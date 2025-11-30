@@ -13,9 +13,10 @@
 1.  [批量JPEG转JXL (jpeg_to_jxl.sh)](#批量jpeg转jxl-jpeg_to_jxlsh)
 2.  [批量PNG转无损JXL (png_to_jxl.sh)](#批量png转无损jxl-png_to_jxlsh)
 3.  [批量HEIC转无损PNG (heic_to_png.sh)](#批量heic转无损png-heic_to_pngsh)
-4.  [视频转高质量GIF (video_to_gif.sh)](#视频转高质量gif-video_to_gifsh)
-5.  [批量合并XMP元数据 (merge_xmp.sh)](#批量合并xmp元数据-merge_xmpsh)
-6.  [分包压缩并上传到GitHub (archive_and_upload.sh)](#分包压缩并上传到github-archive_and_uploadsh)
+4.  [动态图片转H.266/VVC视频 (imganim_to_vvc.sh)](#动态图片转h266vvc视频-imganim_to_vvcsh)
+5.  [视频转高质量GIF (video_to_gif.sh)](#视频转高质量gif-video_to_gifsh)
+6.  [批量合并XMP元数据 (merge_xmp.sh)](#批量合并xmp元数据-merge_xmpsh)
+7.  [分包压缩并上传到GitHub (archive_and_upload.sh)](#分包压缩并上传到github-archive_and_uploadsh)
 
 ---
 
@@ -91,6 +92,32 @@ chmod +x heic_to_png.sh
 
 # 原地转换模式
 ./heic_to_png.sh --in-place /path/to/images
+```
+
+---
+
+### 动态图片转H.266/VVC视频 (imganim_to_vvc.sh)
+
+#### 功能
+通过智能识别文件类型（而非扩展名），将目录下的动态图片（GIF, 动态WebP, APNG）批量转换为现代、高效的 H.266 (VVC) 视频格式（`.mp4`）。
+
+- **元数据**: 尽力保留内部元数据，并完整保留系统文件时间戳。
+- **原地转换**: 支持 `--in-place` 模式，成功后用 `.mp4` 视频替换原始图片。
+
+#### 依赖
+- **`ffmpeg`**: 需要编译时启用 `libvvenc`。`brew install ffmpeg` 安装的版本可能不包含，需用户自行确认。
+- **`exiftool`**: `brew install exiftool`
+
+#### 使用方法
+```bash
+# 赋予执行权限
+chmod +x imganim_to_vvc.sh
+
+# 标准模式 (在旁边创建 .mp4 文件)
+./imganim_to_vvc.sh /path/to/images
+
+# 原地转换模式
+./imganim_to_vvc.sh --in-place /path/to/images
 ```
 
 ---
