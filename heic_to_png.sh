@@ -59,6 +59,31 @@ if [ ! -d "$TARGET_DIR" ]; then
     exit 1
 fi
 
+# --- 安全检查 ---
+if [ "$IN_PLACE" = true ]; then
+    REAL_TARGET_DIR=""
+    if command -v realpath &> /dev/null; then
+        REAL_TARGET_DIR=$(realpath "$TARGET_DIR")
+    else
+        REAL_TARGET_DIR=$(cd "$TARGET_DIR"; pwd)
+    fi
+
+    FORBIDDEN_PATHS=("/" "/etc" "/bin" "/usr" "/System" "$HOME")
+
+    for forbidden in "${FORBIDDEN_PATHS[@]}"; do
+        if [ "$REAL_TARGET_DIR" = "$forbidden" ] || [[ "$REAL_TARGET_DIR" == "$forbidden/"* ]]; then
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo "!!!                        安全警告                        !!!"
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo "错误: 检测到危险操作！"
+            echo "您正试图在受保护的系统目录 ($forbidden) 中执行原地替换操作。"
+            echo "为了您的系统安全，此操作已被强制禁止。"
+            echo "请选择一个普通的用户目录来执行此操作。"
+            exit 1
+        fi
+    done
+fi
+
 echo "将在 '$TARGET_DIR' 文件夹中查找 HEIC/HEIF 文件并转换为无损 PNG..."
 if [ "$IN_PLACE" = true ]; then
   echo "警告: 已启用 --in-place 模式，成功转换后将删除原始 HEIC/HEIF 文件。"
