@@ -1,0 +1,121 @@
+#!name=🚀💪General Enhanced⬆️⬆️ plus (Shadowrocket)
+#!desc=DNS解析优化、代理跳过、真实IP执行和服务优化。适配 Shadowrocket。
+#!author=VirgilClyne & nyamiiko (Optimized)
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+
+[General]
+# 代理设置
+# use-local-host-item-for-proxy = true (Shadowrocket 默认支持，无需显式配置)
+# encrypted-dns-follow-outbound-mode = true (Shadowrocket 不支持此参数)
+
+# TUN路由配置
+tun-excluded-routes = 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4, 255.255.255.255/32
+# tun-included-routes = 192.168.1.12/32, 192.168.1.100/32
+
+# HTTP引擎强制主机 (Shadowrocket 不支持 force-http-engine-hosts)
+# force-http-engine-hosts = baidu.com, -*.apple.com, www.google.com:80, www.google.com:0
+
+# 始终使用原始TCP连接 (Shadowrocket 不支持 always-raw-tcp-hosts/keywords)
+# always-raw-tcp-hosts = ...
+# always-raw-tcp-keywords = ...
+
+# 跳过代理 (Shadowrocket 使用 skip-proxy)
+skip-proxy = localhost, *.local, captive.apple.com, e.crashlytics.com, www.baidu.com, passenger.t3go.cn, yunbusiness.ccb.com, wxh.wo.cn, gate.lagou.com, www.abchina.com.cn, login-service.mobile-bank.psbc.com, mobile-bank.psbc.com, *.battle.net, *.battlenet.com, *.battlenet.com.cn, *.blzstatic.cn, *.d.meituan.net, *.msftconnecttest.com, *.srv.nintendo.net, *.stun.playstation.net, *.xboxlive.com, id6.me, www.shanbay.com, xbox.*.microsoft.com, *.qq.com, *.weixin.qq.com, *.tencent.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, *.95516.com, *.unionpay.com, *.ctrip.com, *.elong.com, *.qunar.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, 192.168.122.1/32, 193.168.0.1/32, ::1/128, fe80::/10
+
+# 始终真实IP (Shadowrocket 使用 always-real-ip)
+always-real-ip = *.lan, *.direct, cable.auth.com, *.msftconnecttest.com, *.msftncsi.com, network-test.debian.org, detectportal.firefox.com, resolver1.opendns.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, global.turn.twilio.com, global.stun.twilio.com, app.yinxiang.com, injections.adguard.org, local.adguard.org, localhost.*.qq.com, localhost.*.weixin.qq.com, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, music.taihe.com, songsearch.kugou.com, trackercdn.kugou.com, *.kuwo.cn, api-jooxtt.sanook.com, api.joox.com, joox.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, isure.stream.qqmusic.qq.com, dl.stream.qqmusic.qq.com, aqqmusic.tc.qq.com, amobile.music.tc.qq.com, *.xiami.com, *.music.migu.cn, music.migu.cn, proxy.golang.org, *.mcdn.bilivideo.cn, *.cmpassport.com, id6.me, open.e.189.cn, opencloud.wostore.cn, id.mail.wo.cn, mdn.open.wo.cn, hmrz.wo.cn, nishub1.10010.com, enrichgw.10010.com, *.wosms.cn, *.jegotrip.com.cn, *.icitymobile.mobi, *.pingan.com.cn, *.cmbchina.com, *.10099.com.cn, *.microdone.cn, pool.ntp.org, *.pool.ntp.org, ntp.*.com, time.*.com, ntp?.*.com, time?.*.com, time.*.gov, time.*.edu.cn, *.ntp.org.cn, PDC._msDCS.*.*, DC._msDCS.*.*, GC._msDCS.*.*, *.apple.com, *.duckdns.org, *.nip.io, *.noip.com, *.sslip.io, *.stun.twilio.com, *.turn.twilio.com, *.xip.io, dns.msftncsi.com, ipv6.msftncsi.com, stun.l.google.com, stun.syncthing.net, stun.stunprotocol.org, stun1.l.google.com, stun2.l.google.com, stun3.l.google.com, stun4.l.google.com, stunserver.org, time.apple.com, www.msftncsi.com, *.weibo.com, *.douyin.com, *.tiktok.com, *.bilibili.com, *.acfun.cn, *.youku.com, *.iqiyi.com, *.le.com, *.pptv.com, *.sohu.com, *.cntv.cn
+
+[URL Rewrite]
+# Google重定向
+^https?://(www\.)?(g|google)\.cn https://www.google.com 307
+^https?://(www\.)?google\.com\.hk https://www.google.com 307
+^https?://(ditu|maps)\.google\.cn https://maps.google.com 307
+
+# 用户代理优化
+^https?:\/\/.*\.zhihu\.com\/(question|topic) - header-replace User-Agent "osee2unifiedRelease/10700 osee2unifiedReleaseVersion/10.70.0 Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
+^https?:\/\/zhidao\.baidu\.com - header-replace User-Agent "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15"
+^https:\/\/github\.com\/ - header-replace Accept-Language "en-US,en;q=0.9"
+^https:\/\/(raw|gist)\.githubusercontent\.com\/ - header-replace Accept-Language "en-US,en;q=0.9"
+^https:\/\/api\.github\.com\/ - header-replace Accept-Language "en-US,en;q=0.9"
+
+[Host]
+# === 单条优先 ===
+ip6-allhosts = ff02::3
+ip6-allnodes = ff02::1
+ip6-allrouters = ff02::2
+ip6-localnet = fe00::0
+ip6-localhost = ::1
+ip6-loopback = ::1
+ip6-mcastprefix = ff00::0
+
+# === 本地域名 / 局域网相关 ===
+*.localdomain = server:system
+*.local = server:system
+*.localhost = server:system
+*.lan = server:system
+*.test = server:system
+_hotspot_.m2m = server:system
+miwifi.com = server:system
+
+# === Telegram / 相关节点 ===
+91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.107 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.120 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.125 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.126 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.128 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.156 = 91.108.56.147,91.108.56.135,91.108.56.130
+
+149.154.175.10 = 149.154.175.53
+149.154.175.50 = 149.154.175.53
+149.154.175.54 = 149.154.175.53
+149.154.175.55 = 149.154.175.53
+149.154.175.56 = 149.154.175.53
+149.154.175.57 = 149.154.175.53
+149.154.175.100 = 149.154.175.53
+149.154.175.101 = 149.154.175.53
+149.154.175.102 = 149.154.175.53
+149.154.175.103 = 149.154.175.53
+149.154.175.117 = 149.154.175.53
+
+# === 公共 DNS / 解析器 ===
+1dot1dot1dot1.cloudflare-dns.com = 2606:4700:4700::1001,2606:4700:4700::1111
+dns.google = 2001:4860:4860::8888,2001:4860:4860::8844
+dns.quad9.net = 2620:fe::fe,2620:fe::9
+dns.adguard-dns.com = 2a10:50c0::ad1:ff,2a10:50c0::ad2:ff
+dns.alidns.com = 2400:3200:baba::1,2400:3200::1
+dns.twnic.tw = 2001:de4::101,2001:de4::102
+doh.360.cn = 101.198.198.198,101.227.130.133
+doh.pub = 2409:8c20:1001:1002:0:ff:b001:efe0,2409:8c28:1001:1001:0:ff:b001:efe1
+
+# === Google / Android / 服务优化映射 ===
+mtalk.google.com = 2404:6800:4008:c07::bc
+alt1-mtalk.google.com = 2607:f8b0:4023:c0b::bc
+alt2-mtalk.google.com = 142.250.115.188
+alt3-mtalk.google.com = 2607:f8b0:4023:2c03::bc    
+alt4-mtalk.google.com = 74.125.200.188
+dl.google.com = 180.163.151.161
+dl.l.google.com = 180.163.151.161
+services.googleapis.cn = 74.125.193.94
+
+# === 系统连通性检测 ===
+captive.apple.com = server:system
+connectivitycheck.gstatic.com = server:system
+detectportal.firefox.com = server:system
+msftconnecttest.com = server:system
+msftncsi.com = server:system
+connectivitycheck.android.com = server:system
+connectivity-check.ubuntu.com = server:system
+connectivitycheck.platform.hicloud.com = server:system
+clients3.google.com = server:system
+clients4.google.com = server:system
+injections.adguard.org = server:system
+local.adguard.org = server:system
+internet.sony.tv = server:system
+www.msftncsi.com = server:system
+
+[MITM]
+# 证书主机名
+hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
