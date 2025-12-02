@@ -858,27 +858,27 @@ async function operator(proxies = []) {
 
             // 用于美化节点名称的 Emoji 列表。
             // p: Premium (高级), f: Fast (高速), s: Stable (稳定), d: Default (默认)
-            emoji: { 
-                p: ['💎', '👑', '⭐'], 
-                f: ['⚡', '🚀', '💨'], 
-                s: ['🛡️', '🔒', '💯'], 
-                d: ['✨', '🔥', '🌟'] 
+            emoji: {
+                p: ['💎', '👑', '⭐'],
+                f: ['⚡', '🚀', '💨'],
+                s: ['🛡️', '🔒', '💯'],
+                d: ['✨', '🔥', '🌟']
             },
 
             // 🎨 节点命名美化配置
             naming: {
                 // 命名风格: 'minimal' (简约), 'standard' (标准), 'detailed' (详细)
                 style: 'minimal',
-                
+
                 // 是否显示序号
                 showIndex: true,
-                
+
                 // 序号分隔符
                 indexSeparator: '·',
-                
+
                 // 是否显示特性emoji
                 showFeatureEmoji: true,
-                
+
                 // 地区名称映射（简化显示）
                 regionShortNames: {
                     '香港': 'HK', '台湾': 'TW', '日本': 'JP', '韩国': 'KR',
@@ -938,6 +938,108 @@ async function operator(proxies = []) {
         const getRandomSni = () => getRandItem(cfg.sni);
         const getRandomObfs = () => getRandItem(cfg.obfs);
 
+        // 🌍 v3.6.1: 域名扩展名到地区映射 - 智能检测节点地区
+        const detectRegionFromDomain = (server) => {
+            if (!server || typeof server !== 'string') return null;
+            const lowerServer = server.toLowerCase();
+
+            // 域名扩展名映射表（按优先级排序）
+            const domainRegionMap = {
+                '.nl': { f: '🇳🇱', r: '荷兰', p: 19 },
+                '.ch': { f: '🇨🇭', r: '瑞士', p: 24 },
+                '.ru': { f: '🇷🇺', r: '俄罗斯', p: 25 },
+                '.au': { f: '🇦🇺', r: '澳洲', p: 27 },
+                '.de': { f: '🇩🇪', r: '德国', p: 16 },
+                '.fr': { f: '🇫🇷', r: '法国', p: 17 },
+                '.uk': { f: '🇬🇧', r: '英国', p: 15 },
+                '.ca': { f: '🇨🇦', r: '加拿大', p: 28 },
+                '.br': { f: '🇧🇷', r: '巴西', p: 41 },
+                '.it': { f: '🇮🇹', r: '意大利', p: 52 },
+                '.es': { f: '🇪🇸', r: '西班牙', p: 53 },
+                '.se': { f: '🇸🇪', r: '瑞典', p: 61 },
+                '.no': { f: '🇳🇴', r: '挪威', p: 67 },
+                '.dk': { f: '🇩🇰', r: '丹麦', p: 68 },
+                '.fi': { f: '🇫🇮', r: '芬兰', p: 60 },
+                '.pl': { f: '🇵🇱', r: '波兰', p: 54 },
+                '.cz': { f: '🇨🇿', r: '捷克', p: 57 },
+                '.at': { f: '🇦🇹', r: '奥地利', p: 56 },
+                '.be': { f: '🇧🇪', r: '比利时', p: 55 },
+                '.gr': { f: '🇬🇷', r: '希腊', p: 66 },
+                '.pt': { f: '🇵🇹', r: '葡萄牙', p: 63 },
+                '.ro': { f: '🇷🇴', r: '罗马尼亚', p: 59 },
+                '.tr': { f: '🇹🇷', r: '土耳其', p: 35 },
+                '.ae': { f: '🇦🇪', r: '阿联酋', p: 33 },
+                '.il': { f: '🇮🇱', r: '以色列', p: 64 },
+                '.za': { f: '🇿🇦', r: '南非', p: 62 },
+                '.nz': { f: '🇳🇿', r: '新西兰', p: 58 },
+                '.ar': { f: '🇦🇷', r: '阿根廷', p: 38 },
+                '.cl': { f: '🇨🇱', r: '智利', p: 42 },
+                '.co': { f: '🇨🇴', r: '哥伦比亚', p: 39 },
+                '.mx': { f: '🇲🇽', r: '墨西哥', p: 44 },
+                '.pe': { f: '🇵🇪', r: '秘鲁', p: 45 },
+                '.ec': { f: '🇪🇨', r: '厄瓜多尔', p: 48 },
+                '.cr': { f: '🇨🇷', r: '哥斯达黎加', p: 46 },
+                '.gt': { f: '🇬🇹', r: '危地马拉', p: 47 },
+                '.bo': { f: '🇧🇴', r: '玻利维亚', p: 49 },
+                '.ma': { f: '🇲🇦', r: '摩洛哥', p: 112 },
+                '.ng': { f: '🇳🇬', r: '尼日利亚', p: 111 },
+                '.ke': { f: '🇰🇪', r: '肯尼亚', p: 110 },
+                '.th': { f: '🇹🇭', r: '泰国', p: 22 },
+                '.pk': { f: '🇵🇰', r: '巴基斯坦', p: 36 }
+            };
+
+            // 检查域名扩展名
+            for (const [ext, region] of Object.entries(domainRegionMap)) {
+                if (lowerServer.endsWith(ext)) {
+                    return region;
+                }
+            }
+
+            return null;
+        };
+
+        // 🚫 v3.6.1: 过滤丑陋/技术性的主机名 - 防止暴露服务器信息
+        const isUglyHostname = (name) => {
+            if (!name || typeof name !== 'string') return false;
+            const lowerName = name.toLowerCase();
+
+            // 丑陋主机名模式列表
+            const uglyPatterns = [
+                /localhost/i,                    // localhost
+                /\.local$/i,                     // *.local
+                /^ip-\d+/i,                      // ip-172-31-34-157
+                /droplet-\d+/i,                  // droplet-329
+                /^lxc/i,                         // LXCNAME, lxc*
+                /\.rev\./i,                      // *.rev.* (reverse DNS)
+                /slashdevslashnetslashtun/i,    // Sub-Store tunnel domains
+                /^\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3}/i,  // 113-29-232-28
+                /^[a-z0-9]{8,}$/i,              // Random hashes (dmitebv2, 5522356392hax)
+                /^[a-f0-9]{8,}$/i,              // Hex hashes
+                /\.aptransit\./i,               // *.aptransit.*
+                /^fif.*ser\d+/i,                // fifctser578050009652
+                /\.slashdev/i,                  // *.slashdev*
+                /^vm-/i,                        // vm-* 
+                /^vps-/i,                       // vps-*
+                /^server\d+/i,                  // server01, server123
+                /^node\d+/i,                    // node01, node123
+                /^host\d+/i,                    // host01, host123
+                /^[0-9a-f]{8}-[0-9a-f]{4}/i,   // UUID patterns
+                /^instance-/i,                  // instance-*
+                /^compute-/i,                   // compute-*
+                /\.compute\./i,                 // *.compute.*
+                /\.amazonaws\./i,               // AWS hostnames
+                /\.googleusercontent\./i,       // Google Cloud hostnames
+                /\.azure/i,                     // Azure hostnames
+                /\.digitalocean/i,              // DigitalOcean hostnames
+                /\.vultr/i,                     // Vultr hostnames
+                /\.linode/i                     // Linode hostnames
+            ];
+
+            return uglyPatterns.some(pattern => pattern.test(lowerName));
+        };
+
+
+
         // 🎭 v3.6.1: 智能指纹随机化 - 根据节点地区分配合适的TLS指纹
         const fingerprintCache = new Map();
         const getSmartFingerprint = (regionName, nodeId) => {
@@ -950,9 +1052,9 @@ async function operator(proxies = []) {
                 return fingerprintCache.get(cacheKey);
             }
             const regionalFp = tlsBoost.regionalFingerprints || {};
-            let fpPool = regionalFp[regionName]?.length > 0 ? regionalFp[regionName] 
-                       : regionalFp['default']?.length > 0 ? regionalFp['default']
-                       : ['chrome', 'safari', 'firefox', 'edge'];
+            let fpPool = regionalFp[regionName]?.length > 0 ? regionalFp[regionName]
+                : regionalFp['default']?.length > 0 ? regionalFp['default']
+                    : ['chrome', 'safari', 'firefox', 'edge'];
             const selectedFp = getRandItem(fpPool);
             fingerprintCache.set(cacheKey, selectedFp);
             return selectedFp;
@@ -1084,25 +1186,25 @@ async function operator(proxies = []) {
         const applySmartTlsEnhancement = (proxy, regionName) => {
             // 如果节点已有 TLS 设置，只增强缺失的配置项
             if (!proxy.tls) return;
-            
+
             const tlsBoost = cfg.enableBoost && cfg.boostOptions.tlsBoost;
             if (!tlsBoost) return;
 
             // 🛡️ Reality/XTLS 节点：只添加曲线配置，跳过其他修改
             const isReality = isRealityNode(proxy);
             const hasXtls = hasXtlsFlow(proxy);
-            
+
             // 🔧 曲线配置：Chrome 131 椭圆曲线偏好（所有 TLS 节点都添加，包括 Reality）
             // Chrome 131 使用的曲线顺序：X25519 > secp256r1 > secp384r1
             if (tlsBoost.curves) {
                 // Clash Meta / Mihomo 格式 (使用冒号分隔)
                 proxy['ecdh-curves'] = tlsBoost.curves.join(':');
-                
+
                 // 🎵 Sing-box 格式：curve_preferences 数组
                 // 参考: https://sing-box.sagernet.org/configuration/shared/tls/
                 // 使用小写格式：x25519, secp256r1, secp384r1
                 proxy['curve_preferences'] = ['x25519', 'secp256r1', 'secp384r1'];
-                
+
                 // 🎵 Sing-box uTLS 指纹配置（Reality 节点使用 chrome 指纹）
                 // 参考: https://sing-box.sagernet.org/configuration/shared/tls/#utls
                 proxy['_utls'] = {
@@ -1110,7 +1212,7 @@ async function operator(proxies = []) {
                     fingerprint: 'chrome'  // Chrome 131 指纹
                 };
             }
-            
+
             // 🛡️ Reality/XTLS 节点：曲线配置已添加，跳过其他修改
             if (isReality || hasXtls) return;
 
@@ -1128,7 +1230,7 @@ async function operator(proxies = []) {
             // 3. 其他情况（自签证书、无证书配置），允许不安全
             const hasCertConfig = proxy.ca || proxy['ca-str'] || proxy['ca_str'];
             const hasKnownSni = proxy.sni && /\.(com|net|org|io|co|gov|edu)$/i.test(proxy.sni);
-            
+
             if (hasCertConfig) {
                 // 有证书配置，验证证书
                 proxy['skip-cert-verify'] = false;
@@ -1173,12 +1275,12 @@ async function operator(proxies = []) {
                 if (proxy.tls === true) {
                     const fragOpts = tlsBoost.tlsFragmentOptions || {};
                     const fragInterval = fragOpts.interval || '10-20';
-                    
+
                     // ✅ Sub-Store sing-box producer 官方支持的参数（布尔值）
                     proxy['_fragment'] = true;  // 启用TLS分片 -> tls.fragment = true
                     proxy['_fragment_fallback_delay'] = fragInterval;  // 分片间隔 -> tls.fragment_fallback_delay
                     proxy['_record_fragment'] = true;  // 记录分片 -> tls.record_fragment = true
-                    
+
                     // ✅ Clash Meta / Mihomo 格式（备用）
                     proxy['client-fingerprint'] = proxy['client-fingerprint'] || 'chrome';
                     // TLS分片已启用（仅sing-box生效）
@@ -1197,7 +1299,7 @@ async function operator(proxies = []) {
                 if (proxy.alpn && !Array.isArray(proxy.alpn)) {
                     proxy.alpn = [proxy.alpn];
                 }
-                
+
                 // ✅ Clash Meta HTTP/2 传输配置（仅当 network=h2 时）
                 if (proxy.network === 'h2') {
                     proxy['h2-opts'] = proxy['h2-opts'] || {
@@ -1279,7 +1381,7 @@ async function operator(proxies = []) {
                     const vlessPort = parseInt(modifiedProxy.port) || 443;
                     const vlessInTlsWhitelist = TLS_WHITELIST_PORTS.has(vlessPort);
                     const vlessInNonTlsBlacklist = NON_TLS_PORTS.has(vlessPort);
-                    
+
                     // 🛡️ 白名单策略：只有白名单端口才强制启用TLS
                     if (cfg.forceTls && !modifiedProxy.tls && vlessInTlsWhitelist) {
                         const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
@@ -1350,7 +1452,7 @@ async function operator(proxies = []) {
                     const trojanPort = parseInt(modifiedProxy.port) || 443;
                     const trojanInTlsWhitelist = TLS_WHITELIST_PORTS.has(trojanPort);
                     const trojanInNonTlsBlacklist = NON_TLS_PORTS.has(trojanPort);
-                    
+
                     // 🛡️ Trojan必须使用TLS，但采用白名单策略
                     if (modifiedProxy.tls === undefined) {
                         if (trojanInNonTlsBlacklist) {
@@ -1399,7 +1501,7 @@ async function operator(proxies = []) {
                     const vmessInTlsWhitelist = TLS_WHITELIST_PORTS.has(vmessPort);
                     // 🚫 黑名单：这些端口明确不支持TLS
                     const vmessInNonTlsBlacklist = NON_TLS_PORTS.has(vmessPort);
-                    
+
                     // 🛡️ 白名单策略（最保守）：
                     // 1. 白名单端口(443/8443等) + forceTls + 原节点无TLS → 启用TLS
                     // 2. 黑名单端口(80/8080等) + 原节点有TLS → 禁用TLS
@@ -1446,7 +1548,7 @@ async function operator(proxies = []) {
                             modifiedProxy.security = preferredCipher;
                             modifiedProxy['_cipher_reason'] = 'security_auto_replaced';
                         }
-                        
+
                         // 非 ECH 场景：替换 ChaCha20 为 AES-GCM（更好的硬件加速）
                         if (!hasECH) {
                             if (modifiedProxy.cipher?.includes('chacha20')) {
@@ -1909,7 +2011,7 @@ async function operator(proxies = []) {
         const seenKeys = new Set();
         const dedupedProxies = [];
         let duplicateCount = 0;
-        
+
         for (let i = 0, len = validProxies.length; i < len; i++) {
             const proxy = validProxies[i];
             const key = getProxyUniqueKey(proxy);
@@ -1920,7 +2022,7 @@ async function operator(proxies = []) {
                 duplicateCount++;
             }
         }
-        
+
         if (duplicateCount > 0) {
             console.log(`[v3.6.0] 🔄 去重: -${duplicateCount} 重复, 剩余 ${dedupedProxies.length} 节点`);
         }
@@ -1939,7 +2041,7 @@ async function operator(proxies = []) {
             if (!name) return [];
             const tags = [];
             const upperName = name.toUpperCase();
-            
+
             // 线路类型标签 (优先级最高)
             const lineTypes = {
                 'IPLC': 'IPLC', 'IEPL': 'IEPL', 'CN2': 'CN2', 'GIA': 'GIA',
@@ -1953,7 +2055,7 @@ async function operator(proxies = []) {
                     break; // 只取一个线路类型
                 }
             }
-            
+
             // 用途标签
             const usageTags = {
                 '流媒体': '📺', 'NETFLIX': '📺', 'NF': '📺', 'DISNEY': '📺',
@@ -1968,14 +2070,14 @@ async function operator(proxies = []) {
                     break; // 只取一个用途标签
                 }
             }
-            
+
             // 倍率标签
             const rateMatch = name.match(/(\d+(?:\.\d+)?)\s*[xX×倍]/);
             if (rateMatch) {
                 const rate = parseFloat(rateMatch[1]);
                 if (rate !== 1) tags.push(`${rate}x`);
             }
-            
+
             return tags.slice(0, 2); // 最多保留2个标签
         };
 
@@ -1983,22 +2085,22 @@ async function operator(proxies = []) {
         const beautifyNodeName = (regionInfo, featType, count, originalName, hasSpecialKeyword) => {
             const { f: regionFlag, r: regionName } = regionInfo;
             const namingCfg = cfg.naming;
-            
+
             // 获取地区简称
             const regionShort = namingCfg.regionShortNames[regionName] || regionName;
-            
+
             // 格式化序号
             const paddedCount = count < 10 ? `0${count}` : `${count}`;
-            
+
             // 提取关键标签（仅当有特殊关键词时）
             const keyTags = hasSpecialKeyword ? extractKeyTags(originalName) : [];
             const tagStr = keyTags.length > 0 ? ` ${keyTags.join('·')}` : '';
-            
+
             // 获取特性emoji
-            const featureEmoji = namingCfg.showFeatureEmoji 
-                ? (regionName === '台湾' ? '' : getRandItem(cfg.emoji[featType])) 
+            const featureEmoji = namingCfg.showFeatureEmoji
+                ? (regionName === '台湾' ? '' : getRandItem(cfg.emoji[featType]))
                 : '';
-            
+
             // 根据命名风格生成名称
             switch (namingCfg.style) {
                 case 'minimal':
@@ -2007,21 +2109,21 @@ async function operator(proxies = []) {
                         return `${regionFlag} ${regionShort}·${paddedCount}${tagStr} ${featureEmoji}`.trim();
                     }
                     return `${regionFlag} ${regionShort}·${paddedCount}${tagStr}`.trim();
-                    
+
                 case 'standard':
                     // 标准风格: 🇭🇰 香港 01 或 🇭🇰 香港 01 IPLC
                     if (featureEmoji) {
                         return `${regionFlag} ${regionName} ${paddedCount}${tagStr} ${featureEmoji}`.trim();
                     }
                     return `${regionFlag} ${regionName} ${paddedCount}${tagStr}`.trim();
-                    
+
                 case 'detailed':
                     // 详细风格: 🇭🇰 香港 | #01 IPLC 💎
                     if (featureEmoji) {
                         return `${regionFlag} ${regionName} | #${paddedCount}${tagStr} ${featureEmoji}`.trim();
                     }
                     return `${regionFlag} ${regionName} | #${paddedCount}${tagStr}`.trim();
-                    
+
                 default:
                     return `${regionFlag} ${regionShort}·${paddedCount}${tagStr}`.trim();
             }
@@ -2033,20 +2135,20 @@ async function operator(proxies = []) {
             const proxy = dedupedProxies[index];
             try {
                 const processedProxy = optimizeProxy(proxy);
-                const originalName = processedProxy.name || 
+                const originalName = processedProxy.name ||
                     `${(processedProxy.type || 'UNKNOWN').toUpperCase()} ${processedProxy.server}:${processedProxy.port}`;
                 processedProxy._originalName = originalName;
 
                 // 缓存地区信息（memoize已处理）
                 const regionInfo = getRegionInfo(originalName);
                 const regionName = regionInfo.r;
-                
+
                 // 获取特性类型
                 const featType = getFeatureType(originalName);
 
                 // 计数器优化
                 const count = incrementCounter(regionCounters, regionName);
-                
+
                 // 检查是否有特殊关键词
                 const hasSpecialKeyword = hasSpecialKeywordCheck(originalName);
 
@@ -2071,17 +2173,17 @@ async function operator(proxies = []) {
                 '落地 Surge': '🎯'
             };
             const shortType = chainTypeShort[chainType] || '🔗';
-            
+
             return exitNodes.map((exitNode, index) => {
                 const chainProxy = removePortHoppingParams(exitNode);
                 const regionInfo = getRegionInfo(chainProxy._originalName);
                 const regionShort = cfg.naming.regionShortNames[regionInfo.r] || regionInfo.r;
                 const paddedCount = (index + 1).toString().padStart(padLength, '0');
-                
+
                 // 提取关键标签
                 const keyTags = extractKeyTags(chainProxy._originalName || '');
                 const tagStr = keyTags.length > 0 ? ` ${keyTags.join('·')}` : '';
-                
+
                 chainProxy['underlying-proxy'] = entryGroup;
                 // 美化链名称: 🔗 🇭🇰 HK·01 IPLC
                 chainProxy.name = `${shortType} ${regionInfo.f} ${regionShort}·${paddedCount}${tagStr}`;
@@ -2114,25 +2216,25 @@ async function operator(proxies = []) {
                 const airportCounters = new Map();
                 finalNodes = proxies.map((proxy, idx) => {
                     if (!proxy || typeof proxy !== 'object') return proxy;
-                    
+
                     const originalName = proxy.name || `Node ${idx + 1}`;
                     const regionInfo = getRegionInfo(originalName);
                     const regionShort = cfg.naming.regionShortNames[regionInfo.r] || regionInfo.r;
-                    
+
                     // 计数
                     const count = (airportCounters.get(regionInfo.r) || 0) + 1;
                     airportCounters.set(regionInfo.r, count);
                     const paddedCount = count < 10 ? `0${count}` : `${count}`;
-                    
+
                     // 提取关键标签
                     const keyTags = extractKeyTags(originalName);
                     const tagStr = keyTags.length > 0 ? ` ${keyTags.join('·')}` : '';
-                    
+
                     // 美化名称: ✈️ 🇭🇰 HK·01 IPLC·📺
                     const beautifiedName = `✈️ ${regionInfo.f} ${regionShort}·${paddedCount}${tagStr}`;
-                    
-                    return { 
-                        ...proxy, 
+
+                    return {
+                        ...proxy,
                         name: beautifiedName,
                         _priority: regionInfo.p,
                         _index: idx
@@ -2164,7 +2266,7 @@ async function operator(proxies = []) {
             const node = finalNodes[i];
             const nodeType = (node.type || '').toLowerCase();
             const nodePort = parseInt(node.port) || 443;
-            
+
             // 只处理VMess和VLESS（非Reality）
             if ((nodeType === 'vmess' || nodeType === 'vless') && !isRealityNode(node)) {
                 // 如果端口不在白名单中，且节点原本没有TLS标记，确保TLS为false
@@ -2174,8 +2276,8 @@ async function operator(proxies = []) {
                     if (!hasRealityFields && node.tls === true) {
                         // 如果没有原始TLS标记但现在有TLS，可能是被错误设置的
                         // 检查是否有SNI或证书配置来判断是否是有意的TLS
-                        const hasIntentionalTls = node.sni || node.servername || node['server-name'] || 
-                                                   node.alpn || node['skip-cert-verify'] !== undefined;
+                        const hasIntentionalTls = node.sni || node.servername || node['server-name'] ||
+                            node.alpn || node['skip-cert-verify'] !== undefined;
                         if (!hasIntentionalTls) {
                             // 移除意外的TLS配置
                             node.tls = false;
