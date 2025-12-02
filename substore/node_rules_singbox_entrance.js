@@ -2169,8 +2169,8 @@ async function operator(proxies = []) {
             const padLength = exitNodes.length.toString().length;
             // 链类型简化映射
             const chainTypeShort = {
-                '中继 Blaze': '🔗',
-                '落地 Surge': '🎯'
+                '中继 Blaze': '🎼',
+                '落地 Surge': '🎵'
             };
             const shortType = chainTypeShort[chainType] || '🔗';
 
