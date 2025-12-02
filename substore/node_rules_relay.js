@@ -1929,6 +1929,7 @@ async function operator(proxies = []) {
         // 🚀 性能优化：使用 lodash memoize 缓存地区识别结果
         // 🚀 性能优化：使用预编译的 REGION_PATTERNS（O(1) 正则匹配，无运行时编译）
         // 🌍 v3.6.1: 增强版本 - 支持域名扩展名检测
+        // 🔧 v3.6.1fix: 修复memoize缓存键 - 使用 nodeName+serverAddress 组合避免错误缓存
         const getRegionInfo = _.memoize((nodeName, serverAddress) => {
             if (!nodeName) return { f: '🌐', r: '其他', p: 999 };
 
@@ -1960,7 +1961,7 @@ async function operator(proxies = []) {
 
             // 3. 最终 Fallback: 未知地区
             return { f: '🌐', r: '其他', p: 999 };
-        });
+        }, (nodeName, serverAddress) => `${nodeName}|${serverAddress || ''}`); // 🔧 组合键resolver
 
         // 🚀 性能优化：使用 lodash memoize 缓存特性识别结果
         const getFeatureType = _.memoize((nodeName) => {
