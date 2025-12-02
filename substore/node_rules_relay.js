@@ -210,14 +210,14 @@ const FEATURE_REGEX = Object.freeze({
 // 🚀🚀🚀 性能关键优化：预编译地区正则表达式（只编译一次，而非每次调用都编译）
 const REGION_PATTERNS = Object.freeze({
     '🇭🇰': { r: /香港|Hong\s*Kong|HK(?!BN)|HongKong|HKBN|HKT|PCCW|HGC|CMI|CSL|WTT/i, n: '香港', p: 11 },
-    '🇹🇼': { r: /台湾|台灣|Taiwan|TW|Taipei|Hinet|CHT|中华电信/i, n: '台湾', p: 10 },
-    '🇯🇵': { r: /日本|Japan|JP|Tokyo|Osaka|NTT|IIJ|KDDI|SoftBank/i, n: '日本', p: 13 },
-    '🇰🇷': { r: /韩国|韓國|Korea|KR|Seoul|SK(?:\s|$)|KT(?:\s|$)|LG\s*U/i, n: '韩国', p: 14 },
-    '🇸🇬': { r: /新加坡|Singapore|SG|Singtel|StarHub/i, n: '新加坡', p: 20 },
-    '🇺🇸': { r: /美国|美國|USA|US(?:\s|$)|United\s*States|Los\s*Angeles|San\s*Jose|New\s*York|LA(?:\s|$)|NY(?:\s|$)|Seattle|Chicago|Dallas|Miami|Atlanta|Ashburn/i, n: '美国', p: 30 },
+    '🇹🇼': { r: /台湾|台灣|Taiwan|TW(?:[\s\-·]|$)|Taipei|Hinet|CHT|中华电信/i, n: '台湾', p: 10 },
+    '🇯🇵': { r: /日本|Japan|JP(?:[\s\-·]|$)|Tokyo|Osaka|NTT|IIJ|KDDI|SoftBank/i, n: '日本', p: 13 },
+    '🇰🇷': { r: /韩国|韓國|Korea|KR(?:[\s\-·]|$)|Seoul|SK(?:[\s\-·]|$)|KT(?:[\s\-·]|$)|LG\s*U/i, n: '韩国', p: 14 },
+    '🇸🇬': { r: /新加坡|Singapore|SG(?:[\s\-·]|$)|Singtel|StarHub/i, n: '新加坡', p: 20 },
+    '🇺🇸': { r: /美国|美國|USA|US(?:[\s\-·]|$)|United\s*States|Los\s*Angeles|San\s*Jose|New\s*York|LA(?:[\s\-·]|$)|NY(?:[\s\-·]|$)|Seattle|Chicago|Dallas|Miami|Atlanta|Ashburn/i, n: '美国', p: 30 },
     '🇨🇳': { r: /(?:^|[\s\-_])(?:中国|Mainland\s*China|PRC)(?:[\s\-_]|$)|(?:^|[\s\-_])CN(?![2-9A-Za-z])|(?:北京|上海|广州|深圳|杭州|成都|武汉|南京|西安|重庆|天津|贵州|贵阳|云南|昆明|四川|福建|厦门|湖北|湖南|长沙|山东|济南|青岛|辽宁|沈阳|大连|河南|郑州|安徽|合肥|河北|石家庄|陕西|广西|南宁|海南|三亚|江西|南昌|甘肃|兰州|青海|宁夏|新疆|西藏|内蒙古|黑龙江|哈尔滨|吉林|长春|浙江|江苏|苏州|无锡)(?:[\s\-_]|$)/i, n: '中国', p: 5 },
-    '🇬🇧': { r: /英国|英國|UK|GB|United\s*Kingdom|London|Manchester/i, n: '英国', p: 40 },
-    '🇩🇪': { r: /德国|德國|Germany|DE(?:\s|$)|Frankfurt|Berlin|Munich/i, n: '德国', p: 41 },
+    '🇬🇧': { r: /英国|英國|UK(?:[\s\-·]|$)|GB(?:[\s\-·]|$)|United\s*Kingdom|London|Manchester/i, n: '英国', p: 40 },
+    '🇩🇪': { r: /德国|德國|Germany|DE(?:[\s\-·]|$)|Frankfurt|Berlin|Munich/i, n: '德国', p: 41 },
     '🇫🇷': { r: /法国|法國|France|FR(?:\s|$)|Paris|Marseille/i, n: '法国', p: 42 },
     '🇳🇱': { r: /荷兰|荷蘭|Netherlands|NL(?:\s|$)|Amsterdam|Rotterdam/i, n: '荷兰', p: 43 },
     '🇦🇺': { r: /澳洲|澳大利亚|Australia|AU(?:\s|$)|Sydney|Melbourne|Brisbane/i, n: '澳洲', p: 70 },
@@ -1929,7 +1929,6 @@ async function operator(proxies = []) {
         // 🚀 性能优化：使用 lodash memoize 缓存地区识别结果
         // 🚀 性能优化：使用预编译的 REGION_PATTERNS（O(1) 正则匹配，无运行时编译）
         // 🌍 v3.6.1: 增强版本 - 支持域名扩展名检测
-        // 🔧 v3.6.1fix: 修复memoize缓存键 - 使用 nodeName+serverAddress 组合避免错误缓存
         const getRegionInfo = _.memoize((nodeName, serverAddress) => {
             if (!nodeName) return { f: '🌐', r: '其他', p: 999 };
 
