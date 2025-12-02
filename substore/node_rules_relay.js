@@ -1366,7 +1366,7 @@ async function operator(proxies = []) {
                         const tlsBoost = cfg.enableBoost && cfg.boostOptions.tlsBoost;
                         if (tlsBoost) {
                             // 🎭 智能指纹随机化 - utls自动包含曲线配置
-                            const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
+                            const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
                             const nodeId = modifiedProxy.server + ':' + modifiedProxy.port;
                             const smartFp = getSmartFingerprint(regionInfo.r, nodeId);
                             modifiedProxy['client-fingerprint'] = smartFp;
@@ -1384,7 +1384,7 @@ async function operator(proxies = []) {
 
                     // 🛡️ 白名单策略：只有白名单端口才强制启用TLS
                     if (cfg.forceTls && !modifiedProxy.tls && vlessInTlsWhitelist) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
+                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
                         applyTlsConfig(modifiedProxy, regionInfo.r);
                     } else if (vlessInNonTlsBlacklist && modifiedProxy.tls) {
                         // 黑名单端口，禁用TLS
@@ -1507,7 +1507,7 @@ async function operator(proxies = []) {
                     // 2. 黑名单端口(80/8080等) + 原节点有TLS → 禁用TLS
                     // 3. 其他所有端口(12800/16056/19203等) → 完全保持原设置
                     if (cfg.forceTls && !modifiedProxy.tls && vmessInTlsWhitelist) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
+                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
                         applyTlsConfig(modifiedProxy, regionInfo.r);
                     } else if (vmessInNonTlsBlacklist && modifiedProxy.tls) {
                         // 黑名单端口，禁用TLS
@@ -1523,7 +1523,7 @@ async function operator(proxies = []) {
 
                     // TLS 增强选项 - 仅在节点原本就有TLS时增强，不强制添加
                     if (cfg.enableBoost && modifiedProxy.tls && !vmessInNonTlsBlacklist) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
+                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
                         applySmartTlsEnhancement(modifiedProxy, regionInfo.r);
                     }
 
@@ -1865,7 +1865,7 @@ async function operator(proxies = []) {
 
                     // 智能 SNI 配置
                     if (!modifiedProxy.sni || cfg.forceSniOverride) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
+                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
                         modifiedProxy.sni = regionInfo.r ? getSmartSni(regionInfo.r) : modifiedProxy.server;
                     }
 
@@ -1928,10 +1928,11 @@ async function operator(proxies = []) {
 
         // 🚀 性能优化：使用 lodash memoize 缓存地区识别结果
         // 🚀 性能优化：使用预编译的 REGION_PATTERNS（O(1) 正则匹配，无运行时编译）
-        const getRegionInfo = _.memoize((nodeName) => {
+        // 🌍 v3.6.1: 增强版本 - 支持域名扩展名检测
+        const getRegionInfo = _.memoize((nodeName, serverAddress) => {
             if (!nodeName) return { f: '🌐', r: '其他', p: 999 };
 
-            // 使用顶部预编译的 REGION_PATTERNS
+            // 1. 使用顶部预编译的 REGION_PATTERNS
             for (const [flag, info] of Object.entries(REGION_PATTERNS)) {
                 if (info.r.test(nodeName)) {
                     let r = info.n;
@@ -1948,6 +1949,16 @@ async function operator(proxies = []) {
                     return { f: flag, r, p: info.p };
                 }
             }
+
+            // 🆕 v3.6.1: 2. 尝试从服务器地址的域名扩展名检测地区
+            if (serverAddress) {
+                const domainRegion = detectRegionFromDomain(serverAddress);
+                if (domainRegion) {
+                    return domainRegion;
+                }
+            }
+
+            // 3. 最终 Fallback: 未知地区
             return { f: '🌐', r: '其他', p: 999 };
         });
 
@@ -2130,6 +2141,7 @@ async function operator(proxies = []) {
         };
 
         // 🚀 v3.6.0: 优化主处理循环 - 减少函数调用和字符串操作
+        // 🌍 v3.6.1: 增强版本 - 智能处理丑陋主机名
         const len = dedupedProxies.length;
         for (let index = 0; index < len; index++) {
             const proxy = dedupedProxies[index];
@@ -2139,8 +2151,13 @@ async function operator(proxies = []) {
                     `${(processedProxy.type || 'UNKNOWN').toUpperCase()} ${processedProxy.server}:${processedProxy.port}`;
                 processedProxy._originalName = originalName;
 
+                // 🆕 v3.6.1: 智能检测 - 如果名称是丑陋的主机名，使用服务器地址进行地区检测
+                const nameIsUgly = isUglyHostname(originalName);
+                const nameForRegionDetection = nameIsUgly ? processedProxy.server : originalName;
+
                 // 缓存地区信息（memoize已处理）
-                const regionInfo = getRegionInfo(originalName);
+                // 传入服务器地址作为第二参数，用于域名扩展名检测
+                const regionInfo = getRegionInfo(nameForRegionDetection, processedProxy.server);
                 const regionName = regionInfo.r;
 
                 // 获取特性类型
@@ -2176,7 +2193,7 @@ async function operator(proxies = []) {
 
             return exitNodes.map((exitNode, index) => {
                 const chainProxy = removePortHoppingParams(exitNode);
-                const regionInfo = getRegionInfo(chainProxy._originalName);
+                const regionInfo = getRegionInfo(chainProxy._originalName, chainProxy.server);
                 const regionShort = cfg.naming.regionShortNames[regionInfo.r] || regionInfo.r;
                 const paddedCount = (index + 1).toString().padStart(padLength, '0');
 
@@ -2218,7 +2235,7 @@ async function operator(proxies = []) {
                     if (!proxy || typeof proxy !== 'object') return proxy;
 
                     const originalName = proxy.name || `Node ${idx + 1}`;
-                    const regionInfo = getRegionInfo(originalName);
+                    const regionInfo = getRegionInfo(originalName, proxy.server);
                     const regionShort = cfg.naming.regionShortNames[regionInfo.r] || regionInfo.r;
 
                     // 计数
