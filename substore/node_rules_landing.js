@@ -215,9 +215,6 @@ const REGION_PATTERNS = Object.freeze({
     '🇰🇷': { r: /韩国|韓國|Korea|KR|Seoul|SK(?:\s|$)|KT(?:\s|$)|LG\s*U/i, n: '韩国', p: 14 },
     '🇸🇬': { r: /新加坡|Singapore|SG|Singtel|StarHub/i, n: '新加坡', p: 20 },
     '🇺🇸': { r: /美国|美國|USA|US(?:\s|$)|United\s*States|Los\s*Angeles|San\s*Jose|New\s*York|LA(?:\s|$)|NY(?:\s|$)|Seattle|Chicago|Dallas|Miami|Atlanta|Ashburn/i, n: '美国', p: 30 },
-    // 🛡️ 中国节点识别优化：避免误判其他地区
-    // - CN(?![2-9A-Za-z]) 避免匹配 CN2/CNA 等专线标识
-    // - 包含所有省份和主要城市
     '🇨🇳': { r: /(?:^|[\s\-_])(?:中国|Mainland\s*China|PRC)(?:[\s\-_]|$)|(?:^|[\s\-_])CN(?![2-9A-Za-z])|(?:北京|上海|广州|深圳|杭州|成都|武汉|南京|西安|重庆|天津|贵州|贵阳|云南|昆明|四川|福建|厦门|湖北|湖南|长沙|山东|济南|青岛|辽宁|沈阳|大连|河南|郑州|安徽|合肥|河北|石家庄|陕西|广西|南宁|海南|三亚|江西|南昌|甘肃|兰州|青海|宁夏|新疆|西藏|内蒙古|黑龙江|哈尔滨|吉林|长春|浙江|江苏|苏州|无锡)(?:[\s\-_]|$)/i, n: '中国', p: 5 },
     '🇬🇧': { r: /英国|英國|UK|GB|United\s*Kingdom|London|Manchester/i, n: '英国', p: 40 },
     '🇩🇪': { r: /德国|德國|Germany|DE(?:\s|$)|Frankfurt|Berlin|Munich/i, n: '德国', p: 41 },
@@ -246,7 +243,6 @@ const REGION_PATTERNS = Object.freeze({
     '🇳🇿': { r: /新西兰|New\s*Zealand|NZ(?:\s|$)|Auckland/i, n: '新西兰', p: 71 },
     '🇿🇦': { r: /南非|South\s*Africa|ZA(?:\s|$)|Johannesburg|Cape\s*Town/i, n: '南非', p: 91 },
     '🇲🇴': { r: /澳门|澳門|Macau|MO(?:\s|$)|CTM/i, n: '澳门', p: 12 },
-    // '🇨🇳': { r: /中国|China|CN(?:\s|$)|北京|上海|广东|深圳|杭州|成都|CMCC|CUCC|CTCC/i, n: '中国', p: 5 }, // Moved up for priority check if needed, but object order doesn't guarantee priority in loop. Relying on regex robustness.
     '🇮🇪': { r: /爱尔兰|Ireland|IE(?:\s|$)|Dublin/i, n: '爱尔兰', p: 47 },
     '🇫🇮': { r: /芬兰|Finland|FI(?:\s|$)|Helsinki/i, n: '芬兰', p: 52 },
     '🇳🇴': { r: /挪威|Norway|NO(?:\s|$)|Oslo/i, n: '挪威', p: 53 },
@@ -273,7 +269,16 @@ const REGION_PATTERNS = Object.freeze({
     '🇲🇲': { r: /缅甸|Myanmar|MM(?:\s|$)|Yangon/i, n: '缅甸', p: 97 },
     '🇳🇵': { r: /尼泊尔|Nepal|NP(?:\s|$)|Kathmandu/i, n: '尼泊尔', p: 95 },
     '🇰🇪': { r: /肯尼亚|Kenya|KE(?:\s|$)|Nairobi/i, n: '肯尼亚', p: 110 },
-    '🇳🇬': { r: /尼日利亚|Nigeria|NG(?:\s|$)|Lagos/i, n: '尼日利亚', p: 111 }
+    '🇳🇬': { r: /尼日利亚|Nigeria|NG(?:\s|$)|Lagos/i, n: '尼日利亚', p: 111 },
+    // 🆕 新增缺失的国家/地区
+    '🇬🇹': { r: /危地马拉|Guatemala|GT(?:\s|$)|Guatemala\s*City/i, n: '危地马拉', p: 67 },
+    '🇧🇴': { r: /玻利维亚|Bolivia|BO(?:\s|$)|La\s*Paz|Sucre/i, n: '玻利维亚', p: 68 },
+    '🇵🇪': { r: /秘鲁|Peru|PE(?:\s|$)|Lima/i, n: '秘鲁', p: 69 },
+    '🇪🇨': { r: /厄瓜多尔|Ecuador|EC(?:\s|$)|Quito/i, n: '厄瓜多尔', p: 64 },
+    '🇨🇷': { r: /哥斯达黎加|Costa\s*Rica|CR(?:\s|$)|San\s*Jose/i, n: '哥斯达黎加', p: 33 },
+    '🇲🇦': { r: /摩洛哥|Morocco|MA(?:\s|$)|Casablanca|Rabat/i, n: '摩洛哥', p: 85 },
+    '🇷🇸': { r: /塞尔维亚|Serbia|RS(?:\s|$)|Belgrade/i, n: '塞尔维亚', p: 86 },
+    '🇱🇹': { r: /立陶宛|Lithuania|LT(?:\s|$)|Vilnius/i, n: '立陶宛', p: 87 }
 });
 
 // 🚀 快速地区匹配函数（使用预编译正则，O(n) 但常数因子极小）
@@ -641,7 +646,7 @@ async function operator(proxies = []) {
 
             // true: 自动生成落地链 (中继 -> 落地)。
             // false: 不生成落地链。
-            generateLandingChains: false,
+            generateLandingChains: true,
 
             // 落地链使用的中继策略组名称，需要与你的 Clash/Substore 配置对应。
             landingEntryGroupName: '🚶 中继路径 🔐',
@@ -652,7 +657,7 @@ async function operator(proxies = []) {
             // 'landing_only': 只输出落地链节点。
             // 'airport_only': ✈️ 机场节点标识（只修改名称添加✈️，内部配置保持原始）。
             // 'dns_resolve': 将域名解析为 IP 地址。
-            outputMode: 'proxies_only',
+            outputMode: 'landing_only',
 
             // 节点协议白名单，只有出现在此列表中的协议类型才会被处理和保留。
             protocols: ['vless', 'vmess', 'trojan', 'snell', 'hysteria2', 'hysteria', 'tuic', 'wireguard', 'https', 'ss', 'shadowsocks', 'http', 'socks5'],
