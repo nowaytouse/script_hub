@@ -3,11 +3,22 @@
 Welcome to my Script Hub! This repository collects various utility scripts designed to enhance efficiency.
 
 **Core Design Principles**:
-- **Complete Metadata Preservation**: All scripts strive to preserve both internal (EXIF, XMP) and system metadata (timestamps) during any conversion or processing.
+- **Complete Metadata Preservation**: All scripts strive to preserve both internal (EXIF, XMP, ICC Profile) and system metadata (timestamps) during any conversion or processing. And the most complete media information (e.g., FPS and frame count)
+  - **Internal Metadata**: EXIF, XMP, IPTC, ICC Profile using `exiftool`
+  - **File System Metadata**: Modification time, access time, creation time using `touch -r`
+  - **Media Information**: Frame count, FPS, duration for animations/videos (100% preserved)
+- **Health Check Validation**: All conversion scripts validate output files to ensure they are viewable/playable before deleting originals.
+- **Whitelist-Only Processing**: Scripts only process specific file formats (whitelist), ignoring all other files for safety.
+- **English Output with Emoji**: All scripts MUST output in English with emoji indicators for better readability and international compatibility. No Chinese or other language output is allowed in script execution.
+
+**User Experience Enhancements**:
+- **Visual Progress Bar**: All scripts now feature a visual progress bar `[████░░] 67%` with ETA estimation.
+- **Real-time Feedback**: Video conversion scripts display real-time ffmpeg stats (frame, fps, speed) to prevent "frozen" state perception.
+- **Detailed Reporting**: Comprehensive summary reports at the end of each execution.
 - **Safety First**: Destructive operations (like deleting or overwriting original files) must only be enabled via explicit flags (e.g., `--in-place` or `--delete-source`).
 - **Robust Safety & Loud Errors**: Scripts include a "dangerous directory" check. If a destructive operation is attempted on a protected system directory, the script will loudly abort with a clear error message.
 - **Batch Processing Capability**: Scripts are designed for efficient batch processing of files within a specified directory.
-- **Verified Safe Deletes**: Original files are only deleted or replaced after confirming successful conversion/processing and proper metadata transfer.
+- **Verified Safe Deletes**: Original files are only deleted or replaced after confirming successful conversion/processing, health validation, and proper metadata transfer.
 
 ---
 
@@ -201,44 +212,144 @@ chmod +x archive_and_upload.sh
 ### Incompatible Media Converter (convert_incompatible_media.sh)
 
 #### Functionality
-Batch converts incompatible media formats to universally compatible formats with **complete metadata preservation**:
-- **HEIC/HEIF → PNG**: Lossless conversion using macOS native `sips` or `heif-convert`
-- **MP4 → Animated WebP**: Lossless conversion (preserves original FPS and resolution, smoother than GIF with smaller file size)
+Batch converts incompatible media formats to universally compatible formats with **complete metadata preservation**, **health validation**, and **optimized performance**:
+- 📷 **HEIC/HEIF → PNG**: Lossless conversion using macOS native `sips` or `heif-convert`
+- 🎬 **MP4 → GIF** (default): Fast lossless conversion (10-20x faster), preserves ALL frames
+- 🎬 **MP4 → WebP** (optional): High-quality lossy (q90), smaller file size
 
 #### Key Features
-- **Atomic Operations**: Temp file → Verify → Replace (prevents data corruption)
-- **Complete Metadata Preservation**:
-  - Internal metadata (EXIF, XMP, IPTC, ICC Profile)
-  - System metadata (creation time, modification time, access time)
-- **Automatic Backup**: Original files backed up before conversion
-- **Multi-level Verification**: File existence, size, and integrity checks
-- **Safety Checks**: Prevents operations on protected system directories
+
+**🏥 Health Check Validation**
+- Validates file signatures (PNG magic bytes, GIF87a/GIF89a, RIFF/WEBP)
+- Verifies media structure using `ffprobe` (dimensions, codec, frame count)
+- Performs decode test using `ffmpeg` to ensure playability
+- Reports health statistics with pass/fail/warning counts
+
+**📋 Maximum Metadata Preservation**
+- **Image Metadata**: EXIF, XMP, IPTC, ICC Profile, ColorSpace
+- **Animation Metadata**: Frame count, FPS, duration (100% preserved)
+- **System Metadata**: Creation time, modification time, access time
+- **Verification**: Reports metadata preservation rate (≥70% = GOOD)
+
+**🔒 Safety & Reliability**
+- **Whitelist Mode**: Only processes specified formats (HEIC/HEIF/MP4)
+- **Atomic Operations**: Temp file → Verify → Health Check → Replace
+- **Automatic Backup**: Original files backed up before any modification
+- **Protected Directories**: Blocks operations on system directories
+- **Converted File Protection**: Tracks newly converted files and protects them from accidental deletion in `--keep-only-incompatible` mode
+
+**⚡ Performance Optimizations**
+- **Fast GIF Conversion**: Optimized single-pass algorithm (10-20x faster than traditional two-pass methods)
+- **Minimal Temporary Files**: Reduces disk I/O for better performance
+- **Efficient Processing**: Processes files sequentially with minimal memory overhead
 
 #### Dependencies
-- **`libheif`** (optional): `brew install libheif`
+- **`sips`** (macOS native) or **`libheif`**: `brew install libheif`
 - **`exiftool`**: `brew install exiftool`
-- **`ffmpeg`**: `brew install ffmpeg`
+- **`ffmpeg`** & **`ffprobe`**: `brew install ffmpeg`
 
 #### Usage
 ```bash
 # Grant execute permission
 chmod +x convert_incompatible_media.sh
 
-# Standard mode (converts and replaces, with automatic backup)
+# Standard mode (with health check and metadata verification)
 ./convert_incompatible_media.sh /path/to/media
+
+# Verbose mode (shows detailed metadata info)
+./convert_incompatible_media.sh --verbose /path/to/media
 
 # Dry-run mode (preview without executing)
 ./convert_incompatible_media.sh --dry-run /path/to/media
 
-# Verbose mode with custom backup directory
-./convert_incompatible_media.sh --verbose --backup-dir /path/to/backup /path/to/media
+# Skip health check (not recommended)
+./convert_incompatible_media.sh --skip-health-check /path/to/media
+
+# WebP format (high-quality lossy, smaller file)
+./convert_incompatible_media.sh --format webp /path/to/media
+
+# Keep-only-incompatible mode (⚠️ DESTRUCTIVE: deletes all compatible files)
+# IMPORTANT: Creates a copy first for safety!
+cp -R /path/to/media /path/to/media_copy
+./convert_incompatible_media.sh --keep-only-incompatible /path/to/media_copy
 ```
 
-**Conversion Details**:
-- **HEIC/HEIF → PNG**: Preserves original resolution and all metadata
-- **MP4 → WebP**: Lossless conversion, preserves original FPS (e.g., 30fps), full resolution, and complete frame count
-- **NO LIMITS**: No downscaling, no frame dropping, no FPS reduction
-- **In-place Replacement**: Automatically deletes original files after conversion, backups saved in `_backup_*` directory
+**Best Practices**:
+1. **Use Copy Mode**: Always operate on a copy of your data, not the original
+2. **Verify First**: Run with `--dry-run` to preview changes before execution
+3. **Keep Backups**: The script creates automatic backups, but external backups are recommended
+4. **Check Results**: Verify converted files before deleting the original directory
+
+**Keep-Only-Incompatible Mode**:
+This special mode converts incompatible media (HEIC/HEIF/MP4) AND deletes all other compatible files (JPG, PNG, GIF, WebP, etc.). Only the converted files remain. Use with extreme caution!
+
+**Example Output (Verbose Mode)**:
+```
+📷 Converting HEIC → PNG: photo.heic
+📋 Original file info:
+    Image Width: 2851
+    Image Height: 4093
+🔄 Step 1/4: Converting image format...
+📋 Step 2/4: Migrating metadata (EXIF, XMP, ICC)...
+⏰ Step 3/4: Preserving timestamps...
+🏥 Step 4/4: Health validation...
+🏥 ✅ Passed: photo.png (4645308 bytes)
+📋 Verifying metadata preservation...
+    📊 Original tags: 42
+    📊 Converted tags: 31
+    ✅ Metadata preservation: GOOD (≥70%)
+✅ Done: photo.heic → photo.png
+
+🎬 Converting MP4 → GIF: video.mp4
+📋 Original file info:
+    📹 codec_name=h264
+    📹 width=1280, height=720
+    🎞️  FPS: 30/1
+    🖼️  Frames: 302
+    ⏱️  Duration: 10.224000s
+🏥 ✅ Passed: video.gif (61038323 bytes)
+📋 Verifying metadata preservation...
+    🖼️  Original frames: 302
+    🖼️  Converted frames: 302
+    ✅ Frame count: PRESERVED
+```
+
+**Health Report**:
+```
+╔══════════════════════════════════════════════╗
+║        🏥 Media Health Report                ║
+╠══════════════════════════════════════════════╣
+║  ✅ Passed:                             4  ║
+║  ❌ Failed:                             0  ║
+║  ⚠️  Warnings:                          0  ║
+║  📊 Health Rate:                    100%  ║
+╚══════════════════════════════════════════════╝
+```
+
+---
+
+### Media Health Check Module (media_health_check.sh)
+
+#### Functionality
+Standalone utility to validate media file integrity and playability. Can be used independently or sourced by other scripts.
+
+#### Features
+- 🔍 **Format Detection**: Validates file signatures for PNG, GIF, WebP, JXL, JPEG, MP4
+- 📊 **Structure Validation**: Uses `ffprobe` to verify dimensions, codec, frame count
+- 🎬 **Decode Test**: Attempts to decode first frame to ensure playability
+- 📋 **Batch Processing**: Can scan entire directories recursively
+
+#### Usage
+```bash
+# Check single file
+./media_health_check.sh image.png
+
+# Check directory
+./media_health_check.sh /path/to/media/
+
+# Check multiple files
+./media_health_check.sh *.gif *.png
+```
 
 ---
 

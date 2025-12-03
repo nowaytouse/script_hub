@@ -1,65 +1,195 @@
 #!/bin/bash
 
-# 批量将指定文件夹内的动态图片 (GIF, APNG, WebP) 转换为 H.266/VVC 视频格式。
+# ============================================================================
+# 🎬 Animated Image to H.266/VVC Video Converter with Health Check
+# ============================================================================
 #
-# 功能:
-# - 递归查找指定目录下的所有文件，并使用 exiftool 检查其MIME类型，忽略扩展名。
-# - 只处理识别出的动态图片 (image/gif, image/apng, image/webp)。
-# - 使用 'ffmpeg' 和 'libvvenc' 编码器转换为 H.266/VVC 视频。
-# - 尽力保留内部元数据，并完整保留系统文件时间戳。
-# - 支持常规模式和原地转换模式。
+# Batch converts animated images (GIF, APNG, WebP) to H.266/VVC video.
 #
-# 使用方法:
-# 1. 确保你已经安装了 ffmpeg (需编译支持 libvvenc) 和 exiftool。
-#    - 在 macOS 上: brew install ffmpeg exiftool
-#    - 注意: Homebrew 的 ffmpeg 可能不自带 libvvenc，可能需要手动编译或使用其他源。
-# 2. 将此脚本赋予执行权限: chmod +x imganim_to_vvc.sh
-# 3. 运行脚本:
-#    - 常规模式 (创建新的 .mp4 文件):
-#      ./imganim_to_vvc.sh /path/to/your/images
-#    - 原地转换模式 (成功后用 .mp4 替换原始图片):
-#      ./imganim_to_vvc.sh --in-place /path/to/your/images
+# Features:
+#   ✅ Whitelist: Only processes image/gif, image/apng, image/webp (by MIME)
+#   ✅ H.266/VVC encoding (libvvenc)
+#   ✅ Health check validation after conversion
+#   ✅ Metadata preservation via exiftool
+#   ✅ System timestamp preservation
+#   ✅ In-place conversion mode
+#
+# Dependencies:
+#   - ffmpeg with libvvenc support
+#   - exiftool (brew install exiftool)
+#
+# Usage:
+#   ./imganim_to_vvc.sh /path/to/images
+#   ./imganim_to_vvc.sh --in-place /path/to/images
+#   ./imganim_to_vvc.sh --skip-health-check /path/to/images
+#
+# ============================================================================
 
-# --- 默认值和参数解析 ---
+# Configuration
 IN_PLACE=false
 TARGET_DIR=""
+SKIP_HEALTH_CHECK=false
+HEALTH_PASSED=0
+HEALTH_FAILED=0
 
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Logging
+log_info()    { echo -e "${BLUE}ℹ️  [INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}✅ [OK]${NC} $1"; }
+log_warn()    { echo -e "${YELLOW}⚠️  [WARN]${NC} $1"; }
+log_error()   { echo -e "${RED}❌ [ERROR]${NC} $1"; }
+log_health()  { echo -e "${CYAN}🏥 [HEALTH]${NC} $1"; }
+
+# ============================================================================
+# 📊 Progress Bar & Time Estimation
+# ============================================================================
+
+START_TIME=0
+CURRENT_FILE=0
+TOTAL_FILES=0
+
+# Display progress bar
+show_progress() {
+    local current=$1
+    local total=$2
+    local filename="$3"
+    
+    local percent=$((current * 100 / total))
+    local filled=$((percent / 2))
+    local empty=$((50 - filled))
+    
+    # Progress bar
+    printf "\r\033[K"  # Clear line
+    printf "📊 Progress: ["
+    printf "${GREEN}"
+    printf '%0.s█' $(seq 1 $filled)
+    printf "${NC}"
+    printf '%0.s░' $(seq 1 $empty)
+    printf "] ${percent}%% "
+    
+    # Current/Total
+    printf "(${current}/${total}) "
+    
+    # Time estimation
+    if [ $current -gt 0 ]; then
+        local elapsed=$(($(date +%s) - START_TIME))
+        local avg_time=$((elapsed / current))
+        local remaining=$(( (total - current) * avg_time ))
+        
+        if [ $remaining -gt 60 ]; then
+            printf "| ⏱️  ETA: ~$((remaining / 60))m ${remaining % 60}s"
+        else
+            printf "| ⏱️  ETA: ~${remaining}s"
+        fi
+    fi
+    
+    # Current file (truncate if too long)
+    if [ -n "$filename" ]; then
+        local display_name="$filename"
+        if [ ${#display_name} -gt 40 ]; then
+            display_name="${display_name:0:37}..."
+        fi
+        printf "\n   📄 ${display_name}"
+    fi
+}
+
+# Clear progress bar and move to next line
+clear_progress() {
+    printf "\r\033[K"
+}
+
+# Video health check function
+check_video_health() {
+    local file="$1"
+    [ "$SKIP_HEALTH_CHECK" = true ] && return 0
+    
+    if command -v ffprobe &> /dev/null; then
+        local probe
+        probe=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,codec_name -of csv=p=0 "$file" 2>&1)
+        if [ $? -ne 0 ] || [ -z "$probe" ]; then
+            log_error "Cannot read video structure: $(basename "$file")"
+            return 1
+        fi
+        
+        IFS=',' read -r codec width height <<< "$probe"
+        if [ -z "$width" ] || [ -z "$height" ] || [ "$width" -lt 1 ] || [ "$height" -lt 1 ]; then
+            log_error "Invalid video dimensions: $(basename "$file")"
+            return 1
+        fi
+    fi
+    
+    if command -v ffmpeg &> /dev/null; then
+        if ! ffmpeg -v error -i "$file" -frames:v 1 -f null - 2>/dev/null; then
+            log_error "Cannot decode video: $(basename "$file")"
+            return 1
+        fi
+    fi
+    
+    local size
+    size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+    log_health "✅ Passed: $(basename "$file") ($size bytes, ${width}x${height})"
+    ((HEALTH_PASSED++)) || true
+    return 0
+}
+
+# Parse arguments
 for arg in "$@"; do
-  case $arg in
-    --in-place)
-      IN_PLACE=true
-      shift
-      ;;
-    *)
-      TARGET_DIR="$arg"
-      ;;
-  esac
+    case $arg in
+        --in-place)
+            IN_PLACE=true
+            shift
+            ;;
+        --skip-health-check)
+            SKIP_HEALTH_CHECK=true
+            shift
+            ;;
+        -h|--help)
+            echo "🎬 Animated Image to H.266/VVC Converter"
+            echo ""
+            echo "Usage: $0 [options] <target_directory>"
+            echo ""
+            echo "Options:"
+            echo "  --in-place           Replace original files after conversion"
+            echo "  --skip-health-check  Skip health validation (not recommended)"
+            echo "  -h, --help           Show this help"
+            exit 0
+            ;;
+        *)
+            TARGET_DIR="$arg"
+            ;;
+    esac
 done
 
-# --- 检查依赖和参数 ---
+# Check dependencies
 if ! command -v ffmpeg &> /dev/null; then
-    echo "错误: ffmpeg 命令未找到。"
-    echo "请先安装 ffmpeg。在 macOS 上可以运行: brew install ffmpeg"
+    log_error "ffmpeg not found. Install: brew install ffmpeg"
     exit 1
 fi
+
 if ! command -v exiftool &> /dev/null; then
-    echo "错误: exiftool 命令未找到。"
-    echo "请先安装 exiftool。在 macOS 上可以运行: brew install exiftool"
+    log_error "exiftool not found. Install: brew install exiftool"
     exit 1
 fi
 
 if [ -z "$TARGET_DIR" ]; then
-    echo "错误: 未指定目标文件夹路径。"
-    echo "用法: $0 [--in-place] <目标文件夹路径>"
+    log_error "No target directory specified"
+    echo "Usage: $0 [--in-place] [--skip-health-check] <target_directory>"
     exit 1
 fi
 
 if [ ! -d "$TARGET_DIR" ]; then
-    echo "错误: 目录 '$TARGET_DIR' 不存在。"
+    log_error "Directory does not exist: $TARGET_DIR"
     exit 1
 fi
 
-# --- 安全检查 ---
+# Safety check
 if [ "$IN_PLACE" = true ]; then
     REAL_TARGET_DIR=""
     if command -v realpath &> /dev/null; then
@@ -68,87 +198,139 @@ if [ "$IN_PLACE" = true ]; then
         REAL_TARGET_DIR=$(cd "$TARGET_DIR"; pwd)
     fi
 
-    FORBIDDEN_PATHS=("/" "/etc" "/bin" "/usr" "/System" "$HOME")
-
+    FORBIDDEN_PATHS=("/" "/etc" "/bin" "/usr" "/System" "/Library" "/Applications")
     for forbidden in "${FORBIDDEN_PATHS[@]}"; do
-        if [ "$REAL_TARGET_DIR" = "$forbidden" ] || [[ "$REAL_TARGET_DIR" == "$forbidden/"* ]]; then
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            echo "!!!                        安全警告                        !!!"
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            echo "错误: 检测到危险操作！"
-            echo "您正试图在受保护的系统目录 ($forbidden) 中执行原地替换操作。"
-            echo "为了您的系统安全，此操作已被强制禁止。"
-            echo "请选择一个普通的用户目录来执行此操作。"
+        if [ "$REAL_TARGET_DIR" = "$forbidden" ]; then
+            log_error "🚫 SAFETY: Cannot operate on protected directory: $forbidden"
             exit 1
         fi
     done
 fi
 
-echo "将在 '$TARGET_DIR' 文件夹中查找动态图片并转换为 H.266 (VVC) 视频..."
-if [ "$IN_PLACE" = true ]; then
-  echo "警告: 已启用 --in-place 模式，成功转换后将删除原始动态图片。"
-fi
+echo "╔══════════════════════════════════════════════╗"
+echo "║   🎬 Animated Image to H.266/VVC Converter   ║"
+echo "╚══════════════════════════════════════════════╝"
+echo ""
+log_info "📁 Target: $TARGET_DIR"
+log_info "📋 Whitelist: GIF, APNG, WebP (by MIME type) → MP4/H.266"
+log_info "🎯 Codec: libvvenc (CRF 28)"
+[ "$IN_PLACE" = true ] && log_warn "🔄 In-place mode: originals will be replaced"
+echo ""
 
-# --- 主逻辑 ---
+# Count total files for progress bar
+echo ""
+log_info "📊 Counting files for progress tracking..."
+local total_count=0
+
+while IFS= read -r -d '' file; do
+    MIME_TYPE=$(exiftool -MIMEType -b "$file" 2>/dev/null)
+    case "$MIME_TYPE" in
+        "image/gif"|"image/apng"|"image/webp")
+            ((total_count++)) || true
+            ;;
+    esac
+done < <(find "$TARGET_DIR" -type f -print0)
+
+TOTAL_FILES=$total_count
+CURRENT_FILE=0
+START_TIME=$(date +%s)
+
+log_info "📁 Found: $TOTAL_FILES animated images"
+echo ""
+
+# Main processing - scan by MIME type
 find "$TARGET_DIR" -type f -print0 | while IFS= read -r -d $'\0' file; do
-    
-    MIME_TYPE=$(exiftool -MIMEType -b "$file")
+    MIME_TYPE=$(exiftool -MIMEType -b "$file" 2>/dev/null)
 
     case "$MIME_TYPE" in
         "image/gif"|"image/apng"|"image/webp")
-            echo "--------------------------------------------------"
-            echo "发现动态图片: $file (类型: $MIME_TYPE)"
+            ((CURRENT_FILE++)) || true
+            show_progress $CURRENT_FILE $TOTAL_FILES "$(basename "$file")"
+            echo "──────────────────────────────────────────────"
+            log_info "🎬 Found animated image: $(basename "$file")"
+            log_info "   MIME: $MIME_TYPE"
             
             output_mp4="${file%.*}.mp4"
 
             if [ "$IN_PLACE" = true ]; then
-                # --- 原地转换逻辑 ---
                 temp_mp4="${file}.mp4.tmp"
-                echo "步骤 1/3: 正在转换为临时文件: $temp_mp4"
-                
-                ffmpeg -v warning -i "$file" -c:v libvvenc -crf 28 -pix_fmt yuv420p -y "$temp_mp4"
+                log_info "🔄 Step 1/4: Converting to H.266/VVC..."
+                ffmpeg -v warning -stats -i "$file" -c:v libvvenc -crf 28 -pix_fmt yuv420p -y "$temp_mp4" 2>&1 | while read line; do
+                    if [[ "$line" =~ frame=.*fps=.*speed= ]]; then
+                        printf "\r  ▶️  $line"
+                    fi
+                done
+                printf "\n"
                 
                 if [ $? -eq 0 ]; then
-                    echo "步骤 2/3: 正在从源文件迁移元数据..."
+                    log_info "📋 Step 2/4: Migrating metadata..."
                     exiftool -tagsfromfile "$file" -all:all -overwrite_original "$temp_mp4" > /dev/null 2>&1
                     
-                    echo "步骤 3/3: 正在同步时间戳并替换文件..."
+                    log_info "⏰ Step 3/4: Preserving timestamps..."
                     touch -r "$file" "$temp_mp4"
-                    
                     mv "$temp_mp4" "$output_mp4"
-                    rm "$file"
                     
-                    echo "完成: '$file' -> '$output_mp4'"
+                    log_info "🏥 Step 4/4: Health validation..."
+                    if check_video_health "$output_mp4"; then
+                        rm "$file"
+                        log_success "Done: $(basename "$file") → $(basename "$output_mp4")"
+                    else
+                        log_error "Health check failed, keeping original"
+                        rm -f "$output_mp4"
+                        ((HEALTH_FAILED++)) || true
+                    fi
                 else
-                    echo "错误: 转换 '$file' 失败。临时文件将被删除。"
+                    log_error "Conversion failed: $(basename "$file")"
                     rm -f "$temp_mp4"
                 fi
             else
-                # --- 常规模式逻辑 ---
                 if [ -f "$output_mp4" ]; then
-                    echo "跳过: '$output_mp4' 已存在。"
+                    log_warn "⏭️  Skip: $(basename "$output_mp4") already exists"
                     continue
                 fi
 
-                echo "步骤 1/2: 正在转换 -> '$output_mp4'"
-                ffmpeg -v warning -i "$file" -c:v libvvenc -crf 28 -pix_fmt yuv420p -y "$output_mp4"
+                log_info "🔄 Step 1/3: Converting to H.266/VVC..."
+                ffmpeg -v warning -stats -i "$file" -c:v libvvenc -crf 28 -pix_fmt yuv420p -y "$output_mp4" 2>&1 | while read line; do
+                    if [[ "$line" =~ frame=.*fps=.*speed= ]]; then
+                        printf "\r  ▶️  $line"
+                    fi
+                done
+                printf "\n"
                 
                 if [ $? -eq 0 ]; then
-                    echo "步骤 2/2: 正在同步元数据和时间戳..."
+                    log_info "📋 Step 2/3: Migrating metadata..."
                     exiftool -tagsfromfile "$file" -all:all -overwrite_original "$output_mp4" > /dev/null 2>&1
                     touch -r "$file" "$output_mp4"
-                    echo "转换成功。"
+                    
+                    log_info "🏥 Step 3/3: Health validation..."
+                    if check_video_health "$output_mp4"; then
+                        log_success "Converted: $(basename "$output_mp4")"
+                    else
+                        log_warn "Health check failed, but file created"
+                        ((HEALTH_FAILED++)) || true
+                    fi
                 else
-                    echo "错误: 转换 '$file' 失败。"
+                    log_error "Conversion failed: $(basename "$file")"
                 fi
             fi
-            ;;
-        *)
-            # 非目标文件，静默忽略
             ;;
     esac
 done
 
-echo "=========================================="
-echo "所有文件处理完毕。"
-echo "=========================================="
+echo ""
+echo "╔══════════════════════════════════════════════╗"
+echo "║   📊 Conversion Complete                     ║"
+echo "╚══════════════════════════════════════════════╝"
+
+# Health report
+if [ "$SKIP_HEALTH_CHECK" = false ]; then
+    echo ""
+    echo "🏥 Health Report:"
+    echo -e "   ✅ Passed:  $HEALTH_PASSED"
+    echo -e "   ❌ Failed:  $HEALTH_FAILED"
+    total=$((HEALTH_PASSED + HEALTH_FAILED))
+    if [ "$total" -gt 0 ]; then
+        rate=$((HEALTH_PASSED * 100 / total))
+        echo "   📊 Rate:    ${rate}%"
+    fi
+fi

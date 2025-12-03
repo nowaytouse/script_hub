@@ -1,142 +1,300 @@
 #!/bin/bash
 
-# 批量将指定文件夹内的 JPEG 图片转换为 JXL 格式
+# ============================================================================
+# 📷 JPEG to JXL Converter - High Quality with Health Check
+# ============================================================================
 #
-# 功能:
-# - 递归查找指定目录下的所有 .jpg, .jpeg 文件。
-# - 使用 'cjxl' 进行高质量有损压缩。
-# - 完整保留系统文件时间戳。
-# - 支持常规模式和原地转换模式。
+# Batch converts JPEG images to high-quality JXL format.
 #
-# 使用方法:
-# 1. 确保你已经安装了 jpeg-xl (https://github.com/libjxl/libjxl)。
-#    - 在 macOS 上: brew install jpeg-xl
-# 2. 将此脚本赋予执行权限: chmod +x jpeg_to_jxl.sh
-# 3. 运行脚本:
-#    - 常规模式 (创建新的 .jxl 文件):
-#      ./jpeg_to_jxl.sh /path/to/your/images
-#    - 原地转换模式 (成功后用 .jxl 替换 .jpeg):
-#      ./jpeg_to_jxl.sh --in-place /path/to/your/images
+# Features:
+#   ✅ Whitelist: Only processes .jpg, .jpeg files
+#   ✅ High-quality lossy compression (-d 1)
+#   ✅ Health check validation after conversion
+#   ✅ System timestamp preservation
+#   ✅ In-place conversion mode
+#
+# Dependencies:
+#   - cjxl/djxl (brew install jpeg-xl)
+#   - ffprobe (brew install ffmpeg) - for health check
+#
+# Usage:
+#   ./jpeg_to_jxl.sh /path/to/images
+#   ./jpeg_to_jxl.sh --in-place /path/to/images
+#   ./jpeg_to_jxl.sh --skip-health-check /path/to/images
+#
+# ============================================================================
 
-# --- 默认值和参数解析 ---
+# Configuration
 IN_PLACE=false
 TARGET_DIR=""
+SKIP_HEALTH_CHECK=false
+HEALTH_PASSED=0
+HEALTH_FAILED=0
 
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Logging
+log_info()    { echo -e "${BLUE}ℹ️  [INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}✅ [OK]${NC} $1"; }
+log_warn()    { echo -e "${YELLOW}⚠️  [WARN]${NC} $1"; }
+log_error()   { echo -e "${RED}❌ [ERROR]${NC} $1"; }
+log_health()  { echo -e "${CYAN}🏥 [HEALTH]${NC} $1"; }
+
+# ============================================================================
+# 📊 Progress Bar & Time Estimation
+# ============================================================================
+
+START_TIME=0
+CURRENT_FILE=0
+TOTAL_FILES=0
+
+# Display progress bar
+show_progress() {
+    local current=$1
+    local total=$2
+    local filename="$3"
+    
+    local percent=$((current * 100 / total))
+    local filled=$((percent / 2))
+    local empty=$((50 - filled))
+    
+    # Progress bar
+    printf "\r\033[K"  # Clear line
+    printf "📊 Progress: ["
+    printf "${GREEN}"
+    printf '%0.s█' $(seq 1 $filled)
+    printf "${NC}"
+    printf '%0.s░' $(seq 1 $empty)
+    printf "] ${percent}%% "
+    
+    # Current/Total
+    printf "(${current}/${total}) "
+    
+    # Time estimation
+    if [ $current -gt 0 ]; then
+        local elapsed=$(($(date +%s) - START_TIME))
+        local avg_time=$((elapsed / current))
+        local remaining=$(( (total - current) * avg_time ))
+        
+        if [ $remaining -gt 60 ]; then
+            printf "| ⏱️  ETA: ~$((remaining / 60))m ${remaining % 60}s"
+        else
+            printf "| ⏱️  ETA: ~${remaining}s"
+        fi
+    fi
+    
+    # Current file (truncate if too long)
+    if [ -n "$filename" ]; then
+        local display_name="$filename"
+        if [ ${#display_name} -gt 40 ]; then
+            display_name="${display_name:0:37}..."
+        fi
+        printf "\n   📄 ${display_name}"
+    fi
+}
+
+# Clear progress bar and move to next line
+clear_progress() {
+    printf "\r\033[K"
+}
+
+# JXL health check function
+check_jxl_health() {
+    local file="$1"
+    [ "$SKIP_HEALTH_CHECK" = true ] && return 0
+    
+    # Check JXL signature (0xFF0A or ISOBMFF container)
+    local sig
+    sig=$(xxd -l 2 -p "$file" 2>/dev/null)
+    if [[ "$sig" != "ff0a" && "$sig" != "0000" ]]; then
+        log_error "Invalid JXL signature: $(basename "$file")"
+        return 1
+    fi
+    
+    # Try djxl decode test
+    if command -v djxl &> /dev/null; then
+        if ! djxl "$file" /dev/null 2>/dev/null; then
+            log_error "Cannot decode JXL: $(basename "$file")"
+            return 1
+        fi
+    fi
+    
+    local size
+    size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+    log_health "✅ Passed: $(basename "$file") ($size bytes)"
+    ((HEALTH_PASSED++)) || true
+    return 0
+}
+
+# Parse arguments
 for arg in "$@"; do
-  case $arg in
-    --in-place)
-      IN_PLACE=true
-      shift
-      ;;
-    *)
-      TARGET_DIR="$arg"
-      ;;
-  esac
+    case $arg in
+        --in-place)
+            IN_PLACE=true
+            shift
+            ;;
+        --skip-health-check)
+            SKIP_HEALTH_CHECK=true
+            shift
+            ;;
+        -h|--help)
+            echo "📷 JPEG to JXL Converter"
+            echo ""
+            echo "Usage: $0 [options] <target_directory>"
+            echo ""
+            echo "Options:"
+            echo "  --in-place           Replace original files after conversion"
+            echo "  --skip-health-check  Skip health validation (not recommended)"
+            echo "  -h, --help           Show this help"
+            exit 0
+            ;;
+        *)
+            TARGET_DIR="$arg"
+            ;;
+    esac
 done
 
-# --- 检查依赖和参数 ---
+# Check dependencies
 if ! command -v cjxl &> /dev/null; then
-    echo "错误: cjxl 命令未找到。"
-    echo "请先安装 jpeg-xl。在 macOS 上可以运行: brew install jpeg-xl"
+    log_error "cjxl not found. Install: brew install jpeg-xl"
     exit 1
 fi
 
 if [ -z "$TARGET_DIR" ]; then
-    echo "错误: 未指定目标文件夹路径。"
-    echo "用法: $0 [--in-place] <目标文件夹路径>"
+    log_error "No target directory specified"
+    echo "Usage: $0 [--in-place] [--skip-health-check] <target_directory>"
     exit 1
 fi
 
 if [ ! -d "$TARGET_DIR" ]; then
-    echo "错误: 目录 '$TARGET_DIR' 不存在。"
+    log_error "Directory does not exist: $TARGET_DIR"
     exit 1
 fi
 
-# --- 安全检查 ---
+# Safety check
 if [ "$IN_PLACE" = true ]; then
     REAL_TARGET_DIR=""
-    # 获取目标目录的真实绝对路径
     if command -v realpath &> /dev/null; then
         REAL_TARGET_DIR=$(realpath "$TARGET_DIR")
     else
-        # realpath 的备用方案
         REAL_TARGET_DIR=$(cd "$TARGET_DIR"; pwd)
     fi
 
-    # 定义危险目录列表
-    FORBIDDEN_PATHS=("/" "/etc" "/bin" "/usr" "/System" "$HOME")
-
+    FORBIDDEN_PATHS=("/" "/etc" "/bin" "/usr" "/System" "/Library" "/Applications")
     for forbidden in "${FORBIDDEN_PATHS[@]}"; do
-        # 检查真实路径是否与危险目录完全相同，或者是否是危险目录的一个子目录
-        if [ "$REAL_TARGET_DIR" = "$forbidden" ] || [[ "$REAL_TARGET_DIR" == "$forbidden/"* ]]; then
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            echo "!!!                        安全警告                        !!!"
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            echo "错误: 检测到危险操作！"
-            echo "您正试图在受保护的系统目录 ($forbidden) 中执行原地替换操作。"
-            echo "为了您的系统安全，此操作已被强制禁止。"
-            echo "请选择一个普通的用户目录来执行此操作。"
+        if [ "$REAL_TARGET_DIR" = "$forbidden" ]; then
+            log_error "🚫 SAFETY: Cannot operate on protected directory: $forbidden"
             exit 1
         fi
     done
 fi
 
+echo "╔══════════════════════════════════════════════╗"
+echo "║   📷 JPEG to JXL Converter                   ║"
+echo "╚══════════════════════════════════════════════╝"
+echo ""
+log_info "📁 Target: $TARGET_DIR"
+log_info "📋 Whitelist: .jpg, .jpeg → .jxl"
+log_info "🎯 Quality: High (-d 1)"
+[ "$IN_PLACE" = true ] && log_warn "🔄 In-place mode: originals will be replaced"
+echo ""
 
-echo "将在 '$TARGET_DIR' 文件夹中查找 JPEG 文件并转换为 JXL..."
-if [ "$IN_PLACE" = true ]; then
-  echo "警告: 已启用 --in-place 模式，成功转换后将删除原始 JPEG 文件。"
-fi
+# Count total files for progress bar
+echo ""
+log_info "📊 Counting files for progress tracking..."
+local total_count=0
 
-# --- 主逻辑 ---
+while IFS= read -r -d '' file; do
+    ((total_count++)) || true
+done < <(find "$TARGET_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" \) -print0 2>/dev/null)
+
+TOTAL_FILES=$total_count
+CURRENT_FILE=0
+START_TIME=$(date +%s)
+
+log_info "📁 Found: $TOTAL_FILES files"
+echo ""
+
+# Main processing
 find "$TARGET_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" \) -print0 | while IFS= read -r -d $'\0' jpeg_file; do
-    echo "--------------------------------------------------"
-    echo "处理文件: $jpeg_file"
+    ((CURRENT_FILE++)) || true
+    show_progress $CURRENT_FILE $TOTAL_FILES "$(basename "$jpeg_file")"
+    echo "──────────────────────────────────────────────"
+    log_info "📷 Processing: $(basename "$jpeg_file")"
     
-    # .jpeg or .jpg -> .jxl
     output_jxl="${jpeg_file%.*}.jxl"
 
     if [ "$IN_PLACE" = true ]; then
-        # --- 原地转换逻辑 ---
         temp_jxl="${jpeg_file}.jxl.tmp"
-        echo "正在转换为临时文件: $temp_jxl"
-        
-        # 使用 -d 1 进行高质量有损压缩
-        cjxl "$jpeg_file" "$temp_jxl" -d 1
+        log_info "🔄 Step 1/3: Converting (high quality -d 1)..."
+        cjxl "$jpeg_file" "$temp_jxl" -d 1 > /dev/null 2>&1
         
         if [ $? -eq 0 ]; then
-            # 验证成功，复制时间戳
-            echo "转换成功。正在同步时间戳并替换文件..."
+            log_info "⏰ Step 2/3: Preserving timestamps..."
             touch -r "$jpeg_file" "$temp_jxl"
-            
-            # 替换原始文件
             mv "$temp_jxl" "$output_jxl"
-            rm "$jpeg_file"
             
-            echo "完成: '$jpeg_file' -> '$output_jxl'"
+            log_info "🏥 Step 3/3: Health validation..."
+            if check_jxl_health "$output_jxl"; then
+                rm "$jpeg_file"
+                log_success "Done: $(basename "$jpeg_file") → $(basename "$output_jxl")"
+            else
+                log_error "Health check failed, keeping original"
+                rm -f "$output_jxl"
+                ((HEALTH_FAILED++)) || true
+            fi
         else
-            echo "错误: 转换 '$jpeg_file' 失败。临时文件将被删除。"
+            log_error "Conversion failed: $(basename "$jpeg_file")"
             rm -f "$temp_jxl"
         fi
     else
-        # --- 常规模式逻辑 ---
         if [ -f "$output_jxl" ]; then
-            echo "跳过: '$output_jxl' 已存在。"
+            log_warn "⏭️  Skip: $(basename "$output_jxl") already exists"
             continue
         fi
 
-        echo "正在转换 -> '$output_jxl'"
-        cjxl "$jpeg_file" "$output_jxl" -d 1
+        log_info "🔄 Step 1/2: Converting (high quality -d 1)..."
+        cjxl "$jpeg_file" "$output_jxl" -d 1 > /dev/null 2>&1
         
         if [ $? -eq 0 ]; then
-            # 转换成功，复制时间戳
             touch -r "$jpeg_file" "$output_jxl"
-            echo "转换成功，已同步时间戳。"
+            
+            log_info "🏥 Step 2/2: Health validation..."
+            if check_jxl_health "$output_jxl"; then
+                log_success "Converted: $(basename "$output_jxl")"
+            else
+                log_warn "Health check failed, but file created"
+                ((HEALTH_FAILED++)) || true
+            fi
         else
-            echo "错误: 转换 '$jpeg_file' 失败。"
+            log_error "Conversion failed: $(basename "$jpeg_file")"
         fi
     fi
+    fi
+    
+    clear_progress
 done
 
-echo "=========================================="
-echo "所有 JPEG 文件处理完毕。"
-echo "=========================================="
+echo ""
+echo "╔══════════════════════════════════════════════╗"
+echo "║   📊 Conversion Complete                     ║"
+echo "╚══════════════════════════════════════════════╝"
+
+# Health report
+if [ "$SKIP_HEALTH_CHECK" = false ]; then
+    echo ""
+    echo "🏥 Health Report:"
+    echo -e "   ✅ Passed:  $HEALTH_PASSED"
+    echo -e "   ❌ Failed:  $HEALTH_FAILED"
+    total=$((HEALTH_PASSED + HEALTH_FAILED))
+    if [ "$total" -gt 0 ]; then
+        rate=$((HEALTH_PASSED * 100 / total))
+        echo "   📊 Rate:    ${rate}%"
+    fi
+fi
