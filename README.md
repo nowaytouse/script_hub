@@ -1,193 +1,245 @@
-# 脚本中心 (Script Hub)
+# Script Hub
 
-欢迎来到我的脚本中心！这里收集了一些为了提高效率而编写的实用工具脚本。
+Welcome to my Script Hub! This repository collects various utility scripts designed to enhance efficiency.
 
-**核心设计原则**:
-- **元数据保留**: 所有脚本都将尽力保留文件的内部元数据（EXIF, XMP）和系统元数据（时间戳）。
-- **安全第一**: 具有破坏性操作（如删除或替换原文件）的功能都必须通过明确的标志（如 `--in-place` 或 `--delete-source`）来启用。
-
----
-
-## 脚本列表
-
-1.  [批量JPEG转JXL (jpeg_to_jxl.sh)](#批量jpeg转jxl-jpeg_to_jxlsh)
-2.  [批量PNG转无损JXL (png_to_jxl.sh)](#批量png转无损jxl-png_to_jxlsh)
-3.  [批量HEIC转无损PNG (heic_to_png.sh)](#批量heic转无损png-heic_to_pngsh)
-4.  [动态图片转H.266/VVC视频 (imganim_to_vvc.sh)](#动态图片转h266vvc视频-imganim_to_vvcsh)
-5.  [视频转高质量GIF (video_to_gif.sh)](#视频转高质量gif-video_to_gifsh)
-6.  [批量合并XMP元数据 (merge_xmp.sh)](#批量合并xmp元数据-merge_xmpsh)
-7.  [分包压缩并上传到GitHub (archive_and_upload.sh)](#分包压缩并上传到github-archive_and_uploadsh)
+**Core Design Principles**:
+- **Complete Metadata Preservation**: All scripts strive to preserve both internal (EXIF, XMP) and system metadata (timestamps) during any conversion or processing.
+- **Safety First**: Destructive operations (like deleting or overwriting original files) must only be enabled via explicit flags (e.g., `--in-place` or `--delete-source`).
+- **Robust Safety & Loud Errors**: Scripts include a "dangerous directory" check. If a destructive operation is attempted on a protected system directory, the script will loudly abort with a clear error message.
+- **Batch Processing Capability**: Scripts are designed for efficient batch processing of files within a specified directory.
+- **Verified Safe Deletes**: Original files are only deleted or replaced after confirming successful conversion/processing and proper metadata transfer.
 
 ---
 
-### 批量JPEG转JXL (jpeg_to_jxl.sh)
+## Script List
 
-#### 功能
-将指定文件夹内的 JPEG 图片 (`.jpg`, `.jpeg`) 批量转换为高质量、高压缩率的 JXL 格式。
+1.  [Batch JPEG to JXL (jpeg_to_jxl.sh)](#batch-jpeg-to-jxl-jpeg_to_jxlsh)
+2.  [Batch PNG to Lossless JXL (png_to_jxl.sh)](#batch-png-to-lossless-jxl-png_to_jxlsh)
+3.  [Batch HEIC to Lossless PNG (heic_to_png.sh)](#batch-heic-to-lossless-png-heic_to_pngsh)
+4.  [Animated Image to H.266/VVC Video (imganim_to_vvc.sh)](#animated-image-to-h266vvc-video-imganim_to_vvcsh)
+5.  [Video to High-Quality GIF (video_to_hq_gif.sh)](#video-to-high-quality-gif-video_to_hq_gifsh)
+6.  [Batch Merge XMP Metadata (merge_xmp.sh)](#batch-merge-xmp-metadata-merge_xmpsh)
+7.  [Archive and Upload to GitHub (archive_and_upload.sh)](#archive-and-upload-to-github-archive_and_uploadsh)
+8.  [Incompatible Media Converter (convert_incompatible_media.sh)](#incompatible-media-converter-convert_incompatible_mediash)
 
-- **元数据**: 完整保留系统文件时间戳。
-- **原地转换**: 支持 `--in-place` 模式，成功后用 `.jxl` 文件替换原始图片。
+---
 
-#### 依赖
-- **`jpeg-xl`**: `brew install jpeg-xl`
+### Batch JPEG to JXL (jpeg_to_jxl.sh)
 
-#### 使用方法
+#### Functionality
+Batch converts JPEG images (`.jpg`, `.jpeg`) within a specified folder to high-quality, high-compression JXL format.
+
+- **Metadata**: Preserves full system file timestamps.
+- **In-place Conversion**: Supports `--in-place` mode, replacing original images with `.jxl` files upon successful conversion.
+
+#### Dependencies
+- **`jpeg-xl`**: Install via Homebrew on macOS: `brew install jpeg-xl`
+
+#### Usage
 ```bash
-# 赋予执行权限
+# Grant execute permission
 chmod +x jpeg_to_jxl.sh
 
-# 标准模式 (在旁边创建 .jxl 文件)
+# Standard mode (creates new .jxl files alongside originals)
 ./jpeg_to_jxl.sh /path/to/images
 
-# 原地转换模式
+# In-place conversion mode
 ./jpeg_to_jxl.sh --in-place /path/to/images
 ```
 
 ---
 
-### 批量PNG转无损JXL (png_to_jxl.sh)
+### Batch PNG to Lossless JXL (png_to_jxl.sh)
 
-#### 功能
-将指定文件夹内的 PNG 图片 (`.png`) 批量转换为 **数学无损** 的 JXL 格式，实现极致的无损压缩。
+#### Functionality
+Batch converts PNG images (`.png`) within a specified folder to **mathematically lossless** JXL format, achieving extreme lossless compression.
 
-- **元数据**: 完整保留系统文件时间戳。
-- **原地转换**: 支持 `--in-place` 模式，成功后用 `.jxl` 文件替换原始图片。
+- **Metadata**: Preserves full system file timestamps.
+- **In-place Conversion**: Supports `--in-place` mode, replacing original images with `.jxl` files upon successful conversion.
 
-#### 依赖
-- **`jpeg-xl`**: `brew install jpeg-xl`
+#### Dependencies
+- **`jpeg-xl`**: Install via Homebrew on macOS: `brew install jpeg-xl`
 
-#### 使用方法
+#### Usage
 ```bash
-# 赋予执行权限
+# Grant execute permission
 chmod +x png_to_jxl.sh
 
-# 标准模式 (在旁边创建 .jxl 文件)
+# Standard mode (creates new .jxl files alongside originals)
 ./png_to_jxl.sh /path/to/images
 
-# 原地转换模式
+# In-place conversion mode
 ./png_to_jxl.sh --in-place /path/to/images
 ```
 
 ---
 
-### 批量HEIC转无损PNG (heic_to_png.sh)
+### Batch HEIC to Lossless PNG (heic_to_png.sh)
 
-#### 功能
-将苹果设备常用的 HEIC/HEIF 格式图片 (`.heic`, `.heif`) 批量转换为兼容性更强的 **无损PNG** 格式。
+#### Functionality
+Batch converts HEIC/HEIF images (`.heic`, `.heif`) commonly used on Apple devices to a more compatible **lossless PNG** format.
 
-- **元数据**: 使用 `exiftool` 确保内部元数据（EXIF, GPS, XMP等）被最完整地迁移，并保留系统文件时间戳。
-- **原地转换**: 支持 `--in-place` 模式，成功后用 `.png` 文件替换原始图片。
+- **Metadata**: Uses `exiftool` to ensure the most complete transfer of internal metadata (EXIF, GPS, XMP, etc.) and preserves system file timestamps.
+- **In-place Conversion**: Supports `--in-place` mode, replacing original images with `.png` files upon successful conversion.
 
-#### 依赖
-- **`libheif`**: `brew install libheif`
-- **`exiftool`**: `brew install exiftool`
+#### Dependencies
+- **`libheif`**: Install via Homebrew on macOS: `brew install libheif`
+- **`exiftool`**: Install via Homebrew on macOS: `brew install exiftool`
 
-#### 使用方法
+#### Usage
 ```bash
-# 赋予执行权限
+# Grant execute permission
 chmod +x heic_to_png.sh
 
-# 标准模式 (在旁边创建 .png 文件)
+# Standard mode (creates new .png files alongside originals)
 ./heic_to_png.sh /path/to/images
 
-# 原地转换模式
+# In-place conversion mode
 ./heic_to_png.sh --in-place /path/to/images
 ```
 
 ---
 
-### 动态图片转H.266/VVC视频 (imganim_to_vvc.sh)
+### Animated Image to H.266/VVC Video (imganim_to_vvc.sh)
 
-#### 功能
-通过智能识别文件类型（而非扩展名），将目录下的动态图片（GIF, 动态WebP, APNG）批量转换为现代、高效的 H.266 (VVC) 视频格式（`.mp4`）。
+#### Functionality
+Intelligently identifies (by MIME type, not just extension) and batch converts animated images (GIF, Animated WebP, APNG) within a directory to the modern, efficient H.266 (VVC) video format (`.mp4`).
 
-- **元数据**: 尽力保留内部元数据，并完整保留系统文件时间戳。
-- **原地转换**: 支持 `--in-place` 模式，成功后用 `.mp4` 视频替换原始图片。
+- **Metadata**: Strives to preserve internal metadata and fully retains system file timestamps.
+- **In-place Conversion**: Supports `--in-place` mode, replacing original animated images with `.mp4` videos upon successful conversion.
 
-#### 依赖
-- **`ffmpeg`**: 需要编译时启用 `libvvenc`。`brew install ffmpeg` 安装的版本可能不包含，需用户自行确认。
-- **`exiftool`**: `brew install exiftool`
+#### Dependencies
+- **`ffmpeg`**: Requires compilation with `libvvenc` support. Homebrew's `ffmpeg` might not include this by default; users may need to compile manually or use a different source.
+- **`exiftool`**: Install via Homebrew on macOS: `brew install exiftool`
 
-#### 使用方法
+#### Usage
 ```bash
-# 赋予执行权限
+# Grant execute permission
 chmod +x imganim_to_vvc.sh
 
-# 标准模式 (在旁边创建 .mp4 文件)
+# Standard mode (creates new .mp4 files alongside originals)
 ./imganim_to_vvc.sh /path/to/images
 
-# 原地转换模式
+# In-place conversion mode
 ./imganim_to_vvc.sh --in-place /path/to/images
 ```
 
 ---
 
-### 视频转高质量GIF (video_to_gif.sh)
+### Video to High-Quality GIF (video_to_hq_gif.sh)
 
-#### 功能
-将常见的视频文件（`.mp4`, `.mov` 等）转换为色彩鲜艳、动态流畅的高质量 GIF。脚本采用两步法（分析视频 -> 生成最优调色板 -> 转换）以达到最佳效果。
+#### Functionality
+Batch converts common video files (`.mp4`, `.mov`, etc.) into visually stunning, high-quality GIFs. The script employs a two-pass `ffmpeg` method (video analysis -> optimal color palette generation -> conversion) for best results, utilizing advanced dithering algorithms for smooth color transitions.
 
-- **元数据**: 尝试迁移视频的内部元数据，并完整保留系统文件时间戳。
-- **源文件清理**: 支持 `--delete-source` 模式，在成功生成 GIF 后删除原始视频。
+- **Metadata**: Attempts to migrate internal video metadata and fully retains system file timestamps.
+- **Source File Cleanup**: Supports `--delete-source` mode, deleting the original video file after successful GIF generation.
+- **Customization**: Allows setting custom framerates and output widths.
 
-#### 依赖
-- **`ffmpeg`**: `brew install ffmpeg`
+#### Dependencies
+- **`ffmpeg`**: Install via Homebrew on macOS: `brew install ffmpeg`
 
-#### 使用方法
+#### Usage
 ```bash
-# 赋予执行权限
-chmod +x video_to_gif.sh
+# Grant execute permission
+chmod +x video_to_hq_gif.sh
 
-# 标准模式 (保留原始视频)
-./video_to_gif.sh /path/to/videos
+# Standard mode (retains original video)
+./video_to_hq_gif.sh /path/to/videos
 
-# 清理模式 (删除原始视频)
-./video_to_gif.sh --delete-source /path/to/videos
+# Cleanup mode (deletes original video after successful conversion)
+./video_to_hq_gif.sh --delete-source /path/to/videos
+
+# Custom framerate and width (e.g., 24 FPS, 720px width)
+./video_to_hq_gif.sh -r 24 -s 720 /path/to/videos
 ```
 
 ---
 
-### 批量合并XMP元数据 (merge_xmp.sh)
+### Batch Merge XMP Metadata (merge_xmp.sh)
 
-#### 功能
-将在专业的图片和视频工作流中产生的 `.xmp` "边车"元数据文件，完整地合并回其对应的主媒体文件中。
+#### Functionality
+Fully merges `.xmp` sidecar metadata files, typically generated in professional photo/video workflows, back into their corresponding main media files.
 
-- **安全措施**: `exiftool` 会自动创建原始文件的备份（文件名以 `_original` 结尾）。
-- **源文件清理**: 支持 `--delete-xmp` 模式，在成功合并后删除 `.xmp` 文件。
+- **Safety Measures**: `exiftool` automatically creates backups of original files (suffixed with `_original`) before modification.
+- **Source File Cleanup**: Supports `--delete-xmp` mode, deleting the `.xmp` file after successful metadata merge.
 
-#### 依赖
-- **`ExifTool`**: `brew install exiftool`
+#### Dependencies
+- **`ExifTool`**: Install via Homebrew on macOS: `brew install exiftool`
 
-#### 使用方法
+#### Usage
 ```bash
-# 赋予执行权限
+# Grant execute permission
 chmod +x merge_xmp.sh
 
-# 标准模式 (保留 .xmp 文件)
+# Standard mode (retains .xmp files)
 ./merge_xmp.sh /path/to/media
 
-# 清理模式 (删除 .xmp 文件)
+# Cleanup mode (deletes .xmp files after successful merge)
 ./merge_xmp.sh --delete-xmp /path/to/media
 ```
 
 ---
 
-### 分包压缩并上传到GitHub (archive_and_upload.sh)
+### Archive and Upload to GitHub (archive_and_upload.sh)
 
-#### 功能
-将一个文件夹内的所有文件，按大约 500MB 的大小为单位，自动分割打包成 `.tar.gz` 压缩文件，并上传到指定 GitHub 仓库的 Releases 中。适合归档不便直接存入 Git 的大型项目或数据。
+#### Functionality
+Automatically splits and archives all files within a directory into `.tar.gz` compressed chunks (approx. 500MB each), then uploads them as "assets" to new GitHub Releases in a specified GitHub repository. Ideal for archiving large projects or datasets unsuitable for direct Git storage.
 
-#### 依赖
-- **`gh` (GitHub CLI)**: `brew install gh`
+#### Dependencies
+- **`gh` (GitHub CLI)**: Install via Homebrew on macOS: `brew install gh`
 
-#### 使用方法
+#### Usage
 ```bash
-# 登录 GitHub
+# Log in to GitHub
 gh auth login
 
-# 赋予执行权限
+# Grant execute permission
 chmod +x archive_and_upload.sh
 
-# 运行脚本
+# Run the script
 ./archive_and_upload.sh ./source_folder your_github_username/repo_name
 ```
+
+---
+
+### Incompatible Media Converter (convert_incompatible_media.sh)
+
+#### Functionality
+Batch converts incompatible media formats to universally compatible formats with **complete metadata preservation**:
+- **HEIC/HEIF → PNG**: Lossless conversion using macOS native `sips` or `heif-convert`
+- **MP4 → High-Quality GIF**: Two-pass conversion with optimized color palette
+
+#### Key Features
+- **Atomic Operations**: Temp file → Verify → Replace (prevents data corruption)
+- **Complete Metadata Preservation**:
+  - Internal metadata (EXIF, XMP, IPTC, ICC Profile)
+  - System metadata (creation time, modification time, access time)
+- **Automatic Backup**: Original files backed up before conversion
+- **Multi-level Verification**: File existence, size, and integrity checks
+- **Safety Checks**: Prevents operations on protected system directories
+
+#### Dependencies
+- **`libheif`** (optional): `brew install libheif`
+- **`exiftool`**: `brew install exiftool`
+- **`ffmpeg`**: `brew install ffmpeg`
+
+#### Usage
+```bash
+# Grant execute permission
+chmod +x convert_incompatible_media.sh
+
+# Standard mode (converts and replaces, with automatic backup)
+./convert_incompatible_media.sh /path/to/media
+
+# Dry-run mode (preview without executing)
+./convert_incompatible_media.sh --dry-run /path/to/media
+
+# Verbose mode with custom backup directory
+./convert_incompatible_media.sh --verbose --backup-dir /path/to/backup /path/to/media
+```
+
+---
+
+### Substore Scripts
+
+A collection of advanced JavaScript rule files designed for the [Sub-Store](https://github.com/sub-store-org/Sub-Store) subscription management tool. These scripts automatically optimize proxy nodes from subscription links for enhanced performance, security, and privacy. Rules are tailored for different proxy clients (e.g., Clash, Sing-box, Surge, Shadowrocket) and node configurations (e.g., relay, entrance).
