@@ -1,0 +1,132 @@
+#!name=🚀💪General Enhanced⬆️⬆️ plus
+#!desc=DNS boost🚀 Proxy bypass⚡ Real-IP exec + Full H3 DoH🔒 Google/GitHub/Zhihu/Baidu fix🛠️ Ultra low-memory💾
+#!author=VirgilClyne & nowaytouse (Optimized)
+#!homepage=https://github.com/VirgilClyne/GetSomeFries/wiki/🌐-通用
+#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bypass.png
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+
+[General]
+# 代理设置
+use-local-host-item-for-proxy = true
+encrypted-dns-follow-outbound-mode = true
+
+# TUN路由配置
+tun-excluded-routes = 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4, 255.255.255.255/32
+tun-included-routes = 192.168.1.12/32, 192.168.1.100/32
+
+# HTTP引擎强制主机（保留或按需精简）
+force-http-engine-hosts = baidu.com, -*.apple.com, www.google.com:80, www.google.com:0
+
+# 始终使用原始TCP连接（扩展支付/网银/验证相关域名）
+always-raw-tcp-hosts = icbc.com.cn, bankofchina.com, abc.com.cn, ccb.com, cmbchina.com, bankcomm.com, spdb.com.cn, htsec.com, gtja.com, citics.com, gf.com.cn, eastmoney.com, cninfo.com.cn, csrc.gov.cn, 12306.cn, sinopec.com, petrochina.com.cn, cmbc.com.cn, cmbchinaucs.com, ebank.pingan.com, psbc.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, mapi.alipay.com, openapi.alipay.com, gw.alipay.com, mclient.alipay.com, *.unionpay.com, *.95516.com,testflight.apple.com, *.apple.com
+
+always-raw-tcp-keywords = zhihu, steam, icbc, ccb, cmbchina, bankofchina, abc, bankcomm, spdb, htsec, gtja, citics, gf, eastmoney, cninfo, csrc, 12306, sinopec, petrochina, passport, ebank, auth, login, webbank, alipay, pay, unionpay, 95516，weibo,testflight,apple,weixin
+
+# 跳过代理 - 中国大陆服务扩展（显式排除支付/网银/支付宝相关域名）
+skip-proxy = %INSERT% localhost, *.local, captive.apple.com, e.crashlytics.com, www.baidu.com, passenger.t3go.cn, yunbusiness.ccb.com, wxh.wo.cn, gate.lagou.com, www.abchina.com.cn, login-service.mobile-bank.psbc.com, mobile-bank.psbc.com, *.battle.net, *.battlenet.com, *.battlenet.com.cn, *.blzstatic.cn, *.d.meituan.net, *.msftconnecttest.com, *.srv.nintendo.net, *.stun.playstation.net, *.xboxlive.com, id6.me, www.shanbay.com, xbox.*.microsoft.com, *.qq.com, *.weixin.qq.com, *.tencent.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, *.95516.com, *.unionpay.com, *.ctrip.com, *.elong.com, *.qunar.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, 192.168.122.1/32, 193.168.0.1/32, ::1/128, fe80::/10
+
+# 始终真实IP - 扩展列表（保留现有并补银行类）
+always-real-ip = %INSERT% *.lan, *.direct, cable.auth.com, *.msftconnecttest.com, *.msftncsi.com, network-test.debian.org, detectportal.firefox.com, resolver1.opendns.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, global.turn.twilio.com, global.stun.twilio.com, app.yinxiang.com, injections.adguard.org, local.adguard.org, localhost.*.qq.com, localhost.*.weixin.qq.com, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, music.taihe.com, songsearch.kugou.com, trackercdn.kugou.com, *.kuwo.cn, api-jooxtt.sanook.com, api.joox.com, joox.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, isure.stream.qqmusic.qq.com, dl.stream.qqmusic.qq.com, aqqmusic.tc.qq.com, amobile.music.tc.qq.com, *.xiami.com, *.music.migu.cn, music.migu.cn, proxy.golang.org, *.mcdn.bilivideo.cn, *.cmpassport.com, id6.me, open.e.189.cn, opencloud.wostore.cn, id.mail.wo.cn, mdn.open.wo.cn, hmrz.wo.cn, nishub1.10010.com, enrichgw.10010.com, *.wosms.cn, *.jegotrip.com.cn, *.icitymobile.mobi, *.pingan.com.cn, *.cmbchina.com, *.10099.com.cn, *.microdone.cn, pool.ntp.org, *.pool.ntp.org, ntp.*.com, time.*.com, ntp?.*.com, time?.*.com, time.*.gov, time.*.edu.cn, *.ntp.org.cn, PDC._msDCS.*.*, DC._msDCS.*.*, GC._msDCS.*.*, *.apple.com, *.duckdns.org, *.nip.io, *.noip.com, *.sslip.io, *.stun.twilio.com, *.turn.twilio.com, *.xip.io, dns.msftncsi.com, ipv6.msftncsi.com, stun.l.google.com, stun.syncthing.net, stun.stunprotocol.org, stun1.l.google.com, stun2.l.google.com, stun3.l.google.com, stun4.l.google.com, stunserver.org, time.apple.com, www.msftncsi.com, *.weibo.com, *.douyin.com, *.tiktok.com, *.bilibili.com, *.acfun.cn, *.youku.com, *.iqiyi.com, *.le.com, *.pptv.com, *.sohu.com, *.cntv.cn
+
+[URL Rewrite]
+# Google重定向
+^https?://(www\.)?(g|google)\.cn https://www.google.com 307
+^https?://(www\.)?google\.com\.hk https://www.google.com 307
+^https?://(ditu|maps)\.google\.cn https://maps.google.com 307
+
+# 用户代理优化
+http-request ^https?:\/\/.*\.zhihu\.com\/(question|topic) header-replace User-Agent "osee2unifiedRelease/10700 osee2unifiedReleaseVersion/10.70.0 Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
+http-request ^https?:\/\/zhidao\.baidu\.com header-replace User-Agent "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15"
+http-request ^https:\/\/github\.com\/ header-replace Accept-Language "en-US,en;q=0.9"
+http-request ^https:\/\/(raw|gist)\.githubusercontent\.com\/ header-replace Accept-Language "en-US,en;q=0.9"
+http-request ^https:\/\/api\.github\.com\/ header-replace Accept-Language "en-US,en;q=0.9"
+
+[Host]
+# === 本地域名 / 局域网相关（保留系统解析） ===
+*.local = server:system
+*.lan = server:system
+*.test = server:system
+_hotspot_.m2m = server:system
+miwifi.com = server:system
+
+# === Telegram / 相关节点 — 合并去重，保留常见 Telegram 节点映射以优化直连/加速 ===
+91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.107 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.120 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.125 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.126 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.128 = 91.108.56.147,91.108.56.135,91.108.56.130
+91.108.56.156 = 91.108.56.147,91.108.56.135,91.108.56.130
+149.154.175.10 = 149.154.175.53
+149.154.175.50 = 149.154.175.53
+149.154.175.54 = 149.154.175.53
+149.154.175.55 = 149.154.175.53
+149.154.175.56 = 149.154.175.53
+149.154.175.57 = 149.154.175.53
+149.154.175.100 = 149.154.175.53
+149.154.175.101 = 149.154.175.53
+149.154.175.102 = 149.154.175.53
+149.154.175.103 = 149.154.175.53
+149.154.175.117 = 149.154.175.53
+91.108.4.0 = 91.108.4.1
+91.108.8.0 = 91.108.8.1
+91.108.12.0 = 91.108.12.1
+91.108.16.0 = 91.108.16.1
+149.154.167.0 = 149.154.167.1
+149.154.171.0 = 149.154.171.1
+149.154.163.0 = 149.154.163.1
+149.154.167.40 = 149.154.167.41
+149.154.175.40 = 149.154.175.41
+
+# === 公共 DNS / 解析器（直接 IP 映射 —— 有价值、直连优先） ===
+1dot1dot1dot1.cloudflare-dns.com = 2606:4700:4700::1001,2606:4700:4700::1111
+dns.google = 2001:4860:4860::8888,2001:4860:4860::8844
+dns.quad9.net = 2620:fe::fe,2620:fe::9
+dns.adguard-dns.com = 2a10:50c0::ad1:ff,2a10:50c0::ad2:ff
+dns.alidns.com = 2400:3200:baba::1,2400:3200::1
+dns.twnic.tw = 2001:de4::101,2001:de4::102
+doh.360.cn = 101.198.198.198,101.227.130.133
+doh.pub = 2409:8c20:1001:1002:0:ff:b001:efe0,2409:8c28:1001:1001:0:ff:b001:efe1
+
+
+# === 系统连通性检测（强制解析到 system） ===
+captive.apple.com = server:system
+connectivitycheck.gstatic.com = server:system
+detectportal.firefox.com = server:system
+msftconnecttest.com = server:system
+msftncsi.com = server:system
+connectivitycheck.android.com = server:system
+connectivity-check.ubuntu.com = server:system
+connectivitycheck.platform.hicloud.com = server:system
+www.msftncsi.com = server:system
+*.cn = server:system
+# === 规则集兜底（线上可用 / 已验证非404 的 RULE-SET 列表） ===
+# Google / Apple / Cloudflare / Telegram / 本地厂商映射 等（用于动态更新与全面兜底）
+RULE-SET:https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Google.list = server:h3://dns.google/dns-query
+# 苹果的doh仅能国外访问
+#RULE-SET:https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Apple.list = server:https://doh.dns.apple.com/dns-query
+RULE-SET:https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/nsfwrule = server:https://dns11.quad9.net/dns-query
+RULE-SET:https://whatshub.top/rule/Cloudflare.list = server:h3://cloudflare-dns.com/dns-query
+RULE-SET:https://ruleset.skk.moe/List/non_ip/ai.conf = server:https://dns11.quad9.net/dns-query
+RULE-SET:https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/alibaba.conf = server:223.5.5.5
+RULE-SET:https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Tencent/Tencent.list = server:114.114.114.114
+
+RULE-SET:https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/baidu.conf = server:223.5.5.5
+RULE-SET:https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/bilibili.conf = server:223.5.5.5
+RULE-SET:https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/bytedance.conf = server:180.184.2.2
+RULE-SET:https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/qihoo360.conf = server:101.227.130.133
+RULE-SET:https://ruleset.skk.moe/List/non_ip/telegram.conf = server:https://dns11.quad9.net/dns-query
+#兜底直连
+RULE-SET:https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaCompanyIp.list,server:223.5.5.5
+RULE-SET:https://raw.githubusercontent.com/chenyk1219/surge/release/ChinaDomain.list,server:223.5.5.5
+RULE-SET:https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/gfw.txt,server:h3://cloudflare-dns.com/dns-query
+
+
+[MITM]
+# 证书主机名
+hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
+
+# 禁用证书主机名 - 扩展列表
+hostname-disabled = %INSERT% gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com

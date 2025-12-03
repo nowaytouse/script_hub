@@ -1,0 +1,75 @@
+#!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
+#!version=2025.10.11-optimized
+#!desc=Modular: This version is designed for separate/combined use, perfect for low-memory devices. 🧩💾⚡
+#!category=『 🔝 Head Expanse › 首端扩域 』
+
+[Rule]
+#DOMAIN,heic.alicdn.com,REJECT
+#DOMAIN-SUFFIX,h-adashx.ut.taobao.com,REJECT
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://raw.githubusercontent.com/limbopro/Adblock4limbo/main/Adblock4limbo_surge.list,REJECT,pre-matching,extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+DOMAIN-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-surge2.txt,REJECT,pre-matching,extended-matching,no-resolve
+#DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt,REJECT,pre-matching
+DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt,REJECT,pre-matching
+#DOMAIN-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/pcdn.txt,REJECT,pre-matching,extended-matching,no-resolve
+DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt,REJECT,pre-matching
+DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt,REJECT,pre-matching
+#DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+DOMAIN-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt,REJECT,pre-matching,extended-matching,no-resolve
+DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_extra.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/ip/reject.conf,REJECT-DROP,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://limbopro.com/Adblock4limbo_surge.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+DOMAIN-SET,https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/sogouinput.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+
+# SDK / 第三方服务隐私增强
+DOMAIN,api.revenuecat.com,REJECT,pre-matching,extended-matching
+DOMAIN-KEYWORD,96110,REJECT-DROP,pre-matching,extended-matching
+DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,pre-matching,extended-matching
+DOMAIN,msmp.abchina.com.cn,REJECT,pre-matching
+RULE-SET,https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list,REJECT,"update-interval=86400",no-resolve // AD广告
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list,REJECT,"update-interval=86400" // 防劫持
+#RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT,"update-interval=86400" // 禁用HTTP协议的DNS
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list,REJECT,"update-interval=86400" // 
+[Host]
+#0.0.0.0 = reject
+#127.0.0.1 = reject
+#255.255.255.255 = reject
+#123.125.81.12 = reject
+#101.226.10.8 = reject
+#198.105.254.11 = reject
+#104.239.213.7 = reject
+#23.217.138.108 = reject
+#23.202.231.167 = reject
+#61.191.206.4 = reject
+#218.30.64.194 = reject
+#61.139.8.101 = reject
+#61.139.8.102 = reject
+#61.139.8.103 = reject
+#61.139.8.104 = reject
+#42.123.125.237 = reject
+#202.100.68.117 = reject
+#113.12.83.4 = reject
+#113.12.83.5 = reject
+#202.100.220.54 = reject
+#60.191.124.236 = reject
+#60.191.124.252 = reject
+#222.221.5.204 = reject
+#64.63.2.53 = reject
+#37.61.54.158 = reject
+#46.82.174.68 = reject
+#59.24.3.173 = reject
+#64.33.88.161 = reject
+#64.33.88.162 = reject
+#66.102.0.0 = reject
+#74.125.0.0 = reject
+#209.85.128.0 = reject
+#216.58.192.0 = reject
+[MITM]
+hostname = %APPEND% video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.zcool.com.cn, acs.m.goofish.com, acs.m.taobao.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, apiwz.midukanshu.com, app.zhoudamozi.com, cdke.youdao.com, conf-darwin.xycdn.com, dict.youdao.com, ecard.shenzhentong.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, img.allahall.com, img.dailmo.com, iyes.youku.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, p0.pipi.cn, qiye.gaoding.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shopapi.io.mi.com, shealthyapi.senssun.com, t-dsp.pinduoduo.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, us.l.qq.com, lanfanapp.com, api.xiachufang.com, api.xiangji.qq.com, video-dsp.pddpic.com, images.pinduoduo.com, client.app.coc.10086.cn, cdn.cmgadx.com, qadx.qinlinad.com, watch.iot.mi.com, cdn.web.chelaile.net.cn, d.socdm.com, m.client.10010.com, cmds.omesoft.com, api.fenxianglife.com, *.58cdn.com.cn, *.iydsj.com, *.k.sohu.com, *.kakamobi.cn, *.kingsoft-office-service.com, *.meituan.net, *.ofo.com, *.pstatp.com, *.snssdk.com, *.tv.sohu.com, *.uve.weibo.com, *.ydstatic.com, *.3gimg.qq.com, *.4gimg.map.qq.com, *.7n.bczcdn.com, *.a.apicloud.com, *.a.qiumibao.com, *.a.sfansclub.com, *.a.wkanx.com, *.account.wps.cn, *.account.wps.com, *.acs.m.taobao.com, *.act.vip.iqiyi.com, *.adpai.thepaper.cn, *.adse.ximalaya.com, *.aes.acfun.cn, *.agent-count.pconline.com.cn, *.api-mifit.huami.com, *.api.jr.mi.com, *.api.m.jd.com, *.api.m.mi.com, *.api.zhihu.com, %APPEND% 203.107.1.1,203.107.1.33,203.107.1.66,203.107.1.67,203.107.1.97,2401:b180:2000:30::1c,2401:b180:2000:20::10, amdc.alipay.com, appconf.mail.163.com, msglb.91160.com, api-access.pangolin-sdk-toutiao.com, is.snssdk.com, mi.gdt.qq.com, open.e.kuaishou.com

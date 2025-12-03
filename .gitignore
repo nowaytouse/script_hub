@@ -23,4 +23,11 @@ archive_part_*.zip
 
 # Logs
 *.log
+
+# Sensitive configuration files
 ruleset/surge ruleset profile
+module/surge/敏感profile 排除上传git
+*敏感*
+*私密*
+*private*
+*secret*

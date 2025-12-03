@@ -1,7 +1,11 @@
-#!name=🔐加密dns
-#!desc=速度会更慢，但更可靠
+#!name=Encrypted DNS Module 🔒🛡️DNS
+#!desc=Speed will be slower, but more reliable 🐢✅💪
+#!author=nowaytouse
+#!homepage=https://github.com/nowaytouse/script_hub
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 
 [General]
+
 # doh3优先
 encrypted-dns-server = h3://cloudflare-dns.com/dns-query,https://dns11.quad9.net/dns-query,h3://dns.adguard-dns.com/dns-query,h3://dns.google/dns-query,h3://freedns.controld.com/p2,h3://dns.alidns.com/dns-query
 
