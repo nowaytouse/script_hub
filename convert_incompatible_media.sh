@@ -304,16 +304,15 @@ convert_mp4_to_webp() {
     
     log_info "Original FPS: $orig_fps (preserving original framerate)"
     
-    # Step 2: Convert to animated WebP (lossless mode for best quality)
-    # -lossless 1: mathematically lossless compression
-    # -q 100: highest quality
-    # -m 6: slowest/best compression
+    # Step 2: Convert to animated WebP (high quality mode)
+    # -q:v 90: high quality (90/100)
+    # -compression_level 4: balanced speed/compression
     # -loop 0: infinite loop
+    # Note: lossless mode is too slow for large videos
     ffmpeg -loglevel error -i "$input" \
         -vcodec libwebp \
-        -lossless 1 \
-        -q:v 100 \
-        -compression_level 6 \
+        -q:v 90 \
+        -compression_level 4 \
         -loop 0 \
         -y "$temp_output" 2>/dev/null
     
