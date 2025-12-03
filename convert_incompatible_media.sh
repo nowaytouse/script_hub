@@ -275,6 +275,7 @@ convert_heic_to_png() {
 }
 
 # Convert MP4 → High-Quality GIF with metadata preservation
+# Preserves ORIGINAL framerate and resolution - NO LIMITS
 convert_mp4_to_gif() {
     local input="$1"
     local output="${input%.*}.gif"
@@ -291,14 +292,25 @@ convert_mp4_to_gif() {
     # Step 1: Backup original file
     backup_file "$input"
     
-    # High-quality GIF parameters
-    local fps=15
-    local scale=540
-    local filters="fps=$fps,scale=$scale:-1:flags=lanczos"
+    # Get original video info (NO LIMITS - preserve original FPS and resolution)
+    local orig_fps
+    orig_fps=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of default=noprint_wrappers=1:nokey=1 "$input" 2>/dev/null | head -1)
     
-    # Step 2: Generate optimized palette
+    # Convert fractional fps (e.g., 30000/1001) to decimal
+    if [[ "$orig_fps" == *"/"* ]]; then
+        local num="${orig_fps%/*}"
+        local den="${orig_fps#*/}"
+        orig_fps=$(echo "scale=2; $num / $den" | bc 2>/dev/null || echo "30")
+    fi
+    
+    log_info "Original FPS: $orig_fps (preserving original framerate)"
+    
+    # NO scaling, NO fps limit - preserve original quality
+    local filters="fps=$orig_fps"
+    
+    # Step 2: Generate optimized palette (full resolution)
     ffmpeg -loglevel error -i "$input" \
-        -vf "${filters},palettegen=stats_mode=diff" \
+        -vf "${filters},palettegen=stats_mode=full:max_colors=256" \
         -y "$palette" 2>/dev/null
     
     if [ ! -f "$palette" ]; then
@@ -306,9 +318,9 @@ convert_mp4_to_gif() {
         return 1
     fi
     
-    # Step 3: Create GIF using palette with advanced dithering
+    # Step 3: Create GIF using palette with advanced dithering (NO LIMITS)
     ffmpeg -loglevel error -i "$input" -i "$palette" \
-        -lavfi "${filters} [x]; [x][1:v]paletteuse=dither=bayer:bayer_scale=5" \
+        -lavfi "${filters} [x]; [x][1:v]paletteuse=dither=sierra2_4a" \
         -y "$temp_output" 2>/dev/null
     
     rm -f "$palette"
