@@ -218,6 +218,11 @@ chmod +x convert_incompatible_media.sh
 ./convert_incompatible_media.sh --verbose --backup-dir /path/to/backup /path/to/media
 ```
 
+**转换细节**：
+- **HEIC/HEIF → PNG**：保留原始分辨率和所有元数据
+- **MP4 → GIF**：保留原始帧率（如30fps）、完整分辨率和完整帧数
+- **无任何限制**：不缩放、不丢帧、不降低帧率
+
 ---
 
 ### Substore 脚本

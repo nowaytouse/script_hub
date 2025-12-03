@@ -234,6 +234,11 @@ chmod +x convert_incompatible_media.sh
 ./convert_incompatible_media.sh --verbose --backup-dir /path/to/backup /path/to/media
 ```
 
+**Conversion Details**:
+- **HEIC/HEIF → PNG**: Preserves original resolution and all metadata
+- **MP4 → GIF**: Preserves original FPS (e.g., 30fps), full resolution, and complete frame count
+- **NO LIMITS**: No downscaling, no frame dropping, no FPS reduction
+
 ---
 
 ### Substore Scripts
