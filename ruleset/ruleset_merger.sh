@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================
 # Script: Ruleset Merger - Proxy Rule Aggregator
-# Version: 2.1
+# Version: 2.2
 # Updated: 2025-12-03
 # Description:
 #   - Download rulesets from third-party URLs
@@ -10,7 +10,7 @@
 #   - Support DOMAIN-SUFFIX, DOMAIN-KEYWORD, IP-CIDR, etc.
 #   - Auto-generate header with timestamp
 #   - Support scheduled auto-update (cron)
-#   - Persistent manual rules (won't be overwritten)
+#   - Auto-detect and preserve manual rules (no flag needed!)
 # Usage:
 #   ./ruleset_merger.sh [options]
 #   Options:
@@ -18,7 +18,6 @@
 #     -s, --source <URL>      Add third-party ruleset URL (can use multiple)
 #     -f, --file <file>       Read rules from local file (can use multiple)
 #     -l, --list <file>       Read URL list from file (one URL per line)
-#     -m, --manual <file>     Persistent manual rules file (auto-preserved)
 #     -o, --output <file>     Output to new file instead of overwriting target
 #     -n, --name <name>       Ruleset name (for header info)
 #     -k, --keep-comments     Keep all comment lines
@@ -27,9 +26,12 @@
 #     -c, --cron              Install/manage cron jobs
 #     -v, --verbose           Show verbose output
 #     -h, --help              Show help message
+# Manual Rules:
+#   Create <name>_manual.txt in same directory (e.g., Telegram_manual.txt)
+#   These rules will be automatically preserved across updates!
 # Examples:
 #   ./ruleset_merger.sh -t base.list -o TikTok.list -n "TikTok" -s "URL1" -s "URL2"
-#   ./ruleset_merger.sh -t base.list -l sources.txt -m manual.txt -o merged.list -g
+#   ./ruleset_merger.sh -t base.list -l sources.txt -o merged.list -g
 #   ./ruleset_merger.sh --cron
 # ============================================
 
@@ -85,7 +87,6 @@ Options:
   -s, --source <URL>      Add third-party ruleset URL (can use multiple)
   -f, --file <file>       Read rules from local file (can use multiple)
   -l, --list <file>       Read URL list from file (one URL per line)
-  -m, --manual <file>     Persistent manual rules file (auto-preserved)
   -o, --output <file>     Output to new file instead of overwriting target
   -n, --name <name>       Ruleset name (for header, default: inferred from filename)
   -k, --keep-comments     Keep all comment lines
@@ -95,13 +96,18 @@ Options:
   -v, --verbose           Show verbose output
   -h, --help              Show this help message
 
+Manual Rules (Auto-Detected):
+  Create <name>_manual.txt in same directory
+  Example: Telegram_manual.txt for Telegram.list
+  These rules are automatically preserved across updates!
+
 Examples:
   # Merge TikTok rulesets
   $(basename "$0") -t base.list -o TikTok.list -n "TikTok" \\
     -s "https://raw.githubusercontent.com/user/repo/TikTok.list"
 
-  # Merge with persistent manual rules
-  $(basename "$0") -t base.list -l sources.txt -m manual.txt -o merged.list -g
+  # Merge with auto-detected manual rules (create TikTok_manual.txt first)
+  $(basename "$0") -t base.list -l sources.txt -o TikTok.list -g
 
   # Install daily auto-update (cron)
   $(basename "$0") --cron
@@ -127,7 +133,6 @@ parse_args() {
             -s|--source) SOURCES+=("$2"); shift 2 ;;
             -f|--file) LOCAL_FILES+=("$2"); shift 2 ;;
             -l|--list) URL_LIST_FILE="$2"; shift 2 ;;
-            -m|--manual) MANUAL_FILE="$2"; shift 2 ;;
             -o|--output) OUTPUT_FILE="$2"; shift 2 ;;
             -n|--name) RULESET_NAME="$2"; shift 2 ;;
             -k|--keep-comments) KEEP_COMMENTS=true; shift ;;
@@ -233,11 +238,11 @@ ${sources_list}
 #   - Auto-generated ruleset, DO NOT edit manually
 #   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
 #   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#   - Manual rules are preserved across updates (if -m flag used)
+#   - Manual rules in ${name}_manual.txt are auto-preserved
 #
 # Auto-Update:
 #   - Cron job pulls upstream updates daily
-#   - Manual: ./ruleset_merger.sh -l sources.txt -m manual.txt -o ${name}.list
+#   - Manual: ./ruleset_merger.sh -l sources.txt -o ${name}.list
 #
 # ═══════════════════════════════════════════════════════════════
 
@@ -355,6 +360,16 @@ merge_rules() {
     # Infer ruleset name
     [ -z "$RULESET_NAME" ] && RULESET_NAME=$(basename "$OUTPUT_FILE" .list | sed 's/_merged$//' | sed 's/_final$//')
     
+    # Auto-detect manual rules file
+    local auto_manual_file="${RULESET_NAME}_manual.txt"
+    if [ -f "$auto_manual_file" ]; then
+        MANUAL_FILE="$auto_manual_file"
+        print_verbose "Auto-detected manual rules: $MANUAL_FILE"
+    elif [ -f "$SCRIPT_DIR/$auto_manual_file" ]; then
+        MANUAL_FILE="$SCRIPT_DIR/$auto_manual_file"
+        print_verbose "Auto-detected manual rules: $MANUAL_FILE"
+    fi
+    
     # Extract existing rules
     print_info "Reading target: $TARGET_FILE"
     extract_rules "$TARGET_FILE" "$existing_rules"
@@ -405,28 +420,15 @@ merge_rules() {
         fi
     done
     
-    # Process persistent manual rules file
-    if [ -n "$MANUAL_FILE" ]; then
-        if [ -f "$MANUAL_FILE" ]; then
-            local temp_manual="$TEMP_DIR/manual_extracted.txt"
-            print_info "Processing manual rules: $MANUAL_FILE"
-            extract_rules "$MANUAL_FILE" "$temp_manual"
-            local manual_count=$(wc -l < "$temp_manual" | tr -d ' ')
-            print_verbose "  Manual rules: $manual_count"
-            cat "$temp_manual" >> "$all_new_rules"
-            echo "#   - [MANUAL] $MANUAL_FILE (persistent)" >> "$sources_list_file"
-        elif [ -f "$SCRIPT_DIR/$MANUAL_FILE" ]; then
-            MANUAL_FILE="$SCRIPT_DIR/$MANUAL_FILE"
-            local temp_manual="$TEMP_DIR/manual_extracted.txt"
-            print_info "Processing manual rules: $MANUAL_FILE"
-            extract_rules "$MANUAL_FILE" "$temp_manual"
-            local manual_count=$(wc -l < "$temp_manual" | tr -d ' ')
-            print_verbose "  Manual rules: $manual_count"
-            cat "$temp_manual" >> "$all_new_rules"
-            echo "#   - [MANUAL] $MANUAL_FILE (persistent)" >> "$sources_list_file"
-        else
-            print_warning "Manual file not found: $MANUAL_FILE"
-        fi
+    # Process persistent manual rules file (auto-detected)
+    if [ -n "$MANUAL_FILE" ] && [ -f "$MANUAL_FILE" ]; then
+        local temp_manual="$TEMP_DIR/manual_extracted.txt"
+        print_info "Processing manual rules: $(basename "$MANUAL_FILE")"
+        extract_rules "$MANUAL_FILE" "$temp_manual"
+        local manual_count=$(wc -l < "$temp_manual" | tr -d ' ')
+        print_verbose "  Manual rules: $manual_count"
+        cat "$temp_manual" >> "$all_new_rules"
+        echo "#   - [MANUAL] $(basename "$MANUAL_FILE") (auto-preserved)" >> "$sources_list_file"
     fi
     
     # Deduplicate
