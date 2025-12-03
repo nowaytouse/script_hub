@@ -19,7 +19,7 @@
 4.  [动态图片转H.266/VVC视频 (imganim_to_vvc.sh)](#动态图片转h266vvc视频-imganim_to_vvcsh)
 5.  [视频转高质量GIF (video_to_hq_gif.sh)](#视频转高质量gif-video_to_hq_gifsh)
 6.  [批量合并XMP元数据 (merge_xmp.sh)](#批量合并xmp元数据-merge_xmpsh)
-7.  [分包压缩并上传到GitHub (archive_and_upload.sh)](#分包压缩并上传到github-archive_and_uploadsh)
+7.  [归档脚本 (archive_and_upload.sh)](#归档脚本-archive_and_uploadsh)
 8.  [不兼容媒体转换器 (convert_incompatible_media.sh)](#不兼容媒体转换器-convert_incompatible_mediash)
 
 ---
@@ -180,26 +180,6 @@ chmod +x merge_xmp.sh
 
 ---
 
-### 分包压缩并上传到GitHub (archive_and_upload.sh)
-
-#### 功能
-自动将目录中的所有文件分割并归档为 `.tar.gz` 压缩包（每块大约 500MB），然后作为“资产”上传到指定 GitHub 仓库的新 Release 中。此功能非常适合归档不适合直接存入 Git 的大型项目或数据集。
-
-#### 依赖
-- **`gh` (GitHub CLI)**: 在 macOS 上通过 Homebrew 安装：`brew install gh`
-
-#### 使用方法
-```bash
-# 登录 GitHub
-gh auth login
-
-# 赋予执行权限
-chmod +x archive_and_upload.sh
-
-# 运行脚本
-./archive_and_upload.sh ./source_folder your_github_username/repo_name
-```
-
 ---
 
 ### 不兼容媒体转换器 (convert_incompatible_media.sh)
@@ -207,7 +187,7 @@ chmod +x archive_and_upload.sh
 #### 功能
 批量将不兼容的媒体格式转换为通用兼容格式，**完整保留所有元数据**：
 - **HEIC/HEIF → PNG**：使用 macOS 原生 `sips` 或 `heif-convert` 进行无损转换
-- **MP4 → 高质量 GIF**：两阶段转换，使用优化调色板
+- **MP4 → 高质量 GIF**：两阶段转换，使用优化调色板（15 FPS，540px宽度，适合社交媒体发布）
 
 #### 核心特性
 - **原子操作**：临时文件 → 验证 → 替换（防止数据损坏）
@@ -243,3 +223,21 @@ chmod +x convert_incompatible_media.sh
 ### Substore 脚本
 
 一系列高级 JavaScript 规则文件，专为 [Sub-Store](https://github.com/sub-store-org/Sub-Store) 订阅管理工具设计。这些脚本自动优化来自订阅链接的代理节点，以增强性能、安全性和隐私。规则根据不同的代理客户端（例如 Clash、Sing-box、Surge、Shadowrocket）和节点配置（例如中继、入口）进行定制。
+
+### 归档脚本 (archive_and_upload.sh)
+
+#### 功能
+自动将目录中的所有文件分割并归档为 `.zip` 压缩包（每块大约 500MB）。适合归档大型项目或数据集。
+
+#### 使用方法
+```bash
+# 赋予执行权限
+chmod +x archive_and_upload.sh
+
+# 运行脚本
+./archive_and_upload.sh ./source_folder
+```
+
+**注意**：压缩包将在当前目录创建，命名为 `archive_part_1.zip`、`archive_part_2.zip` 等。
+
+---

@@ -19,7 +19,7 @@ Welcome to my Script Hub! This repository collects various utility scripts desig
 4.  [Animated Image to H.266/VVC Video (imganim_to_vvc.sh)](#animated-image-to-h266vvc-video-imganim_to_vvcsh)
 5.  [Video to High-Quality GIF (video_to_hq_gif.sh)](#video-to-high-quality-gif-video_to_hq_gifsh)
 6.  [Batch Merge XMP Metadata (merge_xmp.sh)](#batch-merge-xmp-metadata-merge_xmpsh)
-7.  [Archive and Upload to GitHub (archive_and_upload.sh)](#archive-and-upload-to-github-archive_and_uploadsh)
+7.  [Archive Script (archive_and_upload.sh)](#archive-script-archive_and_uploadsh)
 8.  [Incompatible Media Converter (convert_incompatible_media.sh)](#incompatible-media-converter-convert_incompatible_mediash)
 
 ---
@@ -180,25 +180,21 @@ chmod +x merge_xmp.sh
 
 ---
 
-### Archive and Upload to GitHub (archive_and_upload.sh)
+### Archive Script (archive_and_upload.sh)
 
 #### Functionality
-Automatically splits and archives all files within a directory into `.tar.gz` compressed chunks (approx. 500MB each), then uploads them as "assets" to new GitHub Releases in a specified GitHub repository. Ideal for archiving large projects or datasets unsuitable for direct Git storage.
-
-#### Dependencies
-- **`gh` (GitHub CLI)**: Install via Homebrew on macOS: `brew install gh`
+Automatically splits and archives all files within a directory into `.zip` compressed chunks (approx. 500MB each). Ideal for archiving large projects or datasets.
 
 #### Usage
 ```bash
-# Log in to GitHub
-gh auth login
-
 # Grant execute permission
 chmod +x archive_and_upload.sh
 
 # Run the script
-./archive_and_upload.sh ./source_folder your_github_username/repo_name
+./archive_and_upload.sh ./source_folder
 ```
+
+**Note**: Archives are created in the current directory as `archive_part_1.zip`, `archive_part_2.zip`, etc.
 
 ---
 
@@ -207,7 +203,7 @@ chmod +x archive_and_upload.sh
 #### Functionality
 Batch converts incompatible media formats to universally compatible formats with **complete metadata preservation**:
 - **HEIC/HEIF → PNG**: Lossless conversion using macOS native `sips` or `heif-convert`
-- **MP4 → High-Quality GIF**: Two-pass conversion with optimized color palette
+- **MP4 → High-Quality GIF**: Two-pass conversion with optimized color palette (15 FPS, 540px width for social media compatibility)
 
 #### Key Features
 - **Atomic Operations**: Temp file → Verify → Replace (prevents data corruption)

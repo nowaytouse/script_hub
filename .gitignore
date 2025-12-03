@@ -1,0 +1,25 @@
+# Private data directories
+zip_output/
+
+# Backup directories
+*_backup_*/
+_backup_*/
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Archives
+*.zip
+*.tar.gz
+*.tgz
+archive_part_*.zip
+
+# Logs
+*.log
