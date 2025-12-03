@@ -4,14 +4,14 @@
 
 #================================================================
 # MITM Section
-# 来源于 fmz200 模块，为 URL Rewrite 和 Map Local 功能提供解密支持。
+# From fmz200 module, provides decryption for URL Rewrite and Map Local.
 #================================================================
 [MITM]
 hostname = %APPEND% us.l.qq.com, y.gtimg.cn, music.y.qq.com
 
 #================================================================
 # Rule Section
-# 合并自两个模块的 [Rule] 段，移除了重复项，并统一为 REJECT 规则添加了 no-resolve (预先匹配) 参数以提升性能。
+# Merged from two modules, deduplicated, added no-resolve for performance.
 #================================================================
 [Rule]
 # Fmz200 & Luestr
@@ -52,7 +52,7 @@ IP-CIDR,47.110.187.87/32,REJECT,pre-matching,no-resolve
 [URL Rewrite]
 #================================================================
 # URL Rewrite Section
-# 包含 fmz200 模块的 URL Rewrite 规则，并从其 Map Local 规则转换而来。
+# Contains fmz200 URL Rewrite rules, converted from Map Local rules.
 #================================================================
 # https://ahrefs.com/writing-tools/paragraph-rewriter
 # From fmz200 https://ahrefs.com/writing-tools/paragraph-rewriter

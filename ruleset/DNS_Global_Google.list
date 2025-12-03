@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DNS_Global_Google
+# Updated: 2025-12-03 15:06:54 UTC
+# Total Rules: 24
+# Generator: Ruleset Merger v2.0
+# Git Hash: 378a3bf
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Google.list
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - Manual rules in DNS_Global_Google_manual.txt are auto-preserved
+#
+# Auto-Update:
+#   - Cron job pulls upstream updates daily
+#   - Manual: ./ruleset_merger.sh -l sources.txt -o DNS_Global_Google.list
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+DOMAIN-SUFFIX,1e100.net
+DOMAIN-SUFFIX,2mdn.net
+DOMAIN-SUFFIX,app-measurement.net
+DOMAIN-SUFFIX,g.co
+DOMAIN-SUFFIX,ggpht.com
+DOMAIN-SUFFIX,goo.gl
+DOMAIN-SUFFIX,googleapis.cn
+DOMAIN-SUFFIX,googleapis.com
+DOMAIN-SUFFIX,gstatic.cn
+DOMAIN-SUFFIX,gstatic.com
+DOMAIN-SUFFIX,gvt0.com
+DOMAIN-SUFFIX,gvt1.com
+DOMAIN-SUFFIX,gvt2.com
+DOMAIN-SUFFIX,gvt3.com
+DOMAIN-SUFFIX,xn--ngstr-lra8j.com
+DOMAIN-SUFFIX,youtu.be
+DOMAIN-SUFFIX,youtube-nocookie.com
+DOMAIN-SUFFIX,youtube.com
+DOMAIN-SUFFIX,yt.be
+DOMAIN-SUFFIX,ytimg.com
+
+# ========== DOMAIN-KEYWORD ==========
+DOMAIN-KEYWORD,gmail
+DOMAIN-KEYWORD,google
+
+# ========== IP-CIDR ==========
+IP-CIDR,173.194.0.0/16,no-resolve
+IP-CIDR,74.125.0.0/16,no-resolve
+
+# ========== END ==========

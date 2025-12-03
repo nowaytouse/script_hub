@@ -1,0 +1,51 @@
+#!name=🚫 QQ Music Ultimate (Shadowrocket)
+#!desc=QQ音乐去广告规则合集，适配 Shadowrocket
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
+#!version=2025.12.03
+
+[MITM]
+hostname = %APPEND% us.l.qq.com, y.gtimg.cn, music.y.qq.com
+
+[Rule]
+DOMAIN,adstats.tencentmusic.com,REJECT
+DOMAIN,ad.tencentmusic.com,REJECT
+DOMAIN,adcdn.tencentmusic.com,REJECT
+DOMAIN,adcdn6.tencentmusic.com,REJECT
+DOMAIN,adexpo.tencentmusic.com,REJECT
+DOMAIN,adclick.tencentmusic.com,REJECT
+DOMAIN,otheve.beacon.qq.com,REJECT
+DOMAIN,monitor.music.qq.com,REJECT
+DOMAIN,stat.y.qq.com,REJECT
+DOMAIN,tmead.y.qq.com-NO-DROP,REJECT
+DOMAIN,oth.str.mdt.qq.com,REJECT
+DOMAIN,h.trace.qq.com,REJECT
+DOMAIN,sdk.e.qq.com,REJECT
+DOMAIN,p.l.qq.com,REJECT
+DOMAIN,us.l.qq.com,REJECT
+DOMAIN,tangram.e.qq.com,REJECT
+DOMAIN,tmeadbak.y.qq.com-NO-DROP,REJECT
+DOMAIN,tmeadcomm.y.qq.com,REJECT
+DOMAIN,tmead.y.qq.com,REJECT
+DOMAIN,amsweb-cdn-gz-1258344696.file.myqcloud.com,REJECT
+DOMAIN,wallpaper-1258344696.file.myqcloud.com,REJECT
+DOMAIN,xs.gdt.qq.com,REJECT
+DOMAIN,tmeadquic.y.qq.com,REJECT
+DOMAIN,tmeadbak.y.qq.com,REJECT
+DOMAIN-SUFFIX,imtmp.net,REJECT
+DOMAIN-SUFFIX,rqd.qq.com,REJECT
+DOMAIN-SUFFIX,wup.imtt.qq.com,REJECT
+DOMAIN-SUFFIX,gdt.qq.com,REJECT
+DOMAIN-SUFFIX,android.rqd.qq.com,REJECT
+DOMAIN-SUFFIX,e.qq.com,REJECT
+DOMAIN-SUFFIX,v.gdt.qq.com,REJECT
+IP-CIDR,120.222.240.171/32,REJECT,no-resolve
+IP-CIDR,47.110.187.87/32,REJECT,no-resolve
+
+[URL Rewrite]
+^https?:\/\/us\.l\.qq\.com\/exapp - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/t_splash_info\/ - reject
+^https?:\/\/.+?\/music\/common\/upload\/t_splash_info\/ - reject
+^https?:\/\/((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/music\/common\/upload\/t_splash_info\/ - reject
+^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/\/upload\/kg_ad/.*?\d{4}\.jpg - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/targeted_ads - reject

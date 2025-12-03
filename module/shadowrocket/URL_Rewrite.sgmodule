@@ -1,0 +1,37 @@
+#!name=URL Rewrite Module 🔄🌐 (Shadowrocket)
+#!desc=HTTPS重定向 🔒🚀 + 假冒网站保护 🛡️⚠️ + TikTok区域重定向 🌍📍
+#!author=nyamiiko
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!version=2025.12.03
+
+[URL Rewrite]
+# HTTPS重定向
+^https?:\/\/(www\.)?taobao\.com\/ https://taobao.com/ 302
+^https?:\/\/(www\.)?jd\.com\/ https://www.jd.com/ 302
+^https?:\/\/(www\.)?mi\.com\/ https://www.mi.com/ 302
+^https?:\/\/you\.163\.com\/ https://you.163.com/ 302
+^https?:\/\/(www\.)?suning\.com\/ https://suning.com/ 302
+^https?:\/\/(www\.)?yhd\.com\/ https://yhd.com/ 302
+
+# 假冒网站保护
+^https?:\/\/(www\.)?abbyychina\.com\/ https://www.abbyy.cn/ 302
+^https?:\/\/(www\.)?bartender\.cc\/ https://www.macbartender.com/ 302
+^https?:\/\/(www\.)?(betterzipcn|betterzip)\.(com|net)\/ https://macitbetter.com/ 302
+^https?:\/\/(www\.)?beyondcompare\.cc\/ https://www.scootersoftware.com/ 302
+^https?:\/\/(www\.)?coreldrawchina\.com\/ https://www.coreldraw.com/cn/ 302
+^https?:\/\/(www\.)?crossoverchina\.com\/ https://www.codeweavers.com/ 302
+^https?:\/\/(www\.)?easyrecoverychina\.com\/ https://www.ontrack.com/ 302
+^https?:\/\/(www\.)?flstudiochina\.com\/ https://www.image-line.com/ 302
+^https?:\/\/(www\.)?guitarpro\.cc\/ https://www.guitar-pro.com/ 302
+^https?:\/\/(www\.)?mathtype\.cn\/ https://www.dessci.com/ 302
+^https?:\/\/(www\.)?mindmanager\.(cc|cn)\/ https://www.mindjet.com/cn/ 302
+^https?:\/\/(www\.)?mycleanmymac\.com\/ https://macpaw.com/ 302
+^https?:\/\/(www\.)?ntfsformac\.cc\/ https://www.tuxera.com/products/tuxera-ntfs-for-mac-cn/ 302
+^https?:\/\/(www\.)?pdfexpert\.cc\/ https://pdfexpert.com/zh 302
+^https?:\/\/(www\.)?vegaschina\.cn\/ https://www.vegascreativesoftware.com/ 302
+^https?:\/\/(www\.)?xshellcn\.com\/ https://www.netsarang.com/zh/xshell/ 302
+^https?:\/\/(www\.)?yuanchengxiezuo\.com\/ https://www.teamviewer.com/ 302
+
+# TikTok区域重定向
+(?<=(carrier|account|sys)_region=)CN JP 307
+(?<=(carrier|account|sys|sim)_region=)cn in 307

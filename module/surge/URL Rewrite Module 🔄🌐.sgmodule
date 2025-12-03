@@ -6,7 +6,7 @@
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 
 [URL Rewrite]
-# HTTPS重定向
+# HTTPS Redirect
 ^https?:\/\/(www\.)?taobao\.com\/ https://taobao.com/ 302
 ^https?:\/\/(www\.)?jd\.com\/ https://www.jd.com/ 302
 ^https?:\/\/(www\.)?mi\.com\/ https://www.mi.com/ 302
@@ -14,7 +14,7 @@
 ^https?:\/\/(www\.)?suning\.com\/ https://suning.com/ 302
 ^https?:\/\/(www\.)?yhd\.com\/ https://yhd.com/ 302
 
-# 假冒网站保护
+# Fake Website Protection
 ^https?:\/\/(www\.)?ign\.xn--fiqs8s\/ http://cn.ign.com/ccpref/us 302
 ^https?:\/\/(www\.)?abbyychina\.com\/ https://www.abbyy.cn/ 302
 ^https?:\/\/(www\.)?bartender\.cc\/ https://www.macbartender.com/ 302
@@ -60,7 +60,7 @@
 ^https?:\/\/(www\.)?yuanchengxiezuo\.com\/ https://www.teamviewer.com/ 302
 ^https?:\/\/(www\.)?zbrushcn.com/ https://pixologic.com/ 302
 
-# TikTok区域重定向
+# TikTok Region Redirect
 "(.*video_id=\w{32})(.*watermark=)(.*)" $1 302
 "(?<=(carrier|account|sys)_region=)CN" JP 307
 "(?<=(carrier|account|sys|sim)_region=)cn" in 307

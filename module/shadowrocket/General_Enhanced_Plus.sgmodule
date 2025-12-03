@@ -1,7 +1,8 @@
 #!name=🚀💪General Enhanced⬆️⬆️ plus (Shadowrocket)
-#!desc=DNS解析优化、代理跳过、真实IP执行和服务优化。适配 Shadowrocket。
+#!desc=DNS boost🚀 Proxy bypass⚡ Real-IP exec + Google/GitHub/Zhihu/Baidu fix🛠️
 #!author=VirgilClyne & nyamiiko (Optimized)
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!version=2025.12.03
 
 [General]
 # 代理设置
@@ -19,8 +20,8 @@ tun-excluded-routes = 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254
 # always-raw-tcp-hosts = ...
 # always-raw-tcp-keywords = ...
 
-# 跳过代理 (Shadowrocket 使用 skip-proxy)
-skip-proxy = localhost, *.local, captive.apple.com, e.crashlytics.com, www.baidu.com, passenger.t3go.cn, yunbusiness.ccb.com, wxh.wo.cn, gate.lagou.com, www.abchina.com.cn, login-service.mobile-bank.psbc.com, mobile-bank.psbc.com, *.battle.net, *.battlenet.com, *.battlenet.com.cn, *.blzstatic.cn, *.d.meituan.net, *.msftconnecttest.com, *.srv.nintendo.net, *.stun.playstation.net, *.xboxlive.com, id6.me, www.shanbay.com, xbox.*.microsoft.com, *.qq.com, *.weixin.qq.com, *.tencent.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, *.95516.com, *.unionpay.com, *.ctrip.com, *.elong.com, *.qunar.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, 192.168.122.1/32, 193.168.0.1/32, ::1/128, fe80::/10
+# 跳过代理 - 中国大陆服务/支付/网银/游戏
+skip-proxy = localhost, *.local, captive.apple.com, e.crashlytics.com, www.baidu.com, passenger.t3go.cn, yunbusiness.ccb.com, wxh.wo.cn, gate.lagou.com, www.abchina.com.cn, login-service.mobile-bank.psbc.com, mobile-bank.psbc.com, *.battle.net, *.battlenet.com, *.battlenet.com.cn, *.blzstatic.cn, *.d.meituan.net, *.msftconnecttest.com, *.srv.nintendo.net, *.stun.playstation.net, *.xboxlive.com, id6.me, www.shanbay.com, xbox.*.microsoft.com, *.qq.com, *.weixin.qq.com, *.tencent.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, *.95516.com, *.unionpay.com, *.ctrip.com, *.elong.com, *.qunar.com, *.jd.com, *.taobao.com, *.tmall.com, *.suning.com, *.meituan.com, *.dianping.com, *.ele.me, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, 192.168.122.1/32, 193.168.0.1/32, ::1/128, fe80::/10
 
 # 始终真实IP (Shadowrocket 使用 always-real-ip)
 always-real-ip = *.lan, *.direct, cable.auth.com, *.msftconnecttest.com, *.msftncsi.com, network-test.debian.org, detectportal.firefox.com, resolver1.opendns.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, global.turn.twilio.com, global.stun.twilio.com, app.yinxiang.com, injections.adguard.org, local.adguard.org, localhost.*.qq.com, localhost.*.weixin.qq.com, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, music.taihe.com, songsearch.kugou.com, trackercdn.kugou.com, *.kuwo.cn, api-jooxtt.sanook.com, api.joox.com, joox.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, isure.stream.qqmusic.qq.com, dl.stream.qqmusic.qq.com, aqqmusic.tc.qq.com, amobile.music.tc.qq.com, *.xiami.com, *.music.migu.cn, music.migu.cn, proxy.golang.org, *.mcdn.bilivideo.cn, *.cmpassport.com, id6.me, open.e.189.cn, opencloud.wostore.cn, id.mail.wo.cn, mdn.open.wo.cn, hmrz.wo.cn, nishub1.10010.com, enrichgw.10010.com, *.wosms.cn, *.jegotrip.com.cn, *.icitymobile.mobi, *.pingan.com.cn, *.cmbchina.com, *.10099.com.cn, *.microdone.cn, pool.ntp.org, *.pool.ntp.org, ntp.*.com, time.*.com, ntp?.*.com, time?.*.com, time.*.gov, time.*.edu.cn, *.ntp.org.cn, PDC._msDCS.*.*, DC._msDCS.*.*, GC._msDCS.*.*, *.apple.com, *.duckdns.org, *.nip.io, *.noip.com, *.sslip.io, *.stun.twilio.com, *.turn.twilio.com, *.xip.io, dns.msftncsi.com, ipv6.msftncsi.com, stun.l.google.com, stun.syncthing.net, stun.stunprotocol.org, stun1.l.google.com, stun2.l.google.com, stun3.l.google.com, stun4.l.google.com, stunserver.org, time.apple.com, www.msftncsi.com, *.weibo.com, *.douyin.com, *.tiktok.com, *.bilibili.com, *.acfun.cn, *.youku.com, *.iqiyi.com, *.le.com, *.pptv.com, *.sohu.com, *.cntv.cn
