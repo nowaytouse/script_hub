@@ -1,0 +1,25 @@
+# ═══════════════════════════════════════════════════════════════
+# AI IDE Process Rules - AI Platform Routing
+# ═══════════════════════════════════════════════════════════════
+# Auto-generated: 2025-12-03
+# Repository: https://github.com/nowaytouse/script_hub
+# Description: AI-powered IDEs and coding assistants
+# ═══════════════════════════════════════════════════════════════
+
+# Cursor IDE
+PROCESS-NAME,/Applications/Cursor.app/
+PROCESS-NAME,"/Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin)"
+
+# Windsurf IDE
+PROCESS-NAME,/Applications/Windsurf.app/
+PROCESS-NAME,"/Applications/Windsurf.app/Contents/Frameworks/Windsurf Helper (Plugin).app/Contents/MacOS/Windsurf Helper (Plugin)"
+
+# Kiro IDE
+PROCESS-NAME,/Applications/Kiro.app/
+PROCESS-NAME,"/Applications/Kiro.app/Contents/Frameworks/Kiro Helper (Plugin).app/Contents/MacOS/Kiro Helper (Plugin)"
+
+# CodeFlicker
+PROCESS-NAME,/Applications/CodeFlicker.app/
+
+# GitHub Copilot (VS Code extension runs in VS Code process)
+# Handled by domain rules in AI.list
