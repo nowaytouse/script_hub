@@ -7,7 +7,7 @@
 #
 # Functionality:
 # 1. HEIC/HEIF → PNG (lossless conversion with complete metadata preservation)
-# 2. MP4 Video → High-Quality GIF (visually lossless)
+# 2. MP4 Video → Animated WebP (lossless, preserves original FPS and resolution)
 #
 # Safety Features:
 # - Atomic file operations (temp file → verify → replace)
@@ -274,15 +274,14 @@ convert_heic_to_png() {
     fi
 }
 
-# Convert MP4 → High-Quality GIF with metadata preservation
+# Convert MP4 → High-Quality Animated WebP with metadata preservation
 # Preserves ORIGINAL framerate and resolution - NO LIMITS
-convert_mp4_to_gif() {
+convert_mp4_to_webp() {
     local input="$1"
-    local output="${input%.*}.gif"
-    local temp_output="/tmp/gif_convert_$$.gif"
-    local palette="/tmp/palette_$$.png"
+    local output="${input%.*}.webp"
+    local temp_output="/tmp/webp_convert_$$.webp"
     
-    log_info "Converting MP4 → GIF: $(basename "$input")"
+    log_info "Converting MP4 → WebP: $(basename "$input")"
     
     if [ "$DRY_RUN" = true ]; then
         log_info "[DRY-RUN] Would convert: $input → $output"
@@ -305,39 +304,32 @@ convert_mp4_to_gif() {
     
     log_info "Original FPS: $orig_fps (preserving original framerate)"
     
-    # NO scaling, NO fps limit - preserve original quality
-    local filters="fps=$orig_fps"
-    
-    # Step 2: Generate optimized palette (full resolution)
+    # Step 2: Convert to animated WebP (lossless mode for best quality)
+    # -lossless 1: mathematically lossless compression
+    # -q 100: highest quality
+    # -m 6: slowest/best compression
+    # -loop 0: infinite loop
     ffmpeg -loglevel error -i "$input" \
-        -vf "${filters},palettegen=stats_mode=full:max_colors=256" \
-        -y "$palette" 2>/dev/null
-    
-    if [ ! -f "$palette" ]; then
-        log_error "Palette generation failed: $input"
-        return 1
-    fi
-    
-    # Step 3: Create GIF using palette with advanced dithering (NO LIMITS)
-    ffmpeg -loglevel error -i "$input" -i "$palette" \
-        -lavfi "${filters} [x]; [x][1:v]paletteuse=dither=sierra2_4a" \
+        -vcodec libwebp \
+        -lossless 1 \
+        -q:v 100 \
+        -compression_level 6 \
+        -loop 0 \
         -y "$temp_output" 2>/dev/null
     
-    rm -f "$palette"
-    
     if [ ! -f "$temp_output" ]; then
-        log_error "GIF creation failed: $input"
+        log_error "WebP creation failed: $input"
         return 1
     fi
     
-    # Step 4: Verify temp file
+    # Step 3: Verify temp file
     if ! verify_file "$temp_output" 1000; then
         log_error "Verification failed (file too small or corrupted): $temp_output"
         rm -f "$temp_output"
         return 1
     fi
     
-    # Step 5: Sync system timestamps
+    # Step 4: Sync system timestamps
     touch -r "$input" "$temp_output"
     
     # macOS: Preserve creation time
@@ -349,10 +341,10 @@ convert_mp4_to_gif() {
         fi
     fi
     
-    # Step 6: Atomic replace
+    # Step 5: Atomic replace
     mv "$temp_output" "$output"
     
-    # Step 7: Final verification
+    # Step 6: Final verification
     if verify_file "$output" 1000; then
         rm "$input"
         log_success "Done: $(basename "$input") → $(basename "$output")"
@@ -403,7 +395,7 @@ main() {
     log_info "Scanning for MP4 files..."
     while IFS= read -r -d '' file; do
         ((mp4_count++)) || true
-        if convert_mp4_to_gif "$file"; then
+        if convert_mp4_to_webp "$file"; then
             ((success_count++)) || true
         else
             ((fail_count++)) || true

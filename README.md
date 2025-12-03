@@ -203,7 +203,7 @@ chmod +x archive_and_upload.sh
 #### Functionality
 Batch converts incompatible media formats to universally compatible formats with **complete metadata preservation**:
 - **HEIC/HEIF → PNG**: Lossless conversion using macOS native `sips` or `heif-convert`
-- **MP4 → High-Quality GIF**: Two-pass conversion with optimized color palette (preserves original FPS and resolution, NO LIMITS)
+- **MP4 → Animated WebP**: Lossless conversion (preserves original FPS and resolution, smoother than GIF with smaller file size)
 
 #### Key Features
 - **Atomic Operations**: Temp file → Verify → Replace (prevents data corruption)
@@ -236,8 +236,9 @@ chmod +x convert_incompatible_media.sh
 
 **Conversion Details**:
 - **HEIC/HEIF → PNG**: Preserves original resolution and all metadata
-- **MP4 → GIF**: Preserves original FPS (e.g., 30fps), full resolution, and complete frame count
+- **MP4 → WebP**: Lossless conversion, preserves original FPS (e.g., 30fps), full resolution, and complete frame count
 - **NO LIMITS**: No downscaling, no frame dropping, no FPS reduction
+- **In-place Replacement**: Automatically deletes original files after conversion, backups saved in `_backup_*` directory
 
 ---
 
