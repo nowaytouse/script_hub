@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: CDN
+# Updated: 2025-12-03 13:18:47 UTC
+# Total Rules: 26
+# Generator: Ruleset Merger v2.0
+# Git Hash: 1096dbf
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://ruleset.skk.moe/List/non_ip/cdn.conf
+#   - https://ruleset.skk.moe/List/domainset/cdn.conf
+#   - https://whatshub.top/rule/Cloudflare.list
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - Manual rules in CDN_manual.txt are auto-preserved
+#
+# Auto-Update:
+#   - Cron job pulls upstream updates daily
+#   - Manual: ./ruleset_merger.sh -l sources.txt -o CDN.list
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-KEYWORD ==========
+DOMAIN-KEYWORD,-assets.worldsex.com
+DOMAIN-KEYWORD,-cdn.eporner.com
+DOMAIN-KEYWORD,-files.gitbook.io
+DOMAIN-KEYWORD,-images.disco-api.com
+DOMAIN-KEYWORD,-res.cloudinary.com
+DOMAIN-KEYWORD,-thumbs.pornhost.com
+DOMAIN-KEYWORD,-thumbs.worldsex.com
+DOMAIN-KEYWORD,99avcdn
+DOMAIN-KEYWORD,assets.trustpilot.net
+DOMAIN-KEYWORD,cdn.adultempire.com
+DOMAIN-KEYWORD,cdn.trustpilot.net
+DOMAIN-KEYWORD,dsn.algolia.net
+DOMAIN-KEYWORD,fonts.hanime1
+DOMAIN-KEYWORD,images.trustpilot.com
+DOMAIN-KEYWORD,images.trustpilot.net
+DOMAIN-KEYWORD,scripts.trustpilot.com
+DOMAIN-KEYWORD,static.grammarly.com
+DOMAIN-KEYWORD,static.trustpilot.com
+DOMAIN-KEYWORD,vdownload.hanime1
+DOMAIN-KEYWORD,vod-adaptive.akamaized.net
+DOMAIN-KEYWORD,web-assets.zendesk
+
+# ========== DOMAIN ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,cdn-msp.18comic.org
+DOMAIN,cdn-msp.18comic.vip
+DOMAIN,cdn-msp.jmcomic-zzz.one
+DOMAIN,cdn-msp.jmcomic.me
+
+# ========== END ==========

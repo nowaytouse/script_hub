@@ -1,0 +1,82 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamJP
+# Updated: 2025-12-03 13:13:12 UTC
+# Total Rules: 49
+# Generator: Ruleset Merger v2.0
+# Git Hash: 1096dbf
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Nintendo.list
+#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Niconico/Niconico.list
+#   - https://ruleset.skk.moe/List/non_ip/stream_jp.conf
+#   - https://ruleset.skk.moe/List/ip/stream_jp.conf
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - Manual rules in StreamJP_manual.txt are auto-preserved
+#
+# Auto-Update:
+#   - Cron job pulls upstream updates daily
+#   - Manual: ./ruleset_merger.sh -l sources.txt -o StreamJP.list
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+DOMAIN-SUFFIX,abema-tv.com
+DOMAIN-SUFFIX,abema.io
+DOMAIN-SUFFIX,abema.tv
+DOMAIN-SUFFIX,ameba.jp
+DOMAIN-SUFFIX,amebame.com
+DOMAIN-SUFFIX,amebaownd.com
+DOMAIN-SUFFIX,amebaowndme.com
+DOMAIN-SUFFIX,ameblo.jp
+DOMAIN-SUFFIX,dmc.nico
+DOMAIN-SUFFIX,dmm-extension.com
+DOMAIN-SUFFIX,dmm.co.jp
+DOMAIN-SUFFIX,dmm.com
+DOMAIN-SUFFIX,dokusho-ojikan.jp
+DOMAIN-SUFFIX,happyon.jp
+DOMAIN-SUFFIX,hayabusa.dev
+DOMAIN-SUFFIX,hayabusa.io
+DOMAIN-SUFFIX,hayabusa.media
+DOMAIN-SUFFIX,hjholdings.jp
+DOMAIN-SUFFIX,hulu.jp
+DOMAIN-SUFFIX,location-plus.nhk.jp
+DOMAIN-SUFFIX,nicodic.jp
+DOMAIN-SUFFIX,nicomanga.jp
+DOMAIN-SUFFIX,niconico.com
+DOMAIN-SUFFIX,nicoseiga.jp
+DOMAIN-SUFFIX,nicovideo.jp
+DOMAIN-SUFFIX,nimg.jp
+DOMAIN-SUFFIX,nintendo-europe.com
+DOMAIN-SUFFIX,nintendo.be
+DOMAIN-SUFFIX,nintendo.co.jp
+DOMAIN-SUFFIX,nintendo.co.uk
+DOMAIN-SUFFIX,nintendo.com
+DOMAIN-SUFFIX,nintendo.com.au
+DOMAIN-SUFFIX,nintendo.de
+DOMAIN-SUFFIX,nintendo.es
+DOMAIN-SUFFIX,nintendo.eu
+DOMAIN-SUFFIX,nintendo.fr
+DOMAIN-SUFFIX,nintendo.it
+DOMAIN-SUFFIX,nintendo.jp
+DOMAIN-SUFFIX,nintendo.net
+DOMAIN-SUFFIX,nintendo.nl
+DOMAIN-SUFFIX,nintendowifi.net
+DOMAIN-SUFFIX,simg.jp
+DOMAIN-SUFFIX,socdm.com
+DOMAIN-SUFFIX,tver.jp
+DOMAIN-SUFFIX,winticket.jp
+
+# ========== DOMAIN ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,ds-linear-abematv.akamaized.net
+
+# ========== OTHER ==========
+USER-AGENT,AbemaTV*
+USER-AGENT,Niconico*
+
+# ========== END ==========

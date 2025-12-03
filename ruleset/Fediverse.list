@@ -1,0 +1,60 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: Fediverse
+# Updated: 2025-12-03 13:17:38 UTC
+# Total Rules: 29
+# Generator: Ruleset Merger v2.0
+# Git Hash: 1096dbf
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - [LOCAL] Fediverse_manual.txt
+#   - [MANUAL] Fediverse_manual.txt (auto-preserved)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - Manual rules in Fediverse_manual.txt are auto-preserved
+#
+# Auto-Update:
+#   - Cron job pulls upstream updates daily
+#   - Manual: ./ruleset_merger.sh -l sources.txt -o Fediverse.list
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+DOMAIN-SUFFIX,atproto.com
+DOMAIN-SUFFIX,bsky.app
+DOMAIN-SUFFIX,bsky.social
+DOMAIN-SUFFIX,joinpeertube.org
+DOMAIN-SUFFIX,lemmy.ml
+DOMAIN-SUFFIX,lemmy.world
+DOMAIN-SUFFIX,mastodon.art
+DOMAIN-SUFFIX,mastodon.cloud
+DOMAIN-SUFFIX,mastodon.online
+DOMAIN-SUFFIX,mastodon.social
+DOMAIN-SUFFIX,misskey-hub.net
+DOMAIN-SUFFIX,misskey.io
+DOMAIN-SUFFIX,mstdn.jp
+DOMAIN-SUFFIX,nostr.info
+DOMAIN-SUFFIX,nostr.wlvs.space
+DOMAIN-SUFFIX,pawoo.net
+DOMAIN-SUFFIX,peertube.video
+DOMAIN-SUFFIX,pixelfed.org
+DOMAIN-SUFFIX,pixelfed.social
+
+# ========== DOMAIN-KEYWORD ==========
+DOMAIN-KEYWORD,atproto
+DOMAIN-KEYWORD,bsky
+DOMAIN-KEYWORD,lemmy
+DOMAIN-KEYWORD,mastodon
+DOMAIN-KEYWORD,misskey
+DOMAIN-KEYWORD,nostr
+DOMAIN-KEYWORD,peertube
+DOMAIN-KEYWORD,pixelfed
+DOMAIN-KEYWORD,pleroma
+
+# ========== DOMAIN ==========
+DOMAIN,m.cmx.im
+
+# ========== END ==========

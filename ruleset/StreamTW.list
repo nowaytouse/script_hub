@@ -1,0 +1,70 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamTW
+# Updated: 2025-12-03 13:13:41 UTC
+# Total Rules: 39
+# Generator: Ruleset Merger v2.0
+# Git Hash: 1096dbf
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://ruleset.skk.moe/List/non_ip/stream_tw.conf
+#   - https://ruleset.skk.moe/List/ip/stream_tw.conf
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - Manual rules in StreamTW_manual.txt are auto-preserved
+#
+# Auto-Update:
+#   - Cron job pulls upstream updates daily
+#   - Manual: ./ruleset_merger.sh -l sources.txt -o StreamTW.list
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+DOMAIN-SUFFIX,4gtv.tv
+DOMAIN-SUFFIX,ani.gamer.com.tw
+DOMAIN-SUFFIX,api.gamer.com.tw
+DOMAIN-SUFFIX,bahamut.com.tw
+DOMAIN-SUFFIX,fanfox.net
+DOMAIN-SUFFIX,hboasia.com
+DOMAIN-SUFFIX,hbogoasia.com
+DOMAIN-SUFFIX,hbogoasia.hk
+DOMAIN-SUFFIX,hbogoasia.id
+DOMAIN-SUFFIX,hbogoasia.ph
+DOMAIN-SUFFIX,hbogoasia.sg
+DOMAIN-SUFFIX,hbogoasia.tw
+DOMAIN-SUFFIX,kk.stream
+DOMAIN-SUFFIX,kktv.com.tw
+DOMAIN-SUFFIX,kktv.me
+DOMAIN-SUFFIX,linetv.tw
+DOMAIN-SUFFIX,mangafox.me
+DOMAIN-SUFFIX,viblast.com
+
+# ========== DOMAIN ==========
+DOMAIN,44wilhpljf.execute-api.ap-southeast-1.amazonaws.com
+DOMAIN,4gtvfreepcvod-cds.cdn.hinet.net
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,ana.video.friday.tw
+DOMAIN,cdi.ofiii.com
+DOMAIN,d3c7rimkq79yfu.cloudfront.net
+DOMAIN,gamer-cds.cdn.hinet.net
+DOMAIN,gamer2-cds.cdn.hinet.net
+DOMAIN,hbolb.onwardsmg.com
+DOMAIN,hbounify-prod.evergent.com
+DOMAIN,litvfreemobile-hichannel.cdn.hinet.net
+DOMAIN,manifest.prod.boltdns.net
+DOMAIN,ntdfreepc-tgc.cdn.hinet.net
+DOMAIN,players.brightcove.net
+DOMAIN,video.friday.tw
+DOMAIN,www.litv.tv
+
+# ========== OTHER ==========
+PROCESS-NAME,com.linecorp.linetv
+USER-AGENT,Anime*
+USER-AGENT,KKTV*
+USER-AGENT,LINE TV*
+USER-AGENT,com.kktv.ios.kktv*
+
+# ========== END ==========
