@@ -25,19 +25,29 @@ tun-included-routes = 192.168.1.12/32, 192.168.1.100/32
 force-http-engine-hosts = baidu.com, -*.apple.com, www.google.com:80, www.google.com:0
 
 # ═══════════════════════════════════════════════════════════════
-# Always Raw TCP - Finance/Payment/Auth Services
+# Always Raw TCP - Core Finance/Payment Services
 # ═══════════════════════════════════════════════════════════════
-always-raw-tcp-hosts = icbc.com.cn, bankofchina.com, abc.com.cn, ccb.com, cmbchina.com, bankcomm.com, spdb.com.cn, htsec.com, gtja.com, citics.com, gf.com.cn, eastmoney.com, cninfo.com.cn, csrc.gov.cn, 12306.cn, sinopec.com, petrochina.com.cn, cmbc.com.cn, cmbchinaucs.com, ebank.pingan.com, psbc.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, mapi.alipay.com, openapi.alipay.com, gw.alipay.com, mclient.alipay.com, *.unionpay.com, *.95516.com, testflight.apple.com, *.apple.com, *.jd.com, *.suning.com
+always-raw-tcp-hosts = *.alipay.com, *.unionpay.com, *.95516.com, *.apple.com, *.jd.com, icbc.com.cn, ccb.com, cmbchina.com, 12306.cn
 
-always-raw-tcp-keywords = zhihu, steam, icbc, ccb, cmbchina, bankofchina, abc, bankcomm, spdb, htsec, gtja, citics, gf, eastmoney, cninfo, csrc, 12306, sinopec, petrochina, passport, ebank, auth, login, webbank, alipay, pay, unionpay, 95516, weibo, testflight, apple, weixin, wechat, taobao, tmall, jd, suning
+always-raw-tcp-keywords = alipay, pay, unionpay, 95516, apple, weixin, wechat, taobao, jd, bank, auth, login
+
+# [COMMENTED - Extended Raw TCP - Uncomment if needed]
+# always-raw-tcp-hosts = %APPEND% bankofchina.com, abc.com.cn, bankcomm.com, spdb.com.cn, htsec.com, gtja.com, citics.com, eastmoney.com, sinopec.com, psbc.com, *.suning.com
+# always-raw-tcp-keywords = %APPEND% zhihu, steam, icbc, ccb, cmbchina, bankofchina, spdb, gtja, citics, eastmoney, 12306, passport, ebank, webbank, weibo, testflight, tmall, suning
 
 # ═══════════════════════════════════════════════════════════════
-# Skip Proxy - China Services/Payment/Banking/Gaming
+# Skip Proxy - Core List (Optimized to prevent truncation)
 # ═══════════════════════════════════════════════════════════════
-skip-proxy = %INSERT% localhost, *.local, captive.apple.com, e.crashlytics.com, www.baidu.com, passenger.t3go.cn, yunbusiness.ccb.com, wxh.wo.cn, gate.lagou.com, www.abchina.com.cn, login-service.mobile-bank.psbc.com, mobile-bank.psbc.com, *.battle.net, *.battlenet.com, *.battlenet.com.cn, *.blzstatic.cn, *.d.meituan.net, *.msftconnecttest.com, *.srv.nintendo.net, *.stun.playstation.net, *.xboxlive.com, id6.me, www.shanbay.com, xbox.*.microsoft.com, *.qq.com, *.weixin.qq.com, *.tencent.com, *.alipay.com, *.alipay.net, *.alipayobjects.com, *.alipaycdn.com, *.95516.com, *.unionpay.com, *.ctrip.com, *.elong.com, *.qunar.com, *.jd.com, *.taobao.com, *.tmall.com, *.suning.com, *.meituan.com, *.dianping.com, *.ele.me, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, 192.168.122.1/32, 193.168.0.1/32, ::1/128, fe80::/10
+skip-proxy = %INSERT% localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.qq.com, *.tencent.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
 
-# Always Real IP - Extended List
-always-real-ip = %INSERT% *.lan, *.direct, cable.auth.com, *.msftconnecttest.com, *.msftncsi.com, network-test.debian.org, detectportal.firefox.com, resolver1.opendns.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, global.turn.twilio.com, global.stun.twilio.com, app.yinxiang.com, injections.adguard.org, local.adguard.org, localhost.*.qq.com, localhost.*.weixin.qq.com, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, music.taihe.com, songsearch.kugou.com, trackercdn.kugou.com, *.kuwo.cn, api-jooxtt.sanook.com, api.joox.com, joox.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, isure.stream.qqmusic.qq.com, dl.stream.qqmusic.qq.com, aqqmusic.tc.qq.com, amobile.music.tc.qq.com, *.xiami.com, *.music.migu.cn, music.migu.cn, proxy.golang.org, *.mcdn.bilivideo.cn, *.cmpassport.com, id6.me, open.e.189.cn, opencloud.wostore.cn, id.mail.wo.cn, mdn.open.wo.cn, hmrz.wo.cn, nishub1.10010.com, enrichgw.10010.com, *.wosms.cn, *.jegotrip.com.cn, *.icitymobile.mobi, *.pingan.com.cn, *.cmbchina.com, *.10099.com.cn, *.microdone.cn, pool.ntp.org, *.pool.ntp.org, ntp.*.com, time.*.com, ntp?.*.com, time?.*.com, time.*.gov, time.*.edu.cn, *.ntp.org.cn, PDC._msDCS.*.*, DC._msDCS.*.*, GC._msDCS.*.*, *.apple.com, *.duckdns.org, *.nip.io, *.noip.com, *.sslip.io, *.stun.twilio.com, *.turn.twilio.com, *.xip.io, dns.msftncsi.com, ipv6.msftncsi.com, stun.l.google.com, stun.syncthing.net, stun.stunprotocol.org, stun1.l.google.com, stun2.l.google.com, stun3.l.google.com, stun4.l.google.com, stunserver.org, time.apple.com, www.msftncsi.com, *.weibo.com, *.douyin.com, *.tiktok.com, *.bilibili.com, *.acfun.cn, *.youku.com, *.iqiyi.com, *.le.com, *.pptv.com, *.sohu.com, *.cntv.cn
+# [COMMENTED - Extended Skip Proxy - Uncomment if needed]
+# skip-proxy = %APPEND% www.baidu.com, yunbusiness.ccb.com, www.abchina.com.cn, *.blzstatic.cn, *.d.meituan.net, *.stun.playstation.net, *.weixin.qq.com, *.alipay.net, *.alipayobjects.com, *.95516.com, *.ctrip.com, *.tmall.com, *.suning.com, *.meituan.com, *.ele.me
+
+# Always Real IP - Core List (Optimized to prevent truncation)
+always-real-ip = %INSERT% *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com, *.bilibili.com, *.douyin.com, *.tiktok.com
+
+# [COMMENTED - Extended Real IP List - Uncomment if needed]
+# always-real-ip = %APPEND% music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, *.music.migu.cn, *.mcdn.bilivideo.cn, *.cmpassport.com, open.e.189.cn, *.pingan.com.cn, *.cmbchina.com, ntp.*.com, time.*.com, *.weibo.com, *.youku.com, *.iqiyi.com
 
 [URL Rewrite]
 # Google Redirect
