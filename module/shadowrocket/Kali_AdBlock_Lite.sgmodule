@@ -1,240 +1,92 @@
-#!name=🚫 万用去广告规则依赖组件 LITE（Kali-style）
-#!version=2025.10.11-optimized
-#!desc=模块化：本版本适用于分开组合使用，更适合低内存使用。适配 Shadowrocket。
+#!name=🚫 Universal Ad-Blocking LITE (Kali-style) (Shadowrocket)
+#!version=2025.12.03
+#!desc=Modular ad-blocking with Host sinkhole + Online rulesets + QQ Music. Low-memory optimized. 🧩💾⚡
+#!author=nyamiiko
+#!homepage=https://github.com/nowaytouse/script_hub
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
-# -----------------------
-# 基础直连 / 局域网例外（始终优先）
-# -----------------------
-DOMAIN-SUFFIX,local,DIRECT,no-resolve
-IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
-IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
-IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
-IP-CIDR,127.0.0.1/32,DIRECT,no-resolve
-
-# -----------------------
-# Layer 3: 系统与应用行为控制
-# -----------------------
-# (1) 操作系统与平台遥测
-DOMAIN-SUFFIX,metrics.apple.com,REJECT
-DOMAIN-SUFFIX,radarsubmissions.apple.com,REJECT
-DOMAIN-SUFFIX,vortex.data.microsoft.com,REJECT
-DOMAIN-KEYWORD,telemetry,REJECT
-
-# (2) 防止真实 IP 泄露（WebRTC STUN/TURN）
-DOMAIN-SUFFIX,stun.l.google.com,REJECT
-DOMAIN-SUFFIX,stun.services.mozilla.com,REJECT
-DOMAIN,stun.twilio.com,REJECT
-
-# (3) 拦截机器/爬虫/扫描类 User-Agent
-USER-AGENT,*bot*,REJECT
-USER-AGENT,*spider*,REJECT
-USER-AGENT,*crawler*,REJECT
-USER-AGENT,*Scanner*,REJECT
-USER-AGENT,Python-urllib*,REJECT
-# 特定分析/广告 SDK UA
-USER-AGENT,*GDTMob*,REJECT
-USER-AGENT,*Pangolin*,REJECT
-USER-AGENT,*Bytedance-Union*,REJECT
-USER-AGENT,*BaiduMob*,REJECT
-USER-AGENT,*Ksad*,REJECT
-USER-AGENT,*MiAd*,REJECT
-USER-AGENT,CSDN*,REJECT
-
-# (4) 常见分析/统计域名
-DOMAIN-SUFFIX,google-analytics.com,REJECT
-DOMAIN-SUFFIX,googletagmanager.com,REJECT
-DOMAIN-SUFFIX,umeng.com,REJECT
-DOMAIN-SUFFIX,umengcloud.com,REJECT
-DOMAIN-SUFFIX,mta.qq.com,REJECT
-DOMAIN-SUFFIX,ping.tca.qq.com,REJECT
-DOMAIN-SUFFIX,applog.oceanengine.com,REJECT
-DOMAIN-SUFFIX,appsflyer.com,REJECT
-DOMAIN-SUFFIX,talkingdata.net,REJECT
-DOMAIN-KEYWORD,applog,REJECT
-DOMAIN-KEYWORD,analytics,REJECT
-
-# -----------------------
-# 防火墙用途：端口/协议限制
-# -----------------------
-
-# SECTION 1: 系统核心及过时服务端口 (0-1023)
-DEST-PORT,0,REJECT
-DEST-PORT,1,REJECT
-DEST-PORT,7,REJECT
-DEST-PORT,9,REJECT
-DEST-PORT,11,REJECT
-DEST-PORT,13,REJECT
-DEST-PORT,15,REJECT
-DEST-PORT,17,REJECT
-DEST-PORT,19,REJECT
-DEST-PORT,20,REJECT
-DEST-PORT,21,REJECT
-DEST-PORT,23,REJECT
-DEST-PORT,37,REJECT
-DEST-PORT,70,REJECT
-DEST-PORT,79,REJECT
-DEST-PORT,88,REJECT
-DEST-PORT,113,REJECT
-DEST-PORT,135,REJECT
-DEST-PORT,137,REJECT
-DEST-PORT,138,REJECT
-DEST-PORT,139,REJECT
-DEST-PORT,445,REJECT
-DEST-PORT,161,REJECT
-DEST-PORT,162,REJECT
-DEST-PORT,172,REJECT
-DEST-PORT,179,REJECT
-DEST-PORT,389,REJECT
-DEST-PORT,554,REJECT
-DEST-PORT,520,REJECT
-
-# SECTION 2: 应用、数据库和管理服务端口 (1024-49151)
-DEST-PORT,1080,REJECT
-DEST-PORT,1723,REJECT
-DEST-PORT,2049,REJECT
-DEST-PORT,2375,REJECT
-DEST-PORT,2376,REJECT
-DEST-PORT,2379,REJECT
-DEST-PORT,2380,REJECT
-DEST-PORT,3000,REJECT
-DEST-PORT,3050,REJECT
-DEST-PORT,3128,REJECT
-DEST-PORT,3306,REJECT
-DEST-PORT,3389,REJECT
-DEST-PORT,3580,REJECT
-DEST-PORT,3724,REJECT
-DEST-PORT,5000,REJECT
-DEST-PORT,5001,REJECT
-DEST-PORT,50070,REJECT
-DEST-PORT,5631,REJECT
-DEST-PORT,5632,REJECT
-DEST-PORT,5666,REJECT
-DEST-PORT,5672,REJECT
-DEST-PORT,5900-5909,REJECT
-DEST-PORT,5985,REJECT
-DEST-PORT,5986,REJECT
-DEST-PORT,6000-6063,REJECT
-DEST-PORT,631,REJECT
-DEST-PORT,6379,REJECT
-DEST-PORT,6443,REJECT
-DEST-PORT,6881-6889,REJECT
-DEST-PORT,7000,REJECT
-DEST-PORT,7100,REJECT
-DEST-PORT,7200,REJECT
-DEST-PORT,8000,REJECT
-DEST-PORT,8001,REJECT
-DEST-PORT,8008,REJECT
-DEST-PORT,8009,REJECT
-DEST-PORT,8086,REJECT
-DEST-PORT,8100,REJECT
-DEST-PORT,8111,REJECT
-DEST-PORT,8200,REJECT
-DEST-PORT,8443,REJECT
-DEST-PORT,8983,REJECT
-DEST-PORT,9001,REJECT
-DEST-PORT,9090,REJECT
-DEST-PORT,9100-9102,REJECT
-DEST-PORT,9200,REJECT
-DEST-PORT,9300,REJECT
-DEST-PORT,9418,REJECT
-DEST-PORT,9989,REJECT
-DEST-PORT,10000,REJECT
-DEST-PORT,11211,REJECT
-DEST-PORT,1234,REJECT
-DEST-PORT,12345,REJECT
-DEST-PORT,12346,REJECT
-DEST-PORT,12361,REJECT
-DEST-PORT,1338,REJECT
-DEST-PORT,1981,REJECT
-DEST-PORT,2001,REJECT
-DEST-PORT,2049,REJECT
-DEST-PORT,2140,REJECT
-DEST-PORT,23456,REJECT
-DEST-PORT,2535,REJECT
-DEST-PORT,25845,REJECT
-DEST-PORT,2745,REJECT
-DEST-PORT,27444,REJECT
-DEST-PORT,27665,REJECT
-DEST-PORT,30100,REJECT
-DEST-PORT,3127,REJECT
-DEST-PORT,31335,REJECT
-DEST-PORT,31337,REJECT
-DEST-PORT,31338,REJECT
-DEST-PORT,3150,REJECT
-DEST-PORT,33270,REJECT
-DEST-PORT,33333,REJECT
-DEST-PORT,34324,REJECT
-DEST-PORT,4000,REJECT
-DEST-PORT,40421,REJECT
-DEST-PORT,50000,REJECT
-DEST-PORT,54320,REJECT
-DEST-PORT,54321,REJECT
-DEST-PORT,5569,REJECT
-DEST-PORT,5580,REJECT
-DEST-PORT,61466,REJECT
-DEST-PORT,65000,REJECT
-
-# SECTION 3: 常见恶意软件/后门/蠕虫端口
-DEST-PORT,31,REJECT
-DEST-PORT,555,REJECT
-DEST-PORT,666,REJECT
-DEST-PORT,999,REJECT
-DEST-PORT,1001,REJECT
-DEST-PORT,1024-1028,REJECT
-DEST-PORT,1234,REJECT
-DEST-PORT,1243,REJECT
-DEST-PORT,1600,REJECT
-DEST-PORT,1981,REJECT
-DEST-PORT,1999,REJECT
-DEST-PORT,2001,REJECT
-DEST-PORT,2023,REJECT
-DEST-PORT,3129,REJECT
-DEST-PORT,3150,REJECT
-DEST-PORT,33270,REJECT
-DEST-PORT,33333,REJECT
-DEST-PORT,34324,REJECT
-DEST-PORT,40421,REJECT
-DEST-PORT,54320,REJECT
-DEST-PORT,54321,REJECT
-DEST-PORT,61466,REJECT
-DEST-PORT,65000,REJECT
-
-# SECTION 5:在线规则集去广告 列表
-DOMAIN,heic.alicdn.com,REJECT
-DOMAIN-SUFFIX,h-adashx.ut.taobao.com,REJECT
+# ═══════════════════════════════════════════════════════════════
+# Online Ad-Blocking Rulesets
+# ═══════════════════════════════════════════════════════════════
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/limbopro/Adblock4limbo/main/Adblock4limbo_surge.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-surge2.txt,REJECT,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt,REJECT
-RULE-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/pcdn.txt,REJECT,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt,REJECT
 RULE-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt,REJECT,no-resolve
 RULE-SET,https://ruleset.skk.moe/List/domainset/reject_extra.conf,REJECT,no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT,no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT,no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf,REJECT,no-resolve
+RULE-SET,https://ruleset.skk.moe/List/ip/reject.conf,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list,REJECT,no-resolve
-RULE-SET,https://limbopro.com/Adblock4limbo_surge.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt,REJECT,no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/sogouinput.conf,REJECT,no-resolve
 
-# SDK / 第三方服务隐私增强
+# ═══════════════════════════════════════════════════════════════
+# SDK / Third-party Privacy Enhancement
+# ═══════════════════════════════════════════════════════════════
 DOMAIN,api.revenuecat.com,REJECT
 DOMAIN-KEYWORD,96110,REJECT
 DOMAIN-SUFFIX,gjfzpt.cn,REJECT
 DOMAIN,msmp.abchina.com.cn,REJECT
 RULE-SET,https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list,REJECT
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list,REJECT
 
+# ═══════════════════════════════════════════════════════════════
+# QQ Music Ad-Blocking (Merged)
+# ═══════════════════════════════════════════════════════════════
+DOMAIN,adstats.tencentmusic.com,REJECT
+DOMAIN,ad.tencentmusic.com,REJECT
+DOMAIN,adcdn.tencentmusic.com,REJECT
+DOMAIN,adcdn6.tencentmusic.com,REJECT
+DOMAIN,adexpo.tencentmusic.com,REJECT
+DOMAIN,adclick.tencentmusic.com,REJECT
+DOMAIN,otheve.beacon.qq.com,REJECT
+DOMAIN,monitor.music.qq.com,REJECT
+DOMAIN,stat.y.qq.com,REJECT
+DOMAIN,tmead.y.qq.com,REJECT
+DOMAIN,oth.str.mdt.qq.com,REJECT
+DOMAIN,h.trace.qq.com,REJECT
+DOMAIN,sdk.e.qq.com,REJECT
+DOMAIN,p.l.qq.com,REJECT
+DOMAIN,us.l.qq.com,REJECT
+DOMAIN,tangram.e.qq.com,REJECT
+DOMAIN,tmeadcomm.y.qq.com,REJECT
+DOMAIN,tmeadquic.y.qq.com,REJECT
+DOMAIN,tmeadbak.y.qq.com,REJECT
+DOMAIN,amsweb-cdn-gz-1258344696.file.myqcloud.com,REJECT
+DOMAIN,wallpaper-1258344696.file.myqcloud.com,REJECT
+DOMAIN,xs.gdt.qq.com,REJECT
+DOMAIN-SUFFIX,imtmp.net,REJECT
+DOMAIN-SUFFIX,rqd.qq.com,REJECT
+DOMAIN-SUFFIX,wup.imtt.qq.com,REJECT
+DOMAIN-SUFFIX,gdt.qq.com,REJECT
+DOMAIN-SUFFIX,android.rqd.qq.com,REJECT
+DOMAIN-SUFFIX,e.qq.com,REJECT
+DOMAIN-SUFFIX,v.gdt.qq.com,REJECT
+IP-CIDR,120.222.240.171/32,REJECT,no-resolve
+IP-CIDR,47.110.187.87/32,REJECT,no-resolve
+
+[URL Rewrite]
+# ═══════════════════════════════════════════════════════════════
+# QQ Music URL Rewrite
+# ═══════════════════════════════════════════════════════════════
+^https?:\/\/us\.l\.qq\.com\/exapp - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/t_splash_info\/ - reject
+^https?:\/\/.+?\/music\/common\/upload\/t_splash_info\/ - reject
+^https?:\/\/((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/music\/common\/upload\/t_splash_info\/ - reject
+^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/\/upload\/kg_ad/.*?\d{4}\.jpg - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/targeted_ads - reject
+
 [Host]
-# Host 规则保持注释状态
+# Host rules (empty - Shadowrocket handles differently)
 
 [MITM]
-hostname = %APPEND% video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.zcool.com.cn, acs.m.goofish.com, acs.m.taobao.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, apiwz.midukanshu.com, app.zhoudamozi.com, cdke.youdao.com, conf-darwin.xycdn.com, dict.youdao.com, ecard.shenzhentong.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, img.allahall.com, img.dailmo.com, iyes.youku.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, p0.pipi.cn, qiye.gaoding.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shopapi.io.mi.com, shealthyapi.senssun.com, t-dsp.pinduoduo.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, us.l.qq.com, lanfanapp.com, api.xiachufang.com, api.xiangji.qq.com, video-dsp.pddpic.com, images.pinduoduo.com, client.app.coc.10086.cn, cdn.cmgadx.com, qadx.qinlinad.com, watch.iot.mi.com, cdn.web.chelaile.net.cn, d.socdm.com, m.client.10010.com, cmds.omesoft.com, api.fenxianglife.com, *.58cdn.com.cn, *.iydsj.com, *.k.sohu.com, *.kakamobi.cn, *.kingsoft-office-service.com, *.meituan.net, *.ofo.com, *.pstatp.com, *.snssdk.com, *.tv.sohu.com, *.uve.weibo.com, *.ydstatic.com, *.3gimg.qq.com, *.4gimg.map.qq.com, *.7n.bczcdn.com, *.a.apicloud.com, *.a.qiumibao.com, *.a.sfansclub.com, *.a.wkanx.com, *.account.wps.cn, *.account.wps.com, *.acs.m.taobao.com, *.act.vip.iqiyi.com, *.adpai.thepaper.cn, *.adse.ximalaya.com, *.aes.acfun.cn, *.agent-count.pconline.com.cn, *.api-mifit.huami.com, *.api.jr.mi.com, *.api.m.jd.com, *.api.m.mi.com, *.api.zhihu.com, %APPEND% 203.107.1.1,203.107.1.33,203.107.1.66,203.107.1.67,203.107.1.97,2401:b180:2000:30::1c,2401:b180:2000:20::10, amdc.alipay.com, appconf.mail.163.com, msglb.91160.com, api-access.pangolin-sdk-toutiao.com, is.snssdk.com, mi.gdt.qq.com, open.e.kuaishou.com
+hostname = %APPEND% us.l.qq.com, y.gtimg.cn, music.y.qq.com, video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.zcool.com.cn, acs.m.goofish.com, acs.m.taobao.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, apiwz.midukanshu.com, app.zhoudamozi.com, cdke.youdao.com, conf-darwin.xycdn.com, dict.youdao.com, ecard.shenzhentong.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, img.allahall.com, img.dailmo.com, iyes.youku.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, p0.pipi.cn, qiye.gaoding.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shopapi.io.mi.com, shealthyapi.senssun.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, lanfanapp.com, api.xiachufang.com, api.xiangji.qq.com, client.app.coc.10086.cn, cdn.cmgadx.com, qadx.qinlinad.com, watch.iot.mi.com, cdn.web.chelaile.net.cn, d.socdm.com, m.client.10010.com, cmds.omesoft.com, api.fenxianglife.com, *.58cdn.com.cn, *.iydsj.com, *.k.sohu.com, *.kakamobi.cn, *.kingsoft-office-service.com, *.meituan.net, *.ofo.com, *.pstatp.com, *.snssdk.com, *.tv.sohu.com, *.uve.weibo.com, *.ydstatic.com, *.3gimg.qq.com, *.4gimg.map.qq.com, *.7n.bczcdn.com, *.a.apicloud.com, *.a.qiumibao.com, *.a.sfansclub.com, *.a.wkanx.com, *.account.wps.cn, *.account.wps.com, *.acs.m.taobao.com, *.act.vip.iqiyi.com, *.adpai.thepaper.cn, *.adse.ximalaya.com, *.aes.acfun.cn, *.agent-count.pconline.com.cn, *.api-mifit.huami.com, *.api.jr.mi.com, *.api.m.jd.com, *.api.m.mi.com, *.api.zhihu.com, 203.107.1.1, 203.107.1.33, 203.107.1.66, 203.107.1.67, 203.107.1.97, 2401:b180:2000:30::1c, 2401:b180:2000:20::10, amdc.alipay.com, appconf.mail.163.com, msglb.91160.com, is.snssdk.com, mi.gdt.qq.com, open.e.kuaishou.com

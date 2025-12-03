@@ -1,11 +1,11 @@
 #!name=URL Rewrite Module 🔄🌐 (Shadowrocket)
-#!desc=HTTPS重定向 🔒🚀 + 假冒网站保护 🛡️⚠️ + TikTok区域重定向 🌍📍
+#!desc=HTTPS Redirection 🔒🚀 + Fake Website Protection 🛡️⚠️ + TikTok Region Redirection 🌍📍
 #!author=nyamiiko
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!version=2025.12.03
 
 [URL Rewrite]
-# HTTPS重定向
+# HTTPS Redirect
 ^https?:\/\/(www\.)?taobao\.com\/ https://taobao.com/ 302
 ^https?:\/\/(www\.)?jd\.com\/ https://www.jd.com/ 302
 ^https?:\/\/(www\.)?mi\.com\/ https://www.mi.com/ 302
@@ -13,7 +13,7 @@
 ^https?:\/\/(www\.)?suning\.com\/ https://suning.com/ 302
 ^https?:\/\/(www\.)?yhd\.com\/ https://yhd.com/ 302
 
-# 假冒网站保护
+# Fake Website Protection
 ^https?:\/\/(www\.)?abbyychina\.com\/ https://www.abbyy.cn/ 302
 ^https?:\/\/(www\.)?bartender\.cc\/ https://www.macbartender.com/ 302
 ^https?:\/\/(www\.)?(betterzipcn|betterzip)\.(com|net)\/ https://macitbetter.com/ 302
@@ -32,6 +32,6 @@
 ^https?:\/\/(www\.)?xshellcn\.com\/ https://www.netsarang.com/zh/xshell/ 302
 ^https?:\/\/(www\.)?yuanchengxiezuo\.com\/ https://www.teamviewer.com/ 302
 
-# TikTok区域重定向
+# TikTok Region Redirect
 (?<=(carrier|account|sys)_region=)CN JP 307
 (?<=(carrier|account|sys|sim)_region=)cn in 307

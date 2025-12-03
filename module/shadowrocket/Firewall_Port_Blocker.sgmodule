@@ -6,7 +6,7 @@
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# SECTION 1: 系统核心及过时服务端口 (0-1023)
+# SECTION 1: System Core & Legacy Service Ports (0-1023)
 # ═══════════════════════════════════════════════════════════════
 DEST-PORT,0,REJECT
 DEST-PORT,1,REJECT
@@ -17,77 +17,115 @@ DEST-PORT,13,REJECT
 DEST-PORT,15,REJECT
 DEST-PORT,17,REJECT
 DEST-PORT,19,REJECT
+# FTP (Insecure)
 DEST-PORT,20,REJECT
 DEST-PORT,21,REJECT
+# Telnet (Plaintext)
 DEST-PORT,23,REJECT
+# Time Protocol
 DEST-PORT,37,REJECT
+# Gopher
 DEST-PORT,70,REJECT
+# Finger
 DEST-PORT,79,REJECT
+# Kerberos
 DEST-PORT,88,REJECT
+# Auth/Ident
 DEST-PORT,113,REJECT
+# NetBIOS/SMB (High Risk)
 DEST-PORT,135,REJECT
 DEST-PORT,137,REJECT
 DEST-PORT,138,REJECT
 DEST-PORT,139,REJECT
 DEST-PORT,445,REJECT
+# SNMP
 DEST-PORT,161,REJECT
 DEST-PORT,162,REJECT
+# BGP
 DEST-PORT,179,REJECT
+# LDAP
 DEST-PORT,389,REJECT
+# RIP
 DEST-PORT,520,REJECT
+# RTSP
 DEST-PORT,554,REJECT
+# IPP (Printing)
 DEST-PORT,631,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 2: 数据库端口 (高危)
+# SECTION 2: Database Ports (High Risk)
 # ═══════════════════════════════════════════════════════════════
+# MySQL
 DEST-PORT,3306,REJECT
+# PostgreSQL
 DEST-PORT,5432,REJECT
+# MongoDB
 DEST-PORT,27017,REJECT
+# Redis
 DEST-PORT,6379,REJECT
+# Memcached
 DEST-PORT,11211,REJECT
+# Elasticsearch
 DEST-PORT,9200,REJECT
 DEST-PORT,9300,REJECT
+# CouchDB
 DEST-PORT,5984,REJECT
+# Cassandra
 DEST-PORT,9042,REJECT
+# InfluxDB
 DEST-PORT,8086,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 3: 远程管理/容器端口 (高危)
+# SECTION 3: Remote Admin/Container Ports (High Risk)
 # ═══════════════════════════════════════════════════════════════
+# RDP (Remote Desktop)
 DEST-PORT,3389,REJECT
+# VNC
 DEST-PORT,5900,REJECT
 DEST-PORT,5901,REJECT
 DEST-PORT,5902,REJECT
 DEST-PORT,5903,REJECT
+# X11
 DEST-PORT,6000,REJECT
 DEST-PORT,6001,REJECT
+# Docker
 DEST-PORT,2375,REJECT
 DEST-PORT,2376,REJECT
+# Kubernetes
 DEST-PORT,6443,REJECT
 DEST-PORT,10250,REJECT
+# etcd
 DEST-PORT,2379,REJECT
 DEST-PORT,2380,REJECT
+# WinRM
 DEST-PORT,5985,REJECT
 DEST-PORT,5986,REJECT
+# pcAnywhere
 DEST-PORT,5631,REJECT
 DEST-PORT,5632,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 4: 恶意软件/后门/蠕虫常用端口
+# SECTION 4: Malware/Backdoor/Worm Ports
 # ═══════════════════════════════════════════════════════════════
+# Back Orifice
 DEST-PORT,31337,REJECT
 DEST-PORT,31338,REJECT
+# NetBus
 DEST-PORT,12345,REJECT
 DEST-PORT,12346,REJECT
+# SubSeven
 DEST-PORT,27374,REJECT
+# Deep Throat
 DEST-PORT,6670,REJECT
 DEST-PORT,6771,REJECT
+# Trinoo
 DEST-PORT,27444,REJECT
 DEST-PORT,27665,REJECT
 DEST-PORT,31335,REJECT
+# Stacheldraht
 DEST-PORT,16660,REJECT
 DEST-PORT,65000,REJECT
+# Other Malicious Ports
 DEST-PORT,1234,REJECT
 DEST-PORT,1243,REJECT
 DEST-PORT,1981,REJECT
@@ -108,7 +146,7 @@ DEST-PORT,54321,REJECT
 DEST-PORT,61466,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 5: P2P/BT端口
+# SECTION 5: P2P/BitTorrent Ports (Optional)
 # ═══════════════════════════════════════════════════════════════
 DEST-PORT,6881,REJECT
 DEST-PORT,6882,REJECT
@@ -121,7 +159,7 @@ DEST-PORT,6888,REJECT
 DEST-PORT,6889,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 6: 代理/SOCKS端口
+# SECTION 6: Proxy/SOCKS Ports
 # ═══════════════════════════════════════════════════════════════
 DEST-PORT,1080,REJECT
 DEST-PORT,3128,REJECT
