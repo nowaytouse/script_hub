@@ -1,0 +1,51 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: AI
+# Updated: 2025-12-03 12:41:07 UTC
+# Total Rules: 19
+# Generator: Ruleset Merger v2.0
+# Git Hash: 571da24
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list
+#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Gemini/Gemini.list
+#   - [MANUAL] AI_manual.txt (persistent)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - Manual rules are preserved across updates (if -m flag used)
+#
+# Auto-Update:
+#   - Cron job pulls upstream updates daily
+#   - Manual: ./ruleset_merger.sh -l sources.txt -m manual.txt -o AI.list
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,apis.google.com
+DOMAIN-SUFFIX,bard.google.com
+DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,deepmind.com
+DOMAIN-SUFFIX,deepmind.google
+DOMAIN-SUFFIX,gemini.google.com
+DOMAIN-SUFFIX,generativeai.google
+DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
+
+# ========== DOMAIN-KEYWORD ==========
+DOMAIN-KEYWORD,claude
+DOMAIN-KEYWORD,colab
+DOMAIN-KEYWORD,developerprofiles
+DOMAIN-KEYWORD,gemini
+DOMAIN-KEYWORD,generativelanguage
+
+# ========== DOMAIN ==========
+DOMAIN,ai.google.dev
+DOMAIN,alkalimakersuite-pa.clients6.google.com
+DOMAIN,cdn.usefathom.com
+DOMAIN,makersuite.google.com
+DOMAIN,www.gemini.google.com
+
+# ========== END ==========
