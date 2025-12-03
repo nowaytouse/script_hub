@@ -1,0 +1,56 @@
+# Universal Ad-Blocking Ruleset Sources
+# Used by ruleset_merger.sh to download and merge
+# Updated: 2025-12-03
+
+# ═══════════════════════════════════════════════════════════════
+# blackmatrix7 - Advertising & Privacy
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list
+
+# ═══════════════════════════════════════════════════════════════
+# limbopro - Adblock4limbo
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/limbopro/Adblock4limbo/main/Adblock4limbo_surge.list
+https://limbopro.com/Adblock4limbo_surge.list
+
+# ═══════════════════════════════════════════════════════════════
+# anti-AD (privacy-protection-tools)
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-surge2.txt
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/pcdn.txt
+
+# ═══════════════════════════════════════════════════════════════
+# geekdada - surge-list
+# ═══════════════════════════════════════════════════════════════
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt
+
+# ═══════════════════════════════════════════════════════════════
+# skk.moe - Sukka Ruleset
+# ═══════════════════════════════════════════════════════════════
+https://ruleset.skk.moe/List/domainset/reject.conf
+https://ruleset.skk.moe/List/domainset/reject_extra.conf
+https://ruleset.skk.moe/List/non_ip/reject.conf
+https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf
+https://ruleset.skk.moe/List/non_ip/reject-drop.conf
+https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf
+https://ruleset.skk.moe/List/ip/reject.conf
+https://ruleset.skk.moe/List/non_ip/sogouinput.conf
+
+# ═══════════════════════════════════════════════════════════════
+# ACL4SSR
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list
+
+# ═══════════════════════════════════════════════════════════════
+# Other Sources
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt
+https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list
