@@ -1,15 +1,35 @@
 #!/bin/bash
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 广告拦截模块智能合并脚本 (Ad-Blocking Module Intelligent Merger)
+# 广告拦截模块智能合并脚本 v3.0 (Ad-Blocking Module Intelligent Merger)
 # ═══════════════════════════════════════════════════════════════════════════════
 # 功能：
-# 1. 从多个代理软件（Surge、小火箭等）提取广告拦截规则
-# 2. 智能分类：REJECT、REJECT-DROP、REJECT-NO-DROP
-# 3. 增量合并，自动去重
-# 4. URL Rewrite 规则单独处理
-# 5. Host 规则单独处理
-# 6. 自动同步到小火箭模块
+# 1. 从多个代理软件（Surge、Shadowrocket、Clash、Quantumult X等）提取广告拦截规则
+# 2. 智能识别不同格式的规则（自动检测格式）
+# 3. 智能分类：REJECT、REJECT-DROP、REJECT-NO-DROP
+# 4. 增量合并，自动去重
+# 5. URL Rewrite 规则单独处理
+# 6. Host 规则单独处理
+# 7. 支持命令行参数和交互式模式
+# 8. 自动同步到小火箭模块
+# ═══════════════════════════════════════════════════════════════════════════════
+# 
+# 使用方法：
+#   1. 自动扫描模式（默认）:
+#      ./merge_adblock_modules.sh
+#
+#   2. 指定单个模块:
+#      ./merge_adblock_modules.sh /path/to/module.sgmodule
+#
+#   3. 指定多个模块:
+#      ./merge_adblock_modules.sh module1.sgmodule module2.conf module3.yaml
+#
+#   4. 交互式选择模式:
+#      ./merge_adblock_modules.sh --interactive
+#
+#   5. 仅合并到 AdBlock_Merged.list（不更新模块）:
+#      ./merge_adblock_modules.sh --list-only
+#
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -43,9 +63,25 @@ ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.li
 TEMP_RULES_REJECT="$TEMP_DIR/rules_reject.tmp"
 TEMP_RULES_REJECT_DROP="$TEMP_DIR/rules_reject_drop.tmp"
 TEMP_RULES_REJECT_NO_DROP="$TEMP_DIR/rules_reject_no_drop.tmp"
+TEMP_RULES_DIRECT="$TEMP_DIR/rules_direct.tmp"
 TEMP_URL_REWRITE="$TEMP_DIR/url_rewrite.tmp"
 TEMP_HOST="$TEMP_DIR/host.tmp"
 TEMP_MITM="$TEMP_DIR/mitm.tmp"
+
+# 目标规则集
+CHINA_DIRECT_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/ChinaDirect.list"
+
+# 命令行参数
+INTERACTIVE_MODE=false
+LIST_ONLY_MODE=false
+AUTO_DELETE=false
+SPECIFIED_MODULES=()
+
+# 统计信息
+TOTAL_NEW_RULES=0
+TOTAL_NEW_DIRECT=0
+PROCESSED_MODULES=0
+MODULES_TO_DELETE=()
 
 # 日志函数
 log_info() {
@@ -69,6 +105,241 @@ log_section() {
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo -e "${BLUE}  $1${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+}
+
+# 解析命令行参数
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --interactive|-i)
+                INTERACTIVE_MODE=true
+                shift
+                ;;
+            --list-only|-l)
+                LIST_ONLY_MODE=true
+                shift
+                ;;
+            --auto-delete|-d)
+                AUTO_DELETE=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                # 检查是否是文件路径
+                if [[ -f "$1" ]]; then
+                    SPECIFIED_MODULES+=("$1")
+                else
+                    log_error "文件不存在: $1"
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+}
+
+# 显示帮助信息
+show_help() {
+    cat << EOF
+广告拦截模块智能合并脚本 v3.0
+
+使用方法:
+  $0 [选项] [模块文件...]
+
+选项:
+  -i, --interactive    交互式选择模块
+  -l, --list-only      仅合并到规则列表（不更新模块）
+  -d, --auto-delete    自动删除已处理的模块（需确认）
+  -h, --help           显示此帮助信息
+
+示例:
+  # 自动扫描并合并所有模块
+  $0
+
+  # 指定单个模块
+  $0 /path/to/module.sgmodule
+
+  # 指定多个模块
+  $0 module1.sgmodule module2.conf module3.yaml
+
+  # 交互式选择模块
+  $0 --interactive
+
+  # 仅合并到规则列表
+  $0 --list-only module.sgmodule
+
+支持的格式:
+  - Surge (.sgmodule, .conf)
+  - Shadowrocket (.module, .conf)
+  - Clash (.yaml, .yml)
+  - Quantumult X (.conf, .snippet)
+  - Loon (.plugin)
+
+EOF
+}
+
+# 检测模块格式
+detect_module_format() {
+    local file="$1"
+    local format="unknown"
+    
+    # 根据文件扩展名初步判断
+    case "${file##*.}" in
+        sgmodule)
+            format="surge"
+            ;;
+        module)
+            format="shadowrocket"
+            ;;
+        yaml|yml)
+            format="clash"
+            ;;
+        plugin)
+            format="loon"
+            ;;
+        conf)
+            # 需要检查内容来区分 Surge/Shadowrocket/Quantumult X
+            if grep -q "^\[Rule\]" "$file" 2>/dev/null; then
+                format="surge"
+            elif grep -q "^rules:" "$file" 2>/dev/null; then
+                format="clash"
+            elif grep -q "^hostname =" "$file" 2>/dev/null; then
+                format="quantumult_x"
+            fi
+            ;;
+        snippet)
+            format="quantumult_x"
+            ;;
+    esac
+    
+    echo "$format"
+}
+
+# 从 Clash 格式提取规则
+extract_rules_from_clash() {
+    local file="$1"
+    local new_rules=0
+    
+    log_info "处理 Clash 格式: $(basename "$file")"
+    
+    # 提取 rules 部分
+    local in_rules=false
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^rules: ]]; then
+            in_rules=true
+            continue
+        elif [[ "$line" =~ ^[a-zA-Z-]+: ]] && [[ "$in_rules" == true ]]; then
+            break
+        fi
+        
+        if [[ "$in_rules" == true ]] && [[ "$line" =~ ^[[:space:]]*- ]]; then
+            # 移除前导空格和 "- "
+            local rule=$(echo "$line" | sed 's/^[[:space:]]*- //')
+            
+            # 转换 Clash 格式到 Surge 格式
+            # Clash: DOMAIN-SUFFIX,example.com,REJECT
+            # Surge: DOMAIN-SUFFIX,example.com,REJECT
+            if [[ "$rule" =~ REJECT ]]; then
+                # 标准化规则
+                rule=$(echo "$rule" | sed 's/  */ /g')
+                
+                # 分类存储
+                if echo "$rule" | grep -q ",REJECT$"; then
+                    if ! grep -Fxq "$rule" "$TEMP_RULES_REJECT"; then
+                        echo "$rule" >> "$TEMP_RULES_REJECT"
+                        ((new_rules++))
+                    fi
+                fi
+            fi
+        fi
+    done < "$file"
+    
+    if [[ $new_rules -gt 0 ]]; then
+        log_success "从 Clash 模块提取 $new_rules 条规则"
+    fi
+    
+    echo $new_rules
+}
+
+# 从 Quantumult X 格式提取规则
+extract_rules_from_quantumult_x() {
+    local file="$1"
+    local new_rules=0
+    
+    log_info "处理 Quantumult X 格式: $(basename "$file")"
+    
+    # Quantumult X 格式: host-suffix, example.com, reject
+    while IFS= read -r line; do
+        if [[ -z "$line" ]] || [[ "$line" =~ ^# ]] || [[ "$line" =~ ^\; ]]; then
+            continue
+        fi
+        
+        if [[ "$line" =~ reject ]]; then
+            # 转换 Quantumult X 格式到 Surge 格式
+            # QX: host-suffix, example.com, reject
+            # Surge: DOMAIN-SUFFIX,example.com,REJECT
+            
+            local rule=$(echo "$line" | sed 's/host-suffix/DOMAIN-SUFFIX/g' | \
+                         sed 's/host/DOMAIN/g' | \
+                         sed 's/ip-cidr/IP-CIDR/g' | \
+                         sed 's/user-agent/USER-AGENT/g' | \
+                         sed 's/reject/REJECT/g' | \
+                         sed 's/, /,/g' | \
+                         sed 's/ ,/,/g')
+            
+            if ! grep -Fxq "$rule" "$TEMP_RULES_REJECT"; then
+                echo "$rule" >> "$TEMP_RULES_REJECT"
+                ((new_rules++))
+            fi
+        fi
+    done < "$file"
+    
+    if [[ $new_rules -gt 0 ]]; then
+        log_success "从 Quantumult X 模块提取 $new_rules 条规则"
+    fi
+    
+    echo $new_rules
+}
+
+# 从 Loon 格式提取规则
+extract_rules_from_loon() {
+    local file="$1"
+    local new_rules=0
+    
+    log_info "处理 Loon 格式: $(basename "$file")"
+    
+    # Loon 格式与 Surge 类似
+    local in_rule_section=false
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^\[Rule\] ]]; then
+            in_rule_section=true
+            continue
+        elif [[ "$line" =~ ^\[.*\] ]] && [[ "$in_rule_section" == true ]]; then
+            break
+        fi
+        
+        if [[ "$in_rule_section" == true ]] && [[ ! "$line" =~ ^# ]] && [[ ! -z "$line" ]]; then
+            if [[ "$line" =~ REJECT ]]; then
+                local rule=$(echo "$line" | sed 's/  */ /g')
+                
+                if echo "$rule" | grep -q ",REJECT,"; then
+                    if ! grep -Fxq "$rule" "$TEMP_RULES_REJECT"; then
+                        echo "$rule" >> "$TEMP_RULES_REJECT"
+                        ((new_rules++))
+                    fi
+                fi
+            fi
+        fi
+    done < "$file"
+    
+    if [[ $new_rules -gt 0 ]]; then
+        log_success "从 Loon 模块提取 $new_rules 条规则"
+    fi
+    
+    echo $new_rules
 }
 
 # 创建临时目录
@@ -117,6 +388,7 @@ extract_existing_rules() {
     grep ",REJECT," "$TEMP_DIR/existing_rules.tmp" 2>/dev/null | grep -v "REJECT-DROP" | grep -v "REJECT-NO-DROP" > "$TEMP_RULES_REJECT" || touch "$TEMP_RULES_REJECT"
     grep ",REJECT-DROP," "$TEMP_DIR/existing_rules.tmp" 2>/dev/null > "$TEMP_RULES_REJECT_DROP" || touch "$TEMP_RULES_REJECT_DROP"
     grep ",REJECT-NO-DROP," "$TEMP_DIR/existing_rules.tmp" 2>/dev/null > "$TEMP_RULES_REJECT_NO_DROP" || touch "$TEMP_RULES_REJECT_NO_DROP"
+    grep ",DIRECT" "$TEMP_DIR/existing_rules.tmp" 2>/dev/null > "$TEMP_RULES_DIRECT" || touch "$TEMP_RULES_DIRECT"
     
     # 提取 [URL Rewrite] 部分
     log_info "提取 URL Rewrite 规则..."
@@ -190,7 +462,7 @@ extract_existing_rules() {
     echo "  - Host: $host_count"
 }
 
-# 从指定模块提取规则
+# 从指定模块提取规则（智能识别格式）
 extract_rules_from_module() {
     local module_file="$1"
     local module_name=$(basename "$module_file")
@@ -203,17 +475,50 @@ extract_rules_from_module() {
     fi
     
     # 检查文件大小，跳过过大的文件（可能有问题）
-    local file_size=$(stat -f%z "$module_file" 2>/dev/null || echo "0")
-    if [[ $file_size -gt 100000 ]]; then
+    local file_size=$(stat -f%z "$module_file" 2>/dev/null || stat -c%s "$module_file" 2>/dev/null || echo "0")
+    if [[ $file_size -gt 500000 ]]; then
         log_warning "文件过大，跳过: $module_name ($(($file_size / 1024))KB)"
         return
     fi
     
+    # 检测模块格式
+    local format=$(detect_module_format "$module_file")
+    log_info "检测到格式: $format"
+    
     local new_rules=0
     
-    # 提取 Rule 规则 - 使用 grep 更高效
+    # 根据格式调用不同的提取函数
+    case "$format" in
+        clash)
+            new_rules=$(extract_rules_from_clash "$module_file" | tail -1) || new_rules=0
+            ;;
+        quantumult_x)
+            new_rules=$(extract_rules_from_quantumult_x "$module_file" | tail -1) || new_rules=0
+            ;;
+        loon)
+            new_rules=$(extract_rules_from_loon "$module_file" | tail -1) || new_rules=0
+            ;;
+        surge|shadowrocket|unknown)
+            # 使用原有的 Surge/Shadowrocket 提取逻辑
+            new_rules=$(extract_rules_surge_format "$module_file" | tail -1) || new_rules=0
+            ;;
+    esac
+    
+    # 确保new_rules是数字
+    [[ "$new_rules" =~ ^[0-9]+$ ]] || new_rules=0
+    
+    ((TOTAL_NEW_RULES += new_rules)) || true
+    ((PROCESSED_MODULES++)) || true
+}
+
+# 从 Surge/Shadowrocket 格式提取规则（原有逻辑）
+extract_rules_surge_format() {
+    local module_file="$1"
+    local new_rules=0
+    
+    # 提取 Rule 规则 - 使用 awk 更准确
     > "$TEMP_DIR/new_rules.tmp"
-    grep -A 1000 "^\[Rule\]" "$module_file" 2>/dev/null | grep -B 1000 "^\[" | grep -E "^(DOMAIN|IP-CIDR|USER-AGENT|URL-REGEX)" >> "$TEMP_DIR/new_rules.tmp" || true
+    awk '/^\[Rule\]/{flag=1;next}/^\[/{flag=0}flag && /^(DOMAIN|IP-CIDR|USER-AGENT|URL-REGEX|DEST-PORT|SRC-PORT|IP-ASN|GEOIP|PROCESS-NAME)/{print}' "$module_file" >> "$TEMP_DIR/new_rules.tmp" || true
     
     # 按策略分类并去重
     while IFS= read -r rule; do
@@ -224,20 +529,26 @@ extract_rules_from_module() {
         # 标准化规则（移除多余空格）
         rule=$(echo "$rule" | sed 's/  */ /g')
         
-        if echo "$rule" | grep -q ",REJECT-DROP,"; then
+        if echo "$rule" | grep -q ",REJECT-DROP"; then
             if ! grep -Fxq "$rule" "$TEMP_RULES_REJECT_DROP"; then
                 echo "$rule" >> "$TEMP_RULES_REJECT_DROP"
                 ((new_rules++))
             fi
-        elif echo "$rule" | grep -q ",REJECT-NO-DROP,"; then
+        elif echo "$rule" | grep -q ",REJECT-NO-DROP"; then
             if ! grep -Fxq "$rule" "$TEMP_RULES_REJECT_NO_DROP"; then
                 echo "$rule" >> "$TEMP_RULES_REJECT_NO_DROP"
                 ((new_rules++))
             fi
-        elif echo "$rule" | grep -q ",REJECT,"; then
+        elif echo "$rule" | grep -q ",REJECT"; then
             if ! grep -Fxq "$rule" "$TEMP_RULES_REJECT"; then
                 echo "$rule" >> "$TEMP_RULES_REJECT"
                 ((new_rules++))
+            fi
+        elif echo "$rule" | grep -q ",DIRECT"; then
+            if ! grep -Fxq "$rule" "$TEMP_RULES_DIRECT"; then
+                echo "$rule" >> "$TEMP_RULES_DIRECT"
+                ((new_rules++))
+                ((TOTAL_NEW_DIRECT++))
             fi
         fi
     done < "$TEMP_DIR/new_rules.tmp"
@@ -294,50 +605,150 @@ extract_rules_from_module() {
     else
         log_info "从 $module_name 未发现新规则"
     fi
+    
+    echo $new_rules
+}
+
+# 交互式选择模块
+interactive_select_modules() {
+    log_section "交互式选择模块"
+    
+    local all_modules=()
+    local module_formats=()
+    
+    # 扫描所有可能的模块目录
+    log_info "扫描模块文件..."
+    
+    # Surge 模块
+    if [[ -d "$SURGE_MODULE_DIR" ]]; then
+        while IFS= read -r -d '' module; do
+            if [[ "$module" != "$TARGET_MODULE" ]] && grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
+                all_modules+=("$module")
+                module_formats+=("$(detect_module_format "$module")")
+            fi
+        done < <(find "$SURGE_MODULE_DIR" -type f \( -name "*.sgmodule" -o -name "*.conf" \) -print0)
+    fi
+    
+    # Shadowrocket 模块
+    if [[ -d "$SHADOWROCKET_MODULE_DIR" ]]; then
+        while IFS= read -r -d '' module; do
+            local basename_module=$(basename "$module")
+            if [[ ! "$basename_module" =~ ^__ ]] && grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
+                all_modules+=("$module")
+                module_formats+=("$(detect_module_format "$module")")
+            fi
+        done < <(find "$SHADOWROCKET_MODULE_DIR" -type f \( -name "*.module" -o -name "*.conf" -o -name "*.sgmodule" \) -print0 2>/dev/null)
+    fi
+    
+    # 其他可能的目录（Clash、Quantumult X等）
+    for dir in "$PROJECT_ROOT/module"/*/ "$PROJECT_ROOT/conf"*/*/; do
+        if [[ -d "$dir" ]]; then
+            while IFS= read -r -d '' module; do
+                if grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
+                    all_modules+=("$module")
+                    module_formats+=("$(detect_module_format "$module")")
+                fi
+            done < <(find "$dir" -type f \( -name "*.yaml" -o -name "*.yml" -o -name "*.conf" -o -name "*.plugin" -o -name "*.snippet" \) -print0 2>/dev/null)
+        fi
+    done
+    
+    if [[ ${#all_modules[@]} -eq 0 ]]; then
+        log_error "未找到任何广告拦截模块"
+        return
+    fi
+    
+    log_success "找到 ${#all_modules[@]} 个模块"
+    echo ""
+    echo "请选择要合并的模块（输入序号，多个序号用空格分隔，输入 'all' 选择全部，输入 'q' 退出）:"
+    echo ""
+    
+    # 显示模块列表
+    for i in "${!all_modules[@]}"; do
+        local module="${all_modules[$i]}"
+        local format="${module_formats[$i]}"
+        local module_name=$(basename "$module")
+        local module_dir=$(dirname "$module" | sed "s|$PROJECT_ROOT/||")
+        printf "%3d) [%-12s] %s\n" $((i+1)) "$format" "$module_dir/$module_name"
+    done
+    
+    echo ""
+    read -p "请输入选择: " selection
+    
+    if [[ "$selection" == "q" ]]; then
+        log_info "用户取消操作"
+        exit 0
+    elif [[ "$selection" == "all" ]]; then
+        SPECIFIED_MODULES=("${all_modules[@]}")
+        log_success "已选择全部 ${#all_modules[@]} 个模块"
+    else
+        # 解析用户输入的序号
+        for num in $selection; do
+            if [[ "$num" =~ ^[0-9]+$ ]] && [[ $num -ge 1 ]] && [[ $num -le ${#all_modules[@]} ]]; then
+                SPECIFIED_MODULES+=("${all_modules[$((num-1))]}")
+            else
+                log_warning "无效的序号: $num"
+            fi
+        done
+        
+        if [[ ${#SPECIFIED_MODULES[@]} -eq 0 ]]; then
+            log_error "未选择任何有效的模块"
+            exit 1
+        fi
+        
+        log_success "已选择 ${#SPECIFIED_MODULES[@]} 个模块"
+    fi
 }
 
 # 扫描并处理所有模块
 scan_and_merge_modules() {
     log_section "扫描并合并模块"
     
+    # 如果指定了模块，只处理指定的模块
+    if [[ ${#SPECIFIED_MODULES[@]} -gt 0 ]]; then
+        log_info "处理指定的 ${#SPECIFIED_MODULES[@]} 个模块..."
+        for module in "${SPECIFIED_MODULES[@]}"; do
+            extract_rules_from_module "$module"
+        done
+        return
+    fi
+    
+    # 否则自动扫描
+    log_info "自动扫描模式..."
+    
     # 处理 Surge 模块
     log_info "扫描 Surge 模块目录..."
     if [[ -d "$SURGE_MODULE_DIR" ]]; then
-        for module in "$SURGE_MODULE_DIR"/*.sgmodule; do
+        for module in "$SURGE_MODULE_DIR"/*.sgmodule "$SURGE_MODULE_DIR"/*.conf; do
             if [[ -f "$module" ]] && [[ "$module" != "$TARGET_MODULE" ]]; then
                 # 只处理包含广告拦截相关的模块
-                if grep -qi "ad\|reject\|block" "$module"; then
+                if grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
                     extract_rules_from_module "$module"
                 fi
             fi
         done
     fi
     
-    # 处理小火箭模块（暂时禁用，因为有兼容性问题）
-    log_warning "小火箭模块扫描已禁用（存在兼容性问题）"
-    log_info "如需处理小火箭模块，请手动指定模块文件"
+    # 处理小火箭模块
+    if [[ -d "$SHADOWROCKET_MODULE_DIR" ]]; then
+        log_info "扫描 Shadowrocket 模块目录..."
+        for module in "$SHADOWROCKET_MODULE_DIR"/*.module "$SHADOWROCKET_MODULE_DIR"/*.conf "$SHADOWROCKET_MODULE_DIR"/*.sgmodule; do
+            if [[ -f "$module" ]]; then
+                local basename_module=$(basename "$module")
+                
+                # 跳过已同步的模块
+                if [[ "$basename_module" =~ ^__ ]] || [[ "$basename_module" =~ (Encrypted_DNS|URL_Rewrite|Firewall|General_Enhanced|Universal_Ad-Blocking) ]]; then
+                    continue
+                fi
+                
+                # 只处理包含广告拦截相关的模块
+                if grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
+                    extract_rules_from_module "$module"
+                fi
+            fi
+        done
+    fi
     
-    # TODO: 修复小火箭模块处理的兼容性问题
-    # if [[ -d "$SHADOWROCKET_MODULE_DIR" ]]; then
-    #     local processed=0
-    #     for module in "$SHADOWROCKET_MODULE_DIR"/*.sgmodule "$SHADOWROCKET_MODULE_DIR"/*.module; do
-    #         if [[ -f "$module" ]]; then
-    #             local basename_module=$(basename "$module")
-    #             
-    #             # 跳过已同步的模块（以__开头或包含特定名称）
-    #             if [[ "$basename_module" =~ ^__ ]] || [[ "$basename_module" =~ (Encrypted_DNS|URL_Rewrite|Firewall|General_Enhanced|Universal_Ad-Blocking) ]]; then
-    #                 continue
-    #             fi
-    #             
-    #             # 只处理包含广告拦截相关的模块
-    #             if grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
-    #                 extract_rules_from_module "$module"
-    #                 ((processed++))
-    #             fi
-    #         fi
-    #     done
-    #     log_info "小火箭模块处理完成，共处理 $processed 个模块"
-    # fi
+    log_info "自动扫描完成，共处理 $PROCESSED_MODULES 个模块"
 }
 
 # 生成新的模块文件
@@ -549,32 +960,98 @@ EOF
     log_info "总规则数: $existing_count + $new_count = $total_rules"
 }
 
-# 同步到小火箭
-sync_to_shadowrocket() {
-    log_section "同步到小火箭"
-    
-    if [[ ! -d "$SHADOWROCKET_MODULE_DIR" ]]; then
-        log_warning "小火箭模块目录不存在，跳过同步"
+# 合并DIRECT规则到ChinaDirect.list
+merge_to_direct_list() {
+    if [[ ! -s "$TEMP_RULES_DIRECT" ]]; then
+        log_info "无DIRECT规则需要合并"
         return
     fi
     
-    log_info "调用小火箭同步脚本..."
-    if [[ -f "$SCRIPT_DIR/sync_modules_to_shadowrocket.sh" ]]; then
-        bash "$SCRIPT_DIR/sync_modules_to_shadowrocket.sh" "$TARGET_MODULE"
-        log_success "已同步到小火箭"
-    else
-        log_warning "小火箭同步脚本不存在: $SCRIPT_DIR/sync_modules_to_shadowrocket.sh"
+    log_section "合并DIRECT规则到ChinaDirect.list"
+    
+    if [[ ! -f "$CHINA_DIRECT_LIST" ]]; then
+        log_warning "ChinaDirect.list不存在，跳过"
+        return
     fi
+    
+    cp "$CHINA_DIRECT_LIST" "$CHINA_DIRECT_LIST.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    local existing=$(grep -v "^#" "$CHINA_DIRECT_LIST" | grep -v "^$" | wc -l | tr -d ' ')
+    local new_count=0
+    
+    while IFS= read -r rule; do
+        if ! grep -Fxq "$rule" "$CHINA_DIRECT_LIST"; then
+            echo "$rule" >> "$CHINA_DIRECT_LIST"
+            ((new_count++))
+        fi
+    done < "$TEMP_RULES_DIRECT"
+    
+    log_success "新增 $new_count 条DIRECT规则（总计: $((existing + new_count))）"
+}
+
+# 安全删除已处理模块
+safe_delete_modules() {
+    if [[ ${#MODULES_TO_DELETE[@]} -eq 0 ]]; then
+        return
+    fi
+    
+    log_section "删除已处理模块"
+    
+    echo "以下模块已提取规则，可以删除："
+    for i in "${!MODULES_TO_DELETE[@]}"; do
+        echo "  $((i+1)). ${MODULES_TO_DELETE[$i]}"
+    done
+    
+    if [[ "$AUTO_DELETE" == false ]]; then
+        read -p "确认删除？(y/N): " confirm
+        if [[ "$confirm" != "y" ]] && [[ "$confirm" != "Y" ]]; then
+            log_info "取消删除"
+            return
+        fi
+    fi
+    
+    for module in "${MODULES_TO_DELETE[@]}"; do
+        rm -f "$module"
+        log_success "已删除: $(basename "$module")"
+    done
+}
+
+# 同步SRS规则
+sync_srs_rules() {
+    log_section "同步SRS规则（Sing-box）"
+    
+    local srs_script="$PROJECT_ROOT/scripts/network/batch_convert_to_singbox.sh"
+    
+    if [[ ! -f "$srs_script" ]]; then
+        log_warning "SRS转换脚本不存在: $srs_script"
+        return
+    fi
+    
+    log_info "调用SRS转换脚本..."
+    bash "$srs_script"
+    log_success "SRS规则已更新"
 }
 
 # 主函数
 main() {
-    log_section "广告拦截模块智能合并"
-    echo "目标模块: $TARGET_MODULE"
+    # 解析命令行参数
+    parse_arguments "$@"
+    
+    log_section "广告拦截模块智能合并 v3.0"
+    
+    if [[ "$LIST_ONLY_MODE" == false ]]; then
+        echo "目标模块: $TARGET_MODULE"
+    fi
+    echo "目标规则列表: $ADBLOCK_MERGED_LIST"
     echo ""
     
     # 创建临时目录
     create_temp_dir
+    
+    # 交互式选择模式
+    if [[ "$INTERACTIVE_MODE" == true ]]; then
+        interactive_select_modules
+    fi
     
     # 提取现有规则
     extract_existing_rules
@@ -582,14 +1059,32 @@ main() {
     # 扫描并合并所有模块
     scan_and_merge_modules
     
-    # 生成新模块
-    generate_new_module
+    # 显示统计信息
+    log_section "统计信息"
+    log_info "处理模块数: $PROCESSED_MODULES"
+    log_info "新增规则数: $TOTAL_NEW_RULES"
+    
+    # 生成新模块（除非是 list-only 模式）
+    if [[ "$LIST_ONLY_MODE" == false ]]; then
+        generate_new_module
+    else
+        log_info "跳过模块生成（list-only 模式）"
+    fi
     
     # 合并规则到 AdBlock_Merged.list
     merge_to_adblock_list
     
-    # 同步到小火箭
-    sync_to_shadowrocket
+    # 合并DIRECT规则
+    merge_to_direct_list
+    
+    # 同步SRS规则
+    sync_srs_rules
+    
+    # 安全删除已处理模块
+    if [[ "$AUTO_DELETE" == true ]] || [[ ${#SPECIFIED_MODULES[@]} -gt 0 ]]; then
+        MODULES_TO_DELETE=("${SPECIFIED_MODULES[@]}")
+        safe_delete_modules
+    fi
     
     # 清理临时目录
     cleanup_temp_dir
@@ -597,10 +1092,24 @@ main() {
     log_section "完成"
     log_success "广告拦截模块合并完成！"
     echo ""
-    echo "下一步："
-    echo "1. 检查生成的模块: $TARGET_MODULE"
-    echo "2. 如有问题，可恢复备份: $TARGET_MODULE.backup.*"
-    echo "3. 提交到 Git: git add . && git commit -m 'feat: 合并广告拦截模块规则'"
+    echo "📊 最终统计:"
+    echo "  - 处理模块: $PROCESSED_MODULES 个"
+    echo "  - 新增REJECT规则: $TOTAL_NEW_RULES 条"
+    echo "  - 新增DIRECT规则: $TOTAL_NEW_DIRECT 条"
+    echo ""
+    
+    if [[ "$LIST_ONLY_MODE" == false ]]; then
+        echo "📝 下一步："
+        echo "  1. 检查生成的模块: $TARGET_MODULE"
+        echo "  2. 检查规则列表: $ADBLOCK_MERGED_LIST"
+        echo "  3. 如有问题，可恢复备份: *.backup.*"
+        echo "  4. 提交到 Git: git add . && git commit -m 'feat: 合并广告拦截模块规则'"
+    else
+        echo "📝 下一步："
+        echo "  1. 检查规则列表: $ADBLOCK_MERGED_LIST"
+        echo "  2. 如有问题，可恢复备份: $ADBLOCK_MERGED_LIST.backup.*"
+        echo "  3. 提交到 Git: git add . && git commit -m 'feat: 更新广告拦截规则列表'"
+    fi
 }
 
 # 执行主函数
