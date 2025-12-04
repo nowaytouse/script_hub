@@ -10,8 +10,6 @@
 # 4. 支持选择性同步或全部同步
 # ═══════════════════════════════════════════════════════════════════════════════
 
-set -e
-
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -25,12 +23,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCE_DIR="$PROJECT_ROOT/module/surge(main)"
 
-# ⚠️ 请修改以下路径为你的实际 iCloud 目录
-# Surge iCloud 路径示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents
-SURGE_ICLOUD_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
-
-# Shadowrocket iCloud 路径示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
-SHADOWROCKET_ICLOUD_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
+# iCloud 目录配置
+SURGE_ICLOUD_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
+SHADOWROCKET_ICLOUD_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents"
 
 # 敏感信息关键词（用于排除）
 SENSITIVE_KEYWORDS=(
@@ -162,15 +157,12 @@ sync_to_shadowrocket() {
         return
     fi
     
-    # 转换并复制到 Shadowrocket iCloud
-    # Shadowrocket 使用 __ 前缀标识从 Surge 同步的模块
-    local sr_module_name="__${module_name}"
-    local temp_file="/tmp/${sr_module_name}"
-    
-    convert_to_shadowrocket "$module_file" "$temp_file"
-    mv "$temp_file" "$SHADOWROCKET_ICLOUD_DIR/$sr_module_name"
-    
-    log_success "Shadowrocket: $sr_module_name"
+    # 直接复制到 Shadowrocket iCloud（不转换，保持兼容性）
+    if cp "$module_file" "$SHADOWROCKET_ICLOUD_DIR/$module_name" 2>/dev/null; then
+        log_success "Shadowrocket: $module_name"
+    else
+        log_warning "Shadowrocket同步失败: $module_name"
+    fi
 }
 
 # 同步所有模块
@@ -279,13 +271,34 @@ list_modules() {
     echo "敏感文件: $sensitive_count 个（将被跳过）"
 }
 
-# 清理旧的同步文件
-clean_old_synced_files() {
-    log_section "清理旧的同步文件"
+# 清理重复模块
+clean_duplicate_modules() {
+    log_section "清理重复模块"
+    
+    local cleaned=0
+    
+    # 清理 Surge iCloud 中的重复模块
+    if [[ "$SURGE_AVAILABLE" == true ]]; then
+        log_info "检查 Surge iCloud 重复模块..."
+        
+        # 已知重复模块列表
+        local duplicates=(
+            "🔐加密dns.sgmodule"  # 与 "Encrypted DNS Module 🔒🛡️DNS.sgmodule" 重复
+        )
+        
+        for dup in "${duplicates[@]}"; do
+            local dup_file="$SURGE_ICLOUD_DIR/$dup"
+            if [[ -f "$dup_file" ]]; then
+                rm "$dup_file"
+                log_success "删除重复: $dup"
+                ((cleaned++))
+            fi
+        done
+    fi
     
     # 清理 Shadowrocket 中以 __ 开头的旧文件
     if [[ "$SHADOWROCKET_AVAILABLE" == true ]]; then
-        local cleaned=0
+        log_info "清理 Shadowrocket 旧同步文件..."
         for old_file in "$SHADOWROCKET_ICLOUD_DIR"/__*.sgmodule; do
             if [[ -f "$old_file" ]]; then
                 rm "$old_file"
@@ -293,7 +306,12 @@ clean_old_synced_files() {
                 ((cleaned++))
             fi
         done
-        log_success "Shadowrocket: 清理 $cleaned 个旧文件"
+    fi
+    
+    if [[ $cleaned -eq 0 ]]; then
+        log_info "未发现重复或旧文件"
+    else
+        log_success "总计清理: $cleaned 个文件"
     fi
 }
 
@@ -349,10 +367,11 @@ main() {
             exit 0
             ;;
         -c|--clean)
-            clean_old_synced_files
+            clean_duplicate_modules
             exit 0
             ;;
         -a|--all|"")
+            clean_duplicate_modules
             sync_all_modules
             ;;
         *)
