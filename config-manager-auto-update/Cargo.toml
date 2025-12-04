@@ -1,0 +1,79 @@
+[package]
+name = "singbox-manager"
+version = "2.0.0"
+edition = "2021"
+authors = ["Your Name"]
+description = "跨平台的 Sing-box 配置与核心自动更新工具"
+license = "MIT"
+repository = "https://github.com/yourusername/singbox-manager"
+
+[dependencies]
+# 异步运行时
+tokio = { version = "1.35", features = ["full"] }
+
+# HTTP 客户端
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# JSON 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 日志
+log = "0.4"
+env_logger = "0.11"
+
+# 错误处理
+anyhow = "1.0"
+thiserror = "1.0"
+
+# 时间处理
+chrono = "0.4"
+
+# 文件系统操作
+walkdir = "2.4"
+
+# 压缩包处理
+tar = "0.4"
+flate2 = "1.0"
+zip = "0.6"
+
+# 命令行参数解析
+clap = { version = "4.4", features = ["derive"] }
+
+# 跨平台路径
+directories = "5.0"
+
+# UUID 生成
+uuid = { version = "1.6", features = ["v4"] }
+
+# 定时任务
+tokio-cron-scheduler = "0.10"
+
+# 交互式 CLI - 使用标准库实现
+
+[dev-dependencies]
+tempfile = "3.8"
+
+[lib]
+name = "singbox_manager"
+path = "src/lib.rs"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winuser"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 0
+
+[[bin]]
+name = "singbox-manager"
+path = "src/main.rs"
+
