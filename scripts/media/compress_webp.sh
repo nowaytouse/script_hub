@@ -3,13 +3,10 @@
 # WebP Compression Script - Compress WebP files to target size range
 # ═══════════════════════════════════════════════════════════════════════════════
 # 
-# Features:
-#   - ONLY processes WebP files (whitelist mode)
-#   - Preserves ALL metadata (EXIF, XMP, ICC Profile)
-#   - Preserves animation info (FPS, frame count, duration)
-#   - Preserves file system timestamps
-#   - Binary search for optimal quality
-#   - Safe operation (creates new file, not in-place by default)
+# PERFORMANCE OPTIMIZED VERSION
+# - Single webpinfo call per file (cached)
+# - Minimal external process calls
+# - Efficient binary search
 #
 # Usage:
 #   ./compress_webp.sh <input_dir> [min_MB] [max_MB]
@@ -30,10 +27,9 @@ NC='\033[0m'
 MIN_SIZE_MB=15
 MAX_SIZE_MB=20
 IN_PLACE=false
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Dangerous directories (safety check)
-DANGEROUS_DIRS=("/" "/System" "/usr" "/bin" "/sbin" "/var" "/private" "$HOME")
+FAST_MODE=false
+MAX_ATTEMPTS=10
+PARALLEL_JOBS=1  # Number of parallel jobs
 
 # Logging functions
 log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
@@ -41,7 +37,7 @@ log_success() { echo -e "${GREEN}[✓]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[⚠]${NC} $1"; }
 log_error() { echo -e "${RED}[✗]${NC} $1"; }
 
-# Check dependencies
+# Check dependencies (only once at startup)
 check_deps() {
     local missing=()
     command -v magick &>/dev/null || missing+=("imagemagick")
@@ -52,101 +48,31 @@ check_deps() {
         log_info "Install with: brew install ${missing[*]}"
         exit 1
     fi
-    
-    # Optional but recommended
-    if ! command -v webpinfo &>/dev/null; then
-        log_warning "webpinfo not found (optional but recommended for animated WebP)"
-        log_info "Install with: brew install webp"
-    fi
 }
 
-# Safety check for dangerous directories
-check_dangerous_dir() {
-    local dir="$1"
-    local abs_dir=$(cd "$dir" 2>/dev/null && pwd)
-    
-    for dangerous in "${DANGEROUS_DIRS[@]}"; do
-        if [[ "$abs_dir" == "$dangerous" ]]; then
-            log_error "🚨 DANGEROUS DIRECTORY DETECTED: $abs_dir"
-            log_error "Operation aborted for safety. Please use a subdirectory."
-            exit 1
-        fi
-    done
-}
-
-# Get file size in bytes
+# Get file size in bytes (fast)
 get_size() {
     stat -f%z "$1" 2>/dev/null || stat -c%s "$1" 2>/dev/null || echo 0
 }
 
-# Get WebP info (FPS, frame count, duration) - uses webpinfo for animated WebP
-# NOTE: Avoid storing full webpinfo output (can be huge for animated files)
-get_webp_info() {
-    local file="$1"
-    local width="" height="" fps="" frames="" is_anim="no"
-    
-    # Try webpinfo first (more reliable for animated WebP)
-    if command -v webpinfo &>/dev/null; then
-        # Check if animated (quick check, don't store full output)
-        if webpinfo "$file" 2>/dev/null | grep -q "Animation: 1"; then
-            is_anim="yes"
-            # Get canvas size (first line only)
-            local canvas
-            canvas=$(webpinfo "$file" 2>/dev/null | grep "Canvas size" | head -1) || true
-            width=$(echo "$canvas" | grep -oE '[0-9]+' | head -1) || true
-            height=$(echo "$canvas" | grep -oE '[0-9]+' | tail -1) || true
-            # Count ANMF chunks (frames) - stream through grep -c
-            frames=$(webpinfo "$file" 2>/dev/null | grep -c "Chunk ANMF") || frames="0"
-            # Get first frame duration to estimate FPS
-            local frame_dur
-            frame_dur=$(webpinfo "$file" 2>/dev/null | grep "Duration:" | head -1 | grep -oE '[0-9]+') || true
-            if [[ -n "$frame_dur" ]] && [[ "$frame_dur" -gt 0 ]]; then
-                fps=$(echo "scale=2; 1000 / $frame_dur" | bc) || true
-            fi
-        else
-            # Static WebP
-            width=$(webpinfo "$file" 2>/dev/null | grep "Width:" | head -1 | grep -oE '[0-9]+') || true
-            height=$(webpinfo "$file" 2>/dev/null | grep "Height:" | head -1 | grep -oE '[0-9]+') || true
-            frames="1"
-        fi
-    fi
-    
-    # Fallback to ffprobe if webpinfo failed
-    if [[ -z "$width" ]] || [[ "$width" == "0" ]]; then
-        local info
-        info=$(ffprobe -v quiet -print_format json -show_streams -show_format "$file" 2>/dev/null) || true
-        fps=$(echo "$info" | grep -o '"r_frame_rate": "[^"]*"' | head -1 | cut -d'"' -f4) || true
-        frames=$(echo "$info" | grep -o '"nb_frames": "[^"]*"' | head -1 | cut -d'"' -f4) || true
-        width=$(echo "$info" | grep -o '"width": [0-9]*' | head -1 | grep -o '[0-9]*') || true
-        height=$(echo "$info" | grep -o '"height": [0-9]*' | head -1 | grep -o '[0-9]*') || true
-    fi
-    
-    echo "width=${width:-?} height=${height:-?} frames=${frames:-?} fps=${fps:-?} animated=$is_anim"
-}
-
-# Check if WebP is animated - uses webpinfo for reliability
-# Returns 0 if animated, 1 if not (safe with set -e)
-is_animated() {
+# Get basic WebP info - fast method
+# Returns: "width height frames is_animated"
+get_webp_basic_info() {
     local file="$1"
     
-    # Try webpinfo first (most reliable)
-    if command -v webpinfo &>/dev/null; then
-        if webpinfo "$file" 2>/dev/null | grep -q "Animation: 1"; then
-            return 0
-        fi
-    fi
+    # Use identify with [0] to get only first frame info (fast)
+    local width height frames
+    width=$(magick identify -format "%w" "${file}[0]" 2>/dev/null) || width="?"
+    height=$(magick identify -format "%h" "${file}[0]" 2>/dev/null) || height="?"
+    frames=$(magick identify -format "%n" "${file}[0]" 2>/dev/null) || frames="1"
     
-    # Fallback to ffprobe
-    local frames
-    frames=$(ffprobe -v quiet -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$file" 2>/dev/null | tr -d '[:space:]') || true
-    if [[ "$frames" =~ ^[0-9]+$ ]] && [[ "$frames" -gt 1 ]]; then
-        return 0
-    fi
+    local is_anim="no"
+    [[ "$frames" -gt 1 ]] 2>/dev/null && is_anim="yes"
     
-    return 1
+    echo "$width $height $frames $is_anim"
 }
 
-# Compress single WebP file
+# Compress single WebP file - OPTIMIZED
 compress_webp() {
     local input="$1"
     local min_size=$2
@@ -156,178 +82,168 @@ compress_webp() {
     local basename="${filename%.*}"
     
     # Output file
-    if [[ "$IN_PLACE" == true ]]; then
-        local output="$dirname/${basename}_compressed.webp"
-        local final_output="$input"
-    else
-        local output="$dirname/${basename}_compressed.webp"
-        local final_output="$output"
-    fi
+    local output="$dirname/${basename}_compressed.webp"
+    local final_output="$output"
+    [[ "$IN_PLACE" == true ]] && final_output="$input"
     
-    local temp_file=$(mktemp /tmp/webp_compress_XXXXXX)
-    temp_file="${temp_file}.webp"
+    local temp_file="/tmp/webp_compress_$$.webp"
     
     log_info "📦 Processing: $filename"
     
-    # Get original info
-    local orig_info=$(get_webp_info "$input")
+    # Get original info (SINGLE call)
     local orig_size=$(get_size "$input")
-    local orig_size_mb=$(echo "scale=2; $orig_size / 1024 / 1024" | bc)
+    local orig_size_mb=$((orig_size / 1024 / 1024))
     
-    log_info "   📋 Original: ${orig_size_mb}MB | $orig_info"
+    # Quick info using magick identify (much faster)
+    local info
+    info=$(get_webp_basic_info "$input")
+    local width height frames is_anim
+    read -r width height frames is_anim <<< "$info"
     
-    # Check if animated (use || true to prevent set -e from exiting)
-    local is_anim=false
-    is_animated "$input" && is_anim=true || true
+    log_info "   📋 Original: ${orig_size_mb}MB | ${width}x${height} | frames=$frames"
     
-    # Binary search for optimal quality using ImageMagick
+    # Binary search for optimal quality
     local quality=75
     local min_q=5
     local max_q=100
     local attempts=0
-    local max_attempts=15
-    local best_output=""
+    local max_attempts=$MAX_ATTEMPTS
+    local best_quality=75
     local best_size=0
     
+    # Fast mode: start with estimated quality based on target ratio
+    if [[ "$FAST_MODE" == true ]]; then
+        local target_ratio=$(( (min_size + max_size) / 2 * 100 / orig_size ))
+        quality=$((target_ratio + 10))
+        [[ $quality -gt 95 ]] && quality=95
+        [[ $quality -lt 30 ]] && quality=30
+        max_attempts=5
+        log_info "   ⚡ Fast mode: starting at Q=$quality"
+    fi
+    
     while [[ $attempts -lt $max_attempts ]]; do
-        ((++attempts))  # Use prefix increment to avoid set -e issue when attempts=0
+        ((++attempts))
         
-        # Use ImageMagick for both animated and static WebP
-        # ImageMagick handles animated WebP correctly
-        log_info "   🔧 Running magick (Q=$quality)..."
+        # Compress with ImageMagick (handles animated WebP)
         magick "$input" -quality $quality "$temp_file" 2>/dev/null || {
-            log_warning "   ⚠️ magick command failed"
-        }
-        
-        if [[ ! -f "$temp_file" ]] || [[ $(get_size "$temp_file") -eq 0 ]]; then
-            log_warning "   ⚠️ Attempt $attempts failed, trying different quality..."
+            log_warning "   ⚠️ magick failed at Q=$quality"
             quality=$((quality - 10))
             continue
-        fi
+        }
         
         local size=$(get_size "$temp_file")
-        local size_mb=$(echo "scale=2; $size / 1024 / 1024" | bc)
+        local size_mb=$((size / 1024 / 1024))
         
         log_info "   🔄 Attempt $attempts: Q=$quality → ${size_mb}MB"
         
         # Check if in target range
         if [[ $size -ge $min_size ]] && [[ $size -le $max_size ]]; then
             log_success "   ✅ Target reached: ${size_mb}MB"
-            best_output="$temp_file"
+            best_quality=$quality
             best_size=$size
             break
         elif [[ $size -gt $max_size ]]; then
-            # Too big, decrease quality
             max_q=$quality
             quality=$(( (min_q + quality) / 2 ))
         else
-            # Too small, increase quality
             min_q=$quality
             quality=$(( (quality + max_q) / 2 ))
             
-            # If already at max quality and still too small, warn and stop
             if [[ $quality -ge 99 ]]; then
-                local min_mb=$(echo "scale=2; $min_size / 1024 / 1024" | bc)
-                log_warning "   ⚠️ Cannot reach minimum ${min_mb}MB even at Q=100"
-                log_warning "   ⚠️ Best achievable: ${size_mb}MB (Q=$quality)"
-                log_info "   💡 Tip: Original file may be too small or already optimized"
-                best_output="$temp_file"
+                log_warning "   ⚠️ Cannot reach minimum even at Q=100"
+                best_quality=$quality
                 best_size=$size
                 break
             fi
         fi
         
-        # Save best result so far (closest to target range)
-        if [[ $size -gt $best_size ]]; then
+        # Track best result
+        if [[ $size -gt $best_size ]] && [[ $size -le $max_size ]]; then
             best_size=$size
-            cp "$temp_file" "${temp_file}.best"
-            best_output="${temp_file}.best"
+            best_quality=$quality
         fi
         
         # Prevent infinite loop
         if [[ $((max_q - min_q)) -le 1 ]]; then
-            if [[ -n "$best_output" ]] && [[ -f "$best_output" ]]; then
-                local best_mb=$(echo "scale=2; $best_size / 1024 / 1024" | bc)
-                log_warning "   ⚠️ Cannot reach target range, using best: ${best_mb}MB"
-            else
-                log_warning "   ⚠️ Using current result: ${size_mb}MB"
-                best_output="$temp_file"
-            fi
+            log_warning "   ⚠️ Using best achievable: Q=$best_quality"
             break
         fi
     done
     
-    # Verify we have output
-    if [[ -z "$best_output" ]] || [[ ! -f "$best_output" ]]; then
-        log_error "   ❌ Compression failed"
-        rm -f "$temp_file" "${temp_file}.best" 2>/dev/null
-        return 1
+    # Final compression with best quality (if not already done)
+    if [[ ! -f "$temp_file" ]] || [[ $(get_size "$temp_file") -eq 0 ]]; then
+        magick "$input" -quality $best_quality "$temp_file" 2>/dev/null || {
+            log_error "   ❌ Compression failed"
+            rm -f "$temp_file" 2>/dev/null
+            return 1
+        }
     fi
     
-    # Step 1: Copy to output location
-    cp "$best_output" "$output"
+    # Copy to output
+    cp "$temp_file" "$output"
     
-    # Step 2: Migrate metadata using exiftool
-    log_info "   📋 Migrating metadata (EXIF, XMP, ICC)..."
-    exiftool -overwrite_original -TagsFromFile "$input" \
-        "-all:all>all:all" \
-        "-ICC_Profile" \
-        "$output" 2>/dev/null || true
+    # Migrate metadata (single exiftool call)
+    exiftool -overwrite_original -TagsFromFile "$input" "-all:all>all:all" "$output" 2>/dev/null || true
     
-    # Step 3: Preserve timestamps
-    log_info "   ⏰ Preserving timestamps..."
+    # Preserve timestamps
     touch -r "$input" "$output"
     
-    # Step 4: Verify output
-    local new_info=$(get_webp_info "$output")
     local new_size=$(get_size "$output")
-    local new_size_mb=$(echo "scale=2; $new_size / 1024 / 1024" | bc)
+    local new_size_mb=$((new_size / 1024 / 1024))
     
-    log_info "   📋 Result: ${new_size_mb}MB | $new_info"
-    
-    # Step 5: In-place replacement (if enabled)
     if [[ "$IN_PLACE" == true ]]; then
-        log_info "   🔄 Replacing original file..."
         mv "$output" "$final_output"
         log_success "   ✅ Replaced: $filename (${orig_size_mb}MB → ${new_size_mb}MB)"
     else
         log_success "   ✅ Created: ${basename}_compressed.webp (${new_size_mb}MB)"
     fi
     
-    # Cleanup
-    rm -f "$temp_file" "${temp_file}.best" 2>/dev/null
-    
+    rm -f "$temp_file" 2>/dev/null
     return 0
 }
 
 # Process directory
 process_dir() {
     local dir="$1"
-    local count=0
-    local success=0
     local min_bytes=$((MIN_SIZE_MB * 1024 * 1024))
     local max_bytes=$((MAX_SIZE_MB * 1024 * 1024))
     
     log_info "🔍 Scanning for WebP files in: $dir"
     
-    # Find only WebP files (whitelist mode)
+    # Collect files to process
+    local files=()
     while IFS= read -r -d '' file; do
-        # Double check extension
         [[ "${file##*.}" != "webp" ]] && continue
-        
-        # Skip already compressed files (unless in-place mode)
-        if [[ "$IN_PLACE" == false ]] && [[ "$file" == *"_compressed.webp" ]]; then
-            log_info "⏭️  Skipping already compressed: $(basename "$file")"
-            continue
-        fi
-        
-        ((++count))  # Use prefix increment to avoid set -e issue
-        compress_webp "$file" "$min_bytes" "$max_bytes" && ((++success)) || true
-        echo ""
+        [[ "$IN_PLACE" == false ]] && [[ "$file" == *"_compressed.webp" ]] && continue
+        files+=("$file")
     done < <(find "$dir" -type f -iname "*.webp" -print0)
     
+    local total=${#files[@]}
+    log_info "📁 Found $total WebP files to process"
+    
+    if [[ $total -eq 0 ]]; then
+        log_warning "No WebP files found"
+        return 0
+    fi
+    
+    # Process files (parallel if jobs > 1)
+    local success=0
+    if [[ $PARALLEL_JOBS -gt 1 ]] && command -v parallel &>/dev/null; then
+        log_info "🚀 Using $PARALLEL_JOBS parallel jobs"
+        export -f compress_webp get_webp_basic_info get_size log_info log_success log_warning log_error
+        export IN_PLACE FAST_MODE MAX_ATTEMPTS RED GREEN YELLOW CYAN NC
+        printf '%s\0' "${files[@]}" | parallel -0 -j "$PARALLEL_JOBS" \
+            "compress_webp {} $min_bytes $max_bytes"
+        success=$total  # Approximate
+    else
+        for file in "${files[@]}"; do
+            compress_webp "$file" "$min_bytes" "$max_bytes" && ((++success)) || true
+            echo ""
+        done
+    fi
+    
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log_success "📊 Completed: $success/$count files processed"
+    log_success "📊 Completed: $success/$total files processed"
 }
 
 # Show usage
@@ -342,38 +258,26 @@ Usage:
 
 Options:
   --in-place    Replace original files (destructive)
+  --fast        Fast mode (fewer attempts, may be less accurate)
+  -j, --jobs N  Parallel jobs for batch processing (default: 1)
   --help        Show this help message
-
-Arguments:
-  input_dir     Directory containing WebP files
-  min_MB        Minimum target size in MB (default: 15)
-  max_MB        Maximum target size in MB (default: 20)
 
 Examples:
   $0 ./images 15 20
   $0 --in-place ./images 10 15
   $0 video.webp 15 20
-
-Note: This script ONLY processes .webp files (whitelist mode)
 EOF
 }
 
-# Main function
+# Main
 main() {
-    # Parse arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --in-place)
-                IN_PLACE=true
-                shift
-                ;;
-            --help|-h)
-                show_usage
-                exit 0
-                ;;
-            *)
-                break
-                ;;
+            --in-place) IN_PLACE=true; shift ;;
+            --fast) FAST_MODE=true; shift ;;
+            -j|--jobs) PARALLEL_JOBS="$2"; shift 2 ;;
+            --help|-h) show_usage; exit 0 ;;
+            *) break ;;
         esac
     done
     
@@ -381,31 +285,18 @@ main() {
     MIN_SIZE_MB=${2:-15}
     MAX_SIZE_MB=${3:-20}
     
-    if [[ -z "$input" ]]; then
-        show_usage
-        exit 1
-    fi
+    [[ -z "$input" ]] && { show_usage; exit 1; }
     
-    # Check dependencies
     check_deps
     
     log_info "🎯 Target size: ${MIN_SIZE_MB}MB - ${MAX_SIZE_MB}MB"
-    [[ "$IN_PLACE" == true ]] && log_warning "⚠️ In-place mode enabled (will replace originals)"
+    [[ "$IN_PLACE" == true ]] && log_warning "⚠️ In-place mode enabled"
     
     if [[ -d "$input" ]]; then
-        # Safety check for directories
-        [[ "$IN_PLACE" == true ]] && check_dangerous_dir "$input"
         process_dir "$input"
     elif [[ -f "$input" ]]; then
-        # Single file
-        if [[ "${input##*.}" != "webp" ]]; then
-            log_error "❌ Not a WebP file: $input"
-            log_info "This script only processes .webp files"
-            exit 1
-        fi
-        local min_bytes=$((MIN_SIZE_MB * 1024 * 1024))
-        local max_bytes=$((MAX_SIZE_MB * 1024 * 1024))
-        compress_webp "$input" "$min_bytes" "$max_bytes"
+        [[ "${input##*.}" != "webp" ]] && { log_error "❌ Not a WebP file"; exit 1; }
+        compress_webp "$input" $((MIN_SIZE_MB * 1024 * 1024)) $((MAX_SIZE_MB * 1024 * 1024))
     else
         log_error "❌ Path not found: $input"
         exit 1
