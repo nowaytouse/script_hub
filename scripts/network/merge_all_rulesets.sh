@@ -46,12 +46,12 @@ extract_rules() {
             # 构建输出
             out = $1 "," val;
             
-            # 处理后续字段 (保留 no-resolve 等，过滤策略)
+            # 处理后续字段 (只保留 no-resolve，过滤策略和其他 Profile 选项)
             for(i=3; i<=NF; i++) {
                 # 去除首尾空格
                 gsub(/^[ \t]+|[ \t]+$/, "", $i);
-                # 过滤策略关键词和空字段
-                if($i != "" && $i !~ /^(REJECT|reject|DIRECT|direct|PROXY|proxy|REJECT-DROP|REJECT-NO-DROP)$/) {
+                # 只保留 no-resolve，忽略其他所有选项 (如 pre-matching, extended-matching, REJECT 等)
+                if($i == "no-resolve") {
                     out = out "," $i;
                 }
             }
