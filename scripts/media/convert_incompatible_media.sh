@@ -502,7 +502,7 @@ verify_metadata_preservation() {
         fi
         
         # Verify Duration preservation (within 1% tolerance)
-        if [ -n "$orig_duration" ] && [ -n "$conv_duration" ]; then
+        if [ -n "$orig_duration" ] && [ -n "$conv_duration" ] && [ "$conv_duration" != "N/A" ]; then
             local duration_diff=$(awk "BEGIN {printf \"%.2f\", ($conv_duration - $orig_duration) / $orig_duration * 100}")
             if (( $(awk "BEGIN {print ($duration_diff < 1.0 && $duration_diff > -1.0) ? 1 : 0}") )); then
                 echo "    ✅ Duration: PRESERVED (≤1% difference)"
@@ -825,8 +825,8 @@ convert_mp4_to_webp() {
     # Direct ffmpeg execution without pipe blocking
     # compression_level 2 for faster speed
     # -nostdin prevents interactive mode
-    # Using -fps_mode cfr and -framerate for exact FPS preservation
-    if ffmpeg -nostdin -framerate "$fps" -i "$input" \
+    # -fps_mode cfr preserves exact FPS from input
+    if ffmpeg -nostdin -i "$input" \
         -c:v libwebp \
         -lossless 1 \
         -quality 100 \
