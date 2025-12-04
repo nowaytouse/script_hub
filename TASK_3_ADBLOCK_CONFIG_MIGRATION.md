@@ -97,9 +97,11 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/
 ### 4. **Shadowrocket 配置**
 
 **说明**:
-- ⚠️ `conf隐私🔏/shadowroket.conf` 已在 `.gitignore` 中排除
-- ✅ 用户需要手动在 Shadowrocket 配置中添加以下规则：
+- ✅ `conf隐私🔏/shadowroket.conf` 已添加 AdBlock_Merged.list
+- ✅ 已在 `.gitignore` 中排除，不会提交到仓库
+- ✅ 用户本地保留修改
 
+**已添加的规则**:
 ```
 [Rule]
 # ═══════════════════════════════════════════════════════════════
@@ -107,9 +109,6 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/
 # Updated: 2025-12-04 | Moved from module to main config
 # ═══════════════════════════════════════════════════════════════
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT
-
-# 特殊域名 (最小化零散规则)
-...
 ```
 
 **注意**: Shadowrocket 不支持 `extended-matching`, `pre-matching` 等参数，只需要基本的 RULE-SET 语法。
@@ -119,7 +118,7 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/
 | 代理软件 | AdBlock 规则位置 | 状态 | 规则数量 |
 |---------|----------------|------|---------|
 | **Surge** | `surge_profile_template.conf` [Rule] 部分 | ✅ 已添加 | 235,648 |
-| **Shadowrocket** | 用户手动添加到 [Rule] 部分 | ⚠️ 需手动 | 235,648 |
+| **Shadowrocket** | `conf隐私🔏/shadowroket.conf` [Rule] 部分 | ✅ 已添加 | 235,648 |
 | **SingBox** | `Singbox_substore_1.13.0+.json` rule_set | ✅ 已配置 | 235,455 |
 | **模块** | 已移除 | ✅ 完成 | - |
 
@@ -216,8 +215,10 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/
 - `module/surge(main)/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule`
 - `module/surge(main)/surge_profile_template.conf`
 
+**已修改但不提交的文件**:
+- `conf隐私🔏/shadowroket.conf` (已添加 AdBlock_Merged.list，已在 .gitignore 中排除)
+
 **未修改文件**:
-- `conf隐私🔏/shadowroket.conf` (已在 .gitignore 中排除)
 - `substore/Singbox_substore_1.13.0+.json` (已正确配置，无需修改)
 
 ---
