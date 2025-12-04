@@ -2,8 +2,9 @@
 # Policy Group: Various (depends on region requirements)
 # Purpose: Adult content that may need specific routing
 
-# Note: Local files not yet supported by merger script
-# TODO: Add local file support to ruleset_merger.sh
+# Local comprehensive NSFW rulesets (relative to Sources/)
+./NSFW_Complete_Ruleset_Enhanced_Edition_v4.0.txt
+./NSFW.txt
 
-# User's custom NSFW rules (remote - includes comprehensive rulesets)
+# User's custom NSFW rules (remote)
 https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/nsfwrule

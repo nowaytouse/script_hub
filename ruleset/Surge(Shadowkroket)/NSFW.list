@@ -1,13 +1,15 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: NSFW
-# Updated: 2025-12-04 06:46:06 UTC
-# Total Rules: 712
+# Updated: 2025-12-04 13:57:35 UTC
+# Total Rules: 725
 # Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
+# Git Hash: 4d683ac
 # ═══════════════════════════════════════════════════════════════
 #
 # Sources:
-#   - https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/nsfwrule [REJECT] (718 rules)
+#   - LOCAL: NSFW_Complete_Ruleset_Enhanced_Edition_v4.0.txt [REJECT] (718 rules)
+#   - LOCAL: NSFW.txt [REJECT] (123 rules)
+#   -  [REJECT] (718 rules)
 #
 # Usage:
 #   - Auto-generated ruleset, DO NOT edit manually
@@ -17,7 +19,7 @@
 # ═══════════════════════════════════════════════════════════════
 
 # Policy Distribution:
-#   - REJECT:         712 rules
+#   - REJECT:         725 rules
 #   - REJECT-DROP:    0 rules
 #   - REJECT-NO-DROP: 0 rules
 #
@@ -160,6 +162,7 @@ DOMAIN-SUFFIX,dlsite.co.jp
 DOMAIN-SUFFIX,dlsite.com
 DOMAIN-SUFFIX,dmm.co.jp
 DOMAIN-SUFFIX,dmm.com
+DOMAIN-SUFFIX,donmai.us
 DOMAIN-SUFFIX,dorcelclub.com
 DOMAIN-SUFFIX,doujinmoe.us
 DOMAIN-SUFFIX,doujinshi.org
@@ -200,6 +203,7 @@ DOMAIN-SUFFIX,fapcat.com
 DOMAIN-SUFFIX,fapdu.com
 DOMAIN-SUFFIX,fapello.com
 DOMAIN-SUFFIX,fapfappy.com
+DOMAIN-SUFFIX,fapvidhd.com
 DOMAIN-SUFFIX,fareastpornhub.com
 DOMAIN-SUFFIX,fc2.com
 DOMAIN-SUFFIX,fc2ppv.com
@@ -512,12 +516,14 @@ DOMAIN-SUFFIX,porn300.com
 DOMAIN-SUFFIX,porn4days.com
 DOMAIN-SUFFIX,porn4fans.com
 DOMAIN-SUFFIX,porn720.net
+DOMAIN-SUFFIX,pornburst.xxx
 DOMAIN-SUFFIX,porncomixonline.net
 DOMAIN-SUFFIX,porncoven.com
 DOMAIN-SUFFIX,porndig.com
 DOMAIN-SUFFIX,porndude.vip
 DOMAIN-SUFFIX,pornerbros.com
 DOMAIN-SUFFIX,pornez.net
+DOMAIN-SUFFIX,pornfun.com
 DOMAIN-SUFFIX,porngames.com
 DOMAIN-SUFFIX,porngeek.com
 DOMAIN-SUFFIX,porngeneratorai.com
@@ -525,6 +531,7 @@ DOMAIN-SUFFIX,pornhat.com
 DOMAIN-SUFFIX,pornhd.com
 DOMAIN-SUFFIX,pornhd4k.net
 DOMAIN-SUFFIX,pornhd8k.net
+DOMAIN-SUFFIX,pornheed.com
 DOMAIN-SUFFIX,pornhentai.net
 DOMAIN-SUFFIX,pornhits.com
 DOMAIN-SUFFIX,pornhost.com
@@ -542,17 +549,21 @@ DOMAIN-SUFFIX,pornmd.com
 DOMAIN-SUFFIX,pornogames.com
 DOMAIN-SUFFIX,pornolab.net
 DOMAIN-SUFFIX,pornone.com
+DOMAIN-SUFFIX,pornorama.com
+DOMAIN-SUFFIX,pornovideoshub.com
 DOMAIN-SUFFIX,pornoxo.com
 DOMAIN-SUFFIX,pornpics.com
 DOMAIN-SUFFIX,pornpictureshq.com
 DOMAIN-SUFFIX,pornploy.com
 DOMAIN-SUFFIX,pornplus.com
+DOMAIN-SUFFIX,pornrewind.com
 DOMAIN-SUFFIX,porntn.com
 DOMAIN-SUFFIX,porntrex.com
 DOMAIN-SUFFIX,porntube.com
 DOMAIN-SUFFIX,pornwhite.com
 DOMAIN-SUFFIX,pornworks.ai
 DOMAIN-SUFFIX,pornx.ai
+DOMAIN-SUFFIX,porzo.com
 DOMAIN-SUFFIX,povr.com
 DOMAIN-SUFFIX,primeasses.com
 DOMAIN-SUFFIX,primecurves.com
@@ -589,6 +600,7 @@ DOMAIN-SUFFIX,sex.com
 DOMAIN-SUFFIX,sexbabesvr.com
 DOMAIN-SUFFIX,sexemulator.com
 DOMAIN-SUFFIX,sexlikereal.com
+DOMAIN-SUFFIX,sexmovies.com
 DOMAIN-SUFFIX,sexreels.net
 DOMAIN-SUFFIX,sextechguide.com
 DOMAIN-SUFFIX,sextvx.com
@@ -728,7 +740,10 @@ DOMAIN-SUFFIX,xundress.com
 DOMAIN-SUFFIX,xvideos.com
 DOMAIN-SUFFIX,xvideos.es
 DOMAIN-SUFFIX,xxbrits.com
+DOMAIN-SUFFIX,xxxbunker.com
+DOMAIN-SUFFIX,xxxdessert.com
 DOMAIN-SUFFIX,xxxtik.com
+DOMAIN-SUFFIX,xxxvideos247.com
 DOMAIN-SUFFIX,yande.re
 DOMAIN-SUFFIX,youjizz.com
 DOMAIN-SUFFIX,youporn.com

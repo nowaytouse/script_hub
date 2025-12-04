@@ -132,9 +132,9 @@ EOF
     echo ""
 }
 
-# 步骤0: 汲取远程sgmodule规则
+# 步骤0: 汲取远程sgmodule规则（仅REJECT策略）
 step_fetch_sgmodules() {
-    log_step "0" "汲取远程sgmodule规则"
+    log_step "0" "汲取远程sgmodule规则（仅REJECT策略）"
     
     if [[ ! -f "$SGMODULE_SOURCES" ]]; then
         log_warning "sgmodule源文件不存在: $SGMODULE_SOURCES"
@@ -146,6 +146,7 @@ step_fetch_sgmodules() {
     local rules_file="$temp_dir/extracted_rules.txt"
     local count=0
     local total_rules=0
+    local skipped_rules=0
     
     log_info "读取sgmodule源列表..."
     
@@ -165,8 +166,11 @@ step_fetch_sgmodules() {
             continue
         }
         
-        # 提取Rule部分的规则
+        # 提取Rule部分的规则（仅REJECT策略）
         local in_rule_section=false
+        local module_rules=0
+        local module_skipped=0
+        
         while IFS= read -r module_line; do
             if [[ "$module_line" =~ ^\[Rule\] ]]; then
                 in_rule_section=true
@@ -177,29 +181,46 @@ step_fetch_sgmodules() {
             fi
             
             if $in_rule_section && [[ -n "$module_line" ]] && [[ ! "$module_line" =~ ^# ]]; then
-                # 提取规则（去掉策略部分）
-                local rule_type rule_value
-                rule_type=$(echo "$module_line" | cut -d',' -f1)
-                rule_value=$(echo "$module_line" | cut -d',' -f2)
-                
-                if [[ -n "$rule_type" ]] && [[ -n "$rule_value" ]]; then
-                    echo "${rule_type},${rule_value}" >> "$rules_file"
-                    ((total_rules++))
+                # 只提取包含REJECT策略的规则（REJECT, REJECT-DROP, REJECT-NO-DROP）
+                if [[ "$module_line" =~ ,REJECT ]]; then
+                    # 提取规则类型和值（保留完整规则格式）
+                    local rule_type rule_value
+                    rule_type=$(echo "$module_line" | cut -d',' -f1)
+                    rule_value=$(echo "$module_line" | cut -d',' -f2)
+                    
+                    if [[ -n "$rule_type" ]] && [[ -n "$rule_value" ]]; then
+                        # 输出格式: DOMAIN-SUFFIX,example.com,REJECT
+                        echo "${rule_type},${rule_value},REJECT" >> "$rules_file"
+                        ((module_rules++))
+                        ((total_rules++))
+                    fi
+                else
+                    # 跳过非REJECT规则（如DIRECT, PROXY等）
+                    ((module_skipped++))
+                    ((skipped_rules++))
                 fi
             fi
         done <<< "$module_content"
+        
+        if [[ $module_rules -gt 0 ]]; then
+            log_success "  提取 $module_rules 条REJECT规则（跳过 $module_skipped 条非REJECT规则）"
+        else
+            log_info "  未发现REJECT规则（跳过 $module_skipped 条非REJECT规则）"
+        fi
         
     done < "$SGMODULE_SOURCES"
     
     if [[ -f "$rules_file" ]] && [[ $total_rules -gt 0 ]]; then
         # 去重并追加到AdBlock规则
         local unique_rules=$(sort -u "$rules_file" | wc -l | tr -d ' ')
-        log_success "汲取完成: $count 个模块, $unique_rules 条唯一规则"
+        log_success "汲取完成: $count 个模块"
+        log_success "  • REJECT规则: $unique_rules 条（去重后）"
+        log_info "  • 跳过非REJECT: $skipped_rules 条"
         
         # 保存到临时文件供后续合并使用
         cp "$rules_file" "$PROJECT_ROOT/.temp_sgmodule_rules.txt"
     else
-        log_info "没有汲取到新规则"
+        log_info "没有汲取到REJECT规则"
     fi
     
     rm -rf "$temp_dir"

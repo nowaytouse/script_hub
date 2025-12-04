@@ -375,27 +375,64 @@ merge_rules() {
         done < "$URL_LIST_FILE"
     fi
     
-    # Download and process remote rulesets
+    # Download and process rulesets (remote URLs and local files)
     local source_count=0
+    local sources_dir=$(dirname "$URL_LIST_FILE")
+    
     for source_line in "${SOURCES[@]}"; do
         source_count=$((source_count + 1))
         
-        # Parse URL and policy (format: URL|POLICY)
-        local url policy
+        # Parse source and policy (format: SOURCE|POLICY)
+        local source_path policy
         if [[ "$source_line" == *"|"* ]]; then
-            url="${source_line%|*}"
+            source_path="${source_line%|*}"
             policy="${source_line##*|}"
         else
-            url="$source_line"
+            source_path="$source_line"
             policy="REJECT"
         fi
         
         local temp_download="$TEMP_DIR/download_${source_count}.txt"
         local temp_extracted="$TEMP_DIR/extracted_${source_count}.txt"
         
-        print_info "Processing [$source_count/${#SOURCES[@]}]: $(basename "$url") [$policy]"
+        # Check if it's a local file (starts with ./ or / or doesn't start with http)
+        local is_local=false
+        local local_file=""
         
-        if download_ruleset "$url" "$temp_download"; then
+        if [[ "$source_path" == ./* ]]; then
+            # Relative path from sources directory
+            local_file="$sources_dir/${source_path#./}"
+            is_local=true
+        elif [[ "$source_path" == /* ]]; then
+            # Absolute path
+            local_file="$source_path"
+            is_local=true
+        elif [[ ! "$source_path" =~ ^https?:// ]]; then
+            # Assume relative path if not URL
+            local_file="$sources_dir/$source_path"
+            is_local=true
+        fi
+        
+        if $is_local; then
+            # Process local file
+            if [[ -f "$local_file" ]]; then
+                print_info "Processing local [$source_count/${#SOURCES[@]}]: $(basename "$local_file") [$policy]"
+                extract_rules "$local_file" "$temp_extracted"
+                local rules_count=$(wc -l < "$temp_extracted" | tr -d ' ')
+                print_verbose "  Extracted: $rules_count rules"
+                sed "s/$/	${policy}/" "$temp_extracted" >> "$all_new_rules"
+                echo "#   - LOCAL: $(basename "$local_file") [$policy] ($rules_count rules)" >> "$sources_list_file"
+            else
+                print_warning "Local file not found: $local_file"
+                echo "#   - LOCAL: $source_path (NOT FOUND)" >> "$sources_list_file"
+            fi
+            continue
+        fi
+        
+        # Process remote URL
+        print_info "Processing [$source_count/${#SOURCES[@]}]: $(basename "$source_path") [$policy]"
+        
+        if download_ruleset "$source_path" "$temp_download"; then
             extract_rules "$temp_download" "$temp_extracted"
             local rules_count=$(wc -l < "$temp_extracted" | tr -d ' ')
             print_verbose "  Extracted: $rules_count rules"
