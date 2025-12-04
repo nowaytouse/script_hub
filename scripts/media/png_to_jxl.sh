@@ -229,15 +229,18 @@ find "$TARGET_DIR" -type f -iname "*.png" -print0 | while IFS= read -r -d $'\0' 
 
     if [ "$IN_PLACE" = true ]; then
         temp_jxl="${png_file}.jxl.tmp"
-        log_info "🔄 Step 1/3: Converting (lossless -m)..."
+        log_info "🔄 Step 1/4: Converting (lossless -m)..."
         cjxl "$png_file" "$temp_jxl" -m > /dev/null 2>&1
         
         if [ $? -eq 0 ]; then
-            log_info "⏰ Step 2/3: Preserving timestamps..."
+            log_info "📋 Step 2/4: Migrating metadata (EXIF, XMP, IPTC)..."
+            exiftool -tagsfromfile "$png_file" -all:all -overwrite_original "$temp_jxl" > /dev/null 2>&1 || true
+            
+            log_info "⏰ Step 3/4: Preserving timestamps..."
             touch -r "$png_file" "$temp_jxl"
             mv "$temp_jxl" "$output_jxl"
             
-            log_info "🏥 Step 3/3: Health validation..."
+            log_info "🏥 Step 4/4: Health validation..."
             if check_jxl_health "$output_jxl"; then
                 rm "$png_file"
                 log_success "Done: $(basename "$png_file") → $(basename "$output_jxl")"
@@ -256,13 +259,16 @@ find "$TARGET_DIR" -type f -iname "*.png" -print0 | while IFS= read -r -d $'\0' 
             continue
         fi
 
-        log_info "🔄 Step 1/2: Converting (lossless -m)..."
+        log_info "🔄 Step 1/3: Converting (lossless -m)..."
         cjxl "$png_file" "$output_jxl" -m > /dev/null 2>&1
         
         if [ $? -eq 0 ]; then
+            log_info "📋 Step 2/3: Migrating metadata (EXIF, XMP, IPTC)..."
+            exiftool -tagsfromfile "$png_file" -all:all -overwrite_original "$output_jxl" > /dev/null 2>&1 || true
+            
             touch -r "$png_file" "$output_jxl"
             
-            log_info "🏥 Step 2/2: Health validation..."
+            log_info "🏥 Step 3/3: Health validation..."
             if check_jxl_health "$output_jxl"; then
                 log_success "Converted: $(basename "$output_jxl")"
             else

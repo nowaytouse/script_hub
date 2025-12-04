@@ -302,6 +302,9 @@ find "$TARGET_DIR" -type f \( -iname "*.mp4" -o -iname "*.mov" -o -iname "*.mkv"
     rm -f "$palette"
 
     if [ $? -eq 0 ]; then
+        log_info "📋 Step 3.1/3: Migrating metadata (EXIF, XMP, etc.)..."
+        exiftool -tagsfromfile "$video_file" -all:all -overwrite_original "$output_gif" > /dev/null 2>&1 || true
+        
         touch -r "$video_file" "$output_gif"
         
         log_info "🏥 Step 3/3: Health validation..."
