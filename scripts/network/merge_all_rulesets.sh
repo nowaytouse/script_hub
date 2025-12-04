@@ -35,7 +35,26 @@ extract_rules() {
     local input="$1"
     grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|PROCESS-NAME),' "$input" 2>/dev/null | \
         sed 's/[[:space:]]*$//' | \
-        sed 's/^IP-CIDR,\(.*:.*\)/IP-CIDR6,\1/' || true
+        sed 's/^IP-CIDR,\(.*:.*\)/IP-CIDR6,\1/' | \
+        awk -F, '{
+            # 去除 $2 中的空格及之后内容 (针对 "VALUE reject" 格式)
+            split($2, a, " ");
+            val = a[1];
+            
+            # 构建输出
+            out = $1 "," val;
+            
+            # 处理后续字段 (保留 no-resolve 等，过滤策略)
+            for(i=3; i<=NF; i++) {
+                # 去除首尾空格
+                gsub(/^[ \t]+|[ \t]+$/, "", $i);
+                # 过滤策略关键词和空字段
+                if($i != "" && $i !~ /^(REJECT|reject|DIRECT|direct|PROXY|proxy|REJECT-DROP|REJECT-NO-DROP)$/) {
+                    out = out "," $i;
+                }
+            }
+            print out;
+        }' || true
 }
 
 # 合并规则到目标文件
