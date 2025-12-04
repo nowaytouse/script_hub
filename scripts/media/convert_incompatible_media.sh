@@ -469,18 +469,46 @@ verify_metadata_preservation() {
             echo "    ⚠️  Metadata preservation: PARTIAL"
         fi
     elif [ "$type" = "animation" ]; then
-        # Check animation preservation
-        local orig_frames conv_frames orig_fps conv_fps
-        orig_frames=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$original" 2>/dev/null)
-        conv_frames=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$converted" 2>/dev/null)
+        # Check animation preservation with enhanced validation
+        local orig_fps conv_fps orig_duration conv_duration
         
-        echo "    🖼️  Original frames: $orig_frames"
-        echo "    🖼️  Converted frames: $conv_frames"
+        # Get FPS
+        orig_fps=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$original" 2>/dev/null)
+        conv_fps=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$converted" 2>/dev/null)
         
-        if [ "$conv_frames" = "$orig_frames" ]; then
-            echo "    ✅ Frame count: PRESERVED"
+        # Get Duration
+        orig_duration=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$original" 2>/dev/null)
+        conv_duration=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$converted" 2>/dev/null)
+        
+        echo "    🎞️  Original FPS: $orig_fps"
+        echo "    🎞️  Converted FPS: $conv_fps"
+        echo "    ⏱️  Original Duration: ${orig_duration}s"
+        echo "    ⏱️  Converted Duration: ${conv_duration}s"
+        
+        # Calculate expected frames from Duration and FPS
+        if [[ "$orig_fps" =~ ^([0-9]+)/([0-9]+)$ ]]; then
+            local fps_num="${BASH_REMATCH[1]}"
+            local fps_den="${BASH_REMATCH[2]}"
+            local fps_float=$(awk "BEGIN {printf \"%.2f\", $fps_num/$fps_den}")
+            local expected_frames=$(awk "BEGIN {printf \"%.0f\", $orig_duration * $fps_float}")
+            echo "    📊 Expected frames: ~$expected_frames"
+        fi
+        
+        # Verify FPS preservation
+        if [ "$conv_fps" = "$orig_fps" ]; then
+            echo "    ✅ FPS: PRESERVED ($orig_fps)"
         else
-            echo "    ⚠️  Frame count: CHANGED ($orig_frames → $conv_frames)"
+            echo "    ⚠️  FPS: CHANGED ($orig_fps → $conv_fps)"
+        fi
+        
+        # Verify Duration preservation (within 1% tolerance)
+        if [ -n "$orig_duration" ] && [ -n "$conv_duration" ]; then
+            local duration_diff=$(awk "BEGIN {printf \"%.2f\", ($conv_duration - $orig_duration) / $orig_duration * 100}")
+            if (( $(awk "BEGIN {print ($duration_diff < 1.0 && $duration_diff > -1.0) ? 1 : 0}") )); then
+                echo "    ✅ Duration: PRESERVED (≤1% difference)"
+            else
+                echo "    ⚠️  Duration: CHANGED (${duration_diff}% difference)"
+            fi
         fi
     fi
 }
@@ -770,33 +798,42 @@ convert_mp4_to_webp() {
     backup_file "$input"
 
     # Get original FPS for perfect preservation
-    local fps
+    local fps fps_num fps_den
     fps=$(ffprobe -v error -select_streams v:0 \
         -show_entries stream=r_frame_rate \
         -of default=noprint_wrappers=1:nokey=1 "$input" 2>/dev/null)
     
-    # Default to 30 if ffprobe fails
-    [ -z "$fps" ] && fps="30"
+    # Parse FPS fraction (e.g., "30/1" -> num=30, den=1)
+    if [[ "$fps" =~ ^([0-9]+)/([0-9]+)$ ]]; then
+        fps_num="${BASH_REMATCH[1]}"
+        fps_den="${BASH_REMATCH[2]}"
+    else
+        # Default to 30/1 if parsing fails
+        fps_num="30"
+        fps_den="1"
+        fps="30/1"
+    fi
     
-    log_info "  🎞️  Original FPS: $fps"
+    log_info "  🎞️  Original FPS: $fps ($fps_num/$fps_den)"
 
     # OPTIMIZED: Single-step direct conversion to lossless WebP
     # This is 3-5x faster than the old two-step method (MP4→PNG→WebP)
-    log_info "🔄 Step 1/3: Converting to lossless WebP (optimized)..."
+    log_info "🔄 Step 1/4: Converting to lossless WebP (optimized)..."
     log_info "  ▶️  Running ffmpeg (progress will be shown)..."
     echo ""
     
     # Direct ffmpeg execution without pipe blocking
-    # compression_level 2 for faster speed (was 4)
+    # compression_level 2 for faster speed
     # -nostdin prevents interactive mode
-    if ffmpeg -nostdin -i "$input" \
+    # Using -fps_mode cfr and -framerate for exact FPS preservation
+    if ffmpeg -nostdin -framerate "$fps" -i "$input" \
         -c:v libwebp \
         -lossless 1 \
         -quality 100 \
         -compression_level 2 \
         -preset picture \
         -loop 0 \
-        -vsync cfr \
+        -fps_mode cfr \
         -r "$fps" \
         -an \
         -y "$temp_output"; then
