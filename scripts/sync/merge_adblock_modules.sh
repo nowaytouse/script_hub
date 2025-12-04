@@ -75,6 +75,7 @@ CHINA_DIRECT_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/ChinaDirect.list"
 INTERACTIVE_MODE=false
 LIST_ONLY_MODE=false
 AUTO_DELETE=false
+AUTO_MODE=false
 SPECIFIED_MODULES=()
 
 # 统计信息
@@ -123,6 +124,10 @@ parse_arguments() {
                 AUTO_DELETE=true
                 shift
                 ;;
+            --auto|-a)
+                AUTO_MODE=true
+                shift
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -153,6 +158,7 @@ show_help() {
   -i, --interactive    交互式选择模块
   -l, --list-only      仅合并到规则列表（不更新模块）
   -d, --auto-delete    自动删除已处理的模块（需确认）
+  -a, --auto           无人值守模式（跳过所有交互）
   -h, --help           显示此帮助信息
 
 示例:
@@ -1002,7 +1008,7 @@ safe_delete_modules() {
         echo "  $((i+1)). ${MODULES_TO_DELETE[$i]}"
     done
     
-    if [[ "$AUTO_DELETE" == false ]]; then
+    if [[ "$AUTO_DELETE" == false ]] && [[ "$AUTO_MODE" == false ]]; then
         read -p "确认删除？(y/N): " confirm
         if [[ "$confirm" != "y" ]] && [[ "$confirm" != "Y" ]]; then
             log_info "取消删除"
