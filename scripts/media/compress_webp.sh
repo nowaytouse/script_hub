@@ -29,7 +29,8 @@ MAX_SIZE_MB=20
 IN_PLACE=false
 FAST_MODE=false
 MAX_ATTEMPTS=10
-PARALLEL_JOBS=1  # Number of parallel jobs
+PARALLEL_JOBS=1
+OUTPUT_DIR=""  # Custom output directory
 
 # Logging functions
 log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
@@ -81,8 +82,13 @@ compress_webp() {
     local dirname=$(dirname "$input")
     local basename="${filename%.*}"
     
-    # Output file
-    local output="$dirname/${basename}_compressed.webp"
+    # Output file - use OUTPUT_DIR if set, otherwise same directory
+    local out_dir="$dirname"
+    if [[ -n "$OUTPUT_DIR" ]]; then
+        out_dir="$OUTPUT_DIR"
+        mkdir -p "$out_dir"
+    fi
+    local output="$out_dir/${basename}_compressed.webp"
     local final_output="$output"
     [[ "$IN_PLACE" == true ]] && final_output="$input"
     
@@ -257,10 +263,11 @@ Usage:
   $0 <single_file.webp> [min_MB] [max_MB]
 
 Options:
-  --in-place    Replace original files (destructive)
-  --fast        Fast mode (fewer attempts, may be less accurate)
-  -j, --jobs N  Parallel jobs for batch processing (default: 1)
-  --help        Show this help message
+  --in-place      Replace original files (destructive)
+  --fast          Fast mode (fewer attempts, may be less accurate)
+  -o, --output D  Output directory for compressed files
+  -j, --jobs N    Parallel jobs for batch processing (default: 1)
+  --help          Show this help message
 
 Examples:
   $0 ./images 15 20
@@ -276,6 +283,7 @@ main() {
             --in-place) IN_PLACE=true; shift ;;
             --fast) FAST_MODE=true; shift ;;
             -j|--jobs) PARALLEL_JOBS="$2"; shift 2 ;;
+            -o|--output) OUTPUT_DIR="$2"; shift 2 ;;
             --help|-h) show_usage; exit 0 ;;
             *) break ;;
         esac
