@@ -1,49 +1,65 @@
-# Private data directories
+# ============================================
+# Private & Sensitive Data
+# ============================================
 zip_output/
-
-# Backup directories
-*_backup_*/
-_backup_*/
-
-# Temporary files
-*.tmp
-*.temp
-/tmp/
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Archives
-*.zip
-*.tar.gz
-*.tgz
-archive_part_*.zip
-
-# Logs
-*.log
-
-# Sensitive configuration files
-ruleset/surge ruleset profile
-module/surge/敏感profile 排除上传git
+zip_output_copy/
+conf/
+conf隐私🔏/
 *敏感*
 *私密*
 *private*
 *secret*
+ruleset/surge ruleset profile
+module/surge/敏感profile 排除上传git
 
-# Sensitive conf directory (all config files)
-conf/
-conf隐私🔏/
+# ============================================
+# Backup & Temporary Files
+# ============================================
+*_backup_*/
+_backup_*/
+*.tmp
+*.temp
+/tmp/
+.temp_adblock_merge/
 
-# Config manager sensitive files
+# ============================================
+# macOS System Files
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ============================================
+# Archives & Logs
+# ============================================
+*.zip
+*.tar.gz
+*.tgz
+archive_part_*.zip
+*.log
+
+# ============================================
+# Build Artifacts & IDE
+# ============================================
+Cargo.lock
 scripts/network/config-manager-auto-update/config.json
 scripts/network/config-manager-auto-update/bin/
 scripts/network/config-manager-auto-update/target/
 scripts/network/config-manager-auto-update/.cargo/
+.claude/
 
-# Rust build artifacts
-Cargo.lock
-zip_output/
-zip_output_copy/
+# ============================================
+# Test & Debug Files
+# ============================================
 test_debug.webp
+test_*.webp
+test_*.gif
+test_*.png
+
+# ============================================
+# Task Summary Files (auto-generated)
+# ============================================
+COMPLETION_SUMMARY.md
+TASK_*_COMPLETION_SUMMARY.md
+TASK_*_*.md

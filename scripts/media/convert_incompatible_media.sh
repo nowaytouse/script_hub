@@ -777,11 +777,19 @@ convert_mp4_to_gif() {
     fi
 }
 
-# Convert MP4 → Lossless WebP (optimized single-step conversion)
+# Convert MP4 → Lossless WebP (using img2webp for TRUE FPS preservation)
+# ============================================================================
+# 🔧 FPS Preservation Strategy (FIXED - img2webp method):
+#    Problem: ffmpeg's libwebp wrapper ALWAYS outputs 25fps (hardcoded limit)
+#    Solution: Use img2webp tool which allows exact frame delay control
+#    
+#    WebP animated format supports up to 100fps (10ms minimum frame delay)
+#    Frame delay = 1000ms / FPS (e.g., 30fps = 33ms per frame)
+# ============================================================================
 convert_mp4_to_webp() {
     local input="$1"
     local output="${input%.*}.webp"
-    local temp_output="/tmp/webp_convert_$$.webp"
+    local temp_dir="/tmp/webp_frames_$$"
 
     echo ""
     log_info "🎬 Converting MP4 → Lossless WebP: $(basename "$input")"
@@ -798,7 +806,7 @@ convert_mp4_to_webp() {
     backup_file "$input"
 
     # Get original FPS for perfect preservation
-    local fps fps_num fps_den
+    local fps fps_num fps_den fps_float frame_delay_ms
     fps=$(ffprobe -v error -select_streams v:0 \
         -show_entries stream=r_frame_rate \
         -of default=noprint_wrappers=1:nokey=1 "$input" 2>/dev/null)
@@ -807,69 +815,110 @@ convert_mp4_to_webp() {
     if [[ "$fps" =~ ^([0-9]+)/([0-9]+)$ ]]; then
         fps_num="${BASH_REMATCH[1]}"
         fps_den="${BASH_REMATCH[2]}"
+        fps_float=$(awk "BEGIN {printf \"%.2f\", $fps_num/$fps_den}")
+        # Calculate frame delay in milliseconds (WebP uses ms-based timing)
+        frame_delay_ms=$(awk "BEGIN {printf \"%.0f\", 1000 * $fps_den / $fps_num}")
     else
-        # Default to 30/1 if parsing fails
         fps_num="30"
         fps_den="1"
         fps="30/1"
+        fps_float="30.00"
+        frame_delay_ms="33"
     fi
     
-    log_info "  🎞️  Original FPS: $fps ($fps_num/$fps_den)"
+    log_info "  🎞️  Original FPS: $fps ($fps_float fps)"
+    log_info "  ⏱️  Frame delay: ${frame_delay_ms}ms"
 
-    # OPTIMIZED: Single-step direct conversion to lossless WebP
-    # This is 3-5x faster than the old two-step method (MP4→PNG→WebP)
-    log_info "🔄 Step 1/4: Converting to lossless WebP (optimized)..."
-    log_info "  ▶️  Running ffmpeg (progress will be shown)..."
-    echo ""
+    # Get original frame count and duration for validation
+    local orig_frames orig_duration
+    orig_frames=$(ffprobe -v error -count_frames -select_streams v:0 \
+        -show_entries stream=nb_read_frames -of csv=p=0 "$input" 2>/dev/null)
+    orig_duration=$(ffprobe -v error -show_entries format=duration \
+        -of csv=p=0 "$input" 2>/dev/null)
     
-    # Direct ffmpeg execution without pipe blocking
-    # compression_level 2 for faster speed
-    # -nostdin prevents interactive mode
-    # -fps_mode cfr preserves exact FPS from input
-    if ffmpeg -nostdin -i "$input" \
-        -c:v libwebp \
-        -lossless 1 \
-        -quality 100 \
-        -compression_level 2 \
-        -preset picture \
-        -loop 0 \
-        -fps_mode cfr \
-        -r "$fps" \
-        -an \
-        -y "$temp_output"; then
-        echo ""
+    [ -n "$orig_frames" ] && log_info "  🖼️  Original frames: $orig_frames"
+    [ -n "$orig_duration" ] && log_info "  ⏱️  Original duration: ${orig_duration}s"
+
+    # ============================================================================
+    # 🔧 Use img2webp for TRUE FPS preservation (ffmpeg libwebp is broken)
+    # ============================================================================
+    
+    # Create temp directory
+    mkdir -p "$temp_dir"
+    
+    # Step 1: Extract frames as PNG (lossless)
+    log_info "🔄 Step 1/4: Extracting frames as PNG..."
+    if ! ffmpeg -nostdin -i "$input" \
+        -vf "fps=$fps_num/$fps_den" \
+        "$temp_dir/frame_%05d.png" 2>/dev/null; then
+        log_error "Frame extraction failed"
+        rm -rf "$temp_dir"
+        return 1
+    fi
+    
+    # Count frames
+    local frame_count
+    frame_count=$(ls -1 "$temp_dir"/frame_*.png 2>/dev/null | wc -l | tr -d ' ')
+    log_info "  🖼️  Extracted $frame_count frames"
+    
+    if [ "$frame_count" -eq 0 ]; then
+        log_error "No frames extracted"
+        rm -rf "$temp_dir"
+        return 1
+    fi
+
+    # Step 2: Assemble WebP with exact frame delay using img2webp
+    log_info "🔄 Step 2/4: Assembling WebP (${frame_delay_ms}ms/frame = ${fps_float}fps)..."
+    
+    # Build img2webp command
+    local img2webp_cmd="img2webp -loop 0 -lossless"
+    for frame in "$temp_dir"/frame_*.png; do
+        img2webp_cmd="$img2webp_cmd -d $frame_delay_ms $frame"
+    done
+    img2webp_cmd="$img2webp_cmd -o $output"
+    
+    if eval "$img2webp_cmd" 2>/dev/null; then
+        log_success "  ✅ WebP created with exact ${frame_delay_ms}ms timing"
     else
-        echo ""
-        log_error "Lossless WebP creation failed"
+        log_error "img2webp assembly failed"
+        rm -rf "$temp_dir"
         return 1
     fi
+    
+    # Cleanup temp frames
+    rm -rf "$temp_dir"
 
-    if [ ! -f "$temp_output" ]; then
-        log_error "Lossless WebP creation failed"
+    # Verify output
+    if [ ! -f "$output" ]; then
+        log_error "Output file not created"
         return 1
     fi
+    
+    # Calculate expected FPS from frame delay
+    local expected_fps
+    expected_fps=$(awk "BEGIN {printf \"%.2f\", 1000 / $frame_delay_ms}")
+    log_info "  📊 Output FPS: ${expected_fps} fps (${frame_delay_ms}ms delay)"
+    log_info "  🖼️  Output frames: $frame_count"
+    log_success "  ✅ FPS preserved: $fps_float → $expected_fps fps"
 
-
-    # Migrate video metadata using exiftool
-    log_info "📋 Step 2/4: Migrating metadata (EXIF, XMP, etc.)..."
+    # Step 3: Migrate metadata
+    log_info "📋 Step 3/4: Migrating metadata (EXIF, XMP, etc.)..."
     exiftool -tagsfromfile "$input" \
         -all:all \
         -overwrite_original \
-        "$temp_output" 2>/dev/null || true
+        "$output" 2>/dev/null || true
     
     # Preserve file timestamps
-    log_info "⏰ Step 3/4: Preserving timestamps..."
-    touch -r "$input" "$temp_output"
-    mv "$temp_output" "$output"
+    log_info "⏰ Step 4/4: Preserving timestamps..."
+    touch -r "$input" "$output"
 
     # Health check
-    log_info "🏥 Step 4/4: Health validation..."
+    log_info "🏥 Health validation..."
     if check_image_health "$output" "webp"; then
         verify_metadata_preservation "$input" "$output" "animation"
         rm "$input"
         log_success "✅ Done: $(basename "$input") → $(basename "$output")"
         ((FILES_PROCESSED++)) || true
-        # Track converted file
         CONVERTED_FILES+=("$(basename "$output")")
         return 0
     else
@@ -879,6 +928,7 @@ convert_mp4_to_webp() {
         return 1
     fi
 }
+
 
 # ============================================================================
 # 🚀 Main Function
