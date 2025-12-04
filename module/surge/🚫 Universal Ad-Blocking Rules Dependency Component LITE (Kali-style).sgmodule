@@ -7,36 +7,18 @@
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# Online Ad-Blocking Rulesets (Deduplicated)
+# Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
+# Updated: 2025-12-04 | Sources: 25 rulesets
 # ═══════════════════════════════════════════════════════════════
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://raw.githubusercontent.com/limbopro/Adblock4limbo/main/Adblock4limbo_surge.list,REJECT,pre-matching,extended-matching,no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-DOMAIN-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-surge2.txt,REJECT,pre-matching,extended-matching,no-resolve
-DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt,REJECT,pre-matching
-DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt,REJECT,pre-matching
-DOMAIN-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt,REJECT,pre-matching
-DOMAIN-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt,REJECT,pre-matching,extended-matching,no-resolve
-DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_extra.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/ip/reject.conf,REJECT-DROP,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-DOMAIN-SET,https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/sogouinput.conf,REJECT,pre-matching,extended-matching,"update-interval=43200",no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AdBlock_Merged.list,REJECT,extended-matching,"update-interval=86400",no-resolve
 
 # ═══════════════════════════════════════════════════════════════
 # SDK / Third-party Privacy Enhancement
 # ═══════════════════════════════════════════════════════════════
-DOMAIN,api.revenuecat.com,REJECT,pre-matching,extended-matching
-DOMAIN-KEYWORD,96110,REJECT-DROP,pre-matching,extended-matching
-DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,pre-matching,extended-matching
-DOMAIN,msmp.abchina.com.cn,REJECT,pre-matching
-RULE-SET,https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list,REJECT,"update-interval=86400",no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list,REJECT,"update-interval=86400"
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list,REJECT,"update-interval=86400"
+DOMAIN,api.revenuecat.com,REJECT,extended-matching
+DOMAIN-KEYWORD,96110,REJECT-DROP,extended-matching
+DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
+DOMAIN,msmp.abchina.com.cn,REJECT
 
 # ═══════════════════════════════════════════════════════════════
 # QQ Music Ad-Blocking (Merged from QQ Music Ultimate)

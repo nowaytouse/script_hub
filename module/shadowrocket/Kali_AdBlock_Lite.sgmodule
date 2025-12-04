@@ -7,25 +7,10 @@
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# Online Ad-Blocking Rulesets
+# Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
+# Updated: 2025-12-04 | Sources: 25 rulesets
 # ═══════════════════════════════════════════════════════════════
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/limbopro/Adblock4limbo/main/Adblock4limbo_surge.list,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-surge2.txt,REJECT,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt,REJECT
-RULE-SET,https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/domainset/reject_extra.conf,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/ip/reject.conf,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt,REJECT,no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/sogouinput.conf,REJECT,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AdBlock_Merged.list,REJECT,no-resolve
 
 # ═══════════════════════════════════════════════════════════════
 # SDK / Third-party Privacy Enhancement
@@ -34,9 +19,6 @@ DOMAIN,api.revenuecat.com,REJECT
 DOMAIN-KEYWORD,96110,REJECT
 DOMAIN-SUFFIX,gjfzpt.cn,REJECT
 DOMAIN,msmp.abchina.com.cn,REJECT
-RULE-SET,https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list,REJECT
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list,REJECT
 
 # ═══════════════════════════════════════════════════════════════
 # QQ Music Ad-Blocking (Merged)
