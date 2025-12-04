@@ -35,16 +35,20 @@ extract_rules() {
     local input="$1"
     grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|PROCESS-NAME),' "$input" 2>/dev/null | \
         sed 's/[[:space:]]*$//' | \
-        sed 's/^IP-CIDR,\(.*:.*\)/IP-CIDR6,\1/' | \
         awk -F, '{
+            type = $1;
             # 去除 $2 中的空格及之后内容 (针对 "VALUE reject" 格式)
-            # 先去除首尾空格，防止 split 产生空元素
             gsub(/^[ \t]+|[ \t]+$/, "", $2);
             split($2, a, " ");
             val = a[1];
             
+            # IPv6 地址检测：如果 IP-CIDR 的值包含冒号，转换为 IP-CIDR6
+            if(type == "IP-CIDR" && index(val, ":") > 0) {
+                type = "IP-CIDR6";
+            }
+            
             # 构建输出
-            out = $1 "," val;
+            out = type "," val;
             
             # 处理后续字段 (只保留 no-resolve，过滤策略和其他 Profile 选项)
             for(i=3; i<=NF; i++) {
