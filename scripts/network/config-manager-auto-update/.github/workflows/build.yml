@@ -1,0 +1,80 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.21']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    # Linux 依赖
+    - name: Install Linux dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libgl1-mesa-dev xorg-dev
+
+    # 获取依赖
+    - name: Get dependencies
+      run: |
+        go mod download
+        go mod verify
+
+    # 构建
+    - name: Build
+      run: go build -v -ldflags="-s -w" -o singbox-manager${{ matrix.os == 'windows-latest' && '.exe' || '' }} .
+
+    # 测试
+    - name: Test
+      run: go test -v ./...
+
+    # 上传制品
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: singbox-manager-${{ matrix.os }}
+        path: singbox-manager${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          singbox-manager-ubuntu-latest/singbox-manager
+          singbox-manager-windows-latest/singbox-manager.exe
+          singbox-manager-macos-latest/singbox-manager
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

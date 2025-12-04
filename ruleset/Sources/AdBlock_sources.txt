@@ -1,0 +1,67 @@
+# Universal Ad-Blocking Ruleset Sources
+# Used by ruleset_merger.sh to download and merge
+# Updated: 2025-12-04
+#
+# Format: URL|POLICY (optional)
+# Supported policies: REJECT, REJECT-DROP, REJECT-NO-DROP
+# If no policy specified, defaults to REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# blackmatrix7 - Advertising & Privacy
+# Note: BlockHttpDNS.list is used directly in module to preserve
+#       REJECT-DROP policy
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list|REJECT
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list|REJECT
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list|REJECT
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list|REJECT
+# https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list|REJECT-DROP  # Excluded - used in module
+
+# ═══════════════════════════════════════════════════════════════
+# limbopro - Adblock4limbo
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/limbopro/Adblock4limbo/main/Adblock4limbo_surge.list|REJECT
+https://limbopro.com/Adblock4limbo_surge.list|REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# anti-AD (privacy-protection-tools)
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-surge2.txt|REJECT
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt|REJECT-DROP
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/pcdn.txt|REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# geekdada - surge-list
+# ═══════════════════════════════════════════════════════════════
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt|REJECT
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt|REJECT
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt|REJECT
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt|REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# skk.moe - Sukka Ruleset (Policy-Specific)
+# Note: reject-no-drop.conf and reject-drop.conf are used directly
+#       in module to preserve their specific policies
+# ═══════════════════════════════════════════════════════════════
+https://ruleset.skk.moe/List/domainset/reject.conf|REJECT
+https://ruleset.skk.moe/List/domainset/reject_extra.conf|REJECT
+https://ruleset.skk.moe/List/non_ip/reject.conf|REJECT
+# https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf|REJECT-NO-DROP  # Excluded - used in module
+# https://ruleset.skk.moe/List/non_ip/reject-drop.conf|REJECT-DROP  # Excluded - used in module
+https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf|REJECT
+https://ruleset.skk.moe/List/ip/reject.conf|REJECT
+https://ruleset.skk.moe/List/non_ip/sogouinput.conf|REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# ACL4SSR
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list|REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# Other Sources
+# ═══════════════════════════════════════════════════════════════
+https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt|REJECT
+https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list|REJECT
+
+# MetaCubeX 本地规则 (从.srs反编译)
+../MetaCubeX/MetaCubeX_category-ads-all.list

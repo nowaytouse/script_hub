@@ -1,0 +1,22 @@
+{
+  "subscriptions": [
+    {
+      "name": "Sing-box Config",
+      "url": "YOUR_GIST_URL_HERE",
+      "save_path": "./conf/singbox_config.json"
+    }
+  ],
+  "update_interval_hours": 24,
+  "singbox_core_update": {
+    "enabled": true,
+    "check_prerelease": true,
+    "install_path": "./bin/sing-box"
+  },
+  "mihomo_core_update": {
+    "enabled": true,
+    "check_prerelease": true,
+    "install_paths": [
+      "./bin/mihomo"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "subscriptions": [
+    {
+      "name": "My Subscription",
+      "url": "https://example.com/your-subscription-url",
+      "save_path": "/path/to/save/singbox_config.json"
+    }
+  ],
+  "update_interval_hours": 24,
+  "singbox_core_update": {
+    "enabled": true,
+    "check_prerelease": false,
+    "install_path": "/usr/local/bin/sing-box"
+  },
+  "mihomo_core_update": {
+    "enabled": true,
+    "check_prerelease": false,
+    "install_paths": [
+      "/path/to/v2rayN/bin/mihomo",
+      "/usr/local/bin/mihomo"
+    ]
+  }
+}

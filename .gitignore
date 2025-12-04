@@ -34,3 +34,12 @@ module/surge/敏感profile 排除上传git
 
 # Sensitive conf directory (all config files)
 conf/
+
+# Config manager sensitive files
+scripts/network/config-manager-auto-update/config.json
+scripts/network/config-manager-auto-update/bin/
+scripts/network/config-manager-auto-update/target/
+scripts/network/config-manager-auto-update/.cargo/
+
+# Rust build artifacts
+Cargo.lock

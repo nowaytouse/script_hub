@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Rust
+/target/
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*~
+*.bak
+
+# Logs
+*.log
+
+# Config files (contains sensitive information)
+config.json
