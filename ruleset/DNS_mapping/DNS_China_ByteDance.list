@@ -1,0 +1,96 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DNS_China_ByteDance
+# Updated: 2025-12-04 03:46:53 UTC
+# Total Rules: 66
+# Generator: Ruleset Merger v2.4
+# Git Hash: eef5cfc
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/bytedance.conf [REJECT] (66 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# Policy Distribution:
+#   - REJECT:         66 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,baike.com
+DOMAIN-SUFFIX,byteacctimg.com
+DOMAIN-SUFFIX,bytecdn.cn
+DOMAIN-SUFFIX,bytecdntp.com
+DOMAIN-SUFFIX,byted-static.com
+DOMAIN-SUFFIX,bytedance.com
+DOMAIN-SUFFIX,bytednsdoc.com
+DOMAIN-SUFFIX,byteeffecttos.com
+DOMAIN-SUFFIX,bytegoofy.com
+DOMAIN-SUFFIX,byteimg.com
+DOMAIN-SUFFIX,bytetcc.com
+DOMAIN-SUFFIX,coze.cn
+DOMAIN-SUFFIX,dcarapi.com
+DOMAIN-SUFFIX,dcarimg.com
+DOMAIN-SUFFIX,dcarlive.com
+DOMAIN-SUFFIX,dcarstatic.com
+DOMAIN-SUFFIX,dcarvod.com
+DOMAIN-SUFFIX,dongchedi.com
+DOMAIN-SUFFIX,doubao.com
+DOMAIN-SUFFIX,douyin.com
+DOMAIN-SUFFIX,douyincdn.com
+DOMAIN-SUFFIX,douyinliving.com
+DOMAIN-SUFFIX,douyinpic.com
+DOMAIN-SUFFIX,douyinstatic.com
+DOMAIN-SUFFIX,douyinvod.com
+DOMAIN-SUFFIX,edge-byted.com
+DOMAIN-SUFFIX,feelgood.cn
+DOMAIN-SUFFIX,feiliao.com
+DOMAIN-SUFFIX,feishu.cn
+DOMAIN-SUFFIX,feishu.net
+DOMAIN-SUFFIX,feishucdn.com
+DOMAIN-SUFFIX,feishupkg.com
+DOMAIN-SUFFIX,huoshan.com
+DOMAIN-SUFFIX,huoshanstatic.com
+DOMAIN-SUFFIX,huoshanzhibo.com
+DOMAIN-SUFFIX,ibytedapm.com
+DOMAIN-SUFFIX,iesdouyin.com
+DOMAIN-SUFFIX,ixgvideo.com
+DOMAIN-SUFFIX,ixigua.com
+DOMAIN-SUFFIX,ixiguavideo.com
+DOMAIN-SUFFIX,oceanengine.com
+DOMAIN-SUFFIX,okr.com
+DOMAIN-SUFFIX,pipix.com
+DOMAIN-SUFFIX,ppximg.com
+DOMAIN-SUFFIX,ppxstatic.com
+DOMAIN-SUFFIX,ppxvod.com
+DOMAIN-SUFFIX,pstatp.com
+DOMAIN-SUFFIX,rsproxy.cn
+DOMAIN-SUFFIX,snssdk.com
+DOMAIN-SUFFIX,toutiao.com
+DOMAIN-SUFFIX,toutiaocloud.com
+DOMAIN-SUFFIX,toutiaoimg.cn
+DOMAIN-SUFFIX,toutiaoimg.com
+DOMAIN-SUFFIX,toutiaopage.com
+DOMAIN-SUFFIX,toutiaostatic.com
+DOMAIN-SUFFIX,toutiaovod.com
+DOMAIN-SUFFIX,volccdn.com
+DOMAIN-SUFFIX,volcengine.com
+DOMAIN-SUFFIX,volces.com
+DOMAIN-SUFFIX,volcvideo.com
+DOMAIN-SUFFIX,wukong.com
+DOMAIN-SUFFIX,xiaoxiaapi.com
+DOMAIN-SUFFIX,zijieapi.com
+DOMAIN-SUFFIX,zjcdn.com
+DOMAIN-SUFFIX,zjurl.cn
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+
+# ========== END ==========

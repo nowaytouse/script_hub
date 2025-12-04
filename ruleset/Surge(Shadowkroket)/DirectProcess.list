@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════════════
+# Direct Connection Process Rules
+# ═══════════════════════════════════════════════════════════════
+# Auto-generated: 2025-12-03
+# Repository: https://github.com/nowaytouse/script_hub
+# Description: Apps that should always use direct connection
+# ═══════════════════════════════════════════════════════════════
+
+# Music Apps (China)
+PROCESS-NAME,/Applications/NeteaseMusic.app/
+PROCESS-NAME,NeteaseMusic
+PROCESS-NAME,QQMusic
+PROCESS-NAME,KuGou
+PROCESS-NAME,KuWo
+
+# China Apps
+PROCESS-NAME,WeChat
+PROCESS-NAME,QQ
+PROCESS-NAME,AliWangWang
+PROCESS-NAME,DingTalk
+PROCESS-NAME,Feishu
+
+# System/Network Tools
+PROCESS-NAME,networksetup
+PROCESS-NAME,softwareupdated
+PROCESS-NAME,trustd
+
+# WindsurfPro (special: direct)
+PROCESS-NAME,/Applications/WindsurfPro.app/

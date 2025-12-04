@@ -1,0 +1,96 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: Telegram
+# Updated: 2025-12-04 04:22:26 UTC
+# Total Rules: 57
+# Generator: Ruleset Merger v2.4
+# Git Hash: eef5cfc
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list [REJECT] (40 rules)
+#   - https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/telegramcidr.txt [REJECT] (12 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# Policy Distribution:
+#   - REJECT:         57 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,cdn-telegram.org
+DOMAIN-SUFFIX,comments.app
+DOMAIN-SUFFIX,contest.com
+DOMAIN-SUFFIX,graph.org
+DOMAIN-SUFFIX,legra.ph
+DOMAIN-SUFFIX,mbrx.app
+DOMAIN-SUFFIX,quiz.directory
+DOMAIN-SUFFIX,stel.com
+DOMAIN-SUFFIX,t.me
+DOMAIN-SUFFIX,tdesktop.com
+DOMAIN-SUFFIX,telega.one
+DOMAIN-SUFFIX,telegra.ph
+DOMAIN-SUFFIX,telegram-cdn.org
+DOMAIN-SUFFIX,telegram.dog
+DOMAIN-SUFFIX,telegram.me
+DOMAIN-SUFFIX,telegram.org
+DOMAIN-SUFFIX,telegram.space
+DOMAIN-SUFFIX,telegramdownload.com
+DOMAIN-SUFFIX,telesco.pe
+DOMAIN-SUFFIX,tg.dev
+DOMAIN-SUFFIX,tx.me
+DOMAIN-SUFFIX,usercontent.dev
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,nicegram
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,api.imem.app
+DOMAIN,api.swiftgram.app
+
+# ========== IP-CIDR (REJECT) ==========
+IP-CIDR,109.239.140.0/24,no-resolve
+IP-CIDR,139.59.210.98/32,no-resolve
+IP-CIDR,149.154.160.0/20
+IP-CIDR,149.154.160.0/20,no-resolve
+IP-CIDR,17.57.145.151/32
+IP-CIDR,185.76.151.0/24
+IP-CIDR,196.55.216.167/32,no-resolve
+IP-CIDR,5.28.192.0/18,no-resolve
+IP-CIDR,5.28.195.2/32
+IP-CIDR,91.105.192.0/23
+IP-CIDR,91.108.0.0/16,no-resolve
+IP-CIDR,91.108.16.0/21
+IP-CIDR,91.108.4.0/22
+IP-CIDR,91.108.56.0/22
+IP-CIDR,91.108.8.0/21
+IP-CIDR,95.161.64.0/20
+IP-CIDR,95.161.64.0/20,no-resolve
+
+# ========== IP-CIDR6 (REJECT) ==========
+IP-CIDR6,2001:67c:4e8::/48
+IP-CIDR6,2001:67c:4e8::/48,no-resolve
+IP-CIDR6,2001:b28:f23c::/47
+IP-CIDR6,2001:b28:f23c::/47,no-resolve
+IP-CIDR6,2001:b28:f23d::/48,no-resolve
+IP-CIDR6,2001:b28:f23f::/48
+IP-CIDR6,2001:b28:f23f::/48,no-resolve
+IP-CIDR6,2a0a:f280::/29,no-resolve
+IP-CIDR6,2a0a:f280::/32
+
+# ========== OTHER (REJECT) ==========
+PROCESS-NAME,nekox.messenger
+PROCESS-NAME,org.telegram.messenger
+PROCESS-NAME,telegram-desktop
+PROCESS-NAME,tw.nekomimi.nekogram
+PROCESS-NAME,xyz.nextalone.nagram
+
+# ========== END ==========

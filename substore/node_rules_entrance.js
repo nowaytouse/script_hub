@@ -51,7 +51,7 @@
  * v3.4 修复内容（2025-11-29）：
  * - ✅ skip-cert-verify 智能化：有证书配置则验证，无则允许不安全
  * - ✅ VMess security: auto 修复：替换为具体加密方法 (aes-128-gcm)
- * - ✅ 曲线配置：Clash Meta 使用 ecdh-curves（Sing-box 暂不支持）
+ * - ✅ 曲线配置：Clash Meta 使用 ecdh-curves，Sing-box 使用 curve_preferences（1.13.0+支持）
  * - ✅ Shadowrocket tls-alpn：字符串格式 "h2"
  * - ✅ Shadowrocket udp-relay：启用 UDP 转发
  * - ✅ Hysteria2/TUIC 智能证书验证：有证书则验证，无则跳过
@@ -1199,9 +1199,9 @@ async function operator(proxies = []) {
                 // Clash Meta / Mihomo 格式 (使用冒号分隔)
                 proxy['ecdh-curves'] = tlsBoost.curves.join(':');
 
-                // 🎵 Sing-box 格式：curve_preferences 数组
-                // 参考: https://sing-box.sagernet.org/configuration/shared/tls/
-                // 使用小写格式：x25519, secp256r1, secp384r1
+                // ✅ Sing-box 1.13.0+ 完全支持 curve_preferences 数组
+                // 参考官方文档: https://sing-box.sagernet.org/configuration/shared/tls/
+                // 使用小写格式：x25519, secp256r1, secp384r1（自1.13.0-alpha.16引入）
                 proxy['curve_preferences'] = ['x25519', 'secp256r1', 'secp384r1'];
 
                 // 🎵 Sing-box uTLS 指纹配置（Reality 节点使用 chrome 指纹）

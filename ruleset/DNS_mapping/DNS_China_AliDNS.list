@@ -1,0 +1,168 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DNS_China_AliDNS
+# Updated: 2025-12-04 03:46:52 UTC
+# Total Rules: 136
+# Generator: Ruleset Merger v2.4
+# Git Hash: eef5cfc
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/alibaba.conf [REJECT] (88 rules)
+#   - https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/baidu.conf [REJECT] (31 rules)
+#   - https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/bilibili.conf [REJECT] (19 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# Policy Distribution:
+#   - REJECT:         136 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,1688.com
+DOMAIN-SUFFIX,25pp.com
+DOMAIN-SUFFIX,91.com
+DOMAIN-SUFFIX,9game.cn
+DOMAIN-SUFFIX,acgvideo.com
+DOMAIN-SUFFIX,aliapp.org
+DOMAIN-SUFFIX,alibaba-inc.com
+DOMAIN-SUFFIX,alibaba.com
+DOMAIN-SUFFIX,alibabachengdun.com
+DOMAIN-SUFFIX,alibabadns.com
+DOMAIN-SUFFIX,alibabausercontent.com
+DOMAIN-SUFFIX,alibtrip.com
+DOMAIN-SUFFIX,alicdn.com
+DOMAIN-SUFFIX,alicloudccp.com
+DOMAIN-SUFFIX,alidns.com
+DOMAIN-SUFFIX,aligames.com
+DOMAIN-SUFFIX,aliimg.com
+DOMAIN-SUFFIX,alikunlun.com
+DOMAIN-SUFFIX,alikunlun.net
+DOMAIN-SUFFIX,alimama.com
+DOMAIN-SUFFIX,alios.cn
+DOMAIN-SUFFIX,alipan.com
+DOMAIN-SUFFIX,alipay.cn
+DOMAIN-SUFFIX,alipay.com
+DOMAIN-SUFFIX,alipay.com.cn
+DOMAIN-SUFFIX,alipaydev.com
+DOMAIN-SUFFIX,alipayobjects.com
+DOMAIN-SUFFIX,aliyun.com
+DOMAIN-SUFFIX,aliyuncs.com
+DOMAIN-SUFFIX,aliyundrive.com
+DOMAIN-SUFFIX,aliyundrive.net
+DOMAIN-SUFFIX,amap.com
+DOMAIN-SUFFIX,antpcdn.com
+DOMAIN-SUFFIX,autonavi.com
+DOMAIN-SUFFIX,baidu.cn
+DOMAIN-SUFFIX,baidu.com
+DOMAIN-SUFFIX,baidubce.com
+DOMAIN-SUFFIX,baidubcr.com
+DOMAIN-SUFFIX,baiducontent.com
+DOMAIN-SUFFIX,baidupcs.com
+DOMAIN-SUFFIX,baidustatic.com
+DOMAIN-SUFFIX,bcebos.com
+DOMAIN-SUFFIX,bcelive.com
+DOMAIN-SUFFIX,bdimg.com
+DOMAIN-SUFFIX,bdstatic.com
+DOMAIN-SUFFIX,bdydns.com
+DOMAIN-SUFFIX,biliapi.com
+DOMAIN-SUFFIX,biliapi.net
+DOMAIN-SUFFIX,bilibili.cn
+DOMAIN-SUFFIX,bilibili.com
+DOMAIN-SUFFIX,bilicdn1.com
+DOMAIN-SUFFIX,bilicomic.com
+DOMAIN-SUFFIX,bilicomics.com
+DOMAIN-SUFFIX,biligame.com
+DOMAIN-SUFFIX,biligame.net
+DOMAIN-SUFFIX,biliimg.com
+DOMAIN-SUFFIX,bilivideo.cn
+DOMAIN-SUFFIX,bilivideo.com
+DOMAIN-SUFFIX,bilivideo.net
+DOMAIN-SUFFIX,bulicdn2.com
+DOMAIN-SUFFIX,cainiao.com
+DOMAIN-SUFFIX,cainiao.com.cn
+DOMAIN-SUFFIX,cainiaoyizhan.com
+DOMAIN-SUFFIX,cdngslb.com
+DOMAIN-SUFFIX,cibntv.net
+DOMAIN-SUFFIX,dingtalk.com
+DOMAIN-SUFFIX,duapp.com
+DOMAIN-SUFFIX,dwz.cn
+DOMAIN-SUFFIX,ele.me
+DOMAIN-SUFFIX,elemecdn.com
+DOMAIN-SUFFIX,etao.com
+DOMAIN-SUFFIX,feizhu.com
+DOMAIN-SUFFIX,fliggy.com
+DOMAIN-SUFFIX,freshhema.com
+DOMAIN-SUFFIX,freshippo.com
+DOMAIN-SUFFIX,gaode.com
+DOMAIN-SUFFIX,goofish.com
+DOMAIN-SUFFIX,guoguo-app.com
+DOMAIN-SUFFIX,hao123.com
+DOMAIN-SUFFIX,hdslb.com
+DOMAIN-SUFFIX,hellobike.com
+DOMAIN-SUFFIX,hemamax.com
+DOMAIN-SUFFIX,hemaos.com
+DOMAIN-SUFFIX,hemashare.cn
+DOMAIN-SUFFIX,hichina.com
+DOMAIN-SUFFIX,ialicdn.com
+DOMAIN-SUFFIX,iconfont.cn
+DOMAIN-SUFFIX,iqiyi.com
+DOMAIN-SUFFIX,iqiyipic.com
+DOMAIN-SUFFIX,jomodns.com
+DOMAIN-SUFFIX,jomoxc.com
+DOMAIN-SUFFIX,koubei.com
+DOMAIN-SUFFIX,mmstat.com
+DOMAIN-SUFFIX,mxhichina.com
+DOMAIN-SUFFIX,myalicdn.com
+DOMAIN-SUFFIX,mybank.cn
+DOMAIN-SUFFIX,nlark.com
+DOMAIN-SUFFIX,npmmirror.com
+DOMAIN-SUFFIX,shifen.com
+DOMAIN-SUFFIX,shyhhema.com
+DOMAIN-SUFFIX,sm.cn
+DOMAIN-SUFFIX,soku.com
+DOMAIN-SUFFIX,tanx.com
+DOMAIN-SUFFIX,taobao.com
+DOMAIN-SUFFIX,taobao.org
+DOMAIN-SUFFIX,taobaocdn.com
+DOMAIN-SUFFIX,taopiaopiao.com
+DOMAIN-SUFFIX,tb.cn
+DOMAIN-SUFFIX,tbcache.com
+DOMAIN-SUFFIX,tbcdn.cn
+DOMAIN-SUFFIX,tieba.com
+DOMAIN-SUFFIX,tmall.com
+DOMAIN-SUFFIX,tudou.com
+DOMAIN-SUFFIX,uc.cn
+DOMAIN-SUFFIX,uczzd.cn
+DOMAIN-SUFFIX,wandoujia.com
+DOMAIN-SUFFIX,xiami.com
+DOMAIN-SUFFIX,xiami.net
+DOMAIN-SUFFIX,xiaodutv.com
+DOMAIN-SUFFIX,yitao.com
+DOMAIN-SUFFIX,ykimg.com
+DOMAIN-SUFFIX,youku.com
+DOMAIN-SUFFIX,yunjiasu-cdn.net
+DOMAIN-SUFFIX,yunos.com
+DOMAIN-SUFFIX,yuque.com
+DOMAIN-SUFFIX,zuoyebang.com
+DOMAIN-SUFFIX,zybang.com
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,acg.tv
+DOMAIN,ali-safety-video.acfun.cn
+DOMAIN,b23.tv
+DOMAIN,upos-sz-estgoss.bilivideo.com
+DOMAIN,upos-sz-mirrorali.bilivideo.com
+DOMAIN,upos-sz-mirrorbd.bilivideo.com
+DOMAIN,upos-sz-mirrorbdb.bilivideo.com
+DOMAIN,upos-sz-mirrorbos.bilivideo.com
+
+# ========== END ==========

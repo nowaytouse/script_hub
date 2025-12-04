@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DNS_China_114
+# Updated: 2025-12-04 03:46:48 UTC
+# Total Rules: 25
+# Generator: Ruleset Merger v2.4
+# Git Hash: eef5cfc
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Tencent/Tencent.list [REJECT] (25 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# Policy Distribution:
+#   - REJECT:         25 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== IP-CIDR (REJECT) ==========
+IP-CIDR,101.32.104.4/32,no-resolve
+IP-CIDR,101.32.104.41/32,no-resolve
+IP-CIDR,101.32.104.56/32,no-resolve
+IP-CIDR,101.32.118.25/32,no-resolve
+IP-CIDR,101.32.133.16/32,no-resolve
+IP-CIDR,101.32.133.209/32,no-resolve
+IP-CIDR,101.32.133.53/32,no-resolve
+IP-CIDR,103.238.16.0/23,no-resolve
+IP-CIDR,103.7.28.0/22,no-resolve
+IP-CIDR,119.147.8.78/32,no-resolve
+IP-CIDR,120.41.44.0/32,no-resolve
+IP-CIDR,122.5.0.129/32,no-resolve
+IP-CIDR,129.226.107.244/32,no-resolve
+IP-CIDR,129.226.3.47/32,no-resolve
+IP-CIDR,140.249.239.0/32,no-resolve
+IP-CIDR,140.249.28.0/32,no-resolve
+IP-CIDR,150.138.137.0/32,no-resolve
+IP-CIDR,150.139.143.0/32,no-resolve
+IP-CIDR,27.159.95.0/32,no-resolve
+IP-CIDR,58.58.81.129/32,no-resolve
+
+# ========== OTHER (REJECT) ==========
+USER-AGENT,MOO%E9%9F%B3%E4%B9%90*
+USER-AGENT,QQ%E9%9F%B3%E4%B9%90
+USER-AGENT,TencentMidasConnect*
+USER-AGENT,live4iphone*
+USER-AGENT,qqlive4iphone*
+
+# ========== END ==========

@@ -51,7 +51,7 @@
  * v3.4 修复内容（2025-11-29）：
  * - ✅ skip-cert-verify 智能化：有证书配置则验证，无则允许不安全
  * - ✅ VMess security: auto 修复：替换为具体加密方法 (aes-128-gcm)
- * - ✅ 曲线配置：Clash Meta 使用 ecdh-curves（Sing-box 暂不支持）
+ * - ✅ 曲线配置：Clash Meta 使用 ecdh-curves，Sing-box 使用 curve_preferences（1.13.0+支持）
  * - ✅ Shadowrocket tls-alpn：字符串格式 "h2"
  * - ✅ Shadowrocket udp-relay：启用 UDP 转发
  * - ✅ Hysteria2/TUIC 智能证书验证：有证书则验证，无则跳过

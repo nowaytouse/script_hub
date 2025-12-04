@@ -1,0 +1,57 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DNS_China_360
+# Updated: 2025-12-04 03:46:49 UTC
+# Total Rules: 27
+# Generator: Ruleset Merger v2.4
+# Git Hash: eef5cfc
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/qihoo360.conf [REJECT] (27 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# Policy Distribution:
+#   - REJECT:         27 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,360.cn
+DOMAIN-SUFFIX,360.com
+DOMAIN-SUFFIX,360.net
+DOMAIN-SUFFIX,360kuai.com
+DOMAIN-SUFFIX,360os.com
+DOMAIN-SUFFIX,360safe.com
+DOMAIN-SUFFIX,360simg.com
+DOMAIN-SUFFIX,360tpcdn.com
+DOMAIN-SUFFIX,360webcache.com
+DOMAIN-SUFFIX,baomitu.com
+DOMAIN-SUFFIX,haosou.com
+DOMAIN-SUFFIX,qh-cdn.com
+DOMAIN-SUFFIX,qhimg.com
+DOMAIN-SUFFIX,qhimgs
+DOMAIN-SUFFIX,qhimgs.com
+DOMAIN-SUFFIX,qhmsg.com
+DOMAIN-SUFFIX,qhres.com
+DOMAIN-SUFFIX,qhres2.com
+DOMAIN-SUFFIX,qhstatic.com
+DOMAIN-SUFFIX,qhupdate.com
+DOMAIN-SUFFIX,qihucdn.com
+DOMAIN-SUFFIX,qiku.com
+DOMAIN-SUFFIX,so.com
+DOMAIN-SUFFIX,yunpan.cn
+DOMAIN-SUFFIX,yunpan.com
+DOMAIN-SUFFIX,yunpan.com.cn
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+
+# ========== END ==========
