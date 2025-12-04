@@ -81,7 +81,7 @@ brew install jpeg-xl libheif exiftool ffmpeg webp
 
 ## Recent Updates
 
-### 2024-12-04: WebP FPS Preservation Fix
+### 2025-12-04: WebP FPS Preservation Fix
 - **Problem**: ffmpeg's libwebp encoder hardcodes 25fps limit
 - **Solution**: Rewrote MP4→WebP conversion using `img2webp` for exact frame timing
 - **Result**: 30fps videos now correctly convert to 30fps WebP (33ms/frame)
@@ -169,7 +169,7 @@ brew install jpeg-xl libheif exiftool ffmpeg webp
 
 ## 最近更新
 
-### 2024-12-04: WebP帧率保留修复
+### 2025-12-04: WebP帧率保留修复
 - **问题**: ffmpeg的libwebp编码器硬编码25fps限制
 - **解决方案**: 使用`img2webp`重写MP4→WebP转换，实现精确帧时序
 - **结果**: 30fps视频现在正确转换为30fps WebP（33ms/帧）

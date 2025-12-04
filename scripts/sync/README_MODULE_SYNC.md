@@ -298,7 +298,7 @@ chmod +x scripts/sync/sync_modules_to_icloud.sh
 
 ## 📝 更新日志
 
-### v1.0.0 (2024-12-04)
+### v1.0.0 (2025-12-04)
 
 - ✅ 初始版本
 - ✅ 支持 Surge iCloud 同步
@@ -310,4 +310,4 @@ chmod +x scripts/sync/sync_modules_to_icloud.sh
 ---
 
 **脚本位置**: `scripts/sync/sync_modules_to_icloud.sh`  
-**文档更新**: 2024-12-04
+**文档更新**: 2025-12-04

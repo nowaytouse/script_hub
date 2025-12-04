@@ -282,7 +282,7 @@ MIT License
 **Version**: 2.0.0  
 **Platform**: macOS / Linux / Windows  
 **Language**: Rust  
-**Last Updated**: 2024-12-02
+**Last Updated**: 2025-12-02
 
 ## 🔒 Security Note
 
