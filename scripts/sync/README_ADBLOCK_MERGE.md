@@ -8,7 +8,8 @@
 2. **智能分类**：自动按策略分类（REJECT、REJECT-DROP、REJECT-NO-DROP）
 3. **增量合并**：只添加新规则，自动去重，不删除现有规则
 4. **多类型支持**：处理 Rule、URL Rewrite、Host、MITM 等多种规则类型
-5. **自动同步**：合并完成后自动同步到小火箭模块
+5. **合并到巨大规则文件**：自动合并 REJECT 规则到 `ruleset/Surge(Shadowkroket)/AdBlock_Merged.list`（235k+ 规则）
+6. **自动同步**：合并完成后自动同步到小火箭模块
 
 ## 🚀 快速开始
 
@@ -39,10 +40,16 @@ bash scripts/sync/merge_adblock_modules.sh
    ├─ 自动排序
    └─ 添加统计信息
    ↓
-5. 同步到小火箭
+5. 合并到 AdBlock_Merged.list
+   ├─ 提取现有规则（235k+）
+   ├─ 添加新规则（去重）
+   ├─ 更新统计信息
+   └─ 自动备份原文件
+   ↓
+6. 同步到小火箭
    └─ 调用 sync_modules_to_shadowrocket.sh
    ↓
-6. 清理临时文件
+7. 清理临时文件
 ```
 
 ## 📊 输出示例
@@ -88,6 +95,18 @@ bash scripts/sync/merge_adblock_modules.sh
   - 总计: 49 条分流规则
 [✓] 已备份原模块文件
 [✓] 新模块文件已生成
+
+═══════════════════════════════════════════════════════════════
+  合并规则到 AdBlock_Merged.list
+═══════════════════════════════════════════════════════════════
+[✓] 已备份 AdBlock_Merged.list
+[INFO] 提取现有规则...
+[INFO] 现有规则: 235584 条
+[INFO] 准备新规则...
+[✓] 发现 32 条新规则
+[INFO] 合并规则到 AdBlock_Merged.list...
+[✓] 已合并到 AdBlock_Merged.list
+[INFO] 总规则数: 235584 + 32 = 235616
 
 ═══════════════════════════════════════════════════════════════
   同步到小火箭

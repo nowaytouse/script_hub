@@ -1,0 +1,194 @@
+#!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
+#!version=2025.12.03
+#!desc=Modular ad-blocking with Host sinkhole + Online rulesets + QQ Music. Low-memory optimized. 🧩💾⚡
+#!author=nyamiiko
+#!homepage=https://github.com/nowaytouse/script_hub
+#!category=『 🔝 Head Expanse › 首端扩域 』
+
+[Rule]
+# ═══════════════════════════════════════════════════════════════
+# Universal Ad-Blocking (Merged - 235k+ REJECT rules, deduplicated)
+# Updated: 2025-12-04 | Sources: 22 rulesets (REJECT only)
+# Note: DROP/NO-DROP rules use upstream sources directly below
+# ═══════════════════════════════════════════════════════════════
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AdBlock_Merged.list,REJECT,extended-matching,"update-interval=86400",no-resolve
+
+# ═══════════════════════════════════════════════════════════════
+# Policy-Specific Rules (Upstream - Preserve DROP/NO-DROP)
+# ═══════════════════════════════════════════════════════════════
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,"update-interval=86400",no-resolve
+
+# ═══════════════════════════════════════════════════════════════
+# SDK / Third-party Privacy Enhancement
+# ═══════════════════════════════════════════════════════════════
+DOMAIN,api.revenuecat.com,REJECT,extended-matching
+DOMAIN-KEYWORD,96110,REJECT-DROP,extended-matching
+DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
+DOMAIN,msmp.abchina.com.cn,REJECT
+
+# ═══════════════════════════════════════════════════════════════
+# QQ Music Ad-Blocking (Merged from QQ Music Ultimate)
+# ═══════════════════════════════════════════════════════════════
+DOMAIN,adstats.tencentmusic.com,REJECT,no-resolve
+DOMAIN,ad.tencentmusic.com,REJECT,no-resolve
+DOMAIN,adcdn.tencentmusic.com,REJECT,no-resolve
+DOMAIN,adcdn6.tencentmusic.com,REJECT,no-resolve
+DOMAIN,adexpo.tencentmusic.com,REJECT,no-resolve
+DOMAIN,adclick.tencentmusic.com,REJECT,no-resolve
+DOMAIN,otheve.beacon.qq.com,REJECT,no-resolve
+DOMAIN,monitor.music.qq.com,REJECT,no-resolve
+DOMAIN,stat.y.qq.com,REJECT,no-resolve
+DOMAIN,tmead.y.qq.com,REJECT,no-resolve
+DOMAIN,oth.str.mdt.qq.com,REJECT,no-resolve
+DOMAIN,h.trace.qq.com,REJECT,no-resolve
+DOMAIN,sdk.e.qq.com,REJECT,no-resolve
+DOMAIN,p.l.qq.com,REJECT,no-resolve
+DOMAIN,us.l.qq.com,REJECT,no-resolve
+DOMAIN,tangram.e.qq.com,REJECT,no-resolve
+DOMAIN,tmeadcomm.y.qq.com,REJECT,no-resolve
+DOMAIN,tmeadquic.y.qq.com,REJECT,no-resolve
+DOMAIN,tmeadbak.y.qq.com,REJECT,no-resolve
+DOMAIN,amsweb-cdn-gz-1258344696.file.myqcloud.com,REJECT,no-resolve
+DOMAIN,wallpaper-1258344696.file.myqcloud.com,REJECT,no-resolve
+DOMAIN,xs.gdt.qq.com,REJECT,no-resolve
+DOMAIN-SUFFIX,imtmp.net,REJECT,no-resolve
+DOMAIN-SUFFIX,rqd.qq.com,REJECT,no-resolve
+DOMAIN-SUFFIX,wup.imtt.qq.com,REJECT,no-resolve
+DOMAIN-SUFFIX,gdt.qq.com,REJECT,no-resolve
+DOMAIN-SUFFIX,android.rqd.qq.com,REJECT,no-resolve
+DOMAIN-SUFFIX,e.qq.com,REJECT,no-resolve
+DOMAIN-SUFFIX,v.gdt.qq.com,REJECT,no-resolve
+IP-CIDR,120.222.240.171/32,REJECT,no-resolve
+IP-CIDR,47.110.187.87/32,REJECT,pre-matching,no-resolve
+
+[URL Rewrite]
+# ═══════════════════════════════════════════════════════════════
+# QQ Music URL Rewrite
+# ═══════════════════════════════════════════════════════════════
+^https?:\/\/us\.l\.qq\.com\/exapp - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/t_splash_info\/ - reject
+^https?:\/\/.+?\/music\/common\/upload\/t_splash_info\/ - reject
+^https?:\/\/((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/music\/common\/upload\/t_splash_info\/ - reject
+^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/\/upload\/kg_ad/.*?\d{4}\.jpg - reject-tinygif
+
+# ═══════════════════════════════════════════════════════════════
+# StartUp Ads Block (Merged from ddgksf2013/StartUpAds)
+# 420+ URL Rewrite rules for Chinese app startup ads
+# ═══════════════════════════════════════════════════════════════
+# 12306/139邮箱/58同城
+^https?:\/\/ftapi\.10jqka\.com\.cn\/futgwapi\/api\/om\/v\d\/ad\/common\/transfer - reject
+^https?:\/\/ad\.mcloud\.139\.com\/advertapi - reject
+^https?:\/\/smsrebuild1\.mail\.10086\.cn\/together\/s - reject
+^https?:\/\/app\.58\.com\/api\/home\/(advertising|appadv) - reject
+# 36氪/500彩票/AcFun
+^https?:\/\/gateway\.36kr\.com\/api\/adx\/ad\/show - reject
+^https?:\/\/evs\.500\.com\/esinfo\/loading\/loading - reject
+^https?:\/\/api-new\.app\.acfun\.cn\/rest\/app\/flash\/screen\/ - reject
+# 阿里系
+^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alibaba\.advertisementservice\.getadv\/ - reject
+^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alibaba\.cbu\.app\.homepage\.startup - reject
+^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.(show|mshow)\.cn\/ - reject
+# 百度系
+^https?:\/\/tiebac\.baidu\.com\/c\/f\/ad\/getFeedAd - reject
+^https?:\/\/mime\.baidu\.com\/v\d\/IosStart\/getStartInfo - reject
+^https?:\/\/mime\.baidu\.com\/v\d\/activity\/advertisement - reject
+^https?:\/\/appwk\.baidu\.com\/xpage\/interface\/wknaad - reject
+^https?:\/\/pan\.baidu\.com\/act\/v\d\/(bchannel|welfare)\/list - reject
+^https?:\/\/pan\.baidu\.com\/rest\/2\.0\/pcs\/ad - reject
+^https?:\/\/pan\.baidu\.com\/act\/api\/activityentry - reject
+^https?:\/\/mobads\.baidu\.com\/cpro\/ui\/mads.php - reject
+# 贝壳/必剪/哔哩哔哩
+^https?:\/\/apps\.api\.ke\.com\/config\/config\/(bootpage|getactivityconfig) - reject
+^https?:\/\/app\.bilibili\.com\/x\/v\d\/splash\/(brand\/list|event\/list2|list|show) - reject
+# 财新/CSDN/当当
+^https?:\/\/pinggai.*caixin\.com\/s\?z=caixin - reject
+^https?:\/\/app-gw\.csdn\.net\/silkroad-api\/api\/v\d\/assemble\/list\/pub\/channel\/app_open_screen_ad - reject
+^https?:\/\/api\.dangdang\.com\/mapi\d\/mobile\/init - reject
+# 抖音/得物/饿了么
+^https?:\/\/.*\.snssdk\.com\/api\/ad\/ - reject
+^https?:\/\/api\.poizon\.com\/api\/v\d\/app\/advertisement\/ - reject
+^https?:\/\/elemecdn\.com\/.*\/sitemap - reject
+# 高德/工商银行/国泰君安
+^https?:\/\/m5\.amap\.com\/ws\/valueadded\/alimama\/splash_screen - reject
+^https?:\/\/v\.icbc\.com\.cn\/userfiles\/Resources\/WAP\/advertisement\/ - reject
+^https?:\/\/dl\.app\.gtja\.com\/operation\/config\/startUpPic - reject
+# 京东/今日头条/酷狗
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=start - reject
+^https?:\/\/is\.snssdk\.com\/api\/ad\/ - reject
+^https?:\/\/ads\.service\.kugou\.com - reject
+# 美团/芒果TV/网易
+^https?:\/\/img\.meituan\.net\/.*\/mss_.*\.jpg - reject
+^https?:\/\/pcvideoaliyun\.mgtv\.com\/.*\/adver\/ - reject
+^https?:\/\/interface\d?\.music\.163\.com\/eapi\/ad\/ - reject
+# 拼多多/去哪儿/微博
+^https?:\/\/api\.pinduoduo\.com\/api\/cappuccino\/splash - reject
+^https?:\/\/qmobile\.qunar\.com\/mobile\/common\/getAdBanner - reject
+^https?:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/sdkad\.php - reject
+# 小红书/携程/知乎
+^https?:\/\/www\.xiaohongshu\.com\/api\/sns\/v\d\/system_service\/splash_config - reject
+^https?:\/\/m\.ctrip\.com\/restapi\/soa2\/\d+\/json\/getAdsList - reject
+^https?:\/\/api\.zhihu\.com\/commercial_api\/launch_v2 - reject
+# 支付宝/招商银行
+^https?:\/\/render\.alipay\.com\/p\/s\/h5data\/prod\/spring-festival-2020-498 - reject
+^https?:\/\/mbmodule-openapi\.paas\.cmbchina\.com\/graphic\/v\d\/graphicCode - reject
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/targeted_ads - reject-tinygif
+
+[Host]
+# ═══════════════════════════════════════════════════════════════
+# Ad/Tracking Domain Sinkhole (Resolve to 0.0.0.0)
+# ═══════════════════════════════════════════════════════════════
+# China Ad Networks
+admaster.com.cn = 0.0.0.0
+adsmogo.com = 0.0.0.0
+adsage.cn = 0.0.0.0
+adview.cn = 0.0.0.0
+adwo.com = 0.0.0.0
+allyes.com = 0.0.0.0
+anysdk.com = 0.0.0.0
+applovin.com = 0.0.0.0
+baifendian.com = 0.0.0.0
+cnzz.com = 0.0.0.0
+domob.cn = 0.0.0.0
+duomeng.cn = 0.0.0.0
+guomob.com = 0.0.0.0
+inmobi.cn = 0.0.0.0
+intely.cn = 0.0.0.0
+ipinyou.com = 0.0.0.0
+mediav.com = 0.0.0.0
+mobads.baidu.com = 0.0.0.0
+mobads-logs.baidu.com = 0.0.0.0
+tanx.com = 0.0.0.0
+umeng.com = 0.0.0.0
+umtrack.com = 0.0.0.0
+youmi.net = 0.0.0.0
+# Global Ad Networks
+ad.doubleclick.net = 0.0.0.0
+adservice.google.com = 0.0.0.0
+pagead2.googlesyndication.com = 0.0.0.0
+googleadservices.com = 0.0.0.0
+ads.facebook.com = 0.0.0.0
+pixel.facebook.com = 0.0.0.0
+analytics.twitter.com = 0.0.0.0
+ads.twitter.com = 0.0.0.0
+# Telemetry/Tracking
+telemetry.appboy.com = 0.0.0.0
+sdk.tapjoy.com = 0.0.0.0
+metrics.icloud.com = 0.0.0.0
+supportmetrics.apple.com = 0.0.0.0
+# China ISP Hijack IPs (Sinkhole)
+123.125.81.12 = 0.0.0.0
+101.226.10.8 = 0.0.0.0
+61.191.206.4 = 0.0.0.0
+218.30.64.194 = 0.0.0.0
+42.123.125.237 = 0.0.0.0
+202.100.68.117 = 0.0.0.0
+113.12.83.4 = 0.0.0.0
+113.12.83.5 = 0.0.0.0
+60.191.124.236 = 0.0.0.0
+222.221.5.204 = 0.0.0.0
+
+[MITM]
+hostname = %APPEND% us.l.qq.com, y.gtimg.cn, music.y.qq.com, video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.zcool.com.cn, acs.m.goofish.com, acs.m.taobao.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, apiwz.midukanshu.com, app.zhoudamozi.com, cdke.youdao.com, conf-darwin.xycdn.com, dict.youdao.com, ecard.shenzhentong.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, img.allahall.com, img.dailmo.com, iyes.youku.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, p0.pipi.cn, qiye.gaoding.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shopapi.io.mi.com, shealthyapi.senssun.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, lanfanapp.com, api.xiachufang.com, api.xiangji.qq.com, client.app.coc.10086.cn, cdn.cmgadx.com, qadx.qinlinad.com, watch.iot.mi.com, cdn.web.chelaile.net.cn, d.socdm.com, m.client.10010.com, cmds.omesoft.com, api.fenxianglife.com, *.58cdn.com.cn, *.iydsj.com, *.k.sohu.com, *.kakamobi.cn, *.kingsoft-office-service.com, *.meituan.net, *.ofo.com, *.pstatp.com, *.snssdk.com, *.tv.sohu.com, *.uve.weibo.com, *.ydstatic.com, *.3gimg.qq.com, *.4gimg.map.qq.com, *.7n.bczcdn.com, *.a.apicloud.com, *.a.qiumibao.com, *.a.sfansclub.com, *.a.wkanx.com, *.account.wps.cn, *.account.wps.com, *.acs.m.taobao.com, *.act.vip.iqiyi.com, *.adpai.thepaper.cn, *.adse.ximalaya.com, *.aes.acfun.cn, *.agent-count.pconline.com.cn, *.api-mifit.huami.com, *.api.jr.mi.com, *.api.m.jd.com, *.api.m.mi.com, *.api.zhihu.com, 203.107.1.1, 203.107.1.33, 203.107.1.66, 203.107.1.67, 203.107.1.97, 2401:b180:2000:30::1c, 2401:b180:2000:20::10, amdc.alipay.com, appconf.mail.163.com, msglb.91160.com, is.snssdk.com, mi.gdt.qq.com, open.e.kuaishou.com

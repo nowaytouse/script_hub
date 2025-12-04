@@ -367,32 +367,29 @@ generate_new_module() {
     cat > "$TARGET_MODULE" << EOF
 #!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
 #!version=$current_date
-#!desc=Modular ad-blocking with Host sinkhole + Online rulesets + Merged rules. Low-memory optimized. 🧩💾⚡
+#!desc=Modular ad-blocking with Host sinkhole + Online rulesets. Low-memory optimized. 🧩💾⚡
 #!author=nyamiiko
 #!homepage=https://github.com/nowaytouse/script_hub
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# Universal Ad-Blocking (Merged - ${total_rules}+ rules, deduplicated)
-# Updated: $(date +%Y-%m-%d) | Auto-merged from multiple sources
+# Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
+# Updated: $(date +%Y-%m-%d) | REJECT rules are in AdBlock_Merged.list
+# Note: All REJECT rules are merged into the big list file below
 # ═══════════════════════════════════════════════════════════════
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AdBlock_Merged.list,REJECT,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
 
 # ═══════════════════════════════════════════════════════════════
 # Policy-Specific Rules (Upstream - Preserve DROP/NO-DROP)
 # ═══════════════════════════════════════════════════════════════
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,"update-interval=86400",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,"update-interval=86400",no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 
-# ═══════════════════════════════════════════════════════════════
-# REJECT Rules (${reject_count} rules)
-# ═══════════════════════════════════════════════════════════════
 EOF
     
-    # 添加 REJECT 规则（排序）
-    sort -u "$TEMP_RULES_REJECT" >> "$TARGET_MODULE"
+    # 不再添加 REJECT 规则到模块中（已合并到 AdBlock_Merged.list）
     
     # 添加 REJECT-DROP 规则
     if [[ $reject_drop_count -gt 0 ]]; then
@@ -483,8 +480,9 @@ merge_to_adblock_list() {
             continue
         fi
         
-        # 移除 Surge 特有的参数（extended-matching, pre-matching, no-resolve 等）
-        rule=$(echo "$rule" | sed 's/,extended-matching//g' | sed 's/,pre-matching//g' | sed 's/,no-resolve//g' | sed 's/  */ /g')
+        # 保留 extended-matching, pre-matching 参数（小火箭测试版即将支持）
+        # 只移除多余空格
+        rule=$(echo "$rule" | sed 's/  */ /g')
         
         # 检查是否已存在
         if ! grep -Fxq "$rule" "$TEMP_DIR/existing_adblock_rules.tmp"; then
