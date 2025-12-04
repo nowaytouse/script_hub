@@ -315,8 +315,14 @@ process_dir() {
         # Double check extension
         [[ "${file##*.}" != "webp" ]] && continue
         
-        ((count++))
-        compress_webp "$file" "$min_bytes" "$max_bytes" && ((success++)) || true
+        # Skip already compressed files (unless in-place mode)
+        if [[ "$IN_PLACE" == false ]] && [[ "$file" == *"_compressed.webp" ]]; then
+            log_info "⏭️  Skipping already compressed: $(basename "$file")"
+            continue
+        fi
+        
+        ((++count))  # Use prefix increment to avoid set -e issue
+        compress_webp "$file" "$min_bytes" "$max_bytes" && ((++success)) || true
         echo ""
     done < <(find "$dir" -type f -iname "*.webp" -print0)
     
