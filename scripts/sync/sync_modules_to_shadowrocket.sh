@@ -14,7 +14,10 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SURGE_MODULE_DIR="${SCRIPT_DIR}/../../module/surge(main)"
-SHADOWROCKET_MODULE_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
+
+# ⚠️ 请修改以下路径为你的实际 Shadowrocket iCloud 目录
+# 示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
+SHADOWROCKET_MODULE_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
 
 echo -e "${BLUE}=== Surge → Shadowrocket 模块同步 ===${NC}"
 echo "源目录: $SURGE_MODULE_DIR"

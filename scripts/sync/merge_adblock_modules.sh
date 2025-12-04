@@ -26,7 +26,11 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SURGE_MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
-SHADOWROCKET_MODULE_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
+
+# ⚠️ 请修改以下路径为你的实际 Shadowrocket iCloud 目录（可选，如不需要同步到Shadowrocket可留空）
+# 示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
+SHADOWROCKET_MODULE_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
+
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_merge"
 
 # 目标模块
@@ -368,8 +372,8 @@ generate_new_module() {
 #!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
 #!version=$current_date
 #!desc=Modular ad-blocking with Host sinkhole + Online rulesets. Low-memory optimized. 🧩💾⚡
-#!author=nyamiiko
-#!homepage=https://github.com/nowaytouse/script_hub
+#!author=YOUR_AUTHOR_NAME
+#!homepage=https://github.com/YOUR_USERNAME/YOUR_REPO
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]

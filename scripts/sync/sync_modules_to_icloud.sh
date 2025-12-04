@@ -24,8 +24,13 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCE_DIR="$PROJECT_ROOT/module/surge(main)"
-SURGE_ICLOUD_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
-SHADOWROCKET_ICLOUD_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
+
+# ⚠️ 请修改以下路径为你的实际 iCloud 目录
+# Surge iCloud 路径示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents
+SURGE_ICLOUD_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
+
+# Shadowrocket iCloud 路径示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
+SHADOWROCKET_ICLOUD_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
 
 # 敏感信息关键词（用于排除）
 SENSITIVE_KEYWORDS=(
