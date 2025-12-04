@@ -812,13 +812,21 @@ convert_mp4_to_webp() {
         return 1
     fi
 
-    # Preserve timestamps
-    log_info "⏰ Step 2/3: Preserving timestamps..."
+
+    # Migrate video metadata using exiftool
+    log_info "📋 Step 2/4: Migrating metadata (EXIF, XMP, etc.)..."
+    exiftool -tagsfromfile "$input" \
+        -all:all \
+        -overwrite_original \
+        "$temp_output" 2>/dev/null || true
+    
+    # Preserve file timestamps
+    log_info "⏰ Step 3/4: Preserving timestamps..."
     touch -r "$input" "$temp_output"
     mv "$temp_output" "$output"
 
     # Health check
-    log_info "🏥 Step 3/3: Health validation..."
+    log_info "🏥 Step 4/4: Health validation..."
     if check_image_health "$output" "webp"; then
         verify_metadata_preservation "$input" "$output" "animation"
         rm "$input"
