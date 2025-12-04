@@ -783,25 +783,29 @@ convert_mp4_to_webp() {
     # OPTIMIZED: Single-step direct conversion to lossless WebP
     # This is 3-5x faster than the old two-step method (MP4→PNG→WebP)
     log_info "🔄 Step 1/3: Converting to lossless WebP (optimized)..."
+    log_info "  ▶️  Running ffmpeg (progress will be shown)..."
+    echo ""
     
-    ffmpeg -loglevel warning -stats -i "$input" \
+    # Direct ffmpeg execution without pipe blocking
+    # compression_level 2 for faster speed (was 4)
+    # -nostdin prevents interactive mode
+    if ffmpeg -nostdin -i "$input" \
         -c:v libwebp \
         -lossless 1 \
         -quality 100 \
-        -compression_level 4 \
+        -compression_level 2 \
         -preset picture \
         -loop 0 \
         -vsync cfr \
         -r "$fps" \
         -an \
-        -y "$temp_output" 2>&1 | while read line;
- do
-        # Show ffmpeg stats in real-time
-        if [[ "$line" =~ frame=.*fps=.*speed= ]]; then
-            printf "\r  ▶️  $line"
-        fi
-    done
-    printf "\n"
+        -y "$temp_output"; then
+        echo ""
+    else
+        echo ""
+        log_error "Lossless WebP creation failed"
+        return 1
+    fi
 
     if [ ! -f "$temp_output" ]; then
         log_error "Lossless WebP creation failed"
