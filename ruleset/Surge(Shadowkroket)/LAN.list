@@ -1,16 +1,32 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: LAN
-# Updated: 2025-12-04
-# Total Rules: 151
-# Generator: merge_all_rulesets.sh
+# Updated: 2025-12-04 06:46:08 UTC
+# Total Rules: 155
+# Generator: Ruleset Merger v2.4
+# Git Hash: 690aa23
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Lan/Lan.list [REJECT] (141 rules)
+#   - https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list [REJECT] (35 rules)
+#   - https://raw.githubusercontent.com/Loyalsoldier/geoip/refs/heads/release/surge/private.txt [REJECT] (18 rules)
+#   - https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/private.txt [REJECT] (0 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
 # ═══════════════════════════════════════════════════════════════
 
-DOMAIN,asusrouter.com
-DOMAIN,instant.arubanetworks.com
-DOMAIN,oasisauth.h3c.com
-DOMAIN,router.asus.com
-DOMAIN,setmeup.arubanetworks.com
-DOMAIN,www.asusrouter.com
+# Policy Distribution:
+#   - REJECT:         155 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
 DOMAIN-SUFFIX,0.in-addr.arpa
 DOMAIN-SUFFIX,1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
@@ -134,6 +150,16 @@ DOMAIN-SUFFIX,tplogin.cn
 DOMAIN-SUFFIX,ts.net
 DOMAIN-SUFFIX,wifi.cmcc
 DOMAIN-SUFFIX,zte.home
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,asusrouter.com
+DOMAIN,instant.arubanetworks.com
+DOMAIN,oasisauth.h3c.com
+DOMAIN,router.asus.com
+DOMAIN,setmeup.arubanetworks.com
+DOMAIN,www.asusrouter.com
+
+# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,0.0.0.0/8,no-resolve
 IP-CIDR,10.0.0.0/8,no-resolve
 IP-CIDR,100.64.0.0/10,no-resolve
@@ -150,9 +176,17 @@ IP-CIDR,198.51.100.0/24,no-resolve
 IP-CIDR,203.0.113.0/24,no-resolve
 IP-CIDR,224.0.0.0/3,no-resolve
 IP-CIDR,224.0.0.0/4,no-resolve
+IP-CIDR,::/127,no-resolve
+IP-CIDR,fc00::/7,no-resolve
+IP-CIDR,fe80::/10,no-resolve
+IP-CIDR,ff00::/8,no-resolve
+
+# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,::/127,no-resolve
 IP-CIDR6,::1/128,no-resolve
 IP-CIDR6,fc00::/7,no-resolve
 IP-CIDR6,fd00::/8,no-resolve
 IP-CIDR6,fe80::/10,no-resolve
 IP-CIDR6,ff00::/8,no-resolve
+
+# ========== END ==========
