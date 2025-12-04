@@ -1,13 +1,14 @@
 #!/bin/bash
 # ============================================
 # Script: Ruleset Merger - Proxy Rule Aggregator
-# Version: 2.2
-# Updated: 2025-12-03
+# Version: 2.4
+# Updated: 2025-12-04
 # Description:
 #   - Download rulesets from third-party URLs
 #   - Auto-deduplicate rules
 #   - Merge into target ruleset file
 #   - Support DOMAIN-SUFFIX, DOMAIN-KEYWORD, IP-CIDR, etc.
+#   - Support policy-specific rules (REJECT/REJECT-DROP/REJECT-NO-DROP)
 #   - Auto-generate header with timestamp
 #   - Support scheduled auto-update (cron)
 #   - Auto-detect and preserve manual rules (no flag needed!)
@@ -17,7 +18,7 @@
 #     -t, --target <file>     Target/base ruleset file (required)
 #     -s, --source <URL>      Add third-party ruleset URL (can use multiple)
 #     -f, --file <file>       Read rules from local file (can use multiple)
-#     -l, --list <file>       Read URL list from file (one URL per line)
+#     -l, --list <file>       Read URL list from file (format: URL|POLICY)
 #     -o, --output <file>     Output to new file instead of overwriting target
 #     -n, --name <name>       Ruleset name (for header info)
 #     -k, --keep-comments     Keep all comment lines
@@ -26,13 +27,10 @@
 #     -c, --cron              Install/manage cron jobs
 #     -v, --verbose           Show verbose output
 #     -h, --help              Show help message
-# Manual Rules:
-#   Create <name>_manual.txt in same directory (e.g., Telegram_manual.txt)
-#   These rules will be automatically preserved across updates!
-# Examples:
-#   ./ruleset_merger.sh -t base.list -o TikTok.list -n "TikTok" -s "URL1" -s "URL2"
-#   ./ruleset_merger.sh -t base.list -l sources.txt -o merged.list -g
-#   ./ruleset_merger.sh --cron
+# Policy Support:
+#   Sources file format: URL|POLICY (e.g., https://example.com/rules.list|REJECT-DROP)
+#   Supported policies: REJECT, REJECT-DROP, REJECT-NO-DROP
+#   Default policy: REJECT (if not specified)
 # ============================================
 
 set -e
@@ -67,7 +65,6 @@ TOTAL_RULES_ADDED=0
 TOTAL_RULES_DUPLICATE=0
 TOTAL_RULES_AFTER=0
 
-
 # Print colored messages
 print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 print_success() { echo -e "${GREEN}[OK]${NC} $1"; }
@@ -77,16 +74,16 @@ print_verbose() { [ "$VERBOSE" = true ] && echo -e "${CYAN}[DEBUG]${NC} $1" || t
 
 # Show help
 show_help() {
-    cat << EOF
-Ruleset Merger - Proxy Rule Aggregator v2.0
+    cat << 'EOF'
+Ruleset Merger - Proxy Rule Aggregator v2.4
 
-Usage: $(basename "$0") [options]
+Usage: ruleset_merger.sh [options]
 
 Options:
   -t, --target <file>     Target/base ruleset file (required)
   -s, --source <URL>      Add third-party ruleset URL (can use multiple)
   -f, --file <file>       Read rules from local file (can use multiple)
-  -l, --list <file>       Read URL list from file (one URL per line)
+  -l, --list <file>       Read URL list from file (format: URL|POLICY)
   -o, --output <file>     Output to new file instead of overwriting target
   -n, --name <name>       Ruleset name (for header, default: inferred from filename)
   -k, --keep-comments     Keep all comment lines
@@ -96,26 +93,18 @@ Options:
   -v, --verbose           Show verbose output
   -h, --help              Show this help message
 
-Manual Rules (Auto-Detected):
-  Create <name>_manual.txt in same directory
-  Example: Telegram_manual.txt for Telegram.list
-  These rules are automatically preserved across updates!
+Policy Support:
+  Sources file format: URL|POLICY (one per line)
+  Example: https://example.com/rules.list|REJECT-DROP
+  
+  Supported policies:
+    - REJECT         (default, standard rejection)
+    - REJECT-DROP    (drop connection silently)
+    - REJECT-NO-DROP (reject but don't drop connection)
 
 Examples:
-  # Merge TikTok rulesets
-  $(basename "$0") -t base.list -o TikTok.list -n "TikTok" \\
-    -s "https://raw.githubusercontent.com/user/repo/TikTok.list"
-
-  # Merge with auto-detected manual rules (create TikTok_manual.txt first)
-  $(basename "$0") -t base.list -l sources.txt -o TikTok.list -g
-
-  # Install daily auto-update (cron)
-  $(basename "$0") --cron
-
-Supported Rule Types:
-  DOMAIN-SUFFIX, DOMAIN-KEYWORD, DOMAIN, IP-CIDR, IP-CIDR6,
-  GEOIP, URL-REGEX, USER-AGENT, PROCESS-NAME
-
+  ./ruleset_merger.sh -t base.list -o TikTok.list -n "TikTok" -s "URL1|REJECT"
+  ./ruleset_merger.sh -t base.list -l sources.txt -o merged.list -g
 EOF
 }
 
@@ -153,7 +142,6 @@ validate_args() {
         exit 1
     fi
     
-    # Find target file
     if [ ! -f "$TARGET_FILE" ]; then
         if [ -f "$SCRIPT_DIR/$TARGET_FILE" ]; then
             TARGET_FILE="$SCRIPT_DIR/$TARGET_FILE"
@@ -163,13 +151,11 @@ validate_args() {
         fi
     fi
     
-    # Check sources
     if [ ${#SOURCES[@]} -eq 0 ] && [ ${#LOCAL_FILES[@]} -eq 0 ] && [ -z "$URL_LIST_FILE" ]; then
         print_error "At least one source required (-s, -f, or -l)"
         exit 1
     fi
     
-    # Check URL list file
     if [ -n "$URL_LIST_FILE" ] && [ ! -f "$URL_LIST_FILE" ]; then
         if [ -f "$SCRIPT_DIR/$URL_LIST_FILE" ]; then
             URL_LIST_FILE="$SCRIPT_DIR/$URL_LIST_FILE"
@@ -179,10 +165,7 @@ validate_args() {
         fi
     fi
     
-    if [ -z "$OUTPUT_FILE" ]; then
-        OUTPUT_FILE="$TARGET_FILE"
-    fi
-    
+    [ -z "$OUTPUT_FILE" ] && OUTPUT_FILE="$TARGET_FILE"
     return 0
 }
 
@@ -198,24 +181,23 @@ download_ruleset() {
     print_verbose "Downloading: $url"
     
     if command -v curl &>/dev/null; then
-        curl -sL --connect-timeout 10 --max-time 30 "$url" -o "$output_file" 2>/dev/null && return 0
+        curl -sL --connect-timeout 15 --max-time 60 "$url" -o "$output_file" 2>/dev/null && return 0
     elif command -v wget &>/dev/null; then
-        wget -q --timeout=10 "$url" -O "$output_file" 2>/dev/null && return 0
+        wget -q --timeout=15 "$url" -O "$output_file" 2>/dev/null && return 0
     else
         print_error "curl or wget required"; exit 1
     fi
     return 1
 }
 
-# Extract valid rules
+# Extract valid rules (optimized for large files)
 extract_rules() {
     local input="$1" output="$2"
     grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|GEOIP|URL-REGEX|USER-AGENT|PROCESS-NAME),' "$input" 2>/dev/null | \
-        sed 's/[[:space:]]*$//' | sort -u > "$output"
+        sed 's/[[:space:]]*$//' > "$output" || touch "$output"
 }
 
-
-# Generate ruleset header (English)
+# Generate ruleset header
 generate_header() {
     local name="$1" total_rules="$2" sources_list="$3"
     local update_date=$(date "+%Y-%m-%d")
@@ -227,7 +209,7 @@ generate_header() {
 # Ruleset: ${name}
 # Updated: ${update_date} ${update_time}
 # Total Rules: ${total_rules}
-# Generator: Ruleset Merger v2.0
+# Generator: Ruleset Merger v2.4
 # Git Hash: ${git_hash}
 # ═══════════════════════════════════════════════════════════════
 #
@@ -236,13 +218,8 @@ ${sources_list}
 #
 # Usage:
 #   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
 #   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#   - Manual rules in ${name}_manual.txt are auto-preserved
-#
-# Auto-Update:
-#   - Cron job pulls upstream updates daily
-#   - Manual: ./ruleset_merger.sh -l sources.txt -o ${name}.list
 #
 # ═══════════════════════════════════════════════════════════════
 
@@ -262,7 +239,7 @@ git_commit_push() {
     git diff --cached --quiet && { print_info "No changes, skip commit"; return 0; }
     
     git commit -m "$commit_msg" &>/dev/null && print_success "Committed: $commit_msg" || print_warning "Commit failed"
-    git push &>/dev/null && print_success "Pushed to remote" || print_warning "Push failed, please push manually"
+    git push &>/dev/null && print_success "Pushed to remote" || print_warning "Push failed"
 }
 
 # Setup cron jobs
@@ -273,85 +250,99 @@ setup_cron() {
     echo "╚══════════════════════════════════════════╝"
     echo ""
     
-    local cron_script="$SCRIPT_DIR/cron_update.sh"
-    local cron_config="$SCRIPT_DIR/cron_jobs.conf"
-    
     echo "Select action:"
     echo "  1) View current cron jobs"
     echo "  2) Add new scheduled update"
     echo "  3) Remove cron jobs"
-    echo "  4) Generate example config"
-    echo "  5) Exit"
+    echo "  4) Exit"
     echo ""
-    read -p "Enter option [1-5]: " choice
+    read -p "Enter option [1-4]: " choice
     
     case $choice in
         1)
-            echo ""
             print_info "Current ruleset cron jobs:"
-            crontab -l 2>/dev/null | grep -E "ruleset_merger|cron_update" || echo "  (none)"
+            crontab -l 2>/dev/null | grep -E "ruleset_merger" || echo "  (none)"
             ;;
         2)
-            echo ""
-            read -p "Frequency [1=daily/2=weekly/3=custom]: " freq
+            read -p "Frequency [1=daily/2=weekly]: " freq
             local cron_time=""
             case $freq in
                 1) cron_time="0 6 * * *" ;;
                 2) cron_time="0 6 * * 0" ;;
-                3) read -p "Enter cron expression (e.g. '0 */6 * * *'): " cron_time ;;
                 *) print_error "Invalid option"; exit 1 ;;
             esac
-            
-            cat > "$cron_script" << 'CRONEOF'
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_FILE="$SCRIPT_DIR/cron_update.log"
-echo "========== $(date) ==========" >> "$LOG_FILE"
-if [ -f "$SCRIPT_DIR/cron_jobs.conf" ]; then
-    while IFS='|' read -r name target sources output; do
-        [[ "$name" =~ ^#.*$ || -z "$name" ]] && continue
-        echo "Updating: $name" >> "$LOG_FILE"
-        "$SCRIPT_DIR/ruleset_merger.sh" -t "$target" -l "$sources" -o "$output" -n "$name" -g >> "$LOG_FILE" 2>&1
-    done < "$SCRIPT_DIR/cron_jobs.conf"
-fi
-echo "Done" >> "$LOG_FILE"
-CRONEOF
-            chmod +x "$cron_script"
-            (crontab -l 2>/dev/null | grep -v "cron_update.sh"; echo "$cron_time $cron_script") | crontab -
+            (crontab -l 2>/dev/null; echo "$cron_time $SCRIPT_DIR/ruleset_merger.sh -t base.list -l sources.txt -o merged.list -g") | crontab -
             print_success "Cron job added: $cron_time"
-            
-            [ ! -f "$cron_config" ] && cat > "$cron_config" << 'CONFEOF'
-# Cron update config
-# Format: name|base_file|sources_file|output_file
-TikTok|base.list|TikTok_sources.txt|TikTok.list
-Google|base.list|Google_sources.txt|Google.list
-CONFEOF
             ;;
         3)
-            crontab -l 2>/dev/null | grep -v "cron_update.sh" | crontab -
+            crontab -l 2>/dev/null | grep -v "ruleset_merger" | crontab -
             print_success "Removed ruleset cron jobs"
             ;;
-        4)
-            cat > "$SCRIPT_DIR/example_sources.txt" << 'SRCEOF'
-# Example sources list (one URL per line, # for comments)
-https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/TikTok.list
-https://raw.githubusercontent.com/Semporia/TikTok-Unlock/master/Surge/TikTok.list
-SRCEOF
-            print_success "Created: $SCRIPT_DIR/example_sources.txt"
-            ;;
-        5) exit 0 ;;
+        4) exit 0 ;;
     esac
     exit 0
 }
 
+# Output rules by type (optimized)
+output_rules_by_type() {
+    local input_file="$1"
+    local policy="$2"
+    local output_file="$3"
+    
+    [ ! -s "$input_file" ] && return
+    
+    # Use awk for efficient categorization
+    awk -v policy="$policy" '
+    BEGIN { 
+        ds_count=0; dk_count=0; d_count=0; ip_count=0; ip6_count=0; other_count=0
+    }
+    /^DOMAIN-SUFFIX,/ { ds[ds_count++]=$0; next }
+    /^DOMAIN-KEYWORD,/ { dk[dk_count++]=$0; next }
+    /^DOMAIN,/ { d[d_count++]=$0; next }
+    /^IP-CIDR,/ { ip[ip_count++]=$0; next }
+    /^IP-CIDR6,/ { ip6[ip6_count++]=$0; next }
+    { other[other_count++]=$0 }
+    END {
+        if (ds_count > 0) {
+            print "# ========== DOMAIN-SUFFIX (" policy ") =========="
+            for (i=0; i<ds_count; i++) print ds[i]
+            print ""
+        }
+        if (dk_count > 0) {
+            print "# ========== DOMAIN-KEYWORD (" policy ") =========="
+            for (i=0; i<dk_count; i++) print dk[i]
+            print ""
+        }
+        if (d_count > 0) {
+            print "# ========== DOMAIN (" policy ") =========="
+            for (i=0; i<d_count; i++) print d[i]
+            print ""
+        }
+        if (ip_count > 0) {
+            print "# ========== IP-CIDR (" policy ") =========="
+            for (i=0; i<ip_count; i++) print ip[i]
+            print ""
+        }
+        if (ip6_count > 0) {
+            print "# ========== IP-CIDR6 (" policy ") =========="
+            for (i=0; i<ip6_count; i++) print ip6[i]
+            print ""
+        }
+        if (other_count > 0) {
+            print "# ========== OTHER (" policy ") =========="
+            for (i=0; i<other_count; i++) print other[i]
+            print ""
+        }
+    }
+    ' "$input_file" >> "$output_file"
+}
 
-# Main merge logic
+# Main merge logic (optimized for large datasets)
 merge_rules() {
     create_temp_dir
     
     local all_new_rules="$TEMP_DIR/all_new_rules.txt"
     local existing_rules="$TEMP_DIR/existing_rules.txt"
-    local merged_rules="$TEMP_DIR/merged_rules.txt"
     local final_output="$TEMP_DIR/final_output.txt"
     local sources_list_file="$TEMP_DIR/sources_list.txt"
     
@@ -364,10 +355,8 @@ merge_rules() {
     local auto_manual_file="${RULESET_NAME}_manual.txt"
     if [ -f "$auto_manual_file" ]; then
         MANUAL_FILE="$auto_manual_file"
-        print_verbose "Auto-detected manual rules: $MANUAL_FILE"
     elif [ -f "$SCRIPT_DIR/$auto_manual_file" ]; then
         MANUAL_FILE="$SCRIPT_DIR/$auto_manual_file"
-        print_verbose "Auto-detected manual rules: $MANUAL_FILE"
     fi
     
     # Extract existing rules
@@ -379,33 +368,48 @@ merge_rules() {
     # Read URL list file
     if [ -n "$URL_LIST_FILE" ]; then
         print_info "Reading URL list: $URL_LIST_FILE"
-        while IFS= read -r url || [ -n "$url" ]; do
-            url=$(echo "$url" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            [ -n "$url" ] && [[ ! "$url" =~ ^# ]] && SOURCES+=("$url")
+        while IFS= read -r line || [ -n "$line" ]; do
+            line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            [ -z "$line" ] || [[ "$line" =~ ^# ]] && continue
+            SOURCES+=("$line")
         done < "$URL_LIST_FILE"
     fi
     
     # Download and process remote rulesets
     local source_count=0
-    for url in "${SOURCES[@]}"; do
+    for source_line in "${SOURCES[@]}"; do
         source_count=$((source_count + 1))
+        
+        # Parse URL and policy (format: URL|POLICY)
+        local url policy
+        if [[ "$source_line" == *"|"* ]]; then
+            url="${source_line%|*}"
+            policy="${source_line##*|}"
+        else
+            url="$source_line"
+            policy="REJECT"
+        fi
+        
         local temp_download="$TEMP_DIR/download_${source_count}.txt"
         local temp_extracted="$TEMP_DIR/extracted_${source_count}.txt"
         
-        print_info "Processing [$source_count/${#SOURCES[@]}]: $url"
+        print_info "Processing [$source_count/${#SOURCES[@]}]: $(basename "$url") [$policy]"
         
         if download_ruleset "$url" "$temp_download"; then
             extract_rules "$temp_download" "$temp_extracted"
             local rules_count=$(wc -l < "$temp_extracted" | tr -d ' ')
             print_verbose "  Extracted: $rules_count rules"
-            cat "$temp_extracted" >> "$all_new_rules"
-            echo "#   - $url" >> "$sources_list_file"
+            
+            # Append rules with policy marker (use tab as delimiter for efficiency)
+            sed "s/$/	${policy}/" "$temp_extracted" >> "$all_new_rules"
+            
+            echo "#   - $url [$policy] ($rules_count rules)" >> "$sources_list_file"
         else
             print_warning "Download failed: $url"
             echo "#   - $url (FAILED)" >> "$sources_list_file"
         fi
     done
-    
+
     # Process local files
     for local_file in "${LOCAL_FILES[@]}"; do
         if [ -f "$local_file" ]; then
@@ -413,56 +417,76 @@ merge_rules() {
             source_count=$((source_count + 1))
             print_info "Processing local: $local_file"
             extract_rules "$local_file" "$temp_extracted"
-            cat "$temp_extracted" >> "$all_new_rules"
-            echo "#   - [LOCAL] $local_file" >> "$sources_list_file"
-        else
-            print_warning "Local file not found: $local_file"
+            sed "s/$/	REJECT/" "$temp_extracted" >> "$all_new_rules"
+            echo "#   - [LOCAL] $local_file [REJECT]" >> "$sources_list_file"
         fi
     done
     
-    # Process persistent manual rules file (auto-detected)
+    # Process manual rules file
     if [ -n "$MANUAL_FILE" ] && [ -f "$MANUAL_FILE" ]; then
         local temp_manual="$TEMP_DIR/manual_extracted.txt"
         print_info "Processing manual rules: $(basename "$MANUAL_FILE")"
         extract_rules "$MANUAL_FILE" "$temp_manual"
-        local manual_count=$(wc -l < "$temp_manual" | tr -d ' ')
-        print_verbose "  Manual rules: $manual_count"
-        cat "$temp_manual" >> "$all_new_rules"
+        sed "s/$/	REJECT/" "$temp_manual" >> "$all_new_rules"
         echo "#   - [MANUAL] $(basename "$MANUAL_FILE") (auto-preserved)" >> "$sources_list_file"
     fi
     
-    # Deduplicate
-    sort -u "$all_new_rules" -o "$all_new_rules"
-    local new_rules_count=$(wc -l < "$all_new_rules" | tr -d ' ')
-    print_info "New rules (deduplicated): $new_rules_count"
+    print_info "Deduplicating rules (this may take a moment)..."
     
-    # Merge and deduplicate
-    cat "$existing_rules" "$all_new_rules" | sort -u > "$merged_rules"
-    TOTAL_RULES_AFTER=$(wc -l < "$merged_rules" | tr -d ' ')
+    # Optimized deduplication using awk (much faster than sort -u for large files)
+    local reject_rules="$TEMP_DIR/reject_rules.txt"
+    local reject_drop_rules="$TEMP_DIR/reject_drop_rules.txt"
+    local reject_no_drop_rules="$TEMP_DIR/reject_no_drop_rules.txt"
+    
+    # Single-pass deduplication and policy separation using awk
+    awk -F'\t' '
+    !seen[$1]++ {
+        if ($2 == "REJECT-DROP") print $1 > "'"$reject_drop_rules"'"
+        else if ($2 == "REJECT-NO-DROP") print $1 > "'"$reject_no_drop_rules"'"
+        else print $1 > "'"$reject_rules"'"
+    }
+    ' "$all_new_rules"
+    
+    # Ensure files exist
+    touch "$reject_rules" "$reject_drop_rules" "$reject_no_drop_rules"
+    
+    # Merge with existing rules (existing default to REJECT)
+    cat "$existing_rules" >> "$reject_rules"
+    sort -u "$reject_rules" -o "$reject_rules"
+    sort -u "$reject_drop_rules" -o "$reject_drop_rules"
+    sort -u "$reject_no_drop_rules" -o "$reject_no_drop_rules"
+    
+    # Calculate statistics
+    local reject_count=$(wc -l < "$reject_rules" | tr -d ' ')
+    local reject_drop_count=$(wc -l < "$reject_drop_rules" | tr -d ' ')
+    local reject_no_drop_count=$(wc -l < "$reject_no_drop_rules" | tr -d ' ')
+    
+    TOTAL_RULES_AFTER=$((reject_count + reject_drop_count + reject_no_drop_count))
     TOTAL_RULES_ADDED=$((TOTAL_RULES_AFTER - TOTAL_RULES_BEFORE))
-    TOTAL_RULES_DUPLICATE=$((new_rules_count - TOTAL_RULES_ADDED))
+    [ $TOTAL_RULES_ADDED -lt 0 ] && TOTAL_RULES_ADDED=0
     
     # Generate output
     local sources_list=$(cat "$sources_list_file")
     generate_header "$RULESET_NAME" "$TOTAL_RULES_AFTER" "$sources_list" > "$final_output"
     
-    # Categorize rules
-    local domain_suffix=$(grep '^DOMAIN-SUFFIX,' "$merged_rules" | sort -t',' -k2 || true)
-    local domain_keyword=$(grep '^DOMAIN-KEYWORD,' "$merged_rules" | sort -t',' -k2 || true)
-    local domain=$(grep '^DOMAIN,' "$merged_rules" | sort -t',' -k2 || true)
-    local ip_cidr=$(grep '^IP-CIDR,' "$merged_rules" | sort -t',' -k2 || true)
-    local ip_cidr6=$(grep '^IP-CIDR6,' "$merged_rules" | sort -t',' -k2 || true)
-    local other=$(grep -v -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6),' "$merged_rules" || true)
+    # Add policy statistics
+    cat >> "$final_output" << EOF
+# Policy Distribution:
+#   - REJECT:         ${reject_count} rules
+#   - REJECT-DROP:    ${reject_drop_count} rules
+#   - REJECT-NO-DROP: ${reject_no_drop_count} rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+EOF
     
-    [ -n "$domain_suffix" ] && { echo "# ========== DOMAIN-SUFFIX ==========" >> "$final_output"; echo "$domain_suffix" >> "$final_output"; echo "" >> "$final_output"; }
-    [ -n "$domain_keyword" ] && { echo "# ========== DOMAIN-KEYWORD ==========" >> "$final_output"; echo "$domain_keyword" >> "$final_output"; echo "" >> "$final_output"; }
-    [ -n "$domain" ] && { echo "# ========== DOMAIN ==========" >> "$final_output"; echo "$domain" >> "$final_output"; echo "" >> "$final_output"; }
-    [ -n "$ip_cidr" ] && { echo "# ========== IP-CIDR ==========" >> "$final_output"; echo "$ip_cidr" >> "$final_output"; echo "" >> "$final_output"; }
-    [ -n "$ip_cidr6" ] && { echo "# ========== IP-CIDR6 ==========" >> "$final_output"; echo "$ip_cidr6" >> "$final_output"; echo "" >> "$final_output"; }
-    [ -n "$other" ] && { echo "# ========== OTHER ==========" >> "$final_output"; echo "$other" >> "$final_output"; echo "" >> "$final_output"; }
+    # Output rules grouped by policy
+    output_rules_by_type "$reject_rules" "REJECT" "$final_output"
+    output_rules_by_type "$reject_drop_rules" "REJECT-DROP" "$final_output"
+    output_rules_by_type "$reject_no_drop_rules" "REJECT-NO-DROP" "$final_output"
     
     echo "# ========== END ==========" >> "$final_output"
-    
+
     # Statistics
     echo ""
     echo "╔══════════════════════════════════════════╗"
@@ -470,8 +494,13 @@ merge_rules() {
     echo "╠══════════════════════════════════════════╣"
     printf "║  Before:      %-25s ║\n" "$TOTAL_RULES_BEFORE"
     printf "║  Added:       %-25s ║\n" "$TOTAL_RULES_ADDED"
-    printf "║  Duplicates:  %-25s ║\n" "$TOTAL_RULES_DUPLICATE"
     printf "║  After:       %-25s ║\n" "$TOTAL_RULES_AFTER"
+    echo "╠══════════════════════════════════════════╣"
+    echo "║         Policy Distribution              ║"
+    echo "╠══════════════════════════════════════════╣"
+    printf "║  REJECT:         %-22s ║\n" "$reject_count"
+    printf "║  REJECT-DROP:    %-22s ║\n" "$reject_drop_count"
+    printf "║  REJECT-NO-DROP: %-22s ║\n" "$reject_no_drop_count"
     echo "╚══════════════════════════════════════════╝"
     echo ""
     
@@ -491,7 +520,7 @@ main() {
     echo ""
     echo "╔══════════════════════════════════════════╗"
     echo "║     Ruleset Merger - Rule Aggregator     ║"
-    echo "║              Version 2.0                 ║"
+    echo "║              Version 2.4                 ║"
     echo "╚══════════════════════════════════════════╝"
     echo ""
     
