@@ -7,10 +7,18 @@
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
-# Updated: 2025-12-04 | Sources: 25 rulesets
+# Universal Ad-Blocking (Merged - 235k+ REJECT rules, deduplicated)
+# Updated: 2025-12-04 | Sources: 22 rulesets (REJECT only)
+# Note: DROP/NO-DROP rules use upstream sources directly below
 # ═══════════════════════════════════════════════════════════════
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AdBlock_Merged.list,REJECT,extended-matching,"update-interval=86400",no-resolve
+
+# ═══════════════════════════════════════════════════════════════
+# Policy-Specific Rules (Upstream - Preserve DROP/NO-DROP)
+# ═══════════════════════════════════════════════════════════════
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,"update-interval=86400",no-resolve
 
 # ═══════════════════════════════════════════════════════════════
 # SDK / Third-party Privacy Enhancement

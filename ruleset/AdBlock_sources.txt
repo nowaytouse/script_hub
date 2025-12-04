@@ -8,12 +8,14 @@
 
 # ═══════════════════════════════════════════════════════════════
 # blackmatrix7 - Advertising & Privacy
+# Note: BlockHttpDNS.list is used directly in module to preserve
+#       REJECT-DROP policy
 # ═══════════════════════════════════════════════════════════════
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Advertising/Advertising_All.list|REJECT
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Privacy/Privacy_All.list|REJECT
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list|REJECT
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy_All_No_Resolve.list|REJECT
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list|REJECT-DROP
+# https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list|REJECT-DROP  # Excluded - used in module
 
 # ═══════════════════════════════════════════════════════════════
 # limbopro - Adblock4limbo
@@ -38,12 +40,14 @@ https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt|REJECT
 
 # ═══════════════════════════════════════════════════════════════
 # skk.moe - Sukka Ruleset (Policy-Specific)
+# Note: reject-no-drop.conf and reject-drop.conf are used directly
+#       in module to preserve their specific policies
 # ═══════════════════════════════════════════════════════════════
 https://ruleset.skk.moe/List/domainset/reject.conf|REJECT
 https://ruleset.skk.moe/List/domainset/reject_extra.conf|REJECT
 https://ruleset.skk.moe/List/non_ip/reject.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf|REJECT-NO-DROP
-https://ruleset.skk.moe/List/non_ip/reject-drop.conf|REJECT-DROP
+# https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf|REJECT-NO-DROP  # Excluded - used in module
+# https://ruleset.skk.moe/List/non_ip/reject-drop.conf|REJECT-DROP  # Excluded - used in module
 https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf|REJECT
 https://ruleset.skk.moe/List/ip/reject.conf|REJECT
 https://ruleset.skk.moe/List/non_ip/sogouinput.conf|REJECT

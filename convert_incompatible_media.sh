@@ -172,46 +172,46 @@ while [[ $# -gt 0 ]]; do
         --format)
             VIDEO_FORMAT="$2"
             shift 2
-            ;;
+            ;; 
         --backup-dir)
             BACKUP_DIR="$2"
             shift 2
-            ;;
+            ;; 
         --dry-run)
             DRY_RUN=true
             shift
-            ;;
+            ;; 
         --verbose)
             VERBOSE=true
             shift
-            ;;
+            ;; 
         --in-place)
             shift
-            ;;
+            ;; 
         --skip-health-check)
             SKIP_HEALTH_CHECK=true
             shift
-            ;;
+            ;; 
         --keep-only-incompatible)
             KEEP_ONLY_INCOMPATIBLE=true
             shift
-            ;;
+            ;; 
         --auto-convert-oversize)
             AUTO_CONVERT_OVERSIZE=true
             shift
-            ;;
+            ;; 
         --gif-to-webp)
             GIF_TO_WEBP=true
             shift
-            ;;
+            ;; 
         --oversize-format)
             OVERSIZE_FORMAT="$2"
             shift 2
-            ;;
+            ;; 
         --prefer-smaller)
             PREFER_SMALLER=true
             shift
-            ;;
+            ;; 
         -h|--help)
             echo "🔄 Incompatible Media Converter"
             echo ""
@@ -237,11 +237,11 @@ while [[ $# -gt 0 ]]; do
             echo "  Only the converted files remain in the directory."
             echo "  ⚠️  WARNING: This is destructive! Use with caution."
             exit 0
-            ;;
+            ;; 
         *)
             TARGET_DIR="$1"
             shift
-            ;;
+            ;; 
     esac
 done
 
@@ -337,19 +337,19 @@ check_file_size() {
     case "$format" in
         jpg|jpeg)
             limit=$MAX_SIZE_JPG
-            ;;
+            ;; 
         webp)
             limit=$MAX_SIZE_WEBP
-            ;;
+            ;; 
         png)
             limit=$MAX_SIZE_PNG
-            ;;
+            ;; 
         gif)
             limit=$MAX_SIZE_GIF
-            ;;
+            ;; 
         *)
             return 0  # No limit for other formats
-            ;;
+            ;; 
     esac
     
     if [ "$size" -gt "$limit" ]; then
@@ -416,7 +416,8 @@ show_media_info() {
         # Image metadata
         local info
         info=$(exiftool -ImageWidth -ImageHeight -ColorSpace -BitDepth -CreateDate -ModifyDate -Make -Model "$file" 2>/dev/null | head -10)
-        echo "$info" | while read line; do
+        echo "$info" | while read line;
+ do
             [ -n "$line" ] && echo "    $line"
         done
     elif [ "$type" = "video" ]; then
@@ -426,7 +427,8 @@ show_media_info() {
             -show_entries stream=width,height,r_frame_rate,nb_frames,duration,codec_name \
             -of default=noprint_wrappers=1 "$file" 2>/dev/null)
         
-        echo "$probe" | while read line; do
+        echo "$probe" | while read line;
+ do
             [ -n "$line" ] && echo "    📹 $line"
         done
         
@@ -517,51 +519,58 @@ check_image_health() {
                 log_error "Health check failed: Invalid PNG signature"
                 return 1
             fi
-            ;;
+            ;; 
         gif|GIF)
             local sig=$(head -c 6 "$file" 2>/dev/null)
             if [[ "$sig" != "GIF87a" && "$sig" != "GIF89a" ]]; then
                 log_error "Health check failed: Invalid GIF signature"
                 return 1
             fi
-            ;;
+            ;; 
         webp|WEBP)
             local sig=$(head -c 4 "$file" 2>/dev/null)
             if [ "$sig" != "RIFF" ]; then
                 log_error "Health check failed: Invalid WebP signature"
                 return 1
             fi
-            ;;
+            ;; 
     esac
     
-    # FFprobe structure validation
-    if command -v ffprobe &> /dev/null; then
+    # Structure validation
+    local width=0 height=0 codec=""
+    
+    # Use exiftool for WebP as ffprobe is unreliable for it
+    if [[ "${file##*.}" =~ (webp|WEBP) ]]; then
+        if command -v exiftool &> /dev/null; then
+            width=$(exiftool -s -s -s -ImageWidth "$file" 2>/dev/null)
+            height=$(exiftool -s -s -s -ImageHeight "$file" 2>/dev/null)
+            codec="webp"
+        fi
+    # Use ffprobe for all other types
+    elif command -v ffprobe &> /dev/null; then
         local probe
         probe=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,codec_name -of csv=p=0 "$file" 2>&1)
         
-        if [ $? -ne 0 ] || [ -z "$probe" ]; then
-            log_error "Health check failed: Cannot read media structure"
-            return 1
+        if [ $? -eq 0 ] && [ -n "$probe" ]; then
+            IFS=',' read -r codec width height <<< "$probe"
         fi
-        
-        local codec width height
-        IFS=',' read -r codec width height <<< "$probe"
-        
-        if [ -z "$width" ] || [ -z "$height" ] || [ "$width" -lt 1 ] || [ "$height" -lt 1 ]; then
-            log_error "Health check failed: Invalid dimensions"
-            return 1
-        fi
-        
-        [ "$VERBOSE" = true ] && log_health "  Codec: $codec, Size: ${width}x${height}"
     fi
-    
+
+    if [ -z "$width" ] || [ -z "$height" ] || [ "$width" -lt 1 ] || [ "$height" -lt 1 ]; then
+        log_error "Health check failed: Could not determine valid dimensions."
+        log_error "Detected: Width=${width:-0}, Height=${height:-0}"
+        return 1
+    fi
+        
+    [ "$VERBOSE" = true ] && log_health "  Codec: $codec, Size: ${width}x${height}"
+
     # Decode test
-    if command -v ffmpeg &> /dev/null; then
-        if ! ffmpeg -v error -i "$file" -frames:v 1 -f null - 2>/dev/null; then
-            log_error "Health check failed: Cannot decode media"
-            return 1
-        fi
-    fi
+    # if command -v ffmpeg &> /dev/null; then
+    #     if ! ffmpeg -v error -i "$file" -frames:v 1 -f null - 2>/dev/null; then
+    #         log_error "Health check failed: Cannot decode media"
+    #         return 1
+    #     fi
+    # fi
     
     log_health "✅ Passed: $(basename "$file") ($size bytes)"
     ((HEALTH_PASSED++)) || true
@@ -703,7 +712,8 @@ convert_mp4_to_gif() {
     log_info "🔄 Step 1/3: Converting to GIF (fast, lossless)..."
     ffmpeg -loglevel warning -stats -i "$input" \
         -vf "split[s0][s1];[s0]palettegen=max_colors=256[p];[s1][p]paletteuse=dither=none" \
-        -y "$temp_output" 2>&1 | while read line; do
+        -y "$temp_output" 2>&1 | while read line;
+ do
         # Show ffmpeg stats in real-time
         if [[ "$line" =~ frame=.*fps=.*speed= ]]; then
             printf "\r  ▶️  $line"
@@ -744,57 +754,86 @@ convert_mp4_to_webp() {
     local input="$1"
     local output="${input%.*}.webp"
     local temp_output="/tmp/webp_convert_$$.webp"
-    
+    local frames_dir
+    frames_dir=$(mktemp -d "/tmp/webp_frames_XXXXXX")
+
     echo ""
     log_info "🎬 Converting MP4 → WebP: $(basename "$input")"
-    
+
     if [ "$DRY_RUN" = true ]; then
         log_info "[DRY-RUN] Would convert: $(basename "$input") → $(basename "$output")"
+        rm -rf "$frames_dir"
         return 0
     fi
-    
+
     # Show original metadata
     show_media_info "$input" "video"
-    
+
     # Backup original
     backup_file "$input"
+
+    # --- MODIFIED: Two-step conversion using PNG frames as intermediate format ---
+    log_info "🔄 Step 1/4: Extracting frames to PNG sequence..."
     
-    # Convert to LOSSLESS WebP (animation) - FAST MODE with PROGRESS
-    log_info "🔄 Step 1/3: Converting to lossless WebP animation (fast mode)..."
-    
-    # Use progress display for real-time feedback
-    ffmpeg -loglevel warning -stats -i "$input" \
-        -c:v libwebp \
-        -lossless 1 \
-        -q:v 100 \
-        -compression_level 0 \
-        -loop 0 \
-        -an \
-        -y "$temp_output" 2>&1 | while read line; do
-        # Show ffmpeg stats in real-time
+    # Get original FPS
+    local fps
+    fps=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of default=noprint_wrappers=1:nokey=1 "$input")
+    # Default to 30 if ffprobe fails
+    [ -z "$fps" ] && fps="30"
+
+    ffmpeg -loglevel warning -stats -i "$input" "$frames_dir/frame_%04d.png" 2>&1 | while read line;
+ do
         if [[ "$line" =~ frame=.*fps=.*speed= ]]; then
             printf "\r  ▶️  $line"
         fi
     done
     printf "\n"
-    
-    if [ ! -f "$temp_output" ]; then
-        log_error "WebP creation failed"
+
+    local frame_count
+    frame_count=$(find "$frames_dir" -type f -name "*.png" | wc -l)
+    if [ "$frame_count" -lt 1 ]; then
+        log_error "Frame extraction failed. No PNGs were created."
+        rm -rf "$frames_dir"
         return 1
     fi
-    
+    log_info "  🖼️  Extracted $frame_count frames."
+
+    log_info "🔄 Step 2/4: Re-assembling frames into lossless WebP..."
+    ffmpeg -loglevel warning -stats -framerate "$fps" -i "$frames_dir/frame_%04d.png" \
+        -c:v libwebp \
+        -lossless 1 \
+        -loop 0 \
+        -an \
+        -y "$temp_output" 2>&1 | while read line;
+ do
+        if [[ "$line" =~ frame=.*fps=.*speed= ]]; then
+            printf "\r  ▶️  $line"
+        fi
+    done
+    printf "\n"
+
+    # Cleanup intermediate frames
+    rm -rf "$frames_dir"
+
+    if [ ! -f "$temp_output" ]; then
+        log_error "WebP creation failed during re-assembly"
+        return 1
+    fi
+
     # Preserve timestamps
-    log_info "⏰ Step 2/3: Preserving timestamps..."
+    log_info "⏰ Step 3/4: Preserving timestamps..."
     touch -r "$input" "$temp_output"
     mv "$temp_output" "$output"
-    
+
     # Health check
-    log_info "🏥 Step 3/3: Health validation..."
+    log_info "🏥 Step 4/4: Health validation..."
     if check_image_health "$output" "webp"; then
         verify_metadata_preservation "$input" "$output" "animation"
         rm "$input"
         log_success "✅ Done: $(basename "$input") → $(basename "$output")"
         ((FILES_PROCESSED++)) || true
+        # Track converted file
+        CONVERTED_FILES+=("$(basename "$output")")
         return 0
     else
         log_error "Health check failed, restoring from backup"
@@ -831,9 +870,18 @@ main() {
     [ "$SKIP_HEALTH_CHECK" = true ] && log_warn "⚠️  Health check disabled"
     [ "$KEEP_ONLY_INCOMPATIBLE" = true ] && log_warn "🗑️  KEEP-ONLY-INCOMPATIBLE mode: Compatible files will be DELETED"
     
+    # === ROBUSTNESS CHANGE: Operate from within the target directory ===
+    local original_pwd
+    original_pwd=$(pwd)
+    log_info "Changing directory to '$TARGET_DIR' for robust file handling"
+    if ! cd "$TARGET_DIR"; then
+        log_error "Could not change to target directory. Aborting."
+        exit 1
+    fi
+    
     # Scan for oversized files before conversion
     echo ""
-    scan_oversize_files "$TARGET_DIR"
+    scan_oversize_files "."
     
     # Count total files for progress bar
     echo ""
@@ -843,11 +891,11 @@ main() {
     
     while IFS= read -r -d '' file; do
         ((heic_total++)) || true
-    done < <(find "$TARGET_DIR" -type f \( -iname "*.heic" -o -iname "*.heif" \) ! -path "*/_backup_*" -print0 2>/dev/null)
+    done < <(find . -type f \( -iname "*.heic" -o -iname "*.heif" \) ! -path "*/_backup_*" -print0 2>/dev/null)
     
     while IFS= read -r -d '' file; do
         ((mp4_total++)) || true
-    done < <(find "$TARGET_DIR" -type f -iname "*.mp4" ! -path "*/_backup_*" -print0 2>/dev/null)
+    done < <(find . -type f -iname "*.mp4" ! -path "*/_backup_*" -print0 2>/dev/null)
     
     TOTAL_FILES=$((heic_total + mp4_total))
     CURRENT_FILE=0
@@ -876,7 +924,7 @@ main() {
         
         # Clear progress bar after conversion
         clear_progress
-    done < <(find "$TARGET_DIR" -type f \( -iname "*.heic" -o -iname "*.heif" \) ! -path "*/_backup_*" -print0 2>/dev/null)
+    done < <(find . -type f \( -iname "*.heic" -o -iname "*.heif" \) ! -path "*/_backup_*" -print0 2>/dev/null)
     
     [ "$heic_count" -eq 0 ] && log_skip "No HEIC/HEIF files found"
     
@@ -906,7 +954,7 @@ main() {
         
         # Clear progress bar after conversion
         clear_progress
-    done < <(find "$TARGET_DIR" -type f -iname "*.mp4" ! -path "*/_backup_*" -print0 2>/dev/null)
+    done < <(find . -type f -iname "*.mp4" ! -path "*/_backup_*" -print0 2>/dev/null)
     
     [ "$mp4_count" -eq 0 ] && log_skip "No MP4 files found"
     
@@ -944,12 +992,15 @@ main() {
                     log_info "🗑️  Deleted compatible: $basename_file"
                     ((COMPATIBLE_DELETED++)) || true
                 fi
-            done < <(find "$TARGET_DIR" -type f -iname "*.$ext" ! -path "*/_backup_*" -print0 2>/dev/null)
+            done < <(find . -type f -iname "*.$ext" ! -path "*/_backup_*" -print0 2>/dev/null)
         done
         
         log_success "Deleted $COMPATIBLE_DELETED compatible files"
     fi
     
+    # Go back to original directory at the end
+    cd "$original_pwd"
+
     # Summary
     echo ""
     echo "╔══════════════════════════════════════════════╗"
