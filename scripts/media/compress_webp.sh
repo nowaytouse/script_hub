@@ -217,15 +217,28 @@ compress_webp() {
             best_size=$size
             break
         elif [[ $size -gt $max_size ]]; then
+            # Too big, decrease quality
             max_q=$quality
             quality=$(( (min_q + quality) / 2 ))
         else
+            # Too small, increase quality
             min_q=$quality
             quality=$(( (quality + max_q) / 2 ))
+            
+            # If already at max quality and still too small, warn and stop
+            if [[ $quality -ge 99 ]]; then
+                local min_mb=$(echo "scale=2; $min_size / 1024 / 1024" | bc)
+                log_warning "   ⚠️ Cannot reach minimum ${min_mb}MB even at Q=100"
+                log_warning "   ⚠️ Best achievable: ${size_mb}MB (Q=$quality)"
+                log_info "   💡 Tip: Original file may be too small or already optimized"
+                best_output="$temp_file"
+                best_size=$size
+                break
+            fi
         fi
         
-        # Save best result so far (closest to max without exceeding)
-        if [[ $size -le $max_size ]] && [[ $size -gt $best_size ]]; then
+        # Save best result so far (closest to target range)
+        if [[ $size -gt $best_size ]]; then
             best_size=$size
             cp "$temp_file" "${temp_file}.best"
             best_output="${temp_file}.best"
@@ -235,7 +248,7 @@ compress_webp() {
         if [[ $((max_q - min_q)) -le 1 ]]; then
             if [[ -n "$best_output" ]] && [[ -f "$best_output" ]]; then
                 local best_mb=$(echo "scale=2; $best_size / 1024 / 1024" | bc)
-                log_warning "   ⚠️ Cannot reach target, using best: ${best_mb}MB"
+                log_warning "   ⚠️ Cannot reach target range, using best: ${best_mb}MB"
             else
                 log_warning "   ⚠️ Using current result: ${size_mb}MB"
                 best_output="$temp_file"
