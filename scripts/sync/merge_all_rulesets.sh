@@ -34,8 +34,7 @@ download_rules() {
 extract_rules() {
     local input="$1"
     grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|PROCESS-NAME),' "$input" 2>/dev/null | \
-        sed 's/[[:space:]]*$//' | \
-        sed 's/^IP-CIDR,\(.*:.*\)/IP-CIDR6,\1/' || true
+        sed 's/[[:space:]]*$//' || true
 }
 
 # 合并规则到目标文件

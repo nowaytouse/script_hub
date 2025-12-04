@@ -1,30 +1,11 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: PayPal
-# Updated: 2025-12-04 04:22:19 UTC
-# Total Rules: 248
-# Generator: Ruleset Merger v2.4
-# Git Hash: eef5cfc
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/PayPal/PayPal.list [REJECT] (248 rules)
-#   - ../MetaCubeX/MetaCubeX_paypal.list (FAILED)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Updated: 2025-12-04
+# Total Rules: 247
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         248 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-KEYWORD,paypal
 DOMAIN-SUFFIX,account-paypal.info
 DOMAIN-SUFFIX,account-paypal.net
 DOMAIN-SUFFIX,account-paypal.org
@@ -271,11 +252,3 @@ DOMAIN-SUFFIX,xoom.io
 DOMAIN-SUFFIX,xoom.net.cn
 DOMAIN-SUFFIX,xoom.us
 DOMAIN-SUFFIX,xoomcom.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,paypal
-
-# ========== OTHER (REJECT) ==========
-USER-AGENT,PayPal*
-
-# ========== END ==========
