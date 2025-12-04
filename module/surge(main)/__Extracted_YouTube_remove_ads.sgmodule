@@ -1,0 +1,29 @@
+#!name=YouTube去广告
+#!desc=[已提取REJECT=2+DIRECT=0] 原模块精简版
+#!author=Maasea[https://github.com/Maasea],wish[https://github.com/mist-whisper]
+#!category=去广告
+#!date=2025-06-05 16:15:00
+
+#!arguments=隐藏上传按钮:false,隐藏短视频按钮:false,字幕翻译语言:off
+#!arguments-desc=- 屏蔽参数：[true, false] \n- 语言代码：[ off, zh-Hans, zh-Hant, ja, ko, en] \n语言代码遵循 Google Translate Languages Codes, 当填入 off 时关闭翻译。
+
+
+# ═══════════════════════════════════════════════════════════════
+# 此模块由 sync_all_rules.sh 自动生成
+# 原始URL: https://raw.githubusercontent.com/mist-whisper/Surge/master/Modules/YouTube_remove_ads.sgmodule
+# 已提取: REJECT规则 2 条, DIRECT规则 0 条
+# 生成时间: 2025-12-04 22:04:38
+# ═══════════════════════════════════════════════════════════════
+
+[MITM]
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com
+
+[Script]
+youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Youtube/youtube.response.js,argument="{"blockUpload":{{{隐藏上传按钮}}},"blockShorts":{{{隐藏短视频按钮}}},"captionLang":"{{{字幕翻译语言}}}"}"
+
+
+
+
+[Map Local]
+^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
+

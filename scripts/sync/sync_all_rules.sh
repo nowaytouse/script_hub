@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 一键规则同步脚本 (All-in-One Rule Sync) v2.0
+# 一键规则同步脚本 (All-in-One Rule Sync) v3.0
 # ═══════════════════════════════════════════════════════════════════════════════
 # 功能：按最佳顺序执行所有规则处理任务
-# 1. 汲取远程sgmodule规则
-# 2. 提取模块规则（REJECT + DIRECT）
-# 3. 去重合并到规则集
-# 4. 转换SRS规则（Sing-box）
-# 5. 同步到iCloud
-# 6. Git提交推送
+# 1. 汲取远程sgmodule规则（REJECT + DIRECT）
+# 2. 吐出剩余内容为精简模块
+# 3. 提取本地模块规则
+# 4. 去重合并到规则集
+# 5. 转换SRS规则（Sing-box）
+# 6. 同步到iCloud
+# 7. Git提交推送
 #
 # 用法：
 #   ./sync_all_rules.sh           # 交互模式
@@ -34,6 +35,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCES_DIR="$PROJECT_ROOT/ruleset/Sources"
 SGMODULE_SOURCES="$SOURCES_DIR/AdBlock_sgmodule_sources.txt"
+SURGE_MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
+ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
+CHINA_DIRECT_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/ChinaDirect.list"
 
 # 模式配置
 AUTO_MODE=false
@@ -56,7 +60,7 @@ log_error() { echo -e "${RED}[✗]${NC} $1"; }
 # 显示帮助
 show_help() {
     cat << EOF
-🚀 一键规则同步脚本 v2.0
+🚀 一键规则同步脚本 v3.0
 
 用法: $(basename "$0") [选项]
 
@@ -72,12 +76,19 @@ show_help() {
     $(basename "$0") --auto --no-git  # 自动但不提交Git
 
 功能:
-    1. 汲取远程sgmodule规则（从AdBlock_sgmodule_sources.txt）
-    2. 提取本地模块规则（REJECT + DIRECT）
-    3. 去重合并到规则集
-    4. 转换SRS规则（Sing-box）
-    5. 同步到iCloud
-    6. Git提交推送
+    1. 汲取远程sgmodule规则（REJECT + DIRECT）
+       - REJECT规则 → 合并到 AdBlock_Merged.list
+       - DIRECT规则 → 合并到 ChinaDirect.list
+    2. 吐出精简模块（删除已吸取规则后的剩余内容）
+       - 保留 URL Rewrite、MITM、Script 等
+       - 输出到 module/surge(main)/__Extracted_*.sgmodule
+    3. 提取本地模块规则
+    4. 去重合并到规则集
+    5. 转换SRS规则（Sing-box）
+    6. 同步到iCloud
+    7. Git提交推送
+
+sgmodule源文件: ruleset/Sources/AdBlock_sgmodule_sources.txt
 EOF
     exit 0
 }
@@ -113,7 +124,7 @@ show_welcome() {
     echo -e "${BLUE}"
     cat << "EOF"
 ╔═══════════════════════════════════════════════════════════════╗
-║        🚀 一键规则同步脚本 v2.0                               ║
+║        🚀 一键规则同步脚本 v3.0                               ║
 ║        All-in-One Rule Synchronization                        ║
 ╚═══════════════════════════════════════════════════════════════╝
 EOF
@@ -123,18 +134,18 @@ EOF
         echo -e "${GREEN}🤖 无人值守模式${NC}"
     else
         echo "执行顺序："
-        echo "  1️⃣  汲取远程sgmodule规则"
-        echo "  2️⃣  提取本地模块规则"
-        echo "  3️⃣  转换SRS规则"
-        echo "  4️⃣  同步到iCloud"
-        echo "  5️⃣  Git提交推送"
+        echo "  0️⃣  汲取远程sgmodule规则（REJECT+DIRECT）+ 吐出精简模块"
+        echo "  1️⃣  提取本地模块规则"
+        echo "  2️⃣  转换SRS规则"
+        echo "  3️⃣  同步到iCloud"
+        echo "  4️⃣  Git提交推送"
     fi
     echo ""
 }
 
-# 步骤0: 汲取远程sgmodule规则（仅REJECT策略）
+# 步骤0: 汲取远程sgmodule规则（REJECT + DIRECT）并吐出精简模块
 step_fetch_sgmodules() {
-    log_step "0" "汲取远程sgmodule规则（仅REJECT策略）"
+    log_step "0" "汲取远程sgmodule规则 + 吐出精简模块"
     
     if [[ ! -f "$SGMODULE_SOURCES" ]]; then
         log_warning "sgmodule源文件不存在: $SGMODULE_SOURCES"
@@ -143,10 +154,11 @@ step_fetch_sgmodules() {
     fi
     
     local temp_dir=$(mktemp -d)
-    local rules_file="$temp_dir/extracted_rules.txt"
+    local reject_rules_file="$temp_dir/reject_rules.txt"
+    local direct_rules_file="$temp_dir/direct_rules.txt"
     local count=0
-    local total_rules=0
-    local skipped_rules=0
+    local total_reject=0
+    local total_direct=0
     
     log_info "读取sgmodule源列表..."
     
@@ -157,7 +169,8 @@ step_fetch_sgmodules() {
         local url="$line"
         ((count++))
         
-        log_info "[$count] 下载: $(basename "$url")"
+        local module_basename=$(basename "$url" .sgmodule)
+        log_info "[$count] 下载: $module_basename"
         
         # 下载sgmodule
         local module_content
@@ -166,61 +179,227 @@ step_fetch_sgmodules() {
             continue
         }
         
-        # 提取Rule部分的规则（仅REJECT策略）
-        local in_rule_section=false
-        local module_rules=0
-        local module_skipped=0
+        # 临时文件存储各部分
+        local temp_header="$temp_dir/header_${count}.txt"
+        local temp_rule="$temp_dir/rule_${count}.txt"
+        local temp_url_rewrite="$temp_dir/url_rewrite_${count}.txt"
+        local temp_mitm="$temp_dir/mitm_${count}.txt"
+        local temp_script="$temp_dir/script_${count}.txt"
+        local temp_other="$temp_dir/other_${count}.txt"
+        
+        # 解析模块内容
+        local current_section="header"
+        local module_reject=0
+        local module_direct=0
+        local module_other_rules=0
         
         while IFS= read -r module_line; do
+            # 检测section
             if [[ "$module_line" =~ ^\[Rule\] ]]; then
-                in_rule_section=true
+                current_section="rule"
                 continue
-            elif [[ "$module_line" =~ ^\[ ]]; then
-                in_rule_section=false
+            elif [[ "$module_line" =~ ^\[URL\ Rewrite\] ]]; then
+                current_section="url_rewrite"
+                echo "[URL Rewrite]" >> "$temp_url_rewrite"
+                continue
+            elif [[ "$module_line" =~ ^\[MITM\] ]]; then
+                current_section="mitm"
+                echo "[MITM]" >> "$temp_mitm"
+                continue
+            elif [[ "$module_line" =~ ^\[Script\] ]]; then
+                current_section="script"
+                echo "[Script]" >> "$temp_script"
+                continue
+            elif [[ "$module_line" =~ ^\[.*\] ]]; then
+                current_section="other"
+                echo "$module_line" >> "$temp_other"
                 continue
             fi
             
-            if $in_rule_section && [[ -n "$module_line" ]] && [[ ! "$module_line" =~ ^# ]]; then
-                # 只提取包含REJECT策略的规则（REJECT, REJECT-DROP, REJECT-NO-DROP）
-                if [[ "$module_line" =~ ,REJECT ]]; then
-                    # 提取规则类型和值（保留完整规则格式）
-                    local rule_type rule_value
-                    rule_type=$(echo "$module_line" | cut -d',' -f1)
-                    rule_value=$(echo "$module_line" | cut -d',' -f2)
-                    
-                    if [[ -n "$rule_type" ]] && [[ -n "$rule_value" ]]; then
-                        # 输出格式: DOMAIN-SUFFIX,example.com,REJECT
-                        echo "${rule_type},${rule_value},REJECT" >> "$rules_file"
-                        ((module_rules++))
-                        ((total_rules++))
+            case "$current_section" in
+                header)
+                    echo "$module_line" >> "$temp_header"
+                    ;;
+                rule)
+                    if [[ -n "$module_line" ]] && [[ ! "$module_line" =~ ^# ]]; then
+                        # 提取REJECT规则
+                        if [[ "$module_line" =~ ,REJECT ]]; then
+                            local rule_type rule_value
+                            rule_type=$(echo "$module_line" | cut -d',' -f1)
+                            rule_value=$(echo "$module_line" | cut -d',' -f2)
+                            if [[ -n "$rule_type" ]] && [[ -n "$rule_value" ]]; then
+                                echo "${rule_type},${rule_value},REJECT" >> "$reject_rules_file"
+                                ((module_reject++))
+                                ((total_reject++))
+                            fi
+                        # 提取DIRECT规则
+                        elif [[ "$module_line" =~ ,DIRECT ]]; then
+                            local rule_type rule_value
+                            rule_type=$(echo "$module_line" | cut -d',' -f1)
+                            rule_value=$(echo "$module_line" | cut -d',' -f2)
+                            if [[ -n "$rule_type" ]] && [[ -n "$rule_value" ]]; then
+                                echo "${rule_type},${rule_value},DIRECT" >> "$direct_rules_file"
+                                ((module_direct++))
+                                ((total_direct++))
+                            fi
+                        else
+                            # 保留其他规则（如PROXY等）到精简模块
+                            echo "$module_line" >> "$temp_rule"
+                            ((module_other_rules++))
+                        fi
+                    elif [[ "$module_line" =~ ^# ]]; then
+                        # 保留注释
+                        echo "$module_line" >> "$temp_rule"
                     fi
-                else
-                    # 跳过非REJECT规则（如DIRECT, PROXY等）
-                    ((module_skipped++))
-                    ((skipped_rules++))
-                fi
-            fi
+                    ;;
+                url_rewrite)
+                    echo "$module_line" >> "$temp_url_rewrite"
+                    ;;
+                mitm)
+                    echo "$module_line" >> "$temp_mitm"
+                    ;;
+                script)
+                    echo "$module_line" >> "$temp_script"
+                    ;;
+                other)
+                    echo "$module_line" >> "$temp_other"
+                    ;;
+            esac
         done <<< "$module_content"
         
-        if [[ $module_rules -gt 0 ]]; then
-            log_success "  提取 $module_rules 条REJECT规则（跳过 $module_skipped 条非REJECT规则）"
+        log_success "  吸取: REJECT=$module_reject, DIRECT=$module_direct"
+        
+        # 生成精简模块（吐出剩余内容）
+        local output_module="$SURGE_MODULE_DIR/__Extracted_${module_basename}.sgmodule"
+        
+        # 检查是否有剩余内容需要吐出
+        local has_remaining=false
+        [[ -s "$temp_rule" ]] && has_remaining=true
+        [[ -s "$temp_url_rewrite" ]] && has_remaining=true
+        [[ -s "$temp_mitm" ]] && has_remaining=true
+        [[ -s "$temp_script" ]] && has_remaining=true
+        
+        if $has_remaining; then
+            log_info "  吐出精简模块: $(basename "$output_module")"
+            
+            # 写入头部（修改描述）
+            {
+                if [[ -s "$temp_header" ]]; then
+                    # 修改desc行，标注已提取规则
+                    sed "s/^#!desc=.*/#!desc=[已提取REJECT=${module_reject}+DIRECT=${module_direct}] 原模块精简版/" "$temp_header"
+                else
+                    echo "#!name=__Extracted_${module_basename}"
+                    echo "#!desc=[已提取REJECT=${module_reject}+DIRECT=${module_direct}] 原模块精简版"
+                fi
+                
+                echo ""
+                echo "# ═══════════════════════════════════════════════════════════════"
+                echo "# 此模块由 sync_all_rules.sh 自动生成"
+                echo "# 原始URL: $url"
+                echo "# 已提取: REJECT规则 $module_reject 条, DIRECT规则 $module_direct 条"
+                echo "# 生成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+                echo "# ═══════════════════════════════════════════════════════════════"
+                echo ""
+                
+                # 写入剩余Rule（如果有）
+                if [[ -s "$temp_rule" ]] && grep -qv "^#\|^$" "$temp_rule" 2>/dev/null; then
+                    echo "[Rule]"
+                    cat "$temp_rule"
+                    echo ""
+                fi
+                
+                # 写入URL Rewrite
+                [[ -s "$temp_url_rewrite" ]] && cat "$temp_url_rewrite" && echo ""
+                
+                # 写入MITM
+                [[ -s "$temp_mitm" ]] && cat "$temp_mitm" && echo ""
+                
+                # 写入Script
+                [[ -s "$temp_script" ]] && cat "$temp_script" && echo ""
+                
+                # 写入其他section
+                [[ -s "$temp_other" ]] && cat "$temp_other"
+                
+            } > "$output_module"
+            
+            log_success "  已生成: $output_module"
         else
-            log_info "  未发现REJECT规则（跳过 $module_skipped 条非REJECT规则）"
+            log_info "  无剩余内容需要吐出"
         fi
         
     done < "$SGMODULE_SOURCES"
     
-    if [[ -f "$rules_file" ]] && [[ $total_rules -gt 0 ]]; then
-        # 去重并追加到AdBlock规则
-        local unique_rules=$(sort -u "$rules_file" | wc -l | tr -d ' ')
-        log_success "汲取完成: $count 个模块"
-        log_success "  • REJECT规则: $unique_rules 条（去重后）"
-        log_info "  • 跳过非REJECT: $skipped_rules 条"
+    # 汇总统计
+    echo ""
+    log_success "═══ 汲取汇总 ═══"
+    log_success "处理模块: $count 个"
+    
+    # 处理REJECT规则
+    if [[ -f "$reject_rules_file" ]] && [[ -s "$reject_rules_file" ]]; then
+        local unique_reject=$(sort -u "$reject_rules_file" | wc -l | tr -d ' ')
+        log_success "REJECT规则: $unique_reject 条（去重后）"
         
-        # 保存到临时文件供后续合并使用
-        cp "$rules_file" "$PROJECT_ROOT/.temp_sgmodule_rules.txt"
-    else
-        log_info "没有汲取到REJECT规则"
+        # 合并到AdBlock_Merged.list
+        if [[ -f "$ADBLOCK_MERGED_LIST" ]]; then
+            log_info "合并REJECT规则到 AdBlock_Merged.list..."
+            local before_count=$(grep -cv "^#\|^$" "$ADBLOCK_MERGED_LIST" 2>/dev/null || echo "0")
+            
+            # 追加新规则并去重
+            cat "$reject_rules_file" >> "$ADBLOCK_MERGED_LIST"
+            
+            # 提取规则部分，去重，重新生成
+            local temp_merged="$temp_dir/merged_adblock.txt"
+            grep -v "^#\|^$" "$ADBLOCK_MERGED_LIST" | sort -u > "$temp_merged"
+            local after_count=$(wc -l < "$temp_merged" | tr -d ' ')
+            local added=$((after_count - before_count))
+            
+            # 重新生成文件（保留头部）
+            {
+                head -30 "$ADBLOCK_MERGED_LIST" | grep "^#"
+                echo ""
+                cat "$temp_merged"
+            } > "$ADBLOCK_MERGED_LIST.new"
+            mv "$ADBLOCK_MERGED_LIST.new" "$ADBLOCK_MERGED_LIST"
+            
+            log_success "  新增 $added 条规则到 AdBlock_Merged.list"
+        fi
+        
+        cp "$reject_rules_file" "$PROJECT_ROOT/.temp_sgmodule_reject_rules.txt"
+    fi
+    
+    # 处理DIRECT规则
+    if [[ -f "$direct_rules_file" ]] && [[ -s "$direct_rules_file" ]]; then
+        local unique_direct=$(sort -u "$direct_rules_file" | wc -l | tr -d ' ')
+        log_success "DIRECT规则: $unique_direct 条（去重后）"
+        
+        # 合并到ChinaDirect.list（如果存在）
+        if [[ -f "$CHINA_DIRECT_LIST" ]]; then
+            log_info "合并DIRECT规则到 ChinaDirect.list..."
+            local before_count=$(grep -cv "^#\|^$" "$CHINA_DIRECT_LIST" 2>/dev/null || echo "0")
+            
+            # 追加新规则并去重
+            cat "$direct_rules_file" >> "$CHINA_DIRECT_LIST"
+            
+            # 提取规则部分，去重，重新生成
+            local temp_merged="$temp_dir/merged_direct.txt"
+            grep -v "^#\|^$" "$CHINA_DIRECT_LIST" | sort -u > "$temp_merged"
+            local after_count=$(wc -l < "$temp_merged" | tr -d ' ')
+            local added=$((after_count - before_count))
+            
+            # 重新生成文件（保留头部）
+            {
+                head -30 "$CHINA_DIRECT_LIST" | grep "^#"
+                echo ""
+                cat "$temp_merged"
+            } > "$CHINA_DIRECT_LIST.new"
+            mv "$CHINA_DIRECT_LIST.new" "$CHINA_DIRECT_LIST"
+            
+            log_success "  新增 $added 条规则到 ChinaDirect.list"
+        else
+            log_warning "ChinaDirect.list 不存在，跳过DIRECT规则合并"
+        fi
+        
+        cp "$direct_rules_file" "$PROJECT_ROOT/.temp_sgmodule_direct_rules.txt"
     fi
     
     rm -rf "$temp_dir"
@@ -364,6 +543,8 @@ handle_error() {
 # 清理临时文件
 cleanup() {
     rm -f "$PROJECT_ROOT/.temp_sgmodule_rules.txt" 2>/dev/null || true
+    rm -f "$PROJECT_ROOT/.temp_sgmodule_reject_rules.txt" 2>/dev/null || true
+    rm -f "$PROJECT_ROOT/.temp_sgmodule_direct_rules.txt" 2>/dev/null || true
 }
 
 # 主函数
