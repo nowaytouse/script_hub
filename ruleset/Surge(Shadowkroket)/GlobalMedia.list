@@ -1,48 +1,71 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: GlobalMedia
-# Updated: 2025-12-04 06:45:48 UTC
-# Total Rules: 1857
-# Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Netflix.list [REJECT] (41 rules)
-#   - https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Disney.list [REJECT] (174 rules)
-#   - https://raw.githubusercontent.com/HotKids/Rules/master/Surge/RULE-SET/HBO_Max.list [REJECT] (6 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Emby/Emby.list [REJECT] (52 rules)
-#   - https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/BiliBiliIntl.list [REJECT] (2 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Threads/Threads.list [REJECT] (1 rules)
-#   - https://raw.githubusercontent.com/zxfccmm4/Profiles/refs/heads/main/Surge/Ruleset/Unbreak.list [REJECT] (19 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list [REJECT] (190 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Spotify/Spotify.list [REJECT] (31 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitch/Twitch.list [REJECT] (22 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/AmazonPrimeVideo/AmazonPrimeVideo.list [REJECT] (28 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hulu/Hulu.list [REJECT] (59 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/ParamountPlus/ParamountPlus.list [REJECT] (10 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Peacock/Peacock.list [REJECT] (2 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/DiscoveryPlus/DiscoveryPlus.list [REJECT] (17 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/AppleTV/AppleTV.list [REJECT] (10 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/DAZN/DAZN.list [REJECT] (19 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Viu/Viu.list [REJECT] (0 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/TIDAL/TIDAL.list [REJECT] (6 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/SoundCloud/SoundCloud.list [REJECT] (4 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Updated: 2025-12-04
+# Total Rules: 1832
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         1857 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,analytics.strava.com
+DOMAIN,app.adjust.com
+DOMAIN,app.appsflyer.com
+DOMAIN,audio4-ak-spotify-com.akamaized.net
+DOMAIN,bdtj.tagtic.cn
+DOMAIN,cbsi.live.ott.irdeto.com
+DOMAIN,cbsplaylistserver.aws.syncbak.com
+DOMAIN,cbsservice.aws.syncbak.com
+DOMAIN,cdn-spotify-experiments.conductrics.com
+DOMAIN,clientservices.googleapis.com
+DOMAIN,d1v5ir2lpwr8os.cloudfront.net
+DOMAIN,d22qjgkvxw22r6.cloudfront.net
+DOMAIN,d25xi40x97liuc.cloudfront.net
+DOMAIN,d27xxe7juh1us6.cloudfront.net
+DOMAIN,discovery-us.conax.cloud
+DOMAIN,dl.google.com
+DOMAIN,dl.l.google.com
+DOMAIN,dmqdd6hw24ucf.cloudfront.net
+DOMAIN,dplus-northamerica-cloudfront-gcs.prod-vod.h264.io
+DOMAIN,dplus-northamerica.media-edge.prod-vod.h264.io
+DOMAIN,e13252.dscg.akamaiedge.net
+DOMAIN,emby.enjoyit.eu.org
+DOMAIN,emby.lcloud.wiki
+DOMAIN,fairplay.l.qq.com
+DOMAIN,h-netflix.online-metrix.net
+DOMAIN,heads-ak-spotify-com.akamaized.net
+DOMAIN,hls-amt.itunes.apple.com
+DOMAIN,hls.itunes.apple.com
+DOMAIN,link.theplatform.com
+DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
+DOMAIN,livew.l.qq.com
+DOMAIN,log.mmstat.com
+DOMAIN,msg.umeng.com
+DOMAIN,msg.umengcloud.com
+DOMAIN,netflix.com.edgesuite.net
+DOMAIN,notnetflix.cos.cat
+DOMAIN,np-edge.itunes.apple.com
+DOMAIN,play-edge.itunes.apple.com
+DOMAIN,spotify.com.edgesuite.net
+DOMAIN,spotify.map.fastly.net
+DOMAIN,spotify.map.fastlylb.net
+DOMAIN,sycm.mmstat.com
+DOMAIN,translate.googleapis.com
+DOMAIN,tv.applemusic.com
+DOMAIN,update.googleapis.com
+DOMAIN,uts-api.itunes.apple.com
+DOMAIN,vd.l.qq.com
+DOMAIN,vi.l.qq.com
+DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
+DOMAIN-KEYWORD,avoddashs
+DOMAIN-KEYWORD,discovery.uplynk.com
+DOMAIN-KEYWORD,dualstack.apiproxy-
+DOMAIN-KEYWORD,dualstack.ichnaea-web-
+DOMAIN-KEYWORD,emby.wtf
+DOMAIN-KEYWORD,jmsooo
+DOMAIN-KEYWORD,netflixdnstest
+DOMAIN-KEYWORD,odysseyplus
+DOMAIN-KEYWORD,spotify
+DOMAIN-KEYWORD,ttvnw
+DOMAIN-KEYWORD,voddazn
+DOMAIN-KEYWORD,youtube
 DOMAIN-SUFFIX,112263.com
 DOMAIN-SUFFIX,123456.al
 DOMAIN-SUFFIX,20thcenturystudios.com.au
@@ -78,7 +101,6 @@ DOMAIN-SUFFIX,bcbolthboa-a.akamaihd.net
 DOMAIN-SUFFIX,beautyandthebeastmusical.co.uk
 DOMAIN-SUFFIX,bilibili.tv
 DOMAIN-SUFFIX,blog.google
-DOMAIN-SUFFIX,blog.google // Google Blog
 DOMAIN-SUFFIX,braze.com
 DOMAIN-SUFFIX,byspotify.com
 DOMAIN-SUFFIX,callhulu.com
@@ -260,7 +282,6 @@ DOMAIN-SUFFIX,ggpht.com
 DOMAIN-SUFFIX,go-disneyworldgo.com
 DOMAIN-SUFFIX,go.com
 DOMAIN-SUFFIX,googletraveladservices.com
-DOMAIN-SUFFIX,googletraveladservices.com // Google Flights
 DOMAIN-SUFFIX,googlevideo.com
 DOMAIN-SUFFIX,gvt1.com
 DOMAIN-SUFFIX,gvt2.com
@@ -668,73 +689,6 @@ DOMAIN-SUFFIX,youtubekids.com
 DOMAIN-SUFFIX,youtubemobilesupport.com
 DOMAIN-SUFFIX,yt.be
 DOMAIN-SUFFIX,ytimg.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
-DOMAIN-KEYWORD,avoddashs
-DOMAIN-KEYWORD,discovery.uplynk.com
-DOMAIN-KEYWORD,dualstack.apiproxy-
-DOMAIN-KEYWORD,dualstack.ichnaea-web-
-DOMAIN-KEYWORD,emby.wtf
-DOMAIN-KEYWORD,jmsooo
-DOMAIN-KEYWORD,netflixdnstest
-DOMAIN-KEYWORD,odysseyplus
-DOMAIN-KEYWORD,spotify
-DOMAIN-KEYWORD,ttvnw
-DOMAIN-KEYWORD,voddazn
-DOMAIN-KEYWORD,youtube
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,analytics.strava.com
-DOMAIN,app.adjust.com
-DOMAIN,app.appsflyer.com
-DOMAIN,audio4-ak-spotify-com.akamaized.net
-DOMAIN,bdtj.tagtic.cn
-DOMAIN,cbsi.live.ott.irdeto.com
-DOMAIN,cbsplaylistserver.aws.syncbak.com
-DOMAIN,cbsservice.aws.syncbak.com
-DOMAIN,cdn-spotify-experiments.conductrics.com
-DOMAIN,clientservices.googleapis.com
-DOMAIN,d1v5ir2lpwr8os.cloudfront.net
-DOMAIN,d22qjgkvxw22r6.cloudfront.net
-DOMAIN,d25xi40x97liuc.cloudfront.net
-DOMAIN,d27xxe7juh1us6.cloudfront.net
-DOMAIN,discovery-us.conax.cloud
-DOMAIN,dl.google.com
-DOMAIN,dl.l.google.com
-DOMAIN,dmqdd6hw24ucf.cloudfront.net
-DOMAIN,dplus-northamerica-cloudfront-gcs.prod-vod.h264.io
-DOMAIN,dplus-northamerica.media-edge.prod-vod.h264.io
-DOMAIN,e13252.dscg.akamaiedge.net
-DOMAIN,emby.enjoyit.eu.org
-DOMAIN,emby.lcloud.wiki
-DOMAIN,fairplay.l.qq.com
-DOMAIN,h-netflix.online-metrix.net
-DOMAIN,heads-ak-spotify-com.akamaized.net
-DOMAIN,hls-amt.itunes.apple.com
-DOMAIN,hls.itunes.apple.com
-DOMAIN,link.theplatform.com
-DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
-DOMAIN,livew.l.qq.com
-DOMAIN,log.mmstat.com
-DOMAIN,msg.umeng.com
-DOMAIN,msg.umengcloud.com
-DOMAIN,netflix.com.edgesuite.net
-DOMAIN,notnetflix.cos.cat
-DOMAIN,np-edge.itunes.apple.com
-DOMAIN,play-edge.itunes.apple.com
-DOMAIN,spotify.com.edgesuite.net
-DOMAIN,spotify.map.fastly.net
-DOMAIN,spotify.map.fastlylb.net
-DOMAIN,sycm.mmstat.com
-DOMAIN,translate.googleapis.com
-DOMAIN,tv.applemusic.com
-DOMAIN,update.googleapis.com
-DOMAIN,uts-api.itunes.apple.com
-DOMAIN,vd.l.qq.com
-DOMAIN,vi.l.qq.com
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,103.53.48.0/23,no-resolve
 IP-CIDR,103.87.204.0/22,no-resolve
 IP-CIDR,104.154.127.126/32,no-resolve
@@ -1865,16 +1819,12 @@ IP-CIDR,99.79.20.192/26,no-resolve
 IP-CIDR,99.80.34.48/28,no-resolve
 IP-CIDR,99.80.34.64/26,no-resolve
 IP-CIDR,99.80.88.0/25,no-resolve
-
-# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,2402:2a80::/32,no-resolve
 IP-CIDR6,2607:fb10::/32,no-resolve
 IP-CIDR6,2620:10c:7000::/44,no-resolve
 IP-CIDR6,2620:120:e000::/40,no-resolve
 IP-CIDR6,2a00:86c0::/32,no-resolve
 IP-CIDR6,2a03:5640::/32,no-resolve
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,TV
 PROCESS-NAME,com.amazon.avod.thirdpartyclient
 PROCESS-NAME,com.bstar.intl
@@ -1887,28 +1837,3 @@ PROCESS-NAME,com.netflix.mediaclient
 PROCESS-NAME,com.spotify.music
 PROCESS-NAME,com.wbd.stream
 PROCESS-NAME,tv.twitch.android.app
-USER-AGENT,*YouTubeMusic*
-USER-AGENT,*com.google.ios.youtubemusic*
-USER-AGENT,*youtube*
-USER-AGENT,AppleTV*
-USER-AGENT,Argo*
-USER-AGENT,DAZN*
-USER-AGENT,DPlus*
-USER-AGENT,HBOMAX*
-USER-AGENT,InstantVideo.US*
-USER-AGENT,Max*
-USER-AGENT,PPlus*
-USER-AGENT,PeacockMobile*
-USER-AGENT,Prime%20Video*
-USER-AGENT,SoundCloud*
-USER-AGENT,Spotify*
-USER-AGENT,TIDAL*
-USER-AGENT,TIDAL*dia
-USER-AGENT,YouTube*
-USER-AGENT,YouTubeMusic*
-USER-AGENT,com.apple.tv*
-USER-AGENT,com.google.ios.youtube*
-USER-AGENT,com.google.ios.youtubemusic*
-USER-AGENT,discovery+*
-
-# ========== END ==========

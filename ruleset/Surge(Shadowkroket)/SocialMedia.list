@@ -1,37 +1,19 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: SocialMedia
-# Updated: 2025-12-04 06:46:38 UTC
+# Updated: 2025-12-04
 # Total Rules: 660
-# Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Instagram/Instagram.list [REJECT] (4 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitter/Twitter.list [REJECT] (33 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Facebook/Facebook.list [REJECT] (569 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Whatsapp/Whatsapp.list [REJECT] (17 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Snapchat/Snapchat.list [REJECT] (0 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Pinterest/Pinterest.list [REJECT] (23 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Reddit/Reddit.list [REJECT] (8 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/LinkedIn/LinkedIn.list [REJECT] (12 rules)
-#   - ../MetaCubeX/MetaCubeX_facebook.list (FAILED)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         660 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,e122475.dscg.akamaiedge.net
+DOMAIN,graph.facebook.com
+DOMAIN,licdn.cn.cdn20.com
+DOMAIN,linkedin.sc.omtrdc.net
+DOMAIN-KEYWORD,facebook
+DOMAIN-KEYWORD,fbcdn
+DOMAIN-KEYWORD,instagram
+DOMAIN-KEYWORD,twitter
+DOMAIN-KEYWORD,whatsapp
 DOMAIN-SUFFIX,aboutfacebook.com
 DOMAIN-SUFFIX,accessfacebookfromschool.com
 DOMAIN-SUFFIX,accountkit.com
@@ -643,21 +625,6 @@ DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,yogalayout.com
 DOMAIN-SUFFIX,zuckerberg.com
 DOMAIN-SUFFIX,zuckerberg.net
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,facebook
-DOMAIN-KEYWORD,fbcdn
-DOMAIN-KEYWORD,instagram
-DOMAIN-KEYWORD,twitter
-DOMAIN-KEYWORD,whatsapp
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,e122475.dscg.akamaiedge.net
-DOMAIN,graph.facebook.com
-DOMAIN,licdn.cn.cdn20.com
-DOMAIN,linkedin.sc.omtrdc.net
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,108.168.176.192/26,no-resolve
 IP-CIDR,108.168.177.0/27,no-resolve
 IP-CIDR,108.168.180.96/27,no-resolve
@@ -698,5 +665,3 @@ IP-CIDR,54.235.23.242/32,no-resolve
 IP-CIDR,54.242.0.0/15,no-resolve
 IP-CIDR,54.93.124.31/32,no-resolve
 IP-CIDR,69.195.160.0/19,no-resolve
-
-# ========== END ==========

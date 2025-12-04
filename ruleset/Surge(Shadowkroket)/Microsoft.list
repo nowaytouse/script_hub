@@ -1,31 +1,22 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: Microsoft
-# Updated: 2025-12-04 06:46:04 UTC
-# Total Rules: 740
-# Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://ruleset.skk.moe/List/non_ip/microsoft.conf [REJECT] (83 rules)
-#   - https://ruleset.skk.moe/List/non_ip/microsoft_cdn.conf [REJECT] (59 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Bing/Bing.list [REJECT] (9 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Updated: 2025-12-04
+# Total Rules: 738
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         740 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,res-1.cdn.office.net
+DOMAIN,res-h3.public.cdn.office.net
+DOMAIN,res.cdn.office.net
+DOMAIN,statics.teams.cdn.office.net
+DOMAIN,teams.events.data.microsoft.com
+DOMAIN,vsmarketplacebadge.apphb.com
+DOMAIN-KEYWORD,1drv
+DOMAIN-KEYWORD,hotmail
+DOMAIN-KEYWORD,microsoft
+DOMAIN-KEYWORD,onedrive
+DOMAIN-KEYWORD,skydrive
 DOMAIN-SUFFIX,1drv.com
 DOMAIN-SUFFIX,1drv.ms
 DOMAIN-SUFFIX,21vbc.com
@@ -750,27 +741,5 @@ DOMAIN-SUFFIX,xboxstudios.com
 DOMAIN-SUFFIX,xbx.lv
 DOMAIN-SUFFIX,yammer.com
 DOMAIN-SUFFIX,yammerusercontent.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,1drv
-DOMAIN-KEYWORD,hotmail
-DOMAIN-KEYWORD,microsoft
-DOMAIN-KEYWORD,onedrive
-DOMAIN-KEYWORD,skydrive
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
-DOMAIN,res-1.cdn.office.net
-DOMAIN,res-h3.public.cdn.office.net
-DOMAIN,res.cdn.office.net
-DOMAIN,statics.teams.cdn.office.net
-DOMAIN,teams.events.data.microsoft.com
-DOMAIN,vsmarketplacebadge.apphb.com
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,OneDrive
 PROCESS-NAME,OneDriveUpdater
-URL-REGEX,^http://www\.microsoft\.com/pki/
-URL-REGEX,^http://www\.microsoft\.com/pkiops/
-
-# ========== END ==========
