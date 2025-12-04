@@ -12,6 +12,15 @@ conf隐私🔏/
 ruleset/surge ruleset profile
 module/surge/敏感profile 排除上传git
 
+# User-specific scripts (use .example versions)
+scripts/sync/sync_modules_to_icloud.sh
+scripts/network/config-manager-auto-update/test-full.sh
+
+# Test media and conversion outputs
+**/Menthako/
+**/compressed/
+COMPRESSION_REPORT.md
+
 # ============================================
 # Backup & Temporary Files
 # ============================================
@@ -21,6 +30,9 @@ _backup_*/
 *.temp
 /tmp/
 .temp_adblock_merge/
+*.backup.*
+*.sgmodule.backup.*
+*.list.backup.*
 
 # ============================================
 # macOS System Files
@@ -56,6 +68,7 @@ test_debug.webp
 test_*.webp
 test_*.gif
 test_*.png
+zip_output_test/
 
 # ============================================
 # Task Summary Files (auto-generated)

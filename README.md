@@ -17,12 +17,16 @@ Batch media conversion tools with **complete metadata preservation** and **healt
 - **MP4 → WebP**: **True FPS preservation** using `img2webp` (fixes ffmpeg's 25fps limitation)
 - **Animated Images → H.266/VVC**: Modern video codec conversion
 - **Video → High-Quality GIF**: Two-pass palette optimization
+- **WebP Compression**: Binary search for optimal quality (15-20MB target)
+- **GIF Compression**: Frame-preserving compression with quality control
+- **Date Analyzer**: Deep EXIF/XMP date extraction (excludes unreliable FileModifyDate)
 
 **Key Principles:**
 - ✅ Complete metadata preservation (EXIF, XMP, ICC Profile, timestamps)
 - ✅ 100% FPS and frame count preservation for animations
 - ✅ Health check validation before deleting originals
 - ✅ Whitelist-only processing for safety
+- ✅ Performance-optimized (parallel processing, minimal tool calls)
 
 ### 🌐 Network Scripts (`scripts/network/`)
 Configuration management and auto-update tools for proxy applications:
