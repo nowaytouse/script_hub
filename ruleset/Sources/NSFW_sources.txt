@@ -2,5 +2,9 @@
 # Policy Group: Various (depends on region requirements)
 # Purpose: Adult content that may need specific routing
 
+# Local comprehensive NSFW rulesets
+file://NSFW_Complete_Ruleset_Enhanced_Edition_v4.0.txt
+file://NSFW.txt
+
 # User's custom NSFW rules
 https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/nsfwrule
