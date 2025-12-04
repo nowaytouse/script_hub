@@ -307,24 +307,24 @@
       "outbounds": [
         "🎯 全球直连",
         "🇺🇸US·01⚡",
-        "🇺🇸US·02🌟",
+        "🇺🇸US·02✨",
         "🇺🇸US·03🔥",
         "🇺🇸US·04🔥",
-        "🇯🇵JP·01BGP·📺🚀",
+        "🇯🇵JP·01BGP·📺💨",
         "🇯🇵JP·02BGP·📺🚀",
         "🇯🇵JP·03BGP·📺🚀",
-        "🇯🇵JP·04BGP·📺💨",
+        "🇯🇵JP·04BGP·📺⚡",
         "🇯🇵JP·05BGP·📺⭐",
-        "🇯🇵JP·06BGP·📺👑",
+        "🇯🇵JP·06BGP·📺⭐",
         "🇯🇵JP·07BGP·📺⭐",
         "🇭🇰HK·01BGP·📺🚀",
         "🇭🇰HK·02BGP·📺🚀",
-        "🇭🇰HK·03BGP·📺⚡",
+        "🇭🇰HK·03BGP·📺💨",
         "🇭🇰HK·04BGP·📺⚡",
         "🇭🇰HK·05BGP·📺💎",
-        "🇭🇰HK·06BGP·📺💎",
-        "🇸🇬SG·01BGP·📺🚀",
-        "🇸🇬SG·02BGP·📺💨",
+        "🇭🇰HK·06BGP·📺⭐",
+        "🇸🇬SG·01BGP·📺💨",
+        "🇸🇬SG·02BGP·📺🚀",
         "🇸🇬SG·03BGP·📺🚀",
         "🇸🇬SG·04BGP·📺⚡",
         "🇸🇬SG·05BGP·📺👑",
@@ -556,7 +556,7 @@
       "outbounds": [
         "🎯 全球直连",
         "🇺🇸US·01⚡",
-        "🇺🇸US·02🌟",
+        "🇺🇸US·02✨",
         "🇺🇸US·03🔥",
         "🇺🇸US·04🔥"
       ],
@@ -571,10 +571,10 @@
         "🎯 全球直连",
         "🇭🇰HK·01BGP·📺🚀",
         "🇭🇰HK·02BGP·📺🚀",
-        "🇭🇰HK·03BGP·📺⚡",
+        "🇭🇰HK·03BGP·📺💨",
         "🇭🇰HK·04BGP·📺⚡",
         "🇭🇰HK·05BGP·📺💎",
-        "🇭🇰HK·06BGP·📺💎"
+        "🇭🇰HK·06BGP·📺⭐"
       ],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
@@ -585,12 +585,12 @@
       "tag": "🇯🇵 JP - 针对💢",
       "outbounds": [
         "🎯 全球直连",
-        "🇯🇵JP·01BGP·📺🚀",
+        "🇯🇵JP·01BGP·📺💨",
         "🇯🇵JP·02BGP·📺🚀",
         "🇯🇵JP·03BGP·📺🚀",
-        "🇯🇵JP·04BGP·📺💨",
+        "🇯🇵JP·04BGP·📺⚡",
         "🇯🇵JP·05BGP·📺⭐",
-        "🇯🇵JP·06BGP·📺👑",
+        "🇯🇵JP·06BGP·📺⭐",
         "🇯🇵JP·07BGP·📺⭐"
       ],
       "url": "http://www.cloudflare.com/generate_204",
@@ -602,8 +602,8 @@
       "tag": "🇸🇬 新加坡",
       "outbounds": [
         "🎯 全球直连",
-        "🇸🇬SG·01BGP·📺🚀",
-        "🇸🇬SG·02BGP·📺💨",
+        "🇸🇬SG·01BGP·📺💨",
+        "🇸🇬SG·02BGP·📺🚀",
         "🇸🇬SG·03BGP·📺🚀",
         "🇸🇬SG·04BGP·📺⚡",
         "🇸🇬SG·05BGP·📺👑",
@@ -674,7 +674,7 @@
     {
       "tag": "🇹🇼TW·01BGP·📺",
       "type": "vless",
-      "server": "aws-link27.liangxin1.xyz",
+      "server": "43.213.41.59",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -698,7 +698,7 @@
     {
       "tag": "🇹🇼TW·02BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy23.liangxin1.xyz",
+      "server": "43.213.41.59",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -717,7 +717,7 @@
     {
       "tag": "🇭🇰HK·01BGP·📺🚀",
       "type": "vless",
-      "server": "aws-link1.liangxin1.xyz",
+      "server": "43.199.59.233",
       "server_port": 35248,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -731,7 +731,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -741,7 +741,7 @@
     {
       "tag": "🇭🇰HK·02BGP·📺🚀",
       "type": "vless",
-      "server": "aws-link2.liangxin1.xyz",
+      "server": "18.162.245.50",
       "server_port": 38725,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -763,9 +763,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇭🇰HK·03BGP·📺⚡",
+      "tag": "🇭🇰HK·03BGP·📺💨",
       "type": "vless",
-      "server": "aws-link3.liangxin1.xyz",
+      "server": "43.199.67.131",
       "server_port": 27758,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -779,7 +779,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -789,7 +789,7 @@
     {
       "tag": "🇭🇰HK·04BGP·📺⚡",
       "type": "vless",
-      "server": "aws-link4.liangxin1.xyz",
+      "server": "18.162.130.115",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -803,7 +803,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "safari"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -813,7 +813,7 @@
     {
       "tag": "🇭🇰HK·05BGP·📺💎",
       "type": "hysteria2",
-      "server": "aws-linkhy2.liangxin1.xyz",
+      "server": "18.162.124.168",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -830,9 +830,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇭🇰HK·06BGP·📺💎",
+      "tag": "🇭🇰HK·06BGP·📺⭐",
       "type": "hysteria2",
-      "server": "aws-linkhy3.liangxin1.xyz",
+      "server": "43.199.34.225",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -849,9 +849,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇯🇵JP·01BGP·📺🚀",
+      "tag": "🇯🇵JP·01BGP·📺💨",
       "type": "vless",
-      "server": "aws-link13.liangxin1.xyz",
+      "server": "54.92.103.87",
       "server_port": 36574,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -865,7 +865,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "chrome"
+          "fingerprint": "firefox"
         }
       },
       "udp_fragment": true,
@@ -875,7 +875,7 @@
     {
       "tag": "🇯🇵JP·02BGP·📺🚀",
       "type": "vless",
-      "server": "aws-link14.liangxin1.xyz",
+      "server": "35.77.32.246",
       "server_port": 25485,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -889,7 +889,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -899,7 +899,7 @@
     {
       "tag": "🇯🇵JP·03BGP·📺🚀",
       "type": "vless",
-      "server": "aws-link15.liangxin1.xyz",
+      "server": "13.231.151.67",
       "server_port": 35457,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -913,7 +913,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -921,9 +921,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇯🇵JP·04BGP·📺💨",
+      "tag": "🇯🇵JP·04BGP·📺⚡",
       "type": "vless",
-      "server": "cfyes.lxy1015.top",
+      "server": "104.18.43.89",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -960,7 +960,7 @@
     {
       "tag": "🇯🇵JP·05BGP·📺⭐",
       "type": "hysteria2",
-      "server": "aws-linkhy15.liangxin1.xyz",
+      "server": "13.112.250.51",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -977,9 +977,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇯🇵JP·06BGP·📺👑",
+      "tag": "🇯🇵JP·06BGP·📺⭐",
       "type": "hysteria2",
-      "server": "aws-linkhy16.liangxin1.xyz",
+      "server": "18.181.146.117",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -998,7 +998,7 @@
     {
       "tag": "🇯🇵JP·07BGP·📺⭐",
       "type": "hysteria2",
-      "server": "aws-linkhy17.liangxin1.xyz",
+      "server": "18.179.84.225",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1015,9 +1015,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇰🇷KR·01BGP·📺⚡",
+      "tag": "🇰🇷KR·01BGP·📺💨",
       "type": "vless",
-      "server": "aws-link25.liangxin1.xyz",
+      "server": "3.38.218.76",
       "server_port": 34578,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1031,7 +1031,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -1041,7 +1041,7 @@
     {
       "tag": "🇰🇷KR·02BGP·📺💎",
       "type": "hysteria2",
-      "server": "aws-linkhy21.liangxin1.xyz",
+      "server": "3.38.218.76",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1058,9 +1058,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇸🇬SG·01BGP·📺🚀",
+      "tag": "🇸🇬SG·01BGP·📺💨",
       "type": "vless",
-      "server": "aws-link7.liangxin1.xyz",
+      "server": "13.215.179.207",
       "server_port": 48574,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1074,7 +1074,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "chrome"
+          "fingerprint": "firefox"
         }
       },
       "udp_fragment": true,
@@ -1082,9 +1082,9 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇸🇬SG·02BGP·📺💨",
+      "tag": "🇸🇬SG·02BGP·📺🚀",
       "type": "vless",
-      "server": "aws-link8.liangxin1.xyz",
+      "server": "52.221.179.252",
       "server_port": 39645,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1108,7 +1108,7 @@
     {
       "tag": "🇸🇬SG·03BGP·📺🚀",
       "type": "vless",
-      "server": "aws-link9.liangxin1.xyz",
+      "server": "47.128.77.42",
       "server_port": 23587,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1122,7 +1122,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "safari"
+          "fingerprint": "firefox"
         }
       },
       "udp_fragment": true,
@@ -1132,7 +1132,7 @@
     {
       "tag": "🇸🇬SG·04BGP·📺⚡",
       "type": "vless",
-      "server": "aws-link10.liangxin1.xyz",
+      "server": "18.140.56.34",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1146,7 +1146,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -1156,7 +1156,7 @@
     {
       "tag": "🇸🇬SG·05BGP·📺👑",
       "type": "hysteria2",
-      "server": "aws-linkhy10.liangxin1.xyz",
+      "server": "52.77.229.180",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1175,7 +1175,7 @@
     {
       "tag": "🇸🇬SG·06BGP·📺💎",
       "type": "hysteria2",
-      "server": "aws-linkhy11.liangxin1.xyz",
+      "server": "54.169.235.55",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1194,7 +1194,7 @@
     {
       "tag": "🇺🇸US·01⚡",
       "type": "vless",
-      "server": "aws-link19.liangxin1.xyz",
+      "server": "35.92.86.108",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1208,7 +1208,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -1216,7 +1216,7 @@
       "tcp_fast_open": true
     },
     {
-      "tag": "🇺🇸US·02🌟",
+      "tag": "🇺🇸US·02✨",
       "type": "hysteria2",
       "server": "69.197.177.163",
       "server_port": 30000,
@@ -1256,7 +1256,7 @@
     {
       "tag": "🇺🇸US·04🔥",
       "type": "hysteria2",
-      "server": "aws-linkhy27.liangxin1.xyz",
+      "server": "35.92.86.108",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -1299,7 +1299,7 @@
     {
       "tag": "🎼🇹🇼TW·086",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21001,
       "method": "aes-256-gcm",
       "password": "2WK50QVB8ULS2BD6",
@@ -1313,7 +1313,7 @@
     {
       "tag": "🎼🇹🇼TW·087",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21002,
       "method": "aes-256-gcm",
       "password": "11DL86EW6G7Z1DBX",
@@ -1327,7 +1327,7 @@
     {
       "tag": "🎼🇹🇼TW·088",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21003,
       "method": "aes-256-gcm",
       "password": "3X67WJ5XBR9BJGNH",
@@ -1341,7 +1341,7 @@
     {
       "tag": "🎼🇹🇼TW·089",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21004,
       "method": "aes-256-gcm",
       "password": "8R259M1OKQJF224V",
@@ -1355,7 +1355,7 @@
     {
       "tag": "🎼🇹🇼TW·090",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21005,
       "method": "aes-256-gcm",
       "password": "RZYIT8FWVERGQ3J1",
@@ -1369,7 +1369,7 @@
     {
       "tag": "🎼🇹🇼TW·091",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21006,
       "method": "aes-256-gcm",
       "password": "H7ZWAVO0U96N54NK",
@@ -1383,7 +1383,7 @@
     {
       "tag": "🎼🇹🇼TW·092",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 21007,
       "method": "aes-256-gcm",
       "password": "HW53Y12FTZE6VVDT",
@@ -1397,7 +1397,7 @@
     {
       "tag": "🎼🇭🇰HK·002",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15005,
       "method": "aes-256-gcm",
       "password": "EHFWU1PZ4MODRXQK",
@@ -1411,7 +1411,7 @@
     {
       "tag": "🎼🇭🇰HK·003",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15007,
       "method": "aes-256-gcm",
       "password": "ALPWJOTEW2FUPBPA",
@@ -1425,7 +1425,7 @@
     {
       "tag": "🎼🇭🇰HK·004",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15009,
       "method": "aes-256-gcm",
       "password": "FNI26U8JOI68L6Z8",
@@ -1439,7 +1439,7 @@
     {
       "tag": "🎼🇭🇰HK·005",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15012,
       "method": "aes-256-gcm",
       "password": "1NI9A9PID1PHEDBT",
@@ -1453,7 +1453,7 @@
     {
       "tag": "🎼🇭🇰HK·006",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15014,
       "method": "aes-256-gcm",
       "password": "P5FMEGDPGYCXJIKC",
@@ -1467,7 +1467,7 @@
     {
       "tag": "🎼🇭🇰HK·007",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15015,
       "method": "aes-256-gcm",
       "password": "OR6ELXNZL7SII6LL",
@@ -1481,7 +1481,7 @@
     {
       "tag": "🎼🇭🇰HK·008",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 15016,
       "method": "aes-256-gcm",
       "password": "W7FWPR7PTGUXJPR6",
@@ -1495,7 +1495,7 @@
     {
       "tag": "🎼🇯🇵JP·038",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18001,
       "method": "aes-256-gcm",
       "password": "I68B8LZZ297C0B2C",
@@ -1509,7 +1509,7 @@
     {
       "tag": "🎼🇯🇵JP·039",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18002,
       "method": "aes-256-gcm",
       "password": "N3V9Q3ZUWJTM3HVN",
@@ -1523,7 +1523,7 @@
     {
       "tag": "🎼🇯🇵JP·040",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18003,
       "method": "aes-256-gcm",
       "password": "UBXE51C5IAD910ZM",
@@ -1537,7 +1537,7 @@
     {
       "tag": "🎼🇯🇵JP·041",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18004,
       "method": "aes-256-gcm",
       "password": "88G0F84A8U7YPVYL",
@@ -1551,7 +1551,7 @@
     {
       "tag": "🎼🇯🇵JP·042",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18005,
       "method": "aes-256-gcm",
       "password": "LK2HPIX1Y99G3WFP",
@@ -1565,7 +1565,7 @@
     {
       "tag": "🎼🇯🇵JP·043",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18006,
       "method": "aes-256-gcm",
       "password": "JUXB3ZNPWPA8AV4V",
@@ -1579,7 +1579,7 @@
     {
       "tag": "🎼🇯🇵JP·044",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18007,
       "method": "aes-256-gcm",
       "password": "3KUF2YAYOIHWRVWE",
@@ -1593,7 +1593,7 @@
     {
       "tag": "🎼🇯🇵JP·045",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18008,
       "method": "aes-256-gcm",
       "password": "3PRI870TBEIQHDTM",
@@ -1607,7 +1607,7 @@
     {
       "tag": "🎼🇯🇵JP·046",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18009,
       "method": "aes-256-gcm",
       "password": "PQ6BNCF34FIU0YES",
@@ -1621,7 +1621,7 @@
     {
       "tag": "🎼🇯🇵JP·047",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18011,
       "method": "aes-256-gcm",
       "password": "47BT29QF88DIKABT",
@@ -1635,7 +1635,7 @@
     {
       "tag": "🎼🇯🇵JP·048",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18012,
       "method": "aes-256-gcm",
       "password": "DNC2J08A2X72IHE0",
@@ -1649,7 +1649,7 @@
     {
       "tag": "🎼🇯🇵JP·049",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18013,
       "method": "aes-256-gcm",
       "password": "MOFBLILDHY0XQBNJ",
@@ -1663,7 +1663,7 @@
     {
       "tag": "🎼🇯🇵JP·050",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18014,
       "method": "aes-256-gcm",
       "password": "10TMZ6ZN5S6RP5AF",
@@ -1677,7 +1677,7 @@
     {
       "tag": "🎼🇯🇵JP·051",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18015,
       "method": "aes-256-gcm",
       "password": "M5UPJCZRT73TMW93",
@@ -1691,7 +1691,7 @@
     {
       "tag": "🎼🇯🇵JP·052",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 18016,
       "method": "aes-256-gcm",
       "password": "GFAKZF87GDVVKBX9",
@@ -1705,7 +1705,7 @@
     {
       "tag": "🎼🇸🇬SG·009",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16001,
       "method": "aes-256-gcm",
       "password": "BC1MHO5I5Q7EF9PZ",
@@ -1719,7 +1719,7 @@
     {
       "tag": "🎼🇸🇬SG·010",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16002,
       "method": "aes-256-gcm",
       "password": "TI2PCJZMDNSW184U",
@@ -1733,7 +1733,7 @@
     {
       "tag": "🎼🇸🇬SG·011",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16003,
       "method": "aes-256-gcm",
       "password": "ZUZONOB0LD75JCRQ",
@@ -1747,7 +1747,7 @@
     {
       "tag": "🎼🇸🇬SG·012",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16004,
       "method": "aes-256-gcm",
       "password": "9IZ9HUKXV0Q70AW5",
@@ -1761,7 +1761,7 @@
     {
       "tag": "🎼🇸🇬SG·013",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16005,
       "method": "aes-256-gcm",
       "password": "A0SOAOYLOBE8M1GJ",
@@ -1775,7 +1775,7 @@
     {
       "tag": "🎼🇸🇬SG·014",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16006,
       "method": "aes-256-gcm",
       "password": "VN3PFT8K2EMYMAYK",
@@ -1789,7 +1789,7 @@
     {
       "tag": "🎼🇸🇬SG·015",
       "type": "shadowsocks",
-      "server": "w72tapyb.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16007,
       "method": "aes-256-gcm",
       "password": "GX9WAPFUGMN14NH2",
@@ -1803,7 +1803,7 @@
     {
       "tag": "🎼🇸🇬SG·016",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16008,
       "method": "aes-256-gcm",
       "password": "ZZI5NALBF6X2BU9K",
@@ -1817,7 +1817,7 @@
     {
       "tag": "🎼🇸🇬SG·017",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16009,
       "method": "aes-256-gcm",
       "password": "OXIIQB7F27FKB4AS",
@@ -1831,7 +1831,7 @@
     {
       "tag": "🎼🇸🇬SG·018",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16010,
       "method": "aes-256-gcm",
       "password": "YTVDA8I8VIYR2LL9",
@@ -1845,7 +1845,7 @@
     {
       "tag": "🎼🇸🇬SG·019",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16011,
       "method": "aes-256-gcm",
       "password": "MH7YOMUBFF48FVH2",
@@ -1859,7 +1859,7 @@
     {
       "tag": "🎼🇸🇬SG·020",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16012,
       "method": "aes-256-gcm",
       "password": "WEMR86PGPE9O2L9G",
@@ -1873,7 +1873,7 @@
     {
       "tag": "🎼🇸🇬SG·021",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16013,
       "method": "aes-256-gcm",
       "password": "1ZL9179QS871GECA",
@@ -1887,7 +1887,7 @@
     {
       "tag": "🎼🇸🇬SG·022",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16014,
       "method": "aes-256-gcm",
       "password": "76KCM96XT9WF0IZW",
@@ -1901,7 +1901,7 @@
     {
       "tag": "🎼🇸🇬SG·023",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 16016,
       "method": "aes-256-gcm",
       "password": "TPFBV7BML758AJY5",
@@ -1929,7 +1929,7 @@
     {
       "tag": "🎼🇺🇸US·024",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 17001,
       "method": "aes-256-gcm",
       "password": "4XSCD05PZFYEAJQC",
@@ -1971,7 +1971,7 @@
     {
       "tag": "🎼🇺🇸US·027",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 17004,
       "method": "aes-256-gcm",
       "password": "ELF3FHC3F4P0BIYK",
@@ -1985,7 +1985,7 @@
     {
       "tag": "🎼🇺🇸US·028",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 17005,
       "method": "aes-256-gcm",
       "password": "A4ABLJOS1T9P5EXA",
@@ -1999,7 +1999,7 @@
     {
       "tag": "🎼🇺🇸US·029",
       "type": "shadowsocks",
-      "server": "ti3hyra4.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 17007,
       "method": "aes-256-gcm",
       "password": "4AHZ7NXVR0INNPXB",
@@ -2461,7 +2461,7 @@
     {
       "tag": "🎼🇦🇪AE·069",
       "type": "shadowsocks",
-      "server": "8tv68qhq.slashdevslashnetslashtun.net",
+      "server": "36.141.40.20",
       "server_port": 20017,
       "method": "aes-256-gcm",
       "password": "C4CUWPXKNXCI7KFU",
@@ -2622,7 +2622,7 @@
     {
       "tag": "🎵🇹🇼TW·15BGP·📺",
       "type": "vless",
-      "server": "aws-link27.liangxin1.xyz",
+      "server": "43.213.41.59",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2646,7 +2646,7 @@
     {
       "tag": "🎵🇹🇼TW·24BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy23.liangxin1.xyz",
+      "server": "43.213.41.59",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2662,7 +2662,7 @@
     {
       "tag": "🎵🇭🇰HK·01BGP·📺",
       "type": "vless",
-      "server": "aws-link1.liangxin1.xyz",
+      "server": "43.199.59.233",
       "server_port": 35248,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2676,7 +2676,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "chrome"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -2686,7 +2686,7 @@
     {
       "tag": "🎵🇭🇰HK·02BGP·📺",
       "type": "vless",
-      "server": "aws-link2.liangxin1.xyz",
+      "server": "18.162.245.50",
       "server_port": 38725,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2700,7 +2700,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -2710,7 +2710,7 @@
     {
       "tag": "🎵🇭🇰HK·03BGP·📺",
       "type": "vless",
-      "server": "aws-link3.liangxin1.xyz",
+      "server": "43.199.67.131",
       "server_port": 27758,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2724,7 +2724,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "chrome"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -2734,7 +2734,7 @@
     {
       "tag": "🎵🇭🇰HK·04BGP·📺",
       "type": "vless",
-      "server": "aws-link4.liangxin1.xyz",
+      "server": "18.162.130.115",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2748,7 +2748,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -2758,7 +2758,7 @@
     {
       "tag": "🎵🇭🇰HK·16BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy2.liangxin1.xyz",
+      "server": "18.162.124.168",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2774,7 +2774,7 @@
     {
       "tag": "🎵🇭🇰HK·17BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy3.liangxin1.xyz",
+      "server": "43.199.34.225",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2790,7 +2790,7 @@
     {
       "tag": "🎵🇯🇵JP·09BGP·📺",
       "type": "vless",
-      "server": "aws-link13.liangxin1.xyz",
+      "server": "54.92.103.87",
       "server_port": 36574,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2804,7 +2804,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -2814,7 +2814,7 @@
     {
       "tag": "🎵🇯🇵JP·10BGP·📺",
       "type": "vless",
-      "server": "aws-link14.liangxin1.xyz",
+      "server": "35.77.32.246",
       "server_port": 25485,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2828,7 +2828,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -2838,7 +2838,7 @@
     {
       "tag": "🎵🇯🇵JP·11BGP·📺",
       "type": "vless",
-      "server": "aws-link15.liangxin1.xyz",
+      "server": "13.231.151.67",
       "server_port": 35457,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2852,7 +2852,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "safari"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -2862,7 +2862,7 @@
     {
       "tag": "🎵🇯🇵JP·12BGP·📺",
       "type": "vless",
-      "server": "cfyes.lxy1015.top",
+      "server": "104.18.43.89",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2899,7 +2899,7 @@
     {
       "tag": "🎵🇯🇵JP·20BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy15.liangxin1.xyz",
+      "server": "13.112.250.51",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2915,7 +2915,7 @@
     {
       "tag": "🎵🇯🇵JP·21BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy16.liangxin1.xyz",
+      "server": "18.181.146.117",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2931,7 +2931,7 @@
     {
       "tag": "🎵🇯🇵JP·22BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy17.liangxin1.xyz",
+      "server": "18.179.84.225",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2947,7 +2947,7 @@
     {
       "tag": "🎵🇰🇷KR·14BGP·📺",
       "type": "vless",
-      "server": "aws-link25.liangxin1.xyz",
+      "server": "3.38.218.76",
       "server_port": 34578,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2961,7 +2961,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "safari"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -2971,7 +2971,7 @@
     {
       "tag": "🎵🇰🇷KR·23BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy21.liangxin1.xyz",
+      "server": "3.38.218.76",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -2987,7 +2987,7 @@
     {
       "tag": "🎵🇸🇬SG·05BGP·📺",
       "type": "vless",
-      "server": "aws-link7.liangxin1.xyz",
+      "server": "13.215.179.207",
       "server_port": 48574,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3001,7 +3001,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -3011,7 +3011,7 @@
     {
       "tag": "🎵🇸🇬SG·06BGP·📺",
       "type": "vless",
-      "server": "aws-link8.liangxin1.xyz",
+      "server": "52.221.179.252",
       "server_port": 39645,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3025,7 +3025,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "firefox"
+          "fingerprint": "chrome"
         }
       },
       "udp_fragment": true,
@@ -3035,7 +3035,7 @@
     {
       "tag": "🎵🇸🇬SG·07BGP·📺",
       "type": "vless",
-      "server": "aws-link9.liangxin1.xyz",
+      "server": "47.128.77.42",
       "server_port": 23587,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3049,7 +3049,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "chrome"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -3059,7 +3059,7 @@
     {
       "tag": "🎵🇸🇬SG·08BGP·📺",
       "type": "vless",
-      "server": "aws-link10.liangxin1.xyz",
+      "server": "18.140.56.34",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3073,7 +3073,7 @@
         },
         "utls": {
           "enabled": true,
-          "fingerprint": "edge"
+          "fingerprint": "safari"
         }
       },
       "udp_fragment": true,
@@ -3083,7 +3083,7 @@
     {
       "tag": "🎵🇸🇬SG·18BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy10.liangxin1.xyz",
+      "server": "52.77.229.180",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3099,7 +3099,7 @@
     {
       "tag": "🎵🇸🇬SG·19BGP·📺",
       "type": "hysteria2",
-      "server": "aws-linkhy11.liangxin1.xyz",
+      "server": "54.169.235.55",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3115,7 +3115,7 @@
     {
       "tag": "🎵🇺🇸US·13📺",
       "type": "vless",
-      "server": "aws-link19.liangxin1.xyz",
+      "server": "35.92.86.108",
       "server_port": 443,
       "uuid": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3171,7 +3171,7 @@
     {
       "tag": "🎵🇺🇸US·27📺",
       "type": "hysteria2",
-      "server": "aws-linkhy27.liangxin1.xyz",
+      "server": "35.92.86.108",
       "server_port": 60000,
       "password": "c3c093f1-997f-4d66-ad41-cbe8c5f1cb51",
       "tls": {
@@ -3247,86 +3247,6 @@
         "download_detour": "direct-select"
       },
       {
-        "tag": "aiservice",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-!cn.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "paypal",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "tiktok",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "telegramip",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "telegramsite",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "netflixsite",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "netflixip",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/netflix.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "disney",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/disney.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "hbo",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/hbo.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "hulu",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/hulu.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
         "tag": "geosite-openai",
         "type": "remote",
         "format": "binary",
@@ -3351,22 +3271,6 @@
         "update_interval": "24h"
       },
       {
-        "tag": "geosite-youtube",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs",
-        "download_detour": "direct-select",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "geosite-github",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs",
-        "download_detour": "direct-select",
-        "update_interval": "24h"
-      },
-      {
         "tag": "geosite-disney",
         "type": "remote",
         "format": "binary",
@@ -3375,26 +3279,10 @@
         "update_interval": "24h"
       },
       {
-        "tag": "geosite-bilibili",
+        "tag": "adblock-merged",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs",
-        "download_detour": "direct-select",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "geosite-google",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs",
-        "download_detour": "direct-select",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "geosite-category-ads-all",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ads-all.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Merged_Singbox.srs",
         "download_detour": "direct-select",
         "update_interval": "24h"
       },
@@ -3431,90 +3319,10 @@
         "update_interval": "24h"
       },
       {
-        "tag": "geosite-apple",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs",
-        "download_detour": "direct-select",
-        "update_interval": "24h"
-      },
-      {
         "tag": "geosite-private",
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-microsoft",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/microsoft.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-bing",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bing.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-discord",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/discord.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-instagram",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/instagram.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-twitter",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/twitter.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-telegram",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-github2",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-spotify",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/spotify.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
-      },
-      {
-        "tag": "geosite-steam",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs",
         "update_interval": "24h",
         "download_detour": "direct-select"
       },
@@ -3543,20 +3351,300 @@
         "download_detour": "direct-select"
       },
       {
-        "tag": "geosite-category-games-!cn@cn",
+        "tag": "surge-manual_us",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-games-!cn@cn.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_US_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
       },
       {
-        "tag": "geosite-category-ai-!cn",
+        "tag": "surge-manual_west",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-!cn.srs",
-        "update_interval": "24h",
-        "download_detour": "direct-select"
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_West_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_jp",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_JP_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-ai",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AI_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-telegram",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Telegram_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-tiktok",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/TikTok_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-google",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Google_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-lan",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/LAN_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-nsfw",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NSFW_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-bilibili",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bilibili_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-globalmedia",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalMedia_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-gaming",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Gaming_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamjp",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamJP_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamus",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamUS_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamkr",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamKR_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamhk",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamHK_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamtw",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamTW_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-apple",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Apple_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-microsoft",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Microsoft_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-chinadirect",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaDirect_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-fediverse",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Fediverse_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_global",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Global_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-discord",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Discord_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-globalproxy",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalProxy_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-cdn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/CDN_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-chinaip",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-instagram",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Instagram_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-twitter",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Twitter_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-spotify",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Spotify_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-steam",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Steam_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-youtube",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/YouTube_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-github",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GitHub_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-bing",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bing_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-netflix",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Netflix_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-disney",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Disney_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-paypal",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/PayPal_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
       }
     ],
     "rules": [
@@ -3631,32 +3719,41 @@
         "outbound": "🛠️ 手动选择"
       },
       {
-        "rule_set": "paypal",
+        "rule_set": [
+          "surge-paypal"
+        ],
         "outbound": "💳 PayPal 💰"
       },
       {
-        "rule_set": "telegramsite",
+        "rule_set": [
+          "surge-telegram"
+        ],
         "outbound": "☎️ Telegram 💬"
       },
       {
-        "rule_set": "tiktok",
+        "rule_set": [
+          "surge-tiktok"
+        ],
         "outbound": "📱 TikTok 🧠"
       },
       {
-        "rule_set": "aiservice",
+        "rule_set": [
+          "surge-ai"
+        ],
         "outbound": "🛠️ 手动选择"
       },
       {
         "rule_set": [
-          "netflixsite",
-          "hbo",
-          "disney",
-          "hulu"
+          "surge-netflix",
+          "surge-globalmedia",
+          "surge-disney"
         ],
         "outbound": "🎬 全球媒体 🌍"
       },
       {
-        "rule_set": "geosite-apple",
+        "rule_set": [
+          "surge-apple"
+        ],
         "outbound": "🍎 Apple 🍏"
       },
       {
@@ -3693,39 +3790,57 @@
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
-        "rule_set": "geosite-microsoft",
+        "rule_set": [
+          "surge-microsoft"
+        ],
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": "geosite-bing",
+        "rule_set": [
+          "surge-bing"
+        ],
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": "geosite-discord",
+        "rule_set": [
+          "surge-discord"
+        ],
         "outbound": "🛠️ 手动选择"
       },
       {
-        "rule_set": "geosite-instagram",
+        "rule_set": [
+          "surge-instagram"
+        ],
         "outbound": "📷 instgram ⛰️"
       },
       {
-        "rule_set": "geosite-twitter",
+        "rule_set": [
+          "surge-twitter"
+        ],
         "outbound": "🐦 Twitter 🔵"
       },
       {
-        "rule_set": "geosite-telegram",
+        "rule_set": [
+          "surge-telegram"
+        ],
         "outbound": "☎️ Telegram 💬"
       },
       {
-        "rule_set": "geosite-github2",
+        "rule_set": [
+          "surge-github"
+        ],
         "outbound": "🛠️ 手动选择"
       },
       {
-        "rule_set": "geosite-spotify",
+        "rule_set": [
+          "surge-spotify"
+        ],
         "outbound": "🔊  Spotify  🟢"
       },
       {
-        "rule_set": "geosite-steam",
+        "rule_set": [
+          "surge-steam"
+        ],
         "outbound": "🎮 游戏平台 💻"
       },
       {
@@ -3744,11 +3859,15 @@
         "action": "resolve"
       },
       {
-        "rule_set": "telegramip",
+        "rule_set": [
+          "surge-telegram"
+        ],
         "outbound": "☎️ Telegram 💬"
       },
       {
-        "rule_set": "netflixip",
+        "rule_set": [
+          "surge-netflix"
+        ],
         "outbound": "🎬 全球媒体 🌍"
       },
       {
@@ -3789,7 +3908,7 @@
         "outbound": "🎮 Roblox 🎯"
       },
       {
-        "domain": "nyamiiko.sgddns",
+        "domain": "YOUR_DDNS_DOMAIN",
         "outbound": "🎯 全球直连"
       },
       {
@@ -4001,19 +4120,139 @@
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": "geosite-category-games-!cn@cn",
+        "rule_set": [
+          "surge-gaming"
+        ],
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
-        "rule_set": "geosite-category-ai-!cn",
+        "rule_set": [
+          "surge-ai"
+        ],
         "outbound": "🛠️ 手动选择"
       },
       {
-        "rule_set": "geosite-category-ads-all",
+        "rule_set": "adblock-merged",
         "outbound": "❌ 拒绝屏蔽"
       },
       {
-        "rule_set": "geosite-bilibili",
+        "rule_set": "surge-manual_us",
+        "outbound": "🇺🇸 美国"
+      },
+      {
+        "rule_set": "surge-manual_west",
+        "outbound": "🇺🇸 西方 🇫🇷"
+      },
+      {
+        "rule_set": "surge-manual_jp",
+        "outbound": "🇯🇵 JP -   针对💢"
+      },
+      {
+        "rule_set": "surge-ai",
+        "outbound": "🛠️ 手动选择"
+      },
+      {
+        "rule_set": "surge-telegram",
+        "outbound": "☎️ Telegram 💬"
+      },
+      {
+        "rule_set": "surge-tiktok",
+        "outbound": "📱 TikTok 🧠"
+      },
+      {
+        "rule_set": "surge-google",
+        "outbound": "▶️  YouTube 🔴"
+      },
+      {
+        "rule_set": "surge-lan",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-manual",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-nsfw",
+        "outbound": "🇯🇵 JP -   针对💢"
+      },
+      {
+        "rule_set": "surge-bilibili",
+        "outbound": "📺 巴哔港澳 📱"
+      },
+      {
+        "rule_set": "surge-globalmedia",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-gaming",
+        "outbound": "🎮 游戏平台 💻"
+      },
+      {
+        "rule_set": "surge-streamjp",
+        "outbound": "🇯🇵 JP -   针对💢"
+      },
+      {
+        "rule_set": "surge-streamus",
+        "outbound": "🇺🇸 美国"
+      },
+      {
+        "rule_set": "surge-streamkr",
+        "outbound": "🇸🇬 新加坡"
+      },
+      {
+        "rule_set": "surge-streamhk",
+        "outbound": "🇭🇰 香港"
+      },
+      {
+        "rule_set": "surge-streamtw",
+        "outbound": "🇹🇼 台湾"
+      },
+      {
+        "rule_set": "surge-apple",
+        "outbound": "🍎 Apple 🍏"
+      },
+      {
+        "rule_set": "surge-microsoft",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-chinadirect",
+        "outbound": "🗺️ 中国大陆 🇨🇳"
+      },
+      {
+        "rule_set": "surge-fediverse",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-manual_global",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-discord",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-globalproxy",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-cdn",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-chinaip",
+        "outbound": "🗺️ 中国大陆 🇨🇳"
+      },
+      {
+        "rule_set": [
+          "adblock-merged"
+        ],
+        "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": [
+          "surge-bilibili"
+        ],
         "outbound": "📺 巴哔港澳 📱"
       },
       {
@@ -4029,11 +4268,15 @@
         "outbound": "🛠️ 手动选择"
       },
       {
-        "rule_set": "geosite-youtube",
+        "rule_set": [
+          "surge-youtube"
+        ],
         "outbound": "▶️  YouTube 🔴"
       },
       {
-        "rule_set": "geosite-github",
+        "rule_set": [
+          "surge-github"
+        ],
         "outbound": "🛠️ 手动选择"
       },
       {
@@ -4041,7 +4284,9 @@
         "outbound": "🎬 全球媒体 🌍"
       },
       {
-        "rule_set": "geosite-google",
+        "rule_set": [
+          "surge-google"
+        ],
         "outbound": "🛠️ 手动选择"
       },
       {
