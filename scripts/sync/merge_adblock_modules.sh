@@ -32,6 +32,9 @@ TEMP_DIR="$PROJECT_ROOT/.temp_adblock_merge"
 # 目标模块
 TARGET_MODULE="$SURGE_MODULE_DIR/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
 
+# 巨大的合并规则文件
+ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
+
 # 临时文件
 TEMP_RULES_REJECT="$TEMP_DIR/rules_reject.tmp"
 TEMP_RULES_REJECT_DROP="$TEMP_DIR/rules_reject_drop.tmp"
@@ -451,6 +454,99 @@ EOF
     log_success "新模块文件已生成"
 }
 
+# 合并规则到巨大的 AdBlock_Merged.list 文件
+merge_to_adblock_list() {
+    log_section "合并规则到 AdBlock_Merged.list"
+    
+    if [[ ! -f "$ADBLOCK_MERGED_LIST" ]]; then
+        log_error "AdBlock_Merged.list 文件不存在: $ADBLOCK_MERGED_LIST"
+        return
+    fi
+    
+    # 备份原文件
+    cp "$ADBLOCK_MERGED_LIST" "$ADBLOCK_MERGED_LIST.backup.$(date +%Y%m%d_%H%M%S)"
+    log_success "已备份 AdBlock_Merged.list"
+    
+    # 提取现有规则（跳过注释和空行）
+    log_info "提取现有规则..."
+    grep -v "^#" "$ADBLOCK_MERGED_LIST" | grep -v "^$" > "$TEMP_DIR/existing_adblock_rules.tmp"
+    local existing_count=$(wc -l < "$TEMP_DIR/existing_adblock_rules.tmp" | tr -d ' ')
+    log_info "现有规则: $existing_count 条"
+    
+    # 准备新规则（只合并 REJECT 规则，不包括 REJECT-DROP 和 REJECT-NO-DROP）
+    log_info "准备新规则..."
+    > "$TEMP_DIR/new_adblock_rules.tmp"
+    
+    # 从临时文件中提取 REJECT 规则，转换为 .list 格式
+    while IFS= read -r rule; do
+        if [[ -z "$rule" ]] || [[ "$rule" =~ ^# ]]; then
+            continue
+        fi
+        
+        # 移除 Surge 特有的参数（extended-matching, pre-matching, no-resolve 等）
+        rule=$(echo "$rule" | sed 's/,extended-matching//g' | sed 's/,pre-matching//g' | sed 's/,no-resolve//g' | sed 's/  */ /g')
+        
+        # 检查是否已存在
+        if ! grep -Fxq "$rule" "$TEMP_DIR/existing_adblock_rules.tmp"; then
+            echo "$rule" >> "$TEMP_DIR/new_adblock_rules.tmp"
+        fi
+    done < "$TEMP_RULES_REJECT"
+    
+    local new_count=$(wc -l < "$TEMP_DIR/new_adblock_rules.tmp" | tr -d ' ')
+    
+    if [[ $new_count -eq 0 ]]; then
+        log_info "没有新规则需要添加"
+        return
+    fi
+    
+    log_success "发现 $new_count 条新规则"
+    
+    # 合并规则
+    log_info "合并规则到 AdBlock_Merged.list..."
+    
+    # 提取文件头部（注释部分）
+    grep "^#" "$ADBLOCK_MERGED_LIST" > "$TEMP_DIR/adblock_header.tmp"
+    
+    # 更新统计信息
+    local total_rules=$((existing_count + new_count))
+    local current_date=$(date +"%Y-%m-%d %H:%M:%S UTC")
+    
+    # 生成新文件
+    cat > "$ADBLOCK_MERGED_LIST" << EOF
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: AdBlock_Merged
+# Updated: $current_date
+# Total Rules: $total_rules
+# Generator: Ruleset Merger v2.4 + Module Merger
+# ═══════════════════════════════════════════════════════════════
+#
+# Last Merge: Added $new_count rules from modules
+#
+EOF
+    
+    # 添加原有的 Sources 注释（如果有）
+    grep "^# Sources:" "$TEMP_DIR/adblock_header.tmp" -A 100 | grep "^#   -" >> "$ADBLOCK_MERGED_LIST" || true
+    
+    echo "" >> "$ADBLOCK_MERGED_LIST"
+    echo "# ═══════════════════════════════════════════════════════════════" >> "$ADBLOCK_MERGED_LIST"
+    echo "# Rules from Modules (Added: $current_date)" >> "$ADBLOCK_MERGED_LIST"
+    echo "# ═══════════════════════════════════════════════════════════════" >> "$ADBLOCK_MERGED_LIST"
+    
+    # 添加新规则（排序）
+    sort -u "$TEMP_DIR/new_adblock_rules.tmp" >> "$ADBLOCK_MERGED_LIST"
+    
+    echo "" >> "$ADBLOCK_MERGED_LIST"
+    echo "# ═══════════════════════════════════════════════════════════════" >> "$ADBLOCK_MERGED_LIST"
+    echo "# Original Rules" >> "$ADBLOCK_MERGED_LIST"
+    echo "# ═══════════════════════════════════════════════════════════════" >> "$ADBLOCK_MERGED_LIST"
+    
+    # 添加原有规则（排序）
+    sort -u "$TEMP_DIR/existing_adblock_rules.tmp" >> "$ADBLOCK_MERGED_LIST"
+    
+    log_success "已合并到 AdBlock_Merged.list"
+    log_info "总规则数: $existing_count + $new_count = $total_rules"
+}
+
 # 同步到小火箭
 sync_to_shadowrocket() {
     log_section "同步到小火箭"
@@ -486,6 +582,9 @@ main() {
     
     # 生成新模块
     generate_new_module
+    
+    # 合并规则到 AdBlock_Merged.list
+    merge_to_adblock_list
     
     # 同步到小火箭
     sync_to_shadowrocket
