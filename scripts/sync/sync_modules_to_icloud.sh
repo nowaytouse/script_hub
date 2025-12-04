@@ -157,11 +157,19 @@ sync_to_shadowrocket() {
         return
     fi
     
-    # 直接复制到 Shadowrocket iCloud（不转换，保持兼容性）
-    if cp "$module_file" "$SHADOWROCKET_ICLOUD_DIR/$module_name" 2>/dev/null; then
+    # 转换并复制到 Shadowrocket iCloud
+    local output_file="$SHADOWROCKET_ICLOUD_DIR/$module_name"
+    
+    # 使用sed进行兼容性转换（一次性处理）
+    sed -e 's/REJECT-DROP/REJECT/g' \
+        -e 's/REJECT-NO-DROP/REJECT/g' \
+        -e 's/hostname = %APPEND% /hostname = /g' \
+        "$module_file" > "$output_file"
+    
+    if [[ $? -eq 0 ]]; then
         log_success "Shadowrocket: $module_name"
     else
-        log_warning "Shadowrocket同步失败: $module_name"
+        log_warning "Shadowrocket转换失败: $module_name"
     fi
 }
 

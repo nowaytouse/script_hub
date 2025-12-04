@@ -30,6 +30,13 @@ Configuration management and auto-update tools for proxy applications:
 - **Config Manager**: Auto-update proxy configurations
 - **Rule Sync**: Synchronize rulesets across platforms
 
+### 🔄 Sync Scripts (`scripts/sync/`)
+Module synchronization tools for iCloud:
+
+- **Module Sync**: Auto-sync Surge modules to iCloud (Surge + Shadowrocket)
+- **Compatibility Conversion**: Auto-convert Surge modules for Shadowrocket
+- **Duplicate Cleanup**: Remove old/duplicate modules automatically
+
 ### 📦 Substore Scripts (`substore/`)
 Advanced JavaScript rules for [Sub-Store](https://github.com/sub-store-org/Sub-Store):
 
@@ -54,10 +61,13 @@ git clone https://github.com/YOUR_USERNAME/script_hub.git
 cd script_hub
 
 # Make scripts executable
-chmod +x scripts/media/*.sh
+chmod +x scripts/media/*.sh scripts/sync/*.sh
 
 # Example: Convert incompatible media
 ./scripts/media/convert_incompatible_media.sh /path/to/media --keep-only-incompatible
+
+# Example: Sync modules to iCloud
+./scripts/sync/sync_modules_to_icloud.sh --all
 ```
 
 ## Dependencies
@@ -128,6 +138,13 @@ MIT License - See individual script headers for details.
 - **配置管理器**: 自动更新代理配置
 - **规则同步**: 跨平台同步规则集
 
+### 🔄 同步脚本 (`scripts/sync/`)
+iCloud模块同步工具：
+
+- **模块同步**: 自动同步Surge模块到iCloud（Surge + Shadowrocket）
+- **兼容性转换**: 自动转换Surge模块为Shadowrocket兼容格式
+- **重复清理**: 自动删除旧版本/重复模块
+
 ### 📦 Substore脚本 (`substore/`)
 [Sub-Store](https://github.com/sub-store-org/Sub-Store)的高级JavaScript规则：
 
@@ -152,10 +169,13 @@ git clone https://github.com/YOUR_USERNAME/script_hub.git
 cd script_hub
 
 # 添加执行权限
-chmod +x scripts/media/*.sh
+chmod +x scripts/media/*.sh scripts/sync/*.sh
 
 # 示例：转换不兼容媒体
 ./scripts/media/convert_incompatible_media.sh /path/to/media --keep-only-incompatible
+
+# 示例：同步模块到iCloud
+./scripts/sync/sync_modules_to_icloud.sh --all
 ```
 
 ## 依赖安装
