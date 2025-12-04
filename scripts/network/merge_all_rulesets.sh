@@ -38,6 +38,8 @@ extract_rules() {
         sed 's/^IP-CIDR,\(.*:.*\)/IP-CIDR6,\1/' | \
         awk -F, '{
             # 去除 $2 中的空格及之后内容 (针对 "VALUE reject" 格式)
+            # 先去除首尾空格，防止 split 产生空元素
+            gsub(/^[ \t]+|[ \t]+$/, "", $2);
             split($2, a, " ");
             val = a[1];
             
