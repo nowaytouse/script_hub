@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULESET_DIR="${SCRIPT_DIR}/../../ruleset"
+RULESET_DIR="${SCRIPT_DIR}/../../ruleset/Surge(Shadowkroket)"
 TEMP_DIR=$(mktemp -d)
 
 cleanup() { rm -rf "$TEMP_DIR"; }
