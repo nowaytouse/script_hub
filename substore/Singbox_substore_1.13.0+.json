@@ -44,12 +44,12 @@
         "detour": "direct-select",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       },
@@ -60,12 +60,12 @@
         "detour": "♻️ 自动选择",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       },
@@ -76,12 +76,12 @@
         "detour": "♻️ 自动选择",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       },
@@ -92,12 +92,12 @@
         "detour": "♻️ 自动选择",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       },
@@ -108,12 +108,12 @@
         "detour": "♻️ 自动选择",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       },
@@ -124,12 +124,12 @@
         "detour": "♻️ 自动选择",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       },
@@ -140,12 +140,12 @@
         "detour": "♻️ 自动选择",
         "tls": {
           "enabled": true,
-          "min_version": "1.2",
+          "min_version": "1.3",
+          "max_version": "1.3",
           "curve_preferences": [
             "x25519",
             "p256",
-            "p384",
-            "p521"
+            "p384"
           ]
         }
       }
@@ -785,6 +785,14 @@
         "update_interval": "24h"
       },
       {
+        "tag": "adblock-merged",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AdBlock_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
         "tag": "geosite-category-ads-all",
         "type": "remote",
         "format": "binary",
@@ -915,7 +923,7 @@
       {
         "type": "remote",
         "tag": "sukka-apple-cdn",
-        "format": "source",
+        "format": "binary",
         "url": "https://ruleset.skk.moe/sing-box/domainset/apple_cdn.json",
         "update_interval": "24h",
         "download_detour": "direct-select"
@@ -923,7 +931,7 @@
       {
         "type": "remote",
         "tag": "sukka-cdn",
-        "format": "source",
+        "format": "binary",
         "url": "https://ruleset.skk.moe/sing-box/domainset/cdn.json",
         "update_interval": "24h",
         "download_detour": "direct-select"
@@ -931,7 +939,7 @@
       {
         "type": "remote",
         "tag": "sukka-speedtest",
-        "format": "source",
+        "format": "binary",
         "url": "https://ruleset.skk.moe/sing-box/domainset/speedtest.json",
         "update_interval": "24h",
         "download_detour": "direct-select"
@@ -943,6 +951,222 @@
         "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-games-!cn@cn.srs",
         "update_interval": "24h",
         "download_detour": "direct-select"
+      },
+      {
+        "tag": "surge-manual_us",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Manual_US_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_west",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Manual_West_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_jp",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Manual_JP_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-ai",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/AI_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-telegram",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Telegram_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-tiktok",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/TikTok_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-google",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Google_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-lan",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/LAN_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Manual_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-nsfw",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/NSFW_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-bilibili",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Bilibili_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-globalmedia",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/GlobalMedia_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-gaming",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Gaming_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamjp",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/StreamJP_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamus",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/StreamUS_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamkr",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/StreamKR_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamhk",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/StreamHK_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamtw",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/StreamTW_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-apple",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Apple_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-microsoft",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Microsoft_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-chinadirect",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/ChinaDirect_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-fediverse",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Fediverse_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_global",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Manual_Global_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-discord",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Discord_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-globalproxy",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/GlobalProxy_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-cdn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/CDN_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-chinaip",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/ChinaIP_Singbox.srs",
+        "download_detour": "direct-select",
+        "update_interval": "24h"
       },
       {
         "tag": "geosite-category-ai-!cn",
@@ -1401,6 +1625,118 @@
       {
         "rule_set": "geosite-category-ai-!cn",
         "outbound": "🛠️ 手动选择"
+      },
+      {
+        "rule_set": "adblock-merged",
+        "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-manual_us",
+        "outbound": "🇺🇸 美国"
+      },
+      {
+        "rule_set": "surge-manual_west",
+        "outbound": "🇺🇸 西方 🇫🇷"
+      },
+      {
+        "rule_set": "surge-manual_jp",
+        "outbound": "🇯🇵 JP -   针对💢"
+      },
+      {
+        "rule_set": "surge-ai",
+        "outbound": "🛠️ 手动选择"
+      },
+      {
+        "rule_set": "surge-telegram",
+        "outbound": "☎️ Telegram 💬"
+      },
+      {
+        "rule_set": "surge-tiktok",
+        "outbound": "📱 TikTok 🧠"
+      },
+      {
+        "rule_set": "surge-google",
+        "outbound": "▶️  YouTube 🔴"
+      },
+      {
+        "rule_set": "surge-lan",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-manual",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-nsfw",
+        "outbound": "🇯🇵 JP -   针对💢"
+      },
+      {
+        "rule_set": "surge-bilibili",
+        "outbound": "📺 巴哔港澳 📱"
+      },
+      {
+        "rule_set": "surge-globalmedia",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-gaming",
+        "outbound": "🎮 游戏平台 💻"
+      },
+      {
+        "rule_set": "surge-streamjp",
+        "outbound": "🇯🇵 JP -   针对💢"
+      },
+      {
+        "rule_set": "surge-streamus",
+        "outbound": "🇺🇸 美国"
+      },
+      {
+        "rule_set": "surge-streamkr",
+        "outbound": "🇸🇬 新加坡"
+      },
+      {
+        "rule_set": "surge-streamhk",
+        "outbound": "🇭🇰 香港"
+      },
+      {
+        "rule_set": "surge-streamtw",
+        "outbound": "🇹🇼 台湾"
+      },
+      {
+        "rule_set": "surge-apple",
+        "outbound": "🍎 Apple 🍏"
+      },
+      {
+        "rule_set": "surge-microsoft",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-chinadirect",
+        "outbound": "🗺️ 中国大陆 🇨🇳"
+      },
+      {
+        "rule_set": "surge-fediverse",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-manual_global",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-discord",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-globalproxy",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-cdn",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-chinaip",
+        "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
         "rule_set": "geosite-category-ads-all",
