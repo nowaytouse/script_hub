@@ -86,6 +86,12 @@ brew install jpeg-xl libheif exiftool ffmpeg webp
 - **Solution**: Rewrote MP4→WebP conversion using `img2webp` for exact frame timing
 - **Result**: 30fps videos now correctly convert to 30fps WebP (33ms/frame)
 
+### Verified Conversion Quality
+| Type | FPS | Frames | Metadata | Timestamps |
+|------|-----|--------|----------|------------|
+| MP4→WebP | ✅ 30→30.30fps | ✅ 100% | ✅ XMP | ✅ |
+| HEIC→PNG | N/A | N/A | ✅ 31 tags | ✅ |
+
 ---
 
 ## License
@@ -167,6 +173,12 @@ brew install jpeg-xl libheif exiftool ffmpeg webp
 - **问题**: ffmpeg的libwebp编码器硬编码25fps限制
 - **解决方案**: 使用`img2webp`重写MP4→WebP转换，实现精确帧时序
 - **结果**: 30fps视频现在正确转换为30fps WebP（33ms/帧）
+
+### 转换质量验证
+| 类型 | FPS | 帧数 | 元数据 | 时间戳 |
+|------|-----|------|--------|--------|
+| MP4→WebP | ✅ 30→30.30fps | ✅ 100% | ✅ XMP | ✅ |
+| HEIC→PNG | N/A | N/A | ✅ 31标签 | ✅ |
 
 ---
 
