@@ -1,3 +1,4 @@
+// Core modules
 pub mod analyzer;
 pub mod converter;
 pub mod formats;
@@ -8,6 +9,11 @@ pub mod metrics;
 pub mod quality_core;
 pub mod recommender;
 
+// Separated API layers
+pub mod detection_api;
+pub mod conversion_api;
+
+// Core exports
 pub use analyzer::{analyze_image, ImageAnalysis};
 pub use converter::{convert_image, ConversionOptions};
 pub use heic_analysis::HeicAnalysis;
@@ -16,6 +22,10 @@ pub use lossless_converter::{ConversionResult, ConvertOptions};
 pub use metrics::{calculate_psnr, calculate_ssim, psnr_quality_description, ssim_quality_description};
 pub use quality_core::{QualityAnalysis, QualityParams, ConversionRecommendation};
 pub use recommender::{get_recommendation, UpgradeRecommendation};
+
+// New API exports
+pub use detection_api::{detect_image, DetectionResult, DetectedFormat, ImageType, CompressionType};
+pub use conversion_api::{smart_convert, determine_strategy, ConversionConfig, ConversionOutput, TargetFormat};
 
 use thiserror::Error;
 
