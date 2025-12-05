@@ -25,7 +25,7 @@ pub use recommender::{get_recommendation, UpgradeRecommendation};
 
 // New API exports
 pub use detection_api::{detect_image, DetectionResult, DetectedFormat, ImageType, CompressionType};
-pub use conversion_api::{smart_convert, determine_strategy, ConversionConfig, ConversionOutput, TargetFormat};
+pub use conversion_api::{smart_convert, simple_convert, determine_strategy, ConversionConfig, ConversionOutput, TargetFormat};
 
 use thiserror::Error;
 

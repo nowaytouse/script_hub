@@ -377,6 +377,110 @@ pub fn smart_convert(path: &Path, config: &ConversionConfig) -> Result<Conversio
     execute_conversion(&detection, &strategy, config)
 }
 
+/// Simple mode conversion - Always use JXL for static, AV1 MP4 for animated
+/// 
+/// Strategy:
+/// - Any static image → JXL mathematical lossless
+/// - Any animated image → AV1 MP4 CRF 0 (visually lossless)
+pub fn simple_convert(path: &Path, output_dir: Option<&Path>) -> Result<ConversionOutput> {
+    use crate::detection_api::detect_image;
+    
+    let detection = detect_image(path)?;
+    let input_path = Path::new(&detection.file_path);
+    
+    // Determine output path
+    let (extension, is_animated) = match detection.image_type {
+        ImageType::Static => ("jxl", false),
+        ImageType::Animated => ("mp4", true),
+    };
+    
+    let output_path = if let Some(dir) = output_dir {
+        std::fs::create_dir_all(dir)?;
+        dir.join(input_path.file_stem().unwrap()).with_extension(extension)
+    } else {
+        input_path.with_extension(extension)
+    };
+    
+    // Skip if output exists
+    if output_path.exists() {
+        return Ok(ConversionOutput {
+            original_path: detection.file_path.clone(),
+            output_path: output_path.display().to_string(),
+            skipped: true,
+            message: "Output file already exists".to_string(),
+            original_size: detection.file_size,
+            output_size: None,
+            size_reduction: None,
+        });
+    }
+    
+    // Execute conversion
+    let result = if is_animated {
+        // Animated → AV1 MP4 CRF 0
+        convert_to_av1_mp4(input_path, &output_path, detection.fps)
+    } else {
+        // Static → JXL lossless
+        convert_to_jxl_lossless(input_path, &output_path, &detection.format)
+    };
+    
+    if let Err(e) = result {
+        return Err(ImgQualityError::ConversionError(e.to_string()));
+    }
+    
+    // Get output size
+    let output_size = std::fs::metadata(&output_path).ok().map(|m| m.len());
+    let size_reduction = output_size.map(|s| {
+        100.0 * (1.0 - s as f32 / detection.file_size as f32)
+    });
+    
+    Ok(ConversionOutput {
+        original_path: detection.file_path.clone(),
+        output_path: output_path.display().to_string(),
+        skipped: false,
+        message: if is_animated {
+            "Animated → AV1 MP4 (visually lossless)".to_string()
+        } else {
+            "Static → JXL (mathematical lossless)".to_string()
+        },
+        original_size: detection.file_size,
+        output_size,
+        size_reduction,
+    })
+}
+
+/// JXL lossless conversion (always mathematical lossless)
+fn convert_to_jxl_lossless(input: &Path, output: &Path, format: &DetectedFormat) -> Result<()> {
+    let args = if *format == DetectedFormat::JPEG {
+        // JPEG: use lossless_jpeg transcode
+        vec![
+            input.to_str().unwrap(),
+            output.to_str().unwrap(),
+            "--lossless_jpeg=1",
+        ]
+    } else {
+        // Non-JPEG: use -d 0.0 for mathematical lossless
+        vec![
+            input.to_str().unwrap(),
+            output.to_str().unwrap(),
+            "-d", "0.0",
+            "--modular",
+            "-e", "9",
+        ]
+    };
+    
+    let status = Command::new("cjxl")
+        .args(&args)
+        .output()?;
+    
+    if !status.status.success() {
+        return Err(ImgQualityError::ConversionError(
+            String::from_utf8_lossy(&status.stderr).to_string()
+        ));
+    }
+    
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
