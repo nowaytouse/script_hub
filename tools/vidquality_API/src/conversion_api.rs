@@ -255,7 +255,7 @@ fn explore_smaller_size(
     let mut current_crf: u8 = 0;
     let mut attempts: u8 = 0;
     const MAX_CRF: u8 = 23;  // Conservative limit
-    const CRF_STEP: u8 = 2;   // Step size for exploration
+    const CRF_STEP: u8 = 1;   // Step size for exploration (conservative)
     
     info!("   🔍 Exploring smaller size (input: {} bytes)", input_size);
     
