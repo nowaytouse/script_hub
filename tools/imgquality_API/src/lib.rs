@@ -19,7 +19,7 @@ pub use converter::{convert_image, ConversionOptions};
 pub use heic_analysis::HeicAnalysis;
 pub use jpeg_analysis::JpegQualityAnalysis;
 pub use lossless_converter::{ConversionResult, ConvertOptions};
-pub use metrics::{calculate_psnr, calculate_ssim, psnr_quality_description, ssim_quality_description};
+pub use metrics::{calculate_psnr, calculate_ssim, calculate_ms_ssim, psnr_quality_description, ssim_quality_description};
 pub use quality_core::{QualityAnalysis, QualityParams, ConversionRecommendation};
 pub use recommender::{get_recommendation, UpgradeRecommendation};
 

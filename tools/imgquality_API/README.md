@@ -366,8 +366,9 @@ A: JSON输出格式在同一主版本号内保持稳定，适合用于自动化�
 - [x] 核心质量分析
 - [x] JXL格式转换
 - [x] JSON API模式
-- [ ] 并行批处理
-- [ ] 更精确的PSNR/SSIM计算
+- [x] 并行批处理 (rayon-powered)
+- [x] 更精确的PSNR/SSIM计算 (11x11 Gaussian window, Wang 2004)
+- [x] MS-SSIM多尺度SSIM
 - [ ] 支持更多输出格式（AVIF, WebP2）
 - [ ] GUI 界面
 - [ ] 云服务API
