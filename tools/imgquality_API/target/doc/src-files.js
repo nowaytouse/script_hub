@@ -1,0 +1,2 @@
+createSrcSidebar('[["libheif_rs",["",[],["color_profile.rs","context.rs","decoder.rs","encoder.rs","enums.rs","errors.rs","heif.rs","image.rs","image_handle.rs","lib.rs","metadata.rs","reader.rs","regions.rs","utils.rs"]]]]');
+//{"start":19,"fragment_lengths":[203]}

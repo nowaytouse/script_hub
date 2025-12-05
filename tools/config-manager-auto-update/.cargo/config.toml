@@ -1,0 +1,36 @@
+# Cargo 构建配置
+
+[build]
+# 使用所有 CPU 核心并行编译（留空表示自动检测）
+# jobs = 0
+
+[target.x86_64-unknown-linux-gnu]
+linker = "x86_64-linux-gnu-gcc"
+
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+
+[profile.release]
+# 最高优化级别
+opt-level = 3
+# 链接时优化
+lto = true
+# 单个代码生成单元（更好的优化）
+codegen-units = 1
+# 去除符号信息
+strip = true
+# panic 立即终止
+panic = "abort"
+
+[profile.dev]
+# 开发模式优化级别
+opt-level = 0
+# 调试信息
+debug = true
+
+# 带调试信息的 release（用于性能分析）
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+strip = false
+

@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="libheif-rs"><title>libheif_rs - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="libheif_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0 (1159e78c4 2025-09-14)" data-channel="1.90.0" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-68b7e25d.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../libheif_rs/index.html">libheif_<wbr>rs</a><span class="version">1.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#libheif-rs" title="libheif-rs">libheif-rs</a><ul><li><a href="#system-dependencies" title="System dependencies">System dependencies</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>libheif_rs</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/libheif_rs/lib.rs.html#1-28">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="libheif-rs"><a class="doc-anchor" href="#libheif-rs">§</a>libheif-rs</h2>
+<p>Safe wrapper around the libheif-sys crate for parsing heif/heic files.</p>
+<p><a href="https://github.com/Cykooz/libheif-rs/blob/master/CHANGELOG.md">CHANGELOG</a></p>
+<h3 id="system-dependencies"><a class="doc-anchor" href="#system-dependencies">§</a>System dependencies</h3>
+<ul>
+<li><code>libheif-dev</code> &gt;= 1.18.0</li>
+</ul>
+<h4 id="linux"><a class="doc-anchor" href="#linux">§</a>Linux</h4>
+<p>Crate <code>libheif-sys</code> uses <code>pkg-confing</code> to find installed <code>libheif</code>.</p>
+<h4 id="windows"><a class="doc-anchor" href="#windows">§</a>Windows</h4>
+<p>Crate <code>libheif-sys</code> uses <a href="https://crates.io/crates/vcpkg">vcpkg crate</a>
+to find <code>libheif</code> installed with help of <code>vcpkg</code>.</p>
+<p>You can use <a href="https://crates.io/crates/cargo-vcpkg">cargo-vcpkg</a>
+to install <code>libheif</code> with help of <code>cargo</code> command:</p>
+<div class="example-wrap"><pre class="language-shell"><code>cargo vcpkg -v build</code></pre></div>
+<p><code>cargo-vcpkg</code> can fetch and build a <code>vcpkg</code> installation of required
+packages from scratch. It merges package requirements specified in
+the <code>Cargo.toml</code> of crates in the dependency tree.</p>
+<p>PS: I tried build <code>libheif</code> for Windows, but <code>libheif-rs</code> tests
+filed because <code>libheif</code> doesn’t have any encoder plugins available.</p>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3><h4 id="read-heif-file"><a class="doc-anchor" href="#read-heif-file">§</a>Read HEIF file</h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>libheif_rs::{
+    Channel, RgbChroma, ColorSpace, HeifContext, <span class="prelude-ty">Result</span>,
+    ItemId, LibHeif
+};
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">let </span>lib_heif = LibHeif::new();
+    <span class="kw">let </span>ctx = HeifContext::read_from_file(<span class="string">"./data/test.heif"</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>handle = ctx.primary_image_handle()<span class="question-mark">?</span>;
+    <span class="macro">assert_eq!</span>(handle.width(), <span class="number">1652</span>);
+    <span class="macro">assert_eq!</span>(handle.height(), <span class="number">1791</span>);
+
+    <span class="comment">// Get Exif
+    </span><span class="kw">let </span><span class="kw-2">mut </span>meta_ids: Vec&lt;ItemId&gt; = <span class="macro">vec!</span>[<span class="number">0</span>; <span class="number">1</span>];
+    <span class="kw">let </span>count = handle.metadata_block_ids(<span class="kw-2">&amp;mut </span>meta_ids, <span class="string">b"Exif"</span>);
+    <span class="macro">assert_eq!</span>(count, <span class="number">1</span>);
+    <span class="kw">let </span>exif: Vec&lt;u8&gt; = handle.metadata(meta_ids[<span class="number">0</span>])<span class="question-mark">?</span>;
+
+    <span class="comment">// Decode the image
+    </span><span class="kw">let </span>image = lib_heif.decode(
+        <span class="kw-2">&amp;</span>handle,
+        ColorSpace::Rgb(RgbChroma::Rgb),
+        <span class="prelude-val">None</span>,
+    )<span class="question-mark">?</span>;
+    <span class="macro">assert_eq!</span>(
+        image.color_space(), 
+        <span class="prelude-val">Some</span>(ColorSpace::Rgb(RgbChroma::Rgb)),
+    );
+    <span class="macro">assert_eq!</span>(image.width(), <span class="number">1652</span>);
+    <span class="macro">assert_eq!</span>(image.height(), <span class="number">1791</span>);
+
+    <span class="comment">// Scale the image
+    </span><span class="kw">let </span>small_img = image.scale(<span class="number">1024</span>, <span class="number">800</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+    <span class="macro">assert_eq!</span>(small_img.width(), <span class="number">1024</span>);
+    <span class="macro">assert_eq!</span>(small_img.height(), <span class="number">800</span>);
+
+    <span class="comment">// Get "pixels"
+    </span><span class="kw">let </span>planes = small_img.planes();
+    <span class="kw">let </span>interleaved_plane = planes.interleaved.unwrap();
+    <span class="macro">assert_eq!</span>(interleaved_plane.width, <span class="number">1024</span>);
+    <span class="macro">assert_eq!</span>(interleaved_plane.height, <span class="number">800</span>);
+    <span class="macro">assert!</span>(!interleaved_plane.data.is_empty());
+    <span class="macro">assert!</span>(interleaved_plane.stride &gt; <span class="number">0</span>);
+
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<h4 id="write-heif-file"><a class="doc-anchor" href="#write-heif-file">§</a>Write HEIF file</h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tempfile::NamedTempFile;
+<span class="kw">use </span>libheif_rs::{
+    Channel, RgbChroma, ColorSpace, CompressionFormat,
+    EncoderQuality, HeifContext, Image, <span class="prelude-ty">Result</span>, LibHeif
+};
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">let </span>width = <span class="number">640</span>;
+    <span class="kw">let </span>height = <span class="number">480</span>;
+
+    <span class="kw">let </span><span class="kw-2">mut </span>image = Image::new(
+        width,
+        height,
+        ColorSpace::Rgb(RgbChroma::C444)
+    )<span class="question-mark">?</span>;
+
+    image.create_plane(Channel::R, width, height, <span class="number">8</span>)<span class="question-mark">?</span>;
+    image.create_plane(Channel::G, width, height, <span class="number">8</span>)<span class="question-mark">?</span>;
+    image.create_plane(Channel::B, width, height, <span class="number">8</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>planes = image.planes_mut();
+    <span class="kw">let </span>plane_r = planes.r.unwrap();
+    <span class="kw">let </span>stride = plane_r.stride;
+
+    <span class="kw">let </span>data_r = plane_r.data;
+    <span class="kw">let </span>data_g = planes.g.unwrap().data;
+    <span class="kw">let </span>data_b = planes.b.unwrap().data;
+
+    <span class="comment">// Fill data of planes by some "pixels"
+    </span><span class="kw">for </span>y <span class="kw">in </span><span class="number">0</span>..height {
+        <span class="kw">let </span><span class="kw-2">mut </span>pixel_index = stride * y <span class="kw">as </span>usize;
+        <span class="kw">for </span>x <span class="kw">in </span><span class="number">0</span>..width {
+            <span class="kw">let </span>color = ((x * y) <span class="kw">as </span>u32).to_le_bytes();
+            data_r[pixel_index] = color[<span class="number">0</span>];
+            data_g[pixel_index] = color[<span class="number">1</span>];
+            data_b[pixel_index] = color[<span class="number">2</span>];
+            pixel_index += <span class="number">1</span>;
+        }
+    }
+
+    <span class="comment">// Encode image and save it into file.
+    </span><span class="kw">let </span>lib_heif = LibHeif::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>context = HeifContext::new()<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>encoder = lib_heif.encoder_for_format(
+        CompressionFormat::Av1,
+    )<span class="question-mark">?</span>;
+    encoder.set_quality(EncoderQuality::LossLess)<span class="question-mark">?</span>;
+    context.encode_image(<span class="kw-2">&amp;</span>image, <span class="kw-2">&amp;mut </span>encoder, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>tmp_file = NamedTempFile::new().unwrap();
+    context.write_to_file(tmp_file.path().to_str().unwrap())<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="color_profile_types/index.html" title="mod libheif_rs::color_profile_types">color_<wbr>profile_<wbr>types</a></dt><dt><a class="mod" href="regions/index.html" title="mod libheif_rs::regions">regions</a></dt></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.AuxiliaryImagesFilter.html" title="struct libheif_rs::AuxiliaryImagesFilter">Auxiliary<wbr>Images<wbr>Filter</a></dt><dt><a class="struct" href="struct.ColorConversionOptions.html" title="struct libheif_rs::ColorConversionOptions">Color<wbr>Conversion<wbr>Options</a></dt><dt><a class="struct" href="struct.ColorProfileNCLX.html" title="struct libheif_rs::ColorProfileNCLX">Color<wbr>ProfileNCLX</a></dt><dt><a class="struct" href="struct.ColorProfileRaw.html" title="struct libheif_rs::ColorProfileRaw">Color<wbr>Profile<wbr>Raw</a></dt><dt><a class="struct" href="struct.DecoderDescriptor.html" title="struct libheif_rs::DecoderDescriptor">Decoder<wbr>Descriptor</a></dt><dt><a class="struct" href="struct.DecodingOptions.html" title="struct libheif_rs::DecodingOptions">Decoding<wbr>Options</a></dt><dt><a class="struct" href="struct.Encoder.html" title="struct libheif_rs::Encoder">Encoder</a></dt><dt><a class="struct" href="struct.EncoderDescriptor.html" title="struct libheif_rs::EncoderDescriptor">Encoder<wbr>Descriptor</a></dt><dt><a class="struct" href="struct.EncodingOptions.html" title="struct libheif_rs::EncodingOptions">Encoding<wbr>Options</a></dt><dt><a class="struct" href="struct.HeifContext.html" title="struct libheif_rs::HeifContext">Heif<wbr>Context</a></dt><dt><a class="struct" href="struct.HeifError.html" title="struct libheif_rs::HeifError">Heif<wbr>Error</a></dt><dt><a class="struct" href="struct.Image.html" title="struct libheif_rs::Image">Image</a></dt><dt><a class="struct" href="struct.ImageHandle.html" title="struct libheif_rs::ImageHandle">Image<wbr>Handle</a></dt><dd>Encoded image.</dd><dt><a class="struct" href="struct.ImageMetadata.html" title="struct libheif_rs::ImageMetadata">Image<wbr>Metadata</a></dt><dt><a class="struct" href="struct.LibHeif.html" title="struct libheif_rs::LibHeif">LibHeif</a></dt><dd>Guard structure used for <code>libheif</code> initialization, working with plugins,
+getting encoders, decode images and etc.</dd><dt><a class="struct" href="struct.Plane.html" title="struct libheif_rs::Plane">Plane</a></dt><dt><a class="struct" href="struct.Planes.html" title="struct libheif_rs::Planes">Planes</a></dt><dt><a class="struct" href="struct.ScalingOptions.html" title="struct libheif_rs::ScalingOptions">Scaling<wbr>Options</a></dt><dt><a class="struct" href="struct.StreamReader.html" title="struct libheif_rs::StreamReader">Stream<wbr>Reader</a></dt></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Channel.html" title="enum libheif_rs::Channel">Channel</a></dt><dt><a class="enum" href="enum.Chroma.html" title="enum libheif_rs::Chroma">Chroma</a></dt><dt><a class="enum" href="enum.ChromaDownsamplingAlgorithm.html" title="enum libheif_rs::ChromaDownsamplingAlgorithm">Chroma<wbr>Downsampling<wbr>Algorithm</a></dt><dt><a class="enum" href="enum.ChromaUpsamplingAlgorithm.html" title="enum libheif_rs::ChromaUpsamplingAlgorithm">Chroma<wbr>Upsampling<wbr>Algorithm</a></dt><dt><a class="enum" href="enum.ColorPrimaries.html" title="enum libheif_rs::ColorPrimaries">Color<wbr>Primaries</a></dt><dt><a class="enum" href="enum.ColorSpace.html" title="enum libheif_rs::ColorSpace">Color<wbr>Space</a></dt><dt><a class="enum" href="enum.CompressionFormat.html" title="enum libheif_rs::CompressionFormat">Compression<wbr>Format</a></dt><dt><a class="enum" href="enum.EncoderParameterType.html" title="enum libheif_rs::EncoderParameterType">Encoder<wbr>Parameter<wbr>Type</a></dt><dt><a class="enum" href="enum.EncoderParameterValue.html" title="enum libheif_rs::EncoderParameterValue">Encoder<wbr>Parameter<wbr>Value</a></dt><dt><a class="enum" href="enum.EncoderQuality.html" title="enum libheif_rs::EncoderQuality">Encoder<wbr>Quality</a></dt><dt><a class="enum" href="enum.FileTypeResult.html" title="enum libheif_rs::FileTypeResult">File<wbr>Type<wbr>Result</a></dt><dt><a class="enum" href="enum.HeifErrorCode.html" title="enum libheif_rs::HeifErrorCode">Heif<wbr>Error<wbr>Code</a></dt><dt><a class="enum" href="enum.HeifErrorSubCode.html" title="enum libheif_rs::HeifErrorSubCode">Heif<wbr>Error<wbr>SubCode</a></dt><dt><a class="enum" href="enum.ImageOrientation.html" title="enum libheif_rs::ImageOrientation">Image<wbr>Orientation</a></dt><dt><a class="enum" href="enum.MatrixCoefficients.html" title="enum libheif_rs::MatrixCoefficients">Matrix<wbr>Coefficients</a></dt><dt><a class="enum" href="enum.ReaderGrowStatus.html" title="enum libheif_rs::ReaderGrowStatus">Reader<wbr>Grow<wbr>Status</a></dt><dt><a class="enum" href="enum.RgbChroma.html" title="enum libheif_rs::RgbChroma">RgbChroma</a></dt><dt><a class="enum" href="enum.TransferCharacteristics.html" title="enum libheif_rs::TransferCharacteristics">Transfer<wbr>Characteristics</a></dt></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.ColorProfile.html" title="trait libheif_rs::ColorProfile">Color<wbr>Profile</a></dt><dt><a class="trait" href="trait.Reader.html" title="trait libheif_rs::Reader">Reader</a></dt></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.check_file_type.html" title="fn libheif_rs::check_file_type">check_<wbr>file_<wbr>type</a></dt><dd>Check a file type by it first bytes.
+Input data should be at least 12 bytes.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.ColorProfileType.html" title="type libheif_rs::ColorProfileType">Color<wbr>Profile<wbr>Type</a></dt><dt><a class="type" href="type.EncoderParametersTypes.html" title="type libheif_rs::EncoderParametersTypes">Encoder<wbr>Parameters<wbr>Types</a></dt><dt><a class="type" href="type.ItemId.html" title="type libheif_rs::ItemId">ItemId</a></dt><dt><a class="type" href="type.Result.html" title="type libheif_rs::Result">Result</a></dt></dl></section></div></main></body></html>

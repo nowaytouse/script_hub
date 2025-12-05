@@ -1,0 +1,448 @@
+//! Lossless Converter Module
+//! 
+//! Provides conversion API for verified lossless/lossy images
+//! With anti-duplicate execution mechanism
+
+use crate::{ImgQualityError, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::Mutex;
+use std::io::{BufRead, BufReader, Write};
+
+/// Global processed files tracker (anti-duplicate)
+lazy_static::lazy_static! {
+    static ref PROCESSED_FILES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+}
+
+/// Conversion result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConversionResult {
+    pub success: bool,
+    pub input_path: String,
+    pub output_path: Option<String>,
+    pub input_size: u64,
+    pub output_size: Option<u64>,
+    pub size_reduction: Option<f64>,
+    pub message: String,
+    pub skipped: bool,
+    pub skip_reason: Option<String>,
+}
+
+/// Conversion options
+#[derive(Debug, Clone)]
+pub struct ConvertOptions {
+    /// Force conversion even if already processed
+    pub force: bool,
+    /// Output directory (None = same as input)
+    pub output_dir: Option<PathBuf>,
+    /// Delete original after successful conversion
+    pub delete_original: bool,
+}
+
+impl Default for ConvertOptions {
+    fn default() -> Self {
+        Self {
+            force: false,
+            output_dir: None,
+            delete_original: false,
+        }
+    }
+}
+
+/// Check if file has already been processed (anti-duplicate)
+pub fn is_already_processed(path: &Path) -> bool {
+    let canonical = path.canonicalize().ok()
+        .and_then(|p| p.to_str().map(String::from))
+        .unwrap_or_else(|| path.display().to_string());
+    
+    let processed = PROCESSED_FILES.lock().unwrap();
+    processed.contains(&canonical)
+}
+
+/// Mark file as processed
+pub fn mark_as_processed(path: &Path) {
+    let canonical = path.canonicalize().ok()
+        .and_then(|p| p.to_str().map(String::from))
+        .unwrap_or_else(|| path.display().to_string());
+    
+    let mut processed = PROCESSED_FILES.lock().unwrap();
+    processed.insert(canonical);
+}
+
+/// Load processed files list from disk
+pub fn load_processed_list(list_path: &Path) -> Result<()> {
+    if !list_path.exists() {
+        return Ok(());
+    }
+    
+    let file = fs::File::open(list_path)?;
+    let reader = BufReader::new(file);
+    let mut processed = PROCESSED_FILES.lock().unwrap();
+    
+    for line in reader.lines() {
+        if let Ok(path) = line {
+            processed.insert(path);
+        }
+    }
+    
+    Ok(())
+}
+
+/// Save processed files list to disk
+pub fn save_processed_list(list_path: &Path) -> Result<()> {
+    let processed = PROCESSED_FILES.lock().unwrap();
+    let mut file = fs::File::create(list_path)?;
+    
+    for path in processed.iter() {
+        writeln!(file, "{}", path)?;
+    }
+    
+    Ok(())
+}
+
+/// Convert static lossless image to JXL
+pub fn convert_to_jxl(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
+    // Anti-duplicate check
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "jxl", &options.output_dir);
+    
+    // Check if output already exists
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Execute cjxl (v0.11+ syntax)
+    let result = Command::new("cjxl")
+        .arg(input)
+        .arg(&output)
+        .arg("-d").arg("0.0")  // Distance 0 = lossless
+        .arg("-e").arg("8")    // Effort 8 for better compression
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Conversion successful: size reduced {:.1}%", reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("cjxl failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("cjxl not found: {}", e)))
+        }
+    }
+}
+
+/// Convert JPEG to JXL using lossless JPEG transcode (preserves DCT coefficients)
+/// This is the BEST option for JPEG files - no quality loss at all
+pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
+    // Anti-duplicate check
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "jxl", &options.output_dir);
+    
+    // Check if output already exists
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Execute cjxl with --lossless_jpeg=1 for lossless JPEG transcode
+    let result = Command::new("cjxl")
+        .arg(input)
+        .arg(&output)
+        .arg("--lossless_jpeg=1")  // Lossless JPEG transcode - preserves DCT coefficients
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("JPEG lossless transcode successful: size reduced {:.1}%", reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("cjxl JPEG transcode failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("cjxl not found: {}", e)))
+        }
+    }
+}
+
+/// Convert static lossy image to AVIF
+pub fn convert_to_avif(input: &Path, quality: Option<u8>, options: &ConvertOptions) -> Result<ConversionResult> {
+    // Anti-duplicate check
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "avif", &options.output_dir);
+    
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Use original quality or default to high quality
+    let q = quality.unwrap_or(85);
+    
+    let result = Command::new("avifenc")
+        .arg("-s").arg("4")       // Speed 4 (balanced)
+        .arg("-j").arg("all")     // Use all CPU cores
+        .arg("-q").arg(q.to_string())
+        .arg(input)
+        .arg(&output)
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Conversion successful: size reduced {:.1}%", reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("avifenc failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("avifenc not found: {}", e)))
+        }
+    }
+}
+
+/// Convert animated lossless to AV1 MP4 (Q=100 visual lossless)
+pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
+    // Anti-duplicate check
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "mp4", &options.output_dir);
+    
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // AV1 with CRF 0 for visually lossless
+    let result = Command::new("ffmpeg")
+        .arg("-y")  // Overwrite
+        .arg("-i").arg(input)
+        .arg("-c:v").arg("libaom-av1")
+        .arg("-crf").arg("0")    // Lossless mode
+        .arg("-b:v").arg("0")
+        .arg("-pix_fmt").arg("yuv420p")
+        .arg(&output)
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Conversion successful: size reduced {:.1}%", reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("ffmpeg failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("ffmpeg not found: {}", e)))
+        }
+    }
+}
+
+/// Determine output path
+fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> PathBuf {
+    let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
+    
+    match output_dir {
+        Some(dir) => dir.join(format!("{}.{}", stem, extension)),
+        None => input.with_extension(extension),
+    }
+}
+
+/// Clear processed files list
+pub fn clear_processed_list() {
+    let mut processed = PROCESSED_FILES.lock().unwrap();
+    processed.clear();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_determine_output_path() {
+        let input = Path::new("/path/to/image.png");
+        let output = determine_output_path(input, "jxl", &None);
+        assert_eq!(output, Path::new("/path/to/image.jxl"));
+    }
+    
+    #[test]
+    fn test_determine_output_path_with_dir() {
+        let input = Path::new("/path/to/image.png");
+        let output_dir = Some(PathBuf::from("/output"));
+        let output = determine_output_path(input, "avif", &output_dir);
+        assert_eq!(output, Path::new("/output/image.avif"));
+    }
+}
