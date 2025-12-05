@@ -80,6 +80,10 @@ enum Commands {
         /// Delete original after successful conversion
         #[arg(long)]
         delete_original: bool,
+
+        /// Use mathematical lossless AVIF/AV1 (⚠️ VERY SLOW, huge files)
+        #[arg(long)]
+        lossless: bool,
     },
 
     /// Verify conversion quality
@@ -143,11 +147,15 @@ fn main() -> anyhow::Result<()> {
             force,
             recursive,
             delete_original,
+            lossless,
         } => {
+            if lossless {
+                eprintln!("⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)");
+            }
             if input.is_file() {
-                auto_convert_single_file(&input, output.as_ref(), force, delete_original)?;
+                auto_convert_single_file(&input, output.as_ref(), force, delete_original, lossless)?;
             } else if input.is_dir() {
-                auto_convert_directory(&input, output.as_ref(), force, recursive, delete_original)?;
+                auto_convert_directory(&input, output.as_ref(), force, recursive, delete_original, lossless)?;
             } else {
                 eprintln!("❌ Error: Input path does not exist: {}", input.display());
                 std::process::exit(1);
@@ -455,9 +463,11 @@ fn auto_convert_single_file(
     output_dir: Option<&PathBuf>,
     force: bool,
     delete_original: bool,
+    lossless: bool,
 ) -> anyhow::Result<()> {
     use imgquality::lossless_converter::{
-        convert_to_jxl, convert_jpeg_to_jxl, convert_to_avif, convert_to_av1_mp4,
+        convert_to_jxl, convert_jpeg_to_jxl, convert_to_avif, convert_to_avif_lossless,
+        convert_to_av1_mp4, convert_to_av1_mp4_lossless,
         ConvertOptions,
     };
     
@@ -483,19 +493,34 @@ fn auto_convert_single_file(
         }
         // Animated lossless → AV1 MP4
         (_, true, true) => {
-            println!("🔄 Animated lossless→AV1 MP4: {}", input.display());
-            convert_to_av1_mp4(input, &options)?
+            if lossless {
+                println!("🔄 Animated lossless→AV1 MP4 (MATHEMATICAL LOSSLESS): {}", input.display());
+                convert_to_av1_mp4_lossless(input, &options)?
+            } else {
+                println!("🔄 Animated lossless→AV1 MP4: {}", input.display());
+                convert_to_av1_mp4(input, &options)?
+            }
         }
-        // Animated lossy → skip
+        // Animated lossy → skip (unless lossless mode)
         (_, false, true) => {
-            println!("⏭️ Skipping animated lossy: {}", input.display());
-            return Ok(());
+            if lossless {
+                println!("🔄 Animated lossy→AV1 MP4 (MATHEMATICAL LOSSLESS): {}", input.display());
+                convert_to_av1_mp4_lossless(input, &options)?
+            } else {
+                println!("⏭️ Skipping animated lossy: {}", input.display());
+                return Ok(());
+            }
         }
         // Static lossy (non-JPEG) → AVIF
         (_, false, false) => {
-            let quality = analysis.jpeg_analysis.as_ref().map(|j| j.estimated_quality as u8);
-            println!("🔄 Lossy→AVIF: {}", input.display());
-            convert_to_avif(input, quality, &options)?
+            if lossless {
+                println!("🔄 Lossy→AVIF (MATHEMATICAL LOSSLESS): {}", input.display());
+                convert_to_avif_lossless(input, &options)?
+            } else {
+                let quality = analysis.jpeg_analysis.as_ref().map(|j| j.estimated_quality as u8);
+                println!("🔄 Lossy→AVIF: {}", input.display());
+                convert_to_avif(input, quality, &options)?
+            }
         }
     };
     
@@ -515,6 +540,7 @@ fn auto_convert_directory(
     force: bool,
     recursive: bool,
     delete_original: bool,
+    lossless: bool,
 ) -> anyhow::Result<()> {
     let image_extensions = ["png", "jpg", "jpeg", "webp", "gif", "tiff", "tif", "heic", "avif"];
     
@@ -541,6 +567,9 @@ fn auto_convert_directory(
 
     let total = files.len();
     println!("📂 Found {} files to process (parallel mode)", total);
+    if lossless {
+        println!("⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)");
+    }
 
     // Atomic counters for thread-safe counting  
     let success = AtomicUsize::new(0);
@@ -549,7 +578,7 @@ fn auto_convert_directory(
 
     // Process files in parallel using rayon
     files.par_iter().for_each(|path| {
-        match auto_convert_single_file(path, output_dir, force, delete_original) {
+        match auto_convert_single_file(path, output_dir, force, delete_original, lossless) {
             Ok(_) => { success.fetch_add(1, Ordering::Relaxed); }
             Err(e) => {
                 let msg = e.to_string();

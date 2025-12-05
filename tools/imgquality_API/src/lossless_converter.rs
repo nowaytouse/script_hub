@@ -411,6 +411,162 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
     }
 }
 
+/// Convert image to AVIF using mathematical lossless (⚠️ VERY SLOW)
+pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
+    eprintln!("⚠️  Mathematical lossless AVIF encoding - this will be SLOW!");
+    
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "avif", &options.output_dir);
+    
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Mathematical lossless AVIF
+    let result = Command::new("avifenc")
+        .arg("--lossless")  // Mathematical lossless
+        .arg("-s").arg("4")
+        .arg("-j").arg("all")
+        .arg(input)
+        .arg(&output)
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Lossless AVIF: size {:.1}%", reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("avifenc lossless failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("avifenc not found: {}", e)))
+        }
+    }
+}
+
+/// Convert animated to AV1 MP4 using mathematical lossless (⚠️ VERY SLOW)
+pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
+    eprintln!("⚠️  Mathematical lossless AV1 encoding - this will be VERY SLOW!");
+    
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "mp4", &options.output_dir);
+    
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Mathematical lossless AV1
+    let result = Command::new("ffmpeg")
+        .arg("-y")
+        .arg("-i").arg(input)
+        .arg("-c:v").arg("libaom-av1")
+        .arg("-lossless").arg("1")  // Mathematical lossless
+        .arg("-cpu-used").arg("4")
+        .arg("-row-mt").arg("1")
+        .arg(&output)
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Lossless AV1: size {:.1}%", reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("ffmpeg lossless failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("ffmpeg not found: {}", e)))
+        }
+    }
+}
+
 /// Determine output path
 fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> PathBuf {
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
