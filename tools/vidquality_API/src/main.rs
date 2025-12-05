@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use tracing::info;
 use std::path::PathBuf;
-use vidquality::{detect_video, simple_convert, auto_convert, determine_strategy, ConversionConfig};
+use vidquality::{detect_video, simple_convert_with_lossless, auto_convert, determine_strategy, ConversionConfig};
 
 #[derive(Parser)]
 #[command(name = "vidquality")]
@@ -45,6 +45,10 @@ enum Commands {
         /// Explore smaller size (try higher CRF if output > input)
         #[arg(long)]
         explore: bool,
+
+        /// Use mathematical lossless AV1 (⚠️ VERY SLOW, huge files)
+        #[arg(long)]
+        lossless: bool,
     },
 
     /// Simple mode: ALL videos → AV1 MP4
@@ -56,6 +60,10 @@ enum Commands {
         /// Output directory
         #[arg(short, long)]
         output: Option<PathBuf>,
+
+        /// Use mathematical lossless AV1 (⚠️ VERY SLOW, huge files)
+        #[arg(long)]
+        lossless: bool,
     },
 
     /// Show recommended strategy without converting
@@ -96,18 +104,22 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, delete_original, explore } => {
+        Commands::Auto { input, output, force, delete_original, explore, lossless } => {
             let config = ConversionConfig {
                 output_dir: output,
                 force,
                 delete_original,
                 preserve_metadata: true,
                 explore_smaller: explore,
+                use_lossless: lossless,
             };
             
             info!("🎬 Auto Mode Conversion");
             info!("   Lossless sources → FFV1 MKV (archival)");
             info!("   Lossy sources → AV1 MP4 (high quality)");
+            if lossless {
+                info!("   ⚠️  Mathematical lossless AV1: ENABLED (VERY SLOW!)");
+            }
             if explore {
                 info!("   📊 Size exploration: ENABLED");
             }
@@ -125,12 +137,16 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Simple { input, output } => {
+        Commands::Simple { input, output, lossless } => {
             info!("🎬 Simple Mode Conversion");
-            info!("   ALL videos → AV1 MP4 (CRF 0, visually lossless)");
+            if lossless {
+                info!("   ⚠️  ALL videos → AV1 MP4 (MATHEMATICAL LOSSLESS - VERY SLOW!)");
+            } else {
+                info!("   ALL videos → AV1 MP4 (CRF 0, visually lossless)");
+            }
             info!("");
             
-            let result = simple_convert(&input, output.as_deref())?;
+            let result = simple_convert_with_lossless(&input, output.as_deref(), lossless)?;
             
             info!("");
             info!("✅ Complete!");

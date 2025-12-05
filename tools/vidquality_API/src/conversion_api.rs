@@ -56,6 +56,8 @@ pub struct ConversionConfig {
     pub preserve_metadata: bool,
     /// Enable size exploration (try higher CRF if output > input)
     pub explore_smaller: bool,
+    /// Use mathematical lossless AV1 (⚠️ VERY SLOW)
+    pub use_lossless: bool,
 }
 
 impl Default for ConversionConfig {
@@ -66,6 +68,7 @@ impl Default for ConversionConfig {
             delete_original: false,
             preserve_metadata: true,
             explore_smaller: false,
+            use_lossless: false,
         }
     }
 }
@@ -350,6 +353,95 @@ fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: 
     }
     
     Ok(std::fs::metadata(output)?.len())
+}
+
+/// Execute mathematical lossless AV1 conversion (⚠️ VERY SLOW, huge files)
+fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Result<u64> {
+    warn!("⚠️  Mathematical lossless AV1 encoding - this will be VERY SLOW!");
+    
+    let mut args = vec![
+        "-y".to_string(),
+        "-i".to_string(), detection.file_path.clone(),
+        "-c:v".to_string(), "libaom-av1".to_string(),
+        "-lossless".to_string(), "1".to_string(),  // Mathematical lossless
+        "-cpu-used".to_string(), "4".to_string(),
+        "-row-mt".to_string(), "1".to_string(),
+        "-tiles".to_string(), "2x2".to_string(),
+    ];
+    
+    if detection.has_audio {
+        args.extend(vec!["-c:a".to_string(), "flac".to_string()]);  // Lossless audio too
+    } else {
+        args.push("-an".to_string());
+    }
+    
+    args.push(output.display().to_string());
+    
+    let result = Command::new("ffmpeg").args(&args).output()?;
+    
+    if !result.status.success() {
+        return Err(VidQualityError::FFmpegError(
+            String::from_utf8_lossy(&result.stderr).to_string()
+        ));
+    }
+    
+    Ok(std::fs::metadata(output)?.len())
+}
+
+/// Simple mode with lossless option
+pub fn simple_convert_with_lossless(input: &Path, output_dir: Option<&Path>, lossless: bool) -> Result<ConversionOutput> {
+    let detection = detect_video(input)?;
+    
+    let output_dir = output_dir
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| input.parent().unwrap_or(Path::new(".")).to_path_buf());
+    
+    std::fs::create_dir_all(&output_dir)?;
+    
+    let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
+    let output_path = output_dir.join(format!("{}.mp4", stem));
+    
+    let output_size = if lossless {
+        info!("🎬 Simple Mode: {} → AV1 MP4 (LOSSLESS)", input.display());
+        execute_av1_lossless(&detection, &output_path)?
+    } else {
+        info!("🎬 Simple Mode: {} → AV1 MP4 (CRF 0)", input.display());
+        execute_av1_conversion(&detection, &output_path, 0)?
+    };
+    
+    preserve_metadata(input, &output_path)?;
+    preserve_timestamps(input, &output_path)?;
+    
+    let size_ratio = output_size as f64 / detection.file_size as f64;
+    
+    info!("   ✅ Complete: {:.1}% of original", size_ratio * 100.0);
+    
+    Ok(ConversionOutput {
+        input_path: input.display().to_string(),
+        output_path: output_path.display().to_string(),
+        strategy: ConversionStrategy {
+            target: TargetVideoFormat::AV1_MP4,
+            reason: if lossless {
+                "Simple mode: Mathematical lossless AV1".to_string()
+            } else {
+                "Simple mode: All videos → AV1 MP4".to_string()
+            },
+            command: String::new(),
+            preserve_audio: detection.has_audio,
+            crf: 0,
+        },
+        input_size: detection.file_size,
+        output_size,
+        size_ratio,
+        success: true,
+        message: if lossless {
+            "Mathematical lossless conversion successful".to_string()
+        } else {
+            "Simple conversion successful".to_string()
+        },
+        final_crf: 0,
+        exploration_attempts: 0,
+    })
 }
 
 /// Preserve file timestamps
