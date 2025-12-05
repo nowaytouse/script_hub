@@ -19,7 +19,7 @@ use thiserror::Error;
 
 // Re-exports
 pub use detection_api::{detect_video, VideoDetectionResult, DetectedCodec, CompressionType, ColorSpace};
-pub use conversion_api::{smart_convert, simple_convert, determine_strategy, ConversionConfig, ConversionStrategy, TargetVideoFormat};
+pub use conversion_api::{smart_convert, simple_convert, auto_convert, determine_strategy, ConversionConfig, ConversionStrategy, ConversionOutput, TargetVideoFormat};
 pub use ffprobe::{probe_video, FFprobeResult};
 
 #[derive(Error, Debug)]

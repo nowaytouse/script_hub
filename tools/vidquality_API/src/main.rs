@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use tracing::{info, error};
+use tracing::info;
 use std::path::PathBuf;
-use vidquality::{detect_video, simple_convert, smart_convert, determine_strategy, ConversionConfig};
+use vidquality::{detect_video, simple_convert, auto_convert, determine_strategy, ConversionConfig};
 
 #[derive(Parser)]
 #[command(name = "vidquality")]
@@ -24,7 +24,7 @@ enum Commands {
         output: OutputFormat,
     },
 
-    /// Convert video with intelligent strategy selection
+    /// Auto mode: FFV1 for lossless, AV1 for lossy (intelligent selection)
     Auto {
         /// Input video file
         #[arg(value_name = "INPUT")]
@@ -41,9 +41,13 @@ enum Commands {
         /// Delete original after conversion
         #[arg(long)]
         delete_original: bool,
+
+        /// Explore smaller size (try higher CRF if output > input)
+        #[arg(long)]
+        explore: bool,
     },
 
-    /// Simple mode: Lossless→FFV1, Others→AV1
+    /// Simple mode: ALL videos → AV1 MP4
     Simple {
         /// Input video file
         #[arg(value_name = "INPUT")]
@@ -92,28 +96,38 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, delete_original } => {
+        Commands::Auto { input, output, force, delete_original, explore } => {
             let config = ConversionConfig {
                 output_dir: output,
-                simple_mode: false,
                 force,
                 delete_original,
                 preserve_metadata: true,
+                explore_smaller: explore,
             };
             
-            let result = smart_convert(&input, &config)?;
+            info!("🎬 Auto Mode Conversion");
+            info!("   Lossless sources → FFV1 MKV (archival)");
+            info!("   Lossy sources → AV1 MP4 (high quality)");
+            if explore {
+                info!("   📊 Size exploration: ENABLED");
+            }
+            info!("");
+            
+            let result = auto_convert(&input, &config)?;
             
             info!("");
             info!("📊 Conversion Summary:");
             info!("   Input:  {} ({} bytes)", result.input_path, result.input_size);
             info!("   Output: {} ({} bytes)", result.output_path, result.output_size);
             info!("   Ratio:  {:.1}%", result.size_ratio * 100.0);
+            if result.exploration_attempts > 0 {
+                info!("   🔍 Explored {} CRF values, final: CRF {}", result.exploration_attempts, result.final_crf);
+            }
         }
 
         Commands::Simple { input, output } => {
             info!("🎬 Simple Mode Conversion");
-            info!("   Lossless sources → FFV1 MKV (archival)");
-            info!("   Lossy sources → AV1 MP4 (high quality)");
+            info!("   ALL videos → AV1 MP4 (CRF 0, visually lossless)");
             info!("");
             
             let result = simple_convert(&input, output.as_deref())?;
@@ -121,22 +135,20 @@ fn main() -> anyhow::Result<()> {
             info!("");
             info!("✅ Complete!");
             info!("   Output: {}", result.output_path);
+            info!("   Size: {:.1}% of original", result.size_ratio * 100.0);
         }
 
         Commands::Strategy { input } => {
             let detection = detect_video(&input)?;
             let strategy = determine_strategy(&detection);
             
-            println!("\n🎯 Recommended Strategy");
+            println!("\n🎯 Recommended Strategy (Auto Mode)");
             println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             println!("📁 File: {}", input.display());
             println!("🎬 Codec: {} ({})", detection.codec.as_str(), detection.compression.as_str());
             println!("");
             println!("💡 Target: {}", strategy.target.as_str());
             println!("📝 Reason: {}", strategy.reason);
-            println!("");
-            println!("⚙️  Command:");
-            println!("   {}", strategy.command);
             println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         }
     }

@@ -1,10 +1,12 @@
 //! Video Conversion API Module
 //!
 //! Pure conversion layer - executes video conversions based on detection results.
-//! Supports FFV1 archival and AV1 high-quality compression.
+//! - Auto Mode: FFV1 for lossless sources, AV1 for lossy sources
+//! - Simple Mode: Always AV1 MP4
+//! - Size Exploration: Tries higher CRF if output is larger than input
 
 use crate::{VidQualityError, Result};
-use crate::detection_api::{detect_video, VideoDetectionResult, CompressionType, DetectedCodec};
+use crate::detection_api::{detect_video, VideoDetectionResult, CompressionType};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -42,26 +44,28 @@ pub struct ConversionStrategy {
     pub reason: String,
     pub command: String,
     pub preserve_audio: bool,
+    pub crf: u8,
 }
 
 /// Conversion configuration
 #[derive(Debug, Clone)]
 pub struct ConversionConfig {
     pub output_dir: Option<PathBuf>,
-    pub simple_mode: bool,
     pub force: bool,
     pub delete_original: bool,
     pub preserve_metadata: bool,
+    /// Enable size exploration (try higher CRF if output > input)
+    pub explore_smaller: bool,
 }
 
 impl Default for ConversionConfig {
     fn default() -> Self {
         Self {
             output_dir: None,
-            simple_mode: false,
             force: false,
             delete_original: false,
             preserve_metadata: true,
+            explore_smaller: false,
         }
     }
 }
@@ -77,216 +81,301 @@ pub struct ConversionOutput {
     pub size_ratio: f64,
     pub success: bool,
     pub message: String,
+    /// CRF used for final output (if exploration was done)
+    pub final_crf: u8,
+    /// Number of exploration attempts
+    pub exploration_attempts: u8,
 }
 
-/// Determine conversion strategy based on detection result
+/// Determine conversion strategy based on detection result (for auto mode)
 pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
-    let (target, reason) = match result.compression {
+    let (target, reason, crf) = match result.compression {
         CompressionType::Lossless => {
-            // Already lossless - archive with FFV1
             (
                 TargetVideoFormat::FFV1_MKV,
-                format!("Source is {} (lossless) - archiving to FFV1 MKV for standard archival format", 
-                    result.codec.as_str())
+                format!("Source is {} (lossless) - archiving to FFV1 MKV", result.codec.as_str()),
+                0
             )
         }
         CompressionType::VisuallyLossless => {
-            // Visually lossless (ProRes, DNxHD, high-bitrate) - archive with FFV1
             (
                 TargetVideoFormat::FFV1_MKV,
-                format!("Source is {} (visually lossless) - preserving quality with FFV1 MKV",
-                    result.codec.as_str())
+                format!("Source is {} (visually lossless) - preserving with FFV1 MKV", result.codec.as_str()),
+                0
             )
         }
         _ => {
-            // Lossy source - compress with AV1
             (
                 TargetVideoFormat::AV1_MP4,
-                format!("Source is {} ({}) - compressing with AV1 CRF 0 (visually lossless)",
-                    result.codec.as_str(), result.compression.as_str())
+                format!("Source is {} ({}) - compressing with AV1 CRF 0", result.codec.as_str(), result.compression.as_str()),
+                0
             )
         }
     };
-    
-    let command = generate_ffmpeg_command(result, target);
     
     ConversionStrategy {
         target,
         reason,
-        command,
+        command: String::new(),
         preserve_audio: result.has_audio,
+        crf,
     }
 }
 
-/// Generate FFmpeg command for conversion
-fn generate_ffmpeg_command(result: &VideoDetectionResult, target: TargetVideoFormat) -> String {
-    let input = &result.file_path;
-    let ext = target.extension();
-    
-    match target {
-        TargetVideoFormat::FFV1_MKV => {
-            // FFV1 archival encoding
-            // -level 3: Maximum compatibility
-            // -coder 1: Range coder for better compression
-            // -context 1: Context model for better compression
-            // -g 1: GOP size 1 for maximum error resilience
-            // -slices 24: Multi-slice for parallel decoding
-            // -slicecrc 1: CRC for error detection
-            let audio = if result.has_audio { "-c:a flac" } else { "-an" };
-            format!(
-                "ffmpeg -i '{}' -c:v ffv1 -level 3 -coder 1 -context 1 -g 1 -slices 24 -slicecrc 1 {} '{{}}.{}'",
-                input, audio, ext
-            )
-        }
-        TargetVideoFormat::AV1_MP4 => {
-            // AV1 high-quality encoding (CRF 0 = visually lossless)
-            // -crf 0: Highest quality
-            // -b:v 0: Pure CRF mode
-            // -cpu-used 4: Balanced speed/quality
-            // -row-mt 1: Enable row-based multithreading
-            // -tiles 2x2: Tile-based parallelism
-            let audio = if result.has_audio { "-c:a aac -b:a 320k" } else { "-an" };
-            format!(
-                "ffmpeg -i '{}' -c:v libaom-av1 -crf 0 -b:v 0 -cpu-used 4 -row-mt 1 -tiles 2x2 {} '{{}}.{}'",
-                input, audio, ext
-            )
-        }
-    }
-}
-
-/// Simple mode conversion - automatic strategy selection
+/// Simple mode conversion - ALWAYS use AV1 MP4
 pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<ConversionOutput> {
-    let config = ConversionConfig {
-        output_dir: output_dir.map(|p| p.to_path_buf()),
-        simple_mode: true,
-        ..Default::default()
-    };
-    
-    smart_convert(input, &config)
-}
-
-/// Smart conversion with full configuration
-pub fn smart_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {
-    // Detect video properties
     let detection = detect_video(input)?;
     
-    // Determine strategy
+    let output_dir = output_dir
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| input.parent().unwrap_or(Path::new(".")).to_path_buf());
+    
+    std::fs::create_dir_all(&output_dir)?;
+    
+    let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
+    let output_path = output_dir.join(format!("{}.mp4", stem));
+    
+    info!("🎬 Simple Mode: {} → AV1 MP4", input.display());
+    
+    // Always AV1 MP4 with CRF 0
+    let output_size = execute_av1_conversion(&detection, &output_path, 0)?;
+    
+    // Preserve metadata
+    preserve_metadata(input, &output_path)?;
+    preserve_timestamps(input, &output_path)?;
+    
+    let size_ratio = output_size as f64 / detection.file_size as f64;
+    
+    info!("   ✅ Complete: {:.1}% of original", size_ratio * 100.0);
+    
+    Ok(ConversionOutput {
+        input_path: input.display().to_string(),
+        output_path: output_path.display().to_string(),
+        strategy: ConversionStrategy {
+            target: TargetVideoFormat::AV1_MP4,
+            reason: "Simple mode: All videos → AV1 MP4".to_string(),
+            command: String::new(),
+            preserve_audio: detection.has_audio,
+            crf: 0,
+        },
+        input_size: detection.file_size,
+        output_size,
+        size_ratio,
+        success: true,
+        message: "Simple conversion successful".to_string(),
+        final_crf: 0,
+        exploration_attempts: 0,
+    })
+}
+
+/// Auto mode conversion with intelligent strategy selection
+pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {
+    let detection = detect_video(input)?;
     let strategy = determine_strategy(&detection);
     
-    // Generate output path
     let output_dir = config.output_dir.clone()
         .unwrap_or_else(|| input.parent().unwrap_or(Path::new(".")).to_path_buf());
     
-    let stem = input.file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("output");
+    std::fs::create_dir_all(&output_dir)?;
     
+    let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     let output_path = output_dir.join(format!("{}.{}", stem, strategy.target.extension()));
     
-    // Check if output exists
     if output_path.exists() && !config.force {
         return Err(VidQualityError::ConversionError(
-            format!("Output file already exists: {}", output_path.display())
+            format!("Output exists: {}", output_path.display())
         ));
     }
     
-    // Create output directory
-    std::fs::create_dir_all(&output_dir)?;
-    
-    // Build FFmpeg command
-    let ffmpeg_args = build_ffmpeg_args(&detection, &strategy, &output_path);
-    
-    info!("🎬 Converting: {} → {}", input.display(), output_path.display());
-    info!("   Strategy: {}", strategy.target.as_str());
+    info!("🎬 Auto Mode: {} → {}", input.display(), strategy.target.as_str());
     info!("   Reason: {}", strategy.reason);
     
-    // Execute FFmpeg
-    let output = Command::new("ffmpeg")
-        .args(&ffmpeg_args)
-        .output()?;
+    let (output_size, final_crf, attempts) = match strategy.target {
+        TargetVideoFormat::FFV1_MKV => {
+            let size = execute_ffv1_conversion(&detection, &output_path)?;
+            (size, 0, 0)
+        }
+        TargetVideoFormat::AV1_MP4 => {
+            if config.explore_smaller {
+                // Size exploration mode
+                explore_smaller_size(&detection, &output_path)?
+            } else {
+                let size = execute_av1_conversion(&detection, &output_path, 0)?;
+                (size, 0, 0)
+            }
+        }
+    };
     
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(VidQualityError::FFmpegError(stderr.to_string()));
+    // Preserve metadata
+    if config.preserve_metadata {
+        preserve_metadata(input, &output_path)?;
     }
+    preserve_timestamps(input, &output_path)?;
     
-    // Get output size
-    let output_size = std::fs::metadata(&output_path)?.len();
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
-    info!("   ✅ Complete: {:.1}% of original size", size_ratio * 100.0);
-    
-    // Delete original if requested
     if config.delete_original {
         std::fs::remove_file(input)?;
         info!("   🗑️  Original deleted");
     }
     
+    info!("   ✅ Complete: {:.1}% of original", size_ratio * 100.0);
+    
     Ok(ConversionOutput {
         input_path: input.display().to_string(),
         output_path: output_path.display().to_string(),
-        strategy,
+        strategy: ConversionStrategy {
+            target: strategy.target,
+            reason: strategy.reason,
+            command: String::new(),
+            preserve_audio: detection.has_audio,
+            crf: final_crf,
+        },
         input_size: detection.file_size,
         output_size,
         size_ratio,
         success: true,
-        message: "Conversion successful".to_string(),
+        message: if attempts > 0 {
+            format!("Explored {} CRF values, final CRF: {}", attempts, final_crf)
+        } else {
+            "Conversion successful".to_string()
+        },
+        final_crf,
+        exploration_attempts: attempts,
     })
 }
 
-/// Build FFmpeg arguments
-fn build_ffmpeg_args(
+/// Explore smaller size by trying higher CRF values (conservative approach)
+/// Starts at CRF 0 and increases until output < input (even by 1 byte counts)
+fn explore_smaller_size(
     detection: &VideoDetectionResult,
-    strategy: &ConversionStrategy,
     output_path: &Path,
-) -> Vec<String> {
-    let mut args = vec![
-        "-y".to_string(),  // Overwrite output
-        "-i".to_string(),
-        detection.file_path.clone(),
-    ];
+) -> Result<(u64, u8, u8)> {
+    let input_size = detection.file_size;
+    let mut current_crf: u8 = 0;
+    let mut attempts: u8 = 0;
+    const MAX_CRF: u8 = 23;  // Conservative limit
+    const CRF_STEP: u8 = 2;   // Step size for exploration
     
-    match strategy.target {
-        TargetVideoFormat::FFV1_MKV => {
-            args.extend(vec![
-                "-c:v".to_string(), "ffv1".to_string(),
-                "-level".to_string(), "3".to_string(),
-                "-coder".to_string(), "1".to_string(),
-                "-context".to_string(), "1".to_string(),
-                "-g".to_string(), "1".to_string(),
-                "-slices".to_string(), "24".to_string(),
-                "-slicecrc".to_string(), "1".to_string(),
-            ]);
-            
-            if detection.has_audio {
-                args.extend(vec!["-c:a".to_string(), "flac".to_string()]);
-            } else {
-                args.push("-an".to_string());
-            }
+    info!("   🔍 Exploring smaller size (input: {} bytes)", input_size);
+    
+    loop {
+        let output_size = execute_av1_conversion(detection, output_path, current_crf)?;
+        attempts += 1;
+        
+        info!("   📊 CRF {}: {} bytes ({:.1}%)", 
+            current_crf, output_size, (output_size as f64 / input_size as f64) * 100.0);
+        
+        // Success: output is smaller (even by 1 byte)
+        if output_size < input_size {
+            info!("   ✅ Found smaller output at CRF {}", current_crf);
+            return Ok((output_size, current_crf, attempts));
         }
-        TargetVideoFormat::AV1_MP4 => {
-            args.extend(vec![
-                "-c:v".to_string(), "libaom-av1".to_string(),
-                "-crf".to_string(), "0".to_string(),
-                "-b:v".to_string(), "0".to_string(),
-                "-cpu-used".to_string(), "4".to_string(),
-                "-row-mt".to_string(), "1".to_string(),
-                "-tiles".to_string(), "2x2".to_string(),
-            ]);
-            
-            if detection.has_audio {
-                args.extend(vec![
-                    "-c:a".to_string(), "aac".to_string(),
-                    "-b:a".to_string(), "320k".to_string(),
-                ]);
-            } else {
-                args.push("-an".to_string());
-            }
+        
+        // Try next CRF
+        current_crf += CRF_STEP;
+        
+        // Safety limit
+        if current_crf > MAX_CRF {
+            warn!("   ⚠️  Reached CRF limit, using CRF {}", MAX_CRF);
+            let output_size = execute_av1_conversion(detection, output_path, MAX_CRF)?;
+            return Ok((output_size, MAX_CRF, attempts));
         }
     }
+}
+
+/// Execute FFV1 conversion
+fn execute_ffv1_conversion(detection: &VideoDetectionResult, output: &Path) -> Result<u64> {
+    let mut args = vec![
+        "-y".to_string(),
+        "-i".to_string(), detection.file_path.clone(),
+        "-c:v".to_string(), "ffv1".to_string(),
+        "-level".to_string(), "3".to_string(),
+        "-coder".to_string(), "1".to_string(),
+        "-context".to_string(), "1".to_string(),
+        "-g".to_string(), "1".to_string(),
+        "-slices".to_string(), "24".to_string(),
+        "-slicecrc".to_string(), "1".to_string(),
+    ];
     
-    args.push(output_path.display().to_string());
-    args
+    if detection.has_audio {
+        args.extend(vec!["-c:a".to_string(), "flac".to_string()]);
+    } else {
+        args.push("-an".to_string());
+    }
+    
+    args.push(output.display().to_string());
+    
+    let result = Command::new("ffmpeg").args(&args).output()?;
+    
+    if !result.status.success() {
+        return Err(VidQualityError::FFmpegError(
+            String::from_utf8_lossy(&result.stderr).to_string()
+        ));
+    }
+    
+    Ok(std::fs::metadata(output)?.len())
+}
+
+/// Execute AV1 conversion with specified CRF
+fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: u8) -> Result<u64> {
+    let mut args = vec![
+        "-y".to_string(),
+        "-i".to_string(), detection.file_path.clone(),
+        "-c:v".to_string(), "libaom-av1".to_string(),
+        "-crf".to_string(), crf.to_string(),
+        "-b:v".to_string(), "0".to_string(),
+        "-cpu-used".to_string(), "4".to_string(),
+        "-row-mt".to_string(), "1".to_string(),
+        "-tiles".to_string(), "2x2".to_string(),
+    ];
+    
+    if detection.has_audio {
+        args.extend(vec![
+            "-c:a".to_string(), "aac".to_string(),
+            "-b:a".to_string(), "320k".to_string(),
+        ]);
+    } else {
+        args.push("-an".to_string());
+    }
+    
+    args.push(output.display().to_string());
+    
+    let result = Command::new("ffmpeg").args(&args).output()?;
+    
+    if !result.status.success() {
+        return Err(VidQualityError::FFmpegError(
+            String::from_utf8_lossy(&result.stderr).to_string()
+        ));
+    }
+    
+    Ok(std::fs::metadata(output)?.len())
+}
+
+/// Preserve file timestamps
+fn preserve_timestamps(source: &Path, dest: &Path) -> Result<()> {
+    let _ = Command::new("touch")
+        .args(&["-r", source.to_str().unwrap_or(""), dest.to_str().unwrap_or("")])
+        .output();
+    Ok(())
+}
+
+/// Preserve metadata using exiftool
+fn preserve_metadata(source: &Path, dest: &Path) -> Result<()> {
+    let _ = Command::new("exiftool")
+        .args(&[
+            "-overwrite_original",
+            "-TagsFromFile", source.to_str().unwrap_or(""),
+            "-All:All",
+            dest.to_str().unwrap_or(""),
+        ])
+        .output();
+    Ok(())
+}
+
+// Legacy alias for backward compatibility
+pub fn smart_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {
+    auto_convert(input, config)
 }
 
 #[cfg(test)]
@@ -299,3 +388,4 @@ mod tests {
         assert_eq!(TargetVideoFormat::AV1_MP4.extension(), "mp4");
     }
 }
+
