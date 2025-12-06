@@ -1,15 +1,11 @@
 #!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
 #!version=2025.12.06
 #!desc=Modular ad-blocking with Host sinkhole + Online rulesets. Low-memory optimized. 🧩💾⚡
-#!author=YOUR_AUTHOR_NAME
-#!homepage=https://github.com/YOUR_USERNAME/YOUR_REPO
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
-# Updated: 2025-12-06 | REJECT rules are in AdBlock_Merged.list
-# Note: All REJECT rules are merged into the big list file below
+# Universal Ad-Blocking (Merged - REJECT in list file)
 # ═══════════════════════════════════════════════════════════════
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
 
@@ -21,9 +17,7 @@ RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extend
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 
 
-# ═══════════════════════════════════════════════════════════════
-# REJECT-DROP Rules (90 rules)
-# ═══════════════════════════════════════════════════════════════
+# REJECT-DROP Rules
 DEST-PORT,10250,REJECT-DROP
 DEST-PORT,10251,REJECT-DROP
 DEST-PORT,10252,REJECT-DROP
@@ -116,10 +110,6 @@ DOMAIN-KEYWORD,96110,REJECT-DROP,extended-matching
 DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
 
 [URL Rewrite]
-# ═══════════════════════════════════════════════════════════════
-# URL Rewrite Rules (50 rules)
-# Auto-merged from multiple sources
-# ═══════════════════════════════════════════════════════════════
 ^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject
 ^https?:\/\/((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/music\/common\/upload\/t_splash_info\/ - reject
 ^https?:\/\/.*\.snssdk\.com\/api\/ad\/ - reject
@@ -172,10 +162,6 @@ DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
 ^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/targeted_ads - reject-tinygif
 
 [Host]
-# ═══════════════════════════════════════════════════════════════
-# Ad/Tracking Domain Sinkhole (45 domains)
-# Resolve to 0.0.0.0
-# ═══════════════════════════════════════════════════════════════
 101.226.10.8 = 0.0.0.0
 113.12.83.4 = 0.0.0.0
 113.12.83.5 = 0.0.0.0

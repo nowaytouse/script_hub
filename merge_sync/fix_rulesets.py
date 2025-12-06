@@ -11,6 +11,8 @@ NEW_CONF_FILE = '/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc
 
 # Generic/Polluted lists that need cleaning
 GENERIC_LISTS = ['NSFW.list', 'GlobalMedia.list', 'GlobalProxy.list']
+# Built-in or special rulesets to ignore (do not download, do not rewrite)
+IGNORED_RULESETS = {'SYSTEM', 'LAN', 'GEOIP', 'wired', 'wifi', 'cellular'}
 
 def parse_conf_rules():
     rules = []
@@ -29,23 +31,35 @@ def parse_conf_rules():
         if in_rule and line.startswith('RULE-SET'):
             # RULE-SET,URL,Policy,...
             parts = line.split(',')
+            if len(parts) < 3: continue
             url = parts[1]
             policy = parts[2]
-            name = os.path.basename(urlparse(url).path)
+            
+            # Smart naming
+            if url in IGNORED_RULESETS:
+                name = url
+            elif url.startswith('http'):
+                name = os.path.basename(urlparse(url).path)
+            else:
+                name = url # Treat as name if no scheme
+
             rules.append({'name': name, 'url': url, 'policy': policy})
     return rules
 
 def load_ruleset_content(url, name):
+    if name in IGNORED_RULESETS:
+        print(f"Skipping built-in/ignored: {name}")
+        return set(), []
+
     local_path = os.path.join(CONF_DIR, name)
-    
     content = ""
-    is_external = "nowaytouse/script_hub" not in url
+    is_external = "nowaytouse/script_hub" not in url and url.startswith('http')
     
     if not is_external and os.path.exists(local_path):
         print(f"Reading local: {name}")
         with open(local_path, 'r') as f:
             content = f.read()
-    else:
+    elif url.startswith('http'):
         print(f"Downloading: {name} from {url}")
         try:
             # Create a context that doesn't verify SSL certificates
@@ -65,6 +79,9 @@ def load_ruleset_content(url, name):
                 print("Using cached version.")
                 with open(local_path, 'r') as f:
                     content = f.read()
+    else:
+        # Not a URL, not local file? might be a relative path or error
+        pass
 
     # Parse content into a Set of lines (code lines only)
     lines = set()
@@ -93,7 +110,8 @@ def main():
         name = r['name']
         if name not in data:
             rule_set, _ = load_ruleset_content(r['url'], name)
-            data[name] = rule_set
+            if rule_set: # Only add if we got content (built-ins return empty)
+                data[name] = rule_set
     
     # 2. Identify Protected Content
     print("Identifying protected content...")
@@ -120,7 +138,7 @@ def main():
     ordered_names = []
     seen_names = set()
     for r in rules:
-        if r['name'] not in seen_names:
+        if r['name'] not in seen_names and r['name'] not in IGNORED_RULESETS:
             ordered_names.append(r['name'])
             seen_names.add(r['name'])
             
@@ -168,7 +186,15 @@ def main():
                 parts = line.split(',')
                 url = parts[1]
                 policy = parts[2]
-                name = os.path.basename(urlparse(url).path)
+                
+                if url in IGNORED_RULESETS:
+                     f.write(orig_line)
+                     continue
+
+                if url.startswith('http'):
+                    name = os.path.basename(urlparse(url).path)
+                else:
+                    name = url # fallback
                 
                 new_url = BASE_URL + name
                 options = parts[3:]
