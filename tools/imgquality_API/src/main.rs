@@ -506,7 +506,7 @@ fn auto_convert_single_file(
     lossless: bool,
 ) -> anyhow::Result<()> {
     use imgquality::lossless_converter::{
-        convert_to_jxl, convert_jpeg_to_jxl, convert_to_avif, convert_to_avif_lossless,
+        convert_to_jxl, convert_jpeg_to_jxl,
         convert_to_av1_mp4, convert_to_av1_mp4_lossless,
         ConvertOptions,
     };
@@ -567,7 +567,7 @@ fn auto_convert_single_file(
                 return Ok(());
             }
         }
-        // Static lossy (non-JPEG) → Skip lossy WebP, others use ffmpeg for AVIF
+        // Static lossy (non-JPEG) → JXL (Quality 100/Lossless) instead of AVIF
         (format, false, false) => {
             // Skip lossy WebP to avoid quality loss
             if format == "WebP" {
@@ -575,14 +575,8 @@ fn auto_convert_single_file(
                 return Ok(());
             }
             
-            if lossless {
-                println!("🔄 Lossy→AVIF (MATHEMATICAL LOSSLESS): {}", input.display());
-                convert_to_avif_lossless(input, &options)?
-            } else {
-                let quality = analysis.jpeg_analysis.as_ref().map(|j| j.estimated_quality as u8);
-                println!("🔄 Lossy→AVIF: {}", input.display());
-                convert_to_avif(input, quality, &options)?
-            }
+            println!("🔄 Lossy→JXL (Quality 100): {}", input.display());
+            convert_to_jxl(input, &options)?
         }
     };
     
