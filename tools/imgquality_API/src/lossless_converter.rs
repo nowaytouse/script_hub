@@ -597,23 +597,27 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     }
 }
 
-/// Helper to copy metadata and timestamps from source to destination
-/// Uses exiftool if available, otherwise just preserves timestamps
+// Helper to copy metadata and timestamps from source to destination
+// Uses exiftool if available, otherwise just preserves timestamps/permissions
 fn copy_metadata(src: &Path, dst: &Path) {
     // 1. Try to copy all metadata tags using exiftool
     if which::which("exiftool").is_ok() {
         // -tagsfromfile src -all:all: copy all standard tags
         // -FileCreateDate/FileModifyDate: explicitly copy system timestamps (MacOS/System)
-        // -P: Preserve file modification date/time
+        // -CreationDate: Mac specific creation date
+        // -AllDates: convenience for all common date tags
         // -overwrite_original: don't create _original backup
         // -use MWG: use Metadata Working Group standards for compatibility
+        // NOTE: We do NOT use -P because we want the destination modification time 
+        // to be updated to match the source tags we are copying.
         let _ = Command::new("exiftool")
             .arg("-tagsfromfile")
             .arg(src)
             .arg("-all:all")
             .arg("-FileCreateDate")  // Explicitly copy creation date (System tag)
             .arg("-FileModifyDate")  // Explicitly copy modification date
-            .arg("-P")               // Preserve Modification Date
+            .arg("-CreationDate")    // Mac specific
+            .arg("-AllDates")        // All standard date tags
             .arg("-use").arg("MWG")
             .arg("-overwrite_original")
             .arg(dst)
@@ -632,6 +636,9 @@ fn copy_metadata(src: &Path, dst: &Path) {
         if let Ok(atime) = metadata.accessed() {
            let _ = filetime::set_file_atime(dst, filetime::FileTime::from_system_time(atime));
         }
+        
+        // 3. Preserve file permissions (e.g. read-only status)
+        let _ = fs::set_permissions(dst, metadata.permissions());
     }
 }
 
