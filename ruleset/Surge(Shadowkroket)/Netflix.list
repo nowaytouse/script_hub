@@ -1,31 +1,17 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: Netflix
-# Updated: 2025-12-04 06:46:46 UTC
-# Total Rules: 1158
-# Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Netflix/Netflix.list [REJECT] (1158 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Netflix/Netflix_IP.list [REJECT] (0 rules)
-#   - ../MetaCubeX/MetaCubeX_netflix.list (FAILED)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Updated: 2025-12-06
+# Total Rules: 1157
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         1158 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,e13252.dscg.akamaiedge.net
+DOMAIN,h-netflix.online-metrix.net
+DOMAIN,netflix.com.edgesuite.net
+DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
+DOMAIN-KEYWORD,dualstack.apiproxy-
+DOMAIN-KEYWORD,dualstack.ichnaea-web-
+DOMAIN-KEYWORD,netflixdnstest
 DOMAIN-SUFFIX,cookielaw.org
 DOMAIN-SUFFIX,fast.com
 DOMAIN-SUFFIX,flxvpn.net
@@ -56,19 +42,6 @@ DOMAIN-SUFFIX,nflxso.net
 DOMAIN-SUFFIX,nflxvideo.net
 DOMAIN-SUFFIX,onetrust.com
 DOMAIN-SUFFIX,us-west-2.amazonaws.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
-DOMAIN-KEYWORD,dualstack.apiproxy-
-DOMAIN-KEYWORD,dualstack.ichnaea-web-
-DOMAIN-KEYWORD,netflixdnstest
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,e13252.dscg.akamaiedge.net
-DOMAIN,h-netflix.online-metrix.net
-DOMAIN,netflix.com.edgesuite.net
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,103.87.204.0/22,no-resolve
 IP-CIDR,107.23.255.0/26,no-resolve
 IP-CIDR,108.128.160.0/23,no-resolve
@@ -1184,15 +1157,8 @@ IP-CIDR,99.79.20.192/26,no-resolve
 IP-CIDR,99.80.34.48/28,no-resolve
 IP-CIDR,99.80.34.64/26,no-resolve
 IP-CIDR,99.80.88.0/25,no-resolve
-
-# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,2607:fb10::/32,no-resolve
 IP-CIDR6,2620:10c:7000::/44,no-resolve
 IP-CIDR6,2a00:86c0::/32,no-resolve
 IP-CIDR6,2a03:5640::/32,no-resolve
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.netflix.mediaclient
-USER-AGENT,Argo*
-
-# ========== END ==========

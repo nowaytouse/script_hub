@@ -1,31 +1,12 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: YouTube
-# Updated: 2025-12-04 06:46:41 UTC
-# Total Rules: 191
-# Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list [REJECT] (190 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTubeMusic/YouTubeMusic.list [REJECT] (5 rules)
-#   - ../MetaCubeX/MetaCubeX_youtube.list (FAILED)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Updated: 2025-12-06
+# Total Rules: 184
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         191 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,music.youtube.com
+DOMAIN-KEYWORD,youtube
 DOMAIN-SUFFIX,ggpht.cn
 DOMAIN-SUFFIX,ggpht.com
 DOMAIN-SUFFIX,googlevideo.com
@@ -205,27 +186,6 @@ DOMAIN-SUFFIX,youtubekids.com
 DOMAIN-SUFFIX,youtubemobilesupport.com
 DOMAIN-SUFFIX,yt.be
 DOMAIN-SUFFIX,ytimg.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,youtube
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,music.youtube.com
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,172.110.32.0/21,no-resolve
 IP-CIDR,216.73.80.0/20,no-resolve
-
-# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,2620:120:e000::/40,no-resolve
-
-# ========== OTHER (REJECT) ==========
-USER-AGENT,*YouTubeMusic*
-USER-AGENT,*com.google.ios.youtubemusic*
-USER-AGENT,*youtube*
-USER-AGENT,YouTube*
-USER-AGENT,YouTubeMusic*
-USER-AGENT,com.google.ios.youtube*
-USER-AGENT,com.google.ios.youtubemusic*
-
-# ========== END ==========

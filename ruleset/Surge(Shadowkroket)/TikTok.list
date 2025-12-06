@@ -1,31 +1,58 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: TikTok
-# Updated: 2025-12-04 06:46:44 UTC
-# Total Rules: 477
-# Generator: Ruleset Merger v2.4
-# Git Hash: 690aa23
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/TikTok/TikTok.list [REJECT] (33 rules)
-#   - https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/ByteDance/ByteDance.list [REJECT] (372 rules)
-#   - ../MetaCubeX/MetaCubeX_tiktok.list (FAILED)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# Updated: 2025-12-06
+# Total Rules: 476
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         477 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,api.snapkit.com
+DOMAIN,cocacola.co.jp
+DOMAIN,courses.snapsolve.com
+DOMAIN,engagements.appsflyer.com
+DOMAIN,lf16-campaign.ttlstatic.com
+DOMAIN,lf16-csp.oecstatic.com
+DOMAIN,lf16-effectcdn.byteeffecttos-g.com
+DOMAIN,lf16-pkgcdn.pitaya-clientai.com
+DOMAIN,lf16-scmcdn.oecstatic.com
+DOMAIN,lf19-csp.oecstatic.com
+DOMAIN,lf19-pkgcdn.pitaya-clientai.com
+DOMAIN,lf19-scmcdn.oecstatic.com
+DOMAIN,musically-alternate.app.link
+DOMAIN,musically.app.link
+DOMAIN,p1-tt-ipv6.byteimg.com
+DOMAIN,p1-tt.byteimg.com
+DOMAIN,p16-tiktokcdn-com.akamaized.net
+DOMAIN,p26-tt.byteimg.com
+DOMAIN,p3-tt-ipv6.byteimg.com
+DOMAIN,p9-tt.byteimg.com
+DOMAIN,pull-f3-hs.pstatp.com
+DOMAIN,pull-f5-hs.flive.pstatp.com
+DOMAIN,pull-f5-hs.pstatp.com
+DOMAIN,pull-f5-mus.pstatp.com
+DOMAIN,pull-flv-f1-hs.pstatp.com
+DOMAIN,pull-flv-f6-hs.pstatp.com
+DOMAIN,pull-flv-l1-hs.pstatp.com
+DOMAIN,pull-flv-l1-mus.pstatp.com
+DOMAIN,pull-flv-l6-hs.pstatp.com
+DOMAIN,pull-hls-l1-mus.pstatp.com
+DOMAIN,pull-l3-hs.pstatp.com
+DOMAIN,pull-rtmp-f1-hs.pstatp.com
+DOMAIN,pull-rtmp-f6-hs.pstatp.com
+DOMAIN,pull-rtmp-l1-hs.pstatp.com
+DOMAIN,pull-rtmp-l1-mus.pstatp.com
+DOMAIN,pull-rtmp-l6-hs.pstatp.com
+DOMAIN,roovza-launches.appsflyersdk.com
+DOMAIN,trae-api-sg.mchost.guru
+DOMAIN-KEYWORD,-tiktokcdn-com
+DOMAIN-KEYWORD,bytedance.map.
+DOMAIN-KEYWORD,musical.ly
+DOMAIN-KEYWORD,musical.ly.
+DOMAIN-KEYWORD,tiktok
+DOMAIN-KEYWORD,tiktokcdn-
+DOMAIN-KEYWORD,tiktokcdn.com.
+DOMAIN-KEYWORD,tiktokv.com.
+DOMAIN-KEYWORD,ttcdn-tos.
+DOMAIN-KEYWORD,ttlivecdn.com.
 DOMAIN-SUFFIX,2333333333333.com
 DOMAIN-SUFFIX,365yg.com
 DOMAIN-SUFFIX,activity-zhendingtech.com
@@ -452,64 +479,5 @@ DOMAIN-SUFFIX,zjgslb.com
 DOMAIN-SUFFIX,zjurl.cn
 DOMAIN-SUFFIX,zlinkurl.cn
 DOMAIN-SUFFIX,zlinkurl.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,-tiktokcdn-com
-DOMAIN-KEYWORD,bytedance.map.
-DOMAIN-KEYWORD,musical.ly
-DOMAIN-KEYWORD,musical.ly.
-DOMAIN-KEYWORD,tiktok
-DOMAIN-KEYWORD,tiktokcdn-
-DOMAIN-KEYWORD,tiktokcdn.com.
-DOMAIN-KEYWORD,tiktokv.com.
-DOMAIN-KEYWORD,ttcdn-tos.
-DOMAIN-KEYWORD,ttlivecdn.com.
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,api.snapkit.com
-DOMAIN,cocacola.co.jp
-DOMAIN,courses.snapsolve.com
-DOMAIN,engagements.appsflyer.com
-DOMAIN,lf16-campaign.ttlstatic.com
-DOMAIN,lf16-csp.oecstatic.com
-DOMAIN,lf16-effectcdn.byteeffecttos-g.com
-DOMAIN,lf16-pkgcdn.pitaya-clientai.com
-DOMAIN,lf16-scmcdn.oecstatic.com
-DOMAIN,lf19-csp.oecstatic.com
-DOMAIN,lf19-pkgcdn.pitaya-clientai.com
-DOMAIN,lf19-scmcdn.oecstatic.com
-DOMAIN,musically-alternate.app.link
-DOMAIN,musically.app.link
-DOMAIN,p1-tt-ipv6.byteimg.com
-DOMAIN,p1-tt.byteimg.com
-DOMAIN,p16-tiktokcdn-com.akamaized.net
-DOMAIN,p26-tt.byteimg.com
-DOMAIN,p3-tt-ipv6.byteimg.com
-DOMAIN,p9-tt.byteimg.com
-DOMAIN,pull-f3-hs.pstatp.com
-DOMAIN,pull-f5-hs.flive.pstatp.com
-DOMAIN,pull-f5-hs.pstatp.com
-DOMAIN,pull-f5-mus.pstatp.com
-DOMAIN,pull-flv-f1-hs.pstatp.com
-DOMAIN,pull-flv-f6-hs.pstatp.com
-DOMAIN,pull-flv-l1-hs.pstatp.com
-DOMAIN,pull-flv-l1-mus.pstatp.com
-DOMAIN,pull-flv-l6-hs.pstatp.com
-DOMAIN,pull-hls-l1-mus.pstatp.com
-DOMAIN,pull-l3-hs.pstatp.com
-DOMAIN,pull-rtmp-f1-hs.pstatp.com
-DOMAIN,pull-rtmp-f6-hs.pstatp.com
-DOMAIN,pull-rtmp-l1-hs.pstatp.com
-DOMAIN,pull-rtmp-l1-mus.pstatp.com
-DOMAIN,pull-rtmp-l6-hs.pstatp.com
-DOMAIN,roovza-launches.appsflyersdk.com
-DOMAIN,trae-api-sg.mchost.guru
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,114.246.10.65/32,no-resolve
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.zhiliaoapp.musically
-USER-AGENT,TikTok*
-
-# ========== END ==========
