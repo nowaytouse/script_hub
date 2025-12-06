@@ -4,20 +4,12 @@
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
-# ═══════════════════════════════════════════════════════════════
-# Universal Ad-Blocking (Merged - REJECT in list file)
-# ═══════════════════════════════════════════════════════════════
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
-
-# ═══════════════════════════════════════════════════════════════
-# Policy-Specific Rules (Upstream - Preserve DROP/NO-DROP)
-# ═══════════════════════════════════════════════════════════════
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 
-
-# REJECT-DROP Rules
+# REJECT-DROP Rules (Inline Backup)
 DEST-PORT,10250,REJECT-DROP
 DEST-PORT,10251,REJECT-DROP
 DEST-PORT,10252,REJECT-DROP
@@ -108,7 +100,6 @@ DEST-PORT,9300,REJECT-DROP
 DEST-PORT,9898,REJECT-DROP
 DOMAIN-KEYWORD,96110,REJECT-DROP,extended-matching
 DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
-
 [URL Rewrite]
 ^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject
 ^https?:\/\/((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/music\/common\/upload\/t_splash_info\/ - reject
@@ -160,7 +151,6 @@ DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
 ^https?:\/\/y\.gtimg\.cn\/music\/common\/\/upload\/kg_ad/.*?\d{4}\.jpg - reject-tinygif
 ^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/t_splash_info\/ - reject
 ^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/targeted_ads - reject-tinygif
-
 [Host]
 101.226.10.8 = 0.0.0.0
 113.12.83.4 = 0.0.0.0
@@ -207,6 +197,5 @@ telemetry.appboy.com = 0.0.0.0
 umeng.com = 0.0.0.0
 umtrack.com = 0.0.0.0
 youmi.net = 0.0.0.0
-
 [MITM]
-hostname = %APPEND% *.3gimg.qq.com, *.4gimg.map.qq.com, *.58cdn.com.cn, *.7n.bczcdn.com, *.a.apicloud.com, *.a.qiumibao.com, *.a.sfansclub.com, *.a.wkanx.com, *.account.wps.cn, *.account.wps.com, *.acs.m.taobao.com, *.act.vip.iqiyi.com, *.adpai.thepaper.cn, *.adse.ximalaya.com, *.aes.acfun.cn, *.agent-count.pconline.com.cn, *.api-mifit.huami.com, *.api.jr.mi.com, *.api.m.jd.com, *.api.m.mi.com, *.api.zhihu.com, *.google.cn, *.google.com.hk, *.googlevideo.com, *.iydsj.com, *.k.sohu.com, *.kakamobi.cn, *.kingsoft-office-service.com, *.meituan.net, *.ofo.com, *.pstatp.com, *.snssdk.com, *.tv.sohu.com, *.uve.weibo.com, *.ydstatic.com, *.zhihu.com, 203.107.1.1, 203.107.1.33, 203.107.1.66, 203.107.1.67, 203.107.1.97, 2401:b180:2000:20::10, 2401:b180:2000:30::1c, acs.m.goofish.com, acs.m.taobao.com, amdc.alipay.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.fenxianglife.com, api.github.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, api.xiachufang.com, api.xiangji.qq.com, api.zcool.com.cn, apiwz.midukanshu.com, app.zhoudamozi.com, appconf.mail.163.com, buy.itunes.apple.com, cdke.youdao.com, cdn.cmgadx.com, cdn.web.chelaile.net.cn, client.app.coc.10086.cn, cmds.omesoft.com, conf-darwin.xycdn.com, d.socdm.com, dict.youdao.com, ecard.shenzhentong.com, gateway.icloud.com.cn, gist.githubusercontent.com, github.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, hostname-disabled = %INSERT% gateway.icloud.com, images.pinduoduo.com, img.allahall.com, img.dailmo.com, is.snssdk.com, iyes.youku.com, lanfanapp.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.client.10010.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mi.gdt.qq.com, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, msglb.91160.com, music.y.qq.com, open.e.kuaishou.com, p0.pipi.cn, qadx.qinlinad.com, qiye.gaoding.com, raw.githubusercontent.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shealthyapi.senssun.com, shopapi.io.mi.com, t-dsp.pinduoduo.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, us.l.qq.com, video-dsp.pddpic.com, watch.iot.mi.com, weather-data.apple.com, y.gtimg.cn, youtubei.googleapis.com, zhidao.baidu.com
+hostname = %APPEND% %INSERT%gateway.icloud.com, *.google.cn, *.google.com.hk, *.googlevideo.com, *.zhihu.com, api.github.com, buy.itunes.apple.com, gateway.icloud.com.cn, gist.githubusercontent.com, github.com, images.pinduoduo.com, img.allahall.com, img.dailmo.com, is.snssdk.com, iyes.youku.com, lanfanapp.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.client.10010.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mi.gdt.qq.com, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, msglb.91160.com, music.y.qq.com, open.e.kuaishou.com, p0.pipi.cn, qadx.qinlinad.com, qiye.gaoding.com, raw.githubusercontent.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shealthyapi.senssun.com, shopapi.io.mi.com, t-dsp.pinduoduo.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, us.l.qq.com, video-dsp.pddpic.com, watch.iot.mi.com, weather-data.apple.com, y.gtimg.cn, youtubei.googleapis.com, zhidao.baidu.com
