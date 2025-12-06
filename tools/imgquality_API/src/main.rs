@@ -534,7 +534,7 @@ fn auto_convert_single_file(
         // Static lossless → JXL
         (_, true, false) => {
             println!("🔄 Lossless→JXL: {}", input.display());
-            convert_to_jxl(input, &options)?
+            convert_to_jxl(input, &options, 0.0)?
         }
         // Animated lossless → AV1 MP4 (only if >=3 seconds)
         (_, true, true) => {
@@ -567,7 +567,7 @@ fn auto_convert_single_file(
                 return Ok(());
             }
         }
-        // Static lossy (non-JPEG) → JXL (Quality 100/Lossless) instead of AVIF
+        // Static lossy (non-JPEG) → JXL (Quality 100/Lossy - VarDCT) instead of AVIF
         (format, false, false) => {
             // Skip lossy WebP to avoid quality loss
             if format == "WebP" {
@@ -575,8 +575,8 @@ fn auto_convert_single_file(
                 return Ok(());
             }
             
-            println!("🔄 Lossy→JXL (Quality 100): {}", input.display());
-            convert_to_jxl(input, &options)?
+            println!("🔄 Lossy→JXL (Quality 100/Lossy): {}", input.display());
+            convert_to_jxl(input, &options, 0.1)?
         }
     };
     

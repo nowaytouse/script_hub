@@ -103,8 +103,9 @@ pub fn save_processed_list(list_path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Convert static lossless image to JXL
-pub fn convert_to_jxl(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
+/// Convert static image to JXL with specified distance/quality
+/// distance: 0.0 = lossless, 0.1 = visually lossless (Q100 lossy), 1.0 = Q90
+pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> Result<ConversionResult> {
     // Anti-duplicate check
     if !options.force && is_already_processed(input) {
         return Ok(ConversionResult {
@@ -147,7 +148,7 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Conversi
     let result = Command::new("cjxl")
         .arg(input)
         .arg(&output)
-        .arg("-d").arg("0.0")  // Distance 0 = lossless
+        .arg("-d").arg(format!("{:.1}", distance))  // Distance parameter
         .arg("-e").arg("8")    // Effort 8 for better compression
         .output();
     
