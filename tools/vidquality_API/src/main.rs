@@ -106,7 +106,7 @@ fn main() -> anyhow::Result<()> {
 
         Commands::Auto { input, output, force, delete_original, explore, lossless } => {
             let config = ConversionConfig {
-                output_dir: output,
+                output_dir: output.clone(),
                 force,
                 delete_original,
                 preserve_metadata: true,
@@ -125,15 +125,59 @@ fn main() -> anyhow::Result<()> {
             }
             info!("");
             
-            let result = auto_convert(&input, &config)?;
-            
-            info!("");
-            info!("📊 Conversion Summary:");
-            info!("   Input:  {} ({} bytes)", result.input_path, result.input_size);
-            info!("   Output: {} ({} bytes)", result.output_path, result.output_size);
-            info!("   Ratio:  {:.1}%", result.size_ratio * 100.0);
-            if result.exploration_attempts > 0 {
-                info!("   🔍 Explored {} CRF values, final: CRF {}", result.exploration_attempts, result.final_crf);
+            if input.is_dir() {
+                // Directory processing
+                let video_extensions = ["mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "mts"];
+                
+                let files: Vec<_> = std::fs::read_dir(&input)?
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.path().is_file())
+                    .filter(|e| {
+                        if let Some(ext) = e.path().extension() {
+                            video_extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str())
+                        } else {
+                            false
+                        }
+                    })
+                    .map(|e| e.path())
+                    .collect();
+                
+                info!("📂 Found {} video files to process", files.len());
+                
+                let mut success = 0;
+                let mut failed = 0;
+                
+                for file in &files {
+                    match auto_convert(file, &config) {
+                        Ok(result) => {
+                            info!("✅ {} → {} ({:.1}%)", 
+                                file.file_name().unwrap_or_default().to_string_lossy(),
+                                result.output_path,
+                                result.size_ratio * 100.0
+                            );
+                            success += 1;
+                        }
+                        Err(e) => {
+                            info!("❌ {} failed: {}", file.display(), e);
+                            failed += 1;
+                        }
+                    }
+                }
+                
+                info!("");
+                info!("📊 Batch Summary: {} succeeded, {} failed", success, failed);
+            } else {
+                // Single file processing
+                let result = auto_convert(&input, &config)?;
+                
+                info!("");
+                info!("📊 Conversion Summary:");
+                info!("   Input:  {} ({} bytes)", result.input_path, result.input_size);
+                info!("   Output: {} ({} bytes)", result.output_path, result.output_size);
+                info!("   Ratio:  {:.1}%", result.size_ratio * 100.0);
+                if result.exploration_attempts > 0 {
+                    info!("   🔍 Explored {} CRF values, final: CRF {}", result.exploration_attempts, result.final_crf);
+                }
             }
         }
 
