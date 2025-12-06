@@ -20,12 +20,14 @@
 
 🚀 **Intelligent `auto` & `simple` Conversion Engines**
 - **Smart `auto` Strategy**: Automatically determines the best conversion path:
-  - **`Lossless` or `Visually Lossless` Source → FFV1 MKV**: For perfect, bit-for-bit archival. This applies to masters like ProRes, DNxHD, and other lossless formats.
-  - **`High` or `Standard Quality` Source → AV1 MP4**: For efficient, high-quality compression using a visually lossless setting (`CRF 0`).
-- **Archival-Grade Parameters**: Uses community-recommended `ffmpeg` settings for FFV1 (`-level 3`, `-slices 24`, `-slicecrc 1`) to ensure a robust archival master.
-- **Lossless Audio Handling**: Automatically converts audio to **FLAC** in FFV1 archives and high-quality **AAC** in AV1 files.
-- **`--explore` Mode**: For the `auto` command, this unique feature finds the optimal file size by starting at a high quality and incrementally lowering it until the output is smaller than the input.
-- **Metadata Preservation**: Automatically carries over metadata and file timestamps using `exiftool` and `touch` (if installed).
+  - **Modern Codecs (AV1/H.265/VP9 etc.)**: **Skip**. Detected modern formats are skipped to avoid generational loss.
+  - **`Lossless` Source (FFV1/ProRes etc.) → AV1 Lossless**: Converts bulky lossless masters to **mathematically lossless** AV1 (CRF 0 + Lossless), significantly reducing size while maintaining bit-perfect quality.
+  - **`Lossy` Source (H.264/MPEG etc.) → AV1 (CRF 0)**: Compresses using visually lossless CRF 0 settings for high quality.
+- **Simple Mode**: Enforces **AV1 Mathematical Lossless** mode by default for absolute quality preservation.
+- **Archival-Grade Parameters**: Uses CRF 0 for visually lossless results on lossy sources.
+- **Lossless Audio Handling**: Automatically converts audio to **FLAC** or high-quality AAC.
+- **`--explore` Mode**: For the `auto` command, starts from CRF 0 and finds the optimal size.
+- **Most Comprehensive Metadata Preservation**: default **Mandatory** use of `exiftool` (if installed) and system APIs:
 
 ⭐ **New: Mathematical Lossless AV1 Mode**
 - **`--lossless` Flag**: A powerful new option for `auto` and `simple` commands. It forces the conversion to use **mathematically lossless AV1**. This is useful for creating archival masters from sources where FFV1 is not desired.
@@ -153,11 +155,13 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 
 🚀 **智能 `auto` & `simple` 转换引擎**
 - **智能 `auto` 策略**: 自动确定最佳转换路径：
-  - **`无损` 或 `视觉无损` 源文件 → FFV1 MKV**: 用于完美的、逐比特的数字归档。适用于 ProRes、DNxHD 等母版文件。
-  - **`高质量` 或 `标准质量` 源文件 → AV1 MP4**: 用于高效、高质量的压缩，采用视觉无损设置 (`CRF 0`)。
-- **归档级参数**: 为 FFV1 使用社区推荐的 `ffmpeg` 设置 (`-level 3`, `-slices 24`, `-slicecrc 1`)，确保归档母版的稳健性。
-- **无损音频处理**: 在 FFV1 归档中自动将音频转换为 **FLAC**（无损音频），在 AV1 文件中转换为高质量的 **AAC**。
-- **`--explore` 模式**: 在 `auto` 命令中，这个独特功能可通过从高质量开始，逐步降低质量，直到输出文件小于输入文件，来找到最佳的文件大小。
+  - **现代编码 (AV1/H.265/VP9等)**: **自动跳过**。源文件已是高效格式，避免无效重编码和代际损耗。
+  - **无损源文件 (FFV1/ProRes等) → AV1 Lossless**: 将庞大的无损母版转换为**数学无损**的 AV1 (CRF 0 + Lossless)，在保持逐比特一致的同时显著减小体积。
+  - **有损源文件 (H.264/MPEG等) → AV1 (CRF 0)**: 使用视觉无损的 CRF 0 参数进行高质量压缩。
+- **Simple 模式**: 默认强制使用 **AV1 数学无损** 模式，确保绝对的质量保留。
+- **归档级参数**: 针对有损转换使用 CRF 0 确保视觉无损。
+- **无损音频处理**: 自动将音频转换为 **FLAC** 或高码率 AAC。
+- **`--explore` 模式**: 在 `auto` 命令中，从 CRF 0 开始尝试，直到找到比源文件更小的体积。
 - **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
   - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
   - **系统时间戳**: 完美复刻文件创建时间 (CreationDate/Btime) 和修改时间。

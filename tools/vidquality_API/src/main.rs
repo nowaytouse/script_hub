@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use tracing::info;
 use std::path::PathBuf;
-use vidquality::{detect_video, simple_convert_with_lossless, auto_convert, determine_strategy, ConversionConfig};
+use vidquality::{detect_video, auto_convert, determine_strategy, ConversionConfig};
 
 #[derive(Parser)]
 #[command(name = "vidquality")]
@@ -181,16 +181,13 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Simple { input, output, lossless } => {
+        Commands::Simple { input, output, lossless: _ } => {
             info!("🎬 Simple Mode Conversion");
-            if lossless {
-                info!("   ⚠️  ALL videos → AV1 MP4 (MATHEMATICAL LOSSLESS - VERY SLOW!)");
-            } else {
-                info!("   ALL videos → AV1 MP4 (CRF 0, visually lossless)");
-            }
+            info!("   ⚠️  ALL videos → AV1 MP4 (MATHEMATICAL LOSSLESS - VERY SLOW!)");
+            info!("   (Note: Simple mode now enforces lossless conversion by default)");
             info!("");
             
-            let result = simple_convert_with_lossless(&input, output.as_deref(), lossless)?;
+            let result = vidquality::simple_convert(&input, output.as_deref())?;
             
             info!("");
             info!("✅ Complete!");

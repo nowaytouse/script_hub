@@ -521,19 +521,27 @@ fn auto_convert_single_file(
     
     // Smart conversion based on format and lossless status
     let result = match (analysis.format.as_str(), analysis.is_lossless, analysis.is_animated) {
-        // HEIC/AVIF are already modern efficient formats - skip conversion
-        ("HEIC", _, _) | ("HEIF", _, _) | ("AVIF", _, _) => {
-            println!("⏭️ Skipping modern format (already efficient): {}", input.display());
+        // Modern Formats Logic (WebP, AVIF, HEIC)
+        // Rule: Avoid generational loss. 
+        // - If Lossy: SKIP (don't recompress lossy to lossy/jxl)
+        // - If Lossless: CONVERT to JXL (better compression)
+        ("WebP", true, false) | ("AVIF", true, false) | ("HEIC", true, false) | ("HEIF", true, false) => {
+            println!("🔄 Modern Lossless→JXL: {}", input.display());
+            convert_to_jxl(input, &options, 0.0)? // Mathematical lossless
+        }
+        ("WebP", false, _) | ("AVIF", false, _) | ("HEIC", false, _) | ("HEIF", false, _) => {
+            println!("⏭️ Skipping modern lossy format (avoid generation loss): {}", input.display());
             return Ok(());
         }
+
         // JPEG → JXL lossless transcode
         ("JPEG", _, false) => {
             println!("🔄 JPEG→JXL lossless transcode: {}", input.display());
             convert_jpeg_to_jxl(input, &options)?
         }
-        // Static lossless → JXL
+        // Legacy Static lossless (PNG, TIFF, BMP etc) → JXL
         (_, true, false) => {
-            println!("🔄 Lossless→JXL: {}", input.display());
+            println!("🔄 Legacy Lossless→JXL: {}", input.display());
             convert_to_jxl(input, &options, 0.0)?
         }
         // Animated lossless → AV1 MP4 (only if >=3 seconds)
@@ -567,15 +575,16 @@ fn auto_convert_single_file(
                 return Ok(());
             }
         }
-        // Static lossy (non-JPEG) → JXL (Quality 100/Lossy - VarDCT) instead of AVIF
+        // Legacy Static lossy (non-JPEG, non-Modern) → JXL (Quality 100/Lossy - VarDCT)
+        // This handles cases like BMP (if not detected as lossless somehow) or other obscure formats
         (format, false, false) => {
-            // Skip lossy WebP to avoid quality loss
-            if format == "WebP" {
-                println!("⏭️ Skipping lossy WebP (to avoid quality loss): {}", input.display());
+             // Redundant safecheck for WebP/AVIF/HEIC just in case pattern matching missed
+            if format == "WebP" || format == "AVIF" || format == "HEIC" || format == "HEIF" {
+                println!("⏭️ Skipping modern lossy format: {}", input.display());
                 return Ok(());
             }
             
-            println!("🔄 Lossy→JXL (Quality 100/Lossy): {}", input.display());
+            println!("🔄 Legacy Lossy→JXL (Quality 100): {}", input.display());
             convert_to_jxl(input, &options, 0.1)?
         }
     };

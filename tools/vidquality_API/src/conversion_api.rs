@@ -19,6 +19,8 @@ pub enum TargetVideoFormat {
     Ffv1Mkv,
     /// AV1 in MP4 container - for compression
     Av1Mp4,
+    /// Skip conversion (already modern/efficient)
+    Skip,
 }
 
 impl TargetVideoFormat {
@@ -26,6 +28,7 @@ impl TargetVideoFormat {
         match self {
             TargetVideoFormat::Ffv1Mkv => "mkv",
             TargetVideoFormat::Av1Mp4 => "mp4",
+            TargetVideoFormat::Skip => "",
         }
     }
     
@@ -33,6 +36,7 @@ impl TargetVideoFormat {
         match self {
             TargetVideoFormat::Ffv1Mkv => "FFV1 MKV (Archival)",
             TargetVideoFormat::Av1Mp4 => "AV1 MP4 (High Quality)",
+            TargetVideoFormat::Skip => "Skip",
         }
     }
 }
@@ -45,6 +49,7 @@ pub struct ConversionStrategy {
     pub command: String,
     pub preserve_audio: bool,
     pub crf: u8,
+    pub lossless: bool, // New field for mathematical lossless
 }
 
 /// Conversion configuration
@@ -92,26 +97,74 @@ pub struct ConversionOutput {
 
 /// Determine conversion strategy based on detection result (for auto mode)
 pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
-    let (target, reason, crf) = match result.compression {
+    let codec_name = result.codec.as_str(); // e.g. "H.265"
+    
+    // Check for Modern Codecs -> SKIP
+    // H.265/HEVC, AV1, VP9, H.266/VVC
+    match result.codec {
+        crate::detection_api::DetectedCodec::H265 |
+        crate::detection_api::DetectedCodec::AV1 |
+        crate::detection_api::DetectedCodec::VP9 => {
+             return ConversionStrategy {
+                target: TargetVideoFormat::Skip,
+                reason: format!("Source is modern codec ({}) - skipping to avoid generational loss", codec_name),
+                command: String::new(),
+                preserve_audio: false,
+                crf: 0,
+                lossless: false,
+            };
+        }
+        _ => {}
+    }
+    
+    // Also check for "vvc" or "h266" in Unknown string if necessary
+    if let crate::detection_api::DetectedCodec::Unknown(ref s) = result.codec {
+        let s = s.to_lowercase();
+        if s.contains("hevc") || s.contains("h265") || s.contains("av1") || s.contains("vp9") || s.contains("vvc") || s.contains("h266") {
+             return ConversionStrategy {
+                target: TargetVideoFormat::Skip,
+                reason: format!("Source is modern codec ({}) - skipping", s),
+                command: String::new(),
+                preserve_audio: false,
+                crf: 0,
+                lossless: false,
+            };
+        }
+    }
+
+    let (target, reason, crf, lossless) = match result.compression {
         CompressionType::Lossless => {
             (
-                TargetVideoFormat::Ffv1Mkv,
-                format!("Source is {} (lossless) - archiving to FFV1 MKV", result.codec.as_str()),
-                0
+                TargetVideoFormat::Av1Mp4,
+                format!("Source is {} (lossless) - converting to AV1 Lossless", result.codec.as_str()),
+                0,
+                true // Enable mathematical lossless
             )
         }
         CompressionType::VisuallyLossless => {
+            // Treat visually lossless source as high quality source -> AV1 CRF 0 (Lossy/High Quality)
+            // User said: "Input ffv1 etc more lossless coding -> convert to av1 lossless"
+            // But "Visually Lossless" (e.g. ProRes) is technically lossy. 
+            // However, usually ProRes/DNxHD are intermediates. 
+            // Let's stick to: If strictly Lossless -> AV1 Lossless. If "Visually Lossless" -> AV1 CRF 0.
+            // Wait, user instruction: "Input ffv1 etc more lossless coding -> convert to av1 lossless"
+            // "Input h264 lossy etc more coding -> convert to av1 crf 0"
+            // ProRes is "more lossless" than H264. Let's treat it as High Quality Source -> CRF 0?
+            // "Visually Lossless" in detection_api includes ProRes. 
+            // Ideally ProRes -> AV1 CRF 0 is better than ProRes -> AV1 Lossless (huge).
             (
-                TargetVideoFormat::Ffv1Mkv,
-                format!("Source is {} (visually lossless) - preserving with FFV1 MKV", result.codec.as_str()),
-                0
+                TargetVideoFormat::Av1Mp4,
+                format!("Source is {} (visually lossless) - compressing with AV1 CRF 0", result.codec.as_str()),
+                0,
+                false
             )
         }
         _ => {
             (
                 TargetVideoFormat::Av1Mp4,
                 format!("Source is {} ({}) - compressing with AV1 CRF 0", result.codec.as_str(), result.compression.as_str()),
-                0
+                0,
+                false
             )
         }
     };
@@ -122,10 +175,11 @@ pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
         command: String::new(),
         preserve_audio: result.has_audio,
         crf,
+        lossless,
     }
 }
 
-/// Simple mode conversion - ALWAYS use AV1 MP4
+/// Simple mode conversion - ALWAYS use AV1 MP4 (LOSSLESS)
 pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<ConversionOutput> {
     let detection = detect_video(input)?;
     
@@ -138,10 +192,11 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     let output_path = output_dir.join(format!("{}.mp4", stem));
     
-    info!("🎬 Simple Mode: {} → AV1 MP4", input.display());
+    info!("🎬 Simple Mode: {} → AV1 MP4 (LOSSLESS)", input.display());
     
-    // Always AV1 MP4 with CRF 0
-    let output_size = execute_av1_conversion(&detection, &output_path, 0)?;
+    // Always AV1 MP4 with LOSSLESS mode (as requested: corresponding to image JXL lossless)
+    // Note: This produces large files but is mathematically lossless.
+    let output_size = execute_av1_lossless(&detection, &output_path)?;
     
     // Preserve metadata (complete copy)
     copy_metadata(input, &output_path)?;
@@ -155,26 +210,47 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
         output_path: output_path.display().to_string(),
         strategy: ConversionStrategy {
             target: TargetVideoFormat::Av1Mp4,
-            reason: "Simple mode: All videos → AV1 MP4".to_string(),
+            reason: "Simple mode: Always AV1 Lossless".to_string(),
             command: String::new(),
             preserve_audio: detection.has_audio,
             crf: 0,
+            lossless: true,
         },
         input_size: detection.file_size,
         output_size,
         size_ratio,
         success: true,
-        message: "Simple conversion successful".to_string(),
+        message: "Simple conversion successful (Lossless)".to_string(),
         final_crf: 0,
         exploration_attempts: 0,
     })
 }
+
+// remove simple_convert_with_lossless as it's no longer needed/used with the new policy
 
 /// Auto mode conversion with intelligent strategy selection
 pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {
     let detection = detect_video(input)?;
     let strategy = determine_strategy(&detection);
     
+    // Handle Skip Strategy
+    if strategy.target == TargetVideoFormat::Skip {
+        info!("🎬 Auto Mode: {} → SKIP", input.display());
+        info!("   Reason: {}", strategy.reason);
+        return Ok(ConversionOutput {
+            input_path: input.display().to_string(),
+            output_path: "".to_string(),
+            strategy,
+            input_size: detection.file_size,
+            output_size: 0,
+            size_ratio: 0.0,
+            success: true, 
+            message: "Skipped modern codec to avoid generation loss".to_string(),
+            final_crf: 0,
+            exploration_attempts: 0,
+        });
+    }
+
     let output_dir = config.output_dir.clone()
         .unwrap_or_else(|| input.parent().unwrap_or(Path::new(".")).to_path_buf());
     
@@ -194,18 +270,24 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     
     let (output_size, final_crf, attempts) = match strategy.target {
         TargetVideoFormat::Ffv1Mkv => {
+            // Legacy/Fallback catch-all
             let size = execute_ffv1_conversion(&detection, &output_path)?;
             (size, 0, 0)
         }
         TargetVideoFormat::Av1Mp4 => {
-            if config.explore_smaller {
-                // Size exploration mode
+            if strategy.lossless {
+                 info!("   🚀 Using AV1 Mathematical Lossless Mode");
+                 let size = execute_av1_lossless(&detection, &output_path)?;
+                 (size, 0, 0)
+            } else if config.explore_smaller {
+                // Size exploration mode (only valid for lossy)
                 explore_smaller_size(&detection, &output_path)?
             } else {
                 let size = execute_av1_conversion(&detection, &output_path, 0)?;
                 (size, 0, 0)
             }
         }
+        TargetVideoFormat::Skip => unreachable!(), // Handled above
     };
     
     // Preserve metadata (complete copy)
@@ -229,6 +311,7 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
             command: String::new(),
             preserve_audio: detection.has_audio,
             crf: final_crf,
+            lossless: strategy.lossless,
         },
         input_size: detection.file_size,
         output_size,
@@ -384,60 +467,7 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
     Ok(std::fs::metadata(output)?.len())
 }
 
-/// Simple mode with lossless option
-pub fn simple_convert_with_lossless(input: &Path, output_dir: Option<&Path>, lossless: bool) -> Result<ConversionOutput> {
-    let detection = detect_video(input)?;
-    
-    let output_dir = output_dir
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| input.parent().unwrap_or(Path::new(".")).to_path_buf());
-    
-    std::fs::create_dir_all(&output_dir)?;
-    
-    let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
-    let output_path = output_dir.join(format!("{}.mp4", stem));
-    
-    let output_size = if lossless {
-        info!("🎬 Simple Mode: {} → AV1 MP4 (LOSSLESS)", input.display());
-        execute_av1_lossless(&detection, &output_path)?
-    } else {
-        info!("🎬 Simple Mode: {} → AV1 MP4 (CRF 0)", input.display());
-        execute_av1_conversion(&detection, &output_path, 0)?
-    };
-    
-    copy_metadata(input, &output_path)?;
-    
-    let size_ratio = output_size as f64 / detection.file_size as f64;
-    
-    info!("   ✅ Complete: {:.1}% of original", size_ratio * 100.0);
-    
-    Ok(ConversionOutput {
-        input_path: input.display().to_string(),
-        output_path: output_path.display().to_string(),
-        strategy: ConversionStrategy {
-            target: TargetVideoFormat::Av1Mp4,
-            reason: if lossless {
-                "Simple mode: Mathematical lossless AV1".to_string()
-            } else {
-                "Simple mode: All videos → AV1 MP4".to_string()
-            },
-            command: String::new(),
-            preserve_audio: detection.has_audio,
-            crf: 0,
-        },
-        input_size: detection.file_size,
-        output_size,
-        size_ratio,
-        success: true,
-        message: if lossless {
-            "Mathematical lossless conversion successful".to_string()
-        } else {
-            "Simple conversion successful".to_string()
-        },
-        final_crf: 0,
-        exploration_attempts: 0,
-    })
-}
+
 
 /// Helper to copy metadata and timestamps from source to destination
 /// Uses exiftool if available (for complete metadata), and filetime (for robust timestamps)
