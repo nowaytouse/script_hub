@@ -29,6 +29,7 @@
 - **`--explore` Mode**: For the `auto` command, starts from CRF 0 and finds the optimal size.
 - **Most Comprehensive Metadata Preservation**: default **Mandatory** use of `exiftool` (if installed) and system APIs:
   - **Full Exif/IPTC/XMP**: Lossless copy of all tags.
+  - **Extended Attributes (xattr)**: Preserves macOS Finder Tags, comments, and other system-level extended attributes.
   - **Perfect Timestamp Replication**:
     - **Creation Date**: **Perfectly Preserved**. Uses native macOS `setattrlist` syscall for reliable btime restoration (superior to ExifTool).
     - **Modification Time**: Perfectly preserved via atomic syscalls.
@@ -171,6 +172,7 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 - **`--explore` 模式**: 在 `auto` 命令中，从 CRF 0 开始尝试，直到找到比源文件更小的体积。
 - **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
   - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
+  - **扩展属性 (Extended Attributes)**: 完美保留 macOS Finder 标签 (Tags)、备注及其他系统级扩展属性。
   - **时间戳完美复刻**:
     - **创建时间 (Creation Date)**: **完美保留**。使用 macOS 原生 `setattrlist` 系统调用强制写入 (比 ExifTool 更可靠)。
     - **修改时间 (Modify Time)**: **完美保留**。使用原子化系统调用。

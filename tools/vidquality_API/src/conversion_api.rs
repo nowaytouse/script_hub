@@ -582,7 +582,10 @@ pub fn copy_metadata(src: &Path, dst: &Path) {
         eprintln!("⚠️ Exiftool not found, extended metadata will not be preserved");
     }
 
-    // 2. Preserve file system timestamps (creation/modification/access time)
+    // 2. Copy Extended Attributes (xattr)
+    copy_xattrs(src, dst);
+
+    // 3. Preserve file system timestamps (creation/modification/access time)
     if let Ok(metadata) = std::fs::metadata(src) {
         // A. Mac-specific creation time (btime) using setattrlist
         #[cfg(target_os = "macos")]
@@ -600,9 +603,25 @@ pub fn copy_metadata(src: &Path, dst: &Path) {
             eprintln!("⚠️ Failed to set file timestamps (atime/mtime): {}", e);
         }
         
-        // 3. Preserve file permissions (e.g. read-only status)
+        // 4. Preserve file permissions (e.g. read-only status)
         let permissions = metadata.permissions();
         let _ = std::fs::set_permissions(dst, permissions);
+    }
+}
+
+// Helper to copy extended attributes (xattr)
+pub fn copy_xattrs(src: &Path, dst: &Path) {
+    if let Ok(iter) = xattr::list(src) {
+        for name in iter {
+            if let Some(name) = name.to_str() {
+                if let Ok(Some(value)) = xattr::get(src, name) {
+                    if let Err(e) = xattr::set(dst, name, &value) {
+                        // Ignore some system xattrs that might fail
+                         eprintln!("⚠️ Failed to copy xattr {}: {}", name, e);
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -674,8 +674,25 @@ mod macos_ext {
     }
 }
 
+// Helper to copy extended attributes (xattr)
+pub fn copy_xattrs(src: &Path, dst: &Path) {
+    if let Ok(iter) = xattr::list(src) {
+        for name in iter {
+            if let Some(name) = name.to_str() {
+                if let Ok(Some(value)) = xattr::get(src, name) {
+                    if let Err(e) = xattr::set(dst, name, &value) {
+                        // Ignore some system xattrs that might fail (e.g. security related)
+                        // but log usage errors
+                         eprintln!("⚠️ Failed to copy xattr {}: {}", name, e);
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Helper to copy metadata and timestamps from source to destination
-// Uses exiftool (for metadata), set_file_times (for atime/mtime), and setattrlist (for btime on mac)
+// Uses exiftool (for metadata), xattr (for ext attributes), set_file_times (for atime/mtime), and setattrlist (for btime on mac)
 fn copy_metadata(src: &Path, dst: &Path) {
     // 1. Try to copy all metadata tags using exiftool
     if which::which("exiftool").is_ok() {
@@ -706,7 +723,10 @@ fn copy_metadata(src: &Path, dst: &Path) {
         eprintln!("⚠️ Exiftool not found, extended metadata will not be preserved");
     }
 
-    // 2. Preserve file system timestamps (creation/modification/access time)
+    // 2. Copy Extended Attributes (xattr) - e.g. Finder tags, comments, etc.
+    copy_xattrs(src, dst);
+
+    // 3. Preserve file system timestamps (creation/modification/access time)
     if let Ok(metadata) = fs::metadata(src) {
         // A. Mac-specific creation time (btime) using setattrlist
         #[cfg(target_os = "macos")]
@@ -724,8 +744,9 @@ fn copy_metadata(src: &Path, dst: &Path) {
             eprintln!("⚠️ Failed to set file timestamps (atime/mtime): {}", e);
         }
         
-        // 3. Preserve file permissions (e.g. read-only status)
-        let _ = fs::set_permissions(dst, metadata.permissions());
+        // 4. Preserve file permissions (e.g. read-only status)
+        let permissions = metadata.permissions();
+        let _ = fs::set_permissions(dst, permissions);
     }
 }
 
