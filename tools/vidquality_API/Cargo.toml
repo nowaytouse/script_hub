@@ -33,6 +33,7 @@ walkdir = "2.4"
 filetime = "0.2"
 libc = "0.2"
 xattr = "1.3"
+metadata_keeper = { path = "../metadata_keeper" }
 
 # Command execution check
 which = "6.0"

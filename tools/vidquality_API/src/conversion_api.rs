@@ -474,86 +474,6 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
 
 
 // MacOS specialized timestamp setter (creation time + date added)
-#[cfg(target_os = "macos")]
-mod macos_ext {
-    use std::io;
-    use std::path::Path;
-    use std::time::SystemTime;
-    use std::ffi::CString;
-    use std::os::unix::ffi::OsStrExt;
-
-    #[repr(C)]
-    struct attrlist {
-        bitmapcount: u16,
-        reserved: u16,
-        commonattr: u32,
-        volattr: u32,
-        dirattr: u32,
-        fileattr: u32,
-        forkattr: u32,
-    }
-
-    const ATTR_CMN_CRTIME: u32 = 0x00000200;
-    const ATTR_CMN_ADDEDTIME: u32 = 0x10000000;
-    const ATTR_BIT_MAP_COUNT: u16 = 5;
-
-    extern "C" {
-        fn setattrlist(
-            path: *const i8,
-            attrList: *mut attrlist,
-            attrBuf: *mut std::ffi::c_void,
-            attrBufSize: usize,
-            options: u32,
-        ) -> i32;
-    }
-
-    #[repr(C)]
-    struct Timespec {
-        tv_sec: i64,
-        tv_nsec: i64,
-    }
-
-    pub fn set_creation_time(path: &Path, time: SystemTime) -> io::Result<()> {
-        set_time_attr(path, time, ATTR_CMN_CRTIME)
-    }
-
-    fn set_time_attr(path: &Path, time: SystemTime, attr: u32) -> io::Result<()> {
-        let c_path = CString::new(path.as_os_str().as_bytes())?;
-
-        let mut attr_list = attrlist {
-            bitmapcount: ATTR_BIT_MAP_COUNT,
-            reserved: 0,
-            commonattr: attr,
-            volattr: 0,
-            dirattr: 0,
-            fileattr: 0,
-            forkattr: 0,
-        };
-
-        let duration = time.duration_since(SystemTime::UNIX_EPOCH)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-
-        let mut buf = Timespec {
-            tv_sec: duration.as_secs() as i64,
-            tv_nsec: duration.subsec_nanos() as i64,
-        };
-
-        let ret = unsafe {
-            setattrlist(
-                c_path.as_ptr(),
-                &mut attr_list,
-                &mut buf as *mut _ as *mut std::ffi::c_void,
-                std::mem::size_of::<Timespec>(),
-                0,
-            )
-        };
-
-        if ret != 0 {
-            return Err(io::Error::last_os_error());
-        }
-        Ok(())
-    }
-}
 
 // Helper to copy metadata and timestamps from source to destination
 // Maximum metadata preservation: exiftool + xattr + setattrlist + filetime + flags + ACL
@@ -581,115 +501,19 @@ pub fn copy_metadata(src: &Path, dst: &Path) {
             .output();
     }
 
-    // 2. Copy Extended Attributes (xattr) - Finder tags, comments, etc.
-    copy_xattrs(src, dst);
-
-    // 3. Preserve file system timestamps
-    if let Ok(metadata) = std::fs::metadata(src) {
-        #[cfg(target_os = "macos")]
-        {
-            // A. Creation time (btime) via setattrlist
-            if let Ok(created) = metadata.created() {
-                let _ = macos_ext::set_creation_time(dst, created);
-            }
-            // B. Date Added (kMDItemDateAdded) via setattrlist
-            let atime = filetime::FileTime::from_last_access_time(&metadata);
-            let mtime = filetime::FileTime::from_last_modification_time(&metadata);
-            if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
-                eprintln!("⚠️ Failed to set file timestamps (atime/mtime): {}", e);
-            }
-        }
-        
-        // D. Preserve file permissions (chmod)
-        #[cfg(not(target_os = "macos"))]
-        let _ = std::fs::set_permissions(dst, metadata.permissions());
-    }
-
-    // 4. Copy file flags (uchg, hidden, nodump, etc.)
-    // Handled by copy_native_metadata on macOS.
-    // The `copy_file_flags` function is removed as it's unused.
-
-    // 5. Copy ACLs (Access Control Lists)
-    // Handled by copy_native_metadata on macOS.
-    // For other OSes, manual ACL copying is complex and shell-dependent, skipped for now.
-    
-    // 6. Native macOS Metadata (The "Nuclear Option")
-    // Uses copyfile() to transfer ACLs, Flags, Xattrs, and all Timestamps in one go.
-    #[cfg(target_os = "macos")]
-    copy_native_metadata(src, dst);
-}
-
-// Helper to copy system metadata (ACL, xattr, flags, etc) using native copyfile
-#[cfg(target_os = "macos")]
-fn copy_native_metadata(src: &Path, dst: &Path) {
-    use std::ffi::CString;
-    use std::os::unix::ffi::OsStrExt;
-
-    // FFI to macOS copyfile
-    extern "C" {
-        fn copyfile(from: *const i8, to: *const i8, state: *mut std::ffi::c_void, flags: u32) -> i32;
-    }
-
-    // COPYFILE_ACL (1<<0) | COPYFILE_STAT (1<<1) | COPYFILE_XATTR (1<<2)
-    const FLAGS: u32 = (1<<0) | (1<<1) | (1<<2);
-
-    let src_c = match CString::new(src.as_os_str().as_bytes()) {
-        Ok(s) => s,
-        Err(_) => return,
-    };
-    let dst_c = match CString::new(dst.as_os_str().as_bytes()) {
-        Ok(s) => s,
-        Err(_) => return,
-    };
-
-    unsafe {
-        if copyfile(src_c.as_ptr(), dst_c.as_ptr(), std::ptr::null_mut(), FLAGS) < 0 {
-             eprintln!("⚠️ Failed to copy native metadata (ACL/Flags/Xattr)");
-        }
+    // 2. Extended Metadata & System Attributes (Nuclear Option)
+    // Uses centralized metadata_keeper crate to handle:
+    // - macOS Nucleur Copy (ACL, Flags, Resource Forks, Creation Time)
+    // - Extended Attributes (Xattr)
+    // - Standard Timestamps (Atime/Mtime)
+    if let Err(e) = metadata_keeper::preserve_metadata(src, dst) {
+         eprintln!("⚠️ Failed to preserve system metadata: {}", e);
     }
 }
 
-// Helper to copy extended attributes (xattr)
-fn copy_xattrs(src: &Path, dst: &Path) {
-    // Skip system xattrs that cannot/should not be copied
-    const SKIP_XATTRS: &[&str] = &[
-        "com.apple.quarantine",           // Security: re-applied by system
-        "com.apple.provenance",           // Security: system managed
-        "com.apple.rootless",             // SIP protected
-        "com.apple.system.Security",      // Security labels
-    ];
+// Redundant helper functions separated or removed in favor of `metadata_keeper`.
 
-    if let Ok(iter) = xattr::list(src) {
-        for name in iter {
-            if let Some(name_str) = name.to_str() {
-                if SKIP_XATTRS.iter().any(|&s| name_str == s) {
-                    continue;
-                }
-                if let Ok(Some(value)) = xattr::get(src, name_str) {
-                    let _ = xattr::set(dst, name_str, &value);
-                }
-            }
-        }
-    }
-}
 
-    let c_src = match CString::new(src.as_os_str().as_bytes()) {
-        Ok(s) => s,
-        Err(_) => return,
-    };
-    let c_dst = match CString::new(dst.as_os_str().as_bytes()) {
-        Ok(s) => s,
-        Err(_) => return,
-    };
-
-    let mut src_stat: libc::stat = unsafe { std::mem::zeroed() };
-    if unsafe { libc::stat(c_src.as_ptr(), &mut src_stat) } == 0 {
-        let _ = unsafe { chflags(c_dst.as_ptr(), src_stat.st_flags) };
-    }
-}
-
-#[cfg(not(target_os = "macos"))]
-fn copy_file_flags(_src: &Path, _dst: &Path) {}
 
 // Legacy alias for backward compatibility
 pub fn smart_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {
