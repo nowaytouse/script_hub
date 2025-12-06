@@ -1,5 +1,5 @@
 #!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
-#!version=2025.12.04
+#!version=2025.12.06
 #!desc=Modular ad-blocking with Host sinkhole + Online rulesets. Low-memory optimized. 🧩💾⚡
 #!author=YOUR_AUTHOR_NAME
 #!homepage=https://github.com/YOUR_USERNAME/YOUR_REPO
@@ -8,7 +8,7 @@
 [Rule]
 # ═══════════════════════════════════════════════════════════════
 # Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
-# Updated: 2025-12-04 | REJECT rules are in AdBlock_Merged.list
+# Updated: 2025-12-06 | REJECT rules are in AdBlock_Merged.list
 # Note: All REJECT rules are merged into the big list file below
 # ═══════════════════════════════════════════════════════════════
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
