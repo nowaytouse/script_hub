@@ -20,7 +20,7 @@ pub struct JxlIndicator {
 }
 
 /// Image features for quality assessment
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ImageFeatures {
     /// Image entropy (complexity measure)
     pub entropy: f64,
@@ -177,24 +177,31 @@ pub fn analyze_image(path: &PathBuf) -> Result<ImageAnalysis> {
 
 /// Analyze HEIC/HEIF image using libheif
 fn analyze_heic_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
-    let (img, heic_analysis) = analyze_heic_file(path)?;
-    
-    let (width, height) = img.dimensions();
-    let has_alpha = heic_analysis.has_alpha;
-    let color_depth = heic_analysis.bit_depth;
-    let is_lossless = heic_analysis.is_lossless;
-    
-    let features = calculate_image_features(&img, file_size);
+    // Try to analyze deeply, but fallback if it fails (e.g. MemoryAllocationError)
+    // This allows the main loop to still see it as "HEIC" and skip it
+    let (width, height, has_alpha, color_depth, is_lossless, codec, features) = match analyze_heic_file(path) {
+        Ok((img, heic_analysis)) => {
+            let (w, h) = img.dimensions();
+            let feats = calculate_image_features(&img, file_size);
+            (w, h, heic_analysis.has_alpha, heic_analysis.bit_depth, heic_analysis.is_lossless, heic_analysis.codec, feats)
+        }
+        Err(e) => {
+            eprintln!("⚠️ Deep HEIC analysis failed (skipping to basic info): {}", e);
+            // Return dummy values so we can proceed to skip it
+            (0, 0, false, 8, false, "unknown".to_string(), ImageFeatures::default())
+        }
+    };
     
     // HEIC is already efficient, similar to AVIF
     let jxl_indicator = JxlIndicator {
         should_convert: false,
-        reason: format!("HEIC已是现代高效格式 ({}编码)", heic_analysis.codec),
+        reason: format!("HEIC已是现代高效格式 ({}编码)", codec),
         command: String::new(),
         benefit: String::new(),
     };
     
-    let metadata = extract_metadata(path)?;
+    // Use unwrap_or_default for metadata to be safe
+    let metadata = extract_metadata(path).unwrap_or_default();
     
     Ok(ImageAnalysis {
         file_path: path.display().to_string(),
@@ -209,7 +216,7 @@ fn analyze_heic_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
         duration_secs: None,
         is_lossless,
         jpeg_analysis: None,
-        heic_analysis: Some(heic_analysis),
+        heic_analysis: None, // We don't have the full struct if analysis failed, but that's fine
         features,
         jxl_indicator,
         psnr: None,
