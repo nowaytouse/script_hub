@@ -602,13 +602,18 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
 fn copy_metadata(src: &Path, dst: &Path) {
     // 1. Try to copy all metadata tags using exiftool
     if which::which("exiftool").is_ok() {
-        // -tagsfromfile src -all:all: copy all tags
+        // -tagsfromfile src -all:all: copy all standard tags
+        // -FileCreateDate/FileModifyDate: explicitly copy system timestamps (MacOS/System)
+        // -P: Preserve file modification date/time
         // -overwrite_original: don't create _original backup
         // -use MWG: use Metadata Working Group standards for compatibility
         let _ = Command::new("exiftool")
             .arg("-tagsfromfile")
             .arg(src)
             .arg("-all:all")
+            .arg("-FileCreateDate")  // Explicitly copy creation date (System tag)
+            .arg("-FileModifyDate")  // Explicitly copy modification date
+            .arg("-P")               // Preserve Modification Date
             .arg("-use").arg("MWG")
             .arg("-overwrite_original")
             .arg(dst)
@@ -618,6 +623,7 @@ fn copy_metadata(src: &Path, dst: &Path) {
     }
 
     // 2. Preserve file system timestamps (creation/modification time)
+    // This is a fallback/reinforcement for what ExifTool does
     if let Ok(metadata) = fs::metadata(src) {
         if let Ok(mtime) = metadata.modified() {
             let _ = filetime::set_file_mtime(dst, filetime::FileTime::from_system_time(mtime));
