@@ -3,8 +3,8 @@
 # ============================================
 zip_output/
 zip_output_copy/
-/conf/
-/conf隐私🔏/
+backup/
+conf隐私🔏/
 *敏感*
 *私密*
 *private*
@@ -58,6 +58,9 @@ Cargo.lock
 scripts/network/config-manager-auto-update/config.json
 scripts/network/config-manager-auto-update/bin/
 scripts/network/config-manager-auto-update/target/
+# Rust
+target/
+**/target/
 scripts/network/config-manager-auto-update/.cargo/
 .claude/
 

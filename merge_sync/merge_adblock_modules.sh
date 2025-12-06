@@ -779,8 +779,21 @@ generate_new_module() {
     # 备份原文件
     if [[ -f "$TARGET_MODULE" ]]; then
         if [[ "$AUTO_MODE" == "false" && "$CI" != "true" ]]; then
-            cp "$TARGET_MODULE" "$TARGET_MODULE.backup.$(date +%Y%m%d_%H%M%S)"
-            log_success "已备份原模块文件"
+            # Dedicated Backup Directory
+            local BACKUP_DIR="$PROJECT_ROOT/backup/modules"
+            mkdir -p "$BACKUP_DIR"
+            
+            # Create Backup
+            local BACKUP_FILE="$BACKUP_DIR/$(basename "$TARGET_MODULE").$(date +%Y%m%d_%H%M%S).bak"
+            cp "$TARGET_MODULE" "$BACKUP_FILE"
+            log_success "已备份原模块文件到: $BACKUP_FILE"
+            
+            # Rotation: Keep last 3 backups
+            pushd "$BACKUP_DIR" >/dev/null || true
+            # Pattern matching for this specific module
+            local MODULE_NAME=$(basename "$TARGET_MODULE")
+            ls -t "${MODULE_NAME}"*.bak 2>/dev/null | tail -n +4 | xargs -I {} rm "{}" 2>/dev/null || true
+            popd >/dev/null || true
         else
             log_info "跳过备份 (自动模式/CI)"
         fi

@@ -278,9 +278,9 @@ if [ "$EXECUTE" = true ]; then
         cp "$PROFILE_PATH" "$BACKUP_DIR/$(basename "$PROFILE_PATH").$timestamp.bak"
         print_success "Backed up profile to $BACKUP_DIR"
         
-        # Rotation: Keep last 10 backups
+        # Rotation: Keep last 3 backups
         cd "$BACKUP_DIR" || true
-        ls -t *.bak 2>/dev/null | tail -n +11 | xargs -I {} rm "{}" 2>/dev/null || true
+        ls -t *.bak 2>/dev/null | tail -n +4 | xargs -I {} rm "{}" 2>/dev/null || true
         cd - >/dev/null || true
     else
         print_info "Skipping backup (--no-backup or CI detected)."
