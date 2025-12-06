@@ -349,8 +349,8 @@ fn verify_conversion(original: &PathBuf, converted: &PathBuf) -> anyhow::Result<
     println!("   Size reduction: {:.2}%", reduction);
 
     // Load images for quality comparison
-    let orig_img = image::open(original)?;
-    let conv_img = image::open(converted)?;
+    let orig_img = load_image_safe(original)?;
+    let conv_img = load_image_safe(converted)?;
     
     println!("\n📏 Quality Metrics:");
     if let Some(psnr) = calculate_psnr(&orig_img, &conv_img) {
@@ -368,6 +368,46 @@ fn verify_conversion(original: &PathBuf, converted: &PathBuf) -> anyhow::Result<
     println!("\n✅ Verification complete");
 
     Ok(())
+}
+
+/// Load image safely, handling JXL via external decoder if needed
+fn load_image_safe(path: &PathBuf) -> anyhow::Result<image::DynamicImage> {
+    // Check extension
+    let is_jxl = path.extension()
+        .map(|e| e.to_string_lossy().to_lowercase() == "jxl")
+        .unwrap_or(false);
+        
+    if is_jxl {
+        use std::process::Command;
+        use std::time::{SystemTime, UNIX_EPOCH};
+        
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+        let temp_path = std::env::temp_dir().join(format!("imgquality_verify_{}.png", timestamp));
+        
+        // Decode JXL to PNG using djxl
+        let status = Command::new("djxl")
+            .arg(path)
+            .arg(&temp_path)
+            .status()
+            .map_err(|e| anyhow::anyhow!("Failed to execute djxl: {}", e))?;
+            
+        if !status.success() {
+            return Err(anyhow::anyhow!("djxl failed to decode JXL file"));
+        }
+        
+        // Load the temp PNG
+        let img = image::open(&temp_path).map_err(|e| {
+            let _ = std::fs::remove_file(&temp_path);
+            anyhow::anyhow!("Failed to open decoded PNG: {}", e)
+        })?;
+        
+        // Cleanup
+        let _ = std::fs::remove_file(&temp_path);
+        
+        Ok(img)
+    } else {
+        Ok(image::open(path)?)
+    }
 }
 
 fn print_analysis_human(analysis: &imgquality::ImageAnalysis) {
