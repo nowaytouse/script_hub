@@ -123,6 +123,11 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Conversi
     let input_size = fs::metadata(input)?.len();
     let output = determine_output_path(input, "jxl", &options.output_dir);
     
+    // Ensure output directory exists
+    if let Some(parent) = output.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    
     // Check if output already exists
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -567,14 +572,20 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     }
 }
 
-/// Determine output path
+/// Determine output path and ensure directory exists
 fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> PathBuf {
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     
-    match output_dir {
-        Some(dir) => dir.join(format!("{}.{}", stem, extension)),
+    let output = match output_dir {
+        Some(dir) => {
+            // Ensure output directory exists
+            let _ = fs::create_dir_all(dir);
+            dir.join(format!("{}.{}", stem, extension))
+        }
         None => input.with_extension(extension),
-    }
+    };
+    
+    output
 }
 
 /// Clear processed files list

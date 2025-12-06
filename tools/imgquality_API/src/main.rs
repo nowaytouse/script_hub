@@ -481,6 +481,11 @@ fn auto_convert_single_file(
     
     // Smart conversion based on format and lossless status
     let result = match (analysis.format.as_str(), analysis.is_lossless, analysis.is_animated) {
+        // HEIC/AVIF are already modern efficient formats - skip conversion
+        ("HEIC", _, _) | ("HEIF", _, _) | ("AVIF", _, _) => {
+            println!("⏭️ Skipping modern format (already efficient): {}", input.display());
+            return Ok(());
+        }
         // JPEG → JXL lossless transcode
         ("JPEG", _, false) => {
             println!("🔄 JPEG→JXL lossless transcode: {}", input.display());
@@ -522,8 +527,14 @@ fn auto_convert_single_file(
                 return Ok(());
             }
         }
-        // Static lossy (non-JPEG) → AVIF
-        (_, false, false) => {
+        // Static lossy (non-JPEG) → Skip lossy WebP, others use ffmpeg for AVIF
+        (format, false, false) => {
+            // Skip lossy WebP to avoid quality loss
+            if format == "WebP" {
+                println!("⏭️ Skipping lossy WebP (to avoid quality loss): {}", input.display());
+                return Ok(());
+            }
+            
             if lossless {
                 println!("🔄 Lossy→AVIF (MATHEMATICAL LOSSLESS): {}", input.display());
                 convert_to_avif_lossless(input, &options)?
