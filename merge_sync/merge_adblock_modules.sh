@@ -132,6 +132,10 @@ parse_arguments() {
                 show_help
                 exit 0
                 ;;
+            --no-backup)
+                # Accepted for compatibility, auto mode already disables backup
+                shift
+                ;;
             *)
                 # 检查是否是文件路径
                 if [[ -f "$1" ]]; then
@@ -754,6 +758,33 @@ scan_and_merge_modules() {
         done
     fi
     
+    # 处理 Sources/conf 中的 SurgeConf_AdBlock.list
+    local INGESTED_list="$PROJECT_ROOT/ruleset/Sources/conf/SurgeConf_AdBlock.list"
+    if [[ -f "$INGESTED_list" ]]; then
+        log_info "处理本地吸纳规则: SurgeConf_AdBlock.list"
+        # Extract raw rules assuming standard format without header
+        # Temporary prepend [Rule] for compat or just parse directly?
+        # Direct parse:
+        local raw_count=0
+        while IFS= read -r rule; do
+             if [[ "$rule" =~ ^(DOMAIN|IP-CIDR|USER-AGENT|URL-REGEX|DEST-PORT|SRC-PORT|IP-ASN|GEOIP|PROCESS-NAME) ]]; then
+                # Standardize
+                clean_rule=$(echo "$rule" | sed 's/  */ /g')
+                
+                # Deduplicate and Classify
+                if echo "$clean_rule" | grep -q ",REJECT-DROP"; then
+                    if ! grep -Fxq "$clean_rule" "$TEMP_RULES_REJECT_DROP"; then echo "$clean_rule" >> "$TEMP_RULES_REJECT_DROP"; ((raw_count++)); fi
+                elif echo "$clean_rule" | grep -q ",REJECT-NO-DROP"; then
+                    if ! grep -Fxq "$clean_rule" "$TEMP_RULES_REJECT_NO_DROP"; then echo "$clean_rule" >> "$TEMP_RULES_REJECT_NO_DROP"; ((raw_count++)); fi
+                elif echo "$clean_rule" | grep -q ",REJECT"; then
+                    if ! grep -Fxq "$clean_rule" "$TEMP_RULES_REJECT"; then echo "$clean_rule" >> "$TEMP_RULES_REJECT"; ((raw_count++)); fi
+                fi
+             fi
+        done < "$INGESTED_list"
+        log_success "从本地吸纳列表新增 $raw_count 条规则"
+        ((TOTAL_NEW_RULES += raw_count)) || true
+    fi
+
     log_info "自动扫描完成，共处理 $PROCESSED_MODULES 个模块"
 }
 

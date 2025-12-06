@@ -12,7 +12,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULESET_DIR="${SCRIPT_DIR}/../../ruleset"
+RULESET_DIR="${SCRIPT_DIR}/../ruleset"
 SURGE_DIR="${RULESET_DIR}/Surge(Shadowkroket)"
 SINGBOX_DIR="${RULESET_DIR}/SingBox"
 LOCAL_SINGBOX="${SCRIPT_DIR}/config-manager-auto-update/bin/sing-box"

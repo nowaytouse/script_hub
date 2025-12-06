@@ -37,10 +37,19 @@ log_success() {
 
 log_section "一键同步所有规则集"
 
-# Step 1: 合并Surge广告拦截模块
-log_section "Step 1: 合并Surge广告拦截模块"
+# Step 1: 合并普通规则集 (Sources -> Ruleset)
+log_section "Step 1: 合并普通规则集"
+if [[ -f "$SCRIPT_DIR/merge_all_rulesets.sh" ]]; then
+    bash "$SCRIPT_DIR/merge_all_rulesets.sh"
+    log_success "普通规则集合并完成"
+else
+    log_error "merge_all_rulesets.sh 不存在"
+fi
+
+# Step 2: 合并Surge广告拦截模块 (AdBlock)
+log_section "Step 2: 合并Surge广告拦截模块"
 if [[ -f "$SCRIPT_DIR/merge_adblock_modules.sh" ]]; then
-    bash "$SCRIPT_DIR/merge_adblock_modules.sh"
+    bash "$SCRIPT_DIR/merge_adblock_modules.sh" --auto --no-backup # Disable internal backup if handled elsewhere, or let it handle rotation
     log_success "广告拦截模块合并完成"
 else
     log_info "跳过广告拦截模块合并 (脚本不存在)"
@@ -48,8 +57,8 @@ fi
 
 # Step 2: 转换所有规则到SingBox
 log_section "Step 2: 转换所有规则到SingBox"
-if [[ -f "$PROJECT_ROOT/network/batch_convert_to_singbox.sh" ]]; then
-    bash "$PROJECT_ROOT/network/batch_convert_to_singbox.sh"
+if [[ -f "$SCRIPT_DIR/batch_convert_to_singbox.sh" ]]; then
+    bash "$SCRIPT_DIR/batch_convert_to_singbox.sh"
     log_success "SingBox规则转换完成"
 else
     log_info "跳过SingBox转换 (脚本不存在)"

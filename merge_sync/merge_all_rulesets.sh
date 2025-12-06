@@ -203,15 +203,15 @@ merge_to_target "$RULESET_DIR/Microsoft.list" "${MICROSOFT_SOURCES[@]}"
 # ============================================
 # 7. AdBlock - 合并广告规则
 # ============================================
-echo ""
-echo -e "${BLUE}[7/8] AdBlock - 广告拦截${NC}"
-ADBLOCK_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Advertising/Advertising.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list"
-    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_AdBlock.list"
-)
-merge_to_target "$RULESET_DIR/AdBlock_Merged.list" "${ADBLOCK_SOURCES[@]}"
+# NOTE: AdBlock merging is handled by merge_adblock_modules.sh (Smart Merger)
+# echo -e "${BLUE}[7/8] AdBlock - 广告拦截${NC}"
+# ADBLOCK_SOURCES=(
+#     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Advertising/Advertising.list"
+#     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy.list"
+#     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list"
+#     "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_AdBlock.list"
+# )
+# merge_to_target "$RULESET_DIR/AdBlock_Merged.list" "${ADBLOCK_SOURCES[@]}"
 
 # ============================================
 # 8. 新增: SocialMedia - 社交媒体
