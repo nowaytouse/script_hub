@@ -29,6 +29,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Directory traversal
 walkdir = "2.4"
 
+# File modification time
+filetime = "0.2"
+
+# Command execution check
+which = "6.0"
+
 # Regex for parsing ffprobe output
 regex = "1.10"
 

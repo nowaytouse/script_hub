@@ -143,9 +143,8 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
     // Always AV1 MP4 with CRF 0
     let output_size = execute_av1_conversion(&detection, &output_path, 0)?;
     
-    // Preserve metadata
-    preserve_metadata(input, &output_path)?;
-    preserve_timestamps(input, &output_path)?;
+    // Preserve metadata (complete copy)
+    copy_metadata(input, &output_path)?;
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
@@ -209,11 +208,8 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
         }
     };
     
-    // Preserve metadata
-    if config.preserve_metadata {
-        preserve_metadata(input, &output_path)?;
-    }
-    preserve_timestamps(input, &output_path)?;
+    // Preserve metadata (complete copy)
+    copy_metadata(input, &output_path)?;
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
@@ -409,8 +405,7 @@ pub fn simple_convert_with_lossless(input: &Path, output_dir: Option<&Path>, los
         execute_av1_conversion(&detection, &output_path, 0)?
     };
     
-    preserve_metadata(input, &output_path)?;
-    preserve_timestamps(input, &output_path)?;
+    copy_metadata(input, &output_path)?;
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
@@ -444,24 +439,40 @@ pub fn simple_convert_with_lossless(input: &Path, output_dir: Option<&Path>, los
     })
 }
 
-/// Preserve file timestamps
-fn preserve_timestamps(source: &Path, dest: &Path) -> Result<()> {
-    let _ = Command::new("touch")
-        .args(&["-r", source.to_str().unwrap_or(""), dest.to_str().unwrap_or("")])
-        .output();
-    Ok(())
-}
+/// Helper to copy metadata and timestamps from source to destination
+/// Uses exiftool if available (for complete metadata), and filetime (for robust timestamps)
+fn copy_metadata(src: &Path, dst: &Path) -> Result<()> {
+    // 1. Try to copy all metadata tags using exiftool
+    if which::which("exiftool").is_ok() {
+        // -tagsfromfile src -all:all: copy all standard tags
+        // -FileCreateDate/FileModifyDate: explicitly copy system timestamps (MacOS/System)
+        // -P: Preserve file modification date/time
+        // -overwrite_original: don't create _original backup
+        // -use MWG: use Metadata Working Group standards for compatibility
+        let _ = Command::new("exiftool")
+            .arg("-tagsfromfile")
+            .arg(src)
+            .arg("-all:all")
+            .arg("-FileCreateDate")  // Explicitly copy creation date (System tag)
+            .arg("-FileModifyDate")  // Explicitly copy modification date
+            .arg("-P")               // Preserve Modification Date
+            .arg("-use").arg("MWG")
+            .arg("-overwrite_original")
+            .arg(dst)
+            .output();
+    }
 
-/// Preserve metadata using exiftool
-fn preserve_metadata(source: &Path, dest: &Path) -> Result<()> {
-    let _ = Command::new("exiftool")
-        .args(&[
-            "-overwrite_original",
-            "-TagsFromFile", source.to_str().unwrap_or(""),
-            "-All:All",
-            dest.to_str().unwrap_or(""),
-        ])
-        .output();
+    // 2. Preserve file system timestamps (creation/modification time)
+    // This is a fallback/reinforcement for what ExifTool does, using native filetime crate
+    if let Ok(metadata) = std::fs::metadata(src) {
+        if let Ok(mtime) = metadata.modified() {
+            let _ = filetime::set_file_mtime(dst, filetime::FileTime::from_system_time(mtime));
+        }
+        if let Ok(atime) = metadata.accessed() {
+           let _ = filetime::set_file_atime(dst, filetime::FileTime::from_system_time(atime));
+        }
+    }
+    
     Ok(())
 }
 
