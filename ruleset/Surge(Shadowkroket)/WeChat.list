@@ -1,14 +1,9 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: WeChat
-# Updated: 2025-12-06
-# Total Rules: 329
-# Generator: merge_all_rulesets.sh
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: WeChat.list
+# Cleaned by smart_cleanup.py
+# Total: 327
 
-DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
 DOMAIN,dldir1.qq.com
 DOMAIN,slife.xy-asia.com
-DOMAIN,soup.v.qq.com
 DOMAIN,vweixinf.tc.qq.com
 DOMAIN,weixin110.qq.com
 DOMAIN,wup.imtt.qq.com
@@ -248,11 +243,9 @@ DOMAIN-KEYWORD,61.241.49.
 DOMAIN-SUFFIX,iot-tencent.com
 DOMAIN-SUFFIX,lbs.gtimg.com
 DOMAIN-SUFFIX,map.qq.com
-DOMAIN-SUFFIX,qlogo.cn
 DOMAIN-SUFFIX,qpic.cn
 DOMAIN-SUFFIX,servicewechat.com
 DOMAIN-SUFFIX,tenpay.com
-DOMAIN-SUFFIX,up-hl.3g.qq.com
 DOMAIN-SUFFIX,vweixinthumb.tc.qq.com
 DOMAIN-SUFFIX,wechat.com
 DOMAIN-SUFFIX,wechatlegal.net
@@ -266,7 +259,7 @@ DOMAIN-SUFFIX,wx.gtimg.com
 DOMAIN-SUFFIX,wx.qq.com
 DOMAIN-SUFFIX,wxapp.tc.qq.com
 DOMAIN-SUFFIX,wxs.qq.com
-DOMAIN-SUFFIX,yun-hl.3g.qq.com
+IP-ASN,132203,no-resolve
 IP-CIDR,111.30.160.0/20,no-resolve
 IP-CIDR,112.53.11.0/24,no-resolve
 IP-CIDR,112.53.20.0/24,no-resolve
@@ -334,3 +327,5 @@ IP-CIDR6,240e:f7:4f00:1f10::/60,no-resolve
 IP-CIDR6,240e:f7:a070:100::/60,no-resolve
 IP-CIDR6,240e:ff:9018:100::/60,no-resolve
 IP-CIDR6,240e:ff:f100::/44,no-resolve
+USER-AGENT,MicroMessenger*
+USER-AGENT,WeChat*

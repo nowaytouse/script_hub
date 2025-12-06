@@ -1,9 +1,6 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: LAN
-# Updated: 2025-12-06
-# Total Rules: 151
-# Generator: merge_all_rulesets.sh
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: LAN.list
+# Cleaned by smart_cleanup.py
+# Total: 152
 
 DOMAIN,asusrouter.com
 DOMAIN,instant.arubanetworks.com
@@ -111,6 +108,7 @@ DOMAIN-SUFFIX,b.e.f.ip6.arpa
 DOMAIN-SUFFIX,d.f.ip6.arpa
 DOMAIN-SUFFIX,hiwifi.com
 DOMAIN-SUFFIX,home.arpa
+DOMAIN-SUFFIX,internal
 DOMAIN-SUFFIX,ip6-localhost
 DOMAIN-SUFFIX,ip6-loopback
 DOMAIN-SUFFIX,lan

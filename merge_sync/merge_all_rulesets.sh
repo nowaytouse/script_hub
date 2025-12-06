@@ -1,9 +1,12 @@
 #!/bin/bash
 # =============================================================================
-# 完整规则集合并脚本 - 合并所有第三方规则到自有规则集
+# 完整规则集合并脚本 - 智能无人值守版
 # =============================================================================
-# 目标: 将 MetaCubeX/SagerNet/Sukka/Chocolate4U 等规则合并到自有规则集
-# 确保 Singbox 配置只使用自有规则集
+# 1. GIT PULL 拉取最新代码
+# 2. 调用 merge_adblock_modules.sh 处理广告规则
+# 3. 从 ruleset/Sources/Links/*.txt 读取源链接并合并
+# 4. 调用 smart_cleanup.py 进行清洗
+# 5. GIT PUSH 提交更改
 # =============================================================================
 
 set -e
@@ -15,277 +18,168 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULESET_DIR="${SCRIPT_DIR}/../ruleset/Surge(Shadowkroket)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+RULESET_DIR="${PROJECT_ROOT}/ruleset/Surge(Shadowkroket)"
+LINKS_DIR="${PROJECT_ROOT}/ruleset/Sources/Links"
 TEMP_DIR=$(mktemp -d)
 
 cleanup() { rm -rf "$TEMP_DIR"; }
 trap cleanup EXIT
 
-echo -e "${BLUE}=== 规则集完整合并脚本 ===${NC}"
+echo -e "${BLUE}=== 规则集智能合并脚本 (无人值守模式) ===${NC}"
 echo ""
+
+# 0. Git Pull
+echo -e "${YELLOW}>>> 正在同步 Git 仓库...${NC}"
+cd "$PROJECT_ROOT"
+if git pull; then
+    echo -e "${GREEN}✓ Git Pull 成功${NC}"
+else
+    echo -e "${RED}✗ Git Pull 失败，但继续尝试执行...${NC}"
+fi
+
+# 1. 处理广告拦截模块 (AdBlock)
+echo ""
+echo -e "${YELLOW}>>> (1/4) 处理广告拦截模块...${NC}"
+if [ -f "${SCRIPT_DIR}/merge_adblock_modules.sh" ]; then
+    bash "${SCRIPT_DIR}/merge_adblock_modules.sh" --auto --no-backup
+else
+    echo -e "${RED}错误: 找不到 merge_adblock_modules.sh${NC}"
+fi
 
 # 下载函数
 download_rules() {
     local url="$1" output="$2"
-    # Check if local file
-    if [ -f "$url" ]; then
-        cp "$url" "$output"
-        return 0
+    if [[ "$url" == file://* ]]; then
+        local path="${url#file://}"
+        if [ -f "$path" ]; then cp "$path" "$output"; return 0; fi
+    elif [ -f "$url" ]; then
+        cp "$url" "$output"; return 0;
     else
         curl -sL --connect-timeout 15 --max-time 60 "$url" -o "$output" 2>/dev/null
     fi
 }
 
-# 提取有效规则
+# 提取函数
 extract_rules() {
     local input="$1"
     grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|PROCESS-NAME|IN-PORT|DEST-PORT|SRC-PORT),' "$input" 2>/dev/null | \
         sed 's/[[:space:]]*$//' | \
         awk -F, '{
-            type = $1;
-            # 去除 $2 中的空格及之后内容 (针对 "VALUE reject" 格式)
-            gsub(/^[ \t]+|[ \t]+$/, "", $2);
-            split($2, a, " ");
-            val = a[1];
-            
-            # IPv6 地址检测：如果 IP-CIDR 的值包含冒号，转换为 IP-CIDR6
-            if(type == "IP-CIDR" && index(val, ":") > 0) {
-                type = "IP-CIDR6";
-            }
-            
-            # 构建输出
+            type = $1; gsub(/^[ \t]+|[ \t]+$/, "", $2); split($2, a, " "); val = a[1];
+            if(type == "IP-CIDR" && index(val, ":") > 0) type = "IP-CIDR6";
             out = type "," val;
-            
-            # 处理后续字段 (只保留 no-resolve，过滤策略和其他 Profile 选项)
-            for(i=3; i<=NF; i++) {
-                # 去除首尾空格
-                gsub(/^[ \t]+|[ \t]+$/, "", $i);
-                # 只保留 no-resolve，忽略其他所有选项 (如 pre-matching, extended-matching, REJECT 等)
-                if($i == "no-resolve") {
-                    out = out "," $i;
-                }
-            }
+            for(i=3; i<=NF; i++) { gsub(/^[ \t]+|[ \t]+$/, "", $i); if($i == "no-resolve") out = out "," $i; }
             print out;
         }' || true
 }
 
-# 合并规则到目标文件
-merge_to_target() {
-    local target="$1"
-    shift
-    local sources=("$@")
+# 合并函数
+merge_category() {
+    local list_name="$1"
+    local source_name="$2"
+    local target="$RULESET_DIR/$list_name"
+    local source_file="$LINKS_DIR/$source_name"
+    
+    if [ ! -f "$source_file" ]; then echo -e "${YELLOW}Skipping $list_name (Not found: $source_name)${NC}"; return; fi
+    
+    echo -e "${BLUE}正在生成: $list_name ...${NC}"
     local temp_merged="$TEMP_DIR/merged_$RANDOM.txt"
-    
-    echo -e "${YELLOW}合并到: $(basename $target)${NC}"
-    
-    # 创建新的临时文件
     touch "$temp_merged"
     
-    # 保留原有规则
-    if [ -f "$target" ]; then
-        extract_rules "$target" >> "$temp_merged"
-    fi
-    
-    # 下载并合并每个源
-    for url in "${sources[@]}"; do
+    while IFS= read -r url || [[ -n "$url" ]]; do
+        [[ "$url" =~ ^[[:space:]]*#.*$ ]] && continue
+        [[ -z "$url" ]] && continue
+        if [[ "$url" == ./* || "$url" == ../* ]]; then url="${LINKS_DIR}/${url}"; fi
+        url=$(echo "$url" | tr -d '\r')
         local temp_download="$TEMP_DIR/download_$RANDOM.txt"
-        echo "  ← $url"
-        if download_rules "$url" "$temp_download"; then
-            extract_rules "$temp_download" >> "$temp_merged"
-        else
-            echo -e "    ${RED}下载失败${NC}"
-        fi
-    done
+        if download_rules "$url" "$temp_download"; then extract_rules "$temp_download" >> "$temp_merged"; rm -f "$temp_download"; fi
+    done < "$source_file"
     
-    # 去重并排序
-    local count_before=$(wc -l < "$temp_merged" | tr -d ' ')
     sort -u "$temp_merged" -o "$temp_merged"
     local count_after=$(wc -l < "$temp_merged" | tr -d ' ')
-    
-    # 生成带头部的输出
     local update_date=$(date "+%Y-%m-%d")
+    
     cat > "$target" << EOF
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: $(basename "$target" .list)
 # Updated: ${update_date}
 # Total Rules: ${count_after}
-# Generator: merge_all_rulesets.sh
+# Generator: merge_all_rulesets.sh + smart_cleanup.py
 # ═══════════════════════════════════════════════════════════════
 
 EOF
     cat "$temp_merged" >> "$target"
-    
-    echo -e "  ${GREEN}✓ ${count_after} 条规则 (去重前: ${count_before})${NC}"
+    echo -e "  ${GREEN}✓ 合并完成: ${count_after} 条规则${NC}"
 }
 
-# ============================================
-# 1. GlobalMedia - 合并流媒体规则
-# ============================================
+# 2. 执行所有分类合并
 echo ""
-echo -e "${BLUE}[1/8] GlobalMedia - 流媒体服务${NC}"
-GLOBALMEDIA_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Netflix/Netflix.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Disney/Disney.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/HBO/HBO.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hulu/Hulu.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Spotify/Spotify.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitch/Twitch.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/AmazonPrimeVideo/AmazonPrimeVideo.list"
-)
-merge_to_target "$RULESET_DIR/GlobalMedia.list" "${GLOBALMEDIA_SOURCES[@]}"
+echo -e "${YELLOW}>>> (2/4) 合并通用规则集...${NC}"
 
-# ============================================
-# 2. AI - 合并AI服务规则
-# ============================================
+# Core
+merge_category "GlobalMedia.list" "GlobalMedia_sources.txt"
+merge_category "GlobalProxy.list" "GlobalProxy_sources.txt"
+merge_category "ChinaDirect.list" "ChinaDirect_sources.txt"
+merge_category "ChinaIP.list" "ChinaIP_sources.txt"
+merge_category "LAN.list" "LAN_sources.txt"
+merge_category "NSFW.list" "NSFW_sources.txt"
+
+# Process & Ports (Local Conf Absorbed)
+merge_category "DirectProcess.list" "DirectProcess_sources.txt"
+merge_category "FirewallPorts.list" "FirewallPorts_sources.txt"
+
+# Categories
+merge_category "AI.list" "AI_sources.txt"
+merge_category "Gaming.list" "Gaming_sources.txt"
+merge_category "SocialMedia.list" "SocialMedia_sources.txt"
+merge_category "Microsoft.list" "Microsoft_sources.txt"
+merge_category "Apple.list" "Apple_sources.txt"
+merge_category "PayPal.list" "PayPal_sources.txt"
+merge_category "Telegram.list" "Telegram_sources.txt"
+merge_category "GitHub.list" "GitHub_sources.txt"
+merge_category "CDN.list" "CDN_sources.txt"
+merge_category "Fediverse.list" "Fediverse_sources.txt"
+
+# Specifics (for those preferring granular lists)
+merge_category "Twitter.list" "Twitter_sources.txt"
+merge_category "Instagram.list" "Instagram_sources.txt"
+merge_category "TikTok.list" "TikTok_sources.txt"
+merge_category "Netflix.list" "Netflix_sources.txt"
+merge_category "Spotify.list" "Spotify_sources.txt"
+merge_category "YouTube.list" "YouTube_sources.txt"
+merge_category "Google.list" "Google_sources.txt"
+merge_category "Steam.list" "Steam_sources.txt"
+merge_category "Disney.list" "Disney_sources.txt"
+merge_category "Reddit.list" "Reddit_sources.txt"
+merge_category "Bing.list" "Bing_sources.txt"
+merge_category "Bilibili.list" "Bilibili_sources.txt"
+
+
+# 3. 智能清洗
 echo ""
-echo -e "${BLUE}[2/8] AI - AI服务${NC}"
-AI_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OpenAI/OpenAI.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Gemini/Gemini.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Copilot/Copilot.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BardAI/BardAI.list"
-)
-merge_to_target "$RULESET_DIR/AI.list" "${AI_SOURCES[@]}"
+echo -e "${YELLOW}>>> (3/4) 执行智能冲突清洗 (Smart Cleanup)...${NC}"
+python3 "${SCRIPT_DIR}/smart_cleanup.py"
 
-# ============================================
-# 3. Gaming - 合并游戏规则
-# ============================================
+
+# 4. Git Push
 echo ""
-echo -e "${BLUE}[3/8] Gaming - 游戏平台${NC}"
-GAMING_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Steam/Steam.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Epic/Epic.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/PlayStation/PlayStation.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Xbox/Xbox.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Nintendo/Nintendo.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Blizzard/Blizzard.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/EA/EA.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Ubisoft/Ubisoft.list"
-)
-merge_to_target "$RULESET_DIR/Gaming.list" "${GAMING_SOURCES[@]}"
+echo -e "${YELLOW}>>> (4/4) 提交更改到 Git...${NC}"
+cd "$PROJECT_ROOT"
 
-# ============================================
-# 4. GlobalProxy - 合并代理规则 (GFW + geolocation-!cn)
-# ============================================
-echo ""
-echo -e "${BLUE}[4/8] GlobalProxy - 代理规则${NC}"
-GLOBALPROXY_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Global/Global.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list"
-)
-merge_to_target "$RULESET_DIR/GlobalProxy.list" "${GLOBALPROXY_SOURCES[@]}"
-
-# ============================================
-# 5. LAN - 合并私有网络规则
-# ============================================
-echo ""
-echo -e "${BLUE}[5/8] LAN - 私有网络${NC}"
-LAN_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Lan/Lan.list"
-)
-merge_to_target "$RULESET_DIR/LAN.list" "${LAN_SOURCES[@]}"
-
-# ============================================
-# 6. Microsoft - 合并微软规则 (含Bing)
-# ============================================
-echo ""
-echo -e "${BLUE}[6/8] Microsoft - 微软服务${NC}"
-MICROSOFT_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Bing/Bing.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OneDrive/OneDrive.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Teams/Teams.list"
-)
-merge_to_target "$RULESET_DIR/Microsoft.list" "${MICROSOFT_SOURCES[@]}"
-
-# ============================================
-# 7. AdBlock - 合并广告规则
-# ============================================
-# NOTE: AdBlock merging is handled by merge_adblock_modules.sh (Smart Merger)
-# echo -e "${BLUE}[7/8] AdBlock - 广告拦截${NC}"
-# ADBLOCK_SOURCES=(
-#     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Advertising/Advertising.list"
-#     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy.list"
-#     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list"
-#     "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_AdBlock.list"
-# )
-# merge_to_target "$RULESET_DIR/AdBlock_Merged.list" "${ADBLOCK_SOURCES[@]}"
-
-# ============================================
-# 8. 新增: SocialMedia - 社交媒体
-# ============================================
-echo ""
-echo -e "${BLUE}[8/8] SocialMedia - 社交媒体 (新增)${NC}"
-SOCIALMEDIA_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Instagram/Instagram.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitter/Twitter.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Facebook/Facebook.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Whatsapp/Whatsapp.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Reddit/Reddit.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/LinkedIn/LinkedIn.list"
-)
-merge_to_target "$RULESET_DIR/SocialMedia.list" "${SOCIALMEDIA_SOURCES[@]}"
-
-# ============================================
-# 9. 新增: PayPal
-# ============================================
-echo ""
-echo -e "${BLUE}[9/10] PayPal (新增)${NC}"
-PAYPAL_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/PayPal/PayPal.list"
-)
-merge_to_target "$RULESET_DIR/PayPal.list" "${PAYPAL_SOURCES[@]}"
-
-# ============================================
-# 9.1. 新增: Telegram
-# ============================================
-echo ""
-echo -e "${BLUE}[9.1/10] Telegram${NC}"
-TELEGRAM_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list"
-    "${SCRIPT_DIR}/../ruleset/Sources/custom/Telegram_manual.txt"
-)
-merge_to_target "$RULESET_DIR/Telegram.list" "${TELEGRAM_SOURCES[@]}"
-
-# ============================================
-# 10. 新增: GitHub
-# ============================================
-echo ""
-echo -e "${BLUE}[10/10] GitHub (新增)${NC}"
-GITHUB_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitHub/GitHub.list"
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitLab/GitLab.list"
-)
-# ============================================
-# 11. 新增: NSFW - 成人内容
-# ============================================
-echo ""
-echo -e "${BLUE}[11/12] NSFW - 成人内容${NC}"
-NSFW_SOURCES=(
-    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Global/Global.list" # Fallback or specialized?
-    # User's Conf Source
-    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_NSFW.list"
-)
-merge_to_target "$RULESET_DIR/NSFW.list" "${NSFW_SOURCES[@]}"
-
-# ============================================
-# 12. 新增: DirectProcess & Ports
-# ============================================
-echo ""
-echo -e "${BLUE}[12/12] DirectProcess & Ports${NC}"
-DIRECT_PROCESS_SOURCES=(
-    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_DirectProcess.list"
-)
-merge_to_target "$RULESET_DIR/DirectProcess.list" "${DIRECT_PROCESS_SOURCES[@]}"
-
-DIRECT_PORTS_SOURCES=(
-    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_DirectPorts.list"
-)
-merge_to_target "$RULESET_DIR/FirewallPorts.list" "${DIRECT_PORTS_SOURCES[@]}"
+# Check if there are changes
+if [[ -n $(git status -s) ]]; then
+    git add .
+    git commit -m "Auto-update: Ruleset synchronization $(date '+%Y-%m-%d %H:%M')"
+    
+    if git push; then
+        echo -e "${GREEN}✓ Git Push 成功${NC}"
+    else
+        echo -e "${RED}✗ Git Push 失败 (可能需要手动处理)${NC}"
+    fi
+else
+    echo -e "${GREEN}无需提交 (没有变更)${NC}"
+fi
 
 echo ""
-echo -e "${GREEN}=== 规则合并完成 ===${NC}"
-echo ""
-echo "下一步: 运行 batch_convert_to_singbox.sh 生成 .srs 文件"
+echo -e "${GREEN}=== 全流程完成 ===${NC}"

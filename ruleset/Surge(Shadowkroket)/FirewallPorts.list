@@ -1,9 +1,6 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: FirewallPorts
-# Updated: 2025-12-06
-# Total Rules: 2
-# Generator: merge_all_rulesets.sh
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: FirewallPorts.list
+# Cleaned by smart_cleanup.py
+# Total: 2
 
 DEST-PORT,8076
 IN-PORT,8076

@@ -1,28 +1,19 @@
-# ═══════════════════════════════════════════════════════════════
-# Download Tools Process Rules - Direct Connection
-# ═══════════════════════════════════════════════════════════════
-# Auto-generated: 2025-12-03
-# Repository: https://github.com/nowaytouse/script_hub
-# Description: P2P/BT download tools that should bypass proxy
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: DownloadProcess.list
+# Cleaned by smart_cleanup.py
+# Total: 15
 
-# Proxy Tools
-PROCESS-NAME,naive
-PROCESS-NAME,privoxy
-PROCESS-NAME,leaf
-
-# Download Managers
-PROCESS-NAME,Thunder
+PROCESS-NAME,BitComet
+PROCESS-NAME,Deluge
 PROCESS-NAME,DownloadService
-
-# BitTorrent Clients
-PROCESS-NAME,qBittorrent
+PROCESS-NAME,Folx
+PROCESS-NAME,Motrix
+PROCESS-NAME,NetTransport
+PROCESS-NAME,Thunder
 PROCESS-NAME,Transmission
-PROCESS-NAME,uTorrent
 PROCESS-NAME,WebTorrent
 PROCESS-NAME,aria2c
-PROCESS-NAME,Folx
-PROCESS-NAME,NetTransport
-PROCESS-NAME,Motrix
-PROCESS-NAME,Deluge
-PROCESS-NAME,BitComet
+PROCESS-NAME,leaf
+PROCESS-NAME,naive
+PROCESS-NAME,privoxy
+PROCESS-NAME,qBittorrent
+PROCESS-NAME,uTorrent

@@ -1,38 +1,20 @@
-# ═══════════════════════════════════════════════════════════════
-# Manual Direct Rules - 🗺️ 直连通用 🌏
-# ═══════════════════════════════════════════════════════════════
-# Auto-generated: 2025-12-03
-# Repository: https://github.com/nowaytouse/script_hub
-# Description: Manually maintained direct connection rules
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: Manual.list
+# Cleaned by smart_cleanup.py
+# Total: 16
 
-# Local
-DOMAIN,localhost
 DOMAIN,127.0.0.1
-DOMAIN-SUFFIX,local
-DOMAIN-SUFFIX,smtp
-
-# China Comics
-DOMAIN-SUFFIX,idmzj.com
-DOMAIN-SUFFIX,zaimanhua.com
-
-# Steam CDN (China)
-DOMAIN-SUFFIX,steamserver.net
-
-# ByteDance
+DOMAIN,localhost
 DOMAIN-KEYWORD,diting.bytedance
-DOMAIN-KEYWORD,sd-gl.xinqiucc
-
-# Tencent
 DOMAIN-KEYWORD,qq
-
-# Dev Tools (Direct)
-DOMAIN-SUFFIX,jetbrains.com
-DOMAIN-SUFFIX,ugreengroup.com
-DOMAIN-SUFFIX,msftconnecttest.com
+DOMAIN-KEYWORD,sd-gl.xinqiucc
 DOMAIN-SUFFIX,appstorrent.ru
-DOMAIN-SUFFIX,zerotier.com
+DOMAIN-SUFFIX,idmzj.com
 DOMAIN-SUFFIX,imgse.com
-
-# IPv6 Local
+DOMAIN-SUFFIX,jetbrains.com
+DOMAIN-SUFFIX,msftconnecttest.com
+DOMAIN-SUFFIX,smtp
+DOMAIN-SUFFIX,steamserver.net
+DOMAIN-SUFFIX,ugreengroup.com
+DOMAIN-SUFFIX,zaimanhua.com
+DOMAIN-SUFFIX,zerotier.com
 IP-CIDR,fc00::/7

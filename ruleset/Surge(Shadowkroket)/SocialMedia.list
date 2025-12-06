@@ -1,9 +1,6 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: SocialMedia
-# Updated: 2025-12-06
-# Total Rules: 660
-# Generator: merge_all_rulesets.sh
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: SocialMedia.list
+# Cleaned by smart_cleanup.py
+# Total: 623
 
 DOMAIN,e122475.dscg.akamaiedge.net
 DOMAIN,graph.facebook.com
@@ -11,8 +8,6 @@ DOMAIN,licdn.cn.cdn20.com
 DOMAIN,linkedin.sc.omtrdc.net
 DOMAIN-KEYWORD,facebook
 DOMAIN-KEYWORD,fbcdn
-DOMAIN-KEYWORD,instagram
-DOMAIN-KEYWORD,twitter
 DOMAIN-KEYWORD,whatsapp
 DOMAIN-SUFFIX,aboutfacebook.com
 DOMAIN-SUFFIX,accessfacebookfromschool.com
@@ -23,7 +18,6 @@ DOMAIN-SUFFIX,achat-followers-instagram.com
 DOMAIN-SUFFIX,acheter-followers-instagram.com
 DOMAIN-SUFFIX,acheterdesfollowersinstagram.com
 DOMAIN-SUFFIX,acheterfollowersinstagram.com
-DOMAIN-SUFFIX,ads-twitter.com
 DOMAIN-SUFFIX,advancediddetection.com
 DOMAIN-SUFFIX,askfacebook.net
 DOMAIN-SUFFIX,askfacebook.org
@@ -42,12 +36,10 @@ DOMAIN-SUFFIX,buyingfacebooklikes.com
 DOMAIN-SUFFIX,buyoculus.com
 DOMAIN-SUFFIX,careersatfb.com
 DOMAIN-SUFFIX,carstagram.com
-DOMAIN-SUFFIX,cdninstagram.com
 DOMAIN-SUFFIX,celebgramme.com
 DOMAIN-SUFFIX,chickstagram.com
 DOMAIN-SUFFIX,china-facebook.com
 DOMAIN-SUFFIX,click-url.com
-DOMAIN-SUFFIX,cms-twdigitalassets.com
 DOMAIN-SUFFIX,como-hackearfacebook.com
 DOMAIN-SUFFIX,componentkit.org
 DOMAIN-SUFFIX,crowdtangle.com
@@ -399,7 +391,6 @@ DOMAIN-SUFFIX,futureofbusinesssurvey.org
 DOMAIN-SUFFIX,gacebook.com
 DOMAIN-SUFFIX,gameroom.com
 DOMAIN-SUFFIX,gfacecbook.com
-DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,groups.com
 DOMAIN-SUFFIX,hackerfacebook.com
 DOMAIN-SUFFIX,hackfacebook.com
@@ -428,13 +419,11 @@ DOMAIN-SUFFIX,instagda.com
 DOMAIN-SUFFIX,instagify.com
 DOMAIN-SUFFIX,instagmania.com
 DOMAIN-SUFFIX,instagor.com
-DOMAIN-SUFFIX,instagr.am
 DOMAIN-SUFFIX,instagram-brand.com
 DOMAIN-SUFFIX,instagram-engineering.com
 DOMAIN-SUFFIX,instagram-help.com
 DOMAIN-SUFFIX,instagram-press.com
 DOMAIN-SUFFIX,instagram-press.net
-DOMAIN-SUFFIX,instagram.com
 DOMAIN-SUFFIX,instagramci.com
 DOMAIN-SUFFIX,instagramcn.com
 DOMAIN-SUFFIX,instagramdi.com
@@ -524,7 +513,6 @@ DOMAIN-SUFFIX,opencreate.org
 DOMAIN-SUFFIX,opengraphprotocol.com
 DOMAIN-SUFFIX,opengraphprotocol.org
 DOMAIN-SUFFIX,parse.com
-DOMAIN-SUFFIX,periscope.tv
 DOMAIN-SUFFIX,pinimg.com
 DOMAIN-SUFFIX,pinterest.at
 DOMAIN-SUFFIX,pinterest.ca
@@ -549,7 +537,6 @@ DOMAIN-SUFFIX,pinterest.pt
 DOMAIN-SUFFIX,pinterest.ru
 DOMAIN-SUFFIX,pinterest.se
 DOMAIN-SUFFIX,powersunitedvr.com
-DOMAIN-SUFFIX,pscp.tv
 DOMAIN-SUFFIX,pyrobot.org
 DOMAIN-SUFFIX,reachtheworldonfacebook.com
 DOMAIN-SUFFIX,react.com
@@ -572,33 +559,13 @@ DOMAIN-SUFFIX,shopfacebook.com
 DOMAIN-SUFFIX,sportsfacebook.com
 DOMAIN-SUFFIX,sportstream.com
 DOMAIN-SUFFIX,supportfacebook.com
-DOMAIN-SUFFIX,t.co
-DOMAIN-SUFFIX,tellapart.com
 DOMAIN-SUFFIX,terragraph.com
 DOMAIN-SUFFIX,thefacebook.com
 DOMAIN-SUFFIX,thefacebook.net
 DOMAIN-SUFFIX,thefind.com
 DOMAIN-SUFFIX,theinstagramhack.com
 DOMAIN-SUFFIX,toplayerserver.com
-DOMAIN-SUFFIX,tweetdeck.com
-DOMAIN-SUFFIX,twimg.co
-DOMAIN-SUFFIX,twimg.com
-DOMAIN-SUFFIX,twimg.org
-DOMAIN-SUFFIX,twitpic.com
-DOMAIN-SUFFIX,twitter.biz
-DOMAIN-SUFFIX,twitter.com
-DOMAIN-SUFFIX,twitter.jp
-DOMAIN-SUFFIX,twittercommunity.com
-DOMAIN-SUFFIX,twitterflightschool.com
-DOMAIN-SUFFIX,twitterinc.com
-DOMAIN-SUFFIX,twitteroauth.com
-DOMAIN-SUFFIX,twitterstat.us
-DOMAIN-SUFFIX,twtrdns.net
-DOMAIN-SUFFIX,twttr.com
-DOMAIN-SUFFIX,twttr.net
-DOMAIN-SUFFIX,twvid.com
 DOMAIN-SUFFIX,viewpointsfromfacebook.com
-DOMAIN-SUFFIX,vine.co
 DOMAIN-SUFFIX,wa.me
 DOMAIN-SUFFIX,web-instagram.net
 DOMAIN-SUFFIX,whatsapp-plus.info
@@ -621,7 +588,6 @@ DOMAIN-SUFFIX,wwwfacebok.com
 DOMAIN-SUFFIX,wwwfacebook.com
 DOMAIN-SUFFIX,wwwinstagram.com
 DOMAIN-SUFFIX,wwwmfacebook.com
-DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,yogalayout.com
 DOMAIN-SUFFIX,zuckerberg.com
 DOMAIN-SUFFIX,zuckerberg.net
@@ -646,12 +612,7 @@ IP-CIDR,173.192.231.32/27,no-resolve
 IP-CIDR,173.252.64.0/18,no-resolve
 IP-CIDR,18.194.0.0/15,no-resolve
 IP-CIDR,184.173.128.0/17,no-resolve
-IP-CIDR,192.133.76.0/22,no-resolve
-IP-CIDR,199.59.148.0/22,no-resolve
-IP-CIDR,199.96.56.0/21,no-resolve
-IP-CIDR,202.160.128.0/22,no-resolve
 IP-CIDR,208.43.122.128/27,no-resolve
-IP-CIDR,209.237.192.0/19,no-resolve
 IP-CIDR,3.123.36.126/32,no-resolve
 IP-CIDR,31.13.64.0/18,no-resolve
 IP-CIDR,34.224.0.0/12,no-resolve
@@ -664,4 +625,3 @@ IP-CIDR,54.173.34.141/32,no-resolve
 IP-CIDR,54.235.23.242/32,no-resolve
 IP-CIDR,54.242.0.0/15,no-resolve
 IP-CIDR,54.93.124.31/32,no-resolve
-IP-CIDR,69.195.160.0/19,no-resolve

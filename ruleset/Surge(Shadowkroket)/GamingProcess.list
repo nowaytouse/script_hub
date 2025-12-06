@@ -1,28 +1,15 @@
-# ═══════════════════════════════════════════════════════════════
-# Gaming Process Rules - Game Platform Routing
-# ═══════════════════════════════════════════════════════════════
-# Auto-generated: 2025-12-03
-# Repository: https://github.com/nowaytouse/script_hub
-# Description: Game clients and launchers
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: GamingProcess.list
+# Cleaned by smart_cleanup.py
+# Total: 11
 
-# Roblox
 PROCESS-NAME,/Applications/Roblox.app/
 PROCESS-NAME,/Volumes/RobloxPlayerInstaller/RobloxPlayerInstaller.app/
-PROCESS-NAME,RobloxPlayer
-
-# Steam (handled by Gaming.list domain rules mostly)
-PROCESS-NAME,steam
-PROCESS-NAME,steamwebhelper
-
-# Epic Games
+PROCESS-NAME,Agent
+PROCESS-NAME,Battle.net
+PROCESS-NAME,EADesktop
 PROCESS-NAME,EpicGamesLauncher
 PROCESS-NAME,EpicWebHelper
-
-# Battle.net
-PROCESS-NAME,Battle.net
-PROCESS-NAME,Agent
-
-# Origin/EA
 PROCESS-NAME,Origin
-PROCESS-NAME,EADesktop
+PROCESS-NAME,RobloxPlayer
+PROCESS-NAME,steam
+PROCESS-NAME,steamwebhelper

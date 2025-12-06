@@ -1,9 +1,6 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: AI
-# Updated: 2025-12-06
-# Total Rules: 73
-# Generator: merge_all_rulesets.sh
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: AI.list
+# Cleaned by smart_cleanup.py
+# Total: 70
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
@@ -31,11 +28,8 @@ DOMAIN,services.bingapis.com
 DOMAIN,static.cloudflareinsights.com
 DOMAIN,sydney.bing.com
 DOMAIN,www.bing.com
-DOMAIN,www.gemini.google.com
-DOMAIN-KEYWORD,claude
 DOMAIN-KEYWORD,colab
 DOMAIN-KEYWORD,developerprofiles
-DOMAIN-KEYWORD,gemini
 DOMAIN-KEYWORD,generativelanguage
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api

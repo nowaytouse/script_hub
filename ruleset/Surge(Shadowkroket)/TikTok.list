@@ -1,58 +1,13 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: TikTok
-# Updated: 2025-12-06
-# Total Rules: 476
-# Generator: merge_all_rulesets.sh
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: TikTok.list
+# Cleaned by smart_cleanup.py
+# Total: 402
 
-DOMAIN,api.snapkit.com
-DOMAIN,cocacola.co.jp
-DOMAIN,courses.snapsolve.com
-DOMAIN,engagements.appsflyer.com
-DOMAIN,lf16-campaign.ttlstatic.com
-DOMAIN,lf16-csp.oecstatic.com
 DOMAIN,lf16-effectcdn.byteeffecttos-g.com
 DOMAIN,lf16-pkgcdn.pitaya-clientai.com
-DOMAIN,lf16-scmcdn.oecstatic.com
-DOMAIN,lf19-csp.oecstatic.com
-DOMAIN,lf19-pkgcdn.pitaya-clientai.com
-DOMAIN,lf19-scmcdn.oecstatic.com
-DOMAIN,musically-alternate.app.link
-DOMAIN,musically.app.link
-DOMAIN,p1-tt-ipv6.byteimg.com
-DOMAIN,p1-tt.byteimg.com
 DOMAIN,p16-tiktokcdn-com.akamaized.net
-DOMAIN,p26-tt.byteimg.com
-DOMAIN,p3-tt-ipv6.byteimg.com
-DOMAIN,p9-tt.byteimg.com
-DOMAIN,pull-f3-hs.pstatp.com
-DOMAIN,pull-f5-hs.flive.pstatp.com
-DOMAIN,pull-f5-hs.pstatp.com
-DOMAIN,pull-f5-mus.pstatp.com
-DOMAIN,pull-flv-f1-hs.pstatp.com
-DOMAIN,pull-flv-f6-hs.pstatp.com
-DOMAIN,pull-flv-l1-hs.pstatp.com
-DOMAIN,pull-flv-l1-mus.pstatp.com
-DOMAIN,pull-flv-l6-hs.pstatp.com
-DOMAIN,pull-hls-l1-mus.pstatp.com
-DOMAIN,pull-l3-hs.pstatp.com
-DOMAIN,pull-rtmp-f1-hs.pstatp.com
-DOMAIN,pull-rtmp-f6-hs.pstatp.com
-DOMAIN,pull-rtmp-l1-hs.pstatp.com
-DOMAIN,pull-rtmp-l1-mus.pstatp.com
-DOMAIN,pull-rtmp-l6-hs.pstatp.com
-DOMAIN,roovza-launches.appsflyersdk.com
 DOMAIN,trae-api-sg.mchost.guru
-DOMAIN-KEYWORD,-tiktokcdn-com
-DOMAIN-KEYWORD,bytedance.map.
 DOMAIN-KEYWORD,musical.ly
-DOMAIN-KEYWORD,musical.ly.
 DOMAIN-KEYWORD,tiktok
-DOMAIN-KEYWORD,tiktokcdn-
-DOMAIN-KEYWORD,tiktokcdn.com.
-DOMAIN-KEYWORD,tiktokv.com.
-DOMAIN-KEYWORD,ttcdn-tos.
-DOMAIN-KEYWORD,ttlivecdn.com.
 DOMAIN-SUFFIX,2333333333333.com
 DOMAIN-SUFFIX,365yg.com
 DOMAIN-SUFFIX,activity-zhendingtech.com
@@ -98,32 +53,23 @@ DOMAIN-SUFFIX,bytedns1.com
 DOMAIN-SUFFIX,bytedns2.com
 DOMAIN-SUFFIX,bytednsdoc.com
 DOMAIN-SUFFIX,byteeffecttos.com
-DOMAIN-SUFFIX,bytefcdn-oversea.com
-DOMAIN-SUFFIX,bytefcdn-ttpeu.com
 DOMAIN-SUFFIX,bytefcdn.com
 DOMAIN-SUFFIX,bytefcdnrd.com
 DOMAIN-SUFFIX,bytegecko-i18n.com
 DOMAIN-SUFFIX,bytegecko.com
-DOMAIN-SUFFIX,byteglb.com
 DOMAIN-SUFFIX,bytegoofy.com
 DOMAIN-SUFFIX,bytegslb.com
-DOMAIN-SUFFIX,byteicdn.com
-DOMAIN-SUFFIX,byteigtm.com
 DOMAIN-SUFFIX,byteimg.com
-DOMAIN-SUFFIX,byteintl.com
-DOMAIN-SUFFIX,byteintl.net
 DOMAIN-SUFFIX,byteintlapi.com
 DOMAIN-SUFFIX,bytelb.net
 DOMAIN-SUFFIX,bytelove.cn
 DOMAIN-SUFFIX,bytemaimg.com
 DOMAIN-SUFFIX,byteoversea.com
-DOMAIN-SUFFIX,byteoversea.net
 DOMAIN-SUFFIX,bytescm.com
 DOMAIN-SUFFIX,bytesfield.com
 DOMAIN-SUFFIX,bytesmanager.com
 DOMAIN-SUFFIX,bytesyscdn.com
 DOMAIN-SUFFIX,bytetcc.com
-DOMAIN-SUFFIX,bytetcdn.com
 DOMAIN-SUFFIX,bytetos.com
 DOMAIN-SUFFIX,byteurl.cn
 DOMAIN-SUFFIX,bytexservice.com
@@ -291,7 +237,6 @@ DOMAIN-SUFFIX,marscode.com
 DOMAIN-SUFFIX,mobilelegends.com
 DOMAIN-SUFFIX,moonton.com
 DOMAIN-SUFFIX,muscdn.com
-DOMAIN-SUFFIX,musemuse.cn
 DOMAIN-SUFFIX,musical.ly
 DOMAIN-SUFFIX,muyewx.com
 DOMAIN-SUFFIX,ndcpp.com
@@ -337,7 +282,6 @@ DOMAIN-SUFFIX,ribaocdn.com
 DOMAIN-SUFFIX,samasty.com
 DOMAIN-SUFFIX,semi.design
 DOMAIN-SUFFIX,sgpstatp.com
-DOMAIN-SUFFIX,sgsnssdk.com
 DOMAIN-SUFFIX,shoppingads.cn
 DOMAIN-SUFFIX,smartisan.cn
 DOMAIN-SUFFIX,smartisan.com
@@ -348,29 +292,16 @@ DOMAIN-SUFFIX,tekkenthree.com
 DOMAIN-SUFFIX,temaiapi.com
 DOMAIN-SUFFIX,tetrisone.com
 DOMAIN-SUFFIX,tik-tokapi.com
-DOMAIN-SUFFIX,tiktok-usts.net
 DOMAIN-SUFFIX,tiktok.com
-DOMAIN-SUFFIX,tiktok.in
-DOMAIN-SUFFIX,tiktokcdn-eu.com
-DOMAIN-SUFFIX,tiktokcdn-eu.net
-DOMAIN-SUFFIX,tiktokcdn-in.com
 DOMAIN-SUFFIX,tiktokcdn-us.com
 DOMAIN-SUFFIX,tiktokcdn.com
 DOMAIN-SUFFIX,tiktokd.net
 DOMAIN-SUFFIX,tiktokd.org
-DOMAIN-SUFFIX,tiktokglobalshop.com
-DOMAIN-SUFFIX,tiktokglobalshopv.com
 DOMAIN-SUFFIX,tiktokmusic.app
-DOMAIN-SUFFIX,tiktokshop.com
-DOMAIN-SUFFIX,tiktokstaticb.com
 DOMAIN-SUFFIX,tiktokv.com
-DOMAIN-SUFFIX,tiktokv.eu
 DOMAIN-SUFFIX,tiktokv.us
-DOMAIN-SUFFIX,tiktokw.us
 DOMAIN-SUFFIX,tiquality.cn
 DOMAIN-SUFFIX,tiquality.com.cn
-DOMAIN-SUFFIX,tlivecdn.com
-DOMAIN-SUFFIX,tlivepush.com
 DOMAIN-SUFFIX,toscdn.com
 DOMAIN-SUFFIX,toutiao.com
 DOMAIN-SUFFIX,toutiao11.com
@@ -407,19 +338,11 @@ DOMAIN-SUFFIX,toutiaowap.net
 DOMAIN-SUFFIX,trae.ai
 DOMAIN-SUFFIX,trae.cn
 DOMAIN-SUFFIX,trae.com.cn
-DOMAIN-SUFFIX,ttadsmanager.com
-DOMAIN-SUFFIX,ttapis.com
 DOMAIN-SUFFIX,ttbyte.cn
 DOMAIN-SUFFIX,ttbyte.com
 DOMAIN-SUFFIX,ttbyte.net
-DOMAIN-SUFFIX,ttdns2.com
 DOMAIN-SUFFIX,ttjisu.com
-DOMAIN-SUFFIX,ttlivecdn.com
-DOMAIN-SUFFIX,ttoversea.net
-DOMAIN-SUFFIX,ttoverseaus.net
 DOMAIN-SUFFIX,ttwebview.com
-DOMAIN-SUFFIX,ttwstatic.com
-DOMAIN-SUFFIX,tzvbfs.com
 DOMAIN-SUFFIX,ugapk.cn
 DOMAIN-SUFFIX,ugapk.com
 DOMAIN-SUFFIX,ugh5.cn

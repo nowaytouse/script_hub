@@ -1,29 +1,18 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: StreamHK
-# Updated: 2025-12-03 13:13:32 UTC
-# Total Rules: 37
-# Generator: Ruleset Merger v2.0
-# Git Hash: 1096dbf
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://ruleset.skk.moe/List/non_ip/stream_hk.conf
-#   - https://ruleset.skk.moe/List/ip/stream_hk.conf
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#   - Manual rules in StreamHK_manual.txt are auto-preserved
-#
-# Auto-Update:
-#   - Cron job pulls upstream updates daily
-#   - Manual: ./ruleset_merger.sh -l sources.txt -o StreamHK.list
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamHK.list
+# Cleaned by smart_cleanup.py
+# Total: 33
 
-# ========== DOMAIN-SUFFIX ==========
-DOMAIN-SUFFIX,bilibili.tv
+DOMAIN,44wilhpljf.execute-api.ap-southeast-1.amazonaws.com
+DOMAIN,apm-misaka.biliapi.net
+DOMAIN,d1k2us671qcoau.cloudfront.net
+DOMAIN,d2anahhhmp1ffz.cloudfront.net
+DOMAIN,dfp6rglgjqszk.cloudfront.net
+DOMAIN,hbolb.onwardsmg.com
+DOMAIN,hbounify-prod.evergent.com
+DOMAIN,manifest.prod.boltdns.net
+DOMAIN,players.brightcove.net
+DOMAIN-KEYWORD,nowtv100
+DOMAIN-KEYWORD,rthklive
 DOMAIN-SUFFIX,biliintl.com
 DOMAIN-SUFFIX,hboasia.com
 DOMAIN-SUFFIX,hbogoasia.com
@@ -39,26 +28,6 @@ DOMAIN-SUFFIX,tvb.com
 DOMAIN-SUFFIX,viu.com
 DOMAIN-SUFFIX,viu.now.com
 DOMAIN-SUFFIX,viu.tv
-
-# ========== DOMAIN-KEYWORD ==========
-DOMAIN-KEYWORD,nowtv100
-DOMAIN-KEYWORD,rthklive
-
-# ========== DOMAIN ==========
-DOMAIN,44wilhpljf.execute-api.ap-southeast-1.amazonaws.com
-DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
-DOMAIN,apm-misaka.biliapi.net
-DOMAIN,d1k2us671qcoau.cloudfront.net
-DOMAIN,d2anahhhmp1ffz.cloudfront.net
-DOMAIN,dfp6rglgjqszk.cloudfront.net
-DOMAIN,hbolb.onwardsmg.com
-DOMAIN,hbounify-prod.evergent.com
-DOMAIN,manifest.prod.boltdns.net
-DOMAIN,players.brightcove.net
-DOMAIN,upos-bstar-mirrorakam.akamaized.net
-DOMAIN,upos-bstar1-mirrorakam.akamaized.net
-
-# ========== OTHER ==========
 PROCESS-NAME,com.bstar.intl
 PROCESS-NAME,com.hktve.viutv
 PROCESS-NAME,com.viu.pad
@@ -66,5 +35,3 @@ PROCESS-NAME,com.viu.phone
 PROCESS-NAME,com.vuclip.viu
 USER-AGENT,Viu*
 USER-AGENT,mytv*
-
-# ========== END ==========

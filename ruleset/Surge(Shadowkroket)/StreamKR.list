@@ -1,35 +1,7 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: StreamKR
-# Updated: 2025-12-03 13:13:51 UTC
-# Total Rules: 4
-# Generator: Ruleset Merger v2.0
-# Git Hash: 1096dbf
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - https://ruleset.skk.moe/List/non_ip/stream_kr.conf
-#   - https://ruleset.skk.moe/List/ip/stream_kr.conf
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules have no action (REJECT/PROXY/DIRECT), configure as needed
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#   - Manual rules in StreamKR_manual.txt are auto-preserved
-#
-# Auto-Update:
-#   - Cron job pulls upstream updates daily
-#   - Manual: ./ruleset_merger.sh -l sources.txt -o StreamKR.list
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamKR.list
+# Cleaned by smart_cleanup.py
+# Total: 3
 
-# ========== DOMAIN-SUFFIX ==========
 DOMAIN-SUFFIX,smartmediarep.com
 DOMAIN-SUFFIX,tv.naver.com
-
-# ========== DOMAIN ==========
-DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
-
-# ========== OTHER ==========
 USER-AGENT,Naver TV*
-
-# ========== END ==========
