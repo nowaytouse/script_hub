@@ -112,7 +112,7 @@ pub fn calculate_ssim(original: &DynamicImage, converted: &DynamicImage) -> Opti
     let window = get_gaussian_window();
     
     // Calculate SSIM for each window position in parallel
-    let half_win = WINDOW_SIZE / 2;
+    let _half_win = WINDOW_SIZE / 2;
     let valid_width = width - WINDOW_SIZE + 1;
     let valid_height = height - WINDOW_SIZE + 1;
     

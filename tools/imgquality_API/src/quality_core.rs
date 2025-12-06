@@ -3,7 +3,7 @@
 //! Provides precise quality parameter detection with ±1 accuracy
 //! No hardcoding or cheating - genuine parameter extraction
 
-use crate::{ImgQualityError, Result};
+use crate::Result;
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -80,7 +80,7 @@ pub fn is_format_lossless(format: &ImageFormat) -> bool {
 }
 
 /// Analyze image quality with high precision
-pub fn analyze_quality(path: &Path) -> Result<QualityAnalysis> {
+pub fn analyze_quality(_path: &Path) -> Result<QualityAnalysis> {
     // Will be implemented through integration with existing modules
     todo!("Integrate with jpeg_analysis, heic_analysis, etc.")
 }

@@ -16,23 +16,23 @@ use tracing::{info, warn};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TargetVideoFormat {
     /// FFV1 in MKV container - for archival
-    FFV1_MKV,
+    Ffv1Mkv,
     /// AV1 in MP4 container - for compression
-    AV1_MP4,
+    Av1Mp4,
 }
 
 impl TargetVideoFormat {
     pub fn extension(&self) -> &str {
         match self {
-            TargetVideoFormat::FFV1_MKV => "mkv",
-            TargetVideoFormat::AV1_MP4 => "mp4",
+            TargetVideoFormat::Ffv1Mkv => "mkv",
+            TargetVideoFormat::Av1Mp4 => "mp4",
         }
     }
     
     pub fn as_str(&self) -> &str {
         match self {
-            TargetVideoFormat::FFV1_MKV => "FFV1 MKV (Archival)",
-            TargetVideoFormat::AV1_MP4 => "AV1 MP4 (High Quality)",
+            TargetVideoFormat::Ffv1Mkv => "FFV1 MKV (Archival)",
+            TargetVideoFormat::Av1Mp4 => "AV1 MP4 (High Quality)",
         }
     }
 }
@@ -95,21 +95,21 @@ pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
     let (target, reason, crf) = match result.compression {
         CompressionType::Lossless => {
             (
-                TargetVideoFormat::FFV1_MKV,
+                TargetVideoFormat::Ffv1Mkv,
                 format!("Source is {} (lossless) - archiving to FFV1 MKV", result.codec.as_str()),
                 0
             )
         }
         CompressionType::VisuallyLossless => {
             (
-                TargetVideoFormat::FFV1_MKV,
+                TargetVideoFormat::Ffv1Mkv,
                 format!("Source is {} (visually lossless) - preserving with FFV1 MKV", result.codec.as_str()),
                 0
             )
         }
         _ => {
             (
-                TargetVideoFormat::AV1_MP4,
+                TargetVideoFormat::Av1Mp4,
                 format!("Source is {} ({}) - compressing with AV1 CRF 0", result.codec.as_str(), result.compression.as_str()),
                 0
             )
@@ -155,7 +155,7 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
         input_path: input.display().to_string(),
         output_path: output_path.display().to_string(),
         strategy: ConversionStrategy {
-            target: TargetVideoFormat::AV1_MP4,
+            target: TargetVideoFormat::Av1Mp4,
             reason: "Simple mode: All videos → AV1 MP4".to_string(),
             command: String::new(),
             preserve_audio: detection.has_audio,
@@ -194,11 +194,11 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     info!("   Reason: {}", strategy.reason);
     
     let (output_size, final_crf, attempts) = match strategy.target {
-        TargetVideoFormat::FFV1_MKV => {
+        TargetVideoFormat::Ffv1Mkv => {
             let size = execute_ffv1_conversion(&detection, &output_path)?;
             (size, 0, 0)
         }
-        TargetVideoFormat::AV1_MP4 => {
+        TargetVideoFormat::Av1Mp4 => {
             if config.explore_smaller {
                 // Size exploration mode
                 explore_smaller_size(&detection, &output_path)?
@@ -420,7 +420,7 @@ pub fn simple_convert_with_lossless(input: &Path, output_dir: Option<&Path>, los
         input_path: input.display().to_string(),
         output_path: output_path.display().to_string(),
         strategy: ConversionStrategy {
-            target: TargetVideoFormat::AV1_MP4,
+            target: TargetVideoFormat::Av1Mp4,
             reason: if lossless {
                 "Simple mode: Mathematical lossless AV1".to_string()
             } else {
@@ -476,8 +476,7 @@ mod tests {
     
     #[test]
     fn test_target_format() {
-        assert_eq!(TargetVideoFormat::FFV1_MKV.extension(), "mkv");
-        assert_eq!(TargetVideoFormat::AV1_MP4.extension(), "mp4");
+        assert_eq!(TargetVideoFormat::Ffv1Mkv.extension(), "mkv");
+        assert_eq!(TargetVideoFormat::Av1Mp4.extension(), "mp4");
     }
 }
-

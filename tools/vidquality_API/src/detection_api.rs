@@ -3,8 +3,8 @@
 //! Pure analysis layer - detects video properties using ffprobe.
 //! Determines codec type, compression level, and archival suitability.
 
-use crate::{VidQualityError, Result};
-use crate::ffprobe::{probe_video, FFprobeResult};
+use crate::Result;
+use crate::ffprobe::probe_video;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -210,7 +210,7 @@ fn determine_compression_type(
 fn calculate_quality_score(
     compression: &CompressionType,
     bit_depth: u8,
-    bitrate: u64,
+    _bitrate: u64,
     width: u32,
     height: u32,
 ) -> u8 {

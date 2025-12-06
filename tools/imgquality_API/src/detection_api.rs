@@ -4,10 +4,10 @@
 //! Uses magic bytes and actual file content for accurate format detection.
 
 use crate::{ImgQualityError, Result};
-use image::{DynamicImage, GenericImageView, ImageFormat};
+use image::{DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::Read;
 use std::path::Path;
 
 /// Image type classification (static vs animated)

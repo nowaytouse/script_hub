@@ -85,6 +85,11 @@ pub fn analyze_image(path: &PathBuf) -> Result<ImageAnalysis> {
     if is_heic_file(path) {
         return analyze_heic_image(path, file_size);
     }
+    
+    // Check if JXL - image crate doesn't support JXL natively
+    if is_jxl_file(path) {
+        return analyze_jxl_image(path, file_size);
+    }
 
     // Load the image
     let img = image::open(path).map_err(|e| {
@@ -182,7 +187,6 @@ fn analyze_heic_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
     let features = calculate_image_features(&img, file_size);
     
     // HEIC is already efficient, similar to AVIF
-    let output_path = path.with_extension("jxl").display().to_string();
     let jxl_indicator = JxlIndicator {
         should_convert: false,
         reason: format!("HEIC已是现代高效格式 ({}编码)", heic_analysis.codec),
@@ -535,12 +539,100 @@ fn check_avif_lossless(path: &PathBuf) -> Result<bool> {
     // AVIF lossless detection is complex - for now, assume lossy
     // True lossless AVIF is rare in practice
     // Could be improved by parsing AVIF headers for quantizer settings
-    let bytes = std::fs::read(path)?;
+    let _bytes = std::fs::read(path)?;
     
     // Check for lossless indicators in AVIF
     // Look for 'ispe' (image spatial extent) and analyze
     // For now, return false as most AVIF are lossy
     Ok(false)
+}
+
+/// Check if file is JXL by magic bytes or extension
+fn is_jxl_file(path: &PathBuf) -> bool {
+    // Check extension first
+    if let Some(ext) = path.extension() {
+        if ext.to_str().unwrap_or("").to_lowercase() == "jxl" {
+            return true;
+        }
+    }
+    
+    // Check magic bytes: JXL has two signatures
+    // 0xFF 0x0A (naked codestream) or 0x00 0x00 0x00 0x0C 0x4A 0x58 0x4C 0x20 (ISOBMFF container)
+    if let Ok(bytes) = std::fs::read(path) {
+        if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0x0A {
+            return true;
+        }
+        if bytes.len() >= 12 && &bytes[4..8] == b"JXL " {
+            return true;
+        }
+    }
+    false
+}
+
+/// Analyze JXL image using djxl for decoding
+fn analyze_jxl_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
+    use std::process::Command;
+    
+    // Use jxlinfo to get dimensions (if available) or djxl
+    let output = Command::new("djxl")
+        .arg(path)
+        .arg("--info")
+        .output();
+    
+    // Try to get dimensions from djxl output
+    let (width, height) = if let Ok(out) = &output {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        // Parse dimensions from djxl output
+        let mut w = 0u32;
+        let mut h = 0u32;
+        for line in stderr.lines() {
+            if line.contains("x") && line.contains("size") {
+                // Try to parse "WxH" format
+                if let Some(dims) = line.split_whitespace().find(|s| s.contains('x')) {
+                    let parts: Vec<&str> = dims.split('x').collect();
+                    if parts.len() == 2 {
+                        w = parts[0].parse().unwrap_or(0);
+                        h = parts[1].parse().unwrap_or(0);
+                    }
+                }
+            }
+        }
+        (w, h)
+    } else {
+        (0, 0)
+    };
+    
+    // JXL files are always considered lossless (they came from our own conversion)
+    let metadata = extract_metadata(path)?;
+    
+    Ok(ImageAnalysis {
+        file_path: path.display().to_string(),
+        format: "JXL".to_string(),
+        width,
+        height,
+        file_size,
+        color_depth: 8,
+        color_space: "sRGB".to_string(),
+        has_alpha: false,
+        is_animated: false,
+        duration_secs: None,
+        is_lossless: true, // JXL from our conversion is lossless
+        jpeg_analysis: None,
+        heic_analysis: None,
+        features: ImageFeatures {
+            entropy: 0.0,
+            compression_ratio: 0.0,
+        },
+        jxl_indicator: JxlIndicator {
+            should_convert: false,
+            reason: "Already JXL format".to_string(),
+            command: String::new(),
+            benefit: String::new(),
+        },
+        psnr: None,
+        ssim: None,
+        metadata,
+    })
 }
 
 /// Extract metadata

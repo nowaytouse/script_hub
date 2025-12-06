@@ -12,7 +12,7 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::io::{BufRead, BufReader, Write};
 
-/// Global processed files tracker (anti-duplicate)
+// Global processed files tracker (anti-duplicate)
 lazy_static::lazy_static! {
     static ref PROCESSED_FILES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
 }
