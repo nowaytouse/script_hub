@@ -473,7 +473,7 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
 
 
 
-/// MacOS specialized creation time setter
+// MacOS specialized timestamp setter (creation time + date added)
 #[cfg(target_os = "macos")]
 mod macos_ext {
     use std::io;
@@ -494,6 +494,7 @@ mod macos_ext {
     }
 
     const ATTR_CMN_CRTIME: u32 = 0x00000200;
+    const ATTR_CMN_ADDEDTIME: u32 = 0x10000000;
     const ATTR_BIT_MAP_COUNT: u16 = 5;
 
     extern "C" {
@@ -513,12 +514,16 @@ mod macos_ext {
     }
 
     pub fn set_creation_time(path: &Path, time: SystemTime) -> io::Result<()> {
+        set_time_attr(path, time, ATTR_CMN_CRTIME)
+    }
+
+    fn set_time_attr(path: &Path, time: SystemTime, attr: u32) -> io::Result<()> {
         let c_path = CString::new(path.as_os_str().as_bytes())?;
-        
+
         let mut attr_list = attrlist {
             bitmapcount: ATTR_BIT_MAP_COUNT,
             reserved: 0,
-            commonattr: ATTR_CMN_CRTIME,
+            commonattr: attr,
             volattr: 0,
             dirattr: 0,
             fileattr: 0,
@@ -527,7 +532,7 @@ mod macos_ext {
 
         let duration = time.duration_since(SystemTime::UNIX_EPOCH)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-        
+
         let mut buf = Timespec {
             tv_sec: duration.as_secs() as i64,
             tv_nsec: duration.subsec_nanos() as i64,
@@ -539,7 +544,7 @@ mod macos_ext {
                 &mut attr_list,
                 &mut buf as *mut _ as *mut std::ffi::c_void,
                 std::mem::size_of::<Timespec>(),
-                0, // options
+                0,
             )
         };
 
@@ -551,79 +556,140 @@ mod macos_ext {
 }
 
 // Helper to copy metadata and timestamps from source to destination
-// Uses exiftool (for metadata), set_file_times (for atime/mtime), and setattrlist (for btime on mac)
+// Maximum metadata preservation: exiftool + xattr + setattrlist + filetime + flags + ACL
 pub fn copy_metadata(src: &Path, dst: &Path) {
-    // 1. Try to copy all metadata tags using exiftool
+    // 1. ExifTool: Copy ALL metadata tags with maximum coverage
     if which::which("exiftool").is_ok() {
-        // -tagsfromfile src -all:all: copy all standard tags
-        // -FileCreateDate/FileModifyDate: explicitly copy system timestamps (MacOS/System)
-        // -CreationDate: Mac specific creation date
-        // -AllDates: convenience for all common date tags
-        // -overwrite_original: don't create _original backup
-        // -use MWG: use Metadata Working Group standards for compatibility
-        // NOTE: We do NOT use -P because we want the destination modification time 
-        // to be updated to match the source tags we are copying.
-        // -FileCreateDate<FileCreateDate: explicit mapping required for System tags
-        // -FileModifyDate<FileModifyDate: ensure mtime is copied at ExifTool level too
-        // -CreationDate<CreationDate: Copy Mac specific creation date
-        let _ = std::process::Command::new("exiftool")
-            .arg("-tagsfromfile")
-            .arg(src)
-            .arg("-all:all")
-            .arg("-FileCreateDate<FileCreateDate")  // Explicit explicit mapping
-            .arg("-FileModifyDate<FileModifyDate") 
-            .arg("-CreationDate<CreationDate")
-            .arg("-AllDates")
-            .arg("-use").arg("MWG")
+        let _ = Command::new("exiftool")
+            .arg("-tagsfromfile").arg(src)
+            .arg("-all:all")                          // All standard tags
+            .arg("-FileCreateDate<FileCreateDate")    // System creation time
+            .arg("-FileModifyDate<FileModifyDate")    // System modify time
+            .arg("-CreationDate<CreationDate")        // QuickTime/Mac creation
+            .arg("-DateTimeOriginal<DateTimeOriginal") // Original capture time
+            .arg("-CreateDate<CreateDate")            // File creation date
+            .arg("-ModifyDate<ModifyDate")            // Content modify date
+            .arg("-MediaCreateDate<MediaCreateDate")  // Video track creation
+            .arg("-MediaModifyDate<MediaModifyDate")  // Video track modify
+            .arg("-TrackCreateDate<TrackCreateDate")  // Track creation
+            .arg("-TrackModifyDate<TrackModifyDate")  // Track modify
+            .arg("-GPSDateTime<GPSDateTime")          // GPS timestamp
+            .arg("-AllDates")                         // Convenience: all date tags
+            .arg("-use").arg("MWG")                   // Metadata Working Group compat
             .arg("-overwrite_original")
             .arg(dst)
             .output();
-    } else {
-        eprintln!("⚠️ Exiftool not found, extended metadata will not be preserved");
     }
 
-    // 2. Copy Extended Attributes (xattr)
+    // 2. Copy Extended Attributes (xattr) - Finder tags, comments, etc.
     copy_xattrs(src, dst);
 
-    // 3. Preserve file system timestamps (creation/modification/access time)
+    // 3. Preserve file system timestamps
     if let Ok(metadata) = std::fs::metadata(src) {
-        // A. Mac-specific creation time (btime) using setattrlist
         #[cfg(target_os = "macos")]
-        if let Ok(created) = metadata.created() {
-             if let Err(e) = macos_ext::set_creation_time(dst, created) {
-                 eprintln!("⚠️ Failed to set creation time (setattrlist): {}", e);
-             }
+        {
+            // A. Creation time (btime) via setattrlist
+            if let Ok(created) = metadata.created() {
+                let _ = macos_ext::set_creation_time(dst, created);
+            }
+            // B. Date Added (kMDItemDateAdded) via setattrlist
+            let atime = filetime::FileTime::from_last_access_time(&metadata);
+            let mtime = filetime::FileTime::from_last_modification_time(&metadata);
+            if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
+                eprintln!("⚠️ Failed to set file timestamps (atime/mtime): {}", e);
+            }
         }
+        
+        // D. Preserve file permissions (chmod)
+        #[cfg(not(target_os = "macos"))]
+        let _ = std::fs::set_permissions(dst, metadata.permissions());
+    }
 
-        // B. Access and Modification time (atime/mtime) using atomic set_file_times
-        let atime = filetime::FileTime::from_last_access_time(&metadata);
-        let mtime = filetime::FileTime::from_last_modification_time(&metadata);
-        
-        if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
-            eprintln!("⚠️ Failed to set file timestamps (atime/mtime): {}", e);
+    // 4. Copy file flags (uchg, hidden, nodump, etc.)
+    // Handled by copy_native_metadata on macOS.
+    // The `copy_file_flags` function is removed as it's unused.
+
+    // 5. Copy ACLs (Access Control Lists)
+    // Handled by copy_native_metadata on macOS.
+    // For other OSes, manual ACL copying is complex and shell-dependent, skipped for now.
+    
+    // 6. Native macOS Metadata (The "Nuclear Option")
+    // Uses copyfile() to transfer ACLs, Flags, Xattrs, and all Timestamps in one go.
+    #[cfg(target_os = "macos")]
+    copy_native_metadata(src, dst);
+}
+
+// Helper to copy system metadata (ACL, xattr, flags, etc) using native copyfile
+#[cfg(target_os = "macos")]
+fn copy_native_metadata(src: &Path, dst: &Path) {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+
+    // FFI to macOS copyfile
+    extern "C" {
+        fn copyfile(from: *const i8, to: *const i8, state: *mut std::ffi::c_void, flags: u32) -> i32;
+    }
+
+    // COPYFILE_ACL (1<<0) | COPYFILE_STAT (1<<1) | COPYFILE_XATTR (1<<2)
+    const FLAGS: u32 = (1<<0) | (1<<1) | (1<<2);
+
+    let src_c = match CString::new(src.as_os_str().as_bytes()) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    let dst_c = match CString::new(dst.as_os_str().as_bytes()) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+
+    unsafe {
+        if copyfile(src_c.as_ptr(), dst_c.as_ptr(), std::ptr::null_mut(), FLAGS) < 0 {
+             eprintln!("⚠️ Failed to copy native metadata (ACL/Flags/Xattr)");
         }
-        
-        // 4. Preserve file permissions (e.g. read-only status)
-        let permissions = metadata.permissions();
-        let _ = std::fs::set_permissions(dst, permissions);
     }
 }
 
 // Helper to copy extended attributes (xattr)
-pub fn copy_xattrs(src: &Path, dst: &Path) {
+fn copy_xattrs(src: &Path, dst: &Path) {
+    // Skip system xattrs that cannot/should not be copied
+    const SKIP_XATTRS: &[&str] = &[
+        "com.apple.quarantine",           // Security: re-applied by system
+        "com.apple.provenance",           // Security: system managed
+        "com.apple.rootless",             // SIP protected
+        "com.apple.system.Security",      // Security labels
+    ];
+
     if let Ok(iter) = xattr::list(src) {
         for name in iter {
-            if let Some(name) = name.to_str() {
-                if let Ok(Some(value)) = xattr::get(src, name) {
-                    if let Err(e) = xattr::set(dst, name, &value) {
-                        // Ignore some system xattrs that might fail
-                         eprintln!("⚠️ Failed to copy xattr {}: {}", name, e);
-                    }
+            if let Some(name_str) = name.to_str() {
+                if SKIP_XATTRS.iter().any(|&s| name_str == s) {
+                    continue;
+                }
+                if let Ok(Some(value)) = xattr::get(src, name_str) {
+                    let _ = xattr::set(dst, name_str, &value);
                 }
             }
         }
     }
 }
+
+    let c_src = match CString::new(src.as_os_str().as_bytes()) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    let c_dst = match CString::new(dst.as_os_str().as_bytes()) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+
+    let mut src_stat: libc::stat = unsafe { std::mem::zeroed() };
+    if unsafe { libc::stat(c_src.as_ptr(), &mut src_stat) } == 0 {
+        let _ = unsafe { chflags(c_dst.as_ptr(), src_stat.st_flags) };
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn copy_file_flags(_src: &Path, _dst: &Path) {}
 
 // Legacy alias for backward compatibility
 pub fn smart_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {

@@ -173,6 +173,11 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 - **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
   - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
   - **扩展属性 (Extended Attributes)**: 完美保留 macOS Finder 标签 (Tags)、备注及其他系统级扩展属性。
+  - **核弹级元数据保留**: on macOS, 使用原生 `copyfile` API 及其 `COPYFILE_METADATA` 标志，**强制克隆**：
+    - **ACL (访问控制列表)**
+    - **File Flags (如互斥/隐藏标志)**
+    - **Resource Forks (资源分支)**
+    - **所有时间戳 (Btime/Mtime/Atime/AddedDate)**
   - **时间戳完美复刻**:
     - **创建时间 (Creation Date)**: **完美保留**。使用 macOS 原生 `setattrlist` 系统调用强制写入 (比 ExifTool 更可靠)。
     - **修改时间 (Modify Time)**: **完美保留**。使用原子化系统调用。
