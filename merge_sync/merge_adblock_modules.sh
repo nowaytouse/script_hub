@@ -1043,7 +1043,7 @@ safe_delete_modules() {
 sync_srs_rules() {
     log_section "同步SRS规则（Sing-box）"
     
-    local srs_script="$PROJECT_ROOT/scripts/network/batch_convert_to_singbox.sh"
+    local srs_script="$SCRIPT_DIR/batch_convert_to_singbox.sh"
     
     if [[ ! -f "$srs_script" ]]; then
         log_warning "SRS转换脚本不存在: $srs_script"

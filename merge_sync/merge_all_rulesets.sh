@@ -209,7 +209,7 @@ ADBLOCK_SOURCES=(
     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Advertising/Advertising.list"
     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy.list"
     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list"
-    "${SCRIPT_DIR}/../ruleset/conf/SurgeConf_AdBlock.list"
+    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_AdBlock.list"
 )
 merge_to_target "$RULESET_DIR/AdBlock_Merged.list" "${ADBLOCK_SOURCES[@]}"
 
@@ -266,7 +266,7 @@ echo -e "${BLUE}[11/12] NSFW - 成人内容${NC}"
 NSFW_SOURCES=(
     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Global/Global.list" # Fallback or specialized?
     # User's Conf Source
-    "${SCRIPT_DIR}/../ruleset/conf/SurgeConf_NSFW.list"
+    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_NSFW.list"
 )
 merge_to_target "$RULESET_DIR/NSFW.list" "${NSFW_SOURCES[@]}"
 
@@ -276,12 +276,12 @@ merge_to_target "$RULESET_DIR/NSFW.list" "${NSFW_SOURCES[@]}"
 echo ""
 echo -e "${BLUE}[12/12] DirectProcess & Ports${NC}"
 DIRECT_PROCESS_SOURCES=(
-    "${SCRIPT_DIR}/../ruleset/conf/SurgeConf_DirectProcess.list"
+    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_DirectProcess.list"
 )
 merge_to_target "$RULESET_DIR/DirectProcess.list" "${DIRECT_PROCESS_SOURCES[@]}"
 
 DIRECT_PORTS_SOURCES=(
-    "${SCRIPT_DIR}/../ruleset/conf/SurgeConf_DirectPorts.list"
+    "${SCRIPT_DIR}/../ruleset/Sources/conf/SurgeConf_DirectPorts.list"
 )
 merge_to_target "$RULESET_DIR/FirewallPorts.list" "${DIRECT_PORTS_SOURCES[@]}"
 
