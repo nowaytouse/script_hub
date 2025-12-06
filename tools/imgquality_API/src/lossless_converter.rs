@@ -610,14 +610,17 @@ fn copy_metadata(src: &Path, dst: &Path) {
         // -use MWG: use Metadata Working Group standards for compatibility
         // NOTE: We do NOT use -P because we want the destination modification time 
         // to be updated to match the source tags we are copying.
+        // -FileCreateDate<FileCreateDate: explicit mapping required for System tags
+        // -FileModifyDate<FileModifyDate: ensure mtime is copied at ExifTool level too
+        // -CreationDate<CreationDate: Copy Mac specific creation date
         let _ = Command::new("exiftool")
             .arg("-tagsfromfile")
             .arg(src)
             .arg("-all:all")
-            .arg("-FileCreateDate")  // Explicitly copy creation date (System tag)
-            .arg("-FileModifyDate")  // Explicitly copy modification date
-            .arg("-CreationDate")    // Mac specific
-            .arg("-AllDates")        // All standard date tags
+            .arg("-FileCreateDate<FileCreateDate")  // Explicit explicit mapping
+            .arg("-FileModifyDate<FileModifyDate") 
+            .arg("-CreationDate<CreationDate")
+            .arg("-AllDates")
             .arg("-use").arg("MWG")
             .arg("-overwrite_original")
             .arg(dst)

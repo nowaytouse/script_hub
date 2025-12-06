@@ -29,8 +29,11 @@
 - **`--explore` Mode**: For the `auto` command, starts from CRF 0 and finds the optimal size.
 - **Most Comprehensive Metadata Preservation**: default **Mandatory** use of `exiftool` (if installed) and system APIs:
   - **Full Exif/IPTC/XMP**: Lossless copy of all tags.
-  - **System Timestamps**: Perfectly replicates file Access Time and Modification Time.
-    > **Note**: Inode/Metadata Change Time (ctime) cannot be preserved due to OS limitations, but mtime and atime are preserved.
+  - **Perfect Timestamp Replication**:
+    - **Creation Date**: Preserved on best-effort basis (`-FileCreateDate`).
+    - **Modification Time**: Perfectly preserved.
+    - **Access Time**: Perfectly preserved.
+    > **⚠️ Note**: `FileInodeChangeDate` (ctime) cannot be preserved due to OS kernel security restrictions. This is a system feature, not a bug.
   - **File Permissions**: Preserves read-only status.
 
 ⭐ **New: Mathematical Lossless AV1 Mode**
@@ -168,8 +171,11 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 - **`--explore` 模式**: 在 `auto` 命令中，从 CRF 0 开始尝试，直到找到比源文件更小的体积。
 - **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
   - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
-  - **系统时间戳**: 完美复刻文件访问时间 (Access Time) 和修改时间 (Modify Time)。
-    > **注意**: Inode/Metadata Change Time (ctime) 并非用户可控属性，由操作系统在文件创建时更新，因此无法保留原始 ctime。可以使用 `mtime` 作为主要参考。
+  - **时间戳完美复刻**:
+    - **创建时间 (Creation Date)**: 尽全力保留 (`-FileCreateDate` / `-CreationDate`)。
+    - **修改时间 (Modify Time)**: 完美保留。
+    - **访问时间 (Access Time)**: 完美保留。
+    > **⚠️ 注意**: `FileInodeChangeDate` (ctime) 是文件元数据变更时间，由操作系统内核强制更新，**无法保留原始值**。这是系统级安全特性。
   - **文件权限**: 保持只读/读写属性。
 
 ⭐ **新功能: 数学无损 AV1 模式**
