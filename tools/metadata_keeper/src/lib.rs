@@ -1,37 +1,56 @@
 use std::path::Path;
 use std::io;
 
+mod exif;
 #[cfg(target_os = "macos")]
 mod macos;
+mod network;
 
-/// Preserves all possible metadata from source to destination.
+/// **Nuclear Preservation**: The Ultimate Metadata Strategy
 /// 
-/// This is the "Nuclear Option" that tries to clone:
-/// 1. Native system attributes (ACL, Flags, Resource Fork, Creation Date) via platform APIs.
-/// 2. Extended attributes (xattr).
-/// 3. Standard timestamps (atime/mtime).
-/// 
-/// Note: Internal metadata (Exif/IPTC) inside the file content should be handled 
-/// separately (e.g. via `exiftool`) before calling this, as this function focuses
-/// on the file-system and OS level attributes.
-pub fn preserve_metadata(src: &Path, dst: &Path) -> io::Result<()> {
+/// Orchestrates the preservation of metadata across all layers:
+/// 1. **Internal Layer**: Exif/IPTC/XMP via `exiftool` (injects data into file content).
+/// 2. **Network Layer**: Verifies preservation of `WhereFroms` and identifying tags.
+/// 3. **System Layer**: The "Atomic Snapshot". Uses native OS APIs to overwite any
+///    timestamp drifts caused by step 1, and clones ACLs, Flags, and Resource Forks.
+///
+/// This specific order is critical: ExifTool modifies the file (changing mtime/inode).
+/// The System Layer (copyfile) must run LAST to restore the original timestamps and
+/// file system attributes.
+pub fn preserve_pro(src: &Path, dst: &Path) -> io::Result<()> {
     
-    // 1. macOS Native "Nuclear" Copy
-    // This handles ACL, Xattr, Flags, and Timestamps all in one go.
+    // Step 1: Internal Metadata (Exif, MakerNotes, ICC)
+    // This modifies the destination file content!
+    if let Err(e) = exif::preserve_internal_metadata(src, dst) {
+        eprintln!("⚠️ [metadata_keeper] Internal metadata preservation failed: {}", e);
+        // Continue? Yes, because we still want system metadata.
+    }
+
+    // Step 2: Network & User Context (Verification)
+    // Metadata usually carried by xattrs, which Step 3 will handle, but we verify here.
+    // (In future, this step could actively inject sidecar data if configured).
+    let _ = network::verify_network_metadata(src, dst);
+
+    // Step 3: System Layer "Nuclear Option" (macOS)
+    // Transfers ACLs, Flags, Xattrs (including WhereFroms), Resource Forks, and Timestamps.
+    // MUST BE LAST.
     #[cfg(target_os = "macos")]
     {
         if let Err(e) = macos::copy_native_metadata(src, dst) {
             eprintln!("⚠️ [metadata_keeper] Failed to copy native macOS metadata: {}", e);
-            // Fallthrough to standard methods if native fails? 
-            // Usually if this fails, standard methods might also fail, but we can try.
+            // Fallback to standard flow
         } else {
-            // If native copy succeeded, we are mostly done.
+            // Done. `copyfile` handles everything on macOS.
             return Ok(());
         }
     }
 
-    // 2. Standard Fallback / Cross-platform Logic
-    // Access and Modification time (atime/mtime)
+    // Step 3b: Standard Fallback (Linux/Windows)
+    // A. Xattrs
+    #[cfg(not(target_os = "macos"))] 
+    copy_xattrs_manual(src, dst);
+
+    // B. Timestamps & Permissions
     if let Ok(metadata) = std::fs::metadata(src) {
         let atime = filetime::FileTime::from_last_access_time(&metadata);
         let mtime = filetime::FileTime::from_last_modification_time(&metadata);
@@ -40,24 +59,20 @@ pub fn preserve_metadata(src: &Path, dst: &Path) -> io::Result<()> {
             eprintln!("⚠️ [metadata_keeper] Failed to set atime/mtime: {}", e);
         }
 
-        // Permissions
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            let _current_perms = std::fs::metadata(dst)?.permissions();
             let mode = metadata.permissions().mode();
-            // Only update if changed (optional check)
-            if let Err(e) = std::fs::set_permissions(dst, std::fs::Permissions::from_mode(mode)) {
-                 eprintln!("⚠️ [metadata_keeper] Failed to set permissions: {}", e);
-            }
+            let _ = std::fs::set_permissions(dst, std::fs::Permissions::from_mode(mode));
         }
     }
 
-    // 3. Manual Xattr Copy (Linux / Non-macOS or Fallback)
-    #[cfg(not(target_os = "macos"))] 
-    copy_xattrs_manual(src, dst);
-
     Ok(())
+}
+
+// Keep legacy alias for now, or direct to pro
+pub fn preserve_metadata(src: &Path, dst: &Path) -> io::Result<()> {
+    preserve_pro(src, dst)
 }
 
 #[cfg(not(target_os = "macos"))]

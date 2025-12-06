@@ -607,38 +607,14 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
 
 
 // Helper to copy metadata and timestamps from source to destination
-// Maximum metadata preservation: exiftool + xattr + setattrlist + filetime + flags + ACL
+// Maximum metadata preservation: centralized via metadata_keeper
 fn copy_metadata(src: &Path, dst: &Path) {
-    // 1. ExifTool: Copy ALL metadata tags with maximum coverage
-    if which::which("exiftool").is_ok() {
-        let _ = Command::new("exiftool")
-            .arg("-tagsfromfile").arg(src)
-            .arg("-all:all")                          // All standard tags
-            .arg("-FileCreateDate<FileCreateDate")    // System creation time
-            .arg("-FileModifyDate<FileModifyDate")    // System modify time
-            .arg("-CreationDate<CreationDate")        // QuickTime/Mac creation
-            .arg("-DateTimeOriginal<DateTimeOriginal") // Original capture time
-            .arg("-CreateDate<CreateDate")            // File creation date
-            .arg("-ModifyDate<ModifyDate")            // Content modify date
-            .arg("-SubSecTimeOriginal<SubSecTimeOriginal")  // Sub-second precision
-            .arg("-SubSecTimeDigitized<SubSecTimeDigitized")
-            .arg("-SubSecTime<SubSecTime")
-            .arg("-GPSDateTime<GPSDateTime")          // GPS timestamp
-            .arg("-AllDates")                         // Convenience: all date tags
-            .arg("-ICC_Profile<ICC_Profile")          // Color profile
-            .arg("-use").arg("MWG")                   // Metadata Working Group compat
-            .arg("-overwrite_original")
-            .arg(dst)
-            .output();
-    }
-
-    // 2. Extended Metadata & System Attributes (Nuclear Option)
-    // Uses centralized metadata_keeper crate to handle:
-    // - macOS Nucleur Copy (ACL, Flags, Resource Forks, Creation Time)
-    // - Extended Attributes (Xattr)
-    // - Standard Timestamps (Atime/Mtime)
+    // metadata_keeper::preserve_metadata now handles ALL layers:
+    // 1. Internal (Exif/IPTC via ExifTool)
+    // 2. Network (WhereFroms check)
+    // 3. System (ACL, Flags, Xattr, Timestamps via copyfile)
     if let Err(e) = metadata_keeper::preserve_metadata(src, dst) {
-        eprintln!("⚠️ Failed to preserve system metadata: {}", e);
+        eprintln!("⚠️ Failed to preserve metadata: {}", e);
     }
 }
 
