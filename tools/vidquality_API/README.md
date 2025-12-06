@@ -30,8 +30,8 @@
 - **Most Comprehensive Metadata Preservation**: default **Mandatory** use of `exiftool` (if installed) and system APIs:
   - **Full Exif/IPTC/XMP**: Lossless copy of all tags.
   - **Perfect Timestamp Replication**:
-    - **Creation Date**: Preserved on best-effort basis (`-FileCreateDate`).
-    - **Modification Time**: Perfectly preserved.
+    - **Creation Date**: **Perfectly Preserved**. Uses native macOS `setattrlist` syscall for reliable btime restoration (superior to ExifTool).
+    - **Modification Time**: Perfectly preserved via atomic syscalls.
     - **Access Time**: Perfectly preserved.
     > **⚠️ Note**: `FileInodeChangeDate` (ctime) cannot be preserved due to OS kernel security restrictions. This is a system feature, not a bug.
   - **File Permissions**: Preserves read-only status.
@@ -172,10 +172,10 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 - **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
   - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
   - **时间戳完美复刻**:
-    - **创建时间 (Creation Date)**: 尽全力保留 (`-FileCreateDate` / `-CreationDate`)。
-    - **修改时间 (Modify Time)**: 完美保留。
-    - **访问时间 (Access Time)**: 完美保留。
-    > **⚠️ 注意**: `FileInodeChangeDate` (ctime) 是文件元数据变更时间，由操作系统内核强制更新，**无法保留原始值**。这是系统级安全特性。
+    - **创建时间 (Creation Date)**: **完美保留**。使用 macOS 原生 `setattrlist` 系统调用强制写入 (比 ExifTool 更可靠)。
+    - **修改时间 (Modify Time)**: **完美保留**。使用原子化系统调用。
+    - **访问时间 (Access Time)**: **完美保留**。
+    > **⚠️ 注意**: `FileInodeChangeDate` (ctime) 是文件元数据变更时间，由操作系统内核强制更新，无法回溯。这是系统特性。
   - **文件权限**: 保持只读/读写属性。
 
 ⭐ **新功能: 数学无损 AV1 模式**

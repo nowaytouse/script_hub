@@ -201,7 +201,7 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
     let output_size = execute_av1_lossless(&detection, &output_path)?;
     
     // Preserve metadata (complete copy)
-    copy_metadata(input, &output_path)?;
+    copy_metadata(input, &output_path);
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
@@ -293,7 +293,7 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     };
     
     // Preserve metadata (complete copy)
-    copy_metadata(input, &output_path)?;
+    copy_metadata(input, &output_path);
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
@@ -466,14 +466,93 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
         ));
     }
     
+
+    
     Ok(std::fs::metadata(output)?.len())
 }
 
 
 
-/// Helper to copy metadata and timestamps from source to destination
-/// Uses exiftool if available (for complete metadata), and filetime (for robust timestamps)
-fn copy_metadata(src: &Path, dst: &Path) -> Result<()> {
+/// MacOS specialized creation time setter
+#[cfg(target_os = "macos")]
+mod macos_ext {
+    use std::io;
+    use std::path::Path;
+    use std::time::SystemTime;
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+
+    #[repr(C)]
+    struct attrlist {
+        bitmapcount: u16,
+        reserved: u16,
+        commonattr: u32,
+        volattr: u32,
+        dirattr: u32,
+        fileattr: u32,
+        forkattr: u32,
+    }
+
+    const ATTR_CMN_CRTIME: u32 = 0x00000200;
+    const ATTR_BIT_MAP_COUNT: u16 = 5;
+
+    extern "C" {
+        fn setattrlist(
+            path: *const i8,
+            attrList: *mut attrlist,
+            attrBuf: *mut std::ffi::c_void,
+            attrBufSize: usize,
+            options: u32,
+        ) -> i32;
+    }
+
+    #[repr(C)]
+    struct Timespec {
+        tv_sec: i64,
+        tv_nsec: i64,
+    }
+
+    pub fn set_creation_time(path: &Path, time: SystemTime) -> io::Result<()> {
+        let c_path = CString::new(path.as_os_str().as_bytes())?;
+        
+        let mut attr_list = attrlist {
+            bitmapcount: ATTR_BIT_MAP_COUNT,
+            reserved: 0,
+            commonattr: ATTR_CMN_CRTIME,
+            volattr: 0,
+            dirattr: 0,
+            fileattr: 0,
+            forkattr: 0,
+        };
+
+        let duration = time.duration_since(SystemTime::UNIX_EPOCH)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        
+        let mut buf = Timespec {
+            tv_sec: duration.as_secs() as i64,
+            tv_nsec: duration.subsec_nanos() as i64,
+        };
+
+        let ret = unsafe {
+            setattrlist(
+                c_path.as_ptr(),
+                &mut attr_list,
+                &mut buf as *mut _ as *mut std::ffi::c_void,
+                std::mem::size_of::<Timespec>(),
+                0, // options
+            )
+        };
+
+        if ret != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
+    }
+}
+
+// Helper to copy metadata and timestamps from source to destination
+// Uses exiftool (for metadata), set_file_times (for atime/mtime), and setattrlist (for btime on mac)
+pub fn copy_metadata(src: &Path, dst: &Path) {
     // 1. Try to copy all metadata tags using exiftool
     if which::which("exiftool").is_ok() {
         // -tagsfromfile src -all:all: copy all standard tags
@@ -487,7 +566,7 @@ fn copy_metadata(src: &Path, dst: &Path) -> Result<()> {
         // -FileCreateDate<FileCreateDate: explicit mapping required for System tags
         // -FileModifyDate<FileModifyDate: ensure mtime is copied at ExifTool level too
         // -CreationDate<CreationDate: Copy Mac specific creation date
-        let _ = Command::new("exiftool")
+        let _ = std::process::Command::new("exiftool")
             .arg("-tagsfromfile")
             .arg(src)
             .arg("-all:all")
@@ -499,24 +578,32 @@ fn copy_metadata(src: &Path, dst: &Path) -> Result<()> {
             .arg("-overwrite_original")
             .arg(dst)
             .output();
+    } else {
+        eprintln!("⚠️ Exiftool not found, extended metadata will not be preserved");
     }
 
-    // 2. Preserve file system timestamps (creation/modification time)
-    // This is a fallback/reinforcement for what ExifTool does
-    // We use set_file_times to set both atime and mtime atomically if possible
+    // 2. Preserve file system timestamps (creation/modification/access time)
     if let Ok(metadata) = std::fs::metadata(src) {
+        // A. Mac-specific creation time (btime) using setattrlist
+        #[cfg(target_os = "macos")]
+        if let Ok(created) = metadata.created() {
+             if let Err(e) = macos_ext::set_creation_time(dst, created) {
+                 eprintln!("⚠️ Failed to set creation time (setattrlist): {}", e);
+             }
+        }
+
+        // B. Access and Modification time (atime/mtime) using atomic set_file_times
         let atime = filetime::FileTime::from_last_access_time(&metadata);
         let mtime = filetime::FileTime::from_last_modification_time(&metadata);
         
         if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
-            eprintln!("⚠️ Failed to set file timestamps: {}", e);
+            eprintln!("⚠️ Failed to set file timestamps (atime/mtime): {}", e);
         }
         
         // 3. Preserve file permissions (e.g. read-only status)
-        let _ = std::fs::set_permissions(dst, metadata.permissions());
+        let permissions = metadata.permissions();
+        let _ = std::fs::set_permissions(dst, permissions);
     }
-    
-    Ok(())
 }
 
 // Legacy alias for backward compatibility

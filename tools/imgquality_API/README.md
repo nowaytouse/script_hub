@@ -151,10 +151,10 @@ imgquality verify original.png converted.jxl
 - **最全面元数据保留**: 默认**强制**保留所有可能的元数据，无需任何参数：
   - **完整 Exif/IPTC/XMP**: 包括厂商私有标记 (MakerNotes)。
   - **时间戳完美复刻**:
-    - **创建时间 (Creation Date)**: 尽全力保留 (`-FileCreateDate` / `-CreationDate`)。
-    - **修改时间 (Modify Time)**: 完美保留。
-    - **访问时间 (Access Time)**: 完美保留。
-    > **⚠️ 注意**: `FileInodeChangeDate` (ctime) 是文件元数据变更时间，由操作系统内核强制更新，**无法保留原始值**。这是系统级安全特性，而非工具缺陷。
+    - **创建时间 (Creation Date)**: **完美保留**。使用 macOS 原生 `setattrlist` 系统调用强制写入 (比 ExifTool 更可靠)。
+    - **修改时间 (Modify Time)**: **完美保留**。使用原子化系统调用。
+    - **访问时间 (Access Time)**: **完美保留**。
+    > **⚠️ 注意**: `FileInodeChangeDate` (ctime) 是文件元数据变更时间，由操作系统内核强制更新，无法回溯。这是系统特性。
   - **文件权限**: 保持只读/读写属性。
 - **并行处理**: 利用多核并行处理大批量图像。
 - **防止重复**: 会记录已成功处理的文件，在后续运行时自动跳过，避免重复工作（可通过 `--force` 覆盖）。
