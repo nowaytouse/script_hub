@@ -1,0 +1,220 @@
+[General]
+loglevel = warning
+ipv6 = true
+show-error-page-for-reject = true
+compatibility-mode = 5
+internet-test-url = http://captive.apple.com
+proxy-test-url = http://www.cloudflare.com/generate_204
+test-timeout = 3
+geoip-maxmind-url = https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb
+proxy-test-udp = one.one.one.one@1.1.1.1
+http-api = aK3bQ9sR7vY1zC5fJ0gH4nL8wP2uO6xI@0.0.0.0:6171
+http-api-tls = true
+http-api-web-dashboard = true
+allow-wifi-access = false
+allow-hotspot-access = false
+wifi-access-http-port = 4514
+wifi-access-socks5-port = 9810
+proxy-restricted-to-lan = true
+block-quic = per-policy
+exclude-simple-hostnames = true
+read-etc-hosts = true
+use-local-host-item-for-proxy = true
+include-apns = false
+include-cellular-services = false
+wifi-assist = true
+encrypted-dns-follow-outbound-mode = true
+dns-server = 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 208.67.222.222, 208.67.220.220, 116.202.176.26
+hijack-dns = *:53
+allow-dns-svcb = true
+udp-policy-not-supported-behaviour = REJECT
+ipv6-vif = always
+include-all-networks = false
+include-local-networks = false
+auto-suspend = true
+all-hybrid = false
+
+[Ponte]
+server-proxy-name= '"♻️ 自动入口 🧠"'
+
+[Proxy]
+# 手动添加
+🔐x2 手动添加 - WIREGUARD = wireguard, section-name=292D08C2, ip-version=prefer-v6, block-quic=on, underlying-proxy=♻️ 自动入口 🧠, ecn=true
+🔐x3 手动添加 - WIREGUARD 2 = wireguard, section-name=292D08C2, ip-version=prefer-v6, block-quic=on, underlying-proxy=🚶 中续路径 🔐, ecn=true
+# 网络接口 - 以太网
+en0 = direct, interface=en0, dns-follow-interface=true, test-url=http://www.apple.com/library/test/success.html, ip-version=prefer-v6, tos=46
+en1 = direct, interface=en1, dns-follow-interface=true, test-url=http://www.apple.com/library/test/success.html, ip-version=prefer-v6, tos=46
+en2 = direct, interface=en2, dns-follow-interface=true, test-url=http://www.apple.com/library/test/success.html, ip-version=prefer-v6, tos=46
+en3 = direct, interface=en3, dns-follow-interface=true, test-url=http://www.apple.com/library/test/success.html, ip-version=prefer-v6, tos=46
+en4 = direct, interface=en4, dns-follow-interface=true, test-url=http://www.apple.com/library/test/success.html, ip-version=prefer-v6, tos=46
+# 网络接口 - 隧道
+utun0 = direct, interface=utun0, dns-follow-interface=true, ip-version=prefer-v6, tos=46
+utun1 = direct, interface=utun1, allow-other-interface=true, dns-follow-interface=true, ip-version=prefer-v6, tos=46
+utun2 = direct, interface=utun2, dns-follow-interface=true, ip-version=prefer-v6, tos=46
+utun3 = direct, interface=utun3, dns-follow-interface=true, ip-version=prefer-v6, tos=46
+utun4 = direct, interface=utun4, dns-follow-interface=true, test-url=http://www.apple.com/library/test/success.html, ip-version=prefer-v6, tos=46
+
+[Proxy Group]
+# 核心入口 - fallback + 回退策略组
+♻️ 自动入口 🧠 = smart, no-alert=1, hidden=1, include-all-proxies=0, persistent=1, update-interval=1500, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Lambda.png, evaluate-before-use=1, interval=45, timeout=10, policy-path=https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/rukouyuancheng
+🚶 中续路径 🔐 = fallback, "🔐x2 手动添加 - WIREGUARD", no-alert=1, hidden=1, include-all-proxies=0, update-interval=2000, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Oracle.png, evaluate-before-use=1, policy-path=https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/surgechainproxy, interval=70, timeout=10, persistent=0
+🕳️ 落地节点 🔐 + = fallback, "🔐x3 手动添加 - WIREGUARD 2", include-all-proxies=0, hidden=1, evaluate-before-use=0, no-alert=1, policy-path=https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/surgeluodi, update-interval=1777, interval=80, timeout=10, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/SSID_Alt.png, persistent=1, policy-regex-filter=^(?!.*(?:香港|中国|🇨🇳|香港特别行政区|香港特別行政區|澳门|澳門|港澳|HK|TW|MO))(?!(?:.*\uD83C[\uDDE6-\uDDFF]\uD83C[\uDDE6-\uDDFF])).*$
+🛜 PonTen 🏠 = select, DEVICE:NYAMIIKO, no-alert=0, hidden=1, include-all-proxies=0, update-interval=1005
+📺 哔哩哔哩 📱 = select, "🗺️ 直连通用 🌏", "🇭🇰 港澳台 🇲🇴", DIRECT, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/HKMTMedia.png, evaluate-before-use=1, policy-regex-filter=台湾|香港
+🎮 游戏平台 💻 = select, "🗺️ 直连通用 🌏", "🇯🇵 JP 🇯🇵", "🇺🇸 西方 🇫🇷", "🇸🇬 亚洲 🇰🇷", "🇬🇧 UK 🇬🇧", "🇭🇰 港澳台 🇲🇴", "🌍 海外通用 🌍", "🇺🇸 美国 🇺🇸", "🇭🇰 香港 🇭🇰", "🇹🇼 台湾 🇹🇼", "🇸🇬 新加坡 🇸🇬", "🇰🇷 韩国 🇰🇷", "🇲🇴 澳门 🇲🇴", DIRECT, no-alert=0, hidden=0, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Game.png
+🐟 漏网之鱼 🕸️ = select, "♻️ 自动入口 🧠", "🚫 漏网绝杀 🕸️", "🗺️ 直连通用 🌏", "🌍 海外通用 🌍", "🔗 自动回退 🏁", "🛜 PonTen 🏠", no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Cat.png
+🚫 漏网绝杀 🕸️ = select, REJECT, REJECT-DROP, REJECT-NO-DROP, REJECT-TINYGIF, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Flamingo.png
+🔗 自动回退 🏁 = smart, no-alert=1, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Available_Alt.png, persistent=1, policy-path=https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/jichanghebing, update-interval=1360, evaluate-before-use=1, interval=300, timeout=2, policy-regex-filter=^(?!.*(?:中国|CN|北京|杭州|青海|其他)).*$
+# 媒体服务 - 统一排序: 区域组 → 单独地区 → 直连
+▶️  YouTube 🔴 = select, "🇺🇸 西方 🇫🇷", "🇯🇵 JP 🇯🇵", "🇸🇬 亚洲 🇰🇷", "🇬🇧 UK 🇬🇧", "🇭🇰 港澳台 🇲🇴", "🇺🇸 美国 🇺🇸", "🇭🇰 香港 🇭🇰", "🇹🇼 台湾 🇹🇼", "🇸🇬 新加坡 🇸🇬", "🇰🇷 韩国 🇰🇷", "🇲🇴 澳门 🇲🇴", "🗺️ 直连通用 🌏", no-alert=0, hidden=0, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/YouTube.png
+📷 instgram ⛰️ = select, "🇺🇸 西方 🇫🇷", "🇯🇵 JP 🇯🇵", "🇸🇬 亚洲 🇰🇷", "🇬🇧 UK 🇬🇧", "🇭🇰 港澳台 🇲🇴", "🇺🇸 美国 🇺🇸", "🇭🇰 香港 🇭🇰", "🇹🇼 台湾 🇹🇼", "🇸🇬 新加坡 🇸🇬", "🇰🇷 韩国 🇰🇷", "🇲🇴 澳门 🇲🇴", "🗺️ 直连通用 🌏", no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Instagram.png
+🍎 Apple 🍏 = select, "🗺️ 直连通用 🌏", "🇯🇵 JP 🇯🇵", "🇺🇸 西方 🇫🇷", "🇸🇬 亚洲 🇰🇷", "🇬🇧 UK 🇬🇧", "🇭🇰 港澳台 🇲🇴", DIRECT, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Apple.png
+📱 TikTok 🧠 = select, "🇰🇷 韩国 🇰🇷", "🇯🇵 JP 🇯🇵", "🇺🇸 西方 🇫🇷", "🇸🇬 亚洲 🇰🇷", "🇬🇧 UK 🇬🇧", "🇺🇸 美国 🇺🇸", "🇸🇬 新加坡 🇸🇬", "🇹🇼 台湾 🇹🇼", "🇭🇰 香港 🇭🇰", "🇲🇴 澳门 🇲🇴", "🗺️ 直连通用 🌏", no-alert=0, hidden=0, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Cellular.png
+🔊  Spotify  🟢 = select, "🇺🇸 西方 🇫🇷", "🇯🇵 JP 🇯🇵", "🇸🇬 亚洲 🇰🇷", "🇬🇧 UK 🇬🇧", "🇭🇰 港澳台 🇲🇴", "🇺🇸 美国 🇺🇸", "🇭🇰 香港 🇭🇰", "🇹🇼 台湾 🇹🇼", "🇸🇬 新加坡 🇸🇬", "🇰🇷 韩国 🇰🇷", "🇲🇴 澳门 🇲🇴", "🗺️ 直连通用 🌏", no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Spotify.png
+🗺️ 直连通用 🌏 = select, DIRECT, en0, en1, en2, en3, en4, url=http://connectivitycheck.platform.hicloud.com/generate_204, no-alert=1, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Unlock.png, evaluate-before-use=1, tolerance=2, interval=105, timeout=1, include-other-group=🗺️ 中国大陆 🇨🇳
+🌍 海外通用 🌍 = url-test, no-alert=1, hidden=1, include-all-proxies=0, persistent=1, update-interval=1866, include-other-group=""♻️ 自动入口 🧠", "🕳️ 落地节点 🔐 +"", icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Static_Alt.png, evaluate-before-use=1, interval=550, timeout=5, tolerance=80, policy-regex-filter=^(?!.*(?:🇨🇳|🇭🇰|🇲🇴|🇹🇼|HK|TW|CN|MO|回国|大陆)).*$
+# 区域组 - 从♻️自动入口获取节点，无需重复include-other-group
+🇭🇰 港澳台 🇲🇴 = smart, policy-regex-filter=🇭🇰|🇲🇴|🇹🇼|香港|澳门|台湾|HK|MO|TW, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Hong_Kong.png, evaluate-before-use=1, policy-path=https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/rukouyuancheng, update-interval=0
+🇺🇸 西方 🇫🇷 = smart, policy-regex-filter=🇺🇸|🇬🇧|🇫🇷|🇩🇪|美国|英国|法国|德国|US|UK|FR|DE, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/United_States_Map.png, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇸🇬 亚洲 🇰🇷 = smart, policy-regex-filter=🇯🇵|🇸🇬|🇰🇷|日本|新加坡|韩国|JP|SG|KR, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Singapore.png, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🗺️ 中国大陆 🇨🇳 = url-test, policy-regex-filter=🇨🇳|中国|CN, no-alert=1, hidden=1, include-all-proxies=1, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/China_Map.png, evaluate-before-use=1, policy-path=https://gist.githubusercontent.com/nowaytouse/dcf7620c59dffcb1528fa5af02ba5b08/raw/jichanghebing, timeout=1, tolerance=10, update-interval=0
+🇯🇵 JP 🇯🇵 = smart, policy-regex-filter=🇯🇵|日本|JP|Japan, no-alert=1, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Japan.png, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇬🇧 UK 🇬🇧 = smart, policy-regex-filter=🇬🇧|英国|UK|Britain, no-alert=0, hidden=1, include-all-proxies=0, icon-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/UK.png, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🐦 Twitter 🔵 = select, 🇯🇵日本专线🧱, 🇺🇸美国专线🧱, 🇰🇷韩国专线🧱, include-all-proxies=0, hidden=1
+# 单独地区节点 - 统一从♻️自动入口获取
+🇺🇸 美国 🇺🇸 = smart, policy-regex-filter=🇺🇸|美国|US|United States, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇭🇰 香港 🇭🇰 = smart, policy-regex-filter=🇭🇰|香港|HK|Hong Kong, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇲🇴 澳门 🇲🇴 = smart, policy-regex-filter=🇲🇴|澳门|MO|Macao, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇹🇼 台湾 🇹🇼 = smart, policy-regex-filter=🇹🇼|台湾|TW|Taiwan, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇸🇬 新加坡 🇸🇬 = smart, policy-regex-filter=🇸🇬|新加坡|SG|Singapore, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇰🇷 韩国 🇰🇷 = smart, policy-regex-filter=🇰🇷|韩国|KR|Korea, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+# 专线组 - 统一从♻️自动入口获取
+🇯🇵日本专线🧱 = smart, policy-regex-filter=^(?=.*(日本|日|🇯🇵|JP|Japan|东京|Tokyo))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP|沪日))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇺🇸美国专线🧱 = smart, policy-regex-filter=^(?=.*(美国|美|🇺🇸|US|United States))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇭🇰香港专线🧱 = smart, policy-regex-filter=^(?=.*(香港|港|🇭🇰|HK|Hong Kong|HongKong))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP|深港|广港|沪港))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇸🇬新加坡专线🧱 = smart, policy-regex-filter=^(?=.*(新加坡|狮城|坡|新|🇸🇬|SG|Singapore))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP|沪新|深新|广新))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇹🇼台湾专线🧱 = smart, policy-regex-filter=^(?=.*(台湾|台灣|台|湾|灣|🇹🇼|TW|Taiwan|台北|Taipei))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP|沪台|深台|广台))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇬🇧英国专线🧱 = smart, policy-regex-filter=^(?=.*(英国|英|🇬🇧|UK|United Kingdom))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🇰🇷韩国专线🧱 = smart, policy-regex-filter=^(?=.*(韩国|韓國|韩|韓|🇰🇷|KR|Korea|首尔|首爾|Seoul))(?=.*(专线|專線|IPLC|IEPL|CN2|BGP|沪韩|深韩|广韩))(?!.*(家宽|住宅|Residential)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🧱仅专线🧱 = smart, policy-regex-filter=^(?=.*?(?i)(BGP|原生|Native|住宅|Residential|家宽|原生IP|LC|Full Cone|满锥|1Gbps|2Gbps|10Gbps|Dedicated|Enterprise)).*$, hidden=1, include-all-proxies=0, evaluate-before-use=1, include-other-group=♻️ 自动入口 🧠
+🤖AI平台🤖 = smart, include-all-proxies=0, include-other-group="🇺🇸美国专线🧱, "🇺🇸 美国 🇺🇸"", hidden=1, evaluate-before-use=1
+Reddit = smart, include-all-proxies=0, include-other-group=""🇺🇸 美国 🇺🇸", 🇺🇸美国专线🧱", hidden=1, evaluate-before-use=1
+☎️telegram✈️ = smart, no-alert=0, hidden=0, include-all-proxies=0, include-other-group=""🇯🇵 JP 🇯🇵", "🇺🇸 美国 🇺🇸", "🇹🇼 台湾 🇹🇼""
+
+[Rule]
+DOMAIN-KEYWORD,kemono.cr,🧱仅专线🧱 // NSFW
+PROCESS-NAME,/Applications/Thunder.app/,DIRECT
+IN-PORT,8076,DIRECT
+DEST-PORT,8076,DIRECT
+PROCESS-NAME,/Applications/Transmission.app/,DIRECT
+# ============ 以上为新增 ============
+
+# ============ 去广告规则 ============
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,pre-matching,extended-matching,"update-interval=86400",no-resolve
+# 上游 DROP/NO-DROP 规则
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,pre-matching,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,pre-matching,extended-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,pre-matching,extended-matching,"update-interval=86400",no-resolve
+
+# 特殊路由
+DOMAIN-KEYWORD,reddit,Reddit
+DOMAIN,pass-api.proton.me,"🇰🇷 韩国 🇰🇷"
+DOMAIN,list.linehk.top,"🇭🇰 香港 🇭🇰",extended-matching
+DOMAIN,nyamiiko.sgddns,"🛜 PonTen 🏠"
+
+# 手动规则集
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Manual_US.list,"🇺🇸 美国 🇺🇸",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Manual_West.list,"🇺🇸 西方 🇫🇷",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Manual_JP.list,"🇯🇵 JP 🇯🇵",extended-matching,no-resolve
+
+# 进程规则
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AIProcess.list,🤖AI平台🤖
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GamingProcess.list,"🎮 游戏平台 💻"
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/DirectProcess.list,"🗺️ 直连通用 🌏"
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/DownloadProcess.list,"🗺️ 直连通用 🌏"
+
+# AI + 社交
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AI.list,🤖AI平台🤖,extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Telegram.list,☎️telegram✈️,extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/TikTok.list,"📱 TikTok 🧠",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Google.list,"▶️  YouTube 🔴",extended-matching,no-resolve
+
+# 直连
+RULE-SET,SYSTEM,"🗺️ 直连通用 🌏",no-resolve
+RULE-SET,LAN,"🗺️ 直连通用 🌏",no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/LAN.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Manual.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+RULE-SET,https://whatshub.top/rule/QQ.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+
+# 媒体
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/NSFW.list,"🇯🇵 JP 🇯🇵",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Bilibili.list,"📺 哔哩哔哩 📱",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Bahamut.list,"🇭🇰 港澳台 🇲🇴",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitter/Twitter.list,"🐦 Twitter 🔵",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/Coldvvater/Mononoke/master/Surge/Rules/Spotify.list,"🔊  Spotify  🟢",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list,"▶️  YouTube 🔴",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GlobalMedia.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+
+# 游戏
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Epic.list,"🗺️ 直连通用 🌏",extended-matching
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Gaming.list,"🎮 游戏平台 💻",extended-matching
+
+# 区域流媒体
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamJP.list,"🇯🇵 JP 🇯🇵",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamUS.list,"🇺🇸 美国 🇺🇸",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamKR.list,"🇰🇷 韩国 🇰🇷",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamEU.list,🇬🇧英国专线🧱,extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamHK.list,"🇭🇰 香港 🇭🇰",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamTW.list,"🇹🇼 台湾 🇹🇼",extended-matching,no-resolve
+RULE-SET,https://whatshub.top/rule/Binance.list,"🇸🇬 新加坡 🇸🇬",extended-matching,no-resolve
+
+# Apple + 国内
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Apple.list,"🍎 Apple 🍏",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/PayPal/PayPal.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Shadowrocket/NetEaseMusic/NetEaseMusic.list,"🗺️ 直连通用 🌏",extended-matching
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Tencent/Tencent.list,"🗺️ 直连通用 🌏",extended-matching
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/XiaoHongShu/XiaoHongShu.list,"🗺️ 直连通用 🌏",extended-matching
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/WeChat/WeChat.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Tesla/Tesla.list,"🗺️ 直连通用 🌏",extended-matching
+RULE-SET,https://raw.githubusercontent.com/getsomecat/GetSomeCats/Surge/rule/substore.list,"🔗 自动回退 🏁",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Microsoft.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/ChinaDirect.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+
+# 海外通用
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Fediverse.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Manual_Global.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Discord.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+RULE-SET,https://whatshub.top/rule/Kemono.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Instagram/Instagram.list,"📷 instgram ⛰️",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/GoogleCN.list,"🚫 漏网绝杀 🕸️",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitHub/GitHub.list,"🔗 自动回退 🏁",extended-matching,no-resolve
+
+# 兜底
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GlobalProxy.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AppleNews/AppleNews.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/CDN.list,"🌍 海外通用 🌍",extended-matching,no-resolve
+GEOIP,JP,"🇯🇵 JP 🇯🇵"
+GEOIP,US,"🇺🇸 西方 🇫🇷"
+GEOIP,KR,"🇸🇬 亚洲 🇰🇷"
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/ChinaIP.list,"🗺️ 直连通用 🌏",extended-matching,no-resolve
+GEOIP,CN,"🗺️ 直连通用 🌏"
+FINAL,🐟 漏网之鱼 🕸️,dns-failed
+
+[Host]
+*.0807loys.top = server:1.1.1.1
+*.liangxin1.xyz = server:1.1.1.1
+
+[MITM]
+h2 = true
+hostname = https://sub-store.vercel.app
+ca-passphrase = 2B06C68F
+ca-p12 = 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
+
+[WireGuard 292D08C2]
+private-key = SI3vMWKyDI5neGotzlyECkd7kRaAdMGNY3HWX5/vE1M=
+self-ip = 172.16.0.2
+self-ip-v6 = 2606:4700:110:8de8:53c8:8b31:e94a:2631
+prefer-ipv6 = true
+dns-server = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001
+mtu = 1280
+peer = (public-key = bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=, allowed-ips = "0.0.0.0/0, ::0/0", endpoint = engage.cloudflareclient.com:2408)

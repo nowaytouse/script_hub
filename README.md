@@ -19,41 +19,34 @@ Batch media conversion tools with **complete metadata preservation** and **healt
 - **Video → High-Quality GIF**: Two-pass palette optimization
 - **WebP Compression**: Binary search for optimal quality (15-20MB target)
 - **GIF Compression**: Frame-preserving compression with quality control
-- **Date Analyzer**: Deep EXIF/XMP date extraction (excludes unreliable FileModifyDate)
+- **Date Analyzer**: Deep EXIF/XMP date extraction
 
 **Key Principles:**
-- ✅ Complete metadata preservation (EXIF, XMP, ICC Profile, timestamps)
-- ✅ 100% FPS and frame count preservation for animations
-- ✅ Health check validation before deleting originals
+- ✅ Complete metadata preservation (EXIF, XMP, ICC, timestamps)
+- ✅ 100% FPS and frame count preservation
 - ✅ Whitelist-only processing for safety
-- ✅ Performance-optimized (parallel processing, minimal tool calls)
+- ✅ Parallel processing optimized
+
+### 🔄 Merge & Sync (`merge_sync/`)
+Core automation tools for proxy rule management:
+
+- **Rule Ingestion**: `ingest_from_surge.sh` - Auto-import new rules from Surge profiles, classify them, and backup safely.
+- **Rule Merger**: `merge_all_rulesets.sh` - Aggregates rules from 3rd-party sources and local `sources/` into unified lists.
+- **AdBlock Merger**: `merge_adblock_modules.sh` - Intelligent merger for AdBlock modules with Surge/Singbox/Clash support.
+- **Sync Pipeline**: `sync_all_rulesets.sh` - End-to-end automation: Ingest -> Merge -> Convert -> Git Push.
 
 ### 🌐 Network Scripts (`scripts/network/`)
-Configuration management and auto-update tools for proxy applications:
-
+Configuration management:
 - **Config Manager**: Auto-update proxy configurations
-- **Rule Sync**: Synchronize rulesets across platforms
-
-### 🔄 Sync Scripts (`scripts/sync/`)
-Module synchronization tools for iCloud:
-
-- **Module Sync**: Auto-sync Surge modules to iCloud (Surge + Shadowrocket)
-- **Compatibility Conversion**: Auto-convert Surge modules for Shadowrocket
-- **Duplicate Cleanup**: Remove old/duplicate modules automatically
-
-### 📦 Substore Scripts (`substore/`)
-Advanced JavaScript rules for [Sub-Store](https://github.com/sub-store-org/Sub-Store):
-
-- Node filtering and optimization
-- Region-based routing rules
-- Multi-client support (Clash, Sing-box, Surge, Shadowrocket)
+- **SingBox Converter**: Batch convert Surge lists to Sing-box binary format
 
 ### 📋 Rulesets (`ruleset/`)
-Proxy rulesets for multiple platforms:
-
-- Surge / Shadowrocket
-- Sing-Box
-- MetaCubeX (Clash Meta)
+- **Sources (`ruleset/Sources/`)**:
+  - `conf/`: Ingested rules (Auto-generated)
+  - `custom/`: Manual rules (User-defined)
+- **Generated**:
+  - `Surge(Shadowkroket)/`: Final merged lists for Surge/Shadowrocket
+  - `SingBox/`: Binary rulesets (`.srs`) for Sing-box
 
 ---
 
@@ -65,52 +58,49 @@ git clone https://github.com/YOUR_USERNAME/script_hub.git
 cd script_hub
 
 # Make scripts executable
-chmod +x scripts/media/*.sh scripts/sync/*.sh
+chmod +x scripts/media/*.sh merge_sync/*.sh
 
-# Example: Convert incompatible media
-./scripts/media/convert_incompatible_media.sh /path/to/media --keep-only-incompatible
+# Example: Ingest new rules from Surge profile (Dry Run)
+./merge_sync/ingest_from_surge.sh
 
-# Example: Sync modules to iCloud
-./scripts/sync/sync_modules_to_icloud.sh --all
+# Example: Full Sync (Ingest -> Merge -> Git Push)
+./merge_sync/sync_all_rulesets.sh
 ```
+
+### Automation (Unattended)
+Scripts support `--no-backup` flag and detect `CI=true` environment to skip local backups during automated runs.
+A GitHub Action workflow is included for daily updates.
+
+---
 
 ## Dependencies
 
 ### Media Scripts
 ```bash
-# macOS (Homebrew)
 brew install jpeg-xl libheif exiftool ffmpeg webp
 ```
 
-### Required Tools
-| Tool | Purpose | Install |
-|------|---------|---------|
-| `cjxl` | JPEG XL encoding | `brew install jpeg-xl` |
-| `heif-convert` | HEIC/HEIF decoding | `brew install libheif` |
-| `exiftool` | Metadata handling | `brew install exiftool` |
-| `ffmpeg/ffprobe` | Video processing | `brew install ffmpeg` |
-| `img2webp` | WebP animation (FPS-accurate) | `brew install webp` |
+### Network Scripts
+- **Rust Toolchain** (for some compiled tools)
+- **Sing-box** (for rule conversion)
 
 ---
 
 ## Recent Updates
 
-### 2025-12-04: WebP FPS Preservation Fix
-- **Problem**: ffmpeg's libwebp encoder hardcodes 25fps limit
-- **Solution**: Rewrote MP4→WebP conversion using `img2webp` for exact frame timing
-- **Result**: 30fps videos now correctly convert to 30fps WebP (33ms/frame)
+### 2025-12-06: Infrastructure Overhaul
+- **New Structure**: Centralized sync tools in `merge_sync/`.
+- **Git Automation**: Full GitHub Actions workflow for daily unattended updates.
+- **Smart Ingestion**: Improved logic to classify rules from Surge profiles into dedicated source files.
+- **Privacy First**: Strict exclusion of sensitive data (`隐私🔏`).
 
-### Verified Conversion Quality
-| Type | FPS | Frames | Metadata | Timestamps |
-|------|-----|--------|----------|------------|
-| MP4→WebP | ✅ 30→30.30fps | ✅ 100% | ✅ XMP | ✅ |
-| HEIC→PNG | N/A | N/A | ✅ 31 tags | ✅ |
+### 2025-12-04: WebP FPS Preservation
+- Fixed ffmpeg 25fps limitation using `img2webp` for precise frame timing.
 
 ---
 
 ## License
-
-MIT License - See individual script headers for details.
+MIT License.
 
 ---
 
@@ -122,90 +112,49 @@ MIT License - See individual script headers for details.
 
 ### 🎬 媒体脚本 (`scripts/media/`)
 批量媒体转换工具，支持**完整元数据保留**和**健康检查验证**：
+- **JPEG/PNG → JXL**: 高效无损/有损压缩
+- **HEIC → PNG**: 苹果格式转换
+- **MP4 → WebP**: **真实帧率保留**，完美复刻原视频流畅度
+- **Video → GIF**: 高质量调色板优化
 
-- **JPEG → JXL**: 高压缩率转换，完整保留元数据
-- **PNG → JXL**: 数学无损压缩
-- **HEIC/HEIF → PNG**: Apple格式转通用PNG
-- **MP4 → WebP**: **真实FPS保留**，使用`img2webp`（修复ffmpeg的25fps限制）
-- **动图 → H.266/VVC**: 现代视频编码转换
-- **视频 → 高质量GIF**: 双通道调色板优化
-
-**核心原则：**
-- ✅ 完整元数据保留（EXIF、XMP、ICC配置文件、时间戳）
-- ✅ 动画100%帧率和帧数保留
-- ✅ 删除原文件前进行健康检查验证
-- ✅ 仅处理白名单格式，确保安全
-
-### 🌐 网络脚本 (`scripts/network/`)
-代理应用的配置管理和自动更新工具：
-
-- **配置管理器**: 自动更新代理配置
-- **规则同步**: 跨平台同步规则集
-
-### 🔄 同步脚本 (`scripts/sync/`)
-iCloud模块同步工具：
-
-- **模块同步**: 自动同步Surge模块到iCloud（Surge + Shadowrocket）
-- **兼容性转换**: 自动转换Surge模块为Shadowrocket兼容格式
-- **重复清理**: 自动删除旧版本/重复模块
-
-### 📦 Substore脚本 (`substore/`)
-[Sub-Store](https://github.com/sub-store-org/Sub-Store)的高级JavaScript规则：
-
-- 节点过滤和优化
-- 基于地区的路由规则
-- 多客户端支持（Clash、Sing-box、Surge、Shadowrocket）
+### 🔄 合并与同步 (`merge_sync/`)
+代理规则管理的核心自动化工具：
+- **规则吸纳 (`ingest`)**: 从 Surge 配置文件智能提取新规则，分类并归档。
+- **规则合并 (`merge`)**: 聚合第三方源和本地 `sources/` 规则，生成去重后的统一列表。
+- **广告拦截合并**: 智能合并 Surge/Clash/Singbox 格式的去广告模块。
+- **全流程同步**: `sync_all_rulesets.sh` 实现 "吸纳 -> 合并 -> 转换 -> Git推送" 一键死人值守。
 
 ### 📋 规则集 (`ruleset/`)
-多平台代理规则集：
-
-- Surge / Shadowrocket
-- Sing-Box
-- MetaCubeX (Clash Meta)
-
----
+- **源文件 (`ruleset/Sources/`)**:
+  - `conf/`: 自动吸纳的规则文件
+  - `custom/`: 用户手动维护的规则文件
+- **生成产物**:
+  - `Surge(Shadowkroket)/`: 适用于 Surge 和 Shadowrocket 的最终规则
+  - `SingBox/`: 适用于 Sing-box 的二进制规则 (`.srs`)
 
 ## 快速开始
 
 ```bash
-# 克隆仓库
-git clone https://github.com/YOUR_USERNAME/script_hub.git
-cd script_hub
+# 赋予执行权限
+chmod +x scripts/media/*.sh merge_sync/*.sh
 
-# 添加执行权限
-chmod +x scripts/media/*.sh scripts/sync/*.sh
+# 示例：从 Surge 配置提取新规则 (试运行)
+./merge_sync/ingest_from_surge.sh
 
-# 示例：转换不兼容媒体
-./scripts/media/convert_incompatible_media.sh /path/to/media --keep-only-incompatible
-
-# 示例：同步模块到iCloud
-./scripts/sync/sync_modules_to_icloud.sh --all
+# 示例：执行全量同步 (合并+转换+推送)
+./merge_sync/sync_all_rulesets.sh
 ```
 
-## 依赖安装
-
-```bash
-# macOS (Homebrew)
-brew install jpeg-xl libheif exiftool ffmpeg webp
-```
-
----
+### 无人值守自动化
+脚本支持 `--no-backup` 参数，并能自动检测 `CI=true` 环境以跳过本地备份步骤，适合 Cron 或 GitHub Actions 每日自动运行。
 
 ## 最近更新
 
-### 2025-12-04: WebP帧率保留修复
-- **问题**: ffmpeg的libwebp编码器硬编码25fps限制
-- **解决方案**: 使用`img2webp`重写MP4→WebP转换，实现精确帧时序
-- **结果**: 30fps视频现在正确转换为30fps WebP（33ms/帧）
+### 2025-12-06: 架构重构
+- **目录调整**: 同步工具集中至 `merge_sync/`。
+- **自动化**: 集成 GitHub Actions 实现每日自动更新。
+- **隐私保护**: 严格排除敏感目录 (`隐私🔏`)。
+- **智能分类**: Ingest 脚本现在能将规则分类到 `conf/` 下的独立文件中。
 
-### 转换质量验证
-| 类型 | FPS | 帧数 | 元数据 | 时间戳 |
-|------|-----|------|--------|--------|
-| MP4→WebP | ✅ 30→30.30fps | ✅ 100% | ✅ XMP | ✅ |
-| HEIC→PNG | N/A | N/A | ✅ 31标签 | ✅ |
-
----
-
-## 许可证
-
-MIT许可证 - 详见各脚本文件头部说明。
+### 2025-12-04: WebP 帧率修复
+- 使用 `img2webp` 彻底解决了 ffmpeg 导致 WebP 帧率被锁定在 25fps 的问题。

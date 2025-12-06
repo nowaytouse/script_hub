@@ -1,9 +1,0 @@
-/Users/nyamiiko/Library/Mobile Documents/com~apple~CloudDocs/Application/script_hub/tools/imgquality/target/release/deps/ab_glyph_rasterizer-147547c3e47cbc3f.d: /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/lib.rs /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/geometry.rs /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/raster.rs
-
-/Users/nyamiiko/Library/Mobile Documents/com~apple~CloudDocs/Application/script_hub/tools/imgquality/target/release/deps/libab_glyph_rasterizer-147547c3e47cbc3f.rlib: /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/lib.rs /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/geometry.rs /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/raster.rs
-
-/Users/nyamiiko/Library/Mobile Documents/com~apple~CloudDocs/Application/script_hub/tools/imgquality/target/release/deps/libab_glyph_rasterizer-147547c3e47cbc3f.rmeta: /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/lib.rs /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/geometry.rs /Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/raster.rs
-
-/Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/lib.rs:
-/Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/geometry.rs:
-/Users/nyamiiko/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ab_glyph_rasterizer-0.1.10/src/raster.rs:

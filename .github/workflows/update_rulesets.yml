@@ -1,0 +1,30 @@
+name: Update Rulesets
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # Runs at 04:00 UTC everyday
+  workflow_dispatch:      # Allows manual run
+
+jobs:
+  update-rules:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        
+    - name: Execute Sync Script
+      run: |
+        chmod +x sync/sync_all_rulesets.sh
+        chmod +x network/merge_all_rulesets.sh
+        chmod +x sync/merge_adblock_modules.sh
+        ./sync/sync_all_rulesets.sh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

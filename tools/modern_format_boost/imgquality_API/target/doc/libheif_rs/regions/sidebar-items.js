@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Region"],"struct":["Ellipse","EllipseRegion","EllipseTransformed","InlineMaskRegion","PointRegion","PolygonRegion","PolylineRegion","Rectangle","RectangleRegion","RectangleTransformed","ReferencedMaskRegion","RegionItem"]};
