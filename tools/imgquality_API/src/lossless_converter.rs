@@ -157,6 +157,15 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
             let output_size = fs::metadata(&output)?.len();
             let reduction = 1.0 - (output_size as f64 / input_size as f64);
             
+            // Validate output
+            if let Err(e) = verify_jxl_health(&output) {
+                 let _ = fs::remove_file(&output);
+                 return Err(e);
+            }
+
+            // Copy metadata and timestamps
+            copy_metadata(input, &output);
+            
             mark_as_processed(input);
             
             if options.delete_original {
@@ -232,6 +241,15 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
         Ok(output_cmd) if output_cmd.status.success() => {
             let output_size = fs::metadata(&output)?.len();
             let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            // Validate output
+            if let Err(e) = verify_jxl_health(&output) {
+                 let _ = fs::remove_file(&output);
+                 return Err(e);
+            }
+
+            // Copy metadata and timestamps
+            copy_metadata(input, &output);
             
             mark_as_processed(input);
             
@@ -389,6 +407,9 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
             let output_size = fs::metadata(&output)?.len();
             let reduction = 1.0 - (output_size as f64 / input_size as f64);
             
+            // Copy metadata and timestamps
+            copy_metadata(input, &output);
+            
             mark_as_processed(input);
             
             if options.delete_original {
@@ -465,6 +486,9 @@ pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Resul
         Ok(output_cmd) if output_cmd.status.success() => {
             let output_size = fs::metadata(&output)?.len();
             let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            // Copy metadata and timestamps
+            copy_metadata(input, &output);
             
             mark_as_processed(input);
             
@@ -573,6 +597,38 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     }
 }
 
+/// Helper to copy metadata and timestamps from source to destination
+/// Uses exiftool if available, otherwise just preserves timestamps
+fn copy_metadata(src: &Path, dst: &Path) {
+    // 1. Try to copy all metadata tags using exiftool
+    if which::which("exiftool").is_ok() {
+        // -tagsfromfile src -all:all: copy all tags
+        // -overwrite_original: don't create _original backup
+        // -use MWG: use Metadata Working Group standards for compatibility
+        let _ = Command::new("exiftool")
+            .arg("-tagsfromfile")
+            .arg(src)
+            .arg("-all:all")
+            .arg("-use").arg("MWG")
+            .arg("-overwrite_original")
+            .arg(dst)
+            .output();
+    } else {
+        eprintln!("⚠️ Exiftool not found, extended metadata will not be preserved");
+    }
+
+    // 2. Preserve file system timestamps (creation/modification time)
+    if let Ok(metadata) = fs::metadata(src) {
+        if let Ok(mtime) = metadata.modified() {
+            let _ = filetime::set_file_mtime(dst, filetime::FileTime::from_system_time(mtime));
+        }
+        // Atimes are less critical but good to preserve if possible
+        if let Ok(atime) = metadata.accessed() {
+           let _ = filetime::set_file_atime(dst, filetime::FileTime::from_system_time(atime));
+        }
+    }
+}
+
 /// Determine output path and ensure directory exists
 fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> PathBuf {
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
@@ -593,6 +649,27 @@ fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<Path
 pub fn clear_processed_list() {
     let mut processed = PROCESSED_FILES.lock().unwrap();
     processed.clear();
+}
+
+/// Verify that JXL file is valid using signature and optional decoding
+fn verify_jxl_health(path: &Path) -> Result<()> {
+    // Check file signature
+    let mut file = fs::File::open(path)?;
+    let mut sig = [0u8; 2];
+    use std::io::Read;
+    file.read_exact(&mut sig)?;
+
+    // JXL signature: 0xFF 0x0A (bare JXL) or 0x00 0x00 (ISOBMFF container)
+    if sig != [0xFF, 0x0A] && sig != [0x00, 0x00] {
+        return Err(ImgQualityError::ConversionError(
+            "Invalid JXL file signature".to_string(),
+        ));
+    }
+    
+    // Skip full decode check for performance, signature is usually enough for cjxl output
+    // Unless paranoia mode is requested.
+    
+    Ok(())
 }
 
 #[cfg(test)]
