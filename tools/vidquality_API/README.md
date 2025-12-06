@@ -20,7 +20,7 @@
 
 🚀 **Intelligent `auto` & `simple` Conversion Engines**
 - **Smart `auto` Strategy**: Automatically determines the best conversion path:
-  - **Modern Codecs (AV1/H.265/VP9 etc.)**: **Skip**. Detected modern formats are skipped to avoid generational loss.
+  - **Modern Codecs (AV1/H.265/VP9/VVC/AV2)**: **Skip**. Detected modern formats are skipped to avoid generational loss.
   - **`Lossless` Source (FFV1/ProRes etc.) → AV1 Lossless**: Converts bulky lossless masters to **mathematically lossless** AV1 (CRF 0 + Lossless), significantly reducing size while maintaining bit-perfect quality.
   - **`Lossy` Source (H.264/MPEG etc.) → AV1 (CRF 0)**: Compresses using visually lossless CRF 0 settings for high quality.
 - **Simple Mode**: Enforces **AV1 Mathematical Lossless** mode by default for absolute quality preservation.
@@ -28,6 +28,10 @@
 - **Lossless Audio Handling**: Automatically converts audio to **FLAC** or high-quality AAC.
 - **`--explore` Mode**: For the `auto` command, starts from CRF 0 and finds the optimal size.
 - **Most Comprehensive Metadata Preservation**: default **Mandatory** use of `exiftool` (if installed) and system APIs:
+  - **Full Exif/IPTC/XMP**: Lossless copy of all tags.
+  - **System Timestamps**: Perfectly replicates file Access Time and Modification Time.
+    > **Note**: Inode/Metadata Change Time (ctime) cannot be preserved due to OS limitations, but mtime and atime are preserved.
+  - **File Permissions**: Preserves read-only status.
 
 ⭐ **New: Mathematical Lossless AV1 Mode**
 - **`--lossless` Flag**: A powerful new option for `auto` and `simple` commands. It forces the conversion to use **mathematically lossless AV1**. This is useful for creating archival masters from sources where FFV1 is not desired.
@@ -155,7 +159,7 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 
 🚀 **智能 `auto` & `simple` 转换引擎**
 - **智能 `auto` 策略**: 自动确定最佳转换路径：
-  - **现代编码 (AV1/H.265/VP9等)**: **自动跳过**。源文件已是高效格式，避免无效重编码和代际损耗。
+  - **现代编码 (AV1/H.265/VP9/VVC/AV2)**: **自动跳过**。源文件已是高效格式，避免无效重编码和代际损耗。
   - **无损源文件 (FFV1/ProRes等) → AV1 Lossless**: 将庞大的无损母版转换为**数学无损**的 AV1 (CRF 0 + Lossless)，在保持逐比特一致的同时显著减小体积。
   - **有损源文件 (H.264/MPEG等) → AV1 (CRF 0)**: 使用视觉无损的 CRF 0 参数进行高质量压缩。
 - **Simple 模式**: 默认强制使用 **AV1 数学无损** 模式，确保绝对的质量保留。
@@ -164,8 +168,9 @@ vidquality simple "screencast.mov" --output ./videos/ --lossless
 - **`--explore` 模式**: 在 `auto` 命令中，从 CRF 0 开始尝试，直到找到比源文件更小的体积。
 - **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
   - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
-  - **系统时间戳**: 完美复刻文件创建时间 (CreationDate/Btime) 和修改时间。
-  - **文件权限**: 保持原始文件的读写权限属性。
+  - **系统时间戳**: 完美复刻文件访问时间 (Access Time) 和修改时间 (Modify Time)。
+    > **注意**: Inode/Metadata Change Time (ctime) 并非用户可控属性，由操作系统在文件创建时更新，因此无法保留原始 ctime。可以使用 `mtime` 作为主要参考。
+  - **文件权限**: 保持只读/读写属性。
 
 ⭐ **新功能: 数学无损 AV1 模式**
 - **`--lossless` 标志**: `auto` 和 `simple` 命令的一个强大的新选项。它会强制转换使用**数学无损的 AV1**。这对于从不希望使用 FFV1 的源创建归档母版非常有用。

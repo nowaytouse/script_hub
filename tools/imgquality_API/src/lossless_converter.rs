@@ -628,13 +628,13 @@ fn copy_metadata(src: &Path, dst: &Path) {
 
     // 2. Preserve file system timestamps (creation/modification time)
     // This is a fallback/reinforcement for what ExifTool does
+    // We use set_file_times to set both atime and mtime atomically if possible
     if let Ok(metadata) = fs::metadata(src) {
-        if let Ok(mtime) = metadata.modified() {
-            let _ = filetime::set_file_mtime(dst, filetime::FileTime::from_system_time(mtime));
-        }
-        // Atimes are less critical but good to preserve if possible
-        if let Ok(atime) = metadata.accessed() {
-           let _ = filetime::set_file_atime(dst, filetime::FileTime::from_system_time(atime));
+        let atime = filetime::FileTime::from_last_access_time(&metadata);
+        let mtime = filetime::FileTime::from_last_modification_time(&metadata);
+        
+        if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
+            eprintln!("⚠️ Failed to set file timestamps: {}", e);
         }
         
         // 3. Preserve file permissions (e.g. read-only status)

@@ -104,6 +104,8 @@ pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
     match result.codec {
         crate::detection_api::DetectedCodec::H265 |
         crate::detection_api::DetectedCodec::AV1 |
+        crate::detection_api::DetectedCodec::AV2 | // Skip AV2
+        crate::detection_api::DetectedCodec::VVC | // Skip VVC/H.266
         crate::detection_api::DetectedCodec::VP9 => {
              return ConversionStrategy {
                 target: TargetVideoFormat::Skip,
@@ -497,13 +499,14 @@ fn copy_metadata(src: &Path, dst: &Path) -> Result<()> {
     }
 
     // 2. Preserve file system timestamps (creation/modification time)
-    // This is a fallback/reinforcement for what ExifTool does, using native filetime crate
+    // This is a fallback/reinforcement for what ExifTool does
+    // We use set_file_times to set both atime and mtime atomically if possible
     if let Ok(metadata) = std::fs::metadata(src) {
-        if let Ok(mtime) = metadata.modified() {
-            let _ = filetime::set_file_mtime(dst, filetime::FileTime::from_system_time(mtime));
-        }
-        if let Ok(atime) = metadata.accessed() {
-           let _ = filetime::set_file_atime(dst, filetime::FileTime::from_system_time(atime));
+        let atime = filetime::FileTime::from_last_access_time(&metadata);
+        let mtime = filetime::FileTime::from_last_modification_time(&metadata);
+        
+        if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
+            eprintln!("⚠️ Failed to set file timestamps: {}", e);
         }
         
         // 3. Preserve file permissions (e.g. read-only status)

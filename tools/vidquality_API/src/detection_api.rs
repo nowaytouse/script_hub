@@ -21,6 +21,10 @@ pub enum DetectedCodec {
     VP9,
     /// AV1
     AV1,
+    /// AV2 (Experimental)
+    AV2,
+    /// H.266/VVC
+    VVC,
     /// Apple ProRes
     ProRes,
     /// Avid DNxHD/DNxHR
@@ -45,6 +49,8 @@ impl DetectedCodec {
             "hevc" | "h265" | "libx265" => DetectedCodec::H265,
             "vp9" | "libvpx-vp9" => DetectedCodec::VP9,
             "av1" | "libaom-av1" | "libsvtav1" => DetectedCodec::AV1,
+            "av2" => DetectedCodec::AV2, // Experimental
+            "vvc" | "h266" => DetectedCodec::VVC,
             "prores" | "prores_ks" => DetectedCodec::ProRes,
             "dnxhd" | "dnxhr" => DetectedCodec::DNxHD,
             "mjpeg" | "mjpegb" => DetectedCodec::MJPEG,
@@ -84,12 +90,14 @@ impl DetectedCodec {
             DetectedCodec::H265 => "H.265",
             DetectedCodec::VP9 => "VP9",
             DetectedCodec::AV1 => "AV1",
+            DetectedCodec::AV2 => "AV2",
+            DetectedCodec::VVC => "H.266/VVC",
             DetectedCodec::ProRes => "ProRes",
-            DetectedCodec::DNxHD => "DNxHD",
-            DetectedCodec::MJPEG => "Motion JPEG",
+            DetectedCodec::DNxHD => "DNxHD/DNxHR",
+            DetectedCodec::MJPEG => "MJPEG",
             DetectedCodec::Uncompressed => "Uncompressed",
             DetectedCodec::HuffYUV => "HuffYUV",
-            DetectedCodec::UTVideo => "UT Video",
+            DetectedCodec::UTVideo => "UTVideo",
             DetectedCodec::Unknown(s) => s,
         }
     }
