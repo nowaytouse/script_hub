@@ -1,7 +1,9 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: FirewallPorts
 # Updated: 2025-12-06
-# Total Rules: 0
+# Total Rules: 2
 # Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
+DEST-PORT,8076
+IN-PORT,8076
