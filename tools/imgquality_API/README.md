@@ -4,15 +4,15 @@
 
 ## Core Philosophy
 
-1.  **Preserve Quality**: Never degrade quality by re-compressing a lossy file (e.g., lossy WebP or JPEG) into another lossy format.
-2.  **Maximize Efficiency**: Use the best modern codecs for the job: JPEG XL (JXL) for both lossless and lossy images, and AVIF for specific lossy cases.
+1.  **Preserve Quality**: Never degrade quality by re-compressing a lossy file (e.g., lossy WebP or JPEG) into another lossy format, unless explicitly creating a mathematical lossless version.
+2.  **Maximize Efficiency**: Use the best modern codecs for the job: JPEG XL (JXL) for most cases, and AVIF/AV1 for specific lossy-to-lossless or animated use cases.
 3.  **Provide Clarity**: Offer detailed analysis so the user understands *why* a certain action is or is not recommended.
 
 ## Features
 
 ✨ **Comprehensive Quality Analysis**
 - **Deep JPEG Analysis**: Estimates JPEG quality (`Q` score), identifies quantization tables (standard vs. custom), and detects encoder signatures.
-- **HEIC/AVIF Aware**: Correctly identifies HEIC and AVIF as modern formats and advises against unnecessary conversion.
+- **HEIC/AVIF Aware**: Correctly identifies HEIC and AVIF as modern formats and advises against unnecessary conversion in standard mode.
 - **Lossless/Lossy Detection**: Accurately identifies compression type for WebP, PNG, etc.
 - **Rich Metadata**: Extracts color depth, color space, dimensions, alpha, and animation status.
 - **Image Complexity**: Calculates entropy and compression ratio to measure image complexity.
@@ -21,11 +21,16 @@
 - **Smart Strategy**: Automatically chooses the best conversion path based on source properties.
   - **JPEG → JXL**: **True lossless transcode** (`--lossless_jpeg=1`) that preserves original DCT coefficients, reducing size by ~20% with zero quality loss.
   - **PNG/Lossless WebP/TIFF → JXL**: Mathematical lossless compression (`-d 0.0`), reducing size by 30-60%.
-  - **Animated (Lossless) → AV1 MP4**: Converts lossless animations (e.g., GIF) to a highly efficient video format.
+  - **Animated (Lossless) → AV1 MP4**: Converts lossless animations (e.g., GIF) to a highly efficient, visually lossless video.
   - **Static Lossy (non-JPEG) → AVIF**: Converts other static lossy files to AVIF for better compression.
 - **Safe by Default**: Automatically **skips** converting lossy WebP and animated lossy files to prevent quality degradation.
 - **Parallel Processing**: Uses all available CPU cores to process large directories in parallel.
 - **Anti-Duplicate**: Remembers which files have been successfully processed to avoid redundant work on subsequent runs (can be overridden with `--force`).
+
+⭐ **New: Mathematical Lossless Mode**
+- **`--lossless` Flag**: A powerful new option for the `auto` command that overrides standard behavior. It will convert images (including lossy sources) into **mathematically lossless AVIF or AV1 files**. This is useful for creating archival masters from sources that are not JXL-compatible, but be aware:
+  - **⚠️ It is extremely slow.**
+  - **⚠️ It can result in very large files, sometimes larger than the original.**
 
 💡 **CLI & API Modes**
 - **Interactive CLI**: Rich, human-readable output, including detailed reasons for recommendations.
@@ -73,51 +78,34 @@ Provides a detailed report and a clear recommendation.
 ```bash
 imgquality analyze photo.png --recommend
 ```
-*Example Output:*
-```
-📊 Image Quality Analysis Report
-...
-💡 JXL Format Recommendation
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ PNG → JXL
-📝 **Reason**: Lossless source can be losslessly compressed to JXL for significant space savings.
-🎯 **Quality**: Mathematically Lossless
-💾 **Expected Reduction**: 45.1%
-⚙️  **Command**: cjxl 'photo.png' '{output}.jxl' -d 0.0 -e 8
-```
 
 ### 2. `auto`: Smart Automatic Conversion (Recommended)
 
-The `auto` command intelligently analyzes each image and converts it to the optimal format using parallel processing. **This is the recommended command for batch processing.**
+The `auto` command intelligently analyzes each image and converts it to the optimal format.
 
+#### Standard Conversion
 ```bash
 # Analyze and convert a directory, saving to a new location
 imgquality auto ./input_dir --output ./output_dir
-
-# Convert recursively, and delete original files after success
-# Use with caution!
-imgquality auto ./media --recursive --delete-original
 ```
 
-*Example Log:*
+#### Mathematical Lossless Conversion
+Use the `--lossless` flag to create archival-grade AVIF/AV1 files from any source.
+```bash
+# Convert a lossy WebP into a mathematically lossless AVIF
+imgquality auto image.webp --output ./archive/ --lossless
 ```
-📂 Found 152 files to process (parallel mode)
-🔄 JPEG→JXL lossless transcode: ./media/IMG_001.JPG
-✅ Converted successfully (reduced 22.5%)
-🔄 Lossless→JXL: ./media/screenshot.png
-✅ Converted successfully (reduced 58.1%)
-🔄 Animated lossless→AV1 MP4: ./media/animation.gif
-✅ Converted successfully (reduced 85.3%)
-⏭️ Skipping lossy WebP (to avoid quality loss): ./media/image.webp
-⏭️ Skipping modern format (already efficient): ./media/icon.avif
-⏭️ Skipped: Already processed: ./media/processed_before.png
-...
-✅ Auto-conversion complete: 140 succeeded, 10 skipped, 2 failed
+*Log:*
+```
+⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)
+📂 Found 1 files to process (parallel mode)
+🔄 Lossy→AVIF (MATHEMATICAL LOSSLESS): image.webp
+✅ Conversion successful...
 ```
 
 ### 3. `convert`: Manual Conversion
 
-Manually convert images to a *specific* format. This command is less intelligent than `auto` and may result in quality loss if used improperly (e.g., converting JPEG to lossy JXL).
+Manually convert images to a *specific* format. This command is less intelligent than `auto`.
 
 ```bash
 imgquality convert image.png --to jxl --output ./converted/
@@ -130,17 +118,6 @@ Compares two images and calculates perceptual quality metrics. This performs a *
 ```bash
 imgquality verify original.png converted.jxl
 ```
-*Example Output:*
-```
-...
-📏 Quality Metrics:
-   PSNR: ∞ dB (Identical - mathematically lossless)
-   SSIM: 1.000000 (Identical)
-   MS-SSIM: 1.000000 (Identical)
-
-✅ Verification complete: Conversion is mathematically lossless.
-```
-
 ---
 
 # imgquality - 智能图像分析与转换工具
@@ -149,15 +126,15 @@ imgquality verify original.png converted.jxl
 
 ## 核心理念
 
-1.  **保证质量**: 绝不通过将有损文件（如 JPEG 或有损 WebP）重新压缩为另一种有损格式而降低其质量。
-2.  **极致效率**: 使用最优秀的现代编码器：JPEG XL (JXL) 用于无损和有损图像，AVIF 用于特定的有损场景。
+1.  **保证质量**: 绝不通过将有损文件（如 JPEG 或有损 WebP）重新压缩为另一种有损格式而降低其质量，除非是明确创建数学无损版本。
+2.  **极致效率**: 使用最优秀的现代编码器：JPEG XL (JXL) 用于大多数场景，AVIF/AV1 用于特定的有损转无损或动画场景。
 3.  **清晰明确**: 提供详尽的分析，让用户理解*为什么*推荐或不推荐某个操作。
 
 ## 功能特性
 
 ✨ **全面的质量分析**
 - **深度 JPEG 分析**: 估算 JPEG 质量值（`Q` 分数），识别量化表（标准 vs. 自定义），并检测编码器签名。
-- **HEIC/AVIF 感知**: 能正确识别 HEIC 和 AVIF 为现代格式，并建议避免不必要的转换。
+- **HEIC/AVIF 感知**: 在标准模式下能正确识别 HEIC 和 AVIF 为现代格式，并建议避免不必要的转换。
 - **无损/有损检测**: 精准识别 WebP、PNG 等格式的压缩类型。
 - **丰富的元数据**: 提取色深、色彩空间、尺寸、Alpha 通道和动画状态。
 - **图像复杂度**: 通过计算熵和压缩率来衡量图像的复杂程度。
@@ -166,11 +143,16 @@ imgquality verify original.png converted.jxl
 - **智能策略**: 根据源文件属性自动选择最佳转换路径。
   - **JPEG → JXL**: **真正的无损转码** (`--lossless_jpeg=1`)，它会保留原始的 DCT 系数，在完全不损失质量的前提下将体积减少约 20%。
   - **PNG/无损 WebP/TIFF → JXL**: 数学无损压缩 (`-d 0.0`)，可减少 30-60% 的体积。
-  - **无损动画 → AV1 MP4**: 将无损动画（如 GIF）转换为高效的视频格式。
+  - **无损动画 → AV1 MP4**: 将无损动画（如 GIF）转换为高效的、视觉无损的视频。
   - **静态有损 (非 JPEG) → AVIF**: 将其他静态有损文件转换为 AVIF 以获得更高的压缩率。
 - **默认安全**: 自动**跳过**对有损 WebP 和有损动画的转换，以防止质量下降。
 - **并行处理**: 使用所有可用的 CPU 核心并行处理大批量图像。
 - **防止重复**: 会记录已成功处理的文件，在后续运行时自动跳过，避免重复工作（可通过 `--force` 覆盖）。
+
+⭐ **新功能: 数学无损模式**
+- **`--lossless` 标志**: `auto` 命令的一个强大的新选项，它会覆盖标准行为。此模式会将图像（包括有损源）转换为**数学无损的 AVIF 或 AV1 文件**。这对于从不兼容 JXL 的源创建归档母版非常有用，但请注意：
+  - **⚠️ 速度极慢。**
+  - **⚠️ 生成的文件可能非常大，有时甚至比原文件还大。**
 
 💡 **CLI 与 API 双模式**
 - **交互式 CLI**: 提供信息丰富、人类可读的输出，包含详尽的推荐理由。
@@ -218,51 +200,34 @@ cargo install --path .
 ```bash
 imgquality analyze photo.png --recommend
 ```
-*输出示例:*
-```
-📊 图像质量分析报告
-...
-💡 JXL 格式推荐
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ PNG → JXL
-📝 **原因**: 无损源文件可以无损压缩为 JXL，以节省大量空间。
-🎯 **质量**: 数学无损
-💾 **预期减少**: 45.1%
-⚙️  **命令**: cjxl 'photo.png' '{output}.jxl' -d 0.0 -e 8
-```
 
 ### 2. `auto`: 智能自动转换 (推荐)
 
-`auto` 命令会智能分析每个图像，并使用并行处理将其转换为最优格式。**这是进行批量处理时最推荐的命令。**
+`auto` 命令会智能分析每个图像并将其转换为最优格式。
 
+#### 标准转换
 ```bash
 # 分析并转换目录，保存到新位置
 imgquality auto ./input_dir --output ./output_dir
-
-# 递归转换，并在成功后删除原文件
-# 请谨慎使用！
-imgquality auto ./media --recursive --delete-original
 ```
 
-*日志示例:*
+#### 数学无损转换
+使用 `--lossless` 标志从任何源创建归档级的 AVIF/AV1 文件。
+```bash
+# 将一个有损的 WebP 文件转换为数学无损的 AVIF
+imgquality auto image.webp --output ./archive/ --lossless
 ```
-📂 发现 152 个文件待处理 (并行模式)
-🔄 JPEG→JXL 无损转码: ./media/IMG_001.JPG
-✅ 转换成功 (体积减少 22.5%)
-🔄 无损→JXL: ./media/screenshot.png
-✅ 转换成功 (体积减少 58.1%)
-🔄 无损动画→AV1 MP4: ./media/animation.gif
-✅ 转换成功 (体积减少 85.3%)
-⏭️ 跳过有损 WebP (避免质量损失): ./media/image.webp
-⏭️ 跳过现代格式 (已足够高效): ./media/icon.avif
-⏭️ 已跳过: 文件之前处理过: ./media/processed_before.png
-...
-✅ 自动转换完成: 140 成功, 10 跳过, 2 失败
+*日志:*
+```
+⚠️  数学无损模式: 已启用 (速度极慢!)
+📂 发现 1 个文件待处理 (并行模式)
+🔄 有损→AVIF (数学无损): image.webp
+✅ 转换成功...
 ```
 
 ### 3. `convert`: 手动转换
 
-手动将图像转换为*特定*格式。此命令不如 `auto` 智能，如果使用不当（例如，将 JPEG 转换为有损 JXL）可能会导致质量损失。
+手动将图像转换为*特定*格式。此命令不如 `auto` 智能。
 
 ```bash
 imgquality convert image.png --to jxl --output ./converted/
@@ -274,14 +239,4 @@ imgquality convert image.png --to jxl --output ./converted/
 
 ```bash
 imgquality verify original.png converted.jxl
-```
-*输出示例:*
-```
-...
-📏 质量度量:
-   PSNR: ∞ dB (完全相同 - 数学无损)
-   SSIM: 1.000000 (完全相同)
-   MS-SSIM: 1.000000 (完全相同)
-
-✅ 验证完成: 转换是数学无损的。
 ```

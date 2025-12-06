@@ -18,14 +18,19 @@
 - **Archival Candidate Logic**: Intelligently flags videos suitable for archival. A file is a candidate if it's `Lossless`, `Visually Lossless`, or uses a professional codec like `ProRes`.
 - **Rich Metadata**: Extracts format, resolution, FPS, bit depth, color space, duration, and audio information.
 
-🚀 **Intelligent `auto` Conversion Engine**
-- **Smart Strategy**: Automatically determines the best conversion path:
+🚀 **Intelligent `auto` & `simple` Conversion Engines**
+- **Smart `auto` Strategy**: Automatically determines the best conversion path:
   - **`Lossless` or `Visually Lossless` Source → FFV1 MKV**: For perfect, bit-for-bit archival. This applies to masters like ProRes, DNxHD, and other lossless formats.
-  - **`High` or `Standard Quality` Source → AV1 MP4**: For efficient, high-quality compression.
+  - **`High` or `Standard Quality` Source → AV1 MP4**: For efficient, high-quality compression using a visually lossless setting (`CRF 0`).
 - **Archival-Grade Parameters**: Uses community-recommended `ffmpeg` settings for FFV1 (`-level 3`, `-slices 24`, `-slicecrc 1`) to ensure a robust archival master.
-- **Lossless Audio Handling**: Automatically converts audio to **FLAC** in FFV1 archives and **AAC 320k** in AV1 files.
-- **`--explore` Mode**: For AV1 conversion, this unique feature finds the optimal file size by starting at a high quality (CRF 0) and incrementally lowering it until the output is smaller than the input (capped at CRF 23 for safety).
+- **Lossless Audio Handling**: Automatically converts audio to **FLAC** in FFV1 archives and high-quality **AAC** in AV1 files.
+- **`--explore` Mode**: For the `auto` command, this unique feature finds the optimal file size by starting at a high quality and incrementally lowering it until the output is smaller than the input.
 - **Metadata Preservation**: Automatically carries over metadata and file timestamps using `exiftool` and `touch` (if installed).
+
+⭐ **New: Mathematical Lossless AV1 Mode**
+- **`--lossless` Flag**: A powerful new option for `auto` and `simple` commands. It forces the conversion to use **mathematically lossless AV1**. This is useful for creating archival masters from sources where FFV1 is not desired.
+  - **⚠️ It is extremely slow.**
+  - **⚠️ It can result in very large files, sometimes larger than the original.**
 
 ## Installation
 
@@ -65,19 +70,6 @@ Displays a detailed technical report.
 ```bash
 vidquality analyze "ProRes_Master.mov"
 ```
-*Example Output:*
-```
-📊 Video Analysis Report
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📁 File: ProRes_Master.mov
-📦 Format: mov,mp4,m4a,3gp,3g2,mj2
-🎬 Codec: ProRes (Apple ProRes)
-🔍 Compression: Visually Lossless
-...
-⭐ Quality Score: 98/100 (Base:95 + Depth Bonus:3)
-📦 Archival Candidate: ✅ Yes
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
 
 ### 2. `strategy`: Preview the Conversion Plan
 
@@ -86,73 +78,56 @@ Performs a "dry run" to show what the `auto` command will do, without executing.
 ```bash
 vidquality strategy "youtube_dl.mkv"
 ```
-*Example Output:*
-```
-🎯 Recommended Strategy (Auto Mode)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📁 File: youtube_dl.mkv
-🎬 Codec: H.264 (Standard Quality)
-💡 Target: AV1 MP4 (High Quality)
-📝 Reason: Source is H.264 (Standard Quality) - compressing with AV1 CRF 0
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
 
 ### 3. `auto`: Smart Automatic Conversion (Recommended)
 
 The `auto` command is the main function, intelligently converting a video based on the analysis.
 
 #### Archival Example
+Converts a high-quality source to a robust FFV1/MKV archival master.
 ```bash
 vidquality auto "ProRes_Master.mov" --output ./archive/
 ```
-*Log:*
-```
-INFO  vidquality::conversion_api: 🎬 Auto Mode: ProRes_Master.mov → FFV1 MKV (Archival)
-INFO  vidquality::conversion_api:    Reason: Source is ProRes (Visually Lossless) - preserving with FFV1 MKV
-...
-INFO  vidquality::conversion_api:    ✅ Complete: 75.3% of original
-```
 
 #### Compression with Size Exploration
+Converts a lossy source to AV1, finding the best size/quality trade-off.
 ```bash
 vidquality auto "youtube_dl.mkv" --output ./compressed/ --explore
 ```
+
+#### Mathematical Lossless AV1 Archival
+Overrides the default to create a lossless AV1 archive instead of FFV1.
+```bash
+vidquality auto "ProRes_Master.mov" --output ./archive/ --lossless
+```
 *Log:*
 ```
-INFO  vidquality::conversion_api: 🎬 Auto Mode: youtube_dl.mkv → AV1 MP4 (High Quality)
-INFO  vidquality::conversion_api:    🔍 Exploring smaller size (input: 50000000 bytes)
-INFO  vidquality::conversion_api:    📊 CRF 0: 58000000 bytes (116.0%)
-INFO  vidquality::conversion_api:    📊 CRF 1: 54000000 bytes (108.0%)
+🎬 Auto Mode Conversion
+   ⚠️  Mathematical lossless AV1: ENABLED (VERY SLOW!)
 ...
-INFO  vidquality::conversion_api:    📊 CRF 5: 48500000 bytes (97.0%)
-INFO  vidquality::conversion_api:    ✅ Found smaller output at CRF 5
-...
-INFO  vidquality::conversion_api: 📊 Conversion Summary:
-...
-INFO  vidquality::conversion_api:    🔍 Explored 6 CRF values, final: CRF 5
 ```
 
 ### 4. `simple`: Convert Everything to High-Quality AV1
 
-A direct mode that converts any input video to AV1/MP4 using `CRF 0` for visually lossless results. This is for quick compression when archival strategy is not needed.
+A direct mode to convert any input video to AV1/MP4.
 
+#### Visually Lossless (Default)
+Uses `CRF 0` for visually lossless results.
 ```bash
 vidquality simple "screencast.mov" --output ./videos/
 ```
 
-### 5. `--lossless`: Mathematical Lossless AV1 (⚠️ SLOW)
-
-Both `auto` and `simple` support the `--lossless` flag for true **mathematical lossless** AV1 encoding. This produces bit-perfect output but is **VERY SLOW** and creates **huge files**.
-
+#### Mathematically Lossless
+Uses the `--lossless` flag for true lossless conversion.
 ```bash
-# Lossless AV1 in simple mode
-vidquality simple "video.mov" --output ./output/ --lossless
-
-# Lossless AV1 in auto mode (only affects lossy sources)
-vidquality auto "video.mp4" --output ./output/ --lossless
+vidquality simple "screencast.mov" --output ./videos/ --lossless
 ```
-
-> ⚠️ **Warning**: Mathematical lossless AV1 encoding is extremely slow (10-100x slower than lossy). Use only when bit-perfect quality is essential and file size is not a concern.
+*Log:*
+```
+🎬 Simple Mode Conversion
+   ⚠️  ALL videos → AV1 MP4 (MATHEMATICAL LOSSLESS - VERY SLOW!)
+...
+```
 
 ---
 
@@ -176,14 +151,19 @@ vidquality auto "video.mp4" --output ./output/ --lossless
 - **归档候选逻辑**: 智能标记适合归档的视频。如果文件是 `无损`、`视觉无损` 或使用如 `ProRes` 等专业编码器，它就会被视为候选。
 - **丰富的元数据**: 提取格式、分辨率、帧率、位深度、色彩空间、时长和音频信息。
 
-🚀 **智能 `auto` 转换引擎**
-- **智能策略**: 自动确定最佳转换路径：
+🚀 **智能 `auto` & `simple` 转换引擎**
+- **智能 `auto` 策略**: 自动确定最佳转换路径：
   - **`无损` 或 `视觉无损` 源文件 → FFV1 MKV**: 用于完美的、逐比特的数字归档。适用于 ProRes、DNxHD 等母版文件。
-  - **`高质量` 或 `标准质量` 源文件 → AV1 MP4**: 用于高效、高质量的压缩。
+  - **`高质量` 或 `标准质量` 源文件 → AV1 MP4**: 用于高效、高质量的压缩，采用视觉无损设置 (`CRF 0`)。
 - **归档级参数**: 为 FFV1 使用社区推荐的 `ffmpeg` 设置 (`-level 3`, `-slices 24`, `-slicecrc 1`)，确保归档母版的稳健性。
-- **无损音频处理**: 在 FFV1 归档中自动将音频转换为 **FLAC**（无损音频），在 AV1 文件中转换为 **AAC 320k**。
-- **`--explore` 模式**: 在 AV1 转换中，这个独特功能可通过从高质量（CRF 0）开始，逐步降低质量直到输出文件小于输入文件（为安全起见，上限为 CRF 23），来找到最佳文件大小。
+- **无损音频处理**: 在 FFV1 归档中自动将音频转换为 **FLAC**（无损音频），在 AV1 文件中转换为高质量的 **AAC**。
+- **`--explore` 模式**: 在 `auto` 命令中，这个独特功能可通过从高质量开始，逐步降低质量，直到输出文件小于输入文件，来找到最佳的文件大小。
 - **元数据保留**: 如果安装了 `exiftool` 和 `touch`，会自动迁移元数据和文件时间戳。
+
+⭐ **新功能: 数学无损 AV1 模式**
+- **`--lossless` 标志**: `auto` 和 `simple` 命令的一个强大的新选项。它会强制转换使用**数学无损的 AV1**。这对于从不希望使用 FFV1 的源创建归档母版非常有用。
+  - **⚠️ 速度极慢。**
+  - **⚠️ 生成的文件可能非常大，有时甚至比原文件还大。**
 
 ## 安装
 
@@ -223,19 +203,6 @@ cargo install --path .
 ```bash
 vidquality analyze "ProRes_Master.mov"
 ```
-*输出示例:*
-```
-📊 视频分析报告
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📁 文件: ProRes_Master.mov
-📦 格式: mov,mp4,m4a,3gp,3g2,mj2
-🎬 编码: ProRes (Apple ProRes)
-🔍 压缩: 视觉无损
-...
-⭐ 质量分数: 98/100 (基础:95 + 位深度加分:3)
-📦 归档候选: ✅ 是
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
 
 ### 2. `strategy`: 预览转换计划
 
@@ -244,70 +211,53 @@ vidquality analyze "ProRes_Master.mov"
 ```bash
 vidquality strategy "youtube_dl.mkv"
 ```
-*输出示例:*
-```
-🎯 推荐策略 (Auto 模式)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📁 文件: youtube_dl.mkv
-🎬 编码: H.264 (标准质量)
-💡 目标: AV1 MP4 (高质量)
-📝 原因: 源文件是 H.264 (标准质量) - 使用 AV1 CRF 0 进行压缩
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
 
 ### 3. `auto`: 智能自动转换 (推荐)
 
 `auto` 是核心命令，它会根据分析结果智能地转换视频。
 
 #### 归档示例
+将高质量源文件转换为健壮的 FFV1/MKV 归档母版。
 ```bash
 vidquality auto "ProRes_Master.mov" --output ./archive/
 ```
-*日志:*
-```
-INFO  vidquality::conversion_api: 🎬 Auto 模式: ProRes_Master.mov → FFV1 MKV (归档)
-INFO  vidquality::conversion_api:    原因: 源文件是 ProRes (视觉无损) - 使用 FFV1 MKV 进行保存
-...
-INFO  vidquality::conversion_api:    ✅ 完成: 体积为原始文件的 75.3%
-```
 
 #### 使用尺寸探索进行压缩
+将有损源文件转换为 AV1，并找到最佳的体积/质量平衡点。
 ```bash
 vidquality auto "youtube_dl.mkv" --output ./compressed/ --explore
 ```
+
+#### 数学无损 AV1 归档
+覆盖默认行为，创建一个无损的 AV1 归档文件而不是 FFV1。
+```bash
+vidquality auto "ProRes_Master.mov" --output ./archive/ --lossless
+```
 *日志:*
 ```
-INFO  vidquality::conversion_api: 🎬 Auto 模式: youtube_dl.mkv → AV1 MP4 (高质量)
-INFO  vidquality::conversion_api:    🔍 正在探索更小体积 (输入: 50000000 字节)
-INFO  vidquality::conversion_api:    📊 CRF 0: 58000000 字节 (116.0%)
-INFO  vidquality::conversion_api:    📊 CRF 1: 54000000 字节 (108.0%)
+🎬 Auto 模式转换
+   ⚠️  数学无损 AV1: 已启用 (速度极慢!)
 ...
-INFO  vidquality::conversion_api:    📊 CRF 5: 48500000 字节 (97.0%)
-INFO  vidquality::conversion_api:    ✅ 在 CRF 5 找到更小的输出
-...
-INFO  vidquality::conversion_api: 📊 转换总结:
-...
-INFO  vidquality::conversion_api:    🔍 探索了 6 个 CRF 值, 最终使用: CRF 5
 ```
 
 ### 4. `simple`: 将所有文件转换为高质量 AV1
 
-一个直接的模式，将任何输入视频都使用 `CRF 0` 转换为 AV1/MP4 以获得视觉无损的结果。适用于不需要归档策略的快速批量压缩。
+一个直接的模式，将任何输入视频都转换为 AV1/MP4。
 
+#### 视觉无损 (默认)
+使用 `CRF 0` 以获得视觉无损的结果。
 ```bash
 vidquality simple "screencast.mov" --output ./videos/
 ```
 
-### 5. `--lossless`: 数学无损 AV1 (⚠️ 极慢)
-
-`auto` 和 `simple` 均支持 `--lossless` 标志，用于真正的**数学无损** AV1 编码。这将产生逐比特完美的输出，但**非常慢**且生成**巨大的文件**。
-
+#### 数学无损
+使用 `--lossless` 标志进行真正的无损转换。
 ```bash
-# 简单模式下的无损 AV1
-vidquality simple "video.mov" --output ./output/ --lossless
-
-# 自动模式下的无损 AV1 (仅对有损源生效)
-vidquality auto "video.mp4" --output ./output/ --lossless
+vidquality simple "screencast.mov" --output ./videos/ --lossless
 ```
-
-> ⚠️ **警告**: 数学无损 AV1 编码极其缓慢（比有损慢 10-100 倍）。仅在需要逐比特完美质量且文件大小不是问题时使用。
+*日志:*
+```
+🎬 Simple 模式转换
+   ⚠️  所有视频 → AV1 MP4 (数学无损 - 速度极慢!)
+...
+```

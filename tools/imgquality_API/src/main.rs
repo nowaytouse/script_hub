@@ -491,21 +491,32 @@ fn auto_convert_single_file(
             println!("🔄 Lossless→JXL: {}", input.display());
             convert_to_jxl(input, &options)?
         }
-        // Animated lossless → AV1 MP4
+        // Animated lossless → AV1 MP4 (only if >=3 seconds)
         (_, true, true) => {
+            // Check duration - only convert animations >=3 seconds
+            let duration = analysis.duration_secs.unwrap_or(0.0);
+            if duration < 3.0 {
+                println!("⏭️ Skipping short animation ({:.1}s < 3s): {}", duration, input.display());
+                return Ok(());
+            }
+            
             if lossless {
-                println!("🔄 Animated lossless→AV1 MP4 (MATHEMATICAL LOSSLESS): {}", input.display());
+                println!("🔄 Animated lossless→AV1 MP4 (LOSSLESS, {:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4_lossless(input, &options)?
             } else {
-                println!("🔄 Animated lossless→AV1 MP4: {}", input.display());
+                println!("🔄 Animated lossless→AV1 MP4 ({:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4(input, &options)?
             }
         }
-        // Animated lossy → skip (unless lossless mode)
+        // Animated lossy → skip (unless lossless mode AND >=3 seconds)
         (_, false, true) => {
-            if lossless {
-                println!("🔄 Animated lossy→AV1 MP4 (MATHEMATICAL LOSSLESS): {}", input.display());
+            let duration = analysis.duration_secs.unwrap_or(0.0);
+            if lossless && duration >= 3.0 {
+                println!("🔄 Animated lossy→AV1 MP4 (LOSSLESS, {:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4_lossless(input, &options)?
+            } else if duration < 3.0 {
+                println!("⏭️ Skipping short animation ({:.1}s < 3s): {}", duration, input.display());
+                return Ok(());
             } else {
                 println!("⏭️ Skipping animated lossy: {}", input.display());
                 return Ok(());

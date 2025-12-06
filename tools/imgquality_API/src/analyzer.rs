@@ -44,6 +44,9 @@ pub struct ImageAnalysis {
     pub has_alpha: bool,
     pub is_animated: bool,
     
+    // Animation duration in seconds (for animated images, None for static)
+    pub duration_secs: Option<f32>,
+    
     // Core quality info
     pub is_lossless: bool,
     
@@ -137,6 +140,13 @@ pub fn analyze_image(path: &PathBuf) -> Result<ImageAnalysis> {
 
     // Extract metadata
     let metadata = extract_metadata(path)?;
+    
+    // Get duration for animated images using ffprobe
+    let duration_secs = if is_animated {
+        get_animation_duration(path)
+    } else {
+        None
+    };
 
     Ok(ImageAnalysis {
         file_path: path.display().to_string(),
@@ -148,6 +158,7 @@ pub fn analyze_image(path: &PathBuf) -> Result<ImageAnalysis> {
         color_space,
         has_alpha,
         is_animated,
+        duration_secs,
         is_lossless,
         jpeg_analysis,
         heic_analysis: None,
@@ -191,6 +202,7 @@ fn analyze_heic_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
         color_space: "sRGB".to_string(),
         has_alpha,
         is_animated: false,
+        duration_secs: None,
         is_lossless,
         jpeg_analysis: None,
         heic_analysis: Some(heic_analysis),
@@ -460,6 +472,42 @@ fn check_webp_animation(path: &PathBuf) -> Result<bool> {
     let bytes = std::fs::read(path)?;
     let anim_marker = b"ANIM";
     Ok(bytes.windows(4).any(|w| w == anim_marker))
+}
+
+/// Get animation duration in seconds using ffprobe
+fn get_animation_duration(path: &PathBuf) -> Option<f32> {
+    use std::process::Command;
+    
+    let output = Command::new("ffprobe")
+        .args([
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_format",
+            path.to_str().unwrap_or("")
+        ])
+        .output()
+        .ok()?;
+    
+    if !output.status.success() {
+        return None;
+    }
+    
+    let json_str = String::from_utf8_lossy(&output.stdout);
+    
+    // Parse duration from JSON output
+    // Look for "duration": "X.XXX"
+    if let Some(duration_pos) = json_str.find("\"duration\"") {
+        let after_key = &json_str[duration_pos + 11..];
+        if let Some(quote_start) = after_key.find('"') {
+            let after_quote = &after_key[quote_start + 1..];
+            if let Some(quote_end) = after_quote.find('"') {
+                let duration_str = &after_quote[..quote_end];
+                return duration_str.parse::<f32>().ok();
+            }
+        }
+    }
+    
+    None
 }
 
 /// Detect if compression is lossless
