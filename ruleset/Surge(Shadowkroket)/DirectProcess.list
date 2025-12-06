@@ -1,29 +1,23 @@
 # ═══════════════════════════════════════════════════════════════
-# Direct Connection Process Rules
-# ═══════════════════════════════════════════════════════════════
-# Auto-generated: 2025-12-03
-# Repository: https://github.com/nowaytouse/script_hub
-# Description: Apps that should always use direct connection
+# Ruleset: DirectProcess
+# Updated: 2025-12-06
+# Total Rules: 16
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
-# Music Apps (China)
 PROCESS-NAME,/Applications/NeteaseMusic.app/
-PROCESS-NAME,NeteaseMusic
-PROCESS-NAME,QQMusic
-PROCESS-NAME,KuGou
-PROCESS-NAME,KuWo
-
-# China Apps
-PROCESS-NAME,WeChat
-PROCESS-NAME,QQ
+PROCESS-NAME,/Applications/Thunder.app/
+PROCESS-NAME,/Applications/Transmission.app/
+PROCESS-NAME,/Applications/WindsurfPro.app/
 PROCESS-NAME,AliWangWang
 PROCESS-NAME,DingTalk
 PROCESS-NAME,Feishu
-
-# System/Network Tools
+PROCESS-NAME,KuGou
+PROCESS-NAME,KuWo
+PROCESS-NAME,NeteaseMusic
+PROCESS-NAME,QQ
+PROCESS-NAME,QQMusic
+PROCESS-NAME,WeChat
 PROCESS-NAME,networksetup
 PROCESS-NAME,softwareupdated
 PROCESS-NAME,trustd
-
-# WindsurfPro (special: direct)
-PROCESS-NAME,/Applications/WindsurfPro.app/
