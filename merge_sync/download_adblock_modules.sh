@@ -116,8 +116,24 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
         # Module has other sections - keep them but remove [Rule] section
         cleaned_module="$TEMP_DIR/cleaned_${module_name}"
         
-        # Copy header
+        # Copy header and add group classification
         awk '/^\[Rule\]/{exit}1' "$module" > "$cleaned_module"
+        
+        # Add group classification based on module type
+        # Determine group based on module name/purpose (check original name in metadata)
+        module_display_name=$(grep "^#!name=" "$module" | head -1 | sed 's/#!name=//')
+        
+        # Priority: DNS > Ad blocking > Others
+        if echo "$module_display_name" | grep -qi "httpdns\|dns"; then
+            # DNS modules go to Amplify Nexus (enhancement) - highest priority
+            echo "#!group=🛠️ Amplify Nexus › 增幅枢纽" >> "$cleaned_module"
+        elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截"; then
+            # Ad blocking modules go to Head Expanse (priority execution)
+            echo "#!group=🔝 Head Expanse › 首端扩域" >> "$cleaned_module"
+        else
+            # Other modules go to Narrow Pierce (specific targeting)
+            echo "#!group=🎯 Narrow Pierce › 窄域穿刺" >> "$cleaned_module"
+        fi
         
         # Add note about rules
         echo "" >> "$cleaned_module"

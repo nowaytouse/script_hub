@@ -16,9 +16,20 @@ These modules have been **automatically cleaned** by removing:
 
 ## 📦 Available Cleaned Modules
 
+All modules are automatically classified into groups:
+
+### 🔝 Head Expanse › 首端扩域 (Priority Execution)
 1. **可莉广告过滤器.beta.sgmodule** - Extracted 24 rules → Kept [URL Rewrite] + [MITM]
 2. **广告平台拦截器.sgmodule** - Extracted 287 rules → Kept [URL Rewrite] + [MITM]
+
+### 🛠️ Amplify Nexus › 增幅枢纽 (Enhancement)
 3. **blockHTTPDNS.module** - Extracted 170 rules → Kept [URL Rewrite]
+
+### 🎯 Narrow Pierce › 窄域穿刺 (Specific Targeting)
+(No modules in this group currently)
+
+### 📦 Archives Vault › 废弃组件 (Deprecated)
+(Reserved for deprecated modules)
 
 **Removed modules** (only had rules, no other features):
 - ~~Adblock4limbo.sgmodule~~ - 0 rules extracted
