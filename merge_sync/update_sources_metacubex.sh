@@ -1,9 +1,10 @@
 #!/bin/bash
 # 更新Sources文件，添加MetaCubeX本地规则
 
-SCRIPT_DIR="$(dirname "$0")"
-SOURCES_DIR="${SCRIPT_DIR}/../../ruleset/Sources"
-METACUBEX_DIR="${SCRIPT_DIR}/../../ruleset/MetaCubeX"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SOURCES_DIR="${PROJECT_ROOT}/ruleset/Sources/Links"
+METACUBEX_DIR="${PROJECT_ROOT}/ruleset/MetaCubeX"
 
 echo "=== 更新Sources文件，添加MetaCubeX本地规则 ==="
 

@@ -57,9 +57,10 @@ echo ""
 echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║              更新完成                    ║${NC}"
 echo -e "${BLUE}╠══════════════════════════════════════════╣${NC}"
-METACUBEX_COUNT=$(ls "${SCRIPT_DIR}/../../ruleset/MetaCubeX/"*.list 2>/dev/null | wc -l | tr -d ' ')
-SURGE_COUNT=$(ls "${SCRIPT_DIR}/../../ruleset/Surge(Shadowkroket)/"*.list 2>/dev/null | wc -l | tr -d ' ')
-SRS_COUNT=$(ls "${SCRIPT_DIR}/../../ruleset/SingBox/"*.srs 2>/dev/null | wc -l | tr -d ' ')
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+METACUBEX_COUNT=$(ls "${PROJECT_ROOT}/ruleset/MetaCubeX/"*.list 2>/dev/null | wc -l | tr -d ' ')
+SURGE_COUNT=$(ls "${PROJECT_ROOT}/ruleset/Surge(Shadowkroket)/"*.list 2>/dev/null | wc -l | tr -d ' ')
+SRS_COUNT=$(ls "${PROJECT_ROOT}/ruleset/SingBox/"*.srs 2>/dev/null | wc -l | tr -d ' ')
 echo -e "${BLUE}║  MetaCubeX规则: ${GREEN}${METACUBEX_COUNT}${BLUE}                        ║${NC}"
 echo -e "${BLUE}║  Surge规则:     ${GREEN}${SURGE_COUNT}${BLUE}                        ║${NC}"
 echo -e "${BLUE}║  SingBox SRS:   ${GREEN}${SRS_COUNT}${BLUE}                        ║${NC}"

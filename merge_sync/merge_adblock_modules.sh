@@ -40,6 +40,8 @@ extract_rules_surge_format() {
     awk '/^\[Rule\]/{f=1;next}/^\[/{f=0}f' "$file" > "$TEMP_DIR/raw_rules.tmp" || true
     while read -r line; do
         [[ -z "$line" || "$line" =~ ^# ]] && continue
+        # 🔥 跳过 RULE-SET 行（防止自引用循环）
+        [[ "$line" =~ ^RULE-SET ]] && continue
         rule=$(echo "$line" | sed 's/  */ /g')
         if echo "$rule" | grep -q ",REJECT-DROP"; then
              grep -Fxq "$rule" "$TEMP_RULES_REJECT_DROP" || { echo "$rule" >> "$TEMP_RULES_REJECT_DROP"; ((new++)) || true; }
@@ -100,12 +102,22 @@ export_direct() {
 }
 export_merge_list() {
     if [[ -f "$ADBLOCK_MERGED_LIST" ]]; then
-       grep -v "#" "$ADBLOCK_MERGED_LIST" | grep -v "^$" > "$TEMP_DIR/old.tmp" || touch "$TEMP_DIR/old.tmp"
+       # 🔥 过滤掉非法行：RULE-SET、DOMAIN带no-resolve、空行
+       grep -v "#" "$ADBLOCK_MERGED_LIST" | grep -v "^$" | grep -v "^RULE-SET" > "$TEMP_DIR/old.tmp" || touch "$TEMP_DIR/old.tmp"
     else
        touch "$TEMP_DIR/old.tmp"
     fi
     sort -u "$TEMP_RULES_REJECT" > "$TEMP_DIR/new.tmp"
     cat "$TEMP_DIR/old.tmp" "$TEMP_DIR/new.tmp" | sort -u > "$ADBLOCK_MERGED_LIST.tmp"
+    
+    # 🔥 清理非法规则：DOMAIN/DOMAIN-SUFFIX/DOMAIN-KEYWORD 不能带 no-resolve
+    # no-resolve 只能用于 IP-CIDR/IP-CIDR6/GEOIP 规则
+    sed -i '' 's/^\(DOMAIN[^,]*,[^,]*\),no-resolve$/\1/' "$ADBLOCK_MERGED_LIST.tmp" 2>/dev/null || \
+    sed -i 's/^\(DOMAIN[^,]*,[^,]*\),no-resolve$/\1/' "$ADBLOCK_MERGED_LIST.tmp"
+    
+    # 🔥 删除 RULE-SET 行（防止自引用）
+    grep -v "^RULE-SET" "$ADBLOCK_MERGED_LIST.tmp" > "$ADBLOCK_MERGED_LIST.tmp2" && mv "$ADBLOCK_MERGED_LIST.tmp2" "$ADBLOCK_MERGED_LIST.tmp"
+    
     mv "$ADBLOCK_MERGED_LIST.tmp" "$ADBLOCK_MERGED_LIST"
     
     local count=$(wc -l < "$ADBLOCK_MERGED_LIST" | tr -d ' ')

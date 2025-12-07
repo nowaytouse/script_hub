@@ -1,0 +1,220 @@
+use clap::{Parser, Subcommand, ValueEnum};
+use tracing::info;
+use std::path::PathBuf;
+
+// 使用 lib crate
+use vidquality_hevc::{
+    detect_video, auto_convert, simple_convert, determine_strategy, 
+    ConversionConfig, VideoDetectionResult
+};
+
+#[derive(Parser)]
+#[command(name = "vidquality-hevc")]
+#[command(version, about = "Video quality analyzer and HEVC/H.265 converter", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Analyze video properties
+    Analyze {
+        #[arg(value_name = "INPUT")]
+        input: PathBuf,
+        #[arg(short, long, default_value = "human")]
+        output: OutputFormat,
+    },
+
+    /// Auto mode: HEVC Lossless for lossless, HEVC CRF for lossy
+    Auto {
+        #[arg(value_name = "INPUT")]
+        input: PathBuf,
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+        #[arg(short, long)]
+        force: bool,
+        #[arg(long)]
+        delete_original: bool,
+        #[arg(long)]
+        explore: bool,
+        #[arg(long)]
+        lossless: bool,
+    },
+
+    /// Simple mode: ALL videos → HEVC MP4
+    Simple {
+        #[arg(value_name = "INPUT")]
+        input: PathBuf,
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+        #[arg(long)]
+        lossless: bool,
+    },
+
+    /// Show recommended strategy without converting
+    Strategy {
+        #[arg(value_name = "INPUT")]
+        input: PathBuf,
+    },
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
+enum OutputFormat {
+    Human,
+    Json,
+}
+
+fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive(tracing::Level::INFO.into()),
+        )
+        .init();
+
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Analyze { input, output } => {
+            let result = detect_video(&input)?;
+            match output {
+                OutputFormat::Human => print_analysis_human(&result),
+                OutputFormat::Json => {
+                    println!("{}", serde_json::to_string_pretty(&result)?);
+                }
+            }
+        }
+
+        Commands::Auto { input, output, force, delete_original, explore, lossless } => {
+            let config = ConversionConfig {
+                output_dir: output.clone(),
+                force,
+                delete_original,
+                preserve_metadata: true,
+                explore_smaller: explore,
+                use_lossless: lossless,
+            };
+            
+            info!("🎬 Auto Mode Conversion (HEVC/H.265)");
+            info!("   Lossless sources → HEVC Lossless MKV");
+            info!("   Lossy sources → HEVC MP4 (CRF 18-20)");
+            if lossless {
+                info!("   ⚠️  HEVC Lossless: ENABLED");
+            }
+            if explore {
+                info!("   📊 Size exploration: ENABLED");
+            }
+            info!("");
+            
+            if input.is_dir() {
+                let video_extensions = ["mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "mts"];
+                
+                let files: Vec<_> = std::fs::read_dir(&input)?
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.path().is_file())
+                    .filter(|e| {
+                        if let Some(ext) = e.path().extension() {
+                            video_extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str())
+                        } else {
+                            false
+                        }
+                    })
+                    .map(|e| e.path())
+                    .collect();
+                
+                info!("📂 Found {} video files to process", files.len());
+                
+                let mut success = 0;
+                let mut failed = 0;
+                
+                for file in &files {
+                    match auto_convert(file, &config) {
+                        Ok(result) => {
+                            info!("✅ {} → {} ({:.1}%)", 
+                                file.file_name().unwrap_or_default().to_string_lossy(),
+                                result.output_path,
+                                result.size_ratio * 100.0
+                            );
+                            success += 1;
+                        }
+                        Err(e) => {
+                            info!("❌ {} failed: {}", file.display(), e);
+                            failed += 1;
+                        }
+                    }
+                }
+                
+                info!("");
+                info!("📊 Batch Summary: {} succeeded, {} failed", success, failed);
+            } else {
+                let result = auto_convert(&input, &config)?;
+                
+                info!("");
+                info!("📊 Conversion Summary:");
+                info!("   Input:  {} ({} bytes)", result.input_path, result.input_size);
+                info!("   Output: {} ({} bytes)", result.output_path, result.output_size);
+                info!("   Ratio:  {:.1}%", result.size_ratio * 100.0);
+                if result.exploration_attempts > 0 {
+                    info!("   🔍 Explored {} CRF values, final: CRF {}", result.exploration_attempts, result.final_crf);
+                }
+            }
+        }
+
+        Commands::Simple { input, output, lossless: _ } => {
+            info!("🎬 Simple Mode Conversion (HEVC/H.265)");
+            info!("   ALL videos → HEVC MP4 (CRF 18)");
+            info!("");
+            
+            let result = simple_convert(&input, output.as_deref())?;
+            
+            info!("");
+            info!("✅ Complete!");
+            info!("   Output: {}", result.output_path);
+            info!("   Size: {:.1}% of original", result.size_ratio * 100.0);
+        }
+
+        Commands::Strategy { input } => {
+            let detection = detect_video(&input)?;
+            let strategy = determine_strategy(&detection);
+            
+            println!("\n🎯 Recommended Strategy (HEVC Auto Mode)");
+            println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            println!("📁 File: {}", input.display());
+            println!("🎬 Codec: {} ({})", detection.codec.as_str(), detection.compression.as_str());
+            println!("");
+            println!("💡 Target: {}", strategy.target.as_str());
+            println!("📝 Reason: {}", strategy.reason);
+            println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        }
+    }
+
+    Ok(())
+}
+
+fn print_analysis_human(result: &VideoDetectionResult) {
+    println!("\n📊 Video Analysis Report (HEVC)");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("📁 File: {}", result.file_path);
+    println!("📦 Format: {}", result.format);
+    println!("🎬 Codec: {} ({})", result.codec.as_str(), result.codec_long);
+    println!("🔍 Compression: {}", result.compression.as_str());
+    println!("");
+    println!("📐 Resolution: {}x{}", result.width, result.height);
+    println!("🎞️  Frames: {} @ {:.2} fps", result.frame_count, result.fps);
+    println!("⏱️  Duration: {:.2}s", result.duration_secs);
+    println!("🎨 Bit Depth: {}-bit", result.bit_depth);
+    println!("🌈 Pixel Format: {}", result.pix_fmt);
+    println!("");
+    println!("💾 File Size: {} bytes", result.file_size);
+    println!("📊 Bitrate: {} bps", result.bitrate);
+    println!("🎵 Audio: {}", if result.has_audio { 
+        result.audio_codec.as_deref().unwrap_or("yes") 
+    } else { 
+        "no" 
+    });
+    println!("");
+    println!("⭐ Quality Score: {}/100", result.quality_score);
+    println!("📦 Archival Candidate: {}", if result.archival_candidate { "✅ Yes" } else { "❌ No" });
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+}

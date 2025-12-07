@@ -37,7 +37,7 @@ RULESETS=(
     
     # 流媒体
     "GlobalMedia" "YouTube" "Netflix" "Disney" "Spotify"
-    "StreamJP" "StreamUS" "StreamKR" "StreamHK" "StreamTW"
+    "StreamJP" "StreamUS" "StreamKR" "StreamHK" "StreamTW" "StreamEU"
     
     # 游戏
     "Gaming" "Steam"
@@ -56,6 +56,9 @@ RULESETS=(
     
     # 广告/NSFW
     "NSFW" "AdBlock_Merged"
+    
+    # Process 规则 (进程匹配)
+    "AIProcess" "DirectProcess" "DownloadProcess" "GamingProcess"
 )
 
 echo -e "${GREEN}=== Batch Surge to Singbox Converter ===${NC}"

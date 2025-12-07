@@ -401,17 +401,16 @@ fn execute_ffv1_conversion(detection: &VideoDetectionResult, output: &Path) -> R
     Ok(std::fs::metadata(output)?.len())
 }
 
-/// Execute AV1 conversion with specified CRF
+/// Execute AV1 conversion with specified CRF (using SVT-AV1 for better performance)
 fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: u8) -> Result<u64> {
+    // 使用 SVT-AV1 编码器 (libsvtav1) - 比 libaom-av1 快 10-20 倍
     let mut args = vec![
         "-y".to_string(),
         "-i".to_string(), detection.file_path.clone(),
-        "-c:v".to_string(), "libaom-av1".to_string(),
+        "-c:v".to_string(), "libsvtav1".to_string(),
         "-crf".to_string(), crf.to_string(),
-        "-b:v".to_string(), "0".to_string(),
-        "-cpu-used".to_string(), "4".to_string(),
-        "-row-mt".to_string(), "1".to_string(),
-        "-tiles".to_string(), "2x2".to_string(),
+        "-preset".to_string(), "6".to_string(),  // 0-13, 6 是平衡点
+        "-svtav1-params".to_string(), "tune=0:film-grain=0".to_string(),
     ];
     
     if detection.has_audio {
@@ -436,22 +435,22 @@ fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: 
     Ok(std::fs::metadata(output)?.len())
 }
 
-/// Execute mathematical lossless AV1 conversion (⚠️ VERY SLOW, huge files)
+/// Execute mathematical lossless AV1 conversion using SVT-AV1 (⚠️ SLOW, huge files)
 fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Result<u64> {
-    warn!("⚠️  Mathematical lossless AV1 encoding - this will be VERY SLOW!");
+    warn!("⚠️  Mathematical lossless AV1 encoding (SVT-AV1) - this will be SLOW!");
     
+    // SVT-AV1 无损模式: crf=0 + lossless=1
     let mut args = vec![
         "-y".to_string(),
         "-i".to_string(), detection.file_path.clone(),
-        "-c:v".to_string(), "libaom-av1".to_string(),
-        "-lossless".to_string(), "1".to_string(),  // Mathematical lossless
-        "-cpu-used".to_string(), "4".to_string(),
-        "-row-mt".to_string(), "1".to_string(),
-        "-tiles".to_string(), "2x2".to_string(),
+        "-c:v".to_string(), "libsvtav1".to_string(),
+        "-crf".to_string(), "0".to_string(),
+        "-preset".to_string(), "4".to_string(),  // 无损模式用更慢的 preset 保证质量
+        "-svtav1-params".to_string(), "lossless=1".to_string(),  // 数学无损
     ];
     
     if detection.has_audio {
-        args.extend(vec!["-c:a".to_string(), "flac".to_string()]);  // Lossless audio too
+        args.extend(vec!["-c:a".to_string(), "flac".to_string()]);  // 无损音频
     } else {
         args.push("-an".to_string());
     }
@@ -465,8 +464,6 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
             String::from_utf8_lossy(&result.stderr).to_string()
         ));
     }
-    
-
     
     Ok(std::fs::metadata(output)?.len())
 }

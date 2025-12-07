@@ -46,6 +46,26 @@ CONFLICT_MAP = {
 # Also standard exclusions: Remove "Direct" domains from "Proxy" lists if they appear?
 # Maybe too risky. Focus on the defined map.
 
+def is_valid_rule(line):
+    """检查规则是否合法（Surge/Shadowrocket 兼容）"""
+    # 跳过 RULE-SET（不应该出现在 .list 文件中）
+    if line.startswith('RULE-SET'):
+        return False
+    
+    # 🔥 DOMAIN/DOMAIN-SUFFIX/DOMAIN-KEYWORD 不能带 no-resolve
+    # no-resolve 只能用于 IP-CIDR/IP-CIDR6/GEOIP 规则
+    if line.startswith('DOMAIN') and ',no-resolve' in line:
+        return False
+    
+    return True
+
+def clean_rule(line):
+    """清理规则，移除非法参数"""
+    # 移除 DOMAIN 规则中的 no-resolve（如果有的话）
+    if line.startswith('DOMAIN') and ',no-resolve' in line:
+        line = line.replace(',no-resolve', '')
+    return line
+
 def load_list(filepath):
     """Loads rules from a file into a set."""
     rules = set()
@@ -58,7 +78,11 @@ def load_list(filepath):
                  # Normalize: remove comments "DOMAIN,x.com # comment"
                 if '#' in line:
                     line = line.split('#')[0].strip()
-                rules.add(line)
+                # 🔥 清理非法规则
+                line = clean_rule(line)
+                # 🔥 跳过非法规则
+                if is_valid_rule(line):
+                    rules.add(line)
     return rules
 
 def write_list(filepath, rules):
