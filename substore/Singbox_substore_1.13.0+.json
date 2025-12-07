@@ -1337,6 +1337,14 @@
         "outbound": "🐦 Twitter 🔵"
       },
       {
+        "rule_set": "surge-reddit",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-socialmedia",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
         "rule_set": [
           "surge-telegram"
         ],
@@ -1888,6 +1896,22 @@
       },
       {
         "rule_set": "surge-adblock",
+        "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-blockhttpdns",
+        "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-firewallports",
+        "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-blockhttpdns",
+        "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-firewallports",
         "outbound": "❌ 拒绝屏蔽"
       }
     ]
