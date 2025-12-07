@@ -10,7 +10,7 @@ def update_singbox_config(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         config = json.load(f)
     
-    # Deleted rulesets
+    # Deleted rulesets (merged into other rulesets)
     deleted = [
         'QQ_Singbox.srs',
         'WeChat_Singbox.srs', 
@@ -22,7 +22,10 @@ def update_singbox_config(filepath):
         'Fediverse_Singbox.srs',
         'GlobalMedia_Singbox.srs',
         'Twitter_Singbox.srs',
-        'Instagram_Singbox.srs'
+        'Instagram_Singbox.srs',
+        'AdBlock_Merged_Singbox.srs',  # Merged into AdBlock
+        'BlockHttpDNS_Singbox.srs',    # Standalone, not in Surge RULE-SET
+        'ChinaIP_Singbox.srs'          # Used in route config, not RULE-SET
     ]
     
     # Filter out deleted rulesets

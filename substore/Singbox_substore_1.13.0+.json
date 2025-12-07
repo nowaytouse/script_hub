@@ -240,7 +240,7 @@
         "45.90.28.0/24",
         "45.90.30.0/24"
       ],
-      "route_exclude_address_set": "cnip",
+      "route_exclude_address_set": "surge-chinaip",
       "strict_route": true,
       "endpoint_independent_nat": true,
       "stack": "gvisor",
@@ -661,22 +661,6 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-adblock-merged",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Merged_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-blockhttpdns",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/BlockHttpDNS_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
         "tag": "surge-ai",
         "type": "remote",
         "format": "binary",
@@ -909,22 +893,6 @@
         "update_interval": "24h"
       },
       {
-        "tag": "cnip",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-chinaip",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
         "tag": "surge-tencent",
         "type": "remote",
         "format": "binary",
@@ -1049,6 +1017,14 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/substore_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-chinaip",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       }
@@ -1225,7 +1201,7 @@
         "outbound": "☎️telegram✈️"
       },
       {
-        "rule_set": "cnip",
+        "rule_set": "surge-chinaip",
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
