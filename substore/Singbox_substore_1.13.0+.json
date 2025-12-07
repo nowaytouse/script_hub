@@ -289,69 +289,10 @@
     },
     {
       "type": "selector",
-      "tag": "🛠️ 手动选择",
-      "outbounds": [
-        "♻️ 自动选择",
-        "🚀 落地节点 🔐",
-        "🎯 全球直连",
-        "🇺🇸 美国",
-        "🇭🇰 香港",
-        "🇯🇵 JP -   针对💢",
-        "🇸🇬 新加坡",
-        "🇹🇼 台湾"
-      ]
-    },
-    {
-      "type": "urltest",
-      "tag": "♻️ 自动选择",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 15
-    },
-    {
-      "type": "selector",
       "tag": "🚶 中续路径 🔐",
       "outbounds": [
         "🎯 全球直连"
       ]
-    },
-    {
-      "type": "selector",
-      "tag": "💳 PayPal 💰",
-      "outbounds": [
-        "🎯 全球直连",
-        "🛠️ 手动选择"
-      ],
-      "default": "🛠️ 手动选择"
-    },
-    {
-      "type": "selector",
-      "tag": "📱 TikTok 📺",
-      "outbounds": [
-        "🎯 全球直连",
-        "🛠️ 手动选择"
-      ],
-      "default": "🛠️ 手动选择"
-    },
-    {
-      "type": "selector",
-      "tag": "🎬 全球媒体 🌍",
-      "outbounds": [
-        "🎯 全球直连",
-        "🛠️ 手动选择"
-      ]
-    },
-    {
-      "type": "selector",
-      "tag": "☎️ Telegram 💬",
-      "outbounds": [
-        "🛠️ 手动选择",
-        "🇺🇸 美国"
-      ],
-      "default": "🛠️ 手动选择"
     },
     {
       "type": "selector",
@@ -392,16 +333,6 @@
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "1m",
       "tolerance": 30
-    },
-    {
-      "type": "selector",
-      "tag": "📺 巴哔港澳 📱",
-      "outbounds": [
-        "🎯 全球直连",
-        "🇭🇰 香港",
-        "🇹🇼 台湾"
-      ],
-      "default": "🎯 全球直连"
     },
     {
       "type": "selector",
@@ -475,80 +406,6 @@
         "🎯 全球直连"
       ],
       "default": "♻️ 自动选择"
-    },
-    {
-      "type": "selector",
-      "tag": "🚀 落地节点 🔐",
-      "outbounds": [],
-      "interrupt_exist_connections": false
-    },
-    {
-      "type": "urltest",
-      "tag": "🇺🇸 美国",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "urltest",
-      "tag": "🇭🇰 香港",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "urltest",
-      "tag": "🇯🇵 JP -   针对💢",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "urltest",
-      "tag": "🇸🇬 新加坡",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "urltest",
-      "tag": "🇹🇼 台湾",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "selector",
-      "tag": "🎮 Roblox 🎯",
-      "outbounds": [
-        "🛠️ 手动选择",
-        "🎯 全球直连"
-      ],
-      "default": "🛠️ 手动选择"
-    },
-    {
-      "type": "selector",
-      "tag": "🌐 全部节点 🌍",
-      "outbounds": [
-        "♻️ 自动入口 🧠",
-        "🛠️ 手动选择"
-      ],
-      "default": "♻️ 自动入口 🧠"
     },
     {
       "type": "selector",
@@ -803,14 +660,6 @@
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
-    },
-    {
-      "type": "selector",
-      "tag": "🛜 PonTen 🏠",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "default": "🎯 全球直连"
     }
   ],
   "route": {
