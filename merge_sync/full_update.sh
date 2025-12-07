@@ -35,6 +35,7 @@ show_help() {
     echo "  --skip-merge      跳过增量合并"
     echo "  --skip-adblock    跳过广告模块合并"
     echo "  --skip-module     跳过模块同步到iCloud"
+    echo "  --skip-profile    跳过Surge配置同步"
     echo "  --skip-srs        跳过SRS生成"
     echo "  --verbose         显示详细输出"
     echo "  --quiet           静默模式 (最少输出)"
@@ -64,6 +65,7 @@ SKIP_SYNC=false
 SKIP_MERGE=false
 SKIP_ADBLOCK=false
 SKIP_MODULE=false
+SKIP_PROFILE=false
 SKIP_SRS=false
 VERBOSE=false
 QUIET=false
@@ -79,6 +81,7 @@ while [[ $# -gt 0 ]]; do
         --skip-merge) SKIP_MERGE=true; shift ;;
         --skip-adblock) SKIP_ADBLOCK=true; shift ;;
         --skip-module) SKIP_MODULE=true; shift ;;
+        --skip-profile) SKIP_PROFILE=true; shift ;;
         --skip-srs) SKIP_SRS=true; shift ;;
         --verbose) VERBOSE=true; shift ;;
         --quiet) QUIET=true; shift ;;
@@ -121,7 +124,7 @@ fi
 
 # 步骤计数
 STEP=0
-TOTAL_STEPS=9
+TOTAL_STEPS=10
 
 # ═══════════════════════════════════════════════════════════════
 # 步骤1: Git Pull (获取远程更新)
@@ -141,11 +144,14 @@ if [ "$WITH_GIT" = true ] && [ "$SKIP_GIT" = false ]; then
             git stash push -m "auto-stash before full_update $(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
         fi
         
+        # 获取当前分支名
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+        
         # 执行 git pull
         if [ "$VERBOSE" = true ]; then
-            git pull --rebase origin main || git pull origin main || log_warning "Git pull 失败，继续执行"
+            git pull --rebase origin "$CURRENT_BRANCH" || git pull origin "$CURRENT_BRANCH" || log_warning "Git pull 失败，继续执行"
         else
-            git pull --rebase origin main 2>&1 | grep -E "^(Already|Updating|Fast-forward|error:|fatal:)" || git pull origin main 2>&1 | grep -E "^(Already|Updating|Fast-forward|error:|fatal:)" || log_warning "Git pull 失败"
+            git pull --rebase origin "$CURRENT_BRANCH" 2>&1 | grep -E "^(Already|Updating|Fast-forward|error:|fatal:)" || git pull origin "$CURRENT_BRANCH" 2>&1 | grep -E "^(Already|Updating|Fast-forward|error:|fatal:)" || log_warning "Git pull 失败"
         fi
         
         # 恢复 stash (如果有)
@@ -286,7 +292,28 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤8: 生成SRS文件
+# 步骤8: 同步Surge配置文件 (吸取用户规则 + 更新规则集)
+# ═══════════════════════════════════════════════════════════════
+STEP=$((STEP + 1))
+if [ "$SKIP_PROFILE" = false ]; then
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 同步Surge配置文件 (注释关键词智能分类)...${NC}"
+    if [ -f "${SCRIPT_DIR}/sync_profile_to_template.sh" ]; then
+        if [ "$VERBOSE" = true ]; then
+            "${SCRIPT_DIR}/sync_profile_to_template.sh"
+        else
+            "${SCRIPT_DIR}/sync_profile_to_template.sh" 2>&1 | grep -E "^\[OK\]|\[INFO\]|\[WARN\]|RULE-SET|用户规则|同步完成" || true
+        fi
+        log_success "Surge配置同步完成"
+    else
+        log_warning "跳过: sync_profile_to_template.sh 不存在"
+    fi
+else
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 跳过Surge配置同步${NC}"
+fi
+echo ""
+
+# ═══════════════════════════════════════════════════════════════
+# 步骤9: 生成SRS文件
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$SKIP_SRS" = false ]; then
@@ -307,7 +334,7 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤9: Git Commit & Push (提交并推送更新)
+# 步骤10: Git Commit & Push (提交并推送更新)
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$WITH_GIT" = true ] && [ "$SKIP_GIT" = false ]; then
@@ -332,11 +359,14 @@ if [ "$WITH_GIT" = true ] && [ "$SKIP_GIT" = false ]; then
                 git commit -m "$COMMIT_MSG" 2>&1 | grep -E "^\[|files? changed|insertions|deletions" || true
             fi
             
+            # 获取当前分支名
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+            
             # 推送
             if [ "$VERBOSE" = true ]; then
-                git push origin main || git push || log_warning "Git push 失败"
+                git push origin "$CURRENT_BRANCH" || git push || log_warning "Git push 失败"
             else
-                git push origin main 2>&1 | grep -E "^To|->|Everything up-to-date|error:|fatal:" || git push 2>&1 | grep -E "^To|->|Everything up-to-date|error:|fatal:" || log_warning "Git push 失败"
+                git push origin "$CURRENT_BRANCH" 2>&1 | grep -E "^To|->|Everything up-to-date|error:|fatal:" || git push 2>&1 | grep -E "^To|->|Everything up-to-date|error:|fatal:" || log_warning "Git push 失败"
             fi
             
             log_success "Git Commit & Push 完成"
