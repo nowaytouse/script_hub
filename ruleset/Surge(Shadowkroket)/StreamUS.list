@@ -1,33 +1,22 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: StreamUS
-# Updated: 2025-12-07 04:26:59 UTC
-# Total Rules: 152
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (59 rules)
-#   -  [REJECT] (50 rules)
-#   -  [REJECT] (2 rules)
-#   -  [REJECT] (0 rules)
-#   -  [REJECT] (0 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamUS.list
+# Cleaned by smart_cleanup.py
+# Total: 152
 
-# Policy Distribution:
-#   - REJECT:         152 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,athome.fandango.com
+DOMAIN,bcbolt446c5271-a.akamaihd.net
+DOMAIN,cbsi.live.ott.irdeto.com
+DOMAIN,cbsplaylistserver.aws.syncbak.com
+DOMAIN,cbsservice.aws.syncbak.com
+DOMAIN,dashasiafox.akamaized.net
+DOMAIN,edge.api.brightcove.com
+DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
+DOMAIN,prod-api.crackle.com
+DOMAIN,staticasiafox.akamaized.net
+DOMAIN,tubi.tv
+DOMAIN,tubitv.com
+DOMAIN,vudu.com
+DOMAIN,www.tubi.tv
+DOMAIN,www.tubitv.com
 DOMAIN-SUFFIX,112263.com
 DOMAIN-SUFFIX,assetshuluimcom-a.akamaihd.net
 DOMAIN-SUFFIX,bcbolthboa-a.akamaihd.net
@@ -152,25 +141,6 @@ DOMAIN-SUFFIX,warnermediacdn.com
 DOMAIN-SUFFIX,wwwhuluplus.com
 DOMAIN-SUFFIX,yb.uncn.jp
 DOMAIN-SUFFIX,youboranqs01.com
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,athome.fandango.com
-DOMAIN,bcbolt446c5271-a.akamaihd.net
-DOMAIN,cbsi.live.ott.irdeto.com
-DOMAIN,cbsplaylistserver.aws.syncbak.com
-DOMAIN,cbsservice.aws.syncbak.com
-DOMAIN,dashasiafox.akamaized.net
-DOMAIN,edge.api.brightcove.com
-DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
-DOMAIN,prod-api.crackle.com
-DOMAIN,staticasiafox.akamaized.net
-DOMAIN,tubi.tv
-DOMAIN,tubitv.com
-DOMAIN,vudu.com
-DOMAIN,www.tubi.tv
-DOMAIN,www.tubitv.com
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.hbo.hbonow
 PROCESS-NAME,com.hulu.plus
 USER-AGENT,DPlus*
@@ -184,5 +154,3 @@ USER-AGENT,PeacockMobile*
 USER-AGENT,TVer-Release*
 USER-AGENT,discovery+*
 USER-AGENT,encoreTVB*
-
-# ========== END ==========

@@ -1,7 +1,14 @@
 # LAN - Local Area Network
-# Policy Group: 🗺️ 直连通用 🌏
+# Policy Group: 🗺️ 直连通用 🌏 (DIRECT)
 # Purpose: Local network addresses, private IPs
 # 更新: 2025-12-07
+#
+# ⚠️ 重要说明:
+#   本规则集应配置为 DIRECT 策略，不是 REJECT！
+#   用途: 让局域网流量直连，不经过代理
+#   配置示例: RULE-SET,LAN.list,DIRECT
+#
+# 规则来源不带策略标记，策略由配置文件决定
 
 # LAN (blackmatrix7)
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Lan/Lan.list

@@ -1,33 +1,8 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: NSFW
-# Updated: 2025-12-07 04:26:26 UTC
-# Total Rules: 4
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - LOCAL: ./custom/NSFW_manual.txt (NOT FOUND)
-#   -  [REJECT] (4 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: NSFW.list
+# Cleaned by smart_cleanup.py
+# Total: 4
 
-# Policy Distribution:
-#   - REJECT:         4 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,cooer.su
 DOMAIN-SUFFIX,coomer.party
 DOMAIN-SUFFIX,kemono.party
 DOMAIN-SUFFIX,kemono.su
-
-# ========== END ==========

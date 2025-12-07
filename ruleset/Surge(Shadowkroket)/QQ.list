@@ -1,29 +1,7 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: QQ
-# Updated: 2025-12-07 04:26:44 UTC
-# Total Rules: 37
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (25 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: QQ.list
+# Cleaned by smart_cleanup.py
+# Total: 37
 
-# Policy Distribution:
-#   - REJECT:         37 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,mqqurl.com
 DOMAIN-SUFFIX,qlogo.cn
 DOMAIN-SUFFIX,qmail.com
@@ -36,8 +14,6 @@ DOMAIN-SUFFIX,qqopenapp.com
 DOMAIN-SUFFIX,qstatic.com
 DOMAIN-SUFFIX,shurl.cn
 DOMAIN-SUFFIX,yximg.cn
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,101.32.104.4/32,no-resolve
 IP-CIDR,101.32.104.41/32,no-resolve
 IP-CIDR,101.32.104.56/32,no-resolve
@@ -58,12 +34,8 @@ IP-CIDR,150.138.137.0/32,no-resolve
 IP-CIDR,150.139.143.0/32,no-resolve
 IP-CIDR,27.159.95.0/32,no-resolve
 IP-CIDR,58.58.81.129/32,no-resolve
-
-# ========== OTHER (REJECT) ==========
 USER-AGENT,MOO%E9%9F%B3%E4%B9%90*
 USER-AGENT,QQ%E9%9F%B3%E4%B9%90
 USER-AGENT,TencentMidasConnect*
 USER-AGENT,live4iphone*
 USER-AGENT,qqlive4iphone*
-
-# ========== END ==========

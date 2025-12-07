@@ -1,29 +1,7 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: DownloadProcess
-# Updated: 2025-12-07 04:27:08 UTC
-# Total Rules: 15
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
+# Ruleset: DownloadProcess.list
+# Cleaned by smart_cleanup.py
+# Total: 15
 
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
-
-# Policy Distribution:
-#   - REJECT:         15 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,BitComet
 PROCESS-NAME,Deluge
 PROCESS-NAME,DownloadService
@@ -39,5 +17,3 @@ PROCESS-NAME,naive
 PROCESS-NAME,privoxy
 PROCESS-NAME,qBittorrent
 PROCESS-NAME,uTorrent
-
-# ========== END ==========

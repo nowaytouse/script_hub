@@ -1,32 +1,19 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: StreamHK
-# Updated: 2025-12-07 04:27:03 UTC
-# Total Rules: 44
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (12 rules)
-#   -  [REJECT] (6 rules)
-#   -  [REJECT] (0 rules)
-#   -  [REJECT] (2 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamHK.list
+# Cleaned by smart_cleanup.py
+# Total: 45
 
-# Policy Distribution:
-#   - REJECT:         44 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,44wilhpljf.execute-api.ap-southeast-1.amazonaws.com
+DOMAIN,apm-misaka.biliapi.net
+DOMAIN,d1k2us671qcoau.cloudfront.net
+DOMAIN,d2anahhhmp1ffz.cloudfront.net
+DOMAIN,dfp6rglgjqszk.cloudfront.net
+DOMAIN,hbolb.onwardsmg.com
+DOMAIN,hbounify-prod.evergent.com
+DOMAIN,list.linehk.top
+DOMAIN,manifest.prod.boltdns.net
+DOMAIN,players.brightcove.net
+DOMAIN-KEYWORD,nowtv100
+DOMAIN-KEYWORD,rthklive
 DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,csifund.org
 DOMAIN-SUFFIX,d1k2us671qcoau.cloudfront.net
@@ -53,23 +40,6 @@ DOMAIN-SUFFIX,tvb.com
 DOMAIN-SUFFIX,viu.com
 DOMAIN-SUFFIX,viu.now.com
 DOMAIN-SUFFIX,viu.tv
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,nowtv100
-DOMAIN-KEYWORD,rthklive
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,44wilhpljf.execute-api.ap-southeast-1.amazonaws.com
-DOMAIN,apm-misaka.biliapi.net
-DOMAIN,d1k2us671qcoau.cloudfront.net
-DOMAIN,d2anahhhmp1ffz.cloudfront.net
-DOMAIN,dfp6rglgjqszk.cloudfront.net
-DOMAIN,hbolb.onwardsmg.com
-DOMAIN,hbounify-prod.evergent.com
-DOMAIN,manifest.prod.boltdns.net
-DOMAIN,players.brightcove.net
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.bstar.intl
 PROCESS-NAME,com.hktve.viutv
 PROCESS-NAME,com.viu.pad
@@ -77,6 +47,3 @@ PROCESS-NAME,com.viu.phone
 PROCESS-NAME,com.vuclip.viu
 USER-AGENT,Viu*
 USER-AGENT,mytv*
-
-# ========== END ==========
-DOMAIN,list.linehk.top

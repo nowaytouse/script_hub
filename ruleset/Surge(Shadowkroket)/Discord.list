@@ -1,30 +1,7 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: Discord
-# Updated: 2025-12-07 04:26:24 UTC
-# Total Rules: 29
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (29 rules)
-#   - LOCAL: ../MetaCubeX/MetaCubeX_discord.list (NOT FOUND)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: Discord.list
+# Cleaned by smart_cleanup.py
+# Total: 29
 
-# Policy Distribution:
-#   - REJECT:         29 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,airhorn.solutions
 DOMAIN-SUFFIX,airhornbot.com
 DOMAIN-SUFFIX,bigbeans.solutions
@@ -54,5 +31,3 @@ DOMAIN-SUFFIX,discordsays.com
 DOMAIN-SUFFIX,discordstatus.com
 DOMAIN-SUFFIX,hammerandchisel.ssl.zendesk.com
 DOMAIN-SUFFIX,watchanimeattheoffice.com
-
-# ========== END ==========

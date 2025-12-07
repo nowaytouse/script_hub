@@ -218,7 +218,8 @@ ${sources_list}
 #
 # Usage:
 #   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
+#   - Policy is determined by RULE-SET line in config file
 #   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
 #
 # ═══════════════════════════════════════════════════════════════
@@ -283,16 +284,16 @@ setup_cron() {
     exit 0
 }
 
-# Output rules by type (optimized)
+# Output rules by type (optimized) - 不添加策略标记
 output_rules_by_type() {
     local input_file="$1"
-    local policy="$2"
+    local policy="$2"  # 保留参数但不使用，避免破坏调用
     local output_file="$3"
     
     [ ! -s "$input_file" ] && return
     
-    # Use awk for efficient categorization
-    awk -v policy="$policy" '
+    # Use awk for efficient categorization - 不在注释中添加策略标记
+    awk '
     BEGIN { 
         ds_count=0; dk_count=0; d_count=0; ip_count=0; ip6_count=0; other_count=0
     }
@@ -304,32 +305,32 @@ output_rules_by_type() {
     { other[other_count++]=$0 }
     END {
         if (ds_count > 0) {
-            print "# ========== DOMAIN-SUFFIX (" policy ") =========="
+            print "# ========== DOMAIN-SUFFIX =========="
             for (i=0; i<ds_count; i++) print ds[i]
             print ""
         }
         if (dk_count > 0) {
-            print "# ========== DOMAIN-KEYWORD (" policy ") =========="
+            print "# ========== DOMAIN-KEYWORD =========="
             for (i=0; i<dk_count; i++) print dk[i]
             print ""
         }
         if (d_count > 0) {
-            print "# ========== DOMAIN (" policy ") =========="
+            print "# ========== DOMAIN =========="
             for (i=0; i<d_count; i++) print d[i]
             print ""
         }
         if (ip_count > 0) {
-            print "# ========== IP-CIDR (" policy ") =========="
+            print "# ========== IP-CIDR =========="
             for (i=0; i<ip_count; i++) print ip[i]
             print ""
         }
         if (ip6_count > 0) {
-            print "# ========== IP-CIDR6 (" policy ") =========="
+            print "# ========== IP-CIDR6 =========="
             for (i=0; i<ip6_count; i++) print ip6[i]
             print ""
         }
         if (other_count > 0) {
-            print "# ========== OTHER (" policy ") =========="
+            print "# ========== OTHER =========="
             for (i=0; i<other_count; i++) print other[i]
             print ""
         }
@@ -420,8 +421,9 @@ merge_rules() {
                 extract_rules "$local_file" "$temp_extracted"
                 local rules_count=$(wc -l < "$temp_extracted" | tr -d ' ')
                 print_verbose "  Extracted: $rules_count rules"
-                sed "s/$/	${policy}/" "$temp_extracted" >> "$all_new_rules"
-                echo "#   - LOCAL: $(basename "$local_file") [$policy] ($rules_count rules)" >> "$sources_list_file"
+                # 不再添加策略标记，规则集本身不包含策略
+                cat "$temp_extracted" >> "$all_new_rules"
+                echo "#   - LOCAL: $(basename "$local_file") ($rules_count rules)" >> "$sources_list_file"
             else
                 print_warning "Local file not found: $local_file"
                 echo "#   - LOCAL: $source_path (NOT FOUND)" >> "$sources_list_file"
@@ -430,20 +432,20 @@ merge_rules() {
         fi
         
         # Process remote URL
-        print_info "Processing [$source_count/${#SOURCES[@]}]: $(basename "$source_path") [$policy]"
+        print_info "Processing [$source_count/${#SOURCES[@]}]: $(basename "$source_path")"
         
         if download_ruleset "$source_path" "$temp_download"; then
             extract_rules "$temp_download" "$temp_extracted"
             local rules_count=$(wc -l < "$temp_extracted" | tr -d ' ')
             print_verbose "  Extracted: $rules_count rules"
             
-            # Append rules with policy marker (use tab as delimiter for efficiency)
-            sed "s/$/	${policy}/" "$temp_extracted" >> "$all_new_rules"
+            # 不再添加策略标记，规则集本身不包含策略
+            cat "$temp_extracted" >> "$all_new_rules"
             
-            echo "#   - $url [$policy] ($rules_count rules)" >> "$sources_list_file"
+            echo "#   - $(basename "$source_path") ($rules_count rules)" >> "$sources_list_file"
         else
-            print_warning "Download failed: $url"
-            echo "#   - $url (FAILED)" >> "$sources_list_file"
+            print_warning "Download failed: $source_path"
+            echo "#   - $(basename "$source_path") (FAILED)" >> "$sources_list_file"
         fi
     done
 
@@ -454,8 +456,8 @@ merge_rules() {
             source_count=$((source_count + 1))
             print_info "Processing local: $local_file"
             extract_rules "$local_file" "$temp_extracted"
-            sed "s/$/	REJECT/" "$temp_extracted" >> "$all_new_rules"
-            echo "#   - [LOCAL] $local_file [REJECT]" >> "$sources_list_file"
+            cat "$temp_extracted" >> "$all_new_rules"
+            echo "#   - [LOCAL] $(basename "$local_file")" >> "$sources_list_file"
         fi
     done
     
@@ -464,41 +466,23 @@ merge_rules() {
         local temp_manual="$TEMP_DIR/manual_extracted.txt"
         print_info "Processing manual rules: $(basename "$MANUAL_FILE")"
         extract_rules "$MANUAL_FILE" "$temp_manual"
-        sed "s/$/	REJECT/" "$temp_manual" >> "$all_new_rules"
+        cat "$temp_manual" >> "$all_new_rules"
         echo "#   - [MANUAL] $(basename "$MANUAL_FILE") (auto-preserved)" >> "$sources_list_file"
     fi
     
     print_info "Deduplicating rules (this may take a moment)..."
     
-    # Optimized deduplication using awk (much faster than sort -u for large files)
-    local reject_rules="$TEMP_DIR/reject_rules.txt"
-    local reject_drop_rules="$TEMP_DIR/reject_drop_rules.txt"
-    local reject_no_drop_rules="$TEMP_DIR/reject_no_drop_rules.txt"
+    # 简化的去重逻辑 - 不再按策略分组
+    local all_rules="$TEMP_DIR/all_rules.txt"
     
-    # Single-pass deduplication and policy separation using awk
-    awk -F'\t' '
-    !seen[$1]++ {
-        if ($2 == "REJECT-DROP") print $1 > "'"$reject_drop_rules"'"
-        else if ($2 == "REJECT-NO-DROP") print $1 > "'"$reject_no_drop_rules"'"
-        else print $1 > "'"$reject_rules"'"
-    }
-    ' "$all_new_rules"
+    # 合并新规则和现有规则
+    cat "$all_new_rules" "$existing_rules" > "$all_rules"
     
-    # Ensure files exist
-    touch "$reject_rules" "$reject_drop_rules" "$reject_no_drop_rules"
-    
-    # Merge with existing rules (existing default to REJECT)
-    cat "$existing_rules" >> "$reject_rules"
-    sort -u "$reject_rules" -o "$reject_rules"
-    sort -u "$reject_drop_rules" -o "$reject_drop_rules"
-    sort -u "$reject_no_drop_rules" -o "$reject_no_drop_rules"
+    # 去重并排序
+    sort -u "$all_rules" -o "$all_rules"
     
     # Calculate statistics
-    local reject_count=$(wc -l < "$reject_rules" | tr -d ' ')
-    local reject_drop_count=$(wc -l < "$reject_drop_rules" | tr -d ' ')
-    local reject_no_drop_count=$(wc -l < "$reject_no_drop_rules" | tr -d ' ')
-    
-    TOTAL_RULES_AFTER=$((reject_count + reject_drop_count + reject_no_drop_count))
+    TOTAL_RULES_AFTER=$(wc -l < "$all_rules" | tr -d ' ')
     TOTAL_RULES_ADDED=$((TOTAL_RULES_AFTER - TOTAL_RULES_BEFORE))
     [ $TOTAL_RULES_ADDED -lt 0 ] && TOTAL_RULES_ADDED=0
     
@@ -506,21 +490,19 @@ merge_rules() {
     local sources_list=$(cat "$sources_list_file")
     generate_header "$RULESET_NAME" "$TOTAL_RULES_AFTER" "$sources_list" > "$final_output"
     
-    # Add policy statistics
+    # Add note about policy
     cat >> "$final_output" << EOF
-# Policy Distribution:
-#   - REJECT:         ${reject_count} rules
-#   - REJECT-DROP:    ${reject_drop_count} rules
-#   - REJECT-NO-DROP: ${reject_no_drop_count} rules
+# 策略说明:
+#   - 规则集本身不包含策略标记
+#   - 策略由配置文件中的RULE-SET行决定
+#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
 #
 # ═══════════════════════════════════════════════════════════════
 
 EOF
     
-    # Output rules grouped by policy
-    output_rules_by_type "$reject_rules" "REJECT" "$final_output"
-    output_rules_by_type "$reject_drop_rules" "REJECT-DROP" "$final_output"
-    output_rules_by_type "$reject_no_drop_rules" "REJECT-NO-DROP" "$final_output"
+    # Output all rules
+    output_rules_by_type "$all_rules" "" "$final_output"
     
     echo "# ========== END ==========" >> "$final_output"
 
@@ -533,11 +515,8 @@ EOF
     printf "║  Added:       %-25s ║\n" "$TOTAL_RULES_ADDED"
     printf "║  After:       %-25s ║\n" "$TOTAL_RULES_AFTER"
     echo "╠══════════════════════════════════════════╣"
-    echo "║         Policy Distribution              ║"
-    echo "╠══════════════════════════════════════════╣"
-    printf "║  REJECT:         %-22s ║\n" "$reject_count"
-    printf "║  REJECT-DROP:    %-22s ║\n" "$reject_drop_count"
-    printf "║  REJECT-NO-DROP: %-22s ║\n" "$reject_no_drop_count"
+    echo "║  Note: 规则集不包含策略标记              ║"
+    echo "║        策略由配置文件决定                ║"
     echo "╚══════════════════════════════════════════╝"
     echo ""
     

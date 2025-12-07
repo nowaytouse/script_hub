@@ -1,30 +1,8 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: Reddit
-# Updated: 2025-12-07 04:26:32 UTC
-# Total Rules: 8
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (8 rules)
-#   - LOCAL: ../MetaCubeX/MetaCubeX_reddit.list (NOT FOUND)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: Reddit.list
+# Cleaned by smart_cleanup.py
+# Total: 9
 
-# Policy Distribution:
-#   - REJECT:         8 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-KEYWORD,reddit
 DOMAIN-SUFFIX,redd.it
 DOMAIN-SUFFIX,reddit.com
 DOMAIN-SUFFIX,redditmail.com
@@ -33,6 +11,3 @@ DOMAIN-SUFFIX,redditstatic.com
 DOMAIN-SUFFIX,reddituploads.com
 DOMAIN-SUFFIX,reddituploads.com.cdn-cf.behance.net
 DOMAIN-SUFFIX,reddituploads.com.cdn-cf.dropbox.com
-
-# ========== END ==========
-DOMAIN-KEYWORD,reddit

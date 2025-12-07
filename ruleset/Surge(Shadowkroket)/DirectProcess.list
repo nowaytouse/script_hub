@@ -1,30 +1,6 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: DirectProcess
-# Updated: 2025-12-07 04:27:08 UTC
-# Total Rules: 2
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - LOCAL: SurgeConf_DirectProcess.list [REJECT] (2 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: DirectProcess.list
+# Cleaned by smart_cleanup.py
+# Total: 2
 
-# Policy Distribution:
-#   - REJECT:         2 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,/Applications/Thunder.app/
 PROCESS-NAME,/Applications/Transmission.app/
-
-# ========== END ==========

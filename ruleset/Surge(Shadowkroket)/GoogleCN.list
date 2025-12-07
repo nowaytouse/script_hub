@@ -1,29 +1,7 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: GoogleCN
-# Updated: 2025-12-07 04:26:46 UTC
-# Total Rules: 21
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (0 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: GoogleCN.list
+# Cleaned by smart_cleanup.py
+# Total: 21
 
-# Policy Distribution:
-#   - REJECT:         21 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,alt1-mtalk.google.com
 DOMAIN-SUFFIX,alt2-mtalk.google.com
 DOMAIN-SUFFIX,alt3-mtalk.google.com
@@ -45,5 +23,3 @@ DOMAIN-SUFFIX,toolbarqueries.google.com
 DOMAIN-SUFFIX,tools.google.com
 DOMAIN-SUFFIX,tools.l.google.com
 DOMAIN-SUFFIX,www-googletagmanager.l.google.com
-
-# ========== END ==========

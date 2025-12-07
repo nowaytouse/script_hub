@@ -1,30 +1,14 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: Spotify
-# Updated: 2025-12-07 04:26:35 UTC
-# Total Rules: 31
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (31 rules)
-#   - LOCAL: ../MetaCubeX/MetaCubeX_spotify.list (NOT FOUND)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: Spotify.list
+# Cleaned by smart_cleanup.py
+# Total: 31
 
-# Policy Distribution:
-#   - REJECT:         31 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,audio4-ak-spotify-com.akamaized.net
+DOMAIN,cdn-spotify-experiments.conductrics.com
+DOMAIN,heads-ak-spotify-com.akamaized.net
+DOMAIN,spotify.com.edgesuite.net
+DOMAIN,spotify.map.fastly.net
+DOMAIN,spotify.map.fastlylb.net
+DOMAIN-KEYWORD,spotify
 DOMAIN-SUFFIX,audio-ak-spotify-com.akamaized.net
 DOMAIN-SUFFIX,byspotify.com
 DOMAIN-SUFFIX,heads4-ak-spotify-com.akamaized.net
@@ -45,24 +29,7 @@ DOMAIN-SUFFIX,spotifyjobs.com
 DOMAIN-SUFFIX,spotifynewsroom.jp
 DOMAIN-SUFFIX,spotilocal.com
 DOMAIN-SUFFIX,tospotify.com
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,spotify
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,audio4-ak-spotify-com.akamaized.net
-DOMAIN,cdn-spotify-experiments.conductrics.com
-DOMAIN,heads-ak-spotify-com.akamaized.net
-DOMAIN,spotify.com.edgesuite.net
-DOMAIN,spotify.map.fastly.net
-DOMAIN,spotify.map.fastlylb.net
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,104.154.127.126/32,no-resolve
 IP-CIDR,35.186.224.47/32,no-resolve
-
-# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.spotify.music
 USER-AGENT,Spotify*
-
-# ========== END ==========

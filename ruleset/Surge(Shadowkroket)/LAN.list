@@ -1,45 +1,13 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: LAN (Local Area Network)
-# Updated: 2025-12-07 04:26:52 UTC
-# Total Rules: 156 (去重后)
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# 规则集说明:
-#   本规则集包含局域网地址、私有IP段和本地网络相关规则
-#   用于识别和处理本地网络流量,防止本地流量被代理
-#
-# 源文件合并统计:
-#   1. blackmatrix7/Lan.list              (141 rules)
-#   2. ACL4SSR/LocalAreaNetwork.list      (37 rules)
-#   3. Loyalsoldier/private.txt           (18 rules)
-#   4. Loyalsoldier/private.txt (surge)   (0 rules - 重复)
-#   ─────────────────────────────────────────────
-#   原始总数: 196 rules
-#   去重后:   156 rules (删除40条重复规则)
-#
-# 规则类型分布:
-#   - DOMAIN-SUFFIX:  (IPv4/IPv6反向DNS域名)
-#   - DOMAIN:         (路由器管理界面域名)
-#   - IP-CIDR:        (私有IP段: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16等)
-#   - IP-CIDR6:       (IPv6私有地址段)
-#
-# 使用说明:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - 规则按策略类型分组 (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - 兼容 Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: LAN.list
+# Cleaned by smart_cleanup.py
+# Total: 156
 
-# Policy Distribution:
-#   - REJECT:         156 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,asusrouter.com
+DOMAIN,instant.arubanetworks.com
+DOMAIN,oasisauth.h3c.com
+DOMAIN,router.asus.com
+DOMAIN,setmeup.arubanetworks.com
+DOMAIN,www.asusrouter.com
 DOMAIN-SUFFIX,0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
 DOMAIN-SUFFIX,0.in-addr.arpa
 DOMAIN-SUFFIX,1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
@@ -164,16 +132,6 @@ DOMAIN-SUFFIX,tplogin.cn
 DOMAIN-SUFFIX,ts.net
 DOMAIN-SUFFIX,wifi.cmcc
 DOMAIN-SUFFIX,zte.home
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,asusrouter.com
-DOMAIN,instant.arubanetworks.com
-DOMAIN,oasisauth.h3c.com
-DOMAIN,router.asus.com
-DOMAIN,setmeup.arubanetworks.com
-DOMAIN,www.asusrouter.com
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,0.0.0.0/8,no-resolve
 IP-CIDR,10.0.0.0/8,no-resolve
 IP-CIDR,100.64.0.0/10,no-resolve
@@ -194,13 +152,9 @@ IP-CIDR,::/127,no-resolve
 IP-CIDR,fc00::/7,no-resolve
 IP-CIDR,fe80::/10,no-resolve
 IP-CIDR,ff00::/8,no-resolve
-
-# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,::/127,no-resolve
 IP-CIDR6,::1/128,no-resolve
 IP-CIDR6,fc00::/7,no-resolve
 IP-CIDR6,fd00::/8,no-resolve
 IP-CIDR6,fe80::/10,no-resolve
 IP-CIDR6,ff00::/8,no-resolve
-
-# ========== END ==========

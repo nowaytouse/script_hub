@@ -1,31 +1,33 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: CDN
-# Updated: 2025-12-07 04:26:51 UTC
-# Total Rules: 91
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (26 rules)
-#   -  [REJECT] (0 rules)
-#   -  [REJECT] (65 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: CDN.list
+# Cleaned by smart_cleanup.py
+# Total: 91
 
-# Policy Distribution:
-#   - REJECT:         91 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+DOMAIN,cdn-msp.18comic.org
+DOMAIN,cdn-msp.18comic.vip
+DOMAIN,cdn-msp.jmcomic-zzz.one
+DOMAIN,cdn-msp.jmcomic.me
+DOMAIN-KEYWORD,-assets.worldsex.com
+DOMAIN-KEYWORD,-cdn.eporner.com
+DOMAIN-KEYWORD,-files.gitbook.io
+DOMAIN-KEYWORD,-images.disco-api.com
+DOMAIN-KEYWORD,-res.cloudinary.com
+DOMAIN-KEYWORD,-thumbs.pornhost.com
+DOMAIN-KEYWORD,-thumbs.worldsex.com
+DOMAIN-KEYWORD,99avcdn
+DOMAIN-KEYWORD,assets.trustpilot.net
+DOMAIN-KEYWORD,cdn.adultempire.com
+DOMAIN-KEYWORD,cdn.trustpilot.net
+DOMAIN-KEYWORD,dsn.algolia.net
+DOMAIN-KEYWORD,fonts.hanime1
+DOMAIN-KEYWORD,images.trustpilot.com
+DOMAIN-KEYWORD,images.trustpilot.net
+DOMAIN-KEYWORD,scripts.trustpilot.com
+DOMAIN-KEYWORD,static.grammarly.com
+DOMAIN-KEYWORD,static.trustpilot.com
+DOMAIN-KEYWORD,vdownload.hanime1
+DOMAIN-KEYWORD,vod-adaptive.akamaized.net
+DOMAIN-KEYWORD,web-assets.zendesk
 DOMAIN-SUFFIX,cf-ipfs.com
 DOMAIN-SUFFIX,cf-ns.com
 DOMAIN-SUFFIX,cf-ns.net
@@ -69,38 +71,6 @@ DOMAIN-SUFFIX,trycloudflare.com
 DOMAIN-SUFFIX,videodelivery.net
 DOMAIN-SUFFIX,warp.plus
 DOMAIN-SUFFIX,workers.dev
-
-# ========== DOMAIN-KEYWORD (REJECT) ==========
-DOMAIN-KEYWORD,-assets.worldsex.com
-DOMAIN-KEYWORD,-cdn.eporner.com
-DOMAIN-KEYWORD,-files.gitbook.io
-DOMAIN-KEYWORD,-images.disco-api.com
-DOMAIN-KEYWORD,-res.cloudinary.com
-DOMAIN-KEYWORD,-thumbs.pornhost.com
-DOMAIN-KEYWORD,-thumbs.worldsex.com
-DOMAIN-KEYWORD,99avcdn
-DOMAIN-KEYWORD,assets.trustpilot.net
-DOMAIN-KEYWORD,cdn.adultempire.com
-DOMAIN-KEYWORD,cdn.trustpilot.net
-DOMAIN-KEYWORD,dsn.algolia.net
-DOMAIN-KEYWORD,fonts.hanime1
-DOMAIN-KEYWORD,images.trustpilot.com
-DOMAIN-KEYWORD,images.trustpilot.net
-DOMAIN-KEYWORD,scripts.trustpilot.com
-DOMAIN-KEYWORD,static.grammarly.com
-DOMAIN-KEYWORD,static.trustpilot.com
-DOMAIN-KEYWORD,vdownload.hanime1
-DOMAIN-KEYWORD,vod-adaptive.akamaized.net
-DOMAIN-KEYWORD,web-assets.zendesk
-
-# ========== DOMAIN (REJECT) ==========
-DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
-DOMAIN,cdn-msp.18comic.org
-DOMAIN,cdn-msp.18comic.vip
-DOMAIN,cdn-msp.jmcomic-zzz.one
-DOMAIN,cdn-msp.jmcomic.me
-
-# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,103.21.244.0/22,no-resolve
 IP-CIDR,103.22.200.0/22,no-resolve
 IP-CIDR,103.31.4.0/22,no-resolve
@@ -116,8 +86,6 @@ IP-CIDR,188.114.96.0/20,no-resolve
 IP-CIDR,190.93.240.0/20,no-resolve
 IP-CIDR,197.234.240.0/22,no-resolve
 IP-CIDR,198.41.128.0/17,no-resolve
-
-# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,2400:cb00::/32,no-resolve
 IP-CIDR6,2405:8100::/32,no-resolve
 IP-CIDR6,2405:b500::/32,no-resolve
@@ -125,5 +93,3 @@ IP-CIDR6,2606:4700::/32,no-resolve
 IP-CIDR6,2803:f800::/32,no-resolve
 IP-CIDR6,2a06:98c0::/29,no-resolve
 IP-CIDR6,2c0f:f248::/32,no-resolve
-
-# ========== END ==========

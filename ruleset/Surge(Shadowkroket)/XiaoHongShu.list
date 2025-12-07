@@ -1,32 +1,8 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: XiaoHongShu
-# Updated: 2025-12-07 04:26:45 UTC
-# Total Rules: 4
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (4 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: XiaoHongShu.list
+# Cleaned by smart_cleanup.py
+# Total: 4
 
-# Policy Distribution:
-#   - REJECT:         4 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,fengkongcloud.com
 DOMAIN-SUFFIX,xhscdn.com
 DOMAIN-SUFFIX,xhscdn.net
 DOMAIN-SUFFIX,xiaohongshu.com
-
-# ========== END ==========

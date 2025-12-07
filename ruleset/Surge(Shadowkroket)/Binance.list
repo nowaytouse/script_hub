@@ -1,29 +1,7 @@
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: Binance
-# Updated: 2025-12-07 04:26:41 UTC
-# Total Rules: 12
-# Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   -  [REJECT] (12 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
+# Ruleset: Binance.list
+# Cleaned by smart_cleanup.py
+# Total: 12
 
-# Policy Distribution:
-#   - REJECT:         12 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,appsflayer.com
 DOMAIN-SUFFIX,binance.cloud
 DOMAIN-SUFFIX,binance.com
@@ -36,5 +14,3 @@ DOMAIN-SUFFIX,bnbzh.ac
 DOMAIN-SUFFIX,bntrace.com
 DOMAIN-SUFFIX,saasexch.cc
 DOMAIN-SUFFIX,saasexch.com
-
-# ========== END ==========
