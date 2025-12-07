@@ -1,6 +1,32 @@
-# Ruleset: Reddit.list
-# Cleaned by smart_cleanup.py
-# Total: 9
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: Reddit
+# Updated: 2025-12-07 05:44:30 UTC
+# Total Rules: 9
+# Generator: Ruleset Merger v2.4
+# Git Hash: 310e564
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - Reddit.list (8 rules)
+#   - LOCAL: ../MetaCubeX/MetaCubeX_reddit.list (NOT FOUND)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
+#   - Policy is determined by RULE-SET line in config file
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# 策略说明:
+#   - 规则集本身不包含策略标记
+#   - 策略由配置文件中的RULE-SET行决定
+#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+# [smart_cleanup.py] Deduplicated: 9 rules
 
 DOMAIN-KEYWORD,reddit
 DOMAIN-SUFFIX,redd.it
