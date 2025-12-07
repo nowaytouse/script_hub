@@ -43,7 +43,7 @@ show_help() {
     echo "  --verbose         Show detailed output"
     echo "  --quiet           Quiet mode (minimal output)"
     echo "  --quick           Quick mode (skip sync, module and Git)"
-    echo "  --turbo           Turbo mode (quick + parallel)"
+    echo "  --turbo           Turbo mode (quick + parallel + Git)"
     echo "  --full            Full mode (include Git operations)"
     echo "  --unattended      Unattended mode (CI/CD, with Git, skip iCloud)"
     echo "  --ci              CI mode (same as --unattended)"
@@ -65,7 +65,7 @@ show_help() {
 
 # Parse arguments
 WITH_CORE=false
-WITH_GIT=true    # Default: enable Git operations
+WITH_GIT=false   # Default: disable Git operations (use --with-git or --full to enable)
 SKIP_GIT=false
 SKIP_SYNC=false
 SKIP_MERGE=false
@@ -552,7 +552,7 @@ log_success "All done!"
 echo ""
 echo -e "${CYAN}Tips:${NC}"
 echo "  - Use --quick for fast update (skip sync and modules)"
-echo "  - Use --turbo for fastest update (quick + parallel)"
+echo "  - Use --turbo for fastest update (quick + parallel + Git)"
 echo "  - Use --parallel for parallel processing"
 echo "  - Use --verbose for detailed output"
 echo "  - Use --help to see all options"
