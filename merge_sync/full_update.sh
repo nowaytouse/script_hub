@@ -472,14 +472,32 @@ if [ "$WITH_GIT" = true ] && [ "$SKIP_GIT" = false ]; then
             # Get current branch name
             CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
             
-            # Push
-            if [ "$VERBOSE" = true ]; then
-                git push origin "$CURRENT_BRANCH" || git push || log_warning "Git push failed"
-            else
-                git push origin "$CURRENT_BRANCH" 2>&1 | grep -E "^To|->|Everything up-to-date|error:|fatal:" || git push 2>&1 | grep -E "^To|->|Everything up-to-date|error:|fatal:" || log_warning "Git push failed"
-            fi
+            # Push with error detection
+            PUSH_OUTPUT=$(git push origin "$CURRENT_BRANCH" 2>&1)
+            PUSH_EXIT=$?
             
-            log_success "Git Commit & Push complete"
+            if [ $PUSH_EXIT -eq 0 ]; then
+                if [ "$VERBOSE" = true ]; then
+                    echo "$PUSH_OUTPUT"
+                else
+                    echo "$PUSH_OUTPUT" | grep -E "^To|->|Everything up-to-date" || true
+                fi
+                log_success "Git Commit & Push complete"
+            else
+                # Push failed, try without branch name
+                log_warning "Push to '$CURRENT_BRANCH' failed, trying default branch..."
+                PUSH_OUTPUT=$(git push 2>&1)
+                PUSH_EXIT=$?
+                
+                if [ $PUSH_EXIT -eq 0 ]; then
+                    echo "$PUSH_OUTPUT" | grep -E "^To|->|Everything up-to-date" || true
+                    log_success "Git Push complete (default branch)"
+                else
+                    log_error "Git push failed!"
+                    echo "$PUSH_OUTPUT" | grep -E "error:|fatal:|rejected" || echo "$PUSH_OUTPUT"
+                    log_warning "Changes committed locally but not pushed to remote"
+                fi
+            fi
         else
             log_info "No changes to commit"
         fi
