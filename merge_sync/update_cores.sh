@@ -69,7 +69,7 @@ update_cores() {
         bash "$CONFIG_MANAGER_UPDATE_SCRIPT"
     else
         # Directly call the binary
-        "$CONFIG_MANAGER_BINARY" --once all
+        "$CONFIG_MANAGER_BINARY" --once
     fi
 }
 

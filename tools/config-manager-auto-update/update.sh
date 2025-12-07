@@ -20,7 +20,7 @@ echo "🚀 开始一键更新..."
 echo "===================="
 
 # 执行更新
-"$BINARY" --once all
+"$BINARY" --once
 
 echo ""
 echo "✅ 更新完成！"
