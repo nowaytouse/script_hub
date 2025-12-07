@@ -74,7 +74,7 @@ extract_rules() {
         }' || true
 }
 
-# 合并函数 - 使用ruleset_merger.sh (支持策略标记)
+# 合并函数 - 必须使用ruleset_merger.sh
 merge_category() {
     local list_name="$1"
     local source_name="$2"
@@ -88,53 +88,26 @@ merge_category() {
     
     echo -e "${BLUE}正在生成: $list_name ...${NC}"
     
-    # 使用ruleset_merger.sh进行合并 (支持策略标记)
-    if [ -f "${SCRIPT_DIR}/ruleset_merger.sh" ]; then
-        # 创建临时空文件作为target (ruleset_merger需要已存在的target)
-        if [ ! -f "$target" ]; then
-            touch "$target"
-        fi
-        
-        # 调用ruleset_merger.sh
-        bash "${SCRIPT_DIR}/ruleset_merger.sh" \
-            -t "$target" \
-            -l "$source_file" \
-            -o "$target" \
-            -n "$(basename "$target" .list)" \
-            2>&1 | grep -E "(INFO|OK|WARN|ERROR)" || true
-    else
-        # Fallback: 使用旧的简化逻辑
-        echo -e "${YELLOW}Warning: ruleset_merger.sh not found, using fallback${NC}"
-        local temp_merged="$TEMP_DIR/merged_$RANDOM.txt"
-        touch "$temp_merged"
-        
-        while IFS= read -r url || [[ -n "$url" ]]; do
-            [[ "$url" =~ ^[[:space:]]*#.*$ ]] && continue
-            [[ -z "$url" ]] && continue
-            if [[ "$url" == ./* || "$url" == ../* ]]; then url="${LINKS_DIR}/${url}"; fi
-            url=$(echo "$url" | tr -d '\r')
-            local temp_download="$TEMP_DIR/download_$RANDOM.txt"
-            if download_rules "$url" "$temp_download"; then 
-                extract_rules "$temp_download" >> "$temp_merged"
-                rm -f "$temp_download"
-            fi
-        done < "$source_file"
-        
-        sort -u "$temp_merged" -o "$temp_merged"
-        local count_after=$(wc -l < "$temp_merged" | tr -d ' ')
-        local update_date=$(date "+%Y-%m-%d")
-        
-        cat > "$target" << EOF
-# ═══════════════════════════════════════════════════════════════
-# Ruleset: $(basename "$target" .list)
-# Updated: ${update_date}
-# Total Rules: ${count_after}
-# Generator: merge_all_rulesets.sh (fallback mode)
-# ═══════════════════════════════════════════════════════════════
-
-EOF
-        cat "$temp_merged" >> "$target"
+    # 🔥 必须使用ruleset_merger.sh，不存在则响亮报错
+    if [ ! -f "${SCRIPT_DIR}/ruleset_merger.sh" ]; then
+        echo -e "${RED}❌ FATAL ERROR: ruleset_merger.sh not found!${NC}"
+        echo -e "${RED}   Path: ${SCRIPT_DIR}/ruleset_merger.sh${NC}"
+        echo -e "${RED}   This script is REQUIRED for ruleset generation.${NC}"
+        exit 1
     fi
+    
+    # 创建临时空文件作为target (ruleset_merger需要已存在的target)
+    if [ ! -f "$target" ]; then
+        touch "$target"
+    fi
+    
+    # 调用ruleset_merger.sh
+    bash "${SCRIPT_DIR}/ruleset_merger.sh" \
+        -t "$target" \
+        -l "$source_file" \
+        -o "$target" \
+        -n "$(basename "$target" .list)" \
+        2>&1 | grep -E "(INFO|OK|WARN|ERROR)" || true
     
     echo -e "  ${GREEN}✓ 合并完成${NC}"
 }

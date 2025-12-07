@@ -366,6 +366,21 @@ merge_rules() {
     TOTAL_RULES_BEFORE=$(wc -l < "$existing_rules" | tr -d ' ')
     print_info "Existing rules: $TOTAL_RULES_BEFORE"
     
+    # 🔥 提取sources文件头部的策略信息
+    local expected_policy=""
+    if [ -n "$URL_LIST_FILE" ] && [ -f "$URL_LIST_FILE" ]; then
+        # 从头部注释提取策略信息
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^#.*Policy\ Group:.*\(([A-Z]+)\) ]]; then
+                expected_policy="${BASH_REMATCH[1]}"
+                print_info "Expected policy for this ruleset: $expected_policy"
+                break
+            fi
+            # 只读取前20行
+            [ $((++line_count)) -gt 20 ] && break
+        done < "$URL_LIST_FILE"
+    fi
+    
     # Read URL list file
     if [ -n "$URL_LIST_FILE" ]; then
         print_info "Reading URL list: $URL_LIST_FILE"
@@ -490,16 +505,83 @@ merge_rules() {
     local sources_list=$(cat "$sources_list_file")
     generate_header "$RULESET_NAME" "$TOTAL_RULES_AFTER" "$sources_list" > "$final_output"
     
-    # Add note about policy
+    # Add policy information
     cat >> "$final_output" << EOF
 # 策略说明:
 #   - 规则集本身不包含策略标记
 #   - 策略由配置文件中的RULE-SET行决定
+EOF
+    
+    # 🔥 显示预期策略（如果有）
+    if [ -n "$expected_policy" ]; then
+        cat >> "$final_output" << EOF
+#   - ⚠️ 本规则集预期策略: $expected_policy
+#   - 配置示例: RULE-SET,$RULESET_NAME.list,$expected_policy
+EOF
+    else
+        cat >> "$final_output" << EOF
 #   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
+EOF
+    fi
+    
+    cat >> "$final_output" << EOF
 #
 # ═══════════════════════════════════════════════════════════════
 
 EOF
+    
+    # 🔥 策略混入检测 - 检测真正的IP-CIDR规则混入
+    if [ -n "$expected_policy" ]; then
+        print_info "Checking for policy conflicts..."
+        
+        local has_conflict=false
+        local conflict_msg=""
+        local conflict_rules=""
+        
+        # DIRECT规则集不应该包含广告域名关键词
+        if [ "$expected_policy" = "DIRECT" ]; then
+            conflict_rules=$(grep -E "DOMAIN.*(doubleclick|googleads|adservice\.google|ad\.doubleclick)" "$all_rules" 2>/dev/null || true)
+            if [ -n "$conflict_rules" ]; then
+                has_conflict=true
+                conflict_msg="⚠️ CRITICAL: DIRECT ruleset contains ad-related domains!"
+                print_error "$conflict_msg"
+                print_error "Conflicting rules:"
+                echo "$conflict_rules" | head -5 | while read line; do print_error "  $line"; done
+            fi
+        fi
+        
+        # REJECT规则集不应该包含私有IP段（IP-CIDR规则）
+        if [ "$expected_policy" = "REJECT" ]; then
+            conflict_rules=$(grep -E "^IP-CIDR,(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|127\.)" "$all_rules" 2>/dev/null || true)
+            if [ -n "$conflict_rules" ]; then
+                has_conflict=true
+                conflict_msg="⚠️ CRITICAL: REJECT ruleset contains private IP ranges!"
+                print_error "$conflict_msg"
+                print_error "Conflicting rules:"
+                echo "$conflict_rules" | head -5 | while read line; do print_error "  $line"; done
+            fi
+        fi
+        
+        # LAN规则集不应该包含广告域名
+        if [[ "$RULESET_NAME" =~ ^LAN ]]; then
+            conflict_rules=$(grep -E "DOMAIN.*(doubleclick|googleads|adservice\.google)" "$all_rules" 2>/dev/null || true)
+            if [ -n "$conflict_rules" ]; then
+                has_conflict=true
+                conflict_msg="⚠️ CRITICAL: LAN ruleset contains ad-related domains!"
+                print_error "$conflict_msg"
+                print_error "Conflicting rules:"
+                echo "$conflict_rules" | head -5 | while read line; do print_error "  $line"; done
+            fi
+        fi
+        
+        if [ "$has_conflict" = true ]; then
+            echo "# ⚠️ POLICY CONFLICT DETECTED: $conflict_msg" >> "$final_output"
+            echo "#    Please check source files for policy confusion!" >> "$final_output"
+            echo "#" >> "$final_output"
+            print_error "Policy conflict detected! Check output file for details."
+            print_error "This indicates source files may have incorrect policy classification."
+        fi
+    fi
     
     # Output all rules
     output_rules_by_type "$all_rules" "" "$final_output"

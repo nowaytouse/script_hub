@@ -1,5 +1,12 @@
 # AdBlock - 广告拦截规则源
+# Policy Group: 🚫 广告拦截 (REJECT)
+# Purpose: Block advertisements and trackers
 # 更新: 2025-12-07
+#
+# ⚠️ 重要说明:
+#   本规则集应配置为 REJECT 策略
+#   用途: 拦截广告和追踪器
+#   配置示例: RULE-SET,AdBlock.list,REJECT
 
 # blackmatrix7 广告规则
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Advertising/Advertising.list
