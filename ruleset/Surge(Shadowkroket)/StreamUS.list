@@ -1,11 +1,35 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: StreamUS
-# Policy: PROXY
-# Node: US
-# Description: US streaming services
-# Rules: 152
-# Updated: 2025-12-07 14:43:44
+# Updated: 2025-12-07 10:16:14 UTC
+# Total Rules: 152
+# Generator: Ruleset Merger v2.4
+# Git Hash: 6099949
 # ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - Hulu.list (59 rules)
+#   - HBO.list (50 rules)
+#   - Peacock.list (2 rules)
+#   - Paramount.list (0 rules)
+#   - Discovery.list (0 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
+#   - Policy is determined by RULE-SET line in config file
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# 策略说明:
+#   - 规则集本身不包含策略标记
+#   - 策略由配置文件中的RULE-SET行决定
+#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+# [smart_cleanup.py] Deduplicated: 152 rules
 
 DOMAIN,athome.fandango.com
 DOMAIN,bcbolt446c5271-a.akamaihd.net

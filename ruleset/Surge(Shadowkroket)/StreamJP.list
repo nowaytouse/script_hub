@@ -1,11 +1,36 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: StreamJP
-# Policy: PROXY
-# Node: JP
-# Description: Japan streaming services
-# Rules: 124
-# Updated: 2025-12-07 14:43:43
+# Updated: 2025-12-07 10:16:09 UTC
+# Total Rules: 124
+# Generator: Ruleset Merger v2.4
+# Git Hash: 6099949
 # ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - AbemaTV.list (24 rules)
+#   - Niconico.list (10 rules)
+#   - TVer.list (7 rules)
+#   - U-NEXT.list (0 rules)
+#   - Hulu.list (59 rules)
+#   - DAZN.list (19 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
+#   - Policy is determined by RULE-SET line in config file
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# 策略说明:
+#   - 规则集本身不包含策略标记
+#   - 策略由配置文件中的RULE-SET行决定
+#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+# [smart_cleanup.py] Deduplicated: 124 rules
 
 DOMAIN,ds-linear-abematv.akamaized.net
 DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net

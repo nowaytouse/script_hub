@@ -57,7 +57,7 @@
         "tag": "quad9_dns",
         "type": "https",
         "server": "9.9.9.11",
-        "detour": "♻️ 自动选择",
+        "detour": "♻️ 自动入口 🧠",
         "tls": {
           "enabled": true,
           "min_version": "1.3",
@@ -73,7 +73,7 @@
         "tag": "cf_h3_1111",
         "type": "h3",
         "server": "1.1.1.1",
-        "detour": "♻️ 自动选择",
+        "detour": "♻️ 自动入口 🧠",
         "tls": {
           "enabled": true,
           "min_version": "1.3",
@@ -89,7 +89,7 @@
         "tag": "cf_h3_com",
         "type": "h3",
         "server": "1.1.1.1",
-        "detour": "♻️ 自动选择",
+        "detour": "♻️ 自动入口 🧠",
         "tls": {
           "enabled": true,
           "min_version": "1.3",
@@ -105,7 +105,7 @@
         "tag": "google_h3",
         "type": "h3",
         "server": "8.8.8.8",
-        "detour": "♻️ 自动选择",
+        "detour": "♻️ 自动入口 🧠",
         "tls": {
           "enabled": true,
           "min_version": "1.3",
@@ -121,7 +121,7 @@
         "tag": "adguard_h3",
         "type": "h3",
         "server": "94.140.14.14",
-        "detour": "♻️ 自动选择",
+        "detour": "♻️ 自动入口 🧠",
         "tls": {
           "enabled": true,
           "min_version": "1.3",
@@ -137,7 +137,7 @@
         "tag": "quad9_h3",
         "type": "h3",
         "server": "9.9.9.9",
-        "detour": "♻️ 自动选择",
+        "detour": "♻️ 自动入口 🧠",
         "tls": {
           "enabled": true,
           "min_version": "1.3",
@@ -307,8 +307,7 @@
       "tag": "🍎 Apple 🍏",
       "outbounds": [
         "🎯 全球直连",
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇺🇸 美国 🇺🇸"
       ],
       "default": "🎯 全球直连"
     },
@@ -324,11 +323,10 @@
       "type": "urltest",
       "tag": "♻️ 自动入口 🧠",
       "outbounds": [
-        "🇺🇸 美国",
-        "🇭🇰 香港",
-        "🇯🇵 JP -   针对💢",
-        "🇸🇬 新加坡",
-        "🇹🇼 台湾"
+        "🇺🇸 美国 🇺🇸",
+        "🇭🇰 香港 🇭🇰",
+        "🇯🇵 JP 🇯🇵",
+        "🇹🇼 台湾 🇹🇼"
       ],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "1m",
@@ -338,49 +336,44 @@
       "type": "selector",
       "tag": "📱 TikTok 🧠",
       "outbounds": [
-        "🇯🇵 JP -   针对💢",
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🇯🇵 JP -   针对💢"
+      "default": "🇯🇵 JP 🇯🇵"
     },
     {
       "type": "selector",
       "tag": "🐦 Twitter 🔵",
       "outbounds": [
-        "🇯🇵 JP -   针对💢",
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🇯🇵 JP -   针对💢"
+      "default": "🇯🇵 JP 🇯🇵"
     },
     {
       "type": "selector",
       "tag": "🔊  Spotify  🟢",
       "outbounds": [
-        "🇯🇵 JP -   针对💢",
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🇺🇸 美国"
+      "default": "🇺🇸 美国 🇺🇸"
     },
     {
       "type": "selector",
       "tag": "▶️  YouTube 🔴",
       "outbounds": [
         "♻️ 自动入口 🧠",
-        "🇯🇵 JP -   针对💢",
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🇺🇸 美国"
+      "default": "🇺🇸 美国 🇺🇸"
     },
     {
       "type": "selector",
       "tag": "🎮 游戏平台 💻",
       "outbounds": [
         "♻️ 自动入口 🧠",
-        "🛠️ 手动选择",
         "🎯 全球直连"
       ],
       "default": "🎯 全球直连"
@@ -390,29 +383,26 @@
       "tag": "📷 instgram ⛰️",
       "outbounds": [
         "♻️ 自动入口 🧠",
-        "🇯🇵 JP -   针对💢",
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🇺🇸 美国"
+      "default": "🇺🇸 美国 🇺🇸"
     },
     {
       "type": "selector",
       "tag": "🐟 漏网之鱼 🕸️",
       "outbounds": [
-        "🌐 全部节点 🌍",
-        "♻️ 自动选择",
-        "🛠️ 手动选择",
+        "🌍 海外通用 🌍",
+        "♻️ 自动入口 🧠",
         "🎯 全球直连"
       ],
-      "default": "♻️ 自动选择"
+      "default": "♻️ 自动入口 🧠"
     },
     {
       "type": "selector",
       "tag": "🌍 海外通用 🌍",
       "outbounds": [
-        "♻️ 自动入口 🧠",
-        "🛠️ 手动选择"
+        "♻️ 自动入口 🧠"
       ],
       "default": "♻️ 自动入口 🧠"
     },
@@ -420,20 +410,18 @@
       "type": "selector",
       "tag": "🇺🇸 西方 🇫🇷",
       "outbounds": [
-        "🇺🇸 美国",
-        "🛠️ 手动选择"
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🇺🇸 美国"
+      "default": "🇺🇸 美国 🇺🇸"
     },
     {
       "type": "selector",
       "tag": "🇭🇰 港澳台 🇲🇴",
       "outbounds": [
-        "🇭🇰 香港",
-        "🇹🇼 台湾",
-        "🛠️ 手动选择"
+        "🇭🇰 香港 🇭🇰",
+        "🇹🇼 台湾 🇹🇼"
       ],
-      "default": "🇭🇰 香港"
+      "default": "🇭🇰 香港 🇭🇰"
     },
     {
       "type": "urltest",
@@ -642,6 +630,16 @@
       "tolerance": 30
     },
     {
+      "type": "selector",
+      "tag": "Reddit",
+      "outbounds": [
+        "🇺🇸 美国 🇺🇸",
+        "🇺🇸美国专线🧱",
+        "🌍 海外通用 🌍"
+      ],
+      "default": "🇺🇸 美国 🇺🇸"
+    },
+    {
       "type": "urltest",
       "tag": "🤖AI平台🤖",
       "outbounds": [
@@ -672,7 +670,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -680,7 +678,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Merged_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -688,7 +686,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/BlockHttpDNS_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -696,7 +694,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AI_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -704,7 +702,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AIProcess_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -712,7 +710,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Telegram_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -720,7 +718,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/TikTok_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -728,7 +726,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Twitter_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -736,7 +734,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Instagram_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -744,7 +742,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Reddit_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -752,7 +750,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Discord_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -760,7 +758,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/SocialMedia_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -768,7 +766,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Netflix_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -776,7 +774,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Disney_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -784,7 +782,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/YouTube_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -792,7 +790,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Spotify_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -800,7 +798,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalMedia_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -808,7 +806,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bahamut_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -816,7 +814,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamEU_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -824,7 +822,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamHK_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -832,7 +830,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamJP_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -840,7 +838,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamKR_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -848,7 +846,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamTW_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -856,7 +854,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamUS_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -864,7 +862,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Apple_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -872,7 +870,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AppleNews_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -880,7 +878,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Google_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -888,7 +886,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GoogleCN_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -896,7 +894,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Microsoft_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -904,7 +902,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bing_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -912,7 +910,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GitHub_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -920,7 +918,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Gaming_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -928,7 +926,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GamingProcess_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -936,7 +934,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Steam_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -944,7 +942,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Epic_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -952,7 +950,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Speedtest_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -960,7 +958,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/PayPal_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -968,7 +966,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Binance_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -976,7 +974,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bilibili_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -984,7 +982,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaDirect_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -992,7 +990,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1000,7 +998,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1008,7 +1006,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/QQ_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1016,7 +1014,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/WeChat_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1024,7 +1022,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tencent_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1032,7 +1030,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/XiaoHongShu_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1040,7 +1038,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NetEaseMusic_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1048,7 +1046,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tesla_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1056,7 +1054,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/LAN_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1064,7 +1062,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/CDN_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1072,7 +1070,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DownloadProcess_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1080,7 +1078,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalProxy_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1088,7 +1086,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Fediverse_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1096,7 +1094,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1104,7 +1102,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Global_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1112,7 +1110,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_JP_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1120,7 +1118,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_US_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1128,7 +1126,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_West_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1136,7 +1134,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DirectProcess_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1144,7 +1142,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NSFW_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
@@ -1152,7 +1150,7 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/substore_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
+        "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       }
     ],
@@ -1800,7 +1798,7 @@
       },
       {
         "rule_set": "surge-adblock-merged",
-        "outbound": "REJECT"
+        "outbound": "❌ 拒绝屏蔽"
       },
       {
         "rule_set": "surge-manual_us",

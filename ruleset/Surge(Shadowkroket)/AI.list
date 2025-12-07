@@ -1,9 +1,9 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: AI
-# Updated: 2025-12-07 07:54:26 UTC
+# Updated: 2025-12-07 10:14:49 UTC
 # Total Rules: 76
 # Generator: Ruleset Merger v2.4
-# Git Hash: 29a2ed1
+# Git Hash: 6099949
 # ═══════════════════════════════════════════════════════════════
 #
 # Sources:
@@ -33,6 +33,42 @@
 # ═══════════════════════════════════════════════════════════════
 
 # ========== DOMAIN-SUFFIX ==========
+# [smart_cleanup.py] Deduplicated: 76 rules
+
+DOMAIN,ai.google.dev
+DOMAIN,alkalimakersuite-pa.clients6.google.com
+DOMAIN,api.msn.com
+DOMAIN,api.statsig.com
+DOMAIN,assets.msn.com
+DOMAIN,browser-intake-datadoghq.com
+DOMAIN,cdn.usefathom.com
+DOMAIN,chat.openai.com.cdn.cloudflare.net
+DOMAIN,copilot.microsoft.com
+DOMAIN,gateway.bingviz.microsoft.net
+DOMAIN,gateway.bingviz.microsoftapp.net
+DOMAIN,generativelanguage.googleapis.com
+DOMAIN,in.appcenter.ms
+DOMAIN,location.microsoft.com
+DOMAIN,makersuite.google.com
+DOMAIN,o33249.ingest.sentry.io
+DOMAIN,odc.officeapps.live.com
+DOMAIN,openai-api.arkoselabs.com
+DOMAIN,openaiapi-site.azureedge.net
+DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
+DOMAIN,openaicom.imgix.net
+DOMAIN,openaicomproductionae4b.blob.core.windows.net
+DOMAIN,production-openaicom-storage.azureedge.net
+DOMAIN,r.bing.com
+DOMAIN,self.events.data.microsoft.com
+DOMAIN,services.bingapis.com
+DOMAIN,static.cloudflareinsights.com
+DOMAIN,sydney.bing.com
+DOMAIN,www.bing.com
+DOMAIN-KEYWORD,colab
+DOMAIN-KEYWORD,developerprofiles
+DOMAIN-KEYWORD,generativelanguage
+DOMAIN-KEYWORD,openai
+DOMAIN-KEYWORD,openaicom-api
 DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,algolia.net
 DOMAIN-SUFFIX,anthropic.com
@@ -73,47 +109,5 @@ DOMAIN-SUFFIX,sentry.io
 DOMAIN-SUFFIX,sora.com
 DOMAIN-SUFFIX,stripe.com
 DOMAIN-SUFFIX,turn.livekit.cloud
-
-# ========== DOMAIN-KEYWORD ==========
-DOMAIN-KEYWORD,colab
-DOMAIN-KEYWORD,developerprofiles
-DOMAIN-KEYWORD,generativelanguage
-DOMAIN-KEYWORD,openai
-DOMAIN-KEYWORD,openaicom-api
-
-# ========== DOMAIN ==========
-DOMAIN,ai.google.dev
-DOMAIN,alkalimakersuite-pa.clients6.google.com
-DOMAIN,api.msn.com
-DOMAIN,api.statsig.com
-DOMAIN,assets.msn.com
-DOMAIN,browser-intake-datadoghq.com
-DOMAIN,cdn.usefathom.com
-DOMAIN,chat.openai.com.cdn.cloudflare.net
-DOMAIN,copilot.microsoft.com
-DOMAIN,gateway.bingviz.microsoft.net
-DOMAIN,gateway.bingviz.microsoftapp.net
-DOMAIN,generativelanguage.googleapis.com
-DOMAIN,in.appcenter.ms
-DOMAIN,location.microsoft.com
-DOMAIN,makersuite.google.com
-DOMAIN,o33249.ingest.sentry.io
-DOMAIN,odc.officeapps.live.com
-DOMAIN,openai-api.arkoselabs.com
-DOMAIN,openaiapi-site.azureedge.net
-DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
-DOMAIN,openaicom.imgix.net
-DOMAIN,openaicomproductionae4b.blob.core.windows.net
-DOMAIN,production-openaicom-storage.azureedge.net
-DOMAIN,r.bing.com
-DOMAIN,self.events.data.microsoft.com
-DOMAIN,services.bingapis.com
-DOMAIN,static.cloudflareinsights.com
-DOMAIN,sydney.bing.com
-DOMAIN,www.bing.com
-
-# ========== IP-CIDR ==========
 IP-CIDR,24.199.123.28/32,no-resolve
 IP-CIDR,64.23.132.171/32,no-resolve
-
-# ========== END ==========

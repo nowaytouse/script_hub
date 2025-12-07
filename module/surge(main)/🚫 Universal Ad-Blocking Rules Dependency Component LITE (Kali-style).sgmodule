@@ -3,7 +3,7 @@
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
@@ -90,6 +90,7 @@ DEST-PORT,70,REJECT-DROP
 DEST-PORT,7000,REJECT-DROP
 DEST-PORT,7001,REJECT-DROP
 DEST-PORT,79,REJECT-DROP
+DEST-PORT,8076,REJECT-DROP
 DEST-PORT,8086,REJECT-DROP
 DEST-PORT,8500,REJECT-DROP
 DEST-PORT,8600,REJECT-DROP
@@ -99,3 +100,4 @@ DEST-PORT,9300,REJECT-DROP
 DEST-PORT,9898,REJECT-DROP
 DOMAIN-KEYWORD,96110,REJECT-DROP,extended-matching
 DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
+IN-PORT,8076,REJECT-DROP
