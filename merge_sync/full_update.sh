@@ -89,10 +89,12 @@ while [[ $# -gt 0 ]]; do
         --quick) SKIP_SYNC=true; SKIP_MODULE=true; SKIP_GIT=true; shift ;;
         --full) WITH_GIT=true; shift ;;
         --unattended|--ci|--cron)
-            # 无人值守模式: 启用Git, 跳过iCloud模块同步, 静默输出, 自动确认
+            # 无人值守模式: 启用Git, 跳过iCloud模块同步, 跳过核心更新, 静默输出, 自动确认
             UNATTENDED=true
             WITH_GIT=true
+            WITH_CORE=false   # CI环境不更新核心
             SKIP_MODULE=true  # CI环境无iCloud
+            SKIP_PROFILE=true # CI环境跳过Surge配置同步
             QUIET=true
             AUTO_YES=true
             shift ;;
@@ -119,7 +121,7 @@ fi
 
 # 无人值守模式提示
 if [ "$UNATTENDED" = true ] && [ "$QUIET" = false ]; then
-    log_info "无人值守模式已启用 (Git: ON, iCloud: OFF, Auto-confirm: ON)"
+    log_info "无人值守模式已启用 (Git: ON, Core: OFF, iCloud: OFF, Profile: OFF, Auto-confirm: ON)"
 fi
 
 # 步骤计数
