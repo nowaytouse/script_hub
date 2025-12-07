@@ -26,7 +26,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 配置文件路径
 SURGE_ICLOUD_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
-TEMPLATE_FILE="${PROJECT_ROOT}/conf/surge_rules_complete.conf"
+TEMPLATE_FILE="${PROJECT_ROOT}/ruleset/Sources/surge_rules_complete.conf"
 TARGET_FILE="${SURGE_ICLOUD_DIR}/NyaMiiKo Pro Max plus👑_fixed.conf"
 
 # 标记

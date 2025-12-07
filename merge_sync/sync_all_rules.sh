@@ -36,7 +36,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCES_DIR="$PROJECT_ROOT/ruleset/Sources"
 SGMODULE_SOURCES="$SOURCES_DIR/AdBlock_sgmodule_sources.txt"
 SURGE_MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
-ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
+ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
 CHINA_DIRECT_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/ChinaDirect.list"
 
 # 模式配置
@@ -77,7 +77,7 @@ show_help() {
 
 功能:
     1. 汲取远程sgmodule规则（REJECT + DIRECT）
-       - REJECT规则 → 合并到 AdBlock_Merged.list
+       - REJECT规则 → 合并到 AdBlock.list
        - DIRECT规则 → 合并到 ChinaDirect.list
     2. 吐出精简模块（删除已吸取规则后的剩余内容）
        - 保留 URL Rewrite、MITM、Script 等
@@ -339,9 +339,9 @@ step_fetch_sgmodules() {
         local unique_reject=$(sort -u "$reject_rules_file" | wc -l | tr -d ' ')
         log_success "REJECT规则: $unique_reject 条（去重后）"
         
-        # 合并到AdBlock_Merged.list
+        # 合并到AdBlock.list
         if [[ -f "$ADBLOCK_MERGED_LIST" ]]; then
-            log_info "合并REJECT规则到 AdBlock_Merged.list..."
+            log_info "合并REJECT规则到 AdBlock.list..."
             local before_count=$(grep -cv "^#\|^$" "$ADBLOCK_MERGED_LIST" 2>/dev/null || echo "0")
             
             # 追加新规则并去重
@@ -361,7 +361,7 @@ step_fetch_sgmodules() {
             } > "$ADBLOCK_MERGED_LIST.new"
             mv "$ADBLOCK_MERGED_LIST.new" "$ADBLOCK_MERGED_LIST"
             
-            log_success "  新增 $added 条规则到 AdBlock_Merged.list"
+            log_success "  新增 $added 条规则到 AdBlock.list"
         fi
         
         cp "$reject_rules_file" "$PROJECT_ROOT/.temp_sgmodule_reject_rules.txt"
@@ -502,7 +502,7 @@ step_git_commit() {
 show_statistics() {
     log_step "✓" "完成统计"
     
-    local adblock_list="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
+    local adblock_list="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
     local direct_list="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/ChinaDirect.list"
     local srs_dir="$PROJECT_ROOT/ruleset/SingBox"
     
@@ -510,7 +510,7 @@ show_statistics() {
     
     if [[ -f "$adblock_list" ]]; then
         local adblock_count=$(grep -cv "^#\|^$" "$adblock_list" 2>/dev/null || echo "0")
-        echo "  • AdBlock_Merged.list: $adblock_count 条规则"
+        echo "  • AdBlock.list: $adblock_count 条规则"
     fi
     
     if [[ -f "$direct_list" ]]; then

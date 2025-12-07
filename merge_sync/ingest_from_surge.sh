@@ -5,6 +5,12 @@
 #   Extracts "New" rules from Surge profile (above specific marker),
 #   classifies them by policy, appends to local rulesets,
 #   and removes them from the profile.
+#
+# 🔥 IMPORTANT: Firewall Port Rules Exclusion
+#   - Rules with IN-PORT/DEST-PORT/SRC-PORT are AUTOMATICALLY SKIPPED
+#   - These rules should stay in the Firewall module (🔥 Firewall Port Blocker 🛡️🚫.sgmodule)
+#   - Firewall rules are system-level security policies, NOT content filtering
+#   - They should NEVER be merged into AdBlock or other rulesets
 # ============================================
 
 set -e
@@ -63,6 +69,13 @@ get_target_file() {
     
     # Debug
     # echo "DEBUG: Analyzing '$rule' | Policy: '$policy'" >&2
+    
+    # 🔥 CRITICAL: Exclude Firewall Port Rules (Should stay in module)
+    # These rules should NEVER be ingested into rulesets
+    if [[ "$rule" =~ ^(IN-PORT|DEST-PORT|SRC-PORT) ]]; then
+        echo "SKIP_FIREWALL_RULE"
+        return
+    fi
     
     # 1. Check Policy
     if [[ "$policy" == "REJECT" || "$policy" == "REJECT-DROP" ]]; then
@@ -160,10 +173,7 @@ get_target_file() {
             echo "$FILE_PROCESS_DIRECT"
             return
         fi
-        if [[ "$rule" =~ ^(IN-PORT|DEST-PORT|SRC-PORT) ]]; then
-            echo "$FILE_FIREWALL_PORTS"
-            return
-        fi
+        # 🔥 Port rules already excluded at top of function
         echo "$FILE_DIRECT"
     elif [[ "$policy" == "Proxy" || "$policy" == *"专线"* || "$policy" == *"节点"* ]]; then
         echo "$FILE_PROXY"
@@ -284,12 +294,22 @@ echo "---------- PREVIEW: RULES TO INGEST ----------"
 printf "%-60s | %-20s | %-20s\n" "RULE" "POLICY" "TARGET LIST"
 echo "----------------------------------------------------------------------------------------------------------------"
 
+skipped_firewall_count=0
 for rule in "${reversed_buffer[@]}"; do
     policy=$(echo "$rule" | awk -F, '{print $3}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     # If awk fails or format differs (e.g. no commas), defaults empty
     [ -z "$policy" ] && policy="UNKNOWN"
     
     target_file=$(get_target_file "$rule" "$policy")
+    
+    # 🔥 Skip firewall rules
+    if [[ "$target_file" == "SKIP_FIREWALL_RULE" ]]; then
+        display_rule=$(echo "$rule" | cut -c1-60)
+        printf "%-60s | %-20s | ${RED}%-20s${NC}\n" "$display_rule" "$policy" "⚠️ SKIPPED (Firewall)"
+        skipped_firewall_count=$((skipped_firewall_count + 1))
+        continue
+    fi
+    
     target_name=$(basename "$target_file")
     
     # Simplify rule display
@@ -298,6 +318,9 @@ for rule in "${reversed_buffer[@]}"; do
     printf "%-60s | %-20s | ${CYAN}%-20s${NC}\n" "$display_rule" "$policy" "$target_name"
 done
 echo "----------------------------------------------------------------------------------------------------------------"
+if [ $skipped_firewall_count -gt 0 ]; then
+    print_warn "Skipped $skipped_firewall_count firewall port rules (should stay in module)"
+fi
 echo ""
 
 # Ask for confirmation if running interactively, or just proceed if trusted?
@@ -346,9 +369,19 @@ if [ "$EXECUTE" = true ]; then
     fi
 
     # Ingest
+    ingested_count=0
+    skipped_count=0
     for rule in "${reversed_buffer[@]}"; do
         # Detect Policy
         policy=$(echo "$rule" | awk -F, '{print $3}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        
+        # 🔥 Skip firewall rules
+        target_file=$(get_target_file "$rule" "$policy")
+        if [[ "$target_file" == "SKIP_FIREWALL_RULE" ]]; then
+            print_warn "Skipped firewall rule: $rule"
+            skipped_count=$((skipped_count + 1))
+            continue
+        fi
         
         # Strip Policy from Content (User Request)
         # Format: TYPE,VALUE,POLICY,OPTIONS...
@@ -383,9 +416,6 @@ if [ "$EXECUTE" = true ]; then
         # Use awk to print fields except the policy column?
         # `awk -F, ...`
         
-        # If we just want to remove ",POLICY", we can escape it for sed.
-        target_file=$(get_target_file "$rule" "$policy")
-        
         # DEBUG
         echo "[DEBUG] Rule: $rule" >&2
         echo "[DEBUG] Policy: $policy" >&2
@@ -399,7 +429,15 @@ if [ "$EXECUTE" = true ]; then
 
         echo "$clean_content" >> "$target_file"
         print_info "Appended '$clean_content' to $(basename "$target_file")"
+        ingested_count=$((ingested_count + 1))
     done
+    
+    # Summary
+    echo ""
+    print_success "Ingestion complete: $ingested_count rules processed"
+    if [ $skipped_count -gt 0 ]; then
+        print_warn "Skipped $skipped_count firewall port rules (kept in module)"
+    fi
 
     # Remove lines from Profile
     # We extracted lines from the bottom up.

@@ -12,7 +12,7 @@ SURGE_MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
 SHADOWROCKET_MODULE_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_merge"
 TARGET_MODULE="$SURGE_MODULE_DIR/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
-ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
+ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
 
 # TEMPORARY FILES
 TEMP_RULES_REJECT="$TEMP_DIR/rules_reject.tmp"
@@ -80,7 +80,7 @@ generate_module() {
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
@@ -121,7 +121,7 @@ export_merge_list() {
     mv "$ADBLOCK_MERGED_LIST.tmp" "$ADBLOCK_MERGED_LIST"
     
     local count=$(wc -l < "$ADBLOCK_MERGED_LIST" | tr -d ' ')
-    local header="# Ruleset: AdBlock_Merged\n# Updated: $(date)\n# Total Rules: $count\n# ═══════════════════════════════════════════════════════════════\n"
+    local header="# Ruleset: AdBlock\n# Updated: $(date)\n# Total Rules: $count\n# ═══════════════════════════════════════════════════════════════\n"
     echo -e "$header" | cat - "$ADBLOCK_MERGED_LIST" > "$ADBLOCK_MERGED_LIST.tmp" && mv "$ADBLOCK_MERGED_LIST.tmp" "$ADBLOCK_MERGED_LIST"
 }
 

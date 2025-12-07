@@ -1,29 +1,30 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: DNS_China_360
-# Updated: 2025-12-07 04:27:09 UTC
+# Updated: 2025-12-07 06:43:30 UTC
 # Total Rules: 27
 # Generator: Ruleset Merger v2.4
-# Git Hash: 5be0b4a
+# Git Hash: 29a2ed1
 # ═══════════════════════════════════════════════════════════════
 #
 # Sources:
-#   -  [REJECT] (27 rules)
+#   - qihoo360.conf (27 rules)
 #
 # Usage:
 #   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
+#   - Policy is determined by RULE-SET line in config file
 #   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
 #
 # ═══════════════════════════════════════════════════════════════
 
-# Policy Distribution:
-#   - REJECT:         27 rules
-#   - REJECT-DROP:    0 rules
-#   - REJECT-NO-DROP: 0 rules
+# 策略说明:
+#   - 规则集本身不包含策略标记
+#   - 策略由配置文件中的RULE-SET行决定
+#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
 #
 # ═══════════════════════════════════════════════════════════════
 
-# ========== DOMAIN-SUFFIX (REJECT) ==========
+# ========== DOMAIN-SUFFIX ==========
 DOMAIN-SUFFIX,360.cn
 DOMAIN-SUFFIX,360.com
 DOMAIN-SUFFIX,360.net
@@ -51,7 +52,7 @@ DOMAIN-SUFFIX,yunpan.cn
 DOMAIN-SUFFIX,yunpan.com
 DOMAIN-SUFFIX,yunpan.com.cn
 
-# ========== DOMAIN (REJECT) ==========
+# ========== DOMAIN ==========
 DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 
 # ========== END ==========

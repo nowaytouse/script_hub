@@ -304,6 +304,19 @@ if [ -f "${SCRIPT_DIR}/cleanup_empty_rulesets.sh" ]; then
 else
     log_warning "跳过: cleanup_empty_rulesets.sh 不存在"
 fi
+
+# 🔥 Sync port rules to firewall module
+if [ -f "${SCRIPT_DIR}/sync_ports_to_firewall_module.sh" ]; then
+    log_info "Syncing port rules to firewall module..."
+    if [ "$VERBOSE" = true ]; then
+        "${SCRIPT_DIR}/sync_ports_to_firewall_module.sh" --execute --no-backup
+    else
+        "${SCRIPT_DIR}/sync_ports_to_firewall_module.sh" --execute --no-backup 2>&1 | grep -E "^\[INFO\]|^\[OK\]|^\[WARN\]|New Rules Added:|Duplicates Skipped:" || true
+    fi
+    log_success "Port rules sync complete"
+else
+    log_warning "跳过: sync_ports_to_firewall_module.sh 不存在"
+fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
@@ -486,12 +499,12 @@ else
     echo -e "${YELLOW}  ⚠️ 缺失 $MISSING_SRS 个SRS文件${NC}"
 fi
 
-# 显示AdBlock_Merged规则数
-if [ -f "${PROJECT_ROOT}/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list" ]; then
-    ADBLOCK_COUNT=$(grep -v "^#" "${PROJECT_ROOT}/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list" | grep -v "^$" | wc -l | tr -d ' ')
+# 显示AdBlock规则数
+if [ -f "${PROJECT_ROOT}/ruleset/Surge(Shadowkroket)/AdBlock.list" ]; then
+    ADBLOCK_COUNT=$(grep -v "^#" "${PROJECT_ROOT}/ruleset/Surge(Shadowkroket)/AdBlock.list" | grep -v "^$" | wc -l | tr -d ' ')
     echo ""
     echo -e "${CYAN}=== 广告拦截规则 ===${NC}"
-    echo -e "${GREEN}  AdBlock_Merged: $ADBLOCK_COUNT 条规则${NC}"
+    echo -e "${GREEN}  AdBlock: $ADBLOCK_COUNT 条规则${NC}"
 fi
 
 echo ""

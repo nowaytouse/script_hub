@@ -4,7 +4,7 @@
 # 一键同步所有规则集 (One-Click Ruleset Sync)
 # ═══════════════════════════════════════════════════════════════════════════════
 # 功能：
-# 1. 合并Surge广告拦截模块到AdBlock_Merged.list
+# 1. 合并Surge广告拦截模块到AdBlock.list
 # 2. 转换所有Surge规则到SingBox格式
 # 3. 显示同步统计
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -67,8 +67,8 @@ fi
 # Step 3: 显示统计
 log_section "同步统计"
 
-SURGE_ADBLOCK="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
-SINGBOX_ADBLOCK="$PROJECT_ROOT/ruleset/SingBox/AdBlock_Merged_Singbox.srs"
+SURGE_ADBLOCK="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
+SINGBOX_ADBLOCK="$PROJECT_ROOT/ruleset/SingBox/AdBlock_Singbox.srs"
 
 if [[ -f "$SURGE_ADBLOCK" ]]; then
     SURGE_COUNT=$(grep -v "^#" "$SURGE_ADBLOCK" | grep -v "^$" | wc -l | tr -d ' ')

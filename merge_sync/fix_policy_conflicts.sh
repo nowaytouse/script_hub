@@ -57,16 +57,16 @@ fi
 
 echo ""
 
-# 2. 更新AdBlock_Merged.list（如果存在）
-echo -e "${BLUE}━━━ 2. 同步AdBlock_Merged.list ━━━${NC}"
+# 2. 更新AdBlock.list（如果存在）
+echo -e "${BLUE}━━━ 2. 同步AdBlock.list ━━━${NC}"
 
-if [ -f "$RULESET_DIR/AdBlock_Merged.list" ]; then
-    # AdBlock_Merged应该包含所有AdBlock规则
+if [ -f "$RULESET_DIR/AdBlock.list" ]; then
+    # AdBlock应该包含所有AdBlock规则
     # 这里只添加注释，实际合并由merge_adblock_modules.sh处理
-    echo -e "   ${YELLOW}ℹ️  AdBlock_Merged.list需要重新生成${NC}"
+    echo -e "   ${YELLOW}ℹ️  AdBlock.list需要重新生成${NC}"
     echo -e "   ${YELLOW}   运行: bash merge_sync/merge_adblock_modules.sh${NC}"
 else
-    echo -e "   ${GREEN}✓ AdBlock_Merged.list不存在，跳过${NC}"
+    echo -e "   ${GREEN}✓ AdBlock.list不存在，跳过${NC}"
 fi
 
 echo ""

@@ -178,7 +178,7 @@ ADBLOCK_SOURCES=(
     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Privacy/Privacy.list"
     "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Hijacking/Hijacking.list"
 )
-merge_to_target "$RULESET_DIR/AdBlock_Merged.list" "${ADBLOCK_SOURCES[@]}"
+merge_to_target "$RULESET_DIR/AdBlock.list" "${ADBLOCK_SOURCES[@]}"
 
 # ============================================
 # 8. 新增: SocialMedia - 社交媒体

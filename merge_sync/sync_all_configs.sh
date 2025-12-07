@@ -68,7 +68,7 @@ rule_sets = [
     {"tag": "surge-adblock", "type": "remote", "format": "binary", 
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Singbox.srs"},
     {"tag": "surge-adblock-merged", "type": "remote", "format": "binary",
-     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Merged_Singbox.srs"},
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Singbox.srs"},
     {"tag": "surge-blockhttpdns", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/BlockHttpDNS_Singbox.srs"},
     
@@ -159,6 +159,8 @@ rule_sets = [
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bilibili_Singbox.srs"},
     {"tag": "surge-chinadirect", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaDirect_Singbox.srs"},
+    {"tag": "cnip", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs"},
     {"tag": "surge-chinaip", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs"},
     {"tag": "surge-qq", "type": "remote", "format": "binary",

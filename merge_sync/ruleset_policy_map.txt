@@ -4,8 +4,10 @@
 # Node: Any, US, JP, HK, TW, SG, EU, KR
 
 # ========== Ad Blocking (REJECT) ==========
-AdBlock|REJECT||Ad blocking, most comprehensive ruleset
-NSFW|REJECT||Adult content blocking (812+ domains)
+AdBlock|REJECT||Ad blocking, most comprehensive ruleset (235k+ rules)
+
+# ========== Adult Content (PROXY-JP recommended) ==========
+NSFW|PROXY|JP|Adult content (726+ domains, recommend JP node)
 
 # ========== Local Direct (DIRECT) ==========
 LAN|DIRECT||Local network addresses
@@ -82,7 +84,7 @@ AIProcess|PROXY|Any|AI related processes
 GamingProcess|PROXY|Any|Gaming related processes
 
 # ========== Manual Rules ==========
-Manual|PROXY|Any|Manual proxy rules
+Manual|DIRECT||Manual direct connection rules
 Manual_Global|PROXY|Any|Manual global proxy
 Manual_JP|PROXY|JP|Manual Japan node
 Manual_US|PROXY|US|Manual US node
@@ -91,8 +93,10 @@ Manual_West|PROXY|EU|Manual Europe node
 # ========== Other ==========
 substore|PROXY|Any|Sub-Store subscription converter
 
+# ========== China Direct (DNS防泄漏) ==========
+ChinaDirect|DIRECT||China mainland domains for DNS leak prevention (117k+ rules)
+
 # ========== Deleted (Empty/Deprecated) ==========
-# BlockHttpDNS - deleted, use other methods for HTTP DNS blocking
-# ChinaDirect - deleted, covered by other rulesets
+# BlockHttpDNS - deleted, merged into AdBlock.list
 # ChinaIP - deleted, use GEOIP,CN,DIRECT instead
-# FirewallPorts - deleted, port rules should be in config directly
+# FirewallPorts - deleted, use module: 🔥 Firewall Port Blocker 🛡️🚫.sgmodule

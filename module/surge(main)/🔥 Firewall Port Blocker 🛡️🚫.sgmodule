@@ -188,3 +188,9 @@ DEST-PORT,6889,REJECT-DROP
 # 6. Database ports should NEVER be exposed to internet anyway
 # 7. Use VPN/SSH tunnels for remote admin instead of direct exposure
 
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 8: Auto-synced from Surge Config (2025-12-07)
+# ═══════════════════════════════════════════════════════════════
+IN-PORT,8076,REJECT-DROP
+DEST-PORT,8076,REJECT-DROP

@@ -2,12 +2,12 @@
 # ============================================
 # Script: Convert Merged Ruleset to Surge Module Format
 # Version: 1.0
-# Description: Convert AdBlock_Merged.list to module-embeddable format
+# Description: Convert AdBlock.list to module-embeddable format
 # ============================================
 
 set -e
 
-INPUT_FILE="AdBlock_Merged.list"
+INPUT_FILE="AdBlock.list"
 OUTPUT_FILE="AdBlock_Module_Rules.txt"
 
 echo "Converting $INPUT_FILE to module format..."
