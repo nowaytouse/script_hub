@@ -357,26 +357,28 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# Step 7: Module sync to iCloud
+# Step 7: Module info (GitHub URLs - No iCloud sync needed)
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$SKIP_MODULE" = false ]; then
-    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Module sync to iCloud (Surge + Shadowrocket)...${NC}"
-    # Check private script first, then public
-    SYNC_MODULE_SCRIPT="${PRIVATE_DIR}/sync_modules_to_icloud.sh"
-    [ ! -f "$SYNC_MODULE_SCRIPT" ] && SYNC_MODULE_SCRIPT="${SCRIPT_DIR}/sync_modules_to_icloud.sh"
-    if [ -f "$SYNC_MODULE_SCRIPT" ]; then
-        if [ "$VERBOSE" = true ]; then
-            "$SYNC_MODULE_SCRIPT" --all
-        else
-            "$SYNC_MODULE_SCRIPT" --all 2>&1 | grep -E "^\[OK\]|^\[INFO\]|^\[WARN\]|Surge:|Shadowrocket:|modules" || true
-        fi
-        log_success "Module sync complete"
-    else
-        log_warning "Skip: sync_modules_to_icloud.sh not found"
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Module info (GitHub URLs)...${NC}"
+    log_info "Modules are hosted on GitHub and can be referenced directly"
+    log_info "See module/README.md for usage instructions"
+    
+    # Count modules
+    MODULE_COUNT=$(find "$PROJECT_ROOT/module/surge(main)" -name "*.sgmodule" -type f 2>/dev/null | wc -l | tr -d ' ')
+    log_success "Available modules: $MODULE_COUNT"
+    
+    if [ "$VERBOSE" = true ]; then
+        echo ""
+        log_info "Module list:"
+        find "$PROJECT_ROOT/module/surge(main)" -name "*.sgmodule" -type f -exec basename {} \; | sed 's/^/  - /'
+        echo ""
+        log_info "Use GitHub raw URLs in your Surge/Shadowrocket config:"
+        echo "  https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/<module-name>"
     fi
 else
-    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Skip module sync${NC}"
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Skip module info${NC}"
 fi
 echo ""
 

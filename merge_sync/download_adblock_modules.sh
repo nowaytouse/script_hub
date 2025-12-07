@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SOURCES_FILE="$PROJECT_ROOT/ruleset/Sources/Links/AdBlock_sources.txt"
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_download"
-CACHE_DIR="$PROJECT_ROOT/.cache/adblock_modules"
+MODULE_DIR="$PROJECT_ROOT/module/adblock_external"
 ADBLOCK_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
 
 # Colors
@@ -25,7 +25,7 @@ log_error() { echo -e "${RED}[✗]${NC} $1"; }
 
 # Init
 rm -rf "$TEMP_DIR"
-mkdir -p "$TEMP_DIR" "$CACHE_DIR"
+mkdir -p "$TEMP_DIR" "$MODULE_DIR"
 
 log_info "Downloading AdBlock modules..."
 
@@ -48,7 +48,7 @@ while IFS= read -r url; do
     
     # Extract filename from URL
     filename=$(basename "$url")
-    cache_file="$CACHE_DIR/$filename"
+    module_file="$MODULE_DIR/$filename"
     temp_file="$TEMP_DIR/$filename"
     
     log_info "Downloading: $filename"
@@ -58,15 +58,15 @@ while IFS= read -r url; do
         # Check if file is valid (not empty, not HTML error page)
         if [ -s "$temp_file" ] && ! grep -q "<!DOCTYPE html>" "$temp_file" 2>/dev/null; then
             # Check if file changed
-            if [ -f "$cache_file" ]; then
-                if ! diff -q "$temp_file" "$cache_file" >/dev/null 2>&1; then
-                    cp "$temp_file" "$cache_file"
+            if [ -f "$module_file" ]; then
+                if ! diff -q "$temp_file" "$module_file" >/dev/null 2>&1; then
+                    cp "$temp_file" "$module_file"
                     log_success "Updated: $filename"
                 else
                     log_info "No change: $filename"
                 fi
             else
-                cp "$temp_file" "$cache_file"
+                cp "$temp_file" "$module_file"
                 log_success "Downloaded: $filename"
             fi
             downloaded=$((downloaded + 1))
@@ -93,7 +93,7 @@ log_info "Extracting rules from modules..."
 ALL_RULES="$TEMP_DIR/all_module_rules.tmp"
 touch "$ALL_RULES"
 
-for module in "$CACHE_DIR"/*.sgmodule "$CACHE_DIR"/*.module; do
+for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     [ ! -f "$module" ] && continue
     
     log_info "Processing: $(basename "$module")"
