@@ -91,6 +91,8 @@ Manual_West|PROXY|EU|Manual Europe node
 # ========== Other ==========
 substore|PROXY|Any|Sub-Store subscription converter
 
-# ========== Empty/Deprecated ==========
-BlockHttpDNS|REJECT||HTTP DNS blocking (empty, use other methods)
-FirewallPorts|REJECT||Dangerous port blocking (empty, use config directly)
+# ========== Deleted (Empty/Deprecated) ==========
+# BlockHttpDNS - deleted, use other methods for HTTP DNS blocking
+# ChinaDirect - deleted, covered by other rulesets
+# ChinaIP - deleted, use GEOIP,CN,DIRECT instead
+# FirewallPorts - deleted, port rules should be in config directly

@@ -291,6 +291,19 @@ if [ -f "${SCRIPT_DIR}/update_ruleset_headers.sh" ]; then
 else
     log_warning "跳过: update_ruleset_headers.sh 不存在"
 fi
+
+# Cleanup empty/deprecated rulesets
+if [ -f "${SCRIPT_DIR}/cleanup_empty_rulesets.sh" ]; then
+    log_info "Cleaning up empty/deprecated rulesets..."
+    if [ "$VERBOSE" = true ]; then
+        "${SCRIPT_DIR}/cleanup_empty_rulesets.sh"
+    else
+        "${SCRIPT_DIR}/cleanup_empty_rulesets.sh" 2>&1 | grep -E "^\[DELETE\]|^\[ERROR\]|Kept:|Deleted:|Errors:" || true
+    fi
+    log_success "Empty ruleset cleanup complete"
+else
+    log_warning "跳过: cleanup_empty_rulesets.sh 不存在"
+fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
