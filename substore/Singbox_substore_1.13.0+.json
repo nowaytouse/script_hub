@@ -1125,41 +1125,23 @@
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": [
-          "surge-paypal"
-        ],
+        "rule_set": "surge-paypal",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": [
-          "surge-telegram"
-        ],
+        "rule_set": "surge-telegram",
         "outbound": "☎️telegram✈️"
       },
       {
-        "rule_set": [
-          "surge-tiktok"
-        ],
+        "rule_set": "surge-tiktok",
         "outbound": "📱 TikTok 🧠"
       },
       {
-        "rule_set": [
-          "surge-ai"
-        ],
+        "rule_set": "surge-ai",
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": [
-          "surge-netflix",
-          "surge-globalmedia",
-          "surge-disney"
-        ],
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "rule_set": [
-          "surge-apple"
-        ],
+        "rule_set": "surge-apple",
         "outbound": "🍎 Apple 🍏"
       },
       {
@@ -1196,65 +1178,31 @@
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
-        "rule_set": [
-          "surge-microsoft"
-        ],
+        "rule_set": "surge-microsoft",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": [
-          "surge-bing"
-        ],
+        "rule_set": "surge-bing",
         "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": [
-          "surge-discord"
-        ],
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": [
-          "surge-instagram"
-        ],
-        "outbound": "🌐 社交媒体 📱"
-      },
-      {
-        "rule_set": [
-          "surge-twitter"
-        ],
-        "outbound": "🌐 社交媒体 📱"
-      },
-      {
-        "rule_set": "surge-reddit",
-        "outbound": "🌍 海外通用 🌍"
       },
       {
         "rule_set": "surge-socialmedia",
         "outbound": "🌐 社交媒体 📱"
       },
       {
-        "rule_set": [
-          "surge-telegram"
-        ],
+        "rule_set": "surge-telegram",
         "outbound": "☎️telegram✈️"
       },
       {
-        "rule_set": [
-          "surge-github"
-        ],
+        "rule_set": "surge-github",
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": [
-          "surge-spotify"
-        ],
+        "rule_set": "surge-spotify",
         "outbound": "🔊  Spotify  🟢"
       },
       {
-        "rule_set": [
-          "surge-steam"
-        ],
+        "rule_set": "surge-steam",
         "outbound": "🎮 游戏平台 💻"
       },
       {
@@ -1273,16 +1221,8 @@
         "action": "resolve"
       },
       {
-        "rule_set": [
-          "surge-telegram"
-        ],
+        "rule_set": "surge-telegram",
         "outbound": "☎️telegram✈️"
-      },
-      {
-        "rule_set": [
-          "surge-netflix"
-        ],
-        "outbound": "🌍 海外通用 🌍"
       },
       {
         "rule_set": "cnip",
@@ -1522,15 +1462,11 @@
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": [
-          "surge-gaming"
-        ],
+        "rule_set": "surge-gaming",
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
-        "rule_set": [
-          "surge-ai"
-        ],
+        "rule_set": "surge-ai",
         "outbound": "♻️ 自动入口 🧠"
       },
       {
@@ -1582,10 +1518,6 @@
         "outbound": "📺 哔哩哔哩 📱"
       },
       {
-        "rule_set": "surge-globalmedia",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
         "rule_set": "surge-gaming",
         "outbound": "🎮 游戏平台 💻"
       },
@@ -1622,15 +1554,7 @@
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
-        "rule_set": "surge-fediverse",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
         "rule_set": "surge-manual_global",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "rule_set": "surge-discord",
         "outbound": "🌍 海外通用 🌍"
       },
       {
@@ -1646,15 +1570,11 @@
         "outbound": "🗺️ 中国大陆 🇨🇳"
       },
       {
-        "rule_set": [
-          "surge-adblock"
-        ],
+        "rule_set": "surge-adblock",
         "outbound": "❌ 拒绝屏蔽"
       },
       {
-        "rule_set": [
-          "surge-bilibili"
-        ],
+        "rule_set": "surge-bilibili",
         "outbound": "📺 哔哩哔哩 📱"
       },
       {
@@ -1670,25 +1590,15 @@
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": [
-          "surge-youtube"
-        ],
+        "rule_set": "surge-youtube",
         "outbound": "▶️  YouTube 🔴"
       },
       {
-        "rule_set": [
-          "surge-github"
-        ],
+        "rule_set": "surge-github",
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "rule_set": "surge-disney",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "rule_set": [
-          "surge-google"
-        ],
+        "rule_set": "surge-google",
         "outbound": "♻️ 自动入口 🧠"
       },
       {
@@ -1728,14 +1638,6 @@
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": "surge-qq",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-bahamut",
-        "outbound": "🇭🇰 港澳台 🇲🇴"
-      },
-      {
         "rule_set": "surge-epic",
         "outbound": "🗺️ 直连通用 🌏"
       },
@@ -1757,10 +1659,6 @@
       },
       {
         "rule_set": "surge-xiaohongshu",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-wechat",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
