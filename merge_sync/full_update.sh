@@ -65,7 +65,7 @@ show_help() {
 
 # Parse arguments
 WITH_CORE=false
-WITH_GIT=false
+WITH_GIT=true    # Default: enable Git operations
 SKIP_GIT=false
 SKIP_SYNC=false
 SKIP_MERGE=false
@@ -94,8 +94,8 @@ while [[ $# -gt 0 ]]; do
         --verbose) VERBOSE=true; shift ;;
         --quiet) QUIET=true; shift ;;
         -y|--yes) AUTO_YES=true; shift ;;
-        --turbo) SKIP_SYNC=true; SKIP_MODULE=true; SKIP_GIT=true; PARALLEL=true; shift ;;
-        --quick) SKIP_SYNC=true; SKIP_MODULE=true; SKIP_GIT=true; shift ;;
+        --turbo) SKIP_SYNC=true; PARALLEL=true; WITH_GIT=true; shift ;;
+        --quick) SKIP_SYNC=true; shift ;;
         --full) WITH_GIT=true; shift ;;
         --unattended|--ci|--cron)
             # Unattended mode: enable Git, skip iCloud module sync, skip core update, quiet output, auto-confirm

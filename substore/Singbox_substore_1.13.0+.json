@@ -658,6 +658,14 @@
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
+    },
+    {
+      "type": "selector",
+      "tag": "🛜 PonTen 🏠",
+      "outbounds": [
+        "🎯 全球直连"
+      ],
+      "default": "🎯 全球直连"
     }
   ],
   "route": {
