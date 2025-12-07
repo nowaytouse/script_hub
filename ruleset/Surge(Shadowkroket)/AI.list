@@ -1,39 +1,11 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: AI
-# Updated: 2025-12-07 10:14:49 UTC
-# Total Rules: 76
-# Generator: Ruleset Merger v2.4
-# Git Hash: 6099949
+# Policy: PROXY
+# Node: Any
+# Description: AI services (OpenAI/Claude/Gemini)
+# Rules: 76
+# Updated: 2025-12-07 18:38:59
 # ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - OpenAI.list (34 rules)
-#   - Claude.list (3 rules)
-#   - Gemini.list (13 rules)
-#   - BardAI.list (10 rules)
-#   - Copilot.list (49 rules)
-#   - Perplexity.list (0 rules)
-#   - Midjourney.list (0 rules)
-#   - Poe.list (0 rules)
-#   - LOCAL: MetaCubeX_openai.list (17 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
-#   - Policy is determined by RULE-SET line in config file
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
-
-# 策略说明:
-#   - 规则集本身不包含策略标记
-#   - 策略由配置文件中的RULE-SET行决定
-#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX ==========
-# [smart_cleanup.py] Deduplicated: 76 rules
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com

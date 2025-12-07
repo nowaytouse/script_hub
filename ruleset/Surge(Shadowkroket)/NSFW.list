@@ -1,32 +1,11 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: NSFW
-# Updated: 2025-12-07 10:14:52 UTC
-# Total Rules: 726
-# Generator: Ruleset Merger v2.4
-# Git Hash: 6099949
+# Policy: PROXY
+# Node: JP
+# Description: Adult content (726+ domains, recommend JP node)
+# Rules: 726
+# Updated: 2025-12-07 18:39:00
 # ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - LOCAL: NSFW_manual.txt (841 rules)
-#   - Kemono.list (4 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
-#   - Policy is determined by RULE-SET line in config file
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
-
-# 策略说明:
-#   - 规则集本身不包含策略标记
-#   - 策略由配置文件中的RULE-SET行决定
-#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX ==========
-# [smart_cleanup.py] Deduplicated: 726 rules
 
 DOMAIN-SUFFIX,18vr.com
 DOMAIN-SUFFIX,1pondo.tv

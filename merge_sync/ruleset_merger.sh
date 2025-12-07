@@ -588,18 +588,15 @@ EOF
     
     echo "# ========== END ==========" >> "$final_output"
 
-    # Statistics
+    # Statistics - 显示文件名
     echo ""
-    echo "╔══════════════════════════════════════════╗"
-    echo "║            Merge Statistics              ║"
-    echo "╠══════════════════════════════════════════╣"
-    printf "║  Before:      %-25s ║\n" "$TOTAL_RULES_BEFORE"
-    printf "║  Added:       %-25s ║\n" "$TOTAL_RULES_ADDED"
-    printf "║  After:       %-25s ║\n" "$TOTAL_RULES_AFTER"
-    echo "╠══════════════════════════════════════════╣"
-    echo "║  Note: 规则集不包含策略标记              ║"
-    echo "║        策略由配置文件决定                ║"
-    echo "╚══════════════════════════════════════════╝"
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    printf "║  📁 %-55s ║\n" "$RULESET_NAME"
+    echo "╠══════════════════════════════════════════════════════════════╣"
+    printf "║  Before:      %-45s ║\n" "$TOTAL_RULES_BEFORE"
+    printf "║  Added:       %-45s ║\n" "$TOTAL_RULES_ADDED"
+    printf "║  After:       %-45s ║\n" "$TOTAL_RULES_AFTER"
+    echo "╚══════════════════════════════════════════════════════════════╝"
     echo ""
     
     # Write output
