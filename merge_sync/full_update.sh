@@ -65,7 +65,7 @@ show_help() {
 
 # Parse arguments
 WITH_CORE=false
-WITH_GIT=false   # Default: disable Git operations (use --with-git or --full to enable)
+WITH_GIT=true    # Default: enable Git operations (rules need to be pushed to Git)
 SKIP_GIT=false
 SKIP_SYNC=false
 SKIP_MERGE=false
