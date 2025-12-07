@@ -11,62 +11,16 @@
 #!date=2025-05-13 21:58:49
 
 
-[Rule]
 # ═══════════════════════════════════════════════════════════════
-# NOTE: Basic DOMAIN/IP-CIDR rules have been extracted to AdBlock.list
-# This cleaned version only contains:
-#   - URL-REGEX rules (cannot be in .list files)
-#   - Script rules
+# NOTE: All 170 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
 #   - Other module-specific features
-# Use AdBlock.list for basic domain blocking
+# Use AdBlock.list for all blocking rules
 # ═══════════════════════════════════════════════════════════════
 
-URL-REGEX,"^http:\/\/103\.44\.58\.64\/md\?",REJECT
-URL-REGEX,"^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns",REJECT
-URL-REGEX,"^http:\/\/xmc\.ximalaya\.com\/xmlymain-login-web\/login\/",REJECT
-AND,((DOMAIN-KEYWORD,tnc),(AND,((OR,((DOMAIN-KEYWORD,-bjlgy),(DOMAIN-KEYWORD,-alisc),(DOMAIN-KEYWORD,-aliec),(DOMAIN-KEYWORD,-alisg))),(OR,((DOMAIN-SUFFIX,snssdk.com),(DOMAIN-SUFFIX,isnssdk.com),(DOMAIN-SUFFIX,toutiaoapi.com),(DOMAIN-SUFFIX,bytedance.com),(DOMAIN-SUFFIX,zijieapi.com)))))),REJECT
-URL-REGEX,"^http:\/\/182\.256\.116\.116\/d",REJECT
-URL-REGEX,"^http:\/\/47\.101\.175\.206\/resolve",REJECT
-URL-REGEX,"^http:\/\/47\.100\.123\.169\/resolve",REJECT
-URL-REGEX,"^http:\/\/120\.46\.169\.234\/resolve",REJECT
-URL-REGEX,"^http:\/\/121\.36\.72\.124\/resolve",REJECT
-URL-REGEX,"^http:\/\/116\.63\.10\.135\/resolve",REJECT
-URL-REGEX,"^http:\/\/117\.185\.228\.108\/resolve",REJECT
-URL-REGEX,"^http:\/\/117\.144\.238\.29\/resolve",REJECT
-URL-REGEX,"^http:\/\/122\.9\.7\.134\/resolve",REJECT
-URL-REGEX,"^http:\/\/101\.91\.140\.124\/resolve",REJECT
-URL-REGEX,"^http:\/\/101\.91\.140\.224\/resolve",REJECT
-URL-REGEX,"^http:\/\/122\.9\.13\.79\/resolve",REJECT
-URL-REGEX,"^http:\/\/122\.9\.15\.129\/resolve",REJECT
-URL-REGEX,"^http:\/\/112\.65\.200\.117\/resolve",REJECT
-URL-REGEX,"^http:\/\/112\.64\.218\.119\/resolve",REJECT
-URL-REGEX,"^http:\/\/114\.116\.215\.110\/resolve",REJECT
-URL-REGEX,"^http:\/\/116\.63\.10\.31\/resolve",REJECT
-URL-REGEX,"^http:\/\/180\.76\.76\.112\/v\d\/",REJECT
-URL-REGEX,"^http:\/\/180\.76\.76\.112\/v\d\/resolve",REJECT
-URL-REGEX,"^http:\/\/180\.76\.76\.220\/v\d\/resolve",REJECT
-URL-REGEX,"^http:\/\/182\.254\.116\.116\/d",REJECT
-URL-REGEX,"^http:\/\/119\.29\.29\.98\/d\?",REJECT
-URL-REGEX,"^http:\/\/162\.14\.3\.250\/v4",REJECT
-URL-REGEX,"^http:\/\/103\.37\.155\.60\/fetch",REJECT
-URL-REGEX,"^http:\/\/81\.69\.130\.131\/d",REJECT
-URL-REGEX,"^http:\/\/101\.35\.204\.35\/d",REJECT
-URL-REGEX,"^http:\/\/101\.35\.212\.35\/d",REJECT
-URL-REGEX,"^http:\/\/114\.110\.96\.6\/d",REJECT
-URL-REGEX,"^http:\/\/114\.110\.96\.26\/d",REJECT
-URL-REGEX,"^http:\/\/114\.110\.97\.30\/d",REJECT
-URL-REGEX,"^http:\/\/114\.110\.97\.97\/d",REJECT
-URL-REGEX,"^http:\/\/121\.5\.84\.85\/d",REJECT
-URL-REGEX,"^http:\/\/\[2402:4e00:1411:201:0:9964:ba21:5a41\]\/d",REJECT
-URL-REGEX,"^http:\/\/api\.weibo\.cn\/2\/httpdns\/config",REJECT
-URL-REGEX,"^http:\/\/api\.weibo\.cn\/httpdns\/config",REJECT
-URL-REGEX,"^http:\/\/103\.41\.167\.237\/v2\/resolv",REJECT
-URL-REGEX,"^http:\/\/203\.107\.1\.33\/191607\/resolve\?",REJECT
-URL-REGEX,"^http:\/\/119\.29\.29\.29\/d",REJECT
-URL-REGEX,"^http:\/\/54\.222\.159\.138:8053\/httpdns\/",REJECT
-URL-REGEX,"^http:\/\/101\.42\.130\.147:8053\/httpdns\/",REJECT
-URL-REGEX,"^http:\/\/106\.55\.220\.18:8053\/httpdns\/",REJECT
-URL-REGEX,"^http:\/\/139\.196\.12\.179:8053\/httpdns\/",REJECT
 [URL Rewrite]
 ^https?:\/\/203\.107\.1\.1/\d+/ss - reject
 ^https?:\/\/203\.107\.1\.33/\d+/ss - reject

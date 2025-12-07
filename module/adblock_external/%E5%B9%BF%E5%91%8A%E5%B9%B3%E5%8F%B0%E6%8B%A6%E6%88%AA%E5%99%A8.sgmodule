@@ -9,21 +9,16 @@
 #!date=2025-11-28 03:45:41
 
 
-[Rule]
 # ═══════════════════════════════════════════════════════════════
-# NOTE: Basic DOMAIN/IP-CIDR rules have been extracted to AdBlock.list
-# This cleaned version only contains:
-#   - URL-REGEX rules (cannot be in .list files)
-#   - Script rules
+# NOTE: All 287 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
 #   - Other module-specific features
-# Use AdBlock.list for basic domain blocking
+# Use AdBlock.list for all blocking rules
 # ═══════════════════════════════════════════════════════════════
 
-AND,((DOMAIN-KEYWORD,tnc,extended-matching),(OR,((DOMAIN-SUFFIX,capcutapi.com,extended-matching),(DOMAIN-SUFFIX,zijieapi.com,extended-matching),(DOMAIN-SUFFIX,isnssdk.com,extended-matching),(DOMAIN-SUFFIX,toutiaoapi.com,extended-matching),(DOMAIN-SUFFIX,bytedance.com,extended-matching),(DOMAIN-SUFFIX,snssdk.com,extended-matching),(DOMAIN-SUFFIX,sgsnssdk.com,extended-matching)))),DIRECT
-AND,((DOMAIN-KEYWORD,-ad-,extended-matching),(DOMAIN-SUFFIX,byteimg.com,extended-matching)),REJECT,pre-matching
-AND,((DOMAIN-KEYWORD,ads,extended-matching),(DOMAIN-KEYWORD,-normal.zijieapi.com,extended-matching)),REJECT,pre-matching
-AND,((DOMAIN-KEYWORD,adash,extended-matching),(DOMAIN-SUFFIX,ut.taobao.com,extended-matching)),REJECT,pre-matching
-URL-REGEX,"^http:\/\/.+\/amdc\/mobileDispatch",REJECT,extended-matching
 [URL Rewrite]
 ad.aggrxinc.com, - reject
 ^https:\/\/video-dsp\.pddpic\.com\/market-dsp-video\/ - reject
