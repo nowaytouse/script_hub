@@ -1068,14 +1068,6 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-firewallports",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/FirewallPorts_Singbox.srs",
-        "download_detour": "♻️ 自动选择",
-        "update_interval": "24h"
-      },
-      {
         "tag": "surge-downloadprocess",
         "type": "remote",
         "format": "binary",
@@ -1903,15 +1895,7 @@
         "outbound": "❌ 拒绝屏蔽"
       },
       {
-        "rule_set": "surge-firewallports",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
         "rule_set": "surge-blockhttpdns",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
-        "rule_set": "surge-firewallports",
         "outbound": "❌ 拒绝屏蔽"
       }
     ]
