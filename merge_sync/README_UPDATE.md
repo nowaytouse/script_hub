@@ -12,8 +12,18 @@
 6. **广告拦截** - AdBlock 模块合并
 7. **模块同步** - iCloud Surge/Shadowrocket
 8. **配置同步** - Surge 配置文件 (注释关键词智能分类)
-9. **SRS 生成** - Sing-box 二进制规则
+9. **SRS 生成** - Sing-box 二进制规则 (61个规则集 100%覆盖)
 10. **Git 提交** - 自动提交并推送
+
+## 📊 当前统计 (2025-12-07更新)
+
+- **MetaCubeX规则**: 24个
+- **Surge规则**: 61个
+- **Sing-box SRS**: 61个 (100%覆盖率 ✅)
+- **Sources文件**: 53个
+- **Surge模块**: 6个
+- **AdBlock规则**: 235,516条
+- **Shadowrocket规则**: 71条
 
 ## 🚀 使用场景
 
@@ -273,3 +283,152 @@ git stash pop
 - [Sing-box 官方文档](https://sing-box.sagernet.org/)
 - [Mihomo 官方文档](https://wiki.metacubex.one/)
 - [Surge 官方文档](https://manual.nssurge.com/)
+
+
+---
+
+## 📦 Sing-box 规则集详细说明
+
+### 完整规则集列表 (61个)
+
+#### 🛡️ 广告拦截 (3个)
+- `surge-adblock` - 基础广告拦截
+- `surge-adblock-merged` - 合并广告拦截 (235,516条规则)
+- `surge-blockhttpdns` - 阻止HTTP DNS劫持
+
+#### 🤖 AI服务 (2个)
+- `surge-ai` - AI服务 (OpenAI, Anthropic, Google Gemini等)
+- `surge-aiprocess` - AI进程规则
+
+#### 💬 社交媒体 (7个)
+- `surge-telegram` - Telegram
+- `surge-tiktok` - TikTok
+- `surge-twitter` - Twitter/X
+- `surge-instagram` - Instagram
+- `surge-reddit` - Reddit
+- `surge-discord` - Discord
+- `surge-socialmedia` - 社交媒体通用
+
+#### 🎬 流媒体 (11个)
+- `surge-netflix` - Netflix
+- `surge-disney` - Disney+
+- `surge-youtube` - YouTube
+- `surge-spotify` - Spotify
+- `surge-globalmedia` - 全球流媒体
+- `surge-bahamut` - 巴哈姆特动画疯
+- `surge-streameu` - 欧洲流媒体
+- `surge-streamhk` - 香港流媒体
+- `surge-streamjp` - 日本流媒体
+- `surge-streamkr` - 韩国流媒体
+- `surge-streamtw` - 台湾流媒体
+- `surge-streamus` - 美国流媒体
+
+#### 🏢 科技公司 (7个)
+- `surge-apple` - Apple服务
+- `surge-applenews` - Apple News
+- `surge-google` - Google服务
+- `surge-googlecn` - Google中国
+- `surge-microsoft` - Microsoft
+- `surge-bing` - Bing搜索
+- `surge-github` - GitHub
+
+#### 🎮 游戏 (5个)
+- `surge-gaming` - 游戏平台通用
+- `surge-gamingprocess` - 游戏进程规则
+- `surge-steam` - Steam
+- `surge-epic` - Epic Games
+- `surge-speedtest` - Speedtest测速
+
+#### 💰 金融 (2个)
+- `surge-paypal` - PayPal
+- `surge-binance` - Binance币安
+
+#### 🇨🇳 国内服务 (9个)
+- `surge-bilibili` - 哔哩哔哩
+- `surge-chinadirect` - 中国直连
+- `surge-chinaip` - 中国IP段
+- `surge-qq` - QQ
+- `surge-wechat` - 微信
+- `surge-tencent` - 腾讯服务
+- `surge-xiaohongshu` - 小红书
+- `surge-neteasemusic` - 网易云音乐
+- `surge-tesla` - 特斯拉
+
+#### 🌐 网络基础 (4个)
+- `surge-lan` - 局域网
+- `surge-cdn` - CDN服务
+- `surge-firewallports` - 防火墙端口
+- `surge-downloadprocess` - 下载进程
+
+#### 🌍 全球代理 (2个)
+- `surge-globalproxy` - 全球代理
+- `surge-fediverse` - 联邦宇宙 (Mastodon, Pixelfed等)
+
+#### ✋ 手动规则 (6个)
+- `surge-manual` - 手动规则
+- `surge-manual-global` - 手动全球规则
+- `surge-manual-jp` - 手动日本规则
+- `surge-manual-us` - 手动美国规则
+- `surge-manual-west` - 手动西方规则
+- `surge-directprocess` - 直连进程
+
+#### 🔞 特殊分类 (2个)
+- `surge-nsfw` - NSFW内容
+- `surge-substore` - SubStore订阅管理
+
+### 规则集配置
+
+所有规则集使用以下配置：
+
+```json
+{
+  "tag": "surge-xxx",
+  "type": "remote",
+  "format": "binary",
+  "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/XXX_Singbox.srs",
+  "download_detour": "direct-select",
+  "update_interval": "24h"
+}
+```
+
+### 更新规则集
+
+规则集通过 `sync_all_configs.sh` 脚本自动同步：
+
+```bash
+# 单独运行配置同步
+./merge_sync/sync_all_configs.sh
+
+# 或通过完整更新脚本
+./merge_sync/full_update.sh
+```
+
+### 验证规则集
+
+```bash
+# 检查Sing-box配置中的规则集数量
+python3 -c "import json; data=json.load(open('substore/Singbox_substore_1.13.0+.json')); print(f'规则集数量: {len(data[\"route\"][\"rule_set\"])}')"
+
+# 列出所有规则集标签
+python3 -c "import json; data=json.load(open('substore/Singbox_substore_1.13.0+.json')); tags=[rs['tag'] for rs in data['route']['rule_set']]; print('\n'.join(sorted(tags)))"
+
+# 检查SRS文件覆盖率
+ls ruleset/SingBox/*.srs | wc -l
+```
+
+### 规则集优先级
+
+规则集在 `route.rules` 中按以下优先级匹配：
+
+1. **广告拦截** - 最高优先级，阻止广告和追踪
+2. **手动规则** - 用户自定义规则
+3. **特定服务** - AI、社交媒体、流媒体等
+4. **地区规则** - 国内/国外分流
+5. **默认规则** - 兜底规则
+
+### 注意事项
+
+- 所有规则集每24小时自动更新
+- 使用SRS二进制格式，加载速度快
+- 规则集通过GitHub raw链接下载
+- 建议定期运行 `full_update.sh` 保持规则最新
