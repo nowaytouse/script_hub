@@ -52,7 +52,7 @@ show_help() {
     echo "  -h, --help        Show help"
     echo ""
     echo "Examples:"
-    echo "  $0                    # Standard update (no Git, no core)"
+    echo "  $0                    # Standard update (with Git, no core)"
     echo "  $0 --full             # Full update (with Git pull/push)"
     echo "  $0 --with-core        # Local full update (with core+Surge profile)"
     echo "  $0 --full --with-core # Most complete update (Git+core+profile)"
