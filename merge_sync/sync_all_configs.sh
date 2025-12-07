@@ -62,19 +62,23 @@ project_root = sys.argv[2]
 with open(config_file, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
-# 规则集列表（基于 Surge 规则）
+# 规则集列表（完整61个规则集）
 rule_sets = [
-    # 广告拦截
+    # 广告拦截 (3)
     {"tag": "surge-adblock", "type": "remote", "format": "binary", 
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Singbox.srs"},
+    {"tag": "surge-adblock-merged", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AdBlock_Merged_Singbox.srs"},
     {"tag": "surge-blockhttpdns", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/BlockHttpDNS_Singbox.srs"},
     
-    # AI 服务
+    # AI 服务 (2)
     {"tag": "surge-ai", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AI_Singbox.srs"},
+    {"tag": "surge-aiprocess", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AIProcess_Singbox.srs"},
     
-    # 社交媒体
+    # 社交媒体 (7)
     {"tag": "surge-telegram", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Telegram_Singbox.srs"},
     {"tag": "surge-tiktok", "type": "remote", "format": "binary",
@@ -85,8 +89,12 @@ rule_sets = [
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Instagram_Singbox.srs"},
     {"tag": "surge-reddit", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Reddit_Singbox.srs"},
+    {"tag": "surge-discord", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Discord_Singbox.srs"},
+    {"tag": "surge-socialmedia", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/SocialMedia_Singbox.srs"},
     
-    # 流媒体
+    # 流媒体 (11)
     {"tag": "surge-netflix", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Netflix_Singbox.srs"},
     {"tag": "surge-disney", "type": "remote", "format": "binary",
@@ -97,38 +105,110 @@ rule_sets = [
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Spotify_Singbox.srs"},
     {"tag": "surge-globalmedia", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalMedia_Singbox.srs"},
+    {"tag": "surge-bahamut", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bahamut_Singbox.srs"},
+    {"tag": "surge-streameu", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamEU_Singbox.srs"},
+    {"tag": "surge-streamhk", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamHK_Singbox.srs"},
+    {"tag": "surge-streamjp", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamJP_Singbox.srs"},
+    {"tag": "surge-streamkr", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamKR_Singbox.srs"},
+    {"tag": "surge-streamtw", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamTW_Singbox.srs"},
+    {"tag": "surge-streamus", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamUS_Singbox.srs"},
     
-    # 科技公司
+    # 科技公司 (7)
     {"tag": "surge-apple", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Apple_Singbox.srs"},
+    {"tag": "surge-applenews", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AppleNews_Singbox.srs"},
     {"tag": "surge-google", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Google_Singbox.srs"},
+    {"tag": "surge-googlecn", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GoogleCN_Singbox.srs"},
     {"tag": "surge-microsoft", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Microsoft_Singbox.srs"},
+    {"tag": "surge-bing", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bing_Singbox.srs"},
     {"tag": "surge-github", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GitHub_Singbox.srs"},
     
-    # 游戏
+    # 游戏 (5)
     {"tag": "surge-gaming", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Gaming_Singbox.srs"},
+    {"tag": "surge-gamingprocess", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GamingProcess_Singbox.srs"},
     {"tag": "surge-steam", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Steam_Singbox.srs"},
+    {"tag": "surge-epic", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Epic_Singbox.srs"},
+    {"tag": "surge-speedtest", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Speedtest_Singbox.srs"},
     
-    # 金融
+    # 金融 (2)
     {"tag": "surge-paypal", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/PayPal_Singbox.srs"},
+    {"tag": "surge-binance", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Binance_Singbox.srs"},
     
-    # 国内服务
+    # 国内服务 (9)
     {"tag": "surge-bilibili", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bilibili_Singbox.srs"},
     {"tag": "surge-chinadirect", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaDirect_Singbox.srs"},
     {"tag": "surge-chinaip", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaIP_Singbox.srs"},
+    {"tag": "surge-qq", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/QQ_Singbox.srs"},
+    {"tag": "surge-wechat", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/WeChat_Singbox.srs"},
+    {"tag": "surge-tencent", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tencent_Singbox.srs"},
+    {"tag": "surge-xiaohongshu", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/XiaoHongShu_Singbox.srs"},
+    {"tag": "surge-neteasemusic", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NetEaseMusic_Singbox.srs"},
+    {"tag": "surge-tesla", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tesla_Singbox.srs"},
     
-    # 全球代理
+    # 网络基础 (4)
+    {"tag": "surge-lan", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/LAN_Singbox.srs"},
+    {"tag": "surge-cdn", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/CDN_Singbox.srs"},
+    {"tag": "surge-firewallports", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/FirewallPorts_Singbox.srs"},
+    {"tag": "surge-downloadprocess", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DownloadProcess_Singbox.srs"},
+    
+    # 全球代理 (2)
     {"tag": "surge-globalproxy", "type": "remote", "format": "binary",
      "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalProxy_Singbox.srs"},
+    {"tag": "surge-fediverse", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Fediverse_Singbox.srs"},
+    
+    # 手动规则 (6)
+    {"tag": "surge-manual", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Singbox.srs"},
+    {"tag": "surge-manual-global", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Global_Singbox.srs"},
+    {"tag": "surge-manual-jp", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_JP_Singbox.srs"},
+    {"tag": "surge-manual-us", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_US_Singbox.srs"},
+    {"tag": "surge-manual-west", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_West_Singbox.srs"},
+    {"tag": "surge-directprocess", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DirectProcess_Singbox.srs"},
+    
+    # 特殊分类 (2)
+    {"tag": "surge-nsfw", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NSFW_Singbox.srs"},
+    {"tag": "surge-substore", "type": "remote", "format": "binary",
+     "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/substore_Singbox.srs"},
 ]
 
 # 添加通用配置
@@ -145,7 +225,11 @@ config["route"]["rule_set"] = rule_sets
 with open(config_file, 'w', encoding='utf-8') as f:
     json.dump(config, f, indent=2, ensure_ascii=False)
 
-print(f"✅ 已更新 {len(rule_sets)} 个规则集")
+print(f"✅ 已更新 {len(rule_sets)} 个规则集 (完整覆盖)")
+print(f"   广告拦截: 3 | AI服务: 2 | 社交媒体: 7")
+print(f"   流媒体: 11 | 科技公司: 7 | 游戏: 5")
+print(f"   金融: 2 | 国内服务: 9 | 网络基础: 4")
+print(f"   全球代理: 2 | 手动规则: 6 | 特殊分类: 2")
 PYTHON_SCRIPT
 
 log_success "Sing-box 配置已更新"
