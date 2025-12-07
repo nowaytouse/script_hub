@@ -276,6 +276,16 @@ if [ -f "${SCRIPT_DIR}/smart_cleanup.py" ]; then
     log_success "Smart dedup complete"
 fi
 
+if [ -f "${SCRIPT_DIR}/consolidate_rulesets.py" ]; then
+    log_info "Consolidating related rulesets (Tencent, StreamUS, StreamTW)..."
+    if [ "$VERBOSE" = true ]; then
+        python3 "${SCRIPT_DIR}/consolidate_rulesets.py"
+    else
+        python3 "${SCRIPT_DIR}/consolidate_rulesets.py" 2>&1 | grep -E "^(Target|Total|Done)" || true
+    fi
+    log_success "Ruleset consolidation complete"
+fi
+
 if [ -f "${SCRIPT_DIR}/update_ruleset_headers.sh" ]; then
     log_info "Updating ruleset headers (adding policy suggestions)..."
     if [ "$VERBOSE" = true ]; then
