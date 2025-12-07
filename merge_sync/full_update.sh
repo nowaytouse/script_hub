@@ -128,7 +128,7 @@ fi
 
 # 步骤计数
 STEP=0
-TOTAL_STEPS=10
+TOTAL_STEPS=11  # 增加了空规则集检查+去重步骤
 
 # ═══════════════════════════════════════════════════════════════
 # 步骤1: Git Pull (获取远程更新)
@@ -250,6 +250,35 @@ if [ "$SKIP_MERGE" = false ]; then
     fi
 else
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 跳过增量合并${NC}"
+fi
+echo ""
+
+# ═══════════════════════════════════════════════════════════════
+# 步骤5.5: 空规则集检查 + 智能去重
+# ═══════════════════════════════════════════════════════════════
+STEP=$((STEP + 1))
+echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 空规则集检查 + 智能去重...${NC}"
+
+# 检查空规则集
+if [ -f "${SCRIPT_DIR}/check_empty_rulesets.sh" ]; then
+    if [ "$VERBOSE" = true ]; then
+        "${SCRIPT_DIR}/check_empty_rulesets.sh"
+    else
+        "${SCRIPT_DIR}/check_empty_rulesets.sh" 2>&1 | grep -E "^(⚠️|ℹ️|❌|Total|Empty)" || true
+    fi
+fi
+
+# 运行智能去重 (广告 > 细分 > 兜底)
+if [ -f "${SCRIPT_DIR}/smart_cleanup.py" ]; then
+    log_info "运行智能去重 (优先级: 广告 > 细分网站 > 兜底规则)..."
+    if [ "$VERBOSE" = true ]; then
+        python3 "${SCRIPT_DIR}/smart_cleanup.py"
+    else
+        python3 "${SCRIPT_DIR}/smart_cleanup.py" 2>&1 | grep -E "^(Removed|Starting|Complete)" || true
+    fi
+    log_success "智能去重完成"
+else
+    log_warning "跳过: smart_cleanup.py 不存在"
 fi
 echo ""
 

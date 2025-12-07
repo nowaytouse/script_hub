@@ -7,40 +7,57 @@ RULESET_DIR = os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkr
 # Priority Definitions (Higher priority lists steal domains from Lower priority lists)
 # Format: "Specific": ["Generic1", "Generic2"]
 # Meaning: If a domain is in Specific, remove it from Generic1 and Generic2.
+#
+# 🔥 优先级顺序（从高到低）:
+#   1. 广告拦截规则集 (AdBlock, NSFW) - 最高优先级
+#   2. 细分网站规则集 (Twitter, Netflix, Steam等) - 中等优先级
+#   3. 兜底规则集 (GlobalProxy, GlobalMedia, SocialMedia等) - 最低优先级
+#
 CONFLICT_MAP = {
-    # Social Media specific > Generic Social/Media
-    "Twitter.list": ["SocialMedia.list", "GlobalMedia.list"],
-    "Instagram.list": ["SocialMedia.list", "GlobalMedia.list", "Facebook.list"],
-    "Facebook.list": ["SocialMedia.list", "GlobalMedia.list"],
-    "Telegram.list": ["SocialMedia.list", "GlobalMedia.list"],
-    "TikTok.list": ["SocialMedia.list", "GlobalMedia.list"],
-    "YouTube.list": ["GlobalMedia.list", "Google.list"],
-    "Netflix.list": ["GlobalMedia.list"],
-    "Spotify.list": ["GlobalMedia.list"],
-    "Disney.list": ["GlobalMedia.list"],
+    # ========== 第一优先级: 广告拦截 ==========
+    # AdBlock优先于所有其他规则集
+    "AdBlock.list": ["GlobalProxy.list", "GlobalMedia.list", "SocialMedia.list", 
+                     "Google.list", "Microsoft.list", "Apple.list",
+                     "Twitter.list", "Instagram.list", "Facebook.list",
+                     "YouTube.list", "Netflix.list", "Spotify.list"],
+    "AdBlock_Merged.list": ["GlobalProxy.list", "GlobalMedia.list", "SocialMedia.list",
+                            "Google.list", "Microsoft.list", "Apple.list"],
     
-    # NSFW is often a mix, but if we have specific NSFW lists, they should win?
-    # Actually, user issue was x.com in NSFW. 
-    # So Twitter.list > NSFW.list
-    "Twitter.list": ["NSFW.list", "SocialMedia.list", "GlobalMedia.list"],
-    "Reddit.list": ["NSFW.list", "SocialMedia.list"],
+    # ========== 第二优先级: 细分网站规则集 ==========
+    # 社交媒体细分
+    "Twitter.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
+    "Instagram.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
+    "Facebook.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
+    "Telegram.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
+    "TikTok.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
+    "Reddit.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
     
-    # Gaming
-    "Steam.list": ["Gaming.list"],
-    "Epic.list": ["Gaming.list"],
-    "Nintendo.list": ["Gaming.list"],
-    "PlayStation.list": ["Gaming.list"],
-    "Xbox.list": ["Gaming.list"],
+    # 流媒体细分
+    "YouTube.list": ["GlobalMedia.list", "GlobalProxy.list", "Google.list"],
+    "Netflix.list": ["GlobalMedia.list", "GlobalProxy.list"],
+    "Spotify.list": ["GlobalMedia.list", "GlobalProxy.list"],
+    "Disney.list": ["GlobalMedia.list", "GlobalProxy.list"],
     
-    # AI
-    "OpenAI.list": ["AI.list"],
-    "Claude.list": ["AI.list"],
-    "Gemini.list": ["AI.list"],
+    # 游戏细分
+    "Steam.list": ["Gaming.list", "GlobalProxy.list"],
+    "Epic.list": ["Gaming.list", "GlobalProxy.list"],
     
-    # General
+    # AI细分
+    "OpenAI.list": ["AI.list", "GlobalProxy.list"],
+    "Claude.list": ["AI.list", "GlobalProxy.list"],
+    
+    # 科技公司细分
     "Google.list": ["GlobalProxy.list"],
     "Microsoft.list": ["GlobalProxy.list"],
     "Apple.list": ["GlobalProxy.list"],
+    "GitHub.list": ["GlobalProxy.list"],
+    
+    # NSFW细分（成人内容）
+    "NSFW.list": ["GlobalProxy.list"],
+    
+    # ========== 第三优先级: 兜底规则集 ==========
+    # 这些规则集优先级最低，会被细分规则集覆盖
+    # GlobalProxy, GlobalMedia, SocialMedia, Gaming, AI 等
 }
 
 # Also standard exclusions: Remove "Direct" domains from "Proxy" lists if they appear?

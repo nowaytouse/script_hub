@@ -1,1 +1,12 @@
-../conf/SurgeConf_ModulesDirect.list
+# ChinaDirect - 中国直连域名
+# Policy Group: 🇨🇳 中国直连 🇨🇳
+# Purpose: China domains for direct connection
+# 更新: 2025-12-07
+#
+# ⚠️ 说明: 原引用的SurgeConf_ModulesDirect.list文件不存在
+#          此规则集已被其他规则集覆盖（如ChinaMedia等）
+#          建议使用GEOIP规则: GEOIP,CN,DIRECT
+#
+# 如果需要特定域名直连，请在 custom/ChinaDirect_manual.txt 中添加
+
+# 暂时留空，功能已被其他规则集覆盖

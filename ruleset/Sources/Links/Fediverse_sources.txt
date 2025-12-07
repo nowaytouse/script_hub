@@ -2,8 +2,15 @@
 # Policy Group: 🌍 海外通用 🌍
 # Purpose: All decentralized/federated social platforms
 # 更新: 2025-12-07
-
-# Mastodon (blackmatrix7)
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Mastodon/Mastodon.list
+#
+# ⚠️ 说明: blackmatrix7的Mastodon规则集已不存在(404)
+#          需要手动维护Fediverse相关域名
 
 # 手动规则在 custom/Fediverse_manual.txt
+# 常见Fediverse平台:
+#   - Mastodon (mastodon.social, mastodon.online等)
+#   - Pixelfed (pixelfed.social等)
+#   - PeerTube (各实例)
+#   - Pleroma/Akkoma (各实例)
+#
+# 由于Fediverse是去中心化的，实例众多，建议根据实际使用添加规则

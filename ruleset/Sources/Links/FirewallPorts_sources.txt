@@ -1,2 +1,17 @@
-# Firewall Ports Rules (Direct Ports)
-../conf/SurgeConf_DirectPorts.list
+# Firewall Ports Rules (Block Ports)
+# Policy Group: 🚫 拦截 (REJECT)
+# Purpose: Block dangerous ports for security
+# 更新: 2025-12-07
+#
+# ⚠️ 说明: 此规则集包含端口规则(IN-PORT/DEST-PORT)
+#          这些规则应该直接在Surge配置文件的[Rule]部分使用
+#          策略应为REJECT，用于拦截危险端口
+#
+# 端口规则示例:
+#   IN-PORT,8076,REJECT
+#   DEST-PORT,8076,REJECT
+#
+# 建议: 将端口规则直接添加到配置文件的[Rule]部分
+#       配置示例: IN-PORT,8076,REJECT
+
+# 暂时留空 - 端口规则不适合RULE-SET格式

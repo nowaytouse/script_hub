@@ -1,0 +1,17 @@
+# BlockHttpDNS - 拦截HTTP DNS查询
+# Policy Group: 🚫 拦截 (REJECT)
+# Purpose: Block HTTP-based DNS queries to prevent DNS leaks
+# 更新: 2025-12-07
+#
+# ⚠️ 重要说明:
+#   本规则集应配置为 REJECT 策略
+#   用途: 拦截HTTP DNS查询，防止DNS泄露
+#   配置示例: RULE-SET,BlockHttpDNS.list,REJECT
+#
+# 说明: 此规则集目前为空，因为HTTP DNS拦截通常通过
+#       PROTOCOL规则实现，而不是DOMAIN规则
+
+# 如果需要添加规则，可以在这里添加HTTP DNS服务器域名
+# 例如:
+# DOMAIN,dns.google
+# DOMAIN,cloudflare-dns.com
