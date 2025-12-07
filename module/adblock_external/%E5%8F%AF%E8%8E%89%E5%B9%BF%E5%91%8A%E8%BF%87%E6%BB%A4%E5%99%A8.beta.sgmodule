@@ -8,31 +8,29 @@
 #!homepage=https://hub.kelee.one
 #!date=2025-07-16 02:25:05
 
+
 [Rule]
-DOMAIN,acdn.adnxs.com,REJECT,extended-matching,pre-matching
-DOMAIN,mediation.adnxs.com,REJECT,extended-matching,pre-matching
-DOMAIN,sin3-ib.adnxs.com,REJECT,extended-matching,pre-matching
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT,extended-matching,pre-matching
-DOMAIN,data.mistat.xiaomi.com,REJECT,extended-matching,pre-matching
-DOMAIN,tracking.intl.miui.com,REJECT,extended-matching,pre-matching
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,doubleclick-cn.net,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,doubleclick.net,REJECT,extended-matching,pre-matching
-DOMAIN,business.msstatic.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,v1d.szbdyd.com,REJECT,extended-matching,pre-matching
+# ═══════════════════════════════════════════════════════════════
+# NOTE: Basic DOMAIN/IP-CIDR rules have been extracted to AdBlock.list
+# This cleaned version only contains:
+#   - URL-REGEX rules (cannot be in .list files)
+#   - Script rules
+#   - Other module-specific features
+# Use AdBlock.list for basic domain blocking
+# ═══════════════════════════════════════════════════════════════
+
 URL-REGEX,"^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$",REJECT,extended-matching
-DOMAIN-SUFFIX,m1.ad.10010.com,REJECT,extended-matching,pre-matching
-DOMAIN,ad.21cn.com,REJECT,extended-matching,pre-matching
-DOMAIN,ad.k.21cn.com,REJECT,extended-matching,pre-matching
-DOMAIN,admarket.21cn.com,REJECT,extended-matching,pre-matching
-DOMAIN,adshows.21cn.com,REJECT,extended-matching,pre-matching
-IP-CIDR,122.229.8.47/32,REJECT,no-resolve,pre-matching
-IP-CIDR,122.229.29.89/32,REJECT,no-resolve,pre-matching
 URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do",REJECT-TINYGIF,extended-matching
 URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/advertisement\/",REJECT-TINYGIF,extended-matching
-DOMAIN,mall-dsp2.qinlinkeji.com,REJECT,extended-matching,pre-matching
-DOMAIN,mallapi2.qinlinkeji.com,REJECT,extended-matching,pre-matching
-DOMAIN,open-pixon.ads-pixiv.net,REJECT,extended-matching,pre-matching
+#!name=可莉广告过滤器
+#!desc=可莉自用的广告过滤器
+#!author=可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]
+#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
+#!category=BetaModule
+#!tag=去广告
+#!loon_version=3.2.4(787)
+#!homepage=https://hub.kelee.one
+#!date=2025-07-16 02:25:05
 
 [URL Rewrite]
 ^https?:\/\/api-access\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/sdk - reject

@@ -1,10 +1,50 @@
-# External AdBlock Modules
+# External AdBlock Modules (Cleaned Versions)
 
-This directory contains AdBlock modules downloaded from external sources.
+✅ **These are cleaned, optimized versions** - safe to use!
 
-## 📦 Modules
+## 📋 What's Different?
 
-These modules are automatically downloaded by `merge_sync/download_adblock_modules.sh`:
+These modules have been **automatically cleaned** by removing:
+- ❌ Basic DOMAIN rules → Moved to AdBlock.list
+- ❌ Basic IP-CIDR rules → Moved to AdBlock.list
+- ❌ Duplicate rules → Deduplicated
+
+**What remains:**
+- ✅ URL-REGEX rules (cannot be in .list files)
+- ✅ Script rules
+- ✅ Complex logic rules (AND/OR combinations)
+- ✅ Module-specific features
+
+## 📦 Available Cleaned Modules
+
+1. **可莉广告过滤器.beta.sgmodule** - 24 → 3 rules (URL-REGEX)
+2. **广告平台拦截器.sgmodule** - 283 → 1 rule (URL-REGEX)
+3. **blockHTTPDNS.module** - 169 → 45 rules (URL-REGEX + complex logic)
+
+**Removed modules** (all rules extracted to AdBlock.list):
+- ~~Adblock4limbo.sgmodule~~ - 0 unique rules
+- ~~广告联盟.official.sgmodule~~ - 0 unique rules
+- ~~AWAvenue-Ads-Rule-Surge-module.sgmodule~~ - 887 rules (all basic DOMAIN rules)
+
+## ✅ What You Should Use Instead
+
+Use the **merged AdBlock.list** in your Surge/Shadowrocket config:
+
+```ini
+[Rule]
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT
+```
+
+This single file contains **all rules** from:
+- blackmatrix7 Advertising
+- ACL4SSR BanAD
+- SukkaW reject
+- MetaCubeX category-ads-all
+- **All 6 external modules in this directory**
+
+Total: **236,830+ deduplicated rules**
+
+## 📦 Downloaded Modules (For Reference)
 
 1. **Adblock4limbo.sgmodule** - limbopro's comprehensive ad blocking
 2. **广告联盟.official.sgmodule** - QingRex ad network blocking
@@ -21,30 +61,20 @@ These modules are automatically updated when you run:
 bash merge_sync/full_update.sh
 ```
 
-Or manually:
+The update process:
+1. Downloads latest versions
+2. Extracts rules
+3. Merges into AdBlock.list
+4. Deduplicates
+5. Commits to Git
 
-```bash
-bash merge_sync/download_adblock_modules.sh
-```
+## 🔍 Sources
 
-## 🔗 Usage
+See `ruleset/Sources/Links/AdBlock_sources.txt` for the complete list of module URLs.
 
-### Option 1: Use GitHub URLs (Recommended)
+## 📝 Note
 
-Reference modules directly from GitHub in your Surge/Shadowrocket config:
-
-```ini
-[Module]
-# Adblock4limbo
-https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/adblock_external/Adblock4limbo.sgmodule
-
-# AWAvenue Ads Rule
-https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/adblock_external/AWAvenue-Ads-Rule-Surge-module.sgmodule
-```
-
-### Option 2: Use Original URLs
-
-You can also reference the original URLs directly:
+If you want to use the **original modules** directly (not recommended due to duplicates), use the original URLs:
 
 ```ini
 [Module]
@@ -52,13 +82,5 @@ https://limbopro.com/Adblock4limbo.sgmodule
 https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-module.sgmodule
 ```
 
-## 📝 Note
-
-- These modules are **extracted for rules only** in the main AdBlock.list
-- You don't need to manually install them
-- Rules are automatically merged into `ruleset/Surge(Shadowkroket)/AdBlock.list`
-
-## 🔍 Sources
-
-See `ruleset/Sources/Links/AdBlock_sources.txt` for the complete list of module URLs.
+But remember: **This will cause duplicate rules** since these are already in AdBlock.list!
 

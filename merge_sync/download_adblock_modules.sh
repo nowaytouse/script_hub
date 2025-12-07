@@ -86,9 +86,9 @@ log_info "  Total:      $total"
 log_success "  Success:    $downloaded"
 [ $failed -gt 0 ] && log_error "  Failed:     $failed" || log_info "  Failed:     0"
 
-# Extract rules from downloaded modules
+# Extract rules from downloaded modules and create cleaned versions
 log_info ""
-log_info "Extracting rules from modules..."
+log_info "Extracting rules and creating cleaned modules..."
 
 ALL_RULES="$TEMP_DIR/all_module_rules.tmp"
 touch "$ALL_RULES"
@@ -96,13 +96,67 @@ touch "$ALL_RULES"
 for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     [ ! -f "$module" ] && continue
     
-    log_info "Processing: $(basename "$module")"
+    module_name=$(basename "$module")
+    log_info "Processing: $module_name"
     
-    # Extract [Rule] section
+    # Extract [Rule] section for merging
     awk '/^\[Rule\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
     grep -v '^#' | grep -v '^$' | grep -v '^RULE-SET' | \
     sed 's/  */ /g' | \
     grep -E "^DOMAIN|^IP-CIDR|^USER-AGENT|^URL-REGEX|^PROCESS-NAME" >> "$ALL_RULES" || true
+    
+    # Create cleaned version (remove rules that will be in AdBlock.list)
+    log_info "  Creating cleaned version..."
+    cleaned_module="$TEMP_DIR/cleaned_${module_name}"
+    
+    # Copy header sections (everything before [Rule])
+    awk '/^\[Rule\]/{exit}1' "$module" > "$cleaned_module"
+    
+    # Add [Rule] section header
+    echo "" >> "$cleaned_module"
+    echo "[Rule]" >> "$cleaned_module"
+    echo "# ═══════════════════════════════════════════════════════════════" >> "$cleaned_module"
+    echo "# NOTE: Basic DOMAIN/IP-CIDR rules have been extracted to AdBlock.list" >> "$cleaned_module"
+    echo "# This cleaned version only contains:" >> "$cleaned_module"
+    echo "#   - URL-REGEX rules (cannot be in .list files)" >> "$cleaned_module"
+    echo "#   - Script rules" >> "$cleaned_module"
+    echo "#   - Other module-specific features" >> "$cleaned_module"
+    echo "# Use AdBlock.list for basic domain blocking" >> "$cleaned_module"
+    echo "# ═══════════════════════════════════════════════════════════════" >> "$cleaned_module"
+    echo "" >> "$cleaned_module"
+    
+    # Extract and keep only non-basic rules (URL-REGEX, etc.)
+    awk '/^\[Rule\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
+    grep -v '^$' | \
+    grep -v '^#' | \
+    grep -v '^RULE-SET' | \
+    grep -v '^DOMAIN' | \
+    grep -v '^IP-CIDR' | \
+    grep -v '^USER-AGENT' | \
+    grep -v '^PROCESS-NAME' >> "$cleaned_module" || true
+    
+    # Copy other sections (after [Rule])
+    awk '/^\[Rule\]/{f=1;next}f{if(/^\[/){f=0}}!f' "$module" >> "$cleaned_module" || true
+    
+    # Count rules
+    original_rules=$(grep -cE "^(DOMAIN|IP-CIDR|URL-REGEX|USER-AGENT|PROCESS-NAME)" "$module" 2>/dev/null | tr -d ' ' || echo "0")
+    cleaned_rules=$(grep -cE "^(URL-REGEX|SCRIPT)" "$cleaned_module" 2>/dev/null | tr -d ' ' || echo "0")
+    
+    # Ensure numeric values
+    [ -z "$original_rules" ] && original_rules=0
+    [ -z "$cleaned_rules" ] && cleaned_rules=0
+    
+    removed_rules=$((original_rules - cleaned_rules))
+    
+    if [ "$cleaned_rules" -gt 0 ]; then
+        # Has non-basic rules, keep cleaned version
+        mv "$cleaned_module" "$module"
+        log_success "  Cleaned: $original_rules → $cleaned_rules rules (removed $removed_rules basic rules)"
+    else
+        # No non-basic rules, remove the module entirely
+        rm -f "$module" "$cleaned_module"
+        log_warning "  Removed: No unique rules (all $original_rules rules extracted to AdBlock.list)"
+    fi
 done
 
 # Count extracted rules
