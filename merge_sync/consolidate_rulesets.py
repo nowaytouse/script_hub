@@ -54,4 +54,7 @@ if __name__ == '__main__':
     # 3. StreamTW = Bahamut + StreamTW
     merge("StreamTW.list", ["Bahamut.list"])
     
+    # 4. SocialMedia = Reddit + Discord + Fediverse + SocialMedia
+    merge("SocialMedia.list", ["Reddit.list", "Discord.list", "Fediverse.list"])
+    
     print("Done!")
