@@ -64,12 +64,46 @@ update_cores() {
         return 1
     fi
     
-    # Run the update script
+    # Run the update script (updates local bin/sing-box)
     if [ -f "$CONFIG_MANAGER_UPDATE_SCRIPT" ]; then
         bash "$CONFIG_MANAGER_UPDATE_SCRIPT"
     else
         # Directly call the binary
         "$CONFIG_MANAGER_BINARY" --once
+    fi
+    
+    # Copy to system path if sudo available (optional)
+    local local_singbox="$CONFIG_MANAGER_DIR/bin/sing-box"
+    local system_singbox="/usr/local/bin/sing-box"
+    
+    if [ -f "$local_singbox" ]; then
+        log_info "Local sing-box updated successfully"
+        
+        # Try to update system path (requires sudo)
+        if command -v sudo >/dev/null 2>&1; then
+            log_info "Attempting to update system sing-box (requires sudo)..."
+            if sudo -n true 2>/dev/null || sudo -v; then
+                sudo cp "$local_singbox" "$system_singbox" && \
+                sudo chmod +x "$system_singbox" && \
+                log_success "System sing-box updated: $system_singbox" || \
+                log_warning "Failed to update system sing-box (permission denied)"
+            else
+                log_warning "Skipping system update (no sudo permission)"
+            fi
+        else
+            log_warning "sudo not available, skipping system update"
+        fi
+        
+        # Show versions
+        echo ""
+        log_info "Installed versions:"
+        echo "  Local:  $("$local_singbox" version 2>/dev/null | head -1)"
+        if [ -f "$system_singbox" ]; then
+            echo "  System: $("$system_singbox" version 2>/dev/null | head -1)"
+        fi
+    else
+        log_error "Local sing-box not found after update"
+        return 1
     fi
 }
 
