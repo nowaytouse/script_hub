@@ -343,15 +343,6 @@
     },
     {
       "type": "selector",
-      "tag": "🐦 Twitter 🔵",
-      "outbounds": [
-        "🇯🇵 JP 🇯🇵",
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🇯🇵 JP 🇯🇵"
-    },
-    {
-      "type": "selector",
       "tag": "🔊  Spotify  🟢",
       "outbounds": [
         "🇯🇵 JP 🇯🇵",
@@ -377,16 +368,6 @@
         "🎯 全球直连"
       ],
       "default": "🎯 全球直连"
-    },
-    {
-      "type": "selector",
-      "tag": "📷 instgram ⛰️",
-      "outbounds": [
-        "♻️ 自动入口 🧠",
-        "🇯🇵 JP 🇯🇵",
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🇺🇸 美国 🇺🇸"
     },
     {
       "type": "selector",
@@ -630,16 +611,6 @@
       "tolerance": 30
     },
     {
-      "type": "selector",
-      "tag": "Reddit",
-      "outbounds": [
-        "🇺🇸 美国 🇺🇸",
-        "🇺🇸美国专线🧱",
-        "🌍 海外通用 🌍"
-      ],
-      "default": "🇺🇸 美国 🇺🇸"
-    },
-    {
       "type": "urltest",
       "tag": "🤖AI平台🤖",
       "outbounds": [
@@ -662,6 +633,14 @@
     {
       "type": "selector",
       "tag": "🛜 PonTen 🏠",
+      "outbounds": [
+        "🎯 全球直连"
+      ],
+      "default": "🎯 全球直连"
+    },
+    {
+      "type": "selector",
+      "tag": "🌐 社交媒体 📱",
       "outbounds": [
         "🎯 全球直连"
       ],
@@ -1238,13 +1217,13 @@
         "rule_set": [
           "surge-instagram"
         ],
-        "outbound": "📷 instgram ⛰️"
+        "outbound": "🌐 社交媒体 📱"
       },
       {
         "rule_set": [
           "surge-twitter"
         ],
-        "outbound": "🐦 Twitter 🔵"
+        "outbound": "🌐 社交媒体 📱"
       },
       {
         "rule_set": "surge-reddit",
