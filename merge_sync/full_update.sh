@@ -28,7 +28,7 @@ show_help() {
     echo "用法: $0 [选项]"
     echo ""
     echo "选项:"
-    echo "  --with-core       同时更新Singbox核心"
+    echo "  --with-core       同时更新 Sing-box & Mihomo 核心 (本地推荐)"
     echo "  --with-git        启用Git操作 (pull/push)"
     echo "  --skip-git        跳过Git操作"
     echo "  --skip-sync       跳过MetaCubeX同步"
@@ -48,9 +48,11 @@ show_help() {
     echo "  -h, --help        显示帮助"
     echo ""
     echo "示例:"
-    echo "  $0                    # 标准更新 (无Git)"
+    echo "  $0                    # 标准更新 (无Git, 无核心)"
     echo "  $0 --full             # 完整更新 (含Git pull/push)"
-    echo "  $0 --unattended       # 无人值守模式 (CI/CD)"
+    echo "  $0 --with-core        # 本地全面更新 (含核心+Surge配置)"
+    echo "  $0 --full --with-core # 最全面更新 (Git+核心+配置)"
+    echo "  $0 --unattended       # 无人值守模式 (CI/CD, 跳过核心和配置)"
     echo "  $0 --quick            # 快速更新 (仅合并+SRS)"
     echo "  $0 --cron             # 定时任务模式"
     echo ""
@@ -172,20 +174,20 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤2: 更新Singbox核心 (可选)
+# 步骤2: 更新 Sing-box & Mihomo 核心 (可选)
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$WITH_CORE" = true ]; then
-    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 更新Singbox核心...${NC}"
-    if [ -f "${SCRIPT_DIR}/config-manager-auto-update/target/release/singbox-manager" ]; then
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 更新 Sing-box & Mihomo 核心...${NC}"
+    if [ -f "${SCRIPT_DIR}/update_cores.sh" ]; then
         if [ "$VERBOSE" = true ]; then
-            "${SCRIPT_DIR}/config-manager-auto-update/target/release/singbox-manager" --once
+            "${SCRIPT_DIR}/update_cores.sh"
         else
-            "${SCRIPT_DIR}/config-manager-auto-update/target/release/singbox-manager" --once 2>&1 | grep -E "^(✅|❌|🔄|📥)" || true
+            "${SCRIPT_DIR}/update_cores.sh" 2>&1 | grep -E "^\[OK\]|\[INFO\]|\[WARN\]|当前版本|最新版本|下载|安装|完成" || true
         fi
-        log_success "Singbox核心更新完成"
+        log_success "核心更新完成"
     else
-        log_warning "跳过: singbox-manager未编译"
+        log_warning "跳过: update_cores.sh 不存在"
     fi
 else
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] 跳过核心更新 (使用 --with-core 启用)${NC}"
