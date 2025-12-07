@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # ═══════════════════════════════════════════════════════════════
 # Empty Ruleset Cleanup Script

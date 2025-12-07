@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # ═══════════════════════════════════════════════════════════════
 # Empty Ruleset Checker
-# 检查并报告空规则集的状态
+# Check and report empty ruleset status
 # ═══════════════════════════════════════════════════════════════
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,37 +14,37 @@ echo "║     Empty Ruleset Checker v1.0           ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
-# 统计变量
+# Statistics
 total_rulesets=0
 empty_rulesets=0
 truly_empty=0
 has_sources=0
 
-# 检查所有.list文件
+# Check all .list files
 for ruleset_file in "$RULESET_DIR"/*.list; do
     filename=$(basename "$ruleset_file")
     ruleset_name="${filename%.list}"
     total_rulesets=$((total_rulesets + 1))
     
-    # 计算规则数量（排除注释和空行）
+    # Count rules (exclude comments and empty lines)
     rule_count=$(grep -v '^#' "$ruleset_file" | grep -v '^$' | grep -v '^\s*$' | wc -l | tr -d ' ')
     
     if [ "$rule_count" -eq 0 ]; then
         empty_rulesets=$((empty_rulesets + 1))
         
-        # 检查是否有对应的sources文件
+        # Check if corresponding sources file exists
         sources_file="$SOURCES_DIR/${ruleset_name}_sources.txt"
         if [ -f "$sources_file" ]; then
             sources_count=$(grep -v '^#' "$sources_file" | grep -v '^$' | wc -l | tr -d ' ')
             if [ "$sources_count" -gt 0 ]; then
-                echo "⚠️  $filename: 空规则集，但有 $sources_count 个sources (需要合并)"
+                echo "Empty ruleset with $sources_count sources (needs merge): $filename"
                 has_sources=$((has_sources + 1))
             else
-                echo "❌ $filename: 空规则集，sources也为空"
+                echo "Empty ruleset, sources also empty: $filename"
                 truly_empty=$((truly_empty + 1))
             fi
         else
-            echo "❌ $filename: 空规则集，无sources文件"
+            echo "Empty ruleset, no sources file: $filename"
             truly_empty=$((truly_empty + 1))
         fi
     fi
@@ -52,7 +52,7 @@ done
 
 echo ""
 echo "╔══════════════════════════════════════════╗"
-echo "║            检查结果                      ║"
+echo "║            Check Results                 ║"
 echo "╠══════════════════════════════════════════╣"
 printf "║  Total rulesets:  %-21s ║\n" "$total_rulesets"
 printf "║  Empty rulesets:  %-21s ║\n" "$empty_rulesets"
@@ -62,10 +62,10 @@ echo "╚═══════════════════════�
 
 if [ "$truly_empty" -gt 0 ]; then
     echo ""
-    echo "ℹ️  建议: 运行 cleanup_empty_rulesets.sh 清理真正空的规则集"
+    echo "Tip: Run cleanup_empty_rulesets.sh to clean truly empty rulesets"
 fi
 
 if [ "$has_sources" -gt 0 ]; then
     echo ""
-    echo "ℹ️  建议: 运行 incremental_merge_all.sh 合并sources到规则集"
+    echo "Tip: Run incremental_merge_all.sh to merge sources into rulesets"
 fi

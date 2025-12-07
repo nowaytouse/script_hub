@@ -1,26 +1,26 @@
 name: Update Rulesets
 
 # ═══════════════════════════════════════════════════════════════
-# GitHub Actions Workflow - 规则集自动更新
+# GitHub Actions Workflow - Ruleset Auto Update
 # 
-# 功能范围 (CI/CD 专用):
-#   ✅ 规则集更新 (从上游源下载和合并)
-#   ✅ 智能去重 (广告 > 细分 > 兜底)
-#   ✅ 空规则集清理
-#   ✅ 端口规则同步到防火墙模块
-#   ✅ 广告模块合并
-#   ✅ SRS 文件生成 (Sing-box)
-#   ✅ Git 提交和推送
+# Scope (CI/CD Only):
+#   ✅ Ruleset update (download and merge from upstream)
+#   ✅ Smart dedup (AdBlock > Specific > Fallback)
+#   ✅ Empty ruleset cleanup
+#   ✅ Port rules sync to firewall module
+#   ✅ AdBlock module merge
+#   ✅ SRS file generation (Sing-box)
+#   ✅ Git commit and push
 #
-# 不执行的操作 (本地专用):
-#   ❌ 不建立备份 (CI=true 自动跳过)
-#   ❌ 不更新内核 (--unattended 跳过)
-#   ❌ 不下载 Singbox 配置 (--unattended 跳过)
-#   ❌ 不同步到 iCloud (--unattended 跳过)
-#   ❌ 不同步 Surge 配置 (--unattended 跳过)
+# Skipped Operations (Local Only):
+#   ❌ No backup (CI=true auto-skip)
+#   ❌ No core update (--unattended skip)
+#   ❌ No Singbox config download (--unattended skip)
+#   ❌ No iCloud sync (--unattended skip)
+#   ❌ No Surge profile sync (--unattended skip)
 #
-# 运行时间: 每天 UTC 04:00 (北京时间 12:00)
-# 手动触发: workflow_dispatch
+# Schedule: Daily at UTC 04:00 (12:00 Beijing Time)
+# Manual trigger: workflow_dispatch
 # ═══════════════════════════════════════════════════════════════
 
 on:
@@ -37,7 +37,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0  # 完整历史用于git操作
+        fetch-depth: 0  # Full history for git operations
         
     - name: Configure Git
       run: |
@@ -46,8 +46,8 @@ jobs:
 
     - name: Install sing-box (for SRS generation only)
       run: |
-        # 仅安装 sing-box 命令行工具用于 SRS 文件生成
-        # 不下载 Singbox 配置文件 (由 --unattended 模式跳过)
+        # Install sing-box CLI tool for SRS file generation only
+        # Singbox config download is skipped by --unattended mode
         SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
         echo "Installing sing-box v${SINGBOX_VERSION} (CLI tool only)"
         curl -Lo sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
@@ -59,21 +59,22 @@ jobs:
     - name: Execute Full Update Script (Unattended Mode)
       run: |
         chmod +x merge_sync/*.sh
-        # --unattended 模式:
-        #   ✅ 启用 Git 操作 (pull/push)
-        #   ✅ 规则集更新和合并
-        #   ✅ 智能去重和清理
-        #   ✅ 端口规则同步到防火墙模块
-        #   ✅ SRS 文件生成
-        #   ❌ 跳过核心更新 (WITH_CORE=false)
-        #   ❌ 跳过 iCloud 同步 (SKIP_MODULE=true)
-        #   ❌ 跳过 Surge 配置同步 (SKIP_PROFILE=true)
-        # CI=true 环境变量:
-        #   ❌ 所有脚本自动跳过备份
-        ./merge_sync/full_update.sh --unattended --verbose
+        # --unattended mode:
+        #   ✅ Enable Git operations (pull/push)
+        #   ✅ Ruleset update and merge
+        #   ✅ Smart dedup and cleanup
+        #   ✅ Port rules sync to firewall module
+        #   ✅ SRS file generation
+        #   ❌ Skip core update (WITH_CORE=false)
+        #   ❌ Skip iCloud sync (SKIP_MODULE=true)
+        #   ❌ Skip Surge profile sync (SKIP_PROFILE=true)
+        # --parallel: Enable parallel processing for faster execution
+        # CI=true environment variable:
+        #   ❌ All scripts auto-skip backup operations
+        ./merge_sync/full_update.sh --unattended --parallel --verbose
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        CI: true  # 自动跳过所有备份操作
+        CI: true  # Auto-skip all backup operations
         
     - name: Summary
       run: |
@@ -93,30 +94,31 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         if [ -f "ruleset/Surge(Shadowkroket)/AdBlock.list" ]; then
           ADBLOCK_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/AdBlock.list" 2>/dev/null || echo "0")
-          echo "- **AdBlock** (广告拦截): ${ADBLOCK_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **AdBlock**: ${ADBLOCK_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
         if [ -f "ruleset/Surge(Shadowkroket)/ChinaDirect.list" ]; then
           CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/ChinaDirect.list" 2>/dev/null || echo "0")
-          echo "- **ChinaDirect** (DNS防泄漏): ${CHINADIRECT_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **ChinaDirect** (DNS leak prevention): ${CHINADIRECT_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
         if [ -f "ruleset/Surge(Shadowkroket)/GlobalProxy.list" ]; then
           GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/GlobalProxy.list" 2>/dev/null || echo "0")
-          echo "- **GlobalProxy** (全球代理): ${GLOBALPROXY_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **GlobalProxy**: ${GLOBALPROXY_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
         if [ -f "module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" ]; then
           FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" 2>/dev/null || echo "0")
-          echo "- **Firewall** (端口阻止): ${FIREWALL_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **Firewall** (port blocking): ${FIREWALL_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ⚙️ CI/CD Mode" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "✅ 规则集更新和合并" >> $GITHUB_STEP_SUMMARY
-        echo "✅ 智能去重和清理" >> $GITHUB_STEP_SUMMARY
-        echo "✅ 端口规则同步到防火墙模块" >> $GITHUB_STEP_SUMMARY
-        echo "✅ SRS 文件生成" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Git 提交和推送" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Ruleset update and merge" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Smart dedup and cleanup" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Port rules sync to firewall module" >> $GITHUB_STEP_SUMMARY
+        echo "✅ SRS file generation" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Git commit and push" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Parallel processing enabled" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "❌ 跳过备份 (CI=true)" >> $GITHUB_STEP_SUMMARY
-        echo "❌ 跳过核心更新 (--unattended)" >> $GITHUB_STEP_SUMMARY
-        echo "❌ 跳过 iCloud 同步 (--unattended)" >> $GITHUB_STEP_SUMMARY
-        echo "❌ 跳过 Surge 配置同步 (--unattended)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip backup (CI=true)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip core update (--unattended)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip iCloud sync (--unattended)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY

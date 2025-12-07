@@ -1,11 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: AIProcess
-# Policy: PROXY
-# Node: Any
-# Description: AI related processes
+# Updated: 2025-12-07 19:36
 # Rules: 7
-# Updated: 2025-12-07 18:38:59
 # ═══════════════════════════════════════════════════════════════
+
+# [smart_cleanup.py] Deduplicated: 7 rules
 
 PROCESS-NAME,"/Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin)"
 PROCESS-NAME,"/Applications/Kiro.app/Contents/Frameworks/Kiro Helper (Plugin).app/Contents/MacOS/Kiro Helper (Plugin)"

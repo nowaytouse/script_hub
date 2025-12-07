@@ -1,11 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: AI
-# Policy: PROXY
-# Node: Any
-# Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 76
-# Updated: 2025-12-07 18:38:59
+# Updated: 2025-12-07 19:36
+# Rules: 101
 # ═══════════════════════════════════════════════════════════════
+
+# [smart_cleanup.py] Deduplicated: 101 rules
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
@@ -41,6 +40,31 @@ DOMAIN-KEYWORD,developerprofiles
 DOMAIN-KEYWORD,generativelanguage
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api
+DOMAIN-REGEX,$
+DOMAIN-REGEX,+
+DOMAIN-REGEX,-
+DOMAIN-REGEX,.
+DOMAIN-REGEX,S
+DOMAIN-REGEX,\
+DOMAIN-REGEX,^
+DOMAIN-REGEX,a
+DOMAIN-REGEX,b
+DOMAIN-REGEX,c
+DOMAIN-REGEX,d
+DOMAIN-REGEX,e
+DOMAIN-REGEX,g
+DOMAIN-REGEX,h
+DOMAIN-REGEX,m
+DOMAIN-REGEX,n
+DOMAIN-REGEX,o
+DOMAIN-REGEX,p
+DOMAIN-REGEX,r
+DOMAIN-REGEX,s
+DOMAIN-REGEX,t
+DOMAIN-REGEX,u
+DOMAIN-REGEX,w
+DOMAIN-REGEX,y
+DOMAIN-REGEX,z
 DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,algolia.net
 DOMAIN-SUFFIX,anthropic.com

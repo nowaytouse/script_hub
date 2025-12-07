@@ -8,22 +8,22 @@ RULESET_DIR = os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkr
 # Format: "Specific": ["Generic1", "Generic2"]
 # Meaning: If a domain is in Specific, remove it from Generic1 and Generic2.
 #
-# 🔥 优先级顺序（从高到低）:
-#   1. 广告拦截规则集 (AdBlock, NSFW) - 最高优先级
-#   2. 细分网站规则集 (Twitter, Netflix, Steam等) - 中等优先级
-#   3. 兜底规则集 (GlobalProxy, GlobalMedia, SocialMedia等) - 最低优先级
+# Priority order (high to low):
+#   1. Ad-blocking rulesets (AdBlock, NSFW) - Highest priority
+#   2. Specific site rulesets (Twitter, Netflix, Steam, etc.) - Medium priority
+#   3. Fallback rulesets (GlobalProxy, GlobalMedia, SocialMedia, etc.) - Lowest priority
 #
 CONFLICT_MAP = {
-    # ========== 第一优先级: 广告拦截 ==========
-    # AdBlock优先于所有其他规则集
+    # ========== First Priority: Ad-blocking ==========
+    # AdBlock takes priority over all other rulesets
     "AdBlock.list": ["GlobalProxy.list", "GlobalMedia.list", "SocialMedia.list", 
                      "Google.list", "Microsoft.list", "Apple.list",
                      "Twitter.list", "Instagram.list", "Facebook.list",
                      "YouTube.list", "Netflix.list", "Spotify.list"],
-    # AdBlock_Merged.list已合并到AdBlock.list，不再需要单独处理
+    # AdBlock_Merged.list has been merged into AdBlock.list, no longer needs separate handling
     
-    # ========== 第二优先级: 细分网站规则集 ==========
-    # 社交媒体细分
+    # ========== Second Priority: Specific site rulesets ==========
+    # Social media specific
     "Twitter.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
     "Instagram.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
     "Facebook.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
@@ -31,53 +31,53 @@ CONFLICT_MAP = {
     "TikTok.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
     "Reddit.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
     
-    # 流媒体细分
+    # Streaming specific
     "YouTube.list": ["GlobalMedia.list", "GlobalProxy.list", "Google.list"],
     "Netflix.list": ["GlobalMedia.list", "GlobalProxy.list"],
     "Spotify.list": ["GlobalMedia.list", "GlobalProxy.list"],
     "Disney.list": ["GlobalMedia.list", "GlobalProxy.list"],
     
-    # 游戏细分
+    # Gaming specific
     "Steam.list": ["Gaming.list", "GlobalProxy.list"],
     "Epic.list": ["Gaming.list", "GlobalProxy.list"],
     
-    # AI细分
+    # AI specific
     "OpenAI.list": ["AI.list", "GlobalProxy.list"],
     "Claude.list": ["AI.list", "GlobalProxy.list"],
     
-    # 科技公司细分
+    # Tech company specific
     "Google.list": ["GlobalProxy.list"],
     "Microsoft.list": ["GlobalProxy.list"],
     "Apple.list": ["GlobalProxy.list"],
     "GitHub.list": ["GlobalProxy.list"],
     
-    # NSFW细分（成人内容）
+    # NSFW specific (adult content)
     "NSFW.list": ["GlobalProxy.list"],
     
-    # ========== 第三优先级: 兜底规则集 ==========
-    # 这些规则集优先级最低，会被细分规则集覆盖
-    # GlobalProxy, GlobalMedia, SocialMedia, Gaming, AI 等
+    # ========== Third Priority: Fallback rulesets ==========
+    # These rulesets have lowest priority, will be overridden by specific rulesets
+    # GlobalProxy, GlobalMedia, SocialMedia, Gaming, AI, etc.
 }
 
 # Also standard exclusions: Remove "Direct" domains from "Proxy" lists if they appear?
 # Maybe too risky. Focus on the defined map.
 
 def is_valid_rule(line):
-    """检查规则是否合法（Surge/Shadowrocket 兼容）"""
-    # 跳过 RULE-SET（不应该出现在 .list 文件中）
+    """Check if rule is valid (Surge/Shadowrocket compatible)"""
+    # Skip RULE-SET (should not appear in .list files)
     if line.startswith('RULE-SET'):
         return False
     
-    # 🔥 DOMAIN/DOMAIN-SUFFIX/DOMAIN-KEYWORD 不能带 no-resolve
-    # no-resolve 只能用于 IP-CIDR/IP-CIDR6/GEOIP 规则
+    # DOMAIN/DOMAIN-SUFFIX/DOMAIN-KEYWORD cannot have no-resolve
+    # no-resolve is only for IP-CIDR/IP-CIDR6/GEOIP rules
     if line.startswith('DOMAIN') and ',no-resolve' in line:
         return False
     
     return True
 
 def clean_rule(line):
-    """清理规则，移除非法参数"""
-    # 移除 DOMAIN 规则中的 no-resolve（如果有的话）
+    """Clean rule, remove invalid parameters"""
+    # Remove no-resolve from DOMAIN rules (if present)
     if line.startswith('DOMAIN') and ',no-resolve' in line:
         line = line.replace(',no-resolve', '')
     return line
@@ -94,9 +94,9 @@ def load_list(filepath):
                  # Normalize: remove comments "DOMAIN,x.com # comment"
                 if '#' in line:
                     line = line.split('#')[0].strip()
-                # 🔥 清理非法规则
+                # Clean invalid rules
                 line = clean_rule(line)
-                # 🔥 跳过非法规则
+                # Skip invalid rules
                 if is_valid_rule(line):
                     rules.add(line)
     return rules
@@ -106,36 +106,36 @@ def write_list(filepath, rules):
     sorted_rules = sorted(list(rules))
     filename = os.path.basename(filepath)
     
-    # 🔥 尝试保留原有header（由ruleset_merger.sh生成的详细header）
+    # Try to preserve existing header (detailed header generated by ruleset_merger.sh)
     existing_header = []
     
     if os.path.exists(filepath):
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             for line in f:
-                # 保留所有注释行作为header
+                # Keep all comment lines as header
                 if line.startswith('#') or (line.strip() == ''):
                     existing_header.append(line)
                 else:
-                    # 遇到第一个规则行，header结束
+                    # First rule line, header ends
                     break
     
-    # 写入文件
+    # Write file
     with open(filepath, 'w', encoding='utf-8') as f:
         if existing_header and len(existing_header) > 5:
-            # 有详细header，保留它（包括所有注释和分类标记）
+            # Has detailed header, keep it (including all comments and category markers)
             for line in existing_header:
                 f.write(line)
-            # 在header末尾添加smart_cleanup标记
+            # Add smart_cleanup marker at end of header
             f.write(f"# [smart_cleanup.py] Deduplicated: {len(sorted_rules)} rules\n")
             f.write("\n")
         else:
-            # 没有详细header，使用简单header
+            # No detailed header, use simple header
             f.write(f"# Ruleset: {filename}\n")
             f.write("# Cleaned by smart_cleanup.py\n")
             f.write(f"# Total: {len(sorted_rules)}\n")
             f.write("\n")
         
-        # 写入规则（不再添加分类标记，因为header中已有）
+        # Write rules (no longer adding category markers, already in header)
         for rule in sorted_rules:
             f.write(rule + "\n")
 

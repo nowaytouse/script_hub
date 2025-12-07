@@ -1,11 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: AppleNews
-# Policy: PROXY
-# Node: US
-# Description: Apple News (US only)
+# Updated: 2025-12-07 19:36
 # Rules: 4
-# Updated: 2025-12-07 18:39:00
 # ═══════════════════════════════════════════════════════════════
+
+# [smart_cleanup.py] Deduplicated: 4 rules
 
 DOMAIN,gspe1-ssl.ls.apple.com
 DOMAIN,news-client-search.apple.com

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================
 # Script: Convert Merged Ruleset to Surge Module Format
 # Version: 1.0

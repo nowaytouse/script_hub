@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
-# Singbox 启动测试脚本
-# 功能: 测试 Singbox 配置是否可以正常加载
-# 创建: 2025-12-07
+# Singbox Startup Test Script
+# Purpose: Test if Singbox configuration can load properly
+# Created: 2025-12-07
 # =============================================================================
 
 set -e
@@ -24,36 +24,36 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 SINGBOX_CONFIG="$PROJECT_ROOT/substore/Singbox_substore_1.13.0+.json"
 
 echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║           Singbox 启动测试工具                               ║${NC}"
+echo -e "${BLUE}║           Singbox Startup Test Tool                          ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 if [ ! -f "$SINGBOX_CONFIG" ]; then
-    log_error "配置文件不存在: $SINGBOX_CONFIG"
+    log_error "Config file not found: $SINGBOX_CONFIG"
     exit 1
 fi
 
-log_info "测试配置文件: $SINGBOX_CONFIG"
+log_info "Testing config file: $SINGBOX_CONFIG"
 echo ""
 
-# 优先使用本地预览版 sing-box
+# Prefer local preview sing-box
 LOCAL_SINGBOX="$PROJECT_ROOT/tools/config-manager-auto-update/bin/sing-box"
 if [ -x "$LOCAL_SINGBOX" ]; then
     SINGBOX_CMD="$LOCAL_SINGBOX"
-    log_info "使用本地预览版 sing-box"
+    log_info "Using local preview sing-box"
 elif command -v sing-box &> /dev/null; then
     SINGBOX_CMD="sing-box"
-    log_info "使用系统 sing-box"
+    log_info "Using system sing-box"
 else
     SINGBOX_CMD=""
 fi
 
-# 检查 sing-box 是否可用
+# Check if sing-box is available
 if [ -z "$SINGBOX_CMD" ]; then
-    log_warning "sing-box 未安装，跳过启动测试"
-    log_info "仅进行配置验证..."
+    log_warning "sing-box not installed, skipping startup test"
+    log_info "Performing config validation only..."
     
-    # 使用 Python 验证 JSON 格式
+    # Use Python to validate JSON format
     python3 - "$SINGBOX_CONFIG" <<'PYTHON_SCRIPT'
 import json
 import sys
@@ -64,37 +64,37 @@ try:
     with open(config_file, 'r', encoding='utf-8') as f:
         config = json.load(f)
     
-    print("✅ JSON 格式验证通过")
+    print("✅ JSON format validation passed")
     
-    # 检查关键字段
+    # Check required fields
     required_fields = ['log', 'dns', 'inbounds', 'outbounds', 'route']
     missing = [f for f in required_fields if f not in config]
     
     if missing:
-        print(f"❌ 缺少必需字段: {', '.join(missing)}")
+        print(f"❌ Missing required fields: {', '.join(missing)}")
         sys.exit(1)
     
-    print("✅ 配置结构完整")
+    print("✅ Config structure complete")
     
-    # 检查 cnip 规则集
+    # Check cnip ruleset
     rule_sets = config.get('route', {}).get('rule_set', [])
     cnip_defined = any(rs['tag'] == 'cnip' for rs in rule_sets)
     
     if cnip_defined:
-        print("✅ cnip 规则集已定义")
+        print("✅ cnip ruleset defined")
     else:
-        print("❌ cnip 规则集未定义")
+        print("❌ cnip ruleset not defined")
         sys.exit(1)
     
-    print("\n✅ 配置验证通过！")
-    print("   建议: 安装 sing-box 进行完整测试")
-    print("   安装命令: brew install sing-box")
+    print("\n✅ Config validation passed!")
+    print("   Suggestion: Install sing-box for full testing")
+    print("   Install command: brew install sing-box")
     
 except json.JSONDecodeError as e:
-    print(f"❌ JSON 格式错误: {e}")
+    print(f"❌ JSON format error: {e}")
     sys.exit(1)
 except Exception as e:
-    print(f"❌ 验证失败: {e}")
+    print(f"❌ Validation failed: {e}")
     sys.exit(1)
 
 PYTHON_SCRIPT
@@ -102,30 +102,30 @@ PYTHON_SCRIPT
     exit 0
 fi
 
-# 显示 sing-box 版本
+# Show sing-box version
 SINGBOX_VERSION=$("$SINGBOX_CMD" version 2>/dev/null | head -1 || echo "unknown")
-log_info "sing-box 版本: $SINGBOX_VERSION"
+log_info "sing-box version: $SINGBOX_VERSION"
 
-# 使用 sing-box check 命令验证配置
-log_info "使用 sing-box 验证配置..."
+# Use sing-box check command to validate config
+log_info "Validating config with sing-box..."
 
-# 捕获输出但不因为警告而失败
+# Capture output but don't fail on warnings
 SINGBOX_OUTPUT=$("$SINGBOX_CMD" check -c "$SINGBOX_CONFIG" 2>&1 || true)
 echo "$SINGBOX_OUTPUT" > /tmp/singbox_check.log
 
-# 检查是否有真正的错误
+# Check for real errors
 if echo "$SINGBOX_OUTPUT" | grep -q "FATAL\|error:"; then
-    log_error "❌ Singbox 配置验证失败"
+    log_error "❌ Singbox config validation failed"
     echo ""
-    log_info "错误详情:"
+    log_info "Error details:"
     cat /tmp/singbox_check.log
     exit 1
 else
-    log_success "✅ Singbox 配置验证通过！"
+    log_success "✅ Singbox config validation passed!"
 fi
 
 echo ""
-log_info "配置文件可以正常加载"
-log_success "Singbox 应该可以正常启动了！"
+log_info "Config file can load properly"
+log_success "Singbox should start normally!"
 
 rm -f /tmp/singbox_check.log

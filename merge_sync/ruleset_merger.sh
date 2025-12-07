@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================
 # Script: Ruleset Merger - Proxy Rule Aggregator
 # Version: 2.4

@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
-# 配置同步检查脚本
-# 功能: 检查 Surge、Singbox、Shadowrocket 三个配置是否完全同步
-# 更新: 2025-12-07
+# Configuration Sync Checker
+# Purpose: Check if Surge, Singbox, Shadowrocket configs are fully synchronized
+# Updated: 2025-12-07
 # =============================================================================
 
 set -e
@@ -23,61 +23,61 @@ log_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║       配置同步检查工具                                        ║${NC}"
+echo -e "${BLUE}║       Configuration Sync Checker                             ║${NC}"
 echo -e "${BLUE}║       Surge vs Singbox vs Shadowrocket                       ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# 配置文件路径
+# Config file paths
 SURGE_TEMPLATE="$PROJECT_ROOT/ruleset/Sources/surge_rules_complete.conf"
 SINGBOX_CONFIG="$PROJECT_ROOT/substore/Singbox_substore_1.13.0+.json"
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤1: 提取 Surge 规则集列表
+# Step 1: Extract Surge ruleset list
 # ═══════════════════════════════════════════════════════════════
-log_info "步骤1: 提取 Surge 规则集列表..."
+log_info "Step 1: Extracting Surge ruleset list..."
 
 surge_rulesets=()
 while IFS= read -r line; do
-    # 匹配 RULE-SET 行
+    # Match RULE-SET lines
     if [[ "$line" =~ RULE-SET.*https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge\(Shadowkroket\)/([^.]+)\.list ]]; then
         ruleset_name="${BASH_REMATCH[1]}"
         surge_rulesets+=("$ruleset_name")
     fi
 done < "$SURGE_TEMPLATE"
 
-log_success "Surge 规则集数量: ${#surge_rulesets[@]}"
+log_success "Surge ruleset count: ${#surge_rulesets[@]}"
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤2: 提取 Singbox 规则集列表
+# Step 2: Extract Singbox ruleset list
 # ═══════════════════════════════════════════════════════════════
-log_info "步骤2: 提取 Singbox 规则集列表..."
+log_info "Step 2: Extracting Singbox ruleset list..."
 
 singbox_rulesets=()
 while IFS= read -r line; do
-    # 匹配 surge-xxx 规则集
+    # Match surge-xxx rulesets
     if [[ "$line" =~ \"surge-([^\"]+)\" ]]; then
         ruleset_name="${BASH_REMATCH[1]}"
-        # 去重
+        # Deduplicate
         if [[ ! " ${singbox_rulesets[@]} " =~ " ${ruleset_name} " ]]; then
             singbox_rulesets+=("$ruleset_name")
         fi
     fi
 done < "$SINGBOX_CONFIG"
 
-log_success "Singbox 规则集数量: ${#singbox_rulesets[@]}"
+log_success "Singbox ruleset count: ${#singbox_rulesets[@]}"
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤3: 对比规则集
+# Step 3: Compare rulesets
 # ═══════════════════════════════════════════════════════════════
-log_info "步骤3: 对比规则集..."
+log_info "Step 3: Comparing rulesets..."
 echo ""
 
-# 转换为小写并排序
+# Convert to lowercase and sort
 surge_sorted=($(printf '%s\n' "${surge_rulesets[@]}" | tr '[:upper:]' '[:lower:]' | sort))
 singbox_sorted=($(printf '%s\n' "${singbox_rulesets[@]}" | tr '[:upper:]' '[:lower:]' | sort))
 
-# 检查 Surge 中有但 Singbox 中没有的
+# Check rulesets in Surge but not in Singbox
 missing_in_singbox=()
 for ruleset in "${surge_sorted[@]}"; do
     if [[ ! " ${singbox_sorted[@]} " =~ " ${ruleset} " ]]; then
@@ -85,7 +85,7 @@ for ruleset in "${surge_sorted[@]}"; do
     fi
 done
 
-# 检查 Singbox 中有但 Surge 中没有的
+# Check rulesets in Singbox but not in Surge
 extra_in_singbox=()
 for ruleset in "${singbox_sorted[@]}"; do
     if [[ ! " ${surge_sorted[@]} " =~ " ${ruleset} " ]]; then
@@ -94,21 +94,21 @@ for ruleset in "${singbox_sorted[@]}"; do
 done
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤4: 显示结果
+# Step 4: Display results
 # ═══════════════════════════════════════════════════════════════
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║                    对比结果                                  ║${NC}"
+echo -e "${CYAN}║                    Comparison Results                        ║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════════╣${NC}"
-printf "${CYAN}║${NC}  Surge 规则集:     %-40s ${CYAN}║${NC}\n" "${#surge_rulesets[@]}"
-printf "${CYAN}║${NC}  Singbox 规则集:   %-40s ${CYAN}║${NC}\n" "${#singbox_rulesets[@]}"
+printf "${CYAN}║${NC}  Surge rulesets:    %-40s ${CYAN}║${NC}\n" "${#surge_rulesets[@]}"
+printf "${CYAN}║${NC}  Singbox rulesets:  %-40s ${CYAN}║${NC}\n" "${#singbox_rulesets[@]}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 if [ ${#missing_in_singbox[@]} -eq 0 ] && [ ${#extra_in_singbox[@]} -eq 0 ]; then
-    log_success "✅ 完全同步！所有规则集都已匹配"
+    log_success "✅ Fully synchronized! All rulesets match"
 else
     if [ ${#missing_in_singbox[@]} -gt 0 ]; then
-        log_warning "⚠️  Singbox 中缺少的规则集 (${#missing_in_singbox[@]}个):"
+        log_warning "⚠️  Rulesets missing in Singbox (${#missing_in_singbox[@]}):"
         for ruleset in "${missing_in_singbox[@]}"; do
             echo "   - $ruleset"
         done
@@ -116,7 +116,7 @@ else
     fi
     
     if [ ${#extra_in_singbox[@]} -gt 0 ]; then
-        log_info "ℹ️  Singbox 中额外的规则集 (${#extra_in_singbox[@]}个):"
+        log_info "ℹ️  Extra rulesets in Singbox (${#extra_in_singbox[@]}):"
         for ruleset in "${extra_in_singbox[@]}"; do
             echo "   - $ruleset"
         done
@@ -125,9 +125,9 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤5: 检查关键规则集
+# Step 5: Check key rulesets
 # ═══════════════════════════════════════════════════════════════
-log_info "步骤5: 检查关键规则集..."
+log_info "Step 5: Checking key rulesets..."
 echo ""
 
 key_rulesets=(
@@ -143,16 +143,16 @@ key_rulesets=(
     "google"
 )
 
-echo "关键规则集检查:"
+echo "Key Ruleset Check:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-printf "%-20s | %-10s | %-10s\n" "规则集" "Surge" "Singbox"
+printf "%-20s | %-10s | %-10s\n" "Ruleset" "Surge" "Singbox"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 for key in "${key_rulesets[@]}"; do
     surge_has="❌"
     singbox_has="❌"
     
-    # 检查 Surge
+    # Check Surge
     for ruleset in "${surge_sorted[@]}"; do
         if [[ "$ruleset" == "$key" ]]; then
             surge_has="✅"
@@ -160,7 +160,7 @@ for key in "${key_rulesets[@]}"; do
         fi
     done
     
-    # 检查 Singbox
+    # Check Singbox
     for ruleset in "${singbox_sorted[@]}"; do
         if [[ "$ruleset" == "$key" ]]; then
             singbox_has="✅"
@@ -175,12 +175,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# 步骤6: 检查规则顺序（DNS防泄漏）
+# Step 6: Check rule order (DNS leak prevention)
 # ═══════════════════════════════════════════════════════════════
-log_info "步骤6: 检查规则顺序（DNS防泄漏）..."
+log_info "Step 6: Checking rule order (DNS leak prevention)..."
 echo ""
 
-# 检查 ChinaDirect 是否在 GlobalProxy 之前
+# Check if ChinaDirect is before GlobalProxy
 chinadirect_pos=-1
 globalproxy_pos=-1
 
@@ -196,23 +196,22 @@ done
 
 if [ $chinadirect_pos -ge 0 ] && [ $globalproxy_pos -ge 0 ]; then
     if [ $chinadirect_pos -lt $globalproxy_pos ]; then
-        log_success "✅ DNS防泄漏顺序正确: ChinaDirect (位置 $chinadirect_pos) 在 GlobalProxy (位置 $globalproxy_pos) 之前"
+        log_success "✅ DNS leak prevention order correct: ChinaDirect (pos $chinadirect_pos) before GlobalProxy (pos $globalproxy_pos)"
     else
-        log_error "❌ DNS防泄漏顺序错误: ChinaDirect (位置 $chinadirect_pos) 在 GlobalProxy (位置 $globalproxy_pos) 之后"
+        log_error "❌ DNS leak prevention order wrong: ChinaDirect (pos $chinadirect_pos) after GlobalProxy (pos $globalproxy_pos)"
     fi
 else
-    log_warning "⚠️  无法检查规则顺序: ChinaDirect 或 GlobalProxy 未找到"
+    log_warning "⚠️  Cannot check rule order: ChinaDirect or GlobalProxy not found"
 fi
 
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
+# Task 4: Validate key ruleset configuration
 # ═══════════════════════════════════════════════════════════════
-# 任务4: 验证关键规则集配置
-# ═══════════════════════════════════════════════════════════════
-log_info "任务4: 验证关键规则集配置..."
+log_info "Task 4: Validating key ruleset configuration..."
 
-# 检查 cnip 规则集（DNS防泄漏关键配置）
+# Check cnip ruleset (critical for DNS leak prevention)
 python3 - "$SINGBOX_CONFIG" <<'PYTHON_SCRIPT4'
 import json
 import sys
@@ -222,11 +221,11 @@ config_file = sys.argv[1]
 with open(config_file, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
-# 检查 cnip 规则集定义
+# Check cnip ruleset definition
 rule_sets = config.get('route', {}).get('rule_set', [])
 cnip_defined = any(rs['tag'] == 'cnip' for rs in rule_sets)
 
-# 检查 cnip 引用
+# Check cnip references
 inbounds = config.get('inbounds', [])
 cnip_in_inbound = any(
     'route_exclude_address_set' in ib and ib['route_exclude_address_set'] == 'cnip'
@@ -239,35 +238,35 @@ cnip_in_rules = any(
     for rule in rules
 )
 
-print("\n关键规则集检查:")
-print(f"  cnip 定义: {'✅ 已定义' if cnip_defined else '❌ 未定义'}")
-print(f"  cnip inbound引用: {'✅ 已引用' if cnip_in_inbound else '❌ 未引用'}")
-print(f"  cnip rules引用: {'✅ 已引用' if cnip_in_rules else '❌ 未引用'}")
+print("\nKey Ruleset Check:")
+print(f"  cnip defined: {'✅ Yes' if cnip_defined else '❌ No'}")
+print(f"  cnip inbound ref: {'✅ Yes' if cnip_in_inbound else '❌ No'}")
+print(f"  cnip rules ref: {'✅ Yes' if cnip_in_rules else '❌ No'}")
 
 if not cnip_defined:
-    print("\n❌ 错误: cnip 规则集未定义！")
-    print("   这会导致 Singbox 启动失败")
-    print("   请运行: ./merge_sync/sync_all_configs.sh")
+    print("\n❌ Error: cnip ruleset not defined!")
+    print("   This will cause Singbox startup failure")
+    print("   Please run: ./merge_sync/sync_all_configs.sh")
     sys.exit(1)
 
 if cnip_defined and (cnip_in_inbound or cnip_in_rules):
-    print("\n✅ cnip 规则集配置正确")
-    print("   用途: DNS防泄漏 + 中国IP直连")
+    print("\n✅ cnip ruleset configured correctly")
+    print("   Purpose: DNS leak prevention + China IP direct connection")
 
 PYTHON_SCRIPT4
 
 echo ""
 
-# 总结
+# Summary
 # ═══════════════════════════════════════════════════════════════
 echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                    检查完成                                  ║${NC}"
+echo -e "${BLUE}║                    Check Complete                            ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
 
 if [ ${#missing_in_singbox[@]} -eq 0 ] && [ ${#extra_in_singbox[@]} -eq 0 ]; then
-    log_success "所有配置完全同步！"
+    log_success "All configurations fully synchronized!"
     exit 0
 else
-    log_warning "配置存在差异，请运行 sync_all_configs.sh 进行同步"
+    log_warning "Configuration differences found, please run sync_all_configs.sh to sync"
     exit 1
 fi

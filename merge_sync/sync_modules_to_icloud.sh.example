@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════════════════════
+# Module Sync Script - Surge Modules to iCloud (Surge + Shadowrocket)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Features:
+# 1. Sync Surge modules to Surge iCloud directory
+# 2. Sync and convert modules to Shadowrocket iCloud (compatibility conversion)
+# 3. Auto-exclude sensitive files
+# 4. Support selective or batch sync
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Color definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# Path configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SOURCE_DIR="$PROJECT_ROOT/module/surge(main)"
+
+# ============================================
+# CONFIGURATION - EDIT THESE PATHS
+# ============================================
+SURGE_ICLOUD_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
+SHADOWROCKET_ICLOUD_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents"
+
+# Sensitive keywords (for exclusion)
+SENSITIVE_KEYWORDS=(
+    "private"
+    "secret"
+    "password"
+    "token"
+    "api-key"
+    "YOUR_"
+)
+
+# Logging functions
+log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+log_section() {
+    echo ""
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}  $1${NC}"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+}
+
+# Check if directories exist
+check_directories() {
+    log_section "Checking Directories"
+    
+    if [[ ! -d "$SOURCE_DIR" ]]; then
+        log_error "Source directory not found: $SOURCE_DIR"
+        exit 1
+    fi
+    log_success "Source: $SOURCE_DIR"
+    
+    if [[ ! -d "$SURGE_ICLOUD_DIR" ]]; then
+        log_warning "Surge iCloud not found: $SURGE_ICLOUD_DIR"
+        log_info "Will skip Surge sync"
+        SURGE_AVAILABLE=false
+    else
+        log_success "Surge iCloud: $SURGE_ICLOUD_DIR"
+        SURGE_AVAILABLE=true
+    fi
+    
+    if [[ ! -d "$SHADOWROCKET_ICLOUD_DIR" ]]; then
+        log_warning "Shadowrocket iCloud not found: $SHADOWROCKET_ICLOUD_DIR"
+        log_info "Will skip Shadowrocket sync"
+        SHADOWROCKET_AVAILABLE=false
+    else
+        log_success "Shadowrocket iCloud: $SHADOWROCKET_ICLOUD_DIR"
+        SHADOWROCKET_AVAILABLE=true
+    fi
+    
+    if [[ "$SURGE_AVAILABLE" == false ]] && [[ "$SHADOWROCKET_AVAILABLE" == false ]]; then
+        log_error "All target directories unavailable, cannot sync"
+        exit 1
+    fi
+}
+
+# Check if file contains sensitive keywords
+is_sensitive_file() {
+    local filename="$1"
+    for keyword in "${SENSITIVE_KEYWORDS[@]}"; do
+        if [[ "$filename" == *"$keyword"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Sync single module to Surge iCloud
+sync_to_surge() {
+    local module_file="$1"
+    local module_name=$(basename "$module_file")
+    
+    if is_sensitive_file "$module_name"; then
+        log_warning "Skipped sensitive: $module_name"
+        return
+    fi
+    
+    cp "$module_file" "$SURGE_ICLOUD_DIR/$module_name"
+    log_success "Surge: $module_name"
+}
+
+# Sync single module to Shadowrocket iCloud
+sync_to_shadowrocket() {
+    local module_file="$1"
+    local module_name=$(basename "$module_file")
+    
+    if is_sensitive_file "$module_name"; then
+        log_warning "Skipped sensitive: $module_name"
+        return
+    fi
+    
+    local output_file="$SHADOWROCKET_ICLOUD_DIR/$module_name"
+    
+    # Compatibility conversion
+    sed -e 's/REJECT-DROP/REJECT/g' \
+        -e 's/REJECT-NO-DROP/REJECT/g' \
+        -e 's/hostname = %APPEND% /hostname = /g' \
+        "$module_file" > "$output_file"
+    
+    if [[ $? -eq 0 ]]; then
+        log_success "Shadowrocket: $module_name"
+    else
+        log_warning "Shadowrocket conversion failed: $module_name"
+    fi
+}
+
+# Sync all modules
+sync_all_modules() {
+    log_section "Syncing All Modules"
+    
+    local surge_count=0
+    local shadowrocket_count=0
+    local skipped_count=0
+    
+    for module_file in "$SOURCE_DIR"/*.sgmodule; do
+        if [[ ! -f "$module_file" ]]; then
+            continue
+        fi
+        
+        local module_name=$(basename "$module_file")
+        
+        if is_sensitive_file "$module_name"; then
+            log_warning "Skipped sensitive: $module_name"
+            ((skipped_count++))
+            continue
+        fi
+        
+        log_info "Processing: $module_name"
+        
+        if [[ "$SURGE_AVAILABLE" == true ]]; then
+            sync_to_surge "$module_file"
+            ((surge_count++))
+        fi
+        
+        if [[ "$SHADOWROCKET_AVAILABLE" == true ]]; then
+            sync_to_shadowrocket "$module_file"
+            ((shadowrocket_count++))
+        fi
+        
+        echo ""
+    done
+    
+    log_section "Sync Statistics"
+    if [[ "$SURGE_AVAILABLE" == true ]]; then
+        echo "Surge: $surge_count modules"
+    fi
+    if [[ "$SHADOWROCKET_AVAILABLE" == true ]]; then
+        echo "Shadowrocket: $shadowrocket_count modules"
+    fi
+    echo "Skipped: $skipped_count sensitive files"
+}
+
+# Show help
+show_help() {
+    cat << EOF
+${BLUE}═══════════════════════════════════════════════════════════════${NC}
+  Module Sync Script - Surge Modules to iCloud
+${BLUE}═══════════════════════════════════════════════════════════════${NC}
+
+Usage:
+  $0 [options] [module_name]
+
+Options:
+  -a, --all       Sync all modules (default)
+  -l, --list      List all syncable modules
+  -h, --help      Show this help message
+
+Examples:
+  $0                                    # Sync all modules
+  $0 --all                              # Sync all modules
+  $0 "URL Rewrite Module.sgmodule"      # Sync specific module
+  $0 --list                             # List all modules
+
+Sync Targets:
+  - Surge iCloud: $SURGE_ICLOUD_DIR
+  - Shadowrocket: $SHADOWROCKET_ICLOUD_DIR
+
+Compatibility Conversion:
+  Shadowrocket modules are auto-converted:
+  - REJECT-DROP -> REJECT
+  - REJECT-NO-DROP -> REJECT
+  - hostname %APPEND% -> hostname
+
+EOF
+}
+
+# Main function
+main() {
+    log_section "Module Sync Script"
+    check_directories
+    
+    case "${1:-}" in
+        -h|--help) show_help; exit 0 ;;
+        -l|--list)
+            log_section "Syncable Modules List"
+            for module_file in "$SOURCE_DIR"/*.sgmodule; do
+                [[ ! -f "$module_file" ]] && continue
+                local module_name=$(basename "$module_file")
+                if is_sensitive_file "$module_name"; then
+                    echo -e "${YELLOW}[Sensitive]${NC} $module_name"
+                else
+                    echo -e "${GREEN}[Syncable]${NC} $module_name"
+                fi
+            done
+            exit 0
+            ;;
+        -a|--all|"")
+            sync_all_modules
+            ;;
+        *)
+            local module_file="$SOURCE_DIR/$1"
+            if [[ ! -f "$module_file" ]]; then
+                log_error "Module file not found: $1"
+                exit 1
+            fi
+            log_section "Syncing Specific Module: $1"
+            [[ "$SURGE_AVAILABLE" == true ]] && sync_to_surge "$module_file"
+            [[ "$SHADOWROCKET_AVAILABLE" == true ]] && sync_to_shadowrocket "$module_file"
+            ;;
+    esac
+    
+    log_section "Complete"
+    log_success "Module sync completed!"
+}
+
+main "$@"

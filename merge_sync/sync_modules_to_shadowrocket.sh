@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
-# 同步Surge模块到Shadowrocket
-# 功能: 转换Surge模块为Shadowrocket兼容格式并同步
+# Sync Surge Modules to Shadowrocket
+# Function: Convert Surge modules to Shadowrocket compatible format and sync
 # =============================================================================
 
 set -e
@@ -15,49 +15,49 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SURGE_MODULE_DIR="${SCRIPT_DIR}/../../module/surge(main)"
 
-# ⚠️ 请修改以下路径为你的实际 Shadowrocket iCloud 目录
-# 示例: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
+# Please modify the following path to your actual Shadowrocket iCloud directory
+# Example: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
 SHADOWROCKET_MODULE_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
 
-echo -e "${BLUE}=== Surge → Shadowrocket 模块同步 ===${NC}"
-echo "源目录: $SURGE_MODULE_DIR"
-echo "目标目录: $SHADOWROCKET_MODULE_DIR"
+echo -e "${BLUE}=== Surge -> Shadowrocket Module Sync ===${NC}"
+echo "Source: $SURGE_MODULE_DIR"
+echo "Target: $SHADOWROCKET_MODULE_DIR"
 echo ""
 
-# 检查目录
+# Check directories
 if [ ! -d "$SURGE_MODULE_DIR" ]; then
-    echo -e "${RED}❌ Surge模块目录不存在${NC}"
+    echo -e "${RED}Surge module directory not found${NC}"
     exit 1
 fi
 
 if [ ! -d "$SHADOWROCKET_MODULE_DIR" ]; then
-    echo -e "${RED}❌ Shadowrocket模块目录不存在${NC}"
+    echo -e "${RED}Shadowrocket module directory not found${NC}"
     exit 1
 fi
 
-# 转换函数: Surge → Shadowrocket兼容
+# Convert function: Surge -> Shadowrocket compatible
 convert_to_shadowrocket() {
     local input_file="$1"
     local output_file="$2"
     
-    # 复制并进行必要的转换
+    # Copy and perform necessary conversions
     cat "$input_file" | \
-    # 移除Surge特有的extended-matching参数
+    # Remove Surge-specific extended-matching parameter
     sed 's/,extended-matching//g' | \
-    # 移除pre-matching参数
+    # Remove pre-matching parameter
     sed 's/,pre-matching//g' | \
-    # 移除update-interval参数 (Shadowrocket不支持)
+    # Remove update-interval parameter (Shadowrocket doesn't support)
     sed 's/,"update-interval=[0-9]*"//g' | \
-    # 转换REJECT-DROP为REJECT (Shadowrocket兼容)
+    # Convert REJECT-DROP to REJECT (Shadowrocket compatible)
     sed 's/REJECT-DROP/REJECT/g' | \
-    # 转换REJECT-NO-DROP为REJECT
+    # Convert REJECT-NO-DROP to REJECT
     sed 's/REJECT-NO-DROP/REJECT/g' | \
-    # 移除%APPEND%前缀 (Shadowrocket不需要)
+    # Remove %APPEND% prefix (Shadowrocket doesn't need)
     sed 's/%APPEND% //g' \
     > "$output_file"
 }
 
-# 需要同步的模块列表
+# Modules to sync
 MODULES=(
     "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
     "🚀💪General Enhanced⬆️⬆️ plus.sgmodule"
@@ -73,25 +73,25 @@ for module in "${MODULES[@]}"; do
     src_file="${SURGE_MODULE_DIR}/${module}"
     
     if [ -f "$src_file" ]; then
-        # 生成Shadowrocket兼容的文件名
+        # Generate Shadowrocket compatible filename
         dst_name=$(echo "$module" | sed 's/[^a-zA-Z0-9._-]/_/g')
         dst_file="${SHADOWROCKET_MODULE_DIR}/${dst_name}"
         
-        echo -e "${YELLOW}同步: ${module}${NC}"
+        echo -e "${YELLOW}Syncing: ${module}${NC}"
         
         if convert_to_shadowrocket "$src_file" "$dst_file"; then
-            echo -e "${GREEN}  ✅ 完成 → ${dst_name}${NC}"
+            echo -e "${GREEN}  Done -> ${dst_name}${NC}"
             ((SUCCESS++))
         else
-            echo -e "${RED}  ❌ 失败${NC}"
+            echo -e "${RED}  Failed${NC}"
             ((FAILED++))
         fi
     else
-        echo -e "${RED}跳过: ${module} (不存在)${NC}"
+        echo -e "${RED}Skip: ${module} (not found)${NC}"
         ((FAILED++))
     fi
 done
 
 echo ""
-echo -e "${BLUE}=== 同步完成 ===${NC}"
-echo -e "成功: ${GREEN}${SUCCESS}${NC} | 失败: ${RED}${FAILED}${NC}"
+echo -e "${BLUE}=== Sync Complete ===${NC}"
+echo -e "Success: ${GREEN}${SUCCESS}${NC} | Failed: ${RED}${FAILED}${NC}"

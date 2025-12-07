@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
-# 同步MetaCubeX规则到本地并转换为Surge格式
-# 使用sing-box decompile将.srs反编译为JSON，再转换为.list
-# 优化: 并行下载 + 本地sing-box优先
+# Sync MetaCubeX Rules to Local and Convert to Surge Format
+# Use sing-box decompile to convert .srs to JSON, then to .list
+# Optimization: Parallel download + Local sing-box priority
 # =============================================================================
 
 set -e
@@ -20,7 +20,7 @@ METACUBEX_DIR="${RULESET_DIR}/MetaCubeX"
 TMP_DIR="/tmp/metacubex_sync_$$"
 LOCAL_SINGBOX="${SCRIPT_DIR}/config-manager-auto-update/bin/sing-box"
 
-# MetaCubeX规则列表 (tag:url)
+# MetaCubeX rule list (tag:url)
 METACUBEX_RULES=(
     "telegram:https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs"
     "discord:https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/discord.srs"
@@ -48,26 +48,26 @@ METACUBEX_RULES=(
     "cloudflare:https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cloudflare.srs"
 )
 
-echo -e "${BLUE}=== 同步MetaCubeX规则 (优化版) ===${NC}"
-echo "目标目录: $METACUBEX_DIR"
+echo -e "${BLUE}=== Sync MetaCubeX Rules (Optimized) ===${NC}"
+echo "Target directory: $METACUBEX_DIR"
 
-# 创建目录
+# Create directories
 mkdir -p "$METACUBEX_DIR"
 mkdir -p "$TMP_DIR"
 
-# 选择sing-box: 优先使用本地预览版
+# Select sing-box: prefer local preview version
 if [ -x "$LOCAL_SINGBOX" ]; then
     SINGBOX="$LOCAL_SINGBOX"
-    echo -e "${GREEN}使用本地sing-box: $("$SINGBOX" version | head -1)${NC}"
+    echo -e "${GREEN}Using local sing-box: $("$SINGBOX" version | head -1)${NC}"
 elif command -v sing-box &> /dev/null; then
     SINGBOX="sing-box"
-    echo -e "${YELLOW}使用系统sing-box: $(sing-box version | head -1)${NC}"
+    echo -e "${YELLOW}Using system sing-box: $(sing-box version | head -1)${NC}"
 else
-    echo -e "${RED}❌ sing-box未安装${NC}"
+    echo -e "${RED}sing-box not installed${NC}"
     exit 1
 fi
 
-# 转换JSON到Surge格式 (优化版)
+# Convert JSON to Surge format (optimized)
 json_to_surge() {
     local json_file="$1"
     local output_file="$2"
@@ -86,12 +86,12 @@ for rule in data.get('rules', []):
     rules.extend(f'IP-CIDR,{ip},no-resolve' for ip in rule.get('ip_cidr', []))
 rules = list(dict.fromkeys(rules))
 with open('$output_file', 'w') as f:
-    f.write(f'# MetaCubeX geosite-$name\n# 规则数: {len(rules)}\n\n')
+    f.write(f'# MetaCubeX geosite-$name\n# Rules: {len(rules)}\n\n')
     f.write('\n'.join(rules) + '\n')
 print(f'{len(rules)}')" 2>/dev/null
 }
 
-# 处理单个规则 (用于并行)
+# Process single rule (for parallel)
 process_rule() {
     local entry="$1"
     local name="${entry%%:*}"
@@ -101,14 +101,14 @@ process_rule() {
     local json_file="${TMP_DIR}/${name}.json"
     local list_file="${METACUBEX_DIR}/MetaCubeX_${name}.list"
     
-    # 下载 + 反编译 + 转换
+    # Download + Decompile + Convert
     if curl -sL --connect-timeout 10 "$url" -o "$srs_file" 2>/dev/null && \
        "$SINGBOX" rule-set decompile "$srs_file" -o "$json_file" 2>/dev/null; then
         local count=$(json_to_surge "$json_file" "$list_file" "$name")
-        echo -e "${GREEN}✅ ${name}: ${count}条${NC}"
+        echo -e "${GREEN}${name}: ${count} rules${NC}"
         return 0
     else
-        echo -e "${RED}❌ ${name}${NC}"
+        echo -e "${RED}${name} failed${NC}"
         return 1
     fi
 }
@@ -120,7 +120,7 @@ SUCCESS=0
 FAILED=0
 
 echo ""
-# 并行处理 (最多4个并发)
+# Parallel processing (max 4 concurrent)
 for entry in "${METACUBEX_RULES[@]}"; do
     if process_rule "$entry"; then
         ((SUCCESS++))
@@ -129,10 +129,10 @@ for entry in "${METACUBEX_RULES[@]}"; do
     fi
 done
 
-# 清理
+# Cleanup
 rm -rf "$TMP_DIR"
 
 echo ""
-echo -e "${BLUE}=== 完成 ===${NC}"
-echo -e "成功: ${GREEN}${SUCCESS}${NC} | 失败: ${RED}${FAILED}${NC}"
-echo "下一步: ./update_sources_metacubex.sh && ./incremental_merge_all.sh"
+echo -e "${BLUE}=== Complete ===${NC}"
+echo -e "Success: ${GREEN}${SUCCESS}${NC} | Failed: ${RED}${FAILED}${NC}"
+echo "Next: ./update_sources_metacubex.sh && ./incremental_merge_all.sh"
