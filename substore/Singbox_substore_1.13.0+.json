@@ -46,11 +46,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       },
       {
@@ -62,11 +58,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       },
       {
@@ -78,11 +70,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       },
       {
@@ -94,11 +82,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       },
       {
@@ -110,11 +94,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       },
       {
@@ -126,11 +106,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       },
       {
@@ -142,11 +118,7 @@
           "enabled": true,
           "min_version": "1.3",
           "max_version": "1.3",
-          "curve_preferences": [
-            "x25519",
-            "p256",
-            "p384"
-          ]
+          "curve_preferences": ["x25519", "p256", "p384"]
         }
       }
     ],
@@ -174,20 +146,7 @@
         "server": "aliyun_h3"
       },
       {
-        "domain_suffix": [
-          ".cn",
-          ".gov",
-          ".edu",
-          ".mil",
-          ".int",
-          ".arpa",
-          ".local",
-          ".localhost"
-        ],
-        "server": "aliyun_h3"
-      },
-      {
-        "rule_set": "surge-chinadirect",
+        "domain_suffix": [".cn", ".gov", ".edu", ".mil", ".int", ".arpa", ".local", ".localhost"],
         "server": "aliyun_h3"
       },
       {
@@ -199,10 +158,7 @@
         "server": "cf_h3_1111"
       },
       {
-        "query_type": [
-          "A",
-          "AAAA"
-        ],
+        "query_type": ["A", "AAAA"],
         "server": "cf_h3_1111",
         "rewrite_ttl": 64
       }
@@ -214,10 +170,7 @@
       "type": "tun",
       "tag": "🔧 增强模式 ⚙️",
       "interface_name": "utun45",
-      "address": [
-        "172.18.0.1/30",
-        "fdfe:dcba:9876::1/126"
-      ],
+      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"],
       "mtu": 9000,
       "auto_route": true,
       "route_exclude_address": [
@@ -278,9 +231,7 @@
     {
       "type": "selector",
       "tag": "direct-select",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "default": "🎯 全球直连"
     },
     {
@@ -288,254 +239,255 @@
       "tag": "❌ 拒绝屏蔽"
     },
     {
-      "type": "selector",
-      "tag": "🚶 中续路径 🔐",
-      "outbounds": [
-        "🎯 全球直连"
-      ]
-    },
-    {
-      "type": "selector",
-      "tag": "🗺️ 中国大陆 🇨🇳",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "default": "🎯 全球直连"
-    },
-    {
-      "type": "selector",
-      "tag": "🍎 Apple 🍏",
-      "outbounds": [
-        "🎯 全球直连",
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🎯 全球直连"
-    },
-    {
-      "type": "selector",
-      "tag": "🗺️ 直连通用 🌏",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "default": "🎯 全球直连"
+      "type": "urltest",
+      "tag": "♻️ 自动入口 🧠",
+      "outbounds": ["🎯 全球直连"],
+      "url": "http://www.cloudflare.com/generate_204",
+      "interval": "45s",
+      "tolerance": 30
     },
     {
       "type": "urltest",
-      "tag": "♻️ 自动入口 🧠",
-      "outbounds": [
-        "🇺🇸 美国 🇺🇸",
-        "🇭🇰 香港 🇭🇰",
-        "🇯🇵 JP 🇯🇵",
-        "🇹🇼 台湾 🇹🇼"
-      ],
+      "tag": "🚶 中续路径 🔐",
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
-      "interval": "1m",
+      "interval": "70s",
+      "tolerance": 30
+    },
+    {
+      "type": "urltest",
+      "tag": "🕳️ 落地节点 🔐 +",
+      "outbounds": ["🎯 全球直连"],
+      "url": "http://www.cloudflare.com/generate_204",
+      "interval": "80s",
       "tolerance": 30
     },
     {
       "type": "selector",
-      "tag": "📱 TikTok 🧠",
-      "outbounds": [
-        "🇯🇵 JP 🇯🇵",
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🇯🇵 JP 🇯🇵"
+      "tag": "🛜 PonTen 🏠",
+      "outbounds": ["🎯 全球直连", "🌍 海外通用 🌍"],
+      "default": "🎯 全球直连"
     },
     {
       "type": "selector",
-      "tag": "🔊  Spotify  🟢",
-      "outbounds": [
-        "🇯🇵 JP 🇯🇵",
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🇺🇸 美国 🇺🇸"
-    },
-    {
-      "type": "selector",
-      "tag": "▶️  YouTube 🔴",
-      "outbounds": [
-        "♻️ 自动入口 🧠",
-        "🇯🇵 JP 🇯🇵",
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🇺🇸 美国 🇺🇸"
+      "tag": "📺 哔哩哔哩 📱",
+      "outbounds": ["🗺️ 直连通用 🌏", "🇭🇰 港澳台 🇲🇴", "🌍 海外通用 🌍", "🎯 全球直连"],
+      "default": "🗺️ 直连通用 🌏"
     },
     {
       "type": "selector",
       "tag": "🎮 游戏平台 💻",
       "outbounds": [
-        "♻️ 自动入口 🧠",
+        "🗺️ 直连通用 🌏",
+        "🌍 海外通用 🌍",
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 西方 🇫🇷",
+        "🇸🇬 亚洲 🇰🇷",
+        "🇬🇧 UK 🇬🇧",
+        "🇭🇰 港澳台 🇲🇴",
+        "🇺🇸 美国 🇺🇸",
+        "🇭🇰 香港 🇭🇰",
+        "🇹🇼 台湾 🇹🇼",
+        "🇸🇬 新加坡 🇸🇬",
+        "🇰🇷 韩国 🇰🇷",
+        "🇲🇴 澳门 🇲🇴",
         "🎯 全球直连"
       ],
-      "default": "🎯 全球直连"
+      "default": "🗺️ 直连通用 🌏"
     },
     {
       "type": "selector",
       "tag": "🐟 漏网之鱼 🕸️",
       "outbounds": [
-        "🌍 海外通用 🌍",
         "♻️ 自动入口 🧠",
-        "🎯 全球直连"
+        "🌍 海外通用 🌍",
+        "🚫 漏网绝杀 🕸️",
+        "🗺️ 直连通用 🌏",
+        "🔗 自动回退 🏁",
+        "🛜 PonTen 🏠"
       ],
       "default": "♻️ 自动入口 🧠"
-    },
-    {
-      "type": "selector",
-      "tag": "🌍 海外通用 🌍",
-      "outbounds": [
-        "♻️ 自动入口 🧠"
-      ],
-      "default": "♻️ 自动入口 🧠"
-    },
-    {
-      "type": "selector",
-      "tag": "🇺🇸 西方 🇫🇷",
-      "outbounds": [
-        "🇺🇸 美国 🇺🇸"
-      ],
-      "default": "🇺🇸 美国 🇺🇸"
-    },
-    {
-      "type": "selector",
-      "tag": "🇭🇰 港澳台 🇲🇴",
-      "outbounds": [
-        "🇭🇰 香港 🇭🇰",
-        "🇹🇼 台湾 🇹🇼"
-      ],
-      "default": "🇭🇰 香港 🇭🇰"
-    },
-    {
-      "type": "urltest",
-      "tag": "🕳️ 落地节点 🔐 +",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "selector",
-      "tag": "📺 哔哩哔哩 📱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "default": "🎯 全球直连"
     },
     {
       "type": "selector",
       "tag": "🚫 漏网绝杀 🕸️",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "default": "🎯 全球直连"
+      "outbounds": ["❌ 拒绝屏蔽", "🌍 海外通用 🌍"],
+      "default": "❌ 拒绝屏蔽"
     },
     {
       "type": "urltest",
       "tag": "🔗 自动回退 🏁",
+      "outbounds": ["🎯 全球直连"],
+      "url": "http://www.cloudflare.com/generate_204",
+      "interval": "5m",
+      "tolerance": 2
+    },
+    {
+      "type": "selector",
+      "tag": "▶️  YouTube 🔴",
       "outbounds": [
+        "🌍 海外通用 🌍",
+        "🇺🇸 西方 🇫🇷",
+        "🇯🇵 JP 🇯🇵",
+        "🇸🇬 亚洲 🇰🇷",
+        "🇬🇧 UK 🇬🇧",
+        "🇭🇰 港澳台 🇲🇴",
+        "🇺🇸 美国 🇺🇸",
+        "🇭🇰 香港 🇭🇰",
+        "🇹🇼 台湾 🇹🇼",
+        "🇸🇬 新加坡 🇸🇬",
+        "🇰🇷 韩国 🇰🇷",
+        "🇲🇴 澳门 🇲🇴",
+        "🗺️ 直连通用 🌏"
+      ],
+      "default": "🌍 海外通用 🌍"
+    },
+    {
+      "type": "selector",
+      "tag": "🍎 Apple 🍏",
+      "outbounds": [
+        "🗺️ 直连通用 🌏",
+        "🌍 海外通用 🌍",
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 西方 🇫🇷",
+        "🇸🇬 亚洲 🇰🇷",
+        "🇬🇧 UK 🇬🇧",
+        "🇭🇰 港澳台 🇲🇴",
         "🎯 全球直连"
       ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "default": "🗺️ 直连通用 🌏"
+    },
+    {
+      "type": "selector",
+      "tag": "📱 TikTok 🧠",
+      "outbounds": [
+        "🌍 海外通用 🌍",
+        "🇰🇷 韩国 🇰🇷",
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 西方 🇫🇷",
+        "🇸🇬 亚洲 🇰🇷",
+        "🇬🇧 UK 🇬🇧",
+        "🇺🇸 美国 🇺🇸",
+        "🇸🇬 新加坡 🇸🇬",
+        "🇹🇼 台湾 🇹🇼",
+        "🇭🇰 香港 🇭🇰",
+        "🇲🇴 澳门 🇲🇴",
+        "🗺️ 直连通用 🌏"
+      ],
+      "default": "🌍 海外通用 🌍"
+    },
+    {
+      "type": "selector",
+      "tag": "🔊  Spotify  🟢",
+      "outbounds": [
+        "🌍 海外通用 🌍",
+        "🇺🇸 西方 🇫🇷",
+        "🇯🇵 JP 🇯🇵",
+        "🇸🇬 亚洲 🇰🇷",
+        "🇬🇧 UK 🇬🇧",
+        "🇭🇰 港澳台 🇲🇴",
+        "🇺🇸 美国 🇺🇸",
+        "🇭🇰 香港 🇭🇰",
+        "🇹🇼 台湾 🇹🇼",
+        "🇸🇬 新加坡 🇸🇬",
+        "🇰🇷 韩国 🇰🇷",
+        "🇲🇴 澳门 🇲🇴",
+        "🗺️ 直连通用 🌏"
+      ],
+      "default": "🌍 海外通用 🌍"
+    },
+    {
+      "type": "selector",
+      "tag": "🗺️ 直连通用 🌏",
+      "outbounds": ["🎯 全球直连", "🗺️ 中国大陆 🇨🇳", "🌍 海外通用 🌍"],
+      "default": "🎯 全球直连"
     },
     {
       "type": "urltest",
+      "tag": "🌍 海外通用 🌍",
+      "outbounds": ["♻️ 自动入口 🧠", "🕳️ 落地节点 🔐 +"],
+      "url": "http://www.cloudflare.com/generate_204",
+      "interval": "9m",
+      "tolerance": 80
+    },
+    {
+      "type": "selector",
+      "tag": "🇭🇰 港澳台 🇲🇴",
+      "outbounds": ["🌍 海外通用 🌍", "🇭🇰 香港 🇭🇰", "🇹🇼 台湾 🇹🇼", "🇲🇴 澳门 🇲🇴"],
+      "default": "🌍 海外通用 🌍"
+    },
+    {
+      "type": "selector",
+      "tag": "🇺🇸 西方 🇫🇷",
+      "outbounds": ["🌍 海外通用 🌍", "🇺🇸 美国 🇺🇸", "🇬🇧 UK 🇬🇧", "🇺🇸美国专线🧱", "🇬🇧英国专线🧱"],
+      "default": "🌍 海外通用 🌍"
+    },
+    {
+      "type": "selector",
       "tag": "🇸🇬 亚洲 🇰🇷",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇯🇵 JP 🇯🇵", "🇸🇬 新加坡 🇸🇬", "🇰🇷 韩国 🇰🇷", "🇯🇵日本专线🧱", "🇸🇬新加坡专线🧱", "🇰🇷韩国专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
       "type": "urltest",
+      "tag": "🗺️ 中国大陆 🇨🇳",
+      "outbounds": ["🎯 全球直连"],
+      "url": "http://connectivitycheck.platform.hicloud.com/generate_204",
+      "interval": "3m",
+      "tolerance": 10
+    },
+    {
+      "type": "selector",
       "tag": "🇯🇵 JP 🇯🇵",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇯🇵日本专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇬🇧 UK 🇬🇧",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇬🇧英国专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇺🇸 美国 🇺🇸",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇺🇸美国专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇭🇰 香港 🇭🇰",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇭🇰香港专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇲🇴 澳门 🇲🇴",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇹🇼 台湾 🇹🇼",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇹🇼台湾专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇸🇬 新加坡 🇸🇬",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇸🇬新加坡专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
-      "type": "urltest",
+      "type": "selector",
       "tag": "🇰🇷 韩国 🇰🇷",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
+      "outbounds": ["🌍 海外通用 🌍", "🇰🇷韩国专线🧱"],
+      "default": "🌍 海外通用 🌍"
     },
     {
       "type": "urltest",
       "tag": "🇯🇵日本专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -543,9 +495,7 @@
     {
       "type": "urltest",
       "tag": "🇺🇸美国专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -553,9 +503,7 @@
     {
       "type": "urltest",
       "tag": "🇭🇰香港专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -563,9 +511,7 @@
     {
       "type": "urltest",
       "tag": "🇸🇬新加坡专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -573,9 +519,7 @@
     {
       "type": "urltest",
       "tag": "🇹🇼台湾专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -583,9 +527,7 @@
     {
       "type": "urltest",
       "tag": "🇬🇧英国专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -593,9 +535,7 @@
     {
       "type": "urltest",
       "tag": "🇰🇷韩国专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
@@ -603,48 +543,35 @@
     {
       "type": "urltest",
       "tag": "🧱仅专线🧱",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "urltest",
-      "tag": "🤖AI平台🤖",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "url": "http://www.cloudflare.com/generate_204",
-      "interval": "3m",
-      "tolerance": 30
-    },
-    {
-      "type": "urltest",
-      "tag": "☎️telegram✈️",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
+      "outbounds": ["🎯 全球直连"],
       "url": "http://www.cloudflare.com/generate_204",
       "interval": "3m",
       "tolerance": 30
     },
     {
       "type": "selector",
-      "tag": "🛜 PonTen 🏠",
-      "outbounds": [
-        "🎯 全球直连"
-      ],
-      "default": "🎯 全球直连"
+      "tag": "🤖AI平台🤖",
+      "outbounds": ["🌍 海外通用 🌍", "🇺🇸美国专线🧱", "🇺🇸 美国 🇺🇸"],
+      "default": "🌍 海外通用 🌍"
+    },
+    {
+      "type": "selector",
+      "tag": "☎️telegram✈️",
+      "outbounds": ["🌍 海外通用 🌍", "🇯🇵 JP 🇯🇵", "🇺🇸 美国 🇺🇸", "🇹🇼 台湾 🇹🇼"],
+      "default": "🌍 海外通用 🌍"
     },
     {
       "type": "selector",
       "tag": "🌐 社交媒体 📱",
       "outbounds": [
-        "🎯 全球直连"
+        "🌍 海外通用 🌍",
+        "🇯🇵日本专线🧱",
+        "🇺🇸美国专线🧱",
+        "🇰🇷韩国专线🧱",
+        "🇯🇵 JP 🇯🇵",
+        "🇺🇸 美国 🇺🇸"
       ],
-      "default": "🎯 全球直连"
+      "default": "🌍 海外通用 🌍"
     }
   ],
   "route": {
@@ -661,10 +588,26 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-ai",
+        "tag": "surge-manual_us",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AI_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_US_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_west",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_West_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual_jp",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_JP_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -673,6 +616,86 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AIProcess_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-gamingprocess",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GamingProcess_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-directprocess",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DirectProcess_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-downloadprocess",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DownloadProcess_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-lan",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/LAN_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-manual",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-tencent",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tencent_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-bilibili",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bilibili_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-xiaohongshu",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/XiaoHongShu_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-neteasemusic",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NetEaseMusic_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-ai",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AI_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -701,18 +724,34 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-youtube",
+        "tag": "surge-nsfw",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/YouTube_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NSFW_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
-        "tag": "surge-spotify",
+        "tag": "surge-streamjp",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Spotify_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamJP_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamus",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamUS_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-streamkr",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamKR_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -733,22 +772,6 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-streamjp",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamJP_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-streamkr",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamKR_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
         "tag": "surge-streamtw",
         "type": "remote",
         "format": "binary",
@@ -757,66 +780,18 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-streamus",
+        "tag": "surge-youtube",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/StreamUS_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/YouTube_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
-        "tag": "surge-apple",
+        "tag": "surge-spotify",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Apple_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-applenews",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AppleNews_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-google",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Google_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-googlecn",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GoogleCN_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-microsoft",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Microsoft_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-bing",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bing_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-github",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GitHub_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Spotify_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -825,14 +800,6 @@
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Gaming_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-gamingprocess",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GamingProcess_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -853,10 +820,58 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-speedtest",
+        "tag": "surge-google",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Speedtest_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Google_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-bing",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bing_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-apple",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Apple_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-applenews",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/AppleNews_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-microsoft",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Microsoft_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-github",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GitHub_Singbox.srs",
+        "download_detour": "♻️ 自动入口 🧠",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "surge-tesla",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tesla_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -877,58 +892,18 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-bilibili",
+        "tag": "surge-speedtest",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Bilibili_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Speedtest_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
-        "tag": "surge-chinadirect",
+        "tag": "surge-substore",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaDirect_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-tencent",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tencent_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-xiaohongshu",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/XiaoHongShu_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-neteasemusic",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NetEaseMusic_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-tesla",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Tesla_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-lan",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/LAN_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/substore_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -941,26 +916,18 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-downloadprocess",
+        "tag": "surge-googlecn",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DownloadProcess_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GoogleCN_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
       {
-        "tag": "surge-globalproxy",
+        "tag": "surge-chinadirect",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalProxy_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-manual",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/ChinaDirect_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -973,50 +940,10 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-manual_jp",
+        "tag": "surge-globalproxy",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_JP_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-manual_us",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_US_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-manual_west",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_West_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-directprocess",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DirectProcess_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-nsfw",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/NSFW_Singbox.srs",
-        "download_detour": "♻️ 自动入口 🧠",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "surge-substore",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/substore_Singbox.srs",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/GlobalProxy_Singbox.srs",
         "download_detour": "♻️ 自动入口 🧠",
         "update_interval": "24h"
       },
@@ -1043,547 +970,24 @@
         "outbound": "♻️ 自动入口 🧠"
       },
       {
-        "network": "icmp",
-        "outbound": "🎯 全球直连"
+        "rule_set": "surge-adblock",
+        "outbound": "❌ 拒绝屏蔽"
       },
       {
-        "ip_is_private": true,
-        "outbound": "🎯 全球直连"
-      },
-      {
-        "domain": "localhost",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain": "127.0.0.1",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "local",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "ip_cidr": "fc00::/7",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "ip_cidr": "fc00::/8",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-lan",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "protocol": "bittorrent",
-        "outbound": "🎯 全球直连"
-      },
-      {
-        "protocol": "stun",
-        "outbound": "🎯 全球直连"
-      },
-      {
-        "domain_suffix": "smtp",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "steamserver.net",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": [
-          "uuuoo.cc",
-          "emby.bid",
-          "emby.date",
-          "emby.loan",
-          "emby.trade"
-        ],
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-paypal",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-telegram",
-        "outbound": "☎️telegram✈️"
-      },
-      {
-        "rule_set": "surge-tiktok",
-        "outbound": "📱 TikTok 🧠"
-      },
-      {
-        "rule_set": "surge-ai",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-apple",
-        "outbound": "🍎 Apple 🍏"
-      },
-      {
-        "domain_keyword": "icloud",
-        "outbound": "🍎 Apple 🍏"
-      },
-      {
-        "domain_suffix": [
-          ".icloud.com",
-          ".icloud-content.com"
-        ],
-        "outbound": "🎯 全球直连"
-      },
-      {
-        "domain_suffix": [
-          ".office365.com"
-        ],
-        "outbound": "🎯 全球直连"
-      },
-      {
-        "rule_set": "surge-apple",
-        "outbound": "🍎 Apple 🍏"
-      },
-      {
-        "rule_set": "surge-chinadirect",
-        "outbound": "🗺️ 中国大陆 🇨🇳"
-      },
-      {
-        "rule_set": "surge-globalproxy",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-gaming",
-        "outbound": "🗺️ 中国大陆 🇨🇳"
-      },
-      {
-        "rule_set": "surge-microsoft",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-bing",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-socialmedia",
+        "domain_keyword": "reddit",
         "outbound": "🌐 社交媒体 📱"
       },
       {
-        "rule_set": "surge-telegram",
-        "outbound": "☎️telegram✈️"
-      },
-      {
-        "rule_set": "surge-github",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-spotify",
-        "outbound": "🔊  Spotify  🟢"
-      },
-      {
-        "rule_set": "surge-steam",
-        "outbound": "🎮 游戏平台 💻"
-      },
-      {
-        "rule_set": "surge-globalproxy",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-cdn",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-speedtest",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "action": "resolve"
-      },
-      {
-        "rule_set": "surge-telegram",
-        "outbound": "☎️telegram✈️"
-      },
-      {
-        "rule_set": "surge-chinaip",
-        "outbound": "🗺️ 中国大陆 🇨🇳"
-      },
-      {
-        "domain_keyword": "cursor",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "domain_keyword": "picseed",
-        "outbound": "🇯🇵 JP 🇯🇵"
-      },
-      {
-        "domain_suffix": "hanime1.me",
-        "outbound": "🇺🇸 西方 🇫🇷"
-      },
-      {
-        "domain": "profile.gc.fe2.apple-dns.net",
-        "port": 443,
-        "outbound": "🎮 游戏平台 💻"
-      },
-      {
-        "domain_keyword": "roblox",
-        "outbound": "🎮 游戏平台 💻"
-      },
-      {
-        "domain": "YOUR_DDNS_DOMAIN",
-        "outbound": "🎯 全球直连"
-      },
-      {
-        "domain_suffix": "ravens-scans.com",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "domain_keyword": "icloud",
-        "outbound": "🍎 Apple 🍏"
-      },
-      {
-        "domain_suffix": "idmzj.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "zaimanhua.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "steamserver.net",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "jetbrains.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "ugreengroup.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "msftconnecttest.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "appstorrent.ru",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "zerotier.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_suffix": "imgse.com",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "domain_keyword": "mastodon",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "misskey",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "pixelfed",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "pleroma",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "lemmy",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "peertube",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "nostr",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "bsky",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_keyword": "atproto",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "mastodon.social",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "mastodon.online",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "mastodon.cloud",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "mstdn.jp",
-        "outbound": "🇯🇵 JP 🇯🇵"
-      },
-      {
-        "domain_suffix": "mastodon.art",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "pawoo.net",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "pixelfed.social",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "pixelfed.org",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "misskey.io",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "misskey-hub.net",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "lemmy.world",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "lemmy.ml",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "peertube.video",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "joinpeertube.org",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "bsky.app",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "bsky.social",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "atproto.com",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "nostr.wlvs.space",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "nostr.info",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "cloudflare.com",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain": "jable.tv",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain": "api.amplitude.com",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain": "m.cmx.im",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "vercel.app",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "www.torrentmac.net",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "nssurge.com",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "surgee.me",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "googleapis.com",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "api.themoviedb.org",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "domain_suffix": "itoolab.com",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "domain_suffix": "itoolab.net",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "domain_suffix": "ip-api.com",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-gaming",
-        "outbound": "🗺️ 中国大陆 🇨🇳"
-      },
-      {
-        "rule_set": "surge-ai",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-adblock",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
-        "rule_set": "surge-manual_us",
-        "outbound": "🇺🇸 美国 🇺🇸"
-      },
-      {
-        "rule_set": "surge-manual_west",
-        "outbound": "🇺🇸 西方 🇫🇷"
-      },
-      {
-        "rule_set": "surge-manual_jp",
-        "outbound": "🇯🇵 JP 🇯🇵"
-      },
-      {
-        "rule_set": "surge-ai",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-telegram",
-        "outbound": "☎️telegram✈️"
-      },
-      {
-        "rule_set": "surge-tiktok",
-        "outbound": "📱 TikTok 🧠"
-      },
-      {
-        "rule_set": "surge-google",
-        "outbound": "▶️  YouTube 🔴"
-      },
-      {
-        "rule_set": "surge-lan",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-manual",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-nsfw",
-        "outbound": "🇯🇵 JP 🇯🇵"
-      },
-      {
-        "rule_set": "surge-bilibili",
-        "outbound": "📺 哔哩哔哩 📱"
-      },
-      {
-        "rule_set": "surge-gaming",
-        "outbound": "🎮 游戏平台 💻"
-      },
-      {
-        "rule_set": "surge-streamjp",
-        "outbound": "🇯🇵 JP 🇯🇵"
-      },
-      {
-        "rule_set": "surge-streamus",
-        "outbound": "🇺🇸 美国 🇺🇸"
-      },
-      {
-        "rule_set": "surge-streamkr",
+        "domain": "pass-api.proton.me",
         "outbound": "🇰🇷 韩国 🇰🇷"
       },
       {
-        "rule_set": "surge-streamhk",
+        "domain": "list.linehk.top",
         "outbound": "🇭🇰 香港 🇭🇰"
       },
       {
-        "rule_set": "surge-streamtw",
-        "outbound": "🇹🇼 台湾 🇹🇼"
-      },
-      {
-        "rule_set": "surge-apple",
-        "outbound": "🍎 Apple 🍏"
-      },
-      {
-        "rule_set": "surge-microsoft",
-        "outbound": "🗺️ 直连通用 🌏"
-      },
-      {
-        "rule_set": "surge-chinadirect",
-        "outbound": "🗺️ 中国大陆 🇨🇳"
-      },
-      {
-        "rule_set": "surge-manual_global",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "rule_set": "surge-globalproxy",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "rule_set": "surge-cdn",
-        "outbound": "🌍 海外通用 🌍"
-      },
-      {
-        "rule_set": "surge-chinaip",
-        "outbound": "🗺️ 中国大陆 🇨🇳"
-      },
-      {
-        "rule_set": "surge-adblock",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
-        "rule_set": "surge-bilibili",
-        "outbound": "📺 哔哩哔哩 📱"
-      },
-      {
-        "rule_set": "surge-ai",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-ai",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-ai",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-youtube",
-        "outbound": "▶️  YouTube 🔴"
-      },
-      {
-        "rule_set": "surge-github",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-google",
-        "outbound": "♻️ 自动入口 🧠"
-      },
-      {
-        "rule_set": "surge-adblock",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
-        "rule_set": "surge-adblock-merged",
-        "outbound": "❌ 拒绝屏蔽"
+        "domain": "nyamiiko.sgddns",
+        "outbound": "🛜 PonTen 🏠"
       },
       {
         "rule_set": "surge-manual_us",
@@ -1614,19 +1018,19 @@
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": "surge-epic",
+        "network": "icmp",
+        "outbound": "🎯 全球直连"
+      },
+      {
+        "ip_is_private": true,
+        "outbound": "🎯 全球直连"
+      },
+      {
+        "rule_set": "surge-lan",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
-        "rule_set": "surge-streameu",
-        "outbound": "🇬🇧英国专线🧱"
-      },
-      {
-        "rule_set": "surge-binance",
-        "outbound": "🇸🇬 新加坡 🇸🇬"
-      },
-      {
-        "rule_set": "surge-neteasemusic",
+        "rule_set": "surge-manual",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
@@ -1634,11 +1038,119 @@
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
+        "rule_set": "surge-bilibili",
+        "outbound": "📺 哔哩哔哩 📱"
+      },
+      {
         "rule_set": "surge-xiaohongshu",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
+        "rule_set": "surge-neteasemusic",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-ai",
+        "outbound": "🤖AI平台🤖"
+      },
+      {
+        "rule_set": "surge-telegram",
+        "outbound": "☎️telegram✈️"
+      },
+      {
+        "rule_set": "surge-tiktok",
+        "outbound": "📱 TikTok 🧠"
+      },
+      {
+        "rule_set": "surge-socialmedia",
+        "outbound": "🌐 社交媒体 📱"
+      },
+      {
+        "rule_set": "surge-nsfw",
+        "outbound": "🇯🇵 JP 🇯🇵"
+      },
+      {
+        "rule_set": "surge-streamjp",
+        "outbound": "🇯🇵 JP 🇯🇵"
+      },
+      {
+        "rule_set": "surge-streamus",
+        "outbound": "🇺🇸 美国 🇺🇸"
+      },
+      {
+        "rule_set": "surge-streamkr",
+        "outbound": "🇰🇷 韩国 🇰🇷"
+      },
+      {
+        "rule_set": "surge-streameu",
+        "outbound": "🇬🇧 UK 🇬🇧"
+      },
+      {
+        "rule_set": "surge-streamhk",
+        "outbound": "🇭🇰 香港 🇭🇰"
+      },
+      {
+        "rule_set": "surge-streamtw",
+        "outbound": "🇹🇼 台湾 🇹🇼"
+      },
+      {
+        "rule_set": "surge-youtube",
+        "outbound": "▶️  YouTube 🔴"
+      },
+      {
+        "rule_set": "surge-spotify",
+        "outbound": "🔊  Spotify  🟢"
+      },
+      {
+        "rule_set": "surge-gaming",
+        "outbound": "🎮 游戏平台 💻"
+      },
+      {
+        "rule_set": "surge-steam",
+        "outbound": "🎮 游戏平台 💻"
+      },
+      {
+        "rule_set": "surge-epic",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-google",
+        "outbound": "▶️  YouTube 🔴"
+      },
+      {
+        "rule_set": "surge-bing",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-apple",
+        "outbound": "🍎 Apple 🍏"
+      },
+      {
+        "rule_set": "surge-applenews",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-microsoft",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-github",
+        "outbound": "🔗 自动回退 🏁"
+      },
+      {
         "rule_set": "surge-tesla",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-paypal",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-binance",
+        "outbound": "🇸🇬 新加坡 🇸🇬"
+      },
+      {
+        "rule_set": "surge-speedtest",
         "outbound": "🗺️ 直连通用 🌏"
       },
       {
@@ -1646,7 +1158,7 @@
         "outbound": "🔗 自动回退 🏁"
       },
       {
-        "rule_set": "surge-manual_global",
+        "rule_set": "surge-cdn",
         "outbound": "🌍 海外通用 🌍"
       },
       {
@@ -1654,20 +1166,16 @@
         "outbound": "🚫 漏网绝杀 🕸️"
       },
       {
-        "rule_set": "surge-applenews",
+        "rule_set": "surge-chinadirect",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-manual_global",
         "outbound": "🌍 海外通用 🌍"
       },
       {
-        "rule_set": "surge-adblock",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
-        "rule_set": "surge-blockhttpdns",
-        "outbound": "❌ 拒绝屏蔽"
-      },
-      {
-        "rule_set": "surge-blockhttpdns",
-        "outbound": "❌ 拒绝屏蔽"
+        "rule_set": "surge-globalproxy",
+        "outbound": "🌍 海外通用 🌍"
       }
     ]
   }
