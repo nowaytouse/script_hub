@@ -1,214 +1,143 @@
 #!/bin/bash
-# ============================================
-# Script: Sync Surge Profile to Template
-# Version: 1.0
-# Updated: 2025-12-03
-# Description:
-#   - Sync sensitive profile to template
-#   - Auto-desensitize (replace sensitive data)
-#   - Preserve template structure
-#   - Git commit optional
-# Usage:
-#   ./sync_profile_to_template.sh [options]
-#   Options:
-#     -s, --source <file>     Source profile (default: 敏感profile 排除上传git)
-#     -t, --target <file>     Target template (default: surge_profile_template.conf)
-#     -g, --git-commit        Auto git commit after sync
-#     -d, --dry-run           Show changes without writing
-#     -v, --verbose           Show verbose output
-#     -h, --help              Show help
-# ============================================
+# =============================================================================
+# Surge 配置文件规则同步脚本
+# 功能: 将完整规则集同步到 Surge 配置文件
+# 更新: 2025-12-07
+# 
+# 配置文件结构:
+#   [General] ... [Proxy] ... [Proxy Group] ...
+#   [Rule]
+#   # ============ 以上为新增 ============  <-- 用户手动添加的规则在此标记之前
+#   # ============ 去广告规则 ============  <-- 自动同步的规则从这里开始
+#   ...
+#   [Host] ... [MITM] ... [WireGuard] ...
+# =============================================================================
 
 set -e
 
-# Colors
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_FILE="$SCRIPT_DIR/敏感profile 排除上传git"
-TARGET_FILE="$SCRIPT_DIR/surge_profile_template.conf"
-DRY_RUN=false
-VERBOSE=false
-GIT_COMMIT=false
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-print_success() { echo -e "${GREEN}[OK]${NC} $1"; }
-print_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-print_verbose() { [[ "$VERBOSE" == "true" ]] && echo -e "${CYAN}[DEBUG]${NC} $1"; }
+# 配置文件路径
+SURGE_ICLOUD_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
+TEMPLATE_FILE="${PROJECT_ROOT}/conf/surge_rules_complete.conf"
+TARGET_FILE="${SURGE_ICLOUD_DIR}/NyaMiiKo Pro Max plus👑_fixed.conf"
 
-show_help() {
-    cat << EOF
-Sync Surge Profile to Template v1.0
+# 标记
+USER_RULES_MARKER="# ============ 以上为新增 ============"
 
-Usage: $(basename "$0") [options]
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-Options:
-  -s, --source <file>     Source profile (default: 敏感profile 排除上传git)
-  -t, --target <file>     Target template (default: surge_profile_template.conf)
-  -g, --git-commit        Auto git commit after sync
-  -d, --dry-run           Show changes without writing
-  -v, --verbose           Show verbose output
-  -h, --help              Show this help message
-
-Desensitization Rules:
-  - Subscription URLs → YOUR_SUBSCRIPTION_URL
-  - API Keys → YOUR_API_KEY
-  - WireGuard configs → YOUR_* placeholders
-  - CA certificates → YOUR_CA_* placeholders
-  - Personal domains → Removed or genericized
-  - Personal proxy names → Removed
-
-Examples:
-  $(basename "$0")                    # Basic sync
-  $(basename "$0") -g                 # Sync and commit
-  $(basename "$0") -d -v              # Dry run with verbose
-
-EOF
-}
-
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -s|--source) SOURCE_FILE="$2"; shift 2 ;;
-        -t|--target) TARGET_FILE="$2"; shift 2 ;;
-        -g|--git-commit) GIT_COMMIT=true; shift ;;
-        -d|--dry-run) DRY_RUN=true; shift ;;
-        -v|--verbose) VERBOSE=true; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) print_error "Unknown option: $1"; exit 1 ;;
-    esac
-done
-
-# Validate files
-if [[ ! -f "$SOURCE_FILE" ]]; then
-    print_error "Source file not found: $SOURCE_FILE"
-    exit 1
-fi
-
-if [[ ! -f "$TARGET_FILE" ]]; then
-    print_error "Target file not found: $TARGET_FILE"
-    exit 1
-fi
-
-echo ""
-echo "╔══════════════════════════════════════════╗"
-echo "║   Surge Profile → Template Sync          ║"
-echo "╚══════════════════════════════════════════╝"
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║       Surge 配置文件规则同步工具                             ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-print_info "Source: $(basename "$SOURCE_FILE")"
-print_info "Target: $(basename "$TARGET_FILE")"
-echo ""
-
-# Create temp file
-TEMP_FILE=$(mktemp)
-trap "rm -f $TEMP_FILE" EXIT
-
-# Copy source to temp
-cp "$SOURCE_FILE" "$TEMP_FILE"
-
-# ============================================
-# Desensitization Rules
-# ============================================
-
-print_info "Applying desensitization rules..."
-
-# 1. Subscription URLs
-print_verbose "  [1] Replacing subscription URLs"
-sed -i '' 's|policy-path=https://[^,]*|policy-path=YOUR_SUBSCRIPTION_URL|g' "$TEMP_FILE"
-
-# 2. API Keys
-print_verbose "  [2] Replacing API keys"
-sed -i '' 's|http-api = [^@]*@|http-api = YOUR_API_KEY@|g' "$TEMP_FILE"
-
-# 3. CA Passphrase and P12
-print_verbose "  [3] Replacing CA certificates"
-sed -i '' 's|^ca-passphrase = .*|# ca-passphrase = YOUR_CA_PASSPHRASE|g' "$TEMP_FILE"
-sed -i '' 's|^ca-p12 = .*|# ca-p12 = YOUR_CA_P12|g' "$TEMP_FILE"
-
-# 4. WireGuard Section Names
-print_verbose "  [4] Replacing WireGuard configs"
-sed -i '' 's|\[WireGuard [^]]*\]|# [WireGuard YOUR_WG_SECTION]|g' "$TEMP_FILE"
-sed -i '' 's|section-name=[^,]*|section-name=YOUR_WG_SECTION|g' "$TEMP_FILE"
-sed -i '' 's|private-key = .*|# private-key = YOUR_PRIVATE_KEY|g' "$TEMP_FILE"
-sed -i '' 's|self-ip = .*|# self-ip = YOUR_SELF_IP|g' "$TEMP_FILE"
-sed -i '' 's|public-key = [^,]*|public-key = YOUR_PUBLIC_KEY|g' "$TEMP_FILE"
-sed -i '' 's|endpoint = .*)|endpoint = YOUR_ENDPOINT)|g' "$TEMP_FILE"
-
-# 5. Personal Domains (remove specific personal domains)
-print_verbose "  [5] Removing personal domains"
-sed -i '' '/DOMAIN,.*\.sgddns,/d' "$TEMP_FILE"
-sed -i '' '/DOMAIN,.*nyamiiko/d' "$TEMP_FILE"
-sed -i '' '/DOMAIN,pass-api\.proton\.me,/d' "$TEMP_FILE"
-sed -i '' '/DOMAIN,list\.linehk\.top,/d' "$TEMP_FILE"
-
-# 6. Personal Proxy Names (remove specific proxy groups)
-print_verbose "  [6] Removing personal proxy groups"
-sed -i '' '/^🛜 PonTen 🏠 = /d' "$TEMP_FILE"
-sed -i '' '/^Reddit = /d' "$TEMP_FILE"
-
-# 7. Personal Rules
-print_verbose "  [7] Removing personal rules"
-sed -i '' '/^DOMAIN-KEYWORD,reddit,Reddit/d' "$TEMP_FILE"
-
-# 8. Comment out WireGuard proxy definitions
-print_verbose "  [8] Commenting WireGuard proxy definitions"
-sed -i '' 's|^🔐 WIREGUARD = wireguard|# 🔐 WIREGUARD = wireguard|g' "$TEMP_FILE"
-
-# 9. Update header comment
-print_verbose "  [9] Updating header"
-sed -i '' 's|# 作者:.*|# 作者: nowaytouse|g' "$TEMP_FILE"
-sed -i '' 's|# 说明:.*|# 说明: 去敏版本，需要替换 YOUR_* 占位符|g' "$TEMP_FILE"
-
-# 10. Remove empty lines created by deletions (optional)
-print_verbose "  [10] Cleaning up empty lines"
-# Keep this minimal to preserve structure
-
-print_success "Desensitization complete"
-echo ""
-
-# Show diff
-if [[ "$VERBOSE" == "true" ]] || [[ "$DRY_RUN" == "true" ]]; then
-    print_info "Changes preview:"
-    diff -u "$TARGET_FILE" "$TEMP_FILE" | head -50 || true
+# ============================================================
+# 第0部分: 先吸取用户新增的规则 (注释关键词智能分类)
+# ============================================================
+INGEST_SCRIPT="${SCRIPT_DIR}/ingest_from_surge.sh"
+if [ -f "$INGEST_SCRIPT" ]; then
+    log_info "检查用户新增规则 (注释关键词智能分类)..."
+    if bash "$INGEST_SCRIPT" --execute --no-backup 2>/dev/null; then
+        log_success "用户规则已吸取并分类"
+    else
+        log_info "没有新增规则需要吸取"
+    fi
     echo ""
 fi
 
-# Write to target
-if [[ "$DRY_RUN" == "true" ]]; then
-    print_warning "DRY RUN - Not writing to target file"
+# 检查文件
+if [ ! -f "$TEMPLATE_FILE" ]; then
+    log_error "模板文件不存在: $TEMPLATE_FILE"
+    exit 1
+fi
+
+if [ ! -f "$TARGET_FILE" ]; then
+    log_error "目标配置文件不存在: $TARGET_FILE"
+    exit 1
+fi
+
+# 备份原文件
+BACKUP_FILE="${TARGET_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
+cat "$TARGET_FILE" > "$BACKUP_FILE"
+log_info "已备份原文件"
+
+# 创建临时文件
+TEMP_FILE=$(mktemp)
+trap "rm -f $TEMP_FILE" EXIT
+
+# ============================================================
+# 第1部分: 提取 [Rule] 之前的所有内容 (包括 [General], [Proxy], [Proxy Group] 等)
+# ============================================================
+log_info "提取配置文件头部 (到 [Rule] 之前)..."
+sed -n '1,/^\[Rule\]/p' "$TARGET_FILE" > "$TEMP_FILE"
+
+# ============================================================
+# 第2部分: 提取用户手动添加的规则 ([Rule] 到标记之间)
+# ============================================================
+log_info "提取用户手动添加的规则..."
+# 找到 [Rule] 行号
+RULE_LINE=$(grep -n "^\[Rule\]" "$TARGET_FILE" | head -1 | cut -d: -f1)
+# 找到标记行号
+MARKER_LINE=$(grep -n "以上为新增" "$TARGET_FILE" | head -1 | cut -d: -f1)
+
+if [ -n "$MARKER_LINE" ] && [ "$MARKER_LINE" -gt "$RULE_LINE" ]; then
+    # 提取 [Rule] 到标记之间的用户规则 (不包括 [Rule] 行本身)
+    USER_RULES_START=$((RULE_LINE + 1))
+    USER_RULES_END=$((MARKER_LINE))
+    sed -n "${USER_RULES_START},${USER_RULES_END}p" "$TARGET_FILE" >> "$TEMP_FILE"
+    log_info "  用户规则行数: $((USER_RULES_END - USER_RULES_START + 1))"
 else
-    cp "$TEMP_FILE" "$TARGET_FILE"
-    print_success "Template updated: $(basename "$TARGET_FILE")"
+    # 没有标记，添加空的用户规则区域
+    echo "" >> "$TEMP_FILE"
+    echo "$USER_RULES_MARKER" >> "$TEMP_FILE"
+    log_warning "  未找到用户规则标记，已添加"
 fi
 
-# Git commit
-if [[ "$GIT_COMMIT" == "true" ]] && [[ "$DRY_RUN" == "false" ]]; then
-    print_info "Git commit..."
-    cd "$SCRIPT_DIR/../.."
-    
-    if git diff --quiet "$TARGET_FILE"; then
-        print_info "No changes to commit"
-    else
-        git add "$TARGET_FILE"
-        git commit -m "chore(surge): sync profile to template - $(date '+%Y-%m-%d %H:%M')"
-        print_success "Committed changes"
-        
-        read -p "Push to remote? [y/N]: " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            git push
-            print_success "Pushed to remote"
-        fi
-    fi
-fi
+# ============================================================
+# 第3部分: 添加自动同步的规则 (从模板文件)
+# ============================================================
+log_info "添加自动同步的规则..."
+echo "" >> "$TEMP_FILE"
+# 跳过模板文件中的 [Rule] 行（如果有的话）
+grep -v "^\[Rule\]" "$TEMPLATE_FILE" >> "$TEMP_FILE"
+
+# ============================================================
+# 第4部分: 提取 [Host] 及之后的所有内容
+# ============================================================
+log_info "提取配置文件尾部 ([Host] 及之后)..."
+echo "" >> "$TEMP_FILE"
+sed -n '/^\[Host\]/,$p' "$TARGET_FILE" >> "$TEMP_FILE"
+
+# ============================================================
+# 写入最终文件
+# ============================================================
+cat "$TEMP_FILE" > "$TARGET_FILE"
+
+# 统计
+RULE_COUNT=$(grep -c "^RULE-SET" "$TARGET_FILE" 2>/dev/null || echo "0")
+GEOIP_COUNT=$(grep -c "^GEOIP" "$TARGET_FILE" 2>/dev/null || echo "0")
+DOMAIN_COUNT=$(grep -c "^DOMAIN" "$TARGET_FILE" 2>/dev/null || echo "0")
 
 echo ""
-print_success "Sync complete!"
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║                    同步完成统计                              ║${NC}"
+echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${NC}"
+printf "${BLUE}║  ${GREEN}RULE-SET 规则:${NC}  %-5s                                   ${BLUE}║${NC}\n" "$RULE_COUNT"
+printf "${BLUE}║  ${GREEN}GEOIP 规则:${NC}     %-5s                                   ${BLUE}║${NC}\n" "$GEOIP_COUNT"
+printf "${BLUE}║  ${GREEN}DOMAIN 规则:${NC}    %-5s                                   ${BLUE}║${NC}\n" "$DOMAIN_COUNT"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+
+log_success "配置文件已更新"
 echo ""
+log_warning "请在 Surge 中重新加载配置文件以生效"

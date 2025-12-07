@@ -10,7 +10,7 @@
 set -e
 
 # Configuration
-PROFILE_PATH="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents/NyaMiiKo Pro Max plus👑.conf"
+PROFILE_PATH="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents/NyaMiiKo Pro Max plus👑_fixed.conf"
 MARKER="# ============ 以上为新增 ============"
 BACKUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/backup"
 timestamp=$(date "+%Y%m%d_%H%M%S")
@@ -71,12 +71,71 @@ get_target_file() {
     fi
 
     # 2. Check Comments (e.g., // NSFW or # NSFW)
-    if [[ "$rule" =~ (//|#)[[:space:]]*NSFW ]] || [[ "$rule" =~ (//|#)[[:space:]]*R18 ]]; then
+    # 支持的注释关键词: NSFW, R18, Emby, Media, Netflix, Spotify, YouTube, Telegram, Google, AI, Gaming, Direct, Proxy, AdBlock
+    
+    # NSFW / 成人内容
+    if [[ "$rule" =~ (//|#)[[:space:]]*(NSFW|R18|Adult|Porn|成人) ]]; then
         echo "$FILE_NSFW"
         return
     fi
-     if [[ "$rule" =~ (//|#)[[:space:]]*Emby ]]; then
+    
+    # 流媒体
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Emby|Media|流媒体) ]]; then
         echo "$FILE_MEDIA"
+        return
+    fi
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Netflix|奈飞) ]]; then
+        echo "$FILE_NETFLIX"
+        return
+    fi
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Spotify|声田) ]]; then
+        echo "$FILE_SPOTIFY"
+        return
+    fi
+    if [[ "$rule" =~ (//|#)[[:space:]]*(YouTube|油管) ]]; then
+        echo "$FILE_YOUTUBE"
+        return
+    fi
+    
+    # 社交/通讯
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Telegram|电报|TG) ]]; then
+        echo "$FILE_TELEGRAM"
+        return
+    fi
+    
+    # 科技公司
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Google|谷歌) ]]; then
+        echo "$FILE_GOOGLE"
+        return
+    fi
+    
+    # AI 服务
+    if [[ "$rule" =~ (//|#)[[:space:]]*(AI|OpenAI|Claude|ChatGPT) ]]; then
+        echo "$DIR_CONF/SurgeConf_AI.list"
+        return
+    fi
+    
+    # 游戏
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Gaming|游戏|Steam|Epic) ]]; then
+        echo "$DIR_CONF/SurgeConf_Gaming.list"
+        return
+    fi
+    
+    # 直连
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Direct|直连|国内) ]]; then
+        echo "$FILE_DIRECT"
+        return
+    fi
+    
+    # 代理
+    if [[ "$rule" =~ (//|#)[[:space:]]*(Proxy|代理|海外) ]]; then
+        echo "$FILE_PROXY"
+        return
+    fi
+    
+    # 广告拦截
+    if [[ "$rule" =~ (//|#)[[:space:]]*(AdBlock|广告|Block|拦截) ]]; then
+        echo "$FILE_ADBLOCK"
         return
     fi
 
