@@ -67,18 +67,6 @@ URL-REGEX,"^http:\/\/54\.222\.159\.138:8053\/httpdns\/",REJECT
 URL-REGEX,"^http:\/\/101\.42\.130\.147:8053\/httpdns\/",REJECT
 URL-REGEX,"^http:\/\/106\.55\.220\.18:8053\/httpdns\/",REJECT
 URL-REGEX,"^http:\/\/139\.196\.12\.179:8053\/httpdns\/",REJECT
-#!name=HTTPDNS拦截器
-#!desc=拦截常见的HTTPDNS服务，以确保这些请求都能够在Loon的DNS框架下工作。
-#!author=可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md], VirgilClyne[https://github.com/VirgilClyne]
-#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/HTTPDNS.png
-#!category=奶思的模块
-#!tag=DNS
-#!loon_version=3.2.4(787)
-#!homepage=https://github.com/luestr/ProxyResource/blob/main/README.md
-#!raw-url=https://github.com/fmz200/wool_scripts/raw/main/Surge/module/blockHTTPDNS.module
-#!tg-channel=https://t.me/inaisi
-#!date=2025-05-13 21:58:49
-
 [URL Rewrite]
 ^https?:\/\/203\.107\.1\.1/\d+/ss - reject
 ^https?:\/\/203\.107\.1\.33/\d+/ss - reject

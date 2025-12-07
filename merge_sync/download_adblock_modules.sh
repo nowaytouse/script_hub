@@ -135,8 +135,11 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     grep -v '^USER-AGENT' | \
     grep -v '^PROCESS-NAME' >> "$cleaned_module" || true
     
-    # Copy other sections (after [Rule])
-    awk '/^\[Rule\]/{f=1;next}f{if(/^\[/){f=0}}!f' "$module" >> "$cleaned_module" || true
+    # Copy other sections (after [Rule], like [URL Rewrite], [MITM], etc.)
+    awk 'BEGIN{in_rule=0; after_rule=0}
+         /^\[Rule\]/{in_rule=1; next}
+         in_rule && /^\[/{in_rule=0; after_rule=1}
+         after_rule' "$module" >> "$cleaned_module" || true
     
     # Count rules
     original_rules=$(grep -cE "^(DOMAIN|IP-CIDR|URL-REGEX|USER-AGENT|PROCESS-NAME)" "$module" 2>/dev/null | tr -d ' ' || echo "0")

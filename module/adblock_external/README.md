@@ -17,9 +17,9 @@ These modules have been **automatically cleaned** by removing:
 
 ## 📦 Available Cleaned Modules
 
-1. **可莉广告过滤器.beta.sgmodule** - 24 → 3 rules (URL-REGEX)
-2. **广告平台拦截器.sgmodule** - 283 → 1 rule (URL-REGEX)
-3. **blockHTTPDNS.module** - 169 → 45 rules (URL-REGEX + complex logic)
+1. **可莉广告过滤器.beta.sgmodule** - 24 → 3 rules (URL-REGEX) ✅ Format verified
+2. **广告平台拦截器.sgmodule** - 283 → 1 rule (URL-REGEX + [URL Rewrite] + [MITM]) ✅ Format verified
+3. **blockHTTPDNS.module** - 169 → 45 rules (URL-REGEX + complex logic) ✅ Format verified
 
 **Removed modules** (all rules extracted to AdBlock.list):
 - ~~Adblock4limbo.sgmodule~~ - 0 unique rules
