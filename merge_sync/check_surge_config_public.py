@@ -1,11 +1,27 @@
 #!/usr/bin/env python3
-"""Check and fix Surge config for invalid lines"""
+"""Check and fix Surge config for invalid lines (Public Version)"""
 import os
 import sys
 
-def check_surge_config():
+def check_surge_config(surge_path=None):
     """Check Surge config for invalid lines"""
-    surge_path = os.path.expanduser('~/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents/NyaMiiKo Pro Max plus👑_fixed.conf')
+    if surge_path is None:
+        # Try to find Surge config automatically
+        possible_paths = [
+            os.path.expanduser('~/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents/*.conf'),
+        ]
+        
+        import glob
+        for pattern in possible_paths:
+            matches = glob.glob(pattern)
+            if matches:
+                surge_path = matches[0]
+                break
+        
+        if surge_path is None:
+            print("❌ Surge config not found")
+            print("💡 Usage: python3 check_surge_config_public.py <path_to_surge_config>")
+            return False
     
     if not os.path.exists(surge_path):
         print(f"❌ Surge config not found: {surge_path}")
@@ -60,9 +76,12 @@ def check_surge_config():
         print("✅ No invalid lines found!")
         return True
 
-def fix_surge_config():
+def fix_surge_config(surge_path=None):
     """Fix invalid lines in Surge config"""
-    surge_path = os.path.expanduser('~/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents/NyaMiiKo Pro Max plus👑_fixed.conf')
+    if surge_path is None:
+        print("❌ Please provide Surge config path")
+        print("💡 Usage: python3 check_surge_config_public.py --fix <path_to_surge_config>")
+        return False
     
     if not os.path.exists(surge_path):
         print(f"❌ Surge config not found: {surge_path}")
@@ -114,13 +133,18 @@ def fix_surge_config():
         return True
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == '--fix':
-        success = fix_surge_config()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--fix':
+            surge_path = sys.argv[2] if len(sys.argv) > 2 else None
+            success = fix_surge_config(surge_path)
+        else:
+            surge_path = sys.argv[1]
+            success = check_surge_config(surge_path)
     else:
         success = check_surge_config()
         if not success:
             print("")
             print("💡 Run with --fix to automatically fix issues:")
-            print(f"   python3 {sys.argv[0]} --fix")
+            print(f"   python3 {sys.argv[0]} --fix <path_to_surge_config>")
     
     sys.exit(0 if success else 1)

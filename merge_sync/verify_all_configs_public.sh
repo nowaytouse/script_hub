@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Verify All Proxy Configs Sync Status
+# Verify All Proxy Configs Sync Status (Public Version)
 # Function: Check Surge, Singbox, Shadowrocket configs are in sync
+# Usage: ./verify_all_configs_public.sh [surge_config_path]
 # =============================================================================
 
 set -e
@@ -26,7 +27,20 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # ═══════════════════════════════════════════════════════════════
 echo -e "${CYAN}=== 1. Surge Config ===${NC}"
 SURGE_TEMPLATE="$PROJECT_ROOT/ruleset/Sources/surge_rules_complete.conf"
-SURGE_ICLOUD="$HOME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents/NyaMiiKo Pro Max plus👑_fixed.conf"
+
+# Try to find Surge config
+if [ -n "$1" ]; then
+    SURGE_ICLOUD="$1"
+else
+    # Try default location
+    SURGE_ICLOUD="$HOME/Library/Mobile Documents/iCloud~com~nssurge~inc/Documents"
+    if [ -d "$SURGE_ICLOUD" ]; then
+        # Find first .conf file
+        SURGE_ICLOUD=$(find "$SURGE_ICLOUD" -maxdepth 1 -name "*.conf" | head -1)
+    else
+        SURGE_ICLOUD=""
+    fi
+fi
 
 if [ -f "$SURGE_TEMPLATE" ]; then
     SURGE_TEMPLATE_RULES=$(grep -c "^RULE-SET," "$SURGE_TEMPLATE" || echo "0")
@@ -35,14 +49,16 @@ else
     echo -e "${RED}❌ Template not found${NC}"
 fi
 
-if [ -f "$SURGE_ICLOUD" ]; then
+if [ -n "$SURGE_ICLOUD" ] && [ -f "$SURGE_ICLOUD" ]; then
     SURGE_ICLOUD_RULES=$(grep -c "^RULE-SET," "$SURGE_ICLOUD" || echo "0")
     echo -e "${GREEN}✅ iCloud: $SURGE_ICLOUD_RULES RULE-SET${NC}"
+    echo -e "${CYAN}   Path: $SURGE_ICLOUD${NC}"
     
     # Check for invalid lines
-    python3 "$SCRIPT_DIR/check_surge_config.py" 2>&1 | grep -E "^(✅|❌)" || true
+    python3 "$SCRIPT_DIR/check_surge_config_public.py" "$SURGE_ICLOUD" 2>&1 | grep -E "^(✅|❌)" || true
 else
-    echo -e "${YELLOW}⚠️  iCloud config not found (may not be synced yet)${NC}"
+    echo -e "${YELLOW}⚠️  iCloud config not found${NC}"
+    echo -e "${CYAN}💡 Usage: $0 <path_to_surge_config>${NC}"
 fi
 
 echo ""
@@ -72,7 +88,7 @@ if [ -f "$SINGBOX_PRIVATE" ]; then
     SINGBOX_PRIVATE_RULES=$(python3 -c "import json; print(len(json.load(open('$SINGBOX_PRIVATE'))['route']['rule_set']))" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Private: $SINGBOX_PRIVATE_RULES rule_set${NC}"
 else
-    echo -e "${YELLOW}⚠️  Private config not found${NC}"
+    echo -e "${YELLOW}⚠️  Private config not found (this is normal for public repo)${NC}"
 fi
 
 echo ""
@@ -87,7 +103,7 @@ if [ -f "$SR_CONFIG" ]; then
     SR_RULES=$(grep -c "^RULE-SET," "$SR_CONFIG" || echo "0")
     echo -e "${GREEN}✅ Config: $SR_RULES RULE-SET${NC}"
 else
-    echo -e "${YELLOW}⚠️  Config not found${NC}"
+    echo -e "${YELLOW}⚠️  Config not found (this is normal for public repo)${NC}"
 fi
 
 echo ""
@@ -116,8 +132,7 @@ echo ""
 
 # Check if all configs are in sync
 if [ "${SURGE_TEMPLATE_RULES:-0}" -eq 48 ] && \
-   [ "${SINGBOX_SUBSTORE_RULES:-0}" -eq 47 ] && \
-   [ "${SINGBOX_PRIVATE_RULES:-0}" -eq 47 ]; then
+   [ "${SINGBOX_SUBSTORE_RULES:-0}" -eq 47 ]; then
     echo -e "${GREEN}✅ All configs are in sync!${NC}"
     exit 0
 else
