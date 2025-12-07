@@ -1,13 +1,32 @@
-# Ruleset: LAN.list
-# Cleaned by smart_cleanup.py
-# Total: 152
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: LAN
+# Updated: 2025-12-07 03:04:21 UTC
+# Total Rules: 156
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (141 rules)
+#   -  [REJECT] (37 rules)
+#   -  [REJECT] (18 rules)
+#   -  [REJECT] (0 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN,asusrouter.com
-DOMAIN,instant.arubanetworks.com
-DOMAIN,oasisauth.h3c.com
-DOMAIN,router.asus.com
-DOMAIN,setmeup.arubanetworks.com
-DOMAIN,www.asusrouter.com
+# Policy Distribution:
+#   - REJECT:         156 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
 DOMAIN-SUFFIX,0.in-addr.arpa
 DOMAIN-SUFFIX,1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
@@ -132,6 +151,16 @@ DOMAIN-SUFFIX,tplogin.cn
 DOMAIN-SUFFIX,ts.net
 DOMAIN-SUFFIX,wifi.cmcc
 DOMAIN-SUFFIX,zte.home
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,asusrouter.com
+DOMAIN,instant.arubanetworks.com
+DOMAIN,oasisauth.h3c.com
+DOMAIN,router.asus.com
+DOMAIN,setmeup.arubanetworks.com
+DOMAIN,www.asusrouter.com
+
+# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,0.0.0.0/8,no-resolve
 IP-CIDR,10.0.0.0/8,no-resolve
 IP-CIDR,100.64.0.0/10,no-resolve
@@ -148,9 +177,17 @@ IP-CIDR,198.51.100.0/24,no-resolve
 IP-CIDR,203.0.113.0/24,no-resolve
 IP-CIDR,224.0.0.0/3,no-resolve
 IP-CIDR,224.0.0.0/4,no-resolve
+IP-CIDR,::/127,no-resolve
+IP-CIDR,fc00::/7,no-resolve
+IP-CIDR,fe80::/10,no-resolve
+IP-CIDR,ff00::/8,no-resolve
+
+# ========== IP-CIDR6 (REJECT) ==========
 IP-CIDR6,::/127,no-resolve
 IP-CIDR6,::1/128,no-resolve
 IP-CIDR6,fc00::/7,no-resolve
 IP-CIDR6,fd00::/8,no-resolve
 IP-CIDR6,fe80::/10,no-resolve
 IP-CIDR6,ff00::/8,no-resolve
+
+# ========== END ==========

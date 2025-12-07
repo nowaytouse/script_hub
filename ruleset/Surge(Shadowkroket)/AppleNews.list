@@ -1,6 +1,34 @@
-# Ruleset: AppleNews.list
-# Cleaned by smart_cleanup.py
-# Total: 2
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: AppleNews
+# Updated: 2025-12-07 03:03:50 UTC
+# Total Rules: 4
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (4 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
+# Policy Distribution:
+#   - REJECT:         4 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN (REJECT) ==========
 DOMAIN,gspe1-ssl.ls.apple.com
 DOMAIN,news-client-search.apple.com
+
+# ========== OTHER (REJECT) ==========
+USER-AGENT,AppleNews*
+USER-AGENT,com.apple.news*
+
+# ========== END ==========

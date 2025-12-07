@@ -1,8 +1,30 @@
-# Ruleset: Twitter.list
-# Cleaned by smart_cleanup.py
-# Total: 33
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: Twitter
+# Updated: 2025-12-07 03:03:42 UTC
+# Total Rules: 33
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (33 rules)
+#   - LOCAL: ../MetaCubeX/MetaCubeX_twitter.list (NOT FOUND)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN-KEYWORD,twitter
+# Policy Distribution:
+#   - REJECT:         33 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,ads-twitter.com
 DOMAIN-SUFFIX,cms-twdigitalassets.com
 DOMAIN-SUFFIX,grok.com
@@ -29,9 +51,16 @@ DOMAIN-SUFFIX,twttr.net
 DOMAIN-SUFFIX,twvid.com
 DOMAIN-SUFFIX,vine.co
 DOMAIN-SUFFIX,x.com
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,twitter
+
+# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,192.133.76.0/22,no-resolve
 IP-CIDR,199.59.148.0/22,no-resolve
 IP-CIDR,199.96.56.0/21,no-resolve
 IP-CIDR,202.160.128.0/22,no-resolve
 IP-CIDR,209.237.192.0/19,no-resolve
 IP-CIDR,69.195.160.0/19,no-resolve
+
+# ========== END ==========

@@ -1,8 +1,30 @@
-# Ruleset: GitHub.list
-# Cleaned by smart_cleanup.py
-# Total: 31
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: GitHub
+# Updated: 2025-12-07 03:03:56 UTC
+# Total Rules: 31
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (31 rules)
+#   - LOCAL: ../MetaCubeX/MetaCubeX_github.list (NOT FOUND)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN-KEYWORD,github
+# Policy Distribution:
+#   - REJECT:         31 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,atom.io
 DOMAIN-SUFFIX,dependabot.com
 DOMAIN-SUFFIX,ghcr.io
@@ -33,3 +55,8 @@ DOMAIN-SUFFIX,rawgit.com
 DOMAIN-SUFFIX,rawgithub.com
 DOMAIN-SUFFIX,repo.new
 DOMAIN-SUFFIX,thegithubshop.com
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,github
+
+# ========== END ==========

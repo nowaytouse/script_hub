@@ -1,7 +1,159 @@
-# Ruleset: StreamUS.list
-# Cleaned by smart_cleanup.py
-# Total: 49
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamUS
+# Updated: 2025-12-07 03:04:33 UTC
+# Total Rules: 152
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (59 rules)
+#   -  [REJECT] (50 rules)
+#   -  [REJECT] (2 rules)
+#   -  [REJECT] (0 rules)
+#   -  [REJECT] (0 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
+# Policy Distribution:
+#   - REJECT:         152 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,112263.com
+DOMAIN-SUFFIX,assetshuluimcom-a.akamaihd.net
+DOMAIN-SUFFIX,bcbolthboa-a.akamaihd.net
+DOMAIN-SUFFIX,callhulu.com
+DOMAIN-SUFFIX,cbsaavideo.com
+DOMAIN-SUFFIX,cbsi.com
+DOMAIN-SUFFIX,cbsivideo.com
+DOMAIN-SUFFIX,cf-images.ap-southeast-1.prod.boltdns.net
+DOMAIN-SUFFIX,cinemax.com
+DOMAIN-SUFFIX,cws-hulu.conviva.com
+DOMAIN-SUFFIX,dai3fd1oh325y.cloudfront.net
+DOMAIN-SUFFIX,disco-api.com
+DOMAIN-SUFFIX,discoveryplus.co.uk
+DOMAIN-SUFFIX,discoveryplus.com
+DOMAIN-SUFFIX,discoveryplus.in
+DOMAIN-SUFFIX,dnitv.com
+DOMAIN-SUFFIX,encoretvb.com
+DOMAIN-SUFFIX,execute-api.ap-southeast-1.amazonaws.com
+DOMAIN-SUFFIX,execute-api.us-east-1.amazonaws.com
+DOMAIN-SUFFIX,findyourlimits.com
+DOMAIN-SUFFIX,forthethrone.com
+DOMAIN-SUFFIX,fox.com
+DOMAIN-SUFFIX,foxdcg.com
+DOMAIN-SUFFIX,foxplus.com
+DOMAIN-SUFFIX,freehulu.com
+DOMAIN-SUFFIX,happyon.jp
+DOMAIN-SUFFIX,hbo.com
+DOMAIN-SUFFIX,hbo.com.c.footprint.net
+DOMAIN-SUFFIX,hbo.com.edgesuite.net
+DOMAIN-SUFFIX,hbo.map.fastly.net
+DOMAIN-SUFFIX,hboasia.com
+DOMAIN-SUFFIX,hboasia1-i.akamaihd.net
+DOMAIN-SUFFIX,hboasia2-i.akamaihd.net
+DOMAIN-SUFFIX,hboasia3-i.akamaihd.net
+DOMAIN-SUFFIX,hboasia4-i.akamaihd.net
+DOMAIN-SUFFIX,hboasia5-i.akamaihd.net
+DOMAIN-SUFFIX,hboasialive.akamaized.net
+DOMAIN-SUFFIX,hbogeo.cust.footprint.net
+DOMAIN-SUFFIX,hbogo.co.th
+DOMAIN-SUFFIX,hbogo.com
+DOMAIN-SUFFIX,hbogo.eu
+DOMAIN-SUFFIX,hbogoasia.com
+DOMAIN-SUFFIX,hbogoasia.hk
+DOMAIN-SUFFIX,hbogoasia.id
+DOMAIN-SUFFIX,hbogoasia.ph
+DOMAIN-SUFFIX,hbogoasia.sg
+DOMAIN-SUFFIX,hbogoasia.tw
+DOMAIN-SUFFIX,hbogoprod-vod.akamaized.net
+DOMAIN-SUFFIX,hbolb.onwardsmg.com
+DOMAIN-SUFFIX,hbomax.com
+DOMAIN-SUFFIX,hbomaxcdn.com
+DOMAIN-SUFFIX,hbomaxdash.s.llnwi.net
+DOMAIN-SUFFIX,hbonow.com
+DOMAIN-SUFFIX,hbounify-prod.evergent.com
+DOMAIN-SUFFIX,hjholdings.jp
+DOMAIN-SUFFIX,hooloo.tv
+DOMAIN-SUFFIX,hoolu.com
+DOMAIN-SUFFIX,hoolu.tv
+DOMAIN-SUFFIX,hu1u.com
+DOMAIN-SUFFIX,huloo.cc
+DOMAIN-SUFFIX,huloo.tv
+DOMAIN-SUFFIX,hulu.com
+DOMAIN-SUFFIX,hulu.hb.omtrdc.net
+DOMAIN-SUFFIX,hulu.jp
+DOMAIN-SUFFIX,hulu.playback.edge.bamgrid.com
+DOMAIN-SUFFIX,hulu.sc.omtrdc.net
+DOMAIN-SUFFIX,hulu.tv
+DOMAIN-SUFFIX,hulu.us
+DOMAIN-SUFFIX,huluaction.com
+DOMAIN-SUFFIX,huluad.com
+DOMAIN-SUFFIX,huluapp.com
+DOMAIN-SUFFIX,huluasks.com
+DOMAIN-SUFFIX,hulucall.com
+DOMAIN-SUFFIX,hulufree.com
+DOMAIN-SUFFIX,hulugans.com
+DOMAIN-SUFFIX,hulugermany.com
+DOMAIN-SUFFIX,hulugo.com
+DOMAIN-SUFFIX,huluim.com
+DOMAIN-SUFFIX,huluinstantmessenger.com
+DOMAIN-SUFFIX,huluitaly.com
+DOMAIN-SUFFIX,hulunet.com
+DOMAIN-SUFFIX,hulunetwork.com
+DOMAIN-SUFFIX,huluplus.com
+DOMAIN-SUFFIX,hulupremium.com
+DOMAIN-SUFFIX,hulupurchase.com
+DOMAIN-SUFFIX,huluqa.com
+DOMAIN-SUFFIX,hulurussia.com
+DOMAIN-SUFFIX,huluspain.com
+DOMAIN-SUFFIX,hulusports.com
+DOMAIN-SUFFIX,hulustream.com
+DOMAIN-SUFFIX,huluteam.com
+DOMAIN-SUFFIX,hulutv.com
+DOMAIN-SUFFIX,huluusa.com
+DOMAIN-SUFFIX,joinmaidez.com
+DOMAIN-SUFFIX,manifest.prod.boltdns.net
+DOMAIN-SUFFIX,max.com
+DOMAIN-SUFFIX,maxgo.com
+DOMAIN-SUFFIX,mushymush.tv
+DOMAIN-SUFFIX,myhulu.com
+DOMAIN-SUFFIX,now-ashare.com
+DOMAIN-SUFFIX,now-tv.com
+DOMAIN-SUFFIX,now.com
+DOMAIN-SUFFIX,now.com.hk
+DOMAIN-SUFFIX,nowe.com
+DOMAIN-SUFFIX,nowe.hk
+DOMAIN-SUFFIX,originalhulu.com
+DOMAIN-SUFFIX,paramountplus.com
+DOMAIN-SUFFIX,payhulu.com
+DOMAIN-SUFFIX,peacocktv.com
+DOMAIN-SUFFIX,players.brightcove.net
+DOMAIN-SUFFIX,pluto.tv
+DOMAIN-SUFFIX,prod.hjholdings.tv
+DOMAIN-SUFFIX,production-public.tubi.io
+DOMAIN-SUFFIX,registerhulu.com
+DOMAIN-SUFFIX,sho.com
+DOMAIN-SUFFIX,showtime.com
+DOMAIN-SUFFIX,streaks.jp
+DOMAIN-SUFFIX,thehulubraintrust.com
+DOMAIN-SUFFIX,theplatform.com
+DOMAIN-SUFFIX,uplynk.com
+DOMAIN-SUFFIX,warnermediacdn.com
+DOMAIN-SUFFIX,wwwhuluplus.com
+DOMAIN-SUFFIX,yb.uncn.jp
+DOMAIN-SUFFIX,youboranqs01.com
+
+# ========== DOMAIN (REJECT) ==========
 DOMAIN,athome.fandango.com
 DOMAIN,bcbolt446c5271-a.akamaihd.net
 DOMAIN,cbsi.live.ott.irdeto.com
@@ -9,6 +161,7 @@ DOMAIN,cbsplaylistserver.aws.syncbak.com
 DOMAIN,cbsservice.aws.syncbak.com
 DOMAIN,dashasiafox.akamaized.net
 DOMAIN,edge.api.brightcove.com
+DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
 DOMAIN,prod-api.crackle.com
 DOMAIN,staticasiafox.akamaized.net
 DOMAIN,tubi.tv
@@ -16,38 +169,20 @@ DOMAIN,tubitv.com
 DOMAIN,vudu.com
 DOMAIN,www.tubi.tv
 DOMAIN,www.tubitv.com
-DOMAIN-SUFFIX,cbsaavideo.com
-DOMAIN-SUFFIX,cbsi.com
-DOMAIN-SUFFIX,cbsivideo.com
-DOMAIN-SUFFIX,disco-api.com
-DOMAIN-SUFFIX,discoveryplus.co.uk
-DOMAIN-SUFFIX,discoveryplus.com
-DOMAIN-SUFFIX,discoveryplus.in
-DOMAIN-SUFFIX,dnitv.com
-DOMAIN-SUFFIX,encoretvb.com
-DOMAIN-SUFFIX,fox.com
-DOMAIN-SUFFIX,foxdcg.com
-DOMAIN-SUFFIX,foxplus.com
-DOMAIN-SUFFIX,hulu.com
-DOMAIN-SUFFIX,hulu.tv
-DOMAIN-SUFFIX,hulu.us
-DOMAIN-SUFFIX,huluim.com
-DOMAIN-SUFFIX,hulustream.com
-DOMAIN-SUFFIX,paramountplus.com
-DOMAIN-SUFFIX,peacocktv.com
-DOMAIN-SUFFIX,pluto.tv
-DOMAIN-SUFFIX,production-public.tubi.io
-DOMAIN-SUFFIX,sho.com
-DOMAIN-SUFFIX,showtime.com
-DOMAIN-SUFFIX,theplatform.com
-DOMAIN-SUFFIX,uplynk.com
+
+# ========== OTHER (REJECT) ==========
+PROCESS-NAME,com.hbo.hbonow
 PROCESS-NAME,com.hulu.plus
 USER-AGENT,DPlus*
 USER-AGENT,FOX NOW*
 USER-AGENT,FOXPlus*
+USER-AGENT,HBO%20NOW*
+USER-AGENT,HBOMAX*
 USER-AGENT,Hulu*
 USER-AGENT,PPlus*
 USER-AGENT,PeacockMobile*
 USER-AGENT,TVer-Release*
 USER-AGENT,discovery+*
 USER-AGENT,encoreTVB*
+
+# ========== END ==========

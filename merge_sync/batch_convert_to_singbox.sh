@@ -24,42 +24,17 @@ else
     SINGBOX="sing-box"
 fi
 
-# 所有需要转换的规则文件 (完整列表)
-RULESETS=(
-    # 手动规则
-    "Manual_US" "Manual_West" "Manual_JP" "Manual" "Manual_Global"
-    
-    # AI 服务
-    "AI"
-    
-    # 社交媒体
-    "Telegram" "TikTok" "Twitter" "Instagram" "SocialMedia"
-    
-    # 流媒体
-    "GlobalMedia" "YouTube" "Netflix" "Disney" "Spotify"
-    "StreamJP" "StreamUS" "StreamKR" "StreamHK" "StreamTW" "StreamEU"
-    
-    # 游戏
-    "Gaming" "Steam"
-    
-    # 科技公司
-    "Google" "Bing" "Apple" "Microsoft" "GitHub"
-    
-    # 其他服务
-    "Discord" "Fediverse" "PayPal"
-    
-    # 代理/直连
-    "GlobalProxy" "LAN" "CDN"
-    
-    # 中国相关
-    "ChinaDirect" "ChinaIP" "Bilibili"
-    
-    # 广告/NSFW
-    "NSFW" "AdBlock_Merged"
-    
-    # Process 规则 (进程匹配)
-    "AIProcess" "DirectProcess" "DownloadProcess" "GamingProcess"
-)
+# 自动扫描Surge目录中的所有.list文件
+echo "Scanning Surge directory for .list files..."
+RULESETS=()
+for list_file in "${SURGE_DIR}"/*.list; do
+    [ -f "$list_file" ] || continue
+    base_name=$(basename "$list_file" .list)
+    # 跳过备份文件
+    [[ "$base_name" == *.backup* ]] && continue
+    RULESETS+=("$base_name")
+done
+echo "Found ${#RULESETS[@]} rulesets to convert"
 
 echo -e "${GREEN}=== Batch Surge to Singbox Converter ===${NC}"
 echo "Converting ${#RULESETS[@]} rulesets..."

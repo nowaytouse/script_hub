@@ -1,9 +1,30 @@
-# Ruleset: SocialMedia.list
-# Cleaned by smart_cleanup.py
-# Total: 566
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: SocialMedia
+# Updated: 2025-12-07 03:03:38 UTC
+# Total Rules: 569
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (569 rules)
+#   - LOCAL: ../MetaCubeX/MetaCubeX_facebook.list (NOT FOUND)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN-KEYWORD,facebook
-DOMAIN-KEYWORD,fbcdn
+# Policy Distribution:
+#   - REJECT:         569 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,aboutfacebook.com
 DOMAIN-SUFFIX,accessfacebookfromschool.com
 DOMAIN-SUFFIX,accountkit.com
@@ -29,6 +50,7 @@ DOMAIN-SUFFIX,buyingfacebooklikes.com
 DOMAIN-SUFFIX,buyoculus.com
 DOMAIN-SUFFIX,careersatfb.com
 DOMAIN-SUFFIX,carstagram.com
+DOMAIN-SUFFIX,cdninstagram.com
 DOMAIN-SUFFIX,celebgramme.com
 DOMAIN-SUFFIX,chickstagram.com
 DOMAIN-SUFFIX,china-facebook.com
@@ -412,11 +434,13 @@ DOMAIN-SUFFIX,instagda.com
 DOMAIN-SUFFIX,instagify.com
 DOMAIN-SUFFIX,instagmania.com
 DOMAIN-SUFFIX,instagor.com
+DOMAIN-SUFFIX,instagr.am
 DOMAIN-SUFFIX,instagram-brand.com
 DOMAIN-SUFFIX,instagram-engineering.com
 DOMAIN-SUFFIX,instagram-help.com
 DOMAIN-SUFFIX,instagram-press.com
 DOMAIN-SUFFIX,instagram-press.net
+DOMAIN-SUFFIX,instagram.com
 DOMAIN-SUFFIX,instagramci.com
 DOMAIN-SUFFIX,instagramcn.com
 DOMAIN-SUFFIX,instagramdi.com
@@ -545,6 +569,12 @@ DOMAIN-SUFFIX,wwwmfacebook.com
 DOMAIN-SUFFIX,yogalayout.com
 DOMAIN-SUFFIX,zuckerberg.com
 DOMAIN-SUFFIX,zuckerberg.net
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,facebook
+DOMAIN-KEYWORD,fbcdn
+
+# ========== IP-CIDR (REJECT) ==========
 IP-CIDR,108.168.176.192/26,no-resolve
 IP-CIDR,108.168.177.0/27,no-resolve
 IP-CIDR,108.168.180.96/27,no-resolve
@@ -568,3 +598,5 @@ IP-CIDR,54.162.243.80/32,no-resolve
 IP-CIDR,54.173.34.141/32,no-resolve
 IP-CIDR,54.235.23.242/32,no-resolve
 IP-CIDR,54.93.124.31/32,no-resolve
+
+# ========== END ==========

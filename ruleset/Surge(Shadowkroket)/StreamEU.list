@@ -1,14 +1,72 @@
-# Ruleset: StreamEU.list
-# Cleaned by smart_cleanup.py
-# Total: 10
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamEU
+# Updated: 2025-12-07 03:04:51 UTC
+# Total Rules: 35
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (29 rules)
+#   -  [REJECT] (4 rules)
+#   -  [REJECT] (0 rules)
+#   -  [REJECT] (0 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN,bbc.mp-pxcdn.com
-DOMAIN,itvpnpmobile-a.akamaihd.net
+# Policy Distribution:
+#   - REJECT:         35 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,bbc
+DOMAIN-SUFFIX,bbc.co
+DOMAIN-SUFFIX,bbc.co.uk
+DOMAIN-SUFFIX,bbc.com
+DOMAIN-SUFFIX,bbc.in
+DOMAIN-SUFFIX,bbc.net.uk
+DOMAIN-SUFFIX,bbcchinese.com
+DOMAIN-SUFFIX,bbcfmt.hs.llnwd.net
+DOMAIN-SUFFIX,bbcfmt.s.llnwi.net
+DOMAIN-SUFFIX,bbci.co
+DOMAIN-SUFFIX,bbci.co.uk
+DOMAIN-SUFFIX,bbcmedia.co.uk
+DOMAIN-SUFFIX,bbcpersian.com
+DOMAIN-SUFFIX,bbcverticals.com
+DOMAIN-SUFFIX,bidi.net.uk
+DOMAIN-SUFFIX,itv.com
+DOMAIN-SUFFIX,itvstatic.com
+DOMAIN-SUFFIX,tvlicensing.co.uk
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
 DOMAIN-KEYWORD,bbcfmt
 DOMAIN-KEYWORD,uk-live
-DOMAIN-SUFFIX,bbc.co.uk
-DOMAIN-SUFFIX,bbci.co.uk
-DOMAIN-SUFFIX,itv.com
-DOMAIN-SUFFIX,tvlicensing.co.uk
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,aod-dash-uk-live.akamaized.net
+DOMAIN,aod-hls-uk-live.akamaized.net
+DOMAIN,as-dash-uk-live.akamaized.net
+DOMAIN,as-hls-uk-live.akamaized.net
+DOMAIN,bbc.mp-pxcdn.com
+DOMAIN,itvpnpmobile-a.akamaihd.net
+DOMAIN,vod-dash-uk-live.akamaized.net
+DOMAIN,vod-dash-ww-live.akamaized.net
+DOMAIN,vod-hls-uk-live.akamaized.net
+DOMAIN,vod-sub-uk-live.akamaized.net
+DOMAIN,vod-thumb-uk-live.akamaized.net
+DOMAIN,vod-thumb-ww-live.akamaized.net
+DOMAIN,vs-cmaf-push-uk-live.akamaized.net
+
+# ========== OTHER (REJECT) ==========
 USER-AGENT,BBCiPlayer*
 USER-AGENT,ITV_Player*
+
+# ========== END ==========

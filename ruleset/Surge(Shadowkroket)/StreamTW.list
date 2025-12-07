@@ -1,26 +1,72 @@
-# Ruleset: StreamTW.list
-# Cleaned by smart_cleanup.py
-# Total: 22
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamTW
+# Updated: 2025-12-07 03:04:46 UTC
+# Total Rules: 36
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (6 rules)
+#   -  [REJECT] (2 rules)
+#   -  [REJECT] (11 rules)
+#   -  [REJECT] (2 rules)
+#   -  [REJECT] (0 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN,4gtvfreepcvod-cds.cdn.hinet.net
-DOMAIN,ana.video.friday.tw
-DOMAIN,cdi.ofiii.com
-DOMAIN,d3c7rimkq79yfu.cloudfront.net
-DOMAIN,litvfreemobile-hichannel.cdn.hinet.net
-DOMAIN,ntdfreepc-tgc.cdn.hinet.net
-DOMAIN,video.friday.tw
-DOMAIN,www.litv.tv
+# Policy Distribution:
+#   - REJECT:         36 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,4gtv.tv
 DOMAIN-SUFFIX,ani.gamer.com.tw
 DOMAIN-SUFFIX,api.gamer.com.tw
+DOMAIN-SUFFIX,chocotv.com.tw
+DOMAIN-SUFFIX,d3c7rimkq79yfu.cloudfront.net
 DOMAIN-SUFFIX,fanfox.net
+DOMAIN-SUFFIX,fetnet.net
+DOMAIN-SUFFIX,friday.tw
 DOMAIN-SUFFIX,kk.stream
 DOMAIN-SUFFIX,kktv.com.tw
 DOMAIN-SUFFIX,kktv.me
+DOMAIN-SUFFIX,line-cdn.net
+DOMAIN-SUFFIX,line-scdn.net
 DOMAIN-SUFFIX,linetv.tw
+DOMAIN-SUFFIX,litv.tv
 DOMAIN-SUFFIX,mangafox.me
 DOMAIN-SUFFIX,viblast.com
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,4gtvfreepcvod-cds.cdn.hinet.net
+DOMAIN,ana.video.friday.tw
+DOMAIN,cdi.ofiii.com
+DOMAIN,d17lx9ucc6k9fc.cloudfront.net
+DOMAIN,d3c7rimkq79yfu.cloudfront.net
+DOMAIN,d3pgb93pk7bvxj.cloudfront.net
+DOMAIN,d3vm9lcxb6xcm4.cloudfront.net
+DOMAIN,kktv-theater.kk.stream
+DOMAIN,litvfreemobile-hichannel.cdn.hinet.net
+DOMAIN,ntdfreepc-tgc.cdn.hinet.net
+DOMAIN,theater-kktv.cdn.hinet.net
+DOMAIN,video.friday.tw
+DOMAIN,www.litv.tv
+
+# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.linecorp.linetv
 USER-AGENT,KKTV*
 USER-AGENT,LINE TV*
+USER-AGENT,LINE%20TV*
+USER-AGENT,LINE*
 USER-AGENT,com.kktv.ios.kktv*
+
+# ========== END ==========

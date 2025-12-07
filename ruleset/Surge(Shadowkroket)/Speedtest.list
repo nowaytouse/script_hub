@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: Speedtest
+# Updated: 2025-12-07 03:04:22 UTC
+# Total Rules: 6
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (6 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# Policy Distribution:
+#   - REJECT:         6 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,fast.com
+DOMAIN-SUFFIX,ooklaserver.net
+DOMAIN-SUFFIX,speed.cloudflare.com
+DOMAIN-SUFFIX,speed.dler.io
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,speedtest
+
+# ========== OTHER (REJECT) ==========
+USER-AGENT,SpeedTest*
+
+# ========== END ==========

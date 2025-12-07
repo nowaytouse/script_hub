@@ -1,7 +1,28 @@
-# AI Services Sources
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OpenAI/OpenAI.list
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Gemini/Gemini.list
+# AI Services - 人工智能服务规则源
+# 增量合并所有AI相关服务
+# 更新: 2025-12-07
 
-# MetaCubeX 本地规则 (从.srs反编译)
-../MetaCubeX/MetaCubeX_category-ai-cn.list
+# OpenAI (ChatGPT, DALL-E, etc.)
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OpenAI/OpenAI.list
+
+# Claude (Anthropic)
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list
+
+# Google Gemini/Bard
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Gemini/Gemini.list
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BardAI/BardAI.list
+
+# GitHub Copilot
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Copilot/Copilot.list
+
+# Perplexity
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Perplexity/Perplexity.list
+
+# Midjourney
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Midjourney/Midjourney.list
+
+# Poe
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Poe/Poe.list
+
+# MetaCubeX 本地规则 (已转换为Surge格式)
+../deco/MetaCubeX_openai.list

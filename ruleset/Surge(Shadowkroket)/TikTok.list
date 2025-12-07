@@ -1,13 +1,30 @@
-# Ruleset: TikTok.list
-# Cleaned by smart_cleanup.py
-# Total: 32
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: TikTok
+# Updated: 2025-12-07 03:03:41 UTC
+# Total Rules: 33
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (33 rules)
+#   - LOCAL: ../MetaCubeX/MetaCubeX_tiktok.list (NOT FOUND)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN,lf16-effectcdn.byteeffecttos-g.com
-DOMAIN,lf16-pkgcdn.pitaya-clientai.com
-DOMAIN,p16-tiktokcdn-com.akamaized.net
-DOMAIN,trae-api-sg.mchost.guru
-DOMAIN-KEYWORD,musical.ly
-DOMAIN-KEYWORD,tiktok
+# Policy Distribution:
+#   - REJECT:         33 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,bytedapm.com
 DOMAIN-SUFFIX,bytegecko-i18n.com
 DOMAIN-SUFFIX,byteintlapi.com
@@ -33,4 +50,19 @@ DOMAIN-SUFFIX,tiktokv.com
 DOMAIN-SUFFIX,tiktokv.us
 DOMAIN-SUFFIX,trae.ai
 DOMAIN-SUFFIX,ttwebview.com
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,musical.ly
+DOMAIN-KEYWORD,tiktok
+
+# ========== DOMAIN (REJECT) ==========
+DOMAIN,lf16-effectcdn.byteeffecttos-g.com
+DOMAIN,lf16-pkgcdn.pitaya-clientai.com
+DOMAIN,p16-tiktokcdn-com.akamaized.net
+DOMAIN,trae-api-sg.mchost.guru
+
+# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.zhiliaoapp.musically
+USER-AGENT,TikTok*
+
+# ========== END ==========

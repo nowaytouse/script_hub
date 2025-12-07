@@ -11,20 +11,46 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0  # 完整历史用于git操作
         
     - name: Configure Git
       run: |
         git config --global user.name "GitHub Action"
         git config --global user.email "action@github.com"
-        
-    - name: Execute Sync Script
+
+    - name: Install sing-box (for SRS generation)
       run: |
-        chmod +x sync/sync_all_rulesets.sh
-        chmod +x network/merge_all_rulesets.sh
-        chmod +x sync/merge_adblock_modules.sh
-        ./sync/sync_all_rulesets.sh
+        # 下载最新sing-box
+        SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+        echo "Installing sing-box v${SINGBOX_VERSION}"
+        curl -Lo sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
+        tar -xzf sing-box.tar.gz
+        sudo mv sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box /usr/local/bin/
+        rm -rf sing-box.tar.gz sing-box-${SINGBOX_VERSION}-linux-amd64
+        sing-box version
+        
+    - name: Execute Full Update Script (Unattended Mode)
+      run: |
+        chmod +x merge_sync/*.sh
+        ./merge_sync/full_update.sh --unattended --verbose
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Summary
+      run: |
+        echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Category | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| MetaCubeX Rules | $(ls ruleset/MetaCubeX/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Surge Rules | $(ls ruleset/Surge\(Shadowkroket\)/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| SingBox SRS | $(ls ruleset/SingBox/*.srs 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Sources Files | $(ls ruleset/Sources/Links/*_sources.txt 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f "ruleset/Surge(Shadowkroket)/AdBlock_Merged.list" ]; then
+          ADBLOCK_COUNT=$(grep -v "^#" "ruleset/Surge(Shadowkroket)/AdBlock_Merged.list" | grep -v "^$" | wc -l)
+          echo "**AdBlock Rules:** ${ADBLOCK_COUNT}" >> $GITHUB_STEP_SUMMARY
+        fi

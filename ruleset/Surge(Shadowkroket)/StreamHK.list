@@ -1,7 +1,64 @@
-# Ruleset: StreamHK.list
-# Cleaned by smart_cleanup.py
-# Total: 32
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamHK
+# Updated: 2025-12-07 03:04:39 UTC
+# Total Rules: 44
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (12 rules)
+#   -  [REJECT] (6 rules)
+#   -  [REJECT] (0 rules)
+#   -  [REJECT] (2 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
+# Policy Distribution:
+#   - REJECT:         44 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
+DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
+DOMAIN-SUFFIX,csifund.org
+DOMAIN-SUFFIX,d1k2us671qcoau.cloudfront.net
+DOMAIN-SUFFIX,d2anahhhmp1ffz.cloudfront.net
+DOMAIN-SUFFIX,dfp6rglgjqszk.cloudfront.net
+DOMAIN-SUFFIX,hboasia.com
+DOMAIN-SUFFIX,hbogoasia.com
+DOMAIN-SUFFIX,hbogoasia.hk
+DOMAIN-SUFFIX,hbogoasia.id
+DOMAIN-SUFFIX,hbogoasia.ph
+DOMAIN-SUFFIX,hbogoasia.sg
+DOMAIN-SUFFIX,hbogoasia.tw
+DOMAIN-SUFFIX,hkbn.com.hk
+DOMAIN-SUFFIX,hkbn.net
+DOMAIN-SUFFIX,hkbnes.net
+DOMAIN-SUFFIX,jos.com
+DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com
+DOMAIN-SUFFIX,mytvsuper.com
+DOMAIN-SUFFIX,nowe.com
+DOMAIN-SUFFIX,nowestatic.com
+DOMAIN-SUFFIX,psg.cdn.hgc.com.hk
+DOMAIN-SUFFIX,speedtest.com.hk
+DOMAIN-SUFFIX,tvb.com
+DOMAIN-SUFFIX,viu.com
+DOMAIN-SUFFIX,viu.now.com
+DOMAIN-SUFFIX,viu.tv
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,nowtv100
+DOMAIN-KEYWORD,rthklive
+
+# ========== DOMAIN (REJECT) ==========
 DOMAIN,44wilhpljf.execute-api.ap-southeast-1.amazonaws.com
 DOMAIN,apm-misaka.biliapi.net
 DOMAIN,d1k2us671qcoau.cloudfront.net
@@ -11,22 +68,8 @@ DOMAIN,hbolb.onwardsmg.com
 DOMAIN,hbounify-prod.evergent.com
 DOMAIN,manifest.prod.boltdns.net
 DOMAIN,players.brightcove.net
-DOMAIN-KEYWORD,nowtv100
-DOMAIN-KEYWORD,rthklive
-DOMAIN-SUFFIX,hboasia.com
-DOMAIN-SUFFIX,hbogoasia.com
-DOMAIN-SUFFIX,hbogoasia.hk
-DOMAIN-SUFFIX,hbogoasia.id
-DOMAIN-SUFFIX,hbogoasia.ph
-DOMAIN-SUFFIX,hbogoasia.sg
-DOMAIN-SUFFIX,hbogoasia.tw
-DOMAIN-SUFFIX,mytvsuper.com
-DOMAIN-SUFFIX,nowe.com
-DOMAIN-SUFFIX,psg.cdn.hgc.com.hk
-DOMAIN-SUFFIX,tvb.com
-DOMAIN-SUFFIX,viu.com
-DOMAIN-SUFFIX,viu.now.com
-DOMAIN-SUFFIX,viu.tv
+
+# ========== OTHER (REJECT) ==========
 PROCESS-NAME,com.bstar.intl
 PROCESS-NAME,com.hktve.viutv
 PROCESS-NAME,com.viu.pad
@@ -34,3 +77,5 @@ PROCESS-NAME,com.viu.phone
 PROCESS-NAME,com.vuclip.viu
 USER-AGENT,Viu*
 USER-AGENT,mytv*
+
+# ========== END ==========

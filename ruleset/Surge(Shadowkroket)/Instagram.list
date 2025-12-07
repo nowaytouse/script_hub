@@ -1,8 +1,35 @@
-# Ruleset: Instagram.list
-# Cleaned by smart_cleanup.py
-# Total: 4
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: Instagram
+# Updated: 2025-12-07 03:03:43 UTC
+# Total Rules: 4
+# Generator: Ruleset Merger v2.4
+# Git Hash: add40ac
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   -  [REJECT] (4 rules)
+#   - LOCAL: ../MetaCubeX/MetaCubeX_instagram.list (NOT FOUND)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
 
-DOMAIN-KEYWORD,instagram
+# Policy Distribution:
+#   - REJECT:         4 rules
+#   - REJECT-DROP:    0 rules
+#   - REJECT-NO-DROP: 0 rules
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX (REJECT) ==========
 DOMAIN-SUFFIX,cdninstagram.com
 DOMAIN-SUFFIX,instagr.am
 DOMAIN-SUFFIX,instagram.com
+
+# ========== DOMAIN-KEYWORD (REJECT) ==========
+DOMAIN-KEYWORD,instagram
+
+# ========== END ==========
