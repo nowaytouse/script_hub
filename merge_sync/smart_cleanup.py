@@ -86,14 +86,40 @@ def load_list(filepath):
     return rules
 
 def write_list(filepath, rules):
-    """Writes sorted rules back to file with header."""
+    """Writes sorted rules back to file, preserving existing header if present."""
     sorted_rules = sorted(list(rules))
     filename = os.path.basename(filepath)
+    
+    # 🔥 尝试保留原有header（由ruleset_merger.sh生成的详细header）
+    existing_header = []
+    
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                # 保留所有注释行作为header
+                if line.startswith('#') or (line.strip() == ''):
+                    existing_header.append(line)
+                else:
+                    # 遇到第一个规则行，header结束
+                    break
+    
+    # 写入文件
     with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(f"# Ruleset: {filename}\n")
-        f.write("# Cleaned by smart_cleanup.py\n")
-        f.write(f"# Total: {len(sorted_rules)}\n")
-        f.write("\n")
+        if existing_header and len(existing_header) > 5:
+            # 有详细header，保留它（包括所有注释和分类标记）
+            for line in existing_header:
+                f.write(line)
+            # 在header末尾添加smart_cleanup标记
+            f.write(f"# [smart_cleanup.py] Deduplicated: {len(sorted_rules)} rules\n")
+            f.write("\n")
+        else:
+            # 没有详细header，使用简单header
+            f.write(f"# Ruleset: {filename}\n")
+            f.write("# Cleaned by smart_cleanup.py\n")
+            f.write(f"# Total: {len(sorted_rules)}\n")
+            f.write("\n")
+        
+        # 写入规则（不再添加分类标记，因为header中已有）
         for rule in sorted_rules:
             f.write(rule + "\n")
 
