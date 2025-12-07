@@ -324,11 +324,23 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# Step 6: AdBlock module merge
+# Step 6: Download AdBlock modules + Merge
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$SKIP_ADBLOCK" = false ]; then
-    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] AdBlock module merge...${NC}"
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Download AdBlock modules + Merge...${NC}"
+    
+    # Download modules from URLs
+    if [ -f "${SCRIPT_DIR}/download_adblock_modules.sh" ]; then
+        log_info "Downloading AdBlock modules from URLs..."
+        if [ "$VERBOSE" = true ]; then
+            "${SCRIPT_DIR}/download_adblock_modules.sh"
+        else
+            "${SCRIPT_DIR}/download_adblock_modules.sh" 2>&1 | grep -E "^\[✓\]|^\[✗\]|^\[INFO\] (Download Summary|Extracted|Merging|updated)" || true
+        fi
+    fi
+    
+    # Merge local modules
     if [ -f "${SCRIPT_DIR}/merge_adblock_modules.sh" ]; then
         if [ "$VERBOSE" = true ]; then
             "${SCRIPT_DIR}/merge_adblock_modules.sh"
