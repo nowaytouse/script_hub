@@ -1,21 +1,34 @@
 # ═══════════════════════════════════════════════════════════════
-# Ruleset: LAN
+# Ruleset: LAN (Local Area Network)
 # Updated: 2025-12-07 04:26:52 UTC
-# Total Rules: 156
+# Total Rules: 156 (去重后)
 # Generator: Ruleset Merger v2.4
 # Git Hash: 5be0b4a
 # ═══════════════════════════════════════════════════════════════
 #
-# Sources:
-#   -  [REJECT] (141 rules)
-#   -  [REJECT] (37 rules)
-#   -  [REJECT] (18 rules)
-#   -  [REJECT] (0 rules)
+# 规则集说明:
+#   本规则集包含局域网地址、私有IP段和本地网络相关规则
+#   用于识别和处理本地网络流量,防止本地流量被代理
 #
-# Usage:
+# 源文件合并统计:
+#   1. blackmatrix7/Lan.list              (141 rules)
+#   2. ACL4SSR/LocalAreaNetwork.list      (37 rules)
+#   3. Loyalsoldier/private.txt           (18 rules)
+#   4. Loyalsoldier/private.txt (surge)   (0 rules - 重复)
+#   ─────────────────────────────────────────────
+#   原始总数: 196 rules
+#   去重后:   156 rules (删除40条重复规则)
+#
+# 规则类型分布:
+#   - DOMAIN-SUFFIX:  (IPv4/IPv6反向DNS域名)
+#   - DOMAIN:         (路由器管理界面域名)
+#   - IP-CIDR:        (私有IP段: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16等)
+#   - IP-CIDR6:       (IPv6私有地址段)
+#
+# 使用说明:
 #   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by policy type (REJECT/REJECT-DROP/REJECT-NO-DROP)
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#   - 规则按策略类型分组 (REJECT/REJECT-DROP/REJECT-NO-DROP)
+#   - 兼容 Surge/Shadowrocket/Clash/Quantumult X
 #
 # ═══════════════════════════════════════════════════════════════
 
