@@ -1,16 +1,11 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: Microsoft
-# Updated: 2025-12-07 19:52
-# Rules: 667
+# Policy: PROXY
+# Node: Any
+# Description: Microsoft services
+# Rules: 658
+# Updated: 2025-12-07 20:37:21
 # ═══════════════════════════════════════════════════════════════
-
-# [smart_cleanup.py] Deduplicated: 667 rules
-
-# [smart_cleanup.py] Deduplicated: 667 rules
-
-# [smart_cleanup.py] Deduplicated: 667 rules
-
-# [smart_cleanup.py] Deduplicated: 667 rules
 
 DOMAIN,vsmarketplacebadge.apphb.com
 DOMAIN-KEYWORD,1drv
@@ -124,16 +119,10 @@ DOMAIN-SUFFIX,binads.com
 DOMAIN-SUFFIX,binb.com
 DOMAIN-SUFFIX,binf.com
 DOMAIN-SUFFIX,bing
-DOMAIN-SUFFIX,bing.com
-DOMAIN-SUFFIX,bing.com.cn
-DOMAIN-SUFFIX,bing.net
 DOMAIN-SUFFIX,bing123.com
 DOMAIN-SUFFIX,bing135.com
 DOMAIN-SUFFIX,bing4.com
-DOMAIN-SUFFIX,bingads.com
-DOMAIN-SUFFIX,bingagencyawards.com
 DOMAIN-SUFFIX,bingapis.com
-DOMAIN-SUFFIX,bingapistatistics.com
 DOMAIN-SUFFIX,binginternal.com
 DOMAIN-SUFFIX,bingit.net
 DOMAIN-SUFFIX,bingiton.com
@@ -141,11 +130,8 @@ DOMAIN-SUFFIX,bingj.com
 DOMAIN-SUFFIX,bingpix.com
 DOMAIN-SUFFIX,bingpk.com
 DOMAIN-SUFFIX,bings.com
-DOMAIN-SUFFIX,bingsandbox.com
 DOMAIN-SUFFIX,bingtoolbar.com
 DOMAIN-SUFFIX,bingtranslator.com
-DOMAIN-SUFFIX,bingvisualsearch.com
-DOMAIN-SUFFIX,bingworld.com
 DOMAIN-SUFFIX,biying.cn
 DOMAIN-SUFFIX,biying.com
 DOMAIN-SUFFIX,biying.com.cn

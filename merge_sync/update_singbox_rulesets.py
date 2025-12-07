@@ -19,7 +19,10 @@ def update_singbox_config(filepath):
         'Bahamut_Singbox.srs',
         'Reddit_Singbox.srs',
         'Discord_Singbox.srs',
-        'Fediverse_Singbox.srs'
+        'Fediverse_Singbox.srs',
+        'GlobalMedia_Singbox.srs',
+        'Twitter_Singbox.srs',
+        'Instagram_Singbox.srs'
     ]
     
     # Filter out deleted rulesets

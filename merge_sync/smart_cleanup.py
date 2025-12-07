@@ -16,47 +16,49 @@ RULESET_DIR = os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkr
 CONFLICT_MAP = {
     # ========== First Priority: Ad-blocking ==========
     # AdBlock takes priority over all other rulesets
-    "AdBlock.list": ["GlobalProxy.list", "GlobalMedia.list", "SocialMedia.list", 
+    "AdBlock.list": ["GlobalProxy.list", "SocialMedia.list", 
                      "Google.list", "Microsoft.list", "Apple.list",
-                     "Twitter.list", "Instagram.list", "Facebook.list",
-                     "YouTube.list", "Netflix.list", "Spotify.list"],
-    # AdBlock_Merged.list has been merged into AdBlock.list, no longer needs separate handling
+                     "YouTube.list", "Spotify.list", "NSFW.list", "AI.list"],
     
     # ========== Second Priority: Specific site rulesets ==========
-    # Social media specific
-    "Twitter.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
-    "Instagram.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
-    "Facebook.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
-    "Telegram.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
-    "TikTok.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
-    "Reddit.list": ["SocialMedia.list", "GlobalMedia.list", "GlobalProxy.list"],
+    # Social media specific (merged rulesets)
+    "SocialMedia.list": ["GlobalProxy.list", "NSFW.list", "AI.list"],
     
-    # Streaming specific
-    "YouTube.list": ["GlobalMedia.list", "GlobalProxy.list", "Google.list"],
-    "Netflix.list": ["GlobalMedia.list", "GlobalProxy.list"],
-    "Spotify.list": ["GlobalMedia.list", "GlobalProxy.list"],
-    "Disney.list": ["GlobalMedia.list", "GlobalProxy.list"],
+    # Streaming specific (merged rulesets)
+    "StreamUS.list": ["GlobalProxy.list", "NSFW.list"],
+    "StreamTW.list": ["GlobalProxy.list", "NSFW.list"],
+    "StreamHK.list": ["GlobalProxy.list", "NSFW.list"],
+    "StreamJP.list": ["GlobalProxy.list", "NSFW.list"],
+    "StreamKR.list": ["GlobalProxy.list", "NSFW.list"],
+    "StreamEU.list": ["GlobalProxy.list", "NSFW.list"],
+    "YouTube.list": ["GlobalProxy.list", "Google.list", "NSFW.list"],
+    "Spotify.list": ["GlobalProxy.list", "NSFW.list"],
+    "TikTok.list": ["SocialMedia.list", "GlobalProxy.list", "NSFW.list"],
+    "Telegram.list": ["SocialMedia.list", "GlobalProxy.list", "NSFW.list"],
     
     # Gaming specific
-    "Steam.list": ["Gaming.list", "GlobalProxy.list"],
-    "Epic.list": ["Gaming.list", "GlobalProxy.list"],
+    "Gaming.list": ["GlobalProxy.list", "NSFW.list"],
+    "Steam.list": ["Gaming.list", "GlobalProxy.list", "NSFW.list"],
+    "Epic.list": ["Gaming.list", "GlobalProxy.list", "NSFW.list"],
     
     # AI specific
-    "OpenAI.list": ["AI.list", "GlobalProxy.list"],
-    "Claude.list": ["AI.list", "GlobalProxy.list"],
+    "AI.list": ["GlobalProxy.list", "NSFW.list"],
     
     # Tech company specific
-    "Google.list": ["GlobalProxy.list"],
-    "Microsoft.list": ["GlobalProxy.list"],
-    "Apple.list": ["GlobalProxy.list"],
-    "GitHub.list": ["GlobalProxy.list"],
+    "Google.list": ["GlobalProxy.list", "NSFW.list"],
+    "Microsoft.list": ["GlobalProxy.list", "NSFW.list"],
+    "Apple.list": ["GlobalProxy.list", "NSFW.list"],
+    "GitHub.list": ["GlobalProxy.list", "NSFW.list"],
+    "Bing.list": ["Microsoft.list", "GlobalProxy.list", "NSFW.list"],
     
-    # NSFW specific (adult content)
-    "NSFW.list": ["GlobalProxy.list"],
+    # China services specific (merged Tencent)
+    "Tencent.list": ["ChinaDirect.list", "GlobalProxy.list"],
+    "Bilibili.list": ["ChinaDirect.list", "GlobalProxy.list"],
+    "XiaoHongShu.list": ["ChinaDirect.list", "GlobalProxy.list"],
     
     # ========== Third Priority: Fallback rulesets ==========
     # These rulesets have lowest priority, will be overridden by specific rulesets
-    # GlobalProxy, GlobalMedia, SocialMedia, Gaming, AI, etc.
+    # GlobalProxy, SocialMedia, Gaming, AI, NSFW, etc.
 }
 
 # Also standard exclusions: Remove "Direct" domains from "Proxy" lists if they appear?
