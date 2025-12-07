@@ -1,32 +1,9 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: BlockHttpDNS
-# Updated: 2025-12-07 06:16:01 UTC
-# Total Rules: 0
-# Generator: Ruleset Merger v2.4
-# Git Hash: 4059359
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
-#   - Policy is determined by RULE-SET line in config file
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# 建议策略: REJECT
+# 说明: HTTP DNS拦截（空，通过其他方式实现）
+# 规则数量: 0
+# 更新时间: 2025-12-07 14:33:13
 # ═══════════════════════════════════════════════════════════════
 
-# 策略说明:
-#   - 规则集本身不包含策略标记
-#   - 策略由配置文件中的RULE-SET行决定
-#   - ⚠️ 本规则集预期策略: REJECT
-#   - 配置示例: RULE-SET,BlockHttpDNS.list,REJECT
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== END ==========
-# [smart_cleanup.py] Deduplicated: 0 rules
-
-# [smart_cleanup.py] Deduplicated: 0 rules
 

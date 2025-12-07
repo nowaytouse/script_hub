@@ -277,8 +277,19 @@ if [ -f "${SCRIPT_DIR}/smart_cleanup.py" ]; then
         python3 "${SCRIPT_DIR}/smart_cleanup.py" 2>&1 | grep -E "^(Removed|Starting|Complete)" || true
     fi
     log_success "智能去重完成"
+fi
+
+# 更新规则集Header (添加策略建议)
+if [ -f "${SCRIPT_DIR}/update_ruleset_headers.sh" ]; then
+    log_info "更新规则集Header (添加策略建议)..."
+    if [ "$VERBOSE" = true ]; then
+        "${SCRIPT_DIR}/update_ruleset_headers.sh"
+    else
+        "${SCRIPT_DIR}/update_ruleset_headers.sh" 2>&1 | grep -E "^(✅|⚠️|╔|╚)" || true
+    fi
+    log_success "规则集Header更新完成"
 else
-    log_warning "跳过: smart_cleanup.py 不存在"
+    log_warning "跳过: update_ruleset_headers.sh 不存在"
 fi
 echo ""
 

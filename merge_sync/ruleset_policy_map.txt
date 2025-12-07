@@ -1,0 +1,99 @@
+# 规则集策略映射表
+# 格式: 规则集名称|建议策略|建议节点|说明
+# 策略: REJECT, DIRECT, PROXY
+# 节点: 任意, 美国, 日本, 香港, 台湾, 新加坡, 欧洲, 韩国
+
+# ========== 广告拦截 (REJECT) ==========
+AdBlock|REJECT||广告拦截，最全面的广告规则集
+NSFW|REJECT||成人内容拦截
+
+# ========== 本地直连 (DIRECT) ==========
+LAN|DIRECT||本地网络地址
+DirectProcess|DIRECT||需要直连的进程
+DownloadProcess|DIRECT||下载进程直连
+ChinaDirect|DIRECT||中国直连域名
+ChinaIP|DIRECT||中国IP地址段（建议用GEOIP）
+Bilibili|DIRECT||哔哩哔哩（中国直连）
+NetEaseMusic|DIRECT||网易云音乐（中国直连）
+QQ|DIRECT||QQ（中国直连）
+Tencent|DIRECT||腾讯服务（中国直连）
+WeChat|DIRECT||微信（中国直连）
+XiaoHongShu|DIRECT||小红书（中国直连）
+
+# ========== 海外代理 (PROXY) ==========
+GlobalProxy|PROXY|任意|全球代理兜底规则
+GlobalMedia|PROXY|任意|全球流媒体兜底规则
+SocialMedia|PROXY|任意|社交媒体兜底规则
+
+# ========== 美国节点 (PROXY-US) ==========
+AppleNews|PROXY|美国|Apple News仅限美国
+Netflix|PROXY|美国|Netflix美国区
+StreamUS|PROXY|美国|美国流媒体
+OpenAI|PROXY|美国|OpenAI/ChatGPT
+Claude|PROXY|美国|Anthropic Claude
+PayPal|PROXY|美国|PayPal（建议美国节点）
+
+# ========== 日本节点 (PROXY-JP) ==========
+StreamJP|PROXY|日本|日本流媒体
+Bahamut|PROXY|台湾|巴哈姆特动画疯（台湾）
+
+# ========== 香港节点 (PROXY-HK) ==========
+StreamHK|PROXY|香港|香港流媒体
+
+# ========== 台湾节点 (PROXY-TW) ==========
+StreamTW|PROXY|台湾|台湾流媒体
+
+# ========== 韩国节点 (PROXY-KR) ==========
+StreamKR|PROXY|韩国|韩国流媒体
+
+# ========== 欧洲节点 (PROXY-EU) ==========
+StreamEU|PROXY|欧洲|欧洲流媒体
+
+# ========== 任意海外节点 (PROXY) ==========
+AI|PROXY|任意|AI服务（OpenAI/Claude/Gemini等）
+Apple|PROXY|任意|Apple服务
+Bing|PROXY|任意|Bing搜索
+CDN|PROXY|任意|CDN服务
+Discord|PROXY|任意|Discord
+Disney|PROXY|任意|Disney+
+Epic|PROXY|任意|Epic Games
+Gaming|PROXY|任意|游戏平台
+GitHub|PROXY|任意|GitHub
+Google|PROXY|任意|Google服务
+Instagram|PROXY|任意|Instagram
+Microsoft|PROXY|任意|Microsoft服务
+Reddit|PROXY|任意|Reddit
+Spotify|PROXY|任意|Spotify
+Steam|PROXY|任意|Steam
+Telegram|PROXY|任意|Telegram
+TikTok|PROXY|任意|TikTok国际版
+Twitter|PROXY|任意|Twitter/X
+YouTube|PROXY|任意|YouTube
+
+# ========== 特殊规则 ==========
+GoogleCN|DIRECT||Google中国服务（直连）
+Tesla|PROXY|任意|Tesla服务
+Binance|PROXY|任意|币安
+Speedtest|PROXY|任意|Speedtest测速
+
+# ========== 进程规则 ==========
+AIProcess|PROXY|任意|AI相关进程
+GamingProcess|PROXY|任意|游戏相关进程
+
+# ========== 手动规则 ==========
+Manual|PROXY|任意|手动添加的代理规则
+Manual_Global|PROXY|任意|手动全球代理
+Manual_JP|PROXY|日本|手动日本节点
+Manual_US|PROXY|美国|手动美国节点
+Manual_West|PROXY|欧洲|手动欧洲节点
+
+# ========== 其他 ==========
+substore|PROXY|任意|Sub-Store订阅转换
+Fediverse|PROXY|任意|去中心化社交网络
+
+# ========== 已废弃/空规则集 ==========
+BlockHttpDNS|REJECT||HTTP DNS拦截（空，通过其他方式实现）
+FirewallPorts|REJECT||危险端口拦截（空，端口规则不适合RULE-SET）
+# ChinaDirect - 空，功能被其他规则集覆盖
+# ChinaIP - 空，建议使用GEOIP规则
+# Fediverse - 空，上游404

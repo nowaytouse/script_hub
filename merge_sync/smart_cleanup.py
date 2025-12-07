@@ -20,8 +20,7 @@ CONFLICT_MAP = {
                      "Google.list", "Microsoft.list", "Apple.list",
                      "Twitter.list", "Instagram.list", "Facebook.list",
                      "YouTube.list", "Netflix.list", "Spotify.list"],
-    "AdBlock_Merged.list": ["GlobalProxy.list", "GlobalMedia.list", "SocialMedia.list",
-                            "Google.list", "Microsoft.list", "Apple.list"],
+    # AdBlock_Merged.list已合并到AdBlock.list，不再需要单独处理
     
     # ========== 第二优先级: 细分网站规则集 ==========
     # 社交媒体细分

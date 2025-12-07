@@ -1,33 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: Bilibili
-# Updated: 2025-12-07 06:15:53 UTC
-# Total Rules: 50
-# Generator: Ruleset Merger v2.4
-# Git Hash: 4059359
+# 建议策略: DIRECT
+# 说明: 哔哩哔哩（中国直连）
+# 规则数量: 50
+# 更新时间: 2025-12-07 14:33:13
 # ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - LOCAL: MetaCubeX_bilibili.list (50 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
-#   - Policy is determined by RULE-SET line in config file
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
-# ═══════════════════════════════════════════════════════════════
-
-# 策略说明:
-#   - 规则集本身不包含策略标记
-#   - 策略由配置文件中的RULE-SET行决定
-#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX ==========
-# [smart_cleanup.py] Deduplicated: 50 rules
-
-# [smart_cleanup.py] Deduplicated: 50 rules
 
 DOMAIN,manga.bilibili.com
 DOMAIN,upos-hz-mirrorakam.akamaized.net
