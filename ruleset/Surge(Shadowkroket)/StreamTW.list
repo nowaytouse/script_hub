@@ -1,22 +1,17 @@
-# ═══════════════════════════════════════════════════════════════
 # Ruleset: StreamTW
-# Updated: 2025-12-07 19:52
-# Rules: 36
-# ═══════════════════════════════════════════════════════════════
-
-# [smart_cleanup.py] Deduplicated: 36 rules
-
-# [smart_cleanup.py] Deduplicated: 36 rules
-
-# [smart_cleanup.py] Deduplicated: 36 rules
+# Updated: 2025-12-07 20:04
+# Rules: 45
 
 DOMAIN,4gtvfreepcvod-cds.cdn.hinet.net
 DOMAIN,ana.video.friday.tw
+DOMAIN,bahamut.akamaized.net
 DOMAIN,cdi.ofiii.com
 DOMAIN,d17lx9ucc6k9fc.cloudfront.net
 DOMAIN,d3c7rimkq79yfu.cloudfront.net
 DOMAIN,d3pgb93pk7bvxj.cloudfront.net
 DOMAIN,d3vm9lcxb6xcm4.cloudfront.net
+DOMAIN,gamer-cds.cdn.hinet.net
+DOMAIN,gamer2-cds.cdn.hinet.net
 DOMAIN,kktv-theater.kk.stream
 DOMAIN,litvfreemobile-hichannel.cdn.hinet.net
 DOMAIN,ntdfreepc-tgc.cdn.hinet.net
@@ -26,11 +21,16 @@ DOMAIN,www.litv.tv
 DOMAIN-SUFFIX,4gtv.tv
 DOMAIN-SUFFIX,ani.gamer.com.tw
 DOMAIN-SUFFIX,api.gamer.com.tw
+DOMAIN-SUFFIX,bahamut.com.tw
 DOMAIN-SUFFIX,chocotv.com.tw
 DOMAIN-SUFFIX,d3c7rimkq79yfu.cloudfront.net
+DOMAIN-SUFFIX,digicert.com
 DOMAIN-SUFFIX,fanfox.net
 DOMAIN-SUFFIX,fetnet.net
 DOMAIN-SUFFIX,friday.tw
+DOMAIN-SUFFIX,gamer.com.tw
+DOMAIN-SUFFIX,gvt1.com
+DOMAIN-SUFFIX,hinet.net
 DOMAIN-SUFFIX,kk.stream
 DOMAIN-SUFFIX,kktv.com.tw
 DOMAIN-SUFFIX,kktv.me
@@ -41,6 +41,7 @@ DOMAIN-SUFFIX,litv.tv
 DOMAIN-SUFFIX,mangafox.me
 DOMAIN-SUFFIX,viblast.com
 PROCESS-NAME,com.linecorp.linetv
+USER-AGENT,Anime*
 USER-AGENT,KKTV*
 USER-AGENT,LINE TV*
 USER-AGENT,LINE%20TV*
