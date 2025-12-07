@@ -377,6 +377,20 @@ if [ "$SKIP_PROFILE" = false ]; then
     else
         log_warning "Skip: sync_profile_to_template.sh not found"
     fi
+    
+    # Sync Shadowrocket config (from Surge rules)
+    log_info "Syncing Shadowrocket config (RULE-SET from Surge)..."
+    SYNC_SR_SCRIPT="${PRIVATE_DIR}/sync_shadowrocket_config.py"
+    if [ -f "$SYNC_SR_SCRIPT" ]; then
+        if [ "$VERBOSE" = true ]; then
+            python3 "$SYNC_SR_SCRIPT" --verbose
+        else
+            python3 "$SYNC_SR_SCRIPT" 2>&1 | grep -E "^\[|^=|Rules to|Added:|Updated:|Deleted:|Sync completed|No changes" || true
+        fi
+        log_success "Shadowrocket config sync complete"
+    else
+        log_warning "Skip: sync_shadowrocket_config.py not found"
+    fi
 else
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Skip Surge profile sync${NC}"
 fi
