@@ -1108,7 +1108,7 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-manual-global",
+        "tag": "surge-manual_global",
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_Global_Singbox.srs",
@@ -1116,7 +1116,7 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-manual-jp",
+        "tag": "surge-manual_jp",
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_JP_Singbox.srs",
@@ -1124,7 +1124,7 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-manual-us",
+        "tag": "surge-manual_us",
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_US_Singbox.srs",
@@ -1132,7 +1132,7 @@
         "update_interval": "24h"
       },
       {
-        "tag": "surge-manual-west",
+        "tag": "surge-manual_west",
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/Manual_West_Singbox.srs",
@@ -1641,15 +1641,15 @@
         "outbound": "❌ 拒绝屏蔽"
       },
       {
-        "rule_set": "surge-manual-us",
+        "rule_set": "surge-manual_us",
         "outbound": "🇺🇸 美国 🇺🇸"
       },
       {
-        "rule_set": "surge-manual-west",
+        "rule_set": "surge-manual_west",
         "outbound": "🇺🇸 西方 🇫🇷"
       },
       {
-        "rule_set": "surge-manual-jp",
+        "rule_set": "surge-manual_jp",
         "outbound": "🇯🇵 JP 🇯🇵"
       },
       {
@@ -1729,7 +1729,7 @@
         "outbound": "🌍 海外通用 🌍"
       },
       {
-        "rule_set": "surge-manual-global",
+        "rule_set": "surge-manual_global",
         "outbound": "🌍 海外通用 🌍"
       },
       {
@@ -1797,6 +1797,94 @@
       {
         "rule_set": "surge-adblock",
         "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-adblock-merged",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "surge-manual_us",
+        "outbound": "🇺🇸 美国 🇺🇸"
+      },
+      {
+        "rule_set": "surge-manual_west",
+        "outbound": "🇺🇸 西方 🇫🇷"
+      },
+      {
+        "rule_set": "surge-manual_jp",
+        "outbound": "🇯🇵 JP 🇯🇵"
+      },
+      {
+        "rule_set": "surge-aiprocess",
+        "outbound": "🤖AI平台🤖"
+      },
+      {
+        "rule_set": "surge-gamingprocess",
+        "outbound": "🎮 游戏平台 💻"
+      },
+      {
+        "rule_set": "surge-directprocess",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-downloadprocess",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-qq",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-bahamut",
+        "outbound": "🇭🇰 港澳台 🇲🇴"
+      },
+      {
+        "rule_set": "surge-epic",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-streameu",
+        "outbound": "🇬🇧英国专线🧱"
+      },
+      {
+        "rule_set": "surge-binance",
+        "outbound": "🇸🇬 新加坡 🇸🇬"
+      },
+      {
+        "rule_set": "surge-neteasemusic",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-tencent",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-xiaohongshu",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-wechat",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-tesla",
+        "outbound": "🗺️ 直连通用 🌏"
+      },
+      {
+        "rule_set": "surge-substore",
+        "outbound": "🔗 自动回退 🏁"
+      },
+      {
+        "rule_set": "surge-manual_global",
+        "outbound": "🌍 海外通用 🌍"
+      },
+      {
+        "rule_set": "surge-googlecn",
+        "outbound": "🚫 漏网绝杀 🕸️"
+      },
+      {
+        "rule_set": "surge-applenews",
+        "outbound": "🌍 海外通用 🌍"
       },
       {
         "rule_set": "surge-adblock",
