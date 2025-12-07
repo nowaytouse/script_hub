@@ -1,10 +1,38 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: Fediverse
-# 建议策略: PROXY
-# 建议节点: 任意
-# 说明: 去中心化社交网络
-# 规则数量: 0
-# 更新时间: 2025-12-07 14:33:13
+# Policy: PROXY
+# Node: Any
+# Description: Decentralized social (Mastodon/Bluesky)
+# Rules: 29
+# Updated: 2025-12-07 14:36:49
 # ═══════════════════════════════════════════════════════════════
 
-
+DOMAIN-SUFFIX,atproto.com
+DOMAIN-SUFFIX,bsky.app
+DOMAIN-SUFFIX,bsky.social
+DOMAIN-SUFFIX,joinpeertube.org
+DOMAIN-SUFFIX,lemmy.ml
+DOMAIN-SUFFIX,lemmy.world
+DOMAIN-SUFFIX,mastodon.art
+DOMAIN-SUFFIX,mastodon.cloud
+DOMAIN-SUFFIX,mastodon.online
+DOMAIN-SUFFIX,mastodon.social
+DOMAIN-SUFFIX,misskey-hub.net
+DOMAIN-SUFFIX,misskey.io
+DOMAIN-SUFFIX,mstdn.jp
+DOMAIN-SUFFIX,nostr.info
+DOMAIN-SUFFIX,nostr.wlvs.space
+DOMAIN-SUFFIX,pawoo.net
+DOMAIN-SUFFIX,peertube.video
+DOMAIN-SUFFIX,pixelfed.org
+DOMAIN-SUFFIX,pixelfed.social
+DOMAIN-KEYWORD,atproto
+DOMAIN-KEYWORD,bsky
+DOMAIN-KEYWORD,lemmy
+DOMAIN-KEYWORD,mastodon
+DOMAIN-KEYWORD,misskey
+DOMAIN-KEYWORD,nostr
+DOMAIN-KEYWORD,peertube
+DOMAIN-KEYWORD,pixelfed
+DOMAIN-KEYWORD,pleroma
+DOMAIN,m.cmx.im

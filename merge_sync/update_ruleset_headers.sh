@@ -48,18 +48,18 @@ for ruleset_file in "$RULESET_DIR"/*.list; do
     # 生成新header
     header="# ═══════════════════════════════════════════════════════════════
 # Ruleset: ${filename}
-# 建议策略: ${policy}
+# Policy: ${policy}
 "
     
-    # 添加节点建议（如果有）
+    # Add node recommendation (if any)
     if [ -n "$node" ]; then
-        header+="# 建议节点: ${node}
+        header+="# Node: ${node}
 "
     fi
     
-    header+="# 说明: ${desc}
-# 规则数量: ${rule_count}
-# 更新时间: $(date '+%Y-%m-%d %H:%M:%S')
+    header+="# Description: ${desc}
+# Rules: ${rule_count}
+# Updated: $(date '+%Y-%m-%d %H:%M:%S')
 # ═══════════════════════════════════════════════════════════════
 "
     
