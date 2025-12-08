@@ -46,33 +46,43 @@ log_header() { echo -e "\n${CYAN}═══════════════�
 process_module() {
     local temp_file="$1"
     local module_file="$2"
-    local group="$3"
+    local category="$3"
     
     local filename=$(basename "$module_file")
     
-    # Check if module already has #!group
-    if grep -q "^#!group=" "$temp_file"; then
-        # Replace existing group
+    # Surge uses #!category= for module grouping in UI (NOT #!group=)
+    # Check if module already has #!category
+    if grep -q "^#!category=" "$temp_file"; then
+        # Replace existing category
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|^#!group=.*|#!group=$group|" "$temp_file"
+            sed -i '' "s|^#!category=.*|#!category=$category|" "$temp_file"
         else
-            sed -i "s|^#!group=.*|#!group=$group|" "$temp_file"
+            sed -i "s|^#!category=.*|#!category=$category|" "$temp_file"
         fi
     else
-        # Add group after #!name or at the beginning
+        # Add category after #!name or at the beginning
         if grep -q "^#!name=" "$temp_file"; then
             # Insert after #!name line (macOS compatible)
             if [[ "$OSTYPE" == "darwin"* ]]; then
                 sed -i '' "/^#!name=/a\\
-#!group=$group
+#!category=$category
 " "$temp_file"
             else
-                sed -i "/^#!name=/a #!group=$group" "$temp_file"
+                sed -i "/^#!name=/a #!category=$category" "$temp_file"
             fi
         else
             # Add at the beginning
             local tmp_content=$(cat "$temp_file")
-            echo -e "#!group=$group\n$tmp_content" > "$temp_file"
+            echo -e "#!category=$category\n$tmp_content" > "$temp_file"
+        fi
+    fi
+    
+    # Remove any #!group= field (deprecated, Surge uses #!category=)
+    if grep -q "^#!group=" "$temp_file"; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '/^#!group=/d' "$temp_file"
+        else
+            sed -i '/^#!group=/d' "$temp_file"
         fi
     fi
     
@@ -129,12 +139,12 @@ sync_to_shadowrocket() {
         cp "$module" "$sr_file"
         
         # Shadowrocket-specific adjustments
-        # Keep #!group for organization purposes (comment it out instead of removing)
-        if grep -q "^#!group=" "$sr_file"; then
+        # Comment out #!category= (Shadowrocket doesn't use it)
+        if grep -q "^#!category=" "$sr_file"; then
             if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' 's/^#!group=/#!group (for organization): /' "$sr_file"
+                sed -i '' 's/^#!category=/#!category (Surge only): /' "$sr_file"
             else
-                sed -i 's/^#!group=/#!group (for organization): /' "$sr_file"
+                sed -i 's/^#!category=/#!category (Surge only): /' "$sr_file"
             fi
         fi
         

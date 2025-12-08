@@ -44,18 +44,19 @@ declare -A GROUP_FOLDERS=(
 # Functions
 # ═══════════════════════════════════════════════════════════════════════════════
 
-get_module_group() {
+get_module_category() {
     local module_file="$1"
     
-    # Extract #!group= or #!category= line (try group first, then category)
-    local group=$(grep "^#!group=" "$module_file" 2>/dev/null | head -1 | sed 's/^#!group=//')
+    # Surge uses #!category= for module grouping (NOT #!group=)
+    # Extract #!category= line first (preferred), then fallback to #!group=
+    local category=$(grep "^#!category=" "$module_file" 2>/dev/null | head -1 | sed 's/^#!category=//')
     
-    # If no #!group=, try #!category=
-    if [ -z "$group" ]; then
-        group=$(grep "^#!category=" "$module_file" 2>/dev/null | head -1 | sed 's/^#!category=//')
+    # If no #!category=, try legacy #!group= for backward compatibility
+    if [ -z "$category" ]; then
+        category=$(grep "^#!group=" "$module_file" 2>/dev/null | head -1 | sed 's/^#!group=//')
     fi
     
-    echo "$group"
+    echo "$category"
 }
 
 organize_modules() {
@@ -90,25 +91,25 @@ organize_modules() {
         total=$((total + 1))
         
         local filename=$(basename "$module")
-        local group=$(get_module_group "$module")
+        local category=$(get_module_category "$module")
         
-        if [ -z "$group" ]; then
-            log_warning "No group found: $filename"
+        if [ -z "$category" ]; then
+            log_warning "No category found: $filename"
             no_group=$((no_group + 1))
             continue
         fi
         
         # Find matching folder
         local target_folder=""
-        for group_name in "${!GROUP_FOLDERS[@]}"; do
-            if [ "$group" = "$group_name" ]; then
-                target_folder="${GROUP_FOLDERS[$group_name]}"
+        for category_name in "${!GROUP_FOLDERS[@]}"; do
+            if [ "$category" = "$category_name" ]; then
+                target_folder="${GROUP_FOLDERS[$category_name]}"
                 break
             fi
         done
         
         if [ -z "$target_folder" ]; then
-            log_warning "Unknown group '$group': $filename"
+            log_warning "Unknown category '$category': $filename"
             no_group=$((no_group + 1))
             continue
         fi
