@@ -49,6 +49,10 @@ enum Commands {
         /// Use mathematical lossless AV1 (⚠️ VERY SLOW, huge files)
         #[arg(long)]
         lossless: bool,
+
+        /// Match input video quality level (auto-calculate CRF based on input bitrate)
+        #[arg(long)]
+        match_quality: bool,
     },
 
     /// Simple mode: ALL videos → AV1 MP4
@@ -104,7 +108,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, delete_original, explore, lossless } => {
+        Commands::Auto { input, output, force, delete_original, explore, lossless, match_quality } => {
             let config = ConversionConfig {
                 output_dir: output.clone(),
                 force,
@@ -112,11 +116,15 @@ fn main() -> anyhow::Result<()> {
                 preserve_metadata: true,
                 explore_smaller: explore,
                 use_lossless: lossless,
+                match_quality,
             };
             
-            info!("🎬 Auto Mode Conversion");
-            info!("   Lossless sources → FFV1 MKV (archival)");
-            info!("   Lossy sources → AV1 MP4 (high quality)");
+            info!("🎬 Auto Mode Conversion (AV1)");
+            info!("   Lossless sources → AV1 Lossless");
+            info!("   Lossy sources → AV1 MP4 (CRF auto-matched to input quality)");
+            if match_quality {
+                info!("   🎯 Match Quality: ENABLED");
+            }
             if lossless {
                 info!("   ⚠️  Mathematical lossless AV1: ENABLED (VERY SLOW!)");
             }

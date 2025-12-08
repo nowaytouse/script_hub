@@ -26,6 +26,12 @@ pub struct FFprobeResult {
     pub bit_depth: u8,
     pub has_audio: bool,
     pub audio_codec: Option<String>,
+    // Enhanced fields for precise CRF matching
+    pub profile: Option<String>,        // H.264 profile (Baseline/Main/High)
+    pub level: Option<String>,          // H.264 level (3.1, 4.0, etc.)
+    pub has_b_frames: bool,             // Whether B-frames are used
+    pub video_bit_rate: Option<u64>,    // Video stream specific bitrate
+    pub refs: Option<u32>,              // Reference frames
 }
 
 /// Probe video file using ffprobe
@@ -98,6 +104,14 @@ pub fn probe_video(path: &Path) -> Result<FFprobeResult> {
     // Determine bit depth from pixel format
     let bit_depth = detect_bit_depth(&pix_fmt);
     
+    // Enhanced fields for precise CRF matching
+    let profile = video_stream["profile"].as_str().map(|s| s.to_string());
+    let level = video_stream["level"].as_u64().map(|l| format!("{:.1}", l as f64 / 10.0));
+    let has_b_frames = video_stream["has_b_frames"].as_u64().unwrap_or(0) > 0;
+    let video_bit_rate = video_stream["bit_rate"].as_str()
+        .and_then(|s| s.parse::<u64>().ok());
+    let refs = video_stream["refs"].as_u64().map(|r| r as u32);
+    
     // Check for audio
     let has_audio = streams.iter().any(|s| s["codec_type"].as_str() == Some("audio"));
     let audio_codec = streams.iter()
@@ -122,6 +136,11 @@ pub fn probe_video(path: &Path) -> Result<FFprobeResult> {
         bit_depth,
         has_audio,
         audio_codec,
+        profile,
+        level,
+        has_b_frames,
+        video_bit_rate,
+        refs,
     })
 }
 

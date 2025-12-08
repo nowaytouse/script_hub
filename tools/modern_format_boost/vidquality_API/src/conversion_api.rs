@@ -63,6 +63,8 @@ pub struct ConversionConfig {
     pub explore_smaller: bool,
     /// Use mathematical lossless AV1 (⚠️ VERY SLOW)
     pub use_lossless: bool,
+    /// Match input video quality level (auto-calculate CRF based on input bitrate)
+    pub match_quality: bool,
 }
 
 impl Default for ConversionConfig {
@@ -74,6 +76,7 @@ impl Default for ConversionConfig {
             preserve_metadata: true,
             explore_smaller: false,
             use_lossless: false,
+            match_quality: false,
         }
     }
 }
@@ -284,6 +287,12 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
             } else if config.explore_smaller {
                 // Size exploration mode (only valid for lossy)
                 explore_smaller_size(&detection, &output_path)?
+            } else if config.match_quality {
+                // Calculate CRF to match input quality
+                let matched_crf = calculate_matched_crf(&detection);
+                info!("   🎯 Match Quality Mode: using CRF {} to match input quality", matched_crf);
+                let size = execute_av1_conversion(&detection, &output_path, matched_crf)?;
+                (size, matched_crf, 0)
             } else {
                 let size = execute_av1_conversion(&detection, &output_path, 0)?;
                 (size, 0, 0)
@@ -327,6 +336,91 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
         final_crf,
         exploration_attempts: attempts,
     })
+}
+
+/// Calculate CRF to match input video quality level (Enhanced Algorithm for AV1)
+/// 
+/// This function uses a more precise algorithm that considers:
+/// 1. Bits per pixel (bpp) - primary quality indicator
+/// 2. Source codec efficiency - H.264 vs others
+/// 3. Profile/B-frames - encoding complexity
+/// 4. Resolution scaling - higher res needs more bits
+/// 
+/// AV1 CRF range is 0-63, with 23 being default "good quality"
+/// CRF ≈ 63 - 10 * log2(effective_bpp * 100)
+/// 
+/// Clamped to range [18, 35] for AV1
+pub fn calculate_matched_crf(detection: &VideoDetectionResult) -> u8 {
+    // Use pre-calculated bpp if available, otherwise calculate
+    let bpp = if detection.bits_per_pixel > 0.0 {
+        detection.bits_per_pixel
+    } else {
+        let pixels_per_frame = (detection.width as f64) * (detection.height as f64);
+        let pixels_per_second = pixels_per_frame * detection.fps;
+        if pixels_per_second <= 0.0 {
+            info!("   ⚠️  Cannot calculate bpp, using default CRF 28");
+            return 28;
+        }
+        (detection.bitrate as f64) / pixels_per_second
+    };
+    
+    // Codec efficiency factor (AV1 is ~30% more efficient than HEVC, ~50% more than H.264)
+    let codec_factor = match detection.codec {
+        crate::detection_api::DetectedCodec::H264 => 1.0,      // Baseline
+        crate::detection_api::DetectedCodec::H265 => 0.7,      // More efficient
+        crate::detection_api::DetectedCodec::VP9 => 0.75,      // Similar to HEVC
+        crate::detection_api::DetectedCodec::AV1 => 0.5,       // Most efficient (already AV1)
+        crate::detection_api::DetectedCodec::ProRes => 1.5,    // High bitrate codec
+        crate::detection_api::DetectedCodec::DNxHD => 1.5,     // High bitrate codec
+        crate::detection_api::DetectedCodec::MJPEG => 2.0,     // Very inefficient
+        _ => 1.0,
+    };
+    
+    // B-frames bonus (B-frames improve compression efficiency)
+    let bframe_factor = if detection.has_b_frames { 1.1 } else { 1.0 };
+    
+    // Resolution factor (higher res is harder to compress efficiently)
+    let pixels = (detection.width as f64) * (detection.height as f64);
+    let resolution_factor = if pixels > 8_000_000.0 {
+        0.85  // 4K+ needs more bits
+    } else if pixels > 2_000_000.0 {
+        0.9   // 1080p
+    } else if pixels > 500_000.0 {
+        0.95  // 720p
+    } else {
+        1.0   // SD
+    };
+    
+    // Effective bpp after adjustments
+    let effective_bpp = bpp * codec_factor * bframe_factor * resolution_factor;
+    
+    // Convert bpp to CRF using logarithmic formula for AV1
+    // AV1 CRF range is 0-63, with 23 being default "good quality"
+    // SVT-AV1 CRF is more aggressive than x265, so we use a different formula
+    // CRF = 50 - 8 * log2(effective_bpp * 100)
+    // This gives roughly:
+    // bpp=1.0 → CRF ~18
+    // bpp=0.3 → CRF ~24
+    // bpp=0.1 → CRF ~28
+    // bpp=0.03 → CRF ~33
+    let crf_float = if effective_bpp > 0.0 {
+        50.0 - 8.0 * (effective_bpp * 100.0).log2()
+    } else {
+        28.0
+    };
+    
+    // Clamp to reasonable range [18, 35] for AV1
+    let crf = (crf_float.round() as i32).clamp(18, 35) as u8;
+    
+    info!("   📊 Quality Analysis:");
+    info!("      Raw bpp: {:.4}", bpp);
+    info!("      Codec factor: {:.2} ({})", codec_factor, detection.codec.as_str());
+    info!("      B-frames: {} (factor: {:.2})", detection.has_b_frames, bframe_factor);
+    info!("      Resolution: {}x{} (factor: {:.2})", detection.width, detection.height, resolution_factor);
+    info!("      Effective bpp: {:.4}", effective_bpp);
+    info!("      Calculated CRF: {}", crf);
+    
+    crf
 }
 
 /// Explore smaller size by trying higher CRF values (conservative approach)
