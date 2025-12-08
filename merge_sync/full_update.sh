@@ -32,7 +32,7 @@ show_help() {
     echo "Options:"
     echo "  --with-core       Update Sing-box & Mihomo cores (recommended for local)"
     echo "  --with-git        Enable Git operations (pull/push)"
-    echo "  --skip-git        Skip Git operations"
+    # --skip-git removed: Git push is essential for this project
     echo "  --skip-sync       Skip MetaCubeX sync"
     echo "  --skip-merge      Skip incremental merge"
     echo "  --skip-adblock    Skip AdBlock module merge"
@@ -65,8 +65,8 @@ show_help() {
 
 # Parse arguments
 WITH_CORE=false
-WITH_GIT=true    # Default: enable Git operations (rules need to be pushed to Git)
-SKIP_GIT=false
+WITH_GIT=true    # Git operations are ALWAYS enabled (rules are hosted on GitHub)
+# SKIP_GIT removed: makes no sense for this project
 SKIP_SYNC=false
 SKIP_MERGE=false
 SKIP_ADBLOCK=false
@@ -83,7 +83,7 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --with-core) WITH_CORE=true; shift ;;
         --with-git) WITH_GIT=true; shift ;;
-        --skip-git) SKIP_GIT=true; shift ;;
+        # --skip-git removed: Git push is essential
         --skip-sync) SKIP_SYNC=true; shift ;;
         --skip-merge) SKIP_MERGE=true; shift ;;
         --skip-adblock) SKIP_ADBLOCK=true; shift ;;
@@ -141,7 +141,7 @@ TOTAL_STEPS=11
 # Step 1: Git Pull (fetch remote updates)
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
-if [ "$WITH_GIT" = true ] && [ "$SKIP_GIT" = false ]; then
+if [ "$WITH_GIT" = true ]; then
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Git Pull (fetch remote updates)...${NC}"
     cd "$PROJECT_ROOT"
     if git rev-parse --git-dir > /dev/null 2>&1; then
@@ -447,7 +447,7 @@ echo ""
 # Step 10: Git Commit & Push
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
-if [ "$WITH_GIT" = true ] && [ "$SKIP_GIT" = false ]; then
+if [ "$WITH_GIT" = true ]; then
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Git Commit & Push...${NC}"
     cd "$PROJECT_ROOT"
     if git rev-parse --git-dir > /dev/null 2>&1; then
