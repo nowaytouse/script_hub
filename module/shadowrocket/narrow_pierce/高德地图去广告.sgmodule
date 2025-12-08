@@ -1,9 +1,8 @@
 #!name=高德地图去广告
-#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
-#!desc=过滤高德地图开屏广告、各页面推广，精简我的页面。
+#!desc=[🚀SR] 过滤高德地图开屏广告、各页面推广，精简我的页面。
 #!author=RuCu6[https://github.com/RuCu6], kelv1n1n[https://github.com/kelv1n1n]
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Amap.png
-#!category (Surge only): iKeLee
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id461703208
 #!tag=去广告
 #!loon_version=3.2.4(787)
@@ -11,9 +10,9 @@
 #!date=2025-09-04 23:46:49
 
 [Rule]
-DOMAIN,amap-aos-info-nogw.amap.com,REJECT,extended-matching,pre-matching
-DOMAIN,free-aos-cdn-image.amap.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,v.smtcdns.com,REJECT,extended-matching,pre-matching
+DOMAIN,amap-aos-info-nogw.amap.com,REJECT
+DOMAIN,free-aos-cdn-image.amap.com,REJECT
+DOMAIN-SUFFIX,v.smtcdns.com,REJECT
 
 [Body Rewrite]
 http-response-jq ^https:\/\/m5\.amap\.com\/ws\/shield\/search_business\/process\/marketingOperationStructured\? 'delpaths([["data","commonMaterial"]])'
@@ -79,5 +78,5 @@ http-response-jq ^https:\/\/m5-zb\.amap\.com\/ws\/sharedtrip\/taxi\/order_detail
 移除导航详情页推广 = type=http-response, pattern=^https:\/\/(?:info|m5)\.amap\.com\/ws\/shield\/search\/(?:common\/coupon\/info|poi\/detail), script-path=https://kelee.one/Resource/JavaScript/Amap/Amap_remove_ads.js, requires-body=true
 
 [MITM]
-hostname = %APPEND% *.amap.com
+hostname =  *.amap.com
 

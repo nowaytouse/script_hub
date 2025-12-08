@@ -1,162 +1,161 @@
 #!name=2.去除小程序和其他应用广告
-#!group (for organization): 『 🔝 Head Expanse › 首端扩域 』
-#!desc=仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等
-#!category (Surge only): 去广告
+#!desc=[🚀SR] 仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等
+#!category=『 🔝 Head Expanse › 首端扩域 』
 
 [Rule]
 #>爱奇艺
-DOMAIN,api.iqiyi.com,REJECT,extended-matching,pre-matching
+DOMAIN,api.iqiyi.com,REJECT
 
 #>安全浏览限制解除
-DOMAIN,lookup.api.bsb.baidu.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,u3.ucweb.com,REJECT,extended-matching,pre-matching
-DOMAIN-KEYWORD,safebrowsing.,REJECT,extended-matching,pre-matching
+DOMAIN,lookup.api.bsb.baidu.com,REJECT
+DOMAIN-SUFFIX,u3.ucweb.com,REJECT
+DOMAIN-KEYWORD,safebrowsing.,REJECT
 
 #>百度
-DOMAIN,mobads.baidu.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,pos.baidu.com,REJECT,extended-matching,pre-matching
+DOMAIN,mobads.baidu.com,REJECT
+DOMAIN-SUFFIX,pos.baidu.com,REJECT
 IP-CIDR,180.76.76.112/32,REJECT,no-resolve
 IP-CIDR,180.76.76.200/32,REJECT,no-resolve
 
 #>百度地图
-DOMAIN,afd.baidu.com,REJECT,extended-matching,pre-matching
-DOMAIN,afdconf.baidu.com,REJECT,extended-matching,pre-matching
-DOMAIN,lc.map.baidu.com,REJECT,extended-matching,pre-matching
+DOMAIN,afd.baidu.com,REJECT
+DOMAIN,afdconf.baidu.com,REJECT
+DOMAIN,lc.map.baidu.com,REJECT
 
 #>海尔智家
-DOMAIN-SUFFIX,ehaier.com,REJECT,extended-matching,pre-matching
+DOMAIN-SUFFIX,ehaier.com,REJECT
 
 #>HttpDNS
-DOMAIN,hdns.ksyun.com,REJECT,extended-matching,pre-matching
-DOMAIN-KEYWORD,httpdns.,REJECT,extended-matching,pre-matching
-DOMAIN-KEYWORD,httpdns-,REJECT,extended-matching,pre-matching
+DOMAIN,hdns.ksyun.com,REJECT
+DOMAIN-KEYWORD,httpdns.,REJECT
+DOMAIN-KEYWORD,httpdns-,REJECT
 
 #>建设银行
-DOMAIN-KEYWORD,adv.ccb.com,REJECT,extended-matching,pre-matching
+DOMAIN-KEYWORD,adv.ccb.com,REJECT
 
 #>芒果TV
-DOMAIN,credits.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,credits2.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,credits3.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,dflow.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,encounter.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,floor.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,layer.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,mob.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,rc-topic-api.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,rprain.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,rprain.log.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN,vip.bz.mgtv.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,da.mgtv.com,REJECT,extended-matching,pre-matching
+DOMAIN,credits.bz.mgtv.com,REJECT
+DOMAIN,credits2.bz.mgtv.com,REJECT
+DOMAIN,credits3.bz.mgtv.com,REJECT
+DOMAIN,dflow.bz.mgtv.com,REJECT
+DOMAIN,encounter.bz.mgtv.com,REJECT
+DOMAIN,floor.bz.mgtv.com,REJECT
+DOMAIN,layer.bz.mgtv.com,REJECT
+DOMAIN,mob.bz.mgtv.com,REJECT
+DOMAIN,rc-topic-api.bz.mgtv.com,REJECT
+DOMAIN,rprain.bz.mgtv.com,REJECT
+DOMAIN,rprain.log.mgtv.com,REJECT
+DOMAIN,vip.bz.mgtv.com,REJECT
+DOMAIN-SUFFIX,da.mgtv.com,REJECT
 
 #>美团
-DOMAIN,maplocatesdksnapshot.d.meituan.net,REJECT,extended-matching,pre-matching
-DOMAIN,metrics-picture.d.meituan.net,REJECT,extended-matching,pre-matching
+DOMAIN,maplocatesdksnapshot.d.meituan.net,REJECT
+DOMAIN,metrics-picture.d.meituan.net,REJECT
 IP-CIDR,103.37.155.60/32,REJECT,no-resolve
 
 #>美颜相机
-DOMAIN,aaid.uyunad.com,REJECT,extended-matching,pre-matching
-DOMAIN,adui.tg.meitu.com,REJECT,extended-matching,pre-matching
+DOMAIN,aaid.uyunad.com,REJECT
+DOMAIN,adui.tg.meitu.com,REJECT
 
 #>Outlook
-DOMAIN,acdn.adnxs.com,REJECT,extended-matching,pre-matching
-DOMAIN,mediation.adnxs.com,REJECT,extended-matching,pre-matching
-DOMAIN,sin3-ib.adnxs.com,REJECT,extended-matching,pre-matching
+DOMAIN,acdn.adnxs.com,REJECT
+DOMAIN,mediation.adnxs.com,REJECT
+DOMAIN,sin3-ib.adnxs.com,REJECT
 
 #>什么值得买
-DOMAIN,api.zuihuimai.com,REJECT,extended-matching,pre-matching
+DOMAIN,api.zuihuimai.com,REJECT
 
 #>数字联盟
-DOMAIN-SUFFIX,shuzilm.cn,REJECT,extended-matching,pre-matching
+DOMAIN-SUFFIX,shuzilm.cn,REJECT
 
 #>Speedtest
-DOMAIN,ads.pubmatic.com,REJECT,extended-matching,pre-matching
-DOMAIN,id.hadron.ad.gt,REJECT,extended-matching,pre-matching
-DOMAIN-KEYWORD,-adsystem.com,REJECT,extended-matching,pre-matching
+DOMAIN,ads.pubmatic.com,REJECT
+DOMAIN,id.hadron.ad.gt,REJECT
+DOMAIN-KEYWORD,-adsystem.com,REJECT
 
 #>太平洋保险
-DOMAIN,a.cpic.com.cn,REJECT,extended-matching,pre-matching
+DOMAIN,a.cpic.com.cn,REJECT
 
 #>腾讯
-DOMAIN,adsmind.gdtimg.com,REJECT,extended-matching,pre-matching
-DOMAIN,info4.video.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,info6.video.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,ios.video.mpush.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,otheve.beacon.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,pgdt.gtimg.cn,REJECT,extended-matching,pre-matching
-DOMAIN,tmead.y.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,tmeadbak.y.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,tmeadcomm.y.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,tpns.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,gdt.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,l.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN-KEYWORD,trace.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN-KEYWORD,trace.video.qq.com,REJECT,extended-matching,pre-matching
+DOMAIN,adsmind.gdtimg.com,REJECT
+DOMAIN,info4.video.qq.com,REJECT
+DOMAIN,info6.video.qq.com,REJECT
+DOMAIN,ios.video.mpush.qq.com,REJECT
+DOMAIN,otheve.beacon.qq.com,REJECT
+DOMAIN,pgdt.gtimg.cn,REJECT
+DOMAIN,tmead.y.qq.com,REJECT
+DOMAIN,tmeadbak.y.qq.com,REJECT
+DOMAIN,tmeadcomm.y.qq.com,REJECT
+DOMAIN,tpns.qq.com,REJECT
+DOMAIN-SUFFIX,gdt.qq.com,REJECT
+DOMAIN-SUFFIX,l.qq.com,REJECT
+DOMAIN-KEYWORD,trace.qq.com,REJECT
+DOMAIN-KEYWORD,trace.video.qq.com,REJECT
 IP-CIDR,47.110.187.87/32,REJECT,no-resolve
 
 #>微信
-DOMAIN,badjs.weixinbridge.com,REJECT,extended-matching,pre-matching
-DOMAIN,dns.weixin.qq.com.cn,REJECT,extended-matching,pre-matching
-DOMAIN,dns.weixin.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,wxs.qq.com,REJECT,extended-matching,pre-matching
+DOMAIN,badjs.weixinbridge.com,REJECT
+DOMAIN,dns.weixin.qq.com.cn,REJECT
+DOMAIN,dns.weixin.qq.com,REJECT
+DOMAIN-SUFFIX,wxs.qq.com,REJECT
 
 #>小米
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT,extended-matching,pre-matching
+DOMAIN,sdkconfig.ad.xiaomi.com,REJECT
 
 #>云闪付 开屏广告
-DOMAIN,ads.95516.com,REJECT,extended-matching,pre-matching
-DOMAIN,switch.cup.com.cn,REJECT,extended-matching,pre-matching
+DOMAIN,ads.95516.com,REJECT
+DOMAIN,switch.cup.com.cn,REJECT
 
 #>Yandex
-DOMAIN,yandexmetrica.com,REJECT,extended-matching,pre-matching
+DOMAIN,yandexmetrica.com,REJECT
 
 #>收钱吧广告
-DOMAIN,ads-shopping.shouqianba.com,REJECT,extended-matching,pre-matching
+DOMAIN,ads-shopping.shouqianba.com,REJECT
 
 #>猫眼电影
-DOMAIN,ad.maoyan.com,REJECT,extended-matching,pre-matching
+DOMAIN,ad.maoyan.com,REJECT
 
 #>捷停车 @怎么肥事
-DOMAIN,e.jparking.cn,REJECT,extended-matching,pre-matching
+DOMAIN,e.jparking.cn,REJECT
 
 #>小米
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT,extended-matching,pre-matching
-DOMAIN,data.mistat.xiaomi.com,REJECT,extended-matching,pre-matching
-DOMAIN,tracking.intl.miui.com,REJECT,extended-matching,pre-matching
+DOMAIN,sdkconfig.ad.xiaomi.com,REJECT
+DOMAIN,data.mistat.xiaomi.com,REJECT
+DOMAIN,tracking.intl.miui.com,REJECT
 
 #>米家
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT,extended-matching,pre-matching
+DOMAIN,sdkconfig.ad.xiaomi.com,REJECT
 
 #>通用广告
-DOMAIN-SUFFIX,doubleclick-cn.net,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,doubleclick.net,REJECT,extended-matching,pre-matching
+DOMAIN-SUFFIX,doubleclick-cn.net,REJECT
+DOMAIN-SUFFIX,doubleclick.net,REJECT
 
 #>虎牙直播开屏广告
-DOMAIN,business.msstatic.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,v1d.szbdyd.com,REJECT,extended-matching,pre-matching
-URL-REGEX,"^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$",REJECT,extended-matching
+DOMAIN,business.msstatic.com,REJECT
+DOMAIN-SUFFIX,v1d.szbdyd.com,REJECT
+URL-REGEX,"^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$",REJECT
 
 #>中国联通
-DOMAIN-SUFFIX,m1.ad.10010.com,REJECT,extended-matching,pre-matching
+DOMAIN-SUFFIX,m1.ad.10010.com,REJECT
 
 #>中国电信
-DOMAIN,ad.21cn.com,REJECT,extended-matching,pre-matching
-DOMAIN,ad.k.21cn.com,REJECT,extended-matching,pre-matching
-DOMAIN,admarket.21cn.com,REJECT,extended-matching,pre-matching
-DOMAIN,adshows.21cn.com,REJECT,extended-matching,pre-matching
+DOMAIN,ad.21cn.com,REJECT
+DOMAIN,ad.k.21cn.com,REJECT
+DOMAIN,admarket.21cn.com,REJECT
+DOMAIN,adshows.21cn.com,REJECT
 IP-CIDR,122.229.8.47/32,REJECT,no-resolve
 IP-CIDR,122.229.29.89/32,REJECT,no-resolve
 
 #>快递100
-URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do",REJECT-TINYGIF,extended-matching
-URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/advertisement\/",REJECT-TINYGIF,extended-matching
+URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do",REJECT
+URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/advertisement\/",REJECT
 
 #>亲邻开门
-DOMAIN,mall-dsp2.qinlinkeji.com,REJECT,extended-matching,pre-matching
-DOMAIN,mallapi2.qinlinkeji.com,REJECT,extended-matching,pre-matching
+DOMAIN,mall-dsp2.qinlinkeji.com,REJECT
+DOMAIN,mallapi2.qinlinkeji.com,REJECT
 
 #>Pixiv - 作品底部广告
-DOMAIN,open-pixon.ads-pixiv.net,REJECT,extended-matching,pre-matching
+DOMAIN,open-pixon.ads-pixiv.net,REJECT
 
 [URL Rewrite]
 #>企迈点单系统
@@ -657,4 +656,4 @@ T3出行去广告 = type=http-response, pattern=^https:\/\/passenger\.t3go\.cn\/
 古茗去广告 = type=http-response, pattern=^https:\/\/newton\.gumingnc\.com\/newton-buyer\/newton\/buyer\/(ump|touch|external\/front), script-path=https://raw.perzikkop.com/Scripts/MiniPrograms/ming.js, requires-body=true
 
 [MITM]
-hostname = %APPEND% 3pp.starbucks.com.cn, aag.enmonster.com, activity.yonghuivip.com, ad.maoyan.com, ad.xiaotucc.com, ads.ishansong.com, alittle-tea.oss-cn-shanghai.aliyuncs.com, api-fouth-mem.huazhu.com, api-marketing.zhinengxiyifang.cn, api.hellobike.com, api.hengdianfilm.com, api.hongyibo.com.cn, api.kuaidihelp.com, api.maoyan.com, api.mcd.cn, api.pinduoduo.com, api.prod.dj.mstand.cn, api.songguo7.com, api.yonghuivip.com, apiproxy.zuche.com, apis.alenable.com, app.95504.net, app.homeinns.com, applets.jtexpress.com.cn, appuser-static.huolala.cn, as.xiaojukeji.com, capis*.didapinche.com, cappapi.alittle-tea.com, cbd-gateway-service-applets.hualala.com, ccmsupport-sz.tenpay.com, coco-com.e.verystar.net, creditcardapp.bankcomm.com, customer-app.sto.cn, daijia.kuaidadi.com, dock.tenchii.com, dsp.fcbox.com, file.dian.so, flow.dmall.com, fscdn.zto.com, gw-passenger-wap.01zhuanche.com, hdgateway.zto.com, htwkop.xiaojukeji.com, images.qmai.cn, lawsonapi.yorentown.com, m.ctrip.com, mapi.xiaotucc.com, mbmodule-openapi.paas.cmbchina.com, member.lxjchina.com.cn, miniapp.sexytea2013.com, minicap.caocaokeji.cn, minifm.maxxipoint.com, minipro.95504.net, miniprogram.ishansong.com, mkt-gateway.tuhu.cn, mobile-api.imlaidian.com, mxsa.mxbc.net, newton.gumingnc.com, passenger.t3go.cn, passengerapi.saicmobility.com, plt.yorentown.com, qapi.huolala.cn, r2.gzyct.com, res.hongyibo.com.cn, res.pizzahut.com.cn, s.jiediankeji.com, saas-ad.cloudpnr.com, sauron-report.yonghuivip.com, smarket.dian.so, sto-customer-app.oss-cn-shanghai.aliyuncs.com, supplier-api.imdada.cn, suyun-guest.daojia.com, tbgapplet.carlsberg.asia, tm-api.pin-dao.cn, ucmp.sf-express.com, ump.ems.com.cn, vod-movie.maoyan.com, webapi.qmai.cn, webchatapp.fcbox.com, wechat-api.i-xiaoma.com.cn, www.deppon.com, wx.bthhotels.com, wx.maoyan.com, wxapp.bestwehotel.com, wxproj.seeyouyima.com, wxs-weixin.sd.zhumanggroup.com, mcsp.cloudpnr.com, api.szbgcx.cn, rms.meituan.com, api.zcool.com.cn, acs.m.goofish.com, acs.m.taobao.com, api-access.pangolin-sdk-toutiao*.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, apiwz.midukanshu.com, app.zhoudamozi.com, cdke.youdao.com, conf-darwin.xycdn.com, dict.youdao.com, ecard.shenzhentong.com, ether-pack.pangolin-sdk-toutiao.com, gromore.pangolin-sdk-toutiao.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, img.allahall.com, img.dailmo.com, iyes.youku.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, p0.pipi.cn, qiye.gaoding.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shopapi.io.mi.com, shealthyapi.senssun.com, t-dsp.pinduoduo.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, us.l.qq.com, lanfanapp.com, api.xiachufang.com, info.mina.xiaoaisound.com, api.xiangji.qq.com, video-dsp.pddpic.com, images.pinduoduo.com, client.app.coc.10086.cn, cdn.cmgadx.com, qadx.qinlinad.com, watch.iot.mi.com, cdn.web.chelaile.net.cn, d.socdm.com
+hostname =  3pp.starbucks.com.cn, aag.enmonster.com, activity.yonghuivip.com, ad.maoyan.com, ad.xiaotucc.com, ads.ishansong.com, alittle-tea.oss-cn-shanghai.aliyuncs.com, api-fouth-mem.huazhu.com, api-marketing.zhinengxiyifang.cn, api.hellobike.com, api.hengdianfilm.com, api.hongyibo.com.cn, api.kuaidihelp.com, api.maoyan.com, api.mcd.cn, api.pinduoduo.com, api.prod.dj.mstand.cn, api.songguo7.com, api.yonghuivip.com, apiproxy.zuche.com, apis.alenable.com, app.95504.net, app.homeinns.com, applets.jtexpress.com.cn, appuser-static.huolala.cn, as.xiaojukeji.com, capis*.didapinche.com, cappapi.alittle-tea.com, cbd-gateway-service-applets.hualala.com, ccmsupport-sz.tenpay.com, coco-com.e.verystar.net, creditcardapp.bankcomm.com, customer-app.sto.cn, daijia.kuaidadi.com, dock.tenchii.com, dsp.fcbox.com, file.dian.so, flow.dmall.com, fscdn.zto.com, gw-passenger-wap.01zhuanche.com, hdgateway.zto.com, htwkop.xiaojukeji.com, images.qmai.cn, lawsonapi.yorentown.com, m.ctrip.com, mapi.xiaotucc.com, mbmodule-openapi.paas.cmbchina.com, member.lxjchina.com.cn, miniapp.sexytea2013.com, minicap.caocaokeji.cn, minifm.maxxipoint.com, minipro.95504.net, miniprogram.ishansong.com, mkt-gateway.tuhu.cn, mobile-api.imlaidian.com, mxsa.mxbc.net, newton.gumingnc.com, passenger.t3go.cn, passengerapi.saicmobility.com, plt.yorentown.com, qapi.huolala.cn, r2.gzyct.com, res.hongyibo.com.cn, res.pizzahut.com.cn, s.jiediankeji.com, saas-ad.cloudpnr.com, sauron-report.yonghuivip.com, smarket.dian.so, sto-customer-app.oss-cn-shanghai.aliyuncs.com, supplier-api.imdada.cn, suyun-guest.daojia.com, tbgapplet.carlsberg.asia, tm-api.pin-dao.cn, ucmp.sf-express.com, ump.ems.com.cn, vod-movie.maoyan.com, webapi.qmai.cn, webchatapp.fcbox.com, wechat-api.i-xiaoma.com.cn, www.deppon.com, wx.bthhotels.com, wx.maoyan.com, wxapp.bestwehotel.com, wxproj.seeyouyima.com, wxs-weixin.sd.zhumanggroup.com, mcsp.cloudpnr.com, api.szbgcx.cn, rms.meituan.com, api.zcool.com.cn, acs.m.goofish.com, acs.m.taobao.com, api-access.pangolin-sdk-toutiao*.com, api-access.pangolin-sdk-toutiao.com, api-mifit*.huami.com, api-mifit-cn2.huami.com, api-mifit.huami.com, api-overmind.youdao.com, api.ahmobile.cn, api.angkeduo.com, api.jr.mi.com, api.m.mi.com, api.pinduoduo.com, api.wfdata.club, apiwz.midukanshu.com, app.zhoudamozi.com, cdke.youdao.com, conf-darwin.xycdn.com, dict.youdao.com, ecard.shenzhentong.com, ether-pack.pangolin-sdk-toutiao.com, gromore.pangolin-sdk-toutiao.com, gw.alicdn.com, gw.chuangkit.com, hfapp-service.qweather.net, home.mi.com, home.umetrip.com, img.allahall.com, img.dailmo.com, iyes.youku.com, lfd?-analytics.bytescm.com, lfd?-cdn-tos.bytescm.com, m.qianbao.qq.com, mercury-gateway.ixiaochuan.cn, mob.mddcloud.com.cn, mobads-pre-config.cdn.bcebos.com, p0.pipi.cn, qiye.gaoding.com, sdk1xyajs.data.kuiniuca.com, sfd?-fe-tos.pglstatp-toutiao.com, sfo.mddcloud.com.cn, shopapi.io.mi.com, shealthyapi.senssun.com, t-dsp.pinduoduo.com, toblog.ctobsnssdk.com, tower.ubixioe.com, umerp.umetrip.com, us.l.qq.com, lanfanapp.com, api.xiachufang.com, info.mina.xiaoaisound.com, api.xiangji.qq.com, video-dsp.pddpic.com, images.pinduoduo.com, client.app.coc.10086.cn, cdn.cmgadx.com, qadx.qinlinad.com, watch.iot.mi.com, cdn.web.chelaile.net.cn, d.socdm.com

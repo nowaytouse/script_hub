@@ -1,6 +1,6 @@
 #!name= Enable iCloud Private Relay on gateway
-#!group (for organization): 『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!desc=为终端设备启用iCloud专用代理，需要Surge for macOS启用网关模式。
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!desc=[🚀SR] 为终端设备启用iCloud专用代理，需要Surge for macOS启用网关模式。
 #!system=mac
 
 [Rule]
@@ -18,4 +18,4 @@
 ^https?:\/\/p[\d]{1,3}-acsegateway\.icloud\.com header-replace X-MMe-Country TW
 
 [MITM]
-hostname = %APPEND% mask-api.icloud.com, mask-api.fe.apple-dns.net, mask.icloud.com, mask.apple-dns.net, p*-acsegateway.icloud.com
+hostname =  mask-api.icloud.com, mask-api.fe.apple-dns.net, mask.icloud.com, mask.apple-dns.net, p*-acsegateway.icloud.com

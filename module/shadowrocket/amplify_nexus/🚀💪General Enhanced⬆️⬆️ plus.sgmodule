@@ -1,9 +1,9 @@
 #!name=🚀💪General Enhanced⬆️⬆️ plus
-#!desc=DNS boost🚀 Proxy bypass⚡ Real-IP exec + Full H3 DoH🔒 Google/GitHub/Zhihu/Baidu fix🛠️ Ultra low-memory💾
+#!desc=[🚀SR] DNS boost🚀 Proxy bypass⚡ Real-IP exec + Full H3 DoH🔒 Google/GitHub/Zhihu/Baidu fix🛠️ Ultra low-memory💾
 #!author=VirgilClyne & nyamiiko (Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bypass.png
-#!category (Surge only): 『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!version=2025.12.03
 
 [General]
@@ -32,22 +32,22 @@ always-raw-tcp-hosts = *.alipay.com, *.unionpay.com, *.95516.com, *.apple.com, *
 always-raw-tcp-keywords = alipay, pay, unionpay, 95516, apple, weixin, wechat, taobao, jd, bank, auth, login
 
 # [COMMENTED - Extended Raw TCP - Uncomment if needed]
-# always-raw-tcp-hosts = %APPEND% bankofchina.com, abc.com.cn, bankcomm.com, spdb.com.cn, htsec.com, gtja.com, citics.com, eastmoney.com, sinopec.com, psbc.com, *.suning.com
-# always-raw-tcp-keywords = %APPEND% zhihu, steam, icbc, ccb, cmbchina, bankofchina, spdb, gtja, citics, eastmoney, 12306, passport, ebank, webbank, weibo, testflight, tmall, suning
+# always-raw-tcp-hosts =  bankofchina.com, abc.com.cn, bankcomm.com, spdb.com.cn, htsec.com, gtja.com, citics.com, eastmoney.com, sinopec.com, psbc.com, *.suning.com
+# always-raw-tcp-keywords =  zhihu, steam, icbc, ccb, cmbchina, bankofchina, spdb, gtja, citics, eastmoney, 12306, passport, ebank, webbank, weibo, testflight, tmall, suning
 
 # ═══════════════════════════════════════════════════════════════
 # Skip Proxy - Core List (Optimized to prevent truncation)
 # ═══════════════════════════════════════════════════════════════
-skip-proxy = %INSERT% localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.qq.com, *.tencent.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
+skip-proxy =  localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.qq.com, *.tencent.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
 
 # [COMMENTED - Extended Skip Proxy - Uncomment if needed]
-# skip-proxy = %APPEND% www.baidu.com, yunbusiness.ccb.com, www.abchina.com.cn, *.blzstatic.cn, *.d.meituan.net, *.stun.playstation.net, *.weixin.qq.com, *.alipay.net, *.alipayobjects.com, *.95516.com, *.ctrip.com, *.tmall.com, *.suning.com, *.meituan.com, *.ele.me
+# skip-proxy =  www.baidu.com, yunbusiness.ccb.com, www.abchina.com.cn, *.blzstatic.cn, *.d.meituan.net, *.stun.playstation.net, *.weixin.qq.com, *.alipay.net, *.alipayobjects.com, *.95516.com, *.ctrip.com, *.tmall.com, *.suning.com, *.meituan.com, *.ele.me
 
 # Always Real IP - Core List (Optimized to prevent truncation)
-always-real-ip = %INSERT% *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com, *.bilibili.com, *.douyin.com, *.tiktok.com
+always-real-ip =  *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com, *.bilibili.com, *.douyin.com, *.tiktok.com
 
 # [COMMENTED - Extended Real IP List - Uncomment if needed]
-# always-real-ip = %APPEND% music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, *.music.migu.cn, *.mcdn.bilivideo.cn, *.cmpassport.com, open.e.189.cn, *.pingan.com.cn, *.cmbchina.com, ntp.*.com, time.*.com, *.weibo.com, *.youku.com, *.iqiyi.com
+# always-real-ip =  music.163.com, *.music.163.com, *.126.net, musicapi.taihe.com, y.qq.com, *.y.qq.com, streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, *.music.migu.cn, *.mcdn.bilivideo.cn, *.cmpassport.com, open.e.189.cn, *.pingan.com.cn, *.cmbchina.com, ntp.*.com, time.*.com, *.weibo.com, *.youku.com, *.iqiyi.com
 
 [URL Rewrite]
 # Google Redirect
@@ -170,7 +170,7 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DN
 
 [MITM]
 # Certificate Hostnames
-hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
+hostname =  *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
 
 # Disabled Certificate Hostnames
-hostname-disabled = %INSERT% gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com
+hostname-disabled =  gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com

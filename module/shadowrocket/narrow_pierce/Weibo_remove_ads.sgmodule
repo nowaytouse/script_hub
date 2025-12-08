@@ -1,8 +1,7 @@
 #!name=微博去广告
-#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
-#!desc=过滤广告及去除各部分推广模块，全面净化微博
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
+#!desc=[🚀SR] 过滤广告及去除各部分推广模块，全面净化微博
 #!author=RuCu6[https://github.com/RuCu6], zmqcherish[https://github.com/zmqcherish]
-#!category = 去广告
 #!date=2025-11-04 21:00:00
 
 [Rule]
@@ -94,4 +93,4 @@ http-response-jq ^https?:\/\/api\.weibo\.cn\/\d\/groups\/allgroups\/v\d '.pageDa
 移除开屏广告 wbapplua = type=http-response, pattern=^https:\/\/wbapp\.uve\.weibo\.com\/(?:preload\/get_ad|wbapplua\/wbpullad\.lua), script-path=https://kelee.one/Resource/JavaScript/Weibo/Weibo_remove_ads.js, requires-body=true
 
 [MITM]
-hostname = %APPEND% *.weibo.cn, *.weibo.com, weibo.com
+hostname =  *.weibo.cn, *.weibo.com, weibo.com

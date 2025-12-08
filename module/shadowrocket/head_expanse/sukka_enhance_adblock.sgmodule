@@ -1,9 +1,9 @@
 #!name=[Sukka] Enhance Better ADBlock for Surge
-#!group (for organization): 『 🔝 Head Expanse › 首端扩域 』
-#!desc=增强 ADBlock 效果、恢复网站正常功能
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!desc=[🚀SR] 增强 ADBlock 效果、恢复网站正常功能
 
 [MITM]
-hostname = %APPEND% *.google-analytics.com, *.googletagmanager.com, *.googlesyndication.com, *.googletagservices.com, *.doubleclick.net, cdn.ampproject.org, *.addthis.com, static.chartbeat.com, widgets.outbrain.com
+hostname =  *.google-analytics.com, *.googletagmanager.com, *.googlesyndication.com, *.googletagservices.com, *.doubleclick.net, cdn.ampproject.org, *.addthis.com, static.chartbeat.com, widgets.outbrain.com
 
 [URL Rewrite]
 ^https?://.+\.google-analytics\.com/analytics\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_analytics.js 302

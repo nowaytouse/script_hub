@@ -1,6 +1,6 @@
 #!name=TikTok US
-#!group (for organization): 『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!desc=解锁 TikTok 美國 地区
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!desc=[🚀SR] 解锁 TikTok 美國 地区
 #!openUrl=https://github.com/Semporia/TikTok-Unlock
 #!author=Semporia
 #!homepage=https://github.com/Semporia/TikTok-Unlock
@@ -14,4 +14,4 @@
 (^https?:\/\/*\.\w{4}okv.com\/.+&.+)(\d{2}\.3\.\d)(.+) $118.0$3 302
 
 [MITM]
-hostname = %APPEND% *.tiktokv.com, *.byteoversea.com, *.tik-tokapi.com
+hostname =  *.tiktokv.com, *.byteoversea.com, *.tik-tokapi.com

@@ -1,12 +1,11 @@
-#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!name = 📺 BiliBili: 🛡️ ADBlock
-#!desc = 哔哩哔哩：去广告
+#!desc = [🚀SR] 哔哩哔哩：去广告
 自定义去除APP内界面元素
 #!openUrl = http://boxjs.com/#/app/BiliBili.ADBlock
 #!author = ClydeTime[https://github.com/ClydeTime],VirgilClyne[https://github.com/VirgilClyne],app2smile[https://github.com/app2smile],RuCu6[https://github.com/RuCu6],Maasea[https://github.com/Maasea]
 #!homepage = https://ADBlock.BiliUniverse.io
 #!icon = https://github.com/BiliUniverse/ADBlock/raw/main/src/assets/icon_rounded.png
-#!category = 🪐 BiliUniverse
 #!date = 2025-09-17 11:33:45
 #!version = 0.6.21
 #!arguments = Splash:true,Feed.AD:true,Feed.Activity:false,Feed.Vertical:false,Feed.BlockUpLiveList:"",Feed.Story:true,Search.AD:true,Search.HotSearch:true,PGC.AD:true,Xlive.AD:true,Dynamic.HotTopics:true,Dynamic.MostVisited:false,Dynamic.AdCard:true,View.AD:true,DM.Command:false,DM.Colorful:false,Reply.AD:true,LogLevel:"WARN"
@@ -109,5 +108,5 @@ http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'de
 📺 BiliBili.ADBlock.pgc.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v0.6.21/response.bundle.js, argument=Splash="{{{Splash}}}"&Feed.AD="{{{Feed.AD}}}"&Feed.Activity="{{{Feed.Activity}}}"&Feed.Vertical="{{{Feed.Vertical}}}"&Feed.BlockUpLiveList="{{{Feed.BlockUpLiveList}}}"&Feed.Story="{{{Feed.Story}}}"&Search.AD="{{{Search.AD}}}"&Search.HotSearch="{{{Search.HotSearch}}}"&PGC.AD="{{{PGC.AD}}}"&Xlive.AD="{{{Xlive.AD}}}"&Dynamic.HotTopics="{{{Dynamic.HotTopics}}}"&Dynamic.MostVisited="{{{Dynamic.MostVisited}}}"&Dynamic.AdCard="{{{Dynamic.AdCard}}}"&View.AD="{{{View.AD}}}"&DM.Command="{{{DM.Command}}}"&DM.Colorful="{{{DM.Colorful}}}"&Reply.AD="{{{Reply.AD}}}"&LogLevel="{{{LogLevel}}}"
 
 [MITM]
-hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
+hostname =  manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
 h2 = true

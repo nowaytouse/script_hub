@@ -1,9 +1,8 @@
 #!name=小宇宙去广告
-#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
-#!desc=移除开屏广告、搜索框推荐词和AI总结。
+#!desc=[🚀SR] 移除开屏广告、搜索框推荐词和AI总结。
 #!author=wish
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/CosmosPodcast.png
-#!category (Surge only): iKeLee
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id1488894313
 #!tag=去广告
 #!loon_version=3.2.4(787)
@@ -23,5 +22,5 @@ http-response-jq ^https:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.d
 ^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/category data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 [MITM]
-hostname = %APPEND% api.xiaoyuzhoufm.com
+hostname =  api.xiaoyuzhoufm.com
 

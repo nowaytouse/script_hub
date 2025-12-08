@@ -1,10 +1,10 @@
 #!name=[Sukka] URL Rewrite
-#!group (for organization): 『 🔝 Head Expanse › 首端扩域 』
-#!desc=Enable this module to use Sukka URL Rewrite rules
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!desc=[🚀SR] Enable this module to use Sukka URL Rewrite rules
 
 [MITM]
 
-hostname = %APPEND% api.abema.io, union.click.jd.com, nomo.dafork.com
+hostname =  api.abema.io, union.click.jd.com, nomo.dafork.com
 
 [URL Rewrite]
 # AbeamTV Unlock

@@ -1,9 +1,8 @@
 #!name=Spotify去广告
-#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
-#!desc=移除播放广告，恢复歌手和专辑列表的正常展示。修改插件自定义配置项需要重新登陆方可生效。
+#!desc=[🚀SR] 移除播放广告，恢复歌手和专辑列表的正常展示。修改插件自定义配置项需要重新登陆方可生效。
 #!author=001ProMax[https://github.com/001ProMax]
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Spotify.png
-#!category (Surge only): iKeLee
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id324684580
 #!tag=去广告
 #!loon_version=3.2.4(787)
@@ -12,7 +11,7 @@
 #!arguments=tab:false,useractivity:true
 
 [Rule]
-AND,((DOMAIN-SUFFIX,spotify.com,extended-matching),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,spotify.com),(PROTOCOL,QUIC)),REJECT
 
 [URL Rewrite]
 ^https:\/\/(?:\w+-spclient|spclient\.wg)\.spotify\.com(?::443)?\/artistview\/v1\/artist\/(.*)&platform=iphone https://spclient.wg.spotify.com/artistview/v1/artist/$1&platform=ipad header
@@ -24,5 +23,5 @@ AND,((DOMAIN-SUFFIX,spotify.com,extended-matching),(PROTOCOL,QUIC)),REJECT
 Protobuf处理 = type=http-response, pattern=^https:\/\/(?:\w+-spclient|spclient\.wg)\.spotify\.com(?::443)?\/(?:bootstrap|user-customization-service), script-path=https://kelee.one/Resource/JavaScript/Spotify/Spotify_remove_ads.js, requires-body=true, binary-body-mode=true, timeout=5, argument="[{{{tab}}},{{{useractivity}}}]"
 
 [MITM]
-hostname = %APPEND% *-spclient.spotify.com, spclient.wg.spotify.com
+hostname =  *-spclient.spotify.com, spclient.wg.spotify.com
 

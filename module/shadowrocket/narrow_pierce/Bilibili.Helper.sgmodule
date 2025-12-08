@@ -1,6 +1,6 @@
 #!name= Bilibili Helper
-#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
-#!desc= 去除扰人内容 & 禁用 P2P 连接
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
+#!desc= [🚀SR] 去除扰人内容 & 禁用 P2P 连接
 #!arguments=运营商:cm,网络信息:CAIQBBoGbW9iaWxl
 
 # Feature
@@ -39,4 +39,4 @@ bilibili.helper.searchAll = type=http-response,pattern=^https:\/\/grpc\.biliapi\
 bilibili.helper.dynAll = type=http-response,pattern=^https:\/\/grpc\.biliapi\.net\/bilibili\.app\.dynamic\.v2\.Dynamic\/DynAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Bilibili/bilibili.helper.js
 
 [MITM]
-hostname = %APPEND% grpc.biliapi.net, app.bilibili.com
+hostname =  grpc.biliapi.net, app.bilibili.com

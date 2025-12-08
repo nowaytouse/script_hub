@@ -1,13 +1,12 @@
-#!group (for organization): 『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!name =  iRingo: 🗺️ Maps
-#!desc = 自定义 Maps app
+#!desc = [🚀SR] 自定义 Maps app
 添加国际版功能
 自定义服务版本
 #!openUrl = http://boxjs.com/#/app/iRingo.Maps
 #!author = VirgilClyne[https://github.com/VirgilClyne]
 #!homepage = https://NSRingo.github.io/guide/GeoServices/maps
 #!icon = https://developer.apple.com/assets/elements/icons/maps/maps-128x128.png
-#!category =  iRingo
 #!date = 2025-10-27 07:07:29
 #!version = 4.4.0
 #!arguments = GeoManifest.Dynamic.Config.CountryCode:"CN",UrlInfoSet.Dispatcher:"AutoNavi",UrlInfoSet.Directions:"AutoNavi",UrlInfoSet.RAP:"Apple",UrlInfoSet.LocationShift:"AUTO",TileSet.Earth:"AUTO",TileSet.Roads:"AUTO",TileSet.Satellite:"HYBRID",LogLevel:"WARN"
@@ -101,4 +100,4 @@ DOMAIN,gspe79-cn-ssl.ls.apple.com,DIRECT
 🗺️ Maps.geo_manifest.dynamic.config.response = type=http-response, pattern=^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/geo_manifest\/dynamic\/config, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/NSRingo/GeoServices/releases/download/v4.4.0/response.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&LogLevel="{{{LogLevel}}}"
 
 [MITM]
-hostname = %APPEND% configuration.ls.apple.com, gspe35-ssl.ls.apple.com
+hostname =  configuration.ls.apple.com, gspe35-ssl.ls.apple.com
