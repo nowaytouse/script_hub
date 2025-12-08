@@ -368,13 +368,24 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# Step 7: Module info (GitHub URLs - No iCloud sync needed)
+# Step 7: Module consolidation + URL generation
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$SKIP_MODULE" = false ]; then
-    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Module info (GitHub URLs)...${NC}"
-    log_info "Modules are hosted on GitHub and can be referenced directly"
-    log_info "See module/README.md for usage instructions"
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Module consolidation + URL generation...${NC}"
+    
+    # Run module consolidation script
+    if [ -f "${SCRIPT_DIR}/consolidate_modules.py" ]; then
+        log_info "Running module consolidation..."
+        if [ "$VERBOSE" = true ]; then
+            python3 "${SCRIPT_DIR}/consolidate_modules.py"
+        else
+            python3 "${SCRIPT_DIR}/consolidate_modules.py" 2>&1 | grep -E "^(✅|❌|⚠️|📦|🔍|📊|🏷️|找到|整合完成)" || true
+        fi
+        log_success "Module consolidation complete"
+    else
+        log_warning "Skip: consolidate_modules.py not found"
+    fi
     
     # Count modules
     MODULE_COUNT=$(find "$PROJECT_ROOT/module/surge(main)" -name "*.sgmodule" -type f 2>/dev/null | wc -l | tr -d ' ')
@@ -382,14 +393,16 @@ if [ "$SKIP_MODULE" = false ]; then
     
     if [ "$VERBOSE" = true ]; then
         echo ""
-        log_info "Module list:"
-        find "$PROJECT_ROOT/module/surge(main)" -name "*.sgmodule" -type f -exec basename {} \; | sed 's/^/  - /'
+        log_info "Generated files:"
+        echo "  - module/module_urls.txt (URL list)"
+        echo "  - module/modules_data.json (JSON data)"
+        echo "  - module/surge_module_helper.html (Import helper)"
         echo ""
         log_info "Use GitHub raw URLs in your Surge/Shadowrocket config:"
         echo "  https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/<module-name>"
     fi
 else
-    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Skip module info${NC}"
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Skip module consolidation${NC}"
 fi
 echo ""
 
