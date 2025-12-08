@@ -58,6 +58,21 @@ TAG_PATTERNS = {
 }
 
 
+def sanitize_string(s: str) -> str:
+    """清理字符串中的特殊字符，确保JSON安全"""
+    if not s:
+        return s
+    # 移除字面 \n \r \t 字符串（不是真正的换行符）
+    s = s.replace('\\n', ' ').replace('\\r', ' ').replace('\\t', ' ')
+    # 移除真正的换行符、制表符等控制字符
+    s = s.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+    # 移除反斜杠（可能导致JSON转义问题）
+    s = s.replace('\\', '')
+    # 移除多余空格
+    s = ' '.join(s.split())
+    return s
+
+
 def get_module_info(filepath: Path) -> dict:
     """解析模块文件获取信息"""
     info = {
@@ -80,23 +95,23 @@ def get_module_info(filepath: Path) -> dict:
                 # 提取名称
                 match = re.search(r'#!name\s*[=:]\s*(.+)', line)
                 if match:
-                    info["name"] = match.group(1).strip()
+                    info["name"] = sanitize_string(match.group(1).strip())
             elif line.startswith('#!desc'):
                 match = re.search(r'#!desc\s*[=:]\s*(.+)', line)
                 if match:
-                    info["desc"] = match.group(1).strip()[:60]
+                    info["desc"] = sanitize_string(match.group(1).strip()[:60])
             elif line.startswith('#!author'):
                 match = re.search(r'#!author\s*[=:]\s*(.+)', line)
                 if match:
-                    info["author"] = match.group(1).strip()
+                    info["author"] = sanitize_string(match.group(1).strip())
             elif line.startswith('#!version'):
                 match = re.search(r'#!version\s*[=:]\s*(.+)', line)
                 if match:
-                    info["version"] = match.group(1).strip()
+                    info["version"] = sanitize_string(match.group(1).strip())
             elif line.startswith('#!date'):
                 match = re.search(r'#!date\s*[=:]\s*(.+)', line)
                 if match:
-                    info["date"] = match.group(1).strip()
+                    info["date"] = sanitize_string(match.group(1).strip())
                     
     except Exception as e:
         print(f"  ⚠️ 解析失败: {filepath.name} - {e}")
@@ -169,7 +184,7 @@ def scan_modules() -> dict:
 
 
 def generate_helper_js(modules: dict) -> str:
-    """生成助手网页的JavaScript数据"""
+    """生成助手网页的JavaScript数据（紧凑格式，避免IDE格式化破坏）"""
     js_modules = {}
     
     for cat_key, cat_data in modules.items():
@@ -190,8 +205,9 @@ def generate_helper_js(modules: dict) -> str:
             if item["essential"]:
                 js_item["essential"] = True
             js_modules[cat_key]["items"].append(js_item)
-            
-    return json.dumps(js_modules, ensure_ascii=False, indent=4)
+    
+    # 使用紧凑格式，避免IDE自动格式化破坏JSON结构
+    return json.dumps(js_modules, ensure_ascii=False, separators=(',', ':'))
 
 
 def check_duplicates(modules: dict) -> list:
