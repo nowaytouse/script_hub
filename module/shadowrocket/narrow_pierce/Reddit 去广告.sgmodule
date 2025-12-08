@@ -1,0 +1,34 @@
+#!name=Reddit 去广告
+#!group (for organization): 『 🎯 Narrow Pierce › 窄域穿刺 』
+#!desc=过滤推广, 关 NSFW 提示, 自动开启翻译(JQ 版)
+#!category=xream
+#!arguments=NSFW:"Nsfw",TRANSLATION:"http-request"
+#!arguments-desc=\n1️⃣ NSFW\n\n填写 Nsfw 时, 表示关闭 NSFW 提示, 其他值表示恢复默认行为\n\n2️⃣ TRANSLATION\n\n填写 http-request 时, 表示开启自动翻译, # 表示关闭自动翻译.\n⚠️ 由于无法区分首次原始请求和手动点击翻译的请求, 开启之后 App 内切换功能就无效了...
+
+[General]
+
+force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
+
+[MITM]
+
+hostname = %APPEND%, gql.reddit.com, gql-fed.reddit.com
+
+[Body Rewrite]
+
+# walk(
+#   if type == "object" then
+#     (if .is{{{NSFW}}} == true then .is{{{NSFW}}} = false else . end)
+#     | (if .is{{{NSFW}}}MediaBlocked == true then .is{{{NSFW}}}MediaBlocked = false else . end)
+#     | (if .is{{{NSFW}}}ContentShown == false then .is{{{NSFW}}}ContentShown = true else . end)
+#     | (if (.commentsPageAds | type == "array") then (.commentsPageAds = []) else . end)
+#     | (if ( (.node | type == "object") and (.node.cells | type == "array") and (.node.cells | any(.__typename? == "AdMetadataCell" or .isAdPost? == true)) ) then empty else . end)
+#     | (if (.node | type == "object") and (.node.adPayload | type == "object") then empty else . end)
+#     | (if .__typename == "AdPost" then empty else . end)
+#   else . 
+# end)
+
+http-response-jq ^https?:\/\/gql(-fed)?\.reddit\.com 'walk( if type == "object" then (if .is{{{NSFW}}} == true then .is{{{NSFW}}} = false else . end) | (if .is{{{NSFW}}}MediaBlocked == true then .is{{{NSFW}}}MediaBlocked = false else . end) | (if .is{{{NSFW}}}ContentShown == false then .is{{{NSFW}}}ContentShown = true else . end) | (if (.commentsPageAds | type == "array") then (.commentsPageAds = []) else . end) | (if ( (.node | type == "object") and (.node.cells | type == "array") and (.node.cells | any(.__typename? == "AdMetadataCell" or .isAdPost? == true)) ) then empty else . end) | (if (.node | type == "object") and (.node.adPayload | type == "object") then empty else . end) | (if .__typename == "AdPost" then empty else . end) else . end)'
+
+[Header Rewrite]
+{{{TRANSLATION}}} ^https:\/\/gql-fed\.reddit\.com\/ header-del x-reddit-translations
+{{{TRANSLATION}}} ^https:\/\/gql-fed\.reddit\.com\/ header-add x-reddit-translations "enabled"

@@ -111,21 +111,31 @@ sync_to_shadowrocket() {
     
     local converted=0
     
-    for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
+    # Process modules from all subdirectories and root
+    for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module "$MODULE_DIR"/*/*.sgmodule "$MODULE_DIR"/*/*.module; do
         [ ! -f "$module" ] && continue
         
         local filename=$(basename "$module")
-        local sr_file="$SHADOWROCKET_MODULE_DIR/$filename"
+        
+        # Determine target path (preserve subdirectory structure)
+        local relative_path="${module#$MODULE_DIR/}"
+        local sr_file="$SHADOWROCKET_MODULE_DIR/$relative_path"
+        local sr_dir=$(dirname "$sr_file")
+        
+        # Create subdirectory if needed
+        mkdir -p "$sr_dir"
         
         # Copy and convert
         cp "$module" "$sr_file"
         
         # Shadowrocket-specific adjustments
-        # Remove #!group (Shadowrocket doesn't support it)
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' '/^#!group=/d' "$sr_file"
-        else
-            sed -i '/^#!group=/d' "$sr_file"
+        # Keep #!group for organization purposes (comment it out instead of removing)
+        if grep -q "^#!group=" "$sr_file"; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' 's/^#!group=/#!group (for organization): /' "$sr_file"
+            else
+                sed -i 's/^#!group=/#!group (for organization): /' "$sr_file"
+            fi
         fi
         
         converted=$((converted + 1))
