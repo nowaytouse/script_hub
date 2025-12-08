@@ -165,27 +165,7 @@ def scan_modules() -> dict:
     return modules
 
 
-def generate_url_list(modules: dict) -> str:
-    """生成URL列表文件"""
-    lines = [
-        "# Surge Module URLs",
-        f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        ""
-    ]
-    
-    total = 0
-    for cat_key, cat_data in modules.items():
-        lines.append(f"## 『 {cat_data['name']} 』")
-        lines.append(f"# Count: {len(cat_data['items'])}")
-        
-        for item in cat_data["items"]:
-            lines.append(item["url"])
-            total += 1
-            
-        lines.append("")
-        
-    lines.append(f"# Total: {total} modules")
-    return "\n".join(lines)
+# 已删除 generate_url_list 函数 - 用户要求仅更新网页，不再生成URL列表文件
 
 
 def generate_helper_js(modules: dict) -> str:
@@ -278,11 +258,11 @@ def update_helper_html(modules: dict):
         # 生成新的模块数据
         js_data = generate_helper_js(modules)
         
-        # 替换模块数据
-        pattern = r'const modules = \{[\s\S]*?\n\};'
+        # 替换模块数据 - 支持空对象 {} 和多行对象
+        pattern = r'const modules = \{[^;]*\};'
         replacement = f'const modules = {js_data};'
         
-        new_content = re.sub(pattern, replacement, content)
+        new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
         
         with open(helper_path, 'w', encoding='utf-8') as f:
             f.write(new_content)
@@ -324,16 +304,7 @@ def main():
         print("  ✅ 未发现重复模块")
     print()
     
-    # 生成URL列表
-    print("📝 生成URL列表...")
-    url_list = generate_url_list(modules)
-    url_path = OUTPUT_DIR / "module_urls.txt"
-    with open(url_path, 'w', encoding='utf-8') as f:
-        f.write(url_list)
-    print(f"  ✅ 保存到 {url_path}")
-    print()
-    
-    # 更新助手网页
+    # 更新助手网页（唯一输出）
     print("🌐 更新助手网页...")
     update_helper_html(modules)
     print()

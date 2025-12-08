@@ -21,10 +21,10 @@
         .stat.copied .stat-num { color: #4CAF50; }
         .stat.remain .stat-num { color: #FF9800; }
         .actions { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .action-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-size: 0.9em; }
+        .action-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-size: 0.9em; transition: all 0.2s; }
         .action-btn:hover { background: rgba(255,255,255,0.2); }
         .action-btn.danger { background: rgba(244,67,54,0.3); }
-        .action-btn.primary { background: rgba(33,150,243,0.4); }
+        .action-btn.danger:hover { background: rgba(244,67,54,0.5); }
         .category { background: rgba(255,255,255,0.05); border-radius: 14px; margin-bottom: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         .category-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: rgba(255,255,255,0.05); cursor: pointer; }
         .category-header:hover { background: rgba(255,255,255,0.08); }
@@ -35,14 +35,13 @@
         .category.collapsed .category-toggle { transform: rotate(-90deg); }
         .category.collapsed .modules { display: none; }
         .modules { padding: 12px; display: grid; gap: 8px; }
-        .module { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid transparent; }
+        .module { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid transparent; transition: all 0.2s; }
         .module:hover { background: rgba(255,255,255,0.08); }
         .module.copied { background: rgba(76,175,80,0.15); border-color: rgba(76,175,80,0.3); }
         .module.essential { border-color: rgba(255,193,7,0.4); background: rgba(255,193,7,0.1); }
         .module-info { flex: 1; min-width: 0; }
         .module-name { font-weight: 500; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .module-desc { color: #888; font-size: 0.8em; margin-top: 2px; }
-        .module-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .module-desc { color: #888; font-size: 0.8em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tag { font-size: 0.65em; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #aaa; }
         .tag.bilibili { background: rgba(251,114,153,0.3); color: #fb7299; }
         .tag.youtube { background: rgba(255,0,0,0.2); color: #ff4444; }
@@ -50,18 +49,20 @@
         .tag.tool { background: rgba(156,39,176,0.3); color: #ce93d8; }
         .tag.dns { background: rgba(0,150,136,0.3); color: #80cbc4; }
         .tag.shopping { background: rgba(255,152,0,0.3); color: #ffb74d; }
-        .copy-btn { background: rgba(33,150,243,0.3); border: none; color: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85em; white-space: nowrap; }
+        .copy-btn { background: rgba(33,150,243,0.3); border: none; color: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; }
         .copy-btn:hover { background: rgba(33,150,243,0.5); }
         .copy-btn.copied { background: rgba(76,175,80,0.4); }
         .filter-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-btn { background: rgba(255,255,255,0.08); border: none; color: #aaa; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85em; }
+        .filter-btn { background: rgba(255,255,255,0.08); border: none; color: #aaa; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85em; transition: all 0.2s; }
         .filter-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
         .filter-btn.active { background: rgba(33,150,243,0.4); color: #fff; }
         .search-box { width: 100%; max-width: 400px; margin: 0 auto 20px; display: block; }
         .search-box input { width: 100%; padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95em; }
         .search-box input::placeholder { color: #666; }
         .search-box input:focus { outline: none; border-color: rgba(33,150,243,0.5); }
-        .hidden { display: none !important; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: #fff; padding: 12px 24px; border-radius: 10px; z-index: 1000; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } }
+        .update-time { text-align: center; color: #555; font-size: 0.75em; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -83,11 +84,10 @@
         <button class="filter-btn" data-filter="youtube" onclick="setFilter('youtube')">YouTube</button>
     </div>
     <div class="actions">
-        <button class="action-btn primary" onclick="copyAllRemaining()">📋 复制所有剩余</button>
-        <button class="action-btn" onclick="exportProgress()">💾 导出</button>
-        <button class="action-btn danger" onclick="resetProgress()">🔄 重置</button>
+        <button class="action-btn danger" onclick="resetProgress()">🔄 重置进度</button>
     </div>
     <div id="moduleList"></div>
+    <p class="update-time">数据由 consolidate_modules.py 自动生成</p>
 </div>
 <script>
 const modules = {
@@ -500,25 +500,6 @@ function showToast(msg) {
     setTimeout(() => toast.remove(), 1500);
 }
 
-async function copyAllRemaining() {
-    const remaining = [];
-    Object.values(modules).forEach(cat => {
-        cat.items.forEach(m => { if (!copiedModules[m.url]) remaining.push(m.url); });
-    });
-    if (remaining.length === 0) { showToast('所有模块都已复制！'); return; }
-    await navigator.clipboard.writeText(remaining.join('\n'));
-    showToast(`已复制 ${remaining.length} 个URL`);
-}
-
-function exportProgress() {
-    const data = JSON.stringify({ copiedModules, exportTime: new Date().toISOString() }, null, 2);
-    const blob = new Blob([data], {type: 'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'surge_module_progress.json';
-    a.click();
-}
-
 function resetProgress() {
     if (confirm('确定要重置所有进度吗？')) {
         copiedModules = {};
@@ -546,7 +527,7 @@ function renderModules() {
     
     Object.entries(modules).forEach(([catKey, cat]) => {
         let visibleItems = cat.items.filter(m => {
-            const matchSearch = !searchTerm || m.name.toLowerCase().includes(searchTerm) || m.desc.toLowerCase().includes(searchTerm);
+            const matchSearch = !searchTerm || m.name.toLowerCase().includes(searchTerm) || (m.desc && m.desc.toLowerCase().includes(searchTerm));
             if (!matchSearch) return false;
             
             const isCopied = !!copiedModules[m.url];
@@ -584,7 +565,7 @@ function renderModules() {
             moduleEl.innerHTML = `
                 <div class="module-info">
                     <div class="module-name">${m.essential ? '⭐ ' : ''}${m.name}</div>
-                    <div class="module-desc">${m.desc}</div>
+                    <div class="module-desc">${m.desc || ''}</div>
                 </div>
                 ${m.tag ? `<span class="tag ${m.tag}">${m.tag}</span>` : ''}
                 <button class="copy-btn${isCopied ? ' copied' : ''}" onclick="copyUrl('${m.url}', this)">${isCopied ? '✓ 已复制' : '复制'}</button>
@@ -596,7 +577,6 @@ function renderModules() {
     });
 }
 
-// 初始化
 renderModules();
 updateStats();
 </script>
