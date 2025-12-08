@@ -1,0 +1,107 @@
+#!name =  iRingo: 🌤 WeatherKit
+#!desc = iOS 18 & macOS 15 & watchOS 11
+1.解锁全部天气功能
+2.替换空气质量数据
+3.添加下一小时降水数据
+4.添加天气数据
+#!openUrl = http://boxjs.com/#/app/iRingo.WeatherKit
+#!author = VirgilClyne[https://github.com/VirgilClyne],WordlessEcho[https://github.com/WordlessEcho],001[https://github.com/001ProMax]
+#!homepage = https://NSRingo.github.io/guide/Weather/weather-kit
+#!icon = https://developer.apple.com/assets/elements/icons/weatherkit/weatherkit-128x128.png
+#!category =  iRingo
+#!date = 2025-09-09 16:47:30
+#!version = 2.0.6
+#!arguments = DataSets:"airQuality,currentWeather,forecastDaily,forecastHourly,forecastNextHour,locationInfo,news,historicalComparisons,weatherAlerts,weatherChanges",Weather.Provider:"WeatherKit",NextHour.Provider:"ColorfulClouds",AQI.Provider:"ColorfulClouds",AQI.ReplaceProviders:"QWeather",AQI.ComparisonProvider:"Auto",AQI.Local.ReplaceScales:"HJ6332012",AQI.Local.Scale:"EPA_NowCast",AQI.Local.ConvertUnits:false,API.ColorfulClouds.Token:"",API.QWeather.Host:"devapi.qweather.com",API.QWeather.Token:"",API.WAQI.Token:"",LogLevel:"WARN"
+#!arguments-desc = DataSets: [数据集]
+    ├ airQuality: 空气质量
+    ├ currentWeather: 当前天气
+    ├ forecastDaily: 每日预报
+    ├ forecastHourly: 每小时预报
+    ├ forecastNextHour: 未来一小时降水强度
+    ├ locationInfo: 位置信息
+    ├ news: 新闻
+    ├ historicalComparisons: 历史对比
+    ├ weatherAlerts: 天气预警
+    └ weatherChanges: 天气变化
+选中的数据集会被包含在请求中。
+
+Weather.Provider: [天气] 数据源
+    ├ WeatherKit: WeatherKit (不进行替换)
+    ├ ColorfulClouds: 彩云天气
+    └ QWeather: 和风天气
+始终会使用选定的数据源，替换天气数据。
+
+NextHour.Provider: [未来一小时降水强度] 数据源
+    ├ WeatherKit: WeatherKit (不进行替换)
+    ├ ColorfulClouds: 彩云天气
+    └ QWeather: 和风天气
+始终会使用选定的数据源，填补无降水监测地区的数据。
+
+AQI.Provider: [空气质量] 数据源
+    ├ WeatherKit: WeatherKit (不进行替换)
+    ├ ColorfulClouds: 彩云天气
+    ├ QWeather: 和风天气
+    └ WAQI: The World Air Quality Project
+始终会使用选定的数据源，填补无空气质量监测地区的数据。
+
+AQI.ReplaceProviders: [空气质量] 需要替换的供应商
+    ├ QWeather: 和风天气
+    ├ BreezoMeter: BreezoMeter
+    └ TWC: The Weather Channel
+选中的空气质量数据源会被替换。
+
+AQI.ComparisonProvider: [空气质量] 对比昨日数据源
+    ├ Auto: 自动选择 (与[空气质量] 数据源一致)
+    ├ WeatherKit: WeatherKit (不进行替换)
+    ├ ColorfulClouds: 彩云天气
+    └ QWeather: 和风天气
+始终会使用选定的数据源，填补无对比昨日地区的数据。
+
+AQI.Local.ReplaceScales: [空气质量] 需要修改的标准
+    ├ HJ6332012: 中国 (HJ 633—2012)
+    └ EPA_NowCast: 美国 (EPA NowCast)
+选中的空气质量标准会被替换。请注意各国监测的污染物种类可能有所不同，转换算法或API未必适合当地。
+
+AQI.Local.Scale: [空气质量] 本地替换算法
+    ├ NONE: None (不进行替换)
+    ├ EPA_NowCast: 美国 (EPA NowCast)
+    └ WAQI_InstantCast: WAQI InstantCast
+本地替换时使用的算法
+
+AQI.Local.ConvertUnits: [空气质量] 转换污染物计量单位
+将污染物数据替换为转换单位后的数据，方便对照转换后的标准。（不推荐。不同单位互转可能会损失精度，导致数值偏大）
+
+API.ColorfulClouds.Token: [API] 彩云天气令牌
+彩云天气 API 令牌
+
+API.QWeather.Host: [API] 和风天气主机
+和风天气 API 使用的主机名
+
+API.QWeather.Token: [API] 和风天气令牌
+和风天气 API 令牌
+
+API.WAQI.Token: [API] WAQI 令牌
+WAQI API 令牌，填写此字段将自动使用WAQI高级API
+
+LogLevel: [调试] 日志等级
+    ├ OFF: 关闭
+    ├ ERROR: ❌ 错误
+    ├ WARN: ⚠️ 警告
+    ├ INFO: ℹ️ 信息
+    ├ DEBUG: 🅱️ 调试
+    └ ALL: 全部
+选择脚本日志的输出等级，低于所选等级的日志将全部输出。
+
+
+[Rule]
+DOMAIN,weather-analytics-events.apple.com,REJECT-DROP
+DOMAIN-SUFFIX,tthr.apple.com,REJECT-DROP,extended-matching
+DOMAIN,tether.edge.apple,REJECT-DROP,extended-matching
+
+[Script]
+🌤 WeatherKit.api.v1.availability.response = type=http-response, pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v1\/availability\/, requires-body=1, engine=webview, script-path=https://github.com/NSRingo/WeatherKit/releases/download/v2.0.6/response.bundle.js, argument=DataSets="{{{DataSets}}}"&Weather.Provider="{{{Weather.Provider}}}"&NextHour.Provider="{{{NextHour.Provider}}}"&AQI.Provider="{{{AQI.Provider}}}"&AQI.ReplaceProviders="{{{AQI.ReplaceProviders}}}"&AQI.ComparisonProvider="{{{AQI.ComparisonProvider}}}"&AQI.Local.ReplaceScales="{{{AQI.Local.ReplaceScales}}}"&AQI.Local.Scale="{{{AQI.Local.Scale}}}"&AQI.Local.ConvertUnits="{{{AQI.Local.ConvertUnits}}}"&API.ColorfulClouds.Token="{{{API.ColorfulClouds.Token}}}"&API.QWeather.Host="{{{API.QWeather.Host}}}"&API.QWeather.Token="{{{API.QWeather.Token}}}"&API.WAQI.Token="{{{API.WAQI.Token}}}"&LogLevel="{{{LogLevel}}}"
+🌤 WeatherKit.api.v2.weather.request = type=http-request, pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/, engine=webview, script-path=https://github.com/NSRingo/WeatherKit/releases/download/v2.0.6/request.bundle.js, argument=DataSets="{{{DataSets}}}"&Weather.Provider="{{{Weather.Provider}}}"&NextHour.Provider="{{{NextHour.Provider}}}"&AQI.Provider="{{{AQI.Provider}}}"&AQI.ReplaceProviders="{{{AQI.ReplaceProviders}}}"&AQI.ComparisonProvider="{{{AQI.ComparisonProvider}}}"&AQI.Local.ReplaceScales="{{{AQI.Local.ReplaceScales}}}"&AQI.Local.Scale="{{{AQI.Local.Scale}}}"&AQI.Local.ConvertUnits="{{{AQI.Local.ConvertUnits}}}"&API.ColorfulClouds.Token="{{{API.ColorfulClouds.Token}}}"&API.QWeather.Host="{{{API.QWeather.Host}}}"&API.QWeather.Token="{{{API.QWeather.Token}}}"&API.WAQI.Token="{{{API.WAQI.Token}}}"&LogLevel="{{{LogLevel}}}"
+🌤 WeatherKit.api.v2.weather.response = type=http-response, pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/NSRingo/WeatherKit/releases/download/v2.0.6/response.bundle.js, argument=DataSets="{{{DataSets}}}"&Weather.Provider="{{{Weather.Provider}}}"&NextHour.Provider="{{{NextHour.Provider}}}"&AQI.Provider="{{{AQI.Provider}}}"&AQI.ReplaceProviders="{{{AQI.ReplaceProviders}}}"&AQI.ComparisonProvider="{{{AQI.ComparisonProvider}}}"&AQI.Local.ReplaceScales="{{{AQI.Local.ReplaceScales}}}"&AQI.Local.Scale="{{{AQI.Local.Scale}}}"&AQI.Local.ConvertUnits="{{{AQI.Local.ConvertUnits}}}"&API.ColorfulClouds.Token="{{{API.ColorfulClouds.Token}}}"&API.QWeather.Host="{{{API.QWeather.Host}}}"&API.QWeather.Token="{{{API.QWeather.Token}}}"&API.WAQI.Token="{{{API.WAQI.Token}}}"&LogLevel="{{{LogLevel}}}"
+
+[MITM]
+hostname = %APPEND% weatherkit.apple.com

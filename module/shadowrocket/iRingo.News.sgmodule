@@ -1,0 +1,53 @@
+#!name =  iRingo: 📰 News
+#!desc = 1.自定义解锁News的地区
+2.Coming Soon…
+#!openUrl = http://boxjs.com/#/app/iRingo.News
+#!author = VirgilClyne[https://github.com/VirgilClyne]
+#!homepage = https://NSRingo.github.io/guide/apple-news
+#!icon = https://developer.apple.com/assets/elements/icons/news/news-128x128.png
+#!category =  iRingo
+#!date = 2024-12-10 04:32:39
+#!version = 3.2.1
+#!arguments=Proxy:🇺🇸美国,CountryCode:"US",NewsPlusUser:true,LogLevel:"WARN"
+#!arguments-desc=Proxy: News 分流规则使用的策略名
+CountryCode: 国家或地区代码
+    ├ AUTO: 🇺🇳自动（跟随地区检测结果）
+    ├ CN: 🇨🇳中国大陆
+    ├ HK: 🇭🇰香港
+    ├ TW: 🇹🇼台湾
+    ├ SG: 🇸🇬新加坡
+    ├ US: 🇺🇸美国
+    ├ JP: 🇯🇵日本
+    ├ AU: 🇦🇺澳大利亚
+    ├ GB: 🇬🇧英国
+    ├ KR: 🇰🇷韩国
+    ├ CA: 🇨🇦加拿大
+    └ IE: 🇮🇪爱尔兰
+不同国家或地区提供的内容或有差别。
+
+NewsPlusUser: [搜索]显示News+内容
+是否显示News+搜索结果。
+
+LogLevel: [调试] 日志等级
+    ├ OFF: 关闭
+    ├ ERROR: ❌ 错误
+    ├ WARN: ⚠️ 警告
+    ├ INFO: ℹ️ 信息
+    ├ DEBUG: 🅱️ 调试
+    └ ALL: 全部
+选择脚本日志的输出等级，低于所选等级的日志将全部输出。
+
+
+[Rule]
+# ☁️ iCloud
+DOMAIN,gateway.icloud.com,{{{Proxy}}}
+# 📰 News
+RULE-SET,https://github.com/NSRingo/News/releases/download/v3.2.1/News.list,{{{Proxy}}}
+
+[Script]
+📰 News.v1.configs.request = type=http-request, pattern=^https?:\/\/news(-todayconfig)?-edge\.apple\.com\/v1\/configs, requires-body=1, script-path=https://github.com/NSRingo/News/releases/download/v3.2.1/request.bundle.js, argument=CountryCode="{{{CountryCode}}}"&NewsPlusUser="{{{NewsPlusUser}}}"&LogLevel="{{{LogLevel}}}"
+📰 News.analyticseventsv2.async.request = type=http-request, pattern=^https?:\/\/news(-sports)?-events\.apple\.com\/analyticseventsv2\/async, requires-body=1, script-path=https://github.com/NSRingo/News/releases/download/v3.2.1/request.bundle.js, argument=CountryCode="{{{CountryCode}}}"&NewsPlusUser="{{{NewsPlusUser}}}"&LogLevel="{{{LogLevel}}}"
+📰 News.v1.search.request = type=http-request, pattern=^https?:\/\/news-client-search\.apple\.com\/v1\/search, requires-body=0, script-path=https://github.com/NSRingo/News/releases/download/v3.2.1/request.bundle.js, argument=CountryCode="{{{CountryCode}}}"&NewsPlusUser="{{{NewsPlusUser}}}"&LogLevel="{{{LogLevel}}}"
+
+[MITM]
+hostname = %APPEND% news-edge.apple.com, news-todayconfig-edge.apple.com, news-events.apple.com, news-sports-events.apple.com, news-client.apple.com, news-client-search.apple.com

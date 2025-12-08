@@ -1,0 +1,196 @@
+#!name=🔥 Firewall Port Blocker 🛡️🚫
+#!desc=Block dangerous ports: Malware/Backdoor/Database/Admin/Legacy protocols 🔒 (Safe Mode - Allows common services)
+#!author=nyamiiko
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!version=2025.12.04
+
+# ⚠️ IMPORTANT: This module only blocks OUTBOUND connections to dangerous ports
+# It does NOT block legitimate services like HTTPS (443), DNS (53), or common proxies
+# Safe for daily use - will not break normal internet connectivity
+
+[Rule]
+# ═══════════════════════════════════════════════════════════════
+# SECTION 1: Legacy & Insecure Protocols (High Risk)
+# ═══════════════════════════════════════════════════════════════
+# FTP (Insecure - use SFTP/FTPS instead)
+DEST-PORT,20,REJECT-DROP
+DEST-PORT,21,REJECT-DROP
+# Telnet (Plaintext - use SSH instead)
+DEST-PORT,23,REJECT-DROP
+# TFTP (Trivial FTP - no auth)
+DEST-PORT,69,REJECT-DROP
+# Gopher (Obsolete)
+DEST-PORT,70,REJECT-DROP
+# Finger (Privacy risk)
+DEST-PORT,79,REJECT-DROP
+# Auth/Ident (Obsolete)
+DEST-PORT,113,REJECT-DROP
+# NNTP (Usenet - rarely used)
+DEST-PORT,119,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 2: Windows File Sharing (SMB/NetBIOS) - High Risk
+# ═══════════════════════════════════════════════════════════════
+# NetBIOS
+DEST-PORT,135,REJECT-DROP
+DEST-PORT,137,REJECT-DROP
+DEST-PORT,138,REJECT-DROP
+DEST-PORT,139,REJECT-DROP
+# SMB (WannaCry/EternalBlue vector)
+DEST-PORT,445,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 3: Database Ports (Should NOT be exposed to internet)
+# ═══════════════════════════════════════════════════════════════
+# MySQL
+DEST-PORT,3306,REJECT-DROP
+# PostgreSQL
+DEST-PORT,5432,REJECT-DROP
+# MongoDB
+DEST-PORT,27017,REJECT-DROP
+DEST-PORT,27018,REJECT-DROP
+DEST-PORT,27019,REJECT-DROP
+# Redis
+DEST-PORT,6379,REJECT-DROP
+# Memcached
+DEST-PORT,11211,REJECT-DROP
+# Elasticsearch
+DEST-PORT,9200,REJECT-DROP
+DEST-PORT,9300,REJECT-DROP
+# CouchDB
+DEST-PORT,5984,REJECT-DROP
+# Cassandra
+DEST-PORT,9042,REJECT-DROP
+DEST-PORT,7000,REJECT-DROP
+DEST-PORT,7001,REJECT-DROP
+# InfluxDB
+DEST-PORT,8086,REJECT-DROP
+# Oracle DB
+DEST-PORT,1521,REJECT-DROP
+# MS SQL Server
+DEST-PORT,1433,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 4: Remote Admin Ports (High Risk)
+# ═══════════════════════════════════════════════════════════════
+# RDP (Remote Desktop Protocol)
+DEST-PORT,3389,REJECT-DROP
+# VNC (Virtual Network Computing)
+DEST-PORT,5900,REJECT-DROP
+DEST-PORT,5901,REJECT-DROP
+DEST-PORT,5902,REJECT-DROP
+DEST-PORT,5903,REJECT-DROP
+# X11 (X Window System)
+DEST-PORT,6000,REJECT-DROP
+DEST-PORT,6001,REJECT-DROP
+DEST-PORT,6002,REJECT-DROP
+# WinRM (Windows Remote Management)
+DEST-PORT,5985,REJECT-DROP
+DEST-PORT,5986,REJECT-DROP
+# pcAnywhere
+DEST-PORT,5631,REJECT-DROP
+DEST-PORT,5632,REJECT-DROP
+# TeamViewer (if not needed)
+DEST-PORT,5938,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 5: Container/Orchestration Ports (Should be internal only)
+# ═══════════════════════════════════════════════════════════════
+# Docker API (Unencrypted)
+DEST-PORT,2375,REJECT-DROP
+# Kubernetes API
+DEST-PORT,6443,REJECT-DROP
+DEST-PORT,10250,REJECT-DROP
+DEST-PORT,10251,REJECT-DROP
+DEST-PORT,10252,REJECT-DROP
+# etcd
+DEST-PORT,2379,REJECT-DROP
+DEST-PORT,2380,REJECT-DROP
+# Consul
+DEST-PORT,8500,REJECT-DROP
+DEST-PORT,8600,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 6: Known Malware/Backdoor/Trojan Ports
+# ═══════════════════════════════════════════════════════════════
+# Back Orifice
+DEST-PORT,31337,REJECT-DROP
+DEST-PORT,31338,REJECT-DROP
+# NetBus
+DEST-PORT,12345,REJECT-DROP
+DEST-PORT,12346,REJECT-DROP
+# SubSeven
+DEST-PORT,27374,REJECT-DROP
+DEST-PORT,6711,REJECT-DROP
+DEST-PORT,6712,REJECT-DROP
+DEST-PORT,6713,REJECT-DROP
+# Deep Throat
+DEST-PORT,6670,REJECT-DROP
+DEST-PORT,6771,REJECT-DROP
+# Trinoo DDoS
+DEST-PORT,27444,REJECT-DROP
+DEST-PORT,27665,REJECT-DROP
+DEST-PORT,31335,REJECT-DROP
+# Stacheldraht
+DEST-PORT,16660,REJECT-DROP
+DEST-PORT,65000,REJECT-DROP
+# Other Known Malicious Ports
+DEST-PORT,1243,REJECT-DROP
+DEST-PORT,1999,REJECT-DROP
+DEST-PORT,2023,REJECT-DROP
+DEST-PORT,3150,REJECT-DROP
+DEST-PORT,5569,REJECT-DROP
+DEST-PORT,9898,REJECT-DROP
+DEST-PORT,33270,REJECT-DROP
+DEST-PORT,33333,REJECT-DROP
+DEST-PORT,34324,REJECT-DROP
+DEST-PORT,40421,REJECT-DROP
+DEST-PORT,54320,REJECT-DROP
+DEST-PORT,54321,REJECT-DROP
+DEST-PORT,61466,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 7: P2P/BitTorrent Ports (Optional - Comment out if needed)
+# ═══════════════════════════════════════════════════════════════
+# BitTorrent Default Range
+DEST-PORT,6881,REJECT-DROP
+DEST-PORT,6882,REJECT-DROP
+DEST-PORT,6883,REJECT-DROP
+DEST-PORT,6884,REJECT-DROP
+DEST-PORT,6885,REJECT-DROP
+DEST-PORT,6886,REJECT-DROP
+DEST-PORT,6887,REJECT-DROP
+DEST-PORT,6888,REJECT-DROP
+DEST-PORT,6889,REJECT-DROP
+
+# ═══════════════════════════════════════════════════════════════
+# ✅ SAFE PORTS (NOT BLOCKED - For Reference)
+# ═══════════════════════════════════════════════════════════════
+# 53   - DNS (Essential)
+# 80   - HTTP (Essential)
+# 443  - HTTPS (Essential)
+# 853  - DNS over TLS (Secure DNS)
+# 1080 - SOCKS5 Proxy (Legitimate use)
+# 3128 - Squid Proxy (Legitimate use)
+# 8080 - HTTP Alternate (Dev servers, proxies)
+# 8443 - HTTPS Alternate (Common for services)
+# 8888 - HTTP Alternate (Common for proxies)
+# 9090 - HTTP Alternate (Prometheus, etc.)
+
+# ═══════════════════════════════════════════════════════════════
+# 📝 NOTES:
+# ═══════════════════════════════════════════════════════════════
+# 1. This module blocks OUTBOUND connections only
+# 2. Does NOT affect inbound connections (firewall handles that)
+# 3. Safe for daily use - will not break normal browsing
+# 4. If you need P2P/BitTorrent, comment out SECTION 7
+# 5. If you use specific services (VNC, RDP), comment out those lines
+# 6. Database ports should NEVER be exposed to internet anyway
+# 7. Use VPN/SSH tunnels for remote admin instead of direct exposure
+
+
+# ═══════════════════════════════════════════════════════════════
+# SECTION 8: Auto-synced from Surge Config (2025-12-07)
+# ═══════════════════════════════════════════════════════════════
+IN-PORT,8076,REJECT-DROP
+DEST-PORT,8076,REJECT-DROP
