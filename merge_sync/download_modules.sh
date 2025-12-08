@@ -86,6 +86,25 @@ process_module() {
         fi
     fi
     
+    # Remove duplicate #!category= lines (keep only the first one we set)
+    # Some modules have their own #!category which would override ours
+    # Strategy: First line should be our category, remove all others
+    local category_count=$(grep -c "^#!category" "$temp_file" 2>/dev/null || echo "0")
+    if [ "$category_count" -gt 1 ]; then
+        log_warning "  Found $category_count #!category lines, keeping only the first one"
+        # Use awk to keep only the first #!category line
+        awk '
+            /^#!category/ {
+                if (!seen) {
+                    print
+                    seen = 1
+                }
+                next
+            }
+            { print }
+        ' "$temp_file" > "${temp_file}.tmp" && mv "${temp_file}.tmp" "$temp_file"
+    fi
+    
     # Copy to module directory
     cp "$temp_file" "$module_file"
 }
