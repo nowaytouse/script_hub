@@ -176,6 +176,12 @@ pub struct VideoDetectionResult {
     pub quality_score: u8,
     /// Recommendation for archival
     pub archival_candidate: bool,
+    // Enhanced fields for precise CRF matching
+    pub profile: Option<String>,
+    pub has_b_frames: bool,
+    pub video_bitrate: Option<u64>,
+    /// Bits per pixel (for quality estimation)
+    pub bits_per_pixel: f64,
 }
 
 /// Determine compression type based on codec and bitrate
@@ -245,6 +251,14 @@ pub fn detect_video(path: &Path) -> Result<VideoDetectionResult> {
     
     let codec = DetectedCodec::from_ffprobe(&probe.video_codec);
     
+    // Calculate bits per pixel for quality estimation
+    let pixels_per_second = (probe.width as f64) * (probe.height as f64) * probe.frame_rate;
+    let bits_per_pixel = if pixels_per_second > 0.0 {
+        (probe.bit_rate as f64) / pixels_per_second
+    } else {
+        0.0
+    };
+    
     let compression = determine_compression_type(
         &codec,
         probe.bit_rate,
@@ -291,5 +305,9 @@ pub fn detect_video(path: &Path) -> Result<VideoDetectionResult> {
         file_size: probe.size,
         quality_score,
         archival_candidate,
+        profile: probe.profile,
+        has_b_frames: probe.has_b_frames,
+        video_bitrate: probe.video_bit_rate,
+        bits_per_pixel,
     })
 }

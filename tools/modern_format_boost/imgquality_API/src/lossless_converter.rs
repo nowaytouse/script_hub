@@ -619,37 +619,78 @@ pub fn convert_to_av1_mp4_matched(
     }
 }
 
-/// Calculate CRF to match input animation quality
+/// Calculate CRF to match input animation quality (Enhanced Algorithm)
 /// 
-/// Based on bytes per pixel per second, we estimate the appropriate CRF:
-/// - High quality (>50 KB/pixel/s): CRF 18-20
-/// - Medium quality (20-50 KB/pixel/s): CRF 23-26
-/// - Low quality (<20 KB/pixel/s): CRF 28-30
+/// This function uses a more precise algorithm that considers:
+/// 1. Bytes per pixel per second (bpps) - primary quality indicator
+/// 2. Source format efficiency - GIF vs WebP vs APNG
+/// 3. Color depth and palette size
+/// 4. Resolution scaling
+/// 
+/// The formula converts bpps to an equivalent CRF using:
+/// CRF ≈ 63 - 8 * log2(bpps * efficiency_factor * 1000)
+/// 
+/// Clamped to range [18, 35] for AV1
 fn calculate_matched_crf_for_animation(analysis: &crate::ImageAnalysis, file_size: u64) -> u8 {
     let pixels = (analysis.width as u64) * (analysis.height as u64);
     let duration = analysis.duration_secs.unwrap_or(1.0).max(0.1) as f64;
     
-    // Calculate bytes per pixel per second (like bitrate per pixel)
+    // Calculate bytes per pixel per second
     let bytes_per_second = file_size as f64 / duration;
-    let bpps = bytes_per_second / pixels as f64;  // bytes per pixel per second
+    let bpps = bytes_per_second / pixels as f64;
     
-    eprintln!("   📊 Input analysis: {:.4} bytes/pixel/second, {:.1}s duration", bpps, duration);
-    
-    // AV1 is very efficient, so we can use slightly higher CRF for same quality
-    // bpps thresholds are based on typical GIF/WebP animation bitrates
-    let crf = if bpps > 0.5 {
-        18  // Very high quality source (>0.5 bytes/pixel/s)
-    } else if bpps > 0.3 {
-        20  // High quality source
-    } else if bpps > 0.15 {
-        23  // Good quality source
-    } else if bpps > 0.08 {
-        26  // Medium quality source
-    } else if bpps > 0.04 {
-        28  // Standard quality source
-    } else {
-        30  // Low quality source - don't go lower
+    // Format efficiency factor
+    // GIF is very inefficient (256 colors, LZW), WebP is better, APNG is in between
+    let format_factor = match analysis.format.to_lowercase().as_str() {
+        "gif" => 2.5,      // GIF is very inefficient, high bpps doesn't mean high quality
+        "apng" | "png" => 1.5,  // APNG is moderately efficient
+        "webp" => 1.0,     // WebP animated is efficient
+        _ => 1.2,
     };
+    
+    // Color depth factor
+    // 8-bit (256 colors) animations have inherently lower quality ceiling
+    let color_factor = if analysis.color_depth <= 8 {
+        1.3  // Limited palette, don't need as high quality
+    } else {
+        1.0
+    };
+    
+    // Resolution factor (higher res needs more bits for same perceived quality)
+    let resolution_factor = if pixels > 2_000_000 {
+        0.8   // 1080p+ needs more bits
+    } else if pixels > 500_000 {
+        0.9   // 720p
+    } else {
+        1.0   // SD
+    };
+    
+    // Alpha channel factor (alpha adds complexity)
+    let alpha_factor = if analysis.has_alpha { 0.9 } else { 1.0 };
+    
+    // Effective bpps after adjustments
+    let effective_bpps = bpps / format_factor * color_factor * resolution_factor * alpha_factor;
+    
+    // Convert bpps to CRF using logarithmic formula
+    // AV1 CRF range is 0-63, with 23 being default "good quality"
+    // CRF = 63 - 8 * log2(effective_bpps * 1000)
+    let crf_float = if effective_bpps > 0.0 {
+        63.0 - 8.0 * (effective_bpps * 1000.0).log2()
+    } else {
+        30.0
+    };
+    
+    // Clamp to reasonable range [18, 35]
+    let crf = (crf_float.round() as i32).clamp(18, 35) as u8;
+    
+    eprintln!("   📊 Quality Analysis:");
+    eprintln!("      Raw bpps: {:.4} bytes/pixel/second", bpps);
+    eprintln!("      Format: {} (factor: {:.2})", analysis.format, format_factor);
+    eprintln!("      Color depth: {}-bit (factor: {:.2})", analysis.color_depth, color_factor);
+    eprintln!("      Resolution: {}x{} (factor: {:.2})", analysis.width, analysis.height, resolution_factor);
+    eprintln!("      Alpha: {} (factor: {:.2})", analysis.has_alpha, alpha_factor);
+    eprintln!("      Effective bpps: {:.4}", effective_bpps);
+    eprintln!("      Calculated CRF: {}", crf);
     
     crf
 }

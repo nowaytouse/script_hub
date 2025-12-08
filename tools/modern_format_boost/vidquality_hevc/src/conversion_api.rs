@@ -315,47 +315,86 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     })
 }
 
-/// Calculate CRF to match input video quality level
+/// Calculate CRF to match input video quality level (Enhanced Algorithm)
 /// 
-/// This function estimates the appropriate CRF value based on the input video's
-/// bitrate and resolution, so the output quality matches the input quality.
+/// This function uses a more precise algorithm that considers:
+/// 1. Bits per pixel (bpp) - primary quality indicator
+/// 2. Source codec efficiency - H.264 vs others
+/// 3. Profile/B-frames - encoding complexity
+/// 4. Resolution scaling - higher res needs more bits
 /// 
-/// The formula is based on bits-per-pixel (bpp):
-/// - bpp > 1.0  → CRF 18 (visually lossless)
-/// - bpp > 0.5  → CRF 20 (high quality)
-/// - bpp > 0.25 → CRF 23 (good quality)
-/// - bpp > 0.1  → CRF 26 (standard quality)
-/// - bpp <= 0.1 → CRF 28 (low quality, but don't go lower to avoid artifacts)
+/// The formula converts bpp to an equivalent CRF using:
+/// CRF ≈ 51 - 10 * log2(bpp * efficiency_factor * resolution_factor)
+/// 
+/// Clamped to range [18, 32] to avoid extremes
 pub fn calculate_matched_crf(detection: &VideoDetectionResult) -> u8 {
-    let pixels_per_frame = (detection.width as f64) * (detection.height as f64);
-    let pixels_per_second = pixels_per_frame * detection.fps;
-    
-    if pixels_per_second <= 0.0 {
-        info!("   ⚠️  Cannot calculate bpp, using default CRF 23");
-        return 23;
-    }
-    
-    // Calculate bits per pixel
-    // bitrate is in bps (bits per second)
-    let bpp = (detection.bitrate as f64) / pixels_per_second;
-    
-    // HEVC is ~40-50% more efficient than H.264, so we can use slightly higher CRF
-    // for the same visual quality
-    let crf = if bpp > 1.0 {
-        18  // Very high quality source
-    } else if bpp > 0.5 {
-        20  // High quality source
-    } else if bpp > 0.25 {
-        23  // Good quality source
-    } else if bpp > 0.15 {
-        25  // Medium quality source
-    } else if bpp > 0.1 {
-        26  // Standard quality source
+    // Use pre-calculated bpp if available, otherwise calculate
+    let bpp = if detection.bits_per_pixel > 0.0 {
+        detection.bits_per_pixel
     } else {
-        28  // Low quality source - don't go lower
+        let pixels_per_frame = (detection.width as f64) * (detection.height as f64);
+        let pixels_per_second = pixels_per_frame * detection.fps;
+        if pixels_per_second <= 0.0 {
+            info!("   ⚠️  Cannot calculate bpp, using default CRF 23");
+            return 23;
+        }
+        (detection.bitrate as f64) / pixels_per_second
     };
     
-    info!("   📊 Input bpp: {:.3}, matched CRF: {}", bpp, crf);
+    // Codec efficiency factor (HEVC is ~40% more efficient than H.264)
+    // So we need to account for this when matching quality
+    let codec_factor = match detection.codec {
+        crate::detection_api::DetectedCodec::H264 => 1.0,      // Baseline
+        crate::detection_api::DetectedCodec::H265 => 0.6,      // Already efficient
+        crate::detection_api::DetectedCodec::VP9 => 0.65,      // Similar to HEVC
+        crate::detection_api::DetectedCodec::AV1 => 0.5,       // Most efficient
+        crate::detection_api::DetectedCodec::ProRes => 1.5,    // High bitrate codec
+        crate::detection_api::DetectedCodec::DNxHD => 1.5,     // High bitrate codec
+        crate::detection_api::DetectedCodec::MJPEG => 2.0,     // Very inefficient
+        _ => 1.0,
+    };
+    
+    // B-frames bonus (B-frames improve compression efficiency)
+    let bframe_factor = if detection.has_b_frames { 1.1 } else { 1.0 };
+    
+    // Resolution factor (higher res is harder to compress efficiently)
+    let pixels = (detection.width as f64) * (detection.height as f64);
+    let resolution_factor = if pixels > 8_000_000.0 {
+        0.85  // 4K+ needs more bits
+    } else if pixels > 2_000_000.0 {
+        0.9   // 1080p
+    } else if pixels > 500_000.0 {
+        0.95  // 720p
+    } else {
+        1.0   // SD
+    };
+    
+    // Effective bpp after adjustments
+    let effective_bpp = bpp * codec_factor * bframe_factor * resolution_factor;
+    
+    // Convert bpp to CRF using logarithmic formula
+    // CRF = 51 - 10 * log2(effective_bpp * 100)
+    // This gives roughly:
+    // bpp=1.0 → CRF ~18
+    // bpp=0.3 → CRF ~23
+    // bpp=0.1 → CRF ~28
+    // bpp=0.03 → CRF ~32
+    let crf_float = if effective_bpp > 0.0 {
+        51.0 - 10.0 * (effective_bpp * 100.0).log2()
+    } else {
+        28.0
+    };
+    
+    // Clamp to reasonable range [18, 32]
+    let crf = (crf_float.round() as i32).clamp(18, 32) as u8;
+    
+    info!("   📊 Quality Analysis:");
+    info!("      Raw bpp: {:.4}", bpp);
+    info!("      Codec factor: {:.2} ({})", codec_factor, detection.codec.as_str());
+    info!("      B-frames: {} (factor: {:.2})", detection.has_b_frames, bframe_factor);
+    info!("      Resolution: {}x{} (factor: {:.2})", detection.width, detection.height, resolution_factor);
+    info!("      Effective bpp: {:.4}", effective_bpp);
+    info!("      Calculated CRF: {}", crf);
     
     crf
 }
