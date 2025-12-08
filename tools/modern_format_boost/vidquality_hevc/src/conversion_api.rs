@@ -61,6 +61,8 @@ pub struct ConversionConfig {
     pub preserve_metadata: bool,
     pub explore_smaller: bool,
     pub use_lossless: bool,
+    /// Match input video quality level (auto-calculate CRF based on input bitrate)
+    pub match_quality: bool,
 }
 
 impl Default for ConversionConfig {
@@ -72,6 +74,7 @@ impl Default for ConversionConfig {
             preserve_metadata: true,
             explore_smaller: false,
             use_lossless: false,
+            match_quality: false,
         }
     }
 }
@@ -262,6 +265,12 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
                 (size, 0, 0)
             } else if config.explore_smaller {
                 explore_smaller_size(&detection, &output_path)?
+            } else if config.match_quality {
+                // Calculate CRF to match input quality
+                let matched_crf = calculate_matched_crf(&detection);
+                info!("   🎯 Match Quality Mode: using CRF {} to match input quality", matched_crf);
+                let size = execute_hevc_conversion(&detection, &output_path, matched_crf)?;
+                (size, matched_crf, 0)
             } else {
                 let size = execute_hevc_conversion(&detection, &output_path, strategy.crf)?;
                 (size, strategy.crf, 0)
@@ -304,6 +313,51 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
         final_crf,
         exploration_attempts: attempts,
     })
+}
+
+/// Calculate CRF to match input video quality level
+/// 
+/// This function estimates the appropriate CRF value based on the input video's
+/// bitrate and resolution, so the output quality matches the input quality.
+/// 
+/// The formula is based on bits-per-pixel (bpp):
+/// - bpp > 1.0  → CRF 18 (visually lossless)
+/// - bpp > 0.5  → CRF 20 (high quality)
+/// - bpp > 0.25 → CRF 23 (good quality)
+/// - bpp > 0.1  → CRF 26 (standard quality)
+/// - bpp <= 0.1 → CRF 28 (low quality, but don't go lower to avoid artifacts)
+pub fn calculate_matched_crf(detection: &VideoDetectionResult) -> u8 {
+    let pixels_per_frame = (detection.width as f64) * (detection.height as f64);
+    let pixels_per_second = pixels_per_frame * detection.fps;
+    
+    if pixels_per_second <= 0.0 {
+        info!("   ⚠️  Cannot calculate bpp, using default CRF 23");
+        return 23;
+    }
+    
+    // Calculate bits per pixel
+    // bitrate is in bps (bits per second)
+    let bpp = (detection.bitrate as f64) / pixels_per_second;
+    
+    // HEVC is ~40-50% more efficient than H.264, so we can use slightly higher CRF
+    // for the same visual quality
+    let crf = if bpp > 1.0 {
+        18  // Very high quality source
+    } else if bpp > 0.5 {
+        20  // High quality source
+    } else if bpp > 0.25 {
+        23  // Good quality source
+    } else if bpp > 0.15 {
+        25  // Medium quality source
+    } else if bpp > 0.1 {
+        26  // Standard quality source
+    } else {
+        28  // Low quality source - don't go lower
+    };
+    
+    info!("   📊 Input bpp: {:.3}, matched CRF: {}", bpp, crf);
+    
+    crf
 }
 
 /// Explore smaller size by trying higher CRF values

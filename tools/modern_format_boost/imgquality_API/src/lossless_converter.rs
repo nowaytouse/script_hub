@@ -521,6 +521,139 @@ pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Resul
     }
 }
 
+/// Convert animated to AV1 MP4 with quality-matched CRF
+/// 
+/// This function calculates an appropriate CRF based on the input file's
+/// characteristics to match the input quality level.
+pub fn convert_to_av1_mp4_matched(
+    input: &Path, 
+    options: &ConvertOptions,
+    analysis: &crate::ImageAnalysis,
+) -> Result<ConversionResult> {
+    // Anti-duplicate check
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "mp4", &options.output_dir);
+    
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Calculate matched CRF based on input characteristics
+    // For animated images, we estimate quality based on:
+    // - File size per frame
+    // - Resolution
+    // - Duration
+    let crf = calculate_matched_crf_for_animation(analysis, input_size);
+    eprintln!("   🎯 Matched CRF: {} (based on input quality analysis)", crf);
+    
+    // AV1 with calculated CRF
+    let result = Command::new("ffmpeg")
+        .arg("-y")  // Overwrite
+        .arg("-i").arg(input)
+        .arg("-c:v").arg("libaom-av1")
+        .arg("-crf").arg(crf.to_string())
+        .arg("-b:v").arg("0")
+        .arg("-pix_fmt").arg("yuv420p")
+        .arg("-cpu-used").arg("4")  // Balanced speed
+        .arg("-row-mt").arg("1")    // Multi-threading
+        .arg(&output)
+        .output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            // Copy metadata and timestamps
+            copy_metadata(input, &output);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Quality-matched AV1 (CRF {}): size {:.1}%", crf, reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("ffmpeg failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("ffmpeg not found: {}", e)))
+        }
+    }
+}
+
+/// Calculate CRF to match input animation quality
+/// 
+/// Based on bytes per pixel per second, we estimate the appropriate CRF:
+/// - High quality (>50 KB/pixel/s): CRF 18-20
+/// - Medium quality (20-50 KB/pixel/s): CRF 23-26
+/// - Low quality (<20 KB/pixel/s): CRF 28-30
+fn calculate_matched_crf_for_animation(analysis: &crate::ImageAnalysis, file_size: u64) -> u8 {
+    let pixels = (analysis.width as u64) * (analysis.height as u64);
+    let duration = analysis.duration_secs.unwrap_or(1.0).max(0.1) as f64;
+    
+    // Calculate bytes per pixel per second (like bitrate per pixel)
+    let bytes_per_second = file_size as f64 / duration;
+    let bpps = bytes_per_second / pixels as f64;  // bytes per pixel per second
+    
+    eprintln!("   📊 Input analysis: {:.4} bytes/pixel/second, {:.1}s duration", bpps, duration);
+    
+    // AV1 is very efficient, so we can use slightly higher CRF for same quality
+    // bpps thresholds are based on typical GIF/WebP animation bitrates
+    let crf = if bpps > 0.5 {
+        18  // Very high quality source (>0.5 bytes/pixel/s)
+    } else if bpps > 0.3 {
+        20  // High quality source
+    } else if bpps > 0.15 {
+        23  // Good quality source
+    } else if bpps > 0.08 {
+        26  // Medium quality source
+    } else if bpps > 0.04 {
+        28  // Standard quality source
+    } else {
+        30  // Low quality source - don't go lower
+    };
+    
+    crf
+}
+
 /// Convert animated to AV1 MP4 using mathematical lossless (⚠️ VERY SLOW)
 pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
     eprintln!("⚠️  Mathematical lossless AV1 encoding - this will be VERY SLOW!");

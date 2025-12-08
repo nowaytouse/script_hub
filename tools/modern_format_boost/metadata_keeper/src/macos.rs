@@ -5,8 +5,19 @@ use std::io;
 
 /// Native macOS `copyfile` flag constants
 /// Corresponds to <copyfile.h>
-/// COPYFILE_ACL | COPYFILE_STAT | COPYFILE_XATTR | COPYFILE_NOFOLLOW
-const COPYFILE_FLAGS: u32 = (1<<0) | (1<<1) | (1<<2) | (1<<3);
+/// 
+/// IMPORTANT: DO NOT include COPYFILE_DATA (1<<3) - it would overwrite the converted file content!
+/// 
+/// Flags used:
+/// - COPYFILE_ACL   (1<<0) = 0x0001 - Copy ACLs
+/// - COPYFILE_STAT  (1<<1) = 0x0002 - Copy stat info (mode, timestamps)
+/// - COPYFILE_XATTR (1<<2) = 0x0004 - Copy extended attributes
+/// 
+/// NOT used:
+/// - COPYFILE_DATA  (1<<3) = 0x0008 - Would copy file DATA, destroying converted content!
+/// - COPYFILE_NOFOLLOW_SRC  (1<<18) - Don't follow symlinks on source
+/// - COPYFILE_NOFOLLOW_DST  (1<<19) - Don't follow symlinks on destination
+const COPYFILE_FLAGS: u32 = (1<<0) | (1<<1) | (1<<2);  // ACL | STAT | XATTR only, NO DATA!
 
 /// Uses macOS native `copyfile` API to clone ALL metadata relative to security and fs context.
 /// This includes:

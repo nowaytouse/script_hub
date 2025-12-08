@@ -84,6 +84,10 @@ enum Commands {
         /// Use mathematical lossless AVIF/AV1 (⚠️ VERY SLOW, huge files)
         #[arg(long)]
         lossless: bool,
+
+        /// Match input quality level for animated→video conversion (auto-calculate CRF)
+        #[arg(long)]
+        match_quality: bool,
     },
 
     /// Verify conversion quality
@@ -148,14 +152,18 @@ fn main() -> anyhow::Result<()> {
             recursive,
             delete_original,
             lossless,
+            match_quality,
         } => {
             if lossless {
                 eprintln!("⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)");
             }
+            if match_quality {
+                eprintln!("🎯 Match quality mode: ENABLED (auto-calculate CRF for video)");
+            }
             if input.is_file() {
-                auto_convert_single_file(&input, output.as_ref(), force, delete_original, lossless)?;
+                auto_convert_single_file(&input, output.as_ref(), force, delete_original, lossless, match_quality)?;
             } else if input.is_dir() {
-                auto_convert_directory(&input, output.as_ref(), force, recursive, delete_original, lossless)?;
+                auto_convert_directory(&input, output.as_ref(), force, recursive, delete_original, lossless, match_quality)?;
             } else {
                 eprintln!("❌ Error: Input path does not exist: {}", input.display());
                 std::process::exit(1);
@@ -504,10 +512,12 @@ fn auto_convert_single_file(
     force: bool,
     delete_original: bool,
     lossless: bool,
+    match_quality: bool,
 ) -> anyhow::Result<()> {
     use imgquality::lossless_converter::{
         convert_to_jxl, convert_jpeg_to_jxl,
         convert_to_av1_mp4, convert_to_av1_mp4_lossless,
+        convert_to_av1_mp4_matched,
         ConvertOptions,
     };
     
@@ -556,6 +566,9 @@ fn auto_convert_single_file(
             if lossless {
                 println!("🔄 Animated lossless→AV1 MP4 (LOSSLESS, {:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4_lossless(input, &options)?
+            } else if match_quality {
+                println!("🔄 Animated lossless→AV1 MP4 (MATCH QUALITY, {:.1}s): {}", duration, input.display());
+                convert_to_av1_mp4_matched(input, &options, &analysis)?
             } else {
                 println!("🔄 Animated lossless→AV1 MP4 ({:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4(input, &options)?
@@ -567,6 +580,9 @@ fn auto_convert_single_file(
             if lossless && duration >= 3.0 {
                 println!("🔄 Animated lossy→AV1 MP4 (LOSSLESS, {:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4_lossless(input, &options)?
+            } else if match_quality && duration >= 3.0 {
+                println!("🔄 Animated lossy→AV1 MP4 (MATCH QUALITY, {:.1}s): {}", duration, input.display());
+                convert_to_av1_mp4_matched(input, &options, &analysis)?
             } else if duration < 3.0 {
                 println!("⏭️ Skipping short animation ({:.1}s < 3s): {}", duration, input.display());
                 return Ok(());
@@ -606,6 +622,7 @@ fn auto_convert_directory(
     recursive: bool,
     delete_original: bool,
     lossless: bool,
+    match_quality: bool,
 ) -> anyhow::Result<()> {
     let image_extensions = ["png", "jpg", "jpeg", "webp", "gif", "tiff", "tif", "heic", "avif"];
     
@@ -643,7 +660,7 @@ fn auto_convert_directory(
 
     // Process files in parallel using rayon
     files.par_iter().for_each(|path| {
-        match auto_convert_single_file(path, output_dir, force, delete_original, lossless) {
+        match auto_convert_single_file(path, output_dir, force, delete_original, lossless, match_quality) {
             Ok(_) => { success.fetch_add(1, Ordering::Relaxed); }
             Err(e) => {
                 let msg = e.to_string();

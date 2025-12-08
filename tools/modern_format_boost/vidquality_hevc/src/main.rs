@@ -40,6 +40,9 @@ enum Commands {
         explore: bool,
         #[arg(long)]
         lossless: bool,
+        /// Match input video quality level (auto-calculate CRF based on input bitrate)
+        #[arg(long)]
+        match_quality: bool,
     },
 
     /// Simple mode: ALL videos → HEVC MP4
@@ -86,7 +89,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, delete_original, explore, lossless } => {
+        Commands::Auto { input, output, force, delete_original, explore, lossless, match_quality } => {
             let config = ConversionConfig {
                 output_dir: output.clone(),
                 force,
@@ -94,16 +97,24 @@ fn main() -> anyhow::Result<()> {
                 preserve_metadata: true,
                 explore_smaller: explore,
                 use_lossless: lossless,
+                match_quality,
             };
             
             info!("🎬 Auto Mode Conversion (HEVC/H.265)");
             info!("   Lossless sources → HEVC Lossless MKV");
-            info!("   Lossy sources → HEVC MP4 (CRF 18-20)");
+            if match_quality {
+                info!("   Lossy sources → HEVC MP4 (CRF auto-matched to input quality)");
+            } else {
+                info!("   Lossy sources → HEVC MP4 (CRF 18-20)");
+            }
             if lossless {
                 info!("   ⚠️  HEVC Lossless: ENABLED");
             }
             if explore {
                 info!("   📊 Size exploration: ENABLED");
+            }
+            if match_quality {
+                info!("   🎯 Match Quality: ENABLED");
             }
             info!("");
             
