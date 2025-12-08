@@ -695,6 +695,195 @@ fn calculate_matched_crf_for_animation(analysis: &crate::ImageAnalysis, file_siz
     crf
 }
 
+/// Calculate JXL distance to match input image quality (for lossy static images)
+/// 
+/// This function analyzes the input image and calculates an appropriate JXL distance
+/// that matches the perceived quality of the original.
+/// 
+/// JXL distance: 0.0 = lossless, 1.0 = Q90, 2.0 = Q80, etc.
+/// Formula: distance ≈ (100 - estimated_quality) / 10
+/// 
+/// For images without JPEG quality info, we estimate based on:
+/// - Compression ratio
+/// - File size per pixel
+/// - Format efficiency
+pub fn calculate_matched_distance_for_static(analysis: &crate::ImageAnalysis, file_size: u64) -> f32 {
+    let pixels = (analysis.width as u64) * (analysis.height as u64);
+    
+    // If we have JPEG quality analysis, use it directly
+    if let Some(ref jpeg) = analysis.jpeg_analysis {
+        let quality = jpeg.estimated_quality as f32;
+        // JXL distance formula: distance = (100 - quality) / 10
+        // Q100 → d=0.0, Q90 → d=1.0, Q80 → d=2.0, Q70 → d=3.0
+        let distance = (100.0 - quality) / 10.0;
+        let clamped = distance.clamp(0.0, 5.0);
+        
+        eprintln!("   📊 Quality Analysis (JPEG):");
+        eprintln!("      JPEG Quality: Q{}", jpeg.estimated_quality);
+        eprintln!("      Confidence: {:.1}%", jpeg.confidence * 100.0);
+        eprintln!("      Calculated JXL distance: {:.2}", clamped);
+        
+        return clamped;
+    }
+    
+    // For non-JPEG lossy images, estimate based on bytes per pixel
+    let bytes_per_pixel = file_size as f64 / pixels as f64;
+    
+    // Format efficiency factor
+    let format_factor = match analysis.format.to_lowercase().as_str() {
+        "webp" => 0.8,      // WebP is efficient
+        "avif" | "heic" | "heif" => 0.7,  // AVIF/HEIC are very efficient
+        "png" => 1.5,       // PNG is less efficient for photos
+        "bmp" | "tiff" => 2.0,  // Uncompressed/lightly compressed
+        _ => 1.0,
+    };
+    
+    // Color depth factor
+    let depth_factor = match analysis.color_depth {
+        8 => 1.0,
+        16 => 2.0,
+        _ => 1.0,
+    };
+    
+    // Alpha channel factor
+    let alpha_factor = if analysis.has_alpha { 1.33 } else { 1.0 };
+    
+    // Effective bytes per pixel
+    let effective_bpp = bytes_per_pixel / format_factor / depth_factor / alpha_factor;
+    
+    // Estimate quality from effective bpp
+    // High bpp (>1.0) suggests high quality, low bpp (<0.3) suggests low quality
+    // bpp=2.0 → Q95 → d=0.5
+    // bpp=1.0 → Q90 → d=1.0
+    // bpp=0.5 → Q85 → d=1.5
+    // bpp=0.3 → Q80 → d=2.0
+    // bpp=0.1 → Q70 → d=3.0
+    let estimated_quality = if effective_bpp > 0.0 {
+        // Q = 70 + 15 * log2(effective_bpp * 5)
+        70.0 + 15.0 * (effective_bpp * 5.0).log2()
+    } else {
+        75.0
+    };
+    
+    let clamped_quality = estimated_quality.clamp(50.0, 100.0);
+    let distance = ((100.0 - clamped_quality) / 10.0) as f32;
+    let clamped_distance = distance.clamp(0.0, 5.0);
+    
+    eprintln!("   📊 Quality Analysis (Non-JPEG):");
+    eprintln!("      Bytes per pixel: {:.4}", bytes_per_pixel);
+    eprintln!("      Format: {} (factor: {:.2})", analysis.format, format_factor);
+    eprintln!("      Effective bpp: {:.4}", effective_bpp);
+    eprintln!("      Estimated quality: Q{:.0}", clamped_quality);
+    eprintln!("      Calculated JXL distance: {:.2}", clamped_distance);
+    
+    clamped_distance
+}
+
+/// Convert static lossy image to JXL with quality-matched distance
+pub fn convert_to_jxl_matched(
+    input: &Path,
+    options: &ConvertOptions,
+    analysis: &crate::ImageAnalysis,
+) -> Result<ConversionResult> {
+    // Anti-duplicate check
+    if !options.force && is_already_processed(input) {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: None,
+            input_size: fs::metadata(input).map(|m| m.len()).unwrap_or(0),
+            output_size: None,
+            size_reduction: None,
+            message: "Skipped: Already processed".to_string(),
+            skipped: true,
+            skip_reason: Some("duplicate".to_string()),
+        });
+    }
+    
+    let input_size = fs::metadata(input)?.len();
+    let output = determine_output_path(input, "jxl", &options.output_dir);
+    
+    // Ensure output directory exists
+    if let Some(parent) = output.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    
+    // Check if output already exists
+    if output.exists() && !options.force {
+        return Ok(ConversionResult {
+            success: true,
+            input_path: input.display().to_string(),
+            output_path: Some(output.display().to_string()),
+            input_size,
+            output_size: fs::metadata(&output).map(|m| m.len()).ok(),
+            size_reduction: None,
+            message: "Skipped: Output file exists".to_string(),
+            skipped: true,
+            skip_reason: Some("exists".to_string()),
+        });
+    }
+    
+    // Calculate matched distance
+    let distance = calculate_matched_distance_for_static(analysis, input_size);
+    eprintln!("   🎯 Matched JXL distance: {:.2}", distance);
+    
+    // Execute cjxl with calculated distance
+    // Note: For JPEG input with non-zero distance, we need to disable lossless_jpeg
+    let mut cmd = Command::new("cjxl");
+    cmd.arg(input)
+        .arg(&output)
+        .arg("-d").arg(format!("{:.2}", distance))
+        .arg("-e").arg("8");    // Effort 8 for better compression
+    
+    // If distance > 0, disable lossless_jpeg (which is enabled by default for JPEG input)
+    if distance > 0.0 {
+        cmd.arg("--lossless_jpeg=0");
+    }
+    
+    let result = cmd.output();
+    
+    match result {
+        Ok(output_cmd) if output_cmd.status.success() => {
+            let output_size = fs::metadata(&output)?.len();
+            let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            // Validate output
+            if let Err(e) = verify_jxl_health(&output) {
+                let _ = fs::remove_file(&output);
+                return Err(e);
+            }
+
+            // Copy metadata and timestamps
+            copy_metadata(input, &output);
+            
+            mark_as_processed(input);
+            
+            if options.delete_original {
+                fs::remove_file(input)?;
+            }
+            
+            Ok(ConversionResult {
+                success: true,
+                input_path: input.display().to_string(),
+                output_path: Some(output.display().to_string()),
+                input_size,
+                output_size: Some(output_size),
+                size_reduction: Some(reduction * 100.0),
+                message: format!("Quality-matched JXL (d={:.2}): size reduced {:.1}%", distance, reduction * 100.0),
+                skipped: false,
+                skip_reason: None,
+            })
+        }
+        Ok(output_cmd) => {
+            let stderr = String::from_utf8_lossy(&output_cmd.stderr);
+            Err(ImgQualityError::ConversionError(format!("cjxl failed: {}", stderr)))
+        }
+        Err(e) => {
+            Err(ImgQualityError::ToolNotFound(format!("cjxl not found: {}", e)))
+        }
+    }
+}
+
 /// Convert animated to AV1 MP4 using mathematical lossless (⚠️ VERY SLOW)
 pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
     eprintln!("⚠️  Mathematical lossless AV1 encoding - this will be VERY SLOW!");

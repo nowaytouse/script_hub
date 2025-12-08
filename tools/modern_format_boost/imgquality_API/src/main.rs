@@ -517,7 +517,7 @@ fn auto_convert_single_file(
     use imgquality::lossless_converter::{
         convert_to_jxl, convert_jpeg_to_jxl,
         convert_to_av1_mp4, convert_to_av1_mp4_lossless,
-        convert_to_av1_mp4_matched,
+        convert_to_av1_mp4_matched, convert_to_jxl_matched,
         ConvertOptions,
     };
     
@@ -544,10 +544,17 @@ fn auto_convert_single_file(
             return Ok(());
         }
 
-        // JPEG → JXL lossless transcode
+        // JPEG → JXL
         ("JPEG", _, false) => {
-            println!("🔄 JPEG→JXL lossless transcode: {}", input.display());
-            convert_jpeg_to_jxl(input, &options)?
+            if match_quality {
+                // Match quality mode: use lossy JXL with matched distance for better compression
+                println!("🔄 JPEG→JXL (MATCH QUALITY): {}", input.display());
+                convert_to_jxl_matched(input, &options, &analysis)?
+            } else {
+                // Default: lossless transcode (preserves DCT coefficients, no quality loss)
+                println!("🔄 JPEG→JXL lossless transcode: {}", input.display());
+                convert_jpeg_to_jxl(input, &options)?
+            }
         }
         // Legacy Static lossless (PNG, TIFF, BMP etc) → JXL
         (_, true, false) => {
@@ -591,7 +598,7 @@ fn auto_convert_single_file(
                 return Ok(());
             }
         }
-        // Legacy Static lossy (non-JPEG, non-Modern) → JXL (Quality 100/Lossy - VarDCT)
+        // Legacy Static lossy (non-JPEG, non-Modern) → JXL
         // This handles cases like BMP (if not detected as lossless somehow) or other obscure formats
         (format, false, false) => {
              // Redundant safecheck for WebP/AVIF/HEIC just in case pattern matching missed
@@ -600,8 +607,13 @@ fn auto_convert_single_file(
                 return Ok(());
             }
             
-            println!("🔄 Legacy Lossy→JXL (Quality 100): {}", input.display());
-            convert_to_jxl(input, &options, 0.1)?
+            if match_quality {
+                println!("🔄 Legacy Lossy→JXL (MATCH QUALITY): {}", input.display());
+                convert_to_jxl_matched(input, &options, &analysis)?
+            } else {
+                println!("🔄 Legacy Lossy→JXL (Quality 100): {}", input.display());
+                convert_to_jxl(input, &options, 0.1)?
+            }
         }
     };
     
