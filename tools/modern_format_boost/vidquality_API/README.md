@@ -1,288 +1,135 @@
-# vidquality - Intelligent Video Archival & Compression
+# vidquality - 视频质量分析与 AV1 转换工具
 
-**A high-performance CLI tool for deep video analysis and intelligent, quality-preserving format conversion, specializing in FFV1 for archival and AV1 for modern compression.**
-
-`vidquality` uses `ffmpeg` and `ffprobe` to analyze video files and determine the best conversion strategy. It is built on a philosophy of robust, high-quality media preservation and distribution.
-
-## Core Philosophy
-
-1.  **Archival First**: Prioritize the preservation of high-quality and lossless master files using the best-in-class archival codec, **FFV1**, with recommended settings for maximum robustness.
-2.  **Efficient Compression**: Use the **AV1 codec** for creating high-quality, efficient distribution copies from lossy sources.
-3.  **Provide Clarity**: Offer detailed analysis to explain *why* a certain strategy is chosen, based on technical properties of the source file.
-
-## Features
-
-✨ **Deep Video Analysis**
-- **Codec & Compression Analysis**: Detects specific codecs (e.g., `ProRes`, `DNxHD`, `H.264`) and classifies them into `Lossless`, `Visually Lossless`, `High Quality`, or `Standard Quality`.
-- **Quality Score (0-100)**: Calculates a heuristic quality score based on compression type, adding bonuses for high bit depth (≥10-bit) and resolution (≥4K).
-- **Archival Candidate Logic**: Intelligently flags videos suitable for archival. A file is a candidate if it's `Lossless`, `Visually Lossless`, or uses a professional codec like `ProRes`.
-- **Rich Metadata**: Extracts format, resolution, FPS, bit depth, color space, duration, and audio information.
-
-🚀 **Intelligent `auto` & `simple` Conversion Engines**
-- **Smart `auto` Strategy**: Automatically determines the best conversion path:
-  - **Modern Codecs (AV1/H.265/VP9/VVC/AV2)**: **Skip**. Detected modern formats are skipped to avoid generational loss.
-  - **`Lossless` Source (FFV1/ProRes etc.) → AV1 Lossless**: Converts bulky lossless masters to **mathematically lossless** AV1 (CRF 0 + Lossless), significantly reducing size while maintaining bit-perfect quality.
-  - **`Lossy` Source (H.264/MPEG etc.) → AV1 (CRF 0)**: Compresses using visually lossless CRF 0 settings for high quality.
-- **Simple Mode**: Enforces **AV1 Mathematical Lossless** mode by default for absolute quality preservation.
-- **Archival-Grade Parameters**: Uses CRF 0 for visually lossless results on lossy sources.
-- **Lossless Audio Handling**: Automatically converts audio to **FLAC** or high-quality AAC.
-- **`--explore` Mode**: For the `auto` command, starts from CRF 0 and finds the optimal size.
-- **Most Comprehensive Metadata Preservation**: default **Mandatory** use of `exiftool` (if installed) and system APIs:
-  - **Full Exif/IPTC/XMP**: Lossless copy of all tags.
-  - **Extended Attributes (xattr)**: Preserves macOS Finder Tags, comments, and other system-level extended attributes.
-  - **Perfect Timestamp Replication**:
-    - **Creation Date**: **Perfectly Preserved**. Uses native macOS `setattrlist` syscall for reliable btime restoration (superior to ExifTool).
-    - **Modification Time**: Perfectly preserved via atomic syscalls.
-    - **Access Time**: Perfectly preserved.
-    > **⚠️ Note**: `FileInodeChangeDate` (ctime) cannot be preserved due to OS kernel security restrictions. This is a system feature, not a bug.
-  - **File Permissions**: Preserves read-only status.
-
-⭐ **New: Mathematical Lossless AV1 Mode**
-- **`--lossless` Flag**: A powerful new option for `auto` and `simple` commands. It forces the conversion to use **mathematically lossless AV1**. This is useful for creating archival masters from sources where FFV1 is not desired.
-  - **⚠️ It is extremely slow.**
-  - **⚠️ It can result in very large files, sometimes larger than the original.**
-
-## Installation
-
-### Prerequisites
-
-`vidquality` requires a recent version of **FFmpeg** (which includes `ffprobe`) to be installed and available in your system's `PATH`.
-
-```bash
-# On macOS using Homebrew
-brew install ffmpeg
-
-# For metadata preservation (recommended)
-brew install exiftool
-```
-
-### Build & Install
-
-```bash
-# Navigate to the project directory
-cd /path/to/vidquality_API
-
-# Build the release binary
-cargo build --release
-
-# The binary will be at: ./target/release/vidquality
-
-# Optional: Install to your system path
-cargo install --path .
-```
-
-## Command Usage
-
-### 1. `analyze`: Deep Video Analysis
-
-Displays a detailed technical report.
-
-```bash
-vidquality analyze "ProRes_Master.mov"
-```
-
-### 2. `strategy`: Preview the Conversion Plan
-
-Performs a "dry run" to show what the `auto` command will do, without executing.
-
-```bash
-vidquality strategy "youtube_dl.mkv"
-```
-
-### 3. `auto`: Smart Automatic Conversion (Recommended)
-
-The `auto` command is the main function, intelligently converting a video based on the analysis.
-
-#### Archival Example
-Converts a high-quality source to a robust FFV1/MKV archival master.
-```bash
-vidquality auto "ProRes_Master.mov" --output ./archive/
-```
-
-#### Compression with Size Exploration
-Converts a lossy source to AV1, finding the best size/quality trade-off.
-```bash
-vidquality auto "youtube_dl.mkv" --output ./compressed/ --explore
-```
-
-#### Mathematical Lossless AV1 Archival
-Overrides the default to create a lossless AV1 archive instead of FFV1.
-```bash
-vidquality auto "ProRes_Master.mov" --output ./archive/ --lossless
-```
-*Log:*
-```
-🎬 Auto Mode Conversion
-   ⚠️  Mathematical lossless AV1: ENABLED (VERY SLOW!)
-...
-```
-
-### 4. `simple`: Convert Everything to High-Quality AV1
-
-A direct mode to convert any input video to AV1/MP4.
-
-#### Visually Lossless (Default)
-Uses `CRF 0` for visually lossless results.
-```bash
-vidquality simple "screencast.mov" --output ./videos/
-```
-
-#### Mathematically Lossless
-Uses the `--lossless` flag for true lossless conversion.
-```bash
-vidquality simple "screencast.mov" --output ./videos/ --lossless
-```
-*Log:*
-```
-🎬 Simple Mode Conversion
-   ⚠️  ALL videos → AV1 MP4 (MATHEMATICAL LOSSLESS - VERY SLOW!)
-...
-```
-
----
-
-# vidquality - 智能视频归档与压缩工具
-
-**一款高性能的命令行工具，用于深度视频分析和智能、保质量的格式转换，专注于 FFV1 归档和 AV1 现代压缩。**
-
-`vidquality` 使用 `ffmpeg` 和 `ffprobe` 分析视频文件以确定最佳转换策略，其构建于一套健壮、高质量的媒体保存与分发理念之上。
-
-## 核心理念
-
-1.  **归档优先**: 优先使用行业顶级的归档编码器 **FFV1**，并采用推荐的参数配置，以最稳健的方式保存高质量和无损的母版文件。
-2.  **高效压缩**: 使用 **AV1 编码器** 从有损源文件创建高质量、高效率的分发副本。
-3.  **清晰明确**: 基于源文件的技术属性，提供详细的分析，以解释*为什么*选择某种特定的转换策略。
+高质量视频分析工具，支持智能 AV1 压缩和质量匹配。
 
 ## 功能特性
 
-✨ **深度视频分析**
-- **编码与压缩分析**: 能检测特定编码器（如 `ProRes`, `DNxHD`, `H.264`），并将其分为 `无损`, `视觉无损`, `高质量` 或 `标准质量`。
-- **质量分数 (0-100)**: 基于压缩类型计算启发式分数，并为高位深度 (≥10-bit) 和高分辨率 (≥4K) 提供额外加分。
-- **归档候选逻辑**: 智能标记适合归档的视频。如果文件是 `无损`、`视觉无损` 或使用如 `ProRes` 等专业编码器，它就会被视为候选。
-- **丰富的元数据**: 提取格式、分辨率、帧率、位深度、色彩空间、时长和音频信息。
+- 🔍 **视频质量检测**: 编码器、比特率、帧率、分辨率等
+- 📊 **压缩类型识别**: 无损/视觉无损/有损
+- 🔄 **智能 AV1 转换**: 使用 SVT-AV1 编码器（比 libaom 快 10-20 倍）
+- 🎯 **质量匹配模式**: 自动计算匹配输入质量的 CRF
+- 📦 **元数据保留**: 完整保留文件属性和时间戳
 
-🚀 **智能 `auto` & `simple` 转换引擎**
-- **智能 `auto` 策略**: 自动确定最佳转换路径：
-  - **现代编码 (AV1/H.265/VP9/VVC/AV2)**: **自动跳过**。源文件已是高效格式，避免无效重编码和代际损耗。
-  - **无损源文件 (FFV1/ProRes等) → AV1 Lossless**: 将庞大的无损母版转换为**数学无损**的 AV1 (CRF 0 + Lossless)，在保持逐比特一致的同时显著减小体积。
-  - **有损源文件 (H.264/MPEG等) → AV1 (CRF 0)**: 使用视觉无损的 CRF 0 参数进行高质量压缩。
-- **Simple 模式**: 默认强制使用 **AV1 数学无损** 模式，确保绝对的质量保留。
-- **归档级参数**: 针对有损转换使用 CRF 0 确保视觉无损。
-- **无损音频处理**: 自动将音频转换为 **FLAC** 或高码率 AAC。
-- **`--explore` 模式**: 在 `auto` 命令中，从 CRF 0 开始尝试，直到找到比源文件更小的体积。
-- **最全面元数据保留**: 默认**强制**使用 `exiftool`（如已安装）和系统 API 进行最大程度的元数据迁移：
-  - **完整 Exif/IPTC/XMP**: 无损复制所有标签。
-  - **扩展属性 (Extended Attributes)**: 完美保留 macOS Finder 标签 (Tags)、备注及其他系统级扩展属性。
-  - **核弹级元数据保留**: on macOS, 使用原生 `copyfile` API 及其 `COPYFILE_METADATA` 标志，**强制克隆**：
-    - **ACL (访问控制列表)**
-    - **File Flags (如互斥/隐藏标志)**
-    - **Resource Forks (资源分支)**
-    - **所有时间戳 (Btime/Mtime/Atime/AddedDate)**
-  - **时间戳完美复刻**:
-    - **创建时间 (Creation Date)**: **完美保留**。使用 macOS 原生 `setattrlist` 系统调用强制写入 (比 ExifTool 更可靠)。
-    - **修改时间 (Modify Time)**: **完美保留**。使用原子化系统调用。
-    - **访问时间 (Access Time)**: **完美保留**。
-    > **⚠️ 注意**: `FileInodeChangeDate` (ctime) 是文件元数据变更时间，由操作系统内核强制更新，无法回溯。这是系统特性。
-  - **文件权限**: 保持只读/读写属性。
-
-⭐ **新功能: 数学无损 AV1 模式**
-- **`--lossless` 标志**: `auto` 和 `simple` 命令的一个强大的新选项。它会强制转换使用**数学无损的 AV1**。这对于从不希望使用 FFV1 的源创建归档母版非常有用。
-  - **⚠️ 速度极慢。**
-  - **⚠️ 生成的文件可能非常大，有时甚至比原文件还大。**
-
-## 安装
-
-### 前置依赖
-
-`vidquality` 需要在您的系统 `PATH` 中安装并配置好最新版的 **FFmpeg** (它包含了 `ffprobe`)。
+## 命令概览
 
 ```bash
-# 在 macOS 上使用 Homebrew
-brew install ffmpeg
+vidquality <COMMAND>
 
-# 为了保留元数据（推荐）
-brew install exiftool
+Commands:
+  analyze   分析视频属性
+  auto      智能自动转换（推荐）
+  simple    简单模式（全部转 AV1 无损）
+  strategy  显示推荐策略（不转换）
 ```
 
-### 编译与安装
+## Auto 模式转换逻辑
+
+| 输入编码 | 压缩类型 | 输出 | 说明 |
+|---------|---------|------|------|
+| H.265/AV1/VP9/VVC | 任意 | 跳过 | 现代编码，避免代际损失 |
+| FFV1/其他无损 | 无损 | AV1 无损 | 数学无损 AV1 |
+| ProRes/DNxHD | 视觉无损 | AV1 CRF 0 | 高质量压缩 |
+| H.264/其他 | 有损 | AV1 CRF 0 | 默认高质量 |
+| H.264/其他 | 有损 + `--match-quality` | AV1 CRF 18-35 | 匹配输入质量 |
+
+## --match-quality 算法
+
+基于 bits-per-pixel (bpp) 计算匹配的 CRF：
+
+```
+CRF = 50 - 8 * log2(effective_bpp * 100)
+范围: [18, 35]
+
+考虑因素:
+- 编码器效率 (H.264=1.0, H.265=0.7, VP9=0.75, ProRes=1.5, MJPEG=2.0)
+- B 帧 (有=1.1, 无=1.0)
+- 分辨率 (4K+=0.85, 1080p=0.9, 720p=0.95, SD=1.0)
+```
+
+### CRF 对应关系
+
+| 输入 bpp | 计算 CRF | 质量等级 |
+|---------|---------|---------|
+| 1.0 | ~18 | 极高质量 |
+| 0.3 | ~24 | 高质量 |
+| 0.1 | ~28 | 中等质量 |
+| 0.03 | ~33 | 较低质量 |
+
+## 使用示例
 
 ```bash
-# 导航至项目目录
-cd /path/to/vidquality_API
+# 分析视频
+vidquality analyze video.mp4
 
-# 编译 Release 版本
-cargo build --release
+# 智能转换（默认 CRF 0）
+vidquality auto video.mp4
 
-# 二进制文件位于 ./target/release/vidquality
+# 智能转换（匹配质量）
+vidquality auto video.mp4 --match-quality
 
-# 可选：将程序安装到系统路径
-cargo install --path .
+# 批量转换目录
+vidquality auto ./videos/ --match-quality
+
+# 探索更小文件（逐步提高 CRF 直到输出小于输入）
+vidquality auto video.mp4 --explore
+
+# 强制数学无损
+vidquality auto video.mp4 --lossless
+
+# 转换后删除原文件
+vidquality auto video.mp4 --delete-original
+
+# 查看推荐策略
+vidquality strategy video.mp4
 ```
 
-## 命令用法
+## 输出示例
 
-### 1. `analyze`: 深度视频分析
+### 分析输出
+```
+📊 Video Analysis Report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 File: video.mp4
+📦 Format: mov,mp4,m4a,3gp,3g2,mj2
+🎬 Codec: H.264 (H.264 / AVC / MPEG-4 AVC)
+🔍 Compression: Lossy
 
-显示详细的技术报告。
+📐 Resolution: 1920x1080
+🎞️  Frames: 3600 @ 30.00 fps
+⏱️  Duration: 120.00s
+💾 File Size: 125,000,000 bytes
+📊 Bitrate: 8,333,333 bps
 
-```bash
-vidquality analyze "ProRes_Master.mov"
+⭐ Quality Score: 75/100
 ```
 
-### 2. `strategy`: 预览转换计划
+### 转换输出
+```
+🎬 Auto Mode Conversion (AV1)
+   🎯 Match Quality: ENABLED
 
-执行一次“空运行”，显示 `auto` 命令将执行的操作，而不实际转换。
-
-```bash
-vidquality strategy "youtube_dl.mkv"
+🎬 Auto Mode: video.mp4 → AV1 MP4 (High Quality)
+   Reason: Source is H.264 (Lossy) - compressing with AV1 CRF 0
+   🎯 Match Quality Mode: using CRF 24 to match input quality
+   📊 Quality Analysis:
+      Raw bpp: 0.1286
+      Codec factor: 1.00 (H.264)
+      B-frames: true (factor: 1.10)
+      Resolution: 1920x1080 (factor: 0.90)
+      Effective bpp: 0.1273
+      Calculated CRF: 24
+   ✅ Complete: 45.2% of original
 ```
 
-### 3. `auto`: 智能自动转换 (推荐)
+## 编码器说明
 
-`auto` 是核心命令，它会根据分析结果智能地转换视频。
+本工具使用 **SVT-AV1** (`libsvtav1`) 编码器：
+- 比 libaom-av1 快 10-20 倍
+- preset 6（平衡速度和质量）
+- 支持多线程
 
-#### 归档示例
-将高质量源文件转换为健壮的 FFV1/MKV 归档母版。
-```bash
-vidquality auto "ProRes_Master.mov" --output ./archive/
-```
+## 依赖工具
 
-#### 使用尺寸探索进行压缩
-将有损源文件转换为 AV1，并找到最佳的体积/质量平衡点。
-```bash
-vidquality auto "youtube_dl.mkv" --output ./compressed/ --explore
-```
-
-#### 数学无损 AV1 归档
-覆盖默认行为，创建一个无损的 AV1 归档文件而不是 FFV1。
-```bash
-vidquality auto "ProRes_Master.mov" --output ./archive/ --lossless
-```
-*日志:*
-```
-🎬 Auto 模式转换
-   ⚠️  数学无损 AV1: 已启用 (速度极慢!)
-...
-```
-
-### 4. `simple`: 将所有文件转换为高质量 AV1
-
-一个直接的模式，将任何输入视频都转换为 AV1/MP4。
-
-#### 视觉无损 (默认)
-使用 `CRF 0` 以获得视觉无损的结果。
-```bash
-vidquality simple "screencast.mov" --output ./videos/
-```
-
-#### 数学无损
-使用 `--lossless` 标志进行真正的无损转换。
-```bash
-vidquality simple "screencast.mov" --output ./videos/ --lossless
-```
-*日志:*
-```
-🎬 Simple 模式转换
-   ⚠️  所有视频 → AV1 MP4 (数学无损 - 速度极慢!)
-...
-```
+- `ffmpeg` (带 libsvtav1) - 视频编码
+- `ffprobe` - 视频分析
+- `exiftool` - 元数据处理

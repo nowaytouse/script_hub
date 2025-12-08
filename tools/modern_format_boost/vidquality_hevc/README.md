@@ -1,143 +1,144 @@
-# vidquality-hevc - HEVC/H.265 Video Archival & Compression
+# vidquality-hevc - 视频质量分析与 HEVC 转换工具
 
-**A high-performance CLI tool for deep video analysis and intelligent, quality-preserving format conversion, specializing in HEVC/H.265 for both archival (lossless) and compression (lossy).**
+高质量视频分析工具，支持智能 HEVC/H.265 压缩和质量匹配。
 
-> 📌 **Note**: This is the HEVC variant of vidquality. For AV1/SVT-AV1 encoding, use the original `vidquality` tool.
+## 功能特性
 
-`vidquality-hevc` uses `ffmpeg` and `ffprobe` to analyze video files and determine the best conversion strategy using HEVC/H.265 codec.
+- 🔍 **视频质量检测**: 编码器、比特率、帧率、分辨率等
+- 📊 **压缩类型识别**: 无损/视觉无损/有损
+- 🔄 **智能 HEVC 转换**: 使用 libx265 编码器
+- 🎯 **质量匹配模式**: 自动计算匹配输入质量的 CRF
+- 📦 **元数据保留**: 完整保留文件属性和时间戳
+- 🍎 **Apple 兼容**: 使用 hvc1 标签确保 Apple 设备兼容
 
-## Core Philosophy
-
-1.  **HEVC Archival**: Use HEVC lossless mode for preserving high-quality master files with excellent compression.
-2.  **Efficient Compression**: Use HEVC with optimized CRF settings for creating high-quality distribution copies.
-3.  **Apple Compatibility**: Uses `hvc1` tag for maximum Apple device compatibility.
-
-## Features
-
-✨ **Deep Video Analysis**
-- Same analysis capabilities as vidquality
-- Codec & Compression Analysis
-- Quality Score (0-100)
-- Rich Metadata extraction
-
-🚀 **Intelligent Conversion Engines**
-- **Smart `auto` Strategy**:
-  - **Modern Codecs (AV1/H.265/VP9/VVC)**: **Skip** to avoid generational loss
-  - **Lossless Source → HEVC Lossless MKV**: Mathematical lossless preservation
-  - **Lossy Source → HEVC MP4 (CRF 18-20)**: High quality compression
-- **Simple Mode**: HEVC MP4 with CRF 18 (high quality)
-- **Apple Compatible**: Uses `hvc1` tag for iOS/macOS playback
-
-## Installation
-
-### Prerequisites
+## 命令概览
 
 ```bash
-# On macOS using Homebrew
-brew install ffmpeg
+vidquality-hevc <COMMAND>
 
-# For metadata preservation (recommended)
-brew install exiftool
+Commands:
+  analyze   分析视频属性
+  auto      智能自动转换（推荐）
+  simple    简单模式（全部转 HEVC CRF 18）
+  strategy  显示推荐策略（不转换）
 ```
 
-### Build & Install
+## Auto 模式转换逻辑
 
-```bash
-cd /path/to/vidquality_hevc
-cargo build --release
-cargo install --path .
+| 输入编码 | 压缩类型 | 输出 | 说明 |
+|---------|---------|------|------|
+| H.265/AV1/VP9/VVC | 任意 | 跳过 | 现代编码，避免代际损失 |
+| FFV1/其他无损 | 无损 | HEVC 无损 MKV | x265 lossless 模式 |
+| ProRes/DNxHD | 视觉无损 | HEVC CRF 18 | 高质量压缩 |
+| H.264/其他 | 有损 | HEVC CRF 20 | 默认高质量 |
+| H.264/其他 | 有损 + `--match-quality` | HEVC CRF 18-32 | 匹配输入质量 |
+
+## --match-quality 算法
+
+基于 bits-per-pixel (bpp) 计算匹配的 CRF：
+
+```
+CRF = 51 - 10 * log2(effective_bpp * 100)
+范围: [18, 32]
+
+考虑因素:
+- 编码器效率 (H.264=1.0, H.265=0.6, VP9=0.65, AV1=0.5, ProRes=1.5, MJPEG=2.0)
+- B 帧 (有=1.1, 无=1.0)
+- 分辨率 (4K+=0.85, 1080p=0.9, 720p=0.95, SD=1.0)
 ```
 
-## Command Usage
+### CRF 对应关系
 
-### 1. `analyze`: Deep Video Analysis
+| 输入 bpp | 计算 CRF | 质量等级 |
+|---------|---------|---------|
+| 1.0 | ~18 | 极高质量 |
+| 0.3 | ~23 | 高质量 |
+| 0.1 | ~28 | 中等质量 |
+| 0.03 | ~32 | 较低质量 |
 
-```bash
-vidquality-hevc analyze "video.mov"
-```
-
-### 2. `strategy`: Preview the Conversion Plan
-
-```bash
-vidquality-hevc strategy "video.mkv"
-```
-
-### 3. `auto`: Smart Automatic Conversion
-
-```bash
-# Standard conversion
-vidquality-hevc auto "video.mov" --output ./output/
-
-# With lossless mode
-vidquality-hevc auto "video.mov" --output ./archive/ --lossless
-
-# With size exploration
-vidquality-hevc auto "video.mkv" --output ./compressed/ --explore
-```
-
-### 4. `simple`: Convert to HEVC MP4
-
-```bash
-vidquality-hevc simple "video.mov" --output ./videos/
-```
-
-## Comparison with vidquality (AV1)
-
-| Feature | vidquality (AV1) | vidquality-hevc |
-|---------|------------------|-----------------|
-| Encoder | SVT-AV1 | libx265 |
-| Compression | Better (~30% smaller) | Good |
-| Speed | Slower | Faster |
-| Compatibility | Modern browsers/devices | Universal |
-| Apple Support | Limited | Excellent (hvc1) |
-
-## CRF Settings
-
-| Source Type | CRF | Quality |
-|-------------|-----|---------|
-| Lossless | 0 (lossless mode) | Mathematical lossless |
-| Visually Lossless | 18 | Near-lossless |
-| Standard | 20 | High quality |
-| Explore Max | 28 | Good quality |
-
----
-
-# vidquality-hevc - HEVC/H.265 视频归档与压缩工具
-
-**一款高性能的命令行工具，用于深度视频分析和智能、保质量的格式转换，专注于 HEVC/H.265 编码的归档（无损）和压缩（有损）。**
-
-> 📌 **注意**: 这是 vidquality 的 HEVC 变体。如需 AV1/SVT-AV1 编码，请使用原版 `vidquality` 工具。
-
-## 核心理念
-
-1.  **HEVC 归档**: 使用 HEVC 无损模式保存高质量母版文件
-2.  **高效压缩**: 使用优化的 CRF 设置创建高质量分发副本
-3.  **Apple 兼容**: 使用 `hvc1` 标签确保 Apple 设备最佳兼容性
-
-## 安装
-
-```bash
-# 安装依赖
-brew install ffmpeg exiftool
-
-# 编译
-cd /path/to/vidquality_hevc
-cargo build --release
-cargo install --path .
-```
-
-## 使用方法
+## 使用示例
 
 ```bash
 # 分析视频
-vidquality-hevc analyze "video.mov"
+vidquality-hevc analyze video.mp4
 
-# 智能转换
-vidquality-hevc auto "video.mov" --output ./output/
+# 智能转换（默认策略）
+vidquality-hevc auto video.mp4
 
-# 无损模式
-vidquality-hevc auto "video.mov" --output ./archive/ --lossless
+# 智能转换（匹配质量）
+vidquality-hevc auto video.mp4 --match-quality
 
-# 简单模式
-vidquality-hevc simple "video.mov" --output ./videos/
+# 批量转换目录
+vidquality-hevc auto ./videos/ --match-quality
+
+# 探索更小文件（逐步提高 CRF 直到输出小于输入）
+vidquality-hevc auto video.mp4 --explore
+
+# 强制无损模式
+vidquality-hevc auto video.mp4 --lossless
+
+# 转换后删除原文件
+vidquality-hevc auto video.mp4 --delete-original
+
+# 查看推荐策略
+vidquality-hevc strategy video.mp4
 ```
+
+## 输出示例
+
+### 分析输出
+```
+📊 Video Analysis Report (HEVC)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 File: video.mp4
+📦 Format: mov,mp4,m4a,3gp,3g2,mj2
+🎬 Codec: H.264 (H.264 / AVC / MPEG-4 AVC)
+🔍 Compression: Lossy
+
+📐 Resolution: 1920x1080
+🎞️  Frames: 3600 @ 30.00 fps
+⏱️  Duration: 120.00s
+💾 File Size: 125,000,000 bytes
+📊 Bitrate: 8,333,333 bps
+
+⭐ Quality Score: 75/100
+```
+
+### 转换输出
+```
+🎬 Auto Mode Conversion (HEVC/H.265)
+   Lossy sources → HEVC MP4 (CRF auto-matched to input quality)
+   🎯 Match Quality: ENABLED
+
+🎬 Auto Mode: video.mp4 → HEVC MP4 (High Quality)
+   Reason: Source is H.264 (Lossy) - compressing with HEVC CRF 20
+   🎯 Match Quality Mode: using CRF 23 to match input quality
+   📊 Quality Analysis:
+      Raw bpp: 0.1286
+      Codec factor: 1.00 (H.264)
+      B-frames: true (factor: 1.10)
+      Resolution: 1920x1080 (factor: 0.90)
+      Effective bpp: 0.1273
+      Calculated CRF: 23
+   ✅ Complete: 52.1% of original
+```
+
+## HEVC vs AV1 对比
+
+| 特性 | HEVC (本工具) | AV1 (vidquality) |
+|------|--------------|------------------|
+| 压缩效率 | 较好 | 最佳 |
+| 编码速度 | 快 | 中等 |
+| 兼容性 | 极佳 (Apple/硬件) | 较好 |
+| 专利 | 需授权 | 免费 |
+
+**选择建议**:
+- 需要 Apple 设备兼容 → HEVC
+- 追求最佳压缩率 → AV1
+- 需要快速编码 → HEVC
+
+## 依赖工具
+
+- `ffmpeg` (带 libx265) - 视频编码
+- `ffprobe` - 视频分析
+- `exiftool` - 元数据处理
