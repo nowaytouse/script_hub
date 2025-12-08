@@ -5,7 +5,8 @@
 # Optimization: Parallel download + Local sing-box priority
 # =============================================================================
 
-set -e
+# Don't use set -e as it causes issues with arithmetic operations
+# set -e
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -73,25 +74,51 @@ json_to_surge() {
     local output_file="$2"
     local name="$3"
     
-    python3 -c "
+    python3 - "$json_file" "$output_file" "$name" << 'PYEOF'
 import json
-with open('$json_file') as f:
+import re
+import sys
+
+json_file = sys.argv[1]
+output_file = sys.argv[2]
+name = sys.argv[3]
+
+def is_valid_regex(pattern):
+    if not pattern or len(pattern) < 2:
+        return False
+    try:
+        re.compile(pattern)
+        return True
+    except re.error:
+        return False
+
+def is_valid_ipv6_cidr(ip):
+    return '::' in ip or ':' in ip
+
+with open(json_file) as f:
     data = json.load(f)
+
 rules = []
 for rule in data.get('rules', []):
     rules.extend(f'DOMAIN,{d}' for d in rule.get('domain', []))
     rules.extend(f'DOMAIN-SUFFIX,{d}' for d in rule.get('domain_suffix', []))
     rules.extend(f'DOMAIN-KEYWORD,{d}' for d in rule.get('domain_keyword', []))
-    rules.extend(f'DOMAIN-REGEX,{d}' for d in rule.get('domain_regex', []))
-    rules.extend(f'IP-CIDR,{ip},no-resolve' for ip in rule.get('ip_cidr', []))
+    rules.extend(f'DOMAIN-REGEX,{d}' for d in rule.get('domain_regex', []) if is_valid_regex(d))
+    for ip in rule.get('ip_cidr', []):
+        if is_valid_ipv6_cidr(ip):
+            rules.append(f'IP-CIDR6,{ip},no-resolve')
+        else:
+            rules.append(f'IP-CIDR,{ip},no-resolve')
+
 rules = list(dict.fromkeys(rules))
-with open('$output_file', 'w') as f:
-    f.write(f'# MetaCubeX geosite-$name\n# Rules: {len(rules)}\n\n')
+with open(output_file, 'w') as f:
+    f.write(f'# MetaCubeX geosite-{name}\n# Rules: {len(rules)}\n\n')
     f.write('\n'.join(rules) + '\n')
-print(f'{len(rules)}')" 2>/dev/null
+print(len(rules))
+PYEOF
 }
 
-# Process single rule (for parallel)
+# Process single rule with retry
 process_rule() {
     local entry="$1"
     local name="${entry%%:*}"
@@ -101,14 +128,33 @@ process_rule() {
     local json_file="${TMP_DIR}/${name}.json"
     local list_file="${METACUBEX_DIR}/MetaCubeX_${name}.list"
     
-    # Download + Decompile + Convert
-    if curl -sL --connect-timeout 10 "$url" -o "$srs_file" 2>/dev/null && \
-       "$SINGBOX" rule-set decompile "$srs_file" -o "$json_file" 2>/dev/null; then
+    # Download with retry (3 attempts)
+    local attempt=0
+    local max_attempts=3
+    local downloaded=false
+    
+    while [ $attempt -lt $max_attempts ] && [ "$downloaded" = "false" ]; do
+        attempt=$((attempt + 1))
+        if curl -sL --connect-timeout 15 --max-time 30 "$url" -o "$srs_file" 2>/dev/null; then
+            if [ -s "$srs_file" ]; then
+                downloaded=true
+            fi
+        fi
+        [ "$downloaded" = "false" ] && [ $attempt -lt $max_attempts ] && sleep 1
+    done
+    
+    if [ "$downloaded" = "false" ]; then
+        echo -e "${RED}${name}: download failed after $max_attempts attempts${NC}"
+        return 1
+    fi
+    
+    # Decompile + Convert
+    if "$SINGBOX" rule-set decompile "$srs_file" -o "$json_file" 2>/dev/null; then
         local count=$(json_to_surge "$json_file" "$list_file" "$name")
         echo -e "${GREEN}${name}: ${count} rules${NC}"
         return 0
     else
-        echo -e "${RED}${name} failed${NC}"
+        echo -e "${RED}${name}: decompile failed${NC}"
         return 1
     fi
 }
@@ -120,14 +166,28 @@ SUCCESS=0
 FAILED=0
 
 echo ""
-# Parallel processing (max 4 concurrent)
-for entry in "${METACUBEX_RULES[@]}"; do
-    if process_rule "$entry"; then
-        ((SUCCESS++))
-    else
-        ((FAILED++))
-    fi
-done
+# Check if GNU parallel is available for true parallel processing
+if command -v parallel &> /dev/null; then
+    echo -e "${BLUE}Using GNU parallel for concurrent downloads...${NC}"
+    results=$(printf '%s\n' "${METACUBEX_RULES[@]}" | parallel -j4 --halt never process_rule {} 2>&1)
+    echo "$results"
+    SUCCESS=$(echo "$results" | grep -c "rules" || echo "0")
+    FAILED=$((${#METACUBEX_RULES[@]} - SUCCESS))
+else
+    # Sequential processing with progress
+    total=${#METACUBEX_RULES[@]}
+    current=0
+    for entry in "${METACUBEX_RULES[@]}"; do
+        current=$((current + 1))
+        echo -ne "\r[${current}/${total}] "
+        if process_rule "$entry"; then
+            SUCCESS=$((SUCCESS + 1))
+        else
+            FAILED=$((FAILED + 1))
+        fi
+    done
+    echo ""
+fi
 
 # Cleanup
 rm -rf "$TMP_DIR"

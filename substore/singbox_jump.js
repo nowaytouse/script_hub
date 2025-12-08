@@ -34,7 +34,7 @@ function sanitizeNodeTag(tag) {
     if (!tag) return tag;
     if (SANITIZE_CACHE.has(tag)) return SANITIZE_CACHE.get(tag);
     
-    const cleaned = tag.replace(SANITIZE_REGEX, '').replace(/[\t\n\r]/g, ' ').replace(/ {3,}/g, ' ').trim();
+    const cleaned = tag.replace(SANITIZE_REGEX, '').replace(/[\t\n\r]/g, ' ').replace(/ {3,}/g, ' ').trimEnd();
     SANITIZE_CACHE.set(tag, cleaned);
     return cleaned;
 }
@@ -299,9 +299,11 @@ log(`🔄 开始第二阶段：去重和链式代理处理`);
 log(`${'='.repeat(60)}\n`);
 
 // ==================== 链式代理配置 ====================
+// 三跳链路: 入口 → 中续 → 落地
+// 注意: 名称必须与配置文件中的outbound tag完全匹配
 const relay = {
-    '♻️ 自动入口 🧠': '🚶 中继路径 🔐',
-    '🚶 中继路径 🔐': '🚀 落地节点 🔐',
+    '♻️ 自动入口 🧠': '🚶 中续路径 🔐',      // 入口节点 → 中续节点
+    '🚶 中续路径 🔐': '🕳️ 落地节点 🔐 +',   // 中续节点 → 落地节点
 };
 
 log(`📋 链式代理配置:`);
@@ -313,7 +315,7 @@ log('');
 // ==================== 去重核心函数 ====================
 function sanitizeTag(tag) {
     if (!tag) return tag;
-    return tag.replace(/[\[\]【】"']/g, '').replace(/[\t\n\r]/g, ' ').replace(/ {3,}/g, ' ').trim();
+    return tag.replace(/[\[\]【】"']/g, '').replace(/[\t\n\r]/g, ' ').replace(/ {3,}/g, ' ').trimEnd();
 }
 
 function robustDeduplicateOutbounds(outbounds) {

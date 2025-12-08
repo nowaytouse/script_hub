@@ -1,42 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: LAN
-# Updated: 2025-12-07 19:52
-# Rules: 156
+# Policy: DIRECT
+# Description: Local network addresses
+# Rules: 152
+# Updated: 2025-12-08 11:43:02
 # ═══════════════════════════════════════════════════════════════
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
-
-# [smart_cleanup.py] Deduplicated: 156 rules
 
 DOMAIN,asusrouter.com
 DOMAIN,instant.arubanetworks.com
@@ -184,10 +152,6 @@ IP-CIDR,198.51.100.0/24,no-resolve
 IP-CIDR,203.0.113.0/24,no-resolve
 IP-CIDR,224.0.0.0/3,no-resolve
 IP-CIDR,224.0.0.0/4,no-resolve
-IP-CIDR,::/127,no-resolve
-IP-CIDR,fc00::/7,no-resolve
-IP-CIDR,fe80::/10,no-resolve
-IP-CIDR,ff00::/8,no-resolve
 IP-CIDR6,::/127,no-resolve
 IP-CIDR6,::1/128,no-resolve
 IP-CIDR6,fc00::/7,no-resolve

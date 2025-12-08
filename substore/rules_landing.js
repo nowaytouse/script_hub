@@ -649,7 +649,7 @@ async function operator(proxies = []) {
             generateLandingChains: true,
 
             // 落地链使用的中继策略组名称，需要与你的 Clash/Substore 配置对应。
-            landingEntryGroupName: '🚶 中继路径 🔐',
+            landingEntryGroupName: '🚶 中续路径 🔐',
 
             // 控制最终输出的节点类型。
             // 'proxies_only': 输出处理后的入站节点（原始节点经过优化过滤和命名）。

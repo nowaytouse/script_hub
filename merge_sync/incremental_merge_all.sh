@@ -75,7 +75,12 @@ fast_merge() {
     local sources_dir=$(dirname "$sources_file")
     
     # Keep existing rules (non-comment lines)
-    [ -f "$target_file" ] && grep -v '^#' "$target_file" | grep -v '^$' >> "$temp_rules" 2>/dev/null
+    # Filter out AND/OR/NOT rules (only valid in config, not ruleset files)
+    # Filter out invalid DOMAIN-REGEX and fix IPv6 CIDR
+    [ -f "$target_file" ] && grep -v '^#' "$target_file" | grep -v '^$' | \
+        grep -v '^AND,' | grep -v '^OR,' | grep -v '^NOT,' | \
+        grep -v '^DOMAIN-REGEX,$' | grep -v '^DOMAIN-REGEX,[^,]*$' | \
+        sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' >> "$temp_rules" 2>/dev/null
     
     # Add MetaCubeX rules if available
     [ -f "$metacubex_file" ] && grep -E '^(DOMAIN|IP-CIDR|PROCESS-NAME|URL-REGEX|USER-AGENT)' "$metacubex_file" >> "$temp_rules" 2>/dev/null
@@ -98,9 +103,12 @@ fast_merge() {
             local_file="$sources_dir/$path"
         fi
         
-        # Extract rules
+        # Extract rules with filtering
         if [ -f "$local_file" ]; then
-            grep -E '^(DOMAIN|IP-CIDR|PROCESS-NAME|URL-REGEX|USER-AGENT)' "$local_file" >> "$temp_rules" 2>/dev/null
+            grep -E '^(DOMAIN|IP-CIDR|PROCESS-NAME|URL-REGEX|USER-AGENT)' "$local_file" 2>/dev/null | \
+                grep -v '^AND,' | grep -v '^OR,' | grep -v '^NOT,' | \
+                grep -v '^DOMAIN-REGEX,$' | grep -v '^DOMAIN-REGEX,[^,]*$' | \
+                sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' >> "$temp_rules" 2>/dev/null
         fi
     done < "$sources_file"
     

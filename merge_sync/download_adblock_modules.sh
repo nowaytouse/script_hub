@@ -100,13 +100,18 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     log_info "Processing: $module_name"
     
     # Count original rules BEFORE any modification
-    original_rules=$(grep -cE "^(DOMAIN|IP-CIDR|URL-REGEX|USER-AGENT|PROCESS-NAME|AND)" "$module" 2>/dev/null | tr -d ' ' || echo "0")
+    original_rules=$(grep -cE "^(DOMAIN|IP-CIDR|URL-REGEX|USER-AGENT|PROCESS-NAME)" "$module" 2>/dev/null | tr -d ' ' || echo "0")
     
     # Extract [Rule] section for merging into AdBlock.list
     awk '/^\[Rule\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
     grep -v '^#' | grep -v '^$' | grep -v '^RULE-SET' | \
     sed 's/  */ /g' | \
-    grep -E "^DOMAIN|^IP-CIDR|^USER-AGENT|^URL-REGEX|^PROCESS-NAME|^AND" >> "$ALL_RULES" || true
+    grep -E "^DOMAIN|^IP-CIDR|^USER-AGENT|^URL-REGEX|^PROCESS-NAME|^DOMAIN-REGEX" | \
+    # Filter out invalid DOMAIN-REGEX rules
+    grep -v '^DOMAIN-REGEX,\s*$' | \
+    grep -v '^DOMAIN-REGEX,[^,]*$' | \
+    # Fix IPv6 rules
+    sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' >> "$ALL_RULES" || true
     
     # Check if module has non-Rule sections (URL Rewrite, MITM, Script, etc.)
     has_other_sections=$(awk '/^\[Rule\]/{in_rule=1; next}

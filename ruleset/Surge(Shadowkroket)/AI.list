@@ -3,33 +3,9 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 95
-# Updated: 2025-12-07 20:37:21
+# Rules: 70
+# Updated: 2025-12-08 11:43:02
 # ═══════════════════════════════════════════════════════════════
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
-
-# [smart_cleanup.py] Deduplicated: 95 rules
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
@@ -64,31 +40,6 @@ DOMAIN-KEYWORD,developerprofiles
 DOMAIN-KEYWORD,generativelanguage
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api
-DOMAIN-REGEX,$
-DOMAIN-REGEX,+
-DOMAIN-REGEX,-
-DOMAIN-REGEX,.
-DOMAIN-REGEX,S
-DOMAIN-REGEX,\
-DOMAIN-REGEX,^
-DOMAIN-REGEX,a
-DOMAIN-REGEX,b
-DOMAIN-REGEX,c
-DOMAIN-REGEX,d
-DOMAIN-REGEX,e
-DOMAIN-REGEX,g
-DOMAIN-REGEX,h
-DOMAIN-REGEX,m
-DOMAIN-REGEX,n
-DOMAIN-REGEX,o
-DOMAIN-REGEX,p
-DOMAIN-REGEX,r
-DOMAIN-REGEX,s
-DOMAIN-REGEX,t
-DOMAIN-REGEX,u
-DOMAIN-REGEX,w
-DOMAIN-REGEX,y
-DOMAIN-REGEX,z
 DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,algolia.net
 DOMAIN-SUFFIX,anthropic.com

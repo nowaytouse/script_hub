@@ -33,7 +33,13 @@ download_rules() {
 # Extract valid rules
 extract_rules() {
     local input="$1"
-    grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|PROCESS-NAME),' "$input" 2>/dev/null | \
+    grep -E '^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR|IP-CIDR6|PROCESS-NAME|URL-REGEX|USER-AGENT|DOMAIN-REGEX),' "$input" 2>/dev/null | \
+        # Filter out invalid DOMAIN-REGEX rules (empty or single character patterns)
+        grep -v '^DOMAIN-REGEX,\s*$' | \
+        grep -v '^DOMAIN-REGEX,[^,]*$' | \
+        # Fix IPv6 rules: IP-CIDR with IPv6 should be IP-CIDR6
+        sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' | \
+        # Remove trailing whitespace
         sed 's/[[:space:]]*$//' || true
 }
 
