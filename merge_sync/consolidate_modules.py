@@ -7,6 +7,7 @@ Surge模块整合脚本
 2. 生成导入助手网页数据
 3. 验证模块完整性
 4. 检测重复/冲突模块
+5. 显示Shadowrocket兼容性信息
 """
 
 import os
@@ -21,6 +22,7 @@ SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 OUTPUT_DIR = PROJECT_ROOT / "module"
+COMPAT_FILE = OUTPUT_DIR / "modules_compatibility.json"
 
 # GitHub raw URL基础路径
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29"
@@ -183,7 +185,36 @@ def scan_modules() -> dict:
 # 已删除 generate_url_list 函数 - 用户要求仅更新网页，不再生成URL列表文件
 
 
-def generate_helper_js(modules: dict) -> str:
+def load_compatibility_data() -> dict:
+    """加载兼容性数据"""
+    if not COMPAT_FILE.exists():
+        print(f"  ⚠️ 兼容性数据文件不存在: {COMPAT_FILE}")
+        return {}
+    
+    try:
+        with open(COMPAT_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # 构建快速查找字典: name -> {compatible: bool, issues: []}
+        compat_map = {}
+        
+        # 兼容模块
+        for m in data.get("modules", {}).get("compatible", []):
+            compat_map[m["name"]] = {"compatible": True, "issues": []}
+        
+        # Surge专属模块
+        for m in data.get("modules", {}).get("surge_only", []):
+            compat_map[m["name"]] = {"compatible": False, "issues": m.get("issues", [])}
+        
+        print(f"  ✅ 加载兼容性数据: {len(compat_map)} 个模块")
+        return compat_map
+        
+    except Exception as e:
+        print(f"  ❌ 加载兼容性数据失败: {e}")
+        return {}
+
+
+def generate_helper_js(modules: dict, compat_data: dict) -> str:
     """生成助手网页的JavaScript数据（紧凑格式，避免IDE格式化破坏）"""
     js_modules = {}
     
@@ -204,6 +235,15 @@ def generate_helper_js(modules: dict) -> str:
                 js_item["tag"] = item["tag"]
             if item["essential"]:
                 js_item["essential"] = True
+            
+            # 添加兼容性信息
+            compat_info = compat_data.get(item["name"], {})
+            if compat_info:
+                js_item["srCompat"] = compat_info.get("compatible", False)
+                if not compat_info.get("compatible", False) and compat_info.get("issues"):
+                    # 只保留前3个问题，避免数据过大
+                    js_item["srIssues"] = compat_info["issues"][:3]
+            
             js_modules[cat_key]["items"].append(js_item)
     
     # 使用紧凑格式，避免IDE自动格式化破坏JSON结构
@@ -259,7 +299,7 @@ def check_duplicates(modules: dict) -> list:
     return duplicates
 
 
-def update_helper_html(modules: dict):
+def update_helper_html(modules: dict, compat_data: dict):
     """更新助手网页中的模块数据"""
     helper_path = OUTPUT_DIR / "surge_module_helper.html"
     
@@ -271,8 +311,8 @@ def update_helper_html(modules: dict):
         with open(helper_path, 'r', encoding='utf-8') as f:
             content = f.read()
             
-        # 生成新的模块数据
-        js_data = generate_helper_js(modules)
+        # 生成新的模块数据（包含兼容性信息）
+        js_data = generate_helper_js(modules, compat_data)
         
         # 替换模块数据 - 支持空对象 {} 和多行对象
         pattern = r'const modules = \{[^;]*\};'
@@ -320,9 +360,14 @@ def main():
         print("  ✅ 未发现重复模块")
     print()
     
+    # 加载兼容性数据
+    print("📱 加载Shadowrocket兼容性数据...")
+    compat_data = load_compatibility_data()
+    print()
+    
     # 更新助手网页（唯一输出）
     print("🌐 更新助手网页...")
-    update_helper_html(modules)
+    update_helper_html(modules, compat_data)
     print()
     
     # 生成JSON数据

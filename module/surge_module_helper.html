@@ -45,6 +45,16 @@
         .tag.tool { background: rgba(156,39,176,0.3); color: #ce93d8; }
         .tag.dns { background: rgba(0,150,136,0.3); color: #80cbc4; }
         .tag.shopping { background: rgba(255,152,0,0.3); color: #ffb74d; }
+        .tag.sr-compat { background: rgba(76,175,80,0.3); color: #81c784; }
+        .tag.sr-only { background: rgba(255,152,0,0.25); color: #ffb74d; font-size: 0.6em; }
+        .compat-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.7em; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+        .compat-badge.both { background: rgba(76,175,80,0.25); color: #81c784; }
+        .compat-badge.surge-only { background: rgba(255,152,0,0.2); color: #ffb74d; }
+        .compat-legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; font-size: 0.8em; color: #888; flex-wrap: wrap; }
+        .compat-legend span { display: flex; align-items: center; gap: 4px; }
+        .compat-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .compat-dot.both { background: #81c784; }
+        .compat-dot.surge { background: #ffb74d; }
         .copy-btn { background: rgba(33,150,243,0.3); border: none; color: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; }
         .copy-btn:hover { background: rgba(33,150,243,0.5); }
         .copy-btn.copied { background: rgba(76,175,80,0.4); }
@@ -69,6 +79,11 @@
         <div class="stat"><div class="stat-num" id="totalCount">0</div><div class="stat-label">总模块</div></div>
         <div class="stat copied"><div class="stat-num" id="copiedCount">0</div><div class="stat-label">已复制</div></div>
         <div class="stat remain"><div class="stat-num" id="remainCount">0</div><div class="stat-label">剩余</div></div>
+        <div class="stat" style="background:rgba(76,175,80,0.15)"><div class="stat-num" id="srCompatCount" style="color:#81c784">0</div><div class="stat-label">🚀小火箭兼容</div></div>
+    </div>
+    <div class="compat-legend">
+        <span><span class="compat-dot both"></span> Surge + Shadowrocket 双兼容</span>
+        <span><span class="compat-dot surge"></span> 仅Surge (使用高级特性)</span>
     </div>
     <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 搜索模块名称..." oninput="filterModules()"></div>
     <div class="filter-bar">
@@ -76,6 +91,7 @@
         <button class="filter-btn" data-filter="uncopied" onclick="setFilter('uncopied')">未复制</button>
         <button class="filter-btn" data-filter="copied" onclick="setFilter('copied')">已复制</button>
         <button class="filter-btn" data-filter="essential" onclick="setFilter('essential')">⭐必装</button>
+        <button class="filter-btn" data-filter="sr-compat" onclick="setFilter('sr-compat')">🚀小火箭兼容</button>
         <button class="filter-btn" data-filter="bilibili" onclick="setFilter('bilibili')">B站</button>
         <button class="filter-btn" data-filter="youtube" onclick="setFilter('youtube')">YouTube</button>
     </div>
@@ -90,14 +106,14 @@ const modules = {"amplify_nexus":{"name":"🛠️ Amplify Nexus › 增幅枢纽
 let copiedModules = JSON.parse(localStorage.getItem('surge_copied_modules') || '{}');
 let currentFilter = 'all';
 function saveProgress() { localStorage.setItem('surge_copied_modules', JSON.stringify(copiedModules)); updateStats(); }
-function updateStats() { let total = 0, copied = 0; Object.values(modules).forEach(cat => { total += cat.items.length; cat.items.forEach(m => { if (copiedModules[m.url]) copied++; }); }); document.getElementById('totalCount').textContent = total; document.getElementById('copiedCount').textContent = copied; document.getElementById('remainCount').textContent = total - copied; }
+function updateStats() { let total = 0, copied = 0, srCompat = 0; Object.values(modules).forEach(cat => { total += cat.items.length; cat.items.forEach(m => { if (copiedModules[m.url]) copied++; if (m.srCompat) srCompat++; }); }); document.getElementById('totalCount').textContent = total; document.getElementById('copiedCount').textContent = copied; document.getElementById('remainCount').textContent = total - copied; document.getElementById('srCompatCount').textContent = srCompat; }
 async function copyUrl(url, btn) { try { await navigator.clipboard.writeText(url); } catch (e) { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } copiedModules[url] = Date.now(); saveProgress(); btn.textContent = '✓ 已复制'; btn.classList.add('copied'); btn.closest('.module').classList.add('copied'); showToast('已复制到剪贴板'); renderModules(); }
 function showToast(msg) { const existing = document.querySelector('.toast'); if (existing) existing.remove(); const toast = document.createElement('div'); toast.className = 'toast'; toast.textContent = msg; document.body.appendChild(toast); setTimeout(() => toast.remove(), 1500); }
 function resetProgress() { if (confirm('确定要重置所有进度吗？')) { copiedModules = {}; localStorage.removeItem('surge_copied_modules'); location.reload(); } }
 function toggleCategory(el) { el.closest('.category').classList.toggle('collapsed'); }
 function setFilter(filter) { currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => { btn.classList.toggle('active', btn.dataset.filter === filter); }); renderModules(); }
 function filterModules() { renderModules(); }
-function renderModules() { const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const container = document.getElementById('moduleList'); container.innerHTML = ''; Object.entries(modules).forEach(([catKey, cat]) => { let visibleItems = cat.items.filter(m => { const matchSearch = !searchTerm || m.name.toLowerCase().includes(searchTerm) || (m.desc && m.desc.toLowerCase().includes(searchTerm)); if (!matchSearch) return false; const isCopied = !!copiedModules[m.url]; switch(currentFilter) { case 'uncopied': return !isCopied; case 'copied': return isCopied; case 'essential': return m.essential; case 'bilibili': return m.tag === 'bilibili'; case 'youtube': return m.tag === 'youtube'; default: return true; } }); if (visibleItems.length === 0) return; const copiedInCat = visibleItems.filter(m => copiedModules[m.url]).length; const catEl = document.createElement('div'); catEl.className = 'category'; catEl.innerHTML = '<div class="category-header" onclick="toggleCategory(this)"><span class="category-title">' + cat.name + '</span><span class="category-count">' + visibleItems.length + '</span><span class="category-progress">' + copiedInCat + '/' + visibleItems.length + '</span><span class="category-toggle">▼</span></div><div class="modules"></div>'; const modulesEl = catEl.querySelector('.modules'); visibleItems.forEach(m => { const isCopied = !!copiedModules[m.url]; const moduleEl = document.createElement('div'); moduleEl.className = 'module' + (isCopied ? ' copied' : '') + (m.essential ? ' essential' : ''); moduleEl.innerHTML = '<div class="module-info"><div class="module-name">' + (m.essential ? '⭐ ' : '') + m.name + '</div><div class="module-desc">' + (m.desc || '') + '</div></div>' + (m.tag ? '<span class="tag ' + m.tag + '">' + m.tag + '</span>' : '') + '<button class="copy-btn' + (isCopied ? ' copied' : '') + '" onclick="copyUrl(\'' + m.url.replace(/'/g, "\\'") + '\', this)">' + (isCopied ? '✓ 已复制' : '复制') + '</button>'; modulesEl.appendChild(moduleEl); }); container.appendChild(catEl); }); }
+function renderModules() { const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const container = document.getElementById('moduleList'); container.innerHTML = ''; Object.entries(modules).forEach(([catKey, cat]) => { let visibleItems = cat.items.filter(m => { const matchSearch = !searchTerm || m.name.toLowerCase().includes(searchTerm) || (m.desc && m.desc.toLowerCase().includes(searchTerm)); if (!matchSearch) return false; const isCopied = !!copiedModules[m.url]; switch(currentFilter) { case 'uncopied': return !isCopied; case 'copied': return isCopied; case 'essential': return m.essential; case 'sr-compat': return m.srCompat === true; case 'bilibili': return m.tag === 'bilibili'; case 'youtube': return m.tag === 'youtube'; default: return true; } }); if (visibleItems.length === 0) return; const copiedInCat = visibleItems.filter(m => copiedModules[m.url]).length; const catEl = document.createElement('div'); catEl.className = 'category'; catEl.innerHTML = '<div class="category-header" onclick="toggleCategory(this)"><span class="category-title">' + cat.name + '</span><span class="category-count">' + visibleItems.length + '</span><span class="category-progress">' + copiedInCat + '/' + visibleItems.length + '</span><span class="category-toggle">▼</span></div><div class="modules"></div>'; const modulesEl = catEl.querySelector('.modules'); visibleItems.forEach(m => { const isCopied = !!copiedModules[m.url]; const compatBadge = m.srCompat ? '<span class="compat-badge both" title="Surge + Shadowrocket 双兼容">🚀✓</span>' : '<span class="compat-badge surge-only" title="仅Surge' + (m.srIssues ? ': ' + m.srIssues.join(', ') : '') + '">Surge</span>'; const moduleEl = document.createElement('div'); moduleEl.className = 'module' + (isCopied ? ' copied' : '') + (m.essential ? ' essential' : ''); moduleEl.innerHTML = '<div class="module-info"><div class="module-name">' + (m.essential ? '⭐ ' : '') + m.name + compatBadge + '</div><div class="module-desc">' + (m.desc || '') + '</div></div>' + (m.tag ? '<span class="tag ' + m.tag + '">' + m.tag + '</span>' : '') + '<button class="copy-btn' + (isCopied ? ' copied' : '') + '" onclick="copyUrl(\'' + m.url.replace(/'/g, "\\'") + '\', this)">' + (isCopied ? '✓ 已复制' : '复制') + '</button>'; modulesEl.appendChild(moduleEl); }); container.appendChild(catEl); }); }
 renderModules(); updateStats();
 </script>
 </body>
