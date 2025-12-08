@@ -276,6 +276,17 @@ if [ -f "${SCRIPT_DIR}/smart_cleanup.py" ]; then
     log_success "Smart dedup complete"
 fi
 
+# Fix ruleset policies (remove REJECT/DIRECT and options from rules)
+if [ -f "${SCRIPT_DIR}/fix_ruleset_policies.py" ]; then
+    log_info "Fixing ruleset policies (removing embedded policies)..."
+    if [ "$VERBOSE" = true ]; then
+        python3 "${SCRIPT_DIR}/fix_ruleset_policies.py"
+    else
+        python3 "${SCRIPT_DIR}/fix_ruleset_policies.py" 2>&1 | grep -E "^(Total|fixed)" || true
+    fi
+    log_success "Ruleset policy fix complete"
+fi
+
 if [ -f "${SCRIPT_DIR}/consolidate_rulesets.py" ]; then
     log_info "Consolidating related rulesets (Tencent, StreamUS, StreamTW)..."
     if [ "$VERBOSE" = true ]; then

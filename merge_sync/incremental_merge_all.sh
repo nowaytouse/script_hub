@@ -80,7 +80,10 @@ fast_merge() {
     [ -f "$target_file" ] && grep -v '^#' "$target_file" | grep -v '^$' | \
         grep -v '^AND,' | grep -v '^OR,' | grep -v '^NOT,' | \
         grep -v '^DOMAIN-REGEX,$' | grep -v '^DOMAIN-REGEX,[^,]*$' | \
-        sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' >> "$temp_rules" 2>/dev/null
+        sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' | \
+        # Remove policies and options from rules
+        sed 's/,\(REJECT\|DIRECT\|PROXY\|REJECT-DROP\|REJECT-TINYGIF\|REJECT-NO-DROP\|REJECT-IMG\)\(,.*\)*$//' | \
+        sed 's/,extended-matching//g; s/,pre-matching//g' >> "$temp_rules" 2>/dev/null
     
     # Add MetaCubeX rules if available
     [ -f "$metacubex_file" ] && grep -E '^(DOMAIN|IP-CIDR|PROCESS-NAME|URL-REGEX|USER-AGENT)' "$metacubex_file" >> "$temp_rules" 2>/dev/null
@@ -108,7 +111,10 @@ fast_merge() {
             grep -E '^(DOMAIN|IP-CIDR|PROCESS-NAME|URL-REGEX|USER-AGENT)' "$local_file" 2>/dev/null | \
                 grep -v '^AND,' | grep -v '^OR,' | grep -v '^NOT,' | \
                 grep -v '^DOMAIN-REGEX,$' | grep -v '^DOMAIN-REGEX,[^,]*$' | \
-                sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' >> "$temp_rules" 2>/dev/null
+                sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' | \
+        # Remove policies and options from rules
+        sed 's/,\(REJECT\|DIRECT\|PROXY\|REJECT-DROP\|REJECT-TINYGIF\|REJECT-NO-DROP\|REJECT-IMG\)\(,.*\)*$//' | \
+        sed 's/,extended-matching//g; s/,pre-matching//g' >> "$temp_rules" 2>/dev/null
         fi
     done < "$sources_file"
     

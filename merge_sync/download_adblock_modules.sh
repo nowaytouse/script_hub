@@ -111,7 +111,10 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     grep -v '^DOMAIN-REGEX,\s*$' | \
     grep -v '^DOMAIN-REGEX,[^,]*$' | \
     # Fix IPv6 rules
-    sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' >> "$ALL_RULES" || true
+    sed 's/^IP-CIDR,\([0-9a-fA-F:]*::[^,]*\)/IP-CIDR6,\1/' | \
+    # Remove policies (REJECT/DIRECT) and options (extended-matching/pre-matching)
+    sed 's/,\(REJECT\|DIRECT\|PROXY\|REJECT-DROP\|REJECT-TINYGIF\|REJECT-NO-DROP\|REJECT-IMG\)\(,.*\)*$//' | \
+    sed 's/,extended-matching//g; s/,pre-matching//g' >> "$ALL_RULES" || true
     
     # Check if module has non-Rule sections (URL Rewrite, MITM, Script, etc.)
     has_other_sections=$(awk '/^\[Rule\]/{in_rule=1; next}
