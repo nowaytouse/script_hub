@@ -47,8 +47,13 @@ declare -A GROUP_FOLDERS=(
 get_module_group() {
     local module_file="$1"
     
-    # Extract #!group= line
+    # Extract #!group= or #!category= line (try group first, then category)
     local group=$(grep "^#!group=" "$module_file" 2>/dev/null | head -1 | sed 's/^#!group=//')
+    
+    # If no #!group=, try #!category=
+    if [ -z "$group" ]; then
+        group=$(grep "^#!category=" "$module_file" 2>/dev/null | head -1 | sed 's/^#!category=//')
+    fi
     
     echo "$group"
 }
