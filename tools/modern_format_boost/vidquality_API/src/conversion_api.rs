@@ -197,6 +197,9 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     let output_path = output_dir.join(format!("{}.mp4", stem));
     
+    // 🔥 检测输入输出路径冲突
+    check_input_output_conflict(input, &output_path)?;
+    
     info!("🎬 Simple Mode: {} → AV1 MP4 (LOSSLESS)", input.display());
     
     // Always AV1 MP4 with LOSSLESS mode (as requested: corresponding to image JXL lossless)
@@ -263,6 +266,9 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     let output_path = output_dir.join(format!("{}.{}", stem, strategy.target.extension()));
+    
+    // 🔥 检测输入输出路径冲突
+    check_input_output_conflict(input, &output_path)?;
     
     if output_path.exists() && !config.force {
         return Err(VidQualityError::ConversionError(
@@ -565,6 +571,28 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
 
 
 // MacOS specialized timestamp setter (creation time + date added)
+
+/// 🔥 检测输入输出路径冲突
+/// 当输入和输出是同一个文件时，响亮报错并提供建议
+fn check_input_output_conflict(input: &Path, output: &Path) -> Result<()> {
+    let input_canonical = input.canonicalize().unwrap_or_else(|_| input.to_path_buf());
+    let output_canonical = if output.exists() {
+        output.canonicalize().unwrap_or_else(|_| output.to_path_buf())
+    } else {
+        output.to_path_buf()
+    };
+    
+    if input_canonical == output_canonical || input == output {
+        return Err(VidQualityError::ConversionError(format!(
+            "❌ 输入和输出路径相同: {}\n\
+             💡 建议:\n\
+             - 使用 --output/-o 指定不同的输出目录\n\
+             - 或确保输入文件扩展名与目标格式不同",
+            input.display()
+        )));
+    }
+    Ok(())
+}
 
 // Helper to copy metadata and timestamps from source to destination
 // Maximum metadata preservation: centralized via metadata_keeper

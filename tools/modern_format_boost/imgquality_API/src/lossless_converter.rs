@@ -122,7 +122,7 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "jxl", &options.output_dir);
+    let output = determine_output_path(input, "jxl", &options.output_dir)?;
     
     // Ensure output directory exists
     if let Some(parent) = output.parent() {
@@ -213,7 +213,7 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "jxl", &options.output_dir);
+    let output = determine_output_path(input, "jxl", &options.output_dir)?;
     
     // Check if output already exists
     if output.exists() && !options.force {
@@ -297,7 +297,7 @@ pub fn convert_to_avif(input: &Path, quality: Option<u8>, options: &ConvertOptio
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "avif", &options.output_dir);
+    let output = determine_output_path(input, "avif", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -378,7 +378,7 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "mp4", &options.output_dir);
+    let output = determine_output_path(input, "mp4", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -460,7 +460,7 @@ pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Resul
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "avif", &options.output_dir);
+    let output = determine_output_path(input, "avif", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -546,7 +546,7 @@ pub fn convert_to_av1_mp4_matched(
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "mp4", &options.output_dir);
+    let output = determine_output_path(input, "mp4", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -801,7 +801,7 @@ pub fn convert_to_jxl_matched(
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "jxl", &options.output_dir);
+    let output = determine_output_path(input, "jxl", &options.output_dir)?;
     
     // Ensure output directory exists
     if let Some(parent) = output.parent() {
@@ -903,7 +903,7 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "mp4", &options.output_dir);
+    let output = determine_output_path(input, "mp4", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -986,7 +986,8 @@ fn copy_metadata(src: &Path, dst: &Path) {
 
 
 /// Determine output path and ensure directory exists
-fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> PathBuf {
+/// Returns Err if input and output would be the same file
+fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> Result<PathBuf> {
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     
     let output = match output_dir {
@@ -998,7 +999,26 @@ fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<Path
         None => input.with_extension(extension),
     };
     
-    output
+    // 🔥 检测输入输出路径冲突
+    let input_canonical = input.canonicalize().unwrap_or_else(|_| input.to_path_buf());
+    let output_canonical = if output.exists() {
+        output.canonicalize().unwrap_or_else(|_| output.clone())
+    } else {
+        // 输出文件不存在时，比较父目录+文件名
+        output.clone()
+    };
+    
+    if input_canonical == output_canonical || input == &output {
+        return Err(ImgQualityError::ConversionError(format!(
+            "❌ 输入和输出路径相同: {}\n\
+             💡 建议:\n\
+             - 使用 --output/-o 指定不同的输出目录\n\
+             - 或使用 --in-place 参数进行原地替换（会删除原文件）",
+            input.display()
+        )));
+    }
+    
+    Ok(output)
 }
 
 /// Clear processed files list
@@ -1035,7 +1055,7 @@ mod tests {
     #[test]
     fn test_determine_output_path() {
         let input = Path::new("/path/to/image.png");
-        let output = determine_output_path(input, "jxl", &None);
+        let output = determine_output_path(input, "jxl", &None).unwrap();
         assert_eq!(output, Path::new("/path/to/image.jxl"));
     }
     
@@ -1043,7 +1063,17 @@ mod tests {
     fn test_determine_output_path_with_dir() {
         let input = Path::new("/path/to/image.png");
         let output_dir = Some(PathBuf::from("/output"));
-        let output = determine_output_path(input, "avif", &output_dir);
+        let output = determine_output_path(input, "avif", &output_dir).unwrap();
         assert_eq!(output, Path::new("/output/image.avif"));
+    }
+    
+    #[test]
+    fn test_determine_output_path_same_file_error() {
+        // 测试输入输出相同时应该报错
+        let input = Path::new("/path/to/image.jxl");
+        let result = determine_output_path(input, "jxl", &None);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("输入和输出路径相同"));
     }
 }

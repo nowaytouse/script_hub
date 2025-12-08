@@ -182,6 +182,9 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     let output_path = output_dir.join(format!("{}.mp4", stem));
     
+    // 🔥 检测输入输出路径冲突
+    check_input_output_conflict(input, &output_path)?;
+    
     info!("🎬 Simple Mode: {} → HEVC MP4 (CRF 18)", input.display());
     
     let output_size = execute_hevc_conversion(&detection, &output_path, 18)?;
@@ -242,6 +245,9 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
     let output_path = output_dir.join(format!("{}.{}", stem, strategy.target.extension()));
+    
+    // 🔥 检测输入输出路径冲突
+    check_input_output_conflict(input, &output_path)?;
     
     if output_path.exists() && !config.force {
         return Err(VidQualityError::ConversionError(
@@ -498,6 +504,28 @@ fn execute_hevc_lossless(detection: &VideoDetectionResult, output: &Path) -> Res
     }
     
     Ok(std::fs::metadata(output)?.len())
+}
+
+/// 🔥 检测输入输出路径冲突
+/// 当输入和输出是同一个文件时，响亮报错并提供建议
+fn check_input_output_conflict(input: &Path, output: &Path) -> Result<()> {
+    let input_canonical = input.canonicalize().unwrap_or_else(|_| input.to_path_buf());
+    let output_canonical = if output.exists() {
+        output.canonicalize().unwrap_or_else(|_| output.to_path_buf())
+    } else {
+        output.to_path_buf()
+    };
+    
+    if input_canonical == output_canonical || input == output {
+        return Err(VidQualityError::ConversionError(format!(
+            "❌ 输入和输出路径相同: {}\n\
+             💡 建议:\n\
+             - 使用 --output/-o 指定不同的输出目录\n\
+             - 或确保输入文件扩展名与目标格式不同",
+            input.display()
+        )));
+    }
+    Ok(())
 }
 
 /// Copy metadata and timestamps from source to destination
