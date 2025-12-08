@@ -15,9 +15,8 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SURGE_MODULE_DIR="${SCRIPT_DIR}/../../module/surge(main)"
 
-# Please modify the following path to your actual Shadowrocket iCloud directory
-# Example: /Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules
-SHADOWROCKET_MODULE_DIR="/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
+# Shadowrocket iCloud directory (modules are in root, not in Modules subfolder)
+SHADOWROCKET_MODULE_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents"
 
 echo -e "${BLUE}=== Surge -> Shadowrocket Module Sync ===${NC}"
 echo "Source: $SURGE_MODULE_DIR"
@@ -57,39 +56,37 @@ convert_to_shadowrocket() {
     > "$output_file"
 }
 
-# Modules to sync
-MODULES=(
-    "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
-    "🚀💪General Enhanced⬆️⬆️ plus.sgmodule"
-    "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
-    "Encrypted DNS Module 🔒🛡️DNS.sgmodule"
-    "URL Rewrite Module 🔄🌐.sgmodule"
-)
-
+# Sync all modules from all categories
 SUCCESS=0
 FAILED=0
+SKIPPED=0
 
-for module in "${MODULES[@]}"; do
-    src_file="${SURGE_MODULE_DIR}/${module}"
+for category in amplify_nexus head_expanse narrow_pierce; do
+    category_dir="${SURGE_MODULE_DIR}/${category}"
     
-    if [ -f "$src_file" ]; then
-        # Generate Shadowrocket compatible filename
-        dst_name=$(echo "$module" | sed 's/[^a-zA-Z0-9._-]/_/g')
-        dst_file="${SHADOWROCKET_MODULE_DIR}/${dst_name}"
+    if [ ! -d "$category_dir" ]; then
+        echo -e "${YELLOW}Category not found: ${category}${NC}"
+        continue
+    fi
+    
+    echo -e "\n${BLUE}=== Category: ${category} ===${NC}"
+    
+    for src_file in "$category_dir"/*.sgmodule; do
+        [ -f "$src_file" ] || continue
+        
+        module=$(basename "$src_file")
+        dst_file="${SHADOWROCKET_MODULE_DIR}/${module}"
         
         echo -e "${YELLOW}Syncing: ${module}${NC}"
         
         if convert_to_shadowrocket "$src_file" "$dst_file"; then
-            echo -e "${GREEN}  Done -> ${dst_name}${NC}"
+            echo -e "${GREEN}  ✓ Done${NC}"
             ((SUCCESS++))
         else
-            echo -e "${RED}  Failed${NC}"
+            echo -e "${RED}  ✗ Failed${NC}"
             ((FAILED++))
         fi
-    else
-        echo -e "${RED}Skip: ${module} (not found)${NC}"
-        ((FAILED++))
-    fi
+    done
 done
 
 echo ""
