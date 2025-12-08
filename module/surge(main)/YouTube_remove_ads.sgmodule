@@ -1,0 +1,24 @@
+#!name=YouTube去广告
+#!group=『 🎯 Narrow Pierce › 窄域穿刺 』
+#!desc=移除YouTube视频、瀑布流、搜索和Shorts中的广告，移除底部的上传按钮和Shorts按钮，增加画中画及字幕翻译功能，支持后台播放。需要启用QUIC回退保护。支持Premium订阅用户使用，不支持tvOS设备。
+#!author=Maasea[https://github.com/Maasea],wish[https://github.com/mist-whisper]
+#!category=去广告
+#!date=2025-06-05 16:15:00
+
+#!arguments=隐藏上传按钮:false,隐藏短视频按钮:false,字幕翻译语言:off
+#!arguments-desc=- 屏蔽参数：[true, false] \n- 语言代码：[ off, zh-Hans, zh-Hant, ja, ko, en] \n语言代码遵循 Google Translate Languages Codes, 当填入 off 时关闭翻译。
+
+[Rule]
+AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
+
+[Map Local]
+^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
+
+[Script]
+youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Youtube/youtube.response.js,argument="{"blockUpload":{{{隐藏上传按钮}}},"blockShorts":{{{隐藏短视频按钮}}},"captionLang":"{{{字幕翻译语言}}}"}"
+
+
+
+[MITM]
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com
