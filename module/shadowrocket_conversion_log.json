@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-09T22:19:14.716188",
+  "generated": "2025-12-09T22:25:02.016752",
   "stats": {
     "total": 70,
     "converted": 70,
@@ -145,12 +145,6 @@
       "changes": [
         "转换: skip-proxy = %INSERT% localhost, *.local → skip-proxy =  localhost, *.local, captiv",
         "转换: always-real-ip = %INSERT% *.lan, *.direc → always-real-ip =  *.lan, *.direct, *.msf",
-        "DNS转换: # networking.apple = server:https://doh.dns.apple. → # networking.apple = server:system // Apple",
-        "转换: # networking.apple = server:https://doh. → # networking.apple = server:system // Ap",
-        "DNS转换: # *.apple.com = server:https://doh.dns.apple.com/d → # *.apple.com = server:system // Apple.com",
-        "转换: # *.apple.com = server:https://doh.dns.a → # *.apple.com = server:system // Apple.c",
-        "DNS转换: # *.icloud.com = server:https://doh.dns.apple.com/ → # *.icloud.com = server:system // iCloud.com",
-        "转换: # *.icloud.com = server:https://doh.dns. → # *.icloud.com = server:system // iCloud",
         "DNS转换: *.alibaba.cn = server:h3://dns.alidns.com/dns-quer → *.alibaba.cn = server:223.5.5.5 // 阿里巴巴",
         "转换: *.alibaba.cn = server:h3://dns.alidns.co → *.alibaba.cn = server:223.5.5.5 // 阿里巴巴",
         "DNS转换: *.alibaba.com.cn = server:h3://dns.alidns.com/dns- → *.alibaba.com.cn = server:223.5.5.5 // 阿里巴巴",

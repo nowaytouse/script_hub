@@ -208,9 +208,9 @@ stun?.l.google.com = server:syslib // Google STUN
 # ⚠️ COMMENTED: Apple DOH仅在非中国大陆直连下可用
 # refer: https://support.apple.com/zh-cn/HT210060
 # ═══════════════════════════════════════════════════════════════
-# networking.apple = server:system // Apple
-# *.apple.com = server:system // Apple.com
-# *.icloud.com = server:system // iCloud.com
+# networking.apple = server:https://doh.dns.apple.com/dns-query // Apple
+# *.apple.com = server:https://doh.dns.apple.com/dns-query // Apple.com
+# *.icloud.com = server:https://doh.dns.apple.com/dns-query // iCloud.com
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 9: 阿里巴巴 (AliDNS H3 DoH)

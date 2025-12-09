@@ -55,9 +55,15 @@ DNS_CONVERSION_PATTERNS = [
     (r'server:https://ordns\.he\.net/dns-query', 'server:74.82.42.42'),
     (r'server:https://dns\.hinet\.net/dns-query', 'server:168.95.1.1'),
     (r'server:https://dns11\.quad9\.net/dns-query', 'server:9.9.9.11'),
-    # 通用模式 - 移除无法转换的DoH
+    # 通用模式 - 无法转换的DoH转为system（但跳过注释行，在convert_module_content中处理）
     (r'server:h3://[^\s,]+', 'server:system'),
     (r'server:https://[^\s,]+', 'server:system'),
+]
+
+# 不转换的注释行模式（保留原样）
+# Apple DoH没有公开IPv4，保留注释原样让用户知道这是Surge专属功能
+SKIP_DNS_CONVERSION_PATTERNS = [
+    r'doh\.dns\.apple\.com',  # Apple DoH - 无公开IPv4
 ]
 
 # 需要移除的Surge专属行
@@ -122,13 +128,21 @@ def convert_module_content(content: str, filename: str) -> tuple[str, list]:
         
         # 🔥 DNS转换：h3:// 和 https:// DoH → 普通DNS IP
         # Shadowrocket不支持 server:h3:// 和 server:https:// 语法
-        for pattern, replacement in DNS_CONVERSION_PATTERNS:
-            if re.search(pattern, line):
-                old_line = line
-                line = re.sub(pattern, replacement, line)
-                if line != old_line:
-                    changes.append(f"DNS转换: {old_line.strip()[:50]} → {line.strip()[:50]}")
-                    modified = True
+        # 但跳过某些无法转换的DoH（如Apple DoH没有公开IPv4）
+        should_skip_dns = False
+        for skip_pattern in SKIP_DNS_CONVERSION_PATTERNS:
+            if re.search(skip_pattern, line):
+                should_skip_dns = True
+                break
+        
+        if not should_skip_dns:
+            for pattern, replacement in DNS_CONVERSION_PATTERNS:
+                if re.search(pattern, line):
+                    old_line = line
+                    line = re.sub(pattern, replacement, line)
+                    if line != old_line:
+                        changes.append(f"DNS转换: {old_line.strip()[:50]} → {line.strip()[:50]}")
+                        modified = True
         
         if modified and line != original_line:
             changes.append(f"转换: {original_line.strip()[:40]} → {line.strip()[:40]}")
