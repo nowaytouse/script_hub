@@ -239,7 +239,8 @@ show_help() {
     echo "Options:"
     echo "  --singbox-only    Update Sing-box only"
     echo "  --mihomo-only     Update Mihomo only"
-    echo "  --prerelease      Include pre-release versions (alpha/beta)"
+    echo "  --prerelease      Include pre-release versions (alpha/beta) [DEFAULT]"
+    echo "  --stable          Use stable versions only (not recommended for sing-box)"
     echo "  -h, --help        Show help"
     echo ""
     echo "Examples:"
@@ -252,13 +253,15 @@ show_help() {
 # Parse arguments
 SINGBOX_ONLY=false
 MIHOMO_ONLY=false
-INCLUDE_PRERELEASE=false
+# 🔥 默认使用预览版 (sing-box 1.13.0+ 需要预览版)
+INCLUDE_PRERELEASE=true
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --singbox-only) SINGBOX_ONLY=true; shift ;;
         --mihomo-only) MIHOMO_ONLY=true; shift ;;
         --prerelease|--alpha) INCLUDE_PRERELEASE=true; shift ;;
+        --stable) INCLUDE_PRERELEASE=false; shift ;;
         -h|--help) show_help ;;
         *) log_error "Unknown option: $1"; exit 1 ;;
     esac
