@@ -1,107 +1,20 @@
 //! Lossless Converter Module
 //! 
 //! Provides conversion API for verified lossless/lossy images
-//! With anti-duplicate execution mechanism
+//! Uses shared_utils for common functionality (anti-duplicate, ConversionResult, etc.)
 
 use crate::{ImgQualityError, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
-use std::sync::Mutex;
-use std::io::{BufRead, BufReader, Write};
 
-// Global processed files tracker (anti-duplicate)
-lazy_static::lazy_static! {
-    static ref PROCESSED_FILES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
-}
-
-/// Conversion result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConversionResult {
-    pub success: bool,
-    pub input_path: String,
-    pub output_path: Option<String>,
-    pub input_size: u64,
-    pub output_size: Option<u64>,
-    pub size_reduction: Option<f64>,
-    pub message: String,
-    pub skipped: bool,
-    pub skip_reason: Option<String>,
-}
-
-/// Conversion options
-#[derive(Debug, Clone)]
-pub struct ConvertOptions {
-    /// Force conversion even if already processed
-    pub force: bool,
-    /// Output directory (None = same as input)
-    pub output_dir: Option<PathBuf>,
-    /// Delete original after successful conversion
-    pub delete_original: bool,
-}
-
-impl Default for ConvertOptions {
-    fn default() -> Self {
-        Self {
-            force: false,
-            output_dir: None,
-            delete_original: false,
-        }
-    }
-}
-
-/// Check if file has already been processed (anti-duplicate)
-pub fn is_already_processed(path: &Path) -> bool {
-    let canonical = path.canonicalize().ok()
-        .and_then(|p| p.to_str().map(String::from))
-        .unwrap_or_else(|| path.display().to_string());
-    
-    let processed = PROCESSED_FILES.lock().unwrap();
-    processed.contains(&canonical)
-}
-
-/// Mark file as processed
-pub fn mark_as_processed(path: &Path) {
-    let canonical = path.canonicalize().ok()
-        .and_then(|p| p.to_str().map(String::from))
-        .unwrap_or_else(|| path.display().to_string());
-    
-    let mut processed = PROCESSED_FILES.lock().unwrap();
-    processed.insert(canonical);
-}
-
-/// Load processed files list from disk
-pub fn load_processed_list(list_path: &Path) -> Result<()> {
-    if !list_path.exists() {
-        return Ok(());
-    }
-    
-    let file = fs::File::open(list_path)?;
-    let reader = BufReader::new(file);
-    let mut processed = PROCESSED_FILES.lock().unwrap();
-    
-    for line in reader.lines() {
-        if let Ok(path) = line {
-            processed.insert(path);
-        }
-    }
-    
-    Ok(())
-}
-
-/// Save processed files list to disk
-pub fn save_processed_list(list_path: &Path) -> Result<()> {
-    let processed = PROCESSED_FILES.lock().unwrap();
-    let mut file = fs::File::create(list_path)?;
-    
-    for path in processed.iter() {
-        writeln!(file, "{}", path)?;
-    }
-    
-    Ok(())
-}
+// 🔥 模块化：从 shared_utils 导入通用功能
+pub use shared_utils::conversion::{
+    ConversionResult, ConvertOptions,
+    is_already_processed, mark_as_processed, clear_processed_list,
+    load_processed_list, save_processed_list,
+    format_size_change,
+};
 
 /// Convert static image to JXL with specified distance/quality
 /// distance: 0.0 = lossless, 0.1 = visually lossless (Q100 lossy), 1.0 = Q90
@@ -122,7 +35,7 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "jxl", &options.output_dir)?;
+    let output = get_output_path(input, "jxl", &options.output_dir)?;
     
     // Ensure output directory exists
     if let Some(parent) = output.parent() {
@@ -242,7 +155,7 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "jxl", &options.output_dir)?;
+    let output = get_output_path(input, "jxl", &options.output_dir)?;
     
     // Check if output already exists
     if output.exists() && !options.force {
@@ -335,7 +248,7 @@ pub fn convert_to_avif(input: &Path, quality: Option<u8>, options: &ConvertOptio
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "avif", &options.output_dir)?;
+    let output = get_output_path(input, "avif", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -424,7 +337,7 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "mp4", &options.output_dir)?;
+    let output = get_output_path(input, "mp4", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -514,7 +427,7 @@ pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Resul
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "avif", &options.output_dir)?;
+    let output = get_output_path(input, "avif", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -608,7 +521,7 @@ pub fn convert_to_av1_mp4_matched(
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "mp4", &options.output_dir)?;
+    let output = get_output_path(input, "mp4", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -871,7 +784,7 @@ pub fn convert_to_jxl_matched(
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "jxl", &options.output_dir)?;
+    let output = get_output_path(input, "jxl", &options.output_dir)?;
     
     // Ensure output directory exists
     if let Some(parent) = output.parent() {
@@ -1001,7 +914,7 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     }
     
     let input_size = fs::metadata(input)?.len();
-    let output = determine_output_path(input, "mp4", &options.output_dir)?;
+    let output = get_output_path(input, "mp4", &options.output_dir)?;
     
     if output.exists() && !options.force {
         return Ok(ConversionResult {
@@ -1088,46 +1001,10 @@ fn copy_metadata(src: &Path, dst: &Path) {
 }
 
 
-/// Determine output path and ensure directory exists
-/// Returns Err if input and output would be the same file
-fn determine_output_path(input: &Path, extension: &str, output_dir: &Option<PathBuf>) -> Result<PathBuf> {
-    let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
-    
-    let output = match output_dir {
-        Some(dir) => {
-            // Ensure output directory exists
-            let _ = fs::create_dir_all(dir);
-            dir.join(format!("{}.{}", stem, extension))
-        }
-        None => input.with_extension(extension),
-    };
-    
-    // 🔥 检测输入输出路径冲突
-    let input_canonical = input.canonicalize().unwrap_or_else(|_| input.to_path_buf());
-    let output_canonical = if output.exists() {
-        output.canonicalize().unwrap_or_else(|_| output.clone())
-    } else {
-        // 输出文件不存在时，比较父目录+文件名
-        output.clone()
-    };
-    
-    if input_canonical == output_canonical || input == &output {
-        return Err(ImgQualityError::ConversionError(format!(
-            "❌ 输入和输出路径相同: {}\n\
-             💡 建议:\n\
-             - 使用 --output/-o 指定不同的输出目录\n\
-             - 或使用 --in-place 参数进行原地替换（会删除原文件）",
-            input.display()
-        )));
-    }
-    
-    Ok(output)
-}
-
-/// Clear processed files list
-pub fn clear_processed_list() {
-    let mut processed = PROCESSED_FILES.lock().unwrap();
-    processed.clear();
+/// Wrapper for shared_utils::determine_output_path with imgquality error type
+fn get_output_path(input: &Path, extension: &str, output_dir: &Option<std::path::PathBuf>) -> Result<std::path::PathBuf> {
+    shared_utils::conversion::determine_output_path(input, extension, output_dir)
+        .map_err(|e| ImgQualityError::ConversionError(e))
 }
 
 /// Verify that JXL file is valid using signature and optional decoding
@@ -1154,29 +1031,28 @@ fn verify_jxl_health(path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
     
     #[test]
-    fn test_determine_output_path() {
+    fn test_get_output_path() {
         let input = Path::new("/path/to/image.png");
-        let output = determine_output_path(input, "jxl", &None).unwrap();
+        let output = get_output_path(input, "jxl", &None).unwrap();
         assert_eq!(output, Path::new("/path/to/image.jxl"));
     }
     
     #[test]
-    fn test_determine_output_path_with_dir() {
+    fn test_get_output_path_with_dir() {
         let input = Path::new("/path/to/image.png");
         let output_dir = Some(PathBuf::from("/output"));
-        let output = determine_output_path(input, "avif", &output_dir).unwrap();
+        let output = get_output_path(input, "avif", &output_dir).unwrap();
         assert_eq!(output, Path::new("/output/image.avif"));
     }
     
     #[test]
-    fn test_determine_output_path_same_file_error() {
+    fn test_get_output_path_same_file_error() {
         // 测试输入输出相同时应该报错
         let input = Path::new("/path/to/image.jxl");
-        let result = determine_output_path(input, "jxl", &None);
+        let result = get_output_path(input, "jxl", &None);
         assert!(result.is_err());
-        let err_msg = result.unwrap_err().to_string();
-        assert!(err_msg.contains("输入和输出路径相同"));
     }
 }

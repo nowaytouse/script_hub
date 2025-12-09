@@ -13,13 +13,14 @@ modern_format_boost 工具集（imgquality、vidquality、vidquality-hevc）的�
 | 模块 | 功能 |
 |------|------|
 | `metadata` | 完整元数据保留（EXIF/IPTC/xattr/时间戳/ACL） |
-| `progress` | 进度条与 ETA 估算 |
+| `progress` | 进度条与 ETA 估算（含 SmartProgressBar） |
 | `safety` | 危险目录检测 |
 | `batch` | 批量文件处理 |
 | `report` | 汇总报告 |
 | `ffprobe` | FFprobe 视频分析封装 |
 | `tools` | 外部工具检测 |
 | `codecs` | 编解码器信息 |
+| `conversion` | **转换通用功能**（ConversionResult/ConvertOptions/防重复） |
 
 ### 模块详情
 
@@ -139,13 +140,14 @@ Shared utility library for modern_format_boost tools (imgquality, vidquality, vi
 | Module | Function |
 |--------|----------|
 | `metadata` | Complete metadata preservation (EXIF/IPTC/xattr/timestamps/ACL) |
-| `progress` | Progress bar & ETA estimation |
+| `progress` | Progress bar & ETA estimation (with SmartProgressBar) |
 | `safety` | Dangerous directory detection |
 | `batch` | Batch file processing |
 | `report` | Summary reports |
 | `ffprobe` | FFprobe video analysis wrapper |
 | `tools` | External tool detection |
 | `codecs` | Codec information |
+| `conversion` | **Conversion utilities** (ConversionResult/ConvertOptions/anti-duplicate) |
 
 ### Module Details
 

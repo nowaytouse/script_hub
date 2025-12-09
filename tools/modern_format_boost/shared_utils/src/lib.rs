@@ -9,6 +9,7 @@
 //! - External tools detection
 //! - Codec information
 //! - Metadata preservation (EXIF/IPTC/xattr/timestamps/ACL)
+//! - Conversion utilities (ConversionResult, ConvertOptions, anti-duplicate)
 
 pub mod progress;
 pub mod safety;
@@ -18,6 +19,7 @@ pub mod ffprobe;
 pub mod tools;
 pub mod codecs;
 pub mod metadata;
+pub mod conversion;
 
 pub use progress::*;
 pub use safety::*;
@@ -27,3 +29,4 @@ pub use ffprobe::{FFprobeResult, FFprobeError, probe_video, get_duration, get_fr
 pub use tools::*;
 pub use codecs::*;
 pub use metadata::{preserve_metadata, preserve_pro};
+pub use conversion::*;
