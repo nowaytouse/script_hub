@@ -299,6 +299,65 @@ def check_duplicates(modules: dict) -> list:
     return duplicates
 
 
+def load_shadowrocket_modules() -> dict:
+    """加载Shadowrocket模块数据"""
+    sr_data_path = OUTPUT_DIR / "shadowrocket_modules_data.json"
+    
+    if not sr_data_path.exists():
+        print(f"  ⚠️ Shadowrocket模块数据不存在: {sr_data_path}")
+        return {}
+    
+    try:
+        with open(sr_data_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # 提取categories部分
+        categories = data.get("categories", {})
+        print(f"  ✅ 加载Shadowrocket模块: {data.get('total', 0)} 个")
+        return categories
+        
+    except Exception as e:
+        print(f"  ❌ 加载Shadowrocket模块失败: {e}")
+        return {}
+
+
+def generate_sr_helper_js(sr_modules: dict) -> str:
+    """生成Shadowrocket模块的JavaScript数据"""
+    js_modules = {}
+    
+    for cat_key, cat_data in sr_modules.items():
+        js_modules[cat_key] = {
+            "name": cat_data["name"],
+            "desc": cat_data["desc"],
+            "items": []
+        }
+        
+        for item in cat_data["items"]:
+            js_item = {
+                "name": sanitize_string(item["name"]),
+                "desc": sanitize_string(item.get("desc", ""))[:60],
+                "url": item["url"]
+            }
+            # Shadowrocket模块添加标签
+            name_lower = (item["name"] + item.get("desc", "")).lower()
+            if "bilibili" in name_lower or "bili" in name_lower:
+                js_item["tag"] = "bilibili"
+            elif "youtube" in name_lower:
+                js_item["tag"] = "youtube"
+            elif "iringo" in name_lower:
+                js_item["tag"] = "iringo"
+            elif any(x in name_lower for x in ["boxjs", "sub_info", "timecard", "net-lsp"]):
+                js_item["tag"] = "tool"
+            elif "dns" in name_lower:
+                js_item["tag"] = "dns"
+            elif any(x in name_lower for x in ["淘宝", "京东", "拼多多", "闲鱼"]):
+                js_item["tag"] = "shopping"
+            
+            js_modules[cat_key]["items"].append(js_item)
+    
+    return json.dumps(js_modules, ensure_ascii=False, separators=(',', ':'))
+
+
 def update_helper_html(modules: dict, compat_data: dict):
     """更新助手网页中的模块数据"""
     helper_path = OUTPUT_DIR / "surge_module_helper.html"
@@ -311,22 +370,40 @@ def update_helper_html(modules: dict, compat_data: dict):
         with open(helper_path, 'r', encoding='utf-8') as f:
             content = f.read()
             
-        # 生成新的模块数据（包含兼容性信息）
-        js_data = generate_helper_js(modules, compat_data)
+        # 生成Surge模块数据（包含兼容性信息）
+        surge_js_data = generate_helper_js(modules, compat_data)
         
-        # 替换模块数据 - 支持空对象 {} 和多行对象
-        pattern = r'const modules = \{[^;]*\};'
-        replacement = f'const modules = {js_data};'
+        # 加载并生成Shadowrocket模块数据
+        sr_modules = load_shadowrocket_modules()
+        sr_js_data = generate_sr_helper_js(sr_modules) if sr_modules else "{}"
         
-        new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        # 替换Surge模块数据 - 使用更精确的正则
+        surge_pattern = r'const surgeModules = \{.*?\};\s*(?=\n(?:const srModules|let copiedModules))'
+        surge_replacement = f'const surgeModules = {surge_js_data};\n'
+        new_content = re.sub(surge_pattern, surge_replacement, content, flags=re.DOTALL)
+        
+        # 检查是否已有srModules定义
+        if 'const srModules = ' not in new_content:
+            # 在surgeModules后面添加srModules（在let copiedModules之前）
+            new_content = new_content.replace(
+                'let copiedModules = ',
+                f'const srModules = {sr_js_data};\nlet copiedModules = '
+            )
+        else:
+            # 替换现有的srModules
+            sr_pattern = r'const srModules = \{.*?\};\s*(?=\nlet copiedModules)'
+            sr_replacement = f'const srModules = {sr_js_data};\n'
+            new_content = re.sub(sr_pattern, sr_replacement, new_content, flags=re.DOTALL)
         
         with open(helper_path, 'w', encoding='utf-8') as f:
             f.write(new_content)
             
-        print(f"  ✅ 更新 surge_module_helper.html")
+        print(f"  ✅ 更新 surge_module_helper.html (Surge + Shadowrocket)")
         
     except Exception as e:
+        import traceback
         print(f"  ❌ 更新失败: {e}")
+        traceback.print_exc()
 
 
 def main():
