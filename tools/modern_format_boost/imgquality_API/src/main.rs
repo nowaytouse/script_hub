@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use imgquality::{analyze_image, get_recommendation, convert_image, ConversionOptions};
+use imgquality::{analyze_image, get_recommendation};
 use imgquality::{calculate_psnr, calculate_ssim, psnr_quality_description, ssim_quality_description};
 use rayon::prelude::*;
 use serde_json::json;
@@ -38,30 +38,7 @@ enum Commands {
         recommend: bool,
     },
 
-    /// Convert image to recommended format
-    Convert {
-        /// Input file or directory
-        #[arg(value_name = "INPUT")]
-        input: PathBuf,
-
-        /// Target format
-        #[arg(short, long, default_value = "jxl")]
-        to: String,
-
-        /// Output directory
-        #[arg(short, long)]
-        output: Option<PathBuf>,
-
-        /// Replace original file
-        #[arg(long)]
-        in_place: bool,
-
-        /// Recursive directory scan
-        #[arg(short, long)]
-        recursive: bool,
-    },
-
-    /// Auto-convert based on format detection (JPEG→JXL, PNG→JXL, etc.)
+    /// Auto-convert based on format detection (JPEG→JXL, PNG→JXL, Animated→AV1 MP4)
     Auto {
         /// Input file or directory
         #[arg(value_name = "INPUT")]
@@ -145,23 +122,6 @@ fn main() -> anyhow::Result<()> {
                 analyze_single_file(&input, output, recommend)?;
             } else if input.is_dir() {
                 analyze_directory(&input, recursive, output, recommend)?;
-            } else {
-                eprintln!("❌ Error: Input path does not exist: {}", input.display());
-                std::process::exit(1);
-            }
-        }
-
-        Commands::Convert {
-            input,
-            to,
-            output,
-            in_place,
-            recursive,
-        } => {
-            if input.is_file() {
-                convert_single_file(&input, &to, output.as_deref(), in_place)?;
-            } else if input.is_dir() {
-                convert_directory(&input, &to, output.as_deref(), in_place, recursive)?;
             } else {
                 eprintln!("❌ Error: Input path does not exist: {}", input.display());
                 std::process::exit(1);
@@ -294,74 +254,6 @@ fn analyze_directory(
 
     Ok(())
 }
-
-fn convert_single_file(
-    input: &PathBuf,
-    target_format: &str,
-    output_dir: Option<&std::path::Path>,
-    in_place: bool,
-) -> anyhow::Result<()> {
-    let analysis = analyze_image(input)?;
-    let recommendation = get_recommendation(&analysis);
-
-    let options = ConversionOptions {
-        target_format: target_format.to_string(),
-        output_dir: output_dir.map(|p| p.to_path_buf()),
-        in_place,
-        quality_params: recommendation.command.clone(),
-    };
-
-    println!("🔄 Converting: {}", input.display());
-    let output_path = convert_image(input, &options)?;
-    println!("✅ Converted to: {}", output_path.display());
-
-    Ok(())
-}
-
-fn convert_directory(
-    input: &PathBuf,
-    target_format: &str,
-    output_dir: Option<&std::path::Path>,
-    in_place: bool,
-    recursive: bool,
-) -> anyhow::Result<()> {
-    let image_extensions = ["png", "jpg", "jpeg", "webp", "gif", "tiff", "tif"];
-    
-    let walker = if recursive {
-        WalkDir::new(input).follow_links(true)
-    } else {
-        WalkDir::new(input).max_depth(1)
-    };
-
-    let mut success = 0;
-    let mut failed = 0;
-
-    for entry in walker {
-        let entry = entry?;
-        if !entry.file_type().is_file() {
-            continue;
-        }
-
-        let path = entry.path();
-        if let Some(ext) = path.extension() {
-            if image_extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str()) {
-                match convert_single_file(&path.to_path_buf(), target_format, output_dir, in_place) {
-                    Ok(_) => success += 1,
-                    Err(e) => {
-                        eprintln!("❌ Failed to convert {}: {}", path.display(), e);
-                        failed += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    println!("\n{}", "=".repeat(80));
-    println!("✅ Conversion complete: {} succeeded, {} failed", success, failed);
-
-    Ok(())
-}
-
 fn verify_conversion(original: &PathBuf, converted: &PathBuf) -> anyhow::Result<()> {
     println!("🔍 Verifying conversion quality...");
     println!("   Original:  {}", original.display());

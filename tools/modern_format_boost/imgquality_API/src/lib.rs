@@ -1,6 +1,5 @@
 // Core modules
 pub mod analyzer;
-pub mod converter;
 pub mod formats;
 pub mod heic_analysis;
 pub mod jpeg_analysis;
@@ -15,7 +14,6 @@ pub mod conversion_api;
 
 // Core exports
 pub use analyzer::{analyze_image, ImageAnalysis};
-pub use converter::{convert_image, ConversionOptions};
 pub use heic_analysis::HeicAnalysis;
 pub use jpeg_analysis::JpegQualityAnalysis;
 pub use lossless_converter::{ConversionResult, ConvertOptions};
