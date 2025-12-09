@@ -159,6 +159,26 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
             let output_size = fs::metadata(&output)?.len();
             let reduction = 1.0 - (output_size as f64 / input_size as f64);
             
+            // 🔥 智能回退：如果转换后文件变大，删除输出并跳过
+            // 这对于小型PNG或已高度优化的图片很常见
+            if output_size > input_size {
+                let _ = fs::remove_file(&output);
+                eprintln!("   ⏭️  Rollback: JXL larger than original ({} → {} bytes, +{:.1}%)", 
+                    input_size, output_size, (output_size as f64 / input_size as f64 - 1.0) * 100.0);
+                mark_as_processed(input);
+                return Ok(ConversionResult {
+                    success: true,
+                    input_path: input.display().to_string(),
+                    output_path: None,
+                    input_size,
+                    output_size: None,
+                    size_reduction: None,
+                    message: format!("Skipped: JXL would be larger (+{:.1}%)", (output_size as f64 / input_size as f64 - 1.0) * 100.0),
+                    skipped: true,
+                    skip_reason: Some("size_increase".to_string()),
+                });
+            }
+            
             // Validate output
             if let Err(e) = verify_jxl_health(&output) {
                  let _ = fs::remove_file(&output);
@@ -851,6 +871,25 @@ pub fn convert_to_jxl_matched(
         Ok(output_cmd) if output_cmd.status.success() => {
             let output_size = fs::metadata(&output)?.len();
             let reduction = 1.0 - (output_size as f64 / input_size as f64);
+            
+            // 🔥 智能回退：如果转换后文件变大，删除输出并跳过
+            if output_size > input_size {
+                let _ = fs::remove_file(&output);
+                eprintln!("   ⏭️  Rollback: JXL larger than original ({} → {} bytes, +{:.1}%)", 
+                    input_size, output_size, (output_size as f64 / input_size as f64 - 1.0) * 100.0);
+                mark_as_processed(input);
+                return Ok(ConversionResult {
+                    success: true,
+                    input_path: input.display().to_string(),
+                    output_path: None,
+                    input_size,
+                    output_size: None,
+                    size_reduction: None,
+                    message: format!("Skipped: JXL would be larger (+{:.1}%)", (output_size as f64 / input_size as f64 - 1.0) * 100.0),
+                    skipped: true,
+                    skip_reason: Some("size_increase".to_string()),
+                });
+            }
             
             // Validate output
             if let Err(e) = verify_jxl_health(&output) {

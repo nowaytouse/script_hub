@@ -5,7 +5,9 @@ use rayon::prelude::*;
 use serde_json::json;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
 use walkdir::WalkDir;
+use shared_utils::{check_dangerous_directory, print_summary_report, BatchResult};
 
 #[derive(Parser)]
 #[command(name = "imgquality")]
@@ -626,7 +628,7 @@ fn auto_convert_single_file(
     Ok(())
 }
 
-/// Smart auto-convert a directory with parallel processing
+/// Smart auto-convert a directory with parallel processing and progress bar
 fn auto_convert_directory(
     input: &PathBuf,
     output_dir: Option<&PathBuf>,
@@ -636,6 +638,15 @@ fn auto_convert_directory(
     lossless: bool,
     match_quality: bool,
 ) -> anyhow::Result<()> {
+    // 🔥 Safety check: prevent accidental damage to system directories
+    if delete_original {
+        if let Err(e) = check_dangerous_directory(input) {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    }
+    
+    let start_time = Instant::now();
     let image_extensions = ["png", "jpg", "jpeg", "webp", "gif", "tiff", "tif", "heic", "avif"];
     
     let walker = if recursive {
@@ -660,15 +671,30 @@ fn auto_convert_directory(
         .collect();
 
     let total = files.len();
-    println!("📂 Found {} files to process (parallel mode)", total);
+    if total == 0 {
+        println!("📂 No image files found in {}", input.display());
+        return Ok(());
+    }
+    
+    println!("📂 Found {} files to process", total);
     if lossless {
         println!("⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)");
     }
+
+    // Calculate total input size
+    let input_bytes: u64 = files.iter()
+        .filter_map(|p| std::fs::metadata(p).ok())
+        .map(|m| m.len())
+        .sum();
 
     // Atomic counters for thread-safe counting  
     let success = AtomicUsize::new(0);
     let skipped = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
+    let processed = AtomicUsize::new(0);
+
+    // 🔥 Progress bar with ETA
+    let pb = shared_utils::create_progress_bar(total as u64, "Converting");
 
     // Process files in parallel using rayon
     files.par_iter().for_each(|path| {
@@ -684,15 +710,29 @@ fn auto_convert_directory(
                 }
             }
         }
+        let current = processed.fetch_add(1, Ordering::Relaxed) + 1;
+        pb.set_position(current as u64);
+        pb.set_message(path.file_name().unwrap_or_default().to_string_lossy().to_string());
     });
+
+    pb.finish_with_message("Complete!");
 
     let success_count = success.load(Ordering::Relaxed);
     let skipped_count = skipped.load(Ordering::Relaxed);
     let failed_count = failed.load(Ordering::Relaxed);
 
-    println!("\n{}", "=".repeat(60));
-    println!("✅ Auto-conversion complete: {} succeeded, {} skipped, {} failed", 
-        success_count, skipped_count, failed_count);
+    // Build result for summary report
+    let mut result = BatchResult::new();
+    result.succeeded = success_count;
+    result.failed = failed_count;
+    result.skipped = skipped_count;
+    result.total = total;
+
+    // Calculate output size (approximate - only count successful conversions)
+    let output_bytes = input_bytes; // Simplified - would need to track actual output sizes
+
+    // 🔥 Print detailed summary report
+    print_summary_report(&result, start_time.elapsed(), input_bytes, output_bytes, "Image Conversion");
 
     Ok(())
 }

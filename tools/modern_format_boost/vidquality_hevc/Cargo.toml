@@ -41,6 +41,9 @@ which = "6.0"
 # Regex for parsing ffprobe output
 regex = "1.10"
 
+# Shared utilities (progress bar, safety checks, batch processing)
+shared_utils = { path = "../shared_utils" }
+
 [profile.release]
 lto = true
 opt-level = 3

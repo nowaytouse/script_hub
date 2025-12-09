@@ -46,6 +46,9 @@ libheif-rs = "1.0"
 # Lazy static for anti-duplicate mechanism
 lazy_static = "1.5"
 
+# Shared utilities (progress bar, safety checks, batch processing)
+shared_utils = { path = "../shared_utils" }
+
 [profile.release]
 opt-level = 3
 lto = true

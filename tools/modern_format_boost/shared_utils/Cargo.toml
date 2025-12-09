@@ -1,0 +1,22 @@
+[package]
+name = "shared_utils"
+version = "0.1.0"
+edition = "2021"
+description = "Shared utilities for modern_format_boost tools"
+authors = ["Pixly Team"]
+
+[dependencies]
+# Progress bar
+indicatif = "0.17"
+# Terminal colors
+console = "0.15"
+# Time formatting
+chrono = "0.4"
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Directory walking
+walkdir = "2.4"
+
+[features]
+default = []
