@@ -222,6 +222,7 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
     MERGED_MODULES = [
         "🎯 App去广告大合集",      # narrow_pierce合集
         "🛡️ 广告拦截大合集",        # head_expanse合集
+        "🚀 功能增强大合集",        # amplify_nexus合集
     ]
     
     # head_expanse中被合并的原始模块
@@ -237,6 +238,33 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
         "2.去除小程序和其他应用广告",
         "[Sukka] Enhance Better ADBlock for Surge",
         "[Sukka] URL Rewrite",
+    ]
+    
+    # amplify_nexus中被合并的原始模块（排除VVebo_Repair）
+    AMPLIFY_NEXUS_MERGED_SOURCES = [
+        "📺 BiliBili: ⚙️ Enhanced",
+        "📺 BiliBili: 🌐 Global",
+        "📺 BiliBili: 🔀 Redirect",
+        "🍿️ DualSubs: 🔣 Universal",
+        "Encrypted DNS Module 🔒🛡️DNS",
+        "功能｜预览 QX 资源",
+        "机场订阅信息",
+        "Sub-Store(β)",
+        "TikTok US",
+        "节假日信息",
+        "URL Rewrite Module 🔄🌐",
+        "Wi-Fi Calling UK",
+        "Wi-Fi Calling US",
+        "Youtube (Music) Enhance",
+        "BoxJs",
+        " Enable iCloud Private Relay on gateway",
+        " iRingo: 🗺️ Maps",
+        " iRingo: 📰 News",
+        " iRingo: 📺 TV app",
+        " iRingo: 🌤 WeatherKit",
+        "网络信息 𝕏",
+        "苹果助手模块",
+        "🌐 DNS & Host Enhanced",
     ]
     
     for cat_key, cat_data in modules.items():
@@ -268,6 +296,10 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
             
             # head_expanse中被合并的原始模块也标记
             if cat_key == "head_expanse" and item["name"] in HEAD_EXPANSE_MERGED_SOURCES:
+                js_item["hasmerged"] = True
+            
+            # amplify_nexus中被合并的原始模块也标记
+            if cat_key == "amplify_nexus" and item["name"] in AMPLIFY_NEXUS_MERGED_SOURCES:
                 js_item["hasmerged"] = True
             
             # 添加兼容性信息

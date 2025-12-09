@@ -19,13 +19,16 @@ name: Update Rulesets
 #   ❌ No iCloud sync (--unattended skip)
 #   ❌ No Surge profile sync (--unattended skip)
 #
-# Schedule: Daily at UTC 04:00 (12:00 Beijing Time)
+# Schedule: Twice daily
+#   - UTC 20:00 (04:00 Beijing Time next day) - 凌晨更新
+#   - UTC 04:00 (12:00 Beijing Time) - 中午更新
 # Manual trigger: workflow_dispatch
 # ═══════════════════════════════════════════════════════════════
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # Runs at 04:00 UTC everyday (12:00 Beijing Time)
+    - cron: '0 20 * * *'  # Runs at 20:00 UTC (04:00 Beijing Time next day)
+    - cron: '0 4 * * *'   # Runs at 04:00 UTC (12:00 Beijing Time)
   workflow_dispatch:      # Allows manual run
 
 jobs:
