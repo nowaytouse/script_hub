@@ -16,7 +16,7 @@ pub enum TargetFormat {
     JXL,
     /// AVIF - AV1 based image format
     AVIF,
-    /// HEVC MP4 - for animated images, CRF 18 high quality
+    /// HEVC MP4 - for animated images, CRF 0 visually lossless
     HEVCMP4,
     /// Keep original format
     NoConversion,
@@ -104,16 +104,16 @@ pub fn determine_strategy(detection: &DetectionResult) -> ConversionStrategy {
             }
         }
         
-        // Animated lossless (GIF, APNG, animated WebP lossless) -> HEVC MP4 CRF 18
+        // Animated lossless (GIF, APNG, animated WebP lossless) -> HEVC MP4 CRF 0 (visually lossless)
         (ImageType::Animated, CompressionType::Lossless, _) => {
             let input_path = &detection.file_path;
             let output_path = Path::new(input_path).with_extension("mp4");
             let fps = detection.fps.unwrap_or(10.0);
             ConversionStrategy {
                 target: TargetFormat::HEVCMP4,
-                reason: "Animated lossless image, recommend HEVC MP4 with CRF 18 (high quality)".to_string(),
+                reason: "Animated lossless image, recommend HEVC MP4 with CRF 0 (visually lossless)".to_string(),
                 command: format!(
-                    "ffmpeg -i '{}' -c:v libx265 -crf 18 -preset medium -tag:v hvc1 -r {} '{}'",
+                    "ffmpeg -i '{}' -c:v libx265 -crf 0 -preset medium -tag:v hvc1 -r {} '{}'",
                     input_path,
                     fps,
                     output_path.display()
@@ -297,7 +297,7 @@ fn convert_to_avif(input: &Path, output: &Path, quality: Option<u8>) -> Result<(
     Ok(())
 }
 
-/// Convert animated image to HEVC MP4 with CRF 18 (high quality)
+/// Convert animated image to HEVC MP4 with CRF 0 (visually lossless, 与 AV1 CRF 0 对应)
 fn convert_to_hevc_mp4(input: &Path, output: &Path, fps: Option<f32>, width: u32, height: u32) -> Result<()> {
     let fps_str = fps.unwrap_or(10.0).to_string();
     
@@ -313,7 +313,7 @@ fn convert_to_hevc_mp4(input: &Path, output: &Path, fps: Option<f32>, width: u32
         .arg("-threads").arg(max_threads.to_string())
         .arg("-i").arg(input)
         .arg("-c:v").arg("libx265")
-        .arg("-crf").arg("18")       // High quality
+        .arg("-crf").arg("0")       // Visually lossless (与 AV1 CRF 0 对应)
         .arg("-preset").arg("medium")
         .arg("-tag:v").arg("hvc1")   // Apple 兼容性
         .arg("-x265-params").arg(&x265_params)
@@ -442,7 +442,7 @@ pub fn simple_convert(path: &Path, output_dir: Option<&Path>) -> Result<Conversi
     
     // Execute conversion
     let result = if is_animated {
-        // Animated → HEVC MP4 CRF 18
+        // Animated → HEVC MP4 CRF 0 (visually lossless)
         convert_to_hevc_mp4(input_path, &output_path, detection.fps, detection.width, detection.height)
     } else {
         // Static → JXL lossless

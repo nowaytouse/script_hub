@@ -325,7 +325,7 @@ pub fn convert_to_avif(input: &Path, quality: Option<u8>, options: &ConvertOptio
     }
 }
 
-/// Convert animated lossless to HEVC MP4 (CRF 18 high quality)
+/// Convert animated lossless to HEVC MP4 (CRF 0 visually lossless, 与 AV1 CRF 0 对应)
 pub fn convert_to_hevc_mp4(input: &Path, options: &ConvertOptions) -> Result<ConversionResult> {
     // Anti-duplicate check
     if !options.force && is_already_processed(input) {
@@ -364,7 +364,7 @@ pub fn convert_to_hevc_mp4(input: &Path, options: &ConvertOptions) -> Result<Con
     let (width, height) = get_input_dimensions(input)?;
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
     
-    // HEVC with CRF 18 for high quality
+    // HEVC with CRF 0 for visually lossless (与 AV1 CRF 0 对应)
     // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let x265_params = format!("log-level=error:pools={}", max_threads);
@@ -373,7 +373,7 @@ pub fn convert_to_hevc_mp4(input: &Path, options: &ConvertOptions) -> Result<Con
         .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
         .arg("-c:v").arg("libx265")
-        .arg("-crf").arg("18")    // High quality
+        .arg("-crf").arg("0")    // Visually lossless (与 AV1 CRF 0 对应)
         .arg("-preset").arg("medium")
         .arg("-tag:v").arg("hvc1")  // Apple 兼容性
         .arg("-x265-params").arg(&x265_params);
@@ -559,7 +559,7 @@ pub fn convert_to_hevc_mp4_matched(
         });
     }
     
-    // Calculate matched CRF based on input characteristics (HEVC CRF range: 18-32)
+    // Calculate matched CRF based on input characteristics (HEVC CRF range: 0-32)
     let crf = calculate_matched_crf_for_animation_hevc(analysis, input_size);
     eprintln!("   🎯 Matched HEVC CRF: {} (based on input quality analysis)", crf);
     
@@ -705,8 +705,8 @@ fn calculate_matched_crf_for_animation_hevc(analysis: &crate::ImageAnalysis, fil
         23.0
     };
     
-    // Clamp to reasonable range [18, 32] for HEVC
-    let crf = (crf_float.round() as i32).clamp(18, 32) as u8;
+    // Clamp to reasonable range [0, 32] for HEVC (与 AV1 CRF 0 对应，允许视觉无损)
+    let crf = (crf_float.round() as i32).clamp(0, 32) as u8;
     
     eprintln!("   📊 Quality Analysis:");
     eprintln!("      Raw bpps: {:.4} bytes/pixel/second", bpps);
