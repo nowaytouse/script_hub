@@ -103,6 +103,9 @@ typedef struct {
     int skipped_raw;
     int skipped_small;
     int skipped_tiff_jpeg;
+    int skipped_larger;      // Files where JXL was larger (rollback)
+    int metadata_full;       // Files with full metadata preserved
+    int metadata_partial;    // Files with partial metadata
 } Stats;
 
 // Global state

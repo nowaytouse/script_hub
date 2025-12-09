@@ -14,10 +14,26 @@
 
 - 🚀 **多线程并行处理** - 充分利用多核 CPU
 - 🎯 **智能模式选择** - 根据源格式自动选择有损/无损模式
-- 📋 **完整元数据保留** - EXIF, XMP, IPTC, ICC Profile
-- ⏰ **系统时间戳保留** - 保持文件修改时间
+- 📋 **完整元数据保留** - 5 层元数据保留（见下方详细说明）
+- ⏰ **系统时间戳保留** - 保持文件修改时间（在最后设置，避免被覆盖）
 - 🏥 **健康检查验证** - 确保输出文件可用
 - 🔒 **安全检查** - 防止误操作系统目录
+- 🔄 **智能回退** - 如果 JXL 比原文件大，自动跳过
+- 📊 **详细统计报告** - 按格式分类、压缩率、跳过原因
+
+### 元数据保留（5 层）
+
+遵循 `media/CONTRIBUTING.md` 的元数据保留要求：
+
+| 层级 | 内容 | 工具 |
+|------|------|------|
+| **Layer 1** | 内部元数据 (EXIF, IPTC, XMP, ICC Profile) | exiftool |
+| **Layer 2** | macOS 扩展属性 (xattr) | xattr |
+| **Layer 3** | 系统时间戳 (mtime, atime) | utimes() |
+| **Layer 4** | macOS 创建时间 (birthtime) | SetFile |
+| **Layer 5** | 元数据验证 (verbose 模式) | exiftool |
+
+**关键**：时间戳必须在最后设置！因为 exiftool 会修改文件，从而更新时间戳。
 
 ### 支持的格式
 
@@ -144,10 +160,26 @@ sudo apt install libjxl-tools libimage-exiftool-perl
 
 - 🚀 **Multi-threaded Processing** - Fully utilize multi-core CPUs
 - 🎯 **Smart Mode Selection** - Auto-select lossy/lossless based on source format
-- 📋 **Complete Metadata Preservation** - EXIF, XMP, IPTC, ICC Profile
-- ⏰ **Timestamp Preservation** - Keep file modification times
+- 📋 **Complete Metadata Preservation** - 5-layer metadata preservation (see below)
+- ⏰ **Timestamp Preservation** - Keep file modification times (set LAST to avoid overwrite)
 - 🏥 **Health Check Validation** - Ensure output files are valid
 - 🔒 **Safety Checks** - Prevent accidental operations on system directories
+- 🔄 **Smart Rollback** - Auto-skip if JXL is larger than original
+- 📊 **Detailed Statistics** - By format, compression ratio, skip reasons
+
+### Metadata Preservation (5 Layers)
+
+Following `media/CONTRIBUTING.md` requirements:
+
+| Layer | Content | Tool |
+|-------|---------|------|
+| **Layer 1** | Internal (EXIF, IPTC, XMP, ICC Profile) | exiftool |
+| **Layer 2** | macOS Extended Attributes (xattr) | xattr |
+| **Layer 3** | System Timestamps (mtime, atime) | utimes() |
+| **Layer 4** | macOS Creation Time (birthtime) | SetFile |
+| **Layer 5** | Metadata Verification (verbose mode) | exiftool |
+
+**Critical**: Timestamps MUST be set LAST! exiftool modifies the file, which updates timestamps.
 
 ### Supported Formats
 
