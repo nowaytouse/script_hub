@@ -41,6 +41,25 @@ CONVERSION_RULES = {
     "%INSERT%": "",
 }
 
+# DNS相关转换规则 - Shadowrocket不支持h3/https DNS语法
+# 需要转换为普通IP或移除
+DNS_CONVERSION_PATTERNS = [
+    # h3:// DoH → 普通DNS IP
+    (r'server:h3://dns\.alidns\.com/dns-query', 'server:223.5.5.5'),
+    (r'server:h3://dns\.google/dns-query', 'server:8.8.8.8'),
+    (r'server:h3://cloudflare-dns\.com/dns-query', 'server:1.1.1.1'),
+    # https:// DoH → 普通DNS IP
+    (r'server:https://doh\.pub/dns-query', 'server:119.29.29.29'),
+    (r'server:https://dns\.twnic\.tw/dns-query', 'server:101.101.101.101'),
+    (r'server:https://doh\.360\.cn/dns-query', 'server:101.198.198.198'),
+    (r'server:https://ordns\.he\.net/dns-query', 'server:74.82.42.42'),
+    (r'server:https://dns\.hinet\.net/dns-query', 'server:168.95.1.1'),
+    (r'server:https://dns11\.quad9\.net/dns-query', 'server:9.9.9.11'),
+    # 通用模式 - 移除无法转换的DoH
+    (r'server:h3://[^\s,]+', 'server:system'),
+    (r'server:https://[^\s,]+', 'server:system'),
+]
+
 # 需要移除的Surge专属行
 REMOVE_PATTERNS = [
     r'^#!update-interval\s*=.*$',      # 更新间隔
@@ -100,6 +119,16 @@ def convert_module_content(content: str, filename: str) -> tuple[str, list]:
         line = re.sub(r',\s*,', ',', line)
         line = re.sub(r',\s*$', '', line)
         line = re.sub(r'^\s*,', '', line)
+        
+        # 🔥 DNS转换：h3:// 和 https:// DoH → 普通DNS IP
+        # Shadowrocket不支持 server:h3:// 和 server:https:// 语法
+        for pattern, replacement in DNS_CONVERSION_PATTERNS:
+            if re.search(pattern, line):
+                old_line = line
+                line = re.sub(pattern, replacement, line)
+                if line != old_line:
+                    changes.append(f"DNS转换: {old_line.strip()[:50]} → {line.strip()[:50]}")
+                    modified = True
         
         if modified and line != original_line:
             changes.append(f"转换: {original_line.strip()[:40]} → {line.strip()[:40]}")
