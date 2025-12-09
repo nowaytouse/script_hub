@@ -2,27 +2,17 @@
 
 Shared utility library for modern_format_boost tools (imgquality, vidquality, vidquality-hevc).
 
-## Features
+## Modules
 
 ### 1. Progress Bar (`progress.rs`)
-Visual progress feedback with ETA estimation, following media/CONTRIBUTING.md requirements.
+Visual progress feedback with ETA estimation.
 
 ```rust
 use shared_utils::{create_progress_bar, BatchProgress, format_bytes, format_duration};
 
-// Simple progress bar
 let pb = create_progress_bar(100, "Converting");
-for i in 0..100 {
-    pb.inc(1);
-}
+pb.inc(1);
 pb.finish_with_message("Done!");
-
-// Batch progress with statistics
-let mut progress = BatchProgress::new(100, "Processing");
-progress.success("file1.png");
-progress.fail("file2.png");
-progress.skip("file3.png");
-progress.finish();
 ```
 
 ### 2. Safety Checks (`safety.rs`)
@@ -30,12 +20,7 @@ Prevent accidental damage to system directories.
 
 ```rust
 use shared_utils::check_dangerous_directory;
-
-// Will error if path is /System, /usr, etc.
 check_dangerous_directory(Path::new("/Users/me/Documents/photos"))?;
-
-// For destructive operations (delete, in-place replace)
-check_safe_for_destructive(path, "delete")?;
 ```
 
 ### 3. Batch Processing (`batch.rs`)
@@ -43,16 +28,7 @@ Utilities for batch file processing.
 
 ```rust
 use shared_utils::{collect_files, IMAGE_EXTENSIONS, BatchResult};
-
-// Collect all image files recursively
 let files = collect_files(Path::new("./photos"), IMAGE_EXTENSIONS, true);
-
-// Track batch results
-let mut result = BatchResult::new();
-result.success();
-result.fail(path, "Error message".to_string());
-result.skip();
-println!("Success rate: {:.1}%", result.success_rate());
 ```
 
 ### 4. Summary Reports (`report.rs`)
@@ -60,12 +36,48 @@ Detailed reporting after batch operations.
 
 ```rust
 use shared_utils::{print_summary_report, print_health_report};
+print_summary_report(&result, duration, input_bytes, output_bytes, "Conversion");
+```
 
-// Print detailed summary
-print_summary_report(&result, duration, input_bytes, output_bytes, "Image Conversion");
+### 5. FFprobe Wrapper (`ffprobe.rs`) 🆕
+Video/animation analysis using ffprobe.
 
-// Print health check report
-print_health_report(passed, failed, warnings);
+```rust
+use shared_utils::{probe_video, get_duration, get_frame_count, FFprobeResult};
+
+// Full video analysis
+let result = probe_video(Path::new("video.mp4"))?;
+println!("Codec: {}, Duration: {}s", result.video_codec, result.duration);
+
+// Quick duration check
+let duration = get_duration(Path::new("animation.gif"));
+```
+
+### 6. External Tools (`tools.rs`) 🆕
+Check for required external tools.
+
+```rust
+use shared_utils::{check_image_tools, check_video_tools, require_tools, print_tool_report};
+
+// Check all image processing tools
+let tools = check_image_tools();
+print_tool_report(&tools);
+
+// Require specific tools (exits with error if missing)
+require_tools(&["ffmpeg", "cjxl", "exiftool"])?;
+```
+
+### 7. Codec Information (`codecs.rs`) 🆕
+Video codec detection and information.
+
+```rust
+use shared_utils::{DetectedCodec, get_codec_info, CodecCategory};
+
+let codec = DetectedCodec::from_ffprobe("h264");
+println!("Codec: {}, Modern: {}", codec.as_str(), codec.is_modern());
+
+let info = get_codec_info("av1");
+println!("Category: {:?}", info.category);
 ```
 
 ## Usage
@@ -81,6 +93,7 @@ shared_utils = { path = "../shared_utils" }
 
 Following media/CONTRIBUTING.md:
 - **Visual Progress Bar**: `[████░░] 67%` with ETA estimation
-- **Robust Safety & Loud Errors**: Dangerous directory detection with clear error messages
-- **Batch Processing Capability**: Efficient file collection and parallel processing support
-- **Detailed Reporting**: Comprehensive summary reports with statistics
+- **Robust Safety & Loud Errors**: Dangerous directory detection
+- **Batch Processing Capability**: Efficient file collection
+- **Detailed Reporting**: Comprehensive summary reports
+- **Code Reuse**: Eliminate duplicate code across tools

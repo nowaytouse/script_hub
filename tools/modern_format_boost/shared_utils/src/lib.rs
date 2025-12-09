@@ -5,13 +5,22 @@
 //! - Safety checks (dangerous directory detection)
 //! - Batch processing utilities
 //! - Common logging and reporting
+//! - FFprobe wrapper for video analysis
+//! - External tools detection
+//! - Codec information
 
 pub mod progress;
 pub mod safety;
 pub mod batch;
 pub mod report;
+pub mod ffprobe;
+pub mod tools;
+pub mod codecs;
 
 pub use progress::*;
 pub use safety::*;
 pub use batch::*;
 pub use report::*;
+pub use ffprobe::{FFprobeResult, FFprobeError, probe_video, get_duration, get_frame_count, parse_frame_rate, detect_bit_depth, is_ffprobe_available};
+pub use tools::*;
+pub use codecs::*;
