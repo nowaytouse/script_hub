@@ -106,7 +106,10 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     awk '/^\[Rule\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
     grep -v '^#' | grep -v '^$' | grep -v '^RULE-SET' | \
     sed 's/  */ /g' | \
-    grep -E "^DOMAIN|^IP-CIDR|^USER-AGENT|^URL-REGEX|^PROCESS-NAME|^DOMAIN-REGEX" | \
+    grep -E "^(DOMAIN|IP-CIDR|IP-CIDR6|USER-AGENT|URL-REGEX|PROCESS-NAME|DOMAIN-REGEX|DOMAIN-SUFFIX|DOMAIN-KEYWORD|AND,|OR,|NOT,)" | \
+    # Filter out incomplete AND/OR/NOT rules (must end with policy like REJECT)
+    grep -v '^AND,((DOMAIN$' | grep -v '^AND,((DOMAIN-SUFFIX$' | \
+    grep -v '^OR,((DOMAIN$' | grep -v '^NOT,((DOMAIN$' | \
     # Filter out invalid DOMAIN-REGEX rules
     grep -v '^DOMAIN-REGEX,\s*$' | \
     grep -v '^DOMAIN-REGEX,[^,]*$' | \
