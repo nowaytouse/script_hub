@@ -10,6 +10,7 @@
 //! - Codec information
 //! - Metadata preservation (EXIF/IPTC/xattr/timestamps/ACL)
 //! - Conversion utilities (ConversionResult, ConvertOptions, anti-duplicate)
+//! - Date analysis (deep EXIF/XMP date extraction)
 
 pub mod progress;
 pub mod safety;
@@ -21,6 +22,7 @@ pub mod codecs;
 pub mod metadata;
 pub mod conversion;
 pub mod video;
+pub mod date_analysis;
 
 pub use progress::*;
 pub use safety::*;
@@ -32,3 +34,4 @@ pub use codecs::*;
 pub use metadata::{preserve_metadata, preserve_pro};
 pub use conversion::*;
 pub use video::*;
+pub use date_analysis::{analyze_directory, DateAnalysisConfig, DateAnalysisResult, FileDateInfo, DateSource, print_analysis};
