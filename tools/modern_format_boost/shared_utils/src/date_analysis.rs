@@ -106,6 +106,7 @@ impl Default for DateAnalysisConfig {
 
 /// Raw exiftool JSON output structure
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)] // Fields used for deserialization completeness
 struct ExiftoolOutput {
     #[serde(rename = "SourceFile")]
     source_file: Option<String>,
@@ -136,10 +137,6 @@ pub fn analyze_directory(dir: &Path, config: &DateAnalysisConfig) -> Result<Date
     }
     
     // Build exiftool command
-    let ext_args: Vec<String> = config.extensions.iter()
-        .map(|e| format!("-ext {}", e))
-        .collect();
-    
     let output = Command::new("exiftool")
         .arg("-r")
         .arg("-j")
