@@ -219,7 +219,25 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
     js_modules = {}
     
     # 合并版本模块名称（推荐使用）
-    MERGED_MODULES = ["🎯 App去广告大合集"]
+    MERGED_MODULES = [
+        "🎯 App去广告大合集",      # narrow_pierce合集
+        "🛡️ 广告拦截大合集",        # head_expanse合集
+    ]
+    
+    # head_expanse中被合并的原始模块
+    HEAD_EXPANSE_MERGED_SOURCES = [
+        "AWAvenue Ads Rule",
+        "毒奶特供",
+        "AD ByeBye+ 2.x",
+        "AllInOne",
+        "可莉广告过滤器",
+        "广告平台拦截器",
+        "广告联盟去广告",
+        "1.去除常用软件广告",
+        "2.去除小程序和其他应用广告",
+        "[Sukka] Enhance Better ADBlock for Surge",
+        "[Sukka] URL Rewrite",
+    ]
     
     for cat_key, cat_data in modules.items():
         js_modules[cat_key] = {
@@ -247,6 +265,10 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
             # narrow_pierce分类的原始模块标记为"已合并到大合集"
             if cat_key == "narrow_pierce":
                 js_item["hasmerged"] = True  # 标记有合并版本可用
+            
+            # head_expanse中被合并的原始模块也标记
+            if cat_key == "head_expanse" and item["name"] in HEAD_EXPANSE_MERGED_SOURCES:
+                js_item["hasmerged"] = True
             
             # 添加兼容性信息
             compat_info = compat_data.get(item["name"], {})
