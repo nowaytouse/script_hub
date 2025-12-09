@@ -134,6 +134,17 @@ fn main() -> anyhow::Result<()> {
                     .map(|e| e.path())
                     .collect();
                 
+                // 🔥 响亮报错：目录中没有视频文件
+                if files.is_empty() {
+                    anyhow::bail!(
+                        "❌ 目录中没有找到视频文件: {}\n\
+                         💡 支持的视频格式: {}\n\
+                         💡 如果要处理图像，请使用 imgquality 工具",
+                        input.display(),
+                        video_extensions.join(", ")
+                    );
+                }
+                
                 info!("📂 Found {} video files to process", files.len());
                 
                 let mut success = 0;
@@ -159,6 +170,25 @@ fn main() -> anyhow::Result<()> {
                 info!("");
                 info!("📊 Batch Summary: {} succeeded, {} failed", success, failed);
             } else {
+                // 🔥 单文件处理：先检查是否是视频文件
+                let video_extensions = ["mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "mts"];
+                let ext = input.extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| e.to_lowercase())
+                    .unwrap_or_default();
+                
+                if !video_extensions.contains(&ext.as_str()) {
+                    anyhow::bail!(
+                        "❌ 不是视频文件: {}\n\
+                         💡 文件扩展名: .{}\n\
+                         💡 支持的视频格式: {}\n\
+                         💡 如果要处理图像，请使用 imgquality 工具",
+                        input.display(),
+                        ext,
+                        video_extensions.join(", ")
+                    );
+                }
+                
                 let result = auto_convert(&input, &config)?;
                 
                 info!("");
