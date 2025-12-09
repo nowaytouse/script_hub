@@ -385,7 +385,18 @@ STEP=$((STEP + 1))
 if [ "$SKIP_MODULE" = false ]; then
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Module consolidation + URL generation...${NC}"
     
-    # Run module consolidation script
+    # Step 7a: Merge narrow pierce modules into combined modules
+    if [ -f "${SCRIPT_DIR}/merge_narrow_pierce_modules.py" ]; then
+        log_info "Merging narrow pierce modules..."
+        if [ "$VERBOSE" = true ]; then
+            python3 "${SCRIPT_DIR}/merge_narrow_pierce_modules.py"
+        else
+            python3 "${SCRIPT_DIR}/merge_narrow_pierce_modules.py" 2>&1 | grep -E "^\[" || true
+        fi
+        log_success "Narrow pierce modules merged"
+    fi
+    
+    # Step 7b: Run module consolidation script
     if [ -f "${SCRIPT_DIR}/consolidate_modules.py" ]; then
         log_info "Running module consolidation..."
         if [ "$VERBOSE" = true ]; then
