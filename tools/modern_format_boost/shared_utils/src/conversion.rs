@@ -99,6 +99,11 @@ pub struct ConversionResult {
 
 impl ConversionResult {
     /// Create a skipped result (already processed)
+    /// 
+    /// 注意：这里使用 unwrap_or(0) 是合理的，因为：
+    /// 1. 这是跳过场景，文件大小仅用于显示目的
+    /// 2. 如果文件不存在（极端情况），返回0不会影响功能
+    /// 3. 跳过的文件不会被转换，所以大小信息不影响质量
     pub fn skipped_duplicate(input: &Path) -> Self {
         Self {
             success: true,
@@ -114,6 +119,8 @@ impl ConversionResult {
     }
     
     /// Create a skipped result (output exists)
+    /// 
+    /// 注意：这里使用 unwrap_or(0) 是合理的（同上）
     pub fn skipped_exists(input: &Path, output: &Path) -> Self {
         let input_size = fs::metadata(input).map(|m| m.len()).unwrap_or(0);
         Self {

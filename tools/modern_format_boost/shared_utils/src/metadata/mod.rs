@@ -27,6 +27,12 @@ pub use exif::preserve_internal_metadata;
 /// Nuclear Preservation: The Ultimate Metadata Strategy
 /// 
 /// Performance: ~100-300ms per file on macOS (copyfile + exiftool)
+/// 
+/// 🔥 质量宣言说明：元数据保留失败时打印警告但继续是合理的，因为：
+/// 1. 元数据丢失不应阻止文件转换（核心功能）
+/// 2. 用户会看到警告消息，知道发生了什么
+/// 3. 某些格式（如 MP4）可能不支持某些元数据类型
+/// 4. 这是"尽力而为"的策略，而非"全有或全无"
 pub fn preserve_pro(src: &Path, dst: &Path) -> io::Result<()> {
     // 🚀 Performance: macOS fast path - copyfile first (handles ACL, xattr, timestamps)
     #[cfg(target_os = "macos")]

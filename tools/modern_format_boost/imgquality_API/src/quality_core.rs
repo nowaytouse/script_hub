@@ -151,6 +151,11 @@ fn calculate_entropy(img: &DynamicImage) -> f64 {
 
 /// Generate conversion recommendation based on analysis
 /// JPEG uses JXL with --lossless_jpeg=1 for lossless DCT transcode (special case)
+/// 
+/// 注意：这里使用 unwrap_or("output") 和 unwrap_or(".") 是合理的，因为：
+/// 1. 这只是生成推荐命令字符串，不影响实际转换
+/// 2. 用户会看到生成的命令并可以修改
+/// 3. 极端情况下使用默认值不会导致数据损失
 pub fn generate_recommendation(
     format: &str,
     is_lossless: bool,

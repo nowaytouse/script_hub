@@ -68,6 +68,11 @@ pub fn check_dangerous_directory(path: &Path) -> Result<(), String> {
     
     // Check if path is a direct child of dangerous directories (e.g., /Users/username)
     // Allow deeper paths like /Users/username/Documents
+    // 
+    // 注意：这里使用 unwrap_or_else 是合理的，因为：
+    // 1. canonicalize 失败通常意味着路径不存在（新文件）
+    // 2. 使用原路径进行安全检查是保守的策略
+    // 3. 如果路径真的危险，后续检查仍会捕获
     let canonical = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
     let components: Vec<_> = canonical.components().collect();
     
@@ -101,6 +106,7 @@ pub fn check_safe_for_destructive(path: &Path, operation: &str) -> Result<(), St
     check_dangerous_directory(path)?;
     
     // Additional checks for destructive operations
+    // 注意：同上，canonicalize 失败时使用原路径是安全的
     let canonical = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
     let path_str = canonical.to_string_lossy();
     

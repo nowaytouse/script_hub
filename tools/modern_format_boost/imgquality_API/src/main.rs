@@ -566,7 +566,15 @@ fn auto_convert_single_file(
         // Animated lossless → AV1 MP4 (only if >=3 seconds)
         (_, true, true) => {
             // Check duration - only convert animations >=3 seconds
-            let duration = analysis.duration_secs.unwrap_or(0.0);
+            // 🔥 质量宣言：时长未知时使用保守策略（跳过），并响亮警告
+            let duration = match analysis.duration_secs {
+                Some(d) if d > 0.0 => d,
+                _ => {
+                    eprintln!("⚠️  无法获取动画时长，跳过转换: {}", input.display());
+                    eprintln!("   💡 可能原因: ffprobe 未安装或文件格式不支持时长检测");
+                    return Ok(());
+                }
+            };
             if duration < 3.0 {
                 println!("⏭️ Skipping short animation ({:.1}s < 3s): {}", duration, input.display());
                 return Ok(());
@@ -585,7 +593,15 @@ fn auto_convert_single_file(
         }
         // Animated lossy → skip (unless lossless mode AND >=3 seconds)
         (_, false, true) => {
-            let duration = analysis.duration_secs.unwrap_or(0.0);
+            // 🔥 质量宣言：时长未知时使用保守策略（跳过），并响亮警告
+            let duration = match analysis.duration_secs {
+                Some(d) if d > 0.0 => d,
+                _ => {
+                    eprintln!("⚠️  无法获取动画时长，跳过转换: {}", input.display());
+                    eprintln!("   💡 可能原因: ffprobe 未安装或文件格式不支持时长检测");
+                    return Ok(());
+                }
+            };
             if lossless && duration >= 3.0 {
                 println!("🔄 Animated lossy→AV1 MP4 (LOSSLESS, {:.1}s): {}", duration, input.display());
                 convert_to_av1_mp4_lossless(input, &options)?
