@@ -364,16 +364,18 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
     let (width, height) = get_input_dimensions(input)?;
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
     
-    // AV1 with CRF 0 for visually lossless
+    // AV1 with CRF 0 for visually lossless (使用 SVT-AV1 编码器)
     // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let svt_params = format!("tune=0:film-grain=0:lp={}", max_threads);
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")  // Overwrite
         .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
-        .arg("-c:v").arg("libaom-av1")
-        .arg("-crf").arg("0")    // Lossless mode
-        .arg("-b:v").arg("0");
+        .arg("-c:v").arg("libsvtav1")  // 🔥 使用 SVT-AV1 (比 libaom-av1 快 10-20 倍)
+        .arg("-crf").arg("0")    // CRF 0 = 视觉无损最高质量
+        .arg("-preset").arg("6")  // 0-13, 6 是平衡点
+        .arg("-svtav1-params").arg(&svt_params);  // 限制 SVT-AV1 线程数
     
     // 添加视频滤镜（尺寸修正 + 像素格式）
     for arg in &vf_args {
@@ -569,25 +571,25 @@ pub fn convert_to_av1_mp4_matched(
     let (width, height) = get_input_dimensions(input)?;
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, analysis.has_alpha);
     
-    // AV1 with calculated CRF
+    // AV1 with calculated CRF (使用 SVT-AV1 编码器)
     // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let svt_params = format!("tune=0:film-grain=0:lp={}", max_threads);
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")  // Overwrite
         .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
-        .arg("-c:v").arg("libaom-av1")
+        .arg("-c:v").arg("libsvtav1")  // 🔥 使用 SVT-AV1 (比 libaom-av1 快 10-20 倍)
         .arg("-crf").arg(crf.to_string())
-        .arg("-b:v").arg("0");
+        .arg("-preset").arg("6")  // 0-13, 6 是平衡点
+        .arg("-svtav1-params").arg(&svt_params);  // 限制 SVT-AV1 线程数
     
     // 添加视频滤镜（尺寸修正 + 像素格式）
     for arg in &vf_args {
         cmd.arg(arg);
     }
     
-    cmd.arg("-cpu-used").arg("4")  // Balanced speed
-        .arg("-row-mt").arg("1")    // Multi-threading
-        .arg(&output);
+    cmd.arg(&output);
     let result = cmd.output();
     
     match result {
@@ -981,24 +983,25 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     let (width, height) = get_input_dimensions(input)?;
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
     
-    // Mathematical lossless AV1
+    // Mathematical lossless AV1 (使用 SVT-AV1 编码器)
     // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let svt_params = format!("lossless=1:lp={}", max_threads);  // 数学无损 + 限制线程数
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")
         .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
-        .arg("-c:v").arg("libaom-av1")
-        .arg("-lossless").arg("1");  // Mathematical lossless
+        .arg("-c:v").arg("libsvtav1")  // 🔥 使用 SVT-AV1 (比 libaom-av1 快 10-20 倍)
+        .arg("-crf").arg("0")
+        .arg("-preset").arg("4")  // 无损模式用更慢的 preset 保证质量
+        .arg("-svtav1-params").arg(&svt_params);  // 数学无损
     
     // 添加视频滤镜（尺寸修正 + 像素格式）
     for arg in &vf_args {
         cmd.arg(arg);
     }
     
-    cmd.arg("-cpu-used").arg("4")
-        .arg("-row-mt").arg("1")
-        .arg(&output);
+    cmd.arg(&output);
     let result = cmd.output();
 
     match result {

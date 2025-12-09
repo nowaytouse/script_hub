@@ -60,7 +60,7 @@ enum Commands {
         #[arg(long)]
         delete_original: bool,
 
-        /// Use mathematical lossless AVIF/AV1 (⚠️ VERY SLOW, huge files)
+        /// Use mathematical lossless AVIF/HEVC (⚠️ VERY SLOW, huge files)
         #[arg(long)]
         lossless: bool,
 
@@ -476,7 +476,7 @@ fn auto_convert_single_file(
             println!("🔄 Legacy Lossless→JXL: {}", input.display());
             convert_to_jxl(input, &options, 0.0)?
         }
-        // Animated lossless → AV1 MP4 (only if >=3 seconds)
+        // Animated lossless → HEVC MP4 (only if >=3 seconds)
         (_, true, true) => {
             // Check duration - only convert animations >=3 seconds
             // 🔥 质量宣言：时长未知时使用保守策略（跳过），并响亮警告

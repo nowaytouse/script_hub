@@ -403,11 +403,11 @@ pub fn smart_convert(path: &Path, config: &ConversionConfig) -> Result<Conversio
     execute_conversion(&detection, &strategy, config)
 }
 
-/// Simple mode conversion - Always use JXL for static, AV1 MP4 for animated
+/// Simple mode conversion - Always use JXL for static, HEVC MP4 for animated
 /// 
 /// Strategy:
 /// - Any static image → JXL mathematical lossless
-/// - Any animated image → AV1 MP4 CRF 0 (visually lossless)
+/// - Any animated image → HEVC MP4 CRF 0 (visually lossless)
 pub fn simple_convert(path: &Path, output_dir: Option<&Path>) -> Result<ConversionOutput> {
     use crate::detection_api::detect_image;
     

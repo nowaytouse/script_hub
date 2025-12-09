@@ -111,9 +111,9 @@ pub fn determine_strategy(detection: &DetectionResult) -> ConversionStrategy {
             let fps = detection.fps.unwrap_or(10.0);
             ConversionStrategy {
                 target: TargetFormat::AV1MP4,
-                reason: "Animated lossless image, recommend AV1 MP4 with Q=100 (visually lossless)".to_string(),
+                reason: "Animated lossless image, recommend AV1 MP4 with CRF 0 (visually lossless)".to_string(),
                 command: format!(
-                    "ffmpeg -i '{}' -c:v libaom-av1 -crf 0 -b:v 0 -r {} '{}'",
+                    "ffmpeg -i '{}' -c:v libsvtav1 -crf 0 -preset 6 -r {} '{}'",
                     input_path,
                     fps,
                     output_path.display()
@@ -297,19 +297,23 @@ fn convert_to_avif(input: &Path, output: &Path, quality: Option<u8>) -> Result<(
     Ok(())
 }
 
-/// Convert animated image to AV1 MP4 with Q=100 (visually lossless)
+/// Convert animated image to AV1 MP4 with CRF 0 (visually lossless)
+/// 使用 SVT-AV1 编码器 (libsvtav1) - 比 libaom-av1 快 10-20 倍
 fn convert_to_av1_mp4(input: &Path, output: &Path, fps: Option<f32>) -> Result<()> {
     let fps_str = fps.unwrap_or(10.0).to_string();
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let svt_params = format!("tune=0:film-grain=0:lp={}", max_threads);
     
-    // AV1 with CRF 0 = lossless, but we use Q=100 for visually lossless
-    // -crf 0 -b:v 0 for true lossless, or -crf 10 for visually lossless
+    // SVT-AV1 with CRF 0 = 视觉无损最高质量
     let status = Command::new("ffmpeg")
         .args(&[
             "-y",
+            "-threads", &max_threads.to_string(),
             "-i", input.to_str().unwrap(),
-            "-c:v", "libaom-av1",
-            "-crf", "0",        // Q=100 equivalent (highest quality)
-            "-b:v", "0",        // Variable bitrate
+            "-c:v", "libsvtav1",  // 🔥 使用 SVT-AV1
+            "-crf", "0",          // CRF 0 = 视觉无损最高质量
+            "-preset", "6",       // 0-13, 6 是平衡点
+            "-svtav1-params", &svt_params,
             "-r", &fps_str,
             "-pix_fmt", "yuv420p",
             output.to_str().unwrap(),

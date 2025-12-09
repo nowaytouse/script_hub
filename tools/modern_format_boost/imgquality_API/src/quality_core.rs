@@ -203,7 +203,7 @@ pub fn generate_recommendation(
                 command: Some(format!("avifenc -s 4 -j all '{}' '{}'", file_path, output)),
             }
         }
-        // Animated lossless → AV1 MP4 (Q=100)
+        // Animated lossless → AV1 MP4 (CRF 0 视觉无损)
         (true, true) => {
             let output = format!("{}/{}.mp4", output_dir, output_base);
             ConversionRecommendation {
@@ -211,7 +211,7 @@ pub fn generate_recommendation(
                 target_format: Some("AV1 MP4".to_string()),
                 reason: "Animated lossless image, recommend AV1 MP4 (visually lossless)".to_string(),
                 command: Some(format!(
-                    "ffmpeg -i '{}' -c:v libaom-av1 -crf 0 -b:v 0 '{}'", 
+                    "ffmpeg -i '{}' -c:v libsvtav1 -crf 0 -preset 6 '{}'", 
                     file_path, output
                 )),
             }

@@ -203,15 +203,15 @@ pub fn generate_recommendation(
                 command: Some(format!("avifenc -s 4 -j all '{}' '{}'", file_path, output)),
             }
         }
-        // Animated lossless → AV1 MP4 (Q=100)
+        // Animated lossless → HEVC MP4 (CRF 0 视觉无损)
         (true, true) => {
             let output = format!("{}/{}.mp4", output_dir, output_base);
             ConversionRecommendation {
                 should_convert: true,
-                target_format: Some("AV1 MP4".to_string()),
-                reason: "Animated lossless image, recommend AV1 MP4 (visually lossless)".to_string(),
+                target_format: Some("HEVC MP4".to_string()),
+                reason: "Animated lossless image, recommend HEVC MP4 (visually lossless)".to_string(),
                 command: Some(format!(
-                    "ffmpeg -i '{}' -c:v libaom-av1 -crf 0 -b:v 0 '{}'", 
+                    "ffmpeg -i '{}' -c:v libx265 -crf 0 -preset medium '{}'", 
                     file_path, output
                 )),
             }
@@ -260,7 +260,7 @@ mod tests {
     fn test_recommendation_animated_lossless() {
         let rec = generate_recommendation("GIF", true, true, "/path/to/anim.gif");
         assert!(rec.should_convert);
-        assert_eq!(rec.target_format, Some("AV1 MP4".to_string()));
+        assert_eq!(rec.target_format, Some("HEVC MP4".to_string()));
     }
     
     #[test]
