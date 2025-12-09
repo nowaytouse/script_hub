@@ -29,9 +29,11 @@
 #define MIN_LOSSLESS_SIZE (2 * 1024 * 1024)
 
 // JXL quality settings
-#define JXL_DISTANCE_LOSSY 1.0     // High quality lossy for JPEG
-#define JXL_DISTANCE_LOSSLESS 0.0  // Mathematically lossless
+#define JXL_DISTANCE_LOSSLESS 0.0  // Mathematically lossless (-d 0)
 #define JXL_EFFORT_DEFAULT 7       // Balanced speed/compression
+
+// JPEG lossless transcode: --lossless_jpeg=1
+// This preserves DCT coefficients - REVERSIBLE back to original JPEG!
 
 // File type enumeration
 typedef enum {

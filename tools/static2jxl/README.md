@@ -23,12 +23,21 @@
 
 | 格式 | 转换模式 | 条件 | 说明 |
 |------|----------|------|------|
-| **JPEG** | 有损 (-d 1) | 无 | 已是有损格式，高质量重压缩 |
+| **JPEG** | 🔄 可逆转码 (`--lossless_jpeg=1`) | 无 | **保留 DCT 系数，可完美还原原始 JPEG！** |
 | **PNG** | 无损 (-d 0) | >2MB | 真正无损，收益巨大 |
 | **BMP** | 无损 (-d 0) | >2MB | 未压缩格式，收益巨大 |
 | **TIFF** | 无损 (-d 0) | >2MB + 非JPEG压缩 | 见下方说明 |
 | **TGA** | 无损 (-d 0) | >2MB | 游戏/设计常用，压缩差 |
 | **PPM/PBM/PGM** | 无损 (-d 0) | >2MB | 简单位图格式 |
+
+### JPEG 可逆转码说明
+
+JPEG 使用 `--lossless_jpeg=1` 参数进行**可逆转码**：
+
+- ✅ **保留 DCT 系数** - 不进行任何重新编码
+- ✅ **完美可逆** - 可以用 `djxl` 还原为**完全相同**的原始 JPEG
+- ✅ **零质量损失** - 这是 JPEG 转 JXL 的最佳方式
+- 📉 **压缩率** - 通常可减少 20-30% 文件大小
 
 ### TIFF 特殊处理
 
@@ -144,12 +153,21 @@ sudo apt install libjxl-tools libimage-exiftool-perl
 
 | Format | Mode | Condition | Notes |
 |--------|------|-----------|-------|
-| **JPEG** | Lossy (-d 1) | None | Already lossy, high-quality recompression |
+| **JPEG** | 🔄 Reversible (`--lossless_jpeg=1`) | None | **Preserves DCT coefficients, perfectly reversible!** |
 | **PNG** | Lossless (-d 0) | >2MB | True lossless, huge benefits |
 | **BMP** | Lossless (-d 0) | >2MB | Uncompressed, huge benefits |
 | **TIFF** | Lossless (-d 0) | >2MB + non-JPEG | See below |
 | **TGA** | Lossless (-d 0) | >2MB | Common in games/design, poor compression |
 | **PPM/PBM/PGM** | Lossless (-d 0) | >2MB | Simple bitmap formats |
+
+### JPEG Reversible Transcode
+
+JPEG files use `--lossless_jpeg=1` for **reversible transcoding**:
+
+- ✅ **Preserves DCT coefficients** - No re-encoding
+- ✅ **Perfectly reversible** - Can restore to **identical** original JPEG with `djxl`
+- ✅ **Zero quality loss** - This is the BEST way to convert JPEG to JXL
+- 📉 **Compression** - Typically 20-30% size reduction
 
 ### TIFF Handling
 

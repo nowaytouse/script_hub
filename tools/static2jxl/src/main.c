@@ -426,23 +426,22 @@ int collect_files(const char *dir, bool recursive) {
     return g_file_count;
 }
 
-bool convert_to_jxl(const char *input, const char *output, bool lossless) {
+// Convert to JXL - different modes for JPEG vs lossless sources
+bool convert_to_jxl(const char *input, const char *output, bool is_jpeg) {
     char cmd[MAX_PATH_LEN * 3];
-    double distance = lossless ? JXL_DISTANCE_LOSSLESS : JXL_DISTANCE_LOSSY;
     
-    if (g_config.jxl_distance >= 0) {
-        distance = g_config.jxl_distance;
-    }
-    
-    if (lossless) {
-        // Use -d 0 for mathematically lossless
+    if (is_jpeg) {
+        // 🔥 JPEG: Use --lossless_jpeg=1 for REVERSIBLE transcode
+        // This preserves DCT coefficients - can be converted back to identical JPEG!
+        // This is the BEST option for JPEG files - no quality loss at all
+        snprintf(cmd, sizeof(cmd),
+            "cjxl \"%s\" \"%s\" --lossless_jpeg=1 -j 2 2>/dev/null",
+            input, output);
+    } else {
+        // PNG/BMP/TIFF/TGA/PPM: Use -d 0 for mathematically lossless
         snprintf(cmd, sizeof(cmd),
             "cjxl \"%s\" \"%s\" -d 0 -e %d -j 2 2>/dev/null",
             input, output, g_config.jxl_effort);
-    } else {
-        snprintf(cmd, sizeof(cmd),
-            "cjxl \"%s\" \"%s\" -d %.1f -e %d -j 2 2>/dev/null",
-            input, output, distance, g_config.jxl_effort);
     }
     
     return (system(cmd) == 0);
@@ -562,8 +561,8 @@ void print_summary(void) {
     }
     
     printf("\n📋 By Format:\n");
-    if (g_stats.jpeg_count > 0) printf("   JPEG (lossy):   %d\n", g_stats.jpeg_count);
-    if (g_stats.png_count > 0)  printf("   PNG (lossless): %d\n", g_stats.png_count);
+    if (g_stats.jpeg_count > 0) printf("   JPEG (reversible): %d\n", g_stats.jpeg_count);
+    if (g_stats.png_count > 0)  printf("   PNG (lossless):    %d\n", g_stats.png_count);
     if (g_stats.bmp_count > 0)  printf("   BMP (lossless): %d\n", g_stats.bmp_count);
     if (g_stats.tiff_count > 0) printf("   TIFF (lossless):%d\n", g_stats.tiff_count);
     if (g_stats.tga_count > 0)  printf("   TGA (lossless): %d\n", g_stats.tga_count);
@@ -600,7 +599,6 @@ bool process_file(const FileEntry *entry) {
     const char *input = entry->path;
     char *output = get_output_path(input);
     char temp_output[MAX_PATH_LEN];
-    bool lossless = entry->use_lossless;
     
     if (!g_config.in_place && file_exists(output)) {
         if (g_config.verbose) log_warn("Skip: %s exists", output);
@@ -616,13 +614,18 @@ bool process_file(const FileEntry *entry) {
         strcpy(temp_output, output);
     }
     
+    bool is_jpeg = (entry->type == FILE_TYPE_JPEG);
+    
     if (g_config.verbose) {
-        log_info("Converting [%s%s]: %s", get_file_type_name(entry->type),
-                 lossless ? " → lossless" : " → lossy", input);
+        if (is_jpeg) {
+            log_info("Converting [JPEG → lossless transcode]: %s", input);
+        } else {
+            log_info("Converting [%s → lossless -d 0]: %s", get_file_type_name(entry->type), input);
+        }
     }
     
     // Convert
-    if (!convert_to_jxl(input, temp_output, lossless)) {
+    if (!convert_to_jxl(input, temp_output, is_jpeg)) {
         log_error("Conversion failed: %s", input);
         unlink(temp_output);
         pthread_mutex_lock(&g_stats.mutex);
@@ -705,7 +708,7 @@ void *worker_thread(void *arg) {
 void print_usage(const char *prog) {
     printf("📷 static2jxl - Static Image to JXL Converter v%s\n\n", VERSION);
     printf("Converts static images to JXL with intelligent mode selection:\n");
-    printf("  • JPEG → JXL (high quality lossy, -d 1)\n");
+    printf("  • JPEG → JXL (--lossless_jpeg=1, REVERSIBLE transcode!)\n");
     printf("  • PNG/BMP/TGA/PPM (>2MB) → JXL lossless (-d 0)\n");
     printf("  • TIFF (uncompressed/LZW, >2MB) → JXL lossless (-d 0)\n");
     printf("  • RAW formats → SKIP (preserve flexibility)\n\n");
@@ -784,7 +787,7 @@ int main(int argc, char *argv[]) {
     
     log_info("📁 Target: %s", g_config.target_dir);
     log_info("📋 Formats: JPEG, PNG, BMP, TIFF, TGA, PPM");
-    log_info("🎯 Mode: JPEG→lossy(-d 1), Others→lossless(-d 0, >2MB)");
+    log_info("🎯 Mode: JPEG→reversible(--lossless_jpeg=1), Others→lossless(-d 0, >2MB)");
     log_info("🔧 Threads: %d, Effort: %d", g_config.num_threads, g_config.jxl_effort);
     
     if (g_config.in_place) log_warn("🔄 In-place mode: originals will be replaced");
