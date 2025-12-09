@@ -353,16 +353,26 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
         });
     }
     
+    // 🔥 健壮性：获取输入尺寸并生成视频滤镜链
+    // 解决 "Picture height must be an integer multiple of the specified chroma subsampling" 错误
+    let (width, height) = get_input_dimensions(input)?;
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
+    
     // AV1 with CRF 0 for visually lossless
-    let result = Command::new("ffmpeg")
-        .arg("-y")  // Overwrite
+    let mut cmd = Command::new("ffmpeg");
+    cmd.arg("-y")  // Overwrite
         .arg("-i").arg(input)
         .arg("-c:v").arg("libaom-av1")
         .arg("-crf").arg("0")    // Lossless mode
-        .arg("-b:v").arg("0")
-        .arg("-pix_fmt").arg("yuv420p")
-        .arg(&output)
-        .output();
+        .arg("-b:v").arg("0");
+    
+    // 添加视频滤镜（尺寸修正 + 像素格式）
+    for arg in &vf_args {
+        cmd.arg(arg);
+    }
+    
+    cmd.arg(&output);
+    let result = cmd.output();
     
     match result {
         Ok(output_cmd) if output_cmd.status.success() => {
@@ -545,18 +555,28 @@ pub fn convert_to_av1_mp4_matched(
     let crf = calculate_matched_crf_for_animation(analysis, input_size);
     eprintln!("   🎯 Matched CRF: {} (based on input quality analysis)", crf);
     
+    // 🔥 健壮性：获取输入尺寸并生成视频滤镜链
+    // 解决 "Picture height must be an integer multiple of the specified chroma subsampling" 错误
+    let (width, height) = get_input_dimensions(input)?;
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, analysis.has_alpha);
+    
     // AV1 with calculated CRF
-    let result = Command::new("ffmpeg")
-        .arg("-y")  // Overwrite
+    let mut cmd = Command::new("ffmpeg");
+    cmd.arg("-y")  // Overwrite
         .arg("-i").arg(input)
         .arg("-c:v").arg("libaom-av1")
         .arg("-crf").arg(crf.to_string())
-        .arg("-b:v").arg("0")
-        .arg("-pix_fmt").arg("yuv420p")
-        .arg("-cpu-used").arg("4")  // Balanced speed
+        .arg("-b:v").arg("0");
+    
+    // 添加视频滤镜（尺寸修正 + 像素格式）
+    for arg in &vf_args {
+        cmd.arg(arg);
+    }
+    
+    cmd.arg("-cpu-used").arg("4")  // Balanced speed
         .arg("-row-mt").arg("1")    // Multi-threading
-        .arg(&output)
-        .output();
+        .arg(&output);
+    let result = cmd.output();
     
     match result {
         Ok(output_cmd) if output_cmd.status.success() => {
@@ -930,16 +950,27 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
         });
     }
     
+    // 🔥 健壮性：获取输入尺寸并生成视频滤镜链
+    // 解决 "Picture height must be an integer multiple of the specified chroma subsampling" 错误
+    let (width, height) = get_input_dimensions(input)?;
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
+    
     // Mathematical lossless AV1
-    let result = Command::new("ffmpeg")
-        .arg("-y")
+    let mut cmd = Command::new("ffmpeg");
+    cmd.arg("-y")
         .arg("-i").arg(input)
         .arg("-c:v").arg("libaom-av1")
-        .arg("-lossless").arg("1")  // Mathematical lossless
-        .arg("-cpu-used").arg("4")
+        .arg("-lossless").arg("1");  // Mathematical lossless
+    
+    // 添加视频滤镜（尺寸修正 + 像素格式）
+    for arg in &vf_args {
+        cmd.arg(arg);
+    }
+    
+    cmd.arg("-cpu-used").arg("4")
         .arg("-row-mt").arg("1")
-        .arg(&output)
-        .output();
+        .arg(&output);
+    let result = cmd.output();
 
     match result {
         Ok(output_cmd) if output_cmd.status.success() => {
@@ -1005,6 +1036,38 @@ fn copy_metadata(src: &Path, dst: &Path) {
 fn get_output_path(input: &Path, extension: &str, output_dir: &Option<std::path::PathBuf>) -> Result<std::path::PathBuf> {
     shared_utils::conversion::determine_output_path(input, extension, output_dir)
         .map_err(|e| ImgQualityError::ConversionError(e))
+}
+
+/// 获取输入文件的尺寸（宽度和高度）
+/// 
+/// 使用 ffprobe 获取视频/动画的尺寸，或使用 image crate 获取静态图片的尺寸
+/// 
+/// 🔥 遵循质量宣言：失败就响亮报错，绝不静默降级！
+fn get_input_dimensions(input: &Path) -> Result<(u32, u32)> {
+    // 首先尝试使用 ffprobe（适用于视频和动画）
+    if let Ok(probe) = shared_utils::probe_video(input) {
+        if probe.width > 0 && probe.height > 0 {
+            return Ok((probe.width, probe.height));
+        }
+    }
+    
+    // 回退到 image crate（适用于静态图片）
+    match image::image_dimensions(input) {
+        Ok((w, h)) => Ok((w, h)),
+        Err(e) => {
+            // 🔥 响亮报错！绝不静默降级！
+            Err(ImgQualityError::ConversionError(format!(
+                "❌ 无法获取文件尺寸: {}\n\
+                 错误: {}\n\
+                 💡 可能原因:\n\
+                 - 文件损坏或格式不支持\n\
+                 - ffprobe 未安装或不可用\n\
+                 - 文件不是有效的图像/视频格式\n\
+                 请检查文件完整性或安装 ffprobe: brew install ffmpeg",
+                input.display(), e
+            )))
+        }
+    }
 }
 
 /// Verify that JXL file is valid using signature and optional decoding

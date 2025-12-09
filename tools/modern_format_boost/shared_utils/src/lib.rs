@@ -20,6 +20,7 @@ pub mod tools;
 pub mod codecs;
 pub mod metadata;
 pub mod conversion;
+pub mod video;
 
 pub use progress::*;
 pub use safety::*;
@@ -30,3 +31,4 @@ pub use tools::*;
 pub use codecs::*;
 pub use metadata::{preserve_metadata, preserve_pro};
 pub use conversion::*;
+pub use video::*;
