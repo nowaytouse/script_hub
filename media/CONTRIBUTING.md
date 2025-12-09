@@ -83,49 +83,68 @@ Welcome to my Script Hub! This repository collects various utility scripts desig
 
 ## Script List
 
-1.  [Batch JPEG to JXL (jpeg_to_jxl.sh)](#batch-jpeg-to-jxl-jpeg_to_jxlsh)
-2.  [Batch PNG to Lossless JXL (png_to_jxl.sh)](#batch-png-to-lossless-jxl-png_to_jxlsh)
-3.  [Batch HEIC to Lossless PNG (heic_to_png.sh)](#batch-heic-to-lossless-png-heic_to_pngsh)
-4.  [Animated Image to H.266/VVC Video (imganim_to_vvc.sh)](#animated-image-to-h266vvc-video-imganim_to_vvcsh)
-5.  [Video to High-Quality GIF (video_to_hq_gif.sh)](#video-to-high-quality-gif-video_to_hq_gifsh)
-6.  [Batch Merge XMP Metadata (merge_xmp.sh)](#batch-merge-xmp-metadata-merge_xmpsh)
-7.  [Archive Script (archive_and_upload.sh)](#archive-script-archive_and_uploadsh)
-8.  [Incompatible Media Converter (convert_incompatible_media.sh)](#incompatible-media-converter-convert_incompatible_mediash)
+1.  [Static Image to JXL (static2jxl)](#static-image-to-jxl-static2jxl) - **NEW: High-performance C tool**
+2.  [Batch HEIC to Lossless PNG (heic_to_png.sh)](#batch-heic-to-lossless-png-heic_to_pngsh)
+3.  [Animated Image to H.266/VVC Video (imganim_to_vvc.sh)](#animated-image-to-h266vvc-video-imganim_to_vvcsh)
+4.  [Video to High-Quality GIF (video_to_hq_gif.sh)](#video-to-high-quality-gif-video_to_hq_gifsh)
+5.  [Batch Merge XMP Metadata (merge_xmp.sh)](#batch-merge-xmp-metadata-merge_xmpsh)
+6.  [Archive Script (archive_and_upload.sh)](#archive-script-archive_and_uploadsh)
+7.  [Incompatible Media Converter (convert_incompatible_media.sh)](#incompatible-media-converter-convert_incompatible_mediash)
 
 ---
 
-### Batch JPEG to JXL (jpeg_to_jxl.sh)
+### Static Image to JXL (static2jxl)
+
+> **Note**: This tool replaces the old `jpeg_to_jxl.sh` and `png_to_jxl.sh` scripts with a high-performance C implementation.
 
 #### Functionality
-Batch converts JPEG images (`.jpg`, `.jpeg`) within a specified folder to high-quality, high-compression JXL format.
+High-performance batch converter for static images to JXL format with intelligent mode selection:
 
-- **Metadata**: Preserves full system file timestamps.
-- **In-place Conversion**: Supports `--in-place` mode, replacing original images with `.jxl` files upon successful conversion.
+- **JPEG** → JXL (high quality lossy, -d 1)
+- **PNG/BMP/TGA/PPM** (>2MB) → JXL lossless (-d 0)
+- **TIFF** (uncompressed/LZW, >2MB) → JXL lossless (-d 0)
+- **RAW formats** → SKIP (preserve RAW flexibility)
+
+#### Key Features
+- 🚀 Multi-threaded parallel processing
+- 📋 Complete metadata preservation (EXIF, XMP, IPTC, ICC Profile)
+- ⏰ System timestamp preservation
+- 🏥 Health check validation
+- 🔒 Safety checks for dangerous directories
 
 #### Dependencies
-- **`jpeg-xl`**: Install via Homebrew on macOS: `brew install jpeg-xl`
+- **`jpeg-xl`**: `brew install jpeg-xl`
+- **`exiftool`**: `brew install exiftool`
 
 #### Usage
 ```bash
-# Grant execute permission
-chmod +x jpeg_to_jxl.sh
+# Build
+cd tools/static2jxl && make
 
-# Standard mode (creates new .jxl files alongside originals)
-./jpeg_to_jxl.sh /path/to/images
+# Standard mode
+./static2jxl /path/to/images
 
-# In-place conversion mode
-./jpeg_to_jxl.sh --in-place /path/to/images
+# In-place conversion (delete originals)
+./static2jxl --in-place /path/to/images
+
+# 8 parallel threads
+./static2jxl -j 8 /path/to/images
+
+# Verbose output
+./static2jxl --verbose /path/to/images
 ```
+
+See [tools/static2jxl/README.md](../tools/static2jxl/README.md) for full documentation.
 
 ---
 
-### Batch PNG to Lossless JXL (png_to_jxl.sh)
+### Batch HEIC to Lossless PNG (heic_to_png.sh)
 
 #### Functionality
-Batch converts PNG images (`.png`) within a specified folder to **mathematically lossless** JXL format, achieving extreme lossless compression.
+Batch converts HEIC/HEIF images (`.heic`, `.heif`) commonly used on Apple devices to a more compatible **lossless PNG** format.
 
-- **Metadata**: Preserves full system file timestamps.
-- **In-place Conversion**: Supports `--in-place` mode, replacing original images with `.jxl` files upon successful conversion.
+- **Metadata**: Uses `exiftool` to ensure the most complete transfer of internal metadata (EXIF, GPS, XMP, etc.) and preserves system file timestamps.
+- **In-place Conversion**: Supports `--in-place` mode, replacing original images with `.png` files upon successful conversion.
 
 #### Dependencies
 - **`jpeg-xl`**: Install via Homebrew on macOS: `brew install jpeg-xl`

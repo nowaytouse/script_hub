@@ -1,0 +1,245 @@
+# static2jxl - 智能静态图像转 JXL 工具
+
+[English](#english) | [中文](#中文)
+
+---
+
+## 中文
+
+### 简介
+
+`static2jxl` 是一个高性能的 C 语言批量图像转换工具，专门用于将静态图像转换为 JXL 格式。与 `modern_format_boost` 不同，本工具**仅处理静态图像**，不涉及视频或动态图片。
+
+### 核心特性
+
+- 🚀 **多线程并行处理** - 充分利用多核 CPU
+- 🎯 **智能模式选择** - 根据源格式自动选择有损/无损模式
+- 📋 **完整元数据保留** - EXIF, XMP, IPTC, ICC Profile
+- ⏰ **系统时间戳保留** - 保持文件修改时间
+- 🏥 **健康检查验证** - 确保输出文件可用
+- 🔒 **安全检查** - 防止误操作系统目录
+
+### 支持的格式
+
+| 格式 | 转换模式 | 条件 | 说明 |
+|------|----------|------|------|
+| **JPEG** | 有损 (-d 1) | 无 | 已是有损格式，高质量重压缩 |
+| **PNG** | 无损 (-d 0) | >2MB | 真正无损，收益巨大 |
+| **BMP** | 无损 (-d 0) | >2MB | 未压缩格式，收益巨大 |
+| **TIFF** | 无损 (-d 0) | >2MB + 非JPEG压缩 | 见下方说明 |
+| **TGA** | 无损 (-d 0) | >2MB | 游戏/设计常用，压缩差 |
+| **PPM/PBM/PGM** | 无损 (-d 0) | >2MB | 简单位图格式 |
+
+### TIFF 特殊处理
+
+TIFF 格式较为复杂，可能包含不同的压缩方式：
+
+| TIFF 压缩类型 | 处理方式 | 原因 |
+|---------------|----------|------|
+| 未压缩 | ✅ 转换 | JXL 收益巨大 |
+| LZW/Deflate | ✅ 转换 | JXL 仍有优势 |
+| JPEG 压缩 | ❌ 跳过 | 已经有损，不适合 |
+
+### RAW 格式说明
+
+**不处理** RAW 格式（DNG, CR2, CR3, NEF, ARW, ORF, RW2, RAF 等）：
+
+- RAW 保留传感器原始数据，有后期调整空间
+- 转 JXL 会失去 RAW 的灵活性
+- 建议：保留 RAW，只对导出的成品转 JXL
+
+### 2MB 阈值说明
+
+对于无损源格式（PNG, BMP, TGA, PPM, TIFF），只有文件大于 2MB 才会转换：
+
+- 小文件转换收益有限
+- 避免处理图标、缩略图等小文件
+- 可通过 `--force-lossless` 强制转换所有文件
+
+### 安装
+
+```bash
+# 编译
+cd tools/static2jxl
+make
+
+# 安装到系统（可选）
+sudo make install
+```
+
+### 依赖
+
+```bash
+# macOS
+brew install jpeg-xl exiftool
+
+# Linux (Ubuntu/Debian)
+sudo apt install libjxl-tools libimage-exiftool-perl
+```
+
+### 使用方法
+
+```bash
+# 基本用法
+./static2jxl /path/to/images
+
+# 原地替换模式（删除原文件）
+./static2jxl --in-place /path/to/images
+
+# 8 线程并行处理
+./static2jxl -j 8 /path/to/images
+
+# 详细输出
+./static2jxl --verbose /path/to/images
+
+# 预览模式（不实际转换）
+./static2jxl --dry-run /path/to/images
+
+# 强制所有格式使用无损模式
+./static2jxl --force-lossless /path/to/images
+```
+
+### 命令行选项
+
+| 选项 | 说明 |
+|------|------|
+| `--in-place, -i` | 原地替换，删除原文件 |
+| `--skip-health-check` | 跳过健康检查（不推荐） |
+| `--no-recursive` | 不递归处理子目录 |
+| `--force-lossless` | 强制所有格式使用无损模式 |
+| `--verbose, -v` | 显示详细输出 |
+| `--dry-run` | 预览模式，不实际转换 |
+| `-j <N>` | 并行线程数（默认 4） |
+| `-d <distance>` | 覆盖 JXL distance 参数 |
+| `-e <effort>` | JXL effort 1-9（默认 7） |
+
+### 与 modern_format_boost 的区别
+
+| 特性 | static2jxl | modern_format_boost |
+|------|------------|---------------------|
+| 静态图像 | ✅ | ✅ |
+| 动态图像 | ❌ | ✅ |
+| 视频处理 | ❌ | ✅ |
+| 实现语言 | C | Rust |
+| 目标场景 | 大批量静态图像 | 全媒体格式优化 |
+
+---
+
+## English
+
+### Introduction
+
+`static2jxl` is a high-performance C batch image converter for converting static images to JXL format. Unlike `modern_format_boost`, this tool **only handles static images**, not videos or animations.
+
+### Key Features
+
+- 🚀 **Multi-threaded Processing** - Fully utilize multi-core CPUs
+- 🎯 **Smart Mode Selection** - Auto-select lossy/lossless based on source format
+- 📋 **Complete Metadata Preservation** - EXIF, XMP, IPTC, ICC Profile
+- ⏰ **Timestamp Preservation** - Keep file modification times
+- 🏥 **Health Check Validation** - Ensure output files are valid
+- 🔒 **Safety Checks** - Prevent accidental operations on system directories
+
+### Supported Formats
+
+| Format | Mode | Condition | Notes |
+|--------|------|-----------|-------|
+| **JPEG** | Lossy (-d 1) | None | Already lossy, high-quality recompression |
+| **PNG** | Lossless (-d 0) | >2MB | True lossless, huge benefits |
+| **BMP** | Lossless (-d 0) | >2MB | Uncompressed, huge benefits |
+| **TIFF** | Lossless (-d 0) | >2MB + non-JPEG | See below |
+| **TGA** | Lossless (-d 0) | >2MB | Common in games/design, poor compression |
+| **PPM/PBM/PGM** | Lossless (-d 0) | >2MB | Simple bitmap formats |
+
+### TIFF Handling
+
+TIFF is complex and may contain different compression types:
+
+| TIFF Compression | Action | Reason |
+|------------------|--------|--------|
+| Uncompressed | ✅ Convert | Huge JXL benefits |
+| LZW/Deflate | ✅ Convert | JXL still better |
+| JPEG compressed | ❌ Skip | Already lossy |
+
+### RAW Formats
+
+RAW formats (DNG, CR2, CR3, NEF, ARW, ORF, RW2, RAF, etc.) are **NOT processed**:
+
+- RAW preserves sensor data with post-processing flexibility
+- Converting to JXL loses RAW flexibility
+- Recommendation: Keep RAW, only convert exported finals to JXL
+
+### 2MB Threshold
+
+For lossless source formats (PNG, BMP, TGA, PPM, TIFF), only files >2MB are converted:
+
+- Small files have limited conversion benefits
+- Avoids processing icons, thumbnails, etc.
+- Use `--force-lossless` to convert all files
+
+### Installation
+
+```bash
+# Build
+cd tools/static2jxl
+make
+
+# Install to system (optional)
+sudo make install
+```
+
+### Dependencies
+
+```bash
+# macOS
+brew install jpeg-xl exiftool
+
+# Linux (Ubuntu/Debian)
+sudo apt install libjxl-tools libimage-exiftool-perl
+```
+
+### Usage
+
+```bash
+# Basic usage
+./static2jxl /path/to/images
+
+# In-place mode (delete originals)
+./static2jxl --in-place /path/to/images
+
+# 8 parallel threads
+./static2jxl -j 8 /path/to/images
+
+# Verbose output
+./static2jxl --verbose /path/to/images
+
+# Dry-run (preview only)
+./static2jxl --dry-run /path/to/images
+
+# Force lossless for all formats
+./static2jxl --force-lossless /path/to/images
+```
+
+### Command Line Options
+
+| Option | Description |
+|--------|-------------|
+| `--in-place, -i` | Replace originals |
+| `--skip-health-check` | Skip health validation (not recommended) |
+| `--no-recursive` | Don't process subdirectories |
+| `--force-lossless` | Force lossless mode for all formats |
+| `--verbose, -v` | Show detailed output |
+| `--dry-run` | Preview mode, no actual conversion |
+| `-j <N>` | Parallel threads (default: 4) |
+| `-d <distance>` | Override JXL distance |
+| `-e <effort>` | JXL effort 1-9 (default: 7) |
+
+### Comparison with modern_format_boost
+
+| Feature | static2jxl | modern_format_boost |
+|---------|------------|---------------------|
+| Static images | ✅ | ✅ |
+| Animated images | ❌ | ✅ |
+| Video processing | ❌ | ✅ |
+| Language | C | Rust |
+| Target use case | Batch static images | Full media optimization |

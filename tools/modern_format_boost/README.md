@@ -8,6 +8,8 @@
 
 高质量媒体格式升级工具集，将传统格式转换为现代高效格式，同时保留完整元数据。
 
+本工具建议用于重要图集升级用途使用
+
 ### 🎯 设计理念
 
 1. **质量优先**: 默认使用最高质量设置（CRF 0 / 数学无损），避免代际损失
@@ -198,6 +200,8 @@ MIT License
 ## English
 
 High-quality media format upgrade toolkit that converts traditional formats to modern efficient formats while preserving complete metadata.
+
+This tool is recommended for use in critical album upgrades.
 
 ### 🎯 Design Philosophy
 
