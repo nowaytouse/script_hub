@@ -63,7 +63,7 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
         .arg(input)
         .arg(&output)
         .arg("-d").arg(format!("{:.1}", distance))  // Distance parameter
-        .arg("-e").arg("8")    // Effort 8 for better compression
+        .arg("-e").arg("7")    // Effort 7 (cjxl v0.11+ 范围是 1-10，默认 7)
         .output();
     
     match result {
@@ -848,7 +848,7 @@ pub fn convert_to_jxl_matched(
     cmd.arg(input)
         .arg(&output)
         .arg("-d").arg(format!("{:.2}", distance))
-        .arg("-e").arg("8");    // Effort 8 for better compression
+        .arg("-e").arg("7");    // Effort 7 (cjxl v0.11+ 范围是 1-10，默认 7)
     
     // If distance > 0, disable lossless_jpeg (which is enabled by default for JPEG input)
     if distance > 0.0 {

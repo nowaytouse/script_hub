@@ -238,11 +238,12 @@ fn generate_jxl_indicator(
     match format {
         ImageFormat::Png | ImageFormat::Gif | ImageFormat::Tiff => {
             // Lossless formats -> strongly recommend JXL
+            // cjxl v0.11+: --modular=1 强制使用 modular 模式，-e 范围 1-10
             JxlIndicator {
                 should_convert: true,
                 reason: "无损图像，强烈建议转换为JXL格式".to_string(),
                 command: format!(
-                    "cjxl '{}' '{}' -d 0.0 --modular -e 8",
+                    "cjxl '{}' '{}' -d 0.0 --modular=1 -e 9",
                     file_path, output_path
                 ),
                 benefit: "可减少30-60%体积，完全保留原始质量".to_string(),
@@ -275,11 +276,12 @@ fn generate_jxl_indicator(
         }
         ImageFormat::WebP => {
             if is_lossless {
+                // cjxl v0.11+: --modular=1 强制使用 modular 模式，-e 范围 1-10
                 JxlIndicator {
                     should_convert: true,
                     reason: "无损WebP图像，建议转换为JXL".to_string(),
                     command: format!(
-                        "cjxl '{}' '{}' -d 0.0 --modular -e 8",
+                        "cjxl '{}' '{}' -d 0.0 --modular=1 -e 9",
                         file_path, output_path
                     ),
                     benefit: "JXL通常比WebP无损更高效".to_string(),

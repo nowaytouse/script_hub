@@ -259,7 +259,7 @@ fn convert_to_jxl(input: &Path, output: &Path, format: &DetectedFormat) -> Resul
             input.to_str().unwrap(),
             output.to_str().unwrap(),
             "-d", "0.0",
-            "-e", "8",
+            "-e", "7",  // cjxl v0.11+ 范围是 1-10，默认 7
         ]
     };
     
@@ -459,11 +459,12 @@ fn convert_to_jxl_lossless(input: &Path, output: &Path, format: &DetectedFormat)
         ]
     } else {
         // Non-JPEG: use -d 0.0 for mathematical lossless
+        // cjxl v0.11+: --modular=1 强制使用 modular 模式，-e 范围 1-10
         vec![
             input.to_str().unwrap(),
             output.to_str().unwrap(),
             "-d", "0.0",
-            "--modular",
+            "--modular=1",
             "-e", "9",
         ]
     };
