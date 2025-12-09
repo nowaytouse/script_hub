@@ -1,8 +1,14 @@
-# Modern Format Boost 工具集
+# Modern Format Boost 工具集 | Modern Format Boost Toolkit
+
+[English](#english) | [中文](#中文)
+
+---
+
+## 中文
 
 高质量媒体格式升级工具集，将传统格式转换为现代高效格式，同时保留完整元数据。
 
-## 工具概览
+### 工具概览
 
 | 工具 | 输入类型 | 输出格式 | 主要用途 |
 |------|---------|---------|---------|
@@ -10,9 +16,16 @@
 | **vidquality** | 视频 | AV1 MP4 | 视频质量分析与 AV1 压缩 |
 | **vidquality-hevc** | 视频 | HEVC MP4 | 视频质量分析与 HEVC 压缩 |
 
-## 核心特性
+### 共享模块
 
-### 🎯 智能质量匹配 (`--match-quality`)
+| 模块 | 用途 |
+|------|------|
+| **metadata_keeper** | 完整元数据保留（EXIF/IPTC/xattr/时间戳/ACL） |
+| **shared_utils** | 共享工具库（进度条/安全检查/批处理/报告/FFprobe/编解码器检测） |
+
+### 核心特性
+
+#### 🎯 智能质量匹配 (`--match-quality`)
 
 所有工具都支持 `--match-quality` 参数，自动分析输入文件质量并计算匹配的输出参数：
 
@@ -20,22 +33,37 @@
 - **vidquality**: 根据 bits-per-pixel 计算 AV1 CRF (18-35)
 - **vidquality-hevc**: 根据 bits-per-pixel 计算 HEVC CRF (18-32)
 
-### 📊 完整元数据保留
+#### 🔄 智能回退机制
+
+**imgquality** 具有智能回退功能：
+- 如果转换后文件变大，自动删除输出并跳过
+- 避免小型 PNG 或已高度优化图片转换后体积增大的问题
+- 输出清晰消息：`⏭️ Rollback: JXL larger than original`
+
+#### 📊 完整元数据保留
 
 通过 `metadata_keeper` 模块，所有工具都能完整保留：
 - EXIF/IPTC 元数据（通过 ExifTool）
+- ICC 颜色配置文件（通过 `--icc` 参数）
 - macOS 扩展属性（xattr）
 - 文件时间戳（创建时间、修改时间）
 - 文件系统标志和 ACL
 
-### 🔄 智能转换策略
+#### 🔄 智能转换策略
 
 **Auto 模式**会根据输入格式智能选择转换策略：
 - 现代格式（HEVC/AV1/VP9）→ 跳过（避免代际损失）
 - 无损源 → 无损输出
 - 有损源 → 质量匹配的有损输出
 
-## 安装依赖
+#### 📈 进度条与批处理
+
+- 带 ETA 估算的可视化进度条 `[████░░] 67%`
+- 详细的批量处理汇总报告
+- 危险目录安全检查（防止误操作系统目录）
+- 并行处理支持（rayon）
+
+### 安装依赖
 
 ```bash
 # macOS
@@ -47,14 +75,14 @@ ffmpeg -version
 exiftool -ver
 ```
 
-## 快速开始
+### 快速开始
 
 ```bash
 # 编译所有工具
 cd tools/modern_format_boost
 cargo build --release
 
-# 图像转换
+# 图像转换（智能回退：变大则跳过）
 ./target/release/imgquality auto image.jpg --match-quality
 
 # 视频转换 (AV1)
@@ -64,22 +92,152 @@ cargo build --release
 ./target/release/vidquality-hevc auto video.mp4 --match-quality
 ```
 
-## 详细文档
+### 详细文档
 
 - [imgquality 文档](imgquality_API/README.md) - 图像质量分析与转换
 - [vidquality 文档](vidquality_API/README.md) - AV1 视频转换
 - [vidquality-hevc 文档](vidquality_hevc/README.md) - HEVC 视频转换
+- [shared_utils 文档](shared_utils/README.md) - 共享工具库
+- [metadata_keeper 文档](metadata_keeper/README.md) - 元数据保留模块
 
-## 项目结构
+### 项目结构
 
 ```
 modern_format_boost/
 ├── imgquality_API/      # 图像工具
 ├── vidquality_API/      # AV1 视频工具
 ├── vidquality_hevc/     # HEVC 视频工具
-└── metadata_keeper/     # 共享元数据保留模块
+├── metadata_keeper/     # 共享元数据保留模块
+└── shared_utils/        # 共享工具库
+    ├── progress.rs      # 进度条与 ETA
+    ├── safety.rs        # 危险目录检测
+    ├── batch.rs         # 批量文件处理
+    ├── report.rs        # 汇总报告
+    ├── ffprobe.rs       # FFprobe 视频分析
+    ├── tools.rs         # 外部工具检测
+    └── codecs.rs        # 编解码器信息
 ```
 
-## 许可证
+### 许可证
+
+MIT License
+
+---
+
+## English
+
+High-quality media format upgrade toolkit that converts traditional formats to modern efficient formats while preserving complete metadata.
+
+### Tool Overview
+
+| Tool | Input Type | Output Format | Main Purpose |
+|------|-----------|---------------|--------------|
+| **imgquality** | Images/Animations | JXL / AV1 MP4 | Image quality analysis and format upgrade |
+| **vidquality** | Videos | AV1 MP4 | Video quality analysis and AV1 compression |
+| **vidquality-hevc** | Videos | HEVC MP4 | Video quality analysis and HEVC compression |
+
+### Shared Modules
+
+| Module | Purpose |
+|--------|---------|
+| **metadata_keeper** | Complete metadata preservation (EXIF/IPTC/xattr/timestamps/ACL) |
+| **shared_utils** | Shared utility library (progress bar/safety checks/batch processing/reports/FFprobe/codec detection) |
+
+### Core Features
+
+#### 🎯 Smart Quality Matching (`--match-quality`)
+
+All tools support the `--match-quality` parameter, automatically analyzing input file quality and calculating matching output parameters:
+
+- **imgquality**: Calculates JXL distance based on JPEG quality or bytes-per-pixel
+- **vidquality**: Calculates AV1 CRF (18-35) based on bits-per-pixel
+- **vidquality-hevc**: Calculates HEVC CRF (18-32) based on bits-per-pixel
+
+#### 🔄 Smart Rollback Mechanism
+
+**imgquality** features smart rollback:
+- Automatically deletes output and skips if converted file is larger
+- Avoids size increase issues with small PNGs or highly optimized images
+- Clear output message: `⏭️ Rollback: JXL larger than original`
+
+#### 📊 Complete Metadata Preservation
+
+Through the `metadata_keeper` module, all tools preserve:
+- EXIF/IPTC metadata (via ExifTool)
+- ICC color profiles (via `--icc` parameter)
+- macOS extended attributes (xattr)
+- File timestamps (creation time, modification time)
+- File system flags and ACL
+
+#### 🔄 Smart Conversion Strategy
+
+**Auto mode** intelligently selects conversion strategy based on input format:
+- Modern formats (HEVC/AV1/VP9) → Skip (avoid generational loss)
+- Lossless source → Lossless output
+- Lossy source → Quality-matched lossy output
+
+#### 📈 Progress Bar & Batch Processing
+
+- Visual progress bar with ETA estimation `[████░░] 67%`
+- Detailed batch processing summary reports
+- Dangerous directory safety checks (prevent accidental system directory operations)
+- Parallel processing support (rayon)
+
+### Install Dependencies
+
+```bash
+# macOS
+brew install jpeg-xl ffmpeg exiftool
+
+# Verify installation
+cjxl --version
+ffmpeg -version
+exiftool -ver
+```
+
+### Quick Start
+
+```bash
+# Build all tools
+cd tools/modern_format_boost
+cargo build --release
+
+# Image conversion (smart rollback: skip if larger)
+./target/release/imgquality auto image.jpg --match-quality
+
+# Video conversion (AV1)
+./target/release/vidquality auto video.mp4 --match-quality
+
+# Video conversion (HEVC)
+./target/release/vidquality-hevc auto video.mp4 --match-quality
+```
+
+### Detailed Documentation
+
+- [imgquality Documentation](imgquality_API/README.md) - Image quality analysis and conversion
+- [vidquality Documentation](vidquality_API/README.md) - AV1 video conversion
+- [vidquality-hevc Documentation](vidquality_hevc/README.md) - HEVC video conversion
+- [shared_utils Documentation](shared_utils/README.md) - Shared utility library
+- [metadata_keeper Documentation](metadata_keeper/README.md) - Metadata preservation module
+
+### Project Structure
+
+```
+modern_format_boost/
+├── imgquality_API/      # Image tool
+├── vidquality_API/      # AV1 video tool
+├── vidquality_hevc/     # HEVC video tool
+├── metadata_keeper/     # Shared metadata preservation module
+└── shared_utils/        # Shared utility library
+    ├── progress.rs      # Progress bar & ETA
+    ├── safety.rs        # Dangerous directory detection
+    ├── batch.rs         # Batch file processing
+    ├── report.rs        # Summary reports
+    ├── ffprobe.rs       # FFprobe video analysis
+    ├── tools.rs         # External tool detection
+    └── codecs.rs        # Codec information
+```
+
+### License
 
 MIT License
