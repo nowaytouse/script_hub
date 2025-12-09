@@ -249,7 +249,8 @@ if [ ${#URLS[@]} -eq 0 ]; then
         "https://raw.githubusercontent.com/Maasea/sgmodule/refs/heads/master/YouTube.Enhance.sgmodule"
         "https://raw.githubusercontent.com/Repcz/Tool/refs/heads/X/Surge/Module/Function/QX-resource-preview.sgmodule"
         "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule"
-        "https://raw.githubusercontent.com/Repcz/Tool/refs/heads/X/Surge/Module/Function/DNS.sgmodule"
+        # ⚠️ REMOVED: DNS.sgmodule - 已合并到本地 🌐 DNS & Host Enhanced.sgmodule
+        # "https://raw.githubusercontent.com/Repcz/Tool/refs/heads/X/Surge/Module/Function/DNS.sgmodule"
         "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.sgmodule"
         "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule"
         "https://raw.githubusercontent.com/ninjai/apple/refs/heads/main/sgmodule/iCloud_Private_Relay_Gateway.sgmodule"
@@ -258,13 +259,22 @@ if [ ${#URLS[@]} -eq 0 ]; then
         "https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule"
         "https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule"
         "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule"
-        "https://raw.githubusercontent.com/QingRex/LoonKissSurge/refs/heads/main/Surge/Official/%F0%9F%8D%9F%20DNS%20%E5%88%86%E6%B5%81.official.sgmodule"
+        # ⚠️ REMOVED: 🍟 DNS 分流.official.sgmodule - 已合并到本地 🌐 DNS & Host Enhanced.sgmodule
+        # "https://raw.githubusercontent.com/QingRex/LoonKissSurge/refs/heads/main/Surge/Official/%F0%9F%8D%9F%20DNS%20%E5%88%86%E6%B5%81.official.sgmodule"
         "https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule"
         "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"
         "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"
         "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"
     )
 fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Protected Local Modules (不会被远程下载覆盖)
+# 这些模块是本地合并/优化版本，优先级高于远程版本
+# ═══════════════════════════════════════════════════════════════════════════════
+PROTECTED_MODULES=(
+    "🌐 DNS & Host Enhanced.sgmodule"  # 合并自: DNS.sgmodule + 🍟 DNS 分流.official.sgmodule + 🚀💪General Enhanced⬆️⬆️ plus.sgmodule
+)
 
 log_header "Universal Module Downloader"
 log_info "Group: $GROUP"
@@ -291,6 +301,20 @@ for url in "${URLS[@]}"; do
     
     # Ensure .sgmodule extension
     [[ "$filename" != *.sgmodule ]] && [[ "$filename" != *.module ]] && filename="${filename}.sgmodule"
+    
+    # Check if this module is protected (local merged version exists)
+    is_protected=false
+    for protected in "${PROTECTED_MODULES[@]}"; do
+        if [[ "$filename" == "$protected" ]] || [[ "$filename" == "DNS.sgmodule" ]] || [[ "$filename" == *"DNS 分流"* ]] || [[ "$filename" == *"General Enhanced"* ]]; then
+            is_protected=true
+            break
+        fi
+    done
+    
+    if [ "$is_protected" = true ]; then
+        log_warning "Skipping protected module: $filename (local merged version exists)"
+        continue
+    fi
     
     module_file="$MODULE_DIR/$filename"
     temp_file="$TEMP_DIR/$filename"
