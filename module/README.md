@@ -15,6 +15,8 @@ This directory contains Surge and Shadowrocket modules organized by their functi
 
 Modules are automatically updated **twice daily** via GitHub Actions.
 
+**✅ Collections auto-update**: All 3 mega-collections are automatically regenerated from upstream modules.
+
 ---
 
 ## 📦 Recommended Collections (推荐合集)
@@ -117,6 +119,8 @@ python3 ruleset/merge_sync/consolidate_modules.py
 | 04:00 | 12:00 | 中午更新 |
 
 模块通过 GitHub Actions **每日自动更新两次**。
+
+**✅ 合集自动更新**: 所有3个大合集会在每次更新时自动从上游模块重新生成。
 
 ---
 

@@ -385,15 +385,38 @@ STEP=$((STEP + 1))
 if [ "$SKIP_MODULE" = false ]; then
     echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Module consolidation + URL generation...${NC}"
     
-    # Step 7a: Merge narrow pierce modules into combined modules
+    # Step 7a: Merge all module collections (随上游自动更新)
+    # 🎯 App去广告大合集 (narrow_pierce)
     if [ -f "${SCRIPT_DIR}/merge_narrow_pierce_modules.py" ]; then
-        log_info "Merging narrow pierce modules..."
+        log_info "Merging narrow pierce modules → 🎯 App去广告大合集..."
         if [ "$VERBOSE" = true ]; then
             python3 "${SCRIPT_DIR}/merge_narrow_pierce_modules.py"
         else
-            python3 "${SCRIPT_DIR}/merge_narrow_pierce_modules.py" 2>&1 | grep -E "^\[" || true
+            python3 "${SCRIPT_DIR}/merge_narrow_pierce_modules.py" 2>&1 | grep -E "^(✅|📊|合并)" || true
         fi
-        log_success "Narrow pierce modules merged"
+        log_success "🎯 App去广告大合集 merged"
+    fi
+    
+    # 🛡️ 广告拦截大合集 (head_expanse)
+    if [ -f "${SCRIPT_DIR}/merge_head_expanse_modules.py" ]; then
+        log_info "Merging head expanse modules → 🛡️ 广告拦截大合集..."
+        if [ "$VERBOSE" = true ]; then
+            python3 "${SCRIPT_DIR}/merge_head_expanse_modules.py"
+        else
+            python3 "${SCRIPT_DIR}/merge_head_expanse_modules.py" 2>&1 | grep -E "^(✅|📊|合并)" || true
+        fi
+        log_success "🛡️ 广告拦截大合集 merged"
+    fi
+    
+    # 🚀 功能增强大合集 (amplify_nexus)
+    if [ -f "${SCRIPT_DIR}/merge_amplify_nexus_modules.py" ]; then
+        log_info "Merging amplify nexus modules → 🚀 功能增强大合集..."
+        if [ "$VERBOSE" = true ]; then
+            python3 "${SCRIPT_DIR}/merge_amplify_nexus_modules.py"
+        else
+            python3 "${SCRIPT_DIR}/merge_amplify_nexus_modules.py" 2>&1 | grep -E "^(✅|📊|合并)" || true
+        fi
+        log_success "🚀 功能增强大合集 merged"
     fi
     
     # Step 7b: Run module consolidation script

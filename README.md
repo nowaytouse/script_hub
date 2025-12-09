@@ -15,6 +15,8 @@ A collection of utility scripts for media conversion, network configuration mana
 
 Rules and modules are automatically updated **twice daily** via GitHub Actions.
 
+**✅ Collections auto-update**: All 3 mega-collections (🚀/🛡️/🎯) are automatically regenerated from upstream modules during each update cycle.
+
 ---
 
 ## 📦 Module Collections (推荐合集)
@@ -144,6 +146,8 @@ MIT License.
 | 04:00 | 12:00 | 中午更新 |
 
 规则和模块通过 GitHub Actions **每日自动更新两次**。
+
+**✅ 合集自动更新**: 所有3个大合集（🚀/🛡️/🎯）会在每次更新时自动从上游模块重新生成。
 
 ---
 
