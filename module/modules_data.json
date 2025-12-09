@@ -1,6 +1,6 @@
 {
-  "generated": "2025-12-08T17:14:45.431637",
-  "total": 72,
+  "generated": "2025-12-09T21:47:21.459987",
+  "total": 70,
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
@@ -38,17 +38,6 @@
           "author": "VirgilClyne[https://github.com/VirgilClyne]",
           "version": "0.2.18",
           "date": "2025-06-07 13:38:04"
-        },
-        {
-          "name": "系统｜DNS",
-          "filename": "DNS.sgmodule",
-          "desc": "自用 DNS 设置",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/DNS.sgmodule",
-          "tag": "dns",
-          "essential": false,
-          "author": "",
-          "version": "",
-          "date": ""
         },
         {
           "name": "🍿️ DualSubs: 🔣 Universal",
@@ -271,25 +260,14 @@
           "date": ""
         },
         {
-          "name": "🍟 Fries: 🌐 DNS enhanced",
-          "filename": "🍟 DNS 分流.official.sgmodule",
-          "desc": "1.域名按所属DNS进行分流解析 2.路由器地址使用系统DNS进行解析 3.特殊地址使用规范DNS进行解析",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%8D%9F%20DNS%20%E5%88%86%E6%B5%81.official.sgmodule",
+          "name": "🌐 DNS & Host Enhanced",
+          "filename": "🌐 DNS & Host Enhanced.sgmodule",
+          "desc": "统一DNS分流+Host增强模块 | 1.域名按所属DNS分流解析 2.路由器地址使用系统DNS 3.特殊地址规范DNS",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%8C%90%20DNS%20%26%20Host%20Enhanced.sgmodule",
           "tag": "dns",
           "essential": false,
-          "author": "VirgilClyne",
-          "version": "",
-          "date": ""
-        },
-        {
-          "name": "🚀💪General Enhanced⬆️⬆️ plus",
-          "filename": "🚀💪General Enhanced⬆️⬆️ plus.sgmodule",
-          "desc": "DNS boost🚀 Proxy bypass⚡ Real-IP exec + Full H3 DoH🔒 Google/",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%9A%80%F0%9F%92%AAGeneral%20Enhanced%E2%AC%86%EF%B8%8F%E2%AC%86%EF%B8%8F%20plus.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "VirgilClyne & nyamiiko (Optimized)",
-          "version": "2025.12.03",
+          "author": "VirgilClyne & nyamiiko (Merged & Optimized)",
+          "version": "2025.12.09",
           "date": ""
         }
       ]

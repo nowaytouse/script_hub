@@ -3,13 +3,9 @@
 # Policy: PROXY
 # Node: Any
 # Description: Apple services
-# Rules: 54
-# Updated: 2025-12-08 15:13:45
+# Rules: 57
+# Updated: 2025-12-09 21:47:11
 # ═══════════════════════════════════════════════════════════════
-
-# [smart_cleanup.py] Deduplicated: 54 rules
-
-# [smart_cleanup.py] Deduplicated: 54 rules
 
 DOMAIN-KEYWORD,apple-support.akadns.net
 DOMAIN-KEYWORD,apple.com.akadns.net
@@ -19,6 +15,7 @@ DOMAIN-KEYWORD,icloud
 DOMAIN-KEYWORD,icloud.com.akadns.net
 DOMAIN-KEYWORD,smp-device
 DOMAIN-KEYWORD,testflight
+DOMAIN-SUFFIX,apple.com
 IP-CIDR,139.178.128.0/18,no-resolve
 IP-CIDR,144.178.0.0/19,no-resolve
 IP-CIDR,144.178.36.0/22,no-resolve
@@ -29,6 +26,8 @@ IP-CIDR,198.183.17.0/24,no-resolve
 IP-CIDR,205.180.175.0/24,no-resolve
 IP-CIDR,63.92.224.0/19,no-resolve
 IP-CIDR,65.199.22.0/23,no-resolve
+PROCESS-NAME,/System/Applications/Music.app/Contents/MacOS/Music
+PROCESS-NAME,/System/Library/PrivateFrameworks/iTunesCloud.framework/Support/itunescloudd
 PROCESS-NAME,CoreLocationAgent
 PROCESS-NAME,LookupViewService
 PROCESS-NAME,Music
