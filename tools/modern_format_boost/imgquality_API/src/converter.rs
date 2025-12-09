@@ -162,14 +162,23 @@ fn verify_jxl_health(path: &Path) -> Result<()> {
         ));
     }
 
-    // 🔥 简化健康检查：只检查文件签名
-    // djxl 解码验证已移除，因为：
-    // 1. djxl 不支持 --info 参数
-    // 2. djxl 输出到 /dev/null 会失败（无法检测输出格式）
-    // 3. cjxl 输出的文件通常是有效的，签名检查足够
-    // 4. 完整解码验证会显著降低性能
-    //
-    // 如果需要更严格的验证，可以使用 jxlinfo 工具（如果可用）
+    // 🔥 使用 jxlinfo 进行更可靠的验证（如果可用）
+    // jxlinfo 比 djxl 更适合验证，因为它只读取元数据，不需要完整解码
+    if which::which("jxlinfo").is_ok() {
+        let result = Command::new("jxlinfo")
+            .arg(path)
+            .output();
+
+        if let Ok(output) = result {
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                return Err(ImgQualityError::ConversionError(
+                    format!("JXL health check failed (jxlinfo): {}", stderr.trim()),
+                ));
+            }
+        }
+    }
+    // 如果 jxlinfo 不可用，签名检查已经足够（cjxl 输出通常是有效的）
 
     Ok(())
 }

@@ -1081,7 +1081,7 @@ fn get_input_dimensions(input: &Path) -> Result<(u32, u32)> {
     }
 }
 
-/// Verify that JXL file is valid using signature and optional decoding
+/// Verify that JXL file is valid using signature and jxlinfo (if available)
 fn verify_jxl_health(path: &Path) -> Result<()> {
     // Check file signature
     let mut file = fs::File::open(path)?;
@@ -1096,8 +1096,23 @@ fn verify_jxl_health(path: &Path) -> Result<()> {
         ));
     }
     
-    // Skip full decode check for performance, signature is usually enough for cjxl output
-    // Unless paranoia mode is requested.
+    // 🔥 使用 jxlinfo 进行更可靠的验证（如果可用）
+    // jxlinfo 比 djxl 更适合验证，因为它只读取元数据，不需要完整解码
+    if which::which("jxlinfo").is_ok() {
+        let result = Command::new("jxlinfo")
+            .arg(path)
+            .output();
+
+        if let Ok(output) = result {
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                return Err(ImgQualityError::ConversionError(
+                    format!("JXL health check failed (jxlinfo): {}", stderr.trim()),
+                ));
+            }
+        }
+    }
+    // 如果 jxlinfo 不可用，签名检查已经足够（cjxl 输出通常是有效的）
     
     Ok(())
 }

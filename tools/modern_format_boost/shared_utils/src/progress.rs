@@ -10,8 +10,9 @@ use std::time::{Duration, Instant};
 /// 
 /// # Example
 /// ```
+/// use shared_utils::create_progress_bar;
 /// let pb = create_progress_bar(100, "Converting");
-/// for i in 0..100 {
+/// for _ in 0..100 {
 ///     pb.inc(1);
 /// }
 /// pb.finish_with_message("Done!");

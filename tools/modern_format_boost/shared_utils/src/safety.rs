@@ -40,12 +40,13 @@ const DANGEROUS_DIRS: &[&str] = &[
 /// # Example
 /// ```
 /// use shared_utils::check_dangerous_directory;
+/// use std::path::Path;
 /// 
 /// // Safe path
-/// assert!(check_dangerous_directory("/Users/me/Documents/photos").is_ok());
+/// assert!(check_dangerous_directory(Path::new("/Users/me/Documents/photos")).is_ok());
 /// 
 /// // Dangerous path
-/// assert!(check_dangerous_directory("/System").is_err());
+/// assert!(check_dangerous_directory(Path::new("/System")).is_err());
 /// ```
 pub fn check_dangerous_directory(path: &Path) -> Result<(), String> {
     let path_str = path.to_string_lossy();
@@ -134,7 +135,6 @@ pub fn check_extension_whitelist(path: &Path, whitelist: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     #[test]
     fn test_dangerous_directories() {

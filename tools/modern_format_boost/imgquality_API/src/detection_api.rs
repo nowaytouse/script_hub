@@ -350,6 +350,7 @@ fn estimate_jpeg_quality(path: &Path) -> Result<u8> {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
     
     #[test]

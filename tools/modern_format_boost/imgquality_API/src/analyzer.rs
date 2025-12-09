@@ -578,37 +578,41 @@ fn is_jxl_file(path: &PathBuf) -> bool {
     false
 }
 
-/// Analyze JXL image using djxl for decoding
+/// Analyze JXL image using jxlinfo for metadata extraction
+/// 
+/// 🔥 修复：djxl 不支持 --info 参数，使用 jxlinfo 代替
+/// jxlinfo 输出格式示例：
+///   JPEG XL image, 1920x1080, (no alpha), 8-bit sRGB color
 fn analyze_jxl_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
     use std::process::Command;
     
-    // Use jxlinfo to get dimensions (if available) or djxl
-    let output = Command::new("djxl")
-        .arg(path)
-        .arg("--info")
-        .output();
-    
-    // Try to get dimensions from djxl output
-    let (width, height) = if let Ok(out) = &output {
-        let stderr = String::from_utf8_lossy(&out.stderr);
-        // Parse dimensions from djxl output
-        let mut w = 0u32;
-        let mut h = 0u32;
-        for line in stderr.lines() {
-            if line.contains("x") && line.contains("size") {
-                // Try to parse "WxH" format
-                if let Some(dims) = line.split_whitespace().find(|s| s.contains('x')) {
-                    let parts: Vec<&str> = dims.split('x').collect();
-                    if parts.len() == 2 {
-                        w = parts[0].parse().unwrap_or(0);
-                        h = parts[1].parse().unwrap_or(0);
-                    }
-                }
+    // 🔥 使用 jxlinfo 获取 JXL 文件信息（比 djxl 更可靠）
+    let (width, height, has_alpha, color_depth) = if which::which("jxlinfo").is_ok() {
+        let output = Command::new("jxlinfo")
+            .arg(path)
+            .output();
+        
+        if let Ok(out) = output {
+            if out.status.success() {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                parse_jxlinfo_output(&stdout)
+            } else {
+                // jxlinfo 失败，使用默认值
+                (0, 0, false, 8)
             }
+        } else {
+            (0, 0, false, 8)
         }
-        (w, h)
     } else {
-        (0, 0)
+        // jxlinfo 不可用，尝试使用 ffprobe 作为备选
+        if let Ok(probe) = shared_utils::probe_video(path) {
+            (probe.width, probe.height, false, 8)
+        } else {
+            // 🔥 响亮警告：无法获取 JXL 尺寸
+            eprintln!("⚠️  无法获取 JXL 文件尺寸: jxlinfo 和 ffprobe 都不可用");
+            eprintln!("   💡 建议安装 jxlinfo: brew install jpeg-xl");
+            (0, 0, false, 8)
+        }
     };
     
     // JXL files are always considered lossless (they came from our own conversion)
@@ -620,9 +624,9 @@ fn analyze_jxl_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
         width,
         height,
         file_size,
-        color_depth: 8,
+        color_depth,
         color_space: "sRGB".to_string(),
-        has_alpha: false,
+        has_alpha,
         is_animated: false,
         duration_secs: None,
         is_lossless: true, // JXL from our conversion is lossless
@@ -642,6 +646,50 @@ fn analyze_jxl_image(path: &PathBuf, file_size: u64) -> Result<ImageAnalysis> {
         ssim: None,
         metadata,
     })
+}
+
+/// 解析 jxlinfo 输出以提取图像信息
+/// 
+/// jxlinfo 输出格式示例：
+///   JPEG XL image, 1920x1080, (no alpha), 8-bit sRGB color
+///   JPEG XL image, 800x600, alpha, 16-bit linear color
+fn parse_jxlinfo_output(output: &str) -> (u32, u32, bool, u8) {
+    let mut width = 0u32;
+    let mut height = 0u32;
+    let mut has_alpha = false;
+    let mut color_depth = 8u8;
+    
+    for line in output.lines() {
+        let line = line.trim();
+        
+        // 解析尺寸：查找 "WxH" 格式
+        if let Some(dims) = line.split(',').find(|s| s.contains('x') && s.chars().any(|c| c.is_ascii_digit())) {
+            let dims = dims.trim();
+            // 尝试解析 "1920x1080" 格式
+            let parts: Vec<&str> = dims.split('x').collect();
+            if parts.len() == 2 {
+                // 提取数字部分
+                let w_str: String = parts[0].chars().filter(|c| c.is_ascii_digit()).collect();
+                let h_str: String = parts[1].chars().filter(|c| c.is_ascii_digit()).collect();
+                width = w_str.parse().unwrap_or(0);
+                height = h_str.parse().unwrap_or(0);
+            }
+        }
+        
+        // 解析 alpha 通道
+        if line.contains("alpha") && !line.contains("no alpha") {
+            has_alpha = true;
+        }
+        
+        // 解析色深
+        if line.contains("16-bit") {
+            color_depth = 16;
+        } else if line.contains("32-bit") {
+            color_depth = 32;
+        }
+    }
+    
+    (width, height, has_alpha, color_depth)
 }
 
 /// Extract metadata

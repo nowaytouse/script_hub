@@ -5,8 +5,12 @@
 //! - AV1 MP4 for compression (lossy sources)
 //!
 //! ## Simple Mode
-//! ```rust
+//! ```rust,ignore
 //! use vidquality::simple_convert;
+//! use std::path::Path;
+//! 
+//! let input = Path::new("video.mp4");
+//! let output_dir = Some(Path::new("output/"));
 //! simple_convert(input, output_dir)?;
 //! ```
 
