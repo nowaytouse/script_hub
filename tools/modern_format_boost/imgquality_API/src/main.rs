@@ -621,8 +621,9 @@ fn auto_convert_single_file(
     
     if result.skipped {
         println!("⏭️ {}", result.message);
-    } else if let Some(reduction) = result.size_reduction {
-        println!("✅ {} (reduced {:.1}%)", result.message, reduction);
+    } else {
+        // 🔥 修复：message 已经包含了正确的 size reduction/increase 信息
+        println!("✅ {}", result.message);
     }
     
     Ok(())

@@ -193,14 +193,22 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
                 fs::remove_file(input)?;
             }
             
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("JXL conversion successful: size reduced {:.1}%", reduction_pct)
+            } else {
+                format!("JXL conversion successful: size increased {:.1}%", -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Conversion successful: size reduced {:.1}%", reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -279,14 +287,22 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
                 fs::remove_file(input)?;
             }
             
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("JPEG lossless transcode successful: size reduced {:.1}%", reduction_pct)
+            } else {
+                format!("JPEG lossless transcode successful: size increased {:.1}%", -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("JPEG lossless transcode successful: size reduced {:.1}%", reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -360,14 +376,22 @@ pub fn convert_to_avif(input: &Path, quality: Option<u8>, options: &ConvertOptio
                 fs::remove_file(input)?;
             }
 
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("AVIF conversion successful: size reduced {:.1}%", reduction_pct)
+            } else {
+                format!("AVIF conversion successful: size increased {:.1}%", -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Conversion successful: size reduced {:.1}%", reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -441,14 +465,22 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
                 fs::remove_file(input)?;
             }
             
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("AV1 conversion successful: size reduced {:.1}%", reduction_pct)
+            } else {
+                format!("AV1 conversion successful: size increased {:.1}%", -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Conversion successful: size reduced {:.1}%", reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -521,14 +553,22 @@ pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Resul
                 fs::remove_file(input)?;
             }
             
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("Lossless AVIF: size reduced {:.1}%", reduction_pct)
+            } else {
+                format!("Lossless AVIF: size increased {:.1}%", -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Lossless AVIF: size {:.1}%", reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -619,14 +659,22 @@ pub fn convert_to_av1_mp4_matched(
                 fs::remove_file(input)?;
             }
             
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("Quality-matched AV1 (CRF {}): size reduced {:.1}%", crf, reduction_pct)
+            } else {
+                format!("Quality-matched AV1 (CRF {}): size increased {:.1}%", crf, -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Quality-matched AV1 (CRF {}): size {:.1}%", crf, reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -904,14 +952,22 @@ pub fn convert_to_jxl_matched(
                 fs::remove_file(input)?;
             }
             
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("Quality-matched JXL (d={:.2}): size reduced {:.1}%", distance, reduction_pct)
+            } else {
+                format!("Quality-matched JXL (d={:.2}): size increased {:.1}%", distance, -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Quality-matched JXL (d={:.2}): size reduced {:.1}%", distance, reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })
@@ -986,14 +1042,22 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
                 fs::remove_file(input)?;
             }
 
+            // 🔥 修复：正确显示 size reduction/increase 消息
+            let reduction_pct = reduction * 100.0;
+            let message = if reduction >= 0.0 {
+                format!("Lossless AV1: size reduced {:.1}%", reduction_pct)
+            } else {
+                format!("Lossless AV1: size increased {:.1}%", -reduction_pct)
+            };
+            
             Ok(ConversionResult {
                 success: true,
                 input_path: input.display().to_string(),
                 output_path: Some(output.display().to_string()),
                 input_size,
                 output_size: Some(output_size),
-                size_reduction: Some(reduction * 100.0),
-                message: format!("Lossless AV1: size {:.1}%", reduction * 100.0),
+                size_reduction: Some(reduction_pct),
+                message,
                 skipped: false,
                 skip_reason: None,
             })

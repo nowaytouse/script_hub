@@ -4,9 +4,9 @@
 //! Reference: media/CONTRIBUTING.md - Visual Progress Bar requirement
 
 use indicatif::{ProgressBar, ProgressStyle, MultiProgress};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-/// Create a styled progress bar for batch processing
+/// Create a styled progress bar for batch processing with improved ETA
 /// 
 /// # Example
 /// ```
@@ -20,13 +20,112 @@ pub fn create_progress_bar(total: u64, prefix: &str) -> ProgressBar {
     let pb = ProgressBar::new(total);
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("{prefix:.cyan.bold} [{bar:40.green/dim}] {pos}/{len} ({percent}%) | ETA: {eta} | {msg}")
+            // 使用 elapsed_precise 替代 eta，更可靠
+            .template("{prefix:.cyan.bold} [{bar:40.green/dim}] {pos}/{len} ({percent}%) | {elapsed_precise} | {msg}")
             .expect("Invalid progress bar template")
             .progress_chars("█▓░")
     );
     pb.set_prefix(prefix.to_string());
     pb.enable_steady_tick(Duration::from_millis(100));
     pb
+}
+
+/// Create a progress bar with custom ETA calculation (for variable-time tasks)
+pub fn create_progress_bar_with_eta(total: u64, prefix: &str) -> SmartProgressBar {
+    SmartProgressBar::new(total, prefix)
+}
+
+/// Smart progress bar with moving average ETA calculation
+/// Better for tasks with highly variable processing times (like media conversion)
+pub struct SmartProgressBar {
+    bar: ProgressBar,
+    start_time: Instant,
+    total: u64,
+    processed: u64,
+    /// Moving average of last N processing times (in seconds)
+    recent_times: Vec<f64>,
+    last_update: Instant,
+}
+
+impl SmartProgressBar {
+    pub fn new(total: u64, prefix: &str) -> Self {
+        let bar = ProgressBar::new(total);
+        bar.set_style(
+            ProgressStyle::default_bar()
+                .template("{prefix:.cyan.bold} [{bar:40.green/dim}] {pos}/{len} ({percent}%) | ETA: {msg}")
+                .expect("Invalid progress bar template")
+                .progress_chars("█▓░")
+        );
+        bar.set_prefix(prefix.to_string());
+        bar.enable_steady_tick(Duration::from_millis(100));
+        
+        Self {
+            bar,
+            start_time: Instant::now(),
+            total,
+            processed: 0,
+            recent_times: Vec::with_capacity(10),
+            last_update: Instant::now(),
+        }
+    }
+    
+    /// Increment progress and update ETA
+    pub fn inc(&mut self, message: &str) {
+        let elapsed = self.last_update.elapsed().as_secs_f64();
+        self.last_update = Instant::now();
+        
+        // Keep only last 10 times for moving average
+        if self.recent_times.len() >= 10 {
+            self.recent_times.remove(0);
+        }
+        self.recent_times.push(elapsed);
+        
+        self.processed += 1;
+        self.bar.inc(1);
+        
+        // Calculate ETA using moving average
+        let remaining = self.total.saturating_sub(self.processed);
+        let eta = if !self.recent_times.is_empty() && remaining > 0 {
+            let avg_time: f64 = self.recent_times.iter().sum::<f64>() / self.recent_times.len() as f64;
+            let eta_secs = avg_time * remaining as f64;
+            format_eta(eta_secs)
+        } else {
+            "calculating...".to_string()
+        };
+        
+        self.bar.set_message(format!("{} | {}", eta, message));
+    }
+    
+    pub fn finish(&self) {
+        let total_time = self.start_time.elapsed();
+        self.bar.finish_with_message(format!("Done in {}", format_duration(total_time)));
+    }
+    
+    pub fn bar(&self) -> &ProgressBar {
+        &self.bar
+    }
+}
+
+/// Format ETA with reasonable limits (cap at 24h, show "very long" for extreme values)
+fn format_eta(seconds: f64) -> String {
+    if seconds.is_nan() || seconds.is_infinite() || seconds < 0.0 {
+        return "unknown".to_string();
+    }
+    
+    let secs = seconds as u64;
+    
+    // Cap at 24 hours - anything longer is unreliable
+    if secs > 86400 {
+        return ">24h".to_string();
+    }
+    
+    if secs >= 3600 {
+        format!("{}h {}m", secs / 3600, (secs % 3600) / 60)
+    } else if secs >= 60 {
+        format!("{}m {}s", secs / 60, secs % 60)
+    } else {
+        format!("{}s", secs)
+    }
 }
 
 /// Create a spinner for indeterminate progress
