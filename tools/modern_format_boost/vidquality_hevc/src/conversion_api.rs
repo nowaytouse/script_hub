@@ -446,6 +446,9 @@ fn execute_hevc_conversion(detection: &VideoDetectionResult, output: &Path, crf:
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let x265_params = format!("log-level=error:pools={}", max_threads);
     
+    // 🔥 偶数分辨率处理：HEVC 编码器要求宽高为偶数
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
+    
     let mut args = vec![
         "-y".to_string(),
         "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
@@ -456,6 +459,11 @@ fn execute_hevc_conversion(detection: &VideoDetectionResult, output: &Path, crf:
         "-tag:v".to_string(), "hvc1".to_string(),  // Apple 兼容性
         "-x265-params".to_string(), x265_params,  // 限制 x265 线程池
     ];
+    
+    // 添加视频滤镜（偶数分辨率）
+    for arg in &vf_args {
+        args.push(arg.clone());
+    }
     
     if detection.has_audio {
         args.extend(vec![
@@ -487,6 +495,9 @@ fn execute_hevc_lossless(detection: &VideoDetectionResult, output: &Path) -> Res
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let x265_params = format!("lossless=1:log-level=error:pools={}", max_threads);
     
+    // 🔥 偶数分辨率处理：HEVC 编码器要求宽高为偶数
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
+    
     let mut args = vec![
         "-y".to_string(),
         "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
@@ -496,6 +507,11 @@ fn execute_hevc_lossless(detection: &VideoDetectionResult, output: &Path) -> Res
         "-preset".to_string(), "medium".to_string(),
         "-tag:v".to_string(), "hvc1".to_string(),
     ];
+    
+    // 添加视频滤镜（偶数分辨率）
+    for arg in &vf_args {
+        args.push(arg.clone());
+    }
     
     if detection.has_audio {
         args.extend(vec!["-c:a".to_string(), "flac".to_string()]);

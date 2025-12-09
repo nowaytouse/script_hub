@@ -473,6 +473,9 @@ fn execute_ffv1_conversion(detection: &VideoDetectionResult, output: &Path) -> R
     // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     
+    // 🔥 偶数分辨率处理：确保宽高为偶数
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
+    
     let mut args = vec![
         "-y".to_string(),
         "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
@@ -485,6 +488,11 @@ fn execute_ffv1_conversion(detection: &VideoDetectionResult, output: &Path) -> R
         "-slices".to_string(), max_threads.to_string(),  // 使用与线程数相同的 slices
         "-slicecrc".to_string(), "1".to_string(),
     ];
+    
+    // 添加视频滤镜（偶数分辨率）
+    for arg in &vf_args {
+        args.push(arg.clone());
+    }
     
     if detection.has_audio {
         args.extend(vec!["-c:a".to_string(), "flac".to_string()]);
@@ -512,6 +520,9 @@ fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: 
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let svt_params = format!("tune=0:film-grain=0:lp={}", max_threads);
     
+    // 🔥 偶数分辨率处理：AV1 编码器要求宽高为偶数
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
+    
     let mut args = vec![
         "-y".to_string(),
         "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
@@ -521,6 +532,11 @@ fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: 
         "-preset".to_string(), "6".to_string(),  // 0-13, 6 是平衡点
         "-svtav1-params".to_string(), svt_params,  // 限制 SVT-AV1 线程数
     ];
+    
+    // 添加视频滤镜（偶数分辨率）
+    for arg in &vf_args {
+        args.push(arg.clone());
+    }
     
     if detection.has_audio {
         args.extend(vec![
@@ -553,6 +569,9 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
     let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let svt_params = format!("lossless=1:lp={}", max_threads);
     
+    // 🔥 偶数分辨率处理：AV1 编码器要求宽高为偶数
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
+    
     let mut args = vec![
         "-y".to_string(),
         "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
@@ -562,6 +581,11 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
         "-preset".to_string(), "4".to_string(),  // 无损模式用更慢的 preset 保证质量
         "-svtav1-params".to_string(), svt_params,  // 数学无损 + 限制线程数
     ];
+    
+    // 添加视频滤镜（偶数分辨率）
+    for arg in &vf_args {
+        args.push(arg.clone());
+    }
     
     if detection.has_audio {
         args.extend(vec!["-c:a".to_string(), "flac".to_string()]);  // 无损音频
