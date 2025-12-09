@@ -8,16 +8,32 @@
 
 高质量视频分析工具，支持智能 HEVC/H.265 压缩和质量匹配。
 
+### 与 vidquality (AV1) 的区别
+
+| 特性 | vidquality-hevc (本工具) | vidquality (AV1) |
+|------|------------------------|-----------------|
+| 输出编码 | **HEVC/H.265** | AV1 |
+| 编码器 | **libx265** | SVT-AV1 |
+| 默认 CRF | 18-20 | 0 |
+| 压缩效率 | 较好 | 最佳 |
+| 兼容性 | **极佳 (Apple/硬件)** | 较好 |
+| 编码速度 | **快** | 中等 |
+
+**选择建议**:
+- 需要 Apple 设备兼容 → **vidquality-hevc**
+- 追求最佳压缩率 → vidquality (AV1)
+- 需要快速编码 → **vidquality-hevc**
+
 ### 功能特性
 
 - 🔍 **视频质量检测**: 编码器、比特率、帧率、分辨率等
 - 📊 **压缩类型识别**: 无损/视觉无损/有损
 - 🔄 **智能 HEVC 转换**: 使用 libx265 编码器
 - 🎯 **质量匹配模式**: 自动计算匹配输入质量的 CRF
-- 📦 **元数据保留**: 完整保留文件属性和时间戳（通过 shared_utils）
+- 📦 **元数据保留**: 完整保留文件属性和时间戳
 - 🍎 **Apple 兼容**: 使用 hvc1 标签确保 Apple 设备兼容
 - 📈 **尺寸探索模式**: 逐步提高 CRF 直到输出小于输入
-- 🛡️ **安全检查**: 危险目录检测，防止误操作（通过 shared_utils）
+- 🛡️ **安全检查**: 危险目录检测，防止误操作
 
 ### 架构说明
 
@@ -25,6 +41,7 @@
 - **元数据保留** (`shared_utils::metadata`): ExifTool 封装 + 跨平台原生 API
 - **FFprobe 封装** (`shared_utils::ffprobe`): 统一的视频信息获取
 - **编解码器检测** (`shared_utils::codecs`): FFmpeg 编解码器可用性检测
+- **视频处理** (`shared_utils::video`): 偶数尺寸修正、滤镜链生成
 - **安全检查** (`shared_utils::safety`): 危险目录检测
 - **批量处理** (`shared_utils::batch`): 统一的批量处理报告
 
@@ -101,6 +118,12 @@ vidquality-hevc auto video.mp4 --delete-original
 vidquality-hevc strategy video.mp4
 ```
 
+### 性能优化
+
+- **并发限制**: 使用 CPU 核心数的一半（最少 1，最多 4）
+- **线程限制**: FFmpeg 添加 `-threads` 参数，x265 添加 `pools=N` 参数
+- **避免系统卡顿**: 留出资源给系统和编码器内部线程
+
 ### HEVC vs AV1 对比
 
 | 特性 | HEVC (本工具) | AV1 (vidquality) |
@@ -123,7 +146,7 @@ vidquality-hevc strategy video.mp4
 - `exiftool` - 元数据处理
 
 #### Rust 依赖
-- `shared_utils` - 共享工具库（元数据、FFprobe、编解码器检测、安全检查）
+- `shared_utils` - 共享工具库（元数据、FFprobe、编解码器检测、视频处理、安全检查）
 
 ---
 
@@ -131,16 +154,32 @@ vidquality-hevc strategy video.mp4
 
 High-quality video analysis tool with smart HEVC/H.265 compression and quality matching.
 
+### Difference from vidquality (AV1)
+
+| Feature | vidquality-hevc (this tool) | vidquality (AV1) |
+|---------|---------------------------|-----------------|
+| Output Codec | **HEVC/H.265** | AV1 |
+| Encoder | **libx265** | SVT-AV1 |
+| Default CRF | 18-20 | 0 |
+| Compression | Good | Best |
+| Compatibility | **Excellent (Apple/Hardware)** | Good |
+| Encoding Speed | **Fast** | Medium |
+
+**Recommendations**:
+- Need Apple device compatibility → **vidquality-hevc**
+- Want best compression ratio → vidquality (AV1)
+- Need fast encoding → **vidquality-hevc**
+
 ### Features
 
 - 🔍 **Video Quality Detection**: Encoder, bitrate, frame rate, resolution
 - 📊 **Compression Type Recognition**: Lossless/Visually Lossless/Lossy
 - 🔄 **Smart HEVC Conversion**: Uses libx265 encoder
 - 🎯 **Quality Matching Mode**: Auto-calculate CRF matching input quality
-- 📦 **Metadata Preservation**: Complete file attribute and timestamp preservation (via shared_utils)
+- 📦 **Metadata Preservation**: Complete file attribute and timestamp preservation
 - 🍎 **Apple Compatible**: Uses hvc1 tag for Apple device compatibility
 - 📈 **Size Exploration Mode**: Gradually increase CRF until output < input
-- 🛡️ **Safety Checks**: Dangerous directory detection to prevent accidents (via shared_utils)
+- 🛡️ **Safety Checks**: Dangerous directory detection to prevent accidents
 
 ### Architecture
 
@@ -148,6 +187,7 @@ This tool uses the `shared_utils` shared library for:
 - **Metadata Preservation** (`shared_utils::metadata`): ExifTool wrapper + cross-platform native APIs
 - **FFprobe Wrapper** (`shared_utils::ffprobe`): Unified video information retrieval
 - **Codec Detection** (`shared_utils::codecs`): FFmpeg codec availability detection
+- **Video Processing** (`shared_utils::video`): Even dimension correction, filter chain generation
 - **Safety Checks** (`shared_utils::safety`): Dangerous directory detection
 - **Batch Processing** (`shared_utils::batch`): Unified batch processing reports
 
@@ -224,6 +264,12 @@ vidquality-hevc auto video.mp4 --delete-original
 vidquality-hevc strategy video.mp4
 ```
 
+### Performance Optimization
+
+- **Concurrency Limit**: Uses half of CPU cores (min 1, max 4)
+- **Thread Limit**: FFmpeg with `-threads`, x265 with `pools=N`
+- **Avoid System Lag**: Reserves resources for system and encoder internal threads
+
 ### HEVC vs AV1 Comparison
 
 | Feature | HEVC (this tool) | AV1 (vidquality) |
@@ -246,4 +292,4 @@ vidquality-hevc strategy video.mp4
 - `exiftool` - Metadata processing
 
 #### Rust Dependencies
-- `shared_utils` - Shared utility library (metadata, ffprobe, codecs, safety)
+- `shared_utils` - Shared utility library (metadata, ffprobe, codecs, video, safety)

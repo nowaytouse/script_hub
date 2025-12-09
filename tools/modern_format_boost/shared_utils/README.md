@@ -21,6 +21,7 @@ modern_format_boost 工具集（imgquality、vidquality、vidquality-hevc）的�
 | `tools` | 外部工具检测 |
 | `codecs` | 编解码器信息 |
 | `conversion` | **转换通用功能**（ConversionResult/ConvertOptions/防重复） |
+| `video` | **视频处理工具**（偶数尺寸修正/滤镜链生成/YUV420兼容性） |
 
 ### 模块详情
 
@@ -120,6 +121,46 @@ let codec = DetectedCodec::from_ffprobe("h264");
 println!("Modern: {}", codec.is_modern());
 ```
 
+#### 9. 视频处理工具 (`video.rs`)
+
+视频尺寸修正和滤镜链生成，解决 YUV420 色度子采样兼容性问题。
+
+```rust
+use shared_utils::video::{
+    ensure_even_dimensions,
+    get_dimension_correction_filter,
+    build_video_filter_chain,
+    get_ffmpeg_dimension_args,
+    is_yuv420_compatible,
+};
+
+// 检查并修正奇数尺寸
+let (width, height, needs_correction) = ensure_even_dimensions(1921, 1081);
+// width=1920, height=1080, needs_correction=true
+
+// 生成 FFmpeg 滤镜字符串
+let filter = get_dimension_correction_filter(1921, 1081);
+// Some("crop=1920:1080:0:0")
+
+// 生成完整滤镜链（含 alpha 通道处理）
+let chain = build_video_filter_chain(1921, 1081, true);
+// "format=rgba,colorchannelmixer=aa=1.0,format=rgb24,crop=1920:1080:0:0,format=yuv420p"
+
+// 获取 FFmpeg 参数
+let args = get_ffmpeg_dimension_args(1921, 1081, false);
+// ["-vf", "crop=1920:1080:0:0,format=yuv420p"]
+
+// 检查 YUV420 兼容性
+let compatible = is_yuv420_compatible(1920, 1080);
+// true
+```
+
+**解决的问题**：
+- YUV420 色度子采样要求宽度和高度都是偶数
+- 常见错误: `Picture height must be an integer multiple of the specified chroma subsampling`
+- 自动裁剪到偶数尺寸（比填充黑边更好）
+- 处理带 alpha 通道的输入（先移除 alpha）
+
 ### 使用方法
 
 在 `Cargo.toml` 中添加依赖：
@@ -148,6 +189,7 @@ Shared utility library for modern_format_boost tools (imgquality, vidquality, vi
 | `tools` | External tool detection |
 | `codecs` | Codec information |
 | `conversion` | **Conversion utilities** (ConversionResult/ConvertOptions/anti-duplicate) |
+| `video` | **Video processing** (even dimension correction/filter chain/YUV420 compatibility) |
 
 ### Module Details
 
@@ -246,6 +288,46 @@ use shared_utils::{DetectedCodec, get_codec_info};
 let codec = DetectedCodec::from_ffprobe("h264");
 println!("Modern: {}", codec.is_modern());
 ```
+
+#### 9. Video Processing (`video.rs`)
+
+Video dimension correction and filter chain generation for YUV420 chroma subsampling compatibility.
+
+```rust
+use shared_utils::video::{
+    ensure_even_dimensions,
+    get_dimension_correction_filter,
+    build_video_filter_chain,
+    get_ffmpeg_dimension_args,
+    is_yuv420_compatible,
+};
+
+// Check and correct odd dimensions
+let (width, height, needs_correction) = ensure_even_dimensions(1921, 1081);
+// width=1920, height=1080, needs_correction=true
+
+// Generate FFmpeg filter string
+let filter = get_dimension_correction_filter(1921, 1081);
+// Some("crop=1920:1080:0:0")
+
+// Generate complete filter chain (with alpha channel handling)
+let chain = build_video_filter_chain(1921, 1081, true);
+// "format=rgba,colorchannelmixer=aa=1.0,format=rgb24,crop=1920:1080:0:0,format=yuv420p"
+
+// Get FFmpeg arguments
+let args = get_ffmpeg_dimension_args(1921, 1081, false);
+// ["-vf", "crop=1920:1080:0:0,format=yuv420p"]
+
+// Check YUV420 compatibility
+let compatible = is_yuv420_compatible(1920, 1080);
+// true
+```
+
+**Problems Solved**:
+- YUV420 chroma subsampling requires even width and height
+- Common error: `Picture height must be an integer multiple of the specified chroma subsampling`
+- Auto-crop to even dimensions (better than padding with black borders)
+- Handle alpha channel inputs (remove alpha first)
 
 ### Usage
 
