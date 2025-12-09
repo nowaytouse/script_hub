@@ -61,6 +61,7 @@ mod tests {
             color_space: "sRGB".to_string(),
             has_alpha: false,
             is_animated: false,
+            duration_secs: None,  // 静态图像无时长
             is_lossless: true,
             jpeg_analysis: None,
             heic_analysis: None,
