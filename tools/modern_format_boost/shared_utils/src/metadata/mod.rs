@@ -58,15 +58,10 @@ pub fn preserve_pro(src: &Path, dst: &Path) -> io::Result<()> {
             eprintln!("⚠️ [metadata] macOS native copy failed: {}", e);
         }
         
-        // Step 2: Creation time and Date Added (macOS specific, ~2ms)
-        if let Ok(metadata) = std::fs::metadata(src) {
-            if let Ok(created) = metadata.created() {
-                let _ = macos::set_creation_time(dst, created);
-            }
-            if let Ok(added) = macos::get_added_time(src) {
-                let _ = macos::set_added_time(dst, added);
-            }
-        }
+        // Step 2: 保存创建时间和Date Added，稍后设置
+        // ⚠️ 不在这里设置！因为 exiftool 会覆盖文件，重置创建时间
+        let src_created = std::fs::metadata(src).ok().and_then(|m| m.created().ok());
+        let src_added = macos::get_added_time(src).ok();
         
         // Step 3: Internal Metadata via ExifTool (~100-200ms)
         // This handles EXIF, IPTC, XMP, ICC that copyfile doesn't touch
@@ -83,6 +78,20 @@ pub fn preserve_pro(src: &Path, dst: &Path) -> io::Result<()> {
         if let Some((atime, mtime)) = src_times {
             if let Err(e) = filetime::set_file_times(dst, atime, mtime) {
                 eprintln!("⚠️ [metadata] Failed to set file times: {}", e);
+            }
+        }
+        
+        // Step 6: 🔥 macOS创建时间和Date Added（必须在最后！）
+        // filetime::set_file_times 只设置 atime/mtime，不设置创建时间
+        // 必须使用 setattrlist 单独设置创建时间
+        if let Some(created) = src_created {
+            if let Err(e) = macos::set_creation_time(dst, created) {
+                eprintln!("⚠️ [metadata] Failed to set creation time: {}", e);
+            }
+        }
+        if let Some(added) = src_added {
+            if let Err(e) = macos::set_added_time(dst, added) {
+                eprintln!("⚠️ [metadata] Failed to set added time: {}", e);
             }
         }
         
