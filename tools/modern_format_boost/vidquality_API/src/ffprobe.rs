@@ -38,23 +38,50 @@ pub struct FFprobeResult {
 pub fn probe_video(path: &Path) -> Result<FFprobeResult> {
     // Check if ffprobe exists
     if Command::new("ffprobe").arg("-version").output().is_err() {
-        return Err(VidQualityError::ToolNotFound("ffprobe".to_string()));
+        return Err(VidQualityError::ToolNotFound(
+            "ffprobe not found. Please install ffmpeg: brew install ffmpeg".to_string()
+        ));
     }
+    
+    // 🔥 检查文件是否存在
+    if !path.exists() {
+        return Err(VidQualityError::FFprobeError(format!(
+            "File not found: {}", path.display()
+        )));
+    }
+    
+    // 🔥 检查是否是文件（不是目录）
+    if !path.is_file() {
+        return Err(VidQualityError::FFprobeError(format!(
+            "Not a file (is it a directory?): {}", path.display()
+        )));
+    }
+    
+    let path_str = path.to_str().ok_or_else(|| {
+        VidQualityError::FFprobeError(format!(
+            "Invalid path encoding: {}", path.display()
+        ))
+    })?;
     
     let output = Command::new("ffprobe")
         .args(&[
-            "-v", "quiet",
+            "-v", "error",  // 🔥 改为 error 级别以获取错误信息
             "-print_format", "json",
             "-show_format",
             "-show_streams",
-            path.to_str().unwrap_or(""),
+            path_str,
         ])
         .output()?;
     
     if !output.status.success() {
-        return Err(VidQualityError::FFprobeError(
-            String::from_utf8_lossy(&output.stderr).to_string()
-        ));
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let error_msg = if stderr.trim().is_empty() {
+            format!("ffprobe failed to analyze file: {} (exit code: {:?})", 
+                path.display(), output.status.code())
+        } else {
+            format!("ffprobe error for '{}': {}", path.display(), stderr.trim())
+        };
+        return Err(VidQualityError::FFprobeError(error_msg));
     }
     
     let json_str = String::from_utf8_lossy(&output.stdout);
