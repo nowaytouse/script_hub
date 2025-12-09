@@ -145,11 +145,13 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
     }
     
     // Execute cjxl (v0.11+ syntax)
+    // 🔥 添加 --icc 保留 ICC 颜色配置文件
     let result = Command::new("cjxl")
         .arg(input)
         .arg(&output)
         .arg("-d").arg(format!("{:.1}", distance))  // Distance parameter
         .arg("-e").arg("8")    // Effort 8 for better compression
+        .arg("--icc")          // 保留 ICC 颜色配置文件
         .output();
     
     match result {
@@ -231,10 +233,12 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
     }
     
     // Execute cjxl with --lossless_jpeg=1 for lossless JPEG transcode
+    // 🔥 添加 --icc 保留 ICC 颜色配置文件
     let result = Command::new("cjxl")
         .arg(input)
         .arg(&output)
         .arg("--lossless_jpeg=1")  // Lossless JPEG transcode - preserves DCT coefficients
+        .arg("--icc")              // 保留 ICC 颜色配置文件
         .output();
     
     match result {
@@ -833,7 +837,8 @@ pub fn convert_to_jxl_matched(
     cmd.arg(input)
         .arg(&output)
         .arg("-d").arg(format!("{:.2}", distance))
-        .arg("-e").arg("8");    // Effort 8 for better compression
+        .arg("-e").arg("8")     // Effort 8 for better compression
+        .arg("--icc");          // Preserve ICC color profile
     
     // If distance > 0, disable lossless_jpeg (which is enabled by default for JPEG input)
     if distance > 0.0 {
