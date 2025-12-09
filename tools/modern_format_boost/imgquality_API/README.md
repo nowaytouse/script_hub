@@ -14,10 +14,18 @@
 - 📊 **图像特征分析**: 熵值、压缩比、色彩空间等
 - 🔄 **智能格式转换**: 自动选择最佳转换策略
 - 🎯 **质量匹配模式**: 自动计算匹配输入质量的输出参数
-- 📦 **元数据保留**: 完整保留 EXIF/IPTC、ICC 颜色配置文件和文件属性
+- 📦 **元数据保留**: 完整保留 EXIF/IPTC、ICC 颜色配置文件和文件属性（通过 shared_utils）
 - ⏭️ **智能回退**: 转换后变大则自动回退跳过
-- 📈 **进度条**: 带 ETA 估算的可视化进度条
-- 🛡️ **安全检查**: 危险目录检测，防止误操作
+- 📈 **进度条**: 带 ETA 估算的可视化进度条（通过 shared_utils）
+- 🛡️ **安全检查**: 危险目录检测，防止误操作（通过 shared_utils）
+
+### 架构说明
+
+本工具使用 `shared_utils` 共享库提供以下功能：
+- **元数据保留** (`shared_utils::metadata`): ExifTool 封装 + 跨平台原生 API
+- **进度条** (`shared_utils::progress`): 带 ETA 估算的可视化进度
+- **安全检查** (`shared_utils::safety`): 危险目录检测
+- **批量处理** (`shared_utils::batch`): 统一的批量处理报告
 
 ### 命令概览
 
@@ -46,7 +54,7 @@ Auto 模式根据输入格式和特性智能选择转换策略：
 | 动图 (有损) | ≥3秒 + `--match-quality` | AV1 MP4 | 匹配质量 CRF |
 | 动图 | <3秒 | 跳过 | 短动画不转换 |
 
-### 智能回退机制 🆕
+### 智能回退机制
 
 当转换后文件体积变大时，工具会自动：
 1. 删除输出文件
@@ -157,12 +165,16 @@ imgquality verify original.jpg converted.jxl
 ✅ Quality-matched JXL (d=1.50): size reduced 25.3%
 ```
 
-### 依赖工具
+### 依赖
 
+#### 外部工具
 - `cjxl` (libjxl) - JXL 编码
 - `djxl` (libjxl) - JXL 解码（验证用）
 - `ffmpeg` - 动图转视频
 - `exiftool` - 元数据处理
+
+#### Rust 依赖
+- `shared_utils` - 共享工具库（元数据、进度条、安全检查）
 
 ---
 
@@ -176,10 +188,18 @@ High-precision image quality analysis tool with JPEG quality detection (±1 accu
 - 📊 **Image Feature Analysis**: Entropy, compression ratio, color space, etc.
 - 🔄 **Smart Format Conversion**: Automatic best conversion strategy selection
 - 🎯 **Quality Matching Mode**: Auto-calculate output parameters matching input quality
-- 📦 **Metadata Preservation**: Complete EXIF/IPTC, ICC color profile, and file attribute preservation
+- 📦 **Metadata Preservation**: Complete EXIF/IPTC, ICC color profile, and file attribute preservation (via shared_utils)
 - ⏭️ **Smart Rollback**: Auto rollback and skip if converted file is larger
-- 📈 **Progress Bar**: Visual progress bar with ETA estimation
-- 🛡️ **Safety Checks**: Dangerous directory detection to prevent accidents
+- 📈 **Progress Bar**: Visual progress bar with ETA estimation (via shared_utils)
+- 🛡️ **Safety Checks**: Dangerous directory detection to prevent accidents (via shared_utils)
+
+### Architecture
+
+This tool uses the `shared_utils` shared library for:
+- **Metadata Preservation** (`shared_utils::metadata`): ExifTool wrapper + cross-platform native APIs
+- **Progress Bar** (`shared_utils::progress`): Visual progress with ETA estimation
+- **Safety Checks** (`shared_utils::safety`): Dangerous directory detection
+- **Batch Processing** (`shared_utils::batch`): Unified batch processing reports
 
 ### Command Overview
 
@@ -208,7 +228,7 @@ Auto mode intelligently selects conversion strategy based on input format and ch
 | Animation (lossy) | ≥3s + `--match-quality` | AV1 MP4 | Quality matched CRF |
 | Animation | <3s | Skip | Short animations not converted |
 
-### Smart Rollback Mechanism 🆕
+### Smart Rollback Mechanism
 
 When converted file is larger than original, the tool automatically:
 1. Deletes the output file
@@ -321,7 +341,11 @@ imgquality verify original.jpg converted.jxl
 
 ### Dependencies
 
+#### External Tools
 - `cjxl` (libjxl) - JXL encoding
 - `djxl` (libjxl) - JXL decoding (for verification)
 - `ffmpeg` - Animation to video conversion
 - `exiftool` - Metadata processing
+
+#### Rust Dependencies
+- `shared_utils` - Shared utility library (metadata, progress, safety)

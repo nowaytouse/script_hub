@@ -38,7 +38,6 @@ walkdir = "2.5"
 filetime = "0.2"
 libc = "0.2"
 xattr = "1.3"
-metadata_keeper = { path = "../metadata_keeper" }
 
 # HEIC/HEIF support via system libheif
 libheif-rs = "1.0"

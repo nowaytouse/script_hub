@@ -595,18 +595,16 @@ fn check_input_output_conflict(input: &Path, output: &Path) -> Result<()> {
 }
 
 // Helper to copy metadata and timestamps from source to destination
-// Maximum metadata preservation: centralized via metadata_keeper
+// Maximum metadata preservation: centralized via shared_utils::metadata
 pub fn copy_metadata(src: &Path, dst: &Path) {
-    // metadata_keeper::preserve_metadata now handles ALL layers:
+    // shared_utils::preserve_metadata handles ALL layers:
     // 1. Internal (Exif/IPTC via ExifTool)
     // 2. Network (WhereFroms check)
     // 3. System (ACL, Flags, Xattr, Timestamps via copyfile)
-    if let Err(e) = metadata_keeper::preserve_metadata(src, dst) {
+    if let Err(e) = shared_utils::preserve_metadata(src, dst) {
          eprintln!("⚠️ Failed to preserve metadata: {}", e);
     }
 }
-
-// Redundant helper functions separated or removed in favor of `metadata_keeper`.
 
 
 

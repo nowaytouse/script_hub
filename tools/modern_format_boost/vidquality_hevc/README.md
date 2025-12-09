@@ -14,9 +14,19 @@
 - 📊 **压缩类型识别**: 无损/视觉无损/有损
 - 🔄 **智能 HEVC 转换**: 使用 libx265 编码器
 - 🎯 **质量匹配模式**: 自动计算匹配输入质量的 CRF
-- 📦 **元数据保留**: 完整保留文件属性和时间戳
+- 📦 **元数据保留**: 完整保留文件属性和时间戳（通过 shared_utils）
 - 🍎 **Apple 兼容**: 使用 hvc1 标签确保 Apple 设备兼容
 - 📈 **尺寸探索模式**: 逐步提高 CRF 直到输出小于输入
+- 🛡️ **安全检查**: 危险目录检测，防止误操作（通过 shared_utils）
+
+### 架构说明
+
+本工具使用 `shared_utils` 共享库提供以下功能：
+- **元数据保留** (`shared_utils::metadata`): ExifTool 封装 + 跨平台原生 API
+- **FFprobe 封装** (`shared_utils::ffprobe`): 统一的视频信息获取
+- **编解码器检测** (`shared_utils::codecs`): FFmpeg 编解码器可用性检测
+- **安全检查** (`shared_utils::safety`): 危险目录检测
+- **批量处理** (`shared_utils::batch`): 统一的批量处理报告
 
 ### 命令概览
 
@@ -105,11 +115,15 @@ vidquality-hevc strategy video.mp4
 - 追求最佳压缩率 → AV1
 - 需要快速编码 → HEVC
 
-### 依赖工具
+### 依赖
 
+#### 外部工具
 - `ffmpeg` (带 libx265) - 视频编码
 - `ffprobe` - 视频分析
 - `exiftool` - 元数据处理
+
+#### Rust 依赖
+- `shared_utils` - 共享工具库（元数据、FFprobe、编解码器检测、安全检查）
 
 ---
 
@@ -123,9 +137,19 @@ High-quality video analysis tool with smart HEVC/H.265 compression and quality m
 - 📊 **Compression Type Recognition**: Lossless/Visually Lossless/Lossy
 - 🔄 **Smart HEVC Conversion**: Uses libx265 encoder
 - 🎯 **Quality Matching Mode**: Auto-calculate CRF matching input quality
-- 📦 **Metadata Preservation**: Complete file attribute and timestamp preservation
+- 📦 **Metadata Preservation**: Complete file attribute and timestamp preservation (via shared_utils)
 - 🍎 **Apple Compatible**: Uses hvc1 tag for Apple device compatibility
 - 📈 **Size Exploration Mode**: Gradually increase CRF until output < input
+- 🛡️ **Safety Checks**: Dangerous directory detection to prevent accidents (via shared_utils)
+
+### Architecture
+
+This tool uses the `shared_utils` shared library for:
+- **Metadata Preservation** (`shared_utils::metadata`): ExifTool wrapper + cross-platform native APIs
+- **FFprobe Wrapper** (`shared_utils::ffprobe`): Unified video information retrieval
+- **Codec Detection** (`shared_utils::codecs`): FFmpeg codec availability detection
+- **Safety Checks** (`shared_utils::safety`): Dangerous directory detection
+- **Batch Processing** (`shared_utils::batch`): Unified batch processing reports
 
 ### Command Overview
 
@@ -216,6 +240,10 @@ vidquality-hevc strategy video.mp4
 
 ### Dependencies
 
+#### External Tools
 - `ffmpeg` (with libx265) - Video encoding
 - `ffprobe` - Video analysis
 - `exiftool` - Metadata processing
+
+#### Rust Dependencies
+- `shared_utils` - Shared utility library (metadata, ffprobe, codecs, safety)

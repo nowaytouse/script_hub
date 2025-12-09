@@ -18,10 +18,18 @@
 
 ### 共享模块
 
-| 模块 | 用途 |
+所有功能集中在 `shared_utils` 库中：
+
+| 模块 | 功能 |
 |------|------|
-| **metadata_keeper** | 完整元数据保留（EXIF/IPTC/xattr/时间戳/ACL） |
-| **shared_utils** | 共享工具库（进度条/安全检查/批处理/报告/FFprobe/编解码器检测） |
+| `metadata` | 完整元数据保留（EXIF/IPTC/xattr/时间戳/ACL） |
+| `progress` | 进度条与 ETA 估算 |
+| `safety` | 危险目录检测 |
+| `batch` | 批量文件处理 |
+| `report` | 汇总报告 |
+| `ffprobe` | FFprobe 视频分析封装 |
+| `tools` | 外部工具检测 |
+| `codecs` | 编解码器信息 |
 
 ### 核心特性
 
@@ -42,19 +50,12 @@
 
 #### 📊 完整元数据保留
 
-通过 `metadata_keeper` 模块，所有工具都能完整保留：
+通过 `shared_utils::metadata` 模块，所有工具都能完整保留：
 - EXIF/IPTC 元数据（通过 ExifTool）
 - ICC 颜色配置文件（通过 `--icc` 参数）
 - macOS 扩展属性（xattr）
 - 文件时间戳（创建时间、修改时间）
 - 文件系统标志和 ACL
-
-#### 🔄 智能转换策略
-
-**Auto 模式**会根据输入格式智能选择转换策略：
-- 现代格式（HEVC/AV1/VP9）→ 跳过（避免代际损失）
-- 无损源 → 无损输出
-- 有损源 → 质量匹配的有损输出
 
 #### 📈 进度条与批处理
 
@@ -98,7 +99,6 @@ cargo build --release
 - [vidquality 文档](vidquality_API/README.md) - AV1 视频转换
 - [vidquality-hevc 文档](vidquality_hevc/README.md) - HEVC 视频转换
 - [shared_utils 文档](shared_utils/README.md) - 共享工具库
-- [metadata_keeper 文档](metadata_keeper/README.md) - 元数据保留模块
 
 ### 项目结构
 
@@ -107,8 +107,14 @@ modern_format_boost/
 ├── imgquality_API/      # 图像工具
 ├── vidquality_API/      # AV1 视频工具
 ├── vidquality_hevc/     # HEVC 视频工具
-├── metadata_keeper/     # 共享元数据保留模块
 └── shared_utils/        # 共享工具库
+    ├── metadata/        # 元数据保留模块
+    │   ├── mod.rs       # 主入口
+    │   ├── exif.rs      # ExifTool 封装
+    │   ├── macos.rs     # macOS 原生 API
+    │   ├── linux.rs     # Linux ACL
+    │   ├── windows.rs   # Windows 属性
+    │   └── network.rs   # 网络元数据验证
     ├── progress.rs      # 进度条与 ETA
     ├── safety.rs        # 危险目录检测
     ├── batch.rs         # 批量文件处理
@@ -138,10 +144,18 @@ High-quality media format upgrade toolkit that converts traditional formats to m
 
 ### Shared Modules
 
-| Module | Purpose |
-|--------|---------|
-| **metadata_keeper** | Complete metadata preservation (EXIF/IPTC/xattr/timestamps/ACL) |
-| **shared_utils** | Shared utility library (progress bar/safety checks/batch processing/reports/FFprobe/codec detection) |
+All functionality is centralized in the `shared_utils` library:
+
+| Module | Function |
+|--------|----------|
+| `metadata` | Complete metadata preservation (EXIF/IPTC/xattr/timestamps/ACL) |
+| `progress` | Progress bar & ETA estimation |
+| `safety` | Dangerous directory detection |
+| `batch` | Batch file processing |
+| `report` | Summary reports |
+| `ffprobe` | FFprobe video analysis wrapper |
+| `tools` | External tool detection |
+| `codecs` | Codec information |
 
 ### Core Features
 
@@ -162,25 +176,18 @@ All tools support the `--match-quality` parameter, automatically analyzing input
 
 #### 📊 Complete Metadata Preservation
 
-Through the `metadata_keeper` module, all tools preserve:
+Through the `shared_utils::metadata` module, all tools preserve:
 - EXIF/IPTC metadata (via ExifTool)
 - ICC color profiles (via `--icc` parameter)
 - macOS extended attributes (xattr)
 - File timestamps (creation time, modification time)
 - File system flags and ACL
 
-#### 🔄 Smart Conversion Strategy
-
-**Auto mode** intelligently selects conversion strategy based on input format:
-- Modern formats (HEVC/AV1/VP9) → Skip (avoid generational loss)
-- Lossless source → Lossless output
-- Lossy source → Quality-matched lossy output
-
 #### 📈 Progress Bar & Batch Processing
 
 - Visual progress bar with ETA estimation `[████░░] 67%`
 - Detailed batch processing summary reports
-- Dangerous directory safety checks (prevent accidental system directory operations)
+- Dangerous directory safety checks
 - Parallel processing support (rayon)
 
 ### Install Dependencies
@@ -218,7 +225,6 @@ cargo build --release
 - [vidquality Documentation](vidquality_API/README.md) - AV1 video conversion
 - [vidquality-hevc Documentation](vidquality_hevc/README.md) - HEVC video conversion
 - [shared_utils Documentation](shared_utils/README.md) - Shared utility library
-- [metadata_keeper Documentation](metadata_keeper/README.md) - Metadata preservation module
 
 ### Project Structure
 
@@ -227,8 +233,14 @@ modern_format_boost/
 ├── imgquality_API/      # Image tool
 ├── vidquality_API/      # AV1 video tool
 ├── vidquality_hevc/     # HEVC video tool
-├── metadata_keeper/     # Shared metadata preservation module
 └── shared_utils/        # Shared utility library
+    ├── metadata/        # Metadata preservation module
+    │   ├── mod.rs       # Main entry
+    │   ├── exif.rs      # ExifTool wrapper
+    │   ├── macos.rs     # macOS native API
+    │   ├── linux.rs     # Linux ACL
+    │   ├── windows.rs   # Windows attributes
+    │   └── network.rs   # Network metadata verification
     ├── progress.rs      # Progress bar & ETA
     ├── safety.rs        # Dangerous directory detection
     ├── batch.rs         # Batch file processing

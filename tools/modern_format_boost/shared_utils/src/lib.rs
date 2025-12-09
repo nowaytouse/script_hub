@@ -8,6 +8,7 @@
 //! - FFprobe wrapper for video analysis
 //! - External tools detection
 //! - Codec information
+//! - Metadata preservation (EXIF/IPTC/xattr/timestamps/ACL)
 
 pub mod progress;
 pub mod safety;
@@ -16,6 +17,7 @@ pub mod report;
 pub mod ffprobe;
 pub mod tools;
 pub mod codecs;
+pub mod metadata;
 
 pub use progress::*;
 pub use safety::*;
@@ -24,3 +26,4 @@ pub use report::*;
 pub use ffprobe::{FFprobeResult, FFprobeError, probe_video, get_duration, get_frame_count, parse_frame_rate, detect_bit_depth, is_ffprobe_available};
 pub use tools::*;
 pub use codecs::*;
+pub use metadata::{preserve_metadata, preserve_pro};

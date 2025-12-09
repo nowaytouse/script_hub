@@ -530,7 +530,7 @@ fn check_input_output_conflict(input: &Path, output: &Path) -> Result<()> {
 
 /// Copy metadata and timestamps from source to destination
 pub fn copy_metadata(src: &Path, dst: &Path) {
-    if let Err(e) = metadata_keeper::preserve_metadata(src, dst) {
+    if let Err(e) = shared_utils::preserve_metadata(src, dst) {
          eprintln!("⚠️ Failed to preserve metadata: {}", e);
     }
 }
