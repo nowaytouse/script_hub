@@ -566,7 +566,8 @@ int verify_metadata(const char *source, const char *dest) {
 }
 
 // Master function: Complete metadata preservation
-// Order is critical: xattr → internal → creation time → timestamps (LAST!)
+// 🔥 Order is critical: xattr → internal → timestamps → creation time (LAST!)
+// exiftool modifies file, so creation time MUST be set AFTER all file modifications
 bool migrate_metadata(const char *source, const char *dest) {
     bool success = true;
     
@@ -574,6 +575,7 @@ bool migrate_metadata(const char *source, const char *dest) {
     copy_xattrs(source, dest);
     
     // Step 2: Copy internal metadata (EXIF, IPTC, XMP, ICC)
+    // ⚠️ This modifies the file! All time-related operations must come AFTER
     if (!migrate_internal_metadata(source, dest)) {
         if (g_config.verbose) {
             log_warn("Internal metadata migration partial: %s", dest);
@@ -581,17 +583,19 @@ bool migrate_metadata(const char *source, const char *dest) {
         // Don't fail - some formats don't support all metadata
     }
     
-    // Step 3: Copy creation time (macOS)
-    preserve_creation_time(source, dest);
-    
-    // Step 4: Copy timestamps (MUST BE LAST!)
-    // exiftool modifies file, so this must come after
+    // Step 3: Copy timestamps (mtime/atime)
+    // Must come AFTER exiftool which modifies the file
     if (!preserve_timestamps(source, dest)) {
         if (g_config.verbose) {
             log_warn("Timestamp preservation failed: %s", dest);
         }
         success = false;
     }
+    
+    // Step 4: Copy creation time (macOS birthtime) - MUST BE LAST!
+    // 🔥 Critical fix: exiftool's -overwrite_original resets creation time
+    // So we must set creation time AFTER all other operations
+    preserve_creation_time(source, dest);
     
     // Step 5: Verify (verbose mode only)
     if (g_config.verbose) {
