@@ -17,7 +17,7 @@ from datetime import datetime
 
 # 项目根目录
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
 SURGE_MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
 OUTPUT_DIR = PROJECT_ROOT / "module"

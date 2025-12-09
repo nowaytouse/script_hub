@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCES_FILE="$PROJECT_ROOT/ruleset/Sources/Links/AdBlock_sources.txt"
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_download"
 MODULE_DIR="$PROJECT_ROOT/module/adblock_external"

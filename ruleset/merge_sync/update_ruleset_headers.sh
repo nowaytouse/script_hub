@@ -6,7 +6,7 @@
 # ═══════════════════════════════════════════════════════════════
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RULESET_DIR="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)"
 POLICY_MAP="$SCRIPT_DIR/ruleset_policy_map.txt"
 CACHE_DIR="$PROJECT_ROOT/.cache"

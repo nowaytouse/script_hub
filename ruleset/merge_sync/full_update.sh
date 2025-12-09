@@ -16,7 +16,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PRIVATE_DIR="$PROJECT_ROOT/隐私🔏/merge_sync_private"
 
 # Logging functions
@@ -349,6 +349,17 @@ if [ "$SKIP_ADBLOCK" = false ]; then
         else
             "${SCRIPT_DIR}/download_adblock_modules.sh" 2>&1 | grep -E "^\[✓\]|^\[✗\]|^\[INFO\] (Download Summary|Extracted|Merging|updated)" || true
         fi
+    fi
+    
+    # Merge core AdBlock modules (可莉广告过滤器 + 广告平台拦截器 + HTTPDNS拦截器)
+    if [ -f "${SCRIPT_DIR}/merge_adblock_core_modules.sh" ]; then
+        log_info "Merging core AdBlock modules (可莉+广告平台+HTTPDNS)..."
+        if [ "$VERBOSE" = true ]; then
+            "${SCRIPT_DIR}/merge_adblock_core_modules.sh"
+        else
+            "${SCRIPT_DIR}/merge_adblock_core_modules.sh" 2>&1 | grep -E "^\[✓\]|^\[INFO\]|Merged|rules" || true
+        fi
+        log_success "Core AdBlock modules merged"
     fi
     
     # Merge local modules

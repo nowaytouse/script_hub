@@ -5,7 +5,7 @@
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCES_DIR="${PROJECT_ROOT}/ruleset/Sources/Links"
 METACUBEX_DIR="${PROJECT_ROOT}/ruleset/MetaCubeX"
 CACHE_FILE="${PROJECT_ROOT}/.cache/metacubex_hashes.txt"

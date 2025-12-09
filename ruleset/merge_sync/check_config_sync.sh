@@ -15,7 +15,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
@@ -246,7 +246,7 @@ print(f"  cnip rules ref: {'✅ Yes' if cnip_in_rules else '❌ No'}")
 if not cnip_defined:
     print("\n❌ Error: cnip ruleset not defined!")
     print("   This will cause Singbox startup failure")
-    print("   Please run: ./merge_sync/sync_all_configs.sh")
+    print("   Please run: ./ruleset/merge_sync/sync_all_configs.sh")
     sys.exit(1)
 
 if cnip_defined and (cnip_in_inbound or cnip_in_rules):

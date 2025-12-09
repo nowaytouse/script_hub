@@ -12,7 +12,7 @@ from urllib.parse import unquote
 
 # 路径配置
 SR_DIR = Path("/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules")
-SURGE_DIR = Path(__file__).parent.parent / "module" / "surge(main)"
+SURGE_DIR = Path(__file__).parent.parent.parent / "module" / "surge(main)"
 
 # 分类映射
 CATEGORY_MAP = {

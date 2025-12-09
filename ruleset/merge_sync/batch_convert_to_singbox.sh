@@ -14,7 +14,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RULESET_DIR="${PROJECT_ROOT}/ruleset"
 SURGE_DIR="${RULESET_DIR}/Surge(Shadowkroket)"
 SINGBOX_DIR="${RULESET_DIR}/SingBox"

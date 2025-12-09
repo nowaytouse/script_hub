@@ -27,7 +27,7 @@ Batch media conversion tools with **complete metadata preservation** and **healt
 - ✅ Whitelist-only processing for safety
 - ✅ Parallel processing optimized
 
-### 🔄 Merge & Sync (`merge_sync/`)
+### 🔄 Merge & Sync (`ruleset/merge_sync/`)
 Core automation tools for proxy rule management:
 
 - **Rule Ingestion**: `ingest_from_surge.sh` - Auto-import new rules from Surge profiles, classify them, and backup safely.
@@ -58,13 +58,13 @@ git clone https://github.com/YOUR_USERNAME/script_hub.git
 cd script_hub
 
 # Make scripts executable
-chmod +x scripts/media/*.sh merge_sync/*.sh
+chmod +x scripts/media/*.sh ruleset/merge_sync/*.sh
 
 # Example: Ingest new rules from Surge profile (Dry Run)
-./merge_sync/ingest_from_surge.sh
+./ruleset/merge_sync/ingest_from_surge.sh
 
 # Example: Full Sync (Ingest -> Merge -> Git Push)
-./merge_sync/sync_all_rulesets.sh
+./ruleset/merge_sync/sync_all_rulesets.sh
 ```
 
 ### Automation (Unattended)
@@ -89,7 +89,7 @@ brew install jpeg-xl libheif exiftool ffmpeg webp
 ## Recent Updates
 
 ### 2025-12-06: Infrastructure Overhaul
-- **New Structure**: Centralized sync tools in `merge_sync/`.
+- **New Structure**: Centralized sync tools in `ruleset/merge_sync/`.
 - **Git Automation**: Full GitHub Actions workflow for daily unattended updates.
 - **Smart Ingestion**: Improved logic to classify rules from Surge profiles into dedicated source files.
 - **Privacy First**: Strict exclusion of sensitive data (`隐私🔏`).
@@ -117,7 +117,7 @@ MIT License.
 - **MP4 → WebP**: **真实帧率保留**，完美复刻原视频流畅度
 - **Video → GIF**: 高质量调色板优化
 
-### 🔄 合并与同步 (`merge_sync/`)
+### 🔄 合并与同步 (`ruleset/merge_sync/`)
 代理规则管理的核心自动化工具：
 - **规则吸纳 (`ingest`)**: 从 Surge 配置文件智能提取新规则，分类并归档。
 - **规则合并 (`merge`)**: 聚合第三方源和本地 `sources/` 规则，生成去重后的统一列表。
@@ -136,13 +136,13 @@ MIT License.
 
 ```bash
 # 赋予执行权限
-chmod +x scripts/media/*.sh merge_sync/*.sh
+chmod +x scripts/media/*.sh ruleset/merge_sync/*.sh
 
 # 示例：从 Surge 配置提取新规则 (试运行)
-./merge_sync/ingest_from_surge.sh
+./ruleset/merge_sync/ingest_from_surge.sh
 
 # 示例：执行全量同步 (合并+转换+推送)
-./merge_sync/sync_all_rulesets.sh
+./ruleset/merge_sync/sync_all_rulesets.sh
 ```
 
 ### 无人值守自动化
@@ -151,7 +151,7 @@ chmod +x scripts/media/*.sh merge_sync/*.sh
 ## 最近更新
 
 ### 2025-12-06: 架构重构
-- **目录调整**: 同步工具集中至 `merge_sync/`。
+- **目录调整**: 同步工具集中至 `ruleset/merge_sync/`。
 - **自动化**: 集成 GitHub Actions 实现每日自动更新。
 - **隐私保护**: 严格排除敏感目录 (`隐私🔏`)。
 - **智能分类**: Ingest 脚本现在能将规则分类到 `conf/` 下的独立文件中。

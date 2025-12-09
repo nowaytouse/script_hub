@@ -59,7 +59,7 @@ jobs:
         
     - name: Execute Full Update Script (Unattended Mode)
       run: |
-        chmod +x merge_sync/*.sh
+        chmod +x ruleset/merge_sync/*.sh
         # --unattended mode:
         #   ✅ Enable Git operations (pull/push)
         #   ✅ Ruleset update and merge
@@ -72,7 +72,7 @@ jobs:
         # --parallel: Enable parallel processing for faster execution
         # CI=true environment variable:
         #   ❌ All scripts auto-skip backup operations
-        ./merge_sync/full_update.sh --unattended --parallel --verbose
+        ./ruleset/merge_sync/full_update.sh --unattended --parallel --verbose
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: true  # Auto-skip all backup operations

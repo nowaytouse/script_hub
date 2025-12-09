@@ -20,7 +20,7 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # ═══════════════════════════════════════════════════════════════
 # 1. Check Surge config
@@ -137,6 +137,6 @@ if [ "${SURGE_TEMPLATE_RULES:-0}" -eq 48 ] && \
     exit 0
 else
     echo -e "${YELLOW}⚠️  Some configs may need syncing${NC}"
-    echo -e "${CYAN}💡 Run: bash merge_sync/full_update.sh --quick${NC}"
+    echo -e "${CYAN}💡 Run: bash ruleset/merge_sync/full_update.sh --quick${NC}"
     exit 1
 fi

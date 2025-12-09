@@ -15,7 +15,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RULESET_DIR="${PROJECT_ROOT}/ruleset"
 METACUBEX_DIR="${RULESET_DIR}/MetaCubeX"
 TMP_DIR="/tmp/metacubex_sync_$$"

@@ -68,7 +68,7 @@ Total: **236,835+ deduplicated rules** (including all URL-REGEX, DOMAIN, IP-CIDR
 These modules are automatically updated when you run:
 
 ```bash
-bash merge_sync/full_update.sh
+bash ruleset/merge_sync/full_update.sh
 ```
 
 The update process:

@@ -96,21 +96,21 @@ These modules don't have a `#!group=` metadata tag and remain in the root direct
 
 ### Download Modules
 ```bash
-./merge_sync/download_modules.sh --url "URL" --group "GROUP_NAME"
+./ruleset/merge_sync/download_modules.sh --url "URL" --group "GROUP_NAME"
 ```
 
 Downloads modules from URLs and assigns them to a specific group.
 
 ### Organize Modules
 ```bash
-./merge_sync/organize_modules_by_group.sh
+./ruleset/merge_sync/organize_modules_by_group.sh
 ```
 
 Organizes modules into subfolders based on their `#!group=` metadata.
 
 ### Sync to Shadowrocket
 ```bash
-./merge_sync/sync_organized_modules.sh
+./ruleset/merge_sync/sync_organized_modules.sh
 ```
 
 Syncs the organized module structure from surge(main) to shadowrocket, preserving the subdirectory organization.

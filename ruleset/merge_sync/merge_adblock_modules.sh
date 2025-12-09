@@ -8,7 +8,7 @@ set -e
 
 # PATHS
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SURGE_MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_merge"
 TARGET_MODULE="$SURGE_MODULE_DIR/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"

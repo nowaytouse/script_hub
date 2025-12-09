@@ -19,7 +19,7 @@ from urllib.parse import quote
 
 # 项目根目录
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
 MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 OUTPUT_DIR = PROJECT_ROOT / "module"
 COMPAT_FILE = OUTPUT_DIR / "modules_compatibility.json"

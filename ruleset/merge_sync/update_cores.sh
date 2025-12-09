@@ -22,7 +22,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Installation paths
 SINGBOX_SYSTEM_PATH="/usr/local/bin/sing-box"

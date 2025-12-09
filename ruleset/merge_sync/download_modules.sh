@@ -20,7 +20,7 @@
 set +e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TEMP_DIR="$PROJECT_ROOT/.temp_module_download"
 MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
 SHADOWROCKET_MODULE_DIR="$PROJECT_ROOT/module/shadowrocket"
@@ -271,9 +271,14 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 # Protected Local Modules (不会被远程下载覆盖)
 # 这些模块是本地合并/优化版本，优先级高于远程版本
+# 
+# 2025-12-10 更新: DNS模块改为共存关系，不再跳过更新
+# - 本地 🌐 DNS & Host Enhanced.sgmodule 保留
+# - 远程 DNS.sgmodule 等正常下载，用户可选择使用
 # ═══════════════════════════════════════════════════════════════════════════════
 PROTECTED_MODULES=(
-    "🌐 DNS & Host Enhanced.sgmodule"  # 合并自: DNS.sgmodule + 🍟 DNS 分流.official.sgmodule + 🚀💪General Enhanced⬆️⬆️ plus.sgmodule
+    "🌐 DNS & Host Enhanced.sgmodule"  # 本地合并版本，保护不被覆盖
+    # DNS相关模块已改为共存，不再跳过
 )
 
 log_header "Universal Module Downloader"
@@ -303,9 +308,10 @@ for url in "${URLS[@]}"; do
     [[ "$filename" != *.sgmodule ]] && [[ "$filename" != *.module ]] && filename="${filename}.sgmodule"
     
     # Check if this module is protected (local merged version exists)
+    # 2025-12-10: DNS模块改为共存，只保护本地合并版本的精确文件名
     is_protected=false
     for protected in "${PROTECTED_MODULES[@]}"; do
-        if [[ "$filename" == "$protected" ]] || [[ "$filename" == "DNS.sgmodule" ]] || [[ "$filename" == *"DNS 分流"* ]] || [[ "$filename" == *"General Enhanced"* ]]; then
+        if [[ "$filename" == "$protected" ]]; then
             is_protected=true
             break
         fi
