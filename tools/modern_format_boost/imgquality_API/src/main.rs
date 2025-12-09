@@ -110,6 +110,27 @@ enum OutputFormat {
     Json,
 }
 
+/// 计算目录中所有图像文件的总大小
+fn calculate_directory_size(dir: &PathBuf) -> u64 {
+    let image_extensions = ["png", "jpg", "jpeg", "webp", "gif", "tiff", "tif", "heic", "avif", "jxl", "mp4"];
+    
+    WalkDir::new(dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+        .filter(|e| {
+            if let Some(ext) = e.path().extension() {
+                image_extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str())
+            } else {
+                false
+            }
+        })
+        .filter_map(|e| std::fs::metadata(e.path()).ok())
+        .map(|m| m.len())
+        .sum()
+}
+
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
@@ -745,8 +766,17 @@ fn auto_convert_directory(
     result.skipped = skipped_count;
     result.total = total;
 
-    // Calculate output size (approximate - only count successful conversions)
-    let output_bytes = input_bytes; // Simplified - would need to track actual output sizes
+    // 🔥 修复：计算实际输出大小
+    // 由于并行处理，我们需要在转换后重新扫描输出目录
+    // 简化方案：使用 N/A 表示无法计算（因为并行处理难以追踪）
+    // 或者扫描输出目录计算实际大小
+    let output_bytes = if let Some(out_dir) = output_dir {
+        // 如果指定了输出目录，扫描该目录
+        calculate_directory_size(out_dir)
+    } else {
+        // 原地转换：重新扫描输入目录（现在包含转换后的文件）
+        calculate_directory_size(input)
+    };
 
     // 🔥 Print detailed summary report
     print_summary_report(&result, start_time.elapsed(), input_bytes, output_bytes, "Image Conversion");
