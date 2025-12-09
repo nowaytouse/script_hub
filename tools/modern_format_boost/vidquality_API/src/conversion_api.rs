@@ -470,15 +470,19 @@ fn explore_smaller_size(
 
 /// Execute FFV1 conversion
 fn execute_ffv1_conversion(detection: &VideoDetectionResult, output: &Path) -> Result<u64> {
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    
     let mut args = vec![
         "-y".to_string(),
+        "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
         "-i".to_string(), detection.file_path.clone(),
         "-c:v".to_string(), "ffv1".to_string(),
         "-level".to_string(), "3".to_string(),
         "-coder".to_string(), "1".to_string(),
         "-context".to_string(), "1".to_string(),
         "-g".to_string(), "1".to_string(),
-        "-slices".to_string(), "24".to_string(),
+        "-slices".to_string(), max_threads.to_string(),  // 使用与线程数相同的 slices
         "-slicecrc".to_string(), "1".to_string(),
     ];
     
@@ -504,13 +508,18 @@ fn execute_ffv1_conversion(detection: &VideoDetectionResult, output: &Path) -> R
 /// Execute AV1 conversion with specified CRF (using SVT-AV1 for better performance)
 fn execute_av1_conversion(detection: &VideoDetectionResult, output: &Path, crf: u8) -> Result<u64> {
     // 使用 SVT-AV1 编码器 (libsvtav1) - 比 libaom-av1 快 10-20 倍
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let svt_params = format!("tune=0:film-grain=0:lp={}", max_threads);
+    
     let mut args = vec![
         "-y".to_string(),
+        "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
         "-i".to_string(), detection.file_path.clone(),
         "-c:v".to_string(), "libsvtav1".to_string(),
         "-crf".to_string(), crf.to_string(),
         "-preset".to_string(), "6".to_string(),  // 0-13, 6 是平衡点
-        "-svtav1-params".to_string(), "tune=0:film-grain=0".to_string(),
+        "-svtav1-params".to_string(), svt_params,  // 限制 SVT-AV1 线程数
     ];
     
     if detection.has_audio {
@@ -540,13 +549,18 @@ fn execute_av1_lossless(detection: &VideoDetectionResult, output: &Path) -> Resu
     warn!("⚠️  Mathematical lossless AV1 encoding (SVT-AV1) - this will be SLOW!");
     
     // SVT-AV1 无损模式: crf=0 + lossless=1
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let svt_params = format!("lossless=1:lp={}", max_threads);
+    
     let mut args = vec![
         "-y".to_string(),
+        "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
         "-i".to_string(), detection.file_path.clone(),
         "-c:v".to_string(), "libsvtav1".to_string(),
         "-crf".to_string(), "0".to_string(),
         "-preset".to_string(), "4".to_string(),  // 无损模式用更慢的 preset 保证质量
-        "-svtav1-params".to_string(), "lossless=1".to_string(),  // 数学无损
+        "-svtav1-params".to_string(), svt_params,  // 数学无损 + 限制线程数
     ];
     
     if detection.has_audio {

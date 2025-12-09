@@ -442,14 +442,19 @@ fn explore_smaller_size(
 
 /// Execute HEVC conversion with specified CRF (using libx265)
 fn execute_hevc_conversion(detection: &VideoDetectionResult, output: &Path, crf: u8) -> Result<u64> {
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let x265_params = format!("log-level=error:pools={}", max_threads);
+    
     let mut args = vec![
         "-y".to_string(),
+        "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
         "-i".to_string(), detection.file_path.clone(),
         "-c:v".to_string(), "libx265".to_string(),
         "-crf".to_string(), crf.to_string(),
         "-preset".to_string(), "medium".to_string(),
         "-tag:v".to_string(), "hvc1".to_string(),  // Apple 兼容性
-        "-x265-params".to_string(), "log-level=error".to_string(),
+        "-x265-params".to_string(), x265_params,  // 限制 x265 线程池
     ];
     
     if detection.has_audio {
@@ -478,11 +483,16 @@ fn execute_hevc_conversion(detection: &VideoDetectionResult, output: &Path, crf:
 fn execute_hevc_lossless(detection: &VideoDetectionResult, output: &Path) -> Result<u64> {
     warn!("⚠️  HEVC Lossless encoding - this will be slow and produce large files!");
     
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
+    let x265_params = format!("lossless=1:log-level=error:pools={}", max_threads);
+    
     let mut args = vec![
         "-y".to_string(),
+        "-threads".to_string(), max_threads.to_string(),  // 限制 ffmpeg 线程数
         "-i".to_string(), detection.file_path.clone(),
         "-c:v".to_string(), "libx265".to_string(),
-        "-x265-params".to_string(), "lossless=1:log-level=error".to_string(),
+        "-x265-params".to_string(), x265_params,  // 限制 x265 线程池
         "-preset".to_string(), "medium".to_string(),
         "-tag:v".to_string(), "hvc1".to_string(),
     ];

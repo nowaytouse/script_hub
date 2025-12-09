@@ -59,11 +59,14 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
     
     // Execute cjxl (v0.11+ syntax)
     // Note: cjxl 默认保留 ICC 颜色配置文件，无需额外参数
+    // 🔥 性能优化：限制 cjxl 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let result = Command::new("cjxl")
         .arg(input)
         .arg(&output)
         .arg("-d").arg(format!("{:.1}", distance))  // Distance parameter
         .arg("-e").arg("7")    // Effort 7 (cjxl v0.11+ 范围是 1-10，默认 7)
+        .arg("-j").arg(max_threads.to_string())  // 限制线程数
         .output();
     
     match result {
@@ -174,10 +177,13 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
     
     // Execute cjxl with --lossless_jpeg=1 for lossless JPEG transcode
     // Note: cjxl 默认保留 ICC 颜色配置文件，无需额外参数
+    // 🔥 性能优化：限制 cjxl 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let result = Command::new("cjxl")
         .arg(input)
         .arg(&output)
         .arg("--lossless_jpeg=1")  // Lossless JPEG transcode - preserves DCT coefficients
+        .arg("-j").arg(max_threads.to_string())  // 限制线程数
         .output();
     
     match result {
@@ -359,8 +365,11 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
     
     // AV1 with CRF 0 for visually lossless
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")  // Overwrite
+        .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
         .arg("-c:v").arg("libaom-av1")
         .arg("-crf").arg("0")    // Lossless mode
@@ -561,8 +570,11 @@ pub fn convert_to_av1_mp4_matched(
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, analysis.has_alpha);
     
     // AV1 with calculated CRF
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")  // Overwrite
+        .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
         .arg("-c:v").arg("libaom-av1")
         .arg("-crf").arg(crf.to_string())
@@ -844,11 +856,14 @@ pub fn convert_to_jxl_matched(
     // Execute cjxl with calculated distance
     // Note: For JPEG input with non-zero distance, we need to disable lossless_jpeg
     // Note: cjxl 默认保留 ICC 颜色配置文件，无需额外参数
+    // 🔥 性能优化：限制 cjxl 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let mut cmd = Command::new("cjxl");
     cmd.arg(input)
         .arg(&output)
         .arg("-d").arg(format!("{:.2}", distance))
-        .arg("-e").arg("7");    // Effort 7 (cjxl v0.11+ 范围是 1-10，默认 7)
+        .arg("-e").arg("7")    // Effort 7 (cjxl v0.11+ 范围是 1-10，默认 7)
+        .arg("-j").arg(max_threads.to_string());  // 限制线程数
     
     // If distance > 0, disable lossless_jpeg (which is enabled by default for JPEG input)
     if distance > 0.0 {
@@ -967,8 +982,11 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
     let vf_args = shared_utils::get_ffmpeg_dimension_args(width, height, false);
     
     // Mathematical lossless AV1
+    // 🔥 性能优化：限制 ffmpeg 线程数，避免系统卡顿
+    let max_threads = (num_cpus::get() / 2).clamp(1, 4);
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")
+        .arg("-threads").arg(max_threads.to_string())  // 限制线程数
         .arg("-i").arg(input)
         .arg("-c:v").arg("libaom-av1")
         .arg("-lossless").arg("1");  // Mathematical lossless

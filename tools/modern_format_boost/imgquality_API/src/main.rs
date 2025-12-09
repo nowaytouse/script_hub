@@ -626,23 +626,39 @@ fn auto_convert_directory(
     // 🔥 Progress bar with ETA
     let pb = shared_utils::create_progress_bar(total as u64, "Converting");
 
-    // Process files in parallel using rayon
-    files.par_iter().for_each(|path| {
-        match auto_convert_single_file(path, output_dir, force, delete_original, lossless, match_quality) {
-            Ok(_) => { success.fetch_add(1, Ordering::Relaxed); }
-            Err(e) => {
-                let msg = e.to_string();
-                if msg.contains("Skipped") || msg.contains("skip") {
-                    skipped.fetch_add(1, Ordering::Relaxed);
-                } else {
-                    eprintln!("❌ Conversion failed {}: {}", path.display(), e);
-                    failed.fetch_add(1, Ordering::Relaxed);
+    // 🔥 性能优化：限制并发数，避免系统卡顿
+    // - 使用 CPU 核心数的一半，留出资源给系统和编码器内部线程
+    // - 最少 1 个，最多 4 个并发任务
+    let num_cpus = num_cpus::get();
+    let max_threads = (num_cpus / 2).clamp(1, 4);
+    
+    // 创建自定义线程池
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(max_threads)
+        .build()
+        .unwrap_or_else(|_| rayon::ThreadPoolBuilder::new().num_threads(2).build().unwrap());
+    
+    println!("🔧 Using {} parallel threads (CPU cores: {})", max_threads, num_cpus);
+    
+    // Process files in parallel using custom thread pool
+    pool.install(|| {
+        files.par_iter().for_each(|path| {
+            match auto_convert_single_file(path, output_dir, force, delete_original, lossless, match_quality) {
+                Ok(_) => { success.fetch_add(1, Ordering::Relaxed); }
+                Err(e) => {
+                    let msg = e.to_string();
+                    if msg.contains("Skipped") || msg.contains("skip") {
+                        skipped.fetch_add(1, Ordering::Relaxed);
+                    } else {
+                        eprintln!("❌ Conversion failed {}: {}", path.display(), e);
+                        failed.fetch_add(1, Ordering::Relaxed);
+                    }
                 }
             }
-        }
-        let current = processed.fetch_add(1, Ordering::Relaxed) + 1;
-        pb.set_position(current as u64);
-        pb.set_message(path.file_name().unwrap_or_default().to_string_lossy().to_string());
+            let current = processed.fetch_add(1, Ordering::Relaxed) + 1;
+            pb.set_position(current as u64);
+            pb.set_message(path.file_name().unwrap_or_default().to_string_lossy().to_string());
+        });
     });
 
     pb.finish_with_message("Complete!");

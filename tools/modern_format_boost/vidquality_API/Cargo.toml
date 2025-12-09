@@ -43,6 +43,9 @@ regex = "1.10"
 # Shared utilities (progress bar, safety checks, batch processing)
 shared_utils = { path = "../shared_utils" }
 
+# CPU detection for performance optimization
+num_cpus = "1.16"
+
 [profile.release]
 lto = true
 opt-level = 3
