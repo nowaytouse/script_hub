@@ -1,12 +1,16 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use tracing::info;
 use std::path::PathBuf;
+use std::time::Instant;
 
 // 使用 lib crate
 use vidquality_hevc::{
     detect_video, auto_convert, simple_convert, determine_strategy, 
     ConversionConfig, VideoDetectionResult
 };
+
+// 🔥 使用 shared_utils 的统计报告功能（模块化）
+use shared_utils::{print_summary_report, BatchResult};
 
 #[derive(Parser)]
 #[command(name = "vidquality-hevc")]
@@ -147,8 +151,11 @@ fn main() -> anyhow::Result<()> {
                 
                 info!("📂 Found {} video files to process", files.len());
                 
-                let mut success = 0;
-                let mut failed = 0;
+                // 🔥 使用 shared_utils 的 BatchResult 进行统计（模块化）
+                let start_time = Instant::now();
+                let mut batch_result = BatchResult::new();
+                let mut total_input_bytes: u64 = 0;
+                let mut total_output_bytes: u64 = 0;
                 
                 for file in &files {
                     match auto_convert(file, &config) {
@@ -158,17 +165,25 @@ fn main() -> anyhow::Result<()> {
                                 result.output_path,
                                 result.size_ratio * 100.0
                             );
-                            success += 1;
+                            batch_result.success();
+                            total_input_bytes += result.input_size;
+                            total_output_bytes += result.output_size;
                         }
                         Err(e) => {
                             info!("❌ {} failed: {}", file.display(), e);
-                            failed += 1;
+                            batch_result.fail(file.clone(), e.to_string());
                         }
                     }
                 }
                 
-                info!("");
-                info!("📊 Batch Summary: {} succeeded, {} failed", success, failed);
+                // 🔥 使用 shared_utils 的统一报告格式（模块化）
+                print_summary_report(
+                    &batch_result,
+                    start_time.elapsed(),
+                    total_input_bytes,
+                    total_output_bytes,
+                    "HEVC Video",
+                );
             } else {
                 // 🔥 单文件处理：先检查是否是视频文件
                 let video_extensions = ["mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "mts"];
