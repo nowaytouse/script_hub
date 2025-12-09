@@ -218,6 +218,9 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
     """生成助手网页的JavaScript数据（紧凑格式，避免IDE格式化破坏）"""
     js_modules = {}
     
+    # 合并版本模块名称（推荐使用）
+    MERGED_MODULES = ["🎯 App去广告大合集"]
+    
     for cat_key, cat_data in modules.items():
         js_modules[cat_key] = {
             "name": cat_data["name"],
@@ -235,6 +238,15 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
                 js_item["tag"] = item["tag"]
             if item["essential"]:
                 js_item["essential"] = True
+            
+            # 标记合并版本（推荐）
+            if item["name"] in MERGED_MODULES:
+                js_item["merged"] = True
+                js_item["recommended"] = True
+            
+            # narrow_pierce分类的原始模块标记为"已合并到大合集"
+            if cat_key == "narrow_pierce":
+                js_item["hasmerged"] = True  # 标记有合并版本可用
             
             # 添加兼容性信息
             compat_info = compat_data.get(item["name"], {})
