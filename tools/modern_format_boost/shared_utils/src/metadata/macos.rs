@@ -5,7 +5,9 @@ use std::ffi::CString;
 use std::os::unix::ffi::OsStrExt;
 use std::io;
 
-const COPYFILE_FLAGS: u32 = (1<<0) | (1<<1) | (1<<2); // ACL | STAT | XATTR
+// COPYFILE_ACL (1<<0) | COPYFILE_STAT (1<<1) | COPYFILE_XATTR (1<<2)
+// ⚠️ 不要添加 COPYFILE_DATA (1<<3)！那会复制文件内容，导致转换无效！
+const COPYFILE_FLAGS: u32 = (1<<0) | (1<<1) | (1<<2);
 
 pub fn copy_native_metadata(src: &Path, dst: &Path) -> io::Result<()> {
     extern "C" {
