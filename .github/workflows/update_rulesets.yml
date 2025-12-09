@@ -48,8 +48,9 @@ jobs:
       run: |
         # Install sing-box CLI tool for SRS file generation only
         # Singbox config download is skipped by --unattended mode
-        SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
-        echo "Installing sing-box v${SINGBOX_VERSION} (CLI tool only)"
+        # 🔥 使用预览版 (1.13.0+) 以支持最新功能
+        SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases | grep '"tag_name"' | head -1 | sed -E 's/.*"v([^"]+)".*/\1/')
+        echo "Installing sing-box v${SINGBOX_VERSION} (CLI tool only, pre-release)"
         curl -Lo sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
         tar -xzf sing-box.tar.gz
         sudo mv sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box /usr/local/bin/
