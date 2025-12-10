@@ -1,6 +1,6 @@
 # Script Hub 🛠️
 
-A collection of utility scripts for media conversion, network configuration management, proxy rule optimization, and **Surge/Shadowrocket module management**.
+A comprehensive toolkit for **proxy rule management**, **Surge/Shadowrocket module collections**, and **high-quality media format conversion** with complete metadata preservation.
 
 [中文说明](#中文说明)
 
@@ -10,131 +10,176 @@ A collection of utility scripts for media conversion, network configuration mana
 
 | Time (UTC) | Time (Beijing) | Description |
 |------------|----------------|-------------|
-| 20:00 | 04:00 (次日) | 凌晨更新 |
-| 04:00 | 12:00 | 中午更新 |
+| 20:00 | 04:00 (Next Day) | Early morning update |
+| 04:00 | 12:00 | Noon update |
 
 Rules and modules are automatically updated **twice daily** via GitHub Actions.
 
-**✅ Collections auto-update**: All 3 mega-collections (🚀/🛡️/🎯) are automatically regenerated from upstream modules during each update cycle.
-
 ---
 
-## 📦 Module Collections (推荐合集)
+## 📦 Module Collections (Recommended)
 
 We provide **3 mega-collections** that merge multiple modules into single files for easier management:
 
-| Collection | Modules Merged | Description |
-|------------|----------------|-------------|
+| Collection | Modules | Description |
+|------------|---------|-------------|
 | 🚀 **功能增强大合集** | 23 | BiliBili/iRingo/YouTube/TikTok/DNS/BoxJs etc. |
-| 🛡️ **广告拦截大合集** | 11 | AWAvenue/毒奶/可莉/Sukka/广告平台拦截器 etc. |
-| 🎯 **App去广告大合集** | 32 | 微信/微博/淘宝/京东/知乎/小红书 etc. |
+| 🛡️ **广告拦截大合集** | 11 | AWAvenue/毒奶/可莉/Sukka/Ad Platform Blocker etc. |
+| 🎯 **App去广告大合集** | 32 | WeChat/Weibo/Taobao/JD/Zhihu/Xiaohongshu etc. |
 
 ### Quick Import URLs
 
 **Surge:**
 ```
-# 功能增强大合集
+# 功能增强大合集 (Feature Enhancement)
 https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%9A%80%20%E5%8A%9F%E8%83%BD%E5%A2%9E%E5%BC%BA%E5%A4%A7%E5%90%88%E9%9B%86.sgmodule
 
-# 广告拦截大合集
+# 广告拦截大合集 (Ad Blocking)
 https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9B%A1%EF%B8%8F%20%E5%B9%BF%E5%91%8A%E6%8B%A6%E6%88%AA%E5%A4%A7%E5%90%88%E9%9B%86.sgmodule
 
-# App去广告大合集
+# App去广告大合集 (App Ad Removal)
 https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%8E%AF%20App%E5%8E%BB%E5%B9%BF%E5%91%8A%E5%A4%A7%E5%90%88%E9%9B%86.sgmodule
 ```
 
-**Shadowrocket:** Same URLs but replace `surge%28main%29` with `shadowrocket`.
+**Shadowrocket:** Replace `surge%28main%29` with `shadowrocket` in URLs.
 
 ### 🌐 Module Helper Website
 
 Visit our interactive module helper: [surge_module_helper.html](module/surge_module_helper.html)
 
-Features:
 - 📦 Filter by "推荐合集" to see merged collections
 - 🚀 One-click copy URL for Surge/Shadowrocket
 - 📊 Track your installation progress
-- 🔍 Search and filter modules
+- �  Search and filter modules
 
 ---
 
-## Features
+## 🎬 Media Conversion Tools
 
-### 🎬 Media Scripts (`media/`)
-Batch media conversion tools with **complete metadata preservation**:
+### Modern Format Boost (`tools/modern_format_boost/`)
 
-- **JPEG/PNG → JXL**: High-compression with full metadata preservation
-- **HEIC/HEIF → PNG**: Apple format to universal PNG
-- **MP4 → WebP**: True FPS preservation using `img2webp`
-- **Animated Images → AV1/AVIF**: Modern codec conversion
+High-performance Rust tools for batch media format upgrade with **complete metadata preservation**:
+
+| Tool | Input | Output | Encoder | Use Case |
+|------|-------|--------|---------|----------|
+| **imgquality** | Images/GIF | JXL / AV1 MP4 | SVT-AV1 | Best compression ratio |
+| **imgquality-hevc** | Images/GIF | JXL / HEVC MP4 | x265 | Apple device compatibility |
+| **vidquality** | Videos | AV1 MP4 | SVT-AV1 | Best compression ratio |
+| **vidquality-hevc** | Videos | HEVC MP4 | x265 | Apple device compatibility |
+
+**Key Features:**
+- 🎯 **Smart Quality Matching**: `--match-quality` auto-calculates optimal CRF based on input quality
+- 📊 **Complete Metadata**: EXIF/IPTC/XMP/ICC Profile/timestamps/xattr preserved via ExifTool
+- 🔄 **Smart Rollback**: Auto-reverts if output is larger than input
+- 📈 **Progress Visualization**: Real-time progress bar with ETA
+- 🛡️ **Safety Checks**: Dangerous directory detection, verified safe deletes
+
+**Quick Start:**
+```bash
+cd tools/modern_format_boost
+cargo build --release
+
+# Convert images to JXL, animations to HEVC MP4
+./target/release/imgquality-hevc /path/to/images --match-quality --delete-original
+
+# Convert videos to HEVC
+./target/release/vidquality-hevc /path/to/videos --match-quality --delete-original
+```
+
+### Shell Scripts (`media/`)
+
+Legacy bash scripts for media conversion:
+- **JPEG/PNG → JXL**: Lossless transcoding with metadata preservation
+- **HEIC → PNG**: Apple format conversion
+- **Animated Images → AV1/AVIF/VVC**: Modern codec conversion
 - **Video → High-Quality GIF**: Two-pass palette optimization
 
-### 🔄 Merge & Sync (`ruleset/merge_sync/`)
+---
+
+## 📋 Rulesets
+
+Multi-platform proxy rule support:
+
+| Platform | Path | Format |
+|----------|------|--------|
+| **Surge/Shadowrocket** | `ruleset/Surge(Shadowkroket)/` | `.list` text |
+| **Sing-box** | `ruleset/SingBox/` | `.srs` binary |
+| **MetaCubeX** | `ruleset/MetaCubeX/` | `.yaml` |
+
+---
+
+## 🔄 Automation (`ruleset/merge_sync/`)
+
 Core automation tools for proxy rule management:
 
 - **Rule Merger**: Aggregates rules from 3rd-party sources
-- **AdBlock Merger**: Intelligent merger for AdBlock modules
+- **AdBlock Merger**: Intelligent merger for AdBlock modules with deduplication
 - **Module Merger**: Combines multiple modules into mega-collections
-- **Sync Pipeline**: End-to-end automation with Git push
-
-### 📋 Rulesets (`ruleset/`)
-- **Surge/Shadowrocket**: `ruleset/Surge(Shadowkroket)/`
-- **Sing-box**: `ruleset/SingBox/` (binary `.srs` format)
-- **MetaCubeX**: `ruleset/MetaCubeX/`
+- **Surge → Shadowrocket**: Auto-converts modules for Shadowrocket compatibility
+- **Sing-box Converter**: Converts text rules to binary `.srs` format
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 # Clone repository
 git clone https://github.com/nowaytouse/script_hub.git
 cd script_hub
 
-# Make scripts executable
-chmod +x ruleset/merge_sync/*.sh
+# Build Rust tools
+cd tools/modern_format_boost && cargo build --release && cd ../..
 
-# Full update (merge rules + modules + git push)
+# Run full update (merge rules + modules + git push)
+chmod +x ruleset/merge_sync/*.sh
 ./ruleset/merge_sync/full_update.sh
 ```
 
 ---
 
-## Dependencies
+## 📦 Dependencies
 
 ```bash
 # macOS
-brew install jpeg-xl libheif exiftool ffmpeg webp
+brew install jpeg-xl ffmpeg exiftool webp libheif sing-box
 
-# For Sing-box rule conversion
-brew install sing-box
+# Verify
+cjxl --version && ffmpeg -version && exiftool -ver
 ```
 
 ---
 
-## Recent Updates
+## 📁 Project Structure
 
-### 2025-12-10: Module Mega-Collections
-- **NEW**: 🚀 功能增强大合集 (23 modules merged)
-- **NEW**: 🛡️ 广告拦截大合集 (11 modules merged)
-- **NEW**: 🎯 App去广告大合集 (32 modules merged)
-- **NEW**: Twice-daily auto updates (04:00 & 12:00 Beijing Time)
-- **NEW**: Module helper website with collection filters
-
-### 2025-12-06: Infrastructure Overhaul
-- Centralized sync tools in `ruleset/merge_sync/`
-- Full GitHub Actions workflow for daily updates
-- Smart rule classification from Surge profiles
+```
+script_hub/
+├── media/                    # Shell scripts for media conversion
+├── module/                   # Surge/Shadowrocket modules
+│   ├── surge(main)/          # Surge modules
+│   ├── shadowrocket/         # Shadowrocket modules
+│   └── surge_module_helper.html
+├── ruleset/                  # Proxy rulesets
+│   ├── Surge(Shadowkroket)/  # Surge/Shadowrocket rules
+│   ├── SingBox/              # Sing-box binary rules
+│   ├── MetaCubeX/            # MetaCubeX rules
+│   └── merge_sync/           # Automation scripts
+├── substore/                 # Sub-Store scripts
+└── tools/
+    ├── modern_format_boost/  # Rust media conversion tools
+    └── static2jxl/           # C tool for static image → JXL
+```
 
 ---
 
 ## License
-MIT License.
+
+MIT License
 
 ---
 
 # 中文说明
 
-一个实用脚本集合，用于媒体转换、网络配置管理、代理规则优化和 **Surge/Shadowrocket 模块管理**。
+一个综合工具集，用于**代理规则管理**、**Surge/Shadowrocket 模块合集**和**高质量媒体格式转换**（完整元数据保留）。
 
 ---
 
@@ -147,16 +192,14 @@ MIT License.
 
 规则和模块通过 GitHub Actions **每日自动更新两次**。
 
-**✅ 合集自动更新**: 所有3个大合集（🚀/🛡️/🎯）会在每次更新时自动从上游模块重新生成。
-
 ---
 
 ## 📦 推荐合集
 
 我们提供 **3个大合集**，将多个模块合并为单个文件，方便管理：
 
-| 合集名称 | 合并模块数 | 包含内容 |
-|----------|-----------|----------|
+| 合集名称 | 模块数 | 包含内容 |
+|----------|--------|----------|
 | 🚀 **功能增强大合集** | 23 | BiliBili增强/iRingo/YouTube/TikTok/DNS/BoxJs等 |
 | 🛡️ **广告拦截大合集** | 11 | AWAvenue/毒奶/可莉/Sukka/广告平台拦截器等 |
 | 🎯 **App去广告大合集** | 32 | 微信/微博/淘宝/京东/知乎/小红书等App专项去广告 |
@@ -179,82 +222,132 @@ https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28ma
 
 ### 🌐 模块导入助手
 
-访问我们的交互式模块助手网页: [surge_module_helper.html](module/surge_module_helper.html)
+访问交互式模块助手网页: [surge_module_helper.html](module/surge_module_helper.html)
 
-功能特点:
 - 📦 点击"推荐合集"筛选查看合集模块
 - 🚀 一键复制 Surge/Shadowrocket 导入链接
-- 📊 追踪你的安装进度
+- 📊 追踪安装进度
 - 🔍 搜索和筛选模块
 
 ---
 
-## 功能特性
+## 🎬 媒体转换工具
 
-### 🎬 媒体脚本 (`media/`)
-批量媒体转换工具，支持**完整元数据保留**：
-- **JPEG/PNG → JXL**: 高效压缩，保留所有元数据
-- **HEIC → PNG**: 苹果格式转换
-- **MP4 → WebP**: 真实帧率保留
-- **动图 → AV1/AVIF**: 现代编码格式转换
+### Modern Format Boost (`tools/modern_format_boost/`)
 
-### 🔄 合并与同步 (`ruleset/merge_sync/`)
-代理规则管理的核心自动化工具：
-- **规则合并**: 聚合第三方源规则
-- **广告拦截合并**: 智能合并去广告模块
-- **模块合并**: 将多个模块合并为大合集
-- **全流程同步**: 一键完成合并+转换+Git推送
+高性能 Rust 工具，用于批量媒体格式升级，**完整保留元数据**：
 
-### 📋 规则集 (`ruleset/`)
-- **Surge/Shadowrocket**: `ruleset/Surge(Shadowkroket)/`
-- **Sing-box**: `ruleset/SingBox/` (二进制 `.srs` 格式)
-- **MetaCubeX**: `ruleset/MetaCubeX/`
+| 工具 | 输入 | 输出 | 编码器 | 适用场景 |
+|------|------|------|--------|----------|
+| **imgquality** | 图像/动图 | JXL / AV1 MP4 | SVT-AV1 | 最佳压缩率 |
+| **imgquality-hevc** | 图像/动图 | JXL / HEVC MP4 | x265 | Apple设备兼容 |
+| **vidquality** | 视频 | AV1 MP4 | SVT-AV1 | 最佳压缩率 |
+| **vidquality-hevc** | 视频 | HEVC MP4 | x265 | Apple设备兼容 |
+
+**核心特性:**
+- 🎯 **智能质量匹配**: `--match-quality` 根据输入质量自动计算最佳 CRF
+- 📊 **完整元数据保留**: EXIF/IPTC/XMP/ICC Profile/时间戳/xattr 通过 ExifTool 保留
+- 🔄 **智能回退**: 输出大于输入时自动回退
+- 📈 **进度可视化**: 实时进度条和 ETA 估算
+- 🛡️ **安全检查**: 危险目录检测、验证后删除
+
+**快速开始:**
+```bash
+cd tools/modern_format_boost
+cargo build --release
+
+# 图像转 JXL，动图转 HEVC MP4
+./target/release/imgquality-hevc /path/to/images --match-quality --delete-original
+
+# 视频转 HEVC
+./target/release/vidquality-hevc /path/to/videos --match-quality --delete-original
+```
+
+### Shell 脚本 (`media/`)
+
+传统 bash 脚本用于媒体转换：
+- **JPEG/PNG → JXL**: 无损转码，保留元数据
+- **HEIC → PNG**: Apple 格式转换
+- **动图 → AV1/AVIF/VVC**: 现代编码格式转换
+- **视频 → 高质量 GIF**: 双通道调色板优化
 
 ---
 
-## 快速开始
+## 📋 规则集
+
+多平台代理规则支持：
+
+| 平台 | 路径 | 格式 |
+|------|------|------|
+| **Surge/Shadowrocket** | `ruleset/Surge(Shadowkroket)/` | `.list` 文本 |
+| **Sing-box** | `ruleset/SingBox/` | `.srs` 二进制 |
+| **MetaCubeX** | `ruleset/MetaCubeX/` | `.yaml` |
+
+---
+
+## 🔄 自动化工具 (`ruleset/merge_sync/`)
+
+代理规则管理的核心自动化工具：
+
+- **规则合并**: 聚合第三方源规则
+- **广告拦截合并**: 智能合并去广告模块，自动去重
+- **模块合并**: 将多个模块合并为大合集
+- **Surge → Shadowrocket**: 自动转换模块以兼容 Shadowrocket
+- **Sing-box 转换**: 将文本规则转换为二进制 `.srs` 格式
+
+---
+
+## 🚀 快速开始
 
 ```bash
 # 克隆仓库
 git clone https://github.com/nowaytouse/script_hub.git
 cd script_hub
 
-# 赋予执行权限
-chmod +x ruleset/merge_sync/*.sh
+# 编译 Rust 工具
+cd tools/modern_format_boost && cargo build --release && cd ../..
 
 # 执行全量更新 (合并规则+模块+Git推送)
+chmod +x ruleset/merge_sync/*.sh
 ./ruleset/merge_sync/full_update.sh
 ```
 
 ---
 
-## 依赖安装
+## 📦 依赖安装
 
 ```bash
 # macOS
-brew install jpeg-xl libheif exiftool ffmpeg webp
+brew install jpeg-xl ffmpeg exiftool webp libheif sing-box
 
-# Sing-box 规则转换
-brew install sing-box
+# 验证安装
+cjxl --version && ffmpeg -version && exiftool -ver
 ```
 
 ---
 
-## 最近更新
+## 📁 项目结构
 
-### 2025-12-10: 模块大合集
-- **新增**: 🚀 功能增强大合集 (合并23个模块)
-- **新增**: 🛡️ 广告拦截大合集 (合并11个模块)
-- **新增**: 🎯 App去广告大合集 (合并32个模块)
-- **新增**: 每日两次自动更新 (北京时间04:00和12:00)
-- **新增**: 模块助手网页支持合集筛选
-
-### 2025-12-06: 架构重构
-- 同步工具集中至 `ruleset/merge_sync/`
-- 集成 GitHub Actions 实现每日自动更新
-- 智能规则分类
+```
+script_hub/
+├── media/                    # 媒体转换 Shell 脚本
+├── module/                   # Surge/Shadowrocket 模块
+│   ├── surge(main)/          # Surge 模块
+│   ├── shadowrocket/         # Shadowrocket 模块
+│   └── surge_module_helper.html
+├── ruleset/                  # 代理规则集
+│   ├── Surge(Shadowkroket)/  # Surge/Shadowrocket 规则
+│   ├── SingBox/              # Sing-box 二进制规则
+│   ├── MetaCubeX/            # MetaCubeX 规则
+│   └── merge_sync/           # 自动化脚本
+├── substore/                 # Sub-Store 脚本
+└── tools/
+    ├── modern_format_boost/  # Rust 媒体转换工具
+    └── static2jxl/           # C 工具：静态图像 → JXL
+```
 
 ---
 
 ## 许可证
-MIT License.
+
+MIT License
