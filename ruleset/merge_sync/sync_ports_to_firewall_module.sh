@@ -9,9 +9,11 @@
 set -e
 
 # Configuration
-PORTS_SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../ruleset/Sources/conf" && pwd)/SurgeConf_DirectPorts.list"
-FIREWALL_MODULE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../module/surge(main)" && pwd)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
-BACKUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/backup"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PORTS_SOURCE="${PROJECT_ROOT}/ruleset/Sources/conf/SurgeConf_DirectPorts.list"
+FIREWALL_MODULE="${PROJECT_ROOT}/module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
+BACKUP_DIR="${SCRIPT_DIR}/backup"
 timestamp=$(date "+%Y%m%d_%H%M%S")
 
 # Colors
