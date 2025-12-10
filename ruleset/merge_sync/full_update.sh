@@ -579,9 +579,11 @@ if [ "$WITH_GIT" = true ]; then
             # Get current branch name
             CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
             
-            # Push with error detection
+            # Push with error detection (disable set -e temporarily)
+            set +e
             PUSH_OUTPUT=$(git push origin "$CURRENT_BRANCH" 2>&1)
             PUSH_EXIT=$?
+            set -e
             
             if [ $PUSH_EXIT -eq 0 ]; then
                 if [ "$VERBOSE" = true ]; then
@@ -592,17 +594,22 @@ if [ "$WITH_GIT" = true ]; then
                 log_success "Git Commit & Push complete"
             else
                 # Push failed, try without branch name
-                log_warning "Push to '$CURRENT_BRANCH' failed, trying default branch..."
+                log_warning "Push to '$CURRENT_BRANCH' failed (exit $PUSH_EXIT), trying default branch..."
+                echo "$PUSH_OUTPUT" | head -5
+                
+                set +e
                 PUSH_OUTPUT=$(git push 2>&1)
                 PUSH_EXIT=$?
+                set -e
                 
                 if [ $PUSH_EXIT -eq 0 ]; then
                     echo "$PUSH_OUTPUT" | grep -E "^To|->|Everything up-to-date" || true
                     log_success "Git Push complete (default branch)"
                 else
-                    log_error "Git push failed!"
-                    echo "$PUSH_OUTPUT" | grep -E "error:|fatal:|rejected" || echo "$PUSH_OUTPUT"
+                    log_error "Git push failed! (exit $PUSH_EXIT)"
+                    echo "$PUSH_OUTPUT"
                     log_warning "Changes committed locally but not pushed to remote"
+                    # Don't exit with error - the commit was successful
                 fi
             fi
         else
