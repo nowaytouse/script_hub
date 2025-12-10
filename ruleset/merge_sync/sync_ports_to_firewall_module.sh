@@ -37,13 +37,15 @@ echo ""
 
 # 1. Validation
 if [ ! -f "$PORTS_SOURCE" ]; then
-    print_error "Port rules source not found: $PORTS_SOURCE"
-    exit 1
+    print_warn "Port rules source not found: $PORTS_SOURCE"
+    print_info "Skipping port rules sync (source file missing)"
+    exit 0
 fi
 
 if [ ! -f "$FIREWALL_MODULE" ]; then
-    print_error "Firewall module not found: $FIREWALL_MODULE"
-    exit 1
+    print_warn "Firewall module not found: $FIREWALL_MODULE"
+    print_info "Skipping port rules sync (module file missing)"
+    exit 0
 fi
 
 # 2. Extract port rules from source
