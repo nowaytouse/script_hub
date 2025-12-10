@@ -335,7 +335,30 @@ fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
-# Step 6: Download AdBlock modules + Merge
+# Step 6a: Download Amplify Nexus modules (功能增强类)
+# ═══════════════════════════════════════════════════════════════
+STEP=$((STEP + 1))
+if [ "$SKIP_MODULE" = false ]; then
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Download Amplify Nexus modules (iRingo/BiliBili/etc)...${NC}"
+    
+    if [ -f "${SCRIPT_DIR}/download_modules.sh" ]; then
+        log_info "Downloading Amplify Nexus modules from upstream..."
+        if [ "$VERBOSE" = true ]; then
+            "${SCRIPT_DIR}/download_modules.sh" --group "『 🛠️ Amplify Nexus › 增幅枢纽 』"
+        else
+            "${SCRIPT_DIR}/download_modules.sh" --group "『 🛠️ Amplify Nexus › 增幅枢纽 』" 2>&1 | grep -E "^\[✓\]|^\[✗\]|Updated:|Downloaded:|No change:" || true
+        fi
+        log_success "Amplify Nexus modules updated"
+    else
+        log_warning "Skip: download_modules.sh not found"
+    fi
+else
+    echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Skip Amplify Nexus module download${NC}"
+fi
+echo ""
+
+# ═══════════════════════════════════════════════════════════════
+# Step 6b: Download AdBlock modules + Merge
 # ═══════════════════════════════════════════════════════════════
 STEP=$((STEP + 1))
 if [ "$SKIP_ADBLOCK" = false ]; then
