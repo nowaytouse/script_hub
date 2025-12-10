@@ -6,8 +6,9 @@
 # ═══════════════════════════════════════════════════════════════
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULESET_DIR="$SCRIPT_DIR/../ruleset/Surge(Shadowkroket)"
-SOURCES_DIR="$SCRIPT_DIR/../ruleset/Sources/Links"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+RULESET_DIR="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)"
+SOURCES_DIR="$PROJECT_ROOT/ruleset/Sources/Links"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'

@@ -74,7 +74,8 @@ for name in "${!MAPPING[@]}"; do
     cached_hash=$(grep "^${name}:" "$CACHE_FILE" 2>/dev/null | cut -d':' -f2)
     
     # Check if Sources already contains MetaCubeX reference
-    has_reference=$(grep -c "MetaCubeX_${metacubex}.list" "$sources_file" 2>/dev/null || echo "0")
+    has_reference=$(grep -c "MetaCubeX_${metacubex}.list" "$sources_file" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    [ -z "$has_reference" ] && has_reference=0
     
     if [ "$has_reference" -eq 0 ]; then
         # First time adding

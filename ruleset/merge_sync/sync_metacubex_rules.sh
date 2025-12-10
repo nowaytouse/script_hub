@@ -56,15 +56,19 @@ echo "Target directory: $METACUBEX_DIR"
 mkdir -p "$METACUBEX_DIR"
 mkdir -p "$TMP_DIR"
 
-# Select sing-box: prefer local preview version
-if [ -x "$LOCAL_SINGBOX" ]; then
+# Select sing-box: prefer system (CI) > local (macOS)
+# In CI environment, sing-box is installed via workflow
+# Local binary is macOS-only and won't work on Linux CI
+if command -v sing-box &> /dev/null; then
+    SINGBOX="sing-box"
+    echo -e "${GREEN}Using system sing-box: $(sing-box version | head -1)${NC}"
+elif [ -x "$LOCAL_SINGBOX" ] && [ "$(uname)" = "Darwin" ]; then
+    # Only use local binary on macOS (it's a macOS binary)
     SINGBOX="$LOCAL_SINGBOX"
     echo -e "${GREEN}Using local sing-box: $("$SINGBOX" version | head -1)${NC}"
-elif command -v sing-box &> /dev/null; then
-    SINGBOX="sing-box"
-    echo -e "${YELLOW}Using system sing-box: $(sing-box version | head -1)${NC}"
 else
     echo -e "${RED}sing-box not installed${NC}"
+    echo -e "${YELLOW}Install: brew install sing-box (macOS) or see workflow for Linux${NC}"
     exit 1
 fi
 
@@ -171,8 +175,10 @@ if command -v parallel &> /dev/null; then
     echo -e "${BLUE}Using GNU parallel for concurrent downloads...${NC}"
     results=$(printf '%s\n' "${METACUBEX_RULES[@]}" | parallel -j4 --halt never process_rule {} 2>&1)
     echo "$results"
-    SUCCESS=$(echo "$results" | grep -c "rules" || echo "0")
-    FAILED=$((${#METACUBEX_RULES[@]} - SUCCESS))
+    SUCCESS=$(echo "$results" | grep -c "rules" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    [ -z "$SUCCESS" ] && SUCCESS=0
+    TOTAL_RULES=${#METACUBEX_RULES[@]}
+    FAILED=$((TOTAL_RULES - SUCCESS))
 else
     # Sequential processing with progress
     total=${#METACUBEX_RULES[@]}
