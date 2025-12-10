@@ -93,18 +93,21 @@ enum OutputFormat {
     Json,
 }
 
-/// 计算目录中所有图像文件的总大小
-fn calculate_directory_size(dir: &PathBuf) -> u64 {
-    let image_extensions = ["png", "jpg", "jpeg", "webp", "gif", "tiff", "tif", "heic", "avif", "jxl", "mp4"];
+/// 计算目录中指定扩展名文件的总大小
+fn calculate_directory_size_by_extensions(dir: &PathBuf, extensions: &[&str], recursive: bool) -> u64 {
+    let walker = if recursive {
+        WalkDir::new(dir).follow_links(true)
+    } else {
+        WalkDir::new(dir).max_depth(1)
+    };
     
-    WalkDir::new(dir)
-        .follow_links(true)
+    walker
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
         .filter(|e| {
             if let Some(ext) = e.path().extension() {
-                image_extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str())
+                extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str())
             } else {
                 false
             }
@@ -690,17 +693,11 @@ fn auto_convert_directory(
     result.skipped = skipped_count;
     result.total = total;
 
-    // 🔥 修复：计算实际输出大小
-    // 由于并行处理，我们需要在转换后重新扫描输出目录
-    // 简化方案：使用 N/A 表示无法计算（因为并行处理难以追踪）
-    // 或者扫描输出目录计算实际大小
-    let output_bytes = if let Some(out_dir) = output_dir {
-        // 如果指定了输出目录，扫描该目录
-        calculate_directory_size(out_dir)
-    } else {
-        // 原地转换：重新扫描输入目录（现在包含转换后的文件）
-        calculate_directory_size(input)
-    };
+    // 🔥 修复：只计算转换后的目标格式文件大小
+    // 目标格式：JXL（静态图）和 MP4（动画）
+    let output_extensions = ["jxl", "mp4"];
+    let scan_dir = output_dir.unwrap_or(input);
+    let output_bytes = calculate_directory_size_by_extensions(scan_dir, &output_extensions, recursive);
 
     // 🔥 Print detailed summary report
     print_summary_report(&result, start_time.elapsed(), input_bytes, output_bytes, "Image Conversion");
