@@ -38,6 +38,9 @@ enum Commands {
         output: Option<PathBuf>,
         #[arg(short, long)]
         force: bool,
+        /// Recursive directory scan
+        #[arg(short, long)]
+        recursive: bool,
         #[arg(long)]
         delete_original: bool,
         /// In-place conversion: convert and delete original file
@@ -96,7 +99,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, delete_original, in_place, explore, lossless, match_quality } => {
+        Commands::Auto { input, output, force, recursive, delete_original, in_place, explore, lossless, match_quality } => {
             let config = ConversionConfig {
                 output_dir: output.clone(),
                 force,
@@ -124,14 +127,26 @@ fn main() -> anyhow::Result<()> {
             if match_quality {
                 info!("   🎯 Match Quality: ENABLED");
             }
+            if recursive {
+                info!("   📂 Recursive: ENABLED");
+            }
             info!("");
             
             if input.is_dir() {
+                use walkdir::WalkDir;
                 let video_extensions = ["mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "mts"];
                 
-                let files: Vec<_> = std::fs::read_dir(&input)?
+                // 🔥 支持递归目录遍历
+                let walker = if recursive {
+                    WalkDir::new(&input).follow_links(true)
+                } else {
+                    WalkDir::new(&input).max_depth(1)
+                };
+                
+                let files: Vec<_> = walker
+                    .into_iter()
                     .filter_map(|e| e.ok())
-                    .filter(|e| e.path().is_file())
+                    .filter(|e| e.file_type().is_file())
                     .filter(|e| {
                         if let Some(ext) = e.path().extension() {
                             video_extensions.contains(&ext.to_str().unwrap_or("").to_lowercase().as_str())
@@ -139,7 +154,7 @@ fn main() -> anyhow::Result<()> {
                             false
                         }
                     })
-                    .map(|e| e.path())
+                    .map(|e| e.path().to_path_buf())
                     .collect();
                 
                 // 🔥 响亮报错：目录中没有视频文件

@@ -190,10 +190,14 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
     std::fs::create_dir_all(&output_dir)?;
     
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
-    let output_path = output_dir.join(format!("{}.mp4", stem));
+    let input_ext = input.extension().and_then(|e| e.to_str()).unwrap_or("");
     
-    // 🔥 检测输入输出路径冲突
-    check_input_output_conflict(input, &output_path)?;
+    // 🔥 当输入是 mp4 时，添加 _hevc 后缀避免冲突
+    let output_path = if input_ext.eq_ignore_ascii_case("mp4") {
+        output_dir.join(format!("{}_hevc.mp4", stem))
+    } else {
+        output_dir.join(format!("{}.mp4", stem))
+    };
     
     info!("🎬 Simple Mode: {} → HEVC MP4 (CRF 18)", input.display());
     
@@ -254,10 +258,15 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     std::fs::create_dir_all(&output_dir)?;
     
     let stem = input.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
-    let output_path = output_dir.join(format!("{}.{}", stem, strategy.target.extension()));
+    let target_ext = strategy.target.extension();
+    let input_ext = input.extension().and_then(|e| e.to_str()).unwrap_or("");
     
-    // 🔥 检测输入输出路径冲突
-    check_input_output_conflict(input, &output_path)?;
+    // 🔥 当输入输出扩展名相同时，添加 _hevc 后缀避免冲突
+    let output_path = if input_ext.eq_ignore_ascii_case(target_ext) {
+        output_dir.join(format!("{}_hevc.{}", stem, target_ext))
+    } else {
+        output_dir.join(format!("{}.{}", stem, target_ext))
+    };
     
     if output_path.exists() && !config.force {
         return Err(VidQualityError::ConversionError(
