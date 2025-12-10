@@ -3,15 +3,9 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 69
-# Updated: 2025-12-08 15:13:45
+# Rules: 70
+# Updated: 2025-12-10 04:10:55
 # ═══════════════════════════════════════════════════════════════
-
-# [smart_cleanup.py] Deduplicated: 69 rules
-
-# [smart_cleanup.py] Deduplicated: 69 rules
-
-# [smart_cleanup.py] Deduplicated: 69 rules
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
@@ -27,6 +21,7 @@ DOMAIN,generativelanguage.googleapis.com
 DOMAIN,in.appcenter.ms
 DOMAIN,location.microsoft.com
 DOMAIN,makersuite.google.com
+DOMAIN,o33249.ingest.sentry.io
 DOMAIN,odc.officeapps.live.com
 DOMAIN,openai-api.arkoselabs.com
 DOMAIN,openaiapi-site.azureedge.net

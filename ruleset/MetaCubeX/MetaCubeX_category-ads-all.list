@@ -1,5 +1,5 @@
 # MetaCubeX geosite-category-ads-all
-# Rules: 601
+# Rules: 602
 
 DOMAIN,adeventtracker.spotify.com
 DOMAIN,ads3-normal-hl.zijieapi.com
@@ -512,6 +512,7 @@ DOMAIN-SUFFIX,sentry.music.163.com
 DOMAIN-SUFFIX,serving-sys.com
 DOMAIN-SUFFIX,sf3-ttcdn-tos.pstatp.com
 DOMAIN-SUFFIX,shhs-ydd8x2.yjrmss.cn
+DOMAIN-SUFFIX,shoppingads.cn
 DOMAIN-SUFFIX,shuzilm.cn
 DOMAIN-SUFFIX,slog.sina.cn
 DOMAIN-SUFFIX,slog.sina.com.cn
@@ -600,5 +601,5 @@ DOMAIN-SUFFIX,zhugeio.com
 DOMAIN-SUFFIX,zxid-api.mobileservice.cn
 DOMAIN-SUFFIX,zxid-m.mobileservice.cn
 DOMAIN-SUFFIX,zz.bdstatic.com
-DOMAIN-REGEX,^speed\.(coe|open)\.ad\.[a-z]{2,6}\.prod\.hosts\.ooklaserver\.net$
 DOMAIN-REGEX,^adservice\.google\.([a-z]{2}|com?)(\.[a-z]{2})?$
+DOMAIN-REGEX,^speed\.(coe|open)\.ad\.[a-z]{2,6}\.prod\.hosts\.ooklaserver\.net$
