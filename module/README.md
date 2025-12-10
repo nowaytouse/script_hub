@@ -207,7 +207,38 @@ python3 ruleset/merge_sync/consolidate_modules.py
 
 ---
 
-## 更新历史
+## 更新历史 / Update History
 
+- **2025-12-10**: 
+  - 🔥 修复 Shadowrocket `{{{Proxy}}}` 占位符语法问题
+  - 🔥 修复 Adblock4limbo 模块不自动更新问题
+  - ✅ 添加 Amplify Nexus 模块自动更新 (iRingo/BiliBili/DualSubs)
+  - ✅ 添加 Shadowrocket 模块自动转换步骤
+  - ✅ 防火墙模块独立保护，不合并到 AdBlock.list
 - **2025-12-10**: 新增3个大合集，每日两次自动更新
 - **2024-12-08**: 按分组整理所有模块到子目录
+
+---
+
+## 自动更新流程 / Auto Update Pipeline
+
+```
+GitHub Actions (每日 04:00 & 12:00 北京时间)
+    │
+    ├─ Step 6a: download_modules.sh
+    │   └─ 更新 amplify_nexus 模块 (iRingo/BiliBili/DualSubs等)
+    │
+    ├─ Step 6b: download_adblock_modules.sh
+    │   └─ 更新 head_expanse 模块 (Adblock4limbo/可莉/广告平台拦截器等)
+    │
+    ├─ Step 7: 合并模块
+    │   ├─ merge_narrow_pierce_modules.py → 🎯 App去广告大合集
+    │   ├─ merge_head_expanse_modules.py → 🛡️ 广告拦截大合集
+    │   └─ merge_amplify_nexus_modules.py → 🚀 功能增强大合集
+    │
+    ├─ Step 7: convert_surge_to_shadowrocket.py
+    │   └─ 生成 Shadowrocket 兼容版本 (移除 {{{Proxy}}} 等)
+    │
+    └─ Step 7: consolidate_modules.py
+        └─ 更新网页数据 (surge_module_helper.html)
+```

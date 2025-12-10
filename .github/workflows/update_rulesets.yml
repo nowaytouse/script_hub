@@ -41,11 +41,14 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0  # Full history for git operations
+        persist-credentials: true  # 🔥 确保 git push 有权限
         
     - name: Configure Git
       run: |
         git config --global user.name "GitHub Action"
         git config --global user.email "action@github.com"
+        # 🔥 配置 git 使用 token 认证
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
     - name: Install sing-box (for SRS generation only)
       run: |
