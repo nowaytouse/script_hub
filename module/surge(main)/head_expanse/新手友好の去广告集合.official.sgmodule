@@ -4,18 +4,6 @@
 
 #!group=🔝 Head Expanse › 首端扩域
 
-# ═══════════════════════════════════════════════════════════════
-# NOTE: All 43 rules from this module have been extracted to AdBlock.list
-# This cleaned version only contains non-Rule sections:
-#   - [URL Rewrite]
-#   - [MITM]
-#   - [Script]
-#   - Other module-specific features
-# Use AdBlock.list for all blocking rules
-[URL Rewrite]
-#>云闪付 //wallet.95516.com
-^https:\/\/wallet\.95516\.com(:10533)?\/s\/wl\/icon\/large\/1 - reject
-
 [Body Rewrite]
 #>高德地图
 http-response-jq ^https:\/\/m5\.amap\.com\/ws\/shield\/search_business\/process\/marketingOperationStructured\? 'delpaths([["data","tipsOperationLocation"]])'
@@ -243,4 +231,15 @@ http-response-jq ^https:\/\/api\.pinduoduo\.com\/search 'delpaths([["expansion"]
 [MITM]
 hostname = %APPEND% wxa.wxs.qq.com, wximg.wxs.qq.com, wxsmw.wxs.qq.com, *.weibo.cn, *.weibo.com, weibo.com, *-mtop.cainiao.com, cn-acs.m.cainiao.com, acs.m.taobao.com, heic.alicdn.com, guide-acs.m.taobao.com, poplayer.template.alibaba.com, ad.12306.cn, mobile.12306.cn, *api.alipan.com, member.alipan.com, pan.baidu.com, flowplus.meituan.net, img.meituan.net, s3plus.meituan.net, osg-service.sgcc.com.cn, mp.weixin.qq.com, home.mi.com, wallet.95516.com, *.hupu.com, api.pinduoduo.com, video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.yangkeduo.com, m5.amap.com, m5-zb.amap.com, oss.amap.com, sns.amap.com, common.diditaxi.com.cn, freight.xiaojukeji.com, daijia.kuaidadi.com, ct.xiaojukeji.com, res.xiaojukeji.com, conf.diditaxi.com.cn, api.udache.com, 123.207.209.*, 112.53.55.225, 120.241.142.*, 120.241.143.*, 116.85.*, 139.199.240.84, api.caiyunapp.com, wrapper.cyapi.cn, weixin110.qq.com, security.wechat.com, m.baidu.com, www.baidu.com, zhidao.baidu.com
 
+
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: All 0 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
+# ═══════════════════════════════════════════════════════════════
 
