@@ -21,31 +21,17 @@ force-http-engine-hosts =  *.ott.cibntv.net,intl.iqiyi.com,maicai.api.ddxq.mobi,
 
 
 
-[Rule]
-DOMAIN,apm.zhihu.com,REJECT
-DOMAIN,appcloud.zhihu.com,REJECT
-DOMAIN,appcloud2.in.zhihu.com,REJECT
-DOMAIN,crash2.zhihu.com,REJECT
-DOMAIN,duga.zhihu.com,REJECT
-DOMAIN,mqtt.zhihu.com,REJECT
-DOMAIN,sugar.zhihu.com,REJECT
-DOMAIN,zxid-m.mobileservice.cn,REJECT
-IP-CIDR,103.41.167.237/32,REJECT,no-resolve
-IP-CIDR,118.89.204.198/32,REJECT,no-resolve
-IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve
-URL-REGEX,^https:\/\/api\.zhihu\.com\/guide_center\/strategy,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/(notifications\/v\d\/count),REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/api\/v4\/ecom_data\/config,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/bazaar\/float_window,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/bazaar\/vip_tab\/header,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/commercial_api\/answer/\d+/bottom-v2,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/feed\/render\/revisit\/current_reading,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/fringe\/ad,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/message-push\/event,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/moments\/recent,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/root\/window,REJECT
-URL-REGEX,^https?:\/\/api\.zhihu\.com\/settings\/new\/notification,REJECT
+#!group=🎯 Narrow Pierce › 窄域穿刺
 
+# ═══════════════════════════════════════════════════════════════
+# NOTE: All 23 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
+# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 "(^https?:\/\/app\.biliintl\.com\/(x\/)?(intl|dm|reply|history|v\d\/(fav|msgfeed)).+?)(&s_locale=zh-Hans_[A-Z]{2})(.+?)(&sim_code=\d+)(.+)" $1&s_locale=zh-Hans_PH$6&sim_code=51503$8 302

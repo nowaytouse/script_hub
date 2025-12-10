@@ -7,170 +7,17 @@
 # 来源: 32 个App专项去广告模块
 # 包含: 10099, 12306.beta, 123云盘, BiliBili.ADBlock, Bilibili.Helper, IT之家.beta, Jump, QQ音乐, RedNote, Reddit ...
 
-[Rule]
-AND,((DOMAIN,api.pinduoduo.com),(PROTOCOL,QUIC)),REJECT
-AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
-AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
-AND,((DOMAIN-SUFFIX,spotify.com),(PROTOCOL,QUIC)),REJECT
-AND,((IP-ASN,45090,no-resolve),(DEST-PORT,25641),(PROTOCOL,TCP)),REJECT
-AND,((IP-ASN,55990,no-resolve),(DEST-PORT,25641),(PROTOCOL,TCP)),REJECT
-AND,((IP-ASN,63646,no-resolve),(DEST-PORT,25641),(PROTOCOL,TCP)),REJECT
-AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
-AND,((PROTOCOL,UDP),(DST-PORT,443),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
-AND,((URL-REGEX,"^http:\/\/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/d(\d)?"),(USER-AGENT,"*com.xunmeng.pinduoduo*")),REJECT
-AND,((URL-REGEX,"^http:\/\/\[((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))\]\/d(\d)?\?"),(USER-AGENT,"*com.xunmeng.pinduoduo*")),REJECT
-DOMAIN,acs4baichuan.m.taobao.com,REJECT
-DOMAIN,ad.12306.cn,DIRECT
-DOMAIN,ad.maoyan.com,REJECT
-DOMAIN,ad.tencentmusic.com,REJECT
-DOMAIN,adashx.m.taobao.com,REJECT
-DOMAIN,adcdn.tencentmusic.com,REJECT
-DOMAIN,adcdn6.tencentmusic.com,REJECT
-DOMAIN,adclick.tencentmusic.com,REJECT
-DOMAIN,adexpo.tencentmusic.com,REJECT
-DOMAIN,adpinpai.video.weibocdn.com,REJECT
-DOMAIN,ads-shopping.shouqianba.com,REJECT
-DOMAIN,adsmind.ugdtimg.com,REJECT
-DOMAIN,adstats.tencentmusic.com,REJECT
-DOMAIN,amap-aos-info-nogw.amap.com,REJECT
-DOMAIN,amdc.m.youku.com,REJECT
-DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net,PROXY
-DOMAIN,api.sm.cn,REJECT
-DOMAIN,apiv4-iyes.youku.com,REJECT
-DOMAIN,apm-a.pinduoduo.com,REJECT
-DOMAIN,apm.pinduoduo.com,REJECT
-DOMAIN,appcloud.zhihu.com,REJECT
-DOMAIN,appcloud2.in.zhihu.com,REJECT
-DOMAIN,baichuan-sdk.alicdn.com,REJECT
-DOMAIN,bootpreload.uve.weibo.com,REJECT
-DOMAIN,btrace.qq.com,PROXY
-DOMAIN,cad.youku.com,REJECT
-DOMAIN,cd-1.pddpic.com,REJECT
-DOMAIN,cdl-1.pddpic.com,REJECT
-DOMAIN,cdl-p2.pddpic.com,REJECT
-DOMAIN,crash2.zhihu.com,REJECT
-DOMAIN,datacollection.uve.weibo.com,REJECT
-DOMAIN,dldir1.qq.com,PROXY
-DOMAIN,dns.weixin.qq.com,PROXY
-DOMAIN,dns.weixin.qq.com.cn,PROXY
-DOMAIN,ems.youku.com,REJECT
-DOMAIN,epay.ahrcu.com,DIRECT
-DOMAIN,free-aos-cdn-image.amap.com,REJECT
-DOMAIN,gwp.xiaojukeji.com,REJECT
-DOMAIN,h-adashx.ut.taobao.com,REJECT
-DOMAIN,hudong.alicdn.com,REJECT
-DOMAIN,huichuan-mc.sm.cn,REJECT
-DOMAIN,huichuan.sm.cn,REJECT
-DOMAIN,huodong.weibo.cn,REJECT
-DOMAIN,images.pinduoduo.com,REJECT
-DOMAIN,iyes.youku.com,REJECT
-DOMAIN,jp.ad.gameley.com,REJECT
-DOMAIN,m-vali.cp31.ott.cibntv.net,REJECT
-DOMAIN,mc.atm.youku.com,REJECT
-DOMAIN,mc.tencentmusic.com,REJECT
-DOMAIN,meta.pinduoduo.com,REJECT
-DOMAIN,mixpay.wechat.com,DIRECT
-DOMAIN,monitor.music.qq.com,REJECT
-DOMAIN,mqtt.zhihu.com,REJECT
-DOMAIN,nbsdk-baichuan.alicdn.com,REJECT
-DOMAIN,ossgw.alicdn.com,REJECT
-DOMAIN,pre-acs.youku.com,REJECT
-DOMAIN,qh-material.taobao.com,REJECT
-DOMAIN,s3plus.meituan.net,REJECT
-DOMAIN,slife.xy-asia.com,PROXY
-DOMAIN,soup.v.qq.com,PROXY
-DOMAIN,sugar.zhihu.com,REJECT
-DOMAIN,ta-a.pinduoduo.com,REJECT
-DOMAIN,ta.pinduoduo.com,REJECT
-DOMAIN,th-a.pinduoduo.com,REJECT
-DOMAIN,th-b.pinduoduo.com,REJECT
-DOMAIN,th.pinduoduo.com,REJECT
-DOMAIN,titan.pinduoduo.com,REJECT
-DOMAIN,titan.pinduoduo.com,REJECT
-DOMAIN,tmead.y.qq.com,REJECT
-DOMAIN,tmeadbak.y.qq.com,REJECT
-DOMAIN,tmeadquic.y.qq.com,REJECT
-DOMAIN,toblog.ctobsnssdk.com,REJECT
-DOMAIN,ut.taobao.com,REJECT
-DOMAIN,vali-g1.cp31.ott.cibntv.net,REJECT
-DOMAIN,vali-ugc.cp31.ott.cibntv.net,REJECT
-DOMAIN,vweixinf.tc.qq.com,PROXY
-DOMAIN,weixin110.qq.com,PROXY
-DOMAIN,wup.imtt.qq.com,PROXY
-DOMAIN,wxsmsdy.video.qq.com,REJECT
-DOMAIN,wxsnsdy.wxs.qq.com,REJECT
-DOMAIN,wxsnsdythumb.wxs.qq.com,REJECT
-DOMAIN,xg.pinduoduo.com,REJECT
-DOMAIN,yk-ssp.ad.youku.com,REJECT
-DOMAIN,ykad-data.youku.com,REJECT
-DOMAIN,youku-acs.m.taobao.com,REJECT
-DOMAIN,zlsdk.1rtb.net,REJECT
-DOMAIN,zxid-m.mobileservice.cn,REJECT
-DOMAIN-KEYWORD,wechatpay,DIRECT
-DOMAIN-SUFFIX,ad.weibo.com,REJECT
-DOMAIN-SUFFIX,adimg.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,adimg.vue.weibo.com,REJECT
-DOMAIN-SUFFIX,admobile.top,REJECT
-DOMAIN-SUFFIX,ads-d.viber.com,REJECT
-DOMAIN-SUFFIX,ads.aws.viber.com,REJECT
-DOMAIN-SUFFIX,ads.viber.com,REJECT
-DOMAIN-SUFFIX,alitui.weibo.com,REJECT
-DOMAIN-SUFFIX,alitui.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,biz.weibo.com,REJECT
-DOMAIN-SUFFIX,biz.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,click.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,dp.im.weibo.cn,REJECT
-DOMAIN-SUFFIX,dsp.edm.weibo.cn,REJECT
-DOMAIN-SUFFIX,fastimage.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,game.weibo.cn,REJECT
-DOMAIN-SUFFIX,game.weibo.com,REJECT
-DOMAIN-SUFFIX,gw5.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,gw6.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,iot-tencent.com,PROXY
-DOMAIN-SUFFIX,lbs.gtimg.com,PROXY
-DOMAIN-SUFFIX,map.qq.com,PROXY
-DOMAIN-SUFFIX,promote.biz.weibo.cn,REJECT
-DOMAIN-SUFFIX,qlogo.cn,PROXY
-DOMAIN-SUFFIX,qpic.cn,PROXY
-DOMAIN-SUFFIX,sdkapp.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,servicewechat.com,PROXY
-DOMAIN-SUFFIX,tenpay.com, PROXY
-DOMAIN-SUFFIX,tui.weibo.com,REJECT
-DOMAIN-SUFFIX,up-hl.3g.qq.com,PROXY
-DOMAIN-SUFFIX,uve.weibo.com,DIRECT
-DOMAIN-SUFFIX,v.smtcdns.com,REJECT
-DOMAIN-SUFFIX,vweixinthumb.tc.qq.com,PROXY
-DOMAIN-SUFFIX,wax.weibo.com,REJECT
-DOMAIN-SUFFIX,wax.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,wbapp.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,wechat.com,PROXY
-DOMAIN-SUFFIX,wechatlegal.net,PROXY
-DOMAIN-SUFFIX,wechatos.net,PROXY
-DOMAIN-SUFFIX,weibomingzi.com,REJECT
-DOMAIN-SUFFIX,weixin.com,PROXY
-DOMAIN-SUFFIX,weixin.qq.com,PROXY
-DOMAIN-SUFFIX,weixinbridge.com,PROXY
-DOMAIN-SUFFIX,weixinsxy.com,PROXY
-DOMAIN-SUFFIX,widget.weibo.com,REJECT
-DOMAIN-SUFFIX,wx.gtimg.com,PROXY
-DOMAIN-SUFFIX,wx.qq.com,PROXY
-DOMAIN-SUFFIX,wxapp.tc.qq.com,PROXY
-DOMAIN-SUFFIX,wxs.qq.com,REJECT
-DOMAIN-SUFFIX,wxs.qq.com,PROXY
-DOMAIN-SUFFIX,yun-hl.3g.qq.com,PROXY
-DOMAIN-SUFFIX,zymo.mps.weibo.com,REJECT
-DOMAIN-WILDCARD,*pcdn*.biliapi.net,REJECT
-IP-ASN,132203,PROXY, no-resolve
-IP-CIDR,103.41.167.237/32,REJECT,no-resolve
-IP-CIDR,118.89.204.198/32,REJECT,no-resolve
-IP-CIDR,182.61.194.7/32,REJECT,no-resolve
-IP-CIDR,203.107.1.1/24,REJECT,no-resolve
-IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve
-URL-REGEX,"^http:\/\/\w{32}\.jddebug\.com\/diagnose\?",REJECT
-URL-REGEX,"^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/",REJECT
-URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload)",REJECT
-USER-AGENT,MicroMessenger*,PROXY
-USER-AGENT,WeChat*,PROXY
+#!group=🔝 Head Expanse › 首端扩域
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: All 151 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
+# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 ^https:\/\/(?:\w+-spclient|spclient\.wg)\.spotify\.com(?::443)?\/artistview\/v1\/artist\/(.*)&platform=iphone https://spclient.wg.spotify.com/artistview/v1/artist/$1&platform=ipad header
@@ -344,4 +191,4 @@ youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.c
 📺 BiliBili.ADBlock.view.response.grpc = type=http-response, pattern=^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.(view|viewunite)\.v1\.View\/(View|TFInfo|RelatesFeed)$, requires-body=1, binary-body-mode=1, engine=webview, max-size=262144, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v0.6.21/response.bundle.js, argument=Splash="PROXY"&Feed.AD="PROXY"&Feed.Activity="PROXY"&Feed.Vertical="PROXY"&Feed.BlockUpLiveList="PROXY"&Feed.Story="PROXY"&Search.AD="PROXY"&Search.HotSearch="PROXY"&PGC.AD="PROXY"&Xlive.AD="PROXY"&Dynamic.HotTopics="PROXY"&Dynamic.MostVisited="PROXY"&Dynamic.AdCard="PROXY"&View.AD="PROXY"&DM.Command="PROXY"&DM.Colorful="PROXY"&Reply.AD="PROXY"&LogLevel="PROXY"
 
 [MITM]
-hostname = *-mtop.cainiao.com,*-spclient.spotify.com,*.amap.com,*.googlevideo.com,*.weibo.cn,*.weibo.com,3pp.starbucks.com.cn,aag.enmonster.com,acs.m.goofish.com,acs.m.taobao.com,activity.yonghuivip.com,ad.12306.cn,ad.maoyan.com,ad.xiaotucc.com,ads.ishansong.com,alittle-tea.oss-cn-shanghai.aliyuncs.com,ap*.intsig.net,api-fouth-mem.huazhu.com,api-marketing.zhinengxiyifang.cn,api.alipan.com,api.biliapi.net,api.bilibili.com,api.hellobike.com,api.hengdianfilm.com,api.hongyibo.com.cn,api.kuaidihelp.com,api.live.bilibili.com,api.m.jd.com,api.maoyan.com,api.mcd.cn,api.pinduoduo.com,api.prod.dj.mstand.cn,api.songguo7.com,api.szbgcx.cn,api.udache.com,api.vc.bilibili.com,api.weibo.cn,api.xiaoyuzhoufm.com,api.yonghuivip.com,api.zhihu.com,api.zuihuimai.com,apiproxy.zuche.com,apis.alenable.com,app.10099.com.cn,app.95504.net,app.biliapi.net,app.bilibili.com,app.homeinns.com,appcloud2.zhihu.com,applets.jtexpress.com.cn,appuser-static.huolala.cn,as.xiaojukeji.com,bizapi.alipan.com,capis*.didapinche.com,cappapi.alittle-tea.com,cbd-gateway-service-applets.hualala.com,ccmsupport-sz.tenpay.com,chong.qq.com,ci.xiaohongshu.com,cn-acs.m.cainiao.com,coco-com.e.verystar.net,common.diditaxi.com.cn,conf.diditaxi.com.cn,creditcardapp.bankcomm.com,ct.xiaojukeji.com,customer-app.sto.cn,daijia.kuaidadi.com,dat.ruanmei.com,dock.tenchii.com,dsp.fcbox.com,edith.xiaohongshu.com,file.dian.so,flow.dmall.com,fscdn.zto.com,g-acs.m.goofish.com,gql-fed.reddit.com,gql.reddit.com,grpc.biliapi.net,guide-acs.m.taobao.com,gw-passenger-wap.01zhuanche.com,hdgateway.zto.com,heic.alicdn.com,htwkop.xiaojukeji.com,huichuan.sm.cn,images.qmai.cn,lawsonapi.yorentown.com,link.zhihu.com,lion.didialift.com,m-cloud.zhihu.com,m.ctrip.com,manga.bilibili.com,mapi.xiaotucc.com,mbmodule-openapi.paas.cmbchina.com,mcsp.cloudpnr.com,member.alipan.com,member.lxjchina.com.cn,miniapp.sexytea2013.com,minicap.caocaokeji.cn,minifm.maxxipoint.com,minipro.95504.net,miniprogram.ishansong.com,mkt-gateway.tuhu.cn,mobile-api.imlaidian.com,mobile.12306.cn,mp.weixin.qq.com,mxsa.mxbc.net,napi.ithome.com,newton.gumingnc.com,npay.meituan.com,open-cms-api.quark.cn,page-info.zhihu.com,pan.baidu.com,passenger.t3go.cn,passengerapi.saicmobility.com,plt.yorentown.com,poplayer.template.alibaba.com,qapi.huolala.cn,r2.gzyct.com,rec.xiaohongshu.com,res.hongyibo.com.cn,res.pizzahut.com.cn,res.xiaojukeji.com,rms.meituan.com,s.jiediankeji.com,saas-ad.cloudpnr.com,sauron-report.yonghuivip.com,smarket.dian.so,spclient.wg.spotify.com,stars.shuqireader.com,sto-customer-app.oss-cn-shanghai.aliyuncs.com,supplier-api.imdada.cn,suyun-guest.daojia.com,switch.jumpvg.com,tbgapplet.carlsberg.asia,tm-api.pin-dao.cn,ucmp.sf-express.com,ump.ems.com.cn,vod-movie.maoyan.com,web.meituan.com,webchatapp.fcbox.com,wechat-api.i-xiaoma.com.cn,weibo.com,weibointl.api.weibo.cn,weixin110.qq.com,www.123pan.com,www.deppon.com,www.xiaohongshu.com,www.zhihu.com,wx.10086.cnsecurity.wechat.com,wx.17u.cn,wx.bthhotels.com,wx.maoyan.com,wx.online-cmcc.cn,wxapp.bestwehotel.com,wxproj.seeyouyima.com,wxs-weixin.sd.zhumanggroup.com,youtubei.googleapis.com,zhuanlan.zhihu.com
+hostname =  *-mtop.cainiao.com,*-spclient.spotify.com,*.amap.com,*.googlevideo.com,*.weibo.cn,*.weibo.com,3pp.starbucks.com.cn,aag.enmonster.com,acs.m.goofish.com,acs.m.taobao.com,activity.yonghuivip.com,ad.12306.cn,ad.maoyan.com,ad.xiaotucc.com,ads.ishansong.com,alittle-tea.oss-cn-shanghai.aliyuncs.com,ap*.intsig.net,api-fouth-mem.huazhu.com,api-marketing.zhinengxiyifang.cn,api.alipan.com,api.biliapi.net,api.bilibili.com,api.hellobike.com,api.hengdianfilm.com,api.hongyibo.com.cn,api.kuaidihelp.com,api.live.bilibili.com,api.m.jd.com,api.maoyan.com,api.mcd.cn,api.pinduoduo.com,api.prod.dj.mstand.cn,api.songguo7.com,api.szbgcx.cn,api.udache.com,api.vc.bilibili.com,api.weibo.cn,api.xiaoyuzhoufm.com,api.yonghuivip.com,api.zhihu.com,api.zuihuimai.com,apiproxy.zuche.com,apis.alenable.com,app.10099.com.cn,app.95504.net,app.biliapi.net,app.bilibili.com,app.homeinns.com,appcloud2.zhihu.com,applets.jtexpress.com.cn,appuser-static.huolala.cn,as.xiaojukeji.com,bizapi.alipan.com,capis*.didapinche.com,cappapi.alittle-tea.com,cbd-gateway-service-applets.hualala.com,ccmsupport-sz.tenpay.com,chong.qq.com,ci.xiaohongshu.com,cn-acs.m.cainiao.com,coco-com.e.verystar.net,common.diditaxi.com.cn,conf.diditaxi.com.cn,creditcardapp.bankcomm.com,ct.xiaojukeji.com,customer-app.sto.cn,daijia.kuaidadi.com,dat.ruanmei.com,dock.tenchii.com,dsp.fcbox.com,edith.xiaohongshu.com,file.dian.so,flow.dmall.com,fscdn.zto.com,g-acs.m.goofish.com,gql-fed.reddit.com,gql.reddit.com,grpc.biliapi.net,guide-acs.m.taobao.com,gw-passenger-wap.01zhuanche.com,hdgateway.zto.com,heic.alicdn.com,htwkop.xiaojukeji.com,huichuan.sm.cn,images.qmai.cn,lawsonapi.yorentown.com,link.zhihu.com,lion.didialift.com,m-cloud.zhihu.com,m.ctrip.com,manga.bilibili.com,mapi.xiaotucc.com,mbmodule-openapi.paas.cmbchina.com,mcsp.cloudpnr.com,member.alipan.com,member.lxjchina.com.cn,miniapp.sexytea2013.com,minicap.caocaokeji.cn,minifm.maxxipoint.com,minipro.95504.net,miniprogram.ishansong.com,mkt-gateway.tuhu.cn,mobile-api.imlaidian.com,mobile.12306.cn,mp.weixin.qq.com,mxsa.mxbc.net,napi.ithome.com,newton.gumingnc.com,npay.meituan.com,open-cms-api.quark.cn,page-info.zhihu.com,pan.baidu.com,passenger.t3go.cn,passengerapi.saicmobility.com,plt.yorentown.com,poplayer.template.alibaba.com,qapi.huolala.cn,r2.gzyct.com,rec.xiaohongshu.com,res.hongyibo.com.cn,res.pizzahut.com.cn,res.xiaojukeji.com,rms.meituan.com,s.jiediankeji.com,saas-ad.cloudpnr.com,sauron-report.yonghuivip.com,smarket.dian.so,spclient.wg.spotify.com,stars.shuqireader.com,sto-customer-app.oss-cn-shanghai.aliyuncs.com,supplier-api.imdada.cn,suyun-guest.daojia.com,switch.jumpvg.com,tbgapplet.carlsberg.asia,tm-api.pin-dao.cn,ucmp.sf-express.com,ump.ems.com.cn,vod-movie.maoyan.com,web.meituan.com,webchatapp.fcbox.com,wechat-api.i-xiaoma.com.cn,weibo.com,weibointl.api.weibo.cn,weixin110.qq.com,www.123pan.com,www.deppon.com,www.xiaohongshu.com,www.zhihu.com,wx.10086.cnsecurity.wechat.com,wx.17u.cn,wx.bthhotels.com,wx.maoyan.com,wx.online-cmcc.cn,wxapp.bestwehotel.com,wxproj.seeyouyima.com,wxs-weixin.sd.zhumanggroup.com,youtubei.googleapis.com,zhuanlan.zhihu.com

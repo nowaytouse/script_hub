@@ -8,7 +8,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SOURCES_FILE="$PROJECT_ROOT/ruleset/Sources/Links/AdBlock_sources.txt"
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_download"
-MODULE_DIR="$PROJECT_ROOT/module/adblock_external"
+# 🔥 修复: 下载到正确的目录 head_expanse (广告拦截模块分类)
+MODULE_DIR="$PROJECT_ROOT/module/surge(main)/head_expanse"
 ADBLOCK_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
 
 # Colors
@@ -93,10 +94,34 @@ log_info "Extracting rules and creating cleaned modules..."
 ALL_RULES="$TEMP_DIR/all_module_rules.tmp"
 touch "$ALL_RULES"
 
+# 🔥 保护列表：这些模块不参与规则提取和清理
+# 防火墙模块的规则应该单独保留，不合并到 AdBlock.list
+PROTECTED_MODULES=(
+    "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
+    "🛡️ 广告拦截大合集.sgmodule"
+    "🎯 App去广告大合集.sgmodule"
+    "🚀 功能增强大合集.sgmodule"
+)
+
 for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     [ ! -f "$module" ] && continue
     
     module_name=$(basename "$module")
+    
+    # 检查是否在保护列表中
+    is_protected=false
+    for protected in "${PROTECTED_MODULES[@]}"; do
+        if [[ "$module_name" == "$protected" ]]; then
+            is_protected=true
+            break
+        fi
+    done
+    
+    if [ "$is_protected" = true ]; then
+        log_info "Skipping (protected): $module_name"
+        continue
+    fi
+    
     log_info "Processing: $module_name"
     
     # Count original rules BEFORE any modification
@@ -119,9 +144,9 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     sed 's/,\(REJECT\|DIRECT\|PROXY\|REJECT-DROP\|REJECT-TINYGIF\|REJECT-NO-DROP\|REJECT-IMG\)\(,.*\)*$//' | \
     sed 's/,extended-matching//g; s/,pre-matching//g' >> "$ALL_RULES" || true
     
-    # Check if module has non-Rule sections (URL Rewrite, MITM, Script, etc.)
-    has_other_sections=$(awk '/^\[Rule\]/{in_rule=1; next}
-                               in_rule && /^\[/{print "yes"; exit}' "$module")
+    # Check if module has non-Rule sections (URL Rewrite, MITM, Script, Map Local, etc.)
+    # 🔥 修复: 直接检查是否存在这些 section，而不是检查 [Rule] 之后的内容
+    has_other_sections=$(grep -E "^\[(URL Rewrite|MITM|Script|Map Local|Body Rewrite|Header Rewrite)\]" "$module" 2>/dev/null | head -1)
     
     if [ -n "$has_other_sections" ]; then
         # Module has other sections - keep them but remove [Rule] section

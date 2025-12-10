@@ -8,31 +8,17 @@
 #!homepage=https://hub.kelee.one
 #!date=2025-07-16 02:25:05
 
-[Rule]
-DOMAIN,acdn.adnxs.com,REJECT
-DOMAIN,mediation.adnxs.com,REJECT
-DOMAIN,sin3-ib.adnxs.com,REJECT
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT
-DOMAIN,data.mistat.xiaomi.com,REJECT
-DOMAIN,tracking.intl.miui.com,REJECT
-DOMAIN,sdkconfig.ad.xiaomi.com,REJECT
-DOMAIN-SUFFIX,doubleclick-cn.net,REJECT
-DOMAIN-SUFFIX,doubleclick.net,REJECT
-DOMAIN,business.msstatic.com,REJECT
-DOMAIN-SUFFIX,v1d.szbdyd.com,REJECT
-URL-REGEX,"^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$",REJECT
-DOMAIN-SUFFIX,m1.ad.10010.com,REJECT
-DOMAIN,ad.21cn.com,REJECT
-DOMAIN,ad.k.21cn.com,REJECT
-DOMAIN,admarket.21cn.com,REJECT
-DOMAIN,adshows.21cn.com,REJECT
-IP-CIDR,122.229.8.47/32,REJECT,no-resolve
-IP-CIDR,122.229.29.89/32,REJECT,no-resolve
-URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do",REJECT
-URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/advertisement\/",REJECT
-DOMAIN,mall-dsp2.qinlinkeji.com,REJECT
-DOMAIN,mallapi2.qinlinkeji.com,REJECT
-DOMAIN,open-pixon.ads-pixiv.net,REJECT
+#!group=🔝 Head Expanse › 首端扩域
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: All 24 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
+# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 ^https?:\/\/api-access\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/sdk - reject

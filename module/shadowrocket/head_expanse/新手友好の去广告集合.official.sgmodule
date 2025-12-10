@@ -2,74 +2,17 @@
 #!desc=[🚀SR] 仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
-[Rule]
-#>微信小程序 //wxa.wxs.qq.com,wximg.wxs.qq.com,wxsmw.wxs.qq.com
-DOMAIN,wxa.wxs.qq.com,REJECT
-DOMAIN,wximg.wxs.qq.com,REJECT
-DOMAIN,wxsmw.wxs.qq.com,REJECT
+#!group=🔝 Head Expanse › 首端扩域
 
-#>微博
-DOMAIN,wbapp.uve.weibo.com,DIRECT
-DOMAIN-SUFFIX,biz.weibo.com,REJECT
-DOMAIN,dns.weibo.cn,REJECT
-IP-CIDR,39.97.130.51/32,REJECT,no-resolve
-IP-CIDR,39.97.128.148/32,REJECT,no-resolve
-URL-REGEX,^http:\/\/api\.weibo\.cn\/2\/httpdns\/config,REJECT
-URL-REGEX,^http:\/\/api\.weibo\.cn\/httpdns\/config,REJECT
-
-#>菜鸟
-AND,((URL-REGEX,^http:\/\/.+\/amdc\/mobileDispatch), (USER-AGENT,Cainiao4iPhone*)),REJECT
-DOMAIN,adsmind.ugdtimg.com,REJECT
-DOMAIN,amdc.m.youku.com,REJECT
-DOMAIN,apiv4-iyes.youku.com,REJECT
-DOMAIN,httpdns.alicdn.com,REJECT
-DOMAIN,huichuan-mc.sm.cn,REJECT
-DOMAIN,huichuan.sm.cn,REJECT
-DOMAIN,iyes.youku.com,REJECT
-DOMAIN,mc.atm.youku.com,REJECT
-DOMAIN,vali-g1.cp31.ott.cibntv.net,REJECT
-DOMAIN,vali-ugc.cp31.ott.cibntv.net,REJECT
-DOMAIN,yk-ssp.ad.youku.com,REJECT
-DOMAIN,ykad-data.youku.com,REJECT
-
-#>12306
-DOMAIN,ad.12306.cn,DIRECT
-
-#>淘宝
-DOMAIN,adashx.m.taobao.com,REJECT
-DOMAIN,ossgw.alicdn.com,REJECT
-DOMAIN,ems.youku.com,REJECT
-DOMAIN,hudong.alicdn.com,REJECT
-DOMAIN,h-adashx.ut.taobao.com,REJECT
-DOMAIN,ut.taobao.com,REJECT
-
-#>阿里云盘
-IP-CIDR,203.107.1.1/24,REJECT,no-resolve
-
-#>拼多多
-AND,((URL-REGEX,^http:\/\/.+\/(d|d4)\?), (USER-AGENT,*com.xunmeng.pinduoduo*)),REJECT
-DOMAIN,titan.pinduoduo.com,REJECT
-DOMAIN,ta-a.pinduoduo.com,REJECT
-DOMAIN,ta.pinduoduo.com,REJECT
-DOMAIN,th-a.pinduoduo.com,REJECT
-DOMAIN,th-b.pinduoduo.com,REJECT
-DOMAIN,th.pinduoduo.com,REJECT
-
-#>高德地图
-AND,((URL-REGEX,^http:\/\/.+\/amdc\/mobileDispatch), (USER-AGENT,AMapiPhone*)),REJECT
-DOMAIN,amap-aos-info-nogw.amap.com,REJECT
-DOMAIN,free-aos-cdn-image.amap.com,REJECT
-DOMAIN-SUFFIX,v.smtcdns.com,REJECT
-
-#>滴滴出行
-DOMAIN,hd.xiaojukeji.com,REJECT
-DOMAIN,gwp.xiaojukeji.com,REJECT
-AND,((IP-ASN,45090), (DEST-PORT,25641), (PROTOCOL,TCP)),REJECT
-AND,((IP-ASN,63646), (DEST-PORT,25641), (PROTOCOL,TCP)),REJECT
-
-#>彩云天气
-DOMAIN,abyss.cyapi.cn,REJECT
-DOMAIN,ad.cyapi.cn,REJECT
+# ═══════════════════════════════════════════════════════════════
+# NOTE: All 43 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
+# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 #>云闪付 //wallet.95516.com

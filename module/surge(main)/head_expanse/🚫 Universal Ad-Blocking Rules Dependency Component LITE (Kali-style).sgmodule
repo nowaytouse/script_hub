@@ -5,21 +5,17 @@
 #!author=nyamiiko
 #!homepage=https://github.com/nowaytouse/script_hub
 
-[Rule]
-# ═══════════════════════════════════════════════════════════════
-# Policy-Specific Rules (Upstream - Preserve DROP/NO-DROP)
-# Note: AdBlock_Merged.list has been moved to main config files
-# ═══════════════════════════════════════════════════════════════
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-
+#!group=🔝 Head Expanse › 首端扩域
 
 # ═══════════════════════════════════════════════════════════════
-# REJECT-DROP Rules (2 rules)
+# NOTE: All 2 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
 # ═══════════════════════════════════════════════════════════════
-DOMAIN-KEYWORD,96110,REJECT-DROP,extended-matching
-DOMAIN-SUFFIX,gjfzpt.cn,REJECT-DROP,extended-matching
 
 [URL Rewrite]
 # ═══════════════════════════════════════════════════════════════
