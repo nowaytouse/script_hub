@@ -43,6 +43,17 @@ def convert_to_shadowrocket(content):
     lines = content.split('\n')
     converted = []
     
+    # 🔥 Surge参数占位符转换规则
+    # Surge支持 {{{参数名}}} 语法，Shadowrocket不支持
+    PARAMETER_PLACEHOLDER_RULES = {
+        "{{{Proxy}}}": "PROXY",
+        "{{{DIRECT}}}": "DIRECT",
+        "{{{REJECT}}}": "REJECT",
+        "{{{proxy}}}": "PROXY",
+        "{{{direct}}}": "DIRECT",
+        "{{{reject}}}": "REJECT",
+    }
+    
     for line in lines:
         # 移除 %APPEND% %INSERT%
         line = re.sub(r'%APPEND%\s*', '', line)
@@ -56,6 +67,13 @@ def convert_to_shadowrocket(content):
         line = re.sub(r'REJECT-DROP', 'REJECT', line)
         line = re.sub(r'REJECT-NO-DROP', 'REJECT', line)
         line = re.sub(r'REJECT-TINYGIF', 'REJECT', line)
+        
+        # 🔥 Surge参数占位符转换：{{{Proxy}}} → PROXY
+        for placeholder, replacement in PARAMETER_PLACEHOLDER_RULES.items():
+            line = line.replace(placeholder, replacement)
+        
+        # 通用占位符处理：任何未知的 {{{xxx}}} → PROXY
+        line = re.sub(r'\{\{\{[^}]+\}\}\}', 'PROXY', line)
         
         # DoH/DoT DNS -> 普通DNS
         line = re.sub(r'server:h3://[^/]+/dns-query', 'server:223.5.5.5', line)

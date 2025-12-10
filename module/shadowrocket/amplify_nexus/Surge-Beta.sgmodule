@@ -8,10 +8,10 @@
 hostname =  sub.store
 
 [Script]
-Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},ability="{{{ability}}}",engine={{{engine}}},max-size={{{max_size}}}
+Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js,requires-body=true,timeout=PROXY,ability="PROXY",engine=PROXY,max-size=PROXY
 
-Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},engine={{{engine}}},max-size={{{max_size}}}
+Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js,requires-body=true,timeout=PROXY,engine=PROXY,max-size=PROXY
 
-{{{sync}}}=type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}}
+PROXY=type=cron,cronexp="PROXY",wake-system=1,timeout=PROXY,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine=PROXY
 
-{{{produce}}}=type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}},argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
+PROXY=type=cron,cronexp="PROXY",wake-system=1,timeout=PROXY,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine=PROXY,argument="sub=PROXY&col=PROXY"

@@ -41,6 +41,18 @@ CONVERSION_RULES = {
     "%INSERT%": "",
 }
 
+# 🔥 Surge参数占位符转换规则
+# Surge支持 {{{参数名}}} 语法，Shadowrocket不支持
+# 需要转换为合理的默认值
+PARAMETER_PLACEHOLDER_RULES = {
+    "{{{Proxy}}}": "PROXY",           # 代理策略 → PROXY
+    "{{{DIRECT}}}": "DIRECT",         # 直连策略
+    "{{{REJECT}}}": "REJECT",         # 拒绝策略
+    "{{{proxy}}}": "PROXY",           # 小写版本
+    "{{{direct}}}": "DIRECT",
+    "{{{reject}}}": "REJECT",
+}
+
 # DNS相关转换规则 - Shadowrocket不支持h3/https DNS语法
 # 需要转换为普通IP或移除
 DNS_CONVERSION_PATTERNS = [
@@ -125,6 +137,25 @@ def convert_module_content(content: str, filename: str) -> tuple[str, list]:
         line = re.sub(r',\s*,', ',', line)
         line = re.sub(r',\s*$', '', line)
         line = re.sub(r'^\s*,', '', line)
+        
+        # 🔥 Surge参数占位符转换：{{{Proxy}}} → PROXY
+        # Shadowrocket不支持 {{{...}}} 语法
+        for placeholder, replacement in PARAMETER_PLACEHOLDER_RULES.items():
+            if placeholder in line:
+                old_line = line
+                line = line.replace(placeholder, replacement)
+                if line != old_line:
+                    changes.append(f"参数转换: {placeholder} → {replacement}")
+                    modified = True
+        
+        # 通用占位符处理：任何未知的 {{{xxx}}} → PROXY
+        unknown_placeholders = re.findall(r'\{\{\{([^}]+)\}\}\}', line)
+        for placeholder in unknown_placeholders:
+            old_line = line
+            line = re.sub(r'\{\{\{' + re.escape(placeholder) + r'\}\}\}', 'PROXY', line)
+            if line != old_line:
+                changes.append(f"未知参数转换: {{{{{{{placeholder}}}}}}} → PROXY")
+                modified = True
         
         # 🔥 DNS转换：h3:// 和 https:// DoH → 普通DNS IP
         # Shadowrocket不支持 server:h3:// 和 server:https:// 语法

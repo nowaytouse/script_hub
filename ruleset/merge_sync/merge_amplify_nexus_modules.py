@@ -106,6 +106,17 @@ def convert_to_shadowrocket(content: str) -> str:
     lines = content.split('\n')
     converted = []
     
+    # 🔥 Surge参数占位符转换规则
+    # Surge支持 {{{参数名}}} 语法，Shadowrocket不支持
+    PARAMETER_PLACEHOLDER_RULES = {
+        "{{{Proxy}}}": "PROXY",
+        "{{{DIRECT}}}": "DIRECT",
+        "{{{REJECT}}}": "REJECT",
+        "{{{proxy}}}": "PROXY",
+        "{{{direct}}}": "DIRECT",
+        "{{{reject}}}": "REJECT",
+    }
+    
     for line in lines:
         # 移除 %APPEND%
         line = line.replace('%APPEND%', '')
@@ -118,6 +129,13 @@ def convert_to_shadowrocket(content: str) -> str:
         line = line.replace('REJECT-TINYGIF', 'REJECT')
         line = line.replace('REJECT-DROP', 'REJECT')
         line = line.replace('REJECT-NO-DROP', 'REJECT')
+        
+        # 🔥 Surge参数占位符转换：{{{Proxy}}} → PROXY
+        for placeholder, replacement in PARAMETER_PLACEHOLDER_RULES.items():
+            line = line.replace(placeholder, replacement)
+        
+        # 通用占位符处理：任何未知的 {{{xxx}}} → PROXY
+        line = re.sub(r'\{\{\{[^}]+\}\}\}', 'PROXY', line)
         
         # 移除 update-interval
         if 'update-interval' in line.lower():

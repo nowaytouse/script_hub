@@ -3,7 +3,7 @@
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!author=Multiple Authors (合并版)
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Advertising.png
-#!date=2025-12-10 01:34:08
+#!date=2025-12-10 11:05:25
 #!source=AWAvenue-Ads-Rule-Surge-module.sgmodule, Adblock4limbo.sgmodule, All-in-One-2.x.sgmodule, AllInOne_Mock.sgmodule, 可莉广告过滤器.beta.sgmodule...
 
 [General]
@@ -897,7 +897,7 @@ DOMAIN,zeus.ad.xiaomi.com,REJECT
 DOMAIN,zhihu-web-analytics.zhihu.com,REJECT
 DOMAIN,zjres-ad.kajicam.com,REJECT
 DOMAIN,zxid-m.mobileservice.cn,REJECT
-DOMAIN,wbapp.uve.weibo.com,{{{WeiboProxy}}}
+DOMAIN,wbapp.uve.weibo.com,PROXY
 DOMAIN,ad.12306.cn,DIRECT
 URL-REGEX,"^http:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/\w{32}-1-SPLASH",REJECT
 URL-REGEX,"^http:\/\/[\d\.]+:8000\/v1\/resource\/\w{32}-1-SPLASH",REJECT
@@ -2663,8 +2663,8 @@ body_rewrite_55 = type=http-response, pattern=^https:\/\/api\.pinduoduo\.com\/or
 body_rewrite_15 = type=http-response, pattern=^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=basicConfig, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/body-rewrite.js, requires-body=true, max-size=-1, timeout=30, argument=%5B%5B%22json-replace%22%2C%5B%5B%22data.JDMessage.socketmonitor.isSocketEstablishedAhead%22%2C0%5D%2C%5B%22data.JDMessage.socketmonitor.isSocketReport%22%2C0%5D%2C%5B%22data.JDHttpToolKit.httpdns.httpdns%22%2C0%5D%5D%5D%5D
 移除京东广告 = type=http-response, pattern=^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=(deliverLayer|getTabHomeInfo|myOrderInfo|orderTrackBusiness|personinfoBusiness|start|welcomeHome), script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/JD_remove_ads.js, requires-body=true
 body_rewrite_38 = type=http-response, pattern=^https:\/\/app\.bilibili\.com\/x\/resource\/show\/skin\?, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/body-rewrite.js, requires-body=true, max-size=-1, timeout=30, argument=%5B%5B%22json-del%22%2C%5B%22data.common_equip%22%5D%5D%5D
-空降助手 = type=http-request, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/DmSegMobile$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_request_kokoryh.js, requires-body=true, binary-body-mode=true, argument=[{{{logLevel}}}]
-ProtoBuf处理 = type=http-response, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.(app\.(show\.v1\.Popular\/Index|dynamic\.v2\.Dynamic\/DynAll|view(unite)?\.v1\.View\/(View|ViewProgress|RelatesFeed)|playurl\.v1\.PlayURL\/PlayView|playerunite\.v1\.Player\/PlayViewUnite)|polymer\.app\.search\.v1\.Search\/SearchAll|community\.service\.dm\.v1\.DM\/DmView|main\.community\.reply\.v1\.Reply\/MainList|pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_response_kokoryh.js, requires-body=true, binary-body-mode=true, argument="[{{{showUpList}}}, {{{purifyTopReplies}}}, {{{airborne}}}, {{{logLevel}}}]"
+空降助手 = type=http-request, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/DmSegMobile$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_request_kokoryh.js, requires-body=true, binary-body-mode=true, argument=[PROXY]
+ProtoBuf处理 = type=http-response, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.(app\.(show\.v1\.Popular\/Index|dynamic\.v2\.Dynamic\/DynAll|view(unite)?\.v1\.View\/(View|ViewProgress|RelatesFeed)|playurl\.v1\.PlayURL\/PlayView|playerunite\.v1\.Player\/PlayViewUnite)|polymer\.app\.search\.v1\.Search\/SearchAll|community\.service\.dm\.v1\.DM\/DmView|main\.community\.reply\.v1\.Reply\/MainList|pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_response_kokoryh.js, requires-body=true, binary-body-mode=true, argument="[PROXY, PROXY, PROXY, PROXY]"
 移除12306开屏广告 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/12306_remove_splashscreen_ads.js, requires-body=true
 移除12306应用内广告 = type=http-request, pattern=^https:\/\/mobile\.12306\.cn\/otsmobile\/app\/mgs\/mgw\.htm$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/12306_remove_ads.js
 哲也_解锁关键词屏蔽 = type=http-request,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/feed-root\/block",requires-body=1

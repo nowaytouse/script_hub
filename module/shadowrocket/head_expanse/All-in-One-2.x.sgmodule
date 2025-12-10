@@ -11,7 +11,7 @@
 
 
 [Rule]
-DOMAIN,wbapp.uve.weibo.com,{{{WeiboProxy}}}
+DOMAIN,wbapp.uve.weibo.com,PROXY
 DOMAIN,ad.12306.cn,DIRECT
 URL-REGEX,"^http:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/\w{32}-1-SPLASH",REJECT
 URL-REGEX,"^http:\/\/[\d\.]+:8000\/v1\/resource\/\w{32}-1-SPLASH",REJECT
@@ -322,8 +322,8 @@ body_rewrite_15 = type=http-response, pattern=^https:\/\/api\.m\.jd\.com\/client
 
 # ----------- Bilibili -----------
 body_rewrite_38 = type=http-response, pattern=^https:\/\/app\.bilibili\.com\/x\/resource\/show\/skin\?, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/body-rewrite.js, requires-body=true, max-size=-1, timeout=30, argument=%5B%5B%22json-del%22%2C%5B%22data.common_equip%22%5D%5D%5D
-空降助手 = type=http-request, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/DmSegMobile$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_request_kokoryh.js, requires-body=true, binary-body-mode=true, argument=[{{{logLevel}}}]
-ProtoBuf处理 = type=http-response, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.(app\.(show\.v1\.Popular\/Index|dynamic\.v2\.Dynamic\/DynAll|view(unite)?\.v1\.View\/(View|ViewProgress|RelatesFeed)|playurl\.v1\.PlayURL\/PlayView|playerunite\.v1\.Player\/PlayViewUnite)|polymer\.app\.search\.v1\.Search\/SearchAll|community\.service\.dm\.v1\.DM\/DmView|main\.community\.reply\.v1\.Reply\/MainList|pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_response_kokoryh.js, requires-body=true, binary-body-mode=true, argument="[{{{showUpList}}}, {{{purifyTopReplies}}}, {{{airborne}}}, {{{logLevel}}}]"
+空降助手 = type=http-request, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/DmSegMobile$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_request_kokoryh.js, requires-body=true, binary-body-mode=true, argument=[PROXY]
+ProtoBuf处理 = type=http-response, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.(app\.(show\.v1\.Popular\/Index|dynamic\.v2\.Dynamic\/DynAll|view(unite)?\.v1\.View\/(View|ViewProgress|RelatesFeed)|playurl\.v1\.PlayURL\/PlayView|playerunite\.v1\.Player\/PlayViewUnite)|polymer\.app\.search\.v1\.Search\/SearchAll|community\.service\.dm\.v1\.DM\/DmView|main\.community\.reply\.v1\.Reply\/MainList|pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_response_kokoryh.js, requires-body=true, binary-body-mode=true, argument="[PROXY, PROXY, PROXY, PROXY]"
 
 # ------------ 12306 -------------
 移除12306开屏广告 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/12306_remove_splashscreen_ads.js, requires-body=true
