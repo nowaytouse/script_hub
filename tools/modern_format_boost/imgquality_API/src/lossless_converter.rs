@@ -105,7 +105,7 @@ pub fn convert_to_jxl(input: &Path, options: &ConvertOptions, distance: f32) -> 
             
             mark_as_processed(input);
             
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
             
@@ -202,7 +202,7 @@ pub fn convert_jpeg_to_jxl(input: &Path, options: &ConvertOptions) -> Result<Con
             
             mark_as_processed(input);
             
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
             
@@ -291,7 +291,7 @@ pub fn convert_to_avif(input: &Path, quality: Option<u8>, options: &ConvertOptio
 
             mark_as_processed(input);
 
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
 
@@ -395,7 +395,7 @@ pub fn convert_to_av1_mp4(input: &Path, options: &ConvertOptions) -> Result<Conv
             
             mark_as_processed(input);
             
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
             
@@ -483,7 +483,7 @@ pub fn convert_to_avif_lossless(input: &Path, options: &ConvertOptions) -> Resul
             
             mark_as_processed(input);
             
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
             
@@ -602,7 +602,7 @@ pub fn convert_to_av1_mp4_matched(
             
             mark_as_processed(input);
             
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
             
@@ -909,7 +909,7 @@ pub fn convert_to_jxl_matched(
             
             mark_as_processed(input);
             
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
             
@@ -1014,7 +1014,7 @@ pub fn convert_to_av1_mp4_lossless(input: &Path, options: &ConvertOptions) -> Re
 
             mark_as_processed(input);
 
-            if options.delete_original {
+            if options.should_delete_original() {
                 fs::remove_file(input)?;
             }
 

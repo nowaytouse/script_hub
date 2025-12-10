@@ -46,6 +46,11 @@ enum Commands {
         #[arg(long)]
         delete_original: bool,
 
+        /// In-place conversion: convert and delete original file
+        /// Effectively "replaces" the original with the new format
+        #[arg(long)]
+        in_place: bool,
+
         /// Explore smaller size (try higher CRF if output > input)
         #[arg(long)]
         explore: bool,
@@ -112,7 +117,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, delete_original, explore, lossless, match_quality } => {
+        Commands::Auto { input, output, force, delete_original, in_place, explore, lossless, match_quality } => {
             let config = ConversionConfig {
                 output_dir: output.clone(),
                 force,
@@ -121,6 +126,7 @@ fn main() -> anyhow::Result<()> {
                 explore_smaller: explore,
                 use_lossless: lossless,
                 match_quality,
+                in_place,
             };
             
             info!("🎬 Auto Mode Conversion (AV1)");

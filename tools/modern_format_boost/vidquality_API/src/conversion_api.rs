@@ -65,6 +65,8 @@ pub struct ConversionConfig {
     pub use_lossless: bool,
     /// Match input video quality level (auto-calculate CRF based on input bitrate)
     pub match_quality: bool,
+    /// In-place conversion: convert and delete original file
+    pub in_place: bool,
 }
 
 impl Default for ConversionConfig {
@@ -77,7 +79,15 @@ impl Default for ConversionConfig {
             explore_smaller: false,
             use_lossless: false,
             match_quality: false,
+            in_place: false,
         }
+    }
+}
+
+impl ConversionConfig {
+    /// Check if original should be deleted (either via delete_original or in_place)
+    pub fn should_delete_original(&self) -> bool {
+        self.delete_original || self.in_place
     }
 }
 
@@ -312,7 +322,7 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
-    if config.delete_original {
+    if config.should_delete_original() {
         std::fs::remove_file(input)?;
         info!("   🗑️  Original deleted");
     }

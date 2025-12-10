@@ -60,6 +60,12 @@ enum Commands {
         #[arg(long)]
         delete_original: bool,
 
+        /// In-place conversion: convert and delete original file
+        /// Effectively "replaces" the original with the new format
+        /// Example: image.png → image.jxl (original .png deleted)
+        #[arg(long)]
+        in_place: bool,
+
         /// Use mathematical lossless AVIF/HEVC (⚠️ VERY SLOW, huge files)
         #[arg(long)]
         lossless: bool,
@@ -134,19 +140,26 @@ fn main() -> anyhow::Result<()> {
             force,
             recursive,
             delete_original,
+            in_place,
             lossless,
             match_quality,
         } => {
+            // in_place implies delete_original
+            let should_delete = delete_original || in_place;
+            
             if lossless {
                 eprintln!("⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)");
             }
             if match_quality {
                 eprintln!("🎯 Match quality mode: ENABLED (auto-calculate CRF for video)");
             }
+            if in_place {
+                eprintln!("🔄 In-place mode: ENABLED (original files will be deleted after conversion)");
+            }
             if input.is_file() {
-                auto_convert_single_file(&input, output.as_ref(), force, delete_original, lossless, match_quality)?;
+                auto_convert_single_file(&input, output.as_ref(), force, should_delete, in_place, lossless, match_quality)?;
             } else if input.is_dir() {
-                auto_convert_directory(&input, output.as_ref(), force, recursive, delete_original, lossless, match_quality)?;
+                auto_convert_directory(&input, output.as_ref(), force, recursive, should_delete, in_place, lossless, match_quality)?;
             } else {
                 eprintln!("❌ Error: Input path does not exist: {}", input.display());
                 std::process::exit(1);
@@ -426,6 +439,7 @@ fn auto_convert_single_file(
     output_dir: Option<&PathBuf>,
     force: bool,
     delete_original: bool,
+    in_place: bool,
     lossless: bool,
     match_quality: bool,
 ) -> anyhow::Result<()> {
@@ -442,6 +456,7 @@ fn auto_convert_single_file(
         force,
         output_dir: output_dir.cloned(),
         delete_original,
+        in_place,
     };
     
     // Smart conversion based on format and lossless status
@@ -565,11 +580,12 @@ fn auto_convert_directory(
     force: bool,
     recursive: bool,
     delete_original: bool,
+    in_place: bool,
     lossless: bool,
     match_quality: bool,
 ) -> anyhow::Result<()> {
     // 🔥 Safety check: prevent accidental damage to system directories
-    if delete_original {
+    if delete_original || in_place {
         if let Err(e) = check_dangerous_directory(input) {
             eprintln!("{}", e);
             std::process::exit(1);
@@ -643,7 +659,7 @@ fn auto_convert_directory(
     // Process files in parallel using custom thread pool
     pool.install(|| {
         files.par_iter().for_each(|path| {
-            match auto_convert_single_file(path, output_dir, force, delete_original, lossless, match_quality) {
+            match auto_convert_single_file(path, output_dir, force, delete_original, in_place, lossless, match_quality) {
                 Ok(_) => { success.fetch_add(1, Ordering::Relaxed); }
                 Err(e) => {
                     let msg = e.to_string();

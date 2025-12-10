@@ -203,6 +203,10 @@ pub struct ConvertOptions {
     pub output_dir: Option<PathBuf>,
     /// Delete original after successful conversion
     pub delete_original: bool,
+    /// In-place conversion: convert and delete original (effectively "replace")
+    /// When true, the original file is deleted after successful conversion
+    /// This is equivalent to delete_original but with clearer semantics
+    pub in_place: bool,
 }
 
 impl Default for ConvertOptions {
@@ -211,7 +215,15 @@ impl Default for ConvertOptions {
             force: false,
             output_dir: None,
             delete_original: false,
+            in_place: false,
         }
+    }
+}
+
+impl ConvertOptions {
+    /// Check if original should be deleted (either via delete_original or in_place)
+    pub fn should_delete_original(&self) -> bool {
+        self.delete_original || self.in_place
     }
 }
 
@@ -322,8 +334,8 @@ pub fn post_conversion_actions(
     // Mark as processed
     mark_as_processed(input);
     
-    // Delete original if requested
-    if options.delete_original {
+    // Delete original if requested (via delete_original or in_place)
+    if options.should_delete_original() {
         fs::remove_file(input)?;
     }
     
