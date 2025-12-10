@@ -34,6 +34,8 @@ on:
 jobs:
   update-rules:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 🔥 允许 push 到仓库
     
     steps:
     - name: Checkout repository
