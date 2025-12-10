@@ -132,9 +132,19 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     grep -v '^#' | grep -v '^$' | grep -v '^RULE-SET' | \
     sed 's/  */ /g' | \
     grep -E "^(DOMAIN|IP-CIDR|IP-CIDR6|USER-AGENT|URL-REGEX|PROCESS-NAME|DOMAIN-REGEX|DOMAIN-SUFFIX|DOMAIN-KEYWORD|AND,|OR,|NOT,)" | \
-    # Filter out incomplete AND/OR/NOT rules (must end with policy like REJECT)
-    grep -v '^AND,((DOMAIN$' | grep -v '^AND,((DOMAIN-SUFFIX$' | \
-    grep -v '^OR,((DOMAIN$' | grep -v '^NOT,((DOMAIN$' | \
+    # 🔥 修复: 过滤不完整的 AND/OR/NOT 规则（必须有完整的括号闭合）
+    # 过滤掉没有闭合括号的行（不完整规则）
+    grep -v '^AND,((DOMAIN-KEYWORD$' | \
+    grep -v '^AND,((DOMAIN-SUFFIX$' | \
+    grep -v '^AND,((DOMAIN$' | \
+    grep -v '^OR,((DOMAIN$' | \
+    grep -v '^NOT,((DOMAIN$' | \
+    # 过滤掉括号不匹配的行（左括号数量 != 右括号数量）
+    awk '{
+        left = gsub(/\(/, "(", $0)
+        right = gsub(/\)/, ")", $0)
+        if (left == right) print
+    }' | \
     # Filter out invalid DOMAIN-REGEX rules
     grep -v '^DOMAIN-REGEX,\s*$' | \
     grep -v '^DOMAIN-REGEX,[^,]*$' | \
@@ -152,26 +162,37 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
         # Module has other sections - keep them but remove [Rule] section
         cleaned_module="$TEMP_DIR/cleaned_${module_name}"
         
-        # Copy header and add group classification
-        awk '/^\[Rule\]/{exit}1' "$module" > "$cleaned_module"
+        # 🔥 修复: 复制 header 时排除已有的 NOTE 注释块和重复的 #!group= 行
+        # 只保留原始 metadata (#!name, #!desc, etc.) 和非重复内容
+        awk '
+            /^\[Rule\]/ { exit }
+            /^# ═══════════════/ { skip_block=1; next }
+            /^# NOTE: All .* rules/ { next }
+            /^# This cleaned version/ { next }
+            /^#   - \[/ { next }
+            /^# Use AdBlock.list/ { next }
+            skip_block && /^$/ { skip_block=0; next }
+            skip_block { next }
+            /^#!group=/ && seen_group { next }
+            /^#!group=/ { seen_group=1 }
+            { print }
+        ' "$module" > "$cleaned_module"
         
-        # Add group classification based on module type
-        # Determine group based on module name/purpose (check original name in metadata)
-        module_display_name=$(grep "^#!name=" "$module" | head -1 | sed 's/#!name=//')
-        
-        # Priority: DNS > Ad blocking > Others
-        if echo "$module_display_name" | grep -qi "httpdns\|dns"; then
-            # DNS modules go to Amplify Nexus (enhancement) - highest priority
-            echo "#!group=🛠️ Amplify Nexus › 增幅枢纽" >> "$cleaned_module"
-        elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截"; then
-            # Ad blocking modules go to Head Expanse (priority execution)
-            echo "#!group=🔝 Head Expanse › 首端扩域" >> "$cleaned_module"
-        else
-            # Other modules go to Narrow Pierce (specific targeting)
-            echo "#!group=🎯 Narrow Pierce › 窄域穿刺" >> "$cleaned_module"
+        # Add group classification based on module type (only if not already present)
+        if ! grep -q "^#!group=" "$cleaned_module"; then
+            module_display_name=$(grep "^#!name=" "$module" | head -1 | sed 's/#!name=//')
+            
+            # Priority: DNS > Ad blocking > Others
+            if echo "$module_display_name" | grep -qi "httpdns\|dns"; then
+                echo "#!group=🛠️ Amplify Nexus › 增幅枢纽" >> "$cleaned_module"
+            elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截"; then
+                echo "#!group=🔝 Head Expanse › 首端扩域" >> "$cleaned_module"
+            else
+                echo "#!group=🎯 Narrow Pierce › 窄域穿刺" >> "$cleaned_module"
+            fi
         fi
         
-        # Add note about rules
+        # Add note about rules (only once)
         echo "" >> "$cleaned_module"
         echo "# ═══════════════════════════════════════════════════════════════" >> "$cleaned_module"
         echo "# NOTE: All $original_rules rules from this module have been extracted to AdBlock.list" >> "$cleaned_module"
@@ -184,11 +205,22 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
         echo "# ═══════════════════════════════════════════════════════════════" >> "$cleaned_module"
         echo "" >> "$cleaned_module"
         
-        # Copy all sections AFTER [Rule]
-        awk 'BEGIN{in_rule=0; after_rule=0}
-             /^\[Rule\]/{in_rule=1; next}
-             in_rule && /^\[/{in_rule=0; after_rule=1}
-             after_rule' "$module" >> "$cleaned_module" || true
+        # Copy all sections AFTER [Rule] (excluding duplicate NOTE blocks)
+        awk '
+            BEGIN { in_rule=0; after_rule=0; skip_block=0 }
+            /^\[Rule\]/ { in_rule=1; next }
+            in_rule && /^\[/ { in_rule=0; after_rule=1 }
+            !after_rule { next }
+            /^# ═══════════════/ { skip_block=1; next }
+            /^# NOTE: All .* rules/ { next }
+            /^# This cleaned version/ { next }
+            /^#   - \[/ { next }
+            /^# Use AdBlock.list/ { next }
+            skip_block && /^$/ { skip_block=0; next }
+            skip_block { next }
+            /^#!group=/ { next }
+            { print }
+        ' "$module" >> "$cleaned_module" || true
         
         # Replace original module
         mv "$cleaned_module" "$module"

@@ -3,7 +3,7 @@ use imgquality::{analyze_image, get_recommendation};
 use imgquality::{calculate_psnr, calculate_ssim, psnr_quality_description, ssim_quality_description};
 use rayon::prelude::*;
 use serde_json::json;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 use walkdir::WalkDir;
@@ -94,6 +94,7 @@ enum OutputFormat {
 }
 
 /// 计算目录中指定扩展名文件的总大小
+#[allow(dead_code)]
 fn calculate_directory_size_by_extensions(dir: &PathBuf, extensions: &[&str], recursive: bool) -> u64 {
     let walker = if recursive {
         WalkDir::new(dir).follow_links(true)
@@ -630,17 +631,14 @@ fn auto_convert_directory(
         println!("⚠️  Mathematical lossless mode: ENABLED (VERY SLOW!)");
     }
 
-    // Calculate total input size
-    let input_bytes: u64 = files.iter()
-        .filter_map(|p| std::fs::metadata(p).ok())
-        .map(|m| m.len())
-        .sum();
-
     // Atomic counters for thread-safe counting  
     let success = AtomicUsize::new(0);
     let skipped = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
     let processed = AtomicUsize::new(0);
+    // 🔥 修复：追踪实际转换的输入/输出大小
+    let actual_input_bytes = std::sync::atomic::AtomicU64::new(0);
+    let actual_output_bytes = std::sync::atomic::AtomicU64::new(0);
 
     // 🔥 Progress bar with ETA
     let pb = shared_utils::create_progress_bar(total as u64, "Converting");
@@ -662,8 +660,38 @@ fn auto_convert_directory(
     // Process files in parallel using custom thread pool
     pool.install(|| {
         files.par_iter().for_each(|path| {
+            // 获取输入文件大小
+            let input_size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+            
             match auto_convert_single_file(path, output_dir, force, delete_original, in_place, lossless, match_quality) {
-                Ok(_) => { success.fetch_add(1, Ordering::Relaxed); }
+                Ok(_) => { 
+                    // 🔥 修复：检查是否真的生成了输出文件
+                    let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+                    let parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+                    let out_dir = output_dir.unwrap_or(&parent_dir);
+                    
+                    // 检查可能的输出文件
+                    let possible_outputs = [
+                        out_dir.join(format!("{}.jxl", stem)),
+                        out_dir.join(format!("{}.mp4", stem)),
+                    ];
+                    
+                    let output_size: u64 = possible_outputs.iter()
+                        .filter_map(|p| std::fs::metadata(p).ok())
+                        .map(|m| m.len())
+                        .next()
+                        .unwrap_or(0);
+                    
+                    if output_size > 0 {
+                        // 真正成功的转换
+                        success.fetch_add(1, Ordering::Relaxed);
+                        actual_input_bytes.fetch_add(input_size, Ordering::Relaxed);
+                        actual_output_bytes.fetch_add(output_size, Ordering::Relaxed);
+                    } else {
+                        // 跳过的文件（没有生成输出）
+                        skipped.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
                 Err(e) => {
                     let msg = e.to_string();
                     if msg.contains("Skipped") || msg.contains("skip") {
@@ -693,14 +721,12 @@ fn auto_convert_directory(
     result.skipped = skipped_count;
     result.total = total;
 
-    // 🔥 修复：只计算转换后的目标格式文件大小
-    // 目标格式：JXL（静态图）和 MP4（动画）
-    let output_extensions = ["jxl", "mp4"];
-    let scan_dir = output_dir.unwrap_or(input);
-    let output_bytes = calculate_directory_size_by_extensions(scan_dir, &output_extensions, recursive);
+    // 🔥 修复：使用实际追踪的输入/输出大小
+    let final_input_bytes = actual_input_bytes.load(Ordering::Relaxed);
+    let final_output_bytes = actual_output_bytes.load(Ordering::Relaxed);
 
     // 🔥 Print detailed summary report
-    print_summary_report(&result, start_time.elapsed(), input_bytes, output_bytes, "Image Conversion");
+    print_summary_report(&result, start_time.elapsed(), final_input_bytes, final_output_bytes, "Image Conversion");
 
     Ok(())
 }

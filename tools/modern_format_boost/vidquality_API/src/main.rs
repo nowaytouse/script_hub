@@ -198,14 +198,25 @@ fn main() -> anyhow::Result<()> {
                 for file in &files {
                     match auto_convert(file, &config) {
                         Ok(result) => {
-                            info!("✅ {} → {} ({:.1}%)", 
-                                file.file_name().unwrap_or_default().to_string_lossy(),
-                                result.output_path,
-                                result.size_ratio * 100.0
-                            );
-                            batch_result.success();
-                            total_input_bytes += result.input_size;
-                            total_output_bytes += result.output_size;
+                            // 🔥 修复：区分跳过和真正成功的转换
+                            if result.output_size == 0 && result.output_path.is_empty() {
+                                // 跳过的文件（已是现代编码）
+                                info!("⏭️ {} → SKIP ({:.1}%)", 
+                                    file.file_name().unwrap_or_default().to_string_lossy(),
+                                    result.size_ratio * 100.0
+                                );
+                                batch_result.skip();
+                            } else {
+                                // 真正成功的转换
+                                info!("✅ {} → {} ({:.1}%)", 
+                                    file.file_name().unwrap_or_default().to_string_lossy(),
+                                    result.output_path,
+                                    result.size_ratio * 100.0
+                                );
+                                batch_result.success();
+                                total_input_bytes += result.input_size;
+                                total_output_bytes += result.output_size;
+                            }
                         }
                         Err(e) => {
                             info!("❌ {} failed: {}", file.display(), e);
