@@ -1,6 +1,6 @@
 {
-  "generated": "2025-12-10T01:45:32.812741",
-  "total": 73,
+  "generated": "2025-12-11T20:24:50.389912",
+  "total": 71,
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
@@ -279,7 +279,7 @@
           "essential": false,
           "author": "Multiple Authors (合并版)",
           "version": "",
-          "date": "2025-12-10 01:42:22"
+          "date": "2025-12-11 20:24:50"
         }
       ]
     },
@@ -288,18 +288,40 @@
       "desc": "广告拦截平台类",
       "items": [
         {
-          "name": "AWAvenue Ads Rule",
-          "filename": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-          "desc": "Update time: 2025-12-05 09:34:56 UTC+8 Homepage: https://gi",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/AWAvenue-Ads-Rule-Surge-module.sgmodule",
+          "name": "可莉广告过滤器",
+          "filename": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
+          "desc": "可莉自用的广告过滤器",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%25E5%258F%25AF%25E8%258E%2589%25E5%25B9%25BF%25E5%2591%258A%25E8%25BF%2587%25E6%25BB%25A4%25E5%2599%25A8.beta.sgmodule",
+          "tag": "",
+          "essential": true,
+          "author": "可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]",
+          "version": "",
+          "date": "2025-07-16 02:25:05"
+        },
+        {
+          "name": "广告平台拦截器",
+          "filename": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",
+          "desc": "此插件是所有去广告插件的基础，只针对广告平台处理。你依然需要安装其他去广告插件来搭配使用，并确保此插件始终排序在顶部。",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%25E5%25B9%25BF%25E5%2591%258A%25E5%25B9%25B3%25E5%258F%25B0%25E6%258B%25A6%25E6%2588%25AA%25E5%2599%25A8.sgmodule",
           "tag": "",
           "essential": false,
-          "author": "TG-Twilight[https://github.com/TG-Twilight]",
+          "author": "可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]",
+          "version": "",
+          "date": "2025-12-05 00:50:43"
+        },
+        {
+          "name": "广告联盟去广告",
+          "filename": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
+          "desc": "快手联盟,优量汇,穿山甲",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%25E5%25B9%25BF%25E5%2591%258A%25E8%2581%2594%25E7%259B%259F.official.sgmodule",
+          "tag": "",
+          "essential": false,
+          "author": "",
           "version": "",
           "date": ""
         },
         {
-          "name": "毒奶特供(2025年12月08日更新)",
+          "name": "毒奶特供(2025年12月11日更新)",
           "filename": "Adblock4limbo.sgmodule",
           "desc": "毒奶去网页广告计划用户脚本 For Quantumult X & Surge & Shadowrocket & Loon",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/Adblock4limbo.sgmodule",
@@ -332,35 +354,13 @@
           "date": ""
         },
         {
-          "name": "[Sukka] Enhance Better ADBlock for Surge",
-          "filename": "sukka_enhance_adblock.sgmodule",
-          "desc": "增强 ADBlock 效果、恢复网站正常功能",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/sukka_enhance_adblock.sgmodule",
+          "name": "APP启动页去广告ultra+",
+          "filename": "adultraplus.sgmodule",
+          "desc": "APP启动页去广告融合ultra+",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/adultraplus.sgmodule",
           "tag": "",
           "essential": false,
-          "author": "",
-          "version": "",
-          "date": ""
-        },
-        {
-          "name": "[Sukka] URL Rewrite",
-          "filename": "sukka_url_rewrite.sgmodule",
-          "desc": "Enable this module to use Sukka URL Rewrite rules",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/sukka_url_rewrite.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "",
-          "version": "",
-          "date": ""
-        },
-        {
-          "name": "Script Hub: 重写 & 规则集转换",
-          "filename": "⭐️ Script Hub.official.sgmodule",
-          "desc": "https://script.hub",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%E2%AD%90%EF%B8%8F%20Script%20Hub.official.sgmodule",
-          "tag": "",
-          "essential": true,
-          "author": "@小白脸 @xream @keywos @ckyb",
+          "author": "Mixed",
           "version": "",
           "date": ""
         },
@@ -398,17 +398,6 @@
           "date": "2025-11-28 03:45:41"
         },
         {
-          "name": "广告联盟去广告",
-          "filename": "广告联盟.official.sgmodule",
-          "desc": "快手联盟,优量汇,穿山甲",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "",
-          "version": "",
-          "date": ""
-        },
-        {
           "name": "1.去除常用软件广告",
           "filename": "新手友好の去广告集合.official.sgmodule",
           "desc": "仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等",
@@ -428,7 +417,7 @@
           "essential": false,
           "author": "nowaytouse (自动合并)",
           "version": "",
-          "date": "2025-12-10"
+          "date": "2025-12-11"
         },
         {
           "name": "🔥 Firewall Port Blocker 🛡️🚫",
@@ -442,26 +431,15 @@
           "date": ""
         },
         {
-          "name": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)",
-          "filename": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
-          "desc": "Modular ad-blocking with Host sinkhole + Online rulesets. Lo",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20LITE%20%28Kali-style%29.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "nyamiiko",
-          "version": "2025.12.04",
-          "date": ""
-        },
-        {
           "name": "🛡️ 广告拦截大合集",
           "filename": "🛡️ 广告拦截大合集.sgmodule",
-          "desc": "整合所有广告拦截平台规则（AWAvenue/毒奶/可莉/Sukka等） (合并自 11 个模块)",
+          "desc": "整合所有广告拦截平台规则（AWAvenue/毒奶/可莉/Sukka等） (合并自 7 个模块)",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9B%A1%EF%B8%8F%20%E5%B9%BF%E5%91%8A%E6%8B%A6%E6%88%AA%E5%A4%A7%E5%90%88%E9%9B%86.sgmodule",
           "tag": "",
           "essential": false,
           "author": "Multiple Authors (合并版)",
           "version": "",
-          "date": "2025-12-10 01:34:08"
+          "date": "2025-12-11 20:24:50"
         }
       ]
     },
