@@ -132,19 +132,33 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do
     grep -v '^#' | grep -v '^$' | grep -v '^RULE-SET' | \
     sed 's/  */ /g' | \
     grep -E "^(DOMAIN|IP-CIDR|IP-CIDR6|USER-AGENT|URL-REGEX|PROCESS-NAME|DOMAIN-REGEX|DOMAIN-SUFFIX|DOMAIN-KEYWORD|AND,|OR,|NOT,)" | \
-    # 🔥 修复: 过滤不完整的 AND/OR/NOT 规则（必须有完整的括号闭合）
-    # 过滤掉没有闭合括号的行（不完整规则）
-    grep -v '^AND,((DOMAIN-KEYWORD$' | \
-    grep -v '^AND,((DOMAIN-SUFFIX$' | \
-    grep -v '^AND,((DOMAIN$' | \
-    grep -v '^OR,((DOMAIN$' | \
-    grep -v '^NOT,((DOMAIN$' | \
-    # 过滤掉括号不匹配的行（左括号数量 != 右括号数量）
-    awk '{
-        left = gsub(/\(/, "(", $0)
-        right = gsub(/\)/, ")", $0)
-        if (left == right) print
-    }' | \
+    # 🔥 根源修复: 展开 AND/OR 复合规则为简单规则（跨平台兼容）
+    python3 -c '
+import sys, re
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    # 展开 AND/OR 复合规则
+    if line.startswith("AND,((") or line.startswith("OR,(("):
+        # 提取所有 DOMAIN-SUFFIX
+        for m in re.findall(r"DOMAIN-SUFFIX,([^,\)\]]+)", line):
+            s = m.strip()
+            if s and "." in s:
+                print(f"DOMAIN-SUFFIX,{s}")
+        # 提取 DOMAIN-KEYWORD 中像域名的值
+        for m in re.findall(r"DOMAIN-KEYWORD,-?([^,\)\]]+)", line):
+            s = m.strip()
+            if re.search(r"\.(com|net|org|io|cn|jp|kr|tw|hk|sg|uk|de|fr|ru|br|in|au|co|me|tv|cc|xyz|top|app|dev)$", s, re.I):
+                print(f"DOMAIN-SUFFIX,{s}")
+        continue
+    # 过滤不完整规则和括号不匹配的行
+    if line.endswith("DOMAIN-KEYWORD") or line.endswith("DOMAIN-SUFFIX") or line.endswith("DOMAIN"):
+        continue
+    if line.count("(") != line.count(")"):
+        continue
+    print(line)
+' | \
     # Filter out invalid DOMAIN-REGEX rules
     grep -v '^DOMAIN-REGEX,\s*$' | \
     grep -v '^DOMAIN-REGEX,[^,]*$' | \
@@ -241,9 +255,34 @@ if [ "$rule_count" -gt 0 ]; then
     # Merge with existing AdBlock.list
     log_info "Merging with existing AdBlock.list..."
     
-    # Extract existing rules (without header)
+    # Extract existing rules (without header) and clean AND/OR rules
     if [ -f "$ADBLOCK_LIST" ]; then
-        grep -v "^#" "$ADBLOCK_LIST" | grep -v "^$" > "$TEMP_DIR/existing_rules.tmp" 2>/dev/null || true
+        grep -v "^#" "$ADBLOCK_LIST" | grep -v "^$" | \
+        # 🔥 清理现有的 AND/OR 复合规则
+        python3 -c '
+import sys, re
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    # 展开 AND/OR 复合规则
+    if line.startswith("AND,((") or line.startswith("OR,(("):
+        for m in re.findall(r"DOMAIN-SUFFIX,([^,\)\]]+)", line):
+            s = m.strip()
+            if s and "." in s:
+                print(f"DOMAIN-SUFFIX,{s}")
+        for m in re.findall(r"DOMAIN-KEYWORD,-?([^,\)\]]+)", line):
+            s = m.strip()
+            if re.search(r"\.(com|net|org|io|cn|jp|kr|tw|hk|sg|uk|de|fr|ru|br|in|au|co|me|tv|cc|xyz|top|app|dev)$", s, re.I):
+                print(f"DOMAIN-SUFFIX,{s}")
+        continue
+    # 过滤不完整规则
+    if line.endswith("DOMAIN-KEYWORD") or line.endswith("DOMAIN-SUFFIX") or line.endswith("DOMAIN"):
+        continue
+    if line.count("(") != line.count(")"):
+        continue
+    print(line)
+' > "$TEMP_DIR/existing_rules.tmp" 2>/dev/null || true
     else
         touch "$TEMP_DIR/existing_rules.tmp"
     fi
