@@ -258,13 +258,7 @@ echo ""
 STEP=$((STEP + 1))
 echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Empty ruleset check + Smart dedup...${NC}"
 
-if [ -f "${SCRIPT_DIR}/check_empty_rulesets.sh" ]; then
-    if [ "$VERBOSE" = true ]; then
-        "${SCRIPT_DIR}/check_empty_rulesets.sh"
-    else
-        "${SCRIPT_DIR}/check_empty_rulesets.sh" 2>&1 | grep -E "^(Total|Empty)" || true
-    fi
-fi
+# check_empty_rulesets.sh 已合并到 ruleset_cleaner.sh
 
 if [ -f "${SCRIPT_DIR}/smart_cleanup.py" ]; then
     log_info "Running smart dedup (priority: AdBlock > Specific > Fallback)..."
