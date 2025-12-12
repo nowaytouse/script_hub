@@ -1,0 +1,40 @@
+#!name=HTTPDNS拦截器
+#!desc=[🚀SR] 拦截常见的HTTPDNS服务，以确保这些请求都能够在Loon的DNS框架下工作。
+#!author=可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md], VirgilClyne[https://github.com/VirgilClyne]
+#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/HTTPDNS.png
+#!category=奶思的模块
+#!tag=DNS
+#!loon_version=3.2.4(787)
+#!homepage=https://github.com/luestr/ProxyResource/blob/main/README.md
+#!raw-url=https://github.com/fmz200/wool_scripts/raw/main/Surge/module/blockHTTPDNS.module
+#!tg-channel=https://t.me/inaisi
+#!date=2025-05-13 21:58:49
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: All 169 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [MITM]
+#   - [Script]
+#   - Other module-specific features
+# Use AdBlock.list for all blocking rules
+# ═══════════════════════════════════════════════════════════════
+
+[URL Rewrite]
+^https?:\/\/203\.107\.1\.1/\d+/ss - reject
+^https?:\/\/203\.107\.1\.33/\d+/ss - reject
+^https?:\/\/203\.107\.1\.66/\d+/ss - reject
+^https?:\/\/203\.107\.1\.67/\d+/ss - reject
+^https?:\/\/203\.107\.1\.97/\d+/ss - reject
+^https?:\/\/2401:b180:2000:30::1c\/\d+\/d - reject
+^https?:\/\/2401:b180:2000:20::10\/\d+\/d - reject
+^https?:\/\/cdn\.wup\.huya\.com\/monitor\/monitor\.jsp - reject
+^https:\/\/gslbali\.ximalaya\.com\/linkeye-cloud\/httpdns\/ - reject
+
+[Map Local]
+^https?:\/\/appconf\.mail\.163\.com\/mailmaster\/api\/http\/urlConfig\.do$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+^https:\/\/msglb\.91160\.com\/msg\/outer\/broker\/get$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+[MITM]
+hostname = 203.107.1.1, 203.107.1.33, 203.107.1.66, 203.107.1.67, 203.107.1.97, 2401:b180:2000:30::1c, 2401:b180:2000:20::10, amdc.alipay.com, appconf.mail.163.com, msglb.91160.com

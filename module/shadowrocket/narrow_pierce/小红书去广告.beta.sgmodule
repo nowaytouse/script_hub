@@ -56,5 +56,5 @@ http-response-jq ^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v4\/search\/trend
 移除视频水印 = type=http-response, pattern=^https:\/\/(?:edith|rec|www)\.xiaohongshu\.com\/api\/sns\/(?:v4\/note\/videofeed|v10\/note\/video\/save), script-path=https://kelee.one/Resource/JavaScript/RedPaper/RedPaper_remove_ads.js, requires-body=true
 
 [MITM]
-hostname =  ci.xiaohongshu.com, edith.xiaohongshu.com, rec.xiaohongshu.com, www.xiaohongshu.com
+hostname = ci.xiaohongshu.com, edith.xiaohongshu.com, rec.xiaohongshu.com, www.xiaohongshu.com
 

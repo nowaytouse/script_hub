@@ -1,0 +1,83 @@
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!name = 📺 BiliBili: ⚙️ Enhanced
+#!desc = 哔哩哔哩：增强模式
+中国站功能增强及UI自定义
+#!openUrl = http://boxjs.com/#/app/BiliBili.Enhanced
+#!author = VirgilClyne[https://github.com/VirgilClyne]
+#!homepage = https://Enhanced.BiliUniverse.io
+#!icon = https://github.com/BiliUniverse/Enhanced/raw/main/src/assets/icon_rounded.png
+#!date = 2024-12-10 07:12:54
+#!version = 0.5.10
+#!arguments = Home.Tab:"直播tab,推荐tab,hottopic,bangumi,anime,film,koreavtw",Home.Tab_default:"推荐tab",Home.Top_left:"mine",Home.Top:"消息Top",Bottom:"home,dynamic,ogv,会员购Bottom,我的Bottom",LogLevel:"WARN"
+#!arguments-desc = Home.Tab: [首页] 标签页
+    ├ 直播tab: 直播
+    ├ 推荐tab: 推荐
+    ├ hottopic: 热门
+    ├ bangumi: 番剧
+    ├ anime: 动画（港澳台）
+    ├ film: 影视
+    ├ koreavtw: 韩综（港澳台）
+    ├ game: 游戏
+    ├ mctab: minecraft
+    ├ dhtr: 动画同人
+    ├ gaoxiao: 搞笑
+    ├ school: 校园
+    └ kj: 数码
+请选择启用的首页标签页，建议不超过7个。
+
+Home.Tab_default: [首页] 默认标签页
+    ├ 直播tab: 直播
+    ├ 推荐tab: 推荐
+    ├ hottopic: 热门
+    ├ bangumi: 番剧
+    ├ anime: 动画（港澳台）
+    ├ film: 影视
+    ├ koreavtw: 韩综（港澳台）
+    ├ game: 游戏
+    ├ mctab: minecraft
+    ├ dhtr: 动画同人
+    ├ gaoxiao: 搞笑
+    ├ school: 校园
+    └ kj: 数码
+请选择启动APP时默认展示的标签页，需选择已启用的标签页。
+
+Home.Top_left: [首页] 顶栏（左侧）按钮（用户头像）
+    ├ mine: 用户中心-我的
+    └ videoshortcut: 短视频
+请选择顶栏（左侧）按钮（用户头像）的作用（在biliBili粉色版中无法修改）。
+
+Home.Top: [首页] 顶栏（右侧）按钮
+    ├ 游戏中心Top: 游戏中心
+    ├ 会员购Top: 会员购
+    └ 消息Top: 消息
+请选择启用的顶栏（右侧）按钮。
+
+Bottom: [底部] 导航栏按钮
+    ├ home: 首页
+    ├ 频道Bottom: 频道
+    ├ dynamic: 动态
+    ├ publish: 发布
+    ├ ogv: 节目（港澳台）
+    ├ 会员购Bottom: 会员购
+    ├ 消息Bottom: 消息
+    └ 我的Bottom: 我的
+请选择启用的底部导航栏按钮，最多6个。
+
+LogLevel: [调试] 日志等级
+    ├ OFF: 关闭
+    ├ ERROR: ❌ 错误
+    ├ WARN: ⚠️ 警告
+    ├ INFO: ℹ️ 信息
+    ├ DEBUG: 🅱️ 调试
+    └ ALL: 全部
+选择脚本日志的输出等级，低于所选等级的日志将全部输出。
+
+
+[Script]
+📺 BiliBili.Enhanced.x.resource.show.tab.v2 = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/resource\/show\/tab\/v2\?, requires-body=1, script-path=https://github.com/BiliUniverse/Enhanced/releases/download/v0.5.10/response.bundle.js, argument=Home.Tab="{{{Home.Tab}}}"&Home.Tab_default="{{{Home.Tab_default}}}"&Home.Top_left="{{{Home.Top_left}}}"&Home.Top="{{{Home.Top}}}"&Bottom="{{{Bottom}}}"&LogLevel="{{{LogLevel}}}"
+📺 BiliBili.Enhanced.x.v2.account.mine = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/account\/mine(\/ipad)?\?, requires-body=1, script-path=https://github.com/BiliUniverse/Enhanced/releases/download/v0.5.10/response.bundle.js, argument=Home.Tab="{{{Home.Tab}}}"&Home.Tab_default="{{{Home.Tab_default}}}"&Home.Top_left="{{{Home.Top_left}}}"&Home.Top="{{{Home.Top}}}"&Bottom="{{{Bottom}}}"&LogLevel="{{{LogLevel}}}"
+📺 BiliBili.Enhanced.x.v2.region.index = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/region\/index\?, requires-body=1, script-path=https://github.com/BiliUniverse/Enhanced/releases/download/v0.5.10/response.bundle.js, argument=Home.Tab="{{{Home.Tab}}}"&Home.Tab_default="{{{Home.Tab_default}}}"&Home.Top_left="{{{Home.Top_left}}}"&Home.Top="{{{Home.Top}}}"&Bottom="{{{Bottom}}}"&LogLevel="{{{LogLevel}}}"
+📺 BiliBili.Enhanced.x.v2.channel.region.list = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/channel\/region\/list\?, requires-body=1, script-path=https://github.com/BiliUniverse/Enhanced/releases/download/v0.5.10/response.bundle.js, argument=Home.Tab="{{{Home.Tab}}}"&Home.Tab_default="{{{Home.Tab_default}}}"&Home.Top_left="{{{Home.Top_left}}}"&Home.Top="{{{Home.Top}}}"&Bottom="{{{Bottom}}}"&LogLevel="{{{LogLevel}}}"
+
+[MITM]
+hostname = app.bilibili.com, app.biliapi.net

@@ -24,40 +24,40 @@ DOMAIN,epay.ahrcu.com,DIRECT
 DOMAIN,mixpay.wechat.com,DIRECT
 
 # 使用参数中的 Proxy 策略组
-DOMAIN,dns.weixin.qq.com,PROXY
-DOMAIN,dns.weixin.qq.com.cn,PROXY
-DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net,PROXY
-DOMAIN,btrace.qq.com,PROXY
-DOMAIN,dldir1.qq.com,PROXY
-DOMAIN,slife.xy-asia.com,PROXY
-DOMAIN,soup.v.qq.com,PROXY
-DOMAIN,vweixinf.tc.qq.com,PROXY
-DOMAIN,weixin110.qq.com,PROXY
-DOMAIN,wup.imtt.qq.com,PROXY
-DOMAIN-SUFFIX,iot-tencent.com,PROXY
-DOMAIN-SUFFIX,lbs.gtimg.com,PROXY
-DOMAIN-SUFFIX,map.qq.com,PROXY
-DOMAIN-SUFFIX,qlogo.cn,PROXY
-DOMAIN-SUFFIX,qpic.cn,PROXY
-DOMAIN-SUFFIX,servicewechat.com,PROXY
-DOMAIN-SUFFIX,tenpay.com, PROXY
-DOMAIN-SUFFIX,up-hl.3g.qq.com,PROXY
-DOMAIN-SUFFIX,vweixinthumb.tc.qq.com,PROXY
-DOMAIN-SUFFIX,wechat.com,PROXY
-DOMAIN-SUFFIX,wechatlegal.net,PROXY
-DOMAIN-SUFFIX,wechatos.net,PROXY
-DOMAIN-SUFFIX,weixin.com,PROXY
-DOMAIN-SUFFIX,weixin.qq.com,PROXY
-DOMAIN-SUFFIX,weixinbridge.com,PROXY
-DOMAIN-SUFFIX,weixinsxy.com,PROXY
-DOMAIN-SUFFIX,wx.gtimg.com,PROXY
-DOMAIN-SUFFIX,wx.qq.com,PROXY
-DOMAIN-SUFFIX,wxapp.tc.qq.com,PROXY
-DOMAIN-SUFFIX,wxs.qq.com,PROXY
-DOMAIN-SUFFIX,yun-hl.3g.qq.com,PROXY
-USER-AGENT,MicroMessenger*,PROXY
-USER-AGENT,WeChat*,PROXY
-IP-ASN,132203,PROXY, no-resolve
+DOMAIN,dns.weixin.qq.com,{{{Proxy}}}
+DOMAIN,dns.weixin.qq.com.cn,{{{Proxy}}}
+DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net,{{{Proxy}}}
+DOMAIN,btrace.qq.com,{{{Proxy}}}
+DOMAIN,dldir1.qq.com,{{{Proxy}}}
+DOMAIN,slife.xy-asia.com,{{{Proxy}}}
+DOMAIN,soup.v.qq.com,{{{Proxy}}}
+DOMAIN,vweixinf.tc.qq.com,{{{Proxy}}}
+DOMAIN,weixin110.qq.com,{{{Proxy}}}
+DOMAIN,wup.imtt.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,iot-tencent.com,{{{Proxy}}}
+DOMAIN-SUFFIX,lbs.gtimg.com,{{{Proxy}}}
+DOMAIN-SUFFIX,map.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,qlogo.cn,{{{Proxy}}}
+DOMAIN-SUFFIX,qpic.cn,{{{Proxy}}}
+DOMAIN-SUFFIX,servicewechat.com,{{{Proxy}}}
+DOMAIN-SUFFIX,tenpay.com, {{{Proxy}}}
+DOMAIN-SUFFIX,up-hl.3g.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,vweixinthumb.tc.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,wechat.com,{{{Proxy}}}
+DOMAIN-SUFFIX,wechatlegal.net,{{{Proxy}}}
+DOMAIN-SUFFIX,wechatos.net,{{{Proxy}}}
+DOMAIN-SUFFIX,weixin.com,{{{Proxy}}}
+DOMAIN-SUFFIX,weixin.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,weixinbridge.com,{{{Proxy}}}
+DOMAIN-SUFFIX,weixinsxy.com,{{{Proxy}}}
+DOMAIN-SUFFIX,wx.gtimg.com,{{{Proxy}}}
+DOMAIN-SUFFIX,wx.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,wxapp.tc.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,wxs.qq.com,{{{Proxy}}}
+DOMAIN-SUFFIX,yun-hl.3g.qq.com,{{{Proxy}}}
+USER-AGENT,MicroMessenger*,{{{Proxy}}}
+USER-AGENT,WeChat*,{{{Proxy}}}
+IP-ASN,132203,{{{Proxy}}}, no-resolve
 
 [URL Rewrite]
 # 招行首页横幅广告 @ArthasYZ
@@ -358,4 +358,4 @@ T3出行去广告 = type=http-response, pattern=^https:\/\/passenger\.t3go\.cn\/
 美团小程序tap优化 = type=http-response, pattern=^https:\/\/web\.meituan\.com\/api\/miniprogram\/index\/aggregate, script-path=https://raw.githubusercontent.com/mist-whisper/Script/master/WeChat/WexinMiniPrograms/MeiTuan.js, requires-body=true, timeout=60
 
 [MITM]
-hostname =  mp.weixin.qq.com, 3pp.starbucks.com.cn, aag.enmonster.com, activity.yonghuivip.com, ad.maoyan.com, ad.xiaotucc.com, ads.ishansong.com, alittle-tea.oss-cn-shanghai.aliyuncs.com, api-fouth-mem.huazhu.com, api-marketing.zhinengxiyifang.cn, api.hellobike.com, api.hengdianfilm.com, api.hongyibo.com.cn, api.kuaidihelp.com, api.maoyan.com, api.mcd.cn, api.pinduoduo.com, api.prod.dj.mstand.cn, api.songguo7.com, api.yonghuivip.com, apiproxy.zuche.com, apis.alenable.com, app.95504.net, app.homeinns.com, applets.jtexpress.com.cn, appuser-static.huolala.cn, as.xiaojukeji.com, capis*.didapinche.com, cappapi.alittle-tea.com, cbd-gateway-service-applets.hualala.com, ccmsupport-sz.tenpay.com, coco-com.e.verystar.net, creditcardapp.bankcomm.com, customer-app.sto.cn, daijia.kuaidadi.com, dock.tenchii.com, dsp.fcbox.com, file.dian.so, flow.dmall.com, fscdn.zto.com, gw-passenger-wap.01zhuanche.com, hdgateway.zto.com, htwkop.xiaojukeji.com, images.qmai.cn, lawsonapi.yorentown.com, m.ctrip.com, mapi.xiaotucc.com, mbmodule-openapi.paas.cmbchina.com, member.lxjchina.com.cn, miniapp.sexytea2013.com, minicap.caocaokeji.cn, minifm.maxxipoint.com, minipro.95504.net, miniprogram.ishansong.com, mkt-gateway.tuhu.cn, mobile-api.imlaidian.com, mxsa.mxbc.net, newton.gumingnc.com, passenger.t3go.cn, passengerapi.saicmobility.com, plt.yorentown.com, qapi.huolala.cn, r2.gzyct.com, res.hongyibo.com.cn, res.pizzahut.com.cn, s.jiediankeji.com, saas-ad.cloudpnr.com, sauron-report.yonghuivip.com, smarket.dian.so, sto-customer-app.oss-cn-shanghai.aliyuncs.com, supplier-api.imdada.cn, suyun-guest.daojia.com, tbgapplet.carlsberg.asia, tm-api.pin-dao.cn, ucmp.sf-express.com, ump.ems.com.cn, vod-movie.maoyan.com, webchatapp.fcbox.com, wechat-api.i-xiaoma.com.cn, www.deppon.com, wx.bthhotels.com, wx.maoyan.com, wxapp.bestwehotel.com, wxproj.seeyouyima.com, wxs-weixin.sd.zhumanggroup.com, mcsp.cloudpnr.com, api.szbgcx.cn, rms.meituan.com, weixin110.qq.com, chong.qq.com, wx.online-cmcc.cn, wx.10086.cnsecurity.wechat.com, wx.17u.cn, web.meituan.com, npay.meituan.com
+hostname = mp.weixin.qq.com, 3pp.starbucks.com.cn, aag.enmonster.com, activity.yonghuivip.com, ad.maoyan.com, ad.xiaotucc.com, ads.ishansong.com, alittle-tea.oss-cn-shanghai.aliyuncs.com, api-fouth-mem.huazhu.com, api-marketing.zhinengxiyifang.cn, api.hellobike.com, api.hengdianfilm.com, api.hongyibo.com.cn, api.kuaidihelp.com, api.maoyan.com, api.mcd.cn, api.pinduoduo.com, api.prod.dj.mstand.cn, api.songguo7.com, api.yonghuivip.com, apiproxy.zuche.com, apis.alenable.com, app.95504.net, app.homeinns.com, applets.jtexpress.com.cn, appuser-static.huolala.cn, as.xiaojukeji.com, capis*.didapinche.com, cappapi.alittle-tea.com, cbd-gateway-service-applets.hualala.com, ccmsupport-sz.tenpay.com, coco-com.e.verystar.net, creditcardapp.bankcomm.com, customer-app.sto.cn, daijia.kuaidadi.com, dock.tenchii.com, dsp.fcbox.com, file.dian.so, flow.dmall.com, fscdn.zto.com, gw-passenger-wap.01zhuanche.com, hdgateway.zto.com, htwkop.xiaojukeji.com, images.qmai.cn, lawsonapi.yorentown.com, m.ctrip.com, mapi.xiaotucc.com, mbmodule-openapi.paas.cmbchina.com, member.lxjchina.com.cn, miniapp.sexytea2013.com, minicap.caocaokeji.cn, minifm.maxxipoint.com, minipro.95504.net, miniprogram.ishansong.com, mkt-gateway.tuhu.cn, mobile-api.imlaidian.com, mxsa.mxbc.net, newton.gumingnc.com, passenger.t3go.cn, passengerapi.saicmobility.com, plt.yorentown.com, qapi.huolala.cn, r2.gzyct.com, res.hongyibo.com.cn, res.pizzahut.com.cn, s.jiediankeji.com, saas-ad.cloudpnr.com, sauron-report.yonghuivip.com, smarket.dian.so, sto-customer-app.oss-cn-shanghai.aliyuncs.com, supplier-api.imdada.cn, suyun-guest.daojia.com, tbgapplet.carlsberg.asia, tm-api.pin-dao.cn, ucmp.sf-express.com, ump.ems.com.cn, vod-movie.maoyan.com, webchatapp.fcbox.com, wechat-api.i-xiaoma.com.cn, www.deppon.com, wx.bthhotels.com, wx.maoyan.com, wxapp.bestwehotel.com, wxproj.seeyouyima.com, wxs-weixin.sd.zhumanggroup.com, mcsp.cloudpnr.com, api.szbgcx.cn, rms.meituan.com, weixin110.qq.com, chong.qq.com, wx.online-cmcc.cn, wx.10086.cnsecurity.wechat.com, wx.17u.cn, web.meituan.com, npay.meituan.com

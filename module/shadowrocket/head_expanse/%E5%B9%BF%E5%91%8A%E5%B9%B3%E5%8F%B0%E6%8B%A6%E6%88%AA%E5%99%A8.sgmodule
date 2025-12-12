@@ -8,8 +8,6 @@
 #!homepage=https://hub.kelee.one
 #!date=2025-12-05 00:50:43
 
-#!group=🔝 Head Expanse › 首端扩域
-
 # ═══════════════════════════════════════════════════════════════
 # NOTE: All 296 rules from this module have been extracted to AdBlock.list
 # This cleaned version only contains non-Rule sections:
@@ -28,5 +26,5 @@ ad.aggrxinc.com, - reject
 ^https:\/\/images\.pinduoduo\.com\/marketing_api\/ - reject
 
 [MITM]
-hostname =  video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com
+hostname = video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com
 

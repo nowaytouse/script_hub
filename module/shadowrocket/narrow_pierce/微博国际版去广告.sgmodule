@@ -16,4 +16,4 @@ http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=search_to
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=user_center& 'if .data.cards then .data.cards[].items |= map(select(.type != "personal_vip")) | .data.cards |= map(select((.items | length) > 0)) end'
 
 [MITM]
-hostname =  api.weibo.cn, weibointl.api.weibo.cn
+hostname = api.weibo.cn, weibointl.api.weibo.cn

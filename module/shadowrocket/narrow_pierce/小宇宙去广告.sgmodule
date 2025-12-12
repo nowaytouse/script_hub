@@ -22,5 +22,5 @@ http-response-jq ^https:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.d
 ^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/category data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 [MITM]
-hostname =  api.xiaoyuzhoufm.com
+hostname = api.xiaoyuzhoufm.com
 

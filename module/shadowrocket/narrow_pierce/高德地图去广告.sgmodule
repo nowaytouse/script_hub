@@ -78,5 +78,5 @@ http-response-jq ^https:\/\/m5-zb\.amap\.com\/ws\/sharedtrip\/taxi\/order_detail
 移除导航详情页推广 = type=http-response, pattern=^https:\/\/(?:info|m5)\.amap\.com\/ws\/shield\/search\/(?:common\/coupon\/info|poi\/detail), script-path=https://kelee.one/Resource/JavaScript/Amap/Amap_remove_ads.js, requires-body=true
 
 [MITM]
-hostname =  *.amap.com
+hostname = *.amap.com
 

@@ -226,7 +226,7 @@ for line in sys.stdin:
         
         # 🔥 修复: 注释放在 header 之后、第一个 section 之前，避免跑到 MITM 区域
         # 先保存当前内容
-        local header_content=$(cat "$cleaned_module")
+        header_content=$(cat "$cleaned_module")
         
         # 重新生成文件：header + 注释 + sections
         {

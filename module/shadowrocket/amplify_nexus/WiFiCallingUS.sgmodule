@@ -11,25 +11,25 @@ US-Call = url-test,url=http://www.gstatic.com/generate_204,interval=600,toleranc
 
 [Rule]
 # 苹果地区检测
-PROXY,gspe1-ssl.ls.apple.com,PROXY
+{{{苹果地区检测}}},gspe1-ssl.ls.apple.com,{{{默认代理分组}}}
 
 # 通话端口代理
-PROXY,((GEOIP,US),(AND,((PROTOCOL,UDP),(OR,((DEST-PORT,500),(DEST-PORT,4500)))))),PROXY
+{{{通话端口代理}}},((GEOIP,US),(AND,((PROTOCOL,UDP),(OR,((DEST-PORT,500),(DEST-PORT,4500)))))),{{{默认代理分组}}}
 
-DOMAIN-SUFFIX,crl.t-mobile.com,PROXY
-DOMAIN-SUFFIX,depdg.epc.mnc260.mcc310.pub.3gppnetwork.org,PROXY
-DOMAIN-SUFFIX,eas3.msg.t-mobile.com,PROXY
-DOMAIN-SUFFIX,epdg.epc.mnc240.mcc310.pub.3gppnetwork.org,PROXY
-DOMAIN-SUFFIX,epdg.epc.mnc260.mcc310.pub.3gppnetwork.org,PROXY
-DOMAIN-SUFFIX,mascns.t-mobile.com,PROXY
-DOMAIN-SUFFIX,ns.sipgeo.t-mobile.com,PROXY
-DOMAIN-SUFFIX,optimizely.com,PROXY
-DOMAIN-SUFFIX,redirect.ultra.me,PROXY
-DOMAIN-SUFFIX,ss.epdg.epc.geo.mnc260.mcc310.pub.3gppnetwork.org,PROXY
-DOMAIN-SUFFIX,ss.epdg.epc.mnc260.mcc310.pub.3gppnetwork.org,PROXY
-DOMAIN-SUFFIX,ultramobile.com,PROXY
-DOMAIN-KEYWORD,t-mobile,PROXY
-DOMAIN-KEYWORD,ultramobile,PROXY
-IP-CIDR,206.29.177.36/32,PROXY,no-resolve
-IP-CIDR,208.54.0.0/16,PROXY,no-resolve
-IP-CIDR,66.94.0.0/19,PROXY,no-resolve
+DOMAIN-SUFFIX,crl.t-mobile.com,{{{默认代理分组}}}
+DOMAIN-SUFFIX,depdg.epc.mnc260.mcc310.pub.3gppnetwork.org,{{{默认代理分组}}}
+DOMAIN-SUFFIX,eas3.msg.t-mobile.com,{{{默认代理分组}}}
+DOMAIN-SUFFIX,epdg.epc.mnc240.mcc310.pub.3gppnetwork.org,{{{默认代理分组}}}
+DOMAIN-SUFFIX,epdg.epc.mnc260.mcc310.pub.3gppnetwork.org,{{{默认代理分组}}}
+DOMAIN-SUFFIX,mascns.t-mobile.com,{{{默认代理分组}}}
+DOMAIN-SUFFIX,ns.sipgeo.t-mobile.com,{{{默认代理分组}}}
+DOMAIN-SUFFIX,optimizely.com,{{{默认代理分组}}}
+DOMAIN-SUFFIX,redirect.ultra.me,{{{默认代理分组}}}
+DOMAIN-SUFFIX,ss.epdg.epc.geo.mnc260.mcc310.pub.3gppnetwork.org,{{{默认代理分组}}}
+DOMAIN-SUFFIX,ss.epdg.epc.mnc260.mcc310.pub.3gppnetwork.org,{{{默认代理分组}}}
+DOMAIN-SUFFIX,ultramobile.com,{{{默认代理分组}}}
+DOMAIN-KEYWORD,t-mobile,{{{默认代理分组}}}
+DOMAIN-KEYWORD,ultramobile,{{{默认代理分组}}}
+IP-CIDR,206.29.177.36/32,{{{默认代理分组}}},no-resolve
+IP-CIDR,208.54.0.0/16,{{{默认代理分组}}},no-resolve
+IP-CIDR,66.94.0.0/19,{{{默认代理分组}}},no-resolve

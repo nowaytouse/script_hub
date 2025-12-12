@@ -107,4 +107,4 @@ http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=trends& '
 解锁微博会员APP图标 = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/aj\/appicon\/list, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/weibo/weibo_vip.js, requires-body=true, timeout=60
 
 [MITM]
-hostname =  *.weibo.cn, *.weibo.com, weibo.com
+hostname = *.weibo.cn, *.weibo.com, weibo.com

@@ -36,5 +36,5 @@
 精简我的页面 = type=http-response, pattern=^https:\/\/manga\.bilibili\.com\/twirp\/user\.v\d\.User\/UCenterConf, script-path=https://kelee.one/Resource/JavaScript/BiliComic/BiliComic_remove_ads.js, requires-body=true
 
 [MITM]
-hostname =  manga.bilibili.com
+hostname = manga.bilibili.com
 

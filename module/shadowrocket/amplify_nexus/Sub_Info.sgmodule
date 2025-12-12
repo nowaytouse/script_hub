@@ -6,7 +6,7 @@
 # 适配最新Surge TF 5.21.0 (3026)及以上版本的模块新功能，安装模块后只需要长按模块，在弹出的"Edit Arguments"点击进入然后填写相关参数即可使用。
 
 [Panel]
-SUB_INFO = script-name=sub_info,content="Loading…",update-interval=PROXY
+SUB_INFO = script-name=sub_info,content="Loading…",update-interval={{{面板刷新时间}}}
 
 [Script]
-sub_info = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/sub_info_panel.js,argument=url=PROXY&reset_day=PROXY&title=PROXY&icon=PROXY&color=PROXY&expire=PROXY
+sub_info = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/sub_info_panel.js,argument=url={{{订阅链接}}}&reset_day={{{流量重置日期}}}&title={{{机场名称}}}&icon={{{面板图标}}}&color={{{图标颜色}}}&expire={{{套餐到期日子}}}
