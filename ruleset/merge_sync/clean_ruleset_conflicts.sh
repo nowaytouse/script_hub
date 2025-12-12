@@ -268,37 +268,52 @@ COMMON_EXCLUDE_EXACT=(
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 受保护规则集列表（这些规则集不会被清理）
+# 跳过清理的规则集列表
+# 这些规则集本身就应该包含特定域名，不需要清理
 # ═══════════════════════════════════════════════════════════════════════════════
-PROTECTED_RULESETS=(
+SKIP_RULESETS=(
+    # 社交媒体类（应该包含社交媒体域名）
     "SocialMedia"
+    "Telegram"
+    
+    # 游戏类（应该包含游戏平台域名）
     "Gaming"
     "Steam"
     "Epic"
+    
+    # 流媒体类（应该包含流媒体域名）
     "GlobalMedia"
     "YouTube"
     "Spotify"
-    "TikTok"
-    "Telegram"
-    "Twitter"
-    "DownloadDirect"
     "Twitch"
     "Netflix"
-    "Facebook"
-    "Instagram"
-    "Reddit"
+    "TikTok"
     "StreamUS"
     "StreamJP"
     "StreamKR"
     "StreamEU"
     "StreamHK"
     "StreamTW"
+)
+
+# 🔒 受保护规则集（手动维护，永不修改）
+PROTECTED_RULESETS=(
+    "DownloadDirect"
     "Manual"
     "Manual_JP"
     "Manual_US"
     "Manual_West"
     "Manual_Global"
 )
+
+# 检查是否应该跳过
+should_skip() {
+    local name="$1"
+    for skip in "${SKIP_RULESETS[@]}"; do
+        [[ "$name" == "$skip" ]] && return 0
+    done
+    return 1
+}
 
 # 检查是否为受保护规则集
 is_protected() {
@@ -318,6 +333,8 @@ echo ""
 
 total_cleaned=0
 total_checked=0
+total_skipped=0
+total_protected=0
 
 # 遍历所有规则集
 for ruleset_file in "$RULESET_DIR"/*.list; do
@@ -326,30 +343,34 @@ for ruleset_file in "$RULESET_DIR"/*.list; do
     ruleset_name=$(basename "$ruleset_file" .list)
     total_checked=$((total_checked + 1))
     
-    # 跳过受保护的规则集
+    # 跳过受保护的规则集（手动维护）
     if is_protected "$ruleset_name"; then
-        echo -e "${GREEN}[PROTECTED]${NC} $ruleset_name"
+        echo -e "${GREEN}[🔒 PROTECTED]${NC} $ruleset_name (手动维护)"
+        total_protected=$((total_protected + 1))
+        continue
+    fi
+    
+    # 跳过应该包含特定域名的规则集
+    if should_skip "$ruleset_name"; then
+        echo -e "${CYAN}[SKIP]${NC} $ruleset_name (应包含特定域名)"
+        total_skipped=$((total_skipped + 1))
         continue
     fi
     
     # 根据规则集类型选择排除列表
     case "$ruleset_name" in
         NSFW)
-            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name (NSFW 专用排除列表)"
+            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name"
             clean_ruleset_exact "$ruleset_file" "${NSFW_EXCLUDE_EXACT[@]}"
             ;;
-        AdBlock)
-            # AdBlock 可以包含广告追踪域名，但不应包含主站域名
-            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name (通用排除列表)"
-            clean_ruleset_exact "$ruleset_file" "${COMMON_EXCLUDE_EXACT[@]}"
-            ;;
         CDN|LAN|ChinaDirect|GlobalProxy)
-            # 这些规则集有特殊用途，只检查明显的冲突
-            echo -e "${CYAN}[SKIP]${NC} $ruleset_name (特殊用途规则集)"
+            # 这些规则集有特殊用途，跳过
+            echo -e "${CYAN}[SKIP]${NC} $ruleset_name (特殊用途)"
+            total_skipped=$((total_skipped + 1))
             ;;
         *)
             # 其他规则集使用通用排除列表
-            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name (通用排除列表)"
+            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name"
             clean_ruleset_exact "$ruleset_file" "${COMMON_EXCLUDE_EXACT[@]}"
             ;;
     esac
@@ -357,7 +378,8 @@ done
 
 echo ""
 log_success "规则集冲突清理完成！"
-echo "  检查: $total_checked 个规则集"
-echo "  受保护: ${#PROTECTED_RULESETS[@]} 个规则集"
+echo "  总计: $total_checked 个规则集"
+echo "  🔒 受保护: $total_protected 个 (手动维护)"
+echo "  ⏭️  跳过: $total_skipped 个 (应包含特定域名)"
 echo ""
 echo "提示: 运行 batch_convert_to_singbox.sh 重新生成 SRS 文件"
