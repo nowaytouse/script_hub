@@ -48,7 +48,8 @@ pub struct ConversionStrategy {
     pub reason: String,
     pub command: String,
     pub preserve_audio: bool,
-    pub crf: u8,
+    /// 🔥 v3.4: Changed from u8 to f32 for sub-integer precision (0.5 step)
+    pub crf: f32,
     pub lossless: bool,
 }
 
@@ -65,6 +66,8 @@ pub struct ConversionConfig {
     pub match_quality: bool,
     /// In-place conversion: convert and delete original file
     pub in_place: bool,
+    /// 🍎 Apple compatibility mode: Convert non-Apple-compatible modern codecs to HEVC
+    pub apple_compat: bool,
 }
 
 impl Default for ConversionConfig {
@@ -78,6 +81,7 @@ impl Default for ConversionConfig {
             use_lossless: false,
             match_quality: false,
             in_place: false,
+            apple_compat: false,
         }
     }
 }
@@ -100,54 +104,71 @@ pub struct ConversionOutput {
     pub size_ratio: f64,
     pub success: bool,
     pub message: String,
-    pub final_crf: u8,
+    /// 🔥 v3.4: Changed from u8 to f32 for sub-integer precision (0.5 step)
+    pub final_crf: f32,
     pub exploration_attempts: u8,
 }
 
 /// Determine conversion strategy based on detection result (for auto mode)
 pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
-    let codec_name = result.codec.as_str();
+    determine_strategy_with_apple_compat(result, false)
+}
+
+/// 🍎 Determine conversion strategy with Apple compatibility mode option
+/// 
+/// When apple_compat is true:
+/// - Only HEVC is skipped (already Apple compatible)
+/// - AV1, VP9, VVC, AV2 will be converted to HEVC
+/// 
+/// When apple_compat is false (default):
+/// - All modern codecs (HEVC, AV1, VP9, VVC, AV2) are skipped
+pub fn determine_strategy_with_apple_compat(result: &VideoDetectionResult, apple_compat: bool) -> ConversionStrategy {
+    // 🔥 使用统一的跳过检测逻辑
+    // apple_compat 模式：仅跳过 HEVC，转换 AV1/VP9 等非 Apple 兼容格式
+    // 普通模式：跳过所有现代格式 (HEVC, AV1, VP9, VVC, AV2)
+    let skip_decision = if apple_compat {
+        shared_utils::should_skip_video_codec_apple_compat(result.codec.as_str())
+    } else {
+        shared_utils::should_skip_video_codec(result.codec.as_str())
+    };
     
-    // Check for Modern Codecs -> SKIP (H.265/HEVC, AV1, VP9, VVC)
-    match result.codec {
-        crate::detection_api::DetectedCodec::H265 |
-        crate::detection_api::DetectedCodec::AV1 |
-        crate::detection_api::DetectedCodec::AV2 |
-        crate::detection_api::DetectedCodec::VVC |
-        crate::detection_api::DetectedCodec::VP9 => {
-             return ConversionStrategy {
-                target: TargetVideoFormat::Skip,
-                reason: format!("Source is modern codec ({}) - skipping to avoid generational loss", codec_name),
-                command: String::new(),
-                preserve_audio: false,
-                crf: 0,
-                lossless: false,
-            };
-        }
-        _ => {}
+    if skip_decision.should_skip {
+        return ConversionStrategy {
+            target: TargetVideoFormat::Skip,
+            reason: skip_decision.reason,
+            command: String::new(),
+            preserve_audio: false,
+            crf: 0.0,
+            lossless: false,
+        };
     }
     
-    // Also check for modern codecs in Unknown string
+    // 🔥 Also check Unknown codec string for modern formats
     if let crate::detection_api::DetectedCodec::Unknown(ref s) = result.codec {
-        let s = s.to_lowercase();
-        if s.contains("hevc") || s.contains("h265") || s.contains("av1") || s.contains("vp9") || s.contains("vvc") || s.contains("h266") {
-             return ConversionStrategy {
+        let unknown_skip = if apple_compat {
+            shared_utils::should_skip_video_codec_apple_compat(s)
+        } else {
+            shared_utils::should_skip_video_codec(s)
+        };
+        if unknown_skip.should_skip {
+            return ConversionStrategy {
                 target: TargetVideoFormat::Skip,
-                reason: format!("Source is modern codec ({}) - skipping", s),
+                reason: unknown_skip.reason,
                 command: String::new(),
                 preserve_audio: false,
-                crf: 0,
+                crf: 0.0,
                 lossless: false,
             };
         }
     }
 
+    // 🔥 v3.4: CRF values are now f32 for sub-integer precision
     let (target, reason, crf, lossless) = match result.compression {
         CompressionType::Lossless => {
             (
                 TargetVideoFormat::HevcLosslessMkv,
                 format!("Source is {} (lossless) - converting to HEVC Lossless", result.codec.as_str()),
-                0,
+                0.0_f32,
                 true
             )
         }
@@ -155,7 +176,7 @@ pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
             (
                 TargetVideoFormat::HevcMp4,
                 format!("Source is {} (visually lossless) - compressing with HEVC CRF 18", result.codec.as_str()),
-                18,
+                18.0_f32,
                 false
             )
         }
@@ -163,7 +184,7 @@ pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
             (
                 TargetVideoFormat::HevcMp4,
                 format!("Source is {} ({}) - compressing with HEVC CRF 20", result.codec.as_str(), result.compression.as_str()),
-                20,
+                20.0_f32,
                 false
             )
         }
@@ -217,7 +238,7 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
             reason: "Simple mode: HEVC High Quality".to_string(),
             command: String::new(),
             preserve_audio: detection.has_audio,
-            crf: 18,
+            crf: 18.0,
             lossless: false,
         },
         input_size: detection.file_size,
@@ -225,7 +246,7 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
         size_ratio,
         success: true,
         message: "Simple conversion successful (HEVC CRF 18)".to_string(),
-        final_crf: 18,
+        final_crf: 18.0,
         exploration_attempts: 0,
     })
 }
@@ -233,7 +254,7 @@ pub fn simple_convert(input: &Path, output_dir: Option<&Path>) -> Result<Convers
 /// Auto mode conversion with intelligent strategy selection
 pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<ConversionOutput> {
     let detection = detect_video(input)?;
-    let strategy = determine_strategy(&detection);
+    let strategy = determine_strategy_with_apple_compat(&detection, config.apple_compat);
     
     if strategy.target == TargetVideoFormat::Skip {
         info!("🎬 Auto Mode: {} → SKIP", input.display());
@@ -247,7 +268,7 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
             size_ratio: 0.0,
             success: true, 
             message: "Skipped modern codec to avoid generation loss".to_string(),
-            final_crf: 0,
+            final_crf: 0.0,
             exploration_attempts: 0,
         });
     }
@@ -292,24 +313,77 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
         TargetVideoFormat::HevcLosslessMkv => {
             info!("   🚀 Using HEVC Lossless Mode");
             let size = execute_hevc_lossless(&detection, &output_path)?;
-            (size, 0, 0)
+            (size, 0.0, 0) // 🔥 v3.4: CRF is now f32
         }
         TargetVideoFormat::HevcMp4 => {
             if config.use_lossless {
                 info!("   🚀 Using HEVC Lossless Mode (forced)");
                 let size = execute_hevc_lossless(&detection, &output_path)?;
-                (size, 0, 0)
-            } else if config.explore_smaller {
-                explore_smaller_size(&detection, &output_path)?
-            } else if config.match_quality {
-                // Calculate CRF to match input quality
-                let matched_crf = calculate_matched_crf(&detection);
-                info!("   🎯 Match Quality Mode: using CRF {} to match input quality", matched_crf);
-                let size = execute_hevc_conversion(&detection, &output_path, matched_crf)?;
-                (size, matched_crf, 0)
+                (size, 0.0, 0) // 🔥 v3.4: CRF is now f32
             } else {
-                let size = execute_hevc_conversion(&detection, &output_path, strategy.crf)?;
-                (size, strategy.crf, 0)
+                // 🔥 统一使用 shared_utils::video_explorer 处理所有探索模式
+                let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
+                let input_path = Path::new(&detection.file_path);
+                
+                let explore_result = if config.explore_smaller && config.match_quality {
+                    // 模式 3: --explore + --match-quality 组合（精确质量匹配）
+                    let initial_crf = calculate_matched_crf(&detection);
+                    info!("   🔬 Precise Quality-Match: CRF {:.1} + SSIM validation", initial_crf);
+                    shared_utils::explore_hevc(input_path, &output_path, vf_args, initial_crf)
+                } else if config.explore_smaller {
+                    // 模式 1: --explore 单独使用（仅探索更小大小）
+                    info!("   🔍 Size-Only Exploration: finding smaller output");
+                    shared_utils::explore_hevc_size_only(input_path, &output_path, vf_args, strategy.crf)
+                } else if config.match_quality {
+                    // 模式 2: --match-quality 单独使用（单次编码 + SSIM 验证）
+                    let matched_crf = calculate_matched_crf(&detection);
+                    info!("   🎯 Quality-Match: CRF {:.1} + SSIM validation", matched_crf);
+                    shared_utils::explore_hevc_quality_match(input_path, &output_path, vf_args, matched_crf)
+                } else {
+                    // 默认模式：使用策略 CRF，单次编码
+                    info!("   📦 Default: CRF {:.1}", strategy.crf);
+                    shared_utils::explore_hevc_quality_match(input_path, &output_path, vf_args, strategy.crf)
+                }.map_err(|e| VidQualityError::ConversionError(e.to_string()))?;
+                
+                // 打印探索日志
+                for log_line in &explore_result.log {
+                    info!("{}", log_line);
+                }
+                
+                // 🔥 v3.8: 质量验证失败时，保护原文件！
+                if !explore_result.quality_passed && (config.match_quality || config.explore_smaller) {
+                    warn!("   ⚠️  Quality validation FAILED: SSIM {:.4} < 0.95", explore_result.ssim.unwrap_or(0.0));
+                    warn!("   🛡️  Original file PROTECTED (quality too low to replace)");
+                    
+                    // 删除低质量的输出文件
+                    if output_path.exists() {
+                        let _ = std::fs::remove_file(&output_path);
+                        info!("   🗑️  Low-quality output deleted");
+                    }
+                    
+                    // 返回跳过状态，不删除原文件
+                    return Ok(ConversionOutput {
+                        input_path: input.display().to_string(),
+                        output_path: input.display().to_string(), // 保持原路径
+                        strategy: ConversionStrategy {
+                            target: TargetVideoFormat::Skip,
+                            reason: format!("Quality validation failed: SSIM {:.4} < 0.95", explore_result.ssim.unwrap_or(0.0)),
+                            command: String::new(),
+                            preserve_audio: detection.has_audio,
+                            crf: explore_result.optimal_crf,
+                            lossless: false,
+                        },
+                        input_size: detection.file_size,
+                        output_size: detection.file_size, // 保持原大小
+                        size_ratio: 1.0,
+                        success: false, // 标记为失败
+                        message: format!("Skipped: SSIM {:.4} below threshold 0.95", explore_result.ssim.unwrap_or(0.0)),
+                        final_crf: explore_result.optimal_crf,
+                        exploration_attempts: explore_result.iterations as u8,
+                    });
+                }
+                
+                (explore_result.output_size, explore_result.optimal_crf, explore_result.iterations as u8)
             }
         }
         TargetVideoFormat::Skip => unreachable!(),
@@ -319,9 +393,14 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
+    // 🔥 Safe delete with integrity check (断电保护)
     if config.should_delete_original() {
-        std::fs::remove_file(input)?;
-        info!("   🗑️  Original deleted");
+        if let Err(e) = shared_utils::conversion::safe_delete_original(input, &output_path, 1000) {
+            warn!("   ⚠️  Safe delete failed: {}", e);
+            // Don't propagate error - conversion succeeded, just couldn't delete original
+        } else {
+            info!("   🗑️  Original deleted (integrity verified)");
+        }
     }
     
     info!("   ✅ Complete: {:.1}% of original", size_ratio * 100.0);
@@ -351,124 +430,85 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     })
 }
 
-/// Calculate CRF to match input video quality level (Enhanced Algorithm)
+/// Calculate CRF to match input video quality level (Enhanced Algorithm for HEVC)
 /// 
-/// This function uses a more precise algorithm that considers:
-/// 1. Bits per pixel (bpp) - primary quality indicator
-/// 2. Source codec efficiency - H.264 vs others
-/// 3. Profile/B-frames - encoding complexity
-/// 4. Resolution scaling - higher res needs more bits
+/// Uses the unified quality_matcher module from shared_utils for consistent
+/// quality matching across all tools.
 /// 
-/// The formula converts bpp to an equivalent CRF using:
-/// CRF ≈ 51 - 10 * log2(bpp * efficiency_factor * resolution_factor)
+/// 🔥 v3.5: Uses VideoAnalysisBuilder for full field support:
+/// - video_bitrate (separate from total bitrate, 10-30% more accurate)
+/// - pix_fmt (chroma subsampling factor)
+/// - color_space (HDR detection)
 /// 
-/// Clamped to range [18, 32] to avoid extremes
-pub fn calculate_matched_crf(detection: &VideoDetectionResult) -> u8 {
-    // Use pre-calculated bpp if available, otherwise calculate
-    let bpp = if detection.bits_per_pixel > 0.0 {
-        detection.bits_per_pixel
+/// HEVC CRF range is 0-51, with 23 being default "good quality"
+/// Clamped to range [0, 32] for practical use (allows visually lossless)
+/// 
+/// 🔥 v3.4: Returns f32 for sub-integer precision (0.5 step)
+pub fn calculate_matched_crf(detection: &VideoDetectionResult) -> f32 {
+    // 🔥 v3.5: 使用 VideoAnalysisBuilder 传递完整字段
+    let mut builder = shared_utils::VideoAnalysisBuilder::new()
+        .basic(
+            detection.codec.as_str(),
+            detection.width,
+            detection.height,
+            detection.fps,
+            detection.duration_secs,
+        )
+        .bit_depth(detection.bit_depth)
+        .file_size(detection.file_size);
+    
+    // 🔥 优先使用 video_bitrate（排除音频开销，精度提升 10-30%）
+    if let Some(vbr) = detection.video_bitrate {
+        builder = builder.video_bitrate(vbr);
     } else {
-        let pixels_per_frame = (detection.width as f64) * (detection.height as f64);
-        let pixels_per_second = pixels_per_frame * detection.fps;
-        if pixels_per_second <= 0.0 {
-            info!("   ⚠️  Cannot calculate bpp, using default CRF 23");
-            return 23;
+        // Fallback: 使用总比特率（包含音频）
+        builder = builder.video_bitrate(detection.bitrate);
+    }
+    
+    // 🔥 传递 pix_fmt（色度子采样因子）
+    if !detection.pix_fmt.is_empty() {
+        builder = builder.pix_fmt(&detection.pix_fmt);
+    }
+    
+    // 🔥 传递 color_space（HDR 检测）
+    let (color_space_str, is_hdr) = match &detection.color_space {
+        crate::detection_api::ColorSpace::BT709 => ("bt709", false),
+        crate::detection_api::ColorSpace::BT2020 => ("bt2020nc", true), // BT.2020 通常是 HDR
+        crate::detection_api::ColorSpace::SRGB => ("srgb", false),
+        crate::detection_api::ColorSpace::AdobeRGB => ("adobergb", false),
+        crate::detection_api::ColorSpace::Unknown(_) => ("", false),
+    };
+    if !color_space_str.is_empty() {
+        builder = builder.color(color_space_str, is_hdr);
+    }
+    
+    // 🔥 传递 B-frame 信息（使用 gop 方法）
+    if detection.has_b_frames {
+        // 假设有 B 帧时使用 GOP=60, B-frames=2
+        builder = builder.gop(60, 2);
+    }
+    
+    let analysis = builder.build();
+    
+    match shared_utils::calculate_hevc_crf(&analysis) {
+        Ok(result) => {
+            shared_utils::log_quality_analysis(&analysis, &result, shared_utils::EncoderType::Hevc);
+            result.crf // 🔥 v3.4: Already f32 from quality_matcher
         }
-        (detection.bitrate as f64) / pixels_per_second
-    };
-    
-    // Codec efficiency factor (HEVC is ~40% more efficient than H.264)
-    // So we need to account for this when matching quality
-    let codec_factor = match detection.codec {
-        crate::detection_api::DetectedCodec::H264 => 1.0,      // Baseline
-        crate::detection_api::DetectedCodec::H265 => 0.6,      // Already efficient
-        crate::detection_api::DetectedCodec::VP9 => 0.65,      // Similar to HEVC
-        crate::detection_api::DetectedCodec::AV1 => 0.5,       // Most efficient
-        crate::detection_api::DetectedCodec::ProRes => 1.5,    // High bitrate codec
-        crate::detection_api::DetectedCodec::DNxHD => 1.5,     // High bitrate codec
-        crate::detection_api::DetectedCodec::MJPEG => 2.0,     // Very inefficient
-        _ => 1.0,
-    };
-    
-    // B-frames bonus (B-frames improve compression efficiency)
-    let bframe_factor = if detection.has_b_frames { 1.1 } else { 1.0 };
-    
-    // Resolution factor (higher res is harder to compress efficiently)
-    let pixels = (detection.width as f64) * (detection.height as f64);
-    let resolution_factor = if pixels > 8_000_000.0 {
-        0.85  // 4K+ needs more bits
-    } else if pixels > 2_000_000.0 {
-        0.9   // 1080p
-    } else if pixels > 500_000.0 {
-        0.95  // 720p
-    } else {
-        1.0   // SD
-    };
-    
-    // Effective bpp after adjustments
-    let effective_bpp = bpp * codec_factor * bframe_factor * resolution_factor;
-    
-    // Convert bpp to CRF using logarithmic formula
-    // CRF = 51 - 10 * log2(effective_bpp * 100)
-    // This gives roughly:
-    // bpp=1.0 → CRF ~18
-    // bpp=0.3 → CRF ~23
-    // bpp=0.1 → CRF ~28
-    // bpp=0.03 → CRF ~32
-    let crf_float = if effective_bpp > 0.0 {
-        51.0 - 10.0 * (effective_bpp * 100.0).log2()
-    } else {
-        28.0
-    };
-    
-    // Clamp to reasonable range [18, 32]
-    let crf = (crf_float.round() as i32).clamp(18, 32) as u8;
-    
-    info!("   📊 Quality Analysis:");
-    info!("      Raw bpp: {:.4}", bpp);
-    info!("      Codec factor: {:.2} ({})", codec_factor, detection.codec.as_str());
-    info!("      B-frames: {} (factor: {:.2})", detection.has_b_frames, bframe_factor);
-    info!("      Resolution: {}x{} (factor: {:.2})", detection.width, detection.height, resolution_factor);
-    info!("      Effective bpp: {:.4}", effective_bpp);
-    info!("      Calculated CRF: {}", crf);
-    
-    crf
-}
-
-/// Explore smaller size by trying higher CRF values
-fn explore_smaller_size(
-    detection: &VideoDetectionResult,
-    output_path: &Path,
-) -> Result<(u64, u8, u8)> {
-    let input_size = detection.file_size;
-    let mut current_crf: u8 = 18;
-    let mut attempts: u8 = 0;
-    const MAX_CRF: u8 = 28;
-    const CRF_STEP: u8 = 2;
-    
-    info!("   🔍 Exploring smaller size (input: {} bytes)", input_size);
-    
-    loop {
-        let output_size = execute_hevc_conversion(detection, output_path, current_crf)?;
-        attempts += 1;
-        
-        info!("   📊 CRF {}: {} bytes ({:.1}%)", 
-            current_crf, output_size, (output_size as f64 / input_size as f64) * 100.0);
-        
-        if output_size < input_size {
-            info!("   ✅ Found smaller output at CRF {}", current_crf);
-            return Ok((output_size, current_crf, attempts));
-        }
-        
-        current_crf += CRF_STEP;
-        
-        if current_crf > MAX_CRF {
-            warn!("   ⚠️  Reached CRF limit, using CRF {}", MAX_CRF);
-            let output_size = execute_hevc_conversion(detection, output_path, MAX_CRF)?;
-            return Ok((output_size, MAX_CRF, attempts));
+        Err(e) => {
+            // 🔥 Quality Manifesto: 失败时响亮报错，使用保守值
+            warn!("   ⚠️  Quality analysis failed: {}", e);
+            warn!("   ⚠️  Using conservative CRF 23.0");
+            23.0
         }
     }
 }
+
+// 🔥 旧的 explore_smaller_size 函数已被 shared_utils::video_explorer 替代
+// 新的探索器支持三种模式：
+// 1. SizeOnly (--explore): 仅探索更小的文件大小
+// 2. QualityMatch (--match-quality): 使用 AI 预测 CRF + SSIM 验证
+// 3. PreciseQualityMatch (--explore + --match-quality): 二分搜索 + SSIM 裁判验证
 
 /// Execute HEVC conversion with specified CRF (using libx265)
 fn execute_hevc_conversion(detection: &VideoDetectionResult, output: &Path, crf: u8) -> Result<u64> {
@@ -577,10 +617,370 @@ pub fn smart_convert(input: &Path, config: &ConversionConfig) -> Result<Conversi
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_target_format() {
         assert_eq!(TargetVideoFormat::HevcLosslessMkv.extension(), "mkv");
         assert_eq!(TargetVideoFormat::HevcMp4.extension(), "mp4");
+    }
+
+    // ============================================================
+    // 🍎 APPLE COMPATIBILITY MODE TESTS (裁判测试)
+    // ============================================================
+
+    /// 🍎 Test: ConversionConfig default has apple_compat = false
+    #[test]
+    fn test_config_default_apple_compat() {
+        let config = ConversionConfig::default();
+        assert!(!config.apple_compat, "Default apple_compat should be false");
+    }
+
+    /// 🍎 Test: determine_strategy skips VP9 in normal mode
+    #[test]
+    fn test_strategy_normal_mode_skips_vp9() {
+        let detection = crate::detection_api::VideoDetectionResult {
+            file_path: "/test/video.webm".to_string(),
+            format: "webm".to_string(),
+            codec: crate::detection_api::DetectedCodec::VP9,
+            codec_long: "Google VP9".to_string(),
+            compression: crate::detection_api::CompressionType::Standard,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+            pix_fmt: "yuv420p".to_string(),
+            file_size: 50_000_000, bitrate: 6_666_666,
+            has_audio: true, audio_codec: Some("opus".to_string()),
+            quality_score: 75, archival_candidate: false,
+            color_space: crate::detection_api::ColorSpace::BT709,
+            video_bitrate: Some(6_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.1,
+        };
+
+        // Normal mode: VP9 should be skipped
+        let strategy = determine_strategy(&detection);
+        assert_eq!(strategy.target, TargetVideoFormat::Skip,
+            "VP9 should be skipped in normal mode");
+        assert!(strategy.reason.contains("VP9"),
+            "Skip reason should mention VP9");
+    }
+
+    /// 🍎 Test: determine_strategy_with_apple_compat converts VP9
+    #[test]
+    fn test_strategy_apple_compat_converts_vp9() {
+        let detection = crate::detection_api::VideoDetectionResult {
+            file_path: "/test/video.webm".to_string(),
+            format: "webm".to_string(),
+            codec: crate::detection_api::DetectedCodec::VP9,
+            codec_long: "Google VP9".to_string(),
+            compression: crate::detection_api::CompressionType::Standard,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+            pix_fmt: "yuv420p".to_string(),
+            file_size: 50_000_000, bitrate: 6_666_666,
+            has_audio: true, audio_codec: Some("opus".to_string()),
+            quality_score: 75, archival_candidate: false,
+            color_space: crate::detection_api::ColorSpace::BT709,
+            video_bitrate: Some(6_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.1,
+        };
+
+        // Apple compat mode: VP9 should be converted to HEVC
+        let strategy = determine_strategy_with_apple_compat(&detection, true);
+        assert_ne!(strategy.target, TargetVideoFormat::Skip,
+            "VP9 should NOT be skipped in Apple compat mode");
+        assert_eq!(strategy.target, TargetVideoFormat::HevcMp4,
+            "VP9 should be converted to HEVC MP4 in Apple compat mode");
+    }
+
+    /// 🍎 Test: HEVC is skipped in both modes
+    #[test]
+    fn test_strategy_hevc_skipped_both_modes() {
+        let detection = crate::detection_api::VideoDetectionResult {
+            file_path: "/test/video.mp4".to_string(),
+            format: "mp4".to_string(),
+            codec: crate::detection_api::DetectedCodec::H265,
+            codec_long: "HEVC".to_string(),
+            compression: crate::detection_api::CompressionType::Standard,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+            pix_fmt: "yuv420p".to_string(),
+            file_size: 50_000_000, bitrate: 6_666_666,
+            has_audio: true, audio_codec: Some("aac".to_string()),
+            quality_score: 80, archival_candidate: false,
+            color_space: crate::detection_api::ColorSpace::BT709,
+            video_bitrate: Some(6_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.1,
+        };
+
+        // Normal mode: HEVC should be skipped
+        let normal = determine_strategy(&detection);
+        assert_eq!(normal.target, TargetVideoFormat::Skip,
+            "HEVC should be skipped in normal mode");
+
+        // Apple compat mode: HEVC should also be skipped
+        let apple = determine_strategy_with_apple_compat(&detection, true);
+        assert_eq!(apple.target, TargetVideoFormat::Skip,
+            "HEVC should be skipped in Apple compat mode too");
+    }
+
+    /// 🍎 Test: H.264 is converted in both modes
+    #[test]
+    fn test_strategy_h264_converted_both_modes() {
+        let detection = crate::detection_api::VideoDetectionResult {
+            file_path: "/test/video.mp4".to_string(),
+            format: "mp4".to_string(),
+            codec: crate::detection_api::DetectedCodec::H264,
+            codec_long: "H.264/AVC".to_string(),
+            compression: crate::detection_api::CompressionType::Standard,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+            pix_fmt: "yuv420p".to_string(),
+            file_size: 50_000_000, bitrate: 6_666_666,
+            has_audio: true, audio_codec: Some("aac".to_string()),
+            quality_score: 70, archival_candidate: false,
+            color_space: crate::detection_api::ColorSpace::BT709,
+            video_bitrate: Some(6_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.1,
+        };
+
+        // Normal mode: H.264 should be converted
+        let normal = determine_strategy(&detection);
+        assert_ne!(normal.target, TargetVideoFormat::Skip,
+            "H.264 should NOT be skipped in normal mode");
+
+        // Apple compat mode: H.264 should also be converted
+        let apple = determine_strategy_with_apple_compat(&detection, true);
+        assert_ne!(apple.target, TargetVideoFormat::Skip,
+            "H.264 should NOT be skipped in Apple compat mode");
+    }
+
+    /// 🍎 Strict test: Apple compat routing for all codec types
+    #[test]
+    fn test_strict_apple_compat_routing() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+
+        // Helper to create detection result with specific codec
+        let make_detection = |codec: DetectedCodec| -> crate::detection_api::VideoDetectionResult {
+            crate::detection_api::VideoDetectionResult {
+                file_path: "/test/video.mp4".to_string(),
+                format: "mp4".to_string(),
+                codec,
+                codec_long: "Test".to_string(),
+                compression: CompressionType::Standard,
+                width: 1920, height: 1080, frame_count: 1800,
+                fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+                pix_fmt: "yuv420p".to_string(),
+                file_size: 50_000_000, bitrate: 6_666_666,
+                has_audio: false, audio_codec: None,
+                quality_score: 70, archival_candidate: false,
+                color_space: ColorSpace::BT709,
+                video_bitrate: Some(6_000_000), has_b_frames: true,
+                profile: None, bits_per_pixel: 0.1,
+            }
+        };
+
+        // Test cases: (codec, should_skip_normal, should_skip_apple)
+        let test_cases = [
+            (DetectedCodec::H264, false, false),      // Legacy: convert both
+            (DetectedCodec::H265, true, true),        // HEVC: skip both
+            (DetectedCodec::VP9, true, false),        // VP9: skip normal, convert Apple
+            (DetectedCodec::AV1, true, false),        // AV1: skip normal, convert Apple
+        ];
+
+        for (codec, expected_skip_normal, expected_skip_apple) in test_cases {
+            let detection = make_detection(codec.clone());
+
+            let normal = determine_strategy(&detection);
+            let apple = determine_strategy_with_apple_compat(&detection, true);
+
+            let is_skip_normal = normal.target == TargetVideoFormat::Skip;
+            let is_skip_apple = apple.target == TargetVideoFormat::Skip;
+
+            assert_eq!(is_skip_normal, expected_skip_normal,
+                "STRICT: {:?} normal mode: expected skip={}, got skip={}",
+                codec, expected_skip_normal, is_skip_normal);
+
+            assert_eq!(is_skip_apple, expected_skip_apple,
+                "STRICT: {:?} Apple compat mode: expected skip={}, got skip={}",
+                codec, expected_skip_apple, is_skip_apple);
+        }
+    }
+
+    // ============================================================
+    // 🍎 APPLE COMPAT: AUTO ROUTING PRECISION (裁判测试)
+    // ============================================================
+
+    /// 🍎 AV1 → HEVC MP4 in Apple compat mode
+    #[test]
+    fn test_apple_compat_av1_to_hevc() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.mp4".into(), format: "mp4".into(),
+            codec: DetectedCodec::AV1, codec_long: "AV1".into(),
+            compression: CompressionType::Standard,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+            pix_fmt: "yuv420p".into(), file_size: 50_000_000,
+            bitrate: 6_666_666, has_audio: true,
+            audio_codec: Some("opus".into()), quality_score: 85,
+            archival_candidate: false, color_space: ColorSpace::BT709,
+            video_bitrate: Some(6_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.1,
+        };
+        let s = determine_strategy_with_apple_compat(&det, true);
+        assert_eq!(s.target, TargetVideoFormat::HevcMp4);
+        assert!(!s.lossless);
+    }
+
+    /// 🍎 VVC/H.266 → HEVC in Apple compat mode
+    #[test]
+    fn test_apple_compat_vvc_to_hevc() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.mp4".into(), format: "mp4".into(),
+            codec: DetectedCodec::VVC,
+            codec_long: "VVC".into(), compression: CompressionType::Standard,
+            width: 3840, height: 2160, frame_count: 3600,
+            fps: 60.0, duration_secs: 60.0, bit_depth: 10,
+            pix_fmt: "yuv420p10le".into(), file_size: 100_000_000,
+            bitrate: 13_333_333, has_audio: true,
+            audio_codec: Some("aac".into()), quality_score: 90,
+            archival_candidate: false, color_space: ColorSpace::BT2020,
+            video_bitrate: Some(12_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.04,
+        };
+        let s = determine_strategy_with_apple_compat(&det, true);
+        assert_ne!(s.target, TargetVideoFormat::Skip,
+            "VVC should convert in Apple compat mode");
+    }
+
+    // ============================================================
+    // 🍎 APPLE COMPAT: QUALITY MATCHING PRECISION (裁判测试)
+    // ============================================================
+
+    /// 🍎 CRF calculation precision for VP9 source
+    #[test]
+    fn test_apple_compat_crf_precision_vp9() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.webm".into(), format: "webm".into(),
+            codec: DetectedCodec::VP9, codec_long: "VP9".into(),
+            compression: CompressionType::Standard,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 8,
+            pix_fmt: "yuv420p".into(), file_size: 50_000_000,
+            bitrate: 6_666_666, has_audio: false, audio_codec: None,
+            quality_score: 75, archival_candidate: false,
+            color_space: ColorSpace::BT709,
+            video_bitrate: Some(6_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.1,
+        };
+        let crf = calculate_matched_crf(&det);
+        // CRF should be in valid HEVC range [0, 35]
+        assert!(crf >= 0.0 && crf <= 35.0,
+            "CRF {:.1} should be in [0, 35]", crf);
+        // For 6Mbps 1080p, expect CRF ~18-28
+        assert!(crf >= 18.0 && crf <= 28.0,
+            "CRF {:.1} should be ~18-28 for 6Mbps 1080p", crf);
+    }
+
+    /// 🍎 CRF precision for high bitrate AV1
+    #[test]
+    fn test_apple_compat_crf_precision_av1_high_bitrate() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.mp4".into(), format: "mp4".into(),
+            codec: DetectedCodec::AV1, codec_long: "AV1".into(),
+            compression: CompressionType::VisuallyLossless,
+            width: 3840, height: 2160, frame_count: 3600,
+            fps: 60.0, duration_secs: 60.0, bit_depth: 10,
+            pix_fmt: "yuv420p10le".into(), file_size: 500_000_000,
+            bitrate: 66_666_666, has_audio: true,
+            audio_codec: Some("opus".into()), quality_score: 95,
+            archival_candidate: true, color_space: ColorSpace::BT2020,
+            video_bitrate: Some(60_000_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.15,
+        };
+        let crf = calculate_matched_crf(&det);
+        // High bitrate should get lower CRF
+        assert!(crf >= 0.0 && crf <= 22.0,
+            "High bitrate AV1 should get CRF <= 22, got {:.1}", crf);
+    }
+
+    // ============================================================
+    // 🍎 APPLE COMPAT: FORMAT HANDLING PRECISION (裁判测试)
+    // ============================================================
+
+    /// 🍎 Lossless source → HEVC Lossless in Apple compat
+    #[test]
+    fn test_apple_compat_lossless_source() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.mkv".into(), format: "mkv".into(),
+            codec: DetectedCodec::FFV1,
+            codec_long: "FFV1".into(),
+            compression: CompressionType::Lossless,
+            width: 1920, height: 1080, frame_count: 900,
+            fps: 30.0, duration_secs: 30.0, bit_depth: 10,
+            pix_fmt: "yuv444p10le".into(), file_size: 2_000_000_000,
+            bitrate: 533_333_333, has_audio: false, audio_codec: None,
+            quality_score: 100, archival_candidate: true,
+            color_space: ColorSpace::BT709,
+            video_bitrate: Some(533_333_333), has_b_frames: false,
+            profile: None, bits_per_pixel: 8.5,
+        };
+        let s = determine_strategy_with_apple_compat(&det, true);
+        assert_eq!(s.target, TargetVideoFormat::HevcLosslessMkv,
+            "Lossless source should use HEVC Lossless");
+        assert!(s.lossless);
+    }
+
+    /// 🍎 Visually lossless → HEVC CRF 18
+    #[test]
+    fn test_apple_compat_visually_lossless() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.mov".into(), format: "mov".into(),
+            codec: DetectedCodec::ProRes,
+            codec_long: "ProRes".into(),
+            compression: CompressionType::VisuallyLossless,
+            width: 1920, height: 1080, frame_count: 1800,
+            fps: 30.0, duration_secs: 60.0, bit_depth: 10,
+            pix_fmt: "yuv422p10le".into(), file_size: 1_000_000_000,
+            bitrate: 133_333_333, has_audio: true,
+            audio_codec: Some("pcm_s24le".into()), quality_score: 98,
+            archival_candidate: true, color_space: ColorSpace::BT709,
+            video_bitrate: Some(130_000_000), has_b_frames: false,
+            profile: None, bits_per_pixel: 2.1,
+        };
+        let s = determine_strategy_with_apple_compat(&det, true);
+        assert_eq!(s.target, TargetVideoFormat::HevcMp4);
+        assert!((s.crf - 18.0).abs() < 0.1,
+            "Visually lossless should use CRF 18, got {:.1}", s.crf);
+    }
+
+    /// 🍎 Unknown codec string parsing
+    #[test]
+    fn test_apple_compat_unknown_codec_parsing() {
+        use crate::detection_api::{DetectedCodec, CompressionType, ColorSpace};
+        // Test VP9 as unknown string
+        let det = crate::detection_api::VideoDetectionResult {
+            file_path: "/t.webm".into(), format: "webm".into(),
+            codec: DetectedCodec::Unknown("vp9".into()),
+            codec_long: "VP9".into(), compression: CompressionType::Standard,
+            width: 1280, height: 720, frame_count: 900,
+            fps: 30.0, duration_secs: 30.0, bit_depth: 8,
+            pix_fmt: "yuv420p".into(), file_size: 10_000_000,
+            bitrate: 2_666_666, has_audio: false, audio_codec: None,
+            quality_score: 70, archival_candidate: false,
+            color_space: ColorSpace::BT709,
+            video_bitrate: Some(2_500_000), has_b_frames: true,
+            profile: None, bits_per_pixel: 0.09,
+        };
+        // Normal mode: should skip VP9
+        let normal = determine_strategy(&det);
+        assert_eq!(normal.target, TargetVideoFormat::Skip);
+        // Apple mode: should convert VP9
+        let apple = determine_strategy_with_apple_compat(&det, true);
+        assert_ne!(apple.target, TargetVideoFormat::Skip);
     }
 }

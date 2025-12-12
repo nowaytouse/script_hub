@@ -1,12 +1,12 @@
-//! vidquality-hevc - Video Quality Analysis and HEVC/H.265 Conversion API
+//! vidquality - Video Quality Analysis and Format Conversion API
 //!
 //! Provides precise video analysis with intelligent format conversion:
-//! - HEVC Lossless MKV for archival (lossless sources)
-//! - HEVC MP4 for compression (lossy sources)
+//! - FFV1 MKV for archival (lossless sources)
+//! - AV1 MP4 for compression (lossy sources)
 //!
 //! ## Simple Mode
 //! ```rust,ignore
-//! use vidquality_hevc::simple_convert;
+//! use vidquality_av1::simple_convert;
 //! use std::path::Path;
 //! 
 //! let input = Path::new("video.mp4");
@@ -24,7 +24,7 @@ use thiserror::Error;
 // Re-exports
 pub use detection_api::{detect_video, VideoDetectionResult, DetectedCodec, CompressionType, ColorSpace};
 pub use conversion_api::{
-    simple_convert, auto_convert, determine_strategy, determine_strategy_with_apple_compat, ConversionConfig, ConversionStrategy, ConversionOutput, TargetVideoFormat
+    simple_convert, auto_convert, determine_strategy, ConversionConfig, ConversionStrategy, ConversionOutput, TargetVideoFormat
 };
 pub use ffprobe::{probe_video, FFprobeResult};
 

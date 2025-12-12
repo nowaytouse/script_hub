@@ -2,19 +2,14 @@ use clap::{Parser, Subcommand, ValueEnum};
 use tracing::info;
 use std::path::PathBuf;
 use std::time::Instant;
-
-// 使用 lib crate
-use vidquality_hevc::{
-    detect_video, auto_convert, simple_convert, determine_strategy, 
-    ConversionConfig, VideoDetectionResult
-};
+use vidquality_av1::{detect_video, auto_convert, determine_strategy, ConversionConfig};
 
 // 🔥 使用 shared_utils 的统计报告功能（模块化）
 use shared_utils::{print_summary_report, BatchResult};
 
 #[derive(Parser)]
-#[command(name = "vidquality-hevc")]
-#[command(version, about = "Video quality analyzer and HEVC/H.265 converter", long_about = None)]
+#[command(name = "vidquality")]
+#[command(version, about = "Video quality analyzer and format converter - FFV1 archival and AV1 compression", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -24,55 +19,74 @@ struct Cli {
 enum Commands {
     /// Analyze video properties
     Analyze {
+        /// Input video file
         #[arg(value_name = "INPUT")]
         input: PathBuf,
+
+        /// Output format
         #[arg(short, long, default_value = "human")]
         output: OutputFormat,
     },
 
-    /// Auto mode: HEVC Lossless for lossless, HEVC CRF for lossy
+    /// Auto mode: FFV1 for lossless, AV1 for lossy (intelligent selection)
     Auto {
+        /// Input video file
         #[arg(value_name = "INPUT")]
         input: PathBuf,
+
+        /// Output directory
         #[arg(short, long)]
         output: Option<PathBuf>,
+
+        /// Force overwrite existing files
         #[arg(short, long)]
         force: bool,
+
         /// Recursive directory scan
         #[arg(short, long)]
         recursive: bool,
+
+        /// Delete original after conversion
         #[arg(long)]
         delete_original: bool,
+
         /// In-place conversion: convert and delete original file
+        /// Effectively "replaces" the original with the new format
         #[arg(long)]
         in_place: bool,
+
+        /// Explore smaller size (try higher CRF if output > input)
         #[arg(long)]
         explore: bool,
+
+        /// Use mathematical lossless AV1 (⚠️ VERY SLOW, huge files)
         #[arg(long)]
         lossless: bool,
+
         /// Match input video quality level (auto-calculate CRF based on input bitrate)
         /// Enabled by default for video processing
         #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
         match_quality: bool,
-        /// 🍎 Apple compatibility mode: Convert non-Apple-compatible modern codecs (AV1, VP9) to HEVC
-        /// When enabled, AV1/VP9/VVC/AV2 videos will be converted to HEVC for Apple device compatibility
-        /// Only HEVC videos will be skipped (already Apple compatible)
-        #[arg(long, default_value_t = false)]
-        apple_compat: bool,
     },
 
-    /// Simple mode: ALL videos → HEVC MP4
+    /// Simple mode: ALL videos → AV1 MP4
     Simple {
+        /// Input video file
         #[arg(value_name = "INPUT")]
         input: PathBuf,
+
+        /// Output directory
         #[arg(short, long)]
         output: Option<PathBuf>,
+
+        /// Use mathematical lossless AV1 (⚠️ VERY SLOW, huge files)
         #[arg(long)]
         lossless: bool,
     },
 
     /// Show recommended strategy without converting
     Strategy {
+        /// Input video file
         #[arg(value_name = "INPUT")]
         input: PathBuf,
     },
@@ -80,7 +94,9 @@ enum Commands {
 
 #[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
 enum OutputFormat {
+    /// Human-readable output
     Human,
+    /// JSON output
     Json,
 }
 
@@ -97,6 +113,7 @@ fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Analyze { input, output } => {
             let result = detect_video(&input)?;
+            
             match output {
                 OutputFormat::Human => print_analysis_human(&result),
                 OutputFormat::Json => {
@@ -105,7 +122,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Auto { input, output, force, recursive, delete_original, in_place, explore, lossless, match_quality, apple_compat } => {
+        Commands::Auto { input, output, force, recursive, delete_original, in_place, explore, lossless, match_quality } => {
             let config = ConversionConfig {
                 output_dir: output.clone(),
                 force,
@@ -115,27 +132,23 @@ fn main() -> anyhow::Result<()> {
                 use_lossless: lossless,
                 match_quality,
                 in_place,
-                apple_compat,
+                // 🔥 v3.5: 裁判机制增强参数
+                min_ssim: 0.95,       // 默认 SSIM 阈值
+                validate_vmaf: false, // 默认不启用 VMAF（较慢）
+                min_vmaf: 85.0,       // 默认 VMAF 阈值
             };
             
-            info!("🎬 Auto Mode Conversion (HEVC/H.265)");
-            info!("   Lossless sources → HEVC Lossless MKV");
-            if match_quality {
-                info!("   Lossy sources → HEVC MP4 (CRF auto-matched to input quality)");
-            } else {
-                info!("   Lossy sources → HEVC MP4 (CRF 18-20)");
-            }
-            if lossless {
-                info!("   ⚠️  HEVC Lossless: ENABLED");
-            }
-            if explore {
-                info!("   📊 Size exploration: ENABLED");
-            }
+            info!("🎬 Auto Mode Conversion (AV1)");
+            info!("   Lossless sources → AV1 Lossless");
+            info!("   Lossy sources → AV1 MP4 (CRF auto-matched to input quality)");
             if match_quality {
                 info!("   🎯 Match Quality: ENABLED");
             }
-            if apple_compat {
-                info!("   🍎 Apple Compatibility: ENABLED (AV1/VP9 → HEVC)");
+            if lossless {
+                info!("   ⚠️  Mathematical lossless AV1: ENABLED (VERY SLOW!)");
+            }
+            if explore {
+                info!("   📊 Size exploration: ENABLED");
             }
             if recursive {
                 info!("   📂 Recursive: ENABLED");
@@ -143,6 +156,7 @@ fn main() -> anyhow::Result<()> {
             info!("");
             
             if input.is_dir() {
+                // Directory processing
                 use walkdir::WalkDir;
                 let video_extensions = ["mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "mts"];
                 
@@ -231,7 +245,7 @@ fn main() -> anyhow::Result<()> {
                     start_time.elapsed(),
                     total_input_bytes,
                     total_output_bytes,
-                    "HEVC Video",
+                    "AV1 Video",
                 );
             } else {
                 // 🔥 单文件处理：先检查是否是视频文件
@@ -253,6 +267,7 @@ fn main() -> anyhow::Result<()> {
                     );
                 }
                 
+                // Single file processing
                 let result = auto_convert(&input, &config)?;
                 
                 info!("");
@@ -261,17 +276,18 @@ fn main() -> anyhow::Result<()> {
                 info!("   Output: {} ({} bytes)", result.output_path, result.output_size);
                 info!("   Ratio:  {:.1}%", result.size_ratio * 100.0);
                 if result.exploration_attempts > 0 {
-                    info!("   🔍 Explored {} CRF values, final: CRF {:.1}", result.exploration_attempts, result.final_crf);
+                    info!("   🔍 Explored {} CRF values, final: CRF {}", result.exploration_attempts, result.final_crf);
                 }
             }
         }
 
         Commands::Simple { input, output, lossless: _ } => {
-            info!("🎬 Simple Mode Conversion (HEVC/H.265)");
-            info!("   ALL videos → HEVC MP4 (CRF 18)");
+            info!("🎬 Simple Mode Conversion");
+            info!("   ⚠️  ALL videos → AV1 MP4 (MATHEMATICAL LOSSLESS - VERY SLOW!)");
+            info!("   (Note: Simple mode now enforces lossless conversion by default)");
             info!("");
             
-            let result = simple_convert(&input, output.as_deref())?;
+            let result = vidquality_av1::simple_convert(&input, output.as_deref())?;
             
             info!("");
             info!("✅ Complete!");
@@ -283,7 +299,7 @@ fn main() -> anyhow::Result<()> {
             let detection = detect_video(&input)?;
             let strategy = determine_strategy(&detection);
             
-            println!("\n🎯 Recommended Strategy (HEVC Auto Mode)");
+            println!("\n🎯 Recommended Strategy (Auto Mode)");
             println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             println!("📁 File: {}", input.display());
             println!("🎬 Codec: {} ({})", detection.codec.as_str(), detection.compression.as_str());
@@ -297,8 +313,8 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn print_analysis_human(result: &VideoDetectionResult) {
-    println!("\n📊 Video Analysis Report (HEVC)");
+fn print_analysis_human(result: &vidquality_av1::VideoDetectionResult) {
+    println!("\n📊 Video Analysis Report");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     println!("📁 File: {}", result.file_path);
     println!("📦 Format: {}", result.format);
