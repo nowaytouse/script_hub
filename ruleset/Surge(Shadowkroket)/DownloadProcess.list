@@ -2,10 +2,11 @@
 # Ruleset: DownloadProcess
 # Policy: DIRECT
 # Description: Download processes direct
-# Rules: 19
+# Rules: 47
 # Updated: 2025-12-12 20:18:31
 # ═══════════════════════════════════════════════════════════════
 
+# Download processes
 PROCESS-NAME,BitComet
 PROCESS-NAME,Deluge
 PROCESS-NAME,DownloadService
@@ -27,3 +28,25 @@ DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
 DOMAIN-SUFFIX,adobesigncdn.com
 DOMAIN-SUFFIX,echocdn.com
 DOMAIN-SUFFIX,ftcdn.net
+
+# Gaming download domains
+DOMAIN,cloudsync-prod.s3.amazonaws.com
+DOMAIN,gamedownloads-rockstargames-com.akamaized.net
+DOMAIN,ubisoft-orbit-savegames.s3.amazonaws.com
+DOMAIN,ubisoft-uplay-savegames.s3.amazonaws.com
+DOMAIN,videos-rockstargames-com.akamaized.net
+DOMAIN,media-rockstargames-com.akamaized.net
+
+# GitHub download domains
+DOMAIN,github-cloud.s3.amazonaws.com
+
+# Google download domains
+DOMAIN,download.qatp1.net
+DOMAIN-SUFFIX,googleusercontent.com
+DOMAIN-SUFFIX,webpkgcache.com
+
+# CDN and asset delivery domains
+DOMAIN-KEYWORD,vod-adaptive.akamaized.net
+DOMAIN-KEYWORD,vdownload.hanime1
+DOMAIN-SUFFIX,githubassets.com
+DOMAIN-SUFFIX,githubusercontent.com
