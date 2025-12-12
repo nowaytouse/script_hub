@@ -273,7 +273,8 @@ if [ ${#URLS[@]} -eq 0 ]; then
         "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule"
         "https://raw.githubusercontent.com/ninjai/apple/refs/heads/main/sgmodule/iCloud_Private_Relay_Gateway.sgmodule"
         "https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule"
-        "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Location.sgmodule"
+        "        # 🔥 GeoServices 已重命名为 Maps，Location 模块已合并到 Maps
+        # "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Location.sgmodule""
         "https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule"
         "https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule"
         "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule"
