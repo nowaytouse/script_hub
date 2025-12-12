@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- 服务标识 -->
+    <key>Label</key>
+    <string>com.homebrew.auto-update</string>
+    
+    <!-- 执行的程序 -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/bash</string>
+        <string>/Users/nyamiiko/Downloads/GitHub/script_hub/local/brew_auto_update.sh</string>
+    </array>
+    
+    <!-- 工作目录 -->
+    <key>WorkingDirectory</key>
+    <string>/Users/nyamiiko</string>
+    
+    <!-- 标准输出和错误 -->
+    <key>StandardOutPath</key>
+    <string>/Users/nyamiiko/.brew_auto_update/launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/nyamiiko/.brew_auto_update/launchd.log</string>
+    
+    <!-- 自动启动 -->
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <!-- 保持运行 -->
+    <key>KeepAlive</key>
+    <true/>
+    
+    <!-- 用户 -->
+    <key>UserName</key>
+    <string>nyamiiko</string>
+    
+    <!-- 环境变量 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/nyamiiko</string>
+    </dict>
+    
+    <!-- 进程管理 -->
+    <key>ProcessType</key>
+    <string>Background</string>
+    
+    <!-- 重启延迟 -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>
