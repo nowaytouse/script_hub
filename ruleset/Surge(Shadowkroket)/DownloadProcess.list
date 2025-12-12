@@ -1,12 +1,16 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: DownloadProcess
 # Policy: DIRECT
-# Description: Download processes direct
-# Rules: 47
-# Updated: 2025-12-12 20:18:31
+# Description: Download client processes (direct connection)
+# Rules: 15
+# Updated: 2025-12-12 20:30:00
+# ═══════════════════════════════════════════════════════════════
+# 
+# 下载客户端进程直连
+# 域名规则请使用 DownloadDirect.list
+#
 # ═══════════════════════════════════════════════════════════════
 
-# Download processes
 PROCESS-NAME,BitComet
 PROCESS-NAME,Deluge
 PROCESS-NAME,DownloadService
@@ -22,31 +26,3 @@ PROCESS-NAME,naive
 PROCESS-NAME,privoxy
 PROCESS-NAME,qBittorrent
 PROCESS-NAME,uTorrent
-
-# Adobe download-related domains
-DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
-DOMAIN-SUFFIX,adobesigncdn.com
-DOMAIN-SUFFIX,echocdn.com
-DOMAIN-SUFFIX,ftcdn.net
-
-# Gaming download domains
-DOMAIN,cloudsync-prod.s3.amazonaws.com
-DOMAIN,gamedownloads-rockstargames-com.akamaized.net
-DOMAIN,ubisoft-orbit-savegames.s3.amazonaws.com
-DOMAIN,ubisoft-uplay-savegames.s3.amazonaws.com
-DOMAIN,videos-rockstargames-com.akamaized.net
-DOMAIN,media-rockstargames-com.akamaized.net
-
-# GitHub download domains
-DOMAIN,github-cloud.s3.amazonaws.com
-
-# Google download domains
-DOMAIN,download.qatp1.net
-DOMAIN-SUFFIX,googleusercontent.com
-DOMAIN-SUFFIX,webpkgcache.com
-
-# CDN and asset delivery domains
-DOMAIN-KEYWORD,vod-adaptive.akamaized.net
-DOMAIN-KEYWORD,vdownload.hanime1
-DOMAIN-SUFFIX,githubassets.com
-DOMAIN-SUFFIX,githubusercontent.com

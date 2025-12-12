@@ -1,0 +1,122 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DownloadDirect
+# Policy: DIRECT
+# Description: Download CDN domains for direct connection
+# Rules: 68
+# Updated: 2025-12-12 20:30:00
+# ═══════════════════════════════════════════════════════════════
+# 
+# 设计理念：网站走代理，下载直连
+# - 游戏/软件网站需要代理访问（被墙或加速）
+# - 大文件下载走直连（节省流量、提高速度）
+# - 小文件/短内容仍可走代理（不影响体验）
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────
+# Steam 下载 CDN（游戏下载直连）
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,steamcontent.com
+DOMAIN-SUFFIX,steamusercontent.com
+DOMAIN-SUFFIX,steamserver.net
+DOMAIN-SUFFIX,st.dl.bscstorage.net
+DOMAIN-SUFFIX,st.dl.eccdnx.com
+DOMAIN-SUFFIX,st.dl.pinyuncloud.com
+DOMAIN-SUFFIX,dl.steam.clngaa.com
+DOMAIN-SUFFIX,dl.steam.ksyna.com
+DOMAIN-SUFFIX,steam.cdn.on.net
+DOMAIN-SUFFIX,steam.cdn.orcon.net.nz
+DOMAIN-SUFFIX,steam.cdn.slingshot.co.nz
+DOMAIN-SUFFIX,steam.cdn.webra.ru
+DOMAIN-SUFFIX,steampipe.akamaized.net
+DOMAIN-SUFFIX,steampipe-kr.akamaized.net
+DOMAIN-SUFFIX,steampipe-partner.akamaized.net
+DOMAIN-SUFFIX,cdn-ali.content.steamchina.com
+DOMAIN-SUFFIX,cdn-qc.content.steamchina.com
+DOMAIN-SUFFIX,cdn-ws.content.steamchina.com
+DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
+
+# ─────────────────────────────────────────────────────────────
+# Epic Games 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,epicgames-download1.akamaized.net
+DOMAIN-SUFFIX,download.epicgames.com
+DOMAIN-SUFFIX,download2.epicgames.com
+DOMAIN-SUFFIX,download3.epicgames.com
+DOMAIN-SUFFIX,download4.epicgames.com
+DOMAIN-SUFFIX,fastly-download.epicgames.com
+
+# ─────────────────────────────────────────────────────────────
+# GOG 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,gog.qtlglb.com
+DOMAIN-SUFFIX,cdn.gog.com
+
+# ─────────────────────────────────────────────────────────────
+# Blizzard/Battle.net 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,blzddist1-a.akamaihd.net
+DOMAIN-SUFFIX,blzddistkr1-a.akamaihd.net
+DOMAIN-SUFFIX,blz.nosdn.127.net
+DOMAIN-SUFFIX,level3.blizzard.com
+DOMAIN-SUFFIX,dist.blizzard.com
+
+# ─────────────────────────────────────────────────────────────
+# EA/Origin 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,origin-a.akamaihd.net
+DOMAIN-SUFFIX,originasserts.akamaized.net
+DOMAIN-SUFFIX,eaasserts-a.akamaihd.net
+
+# ─────────────────────────────────────────────────────────────
+# Ubisoft 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,ubisoft-orbit-savegames.s3.amazonaws.com
+DOMAIN-SUFFIX,ubisoft-uplay-savegames.s3.amazonaws.com
+
+# ─────────────────────────────────────────────────────────────
+# Rockstar 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
+
+# ─────────────────────────────────────────────────────────────
+# Microsoft/Xbox 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,assets1.xboxlive.com
+DOMAIN-SUFFIX,assets2.xboxlive.com
+DOMAIN-SUFFIX,xboxlive.com.edgesuite.net
+DOMAIN-SUFFIX,xbox-ecn102.vo.msecnd.net
+DOMAIN-SUFFIX,dlassets-ssl.xboxlive.com
+DOMAIN-SUFFIX,dlassets2-ssl.xboxlive.com
+
+# ─────────────────────────────────────────────────────────────
+# PlayStation 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,gs2.ww.prod.dl.playstation.net
+DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
+DOMAIN-SUFFIX,ares.dl.playstation.net
+
+# ─────────────────────────────────────────────────────────────
+# Nintendo 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,ccs.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,ecs.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,ias.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,nus.cdn.shop.wii.com
+DOMAIN-SUFFIX,nus.cdn.t.shop.nintendowifi.net
+
+# ─────────────────────────────────────────────────────────────
+# Adobe 下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
+DOMAIN-SUFFIX,adobesigncdn.com
+DOMAIN-SUFFIX,echocdn.com
+DOMAIN-SUFFIX,ftcdn.net
+
+# ─────────────────────────────────────────────────────────────
+# 通用软件下载 CDN
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
+DOMAIN-SUFFIX,officecdn.microsoft.com
+DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
+
