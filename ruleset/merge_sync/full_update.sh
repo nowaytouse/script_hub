@@ -314,11 +314,24 @@ if [ -f "${SCRIPT_DIR}/cleanup_empty_rulesets.sh" ]; then
     if [ "$VERBOSE" = true ]; then
         "${SCRIPT_DIR}/cleanup_empty_rulesets.sh"
     else
-        "${SCRIPT_DIR}/cleanup_empty_rulesets.sh" 2>&1 | grep -E "^\[DELETE\]|^\[ERROR\]|Kept:|Deleted:|Errors:" || true
+        "${SCRIPT_DIR}/cleanup_empty_rulesets.sh" 2>&1 | grep -E "^\[DELETE\]|^\[ERROR\]|^\[PROTECTED\]|Kept:|Deleted:|Errors:" || true
     fi
     log_success "Empty ruleset cleanup complete"
 else
     log_warning "Skip: cleanup_empty_rulesets.sh not found"
+fi
+
+# 🔥 清理规则集冲突（移除混入的域名）
+if [ -f "${SCRIPT_DIR}/clean_ruleset_conflicts.sh" ]; then
+    log_info "Cleaning ruleset conflicts (removing mixed-in domains)..."
+    if [ "$VERBOSE" = true ]; then
+        "${SCRIPT_DIR}/clean_ruleset_conflicts.sh"
+    else
+        "${SCRIPT_DIR}/clean_ruleset_conflicts.sh" 2>&1 | grep -E "^\[✓\]|^\[⚠\].*移除:" || true
+    fi
+    log_success "Ruleset conflict cleanup complete"
+else
+    log_warning "Skip: clean_ruleset_conflicts.sh not found"
 fi
 
 if [ -f "${SCRIPT_DIR}/sync_ports_to_firewall_module.sh" ]; then
