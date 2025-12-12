@@ -232,16 +232,19 @@ for line in sys.stdin:
         {
             echo "$header_content"
             echo ""
-            echo "# ═══════════════════════════════════════════════════════════════"
-            echo "# NOTE: All $original_rules rules from this module have been extracted to AdBlock.list"
-            echo "# This cleaned version only contains non-Rule sections:"
-            echo "#   - [URL Rewrite]"
-            echo "#   - [MITM]"
-            echo "#   - [Script]"
-            echo "#   - Other module-specific features"
-            echo "# Use AdBlock.list for all blocking rules"
-            echo "# ═══════════════════════════════════════════════════════════════"
-            echo ""
+            # 🔥 只在有规则时才添加提取注释
+            if [ "$original_rules" -gt 0 ]; then
+                echo "# ═══════════════════════════════════════════════════════════════"
+                echo "# NOTE: All $original_rules rules from this module have been extracted to AdBlock.list"
+                echo "# This cleaned version only contains non-Rule sections:"
+                echo "#   - [URL Rewrite]"
+                echo "#   - [MITM]"
+                echo "#   - [Script]"
+                echo "#   - Other module-specific features"
+                echo "# Use AdBlock.list for all blocking rules"
+                echo "# ═══════════════════════════════════════════════════════════════"
+                echo ""
+            fi
         } > "${cleaned_module}.tmp"
         mv "${cleaned_module}.tmp" "$cleaned_module"
         
