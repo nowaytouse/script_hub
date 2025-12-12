@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 # ============================================
 # Script: Ingest Rules from Surge Profile
 # Description:

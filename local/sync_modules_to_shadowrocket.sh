@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # 同步Surge模块到Shadowrocket
 # 功能: 转换Surge模块为Shadowrocket兼容格式并同步

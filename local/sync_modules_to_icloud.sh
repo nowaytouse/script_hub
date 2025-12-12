@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Module Sync Script - Surge Modules to iCloud (Surge + Shadowrocket)

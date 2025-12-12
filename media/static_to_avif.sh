@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ============================================================================
 # 🖼️ Static Image to AVIF Converter (using avifenc)

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 广告拦截模块智能合并脚本 (Ad-Blocking Module Intelligent Merger)

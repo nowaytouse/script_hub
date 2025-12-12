@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # Sing-box Manager 一键更新脚本
 # 用途：快速更新所有内容（内核 + geofiles + 配置）

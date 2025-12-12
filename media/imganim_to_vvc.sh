@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ============================================================================
 # 🎬 Animated Image to H.266/VVC Video Converter with Health Check

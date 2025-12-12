@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 echo "=== 性能基准测试 ==="
 echo ""
 echo "测试 1: 完整更新时间"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 模块同步脚本 - Surge 模块同步到 iCloud (Surge + Shadowrocket)

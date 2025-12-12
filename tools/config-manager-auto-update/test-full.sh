@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 set -e
 echo "=== Mihomo 完整测试 ==="
 echo ""

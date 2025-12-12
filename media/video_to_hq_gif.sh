@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ============================================================================
 # 🎬 Video to High-Quality GIF Converter with Health Check

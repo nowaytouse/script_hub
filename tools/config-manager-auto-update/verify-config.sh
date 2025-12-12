@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # 配置验证脚本
 # 用途：验证 cm_config.json 配置是否正确

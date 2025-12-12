@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # ============================================================================
 # 🎬 Short Animated Image to AV1 Video Converter (< 3 seconds)

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 echo "Testing mihomo update functionality..."
 ./target/release/singbox-manager --version
 echo ""

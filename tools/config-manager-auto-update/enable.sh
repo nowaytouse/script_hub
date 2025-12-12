@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
 # Sing-box Manager 启用脚本
 # 用途：编译、配置和启动工具
