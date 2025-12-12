@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # Universal Module Downloader & Extractor
 # 
@@ -157,13 +157,31 @@ sync_to_shadowrocket() {
         # Copy and convert
         cp "$module" "$sr_file"
         
-        # Shadowrocket-specific adjustments
-        # Comment out #!category= (Shadowrocket doesn't use it)
-        if grep -q "^#!category=" "$sr_file"; then
-            if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' 's/^#!category=/#!category (Surge only): /' "$sr_file"
-            else
-                sed -i 's/^#!category=/#!category (Surge only): /' "$sr_file"
+        # 🔥 修复: 保留 #!category= 标签（小火箭也支持分组）
+        # 只需要移除 Surge 特有的参数
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # 移除 Surge 特有参数
+            sed -i '' 's/,extended-matching//g' "$sr_file"
+            sed -i '' 's/,pre-matching//g' "$sr_file"
+            sed -i '' 's/,"update-interval=[0-9]*"//g' "$sr_file"
+            # 转换 REJECT-DROP/REJECT-NO-DROP 为 REJECT
+            sed -i '' 's/REJECT-DROP/REJECT/g' "$sr_file"
+            sed -i '' 's/REJECT-NO-DROP/REJECT/g' "$sr_file"
+            # 移除 %APPEND% 前缀
+            sed -i '' 's/%APPEND% //g' "$sr_file"
+            # 在 #!desc 中添加 [🚀SR] 标记（如果没有的话）
+            if ! grep -q '\[🚀SR\]' "$sr_file"; then
+                sed -i '' 's/^#!desc=/#!desc=[🚀SR] /' "$sr_file"
+            fi
+        else
+            sed -i 's/,extended-matching//g' "$sr_file"
+            sed -i 's/,pre-matching//g' "$sr_file"
+            sed -i 's/,"update-interval=[0-9]*"//g' "$sr_file"
+            sed -i 's/REJECT-DROP/REJECT/g' "$sr_file"
+            sed -i 's/REJECT-NO-DROP/REJECT/g' "$sr_file"
+            sed -i 's/%APPEND% //g' "$sr_file"
+            if ! grep -q '\[🚀SR\]' "$sr_file"; then
+                sed -i 's/^#!desc=/#!desc=[🚀SR] /' "$sr_file"
             fi
         fi
         

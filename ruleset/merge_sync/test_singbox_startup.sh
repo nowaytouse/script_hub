@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Singbox Startup Test Script
 # Purpose: Test if Singbox configuration can load properly

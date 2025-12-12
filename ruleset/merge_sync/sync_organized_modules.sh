@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # Sync Organized Modules to Shadowrocket
 # 
@@ -53,12 +53,31 @@ for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module "$MODULE_DIR"/*/*.
     cp "$module" "$target_file"
     
     # Shadowrocket-specific adjustments
-    # Keep #!group for organization purposes (comment it out)
-    if grep -q "^#!group=" "$target_file"; then
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' 's/^#!group=/#!group (for organization): /' "$target_file"
-        else
-            sed -i 's/^#!group=/#!group (for organization): /' "$target_file"
+    # 🔥 修复: 保留 #!category= 标签（小火箭也支持分组）
+    # 只需要移除 Surge 特有的参数
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # 移除 Surge 特有参数
+        sed -i '' 's/,extended-matching//g' "$target_file"
+        sed -i '' 's/,pre-matching//g' "$target_file"
+        sed -i '' 's/,"update-interval=[0-9]*"//g' "$target_file"
+        # 转换 REJECT-DROP/REJECT-NO-DROP 为 REJECT
+        sed -i '' 's/REJECT-DROP/REJECT/g' "$target_file"
+        sed -i '' 's/REJECT-NO-DROP/REJECT/g' "$target_file"
+        # 移除 %APPEND% 前缀
+        sed -i '' 's/%APPEND% //g' "$target_file"
+        # 在 #!desc 中添加 [🚀SR] 标记（如果没有的话）
+        if ! grep -q '\[🚀SR\]' "$target_file"; then
+            sed -i '' 's/^#!desc=/#!desc=[🚀SR] /' "$target_file"
+        fi
+    else
+        sed -i 's/,extended-matching//g' "$target_file"
+        sed -i 's/,pre-matching//g' "$target_file"
+        sed -i 's/,"update-interval=[0-9]*"//g' "$target_file"
+        sed -i 's/REJECT-DROP/REJECT/g' "$target_file"
+        sed -i 's/REJECT-NO-DROP/REJECT/g' "$target_file"
+        sed -i 's/%APPEND% //g' "$target_file"
+        if ! grep -q '\[🚀SR\]' "$target_file"; then
+            sed -i 's/^#!desc=/#!desc=[🚀SR] /' "$target_file"
         fi
     fi
     

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # AdBlock Module Smart Merge Script v4.1 (Performance Optimized - macOS Compatible)
 # Optimization: Use sort -u instead of line-by-line grep dedup, batch processing

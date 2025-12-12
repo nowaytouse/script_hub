@@ -1,5 +1,6 @@
 #!name=广告联盟去广告
 #!desc=快手联盟,优量汇,穿山甲
+#!category=『 🔝 Head Expanse › 首端扩域 』
 # 仓库地址 https://github.com/app2smile/rules
 
 [MITM]
@@ -7,12 +8,6 @@ hostname = %APPEND% api-access.pangolin-sdk-toutiao.com, is.snssdk.com, mi.gdt.q
 
 [Script]
 广告联盟json = type=http-response,pattern=^https:\/\/((api-access\.pangolin-sdk-toutiao|is\.snssdk)\.com\/api\/ad\/union\/sdk\/get_ads|open\.e\.kuaishou\.com\/rest\/e\/v3\/open\/univ$|mi\.gdt\.qq\.com\/gdt_mview\.fcg\?),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/adsense.js
-#!group=🔝 Head Expanse › 首端扩域
-
-# ═══════════════════════════════════════════════════════════════
-# NOTE: All 0 rules from this module have been extracted to AdBlock.list
-# This cleaned version only contains non-Rule sections:
-#   - [URL Rewrite]
 #   - [MITM]
 #   - [Script]
 #   - Other module-specific features

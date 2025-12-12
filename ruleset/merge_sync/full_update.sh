@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Full Update Script v3.2
 # Function: Git Pull + Sync MetaCubeX + Update Sources + Incremental Merge + 

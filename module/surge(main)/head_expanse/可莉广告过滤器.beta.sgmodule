@@ -1,14 +1,12 @@
 #!name=可莉广告过滤器
 #!desc=可莉自用的广告过滤器
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!author=可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
-#!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=去广告
 #!loon_version=3.2.4(787)
 #!homepage=https://hub.kelee.one
 #!date=2025-07-16 02:25:05
-
-#!group=🔝 Head Expanse › 首端扩域
 
 [Body Rewrite]
 http-response ^https?:\/\/cmds\.omesoft\.com\/HypnotistWS\.asmx <GetADResult>\.\*\?<\/GetADResult> <GetADResult>{"ret":0,"msg":"正常","err_code":0,"data":{"ad":[]}}</GetADResult>

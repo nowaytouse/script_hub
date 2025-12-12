@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Complete Ruleset Merger - Merge all third-party rules into own rulesets
 # =============================================================================

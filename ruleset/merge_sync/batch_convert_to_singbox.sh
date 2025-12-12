@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Batch Convert Surge Rules to Singbox Binary (.srs) - Incremental v2.2
 # Optimization: 

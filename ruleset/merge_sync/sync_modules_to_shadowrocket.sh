@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Sync Surge Modules to Shadowrocket
 # Function: Convert Surge modules to Shadowrocket compatible format and sync
@@ -35,6 +35,7 @@ if [ ! -d "$SHADOWROCKET_MODULE_DIR" ]; then
 fi
 
 # Convert function: Surge -> Shadowrocket compatible
+# 🔥 修复: 保留 #!category= 标签（小火箭也支持分组）
 convert_to_shadowrocket() {
     local input_file="$1"
     local output_file="$2"
@@ -54,6 +55,11 @@ convert_to_shadowrocket() {
     # Remove %APPEND% prefix (Shadowrocket doesn't need)
     sed 's/%APPEND% //g' \
     > "$output_file"
+    
+    # 在 #!desc 中添加 [🚀SR] 标记（如果没有的话）
+    if ! grep -q '\[🚀SR\]' "$output_file"; then
+        sed -i '' 's/^#!desc=/#!desc=[🚀SR] /' "$output_file"
+    fi
 }
 
 # Sync all modules from all categories

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # MetaCubeX Sources Incremental Update Script v2.0
 # Function: Detect MetaCubeX rule changes, truly incremental update to Sources

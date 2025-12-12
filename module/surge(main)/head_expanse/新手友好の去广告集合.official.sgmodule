@@ -2,8 +2,6 @@
 #!desc=仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等
 #!category=『 🔝 Head Expanse › 首端扩域 』
 
-#!group=🔝 Head Expanse › 首端扩域
-
 [Body Rewrite]
 #>高德地图
 http-response-jq ^https:\/\/m5\.amap\.com\/ws\/shield\/search_business\/process\/marketingOperationStructured\? 'delpaths([["data","tipsOperationLocation"]])'

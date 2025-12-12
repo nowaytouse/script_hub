@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Verify All Proxy Configs Sync Status (Public Version)
 # Function: Check Surge, Singbox, Shadowrocket configs are in sync

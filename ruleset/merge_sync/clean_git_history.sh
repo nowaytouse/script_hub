@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Clean Git History - Remove Sensitive Files
 # Function: Remove sensitive files from Git history using git-filter-repo

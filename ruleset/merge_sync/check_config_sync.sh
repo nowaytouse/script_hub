@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Configuration Sync Checker
 # Purpose: Check if Surge, Singbox, Shadowrocket configs are fully synchronized

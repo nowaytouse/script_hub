@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # Download AdBlock modules from URLs in AdBlock_sources.txt
 # Extract rules and merge into AdBlock.list
 
@@ -176,8 +176,8 @@ for line in sys.stdin:
         # Module has other sections - keep them but remove [Rule] section
         cleaned_module="$TEMP_DIR/cleaned_${module_name}"
         
-        # 🔥 修复: 复制 header 时排除已有的 NOTE 注释块和重复的 #!group= 行
-        # 只保留原始 metadata (#!name, #!desc, etc.) 和非重复内容
+        # 🔥 修复: 复制 header 时保留 #!category= 标签，排除已有的 NOTE 注释块
+        # Surge 使用 #!category= 来分组模块（不是 #!group=）
         awk '
             /^\[Rule\]/ { exit }
             /^# ═══════════════/ { skip_block=1; next }
@@ -187,37 +187,63 @@ for line in sys.stdin:
             /^# Use AdBlock.list/ { next }
             skip_block && /^$/ { skip_block=0; next }
             skip_block { next }
-            /^#!group=/ && seen_group { next }
-            /^#!group=/ { seen_group=1 }
             { print }
         ' "$module" > "$cleaned_module"
         
-        # Add group classification based on module type (only if not already present)
-        if ! grep -q "^#!group=" "$cleaned_module"; then
+        # 🔥 修复: 使用 #!category= 而不是 #!group=（Surge 正确的分组标签）
+        # Add category classification based on module type (only if not already present)
+        if ! grep -q "^#!category=" "$cleaned_module"; then
             module_display_name=$(grep "^#!name=" "$module" | head -1 | sed 's/#!name=//')
             
             # Priority: DNS > Ad blocking > Others
             if echo "$module_display_name" | grep -qi "httpdns\|dns"; then
-                echo "#!group=🛠️ Amplify Nexus › 增幅枢纽" >> "$cleaned_module"
-            elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截"; then
-                echo "#!group=🔝 Head Expanse › 首端扩域" >> "$cleaned_module"
+                # 在 #!desc 后面插入 #!category
+                if grep -q "^#!desc=" "$cleaned_module"; then
+                    sed -i '' '/^#!desc=/a\
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+' "$cleaned_module"
+                else
+                    echo "#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』" >> "$cleaned_module"
+                fi
+            elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截\|limbo"; then
+                if grep -q "^#!desc=" "$cleaned_module"; then
+                    sed -i '' '/^#!desc=/a\
+#!category=『 🔝 Head Expanse › 首端扩域 』
+' "$cleaned_module"
+                else
+                    echo "#!category=『 🔝 Head Expanse › 首端扩域 』" >> "$cleaned_module"
+                fi
             else
-                echo "#!group=🎯 Narrow Pierce › 窄域穿刺" >> "$cleaned_module"
+                if grep -q "^#!desc=" "$cleaned_module"; then
+                    sed -i '' '/^#!desc=/a\
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
+' "$cleaned_module"
+                else
+                    echo "#!category=『 🎯 Narrow Pierce › 窄域穿刺 』" >> "$cleaned_module"
+                fi
             fi
         fi
         
-        # Add note about rules (only once)
-        echo "" >> "$cleaned_module"
-        echo "# ═══════════════════════════════════════════════════════════════" >> "$cleaned_module"
-        echo "# NOTE: All $original_rules rules from this module have been extracted to AdBlock.list" >> "$cleaned_module"
-        echo "# This cleaned version only contains non-Rule sections:" >> "$cleaned_module"
-        echo "#   - [URL Rewrite]" >> "$cleaned_module"
-        echo "#   - [MITM]" >> "$cleaned_module"
-        echo "#   - [Script]" >> "$cleaned_module"
-        echo "#   - Other module-specific features" >> "$cleaned_module"
-        echo "# Use AdBlock.list for all blocking rules" >> "$cleaned_module"
-        echo "# ═══════════════════════════════════════════════════════════════" >> "$cleaned_module"
-        echo "" >> "$cleaned_module"
+        # 🔥 修复: 注释放在 header 之后、第一个 section 之前，避免跑到 MITM 区域
+        # 先保存当前内容
+        local header_content=$(cat "$cleaned_module")
+        
+        # 重新生成文件：header + 注释 + sections
+        {
+            echo "$header_content"
+            echo ""
+            echo "# ═══════════════════════════════════════════════════════════════"
+            echo "# NOTE: All $original_rules rules from this module have been extracted to AdBlock.list"
+            echo "# This cleaned version only contains non-Rule sections:"
+            echo "#   - [URL Rewrite]"
+            echo "#   - [MITM]"
+            echo "#   - [Script]"
+            echo "#   - Other module-specific features"
+            echo "# Use AdBlock.list for all blocking rules"
+            echo "# ═══════════════════════════════════════════════════════════════"
+            echo ""
+        } > "${cleaned_module}.tmp"
+        mv "${cleaned_module}.tmp" "$cleaned_module"
         
         # Copy all sections AFTER [Rule] (excluding duplicate NOTE blocks)
         awk '
@@ -232,7 +258,6 @@ for line in sys.stdin:
             /^# Use AdBlock.list/ { next }
             skip_block && /^$/ { skip_block=0; next }
             skip_block { next }
-            /^#!group=/ { next }
             { print }
         ' "$module" >> "$cleaned_module" || true
         

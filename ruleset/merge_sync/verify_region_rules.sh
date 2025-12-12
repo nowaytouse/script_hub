@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Region Rule Assignment Verification Script
 # Function: Verify Surge, Singbox, Shadowrocket region streaming rule assignments

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Incremental Merge Rulesets v3.1 - Ultra Fast Edition
 # Core Optimization: 

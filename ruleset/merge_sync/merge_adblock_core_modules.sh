@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # AdBlock Core Modules Merger v1.0
 # 

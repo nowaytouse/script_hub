@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # =============================================================================
 # Singbox Configuration Validator
 # Purpose: Validate Singbox configuration file integrity and correctness

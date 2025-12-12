@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # ============================================
 # Script: Ruleset Merger - Proxy Rule Aggregator
 # Version: 2.4

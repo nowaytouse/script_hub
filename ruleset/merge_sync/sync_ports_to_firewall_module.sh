@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 # ============================================
 # Script: Sync Port Rules to Firewall Module
 # Description:
