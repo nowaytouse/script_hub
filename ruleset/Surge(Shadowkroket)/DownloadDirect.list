@@ -2,8 +2,7 @@
 # Ruleset: DownloadDirect
 # Policy: DIRECT
 # Description: Download CDN domains for direct connection
-# Rules: 91
-# Updated: 2025-12-12 16:44:09
+# Updated: 2025-12-12
 # ═══════════════════════════════════════════════════════════════
 # 
 # 🎯 设计理念：网站走代理，下载直连
@@ -13,18 +12,57 @@
 # ⚠️ 规则优先级说明：
 # - 此规则集应放在广告拦截之后、其他服务规则之前
 # - 确保下载 CDN 域名优先匹配到直连策略
-# - 避免被后续的代理规则覆盖
 #
 # 🔒 受保护规则集：只追加不覆盖
 #
 # ═══════════════════════════════════════════════════════════════
 
-DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
-DOMAIN,csgo.wmsj.cn
+# ═══════════════════════════════════════════════════════════════
+# Adobe Creative Cloud Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,ccmdl.adobe.com
+DOMAIN-SUFFIX,ccmdls.adobe.com
+DOMAIN-SUFFIX,adobedownloads.edgesuite.net
+DOMAIN-SUFFIX,ardownload.adobe.com
+DOMAIN-SUFFIX,ardownload2.adobe.com
+DOMAIN-SUFFIX,swupdl.adobe.com
+DOMAIN-SUFFIX,swupmf.adobe.com
+DOMAIN-SUFFIX,adobedownloads.akamaized.net
+DOMAIN-SUFFIX,adobesigncdn.com
+DOMAIN-SUFFIX,ftcdn.net
+DOMAIN-SUFFIX,assets.adobe.com
+DOMAIN-SUFFIX,cc-api-data.adobe.io
+DOMAIN-SUFFIX,cc-api-storage.adobe.io
+DOMAIN-SUFFIX,cclibraries-defaults-cdn.adobe.com
+DOMAIN-SUFFIX,pv2atweb01.adobe.com
+
+# ═══════════════════════════════════════════════════════════════
+# Steam Downloads (Valve)
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,steamcontent.com
+DOMAIN-SUFFIX,steamusercontent.com
+DOMAIN-SUFFIX,steamchina.com
+DOMAIN-SUFFIX,steamserver.net
+DOMAIN-SUFFIX,steamcdn-a.akamaihd.net
+DOMAIN-SUFFIX,steampipe.akamaized.net
+DOMAIN-SUFFIX,steampipe-kr.akamaized.net
+DOMAIN-SUFFIX,steampipe-partner.akamaized.net
+DOMAIN-SUFFIX,steamcontent.tnkjmec.com
+DOMAIN-SUFFIX,cm.steampowered.com
+DOMAIN-SUFFIX,cdn-ali.content.steamchina.com
+DOMAIN-SUFFIX,cdn-qc.content.steamchina.com
+DOMAIN-SUFFIX,cdn-ws.content.steamchina.com
+DOMAIN-SUFFIX,steam.apac.qtlglb.com
+DOMAIN-SUFFIX,steam.eca.qtlglb.com
+DOMAIN-SUFFIX,steam.naeu.qtlglb.com
+DOMAIN-SUFFIX,steam.ru.qtlglb.com
+DOMAIN-SUFFIX,steam.cdn.on.net
+DOMAIN-SUFFIX,steam.cdn.orcon.net.nz
+DOMAIN-SUFFIX,steam.cdn.slingshot.co.nz
+DOMAIN-SUFFIX,steam.cdn.webra.ru
+DOMAIN-SUFFIX,edge.steam-dns.top.comcast.net
 DOMAIN,dl.steam.clngaa.com
 DOMAIN,dl.steam.ksyna.com
-DOMAIN,dota2.wmsj.cn
-DOMAIN,eaasserts-a.akamaihd.net
 DOMAIN,st.dl.bscstorage.net
 DOMAIN,st.dl.eccdnx.com
 DOMAIN,st.dl.pinyuncloud.com
@@ -32,81 +70,241 @@ DOMAIN,steampipe.steamcontent.tnkjmec.com
 DOMAIN,steampowered.com.8686c.com
 DOMAIN,steamstatic.com.8686c.com
 DOMAIN,wmsjsteam.com
+DOMAIN,csgo.wmsj.cn
+DOMAIN,dota2.wmsj.cn
 DOMAIN,xz.pphimalayanrt.com
-DOMAIN-SUFFIX,adobesigncdn.com
-DOMAIN-SUFFIX,ares.dl.playstation.net
-DOMAIN-SUFFIX,assets1.xboxlive.com
-DOMAIN-SUFFIX,assets2.xboxlive.com
-DOMAIN-SUFFIX,blz.nosdn.127.net
-DOMAIN-SUFFIX,blzddist1-a.akamaihd.net
-DOMAIN-SUFFIX,blzddistkr1-a.akamaihd.net
-DOMAIN-SUFFIX,blzmedia-a.akamaihd.net
-DOMAIN-SUFFIX,ccs.cdn.wup.shop.nintendo.net
-DOMAIN-SUFFIX,cdn-ali.content.steamchina.com
-DOMAIN-SUFFIX,cdn-qc.content.steamchina.com
-DOMAIN-SUFFIX,cdn-ws.content.steamchina.com
-DOMAIN-SUFFIX,cdn.gog.com
-DOMAIN-SUFFIX,cm.steampowered.com
-DOMAIN-SUFFIX,di.res.netease.com
-DOMAIN-SUFFIX,diablo3.nosdn.127.net
-DOMAIN-SUFFIX,dist.blizzard.com
-DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
-DOMAIN-SUFFIX,dl.steam.clngaa.com
-DOMAIN-SUFFIX,dl.steam.ksyna.com
-DOMAIN-SUFFIX,dlassets-ssl.xboxlive.com
-DOMAIN-SUFFIX,dlassets2-ssl.xboxlive.com
+
+# ═══════════════════════════════════════════════════════════════
+# Epic Games Downloads
+# ═══════════════════════════════════════════════════════════════
 DOMAIN-SUFFIX,download.epicgames.com
 DOMAIN-SUFFIX,download2.epicgames.com
 DOMAIN-SUFFIX,download3.epicgames.com
 DOMAIN-SUFFIX,download4.epicgames.com
-DOMAIN-SUFFIX,eaassets-a.akamaihd.net
-DOMAIN-SUFFIX,echocdn.com
-DOMAIN-SUFFIX,ecs.cdn.wup.shop.nintendo.net
-DOMAIN-SUFFIX,edge.steam-dns.top.comcast.net
-DOMAIN-SUFFIX,epicgames-download1.akamaized.net
-DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
 DOMAIN-SUFFIX,fastly-download.epicgames.com
-DOMAIN-SUFFIX,ftcdn.net
-DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
+DOMAIN-SUFFIX,epicgames-download1.akamaized.net
+DOMAIN-SUFFIX,epicgames-download1-1251447533.file.myqcloud.com
+DOMAIN-SUFFIX,cdn1.epicgames.com
+DOMAIN-SUFFIX,cdn2.epicgames.com
+
+# ═══════════════════════════════════════════════════════════════
+# GOG Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,cdn.gog.com
 DOMAIN-SUFFIX,gog-statics.com
 DOMAIN-SUFFIX,gog.qtlglb.com
-DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
-DOMAIN-SUFFIX,gs2.ww.prod.dl.playstation.net
-DOMAIN-SUFFIX,hearthstone.nosdn.127.net
-DOMAIN-SUFFIX,heroes.nos.netease.com
-DOMAIN-SUFFIX,ias.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,galaxy-client.gog.com
+
+# ═══════════════════════════════════════════════════════════════
+# Blizzard / Battle.net Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,dist.blizzard.com
 DOMAIN-SUFFIX,level3.blizzard.com
-DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
-DOMAIN-SUFFIX,nus.cdn.shop.wii.com
-DOMAIN-SUFFIX,nus.cdn.t.shop.nintendowifi.net
-DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
-DOMAIN-SUFFIX,officecdn.microsoft.com
-DOMAIN-SUFFIX,origin-a.akamaihd.net
-DOMAIN-SUFFIX,originasserts.akamaized.net
+DOMAIN-SUFFIX,blzddist1-a.akamaihd.net
+DOMAIN-SUFFIX,blzddistkr1-a.akamaihd.net
+DOMAIN-SUFFIX,blzmedia-a.akamaihd.net
+DOMAIN-SUFFIX,blz.nosdn.127.net
+DOMAIN-SUFFIX,diablo3.nosdn.127.net
+DOMAIN-SUFFIX,hearthstone.nosdn.127.net
 DOMAIN-SUFFIX,overwatch.nosdn.127.net
 DOMAIN-SUFFIX,sc2.nosdn.127.net
-DOMAIN-SUFFIX,st.dl.bscstorage.net
-DOMAIN-SUFFIX,st.dl.eccdnx.com
-DOMAIN-SUFFIX,st.dl.pinyuncloud.com
-DOMAIN-SUFFIX,steam.apac.qtlglb.com
-DOMAIN-SUFFIX,steam.cdn.on.net
-DOMAIN-SUFFIX,steam.cdn.orcon.net.nz
-DOMAIN-SUFFIX,steam.cdn.slingshot.co.nz
-DOMAIN-SUFFIX,steam.cdn.webra.ru
-DOMAIN-SUFFIX,steam.eca.qtlglb.com
-DOMAIN-SUFFIX,steam.naeu.qtlglb.com
-DOMAIN-SUFFIX,steam.ru.qtlglb.com
-DOMAIN-SUFFIX,steamcdn-a.akamaihd.net
-DOMAIN-SUFFIX,steamchina.com
-DOMAIN-SUFFIX,steamcontent.com
-DOMAIN-SUFFIX,steamcontent.tnkjmec.com
-DOMAIN-SUFFIX,steampipe-kr.akamaized.net
-DOMAIN-SUFFIX,steampipe-partner.akamaized.net
-DOMAIN-SUFFIX,steampipe.akamaized.net
-DOMAIN-SUFFIX,steamserver.net
-DOMAIN-SUFFIX,steamusercontent.com
+DOMAIN-SUFFIX,wow.nosdn.127.net
+DOMAIN-SUFFIX,heroes.nos.netease.com
+DOMAIN-SUFFIX,di.res.netease.com
+
+# ═══════════════════════════════════════════════════════════════
+# EA / Origin Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,origin-a.akamaihd.net
+DOMAIN-SUFFIX,originasserts.akamaized.net
+DOMAIN-SUFFIX,eaassets-a.akamaihd.net
+DOMAIN,eaasserts-a.akamaihd.net
+DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
+
+# ═══════════════════════════════════════════════════════════════
+# Ubisoft Downloads
+# ═══════════════════════════════════════════════════════════════
 DOMAIN-SUFFIX,ubisoft-orbit-savegames.s3.amazonaws.com
 DOMAIN-SUFFIX,ubisoft-uplay-savegames.s3.amazonaws.com
+DOMAIN-SUFFIX,static3.cdn.ubi.com
+DOMAIN-SUFFIX,static2.cdn.ubi.com
+
+# ═══════════════════════════════════════════════════════════════
+# Rockstar Games Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
+DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
 DOMAIN-SUFFIX,videos-rockstargames-com.akamaized.net
-DOMAIN-SUFFIX,wow.nosdn.127.net
+
+# ═══════════════════════════════════════════════════════════════
+# Microsoft / Xbox Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
+DOMAIN-SUFFIX,officecdn.microsoft.com
+DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
+DOMAIN-SUFFIX,assets1.xboxlive.com
+DOMAIN-SUFFIX,assets2.xboxlive.com
+DOMAIN-SUFFIX,dlassets-ssl.xboxlive.com
+DOMAIN-SUFFIX,dlassets2-ssl.xboxlive.com
 DOMAIN-SUFFIX,xboxlive.com.edgesuite.net
+DOMAIN-SUFFIX,download.windowsupdate.com
+DOMAIN-SUFFIX,windowsupdate.com
+DOMAIN-SUFFIX,update.microsoft.com
+DOMAIN-SUFFIX,tlu.dl.delivery.mp.microsoft.com
+DOMAIN-SUFFIX,emdl.ws.microsoft.com
+
+# ═══════════════════════════════════════════════════════════════
+# PlayStation Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,ares.dl.playstation.net
+DOMAIN-SUFFIX,gs2.ww.prod.dl.playstation.net
+DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
+DOMAIN-SUFFIX,zeus.dl.playstation.net
+DOMAIN-SUFFIX,apollo.dl.playstation.net
+DOMAIN-SUFFIX,tmdb.np.dl.playstation.net
+
+# ═══════════════════════════════════════════════════════════════
+# Nintendo Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,ccs.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,ecs.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,ias.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,nus.cdn.shop.wii.com
+DOMAIN-SUFFIX,nus.cdn.t.shop.nintendowifi.net
+DOMAIN-SUFFIX,atum.hac.lp1.d4c.nintendo.net
+DOMAIN-SUFFIX,bugyo.hac.lp1.eshop.nintendo.net
+
+# ═══════════════════════════════════════════════════════════════
+# Apple Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,iosapps.itunes.apple.com
+DOMAIN-SUFFIX,osxapps.itunes.apple.com
+DOMAIN-SUFFIX,updates-http.cdn-apple.com
+DOMAIN-SUFFIX,swcdn.apple.com
+DOMAIN-SUFFIX,swdist.apple.com
+DOMAIN-SUFFIX,swdownload.apple.com
+DOMAIN-SUFFIX,swscan.apple.com
+DOMAIN-SUFFIX,xp.apple.com
+DOMAIN-SUFFIX,appldnld.apple.com
+DOMAIN-SUFFIX,appldnld.apple.com.edgesuite.net
+DOMAIN-SUFFIX,mesu.apple.com
+DOMAIN-SUFFIX,gdmf.apple.com
+DOMAIN-SUFFIX,oscdn.apple.com
+DOMAIN-SUFFIX,configuration.apple.com
+
+# ═══════════════════════════════════════════════════════════════
+# JetBrains IDE Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,download.jetbrains.com
+DOMAIN-SUFFIX,download-cdn.jetbrains.com
+DOMAIN-SUFFIX,plugins.jetbrains.com
+
+# ═══════════════════════════════════════════════════════════════
+# Visual Studio / VS Code Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,download.visualstudio.microsoft.com
+DOMAIN-SUFFIX,az764295.vo.msecnd.net
+DOMAIN-SUFFIX,vscode.cdn.azure.cn
+DOMAIN-SUFFIX,update.code.visualstudio.com
+
+# ═══════════════════════════════════════════════════════════════
+# Docker Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,download.docker.com
+DOMAIN-SUFFIX,desktop.docker.com
+
+# ═══════════════════════════════════════════════════════════════
+# Node.js / npm Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,nodejs.org
+DOMAIN-SUFFIX,registry.npmjs.org
+DOMAIN-SUFFIX,registry.npmmirror.com
+
+# ═══════════════════════════════════════════════════════════════
+# Python / PyPI Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,files.pythonhosted.org
+DOMAIN-SUFFIX,pypi.org
+DOMAIN-SUFFIX,pypi.python.org
+
+# ═══════════════════════════════════════════════════════════════
+# Homebrew Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,homebrew.bintray.com
+DOMAIN-SUFFIX,ghcr.io
+DOMAIN-SUFFIX,pkg-containers.githubusercontent.com
+
+# ═══════════════════════════════════════════════════════════════
+# Unity Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,download.unity3d.com
+DOMAIN-SUFFIX,netstorage.unity3d.com
+DOMAIN-SUFFIX,beta.unity3d.com
+
+# ═══════════════════════════════════════════════════════════════
+# Unreal Engine Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,cdn1.unrealengine.com
+DOMAIN-SUFFIX,cdn2.unrealengine.com
+DOMAIN-SUFFIX,cdn3.unrealengine.com
+
+# ═══════════════════════════════════════════════════════════════
+# NVIDIA Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,download.nvidia.com
+DOMAIN-SUFFIX,us.download.nvidia.com
+DOMAIN-SUFFIX,international.download.nvidia.com
+
+# ═══════════════════════════════════════════════════════════════
+# AMD Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,drivers.amd.com
+DOMAIN-SUFFIX,download.amd.com
+
+# ═══════════════════════════════════════════════════════════════
+# Intel Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,downloadcenter.intel.com
+DOMAIN-SUFFIX,downloadmirror.intel.com
+
+# ═══════════════════════════════════════════════════════════════
+# General CDN / Cloud Storage
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,echocdn.com
+DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
+DOMAIN-SUFFIX,cloudfront.net
+DOMAIN-SUFFIX,fastly.net
+DOMAIN-SUFFIX,akamaized.net
+DOMAIN-SUFFIX,akamaihd.net
+DOMAIN-SUFFIX,edgekey.net
+DOMAIN-SUFFIX,edgesuite.net
+
+# ═══════════════════════════════════════════════════════════════
+# 网易游戏 Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,dl.netease.com
+DOMAIN-SUFFIX,update.netease.com
+DOMAIN-SUFFIX,patch.netease.com
+
+# ═══════════════════════════════════════════════════════════════
+# 腾讯游戏 Downloads
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,dlied1.qq.com
+DOMAIN-SUFFIX,dlied2.qq.com
+DOMAIN-SUFFIX,dlied3.qq.com
+DOMAIN-SUFFIX,dlied4.qq.com
+DOMAIN-SUFFIX,dlied5.qq.com
+DOMAIN-SUFFIX,dlied6.qq.com
+DOMAIN-SUFFIX,dldir1.qq.com
+DOMAIN-SUFFIX,down.qq.com
+DOMAIN-SUFFIX,minorshield.qq.com
+
+# ═══════════════════════════════════════════════════════════════
+# 米哈游 Downloads (原神/崩坏)
+# ═══════════════════════════════════════════════════════════════
+DOMAIN-SUFFIX,autopatchhk.yuanshen.com
+DOMAIN-SUFFIX,autopatchcn.yuanshen.com
+DOMAIN-SUFFIX,sdk-os-static.mihoyo.com
+DOMAIN-SUFFIX,hk4e-launcher-static.mihoyo.com
+DOMAIN-SUFFIX,bh3-launcher-static.mihoyo.com
+
