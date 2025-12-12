@@ -181,8 +181,11 @@ pub fn execute_conversion(
         TargetFormat::NoConversion => return Err(ImgQualityError::ConversionError("No conversion".to_string())),
     };
     
+    let file_stem = input_path.file_stem()
+        .ok_or_else(|| ImgQualityError::ConversionError("Invalid file path: no file stem".to_string()))?;
+    
     let output_path = if let Some(ref dir) = config.output_dir {
-        dir.join(input_path.file_stem().unwrap()).with_extension(extension)
+        dir.join(file_stem).with_extension(extension)
     } else {
         input_path.with_extension(extension)
     };
@@ -218,19 +221,26 @@ pub fn execute_conversion(
         100.0 * (1.0 - s as f32 / detection.file_size as f32)
     });
     
-    // Preserve timestamps if requested
-    if config.preserve_timestamps {
-        preserve_timestamps(input_path, &output_path)?;
-    }
+    // 🔥 顺序很重要！先 metadata，后 timestamps
+    // exiftool -overwrite_original 会修改文件，从而更新时间戳
+    // 因此必须在 metadata 之后设置 timestamps
     
-    // Preserve metadata if requested
+    // Preserve metadata if requested (exiftool will modify file timestamps!)
     if config.preserve_metadata {
         preserve_metadata(input_path, &output_path)?;
     }
     
-    // Delete original if requested
+    // Preserve timestamps if requested (must be AFTER metadata!)
+    if config.preserve_timestamps {
+        preserve_timestamps(input_path, &output_path)?;
+    }
+    
+    // 🔥 Safe delete with integrity check (断电保护)
     if config.delete_original {
-        std::fs::remove_file(input_path)?;
+        if let Err(e) = shared_utils::conversion::safe_delete_original(input_path, &output_path, 100) {
+            eprintln!("   ⚠️  Safe delete failed: {}", e);
+            // Don't propagate error - conversion succeeded
+        }
     }
     
     Ok(ConversionOutput {
@@ -244,23 +254,24 @@ pub fn execute_conversion(
     })
 }
 
+/// Helper to safely convert Path to str
+fn path_to_str(path: &Path) -> Result<&str> {
+    path.to_str().ok_or_else(|| ImgQualityError::ConversionError(
+        format!("Invalid UTF-8 in path: {:?}", path)
+    ))
+}
+
 /// Convert to JXL
 fn convert_to_jxl(input: &Path, output: &Path, format: &DetectedFormat) -> Result<()> {
+    let input_str = path_to_str(input)?;
+    let output_str = path_to_str(output)?;
+    
     let args = if *format == DetectedFormat::JPEG {
         // JPEG lossless transcode
-        vec![
-            input.to_str().unwrap(),
-            output.to_str().unwrap(),
-            "--lossless_jpeg=1",
-        ]
+        vec![input_str, output_str, "--lossless_jpeg=1"]
     } else {
         // Lossless modular encoding
-        vec![
-            input.to_str().unwrap(),
-            output.to_str().unwrap(),
-            "-d", "0.0",
-            "-e", "7",  // cjxl v0.11+ 范围是 1-10，默认 7
-        ]
+        vec![input_str, output_str, "-d", "0.0", "-e", "7"]  // cjxl v0.11+ 范围是 1-10，默认 7
     };
     
     let status = Command::new("cjxl")
@@ -279,13 +290,11 @@ fn convert_to_jxl(input: &Path, output: &Path, format: &DetectedFormat) -> Resul
 /// Convert to AVIF
 fn convert_to_avif(input: &Path, output: &Path, quality: Option<u8>) -> Result<()> {
     let q = quality.unwrap_or(85).to_string();
+    let input_str = path_to_str(input)?;
+    let output_str = path_to_str(output)?;
     
     let status = Command::new("avifenc")
-        .args(&[
-            input.to_str().unwrap(),
-            output.to_str().unwrap(),
-            "-q", &q,
-        ])
+        .args([input_str, output_str, "-q", &q])
         .output()?;
     
     if !status.status.success() {
@@ -340,11 +349,11 @@ fn convert_to_hevc_mp4(input: &Path, output: &Path, fps: Option<f32>, width: u32
 /// 构建偶数分辨率滤镜
 /// HEVC/AV1 编码器要求宽高为偶数，否则会报错
 fn build_even_dimension_filter(width: u32, height: u32) -> String {
-    let need_pad = width % 2 != 0 || height % 2 != 0;
+    let need_pad = !width.is_multiple_of(2) || !height.is_multiple_of(2);
     if need_pad {
         // pad 到偶数分辨率，使用黑色填充
-        let new_width = if width % 2 != 0 { width + 1 } else { width };
-        let new_height = if height % 2 != 0 { height + 1 } else { height };
+        let new_width = if !width.is_multiple_of(2) { width + 1 } else { width };
+        let new_height = if !height.is_multiple_of(2) { height + 1 } else { height };
         format!("pad={}:{}:0:0:black", new_width, new_height)
     } else {
         String::new()
@@ -353,8 +362,11 @@ fn build_even_dimension_filter(width: u32, height: u32) -> String {
 
 /// Preserve file timestamps (modification time, access time)
 fn preserve_timestamps(source: &Path, dest: &Path) -> Result<()> {
+    let source_str = path_to_str(source)?;
+    let dest_str = path_to_str(dest)?;
+    
     let status = Command::new("touch")
-        .args(&["-r", source.to_str().unwrap(), dest.to_str().unwrap()])
+        .args(["-r", source_str, dest_str])
         .output()?;
     
     if !status.status.success() {
@@ -372,13 +384,11 @@ fn preserve_metadata(source: &Path, dest: &Path) -> Result<()> {
         return Ok(()); // Skip if not available
     }
     
+    let source_str = path_to_str(source)?;
+    let dest_str = path_to_str(dest)?;
+    
     let status = Command::new("exiftool")
-        .args(&[
-            "-overwrite_original",
-            "-TagsFromFile", source.to_str().unwrap(),
-            "-All:All",
-            dest.to_str().unwrap(),
-        ])
+        .args(["-overwrite_original", "-TagsFromFile", source_str, "-All:All", dest_str])
         .output()?;
     
     if !status.status.success() {
@@ -420,9 +430,12 @@ pub fn simple_convert(path: &Path, output_dir: Option<&Path>) -> Result<Conversi
         ImageType::Animated => ("mp4", true),
     };
     
+    let file_stem = input_path.file_stem()
+        .ok_or_else(|| ImgQualityError::ConversionError("Invalid file path: no file stem".to_string()))?;
+    
     let output_path = if let Some(dir) = output_dir {
         std::fs::create_dir_all(dir)?;
-        dir.join(input_path.file_stem().unwrap()).with_extension(extension)
+        dir.join(file_stem).with_extension(extension)
     } else {
         input_path.with_extension(extension)
     };
@@ -476,23 +489,16 @@ pub fn simple_convert(path: &Path, output_dir: Option<&Path>) -> Result<Conversi
 
 /// JXL lossless conversion (always mathematical lossless)
 fn convert_to_jxl_lossless(input: &Path, output: &Path, format: &DetectedFormat) -> Result<()> {
+    let input_str = path_to_str(input)?;
+    let output_str = path_to_str(output)?;
+    
     let args = if *format == DetectedFormat::JPEG {
         // JPEG: use lossless_jpeg transcode
-        vec![
-            input.to_str().unwrap(),
-            output.to_str().unwrap(),
-            "--lossless_jpeg=1",
-        ]
+        vec![input_str, output_str, "--lossless_jpeg=1"]
     } else {
         // Non-JPEG: use -d 0.0 for mathematical lossless
         // cjxl v0.11+: --modular=1 强制使用 modular 模式，-e 范围 1-10
-        vec![
-            input.to_str().unwrap(),
-            output.to_str().unwrap(),
-            "-d", "0.0",
-            "--modular=1",
-            "-e", "9",
-        ]
+        vec![input_str, output_str, "-d", "0.0", "--modular=1", "-e", "9"]
     };
     
     let status = Command::new("cjxl")
