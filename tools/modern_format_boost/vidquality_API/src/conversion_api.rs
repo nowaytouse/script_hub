@@ -67,6 +67,12 @@ pub struct ConversionConfig {
     pub match_quality: bool,
     /// In-place conversion: convert and delete original file
     pub in_place: bool,
+    /// 🔥 v3.5: Minimum SSIM threshold for quality validation (default: 0.95)
+    pub min_ssim: f64,
+    /// 🔥 v3.5: Enable VMAF validation (slower but more accurate)
+    pub validate_vmaf: bool,
+    /// 🔥 v3.5: Minimum VMAF threshold (default: 85.0)
+    pub min_vmaf: f64,
 }
 
 impl Default for ConversionConfig {
@@ -80,6 +86,9 @@ impl Default for ConversionConfig {
             use_lossless: false,
             match_quality: false,
             in_place: false,
+            min_ssim: 0.95,      // 🔥 v3.5: Default SSIM threshold
+            validate_vmaf: false, // 🔥 v3.5: VMAF disabled by default (slower)
+            min_vmaf: 85.0,      // 🔥 v3.5: Default VMAF threshold
         }
     }
 }
@@ -110,35 +119,28 @@ pub struct ConversionOutput {
 
 /// Determine conversion strategy based on detection result (for auto mode)
 pub fn determine_strategy(result: &VideoDetectionResult) -> ConversionStrategy {
-    let codec_name = result.codec.as_str(); // e.g. "H.265"
+    // 🔥 使用统一的跳过检测逻辑 (shared_utils::should_skip_video_codec)
+    // 支持: H.265/HEVC, AV1, VP9, VVC/H.266, AV2
+    let skip_decision = shared_utils::should_skip_video_codec(result.codec.as_str());
     
-    // Check for Modern Codecs -> SKIP
-    // H.265/HEVC, AV1, VP9, H.266/VVC
-    match result.codec {
-        crate::detection_api::DetectedCodec::H265 |
-        crate::detection_api::DetectedCodec::AV1 |
-        crate::detection_api::DetectedCodec::AV2 | // Skip AV2
-        crate::detection_api::DetectedCodec::VVC | // Skip VVC/H.266
-        crate::detection_api::DetectedCodec::VP9 => {
-             return ConversionStrategy {
-                target: TargetVideoFormat::Skip,
-                reason: format!("Source is modern codec ({}) - skipping to avoid generational loss", codec_name),
-                command: String::new(),
-                preserve_audio: false,
-                crf: 0,
-                lossless: false,
-            };
-        }
-        _ => {}
+    if skip_decision.should_skip {
+        return ConversionStrategy {
+            target: TargetVideoFormat::Skip,
+            reason: skip_decision.reason,
+            command: String::new(),
+            preserve_audio: false,
+            crf: 0,
+            lossless: false,
+        };
     }
     
-    // Also check for "vvc" or "h266" in Unknown string if necessary
+    // 🔥 Also check Unknown codec string for modern formats
     if let crate::detection_api::DetectedCodec::Unknown(ref s) = result.codec {
-        let s = s.to_lowercase();
-        if s.contains("hevc") || s.contains("h265") || s.contains("av1") || s.contains("vp9") || s.contains("vvc") || s.contains("h266") {
-             return ConversionStrategy {
+        let unknown_skip = shared_utils::should_skip_video_codec(s);
+        if unknown_skip.should_skip {
+            return ConversionStrategy {
                 target: TargetVideoFormat::Skip,
-                reason: format!("Source is modern codec ({}) - skipping", s),
+                reason: unknown_skip.reason,
                 command: String::new(),
                 preserve_audio: false,
                 crf: 0,
@@ -292,10 +294,21 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     // 🔥 检测输入输出路径冲突（作为安全检查）
     check_input_output_conflict(input, &output_path)?;
     
+    // 🔥 修复：输出文件已存在时返回跳过状态而非错误
     if output_path.exists() && !config.force {
-        return Err(VidQualityError::ConversionError(
-            format!("Output exists: {}", output_path.display())
-        ));
+        info!("⏭️ Output exists, skipping: {}", output_path.display());
+        return Ok(ConversionOutput {
+            input_path: input.display().to_string(),
+            output_path: String::new(),  // 空路径表示跳过
+            strategy: strategy.clone(),
+            input_size: detection.file_size,
+            output_size: 0,  // 0 表示跳过
+            size_ratio: 1.0,
+            success: true,
+            message: format!("Skipped: output exists ({})", output_path.display()),
+            final_crf: 0,
+            exploration_attempts: 0,
+        });
     }
     
     info!("🎬 Auto Mode: {} → {}", input.display(), strategy.target.as_str());
@@ -312,6 +325,17 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
                  info!("   🚀 Using AV1 Mathematical Lossless Mode");
                  let size = execute_av1_lossless(&detection, &output_path)?;
                  (size, 0, 0)
+            } else if config.explore_smaller && config.match_quality {
+                // 🔥 v3.5: 精确质量匹配模式 (--explore + --match-quality)
+                // 二分搜索 + SSIM/VMAF 裁判验证，找到最优质量-大小平衡
+                info!("   🔬 Precise Quality-Match Mode: binary search + quality validation");
+                explore_precise_quality_match_av1(
+                    &detection, 
+                    &output_path, 
+                    config.min_ssim,
+                    config.validate_vmaf,
+                    config.min_vmaf,
+                )?
             } else if config.explore_smaller {
                 // Size exploration mode (only valid for lossy)
                 explore_smaller_size(&detection, &output_path)?
@@ -334,9 +358,13 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
     
     let size_ratio = output_size as f64 / detection.file_size as f64;
     
+    // 🔥 Safe delete with integrity check (断电保护)
     if config.should_delete_original() {
-        std::fs::remove_file(input)?;
-        info!("   🗑️  Original deleted");
+        if let Err(e) = shared_utils::conversion::safe_delete_original(input, &output_path, 1000) {
+            warn!("   ⚠️  Safe delete failed: {}", e);
+        } else {
+            info!("   🗑️  Original deleted (integrity verified)");
+        }
     }
     
     info!("   ✅ Complete: {:.1}% of original", size_ratio * 100.0);
@@ -368,87 +396,139 @@ pub fn auto_convert(input: &Path, config: &ConversionConfig) -> Result<Conversio
 
 /// Calculate CRF to match input video quality level (Enhanced Algorithm for AV1)
 /// 
-/// This function uses a more precise algorithm that considers:
-/// 1. Bits per pixel (bpp) - primary quality indicator
-/// 2. Source codec efficiency - H.264 vs others
-/// 3. Profile/B-frames - encoding complexity
-/// 4. Resolution scaling - higher res needs more bits
+/// Uses the unified quality_matcher module from shared_utils for consistent
+/// quality matching across all tools.
 /// 
 /// AV1 CRF range is 0-63, with 23 being default "good quality"
-/// CRF ≈ 63 - 10 * log2(effective_bpp * 100)
-/// 
-/// Clamped to range [18, 35] for AV1
+/// Clamped to range [18, 35] for practical use
 pub fn calculate_matched_crf(detection: &VideoDetectionResult) -> u8 {
-    // Use pre-calculated bpp if available, otherwise calculate
-    let bpp = if detection.bits_per_pixel > 0.0 {
-        detection.bits_per_pixel
-    } else {
-        let pixels_per_frame = (detection.width as f64) * (detection.height as f64);
-        let pixels_per_second = pixels_per_frame * detection.fps;
-        if pixels_per_second <= 0.0 {
-            info!("   ⚠️  Cannot calculate bpp, using default CRF 28");
-            return 28;
+    // 🔥 使用统一的 quality_matcher 模块
+    let analysis = shared_utils::from_video_detection(
+        &detection.file_path,
+        detection.codec.as_str(),
+        detection.width,
+        detection.height,
+        detection.bitrate,
+        detection.fps,
+        detection.duration_secs,
+        detection.has_b_frames,
+        detection.bit_depth,
+        detection.file_size,
+    );
+    
+    match shared_utils::calculate_av1_crf(&analysis) {
+        Ok(result) => {
+            shared_utils::log_quality_analysis(&analysis, &result, shared_utils::EncoderType::Av1);
+            result.crf.round() as u8
         }
-        (detection.bitrate as f64) / pixels_per_second
+        Err(e) => {
+            // 🔥 Quality Manifesto: 失败时响亮报错，使用保守值
+            warn!("   ⚠️  Quality analysis failed: {}", e);
+            warn!("   ⚠️  Using conservative CRF 28");
+            28
+        }
+    }
+}
+
+/// 🔥 v3.5: 精确质量匹配探索 (--explore + --match-quality 组合)
+/// 
+/// 策略：二分搜索 + SSIM/VMAF 裁判验证
+/// 找到满足质量阈值的最高 CRF（最小文件）
+/// 
+/// ## 裁判机制 (Referee Mechanism)
+/// 1. 使用 AI 预测的 CRF 作为起点
+/// 2. 二分搜索找到满足 SSIM >= min_ssim 的最高 CRF
+/// 3. 可选 VMAF 验证（更准确但更慢）
+/// 4. 自校准：如果初始 CRF 不满足质量，向下搜索
+/// 
+/// ## 评价标准 (Evaluation Criteria)
+/// - SSIM >= 0.95: 视觉无损 (Good)
+/// - SSIM >= 0.98: 几乎无法区分 (Excellent)
+/// - VMAF >= 85: 流媒体质量 (Good)
+/// - VMAF >= 93: 存档质量 (Excellent)
+fn explore_precise_quality_match_av1(
+    detection: &VideoDetectionResult,
+    output_path: &Path,
+    min_ssim: f64,
+    validate_vmaf: bool,
+    min_vmaf: f64,
+) -> Result<(u64, u8, u8)> {
+    use shared_utils::video_explorer::{
+        VideoExplorer, VideoEncoder, ExploreConfig, ExploreMode, QualityThresholds
     };
     
-    // Codec efficiency factor (AV1 is ~30% more efficient than HEVC, ~50% more than H.264)
-    let codec_factor = match detection.codec {
-        crate::detection_api::DetectedCodec::H264 => 1.0,      // Baseline
-        crate::detection_api::DetectedCodec::H265 => 0.7,      // More efficient
-        crate::detection_api::DetectedCodec::VP9 => 0.75,      // Similar to HEVC
-        crate::detection_api::DetectedCodec::AV1 => 0.5,       // Most efficient (already AV1)
-        crate::detection_api::DetectedCodec::ProRes => 1.5,    // High bitrate codec
-        crate::detection_api::DetectedCodec::DNxHD => 1.5,     // High bitrate codec
-        crate::detection_api::DetectedCodec::MJPEG => 2.0,     // Very inefficient
-        _ => 1.0,
+    let input_path = std::path::Path::new(&detection.file_path);
+    
+    // 计算 AI 预测的 CRF
+    let initial_crf = calculate_matched_crf(detection);
+    
+    info!("   🔬 Precise Quality-Match Exploration (AV1)");
+    info!("      Input: {} bytes", detection.file_size);
+    info!("      Initial CRF: {} (AI predicted)", initial_crf);
+    info!("      Min SSIM: {:.4}", min_ssim);
+    if validate_vmaf {
+        info!("      Min VMAF: {:.1}", min_vmaf);
+    }
+    
+    // 配置探索器
+    let config = ExploreConfig {
+        mode: ExploreMode::PreciseQualityMatch,
+        initial_crf: initial_crf as f32,
+        min_crf: 15.0,  // AV1 最低 CRF
+        max_crf: 40.0,  // AV1 最高可接受 CRF
+        target_ratio: 1.0,  // 目标：输出 <= 输入
+        quality_thresholds: QualityThresholds {
+            min_ssim,
+            min_psnr: 35.0,
+            min_vmaf,
+            validate_ssim: true,
+            validate_psnr: false,
+            validate_vmaf,
+        },
+        max_iterations: 8,  // 最多 8 次迭代
     };
     
-    // B-frames bonus (B-frames improve compression efficiency)
-    let bframe_factor = if detection.has_b_frames { 1.1 } else { 1.0 };
+    // 获取视频滤镜参数
+    let vf_args = shared_utils::get_ffmpeg_dimension_args(detection.width, detection.height, false);
     
-    // Resolution factor (higher res is harder to compress efficiently)
-    let pixels = (detection.width as f64) * (detection.height as f64);
-    let resolution_factor = if pixels > 8_000_000.0 {
-        0.85  // 4K+ needs more bits
-    } else if pixels > 2_000_000.0 {
-        0.9   // 1080p
-    } else if pixels > 500_000.0 {
-        0.95  // 720p
+    // 创建探索器
+    let explorer = VideoExplorer::new(
+        input_path,
+        output_path,
+        VideoEncoder::Av1,
+        vf_args,
+        config,
+    ).map_err(|e| VidQualityError::ConversionError(format!("Explorer init failed: {}", e)))?;
+    
+    // 执行探索
+    let result = explorer.explore()
+        .map_err(|e| VidQualityError::ConversionError(format!("Exploration failed: {}", e)))?;
+    
+    // 输出探索日志
+    for line in &result.log {
+        info!("{}", line);
+    }
+    
+    // 🔥 裁判验证结果
+    if result.quality_passed {
+        info!("   ✅ Quality validation PASSED");
+        if let Some(ssim) = result.ssim {
+            info!("      SSIM: {:.4} ({})", ssim, shared_utils::video_explorer::precision::ssim_quality_grade(ssim));
+        }
+        if let Some(vmaf) = result.vmaf {
+            info!("      VMAF: {:.2} ({})", vmaf, shared_utils::video_explorer::precision::vmaf_quality_grade(vmaf));
+        }
     } else {
-        1.0   // SD
-    };
+        warn!("   ⚠️  Quality validation FAILED - using best available CRF");
+        if let Some(ssim) = result.ssim {
+            warn!("      SSIM: {:.4} < {:.4} threshold", ssim, min_ssim);
+        }
+    }
     
-    // Effective bpp after adjustments
-    let effective_bpp = bpp * codec_factor * bframe_factor * resolution_factor;
+    info!("   📊 Final: CRF {:.1}, {} bytes ({:+.1}%)", 
+        result.optimal_crf, result.output_size, result.size_change_pct);
     
-    // Convert bpp to CRF using logarithmic formula for AV1
-    // AV1 CRF range is 0-63, with 23 being default "good quality"
-    // SVT-AV1 CRF is more aggressive than x265, so we use a different formula
-    // CRF = 50 - 8 * log2(effective_bpp * 100)
-    // This gives roughly:
-    // bpp=1.0 → CRF ~18
-    // bpp=0.3 → CRF ~24
-    // bpp=0.1 → CRF ~28
-    // bpp=0.03 → CRF ~33
-    let crf_float = if effective_bpp > 0.0 {
-        50.0 - 8.0 * (effective_bpp * 100.0).log2()
-    } else {
-        28.0
-    };
-    
-    // Clamp to reasonable range [18, 35] for AV1
-    let crf = (crf_float.round() as i32).clamp(18, 35) as u8;
-    
-    info!("   📊 Quality Analysis:");
-    info!("      Raw bpp: {:.4}", bpp);
-    info!("      Codec factor: {:.2} ({})", codec_factor, detection.codec.as_str());
-    info!("      B-frames: {} (factor: {:.2})", detection.has_b_frames, bframe_factor);
-    info!("      Resolution: {}x{} (factor: {:.2})", detection.width, detection.height, resolution_factor);
-    info!("      Effective bpp: {:.4}", effective_bpp);
-    info!("      Calculated CRF: {}", crf);
-    
-    crf
+    Ok((result.output_size, result.optimal_crf.round() as u8, result.iterations as u8))
 }
 
 /// Explore smaller size by trying higher CRF values (conservative approach)

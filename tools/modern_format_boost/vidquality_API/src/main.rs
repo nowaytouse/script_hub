@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use tracing::info;
 use std::path::PathBuf;
 use std::time::Instant;
-use vidquality::{detect_video, auto_convert, determine_strategy, ConversionConfig};
+use vidquality_av1::{detect_video, auto_convert, determine_strategy, ConversionConfig};
 
 // 🔥 使用 shared_utils 的统计报告功能（模块化）
 use shared_utils::{print_summary_report, BatchResult};
@@ -64,7 +64,8 @@ enum Commands {
         lossless: bool,
 
         /// Match input video quality level (auto-calculate CRF based on input bitrate)
-        #[arg(long)]
+        /// Enabled by default for video processing
+        #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
         match_quality: bool,
     },
 
@@ -131,6 +132,10 @@ fn main() -> anyhow::Result<()> {
                 use_lossless: lossless,
                 match_quality,
                 in_place,
+                // 🔥 v3.5: 裁判机制增强参数
+                min_ssim: 0.95,       // 默认 SSIM 阈值
+                validate_vmaf: false, // 默认不启用 VMAF（较慢）
+                min_vmaf: 85.0,       // 默认 VMAF 阈值
             };
             
             info!("🎬 Auto Mode Conversion (AV1)");
@@ -219,8 +224,17 @@ fn main() -> anyhow::Result<()> {
                             }
                         }
                         Err(e) => {
-                            info!("❌ {} failed: {}", file.display(), e);
-                            batch_result.fail(file.clone(), e.to_string());
+                            // 🔥 修复：将"Output exists"错误视为跳过而非失败
+                            let error_msg = e.to_string();
+                            if error_msg.contains("Output exists:") {
+                                info!("⏭️ {} → SKIP (output exists)", 
+                                    file.file_name().unwrap_or_default().to_string_lossy()
+                                );
+                                batch_result.skip();
+                            } else {
+                                info!("❌ {} failed: {}", file.display(), e);
+                                batch_result.fail(file.clone(), e.to_string());
+                            }
                         }
                     }
                 }
@@ -273,7 +287,7 @@ fn main() -> anyhow::Result<()> {
             info!("   (Note: Simple mode now enforces lossless conversion by default)");
             info!("");
             
-            let result = vidquality::simple_convert(&input, output.as_deref())?;
+            let result = vidquality_av1::simple_convert(&input, output.as_deref())?;
             
             info!("");
             info!("✅ Complete!");
@@ -289,7 +303,7 @@ fn main() -> anyhow::Result<()> {
             println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             println!("📁 File: {}", input.display());
             println!("🎬 Codec: {} ({})", detection.codec.as_str(), detection.compression.as_str());
-            println!("");
+            println!();
             println!("💡 Target: {}", strategy.target.as_str());
             println!("📝 Reason: {}", strategy.reason);
             println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -299,20 +313,20 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn print_analysis_human(result: &vidquality::VideoDetectionResult) {
+fn print_analysis_human(result: &vidquality_av1::VideoDetectionResult) {
     println!("\n📊 Video Analysis Report");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     println!("📁 File: {}", result.file_path);
     println!("📦 Format: {}", result.format);
     println!("🎬 Codec: {} ({})", result.codec.as_str(), result.codec_long);
     println!("🔍 Compression: {}", result.compression.as_str());
-    println!("");
+    println!();
     println!("📐 Resolution: {}x{}", result.width, result.height);
     println!("🎞️  Frames: {} @ {:.2} fps", result.frame_count, result.fps);
     println!("⏱️  Duration: {:.2}s", result.duration_secs);
     println!("🎨 Bit Depth: {}-bit", result.bit_depth);
     println!("🌈 Pixel Format: {}", result.pix_fmt);
-    println!("");
+    println!();
     println!("💾 File Size: {} bytes", result.file_size);
     println!("📊 Bitrate: {} bps", result.bitrate);
     println!("🎵 Audio: {}", if result.has_audio { 
@@ -320,7 +334,7 @@ fn print_analysis_human(result: &vidquality::VideoDetectionResult) {
     } else { 
         "no" 
     });
-    println!("");
+    println!();
     println!("⭐ Quality Score: {}/100", result.quality_score);
     println!("📦 Archival Candidate: {}", if result.archival_candidate { "✅ Yes" } else { "❌ No" });
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
