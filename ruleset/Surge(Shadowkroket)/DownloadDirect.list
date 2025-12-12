@@ -2,19 +2,24 @@
 # Ruleset: DownloadDirect
 # Policy: DIRECT
 # Description: Download CDN domains for direct connection
-# Rules: 68
-# Updated: 2025-12-12 20:30:00
+# Rules: 85
+# Updated: 2025-12-12 21:00:00
 # ═══════════════════════════════════════════════════════════════
 # 
-# 设计理念：网站走代理，下载直连
+# 🎯 设计理念：网站走代理，下载直连
 # - 游戏/软件网站需要代理访问（被墙或加速）
 # - 大文件下载走直连（节省流量、提高速度）
-# - 小文件/短内容仍可走代理（不影响体验）
+# 
+# ⚠️ 规则优先级说明：
+# - 此规则集应放在广告拦截之后、其他服务规则之前
+# - 确保下载 CDN 域名优先匹配到直连策略
+# - 避免被后续的代理规则覆盖
 #
 # ═══════════════════════════════════════════════════════════════
 
 # ─────────────────────────────────────────────────────────────
 # Steam 下载 CDN（游戏下载直连）
+# 关键词: dl, cdn, content, pipe
 # ─────────────────────────────────────────────────────────────
 DOMAIN-SUFFIX,steamcontent.com
 DOMAIN-SUFFIX,steamusercontent.com
@@ -31,10 +36,17 @@ DOMAIN-SUFFIX,steam.cdn.webra.ru
 DOMAIN-SUFFIX,steampipe.akamaized.net
 DOMAIN-SUFFIX,steampipe-kr.akamaized.net
 DOMAIN-SUFFIX,steampipe-partner.akamaized.net
+DOMAIN-SUFFIX,steamcdn-a.akamaihd.net
 DOMAIN-SUFFIX,cdn-ali.content.steamchina.com
 DOMAIN-SUFFIX,cdn-qc.content.steamchina.com
 DOMAIN-SUFFIX,cdn-ws.content.steamchina.com
 DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
+DOMAIN-SUFFIX,steamcontent.tnkjmec.com
+DOMAIN-SUFFIX,steam.apac.qtlglb.com
+DOMAIN-SUFFIX,steam.eca.qtlglb.com
+DOMAIN-SUFFIX,steam.naeu.qtlglb.com
+DOMAIN-SUFFIX,steam.ru.qtlglb.com
+DOMAIN-SUFFIX,edge.steam-dns.top.comcast.net
 
 # ─────────────────────────────────────────────────────────────
 # Epic Games 下载 CDN
@@ -51,6 +63,7 @@ DOMAIN-SUFFIX,fastly-download.epicgames.com
 # ─────────────────────────────────────────────────────────────
 DOMAIN-SUFFIX,gog.qtlglb.com
 DOMAIN-SUFFIX,cdn.gog.com
+DOMAIN-SUFFIX,gog-statics.com
 
 # ─────────────────────────────────────────────────────────────
 # Blizzard/Battle.net 下载 CDN
@@ -60,13 +73,15 @@ DOMAIN-SUFFIX,blzddistkr1-a.akamaihd.net
 DOMAIN-SUFFIX,blz.nosdn.127.net
 DOMAIN-SUFFIX,level3.blizzard.com
 DOMAIN-SUFFIX,dist.blizzard.com
+DOMAIN-SUFFIX,blzmedia-a.akamaihd.net
 
 # ─────────────────────────────────────────────────────────────
 # EA/Origin 下载 CDN
 # ─────────────────────────────────────────────────────────────
 DOMAIN-SUFFIX,origin-a.akamaihd.net
 DOMAIN-SUFFIX,originasserts.akamaized.net
-DOMAIN-SUFFIX,eaasserts-a.akamaihd.net
+DOMAIN-SUFFIX,eaassets-a.akamaihd.net
+DOMAIN,eaasserts-a.akamaihd.net
 
 # ─────────────────────────────────────────────────────────────
 # Ubisoft 下载 CDN
@@ -78,6 +93,8 @@ DOMAIN-SUFFIX,ubisoft-uplay-savegames.s3.amazonaws.com
 # Rockstar 下载 CDN
 # ─────────────────────────────────────────────────────────────
 DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
+DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
+DOMAIN-SUFFIX,videos-rockstargames-com.akamaized.net
 
 # ─────────────────────────────────────────────────────────────
 # Microsoft/Xbox 下载 CDN
@@ -85,9 +102,11 @@ DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
 DOMAIN-SUFFIX,assets1.xboxlive.com
 DOMAIN-SUFFIX,assets2.xboxlive.com
 DOMAIN-SUFFIX,xboxlive.com.edgesuite.net
-DOMAIN-SUFFIX,xbox-ecn102.vo.msecnd.net
 DOMAIN-SUFFIX,dlassets-ssl.xboxlive.com
 DOMAIN-SUFFIX,dlassets2-ssl.xboxlive.com
+DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
+DOMAIN-SUFFIX,officecdn.microsoft.com
+DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
 
 # ─────────────────────────────────────────────────────────────
 # PlayStation 下载 CDN
@@ -114,9 +133,13 @@ DOMAIN-SUFFIX,echocdn.com
 DOMAIN-SUFFIX,ftcdn.net
 
 # ─────────────────────────────────────────────────────────────
-# 通用软件下载 CDN
+# 网易游戏下载 CDN (中国直连)
 # ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
-DOMAIN-SUFFIX,officecdn.microsoft.com
-DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
+DOMAIN-SUFFIX,di.res.netease.com
+DOMAIN-SUFFIX,diablo3.nosdn.127.net
+DOMAIN-SUFFIX,hearthstone.nosdn.127.net
+DOMAIN-SUFFIX,heroes.nos.netease.com
+DOMAIN-SUFFIX,overwatch.nosdn.127.net
+DOMAIN-SUFFIX,sc2.nosdn.127.net
+DOMAIN-SUFFIX,wow.nosdn.127.net
 
