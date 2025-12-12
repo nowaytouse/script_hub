@@ -233,17 +233,131 @@ clean_ruleset_exact() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 通用排除列表（适用于大多数规则集）
+# ═══════════════════════════════════════════════════════════════════════════════
+COMMON_EXCLUDE_EXACT=(
+    # 社交媒体
+    "x.com"
+    "twitter.com"
+    "facebook.com"
+    "instagram.com"
+    "reddit.com"
+    "discord.com"
+    "discordapp.com"
+    "discordapp.net"
+    "media.discordapp.net"
+    "cdn.discordapp.com"
+    
+    # 流媒体
+    "netflix.com"
+    "hbomax.com"
+    "hbo.com"
+    "youtube.com"
+    "youtu.be"
+    "twitch.tv"
+    "spotify.com"
+    
+    # 游戏平台
+    "itch.io"
+    "steampowered.com"
+    "epicgames.com"
+    
+    # 图片托管
+    "images.pexels.com"
+    "imgur.com"
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 受保护规则集列表（这些规则集不会被清理）
+# ═══════════════════════════════════════════════════════════════════════════════
+PROTECTED_RULESETS=(
+    "SocialMedia"
+    "Gaming"
+    "Steam"
+    "Epic"
+    "GlobalMedia"
+    "YouTube"
+    "Spotify"
+    "TikTok"
+    "Telegram"
+    "Twitter"
+    "DownloadDirect"
+    "Twitch"
+    "Netflix"
+    "Facebook"
+    "Instagram"
+    "Reddit"
+    "StreamUS"
+    "StreamJP"
+    "StreamKR"
+    "StreamEU"
+    "StreamHK"
+    "StreamTW"
+    "Manual"
+    "Manual_JP"
+    "Manual_US"
+    "Manual_West"
+    "Manual_Global"
+)
+
+# 检查是否为受保护规则集
+is_protected() {
+    local name="$1"
+    for protected in "${PROTECTED_RULESETS[@]}"; do
+        [[ "$name" == "$protected" ]] && return 0
+    done
+    return 1
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 主流程
 # ═══════════════════════════════════════════════════════════════════════════════
 
 log_info "开始清理规则集冲突..."
 echo ""
 
-# 1. 清理 NSFW.list（精确匹配）
-echo -e "${BLUE}[1/1] 清理 NSFW.list (精确匹配模式)${NC}"
-clean_ruleset_exact "$RULESET_DIR/NSFW.list" "${NSFW_EXCLUDE_EXACT[@]}"
+total_cleaned=0
+total_checked=0
+
+# 遍历所有规则集
+for ruleset_file in "$RULESET_DIR"/*.list; do
+    [[ ! -f "$ruleset_file" ]] && continue
+    
+    ruleset_name=$(basename "$ruleset_file" .list)
+    total_checked=$((total_checked + 1))
+    
+    # 跳过受保护的规则集
+    if is_protected "$ruleset_name"; then
+        echo -e "${GREEN}[PROTECTED]${NC} $ruleset_name"
+        continue
+    fi
+    
+    # 根据规则集类型选择排除列表
+    case "$ruleset_name" in
+        NSFW)
+            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name (NSFW 专用排除列表)"
+            clean_ruleset_exact "$ruleset_file" "${NSFW_EXCLUDE_EXACT[@]}"
+            ;;
+        AdBlock)
+            # AdBlock 可以包含广告追踪域名，但不应包含主站域名
+            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name (通用排除列表)"
+            clean_ruleset_exact "$ruleset_file" "${COMMON_EXCLUDE_EXACT[@]}"
+            ;;
+        CDN|LAN|ChinaDirect|GlobalProxy)
+            # 这些规则集有特殊用途，只检查明显的冲突
+            echo -e "${CYAN}[SKIP]${NC} $ruleset_name (特殊用途规则集)"
+            ;;
+        *)
+            # 其他规则集使用通用排除列表
+            echo -e "${BLUE}[CLEAN]${NC} $ruleset_name (通用排除列表)"
+            clean_ruleset_exact "$ruleset_file" "${COMMON_EXCLUDE_EXACT[@]}"
+            ;;
+    esac
+done
 
 echo ""
 log_success "规则集冲突清理完成！"
+echo "  检查: $total_checked 个规则集"
+echo "  受保护: ${#PROTECTED_RULESETS[@]} 个规则集"
 echo ""
 echo "提示: 运行 batch_convert_to_singbox.sh 重新生成 SRS 文件"
