@@ -731,6 +731,14 @@
         "update_interval": "24h"
       },
       {
+        "tag": "surge-downloaddirect",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/SingBox/DownloadDirect_Singbox.srs",
+        "download_detour": "🎯 全球直连",
+        "update_interval": "24h"
+      },
+      {
         "tag": "surge-manual_us",
         "type": "remote",
         "format": "binary",
@@ -1115,6 +1123,10 @@
       {
         "rule_set": "surge-adblock",
         "outbound": "❌ 拒绝屏蔽"
+      },
+      {
+        "rule_set": "surge-downloaddirect",
+        "outbound": "🗺️ 直连通用 🌏"
       },
       {
         "domain_keyword": "reddit",
