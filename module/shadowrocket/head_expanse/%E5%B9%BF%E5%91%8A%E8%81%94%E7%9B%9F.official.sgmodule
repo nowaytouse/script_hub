@@ -4,17 +4,8 @@
 # 仓库地址 https://github.com/app2smile/rules
 
 [MITM]
-hostname = api-access.pangolin-sdk-toutiao.com, is.snssdk.com, mi.gdt.qq.com, open.e.kuaishou.com
+hostname =  api-access.pangolin-sdk-toutiao.com, is.snssdk.com, mi.gdt.qq.com, open.e.kuaishou.com
 
 [Script]
 广告联盟json = type=http-response,pattern=^https:\/\/((api-access\.pangolin-sdk-toutiao|is\.snssdk)\.com\/api\/ad\/union\/sdk\/get_ads|open\.e\.kuaishou\.com\/rest\/e\/v3\/open\/univ$|mi\.gdt\.qq\.com\/gdt_mview\.fcg\?),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/adsense.js
-
-# ═══════════════════════════════════════════════════════════════
-# This cleaned version only contains non-Rule sections:
-#   - [URL Rewrite]
-#   - [MITM]
-#   - [Script]
-#   - Other module-specific features
-# Use AdBlock.list for all blocking rules
-# ═══════════════════════════════════════════════════════════════
 

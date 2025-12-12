@@ -4,10 +4,10 @@
 
 [General]
 # @mieq @wuhu @EAlyce
-always-real-ip = *.10099.com.cn
+always-real-ip =  *.10099.com.cn
 
 [Script]
 ^https?:\/\/app\.10099\.com\.cn\/contact-web\/api\/version\/getFlashScreenPage data-type=text data="" status-code=502
 
 [MITM]
-hostname = app.10099.com.cn
+hostname =  app.10099.com.cn

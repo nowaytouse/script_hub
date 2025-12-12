@@ -69,5 +69,5 @@ DOMAIN,youku-acs.m.taobao.com,REJECT
 移除首页推广 = type=http-response, pattern=^https:\/\/(?:cn-acs\.m|netflow-mtop)\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.m?show\.cn, script-path=https://kelee.one/Resource/JavaScript/Cainiao/Cainiao_remove_ads.js, requires-body=true
 
 [MITM]
-hostname = *-mtop.cainiao.com, cn-acs.m.cainiao.com, guide-acs.m.taobao.com
+hostname =  *-mtop.cainiao.com, cn-acs.m.cainiao.com, guide-acs.m.taobao.com
 

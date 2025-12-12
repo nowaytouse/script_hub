@@ -3,14 +3,12 @@
 # Policy: PROXY
 # Node: JP
 # Description: Manual Japan node
-# Rules: 139
-# Updated: 2025-12-12 20:18:31
+# Rules: 135
+# Updated: 2025-12-12 20:59:32
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN-KEYWORD,pixiv
 DOMAIN-SUFFIX,mstdn.jp
-
-# Adobe rules (excluding download-related domains)
 DOMAIN-SUFFIX,10xfotolia.com
 DOMAIN-SUFFIX,2o7.net
 DOMAIN-SUFFIX,acrobat.com

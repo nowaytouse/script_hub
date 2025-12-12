@@ -12,7 +12,7 @@ DOMAIN-SUFFIX,apps.apple.com,DIRECT
 DOMAIN-SUFFIX,itunes.apple.com,DIRECT
 
 [Host]
-{{{商店下载加速}}}.itunes.apple.com = {{{商店加速地址}}}
-{{{系统升级加速}}}.cdn-apple.com = {{{升级加速地址}}}
-{{{系统升级加速}}}.cdn-apple.com.akadns.net = {{{升级加速地址}}}
-{{{系统升级加速}}}.g.aaplimg.com = {{{升级加速地址}}}
+PROXY.itunes.apple.com = PROXY
+PROXY.cdn-apple.com = PROXY
+PROXY.cdn-apple.com.akadns.net = PROXY
+PROXY.g.aaplimg.com = PROXY

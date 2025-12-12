@@ -329,12 +329,3 @@ hostname = %APPEND% oauth.secure.pixiv.net, api.mcd.cn, orders.kfc.com.cn, dynam
 h2 = true
 tcp-connection = true
 
-# ═══════════════════════════════════════════════════════════════
-# This cleaned version only contains non-Rule sections:
-#   - [URL Rewrite]
-#   - [MITM]
-#   - [Script]
-#   - Other module-specific features
-# Use AdBlock.list for all blocking rules
-# ═══════════════════════════════════════════════════════════════
-

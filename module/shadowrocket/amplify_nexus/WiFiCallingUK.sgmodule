@@ -11,32 +11,32 @@ UK-Call = url-test,url=http://www.gstatic.com/generate_204,interval=600,toleranc
 
 [Rule]
 # 苹果地区检测
-{{{苹果地区检测}}},gspe1-ssl.ls.apple.com,{{{默认代理分组}}}
+PROXY,gspe1-ssl.ls.apple.com,PROXY
 
 # 通话端口代理
-{{{通话端口代理}}},((GEOIP,GB),(AND,((PROTOCOL,UDP),(OR,((DEST-PORT,500),(DEST-PORT,4500)))))),{{{默认代理分组}}}
+PROXY,((GEOIP,GB),(AND,((PROTOCOL,UDP),(OR,((DEST-PORT,500),(DEST-PORT,4500)))))),PROXY
 
 # 沃达丰
-DOMAIN-SUFFIX,entsrv-uk.vodafone.com,{{{默认代理分组}}}
-DOMAIN-SUFFIX,vuk-gto.prod.ondemandconnectivity.com,{{{默认代理分组}}}
-DOMAIN-SUFFIX,epdg.epc.mnc015.mcc234.pub.3gppnetwork.org,{{{默认代理分组}}}
-DOMAIN-SUFFIX,ss.epdg.epc.mnc015.mcc234.pub.3gppnetwork.org,{{{默认代理分组}}}
-DOMAIN-SUFFIX,ss.epdg.epc.geo.mnc015.mcc234.pub.3gppnetwork.org,{{{默认代理分组}}}
-DOMAIN-KEYWORD,mcc234,{{{默认代理分组}}}
-IP-CIDR,88.82.0.0/19,{{{默认代理分组}}},no-resolve
-IP-CIDR,148.252.160.0/19,{{{默认代理分组}}},no-resolve
+DOMAIN-SUFFIX,entsrv-uk.vodafone.com,PROXY
+DOMAIN-SUFFIX,vuk-gto.prod.ondemandconnectivity.com,PROXY
+DOMAIN-SUFFIX,epdg.epc.mnc015.mcc234.pub.3gppnetwork.org,PROXY
+DOMAIN-SUFFIX,ss.epdg.epc.mnc015.mcc234.pub.3gppnetwork.org,PROXY
+DOMAIN-SUFFIX,ss.epdg.epc.geo.mnc015.mcc234.pub.3gppnetwork.org,PROXY
+DOMAIN-KEYWORD,mcc234,PROXY
+IP-CIDR,88.82.0.0/19,PROXY,no-resolve
+IP-CIDR,148.252.160.0/19,PROXY,no-resolve
 
 # CMLink UK EE
-IP-CIDR,46.68.0.0/17,{{{默认代理分组}}},no-resolve
+IP-CIDR,46.68.0.0/17,PROXY,no-resolve
 
 # Giffgaff
-DOMAIN-SUFFIX,giffgaff.com,{{{默认代理分组}}}
-IP-CIDR,87.194.0.0/16,{{{默认代理分组}}},no-resolve
+DOMAIN-SUFFIX,giffgaff.com,PROXY
+IP-CIDR,87.194.0.0/16,PROXY,no-resolve
 
 # VOXI
-DOMAIN,vfgb.idemia.io,{{{默认代理分组}}}
-IP-CIDR,148.252.160.0/19,{{{默认代理分组}}},no-resolve
+DOMAIN,vfgb.idemia.io,PROXY
+IP-CIDR,148.252.160.0/19,PROXY,no-resolve
 
 # CTE
-DOMAIN-SUFFIX,ee.co.uk,{{{默认代理分组}}}
-IP-CIDR,31.94.0.0/16,{{{默认代理分组}}},no-resolve
+DOMAIN-SUFFIX,ee.co.uk,PROXY
+IP-CIDR,31.94.0.0/16,PROXY,no-resolve

@@ -93,4 +93,4 @@ http-response-jq ^https?:\/\/api\.weibo\.cn\/\d\/groups\/allgroups\/v\d '.pageDa
 移除开屏广告 wbapplua = type=http-response, pattern=^https:\/\/wbapp\.uve\.weibo\.com\/(?:preload\/get_ad|wbapplua\/wbpullad\.lua), script-path=https://kelee.one/Resource/JavaScript/Weibo/Weibo_remove_ads.js, requires-body=true
 
 [MITM]
-hostname = *.weibo.cn, *.weibo.com, weibo.com
+hostname =  *.weibo.cn, *.weibo.com, weibo.com
