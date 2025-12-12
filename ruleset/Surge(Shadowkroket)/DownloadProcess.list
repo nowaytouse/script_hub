@@ -2,8 +2,8 @@
 # Ruleset: DownloadProcess
 # Policy: DIRECT
 # Description: Download processes direct
-# Rules: 15
-# Updated: 2025-12-11 20:18:31
+# Rules: 19
+# Updated: 2025-12-12 20:18:31
 # ═══════════════════════════════════════════════════════════════
 
 PROCESS-NAME,BitComet
@@ -21,3 +21,9 @@ PROCESS-NAME,naive
 PROCESS-NAME,privoxy
 PROCESS-NAME,qBittorrent
 PROCESS-NAME,uTorrent
+
+# Adobe download-related domains
+DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
+DOMAIN-SUFFIX,adobesigncdn.com
+DOMAIN-SUFFIX,echocdn.com
+DOMAIN-SUFFIX,ftcdn.net
