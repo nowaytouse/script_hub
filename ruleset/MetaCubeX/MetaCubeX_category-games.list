@@ -1,5 +1,5 @@
 # MetaCubeX geosite-category-games
-# Rules: 923
+# Rules: 924
 
 DOMAIN,a.ppy.sh
 DOMAIN,a4e8s8k3.map2.ssl.hwcdn.net
@@ -501,6 +501,7 @@ DOMAIN-SUFFIX,nexon.io
 DOMAIN-SUFFIX,nexoncdn.co.kr
 DOMAIN-SUFFIX,nextstudios.com
 DOMAIN-SUFFIX,nextworkshop.net
+DOMAIN-SUFFIX,nexus-cdn.com
 DOMAIN-SUFFIX,nexusmods.com
 DOMAIN-SUFFIX,nfsworld.com
 DOMAIN-SUFFIX,nikke-de.com
@@ -918,9 +919,9 @@ DOMAIN-SUFFIX,zenlesszonezero.com
 DOMAIN-SUFFIX,zhuoyou.com
 DOMAIN-SUFFIX,zhuoyuegame.com
 DOMAIN-REGEX,^epicgames-download\d\.akamaized\.net$
-DOMAIN-REGEX,^.+-mihayo\.akamaized\.net$
 DOMAIN-REGEX,^cdn\d-epicgames-\d+\.file\.myqcloud\.com$
 DOMAIN-REGEX,^epicgames-download\d-\d+\.file\.myqcloud\.com$
 DOMAIN-REGEX,^cdn-akamai-.+\.gog-services\.com$
 DOMAIN-REGEX,^gog-cdn-.+\.footprint\.net$
 DOMAIN-REGEX,^images(-\d)?\.gog-statics\.com$
+DOMAIN-REGEX,^.+-mihayo\.akamaized\.net$
