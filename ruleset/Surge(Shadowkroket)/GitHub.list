@@ -1,10 +1,8 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: GitHub
-# Policy: PROXY
-# Node: Any
-# Description: GitHub
-# Rules: 31
-# Updated: 2025-12-11 20:18:31
+# Updated: 2025-12-12
+# Total Rules: 37
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN-KEYWORD,github
@@ -29,6 +27,12 @@ DOMAIN-SUFFIX,githubpreview.dev
 DOMAIN-SUFFIX,githubstatus.com
 DOMAIN-SUFFIX,githubuniverse.com
 DOMAIN-SUFFIX,githubusercontent.com
+DOMAIN-SUFFIX,gitlab-assets.oss-cn-hongkong.aliyuncs.com
+DOMAIN-SUFFIX,gitlab-static.net
+DOMAIN-SUFFIX,gitlab.com
+DOMAIN-SUFFIX,gitlab.net
+DOMAIN-SUFFIX,gitter-static.net
+DOMAIN-SUFFIX,gitter.im
 DOMAIN-SUFFIX,myoctocat.com
 DOMAIN-SUFFIX,npm.community
 DOMAIN-SUFFIX,npmjs.com

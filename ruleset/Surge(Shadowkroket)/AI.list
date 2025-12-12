@@ -1,15 +1,14 @@
 # ═══════════════════════════════════════════════════════════════
 # Ruleset: AI
-# Policy: PROXY
-# Node: Any
-# Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 70
-# Updated: 2025-12-11 20:18:31
+# Updated: 2025-12-12
+# Total Rules: 76
+# Generator: merge_all_rulesets.sh
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,api.msn.com
+DOMAIN,api.statsig.com
 DOMAIN,assets.msn.com
 DOMAIN,browser-intake-datadoghq.com
 DOMAIN,cdn.usefathom.com
@@ -44,6 +43,7 @@ DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,algolia.net
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,api.microsoftapp.net
+DOMAIN-SUFFIX,api.statsig.com
 DOMAIN-SUFFIX,apis.google.com
 DOMAIN-SUFFIX,auth0.com
 DOMAIN-SUFFIX,bard.google.com
@@ -57,6 +57,8 @@ DOMAIN-SUFFIX,client-api.arkoselabs.com
 DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deepmind.google
 DOMAIN-SUFFIX,edgeservices.bing.com
+DOMAIN-SUFFIX,events.statsigapi.net
+DOMAIN-SUFFIX,featuregates.org
 DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,generativeai.google
 DOMAIN-SUFFIX,host.livekit.cloud
@@ -72,6 +74,8 @@ DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
 DOMAIN-SUFFIX,openaiapi-site.azureedge.net
 DOMAIN-SUFFIX,openaicom.imgix.net
 DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
+DOMAIN-SUFFIX,segment.io
+DOMAIN-SUFFIX,sentry.io
 DOMAIN-SUFFIX,sora.com
 DOMAIN-SUFFIX,stripe.com
 DOMAIN-SUFFIX,turn.livekit.cloud

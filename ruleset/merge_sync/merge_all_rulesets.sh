@@ -222,6 +222,86 @@ GITHUB_SOURCES=(
 )
 merge_to_target "$RULESET_DIR/GitHub.list" "${GITHUB_SOURCES[@]}"
 
+# ============================================
+# 11. DownloadDirect - Download CDN Direct (Protected)
+# ============================================
+# 🔒 这是一个受保护的规则集，只追加不覆盖
+# 设计理念：网站走代理，下载直连
+echo ""
+echo -e "${BLUE}[11/11] DownloadDirect - Download CDN Direct (Protected)${NC}"
+
+# 远程下载 CDN 规则源
+DOWNLOADDIRECT_SOURCES=(
+    # Steam 下载 CDN
+    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/SteamCN/SteamCN.list"
+)
+
+# 🔒 受保护的合并：只追加新规则，不删除现有规则
+merge_protected_ruleset() {
+    local target="$1"
+    shift
+    local sources=("$@")
+    local temp_merged="$TEMP_DIR/merged_protected_$RANDOM.txt"
+    
+    echo -e "${YELLOW}Protected merge to: $(basename $target)${NC}"
+    
+    # 必须保留现有规则
+    if [ -f "$target" ]; then
+        extract_rules "$target" > "$temp_merged"
+        local existing_count=$(wc -l < "$temp_merged" | tr -d ' ')
+        echo "  Preserving $existing_count existing rules"
+    else
+        touch "$temp_merged"
+    fi
+    
+    # 下载并追加远程规则
+    for url in "${sources[@]}"; do
+        local temp_download="$TEMP_DIR/download_$RANDOM.txt"
+        echo "  <- $url"
+        if download_rules "$url" "$temp_download"; then
+            extract_rules "$temp_download" >> "$temp_merged"
+        else
+            echo -e "    ${RED}Download failed (ignored)${NC}"
+        fi
+    done
+    
+    # 去重但保留所有规则
+    local count_before=$(wc -l < "$temp_merged" | tr -d ' ')
+    sort -u "$temp_merged" -o "$temp_merged"
+    local count_after=$(wc -l < "$temp_merged" | tr -d ' ')
+    
+    # 生成带头部的输出
+    local update_date=$(date "+%Y-%m-%d %H:%M:%S")
+    cat > "$target" << EOF
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DownloadDirect
+# Policy: DIRECT
+# Description: Download CDN domains for direct connection
+# Rules: ${count_after}
+# Updated: ${update_date}
+# ═══════════════════════════════════════════════════════════════
+# 
+# 🎯 设计理念：网站走代理，下载直连
+# - 游戏/软件网站需要代理访问（被墙或加速）
+# - 大文件下载走直连（节省流量、提高速度）
+# 
+# ⚠️ 规则优先级说明：
+# - 此规则集应放在广告拦截之后、其他服务规则之前
+# - 确保下载 CDN 域名优先匹配到直连策略
+# - 避免被后续的代理规则覆盖
+#
+# 🔒 受保护规则集：只追加不覆盖
+#
+# ═══════════════════════════════════════════════════════════════
+
+EOF
+    cat "$temp_merged" >> "$target"
+    
+    echo -e "  ${GREEN}✓ ${count_after} rules (protected merge)${NC}"
+}
+
+merge_protected_ruleset "$RULESET_DIR/DownloadDirect.list" "${DOWNLOADDIRECT_SOURCES[@]}"
+
 echo ""
 echo -e "${GREEN}=== Ruleset merge complete ===${NC}"
 echo ""

@@ -33,6 +33,16 @@ for ruleset_file in "$RULESET_DIR"/*.list; do
     # Count actual rules (exclude comments and empty lines)
     rule_count=$(grep -v '^#' "$ruleset_file" | grep -v '^$' | grep -v '^\s*$' | wc -l | tr -d ' ')
     
+    # 🔒 受保护的规则集列表（永不删除）
+    case "$ruleset_name" in
+        DownloadDirect|Manual_JP|Manual_US|Manual_West|Manual_Global|Manual)
+            # 这些是手动维护的规则集，即使为空也不删除
+            echo -e "${GREEN}[PROTECTED]${NC} $filename ($rule_count rules - manual ruleset)"
+            kept=$((kept + 1))
+            continue
+            ;;
+    esac
+    
     if [ "$rule_count" -eq 0 ]; then
         # Check if this is a known deprecated ruleset
         case "$ruleset_name" in

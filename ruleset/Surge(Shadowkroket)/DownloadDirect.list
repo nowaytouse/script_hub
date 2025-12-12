@@ -2,8 +2,8 @@
 # Ruleset: DownloadDirect
 # Policy: DIRECT
 # Description: Download CDN domains for direct connection
-# Rules: 85
-# Updated: 2025-12-12 21:00:00
+# Rules: 91
+# Updated: 2025-12-12 16:44:09
 # ═══════════════════════════════════════════════════════════════
 # 
 # 🎯 设计理念：网站走代理，下载直连
@@ -15,131 +15,98 @@
 # - 确保下载 CDN 域名优先匹配到直连策略
 # - 避免被后续的代理规则覆盖
 #
+# 🔒 受保护规则集：只追加不覆盖
+#
 # ═══════════════════════════════════════════════════════════════
 
-# ─────────────────────────────────────────────────────────────
-# Steam 下载 CDN（游戏下载直连）
-# 关键词: dl, cdn, content, pipe
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,steamcontent.com
-DOMAIN-SUFFIX,steamusercontent.com
-DOMAIN-SUFFIX,steamserver.net
-DOMAIN-SUFFIX,st.dl.bscstorage.net
-DOMAIN-SUFFIX,st.dl.eccdnx.com
-DOMAIN-SUFFIX,st.dl.pinyuncloud.com
-DOMAIN-SUFFIX,dl.steam.clngaa.com
-DOMAIN-SUFFIX,dl.steam.ksyna.com
-DOMAIN-SUFFIX,steam.cdn.on.net
-DOMAIN-SUFFIX,steam.cdn.orcon.net.nz
-DOMAIN-SUFFIX,steam.cdn.slingshot.co.nz
-DOMAIN-SUFFIX,steam.cdn.webra.ru
-DOMAIN-SUFFIX,steampipe.akamaized.net
-DOMAIN-SUFFIX,steampipe-kr.akamaized.net
-DOMAIN-SUFFIX,steampipe-partner.akamaized.net
-DOMAIN-SUFFIX,steamcdn-a.akamaihd.net
+DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
+DOMAIN,csgo.wmsj.cn
+DOMAIN,dl.steam.clngaa.com
+DOMAIN,dl.steam.ksyna.com
+DOMAIN,dota2.wmsj.cn
+DOMAIN,eaasserts-a.akamaihd.net
+DOMAIN,st.dl.bscstorage.net
+DOMAIN,st.dl.eccdnx.com
+DOMAIN,st.dl.pinyuncloud.com
+DOMAIN,steampipe.steamcontent.tnkjmec.com
+DOMAIN,steampowered.com.8686c.com
+DOMAIN,steamstatic.com.8686c.com
+DOMAIN,wmsjsteam.com
+DOMAIN,xz.pphimalayanrt.com
+DOMAIN-SUFFIX,adobesigncdn.com
+DOMAIN-SUFFIX,ares.dl.playstation.net
+DOMAIN-SUFFIX,assets1.xboxlive.com
+DOMAIN-SUFFIX,assets2.xboxlive.com
+DOMAIN-SUFFIX,blz.nosdn.127.net
+DOMAIN-SUFFIX,blzddist1-a.akamaihd.net
+DOMAIN-SUFFIX,blzddistkr1-a.akamaihd.net
+DOMAIN-SUFFIX,blzmedia-a.akamaihd.net
+DOMAIN-SUFFIX,ccs.cdn.wup.shop.nintendo.net
 DOMAIN-SUFFIX,cdn-ali.content.steamchina.com
 DOMAIN-SUFFIX,cdn-qc.content.steamchina.com
 DOMAIN-SUFFIX,cdn-ws.content.steamchina.com
-DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
-DOMAIN-SUFFIX,steamcontent.tnkjmec.com
-DOMAIN-SUFFIX,steam.apac.qtlglb.com
-DOMAIN-SUFFIX,steam.eca.qtlglb.com
-DOMAIN-SUFFIX,steam.naeu.qtlglb.com
-DOMAIN-SUFFIX,steam.ru.qtlglb.com
-DOMAIN-SUFFIX,edge.steam-dns.top.comcast.net
-
-# ─────────────────────────────────────────────────────────────
-# Epic Games 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,epicgames-download1.akamaized.net
+DOMAIN-SUFFIX,cdn.gog.com
+DOMAIN-SUFFIX,cm.steampowered.com
+DOMAIN-SUFFIX,di.res.netease.com
+DOMAIN-SUFFIX,diablo3.nosdn.127.net
+DOMAIN-SUFFIX,dist.blizzard.com
+DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
+DOMAIN-SUFFIX,dl.steam.clngaa.com
+DOMAIN-SUFFIX,dl.steam.ksyna.com
+DOMAIN-SUFFIX,dlassets-ssl.xboxlive.com
+DOMAIN-SUFFIX,dlassets2-ssl.xboxlive.com
 DOMAIN-SUFFIX,download.epicgames.com
 DOMAIN-SUFFIX,download2.epicgames.com
 DOMAIN-SUFFIX,download3.epicgames.com
 DOMAIN-SUFFIX,download4.epicgames.com
-DOMAIN-SUFFIX,fastly-download.epicgames.com
-
-# ─────────────────────────────────────────────────────────────
-# GOG 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,gog.qtlglb.com
-DOMAIN-SUFFIX,cdn.gog.com
-DOMAIN-SUFFIX,gog-statics.com
-
-# ─────────────────────────────────────────────────────────────
-# Blizzard/Battle.net 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,blzddist1-a.akamaihd.net
-DOMAIN-SUFFIX,blzddistkr1-a.akamaihd.net
-DOMAIN-SUFFIX,blz.nosdn.127.net
-DOMAIN-SUFFIX,level3.blizzard.com
-DOMAIN-SUFFIX,dist.blizzard.com
-DOMAIN-SUFFIX,blzmedia-a.akamaihd.net
-
-# ─────────────────────────────────────────────────────────────
-# EA/Origin 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,origin-a.akamaihd.net
-DOMAIN-SUFFIX,originasserts.akamaized.net
 DOMAIN-SUFFIX,eaassets-a.akamaihd.net
-DOMAIN,eaasserts-a.akamaihd.net
-
-# ─────────────────────────────────────────────────────────────
-# Ubisoft 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,ubisoft-orbit-savegames.s3.amazonaws.com
-DOMAIN-SUFFIX,ubisoft-uplay-savegames.s3.amazonaws.com
-
-# ─────────────────────────────────────────────────────────────
-# Rockstar 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
-DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
-DOMAIN-SUFFIX,videos-rockstargames-com.akamaized.net
-
-# ─────────────────────────────────────────────────────────────
-# Microsoft/Xbox 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,assets1.xboxlive.com
-DOMAIN-SUFFIX,assets2.xboxlive.com
-DOMAIN-SUFFIX,xboxlive.com.edgesuite.net
-DOMAIN-SUFFIX,dlassets-ssl.xboxlive.com
-DOMAIN-SUFFIX,dlassets2-ssl.xboxlive.com
-DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
-DOMAIN-SUFFIX,officecdn.microsoft.com
-DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
-
-# ─────────────────────────────────────────────────────────────
-# PlayStation 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,gs2.ww.prod.dl.playstation.net
-DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
-DOMAIN-SUFFIX,ares.dl.playstation.net
-
-# ─────────────────────────────────────────────────────────────
-# Nintendo 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,ccs.cdn.wup.shop.nintendo.net
-DOMAIN-SUFFIX,ecs.cdn.wup.shop.nintendo.net
-DOMAIN-SUFFIX,ias.cdn.wup.shop.nintendo.net
-DOMAIN-SUFFIX,nus.cdn.shop.wii.com
-DOMAIN-SUFFIX,nus.cdn.t.shop.nintendowifi.net
-
-# ─────────────────────────────────────────────────────────────
-# Adobe 下载 CDN
-# ─────────────────────────────────────────────────────────────
-DOMAIN,cc-ext-prod-pkgs.s3.amazonaws.com
-DOMAIN-SUFFIX,adobesigncdn.com
 DOMAIN-SUFFIX,echocdn.com
+DOMAIN-SUFFIX,ecs.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,edge.steam-dns.top.comcast.net
+DOMAIN-SUFFIX,epicgames-download1.akamaized.net
+DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
+DOMAIN-SUFFIX,fastly-download.epicgames.com
 DOMAIN-SUFFIX,ftcdn.net
-
-# ─────────────────────────────────────────────────────────────
-# 网易游戏下载 CDN (中国直连)
-# ─────────────────────────────────────────────────────────────
-DOMAIN-SUFFIX,di.res.netease.com
-DOMAIN-SUFFIX,diablo3.nosdn.127.net
+DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
+DOMAIN-SUFFIX,gog-statics.com
+DOMAIN-SUFFIX,gog.qtlglb.com
+DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
+DOMAIN-SUFFIX,gs2.ww.prod.dl.playstation.net
 DOMAIN-SUFFIX,hearthstone.nosdn.127.net
 DOMAIN-SUFFIX,heroes.nos.netease.com
+DOMAIN-SUFFIX,ias.cdn.wup.shop.nintendo.net
+DOMAIN-SUFFIX,level3.blizzard.com
+DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
+DOMAIN-SUFFIX,nus.cdn.shop.wii.com
+DOMAIN-SUFFIX,nus.cdn.t.shop.nintendowifi.net
+DOMAIN-SUFFIX,officecdn-microsoft-com.akamaized.net
+DOMAIN-SUFFIX,officecdn.microsoft.com
+DOMAIN-SUFFIX,origin-a.akamaihd.net
+DOMAIN-SUFFIX,originasserts.akamaized.net
 DOMAIN-SUFFIX,overwatch.nosdn.127.net
 DOMAIN-SUFFIX,sc2.nosdn.127.net
+DOMAIN-SUFFIX,st.dl.bscstorage.net
+DOMAIN-SUFFIX,st.dl.eccdnx.com
+DOMAIN-SUFFIX,st.dl.pinyuncloud.com
+DOMAIN-SUFFIX,steam.apac.qtlglb.com
+DOMAIN-SUFFIX,steam.cdn.on.net
+DOMAIN-SUFFIX,steam.cdn.orcon.net.nz
+DOMAIN-SUFFIX,steam.cdn.slingshot.co.nz
+DOMAIN-SUFFIX,steam.cdn.webra.ru
+DOMAIN-SUFFIX,steam.eca.qtlglb.com
+DOMAIN-SUFFIX,steam.naeu.qtlglb.com
+DOMAIN-SUFFIX,steam.ru.qtlglb.com
+DOMAIN-SUFFIX,steamcdn-a.akamaihd.net
+DOMAIN-SUFFIX,steamchina.com
+DOMAIN-SUFFIX,steamcontent.com
+DOMAIN-SUFFIX,steamcontent.tnkjmec.com
+DOMAIN-SUFFIX,steampipe-kr.akamaized.net
+DOMAIN-SUFFIX,steampipe-partner.akamaized.net
+DOMAIN-SUFFIX,steampipe.akamaized.net
+DOMAIN-SUFFIX,steamserver.net
+DOMAIN-SUFFIX,steamusercontent.com
+DOMAIN-SUFFIX,ubisoft-orbit-savegames.s3.amazonaws.com
+DOMAIN-SUFFIX,ubisoft-uplay-savegames.s3.amazonaws.com
+DOMAIN-SUFFIX,videos-rockstargames-com.akamaized.net
 DOMAIN-SUFFIX,wow.nosdn.127.net
-
+DOMAIN-SUFFIX,xboxlive.com.edgesuite.net
