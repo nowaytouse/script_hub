@@ -234,7 +234,7 @@ for line in sys.stdin:
             module_display_name=$(grep "^#!name=" "$module" | head -1 | sed 's/#!name=//')
             
             # Determine category
-            local category=""
+            category=""
             if echo "$module_display_name" | grep -qi "httpdns\|dns"; then
                 category="『 🛠️ Amplify Nexus › 增幅枢纽 』"
             elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截\|limbo"; then
@@ -245,7 +245,7 @@ for line in sys.stdin:
             
             # 🔥 Cross-platform: use temp file instead of sed -i
             if grep -q "^#!desc=" "$cleaned_module"; then
-                local tmp_cat=$(mktemp)
+                tmp_cat=$(mktemp)
                 awk -v cat="$category" '/^#!desc=/{print; print "#!category=" cat; next} {print}' "$cleaned_module" > "$tmp_cat"
                 mv "$tmp_cat" "$cleaned_module"
             else
