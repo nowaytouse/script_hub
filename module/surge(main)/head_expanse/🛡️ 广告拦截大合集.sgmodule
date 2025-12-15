@@ -3,7 +3,7 @@
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!author=Multiple Authors (合并版)
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Advertising.png
-#!date=2025-12-12 21:03:18
+#!date=2025-12-15 21:10:39
 #!source=Adblock4limbo.sgmodule, All-in-One-2.x.sgmodule, AllInOne_Mock.sgmodule, 可莉广告过滤器.beta.sgmodule, 广告平台拦截器.sgmodule...
 
 [General]
@@ -15,6 +15,7 @@ force-http-engine-hosts = %APPEND% *.ott.cibntv.net,intl.iqiyi.com,maicai.api.dd
 ^https?:\/\/adc\.tamedia\.com\.tw\/rmadp/static/js/gm-sdk8-mobile\.js - reject
 ^https?:\/\/.*?.gliacloud.com.*?www\.novel543\..* - reject
 ^https?:\/\/cdn\.holmesmind\.com\/js\/init\.js - reject
+^https://m.diyibanzhu.me/js/js4.js - reject
 \/api\/video\/getadsdatalist\? - reject
 js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/[-a-z]{6,}\.com?\/[a-d][-\.\/_A-Za-z][DHWXm][-\.\/_A-Za-z][59FVZ][-\.\/_A-Za-z][6swyz][-\.\/_A-Za-z][-\/_0-9a-zA-Z][-\.\/_A-Za-z][-\/_0-9a-zA-Z]{22,162}$ - reject
