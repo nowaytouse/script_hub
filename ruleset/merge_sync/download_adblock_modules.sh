@@ -233,32 +233,23 @@ for line in sys.stdin:
         if ! grep -q "^#!category=" "$cleaned_module"; then
             module_display_name=$(grep "^#!name=" "$module" | head -1 | sed 's/#!name=//')
             
-            # Priority: DNS > Ad blocking > Others
+            # Determine category
+            local category=""
             if echo "$module_display_name" | grep -qi "httpdns\|dns"; then
-                # 在 #!desc 后面插入 #!category
-                if grep -q "^#!desc=" "$cleaned_module"; then
-                    sed -i '' '/^#!desc=/a\
-#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-' "$cleaned_module"
-                else
-                    echo "#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』" >> "$cleaned_module"
-                fi
+                category="『 🛠️ Amplify Nexus › 增幅枢纽 』"
             elif echo "$module_display_name" | grep -qi "广告\|adblock\|ad\|拦截\|limbo"; then
-                if grep -q "^#!desc=" "$cleaned_module"; then
-                    sed -i '' '/^#!desc=/a\
-#!category=『 🔝 Head Expanse › 首端扩域 』
-' "$cleaned_module"
-                else
-                    echo "#!category=『 🔝 Head Expanse › 首端扩域 』" >> "$cleaned_module"
-                fi
+                category="『 🔝 Head Expanse › 首端扩域 』"
             else
-                if grep -q "^#!desc=" "$cleaned_module"; then
-                    sed -i '' '/^#!desc=/a\
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
-' "$cleaned_module"
-                else
-                    echo "#!category=『 🎯 Narrow Pierce › 窄域穿刺 』" >> "$cleaned_module"
-                fi
+                category="『 🎯 Narrow Pierce › 窄域穿刺 』"
+            fi
+            
+            # 🔥 Cross-platform: use temp file instead of sed -i
+            if grep -q "^#!desc=" "$cleaned_module"; then
+                local tmp_cat=$(mktemp)
+                awk -v cat="$category" '/^#!desc=/{print; print "#!category=" cat; next} {print}' "$cleaned_module" > "$tmp_cat"
+                mv "$tmp_cat" "$cleaned_module"
+            else
+                echo "#!category=$category" >> "$cleaned_module"
             fi
         fi
         
