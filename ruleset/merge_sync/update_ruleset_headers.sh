@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
 # Ruleset Header Update Script v2.1 (Performance Optimized - macOS Compatible)
 # Function: Add policy suggestions and node recommendations to rulesets

@@ -1,7 +1,8 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════════
-# AdBlock Module Smart Merge Script v4.1 (Performance Optimized - macOS Compatible)
+# AdBlock Module Smart Merge Script v4.2 (with Whitelist Support)
 # Optimization: Use sort -u instead of line-by-line grep dedup, batch processing
+# New: Whitelist mechanism to prevent false positives (e.g., WeChat redirect)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -15,16 +16,68 @@ TARGET_MODULE="$SURGE_MODULE_DIR/🚫 Universal Ad-Blocking Rules Dependency Com
 ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
 CACHE_DIR="$PROJECT_ROOT/.cache"
 HASH_FILE="$CACHE_DIR/adblock_hashes.txt"
+WHITELIST_FILE="$PROJECT_ROOT/ruleset/Sources/adblock_whitelist.txt"
 
 # UTILS
 log_info() { echo -e "\033[0;36m[INFO]\033[0m $1"; }
 log_success() { echo -e "\033[0;32m[✓]\033[0m $1"; }
 log_warning() { echo -e "\033[1;33m[⚠]\033[0m $1"; }
+log_error() { echo -e "\033[0;31m[✗]\033[0m $1"; }
+
+# 🔥 Load whitelist patterns for filtering
+load_whitelist() {
+    if [ -f "$WHITELIST_FILE" ]; then
+        # Extract domain patterns from whitelist (ignore comments and empty lines)
+        grep -v '^#' "$WHITELIST_FILE" | grep -v '^$' | \
+        sed 's/^DOMAIN-SUFFIX,//' | sed 's/^DOMAIN-KEYWORD,//' | sed 's/^DOMAIN,//' | \
+        sort -u > "$TEMP_DIR/whitelist_domains.tmp"
+        
+        WHITELIST_COUNT=$(wc -l < "$TEMP_DIR/whitelist_domains.tmp" 2>/dev/null | tr -d ' ' || echo "0")
+        log_info "Loaded $WHITELIST_COUNT whitelist patterns from adblock_whitelist.txt"
+    else
+        touch "$TEMP_DIR/whitelist_domains.tmp"
+        log_warning "Whitelist file not found: $WHITELIST_FILE"
+    fi
+}
+
+# 🔥 Filter rules against whitelist
+filter_whitelist() {
+    local input_file="$1"
+    local output_file="$2"
+    
+    if [ ! -s "$TEMP_DIR/whitelist_domains.tmp" ]; then
+        # No whitelist, just copy
+        cp "$input_file" "$output_file"
+        return
+    fi
+    
+    # Build grep pattern from whitelist
+    local whitelist_pattern=$(cat "$TEMP_DIR/whitelist_domains.tmp" | tr '\n' '|' | sed 's/|$//')
+    
+    if [ -n "$whitelist_pattern" ]; then
+        # Filter out rules matching whitelist domains
+        grep -vE "$whitelist_pattern" "$input_file" > "$output_file" 2>/dev/null || cp "$input_file" "$output_file"
+        
+        # Count filtered rules
+        local before=$(wc -l < "$input_file" 2>/dev/null | tr -d ' ' || echo "0")
+        local after=$(wc -l < "$output_file" 2>/dev/null | tr -d ' ' || echo "0")
+        local filtered=$((before - after))
+        
+        if [ "$filtered" -gt 0 ]; then
+            log_warning "Whitelist filtered: $filtered rules removed (before: $before, after: $after)"
+        fi
+    else
+        cp "$input_file" "$output_file"
+    fi
+}
 
 # INIT
 rm -rf "$TEMP_DIR"
 mkdir -p "$TEMP_DIR" "$CACHE_DIR"
 touch "$HASH_FILE"
+
+# Load whitelist
+load_whitelist
 
 # Check if update needed
 needs_update=false
@@ -157,7 +210,10 @@ cat "$TEMP_DIR/old_adblock.tmp" "$ALL_REJECT" 2>/dev/null | sort -u > "$TEMP_DIR
 
 # Clean invalid rules
 sed 's/^\(DOMAIN[^,]*,[^,]*\),no-resolve$/\1/' "$TEMP_DIR/merged_adblock.tmp" 2>/dev/null | \
-grep -v "^RULE-SET" > "$TEMP_DIR/clean_adblock.tmp" || true
+grep -v "^RULE-SET" > "$TEMP_DIR/clean_adblock_pre.tmp" || true
+
+# 🔥 Apply whitelist filter (remove rules that match whitelist domains)
+filter_whitelist "$TEMP_DIR/clean_adblock_pre.tmp" "$TEMP_DIR/clean_adblock.tmp"
 
 # Add header
 rule_count=$(wc -l < "$TEMP_DIR/clean_adblock.tmp" 2>/dev/null | tr -d ' ' || echo "0")

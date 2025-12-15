@@ -1,6 +1,7 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # Download AdBlock modules from URLs in AdBlock_sources.txt
 # Extract rules and merge into AdBlock.list
+# v2.0: Added whitelist support to prevent false positives
 
 set -e
 
@@ -11,6 +12,7 @@ TEMP_DIR="$PROJECT_ROOT/.temp_adblock_download"
 # 🔥 修复: 下载到正确的目录 head_expanse (广告拦截模块分类)
 MODULE_DIR="$PROJECT_ROOT/module/surge(main)/head_expanse"
 ADBLOCK_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
+WHITELIST_FILE="$PROJECT_ROOT/ruleset/Sources/adblock_whitelist.txt"
 
 # Colors
 RED='\033[0;31m'
@@ -24,9 +26,45 @@ log_success() { echo -e "${GREEN}[✓]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[⚠]${NC} $1"; }
 log_error() { echo -e "${RED}[✗]${NC} $1"; }
 
+# 🔥 Load whitelist and build filter pattern
+load_whitelist() {
+    if [ -f "$WHITELIST_FILE" ]; then
+        grep -v '^#' "$WHITELIST_FILE" | grep -v '^$' | \
+        sed 's/^DOMAIN-SUFFIX,//' | sed 's/^DOMAIN-KEYWORD,//' | sed 's/^DOMAIN,//' | \
+        sort -u > "$TEMP_DIR/whitelist_domains.tmp"
+        WHITELIST_COUNT=$(wc -l < "$TEMP_DIR/whitelist_domains.tmp" 2>/dev/null | tr -d ' ' || echo "0")
+        log_info "Loaded $WHITELIST_COUNT whitelist patterns"
+    else
+        touch "$TEMP_DIR/whitelist_domains.tmp"
+        log_warning "Whitelist not found: $WHITELIST_FILE"
+    fi
+}
+
+# 🔥 Filter rules against whitelist
+filter_whitelist() {
+    local input_file="$1"
+    local output_file="$2"
+    if [ ! -s "$TEMP_DIR/whitelist_domains.tmp" ]; then
+        cp "$input_file" "$output_file"; return
+    fi
+    local pattern=$(cat "$TEMP_DIR/whitelist_domains.tmp" | tr '\n' '|' | sed 's/|$//')
+    if [ -n "$pattern" ]; then
+        grep -vE "$pattern" "$input_file" > "$output_file" 2>/dev/null || cp "$input_file" "$output_file"
+        local before=$(wc -l < "$input_file" | tr -d ' ')
+        local after=$(wc -l < "$output_file" | tr -d ' ')
+        local filtered=$((before - after))
+        [ "$filtered" -gt 0 ] && log_warning "Whitelist filtered: $filtered rules"
+    else
+        cp "$input_file" "$output_file"
+    fi
+}
+
 # Init
 rm -rf "$TEMP_DIR"
 mkdir -p "$TEMP_DIR" "$MODULE_DIR"
+
+# Load whitelist
+load_whitelist
 
 log_info "Downloading AdBlock modules..."
 
@@ -317,7 +355,10 @@ for line in sys.stdin:
     
     # Merge and deduplicate
     cat "$TEMP_DIR/existing_rules.tmp" "$ALL_RULES" 2>/dev/null | \
-    sort -u > "$TEMP_DIR/merged_rules.tmp"
+    sort -u > "$TEMP_DIR/merged_rules_pre.tmp"
+    
+    # 🔥 Apply whitelist filter
+    filter_whitelist "$TEMP_DIR/merged_rules_pre.tmp" "$TEMP_DIR/merged_rules.tmp"
     
     # Count final rules
     final_count=$(wc -l < "$TEMP_DIR/merged_rules.tmp" 2>/dev/null | tr -d ' ' || echo "0")
@@ -328,6 +369,7 @@ for line in sys.stdin:
         echo "# Updated: $(date)"
         echo "# Total Rules: $final_count"
         echo "# Includes: Module rules + Source rules"
+        echo "# Whitelist: adblock_whitelist.txt applied"
         echo "# ═══════════════════════════════════════════════════════════════"
         echo ""
         cat "$TEMP_DIR/merged_rules.tmp"

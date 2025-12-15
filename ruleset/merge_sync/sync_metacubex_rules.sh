@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
 # Sync MetaCubeX Rules to Local and Convert to Surge Format
 # Use sing-box decompile to convert .srs to JSON, then to .list

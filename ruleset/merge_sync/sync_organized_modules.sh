@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # Sync Organized Modules to Shadowrocket
 # 

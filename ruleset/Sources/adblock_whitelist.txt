@@ -1,0 +1,42 @@
+# AdBlock Whitelist - 白名单配置
+# 合并规则时自动排除这些域名/规则
+# 
+# 用途: 防止误拦截导致功能异常
+# 例如: 微信内置浏览器的链接重定向被拦截
+#
+# 格式说明:
+#   - 每行一条规则
+#   - 支持 DOMAIN, DOMAIN-SUFFIX, DOMAIN-KEYWORD 格式
+#   - 以 # 开头的行为注释
+#   - 空行会被忽略
+#
+# 更新: 2025-12-15
+# ═══════════════════════════════════════════════════════════════
+
+# ============ 微信相关 (WeChat) ============
+# 微信内置浏览器链接跳转/重定向必需
+DOMAIN-SUFFIX,weixin.qq.com
+DOMAIN-SUFFIX,wx.qq.com
+DOMAIN-SUFFIX,wechat.com
+DOMAIN-SUFFIX,weixinbridge.com
+DOMAIN,open.weixin.qq.com
+DOMAIN,res.wx.qq.com
+DOMAIN,mp.weixin.qq.com
+
+# 微信小程序相关
+DOMAIN-SUFFIX,servicewechat.com
+DOMAIN-SUFFIX,wxs.qq.com
+
+# ============ 支付相关 (Payment) ============
+# 支付宝
+DOMAIN-SUFFIX,alipay.com
+DOMAIN-SUFFIX,alipayobjects.com
+
+# 微信支付
+DOMAIN-SUFFIX,tenpay.com
+DOMAIN-SUFFIX,wechatpay.com
+
+# ============ 其他常用服务 ============
+# 可根据需要添加更多白名单域名
+# DOMAIN-SUFFIX,example.com
+

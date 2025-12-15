@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
 # Sing-box & Mihomo Core Update Script (Simple Version)
 # Function: Download latest versions without using GitHub API
