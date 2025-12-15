@@ -113,6 +113,8 @@ DOMAIN-SUFFIX,5054399.com
 DOMAIN-SUFFIX,5054399.net
 DOMAIN-SUFFIX,71acg.com
 DOMAIN-SUFFIX,71acg.net
+DOMAIN-SUFFIX,7k7k.com
+DOMAIN-SUFFIX,9game.cn
 DOMAIN-SUFFIX,9xgame.com
 DOMAIN-SUFFIX,ac-pocketcamp.com
 DOMAIN-SUFFIX,aki-game.com
@@ -795,7 +797,6 @@ DOMAIN-SUFFIX,tencentstart.com
 DOMAIN-SUFFIX,texasholdemcup.cn
 DOMAIN-SUFFIX,texasholdemcup.com
 DOMAIN-SUFFIX,texasholdemcup.net
-DOMAIN-SUFFIX,tgbus.com
 DOMAIN-SUFFIX,tgpro.top
 DOMAIN-SUFFIX,tgprocs.net
 DOMAIN-SUFFIX,thedreadwolfrises.com
@@ -832,7 +833,6 @@ DOMAIN-SUFFIX,uo.com
 DOMAIN-SUFFIX,uoherald.com
 DOMAIN-SUFFIX,uplay.com
 DOMAIN-SUFFIX,valvesoftware.com
-DOMAIN-SUFFIX,vgtime.com
 DOMAIN-SUFFIX,videoxiaoyouxi.com
 DOMAIN-SUFFIX,visceralgames.com
 DOMAIN-SUFFIX,vrzwk.cn
@@ -919,9 +919,9 @@ DOMAIN-SUFFIX,zenlesszonezero.com
 DOMAIN-SUFFIX,zhuoyou.com
 DOMAIN-SUFFIX,zhuoyuegame.com
 DOMAIN-REGEX,^epicgames-download\d\.akamaized\.net$
-DOMAIN-REGEX,^cdn\d-epicgames-\d+\.file\.myqcloud\.com$
-DOMAIN-REGEX,^epicgames-download\d-\d+\.file\.myqcloud\.com$
+DOMAIN-REGEX,^.+-mihayo\.akamaized\.net$
 DOMAIN-REGEX,^cdn-akamai-.+\.gog-services\.com$
 DOMAIN-REGEX,^gog-cdn-.+\.footprint\.net$
 DOMAIN-REGEX,^images(-\d)?\.gog-statics\.com$
-DOMAIN-REGEX,^.+-mihayo\.akamaized\.net$
+DOMAIN-REGEX,^cdn\d-epicgames-\d+\.file\.myqcloud\.com$
+DOMAIN-REGEX,^epicgames-download\d-\d+\.file\.myqcloud\.com$
