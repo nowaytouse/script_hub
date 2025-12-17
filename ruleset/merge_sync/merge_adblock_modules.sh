@@ -166,26 +166,10 @@ sort -u "$ALL_REJECT_DROP" -o "$ALL_REJECT_DROP" 2>/dev/null || true
 sort -u "$ALL_REJECT_NO_DROP" -o "$ALL_REJECT_NO_DROP" 2>/dev/null || true
 sort -u "$ALL_DIRECT" -o "$ALL_DIRECT" 2>/dev/null || true
 
-# Generate module
-log_info "Generating module..."
-cat > "$TARGET_MODULE" << 'EOF'
-#!name=🚫 Universal Ad-Blocking Rules (Lite)
-#!desc=Auto-merged: REJECT/DROP/DIRECT Rules Only.
-#!category=『 🔝 Head Expanse › 首端扩域 』
-
-[Rule]
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-
-EOF
-
-# Add DROP rules
-if [ -s "$ALL_REJECT_DROP" ]; then
-    echo "# DROP Rules" >> "$TARGET_MODULE"
-    cat "$ALL_REJECT_DROP" >> "$TARGET_MODULE"
-fi
+# ⚠️ IMPORTANT: Do NOT overwrite TARGET_MODULE!
+# The module file is manually maintained with URL Rewrite, Body Rewrite, Map Local, MITM configs.
+# This script ONLY updates the AdBlock.list ruleset file.
+log_info "Skipping module generation (manually maintained)"
 
 # Export rule files
 sort -u "$ALL_REJECT_DROP" > "$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/reject-drop.conf" 2>/dev/null || true
