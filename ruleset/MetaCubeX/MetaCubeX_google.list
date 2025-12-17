@@ -1,5 +1,5 @@
 # MetaCubeX geosite-google
-# Rules: 1066
+# Rules: 1065
 
 DOMAIN,265.com
 DOMAIN,ai.google.dev
@@ -64,7 +64,6 @@ DOMAIN,firebaseremoteconfig.googleapis.com
 DOMAIN,fontfiles.googleapis.com
 DOMAIN,fonts.googleapis.com
 DOMAIN,fonts.gstatic.com
-DOMAIN,fundingchoicesmessages.google.com
 DOMAIN,g0.gstatic.com
 DOMAIN,g1.gstatic.com
 DOMAIN,g2.gstatic.com
@@ -1064,6 +1063,6 @@ DOMAIN-SUFFIX,youtubemobilesupport.com
 DOMAIN-SUFFIX,yt.be
 DOMAIN-SUFFIX,ytimg.com
 DOMAIN-SUFFIX,zukunftswerkstatt.de
-DOMAIN-REGEX,^adservice\.google\.([a-z]{2}|com?)(\.[a-z]{2})?$
 DOMAIN-REGEX,^r+[0-9]+(---|\.)sn-(2x3|ni5|j5o)\w{5}\.xn--ngstr-lra8j\.com$
 DOMAIN-REGEX,^r+[0-9]+(---|\.)sn-(2x3|ni5|j5o)\w{5}\.googlevideo\.com$
+DOMAIN-REGEX,^adservice\.google\.([a-z]{2}|com?)(\.[a-z]{2})?$
