@@ -1,5 +1,5 @@
 #!name=🌐 DNS & Host Enhanced
-#!desc=统一DNS分流+Host增强模块 | 全量DoH加密DNS | 🔧 2025.12.17: 所有传统DNS改为DoH(修复增强模式下DNS劫持问题)
+#!desc=🔒 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.12.17: 修复增强模式下DNS劫持
 #!author=VirgilClyne & nyamiiko (Merged & Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
@@ -7,6 +7,16 @@
 #!version=2025.12.17
 
 [General]
+# ═══════════════════════════════════════════════════════════════
+# Encrypted DNS Configuration (Merged from Encrypted DNS Module)
+# ⚠️ 2025.12.17: 全量DoH加密，避免传统DNS泄漏/劫持
+# ═══════════════════════════════════════════════════════════════
+# DoH3/DoH Priority (国际优先，国内DoH作为备用)
+encrypted-dns-server = h3://dns.alidns.com/dns-query, h3://cloudflare-dns.com/dns-query, https://dns11.quad9.net/dns-query, h3://dns.adguard-dns.com/dns-query, h3://dns.google/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query
+
+# Fallback DNS Servers (IPv6 + IPv4) - 仅用于DoH域名解析和连通性测试
+dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
+
 # ═══════════════════════════════════════════════════════════════
 # DNS Core Settings
 # ═══════════════════════════════════════════════════════════════
