@@ -241,12 +241,13 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
     ]
     
     # amplify_nexus中被合并的原始模块（排除VVebo_Repair）
+    # ⚠️ 2025.12.17: Encrypted DNS Module已合并到🌐 DNS & Host Enhanced，不再单独存在
     AMPLIFY_NEXUS_MERGED_SOURCES = [
         "📺 BiliBili: ⚙️ Enhanced",
         "📺 BiliBili: 🌐 Global",
         "📺 BiliBili: 🔀 Redirect",
         "🍿️ DualSubs: 🔣 Universal",
-        "Encrypted DNS Module 🔒🛡️DNS",
+        # "Encrypted DNS Module 🔒🛡️DNS",  # 已删除，功能合并到🌐 DNS & Host Enhanced
         "功能｜预览 QX 资源",
         "机场订阅信息",
         "Sub-Store(β)",

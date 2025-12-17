@@ -65,11 +65,13 @@ cleanup_old_modules() {
 }
 
 # 需要同步的模块列表
+# ⚠️ 2025.12.17: Encrypted DNS Module已合并到🌐 DNS & Host Enhanced
 MODULES=(
     "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
     "🚀💪General Enhanced⬆️⬆️ plus.sgmodule"
     "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
-    "Encrypted DNS Module 🔒🛡️DNS.sgmodule"
+    # "Encrypted DNS Module 🔒🛡️DNS.sgmodule"  # 已删除，功能合并到🌐 DNS & Host Enhanced
+    "🌐 DNS & Host Enhanced.sgmodule"
     "URL Rewrite Module 🔄🌐.sgmodule"
 )
 
