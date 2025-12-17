@@ -30,9 +30,7 @@ SHADOWROCKET_MODULE_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~lig
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_merge"
 
 # 目标模块
-# ⚠️ WARNING: This module is MANUALLY MAINTAINED with URL Rewrite, Body Rewrite, Map Local, MITM configs
-# DO NOT overwrite it! This script only updates AdBlock_Merged.list
-TARGET_MODULE="$SURGE_MODULE_DIR/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
+TARGET_MODULE="$SURGE_MODULE_DIR/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
 
 # 巨大的合并规则文件
 ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list"
@@ -339,11 +337,8 @@ scan_and_merge_modules() {
 }
 
 # 生成新的模块文件
-# ⚠️ DISABLED: This function was overwriting manually maintained module!
-# The module contains URL Rewrite, Body Rewrite, Map Local, MITM configs that must be preserved.
-# This script now ONLY updates AdBlock_Merged.list, NOT the module file.
 generate_new_module() {
-    log_section "跳过模块生成（手动维护的模块）"
+    log_section "生成新模块文件"
     
     local reject_count=$(wc -l < "$TEMP_RULES_REJECT" | tr -d ' ')
     local reject_drop_count=$(wc -l < "$TEMP_RULES_REJECT_DROP" | tr -d ' ')
@@ -352,7 +347,7 @@ generate_new_module() {
     local host_count=$(wc -l < "$TEMP_HOST" | tr -d ' ')
     local total_rules=$((reject_count + reject_drop_count + reject_no_drop_count))
     
-    log_info "提取的规则统计:"
+    log_info "最终规则统计:"
     echo "  - REJECT: $reject_count"
     echo "  - REJECT-DROP: $reject_drop_count"
     echo "  - REJECT-NO-DROP: $reject_no_drop_count"
@@ -360,23 +355,100 @@ generate_new_module() {
     echo "  - Host: $host_count"
     echo "  - 总计: $total_rules 条分流规则"
     
-    # ⚠️ DO NOT overwrite TARGET_MODULE!
-    # It contains manually maintained URL Rewrite, Body Rewrite, Map Local, MITM configs
-    log_warning "⚠️ 跳过模块文件生成 - 该模块为手动维护，包含 URL Rewrite/Body Rewrite/Map Local/MITM 配置"
-    log_info "规则将合并到 AdBlock_Merged.list 而非覆盖模块文件"
+    # 备份原文件
+    if [[ -f "$TARGET_MODULE" ]]; then
+        cp "$TARGET_MODULE" "$TARGET_MODULE.backup.$(date +%Y%m%d_%H%M%S)"
+        log_success "已备份原模块文件"
+    fi
     
-    # Export DROP rules to separate files for reference
+    # 生成新模块
+    local current_date=$(date +%Y.%m.%d)
+    
+    cat > "$TARGET_MODULE" << EOF
+#!name=🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)
+#!version=$current_date
+#!desc=Modular ad-blocking with Host sinkhole + Online rulesets. Low-memory optimized. 🧩💾⚡
+#!author=nyamiiko
+#!homepage=https://github.com/nowaytouse/script_hub
+#!category=『 🔝 Head Expanse › 首端扩域 』
+
+[Rule]
+# ═══════════════════════════════════════════════════════════════
+# Universal Ad-Blocking (Merged - 235k+ rules, deduplicated)
+# Updated: $(date +%Y-%m-%d) | REJECT rules are in AdBlock_Merged.list
+# Note: All REJECT rules are merged into the big list file below
+# ═══════════════════════════════════════════════════════════════
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock_Merged.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+
+# ═══════════════════════════════════════════════════════════════
+# Policy-Specific Rules (Upstream - Preserve DROP/NO-DROP)
+# ═══════════════════════════════════════════════════════════════
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+
+EOF
+    
+    # 不再添加 REJECT 规则到模块中（已合并到 AdBlock_Merged.list）
+    
+    # 添加 REJECT-DROP 规则
     if [[ $reject_drop_count -gt 0 ]]; then
-        sort -u "$TEMP_RULES_REJECT_DROP" > "$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/reject-drop.conf" 2>/dev/null || true
-        log_success "导出 REJECT-DROP 规则到 reject-drop.conf"
+        cat >> "$TARGET_MODULE" << EOF
+
+# ═══════════════════════════════════════════════════════════════
+# REJECT-DROP Rules (${reject_drop_count} rules)
+# ═══════════════════════════════════════════════════════════════
+EOF
+        sort -u "$TEMP_RULES_REJECT_DROP" >> "$TARGET_MODULE"
     fi
     
+    # 添加 REJECT-NO-DROP 规则
     if [[ $reject_no_drop_count -gt 0 ]]; then
-        sort -u "$TEMP_RULES_REJECT_NO_DROP" > "$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/reject-no-drop.conf" 2>/dev/null || true
-        log_success "导出 REJECT-NO-DROP 规则到 reject-no-drop.conf"
+        cat >> "$TARGET_MODULE" << EOF
+
+# ═══════════════════════════════════════════════════════════════
+# REJECT-NO-DROP Rules (${reject_no_drop_count} rules)
+# ═══════════════════════════════════════════════════════════════
+EOF
+        sort -u "$TEMP_RULES_REJECT_NO_DROP" >> "$TARGET_MODULE"
     fi
     
-    log_success "规则提取完成，将在下一步合并到 AdBlock_Merged.list"
+    # 添加 URL Rewrite 规则
+    if [[ $url_rewrite_count -gt 0 ]]; then
+        cat >> "$TARGET_MODULE" << EOF
+
+[URL Rewrite]
+# ═══════════════════════════════════════════════════════════════
+# URL Rewrite Rules (${url_rewrite_count} rules)
+# Auto-merged from multiple sources
+# ═══════════════════════════════════════════════════════════════
+EOF
+        sort -u "$TEMP_URL_REWRITE" >> "$TARGET_MODULE"
+    fi
+    
+    # 添加 Host 规则
+    if [[ $host_count -gt 0 ]]; then
+        cat >> "$TARGET_MODULE" << EOF
+
+[Host]
+# ═══════════════════════════════════════════════════════════════
+# Ad/Tracking Domain Sinkhole (${host_count} domains)
+# Resolve to 0.0.0.0
+# ═══════════════════════════════════════════════════════════════
+EOF
+        sort -u "$TEMP_HOST" >> "$TARGET_MODULE"
+    fi
+    
+    # 添加 MITM
+    if [[ -s "$TEMP_MITM" ]]; then
+        cat >> "$TARGET_MODULE" << EOF
+
+[MITM]
+EOF
+        cat "$TEMP_MITM" >> "$TARGET_MODULE"
+    fi
+    
+    log_success "新模块文件已生成"
 }
 
 # 合并规则到巨大的 AdBlock_Merged.list 文件

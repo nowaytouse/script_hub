@@ -17,7 +17,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MODULE_DIR="$PROJECT_ROOT/module/surge(main)"
 HEAD_EXPANSE_DIR="$MODULE_DIR/head_expanse"
 TEMP_DIR="$PROJECT_ROOT/.temp_adblock_core_merge"
-OUTPUT_MODULE="$MODULE_DIR/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
+OUTPUT_MODULE="$HEAD_EXPANSE_DIR/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
 
 # Colors
 RED='\033[0;31m'
