@@ -1,10 +1,10 @@
 #!name=🌐 DNS & Host Enhanced
-#!desc=统一DNS分流+Host增强模块 | 1.域名按所属DNS分流解析 2.路由器地址使用系统DNS 3.特殊地址规范DNS 4.Telegram/Google优化 5.国内外DNS智能分流 | ⚠️ Apple DOH已注释(仅非中国大陆直连可用)
+#!desc=统一DNS分流+Host增强模块 | 全量DoH加密DNS | 🔧 2025.12.17: 所有传统DNS改为DoH(修复增强模式下DNS劫持问题)
 #!author=VirgilClyne & nyamiiko (Merged & Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2025.12.09
+#!version=2025.12.17
 
 [General]
 # ═══════════════════════════════════════════════════════════════
@@ -190,16 +190,17 @@ alt6-mtalk.google.com = 3.3.3.3, 172.217.197.188 // Firebase Cloud Messaging
 alt7-mtalk.google.com = 74.125.200.188, 2607:f8b0:4002:c03::bc, 108.177.12.188 // Firebase Cloud Messaging
 alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
 
-# > Google CDN/Download (Domestic DNS for better speed)
-blog.google = server:119.29.29.29 // Google Blog
-googletraveladservices.com = server:119.29.29.29 // Google Flights
-dl.google.com = server:119.29.29.29 // Google Download
-dl.l.google.com = server:119.29.29.29 // Google Download
-clientservices.googleapis.com = server:119.29.29.29 // Google Chrome
-update.googleapis.com = server:119.29.29.29 // Google Update
-translate.googleapis.com = server:119.29.29.29 // Google Translate
-fonts.googleapis.com = server:119.29.29.29 // Google Fonts
-fonts.gstatic.com = server:119.29.29.29 // Google Fonts
+# > Google CDN/Download (DNSPod DoH for better speed & security)
+# ⚠️ 2025.12.17 FIX: 传统DNS改为DOH，防止增强模式下DNS劫持
+blog.google = server:https://doh.pub/dns-query // Google Blog
+googletraveladservices.com = server:https://doh.pub/dns-query // Google Flights
+dl.google.com = server:https://doh.pub/dns-query // Google Download
+dl.l.google.com = server:https://doh.pub/dns-query // Google Download
+clientservices.googleapis.com = server:https://doh.pub/dns-query // Google Chrome
+update.googleapis.com = server:https://doh.pub/dns-query // Google Update
+translate.googleapis.com = server:https://doh.pub/dns-query // Google Translate
+fonts.googleapis.com = server:https://doh.pub/dns-query // Google Fonts
+fonts.gstatic.com = server:https://doh.pub/dns-query // Google Fonts
 stun.l.google.com = server:syslib // Google STUN
 stun?.l.google.com = server:syslib // Google STUN
 
@@ -294,28 +295,30 @@ tb.cn = server:h3://dns.alidns.com/dns-query // 淘宝短网址
 url.cn = server:https://doh.pub/dns-query // 腾讯短网址
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 13: 百度 (Baidu DNS)
+# SECTION 13: 百度 (AliDNS H3 DoH)
+# ⚠️ 2025.12.17 FIX: 传统DNS 180.76.76.76 改为 AliDNS DoH
+# 增强模式下传统DNS可能被劫持导致百度无法联网，使用DOH更安全可靠
 # refer: https://dudns.baidu.com/support/localdns/Address/index.html
 # ═══════════════════════════════════════════════════════════════
-*.baidu = server:180.76.76.76 // 百度
-*.baidu.com = server:180.76.76.76 // 百度
-*.bdimg.com = server:180.76.76.76 // 百度 静态资源
-*.bdstatic.com = server:180.76.76.76 // 百度 静态资源
-*.baidupcs.* = server:180.76.76.76 // 百度网盘
-*.baiduyuncdn.* = server:180.76.76.76 // 百度云CDN
-*.baiduyundns.* = server:180.76.76.76 // 百度云DNS
-*.bdydns.* = server:180.76.76.76 // 百度云 DNS
-*.bdycdn.* = server:180.76.76.76 // 百度云 CDN
-*.bdysite.com = server:180.76.76.76 // 百度云 域名
-*.bdysites.com = server:180.76.76.76 // 百度云 域名
-*.baidubce.* = server:180.76.76.76 // 百度智能云
-*.bcedns.* = server:180.76.76.76 // 百度智能云 DNS
-*.bcebos.com = server:180.76.76.76 // 百度智能云 对象存储BOS
-*.bcevod.com = server:180.76.76.76 // 百度智能云 播放器服务
-*.bceimg.com = server:180.76.76.76 // 百度智能云 图片服务
-*.bcehost.com = server:180.76.76.76 // 百度智能云 主机
-*.bcehosts.com = server:180.76.76.76 // 百度智能云 主机
-dwz.cn = server:180.76.76.76 // 百度短网址
+*.baidu = server:h3://dns.alidns.com/dns-query // 百度
+*.baidu.com = server:h3://dns.alidns.com/dns-query // 百度
+*.bdimg.com = server:h3://dns.alidns.com/dns-query // 百度 静态资源
+*.bdstatic.com = server:h3://dns.alidns.com/dns-query // 百度 静态资源
+*.baidupcs.* = server:h3://dns.alidns.com/dns-query // 百度网盘
+*.baiduyuncdn.* = server:h3://dns.alidns.com/dns-query // 百度云CDN
+*.baiduyundns.* = server:h3://dns.alidns.com/dns-query // 百度云DNS
+*.bdydns.* = server:h3://dns.alidns.com/dns-query // 百度云 DNS
+*.bdycdn.* = server:h3://dns.alidns.com/dns-query // 百度云 CDN
+*.bdysite.com = server:h3://dns.alidns.com/dns-query // 百度云 域名
+*.bdysites.com = server:h3://dns.alidns.com/dns-query // 百度云 域名
+*.baidubce.* = server:h3://dns.alidns.com/dns-query // 百度智能云
+*.bcedns.* = server:h3://dns.alidns.com/dns-query // 百度智能云 DNS
+*.bcebos.com = server:h3://dns.alidns.com/dns-query // 百度智能云 对象存储BOS
+*.bcevod.com = server:h3://dns.alidns.com/dns-query // 百度智能云 播放器服务
+*.bceimg.com = server:h3://dns.alidns.com/dns-query // 百度智能云 图片服务
+*.bcehost.com = server:h3://dns.alidns.com/dns-query // 百度智能云 主机
+*.bcehosts.com = server:h3://dns.alidns.com/dns-query // 百度智能云 主机
+dwz.cn = server:h3://dns.alidns.com/dns-query // 百度短网址
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 14: 360 (360 DoH)
@@ -341,59 +344,61 @@ dwz.cn = server:180.76.76.76 // 百度短网址
 urlqh.cn = server:https://doh.360.cn/dns-query // 360短网址
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 15: 字节跳动/ByteDance (Volcano DNS)
+# SECTION 15: 字节跳动/ByteDance (AliDNS H3 DoH)
+# ⚠️ 2025.12.17 FIX: 传统DNS 180.184.1.1 改为 AliDNS DoH，防止DNS劫持
 # refer: https://www.volcengine.com/docs/6758/179060
 # ═══════════════════════════════════════════════════════════════
-*.amemv.com = server:180.184.1.1 // 艾特迷
-*.bdxiguaimg.com = server:180.184.1.1 // 西瓜 图片服务
-*.bdxiguastatic.com = server:180.184.1.1 // 西瓜 静态资源
-*.byted-static.com = server:180.184.1.1 // 字节跳动 UNPKG
-*.bytedance.* = server:180.184.1.1 // 字节跳动
-*.bytedns.net = server:180.184.1.1 // 字节跳动 DNS
-*.bytednsdoc.com = server:180.184.1.1 // 字节跳动 CDN 文件存储
-*.bytegoofy.com = server:180.184.1.1 // 字节跳动 Goofy
-*.byteimg.com = server:180.184.1.1 // 字节跳动 图片服务
-*.bytescm.com = server:180.184.1.1 // 字节跳动 SCM
-*.bytetos.com = server:180.184.1.1 // 字节跳动 TOS
-*.bytexservice.com = server:180.184.1.1 // 飞书企业服务平台
-*.douyin.com = server:180.184.1.1 // 抖音
-*.douyinpic.com = server:180.184.1.1 // 抖音 静态资源
-*.douyinstatic.com = server:180.184.1.1 // 抖音 静态资源
-*.douyinvod.com = server:180.184.1.1 // 抖音 静态资源
-*.feelgood.cn = server:180.184.1.1 // FeelGood平台
-*.feiliao.com = server:180.184.1.1 // 飞聊官网
-*.gifshow.com = server:180.184.1.1 // 快手
-*.huoshan.com = server:180.184.1.1 // 火山网
-*.huoshanzhibo.com = server:180.184.1.1 // 火山直播
-*.ibytedapm.com = server:180.184.1.1 // 抖音 dapm
-*.iesdouyin.com = server:180.184.1.1 // 抖音 CDN
-*.ixigua.com = server:180.184.1.1 // 西瓜视频
-*.kspkg.com = server:180.184.1.1 // 快手
-*.pstatp.com = server:180.184.1.1 // 抖音 静态资源
-*.snssdk.com = server:180.184.1.1 // 今日头条
-*.toutiao.com = server:180.184.1.1 // 今日头条
-*.toutiao13.com = server:180.184.1.1 // 今日头条
-*.toutiao???.??? = server:180.184.1.1 // 今日头条 静态资源
-*.toutiaocloud.cn = server:180.184.1.1 // 头条云
-*.toutiaocloud.com = server:180.184.1.1 // 头条云
-*.toutiaopage.com = server:180.184.1.1 // 今日头条 建站
-*.wukong.com = server:180.184.1.1 // 悟空
-*.zijieapi.com = server:180.184.1.1 // 字节跳动 API
-*.zijieimg.com = server:180.184.1.1 // 字节跳动 图片服务
-*.zjbyte.com = server:180.184.1.1 // 今日头条 网页版
-*.zjcdn.com = server:180.184.1.1 // 字节跳动 CDN
+*.amemv.com = server:h3://dns.alidns.com/dns-query // 艾特迷
+*.bdxiguaimg.com = server:h3://dns.alidns.com/dns-query // 西瓜 图片服务
+*.bdxiguastatic.com = server:h3://dns.alidns.com/dns-query // 西瓜 静态资源
+*.byted-static.com = server:h3://dns.alidns.com/dns-query // 字节跳动 UNPKG
+*.bytedance.* = server:h3://dns.alidns.com/dns-query // 字节跳动
+*.bytedns.net = server:h3://dns.alidns.com/dns-query // 字节跳动 DNS
+*.bytednsdoc.com = server:h3://dns.alidns.com/dns-query // 字节跳动 CDN 文件存储
+*.bytegoofy.com = server:h3://dns.alidns.com/dns-query // 字节跳动 Goofy
+*.byteimg.com = server:h3://dns.alidns.com/dns-query // 字节跳动 图片服务
+*.bytescm.com = server:h3://dns.alidns.com/dns-query // 字节跳动 SCM
+*.bytetos.com = server:h3://dns.alidns.com/dns-query // 字节跳动 TOS
+*.bytexservice.com = server:h3://dns.alidns.com/dns-query // 飞书企业服务平台
+*.douyin.com = server:h3://dns.alidns.com/dns-query // 抖音
+*.douyinpic.com = server:h3://dns.alidns.com/dns-query // 抖音 静态资源
+*.douyinstatic.com = server:h3://dns.alidns.com/dns-query // 抖音 静态资源
+*.douyinvod.com = server:h3://dns.alidns.com/dns-query // 抖音 静态资源
+*.feelgood.cn = server:h3://dns.alidns.com/dns-query // FeelGood平台
+*.feiliao.com = server:h3://dns.alidns.com/dns-query // 飞聊官网
+*.gifshow.com = server:h3://dns.alidns.com/dns-query // 快手
+*.huoshan.com = server:h3://dns.alidns.com/dns-query // 火山网
+*.huoshanzhibo.com = server:h3://dns.alidns.com/dns-query // 火山直播
+*.ibytedapm.com = server:h3://dns.alidns.com/dns-query // 抖音 dapm
+*.iesdouyin.com = server:h3://dns.alidns.com/dns-query // 抖音 CDN
+*.ixigua.com = server:h3://dns.alidns.com/dns-query // 西瓜视频
+*.kspkg.com = server:h3://dns.alidns.com/dns-query // 快手
+*.pstatp.com = server:h3://dns.alidns.com/dns-query // 抖音 静态资源
+*.snssdk.com = server:h3://dns.alidns.com/dns-query // 今日头条
+*.toutiao.com = server:h3://dns.alidns.com/dns-query // 今日头条
+*.toutiao13.com = server:h3://dns.alidns.com/dns-query // 今日头条
+*.toutiao???.??? = server:h3://dns.alidns.com/dns-query // 今日头条 静态资源
+*.toutiaocloud.cn = server:h3://dns.alidns.com/dns-query // 头条云
+*.toutiaocloud.com = server:h3://dns.alidns.com/dns-query // 头条云
+*.toutiaopage.com = server:h3://dns.alidns.com/dns-query // 今日头条 建站
+*.wukong.com = server:h3://dns.alidns.com/dns-query // 悟空
+*.zijieapi.com = server:h3://dns.alidns.com/dns-query // 字节跳动 API
+*.zijieimg.com = server:h3://dns.alidns.com/dns-query // 字节跳动 图片服务
+*.zjbyte.com = server:h3://dns.alidns.com/dns-query // 今日头条 网页版
+*.zjcdn.com = server:h3://dns.alidns.com/dns-query // 字节跳动 CDN
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 16: BiliBili (Multi-CDN Optimization)
+# SECTION 16: BiliBili (Multi-CDN Optimization - All DoH)
+# ⚠️ 2025.12.17 FIX: 百度云CDN传统DNS改为AliDNS DoH，防止DNS劫持
 # ═══════════════════════════════════════════════════════════════
 upos-sz-mirrorali.bilivideo.com = server:h3://dns.alidns.com/dns-query // BiliBili upos视频服务器（阿里云）
 upos-sz-mirrorali?.bilivideo.com = server:h3://dns.alidns.com/dns-query // BiliBili upos视频服务器（阿里云）
 upos-sz-mirrorali??.bilivideo.com = server:h3://dns.alidns.com/dns-query // BiliBili upos视频服务器（阿里云）
-upos-sz-mirrorbos.bilivideo.com = server:180.76.76.76 // BiliBili upos视频服务器（百度云）
+upos-sz-mirrorbos.bilivideo.com = server:h3://dns.alidns.com/dns-query // BiliBili upos视频服务器（百度云）
 upos-sz-mirrorcos.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos视频服务器（腾讯云）
 upos-sz-mirrorcos?.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos视频服务器（腾讯云）
 upos-sz-mirrorcos??.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos视频服务器（腾讯云）
-upos-sz-upcdnbd??.bilivideo.com = server:180.76.76.76 // BiliBili upos视频服务器（百度云）
+upos-sz-upcdnbd??.bilivideo.com = server:h3://dns.alidns.com/dns-query // BiliBili upos视频服务器（百度云）
 upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos视频服务器（腾讯云）
 
 # ═══════════════════════════════════════════════════════════════
@@ -411,7 +416,8 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 *.he.net = server:https://ordns.he.net/dns-query // HE.net
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 19: DNS Mapping Rulesets (External Lists)
+# SECTION 19: DNS Mapping Rulesets (External Lists - All DoH)
+# ⚠️ 2025.12.17 FIX: 所有传统DNS改为DoH，防止增强模式下DNS劫持
 # ═══════════════════════════════════════════════════════════════
 
 # Google DoH (h3://dns.google/dns-query)
@@ -423,17 +429,17 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DN
 # Quad9 DoH - Telegram/AI/NSFW (https://dns11.quad9.net/dns-query)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Quad9.list,server:https://dns11.quad9.net/dns-query
 
-# AliDNS - Alibaba/Baidu/Bilibili (223.5.5.5)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:223.5.5.5
+# AliDNS H3 DoH - Alibaba/Baidu/Bilibili
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:h3://dns.alidns.com/dns-query
 
-# 114 DNS - Tencent (114.114.114.114)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:114.114.114.114
+# DNSPod DoH - Tencent
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
 
-# ByteDance DNS (180.184.2.2)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:180.184.2.2
+# AliDNS H3 DoH - ByteDance (火山引擎无公开DoH，使用AliDNS替代)
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:h3://dns.alidns.com/dns-query
 
-# 360 DNS (101.227.130.133)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:101.227.130.133
+# 360 DoH
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
 
 [MITM]
 # Certificate Hostnames
