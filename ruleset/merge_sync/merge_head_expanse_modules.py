@@ -22,19 +22,22 @@ HEAD_EXPANSE_DIR = PROJECT_ROOT / "module" / "surge(main)" / "head_expanse"
 SR_HEAD_EXPANSE_DIR = PROJECT_ROOT / "module" / "shadowrocket" / "head_expanse"
 
 # 要合并的模块列表（广告拦截相关）
-# 包含: 可莉广告过滤器、广告平台拦截器、All-in-One等
+# 注意: AWAvenue-Ads-Rule 已被吸收到 AdBlock.list，模块已删除 (commit 4644020)
+# 注意: 广告联盟.official 规则已被吸收，仅保留 URL 编码版本的脚本部分
 MODULES_TO_MERGE = [
     "Adblock4limbo.sgmodule",
-    "All-in-One-2.x.sgmodule", 
+    "All-in-One-2.x.sgmodule",
     "AllInOne_Mock.sgmodule",
+    "adultraplus.sgmodule",
+    # 中文文件名 (优先使用)
     "可莉广告过滤器.beta.sgmodule",
-    "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",  # URL编码版本
     "广告平台拦截器.sgmodule",
-    "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",  # URL编码版本
-    "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",  # 广告联盟 URL编码版本
     "新手友好の去广告集合.official.sgmodule",
     "小程序和应用懒人去广告合集.official.sgmodule",
-    "adultraplus.sgmodule",
+    # URL编码版本 (备用，避免重复)
+    "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
+    "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",
+    "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
 ]
 
 # Sukka 上游规则集 (自动跟随更新)
