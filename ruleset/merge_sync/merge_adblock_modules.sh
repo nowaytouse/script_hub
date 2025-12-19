@@ -394,6 +394,9 @@ fi
 
 log_section "Generating AdBlock.list"
 
+# AND规则拆分文件路径
+AND_RULES_DECOMPOSED="$PROJECT_ROOT/ruleset/Sources/and_rules_decomposed.list"
+
 # Merge with existing rules
 if [ -f "$ADBLOCK_MERGED_LIST" ]; then
     grep -v "^#" "$ADBLOCK_MERGED_LIST" 2>/dev/null | grep -v "^$" | grep -v "^RULE-SET" > "$TEMP_DIR/old_adblock.tmp" || true
@@ -401,14 +404,21 @@ else
     touch "$TEMP_DIR/old_adblock.tmp"
 fi
 
+# 合并: 旧规则 + 新提取的REJECT规则 + AND规则拆分
 cat "$TEMP_DIR/old_adblock.tmp" "$ALL_REJECT" 2>/dev/null | sort -u > "$TEMP_DIR/merged_adblock.tmp"
+
+# 添加AND规则拆分（如果存在）
+if [ -f "$AND_RULES_DECOMPOSED" ]; then
+    log_info "Adding decomposed AND rules from: and_rules_decomposed.list"
+    grep -v "^#" "$AND_RULES_DECOMPOSED" 2>/dev/null | grep -v "^$" >> "$TEMP_DIR/merged_adblock.tmp" || true
+fi
 
 # Clean and filter - 移除RULE-SET文件中不允许的参数
 # RULE-SET文件只能包含纯规则，策略和参数在引用时指定
-sed 's/,REJECT//g; s/,extended-matching//g; s/,pre-matching//g' "$TEMP_DIR/merged_adblock.tmp" 2>/dev/null | \
-sed 's/^\(DOMAIN[^,]*,[^,]*\),no-resolve$/\1/' | \
+sed 's/,REJECT[^,]*//g; s/,extended-matching//g; s/,pre-matching//g; s/,no-resolve//g' "$TEMP_DIR/merged_adblock.tmp" 2>/dev/null | \
 grep -v "^RULE-SET" | \
-grep -v "^AND," > "$TEMP_DIR/clean_adblock_pre.tmp" || true
+grep -v "^AND," | \
+sort -u > "$TEMP_DIR/clean_adblock_pre.tmp" || true
 
 filter_whitelist "$TEMP_DIR/clean_adblock_pre.tmp" "$TEMP_DIR/clean_adblock.tmp"
 
