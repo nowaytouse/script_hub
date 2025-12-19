@@ -24,6 +24,20 @@ RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/r
 # 本地合并规则
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 
+# ═══════════════════════════════════════════════════════════════
+# AND Rules (复合条件规则 - 不能放在RULE-SET中)
+# ═══════════════════════════════════════════════════════════════
+# 拼多多 QUIC 广告
+AND,((DOMAIN,api.pinduoduo.com,extended-matching),(PROTOCOL,QUIC)),REJECT
+# YouTube QUIC 广告
+AND,((DOMAIN,youtubei.googleapis.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN-SUFFIX,googlevideo.com),(PROTOCOL,UDP)),REJECT
+# Spotify QUIC
+AND,((DOMAIN-SUFFIX,spotify.com,extended-matching),(PROTOCOL,QUIC)),REJECT
+# 小红书 QUIC 广告
+AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com,extended-matching)),REJECT
+AND,((PROTOCOL,UDP),(DEST-PORT,443),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
+
 # Merged REJECT-DROP Rules (92)
 DEST-PORT,10250,REJECT-DROP
 DEST-PORT,10251,REJECT-DROP
