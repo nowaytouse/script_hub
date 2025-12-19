@@ -1,10 +1,7 @@
-# AND Rules Decomposed - 复合规则拆分
-# 原始AND规则拆分为简单DOMAIN规则，兼容所有代理软件
+# AND Rules Decomposed - 复合规则拆分为简单域名规则
+# 原始AND规则拆分后兼容所有代理软件 (Shadowrocket/Quantumult X/Clash等)
 # Updated: 2025-12-20
 # ═══════════════════════════════════════════════════════════════
-
-# 拼多多广告 (原: AND,((DOMAIN,api.pinduoduo.com),(PROTOCOL,QUIC)))
-DOMAIN,api.pinduoduo.com
 
 # YouTube广告 (原: AND,((DOMAIN,youtubei.googleapis.com),(PROTOCOL,UDP)))
 DOMAIN,youtubei.googleapis.com
@@ -12,12 +9,19 @@ DOMAIN,youtubei.googleapis.com
 # Google视频广告 (原: AND,((DOMAIN-SUFFIX,googlevideo.com),(PROTOCOL,UDP)))
 DOMAIN-SUFFIX,googlevideo.com
 
-# Spotify广告 (原: AND,((DOMAIN-SUFFIX,spotify.com),(PROTOCOL,QUIC)))
-# 注意: 这会影响正常播放，建议保留注释
-# DOMAIN-SUFFIX,spotify.com
+# 拼多多广告 (原: AND,((DOMAIN,api.pinduoduo.com),(PROTOCOL,QUIC)))
+DOMAIN,api.pinduoduo.com
 
 # 小红书广告 (原: AND,((DOMAIN-SUFFIX,xiaohongshu.com),(PROTOCOL,QUIC/UDP)))
 # 注意: 拆分后会影响正常功能，仅拦截已知广告子域名
 DOMAIN,ads.xiaohongshu.com
 DOMAIN,ad.xiaohongshu.com
 DOMAIN,tracker.xiaohongshu.com
+
+# 滴滴出行广告相关 (原: AND,((IP-ASN,xxx),(DEST-PORT,25641),(PROTOCOL,TCP)))
+# 注意: IP-ASN规则无法简单拆分，保留域名拦截
+DOMAIN,gwp.xiaojukeji.com
+
+# Spotify广告 (原: AND,((DOMAIN-SUFFIX,spotify.com),(PROTOCOL,QUIC)))
+# 注意: 拆分后可能影响正常播放，谨慎启用
+# DOMAIN-SUFFIX,spotify.com
