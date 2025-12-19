@@ -1,6 +1,6 @@
 {
-  "generated": "2025-12-15T21:15:26.348933",
-  "total": 71,
+  "generated": "2025-12-20T02:15:32.955395",
+  "total": 68,
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
@@ -49,17 +49,6 @@
           "author": "VirgilClyne[https://github.com/VirgilClyne]",
           "version": "1.7.5",
           "date": "2025-11-23 07:45:05"
-        },
-        {
-          "name": "Encrypted DNS Module 🔒🛡️DNS",
-          "filename": "Encrypted DNS Module 🔒🛡️DNS.sgmodule",
-          "desc": "Speed will be slower, but more reliable 🐢✅💪",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Encrypted%20DNS%20Module%20%F0%9F%94%92%F0%9F%9B%A1%EF%B8%8FDNS.sgmodule",
-          "tag": "dns",
-          "essential": false,
-          "author": "nowaytouse",
-          "version": "",
-          "date": ""
         },
         {
           "name": "功能｜预览 QX 资源",
@@ -124,17 +113,6 @@
           "tag": "",
           "essential": false,
           "author": "nowaytouse",
-          "version": "",
-          "date": ""
-        },
-        {
-          "name": "VVebo主页时间线修复",
-          "filename": "VVebo_Repair.sgmodule",
-          "desc": "修复失效的用户主页时间线显示和粉丝列表",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/VVebo_Repair.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "suiyuran",
           "version": "",
           "date": ""
         },
@@ -262,12 +240,12 @@
         {
           "name": "🌐 DNS & Host Enhanced",
           "filename": "🌐 DNS & Host Enhanced.sgmodule",
-          "desc": "统一DNS分流+Host增强模块 | 1.域名按所属DNS分流解析 2.路由器地址使用系统DNS 3.特殊地址规范DNS",
+          "desc": "🔒 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.1",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%8C%90%20DNS%20%26%20Host%20Enhanced.sgmodule",
           "tag": "dns",
           "essential": false,
           "author": "VirgilClyne & nyamiiko (Merged & Optimized)",
-          "version": "2025.12.09",
+          "version": "2025.12.19",
           "date": ""
         },
         {
@@ -321,7 +299,7 @@
           "date": ""
         },
         {
-          "name": "毒奶特供(2025年12月15日更新)",
+          "name": "毒奶特供(2025年12月19日更新)",
           "filename": "Adblock4limbo.sgmodule",
           "desc": "毒奶去网页广告计划用户脚本 For Quantumult X & Surge & Shadowrocket & Loon",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/Adblock4limbo.sgmodule",
@@ -422,24 +400,35 @@
         {
           "name": "🔥 Firewall Port Blocker 🛡️🚫",
           "filename": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
-          "desc": "Block dangerous ports: Malware/Backdoor/Database/Admin/Legac",
+          "desc": "Conservative firewall: Block known threats only 🔒 ✅ Safe:",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%94%A5%20Firewall%20Port%20Blocker%20%F0%9F%9B%A1%EF%B8%8F%F0%9F%9A%AB.sgmodule",
           "tag": "",
           "essential": false,
           "author": "nyamiiko",
-          "version": "2025.12.04",
+          "version": "2025.12.20",
           "date": ""
+        },
+        {
+          "name": "🚫 Universal Ad-Blocking Rules (Lite)",
+          "filename": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
+          "desc": "Auto-merged from: 广告联盟 + 小程序去广告 + AD ByeBye+ 2.x + AllInOne",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20LITE%20%28Kali-style%29.sgmodule",
+          "tag": "",
+          "essential": false,
+          "author": "可莉🅥, Sukka, VirgilClyne, bunizao, blackmatrix7, limbopro, Auto-Merged",
+          "version": "",
+          "date": "2025-12-20 01:10:30"
         },
         {
           "name": "🛡️ 广告拦截大合集",
           "filename": "🛡️ 广告拦截大合集.sgmodule",
-          "desc": "整合所有广告拦截平台规则（AWAvenue/毒奶/可莉/Sukka等） (合并自 7 个模块)",
+          "desc": "整合所有广告拦截平台规则（AWAvenue/毒奶/可莉/Sukka等） (合并自 11 个模块)",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9B%A1%EF%B8%8F%20%E5%B9%BF%E5%91%8A%E6%8B%A6%E6%88%AA%E5%A4%A7%E5%90%88%E9%9B%86.sgmodule",
           "tag": "",
           "essential": false,
           "author": "Multiple Authors (合并版)",
           "version": "",
-          "date": "2025-12-15 21:15:26"
+          "date": "2025-12-20 00:30:24"
         }
       ]
     },
@@ -657,39 +646,6 @@
           "date": "2025-08-01 19:57:10"
         },
         {
-          "name": "微博去广告&净化",
-          "filename": "微博去广告&净化.sgmodule",
-          "desc": "去除常见的广告和部分多余的模块",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/%E5%BE%AE%E5%8D%9A%E5%8E%BB%E5%B9%BF%E5%91%8A%26%E5%87%80%E5%8C%96.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "奶思[https://github.com/fmz200]",
-          "version": "",
-          "date": "2025-11-10 10:08:47"
-        },
-        {
-          "name": "微博去广告&净化",
-          "filename": "微博去广告_fmz200.sgmodule",
-          "desc": "去除常见的广告和部分多余的模块",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/%E5%BE%AE%E5%8D%9A%E5%8E%BB%E5%B9%BF%E5%91%8A_fmz200.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "奶思[https://github.com/fmz200]",
-          "version": "",
-          "date": "2025-11-10 10:08:47"
-        },
-        {
-          "name": "WeiboIntl",
-          "filename": "微博国际版去广告.sgmodule",
-          "desc": "移除开屏、瀑布流、趋势页、用户中心广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/%E5%BE%AE%E5%8D%9A%E5%9B%BD%E9%99%85%E7%89%88%E5%8E%BB%E5%B9%BF%E5%91%8A.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "iab0x00，thanks to kokoryh",
-          "version": "",
-          "date": ""
-        },
-        {
           "name": "扫描全能王",
           "filename": "扫描全能王解锁.sgmodule",
           "desc": "解锁扫描全能王",
@@ -798,6 +754,17 @@
           "author": "RuCu6[https://github.com/RuCu6], kelv1n1n[https://github.com/kelv1n1n]",
           "version": "",
           "date": "2025-09-04 23:46:49"
+        },
+        {
+          "name": "🐦 微博去广告合集",
+          "filename": "🐦 微博去广告合集.sgmodule",
+          "desc": "合并微博+微博国际版去广告 (自动追随上游更新) 上游: fmz200/wool_scripts, iab0x00",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/%F0%9F%90%A6%20%E5%BE%AE%E5%8D%9A%E5%8E%BB%E5%B9%BF%E5%91%8A%E5%90%88%E9%9B%86.sgmodule",
+          "tag": "",
+          "essential": false,
+          "author": "fmz200, iab0x00, kokoryh, zmqcherish",
+          "version": "",
+          "date": "2025-12-20 02:06:32"
         }
       ]
     }
