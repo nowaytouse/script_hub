@@ -1,6 +1,6 @@
 {
-  "generated": "2025-12-20T02:48:23.884689",
-  "total": 67,
+  "generated": "2025-12-20T03:00:36.912514",
+  "total": 65,
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
@@ -73,17 +73,6 @@
           "date": ""
         },
         {
-          "name": "URL Rewrite Module 🔄🌐",
-          "filename": "URL Rewrite Module 🔄🌐.sgmodule",
-          "desc": "HTTPS Redirection 🔒🚀 + Fake Website Protection 🛡️⚠️ + TikTok",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/URL%20Rewrite%20Module%20%F0%9F%94%84%F0%9F%8C%90.sgmodule",
-          "tag": "",
-          "essential": false,
-          "author": "nowaytouse",
-          "version": "",
-          "date": ""
-        },
-        {
           "name": "Wi-Fi Calling UK",
           "filename": "WiFiCallingUK.sgmodule",
           "desc": "参数编辑可以细化设置。适用于部分英国SIM卡的Wi-Fi Calling功能",
@@ -100,17 +89,6 @@
           "desc": "参数编辑可以细化设置。适用于部分美国SIM卡的Wi-Fi Calling功能。使用本模块后打开飞行模式后再关闭飞行模式进",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/WiFiCallingUS.sgmodule",
           "tag": "",
-          "essential": false,
-          "author": "",
-          "version": "",
-          "date": ""
-        },
-        {
-          "name": "Youtube (Music) Enhance",
-          "filename": "YouTube.Enhance.sgmodule",
-          "desc": "适用于 Youtube & Youtube Music",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/YouTube.Enhance.sgmodule",
-          "tag": "youtube",
           "essential": false,
           "author": "",
           "version": "",
@@ -205,9 +183,9 @@
           "date": ""
         },
         {
-          "name": "🌐 DNS & Host Enhanced",
+          "name": "🌐 DNS & Host & URL Rewrite Enhanced",
           "filename": "🌐 DNS & Host Enhanced.sgmodule",
-          "desc": "🔒 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.1",
+          "desc": "🔒 全量DoH加密DNS + Host分流增强 + URL重写 | 已合并Encrypted DNS Module +",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%8C%90%20DNS%20%26%20Host%20Enhanced.sgmodule",
           "tag": "dns",
           "essential": false,
@@ -224,7 +202,18 @@
           "essential": false,
           "author": "VirgilClyne, ClydeTime, Maasea",
           "version": "",
-          "date": "2025-12-20 02:47:59"
+          "date": "2025-12-20 02:53:16"
+        },
+        {
+          "name": "📺 YouTube增强合集",
+          "filename": "📺 YouTube增强合集.sgmodule",
+          "desc": "合并YouTube增强+去广告 (自动追随上游更新) 🎬 Enhance: 画中画/后台播放/字幕翻译 🛡️ ADB",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
+          "tag": "youtube",
+          "essential": false,
+          "author": "Maasea",
+          "version": "",
+          "date": "2025-12-20 02:58:54"
         },
         {
           "name": "🚀 功能增强大合集",
@@ -556,17 +545,6 @@
           "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]",
           "version": "",
           "date": "2025-07-20 21:12:00"
-        },
-        {
-          "name": "YouTube去广告",
-          "filename": "YouTube_remove_ads.sgmodule",
-          "desc": "移除YouTube视频、瀑布流、搜索和Shorts中的广告，移除底部的上传按钮和Shorts按钮，增加画中画及字幕翻译功",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/YouTube_remove_ads.sgmodule",
-          "tag": "youtube",
-          "essential": false,
-          "author": "Maasea[https://github.com/Maasea],wish[https://github.com/mist-whisper]",
-          "version": "",
-          "date": "2025-06-05 16:15:00"
         },
         {
           "name": "[Sukka] URL Rewrite",

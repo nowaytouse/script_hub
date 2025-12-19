@@ -1,21 +1,21 @@
 {
-  "generated": "2025-12-20T02:48:17.213341",
+  "generated": "2025-12-20T03:00:29.895806",
   "stats": {
-    "total": 67,
-    "converted": 67,
+    "total": 65,
+    "converted": 65,
     "skipped": 0,
     "categories": {
       "amplify_nexus": {
-        "total": 21,
-        "converted": 21
+        "total": 20,
+        "converted": 20
       },
       "head_expanse": {
         "total": 17,
         "converted": 17
       },
       "narrow_pierce": {
-        "total": 29,
-        "converted": 29
+        "total": 28,
+        "converted": 28
       }
     }
   },
@@ -1174,20 +1174,6 @@
       ]
     },
     {
-      "file": "YouTube.Enhance.sgmodule",
-      "category": "amplify_nexus",
-      "changes": [
-        "未知参数转换: {{{歌词翻译语言}}} → PROXY",
-        "未知参数转换: {{{字幕翻译语言}}} → PROXY",
-        "未知参数转换: {{{屏蔽上传按钮}}} → PROXY",
-        "未知参数转换: {{{屏蔽选段按钮}}} → PROXY",
-        "未知参数转换: {{{屏蔽Shorts按钮}}} → PROXY",
-        "未知参数转换: {{{启用调试模式}}} → PROXY",
-        "转换: youtube.response = type=http-response,pa → youtube.response = type=http-response,pa",
-        "转换: hostname = %APPEND% *.googlevideo.com, y → hostname =  *.googlevideo.com, youtubei."
-      ]
-    },
-    {
       "file": "boxjs.rewrite.surge.sgmodule",
       "category": "amplify_nexus",
       "changes": [
@@ -2251,6 +2237,20 @@
         "未知参数转换: {{{LogLevel}}} → PROXY",
         "转换: 📺 BiliBili.Redirect.PCDN.upgcxcode.m4s = → 📺 BiliBili.Redirect.PCDN.upgcxcode.m4s =",
         "转换: hostname = %APPEND% *.mcdn.bilivideo.cn, → hostname =  *.mcdn.bilivideo.cn, api.bil"
+      ]
+    },
+    {
+      "file": "📺 YouTube增强合集.sgmodule",
+      "category": "amplify_nexus",
+      "changes": [
+        "未知参数转换: {{{歌词翻译语言}}} → PROXY",
+        "未知参数转换: {{{字幕翻译语言}}} → PROXY",
+        "未知参数转换: {{{屏蔽上传按钮}}} → PROXY",
+        "未知参数转换: {{{屏蔽选段按钮}}} → PROXY",
+        "未知参数转换: {{{屏蔽Shorts按钮}}} → PROXY",
+        "未知参数转换: {{{启用调试模式}}} → PROXY",
+        "转换: youtube.response = type=http-response,pa → youtube.response = type=http-response,pa",
+        "转换: hostname = %APPEND% *.googlevideo.com, y → hostname =  *.googlevideo.com, youtubei."
       ]
     },
     {
@@ -5925,17 +5925,6 @@
         "参数转换: {{{Proxy}}} → PROXY",
         "转换: IP-ASN,132203,{{{Proxy}}}, no-resolve → IP-ASN,132203,PROXY, no-resolve",
         "转换: hostname = %APPEND% mp.weixin.qq.com, 3p → hostname =  mp.weixin.qq.com, 3pp.starbu"
-      ]
-    },
-    {
-      "file": "YouTube_remove_ads.sgmodule",
-      "category": "narrow_pierce",
-      "changes": [
-        "未知参数转换: {{{隐藏上传按钮}}} → PROXY",
-        "未知参数转换: {{{隐藏短视频按钮}}} → PROXY",
-        "未知参数转换: {{{字幕翻译语言}}} → PROXY",
-        "转换: youtube.response = type=http-response,pa → youtube.response = type=http-response,pa",
-        "转换: hostname = %APPEND% *.googlevideo.com, y → hostname =  *.googlevideo.com, youtubei."
       ]
     },
     {
