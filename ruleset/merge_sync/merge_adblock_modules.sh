@@ -318,11 +318,13 @@ cat > "$TARGET_MODULE" << EOF
 # External AdBlock rulesets (upstream auto-update)
 # Sources: Sukka/skk.moe, blackmatrix7, nowaytouse
 # ═══════════════════════════════════════════════════════════════
+# [Sukka] Enhance Better ADBlock - 主要REJECT规则 (RULE-SET格式)
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # [Sukka] REJECT-NO-DROP规则 (不丢弃连接)
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 # [Sukka] REJECT-DROP规则 (静默丢弃)
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# [Sukka] 域名集规则 (DOMAIN-SET格式)
+# [Sukka] 域名集规则 (DOMAIN-SET格式: 纯域名列表)
 DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject.conf,REJECT,extended-matching,pre-matching,update-interval=86400
 # BlockHttpDNS - 阻止HTTPDNS泄露
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
