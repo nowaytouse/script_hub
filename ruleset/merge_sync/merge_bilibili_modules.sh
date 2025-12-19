@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # BiliBili Module Merge Script - 哔哩哔哩模块合并脚本
-# 
-# 上游源: VirgilClyne/BiliUniverse
-# - Enhanced: UI自定义
-# - Global: 全区搜索
-# - Redirect: CDN重定向
+# 上游源: VirgilClyne/BiliUniverse (GitHub Releases)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -15,15 +11,10 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TEMP_DIR="$PROJECT_ROOT/.temp_bilibili_merge"
 OUTPUT_MODULE="$PROJECT_ROOT/module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule"
 
-# 上游URL (使用 Surge 目录)
-ENHANCED_URL="https://raw.githubusercontent.com/BiliUniverse/Enhanced/main/modules/BiliBili.Enhanced.sgmodule"
-GLOBAL_URL="https://raw.githubusercontent.com/BiliUniverse/Global/main/modules/BiliBili.Global.sgmodule"
-REDIRECT_URL="https://raw.githubusercontent.com/BiliUniverse/Redirect/main/modules/BiliBili.Redirect.sgmodule"
-
-# 备用URL
-ENHANCED_URL_ALT="https://github.com/BiliUniverse/Enhanced/raw/main/modules/BiliBili.Enhanced.sgmodule"
-GLOBAL_URL_ALT="https://github.com/BiliUniverse/Global/raw/main/modules/BiliBili.Global.sgmodule"
-REDIRECT_URL_ALT="https://github.com/BiliUniverse/Redirect/raw/main/modules/BiliBili.Redirect.sgmodule"
+# 上游URL (GitHub Releases)
+ENHANCED_URL="https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"
+GLOBAL_URL="https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"
+REDIRECT_URL="https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"
 
 log_info() { echo -e "\033[0;36m[INFO]\033[0m $1"; }
 log_success() { echo -e "\033[0;32m[✓]\033[0m $1"; }
@@ -34,98 +25,72 @@ mkdir -p "$TEMP_DIR"
 
 log_info "下载上游BiliBili模块..."
 
-# 下载模块 (尝试主URL，失败则用备用URL，最后用本地)
-download_module() {
-    local name="$1" url="$2" alt_url="$3" local_file="$4" output="$5"
+# 下载模块
+for mod in Enhanced Global Redirect; do
+    url_var="${mod^^}_URL"
+    url="${!url_var}"
+    output="$TEMP_DIR/${mod,,}.module"
     if curl -sL "$url" -o "$output" 2>/dev/null && [ -s "$output" ]; then
-        log_success "$name 从上游下载成功"
-    elif curl -sL "$alt_url" -o "$output" 2>/dev/null && [ -s "$output" ]; then
-        log_success "$name 从备用URL下载成功"
-    elif [ -f "$local_file" ]; then
-        cp "$local_file" "$output"
-        log_info "$name 使用本地文件"
+        log_success "$mod 下载成功"
     else
-        log_error "$name 下载失败且无本地文件!"
-        return 1
+        log_error "$mod 下载失败: $url"
+        exit 1
     fi
-}
-
-download_module "Enhanced" "$ENHANCED_URL" "$ENHANCED_URL_ALT" "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Enhanced.sgmodule" "$TEMP_DIR/enhanced.module"
-download_module "Global" "$GLOBAL_URL" "$GLOBAL_URL_ALT" "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Global.sgmodule" "$TEMP_DIR/global.module"
-download_module "Redirect" "$REDIRECT_URL" "$REDIRECT_URL_ALT" "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Redirect.sgmodule" "$TEMP_DIR/redirect.module"
+done
 
 log_info "合并模块..."
 
-# 提取各部分
-extract_section() {
-    local file="$1" section="$2" output="$3"
-    awk -v sec="$section" '
-        /^\[/ { in_section = ($0 ~ "^\\[" sec "\\]") }
-        in_section && !/^\[/ && !/^#!/ && NF { print }
-    ' "$file" >> "$output" 2>/dev/null || true
-}
+# 初始化临时文件
+touch "$TEMP_DIR/general.tmp" "$TEMP_DIR/script.tmp" "$TEMP_DIR/mitm.tmp"
 
-for f in general script mitm; do touch "$TEMP_DIR/$f.tmp"; done
-
-# 提取各模块
+# 提取 [Script] 部分
 for mod in enhanced global redirect; do
-    extract_section "$TEMP_DIR/$mod.module" "General" "$TEMP_DIR/general.tmp"
-    extract_section "$TEMP_DIR/$mod.module" "Script" "$TEMP_DIR/script.tmp"
+    awk '/^\[Script\]/{f=1;next}/^\[/{f=0}f && /^📺/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/script.tmp" 2>/dev/null || true
+done
+
+# 提取 [General] 部分
+for mod in enhanced global redirect; do
+    awk '/^\[General\]/{f=1;next}/^\[/{f=0}f && NF && !/^#/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/general.tmp" 2>/dev/null || true
+done
+
+# 提取 MITM hostname
+for mod in enhanced global redirect; do
     awk '/^\[MITM\]/{f=1;next}/^\[/{f=0}f && /hostname/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/mitm.tmp" 2>/dev/null || true
 done
 
 # 去重
 sort -u "$TEMP_DIR/script.tmp" -o "$TEMP_DIR/script.tmp"
+sort -u "$TEMP_DIR/general.tmp" -o "$TEMP_DIR/general.tmp"
 
-# 合并MITM
-mitm_hosts=$(cat "$TEMP_DIR/mitm.tmp" | sed 's/hostname = %APPEND% //' | tr ',' '\n' | sed 's/^ *//' | sort -u | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
+# 合并MITM hostname
+mitm_hosts=$(cat "$TEMP_DIR/mitm.tmp" | sed 's/hostname = %APPEND% //' | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//' | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
 
-# 生成合并模块
-cat > "$OUTPUT_MODULE" << 'EOF'
+# 生成合并模块头部
+cat > "$OUTPUT_MODULE" << EOF
 #!name=📺 BiliBili增强合集
-#!desc=合并BiliUniverse三大模块 (自动追随上游更新)\n\n⚙️ Enhanced: UI自定义\n🌐 Global: 全区搜索\n🔀 Redirect: CDN重定向
+#!desc=合并BiliUniverse三大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向
 #!author=VirgilClyne
 #!icon=https://github.com/BiliUniverse/Enhanced/raw/main/src/assets/icon_rounded.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=BiliBili, 增强, 合并
-EOF
-echo "#!date=$(date +%Y-%m-%d\ %H:%M:%S)" >> "$OUTPUT_MODULE"
-
-# 添加参数 (合并三个模块的参数)
-cat >> "$OUTPUT_MODULE" << 'EOF'
-
-# ═══════════════════════════════════════════════════════════════
-# Enhanced 参数
-# ═══════════════════════════════════════════════════════════════
-#!arguments = Home.Tab:"直播tab,推荐tab,hottopic,bangumi,anime,film,koreavtw",Home.Tab_default:"推荐tab",Home.Top_left:"mine",Home.Top:"消息Top",Bottom:"home,dynamic,ogv,会员购Bottom,我的Bottom",LogLevel:"WARN"
-
-# ═══════════════════════════════════════════════════════════════
-# Global 参数
-# ═══════════════════════════════════════════════════════════════
-#!arguments = ForceHost:"1",Locales:"CHN,HKG,TWN",Proxies.CHN:"DIRECT",Proxies.HKG:"🇭🇰香港",Proxies.MAC:"🇲🇴澳门",Proxies.TWN:"🇹🇼台湾"
-
-# ═══════════════════════════════════════════════════════════════
-# Redirect 参数
-# ═══════════════════════════════════════════════════════════════
-#!arguments = Host.Akamaized:"upos-sz-mirrorali.bilivideo.com",Host.BStar:"upos-sz-mirrorali.bilivideo.com",Host.PCDN:"upos-sz-mirrorali.bilivideo.com",Host.MCDN:"proxy-tf-all-ws.bilivideo.com"
+#!openUrl=http://boxjs.com/#/app/BiliBili.Enhanced
+#!date=$(date +%Y-%m-%d\ %H:%M:%S)
 
 EOF
 
-# 添加General
+# 添加 [General]
 if [ -s "$TEMP_DIR/general.tmp" ]; then
     echo "[General]" >> "$OUTPUT_MODULE"
     cat "$TEMP_DIR/general.tmp" >> "$OUTPUT_MODULE"
     echo "" >> "$OUTPUT_MODULE"
 fi
 
-# 添加Script
+# 添加 [Script]
 echo "[Script]" >> "$OUTPUT_MODULE"
-echo "# ═══════════════════════════════════════════════════════════════" >> "$OUTPUT_MODULE"
 echo "# BiliUniverse Scripts (Enhanced + Global + Redirect)" >> "$OUTPUT_MODULE"
-echo "# ═══════════════════════════════════════════════════════════════" >> "$OUTPUT_MODULE"
 cat "$TEMP_DIR/script.tmp" >> "$OUTPUT_MODULE"
 
-# 添加MITM
+# 添加 [MITM]
 cat >> "$OUTPUT_MODULE" << EOF
 
 [MITM]
