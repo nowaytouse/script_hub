@@ -1,10 +1,10 @@
 #!name=🌐 DNS & Host Enhanced
-#!desc=🔒 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.12.17: 修复增强模式下DNS劫持
+#!desc=🔒 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.12.19: 路由器/mDNS域名使用force-syslib确保增强模式兼容
 #!author=VirgilClyne & nyamiiko (Merged & Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2025.12.17
+#!version=2025.12.19
 
 [General]
 # ═══════════════════════════════════════════════════════════════
@@ -97,47 +97,49 @@ dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
 dns.adguard-dns.com = 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 3: Local Domains / LAN (System DNS)
+# SECTION 3: Local Domains / LAN
+# ⚠️ .local 域名 Surge 已默认特殊处理，无需 force-syslib
+# ⚠️ mDNS 特殊域名使用 force-syslib 确保增强模式下正常工作
 # ═══════════════════════════════════════════════════════════════
-*.local = server:system
-*.lan = server:system
-*.test = server:system
-*.localhost = server:system
-*.localdomain = server:system
-_hotspot_.m2m = server:system // M2M routers at MiFi Hotspot
-hotspot.cslwifi.com = server:system // csl Wi-Fi
+*.local = server:system // Surge 已默认处理 .local
+*.lan = server:system // 本地局域网
+*.test = server:system // 测试域名
+*.localhost = server:system // 本地主机
+*.localdomain = server:system // 本地域名
+_hotspot_.m2m = server:force-syslib // M2M routers at MiFi Hotspot (mDNS)
+hotspot.cslwifi.com = server:force-syslib // csl Wi-Fi Hotspot (mDNS)
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 4: Router Admin Panel (System DNS)
+# SECTION 4: Router Admin Panel (Force System Library DNS)
+# ⚠️ 使用 force-syslib：无论是否开启增强模式，均由系统库解析
+# 这些是本地路由器管理面板，依赖 mDNS/本地发现，必须用系统库
 # ═══════════════════════════════════════════════════════════════
-*.id.ui.direct = server:syslib // Ubiquiti Unifi Network App
-unifi.local = server:syslib // Ubiquiti Unifi OS
-amplifi.lan = server:syslib // Ubiquiti Amplifi Router
-router.synology.com = server:syslib // Synology Router
-sila.razer.com = server:syslib // Razer Sila Router
-router.asus.com = server:syslib // Asus Router
-routerlogin.net = server:syslib // Netgear Router
-orbilogin.com = server:syslib // Netgear Obri Router
-www.LinksysSmartWiFi.com = server:syslib // Linksys Router
-LinksysSmartWiFi.com = server:syslib // Linksys Router
-myrouter.local = server:syslib // Linksys Router
-instant.arubanetworks.com = server:syslib // Aurba Router
-setmeup.arubanetworks.com = server:syslib // Aurba Router
-www.miwifi.com = server:syslib // 小米 Mi WiFi Router
-miwifi.com = server:syslib // 小米 Mi WiFi Router
-mediarouter.home = server:syslib // 华为 Huawei Router
-tplogin.cn = server:syslib // TP-Link Router
-tplinklogin.net = server:syslib // TP-Link Router
-tplinkwifi.net = server:syslib // TP-Link Router
-melogin.cn = server:syslib // 水星 MERCURY Router
-falogin.cn = server:syslib // 迅捷 FAST Router
-tendawifi.com = server:syslib // 腾达 Tenda Router
-leike.cc = server:syslib // 磊科 Netcore Router
-zte.home = server:syslib // 中兴 ZTE Router
-p.to = server:syslib // 斐讯 PHICOMM Router
-phicomm.me = server:syslib // 斐讯 PHICOMM Router
-hiwifi.com = server:syslib // 极路由 HiWiFi Router
-peiluyou.com = server:syslib // 迅雷路由
+*.id.ui.direct = server:force-syslib // Ubiquiti Unifi Network App (mDNS)
+amplifi.lan = server:force-syslib // Ubiquiti Amplifi Router (mDNS)
+router.synology.com = server:force-syslib // Synology Router (本地发现)
+sila.razer.com = server:force-syslib // Razer Sila Router (本地发现)
+router.asus.com = server:force-syslib // Asus Router (本地发现)
+routerlogin.net = server:force-syslib // Netgear Router (本地发现)
+orbilogin.com = server:force-syslib // Netgear Obri Router (本地发现)
+www.LinksysSmartWiFi.com = server:force-syslib // Linksys Router (本地发现)
+LinksysSmartWiFi.com = server:force-syslib // Linksys Router (本地发现)
+instant.arubanetworks.com = server:force-syslib // Aurba Router (本地发现)
+setmeup.arubanetworks.com = server:force-syslib // Aurba Router (本地发现)
+www.miwifi.com = server:force-syslib // 小米 Mi WiFi Router (本地发现)
+miwifi.com = server:force-syslib // 小米 Mi WiFi Router (本地发现)
+mediarouter.home = server:force-syslib // 华为 Huawei Router (本地发现)
+tplogin.cn = server:force-syslib // TP-Link Router (本地发现)
+tplinklogin.net = server:force-syslib // TP-Link Router (本地发现)
+tplinkwifi.net = server:force-syslib // TP-Link Router (本地发现)
+melogin.cn = server:force-syslib // 水星 MERCURY Router (本地发现)
+falogin.cn = server:force-syslib // 迅捷 FAST Router (本地发现)
+tendawifi.com = server:force-syslib // 腾达 Tenda Router (本地发现)
+leike.cc = server:force-syslib // 磊科 Netcore Router (本地发现)
+zte.home = server:force-syslib // 中兴 ZTE Router (本地发现)
+p.to = server:force-syslib // 斐讯 PHICOMM Router (本地发现)
+phicomm.me = server:force-syslib // 斐讯 PHICOMM Router (本地发现)
+hiwifi.com = server:force-syslib // 极路由 HiWiFi Router (本地发现)
+peiluyou.com = server:force-syslib // 迅雷路由 (本地发现)
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 5: System Connectivity Check (Force System DNS)
@@ -212,8 +214,8 @@ update.googleapis.com = server:https://doh.pub/dns-query // Google Update
 translate.googleapis.com = server:https://doh.pub/dns-query // Google Translate
 fonts.googleapis.com = server:https://doh.pub/dns-query // Google Fonts
 fonts.gstatic.com = server:https://doh.pub/dns-query // Google Fonts
-stun.l.google.com = server:syslib // Google STUN
-stun?.l.google.com = server:syslib // Google STUN
+stun.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
+stun?.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 8: Apple Services

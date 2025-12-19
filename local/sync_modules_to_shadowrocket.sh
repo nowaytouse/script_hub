@@ -43,7 +43,8 @@ convert_to_shadowrocket() {
     sed 's/,"update-interval=[0-9]*"//g' | \
     sed 's/REJECT-DROP/REJECT/g' | \
     sed 's/REJECT-NO-DROP/REJECT/g' | \
-    sed 's/%APPEND% //g' \
+    sed 's/%APPEND% //g' | \
+    sed 's/server:force-syslib/server:syslib/g' \
     > "$output_file"
 }
 
