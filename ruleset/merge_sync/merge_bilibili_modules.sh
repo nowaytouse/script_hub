@@ -15,10 +15,15 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TEMP_DIR="$PROJECT_ROOT/.temp_bilibili_merge"
 OUTPUT_MODULE="$PROJECT_ROOT/module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule"
 
-# 上游URL
+# 上游URL (使用 Surge 目录)
 ENHANCED_URL="https://raw.githubusercontent.com/BiliUniverse/Enhanced/main/modules/BiliBili.Enhanced.sgmodule"
 GLOBAL_URL="https://raw.githubusercontent.com/BiliUniverse/Global/main/modules/BiliBili.Global.sgmodule"
 REDIRECT_URL="https://raw.githubusercontent.com/BiliUniverse/Redirect/main/modules/BiliBili.Redirect.sgmodule"
+
+# 备用URL
+ENHANCED_URL_ALT="https://github.com/BiliUniverse/Enhanced/raw/main/modules/BiliBili.Enhanced.sgmodule"
+GLOBAL_URL_ALT="https://github.com/BiliUniverse/Global/raw/main/modules/BiliBili.Global.sgmodule"
+REDIRECT_URL_ALT="https://github.com/BiliUniverse/Redirect/raw/main/modules/BiliBili.Redirect.sgmodule"
 
 log_info() { echo -e "\033[0;36m[INFO]\033[0m $1"; }
 log_success() { echo -e "\033[0;32m[✓]\033[0m $1"; }
@@ -29,15 +34,25 @@ mkdir -p "$TEMP_DIR"
 
 log_info "下载上游BiliBili模块..."
 
-# 下载模块
-curl -sL "$ENHANCED_URL" -o "$TEMP_DIR/enhanced.module" 2>/dev/null || log_error "Enhanced下载失败"
-curl -sL "$GLOBAL_URL" -o "$TEMP_DIR/global.module" 2>/dev/null || log_error "Global下载失败"
-curl -sL "$REDIRECT_URL" -o "$TEMP_DIR/redirect.module" 2>/dev/null || log_error "Redirect下载失败"
+# 下载模块 (尝试主URL，失败则用备用URL，最后用本地)
+download_module() {
+    local name="$1" url="$2" alt_url="$3" local_file="$4" output="$5"
+    if curl -sL "$url" -o "$output" 2>/dev/null && [ -s "$output" ]; then
+        log_success "$name 从上游下载成功"
+    elif curl -sL "$alt_url" -o "$output" 2>/dev/null && [ -s "$output" ]; then
+        log_success "$name 从备用URL下载成功"
+    elif [ -f "$local_file" ]; then
+        cp "$local_file" "$output"
+        log_info "$name 使用本地文件"
+    else
+        log_error "$name 下载失败且无本地文件!"
+        return 1
+    fi
+}
 
-# 如果下载失败，使用本地文件
-[ ! -s "$TEMP_DIR/enhanced.module" ] && cp "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Enhanced.sgmodule" "$TEMP_DIR/enhanced.module"
-[ ! -s "$TEMP_DIR/global.module" ] && cp "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Global.sgmodule" "$TEMP_DIR/global.module"
-[ ! -s "$TEMP_DIR/redirect.module" ] && cp "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Redirect.sgmodule" "$TEMP_DIR/redirect.module"
+download_module "Enhanced" "$ENHANCED_URL" "$ENHANCED_URL_ALT" "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Enhanced.sgmodule" "$TEMP_DIR/enhanced.module"
+download_module "Global" "$GLOBAL_URL" "$GLOBAL_URL_ALT" "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Global.sgmodule" "$TEMP_DIR/global.module"
+download_module "Redirect" "$REDIRECT_URL" "$REDIRECT_URL_ALT" "$PROJECT_ROOT/module/surge(main)/amplify_nexus/BiliBili.Redirect.sgmodule" "$TEMP_DIR/redirect.module"
 
 log_info "合并模块..."
 
