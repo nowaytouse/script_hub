@@ -1,196 +1,122 @@
 #!name=🔥 Firewall Port Blocker 🛡️🚫
-#!desc=[🚀SR] Block dangerous ports: Malware/Backdoor/Database/Admin/Legacy protocols 🔒 (Safe Mode - Allows common services)
+#!desc=[🚀SR] Conservative firewall: Block known threats only 🔒\n\n✅ Safe: Gaming/P2P/Torrent/Remote Desktop\n⛔ Blocked: Malware/Backdoor/Exposed DB ports
 #!author=nyamiiko
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!version=2025.12.04
+#!version=2025.12.20
+#!tag=安全, 防火墙
 
-# ⚠️ IMPORTANT: This module only blocks OUTBOUND connections to dangerous ports
-# It does NOT block legitimate services like HTTPS (443), DNS (53), or common proxies
-# Safe for daily use - will not break normal internet connectivity
+# ═══════════════════════════════════════════════════════════════
+# 🛡️ CONSERVATIVE FIREWALL - Safe for Daily Use
+# ═══════════════════════════════════════════════════════════════
+# ✅ ALLOWED: Gaming, P2P/Torrent, VPN, Remote Desktop, Streaming
+# ⛔ BLOCKED: Known malware ports, exposed database ports
+# 
+# 策略说明:
+# - 保守策略: 只拦截已知威胁，不影响正常使用
+# - 游戏友好: 不拦截任何游戏端口
+# - 下载友好: 不拦截 BitTorrent/P2P 端口
+# - 远程友好: 不拦截 RDP/VNC/TeamViewer
+# ═══════════════════════════════════════════════════════════════
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
-# SECTION 1: Legacy & Insecure Protocols (High Risk)
+# SECTION 1: 🔴 AGGRESSIVE - Known Malware/Backdoor Ports
+# These are CONFIRMED malicious - always block
 # ═══════════════════════════════════════════════════════════════
-# FTP (Insecure - use SFTP/FTPS instead)
-DEST-PORT,20,REJECT
-DEST-PORT,21,REJECT
-# Telnet (Plaintext - use SSH instead)
-DEST-PORT,23,REJECT
-# TFTP (Trivial FTP - no auth)
-DEST-PORT,69,REJECT
-# Gopher (Obsolete)
-DEST-PORT,70,REJECT
-# Finger (Privacy risk)
-DEST-PORT,79,REJECT
-# Auth/Ident (Obsolete)
-DEST-PORT,113,REJECT
-# NNTP (Usenet - rarely used)
-DEST-PORT,119,REJECT
-
-# ═══════════════════════════════════════════════════════════════
-# SECTION 2: Windows File Sharing (SMB/NetBIOS) - High Risk
-# ═══════════════════════════════════════════════════════════════
-# NetBIOS
-DEST-PORT,135,REJECT
-DEST-PORT,137,REJECT
-DEST-PORT,138,REJECT
-DEST-PORT,139,REJECT
-# SMB (WannaCry/EternalBlue vector)
-DEST-PORT,445,REJECT
-
-# ═══════════════════════════════════════════════════════════════
-# SECTION 3: Database Ports (Should NOT be exposed to internet)
-# ═══════════════════════════════════════════════════════════════
-# MySQL
-DEST-PORT,3306,REJECT
-# PostgreSQL
-DEST-PORT,5432,REJECT
-# MongoDB
-DEST-PORT,27017,REJECT
-DEST-PORT,27018,REJECT
-DEST-PORT,27019,REJECT
-# Redis
-DEST-PORT,6379,REJECT
-# Memcached
-DEST-PORT,11211,REJECT
-# Elasticsearch
-DEST-PORT,9200,REJECT
-DEST-PORT,9300,REJECT
-# CouchDB
-DEST-PORT,5984,REJECT
-# Cassandra
-DEST-PORT,9042,REJECT
-DEST-PORT,7000,REJECT
-DEST-PORT,7001,REJECT
-# InfluxDB
-DEST-PORT,8086,REJECT
-# Oracle DB
-DEST-PORT,1521,REJECT
-# MS SQL Server
-DEST-PORT,1433,REJECT
-
-# ═══════════════════════════════════════════════════════════════
-# SECTION 4: Remote Admin Ports (High Risk)
-# ═══════════════════════════════════════════════════════════════
-# RDP (Remote Desktop Protocol)
-DEST-PORT,3389,REJECT
-# VNC (Virtual Network Computing)
-DEST-PORT,5900,REJECT
-DEST-PORT,5901,REJECT
-DEST-PORT,5902,REJECT
-DEST-PORT,5903,REJECT
-# X11 (X Window System)
-DEST-PORT,6000,REJECT
-DEST-PORT,6001,REJECT
-DEST-PORT,6002,REJECT
-# WinRM (Windows Remote Management)
-DEST-PORT,5985,REJECT
-DEST-PORT,5986,REJECT
-# pcAnywhere
-DEST-PORT,5631,REJECT
-DEST-PORT,5632,REJECT
-# TeamViewer (if not needed)
-DEST-PORT,5938,REJECT
-
-# ═══════════════════════════════════════════════════════════════
-# SECTION 5: Container/Orchestration Ports (Should be internal only)
-# ═══════════════════════════════════════════════════════════════
-# Docker API (Unencrypted)
-DEST-PORT,2375,REJECT
-# Kubernetes API
-DEST-PORT,6443,REJECT
-DEST-PORT,10250,REJECT
-DEST-PORT,10251,REJECT
-DEST-PORT,10252,REJECT
-# etcd
-DEST-PORT,2379,REJECT
-DEST-PORT,2380,REJECT
-# Consul
-DEST-PORT,8500,REJECT
-DEST-PORT,8600,REJECT
-
-# ═══════════════════════════════════════════════════════════════
-# SECTION 6: Known Malware/Backdoor/Trojan Ports
-# ═══════════════════════════════════════════════════════════════
-# Back Orifice
+# Back Orifice (Classic Trojan)
 DEST-PORT,31337,REJECT
 DEST-PORT,31338,REJECT
-# NetBus
+# NetBus (Remote Admin Trojan)
 DEST-PORT,12345,REJECT
 DEST-PORT,12346,REJECT
-# SubSeven
+# SubSeven (Trojan)
 DEST-PORT,27374,REJECT
 DEST-PORT,6711,REJECT
 DEST-PORT,6712,REJECT
 DEST-PORT,6713,REJECT
-# Deep Throat
+# Deep Throat (Trojan)
 DEST-PORT,6670,REJECT
 DEST-PORT,6771,REJECT
 # Trinoo DDoS
 DEST-PORT,27444,REJECT
 DEST-PORT,27665,REJECT
 DEST-PORT,31335,REJECT
-# Stacheldraht
+# Stacheldraht DDoS
 DEST-PORT,16660,REJECT
 DEST-PORT,65000,REJECT
-# Other Known Malicious Ports
+# Other Confirmed Malware Ports
 DEST-PORT,1243,REJECT
 DEST-PORT,1999,REJECT
-DEST-PORT,2023,REJECT
 DEST-PORT,3150,REJECT
 DEST-PORT,5569,REJECT
 DEST-PORT,9898,REJECT
 DEST-PORT,33270,REJECT
-DEST-PORT,33333,REJECT
-DEST-PORT,34324,REJECT
 DEST-PORT,40421,REJECT
 DEST-PORT,54320,REJECT
 DEST-PORT,54321,REJECT
 DEST-PORT,61466,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 7: P2P/BitTorrent Ports (Optional - Comment out if needed)
+# SECTION 2: 🟠 MODERATE - Legacy Insecure Protocols
+# Block plaintext protocols that should use encrypted alternatives
 # ═══════════════════════════════════════════════════════════════
-# BitTorrent Default Range
-DEST-PORT,6881,REJECT
-DEST-PORT,6882,REJECT
-DEST-PORT,6883,REJECT
-DEST-PORT,6884,REJECT
-DEST-PORT,6885,REJECT
-DEST-PORT,6886,REJECT
-DEST-PORT,6887,REJECT
-DEST-PORT,6888,REJECT
-DEST-PORT,6889,REJECT
+# Telnet (use SSH instead)
+DEST-PORT,23,REJECT
+# TFTP (no authentication)
+DEST-PORT,69,REJECT
+# Finger (privacy risk)
+DEST-PORT,79,REJECT
+# Auth/Ident (obsolete)
+DEST-PORT,113,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# ✅ SAFE PORTS (NOT BLOCKED - For Reference)
+# SECTION 3: 🟠 MODERATE - Windows SMB/NetBIOS
+# High risk for WannaCry/EternalBlue attacks
 # ═══════════════════════════════════════════════════════════════
-# 53   - DNS (Essential)
-# 80   - HTTP (Essential)
-# 443  - HTTPS (Essential)
-# 853  - DNS over TLS (Secure DNS)
-# 1080 - SOCKS5 Proxy (Legitimate use)
-# 3128 - Squid Proxy (Legitimate use)
-# 8080 - HTTP Alternate (Dev servers, proxies)
-# 8443 - HTTPS Alternate (Common for services)
-# 8888 - HTTP Alternate (Common for proxies)
-# 9090 - HTTP Alternate (Prometheus, etc.)
+# NetBIOS
+DEST-PORT,135,REJECT
+DEST-PORT,137,REJECT
+DEST-PORT,138,REJECT
+DEST-PORT,139,REJECT
+# SMB (WannaCry vector)
+DEST-PORT,445,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# 📝 NOTES:
+# SECTION 4: 🟡 CONSERVATIVE - Exposed Database Ports
+# Databases should NEVER be directly exposed to internet
 # ═══════════════════════════════════════════════════════════════
-# 1. This module blocks OUTBOUND connections only
-# 2. Does NOT affect inbound connections (firewall handles that)
-# 3. Safe for daily use - will not break normal browsing
-# 4. If you need P2P/BitTorrent, comment out SECTION 7
-# 5. If you use specific services (VNC, RDP), comment out those lines
-# 6. Database ports should NEVER be exposed to internet anyway
-# 7. Use VPN/SSH tunnels for remote admin instead of direct exposure
+# MySQL
+DEST-PORT,3306,REJECT
+# PostgreSQL
+DEST-PORT,5432,REJECT
+# MongoDB (常被扫描攻击)
+DEST-PORT,27017,REJECT
+# Redis (常被未授权访问)
+DEST-PORT,6379,REJECT
+# Memcached (DDoS放大攻击)
+DEST-PORT,11211,REJECT
 
+# ═══════════════════════════════════════════════════════════════
+# SECTION 5: 🟡 CONSERVATIVE - Container/K8s Ports
+# Should only be accessed via VPN/internal network
+# ═══════════════════════════════════════════════════════════════
+# Docker API (unencrypted)
+DEST-PORT,2375,REJECT
+# Kubernetes API
+DEST-PORT,6443,REJECT
+DEST-PORT,10250,REJECT
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 8: Auto-synced from Surge Config (2025-12-07)
+# ✅ EXPLICITLY ALLOWED (NOT BLOCKED)
 # ═══════════════════════════════════════════════════════════════
-IN-PORT,8076,REJECT
-DEST-PORT,8076,REJECT
+# 🎮 Gaming: ALL game ports allowed
+# 📥 P2P/Torrent: 6881-6889 and all others ALLOWED
+# 🖥️ Remote: RDP(3389), VNC(5900+), TeamViewer(5938) ALLOWED
+# 📺 Streaming: All streaming ports ALLOWED
+# 🌐 Web: 80, 443, 8080, 8443 ALLOWED
+# 🔒 VPN: All VPN ports ALLOWED
+# 📧 Email: 25, 465, 587, 993, 995 ALLOWED
+# 📁 FTP: 20, 21 ALLOWED (some users need it)
+# 🔧 SSH: 22 ALLOWED
+# 📡 DNS: 53, 853 ALLOWED
+

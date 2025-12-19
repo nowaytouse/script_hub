@@ -1,10 +1,10 @@
 #!name=🌐 DNS & Host Enhanced
-#!desc=[🚀SR] 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.12.17: 修复增强模式下DNS劫持
+#!desc=[🚀SR] 🔒 全量DoH加密DNS + Host分流增强 | 已合并Encrypted DNS Module | 🔧 2025.12.19: 路由器/mDNS域名使用force-syslib确保增强模式兼容
 #!author=VirgilClyne & nyamiiko (Merged & Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2025.12.17
+#!version=2025.12.19
 
 [General]
 # ═══════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@
 # ⚠️ 2025.12.17: 全量DoH加密，避免传统DNS泄漏/劫持
 # ═══════════════════════════════════════════════════════════════
 # DoH3/DoH Priority (国际优先，国内DoH作为备用)
-encrypted-dns-server = 223.5.5.5, 1.1.1.1, 9.9.9.11, 94.140.14.14, 8.8.8.8, 119.29.29.29, 101.198.198.198
+encrypted-dns-server = h3://dns.alidns.com/dns-query, h3://cloudflare-dns.com/dns-query, https://dns11.quad9.net/dns-query, h3://dns.adguard-dns.com/dns-query, h3://dns.google/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query
 
 # ⚠️ Fallback DNS Servers - 默认注释，避免传统DNS被劫持
 # 如需启用，请取消注释（仅用于DoH域名解析和连通性测试）
@@ -46,12 +46,12 @@ always-raw-tcp-keywords = alipay, pay, unionpay, 95516, apple, weixin, wechat, t
 # ═══════════════════════════════════════════════════════════════
 # Skip Proxy - Core List
 # ═══════════════════════════════════════════════════════════════
-skip-proxy = localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.qq.com, *.tencent.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
+skip-proxy =  localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.qq.com, *.tencent.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
 
 # ═══════════════════════════════════════════════════════════════
 # Always Real IP - Core List
 # ═══════════════════════════════════════════════════════════════
-always-real-ip = *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com, *.bilibili.com, *.douyin.com, *.tiktok.com
+always-real-ip =  *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com, *.bilibili.com, *.douyin.com, *.tiktok.com
 
 [URL Rewrite]
 # Google Redirect
@@ -87,57 +87,59 @@ cloudflare-dns.com = 104.16.249.249, 104.16.248.249, 2606:4700::6810:f8f9, 2606:
 1dot1dot1dot1.cloudflare-dns.com = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // 1dot1dot1dot1.cloudflare-dns.com:853
 one.one.one.one = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // one.one.one.one:853
 dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200:baba::1, 2400:3200::1 // https://dns.alidns.com/dns-query
-doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1 // 119.29.29.29
+doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1 // https://doh.pub/dns-query
 dot.pub = 1.12.12.12, 120.53.53.53 // dot.pub:853
-doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // 101.198.198.198
+doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // https://doh.360.cn/dns-query
 dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // dot.360.cn:853
-dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // 101.101.101.101
-ordns.he.net = 74.82.42.42, 2001:470:20::2 // 74.82.42.42
+dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twnic.tw/dns-query
+ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
 dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
 dns.adguard-dns.com = 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 3: Local Domains / LAN (System DNS)
+# SECTION 3: Local Domains / LAN
+# ⚠️ .local 域名 Surge 已默认特殊处理，无需 force-syslib
+# ⚠️ mDNS 特殊域名使用 force-syslib 确保增强模式下正常工作
 # ═══════════════════════════════════════════════════════════════
-*.local = server:system
-*.lan = server:system
-*.test = server:system
-*.localhost = server:system
-*.localdomain = server:system
-_hotspot_.m2m = server:system // M2M routers at MiFi Hotspot
-hotspot.cslwifi.com = server:system // csl Wi-Fi
+*.local = server:system // Surge 已默认处理 .local
+*.lan = server:system // 本地局域网
+*.test = server:system // 测试域名
+*.localhost = server:system // 本地主机
+*.localdomain = server:system // 本地域名
+_hotspot_.m2m = server:force-syslib // M2M routers at MiFi Hotspot (mDNS)
+hotspot.cslwifi.com = server:force-syslib // csl Wi-Fi Hotspot (mDNS)
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 4: Router Admin Panel (System DNS)
+# SECTION 4: Router Admin Panel (Force System Library DNS)
+# ⚠️ 使用 force-syslib：无论是否开启增强模式，均由系统库解析
+# 这些是本地路由器管理面板，依赖 mDNS/本地发现，必须用系统库
 # ═══════════════════════════════════════════════════════════════
-*.id.ui.direct = server:syslib // Ubiquiti Unifi Network App
-unifi.local = server:syslib // Ubiquiti Unifi OS
-amplifi.lan = server:syslib // Ubiquiti Amplifi Router
-router.synology.com = server:syslib // Synology Router
-sila.razer.com = server:syslib // Razer Sila Router
-router.asus.com = server:syslib // Asus Router
-routerlogin.net = server:syslib // Netgear Router
-orbilogin.com = server:syslib // Netgear Obri Router
-www.LinksysSmartWiFi.com = server:syslib // Linksys Router
-LinksysSmartWiFi.com = server:syslib // Linksys Router
-myrouter.local = server:syslib // Linksys Router
-instant.arubanetworks.com = server:syslib // Aurba Router
-setmeup.arubanetworks.com = server:syslib // Aurba Router
-www.miwifi.com = server:syslib // 小米 Mi WiFi Router
-miwifi.com = server:syslib // 小米 Mi WiFi Router
-mediarouter.home = server:syslib // 华为 Huawei Router
-tplogin.cn = server:syslib // TP-Link Router
-tplinklogin.net = server:syslib // TP-Link Router
-tplinkwifi.net = server:syslib // TP-Link Router
-melogin.cn = server:syslib // 水星 MERCURY Router
-falogin.cn = server:syslib // 迅捷 FAST Router
-tendawifi.com = server:syslib // 腾达 Tenda Router
-leike.cc = server:syslib // 磊科 Netcore Router
-zte.home = server:syslib // 中兴 ZTE Router
-p.to = server:syslib // 斐讯 PHICOMM Router
-phicomm.me = server:syslib // 斐讯 PHICOMM Router
-hiwifi.com = server:syslib // 极路由 HiWiFi Router
-peiluyou.com = server:syslib // 迅雷路由
+*.id.ui.direct = server:force-syslib // Ubiquiti Unifi Network App (mDNS)
+amplifi.lan = server:force-syslib // Ubiquiti Amplifi Router (mDNS)
+router.synology.com = server:force-syslib // Synology Router (本地发现)
+sila.razer.com = server:force-syslib // Razer Sila Router (本地发现)
+router.asus.com = server:force-syslib // Asus Router (本地发现)
+routerlogin.net = server:force-syslib // Netgear Router (本地发现)
+orbilogin.com = server:force-syslib // Netgear Obri Router (本地发现)
+www.LinksysSmartWiFi.com = server:force-syslib // Linksys Router (本地发现)
+LinksysSmartWiFi.com = server:force-syslib // Linksys Router (本地发现)
+instant.arubanetworks.com = server:force-syslib // Aurba Router (本地发现)
+setmeup.arubanetworks.com = server:force-syslib // Aurba Router (本地发现)
+www.miwifi.com = server:force-syslib // 小米 Mi WiFi Router (本地发现)
+miwifi.com = server:force-syslib // 小米 Mi WiFi Router (本地发现)
+mediarouter.home = server:force-syslib // 华为 Huawei Router (本地发现)
+tplogin.cn = server:force-syslib // TP-Link Router (本地发现)
+tplinklogin.net = server:force-syslib // TP-Link Router (本地发现)
+tplinkwifi.net = server:force-syslib // TP-Link Router (本地发现)
+melogin.cn = server:force-syslib // 水星 MERCURY Router (本地发现)
+falogin.cn = server:force-syslib // 迅捷 FAST Router (本地发现)
+tendawifi.com = server:force-syslib // 腾达 Tenda Router (本地发现)
+leike.cc = server:force-syslib // 磊科 Netcore Router (本地发现)
+zte.home = server:force-syslib // 中兴 ZTE Router (本地发现)
+p.to = server:force-syslib // 斐讯 PHICOMM Router (本地发现)
+phicomm.me = server:force-syslib // 斐讯 PHICOMM Router (本地发现)
+hiwifi.com = server:force-syslib // 极路由 HiWiFi Router (本地发现)
+peiluyou.com = server:force-syslib // 迅雷路由 (本地发现)
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 5: System Connectivity Check (Force System DNS)
@@ -212,8 +214,8 @@ update.googleapis.com = server:119.29.29.29 // Google Update
 translate.googleapis.com = server:119.29.29.29 // Google Translate
 fonts.googleapis.com = server:119.29.29.29 // Google Fonts
 fonts.gstatic.com = server:119.29.29.29 // Google Fonts
-stun.l.google.com = server:syslib // Google STUN
-stun?.l.google.com = server:syslib // Google STUN
+stun.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
+stun?.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 8: Apple Services
@@ -431,13 +433,13 @@ upos-sz-upcdntx.bilivideo.com = server:119.29.29.29 // BiliBili upos视频服务
 # ⚠️ 2025.12.17 FIX: 所有传统DNS改为DoH，防止增强模式下DNS劫持
 # ═══════════════════════════════════════════════════════════════
 
-# Google DoH (8.8.8.8)
+# Google DoH (h3://dns.google/dns-query)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Google.list,server:8.8.8.8
 
-# Cloudflare DoH (1.1.1.1)
+# Cloudflare DoH (h3://cloudflare-dns.com/dns-query)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Cloudflare.list,server:1.1.1.1
 
-# Quad9 DoH - Telegram/AI/NSFW (9.9.9.11)
+# Quad9 DoH - Telegram/AI/NSFW (https://dns11.quad9.net/dns-query)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Quad9.list,server:9.9.9.11
 
 # AliDNS H3 DoH - Alibaba/Baidu/Bilibili
@@ -454,7 +456,7 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DN
 
 [MITM]
 # Certificate Hostnames
-hostname = *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
+hostname =  *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
 
 # Disabled Certificate Hostnames (Sensitive Services)
-hostname-disabled = gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com
+hostname-disabled =  gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com
