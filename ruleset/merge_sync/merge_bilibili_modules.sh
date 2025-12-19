@@ -9,7 +9,6 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TEMP_DIR="$PROJECT_ROOT/.temp_bilibili_merge"
 OUTPUT_MODULE="$PROJECT_ROOT/module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule"
 
-# 上游URL
 ENHANCED_URL="https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"
 GLOBAL_URL="https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"
 REDIRECT_URL="https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"
@@ -39,16 +38,27 @@ done
 
 log_info "合并模块..."
 
-for f in general script mitm arguments arguments_desc rule header_rewrite url_rewrite map_local; do
+for f in general script mitm rule header_rewrite url_rewrite map_local; do
     touch "$TEMP_DIR/$f.tmp"
 done
 
+# 直接拼接 arguments (不拆分，保持原格式)
+args_list=""
+args_desc_list=""
+
 for mod in enhanced global redirect adblock helper; do
-    grep '^#!arguments *= *' "$TEMP_DIR/$mod.module" 2>/dev/null | sed 's/^#!arguments *= *//' >> "$TEMP_DIR/arguments.tmp" || true
+    # 直接提取整行 arguments，不拆分
+    args=$(grep '^#!arguments *= *' "$TEMP_DIR/$mod.module" 2>/dev/null | sed 's/^#!arguments *= *//' || true)
+    if [ -n "$args" ]; then
+        [ -n "$args_list" ] && args_list="$args_list,$args" || args_list="$args"
+    fi
     
+    # arguments-desc 带模块名前缀
     mod_name=$(grep '^#!name' "$TEMP_DIR/$mod.module" | head -1 | sed 's/^#!name *= *//')
     desc=$(grep '^#!arguments-desc *= *' "$TEMP_DIR/$mod.module" 2>/dev/null | sed 's/^#!arguments-desc *= *//' || true)
-    [ -n "$desc" ] && echo "[$mod_name]\\n$desc" >> "$TEMP_DIR/arguments_desc.tmp"
+    if [ -n "$desc" ]; then
+        args_desc_list="${args_desc_list}\\n\\n[$mod_name]\\n$desc"
+    fi
     
     awk '/^\[Script\]/{f=1;next}/^\[/{f=0}f && NF && !/^#/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/script.tmp" 2>/dev/null || true
     awk '/^\[General\]/{f=1;next}/^\[/{f=0}f && NF && !/^#/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/general.tmp" 2>/dev/null || true
@@ -64,8 +74,6 @@ for f in script general rule header_rewrite url_rewrite map_local; do
 done
 
 mitm_hosts=$(sed 's/hostname = %APPEND% //' "$TEMP_DIR/mitm.tmp" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | awk 'NF' | sort -u | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
-merged_args=$(tr ',' '\n' < "$TEMP_DIR/arguments.tmp" | sed 's/^ *//;s/ *$//' | awk 'NF' | sort -u | tr '\n' ',' | sed 's/,$//')
-merged_args_desc=$(tr -d '\n' < "$TEMP_DIR/arguments_desc.tmp" | sed 's/\[📺/\\n\\n[📺/g' | sed 's/\[Bilibili/\\n\\n[Bilibili/g')
 
 cat > "$OUTPUT_MODULE" << 'HEADER'
 #!name=📺 BiliBili增强合集
@@ -78,8 +86,8 @@ cat > "$OUTPUT_MODULE" << 'HEADER'
 HEADER
 
 echo "#!date=$(date +%Y-%m-%d\ %H:%M:%S)" >> "$OUTPUT_MODULE"
-[ -n "$merged_args" ] && echo "#!arguments = $merged_args" >> "$OUTPUT_MODULE"
-[ -s "$TEMP_DIR/arguments_desc.tmp" ] && echo "#!arguments-desc = $merged_args_desc" >> "$OUTPUT_MODULE"
+[ -n "$args_list" ] && echo "#!arguments = $args_list" >> "$OUTPUT_MODULE"
+[ -n "$args_desc_list" ] && echo "#!arguments-desc = $args_desc_list" >> "$OUTPUT_MODULE"
 echo "" >> "$OUTPUT_MODULE"
 
 [ -s "$TEMP_DIR/general.tmp" ] && { echo "[General]"; cat "$TEMP_DIR/general.tmp"; echo ""; } >> "$OUTPUT_MODULE"
