@@ -1,8 +1,8 @@
 {
-  "generated": "2025-12-20T02:35:06.379841",
+  "generated": "2025-12-20T02:44:51.543227",
   "stats": {
-    "total": 69,
-    "converted": 69,
+    "total": 68,
+    "converted": 68,
     "skipped": 0,
     "categories": {
       "amplify_nexus": {
@@ -14,8 +14,8 @@
         "converted": 17
       },
       "narrow_pierce": {
-        "total": 31,
-        "converted": 31
+        "total": 30,
+        "converted": 30
       }
     }
   },
@@ -1789,6 +1789,18 @@
       "category": "amplify_nexus",
       "changes": [
         "转换: force-http-engine-hosts = %APPEND% *:448 → force-http-engine-hosts =  *:4480, *:448",
+        "未知参数转换: {{{运营商}}} → PROXY",
+        "转换: http-request ^https:\\/\\/app\\.bilibili\\.c → http-request ^https:\\/\\/app\\.bilibili\\.c",
+        "未知参数转换: {{{网络信息}}} → PROXY",
+        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
+        "未知参数转换: {{{网络信息}}} → PROXY",
+        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
+        "未知参数转换: {{{网络信息}}} → PROXY",
+        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
+        "未知参数转换: {{{网络信息}}} → PROXY",
+        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
+        "未知参数转换: {{{网络信息}}} → PROXY",
+        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
         "未知参数转换: {{{Home.Tab}}} → PROXY",
         "未知参数转换: {{{Home.Tab_default}}} → PROXY",
         "未知参数转换: {{{Home.Top_left}}} → PROXY",
@@ -5767,25 +5779,6 @@
         "未知参数转换: {{{LogLevel}}} → PROXY",
         "转换: 📺 BiliBili.ADBlock.pgc.response.grpc = t → 📺 BiliBili.ADBlock.pgc.response.grpc = t",
         "转换: hostname = %APPEND% manga.bilibili.com,  → hostname =  manga.bilibili.com, api.live"
-      ]
-    },
-    {
-      "file": "Bilibili.Helper.sgmodule",
-      "category": "narrow_pierce",
-      "changes": [
-        "未知参数转换: {{{运营商}}} → PROXY",
-        "转换: http-request ^https:\\/\\/app\\.bilibili\\.c → http-request ^https:\\/\\/app\\.bilibili\\.c",
-        "未知参数转换: {{{网络信息}}} → PROXY",
-        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
-        "未知参数转换: {{{网络信息}}} → PROXY",
-        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
-        "未知参数转换: {{{网络信息}}} → PROXY",
-        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
-        "未知参数转换: {{{网络信息}}} → PROXY",
-        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
-        "未知参数转换: {{{网络信息}}} → PROXY",
-        "转换: http-request ^https:\\/\\/grpc\\.biliapi\\.n → http-request ^https:\\/\\/grpc\\.biliapi\\.n",
-        "转换: hostname = %APPEND% grpc.biliapi.net, ap → hostname =  grpc.biliapi.net, app.bilibi"
       ]
     },
     {
