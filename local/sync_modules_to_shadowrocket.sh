@@ -13,7 +13,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SURGE_MODULE_DIR="${SCRIPT_DIR}/../../module/surge(main)"
+SURGE_MODULE_DIR="${SCRIPT_DIR}/../module/surge(main)"
 SHADOWROCKET_MODULE_DIR="/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules"
 
 echo -e "${BLUE}=== Surge → Shadowrocket 模块同步 ===${NC}"
@@ -65,15 +65,13 @@ cleanup_old_modules() {
     done
 }
 
-# 需要同步的模块列表
+# 需要同步的模块列表 (相对于SURGE_MODULE_DIR)
 # ⚠️ 2025.12.17: Encrypted DNS Module已合并到🌐 DNS & Host Enhanced
 MODULES=(
-    "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
-    "🚀💪General Enhanced⬆️⬆️ plus.sgmodule"
-    "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
-    # "Encrypted DNS Module 🔒🛡️DNS.sgmodule"  # 已删除，功能合并到🌐 DNS & Host Enhanced
-    "🌐 DNS & Host Enhanced.sgmodule"
-    "URL Rewrite Module 🔄🌐.sgmodule"
+    "head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
+    "amplify_nexus/🚀 功能增强大合集.sgmodule"
+    "amplify_nexus/🌐 DNS & Host Enhanced.sgmodule"
+    "amplify_nexus/URL Rewrite Module 🔄🌐.sgmodule"
 )
 
 SUCCESS=0
@@ -81,25 +79,27 @@ FAILED=0
 
 for module in "${MODULES[@]}"; do
     src_file="${SURGE_MODULE_DIR}/${module}"
+    # 提取文件名（不含路径）
+    filename=$(basename "$module")
     
     if [ -f "$src_file" ]; then
-        echo -e "${YELLOW}同步: ${module}${NC}"
+        echo -e "${YELLOW}同步: ${filename}${NC}"
         
         # 清理旧模块
-        cleanup_old_modules "$module"
+        cleanup_old_modules "$filename"
         
-        # 新文件名: 使用双下划线前缀 + 原始名称
-        dst_file="${SHADOWROCKET_MODULE_DIR}/__${module}"
+        # 新文件名: 使用双下划线前缀 + 原始名称（不含子目录）
+        dst_file="${SHADOWROCKET_MODULE_DIR}/__${filename}"
         
         if convert_to_shadowrocket "$src_file" "$dst_file"; then
-            echo -e "${GREEN}  ✅ 完成 → __${module}${NC}"
+            echo -e "${GREEN}  ✅ 完成 → __${filename}${NC}"
             SUCCESS=$((SUCCESS + 1))
         else
             echo -e "${RED}  ❌ 失败${NC}"
             FAILED=$((FAILED + 1))
         fi
     else
-        echo -e "${RED}跳过: ${module} (不存在)${NC}"
+        echo -e "${RED}跳过: ${filename} (不存在: ${src_file})${NC}"
         FAILED=$((FAILED + 1))
     fi
     echo ""
