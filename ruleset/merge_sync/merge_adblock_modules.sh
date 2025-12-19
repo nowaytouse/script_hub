@@ -318,18 +318,16 @@ cat > "$TARGET_MODULE" << EOF
 # External AdBlock rulesets (upstream auto-update)
 # Sources: Sukka/skk.moe, blackmatrix7, nowaytouse
 # ═══════════════════════════════════════════════════════════════
-# [Sukka] Enhance Better ADBlock for Surge - 主要REJECT规则
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
 # [Sukka] REJECT-NO-DROP规则 (不丢弃连接)
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 # [Sukka] REJECT-DROP规则 (静默丢弃)
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
-# [Sukka] URL Rewrite 相关域名规则
-RULE-SET,https://ruleset.skk.moe/List/domainset/reject.conf,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
+# [Sukka] 域名集规则 (DOMAIN-SET格式)
+DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject.conf,REJECT,extended-matching,pre-matching,update-interval=86400
 # BlockHttpDNS - 阻止HTTPDNS泄露
-RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 # 本地合并规则
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 
 EOF
 
