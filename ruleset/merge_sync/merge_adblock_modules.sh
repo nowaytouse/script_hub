@@ -403,9 +403,12 @@ fi
 
 cat "$TEMP_DIR/old_adblock.tmp" "$ALL_REJECT" 2>/dev/null | sort -u > "$TEMP_DIR/merged_adblock.tmp"
 
-# Clean and filter
-sed 's/^\(DOMAIN[^,]*,[^,]*\),no-resolve$/\1/' "$TEMP_DIR/merged_adblock.tmp" 2>/dev/null | \
-grep -v "^RULE-SET" > "$TEMP_DIR/clean_adblock_pre.tmp" || true
+# Clean and filter - 移除RULE-SET文件中不允许的参数
+# RULE-SET文件只能包含纯规则，策略和参数在引用时指定
+sed 's/,REJECT//g; s/,extended-matching//g; s/,pre-matching//g' "$TEMP_DIR/merged_adblock.tmp" 2>/dev/null | \
+sed 's/^\(DOMAIN[^,]*,[^,]*\),no-resolve$/\1/' | \
+grep -v "^RULE-SET" | \
+grep -v "^AND," > "$TEMP_DIR/clean_adblock_pre.tmp" || true
 
 filter_whitelist "$TEMP_DIR/clean_adblock_pre.tmp" "$TEMP_DIR/clean_adblock.tmp"
 

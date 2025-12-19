@@ -4,14 +4,14 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=去广告, 依赖, HTTPDNS, Sukka
-#!date=2025-12-20 00:21:44
+#!date=2025-12-20 01:02:52
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
 # External AdBlock rulesets (upstream auto-update)
 # Sources: Sukka/skk.moe, blackmatrix7, nowaytouse
 # ═══════════════════════════════════════════════════════════════
-# [Sukka] Enhance Better ADBlock - 主要REJECT规则 (RULE-SET格式: DOMAIN,DOMAIN-SUFFIX等)
+# [Sukka] Enhance Better ADBlock - 主要REJECT规则 (RULE-SET格式)
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # [Sukka] REJECT-NO-DROP规则 (不丢弃连接)
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
@@ -24,27 +24,10 @@ RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/r
 # 本地合并规则
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 
-# ═══════════════════════════════════════════════════════════════
-# AND Rules (复合条件规则 - 不能放在RULE-SET中)
-# ═══════════════════════════════════════════════════════════════
-# 拼多多 QUIC 广告
-AND,((DOMAIN,api.pinduoduo.com,extended-matching),(PROTOCOL,QUIC)),REJECT
-# YouTube QUIC 广告
-AND,((DOMAIN,youtubei.googleapis.com),(PROTOCOL,UDP)),REJECT
-AND,((DOMAIN-SUFFIX,googlevideo.com),(PROTOCOL,UDP)),REJECT
-# Spotify QUIC
-AND,((DOMAIN-SUFFIX,spotify.com,extended-matching),(PROTOCOL,QUIC)),REJECT
-# 小红书 QUIC 广告
-AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com,extended-matching)),REJECT
-AND,((PROTOCOL,UDP),(DEST-PORT,443),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
-
-# Merged REJECT-DROP Rules (92)
+# Merged REJECT-DROP Rules (44)
 DEST-PORT,10250,REJECT-DROP
-DEST-PORT,10251,REJECT-DROP
-DEST-PORT,10252,REJECT-DROP
 DEST-PORT,11211,REJECT-DROP
 DEST-PORT,113,REJECT-DROP
-DEST-PORT,119,REJECT-DROP
 DEST-PORT,12345,REJECT-DROP
 DEST-PORT,12346,REJECT-DROP
 DEST-PORT,1243,REJECT-DROP
@@ -52,20 +35,11 @@ DEST-PORT,135,REJECT-DROP
 DEST-PORT,137,REJECT-DROP
 DEST-PORT,138,REJECT-DROP
 DEST-PORT,139,REJECT-DROP
-DEST-PORT,1433,REJECT-DROP
-DEST-PORT,1521,REJECT-DROP
 DEST-PORT,16660,REJECT-DROP
 DEST-PORT,1999,REJECT-DROP
-DEST-PORT,20,REJECT-DROP
-DEST-PORT,2023,REJECT-DROP
-DEST-PORT,21,REJECT-DROP
 DEST-PORT,23,REJECT-DROP
 DEST-PORT,2375,REJECT-DROP
-DEST-PORT,2379,REJECT-DROP
-DEST-PORT,2380,REJECT-DROP
 DEST-PORT,27017,REJECT-DROP
-DEST-PORT,27018,REJECT-DROP
-DEST-PORT,27019,REJECT-DROP
 DEST-PORT,27374,REJECT-DROP
 DEST-PORT,27444,REJECT-DROP
 DEST-PORT,27665,REJECT-DROP
@@ -75,28 +49,12 @@ DEST-PORT,31338,REJECT-DROP
 DEST-PORT,3150,REJECT-DROP
 DEST-PORT,3306,REJECT-DROP
 DEST-PORT,33270,REJECT-DROP
-DEST-PORT,33333,REJECT-DROP
-DEST-PORT,3389,REJECT-DROP
-DEST-PORT,34324,REJECT-DROP
 DEST-PORT,40421,REJECT-DROP
 DEST-PORT,445,REJECT-DROP
 DEST-PORT,5432,REJECT-DROP
 DEST-PORT,54320,REJECT-DROP
 DEST-PORT,54321,REJECT-DROP
 DEST-PORT,5569,REJECT-DROP
-DEST-PORT,5631,REJECT-DROP
-DEST-PORT,5632,REJECT-DROP
-DEST-PORT,5900,REJECT-DROP
-DEST-PORT,5901,REJECT-DROP
-DEST-PORT,5902,REJECT-DROP
-DEST-PORT,5903,REJECT-DROP
-DEST-PORT,5938,REJECT-DROP
-DEST-PORT,5984,REJECT-DROP
-DEST-PORT,5985,REJECT-DROP
-DEST-PORT,5986,REJECT-DROP
-DEST-PORT,6000,REJECT-DROP
-DEST-PORT,6001,REJECT-DROP
-DEST-PORT,6002,REJECT-DROP
 DEST-PORT,61466,REJECT-DROP
 DEST-PORT,6379,REJECT-DROP
 DEST-PORT,6443,REJECT-DROP
@@ -106,29 +64,9 @@ DEST-PORT,6711,REJECT-DROP
 DEST-PORT,6712,REJECT-DROP
 DEST-PORT,6713,REJECT-DROP
 DEST-PORT,6771,REJECT-DROP
-DEST-PORT,6881,REJECT-DROP
-DEST-PORT,6882,REJECT-DROP
-DEST-PORT,6883,REJECT-DROP
-DEST-PORT,6884,REJECT-DROP
-DEST-PORT,6885,REJECT-DROP
-DEST-PORT,6886,REJECT-DROP
-DEST-PORT,6887,REJECT-DROP
-DEST-PORT,6888,REJECT-DROP
-DEST-PORT,6889,REJECT-DROP
 DEST-PORT,69,REJECT-DROP
-DEST-PORT,70,REJECT-DROP
-DEST-PORT,7000,REJECT-DROP
-DEST-PORT,7001,REJECT-DROP
 DEST-PORT,79,REJECT-DROP
-DEST-PORT,8076,REJECT-DROP
-DEST-PORT,8086,REJECT-DROP
-DEST-PORT,8500,REJECT-DROP
-DEST-PORT,8600,REJECT-DROP
-DEST-PORT,9042,REJECT-DROP
-DEST-PORT,9200,REJECT-DROP
-DEST-PORT,9300,REJECT-DROP
 DEST-PORT,9898,REJECT-DROP
-IN-PORT,8076,REJECT-DROP
 URL-REGEX,"^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/",REJECT-DROP
 URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload)",REJECT-DROP
 
@@ -3179,7 +3117,7 @@ https?:\/\/res\.xiaojukeji\.com\/resapi\/activity\/get(Ruled|Preload|PasMultiNot
 
 [Script]
 # ═══════════════════════════════════════════════════════════════
-# Merged Script Rules (772)
+# Merged Script Rules (766)
 # ═══════════════════════════════════════════════════════════════
 12306 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://raw.perzikkop.com/Scripts/12306_splashscreen.js, requires-body=true
 12306 = type=http-response, pattern=^https:\/\/mobile\.12306\.cn\/otsmobile\/app\/mgs\/mgw\.htm$, script-path=https://raw.perzikkop.com/Scripts/12306.js
@@ -3217,13 +3155,11 @@ Javbus(www.javbus.com) = type=http-response , pattern="^https?:\/\/www\.javbus\.
 Javday(javday.tv|javday.app) = type=http-response , pattern="^https?:\/\/javday\.(tv|app)\/(?!(.*(api|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Javlibrary(www.Javlibrary.com) = type=http-response , pattern="^https?:\/\/www\.javlibrary\.com\/(cn|tw|ja|en)\/(\?v\=jav|vl_|search|star|tl_|public|genre)" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Javmost(javmost.xyz) = type=http-response , pattern="^https?:\/\/\w{3,5}\.javmost\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
-Javmost(javmost.xyz) = type=http-response , pattern="^https?:\/\/\w{3,5}\.javmost\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/surge_javmost.js , script-update-interval=0
 M Stand去广告 = type=http-response, pattern=^https:\/\/api\.prod\.dj\.mstand\.cn\/scrm\/mini\/app\/index\/info, script-path=https://raw.githubusercontent.com/mist-whisper/Script/master/WeChat/WexinMiniPrograms/MStand.js, requires-body=true
 M Stand去广告 = type=http-response, pattern=^https:\/\/api\.prod\.dj\.mstand\.cn\/scrm\/mini\/app\/index\/info, script-path=https://raw.perzikkop.com/Scripts/MiniPrograms/M_Stand.js, requires-body=true
 Missav(missav.com) = type=http-response , pattern="^https?:\/\/missav\.(ws|live|com|ai)\/(?!(.*(api|login|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 NT动漫(www.ntdm9.com) =  type=http-response , pattern="^https?:\/\/(www.ntdm9.com)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Netflav(netflav|netflav5|.com) = type=http-response , pattern="^https?:\/\/(netflav|netflav5)\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
-Netflav(netflav|netflav5|.com) = type=http-response , pattern="^https?:\/\/(netflav|netflav5)\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/surge_netflav.js , script-update-interval=0
 PlayerAds = type=http-response , pattern="^https?:\/\/(lk1\.supremejav\.com|trailerhg\.xyz|turboplayers\.xyz|javggvideo\.xyz|turtleviplay\.xyz|findjav\.com|stbturbo\.xyz|emturbovid\.com|streamtape\.com|javplayer|((mmsw02|mmfl04|netflavns1|netflavns2|emturbovid|filemoon|embedrise|mmfl02|embedgram)\.(sx|com))|filemoon\.sx|embedrise\.com|mmfl02\.com|embedgram\.com|fviplions\.com|sfastwish\.com|cabecabean\.lol|belegug\.online|wishfast\.top|vidmoviesb\.xyz|vhmovies\.to|awish\.pro|ankrzkz\.sbs|sub123\.xyz|leakslove\.net|mwish\.pro|embedwish\.com|javhahaha\.us|abkrzkz\.sbs|streamvid\.top|abkrzkr\.sbs|playertv\.net|sbrity\.com|doodporn\.xyz|mycloud123\.top|streamsb\.click|streamxxx\.online|trafficdepot\.re|sblona\.com|filelions\..*|ahvsh\.com|sbrapid\.com|streaamss\.com|louishide\.com|projectfreetv\.lol|streamwish\.to|lvturbo\.com|javb1\.com|sbface\.com|rbtstream\.info|vidgo\.top|sbhight\.com|sbbrisk\.com|streamhide\.to|cloudrls\.com|mm9846\.com|m4uhd\.club|streamm4u\.club|sbchill\.com|fbjav\.com|imfb\.xyz|sbrulz\.xyz|baldrfilms\.xyz|javbigo\.xyz|dizivap\..*|dvapizle\..*|sblongvu\.com|mavavid\.com|fembed9hd\.com|xsub\.cc|sbthe\.com|sbanh\.com|mm9844\..*|anigogo\.net|faptiti\.com|javsubbed\.xyz|sblanh\.com|av4asia\.com|playerjavseen\.com|pornhubed\.com|xvideostream\.net|streamsss\.net|sbspeed\.com|vcdn-stream\.xyz|vanfem\.com|javuncen\.xyz|vidplay\.ch|javenglish\.me|ssbstream\.net|zojav\.com|watch-jav-english\.live|javpornhd\.online|yuamikami\.xyz|embed-media\.com|obaplayer\.xyz|cdn-myhdjav\.info|dlmovies\.link|cinegrabber\.com|watchjavnow\.xyz|luxubu\.review|nsfwzone\.xyz|viplayer\.cc|cinemaemcasa\.xyz|sbfast\.com|iframe2videos\.xyz|javfu\.net|streamas\.cloud|nashstream\.top|yuistream\.xyz|jav247\.top|viewsb\.com|myvideoplayer\.monster|cloudemb\.com|moviesland\.xyz|jvembed\.com|ffem\.club|javleaked\.com|pornhole\.club|ndrama\.xyz|fembed-hd\.com|netflav\.com|netflav5\.com|mambast\.tk|cutl\.xyz|playerjavhd\.com|mycloudzz\.com|suzihaza\.com|embedsb\.com|layarkacaxxi\.icu|nekolink\.site|sbflix\.xyz|javhdfree\.icu|streamsb\.net|rubicstreaming\.com|javside\.com|gdstream\.net|animepl\.xyz|watchsb\.com|sbplay2\..*|hentai4\.me|playersb\.com|streamabc\.xyz|ns21\.online|diasfem\.com|milfnut\.net|pelispop\.net|ondembed\.xyz|tubesb\.com|fplayer\.info|mm9842\.com|sbplay1\.com|javmvp\.com|japopav\.tv|nezuko-ah\.nl|pelistop\.co|vidcloud\..*|mavlecteur\.com|xxxjaa\.xyz|vcdn2\.space|mavplayer\.xyz|sbplay\..*|sbvideo\.net|sbembed4\.com|javcl\.me|dfmagazine\.co\.uk|down-paradise\.com|embedsito\.com|serverf4\.org)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Pornhub(cn.pornhub.com) = type=http-response , pattern="^https?:\/\/(\w{0,3}(\.){0,1}(pornhub)(\.)\w{0,3})\/(?!(.*(authenticate|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 ProtoBuf处理 = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/c\/f\/(frs\/(page|threadlist|generalTabList)|pb\/page|excellent\/personalized)\?cmd, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/tieba-proto.js, requires-body=true, binary-body-mode=true, timeout=10
