@@ -36,6 +36,11 @@ DOMAIN-SUFFIX,alipayobjects.com
 DOMAIN-SUFFIX,tenpay.com
 DOMAIN-SUFFIX,wechatpay.com
 
+# ============ Sukka 规则集签名域名 ============
+# Sukka 用于检测规则集是否正确加载的测试域名
+# 这不是真实域名，但 Surge 会报错，需要排除
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+
 # ============ 其他常用服务 ============
 # 可根据需要添加更多白名单域名
 # DOMAIN-SUFFIX,example.com
