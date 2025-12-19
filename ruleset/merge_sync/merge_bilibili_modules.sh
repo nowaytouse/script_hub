@@ -15,6 +15,7 @@ OUTPUT_MODULE="$PROJECT_ROOT/module/surge(main)/amplify_nexus/📺 BiliBili增�
 ENHANCED_URL="https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"
 GLOBAL_URL="https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"
 REDIRECT_URL="https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"
+ADBLOCK_URL="https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule"
 HELPER_URL="https://raw.githubusercontent.com/Maasea/sgmodule/master/Bilibili.Helper.sgmodule"
 
 log_info() { echo -e "\033[0;36m[INFO]\033[0m $1"; }
@@ -27,7 +28,7 @@ mkdir -p "$TEMP_DIR"
 log_info "下载上游BiliBili模块..."
 
 # 下载模块
-for mod in Enhanced Global Redirect Helper; do
+for mod in Enhanced Global Redirect ADBlock Helper; do
     url_var="${mod^^}_URL"
     url="${!url_var}"
     output="$TEMP_DIR/${mod,,}.module"
@@ -42,12 +43,12 @@ done
 log_info "合并模块..."
 
 # 初始化临时文件
-for f in general script mitm arguments arguments_desc rule header_rewrite; do
+for f in general script mitm arguments arguments_desc rule header_rewrite url_rewrite map_local; do
     touch "$TEMP_DIR/$f.tmp"
 done
 
 # 提取各部分
-for mod in enhanced global redirect helper; do
+for mod in enhanced global redirect adblock helper; do
     # #!arguments
     grep '^#!arguments *= *' "$TEMP_DIR/$mod.module" 2>/dev/null | sed 's/^#!arguments *= *//' >> "$TEMP_DIR/arguments.tmp" || true
     
@@ -68,12 +69,18 @@ for mod in enhanced global redirect helper; do
     # [Header Rewrite]
     awk '/^\[Header Rewrite\]/{f=1;next}/^\[/{f=0}f && NF && !/^#/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/header_rewrite.tmp" 2>/dev/null || true
     
+    # [URL Rewrite]
+    awk '/^\[URL Rewrite\]/{f=1;next}/^\[/{f=0}f && NF && !/^#/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/url_rewrite.tmp" 2>/dev/null || true
+    
+    # [Map Local]
+    awk '/^\[Map Local\]/{f=1;next}/^\[/{f=0}f && NF && !/^#/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/map_local.tmp" 2>/dev/null || true
+    
     # [MITM] hostname
     awk '/^\[MITM\]/{f=1;next}/^\[/{f=0}f && /hostname/' "$TEMP_DIR/$mod.module" >> "$TEMP_DIR/mitm.tmp" 2>/dev/null || true
 done
 
 # 去重
-for f in script general rule header_rewrite; do
+for f in script general rule header_rewrite url_rewrite map_local; do
     sort -u "$TEMP_DIR/$f.tmp" -o "$TEMP_DIR/$f.tmp"
 done
 
@@ -89,8 +96,8 @@ merged_args_desc=$(cat "$TEMP_DIR/arguments_desc.tmp" | tr -d '\n' | sed 's/\[�
 # 生成合并模块
 cat > "$OUTPUT_MODULE" << 'HEADER'
 #!name=📺 BiliBili增强合集
-#!desc=合并BiliUniverse四大模块 (自动追随上游更新)\n⚙️ Enhanced: UI自定义\n🌐 Global: 全区搜索\n🔀 Redirect: CDN重定向\n🛠️ Helper: 去广告+禁P2P
-#!author=VirgilClyne, Maasea
+#!desc=合并BiliUniverse五大模块 (自动追随上游更新)\n⚙️ Enhanced: UI自定义\n🌐 Global: 全区搜索\n🔀 Redirect: CDN重定向\n🛡️ ADBlock: 去广告\n🛠️ Helper: 禁P2P
+#!author=VirgilClyne, ClydeTime, Maasea
 #!icon=https://github.com/BiliUniverse/Enhanced/raw/main/src/assets/icon_rounded.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=BiliBili, 增强, 合并
@@ -123,6 +130,20 @@ fi
 if [ -s "$TEMP_DIR/header_rewrite.tmp" ]; then
     echo "[Header Rewrite]" >> "$OUTPUT_MODULE"
     cat "$TEMP_DIR/header_rewrite.tmp" >> "$OUTPUT_MODULE"
+    echo "" >> "$OUTPUT_MODULE"
+fi
+
+# [URL Rewrite]
+if [ -s "$TEMP_DIR/url_rewrite.tmp" ]; then
+    echo "[URL Rewrite]" >> "$OUTPUT_MODULE"
+    cat "$TEMP_DIR/url_rewrite.tmp" >> "$OUTPUT_MODULE"
+    echo "" >> "$OUTPUT_MODULE"
+fi
+
+# [Map Local]
+if [ -s "$TEMP_DIR/map_local.tmp" ]; then
+    echo "[Map Local]" >> "$OUTPUT_MODULE"
+    cat "$TEMP_DIR/map_local.tmp" >> "$OUTPUT_MODULE"
     echo "" >> "$OUTPUT_MODULE"
 fi
 
