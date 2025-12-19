@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════════
-# AdBlock Module Smart Merge Script v5.0 (Consolidated Edition)
+# AdBlock Module Smart Merge Script v5.1 (Consolidated Edition)
 # 
 # Merges multiple ad-blocking modules into Universal Ad-Blocking Rules:
 # - 广告联盟去广告
 # - 去除小程序和其他应用广告  
 # - AD ByeBye+ 2.x
 # - AllInOne
+# - [Sukka] Enhance Better ADBlock for Surge
+# - [Sukka] URL Rewrite
+# - 可莉广告过滤器
+# - 广告平台拦截器
 #
 # Features:
 # - Multi-section extraction: [Rule], [URL Rewrite], [Map Local], [Script], [MITM]
@@ -14,6 +18,7 @@
 # - Batch deduplication using sort -u
 # - Whitelist filtering
 # - Hash-based change detection for upstream updates
+# - Upstream auto-sync with Sukka ruleset
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -39,6 +44,16 @@ SOURCE_MODULES=(
     "小程序和应用懒人去广告合集.official.sgmodule"
     "All-in-One-2.x.sgmodule"
     "AllInOne_Mock.sgmodule"
+    "可莉广告过滤器.beta.sgmodule"
+    "广告平台拦截器.sgmodule"
+    "Adblock4limbo.sgmodule"
+)
+
+# 🔥 Sukka upstream rulesets (auto-update from skk.moe)
+SUKKA_RULESETS=(
+    "https://ruleset.skk.moe/List/non_ip/reject.conf"
+    "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf"
+    "https://ruleset.skk.moe/List/non_ip/reject-drop.conf"
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -291,21 +306,30 @@ log_section "Generating Output Module"
 # Generate module header
 cat > "$TARGET_MODULE" << EOF
 #!name=🚫 Universal Ad-Blocking Rules (Lite)
-#!desc=Auto-merged from: 广告联盟 + 小程序去广告 + AD ByeBye+ 2.x + AllInOne\\n\\n拦截广告平台、HTTPDNS、常见应用广告。包含 Rule/URL Rewrite/Map Local/Script/MITM 完整功能。
-#!author=可莉🅥, VirgilClyne, bunizao, blackmatrix7, Auto-Merged
+#!desc=Auto-merged from: 广告联盟 + 小程序去广告 + AD ByeBye+ 2.x + AllInOne + 可莉 + Sukka\\n\\n拦截广告平台、HTTPDNS、常见应用广告。包含 Rule/URL Rewrite/Map Local/Script/MITM 完整功能。\\n\\n⚠️ 隐私说明: kelee.one 是可莉的脚本托管服务，仅用于下载去广告脚本，不会上报用户数据。
+#!author=可莉🅥, Sukka, VirgilClyne, bunizao, blackmatrix7, limbopro, Auto-Merged
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!tag=去广告, 依赖, HTTPDNS
+#!tag=去广告, 依赖, HTTPDNS, Sukka
 #!date=$(date +%Y-%m-%d\ %H:%M:%S)
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
 # External AdBlock rulesets (upstream auto-update)
+# Sources: Sukka/skk.moe, blackmatrix7, nowaytouse
 # ═══════════════════════════════════════════════════════════════
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+# [Sukka] Enhance Better ADBlock for Surge - 主要REJECT规则
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+# [Sukka] REJECT-NO-DROP规则 (不丢弃连接)
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+# [Sukka] REJECT-DROP规则 (静默丢弃)
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+# [Sukka] URL Rewrite 相关域名规则
+RULE-SET,https://ruleset.skk.moe/List/domainset/reject.conf,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
+# BlockHttpDNS - 阻止HTTPDNS泄露
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,"update-interval=86400",no-resolve
+# 本地合并规则
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,"update-interval=86400",no-resolve
 
 EOF
 

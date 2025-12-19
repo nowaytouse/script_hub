@@ -22,6 +22,7 @@ HEAD_EXPANSE_DIR = PROJECT_ROOT / "module" / "surge(main)" / "head_expanse"
 SR_HEAD_EXPANSE_DIR = PROJECT_ROOT / "module" / "shadowrocket" / "head_expanse"
 
 # 要合并的模块列表（广告拦截相关）
+# 包含: [Sukka] Enhance Better ADBlock, [Sukka] URL Rewrite, 可莉广告过滤器等
 MODULES_TO_MERGE = [
     "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "Adblock4limbo.sgmodule",
@@ -29,11 +30,18 @@ MODULES_TO_MERGE = [
     "AllInOne_Mock.sgmodule",
     "可莉广告过滤器.beta.sgmodule",
     "广告平台拦截器.sgmodule",
+    "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",  # 广告联盟
     "广告联盟.official.sgmodule",
     "新手友好の去广告集合.official.sgmodule",
     "小程序和应用懒人去广告合集.official.sgmodule",
-    "sukka_enhance_adblock.sgmodule",
-    "sukka_url_rewrite.sgmodule",
+]
+
+# Sukka 上游规则集 (自动跟随更新)
+SUKKA_UPSTREAM_RULESETS = [
+    "https://ruleset.skk.moe/List/non_ip/reject.conf",
+    "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "https://ruleset.skk.moe/List/domainset/reject.conf",
 ]
 
 # 不合并的模块（功能性/工具类）
