@@ -42,6 +42,22 @@ log_info "合并模块..."
 
 # 初始化临时文件
 touch "$TEMP_DIR/general.tmp" "$TEMP_DIR/script.tmp" "$TEMP_DIR/mitm.tmp"
+touch "$TEMP_DIR/arguments.tmp" "$TEMP_DIR/arguments_desc.tmp"
+
+# 提取 #!arguments (参数定义)
+for mod in enhanced global redirect; do
+    grep '^#!arguments = ' "$TEMP_DIR/$mod.module" 2>/dev/null | sed 's/^#!arguments = //' >> "$TEMP_DIR/arguments.tmp" || true
+done
+
+# 提取 #!arguments-desc (参数描述)
+for mod in enhanced global redirect; do
+    # 提取模块名作为前缀
+    mod_name=$(grep '^#!name' "$TEMP_DIR/$mod.module" | head -1 | sed 's/^#!name *= *//')
+    desc=$(grep '^#!arguments-desc = ' "$TEMP_DIR/$mod.module" 2>/dev/null | sed 's/^#!arguments-desc = //' || true)
+    if [ -n "$desc" ]; then
+        echo "[$mod_name]\\n$desc" >> "$TEMP_DIR/arguments_desc.tmp"
+    fi
+done
 
 # 提取 [Script] 部分
 for mod in enhanced global redirect; do
@@ -65,6 +81,12 @@ sort -u "$TEMP_DIR/general.tmp" -o "$TEMP_DIR/general.tmp"
 # 合并MITM hostname
 mitm_hosts=$(cat "$TEMP_DIR/mitm.tmp" | sed 's/hostname = %APPEND% //' | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//' | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
 
+# 合并 arguments (用逗号分隔)
+merged_args=$(cat "$TEMP_DIR/arguments.tmp" | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//' | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//')
+
+# 合并 arguments-desc (用换行分隔)
+merged_args_desc=$(cat "$TEMP_DIR/arguments_desc.tmp" | tr -d '\n' | sed 's/\[📺/\\n\\n[📺/g')
+
 # 生成合并模块头部
 cat > "$OUTPUT_MODULE" << EOF
 #!name=📺 BiliBili增强合集
@@ -75,8 +97,19 @@ cat > "$OUTPUT_MODULE" << EOF
 #!tag=BiliBili, 增强, 合并
 #!openUrl=http://boxjs.com/#/app/BiliBili.Enhanced
 #!date=$(date +%Y-%m-%d\ %H:%M:%S)
-
 EOF
+
+# 添加合并的 arguments
+if [ -n "$merged_args" ]; then
+    echo "#!arguments = $merged_args" >> "$OUTPUT_MODULE"
+fi
+
+# 添加合并的 arguments-desc
+if [ -s "$TEMP_DIR/arguments_desc.tmp" ]; then
+    echo "#!arguments-desc = $merged_args_desc" >> "$OUTPUT_MODULE"
+fi
+
+echo "" >> "$OUTPUT_MODULE"
 
 # 添加 [General]
 if [ -s "$TEMP_DIR/general.tmp" ]; then
