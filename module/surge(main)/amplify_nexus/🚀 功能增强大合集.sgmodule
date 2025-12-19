@@ -339,8 +339,6 @@ DOMAIN-KEYWORD,ultramobile,{{{默认代理分组}}}
 IP-CIDR,206.29.177.36/32,{{{默认代理分组}}},no-resolve
 IP-CIDR,208.54.0.0/16,{{{默认代理分组}}},no-resolve
 IP-CIDR,66.94.0.0/19,{{{默认代理分组}}},no-resolve
-AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
-AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
 DOMAIN-SUFFIX,is.autonavi.com,DIRECT
 DOMAIN,gspe11-2-cn-ssl.ls.apple.com,DIRECT
 DOMAIN,gspe12-cn-ssl.ls.apple.com,DIRECT

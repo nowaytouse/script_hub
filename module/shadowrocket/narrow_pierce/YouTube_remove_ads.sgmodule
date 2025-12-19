@@ -8,8 +8,6 @@
 #!arguments-desc=- 屏蔽参数：[true, false] \n- 语言代码：[ off, zh-Hans, zh-Hant, ja, ko, en] \n语言代码遵循 Google Translate Languages Codes, 当填入 off 时关闭翻译。
 
 [Rule]
-AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
-AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
 
 [Map Local]
 ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200

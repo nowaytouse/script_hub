@@ -4,7 +4,6 @@
 #!author=转自@RuCu6，by@iab0x00
 
 [Rule]
-AND,((PROTOCOL,UDP),(DST-PORT,443),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
 
 [Body Rewrite]
 http-response-jq ^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/search\/banner_list$ 'if (getpath([]) | has("data")) then (setpath(["data"]; {})) else . end'

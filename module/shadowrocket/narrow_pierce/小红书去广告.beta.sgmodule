@@ -10,7 +10,6 @@
 #!date=2025-08-01 19:57:10
 
 [Rule]
-AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
 
 [Body Rewrite]
 http-response-jq ^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/search\/banner_list$ 'if (getpath([]) | has("data")) then (setpath(["data"]; {})) else . end'
