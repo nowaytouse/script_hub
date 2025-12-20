@@ -13,6 +13,20 @@
 # 更新: 2025-12-20
 # ═══════════════════════════════════════════════════════════════
 
+# ============ 🔥 YouTube 核心域名 (CRITICAL) ============
+# 这些域名被拦截会导致 YouTube 完全无法使用！
+DOMAIN,youtubei.googleapis.com
+DOMAIN-SUFFIX,googlevideo.com
+DOMAIN-SUFFIX,s2.youtube.com
+DOMAIN-SUFFIX,youtube.com
+DOMAIN-SUFFIX,ytimg.com
+DOMAIN-SUFFIX,yt3.ggpht.com
+DOMAIN-SUFFIX,yt4.ggpht.com
+
+# ============ 🔥 Google 核心服务 ============
+DOMAIN-SUFFIX,googleapis.com
+DOMAIN-SUFFIX,gstatic.com
+
 # ============ 危险 IP 规则 (会导致无法上网) ============
 # 这些 IP 规则过于宽泛，会导致网络异常
 IP-CIDR,0.0.0.0/24
