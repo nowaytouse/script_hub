@@ -57,8 +57,26 @@ EXCLUDED_MODULES = [
     "blockHTTPDNS.module",  # 单独的HTTPDNS模块
 ]
 
+# 排除的关键词（避免与专用模块重复）
+# BiliBili相关规则已在 📺 BiliBili增强合集.sgmodule 中
+EXCLUDED_KEYWORDS = [
+    "bilibili",
+    "bilivideo",
+    "biliapi",
+    "哔哩",
+]
+
 # 输出文件名
 OUTPUT_NAME = "🛡️ 广告拦截大合集.sgmodule"
+
+
+def is_bilibili_related(line: str) -> bool:
+    """检查是否为BiliBili相关规则"""
+    line_lower = line.lower()
+    for keyword in EXCLUDED_KEYWORDS:
+        if keyword in line_lower:
+            return True
+    return False
 
 
 def parse_module(filepath: Path) -> dict:
@@ -210,18 +228,25 @@ def merge_modules():
         source_modules.append(module_name)
         merged_count += 1
         
-        # 合并各section（使用OrderedDict去重）
+        # 合并各section（使用OrderedDict去重，排除BiliBili相关）
         for rule in sections["Rule"]:
-            all_rules[rule] = True
+            if not is_bilibili_related(rule):
+                all_rules[rule] = True
         for rewrite in sections["URL Rewrite"]:
-            all_rewrites[rewrite] = True
+            if not is_bilibili_related(rewrite):
+                all_rewrites[rewrite] = True
         for map_local in sections["Map Local"]:
-            all_map_local[map_local] = True
+            if not is_bilibili_related(map_local):
+                all_map_local[map_local] = True
         for script in sections["Script"]:
-            all_scripts[script] = True
+            if not is_bilibili_related(script):
+                all_scripts[script] = True
         for general in sections["General"]:
             all_general[general] = True
-        all_hostnames.update(sections["MITM"]["hostname"])
+        # hostname也过滤BiliBili相关
+        for host in sections["MITM"]["hostname"]:
+            if not is_bilibili_related(host):
+                all_hostnames.add(host)
     
     print()
     print(f"📊 合并统计:")

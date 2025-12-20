@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-20T12:25:52.003652",
+  "generated": "2025-12-20T12:39:24.678986",
   "stats": {
     "total": 64,
     "converted": 64,
@@ -3213,13 +3213,6 @@
       "category": "head_expanse",
       "changes": [
         "转换: force-http-engine-hosts = %APPEND% *.ott → force-http-engine-hosts =  *.ott.cibntv.",
-        "未知参数转换: {{{logLevel}}} → PROXY",
-        "转换: 空降助手 = type=http-request, pattern=^https → 空降助手 = type=http-request, pattern=^https",
-        "未知参数转换: {{{showUpList}}} → PROXY",
-        "未知参数转换: {{{purifyTopReplies}}} → PROXY",
-        "未知参数转换: {{{airborne}}} → PROXY",
-        "未知参数转换: {{{logLevel}}} → PROXY",
-        "转换: ProtoBuf处理 = type=http-response, pattern → ProtoBuf处理 = type=http-response, pattern",
         "转换: hostname = %APPEND% *-mtop.cainiao.com,  → hostname =  *-mtop.cainiao.com, *-releas"
       ]
     },
