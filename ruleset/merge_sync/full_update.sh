@@ -426,17 +426,6 @@ if [ "$SKIP_MODULE" = false ]; then
         log_success "🛡️ 广告拦截大合集 merged"
     fi
     
-    # 🚀 功能增强大合集 (amplify_nexus)
-    if [ -f "${SCRIPT_DIR}/merge_amplify_nexus_modules.py" ]; then
-        log_info "Merging amplify nexus modules → 🚀 功能增强大合集..."
-        if [ "$VERBOSE" = true ]; then
-            python3 "${SCRIPT_DIR}/merge_amplify_nexus_modules.py"
-        else
-            python3 "${SCRIPT_DIR}/merge_amplify_nexus_modules.py" 2>&1 | grep -E "^(✅|📊|合并)" || true
-        fi
-        log_success "🚀 功能增强大合集 merged"
-    fi
-    
     # 🚀 Surge → Shadowrocket 模块转换 (必须在所有合并之后执行)
     # 转换所有 Surge 模块为 Shadowrocket 兼容版本
     # 包括: 移除 {{{Proxy}}} 占位符、转换 REJECT-DROP 等

@@ -138,7 +138,6 @@ PROTECTED_MODULES=(
     "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
     "🛡️ 广告拦截大合集.sgmodule"
     "🎯 App去广告大合集.sgmodule"
-    "🚀 功能增强大合集.sgmodule"
 )
 
 for module in "$MODULE_DIR"/*.sgmodule "$MODULE_DIR"/*.module; do

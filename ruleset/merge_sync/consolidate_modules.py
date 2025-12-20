@@ -222,7 +222,6 @@ def generate_helper_js(modules: dict, compat_data: dict) -> str:
     MERGED_MODULES = [
         "🎯 App去广告大合集",      # narrow_pierce合集
         "🛡️ 广告拦截大合集",        # head_expanse合集
-        "🚀 功能增强大合集",        # amplify_nexus合集
     ]
     
     # head_expanse中被合并的原始模块

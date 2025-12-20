@@ -69,7 +69,6 @@ cleanup_old_modules() {
 # ⚠️ 2025.12.17: Encrypted DNS Module已合并到🌐 DNS & Host Enhanced
 MODULES=(
     "head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule"
-    "amplify_nexus/🚀 功能增强大合集.sgmodule"
     "amplify_nexus/🌐 DNS & Host Enhanced.sgmodule"
     "amplify_nexus/URL Rewrite Module 🔄🌐.sgmodule"
 )
