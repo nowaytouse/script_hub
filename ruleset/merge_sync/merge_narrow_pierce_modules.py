@@ -18,6 +18,28 @@ SR_OUTPUT_DIR = PROJECT_ROOT / "module" / "shadowrocket" / "head_expanse"
 MERGED_NAME = "🎯 App去广告大合集"
 MERGED_DESC = "整合所有App专项去广告规则（购物/云盘/社交/工具等）"
 
+# 排除的模块（已有专用合集）
+EXCLUDED_MODULES = [
+    "🐦 微博去广告合集.sgmodule",  # 已有专用合集
+]
+
+# 排除的关键词（避免与专用模块重复）
+# BiliBili相关规则已在 📺 BiliBili增强合集.sgmodule 中
+EXCLUDED_KEYWORDS = [
+    "bilibili",
+    "bilivideo", 
+    "biliapi",
+    "哔哩",
+]
+
+def is_excluded_content(line):
+    """检查是否为需要排除的内容"""
+    line_lower = line.lower()
+    for keyword in EXCLUDED_KEYWORDS:
+        if keyword in line_lower:
+            return True
+    return False
+
 def extract_section(content, section_name):
     """提取模块文件中的指定section"""
     pattern = rf'^\[{re.escape(section_name)}\]\s*\n(.*?)(?=^\[|\Z)'
@@ -94,14 +116,27 @@ def merge_all_modules():
     for f in sorted(MODULE_DIR.glob("*.sgmodule")):
         if not f.is_file():
             continue
+        # 跳过排除的模块
+        if f.name in EXCLUDED_MODULES:
+            print(f"  - 跳过: {f.name} (已有专用合集)")
+            continue
         found_modules.append(f.name)
         print(f"  + {f.name}")
         
         content = f.read_text(encoding='utf-8')
-        rules.update(extract_section(content, 'Rule'))
-        rewrites.update(extract_section(content, 'URL Rewrite'))
-        scripts.update(extract_section(content, 'Script'))
-        mitm.update(extract_hostname(content))
+        # 过滤排除的内容
+        for rule in extract_section(content, 'Rule'):
+            if not is_excluded_content(rule):
+                rules.add(rule)
+        for rewrite in extract_section(content, 'URL Rewrite'):
+            if not is_excluded_content(rewrite):
+                rewrites.add(rewrite)
+        for script in extract_section(content, 'Script'):
+            if not is_excluded_content(script):
+                scripts.add(script)
+        for host in extract_hostname(content):
+            if not is_excluded_content(host):
+                mitm.add(host)
     
     if not found_modules:
         print("  未找到模块")
