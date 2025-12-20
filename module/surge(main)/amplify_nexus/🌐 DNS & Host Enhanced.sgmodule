@@ -1,5 +1,5 @@
 #!name=🌐 DNS & Host & URL Rewrite Enhanced
-#!desc=🔒 全量DoH加密DNS + Host分流增强 + URL重写 + GetSomeFries(General/DNS/HTTPDNS/ASN) | 🔧 AUTO-MERGED
+#!desc=🔒 全量DoH加密DNS + Host分流增强 + URL重写 | 已合并Encrypted DNS Module + URL Rewrite Module | 🔧 2025.12.20
 #!author=VirgilClyne & nyamiiko (Merged & Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
@@ -514,10 +514,10 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DN
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
 
 
-
+[Rule]
 # ═══════════════════════════════════════════════════════════════
-# FROM: GetSomeFries HTTPDNS.Block (阻止HTTPDNS劫持)
-# ⚠️ AUTO-MERGED - 自动从上游同步 2025.12.20
+# FROM: GetSomeFries HTTPDNS.Block (Block HTTPDNS hijacking)
+# AUTO-MERGED: 2025.12.20
 # ═══════════════════════════════════════════════════════════════
 # Alibaba
 DOMAIN,httpdns.alicdn.com,REJECT,extended-matching,pre-matching
@@ -629,8 +629,8 @@ IP-CIDR,118.89.204.198/32,REJECT,no-resolve,pre-matching
 IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve,pre-matching
 
 # ═══════════════════════════════════════════════════════════════
-# FROM: GetSomeFries ASN.China (中国大陆ASN直连)
-# ⚠️ AUTO-MERGED - 自动从上游同步 2025.12.20
+# FROM: GetSomeFries ASN.China (China ASN Direct)
+# AUTO-MERGED: 2025.12.20
 # ═══════════════════════════════════════════════════════════════
 IP-ASN,4134,DIRECT,no-resolve // 中国电信骨干网
 IP-ASN,4538,DIRECT,no-resolve // 中国教育科研网络中心
@@ -1579,12 +1579,9 @@ IP-ASN,211843,DIRECT,no-resolve // 南京天开信息技术有限公司
 IP-ASN,212237,DIRECT,no-resolve // Changgong Zhang
 # IP-ASN,212292,DIRECT,no-resolve // SKYWTH.COM LTD 【未广播中国大陆IP】
 
-
 [MITM]
 # Certificate Hostnames
 hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
 
 # Disabled Certificate Hostnames (Sensitive Services)
 hostname-disabled = %INSERT% gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com
-
-[Rule]
