@@ -1,5 +1,5 @@
 # MetaCubeX geosite-category-ads-all
-# Rules: 639
+# Rules: 640
 
 DOMAIN,ad-channel.diwodiwo.xyz
 DOMAIN,ad-display.diwodiwo.xyz
@@ -569,6 +569,7 @@ DOMAIN-SUFFIX,statis.api.3g.youku.com
 DOMAIN-SUFFIX,supersonic.com
 DOMAIN-SUFFIX,supersonicads-a.akamaihd.net
 DOMAIN-SUFFIX,supersonicads.com
+DOMAIN-SUFFIX,syh.zybang.com
 DOMAIN-SUFFIX,taboola.com
 DOMAIN-SUFFIX,tajs.qq.com
 DOMAIN-SUFFIX,tapsell.ir
@@ -638,5 +639,5 @@ DOMAIN-SUFFIX,zhugeio.com
 DOMAIN-SUFFIX,zxid-api.mobileservice.cn
 DOMAIN-SUFFIX,zxid-m.mobileservice.cn
 DOMAIN-SUFFIX,zz.bdstatic.com
-DOMAIN-REGEX,^speed\.(coe|open)\.ad\.[a-z]{2,6}\.prod\.hosts\.ooklaserver\.net$
 DOMAIN-REGEX,^adservice\.google\.([a-z]{2}|com?)(\.[a-z]{2})?$
+DOMAIN-REGEX,^speed\.(coe|open)\.ad\.[a-z]{2,6}\.prod\.hosts\.ooklaserver\.net$
