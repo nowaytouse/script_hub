@@ -27,6 +27,14 @@ DOMAIN-SUFFIX,yt4.ggpht.com
 DOMAIN-SUFFIX,googleapis.com
 DOMAIN-SUFFIX,gstatic.com
 
+# ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
+# 注意: 不要添加 apple.com 整体，会让广告规则失效
+DOMAIN,known-issues.apple.com
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,mzstatic.com
+DOMAIN-SUFFIX,apple-cloudkit.com
+DOMAIN-SUFFIX,cdn-apple.com
+
 # ============ 危险 IP 规则 (会导致无法上网) ============
 # 这些 IP 规则过于宽泛，会导致网络异常
 IP-CIDR,0.0.0.0/24
