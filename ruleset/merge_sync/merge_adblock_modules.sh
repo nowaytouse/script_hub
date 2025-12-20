@@ -415,9 +415,15 @@ fi
 
 # Clean and filter - 移除RULE-SET文件中不允许的参数
 # RULE-SET文件只能包含纯规则，策略和参数在引用时指定
+# 🔥 v5.2: 增强过滤 - 移除危险的 IP 规则
 sed 's/,REJECT[^,]*//g; s/,extended-matching//g; s/,pre-matching//g; s/,no-resolve//g' "$TEMP_DIR/merged_adblock.tmp" 2>/dev/null | \
 grep -v "^RULE-SET" | \
 grep -v "^AND," | \
+grep -v "^IP-CIDR,0\.0\.0\." | \
+grep -v "^IP-CIDR,127\." | \
+grep -v "^IP-CIDR,10\.0\.0\.0/8" | \
+grep -v "^IP-CIDR,192\.168\.0\.0/16" | \
+grep -v "^IP-CIDR,172\.16\.0\.0/12" | \
 sort -u > "$TEMP_DIR/clean_adblock_pre.tmp" || true
 
 filter_whitelist "$TEMP_DIR/clean_adblock_pre.tmp" "$TEMP_DIR/clean_adblock.tmp"
