@@ -55,6 +55,9 @@ MITM_FILE="$TEMP_DIR/mitm.tmp"
 
 touch "$RULES_FILE" "$URL_REWRITE_FILE" "$BODY_REWRITE_FILE" "$MAP_LOCAL_FILE" "$MITM_FILE"
 
+# BiliBili exclusion pattern (already in dedicated module)
+BILIBILI_PATTERN="bilibili|biliapi|bilivideo|哔哩"
+
 # Process each source module
 for module in "${SOURCE_MODULES[@]}"; do
     if [ ! -f "$module" ]; then
@@ -65,26 +68,26 @@ for module in "${SOURCE_MODULES[@]}"; do
     module_name=$(basename "$module")
     log_info "Processing: $module_name"
     
-    # Extract [Rule] section
+    # Extract [Rule] section (exclude BiliBili)
     awk '/^\[Rule\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
-        grep -v '^#' | grep -v '^$' >> "$RULES_FILE" || true
+        grep -v '^#' | grep -viE "$BILIBILI_PATTERN" | grep -v '^$' >> "$RULES_FILE" || true
     
-    # Extract [URL Rewrite] section
+    # Extract [URL Rewrite] section (exclude BiliBili)
     awk '/^\[URL Rewrite\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
-        grep -v '^#' | grep -v '^$' >> "$URL_REWRITE_FILE" || true
+        grep -v '^#' | grep -viE "$BILIBILI_PATTERN" | grep -v '^$' >> "$URL_REWRITE_FILE" || true
     
-    # Extract [Body Rewrite] section
+    # Extract [Body Rewrite] section (exclude BiliBili)
     awk '/^\[Body Rewrite\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
-        grep -v '^#' | grep -v '^$' >> "$BODY_REWRITE_FILE" || true
+        grep -v '^#' | grep -viE "$BILIBILI_PATTERN" | grep -v '^$' >> "$BODY_REWRITE_FILE" || true
     
-    # Extract [Map Local] section
+    # Extract [Map Local] section (exclude BiliBili)
     awk '/^\[Map Local\]/{f=1;next}/^\[/{f=0}f' "$module" 2>/dev/null | \
-        grep -v '^#' | grep -v '^$' >> "$MAP_LOCAL_FILE" || true
+        grep -v '^#' | grep -viE "$BILIBILI_PATTERN" | grep -v '^$' >> "$MAP_LOCAL_FILE" || true
     
-    # Extract MITM hostnames
+    # Extract MITM hostnames (exclude BiliBili)
     grep -E "^hostname\s*=" "$module" 2>/dev/null | \
         sed 's/hostname\s*=\s*%APPEND%\s*//' | \
-        tr ',' '\n' | tr -d ' ' >> "$MITM_FILE" || true
+        tr ',' '\n' | tr -d ' ' | grep -viE "$BILIBILI_PATTERN" >> "$MITM_FILE" || true
 done
 
 # Deduplicate all sections
