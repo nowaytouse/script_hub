@@ -1,5 +1,5 @@
 # MetaCubeX geosite-category-games
-# Rules: 924
+# Rules: 927
 
 DOMAIN,a.ppy.sh
 DOMAIN,a4e8s8k3.map2.ssl.hwcdn.net
@@ -835,6 +835,9 @@ DOMAIN-SUFFIX,uplay.com
 DOMAIN-SUFFIX,valvesoftware.com
 DOMAIN-SUFFIX,videoxiaoyouxi.com
 DOMAIN-SUFFIX,visceralgames.com
+DOMAIN-SUFFIX,vrchat.cloud
+DOMAIN-SUFFIX,vrchat.com
+DOMAIN-SUFFIX,vrchat.net
 DOMAIN-SUFFIX,vrzwk.cn
 DOMAIN-SUFFIX,vrzwk.com
 DOMAIN-SUFFIX,vrzwk.net
@@ -920,8 +923,8 @@ DOMAIN-SUFFIX,zhuoyou.com
 DOMAIN-SUFFIX,zhuoyuegame.com
 DOMAIN-REGEX,^epicgames-download\d\.akamaized\.net$
 DOMAIN-REGEX,^.+-mihayo\.akamaized\.net$
+DOMAIN-REGEX,^cdn\d-epicgames-\d+\.file\.myqcloud\.com$
+DOMAIN-REGEX,^epicgames-download\d-\d+\.file\.myqcloud\.com$
 DOMAIN-REGEX,^cdn-akamai-.+\.gog-services\.com$
 DOMAIN-REGEX,^gog-cdn-.+\.footprint\.net$
 DOMAIN-REGEX,^images(-\d)?\.gog-statics\.com$
-DOMAIN-REGEX,^cdn\d-epicgames-\d+\.file\.myqcloud\.com$
-DOMAIN-REGEX,^epicgames-download\d-\d+\.file\.myqcloud\.com$
