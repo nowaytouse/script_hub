@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=去广告, 依赖, HTTPDNS, Sukka
-#!date=2025-12-26 04:37:05
+#!date=2025-12-26 20:16:05
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
@@ -3129,7 +3129,7 @@ https?:\/\/res\.xiaojukeji\.com\/resapi\/activity\/get(Ruled|Preload|PasMultiNot
 
 [Script]
 # ═══════════════════════════════════════════════════════════════
-# Merged Script Rules (711)
+# Merged Script Rules (712)
 # ═══════════════════════════════════════════════════════════════
 12306 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://raw.perzikkop.com/Scripts/12306_splashscreen.js, requires-body=true
 12306 = type=http-response, pattern=^https:\/\/mobile\.12306\.cn\/otsmobile\/app\/mgs\/mgw\.htm$, script-path=https://raw.perzikkop.com/Scripts/12306.js
@@ -3604,6 +3604,7 @@ zhuanzhuan=type=http-response,pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/tran
 剧迷网(gimy.app|ai) = type=http-response , pattern="^https?:\/\/(\w{0,3}(\.){0,1}(gimy)(\.)\w{0,3})\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 华人直播(huaren.live) = type=http-response , pattern="^https?:\/\/(huaren\.live)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 华人直播(play.huaren.live) = type=http-response , pattern="^https?:\/\/(play\.huaren\.live)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
+华人直播播放源(playa.huaren.live) = type=http-response , pattern="^https?:\/\/(playa\.huaren\.live)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 古茗去广告 = type=http-response, pattern=^https:\/\/newton\.gumingnc\.com\/newton-buyer\/newton\/buyer\/(ump|touch|external\/front), script-path=https://raw.githubusercontent.com/mist-whisper/Script/master/WeChat/WexinMiniPrograms/Guming.js, requires-body=true
 古茗去广告 = type=http-response, pattern=^https:\/\/newton\.gumingnc\.com\/newton-buyer\/newton\/buyer\/(ump|touch|external\/front), script-path=https://raw.perzikkop.com/Scripts/MiniPrograms/ming.js, requires-body=true
 哔嘀影视展示页(www.52bdys.com) = type=http-response , pattern="^https?:\/\/www\.52bdys\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
