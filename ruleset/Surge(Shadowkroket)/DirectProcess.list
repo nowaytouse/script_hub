@@ -1,0 +1,10 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DirectProcess
+# Policy: DIRECT
+# Description: Processes requiring direct connection
+# Rules: 2
+# Updated: 2026-02-19 20:32:26
+# ═══════════════════════════════════════════════════════════════
+
+PROCESS-NAME,/Applications/Thunder.app/
+PROCESS-NAME,/Applications/Transmission.app/

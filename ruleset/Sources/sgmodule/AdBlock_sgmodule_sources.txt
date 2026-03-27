@@ -1,0 +1,13 @@
+# ═══════════════════════════════════════════════════════════════
+# AdBlock sgmodule Sources - 远程模块规则汲取
+# ═══════════════════════════════════════════════════════════════
+# 格式: 每行一个sgmodule URL
+# 功能: 自动下载并提取[Rule]部分的规则
+# 用途: 汲取第三方模块的广告拦截规则
+# ═══════════════════════════════════════════════════════════════
+
+# YouTube广告拦截 (mist-whisper)
+https://raw.githubusercontent.com/mist-whisper/Surge/master/Modules/YouTube_remove_ads.sgmodule
+
+# 可添加更多sgmodule源...
+# https://example.com/another_module.sgmodule

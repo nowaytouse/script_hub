@@ -1,0 +1,12 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: StreamKR
+# Policy: PROXY
+# Node: KR
+# Description: Korea streaming services
+# Rules: 3
+# Updated: 2026-02-19 20:32:26
+# ═══════════════════════════════════════════════════════════════
+
+DOMAIN-SUFFIX,smartmediarep.com
+DOMAIN-SUFFIX,tv.naver.com
+USER-AGENT,Naver TV*

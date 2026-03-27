@@ -1,0 +1,133 @@
+name: Update Rulesets
+
+# ═══════════════════════════════════════════════════════════════
+# GitHub Actions Workflow - Ruleset Auto Update
+# 
+# Scope (CI/CD Only):
+#   ✅ Ruleset update (download and merge from upstream)
+#   ✅ Smart dedup (AdBlock > Specific > Fallback)
+#   ✅ Empty ruleset cleanup
+#   ✅ Port rules sync to firewall module
+#   ✅ AdBlock module merge
+#   ✅ SRS file generation (Sing-box)
+#   ✅ Git commit and push
+#
+# Skipped Operations (Local Only):
+#   ❌ No backup (CI=true auto-skip)
+#   ❌ No core update (--unattended skip)
+#   ❌ No Singbox config download (--unattended skip)
+#   ❌ No iCloud sync (--unattended skip)
+#   ❌ No Surge profile sync (--unattended skip)
+#
+# Schedule: Twice daily
+#   - UTC 20:00 (04:00 Beijing Time next day) - 凌晨更新
+#   - UTC 04:00 (12:00 Beijing Time) - 中午更新
+# Manual trigger: workflow_dispatch
+# ═══════════════════════════════════════════════════════════════
+
+on:
+  schedule:
+    - cron: '0 20 * * *'  # Runs at 20:00 UTC (04:00 Beijing Time next day)
+    - cron: '0 4 * * *'   # Runs at 04:00 UTC (12:00 Beijing Time)
+  workflow_dispatch:      # Allows manual run
+
+jobs:
+  update-rules:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 🔥 允许 push 到仓库
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0  # Full history for git operations
+        persist-credentials: true  # 🔥 确保 git push 有权限
+        
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        # 🔥 配置 git 使用 token 认证
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+    - name: Install sing-box (for SRS generation only)
+      run: |
+        # Install sing-box CLI tool for SRS file generation only
+        # Singbox config download is skipped by --unattended mode
+        # 🔥 使用预览版 (1.13.0+) 以支持最新功能
+        SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases | grep '"tag_name"' | head -1 | sed -E 's/.*"v([^"]+)".*/\1/')
+        echo "Installing sing-box v${SINGBOX_VERSION} (CLI tool only, pre-release)"
+        curl -Lo sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
+        tar -xzf sing-box.tar.gz
+        sudo mv sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box /usr/local/bin/
+        rm -rf sing-box.tar.gz sing-box-${SINGBOX_VERSION}-linux-amd64
+        sing-box version
+        
+    - name: Execute Full Update Script (Unattended Mode)
+      run: |
+        chmod +x ruleset/merge_sync/*.sh
+        # --unattended mode:
+        #   ✅ Enable Git operations (pull/push)
+        #   ✅ Ruleset update and merge
+        #   ✅ Smart dedup and cleanup
+        #   ✅ Port rules sync to firewall module
+        #   ✅ SRS file generation
+        #   ❌ Skip core update (WITH_CORE=false)
+        #   ❌ Skip iCloud sync (SKIP_MODULE=true)
+        #   ❌ Skip Surge profile sync (SKIP_PROFILE=true)
+        # --parallel: Enable parallel processing for faster execution
+        # CI=true environment variable:
+        #   ❌ All scripts auto-skip backup operations
+        ./ruleset/merge_sync/full_update.sh --unattended --parallel --verbose
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CI: true  # Auto-skip all backup operations
+        
+    - name: Summary
+      run: |
+        echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📁 File Statistics" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Category | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| MetaCubeX Rules | $(ls ruleset/MetaCubeX/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Surge Rules | $(ls ruleset/Surge\(Shadowkroket\)/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| SingBox SRS | $(ls ruleset/SingBox/*.srs 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Sources Files | $(ls ruleset/Sources/Links/*_sources.txt 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Modules | $(ls module/surge\(main\)/*.sgmodule 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔑 Key Rulesets" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f "ruleset/Surge(Shadowkroket)/AdBlock.list" ]; then
+          ADBLOCK_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/AdBlock.list" 2>/dev/null || echo "0")
+          echo "- **AdBlock**: ${ADBLOCK_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f "ruleset/Surge(Shadowkroket)/ChinaDirect.list" ]; then
+          CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/ChinaDirect.list" 2>/dev/null || echo "0")
+          echo "- **ChinaDirect** (DNS leak prevention): ${CHINADIRECT_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f "ruleset/Surge(Shadowkroket)/GlobalProxy.list" ]; then
+          GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/GlobalProxy.list" 2>/dev/null || echo "0")
+          echo "- **GlobalProxy**: ${GLOBALPROXY_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f "module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" ]; then
+          FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" 2>/dev/null || echo "0")
+          echo "- **Firewall** (port blocking): ${FIREWALL_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ⚙️ CI/CD Mode" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Ruleset update and merge" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Smart dedup and cleanup" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Port rules sync to firewall module" >> $GITHUB_STEP_SUMMARY
+        echo "✅ SRS file generation" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Git commit and push" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Parallel processing enabled" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip backup (CI=true)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip core update (--unattended)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip iCloud sync (--unattended)" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY

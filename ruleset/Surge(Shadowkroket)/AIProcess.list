@@ -1,0 +1,16 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: AIProcess
+# Policy: PROXY
+# Node: Any
+# Description: AI related processes
+# Rules: 7
+# Updated: 2026-02-19 20:32:26
+# ═══════════════════════════════════════════════════════════════
+
+PROCESS-NAME,"/Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin)"
+PROCESS-NAME,"/Applications/Kiro.app/Contents/Frameworks/Kiro Helper (Plugin).app/Contents/MacOS/Kiro Helper (Plugin)"
+PROCESS-NAME,"/Applications/Windsurf.app/Contents/Frameworks/Windsurf Helper (Plugin).app/Contents/MacOS/Windsurf Helper (Plugin)"
+PROCESS-NAME,/Applications/CodeFlicker.app/
+PROCESS-NAME,/Applications/Cursor.app/
+PROCESS-NAME,/Applications/Kiro.app/
+PROCESS-NAME,/Applications/Windsurf.app/

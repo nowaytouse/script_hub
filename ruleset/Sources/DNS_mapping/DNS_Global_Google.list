@@ -1,0 +1,58 @@
+# ═══════════════════════════════════════════════════════════════
+# Ruleset: DNS_Global_Google
+# Updated: 2025-12-07 10:45:54 UTC
+# Total Rules: 25
+# Generator: Ruleset Merger v2.4
+# Git Hash: f12294c
+# ═══════════════════════════════════════════════════════════════
+#
+# Sources:
+#   - Google.list (25 rules)
+#
+# Usage:
+#   - Auto-generated ruleset, DO NOT edit manually
+#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
+#   - Policy is determined by RULE-SET line in config file
+#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
+#
+# ═══════════════════════════════════════════════════════════════
+
+# 策略说明:
+#   - 规则集本身不包含策略标记
+#   - 策略由配置文件中的RULE-SET行决定
+#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
+#
+# ═══════════════════════════════════════════════════════════════
+
+# ========== DOMAIN-SUFFIX ==========
+DOMAIN-SUFFIX,1e100.net
+DOMAIN-SUFFIX,2mdn.net
+DOMAIN-SUFFIX,app-measurement.net
+DOMAIN-SUFFIX,c.gle
+DOMAIN-SUFFIX,g.co
+DOMAIN-SUFFIX,ggpht.com
+DOMAIN-SUFFIX,goo.gl
+DOMAIN-SUFFIX,googleapis.cn
+DOMAIN-SUFFIX,googleapis.com
+DOMAIN-SUFFIX,gstatic.cn
+DOMAIN-SUFFIX,gstatic.com
+DOMAIN-SUFFIX,gvt0.com
+DOMAIN-SUFFIX,gvt1.com
+DOMAIN-SUFFIX,gvt2.com
+DOMAIN-SUFFIX,gvt3.com
+DOMAIN-SUFFIX,xn--ngstr-lra8j.com
+DOMAIN-SUFFIX,youtu.be
+DOMAIN-SUFFIX,youtube-nocookie.com
+DOMAIN-SUFFIX,youtube.com
+DOMAIN-SUFFIX,yt.be
+DOMAIN-SUFFIX,ytimg.com
+
+# ========== DOMAIN-KEYWORD ==========
+DOMAIN-KEYWORD,gmail
+DOMAIN-KEYWORD,google
+
+# ========== IP-CIDR ==========
+IP-CIDR,173.194.0.0/16,no-resolve
+IP-CIDR,74.125.0.0/16,no-resolve
+
+# ========== END ==========

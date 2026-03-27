@@ -1,0 +1,582 @@
+{
+  "generated": "2025-12-08T17:05:26.215483",
+  "total": 72,
+  "compatible": 7,
+  "surge_only": 65,
+  "modules": {
+    "compatible": [
+      {
+        "name": "🌐 DNS & Host Enhanced",
+        "category": "amplify_nexus"
+      },
+      {
+        "name": "URL Rewrite Module 🔄🌐",
+        "category": "amplify_nexus"
+      },
+      {
+        "name": "Wi-Fi Calling UK",
+        "category": "amplify_nexus"
+      },
+      {
+        "name": "Wi-Fi Calling US",
+        "category": "amplify_nexus"
+      },
+      {
+        "name": "苹果助手模块",
+        "category": "amplify_nexus"
+      }
+    ],
+    "surge_only": [
+      {
+        "name": "📺 BiliBili: ⚙️ Enhanced",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "📺 BiliBili: 🌐 Global",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "📺 BiliBili: 🔀 Redirect",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "🍿️ DualSubs: 🔣 Universal",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "功能｜预览 QX 资源",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "机场订阅信息",
+        "category": "amplify_nexus",
+        "issues": [
+          "更新间隔",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "Sub-Store(β)",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "能力声明",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "TikTok US",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "节假日信息",
+        "category": "amplify_nexus",
+        "issues": [
+          "更新间隔",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "VVebo主页时间线修复",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "Youtube (Music) Enhance",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "BoxJs",
+        "category": "amplify_nexus",
+        "issues": [
+          "插入规则",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": " Enable iCloud Private Relay on gateway",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": " iRingo: 🗺️ Maps",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": " iRingo: 📰 News",
+        "category": "amplify_nexus",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": " iRingo: 📺 TV app",
+        "category": "amplify_nexus",
+        "issues": [
+          "静默拒绝",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": " iRingo: 🌤 WeatherKit",
+        "category": "amplify_nexus",
+        "issues": [
+          "扩展匹配",
+          "静默拒绝",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "网络信息 𝕏",
+        "category": "amplify_nexus",
+        "issues": [
+          "更新间隔",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "🚀💪General Enhanced⬆️⬆️ plus",
+        "category": "amplify_nexus",
+        "issues": [
+          "插入规则",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "AWAvenue Ads Rule",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "预匹配"
+        ]
+      },
+      {
+        "name": "毒奶特供(2025年12月08日更新)",
+        "category": "head_expanse",
+        "issues": [
+          "更新间隔",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "AD ByeBye+ 2.x",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "拒绝返回GIF",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "AllInOne",
+        "category": "head_expanse",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "[Sukka] Enhance Better ADBlock for Surge",
+        "category": "head_expanse",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "[Sukka] URL Rewrite",
+        "category": "head_expanse",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "Script Hub: 重写 & 规则集转换",
+        "category": "head_expanse",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "可莉广告过滤器",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "拒绝返回GIF",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "2.去除小程序和其他应用广告",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "拒绝返回GIF",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "广告平台拦截器",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "广告联盟去广告",
+        "category": "head_expanse",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "1.去除常用软件广告",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "拒绝不丢弃",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "🔥 Firewall Port Blocker 🛡️🚫",
+        "category": "head_expanse",
+        "issues": [
+          "静默拒绝"
+        ]
+      },
+      {
+        "name": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)",
+        "category": "head_expanse",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "静默拒绝",
+          "拒绝不丢弃",
+          "更新间隔",
+          "插入规则",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "去广告｜中国广电",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "12306去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "123云盘",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "📺 BiliBili: 🛡️ ADBlock",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "Bilibili Helper",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "IT之家去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "Jump去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "QQ音乐去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配"
+        ]
+      },
+      {
+        "name": "RedNote",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "Reddit 去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "Spotify去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "WeChat增强",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "微博去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "YouTube去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "京东去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "哔哩哔哩漫画去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "夸克去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "小宇宙去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "小红书去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "微博去广告&净化",
+        "category": "narrow_pierce",
+        "issues": [
+          "静默拒绝",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "微博去广告&净化",
+        "category": "narrow_pierce",
+        "issues": [
+          "静默拒绝",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "WeiboIntl",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "扫描全能王",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "拼多多去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "拒绝不丢弃",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "淘宝去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "滴滴出行去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则"
+        ]
+      },
+      {
+        "name": "百度网盘去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "知乎去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "菜鸟去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "闲鱼去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "追加规则"
+        ]
+      },
+      {
+        "name": "阿里云盘去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "预匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      },
+      {
+        "name": "高德地图去广告",
+        "category": "narrow_pierce",
+        "issues": [
+          "扩展匹配",
+          "预匹配",
+          "追加规则",
+          "脚本路径(部分)"
+        ]
+      }
+    ]
+  }
+}
