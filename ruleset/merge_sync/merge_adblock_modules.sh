@@ -37,6 +37,7 @@ ADBLOCK_MERGED_LIST="$PROJECT_ROOT/ruleset/Surge(Shadowkroket)/AdBlock.list"
 CACHE_DIR="$PROJECT_ROOT/.cache"
 HASH_FILE="$CACHE_DIR/adblock_hashes.txt"
 WHITELIST_FILE="$PROJECT_ROOT/ruleset/Sources/adblock_whitelist.txt"
+FIREWALL_MODULE="$HEAD_EXPANSE_DIR/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"
 
 # 🔥 Source modules to merge (relative to HEAD_EXPANSE_DIR)
 SOURCE_MODULES=(
@@ -211,11 +212,11 @@ for module_name in "${SOURCE_MODULES[@]}"; do
     fi
 done
 
-# Also check other ad-related modules in head_expanse
 for module in "$HEAD_EXPANSE_DIR"/*.sgmodule; do
     [ ! -f "$module" ] && continue
     [[ "$module" == "$TARGET_MODULE" ]] && continue
-    
+    [[ "$module" == "$FIREWALL_MODULE" ]] && continue
+
     module_name=$(basename "$module")
     # Skip if already in SOURCE_MODULES
     skip=false
@@ -226,11 +227,11 @@ for module in "$HEAD_EXPANSE_DIR"/*.sgmodule; do
         fi
     done
     [ "$skip" = true ] && continue
-    
+
     if grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
         hash=$(md5 -q "$module" 2>/dev/null || md5sum "$module" | cut -d' ' -f1)
         new_hashes="${new_hashes}${module_name}|${hash}\n"
-        
+
         old_hash=$(grep "^${module_name}|" "$HASH_FILE" 2>/dev/null | cut -d'|' -f2)
         if [ "$old_hash" != "$hash" ]; then
             needs_update=true
@@ -259,7 +260,8 @@ done
 for module in "$HEAD_EXPANSE_DIR"/*.sgmodule; do
     [ ! -f "$module" ] && continue
     [[ "$module" == "$TARGET_MODULE" ]] && continue
-    
+    [[ "$module" == "$FIREWALL_MODULE" ]] && continue
+
     module_name=$(basename "$module")
     skip=false
     for src in "${SOURCE_MODULES[@]}"; do
@@ -269,7 +271,7 @@ for module in "$HEAD_EXPANSE_DIR"/*.sgmodule; do
         fi
     done
     [ "$skip" = true ] && continue
-    
+
     if grep -qi "ad\|reject\|block" "$module" 2>/dev/null; then
         extract_rules_from_module "$module"
     fi
