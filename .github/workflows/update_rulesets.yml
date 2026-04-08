@@ -65,25 +65,12 @@ jobs:
         rm -rf sing-box.tar.gz sing-box-${SINGBOX_VERSION}-linux-amd64
         sing-box version
         
-    - name: Execute Full Update Script (Unattended Mode)
+    - name: Execute Python Ruleset Update
       run: |
-        chmod +x ruleset/merge_sync/*.sh
-        # --unattended mode:
-        #   ✅ Enable Git operations (pull/push)
-        #   ✅ Ruleset update and merge
-        #   ✅ Smart dedup and cleanup
-        #   ✅ Port rules sync to firewall module
-        #   ✅ SRS file generation
-        #   ❌ Skip core update (WITH_CORE=false)
-        #   ❌ Skip iCloud sync (SKIP_MODULE=true)
-        #   ❌ Skip Surge profile sync (SKIP_PROFILE=true)
-        # --parallel: Enable parallel processing for faster execution
-        # CI=true environment variable:
-        #   ❌ All scripts auto-skip backup operations
-        ./ruleset/merge_sync/full_update.sh --unattended --parallel --verbose
+        python3 scripts/main_update.py --execute
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        CI: true  # Auto-skip all backup operations
+        CI: true
         
     - name: Summary
       run: |

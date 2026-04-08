@@ -3,15 +3,28 @@
 # Policy: PROXY
 # Node: Any
 # Description: YouTube
-# Rules: 188
-# Updated: 2026-04-08 17:14:38
+# Rules: 191
+# Updated: 2026-04-08 18:08:59
 # ═══════════════════════════════════════════════════════════════
 
-DOMAIN-KEYWORD,youtube
+DOMAIN,.
+DOMAIN,3
+DOMAIN,c
+DOMAIN,e
+DOMAIN,g
+DOMAIN,l
+DOMAIN,m
+DOMAIN,n
+DOMAIN,o
+DOMAIN,r
+DOMAIN,s
+DOMAIN,t
+DOMAIN,u
+DOMAIN,y
+DOMAIN-SUFFIX,ads.youtube.com
+DOMAIN-SUFFIX,ggpht.cn
 DOMAIN-SUFFIX,ggpht.com
 DOMAIN-SUFFIX,googlevideo.com
-DOMAIN-SUFFIX,gvt1.com
-DOMAIN-SUFFIX,video.google.com
 DOMAIN-SUFFIX,wide-youtube.l.google.com
 DOMAIN-SUFFIX,withyoutube.com
 DOMAIN-SUFFIX,youtu.be
@@ -185,13 +198,3 @@ DOMAIN-SUFFIX,youtubekids.com
 DOMAIN-SUFFIX,youtubemobilesupport.com
 DOMAIN-SUFFIX,yt.be
 DOMAIN-SUFFIX,ytimg.com
-IP-CIDR,172.110.32.0/21,no-resolve
-IP-CIDR,216.73.80.0/20,no-resolve
-IP-CIDR6,2620:120:e000::/40,no-resolve
-USER-AGENT,*YouTubeMusic*
-USER-AGENT,*com.google.ios.youtubemusic*
-USER-AGENT,*youtube*
-USER-AGENT,YouTube*
-USER-AGENT,YouTubeMusic*
-USER-AGENT,com.google.ios.youtube*
-USER-AGENT,com.google.ios.youtubemusic*

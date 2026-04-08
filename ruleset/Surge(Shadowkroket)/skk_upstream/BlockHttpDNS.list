@@ -1,15 +1,6 @@
-# Synced: 2026-04-08 17:15:01
-# Source: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list
+# Ruleset: BlockHttpDNS.list
+# Updated: 2026-04-08 18:52:36.891632
 
-# NAME: BlockHttpDNS
-# AUTHOR: blackmatrix7
-# REPO: https://github.com/blackmatrix7/ios_rule_script
-# UPDATED: 2025-06-06 09:20:00
-# DOMAIN: 18
-# DOMAIN-SUFFIX: 4
-# IP-CIDR: 37
-# IP-CIDR6: 4
-# TOTAL: 63
 DOMAIN,dns.jd.com
 DOMAIN,dns.weibo.cn
 DOMAIN,dns.weixin.qq.com

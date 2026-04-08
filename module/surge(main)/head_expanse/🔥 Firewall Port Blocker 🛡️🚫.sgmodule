@@ -1,33 +1,40 @@
 #!name=🔥 Firewall Port Blocker 🛡️
-#!desc=出站端口过滤 | C2/RAT/矿池/僵尸网络/DDoS放大/IoT/SCADA/macOS特有攻击面 | 游戏/P2P/远程桌面零影响
+#!desc=Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP
 #!author=nyamiiko (Enhanced)
-#!category=『 🔝 Head Expanse › 首端扩域 』
-#!version=2025.03.14
-#!tag=安全, 防火墙, macOS
+#!category=『 🔝 Head Expanse › Ad-Blocking Platform 』
+#!version=2026.04.08
+#!tag=Security, Firewall, macOS
 
 # ═══════════════════════════════════════════════════════════════
-# ⚠️  作用域说明
+# ⚠️  Scope & Usage Information
 # ═══════════════════════════════════════════════════════════════
-# Surge DEST-PORT 匹配【出站连接的目标端口】，即本机发起的对外连接。
-# 本模块的防护目标是：
-#   • 阻止设备上的恶意软件/RAT 向 C2 服务器回连
-#   • 阻止矿机程序连接 Stratum 矿池
-#   • 阻止设备成为 DDoS 反射/放大攻击的源节点
-#   • 阻止 IoT 僵尸网络控制信道（Mirai 变种等）
-#   • 阻止 macOS 特有的遗留协议和暴露服务被外部访问或滥用
-#   • 阻止设备访问互联网上暴露的危险基础设施
+# Surge DEST-PORT matches the [Destination Port] of outbound connections，即本机发起的对外连接。
+# Protection Goals of this Module:：
+#   • Block malware/RAT callback to C2 servers
+#   • Block miners from connecting to Stratum pools
+#   • Prevent device from being used as a DDoS reflection node
+#   • Block IoT botnet control channels (Mirai variants, etc.)（Mirai 变种等）
+#   • Block legacy macOS protocols and exposed services被外部访问或滥用
+#   • Block access to dangerous public infrastructure
 #
-# ✅ 不受影响：游戏、P2P/BT、VPN、流媒体、RDP/VNC、SSH、Web(80/443)
-# ⚠️  开发者注意：SECTION 5 会阻止直连远程数据库，需要时请注释掉
-# ⚠️  macOS 用户：SECTION 10 阻止了 AFP/ARD/NFS 出站，家庭 NAS 用户请按需注释
+# ✅ Untouched: Games, P2P/BT, VPN, Streaming, RDP/VNC, SSH, Web (80/443)、SSH、Web(80/443)
+# ⚠️  Developer Note: SECTION 5 blocks direct remote database connections，需要时请注释掉
+# ⚠️  macOS Users: SECTION 10 blocks AFP/ARD/NFS outbound，Home NAS users may comment out rules as needed
 # ═══════════════════════════════════════════════════════════════
 
 [Rule]
 
+# --- SYNCED PORT RULES START ---
+# Automated update from ports source
+# Updated: 2026-04-08 18:08:59
+DEST-PORT,8076
+IN-PORT,8076
+# --- SYNCED PORT RULES END ---
+
 # ═══════════════════════════════════════════════════════════════
-# SECTION 1: 经典木马/RAT 回连端口
-# 历史上被确认滥用，当代正常软件不使用
-# 策略：REJECT-DROP（静默丢弃，不回 RST，不暴露过滤存在）
+# SECTION 1: Classic Trojan/RAT C2 Ports
+# Historically abused, unused by modern legitimate software
+# Policy: REJECT-DROP (Silent drop, no RST, conceals filtering)
 # ═══════════════════════════════════════════════════════════════
 
 # Back Orifice / BO2K
@@ -70,9 +77,9 @@ DEST-PORT,54321,REJECT-DROP  # Back Orifice 2000
 DEST-PORT,61466,REJECT-DROP  # Telecommando
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 2: 现代 C2 框架默认端口
+# SECTION 2: Modern C2 Framework Default Ports
 # Cobalt Strike / Metasploit / Sliver / Empire / Havoc 等
-# 正常生产环境不应出现这些出站连接
+# Inbound/Outbound connections not expected in production environments
 # ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,4444,REJECT-DROP   # Metasploit meterpreter 默认监听
@@ -81,7 +88,7 @@ DEST-PORT,50050,REJECT-DROP  # Cobalt Strike teamserver
 DEST-PORT,50051,REJECT-DROP  # Cobalt Strike 变体
 DEST-PORT,60000,REJECT-DROP  # Sliver C2 默认
 
-# 常见 RAT/木马 监听端口
+# Common RAT/Trojan listening ports
 DEST-PORT,1337,REJECT-DROP   # 黑客文化端口，常被 RAT/WebShell 用
 DEST-PORT,5554,REJECT-DROP   # Sasser 蠕虫
 DEST-PORT,9996,REJECT-DROP   # Sasser 蠕虫 FTP 传输
@@ -90,8 +97,8 @@ DEST-PORT,1026,REJECT-DROP   # Windows messenger spam / RAT
 DEST-PORT,1027,REJECT-DROP   # Windows messenger spam
 
 # ═══════════════════════════════════════════════════════════════
-# SECTION 3: IRC 僵尸网络 C2
-# 现代正常用途极少，僵尸网络大量使用
+# SECTION 3: IRC Botnet C2 Channels
+# Rarely used for legitimate purposes, extensively used by botnets
 # ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,6667,REJECT-DROP   # IRC 标准端口，僵尸网络 C2 经典信道

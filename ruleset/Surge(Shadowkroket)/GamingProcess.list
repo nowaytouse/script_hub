@@ -3,18 +3,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Gaming related processes
-# Rules: 11
-# Updated: 2026-04-08 17:14:38
+# Rules: 1
+# Updated: 2026-04-08 18:43:46
 # ═══════════════════════════════════════════════════════════════
 
-PROCESS-NAME,/Applications/Roblox.app/
-PROCESS-NAME,/Volumes/RobloxPlayerInstaller/RobloxPlayerInstaller.app/
-PROCESS-NAME,Agent
-PROCESS-NAME,Battle.net
-PROCESS-NAME,EADesktop
-PROCESS-NAME,EpicGamesLauncher
-PROCESS-NAME,EpicWebHelper
-PROCESS-NAME,Origin
-PROCESS-NAME,RobloxPlayer
-PROCESS-NAME,steam
-PROCESS-NAME,steamwebhelper
+PROCESS-NAME,/Applications/DDNet.app/

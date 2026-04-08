@@ -3,7 +3,7 @@
 # Policy: DIRECT
 # Description: Manual direct connection rules
 # Rules: 16
-# Updated: 2026-04-08 17:14:38
+# Updated: 2026-04-08 18:08:59
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,127.0.0.1
@@ -21,4 +21,4 @@ DOMAIN-SUFFIX,steamserver.net
 DOMAIN-SUFFIX,ugreengroup.com
 DOMAIN-SUFFIX,zaimanhua.com
 DOMAIN-SUFFIX,zerotier.com
-IP-CIDR,fc00::/7
+IP-CIDR6,fc00::/7

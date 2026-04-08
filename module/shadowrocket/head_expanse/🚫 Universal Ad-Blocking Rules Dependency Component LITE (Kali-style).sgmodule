@@ -1,30 +1,22 @@
-#!name=🚫 Universal Ad-Blocking Rules (Lite)
-#!desc=[🚀SR] Auto-merged from: 广告联盟 + 小程序去广告 + AD ByeBye+ 2.x + AllInOne + 可莉\n\n拦截广告平台、HTTPDNS、常见应用广告。包含 Rule/URL Rewrite/Map Local/Script/MITM 完整功能。所有规则集已内化，无外部依赖。\n\n⚠️ 隐私说明: kelee.one 是可莉的脚本托管服务，仅用于下载去广告脚本，不会上报用户数据。
-#!author=可莉🅥, VirgilClyne, bunizao, blackmatrix7, limbopro, Auto-Merged
+#!name=🚫 Universal Ad-Blocking Rules (LITE)
+#!desc=[🚀SR] Consolidated ad-blocking logic. Automated merge from multiple sources including Kelee, AllInOne, and App-specific blockers. Fully self-contained.
+#!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!tag=去广告, 依赖, HTTPDNS
-#!date=2026-04-08 17:15:14
+#!tag=AdBlock, Dependency, HTTPDNS
+#!date=2026-04-08 18:08:59
 
 [Rule]
-# ═══════════════════════════════════════════════════════════════
-# Self-hosted AdBlock rulesets (无外部依赖)
-# Sources: 广告联盟, 小程序去广告, AD ByeBye+ 2.x, AllInOne, 可莉
-# ═══════════════════════════════════════════════════════════════
-# 主要REJECT规则 (本地托管)
+# REJECT Rules (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,update-interval=86400,no-resolve
-# REJECT规则 (本地托管)
+# REJECT Rules (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-no-drop.conf,REJECT,update-interval=86400,no-resolve
-# REJECT规则 (本地托管)
+# REJECT Rules (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-drop.conf,REJECT,update-interval=86400,no-resolve
-# BlockHttpDNS - 阻止HTTPDNS泄露 (本地托管)
+# BlockHttpDNS (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/BlockHttpDNS.list,REJECT,update-interval=86400,no-resolve
 
-
 [URL Rewrite]
-# ═══════════════════════════════════════════════════════════════
-# Merged URL Rewrite Rules (943)
-# ═══════════════════════════════════════════════════════════════
 (^https?://app\.biliintl\.com/(x/)?(intl|dm|reply|history|v\d/(fav|msgfeed)).+?)(&s_locale=zh-Hans_[A-Z]{2})(.+?)(&sim_code=\d+)(.+) $1&s_locale=zh-Hans_PH$6&sim_code=51503$8 302
 (^https?://passport\.biliintl\.com/x/intl/passport-login/.+)(&s_locale=zh-Hans_[A-Z]{2})(.+)(&sim_code=\d+)(.+) $1&s_locale=zh-Hans_PH$35&sim_code=51503$5 302
 (https://www.javlibrary.com/cn/videoreviews.php\?v=)(.*?)(&mode=.*) https://www.javlibrary.com/cn/?v=$2 307
@@ -970,9 +962,6 @@ jbnnr_yueyupp_3.js - reject
 js\.wpadmngr\.com\/static\/adManager\.js - reject
 
 [Map Local]
-# ═══════════════════════════════════════════════════════════════
-# Merged Map Local Rules (2061)
-# ═══════════════════════════════════════════════════════════════
 "^http:\/\/.*aastocks\.com\/ad\/" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^http:\/\/.*babytree\.com/(plough\.do|go_search\/api\/mobile_search_new\/get_multi_search_default_keywords)" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^http:\/\/ads.?s?ervice(retry)?\.(kugou|kglink).(com|cn)\/v\d\/" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
@@ -3036,9 +3025,6 @@ https?:\/\/m\.sd\.10086\.cn\/zapi\/app_common\/homeWelcome\/welcome.do data="htt
 https?:\/\/res\.xiaojukeji\.com\/resapi\/activity\/get(Ruled|Preload|PasMultiNotices) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 
 [Script]
-# ═══════════════════════════════════════════════════════════════
-# Merged Script Rules (628)
-# ═══════════════════════════════════════════════════════════════
 12306 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://raw.perzikkop.com/Scripts/12306_splashscreen.js, requires-body=true
 12306 = type=http-response, pattern=^https:\/\/mobile\.12306\.cn\/otsmobile\/app\/mgs\/mgw\.htm$, script-path=https://raw.perzikkop.com/Scripts/12306.js
 123062=type=http-response,pattern=^https?:\/\/ad\.12306\.cn\/ad\/ser\/getAdList,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/12306.js
@@ -3078,7 +3064,7 @@ Netflav(netflav|netflav5|.com) = type=http-response , pattern="^https?:\/\/(netf
 PlayerAds = type=http-response , pattern="^https?:\/\/(lk1\.supremejav\.com|trailerhg\.xyz|turboplayers\.xyz|javggvideo\.xyz|turtleviplay\.xyz|findjav\.com|stbturbo\.xyz|emturbovid\.com|streamtape\.com|javplayer|((mmsw02|mmfl04|netflavns1|netflavns2|emturbovid|filemoon|embedrise|mmfl02|embedgram)\.(sx|com))|filemoon\.sx|embedrise\.com|mmfl02\.com|embedgram\.com|fviplions\.com|sfastwish\.com|cabecabean\.lol|belegug\.online|wishfast\.top|vidmoviesb\.xyz|vhmovies\.to|awish\.pro|ankrzkz\.sbs|sub123\.xyz|leakslove\.net|mwish\.pro|embedwish\.com|javhahaha\.us|abkrzkz\.sbs|streamvid\.top|abkrzkr\.sbs|playertv\.net|sbrity\.com|doodporn\.xyz|mycloud123\.top|streamsb\.click|streamxxx\.online|trafficdepot\.re|sblona\.com|filelions\..*|ahvsh\.com|sbrapid\.com|streaamss\.com|louishide\.com|projectfreetv\.lol|streamwish\.to|lvturbo\.com|javb1\.com|sbface\.com|rbtstream\.info|vidgo\.top|sbhight\.com|sbbrisk\.com|streamhide\.to|cloudrls\.com|mm9846\.com|m4uhd\.club|streamm4u\.club|sbchill\.com|fbjav\.com|imfb\.xyz|sbrulz\.xyz|baldrfilms\.xyz|javbigo\.xyz|dizivap\..*|dvapizle\..*|sblongvu\.com|mavavid\.com|fembed9hd\.com|xsub\.cc|sbthe\.com|sbanh\.com|mm9844\..*|anigogo\.net|faptiti\.com|javsubbed\.xyz|sblanh\.com|av4asia\.com|playerjavseen\.com|pornhubed\.com|xvideostream\.net|streamsss\.net|sbspeed\.com|vcdn-stream\.xyz|vanfem\.com|javuncen\.xyz|vidplay\.ch|javenglish\.me|ssbstream\.net|zojav\.com|watch-jav-english\.live|javpornhd\.online|yuamikami\.xyz|embed-media\.com|obaplayer\.xyz|cdn-myhdjav\.info|dlmovies\.link|cinegrabber\.com|watchjavnow\.xyz|luxubu\.review|nsfwzone\.xyz|viplayer\.cc|cinemaemcasa\.xyz|sbfast\.com|iframe2videos\.xyz|javfu\.net|streamas\.cloud|nashstream\.top|yuistream\.xyz|jav247\.top|viewsb\.com|myvideoplayer\.monster|cloudemb\.com|moviesland\.xyz|jvembed\.com|ffem\.club|javleaked\.com|pornhole\.club|ndrama\.xyz|fembed-hd\.com|netflav\.com|netflav5\.com|mambast\.tk|cutl\.xyz|playerjavhd\.com|mycloudzz\.com|suzihaza\.com|embedsb\.com|layarkacaxxi\.icu|nekolink\.site|sbflix\.xyz|javhdfree\.icu|streamsb\.net|rubicstreaming\.com|javside\.com|gdstream\.net|animepl\.xyz|watchsb\.com|sbplay2\..*|hentai4\.me|playersb\.com|streamabc\.xyz|ns21\.online|diasfem\.com|milfnut\.net|pelispop\.net|ondembed\.xyz|tubesb\.com|fplayer\.info|mm9842\.com|sbplay1\.com|javmvp\.com|japopav\.tv|nezuko-ah\.nl|pelistop\.co|vidcloud\..*|mavlecteur\.com|xxxjaa\.xyz|vcdn2\.space|mavplayer\.xyz|sbplay\..*|sbvideo\.net|sbembed4\.com|javcl\.me|dfmagazine\.co\.uk|down-paradise\.com|embedsito\.com|serverf4\.org)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Pornhub(cn.pornhub.com) = type=http-response , pattern="^https?:\/\/(\w{0,3}(\.){0,1}(pornhub)(\.)\w{0,3})\/(?!(.*(authenticate|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 ProtoBuf处理 = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/c\/f\/(frs\/(page|threadlist|generalTabList)|pb\/page|excellent\/personalized)\?cmd, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/tieba-proto.js, requires-body=true, binary-body-mode=true, timeout=10
-ProtoBuf处理 = type=http-response, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.(app\.(show\.v1\.Popular\/Index|dynamic\.v2\.Dynamic\/DynAll|view(unite)?\.v1\.View\/(View|ViewProgress|RelatesFeed)|playurl\.v1\.PlayURL\/PlayView|playerunite\.v1\.Player\/PlayViewUnite)|polymer\.app\.search\.v1\.Search\/SearchAll|community\.service\.dm\.v1\.DM\/DmView|main\.community\.reply\.v1\.Reply\/MainList|pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_response_kokoryh.js, requires-body=true, binary-body-mode=true, argument="[PROXY, PROXY, PROXY, PROXY]"
+ProtoBuf处理 = type=http-response, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.(app\.(show\.v1\.Popular\/Index|dynamic\.v2\.Dynamic\/DynAll|view(unite)?\.v1\.View\/(View|ViewProgress|RelatesFeed)|playurl\.v1\.PlayURL\/PlayView|playerunite\.v1\.Player\/PlayViewUnite)|polymer\.app\.search\.v1\.Search\/SearchAll|community\.service\.dm\.v1\.DM\/DmView|main\.community\.reply\.v1\.Reply\/MainList|pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_response_kokoryh.js, requires-body=true, binary-body-mode=true, argument="[{{{showUpList}}}, {{{purifyTopReplies}}}, {{{airborne}}}, {{{logLevel}}}]"
 PupuSplashAds2=type=http-response,pattern=^https:\/\/j1\.pupuapi\.com\/client\/search\/hot_keywords\/v3,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PupuSplashAds.js
 PupuSplashAds3=type=http-response,pattern=^https:\/\/j1\.pupuapi\.com\/client\/order_settlement\/detail,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PupuSplashAds.js
 PupuSplashAds4=type=http-response,pattern=^https:\/\/j1\.pupuapi\.com\/client\/order\/orders\/list\/v4,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PupuSplashAds.js
@@ -3088,8 +3074,8 @@ PupuSplashAds=type=http-response,pattern=^https:\/\/j1\.pupuapi\.com\/client\/se
 QuDa=type=http-response,pattern=^https?:\/\/iqushangwang\.8quan\.com\/index\.php\/i\/index\/index,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/QuDa.js
 Script Hub: 前端 = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-hub.js, timeout=300
 Script Hub: 脚本转换 = type=http-request, pattern=^https?:\/\/script\.hub\/convert\/, script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-converter.js, timeout=300
-Script Hub: 规则集转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/rule-parser.js, timeout=300, argument=Notify=PROXY
-Script Hub: 重写转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Rewrite-Parser.js, timeout=300, argument=Notify=PROXY
+Script Hub: 规则集转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/rule-parser.js, timeout=300, argument=Notify={{{Notify}}}
+Script Hub: 重写转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
 Smzdm2=type=http-response,pattern=^https?:\/\/user-api\.smzdm\.com\/vip$,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/smzdm/Smzdm.js
 Smzdm3=type=http-response,pattern=^https?:\/\/qianbao\.smzdm\.com\/v\d\/app\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
 Smzdm4=type=http-response,pattern=^https?:\/\/homepage-api\.smzdm\.com\/v3\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
@@ -3629,7 +3615,7 @@ zhuanzhuan=type=http-response,pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/tran
 移除首页推广 = type=http-response, pattern=^https:\/\/m5\.amap\.com\/ws\/shield\/frogserver\/aocs\/updatable\/1\?, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Amap_remove_ads.js, requires-body=true
 移除首页顶部标签 = type=http-response, pattern=^https:\/\/api\.weibo\.cn\/2\/groups\/allgroups\/v2\?, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Weibo_remove_ads.js, requires-body=true
 稷下書院(www.novel543.com) =  type=http-response , pattern="^https?:\/\/(www.novel543.com)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
-空降助手 = type=http-request, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/DmSegMobile$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_request_kokoryh.js, requires-body=true, binary-body-mode=true, argument=[PROXY]
+空降助手 = type=http-request, pattern=^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/DmSegMobile$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Bilibili_proto_request_kokoryh.js, requires-body=true, binary-body-mode=true, argument=[{{{logLevel}}}]
 第一版主(m.diyibanzhu.me) =  type=http-response , pattern="^https?:\/\/(m\.diyibanzhu\.me)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 精简顶部标签 = type=http-response, pattern=^https:\/\/api\.zhihu\.com\/root\/tab, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Zhihu_remove_ads.js, requires-body=true
 紳士漫畫(www.wnacg.com) = type=http-response , pattern="^https?:\/\/www\.wnacg\.com\/(?!(.*(onclick|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0

@@ -1,30 +1,22 @@
-#!name=🚫 Universal Ad-Blocking Rules (Lite)
-#!desc=Auto-merged from: 广告联盟 + 小程序去广告 + AD ByeBye+ 2.x + AllInOne + 可莉\n\n拦截广告平台、HTTPDNS、常见应用广告。包含 Rule/URL Rewrite/Map Local/Script/MITM 完整功能。所有规则集已内化，无外部依赖。\n\n⚠️ 隐私说明: kelee.one 是可莉的脚本托管服务，仅用于下载去广告脚本，不会上报用户数据。
-#!author=可莉🅥, VirgilClyne, bunizao, blackmatrix7, limbopro, Auto-Merged
+#!name=🚫 Universal Ad-Blocking Rules (LITE)
+#!desc=Consolidated ad-blocking logic. Automated merge from multiple sources including Kelee, AllInOne, and App-specific blockers. Fully self-contained.
+#!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!tag=去广告, 依赖, HTTPDNS
-#!date=2026-04-08 17:15:14
+#!tag=AdBlock, Dependency, HTTPDNS
+#!date=2026-04-08 18:08:59
 
 [Rule]
-# ═══════════════════════════════════════════════════════════════
-# Self-hosted AdBlock rulesets (无外部依赖)
-# Sources: 广告联盟, 小程序去广告, AD ByeBye+ 2.x, AllInOne, 可莉
-# ═══════════════════════════════════════════════════════════════
-# 主要REJECT规则 (本地托管)
+# REJECT Rules (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# REJECT-NO-DROP规则 (本地托管)
+# REJECT-NO-DROP Rules (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# REJECT-DROP规则 (本地托管)
+# REJECT-DROP Rules (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# BlockHttpDNS - 阻止HTTPDNS泄露 (本地托管)
+# BlockHttpDNS (Self-hosted)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 
-
 [URL Rewrite]
-# ═══════════════════════════════════════════════════════════════
-# Merged URL Rewrite Rules (943)
-# ═══════════════════════════════════════════════════════════════
 (^https?://app\.biliintl\.com/(x/)?(intl|dm|reply|history|v\d/(fav|msgfeed)).+?)(&s_locale=zh-Hans_[A-Z]{2})(.+?)(&sim_code=\d+)(.+) $1&s_locale=zh-Hans_PH$6&sim_code=51503$8 302
 (^https?://passport\.biliintl\.com/x/intl/passport-login/.+)(&s_locale=zh-Hans_[A-Z]{2})(.+)(&sim_code=\d+)(.+) $1&s_locale=zh-Hans_PH$35&sim_code=51503$5 302
 (https://www.javlibrary.com/cn/videoreviews.php\?v=)(.*?)(&mode=.*) https://www.javlibrary.com/cn/?v=$2 307
@@ -970,9 +962,6 @@ jbnnr_yueyupp_3.js - reject
 js\.wpadmngr\.com\/static\/adManager\.js - reject
 
 [Map Local]
-# ═══════════════════════════════════════════════════════════════
-# Merged Map Local Rules (2061)
-# ═══════════════════════════════════════════════════════════════
 "^http:\/\/.*aastocks\.com\/ad\/" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^http:\/\/.*babytree\.com/(plough\.do|go_search\/api\/mobile_search_new\/get_multi_search_default_keywords)" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^http:\/\/ads.?s?ervice(retry)?\.(kugou|kglink).(com|cn)\/v\d\/" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
@@ -3036,9 +3025,6 @@ https?:\/\/m\.sd\.10086\.cn\/zapi\/app_common\/homeWelcome\/welcome.do data="htt
 https?:\/\/res\.xiaojukeji\.com\/resapi\/activity\/get(Ruled|Preload|PasMultiNotices) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 
 [Script]
-# ═══════════════════════════════════════════════════════════════
-# Merged Script Rules (628)
-# ═══════════════════════════════════════════════════════════════
 12306 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://raw.perzikkop.com/Scripts/12306_splashscreen.js, requires-body=true
 12306 = type=http-response, pattern=^https:\/\/mobile\.12306\.cn\/otsmobile\/app\/mgs\/mgw\.htm$, script-path=https://raw.perzikkop.com/Scripts/12306.js
 123062=type=http-response,pattern=^https?:\/\/ad\.12306\.cn\/ad\/ser\/getAdList,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/12306.js
