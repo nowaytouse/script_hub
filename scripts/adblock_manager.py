@@ -277,7 +277,10 @@ class AdBlockManager:
         if not rule:
             return None
 
-        if "," not in rule:
+        if "," in rule:
+            parts = rule.split(",", 1)
+            rule = f"{parts[0].strip()},{parts[1].strip()}"
+        else:
             normalized_bare_rule = self.normalize_bare_rule(rule)
             if not normalized_bare_rule:
                 return None

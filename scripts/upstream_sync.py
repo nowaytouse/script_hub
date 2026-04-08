@@ -193,13 +193,13 @@ class UpstreamSyncer:
             with open(tmp_json, 'r') as f: data = json.load(f)
             rules = []
             for rule in data.get('rules', []):
-                rules.extend([f"DOMAIN,{d}" for d in rule.get('domain', [])])
-                rules.extend([f"DOMAIN-SUFFIX,{d}" for d in rule.get('domain_suffix', [])])
-                rules.extend([f"DOMAIN-KEYWORD,{d}" for d in rule.get('domain_keyword', [])])
-                rules.extend([f"DOMAIN-REGEX,{d}" for d in rule.get('domain_regex', []) if self._is_valid_regex(d)])
+                rules.extend([f"DOMAIN,{d.strip()}" for d in rule.get('domain', [])])
+                rules.extend([f"DOMAIN-SUFFIX,{d.strip()}" for d in rule.get('domain_suffix', [])])
+                rules.extend([f"DOMAIN-KEYWORD,{d.strip()}" for d in rule.get('domain_keyword', [])])
+                rules.extend([f"DOMAIN-REGEX,{d.strip()}" for d in rule.get('domain_regex', []) if self._is_valid_regex(d)])
                 for ip in rule.get('ip_cidr', []):
                     prefix = "IP-CIDR6" if ":" in ip else "IP-CIDR"
-                    rules.append(f"{prefix},{ip},no-resolve")
+                    rules.append(f"{prefix},{ip.strip()},no-resolve")
             rules = sorted(list(set(rules)))
             output_path = os.path.join(METACUBEX_DIR, f"MetaCubeX_{name}.list")
             final_content = f"# MetaCubeX geosite-{name}\n# Rules: {len(rules)}\n\n" + "\n".join(rules) + "\n"
