@@ -552,10 +552,18 @@ class AdBlockManager:
             else:
                 non_rule_sections.append((section_name, section_lines))
 
-        if rule_count == 0:
-            return text.rstrip() + "\n"
-
         output = self.sanitize_module_header(header_lines)
+
+        if not sections or rule_count == 0:
+            if output:
+                # Reconstruct content with sanitized header
+                body = []
+                for section_name, section_lines in sections:
+                    body.append(f"[{section_name}]")
+                    body.extend(section_lines)
+                    body.append("")
+                return "\n".join(output + [""] + body).rstrip() + "\n"
+            return text.rstrip() + "\n"
         if output:
             output.append("")
 
