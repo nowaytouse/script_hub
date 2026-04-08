@@ -32,7 +32,7 @@ SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.conf")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 
-GROUP_HEAD_EXPANSE = "《 🔝 Head Expanse › 首端扩域 》"
+GROUP_HEAD_EXPANSE = "[ 🔝 Head Expanse › 首端扩域 ]"
 MODULE_SUFFIXES = (".sgmodule", ".module")
 REMOTE_PREFIXES = ("http://", "https://")
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
