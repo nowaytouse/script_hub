@@ -296,9 +296,10 @@ class AdBlockManager:
             return None
 
         if rule.startswith("DOMAIN-REGEX,"):
-            payload = rule.split(",", 1)[1].strip()
+            payload = rule.split(",", 1)[1].strip().strip('"')
             if payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
                 return None
+            return f'DOMAIN-REGEX,"{payload}"'
 
         return rule
 

@@ -114,11 +114,11 @@ class RulesetManager:
         if r.startswith('IP-CIDR,') and '::' in r: r = r.replace('IP-CIDR,', 'IP-CIDR6,', 1)
         if any(k in r for k in ["AND,", "OR,", "NOT,"]): return ""
         if r.startswith("DOMAIN-REGEX,"):
-            payload = r[13:].strip()
+            payload = r[13:].strip().strip('"')
             if not payload or payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
                 return ""
-        
-        if "," in r:
+            r = f'DOMAIN-REGEX,"{payload}"'
+        elif "," in r:
             parts = r.split(",", 1)
             r = f"{parts[0].strip()},{parts[1].strip()}"
         
