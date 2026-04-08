@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=《 🔝 Head Expanse › 首端扩域 》
 #!tag=AdBlock, Dependency, HTTPDNS
-#!date=2026-04-09 00:52:14
+#!date=2026-04-08 17:45:34
 
 [Rule]
 # REJECT Rules (self-hosted canonical rebuild)
@@ -109,6 +109,7 @@ DOMAIN-SUFFIX,zijieapi.com,REJECT
 ^http:\/\/139\.196\.12\.179:8053\/httpdns\/ _ reject
 ^http:\/\/54\.222\.159\.138:8053\/httpdns\/ _ reject
 ^http:\/\/home\.umetrip\.com\/gateway\/api\/umetrip\/native - reject
+^http:\/\/image1\.ccb\.com\/newsinfo\/eBranch\/check\/(?:nf\/newfin\/activity|po\/poortheme\/activity)\/\w+\.png - reject
 ^http:\/\/img\.allahall\.com\/img\/50\/edb40c6392f848df37f9c31d8a6f90f6\.jpg - reject
 ^http:\/\/img\.allahall\.com\/img\/59\/6a13a75dfe46ebfdac96bd27ef098885\.jpg - reject
 ^http:\/\/img\.allahall\.com\/img\/5\/6cb2aa237ce1f65944aa1ecb29fbdeef\.jpg - reject
@@ -129,33 +130,53 @@ DOMAIN-SUFFIX,zijieapi.com,REJECT
 ^https:\/\/a\.line\.me\/cs\/v\d\/oa$ _ reject
 ^https:\/\/a\.line\.me\/lass\/api\/v\d\/ads$ _ reject
 ^https:\/\/a\.line\.me\/oa\/v\d\/e$ _ reject
+^https:\/\/aag\.enmonster\.com\/apa\/index\/advert\/skin - reject
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.playboy\.recommend\/1\.0 _ reject
 ^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idle\.home\.welcome - reject
+^https:\/\/activity\.yonghuivip\.com\/api\/\/web\/shensuan\/ad - reject
+^https:\/\/activity\.yonghuivip\.com\/api\/app\/fp\/homepage\/pop - reject
 ^https:\/\/ad\.line-scdn\.net\/0h _ reject
+^https:\/\/ad\.xiaotucc\.com\/advert - reject
 ^https:\/\/api-access\.pangolin-sdk-toutiao\d?\.com\/api\/ad\/ _ reject
+^https:\/\/api-marketing\.zhinengxiyifang\.cn\/api\/v2\/cloudcode\/wechat\/bid - reject
 ^https:\/\/api-mifit-cn2\.huami\.com\/discovery\/mi\/cards\/startpage_ad - reject
 ^https:\/\/api\.(pinduoduo|yangkeduo)\.com\/api\/cappuccino\/splash - reject
+^https:\/\/api\.pinduoduo\.com\/api\/ktt_gateway\/activity\/feeds\/personal_home_page\/ - reject
+^https:\/\/api\.szbgcx\.cn\/account\/adv\/ - reject
+^https:\/\/api\.wfdata\.club\/v2\/yesfeng\/yesList - reject
+^https:\/\/api\.yonghuivip\.com\/api\/fp\/homepage\/pop - reject
 ^https:\/\/api\.zhihu\.com\/ab\/api\/v1\/products\/zhihu\/platforms\/ios\/config _ reject
+^https:\/\/api\.zhihu\.com\/unlimited\/go\/my_card - reject
 ^https:\/\/api\.zhihu\.com\/unlimited\/go\/my_card _ reject
 ^https:\/\/apiwz\.midukanshu\.com\/advert\/getPopup$ - reject
 ^https:\/\/apiwz\.midukanshu\.com\/advert\/treasureInfo$ - reject
 ^https:\/\/apiwz\.midukanshu\.com\/config\/getAds$ - reject
 ^https:\/\/app\.10099\.com\.cn\/contact-web\/api\/version\/getFlashScreenPage - reject
+^https:\/\/app\.95504\.net\/app\/json\/page_ad\/initPageAd\?ver= - reject
 ^https:\/\/app\.flymodem\.com\.cn\/Appapi\/Public\/welecome _ reject
 ^https:\/\/axxd\.xmseeyouyima\.com\/ad\/ _ reject
 ^https:\/\/axxd\.xmseeyouyima\.com\/ad_statistics\? _ reject
 ^https:\/\/axxd\.xmseeyouyima\.com\/pregetad\? _ reject
 ^https:\/\/axxd\.xmseeyouyima\.com\/v1\/getad\? _ reject
 ^https:\/\/buy\.line\.me\/api\/graphql\?variables _ reject
+^https:\/\/ccmsupport-sz\.tenpay\.com\/cgi-bin\/common\/ccm_page_element.cgi - reject
 ^https:\/\/cdn\.web\.chelaile\.net\.cn\/info-flow\/index\.html - reject
 ^https:\/\/cix\.line-apps\.com\/R4\? _ reject
+^https:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/DN\/(explorePage\/getAdverList|init\/startInit) - reject
 ^https:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/DN\/init\/startInit$ - reject
+^https:\/\/creditcardapp\.bankcomm\.com\/cnsvPmpaMdbcardWeb\/page\/getGuidePageAds - reject
 ^https:\/\/crs-event\.line\.me\/v\d\/imp _ reject
 ^https:\/\/dl-cu-hz\.lechange\.cn\/oms-online\/advertisementPush _ reject
 ^https:\/\/dsp\.fcbox\.com\/adSearch\/get\? _ reject
 ^https:\/\/dudian-oss\.oss-cn-shenzhen\.aliyuncs\.com\/dlabel\/1\/startpage _ reject
+^https:\/\/elemecdn.com\/.+\/sitemap - reject
 ^https:\/\/ether-pack\.pangolin-sdk-toutiao\.com\/union\/endcard\/ _ reject
 ^https:\/\/external\.fcbox\.com\/wxgw\/post\/suggestion\/query _ reject
+^https:\/\/flow\.dmall\.com\/app\/home\/pops - reject
+^https:\/\/fscdn\.zto\.com\/fs1 - reject
+^https:\/\/fuss10.elemecdn.com\/.+\.mp4 - reject
+^https:\/\/fuss10.elemecdn.com\/.+\/w\/640\/h\/\d{3,4} - reject
+^https:\/\/fuss10.elemecdn.com\/.+\/w\/750\/h\/\d{3,4} - reject
 ^https:\/\/gslbali\.ximalaya\.com\/linkeye-cloud\/httpdns\/ - reject
 ^https:\/\/gw\.alicdn\.com\/mt\/ - reject
 ^https:\/\/gw\.alicdn\.com\/tfs\/.+\d{3,4}-\d{4} - reject
@@ -163,6 +184,10 @@ DOMAIN-SUFFIX,zijieapi.com,REJECT
 ^https:\/\/gw\.line\.naver\.jp\/ext\/lgfp\/lad\/v1$ _ reject
 ^https:\/\/gw\.line\.naver\.jp\/lass\/api\/v1\/ads$ _ reject
 ^https:\/\/gw\.line\.naver\.jp\/tr\/event$ _ reject
+^https:\/\/hdgateway\.zto\.com\/getAdInfo - reject
+^https:\/\/hdgateway\.zto\.com\/getApolloConfig - reject
+^https:\/\/hdgateway\.zto\.com\/listJumperShow - reject
+^https:\/\/hdgateway\.zto\.com\/track - reject
 ^https:\/\/imagepc\.ctaiot\.com\/dlabel\/0\/startpage _ reject
 ^https:\/\/images\.pinduoduo\.com\/marketing_api\/ - reject
 ^https:\/\/images\.pinduoduo\.com\/mrk\/ - reject
@@ -175,7 +200,11 @@ DOMAIN-SUFFIX,zijieapi.com,REJECT
 ^https:\/\/legy\.line-apps\.com:443\/tr\/event$ _ reject
 ^https:\/\/legy\.line-apps\.com\/line\.gcs\.GcsModuleService\/GetModulesByModuleIds$ _ reject
 ^https:\/\/lf-cdn-tos\.bytescm\.com\/obj\/static\/ad\/ _ reject
+^https:\/\/link\.zhihu\.com\/\?target=(?:https?)?(?:%3A|:)?(?:\/\/|%2F%2F)?(.*) http://$1 302
 ^https:\/\/link\.zhihu\.com\/\?target=(https?)?(%3A|:)?(\/\/|%2F%2F)?(.*?)(&source.*)?$ http://$4 302
+^https:\/\/mbmodule-openapi\.paas\.cmbchina\.com\/graphic\/v2\/module\/graphic - reject
+^https:\/\/minipro\.95504\.net\/app\/json\/ad\/getIndexAdData - reject
+^https:\/\/minipro\.95504\.net\/app\/json\/ad\/getPopAdData - reject
 ^https:\/\/mmfl02\.com\/.*?\&ads - reject
 ^https:\/\/mmfl02\.com\/assets\/jquery\/p2adult\.js.* - reject
 ^https:\/\/mobileapi\.xiamenair\.com\/mobile-starter _ reject
@@ -184,6 +213,7 @@ DOMAIN-SUFFIX,zijieapi.com,REJECT
 ^https:\/\/obs\.line-scdn\.net\/0h.+\/\d+p\.mp4$ _ reject
 ^https:\/\/obs\.line-scdn\.net\/0hGH\d _ reject
 ^https:\/\/rtm\.fcbox\.com\/rtsWeb\/api\/resource\/ad\/queryAd _ reject
+^https:\/\/sauron-report\.yonghuivip\.com\/collect - reject
 ^https:\/\/scdn\.line-apps\.com\/appresources\/moretab\/list\.json _ reject
 ^https:\/\/scdn\.line-apps\.com\/lan\/document\/pageEvent\/line\/ios\/ _ reject
 ^https:\/\/scdn\.line-apps\.com\/lan\/image\/line\/bannerImageEvent\/ _ reject
@@ -192,14 +222,17 @@ DOMAIN-SUFFIX,zijieapi.com,REJECT
 ^https:\/\/static\.line-scdn\.net\/ad-sdk\/ _ reject
 ^https:\/\/suzihaza\.com\/asset\/jquery\/slim-3\.2\.min\.js.* - reject
 ^https:\/\/t-dsp\.pinduoduo\.com\/dspcb\/i\/mrk_ - reject
+^https:\/\/ump\.ems\.com\.cn\/mailAd$ - reject
 ^https:\/\/uts-front\.line-apps\.com\/event$ _ reject
 ^https:\/\/uts-front\.line-apps\.com\/settings$ _ reject
 ^https:\/\/video-dsp\.pddpic\.com\/market-dsp-video\/ - reject
 ^https:\/\/w\.line\.me\/adp\/api\/ad\/v\d\/ _ reject
+^https:\/\/www1.elecfans.com\/www\/delivery - reject
 ^https:\/\/www\.xiaoxiongmeishu\.com\/api\/(home\/v1\/config\/appInit|s\/v1\/popup\/createCouponPopup) _ reject
 ^https:\/\/www\.zhihu\.com\/api\/v4/(answers|questions)\/\d+/related-readings _ reject
 ^https:\/\/www\.zhihu\.com\/api\/v4\/hot_recommendation _ reject
 ^https:\/\/www\.zhihu\.com\/api\/v4\/mcn\/v2\/linkcards\? _ reject
+^https:\/\/www\.zhihu\.com\/appview\/v3\/zhmore - reject
 ^https:\/\/www\.zhihu\.com\/commercial_api\/banners_v3\/mobile_banner _ reject
 ^https:\/\/xxyx-client-api\.xiaoxiaoyouxuan\.com\/bottom_banner _ reject
 ^https:\/\/xxyx-client-api\.xiaoxiaoyouxuan\.com\/get_index_activity_list_ad _ reject
