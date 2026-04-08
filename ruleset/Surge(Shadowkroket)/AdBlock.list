@@ -1,6 +1,6 @@
 # Ruleset: AdBlock
-# Updated: 2026-04-08 17:45:35
-# Total Rules: 289052
+# Updated: 2026-04-09 02:31:34
+# Total Rules: 289032
 # Source Manifest: ruleset/Sources/Links/AdBlock_sources.txt
 # Build Model: Canonical rebuild from curated sources, no self-reference
 # Whitelist: ruleset/Sources/adblock_whitelist.txt
@@ -17938,26 +17938,6 @@ DOMAIN-KEYWORD,xn--2qux23c9ziyrq
 DOMAIN-KEYWORD,xxshuyuan
 DOMAIN-KEYWORD,zjtoolbar
 DOMAIN-KEYWORD,zymerget
-DOMAIN-REGEX,]
-DOMAIN-REGEX,^
-DOMAIN-REGEX,a
-DOMAIN-REGEX,c
-DOMAIN-REGEX,d
-DOMAIN-REGEX,e
-DOMAIN-REGEX,h
-DOMAIN-REGEX,k
-DOMAIN-REGEX,l
-DOMAIN-REGEX,n
-DOMAIN-REGEX,o
-DOMAIN-REGEX,p
-DOMAIN-REGEX,r
-DOMAIN-REGEX,s
-DOMAIN-REGEX,t
-DOMAIN-REGEX,v
-DOMAIN-REGEX,z
-DOMAIN-REGEX,{
-DOMAIN-REGEX,|
-DOMAIN-REGEX,}
 DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject.conf
 DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_extra.conf
 DOMAIN-SUFFIX,*-datareceiver.aki-game.net

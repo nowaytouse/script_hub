@@ -210,8 +210,13 @@ class UpstreamSyncer:
                 if os.path.exists(p): os.remove(p)
 
     def _is_valid_regex(self, pattern):
-        try: re.compile(pattern); return True
-        except: return False
+        if not pattern or len(pattern) < 2 or pattern in [".", "*", "]", "[", "^", "$", "(", ")", "|"]:
+            return False
+        try:
+            re.compile(pattern)
+            return True
+        except:
+            return False
 
     def sync_metacubex(self):
         Logger.section("Syncing MetaCubeX Rules (Concurrent)")

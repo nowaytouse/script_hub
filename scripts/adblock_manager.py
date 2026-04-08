@@ -58,7 +58,7 @@ ALLOWED_RULE_PREFIXES = (
     "PROCESS-NAME,",
     "DEST-PORT,",
 )
-INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6"}
+INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]"}
 BODY_REWRITE_PREFIXES = ("http-response", "http-request", "http-response-jq", "http-request-jq")
 UNSAFE_IP_RULE_PREFIXES = (
     "IP-CIDR,0.0.0.",
@@ -294,7 +294,7 @@ class AdBlockManager:
 
         if rule.startswith("DOMAIN-REGEX,"):
             payload = rule.split(",", 1)[1].strip()
-            if payload in INVALID_DOMAIN_REGEX_VALUES:
+            if payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
                 return None
 
         return rule

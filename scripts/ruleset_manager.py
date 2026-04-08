@@ -37,6 +37,7 @@ CONFLICT_DOMAINS = [
 ]
 
 DEPRECATED_RULESETS = ["BlockHttpDNS", "FirewallPorts", "YouTube", "GoogleCN", "Steam", "Epic", "GamingProcess", "QQ", "WeChat", "DownloadProcess", "GlobalMedia", "XiaoHongShu", "NetEaseMusic", "Tencent", "AIProcess", "LAN", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "Discord", "Fediverse", "Bing", "Tesla", "ChinaDirect", "DirectProcess", "DownloadDirect"]
+INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]", "["}
 
 RULESETS = [
     "AI", "Gaming", "GlobalProxy", "Microsoft", "NSFW", "SYSTEM",
@@ -112,7 +113,10 @@ class RulesetManager:
         
         if r.startswith('IP-CIDR,') and '::' in r: r = r.replace('IP-CIDR,', 'IP-CIDR6,', 1)
         if any(k in r for k in ["AND,", "OR,", "NOT,"]): return ""
-        if r.startswith("DOMAIN-REGEX,") and ("," not in r[13:] or not r[13:].strip()): return ""
+        if r.startswith("DOMAIN-REGEX,"):
+            payload = r[13:].strip()
+            if not payload or payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
+                return ""
         
         if not r.startswith(("DOMAIN", "IP-CIDR", "PROCESS-NAME", "URL-REGEX", "USER-AGENT")):
             return ""
