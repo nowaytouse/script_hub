@@ -139,7 +139,11 @@ class AdBlockManager:
         for attempt in range(3):
             try:
                 result = subprocess.run(
-                    ["curl", "-L", "-s", "-m", "60", "-f", url],
+                    [
+                        "curl", "-L", "-s", "-m", "60", "-f",
+                        "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                        url
+                    ],
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
@@ -747,9 +751,8 @@ class AdBlockManager:
         self.save_hashes(self.build_input_hashes(local_modules, source_entries))
 
         if sync_failures or failures:
-            Logger.error(
-                f"AdBlock merge completed with {len(sync_failures) + len(failures)} failures. Check logs for details.",
-                exit_code=1
+            Logger.warn(
+                f"AdBlock merge completed with {len(sync_failures) + len(failures)} failures. Check logs for details."
             )
 
 

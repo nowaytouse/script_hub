@@ -98,7 +98,11 @@ class UpstreamSyncer:
             try:
                 # -L follow redirects, -s silent, -m timeout, -f fail on error
                 result = subprocess.run(
-                    ["curl", "-L", "-s", "-m", "60", "-f", url],
+                    [
+                        "curl", "-L", "-s", "-m", "60", "-f",
+                        "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                        url
+                    ],
                     capture_output=True, check=True
                 )
                 if result.stdout:
