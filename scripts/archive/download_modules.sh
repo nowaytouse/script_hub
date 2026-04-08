@@ -259,7 +259,7 @@ fi
 # If no URLs provided, use default list
 if [ ${#URLS[@]} -eq 0 ]; then
     URLS=(
-        "https://whatshub.top/module/bili.module"
+        "https://yfamilys.com/module/bili.module"
         "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule"
         "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule"
         "https://raw.githubusercontent.com/Semporia/TikTok-Unlock/master/Surge/TiKTok-US.sgmodule"

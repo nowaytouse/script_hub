@@ -718,11 +718,10 @@ class AdBlockManager:
         Logger.section("Syncing Upstream Ad Modules")
         cached_modules, sync_failures = self.sync_remote_module_sources(source_entries)
         if sync_failures:
-            Logger.error(
-                "Canonical AdBlock module sync aborted because required upstream modules failed: "
+            Logger.warn(
+                "Some canonical AdBlock module syncs failed. Proceeding with best-effort build: "
                 + ", ".join(sync_failures[:10])
-                + (" ..." if len(sync_failures) > 10 else ""),
-                exit_code=1,
+                + (" ..." if len(sync_failures) > 10 else "")
             )
 
         local_modules = self.discover_local_modules()
@@ -733,11 +732,10 @@ class AdBlockManager:
         Logger.section("Fetching Canonical AdBlock Sources")
         failures = self.process_source_entries(source_entries, cached_contents=cached_modules)
         if failures:
-            Logger.error(
-                "Canonical AdBlock rebuild aborted because required sources failed: "
+            Logger.warn(
+                "Some canonical AdBlock sources failed. Proceeding with best-effort build: "
                 + ", ".join(failures[:10])
-                + (" ..." if len(failures) > 10 else ""),
-                exit_code=1,
+                + (" ..." if len(failures) > 10 else "")
             )
 
         if os.path.exists(SKK_REJECT):
@@ -747,6 +745,12 @@ class AdBlockManager:
         self.generate_module()
         self.generate_ruleset()
         self.save_hashes(self.build_input_hashes(local_modules, source_entries))
+
+        if sync_failures or failures:
+            Logger.error(
+                f"AdBlock merge completed with {len(sync_failures) + len(failures)} failures. Check logs for details.",
+                exit_code=1
+            )
 
 
 if __name__ == "__main__":
