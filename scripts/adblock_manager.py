@@ -32,7 +32,7 @@ SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.conf")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 
-GROUP_HEAD_EXPANSE = "[ 🔝 Head Expanse › 首端扩域 ]"
+GROUP_HEAD_EXPANSE = "『 🔝 Head Expanse › 首端扩域 』"
 MODULE_SUFFIXES = (".sgmodule", ".module")
 REMOTE_PREFIXES = ("http://", "https://")
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
@@ -495,10 +495,25 @@ class AdBlockManager:
 
     def sanitize_module_header(self, header_lines: List[str]) -> List[str]:
         cleaned = []
+        name_line_idx = -1
+
         for line in header_lines:
             stripped = line.strip()
+            if stripped.startswith("#!category="):
+                continue  # We will inject our own
+            if stripped.startswith("#!name="):
+                name_line_idx = len(cleaned)
+            
             if line.startswith("#!") or not stripped:
                 cleaned.append(line)
+        
+        # Inject standard category
+        category_line = f"#!category={GROUP_HEAD_EXPANSE}"
+        if name_line_idx != -1:
+            cleaned.insert(name_line_idx + 1, category_line)
+        else:
+            cleaned.insert(0, category_line)
+
         while cleaned and not cleaned[-1].strip():
             cleaned.pop()
         return cleaned
