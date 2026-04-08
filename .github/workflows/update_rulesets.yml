@@ -25,10 +25,14 @@ name: Update Rulesets
 # Manual trigger: workflow_dispatch
 # ═══════════════════════════════════════════════════════════════
 
+# Manual push trigger
 on:
   schedule:
     - cron: '0 20 * * *'  # Runs at 20:00 UTC (04:00 Beijing Time next day)
     - cron: '0 4 * * *'   # Runs at 04:00 UTC (12:00 Beijing Time)
+  push:
+    branches:
+      - master
   workflow_dispatch:      # Allows manual run
 
 jobs:
