@@ -3,15 +3,14 @@
 # Policy: PROXY
 # Node: EU
 # Description: Europe streaming services
-# Rules: 35
-# Updated: 2026-04-08 17:14:38
+# Rules: 33
+# Updated: 2026-04-09 00:50:21
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,aod-dash-uk-live.akamaized.net
 DOMAIN,aod-hls-uk-live.akamaized.net
 DOMAIN,as-dash-uk-live.akamaized.net
 DOMAIN,as-hls-uk-live.akamaized.net
-DOMAIN,bbc.mp-pxcdn.com
 DOMAIN,itvpnpmobile-a.akamaihd.net
 DOMAIN,vod-dash-uk-live.akamaized.net
 DOMAIN,vod-dash-ww-live.akamaized.net
@@ -39,6 +38,5 @@ DOMAIN-SUFFIX,bbcverticals.com
 DOMAIN-SUFFIX,bidi.net.uk
 DOMAIN-SUFFIX,itv.com
 DOMAIN-SUFFIX,itvstatic.com
-DOMAIN-SUFFIX,tvlicensing.co.uk
 USER-AGENT,BBCiPlayer*
 USER-AGENT,ITV_Player*

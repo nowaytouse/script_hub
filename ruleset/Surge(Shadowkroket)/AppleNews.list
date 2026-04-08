@@ -3,11 +3,9 @@
 # Policy: PROXY
 # Node: US
 # Description: Apple News (US only)
-# Rules: 4
-# Updated: 2026-04-08 17:14:38
+# Rules: 2
+# Updated: 2026-04-09 00:50:10
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,gspe1-ssl.ls.apple.com
 DOMAIN,news-client-search.apple.com
-USER-AGENT,AppleNews*
-USER-AGENT,com.apple.news*

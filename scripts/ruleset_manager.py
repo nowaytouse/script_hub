@@ -2,6 +2,7 @@
 import os
 import re
 import hashlib
+import subprocess
 import concurrent.futures
 from datetime import datetime
 from typing import List, Set, Dict, Optional
@@ -18,10 +19,10 @@ POLICY_MAP_FILE = os.path.join(ROOT, "ruleset/Sources/ruleset_policy_map.txt")
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-PROTECTED_RULESETS = ["DownloadDirect", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global"]
+PROTECTED_RULESETS = []
 
 SKIP_CONFLICT_CHECK = [
-    "SocialMedia", "Gaming", "Steam", "Epic", "GlobalMedia", "YouTube", "Spotify", 
+    "SocialMedia", "GlobalProxy", "GlobalMedia", "SYSTEM", "Direct", "Spotify", 
     "TikTok", "Telegram", "Twitter", "Twitch", "Netflix", "Facebook", "Instagram", 
     "Reddit", "StreamUS", "StreamJP", "StreamKR", "StreamEU", "StreamHK", "StreamTW"
 ]
@@ -35,19 +36,16 @@ CONFLICT_DOMAINS = [
     "images.pexels.com", "imgur.com", "happymag.tv", "wortfm.org"
 ]
 
-DEPRECATED_RULESETS = ["BlockHttpDNS", "FirewallPorts"]
+DEPRECATED_RULESETS = ["BlockHttpDNS", "FirewallPorts", "YouTube", "GoogleCN", "Steam", "Epic", "GamingProcess", "QQ", "WeChat", "DownloadProcess", "GlobalMedia", "XiaoHongShu", "NetEaseMusic", "Tencent", "AIProcess", "LAN", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "Discord", "Fediverse", "Bing", "Tesla", "ChinaDirect", "DirectProcess", "DownloadDirect"]
 
 RULESETS = [
-    "GlobalMedia", "AI", "Gaming", "GlobalProxy", "Microsoft", "Discord", "Fediverse", "NSFW", "LAN",
-    "SocialMedia", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "WeChat",
-    "YouTube", "Netflix", "Disney", "Spotify", "Bahamut", "AppleNews",
-    "Google", "Bing", "Apple", "GitHub", "PayPal", "Tesla", "Binance",
-    "Steam", "Epic",
-    "ChinaDirect", "Bilibili", "QQ", "Tencent", "XiaoHongShu", "NetEaseMusic", "GoogleCN",
+    "AI", "Gaming", "GlobalProxy", "Microsoft", "NSFW", "SYSTEM",
+    "SocialMedia",
+    "Netflix", "Disney", "Spotify", "Bahamut", "AppleNews",
+    "Google", "Apple", "GitHub", "PayPal", "Binance",
+    "Direct", "Bilibili",
     "CDN", "Speedtest",
-    "StreamJP", "StreamUS", "StreamKR", "StreamHK", "StreamTW", "StreamEU",
-    "AIProcess", "DirectProcess", "DownloadProcess", "GamingProcess",
-    "AdBlock", "substore"
+    "StreamJP", "StreamUS", "StreamKR", "StreamHK", "StreamTW", "StreamEU"
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -60,6 +58,16 @@ class RulesetManager:
         self.hashes = self._load_hashes()
         self.policy_map = self._load_policy_map()
         self.stats = {"merged": 0, "skipped": 0, "deleted": 0}
+
+    def _download(self, url: str) -> str:
+        """Download remote content using curl."""
+        try:
+            result = subprocess.run(["curl", "-L", "-s", "-m", "30", "-f", url], capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout
+        except Exception as e:
+            Logger.warn(f"Download failed for {url}: {e}")
+        return ""
 
     def _load_hashes(self) -> Dict[str, str]:
         hashes = {}
@@ -168,12 +176,19 @@ class RulesetManager:
             if os.path.exists(s_file):
                 for line in read_file(s_file):
                     line = line.strip()
-                    if not line or line.startswith(('#', 'http')): continue
-                    local_path = os.path.join(SOURCES_DIR, line.split('|')[0])
-                    if os.path.exists(local_path):
-                        for r_line in read_file(local_path):
-                            cleaned = self.clean_rule(r_line, name)
-                            if cleaned: all_rules.add(cleaned)
+                    if not line or line.startswith('#'): continue
+                    if line.startswith('http'):
+                        remote_content = self._download(line)
+                        if remote_content:
+                            for r_line in remote_content.splitlines():
+                                cleaned = self.clean_rule(r_line, name)
+                                if cleaned: all_rules.add(cleaned)
+                    else:
+                        local_path = os.path.join(SOURCES_DIR, line.split('|')[0])
+                        if os.path.exists(local_path):
+                            for r_line in read_file(local_path):
+                                cleaned = self.clean_rule(r_line, name)
+                                if cleaned: all_rules.add(cleaned)
 
         if not all_rules and name not in PROTECTED_RULESETS: return
         write_file(target_file, self.generate_header(name, len(all_rules)) + "\n".join(sorted(list(all_rules))) + "\n")
@@ -184,7 +199,11 @@ class RulesetManager:
     def run(self):
         Logger.section("Ruleset Processing (1:1 Logic)")
         os.makedirs(SURGE_DIR, exist_ok=True)
-        all_to_process = set(RULESETS) | set(DEPRECATED_RULESETS) | set([f[:-5] for f in os.listdir(SURGE_DIR) if f.endswith('.list')])
+        # Exclude AdBlock and substore as they have specialized managers
+        SPECIAL_MANAGED = ["AdBlock", "substore"]
+        all_files = [f[:-5] for f in os.listdir(SURGE_DIR) if f.endswith('.list')]
+        all_to_process = (set(RULESETS) | set(DEPRECATED_RULESETS) | set(all_files)) - set(SPECIAL_MANAGED)
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             executor.map(self.process_ruleset, sorted(list(all_to_process)))
         self._save_hashes()

@@ -93,16 +93,20 @@ class UpstreamSyncer:
 
     def download(self, url: str) -> bytes:
         """Use system curl for robust SSL handling while maintaining security."""
-        try:
-            # -L follow redirects, -s silent, -m timeout, -f fail on error
-            result = subprocess.run(
-                ["curl", "-L", "-s", "-m", "30", "-f", url],
-                capture_output=True, check=True
-            )
-            return result.stdout
-        except Exception as e:
-            Logger.warn(f"Download failed: {url} - {e}")
-            return b""
+        last_error = None
+        for _ in range(3):
+            try:
+                # -L follow redirects, -s silent, -m timeout, -f fail on error
+                result = subprocess.run(
+                    ["curl", "-L", "-s", "-m", "60", "-f", url],
+                    capture_output=True, check=True
+                )
+                if result.stdout:
+                    return result.stdout
+            except Exception as e:
+                last_error = e
+        Logger.warn(f"Download failed: {url} - {last_error}")
+        return b""
 
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")

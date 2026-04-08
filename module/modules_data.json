@@ -1,54 +1,23 @@
 {
-  "generated": "2026-04-08T11:43:16.273889",
-  "total": 57,
+  "generated": "2026-04-09T00:52:15.863272",
+  "total": 55,
   "modules": [
     {
-      "id": "📺 BiliBili增强合集",
-      "filename": "📺 BiliBili增强合集.sgmodule",
+      "id": "boxjs.rewrite.surge",
+      "filename": "boxjs.rewrite.surge.sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-      "name": "📺 BiliBili增强合集",
-      "desc": "合并BiliUniverse五大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向\\n🛡️ ADBlock: 去广告\\n🛠️ Helper: 禁P2P",
-      "tags": [
-        "BiliBili",
-        "增强",
-        "合并"
-      ]
-    },
-    {
-      "id": "Sub_Info",
-      "filename": "Sub_Info.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/Sub_Info.sgmodule",
-      "name": "机场订阅信息",
-      "desc": "显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
+      "path": "module/surge(main)/amplify_nexus/boxjs.rewrite.surge.sgmodule",
+      "name": "BoxJs",
+      "desc": "http://boxjs.com",
       "tags": []
     },
     {
-      "id": "iRingo.TV",
-      "filename": "iRingo.TV.sgmodule",
+      "id": "DualSubs.Universal",
+      "filename": "DualSubs.Universal.sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iRingo.TV.sgmodule",
-      "name": " iRingo: 📺 TV app",
-      "desc": "全面自定义「TV app」功能",
-      "tags": []
-    },
-    {
-      "id": "TiKTok-US",
-      "filename": "TiKTok-US.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/TiKTok-US.sgmodule",
-      "name": "TikTok US",
-      "desc": "解锁 TikTok 美國 地区",
-      "tags": []
-    },
-    {
-      "id": "iRingo.WeatherKit",
-      "filename": "iRingo.WeatherKit.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iRingo.WeatherKit.sgmodule",
-      "name": " iRingo: 🌤 WeatherKit",
-      "desc": "iOS 18 & macOS 15 & watchOS 11",
+      "path": "module/surge(main)/amplify_nexus/DualSubs.Universal.sgmodule",
+      "name": "🍿️ DualSubs: 🔣 Universal",
+      "desc": "流媒体平台字幕增强及双语模块",
       "tags": []
     },
     {
@@ -61,39 +30,30 @@
       "tags": []
     },
     {
-      "id": "Surge-Beta",
-      "filename": "Surge-Beta.sgmodule",
+      "id": "iRingo.News",
+      "filename": "iRingo.News.sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/Surge-Beta.sgmodule",
-      "name": "Sub-Store(β)",
-      "desc": "支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *",
+      "path": "module/surge(main)/amplify_nexus/iRingo.News.sgmodule",
+      "name": " iRingo: 📰 News",
+      "desc": "1.自定义解锁News的地区",
       "tags": []
     },
     {
-      "id": "Timecard",
-      "filename": "Timecard.sgmodule",
+      "id": "iRingo.TV",
+      "filename": "iRingo.TV.sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/Timecard.sgmodule",
-      "name": "节假日信息",
-      "desc": "显示节假日的信息",
+      "path": "module/surge(main)/amplify_nexus/iRingo.TV.sgmodule",
+      "name": " iRingo: 📺 TV app",
+      "desc": "全面自定义「TV app」功能",
       "tags": []
     },
     {
-      "id": "boxjs.rewrite.surge",
-      "filename": "boxjs.rewrite.surge.sgmodule",
+      "id": "iRingo.WeatherKit",
+      "filename": "iRingo.WeatherKit.sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/boxjs.rewrite.surge.sgmodule",
-      "name": "BoxJs",
-      "desc": "http://boxjs.com",
-      "tags": []
-    },
-    {
-      "id": "🌐 DNS & Host Enhanced",
-      "filename": "🌐 DNS & Host Enhanced.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule",
-      "name": "🌐 DNS & Host & URL Rewrite Enhanced",
-      "desc": "🔒 全量DoH加密DNS + Host分流增强 + URL重写 | 已合并Encrypted DNS Module + URL Rewrite Module | 🔧 2025.03.14",
+      "path": "module/surge(main)/amplify_nexus/iRingo.WeatherKit.sgmodule",
+      "name": " iRingo: 🌤 WeatherKit",
+      "desc": "iOS 18 & macOS 15 & watchOS 11",
       "tags": []
     },
     {
@@ -106,13 +66,62 @@
       "tags": []
     },
     {
-      "id": "iRingo.News",
-      "filename": "iRingo.News.sgmodule",
+      "id": "Sub_Info",
+      "filename": "Sub_Info.sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iRingo.News.sgmodule",
-      "name": " iRingo: 📰 News",
-      "desc": "1.自定义解锁News的地区",
+      "path": "module/surge(main)/amplify_nexus/Sub_Info.sgmodule",
+      "name": "机场订阅信息",
+      "desc": "显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
       "tags": []
+    },
+    {
+      "id": "Surge-Beta",
+      "filename": "Surge-Beta.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/Surge-Beta.sgmodule",
+      "name": "Sub-Store(β)",
+      "desc": "支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *",
+      "tags": []
+    },
+    {
+      "id": "TiKTok-US",
+      "filename": "TiKTok-US.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/TiKTok-US.sgmodule",
+      "name": "TikTok US",
+      "desc": "解锁 TikTok 美國 地区",
+      "tags": []
+    },
+    {
+      "id": "Timecard",
+      "filename": "Timecard.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/Timecard.sgmodule",
+      "name": "节假日信息",
+      "desc": "显示节假日的信息",
+      "tags": []
+    },
+    {
+      "id": "🌐 DNS & Host Enhanced",
+      "filename": "🌐 DNS & Host Enhanced.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule",
+      "name": "🌐 DNS & Host & URL Rewrite Enhanced",
+      "desc": "🔒 全量DoH加密DNS + Host分流增强 + URL重写 | 已合并Encrypted DNS Module + URL Rewrite Module | 🔧 2025.03.14",
+      "tags": []
+    },
+    {
+      "id": "📺 BiliBili增强合集",
+      "filename": "📺 BiliBili增强合集.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+      "name": "📺 BiliBili增强合集",
+      "desc": "合并BiliUniverse五大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向\\n🛡️ ADBlock: 去广告\\n🛠️ Helper: 禁P2P",
+      "tags": [
+        "BiliBili",
+        "增强",
+        "合并"
+      ]
     },
     {
       "id": "📺 YouTube增强合集",
@@ -128,74 +137,15 @@
       ]
     },
     {
-      "id": "DualSubs.Universal",
-      "filename": "DualSubs.Universal.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/DualSubs.Universal.sgmodule",
-      "name": "🍿️ DualSubs: 🔣 Universal",
-      "desc": "流媒体平台字幕增强及双语模块",
-      "tags": []
-    },
-    {
-      "id": "Adblock4limbo",
-      "filename": "Adblock4limbo.sgmodule",
+      "id": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta",
+      "filename": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
       "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/Adblock4limbo.sgmodule",
-      "name": "毒奶特供(2026年04月08日更新)",
-      "desc": "毒奶去网页广告计划用户脚本 For Quantumult X & Surge & Shadowrocket & Loon & Stash & 油猴 ；1.新增页面右下角导航；2.通过 JavaScript 移除特定网站网页广告 —— 搜索引擎（Bing/Google）广告及内容农场结果清除/低端影视/欧乐影院/iyf爱壹帆/哔滴影视/Pornhub/Javbus/Supjav/Jable(支持抓取M3U8链接)/MissAv/91porn(支持视频下载)/hitomi/紳士漫畫/禁漫天堂/等视频&ACG&小说&漫画网站上的弹窗广告&视频广告&Gif图片广告等，保持网页清爽干净无打扰！ P.S. 欢迎提交issue",
-      "tags": []
-    },
-    {
-      "id": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official",
-      "filename": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
-      "name": "广告联盟去广告",
-      "desc": "快手联盟,优量汇,穿山甲",
-      "tags": []
-    },
-    {
-      "id": "广告平台拦截器",
-      "filename": "广告平台拦截器.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/广告平台拦截器.sgmodule",
-      "name": "广告平台拦截器",
-      "desc": "此插件是所有去广告插件的基础，只针对广告平台处理。你依然需要安装其他去广告插件来搭配使用，并确保此插件始终排序在顶部。\\n\\n支持拦截腾讯、字节跳动、快手、百度、邑盟、倍孜、艾狄墨搏、袤博、极光、个推、友盟、阿里巴巴、阿里妈妈、阿里百川、超级汇川、优比客思、秒针、网易、美团、小米、京东、天目、讯飞、泛连、锐讯灵通、聚次方、美数、嗨量、维快网络、变现猫、章鱼、分秒、泰之菩、翼信、快易、数萤技术、方麟、益起、上量优选、新义互联、腾云天下、布里奇、塔酷、丽声、推啊、旺脉、新度博望、新多广告、快易科技、封狐信息、互裕科技、旺脉信息、佳量动力、享点科技、游昆信息、小川科技、旺脉科技、萃弈、泛为、米漫、易量跃动、秒针、贵士移动、星讯、倍业科技、创聚科技、硬核聚视、Google、SupersonicAds、APPSAD、Adjust、Sigmob、TradPlus、Fancy、MedPro、AppLovin、Unity3D、Tapjoy、Liftoff、Vungle、Moloco、Smadex、Tapad、Appier、InMobi、AppsFlyer、AppLovin、Moloco、RayJump、RixEngine等广告平台的广告请求，更适合iOS平台的应用。",
+      "path": "module/surge(main)/head_expanse/%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
+      "name": "可莉广告过滤器",
+      "desc": "可莉自用的广告过滤器",
       "tags": [
-        "去广告",
-        "依赖"
+        "去广告"
       ]
-    },
-    {
-      "id": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)",
-      "filename": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
-      "name": "🚫 Universal Ad-Blocking Rules (LITE)",
-      "desc": "Consolidated ad-blocking logic. Automated merge from multiple sources including Kelee, AllInOne, and App-specific blockers. Fully self-contained.",
-      "tags": [
-        "AdBlock",
-        "Dependency",
-        "HTTPDNS"
-      ]
-    },
-    {
-      "id": "小程序和应用懒人去广告合集.official",
-      "filename": "小程序和应用懒人去广告合集.official.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/小程序和应用懒人去广告合集.official.sgmodule",
-      "name": "2.去除小程序和其他应用广告",
-      "desc": "仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等",
-      "tags": []
-    },
-    {
-      "id": "[Sukka] Enhance Better ADBlock for Surge",
-      "filename": "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/[Sukka] Enhance Better ADBlock for Surge.sgmodule",
-      "name": "[Sukka] Enhance Better ADBlock for Surge",
-      "desc": "增强 ADBlock 效果、恢复网站正常功能",
-      "tags": []
     },
     {
       "id": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8",
@@ -210,12 +160,30 @@
       ]
     },
     {
-      "id": "AllInOne_Mock",
-      "filename": "AllInOne_Mock.sgmodule",
+      "id": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official",
+      "filename": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
       "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/AllInOne_Mock.sgmodule",
-      "name": "AllInOne",
-      "desc": "最后更新时间 2025-08-26 02:12:35",
+      "path": "module/surge(main)/head_expanse/%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
+      "name": "广告联盟去广告",
+      "desc": "快手联盟,优量汇,穿山甲",
+      "tags": []
+    },
+    {
+      "id": "[Sukka] Enhance Better ADBlock for Surge",
+      "filename": "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
+      "category": "head_expanse",
+      "path": "module/surge(main)/head_expanse/[Sukka] Enhance Better ADBlock for Surge.sgmodule",
+      "name": "[Sukka] Enhance Better ADBlock for Surge",
+      "desc": "增强 ADBlock 效果、恢复网站正常功能",
+      "tags": []
+    },
+    {
+      "id": "Adblock4limbo",
+      "filename": "Adblock4limbo.sgmodule",
+      "category": "head_expanse",
+      "path": "module/surge(main)/head_expanse/Adblock4limbo.sgmodule",
+      "name": "毒奶特供(2026年04月09日更新)",
+      "desc": "毒奶去网页广告计划用户脚本 For Quantumult X & Surge & Shadowrocket & Loon & Stash & 油猴 ；1.新增页面右下角导航；2.通过 JavaScript 移除特定网站网页广告 —— 搜索引擎（Bing/Google）广告及内容农场结果清除/低端影视/欧乐影院/iyf爱壹帆/哔滴影视/Pornhub/Javbus/Supjav/Jable(支持抓取M3U8链接)/MissAv/91porn(支持视频下载)/hitomi/紳士漫畫/禁漫天堂/等视频&ACG&小说&漫画网站上的弹窗广告&视频广告&Gif图片广告等，保持网页清爽干净无打扰！ P.S. 欢迎提交issue",
       "tags": []
     },
     {
@@ -228,23 +196,39 @@
       "tags": []
     },
     {
-      "id": "可莉广告过滤器.beta",
-      "filename": "可莉广告过滤器.beta.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/可莉广告过滤器.beta.sgmodule",
-      "name": "可莉广告过滤器",
-      "desc": "可莉自用的广告过滤器",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
       "id": "All-in-One-2.x",
       "filename": "All-in-One-2.x.sgmodule",
       "category": "head_expanse",
       "path": "module/surge(main)/head_expanse/All-in-One-2.x.sgmodule",
       "name": "AD ByeBye+ 2.x",
       "desc": "Most Optimized Ad-free Experience presented with automated updates. | 提供最优化无广告体验，自动同步更新。\\nRepo: https://tuu.cat/repo・Update: 12/04/2025・Support: @bunizao・ Channel: @hututu00",
+      "tags": []
+    },
+    {
+      "id": "AllInOne_Mock",
+      "filename": "AllInOne_Mock.sgmodule",
+      "category": "head_expanse",
+      "path": "module/surge(main)/head_expanse/AllInOne_Mock.sgmodule",
+      "name": "AllInOne",
+      "desc": "最后更新时间 2025-08-26 02:12:35",
+      "tags": []
+    },
+    {
+      "id": "Script Hub 重写 & 规则集转换",
+      "filename": "Script Hub 重写 & 规则集转换.sgmodule",
+      "category": "head_expanse",
+      "path": "module/surge(main)/head_expanse/Script Hub 重写 & 规则集转换.sgmodule",
+      "name": "Script Hub: 重写 & 规则集转换",
+      "desc": "https://script.hub",
+      "tags": []
+    },
+    {
+      "id": "小程序和应用懒人去广告合集.official",
+      "filename": "小程序和应用懒人去广告合集.official.sgmodule",
+      "category": "head_expanse",
+      "path": "module/surge(main)/head_expanse/小程序和应用懒人去广告合集.official.sgmodule",
+      "name": "2.去除小程序和其他应用广告",
+      "desc": "仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等",
       "tags": []
     },
     {
@@ -270,150 +254,16 @@
       ]
     },
     {
-      "id": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta",
-      "filename": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
+      "id": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style)",
+      "filename": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
       "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
-      "name": "可莉广告过滤器",
-      "desc": "可莉自用的广告过滤器",
+      "path": "module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
+      "name": "🚫 Universal Ad-Blocking Rules (LITE)",
+      "desc": "Canonical ad-block rebuild from curated rule sources and local module sections. No self-reference, no recursive accumulation.",
       "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "Script Hub 重写 & 规则集转换",
-      "filename": "Script Hub 重写 & 规则集转换.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/Script Hub 重写 & 规则集转换.sgmodule",
-      "name": "Script Hub: 重写 & 规则集转换",
-      "desc": "https://script.hub",
-      "tags": []
-    },
-    {
-      "id": "高德地图去广告",
-      "filename": "高德地图去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/高德地图去广告.sgmodule",
-      "name": "高德地图去广告",
-      "desc": "过滤高德地图开屏广告、各页面推广，精简我的页面。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "RedNote",
-      "filename": "RedNote.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/RedNote.sgmodule",
-      "name": "RedNote",
-      "desc": "小红书去广告、去图片视频水印",
-      "tags": []
-    },
-    {
-      "id": "菜鸟去广告",
-      "filename": "菜鸟去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/菜鸟去广告.sgmodule",
-      "name": "菜鸟去广告",
-      "desc": "过滤菜鸟广告",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "QQ音乐去广告",
-      "filename": "QQ音乐去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/QQ音乐去广告.sgmodule",
-      "name": "QQ音乐去广告",
-      "desc": "过滤QQ音乐广告",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "🐦 微博去广告合集",
-      "filename": "🐦 微博去广告合集.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/🐦 微博去广告合集.sgmodule",
-      "name": "🐦 微博去广告合集",
-      "desc": "合并微博+微博国际版去广告 (自动追随上游更新)\\n\\n上游: fmz200/wool_scripts, iab0x00",
-      "tags": [
-        "去广告",
-        "微博",
-        "合并",
-        "自动更新"
-      ]
-    },
-    {
-      "id": "[Sukka] URL Rewrite",
-      "filename": "[Sukka] URL Rewrite.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/[Sukka] URL Rewrite.sgmodule",
-      "name": "[Sukka] URL Rewrite",
-      "desc": "Enable this module to use Sukka URL Rewrite rules",
-      "tags": []
-    },
-    {
-      "id": "知乎去广告",
-      "filename": "知乎去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/知乎去广告.sgmodule",
-      "name": "知乎去广告",
-      "desc": "移除各部分广告，移除知乎安全中心跳转，建议卸载知乎重新安装。如遇安全中心页面移除失败的，请积极反馈。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "小宇宙去广告",
-      "filename": "小宇宙去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/小宇宙去广告.sgmodule",
-      "name": "小宇宙去广告",
-      "desc": "移除开屏广告、搜索框推荐词和AI总结。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "Reddit 去广告",
-      "filename": "Reddit 去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/Reddit 去广告.sgmodule",
-      "name": "Reddit 去广告",
-      "desc": "过滤推广, 关 NSFW 提示, 自动开启翻译(JQ 版)",
-      "tags": []
-    },
-    {
-      "id": "闲鱼去广告",
-      "filename": "闲鱼去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/闲鱼去广告.sgmodule",
-      "name": "闲鱼去广告",
-      "desc": "移除开屏广告、商品信息流广告、关注推荐、搜索栏填充词、首页签到入口及悬浮广告，精简我的页面。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "AWAvenue Ads Rule",
-      "filename": "AWAvenue Ads Rule.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/AWAvenue Ads Rule.sgmodule",
-      "name": "AWAvenue Ads Rule",
-      "desc": "Update time: 2025-12-05 09:34:56 UTC+8\\nHomepage: https://github.com/TG-Twilight/AWAvenue-Ads-Rule",
-      "tags": []
-    },
-    {
-      "id": "小红书去广告.beta",
-      "filename": "小红书去广告.beta.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/小红书去广告.beta.sgmodule",
-      "name": "小红书去广告",
-      "desc": "过滤信息流推广，移除图片及视频水印，如有异常，请先清除缓存再尝试。",
-      "tags": [
-        "去广告"
+        "AdBlock",
+        "Dependency",
+        "HTTPDNS"
       ]
     },
     {
@@ -423,88 +273,6 @@
       "path": "module/surge(main)/narrow_pierce/10099.sgmodule",
       "name": "去广告｜中国广电",
       "desc": "中国广电去广告 [需卸载重装]\\n作者：@keywos",
-      "tags": []
-    },
-    {
-      "id": "夸克去广告",
-      "filename": "夸克去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/夸克去广告.sgmodule",
-      "name": "夸克去广告",
-      "desc": "移除阅读广告，精简我的页面。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "WeChat_Enhance",
-      "filename": "WeChat_Enhance.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/WeChat_Enhance.sgmodule",
-      "name": "WeChat增强",
-      "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
-      "tags": []
-    },
-    {
-      "id": "拼多多去广告",
-      "filename": "拼多多去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/拼多多去广告.sgmodule",
-      "name": "拼多多去广告",
-      "desc": "移除开屏广告、底栏多多视频、会场入口、聊天页面精选推荐及推广，精简首页和个人中心。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "哔哩哔哩漫画去广告",
-      "filename": "哔哩哔哩漫画去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/哔哩哔哩漫画去广告.sgmodule",
-      "name": "哔哩哔哩漫画去广告",
-      "desc": "移除开屏广告、应用内悬浮窗、各类横幅广告、你可能喜欢、小说推荐、首页弹窗，精简首页标签、底栏活动按钮和我的页面。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "滴滴出行去广告.beta",
-      "filename": "滴滴出行去广告.beta.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/滴滴出行去广告.beta.sgmodule",
-      "name": "滴滴出行去广告",
-      "desc": "移除开屏广告、精简首页、底栏和我的页面。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "京东去广告",
-      "filename": "京东去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/京东去广告.sgmodule",
-      "name": "京东去广告",
-      "desc": "移除京东开屏广告，精简我的页面产品推广。",
-      "tags": [
-        "去广告"
-      ]
-    },
-    {
-      "id": "扫描全能王解锁",
-      "filename": "扫描全能王解锁.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/扫描全能王解锁.sgmodule",
-      "name": "扫描全能王",
-      "desc": "解锁扫描全能王",
-      "tags": []
-    },
-    {
-      "id": "123云盘去广告",
-      "filename": "123云盘去广告.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/123云盘去广告.sgmodule",
-      "name": "123云盘",
-      "desc": "2025-09-09 10:10:26",
       "tags": []
     },
     {
@@ -519,15 +287,31 @@
       ]
     },
     {
-      "id": "淘宝去广告",
-      "filename": "淘宝去广告.sgmodule",
+      "id": "123云盘去广告",
+      "filename": "123云盘去广告.sgmodule",
       "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/淘宝去广告.sgmodule",
-      "name": "淘宝去广告",
-      "desc": "过滤淘宝开屏广告",
-      "tags": [
-        "去广告"
-      ]
+      "path": "module/surge(main)/narrow_pierce/123云盘去广告.sgmodule",
+      "name": "123云盘",
+      "desc": "2025-09-09 10:10:26",
+      "tags": []
+    },
+    {
+      "id": "[Sukka] URL Rewrite",
+      "filename": "[Sukka] URL Rewrite.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/[Sukka] URL Rewrite.sgmodule",
+      "name": "[Sukka] URL Rewrite",
+      "desc": "Enable this module to use Sukka URL Rewrite rules",
+      "tags": []
+    },
+    {
+      "id": "AWAvenue Ads Rule",
+      "filename": "AWAvenue Ads Rule.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/AWAvenue Ads Rule.sgmodule",
+      "name": "AWAvenue Ads Rule",
+      "desc": "Update time: 2026-04-07 20:55:56 UTC+8\\nHomepage: https://github.com/TG-Twilight/AWAvenue-Ads-Rule",
+      "tags": []
     },
     {
       "id": "IT之家去广告.beta",
@@ -552,12 +336,147 @@
       ]
     },
     {
+      "id": "QQ音乐去广告",
+      "filename": "QQ音乐去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/QQ音乐去广告.sgmodule",
+      "name": "QQ音乐去广告",
+      "desc": "过滤QQ音乐广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "Reddit 去广告",
+      "filename": "Reddit 去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/Reddit 去广告.sgmodule",
+      "name": "Reddit 去广告",
+      "desc": "过滤推广, 关 NSFW 提示, 自动开启翻译(JQ 版)",
+      "tags": []
+    },
+    {
+      "id": "RedNote",
+      "filename": "RedNote.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/RedNote.sgmodule",
+      "name": "RedNote",
+      "desc": "小红书去广告、去图片视频水印",
+      "tags": []
+    },
+    {
       "id": "Spotify去广告",
       "filename": "Spotify去广告.sgmodule",
       "category": "narrow_pierce",
       "path": "module/surge(main)/narrow_pierce/Spotify去广告.sgmodule",
       "name": "Spotify去广告",
       "desc": "移除播放广告，恢复歌手和专辑列表的正常展示。修改插件自定义配置项需要重新登陆方可生效。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "WeChat_Enhance",
+      "filename": "WeChat_Enhance.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/WeChat_Enhance.sgmodule",
+      "name": "WeChat增强",
+      "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
+      "tags": []
+    },
+    {
+      "id": "京东去广告",
+      "filename": "京东去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/京东去广告.sgmodule",
+      "name": "京东去广告",
+      "desc": "移除京东开屏广告，精简我的页面产品推广。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "哔哩哔哩漫画去广告",
+      "filename": "哔哩哔哩漫画去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/哔哩哔哩漫画去广告.sgmodule",
+      "name": "哔哩哔哩漫画去广告",
+      "desc": "移除开屏广告、应用内悬浮窗、各类横幅广告、你可能喜欢、小说推荐、首页弹窗，精简首页标签、底栏活动按钮和我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "夸克去广告",
+      "filename": "夸克去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/夸克去广告.sgmodule",
+      "name": "夸克去广告",
+      "desc": "移除阅读广告，精简我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "小宇宙去广告",
+      "filename": "小宇宙去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/小宇宙去广告.sgmodule",
+      "name": "小宇宙去广告",
+      "desc": "移除开屏广告、搜索框推荐词和AI总结。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "小红书去广告.beta",
+      "filename": "小红书去广告.beta.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/小红书去广告.beta.sgmodule",
+      "name": "小红书去广告",
+      "desc": "过滤信息流推广，移除图片及视频水印，如有异常，请先清除缓存再尝试。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "扫描全能王解锁",
+      "filename": "扫描全能王解锁.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/扫描全能王解锁.sgmodule",
+      "name": "扫描全能王",
+      "desc": "解锁扫描全能王",
+      "tags": []
+    },
+    {
+      "id": "拼多多去广告",
+      "filename": "拼多多去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/拼多多去广告.sgmodule",
+      "name": "拼多多去广告",
+      "desc": "移除开屏广告、底栏多多视频、会场入口、聊天页面精选推荐及推广，精简首页和个人中心。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "淘宝去广告",
+      "filename": "淘宝去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/淘宝去广告.sgmodule",
+      "name": "淘宝去广告",
+      "desc": "过滤淘宝开屏广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "滴滴出行去广告.beta",
+      "filename": "滴滴出行去广告.beta.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/滴滴出行去广告.beta.sgmodule",
+      "name": "滴滴出行去广告",
+      "desc": "移除开屏广告、精简首页、底栏和我的页面。",
       "tags": [
         "去广告"
       ]
@@ -574,6 +493,39 @@
       ]
     },
     {
+      "id": "知乎去广告",
+      "filename": "知乎去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/知乎去广告.sgmodule",
+      "name": "知乎去广告",
+      "desc": "移除各部分广告，移除知乎安全中心跳转，建议卸载知乎重新安装。如遇安全中心页面移除失败的，请积极反馈。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "菜鸟去广告",
+      "filename": "菜鸟去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/菜鸟去广告.sgmodule",
+      "name": "菜鸟去广告",
+      "desc": "过滤菜鸟广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "闲鱼去广告",
+      "filename": "闲鱼去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/闲鱼去广告.sgmodule",
+      "name": "闲鱼去广告",
+      "desc": "移除开屏广告、商品信息流广告、关注推荐、搜索栏填充词、首页签到入口及悬浮广告，精简我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
       "id": "阿里云盘去广告",
       "filename": "阿里云盘去广告.sgmodule",
       "category": "narrow_pierce",
@@ -582,6 +534,31 @@
       "desc": "移除首页广告横幅、弹窗和顶部奖励。",
       "tags": [
         "去广告"
+      ]
+    },
+    {
+      "id": "高德地图去广告",
+      "filename": "高德地图去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/高德地图去广告.sgmodule",
+      "name": "高德地图去广告",
+      "desc": "过滤高德地图开屏广告、各页面推广，精简我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "🐦 微博去广告合集",
+      "filename": "🐦 微博去广告合集.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/🐦 微博去广告合集.sgmodule",
+      "name": "🐦 微博去广告合集",
+      "desc": "合并微博+微博国际版去广告 (自动追随上游更新)\\n\\n上游: fmz200/wool_scripts, iab0x00",
+      "tags": [
+        "去广告",
+        "微博",
+        "合并",
+        "自动更新"
       ]
     }
   ]

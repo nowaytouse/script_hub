@@ -3,11 +3,10 @@
 # Policy: PROXY
 # Node: JP
 # Description: Japan streaming services
-# Rules: 124
-# Updated: 2026-04-08 17:14:38
+# Rules: 119
+# Updated: 2026-04-09 00:50:24
 # ═══════════════════════════════════════════════════════════════
 
-DOMAIN,ds-linear-abematv.akamaized.net
 DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
 DOMAIN-KEYWORD,abematv.akamaized.net
 DOMAIN-KEYWORD,voddazn
@@ -40,9 +39,6 @@ DOMAIN-SUFFIX,dca-ll-voddazn-dznvodjp.s.llnwi.net
 DOMAIN-SUFFIX,dcalivedazn.akamaized.net
 DOMAIN-SUFFIX,dcblivedazn.akamaized.net
 DOMAIN-SUFFIX,dmc.nico
-DOMAIN-SUFFIX,dmm-extension.com
-DOMAIN-SUFFIX,dmm.co.jp
-DOMAIN-SUFFIX,dmm.com
 DOMAIN-SUFFIX,dogatch.jp
 DOMAIN-SUFFIX,dokusho-ojikan.jp
 DOMAIN-SUFFIX,ds-linear-abematv.akamaized.net
@@ -99,7 +95,6 @@ DOMAIN-SUFFIX,indaznlab.com
 DOMAIN-SUFFIX,intercom.io
 DOMAIN-SUFFIX,joinmaidez.com
 DOMAIN-SUFFIX,linear-abematv.akamaized.net
-DOMAIN-SUFFIX,location-plus.nhk.jp
 DOMAIN-SUFFIX,logx.optimizely.com
 DOMAIN-SUFFIX,mushymush.tv
 DOMAIN-SUFFIX,myhulu.com

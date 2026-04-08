@@ -13,6 +13,7 @@ Features:
 import os
 import re
 import json
+import urllib.parse
 from pathlib import Path
 from datetime import datetime
 
@@ -36,7 +37,7 @@ def scan_modules():
     print("📦 Surge Module Consolidation Tool")
     print("=" * 60)
     
-    all_modules = []
+    deduped_modules = {}
     category_stats = {cat: 0 for cat in CATEGORIES}
     
     for cat_key in CATEGORIES:
@@ -70,8 +71,19 @@ def scan_modules():
                 print(f"  ❌ Error parsing {module_file.name}: {e}")
                 continue
                 
-            all_modules.append(info)
-            category_stats[cat_key] += 1
+            canonical_name = urllib.parse.unquote(module_file.name)
+            dedupe_key = (cat_key, canonical_name)
+            existing = deduped_modules.get(dedupe_key)
+            prefer_current = existing is None or ("%" in module_file.name and "%" not in existing["filename"])
+            if prefer_current:
+                deduped_modules[dedupe_key] = info
+
+    all_modules = sorted(
+        deduped_modules.values(),
+        key=lambda item: (item["category"], item["filename"].lower()),
+    )
+    for item in all_modules:
+        category_stats[item["category"]] += 1
             
     print(f"🔍 Scanned {len(all_modules)} modules")
     for cat, count in category_stats.items():

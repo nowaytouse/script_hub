@@ -1,9 +1,9 @@
 # ═══════════════════════════════════════════════════════════════
-# Ruleset: LAN
+# Ruleset: SYSTEM
 # Policy: DIRECT
-# Description: Local network addresses
-# Rules: 152
-# Updated: 2026-04-08 17:14:38
+# Description: System and local network rules (Consolidated)
+# Rules: 149
+# Updated: 2026-04-09 00:50:19
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,asusrouter.com
@@ -12,8 +12,6 @@ DOMAIN,oasisauth.h3c.com
 DOMAIN,router.asus.com
 DOMAIN,setmeup.arubanetworks.com
 DOMAIN,www.asusrouter.com
-DOMAIN-SUFFIX,0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
-DOMAIN-SUFFIX,0.in-addr.arpa
 DOMAIN-SUFFIX,1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
 DOMAIN-SUFFIX,10.in-addr.arpa
 DOMAIN-SUFFIX,100.100.in-addr.arpa
@@ -130,31 +128,30 @@ DOMAIN-SUFFIX,plex.direct
 DOMAIN-SUFFIX,router.ctc
 DOMAIN-SUFFIX,routerlogin.com
 DOMAIN-SUFFIX,tendawifi.com
-DOMAIN-SUFFIX,test.steampowered.com
 DOMAIN-SUFFIX,tplinkwifi.net
 DOMAIN-SUFFIX,tplogin.cn
 DOMAIN-SUFFIX,ts.net
 DOMAIN-SUFFIX,wifi.cmcc
 DOMAIN-SUFFIX,zte.home
-IP-CIDR,0.0.0.0/8,no-resolve
-IP-CIDR,10.0.0.0/8,no-resolve
-IP-CIDR,100.64.0.0/10,no-resolve
-IP-CIDR,127.0.0.0/8,no-resolve
-IP-CIDR,169.254.0.0/16,no-resolve
-IP-CIDR,172.16.0.0/12,no-resolve
-IP-CIDR,192.0.0.0/24,no-resolve
-IP-CIDR,192.0.2.0/24,no-resolve
-IP-CIDR,192.168.0.0/16,no-resolve
-IP-CIDR,192.88.99.0/24,no-resolve
-IP-CIDR,198.18.0.0/15,no-resolve
-IP-CIDR,198.18.0.0/16,no-resolve
-IP-CIDR,198.51.100.0/24,no-resolve
-IP-CIDR,203.0.113.0/24,no-resolve
-IP-CIDR,224.0.0.0/3,no-resolve
-IP-CIDR,224.0.0.0/4,no-resolve
-IP-CIDR6,::/127,no-resolve
-IP-CIDR6,::1/128,no-resolve
-IP-CIDR6,fc00::/7,no-resolve
-IP-CIDR6,fd00::/8,no-resolve
-IP-CIDR6,fe80::/10,no-resolve
-IP-CIDR6,ff00::/8,no-resolve
+IP-CIDR,0.0.0.0/8
+IP-CIDR,10.0.0.0/8
+IP-CIDR,100.64.0.0/10
+IP-CIDR,127.0.0.0/8
+IP-CIDR,169.254.0.0/16
+IP-CIDR,172.16.0.0/12
+IP-CIDR,192.0.0.0/24
+IP-CIDR,192.0.2.0/24
+IP-CIDR,192.168.0.0/16
+IP-CIDR,192.88.99.0/24
+IP-CIDR,198.18.0.0/15
+IP-CIDR,198.18.0.0/16
+IP-CIDR,198.51.100.0/24
+IP-CIDR,203.0.113.0/24
+IP-CIDR,224.0.0.0/3
+IP-CIDR,224.0.0.0/4
+IP-CIDR6,::/127
+IP-CIDR6,::1/128
+IP-CIDR6,fc00::/7
+IP-CIDR6,fd00::/8
+IP-CIDR6,fe80::/10
+IP-CIDR6,ff00::/8

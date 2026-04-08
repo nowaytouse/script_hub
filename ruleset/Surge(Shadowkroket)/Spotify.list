@@ -3,8 +3,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Spotify
-# Rules: 26
-# Updated: 2026-04-08 18:08:59
+# Rules: 37
+# Updated: 2026-04-09 00:50:19
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,adeventtracker.spotify.com
@@ -18,11 +18,16 @@ DOMAIN,heads4-ak-spotify-com.akamaized.net
 DOMAIN,spotify.com.edgesuite.net
 DOMAIN,spotify.map.fastly.net
 DOMAIN,spotify.map.fastlylb.net
+DOMAIN-KEYWORD,spotify
+DOMAIN-SUFFIX,audio-ak-spotify-com.akamaized.net
 DOMAIN-SUFFIX,byspotify.com
+DOMAIN-SUFFIX,heads4-ak-spotify-com.akamaized.net
 DOMAIN-SUFFIX,pscdn.co
 DOMAIN-SUFFIX,scdn.co
 DOMAIN-SUFFIX,spoti.fi
+DOMAIN-SUFFIX,spotify-com.akamaized.net
 DOMAIN-SUFFIX,spotify-everywhere.com
+DOMAIN-SUFFIX,spotify.app.link
 DOMAIN-SUFFIX,spotify.com
 DOMAIN-SUFFIX,spotify.design
 DOMAIN-SUFFIX,spotify.link
@@ -32,4 +37,10 @@ DOMAIN-SUFFIX,spotifycharts.com
 DOMAIN-SUFFIX,spotifycodes.com
 DOMAIN-SUFFIX,spotifyforbrands.com
 DOMAIN-SUFFIX,spotifyjobs.com
+DOMAIN-SUFFIX,spotifynewsroom.jp
+DOMAIN-SUFFIX,spotilocal.com
 DOMAIN-SUFFIX,tospotify.com
+IP-CIDR,104.154.127.126/32
+IP-CIDR,35.186.224.47/32
+PROCESS-NAME,com.spotify.music
+USER-AGENT,Spotify*
