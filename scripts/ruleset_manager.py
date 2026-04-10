@@ -4,6 +4,7 @@ import re
 import hashlib
 import subprocess
 import concurrent.futures
+import sys
 from datetime import datetime
 from typing import List, Set, Dict, Optional
 from lib.common import Logger, get_project_root, read_file, write_file
@@ -61,13 +62,36 @@ class RulesetManager:
         self.stats = {"merged": 0, "skipped": 0, "deleted": 0}
 
     def _download(self, url: str) -> str:
-        """Download remote content using curl."""
+        """Download remote content using curl. Supports .lsr decoding."""
         try:
-            result = subprocess.run(["curl", "-L", "-s", "-m", "30", "-f", url], capture_output=True, text=True)
-            if result.returncode == 0:
-                return result.stdout
+            is_lsr = url.lower().endswith('.lsr')
+            if is_lsr:
+                # Download binary for .lsr
+                result = subprocess.run(["curl", "-L", "-s", "-m", "30", "-f", url], capture_output=True)
+                if result.returncode == 0:
+                    return self._decode_lsr_content(result.stdout)
+            else:
+                result = subprocess.run(["curl", "-L", "-s", "-m", "30", "-f", url], capture_output=True, text=True)
+                if result.returncode == 0:
+                    return result.stdout
         except Exception as e:
             Logger.warn(f"Download failed for {url}: {e}")
+        return ""
+
+    def _decode_lsr_content(self, data: bytes) -> str:
+        """Integrated LSR decoder logic."""
+        try:
+            # Ensure scripts directory is in path for import
+            scripts_dir = os.path.dirname(os.path.abspath(__file__))
+            if scripts_dir not in sys.path:
+                sys.path.append(scripts_dir)
+            import lsr_decoder
+            rules, method = lsr_decoder.decode_lsr_bytes(data)
+            if rules:
+                Logger.info(f"  [+] Decoded .lsr using {method} ({len(rules)} rules)")
+                return "\n".join(rules)
+        except Exception as e:
+            Logger.warn(f"LSR decoding failed: {e}")
         return ""
 
     def _load_hashes(self) -> Dict[str, str]:

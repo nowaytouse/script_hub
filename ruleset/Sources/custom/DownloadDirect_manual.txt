@@ -77,6 +77,14 @@ DOMAIN-SUFFIX,download.epicgames.com
 DOMAIN-SUFFIX,download.jetbrains.com
 DOMAIN-SUFFIX,download.nvidia.com
 DOMAIN-SUFFIX,download.unity3d.com
+# Download Acceleration - Manual Additions
+# Steam, Adobe, Microsoft Updates, and Private Tracker (PT) domains
+
+# PT Manual Rules (from V2EX thread)
+DOMAIN-SUFFIX,tracker
+DOMAIN-KEYWORD,tracker
+DOMAIN-KEYWORD,v6tracker
+IP-CIDR,192.168.215.2/32,no-resolve
 DOMAIN-SUFFIX,download.visualstudio.microsoft.com
 DOMAIN-SUFFIX,download.windowsupdate.com
 DOMAIN-SUFFIX,download2.epicgames.com
