@@ -338,8 +338,8 @@ DEST-PORT,4911,REJECT-DROP   # Niagara Fox over TLS
 # ⚠️ 本地开发者请注释此节
 # ═══════════════════════════════════════════════════════════════
 
-DEST-PORT,3000,REJECT-DROP   # Grafana / Node 开发服务器（常无认证暴露）
-DEST-PORT,9090,REJECT-DROP   # Prometheus（指标接口无认证暴露）
+DEST-PORT,3000,REJECT-DROP   # Grafana / Node Server (⚠️ DevOps users comment this)
+DEST-PORT,9090,REJECT-DROP   # Prometheus UI
 DEST-PORT,9091,REJECT-DROP   # Prometheus Pushgateway
 DEST-PORT,5601,REJECT-DROP   # Kibana（Elasticsearch 可视化，常无认证）
 DEST-PORT,9411,REJECT-DROP   # Zipkin（分布式追踪）
