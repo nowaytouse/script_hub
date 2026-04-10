@@ -2,8 +2,10 @@ import os
 import hashlib
 import re
 import sys
+import subprocess
+import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # COLORS & LOGGING
@@ -110,3 +112,81 @@ def clean_rules(rules: List[str]) -> List[str]:
             seen.add(r_strip)
             cleaned.append(r_strip)
     return sorted(cleaned)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HARDENED DOWNLOAD UTILITIES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_BROWSER_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+)
+
+def _is_html_content(data) -> bool:
+    """Detect if downloaded content is HTML (Cloudflare challenge, 404 page, etc.)."""
+    if isinstance(data, bytes):
+        sample = data[:500].lower()
+        return b"<!doctype html" in sample or b"<html" in sample
+    if isinstance(data, str):
+        sample = data[:500].lower()
+        return "<!doctype html" in sample or "<html" in sample
+    return False
+
+def _has_dangerous_chars(line: str) -> bool:
+    """Reject lines with HTML/JS artifacts that should never appear in rule files."""
+    return any(c in line for c in ('<', '>', '{', '}', 'function(', 'window.', 'document.'))
+
+def safe_download(url: str, binary: bool = False, retries: int = 1,
+                  timeout: int = 30) -> Optional[str]:
+    """Download content from a URL with hardened protections."""
+    cmd = ["curl", "-L", "-s", "-m", str(timeout), "-f",
+           "-H", f"User-Agent: {_BROWSER_UA}", url]
+
+    for attempt in range(retries + 1):
+        try:
+            if binary:
+                result = subprocess.run(cmd, capture_output=True)
+            else:
+                result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                if attempt < retries:
+                    time.sleep(2 ** attempt)
+                    continue
+                return None
+
+            content = result.stdout
+            if _is_html_content(content):
+                return None
+
+            return content
+        except Exception:
+            if attempt < retries:
+                time.sleep(2 ** attempt)
+                continue
+            return None
+    return None
+
+def safe_download_binary(url: str, retries: int = 1,
+                         timeout: int = 30) -> Optional[bytes]:
+    """Download binary content with hardened protections."""
+    cmd = ["curl", "-L", "-s", "-m", str(timeout), "-f",
+           "-H", f"User-Agent: {_BROWSER_UA}", url]
+
+    for attempt in range(retries + 1):
+        try:
+            result = subprocess.run(cmd, capture_output=True)
+            if result.returncode != 0:
+                if attempt < retries:
+                    time.sleep(2 ** attempt)
+                    continue
+                return None
+            if _is_html_content(result.stdout):
+                return None
+            return result.stdout
+        except Exception:
+            if attempt < retries:
+                time.sleep(2 ** attempt)
+                continue
+            return None
+    return None

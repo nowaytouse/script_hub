@@ -2,12 +2,15 @@
 import os
 import re
 import hashlib
-import subprocess
+import zlib
+import gzip
 import concurrent.futures
-import sys
 from datetime import datetime
 from typing import List, Set, Dict, Optional
-from lib.common import Logger, get_project_root, read_file, write_file
+from lib.common import (
+    Logger, get_project_root, read_file, write_file,
+    safe_download, safe_download_binary, _has_dangerous_chars
+)
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
@@ -62,47 +65,77 @@ class RulesetManager:
         self.stats = {"merged": 0, "skipped": 0, "deleted": 0}
 
     def _download(self, url: str) -> str:
-        """Download remote content using curl. Supports .lsr decoding and HTML protection."""
-        try:
-            ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-            is_lsr = url.lower().endswith('.lsr')
-            
-            cmd = ["curl", "-L", "-s", "-m", "30", "-f", "-H", f"User-Agent: {ua}", url]
-            
-            if is_lsr:
-                result = subprocess.run(cmd, capture_output=True)
-                if result.returncode == 0:
-                    # Quick HTML detection for binary-ish downloads
-                    if result.stdout.startswith(b"<!DOCTYPE") or b"<html" in result.stdout[:200].lower():
-                        Logger.warn(f" [!] Source skipped (HTML detected): {url}")
-                        return ""
-                    return self._decode_lsr_content(result.stdout)
-            else:
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                if result.returncode == 0:
-                    # HTML detection for text downloads
-                    if result.stdout.strip().startswith("<!DOCTYPE") or "<html" in result.stdout[:200].lower():
-                        Logger.warn(f" [!] Source skipped (HTML detected): {url}")
-                        return ""
-                    return result.stdout
-        except Exception as e:
-            Logger.warn(f"Download failed for {url}: {e}")
-        return ""
+        """Download remote content with hardened protections (via lib/common)."""
+        is_lsr = url.lower().endswith('.lsr')
+        if is_lsr:
+            raw = safe_download_binary(url, retries=1)
+            if raw is None:
+                return ""
+            return self._decode_lsr_bytes(raw)
+        else:
+            content = safe_download(url, retries=1)
+            return content if content else ""
 
-    def _decode_lsr_content(self, data: bytes) -> str:
-        """Integrated LSR decoder logic."""
+    @staticmethod
+    def _try_decompress(data: bytes) -> Optional[bytes]:
+        """Try gzip, zlib, and raw deflate decompression."""
         try:
-            # Ensure scripts directory is in path for import
-            scripts_dir = os.path.dirname(os.path.abspath(__file__))
-            if scripts_dir not in sys.path:
-                sys.path.append(scripts_dir)
-            import lsr_decoder
-            rules, method = lsr_decoder.decode_lsr_bytes(data)
+            return gzip.decompress(data)
+        except Exception:
+            pass
+        try:
+            return zlib.decompress(data)
+        except Exception:
+            pass
+        for offset in range(1, min(64, len(data))):
+            try:
+                return zlib.decompress(data[offset:])
+            except Exception:
+                pass
+        try:
+            return zlib.decompress(data, -15)
+        except Exception:
+            pass
+        for offset in range(1, min(64, len(data))):
+            try:
+                return zlib.decompress(data[offset:], -15)
+            except Exception:
+                pass
+        return None
+
+    @staticmethod
+    def _extract_rules_from_text(text: str) -> List[str]:
+        """Extract valid rule lines from decoded text."""
+        rules = []
+        prefixes = ('DOMAIN', 'IP-CIDR', 'USER-AGENT', 'URL-REGEX',
+                    'GEOIP', 'PROCESS-NAME', 'DEST-PORT', 'SRC-PORT')
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith('#') or line.startswith('//'):
+                continue
+            if any(line.startswith(p) for p in prefixes):
+                if not _has_dangerous_chars(line):
+                    rules.append(line)
+        return rules
+
+    def _decode_lsr_bytes(self, raw: bytes) -> str:
+        """Decode .lsr binary content."""
+        try:
+            text = raw.decode('utf-8')
+            rules = self._extract_rules_from_text(text)
             if rules:
-                Logger.info(f"  [+] Decoded .lsr using {method} ({len(rules)} rules)")
                 return "\n".join(rules)
-        except Exception as e:
-            Logger.warn(f"LSR decoding failed: {e}")
+        except Exception:
+            pass
+        decompressed = self._try_decompress(raw)
+        if decompressed:
+            try:
+                text = decompressed.decode('utf-8')
+                rules = self._extract_rules_from_text(text)
+                if rules:
+                    return "\n".join(rules)
+            except Exception:
+                pass
         return ""
 
     def _load_hashes(self) -> Dict[str, str]:

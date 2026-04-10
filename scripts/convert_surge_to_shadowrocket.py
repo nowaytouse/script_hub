@@ -40,8 +40,9 @@ REMOVE_PATTERNS = [
     r'^#!ability\s*=.*$',
     r',"update-interval=[0-9]*"', # Precise match for quoted update-interval from Bash
 ]
+from typing import Tuple
 
-def convert_module_content(content: str, filename: str) -> tuple[str, list]:
+def convert_module_content(content: str, filename: str) -> Tuple[str, list]:
     changes = []
     lines = content.split('\n')
     new_lines = []
