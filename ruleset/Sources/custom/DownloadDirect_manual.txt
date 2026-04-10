@@ -80,11 +80,11 @@ DOMAIN-SUFFIX,download.unity3d.com
 # Download Acceleration - Manual Additions
 # Steam, Adobe, Microsoft Updates, and Private Tracker (PT) domains
 
-# PT Manual Rules (from V2EX thread)
-DOMAIN-SUFFIX,tracker
+# PT Manual Rules (from V2EX & optimization)
 DOMAIN-KEYWORD,tracker
 DOMAIN-KEYWORD,v6tracker
 IP-CIDR,192.168.215.2/32,no-resolve
+DOMAIN,tts.knitsky.com
 DOMAIN-SUFFIX,download.visualstudio.microsoft.com
 DOMAIN-SUFFIX,download.windowsupdate.com
 DOMAIN-SUFFIX,download2.epicgames.com
