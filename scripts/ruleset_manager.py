@@ -62,17 +62,28 @@ class RulesetManager:
         self.stats = {"merged": 0, "skipped": 0, "deleted": 0}
 
     def _download(self, url: str) -> str:
-        """Download remote content using curl. Supports .lsr decoding."""
+        """Download remote content using curl. Supports .lsr decoding and HTML protection."""
         try:
+            ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
             is_lsr = url.lower().endswith('.lsr')
+            
+            cmd = ["curl", "-L", "-s", "-m", "30", "-f", "-H", f"User-Agent: {ua}", url]
+            
             if is_lsr:
-                # Download binary for .lsr
-                result = subprocess.run(["curl", "-L", "-s", "-m", "30", "-f", url], capture_output=True)
+                result = subprocess.run(cmd, capture_output=True)
                 if result.returncode == 0:
+                    # Quick HTML detection for binary-ish downloads
+                    if result.stdout.startswith(b"<!DOCTYPE") or b"<html" in result.stdout[:200].lower():
+                        Logger.warn(f" [!] Source skipped (HTML detected): {url}")
+                        return ""
                     return self._decode_lsr_content(result.stdout)
             else:
-                result = subprocess.run(["curl", "-L", "-s", "-m", "30", "-f", url], capture_output=True, text=True)
+                result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode == 0:
+                    # HTML detection for text downloads
+                    if result.stdout.strip().startswith("<!DOCTYPE") or "<html" in result.stdout[:200].lower():
+                        Logger.warn(f" [!] Source skipped (HTML detected): {url}")
+                        return ""
                     return result.stdout
         except Exception as e:
             Logger.warn(f"Download failed for {url}: {e}")
