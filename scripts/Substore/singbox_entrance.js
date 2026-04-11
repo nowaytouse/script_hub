@@ -132,6 +132,7 @@
  * - TCP Fast Open (TFO) - 减少首次连接延迟，优化网页/小包传输
  * - UDP 转发 - 支持全流量代理（游戏、DNS等）
  * - ECN (显式拥塞通知) - 提升拥堵网络下的性能
+ * - IPv4 偏好 - 强制使用 IPv4 地址（如果节点支持）
  * - IPv6 偏好 - 优先使用 IPv6 地址（如果节点支持）
  *
  * TLS 增强选项（仅当节点已启用 TLS 时生效）：
@@ -966,9 +967,13 @@ async function operator(proxies = []) {
             // false: 禁用 ECN。
             enableECN: true,
 
+            // true: 强制使用 IPv4 地址进行连接（如果节点支持）。
+            // false: 不改变节点的 IPV4 偏好。
+            forceIPv4: true,
+
             // true: 优先使用 IPv6 地址进行连接（如果节点支持）。
             // false: 不改变节点的 IPV6 偏好。
-            forceIPv6: true,
+            forceIPv6: false,
 
             // true: 为支持的协议 (VLESS, Trojan, VMess) 强制开启 TLS 加密。
             // false: 保持节点原有的 TLS 设置。
@@ -1731,8 +1736,9 @@ async function operator(proxies = []) {
                 // ECN (显式拥塞通知) - 提升拥堵网络性能
                 modifiedProxy['ecn'] = true;  // 启用 ECN
 
-                // IPv6 偏好设置
-                if (cfg.forceIPv6) modifiedProxy['ip-version'] = 'prefer-v6';
+                // IP 版本偏好设置
+                if (cfg.forceIPv4) modifiedProxy['ip-version'] = 'prefer-v4';
+                else if (cfg.forceIPv6) modifiedProxy['ip-version'] = 'prefer-v6';
 
                 // TCP Fast Open (TFO) - 减少首次连接延迟
                 if (cfg.boostOptions.enableTcpFastOpen) {
@@ -1749,7 +1755,8 @@ async function operator(proxies = []) {
             } else {
                 // 如果禁用 boost，仍保留原有的基本设置
                 modifiedProxy['ecn'] = true;  // 默认启用 ECN
-                if (cfg.forceIPv6) modifiedProxy['ip-version'] = 'prefer-v6';
+                if (cfg.forceIPv4) modifiedProxy['ip-version'] = 'prefer-v4';
+                else if (cfg.forceIPv6) modifiedProxy['ip-version'] = 'prefer-v6';
                 modifiedProxy['tfo'] = true;        // Surge
                 modifiedProxy['fast-open'] = true;  // Shadowrocket
             }
