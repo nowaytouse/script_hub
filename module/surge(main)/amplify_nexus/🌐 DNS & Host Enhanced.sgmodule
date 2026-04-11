@@ -1,18 +1,20 @@
 #!name=🌐 DNS & Host & URL Rewrite Enhanced
-#!desc=🔒 全量DoH加密DNS + Host分流增强 + URL重写 | 已合并Encrypted DNS Module + URL Rewrite Module | 🔧 2025.03.14
+#!desc=🔒 全量DoH加密DNS + Host分流增强 + URL重写 + 脚本级HTTPDNS拦截 + DoH健康监测 | 🔧 2026.04.12
 #!author=VirgilClyne & nyamiiko (Merged & Optimized)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2025.03.14
+#!version=2026.04.12
 
 [General]
 # ═══════════════════════════════════════════════════════════════
 # Encrypted DNS Configuration
 # ⚠️ 全量DoH加密，避免传统DNS泄漏/劫持
 # ═══════════════════════════════════════════════════════════════
-# DoH3/DoH Priority（国际优先，国内DoH备用）
-encrypted-dns-server = h3://dns.alidns.com/dns-query, h3://cloudflare-dns.com/dns-query, https://dns11.quad9.net/dns-query, h3://dns.adguard-dns.com/dns-query, h3://dns.google/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query
+# DoH3/DoH Priority（安全优先 → 国际 → 国内备用）
+# ⚠️ Quad9 (Malware Blocking) 置首，提供额外威胁过滤层
+# ⚠️ H3(QUIC) 优先获取更低延迟和更强抗干扰能力
+encrypted-dns-server = h3://dns11.quad9.net/dns-query, h3://cloudflare-dns.com/dns-query, h3://dns.adguard-dns.com/dns-query, h3://dns.google/dns-query, h3://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query
 
 # ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
 # dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
@@ -22,6 +24,8 @@ encrypted-dns-server = h3://dns.alidns.com/dns-query, h3://cloudflare-dns.com/dn
 # ═══════════════════════════════════════════════════════════════
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
+# ⚠️ 强制验证DoH服务器证书，防止中间人攻击
+encrypted-dns-skip-cert-verification = false
 
 # ═══════════════════════════════════════════════════════════════
 # TUN Routing - Exclude LAN/Reserved
@@ -233,6 +237,7 @@ www.msftncsi.com = server:system
 connectivitycheck.android.com = server:system
 connectivity-check.ubuntu.com = server:system
 connectivitycheck.platform.hicloud.com = server:system
+# ⚠️ *.cn 通配域名使用系统 DNS（避免国内域名走海外 DoH 变慢）
 *.cn = server:system
 
 # ═══════════════════════════════════════════════════════════════
@@ -693,6 +698,20 @@ IP-CIDR6,240e:928:1400:10::25/128,REJECT,no-resolve,pre-matching
 # Zhihu
 IP-CIDR,118.89.204.198/32,REJECT,no-resolve,pre-matching
 IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve,pre-matching
+# Kuaishou
+DOMAIN,httpdns.kwd.inkuai.com,REJECT,extended-matching,pre-matching
+DOMAIN,httpdns.gifshow.com,REJECT,extended-matching,pre-matching
+# Xiaomi
+DOMAIN,resolver.msg.xiaomi.net,REJECT,extended-matching,pre-matching
+DOMAIN,httpdns.browser.miui.com,REJECT,extended-matching,pre-matching
+# Pinduoduo
+DOMAIN,httpdns.pinduoduo.com,REJECT,extended-matching,pre-matching
+# Ctrip
+DOMAIN,sec-httpdns.ctrip.com,REJECT,extended-matching,pre-matching
+# DiDi
+DOMAIN,hd.xiaojukeji.com,REJECT,extended-matching,pre-matching
+# Sina
+DOMAIN,dns.sina.cn,REJECT,extended-matching,pre-matching
 
 # ═══════════════════════════════════════════════════════════════
 # China ASN Direct
@@ -1645,6 +1664,22 @@ PROTOCOL,QUIC,REJECT-NO-DROP
 # ═══════════════════════════════════════════════════════════════
 GEOIP,CN,DIRECT,no-resolve
 
+[Script]
+# ═══════════════════════════════════════════════════════════════
+# DNS Guard - HTTPDNS Interception (Script-level, more precise)
+# ⚠️ 在URL层面拦截HTTPDNS请求 + 验证DNS响应防止投毒
+# ═══════════════════════════════════════════════════════════════
+DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/main/scripts/dns/dns_guard.js, requires-body=0, timeout=10
+
+DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/main/scripts/dns/dns_guard.js, requires-body=0, timeout=10
+
+DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/main/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
+
+# ═══════════════════════════════════════════════════════════════
+# DoH Health Monitor (每6小时检测一次)
+# ═══════════════════════════════════════════════════════════════
+DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/main/scripts/dns/doh_health.js, timeout=30
+
 [MITM]
-hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com
+hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn
 hostname-disabled = %INSERT% gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com, sandbox.itunes.apple.com, upp.itunes.apple.com
