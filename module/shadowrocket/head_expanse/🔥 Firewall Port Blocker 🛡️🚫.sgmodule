@@ -2,7 +2,7 @@
 #!desc=[🚀SR] Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP
 #!author=nyamiiko (Enhanced)
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!version=2026.04.10
+#!version=2026.04.11
 #!tag=Security, Firewall, macOS
 
 # ═══════════════════════════════════════════════════════════════
@@ -26,7 +26,7 @@
 
 # --- SYNCED PORT RULES START ---
 # Automated update from ports source
-# Updated: 2026-04-10 14:06:11
+# Updated: 2026-04-11 05:26:06
 DEST-PORT,8076
 IN-PORT,127.0.0.1:12654
 IN-PORT,8076
@@ -338,8 +338,8 @@ DEST-PORT,4911,REJECT   # Niagara Fox over TLS
 # ⚠️ 本地开发者请注释此节
 # ═══════════════════════════════════════════════════════════════
 
-DEST-PORT,3000,REJECT   # Grafana / Node 开发服务器（常无认证暴露）
-DEST-PORT,9090,REJECT   # Prometheus（指标接口无认证暴露）
+DEST-PORT,3000,REJECT   # Grafana / Node Server (⚠️ DevOps users comment this)
+DEST-PORT,9090,REJECT   # Prometheus UI
 DEST-PORT,9091,REJECT   # Prometheus Pushgateway
 DEST-PORT,5601,REJECT   # Kibana（Elasticsearch 可视化，常无认证）
 DEST-PORT,9411,REJECT   # Zipkin（分布式追踪）
