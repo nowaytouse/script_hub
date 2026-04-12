@@ -113,7 +113,7 @@ class RulesetManager:
             line = line.strip()
             if not line or line.startswith('#') or line.startswith('//'):
                 continue
-            if any(line.startswith(p) for p in prefixes):
+            if any(line.startswith(p) for p in prefixes) or ',' not in line:
                 if not _has_dangerous_chars(line):
                     rules.append(line)
         return rules
@@ -170,6 +170,24 @@ class RulesetManager:
         r = rule.strip()
         if not r or r.startswith('#'): return ""
         
+        # 0. Convert Domain Set formats (no commas) to classical syntax
+        if "," not in r:
+            # Check if it looks like an IP Address (basic heuristic)
+            if ":" in r or (r.count(".") == 3 and all(c.isdigit() for c in r.split('/')[0].replace(".", ""))):
+                if "/" in r:
+                    r = f"IP-CIDR6,{r}" if ":" in r else f"IP-CIDR,{r}"
+                else:
+                    r = f"IP-CIDR6,{r}/128" if ":" in r else f"IP-CIDR,{r}/32"
+            else:
+                if r.startswith('.'):
+                    r = f"DOMAIN-SUFFIX,{r[1:]}"
+                elif r.startswith('+.'):
+                    r = f"DOMAIN-SUFFIX,{r[2:]}"
+                elif r.startswith('+'):
+                    r = f"DOMAIN-SUFFIX,{r[1:]}"
+                else:
+                    r = f"DOMAIN,{r}"
+
         # 1. Conflict Check (Match original bash behavior)
         if ruleset_name not in SKIP_CONFLICT_CHECK:
             for domain in CONFLICT_DOMAINS:
@@ -194,7 +212,7 @@ class RulesetManager:
             parts = r.split(",", 1)
             r = f"{parts[0].strip()},{parts[1].strip()}"
         
-        if not r.startswith(("DOMAIN", "IP-CIDR", "PROCESS-NAME", "URL-REGEX", "USER-AGENT")):
+        if not r.startswith(("DOMAIN", "IP-CIDR", "PROCESS-NAME", "URL-REGEX", "USER-AGENT", "GEOIP")):
             return ""
         return r
 
