@@ -42,7 +42,7 @@ LogLevel: [调试] 日志等级
 # ☁️ iCloud
 DOMAIN,gateway.icloud.com,{{{Proxy}}}
 # 📰 News
-RULE-SET,https://github.com/NSRingo/News/releases/download/v3.2.1/News.list,{{{Proxy}}}
+# [SR不支持RULE-SET] RULE-SET,https://github.com/NSRingo/News/releases/download/v3.2.1/News.list,{{{Proxy}}}
 
 [Script]
 📰 News.v1.configs.request = type=http-request, pattern=^https?:\/\/news(-todayconfig)?-edge\.apple\.com\/v1\/configs, requires-body=1, script-path=https://github.com/NSRingo/News/releases/download/v3.2.1/request.bundle.js, argument=CountryCode="{{{CountryCode}}}"&NewsPlusUser="{{{NewsPlusUser}}}"&LogLevel="{{{LogLevel}}}"

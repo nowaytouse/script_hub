@@ -124,6 +124,15 @@ def convert_content(content: str) -> str:
                 continue
             line = _translate_general_line(line)
 
+        # ── [Rule] / [DNS] section: comment out SR-unsupported rule types ────────
+        if section in ("Rule", "DNS", "Host") and not stripped.startswith('#') and stripped:
+            if stripped.startswith('RULE-SET,'):
+                out.append(f"# [SR不支持RULE-SET] {line.lstrip()}")
+                continue
+            if stripped.startswith('PROTOCOL,'):
+                out.append(f"# [SR不支持PROTOCOL规则] {line.lstrip()}")
+                continue
+
         # ── Strip %INSERT% / %APPEND% prefixes ────────────────────────────────
         line = re.sub(r'%(?:INSERT|APPEND)%\s*', '', line)
 

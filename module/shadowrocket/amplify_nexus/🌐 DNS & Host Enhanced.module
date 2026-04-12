@@ -608,13 +608,13 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 # ═══════════════════════════════════════════════════════════════
 # SECTION 28: DNS Mapping Rulesets (External Lists)
 # ═══════════════════════════════════════════════════════════════
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Google.list,server:h3://dns.google/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Cloudflare.list,server:h3://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Quad9.list,server:https://dns11.quad9.net/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:h3://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:h3://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Google.list,server:h3://dns.google/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Cloudflare.list,server:h3://cloudflare-dns.com/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Quad9.list,server:https://dns11.quad9.net/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:h3://dns.alidns.com/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:h3://dns.alidns.com/dns-query
+# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
@@ -1662,7 +1662,7 @@ IP-ASN,136166,DIRECT,no-resolve // 腾讯云国际
 # ⚠️ 阻断 QUIC 防止绕过代理；UDP 53 防止 DNS 泄漏
 # ═══════════════════════════════════════════════════════════════
 # 阻断 QUIC，强制回落 HTTPS/TCP，确保代理策略生效
-PROTOCOL,QUIC,REJECT
+# [SR不支持PROTOCOL规则] PROTOCOL,QUIC,REJECT-NO-DROP
 
 # ═══════════════════════════════════════════════════════════════
 # GEOIP Catch-All (放置于 ASN 规则之后、FINAL 之前)
