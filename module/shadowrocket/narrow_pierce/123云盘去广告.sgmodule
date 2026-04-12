@@ -1,9 +1,0 @@
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
-#!name=123云盘
-#!desc=[🚀SR] 2025-09-09 10:10:26
-
-[URL Rewrite]
-^https?:\/\/www\.123pan\.com\/api\/config\/get - reject-dict
-
-[MITM]
-hostname =  www.123pan.com

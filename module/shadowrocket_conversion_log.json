@@ -1,22 +1,295 @@
 {
-  "generated": "2026-04-08T17:39:52.173622",
+  "generated": "2026-04-13T02:13:38.982309",
   "stats": {
     "total": 57,
     "converted": 57,
-    "skipped": 0,
-    "categories": {
-      "amplify_nexus": {
-        "total": 14,
-        "converted": 14
-      },
-      "head_expanse": {
-        "total": 15,
-        "converted": 15
-      },
-      "narrow_pierce": {
-        "total": 28,
-        "converted": 28
-      }
+    "failed": 0
+  },
+  "log": [
+    {
+      "src": "DualSubs.Universal.sgmodule",
+      "dst": "DualSubs.Universal.module",
+      "status": "ok"
+    },
+    {
+      "src": "Sub_Info.sgmodule",
+      "dst": "Sub_Info.module",
+      "status": "ok"
+    },
+    {
+      "src": "Surge-Beta.sgmodule",
+      "dst": "Surge-Beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "TiKTok-US.sgmodule",
+      "dst": "TiKTok-US.module",
+      "status": "ok"
+    },
+    {
+      "src": "Timecard.sgmodule",
+      "dst": "Timecard.module",
+      "status": "ok"
+    },
+    {
+      "src": "boxjs.rewrite.surge.sgmodule",
+      "dst": "boxjs.rewrite.surge.module",
+      "status": "ok"
+    },
+    {
+      "src": "iRingo.Maps.sgmodule",
+      "dst": "iRingo.Maps.module",
+      "status": "ok"
+    },
+    {
+      "src": "iRingo.News.sgmodule",
+      "dst": "iRingo.News.module",
+      "status": "ok"
+    },
+    {
+      "src": "iRingo.TV.sgmodule",
+      "dst": "iRingo.TV.module",
+      "status": "ok"
+    },
+    {
+      "src": "iRingo.WeatherKit.sgmodule",
+      "dst": "iRingo.WeatherKit.module",
+      "status": "ok"
+    },
+    {
+      "src": "net-lsp-x.sgmodule",
+      "dst": "net-lsp-x.module",
+      "status": "ok"
+    },
+    {
+      "src": "🌐 DNS & Host Enhanced.sgmodule",
+      "dst": "🌐 DNS & Host Enhanced.module",
+      "status": "ok"
+    },
+    {
+      "src": "📺 BiliBili增强合集.sgmodule",
+      "dst": "📺 BiliBili增强合集.module",
+      "status": "ok"
+    },
+    {
+      "src": "📺 YouTube增强合集.sgmodule",
+      "dst": "📺 YouTube增强合集.module",
+      "status": "ok"
+    },
+    {
+      "src": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule",
+      "dst": "%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",
+      "dst": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.module",
+      "status": "ok"
+    },
+    {
+      "src": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.sgmodule",
+      "dst": "%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.module",
+      "status": "ok"
+    },
+    {
+      "src": "Adblock4limbo.sgmodule",
+      "dst": "Adblock4limbo.module",
+      "status": "ok"
+    },
+    {
+      "src": "All-in-One-2.x.sgmodule",
+      "dst": "All-in-One-2.x.module",
+      "status": "ok"
+    },
+    {
+      "src": "AllInOne_Mock.sgmodule",
+      "dst": "AllInOne_Mock.module",
+      "status": "ok"
+    },
+    {
+      "src": "Script Hub 重写 & 规则集转换.sgmodule",
+      "dst": "Script Hub 重写 & 规则集转换.module",
+      "status": "ok"
+    },
+    {
+      "src": "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
+      "dst": "[Sukka] Enhance Better ADBlock for Surge.module",
+      "status": "ok"
+    },
+    {
+      "src": "adultraplus.sgmodule",
+      "dst": "adultraplus.module",
+      "status": "ok"
+    },
+    {
+      "src": "可莉广告过滤器.beta.sgmodule",
+      "dst": "可莉广告过滤器.beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "小程序和应用懒人去广告合集.official.sgmodule",
+      "dst": "小程序和应用懒人去广告合集.official.module",
+      "status": "ok"
+    },
+    {
+      "src": "广告平台拦截器.sgmodule",
+      "dst": "广告平台拦截器.module",
+      "status": "ok"
+    },
+    {
+      "src": "新手友好の去广告集合.official.sgmodule",
+      "dst": "新手友好の去广告集合.official.module",
+      "status": "ok"
+    },
+    {
+      "src": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
+      "dst": "🔥 Firewall Port Blocker 🛡️🚫.module",
+      "status": "ok"
+    },
+    {
+      "src": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
+      "dst": "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).module",
+      "status": "ok"
+    },
+    {
+      "src": "10099.sgmodule",
+      "dst": "10099.module",
+      "status": "ok"
+    },
+    {
+      "src": "12306去广告.beta.sgmodule",
+      "dst": "12306去广告.beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "123云盘去广告.sgmodule",
+      "dst": "123云盘去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "AWAvenue Ads Rule.sgmodule",
+      "dst": "AWAvenue Ads Rule.module",
+      "status": "ok"
+    },
+    {
+      "src": "IT之家去广告.beta.sgmodule",
+      "dst": "IT之家去广告.beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "Jump去广告.sgmodule",
+      "dst": "Jump去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "QQ音乐去广告.sgmodule",
+      "dst": "QQ音乐去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "RedNote.sgmodule",
+      "dst": "RedNote.module",
+      "status": "ok"
+    },
+    {
+      "src": "Reddit 去广告.sgmodule",
+      "dst": "Reddit 去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "Spotify去广告.sgmodule",
+      "dst": "Spotify去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "WeChat_Enhance.sgmodule",
+      "dst": "WeChat_Enhance.module",
+      "status": "ok"
+    },
+    {
+      "src": "[Sukka] URL Rewrite.sgmodule",
+      "dst": "[Sukka] URL Rewrite.module",
+      "status": "ok"
+    },
+    {
+      "src": "京东去广告.sgmodule",
+      "dst": "京东去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "哔哩哔哩漫画去广告.sgmodule",
+      "dst": "哔哩哔哩漫画去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "夸克去广告.sgmodule",
+      "dst": "夸克去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "小宇宙去广告.sgmodule",
+      "dst": "小宇宙去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "小红书去广告.beta.sgmodule",
+      "dst": "小红书去广告.beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "扫描全能王解锁.sgmodule",
+      "dst": "扫描全能王解锁.module",
+      "status": "ok"
+    },
+    {
+      "src": "拼多多去广告.sgmodule",
+      "dst": "拼多多去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "淘宝去广告.sgmodule",
+      "dst": "淘宝去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "滴滴出行去广告.beta.sgmodule",
+      "dst": "滴滴出行去广告.beta.module",
+      "status": "ok"
+    },
+    {
+      "src": "百度网盘去广告.sgmodule",
+      "dst": "百度网盘去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "知乎去广告.sgmodule",
+      "dst": "知乎去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "菜鸟去广告.sgmodule",
+      "dst": "菜鸟去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "闲鱼去广告.sgmodule",
+      "dst": "闲鱼去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "阿里云盘去广告.sgmodule",
+      "dst": "阿里云盘去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "高德地图去广告.sgmodule",
+      "dst": "高德地图去广告.module",
+      "status": "ok"
+    },
+    {
+      "src": "🐦 微博去广告合集.sgmodule",
+      "dst": "🐦 微博去广告合集.module",
+      "status": "ok"
     }
-  }
+  ]
 }
