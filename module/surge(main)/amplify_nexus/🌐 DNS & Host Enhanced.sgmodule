@@ -50,12 +50,12 @@ always-raw-tcp-keywords = alipay, unionpay, 95516, applepay, wechatpay, wxpay, j
 # ═══════════════════════════════════════════════════════════════
 # Skip Proxy - Core List
 # ═══════════════════════════════════════════════════════════════
-skip-proxy = %INSERT% localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.qq.com, *.tencent.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
+skip-proxy = %INSERT% localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
 
 # ═══════════════════════════════════════════════════════════════
 # Always Real IP - Core List
 # ═══════════════════════════════════════════════════════════════
-always-real-ip = %INSERT% *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com, *.bilibili.com, *.douyin.com, *.tiktok.com
+always-real-ip = %INSERT% *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com
 
 [URL Rewrite]
 # ═══════════════════════════════════════════════════════════════
@@ -180,6 +180,10 @@ dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twni
 ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
 dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
 dns.adguard-dns.com = 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
+
+# GitHub Static Mapping (Prevent Leak & Speed Up RULE-SET Fetching)
+raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133
+github.com = 140.82.113.4, 140.82.112.3
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 3: Local Domains / LAN
