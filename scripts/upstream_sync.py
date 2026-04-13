@@ -112,12 +112,17 @@ class UpstreamSyncer:
             
             clean_version = version.lstrip('v')
             arch = "arm64" if platform.machine() == "arm64" else "amd64"
-            url = f"https://github.com/SagerNet/sing-box/releases/download/{version}/sing-box-{clean_version}-darwin-{arch}.tar.gz"
+            primary_url = f"https://github.com/SagerNet/sing-box/releases/download/{version}/sing-box-{clean_version}-darwin-{arch}.tar.gz"
+            mirror_url = f"https://ghproxy.net/https://github.com/SagerNet/sing-box/releases/download/{version}/sing-box-{clean_version}-darwin-{arch}.tar.gz"
             
             Logger.info(f"Downloading sing-box {version} for darwin-{arch}...")
             tar_path = os.path.join(ROOT, "sing-box.tar.gz")
-            if not self.download_to_file(url, tar_path):
-                raise Exception("Download failed")
+            
+            # Try primary then mirror
+            if not self.download_to_file(primary_url, tar_path):
+                Logger.info("Primary source failed. Trying mirror...")
+                if not self.download_to_file(mirror_url, tar_path):
+                    raise Exception("Download failed from all sources")
 
             with tarfile.open(tar_path, mode="r:gz") as tar:
                 # Find the binary in the tarball (usually in a subdirectory)

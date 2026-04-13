@@ -3,8 +3,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Google services
-# Rules: 1183
-# Updated: 2026-04-13 23:45:33
+# Rules: 1169
+# Updated: 2026-04-14 00:29:33
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,265.com
@@ -250,7 +250,6 @@ DOMAIN-KEYWORD,blogspot
 DOMAIN-KEYWORD,gmail
 DOMAIN-KEYWORD,google
 DOMAIN-KEYWORD,recaptcha
-DOMAIN-KEYWORD,youtube
 DOMAIN-SUFFIX,0emm.com
 DOMAIN-SUFFIX,1e100.net
 DOMAIN-SUFFIX,1ucrs.com
@@ -960,7 +959,6 @@ DOMAIN-SUFFIX,verilylifesciences.com
 DOMAIN-SUFFIX,verilystudyhub.com
 DOMAIN-SUFFIX,verilystudywatch.com
 DOMAIN-SUFFIX,verilystudywatch.org
-DOMAIN-SUFFIX,video.google.com
 DOMAIN-SUFFIX,wallet.com
 DOMAIN-SUFFIX,waveprotocol.org
 DOMAIN-SUFFIX,waymo.com
@@ -974,7 +972,6 @@ DOMAIN-SUFFIX,webrtc.org
 DOMAIN-SUFFIX,weltweitwachsen.de
 DOMAIN-SUFFIX,whatbrowser.org
 DOMAIN-SUFFIX,whats.new
-DOMAIN-SUFFIX,wide-youtube.l.google.com
 DOMAIN-SUFFIX,widevine.com
 DOMAIN-SUFFIX,withgoogle.com
 DOMAIN-SUFFIX,withyoutube.com
@@ -1000,7 +997,6 @@ DOMAIN-SUFFIX,xn--qcka1pmc
 DOMAIN-SUFFIX,xplr.co
 DOMAIN-SUFFIX,youtube
 DOMAIN-SUFFIX,youtube-nocookie.com
-DOMAIN-SUFFIX,youtube-ui.l.google.com
 DOMAIN-SUFFIX,youtube.ae
 DOMAIN-SUFFIX,youtube.al
 DOMAIN-SUFFIX,youtube.am
@@ -1095,7 +1091,6 @@ DOMAIN-SUFFIX,youtube.es
 DOMAIN-SUFFIX,youtube.fi
 DOMAIN-SUFFIX,youtube.fr
 DOMAIN-SUFFIX,youtube.ge
-DOMAIN-SUFFIX,youtube.googleapis.com
 DOMAIN-SUFFIX,youtube.gr
 DOMAIN-SUFFIX,youtube.gt
 DOMAIN-SUFFIX,youtube.hk
@@ -1153,7 +1148,6 @@ DOMAIN-SUFFIX,youtube.ug
 DOMAIN-SUFFIX,youtube.uy
 DOMAIN-SUFFIX,youtube.vn
 DOMAIN-SUFFIX,youtubeeducation.com
-DOMAIN-SUFFIX,youtubeembeddedplayer.googleapis.com
 DOMAIN-SUFFIX,youtubefanfest.com
 DOMAIN-SUFFIX,youtubegaming.com
 DOMAIN-SUFFIX,youtubego.co.id
@@ -1162,7 +1156,6 @@ DOMAIN-SUFFIX,youtubego.com
 DOMAIN-SUFFIX,youtubego.com.br
 DOMAIN-SUFFIX,youtubego.id
 DOMAIN-SUFFIX,youtubego.in
-DOMAIN-SUFFIX,youtubei.googleapis.com
 DOMAIN-SUFFIX,youtubekids.com
 DOMAIN-SUFFIX,youtubemobilesupport.com
 DOMAIN-SUFFIX,yt.be
@@ -1181,12 +1174,5 @@ PROCESS-NAME,com.google.android.gms
 PROCESS-NAME,com.google.android.gsf
 PROCESS-NAME,com.google.android.play.games
 USER-AGENT,%E4%BA%91%E7%AB%AF%E7%A1%AC%E7%9B%98*
-USER-AGENT,*YouTubeMusic*
 USER-AGENT,*com.google.Drive*
-USER-AGENT,*com.google.ios.youtubemusic*
-USER-AGENT,*youtube*
 USER-AGENT,Google.Drive*
-USER-AGENT,YouTube*
-USER-AGENT,YouTubeMusic*
-USER-AGENT,com.google.ios.youtube*
-USER-AGENT,com.google.ios.youtubemusic*

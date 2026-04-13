@@ -3,8 +3,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Apple services
-# Rules: 1840
-# Updated: 2026-04-13 23:45:25
+# Rules: 1784
+# Updated: 2026-04-14 00:28:20
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,a1.mzstatic.com
@@ -252,14 +252,7 @@ DOMAIN,www.apple.com
 DOMAIN,www.apple.com.edgekey.net.globalredir.akadns.net
 DOMAIN,www.support.apple.com
 DOMAIN,xp.apple.com
-DOMAIN-KEYWORD,apple-support.akadns.net
-DOMAIN-KEYWORD,apple.com.akadns.net
-DOMAIN-KEYWORD,apple.com.edgekey.net
-DOMAIN-KEYWORD,buy.itunes.apple.com
 DOMAIN-KEYWORD,icloud
-DOMAIN-KEYWORD,icloud.com.akadns.net
-DOMAIN-KEYWORD,smp-device
-DOMAIN-KEYWORD,testflight
 DOMAIN-SUFFIX,100beatscheap.com
 DOMAIN-SUFFIX,12diasdepresentesdeitunes.com
 DOMAIN-SUFFIX,12diasderegalosdeitunes.cl
@@ -1796,54 +1789,5 @@ DOMAIN-SUFFIX,xn--kput3imi374g.xn--hxt814e
 DOMAIN-SUFFIX,xn--ohq11k7pl25iyo8a.cn
 DOMAIN-SUFFIX,xn--ruq8a011kt6y.xn--hxt814e
 DOMAIN-SUFFIX,yourmonsterbeats.com
-IP-CIDR,139.178.128.0/18
-IP-CIDR,144.178.0.0/19
-IP-CIDR,144.178.36.0/22
-IP-CIDR,144.178.48.0/20
-IP-CIDR,17.0.0.0/8
-IP-CIDR,192.35.50.0/24
-IP-CIDR,198.183.17.0/24
-IP-CIDR,205.180.175.0/24
-IP-CIDR,63.92.224.0/19
-IP-CIDR,65.199.22.0/23
-IP-CIDR6,2403:300::/32
-IP-CIDR6,2620:149::/32
-IP-CIDR6,2a01:b740::/32
 PROCESS-NAME,/System/Applications/Music.app/Contents/MacOS/Music
 PROCESS-NAME,/System/Library/PrivateFrameworks/iTunesCloud.framework/Support/itunescloudd
-PROCESS-NAME,CoreLocationAgent
-PROCESS-NAME,LookupViewService
-PROCESS-NAME,Music
-PROCESS-NAME,TV
-PROCESS-NAME,WeatherWidget
-PROCESS-NAME,apsd
-PROCESS-NAME,com.apple.Maps
-PROCESS-NAME,com.apple.geod
-PROCESS-NAME,findmydevice-user-agent
-PROCESS-NAME,fmfd
-PROCESS-NAME,mapspushd
-PROCESS-NAME,netbiosd
-PROCESS-NAME,trustd
-USER-AGENT,*FindMyiPhone?
-USER-AGENT,*Music?
-USER-AGENT,*WeatherFoundation*
-USER-AGENT,*com.apple.Maps?
-USER-AGENT,*com.apple.mobileme.fmip1
-USER-AGENT,AppleNews*
-USER-AGENT,AppleTV*
-USER-AGENT,FMDClient*
-USER-AGENT,FMFD*
-USER-AGENT,FindMyFriends*
-USER-AGENT,FindMyiPhone*
-USER-AGENT,Maps*
-USER-AGENT,Music*
-USER-AGENT,Wallet*
-USER-AGENT,com.apple.Maps
-USER-AGENT,com.apple.appstored*
-USER-AGENT,com.apple.news*
-USER-AGENT,com.apple.trustd*
-USER-AGENT,com.apple.tv*
-USER-AGENT,fmflocatord*
-USER-AGENT,geod*
-USER-AGENT,locationd*
-USER-AGENT,passd*
