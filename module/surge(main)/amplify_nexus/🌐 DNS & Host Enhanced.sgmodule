@@ -17,13 +17,13 @@
 encrypted-dns-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query
 
 # ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
-dns-server = 223.5.5.5, 223.6.6.6, 1.1.1.1, 8.8.8.8, 2606:4700:4700::1111, 2606:4700:4700::1001, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
+# dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
 
 # ═══════════════════════════════════════════════════════════════
 # DNS Core Settings
 # ═══════════════════════════════════════════════════════════════
 use-local-host-item-for-proxy = true
-encrypted-dns-follow-outbound-mode = true
+encrypted-dns-follow-outbound-mode = false
 # ⚠️ 强制验证DoH服务器证书，防止中间人攻击
 encrypted-dns-skip-cert-verification = false
 
@@ -405,7 +405,7 @@ url.cn = server:https://doh.pub/dns-query // 腾讯短网址
 *.bdysites.com = server:https://dns.alidns.com/dns-query // 百度云 域名
 *.baidubce.* = server:https://dns.alidns.com/dns-query // 百度智能云
 *.bcedns.* = server:https://dns.alidns.com/dns-query // 百度智能云 DNS
-*.bcebos.com = server:https://dns.alidns.com/dns-query // 百度智能云 对象存储BOS
+# *.bcebos.com = server:https://dns.alidns.com/dns-query // 百度智能云 对象存储BOS
 *.bcevod.com = server:https://dns.alidns.com/dns-query // 百度智能云 播放器服务
 *.bceimg.com = server:https://dns.alidns.com/dns-query // 百度智能云 图片服务
 *.bcehost.com = server:https://dns.alidns.com/dns-query // 百度智能云 主机
