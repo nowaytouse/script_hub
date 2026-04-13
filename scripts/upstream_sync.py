@@ -115,12 +115,11 @@ class UpstreamSyncer:
             url = f"https://github.com/SagerNet/sing-box/releases/download/{version}/sing-box-{clean_version}-darwin-{arch}.tar.gz"
             
             Logger.info(f"Downloading sing-box {version} for darwin-{arch}...")
-            tar_data = self.download(url)
-            if not tar_data:
+            tar_path = os.path.join(ROOT, "sing-box.tar.gz")
+            if not self.download_to_file(url, tar_path):
                 raise Exception("Download failed")
 
-            import io
-            with tarfile.open(fileobj=io.BytesIO(tar_data), mode="r:gz") as tar:
+            with tarfile.open(tar_path, mode="r:gz") as tar:
                 # Find the binary in the tarball (usually in a subdirectory)
                 binary_member = None
                 for member in tar.getmembers():
@@ -129,8 +128,7 @@ class UpstreamSyncer:
                         break
                 
                 if binary_member:
-                    # Extract to temporary location
-                    extract_path = os.path.join(ROOT, "sing-box_tmp")
+                    # Extract binary
                     tar.extract(binary_member, path=ROOT)
                     # Move binary to root and cleanup
                     src_path = os.path.join(ROOT, binary_member.name)
@@ -144,6 +142,7 @@ class UpstreamSyncer:
                         top_dir = binary_member.name.split("/")[0]
                         shutil.rmtree(os.path.join(ROOT, top_dir), ignore_errors=True)
                     
+                    if os.path.exists(tar_path): os.remove(tar_path)
                     Logger.success(f"sing-box {version} installed successfully at {dest_path}")
                     return dest_path
         except Exception as e:
@@ -151,26 +150,25 @@ class UpstreamSyncer:
         
         return None
 
+    def download_to_file(self, url: str, dest_path: str) -> bool:
+        """Download a large file directly to disk using curl."""
+        try:
+            # -L follow redirects, -s silent, -m timeout, -f fail on error, -o output
+            subprocess.run(
+                [
+                    "curl", "-L", "-s", "-m", "300", "-f",
+                    "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "-o", dest_path, url
+                ],
+                check=True
+            )
+            return True
+        except Exception as e:
+            Logger.warn(f"File download failed: {url} - {e}")
+            if os.path.exists(dest_path): os.remove(dest_path)
+            return False
+
     def download(self, url: str) -> bytes:
-        """Use system curl for robust SSL handling while maintaining security."""
-        last_error = None
-        for _ in range(3):
-            try:
-                # -L follow redirects, -s silent, -m timeout, -f fail on error
-                result = subprocess.run(
-                    [
-                        "curl", "-L", "-s", "-m", "60", "-f",
-                        "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                        url
-                    ],
-                    capture_output=True, check=True
-                )
-                if result.stdout:
-                    return result.stdout
-            except Exception as e:
-                last_error = e
-        Logger.warn(f"Download failed: {url} - {last_error}")
-        return b""
 
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")
