@@ -233,17 +233,17 @@ peiluyou.com = server:force-syslib // 迅雷路由
 # ═══════════════════════════════════════════════════════════════
 # SECTION 5: System Connectivity Check
 # ═══════════════════════════════════════════════════════════════
-captive.apple.com = server:system
-connectivitycheck.gstatic.com = server:system
-detectportal.firefox.com = server:system
-msftconnecttest.com = server:system
-msftncsi.com = server:system
-www.msftncsi.com = server:system
-connectivitycheck.android.com = server:system
-connectivity-check.ubuntu.com = server:system
-connectivitycheck.platform.hicloud.com = server:system
-# ⚠️ *.cn 通配域名使用系统 DNS（避免国内域名走海外 DoH 变慢）
-*.cn = server:system
+captive.apple.com = server:https://doh.pub/dns-query
+connectivitycheck.gstatic.com = server:https://dns.google/dns-query
+detectportal.firefox.com = server:https://cloudflare-dns.com/dns-query
+msftconnecttest.com = server:https://dns.google/dns-query
+msftncsi.com = server:https://dns.google/dns-query
+www.msftncsi.com = server:https://dns.google/dns-query
+connectivitycheck.android.com = server:https://dns.google/dns-query
+connectivity-check.ubuntu.com = server:https://cloudflare-dns.com/dns-query
+connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
+# ⚠️ *.cn 通配域名使用 AliDNS DoH（避免传统 DNS 泄漏）
+*.cn = server:https://dns.alidns.com/dns-query
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 6: Telegram Node Mapping
