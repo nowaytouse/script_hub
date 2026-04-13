@@ -11,7 +11,7 @@
 
 [MITM]
 
-hostname =%APPEND% ap*.intsig.net
+hostname = %APPEND% ap*.intsig.net, -github.com, -api.github.com, -*.githubusercontent.com
 
 
 

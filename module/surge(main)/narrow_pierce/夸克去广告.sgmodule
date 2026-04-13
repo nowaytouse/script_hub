@@ -19,5 +19,5 @@
 # [DISABLED-404] 精简我的页面 = type=http-response, pattern=^https:\/\/open-cms-api\.quark\.cn\/open-cms, script-path=https://kelee.one/Resource/JavaScript/QuarkBrowser/QuarkBrowser_remove_ads.js, requires-body=true
 
 [MITM]
-hostname = %APPEND% huichuan.sm.cn, stars.shuqireader.com, open-cms-api.quark.cn
+hostname = %APPEND% huichuan.sm.cn, stars.shuqireader.com, open-cms-api.quark.cn, -github.com, -api.github.com, -*.githubusercontent.com
 

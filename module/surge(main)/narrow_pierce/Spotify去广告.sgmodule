@@ -22,5 +22,5 @@
 Protobuf处理 = type=http-response, pattern=^https:\/\/(?:\w+-spclient|spclient\.wg)\.spotify\.com(?::443)?\/(?:bootstrap|user-customization-service), script-path=https://kelee.one/Resource/JavaScript/Spotify/Spotify_remove_ads.js, requires-body=true, binary-body-mode=true, timeout=5, argument="[{{{tab}}},{{{useractivity}}}]"
 
 [MITM]
-hostname = %APPEND% *-spclient.spotify.com, spclient.wg.spotify.com
+hostname = %APPEND% *-spclient.spotify.com, spclient.wg.spotify.com, -github.com, -api.github.com, -*.githubusercontent.com
 

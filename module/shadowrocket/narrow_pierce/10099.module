@@ -15,4 +15,4 @@ always-real-ip = *.10099.com.cn
 ^https?:\/\/app\.10099\.com\.cn\/contact-web\/api\/version\/getFlashScreenPage data-type=text data="" status-code=502
 
 [MITM]
-hostname = app.10099.com.cn
+hostname = app.10099.com.cn, -github.com, -api.github.com, -*.githubusercontent.com

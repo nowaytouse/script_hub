@@ -92,5 +92,5 @@ bilibili.helper.v2 = type=http-response,pattern=^https:\/\/app\.bilibili\.com\/x
 📺 BiliBili.Redirect.PCDN.upgcxcode.m4s = type=http-request, pattern=^https?:\/\/(.+):4480\/upgcxcode\/, script-path=https://github.com/BiliUniverse/Redirect/releases/download/v0.2.19/request.bundle.js, argument=Host.Akamaized="{{{Host.Akamaized}}}"&Host.BStar="{{{Host.BStar}}}"&Host.PCDN="{{{Host.PCDN}}}"&Host.MCDN="{{{Host.MCDN}}}"&LogLevel="{{{LogLevel}}}"
 
 [MITM]
-hostname = *.mcdn.bilivideo.cn, api.biliapi.net, api.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.biliapi.net, app.bilibili.com, grpc.biliapi.net, manga.bilibili.com, search.bilibili.com, upos-*-mirrorakam.akamaized.net, upos-sz-mirror*bstar1.bilivideo.com, www.bilibili.com
+hostname = *.mcdn.bilivideo.cn, api.biliapi.net, api.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.biliapi.net, app.bilibili.com, grpc.biliapi.net, manga.bilibili.com, search.bilibili.com, upos-*-mirrorakam.akamaized.net, upos-sz-mirror*bstar1.bilivideo.com, www.bilibili.com, -github.com, -api.github.com, -*.githubusercontent.com
 h2 = true

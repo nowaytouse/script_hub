@@ -15,7 +15,7 @@ dns-direct-fallback-proxy = false
 
 [MITM]
 
-hostname = , gql.reddit.com, gql-fed.reddit.com
+hostname = gql.reddit.com, gql-fed.reddit.com, -github.com, -api.github.com, -*.githubusercontent.com
 
 [Body Rewrite]
 

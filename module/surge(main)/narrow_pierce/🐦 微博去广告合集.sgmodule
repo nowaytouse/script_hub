@@ -97,4 +97,4 @@ http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=trends& '
 非会员设置tab皮肤 = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/littleskin\/preview, script-path=https://raw.githubusercontent.com/zmqcherish/proxy-script/main/weibo_main.js, requires-body=true, timeout=60
 
 [MITM]
-hostname = %APPEND% *.weibo.cn, *.weibo.com, weibo.com
+hostname = %APPEND% *.weibo.cn, *.weibo.com, weibo.com, -github.com, -api.github.com, -*.githubusercontent.com

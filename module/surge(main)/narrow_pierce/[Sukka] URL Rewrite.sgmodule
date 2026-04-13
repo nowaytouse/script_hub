@@ -4,7 +4,7 @@
 
 [MITM]
 
-hostname = %APPEND% api.abema.io, union.click.jd.com, nomo.dafork.com
+hostname = %APPEND% api.abema.io, union.click.jd.com, nomo.dafork.com, -github.com, -api.github.com, -*.githubusercontent.com
 
 [URL Rewrite]
 # AbeamTV Unlock
