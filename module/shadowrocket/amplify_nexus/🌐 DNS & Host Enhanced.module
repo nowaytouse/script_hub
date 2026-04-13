@@ -20,7 +20,7 @@ dns-direct-fallback-proxy = false
 # ⚠️ Quad9 (Malware Blocking) 置首，提供额外威胁过滤层
 # ⚠️ 全部使用 HTTPS DoH (TCP/TLS)，避免 QUIC/UDP 被代理规则或 ISP 拦截导致 DNS 超时
 doh-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query
-# doh-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/dns-query, https://dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://dns.nextdns.io/7f2fac
+# encrypted-dns-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/dns-query, https://dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://dns.nextdns.io/7f2fac
 
 # ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
 # dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
@@ -29,7 +29,7 @@ doh-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, h
 # DNS Core Settings
 # ═══════════════════════════════════════════════════════════════
 # [SR不支持,已移除] use-local-host-item-for-proxy = true
-encrypted-dns-follow-outbound-mode = true
+# [SR不支持,已移除] encrypted-dns-follow-outbound-mode = true
 # ⚠️ 强制验证DoH服务器证书，防止中间人攻击
 # [SR不支持,已移除] encrypted-dns-skip-cert-verification = false
 
@@ -620,10 +620,10 @@ stun?.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Google.list,server:https://dns.google/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Quad9.list,server:https://dns11.quad9.net/dns-query
-# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
-# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
-# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-# [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════

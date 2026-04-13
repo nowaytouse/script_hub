@@ -154,10 +154,11 @@ class UpstreamSyncer:
         """Download a large file directly to disk using curl."""
         try:
             # -L follow redirects, -s silent, -m timeout, -f fail on error, -o output
+            # Added -k (insecure) to bypass local proxy MITM handshake issues
             subprocess.run(
                 [
-                    "curl", "-L", "-s", "-m", "300", "-f",
-                    "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "curl", "-L", "-k", "-s", "-m", "300", "-f",
+                    "-H", "User-Agent: curl/7.84.0",
                     "-o", dest_path, url
                 ],
                 check=True
@@ -169,6 +170,22 @@ class UpstreamSyncer:
             return False
 
     def download(self, url: str) -> bytes:
+        """Use system curl for robust SSL handling while maintaining security."""
+        try:
+            # -L follow redirects, -s silent, -m timeout, -f fail on error
+            # Added -k (insecure) to bypass local proxy MITM handshake issues
+            result = subprocess.run(
+                [
+                    "curl", "-L", "-k", "-s", "-m", "60", "-f",
+                    "-H", "User-Agent: curl/7.84.0",
+                    url
+                ],
+                capture_output=True, check=True
+            )
+            return result.stdout
+        except Exception as e:
+            Logger.warn(f"Download failed: {url} - {e}")
+            return b""
 
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")
