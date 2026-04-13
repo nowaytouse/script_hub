@@ -4,6 +4,9 @@ import re
 import json
 import subprocess
 import concurrent.futures
+import platform
+import tarfile
+import shutil
 from datetime import datetime
 from lib.common import Logger, get_project_root, write_file
 
@@ -79,16 +82,73 @@ PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
 
 class UpstreamSyncer:
     def __init__(self):
-        self.singbox_path = self._find_singbox()
+        self.singbox_path = self._setup_singbox()
 
-    def _find_singbox(self):
+    def _setup_singbox(self):
+        """Find or automatically download the latest sing-box beta binary."""
+        # 1. Check system path
         try:
             result = subprocess.run(["which", "sing-box"], capture_output=True, text=True)
             if result.returncode == 0:
                 return result.stdout.strip()
         except: pass
-        local_path = os.path.join(ROOT, "scripts/config-manager-auto-update/bin/sing-box")
-        if os.path.exists(local_path): return local_path
+
+        # 2. Check local root
+        local_path = os.path.join(ROOT, "sing-box")
+        if os.path.exists(local_path) and os.access(local_path, os.X_OK):
+            return local_path
+
+        # 3. Auto-download latest beta
+        Logger.info("sing-box not found. Attempting to download latest beta...")
+        try:
+            # Scrape releases page for latest pre-release version
+            # Use curl to avoid GitHub API limitations
+            cmd = "curl -L -s https://github.com/SagerNet/sing-box/releases | grep -oE 'v[0-9]+\\.[0-9]+\\.[0-9]+-(beta|alpha|rc)\\.[0-9]+' | head -n 1"
+            version_bytes = subprocess.check_output(cmd, shell=True)
+            version = version_bytes.decode().strip()
+            if not version:
+                # Fallback to a stable-ish known pattern if scraping fails
+                version = "v1.14.0-alpha.11" 
+            
+            clean_version = version.lstrip('v')
+            arch = "arm64" if platform.machine() == "arm64" else "amd64"
+            url = f"https://github.com/SagerNet/sing-box/releases/download/{version}/sing-box-{clean_version}-darwin-{arch}.tar.gz"
+            
+            Logger.info(f"Downloading sing-box {version} for darwin-{arch}...")
+            tar_data = self.download(url)
+            if not tar_data:
+                raise Exception("Download failed")
+
+            import io
+            with tarfile.open(fileobj=io.BytesIO(tar_data), mode="r:gz") as tar:
+                # Find the binary in the tarball (usually in a subdirectory)
+                binary_member = None
+                for member in tar.getmembers():
+                    if member.name.endswith("/sing-box") or member.name == "sing-box":
+                        binary_member = member
+                        break
+                
+                if binary_member:
+                    # Extract to temporary location
+                    extract_path = os.path.join(ROOT, "sing-box_tmp")
+                    tar.extract(binary_member, path=ROOT)
+                    # Move binary to root and cleanup
+                    src_path = os.path.join(ROOT, binary_member.name)
+                    dest_path = os.path.join(ROOT, "sing-box")
+                    if os.path.exists(dest_path): os.remove(dest_path)
+                    shutil.move(src_path, dest_path)
+                    os.chmod(dest_path, 0o755)
+                    
+                    # Cleanup extracted folder if it was in a subfolder
+                    if "/" in binary_member.name:
+                        top_dir = binary_member.name.split("/")[0]
+                        shutil.rmtree(os.path.join(ROOT, top_dir), ignore_errors=True)
+                    
+                    Logger.success(f"sing-box {version} installed successfully at {dest_path}")
+                    return dest_path
+        except Exception as e:
+            Logger.error(f"Failed to auto-setup sing-box: {e}")
+        
         return None
 
     def download(self, url: str) -> bytes:

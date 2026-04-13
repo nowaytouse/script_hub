@@ -82,6 +82,21 @@ def process_file(filepath, exclusions, dry_run=False):
         return True
     return False
 
+def run_cleanup(directory="module", exclusions=DEFAULT_EXCLUSIONS, dry_run=False):
+    """
+    Main entry point for programmatic cleanup.
+    """
+    modified_count = 0
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith(('.sgmodule', '.module')):
+                path = os.path.join(root, file)
+                if process_file(path, exclusions, dry_run):
+                    if not dry_run:
+                        print(f"[✓] MITM Cleaned: {path}")
+                    modified_count += 1
+    return modified_count
+
 def main():
     parser = argparse.ArgumentParser(description="Mass-cleanup of MITM hostname exclusions.")
     parser.add_argument("--dir", default="module", help="Directory to scan (default: module)")
@@ -89,18 +104,9 @@ def main():
     parser.add_argument("--exclude", nargs="+", default=DEFAULT_EXCLUSIONS, help="List of exclusions to enforce")
     args = parser.parse_args()
 
-    modified_count = 0
-    for root, _, files in os.walk(args.dir):
-        for file in files:
-            if file.endswith(('.sgmodule', '.module')):
-                path = os.path.join(root, file)
-                if process_file(path, args.exclude, args.dry_run):
-                    if not args.dry_run:
-                        print(f"[✓] Modified: {path}")
-                    modified_count += 1
-    
+    count = run_cleanup(args.dir, args.exclude, args.dry_run)
     status = "Modification candidates found" if args.dry_run else "Modules modified"
-    print(f"\nTotal processes: {modified_count} {status}")
+    print(f"\nTotal: {count} {status}")
 
 if __name__ == "__main__":
     main()

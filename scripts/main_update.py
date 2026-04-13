@@ -11,6 +11,7 @@ from upstream_sync import UpstreamSyncer
 from adblock_manager import AdBlockManager
 from ruleset_manager import RulesetManager
 from srs_generator import SRSGenerator
+from maintenance.mitm_cleanup_github import run_cleanup
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -65,7 +66,15 @@ def main():
     except Exception as e:
         Logger.error(f"Module processing failed: {e}")
 
-    # 6. SRS Generation
+    # 6. MITM Hardening (Final cleanup pass)
+    Logger.section("MITM Hardening")
+    try:
+        count = run_cleanup()
+        Logger.success(f"MITM hardening completed: {count} modules reinforced.")
+    except Exception as e:
+        Logger.error(f"MITM hardening failed: {e}")
+
+    # 7. SRS Generation
     srs_gen = SRSGenerator()
     srs_gen.run()
 

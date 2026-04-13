@@ -2,8 +2,8 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 942
-# Updated: 2026-04-13 17:02:15
+# Rules: 1001
+# Updated: 2026-04-13 23:23:29
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,004430.xyz
@@ -38,6 +38,7 @@ DOMAIN,local.adguard.org
 DOMAIN,lucke.fenesisu.moe
 DOMAIN,martin-gebhardt.eu
 DOMAIN,miwifi.com
+DOMAIN,netease.ugcvideoss.ourdvs.com
 DOMAIN,ns575949.ip-51-222-82.net
 DOMAIN,nyaa.tracker.wf
 DOMAIN,oasisauth.h3c.com
@@ -430,6 +431,7 @@ DOMAIN-SUFFIX,126.100.in-addr.arpa
 DOMAIN-SUFFIX,127.100.in-addr.arpa
 DOMAIN-SUFFIX,127.in-addr.arpa
 DOMAIN-SUFFIX,16.172.in-addr.arpa
+DOMAIN-SUFFIX,163yun.com
 DOMAIN-SUFFIX,168.192.in-addr.arpa
 DOMAIN-SUFFIX,17.172.in-addr.arpa
 DOMAIN-SUFFIX,18.172.in-addr.arpa
@@ -503,6 +505,7 @@ DOMAIN-SUFFIX,alpharatio.cc
 DOMAIN-SUFFIX,animebytes.tv
 DOMAIN-SUFFIX,animetorrents.me
 DOMAIN-SUFFIX,anthelion.me
+DOMAIN-SUFFIX,api.iplay.163.com
 DOMAIN-SUFFIX,apollo.dl.playstation.net
 DOMAIN-SUFFIX,appldnld.apple.com
 DOMAIN-SUFFIX,appldnld.apple.com.edgesuite.net
@@ -620,6 +623,7 @@ DOMAIN-SUFFIX,extremlymtorrents.ws
 DOMAIN-SUFFIX,f3b7q2p3.ssl.hwcdn.net
 DOMAIN-SUFFIX,fastly-download.epicgames.com
 DOMAIN-SUFFIX,fastly.net
+DOMAIN-SUFFIX,fengkongcloud.com
 DOMAIN-SUFFIX,filelist.io
 DOMAIN-SUFFIX,files.pythonhosted.org
 DOMAIN-SUFFIX,ftcdn.net
@@ -662,6 +666,7 @@ DOMAIN-SUFFIX,hk4e-launcher-static.mihoyo.com
 DOMAIN-SUFFIX,home.arpa
 DOMAIN-SUFFIX,homebrew.bintray.com
 DOMAIN-SUFFIX,hudbt.hust.edu.cn
+DOMAIN-SUFFIX,hz.netease.com
 DOMAIN-SUFFIX,ias.cdn.wup.shop.nintendo.net
 DOMAIN-SUFFIX,icetorrent.org
 DOMAIN-SUFFIX,internal
@@ -694,6 +699,7 @@ DOMAIN-SUFFIX,localhost.sec.qq.com
 DOMAIN-SUFFIX,lztr.me
 DOMAIN-SUFFIX,m-team.cc
 DOMAIN-SUFFIX,madsrevolution.net
+DOMAIN-SUFFIX,mam.netease.com
 DOMAIN-SUFFIX,map.qq.com
 DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
 DOMAIN-SUFFIX,mesu.apple.com
@@ -702,6 +708,10 @@ DOMAIN-SUFFIX,miwifi.com
 DOMAIN-SUFFIX,moecat.best
 DOMAIN-SUFFIX,morethan.tv
 DOMAIN-SUFFIX,msg.vg
+DOMAIN-SUFFIX,music.126.com
+DOMAIN-SUFFIX,music.126.net
+DOMAIN-SUFFIX,music.163.com
+DOMAIN-SUFFIX,music.163.com.163jiasu.com
 DOMAIN-SUFFIX,my.router
 DOMAIN-SUFFIX,myanonamouse.net
 DOMAIN-SUFFIX,nanyangpt.com
@@ -845,33 +855,75 @@ DOMAIN-SUFFIX,wxapp.tc.qq.com
 DOMAIN-SUFFIX,wxs.qq.com
 DOMAIN-SUFFIX,xauat6.edu.cn
 DOMAIN-SUFFIX,xboxlive.com.edgesuite.net
+DOMAIN-SUFFIX,xhscdn.com
+DOMAIN-SUFFIX,xhscdn.net
+DOMAIN-SUFFIX,xiaohongshu.com
 DOMAIN-SUFFIX,xp.apple.com
+DOMAIN-SUFFIX,yun-app.net
 DOMAIN-SUFFIX,yun-hl.3g.qq.com
 DOMAIN-SUFFIX,zeus.dl.playstation.net
 DOMAIN-SUFFIX,zte.home
 IP-CIDR,0.0.0.0/8
 IP-CIDR,10.0.0.0/8
 IP-CIDR,100.64.0.0/10
+IP-CIDR,101.32.104.4/32
+IP-CIDR,101.32.104.41/32
+IP-CIDR,101.32.104.56/32
+IP-CIDR,101.32.118.25/32
+IP-CIDR,101.32.133.16/32
+IP-CIDR,101.32.133.209/32
+IP-CIDR,101.32.133.53/32
+IP-CIDR,101.71.154.241/32
+IP-CIDR,103.126.92.132/31
+IP-CIDR,103.238.16.0/23
+IP-CIDR,103.7.28.0/22
 IP-CIDR,111.30.160.0/20
+IP-CIDR,112.13.119.17/32
+IP-CIDR,112.13.119.18/32
+IP-CIDR,112.13.122.1/32
+IP-CIDR,112.13.122.4/32
 IP-CIDR,112.53.11.0/24
 IP-CIDR,112.53.20.0/24
+IP-CIDR,115.236.112.0/20
+IP-CIDR,118.24.63.156/32
+IP-CIDR,119.147.8.78/32
+IP-CIDR,120.41.44.0/32
+IP-CIDR,122.5.0.129/32
 IP-CIDR,127.0.0.0/8
+IP-CIDR,129.226.107.244/32
+IP-CIDR,129.226.3.47/32
+IP-CIDR,140.249.239.0/32
+IP-CIDR,140.249.28.0/32
+IP-CIDR,150.138.137.0/32
+IP-CIDR,150.139.143.0/32
 IP-CIDR,169.254.0.0/16
 IP-CIDR,172.16.0.0/12
+IP-CIDR,182.92.170.253/32
 IP-CIDR,192.0.0.0/24
 IP-CIDR,192.0.2.0/24
 IP-CIDR,192.168.0.0/16
 IP-CIDR,192.168.215.2/32
 IP-CIDR,192.88.99.0/24
+IP-CIDR,193.112.159.225/32
 IP-CIDR,198.18.0.0/15
 IP-CIDR,198.18.0.0/16
 IP-CIDR,198.51.100.0/24
 IP-CIDR,203.0.113.0/24
 IP-CIDR,207.241.226.111/32
 IP-CIDR,207.241.231.226/32
+IP-CIDR,223.252.192.0/19
 IP-CIDR,224.0.0.0/3
 IP-CIDR,224.0.0.0/4
+IP-CIDR,27.159.95.0/32
+IP-CIDR,39.105.175.128/32
+IP-CIDR,39.105.63.80/32
+IP-CIDR,45.254.48.1/32
+IP-CIDR,47.100.127.239/32
 IP-CIDR,52.58.128.163/32
+IP-CIDR,58.58.81.129/32
+IP-CIDR,59.111.128.0/17
+IP-CIDR,59.111.19.33/32
+IP-CIDR,59.111.21.14/31
 IP-CIDR6,2402:4e00:1020:10fb:0:9466::/112
 IP-CIDR6,2402:4e00:1430:2264:0:9467::/96
 IP-CIDR6,2402:4e00:1900:1700:0:9554:1ad0:140a/128
@@ -946,5 +998,12 @@ PROCESS-NAME,/Applications/DDNet.app/
 PROCESS-NAME,/Applications/Thunder.app/
 PROCESS-NAME,/Applications/Transmission.app/
 PROCESS-NAME,/Applications/evol.app/
+USER-AGENT,%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90*
+USER-AGENT,MOO%E9%9F%B3%E4%B9%90*
 USER-AGENT,MicroMessenger*
+USER-AGENT,NeteaseMusic*
+USER-AGENT,QQ%E9%9F%B3%E4%B9%90
+USER-AGENT,TencentMidasConnect*
 USER-AGENT,WeChat*
+USER-AGENT,live4iphone*
+USER-AGENT,qqlive4iphone*

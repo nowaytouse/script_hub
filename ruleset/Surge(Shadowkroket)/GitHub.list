@@ -3,12 +3,13 @@
 # Policy: PROXY
 # Node: Any
 # Description: GitHub
-# Rules: 33
-# Updated: 2026-04-13 16:56:31
+# Rules: 39
+# Updated: 2026-04-13 23:21:17
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,github-api.arkoselabs.com
 DOMAIN,github-cloud.s3.amazonaws.com
+DOMAIN-KEYWORD,github
 DOMAIN-SUFFIX,atom.io
 DOMAIN-SUFFIX,blob.core.windows.net
 DOMAIN-SUFFIX,collector.github.com
@@ -17,6 +18,9 @@ DOMAIN-SUFFIX,dependabot.com
 DOMAIN-SUFFIX,gh.io
 DOMAIN-SUFFIX,ghcr.io
 DOMAIN-SUFFIX,git.io
+DOMAIN-SUFFIX,github-atom-io-herokuapp-com.freetls.fastly.net
+DOMAIN-SUFFIX,github-avatars.oss-cn-hongkong.aliyuncs.com
+DOMAIN-SUFFIX,github-cloud.s3.amazonaws.com
 DOMAIN-SUFFIX,github.ai
 DOMAIN-SUFFIX,github.blog
 DOMAIN-SUFFIX,github.com
@@ -38,5 +42,7 @@ DOMAIN-SUFFIX,npmjs.com
 DOMAIN-SUFFIX,npmjs.org
 DOMAIN-SUFFIX,octocaptcha.com
 DOMAIN-SUFFIX,opensource.guide
+DOMAIN-SUFFIX,rawgit.com
+DOMAIN-SUFFIX,rawgithub.com
 DOMAIN-SUFFIX,repo.new
 DOMAIN-SUFFIX,thegithubshop.com
