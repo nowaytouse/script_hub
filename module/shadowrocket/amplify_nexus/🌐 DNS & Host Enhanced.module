@@ -1695,5 +1695,5 @@ DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/reso
 DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
-hostname = *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, github.com, raw.githubusercontent.com, gist.githubusercontent.com, api.github.com, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn
+hostname = *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
 hostname-disabled = gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com, sandbox.itunes.apple.com, upp.itunes.apple.com
