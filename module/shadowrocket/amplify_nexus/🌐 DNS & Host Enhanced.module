@@ -19,7 +19,7 @@ dns-direct-fallback-proxy = false
 # DoH Priority（安全优先 → 国际 → 国内备用）
 # ⚠️ Quad9 (Malware Blocking) 置首，提供额外威胁过滤层
 # ⚠️ 全部使用 HTTPS DoH (TCP/TLS)，避免 QUIC/UDP 被代理规则或 ISP 拦截导致 DNS 超时
-doh-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query
+doh-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query
 
 # ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
 # dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
@@ -176,11 +176,11 @@ dns64.dns.google = 2001:4860:4860::6464, 2001:4860:4860::64 // https://dns64.dns
 cloudflare-dns.com = 104.16.249.249, 104.16.248.249, 2606:4700::6810:f8f9, 2606:4700::6810:f9f9 // https://cloudflare-dns.com/dns-query
 1dot1dot1dot1.cloudflare-dns.com = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // 1dot1dot1dot1.cloudflare-dns.com:853
 one.one.one.one = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // one.one.one.one:853
-dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200:baba::1, 2400:3200::1 // https://dns.alidns.com/dns-query
-doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1 // https://doh.pub/dns-query
-dot.pub = 1.12.12.12, 120.53.53.53 // dot.pub:853
-doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // https://doh.360.cn/dns-query
-dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // dot.360.cn:853
+# dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200:baba::1, 2400:3200::1 // https://dns.alidns.com/dns-query
+# doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1 // https://doh.pub/dns-query
+# dot.pub = 1.12.12.12, 120.53.53.53 // dot.pub:853
+# doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // https://doh.360.cn/dns-query
+# dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // dot.360.cn:853
 dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twnic.tw/dns-query
 ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
 dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
