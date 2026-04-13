@@ -40,11 +40,11 @@ CONFLICT_DOMAINS = [
     "images.pexels.com", "imgur.com", "happymag.tv", "wortfm.org"
 ]
 
-DEPRECATED_RULESETS = ["BlockHttpDNS", "FirewallPorts", "YouTube", "GoogleCN", "Steam", "Epic", "GamingProcess", "QQ", "WeChat", "DownloadProcess", "GlobalMedia", "XiaoHongShu", "NetEaseMusic", "Tencent", "AIProcess", "LAN", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "Discord", "Fediverse", "Bing", "Tesla", "ChinaDirect", "DirectProcess", "DownloadDirect"]
+DEPRECATED_RULESETS = ["SYSTEM", "BlockHttpDNS", "FirewallPorts", "YouTube", "GoogleCN", "Steam", "Epic", "GamingProcess", "QQ", "WeChat", "DownloadProcess", "GlobalMedia", "XiaoHongShu", "NetEaseMusic", "Tencent", "AIProcess", "LAN", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "Discord", "Fediverse", "Bing", "Tesla", "ChinaDirect", "DirectProcess", "DownloadDirect"]
 INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]", "["}
 
 RULESETS = [
-    "AI", "Gaming", "GlobalProxy", "Microsoft", "NSFW", "SYSTEM",
+    "AI", "Gaming", "GlobalProxy", "Microsoft", "NSFW",
     "SocialMedia",
     "Netflix", "Disney", "Spotify", "Bahamut", "AppleNews",
     "Google", "Apple", "GitHub", "PayPal", "Binance",
