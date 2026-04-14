@@ -627,10 +627,10 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Google.list,server:https://dns.google/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_Global_Quad9.list,server:https://dns11.quad9.net/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_114.list,server:https://doh.pub/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/DNS_China_360.list,server:https://doh.360.cn/dns-query
 
 [Rule]
 # ═══════════════════════════════════════════════════════════════
