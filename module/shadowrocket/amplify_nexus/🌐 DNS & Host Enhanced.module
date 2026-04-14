@@ -19,7 +19,7 @@ dns-direct-fallback-proxy = false
 # DoH Priority（安全优先 → 国际 → 国内备用）
 # ⚠️ Quad9 (Malware Blocking) 置首，提供额外威胁过滤层
 # ⚠️ 全部使用 HTTPS DoH (TCP/TLS)，避免 QUIC/UDP 被代理规则或 ISP 拦截导致 DNS 超时
-doh-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.cn/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://dns6.cfiec.net/dns-query
+doh-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.cn/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://dns6.cfiec.net/dns-query, https://doh.ffmuc.net/dns-query
 
 # ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
 # dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
@@ -191,6 +191,7 @@ dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
 dns.adguard-dns.com = 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
 doh.libredns.gr = 116.202.176.26 // https://doh.libredns.gr/dns-query & /noads
 doh.dns4all.eu = 194.0.5.3 // https://doh.dns4all.eu/dns-query
+doh.ffmuc.net = 5.1.66.255, 185.150.99.255, 2001:678:e68:f000::, 2001:678:ed0:f000:: // https://doh.ffmuc.net/dns-query
 wikimedia-dns.org = 185.71.138.138 // https://wikimedia-dns.org/dns-query
 dns.mullvad.net = 194.242.2.2, 194.242.2.3, 194.242.2.4, 194.242.2.9 // https://dns.mullvad.net/dns-query
 adblock.dns.mullvad.net = 194.242.2.2 // https://adblock.dns.mullvad.net/dns-query
