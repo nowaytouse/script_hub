@@ -243,9 +243,25 @@ class RulesetManager:
 
         hasher = hashlib.md5()
         found = False
-        for f in [os.path.join(SOURCES_DIR, f"{name}_sources.txt"), os.path.join(METACUBEX_DIR, f"MetaCubeX_{name}.list")]:
+        
+        # 1. Hash the manifest lists themselves
+        manifests = [
+            os.path.join(SOURCES_DIR, f"{name}_sources.txt"), 
+            os.path.join(METACUBEX_DIR, f"MetaCubeX_{name}.list")
+        ]
+        for f in manifests:
             if os.path.exists(f):
-                with open(f, 'rb') as f_obj: hasher.update(f_obj.read())
+                with open(f, 'rb') as f_obj: 
+                    content = f_obj.read()
+                    hasher.update(content)
+                    # 2. Deep Dive: If it's a manifest, hash the local files it references
+                    if f.endswith('_sources.txt'):
+                        for line in content.decode('utf-8', errors='ignore').splitlines():
+                            line = line.strip()
+                            if line and not line.startswith(('#', 'http')):
+                                local_ref = os.path.join(SOURCES_DIR, line.split('|')[0])
+                                if os.path.exists(local_ref):
+                                    with open(local_ref, 'rb') as lr_obj: hasher.update(lr_obj.read())
                 found = True
         
         if name in PROTECTED_RULESETS and os.path.exists(target_file):
