@@ -7,7 +7,9 @@
 #!version=2026.04.15
 
 [General]
-# Global fallback pool only. Mainland DoH endpoints are assigned exclusively by [Host].
+# Global-first fallback pool with mainland backstops. Sensitive domains are
+# hard-locked below so international lookups do not fall into CN DoH and
+# critical mainland lookups do not spill overseas when a RULE-SET misses.
 encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
@@ -49,6 +51,10 @@ doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c2
 dot.pub = 1.12.12.12, 120.53.53.53 // dot.pub:853
 doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // https://doh.360.cn/dns-query
 dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // dot.360.cn:853
+dns.baidu.com = 180.76.76.76, 110.242.68.66, 2400:da00::6666 // https://dns.baidu.com/dns-query
+dns.cn = 1.2.4.8, 210.2.4.8, 2001:dc7:1000::1 // https://dns.cn/dns-query
+dns.tuna.tsinghua.edu.cn = 101.6.6.6, 2001:da8::666 // https://dns.tuna.tsinghua.edu.cn/dns-query
+dns6.cfiec.net = 240c:6666::6666, 240c:6644::6644 // https://dns6.cfiec.net/dns-query
 dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twnic.tw/dns-query
 ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
 dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
@@ -145,41 +151,139 @@ telegram.org = server:https://dns.quad9.net/dns-query
 t.me = server:https://dns.quad9.net/dns-query
 telegram.me = server:https://dns.quad9.net/dns-query
 
-# SECTION 5: International DoH Steering RULE-SETs
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://doh.dns4all.eu/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.quad9.net/dns-query
-# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
-# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns.quad9.net/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
+# SECTION 5: Critical Mainland Hard Lock
+# Keep only the highest-value mainland families inline. This fail-closed block
+# prevents apex and core CN domains from leaking to global DoH if a remote host
+# RULE-SET fetch fails, while broader coverage stays consolidated below.
+alibaba.com = server:https://dns.alidns.com/dns-query
+*.alibaba.com = server:https://dns.alidns.com/dns-query
+alibaba.com.cn = server:https://dns.alidns.com/dns-query
+*.alibaba.com.cn = server:https://dns.alidns.com/dns-query
+alibaba.cn = server:https://dns.alidns.com/dns-query
+*.alibaba.cn = server:https://dns.alidns.com/dns-query
+1688.com = server:https://dns.alidns.com/dns-query
+*.1688.com = server:https://dns.alidns.com/dns-query
+taobao.com = server:https://dns.alidns.com/dns-query
+*.taobao.com = server:https://dns.alidns.com/dns-query
+tmall.com = server:https://dns.alidns.com/dns-query
+*.tmall.com = server:https://dns.alidns.com/dns-query
+alipay.com = server:https://dns.alidns.com/dns-query
+*.alipay.com = server:https://dns.alidns.com/dns-query
+alipay.com.cn = server:https://dns.alidns.com/dns-query
+*.alipay.com.cn = server:https://dns.alidns.com/dns-query
+alipaydns.com = server:https://dns.alidns.com/dns-query
+*.alipaydns.com = server:https://dns.alidns.com/dns-query
+aliyun.com = server:https://dns.alidns.com/dns-query
+*.aliyun.com = server:https://dns.alidns.com/dns-query
+aliyuncs.com = server:https://dns.alidns.com/dns-query
+*.aliyuncs.com = server:https://dns.alidns.com/dns-query
+baidu.com = server:https://dns.alidns.com/dns-query
+*.baidu.com = server:https://dns.alidns.com/dns-query
+baidu.cn = server:https://dns.alidns.com/dns-query
+*.baidu.cn = server:https://dns.alidns.com/dns-query
+baidubce.com = server:https://dns.alidns.com/dns-query
+*.baidubce.com = server:https://dns.alidns.com/dns-query
+baidupcs.com = server:https://dns.alidns.com/dns-query
+*.baidupcs.com = server:https://dns.alidns.com/dns-query
+bdimg.com = server:https://dns.alidns.com/dns-query
+*.bdimg.com = server:https://dns.alidns.com/dns-query
+bdstatic.com = server:https://dns.alidns.com/dns-query
+*.bdstatic.com = server:https://dns.alidns.com/dns-query
+bilibili.com = server:https://dns.alidns.com/dns-query
+*.bilibili.com = server:https://dns.alidns.com/dns-query
+bilivideo.com = server:https://dns.alidns.com/dns-query
+*.bilivideo.com = server:https://dns.alidns.com/dns-query
+hdslb.com = server:https://dns.alidns.com/dns-query
+*.hdslb.com = server:https://dns.alidns.com/dns-query
+tencent.com = server:https://doh.pub/dns-query
+*.tencent.com = server:https://doh.pub/dns-query
+qcloud.com = server:https://doh.pub/dns-query
+*.qcloud.com = server:https://doh.pub/dns-query
+qq.com = server:https://doh.pub/dns-query
+*.qq.com = server:https://doh.pub/dns-query
+weixin.com = server:https://doh.pub/dns-query
+*.weixin.com = server:https://doh.pub/dns-query
+wechat.com = server:https://doh.pub/dns-query
+*.wechat.com = server:https://doh.pub/dns-query
+servicewechat.com = server:https://doh.pub/dns-query
+*.servicewechat.com = server:https://doh.pub/dns-query
+jd.com = server:https://doh.pub/dns-query
+*.jd.com = server:https://doh.pub/dns-query
+360buy.com = server:https://doh.pub/dns-query
+*.360buy.com = server:https://doh.pub/dns-query
+jdcloud.com = server:https://doh.pub/dns-query
+*.jdcloud.com = server:https://doh.pub/dns-query
+jdpay.com = server:https://doh.pub/dns-query
+*.jdpay.com = server:https://doh.pub/dns-query
+meituan.com = server:https://doh.pub/dns-query
+*.meituan.com = server:https://doh.pub/dns-query
+meituan.net = server:https://doh.pub/dns-query
+*.meituan.net = server:https://doh.pub/dns-query
+dianping.com = server:https://doh.pub/dns-query
+*.dianping.com = server:https://doh.pub/dns-query
+sankuai.com = server:https://doh.pub/dns-query
+*.sankuai.com = server:https://doh.pub/dns-query
+163.com = server:https://doh.pub/dns-query
+*.163.com = server:https://doh.pub/dns-query
+126.com = server:https://doh.pub/dns-query
+*.126.com = server:https://doh.pub/dns-query
+netease.com = server:https://doh.pub/dns-query
+*.netease.com = server:https://doh.pub/dns-query
+youdao.com = server:https://doh.pub/dns-query
+*.youdao.com = server:https://doh.pub/dns-query
+weibo.com = server:https://doh.pub/dns-query
+*.weibo.com = server:https://doh.pub/dns-query
+weibo.cn = server:https://doh.pub/dns-query
+*.weibo.cn = server:https://doh.pub/dns-query
+sina.com.cn = server:https://doh.pub/dns-query
+*.sina.com.cn = server:https://doh.pub/dns-query
+sina.cn = server:https://doh.pub/dns-query
+*.sina.cn = server:https://doh.pub/dns-query
+unionpay.com = server:https://doh.pub/dns-query
+*.unionpay.com = server:https://doh.pub/dns-query
+95516.com = server:https://doh.pub/dns-query
+*.95516.com = server:https://doh.pub/dns-query
+icbc.com.cn = server:https://doh.pub/dns-query
+*.icbc.com.cn = server:https://doh.pub/dns-query
+ccb.com = server:https://doh.pub/dns-query
+*.ccb.com = server:https://doh.pub/dns-query
+abchina.com = server:https://doh.pub/dns-query
+*.abchina.com = server:https://doh.pub/dns-query
+boc.cn = server:https://doh.pub/dns-query
+*.boc.cn = server:https://doh.pub/dns-query
+bankcomm.com = server:https://doh.pub/dns-query
+*.bankcomm.com = server:https://doh.pub/dns-query
+cmbchina.com = server:https://doh.pub/dns-query
+*.cmbchina.com = server:https://doh.pub/dns-query
+pingan.com = server:https://doh.pub/dns-query
+*.pingan.com = server:https://doh.pub/dns-query
+pingan.com.cn = server:https://doh.pub/dns-query
+*.pingan.com.cn = server:https://doh.pub/dns-query
+cib.com.cn = server:https://doh.pub/dns-query
+*.cib.com.cn = server:https://doh.pub/dns-query
+spdb.com.cn = server:https://doh.pub/dns-query
+*.spdb.com.cn = server:https://doh.pub/dns-query
 
-# SECTION 6: Mainland DoH Steering RULE-SETs
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
+# SECTION 6: International DoH Steering RULE-SETs
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://doh.dns4all.eu/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.quad9.net/dns-query
+# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
+# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns.quad9.net/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
 
-# SECTION 7: Retained Inline Mainland Exceptions
-# These domain families are not covered by the current curated RULE-SETs yet.
-*.didichuxing.com = server:https://dns.alidns.com/dns-query
-*.didiglobal.com = server:https://dns.alidns.com/dns-query
-*.udache.com = server:https://dns.alidns.com/dns-query
-*.xiaojukeji.com = server:https://dns.alidns.com/dns-query
-*.mi.com = server:https://dns.alidns.com/dns-query
-*.miui.com = server:https://dns.alidns.com/dns-query
-*.xiaomi.com = server:https://dns.alidns.com/dns-query
-*.xiaomi.net = server:https://dns.alidns.com/dns-query
-*.mi-img.com = server:https://dns.alidns.com/dns-query
-*.huawei.com = server:https://dns.alidns.com/dns-query
-*.hicloud.com = server:https://dns.alidns.com/dns-query
-*.dbankcloud.com = server:https://dns.alidns.com/dns-query
-*.hwcdn.net = server:https://dns.alidns.com/dns-query
-*.vmall.com = server:https://dns.alidns.com/dns-query
-*.hihonor.com = server:https://dns.alidns.com/dns-query
+# SECTION 7: Mainland DoH Steering RULE-SETs
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
+
+# SECTION 8: Regional Inline Exceptions
+# Keep only the small regional resolver overrides inline.
 *.cht.com.tw = server:https://dns.twnic.tw/dns-query
 *.hinet.net = server:https://dns.twnic.tw/dns-query
 *.emome.net = server:https://dns.twnic.tw/dns-query
@@ -187,7 +291,7 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/
 *.taipei = server:https://dns.twnic.tw/dns-query
 *.he.net = server:https://ordns.he.net/dns-query
 
-# SECTION 8: Connectivity / Mainland Catch-All
+# SECTION 9: Connectivity / Mainland Catch-All
 connectivitycheck.gstatic.com = server:https://dns.google/dns-query
 detectportal.firefox.com = server:https://cloudflare-dns.com/dns-query
 msftconnecttest.com = server:https://dns.google/dns-query
@@ -199,7 +303,7 @@ connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 # Generic .cn fallback must stay after the global hard-lock and curated rulesets.
 *.cn = server:https://dns.alidns.com/dns-query
 
-# SECTION 9: Telegram Node Mapping
+# SECTION 10: Telegram Node Mapping
 91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
 91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130
 91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130
@@ -230,7 +334,7 @@ connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 149.154.167.40 = 149.154.167.41
 149.154.175.40 = 149.154.175.41
 
-# SECTION 10: Google Services
+# SECTION 11: Google Services
 talk.google.com = 108.177.125.188 // Firebase Cloud Messaging
 mtalk.google.com = 108.177.125.188, 2404:6800:4008:c07::bc, 142.250.31.188 // Firebase Cloud Messaging
 alt1-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:c0b::bc, 64.233.171.188 // Firebase Cloud Messaging
@@ -244,24 +348,24 @@ alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
 stun.l.google.com = server:force-syslib // WebRTC local discovery
 stun?.l.google.com = server:force-syslib // WebRTC local discovery
 
-# SECTION 11: Apple Notes
+# SECTION 12: Apple Notes
 # networking.apple = server:https://doh.dns.apple.com/dns-query
 # *.apple.com = server:https://doh.dns.apple.com/dns-query
 # *.icloud.com = server:https://doh.dns.apple.com/dns-query
 
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
 # Mainland ASN direct rules.
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/ChinaASN.list,DIRECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/GlobalASN.list,DIRECT,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/ChinaASN.list,DIRECT,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/GlobalASN.list,DIRECT,no-resolve
 PROTOCOL,QUIC,REJECT-NO-DROP
 
 [Script]
-DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
-DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
-DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
-DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/doh_health.js, timeout=30
+DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
+DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
+DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
+DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
 hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn

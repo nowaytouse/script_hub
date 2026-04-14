@@ -1,7 +1,7 @@
 # DNS Mapping Ruleset: DNS_China_AliDNS
-# Description: Automated priority mapping for DoH steering
-# Rules: 138
-# Updated: 2026-04-14 23:51:46
+# Description: Automated priority mapping with curated mainland additions
+# Rules: 156
+# Updated: 2026-04-15 00:00:00
 
 DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 DOMAIN,acg.tv
@@ -20,6 +20,8 @@ DOMAIN-SUFFIX,acgvideo.com
 DOMAIN-SUFFIX,aliapp.org
 DOMAIN-SUFFIX,alibaba-inc.com
 DOMAIN-SUFFIX,alibaba.com
+DOMAIN-SUFFIX,alibaba.com.cn
+DOMAIN-SUFFIX,alibaba.cn
 DOMAIN-SUFFIX,alibabachengdun.com
 DOMAIN-SUFFIX,alibabadns.com
 DOMAIN-SUFFIX,alibabausercontent.com
@@ -37,6 +39,7 @@ DOMAIN-SUFFIX,alipan.com
 DOMAIN-SUFFIX,alipay.cn
 DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipay.com.cn
+DOMAIN-SUFFIX,alipaydns.com
 DOMAIN-SUFFIX,alipaydev.com
 DOMAIN-SUFFIX,alipayobjects.com
 DOMAIN-SUFFIX,aliyun.com
@@ -77,7 +80,10 @@ DOMAIN-SUFFIX,cainiao.com.cn
 DOMAIN-SUFFIX,cainiaoyizhan.com
 DOMAIN-SUFFIX,cdngslb.com
 DOMAIN-SUFFIX,cibntv.net
+DOMAIN-SUFFIX,dbankcloud.com
 DOMAIN-SUFFIX,dingtalk.com
+DOMAIN-SUFFIX,didichuxing.com
+DOMAIN-SUFFIX,didiglobal.com
 DOMAIN-SUFFIX,duapp.com
 DOMAIN-SUFFIX,dwz.cn
 DOMAIN-SUFFIX,ele.me
@@ -93,11 +99,15 @@ DOMAIN-SUFFIX,goofish.com
 DOMAIN-SUFFIX,guoguo-app.com
 DOMAIN-SUFFIX,hao123.com
 DOMAIN-SUFFIX,hdslb.com
+DOMAIN-SUFFIX,hicloud.com
+DOMAIN-SUFFIX,hihonor.com
 DOMAIN-SUFFIX,hellobike.com
 DOMAIN-SUFFIX,hemamax.com
 DOMAIN-SUFFIX,hemaos.com
 DOMAIN-SUFFIX,hemashare.cn
 DOMAIN-SUFFIX,hichina.com
+DOMAIN-SUFFIX,huawei.com
+DOMAIN-SUFFIX,hwcdn.net
 DOMAIN-SUFFIX,ialicdn.com
 DOMAIN-SUFFIX,iconfont.cn
 DOMAIN-SUFFIX,iqiyi.com
@@ -106,6 +116,9 @@ DOMAIN-SUFFIX,jomodns.com
 DOMAIN-SUFFIX,jomoxc.com
 DOMAIN-SUFFIX,koubei.com
 DOMAIN-SUFFIX,mmstat.com
+DOMAIN-SUFFIX,mi-img.com
+DOMAIN-SUFFIX,mi.com
+DOMAIN-SUFFIX,miui.com
 DOMAIN-SUFFIX,mxhichina.com
 DOMAIN-SUFFIX,myalicdn.com
 DOMAIN-SUFFIX,mybank.cn
@@ -129,10 +142,15 @@ DOMAIN-SUFFIX,tmall.com
 DOMAIN-SUFFIX,tudou.com
 DOMAIN-SUFFIX,uc.cn
 DOMAIN-SUFFIX,uczzd.cn
+DOMAIN-SUFFIX,udache.com
 DOMAIN-SUFFIX,wandoujia.com
+DOMAIN-SUFFIX,vmall.com
 DOMAIN-SUFFIX,xiami.com
 DOMAIN-SUFFIX,xiami.net
 DOMAIN-SUFFIX,xiaodutv.com
+DOMAIN-SUFFIX,xiaojukeji.com
+DOMAIN-SUFFIX,xiaomi.com
+DOMAIN-SUFFIX,xiaomi.net
 DOMAIN-SUFFIX,yitao.com
 DOMAIN-SUFFIX,ykimg.com
 DOMAIN-SUFFIX,youku.com
