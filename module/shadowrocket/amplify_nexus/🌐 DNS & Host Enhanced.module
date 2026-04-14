@@ -543,6 +543,7 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 
 # SECTION 28: DNS Mapping Rulesets (External Lists)
 # --- 🔒 International Priority Lock (Must be first) ---
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://doh.dns4all.eu/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns11.quad9.net/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns11.quad9.net/dns-query
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
