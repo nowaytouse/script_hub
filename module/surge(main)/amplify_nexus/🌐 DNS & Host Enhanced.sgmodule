@@ -14,8 +14,8 @@
 # DoH Priority（安全优先 → 国际 → 国内备用）
 # ⚠️ Quad9 (Malware Blocking) 置首，提供额外威胁过滤层
 # ⚠️ 全部使用 HTTPS DoH (TCP/TLS)，避免 QUIC/UDP 被代理规则或 ISP 拦截导致 DNS 超时
-encrypted-dns-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query
-# encrypted-dns-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/dns-query, https://dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://dns.nextdns.io/7f2fac
+encrypted-dns-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query
+# encrypted-dns-server = https://dns11.quad9.net/dns-query, https://cloudflare-dns.com/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/dns-query, https://dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://dns.nextdns.io/7f2fac, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query
 
 # ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
 # dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
@@ -181,8 +181,11 @@ dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twni
 ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
 dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
 dns.adguard-dns.com = 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
-doh.libredns.gr = 116.202.176.26 // https://doh.libredns.gr/dns-query
+doh.libredns.gr = 116.202.176.26 // https://doh.libredns.gr/dns-query & /noads
+doh.dns4all.eu = 194.0.5.3 // https://doh.dns4all.eu/dns-query
+wikimedia-dns.org = 185.71.138.138 // https://wikimedia-dns.org/dns-query
 dns.mullvad.net = 194.242.2.2, 194.242.2.3, 194.242.2.4, 194.242.2.9 // https://dns.mullvad.net/dns-query
+adblock.dns.mullvad.net = 194.242.2.2 // https://adblock.dns.mullvad.net/dns-query
 freedns.controld.com = 76.76.2.0, 76.76.10.0 // https://freedns.controld.com/p1
 dns.nextdns.io = 45.90.28.0, 45.90.30.0 // https://dns.nextdns.io/7f2fac
 
