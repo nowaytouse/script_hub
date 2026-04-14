@@ -13,16 +13,12 @@ from ruleset_manager import RulesetManager
 from srs_generator import SRSGenerator
 from maintenance.mitm_cleanup_github import run_cleanup
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════════
 
 ROOT = get_project_root()
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # MAIN ORCHESTRATOR
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def main():
     parser = argparse.ArgumentParser(description="Script Hub Python Main Orchestrator (v1.2 International)")

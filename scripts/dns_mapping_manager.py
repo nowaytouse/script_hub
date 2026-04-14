@@ -61,12 +61,10 @@ class DNSMappingManager:
 
     def generate_header(self, name: str, rule_count: int) -> str:
         header = [
-            "# ═══════════════════════════════════════════════════════════════",
             f"# DNS Mapping Ruleset: {name}",
             f"# Description: Automated priority mapping for DoH steering",
             f"# Rules: {rule_count}",
-            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            "# ═══════════════════════════════════════════════════════════════\n"
+            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         ]
         return "\n".join(header) + "\n"
 

@@ -8,7 +8,6 @@
 # homepage: https://hub.kelee.one
 # date: 2025-07-16 02:25:05
 
-# ═══════════════════════════════════════════════════════════════
 # NOTE: All 24 rules from this module have been extracted to AdBlock.list
 # This cleaned version only contains non-Rule sections:
 #   - [URL Rewrite]
@@ -16,7 +15,6 @@
 #   - [Map Local]
 #   - [MITM]
 # Use AdBlock.list for all blocking rules
-# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 ^https?:\/\/api-access\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/sdk - reject

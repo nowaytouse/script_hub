@@ -7,9 +7,7 @@ import time
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # COLORS & LOGGING
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class Logger:
     BLUE = '\033[0;34m'
@@ -42,9 +40,7 @@ class Logger:
     def section(msg: str):
         print(f"\n{Logger.PURPLE}═══ {msg} ═══{Logger.NC}")
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # FILE & PATH UTILITIES
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def get_project_root() -> str:
     """Gets the project root based on the script location.
@@ -81,9 +77,7 @@ def write_file(file_path: str, content: str):
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # SURGE/SINGBOX SPECIFIC PARSERS
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def extract_section(lines: List[str], section_name: str) -> List[str]:
     """Extracts a section (e.g., [Rule]) from a list of lines."""
@@ -113,9 +107,7 @@ def clean_rules(rules: List[str]) -> List[str]:
             cleaned.append(r_strip)
     return sorted(cleaned)
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # HARDENED DOWNLOAD UTILITIES
-# ═══════════════════════════════════════════════════════════════════════════════
 
 _BROWSER_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "

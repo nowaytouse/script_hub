@@ -10,14 +10,12 @@
 #!tg-channel=https://t.me/inaisi
 #!date=2025-05-13 21:58:49
 
-# ═══════════════════════════════════════════════════════════════
 # NOTE: All 174 rules from this module have been extracted to AdBlock.list
 # This cleaned version only contains non-Rule sections:
 #   - [URL Rewrite]
 #   - [Map Local]
 #   - [MITM]
 # Use AdBlock.list for all blocking rules
-# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 ^https?:\/\/203\.107\.1\.1/\d+/ss - reject

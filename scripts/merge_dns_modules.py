@@ -68,16 +68,12 @@ def main():
     date_str = datetime.now().strftime('%Y.%m.%d')
     rule_section = f"""
 [Rule]
-# ═══════════════════════════════════════════════════════════════
 # FROM: GetSomeFries HTTPDNS.Block (Block HTTPDNS hijacking)
 # AUTO-MERGED: {date_str}
-# ═══════════════════════════════════════════════════════════════
 {httpdns_rules}
 
-# ═══════════════════════════════════════════════════════════════
 # FROM: GetSomeFries ASN.China (China ASN Direct)
 # AUTO-MERGED: {date_str}
-# ═══════════════════════════════════════════════════════════════
 {asn_rules}
 """
     

@@ -567,7 +567,6 @@ class AdBlockManager:
         if output:
             output.append("")
 
-        output.append("# ═══════════════════════════════════════════════════════════════")
         output.append(f"# NOTE: All {rule_count} rules from this module have been extracted to AdBlock.list")
         if non_rule_sections:
             output.append("# This cleaned version only contains non-Rule sections:")
@@ -580,7 +579,6 @@ class AdBlockManager:
             output.append("# Use AdBlock.list for all blocking rules")
         else:
             output.append("# This module is kept synced, but all blocking rules now live in AdBlock.list")
-        output.append("# ═══════════════════════════════════════════════════════════════")
 
         if non_rule_sections:
             output.append("")
@@ -735,7 +733,6 @@ class AdBlockManager:
             "# Source Manifest: ruleset/Sources/Links/AdBlock_sources.txt\n",
             "# Build Model: Canonical rebuild from curated sources, no self-reference\n",
             "# Whitelist: ruleset/Sources/adblock_whitelist.txt\n",
-            "# ═══════════════════════════════════════════════════════════════\n\n",
         ]
         content.extend(f"{rule}\n" for rule in clean_rules)
         write_file(ADBLOCK_LIST, "".join(content))

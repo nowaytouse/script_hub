@@ -1,10 +1,8 @@
-# ═══════════════════════════════════════════════════════════════
 # Ruleset: DNS_China_114
 # Updated: 2025-12-07 10:45:46 UTC
 # Total Rules: 25
 # Generator: Ruleset Merger v2.4
 # Git Hash: f12294c
-# ═══════════════════════════════════════════════════════════════
 #
 # Sources:
 #   - Tencent.list (25 rules)
@@ -15,14 +13,12 @@
 #   - Policy is determined by RULE-SET line in config file
 #   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
 #
-# ═══════════════════════════════════════════════════════════════
 
 # 策略说明:
 #   - 规则集本身不包含策略标记
 #   - 策略由配置文件中的RULE-SET行决定
 #   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
 #
-# ═══════════════════════════════════════════════════════════════
 
 # ========== IP-CIDR ==========
 IP-CIDR,101.32.104.4/32,no-resolve

@@ -15,9 +15,7 @@ METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
 SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
 MODULE_DIR = os.path.join(ROOT, "module/surge(main)")
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════════
 
 SKK_SOURCES = {
     "reject.conf": "https://ruleset.skk.moe/List/non_ip/reject.conf",
@@ -76,9 +74,7 @@ NEXUS_MODULES = [
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
 PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # SYNC CLASS
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class UpstreamSyncer:
     def __init__(self):

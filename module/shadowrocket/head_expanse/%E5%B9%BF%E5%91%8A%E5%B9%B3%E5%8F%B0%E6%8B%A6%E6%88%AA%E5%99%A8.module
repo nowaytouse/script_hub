@@ -8,13 +8,11 @@
 # homepage: https://hub.kelee.one
 # date: 2026-03-03 10:07:10
 
-# ═══════════════════════════════════════════════════════════════
 # NOTE: All 313 rules from this module have been extracted to AdBlock.list
 # This cleaned version only contains non-Rule sections:
 #   - [URL Rewrite]
 #   - [MITM]
 # Use AdBlock.list for all blocking rules
-# ═══════════════════════════════════════════════════════════════
 
 [URL Rewrite]
 ^https:\/\/video-dsp\.pddpic\.com\/market-dsp-video\/ - reject

@@ -5,9 +5,7 @@
 # version: 2026.04.14
 # tag: Security, Firewall, macOS
 
-# ═══════════════════════════════════════════════════════════════
 # ⚠️  Scope & Usage Information
-# ═══════════════════════════════════════════════════════════════
 # Surge DEST-PORT matches the [Destination Port] of outbound connections，即本机发起的对外连接。
 # Protection Goals of this Module:：
 #   • Block malware/RAT callback to C2 servers
@@ -20,7 +18,6 @@
 # ✅ Untouched: Games, P2P/BT, VPN, Streaming, RDP/VNC, SSH, Web (80/443)、SSH、Web(80/443)
 # ⚠️  Developer Note: SECTION 5 blocks direct remote database connections，需要时请注释掉
 # ⚠️  macOS Users: SECTION 10 blocks AFP/ARD/NFS outbound，Home NAS users may comment out rules as needed
-# ═══════════════════════════════════════════════════════════════
 
 [Rule]
 
@@ -32,11 +29,9 @@ IN-PORT,127.0.0.1:12654
 IN-PORT,8076
 # --- SYNCED PORT RULES END ---
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 1: Classic Trojan/RAT C2 Ports
 # Historically abused, unused by modern legitimate software
 # Policy: REJECT (Silent drop, no RST, conceals filtering)
-# ═══════════════════════════════════════════════════════════════
 
 # Back Orifice / BO2K
 DEST-PORT,31337,REJECT
@@ -77,11 +72,9 @@ DEST-PORT,54320,REJECT  # Back Orifice 2000
 DEST-PORT,54321,REJECT  # Back Orifice 2000
 DEST-PORT,61466,REJECT  # Telecommando
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 2: Modern C2 Framework Default Ports
 # Cobalt Strike / Metasploit / Sliver / Empire / Havoc 等
 # Inbound/Outbound connections not expected in production environments
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,4444,REJECT   # Metasploit meterpreter 默认监听
 DEST-PORT,4445,REJECT   # Metasploit 变体
@@ -97,10 +90,8 @@ DEST-PORT,1025,REJECT   # 常被 Windows RAT 占用
 DEST-PORT,1026,REJECT   # Windows messenger spam / RAT
 DEST-PORT,1027,REJECT   # Windows messenger spam
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 3: IRC Botnet C2 Channels
 # Rarely used for legitimate purposes, extensively used by botnets
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,6667,REJECT   # IRC 标准端口，僵尸网络 C2 经典信道
 DEST-PORT,6668,REJECT   # IRC 变体
@@ -108,11 +99,9 @@ DEST-PORT,6669,REJECT   # IRC 变体
 DEST-PORT,7000,REJECT   # IRC 备用，僵尸网络常用
 DEST-PORT,194,REJECT    # IRC 官方分配端口
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 4: 加密货币矿池 Stratum 协议
 # 挖矿恶意软件（cryptojacker）的标准通信端口
 # ⚠️ 如果你是矿工请注释此节
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,3333,REJECT   # Stratum 最常用端口（ETH/ETC/XMR）
 DEST-PORT,5555,REJECT   # Stratum 备用
@@ -125,11 +114,9 @@ DEST-PORT,3032,REJECT   # NiceHash Stratum
 DEST-PORT,3092,REJECT   # MiningPoolHub Stratum
 DEST-PORT,20535,REJECT  # 矿池备用
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 5: 暴露的数据库与基础设施端口
 # 设备不应主动出站连接互联网上的裸端口
 # ⚠️ 开发者若需直连远程数据库，请注释对应行
-# ═══════════════════════════════════════════════════════════════
 
 # 关系型数据库
 DEST-PORT,3306,REJECT   # MySQL / MariaDB
@@ -181,11 +168,9 @@ DEST-PORT,50070,REJECT  # Hadoop HDFS NameNode WebUI
 DEST-PORT,50075,REJECT  # Hadoop HDFS DataNode
 DEST-PORT,8032,REJECT   # Hadoop YARN ResourceManager
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 6: 高危遗留协议
 # 无加密认证，出站连接无意义且存在风险
 # 策略：REJECT（快速失败，减少超时等待）
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,23,REJECT           # Telnet（明文，用 SSH 替代）
 DEST-PORT,69,REJECT           # TFTP（无认证）
@@ -196,10 +181,8 @@ DEST-PORT,513,REJECT          # rlogin（明文远程登录）
 DEST-PORT,514,REJECT          # rsh / syslog（明文，无认证）
 DEST-PORT,515,REJECT          # LPD 打印服务（历史漏洞多）
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 7: Windows 内网协议
 # 出站到互联网毫无意义，WannaCry/EternalBlue 主要攻击向量
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,135,REJECT     # RPC Endpoint Mapper / DCOM
 DEST-PORT,137,REJECT     # NetBIOS Name Service
@@ -213,12 +196,10 @@ DEST-PORT,4045,REJECT    # Windows Lockd（NFS lock manager）
 DEST-PORT,5355,REJECT
 
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 8: DDoS 反射/放大攻击源端口
 # 出站请求这些端口会使本机成为 DDoS 放大攻击的反射源
 # 放大倍数标注为理论峰值（CERT/CAIDA 数据）
 # 策略：REJECT（静默丢弃，不暴露存在）
-# ═══════════════════════════════════════════════════════════════
 
 # 经典 DRDoS 放大协议（出站触发反射）
 DEST-PORT,7,REJECT      # Echo（放大 ~2x，但量大时危险）
@@ -252,10 +233,8 @@ DEST-PORT,3283,REJECT   # Apple Remote Desktop / ARMS
 # NTP 放大攻击（⚠️ NTP 本身需要保留，仅拦截危险的 monlist 端口变体）
 # 注：标准 NTP 123 端口不拦截，保证时间同步正常
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 9: IoT / 嵌入式设备攻击端口
 # Mirai 及其变种的主要攻击信道
-# ═══════════════════════════════════════════════════════════════
 
 # MQTT（IoT 消息协议，Mirai 变种 C2 大量使用）
 DEST-PORT,1883,REJECT   # MQTT 明文（无认证暴露极危险）
@@ -280,11 +259,9 @@ DEST-PORT,49152,REJECT  # UPnP SOAP（Broadband Forum TR-064 漏洞）
 DEST-PORT,49153,REJECT  # UPnP 动态端口
 DEST-PORT,49154,REJECT  # UPnP 动态端口
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 10: macOS 特有攻击面与遗留协议
 # 这些服务在 macOS 上默认可能启用，出站到互联网均无意义
 # ⚠️ 家庭 NAS / 局域网文件共享用户请按需注释
-# ═══════════════════════════════════════════════════════════════
 
 # AFP - Apple Filing Protocol（macOS 文件共享遗留协议，已被 SMB 替代）
 # CVE-2018-4295 等多个 AFP 漏洞，出站到互联网毫无意义
@@ -313,11 +290,9 @@ DEST-PORT,5223,REJECT   # APNs 端口（被伪装成 Apple Push 的 macOS RAT �
 DEST-PORT,8567,REJECT   # macOS 恶意软件 C2 高频观测端口
 DEST-PORT,49475,REJECT  # macOS 后门高端口（ESET/SentinelOne 威胁情报）
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 11: 工业控制系统 / SCADA / OT 端口
 # 这些协议不应出现在普通用户设备的出站连接中
 # 恶意软件（Industroyer/Triton/BlackEnergy）常用这些端口横向移动
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,102,REJECT    # ISO-TSAP / Siemens S7 / IEC 61850 MMS（Stuxnet 目标协议）
 DEST-PORT,502,REJECT    # Modbus TCP（全球 Shodan 暴露数量最多的 SCADA 协议）
@@ -332,11 +307,9 @@ DEST-PORT,2404,REJECT   # IEC 60870-5-104（变电站远动协议）
 DEST-PORT,1911,REJECT   # Niagara Fox（楼控系统，Shodan 大量暴露）
 DEST-PORT,4911,REJECT   # Niagara Fox over TLS
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 12: 监控/可观测性工具暴露端口
 # 这些服务无认证暴露极为普遍，出站访问可能连接到蜜罐或数据泄露端点
 # ⚠️ 本地开发者请注释此节
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,3000,REJECT   # Grafana / Node Server (⚠️ DevOps users comment this)
 DEST-PORT,9090,REJECT   # Prometheus UI
@@ -354,11 +327,9 @@ DEST-PORT,8161,REJECT   # ActiveMQ Web Console（默认无认证）
 DEST-PORT,61616,REJECT  # ActiveMQ Broker（常被用于 RCE）
 DEST-PORT,61617,REJECT  # ActiveMQ SSL Broker
 
-# ═══════════════════════════════════════════════════════════════
 # SECTION 13: 遗留文件传输与信息泄露协议
 # 这些协议明文传输或存在已知信息泄露漏洞
 # 策略：REJECT（快速失败，减少应用层超时）
-# ═══════════════════════════════════════════════════════════════
 
 DEST-PORT,20,REJECT           # FTP 数据（主动模式，现代 FTP 客户端已不需要）
 # 注：FTP 控制端口 21 保留，部分用户仍需 PASV 模式 FTP

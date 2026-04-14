@@ -19,9 +19,7 @@ METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
 CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.txt")
 POLICY_MAP_FILE = os.path.join(ROOT, "ruleset/Sources/ruleset_policy_map.txt")
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════════
+# --- CONFIGURATION ---
 
 PROTECTED_RULESETS = []
 
@@ -53,9 +51,7 @@ RULESETS = [
     "StreamJP", "StreamUS", "StreamKR", "StreamHK", "StreamTW", "StreamEU"
 ]
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# RULESET MANAGER CLASS
-# ═══════════════════════════════════════════════════════════════════════════════
+# --- RULESET MANAGER CLASS ---
 
 class RulesetManager:
     def __init__(self, force: bool = False):
@@ -219,7 +215,6 @@ class RulesetManager:
     def generate_header(self, name: str, rule_count: int) -> str:
         p_info = self.policy_map.get(name, {"policy": "PROXY", "node": "Any", "desc": "Auto-merged ruleset"})
         header = [
-            "# ═══════════════════════════════════════════════════════════════",
             f"# Ruleset: {name}",
             f"# Policy: {p_info['policy']}"
         ]
@@ -227,8 +222,7 @@ class RulesetManager:
         header.extend([
             f"# Description: {p_info['desc']}",
             f"# Rules: {rule_count}",
-            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            "# ═══════════════════════════════════════════════════════════════\n"
+            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         ])
         return "\n".join(header) + "\n"
 
