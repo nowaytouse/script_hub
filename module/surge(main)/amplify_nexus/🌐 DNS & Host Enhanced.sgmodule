@@ -557,113 +557,12 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/So
 [Rule]
 # 🔒 Block 360 DNS from resolving international domains
 # ⚠️ 防止 360 DoH 对外网域名进行中间人解析
-DOMAIN,doh.360.cn,DIRECT
-DOMAIN,dns.360.cn,DIRECT
-# 阻断 360 安全组件对外网的 DNS 探针
-DOMAIN-SUFFIX,so.360.cn,REJECT
-
 # HTTPDNS Hijacking Block
-# Alibaba
-DOMAIN,httpdns.alicdn.com,REJECT,extended-matching,pre-matching
-# Aliyun
-DOMAIN,httpdns-api.aliyuncs.com,REJECT,extended-matching,pre-matching
-DOMAIN,httpdns-sc.aliyuncs.com,REJECT,extended-matching,pre-matching
-IP-CIDR,203.107.1.0/24,REJECT,no-resolve,pre-matching
-# Baidu
-DOMAIN,httpsdns.baidu.com,REJECT,extended-matching,pre-matching
-DOMAIN,httpdns.baidu.com,REJECT,extended-matching,pre-matching
-# BaiduBCE
-DOMAIN,httpdns.baidubce.com,REJECT,extended-matching,pre-matching
-IP-CIDR,180.76.76.200/32,REJECT,no-resolve,pre-matching
-# Bilibili
-DOMAIN,httpdns.bilivideo.com,REJECT,extended-matching,pre-matching
-IP-CIDR,47.101.175.206/32,REJECT,no-resolve,pre-matching
-IP-CIDR,47.100.123.169/32,REJECT,no-resolve,pre-matching
-IP-CIDR,120.46.169.234/32,REJECT,no-resolve,pre-matching
-IP-CIDR,121.36.72.124/32,REJECT,no-resolve,pre-matching
-IP-CIDR,116.63.10.135/32,REJECT,no-resolve,pre-matching
-IP-CIDR,122.9.7.134/32,REJECT,no-resolve,pre-matching
-IP-CIDR,117.185.228.108/32,REJECT,no-resolve,pre-matching
-IP-CIDR,117.144.238.29/32,REJECT,no-resolve,pre-matching
-IP-CIDR,122.9.13.79/32,REJECT,no-resolve,pre-matching
-IP-CIDR,122.9.15.129/32,REJECT,no-resolve,pre-matching
-IP-CIDR,101.91.140.224/32,REJECT,no-resolve,pre-matching
-IP-CIDR,101.91.140.124/32,REJECT,no-resolve,pre-matching
-IP-CIDR,114.116.215.110/32,REJECT,no-resolve,pre-matching
-IP-CIDR,116.63.10.31/32,REJECT,no-resolve,pre-matching
-IP-CIDR,112.64.218.119/32,REJECT,no-resolve,pre-matching
-IP-CIDR,112.65.200.117/32,REJECT,no-resolve,pre-matching
-# Huawei
-DOMAIN,httpdns.c.cdnhwc2.com,REJECT,extended-matching,pre-matching
-# JD
-DOMAIN,dns.jd.com,REJECT,extended-matching,pre-matching
-IP-CIDR,101.124.19.122/32,REJECT,no-resolve,pre-matching
-IP-CIDR6,2402:db40:5100:1011::5/128,REJECT,no-resolve,pre-matching
-IP-CIDR,103.224.222.208/32,REJECT,no-resolve,pre-matching
-# Keep
-DOMAIN,httpdns.calorietech.com,REJECT,extended-matching,pre-matching
-# Meituan
-DOMAIN,httpdns.meituan.com,REJECT,extended-matching,pre-matching
-DOMAIN,httpdnsvip.meituan.com,REJECT,extended-matching,pre-matching
-IP-CIDR,202.90.108.13/32,REJECT,no-resolve
-IP-CIDR,202.90.110.46/32,REJECT,no-resolve
-# NetEase
-DOMAIN,httpdns.yunxindns.com,REJECT,extended-matching,pre-matching
-DOMAIN,httpdns.n.netease.com,REJECT,extended-matching,pre-matching
-DOMAIN,httpdns.music.163.com,REJECT,extended-matching,pre-matching
-DOMAIN,music.httpdns.c.163.com,REJECT,extended-matching,pre-matching
-DOMAIN,lofter.httpdns.c.163.com,REJECT,extended-matching,pre-matching
-IP-CIDR,59.111.239.61/32,REJECT,no-resolve,pre-matching
-IP-CIDR,59.111.239.62/32,REJECT,no-resolve,pre-matching
-IP-CIDR,115.236.121.51/32,REJECT,no-resolve,pre-matching
-IP-CIDR,115.236.121.195/32,REJECT,no-resolve,pre-matching
-# Oppo
-DOMAIN,httpdns.push.oppomobile.com,REJECT,extended-matching,pre-matching
-# Tencent Cloud
-DOMAIN-SUFFIX,httpdns.pro,REJECT,extended-matching,pre-matching
-IP-CIDR,119.29.29.98/32,REJECT,no-resolve,pre-matching
-IP-CIDR,119.29.29.99/32,REJECT,no-resolve,pre-matching
-# Volcengine
-DOMAIN,httpdns.volcengineapi.com,REJECT,extended-matching,pre-matching
-# Weibo
-DOMAIN,dns.weibo.cn,REJECT,extended-matching,pre-matching
-IP-CIDR,39.97.128.148/32,REJECT,no-resolve,pre-matching
-IP-CIDR,39.97.130.51/32,REJECT,no-resolve,pre-matching
-# Wework
-# ⚠️ 修复：移除原文件中的重复条目
-IP-CIDR,182.254.116.117/32,REJECT,no-resolve,pre-matching
-IP-CIDR,182.254.118.119/32,REJECT,no-resolve,pre-matching
-# Weixin
-DOMAIN,dns.weixin.qq.com,REJECT,extended-matching,pre-matching
-DOMAIN,dns.weixin.qq.com.cn,REJECT,extended-matching,pre-matching
-IP-CIDR,42.81.232.18/32,REJECT,no-resolve,pre-matching
-IP-CIDR,42.187.182.106/32,REJECT,no-resolve,pre-matching
-IP-CIDR,42.187.182.123/32,REJECT,no-resolve,pre-matching
-IP-CIDR,42.187.184.154/32,REJECT,no-resolve,pre-matching
-IP-CIDR,123.151.54.50/32,REJECT,no-resolve,pre-matching
-IP-CIDR6,2402:4e00:1900:1700:0:9554:1ad9:c3a/128,REJECT,no-resolve,pre-matching
-IP-CIDR6,240e:928:1400:10::25/128,REJECT,no-resolve,pre-matching
-# Zhihu
-IP-CIDR,118.89.204.198/32,REJECT,no-resolve,pre-matching
-IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve,pre-matching
-# Kuaishou
-DOMAIN,httpdns.kwd.inkuai.com,REJECT,extended-matching,pre-matching
-DOMAIN,httpdns.gifshow.com,REJECT,extended-matching,pre-matching
-# Xiaomi
-DOMAIN,resolver.msg.xiaomi.net,REJECT,extended-matching,pre-matching
-DOMAIN,httpdns.browser.miui.com,REJECT,extended-matching,pre-matching
-# Pinduoduo
-DOMAIN,httpdns.pinduoduo.com,REJECT,extended-matching,pre-matching
-# Ctrip
-DOMAIN,sec-httpdns.ctrip.com,REJECT,extended-matching,pre-matching
-# DiDi
-DOMAIN,hd.xiaojukeji.com,REJECT,extended-matching,pre-matching
-# Sina
-DOMAIN,dns.sina.cn,REJECT,extended-matching,pre-matching
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/HTTPDNS_Hijack.list,REJECT
 
 # China ASN Priority
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/ChinaASN.list,DIRECT
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/GlobalASN.list,DIRECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/ChinaASN.list,DIRECT,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/GlobalASN.list,DIRECT,no-resolve
 
 PROTOCOL,QUIC,REJECT-NO-DROP
 
