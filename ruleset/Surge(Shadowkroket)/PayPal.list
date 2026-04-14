@@ -3,22 +3,11 @@
 # Policy: PROXY
 # Node: US
 # Description: PayPal (recommend US node)
-# Rules: 256
-# Updated: 2026-04-14 00:29:57
+# Rules: 248
+# Updated: 2026-04-14 06:01:53
 # ═══════════════════════════════════════════════════════════════
 
-DOMAIN,.
-DOMAIN,3
-DOMAIN,a
-DOMAIN,c
-DOMAIN,e
-DOMAIN,m
-DOMAIN,n
-DOMAIN,o
-DOMAIN,s
-DOMAIN,v
-DOMAIN,w
-DOMAIN,z
+DOMAIN-KEYWORD,paypal
 DOMAIN-SUFFIX,account-paypal.info
 DOMAIN-SUFFIX,account-paypal.net
 DOMAIN-SUFFIX,account-paypal.org
@@ -129,6 +118,7 @@ DOMAIN-SUFFIX,paypal-mainstreet.net
 DOMAIN-SUFFIX,paypal-marketing.com
 DOMAIN-SUFFIX,paypal-media.com
 DOMAIN-SUFFIX,paypal-merchantloyalty.com
+DOMAIN-SUFFIX,paypal-mktg.com
 DOMAIN-SUFFIX,paypal-mobilemoney.com
 DOMAIN-SUFFIX,paypal-network.org
 DOMAIN-SUFFIX,paypal-notice.com
@@ -251,6 +241,7 @@ DOMAIN-SUFFIX,venmo.com
 DOMAIN-SUFFIX,venmo.info
 DOMAIN-SUFFIX,venmo.net
 DOMAIN-SUFFIX,venmo.org
+DOMAIN-SUFFIX,venmo.s3.amazonaws.com
 DOMAIN-SUFFIX,webmoneyinfo.com
 DOMAIN-SUFFIX,wiremoneytoirelandwithxoomeasierandcheaper.com
 DOMAIN-SUFFIX,www-paypal.info
@@ -263,3 +254,4 @@ DOMAIN-SUFFIX,xoom.io
 DOMAIN-SUFFIX,xoom.net.cn
 DOMAIN-SUFFIX,xoom.us
 DOMAIN-SUFFIX,xoomcom.com
+USER-AGENT,PayPal*
