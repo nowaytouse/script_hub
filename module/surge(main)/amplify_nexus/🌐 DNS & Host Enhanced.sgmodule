@@ -373,6 +373,10 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sur
 # Mainland ASN direct rules.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/ChinaASN.list,DIRECT,no-resolve
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/GlobalASN.list,DIRECT,no-resolve
+
+# GEOIP Catch-All (放置于 ASN 规则之后、FINAL 之前)
+GEOIP,CN,DIRECT,no-resolve
+
 PROTOCOL,QUIC,REJECT-NO-DROP
 
 [Script]

@@ -44,6 +44,7 @@ skip-proxy = localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.co
 always-real-ip = *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com
 
 [URL Rewrite]
+# Keep only the Google country redirects that still align with the DNS policy.
 ^https?://(www\.)?(g|google)\.cn https://www.google.com 307
 ^https?://(www\.)?google\.com\.hk https://www.google.com 307
 ^https?://(ditu|maps)\.google\.cn https://maps.google.com 307
@@ -653,12 +654,10 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 # RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
 
 [Rule]
-# 🔒 Block 360 DNS from resolving international domains
-# ⚠️ 防止 360 DoH 对外网域名进行中间人解析
-# HTTPDNS Hijacking Block
+# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
 
-# China ASN Priority
+# Mainland ASN direct rules.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/ChinaASN.list,DIRECT,no-resolve
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/GlobalASN.list,DIRECT,no-resolve
 
@@ -668,15 +667,9 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sur
 GEOIP,CN,DIRECT,no-resolve
 
 [Script]
-# DNS Guard - HTTPDNS Interception (Script-level, more precise)
-# ⚠️ 在URL层面拦截HTTPDNS请求 + 验证DNS响应防止投毒
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
-
 DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
-
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
-
-# DoH Health Monitor (每6小时检测一次)
 DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
