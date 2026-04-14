@@ -254,7 +254,16 @@ class RulesetManager:
             found = True
             
         current_hash = hasher.hexdigest() if found else ""
-        if not self.force and os.path.exists(target_file) and self.hashes.get(name) == current_hash:
+        # Detect if any source is remote (http)
+        has_remote = False
+        s_file = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
+        if os.path.exists(s_file):
+            for line in read_file(s_file):
+                if line.strip().startswith('http'):
+                    has_remote = True
+                    break
+
+        if not self.force and os.path.exists(target_file) and self.hashes.get(name) == current_hash and not has_remote:
             self.stats["skipped"] += 1
             return
 
