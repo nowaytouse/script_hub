@@ -1,4 +1,5 @@
-# DNS分流: 114 DNS (114.114.114.114)
-# 适用于: 腾讯系
+# DNS分流: DNSPod / 腾讯系 / 国内站点
+# 说明: 保留 DNS_China_114 命名仅为兼容既有 RULE-SET 路径
+# ⚠️ 此清单必须保持为纯 DOMAIN / DOMAIN-SUFFIX 规则，才能安全用于 [Host] RULE-SET
 
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Tencent/Tencent.list
+./DNS_China_114_manual.list

@@ -8,48 +8,54 @@
  * Type: cron script
  *
  * @author nyamiiko
- * @version 2026.04.12
+ * @version 2026.04.15
  */
 
 const NAME = "DoH Monitor";
-const VERSION = "2026.04.12";
+const VERSION = "2026.04.15";
 
-// DoH servers to monitor - same order as module config
+const DNS_QUERY_GLOBAL = "AAEAAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE";
+const DNS_QUERY_TENCENT = "AAEAAAABAAAAAAAAA3d3dwJxcQNjb20AAAEAAQ";
+const DNS_QUERY_ALI = "AAEAAAABAAAAAAAAA3d3dwZ0YW9iYW8DY29tAAABAAE";
+
+// Monitor the global fallback pool with global domains, and mainland-only
+// providers with mainland domains, so the health check mirrors the actual
+// privacy policy instead of normalizing CN DoH lookups for Google.
 const DOH_SERVERS = [
   {
-    name: "AliDNS",
-    url: "https://dns.alidns.com/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "CN",
+    name: "Quad9",
+    url: `https://dns.quad9.net/dns-query?dns=${DNS_QUERY_GLOBAL}`,
+    scope: "Global Fallback",
   },
   {
     name: "Cloudflare",
-    url: "https://cloudflare-dns.com/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "Global",
-  },
-  {
-    name: "Quad9",
-    url: "https://dns11.quad9.net/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "Global",
+    url: `https://cloudflare-dns.com/dns-query?dns=${DNS_QUERY_GLOBAL}`,
+    scope: "Global Fallback",
   },
   {
     name: "AdGuard",
-    url: "https://dns.adguard-dns.com/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "Global",
+    url: `https://dns.adguard-dns.com/dns-query?dns=${DNS_QUERY_GLOBAL}`,
+    scope: "Global Fallback",
   },
   {
     name: "Google",
-    url: "https://dns.google/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "Global",
+    url: `https://dns.google/dns-query?dns=${DNS_QUERY_GLOBAL}`,
+    scope: "Global Fallback",
+  },
+  {
+    name: "AliDNS",
+    url: `https://dns.alidns.com/dns-query?dns=${DNS_QUERY_ALI}`,
+    scope: "China Host Rules",
   },
   {
     name: "DNSPod",
-    url: "https://doh.pub/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "CN",
+    url: `https://doh.pub/dns-query?dns=${DNS_QUERY_TENCENT}`,
+    scope: "China Host Rules",
   },
   {
     name: "360DNS",
-    url: "https://doh.360.cn/dns-query?dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE",
-    region: "CN",
+    url: `https://doh.360.cn/dns-query?dns=${DNS_QUERY_TENCENT}`,
+    scope: "China Host Rules",
   },
 ];
 
@@ -84,7 +90,7 @@ function setStore(key, val) {
 
 /**
  * Test a single DoH server
- * Returns: { name, region, status, latency, error? }
+ * Returns: { name, scope, status, latency, error? }
  */
 function testServer(server) {
   return new Promise((resolve) => {
@@ -92,7 +98,7 @@ function testServer(server) {
     const timer = setTimeout(() => {
       resolve({
         name: server.name,
-        region: server.region,
+        scope: server.scope,
         status: "timeout",
         latency: TIMEOUT,
       });
@@ -113,7 +119,7 @@ function testServer(server) {
         if (error) {
           resolve({
             name: server.name,
-            region: server.region,
+            scope: server.scope,
             status: "error",
             latency,
             error: String(error).substring(0, 80),
@@ -121,14 +127,14 @@ function testServer(server) {
         } else if (response && response.status >= 200 && response.status < 400) {
           resolve({
             name: server.name,
-            region: server.region,
+            scope: server.scope,
             status: latency > SLOW_THRESHOLD ? "slow" : "ok",
             latency,
           });
         } else {
           resolve({
             name: server.name,
-            region: server.region,
+            scope: server.scope,
             status: "error",
             latency,
             error: `HTTP ${response ? response.status : "?"}`,
@@ -155,7 +161,7 @@ async function main() {
   const lines = results.map((r) => {
     const icon =
       r.status === "ok" ? "✅" : r.status === "slow" ? "⚠️" : "❌";
-    return `${icon} ${r.name} (${r.region}): ${r.latency}ms`;
+    return `${icon} ${r.name} (${r.scope}): ${r.latency}ms`;
   });
 
   // Store last check time and results

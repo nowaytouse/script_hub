@@ -1,122 +1,31 @@
-#!name=🌐 DNS & Host & URL Rewrite Enhanced
-#!desc=🔒 全量DoH加密DNS + Host分流增强 + URL重写 + 🛡️ 高级安全过滤 | 🔧 2026.04.14
-#!author=VirgilClyne & nyamiiko (Merged & Optimized)
+#!name=🌐 DNS & Host Enhanced (Strict Privacy)
+#!desc=🔒 严格国际域名优先 DoH + Host 分流增强 + HTTPDNS 拦截 | 🛡️ 2026.04.15
+#!author=VirgilClyne & nyamiiko (Refactored)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.13
+#!version=2026.04.15
 
 [General]
-# Encrypted DNS Configuration
-# ⚠️ 全量DoH加密，避免传统DNS泄漏/劫持
-# DoH Priority（安全优先 → 国际 → 国内备用）
-# ⚠️ Quad9 (Malware Blocking) 置首，提供额外威胁过滤层
-# ⚠️ 全部使用 HTTPS DoH (TCP/TLS)，避免 QUIC/UDP 被代理规则或 ISP 拦截导致 DNS 超时
-encrypted-dns-server = https://dns11.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.cn/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://dns6.cfiec.net/dns-query, https://doh.ffmuc.net/dns-query
-
-# ⚠️ Fallback DNS（默认注释，避免传统DNS被劫持；仅用于DoH域名解析和连通性测试时启用）
-# dns-server = 2606:4700:4700::1111, 2606:4700:4700::1001, 1.1.1.1, 1.0.0.1, 2620:fe::fe, 2620:fe::9, 9.9.9.9, 149.112.112.112, 2400:3200:baba::1, 223.5.5.5, 223.6.6.6
-
-# DNS Core Settings
+# Global fallback pool only. Mainland DoH endpoints are assigned exclusively by [Host].
+encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
+# dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
-# ⚠️ 强制验证DoH服务器证书，防止中间人攻击
 encrypted-dns-skip-cert-verification = false
-
-# TUN Routing - Exclude LAN/Reserved
 tun-excluded-routes = 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4, 255.255.255.255/32
 tun-included-routes = 192.168.1.12/32, 192.168.1.100/32
-
-# Force HTTP Engine Hosts
-# ⚠️ 修复：移除无效端口 :0；-*.apple.com 为排除项，保持原意
 force-http-engine-hosts = baidu.com, -*.apple.com, www.google.com:80
-
-# Always Raw TCP - Core Finance/Payment Services
-# ⚠️ always-raw-tcp-keywords: Beta 专属指令，按子串匹配跳过协议嗅探
-#    适合主机名不可预测场景（如动态支付域名）
 always-raw-tcp-hosts = *.alipay.com, *.unionpay.com, *.95516.com, *.apple.com, *.jd.com, icbc.com.cn, ccb.com, cmbchina.com, 12306.cn
 always-raw-tcp-keywords = alipay, unionpay, 95516, applepay, wechatpay, wxpay, jdpay, bank, icbc, ccb, abchina, bocpay, bankcomm, cmbchina, pingan, 12306, chinapay, bestpay, 99bill, yeepay, lianlian, suixingpay, huifu, 17173pay, cmpay, upop, ebspay, 19pay, 95599, 95588, 95533, 95568, 95521, oauth, ssotoken, authorize, captcha, verify, antirobot, risk, anti-fraud, riskcontrol, trustdevice, saf-js, fp.js, fingerprint, deviceid, accs, mtgsig, xsecappid, sec-request, xboundary
-
-# Skip Proxy - Core List
 skip-proxy = %INSERT% localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
-
-# Always Real IP - Core List
 always-real-ip = %INSERT% *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com
 
 [URL Rewrite]
-# Google Redirect
+# Keep only the Google country redirects that still align with the DNS policy.
 ^https?://(www\.)?(g|google)\.cn https://www.google.com 307
 ^https?://(www\.)?google\.com\.hk https://www.google.com 307
 ^https?://(ditu|maps)\.google\.cn https://maps.google.com 307
-
-# HTTPS Redirect
-^https?:\/\/(www\.)?taobao\.com\/ https://taobao.com/ 302
-^https?:\/\/(www\.)?jd\.com\/ https://www.jd.com/ 302
-^https?:\/\/(www\.)?mi\.com\/ https://www.mi.com/ 302
-^https?:\/\/you\.163\.com\/ https://you.163.com/ 302
-^https?:\/\/(www\.)?suning\.com\/ https://suning.com/ 302
-^https?:\/\/(www\.)?yhd\.com\/ https://yhd.com/ 302
-
-# Fake Website Protection
-^https?:\/\/(www\.)?ign\.xn--fiqs8s\/ http://cn.ign.com/ccpref/us 302
-^https?:\/\/(www\.)?abbyychina\.com\/ https://www.abbyy.cn/ 302
-^https?:\/\/(www\.)?bartender\.cc\/ https://www.macbartender.com/ 302
-^https?:\/\/(www\.)?(betterzipcn|betterzip)\.(com|net)\/ https://macitbetter.com/ 302
-^https?:\/\/(www\.)?beyondcompare\.cc\/ https://www.scootersoftware.com/ 302
-^https?:\/\/(www\.)?bingdianhuanyuan\.cn\/ https://www.faronics.com/zh-hans/products/deep-freeze 302
-^https?:\/\/(www\.)?chemdraw\.com\.cn\/ https://www.perkinelmer.com.cn/ 302
-^https?:\/\/(www\.)?codesoftchina\.com\/ https://www.teklynx.com/ 302
-^https?:\/\/(www\.)?coreldrawchina\.com\/ https://www.coreldraw.com/cn/ 302
-^https?:\/\/(www\.)?crossoverchina\.com\/ https://www.codeweavers.com/ 302
-^https?:\/\/(www\.)?dongmansoft\.com\/ https://www.udongman.cn/ 302
-^https?:\/\/(www\.)?earmasterchina\.cn\/ https://www.earmaster.com/ 302
-^https?:\/\/(www\.)?easyrecoverychina\.com\/ https://www.ontrack.com/ 302
-^https?:\/\/(www\.)?ediuschina\.com\/ https://www.grassvalley.com/ 302
-^https?:\/\/(www\.)?flstudiochina\.com\/ https://www.image-line.com/ 302
-^https?:\/\/(www\.)?formysql\.com\/ https://www.navicat.com.cn/ 302
-^https?:\/\/(www\.)?guitarpro\.cc\/ https://www.guitar-pro.com/ 302
-^https?:\/\/(www\.)?huishenghuiying\.com\.cn\/ https://www.coreldraw.com/cn/ 302
-^https?:\/\/hypersnap\.mairuan\.com\/ https://www.hyperionics.com/ 302
-^https?:\/\/(www\.)?iconworkshop\.cn\/ https://www.axialis.com/ 302
-^https?:\/\/(www\.)?imindmap\.cc\/ https://www.ayoa.com/previously-imindmap/ 302
-^https?:\/\/(www\.)?jihehuaban\.com\.cn\/ https://www.chartwellyorke.com/sketchpad/x24795.html header
-^https?:\/\/(www\.)?keyshot\.mairuan\.com\/ https://www.keyshot.com/ 302
-^https?:\/\/(www\.)?kingdeecn\.cn\/ http://www.kingdee.com/ 302
-^https?:\/\/(www\.)?logoshejishi\.com https://www.sothink.com/product/logo-design-software/ 302
-^https?:\/\/logoshejishi\.mairuan\.com\/ https://www.sothink.com/product/logo-design-software/ 302
-^https?:\/\/(www\.)?luping\.net\.cn\/ https://www.techsmith.com/ 302
-^https?:\/\/(www\.)?mathtype\.cn\/ https://www.dessci.com/ 302
-^https?:\/\/(www\.)?mindmanager\.(cc|cn)\/ https://www.mindjet.com/cn/ 302
-^https?:\/\/(www\.)?mindmapper\.cc\/ https://www.mindmapper.com/ 302
-^https?:\/\/(www\.)?mycleanmymac\.com\/ https://macpaw.com/ 302
-^https?:\/\/(www\.)?nicelabel\.cc\/ https://www.nicelabel.com/zh/ 302
-^https?:\/\/(www\.)?ntfsformac\.cc\/ https://www.tuxera.com/products/tuxera-ntfs-for-mac-cn/ 302
-^https?:\/\/(www\.)?ntfsformac\.cn\/ https://china.paragon-software.com/home-mac/ntfs-for-mac/ 302
-^https?:\/\/(www\.)?overturechina\.com\/ https://sonicscores.com/ 302
-^https?:\/\/(www\.)?passwordrecovery\.cn\/ https://cn.elcomsoft.com/aopr.html 302
-^https?:\/\/(www\.)?pdfexpert\.cc\/ https://pdfexpert.com/zh 302
-^https?:\/\/(www\.)?photozoomchina\.com\/ https://www.benvista.com/ 302
-^https?:\/\/(www\.)?shankejingling\.com\/ https://www.sothink.com/product/flashdecompiler/ 302
-^https?:\/\/cn\.ultraiso\.net\/ https://cn.ezbsystems.com/ultraiso/ 302
-^https?:\/\/(www\.)?vegaschina\.cn\/ https://www.vegascreativesoftware.com/ 302
-^https?:\/\/(www\.)?xshellcn\.com\/ https://www.netsarang.com/zh/xshell/ 302
-^https?:\/\/(www\.)?yuanchengxiezuo\.com\/ https://www.teamviewer.com/ 302
-^https?:\/\/(www\.)?zbrushcn.com/ https://pixologic.com/ 302
-
-# TikTok Watermark Removal
-# ⚠️ 修复：移除 Surge 不支持的 lookbehind 语法区域重定向规则
-#    区域覆盖功能已移至 [Header Rewrite] 实现
-^(https?://[^/]*tiktok[^/]*/[^?]*\?)(.*&)?video_id=(\w{32})(.*?)(&watermark=[^&]*)(.*)$ $1$2video_id=$3$4$6 302
-
-[Header Rewrite]
-
-# User-Agent & Accept-Language Optimization
-# ⚠️ 从 [URL Rewrite] 移入：这些是头部改写规则，非URL重写
-^https?:\/\/.*\.zhihu\.com\/(question|topic) header-replace User-Agent "osee2unifiedRelease/10700 osee2unifiedReleaseVersion/10.70.0 Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
-^https?:\/\/zhidao\.baidu\.com header-replace User-Agent "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15"
-^https:\/\/github\.com\/ header-replace Accept-Language "en-US,en;q=0.9"
-^https:\/\/(raw|gist)\.githubusercontent\.com\/ header-replace Accept-Language "en-US,en;q=0.9"
-^https:\/\/api\.github\.com\/ header-replace Accept-Language "en-US,en;q=0.9"
 
 [Host]
 # SECTION 1: IPv6 Local Address Mapping
@@ -128,25 +37,21 @@ ip6-allnodes = ff02::1 // IPv6 All Nodes
 ip6-allrouters = ff02::2 // IPv6 All Routers
 ip6-allhosts = ff02::3 // IPv6 All Hosts
 
-# SECTION 2: Encrypted DNS Servers Bootstrap
+# SECTION 2: Bootstrap Hosts For General DoH / RULE-SET Fetching
 dns.google = 8.8.8.8, 8.8.4.4, 2001:4860:4860::8888, 2001:4860:4860::8844 // https://dns.google/dns-query
 dns64.dns.google = 2001:4860:4860::6464, 2001:4860:4860::64 // https://dns64.dns.google/dns-query
 cloudflare-dns.com = 104.16.249.249, 104.16.248.249, 2606:4700::6810:f8f9, 2606:4700::6810:f9f9 // https://cloudflare-dns.com/dns-query
 1dot1dot1dot1.cloudflare-dns.com = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // 1dot1dot1dot1.cloudflare-dns.com:853
 one.one.one.one = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // one.one.one.one:853
+dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
 dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200:baba::1, 2400:3200::1 // https://dns.alidns.com/dns-query
 doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1 // https://doh.pub/dns-query
 dot.pub = 1.12.12.12, 120.53.53.53 // dot.pub:853
 doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // https://doh.360.cn/dns-query
 dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // dot.360.cn:853
-dns.baidu.com = 180.76.76.76, 110.242.68.66, 2400:da00::6666 // https://dns.baidu.com/dns-query
-dns.cn = 1.2.4.8, 210.2.4.8, 2001:dc7:1000::1 // https://dns.cn/dns-query
-dns.tuna.tsinghua.edu.cn = 101.6.6.6, 2001:da8::666 // https://dns.tuna.tsinghua.edu.cn/dns-query
-dns6.cfiec.net = 240c:6666::6666, 240c:6644::6644 // https://dns6.cfiec.net/dns-query
 dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twnic.tw/dns-query
 ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
-dns.quad9.net = 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
-dns.adguard-dns.com = 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
+dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
 doh.libredns.gr = 116.202.176.26 // https://doh.libredns.gr/dns-query & /noads
 doh.dns4all.eu = 194.0.5.3 // https://doh.dns4all.eu/dns-query
 doh.ffmuc.net = 5.1.66.255, 185.150.99.255, 2001:678:e68:f000::, 2001:678:ed0:f000:: // https://doh.ffmuc.net/dns-query
@@ -155,53 +60,134 @@ dns.mullvad.net = 194.242.2.2, 194.242.2.3, 194.242.2.4, 194.242.2.9 // https://
 adblock.dns.mullvad.net = 194.242.2.2 // https://adblock.dns.mullvad.net/dns-query
 freedns.controld.com = 76.76.2.0, 76.76.10.0 // https://freedns.controld.com/p1
 dns.nextdns.io = 45.90.28.0, 45.90.30.0 // https://dns.nextdns.io/7f2fac
-
-# GitHub Static Mapping (Prevent Leak & Speed Up RULE-SET Fetching)
 raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133
 github.com = 140.82.113.4, 140.82.112.3
 
-# SECTION 3: Local Domains / LAN
-# ⚠️ .local 域名 Surge 已默认特殊处理
-# ⚠️ mDNS 特殊域名使用 force-syslib
-*.local = server:system // Surge 已默认处理 .local
-*.lan = server:system // 本地局域网
-*.test = server:system // 测试域名
-*.localhost = server:system // 本地主机
-*.localdomain = server:system // 本地域名
-_hotspot_.m2m = server:force-syslib // M2M routers at MiFi Hotspot (mDNS)
-hotspot.cslwifi.com = server:force-syslib // csl Wi-Fi Hotspot (mDNS)
+# SECTION 3: Local Domains / LAN / Router Admin
+*.local = server:system
+*.lan = server:system
+*.test = server:system
+*.localhost = server:system
+*.localdomain = server:system
+_hotspot_.m2m = server:force-syslib
+hotspot.cslwifi.com = server:force-syslib
+*.id.ui.direct = server:force-syslib
+amplifi.lan = server:force-syslib
+router.synology.com = server:force-syslib
+sila.razer.com = server:force-syslib
+router.asus.com = server:force-syslib
+routerlogin.net = server:force-syslib
+orbilogin.com = server:force-syslib
+www.LinksysSmartWiFi.com = server:force-syslib
+LinksysSmartWiFi.com = server:force-syslib
+instant.arubanetworks.com = server:force-syslib
+setmeup.arubanetworks.com = server:force-syslib
+www.miwifi.com = server:force-syslib
+miwifi.com = server:force-syslib
+mediarouter.home = server:force-syslib
+tplogin.cn = server:force-syslib
+tplinklogin.net = server:force-syslib
+tplinkwifi.net = server:force-syslib
+melogin.cn = server:force-syslib
+falogin.cn = server:force-syslib
+tendawifi.com = server:force-syslib
+leike.cc = server:force-syslib
+zte.home = server:force-syslib
+p.to = server:force-syslib
+phicomm.me = server:force-syslib
+hiwifi.com = server:force-syslib
+peiluyou.com = server:force-syslib
 
-# SECTION 4: Router Admin Panel (Force System Library DNS)
-# ⚠️ 本地路由器管理面板，依赖 mDNS/本地发现，必须用系统库
-*.id.ui.direct = server:force-syslib // Ubiquiti Unifi Network App (mDNS)
-amplifi.lan = server:force-syslib // Ubiquiti Amplifi Router (mDNS)
-router.synology.com = server:force-syslib // Synology Router
-sila.razer.com = server:force-syslib // Razer Sila Router
-router.asus.com = server:force-syslib // Asus Router
-routerlogin.net = server:force-syslib // Netgear Router
-orbilogin.com = server:force-syslib // Netgear Orbi Router
-www.LinksysSmartWiFi.com = server:force-syslib // Linksys Router
-LinksysSmartWiFi.com = server:force-syslib // Linksys Router
-instant.arubanetworks.com = server:force-syslib // Aruba Router
-setmeup.arubanetworks.com = server:force-syslib // Aruba Router
-www.miwifi.com = server:force-syslib // 小米 Mi WiFi Router
-miwifi.com = server:force-syslib // 小米 Mi WiFi Router
-mediarouter.home = server:force-syslib // 华为 Huawei Router
-tplogin.cn = server:force-syslib // TP-Link Router
-tplinklogin.net = server:force-syslib // TP-Link Router
-tplinkwifi.net = server:force-syslib // TP-Link Router
-melogin.cn = server:force-syslib // 水星 MERCURY Router
-falogin.cn = server:force-syslib // 迅捷 FAST Router
-tendawifi.com = server:force-syslib // 腾达 Tenda Router
-leike.cc = server:force-syslib // 磊科 Netcore Router
-zte.home = server:force-syslib // 中兴 ZTE Router
-p.to = server:force-syslib // 斐讯 PHICOMM Router
-phicomm.me = server:force-syslib // 斐讯 PHICOMM Router
-hiwifi.com = server:force-syslib // 极路由 HiWiFi Router
-peiluyou.com = server:force-syslib // 迅雷路由
+# SECTION 4: Critical International Hard Lock
+# These entries remain inline so the most sensitive domains stay protected even
+# if remote RULE-SET fetches fail or a client skips them.
+google.com = server:https://dns.google/dns-query
+*.google.com = server:https://dns.google/dns-query
+google.com.hk = server:https://dns.google/dns-query
+*.google.com.hk = server:https://dns.google/dns-query
+google.cn = server:https://dns.google/dns-query
+*.google.cn = server:https://dns.google/dns-query
+googleapis.com = server:https://dns.google/dns-query
+*.googleapis.com = server:https://dns.google/dns-query
+gstatic.com = server:https://dns.google/dns-query
+*.gstatic.com = server:https://dns.google/dns-query
+googleusercontent.com = server:https://dns.google/dns-query
+*.googleusercontent.com = server:https://dns.google/dns-query
+youtube.com = server:https://dns.google/dns-query
+*.youtube.com = server:https://dns.google/dns-query
+googlevideo.com = server:https://dns.google/dns-query
+*.googlevideo.com = server:https://dns.google/dns-query
+ytimg.com = server:https://dns.google/dns-query
+*.ytimg.com = server:https://dns.google/dns-query
+api.github.com = server:https://dns.quad9.net/dns-query
+*.githubusercontent.com = server:https://dns.quad9.net/dns-query
+*.githubassets.com = server:https://dns.quad9.net/dns-query
+*.github.io = server:https://dns.quad9.net/dns-query
+cloudflare.com = server:https://cloudflare-dns.com/dns-query
+*.cloudflare.com = server:https://cloudflare-dns.com/dns-query
+*.cloudflare-dns.com = server:https://cloudflare-dns.com/dns-query
+*.workers.dev = server:https://cloudflare-dns.com/dns-query
+*.pages.dev = server:https://cloudflare-dns.com/dns-query
+openai.com = server:https://cloudflare-dns.com/dns-query
+*.openai.com = server:https://cloudflare-dns.com/dns-query
+chatgpt.com = server:https://cloudflare-dns.com/dns-query
+*.chatgpt.com = server:https://cloudflare-dns.com/dns-query
+oaistatic.com = server:https://cloudflare-dns.com/dns-query
+*.oaistatic.com = server:https://cloudflare-dns.com/dns-query
+oaiusercontent.com = server:https://cloudflare-dns.com/dns-query
+*.oaiusercontent.com = server:https://cloudflare-dns.com/dns-query
+anthropic.com = server:https://dns.quad9.net/dns-query
+*.anthropic.com = server:https://dns.quad9.net/dns-query
+claude.ai = server:https://dns.quad9.net/dns-query
+*.claude.ai = server:https://dns.quad9.net/dns-query
+telegram.org = server:https://dns.quad9.net/dns-query
+*.telegram.org = server:https://dns.quad9.net/dns-query
+t.me = server:https://dns.quad9.net/dns-query
+telegram.me = server:https://dns.quad9.net/dns-query
 
-# SECTION 5: System Connectivity Check
-# captive.apple.com = server:https://doh.pub/dns-query
+# SECTION 5: International DoH Steering RULE-SETs
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://doh.dns4all.eu/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.quad9.net/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
+# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns.quad9.net/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
+
+# SECTION 6: Mainland DoH Steering RULE-SETs
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
+
+# SECTION 7: Retained Inline Mainland Exceptions
+# These domain families are not covered by the current curated RULE-SETs yet.
+*.didichuxing.com = server:https://dns.alidns.com/dns-query
+*.didiglobal.com = server:https://dns.alidns.com/dns-query
+*.udache.com = server:https://dns.alidns.com/dns-query
+*.xiaojukeji.com = server:https://dns.alidns.com/dns-query
+*.mi.com = server:https://dns.alidns.com/dns-query
+*.miui.com = server:https://dns.alidns.com/dns-query
+*.xiaomi.com = server:https://dns.alidns.com/dns-query
+*.xiaomi.net = server:https://dns.alidns.com/dns-query
+*.mi-img.com = server:https://dns.alidns.com/dns-query
+*.huawei.com = server:https://dns.alidns.com/dns-query
+*.hicloud.com = server:https://dns.alidns.com/dns-query
+*.dbankcloud.com = server:https://dns.alidns.com/dns-query
+*.hwcdn.net = server:https://dns.alidns.com/dns-query
+*.vmall.com = server:https://dns.alidns.com/dns-query
+*.hihonor.com = server:https://dns.alidns.com/dns-query
+*.cht.com.tw = server:https://dns.twnic.tw/dns-query
+*.hinet.net = server:https://dns.twnic.tw/dns-query
+*.emome.net = server:https://dns.twnic.tw/dns-query
+*.tw = server:https://dns.twnic.tw/dns-query
+*.taipei = server:https://dns.twnic.tw/dns-query
+*.he.net = server:https://ordns.he.net/dns-query
+
+# SECTION 8: Connectivity / Mainland Catch-All
 connectivitycheck.gstatic.com = server:https://dns.google/dns-query
 detectportal.firefox.com = server:https://cloudflare-dns.com/dns-query
 msftconnecttest.com = server:https://dns.google/dns-query
@@ -210,10 +196,10 @@ www.msftncsi.com = server:https://dns.google/dns-query
 connectivitycheck.android.com = server:https://dns.google/dns-query
 connectivity-check.ubuntu.com = server:https://cloudflare-dns.com/dns-query
 connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
-# ⚠️ *.cn 通配域名使用 AliDNS DoH（避免传统 DNS 泄漏）
+# Generic .cn fallback must stay after the global hard-lock and curated rulesets.
 *.cn = server:https://dns.alidns.com/dns-query
 
-# SECTION 6: Telegram Node Mapping
+# SECTION 9: Telegram Node Mapping
 91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
 91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130
 91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130
@@ -244,8 +230,7 @@ connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 149.154.167.40 = 149.154.167.41
 149.154.175.40 = 149.154.175.41
 
-# SECTION 7: Google Services
-# > Firebase Cloud Messaging
+# SECTION 10: Google Services
 talk.google.com = 108.177.125.188 // Firebase Cloud Messaging
 mtalk.google.com = 108.177.125.188, 2404:6800:4008:c07::bc, 142.250.31.188 // Firebase Cloud Messaging
 alt1-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:c0b::bc, 64.233.171.188 // Firebase Cloud Messaging
@@ -256,322 +241,27 @@ alt5-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:1::bc, 142.250.112.188 // Fireba
 alt6-mtalk.google.com = 3.3.3.3, 172.217.197.188 // Firebase Cloud Messaging
 alt7-mtalk.google.com = 74.125.200.188, 2607:f8b0:4002:c03::bc, 108.177.12.188 // Firebase Cloud Messaging
 alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
+stun.l.google.com = server:force-syslib // WebRTC local discovery
+stun?.l.google.com = server:force-syslib // WebRTC local discovery
 
-# > Google CDN/Download（DNSPod DoH 提升速度与安全性）
-# blog.google = server:https://doh.pub/dns-query // Google Blog
-# googletraveladservices.com = server:https://doh.pub/dns-query // Google Flights
-# dl.google.com = server:https://doh.pub/dns-query // Google Download
-# dl.l.google.com = server:https://doh.pub/dns-query // Google Download
-# clientservices.googleapis.com = server:https://doh.pub/dns-query // Google Chrome
-# update.googleapis.com = server:https://doh.pub/dns-query // Google Update
-# translate.googleapis.com = server:https://doh.pub/dns-query // Google Translate
-# fonts.googleapis.com = server:https://doh.pub/dns-query // Google Fonts
-# fonts.gstatic.com = server:https://doh.pub/dns-query // Google Fonts
-stun.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
-stun?.l.google.com = server:force-syslib // Google STUN (WebRTC 本地发现)
-
-# SECTION 8: Apple Services
-# ⚠️ 注释保留：Apple DoH 仅在非中国大陆直连下可用
-# refer: https://support.apple.com/zh-cn/HT210060
-# networking.apple = server:https://doh.dns.apple.com/dns-query // Apple
-# *.apple.com = server:https://doh.dns.apple.com/dns-query // Apple.com
-# *.icloud.com = server:https://doh.dns.apple.com/dns-query // iCloud.com
-
-# SECTION 9: 阿里巴巴 (AliDNS H3 DoH)
-*.alibaba.cn = server:https://dns.alidns.com/dns-query // 阿里巴巴
-*.alibaba.com.cn = server:https://dns.alidns.com/dns-query // 阿里巴巴
-*.china.alibaba.com = server:https://dns.alidns.com/dns-query // Alibaba 中国
-*.1688.com = server:https://dns.alidns.com/dns-query // 1688
-*.taobao.com = server:https://dns.alidns.com/dns-query // 淘宝
-*.tbcache.com = server:https://dns.alidns.com/dns-query // 淘宝 缓存
-*.tmall.com = server:https://dns.alidns.com/dns-query // 天猫
-*.alicdn.com = server:https://dns.alidns.com/dns-query // 阿里 CDN
-*.alikunlun.com = server:https://dns.alidns.com/dns-query // 阿里昆仑
-*.aliapp.com = server:https://dns.alidns.com/dns-query // 云引擎应用平台
-*.aliapp.org = server:https://dns.alidns.com/dns-query // 上云平台
-*.alibabausercontent.com = server:https://dns.alidns.com/dns-query // 阿里用户上传资料
-*.mmstat.com = server:https://dns.alidns.com/dns-query // mmstat 数据统计 广告追踪
-tb.cn = server:https://dns.alidns.com/dns-query // 淘宝短网址
-
-# SECTION 10: 阿里云 (AliDNS H3 DoH)
-*.aliyun.* = server:https://dns.alidns.com/dns-query // 阿里云
-*.aliyuncdn.* = server:https://dns.alidns.com/dns-query // 阿里云 CDN
-*.aliyuncs.com = server:https://dns.alidns.com/dns-query // 阿里云 API 服务
-*.aliyunddos????.com = server:https://dns.alidns.com/dns-query // 阿里云 DDoS防护
-*.aliyundrive.com = server:https://dns.alidns.com/dns-query // 阿里云盘
-*.aliyundun.com = server:https://dns.alidns.com/dns-query // 阿里云盾
-*.aliyundunwaf.com = server:https://dns.alidns.com/dns-query // 阿里云盾 Web 应用防火墙
-*.aliyun-inc.com = server:https://dns.alidns.com/dns-query // 阿里云 内部
-
-# SECTION 11: 蚂蚁集团/支付宝 (AliDNS H3 DoH)
-*.antgroup.com = server:https://dns.alidns.com/dns-query // 蚂蚁集团
-*.antfin.com = server:https://dns.alidns.com/dns-query // 蚂蚁金服
-*.antfinancial.com = server:https://dns.alidns.com/dns-query // 蚂蚁金服
-*.alipay.com = server:https://dns.alidns.com/dns-query // 支付宝
-*.alipay.com.cn = server:https://dns.alidns.com/dns-query // 支付宝
-*.alipaydns.com = server:https://dns.alidns.com/dns-query // 支付宝 HTTP DNS
-*.alipayeshop.com = server:https://dns.alidns.com/dns-query // 支付宝 商家资源
-*.alipaylog.com = server:https://dns.alidns.com/dns-query // 支付宝 Mdap
-*.alipayobjects.com = server:https://dns.alidns.com/dns-query // 支付宝 静态资源
-*.alipay-eco.com = server:https://dns.alidns.com/dns-query // 支付宝 开放技术生态体系
-
-# SECTION 12: 腾讯 (DNSPod DoH)
-*.tencent.com = server:https://doh.pub/dns-query // 腾讯
-*.qcloud.com = server:https://doh.pub/dns-query // 腾讯云
-*.qcloudcdn.cn = server:https://doh.pub/dns-query // 腾讯云CDN
-*.qcloudcdn.com = server:https://doh.pub/dns-query // 腾讯云CDN
-*.qcloudcos.com = server:https://doh.pub/dns-query // 腾讯云对象储存
-*.qcloudimg.com = server:https://doh.pub/dns-query // 腾讯云静态资源
-*.qcloudcjgj.com = server:https://doh.pub/dns-query // 腾讯云超级管家
-*.qcloudwzgj.com = server:https://doh.pub/dns-query // 腾讯云网站管家
-*.qcloudzygj.com = server:https://doh.pub/dns-query // 腾讯云主页管家
-*.myqcloud.com = server:https://doh.pub/dns-query // 腾讯开放云
-*.tencent-cloud.net = server:https://doh.pub/dns-query // 腾讯云
-*.tencentcloud-aiot.com = server:https://doh.pub/dns-query // 腾讯云aiot解决方案
-*.tencentcloudapi.com = server:https://doh.pub/dns-query // 腾讯云API
-*.tencentcloudcr.com = server:https://doh.pub/dns-query // 腾讯云容器镜像服务TCR
-*.tencentcloudmarket.com = server:https://doh.pub/dns-query // 腾讯云云市场
-*.qq.com = server:https://doh.pub/dns-query // QQ
-*.qlogo.cn = server:https://doh.pub/dns-query // 腾讯头像
-*.qpic.cn = server:https://doh.pub/dns-query // 腾讯图片
-*.weixin.qq.com = server:https://doh.pub/dns-query // 微信
-*.wx.qq.com = server:https://doh.pub/dns-query // 微信
-*.weixin.com = server:https://doh.pub/dns-query // 微信
-*.weixinbridge.com = server:https://doh.pub/dns-query // 微信公众平台
-*.wechat.com = server:https://doh.pub/dns-query // WeChat
-*.servicewechat.com = server:https://doh.pub/dns-query // 微信小程序
-*.weiyun.com = server:https://doh.pub/dns-query // 微云
-*.gtimg.cn = server:https://doh.pub/dns-query // 腾讯 图片 静态资源
-*.idqqimg.com = server:https://doh.pub/dns-query // 腾讯 图片 静态资源
-*.cdn-go.cn = server:https://doh.pub/dns-query // 腾讯 静态资源 CDN
-*.smtcdns.com = server:https://doh.pub/dns-query // 腾讯云 智能云解析DNS
-*.smtcdns.net = server:https://doh.pub/dns-query // 腾讯云 智能云解析DNS
-url.cn = server:https://doh.pub/dns-query // 腾讯短网址
-
-# SECTION 13: 百度 (AliDNS H3 DoH)
-*.baidu = server:https://dns.alidns.com/dns-query // 百度
-*.baidu.com = server:https://dns.alidns.com/dns-query // 百度
-*.bdimg.com = server:https://dns.alidns.com/dns-query // 百度 静态资源
-*.bdstatic.com = server:https://dns.alidns.com/dns-query // 百度 静态资源
-*.baidupcs.* = server:https://dns.alidns.com/dns-query // 百度网盘
-*.baiduyuncdn.* = server:https://dns.alidns.com/dns-query // 百度云CDN
-*.baiduyundns.* = server:https://dns.alidns.com/dns-query // 百度云DNS
-*.bdydns.* = server:https://dns.alidns.com/dns-query // 百度云 DNS
-*.bdycdn.* = server:https://dns.alidns.com/dns-query // 百度云 CDN
-*.bdysite.com = server:https://dns.alidns.com/dns-query // 百度云 域名
-*.bdysites.com = server:https://dns.alidns.com/dns-query // 百度云 域名
-*.baidubce.* = server:https://dns.alidns.com/dns-query // 百度智能云
-*.bcedns.* = server:https://dns.alidns.com/dns-query // 百度智能云 DNS
-*.bcebos.com = server:https://dns.alidns.com/dns-query // 百度智能云 对象存储BOS
-*.bcevod.com = server:https://dns.alidns.com/dns-query // 百度智能云 播放器服务
-*.bceimg.com = server:https://dns.alidns.com/dns-query // 百度智能云 图片服务
-*.bcehost.com = server:https://dns.alidns.com/dns-query // 百度智能云 主机
-*.bcehosts.com = server:https://dns.alidns.com/dns-query // 百度智能云 主机
-dwz.cn = server:https://dns.alidns.com/dns-query // 百度短网址
-
-# SECTION 14: 360 (360 DoH)
-*.360.cn = server:https://doh.360.cn/dns-query // 360安全中心
-*.360safe.com = server:https://doh.360.cn/dns-query // 360安全卫士
-*.360kuai.com = server:https://doh.360.cn/dns-query // 360快资讯
-*.so.com = server:https://doh.360.cn/dns-query // 360搜索
-*.360webcache.com = server:https://doh.360.cn/dns-query // 360网页快照服务
-*.qihuapi.com = server:https://doh.360.cn/dns-query // 奇虎api
-*.qhimg.com = server:https://doh.360.cn/dns-query // 360图床
-*.qhimgs.com = server:https://doh.360.cn/dns-query // 360图床
-*.qhimgs?.com = server:https://doh.360.cn/dns-query // 360图床
-*.qhmsg.com = server:https://doh.360.cn/dns-query // 360
-*.qhres.com = server:https://doh.360.cn/dns-query // 奇虎静态资源
-*.qhres?.com = server:https://doh.360.cn/dns-query // 奇虎静态资源
-*.dhrest.com = server:https://doh.360.cn/dns-query // 导航静态文件
-*.qhupdate.com = server:https://doh.360.cn/dns-query // 360
-*.yunpan.cn = server:https://doh.360.cn/dns-query // 360安全云盘
-*.yunpan.com.cn = server:https://doh.360.cn/dns-query // 360安全云盘
-*.yunpan.com = server:https://doh.360.cn/dns-query // 360安全云盘
-urlqh.cn = server:https://doh.360.cn/dns-query // 360短网址
-
-# SECTION 15: 字节跳动/ByteDance (AliDNS H3 DoH)
-*.amemv.com = server:https://dns.alidns.com/dns-query // 艾特迷
-*.bdxiguaimg.com = server:https://dns.alidns.com/dns-query // 西瓜 图片服务
-*.bdxiguastatic.com = server:https://dns.alidns.com/dns-query // 西瓜 静态资源
-*.byted-static.com = server:https://dns.alidns.com/dns-query // 字节跳动 UNPKG
-*.bytedance.* = server:https://dns.alidns.com/dns-query // 字节跳动
-*.bytedns.net = server:https://dns.alidns.com/dns-query // 字节跳动 DNS
-*.bytednsdoc.com = server:https://dns.alidns.com/dns-query // 字节跳动 CDN 文件存储
-*.bytegoofy.com = server:https://dns.alidns.com/dns-query // 字节跳动 Goofy
-*.byteimg.com = server:https://dns.alidns.com/dns-query // 字节跳动 图片服务
-*.bytescm.com = server:https://dns.alidns.com/dns-query // 字节跳动 SCM
-*.bytetos.com = server:https://dns.alidns.com/dns-query // 字节跳动 TOS
-*.bytexservice.com = server:https://dns.alidns.com/dns-query // 飞书企业服务平台
-*.douyin.com = server:https://dns.alidns.com/dns-query // 抖音
-*.douyinpic.com = server:https://dns.alidns.com/dns-query // 抖音 静态资源
-*.douyinstatic.com = server:https://dns.alidns.com/dns-query // 抖音 静态资源
-*.douyinvod.com = server:https://dns.alidns.com/dns-query // 抖音 静态资源
-*.feelgood.cn = server:https://dns.alidns.com/dns-query // FeelGood平台
-*.feiliao.com = server:https://dns.alidns.com/dns-query // 飞聊官网
-*.gifshow.com = server:https://dns.alidns.com/dns-query // 快手
-*.huoshan.com = server:https://dns.alidns.com/dns-query // 火山网
-*.huoshanzhibo.com = server:https://dns.alidns.com/dns-query // 火山直播
-*.ibytedapm.com = server:https://dns.alidns.com/dns-query // 抖音 dapm
-*.iesdouyin.com = server:https://dns.alidns.com/dns-query // 抖音 CDN
-*.ixigua.com = server:https://dns.alidns.com/dns-query // 西瓜视频
-*.kspkg.com = server:https://dns.alidns.com/dns-query // 快手
-*.pstatp.com = server:https://dns.alidns.com/dns-query // 抖音 静态资源
-*.snssdk.com = server:https://dns.alidns.com/dns-query // 今日头条
-*.toutiao.com = server:https://dns.alidns.com/dns-query // 今日头条
-*.toutiao13.com = server:https://dns.alidns.com/dns-query // 今日头条
-*.toutiao???.??? = server:https://dns.alidns.com/dns-query // 今日头条 静态资源
-*.toutiaocloud.cn = server:https://dns.alidns.com/dns-query // 头条云
-*.toutiaocloud.com = server:https://dns.alidns.com/dns-query // 头条云
-*.toutiaopage.com = server:https://dns.alidns.com/dns-query // 今日头条 建站
-*.wukong.com = server:https://dns.alidns.com/dns-query // 悟空
-*.zijieapi.com = server:https://dns.alidns.com/dns-query // 字节跳动 API
-*.zijieimg.com = server:https://dns.alidns.com/dns-query // 字节跳动 图片服务
-*.zjbyte.com = server:https://dns.alidns.com/dns-query // 今日头条 网页版
-*.zjcdn.com = server:https://dns.alidns.com/dns-query // 字节跳动 CDN
-
-# SECTION 16: BiliBili (Multi-CDN Optimization)
-upos-sz-mirrorali.bilivideo.com = server:https://dns.alidns.com/dns-query // BiliBili upos（阿里云）
-upos-sz-mirrorali?.bilivideo.com = server:https://dns.alidns.com/dns-query // BiliBili upos（阿里云）
-upos-sz-mirrorali??.bilivideo.com = server:https://dns.alidns.com/dns-query // BiliBili upos（阿里云）
-upos-sz-mirrorbos.bilivideo.com = server:https://dns.alidns.com/dns-query // BiliBili upos（百度云）
-upos-sz-mirrorcos.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos（腾讯云）
-upos-sz-mirrorcos?.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos（腾讯云）
-upos-sz-mirrorcos??.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos（腾讯云）
-upos-sz-upcdnbd??.bilivideo.com = server:https://dns.alidns.com/dns-query // BiliBili upos（百度云）
-upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upos（腾讯云）
-
-# SECTION 17: 台湾地区 (TWNIC DNS)
-*.cht.com.tw = server:https://dns.hinet.net/dns-query // 中华电信
-*.hinet.net = server:https://dns.hinet.net/dns-query // 中华电信HiNet
-*.emome.net = server:https://dns.hinet.net/dns-query // 中华电信emome
-*.tw = server:https://dns.twnic.tw/dns-query // TWNIC DNS
-*.taipei = server:https://dns.twnic.tw/dns-query // TWNIC DNS
-
-# SECTION 18: Hurricane Electric
-*.he.net = server:https://ordns.he.net/dns-query // HE.net
-
-# SECTION 19: 网易 NetEase (DNSPod DoH)
-*.163.com = server:https://doh.pub/dns-query // 网易
-*.126.com = server:https://doh.pub/dns-query // 网易邮箱
-*.126.net = server:https://doh.pub/dns-query // 网易CDN
-*.127.net = server:https://doh.pub/dns-query // 网易CDN
-*.lofter.com = server:https://doh.pub/dns-query // LOFTER
-*.netease.com = server:https://doh.pub/dns-query // 网易
-*.ydstatic.com = server:https://doh.pub/dns-query // 有道静态资源
-*.youdao.com = server:https://doh.pub/dns-query // 有道
-
-# SECTION 20: 京东 JD (DNSPod DoH)
-*.jd.com = server:https://doh.pub/dns-query // 京东
-*.360buy.com = server:https://doh.pub/dns-query // 京东
-*.jdcloud.com = server:https://doh.pub/dns-query // 京东云
-*.jcloudcs.com = server:https://doh.pub/dns-query // 京东云CDN
-*.jdcloud-cdn.com = server:https://doh.pub/dns-query // 京东云CDN
-*.jdpay.com = server:https://doh.pub/dns-query // 京东支付
-*.jdwl.com = server:https://doh.pub/dns-query // 京东物流
-*.jdl.com = server:https://doh.pub/dns-query // 京东物流
-*.jingxi.com = server:https://doh.pub/dns-query // 京喜
-
-# SECTION 21: 小米 Xiaomi (AliDNS H3 DoH)
-*.mi.com = server:https://dns.alidns.com/dns-query // 小米
-*.miui.com = server:https://dns.alidns.com/dns-query // MIUI
-*.xiaomi.com = server:https://dns.alidns.com/dns-query // 小米
-*.xiaomi.net = server:https://dns.alidns.com/dns-query // 小米网络
-*.mi-img.com = server:https://dns.alidns.com/dns-query // 小米图片CDN
-
-# SECTION 22: 华为 Huawei (AliDNS H3 DoH)
-*.huawei.com = server:https://dns.alidns.com/dns-query // 华为
-*.hicloud.com = server:https://dns.alidns.com/dns-query // 华为云/花瓣
-*.dbankcloud.com = server:https://dns.alidns.com/dns-query // 华为数据库云
-*.hwcdn.net = server:https://dns.alidns.com/dns-query // 华为CDN
-*.vmall.com = server:https://dns.alidns.com/dns-query // 华为商城
-*.hihonor.com = server:https://dns.alidns.com/dns-query // 荣耀
-
-# SECTION 23: 美团 Meituan (DNSPod DoH)
-*.meituan.com = server:https://doh.pub/dns-query // 美团
-*.meituan.net = server:https://doh.pub/dns-query // 美团网络
-*.dianping.com = server:https://doh.pub/dns-query // 大众点评
-*.meituancdn.com = server:https://doh.pub/dns-query // 美团CDN
-*.sankuai.com = server:https://doh.pub/dns-query // 三快科技（美团）
-
-# SECTION 24: 微博/新浪 Weibo/Sina (DNSPod DoH)
-*.weibo.com = server:https://doh.pub/dns-query // 微博
-*.weibo.cn = server:https://doh.pub/dns-query // 微博移动端
-*.sina.com.cn = server:https://doh.pub/dns-query // 新浪
-*.sina.cn = server:https://doh.pub/dns-query // 新浪移动
-*.sinaimg.cn = server:https://doh.pub/dns-query // 新浪图片CDN
-*.sinajs.cn = server:https://doh.pub/dns-query // 新浪JS CDN
-*.weibocdn.com = server:https://doh.pub/dns-query // 微博CDN
-
-# SECTION 25: 滴滴 DiDi (AliDNS H3 DoH)
-*.didichuxing.com = server:https://dns.alidns.com/dns-query // 滴滴出行
-*.didiglobal.com = server:https://dns.alidns.com/dns-query // 滴滴全球
-*.udache.com = server:https://dns.alidns.com/dns-query // 滴滴代驾
-*.xiaojukeji.com = server:https://dns.alidns.com/dns-query // 小桔科技
-
-# SECTION 26: 哔哩哔哩主域 BiliBili (DNSPod DoH)
-# （bilivideo.com CDN 分流详见 SECTION 16）
-*.bilibili.com = server:https://doh.pub/dns-query // BiliBili
-*.hdslb.com = server:https://doh.pub/dns-query // BiliBili 静态资源
-*.biliimg.com = server:https://doh.pub/dns-query // BiliBili 图片
-*.acgvideo.com = server:https://doh.pub/dns-query // BiliBili 视频
-
-# SECTION 27: 银行/金融 Finance (DNSPod DoH)
-*.icbc.com.cn = server:https://doh.pub/dns-query // 工商银行
-*.ccb.com = server:https://doh.pub/dns-query // 建设银行
-*.abchina.com = server:https://doh.pub/dns-query // 农业银行
-*.boc.cn = server:https://doh.pub/dns-query // 中国银行
-*.bankcomm.com = server:https://doh.pub/dns-query // 交通银行
-*.cmbchina.com = server:https://doh.pub/dns-query // 招商银行
-*.95516.com = server:https://doh.pub/dns-query // 银联
-*.unionpay.com = server:https://doh.pub/dns-query // 银联
-*.pingan.com = server:https://doh.pub/dns-query // 平安
-*.pingan.com.cn = server:https://doh.pub/dns-query // 平安中国
-*.cib.com.cn = server:https://doh.pub/dns-query // 兴业银行
-*.spdb.com.cn = server:https://doh.pub/dns-query // 浦发银行
-
-# SECTION 28: DNS Mapping Rulesets (External Lists)
-# --- 🔒 International Priority Lock (Must be first) ---
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://doh.dns4all.eu/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns11.quad9.net/dns-query
-# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns11.quad9.net/dns-query
-# RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns11.quad9.net/dns-query
-# --- Basic Global Lists ---
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns11.quad9.net/dns-query
-# --- China Lists ---
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
+# SECTION 11: Apple Notes
+# networking.apple = server:https://doh.dns.apple.com/dns-query
+# *.apple.com = server:https://doh.dns.apple.com/dns-query
+# *.icloud.com = server:https://doh.dns.apple.com/dns-query
 
 [Rule]
-# 🔒 Block 360 DNS from resolving international domains ⚠️ 防止 360 DoH 对外网域名进行中间人解析
-
-# HTTPDNS Hijacking Block
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/HTTPDNS_Hijack.list,REJECT
-
-# China ASN Priority
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/ChinaASN.list,DIRECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/main/ruleset/Surge(Shadowkroket)/GlobalASN.list,DIRECT,no-resolve
-
+# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
+# Mainland ASN direct rules.
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/ChinaASN.list,DIRECT,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/GlobalASN.list,DIRECT,no-resolve
 PROTOCOL,QUIC,REJECT-NO-DROP
 
 [Script]
-# DNS Guard - HTTPDNS Interception (Script-level, more precise)
-# ⚠️ 在URL层面拦截HTTPDNS请求 + 验证DNS响应防止投毒
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
-
 DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
-
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
-
-# DoH Health Monitor (每6小时检测一次)
 DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
-hostname = %APPEND% *.google.cn, *.google.com.hk, *.zhihu.com, zhidao.baidu.com, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
-hostname-disabled = %INSERT% gateway.icloud.com, gateway.icloud.com.cn, weather-data.apple.com, buy.itunes.apple.com, sandbox.itunes.apple.com, upp.itunes.apple.com
+hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn
