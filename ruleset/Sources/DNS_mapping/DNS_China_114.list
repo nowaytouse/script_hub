@@ -1,12 +1,7 @@
 # DNS Mapping Ruleset: DNS_China_114
-# Description: Curated DNSPod / Tencent-side mainland domains for explicit DoH steering
+# Description: Automated priority mapping for DoH steering
 # Rules: 73
-# Updated: 2026-04-15 00:00:00
-#
-# NOTE:
-#   - Historical filename retained for compatibility with existing RULE-SET URLs.
-#   - This list is intentionally domain-only and safe for [Host] RULE-SET usage.
-#
+# Updated: 2026-04-15 01:37:05
 
 DOMAIN-SUFFIX,126.com
 DOMAIN-SUFFIX,126.net

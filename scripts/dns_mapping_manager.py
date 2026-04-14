@@ -95,10 +95,14 @@ class DNSMappingManager:
             else:
                 # Handle local path relative to manifest
                 local_path = os.path.abspath(os.path.join(os.path.dirname(sources_file), line))
-                if os.path.exists(local_path):
+                if os.path.exists(local_path) and os.path.isfile(local_path):
                     for r_line in read_file(local_path):
                         cleaned = self.clean_rule(r_line)
                         if cleaned: all_rules.add(cleaned)
+                else:
+                    # Treat as inline domain rule
+                    cleaned = self.clean_rule(line)
+                    if cleaned: all_rules.add(cleaned)
         
         if all_rules:
             write_file(target_file, self.generate_header(name, len(all_rules)) + "\n".join(sorted(list(all_rules))) + "\n")
