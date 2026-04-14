@@ -3,8 +3,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 70
-# Updated: 2026-04-14 00:30:12
+# Rules: 76
+# Updated: 2026-04-14 18:40:39
 # ═══════════════════════════════════════════════════════════════
 
 DOMAIN,ai.google.dev
@@ -13,6 +13,7 @@ DOMAIN,api.msn.com
 DOMAIN,api.statsig.com
 DOMAIN,assets.msn.com
 DOMAIN,browser-intake-datadoghq.com
+DOMAIN,cdn.usefathom.com
 DOMAIN,chat.openai.com.cdn.cloudflare.net
 DOMAIN,copilot.microsoft.com
 DOMAIN,gateway.bingviz.microsoft.net
@@ -38,9 +39,13 @@ DOMAIN,www.bing.com
 DOMAIN-KEYWORD,colab
 DOMAIN-KEYWORD,developerprofiles
 DOMAIN-KEYWORD,generativelanguage
+DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api
+DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,algolia.net
+DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,api.microsoftapp.net
+DOMAIN-SUFFIX,api.statsig.com
 DOMAIN-SUFFIX,apis.google.com
 DOMAIN-SUFFIX,auth0.com
 DOMAIN-SUFFIX,bard.google.com
@@ -49,6 +54,7 @@ DOMAIN-SUFFIX,challenges.cloudflare.com
 DOMAIN-SUFFIX,chat.com
 DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,chatgpt.livekit.cloud
+DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,client-api.arkoselabs.com
 DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deepmind.google

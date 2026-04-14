@@ -3,9 +3,27 @@
 # Policy: PROXY
 # Node: HK
 # Description: Hong Kong streaming services
-# Rules: 2
-# Updated: 2026-04-14 00:31:40
+# Rules: 20
+# Updated: 2026-04-14 18:40:49
 # ═══════════════════════════════════════════════════════════════
 
+DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
+DOMAIN-SUFFIX,csifund.org
+DOMAIN-SUFFIX,d1k2us671qcoau.cloudfront.net
+DOMAIN-SUFFIX,d2anahhhmp1ffz.cloudfront.net
+DOMAIN-SUFFIX,dfp6rglgjqszk.cloudfront.net
+DOMAIN-SUFFIX,hkbn.com.hk
+DOMAIN-SUFFIX,hkbn.net
+DOMAIN-SUFFIX,hkbnes.net
+DOMAIN-SUFFIX,jos.com
+DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,nowe.com
 DOMAIN-SUFFIX,nowestatic.com
+DOMAIN-SUFFIX,speedtest.com.hk
+DOMAIN-SUFFIX,viu.com
+DOMAIN-SUFFIX,viu.now.com
+DOMAIN-SUFFIX,viu.tv
+PROCESS-NAME,com.viu.pad
+PROCESS-NAME,com.viu.phone
+PROCESS-NAME,com.vuclip.viu
+USER-AGENT,Viu*
