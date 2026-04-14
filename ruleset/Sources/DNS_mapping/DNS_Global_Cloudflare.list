@@ -1,30 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
-# Ruleset: DNS_Global_Cloudflare
-# Updated: 2025-12-07 10:45:53 UTC
-# Total Rules: 65
-# Generator: Ruleset Merger v2.4
-# Git Hash: f12294c
-# ═══════════════════════════════════════════════════════════════
-#
-# Sources:
-#   - Cloudflare.list (65 rules)
-#
-# Usage:
-#   - Auto-generated ruleset, DO NOT edit manually
-#   - Rules grouped by type (DOMAIN-SUFFIX/DOMAIN/IP-CIDR/etc.)
-#   - Policy is determined by RULE-SET line in config file
-#   - Compatible with Surge/Shadowrocket/Clash/Quantumult X
-#
+# DNS Mapping Ruleset: DNS_Global_Cloudflare
+# Description: Automated priority mapping for DoH steering
+# Rules: 43
+# Updated: 2026-04-14 23:19:08
 # ═══════════════════════════════════════════════════════════════
 
-# 策略说明:
-#   - 规则集本身不包含策略标记
-#   - 策略由配置文件中的RULE-SET行决定
-#   - 例如: RULE-SET,LAN.list,DIRECT 或 RULE-SET,AdBlock.list,REJECT
-#
-# ═══════════════════════════════════════════════════════════════
-
-# ========== DOMAIN-SUFFIX ==========
 DOMAIN-SUFFIX,cf-ipfs.com
 DOMAIN-SUFFIX,cf-ns.com
 DOMAIN-SUFFIX,cf-ns.net
@@ -68,31 +48,3 @@ DOMAIN-SUFFIX,trycloudflare.com
 DOMAIN-SUFFIX,videodelivery.net
 DOMAIN-SUFFIX,warp.plus
 DOMAIN-SUFFIX,workers.dev
-
-# ========== IP-CIDR ==========
-IP-CIDR,103.21.244.0/22,no-resolve
-IP-CIDR,103.22.200.0/22,no-resolve
-IP-CIDR,103.31.4.0/22,no-resolve
-IP-CIDR,104.16.0.0/13,no-resolve
-IP-CIDR,104.24.0.0/14,no-resolve
-IP-CIDR,108.162.192.0/18,no-resolve
-IP-CIDR,131.0.72.0/22,no-resolve
-IP-CIDR,141.101.64.0/18,no-resolve
-IP-CIDR,162.158.0.0/15,no-resolve
-IP-CIDR,172.64.0.0/13,no-resolve
-IP-CIDR,173.245.48.0/20,no-resolve
-IP-CIDR,188.114.96.0/20,no-resolve
-IP-CIDR,190.93.240.0/20,no-resolve
-IP-CIDR,197.234.240.0/22,no-resolve
-IP-CIDR,198.41.128.0/17,no-resolve
-
-# ========== IP-CIDR6 ==========
-IP-CIDR6,2400:cb00::/32,no-resolve
-IP-CIDR6,2405:8100::/32,no-resolve
-IP-CIDR6,2405:b500::/32,no-resolve
-IP-CIDR6,2606:4700::/32,no-resolve
-IP-CIDR6,2803:f800::/32,no-resolve
-IP-CIDR6,2a06:98c0::/29,no-resolve
-IP-CIDR6,2c0f:f248::/32,no-resolve
-
-# ========== END ==========
