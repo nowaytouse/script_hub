@@ -308,6 +308,9 @@ alt5-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:1::bc, 142.250.112.188 // Fireba
 alt6-mtalk.google.com = 3.3.3.3, 172.217.197.188 // Firebase Cloud Messaging
 alt7-mtalk.google.com = 74.125.200.188, 2607:f8b0:4002:c03::bc, 108.177.12.188 // Firebase Cloud Messaging
 alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
+*.google.com = server:https://dns.google/dns-query // Google Global
+*.googleapis.com = server:https://dns.google/dns-query // Google APIs
+*.goog = server:https://dns.google/dns-query // Google TLDs (.goog/.google/etc)
 
 # > Google CDN/Download（DNSPod DoH 提升速度与安全性）
 # blog.google = server:https://doh.pub/dns-query // Google Blog
