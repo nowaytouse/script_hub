@@ -298,6 +298,10 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
+# Mainland catch-all: Direct.list (126K+ mainland .com domains) ensures domains
+# like ifeng.com never fall through to the international-only global pool.
+# International domains in this list won't conflict — SECTION 6 matches first.
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/Direct.list,server:https://dns.alidns.com/dns-query
 
 # SECTION 8: Regional Inline Exceptions
 # Keep only the small regional resolver overrides inline.
