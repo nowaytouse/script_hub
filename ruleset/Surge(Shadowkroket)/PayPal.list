@@ -2,21 +2,9 @@
 # Policy: PROXY
 # Node: US
 # Description: PayPal (recommend US node)
-# Rules: 260
-# Updated: 2026-04-14 23:31:56
+# Rules: 248
+# Updated: 2026-04-15 06:01:46
 
-DOMAIN,.
-DOMAIN,3
-DOMAIN,a
-DOMAIN,c
-DOMAIN,e
-DOMAIN,m
-DOMAIN,n
-DOMAIN,o
-DOMAIN,s
-DOMAIN,v
-DOMAIN,w
-DOMAIN,z
 DOMAIN-KEYWORD,paypal
 DOMAIN-SUFFIX,account-paypal.info
 DOMAIN-SUFFIX,account-paypal.net

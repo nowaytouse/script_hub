@@ -4,17 +4,17 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS
-#!date=2026-04-14 06:02:11
+#!date=2026-04-15 06:02:12
 
 [Rule]
 # REJECT Rules (self-hosted canonical rebuild)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # REJECT-NO-DROP Rules (synced from skk upstream)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 # REJECT-DROP Rules (synced from skk upstream)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 # BlockHttpDNS Rules (kept separate to preserve REJECT-DROP behavior)
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 
 # Merged REJECT-DROP Rules (78)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT-DROP
