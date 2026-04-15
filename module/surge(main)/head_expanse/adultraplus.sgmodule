@@ -936,9 +936,9 @@ ddxq=type=http-response,pattern=^https?:\/\/user\.api\.ddxq\.mobi\/userportal-se
 
 smzdm_ads=type=http-response,pattern=^https?:\/\/user-api\.smzdm\.com\/vip\/creator_user_center,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/smzdm/smzdm_ads.js
 
-Smzdm=type=http-response,pattern=^https?:\/\/user-api\.smzdm\.com\/vip\/bottom_card_list,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm=type=http-response,pattern=^https?:\/\/user-api\.smzdm\.com\/vip\/bottom_card_list,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
-Smzdm2=type=http-response,pattern=^https?:\/\/user-api\.smzdm\.com\/vip$,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/smzdm/Smzdm.js
+Smzdm2=type=http-response,pattern=^https?:\/\/user-api\.smzdm\.com\/vip$,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 cnftp=type=http-response,pattern=^https?:\/\/un-acs\.youku\.com\/gw\/mtop\.youku\.play\.ups\.appinfo\.get,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cnftp.js
 
@@ -980,7 +980,7 @@ didiAds=type=http-response,pattern=^https?:\/\/res\.xiaojukeji\.com\/resapi\/act
 
 didiAds2=type=http-response,pattern=^https?:\/\/res\.xiaojukeji\.com\/resapi\/activity\/mget,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/didi/didiAds.js
 
-Smzdm3=type=http-response,pattern=^https?:\/\/qianbao\.smzdm\.com\/v\d\/app\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm3=type=http-response,pattern=^https?:\/\/qianbao\.smzdm\.com\/v\d\/app\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 cnftp3=type=http-response,pattern=^https?:\/\/push\.m\.youku\.com\/collect-api\/get_push_interval_config_wx\?,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cnftp.js
 
@@ -1112,7 +1112,7 @@ cnftp13=type=http-response,pattern=^https?:\/\/iface2\.iqiyi\.com\/aggregate\/3\
 
 smzdm_json5=type=http-response,pattern=^https?:\/\/homepage-api\.smzdm\.com\/v3\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
 
-Smzdm4=type=http-response,pattern=^https?:\/\/homepage-api\.smzdm\.com\/v3\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm4=type=http-response,pattern=^https?:\/\/homepage-api\.smzdm\.com\/v3\/home,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 smzdm_ads4=type=http-response,pattern=^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/user_related_modul\?,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/smzdm/smzdm_ads.js
 
@@ -1122,7 +1122,7 @@ smzdm_ads5=type=http-response,pattern=^https?:\/\/haojia-api\.smzdm\.com\/rankin
 
 smzdm_json7=type=http-response,pattern=^https?:\/\/haojia-api\.smzdm\.com\/home\/list,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
 
-Smzdm5=type=http-response,pattern=^https?:\/\/haojia-api\.smzdm\.com\/home\/list,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm5=type=http-response,pattern=^https?:\/\/haojia-api\.smzdm\.com\/home\/list,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 myBlockAds=type=http-response,pattern=^https?:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.(cloudvideo\.video\.query|wireless\.home\.splash\.awesome\.get),requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/myBlockAds.js
 
@@ -1208,7 +1208,7 @@ smzdm_json8=type=http-response,pattern=^https?:\/\/baike-api\.smzdm\.com\/home_v
 
 kuwo4=type=http-response,pattern=^https?:\/\/audiobookpay\.kuwo\.cn\/a\.p,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/kuwo/kuwo.js
 
-Smzdm6=type=http-response,pattern=^https?:\/\/article-api\.smzdm\.com\/publish\/get_bubble,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm6=type=http-response,pattern=^https?:\/\/article-api\.smzdm\.com\/publish\/get_bubble,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 qidian2=type=http-response,pattern=^https?:\/\/apps\.teamair\.cn\/app\/version,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/qidian.js
 
@@ -1216,11 +1216,11 @@ zhuanzhuan=type=http-response,pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/tran
 
 ad\=type=http-response,pattern=^https?:\/\/app02\.vgtime\.com:8080\/vgtime-app\/api\/v2\/init\/ad\.json,requires-body=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/vgtime.js
 
-Smzdm7=type=http-response,pattern=^https?:\/\/app-api\.smzdm\.com\/util\/update,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm7=type=http-response,pattern=^https?:\/\/app-api\.smzdm\.com\/util\/update,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 smzdm_json9=type=http-response,pattern=^https?:\/\/app-api\.smzdm\.com\/util\/loading,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
 
-Smzdm8=type=http-response,pattern=^https?:\/\/app-api\.smzdm\.com\/util\/loading,requires-body=1,script-path=https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Smzdm.js
+Smzdm8=type=http-response,pattern=^https?:\/\/app-api\.smzdm\.com\/util\/loading,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/smzdm_json.js
 
 foliday=type=http-response,pattern=^https?:\/\/apis\.folidaymall\.com\/online\/capi\/component\/getPageComponents,requires-body=1,script-path=https://raw.githubusercontent.com/zirawell/R-Store/main/Res/Scripts/AntiAd/foliday.js
 
