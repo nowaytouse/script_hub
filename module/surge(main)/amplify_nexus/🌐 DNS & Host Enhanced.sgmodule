@@ -200,11 +200,6 @@ alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
 stun.l.google.com = server:force-syslib // WebRTC local discovery
 stun?.l.google.com = server:force-syslib // WebRTC local discovery
 
-# SECTION 12: Apple Notes
-# networking.apple = server:https://doh.dns.apple.com/dns-query
-# *.apple.com = server:https://doh.dns.apple.com/dns-query
-# *.icloud.com = server:https://doh.dns.apple.com/dns-query
-
 # SECTION 13: Certificate Verification (OCSP/CRL) Bypass
 # Force system resolver for SSL certificate verification to break DoH loop dependencies.
 ocsp.digicert.cn = server:syslib
