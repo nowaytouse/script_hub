@@ -7,17 +7,15 @@
 #!version=2026.04.15
 
 [General]
-# Mainland-only global DoH pool. This is the DEFAULT resolver for ALL domains
-# not matched by any [Host] entry. International domains are steered to
-# international DoH via [Host] SECTION 4 (inline locks — always reliable) and
-# SECTION 6 (RULE-SET steering — supplementary coverage).
-# WHY mainland default: In China, mainland domains vastly outnumber international
-# ones. Relying on RULE-SET catch-all for mainland (Direct.list) is unreliable
-# due to CDN fetch failures. This way, even if [Host] RULE-SETs fail to load,
-# mainland domains still resolve correctly.
-# Privacy: encrypted-dns-follow-outbound-mode=true ensures mainland DoH → DIRECT
-# (fast), international DoH in [Host] → PROXY (private). No DNS leak for intl.
-encrypted-dns-server = https://doh.pub/dns-query, https://dns.alidns.com/dns-query
+# International-only global DoH pool. This is the DEFAULT resolver for ALL domains
+# not matched by any [Host] entry. Mainland China domains must be matched by
+# [Host] SECTION 7 (curated lists + Direct.list catch-all) or SECTION 9 (*.cn)
+# to avoid falling into this international pool and getting poisoned results.
+# WHY international default: Ensures maximum privacy and correct resolution for
+# any international long-tail domains that aren't matched by RULE-SETs.
+# Privacy: encrypted-dns-follow-outbound-mode=true ensures these fallbacks go
+# through the proxy, preventing leaks.
+encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
@@ -319,8 +317,10 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
-# Direct.list catch-all removed — global pool is now mainland DoH, so mainland
-# domains that miss SECTION 7 RULE-SETs still resolve correctly via the default.
+# Mainland catch-all: Direct.list (126K+ mainland .com domains) ensures domains
+# like ifeng.com never fall through to the international-only global pool.
+# International domains in this list won't conflict — SECTION 6 matches first.
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/Direct.list,server:https://doh.pub/dns-query
 
 # SECTION 8: Regional Inline Exceptions
 # Keep only the small regional resolver overrides inline.
