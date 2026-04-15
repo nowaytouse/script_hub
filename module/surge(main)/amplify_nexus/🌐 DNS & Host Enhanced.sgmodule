@@ -411,15 +411,6 @@ ocsp.apple.com = server:syslib
 ocsp2.apple.com = server:syslib
 ocsp-lb.apple.com.akadns.net = server:syslib
 
-# SECTION 14: Apple Infrastructure Hard Lock
-# Precision steering for Apple CNAMEs and CDN infrastructure.
-*.apple.com.akadns.net = server:https://doh.dns.apple.com/dns-query
-*.icloud.com.akadns.net = server:https://doh.dns.apple.com/dns-query
-*.aaplimg.com = server:https://doh.dns.apple.com/dns-query
-*.apple-cloudkit.com = server:https://doh.dns.apple.com/dns-query
-*.cdn-apple.com = server:https://doh.dns.apple.com/dns-query
-captive.apple.com = server:https://doh.dns.apple.com/dns-query
-
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
