@@ -14,7 +14,7 @@ hijack-dns = *:53
 dns-direct-fallback-proxy = false
 # Global-first fallback pool with mainland backstops. The strict privacy policy
 # still depends on the inline host locks below, especially for apex domains.
-doh-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.volcengine.com/dns-query, https://dns.cn/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://223.5.5.5/dns-query, https://1.12.12.12/dns-query
+doh-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 
 # DNS Core Settings

@@ -7,10 +7,12 @@
 #!version=2026.04.15
 
 [General]
-# Global-first fallback pool with mainland backstops. Sensitive domains are
-# hard-locked below so international lookups do not fall into CN DoH and
-# critical mainland lookups do not spill overseas when a RULE-SET misses.
-encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.volcengine.com/dns-query, https://dns.cn/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://223.5.5.5/dns-query, https://1.12.12.12/dns-query
+# International-only global DoH pool. Mainland China DoH is NOT here — it lives
+# in the [Host] section via SECTION 5 (inline apex locks), SECTION 7 (RULE-SET
+# steering for 326+ mainland domains), and SECTION 9 (*.cn catch-all).
+# Mixing mainland DoH into this pool causes DNS pollution: mainland servers race
+# and win for international domains, returning poisoned results.
+encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
