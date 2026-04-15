@@ -154,26 +154,26 @@ anthropic.com = server:https://dns.quad9.net/dns-query
 *.anthropic.com = server:https://dns.quad9.net/dns-query
 claude.ai = server:https://dns.quad9.net/dns-query
 *.claude.ai = server:https://dns.quad9.net/dns-query
-telegram.org = server:https://dns.quad9.net/dns-query
-*.telegram.org = server:https://dns.quad9.net/dns-query
-t.me = server:https://dns.quad9.net/dns-query
-telegram.me = server:https://dns.quad9.net/dns-query
-duckduckgo.com = server:https://dns.quad9.net/dns-query
-*.duckduckgo.com = server:https://dns.quad9.net/dns-query
-spread.duckduckgo.com = server:https://dns.quad9.net/dns-query
-start.duckduckgo.com = server:https://dns.quad9.net/dns-query
-proton.me = server:https://dns.quad9.net/dns-query
-*.proton.me = server:https://dns.quad9.net/dns-query
-signal.org = server:https://dns.quad9.net/dns-query
-*.signal.org = server:https://dns.quad9.net/dns-query
-mozilla.org = server:https://cloudflare-dns.com/dns-query
-*.mozilla.org = server:https://cloudflare-dns.com/dns-query
-firefox.com = server:https://cloudflare-dns.com/dns-query
-*.firefox.com = server:https://cloudflare-dns.com/dns-query
-wikipedia.org = server:https://dns.quad9.net/dns-query
-*.wikipedia.org = server:https://dns.quad9.net/dns-query
-wikimedia.org = server:https://dns.quad9.net/dns-query
-*.wikimedia.org = server:https://dns.quad9.net/dns-query
+telegram.org = server:https://adblock.dns.mullvad.net/dns-query
+*.telegram.org = server:https://adblock.dns.mullvad.net/dns-query
+t.me = server:https://adblock.dns.mullvad.net/dns-query
+telegram.me = server:https://adblock.dns.mullvad.net/dns-query
+duckduckgo.com = server:https://adblock.dns.mullvad.net/dns-query
+*.duckduckgo.com = server:https://adblock.dns.mullvad.net/dns-query
+spread.duckduckgo.com = server:https://adblock.dns.mullvad.net/dns-query
+start.duckduckgo.com = server:https://adblock.dns.mullvad.net/dns-query
+proton.me = server:https://adblock.dns.mullvad.net/dns-query
+*.proton.me = server:https://adblock.dns.mullvad.net/dns-query
+signal.org = server:https://adblock.dns.mullvad.net/dns-query
+*.signal.org = server:https://adblock.dns.mullvad.net/dns-query
+mozilla.org = server:https://doh.libredns.gr/noads
+*.mozilla.org = server:https://doh.libredns.gr/noads
+firefox.com = server:https://doh.libredns.gr/noads
+*.firefox.com = server:https://doh.libredns.gr/noads
+wikipedia.org = server:https://wikimedia-dns.org/dns-query
+*.wikipedia.org = server:https://wikimedia-dns.org/dns-query
+wikimedia.org = server:https://wikimedia-dns.org/dns-query
+*.wikimedia.org = server:https://wikimedia-dns.org/dns-query
 
 # SECTION 5: Critical Mainland Apex Lock
 # Surge modules previously mostly mirrored wildcard-only legacy sections. These
@@ -303,12 +303,12 @@ spdb.com.cn = server:https://doh.pub/dns-query
 *.spdb.com.cn = server:https://doh.pub/dns-query
 
 # SECTION 6: International DoH Steering RULE-SETs
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://doh.dns4all.eu/dns-query
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.quad9.net/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://adblock.dns.mullvad.net/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.nextdns.io/7f2fac
 # RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
 # RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://dns.adguard-dns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns.quad9.net/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
