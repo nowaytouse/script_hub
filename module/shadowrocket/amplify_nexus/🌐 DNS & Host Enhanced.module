@@ -652,6 +652,23 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 *.cib.com.cn = server:https://doh.pub/dns-query // 兴业银行
 *.spdb.com.cn = server:https://doh.pub/dns-query // 浦发银行
 
+# SECTION 13: Certificate Verification (OCSP/CRL) Bypass
+# Force system resolver for SSL certificate verification to break DoH loop dependencies.
+ocsp.digicert.cn = server:force-syslib
+ocsp.digicert.com = server:force-syslib
+crl3.digicert.com = server:force-syslib
+crl4.digicert.com = server:force-syslib
+ocsp.sectigo.com = server:force-syslib
+ocsp.verisign.com = server:force-syslib
+ocsp.globalsign.com = server:force-syslib
+ocsp.comodoca.com = server:force-syslib
+ocsp.entrust.net = server:force-syslib
+ocsp.identrust.com = server:force-syslib
+ocsp.pki.goog = server:force-syslib
+ocsp.apple.com = server:force-syslib
+ocsp2.apple.com = server:force-syslib
+ocsp-lb.apple.com.akadns.net = server:force-syslib
+
 # SECTION 28: DNS Mapping Rulesets (External Lists)
 # Shadowrocket modules support host RULE-SET mapping (with occasional caching quirks).
 # To prevent inline bloat, we strictly rely on modular RULE-SETs for macro-level routing.

@@ -393,6 +393,23 @@ stun?.l.google.com = server:force-syslib // WebRTC local discovery
 # *.apple.com = server:https://doh.dns.apple.com/dns-query
 # *.icloud.com = server:https://doh.dns.apple.com/dns-query
 
+# SECTION 13: Certificate Verification (OCSP/CRL) Bypass
+# Force system resolver for SSL certificate verification to break DoH loop dependencies.
+ocsp.digicert.cn = server:syslib
+ocsp.digicert.com = server:syslib
+crl3.digicert.com = server:syslib
+crl4.digicert.com = server:syslib
+ocsp.sectigo.com = server:syslib
+ocsp.verisign.com = server:syslib
+ocsp.globalsign.com = server:syslib
+ocsp.comodoca.com = server:syslib
+ocsp.entrust.net = server:syslib
+ocsp.identrust.com = server:syslib
+ocsp.pki.goog = server:syslib
+ocsp.apple.com = server:syslib
+ocsp2.apple.com = server:syslib
+ocsp-lb.apple.com.akadns.net = server:syslib
+
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
