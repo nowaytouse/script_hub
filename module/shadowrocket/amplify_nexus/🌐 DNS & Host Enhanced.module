@@ -122,36 +122,6 @@ cloudflare.com = server:https://cloudflare-dns.com/dns-query
 *.cloudflare-dns.com = server:https://cloudflare-dns.com/dns-query
 *.workers.dev = server:https://cloudflare-dns.com/dns-query
 *.pages.dev = server:https://cloudflare-dns.com/dns-query
-apple.com = server:https://cloudflare-dns.com/dns-query
-*.apple.com = server:https://cloudflare-dns.com/dns-query
-icloud.com = server:https://cloudflare-dns.com/dns-query
-*.icloud.com = server:https://cloudflare-dns.com/dns-query
-mzstatic.com = server:https://cloudflare-dns.com/dns-query
-*.mzstatic.com = server:https://cloudflare-dns.com/dns-query
-microsoft.com = server:https://dns.quad9.net/dns-query
-*.microsoft.com = server:https://dns.quad9.net/dns-query
-live.com = server:https://dns.quad9.net/dns-query
-*.live.com = server:https://dns.quad9.net/dns-query
-windows.com = server:https://dns.quad9.net/dns-query
-*.windows.com = server:https://dns.quad9.net/dns-query
-office.com = server:https://dns.quad9.net/dns-query
-*.office.com = server:https://dns.quad9.net/dns-query
-bing.com = server:https://dns.quad9.net/dns-query
-*.bing.com = server:https://dns.quad9.net/dns-query
-reddit.com = server:https://dns.adguard-dns.com/dns-query
-*.reddit.com = server:https://dns.adguard-dns.com/dns-query
-discord.com = server:https://dns.adguard-dns.com/dns-query
-*.discord.com = server:https://dns.adguard-dns.com/dns-query
-discord.gg = server:https://dns.adguard-dns.com/dns-query
-*.discord.gg = server:https://dns.adguard-dns.com/dns-query
-twitter.com = server:https://dns.adguard-dns.com/dns-query
-*.twitter.com = server:https://dns.adguard-dns.com/dns-query
-x.com = server:https://dns.adguard-dns.com/dns-query
-*.x.com = server:https://dns.adguard-dns.com/dns-query
-facebook.com = server:https://dns.adguard-dns.com/dns-query
-*.facebook.com = server:https://dns.adguard-dns.com/dns-query
-instagram.com = server:https://dns.adguard-dns.com/dns-query
-*.instagram.com = server:https://dns.adguard-dns.com/dns-query
 openai.com = server:https://cloudflare-dns.com/dns-query
 *.openai.com = server:https://cloudflare-dns.com/dns-query
 chatgpt.com = server:https://cloudflare-dns.com/dns-query
@@ -683,22 +653,22 @@ upos-sz-upcdntx.bilivideo.com = server:https://doh.pub/dns-query // BiliBili upo
 *.spdb.com.cn = server:https://doh.pub/dns-query // 浦发银行
 
 # SECTION 28: DNS Mapping Rulesets (External Lists)
-# [SR Host Fallback]
-# Shadowrocket modules are unreliable with host RULE-SET, so the active privacy
-# policy lives in the inline host mappings above. These URLs are kept only as
-# documentation for parity with the Surge module.
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://wikimedia-dns.org/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.nextdns.io/7f2fac
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://dns.adguard-dns.com/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns.quad9.net/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
+# Shadowrocket modules support host RULE-SET mapping (with occasional caching quirks).
+# To prevent inline bloat, we strictly rely on modular RULE-SETs for macro-level routing.
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://wikimedia-dns.org/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.nextdns.io/7f2fac
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Apple.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_AI.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Social.list,server:https://dns.adguard-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Infrastructure.list,server:https://dns.quad9.net/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Google.list,server:https://dns.google/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
 
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
