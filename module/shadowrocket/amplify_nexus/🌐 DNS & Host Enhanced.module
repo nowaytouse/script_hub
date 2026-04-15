@@ -670,6 +670,15 @@ ocsp.apple.com = server:force-syslib
 ocsp2.apple.com = server:force-syslib
 ocsp-lb.apple.com.akadns.net = server:force-syslib
 
+# SECTION 14: Apple Infrastructure Hard Lock
+# Precision steering for Apple CNAMEs and CDN infrastructure.
+*.apple.com.akadns.net = server:https://doh.dns.apple.com/dns-query
+*.icloud.com.akadns.net = server:https://doh.dns.apple.com/dns-query
+*.aaplimg.com = server:https://doh.dns.apple.com/dns-query
+*.apple-cloudkit.com = server:https://doh.dns.apple.com/dns-query
+*.cdn-apple.com = server:https://doh.dns.apple.com/dns-query
+captive.apple.com = server:https://doh.dns.apple.com/dns-query
+
 # SECTION 28: DNS Mapping Rulesets (External Lists)
 # Shadowrocket modules support host RULE-SET mapping (with occasional caching quirks).
 # To prevent inline bloat, we strictly rely on modular RULE-SETs for macro-level routing.
