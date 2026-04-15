@@ -14,7 +14,7 @@ hijack-dns = *:53
 dns-direct-fallback-proxy = false
 # Global-first fallback pool with mainland backstops. The strict privacy policy
 # still depends on the inline host locks below, especially for apex domains.
-doh-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://adblock.dns.mullvad.net/dns-query, https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://dns6.cfiec.net/dns-query, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
+doh-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 
 # DNS Core Settings
@@ -73,7 +73,8 @@ dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // d
 dns.baidu.com = 180.76.76.76, 110.242.68.66, 2400:da00::6666 // https://dns.baidu.com/dns-query
 dns.cn = 1.2.4.8, 210.2.4.8, 2001:dc7:1000::1 // https://dns.cn/dns-query
 dns.tuna.tsinghua.edu.cn = 101.6.6.6, 2001:da8::666 // https://dns.tuna.tsinghua.edu.cn/dns-query
-dns6.cfiec.net = 240c:6666::6666, 240c:6644::6644 // https://dns6.cfiec.net/dns-query
+dns6.cfiec.net = 240c:6666::6666, 240c:6644::6644
+dns.volcengine.com = 180.184.1.1, 180.184.2.2, 2402:4e00:1020:1404::10, 2402:4e00:1430:1102::a // https://dns6.cfiec.net/dns-query
 dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twnic.tw/dns-query
 ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
 dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
