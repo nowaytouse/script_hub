@@ -10,7 +10,7 @@
 # Global-first fallback pool with mainland backstops. Sensitive domains are
 # hard-locked below so international lookups do not fall into CN DoH and
 # critical mainland lookups do not spill overseas when a RULE-SET misses.
-encrypted-dns-server = https://adblock.dns.mullvad.net/dns-query, https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
+encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
@@ -63,7 +63,7 @@ doh.dns4all.eu = 194.0.5.3 // https://doh.dns4all.eu/dns-query
 doh.ffmuc.net = 5.1.66.255, 185.150.99.255, 2001:678:e68:f000::, 2001:678:ed0:f000:: // https://doh.ffmuc.net/dns-query
 wikimedia-dns.org = 185.71.138.138 // https://wikimedia-dns.org/dns-query
 dns.mullvad.net = 194.242.2.2, 194.242.2.3, 194.242.2.4, 194.242.2.9 // https://dns.mullvad.net/dns-query
-adblock.dns.mullvad.net = 194.242.2.2, 2a07:e340::2 // https://adblock.dns.mullvad.net/dns-query
+adblock.dns.mullvad.net = 194.242.2.2 // https://adblock.dns.mullvad.net/dns-query
 freedns.controld.com = 76.76.2.0, 76.76.10.0 // https://freedns.controld.com/p1
 dns.nextdns.io = 45.90.28.0, 45.90.30.0 // https://dns.nextdns.io/7f2fac
 raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133
@@ -370,14 +370,10 @@ stun?.l.google.com = server:force-syslib // WebRTC local discovery
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
-# Mainland ASN direct rules.
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/ChinaASN.list,DIRECT,no-resolve
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/GlobalASN.list,DIRECT,no-resolve
-
-# GEOIP Catch-All (放置于 ASN 规则之后、FINAL 之前)
-GEOIP,CN,DIRECT,no-resolve
-
-PROTOCOL,QUIC,REJECT-NO-DROP
+# ⚠️ ChinaASN / GlobalASN / GEOIP,CN / PROTOCOL,QUIC 已移至主配置 [Rule]。
+# 原因：模块 [Rule] 在 Surge 中始终预置（prepend），导致 IP 规则在域名代理
+# 规则之前触发，造成 GitHub push 阻塞、Gemini UI 异常、DNS 泄漏等问题。
+# 正确位置：主配置 [Rule] 中，在所有域名代理规则之后、GEOIP 兜底之前。
 
 [Script]
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
@@ -386,4 +382,4 @@ DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/reso
 DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
-hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn
