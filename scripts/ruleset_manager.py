@@ -47,7 +47,7 @@ RULESETS = [
     "Netflix", "Disney", "Spotify", "Bahamut", "AppleNews",
     "Google", "Apple", "GitHub", "PayPal", "Binance",
     "Direct", "Bilibili",
-    "CDN", "Speedtest",
+    "CDN",
     "StreamJP", "StreamUS", "StreamKR", "StreamHK", "StreamTW", "StreamEU"
 ]
 
@@ -165,7 +165,16 @@ class RulesetManager:
     def clean_rule(self, rule: str, ruleset_name: str) -> str:
         r = rule.strip()
         if not r or r.startswith('#'): return ""
-        
+
+        # Support Clash YAML payload items so upstream YAML rules can be merged
+        # into native .list outputs without a separate conversion step.
+        if r in {"payload:", "payload"}:
+            return ""
+        if r.startswith("-"):
+            r = r[1:].strip().strip('"').strip("'")
+            if not r:
+                return ""
+
         # 0. Convert Domain Set formats (no commas) to classical syntax
         if "," not in r:
             # Check if it looks like an IP Address (basic heuristic)

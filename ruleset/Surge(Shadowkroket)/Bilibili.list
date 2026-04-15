@@ -2,11 +2,28 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 50
-# Updated: 2026-04-15 06:01:43
+# Rules: 68
+# Updated: 2026-04-15 19:45:53
 
+DOMAIN,-
+DOMAIN,.
+DOMAIN,a
+DOMAIN,d
+DOMAIN,e
+DOMAIN,h
+DOMAIN,i
+DOMAIN,k
+DOMAIN,m
 DOMAIN,manga.bilibili.com
+DOMAIN,n
+DOMAIN,o
+DOMAIN,p
+DOMAIN,r
+DOMAIN,s
+DOMAIN,t
+DOMAIN,u
 DOMAIN,upos-hz-mirrorakam.akamaized.net
+DOMAIN,z
 DOMAIN-SUFFIX,acg.tv
 DOMAIN-SUFFIX,acgvideo.com
 DOMAIN-SUFFIX,animetamashi.cn
@@ -51,6 +68,7 @@ DOMAIN-SUFFIX,bilivideo.net
 DOMAIN-SUFFIX,dreamcast.hk
 DOMAIN-SUFFIX,hdslb.com
 DOMAIN-SUFFIX,hdslb.org
+DOMAIN-SUFFIX,huasheng.cn
 DOMAIN-SUFFIX,im9.com
 DOMAIN-SUFFIX,maoercdn.com
 DOMAIN-SUFFIX,mincdn.com

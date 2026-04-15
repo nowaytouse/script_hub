@@ -155,7 +155,7 @@ RULESETS=(
     Google Bing Apple GitHub PayPal Tesla Binance
     Steam Epic
     ChinaDirect Bilibili QQ Tencent XiaoHongShu NetEaseMusic GoogleCN
-    CDN Speedtest
+    CDN
     StreamJP StreamUS StreamKR StreamHK StreamTW StreamEU
     AIProcess DirectProcess DownloadProcess GamingProcess
     AdBlock
