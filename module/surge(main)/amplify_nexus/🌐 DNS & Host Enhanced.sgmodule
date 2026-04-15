@@ -17,7 +17,7 @@
 # mainland domains still resolve correctly.
 # Privacy: encrypted-dns-follow-outbound-mode=true ensures mainland DoH → DIRECT
 # (fast), international DoH in [Host] → PROXY (private). No DNS leak for intl.
-encrypted-dns-server = https://dns.alidns.com/dns-query, https://doh.pub/dns-query, https://doh.360.cn/dns-query, https://dns.baidu.com/dns-query, https://dns.volcengine.com/dns-query, https://dns.cn/dns-query, https://dns.tuna.tsinghua.edu.cn/dns-query, https://223.5.5.5/dns-query, https://1.12.12.12/dns-query
+encrypted-dns-server = https://doh.pub/dns-query, https://dns.alidns.com/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
@@ -142,6 +142,36 @@ cloudflare.com = server:https://cloudflare-dns.com/dns-query
 *.cloudflare-dns.com = server:https://cloudflare-dns.com/dns-query
 *.workers.dev = server:https://cloudflare-dns.com/dns-query
 *.pages.dev = server:https://cloudflare-dns.com/dns-query
+apple.com = server:https://cloudflare-dns.com/dns-query
+*.apple.com = server:https://cloudflare-dns.com/dns-query
+icloud.com = server:https://cloudflare-dns.com/dns-query
+*.icloud.com = server:https://cloudflare-dns.com/dns-query
+mzstatic.com = server:https://cloudflare-dns.com/dns-query
+*.mzstatic.com = server:https://cloudflare-dns.com/dns-query
+microsoft.com = server:https://dns.quad9.net/dns-query
+*.microsoft.com = server:https://dns.quad9.net/dns-query
+live.com = server:https://dns.quad9.net/dns-query
+*.live.com = server:https://dns.quad9.net/dns-query
+windows.com = server:https://dns.quad9.net/dns-query
+*.windows.com = server:https://dns.quad9.net/dns-query
+office.com = server:https://dns.quad9.net/dns-query
+*.office.com = server:https://dns.quad9.net/dns-query
+bing.com = server:https://dns.quad9.net/dns-query
+*.bing.com = server:https://dns.quad9.net/dns-query
+reddit.com = server:https://dns.adguard-dns.com/dns-query
+*.reddit.com = server:https://dns.adguard-dns.com/dns-query
+discord.com = server:https://dns.adguard-dns.com/dns-query
+*.discord.com = server:https://dns.adguard-dns.com/dns-query
+discord.gg = server:https://dns.adguard-dns.com/dns-query
+*.discord.gg = server:https://dns.adguard-dns.com/dns-query
+twitter.com = server:https://dns.adguard-dns.com/dns-query
+*.twitter.com = server:https://dns.adguard-dns.com/dns-query
+x.com = server:https://dns.adguard-dns.com/dns-query
+*.x.com = server:https://dns.adguard-dns.com/dns-query
+facebook.com = server:https://dns.adguard-dns.com/dns-query
+*.facebook.com = server:https://dns.adguard-dns.com/dns-query
+instagram.com = server:https://dns.adguard-dns.com/dns-query
+*.instagram.com = server:https://dns.adguard-dns.com/dns-query
 openai.com = server:https://cloudflare-dns.com/dns-query
 *.openai.com = server:https://cloudflare-dns.com/dns-query
 chatgpt.com = server:https://cloudflare-dns.com/dns-query
@@ -318,7 +348,7 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.360.cn/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
 # Direct.list catch-all removed — global pool is now mainland DoH, so mainland
 # domains that miss SECTION 7 RULE-SETs still resolve correctly via the default.
 
