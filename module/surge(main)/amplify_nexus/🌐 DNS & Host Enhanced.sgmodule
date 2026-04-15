@@ -113,31 +113,6 @@ phicomm.me = server:force-syslib
 hiwifi.com = server:force-syslib
 peiluyou.com = server:force-syslib
 
-# SECTION 4: Critical International Hard Lock
-# These entries remain inline so the most sensitive domains stay protected even
-# if remote RULE-SET fetches fail or a client skips them.
-google.com = server:https://dns.google/dns-query
-*.google.com = server:https://dns.google/dns-query
-google.com.hk = server:https://dns.google/dns-query
-*.google.com.hk = server:https://dns.google/dns-query
-google.cn = server:https://dns.google/dns-query
-*.google.cn = server:https://dns.google/dns-query
-googleapis.com = server:https://dns.google/dns-query
-*.googleapis.com = server:https://dns.google/dns-query
-gstatic.com = server:https://dns.google/dns-query
-*.gstatic.com = server:https://dns.google/dns-query
-googleusercontent.com = server:https://dns.google/dns-query
-*.googleusercontent.com = server:https://dns.google/dns-query
-youtube.com = server:https://dns.google/dns-query
-*.youtube.com = server:https://dns.google/dns-query
-googlevideo.com = server:https://dns.google/dns-query
-*.googlevideo.com = server:https://dns.google/dns-query
-ytimg.com = server:https://dns.google/dns-query
-*.ytimg.com = server:https://dns.google/dns-query
-api.github.com = server:https://dns.quad9.net/dns-query
-*.githubusercontent.com = server:https://dns.quad9.net/dns-query
-*.githubassets.com = server:https://dns.quad9.net/dns-query
-*.github.io = server:https://dns.quad9.net/dns-query
 # SECTION 8: Regional Inline Exceptions (Moved)
 # SECTION 6: International DoH Steering RULE-SETs
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://wikimedia-dns.org/dns-query
