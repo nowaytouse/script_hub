@@ -1,0 +1,28 @@
+#!name=🌐 mosdns DNS Integration
+#!desc=Route all DNS queries to local mosdns (127.0.0.1:5335) for dual-track resolution
+#!author=nyamiiko
+#!homepage=https://github.com/nowaytouse/script_hub
+#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
+#!version=2026.04.16
+
+[General]
+# Route all DNS queries to local mosdns instance
+# mosdns handles dual-track resolution:
+# - CN domains → Mainland DoH (AliDNS/DNSPod) direct
+# - International domains → International DoH (Cloudflare/Google) via proxy
+dns-server = 127.0.0.1:5335
+
+# Disable Surge's built-in DoH — mosdns handles all encrypted DNS
+# encrypted-dns-server = (removed)
+
+# Keep these for mosdns bootstrap and fallback
+use-local-host-item-for-proxy = false
+encrypted-dns-follow-outbound-mode = false
+
+[Host]
+# Bootstrap for mosdns itself (in case mosdns needs to resolve DoH server hostnames)
+dns.alidns.com = 223.5.5.5, 223.6.6.6
+doh.pub = 1.12.12.12, 120.53.53.53
+cloudflare-dns.com = 104.16.249.249, 104.16.248.249
+dns.google = 8.8.8.8, 8.8.4.4

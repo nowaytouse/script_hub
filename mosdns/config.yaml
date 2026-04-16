@@ -1,0 +1,134 @@
+# mosdns Configuration - Dual-Track DNS with Zero Cross-Contamination
+# Version: 2026.04.16
+# Author: nyamiiko
+#
+# Architecture:
+# Surge → 127.0.0.1:5335 (mosdns)
+#   ↓
+# CN domains → Mainland DoH (AliDNS/DNSPod)
+# International domains → International DoH (Cloudflare via proxy)
+
+log:
+  level: info
+  file: "/tmp/mosdns.log"
+
+# Data sources
+data_providers:
+  - tag: geosite
+    file: ./geosite.dat
+    auto_reload: true
+
+  - tag: geoip
+    file: ./geoip.dat
+    auto_reload: true
+
+  - tag: cn_domain
+    file: ./cn_domain.txt
+    auto_reload: true
+
+# Plugin definitions
+plugins:
+  # Cache
+  - tag: cache
+    type: cache
+    args:
+      size: 10240
+      lazy_cache_ttl: 86400
+      dump_file: /tmp/mosdns_cache.dump
+      dump_interval: 600
+
+  # Mainland domain matcher
+  - tag: cn_domain_matcher
+    type: domain_set
+    args:
+      files:
+        - ./cn_domain.txt
+
+  # Mainland IP matcher
+  - tag: cn_ip_matcher
+    type: ip_set
+    args:
+      files:
+        - ./cn_ip.txt
+
+  # Mainland DoH forwarder (AliDNS)
+  - tag: forward_alidns
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: https://dns.alidns.com/dns-query
+          enable_pipeline: true
+          enable_http3: false
+        - addr: https://doh.pub/dns-query
+          enable_pipeline: true
+          enable_http3: false
+
+  # International DoH forwarder (Cloudflare via SOCKS5 proxy)
+  - tag: forward_cloudflare
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: https://cloudflare-dns.com/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+        - addr: https://dns.google/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+
+  # ECS for mainland queries
+  - tag: ecs_cn
+    type: ecs
+    args:
+      auto: true
+      force_overwrite: false
+      mask4: 24
+      mask6: 48
+
+  # Main sequence
+  - tag: main_sequence
+    type: sequence
+    args:
+      - exec: $cache
+
+      # Check if domain is mainland
+      - matches: qname $cn_domain_matcher
+        exec: jump cn_sequence
+
+      # Check if domain ends with .cn
+      - matches: qname suffix:.cn
+        exec: jump cn_sequence
+
+      # Default: international sequence
+      - exec: jump intl_sequence
+
+  # Mainland sequence
+  - tag: cn_sequence
+    type: sequence
+    args:
+      - exec: $ecs_cn
+      - exec: $forward_alidns
+      - matches: "!resp_ip $cn_ip_matcher"
+        exec: reject 3  # NXDOMAIN if response IP is not CN
+      - exec: accept
+
+  # International sequence
+  - tag: intl_sequence
+    type: sequence
+    args:
+      - exec: $forward_cloudflare
+      - matches: resp_ip $cn_ip_matcher
+        exec: reject 3  # NXDOMAIN if response IP is CN (pollution)
+      - exec: accept
+
+# Server
+servers:
+  - exec: main_sequence
+    listeners:
+      - protocol: udp
+        addr: 127.0.0.1:5335
+      - protocol: tcp
+        addr: 127.0.0.1:5335
