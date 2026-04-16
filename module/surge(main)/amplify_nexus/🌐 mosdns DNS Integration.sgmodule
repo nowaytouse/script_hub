@@ -26,5 +26,25 @@ DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
 DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/doh_health.js, timeout=30
 
+[Rule]
+# DNS Providers - Mainland (DIRECT)
+DOMAIN,dns.alidns.com,DIRECT
+DOMAIN,doh.pub,DIRECT
+DOMAIN,dns.pub,DIRECT
+DOMAIN,doh.360.cn,DIRECT
+
+# DNS Providers - International (PROXY)
+# Note: Use your primary proxy policy here (e.g., PROXY or a specific group)
+DOMAIN,dns.google,PROXY
+DOMAIN,cloudflare-dns.com,PROXY
+DOMAIN,dns.quad9.net,PROXY
+DOMAIN,dns.adguard-dns.com,PROXY
+DOMAIN,dns.nextdns.io,PROXY
+DOMAIN,doh.opendns.com,PROXY
+DOMAIN,doh.dns.apple.com,PROXY
+DOMAIN,wikimedia-dns.org,PROXY
+DOMAIN,dns.twnic.tw,PROXY
+
+
 [MITM]
 hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
