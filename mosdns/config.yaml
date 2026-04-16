@@ -1,10 +1,12 @@
 # mosdns Configuration - Ultra-Granular Global Steering (Absolute Path + Correct Order)
-# Version: 2026.04.16s
+# Version: 2026.04.17a
 # Strategy: Full alignment with Surge Module. Fixed plugin order for stability.
+# CN + intl fallback chain into local smartdns-rs (127.0.0.1:6353/6354) for fastest-IP + TTL smoothing.
 
 log:
   level: info
   file: "/tmp/mosdns.log"
+  production: true
 
 plugins:
   # 1. Cache
@@ -79,6 +81,12 @@ plugins:
   - tag: forward_tencent
     type: forward
     args: {upstreams: [{addr: "https://doh.pub/dns-query", enable_pipeline: true}]}
+  - tag: forward_smartdns_cn
+    type: forward
+    args: {upstreams: [{addr: "udp://127.0.0.1:6353"}]}
+  - tag: forward_smartdns_intl
+    type: forward
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}]}
   - tag: forward_intl_general
     type: forward
     args:
@@ -101,8 +109,7 @@ plugins:
   - tag: cn_sequence
     type: sequence
     args:
-      - exec: $forward_ali
-      - exec: $forward_tencent
+      - exec: $forward_smartdns_cn
       - matches: "!resp_ip $cn_ip_matcher"
         exec: reject 3
       - exec: accept
@@ -110,9 +117,7 @@ plugins:
   - tag: intl_sequence
     type: sequence
     args:
-      - exec: $forward_intl_general
-      - matches: resp_ip $cn_ip_matcher
-        exec: $forward_quad9
+      - exec: $forward_smartdns_intl
       - matches: resp_ip $cn_ip_matcher
         exec: reject 3
       - exec: accept

@@ -1,6 +1,6 @@
 #!/bin/bash
 # mosdns Installation Script for macOS
-# Version: 2026.04.16
+# Version: 2026.04.17
 # Author: nyamiiko
 
 set -e
@@ -11,6 +11,16 @@ CONFIG_DIR="$HOME/.mosdns/config"
 DATA_DIR="$HOME/.mosdns/data"
 
 echo "🚀 Installing mosdns ${MOSDNS_VERSION}..."
+
+# Prerequisite: smartdns-rs must be installed first — mosdns cn_sequence / intl_sequence
+# forward into 127.0.0.1:6353 and 127.0.0.1:6354. Warn but don't fail; specialty-steered
+# paths (Apple/Google/MS/…) still work without smartdns.
+if ! launchctl list 2>/dev/null | grep -q com.smartdns; then
+    echo "⚠️  smartdns-rs does not appear to be running (com.smartdns launchd job missing)."
+    echo "   The CN and intl fallback buckets depend on it."
+    echo "   Install it first: cd $(dirname "$(pwd)")/smartdns && ./install.sh"
+    echo "   Continuing anyway — specialty-steered paths will still resolve."
+fi
 
 # Create directories
 mkdir -p "$INSTALL_DIR"
@@ -105,3 +115,6 @@ echo "🛑 Stop service: launchctl unload ~/Library/LaunchAgents/com.mosdns.plis
 echo "🔄 Restart service: launchctl unload ~/Library/LaunchAgents/com.mosdns.plist && launchctl load ~/Library/LaunchAgents/com.mosdns.plist"
 echo ""
 echo "⚙️  Next step: Update Surge configuration to use 127.0.0.1:5335 as DNS server"
+echo ""
+echo "ℹ️  Architecture reminder: mosdns handles steering; its CN and intl buckets chain into smartdns-rs:"
+echo "   Surge → 127.0.0.1:5335 (mosdns) → 127.0.0.1:6353 / 6354 (smartdns groups)"

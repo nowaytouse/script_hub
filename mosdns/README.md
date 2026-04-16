@@ -1,6 +1,6 @@
 # mosdns DNS Setup for Surge
 
-Complete dual-track DNS solution with zero cross-contamination between mainland and international domains.
+Complete dual-track DNS solution with zero cross-contamination between mainland and international domains. Chains into a local [smartdns-rs](../smartdns/README.md) instance for fastest-IP selection, TTL smoothing, IPv6 preference, and audit logging on the CN and international fallback buckets.
 
 ## Architecture
 
@@ -8,16 +8,21 @@ Complete dual-track DNS solution with zero cross-contamination between mainland 
 Surge → 127.0.0.1:5335 (mosdns)
           ↓
     ┌─────┴─────┐
-    │  mosdns   │
+    │  mosdns   │  (steering brain)
     └─────┬─────┘
           │
-    ┌─────┴──────────────┐
-    │                    │
-CN domains          International
-    │                    │
-    ↓                    ↓
-AliDNS/DNSPod      Cloudflare DoH
-(direct)           (via SOCKS5 proxy)
+    ┌─────┴──────────────────────────────────┐
+    │                 │                      │
+Specialty steers  CN domains            International
+(Apple/Google/    (cn_domain_matcher)   fallback
+ MS/Cloudflare/        │                      │
+ TW/Social/            ↓                      ↓
+ Ali/Tencent/     127.0.0.1:6353        127.0.0.1:6354
+ NSFW)            (smartdns cn)         (smartdns intl)
+    │                  │                      │
+    ↓               race 4 CN DoH         race 6 intl DoH
+direct DoH         speed-tested          via SOCKS5 proxy
+(unchanged)        fastest-IP            (speed-check off)
 ```
 
 ## Features
@@ -27,9 +32,19 @@ AliDNS/DNSPod      Cloudflare DoH
 - **ECS support**: Adds EDNS Client Subnet for mainland queries
 - **Caching**: 10K entry cache with lazy TTL and disk persistence
 - **Auto-reload**: Domain/IP lists reload automatically on change
+- **Fastest-IP selection** (via chained smartdns): best IP picked by ping/TCP speed test for CN and intl fallback buckets
+- **TTL smoothing**: prefetch + serve-expired keeps common domains resolving with zero user-visible latency
+- **Audit**: mosdns JSON log covers every query; smartdns audit log covers CN+intl IP selection
 
 ## Installation
 
+**Prerequisite — install smartdns-rs first**:
+```bash
+cd ~/Downloads/GitHub/script_hub/smartdns
+./install.sh
+```
+
+Then install mosdns:
 ```bash
 cd ~/Downloads/GitHub/script_hub/mosdns
 ./install.sh
@@ -112,13 +127,21 @@ vim ~/.mosdns/config/config.yaml
 ## Configuration Details
 
 ### Mainland DoH Upstreams
-- Primary: `https://dns.alidns.com/dns-query`
-- Secondary: `https://doh.pub/dns-query`
+Racing (via chained smartdns on `127.0.0.1:6353`):
+- `https://dns.alidns.com/dns-query`
+- `https://doh.pub/dns-query` (Tencent)
+- `https://dns.pub/dns-query` (DNSPod)
+- `https://doh.360.cn/dns-query`
 
 ### International DoH Upstreams (via SOCKS5 proxy)
-- Primary: `https://cloudflare-dns.com/dns-query`
-- Secondary: `https://dns.google/dns-query`
-- Proxy: `127.0.0.1:9810` (Surge SOCKS5 port)
+Racing (via chained smartdns on `127.0.0.1:6354`):
+- `https://dns.google/dns-query`
+- `https://cloudflare-dns.com/dns-query`
+- `https://dns.quad9.net/dns-query`
+- `https://dns.adguard-dns.com/dns-query`
+- `https://dns.nextdns.io/dns-query`
+- `https://doh.opendns.com/dns-query`
+- Proxy: `127.0.0.1:6153` (Surge SOCKS5 port)
 
 ### Domain Matching Logic
 1. Check if domain matches CN domain list → mainland sequence
@@ -192,10 +215,11 @@ rm -rf ~/.mosdns
 
 ## Performance
 
-- Cache hit rate: ~80-90% for typical usage
-- Query latency: <5ms (cache hit), <50ms (cache miss)
-- Memory usage: ~50-100MB
+- Cache hit rate: ~80-90% for typical usage (mosdns) + separate cache in smartdns
+- Query latency: <5ms (cache hit), ~50-80ms (cache miss; intl goes through Surge SOCKS5 + DoH race)
+- Memory usage: ~50-100MB for mosdns, ~30-60MB for smartdns
 - CPU usage: <1% idle, <5% under load
+- Fastest-IP selection on CN bucket typically shaves 10-30ms off subsequent connection setup
 
 ## Security
 
@@ -203,3 +227,4 @@ rm -rf ~/.mosdns
 - Mainland DoH queries go direct (faster, no privacy concern for CN domains)
 - Anti-pollution validation prevents DNS hijacking
 - No plaintext DNS queries (all DoH)
+- mosdns JSON log at `/tmp/mosdns.log` and smartdns audit log at `/tmp/smartdns_audit.log` provide full-stack query visibility
