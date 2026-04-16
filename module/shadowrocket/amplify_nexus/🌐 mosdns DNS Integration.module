@@ -16,7 +16,7 @@ dns-direct-fallback-proxy = false
 # mosdns handles dual-track resolution with multi-tier fallback:
 # - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
 # - International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/etc.) via proxy
-dns-server = 127.0.0.1:5335
+dns-server = 127.0.0.1
 
 # Disable Surge's built-in DoH — mosdns handles all encrypted DNS
 # encrypted-dns-server = (removed)
@@ -27,13 +27,6 @@ dns-server = 127.0.0.1:5335
 hijack-dns = *:53
 allow-dns-svcb = false
 
-[Rule]
-# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
-# [SR不支持RULE-SET] RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
-# ⚠️ ChinaASN / GlobalASN / GEOIP,CN / PROTOCOL,QUIC 已移至主配置 [Rule]。
-# 原因：模块 [Rule] 在 Surge 中始终预置（prepend），导致 IP 规则在域名代理
-# 规则之前触发，造成 GitHub push 阻塞、Gemini UI 异常、DNS 泄漏等问题。
-# 正确位置：主配置 [Rule] 中，在所有域名代理规则之后、GEOIP 兜底之前。
 
 [Script]
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
