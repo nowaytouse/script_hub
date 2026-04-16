@@ -111,6 +111,39 @@ class AdBlockManager:
         self.mitm_hosts: Set[str] = set()
         self.hashes: Dict[str, str] = {}
 
+    def cleanup_local_lists(self):
+        """Clean all configured local lists from whitelisted items."""
+        targets = [ADBLOCK_LIST, SKK_REJECT, SKK_HTTPDNS]
+        # Also find any local lists in sources
+        source_entries = self.load_source_entries()
+        for entry in source_entries:
+            if not entry.is_remote and entry.resolved_path.endswith(".list"):
+                targets.append(entry.resolved_path)
+            # Find HTTPDNS_Hijack.list - it's hardcoded in header but let's find its path
+            hijack_path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/HTTPDNS_Hijack.list")
+            if os.path.exists(hijack_path):
+                targets.append(hijack_path)
+
+        for path in set(targets):
+            if not os.path.exists(path):
+                continue
+            lines = read_file(path)
+            new_lines = []
+            changed = False
+            for line in lines:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#"):
+                    new_lines.append(line)
+                    continue
+                # Simple domain check in rule line
+                if any(white_item in stripped for white_item in self.whitelist):
+                    changed = True
+                    continue
+                new_lines.append(line)
+            if changed:
+                Logger.info(f"Scrubbed whitelist items from {os.path.basename(path)}")
+                write_file(path, "".join(new_lines))
+
     def load_whitelist(self):
         if not os.path.exists(WHITELIST_FILE):
             return
@@ -697,6 +730,13 @@ class AdBlockManager:
             "#!tag=AdBlock, Dependency, HTTPDNS\n"
             f"#!date={datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
             "[Rule]\n"
+            "# High-Priority White-list (Prevent DNS failure)\n"
+            "# We allow these specifically before any REJECT-SETs to avoid 'Dropped by rule' log errors.\n"
+            "DOMAIN,dns.alidns.com,DIRECT\n"
+            "DOMAIN,doh.pub,DIRECT\n"
+            "DOMAIN,dns.pub,DIRECT\n"
+            "DOMAIN,doh.360.cn,DIRECT\n"
+            "DOMAIN,doh.dns.apple.com,DIRECT\n\n"
             "# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.\n"
             "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
             "# REJECT Rules (self-hosted canonical rebuild)\n"
@@ -751,6 +791,7 @@ class AdBlockManager:
         Logger.section("AdBlock Module Consolidation (Canonical Rebuild)")
         self.load_whitelist()
         self.load_hashes()
+        self.cleanup_local_lists()
 
         source_entries = self.load_source_entries()
         Logger.section("Syncing Upstream Ad Modules")
