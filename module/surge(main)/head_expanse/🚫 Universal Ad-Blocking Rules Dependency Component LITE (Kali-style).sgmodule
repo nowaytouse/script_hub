@@ -7,6 +7,23 @@
 #!date=2026-04-16 20:26:20
 
 [Rule]
+# White-list DNS over HTTPS (DoH) providers to prevent ad-block interference
+# Mainland (DIRECT)
+DOMAIN,dns.alidns.com,DIRECT
+DOMAIN,doh.pub,DIRECT
+DOMAIN,dns.pub,DIRECT
+DOMAIN,doh.360.cn,DIRECT
+# International (PROXY)
+DOMAIN,dns.google,PROXY
+DOMAIN,cloudflare-dns.com,PROXY
+DOMAIN,dns.quad9.net,PROXY
+DOMAIN,dns.adguard-dns.com,PROXY
+DOMAIN,dns.nextdns.io,PROXY
+DOMAIN,doh.opendns.com,PROXY
+DOMAIN,doh.dns.apple.com,PROXY
+DOMAIN,wikimedia-dns.org,PROXY
+DOMAIN,dns.twnic.tw,PROXY
+
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
 # REJECT Rules (self-hosted canonical rebuild)
@@ -23,7 +40,7 @@ DOMAIN,api.yuedu.dns.iqiyi.com,REJECT-DROP
 DOMAIN,apidns.kwd.inkuai.com,REJECT-DROP
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT-DROP
 DOMAIN,data.video.dns.iqiyi.com,REJECT-DROP
-DOMAIN,dns.alidns.com,REJECT-DROP
+# DOMAIN,dns.alidns.com,REJECT-DROP (Whitelisted above)
 DOMAIN,dns.iqiyi.com,REJECT-DROP
 DOMAIN,dns.jd.com,REJECT-DROP
 DOMAIN,dns.jd.com.gslb.qianxun.com,REJECT-DROP
@@ -32,7 +49,7 @@ DOMAIN,dns.qq.com,REJECT-DROP
 DOMAIN,dns.weibo.cn,REJECT-DROP
 DOMAIN,dns.weixin.qq.com,REJECT-DROP
 DOMAIN,dns.weixin.qq.com.cn,REJECT-DROP
-DOMAIN,doh.dns.apple.com,REJECT-DROP
+# DOMAIN,doh.dns.apple.com,REJECT-DROP (Whitelisted above)
 DOMAIN,doh.iqiyi.com,REJECT-DROP
 DOMAIN,doh.jd.com,REJECT-DROP
 DOMAIN,doh.ptqy.gitv.tv,REJECT-DROP
