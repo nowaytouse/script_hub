@@ -1,6 +1,6 @@
-# mosdns Configuration - Multi-Layered Dual-Track DoH
-# Version: 2026.04.16n
-# Note: Integrated ALL requested DoH providers from Surge config. Optimized for Surge 6153 proxy.
+# mosdns Configuration - Precision Vendor-Steering Dual-Track DoH
+# Version: 2026.04.16q
+# Strategy: Direct vendor domains to their respective DoH for maximum CDN performance.
 
 log:
   level: info
@@ -16,7 +16,7 @@ plugins:
       dump_file: /tmp/mosdns_cache.dump
       dump_interval: 600
 
-  # 2. Matchers
+  # 2. Matchers (Domain Sets)
   - tag: cn_domain_matcher
     type: domain_set
     args:
@@ -29,7 +29,66 @@ plugins:
       files:
         - ./cn_ip.txt
 
-  # 3. Forwarders - Mainland Primary (Direct)
+  - tag: nsfw_domain_matcher
+    type: domain_set
+    args:
+      files:
+        - ./nsfw_domain.txt
+
+  - tag: ali_domain_matcher
+    type: domain_set
+    args:
+      files:
+        - ./vendor_ali.txt
+
+  - tag: tencent_domain_matcher
+    type: domain_set
+    args:
+      files:
+        - ./vendor_tencent.txt
+
+  - tag: 360_domain_matcher
+    type: domain_set
+    args:
+      files:
+        - ./vendor_360.txt
+
+  - tag: baidu_domain_matcher
+    type: domain_set
+    args:
+      files:
+        - ./vendor_baidu.txt
+
+  # 3. Forwarders - Vendor Specific
+  - tag: forward_ali
+    type: forward
+    args:
+      upstreams:
+        - addr: https://dns.alidns.com/dns-query
+          enable_pipeline: true
+
+  - tag: forward_tencent
+    type: forward
+    args:
+      upstreams:
+        - addr: https://doh.pub/dns-query
+          enable_pipeline: true
+
+  - tag: forward_360
+    type: forward
+    args:
+      upstreams:
+        - addr: https://doh.360.cn/dns-query
+          enable_pipeline: true
+
+  - tag: forward_baidu
+    type: forward
+    args:
+      upstreams:
+        - addr: https://dns.baidu.com/dns-query
+          enable_pipeline: true
+
+  # General Forwarders
   - tag: forward_cn_primary
     type: forward
     args:
@@ -42,18 +101,6 @@ plugins:
         - addr: https://doh.360.cn/dns-query
           enable_pipeline: true
 
-  # Mainland Secondary (Backup/Fallback)
-  - tag: forward_cn_secondary
-    type: forward
-    args:
-      concurrent: 2
-      upstreams:
-        - addr: https://dns.baidu.com/dns-query
-          enable_pipeline: true
-        - addr: https://dns.volcengine.com/dns-query
-          enable_pipeline: true
-
-  # International Primary (Reliable Privacy)
   - tag: forward_intl_primary
     type: forward
     args:
@@ -69,7 +116,21 @@ plugins:
           enable_pipeline: true
           socks5: 127.0.0.1:6153
 
-  # International Secondary (Specialized/Adblock)
+  - tag: forward_intl_specialized
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: https://wikimedia-dns.org/dns-query
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://doh.libredns.gr/noads
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://freedns.controld.com/p1
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+
   - tag: forward_intl_secondary
     type: forward
     args:
@@ -84,39 +145,21 @@ plugins:
         - addr: https://adblock.dns.mullvad.net/dns-query
           enable_pipeline: true
           socks5: 127.0.0.1:6153
-
-  # International Tertiary (Global Distribution)
-  - tag: forward_intl_tertiary
-    type: forward
-    args:
-      concurrent: 3
-      upstreams:
-        - addr: https://doh.libredns.gr/noads
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://freedns.controld.com/p1
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://wikimedia-dns.org/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://doh.ffmuc.net/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://doh.dns4all.eu/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
         - addr: https://dns.twnic.tw/dns-query
           enable_pipeline: true
           socks5: 127.0.0.1:6153
 
   # 4. Sequences
+  - tag: nsfw_sequence
+    type: sequence
+    args:
+      - exec: $forward_intl_specialized
+      - exec: accept
+
   - tag: cn_sequence
     type: sequence
     args:
       - exec: $forward_cn_primary
-      - matches: "!resp_ip $cn_ip_matcher"
-        exec: $forward_cn_secondary
       - matches: "!resp_ip $cn_ip_matcher"
         exec: reject 3
       - exec: accept
@@ -126,9 +169,9 @@ plugins:
     args:
       - exec: $forward_intl_primary
       - matches: resp_ip $cn_ip_matcher
-        exec: $forward_intl_secondary
+        exec: $forward_intl_specialized
       - matches: resp_ip $cn_ip_matcher
-        exec: $forward_intl_tertiary
+        exec: $forward_intl_secondary
       - matches: resp_ip $cn_ip_matcher
         exec: reject 3
       - exec: accept
@@ -137,6 +180,27 @@ plugins:
     type: sequence
     args:
       - exec: $cache
+      # NSFW (Privacy Priority)
+      - matches: qname $nsfw_domain_matcher
+        exec: jump nsfw_sequence
+      # Precision Vendor Steering
+      - matches: qname $ali_domain_matcher
+        exec: $forward_ali
+      - matches: qname $ali_domain_matcher
+        exec: accept
+      - matches: qname $tencent_domain_matcher
+        exec: $forward_tencent
+      - matches: qname $tencent_domain_matcher
+        exec: accept
+      - matches: qname $360_domain_matcher
+        exec: $forward_360
+      - matches: qname $360_domain_matcher
+        exec: accept
+      - matches: qname $baidu_domain_matcher
+        exec: $forward_baidu
+      - matches: qname $baidu_domain_matcher
+        exec: accept
+      # General Split
       - matches: qname $cn_domain_matcher
         exec: jump cn_sequence
       - exec: jump intl_sequence
