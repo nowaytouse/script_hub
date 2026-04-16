@@ -1,6 +1,6 @@
-# mosdns Configuration - Precision Vendor-Steering Dual-Track DoH
-# Version: 2026.04.16q
-# Strategy: Direct vendor domains to their respective DoH for maximum CDN performance.
+# mosdns Configuration - Ultra-Granular Global Steering (Absolute Path + Correct Order)
+# Version: 2026.04.16s
+# Strategy: Full alignment with Surge Module. Fixed plugin order for stability.
 
 log:
   level: info
@@ -17,149 +17,92 @@ plugins:
       dump_interval: 600
 
   # 2. Matchers (Domain Sets)
+  - tag: matcher_apple
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Apple.txt"]}
+  - tag: matcher_google
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Google.txt", "/Users/nyamiiko/.mosdns/data/steer_GitHub.txt"]}
+  - tag: matcher_microsoft
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Microsoft.txt"]}
+  - tag: matcher_ai_cf
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_AI.txt", "/Users/nyamiiko/.mosdns/data/steer_Cloudflare.txt"]}
+  - tag: matcher_nsfw
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/nsfw_domain.txt"]}
+  - tag: matcher_tw
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_StreamTW.txt"]}
+  - tag: matcher_social
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_SocialMedia.txt"]}
+  - tag: matcher_ali
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/vendor_ali.txt"]}
+  - tag: matcher_tencent
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/vendor_tencent.txt"]}
   - tag: cn_domain_matcher
     type: domain_set
-    args:
-      files:
-        - ./cn_domain.txt
-
+    args: {files: ["/Users/nyamiiko/.mosdns/data/cn_domain.txt"]}
   - tag: cn_ip_matcher
     type: ip_set
-    args:
-      files:
-        - ./cn_ip.txt
+    args: {files: ["/Users/nyamiiko/.mosdns/data/cn_ip.txt"]}
 
-  - tag: nsfw_domain_matcher
-    type: domain_set
-    args:
-      files:
-        - ./nsfw_domain.txt
-
-  - tag: ali_domain_matcher
-    type: domain_set
-    args:
-      files:
-        - ./vendor_ali.txt
-
-  - tag: tencent_domain_matcher
-    type: domain_set
-    args:
-      files:
-        - ./vendor_tencent.txt
-
-  - tag: 360_domain_matcher
-    type: domain_set
-    args:
-      files:
-        - ./vendor_360.txt
-
-  - tag: baidu_domain_matcher
-    type: domain_set
-    args:
-      files:
-        - ./vendor_baidu.txt
-
-  # 3. Forwarders - Vendor Specific
+  # 3. Forwarders
+  - tag: forward_apple
+    type: forward
+    args: {upstreams: [{addr: "https://doh.dns.apple.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+  - tag: forward_google
+    type: forward
+    args: {upstreams: [{addr: "https://dns.google/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+  - tag: forward_quad9
+    type: forward
+    args: {upstreams: [{addr: "https://dns.quad9.net/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+  - tag: forward_cloudflare
+    type: forward
+    args: {upstreams: [{addr: "https://cloudflare-dns.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+  - tag: forward_mullvad_nsfw
+    type: forward
+    args: {upstreams: [{addr: "https://adblock.dns.mullvad.net/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+  - tag: forward_twnic
+    type: forward
+    args: {upstreams: [{addr: "https://dns.twnic.tw/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+  - tag: forward_adguard_social
+    type: forward
+    args: {upstreams: [{addr: "https://dns.adguard-dns.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
   - tag: forward_ali
     type: forward
-    args:
-      upstreams:
-        - addr: https://dns.alidns.com/dns-query
-          enable_pipeline: true
-
+    args: {upstreams: [{addr: "https://dns.alidns.com/dns-query", enable_pipeline: true}]}
   - tag: forward_tencent
     type: forward
-    args:
-      upstreams:
-        - addr: https://doh.pub/dns-query
-          enable_pipeline: true
-
-  - tag: forward_360
-    type: forward
-    args:
-      upstreams:
-        - addr: https://doh.360.cn/dns-query
-          enable_pipeline: true
-
-  - tag: forward_baidu
-    type: forward
-    args:
-      upstreams:
-        - addr: https://dns.baidu.com/dns-query
-          enable_pipeline: true
-
-  # General Forwarders
-  - tag: forward_cn_primary
-    type: forward
-    args:
-      concurrent: 3
-      upstreams:
-        - addr: https://dns.alidns.com/dns-query
-          enable_pipeline: true
-        - addr: https://doh.pub/dns-query
-          enable_pipeline: true
-        - addr: https://doh.360.cn/dns-query
-          enable_pipeline: true
-
-  - tag: forward_intl_primary
+    args: {upstreams: [{addr: "https://doh.pub/dns-query", enable_pipeline: true}]}
+  - tag: forward_intl_general
     type: forward
     args:
       concurrent: 3
       upstreams:
         - addr: https://dns.google/dns-query
-          enable_pipeline: true
           socks5: 127.0.0.1:6153
         - addr: https://cloudflare-dns.com/dns-query
-          enable_pipeline: true
           socks5: 127.0.0.1:6153
         - addr: https://dns.quad9.net/dns-query
-          enable_pipeline: true
           socks5: 127.0.0.1:6153
 
-  - tag: forward_intl_specialized
-    type: forward
-    args:
-      concurrent: 3
-      upstreams:
-        - addr: https://wikimedia-dns.org/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://doh.libredns.gr/noads
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://freedns.controld.com/p1
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-
-  - tag: forward_intl_secondary
-    type: forward
-    args:
-      concurrent: 3
-      upstreams:
-        - addr: https://dns.nextdns.io/7f2fac
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://dns.adguard-dns.com/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://adblock.dns.mullvad.net/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-        - addr: https://dns.twnic.tw/dns-query
-          enable_pipeline: true
-          socks5: 127.0.0.1:6153
-
-  # 4. Sequences
+  # 4. Sequences (Define dependent ones first)
   - tag: nsfw_sequence
     type: sequence
     args:
-      - exec: $forward_intl_specialized
+      - exec: $forward_mullvad_nsfw
       - exec: accept
 
   - tag: cn_sequence
     type: sequence
     args:
-      - exec: $forward_cn_primary
+      - exec: $forward_ali
+      - exec: $forward_tencent
       - matches: "!resp_ip $cn_ip_matcher"
         exec: reject 3
       - exec: accept
@@ -167,11 +110,9 @@ plugins:
   - tag: intl_sequence
     type: sequence
     args:
-      - exec: $forward_intl_primary
+      - exec: $forward_intl_general
       - matches: resp_ip $cn_ip_matcher
-        exec: $forward_intl_specialized
-      - matches: resp_ip $cn_ip_matcher
-        exec: $forward_intl_secondary
+        exec: $forward_quad9
       - matches: resp_ip $cn_ip_matcher
         exec: reject 3
       - exec: accept
@@ -180,25 +121,42 @@ plugins:
     type: sequence
     args:
       - exec: $cache
-      # NSFW (Privacy Priority)
-      - matches: qname $nsfw_domain_matcher
+      # NSFW
+      - matches: qname $matcher_nsfw
         exec: jump nsfw_sequence
-      # Precision Vendor Steering
-      - matches: qname $ali_domain_matcher
+      # Specialized Steering
+      - matches: qname $matcher_apple
+        exec: $forward_apple
+      - matches: qname $matcher_apple
+        exec: accept
+      - matches: qname $matcher_google
+        exec: $forward_google
+      - matches: qname $matcher_google
+        exec: accept
+      - matches: qname $matcher_microsoft
+        exec: $forward_quad9
+      - matches: qname $matcher_microsoft
+        exec: accept
+      - matches: qname $matcher_ai_cf
+        exec: $forward_cloudflare
+      - matches: qname $matcher_ai_cf
+        exec: accept
+      - matches: qname $matcher_tw
+        exec: $forward_twnic
+      - matches: qname $matcher_tw
+        exec: accept
+      - matches: qname $matcher_social
+        exec: $forward_adguard_social
+      - matches: qname $matcher_social
+        exec: accept
+      # CN Vendors
+      - matches: qname $matcher_ali
         exec: $forward_ali
-      - matches: qname $ali_domain_matcher
+      - matches: qname $matcher_ali
         exec: accept
-      - matches: qname $tencent_domain_matcher
+      - matches: qname $matcher_tencent
         exec: $forward_tencent
-      - matches: qname $tencent_domain_matcher
-        exec: accept
-      - matches: qname $360_domain_matcher
-        exec: $forward_360
-      - matches: qname $360_domain_matcher
-        exec: accept
-      - matches: qname $baidu_domain_matcher
-        exec: $forward_baidu
-      - matches: qname $baidu_domain_matcher
+      - matches: qname $matcher_tencent
         exec: accept
       # General Split
       - matches: qname $cn_domain_matcher
@@ -208,12 +166,7 @@ plugins:
   # 5. Servers
   - tag: udp_server
     type: udp_server
-    args:
-      entry: main_sequence
-      listen: 127.0.0.1:5335
-
+    args: {entry: main_sequence, listen: "127.0.0.1:5335"}
   - tag: tcp_server
     type: tcp_server
-    args:
-      entry: main_sequence
-      listen: 127.0.0.1:5335
+    args: {entry: main_sequence, listen: "127.0.0.1:5335"}
