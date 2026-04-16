@@ -396,6 +396,13 @@ class AdBlockManager:
             normalized = self.normalize_rule(candidate)
             if not normalized:
                 continue
+
+            # CRITICAL: Apply deep whitelist filtering at ingestion
+            # Extracts the domain/IP from the normalized rule (e.g. DOMAIN,abc.com -> abc.com)
+            rule_payload = normalized.split(",", 1)[-1] if "," in normalized else normalized
+            if any(white_item in rule_payload for white_item in self.whitelist):
+                continue
+
             if policy == "REJECT":
                 self.rules["REJECT"].add(normalized)
                 continue
