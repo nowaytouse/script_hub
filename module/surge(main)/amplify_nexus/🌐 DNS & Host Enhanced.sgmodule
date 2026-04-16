@@ -1,24 +1,19 @@
 #!name=🌐 DNS & Host Enhanced (Strict Privacy)
-#!desc=🔒 Rule-Based DoH Steering + Host 分流增强 + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.16
+#!desc=🔒 International-Only Global DoH + Rule-Based Host Steering + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.16
 #!author=VirgilClyne & nyamiiko (Refactored)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16
+#!version=2026.04.16b
 
 [General]
-# Mainland + International DoH pool. This is the DEFAULT resolver for ALL domains
-# not matched by any [Host] entry. International domains are steered to
-# international DoH via [Host] SECTION 3 (rule-based DOMAIN-SET steering).
-# WHY mixed pool: Mainland China DoH is kept in the global pool for mainland
-# domain resolution speed, but international domains are explicitly steered to
-# international DoH at the [Host] level to prevent mainland DoH from resolving
-# them (privacy risk). This approach ensures:
-# 1. Mainland domains resolve fast via mainland DoH (even if RULE-SETs fail)
-# 2. International domains NEVER hit mainland DoH (forced via SECTION 3)
-# 3. encrypted-dns-follow-outbound-mode=true ensures mainland DoH → DIRECT
-#    (fast), international DoH in [Host] → PROXY (private). No DNS leak.
-encrypted-dns-server = https://doh.pub/dns-query, https://dns.alidns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
+# International-only global DoH pool. Mainland domains are steered to mainland
+# DoH via [Host] SECTION 6 RULE-SETs. Any domain not matched by [Host] entries
+# resolves via this international-only pool — mainland DoH is intentionally
+# excluded to prevent it from ever resolving international domains.
+# Mainland domains that miss SECTION 6 RULE-SETs fall back here (international
+# DoH), which is acceptable: they resolve correctly, just not via mainland DoH.
+encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
 encrypted-dns-follow-outbound-mode = true
