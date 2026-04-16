@@ -1,12 +1,17 @@
-#!name=🌐 mosdns DNS Integration
-#!desc=Route all DNS queries to local mosdns (127.0.0.1:5335) for dual-track resolution with multi-tier fallback
-#!author=nyamiiko
-#!homepage=https://github.com/nowaytouse/script_hub
-#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
-#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16b
+# name: 🌐 mosdns DNS Integration
+# desc: [🚀SR] Route all DNS queries to local mosdns (127.0.0.1:5335) for dual-track resolution with multi-tier fallback
+# author: nyamiiko
+# homepage: https://github.com/nowaytouse/script_hub
+# icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
+# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
+# version: 2026.04.16b
 
 [General]
+bypass-system = true
+ipv6 = true
+prefer-ipv6 = true
+hijack-dns = *:53
+dns-direct-fallback-proxy = false
 # Route all DNS queries to local mosdns instance
 # mosdns handles dual-track resolution with multi-tier fallback:
 # - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
@@ -17,14 +22,14 @@ dns-server = 127.0.0.1:5335
 # encrypted-dns-server = (removed)
 
 # Keep these for mosdns bootstrap and fallback
-use-local-host-item-for-proxy = false
-encrypted-dns-follow-outbound-mode = false
+# [SR不支持,已移除] use-local-host-item-for-proxy = false
+# [SR不支持,已移除] encrypted-dns-follow-outbound-mode = false
 hijack-dns = *:53
 allow-dns-svcb = false
 
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
+# [SR不支持RULE-SET] RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
 # ⚠️ ChinaASN / GlobalASN / GEOIP,CN / PROTOCOL,QUIC 已移至主配置 [Rule]。
 # 原因：模块 [Rule] 在 Surge 中始终预置（prepend），导致 IP 规则在域名代理
 # 规则之前触发，造成 GitHub push 阻塞、Gemini UI 异常、DNS 泄漏等问题。
@@ -37,4 +42,4 @@ DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/reso
 DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
-hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com

@@ -5,75 +5,10 @@
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!version=2026.04.16d
-
-[General]
-# International-only global DoH pool. Mainland domains are steered to mainland
-# DoH via [Host] SECTION 6 RULE-SETs. Any domain not matched by [Host] entries
-# resolves via this international-only pool — mainland DoH is intentionally
-# excluded to prevent it from ever resolving international domains.
-# Mainland domains that miss SECTION 6 RULE-SETs fall back here (international
-# DoH), which is acceptable: they resolve correctly, just not via mainland DoH.
-encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
-# dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
-use-local-host-item-for-proxy = true
-encrypted-dns-follow-outbound-mode = true
-encrypted-dns-skip-cert-verification = false
-tun-excluded-routes = 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4, 255.255.255.255/32
-tun-included-routes = 192.168.1.12/32, 192.168.1.100/32
-force-http-engine-hosts = baidu.com, -*.apple.com, www.google.com:80
-always-raw-tcp-hosts = *.alipay.com, *.unionpay.com, *.95516.com, *.apple.com, *.jd.com, icbc.com.cn, ccb.com, cmbchina.com, 12306.cn
-always-raw-tcp-keywords = alipay, unionpay, 95516, applepay, wechatpay, wxpay, jdpay, bank, icbc, ccb, abchina, bocpay, bankcomm, cmbchina, pingan, 12306, chinapay, bestpay, 99bill, yeepay, lianlian, suixingpay, huifu, 17173pay, cmpay, upop, ebspay, 19pay, 95599, 95588, 95533, 95568, 95521, oauth, ssotoken, authorize, captcha, verify, antirobot, risk, anti-fraud, riskcontrol, trustdevice, saf-js, fp.js, fingerprint, deviceid, accs, mtgsig, xsecappid, sec-request, xboundary
-skip-proxy = %INSERT% localhost, *.local, captive.apple.com, *.battle.net, *.battlenet.com, *.msftconnecttest.com, *.srv.nintendo.net, *.xboxlive.com, *.alipay.com, *.unionpay.com, *.jd.com, *.taobao.com, 10.0.0.0/8, 127.0.0.1/32, 172.16.0.0/12, 192.168.0.0/16, ::1/128, fe80::/10
-always-real-ip = %INSERT% *.lan, *.direct, *.msftconnecttest.com, *.msftncsi.com, detectportal.firefox.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, stun.*, *.logon.battlenet.com.cn, *.logon.battle.net, *.blzstatic.cn, *.apple.com, pool.ntp.org, *.pool.ntp.org, time.apple.com
-
 [URL Rewrite]
-# Keep only the Google country redirects that still align with the DNS policy.
-^https?://(www\.)?(g|google)\.cn https://www.google.com 307
-^https?://(www\.)?google\.com\.hk https://www.google.com 307
-^https?://(ditu|maps)\.google\.cn https://maps.google.com 307
+
 
 [Host]
-# SECTION 1: IPv6 Local Address Mapping
-ip6-localhost = ::1 // IPv6 Localhost
-ip6-loopback = ::1 // IPv6 Loopback
-ip6-localnet = fe00::0 // IPv6 Link-Local
-ip6-mcastprefix = ff00::0 // IPv6 Multicast
-ip6-allnodes = ff02::1 // IPv6 All Nodes
-ip6-allrouters = ff02::2 // IPv6 All Routers
-ip6-allhosts = ff02::3 // IPv6 All Hosts
-
-# SECTION 2: Bootstrap Hosts For General DoH / RULE-SET Fetching
-dns.google = 8.8.8.8, 8.8.4.4, 2001:4860:4860::8888, 2001:4860:4860::8844 // https://dns.google/dns-query
-dns64.dns.google = 2001:4860:4860::6464, 2001:4860:4860::64 // https://dns64.dns.google/dns-query
-cloudflare-dns.com = 104.16.249.249, 104.16.248.249, 2606:4700::6810:f8f9, 2606:4700::6810:f9f9 // https://cloudflare-dns.com/dns-query
-1dot1dot1dot1.cloudflare-dns.com = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // 1dot1dot1dot1.cloudflare-dns.com:853
-one.one.one.one = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1001, 2606:4700:4700::1111 // one.one.one.one:853
-dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9 // https://dns.quad9.net/dns-query
-dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200:baba::1, 2400:3200::1 // https://dns.alidns.com/dns-query
-doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1 // https://doh.pub/dns-query
-dot.pub = 1.12.12.12, 120.53.53.53 // dot.pub:853
-doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133 // https://doh.360.cn/dns-query
-dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15 // dot.360.cn:853
-dns.baidu.com = 180.76.76.76, 110.242.68.66, 2400:da00::6666 // https://dns.baidu.com/dns-query
-dns.cn = 1.2.4.8, 210.2.4.8, 2001:dc7:1000::1 // https://dns.cn/dns-query
-dns.tuna.tsinghua.edu.cn = 101.6.6.6, 2001:da8::666 // https://dns.tuna.tsinghua.edu.cn/dns-query
-dns6.cfiec.net = 240c:6666::6666, 240c:6644::6644 // https://dns6.cfiec.net/dns-query
-dns.volcengine.com = 180.184.1.1, 180.184.2.2, 2402:4e00:1020:1404::10, 2402:4e00:1430:1102::a // https://dns.volcengine.com/dns-query
-dns.twnic.tw = 101.101.101.101, 2001:de4::101, 2001:de4::102 // https://dns.twnic.tw/dns-query
-ordns.he.net = 74.82.42.42, 2001:470:20::2 // https://ordns.he.net/dns-query
-dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff // https://dns.adguard-dns.com/dns-query
-doh.libredns.gr = 116.202.176.26 // https://doh.libredns.gr/dns-query & /noads
-doh.dns4all.eu = 194.0.5.3 // https://doh.dns4all.eu/dns-query
-doh.ffmuc.net = 5.1.66.255, 185.150.99.255, 2001:678:e68:f000::, 2001:678:ed0:f000:: // https://doh.ffmuc.net/dns-query
-wikimedia-dns.org = 185.71.138.138 // https://wikimedia-dns.org/dns-query
-dns.mullvad.net = 194.242.2.2, 194.242.2.3, 194.242.2.4, 194.242.2.9 // https://dns.mullvad.net/dns-query
-adblock.dns.mullvad.net = 194.242.2.2 // https://adblock.dns.mullvad.net/dns-query
-freedns.controld.com = 76.76.2.0, 76.76.10.0 // https://freedns.controld.com/p1
-doh.dns.apple.com = 17.253.1.201, 17.253.1.202, 17.253.2.202, 17.253.3.201, 17.253.24.201, 17.253.26.201, 17.253.27.201 // https://doh.dns.apple.com/dns-query
-dns.nextdns.io = 45.90.28.0, 45.90.30.0 // https://dns.nextdns.io/7f2fac
-raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133
-github.com = 140.82.113.4, 140.82.112.3
-
 # SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
 # Mainland domains must be at the top so they hit mainland DoH without
 # falling through to the international global pool (which would be slow).
@@ -86,40 +21,7 @@ DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulese
 # Generic .cn TLD fallback — last resort for mainland domains
 *.cn = server:https://dns.alidns.com/dns-query
 
-# SECTION 4: Local Domains / LAN / Router Admin
-*.local = server:system
-*.lan = server:system
-*.test = server:system
-*.localhost = server:system
-*.localdomain = server:system
-_hotspot_.m2m = server:force-syslib
-hotspot.cslwifi.com = server:force-syslib
-*.id.ui.direct = server:force-syslib
-amplifi.lan = server:force-syslib
-router.synology.com = server:force-syslib
-sila.razer.com = server:force-syslib
-router.asus.com = server:force-syslib
-routerlogin.net = server:force-syslib
-orbilogin.com = server:force-syslib
-www.LinksysSmartWiFi.com = server:force-syslib
-LinksysSmartWiFi.com = server:force-syslib
-instant.arubanetworks.com = server:force-syslib
-setmeup.arubanetworks.com = server:force-syslib
-www.miwifi.com = server:force-syslib
-miwifi.com = server:force-syslib
-mediarouter.home = server:force-syslib
-tplogin.cn = server:force-syslib
-tplinklogin.net = server:force-syslib
-tplinkwifi.net = server:force-syslib
-melogin.cn = server:force-syslib
-falogin.cn = server:force-syslib
-tendawifi.com = server:force-syslib
-leike.cc = server:force-syslib
-zte.home = server:force-syslib
-p.to = server:force-syslib
-phicomm.me = server:force-syslib
-hiwifi.com = server:force-syslib
-peiluyou.com = server:force-syslib
+
 
 # SECTION 5: Rule-Based DoH Steering (International Domains → International DoH)
 # International domains are explicitly steered to international DoH to ensure
@@ -191,36 +93,7 @@ connectivitycheck.android.com = server:https://dns.google/dns-query
 connectivity-check.ubuntu.com = server:https://cloudflare-dns.com/dns-query
 connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 
-# SECTION 9: Telegram Node Mapping
-91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.107 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.120 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.125 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.126 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.128 = 91.108.56.147,91.108.56.135,91.108.56.130
-91.108.56.156 = 91.108.56.147,91.108.56.135,91.108.56.130
-149.154.175.10 = 149.154.175.53
-149.154.175.50 = 149.154.175.53
-149.154.175.54 = 149.154.175.53
-149.154.175.55 = 149.154.175.53
-149.154.175.56 = 149.154.175.53
-149.154.175.57 = 149.154.175.53
-149.154.175.100 = 149.154.175.53
-149.154.175.101 = 149.154.175.53
-149.154.175.102 = 149.154.175.53
-149.154.175.103 = 149.154.175.53
-149.154.175.117 = 149.154.175.53
-91.108.4.0 = 91.108.4.1
-91.108.8.0 = 91.108.8.1
-91.108.12.0 = 91.108.12.1
-91.108.16.0 = 91.108.16.1
-149.154.167.0 = 149.154.167.1
-149.154.171.0 = 149.154.171.1
-149.154.163.0 = 149.154.163.1
-149.154.167.40 = 149.154.167.41
-149.154.175.40 = 149.154.175.41
+
 
 # SECTION 10: Google Services
 talk.google.com = 108.177.125.188 // Firebase Cloud Messaging
@@ -236,22 +109,7 @@ alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
 stun.l.google.com = server:force-syslib // WebRTC local discovery
 stun?.l.google.com = server:force-syslib // WebRTC local discovery
 
-# SECTION 11: Certificate Verification (OCSP/CRL) Bypass
-# Force system resolver for SSL certificate verification to break DoH loop dependencies.
-ocsp.digicert.cn = server:syslib
-ocsp.digicert.com = server:syslib
-crl3.digicert.com = server:syslib
-crl4.digicert.com = server:syslib
-ocsp.sectigo.com = server:syslib
-ocsp.verisign.com = server:syslib
-ocsp.globalsign.com = server:syslib
-ocsp.comodoca.com = server:syslib
-ocsp.entrust.net = server:syslib
-ocsp.identrust.com = server:syslib
-ocsp.pki.goog = server:syslib
-ocsp.apple.com = server:syslib
-ocsp2.apple.com = server:syslib
-ocsp-lb.apple.com.akadns.net = server:syslib
+
 
 [Rule]
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.

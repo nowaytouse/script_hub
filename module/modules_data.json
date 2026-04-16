@@ -1,6 +1,6 @@
 {
-  "generated": "2026-04-16T06:04:25.144957",
-  "total": 55,
+  "generated": "2026-04-16T20:08:13.757473",
+  "total": 56,
   "modules": [
     {
       "id": "boxjs.rewrite.surge",
@@ -107,7 +107,16 @@
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule",
       "name": "🌐 DNS & Host Enhanced (Strict Privacy)",
-      "desc": "🔒 严格国际域名优先 DoH + Host 分流增强 + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.15",
+      "desc": "🔒 International-Only Global DoH + Rule-Based Host Steering + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.16",
+      "tags": []
+    },
+    {
+      "id": "🌐 mosdns DNS Integration",
+      "filename": "🌐 mosdns DNS Integration.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/🌐 mosdns DNS Integration.sgmodule",
+      "name": "🌐 mosdns DNS Integration",
+      "desc": "Route all DNS queries to local mosdns (127.0.0.1:5335) for dual-track resolution with multi-tier fallback",
       "tags": []
     },
     {

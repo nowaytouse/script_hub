@@ -4,9 +4,11 @@
 # icon: https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 # category: 『 🔝 Head Expanse › 首端扩域 』
 # tag: AdBlock, Dependency, HTTPDNS
-# date: 2026-04-16 06:04:23
+# date: 2026-04-16 20:08:11
 
 [Rule]
+# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
+# [SR不支持RULE-SET] RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
 # REJECT Rules (self-hosted canonical rebuild)
 # [SR不支持RULE-SET] RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # REJECT Rules (synced from skk upstream)
