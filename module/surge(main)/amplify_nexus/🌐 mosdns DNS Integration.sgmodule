@@ -1,16 +1,16 @@
 #!name=🌐 mosdns DNS Integration
-#!desc=Route all DNS queries to local mosdns (127.0.0.1:5335) for dual-track resolution
+#!desc=Route all DNS queries to local mosdns (127.0.0.1:5335) for dual-track resolution with multi-tier fallback
 #!author=nyamiiko
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16
+#!version=2026.04.16b
 
 [General]
 # Route all DNS queries to local mosdns instance
-# mosdns handles dual-track resolution:
-# - CN domains → Mainland DoH (AliDNS/DNSPod) direct
-# - International domains → International DoH (Cloudflare/Google) via proxy
+# mosdns handles dual-track resolution with multi-tier fallback:
+# - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
+# - International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/etc.) via proxy
 dns-server = 127.0.0.1:5335
 
 # Disable Surge's built-in DoH — mosdns handles all encrypted DNS
@@ -19,10 +19,51 @@ dns-server = 127.0.0.1:5335
 # Keep these for mosdns bootstrap and fallback
 use-local-host-item-for-proxy = false
 encrypted-dns-follow-outbound-mode = false
+hijack-dns = *:53
+allow-dns-svcb = false
 
 [Host]
-# Bootstrap for mosdns itself (in case mosdns needs to resolve DoH server hostnames)
-dns.alidns.com = 223.5.5.5, 223.6.6.6
-doh.pub = 1.12.12.12, 120.53.53.53
-cloudflare-dns.com = 104.16.249.249, 104.16.248.249
-dns.google = 8.8.8.8, 8.8.4.4
+# SECTION 1: Bootstrap for mosdns DoH server hostnames
+# Mainland DoH servers
+dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200:baba::1, 2400:3200::1
+doh.pub = 1.12.12.12, 120.53.53.53, 2409:8c20:1001:1002:0:ff:b001:efe0, 2409:8c28:1001:1001:0:ff:b001:efe1
+doh.360.cn = 23.6.48.18, 112.65.69.15, 101.198.198.198, 101.227.130.133
+dns.baidu.com = 180.76.76.76, 110.242.68.66, 2400:da00::6666
+dns.volcengine.com = 180.184.1.1, 180.184.2.2, 2402:4e00:1020:1404::10, 2402:4e00:1430:1102::a
+
+# International DoH servers
+cloudflare-dns.com = 104.16.249.249, 104.16.248.249, 2606:4700::6810:f8f9, 2606:4700::6810:f9f9
+dns.google = 8.8.8.8, 8.8.4.4, 2001:4860:4860::8888, 2001:4860:4860::8844
+dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9
+dns.nextdns.io = 45.90.28.0, 45.90.30.0
+dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff
+adblock.dns.mullvad.net = 194.242.2.2
+wikimedia-dns.org = 185.71.138.138
+doh.libredns.gr = 116.202.176.26
+freedns.controld.com = 76.76.2.0, 76.76.10.0
+
+# SECTION 2: Local domains bypass mosdns
+*.local = server:system
+*.lan = server:system
+*.test = server:system
+*.localhost = server:system
+*.localdomain = server:system
+
+# SECTION 3: Router admin interfaces bypass mosdns
+router.asus.com = server:force-syslib
+routerlogin.net = server:force-syslib
+orbilogin.com = server:force-syslib
+tplogin.cn = server:force-syslib
+tplinklogin.net = server:force-syslib
+melogin.cn = server:force-syslib
+miwifi.com = server:force-syslib
+www.miwifi.com = server:force-syslib
+
+# SECTION 4: Certificate verification bypass mosdns (prevent DoH loop)
+ocsp.digicert.cn = server:syslib
+ocsp.digicert.com = server:syslib
+ocsp.sectigo.com = server:syslib
+ocsp.verisign.com = server:syslib
+ocsp.globalsign.com = server:syslib
+ocsp.apple.com = server:syslib
+ocsp2.apple.com = server:syslib

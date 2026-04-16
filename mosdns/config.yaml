@@ -1,12 +1,18 @@
 # mosdns Configuration - Dual-Track DNS with Zero Cross-Contamination
-# Version: 2026.04.16
+# Version: 2026.04.16b
 # Author: nyamiiko
 #
 # Architecture:
 # Surge → 127.0.0.1:5335 (mosdns)
 #   ↓
-# CN domains → Mainland DoH (AliDNS/DNSPod)
-# International domains → International DoH (Cloudflare via proxy)
+# CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine)
+# International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/Wikimedia/LibreDNS/ControlD via proxy)
+#
+# Features:
+# - Multi-tier fallback for both CN and international DoH
+# - Anti-pollution validation with automatic fallback
+# - ECS support for mainland queries
+# - 10K entry cache with disk persistence
 
 log:
   level: info
@@ -51,11 +57,11 @@ plugins:
       files:
         - ./cn_ip.txt
 
-  # Mainland DoH forwarder (AliDNS)
-  - tag: forward_alidns
+  # Mainland DoH forwarder - Primary (AliDNS + DNSPod)
+  - tag: forward_cn_primary
     type: forward
     args:
-      concurrent: 2
+      concurrent: 3
       upstreams:
         - addr: https://dns.alidns.com/dns-query
           enable_pipeline: true
@@ -63,18 +69,76 @@ plugins:
         - addr: https://doh.pub/dns-query
           enable_pipeline: true
           enable_http3: false
+        - addr: https://doh.360.cn/dns-query
+          enable_pipeline: true
+          enable_http3: false
 
-  # International DoH forwarder (Cloudflare via SOCKS5 proxy)
-  - tag: forward_cloudflare
+  # Mainland DoH forwarder - Secondary (Backup)
+  - tag: forward_cn_secondary
     type: forward
     args:
       concurrent: 2
+      upstreams:
+        - addr: https://dns.baidu.com/dns-query
+          enable_pipeline: true
+          enable_http3: false
+        - addr: https://dns.volcengine.com/dns-query
+          enable_pipeline: true
+          enable_http3: false
+
+  # International DoH forwarder - Primary (Cloudflare + Google via proxy)
+  - tag: forward_intl_primary
+    type: forward
+    args:
+      concurrent: 3
       upstreams:
         - addr: https://cloudflare-dns.com/dns-query
           enable_pipeline: true
           enable_http3: false
           socks5: 127.0.0.1:9810
         - addr: https://dns.google/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+        - addr: https://dns.quad9.net/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+
+  # International DoH forwarder - Secondary (Privacy-focused via proxy)
+  - tag: forward_intl_secondary
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: https://dns.nextdns.io/7f2fac
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+        - addr: https://dns.adguard-dns.com/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+        - addr: https://adblock.dns.mullvad.net/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+
+  # International DoH forwarder - Tertiary (Additional providers via proxy)
+  - tag: forward_intl_tertiary
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: https://wikimedia-dns.org/dns-query
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+        - addr: https://doh.libredns.gr/noads
+          enable_pipeline: true
+          enable_http3: false
+          socks5: 127.0.0.1:9810
+        - addr: https://freedns.controld.com/p1
           enable_pipeline: true
           enable_http3: false
           socks5: 127.0.0.1:9810
@@ -110,7 +174,12 @@ plugins:
     type: sequence
     args:
       - exec: $ecs_cn
-      - exec: $forward_alidns
+      # Try primary mainland DoH
+      - exec: $forward_cn_primary
+      # If primary fails or returns non-CN IP, try secondary
+      - matches: "!resp_ip $cn_ip_matcher"
+        exec: $forward_cn_secondary
+      # Final validation: reject if still not CN IP
       - matches: "!resp_ip $cn_ip_matcher"
         exec: reject 3  # NXDOMAIN if response IP is not CN
       - exec: accept
@@ -119,7 +188,15 @@ plugins:
   - tag: intl_sequence
     type: sequence
     args:
-      - exec: $forward_cloudflare
+      # Try primary international DoH
+      - exec: $forward_intl_primary
+      # If primary fails or returns CN IP (pollution), try secondary
+      - matches: resp_ip $cn_ip_matcher
+        exec: $forward_intl_secondary
+      # If secondary also fails, try tertiary
+      - matches: resp_ip $cn_ip_matcher
+        exec: $forward_intl_tertiary
+      # Final validation: reject if still CN IP (pollution)
       - matches: resp_ip $cn_ip_matcher
         exec: reject 3  # NXDOMAIN if response IP is CN (pollution)
       - exec: accept
