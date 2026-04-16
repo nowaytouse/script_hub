@@ -64,9 +64,9 @@ plugins:
   - tag: forward_cloudflare
     type: forward
     args: {upstreams: [{addr: "https://cloudflare-dns.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
-  - tag: forward_mullvad_nsfw
+  - tag: forward_wikimedia_privacy
     type: forward
-    args: {upstreams: [{addr: "https://adblock.dns.mullvad.net/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "https://wikimedia-dns.org/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
   - tag: forward_twnic
     type: forward
     args: {upstreams: [{addr: "https://dns.twnic.tw/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
@@ -95,7 +95,7 @@ plugins:
   - tag: nsfw_sequence
     type: sequence
     args:
-      - exec: $forward_mullvad_nsfw
+      - exec: $forward_wikimedia_privacy
       - exec: accept
 
   - tag: cn_sequence
