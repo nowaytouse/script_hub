@@ -175,3 +175,9 @@ plugins:
   - tag: tcp_server
     type: tcp_server
     args: {entry: main_sequence, listen: "127.0.0.1:5335"}
+  - tag: doh_server
+    type: http_server
+    args:
+      entry: main_sequence
+      listen: "127.0.0.1:5336"
+      path: /dns-query
