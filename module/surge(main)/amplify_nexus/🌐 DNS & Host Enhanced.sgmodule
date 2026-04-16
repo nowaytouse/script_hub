@@ -4,7 +4,7 @@
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16c
+#!version=2026.04.16d
 
 [General]
 # International-only global DoH pool. Mainland domains are steered to mainland
@@ -81,7 +81,9 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
-# Generic .cn fallback — catches mainland domains that miss the RULE-SETs above.
+# Comprehensive mainland domain catch-all from Direct.list
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Direct.list,server:https://doh.pub/dns-query
+# Generic .cn TLD fallback — last resort for mainland domains
 *.cn = server:https://dns.alidns.com/dns-query
 
 # SECTION 4: Local Domains / LAN / Router Admin
