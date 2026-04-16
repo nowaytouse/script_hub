@@ -4,7 +4,7 @@
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16b
+#!version=2026.04.16c
 
 [General]
 # International-only global DoH pool. Mainland domains are steered to mainland
@@ -74,43 +74,15 @@ dns.nextdns.io = 45.90.28.0, 45.90.30.0 // https://dns.nextdns.io/7f2fac
 raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133
 github.com = 140.82.113.4, 140.82.112.3
 
-# SECTION 3: Rule-Based DoH Steering (International Domains → International DoH)
-# Prevents mainland China DoH from resolving international domains by assigning
-# international DoH servers at the host level based on traffic routing rules.
-# Format: DOMAIN-SET,<ruleset_url>,server:https://<international_doh_server>
-
-# Japan-routed domains (StreamJP, StreamKR, CDN, substore)
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamJP.list,server:https://dns.google/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamKR.list,server:https://dns.google/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/CDN.list,server:https://cloudflare-dns.com/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/substore.list,server:https://dns.quad9.net/dns-query
-
-# Taiwan/HK-routed domains (StreamHK, StreamTW)
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamHK.list,server:https://dns.google/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamTW.list,server:https://dns.twnic.tw/dns-query
-
-# US-routed domains (Cloudflare, StreamUS, AppleNews, StreamEU, Spotify)
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Cloudflare.list,server:https://cloudflare-dns.com/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamUS.list,server:https://dns.google/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AppleNews.list,server:https://doh.dns.apple.com/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamEU.list,server:https://dns.quad9.net/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Spotify.list,server:https://cloudflare-dns.com/dns-query
-
-# Tech companies & specialized bypass (SocialMedia, NSFW, GitHub, Google, Microsoft, AI, Binance)
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/SocialMedia.list,server:https://cloudflare-dns.com/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/NSFW.list,server:https://adblock.dns.mullvad.net/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GitHub.list,server:https://dns.google/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Google.list,server:https://dns.google/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Microsoft.list,server:https://dns.quad9.net/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AI.list,server:https://cloudflare-dns.com/dns-query
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Binance.list,server:https://cloudflare-dns.com/dns-query
-
-# Global proxy catch-all
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GlobalProxy.list,server:https://dns.quad9.net/dns-query
-
-# Inline NSFW domains
-hanime1.me = server:https://adblock.dns.mullvad.net/dns-query
-18comic.vip = server:https://adblock.dns.mullvad.net/dns-query
+# SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
+# Mainland domains must be at the top so they hit mainland DoH without
+# falling through to the international global pool (which would be slow).
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
+# Generic .cn fallback — catches mainland domains that miss the RULE-SETs above.
+*.cn = server:https://dns.alidns.com/dns-query
 
 # SECTION 4: Local Domains / LAN / Router Admin
 *.local = server:system
@@ -147,9 +119,47 @@ phicomm.me = server:force-syslib
 hiwifi.com = server:force-syslib
 peiluyou.com = server:force-syslib
 
-# SECTION 5: Supplementary DNS Mapping RULE-SETs (Fine-grained control)
+# SECTION 5: Rule-Based DoH Steering (International Domains → International DoH)
+# International domains are explicitly steered to international DoH to ensure
+# they never hit the international-only global pool fallback (which would work
+# but might be slower than targeted steering).
+# Format: DOMAIN-SET,<ruleset_url>,server:https://<international_doh_server>
+
+# Japan-routed domains (StreamJP, StreamKR, CDN, substore)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamJP.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamKR.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/CDN.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/substore.list,server:https://dns.quad9.net/dns-query
+
+# Taiwan/HK-routed domains (StreamHK, StreamTW)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamHK.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamTW.list,server:https://dns.twnic.tw/dns-query
+
+# US-routed domains (Cloudflare, StreamUS, AppleNews, StreamEU, Spotify)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Cloudflare.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamUS.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AppleNews.list,server:https://doh.dns.apple.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamEU.list,server:https://dns.quad9.net/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Spotify.list,server:https://cloudflare-dns.com/dns-query
+
+# Tech companies & specialized bypass (SocialMedia, NSFW, GitHub, Google, Microsoft, AI, Binance)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/SocialMedia.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/NSFW.list,server:https://adblock.dns.mullvad.net/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GitHub.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Google.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Microsoft.list,server:https://dns.quad9.net/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AI.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Binance.list,server:https://cloudflare-dns.com/dns-query
+
+# Global proxy catch-all
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GlobalProxy.list,server:https://dns.quad9.net/dns-query
+
+# Inline NSFW domains
+hanime1.me = server:https://adblock.dns.mullvad.net/dns-query
+18comic.vip = server:https://adblock.dns.mullvad.net/dns-query
+
+# SECTION 6: Supplementary DNS Mapping RULE-SETs (Fine-grained control)
 # These provide additional granular control for specific service categories.
-# SECTION 3 already handles the main traffic routing rules.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://wikimedia-dns.org/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.nextdns.io/7f2fac
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
@@ -161,14 +171,7 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
 
-# SECTION 6: Mainland DoH Steering RULE-SETs
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
-
 # SECTION 7: Regional Inline Exceptions
-# Keep only the small regional resolver overrides inline.
 *.cht.com.tw = server:https://dns.twnic.tw/dns-query
 *.hinet.net = server:https://dns.twnic.tw/dns-query
 *.emome.net = server:https://dns.twnic.tw/dns-query
@@ -185,8 +188,6 @@ www.msftncsi.com = server:https://dns.google/dns-query
 connectivitycheck.android.com = server:https://dns.google/dns-query
 connectivity-check.ubuntu.com = server:https://cloudflare-dns.com/dns-query
 connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
-# Generic .cn fallback must stay after the global hard-lock and curated rulesets.
-*.cn = server:https://dns.alidns.com/dns-query
 
 # SECTION 9: Telegram Node Mapping
 91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
