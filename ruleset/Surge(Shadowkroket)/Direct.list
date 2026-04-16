@@ -1,8 +1,8 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 126312
-# Updated: 2026-04-15 23:45:55
+# Rules: 126320
+# Updated: 2026-04-16 06:03:59
 
 DOMAIN,004430.xyz
 DOMAIN,1-fss24-s0.streamhoster.com
@@ -72,6 +72,7 @@ DOMAIN,appleid.cdn-apple.com
 DOMAIN,apps.mzstatic.com
 DOMAIN,apps5.oingo.com
 DOMAIN,apptrailers.itunes.apple.com
+DOMAIN,archive.torrentonline.cc
 DOMAIN,as-hls-ww-live.akamaized.net
 DOMAIN,astro1.rastream.com
 DOMAIN,asusrouter.com
@@ -94,10 +95,9 @@ DOMAIN,bittorrent-tracker.e-n-c-r-y-p-t.net
 DOMAIN,bj1.api.bing.com
 DOMAIN,blzddist1-a.akamaihd.net
 DOMAIN,bookkeeper.itunes.apple.com
-DOMAIN,bt.okmp3.ru
 DOMAIN,bt.rer.lol
 DOMAIN,bt1.archive.org
-DOMAIN,bt2.archive.org
+DOMAIN,bt1.xxxxbt.cc
 DOMAIN,build.microsoft.com
 DOMAIN,bvarf.tracker.sh
 DOMAIN,c.admob.com
@@ -253,7 +253,6 @@ DOMAIN,emoi-cncdn.bing.com
 DOMAIN,evan.im
 DOMAIN,exodus.desync.com
 DOMAIN,experiments.apple.com
-DOMAIN,explodie.org
 DOMAIN,f.c2r.ts.cdn.office.net
 DOMAIN,f24hls-i.akamaihd.net
 DOMAIN,fash1043.cloudycdn.services
@@ -275,7 +274,6 @@ DOMAIN,fta.dell.com
 DOMAIN,ftaapj.dell.com
 DOMAIN,ftaemea.dell.com
 DOMAIN,ftasitapj.dell.com
-DOMAIN,ftp.pet
 DOMAIN,g0.gstatic.com
 DOMAIN,g1.gstatic.com
 DOMAIN,g2.gstatic.com
@@ -348,6 +346,7 @@ DOMAIN,hls.kqed.org
 DOMAIN,hls.qguiyang.com
 DOMAIN,hls.qxtv0763.com
 DOMAIN,hls.wlrn.mobi
+DOMAIN,home.yxgz.club
 DOMAIN,hospital.pku.edu.cn
 DOMAIN,http1.torrust-tracker-demo.com
 DOMAIN,httpdvb.slave.ttcatv.tv
@@ -458,7 +457,6 @@ DOMAIN,local.adguard.org
 DOMAIN,logger-dev.corp.google.com
 DOMAIN,logger.corp.google.com
 DOMAIN,login.corp.google.com
-DOMAIN,lucke.fenesisu.moe
 DOMAIN,lv.queniujq.cn
 DOMAIN,m.567it.com
 DOMAIN,m3u8.channel.luzhoubs.com
@@ -530,6 +528,7 @@ DOMAIN,ntservicepack.microsoft.com
 DOMAIN,nyaa.tracker.wf
 DOMAIN,o.pki.goog
 DOMAIN,oasisauth.h3c.com
+DOMAIN,obey.torrentonline.cc
 DOMAIN,ocsp-lb.apple.com.akadns.net
 DOMAIN,ocsp.apple.com
 DOMAIN,ocsp.pki.goog
@@ -538,11 +537,12 @@ DOMAIN,ocsp2.apple.com
 DOMAIN,oemsoc.download.prss.microsoft.com
 DOMAIN,officecdn.microsoft.com
 DOMAIN,open.demonii.com
-DOMAIN,open.dstud.io
 DOMAIN,open.stealth.si
+DOMAIN,open.trackerlist.xyz
 DOMAIN,opencourse.pku.edu.cn
 DOMAIN,opentor.org
 DOMAIN,opentracker.8880085.xyz
+DOMAIN,opentracker.io
 DOMAIN,origin-a.akamaihd.ne
 DOMAIN,origin-a.akamaihd.net
 DOMAIN,oscdn.apple.com
@@ -790,6 +790,7 @@ DOMAIN,tjrate.tjtele.com
 DOMAIN,tl.gscm.tv
 DOMAIN,tools.google.com
 DOMAIN,tools.l.google.com
+DOMAIN,torrent.hificode.in
 DOMAIN,torrent.tracker.durukanbal.com
 DOMAIN,torrentclub.online
 DOMAIN,torrents.tmtime.dev
@@ -797,14 +798,10 @@ DOMAIN,torrentsmd.com
 DOMAIN,tp.louisvuitton.com
 DOMAIN,tplogin.cn
 DOMAIN,tr.abiir.top
-DOMAIN,tr.abir.ga
 DOMAIN,tr.highstar.shop
-DOMAIN,tr.kxmp.cf
 DOMAIN,tr.nyacat.pw
 DOMAIN,tr4ck3r.duckdns.org
-DOMAIN,tracker-de-2.cutie.dating
 DOMAIN,tracker-udp.gbitt.info
-DOMAIN,tracker-zhuqiy.xn--1r3au8b.space
 DOMAIN,tracker.004430.xyz
 DOMAIN,tracker.1h.is
 DOMAIN,tracker.23794.top
@@ -812,14 +809,16 @@ DOMAIN,tracker.7471.top
 DOMAIN,tracker.bittor.pw
 DOMAIN,tracker.bluefrog.pw
 DOMAIN,tracker.breizh.pm
+DOMAIN,tracker.bt-hash.com
 DOMAIN,tracker.bt4g.com
-DOMAIN,tracker.cangku.moe
 DOMAIN,tracker.corpscorp.online
+DOMAIN,tracker.cutie.dating
 DOMAIN,tracker.darkness.services
 DOMAIN,tracker.ddunlimited.net
 DOMAIN,tracker.dhitechnical.com
 DOMAIN,tracker.dler.com
 DOMAIN,tracker.dler.org
+DOMAIN,tracker.dmcomic.org
 DOMAIN,tracker.ducks.party
 DOMAIN,tracker.exe.in.th
 DOMAIN,tracker.filemail.com
@@ -830,16 +829,18 @@ DOMAIN,tracker.ghostchu-services.top
 DOMAIN,tracker.gmi.gd
 DOMAIN,tracker.hismz.cn
 DOMAIN,tracker.huadongblower.xyz
+DOMAIN,tracker.iperson.xyz
+DOMAIN,tracker.ipv6tracker.org
 DOMAIN,tracker.ixuexi.click
 DOMAIN,tracker.kuroy.me
-DOMAIN,tracker.moeblog.cn
+DOMAIN,tracker.lintk.me
+DOMAIN,tracker.moxing.party
 DOMAIN,tracker.mywaifu.best
 DOMAIN,tracker.nekomi.cn
 DOMAIN,tracker.nyaa.vc
 DOMAIN,tracker.opentorrent.top
 DOMAIN,tracker.opentrackr.org
 DOMAIN,tracker.openwebtorrent.com
-DOMAIN,tracker.pcfreetime.com
 DOMAIN,tracker.playground.ru
 DOMAIN,tracker.plx.im
 DOMAIN,tracker.pmman.tech
@@ -850,16 +851,19 @@ DOMAIN,tracker.skyts.net
 DOMAIN,tracker.srv00.com
 DOMAIN,tracker.t-1.org
 DOMAIN,tracker.theoks.net
+DOMAIN,tracker.therarbg.to
 DOMAIN,tracker.torrent.eu.org
 DOMAIN,tracker.torrust-demo.com
 DOMAIN,tracker.tritan.gg
 DOMAIN,tracker.tryhackx.org
 DOMAIN,tracker.tvunderground.org.ru
-DOMAIN,tracker.wepzone.net
+DOMAIN,tracker.vanitycore.co
+DOMAIN,tracker.waaa.moe
 DOMAIN,tracker.wildkat.net
 DOMAIN,tracker.xn--djrq4gl4hvoi.top
 DOMAIN,tracker.yemekyedim.com
 DOMAIN,tracker.yggleak.top
+DOMAIN,tracker.yume-hatsuyuki.moe
 DOMAIN,tracker.zhuqiy.com
 DOMAIN,tracker1.520.jp
 DOMAIN,tracker1.itzmx.com
@@ -868,6 +872,7 @@ DOMAIN,tracker2.itzmx.com
 DOMAIN,tracker3.ctix.cn
 DOMAIN,tracker3.itzmx.com
 DOMAIN,tracker4.itzmx.com
+DOMAIN,tracker810.xyz
 DOMAIN,trackthis.cyber.pz.it
 DOMAIN,trtcanlitv-lh.akamaihd.net
 DOMAIN,tts.knitsky.com
@@ -894,6 +899,7 @@ DOMAIN,v1.one-tv.com
 DOMAIN,valid.apple.com
 DOMAIN,valid.origin-apple.com.akadns.net
 DOMAIN,vip888.kuyun99.com
+DOMAIN,vito-tracker.duckdns.org
 DOMAIN,voa-lh.akamaihd.net
 DOMAIN,vod.qhdcm.com
 DOMAIN,vscode.download.prss.microsoft.com
@@ -911,6 +917,7 @@ DOMAIN,weather-map2.apple.com
 DOMAIN,weatherkit.apple.com
 DOMAIN,weixin110.qq.com
 DOMAIN,weizhiyundong.list
+DOMAIN,whybother.torrentonline.cc
 DOMAIN,wmsjsteam.com
 DOMAIN,wosu.streamguys1.com
 DOMAIN,wowza-stream.wbur.org
@@ -933,6 +940,7 @@ DOMAIN,www.dell.com
 DOMAIN,www.destinationurl.com
 DOMAIN,www.entrust.cn
 DOMAIN,www.filmon.com
+DOMAIN,www.genesis-sp.org
 DOMAIN,www.gstatic.com
 DOMAIN,www.libvideo.com
 DOMAIN,www.microsoft.com
