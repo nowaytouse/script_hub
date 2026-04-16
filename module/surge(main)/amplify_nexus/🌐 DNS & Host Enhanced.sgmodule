@@ -1,22 +1,23 @@
 #!name=🌐 DNS & Host Enhanced (Strict Privacy)
-#!desc=🔒 严格国际域名优先 DoH + Host 分流增强 + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.15
+#!desc=🔒 Rule-Based DoH Steering + Host 分流增强 + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.16
 #!author=VirgilClyne & nyamiiko (Refactored)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.15
+#!version=2026.04.16
 
 [General]
-# Mainland-only global DoH pool. This is the DEFAULT resolver for ALL domains
+# Mainland + International DoH pool. This is the DEFAULT resolver for ALL domains
 # not matched by any [Host] entry. International domains are steered to
-# international DoH via [Host] SECTION 4 (inline locks — always reliable) and
-# SECTION 6 (RULE-SET steering — supplementary coverage).
-# WHY mainland default: In China, mainland domains vastly outnumber international
-# ones. Relying on RULE-SET catch-all for mainland (Direct.list) is unreliable
-# due to CDN fetch failures. This way, even if [Host] RULE-SETs fail to load,
-# mainland domains still resolve correctly.
-# Privacy: encrypted-dns-follow-outbound-mode=true ensures mainland DoH → DIRECT
-# (fast), international DoH in [Host] → PROXY (private). No DNS leak for intl.
+# international DoH via [Host] SECTION 3 (rule-based DOMAIN-SET steering).
+# WHY mixed pool: Mainland China DoH is kept in the global pool for mainland
+# domain resolution speed, but international domains are explicitly steered to
+# international DoH at the [Host] level to prevent mainland DoH from resolving
+# them (privacy risk). This approach ensures:
+# 1. Mainland domains resolve fast via mainland DoH (even if RULE-SETs fail)
+# 2. International domains NEVER hit mainland DoH (forced via SECTION 3)
+# 3. encrypted-dns-follow-outbound-mode=true ensures mainland DoH → DIRECT
+#    (fast), international DoH in [Host] → PROXY (private). No DNS leak.
 encrypted-dns-server = https://doh.pub/dns-query, https://dns.alidns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query
 # dns-server = 9.9.9.9, 149.112.112.112, 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4
 use-local-host-item-for-proxy = true
@@ -78,7 +79,45 @@ dns.nextdns.io = 45.90.28.0, 45.90.30.0 // https://dns.nextdns.io/7f2fac
 raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133
 github.com = 140.82.113.4, 140.82.112.3
 
-# SECTION 3: Local Domains / LAN / Router Admin
+# SECTION 3: Rule-Based DoH Steering (International Domains → International DoH)
+# Prevents mainland China DoH from resolving international domains by assigning
+# international DoH servers at the host level based on traffic routing rules.
+# Format: DOMAIN-SET,<ruleset_url>,server:https://<international_doh_server>
+
+# Japan-routed domains (StreamJP, StreamKR, CDN, substore)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamJP.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamKR.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/CDN.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/substore.list,server:https://dns.quad9.net/dns-query
+
+# Taiwan/HK-routed domains (StreamHK, StreamTW)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamHK.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamTW.list,server:https://dns.twnic.tw/dns-query
+
+# US-routed domains (Cloudflare, StreamUS, AppleNews, StreamEU, Spotify)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Cloudflare.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamUS.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AppleNews.list,server:https://doh.dns.apple.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/StreamEU.list,server:https://dns.quad9.net/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Spotify.list,server:https://cloudflare-dns.com/dns-query
+
+# Tech companies & specialized bypass (SocialMedia, NSFW, GitHub, Google, Microsoft, AI, Binance)
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/SocialMedia.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/NSFW.list,server:https://adblock.dns.mullvad.net/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GitHub.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Google.list,server:https://dns.google/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Microsoft.list,server:https://dns.quad9.net/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AI.list,server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Binance.list,server:https://cloudflare-dns.com/dns-query
+
+# Global proxy catch-all
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/GlobalProxy.list,server:https://dns.quad9.net/dns-query
+
+# Inline NSFW domains
+hanime1.me = server:https://adblock.dns.mullvad.net/dns-query
+18comic.vip = server:https://adblock.dns.mullvad.net/dns-query
+
+# SECTION 4: Local Domains / LAN / Router Admin
 *.local = server:system
 *.lan = server:system
 *.test = server:system
@@ -113,8 +152,9 @@ phicomm.me = server:force-syslib
 hiwifi.com = server:force-syslib
 peiluyou.com = server:force-syslib
 
-# SECTION 8: Regional Inline Exceptions (Moved)
-# SECTION 6: International DoH Steering RULE-SETs
+# SECTION 5: Supplementary DNS Mapping RULE-SETs (Fine-grained control)
+# These provide additional granular control for specific service categories.
+# SECTION 3 already handles the main traffic routing rules.
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Privacy.list,server:https://wikimedia-dns.org/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Priority.list,server:https://dns.nextdns.io/7f2fac
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Microsoft.list,server:https://dns.quad9.net/dns-query
@@ -126,15 +166,13 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Cloudflare.list,server:https://cloudflare-dns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_Global_Quad9.list,server:https://dns.quad9.net/dns-query
 
-# SECTION 7: Mainland DoH Steering RULE-SETs
+# SECTION 6: Mainland DoH Steering RULE-SETs
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
-# Direct.list catch-all removed — global pool is now mainland DoH, so mainland
-# domains that miss SECTION 7 RULE-SETs still resolve correctly via the default.
 
-# SECTION 8: Regional Inline Exceptions
+# SECTION 7: Regional Inline Exceptions
 # Keep only the small regional resolver overrides inline.
 *.cht.com.tw = server:https://dns.twnic.tw/dns-query
 *.hinet.net = server:https://dns.twnic.tw/dns-query
@@ -143,7 +181,7 @@ RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sou
 *.taipei = server:https://dns.twnic.tw/dns-query
 *.he.net = server:https://ordns.he.net/dns-query
 
-# SECTION 9: Connectivity / Mainland Catch-All
+# SECTION 8: Connectivity / Mainland Catch-All
 connectivitycheck.gstatic.com = server:https://dns.google/dns-query
 detectportal.firefox.com = server:https://cloudflare-dns.com/dns-query
 msftconnecttest.com = server:https://dns.google/dns-query
@@ -155,7 +193,7 @@ connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 # Generic .cn fallback must stay after the global hard-lock and curated rulesets.
 *.cn = server:https://dns.alidns.com/dns-query
 
-# SECTION 10: Telegram Node Mapping
+# SECTION 9: Telegram Node Mapping
 91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130
 91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130
 91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130
@@ -186,7 +224,7 @@ connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 149.154.167.40 = 149.154.167.41
 149.154.175.40 = 149.154.175.41
 
-# SECTION 11: Google Services
+# SECTION 10: Google Services
 talk.google.com = 108.177.125.188 // Firebase Cloud Messaging
 mtalk.google.com = 108.177.125.188, 2404:6800:4008:c07::bc, 142.250.31.188 // Firebase Cloud Messaging
 alt1-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:c0b::bc, 64.233.171.188 // Firebase Cloud Messaging
@@ -200,7 +238,7 @@ alt8-mtalk.google.com = 3.3.3.3 // Firebase Cloud Messaging
 stun.l.google.com = server:force-syslib // WebRTC local discovery
 stun?.l.google.com = server:force-syslib // WebRTC local discovery
 
-# SECTION 13: Certificate Verification (OCSP/CRL) Bypass
+# SECTION 11: Certificate Verification (OCSP/CRL) Bypass
 # Force system resolver for SSL certificate verification to break DoH loop dependencies.
 ocsp.digicert.cn = server:syslib
 ocsp.digicert.com = server:syslib
