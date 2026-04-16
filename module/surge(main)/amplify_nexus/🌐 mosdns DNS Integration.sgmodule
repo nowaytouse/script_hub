@@ -1,12 +1,18 @@
 #!name=🌐 mosdns DNS Integration
-#!desc=Route all DNS queries to local mosdns (127.0.0.1:5335) via DNS Script to bypass Surge port limitations.
+#!desc=Route all DNS queries to local mosdns (127.0.0.1:53) for dual-track resolution with multi-tier fallback.
 #!author=nyamiiko
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16e
+#!version=2026.04.16f
 
 [General]
+# Route all DNS queries to local mosdns instance on standard port 53
+# mosdns handles dual-track resolution with multi-tier fallback:
+# - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
+# - International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/etc.) via proxy
+dns-server = 127.0.0.1
+
 # Keep these for mosdns bootstrap and fallback
 use-local-host-item-for-proxy = false
 encrypted-dns-follow-outbound-mode = false
@@ -15,7 +21,6 @@ allow-dns-svcb = false
 
 
 [Script]
-mosdns-forward = type=dns, pattern=*, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/mosdns_forwarder.js
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10

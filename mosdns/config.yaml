@@ -171,10 +171,10 @@ plugins:
   # 5. Servers
   - tag: udp_server
     type: udp_server
-    args: {entry: main_sequence, listen: "127.0.0.1:5335"}
+    args: {entry: main_sequence, listen: "127.0.0.1:53"}
   - tag: tcp_server
     type: tcp_server
-    args: {entry: main_sequence, listen: "127.0.0.1:5335"}
+    args: {entry: main_sequence, listen: "127.0.0.1:53"}
   - tag: doh_server
     type: http_server
     args:
