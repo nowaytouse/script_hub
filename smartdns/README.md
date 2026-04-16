@@ -5,7 +5,7 @@ Adds speed-test-based answer ranking, TTL smoothing, IPv6 preference, and a nati
 ## Architecture
 
 ```
-Surge → 127.0.0.1:5335 (mosdns — steering brain)
+Surge → 127.0.0.1:53 (mosdns — steering brain)
           │
           ├─ Specialty steers (Apple/Google/MS/…) → direct DoH (unchanged)
           ├─ NSFW                                  → Wikimedia DoH (unchanged)
@@ -49,8 +49,8 @@ This will:
 After SmartDNS is running, reload mosdns so it picks up the new chain:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.mosdns.plist
-launchctl load   ~/Library/LaunchAgents/com.mosdns.plist
+sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist && \
+sudo launchctl load -w /Library/LaunchDaemons/com.mosdns.plist
 ```
 
 ## Ports
@@ -72,9 +72,9 @@ dig @127.0.0.1 -p 6353 baidu.com +stats
 dig @127.0.0.1 -p 6354 google.com +stats
 
 # End-to-end through mosdns entry
-dig @127.0.0.1 -p 5335 news.ycombinator.com    # hits intl fallback → smartdns
-dig @127.0.0.1 -p 5335 jd.com                  # hits cn_sequence    → smartdns
-dig @127.0.0.1 -p 5335 apple.com               # steered direct to Apple DoH (unchanged)
+dig @127.0.0.1 news.ycombinator.com    # hits intl fallback → smartdns
+dig @127.0.0.1 jd.com                  # hits cn_sequence    → smartdns
+dig @127.0.0.1 apple.com               # steered direct to Apple DoH (unchanged)
 ```
 
 ## Management

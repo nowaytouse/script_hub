@@ -5,7 +5,7 @@ Complete dual-track DNS solution with zero cross-contamination between mainland 
 ## Architecture
 
 ```
-Surge → 127.0.0.1:5335 (mosdns)
+Surge → 127.0.0.1:53 (mosdns)
           ↓
     ┌─────┴─────┐
     │  mosdns   │  (steering brain)
@@ -54,15 +54,15 @@ This will:
 1. Download mosdns binary for your architecture (arm64/amd64)
 2. Download geosite.dat, geoip.dat, CN domain list, CN IP list
 3. Install configuration to `~/.mosdns/`
-4. Create and load launchd service (auto-start on boot)
+4. Create and load launchd service (**LaunchDaemon** on port 53; requires root)
 
 ## Surge Configuration
 
 Update your Surge config `[General]` section:
 
-```ini
 [General]
-dns-server = 127.0.0.1:5335
+dns-server = 127.0.0.1
+# Surge defaults to port 53. If using port 53, specify 127.0.0.1 directly.
 # Remove encrypted-dns-server line — mosdns handles all DoH
 ```
 
@@ -70,23 +70,23 @@ Or use the provided Surge module:
 
 ```ini
 #!name=mosdns DNS Integration
-#!desc=Route all DNS queries to local mosdns (127.0.0.1:5335)
+#!desc=Route all DNS queries to local mosdns (127.0.0.1:53)
 
 [General]
-dns-server = 127.0.0.1:5335
+dns-server = 127.0.0.1
 ```
 
 ## Verification
 
 Test mainland domain:
 ```bash
-dig @127.0.0.1 -p 5335 baidu.com
+dig @127.0.0.1 baidu.com
 # Should resolve via AliDNS, return CN IP
 ```
 
 Test international domain:
 ```bash
-dig @127.0.0.1 -p 5335 google.com
+dig @127.0.0.1 google.com
 # Should resolve via Cloudflare (via proxy), return non-CN IP
 ```
 
@@ -99,23 +99,24 @@ tail -f /tmp/mosdns.log
 
 **Check status:**
 ```bash
-launchctl list | grep mosdns
+sudo launchctl list | grep mosdns
+sudo lsof -i :53
 ```
 
 **Stop service:**
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.mosdns.plist
+sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist
 ```
 
 **Start service:**
 ```bash
-launchctl load ~/Library/LaunchAgents/com.mosdns.plist
+sudo launchctl load -w /Library/LaunchDaemons/com.mosdns.plist
 ```
 
 **Restart service:**
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.mosdns.plist && \
-launchctl load ~/Library/LaunchAgents/com.mosdns.plist
+sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist && \
+sudo launchctl load -w /Library/LaunchDaemons/com.mosdns.plist
 ```
 
 **Update configuration:**
@@ -166,16 +167,16 @@ cat /tmp/mosdns.stderr.log
 **DNS not resolving:**
 ```bash
 # Verify mosdns is listening
-lsof -i :5335
+sudo lsof -i :53
 
 # Test directly
-dig @127.0.0.1 -p 5335 example.com
+dig @127.0.0.1 example.com
 ```
 
 **Surge not using mosdns:**
 ```bash
 # Check Surge DNS config
-# Ensure dns-server = 127.0.0.1:5335 is set
+# Ensure dns-server = 127.0.0.1 is set
 # Remove any encrypted-dns-server lines
 ```
 
@@ -202,14 +203,14 @@ curl -L -o cn_ip.txt "https://raw.githubusercontent.com/17mon/china_ip_list/mast
 
 ```bash
 # Stop and remove service
-launchctl unload ~/Library/LaunchAgents/com.mosdns.plist
-rm ~/Library/LaunchAgents/com.mosdns.plist
+sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist
+sudo rm /Library/LaunchDaemons/com.mosdns.plist
 
 # Remove installation
 rm -rf ~/.mosdns
 
 # Restore Surge DNS config
-# Remove dns-server = 127.0.0.1:5335
+# Remove dns-server = 127.0.0.1
 # Add back encrypted-dns-server line
 ```
 
