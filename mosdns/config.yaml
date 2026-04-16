@@ -1,6 +1,6 @@
-# mosdns Configuration - Dual-Track DNS (v5 Plugin-Based Compatibility Mode)
-# Version: 2026.04.16m
-# Optimized: Removed doh.360.cn to reduce TLS handshake warnings. 
+# mosdns Configuration - Multi-Layered Dual-Track DoH
+# Version: 2026.04.16n
+# Note: Integrated ALL requested DoH providers from Surge config. Optimized for Surge 6153 proxy.
 
 log:
   level: info
@@ -29,18 +29,20 @@ plugins:
       files:
         - ./cn_ip.txt
 
-  # 3. Forwarders - Mainland Primary (DoH ONLY)
+  # 3. Forwarders - Mainland Primary (Direct)
   - tag: forward_cn_primary
     type: forward
     args:
-      concurrent: 2
+      concurrent: 3
       upstreams:
         - addr: https://dns.alidns.com/dns-query
           enable_pipeline: true
         - addr: https://doh.pub/dns-query
           enable_pipeline: true
+        - addr: https://doh.360.cn/dns-query
+          enable_pipeline: true
 
-  # Mainland Secondary (DoH)
+  # Mainland Secondary (Backup/Fallback)
   - tag: forward_cn_secondary
     type: forward
     args:
@@ -51,23 +53,23 @@ plugins:
         - addr: https://dns.volcengine.com/dns-query
           enable_pipeline: true
 
-  # International Primary (DoH via SOCKS5)
+  # International Primary (Reliable Privacy)
   - tag: forward_intl_primary
     type: forward
     args:
       concurrent: 3
       upstreams:
-        - addr: https://cloudflare-dns.com/dns-query
+        - addr: https://dns.google/dns-query
           enable_pipeline: true
           socks5: 127.0.0.1:6153
-        - addr: https://dns.google/dns-query
+        - addr: https://cloudflare-dns.com/dns-query
           enable_pipeline: true
           socks5: 127.0.0.1:6153
         - addr: https://dns.quad9.net/dns-query
           enable_pipeline: true
           socks5: 127.0.0.1:6153
 
-  # International Secondary (DoH via SOCKS5)
+  # International Secondary (Specialized/Adblock)
   - tag: forward_intl_secondary
     type: forward
     args:
@@ -80,6 +82,31 @@ plugins:
           enable_pipeline: true
           socks5: 127.0.0.1:6153
         - addr: https://adblock.dns.mullvad.net/dns-query
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+
+  # International Tertiary (Global Distribution)
+  - tag: forward_intl_tertiary
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: https://doh.libredns.gr/noads
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://freedns.controld.com/p1
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://wikimedia-dns.org/dns-query
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://doh.ffmuc.net/dns-query
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://doh.dns4all.eu/dns-query
+          enable_pipeline: true
+          socks5: 127.0.0.1:6153
+        - addr: https://dns.twnic.tw/dns-query
           enable_pipeline: true
           socks5: 127.0.0.1:6153
 
@@ -100,6 +127,8 @@ plugins:
       - exec: $forward_intl_primary
       - matches: resp_ip $cn_ip_matcher
         exec: $forward_intl_secondary
+      - matches: resp_ip $cn_ip_matcher
+        exec: $forward_intl_tertiary
       - matches: resp_ip $cn_ip_matcher
         exec: reject 3
       - exec: accept
