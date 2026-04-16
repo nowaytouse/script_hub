@@ -178,6 +178,7 @@ plugins:
   - tag: doh_server
     type: http_server
     args:
-      entry: main_sequence
       listen: "127.0.0.1:5336"
-      path: /dns-query
+      entries:
+        - path: /dns-query
+          exec: main_sequence
