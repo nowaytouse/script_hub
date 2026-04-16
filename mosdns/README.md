@@ -165,7 +165,7 @@ cd ~/.mosdns/data
 
 # Update geosite/geoip
 curl -L -o geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
-curl -L -o geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+curl -L -o geoip.mmdb "https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb"
 
 # Update CN domain list
 curl -L "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" | \

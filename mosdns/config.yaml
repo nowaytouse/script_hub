@@ -25,7 +25,7 @@ data_providers:
     auto_reload: true
 
   - tag: geoip
-    file: ./geoip.dat
+    file: ./geoip.mmdb
     auto_reload: true
 
   - tag: cn_domain
@@ -55,7 +55,7 @@ plugins:
     type: ip_set
     args:
       files:
-        - ./cn_ip.txt
+        - ./geoip.mmdb:cn
 
   # Mainland DoH forwarder - Primary (AliDNS + DNSPod)
   - tag: forward_cn_primary

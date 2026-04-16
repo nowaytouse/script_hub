@@ -36,9 +36,9 @@ chmod +x mosdns
 rm mosdns.zip
 
 # Download geosite and geoip data
-echo "📥 Downloading geosite.dat and geoip.dat..."
+echo "📥 Downloading geosite.dat and geoip.mmdb..."
 curl -L -o "$DATA_DIR/geosite.dat" "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
-curl -L -o "$DATA_DIR/geoip.dat" "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+curl -L -o "$DATA_DIR/geoip.mmdb" "https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb"
 
 # Download CN domain list
 echo "📥 Downloading CN domain list..."
@@ -55,7 +55,7 @@ cp "$(dirname "$0")/config.yaml" "$CONFIG_DIR/config.yaml"
 
 # Update config paths
 sed -i '' "s|./geosite.dat|$DATA_DIR/geosite.dat|g" "$CONFIG_DIR/config.yaml"
-sed -i '' "s|./geoip.dat|$DATA_DIR/geoip.dat|g" "$CONFIG_DIR/config.yaml"
+sed -i '' "s|./geoip.mmdb|$DATA_DIR/geoip.mmdb|g" "$CONFIG_DIR/config.yaml"
 sed -i '' "s|./cn_domain.txt|$DATA_DIR/cn_domain.txt|g" "$CONFIG_DIR/config.yaml"
 sed -i '' "s|./cn_ip.txt|$DATA_DIR/cn_ip.txt|g" "$CONFIG_DIR/config.yaml"
 
