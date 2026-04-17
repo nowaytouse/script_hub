@@ -18,7 +18,25 @@ use-local-host-item-for-proxy = false
 encrypted-dns-follow-outbound-mode = false
 hijack-dns = *:53
 allow-dns-svcb = false
+# allow-udp-proxy = false
 
+[Rule]
+# FORCE-DIRECT Bootstrap DNS to bypass ASN/Proxy filters
+IP-CIDR,119.29.29.29/32,DIRECT,no-resolve
+IP-CIDR,1.12.12.12/32,DIRECT,no-resolve
+IP-CIDR,120.53.53.53/32,DIRECT,no-resolve
+IP-CIDR,223.5.5.5/32,DIRECT,no-resolve
+IP-CIDR,223.6.6.6/32,DIRECT,no-resolve
+IP-CIDR,1.1.1.1/32,DIRECT,no-resolve
+IP-CIDR,1.0.0.1/32,DIRECT,no-resolve
+IP-CIDR,8.8.8.8/32,DIRECT,no-resolve
+IP-CIDR,114.114.114.114/32,DIRECT,no-resolve
+IP-CIDR,9.9.9.9/32,DIRECT,no-resolve
+IP-CIDR6,2400:3200::1/128,DIRECT,no-resolve
+IP-CIDR6,2402:4e00::/128,DIRECT,no-resolve
+IP-CIDR6,2400:da00::6666/128,DIRECT,no-resolve
+IP-CIDR6,2606:4700:4700::1111/128,DIRECT,no-resolve
+IP-CIDR6,2001:4860:4860::8888/128,DIRECT,no-resolve
 
 [Script]
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
