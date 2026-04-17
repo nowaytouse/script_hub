@@ -199,13 +199,26 @@ plugins:
   - tag: udp_server
     type: udp_server
     args: {entry: main_sequence, listen: "127.0.0.1:53"}
+  - tag: udp_server_v6
+    type: udp_server
+    args: {entry: main_sequence, listen: "[::1]:53"}
   - tag: tcp_server
     type: tcp_server
     args: {entry: main_sequence, listen: "127.0.0.1:53"}
+  - tag: tcp_server_v6
+    type: tcp_server
+    args: {entry: main_sequence, listen: "[::1]:53"}
   - tag: doh_server
     type: http_server
     args:
       listen: "127.0.0.1:5336"
+      entries:
+        - path: /dns-query
+          exec: main_sequence
+  - tag: doh_server_v6
+    type: http_server
+    args:
+      listen: "[::1]:5336"
       entries:
         - path: /dns-query
           exec: main_sequence

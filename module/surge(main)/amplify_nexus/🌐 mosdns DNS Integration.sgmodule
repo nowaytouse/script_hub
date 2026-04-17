@@ -11,7 +11,7 @@
 # mosdns handles dual-track resolution with multi-tier fallback:
 # - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
 # - International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/etc.) via proxy
-dns-server = 127.0.0.1
+dns-server = 127.0.0.1, [::1]
 
 # Keep these for mosdns bootstrap and fallback
 use-local-host-item-for-proxy = false
