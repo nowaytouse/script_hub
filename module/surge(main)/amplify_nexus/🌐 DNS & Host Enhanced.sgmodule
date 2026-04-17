@@ -5,23 +5,7 @@
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!version=2026.04.16d
-[General]
-# Route all DNS queries to local mosdns instance
-# mosdns handles dual-track resolution with multi-tier fallback:
-# - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
-# - International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/etc.) via proxy
-dns-server = 127.0.0.1
-
-# Disable Surge's built-in DoH — mosdns handles all encrypted DNS
-# encrypted-dns-server = (removed)
-
-# Keep these for mosdns bootstrap and fallback
-use-local-host-item-for-proxy = false
-encrypted-dns-follow-outbound-mode = false
-hijack-dns = *:53
-allow-dns-svcb = false
-encrypted-dns-server = https://dns.quad9.net/dns-query, https://dns.nextdns.io/7f2fac, https://dns.adguard-dns.com/dns-query, https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.libredns.gr/noads, https://adblock.dns.mullvad.net/dns-query, https://freedns.controld.com/p1, https://doh.dns4all.eu/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ffmuc.net/dns-query,https://dns.alidns.com/dns-query,https://doh.pub/dns-query,https://dns.twnic.tw/dns-query
-
+#!version=2026.04.18e
 
 [Host]
 # SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)

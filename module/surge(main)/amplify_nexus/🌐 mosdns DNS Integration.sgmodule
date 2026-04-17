@@ -6,19 +6,7 @@
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!version=2026.04.16f
 
-[General]
-# Route all DNS queries to local mosdns instance on standard port 53
-# mosdns handles dual-track resolution with multi-tier fallback:
-# - CN domains → Mainland DoH (AliDNS/DNSPod/360/Baidu/Volcengine) direct
-# - International domains → International DoH (Cloudflare/Google/Quad9/NextDNS/AdGuard/Mullvad/etc.) via proxy
-dns-server = 127.0.0.1, [::1]
-
-# Keep these for mosdns bootstrap and fallback
-use-local-host-item-for-proxy = false
-encrypted-dns-follow-outbound-mode = false
-hijack-dns = *:53
-allow-dns-svcb = false
-
+#!version=2026.04.18g
 
 [Script]
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
