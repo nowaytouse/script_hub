@@ -40,6 +40,9 @@ plugins:
   - tag: matcher_social
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/steer_SocialMedia.txt"]}
+  - tag: matcher_tiktok
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_TikTok.txt"]}
   - tag: matcher_ali
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/vendor_ali.txt"]}
@@ -106,6 +109,12 @@ plugins:
       - exec: $forward_wikimedia_privacy
       - exec: accept
 
+  - tag: tiktok_sequence
+    type: sequence
+    args:
+      - exec: $forward_intl_general
+      - exec: accept
+
   - tag: cn_sequence
     type: sequence
     args:
@@ -129,6 +138,9 @@ plugins:
       # NSFW
       - matches: qname $matcher_nsfw
         exec: jump nsfw_sequence
+      # TikTok (Special Steering for comments)
+      - matches: qname $matcher_tiktok
+        exec: jump tiktok_sequence
       # Specialized Steering
       - matches: qname $matcher_apple
         exec: $forward_apple

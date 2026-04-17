@@ -84,8 +84,8 @@ DOMAIN,mcdn.bilivideo.cn
 # 可根据需要添加更多白名单域名
 # DOMAIN-SUFFIX,example.com
 
-# ============ 抖音 (Douyin) ============
-# 抖音视频播放及核心业务必需
+# ============ 抖音 (Douyin) & TikTok ============
+# 抖音/TikTok 视频播放及核心业务必需
 DOMAIN-SUFFIX,douyin.com
 DOMAIN-SUFFIX,amemv.com
 DOMAIN-SUFFIX,snssdk.com
@@ -100,6 +100,13 @@ DOMAIN-SUFFIX,bytedance.com
 DOMAIN-SUFFIX,ixigua.com
 DOMAIN-SUFFIX,pstatp.com
 DOMAIN-SUFFIX,toutiao.com
+# TikTok International
+DOMAIN-SUFFIX,tiktok.com
+DOMAIN-SUFFIX,tiktokv.com
+DOMAIN-SUFFIX,tiktokcdn.com
+DOMAIN-SUFFIX,byteoversea.com
+DOMAIN-SUFFIX,ibytedtos.com
+DOMAIN-SUFFIX,muscdn.com
 
 # ============ 小红书 (XiaoHongShu) ============
 DOMAIN-SUFFIX,xiaohongshu.com
@@ -150,3 +157,8 @@ DOMAIN,doh.opendns.com
 DOMAIN,doh.dns.apple.com
 DOMAIN,wikimedia-dns.org
 DOMAIN,dns.twnic.tw
+DOMAIN,wikimedia-dns.org
+DOMAIN,libredns.gr
+DOMAIN,dns4all.eu
+DOMAIN,doh.mullvad.net
+DOMAIN,dns.google.com

@@ -1,7 +1,7 @@
 # DNS Mapping Ruleset: DNS_Global_Privacy
 # Description: Automated priority mapping for DoH steering
-# Rules: 755
-# Updated: 2026-04-18 03:24:40
+# Rules: 758
+# Updated: 2026-04-18 03:36:26
 
 DOMAIN,adguard-dns.com
 DOMAIN,brave.com
@@ -32,10 +32,12 @@ DOMAIN,wikimedia.org
 DOMAIN,wikipedia.org
 DOMAIN,wire.com
 DOMAIN-SUFFIX,./../../ruleset/Surge(Shadowkroket)/Privacy.list
+DOMAIN-SUFFIX,18comic.ink
 DOMAIN-SUFFIX,18vr.com
 DOMAIN-SUFFIX,1pondo.tv
 DOMAIN-SUFFIX,21naturals.com
 DOMAIN-SUFFIX,21sextury.com
+DOMAIN-SUFFIX,3hentai.net
 DOMAIN-SUFFIX,4anime.to
 DOMAIN-SUFFIX,4chan.org
 DOMAIN-SUFFIX,4kporn.com
@@ -245,6 +247,7 @@ DOMAIN-SUFFIX,goodvibes.com
 DOMAIN-SUFFIX,gotanynudes.com
 DOMAIN-SUFFIX,gotporn.com
 DOMAIN-SUFFIX,hanime.tv
+DOMAIN-SUFFIX,hanime1.me
 DOMAIN-SUFFIX,happymag.tv
 DOMAIN-SUFFIX,hath.network
 DOMAIN-SUFFIX,hbeatsart.com

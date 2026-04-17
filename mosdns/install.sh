@@ -59,9 +59,10 @@ curl -L -o "$DATA_DIR/cn_domain.txt" "https://raw.githubusercontent.com/felixonm
 echo "📥 Downloading CN IP list..."
 curl -L -o "$DATA_DIR/cn_ip.txt" "https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt"
 
-# Copy config
-echo "📝 Copying configuration..."
+# Copy config and data files
+echo "📝 Copying configuration and local data lists..."
 cp "$(dirname "$0")/config.yaml" "$CONFIG_DIR/config.yaml"
+cp "$(dirname "$0")"/*.txt "$DATA_DIR/"
 
 # Update config paths
 sed -i '' "s|./geosite.dat|$DATA_DIR/geosite.dat|g" "$CONFIG_DIR/config.yaml"
