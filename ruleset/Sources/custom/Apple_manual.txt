@@ -3,3 +3,12 @@
 
 # iCloud 关键词匹配
 DOMAIN-KEYWORD,icloud
+
+# Core Apple/iCloud Domains (Hardened for Direct Routing)
+DOMAIN,gateway.icloud.com
+DOMAIN-SUFFIX,apple.com
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud-content.com
+DOMAIN-SUFFIX,mzstatic.com
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,apple-cloudkit.com

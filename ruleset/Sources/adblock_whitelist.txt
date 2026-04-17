@@ -29,10 +29,14 @@ DOMAIN-SUFFIX,gstatic.com
 # ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
 # 注意: 不要添加 apple.com 整体，会让广告规则失效
 DOMAIN,known-issues.apple.com
+DOMAIN,gateway.icloud.com
 DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud-content.com
 DOMAIN-SUFFIX,mzstatic.com
 DOMAIN-SUFFIX,apple-cloudkit.com
 DOMAIN-SUFFIX,cdn-apple.com
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,apple.com.akadns.net
 
 # ============ 危险 IP 规则 (会导致无法上网) ============
 # 这些 IP 规则过于宽泛，会导致网络异常
@@ -147,9 +151,14 @@ DOMAIN-SUFFIX,terabox.com
 DOMAIN,dns.alidns.com
 DOMAIN,doh.pub
 DOMAIN,dns.pub
+DOMAIN,dot.pub
 DOMAIN,doh.360.cn
+DOMAIN,dot.360.cn
 DOMAIN,dns.google
+DOMAIN,dns.google.com
 DOMAIN,cloudflare-dns.com
+DOMAIN,1dot1dot1dot1.cloudflare-dns.com
+DOMAIN,one.one.one.one
 DOMAIN,dns.quad9.net
 DOMAIN,dns.adguard-dns.com
 DOMAIN,dns.nextdns.io
@@ -157,8 +166,8 @@ DOMAIN,doh.opendns.com
 DOMAIN,doh.dns.apple.com
 DOMAIN,wikimedia-dns.org
 DOMAIN,dns.twnic.tw
-DOMAIN,wikimedia-dns.org
 DOMAIN,libredns.gr
 DOMAIN,dns4all.eu
 DOMAIN,doh.mullvad.net
-DOMAIN,dns.google.com
+DOMAIN,ffmuc.net
+DOMAIN,doh.ffmuc.net

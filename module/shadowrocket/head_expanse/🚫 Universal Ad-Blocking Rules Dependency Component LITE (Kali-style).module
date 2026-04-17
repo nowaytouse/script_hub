@@ -4,7 +4,7 @@
 # icon: https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 # category: 『 🔝 Head Expanse › 首端扩域 』
 # tag: AdBlock, Dependency, HTTPDNS
-# date: 2026-04-17 06:05:49
+# date: 2026-04-18 04:41:29
 
 [Rule]
 # High-Priority White-list (Prevent DNS failure)
@@ -12,8 +12,11 @@
 DOMAIN,dns.alidns.com,DIRECT
 DOMAIN,doh.pub,DIRECT
 DOMAIN,dns.pub,DIRECT
+DOMAIN,dot.pub,DIRECT
 DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
+DOMAIN,dns.google,DIRECT
+DOMAIN,dns.google.com,DIRECT
 
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
 # [SR不支持RULE-SET] RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
