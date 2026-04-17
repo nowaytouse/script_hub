@@ -41,6 +41,16 @@ CONFLICT_DOMAINS = [
 DEPRECATED_RULESETS = ["SYSTEM", "BlockHttpDNS", "FirewallPorts", "YouTube", "GoogleCN", "Steam", "Epic", "GamingProcess", "QQ", "WeChat", "DownloadProcess", "GlobalMedia", "XiaoHongShu", "NetEaseMusic", "Tencent", "AIProcess", "LAN", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "Discord", "Fediverse", "Bing", "Tesla", "ChinaDirect", "DirectProcess", "DownloadDirect"]
 INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]", "["}
 
+# --- HARDENING: PROTECTIVE FILTERS ---
+# These keywords are NEVER allowed in the [Direct] ruleset.
+# Even if an upstream source mistakenly lists them as direct, we strip them.
+MANDATORY_PROXY_KEYWORDS = [
+    "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
+    "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
+    "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
+    "akamai", "fastly", "cloudflare"
+]
+
 RULESETS = [
     "AI", "Gaming", "GlobalProxy", "Microsoft", "NSFW",
     "SocialMedia",
@@ -197,6 +207,12 @@ class RulesetManager:
         if ruleset_name not in SKIP_CONFLICT_CHECK:
             for domain in CONFLICT_DOMAINS:
                 if r.endswith(f",{domain}"): return ""
+        
+        # 1.1 Hardening: Force Proxy for international services in Direct ruleset
+        if ruleset_name == "Direct":
+            r_lower = r.lower()
+            if any(kw in r_lower for kw in MANDATORY_PROXY_KEYWORDS):
+                return ""
         
         # 2. Cleanup features
         r = re.sub(r',(REJECT|DIRECT|PROXY|REJECT-DROP|REJECT-TINYGIF|REJECT-NO-DROP|REJECT-IMG)(,.*)*$', '', r)

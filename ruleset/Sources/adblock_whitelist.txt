@@ -22,9 +22,8 @@ DOMAIN-SUFFIX,ytimg.com
 DOMAIN-SUFFIX,yt3.ggpht.com
 DOMAIN-SUFFIX,yt4.ggpht.com
 
-# ============ 🔥 Google 核心服务 ============
-DOMAIN-SUFFIX,googleapis.com
-DOMAIN-SUFFIX,gstatic.com
+# ============ 🔥 Google 核心服务 (Removed for Hardening) ============
+# Removed to prevent accidental leakage into Direct ruleset.
 
 # ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
 # 注意: 不要添加 apple.com 整体，会让广告规则失效
