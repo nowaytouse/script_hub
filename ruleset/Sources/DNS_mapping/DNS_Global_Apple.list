@@ -1,13 +1,14 @@
 # DNS Mapping Ruleset: DNS_Global_Apple
 # Description: Automated priority mapping for DoH steering
-# Rules: 1789
-# Updated: 2026-04-15 01:38:21
+# Rules: 1797
+# Updated: 2026-04-18 03:24:43
 
 DOMAIN,a1.mzstatic.com
 DOMAIN,a2.mzstatic.com
 DOMAIN,a3.mzstatic.com
 DOMAIN,a4.mzstatic.com
 DOMAIN,a5.mzstatic.com
+DOMAIN,aaplimg.com
 DOMAIN,adcdownload.apple.com
 DOMAIN,adcdownload.apple.com.akadns.net
 DOMAIN,amp-api-edge-lb-cn.itunes-apple.com.akadns.net
@@ -25,8 +26,11 @@ DOMAIN,api-edge.apps.apple.com
 DOMAIN,app-site-association.cdn-apple.com
 DOMAIN,appldnld.apple.com
 DOMAIN,appldnld.g.aaplimg.com
+DOMAIN,apple-cloudkit.com
+DOMAIN,apple-livephotoskit.com
 DOMAIN,apple-tv-plus-press.apple.com
 DOMAIN,apple.com.akadns.net
+DOMAIN,apple.com.edgesuite.net
 DOMAIN,appleid.cdn-apple.com
 DOMAIN,appleworldwidedeveloper.hb-api.omtrdc.net
 DOMAIN,appleworldwidedeveloper.sc.omtrdc.net
@@ -37,6 +41,7 @@ DOMAIN,bag-cdn.itunes-apple.com.akadns.net
 DOMAIN,bag.itunes.apple.com
 DOMAIN,beatselectronicsllc.tt.omtrdc.net
 DOMAIN,bookkeeper.itunes.apple.com
+DOMAIN,cdn-apple.com
 DOMAIN,cdn-cn.apple-mapkit.com
 DOMAIN,cdn-cn1.apple-mapkit.com
 DOMAIN,cdn-cn2.apple-mapkit.com
@@ -114,6 +119,8 @@ DOMAIN,hls-amt.itunes.apple.com
 DOMAIN,hls.itunes.apple.com
 DOMAIN,icloud-cdn.icloud.com.akadns.net
 DOMAIN,icloud.cdn-apple.com
+DOMAIN,icloud.com.akadns.net
+DOMAIN,icloud.com.edgesuite.net
 DOMAIN,images.apple.com.edgekey.net.globalredir.akadns.net
 DOMAIN,inappcheck-cn.itunes-apple.com.akadns.net
 DOMAIN,inappcheck-lb.itunes-apple.com.akadns.net
@@ -160,6 +167,7 @@ DOMAIN,music.apple.com
 DOMAIN,musicstatus.music.apple.com
 DOMAIN,mvod.itunes.apple.com
 DOMAIN,myapp.itunes.apple.com
+DOMAIN,mzstatic.com.edgesuite.net
 DOMAIN,notary-submissions-prod.s3-accelerate.amazonaws.com
 DOMAIN,notary-submissions-prod.s3.us-west-2.amazonaws.com
 DOMAIN,np-edge.itunes.apple.com

@@ -1,7 +1,7 @@
 # DNS Mapping Ruleset: DNS_Global_Google
 # Description: Automated priority mapping for DoH steering
-# Rules: 1162
-# Updated: 2026-04-15 01:37:05
+# Rules: 1171
+# Updated: 2026-04-18 03:24:38
 
 DOMAIN,265.com
 DOMAIN,ai.google.dev
@@ -78,10 +78,17 @@ DOMAIN,g3.gstatic.com
 DOMAIN,go.corp.google.com
 DOMAIN,gongyichuangyi.net
 DOMAIN,google-ohttp-relay-safebrowsing.fastly-edge.com
+DOMAIN,google.cn
+DOMAIN,google.com
+DOMAIN,google.com.hk
 DOMAIN,googleapis-cn.com
+DOMAIN,googleapis.com
 DOMAIN,googleapps-cn.com
 DOMAIN,googleflights-cn.net
+DOMAIN,googleusercontent.com
+DOMAIN,googlevideo.com
 DOMAIN,gstatic-cn.com
+DOMAIN,gstatic.com
 DOMAIN,gstaticadssl.l.google.com
 DOMAIN,gtm.oasisfeng.com
 DOMAIN,i.pki.goog
@@ -240,7 +247,9 @@ DOMAIN,www.destinationurl.com
 DOMAIN,www.gstatic.com
 DOMAIN,www.pxcc.com
 DOMAIN,www.recaptcha.net
+DOMAIN,youtube.com
 DOMAIN,yt3.googleusercontent.com
+DOMAIN,ytimg.com
 DOMAIN-KEYWORD,appspot
 DOMAIN-KEYWORD,blogspot
 DOMAIN-KEYWORD,gmail

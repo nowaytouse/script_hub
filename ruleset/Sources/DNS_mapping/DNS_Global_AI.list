@@ -1,16 +1,19 @@
 # DNS Mapping Ruleset: DNS_Global_AI
 # Description: Automated priority mapping for DoH steering
-# Rules: 74
-# Updated: 2026-04-15 01:37:04
+# Rules: 80
+# Updated: 2026-04-18 03:24:37
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
+DOMAIN,anthropic.com
 DOMAIN,api.msn.com
 DOMAIN,api.statsig.com
 DOMAIN,assets.msn.com
 DOMAIN,browser-intake-datadoghq.com
 DOMAIN,cdn.usefathom.com
 DOMAIN,chat.openai.com.cdn.cloudflare.net
+DOMAIN,chatgpt.com
+DOMAIN,claude.ai
 DOMAIN,copilot.microsoft.com
 DOMAIN,gateway.bingviz.microsoft.net
 DOMAIN,gateway.bingviz.microsoftapp.net
@@ -19,8 +22,11 @@ DOMAIN,in.appcenter.ms
 DOMAIN,location.microsoft.com
 DOMAIN,makersuite.google.com
 DOMAIN,o33249.ingest.sentry.io
+DOMAIN,oaistatic.com
+DOMAIN,oaiusercontent.com
 DOMAIN,odc.officeapps.live.com
 DOMAIN,openai-api.arkoselabs.com
+DOMAIN,openai.com
 DOMAIN,openaiapi-site.azureedge.net
 DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,openaicom.imgix.net

@@ -1,16 +1,18 @@
 # DNS Mapping Ruleset: DNS_Global_Privacy
 # Description: Automated priority mapping for DoH steering
-# Rules: 748
-# Updated: 2026-04-15 01:37:18
+# Rules: 755
+# Updated: 2026-04-18 03:24:40
 
 DOMAIN,adguard-dns.com
 DOMAIN,brave.com
 DOMAIN,controld.com
 DOMAIN,dns4all.eu
 DOMAIN,duckduckgo.com
+DOMAIN,firefox.com
 DOMAIN,ivpn.net
 DOMAIN,libredns.gr
 DOMAIN,line.me
+DOMAIN,mozilla.org
 DOMAIN,mullvad.net
 DOMAIN,nextdns.io
 DOMAIN,perfect-privacy.com
@@ -19,12 +21,17 @@ DOMAIN,protonmail.com
 DOMAIN,quad9.net
 DOMAIN,signal.org
 DOMAIN,startpage.com
+DOMAIN,t.me
+DOMAIN,telegram.me
 DOMAIN,telegram.org
 DOMAIN,threema.ch
 DOMAIN,torproject.org
 DOMAIN,tutanota.com
 DOMAIN,wickr.com
+DOMAIN,wikimedia.org
+DOMAIN,wikipedia.org
 DOMAIN,wire.com
+DOMAIN-SUFFIX,./../../ruleset/Surge(Shadowkroket)/Privacy.list
 DOMAIN-SUFFIX,18vr.com
 DOMAIN-SUFFIX,1pondo.tv
 DOMAIN-SUFFIX,21naturals.com
@@ -239,6 +246,7 @@ DOMAIN-SUFFIX,gotanynudes.com
 DOMAIN-SUFFIX,gotporn.com
 DOMAIN-SUFFIX,hanime.tv
 DOMAIN-SUFFIX,happymag.tv
+DOMAIN-SUFFIX,hath.network
 DOMAIN-SUFFIX,hbeatsart.com
 DOMAIN-SUFFIX,hbomax.com
 DOMAIN-SUFFIX,hbrowse.com

@@ -26,6 +26,10 @@ class SRSGenerator:
         local_path = os.path.join(ROOT, "scripts/config-manager-auto-update/bin/sing-box")
         if os.path.exists(local_path):
             return local_path
+        # Also check project root
+        root_path = os.path.join(ROOT, "sing-box")
+        if os.path.exists(root_path):
+            return root_path
         return None
 
     def compile_srs(self, list_file: str):
