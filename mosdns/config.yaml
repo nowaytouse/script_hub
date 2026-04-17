@@ -49,6 +49,9 @@ plugins:
   - tag: matcher_tencent
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/vendor_tencent.txt"]}
+  - tag: matcher_bootstrap
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Bootstrap.txt"]}
   - tag: cn_domain_matcher
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/cn_domain.txt"]}
@@ -90,6 +93,13 @@ plugins:
   - tag: forward_smartdns_intl
     type: forward
     args: {upstreams: [{addr: "udp://127.0.0.1:6354"}]}
+  - tag: forward_bootstrap
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "udp://223.5.5.5"
+        - addr: "udp://119.29.29.29"
   - tag: forward_intl_general
     type: forward
     args:
@@ -135,6 +145,11 @@ plugins:
     type: sequence
     args:
       - exec: $cache
+      # Bootstrap DNS (Ensure core DoH providers resolve)
+      - matches: qname $matcher_bootstrap
+        exec: $forward_bootstrap
+      - matches: qname $matcher_bootstrap
+        exec: accept
       # NSFW
       - matches: qname $matcher_nsfw
         exec: jump nsfw_sequence
