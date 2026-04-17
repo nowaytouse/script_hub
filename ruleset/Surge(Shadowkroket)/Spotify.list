@@ -2,17 +2,12 @@
 # Policy: PROXY
 # Node: Any
 # Description: Spotify
-# Rules: 37
-# Updated: 2026-04-16 20:24:43
+# Rules: 31
+# Updated: 2026-04-17 06:05:17
 
-DOMAIN,adeventtracker.spotify.com
-DOMAIN,adstudio-assets.scdn.co
-DOMAIN,audio-ak-spotify-com.akamaized.net
 DOMAIN,audio4-ak-spotify-com.akamaized.net
-DOMAIN,bloodhound.spotify.com
 DOMAIN,cdn-spotify-experiments.conductrics.com
 DOMAIN,heads-ak-spotify-com.akamaized.net
-DOMAIN,heads4-ak-spotify-com.akamaized.net
 DOMAIN,spotify.com.edgesuite.net
 DOMAIN,spotify.map.fastly.net
 DOMAIN,spotify.map.fastlylb.net
@@ -28,7 +23,6 @@ DOMAIN-SUFFIX,spotify-everywhere.com
 DOMAIN-SUFFIX,spotify.app.link
 DOMAIN-SUFFIX,spotify.com
 DOMAIN-SUFFIX,spotify.design
-DOMAIN-SUFFIX,spotify.link
 DOMAIN-SUFFIX,spotifycdn.com
 DOMAIN-SUFFIX,spotifycdn.net
 DOMAIN-SUFFIX,spotifycharts.com
