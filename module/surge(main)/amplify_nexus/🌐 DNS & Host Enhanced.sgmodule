@@ -131,5 +131,10 @@ DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicd
 DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
 
+[Rule]
+# Force airport/proxy node domains to be DIRECT to break resolution loops
+DOMAIN-SUFFIX,liangxin1.xyz,DIRECT
+DOMAIN-SUFFIX,liangxin?.xyz,DIRECT
+
 [MITM]
 hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
