@@ -4,10 +4,11 @@
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.18h
+#!version=2026.04.18i
 
 [General]
 ipv6 = true
+ipv6-vif = always
 dns-server = [::1]
 encrypted-dns-server = 
 encrypted-dns-follow-outbound-mode = false
