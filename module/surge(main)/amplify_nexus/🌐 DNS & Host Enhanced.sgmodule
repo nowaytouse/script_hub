@@ -7,12 +7,11 @@
 #!version=2026.04.19a
 
 [General]
-# Bootstrap DNS - Epic-Scale International Dual-Stack Anycast Pool
-dns-server = 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 208.67.222.222, 208.67.220.220, 185.222.222.222, 64.6.64.6, 64.6.65.6, 94.140.14.14, 94.140.15.15, 8.26.56.26, 8.20.247.20, 4.2.2.1, 4.2.2.2, 4.2.2.3, 4.2.2.4, 74.82.42.42, 185.43.135.1, 91.239.100.100, 146.255.56.98, 185.150.99.255, 174.138.29.155, 80.80.80.80, 80.80.81.81, 195.46.39.39, 216.146.35.35, 216.146.36.36, 129.250.35.250, 129.250.35.251, 168.95.1.1, 168.95.192.1, 205.252.144.228, 202.248.37.1, 202.232.2.2, 139.130.4.4, 156.154.70.1, 156.154.71.1, 2001:4860:4860::8888, 2001:4860:4860::8844, 2606:4700:4700::1111, 2606:4700:4700::1001, 2620:fe::fe, 2620:fe::9, 2620:119:35::35, 2620:119:53::53, 2001:11ff:0:a01::1, 2001:11ff:0:b01::1, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff, 2001:470:20::2, 2001:148f:fffe::1, 2001:67c:28a4::, 2a02:1b8:10:5fc::1, 2a03:b10:dead:beef:1, 2a01:4c8:77:80:80:80:80:80, 2610:a1:1010::1, 2001:620:0:ff::2
+# Bootstrap DNS - Curated International Gold Standard
+dns-server = 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 94.140.14.14, 2001:4860:4860::8888, 2001:4860:4860::8844, 2606:4700:4700::1111, 2606:4700:4700::1001, 2620:fe::fe, 2620:fe::9, 2a10:50c0::ad1:ff
 
-# Global DoH Pool - Ultra-Scale International Anycast
-# Includes premium ad-blocking, privacy-hardened, and regional specific endpoints
-encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://doh.family.adguard-dns.com/dns-query, https://dns.nextdns.io/7f2fac, https://dns.controld.com/p2, https://dns.mullvad.net/dns-query, https://adblock.dns.mullvad.net/dns-query, https://doh.libredns.gr/noads, https://doh.opendns.com/dns-query, https://dns.nextdns.io, https://doh.dns.sb/dns-query, https://doh.cleanbrowsing.org/doh/security-filter/, https://dns.twnic.tw/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ahoy.pro/dns-query, https://doh.sway.run/dns-query, https://unicast.censurfridns.dk/dns-query, https://doh.applied-privacy.net/query, https://odvr.nic.cz/doh, https://dns.digitale-gesellschaft.ch/dns-query, https://doh.gcore.com/dns-query, https://doh.ffmuc.net/dns-query, https://doh.42l.fr/dns-query, https://dns.flashdance.ch/dns-query, https://doh.dns.apple.com/dns-query, https://dns.hostux.net/dns-query, https://doh.tiar.app/dns-query, https://doh.linuxsec.org/dns-query, https://dns.nixnet.xyz/dns-query, https://doh.mvps.net/dns-query, https://doh.k8s.li/dns-query
+# Global DoH Pool - Curated International Gold Standard (Mainland DoH excluded)
+encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.nextdns.io/7f2fac, https://dns.controld.com/p2, https://dns.mullvad.net/dns-query, https://doh.libredns.gr/noads, https://doh.dns.sb/dns-query, https://dns.twnic.tw/dns-query
 
 # Performance/Privacy Switches
 # Enable following outbound mode to ensure international DoH goes through proxy
