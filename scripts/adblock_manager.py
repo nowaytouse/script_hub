@@ -740,7 +740,7 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT\n"
             "DOMAIN,doh.dns.apple.com,DIRECT\n"
             "# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.\n"
-            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
+            "# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
             "# REJECT Rules (self-hosted canonical rebuild)\n"
             "RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
             "# REJECT-NO-DROP Rules (synced from skk upstream)\n"
