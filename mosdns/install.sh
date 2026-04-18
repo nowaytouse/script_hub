@@ -73,8 +73,8 @@ sed -i '' "s|./cn_ip.txt|$DATA_DIR/cn_ip.txt|g" "$CONFIG_DIR/config.yaml"
 sed -i '' "s|./cn_ip_v6.txt|$DATA_DIR/cn_ip_v6.txt|g" "$CONFIG_DIR/config.yaml"
 
 # Create launchd plist
-echo "🔧 Creating launchd service..."
-cat > "$HOME/Library/LaunchAgents/com.mosdns.plist" <<EOF
+echo "🔧 Creating launchd service (System Level)..."
+sudo cat > "/Library/LaunchDaemons/com.mosdns.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -102,8 +102,8 @@ EOF
 
 # Load service
 echo "🚀 Starting mosdns service..."
-launchctl unload "$HOME/Library/LaunchAgents/com.mosdns.plist" 2>/dev/null || true
-launchctl load "$HOME/Library/LaunchAgents/com.mosdns.plist"
+sudo launchctl unload "/Library/LaunchDaemons/com.mosdns.plist" 2>/dev/null || true
+sudo launchctl load "/Library/LaunchDaemons/com.mosdns.plist"
 
 echo ""
 echo "✅ mosdns installed successfully!"
@@ -112,10 +112,10 @@ echo "📍 Installation directory: $INSTALL_DIR"
 echo "📍 Configuration: $CONFIG_DIR/config.yaml"
 echo "📍 Data directory: $DATA_DIR"
 echo ""
-echo "🔍 Check status: launchctl list | grep mosdns"
+echo "🔍 Check status: sudo launchctl list | grep mosdns"
 echo "📋 View logs: tail -f /tmp/mosdns.log"
-echo "🛑 Stop service: launchctl unload ~/Library/LaunchAgents/com.mosdns.plist"
-echo "🔄 Restart service: launchctl unload ~/Library/LaunchAgents/com.mosdns.plist && launchctl load ~/Library/LaunchAgents/com.mosdns.plist"
+echo "🛑 Stop service: sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist"
+echo "🔄 Restart service: sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist && sudo launchctl load /Library/LaunchDaemons/com.mosdns.plist"
 echo ""
 echo "⚙️  Next step: Update Surge configuration to use 127.0.0.1:5335 as DNS server"
 echo ""

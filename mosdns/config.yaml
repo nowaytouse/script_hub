@@ -68,25 +68,25 @@ plugins:
   # ── Forwarders ─────────────────────────────────
   - tag: forward_apple
     type: forward
-    args: {upstreams: [{addr: "https://doh.dns.apple.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_google
     type: forward
-    args: {upstreams: [{addr: "https://dns.google/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_quad9
     type: forward
-    args: {upstreams: [{addr: "https://dns.quad9.net/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_cloudflare
     type: forward
-    args: {upstreams: [{addr: "https://cloudflare-dns.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_wikimedia_privacy
     type: forward
-    args: {upstreams: [{addr: "https://wikimedia-dns.org/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_twnic
     type: forward
-    args: {upstreams: [{addr: "https://dns.twnic.tw/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_adguard_social
     type: forward
-    args: {upstreams: [{addr: "https://dns.adguard-dns.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
+    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}, {addr: "tcp://127.0.0.1:6354"}]}
   - tag: forward_ali
     type: forward
     args: {upstreams: [{addr: "https://dns.alidns.com/dns-query", enable_pipeline: true}]}
