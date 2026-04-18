@@ -11,7 +11,7 @@ Surge -> 127.0.0.1:53 / [::1]:53 (mosdns)
            +-> Apple / Google / MS / AI    -> direct DoH in mosdns
            +-> TW / Social / NSFW / TikTok -> direct DoH in mosdns
            +-> Ali / Tencent vendor domains -> direct CN DoH in mosdns
-           +-> CN domains                  -> 127.0.0.1:6353 (smartdns CN bucket)
+           +-> CN domains                  -> Ali/Tencent DoH (concurrent)
            \-> International fallback      -> direct DoH in mosdns via Surge SOCKS5
 ```
 
@@ -19,21 +19,11 @@ Surge -> 127.0.0.1:53 / [::1]:53 (mosdns)
 
 - Dual-stack local listeners on `127.0.0.1:53` and `[::1]:53`
 - DoH prioritized for steady-state resolution; only the bootstrap allowlist uses plain UDP
-- `smartdns-rs` restricted to the CN bucket, which removes the old `6354` intl feedback loop
+- **Standalone Mode**: Removed `smartdns-rs` dependency to simplify the stack
 - IPv4 and IPv6 CN IP sets are both used when mosdns checks whether an intl answer actually landed on a CN CDN
-- SmartDNS audit stays disabled so Surge does not get flooded with local DNS noise
-- Launchd templates for both components include a working directory, persistent restart behavior, and raised file limits
+- Launchd templates include a working directory, persistent restart behavior, and raised file limits
 
 ## Installation
-
-Install `smartdns-rs` first:
-
-```bash
-cd ~/Downloads/GitHub/script_hub/smartdns
-./install.sh
-```
-
-Then install `mosdns`:
 
 ```bash
 cd ~/Downloads/GitHub/script_hub/mosdns
@@ -70,13 +60,10 @@ Or use a minimal module:
 dns-server = 127.0.0.1, [::1]
 ```
 
-## Verification
-
-Check that both launchd jobs are current and running:
+Check that the launchd job is current and running:
 
 ```bash
-launchctl print gui/$(id -u)/com.smartdns | rg "state =|program ="
-launchctl print system/com.mosdns | rg "state =|program ="
+sudo launchctl print system/com.mosdns | rg "state =|program ="
 ```
 
 Check for stale pre-refactor markers in the live configs:
@@ -156,7 +143,7 @@ reload_service() {
 
 ### CN acceleration path
 
-`mosdns` forwards general CN domains to `smartdns-rs` on `127.0.0.1:6353`, where AliDNS, DNSPod, Tencent, and 360 DoH are raced and ranked with `ping,tcp:443`.
+`mosdns` forwards general CN domains to AliDNS and DNSPod concurrently via DoH.
 
 ### International fallback path
 
@@ -189,7 +176,8 @@ If that returns matches, the live files were not updated to the April 19, 2026 t
 ```bash
 cat /tmp/mosdns.stderr.log
 plutil -lint /Library/LaunchDaemons/com.mosdns.plist
-launchctl print system/com.mosdns
+# Status
+sudo launchctl print system/com.mosdns
 ```
 
 **IPv6 path looks wrong**
