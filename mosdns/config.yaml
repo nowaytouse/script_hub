@@ -183,8 +183,8 @@ plugins:
         exec: accept
       - matches: "resp_ip $cn_ip_v6_matcher"
         exec: accept
-      # Otherwise, it might be a CDN-cloaked international domain, retry via international sequence.
-      - exec: $intl_sequence
+      # Otherwise, it might be a CDN-cloaked international domain, fallback to intl forwarder directly (to avoid recursion).
+      - exec: $forward_smartdns_intl
       - exec: accept
 
   # Intl sequence: query smartdns-rs Intl group, verify response IP is NOT CN.
@@ -194,11 +194,11 @@ plugins:
     type: sequence
     args:
       - exec: $forward_smartdns_intl
-      # If an international query returns a CN IP (v4 or v6), retry via local CN sequence for better latency.
+      # If an international query returns a CN IP (v4 or v6), retry via local CN forwarder (to avoid recursion).
       - matches: "resp_ip $cn_ip_matcher"
-        exec: $cn_sequence
+        exec: $forward_smartdns_cn
       - matches: "resp_ip $cn_ip_v6_matcher"
-        exec: $cn_sequence
+        exec: $forward_smartdns_cn
       # Otherwise, it is truly international, accept results.
       - exec: accept
 
