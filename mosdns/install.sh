@@ -55,9 +55,10 @@ echo "📥 Downloading CN domain list..."
 curl -L -o "$DATA_DIR/cn_domain.txt" "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" | \
     sed 's/server=\/\(.*\)\/114.114.114.114/\1/' > "$DATA_DIR/cn_domain.txt"
 
-# Download CN IP list
-echo "📥 Downloading CN IP list..."
+# Download CN IP list (IPv4 + IPv6)
+echo "📥 Downloading CN IP lists..."
 curl -L -o "$DATA_DIR/cn_ip.txt" "https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt"
+curl -L -o "$DATA_DIR/cn_ip_v6.txt" "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china6.txt"
 
 # Copy config and data files
 echo "📝 Copying configuration and local data lists..."
@@ -69,6 +70,7 @@ sed -i '' "s|./geosite.dat|$DATA_DIR/geosite.dat|g" "$CONFIG_DIR/config.yaml"
 sed -i '' "s|./geoip.mmdb|$DATA_DIR/geoip.mmdb|g" "$CONFIG_DIR/config.yaml"
 sed -i '' "s|./cn_domain.txt|$DATA_DIR/cn_domain.txt|g" "$CONFIG_DIR/config.yaml"
 sed -i '' "s|./cn_ip.txt|$DATA_DIR/cn_ip.txt|g" "$CONFIG_DIR/config.yaml"
+sed -i '' "s|./cn_ip_v6.txt|$DATA_DIR/cn_ip_v6.txt|g" "$CONFIG_DIR/config.yaml"
 
 # Create launchd plist
 echo "🔧 Creating launchd service..."
