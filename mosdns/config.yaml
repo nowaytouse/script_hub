@@ -1,11 +1,15 @@
-# mosdns Configuration - Full Granular Steering (Syntax Corrected)
+# mosdns Configuration - Production Granular Steering
+# Revised: 2026.04.18 (Final Corrected Order & Syntax)
+
 log:
   level: info
-  file: "/tmp/mosdns.log"
   production: true
+  file: "/tmp/mosdns.log"
 
 plugins:
+  # ──────────────────────────────────────────────
   # 1. Cache
+  # ──────────────────────────────────────────────
   - tag: cache
     type: cache
     args:
@@ -14,7 +18,9 @@ plugins:
       dump_file: /tmp/mosdns_cache.dump
       dump_interval: 600
 
+  # ──────────────────────────────────────────────
   # 2. Matchers (Domain Sets)
+  # ──────────────────────────────────────────────
   - tag: matcher_apple
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Apple.txt"]}
@@ -52,7 +58,7 @@ plugins:
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/cn_domain.txt"]}
 
-  # IP matchers
+  # ── IP matchers ──
   - tag: cn_ip_matcher
     type: ip_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/cn_ip.txt"]}
@@ -60,7 +66,9 @@ plugins:
     type: ip_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/cn_ip_v6.txt"]}
 
+  # ──────────────────────────────────────────────
   # 3. Forwarders (MUST be defined before sequences that use them)
+  # ──────────────────────────────────────────────
   - tag: forward_apple
     type: forward
     args: {upstreams: [{addr: "https://doh.dns.apple.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
@@ -120,89 +128,101 @@ plugins:
         - addr: https://dns.quad9.net/dns-query
           socks5: 127.0.0.1:6153
 
+  # ──────────────────────────────────────────────
   # 4. Sequences
+  # ──────────────────────────────────────────────
   - tag: nsfw_sequence
     type: sequence
     args:
-      - exec: forward_wikimedia_privacy
+      - exec: $forward_wikimedia_privacy
       - exec: accept
 
   - tag: tiktok_sequence
     type: sequence
     args:
-      - exec: forward_intl_general
+      - exec: $forward_intl_general
       - exec: accept
 
   - tag: cn_sequence
     type: sequence
     args:
-      - exec: forward_smartdns_cn
-      - matches: "resp_ip cn_ip_matcher"
+      - exec: $forward_smartdns_cn
+      # If response is a known CN IP, we are done.
+      - matches: "resp_ip $cn_ip_matcher"
         exec: accept
-      - matches: "resp_ip cn_ip_v6_matcher"
+      - matches: "resp_ip $cn_ip_v6_matcher"
         exec: accept
-      - exec: forward_smartdns_intl
+      # Non-CN IP for a CN domain? Fall through to intl forwarder directly (to avoid recursion).
+      - exec: $forward_smartdns_intl
       - exec: accept
 
   - tag: intl_sequence
     type: sequence
     args:
-      - exec: forward_smartdns_intl
-      - matches: "resp_ip cn_ip_matcher"
-        exec: forward_smartdns_cn
-      - matches: "resp_ip cn_ip_v6_matcher"
-        exec: forward_smartdns_cn
+      - exec: $forward_smartdns_intl
+      # If an intl domain resolves to a CN IP, retry via local CN forwarder for speed.
+      - matches: "resp_ip $cn_ip_matcher"
+        exec: $forward_smartdns_cn
+      - matches: "resp_ip $cn_ip_v6_matcher"
+        exec: $forward_smartdns_cn
       - exec: accept
 
   - tag: main_sequence
     type: sequence
     args:
-      - exec: cache
-      - matches: qname matcher_bootstrap
-        exec: forward_bootstrap
-      - matches: qname matcher_bootstrap
+      - exec: $cache
+      # Bootstrap DNS
+      - matches: qname $matcher_bootstrap
+        exec: $forward_bootstrap
+      - matches: qname $matcher_bootstrap
         exec: accept
-      - matches: qname matcher_nsfw
+      # NSFW
+      - matches: qname $matcher_nsfw
         exec: jump nsfw_sequence
-      - matches: qname matcher_tiktok
+      # TikTok
+      - matches: qname $matcher_tiktok
         exec: jump tiktok_sequence
-      - matches: qname matcher_apple
-        exec: forward_apple
-      - matches: qname matcher_apple
+      # Specialized per-vendor steering
+      - matches: qname $matcher_apple
+        exec: $forward_apple
+      - matches: qname $matcher_apple
         exec: accept
-      - matches: qname matcher_google
-        exec: forward_google
-      - matches: qname matcher_google
+      - matches: qname $matcher_google
+        exec: $forward_google
+      - matches: qname $matcher_google
         exec: accept
-      - matches: qname matcher_microsoft
-        exec: forward_quad9
-      - matches: qname matcher_microsoft
+      - matches: qname $matcher_microsoft
+        exec: $forward_quad9
+      - matches: qname $matcher_microsoft
         exec: accept
-      - matches: qname matcher_ai_cf
-        exec: forward_cloudflare
-      - matches: qname matcher_ai_cf
+      - matches: qname $matcher_ai_cf
+        exec: $forward_cloudflare
+      - matches: qname $matcher_ai_cf
         exec: accept
-      - matches: qname matcher_tw
-        exec: forward_twnic
-      - matches: qname matcher_tw
+      - matches: qname $matcher_tw
+        exec: $forward_twnic
+      - matches: qname $matcher_tw
         exec: accept
-      - matches: qname matcher_social
-        exec: forward_adguard_social
-      - matches: qname matcher_social
+      - matches: qname $matcher_social
+        exec: $forward_adguard_social
+      - matches: qname $matcher_social
         exec: accept
-      - matches: qname matcher_ali
-        exec: forward_ali
-      - matches: qname matcher_ali
+      - matches: qname $matcher_ali
+        exec: $forward_ali
+      - matches: qname $matcher_ali
         exec: accept
-      - matches: qname matcher_tencent
-        exec: forward_tencent
-      - matches: qname matcher_tencent
+      - matches: qname $matcher_tencent
+        exec: $forward_tencent
+      - matches: qname $matcher_tencent
         exec: accept
-      - matches: qname cn_domain_matcher
+      # Split tunneling
+      - matches: qname $cn_domain_matcher
         exec: jump cn_sequence
       - exec: jump intl_sequence
 
+  # ──────────────────────────────────────────────
   # 5. Servers
+  # ──────────────────────────────────────────────
   - tag: udp_server
     type: udp_server
     args: {entry: main_sequence, listen: "127.0.0.1:53"}

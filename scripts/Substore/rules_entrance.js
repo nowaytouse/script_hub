@@ -413,7 +413,7 @@ const applySmartCertVerification = (proxy, regionName) => {
 
         // 3. 协议特定策略
         const protocol = (proxy.type || '').toLowerCase();
-        
+
         // Reality 和 XTLS 节点：保持原有设置
         if (isRealityNode(proxy) || hasXtlsFlow(proxy)) {
             return proxy['skip-cert-verify'] ?? true;
@@ -444,7 +444,7 @@ const applySmartCertVerification = (proxy, regionName) => {
             proxy: proxy.name || proxy.server,
             region: regionName
         });
-        
+
         console.log(`[TLS安全] 异常恢复: ${recovery.suggestion}`);
         return true; // 异常时采用兼容策略
     }
@@ -461,7 +461,7 @@ const logSecurityEvent = (event, proxy, reason, riskLevel = 'medium') => {
     const nodeName = proxy.name || proxy.server || 'Unknown';
     const protocol = proxy.type || 'unknown';
     const timestamp = new Date().toISOString();
-    
+
     // 构建详细的日志条目
     const logEntry = {
         timestamp,
@@ -482,10 +482,10 @@ const logSecurityEvent = (event, proxy, reason, riskLevel = 'medium') => {
             hasXtls: hasXtlsFlow(proxy)
         }
     };
-    
+
     // 根据风险等级使用不同的日志格式
     const logMessage = `[TLS安全] ${event} | ${riskLevel.toUpperCase()} | ${protocol} | ${nodeName} | ${reason}`;
-    
+
     switch (riskLevel.toLowerCase()) {
         case 'critical':
             console.error(`🚨 ${logMessage}`);
@@ -501,19 +501,19 @@ const logSecurityEvent = (event, proxy, reason, riskLevel = 'medium') => {
             console.log(`✅ ${logMessage}`);
             break;
     }
-    
+
     // 存储到内存日志（用于后续查询和分析）
     if (!globalThis.tlsSecurityLogs) {
         globalThis.tlsSecurityLogs = [];
     }
-    
+
     globalThis.tlsSecurityLogs.push(logEntry);
-    
+
     // 保持日志数量在合理范围内（最多1000条）
     if (globalThis.tlsSecurityLogs.length > 1000) {
         globalThis.tlsSecurityLogs = globalThis.tlsSecurityLogs.slice(-1000);
     }
-    
+
     // 对于高风险事件，提供用户友好的错误提示
     if (['high', 'critical'].includes(riskLevel.toLowerCase())) {
         const userFriendlyMessage = generateUserFriendlyMessage(event, proxy, reason);
@@ -532,28 +532,28 @@ const logSecurityEvent = (event, proxy, reason, riskLevel = 'medium') => {
  */
 const generateUserFriendlyMessage = (event, proxy, reason) => {
     const nodeName = proxy.name || proxy.server || '节点';
-    
+
     switch (event) {
         case 'CONFIG_VALIDATION_FAILED':
             return `节点 ${nodeName} 配置有误，建议检查服务器地址、端口和协议类型是否正确`;
-        
+
         case 'CERT_VERIFY_SKIPPED':
             if (reason.includes('无证书配置')) {
                 return `节点 ${nodeName} 未配置证书，已采用兼容模式。如需更高安全性，请添加证书配置`;
             }
             break;
-        
+
         case 'TLS_CONFIG_ERROR':
         case 'TLS_ENHANCEMENT_ERROR':
             return `节点 ${nodeName} TLS配置出现问题，已回退到安全配置。建议检查节点配置的完整性`;
-        
+
         case 'COMPATIBILITY_ISSUE':
             return `节点 ${nodeName} 存在兼容性问题，某些功能可能无法正常工作`;
-        
+
         default:
             return null;
     }
-    
+
     return null;
 };
 
@@ -566,44 +566,44 @@ const querySecurityLogs = (filters = {}) => {
     if (!globalThis.tlsSecurityLogs) {
         return [];
     }
-    
+
     let logs = [...globalThis.tlsSecurityLogs];
-    
+
     // 按时间范围过滤
     if (filters.startTime) {
         const startTime = new Date(filters.startTime);
         logs = logs.filter(log => new Date(log.timestamp) >= startTime);
     }
-    
+
     if (filters.endTime) {
         const endTime = new Date(filters.endTime);
         logs = logs.filter(log => new Date(log.timestamp) <= endTime);
     }
-    
+
     // 按风险等级过滤
     if (filters.riskLevel) {
         const targetRisk = filters.riskLevel.toUpperCase();
         logs = logs.filter(log => log.riskLevel === targetRisk);
     }
-    
+
     // 按协议类型过滤
     if (filters.protocol) {
         logs = logs.filter(log => log.protocol.toLowerCase() === filters.protocol.toLowerCase());
     }
-    
+
     // 按事件类型过滤
     if (filters.event) {
         logs = logs.filter(log => log.event === filters.event);
     }
-    
+
     // 按节点名称过滤
     if (filters.nodeName) {
         logs = logs.filter(log => log.nodeName.includes(filters.nodeName));
     }
-    
+
     // 排序（最新的在前）
     logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
+
     return logs;
 };
 
@@ -615,10 +615,10 @@ const generateSecuritySummary = () => {
     const logs = globalThis.tlsSecurityLogs || [];
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
+
     // 最近一小时的日志
     const recentLogs = logs.filter(log => new Date(log.timestamp) >= oneHourAgo);
-    
+
     // 统计各风险等级的事件数量
     const riskStats = {
         critical: recentLogs.filter(log => log.riskLevel === 'CRITICAL').length,
@@ -626,26 +626,26 @@ const generateSecuritySummary = () => {
         medium: recentLogs.filter(log => log.riskLevel === 'MEDIUM').length,
         low: recentLogs.filter(log => log.riskLevel === 'LOW').length
     };
-    
+
     // 统计各协议的事件数量
     const protocolStats = {};
     recentLogs.forEach(log => {
         protocolStats[log.protocol] = (protocolStats[log.protocol] || 0) + 1;
     });
-    
+
     // 统计各事件类型的数量
     const eventStats = {};
     recentLogs.forEach(log => {
         eventStats[log.event] = (eventStats[log.event] || 0) + 1;
     });
-    
+
     // 计算总体安全评分（0-100）
     let securityScore = 100;
     securityScore -= riskStats.critical * 20; // 严重问题扣20分
     securityScore -= riskStats.high * 10;     // 高风险问题扣10分
     securityScore -= riskStats.medium * 2;    // 中风险问题扣2分
     securityScore = Math.max(0, securityScore);
-    
+
     // 确定总体安全状态
     let overallStatus = 'excellent';
     if (securityScore < 60) {
@@ -655,7 +655,7 @@ const generateSecuritySummary = () => {
     } else if (securityScore < 95) {
         overallStatus = 'good';
     }
-    
+
     return {
         timestamp: now.toISOString(),
         timeRange: '最近1小时',
@@ -677,31 +677,31 @@ const generateSecuritySummary = () => {
  */
 const generateSecurityRecommendations = (riskStats, eventStats) => {
     const recommendations = [];
-    
+
     if (riskStats.critical > 0) {
         recommendations.push('发现严重安全问题，建议立即检查节点配置');
     }
-    
+
     if (riskStats.high > 5) {
         recommendations.push('高风险事件较多，建议审查TLS配置策略');
     }
-    
+
     if (eventStats.CONFIG_VALIDATION_FAILED > 3) {
         recommendations.push('多个节点配置验证失败，建议检查节点来源和配置格式');
     }
-    
+
     if (eventStats.CERT_VERIFY_SKIPPED > 10) {
         recommendations.push('大量节点跳过证书验证，建议考虑添加证书配置以提高安全性');
     }
-    
+
     if (eventStats.TLS_CONFIG_ERROR > 2) {
         recommendations.push('TLS配置错误较多，建议检查网络环境和节点兼容性');
     }
-    
+
     if (recommendations.length === 0) {
         recommendations.push('当前安全状态良好，继续保持');
     }
-    
+
     return recommendations;
 };
 
@@ -712,7 +712,7 @@ const generateSecurityRecommendations = (riskStats, eventStats) => {
  */
 const getProtocolSecurityPolicy = (proxy) => {
     const protocol = (proxy.type || '').toLowerCase();
-    
+
     switch (protocol) {
         case 'hysteria2':
         case 'hysteria':
@@ -723,7 +723,7 @@ const getProtocolSecurityPolicy = (proxy) => {
                 supportsSelfSigned: true,
                 recommendedAction: 'allow_skip'
             };
-        
+
         case 'tuic':
             return {
                 requiresCert: false, // UDP-over-QUIC，机场常用自签
@@ -732,7 +732,7 @@ const getProtocolSecurityPolicy = (proxy) => {
                 supportsSelfSigned: true,
                 recommendedAction: 'allow_skip'
             };
-        
+
         case 'vmess':
         case 'vless':
         case 'trojan':
@@ -743,7 +743,7 @@ const getProtocolSecurityPolicy = (proxy) => {
                 supportsSelfSigned: true,
                 recommendedAction: 'conditional_skip'
             };
-        
+
         default:
             return {
                 requiresCert: false,
@@ -773,19 +773,19 @@ const handleSelfSignedCertificate = (proxy) => {
     const selfSignedIndicators = [
         // 1. 没有证书配置（机场常见）
         !proxy.ca && !proxy['ca-str'] && !proxy['ca_str'],
-        
+
         // 2. SNI 与服务器地址不匹配
         proxy.sni && proxy.server && proxy.sni !== proxy.server,
-        
+
         // 3. 使用非标准端口
         proxy.port && !TLS_WHITELIST_PORTS.has(proxy.port),
-        
+
         // 4. 协议特定指标
         ['hysteria2', 'tuic'].includes((proxy.type || '').toLowerCase())
     ];
 
     const indicatorCount = selfSignedIndicators.filter(Boolean).length;
-    
+
     if (indicatorCount >= 2) {
         result.isSelfSigned = true;
         result.shouldSkipVerify = true;
@@ -846,7 +846,7 @@ const assessSecurityRisk = (proxy, context = {}) => {
     // 2. 协议安全性评估
     const protocol = (proxy.type || '').toLowerCase();
     const protocolPolicy = getProtocolSecurityPolicy(proxy);
-    
+
     if (protocolPolicy.riskLevel === 'low') {
         riskScore += 10;
         assessment.factors.push(`${protocol}协议安全性较高 (+10)`);
@@ -900,7 +900,7 @@ const assessSecurityRisk = (proxy, context = {}) => {
 
     // 计算最终风险等级
     assessment.score = Math.max(0, Math.min(100, riskScore));
-    
+
     if (assessment.score >= 70) {
         assessment.overallRisk = 'low';
     } else if (assessment.score >= 40) {
@@ -936,13 +936,13 @@ const applyEnhancedSmartVerification = (proxy, regionName) => {
 
         // 2. 风险评估
         const riskAssessment = assessSecurityRisk(proxy, { region: regionName });
-        
+
         // 3. 自签证书处理
         const selfSignedResult = handleSelfSignedCertificate(proxy);
-        
+
         // 4. 协议特定策略
         const protocolPolicy = getProtocolSecurityPolicy(proxy);
-        
+
         // 5. 综合决策逻辑
         let shouldSkipVerify = true; // 默认跳过（机场兼容性）
         let decisionReason = '';
@@ -996,7 +996,7 @@ const applyEnhancedSmartVerification = (proxy, regionName) => {
             proxy: proxy.name || proxy.server,
             region: regionName
         });
-        
+
         logSecurityEvent('VERIFICATION_ERROR', proxy, recovery.suggestion, 'high');
         return true; // 异常时采用兼容策略
     }
@@ -1062,7 +1062,7 @@ const handleTlsException = (error, context = {}) => {
  */
 const getSuggestionForError = (error) => {
     const message = error.message.toLowerCase();
-    
+
     if (message.includes('certificate')) {
         return '建议检查证书配置或启用 skip-cert-verify';
     } else if (message.includes('sni')) {
@@ -1111,11 +1111,11 @@ const validateTlsConfiguration = (proxy) => {
         // 检查 TLS 版本配置
         const minVersion = proxy['tls-min-version'];
         const maxVersion = proxy['tls-max-version'];
-        
+
         if (minVersion && maxVersion) {
             const minVer = parseFloat(minVersion);
             const maxVer = parseFloat(maxVersion);
-            
+
             if (minVer > maxVer) {
                 result.warnings.push('TLS 最小版本大于最大版本');
                 result.fixes.push('调整 TLS 版本配置');
@@ -1125,7 +1125,7 @@ const validateTlsConfiguration = (proxy) => {
         // 检查证书配置冲突
         const hasCa = proxy.ca || proxy['ca-str'] || proxy['ca_str'];
         const skipVerify = proxy['skip-cert-verify'];
-        
+
         if (hasCa && skipVerify === true) {
             result.warnings.push('有证书配置但跳过验证，可能存在安全风险');
             result.fixes.push('考虑启用证书验证或移除证书配置');
@@ -1163,7 +1163,7 @@ const rollbackConfiguration = (proxy, backup) => {
 
         // 恢复关键安全配置
         const safetyKeys = ['skip-cert-verify', 'tls', 'sni', 'alpn', 'tls-min-version', 'tls-max-version'];
-        
+
         for (const key of safetyKeys) {
             if (backup.hasOwnProperty(key)) {
                 proxy[key] = backup[key];
@@ -1334,15 +1334,15 @@ const checkHysteria2Sni = (proxy) => {
 
         // 6. TLS握手失败常见原因分析
         const handshakeIssues = [];
-        
+
         if (!proxy.sni) {
             handshakeIssues.push('缺少SNI可能导致握手失败');
         }
-        
+
         if (proxy.sni && !sniDiagnostics.sniIsValidDomain) {
             handshakeIssues.push('无效SNI格式可能导致握手失败');
         }
-        
+
         if (proxy['skip-cert-verify'] === false && !certDiagnostics.hasCertConfig) {
             handshakeIssues.push('启用证书验证但无证书配置可能导致握手失败');
         }
@@ -1358,11 +1358,11 @@ const checkHysteria2Sni = (proxy) => {
         } else {
             result.recommendations.push('建议检查服务器端配置是否匹配');
             result.recommendations.push('确认服务器支持指定的SNI域名');
-            
+
             if (!proxy.sni) {
                 result.recommendations.push('添加合适的SNI域名');
             }
-            
+
             if (proxy['skip-cert-verify'] === false) {
                 result.recommendations.push('考虑启用skip-cert-verify以提高兼容性');
             }
@@ -1532,15 +1532,15 @@ const checkVlessCertificateConsistency = (proxy) => {
  */
 const diagnoseProtocolSpecificIssues = (proxy) => {
     const protocol = (proxy.type || '').toLowerCase();
-    
+
     switch (protocol) {
         case 'hysteria2':
         case 'hysteria':
             return checkHysteria2Sni(proxy);
-        
+
         case 'vless':
             return checkVlessCertificateConsistency(proxy);
-        
+
         case 'vmess':
         case 'trojan':
             // 对于VMess和Trojan，使用通用的证书一致性检查
@@ -1548,7 +1548,7 @@ const diagnoseProtocolSpecificIssues = (proxy) => {
                 ...proxy,
                 type: 'vless' // 临时转换以复用检查逻辑
             });
-        
+
         default:
             return {
                 isValid: true,
@@ -1567,7 +1567,7 @@ const diagnoseProtocolSpecificIssues = (proxy) => {
  */
 const testExceptionHandlingCompleteness = () => {
     console.log('[测试] Property 1: Exception Handling Completeness');
-    
+
     // 测试用例：各种异常情况
     const testCases = [
         { name: 'null proxy', proxy: null },
@@ -1577,13 +1577,13 @@ const testExceptionHandlingCompleteness = () => {
         { name: 'missing server proxy', proxy: { type: 'vmess' } },
         { name: 'circular reference', proxy: {} }
     ];
-    
+
     // 创建循环引用
     testCases[testCases.length - 1].proxy.self = testCases[testCases.length - 1].proxy;
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const result = safeExecute(
@@ -1591,7 +1591,7 @@ const testExceptionHandlingCompleteness = () => {
                 `测试${testCase.name}`,
                 true
             );
-            
+
             // 验证：应该返回一个布尔值，不应该抛出异常
             if (typeof result === 'boolean') {
                 passedTests++;
@@ -1603,7 +1603,7 @@ const testExceptionHandlingCompleteness = () => {
             console.log(`[测试] ❌ ${testCase.name}: 未捕获异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 1 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -1616,23 +1616,23 @@ const testExceptionHandlingCompleteness = () => {
  */
 const testConfigurationConflictDetection = () => {
     console.log('[测试] Property 2: Configuration Conflict Detection and Rollback');
-    
+
     const testCases = [
         {
             name: '证书配置冲突',
-            proxy: { 
-                type: 'vmess', 
-                server: 'test.com', 
-                ca: 'cert1', 
+            proxy: {
+                type: 'vmess',
+                server: 'test.com',
+                ca: 'cert1',
                 'ca-str': 'cert2',
-                'skip-cert-verify': false 
+                'skip-cert-verify': false
             }
         },
         {
             name: 'TLS版本冲突',
-            proxy: { 
-                type: 'vless', 
-                server: 'test.com', 
+            proxy: {
+                type: 'vless',
+                server: 'test.com',
                 tls: true,
                 'tls-min-version': '1.3',
                 'tls-max-version': '1.2' // 冲突：最小版本大于最大版本
@@ -1640,19 +1640,19 @@ const testConfigurationConflictDetection = () => {
         },
         {
             name: 'Reality节点TLS冲突',
-            proxy: { 
-                type: 'vless', 
-                server: 'test.com', 
+            proxy: {
+                type: 'vless',
+                server: 'test.com',
                 tls: true,
                 publicKey: 'test-key', // Reality 节点
                 'skip-cert-verify': false
             }
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const originalProxy = JSON.parse(JSON.stringify(testCase.proxy));
@@ -1661,7 +1661,7 @@ const testConfigurationConflictDetection = () => {
                 `冲突检测${testCase.name}`,
                 true
             );
-            
+
             // 验证：应该处理冲突并返回合理结果
             if (typeof result === 'boolean') {
                 passedTests++;
@@ -1673,7 +1673,7 @@ const testConfigurationConflictDetection = () => {
             console.log(`[测试] ❌ ${testCase.name}: 冲突检测异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 2 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -1686,12 +1686,12 @@ const testConfigurationConflictDetection = () => {
  */
 const testParameterCompatibilityValidation = () => {
     console.log('[测试] Property 3: Parameter Compatibility Validation');
-    
+
     const testCases = [
         {
             name: '不兼容的协议组合',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.com',
                 tls: true,
                 flow: 'xtls-rprx-vision' // VMess 不支持 XTLS
@@ -1699,8 +1699,8 @@ const testParameterCompatibilityValidation = () => {
         },
         {
             name: '无效的端口配置',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'test.com',
                 port: 'invalid-port',
                 tls: true
@@ -1708,18 +1708,18 @@ const testParameterCompatibilityValidation = () => {
         },
         {
             name: '协议类型不匹配',
-            proxy: { 
-                type: 'hysteria2', 
+            proxy: {
+                type: 'hysteria2',
                 server: 'test.com',
                 'tls-min-version': '1.3', // Hysteria2 使用 QUIC，不需要传统 TLS 配置
                 'tls-max-version': '1.3'
             }
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const originalProxy = JSON.parse(JSON.stringify(testCase.proxy));
@@ -1728,7 +1728,7 @@ const testParameterCompatibilityValidation = () => {
                 `参数兼容性${testCase.name}`,
                 true
             );
-            
+
             // 验证：应该处理不兼容参数并返回安全默认值
             if (typeof result === 'boolean') {
                 passedTests++;
@@ -1740,7 +1740,7 @@ const testParameterCompatibilityValidation = () => {
             console.log(`[测试] ❌ ${testCase.name}: 参数验证异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 3 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -1753,12 +1753,12 @@ const testParameterCompatibilityValidation = () => {
  */
 const testOriginalConfigurationProtection = () => {
     console.log('[测试] Property 5: Original Configuration Protection');
-    
+
     const testCases = [
         {
             name: '正常配置保护',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.com',
                 port: 443,
                 uuid: 'test-uuid',
@@ -1767,8 +1767,8 @@ const testOriginalConfigurationProtection = () => {
         },
         {
             name: '复杂配置保护',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'test.com',
                 port: 443,
                 uuid: 'test-uuid',
@@ -1779,22 +1779,22 @@ const testOriginalConfigurationProtection = () => {
             }
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const originalProxy = JSON.parse(JSON.stringify(testCase.proxy));
             const originalKeys = Object.keys(originalProxy);
-            
+
             // 执行处理
             const result = safeExecute(
                 () => applySmartCertVerification(testCase.proxy, 'test'),
                 `配置保护${testCase.name}`,
                 true
             );
-            
+
             // 验证：原始配置的关键字段应该保持不变
             let configProtected = true;
             for (const key of ['type', 'server', 'port', 'uuid']) {
@@ -1804,7 +1804,7 @@ const testOriginalConfigurationProtection = () => {
                     break;
                 }
             }
-            
+
             if (configProtected && typeof result === 'boolean') {
                 passedTests++;
                 console.log(`[测试] ✅ ${testCase.name}: 原始配置已保护`);
@@ -1815,7 +1815,7 @@ const testOriginalConfigurationProtection = () => {
             console.log(`[测试] ❌ ${testCase.name}: 配置保护异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 5 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -1828,7 +1828,7 @@ const testOriginalConfigurationProtection = () => {
  */
 const testRobustExceptionHandling = () => {
     console.log('[测试] Property 3 Enhanced: Robust Exception Handling');
-    
+
     const testCases = [
         {
             name: '配置验证异常',
@@ -1864,10 +1864,10 @@ const testRobustExceptionHandling = () => {
             }
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const result = testCase.test();
@@ -1881,7 +1881,7 @@ const testRobustExceptionHandling = () => {
             console.log(`[测试] ❌ ${testCase.name}: 异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 3 Enhanced 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -1894,12 +1894,12 @@ const testRobustExceptionHandling = () => {
  */
 const testCertificateBasedVerificationStrategy = () => {
     console.log('[测试] Property 6: Certificate-Based Verification Strategy');
-    
+
     const testCases = [
         {
             name: '有CA证书配置',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.com',
                 port: 443,
                 tls: true,
@@ -1909,8 +1909,8 @@ const testCertificateBasedVerificationStrategy = () => {
         },
         {
             name: '有ca-str证书配置',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'test.com',
                 port: 443,
                 tls: true,
@@ -1920,8 +1920,8 @@ const testCertificateBasedVerificationStrategy = () => {
         },
         {
             name: '有ca_str证书配置',
-            proxy: { 
-                type: 'trojan', 
+            proxy: {
+                type: 'trojan',
                 server: 'test.com',
                 port: 443,
                 tls: true,
@@ -1931,8 +1931,8 @@ const testCertificateBasedVerificationStrategy = () => {
         },
         {
             name: '无证书配置',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.com',
                 port: 443,
                 tls: true
@@ -1941,8 +1941,8 @@ const testCertificateBasedVerificationStrategy = () => {
         },
         {
             name: '用户明确设置skip-cert-verify=false',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'test.com',
                 port: 443,
                 tls: true,
@@ -1952,8 +1952,8 @@ const testCertificateBasedVerificationStrategy = () => {
         },
         {
             name: '用户明确设置skip-cert-verify=true',
-            proxy: { 
-                type: 'trojan', 
+            proxy: {
+                type: 'trojan',
                 server: 'test.com',
                 port: 443,
                 tls: true,
@@ -1962,10 +1962,10 @@ const testCertificateBasedVerificationStrategy = () => {
             expectedSkipVerify: true // 应该尊重用户设置
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const result = safeExecute(
@@ -1973,7 +1973,7 @@ const testCertificateBasedVerificationStrategy = () => {
                 `证书验证策略${testCase.name}`,
                 null
             );
-            
+
             // 验证：结果应该符合预期的证书验证策略
             if (result === testCase.expectedSkipVerify) {
                 passedTests++;
@@ -1985,7 +1985,7 @@ const testCertificateBasedVerificationStrategy = () => {
             console.log(`[测试] ❌ ${testCase.name}: 证书验证异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 6 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -1998,12 +1998,12 @@ const testCertificateBasedVerificationStrategy = () => {
  */
 const testTrustedDomainSniVerification = () => {
     console.log('[测试] Property 7: Trusted Domain SNI Verification');
-    
+
     const testCases = [
         {
             name: '可信域名SNI - cloudflare.com',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: '1.2.3.4',
                 port: 443,
                 tls: true,
@@ -2013,8 +2013,8 @@ const testTrustedDomainSniVerification = () => {
         },
         {
             name: '可信域名SNI - google.com',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: '5.6.7.8',
                 port: 443,
                 tls: true,
@@ -2024,8 +2024,8 @@ const testTrustedDomainSniVerification = () => {
         },
         {
             name: '可信CDN域名 - cdn.cloudflare.net',
-            proxy: { 
-                type: 'trojan', 
+            proxy: {
+                type: 'trojan',
                 server: '9.10.11.12',
                 port: 443,
                 tls: true,
@@ -2035,8 +2035,8 @@ const testTrustedDomainSniVerification = () => {
         },
         {
             name: '测试域名SNI - test.example.com',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: '127.0.0.1',
                 port: 443,
                 tls: true,
@@ -2046,8 +2046,8 @@ const testTrustedDomainSniVerification = () => {
         },
         {
             name: '本地域名SNI - localhost',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: '192.168.1.1',
                 port: 443,
                 tls: true,
@@ -2057,8 +2057,8 @@ const testTrustedDomainSniVerification = () => {
         },
         {
             name: '随机域名SNI - random123.xyz',
-            proxy: { 
-                type: 'trojan', 
+            proxy: {
+                type: 'trojan',
                 server: 'random.server.com',
                 port: 443,
                 tls: true,
@@ -2068,8 +2068,8 @@ const testTrustedDomainSniVerification = () => {
         },
         {
             name: '无SNI配置',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.com',
                 port: 443,
                 tls: true
@@ -2077,10 +2077,10 @@ const testTrustedDomainSniVerification = () => {
             expectedBehavior: 'should_skip' // 无SNI应该跳过验证
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const result = safeExecute(
@@ -2088,10 +2088,10 @@ const testTrustedDomainSniVerification = () => {
                 `SNI验证${testCase.name}`,
                 null
             );
-            
+
             // 验证：根据SNI域名的可信度决定验证策略
             let testPassed = false;
-            
+
             if (testCase.expectedBehavior === 'should_verify') {
                 // 对于可信域名，在没有明确证书配置时，当前实现采用兼容策略
                 // 这是合理的，因为机场环境下即使使用可信SNI也可能使用自签证书
@@ -2105,7 +2105,7 @@ const testTrustedDomainSniVerification = () => {
                     console.log(`[测试] ❌ ${testCase.name}: 应该跳过验证但未跳过 (skip=${result})`);
                 }
             }
-            
+
             if (testPassed) {
                 passedTests++;
             }
@@ -2113,7 +2113,7 @@ const testTrustedDomainSniVerification = () => {
             console.log(`[测试] ❌ ${testCase.name}: SNI验证异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 7 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -2126,12 +2126,12 @@ const testTrustedDomainSniVerification = () => {
  */
 const testSelfSignedCertificateHandling = () => {
     console.log('[测试] Property 8: Self-Signed Certificate Handling');
-    
+
     const testCases = [
         {
             name: '明确的自签证书场景',
-            proxy: { 
-                type: 'hysteria2', 
+            proxy: {
+                type: 'hysteria2',
                 server: 'self-signed.example.com',
                 port: 12800, // 非标准端口
                 tls: true,
@@ -2142,8 +2142,8 @@ const testSelfSignedCertificateHandling = () => {
         },
         {
             name: '无证书配置的VMess',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'vmess.example.com',
                 port: 443,
                 tls: true
@@ -2154,8 +2154,8 @@ const testSelfSignedCertificateHandling = () => {
         },
         {
             name: '有证书配置的节点',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'secure.example.com',
                 port: 443,
                 tls: true,
@@ -2166,8 +2166,8 @@ const testSelfSignedCertificateHandling = () => {
         },
         {
             name: 'Reality节点特殊处理',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'reality.example.com',
                 port: 443,
                 tls: true,
@@ -2178,10 +2178,10 @@ const testSelfSignedCertificateHandling = () => {
             expectedRiskLevel: 'low'
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             // 测试自签证书处理逻辑
@@ -2190,37 +2190,37 @@ const testSelfSignedCertificateHandling = () => {
                 `自签证书处理${testCase.name}`,
                 null
             );
-            
+
             // 测试风险评估
             const riskAssessment = safeExecute(
                 () => assessSecurityRisk(testCase.proxy),
                 `风险评估${testCase.name}`,
                 null
             );
-            
+
             // 测试整体验证策略
             const verificationResult = safeExecute(
                 () => applySmartCertVerification(testCase.proxy, 'test'),
                 `整体验证${testCase.name}`,
                 null
             );
-            
+
             // 验证结果
             let testPassed = true;
-            
+
             if (verificationResult !== testCase.expectedSkipVerify) {
                 console.log(`[测试] ❌ ${testCase.name}: 验证策略错误，期望skip=${testCase.expectedSkipVerify}，实际skip=${verificationResult}`);
                 testPassed = false;
             }
-            
+
             if (selfSignedResult && typeof selfSignedResult === 'object') {
                 console.log(`[测试] ℹ️ ${testCase.name}: 自签检测=${selfSignedResult.isSelfSigned}, 风险=${selfSignedResult.riskLevel}`);
             }
-            
+
             if (riskAssessment && typeof riskAssessment === 'object') {
                 console.log(`[测试] ℹ️ ${testCase.name}: 风险评估=${riskAssessment.overallRisk}, 评分=${riskAssessment.score}`);
             }
-            
+
             if (testPassed) {
                 passedTests++;
                 console.log(`[测试] ✅ ${testCase.name}: 自签证书处理正确`);
@@ -2229,7 +2229,7 @@ const testSelfSignedCertificateHandling = () => {
             console.log(`[测试] ❌ ${testCase.name}: 自签证书处理异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 8 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -2242,12 +2242,12 @@ const testSelfSignedCertificateHandling = () => {
  */
 const testIntegratedTlsFunctions = () => {
     console.log('[测试] Property 12: Integration Test - Enhanced TLS Functions');
-    
+
     const testCases = [
         {
             name: '正常TLS配置集成',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.example.com',
                 port: 443,
                 uuid: 'test-uuid'
@@ -2259,8 +2259,8 @@ const testIntegratedTlsFunctions = () => {
         },
         {
             name: 'TLS增强功能集成',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'secure.example.com',
                 port: 443,
                 tls: true,
@@ -2272,8 +2272,8 @@ const testIntegratedTlsFunctions = () => {
         },
         {
             name: 'Reality节点保护测试',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'reality.example.com',
                 port: 443,
                 tls: true,
@@ -2286,8 +2286,8 @@ const testIntegratedTlsFunctions = () => {
         },
         {
             name: '异常配置处理测试',
-            proxy: { 
-                type: 'invalid-type', 
+            proxy: {
+                type: 'invalid-type',
                 server: null,
                 port: 'invalid'
             },
@@ -2296,10 +2296,10 @@ const testIntegratedTlsFunctions = () => {
             expectedHandled: true // 异常应该被正确处理
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     // 模拟配置环境
     const mockCfg = {
         forceTls: true,
@@ -2314,19 +2314,19 @@ const testIntegratedTlsFunctions = () => {
             }
         }
     };
-    
+
     // 临时替换全局配置
     const originalCfg = typeof cfg !== 'undefined' ? cfg : {};
     if (typeof cfg !== 'undefined') {
         Object.assign(cfg, mockCfg);
     }
-    
+
     for (const testCase of testCases) {
         try {
             const originalProxy = JSON.parse(JSON.stringify(testCase.proxy));
             let testPassed = true;
             let errorHandled = false;
-            
+
             // 执行测试函数
             if (testCase.testFunction === 'applyTlsConfig') {
                 try {
@@ -2338,7 +2338,7 @@ const testIntegratedTlsFunctions = () => {
                             if (testCase.proxy.type === 'invalid-type' || !testCase.proxy.server) {
                                 throw new Error('Invalid configuration');
                             }
-                            
+
                             if (TLS_WHITELIST_PORTS.has(testCase.proxy.port)) {
                                 testCase.proxy.tls = true;
                                 testCase.proxy['skip-cert-verify'] = applySmartCertVerification(testCase.proxy, testCase.region);
@@ -2348,7 +2348,7 @@ const testIntegratedTlsFunctions = () => {
                         `集成测试${testCase.name}`,
                         false
                     );
-                    
+
                     if (result === false && testCase.expectedHandled) {
                         errorHandled = true;
                     }
@@ -2380,23 +2380,23 @@ const testIntegratedTlsFunctions = () => {
                     }
                 }
             }
-            
+
             // 验证结果
             if (testCase.expectedTls !== undefined && testCase.proxy.tls !== testCase.expectedTls) {
                 console.log(`[测试] ❌ ${testCase.name}: TLS设置错误，期望${testCase.expectedTls}，实际${testCase.proxy.tls}`);
                 testPassed = false;
             }
-            
+
             if (testCase.expectedSkipVerify !== undefined && testCase.proxy['skip-cert-verify'] !== testCase.expectedSkipVerify) {
                 console.log(`[测试] ❌ ${testCase.name}: 证书验证设置错误，期望skip=${testCase.expectedSkipVerify}，实际skip=${testCase.proxy['skip-cert-verify']}`);
                 testPassed = false;
             }
-            
+
             if (testCase.expectedHandled && !errorHandled) {
                 console.log(`[测试] ❌ ${testCase.name}: 异常未被正确处理`);
                 testPassed = false;
             }
-            
+
             if (testPassed) {
                 passedTests++;
                 console.log(`[测试] ✅ ${testCase.name}: 集成测试通过`);
@@ -2405,12 +2405,12 @@ const testIntegratedTlsFunctions = () => {
             console.log(`[测试] ❌ ${testCase.name}: 集成测试异常 ${error.message}`);
         }
     }
-    
+
     // 恢复原始配置
     if (typeof cfg !== 'undefined') {
         Object.assign(cfg, originalCfg);
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 12 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -2423,18 +2423,18 @@ const testIntegratedTlsFunctions = () => {
  */
 const testSecurityEventLogging = () => {
     console.log('[测试] Property 9: Security Event Logging');
-    
+
     // 清空现有日志
     if (globalThis.tlsSecurityLogs) {
         globalThis.tlsSecurityLogs = [];
     }
-    
+
     const testCases = [
         {
             name: '证书验证跳过事件',
             event: 'CERT_VERIFY_SKIPPED',
-            proxy: { 
-                type: 'vmess', 
+            proxy: {
+                type: 'vmess',
                 server: 'test.example.com',
                 port: 443,
                 name: '测试节点'
@@ -2446,8 +2446,8 @@ const testSecurityEventLogging = () => {
         {
             name: '配置验证失败事件',
             event: 'CONFIG_VALIDATION_FAILED',
-            proxy: { 
-                type: 'invalid', 
+            proxy: {
+                type: 'invalid',
                 server: null,
                 name: '无效节点'
             },
@@ -2459,8 +2459,8 @@ const testSecurityEventLogging = () => {
         {
             name: 'TLS配置错误事件',
             event: 'TLS_CONFIG_ERROR',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'error.example.com',
                 port: 443,
                 name: '错误节点'
@@ -2473,8 +2473,8 @@ const testSecurityEventLogging = () => {
         {
             name: '低风险安全事件',
             event: 'SPECIAL_NODE_PROTECTED',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'reality.example.com',
                 port: 443,
                 name: 'Reality节点',
@@ -2486,23 +2486,23 @@ const testSecurityEventLogging = () => {
             expectedUserMessage: false
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const initialLogCount = globalThis.tlsSecurityLogs ? globalThis.tlsSecurityLogs.length : 0;
-            
+
             // 执行日志记录
             logSecurityEvent(testCase.event, testCase.proxy, testCase.reason, testCase.riskLevel);
-            
+
             // 验证日志是否被记录
             const currentLogCount = globalThis.tlsSecurityLogs ? globalThis.tlsSecurityLogs.length : 0;
             const logWasRecorded = currentLogCount > initialLogCount;
-            
+
             let testPassed = true;
-            
+
             if (testCase.expectedLogged && !logWasRecorded) {
                 console.log(`[测试] ❌ ${testCase.name}: 日志未被记录`);
                 testPassed = false;
@@ -2510,33 +2510,33 @@ const testSecurityEventLogging = () => {
                 console.log(`[测试] ❌ ${testCase.name}: 不应该记录日志但被记录了`);
                 testPassed = false;
             }
-            
+
             // 验证日志内容
             if (logWasRecorded && globalThis.tlsSecurityLogs.length > 0) {
                 const lastLog = globalThis.tlsSecurityLogs[globalThis.tlsSecurityLogs.length - 1];
-                
+
                 if (lastLog.event !== testCase.event) {
                     console.log(`[测试] ❌ ${testCase.name}: 事件类型错误，期望${testCase.event}，实际${lastLog.event}`);
                     testPassed = false;
                 }
-                
+
                 if (lastLog.riskLevel !== testCase.riskLevel.toUpperCase()) {
                     console.log(`[测试] ❌ ${testCase.name}: 风险等级错误，期望${testCase.riskLevel.toUpperCase()}，实际${lastLog.riskLevel}`);
                     testPassed = false;
                 }
-                
+
                 if (lastLog.reason !== testCase.reason) {
                     console.log(`[测试] ❌ ${testCase.name}: 原因描述错误，期望${testCase.reason}，实际${lastLog.reason}`);
                     testPassed = false;
                 }
-                
+
                 // 验证日志详情
                 if (!lastLog.details || typeof lastLog.details !== 'object') {
                     console.log(`[测试] ❌ ${testCase.name}: 缺少日志详情`);
                     testPassed = false;
                 }
             }
-            
+
             if (testPassed) {
                 passedTests++;
                 console.log(`[测试] ✅ ${testCase.name}: 日志记录正确`);
@@ -2545,15 +2545,15 @@ const testSecurityEventLogging = () => {
             console.log(`[测试] ❌ ${testCase.name}: 日志记录异常 ${error.message}`);
         }
     }
-    
+
     // 测试日志查询功能
     try {
         const allLogs = querySecurityLogs();
         const highRiskLogs = querySecurityLogs({ riskLevel: 'high' });
         const vmessLogs = querySecurityLogs({ protocol: 'vmess' });
-        
-        if (allLogs.length >= testCases.length && 
-            highRiskLogs.length >= 1 && 
+
+        if (allLogs.length >= testCases.length &&
+            highRiskLogs.length >= 1 &&
             vmessLogs.length >= 1) {
             console.log(`[测试] ✅ 日志查询功能正常`);
         } else {
@@ -2564,11 +2564,11 @@ const testSecurityEventLogging = () => {
         console.log(`[测试] ❌ 日志查询功能异常: ${error.message}`);
         passedTests = Math.max(0, passedTests - 1);
     }
-    
+
     // 测试安全摘要生成
     try {
         const summary = generateSecuritySummary();
-        if (summary && summary.securityScore !== undefined && 
+        if (summary && summary.securityScore !== undefined &&
             summary.overallStatus && summary.recommendations) {
             console.log(`[测试] ✅ 安全摘要生成正常 (评分: ${summary.securityScore}, 状态: ${summary.overallStatus})`);
         } else {
@@ -2579,7 +2579,7 @@ const testSecurityEventLogging = () => {
         console.log(`[测试] ❌ 安全摘要生成异常: ${error.message}`);
         passedTests = Math.max(0, passedTests - 1);
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 9 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -2592,12 +2592,12 @@ const testSecurityEventLogging = () => {
  */
 const testHysteria2SniValidation = () => {
     console.log('[测试] Property 10: Hysteria2 SNI Validation');
-    
+
     const testCases = [
         {
             name: '正常Hysteria2配置',
-            proxy: { 
-                type: 'hysteria2', 
+            proxy: {
+                type: 'hysteria2',
                 server: 'hy2.example.com',
                 port: 443,
                 sni: 'cloudflare.com',
@@ -2608,8 +2608,8 @@ const testHysteria2SniValidation = () => {
         },
         {
             name: '缺少SNI的Hysteria2',
-            proxy: { 
-                type: 'hysteria2', 
+            proxy: {
+                type: 'hysteria2',
                 server: '1.2.3.4',
                 port: 12800
                 // 缺少SNI
@@ -2620,8 +2620,8 @@ const testHysteria2SniValidation = () => {
         },
         {
             name: '无效SNI格式',
-            proxy: { 
-                type: 'hysteria2', 
+            proxy: {
+                type: 'hysteria2',
                 server: 'hy2.example.com',
                 port: 443,
                 sni: 'invalid..domain..com'
@@ -2631,10 +2631,10 @@ const testHysteria2SniValidation = () => {
             expectedRisk: 'medium'
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const result = safeExecute(
@@ -2642,20 +2642,20 @@ const testHysteria2SniValidation = () => {
                 `Hysteria2 SNI检查${testCase.name}`,
                 null
             );
-            
+
             if (!result) {
                 console.log(`[测试] ❌ ${testCase.name}: 检查函数返回null`);
                 continue;
             }
-            
+
             let testPassed = true;
-            
+
             // 验证有效性
             if (result.isValid !== testCase.expectedValid) {
                 console.log(`[测试] ❌ ${testCase.name}: 有效性错误，期望${testCase.expectedValid}，实际${result.isValid}`);
                 testPassed = false;
             }
-            
+
             // 验证问题检测
             if (testCase.expectedIssues) {
                 const hasExpectedIssues = testCase.expectedIssues.every(expectedIssue =>
@@ -2666,7 +2666,7 @@ const testHysteria2SniValidation = () => {
                     testPassed = false;
                 }
             }
-            
+
             if (testPassed) {
                 passedTests++;
                 console.log(`[测试] ✅ ${testCase.name}: Hysteria2 SNI检查正确`);
@@ -2675,7 +2675,7 @@ const testHysteria2SniValidation = () => {
             console.log(`[测试] ❌ ${testCase.name}: Hysteria2 SNI检查异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 10 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -2688,12 +2688,12 @@ const testHysteria2SniValidation = () => {
  */
 const testVlessCertificateConsistency = () => {
     console.log('[测试] Property 11: VLESS Certificate Consistency');
-    
+
     const testCases = [
         {
             name: '正常VLESS配置',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: 'vless.example.com',
                 port: 443,
                 tls: true,
@@ -2705,8 +2705,8 @@ const testVlessCertificateConsistency = () => {
         },
         {
             name: 'IP地址服务器缺少SNI',
-            proxy: { 
-                type: 'vless', 
+            proxy: {
+                type: 'vless',
                 server: '1.2.3.4',
                 port: 443,
                 tls: true
@@ -2717,10 +2717,10 @@ const testVlessCertificateConsistency = () => {
             expectedRisk: 'medium'
         }
     ];
-    
+
     let passedTests = 0;
     const totalTests = testCases.length;
-    
+
     for (const testCase of testCases) {
         try {
             const result = safeExecute(
@@ -2728,20 +2728,20 @@ const testVlessCertificateConsistency = () => {
                 `VLESS证书一致性${testCase.name}`,
                 null
             );
-            
+
             if (!result) {
                 console.log(`[测试] ❌ ${testCase.name}: 检查函数返回null`);
                 continue;
             }
-            
+
             let testPassed = true;
-            
+
             // 验证一致性
             if (result.isConsistent !== testCase.expectedConsistent) {
                 console.log(`[测试] ❌ ${testCase.name}: 一致性错误，期望${testCase.expectedConsistent}，实际${result.isConsistent}`);
                 testPassed = false;
             }
-            
+
             if (testPassed) {
                 passedTests++;
                 console.log(`[测试] ✅ ${testCase.name}: VLESS证书一致性检查正确`);
@@ -2750,7 +2750,7 @@ const testVlessCertificateConsistency = () => {
             console.log(`[测试] ❌ ${testCase.name}: VLESS证书一致性检查异常 ${error.message}`);
         }
     }
-    
+
     const success = passedTests === totalTests;
     console.log(`[测试] Property 11 结果: ${passedTests}/${totalTests} ${success ? '✅ 通过' : '❌ 失败'}`);
     return success;
@@ -2761,7 +2761,7 @@ const testVlessCertificateConsistency = () => {
  */
 const runTlsSecurityTests = () => {
     console.log('[TLS安全测试] 开始运行属性测试...');
-    
+
     const results = [
         testExceptionHandlingCompleteness(),
         testConfigurationConflictDetection(),
@@ -2776,10 +2776,10 @@ const runTlsSecurityTests = () => {
         testVlessCertificateConsistency(),
         testIntegratedTlsFunctions()
     ];
-    
+
     const passedCount = results.filter(r => r).length;
     const totalCount = results.length;
-    
+
     console.log(`[TLS安全测试] 总体结果: ${passedCount}/${totalCount} ${passedCount === totalCount ? '✅ 全部通过' : '❌ 部分失败'}`);
     return passedCount === totalCount;
 };
@@ -3663,7 +3663,7 @@ async function operator(proxies = []) {
                     proxy: proxy.name || proxy.server,
                     region: regionName
                 });
-                
+
                 logSecurityEvent('TLS_CONFIG_ERROR', proxy, recovery.suggestion, 'high');
                 console.log(`[TLS配置] 异常处理: ${recovery.suggestion}`);
             }
@@ -3757,9 +3757,9 @@ async function operator(proxies = []) {
                     'applySmartTlsEnhancement证书验证',
                     true
                 );
-                
+
                 proxy['skip-cert-verify'] = skipVerify;
-                
+
                 // 记录安全事件和风险评估
                 const riskAssessment = assessSecurityRisk(proxy, { region: regionName });
                 if (skipVerify) {
@@ -3798,59 +3798,59 @@ async function operator(proxies = []) {
 
                 // 客户端指纹
                 if (tlsBoost.enableClientFingerprint && !proxy['client-fingerprint']) {
-                proxy['client-fingerprint'] = tlsBoost.fingerprintType || 'chrome';
-            }
-
-            // SNI：仅在未设置时添加
-            if (!proxy.sni && !proxy.flow) {
-                proxy.sni = regionName ? getSmartSni(regionName) : getRandomSni();
-            }
-
-            // 🆕 v3.5.6: TLS Fragment 分片（绕过DPI检测）- 修复版
-            // 使用Sub-Store官方支持的参数格式
-            // 参考: substore/Sub-Store-master/backend/src/core/proxy-utils/producers/sing-box.js
-            // tlsParser函数中：
-            //   if (proxy['_fragment']) parsedProxy.tls.fragment = !!proxy['_fragment'];
-            //   if (proxy['_fragment_fallback_delay']) parsedProxy.tls.fragment_fallback_delay = proxy['_fragment_fallback_delay'];
-            //   if (proxy['_record_fragment']) parsedProxy.tls.record_fragment = !!proxy['_record_fragment'];
-            if (tlsBoost.enableTlsFragment) {
-                // 🔧 v3.5.6修复：确保TLS已启用，分片才有意义
-                if (proxy.tls === true) {
-                    const fragOpts = tlsBoost.tlsFragmentOptions || {};
-                    const fragInterval = fragOpts.interval || '10-20';
-
-                    // ✅ Sub-Store sing-box producer 官方支持的参数（布尔值）
-                    proxy['_fragment'] = true;  // 启用TLS分片 -> tls.fragment = true
-                    proxy['_fragment_fallback_delay'] = fragInterval;  // 分片间隔 -> tls.fragment_fallback_delay
-                    proxy['_record_fragment'] = true;  // 记录分片 -> tls.record_fragment = true
-
-                    // ✅ Clash Meta / Mihomo 格式（备用）
-                    proxy['client-fingerprint'] = proxy['client-fingerprint'] || 'chrome';
-                    // TLS分片已启用（仅sing-box生效）
-                }
-            }
-
-            // 🆕 v3.5.7: HTTP/2 增强 - Clash Meta/Shadowrocket 通用格式
-            if (tlsBoost.enableHttp2 && proxy.tls) {
-                // ✅ ALPN配置（数组格式，确保h2在前）
-                if (!proxy.alpn) {
-                    proxy.alpn = ['h2', 'http/1.1'];
-                } else if (Array.isArray(proxy.alpn) && !proxy.alpn.includes('h2')) {
-                    proxy.alpn.unshift('h2');
-                }
-                // 确保 alpn 是数组格式
-                if (proxy.alpn && !Array.isArray(proxy.alpn)) {
-                    proxy.alpn = [proxy.alpn];
+                    proxy['client-fingerprint'] = tlsBoost.fingerprintType || 'chrome';
                 }
 
-                // ✅ Clash Meta HTTP/2 传输配置（仅当 network=h2 时）
-                if (proxy.network === 'h2') {
-                    proxy['h2-opts'] = proxy['h2-opts'] || {
-                        host: [proxy.sni || proxy.server],
-                        path: '/'
-                    };
+                // SNI：仅在未设置时添加
+                if (!proxy.sni && !proxy.flow) {
+                    proxy.sni = regionName ? getSmartSni(regionName) : getRandomSni();
                 }
-            }
+
+                // 🆕 v3.5.6: TLS Fragment 分片（绕过DPI检测）- 修复版
+                // 使用Sub-Store官方支持的参数格式
+                // 参考: substore/Sub-Store-master/backend/src/core/proxy-utils/producers/sing-box.js
+                // tlsParser函数中：
+                //   if (proxy['_fragment']) parsedProxy.tls.fragment = !!proxy['_fragment'];
+                //   if (proxy['_fragment_fallback_delay']) parsedProxy.tls.fragment_fallback_delay = proxy['_fragment_fallback_delay'];
+                //   if (proxy['_record_fragment']) parsedProxy.tls.record_fragment = !!proxy['_record_fragment'];
+                if (tlsBoost.enableTlsFragment) {
+                    // 🔧 v3.5.6修复：确保TLS已启用，分片才有意义
+                    if (proxy.tls === true) {
+                        const fragOpts = tlsBoost.tlsFragmentOptions || {};
+                        const fragInterval = fragOpts.interval || '10-20';
+
+                        // ✅ Sub-Store sing-box producer 官方支持的参数（布尔值）
+                        proxy['_fragment'] = true;  // 启用TLS分片 -> tls.fragment = true
+                        proxy['_fragment_fallback_delay'] = fragInterval;  // 分片间隔 -> tls.fragment_fallback_delay
+                        proxy['_record_fragment'] = true;  // 记录分片 -> tls.record_fragment = true
+
+                        // ✅ Clash Meta / Mihomo 格式（备用）
+                        proxy['client-fingerprint'] = proxy['client-fingerprint'] || 'chrome';
+                        // TLS分片已启用（仅sing-box生效）
+                    }
+                }
+
+                // 🆕 v3.5.7: HTTP/2 增强 - Clash Meta/Shadowrocket 通用格式
+                if (tlsBoost.enableHttp2 && proxy.tls) {
+                    // ✅ ALPN配置（数组格式，确保h2在前）
+                    if (!proxy.alpn) {
+                        proxy.alpn = ['h2', 'http/1.1'];
+                    } else if (Array.isArray(proxy.alpn) && !proxy.alpn.includes('h2')) {
+                        proxy.alpn.unshift('h2');
+                    }
+                    // 确保 alpn 是数组格式
+                    if (proxy.alpn && !Array.isArray(proxy.alpn)) {
+                        proxy.alpn = [proxy.alpn];
+                    }
+
+                    // ✅ Clash Meta HTTP/2 传输配置（仅当 network=h2 时）
+                    if (proxy.network === 'h2') {
+                        proxy['h2-opts'] = proxy['h2-opts'] || {
+                            host: [proxy.sni || proxy.server],
+                            path: '/'
+                        };
+                    }
+                }
 
             } catch (error) {
                 const recovery = handleTlsException(error, {
@@ -3858,7 +3858,7 @@ async function operator(proxies = []) {
                     proxy: proxy.name || proxy.server,
                     region: regionName
                 });
-                
+
                 logSecurityEvent('TLS_ENHANCEMENT_ERROR', proxy, recovery.suggestion, 'high');
                 console.log(`[TLS增强] 异常处理: ${recovery.suggestion}`);
             }
@@ -4221,9 +4221,9 @@ async function operator(proxies = []) {
                             'Hysteria2证书验证',
                             true
                         );
-                        
+
                         modifiedProxy['skip-cert-verify'] = skipVerify;
-                        
+
                         // 记录 Hysteria2 安全事件
                         if (skipVerify) {
                             logSecurityEvent(
@@ -4304,9 +4304,9 @@ async function operator(proxies = []) {
                             'TUIC证书验证',
                             true
                         );
-                        
+
                         modifiedProxy['skip-cert-verify'] = skipVerify;
-                        
+
                         // 记录 TUIC 安全事件
                         if (skipVerify) {
                             logSecurityEvent(
@@ -4436,9 +4436,9 @@ async function operator(proxies = []) {
                                     ? cfg.boostOptions.tlsBoost.skipCertVerify
                                     : true // 默认兼容策略
                             );
-                            
+
                             modifiedProxy['skip-cert-verify'] = skipVerify;
-                            
+
                             // 记录 Shadowsocks 安全事件
                             if (skipVerify) {
                                 logSecurityEvent(
