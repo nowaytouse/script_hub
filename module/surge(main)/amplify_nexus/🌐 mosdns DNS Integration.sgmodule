@@ -16,17 +16,17 @@ encrypted-dns-follow-outbound-mode = false
 [Host]
 # DNS Bootstrap - Loop Prevention
 # Hardcoded IPs for critical DoH providers to ensure Surge resolves them instantly without querying mosdns.
-dns.google = 8.8.8.8, 8.8.4.4, 2001:4860:4860::8888, 2001:4860:4860::8844
-cloudflare-dns.com = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001
-doh.pub = 1.12.12.12, 120.53.53.53, 2402:4e00::
-dns.pub = 1.12.12.12, 120.53.53.53, 2402:4e00::
-dot.pub = 1.12.12.12, 120.53.53.53, 2402:4e00::
-doh.360.cn = 101.198.198.198, 101.198.199.200, 2400:6180:119:3:c::
-dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1
-doh.dns.apple.com = 17.253.14.251, 17.253.14.125, 2603:1010:1:c2::163
-dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9
-dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff
-wikimedia-dns.org = 198.35.26.96, 2620:0:862:ed1a::1, 103.102.166.224
+dns.google = server:syslib
+cloudflare-dns.com = server:syslib
+doh.pub = server:syslib
+dns.pub = server:syslib
+dot.pub = server:syslib
+doh.360.cn = server:syslib
+dns.alidns.com = server:syslib
+doh.dns.apple.com = server:syslib
+dns.quad9.net = server:syslib
+dns.adguard-dns.com = server:syslib
+wikimedia-dns.org = server:syslib
 
 # [Script]
 # DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
