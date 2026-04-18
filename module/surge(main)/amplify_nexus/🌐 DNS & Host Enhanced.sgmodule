@@ -7,8 +7,8 @@
 #!version=2026.04.19a
 
 [General]
-# Bootstrap DNS - Primarily for mainland connectivity and DoH bootstrapping
-dns-server = 223.5.5.5, 119.29.29.29
+# Bootstrap DNS - International Only
+dns-server = 8.8.8.8, 1.1.1.1, 9.9.9.9
 
 # Global DoH Pool - International Only (Mainland DoH excluded)
 encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.nextdns.io/7f2fac, https://dns.controld.com/p2, https://dns.mullvad.net/dns-query, https://doh.opendns.com/dns-query, https://doh.dns.sb/dns-query, https://doh.cleanbrowsing.org/doh/security-filter/, https://dns.twnic.tw/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ahoy.pro/dns-query, https://doh.sway.run/dns-query, https://doh.libredns.gr/dns-query, https://unicast.censurfridns.dk/dns-query
