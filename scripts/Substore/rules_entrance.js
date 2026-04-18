@@ -3496,10 +3496,10 @@ async function operator(proxies = []) {
 
         // 🔒 智能安全策略：混淆域名检测与自动矫正
         const SUSPICIOUS_SNI_PATTERNS = [
-            /\.biliimg\.com$/i,
-            /^www\.apple\.com$/i,
-            /\.pages\.dev$/i,
-            /\.(top|xyz|site|link|info|me|today|rocks|cloud|online|shop|life|work)$/i
+            /\.biliimg\.com(:\d+)?$/i,
+            /^www\.apple\.com(:\d+)?$/i,
+            /\.pages\.dev(:\d+)?$/i,
+            /\.(top|xyz|site|link|info|me|today|rocks|cloud|online|shop|life|work)(:\d+)?$/i
         ];
 
         const SAFE_SNI_POOL = [
@@ -3516,18 +3516,27 @@ async function operator(proxies = []) {
         const applySmartSniCorrection = (proxy) => {
             if (!proxy.tls) return;
 
-            const currentSni = proxy.sni || proxy.server || '';
+            // 获取当前的 SNI (支持多种字段名)
+            const getRawSni = (p) => (p.sni || p.servername || p['server-name'] || p.server || '').toString().trim();
+            const currentSni = getRawSni(proxy);
+            
+            if (!currentSni) return;
+
             const isSuspicious = SUSPICIOUS_SNI_PATTERNS.some(pattern => pattern.test(currentSni));
 
             if (isSuspicious) {
                 const oldSni = currentSni;
                 const newSni = getRandItem(SAFE_SNI_POOL);
-                proxy.sni = newSni;
                 
-                // 同时也更新常用插件中的域名
-                if (proxy['ws-opts']?.headers?.Host) proxy['ws-opts'].headers.Host = newSni;
-                if (proxy['http-opts']?.headers?.Host) proxy['http-opts'].headers.Host = newSni;
-                if (proxy['obfs-opts']?.host) proxy['obfs-opts'].host = newSni;
+                // 统一设置 SNI 字段
+                proxy.sni = newSni;
+                if (proxy.servername) proxy.servername = newSni;
+                if (proxy['server-name']) proxy['server-name'] = newSni;
+                
+                // 同时也强制同步/设置常用插件中的 Host 域名 (即便原本没有也补上，增加隐蔽性)
+                _.set(proxy, 'ws-opts.headers.Host', newSni);
+                _.set(proxy, 'http-opts.headers.Host', newSni);
+                _.set(proxy, 'obfs-opts.host', newSni);
                 
                 console.log(`[安全矫正] 🛡️ ${proxy.name || proxy.server}: ${oldSni} -> ${newSni}`);
             }
@@ -4858,13 +4867,13 @@ async function operator(proxies = []) {
             case 'relay_only': finalNodes = relayChainProxies; break;
             case 'landing_only': finalNodes = landingChainProxies; break;
             case 'airport_only': {
-                // ✈️ 机场预设模式：美化命名但保持优化后的配置
-                // 修复 v3.6.1: 确保机场模式也能享受 SNI 矫正和 TLS 优化
+                // ✈️ 机场预设模式：美化命名但保持原始配置
+                // 格式: ✈️ 🇭🇰 HK·01 IPLC·📺
                 const airportCounters = new Map();
-                finalNodes = processedProxies.map((proxy, idx) => {
+                finalNodes = proxies.map((proxy, idx) => {
                     if (!proxy || typeof proxy !== 'object') return proxy;
 
-                    const originalName = proxy._originalName || proxy.name || `Node ${idx + 1}`;
+                    const originalName = proxy.name || `Node ${idx + 1}`;
                     const regionInfo = getRegionInfo(originalName, proxy.server);
                     const regionShort = cfg.naming.regionShortNames[regionInfo.r] || regionInfo.r;
 
