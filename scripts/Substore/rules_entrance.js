@@ -3526,6 +3526,35 @@ async function operator(proxies = []) {
             }
             return false;
         };
+ 
+        // 🔒 智能安全策略：机场 SNI 自动矫正
+        const AIRPORT_SNI_PATTERN = /\.(top|xyz|site|link|info|me|today|rocks|cloud|online|shop|life|work)$/i;
+        const SAFE_SNI_POOL = [
+            'www.apple.com.cn',
+            'download-porter.hoyoverse.com',
+            'api-cloudgame.mihoyo.com',
+            'static.cloud.microsoft'
+        ];
+ 
+        /**
+         * 矫正机场风格的 SNI，替换为更隐蔽的域名
+         * @param {Object} proxy - 代理节点
+         */
+        const correctAirportSni = (proxy) => {
+            const currentSni = proxy.sni || proxy.server || '';
+            if (AIRPORT_SNI_PATTERN.test(currentSni)) {
+                const oldSni = currentSni;
+                const newSni = getRandItem(SAFE_SNI_POOL);
+                proxy.sni = newSni;
+                
+                // 同时也更新常用插件中的域名
+                if (proxy['ws-opts']?.headers?.Host) proxy['ws-opts'].headers.Host = newSni;
+                if (proxy['http-opts']?.headers?.Host) proxy['http-opts'].headers.Host = newSni;
+                if (proxy['obfs-opts']?.host) proxy['obfs-opts'].host = newSni;
+                
+                console.log(`[SNI矫正] ✈️ ${proxy.name || proxy.server}: ${oldSni} -> ${newSni}`);
+            }
+        };
 
         // 🛡️ 增强过滤检查（更完善的防御性检查）
         const checkAndFilter = (proxy) => {
@@ -3916,6 +3945,9 @@ async function operator(proxies = []) {
         const optimizeProxy = (proxy) => {
             const protocolType = proxy.type.toLowerCase();
             const modifiedProxy = { ...proxy };
+ 
+            // 🔒 自动矫正机场 SNI
+            correctAirportSni(modifiedProxy);
 
             // ============================================================
             // 通用 Boost 选项（适用于多数协议）
