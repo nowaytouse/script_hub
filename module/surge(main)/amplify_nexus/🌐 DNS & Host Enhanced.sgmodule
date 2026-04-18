@@ -11,7 +11,8 @@
 dns-server = 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 208.67.222.222, 208.67.220.220, 185.222.222.222, 64.6.64.6, 64.6.65.6, 94.140.14.14, 94.140.15.15, 8.26.56.26, 8.20.247.20, 4.2.2.1, 4.2.2.2
 
 # Global DoH Pool - International Only (Mainland DoH excluded)
-encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.nextdns.io/7f2fac, https://dns.controld.com/p2, https://dns.mullvad.net/dns-query, https://doh.opendns.com/dns-query, https://doh.dns.sb/dns-query, https://doh.cleanbrowsing.org/doh/security-filter/, https://dns.twnic.tw/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ahoy.pro/dns-query, https://doh.sway.run/dns-query, https://doh.libredns.gr/dns-query, https://unicast.censurfridns.dk/dns-query
+# Includes specialized variants for ad-blocking and maximum privacy
+encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://doh.family.adguard-dns.com/dns-query, https://dns.nextdns.io/7f2fac, https://dns.controld.com/p2, https://dns.mullvad.net/dns-query, https://adblock.dns.mullvad.net/dns-query, https://doh.libredns.gr/noads, https://doh.opendns.com/dns-query, https://dns.nextdns.io, https://doh.dns.sb/dns-query, https://doh.cleanbrowsing.org/doh/security-filter/, https://dns.twnic.tw/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ahoy.pro/dns-query, https://doh.sway.run/dns-query, https://unicast.censurfridns.dk/dns-query, https://doh.applied-privacy.net/query, https://odvr.nic.cz/doh, https://dns.digitale-gesellschaft.ch/dns-query
 
 # Performance/Privacy Switches
 # Enable following outbound mode to ensure international DoH goes through proxy
