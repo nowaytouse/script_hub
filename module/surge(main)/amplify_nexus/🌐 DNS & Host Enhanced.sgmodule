@@ -8,7 +8,7 @@
 
 [General]
 # Global DoH Pool - International Only (Mainland DoH excluded)
-encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://wikimedia-dns.org/dns-query, https://dns.twnic.tw/dns-query
+encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://dns.nextdns.io/7f2fac, https://dns.controld.com/p2, https://dns.mullvad.net/dns-query, https://doh.opendns.com/dns-query, https://doh.dns.sb/dns-query, https://doh.cleanbrowsing.org/doh/security-filter/, https://dns.twnic.tw/dns-query, https://wikimedia-dns.org/dns-query, https://doh.ahoy.pro/dns-query, https://doh.sway.run/dns-query, https://doh.libredns.gr/dns-query, https://unicast.censurfridns.dk/dns-query
 
 [Host]
 # SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
