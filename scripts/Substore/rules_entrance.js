@@ -4858,13 +4858,13 @@ async function operator(proxies = []) {
             case 'relay_only': finalNodes = relayChainProxies; break;
             case 'landing_only': finalNodes = landingChainProxies; break;
             case 'airport_only': {
-                // ✈️ 机场预设模式：美化命名但保持原始配置
-                // 格式: ✈️ 🇭🇰 HK·01 IPLC·📺
+                // ✈️ 机场预设模式：美化命名但保持优化后的配置
+                // 修复 v3.6.1: 确保机场模式也能享受 SNI 矫正和 TLS 优化
                 const airportCounters = new Map();
-                finalNodes = proxies.map((proxy, idx) => {
+                finalNodes = processedProxies.map((proxy, idx) => {
                     if (!proxy || typeof proxy !== 'object') return proxy;
 
-                    const originalName = proxy.name || `Node ${idx + 1}`;
+                    const originalName = proxy._originalName || proxy.name || `Node ${idx + 1}`;
                     const regionInfo = getRegionInfo(originalName, proxy.server);
                     const regionShort = cfg.naming.regionShortNames[regionInfo.r] || regionInfo.r;
 
