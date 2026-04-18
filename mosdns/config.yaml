@@ -132,12 +132,12 @@ plugins:
       concurrent: 5
       upstreams:
         - addr: "223.5.5.5"               # AliDNS IPv4
-        - addr: "2400:3200::1"            # AliDNS IPv6
+        - addr: "[2400:3200::1]"          # AliDNS IPv6
         - addr: "119.29.29.29"             # DNSPod IPv4
-        - addr: "2402:4e00::"              # DNSPod IPv6
-        - addr: "2001:4860:4860::8888"     # Google IPv6
+        - addr: "[2402:4e00::]"            # DNSPod IPv6
+        - addr: "[2001:4860:4860::8888]"   # Google IPv6
         - addr: "1.1.1.1"                  # Cloudflare IPv4
-        - addr: "2620:fe::fe"              # Quad9 IPv6
+        - addr: "[2620:fe::fe]"            # Quad9 IPv6
 
   - tag: forward_intl_general
     type: forward
