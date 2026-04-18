@@ -77,20 +77,51 @@ tail -f /tmp/smartdns.log
 
 ## Management
 
+### Golden Specification for launchd
+
+1. **bootout** → Clean up old instances
+2. **bootstrap** → Register service
+3. **kickstart** → Run service
+4. **print** → Verify status
+
+### Operations
+
 ```bash
-# Status
-launchctl print gui/$(id -u)/com.smartdns
+# 1. Status
+launchctl print "gui/$(id -u)/com.smartdns" | egrep "state|program"
 
-# Stop / start
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.smartdns.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.smartdns.plist
+# 2. Complete Reload (Golden Lifecycle)
+launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.plist 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.plist
+launchctl kickstart -k "gui/$(id -u)/com.smartdns"
 
-# Restart after config edits
-launchctl kickstart -k gui/$(id -u)/com.smartdns
-
-# Edit config
-vim ~/.smartdns/smartdns.conf
+# 3. Quick Restart (Config reload only)
+launchctl kickstart -k "gui/$(id -u)/com.smartdns"
 ```
+
+### Unified Management Function
+
+Add this to your `.zshrc` or `.bashrc` for easy management:
+
+```bash
+reload_service() {
+  local domain=$1
+  local plist=$2
+  local label=$3
+
+  # Use sudo only if domain is 'system'
+  local cmd_prefix=""
+  [[ "$domain" == "system" ]] && cmd_prefix="sudo "
+
+  $cmd_prefix launchctl bootout "$domain" "$plist" 2>/dev/null || true
+  $cmd_prefix launchctl bootstrap "$domain" "$plist"
+  $cmd_prefix launchctl kickstart -k "$domain/$label"
+}
+
+# Usage:
+# reload_service "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.plist com.smartdns
+```
+
 
 ## Audit and Noise Control
 

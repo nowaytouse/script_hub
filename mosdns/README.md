@@ -106,21 +106,51 @@ tail -f /tmp/mosdns.log
 
 ## Management
 
+### Golden Specification for launchd
+
+1. **bootout** → Clean up old instances (use `sudo` for system domain)
+2. **bootstrap** → Register service
+3. **kickstart** → Run service
+4. **print** → Verify status
+
+### Operations
+
 ```bash
-# Status
-launchctl print gui/$(id -u)/com.smartdns
-launchctl print system/com.mosdns
+# 1. Status
+sudo launchctl print system/com.mosdns | egrep "state|program"
 
-# Stop / start mosdns
-sudo launchctl bootout system /Library/LaunchDaemons/com.mosdns.plist
+# 2. Complete Reload (Golden Lifecycle)
+sudo launchctl bootout system /Library/LaunchDaemons/com.mosdns.plist 2>/dev/null || true
 sudo launchctl bootstrap system /Library/LaunchDaemons/com.mosdns.plist
-
-# Restart mosdns after config edits
 sudo launchctl kickstart -k system/com.mosdns
 
-# Edit config
-vim ~/.mosdns/config/config.yaml
+# 3. Quick Restart (Config reload only)
+sudo launchctl kickstart -k system/com.mosdns
 ```
+
+### Unified Management Function
+
+Add this to your `.zshrc` or `.bashrc` for easy management:
+
+```bash
+reload_service() {
+  local domain=$1
+  local plist=$2
+  local label=$3
+
+  # Use sudo only if domain is 'system'
+  local cmd_prefix=""
+  [[ "$domain" == "system" ]] && cmd_prefix="sudo "
+
+  $cmd_prefix launchctl bootout "$domain" "$plist" 2>/dev/null || true
+  $cmd_prefix launchctl bootstrap "$domain" "$plist"
+  $cmd_prefix launchctl kickstart -k "$domain/$label"
+}
+
+# Usage:
+# reload_service system /Library/LaunchDaemons/com.mosdns.plist com.mosdns
+```
+
 
 ## Routing Details
 
