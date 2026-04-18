@@ -178,13 +178,13 @@ plugins:
     type: sequence
     args:
       - exec: $forward_smartdns_cn
-      # Accept immediately if response IP is CN (IPv4 or IPv6)
+      # If response is a known CN IP (v4 or v6), we are done.
       - matches: "resp_ip $cn_ip_matcher"
         exec: accept
       - matches: "resp_ip $cn_ip_v6_matcher"
         exec: accept
-      # Non-CN IP for a CN domain → domain is on intl CDN, fall to intl path
-      - exec: $forward_smartdns_intl
+      # Otherwise, it might be a CDN-cloaked international domain, retry via international sequence.
+      - exec: $intl_sequence
       - exec: accept
 
   # Intl sequence: query smartdns-rs Intl group, verify response IP is NOT CN.
@@ -194,13 +194,12 @@ plugins:
     type: sequence
     args:
       - exec: $forward_smartdns_intl
-      # If response IP is NOT CN → good, accept
-      - matches: "!resp_ip $cn_ip_matcher"
-        exec: accept
-      - matches: "!resp_ip $cn_ip_v6_matcher"
-        exec: accept
-      # CN IP for intl domain → domain uses CN CDN, fall to cn_sequence
-      - exec: $forward_smartdns_cn
+      # If an international query returns a CN IP (v4 or v6), retry via local CN sequence for better latency.
+      - matches: "resp_ip $cn_ip_matcher"
+        exec: $cn_sequence
+      - matches: "resp_ip $cn_ip_v6_matcher"
+        exec: $cn_sequence
+      # Otherwise, it is truly international, accept results.
       - exec: accept
 
   - tag: main_sequence
