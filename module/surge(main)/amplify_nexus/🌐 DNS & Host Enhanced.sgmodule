@@ -18,6 +18,11 @@ encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/
 encrypted-dns-follow-outbound-mode = true
 
 [Host]
+# SECTION 1: Airport / Proxy Server Node Hardening (Self-Bootstrapping)
+# Map airport/node domains to syslib to prevent encrypted DNS recursion loops.
+*.liangxin1.xyz = server:syslib
+*.liangxin?.xyz = server:syslib
+
 # SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
 # Mainland domains must be at the top so they hit mainland DoH without
 # falling through to the international global pool (which would be slow).
