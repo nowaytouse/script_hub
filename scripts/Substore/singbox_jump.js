@@ -1,32 +1,3 @@
-/**
- * ============================================================
- * Sub-Store 节点隐蔽性与安全性全面增强脚本 【v3.7.0 Sing-box三跳版】
- * ============================================================
- * 
- * v3.7.0 TLS安全增强版（2025-01-23）：
- * - 🛡️ TLS安全增强：智能证书验证策略，平衡安全性与机场兼容性
- * - 🛡️ 脚本健壮性：全面异常处理、配置验证、自动回退机制
- * - 🧪 属性测试：12个属性测试验证系统正确性和安全性
- * - 📊 风险评估：智能风险评估模块，详细安全因素分析
- * - 🔐 自签证书处理：专门的自签证书检测和处理逻辑
- * - 📝 安全事件日志：详细的TLS安全事件记录和风险等级标记
- * - 🎯 协议特定策略：针对不同协议的专门安全策略
- * - 🛡️ 配置保护：Reality/XTLS节点特殊保护，确保兼容性
- * - 🔍 SNI诊断：Hysteria2和VLESS节点的SNI配置诊断
- * - 📈 监控系统：安全事件查询、摘要报告和用户友好提示
- *
- * v3.6.0 优化内容（2025-11-29）：
- * - 🚀 性能优化：批量处理优化，减少循环次数
- * - 🔒 安全增强：增强节点验证，防止恶意配置
- * - 🎭 隐蔽性提升：优化Chrome 131指纹，更真实的浏览器模拟
- * - 📦 代码质量：简化冗余逻辑，提高可维护性
- * - ⚡ 效率提升：优化去重算法，使用更高效的数据结构
- *
- * 三跳链式代理配置：入口节点 → 中继节点 → 落地节点
- * 适用于需要多层代理的复杂网络环境
- * ============================================================
- */
-
 log(`🚀 开始三跳链式代理节点插入脚本处理`);
 
 // ==================== 参数解析 ====================
@@ -37,10 +8,40 @@ let {
     name3, outbound3, type3, includeUnsupportedProxy3, url3
 } = $arguments;
 
+const HOP_PRESETS = [
+    {
+        key: 'inbound',
+        label: '入口',
+        name: firstDefined($arguments.inboundName, $arguments.entryName, name1),
+        outbound: firstDefined($arguments.inboundOutbound, $arguments.entryOutbound, outbound1),
+        type: firstDefined($arguments.inboundType, $arguments.entryType, type1),
+        includeUnsupportedProxy: normalizeBooleanArgument(firstDefined($arguments.inboundIncludeUnsupportedProxy, $arguments.entryIncludeUnsupportedProxy, includeUnsupportedProxy1)),
+        url: firstDefined($arguments.inboundUrl, $arguments.entryUrl, url1),
+    },
+    {
+        key: 'relay',
+        label: '中续',
+        name: firstDefined($arguments.relayName, $arguments.middleName, name2),
+        outbound: firstDefined($arguments.relayOutbound, $arguments.middleOutbound, outbound2),
+        type: firstDefined($arguments.relayType, $arguments.middleType, type2),
+        includeUnsupportedProxy: normalizeBooleanArgument(firstDefined($arguments.relayIncludeUnsupportedProxy, $arguments.middleIncludeUnsupportedProxy, includeUnsupportedProxy2)),
+        url: firstDefined($arguments.relayUrl, $arguments.middleUrl, url2),
+    },
+    {
+        key: 'egress',
+        label: '落地',
+        name: firstDefined($arguments.egressName, $arguments.exitName, name3),
+        outbound: firstDefined($arguments.egressOutbound, $arguments.exitOutbound, outbound3),
+        type: firstDefined($arguments.egressType, $arguments.exitType, type3),
+        includeUnsupportedProxy: normalizeBooleanArgument(firstDefined($arguments.egressIncludeUnsupportedProxy, $arguments.exitIncludeUnsupportedProxy, includeUnsupportedProxy3)),
+        url: firstDefined($arguments.egressUrl, $arguments.exitUrl, url3),
+    },
+];
+
 log(`\n📋 三跳配置参数:`);
-log(`  第一跳(入口): name=${name1}, type=${type1}`);
-log(`  第二跳(中续): name=${name2}, type=${type2}`);
-log(`  第三跳(落地): name=${name3}, type=${type3}`);
+for (const hop of HOP_PRESETS) {
+    log(`  ${hop.label}: name=${hop.name ?? '-'}, type=${hop.type ?? '-'}, outbound=${hop.outbound ?? '-'}`);
+}
 
 const parser = ProxyUtils.JSON5 || JSON;
 log(`\n使用 ${ProxyUtils.JSON5 ? 'JSON5' : 'JSON'} 解析配置文件`);
@@ -53,6 +54,10 @@ try {
     throw new Error(`配置文件不是合法的 ${ProxyUtils.JSON5 ? 'JSON5' : 'JSON'} 格式`);
 }
 
+if (!config || !Array.isArray(config.outbounds)) {
+    throw new Error('配置文件缺少 outbounds 数组，无法执行链式节点插入');
+}
+
 // ==================== 性能优化：预编译正则表达式 ====================
 const SANITIZE_REGEX = /[\[\]【】"']+/g;
 const WHITESPACE_REGEX = /\s+/g;
@@ -63,7 +68,11 @@ function sanitizeNodeTag(tag) {
     if (!tag) return tag;
     if (SANITIZE_CACHE.has(tag)) return SANITIZE_CACHE.get(tag);
     
-    const cleaned = tag.replace(SANITIZE_REGEX, '').replace(/[\t\n\r]/g, ' ').replace(/ {3,}/g, ' ').trimEnd();
+    const cleaned = tag
+        .replace(SANITIZE_REGEX, '')
+        .replace(/[\t\n\r]/g, ' ')
+        .replace(WHITESPACE_REGEX, ' ')
+        .trimEnd();
     SANITIZE_CACHE.set(tag, cleaned);
     return cleaned;
 }
@@ -152,7 +161,7 @@ function parseOutboundRules(outbound, hopLabel) {
 function insertProxiesToGroups(proxies, outbounds, hopLabel, stats) {
     log(`\n📝 ${hopLabel}: 插入节点到策略组...`);
     let insertedCount = 0;
-    const VALID_TYPES = new Set(['selector', 'urltest']);
+    const VALID_TYPES = new Set(['selector', 'urltest', 'load-balance']);
     
     // 预编译所有正则表达式
     const compiledRules = outbounds.map(([pattern, tagRegex]) => ({
@@ -174,6 +183,8 @@ function insertProxiesToGroups(proxies, outbounds, hopLabel, stats) {
             }
             
             const matchedTags = getTags(proxies, tagRegex);
+            const existingTags = new Set(outbound.outbounds);
+            const newTags = [];
             
             if (!stats[outbound.tag]) {
                 stats[outbound.tag] = {
@@ -184,11 +195,17 @@ function insertProxiesToGroups(proxies, outbounds, hopLabel, stats) {
                 };
             }
             
-            if (matchedTags.length > 0) {
-                stats[outbound.tag].inserted += matchedTags.length;
-                stats[outbound.tag].nodes.push(...matchedTags);
-                insertedCount += matchedTags.length;
-                outbound.outbounds.push(...matchedTags);
+            for (const tag of matchedTags) {
+                if (existingTags.has(tag)) continue;
+                existingTags.add(tag);
+                newTags.push(tag);
+            }
+
+            if (newTags.length > 0) {
+                stats[outbound.tag].inserted += newTags.length;
+                stats[outbound.tag].nodes.push(...newTags);
+                insertedCount += newTags.length;
+                outbound.outbounds.push(...newTags);
             }
         }
     }
@@ -202,31 +219,18 @@ const allProxies = [];
 const insertionStats = {};
 let totalInserted = 0;
 
-// 第一跳：节点入口
-if (name1 && outbound1) {
-    const proxies1 = await fetchProxies(name1, type1, url1, includeUnsupportedProxy1, '第一跳(入口)');
-    const outbounds1 = parseOutboundRules(outbound1, '第一跳(入口)');
-    const inserted1 = insertProxiesToGroups(proxies1, outbounds1, '第一跳(入口)', insertionStats);
-    totalInserted += inserted1;
-    allProxies.push(...proxies1);
-}
+for (const hop of HOP_PRESETS) {
+    if (!hop.name || !hop.outbound) {
+        log(`\n⚪ 跳过${hop.label}: 缺少 name 或 outbound`);
+        continue;
+    }
 
-// 第二跳：中续路径
-if (name2 && outbound2) {
-    const proxies2 = await fetchProxies(name2, type2, url2, includeUnsupportedProxy2, '第二跳(中续)');
-    const outbounds2 = parseOutboundRules(outbound2, '第二跳(中续)');
-    const inserted2 = insertProxiesToGroups(proxies2, outbounds2, '第二跳(中续)', insertionStats);
-    totalInserted += inserted2;
-    allProxies.push(...proxies2);
-}
-
-// 第三跳：落地节点
-if (name3 && outbound3) {
-    const proxies3 = await fetchProxies(name3, type3, url3, includeUnsupportedProxy3, '第三跳(落地)');
-    const outbounds3 = parseOutboundRules(outbound3, '第三跳(落地)');
-    const inserted3 = insertProxiesToGroups(proxies3, outbounds3, '第三跳(落地)', insertionStats);
-    totalInserted += inserted3;
-    allProxies.push(...proxies3);
+    const displayLabel = `${hop.label}(${hop.key})`;
+    const hopProxies = await fetchProxies(hop.name, hop.type, hop.url, hop.includeUnsupportedProxy, displayLabel);
+    const hopOutbounds = parseOutboundRules(hop.outbound, displayLabel);
+    const inserted = insertProxiesToGroups(hopProxies, hopOutbounds, displayLabel, insertionStats);
+    totalInserted += inserted;
+    allProxies.push(...hopProxies);
 }
 
 log(`\n✅ 三跳总共插入 ${totalInserted} 个节点`);
@@ -330,10 +334,19 @@ log(`${'='.repeat(60)}\n`);
 // ==================== 链式代理配置 ====================
 // 三跳链路: 入口 → 中续 → 落地
 // 注意: 名称必须与配置文件中的outbound tag完全匹配
-const relay = {
-    '♻️ 自动入口 🧠': '🚶 中续路径 🔐',      // 入口节点 → 中续节点
-    '🚶 中续路径 🔐': '🕳️ 落地节点 🔐 +',   // 中续节点 → 落地节点
+const hopGroupPreset = {
+    inbound: firstDefined($arguments.inboundGroup, $arguments.entryGroup, '♻️ 自动入口 🧠'),
+    relay: firstDefined($arguments.relayGroup, $arguments.middleGroup, '🚶 中续路径 🔐'),
+    egress: firstDefined($arguments.egressGroup, $arguments.exitGroup, '🕳️ 落地节点 🔐 +'),
 };
+
+const relay = {};
+if (hopGroupPreset.inbound && hopGroupPreset.relay) {
+    relay[hopGroupPreset.inbound] = hopGroupPreset.relay;
+}
+if (hopGroupPreset.relay && hopGroupPreset.egress) {
+    relay[hopGroupPreset.relay] = hopGroupPreset.egress;
+}
 
 log(`📋 链式代理配置:`);
 Object.entries(relay).forEach(([from, to]) => {
@@ -486,8 +499,8 @@ function detectRelayCycle(group, path = []) {
         const newPath = [...path, group];
         if (visiting.has(target)) {
             const cyclePath = [...newPath, target].join(' ➜ ');
-            log(`   ❌ 检测到宏观循环: \${cyclePath}`);
-            log(`   🛡️ 为防止错误，此链接将被断开: \${group} -> \${target}`);
+            log(`   ❌ 检测到宏观循环: ${cyclePath}`);
+            log(`   🛡️ 为防止错误，此链接将被断开: ${group} -> ${target}`);
             safeChains.delete(group);
             cycleFoundInRelay = true;
         } else if (!visited.has(target)) {
@@ -612,9 +625,36 @@ function log(v) {
 }
 
 function createTagRegExp(tagPattern) {
-    return new RegExp(tagPattern.replace(/ℹ️/g, '').trim(), tagPattern.includes('ℹ️') ? 'i' : undefined);
+    return createSafeRegExp(tagPattern.replace(/ℹ️/g, '').trim(), tagPattern.includes('ℹ️') ? 'i' : undefined);
 }
 
 function createOutboundRegExp(outboundPattern) {
-    return new RegExp(outboundPattern.replace(/ℹ️/g, '').trim(), outboundPattern.includes('ℹ️') ? 'i' : undefined);
+    return createSafeRegExp(outboundPattern.replace(/ℹ️/g, '').trim(), outboundPattern.includes('ℹ️') ? 'i' : undefined);
+}
+
+function createSafeRegExp(pattern, flags) {
+    try {
+        return new RegExp(pattern, flags);
+    } catch (error) {
+        log(`⚠️ 正则创建失败，已回退为不匹配模式: ${pattern} (${error.message ?? error})`);
+        return /^$/;
+    }
+}
+
+function firstDefined(...values) {
+    for (const value of values) {
+        if (value !== undefined && value !== null && value !== '') {
+            return value;
+        }
+    }
+    return undefined;
+}
+
+function normalizeBooleanArgument(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return value;
+    const normalized = value.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on', 'enable', 'enabled'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off', 'disable', 'disabled'].includes(normalized)) return false;
+    return value;
 }

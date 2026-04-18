@@ -1,6 +1,6 @@
 # mosdns DNS Setup for Surge
 
-Complete dual-track DNS solution with zero cross-contamination between mainland and international domains. Chains into a local [smartdns-rs](../smartdns/README.md) instance for fastest-IP selection, TTL smoothing, IPv6 preference, and audit logging on the CN and international fallback buckets.
+Complete dual-track DNS solution with zero cross-contamination between mainland and international domains. Chains into a local [smartdns-rs](../smartdns/README.md) instance for fastest-IP selection, TTL smoothing, and IPv6 preference on the CN bucket only.
 
 ## Architecture
 
@@ -17,12 +17,12 @@ Specialty steers  CN domains            International
 (Apple/Google/    (cn_domain_matcher)   fallback
  MS/Cloudflare/        │                      │
  TW/Social/            ↓                      ↓
- Ali/Tencent/     127.0.0.1:6353        127.0.0.1:6354
- NSFW)            (smartdns cn)         (smartdns intl)
-    │                  │                      │
-    ↓               race 4 CN DoH         race 6 intl DoH
-direct DoH         speed-tested          via SOCKS5 proxy
-(unchanged)        fastest-IP            (speed-check off)
+ Ali/Tencent/     127.0.0.1:6353        direct DoH via
+ NSFW)            (smartdns cn)         Surge SOCKS5
+    │                  │
+    ↓               race 4 CN DoH
+direct DoH         speed-tested
+(unchanged)        fastest-IP
 ```
 
 ## Features
@@ -32,9 +32,9 @@ direct DoH         speed-tested          via SOCKS5 proxy
 - **ECS support**: Adds EDNS Client Subnet for mainland queries
 - **Caching**: 10K entry cache with lazy TTL and disk persistence
 - **Auto-reload**: Domain/IP lists reload automatically on change
-- **Fastest-IP selection** (via chained smartdns): best IP picked by ping/TCP speed test for CN and intl fallback buckets
-- **TTL smoothing**: prefetch + serve-expired keeps common domains resolving with zero user-visible latency
-- **Audit**: mosdns JSON log covers every query; smartdns audit log covers CN+intl IP selection
+- **Fastest-IP selection** (via chained smartdns): best IP picked by ping/TCP speed test for the CN bucket
+- **TTL smoothing**: serve-expired keeps common CN domains resolving without hammering Surge
+- **Audit**: mosdns JSON log covers end-to-end steering; smartdns audit is disabled by default
 
 ## Installation
 
@@ -135,13 +135,11 @@ Racing (via chained smartdns on `127.0.0.1:6353`):
 - `https://doh.360.cn/dns-query`
 
 ### International DoH Upstreams (via SOCKS5 proxy)
-Racing (via chained smartdns on `127.0.0.1:6354`):
+Racing directly inside mosdns:
 - `https://dns.google/dns-query`
 - `https://cloudflare-dns.com/dns-query`
 - `https://dns.quad9.net/dns-query`
 - `https://dns.adguard-dns.com/dns-query`
-- `https://dns.nextdns.io/dns-query`
-- `https://doh.opendns.com/dns-query`
 - Proxy: `127.0.0.1:6153` (Surge SOCKS5 port)
 
 ### Domain Matching Logic
@@ -228,4 +226,4 @@ rm -rf ~/.mosdns
 - Mainland DoH queries go direct (faster, no privacy concern for CN domains)
 - Anti-pollution validation prevents DNS hijacking
 - No plaintext DNS queries (all DoH)
-- mosdns JSON log at `/tmp/mosdns.log` and smartdns audit log at `/tmp/smartdns_audit.log` provide full-stack query visibility
+- mosdns JSON log at `/tmp/mosdns.log` remains the main visibility point; SmartDNS audit is disabled by default

@@ -12,9 +12,9 @@ DATA_DIR="$HOME/.mosdns/data"
 
 echo "🚀 Installing mosdns ${MOSDNS_VERSION}..."
 
-# Prerequisite: smartdns-rs must be installed first — mosdns cn_sequence / intl_sequence
-# forward into 127.0.0.1:6353 and 127.0.0.1:6354. Warn but don't fail; specialty-steered
-# paths (Apple/Google/MS/…) still work without smartdns.
+# Prerequisite: smartdns-rs should be installed first — mosdns cn_sequence forwards
+# into 127.0.0.1:6353 for CN fastest-IP selection. Warn but don't fail; specialty-steered
+# and intl DoH paths still work without smartdns.
 if ! launchctl list 2>/dev/null | grep -q com.smartdns; then
     echo "⚠️  smartdns-rs does not appear to be running (com.smartdns launchd job missing)."
     echo "   The CN and intl fallback buckets depend on it."
@@ -127,7 +127,7 @@ echo "📋 View logs: tail -f /tmp/mosdns.log"
 echo "🛑 Stop service: sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist"
 echo "🔄 Restart service: sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist && sudo launchctl load /Library/LaunchDaemons/com.mosdns.plist"
 echo ""
-echo "⚙️  Next step: Update Surge configuration to use 127.0.0.1:5335 as DNS server"
+echo "⚙️  Next step: Update Surge configuration to use 127.0.0.1:53 as DNS server"
 echo ""
-echo "ℹ️  Architecture reminder: mosdns handles steering; its CN and intl buckets chain into smartdns-rs:"
-echo "   Surge → 127.0.0.1:5335 (mosdns) → 127.0.0.1:6353 / 6354 (smartdns groups)"
+echo "ℹ️  Architecture reminder: mosdns handles steering; only its CN bucket chains into smartdns-rs:"
+echo "   Surge → 127.0.0.1:53 (mosdns) → 127.0.0.1:6353 (smartdns CN group)"

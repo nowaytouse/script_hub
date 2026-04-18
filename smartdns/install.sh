@@ -8,7 +8,7 @@ set -e
 INSTALL_DIR="$HOME/.smartdns"
 CONFIG_FILE="$INSTALL_DIR/smartdns.conf"
 
-echo "🚀 Installing smartdns-rs (fastest-IP layer beneath mosdns)..."
+echo "🚀 Installing smartdns-rs (CN acceleration layer beneath mosdns)..."
 
 # Sanity: Homebrew present
 if ! command -v brew >/dev/null 2>&1; then
@@ -90,18 +90,15 @@ echo "📍 LaunchAgent:   $PLIST"
 echo ""
 echo "🔌 Listen ports:"
 echo "   - 127.0.0.1:6353  (CN group — racing Ali/Tencent/DNSPod/360, speed-tested)"
-echo "   - 127.0.0.1:6354  (Intl group — racing 6 DoH upstreams via Surge SOCKS5)"
 echo ""
 echo "🔍 Check status: launchctl list | grep com.smartdns"
 echo "📋 Main log:     tail -f /tmp/smartdns.log"
-echo "📋 Audit log:    tail -f /tmp/smartdns_audit.log"
 echo "🛑 Stop:         launchctl unload $PLIST"
 echo "🔄 Restart:      launchctl unload $PLIST && launchctl load $PLIST"
 echo ""
-echo "⚙️  Next step: (re)load mosdns so its intl/cn sequences chain into this daemon:"
+echo "⚙️  Next step: (re)load mosdns so its CN sequence chains into this daemon:"
 echo "    launchctl unload ~/Library/LaunchAgents/com.mosdns.plist"
 echo "    launchctl load   ~/Library/LaunchAgents/com.mosdns.plist"
 echo ""
 echo "✔  Quick smoke tests:"
 echo "    dig @127.0.0.1 -p 6353 baidu.com     # CN group, should return CN IP"
-echo "    dig @127.0.0.1 -p 6354 google.com    # Intl group, should return non-CN IP"
