@@ -1,5 +1,5 @@
 #!name=🌐 mosdns DNS Integration
-#!desc=Route all DNS queries to local mosdns via IPv6 ([::1]:53) with DoH explicitly disabled for deterministic steering.
+#!desc=Route all DNS queries to local mosdns via 127.0.0.1 and [::1] with DoH explicitly disabled for deterministic steering.
 #!author=nyamiiko
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
@@ -8,8 +8,8 @@
 
 [General]
 ipv6 = true
-ipv6-vif = always
-dns-server = [::1]
+ipv6-vif = auto
+dns-server = 127.0.0.1, [::1]
 encrypted-dns-server = 
 encrypted-dns-follow-outbound-mode = false
 

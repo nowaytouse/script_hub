@@ -17,7 +17,7 @@ DOMAIN,dot.pub,DIRECT
 DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
 # Block app-layer HTTPDNS first so apps cannot bypass the host steering above.
-# RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
 # REJECT Rules (self-hosted canonical rebuild)
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # REJECT-NO-DROP Rules (synced from skk upstream)
