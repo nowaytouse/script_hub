@@ -1,11 +1,14 @@
 #!name=🌐 DNS & Host Enhanced (Strict Privacy)
-#!desc=🔒 International-Only Global DoH + Rule-Based Host Steering + HTTPDNS 拦截 | 🔄 Forced Sync:21:36:50 | 🛡️ 2026.04.16
+#!desc=🔒 International-Only Global DoH + Rule-Based Host Steering + HTTPDNS 拦截 | 🛡️ 2026.04.19
 #!author=VirgilClyne & nyamiiko (Refactored)
 #!homepage=https://github.com/nowaytouse/script_hub
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!version=2026.04.16d
-#!version=2026.04.18e
+#!version=2026.04.19a
+
+[General]
+# Global DoH Pool - International Only (Mainland DoH excluded)
+encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/dns-query, https://dns.quad9.net/dns-query, https://dns.adguard-dns.com/dns-query, https://wikimedia-dns.org/dns-query, https://dns.twnic.tw/dns-query
 
 [Host]
 # SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
