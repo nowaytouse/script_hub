@@ -18,11 +18,6 @@ encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/
 encrypted-dns-follow-outbound-mode = true
 
 [Host]
-# SECTION 1: Airport / Proxy Server Node Hardening (Self-Bootstrapping)
-# Map airport/node domains to syslib to prevent encrypted DNS recursion loops.
-*.liangxin1.xyz = server:syslib
-*.liangxin?.xyz = server:syslib
-
 # SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
 # Mainland domains must be at the top so they hit mainland DoH without
 # falling through to the international global pool (which would be slow).
@@ -110,6 +105,11 @@ connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 
 
 
+# SECTION 9: Proxy Infrastructure - Loop Prevention
+# Hardcoding proxy server IPs to avoid circular dependencies with encrypted DNS
+aws-linkhy15.liangxin1.xyz = 18.183.7.71
+*.liangxin1.xyz = server:syslib
+
 # SECTION 10: Google Services
 talk.google.com = 108.177.125.188 // Firebase Cloud Messaging
 mtalk.google.com = 108.177.125.188, 2404:6800:4008:c07::bc, 142.250.31.188 // Firebase Cloud Messaging
@@ -130,11 +130,6 @@ stun?.l.google.com = server:force-syslib // WebRTC local discovery
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
-
-[Rule]
-# Force airport/proxy node domains to be DIRECT to break resolution loops
-DOMAIN-SUFFIX,liangxin1.xyz,DIRECT
-DOMAIN-SUFFIX,liangxin?.xyz,DIRECT
 
 [MITM]
 hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
