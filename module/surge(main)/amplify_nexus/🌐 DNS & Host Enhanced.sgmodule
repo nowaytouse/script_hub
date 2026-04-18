@@ -8,7 +8,17 @@
 #!version=2026.04.18e
 
 [Host]
-
+# SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
+# Mainland domains must be at the top so they hit mainland DoH without
+# falling through to the international global pool (which would be slow).
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
+# Comprehensive mainland domain catch-all from Direct.list
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Direct.list,server:https://doh.pub/dns-query
+# Generic .cn TLD fallback — last resort for mainland domains
+*.cn = server:https://dns.alidns.com/dns-query
 
 
 
@@ -81,7 +91,7 @@ msftncsi.com = server:https://dns.google/dns-query
 www.msftncsi.com = server:https://dns.google/dns-query
 connectivitycheck.android.com = server:https://dns.google/dns-query
 connectivity-check.ubuntu.com = server:https://cloudflare-dns.com/dns-query
-connectivitycheck.platform.hicloud.com = 223.5.5.5
+connectivitycheck.platform.hicloud.com = server:https://dns.alidns.com/dns-query
 
 
 
