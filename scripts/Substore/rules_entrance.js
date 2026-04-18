@@ -3494,55 +3494,32 @@ async function operator(proxies = []) {
             return selectedFp;
         };
 
-        // 🔒 智能安全策略：不可靠域名检测
-        const UNRELIABLE_DOMAIN_PATTERNS = [
+        // 🔒 智能安全策略：混淆域名检测与自动矫正
+        const SUSPICIOUS_SNI_PATTERNS = [
             /\.biliimg\.com$/i,
             /^www\.apple\.com$/i,
-            /\.pages\.dev$/i  // 常用于伪装
+            /\.pages\.dev$/i,
+            /\.(top|xyz|site|link|info|me|today|rocks|cloud|online|shop|life|work)$/i
         ];
 
-        /**
-         * 检查是否为不可靠且不安全的节点
-         * @param {Object} proxy - 代理节点
-         * @returns {string|boolean} - 如果不可靠则返回原因字符串，否则返回 false
-         */
-        const getUnsecureUnreliableReason = (proxy) => {
-            if (!proxy.tls) return false;
-
-            const server = (proxy.server || '').toLowerCase();
-            const sni = (proxy.sni || '').toLowerCase();
-
-            // 检查服务器或 SNI 是否匹配不可靠域名
-            const isUnreliable = UNRELIABLE_DOMAIN_PATTERNS.some(pattern => 
-                pattern.test(server) || pattern.test(sni)
-            );
-
-            if (isUnreliable) {
-                // 如果没有 CA 证书配置，则认为是不安全的
-                const hasCert = !!(proxy.ca || proxy['ca-str'] || proxy['ca_str']);
-                if (!hasCert) {
-                    return `不可靠域名 [${sni || server}] 且缺少证书验证，强制安全删除`;
-                }
-            }
-            return false;
-        };
- 
-        // 🔒 智能安全策略：机场 SNI 自动矫正
-        const AIRPORT_SNI_PATTERN = /\.(top|xyz|site|link|info|me|today|rocks|cloud|online|shop|life|work)$/i;
         const SAFE_SNI_POOL = [
             'www.apple.com.cn',
             'download-porter.hoyoverse.com',
             'api-cloudgame.mihoyo.com',
             'static.cloud.microsoft'
         ];
- 
+
         /**
-         * 矫正机场风格的 SNI，替换为更隐蔽的域名
+         * 自动矫正存疑的 SNI，替换为更隐蔽的域名（以矫正代删除）
          * @param {Object} proxy - 代理节点
          */
-        const correctAirportSni = (proxy) => {
+        const applySmartSniCorrection = (proxy) => {
+            if (!proxy.tls) return;
+
             const currentSni = proxy.sni || proxy.server || '';
-            if (AIRPORT_SNI_PATTERN.test(currentSni)) {
+            const isSuspicious = SUSPICIOUS_SNI_PATTERNS.some(pattern => pattern.test(currentSni));
+
+            if (isSuspicious) {
                 const oldSni = currentSni;
                 const newSni = getRandItem(SAFE_SNI_POOL);
                 proxy.sni = newSni;
@@ -3552,7 +3529,7 @@ async function operator(proxies = []) {
                 if (proxy['http-opts']?.headers?.Host) proxy['http-opts'].headers.Host = newSni;
                 if (proxy['obfs-opts']?.host) proxy['obfs-opts'].host = newSni;
                 
-                console.log(`[SNI矫正] ✈️ ${proxy.name || proxy.server}: ${oldSni} -> ${newSni}`);
+                console.log(`[安全矫正] 🛡️ ${proxy.name || proxy.server}: ${oldSni} -> ${newSni}`);
             }
         };
 
@@ -3591,14 +3568,6 @@ async function operator(proxies = []) {
             if (protocolType === 'wireguard' && (!proxy.privateKey && !proxy['private-key'])) return true;
 
             const nodeName = (proxy.name || '').toLowerCase();
- 
-            // 🔒 强制安全策略：删除不可靠且不安全的节点
-            const unsecureReason = getUnsecureUnreliableReason(proxy);
-            if (unsecureReason) {
-                console.log(`[安全拦截] 🛡️ ${proxy.name || proxy.server}: ${unsecureReason}`);
-                return true; // 过滤掉
-            }
- 
             return BLOCK_REGEX.test(nodeName) || BLOCK_REGEX_EN.test(nodeName);
         };
 
@@ -3946,8 +3915,8 @@ async function operator(proxies = []) {
             const protocolType = proxy.type.toLowerCase();
             const modifiedProxy = { ...proxy };
  
-            // 🔒 自动矫正机场 SNI
-            correctAirportSni(modifiedProxy);
+            // 🔒 自动矫正存疑 SNI（以矫正代删除）
+            applySmartSniCorrection(modifiedProxy);
 
             // ============================================================
             // 通用 Boost 选项（适用于多数协议）
