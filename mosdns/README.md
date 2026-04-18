@@ -1,229 +1,193 @@
 # mosdns DNS Setup for Surge
 
-Complete dual-track DNS solution with zero cross-contamination between mainland and international domains. Chains into a local [smartdns-rs](../smartdns/README.md) instance for fastest-IP selection, TTL smoothing, and IPv6 preference on the CN bucket only.
+Stable dual-stack DNS entrypoint for Surge. `mosdns` stays on `127.0.0.1:53` and `[::1]:53`, `smartdns-rs` is limited to the CN acceleration bucket on `127.0.0.1:6353`, and international or specialty DoH stays inside mosdns so the old `Surge -> mosdns -> smartdns -> Surge` loop cannot come back.
 
 ## Architecture
 
-```
-Surge → 127.0.0.1:53 (mosdns)
-          ↓
-    ┌─────┴─────┐
-    │  mosdns   │  (steering brain)
-    └─────┬─────┘
-          │
-    ┌─────┴──────────────────────────────────┐
-    │                 │                      │
-Specialty steers  CN domains            International
-(Apple/Google/    (cn_domain_matcher)   fallback
- MS/Cloudflare/        │                      │
- TW/Social/            ↓                      ↓
- Ali/Tencent/     127.0.0.1:6353        direct DoH via
- NSFW)            (smartdns cn)         Surge SOCKS5
-    │                  │
-    ↓               race 4 CN DoH
-direct DoH         speed-tested
-(unchanged)        fastest-IP
+```text
+Surge -> 127.0.0.1:53 / [::1]:53 (mosdns)
+           |
+           +-> Bootstrap allowlist         -> plain UDP bootstrap only
+           +-> Apple / Google / MS / AI    -> direct DoH in mosdns
+           +-> TW / Social / NSFW / TikTok -> direct DoH in mosdns
+           +-> Ali / Tencent vendor domains -> direct CN DoH in mosdns
+           +-> CN domains                  -> 127.0.0.1:6353 (smartdns CN bucket)
+           \-> International fallback      -> direct DoH in mosdns via Surge SOCKS5
 ```
 
 ## Features
 
-- **Zero cross-contamination**: CN domains never hit international DoH, international domains never hit mainland DoH
-- **Anti-pollution**: Validates response IPs against expected region
-- **ECS support**: Adds EDNS Client Subnet for mainland queries
-- **Caching**: 10K entry cache with lazy TTL and disk persistence
-- **Auto-reload**: Domain/IP lists reload automatically on change
-- **Fastest-IP selection** (via chained smartdns): best IP picked by ping/TCP speed test for the CN bucket
-- **TTL smoothing**: serve-expired keeps common CN domains resolving without hammering Surge
-- **Audit**: mosdns JSON log covers end-to-end steering; smartdns audit is disabled by default
+- Dual-stack local listeners on `127.0.0.1:53` and `[::1]:53`
+- DoH prioritized for steady-state resolution; only the bootstrap allowlist uses plain UDP
+- `smartdns-rs` restricted to the CN bucket, which removes the old `6354` intl feedback loop
+- IPv4 and IPv6 CN IP sets are both used when mosdns checks whether an intl answer actually landed on a CN CDN
+- SmartDNS audit stays disabled so Surge does not get flooded with local DNS noise
+- Launchd templates for both components include a working directory, persistent restart behavior, and raised file limits
 
 ## Installation
 
-**Prerequisite — install smartdns-rs first**:
+Install `smartdns-rs` first:
+
 ```bash
 cd ~/Downloads/GitHub/script_hub/smartdns
 ./install.sh
 ```
 
-Then install mosdns:
+Then install `mosdns`:
+
 ```bash
 cd ~/Downloads/GitHub/script_hub/mosdns
 ./install.sh
 ```
 
-This will:
-1. Download mosdns binary for your architecture (arm64/amd64)
-2. Download geosite.dat, geoip.dat, CN domain list, CN IP list
-3. Install configuration to `~/.mosdns/`
-4. Create and load launchd service (**LaunchDaemon** on port 53; requires root)
+If either component was installed before April 19, 2026, rerun both installers or manually copy the current repo config and plist files, then reload both jobs. Older live installs still contain the unstable `6354` topology and `smartdns` audit settings.
+
+The installer will:
+
+1. Download the `mosdns` binary for your architecture.
+2. Download `geosite.dat`, `geoip.mmdb`, the CN domain list, and CN IPv4/IPv6 IP lists.
+3. Render [config.yaml](/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/config.yaml:1) into `~/.mosdns/config/config.yaml`.
+4. Render [com.mosdns.daemon.plist](/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/com.mosdns.daemon.plist:1) into `/Library/LaunchDaemons/com.mosdns.plist`.
+5. Reload the `system/com.mosdns` LaunchDaemon.
 
 ## Surge Configuration
 
-Update your Surge config `[General]` section:
+Update your `[General]` section:
 
+```ini
 [General]
-dns-server = 127.0.0.1
-# Surge defaults to port 53. If using port 53, specify 127.0.0.1 directly.
-# Remove encrypted-dns-server line — mosdns handles all DoH
+dns-server = 127.0.0.1, [::1]
+# Remove encrypted-dns-server. mosdns owns DoH.
 ```
 
-Or use the provided Surge module:
+Or use a minimal module:
 
 ```ini
 #!name=mosdns DNS Integration
-#!desc=Route all DNS queries to local mosdns (127.0.0.1:53)
+#!desc=Route DNS to local mosdns on 127.0.0.1 and [::1]
 
 [General]
-dns-server = 127.0.0.1
+dns-server = 127.0.0.1, [::1]
 ```
 
 ## Verification
 
-Test mainland domain:
+Check that both launchd jobs are current and running:
+
 ```bash
-dig @127.0.0.1 baidu.com
-# Should resolve via AliDNS, return CN IP
+launchctl print gui/$(id -u)/com.smartdns | rg "state =|program ="
+launchctl print system/com.mosdns | rg "state =|program ="
 ```
 
-Test international domain:
+Check for stale pre-refactor markers in the live configs:
+
 ```bash
+rg -n "6354|audit-enable yes|forward_smartdns_intl" \
+  ~/.smartdns/smartdns.conf \
+  ~/.mosdns/config/config.yaml
+# Expected: no matches
+```
+
+Check that the installed plists include the hardening that exists in this repo:
+
+```bash
+plutil -p ~/Library/LaunchAgents/com.smartdns.plist | rg "HardResourceLimits|WorkingDirectory"
+plutil -p /Library/LaunchDaemons/com.mosdns.plist | rg "HardResourceLimits|WorkingDirectory"
+```
+
+Smoke-test both stacks:
+
+```bash
+dig @127.0.0.1 jd.com
 dig @127.0.0.1 google.com
-# Should resolve via Cloudflare (via proxy), return non-CN IP
-```
-
-Check logs:
-```bash
+dig @::1 jd.com
 tail -f /tmp/mosdns.log
 ```
 
 ## Management
 
-**Check status:**
 ```bash
-sudo launchctl list | grep mosdns
-sudo lsof -i :53
-```
+# Status
+launchctl print gui/$(id -u)/com.smartdns
+launchctl print system/com.mosdns
 
-**Stop service:**
-```bash
-sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist
-```
+# Stop / start mosdns
+sudo launchctl bootout system /Library/LaunchDaemons/com.mosdns.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.mosdns.plist
 
-**Start service:**
-```bash
-sudo launchctl load -w /Library/LaunchDaemons/com.mosdns.plist
-```
+# Restart mosdns after config edits
+sudo launchctl kickstart -k system/com.mosdns
 
-**Restart service:**
-```bash
-sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist && \
-sudo launchctl load -w /Library/LaunchDaemons/com.mosdns.plist
-```
-
-**Update configuration:**
-```bash
+# Edit config
 vim ~/.mosdns/config/config.yaml
-# Then restart service
 ```
 
-## Configuration Details
+## Routing Details
 
-### Mainland DoH Upstreams
-Racing (via chained smartdns on `127.0.0.1:6353`):
-- `https://dns.alidns.com/dns-query`
-- `https://doh.pub/dns-query` (Tencent)
-- `https://dns.pub/dns-query` (DNSPod)
-- `https://doh.360.cn/dns-query`
+### CN acceleration path
 
-### International DoH Upstreams (via SOCKS5 proxy)
-Racing directly inside mosdns:
+`mosdns` forwards general CN domains to `smartdns-rs` on `127.0.0.1:6353`, where AliDNS, DNSPod, Tencent, and 360 DoH are raced and ranked with `ping,tcp:443`.
+
+### International fallback path
+
+General international lookups stay inside `mosdns` and go to:
+
 - `https://dns.google/dns-query`
 - `https://cloudflare-dns.com/dns-query`
 - `https://dns.quad9.net/dns-query`
-- `https://dns.adguard-dns.com/dns-query`
-- Proxy: `127.0.0.1:6153` (Surge SOCKS5 port)
 
-### Domain Matching Logic
-1. Check if domain matches CN domain list → mainland sequence
-2. Check if domain ends with `.cn` → mainland sequence
-3. Otherwise → international sequence
+All three run through Surge SOCKS5 on `127.0.0.1:6153`.
 
-### Anti-Pollution
-- Mainland sequence: Rejects responses with non-CN IPs
-- International sequence: Rejects responses with CN IPs (pollution indicator)
+### Specialty steering
+
+`mosdns` keeps the direct per-domain DoH paths for Apple, Google/GitHub, Microsoft, Cloudflare/AI, TWNIC, AdGuard Social, Wikimedia NSFW, TikTok, Ali vendor domains, and Tencent vendor domains.
 
 ## Troubleshooting
 
-**mosdns not starting:**
+**Surge policies still all red or SmartDNS still looks noisy**
+
 ```bash
-# Check logs
+rg -n "6354|audit-enable yes|forward_smartdns_intl" \
+  ~/.smartdns/smartdns.conf \
+  ~/.mosdns/config/config.yaml
+```
+
+If that returns matches, the live files were not updated to the April 19, 2026 topology yet.
+
+**mosdns will not start**
+
+```bash
 cat /tmp/mosdns.stderr.log
-
-# Test config manually
-~/.mosdns/mosdns start -c ~/.mosdns/config/config.yaml
+plutil -lint /Library/LaunchDaemons/com.mosdns.plist
+launchctl print system/com.mosdns
 ```
 
-**DNS not resolving:**
+**IPv6 path looks wrong**
+
 ```bash
-# Verify mosdns is listening
-sudo lsof -i :53
-
-# Test directly
-dig @127.0.0.1 example.com
+dig @::1 jd.com AAAA
+dig @127.0.0.1 google.com AAAA
 ```
 
-**Surge not using mosdns:**
-```bash
-# Check Surge DNS config
-# Ensure dns-server = 127.0.0.1 is set
-# Remove any encrypted-dns-server lines
-```
+If the intl fallback returns a CN CDN IPv6 address repeatedly, update both `cn_ip.txt` and `cn_ip_v6.txt` under `~/.mosdns/data/`.
 
 ## Updating Data Files
-
-Data files auto-reload, but to manually update:
 
 ```bash
 cd ~/.mosdns/data
 
-# Update geosite/geoip
-curl -L -o geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
-curl -L -o geoip.mmdb "https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb"
+curl -fsSL "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" | \
+  sed 's/server=\/\(.*\)\/114.114.114.114/\1/' > cn_domain.txt
 
-# Update CN domain list
-curl -L "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" | \
-    sed 's/server=\/\(.*\)\/114.114.114.114/\1/' > cn_domain.txt
+curl -fsSL -o cn_ip.txt "https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt"
+curl -fsSL -o cn_ip_v6.txt "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china6.txt"
 
-# Update CN IP list
-curl -L -o cn_ip.txt "https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt"
+sudo launchctl kickstart -k system/com.mosdns
 ```
 
-## Uninstallation
+## Security Notes
 
-```bash
-# Stop and remove service
-sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist
-sudo rm /Library/LaunchDaemons/com.mosdns.plist
-
-# Remove installation
-rm -rf ~/.mosdns
-
-# Restore Surge DNS config
-# Remove dns-server = 127.0.0.1
-# Add back encrypted-dns-server line
-```
-
-## Performance
-
-- Cache hit rate: ~80-90% for typical usage (mosdns) + separate cache in smartdns
-- Query latency: <5ms (cache hit), ~50-80ms (cache miss; intl goes through Surge SOCKS5 + DoH race)
-- Memory usage: ~50-100MB for mosdns, ~30-60MB for smartdns
-- CPU usage: <1% idle, <5% under load
-- Fastest-IP selection on CN bucket typically shaves 10-30ms off subsequent connection setup
-
-## Security
-
-- All international DoH queries go through Surge SOCKS5 proxy (encrypted)
-- Mainland DoH queries go direct (faster, no privacy concern for CN domains)
-- Anti-pollution validation prevents DNS hijacking
-- No plaintext DNS queries (all DoH)
-- mosdns JSON log at `/tmp/mosdns.log` remains the main visibility point; SmartDNS audit is disabled by default
+- Steady-state upstream resolution is DoH-first.
+- The bootstrap allowlist intentionally uses plain UDP to avoid circular dependency during DoH bootstrap.
+- `smartdns` audit is disabled by default because Surge can misinterpret that local flood as an abnormal request rate.
+- `mosdns` remains the main observability point via `/tmp/mosdns.log`.

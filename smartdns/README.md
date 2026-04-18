@@ -1,31 +1,24 @@
-# smartdns-rs — Stable CN acceleration beneath mosdns
+# smartdns-rs — Stable CN Acceleration Beneath mosdns
 
-Adds speed-test-based answer ranking, TTL smoothing, and IPv6 preference to the CN bucket in the existing mosdns steering stack.
+`smartdns-rs` is now only the CN acceleration bucket beneath `mosdns`. It no longer owns the international path, which means the old `Surge -> mosdns -> smartdns -> Surge SOCKS5` loop is gone.
 
 ## Architecture
 
-```
-Surge → 127.0.0.1:53 (mosdns — steering brain)
-          │
-          ├─ Specialty steers (Apple/Google/MS/…) → direct DoH (unchanged)
-          ├─ NSFW                                  → Wikimedia DoH (unchanged)
-          ├─ Ali/Tencent vendor                    → vendor DoH    (unchanged)
-          ├─ CN domain_set    → 127.0.0.1:6353  (smartdns CN group)
-          │                      └─ races Ali + Tencent + DNSPod + 360
-          │                         speed-tests returned CN IPs, returns fastest
-          │
-          └─ intl fallback    → direct DoH via mosdns + Surge SOCKS5
+```text
+Surge -> mosdns on 127.0.0.1:53 / [::1]:53
+           |
+           +-> Specialty and intl DoH stay in mosdns
+           \-> CN domain bucket -> smartdns on 127.0.0.1:6353 / [::1]:6353
+                                    -> AliDNS / doh.pub / dns.pub / 360 DoH
+                                    -> speed-check + TTL smoothing + IPv6 preference
 ```
 
-## What this adds over mosdns alone
+## What SmartDNS Adds
 
-| Feature | Where it happens |
-|---|---|
-| **Fastest-IP selection** | `speed-check-mode ping,tcp:443` on the CN group |
-| **TTL smoothing** | `serve-expired yes` with capped stale TTL for hot CN domains |
-| **IPv6 preference** | `dualstack-ip-selection yes` (threshold 15ms) |
-
-mosdns's specialty-steered and international paths are left alone — racing those through smartdns is what previously created the unstable Surge feedback loop.
+- Fastest-IP selection for CN answers with `speed-check-mode ping,tcp:443`
+- TTL smoothing through `serve-expired yes`
+- IPv6 preference through `dualstack-ip-selection yes`
+- Lower local noise inside Surge because `audit-enable no`
 
 ## Installation
 
@@ -34,85 +27,111 @@ cd ~/Downloads/GitHub/script_hub/smartdns
 ./install.sh
 ```
 
-This will:
-1. `brew install smartdns` (installs `smartdns-rs`)
-2. Copy `smartdns.conf` to `~/.smartdns/smartdns.conf`
-3. Create `~/Library/LaunchAgents/com.smartdns.plist` with `RunAtLoad` + `KeepAlive`
-4. Load the service
+The installer will:
 
-After SmartDNS is running, reload mosdns so it picks up the new chain:
+1. Install or reuse the Homebrew `smartdns` formula.
+2. Copy [smartdns.conf](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/smartdns.conf:1) to `~/.smartdns/smartdns.conf`.
+3. Render [com.smartdns.plist](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/com.smartdns.plist:1) to `~/Library/LaunchAgents/com.smartdns.plist`.
+4. Reload the `gui/$(id -u)/com.smartdns` LaunchAgent.
 
-```bash
-sudo launchctl unload /Library/LaunchDaemons/com.mosdns.plist && \
-sudo launchctl load -w /Library/LaunchDaemons/com.mosdns.plist
-```
+If your current install predates April 19, 2026, rerun both the `smartdns` and `mosdns` installers. Older live configs still expose `6354` and keep SmartDNS audit enabled.
 
 ## Ports
 
 | Port | Role |
 |---|---|
-| `127.0.0.1:6353` | CN group — racing direct to Ali/Tencent/DNSPod/360 |
+| `127.0.0.1:6353` / `[::1]:6353` | CN-only SmartDNS bucket queried by mosdns |
 
-This port is internal — nothing outside mosdns should query it directly.
+Nothing outside mosdns should use this port as a primary resolver.
 
 ## Verification
 
-```bash
-# CN group: returns a CN IP (speed-tested), <50ms first query, near-zero cached
-dig @127.0.0.1 -p 6353 baidu.com +stats
+Check the live job:
 
-# End-to-end through mosdns entry
-dig @127.0.0.1 news.ycombinator.com    # hits intl fallback → mosdns direct DoH
-dig @127.0.0.1 jd.com                  # hits cn_sequence    → smartdns
-dig @127.0.0.1 apple.com               # steered direct to Apple DoH (unchanged)
+```bash
+launchctl print gui/$(id -u)/com.smartdns | rg "state =|program ="
+```
+
+Check that the live config is the post-refactor version:
+
+```bash
+rg -n "6354|audit-enable yes" ~/.smartdns/smartdns.conf ~/.mosdns/config/config.yaml
+# Expected: no matches
+```
+
+Check the installed plist:
+
+```bash
+plutil -p ~/Library/LaunchAgents/com.smartdns.plist | rg "HardResourceLimits|WorkingDirectory"
+```
+
+Smoke-test the CN bucket and then the end-to-end mosdns path:
+
+```bash
+dig @127.0.0.1 -p 6353 jd.com +stats
+dig @::1 -p 6353 jd.com +stats
+dig @127.0.0.1 jd.com
+dig @127.0.0.1 news.ycombinator.com
+tail -f /tmp/smartdns.log
 ```
 
 ## Management
 
 ```bash
 # Status
-launchctl list | grep com.smartdns
-lsof -i :6353
+launchctl print gui/$(id -u)/com.smartdns
 
-# Logs
-tail -f /tmp/smartdns.log           # main log
-# Stop / start / restart
-launchctl unload ~/Library/LaunchAgents/com.smartdns.plist
-launchctl load   ~/Library/LaunchAgents/com.smartdns.plist
+# Stop / start
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.smartdns.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.smartdns.plist
 
-# Edit config (then restart)
+# Restart after config edits
+launchctl kickstart -k gui/$(id -u)/com.smartdns
+
+# Edit config
 vim ~/.smartdns/smartdns.conf
 ```
 
-## Audit log
+## Audit and Noise Control
 
-By default the audit log is disabled to avoid flooding Surge with local DNS noise. mosdns's JSON log (`/tmp/mosdns.log`) remains the main visibility point for end-to-end steering.
+`audit-enable no` is intentional. The older audit-enabled layout could make Surge flag SmartDNS as a local resolver sending very high request volume. The current design keeps SmartDNS limited to the CN bucket and leaves `/tmp/mosdns.log` as the main end-to-end log.
 
 ## Troubleshooting
 
-**SmartDNS won't start**
+**Surge still reports SmartDNS as red or excessively noisy**
+
 ```bash
-cat /tmp/smartdns.stderr.log
-# Test config manually:
-$(brew --prefix)/sbin/smartdns run -c ~/.smartdns/smartdns.conf -f
+rg -n "6354|audit-enable yes" ~/.smartdns/smartdns.conf ~/.mosdns/config/config.yaml
 ```
 
-**CN queries return non-CN IPs and get rejected by mosdns**
-The CN DoH upstreams are being poisoned or 360 is returning garbage. Inspect `smartdns.log` and the mosdns log — if a specific upstream is consistently bad, remove its `server-https` line from `~/.smartdns/smartdns.conf` and restart.
+If that returns matches, the live files were not updated yet.
 
-**Port 6353 already in use**
+**SmartDNS will not start**
+
 ```bash
-lsof -i :6353
-# Kill conflicting process or change the `bind` line in smartdns.conf
+cat /tmp/smartdns.stderr.log
+plutil -lint ~/Library/LaunchAgents/com.smartdns.plist
+launchctl print gui/$(id -u)/com.smartdns
+```
+
+**CN answers look obviously wrong**
+
+Inspect the SmartDNS log and temporarily remove the bad upstream from `~/.smartdns/smartdns.conf`, then restart the LaunchAgent.
+
+**Port 6353 is already in use**
+
+```bash
+lsof -nP -iTCP:6353 -sTCP:LISTEN
+lsof -nP -iUDP:6353
 ```
 
 ## Uninstallation
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.smartdns.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.smartdns.plist
 rm ~/Library/LaunchAgents/com.smartdns.plist
 rm -rf ~/.smartdns
 brew uninstall smartdns
 ```
 
-Remember to also revert `mosdns/config.yaml` if you remove SmartDNS completely, or mosdns's CN bucket will fail.
+If you remove SmartDNS completely, also update `~/.mosdns/config/config.yaml` or rerun the mosdns installer so the CN bucket does not keep pointing at `127.0.0.1:6353`.

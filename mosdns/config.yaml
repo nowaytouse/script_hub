@@ -21,49 +21,49 @@ plugins:
   # ── Domain Matchers ────────────────────────────
   - tag: matcher_apple
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Apple.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_Apple.txt"]}
   - tag: matcher_google
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Google.txt", "/Users/nyamiiko/.mosdns/data/steer_GitHub.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_Google.txt", "__MOSDNS_DATA__/steer_GitHub.txt"]}
   - tag: matcher_microsoft
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Microsoft.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_Microsoft.txt"]}
   - tag: matcher_ai_cf
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_AI.txt", "/Users/nyamiiko/.mosdns/data/steer_Cloudflare.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_AI.txt", "__MOSDNS_DATA__/steer_Cloudflare.txt"]}
   - tag: matcher_nsfw
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/nsfw_domain.txt"]}
+    args: {files: ["__MOSDNS_DATA__/nsfw_domain.txt"]}
   - tag: matcher_tw
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_StreamTW.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_StreamTW.txt"]}
   - tag: matcher_social
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_SocialMedia.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_SocialMedia.txt"]}
   - tag: matcher_tiktok
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_TikTok.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_TikTok.txt"]}
   - tag: matcher_ali
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/vendor_ali.txt"]}
+    args: {files: ["__MOSDNS_DATA__/vendor_ali.txt"]}
   - tag: matcher_tencent
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/vendor_tencent.txt"]}
+    args: {files: ["__MOSDNS_DATA__/vendor_tencent.txt"]}
   - tag: matcher_bootstrap
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Bootstrap.txt"]}
+    args: {files: ["__MOSDNS_DATA__/steer_Bootstrap.txt"]}
   - tag: cn_domain_matcher
     type: domain_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/cn_domain.txt"]}
+    args: {files: ["__MOSDNS_DATA__/cn_domain.txt"]}
 
-  # ── IP Matcher (CN, v4+v6 combined) ───────────
-  # cn_ip.txt should contain both IPv4 and IPv6 CN CIDRs.
+  # ── IP Matcher (CN, IPv4 + IPv6) ──────────────
   # Only used by intl_sequence to detect CN-CDN responses.
   - tag: cn_ip_matcher
     type: ip_set
     args:
       files:
-        - "/Users/nyamiiko/.mosdns/data/cn_ip.txt"
+        - "__MOSDNS_DATA__/cn_ip.txt"
+        - "__MOSDNS_DATA__/cn_ip_v6.txt"
 
   # ── Forwarders ─────────────────────────────────
   - tag: forward_apple

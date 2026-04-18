@@ -3,16 +3,16 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.mosdns</string>
+    <string>com.smartdns</string>
     <key>ProgramArguments</key>
     <array>
-        <string>__MOSDNS_BIN__</string>
-        <string>start</string>
+        <string>__SMARTDNS_BIN__</string>
+        <string>run</string>
         <string>-c</string>
-        <string>__MOSDNS_CONFIG__</string>
+        <string>__SMARTDNS_CONFIG__</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>__MOSDNS_WORKDIR__</string>
+    <string>__SMARTDNS_WORKDIR__</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -25,9 +25,9 @@
     <key>AbandonProcessGroup</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/mosdns.stdout.log</string>
+    <string>/tmp/smartdns.stdout.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/mosdns.stderr.log</string>
+    <string>/tmp/smartdns.stderr.log</string>
     <key>SoftResourceLimits</key>
     <dict>
         <key>numberOfFiles</key>
