@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-18T05:42:59.076233",
+  "generated": "2026-04-18T21:03:10.501668",
   "total": 56,
   "modules": [
     {
@@ -116,7 +116,7 @@
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/🌐 mosdns DNS Integration.sgmodule",
       "name": "🌐 mosdns DNS Integration",
-      "desc": "Route all DNS queries to local mosdns (127.0.0.1:53) for dual-track resolution with multi-tier fallback.",
+      "desc": "Route all DNS queries to local mosdns via 127.0.0.1 and [::1] with DoH explicitly disabled for deterministic steering.",
       "tags": []
     },
     {

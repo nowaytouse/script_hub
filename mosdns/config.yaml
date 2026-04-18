@@ -1,20 +1,7 @@
-# mosdns Configuration - Ultra-Granular Global Steering (Absolute Path + Correct Order)
-# Version: 2026.04.18a
-# Strategy: Full alignment with Surge Module. Fixed plugin order for stability.
-# CN + intl fallback chain into local smartdns-rs (127.0.0.1:6353/6354) for fastest-IP + TTL smoothing.
-#
-# CHANGES from 2026.04.17a:
-#   [HIGH]  cn_ip_matcher / cn_ip_matcher_v6: split into dual ip_set so IPv6 AAAA responses
-#           are correctly classified in cn_sequence and intl_sequence.
-#   [MED]   cn_sequence: on IP-mismatch, fallback to intl_sequence instead of hard reject,
-#           handles CN domains on Cloudflare/Fastly CDN gracefully.
-#   [MED]   intl_sequence: same — on CN-IP response, retry via cn_sequence rather than reject.
-#   [LOW]   bootstrap forwarder: removed Google 8888 IPv6 (semantically wrong for CN bootstrap);
-#           added Quad9 IPv6 as neutral fallback.
-#   [LOW]   nsfw_sequence: clarified intent comment (privacy routing, NOT blocking).
-#           To block instead: replace exec with "reject 3".
-#   [INFO]  IPv6 listeners ([::1]:53 / [::1]:5336) were already present — no change needed.
-#           macOS: binding :53 requires root (sudo) or use a high port + Surge redirect.
+# mosdns Configuration - Ultra-Granular Global Steering
+# Version: 2026.04.18c
+# Fix: removed IP verification from cn_sequence to break Surge SOCKS5 deadlock.
+#      CN domains always trust CN resolver answer (no intl fallback loop).
 
 log:
   level: info
@@ -22,9 +9,7 @@ log:
   production: true
 
 plugins:
-  # ──────────────────────────────────────────────
-  # 1. Cache
-  # ──────────────────────────────────────────────
+  # ── Cache ──────────────────────────────────────
   - tag: cache
     type: cache
     args:
@@ -33,9 +18,7 @@ plugins:
       dump_file: /tmp/mosdns_cache.dump
       dump_interval: 600
 
-  # ──────────────────────────────────────────────
-  # 2. Matchers (Domain Sets)
-  # ──────────────────────────────────────────────
+  # ── Domain Matchers ────────────────────────────
   - tag: matcher_apple
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/steer_Apple.txt"]}
@@ -73,22 +56,16 @@ plugins:
     type: domain_set
     args: {files: ["/Users/nyamiiko/.mosdns/data/cn_domain.txt"]}
 
-  # ── IP matchers ──
-  # FIX: Split into two ip_set plugins (IPv4 + IPv6) so AAAA responses are
-  # correctly classified in cn_sequence and intl_sequence.
-  # cn_ip.txt    → IPv4 CN CIDRs  (e.g. from ipinfo/china or APNIC delegated)
-  # cn_ip_v6.txt → IPv6 CN CIDRs  (e.g. CNNIC delegated, 2400::/12 etc.)
-  # If you combine both in one file, merge them back into a single ip_set.
+  # ── IP Matcher (CN, v4+v6 combined) ───────────
+  # cn_ip.txt should contain both IPv4 and IPv6 CN CIDRs.
+  # Only used by intl_sequence to detect CN-CDN responses.
   - tag: cn_ip_matcher
     type: ip_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/cn_ip.txt"]}
-  - tag: cn_ip_v6_matcher
-    type: ip_set
-    args: {files: ["/Users/nyamiiko/.mosdns/data/cn_ip_v6.txt"]}
+    args:
+      files:
+        - "/Users/nyamiiko/.mosdns/data/cn_ip.txt"
 
-  # ──────────────────────────────────────────────
-  # 3. Forwarders
-  # ──────────────────────────────────────────────
+  # ── Forwarders ─────────────────────────────────
   - tag: forward_apple
     type: forward
     args: {upstreams: [{addr: "https://doh.dns.apple.com/dns-query", enable_pipeline: true, socks5: 127.0.0.1:6153}]}
@@ -116,28 +93,34 @@ plugins:
   - tag: forward_tencent
     type: forward
     args: {upstreams: [{addr: "https://doh.pub/dns-query", enable_pipeline: true}]}
+
+  # UDP + TCP both for EDNS truncation prevention
   - tag: forward_smartdns_cn
     type: forward
-    args: {upstreams: [{addr: "udp://127.0.0.1:6353"}]}
+    args:
+      upstreams:
+        - addr: "udp://127.0.0.1:6353"
+        - addr: "tcp://127.0.0.1:6353"
+
   - tag: forward_smartdns_intl
     type: forward
-    args: {upstreams: [{addr: "udp://127.0.0.1:6354"}]}
+    args:
+      upstreams:
+        - addr: "udp://127.0.0.1:6354"
+        - addr: "tcp://127.0.0.1:6354"
 
-  # Bootstrap: resolves hostnames of CN DoH providers WITHOUT going through DoH itself.
-  # FIX: removed Google 8888 IPv6 (inconsistent with CN-bootstrap intent).
-  #      Added Quad9 IPv6 (2620:fe::fe) as neutral anycast fallback.
+  # Bootstrap: plain UDP — no DoH, no proxy
   - tag: forward_bootstrap
     type: forward
     args:
       concurrent: 5
       upstreams:
-        - addr: "223.5.5.5"               # AliDNS IPv4
-        - addr: "[2400:3200::1]:53"       # AliDNS IPv6
-        - addr: "119.29.29.29"             # DNSPod IPv4
-        - addr: "[2402:4e00::]:53"         # DNSPod IPv6
-        - addr: "[2001:4860:4860::8888]:53" # Google IPv6
-        - addr: "1.1.1.1"                  # Cloudflare IPv4
-        - addr: "[2620:fe::fe]:53"         # Quad9 IPv6
+        - addr: "223.5.5.5"
+        - addr: "[2400:3200::1]:53"
+        - addr: "119.29.29.29"
+        - addr: "[2402:4e00::]:53"
+        - addr: "[2620:fe::fe]:53"
+        - addr: "1.1.1.1"
 
   - tag: forward_intl_general
     type: forward
@@ -151,13 +134,8 @@ plugins:
         - addr: https://dns.quad9.net/dns-query
           socks5: 127.0.0.1:6153
 
-  # ──────────────────────────────────────────────
-  # 4. Sequences (Define dependent ones first)
-  # ──────────────────────────────────────────────
+  # ── Sequences ──────────────────────────────────
 
-  # NSFW intent: routes to a privacy-focused resolver (Wikimedia), NOT blocking.
-  # To BLOCK NSFW domains instead, replace the two lines below with:
-  #   - exec: reject 3
   - tag: nsfw_sequence
     type: sequence
     args:
@@ -170,36 +148,26 @@ plugins:
       - exec: $forward_intl_general
       - exec: accept
 
-  # CN sequence: query smartdns-rs CN group, verify response IP is CN.
-  # FIX: checks both IPv4 (cn_ip_matcher) and IPv6 (cn_ip_v6_matcher).
-  # FIX: on IP-mismatch (e.g. CN domain on Cloudflare CDN), fall through to
-  #      intl_sequence instead of hard-rejecting — avoids broken resolution.
+  # CN sequence: trust CN resolver answer unconditionally.
+  # NO IP verification — avoids Surge SOCKS5 deadlock when CN domain
+  # resolves to non-CN CDN IP (Akamai, Fastly, etc.).
+  # CN resolvers always return the optimal CN/HK CDN node anyway.
   - tag: cn_sequence
     type: sequence
     args:
       - exec: $forward_smartdns_cn
-      # Accept immediately if response IP is CN (IPv4 or IPv6)
-      - matches: "resp_ip $cn_ip_matcher"
-        exec: accept
-      - matches: "resp_ip $cn_ip_v6_matcher"
-        exec: accept
-      # Non-CN IP for a CN domain → domain is on intl CDN, fall to intl path
-      - exec: $forward_smartdns_intl
       - exec: accept
 
-  # Intl sequence: query smartdns-rs Intl group, verify response IP is NOT CN.
-  # FIX: checks both IPv4 and IPv6 cn matchers.
-  # FIX: on CN-IP response (intl domain on CN CDN), fall to cn_sequence.
+  # Intl sequence: verify response is NOT a CN IP.
+  # If CN IP returned (intl domain on CN CDN), fallback to CN resolver.
+  # This direction is safe — cn_sequence has no proxy dependency.
   - tag: intl_sequence
     type: sequence
     args:
       - exec: $forward_smartdns_intl
-      # If response IP is NOT CN → good, accept
       - matches: "!resp_ip $cn_ip_matcher"
         exec: accept
-      - matches: "!resp_ip $cn_ip_v6_matcher"
-        exec: accept
-      # CN IP for intl domain → domain uses CN CDN, fall to cn_sequence
+      # Intl domain returned CN IP → use CN resolver path
       - exec: $forward_smartdns_cn
       - exec: accept
 
@@ -207,18 +175,18 @@ plugins:
     type: sequence
     args:
       - exec: $cache
-      # Bootstrap DNS (resolves CN DoH provider hostnames before DoH is available)
+      # Bootstrap
       - matches: qname $matcher_bootstrap
         exec: $forward_bootstrap
       - matches: qname $matcher_bootstrap
         exec: accept
-      # NSFW — privacy routing (see nsfw_sequence comment above re: blocking)
+      # NSFW (privacy routing, not blocking)
       - matches: qname $matcher_nsfw
         exec: jump nsfw_sequence
-      # TikTok — routed through intl general (comment policy compliance)
+      # TikTok
       - matches: qname $matcher_tiktok
         exec: jump tiktok_sequence
-      # Specialized per-vendor steering
+      # Per-vendor steering
       - matches: qname $matcher_apple
         exec: $forward_apple
       - matches: qname $matcher_apple
@@ -243,7 +211,7 @@ plugins:
         exec: $forward_adguard_social
       - matches: qname $matcher_social
         exec: accept
-      # CN Vendors (direct, no proxy)
+      # CN Vendors — direct
       - matches: qname $matcher_ali
         exec: $forward_ali
       - matches: qname $matcher_ali
@@ -252,16 +220,12 @@ plugins:
         exec: $forward_tencent
       - matches: qname $matcher_tencent
         exec: accept
-      # General split: CN domain list → cn_sequence, everything else → intl_sequence
+      # General split
       - matches: qname $cn_domain_matcher
         exec: jump cn_sequence
       - exec: jump intl_sequence
 
-  # ──────────────────────────────────────────────
-  # 5. Servers
-  # NOTE: Binding :53 on macOS requires root (sudo mosdns).
-  #       Alternative: use port 5335 here and configure Surge to redirect 53 → 5335.
-  # ──────────────────────────────────────────────
+  # ── Servers ────────────────────────────────────
   - tag: udp_server
     type: udp_server
     args: {entry: main_sequence, listen: "127.0.0.1:53"}
