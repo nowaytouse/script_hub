@@ -9,7 +9,7 @@
 [General]
 ipv6 = true
 ipv6-vif = auto
-dns-server = 127.0.0.1, [::1]
+dns-server = 127.0.0.1:5335, [::1]:5335
 encrypted-dns-server = 
 encrypted-dns-follow-outbound-mode = false
 

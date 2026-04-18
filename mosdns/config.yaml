@@ -400,19 +400,19 @@ plugins:
   # ────────────────────────────────────────────────────────────────────
   - tag: udp_server
     type: udp_server
-    args: {entry: main_sequence, listen: "127.0.0.1:53"}
+    args: {entry: main_sequence, listen: "127.0.0.1:5335"}
 
   - tag: udp_server_v6
     type: udp_server
-    args: {entry: main_sequence, listen: "[::1]:53"}
+    args: {entry: main_sequence, listen: "[::1]:5335"}
 
   - tag: tcp_server
     type: tcp_server
-    args: {entry: main_sequence, listen: "127.0.0.1:53"}
+    args: {entry: main_sequence, listen: "127.0.0.1:5335"}
 
   - tag: tcp_server_v6
     type: tcp_server
-    args: {entry: main_sequence, listen: "[::1]:53"}
+    args: {entry: main_sequence, listen: "[::1]:5335"}
 
   - tag: doh_server
     type: http_server

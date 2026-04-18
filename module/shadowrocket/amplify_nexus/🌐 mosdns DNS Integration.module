@@ -14,7 +14,7 @@ hijack-dns = *:53
 dns-direct-fallback-proxy = false
 ipv6 = true
 ipv6-vif = auto
-dns-server = 127.0.0.1, [::1]
+dns-server = 127.0.0.1:5335, [::1]:5335
 doh-server = 
 # [SR不支持,已移除] encrypted-dns-follow-outbound-mode = false
 

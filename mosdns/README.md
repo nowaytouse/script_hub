@@ -1,11 +1,11 @@
 # mosdns DNS Setup for Surge
 
-Stable dual-stack DNS entrypoint for Surge. `mosdns` stays on `127.0.0.1:53` and `[::1]:53`, `smartdns-rs` is limited to the CN acceleration bucket on `127.0.0.1:6353`, and international or specialty DoH stays inside mosdns so the old `Surge -> mosdns -> smartdns -> Surge` loop cannot come back.
+Stable dual-stack DNS entrypoint for Surge. `mosdns` stays on `127.0.0.1:5335` and `[::1]:5335`. International or specialty DoH stays inside mosdns so the old `Surge -> mosdns -> smartdns -> Surge` loop cannot come back.
 
 ## Architecture
 
 ```text
-Surge -> 127.0.0.1:53 / [::1]:53 (mosdns)
+Surge -> 127.0.0.1:5335 / [::1]:5335 (mosdns)
            |
            +-> Bootstrap allowlist         -> plain UDP bootstrap only
            +-> Apple / Google / MS / AI    -> direct DoH in mosdns
@@ -17,7 +17,7 @@ Surge -> 127.0.0.1:53 / [::1]:53 (mosdns)
 
 ## Features
 
-- Dual-stack local listeners on `127.0.0.1:53` and `[::1]:53`
+- Dual-stack local listeners on `127.0.0.1:5335` and `[::1]:5335`
 - DoH prioritized for steady-state resolution; only the bootstrap allowlist uses plain UDP
 - **Standalone Mode**: Removed `smartdns-rs` dependency to simplify the stack
 - IPv4 and IPv6 CN IP sets are both used when mosdns checks whether an intl answer actually landed on a CN CDN
@@ -46,7 +46,7 @@ Update your `[General]` section:
 
 ```ini
 [General]
-dns-server = 127.0.0.1, [::1]
+dns-server = 127.0.0.1:5335, [::1]:5335
 # Remove encrypted-dns-server. mosdns owns DoH.
 ```
 
@@ -54,10 +54,10 @@ Or use a minimal module:
 
 ```ini
 #!name=mosdns DNS Integration
-#!desc=Route DNS to local mosdns on 127.0.0.1 and [::1]
+#!desc=Route DNS to local mosdns on 127.0.0.1:5335 and [::1]:5335
 
 [General]
-dns-server = 127.0.0.1, [::1]
+dns-server = 127.0.0.1:5335, [::1]:5335
 ```
 
 Check that the launchd job is current and running:
@@ -85,9 +85,9 @@ plutil -p /Library/LaunchDaemons/com.mosdns.plist | rg "HardResourceLimits|Worki
 Smoke-test both stacks:
 
 ```bash
-dig @127.0.0.1 jd.com
-dig @127.0.0.1 google.com
-dig @::1 jd.com
+dig @127.0.0.1 -p 5335 jd.com
+dig @127.0.0.1 -p 5335 google.com
+dig @::1 -p 5335 jd.com
 tail -f /tmp/mosdns.log
 ```
 
