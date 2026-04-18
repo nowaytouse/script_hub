@@ -9,8 +9,7 @@
 [General]
 ipv6 = true
 ipv6-vif = auto
-dns-server = 127.0.0.1, [::1]
-dns-hijack = -*
+dns-server = 127.0.0.1:5335, [::1]:5335
 encrypted-dns-server = 
 encrypted-dns-follow-outbound-mode = false
 
@@ -28,7 +27,6 @@ doh.dns.apple.com = 17.253.14.251, 17.253.14.125, 2603:1010:1:c2::163
 dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9
 dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff
 wikimedia-dns.org = 198.35.26.96, 2620:0:862:ed1a::1, 103.102.166.224
-* = server:127.0.0.1:5335
 
 # [Script]
 # DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10

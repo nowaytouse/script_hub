@@ -125,7 +125,6 @@ stun?.l.google.com = server:force-syslib // WebRTC local discovery
 DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
 DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
-DoH Health Monitor = type=cron, cronexp=0 */6 * * *, wake-system=0, script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/doh_health.js, timeout=30
 
 [MITM]
 hostname = %APPEND% *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
