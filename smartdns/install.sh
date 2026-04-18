@@ -59,6 +59,16 @@ cat > "$PLIST" <<EOF
     <string>/tmp/smartdns.stdout.log</string>
     <key>StandardErrorPath</key>
     <string>/tmp/smartdns.stderr.log</string>
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>numberOfFiles</key>
+        <integer>65536</integer>
+    </dict>
+    <key>HardResourceLimits</key>
+    <dict>
+        <key>numberOfFiles</key>
+        <integer>65536</integer>
+    </dict>
 </dict>
 </plist>
 EOF
