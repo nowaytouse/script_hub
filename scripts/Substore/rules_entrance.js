@@ -372,7 +372,140 @@ const PORT_HOPPING_PARAMS = Object.freeze(new Set([
 ]));
 
 // 🚀 预编译清理属性集合
-const CLEANUP_PROPS = Object.freeze(['_priority', '_index', '_originalName', '_originalServer', '_testLatency', '_passedEndpoint', '_skip_reason', '_cipher_reason', '_quic-blocked']);
+const CLEANUP_PROPS = Object.freeze([
+    '_priority', '_index', '_originalName', '_originalServer', '_testLatency', '_passedEndpoint',
+    '_skip_reason', '_cipher_reason', '_quic-blocked', '_force_strict_tls_verify',
+    '_unsafe_sni_reason', '_unsafe_sni_original'
+]);
+
+// 🔒 严格 SNI 安全策略：不再接受明显不可靠的机场/临时域名
+const STRICT_SAFE_SNI_FALLBACK_POOL = Object.freeze([
+    'www.apple.com.cn',
+    'download-porter.hoyoverse.com',
+    'sdk-static.mihoyo.com',
+    'www.microsoft.com',
+    'fonts.gstatic.com',
+    'cdnjs.cloudflare.com',
+    'ajax.googleapis.com'
+]);
+
+const STRICT_UNSAFE_SNI_EXACT_SET = Object.freeze(new Set([
+    'www.apple.com',
+    'apple.com',
+    'pages.dev',
+    'workers.dev',
+    'localhost'
+]));
+
+const TLS_HOST_DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+
+const STRICT_UNSAFE_SNI_PATTERNS = Object.freeze([
+    /\.pages\.dev$/i,
+    /\.workers\.dev$/i,
+    /\.biliimg\.com$/i,
+    /\.(top|xyz|site|link|info|me|today|rocks|online|shop|life|work|click|lol|monster|stream)(:\d+)?$/i,
+    /^(test|temp|demo|example|localhost)(?:\.|$)/i,
+    /(?:^|\.)(localhost|local)$/i,
+    /^127\./i,
+    /^0\.0\.0\.0$/i
+]);
+
+const normalizeTlsHost = (value) => {
+    if (Array.isArray(value)) {
+        value = value.find(Boolean);
+    }
+
+    if (value === undefined || value === null) return '';
+
+    let host = String(value).trim().toLowerCase();
+    if (!host) return '';
+
+    if (host.startsWith('[') && host.includes(']')) {
+        host = host.slice(1, host.indexOf(']'));
+    } else if ((host.match(/:/g) || []).length === 1 && /:\d+$/.test(host)) {
+        host = host.replace(/:\d+$/, '');
+    }
+
+    if (host.includes('/')) {
+        host = host.split('/')[0];
+    }
+
+    return host.replace(/\.$/, '');
+};
+
+const isPrivateIpv4Host = (host) => {
+    if (!host || !/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) return false;
+
+    const octets = host.split('.').map(v => parseInt(v, 10));
+    if (octets.some(v => Number.isNaN(v) || v < 0 || v > 255)) return false;
+
+    return octets[0] === 10 ||
+        octets[0] === 127 ||
+        (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+        (octets[0] === 192 && octets[1] === 168) ||
+        (octets[0] === 169 && octets[1] === 254) ||
+        host === '0.0.0.0';
+};
+
+const analyzeTlsHostSafety = (value) => {
+    const host = normalizeTlsHost(value);
+    if (!host) {
+        return { host: '', unsafe: false, reason: 'missing' };
+    }
+
+    if (STRICT_UNSAFE_SNI_EXACT_SET.has(host)) {
+        return { host, unsafe: true, reason: '命中明确禁止的 SNI 域名' };
+    }
+
+    if (isPrivateIpv4Host(host)) {
+        return { host, unsafe: true, reason: '内网、回环或保留地址不适合作为 TLS SNI' };
+    }
+
+    if (STRICT_UNSAFE_SNI_PATTERNS.some(pattern => pattern.test(host))) {
+        return { host, unsafe: true, reason: '命中不安全或机场域名模式' };
+    }
+
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) {
+        return { host, unsafe: true, reason: 'IP 地址不适合作为严格 TLS SNI' };
+    }
+
+    if (!TLS_HOST_DOMAIN_REGEX.test(host)) {
+        return { host, unsafe: true, reason: 'SNI 域名格式无效' };
+    }
+
+    return { host, unsafe: false, reason: 'trusted' };
+};
+
+const isRealityNode = (proxy = {}) => !!(
+    proxy['reality-opts'] ||
+    proxy['reality-ops'] ||
+    proxy['reality-public-key'] ||
+    proxy['public-key'] ||
+    proxy['pbk'] ||
+    proxy['sid'] ||
+    proxy['publicKey'] ||
+    proxy['shortId'] ||
+    (proxy.tls && proxy['reality']) ||
+    (proxy['server-name'] && proxy['public-key']) ||
+    (proxy['peer'] && proxy['publicKey'])
+);
+
+const hasXtlsFlow = (proxy = {}) => !!(
+    proxy.flow && (
+        proxy.flow.includes('xtls') ||
+        proxy.flow.includes('vision') ||
+        proxy.flow.includes('splice') ||
+        proxy.flow.includes('direct') ||
+        proxy.flow.includes('origin')
+    )
+);
+
+const hasEchSupport = (proxy = {}) => !!(
+    proxy.ech ||
+    proxy['ech-config'] ||
+    proxy['tls-ech'] ||
+    (proxy.tls && proxy['encrypted-client-hello'])
+);
 
 // 🔒 TLS 安全增强模块 - 智能证书验证策略
 // ============================================================
@@ -385,6 +518,11 @@ const CLEANUP_PROPS = Object.freeze(['_priority', '_index', '_originalName', '_o
  */
 const applySmartCertVerification = (proxy, regionName) => {
     try {
+        if (proxy['_force_strict_tls_verify'] === true) {
+            console.log(`[TLS安全] 严格安全策略已启用，强制验证证书: ${proxy.name || proxy.server}`);
+            return false;
+        }
+
         // 🛡️ 配置验证 - 确保配置有效性
         const validation = validateTlsConfiguration(proxy);
         if (!validation.isValid) {
@@ -421,6 +559,12 @@ const applySmartCertVerification = (proxy, regionName) => {
 
         // 4. 基于 SNI 的智能判断（更宽松的策略，适应机场环境）
         if (proxy.sni) {
+            const sniSafety = analyzeTlsHostSafety(proxy.sni);
+            if (sniSafety.unsafe) {
+                console.log(`[TLS安全] 检测到不安全SNI ${sniSafety.host}，强制启用证书验证: ${sniSafety.reason}`);
+                return false;
+            }
+
             // 检查是否是明显的测试/临时域名
             const isTestDomain = /^(test|temp|demo|example|localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(proxy.sni);
             if (isTestDomain) {
@@ -927,6 +1071,11 @@ const assessSecurityRisk = (proxy, context = {}) => {
  */
 const applyEnhancedSmartVerification = (proxy, regionName) => {
     try {
+        if (proxy['_force_strict_tls_verify'] === true) {
+            logSecurityEvent('CERT_VERIFY_ENABLED', proxy, '严格SNI安全策略强制验证证书', 'low');
+            return false;
+        }
+
         // 1. 基础配置验证
         const validation = validateTlsConfiguration(proxy);
         if (!validation.isValid) {
@@ -962,13 +1111,21 @@ const applyEnhancedSmartVerification = (proxy, regionName) => {
             shouldSkipVerify = true;
             decisionReason = 'Reality/XTLS节点，保持原有配置';
         }
+        // 优先级4: 不安全 SNI 强制严格验证
+        else if (proxy.sni) {
+            const sniSafety = analyzeTlsHostSafety(proxy.sni);
+            if (sniSafety.unsafe) {
+                shouldSkipVerify = false;
+                decisionReason = `检测到不安全SNI ${sniSafety.host}，强制严格验证`;
+            }
+        }
         // 优先级4: 自签证书处理结果
-        else if (selfSignedResult.isSelfSigned) {
+        if (decisionReason === '' && selfSignedResult.isSelfSigned) {
             shouldSkipVerify = selfSignedResult.shouldSkipVerify;
             decisionReason = selfSignedResult.reason;
         }
         // 优先级5: 协议默认策略
-        else {
+        else if (decisionReason === '') {
             shouldSkipVerify = protocolPolicy.defaultSkipVerify;
             decisionReason = `${proxy.type}协议默认策略`;
         }
@@ -3061,6 +3218,15 @@ async function operator(proxies = []) {
             // false: 仅在原节点无 SNI 时添加。
             forceSniOverride: true,
 
+            // 严格 TLS/SNI 安全策略：先矫正不安全 SNI，无法矫正再丢弃节点。
+            strictSniSecurity: {
+                enabled: true,
+                dropUnsafeTlsNode: true,
+                syncTransportHost: true,
+                forceStrictVerifyAfterCorrection: true,
+                safeSniPool: [...STRICT_SAFE_SNI_FALLBACK_POOL]
+            },
+
             // true: 强制覆盖 WebSocket 的 Host 头，即使原节点已有 Host 值。
             // false: 仅在原节点无 Host 时添加。
             forceObfsOverride: false,
@@ -3342,36 +3508,161 @@ async function operator(proxies = []) {
             return arr[Math.floor(Math.random() * arr.length)];
         };
 
-        // 🌐 智能 SNI 选择：根据节点地区匹配对应 CDN（带缓存）
-        const sniCache = new Map();
-        const getSmartSni = (regionName) => {
-            // 使用缓存避免重复计算
-            if (sniCache.has(regionName)) {
-                const cached = sniCache.get(regionName);
-                return getRandItem(cached);
+        const getSafeSniCandidates = (regionName) => {
+            const candidateGroups = [];
+
+            if (cfg.regionalCdnMapping[regionName]?.length) {
+                candidateGroups.push(cfg.regionalCdnMapping[regionName]);
+            }
+            if (cfg.regionalCdnMapping['default']?.length) {
+                candidateGroups.push(cfg.regionalCdnMapping['default']);
+            }
+            if (cfg.strictSniSecurity.safeSniPool?.length) {
+                candidateGroups.push(cfg.strictSniSecurity.safeSniPool);
+            }
+            if (cfg.sni?.length) {
+                candidateGroups.push(cfg.sni);
             }
 
-            let cdnList;
-            // 1. 尝试从地区 CDN 映射中获取
-            if (cfg.regionalCdnMapping[regionName] && cfg.regionalCdnMapping[regionName].length > 0) {
-                cdnList = cfg.regionalCdnMapping[regionName];
-            }
-            // 2. Fallback: 使用通用 CDN
-            else if (cfg.regionalCdnMapping['default'] && cfg.regionalCdnMapping['default'].length > 0) {
-                cdnList = cfg.regionalCdnMapping['default'];
-            }
-            // 3. 最终 Fallback: 使用原始 SNI 列表
-            else {
-                cdnList = cfg.sni;
+            const unique = [];
+            const seen = new Set();
+
+            for (const group of candidateGroups) {
+                for (const item of group) {
+                    const normalized = normalizeTlsHost(item);
+                    if (!normalized || seen.has(normalized)) continue;
+                    if (analyzeTlsHostSafety(normalized).unsafe) continue;
+                    seen.add(normalized);
+                    unique.push(normalized);
+                }
             }
 
-            sniCache.set(regionName, cdnList);
-            return getRandItem(cdnList);
+            return unique.length > 0 ? unique : [...STRICT_SAFE_SNI_FALLBACK_POOL];
         };
 
-        // 原始随机 SNI 选择（用于不需要智能选择的场景）
-        const getRandomSni = () => getRandItem(cfg.sni);
+        const getCorrectionSniCandidates = (regionName) => {
+            const strictPool = (cfg.strictSniSecurity.safeSniPool || [])
+                .map(item => normalizeTlsHost(item))
+                .filter(item => item && !analyzeTlsHostSafety(item).unsafe);
+
+            if (strictPool.length > 0) {
+                return [...new Set(strictPool)];
+            }
+
+            return getSafeSniCandidates(regionName);
+        };
+
+        // 🌐 智能 SNI 选择：根据节点地区匹配可信 CDN（带缓存）
+        const sniCache = new Map();
+        const getSmartSni = (regionName) => {
+            const cacheKey = regionName || 'default';
+            if (!sniCache.has(cacheKey)) {
+                sniCache.set(cacheKey, getSafeSniCandidates(regionName));
+            }
+            return getRandItem(sniCache.get(cacheKey));
+        };
+
+        // 原始随机 SNI 选择（仅返回通过安全筛选的域名）
+        const getRandomSni = () => getRandItem(getSafeSniCandidates('default'));
         const getRandomObfs = () => getRandItem(cfg.obfs);
+
+        const getTlsSurfaceEntries = (proxy) => {
+            const entries = [
+                { key: 'sni', value: proxy.sni },
+                { key: 'servername', value: proxy.servername },
+                { key: 'server-name', value: proxy['server-name'] },
+                { key: 'ws-opts.headers.Host', value: _.get(proxy, 'ws-opts.headers.Host') },
+                { key: 'http-opts.headers.Host', value: _.get(proxy, 'http-opts.headers.Host') },
+                { key: 'obfs-opts.host', value: _.get(proxy, 'obfs-opts.host') }
+            ];
+
+            const h2Hosts = _.get(proxy, 'h2-opts.host');
+            if (Array.isArray(h2Hosts)) {
+                for (let i = 0; i < h2Hosts.length; i++) {
+                    entries.push({ key: `h2-opts.host.${i}`, value: h2Hosts[i] });
+                }
+            } else if (h2Hosts) {
+                entries.push({ key: 'h2-opts.host', value: h2Hosts });
+            }
+
+            return entries
+                .map(entry => ({ ...entry, normalized: normalizeTlsHost(entry.value) }))
+                .filter(entry => entry.normalized);
+        };
+
+        const applySecureSniToProxy = (proxy, newSni) => {
+            proxy.sni = newSni;
+            if (proxy.servername !== undefined) proxy.servername = newSni;
+            if (proxy['server-name'] !== undefined) proxy['server-name'] = newSni;
+
+            if (cfg.strictSniSecurity.syncTransportHost) {
+                if (proxy.network === 'ws' || _.get(proxy, 'ws-opts.headers.Host') !== undefined) {
+                    _.set(proxy, 'ws-opts.headers.Host', newSni);
+                }
+                if (proxy.network === 'http' || _.get(proxy, 'http-opts.headers.Host') !== undefined) {
+                    _.set(proxy, 'http-opts.headers.Host', newSni);
+                }
+                if (_.get(proxy, 'obfs-opts.host') !== undefined) {
+                    _.set(proxy, 'obfs-opts.host', newSni);
+                }
+
+                const h2Hosts = _.get(proxy, 'h2-opts.host');
+                if (Array.isArray(h2Hosts)) {
+                    _.set(proxy, 'h2-opts.host', h2Hosts.map(() => newSni));
+                } else if (h2Hosts !== undefined || proxy.network === 'h2') {
+                    _.set(proxy, 'h2-opts.host', [newSni]);
+                }
+            }
+        };
+
+        const enforceStrictSniSecurity = (proxy, regionName) => {
+            if (!cfg.strictSniSecurity.enabled) {
+                return { shouldDrop: false, corrected: false };
+            }
+
+            const protocolType = (proxy.type || '').toLowerCase();
+            const tlsLikeProtocols = new Set(['trojan', 'hysteria2', 'hysteria', 'tuic', 'https']);
+            const shouldInspect = proxy.tls === true || tlsLikeProtocols.has(protocolType);
+
+            if (!shouldInspect || isRealityNode(proxy) || hasXtlsFlow(proxy)) {
+                return { shouldDrop: false, corrected: false };
+            }
+
+            const unsafeEntries = getTlsSurfaceEntries(proxy)
+                .map(entry => ({ ...entry, analysis: analyzeTlsHostSafety(entry.normalized) }))
+                .filter(entry => entry.analysis.unsafe);
+
+            if (unsafeEntries.length === 0) {
+                return { shouldDrop: false, corrected: false };
+            }
+
+            const currentSni = normalizeTlsHost(proxy.sni || proxy.servername || proxy['server-name']);
+            const replacementPool = getCorrectionSniCandidates(regionName)
+                .filter(candidate => candidate !== currentSni);
+            const replacementSni = getRandItem(replacementPool) || getRandomSni();
+
+            if (!replacementSni || analyzeTlsHostSafety(replacementSni).unsafe) {
+                return {
+                    shouldDrop: !!cfg.strictSniSecurity.dropUnsafeTlsNode,
+                    corrected: false,
+                    reason: unsafeEntries.map(entry => `${entry.key}:${entry.analysis.reason}`).join('; ')
+                };
+            }
+
+            proxy['_unsafe_sni_original'] = currentSni || unsafeEntries[0].normalized;
+            proxy['_unsafe_sni_reason'] = unsafeEntries.map(entry => `${entry.key}:${entry.analysis.reason}`).join('; ');
+            applySecureSniToProxy(proxy, replacementSni);
+
+            if (cfg.strictSniSecurity.forceStrictVerifyAfterCorrection) {
+                proxy['skip-cert-verify'] = false;
+                proxy['_force_strict_tls_verify'] = true;
+            }
+
+            console.log(`[SNI安全] 🛡️ ${proxy.name || proxy.server}: ${proxy['_unsafe_sni_original']} -> ${replacementSni}`);
+            logSecurityEvent('UNSAFE_SNI_CORRECTED', proxy, proxy['_unsafe_sni_reason'], 'medium');
+
+            return { shouldDrop: false, corrected: true, replacementSni };
+        };
 
         // 🌍 v3.6.1: 域名扩展名到地区映射 - 智能检测节点地区
         const detectRegionFromDomain = (server) => {
@@ -3492,54 +3783,6 @@ async function operator(proxies = []) {
             const selectedFp = getRandItem(fpPool);
             fingerprintCache.set(cacheKey, selectedFp);
             return selectedFp;
-        };
-
-        // 🔒 智能安全策略：混淆域名检测与自动矫正
-        const SUSPICIOUS_SNI_PATTERNS = [
-            /\.biliimg\.com(:\d+)?$/i,
-            /^www\.apple\.com(:\d+)?$/i,
-            /\.pages\.dev(:\d+)?$/i,
-            /\.(top|xyz|site|link|info|me|today|rocks|cloud|online|shop|life|work)(:\d+)?$/i
-        ];
-
-        const SAFE_SNI_POOL = [
-            'www.apple.com.cn',
-            'download-porter.hoyoverse.com',
-            'api-cloudgame.mihoyo.com',
-            'static.cloud.microsoft'
-        ];
-
-        /**
-         * 自动矫正存疑的 SNI，替换为更隐蔽的域名（以矫正代删除）
-         * @param {Object} proxy - 代理节点
-         */
-        const applySmartSniCorrection = (proxy) => {
-            if (!proxy.tls) return;
-
-            // 获取当前的 SNI (支持多种字段名)
-            const getRawSni = (p) => (p.sni || p.servername || p['server-name'] || p.server || '').toString().trim();
-            const currentSni = getRawSni(proxy);
-            
-            if (!currentSni) return;
-
-            const isSuspicious = SUSPICIOUS_SNI_PATTERNS.some(pattern => pattern.test(currentSni));
-
-            if (isSuspicious) {
-                const oldSni = currentSni;
-                const newSni = getRandItem(SAFE_SNI_POOL);
-                
-                // 统一设置 SNI 字段
-                proxy.sni = newSni;
-                if (proxy.servername) proxy.servername = newSni;
-                if (proxy['server-name']) proxy['server-name'] = newSni;
-                
-                // 同时也强制同步/设置常用插件中的 Host 域名 (即便原本没有也补上，增加隐蔽性)
-                _.set(proxy, 'ws-opts.headers.Host', newSni);
-                _.set(proxy, 'http-opts.headers.Host', newSni);
-                _.set(proxy, 'obfs-opts.host', newSni);
-                
-                console.log(`[安全矫正] 🛡️ ${proxy.name || proxy.server}: ${oldSni} -> ${newSni}`);
-            }
         };
 
         // 🛡️ 增强过滤检查（更完善的防御性检查）
@@ -3923,9 +4166,15 @@ async function operator(proxies = []) {
         const optimizeProxy = (proxy) => {
             const protocolType = proxy.type.toLowerCase();
             const modifiedProxy = { ...proxy };
- 
-            // 🔒 自动矫正存疑 SNI（以矫正代删除）
-            applySmartSniCorrection(modifiedProxy);
+            const baseRegionInfo = getRegionInfo(proxy.name || proxy.server || '', proxy.server);
+
+            const sniSecurityResult = enforceStrictSniSecurity(modifiedProxy, baseRegionInfo.r);
+            if (sniSecurityResult.shouldDrop) {
+                modifiedProxy['_drop_reason'] = sniSecurityResult.reason || 'unsafe_sni';
+                console.log(`[SNI安全] ❌ 删除节点 ${proxy.name || proxy.server}: ${modifiedProxy['_drop_reason']}`);
+                logSecurityEvent('UNSAFE_TLS_NODE_DROPPED', modifiedProxy, modifiedProxy['_drop_reason'], 'high');
+                return null;
+            }
 
             // ============================================================
             // 通用 Boost 选项（适用于多数协议）
@@ -4257,6 +4506,8 @@ async function operator(proxies = []) {
                     }
 
                     if (cfg.enableBoost) {
+                        const hy2HasCert = !!(modifiedProxy.ca || modifiedProxy['ca-str'] || modifiedProxy['ca_str']);
+
                         // 🔒 TLS 1.3 配置（Hysteria2 需要 TLS 1.3）
                         // 仅在未设置时添加
                         if (!modifiedProxy['tls-min-version']) {
@@ -4340,6 +4591,8 @@ async function operator(proxies = []) {
                     // 🛡️ TUIC 节点保护：最小化修改，保留原有配置
 
                     if (cfg.enableBoost) {
+                        const tuicHasCert = !!(modifiedProxy.ca || modifiedProxy['ca-str'] || modifiedProxy['ca_str']);
+
                         // 🔒 TLS 1.3 配置（TUIC 需要 TLS 1.3）
                         // 仅在未设置时添加
                         if (!modifiedProxy['tls-min-version']) {
@@ -4560,6 +4813,18 @@ async function operator(proxies = []) {
                         modifiedProxy.network = 'tcp';
                     }
                 }
+            }
+
+            const finalSniSecurityResult = enforceStrictSniSecurity(modifiedProxy, baseRegionInfo.r);
+            if (finalSniSecurityResult.shouldDrop) {
+                modifiedProxy['_drop_reason'] = finalSniSecurityResult.reason || 'unsafe_sni';
+                console.log(`[SNI安全] ❌ 删除节点 ${proxy.name || proxy.server}: ${modifiedProxy['_drop_reason']}`);
+                logSecurityEvent('UNSAFE_TLS_NODE_DROPPED', modifiedProxy, modifiedProxy['_drop_reason'], 'high');
+                return null;
+            }
+
+            if ((modifiedProxy['_force_strict_tls_verify'] === true || finalSniSecurityResult.corrected) && modifiedProxy.tls) {
+                modifiedProxy['skip-cert-verify'] = false;
             }
 
             return modifiedProxy;
@@ -4786,6 +5051,10 @@ async function operator(proxies = []) {
             const proxy = dedupedProxies[index];
             try {
                 const processedProxy = optimizeProxy(proxy);
+                if (!processedProxy) {
+                    continue;
+                }
+
                 const originalName = processedProxy.name ||
                     `${(processedProxy.type || 'UNKNOWN').toUpperCase()} ${processedProxy.server}:${processedProxy.port}`;
                 processedProxy._originalName = originalName;
