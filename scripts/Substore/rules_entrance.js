@@ -3494,6 +3494,38 @@ async function operator(proxies = []) {
             return selectedFp;
         };
 
+        // 🔒 智能安全策略：不可靠域名检测
+        const UNRELIABLE_DOMAIN_PATTERNS = [
+            /\.biliimg\.com$/i,
+            /\.pages\.dev$/i  // 常用于伪装
+        ];
+
+        /**
+         * 检查是否为不可靠且不安全的节点
+         * @param {Object} proxy - 代理节点
+         * @returns {string|boolean} - 如果不可靠则返回原因字符串，否则返回 false
+         */
+        const getUnsecureUnreliableReason = (proxy) => {
+            if (!proxy.tls) return false;
+
+            const server = (proxy.server || '').toLowerCase();
+            const sni = (proxy.sni || '').toLowerCase();
+
+            // 检查服务器或 SNI 是否匹配不可靠域名
+            const isUnreliable = UNRELIABLE_DOMAIN_PATTERNS.some(pattern => 
+                pattern.test(server) || pattern.test(sni)
+            );
+
+            if (isUnreliable) {
+                // 如果没有 CA 证书配置，则认为是不安全的
+                const hasCert = !!(proxy.ca || proxy['ca-str'] || proxy['ca_str']);
+                if (!hasCert) {
+                    return `不可靠域名 [${sni || server}] 且缺少证书验证，强制安全删除`;
+                }
+            }
+            return false;
+        };
+
         // 🛡️ 增强过滤检查（更完善的防御性检查）
         const checkAndFilter = (proxy) => {
             if (!cfg.filterMode) return false;
@@ -3529,6 +3561,14 @@ async function operator(proxies = []) {
             if (protocolType === 'wireguard' && (!proxy.privateKey && !proxy['private-key'])) return true;
 
             const nodeName = (proxy.name || '').toLowerCase();
+ 
+            // 🔒 强制安全策略：删除不可靠且不安全的节点
+            const unsecureReason = getUnsecureUnreliableReason(proxy);
+            if (unsecureReason) {
+                console.log(`[安全拦截] 🛡️ ${proxy.name || proxy.server}: ${unsecureReason}`);
+                return true; // 过滤掉
+            }
+ 
             return BLOCK_REGEX.test(nodeName) || BLOCK_REGEX_EN.test(nodeName);
         };
 
