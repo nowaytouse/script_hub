@@ -3497,6 +3497,7 @@ async function operator(proxies = []) {
         // 🔒 智能安全策略：不可靠域名检测
         const UNRELIABLE_DOMAIN_PATTERNS = [
             /\.biliimg\.com$/i,
+            /^www\.apple\.com$/i,
             /\.pages\.dev$/i  // 常用于伪装
         ];
 
