@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * Sub-Store 节点隐蔽性与安全性全面增强脚本 【v3.7.0 Sing-box落地版】
+ * Sub-Store 节点隐蔽性与安全性全面增强脚本 【v3.7.0 Sing-box入口版】
  * ============================================================
  * 
  * v3.7.0 TLS安全增强版（2025-01-23）：
@@ -717,6 +717,97 @@ const applyEnhancedSmartVerification = (proxy, regionName) => {
 
 
 
+const UNIFIED_PRESET_ALIASES = Object.freeze({
+    inbound: 'inbound',
+    entrance: 'inbound',
+    entry: 'inbound',
+    proxies: 'inbound',
+    relay: 'relay',
+    middle: 'relay',
+    mid: 'relay',
+    egress: 'egress',
+    landing: 'egress',
+    exit: 'egress',
+});
+
+function normalizeBooleanArgument(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on', 'enable', 'enabled'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off', 'disable', 'disabled'].includes(normalized)) return false;
+    return undefined;
+}
+
+function resolveUnifiedPreset(args = {}) {
+    const rawValue = args.preset ?? args.behavior ?? args.mode ?? args.flow ?? args.profile;
+    if (typeof rawValue !== 'string') return 'inbound';
+    return UNIFIED_PRESET_ALIASES[rawValue.trim().toLowerCase()] || 'inbound';
+}
+
+function deepMergeConfig(target, source) {
+    if (!source || typeof source !== 'object') return target;
+
+    for (const [key, value] of Object.entries(source)) {
+        if (Array.isArray(value)) {
+            target[key] = [...value];
+            continue;
+        }
+
+        if (value && typeof value === 'object') {
+            const baseValue = target[key];
+            if (!baseValue || typeof baseValue !== 'object' || Array.isArray(baseValue)) {
+                target[key] = {};
+            }
+            deepMergeConfig(target[key], value);
+            continue;
+        }
+
+        if (value !== undefined) {
+            target[key] = value;
+        }
+    }
+
+    return target;
+}
+
+function extractUnifiedOverrides(args = {}) {
+    const overrides = {};
+    const booleanKeys = [
+        'filterMode',
+        'sortEnabled',
+        'reverseSort',
+        'blockQuic',
+        'enableBoost',
+        'enableECN',
+        'forceIPv4',
+        'forceIPv6',
+        'forceTls',
+        'forceWsObfs',
+        'forceSniOverride',
+        'forceObfsOverride',
+        'shadowTlsEnabled',
+        'generateRelayChains',
+        'generateLandingChains',
+    ];
+
+    for (const key of booleanKeys) {
+        const parsed = normalizeBooleanArgument(args[key]);
+        if (parsed !== undefined) {
+            overrides[key] = parsed;
+        }
+    }
+
+    const stringKeys = ['outputMode', 'relayEntryGroupName', 'landingEntryGroupName'];
+    for (const key of stringKeys) {
+        if (typeof args[key] === 'string' && args[key].trim()) {
+            overrides[key] = args[key].trim();
+        }
+    }
+
+    return overrides;
+}
+
 async function operator(proxies = []) {
     try {
         // 🛡️ 防御性检查：确保输入有效
@@ -803,32 +894,21 @@ async function operator(proxies = []) {
                     enableClientFingerprint: true,
 
                     // 🎭 v3.6.1: 智能指纹随机化配置
-                    // 根据节点地区智能分配合适的指纹，避免全部使用chrome导致的指纹集中暴露
-                    enableSmartFingerprint: true,  // 启用智能指纹随机化
-
-                    // 🌏 地区指纹映射（根据节点地区分配合适的指纹池）
+                    enableSmartFingerprint: true,
                     regionalFingerprints: {
-                        // 🇨🇳 中国大陆节点：使用国内常见浏览器指纹
                         '中国': ['qq', 'safari', 'chrome', 'edge', '360'],
-                        // 🇭🇰🇹🇼🇲🇴 港澳台节点：混合指纹
                         '香港': ['chrome', 'safari', 'edge', 'firefox'],
                         '台湾': ['chrome', 'safari', 'edge', 'firefox'],
                         '澳门': ['chrome', 'safari', 'qq', 'edge'],
-                        // 🇯🇵🇰🇷 日韩节点：Chrome/Safari为主
                         '日本': ['chrome', 'safari', 'edge', 'firefox'],
                         '韩国': ['chrome', 'safari', 'edge', 'firefox'],
-                        // 🇺🇸🇬🇧🇩🇪 欧美节点：标准浏览器指纹
                         '美国': ['chrome', 'safari', 'firefox', 'edge'],
                         '英国': ['chrome', 'safari', 'firefox', 'edge'],
                         '德国': ['chrome', 'firefox', 'safari', 'edge'],
-                        // 🇸🇬🇲🇾 东南亚节点
                         '新加坡': ['chrome', 'safari', 'edge', 'firefox'],
                         '马来西亚': ['chrome', 'safari', 'edge'],
-                        // 🌐 默认指纹池（其他地区）
                         'default': ['chrome', 'safari', 'firefox', 'edge']
                     },
-
-                    // 🔒 Fallback指纹（智能指纹禁用时使用）
                     fingerprintType: 'chrome',
 
                     // 🔒 TLS 版本: 仅 1.3（Chrome 131 默认）
@@ -1273,6 +1353,31 @@ async function operator(proxies = []) {
             }
         };
 
+        const presetProfiles = {
+            inbound: {
+                outputMode: 'proxies_only',
+                generateRelayChains: false,
+                generateLandingChains: false
+            },
+            relay: {
+                outputMode: 'relay_only',
+                generateRelayChains: true,
+                generateLandingChains: false
+            },
+            egress: {
+                outputMode: 'landing_only',
+                generateRelayChains: false,
+                generateLandingChains: true
+            }
+        };
+
+        const selectedPreset = resolveUnifiedPreset($arguments);
+        deepMergeConfig(cfg, presetProfiles[selectedPreset]);
+        deepMergeConfig(cfg, extractUnifiedOverrides($arguments));
+
+        console.log('[node_rules_unified] 当前预设:', selectedPreset);
+        console.log('[node_rules_unified] 输出模式:', cfg.outputMode);
+
         // 🚀 性能优化：使用更高效的随机选择（避免重复创建）
         const getRandItem = (arr) => {
             if (!arr || arr.length === 0) return null;
@@ -1413,37 +1518,22 @@ async function operator(proxies = []) {
 
 
         // 🎭 v3.6.1: 智能指纹随机化 - 根据节点地区分配合适的TLS指纹
-        // 避免所有节点使用相同指纹导致的指纹集中暴露问题
-        const fingerprintCache = new Map();  // 缓存每个节点的指纹（保证同一节点指纹一致）
+        const fingerprintCache = new Map();
         const getSmartFingerprint = (regionName, nodeId) => {
-            // 如果禁用智能指纹，返回默认指纹
             const tlsBoost = cfg.boostOptions && cfg.boostOptions.tlsBoost;
             if (!tlsBoost || !tlsBoost.enableSmartFingerprint) {
                 return tlsBoost?.fingerprintType || 'chrome';
             }
-
-            // 使用nodeId缓存，确保同一节点每次获取相同指纹
             const cacheKey = `${regionName}_${nodeId}`;
             if (fingerprintCache.has(cacheKey)) {
                 return fingerprintCache.get(cacheKey);
             }
-
-            // 获取地区对应的指纹池
             const regionalFp = tlsBoost.regionalFingerprints || {};
-            let fpPool;
-
-            if (regionalFp[regionName] && regionalFp[regionName].length > 0) {
-                fpPool = regionalFp[regionName];
-            } else if (regionalFp['default'] && regionalFp['default'].length > 0) {
-                fpPool = regionalFp['default'];
-            } else {
-                fpPool = ['chrome', 'safari', 'firefox', 'edge'];
-            }
-
-            // 随机选择指纹
+            let fpPool = regionalFp[regionName]?.length > 0 ? regionalFp[regionName]
+                : regionalFp['default']?.length > 0 ? regionalFp['default']
+                    : ['chrome', 'safari', 'firefox', 'edge'];
             const selectedFp = getRandItem(fpPool);
             fingerprintCache.set(cacheKey, selectedFp);
-
             return selectedFp;
         };
 
@@ -1796,25 +1886,16 @@ async function operator(proxies = []) {
                     // VLESS 优化配置
                     // 🛡️ Reality 节点保护（使用提取的检测函数）
                     if (isRealityNode(modifiedProxy)) {
-                        // 🔧 Reality节点：智能指纹 + Clash Meta曲线配置
-                        // ⚠️ 注意：官方Sub-Store不支持sing-box的curve_preferences
-                        // 但utls指纹会自动包含对应浏览器的曲线配置
+                        // 🔧 Reality节点：只添加曲线配置和Chrome指纹，不修改其他设置
                         const tlsBoost = cfg.enableBoost && cfg.boostOptions.tlsBoost;
                         if (tlsBoost) {
-                            // 🎭 v3.6.1: 智能指纹随机化 - 根据地区分配合适指纹
-                            // sing-box的utls会自动使用对应浏览器的曲线配置
+                            // 🎭 智能指纹随机化 - utls自动包含曲线配置
                             const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '');
                             const nodeId = modifiedProxy.server + ':' + modifiedProxy.port;
                             const smartFp = getSmartFingerprint(regionInfo.r, nodeId);
-
-                            // 设置client-fingerprint（Sub-Store会转换为utls配置）
-                            // utls指纹自动包含：曲线、TLS版本、ALPN等完整浏览器特征
                             modifiedProxy['client-fingerprint'] = smartFp;
-
-                            // Clash Meta / Mihomo 格式：显式设置曲线
-                            if (tlsBoost.curves) {
-                                modifiedProxy['ecdh-curves'] = tlsBoost.curves.join(':');
-                            }
+                            // Clash Meta格式
+                            if (tlsBoost.curves) modifiedProxy['ecdh-curves'] = tlsBoost.curves.join(':');
                         }
                         modifiedProxy['_skip_reason'] = 'reality_vless';
                         break;

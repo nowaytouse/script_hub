@@ -717,6 +717,97 @@ const applyEnhancedSmartVerification = (proxy, regionName) => {
 
 
 
+const UNIFIED_PRESET_ALIASES = Object.freeze({
+    inbound: 'inbound',
+    entrance: 'inbound',
+    entry: 'inbound',
+    proxies: 'inbound',
+    relay: 'relay',
+    middle: 'relay',
+    mid: 'relay',
+    egress: 'egress',
+    landing: 'egress',
+    exit: 'egress',
+});
+
+function normalizeBooleanArgument(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on', 'enable', 'enabled'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off', 'disable', 'disabled'].includes(normalized)) return false;
+    return undefined;
+}
+
+function resolveUnifiedPreset(args = {}) {
+    const rawValue = args.preset ?? args.behavior ?? args.mode ?? args.flow ?? args.profile;
+    if (typeof rawValue !== 'string') return 'inbound';
+    return UNIFIED_PRESET_ALIASES[rawValue.trim().toLowerCase()] || 'inbound';
+}
+
+function deepMergeConfig(target, source) {
+    if (!source || typeof source !== 'object') return target;
+
+    for (const [key, value] of Object.entries(source)) {
+        if (Array.isArray(value)) {
+            target[key] = [...value];
+            continue;
+        }
+
+        if (value && typeof value === 'object') {
+            const baseValue = target[key];
+            if (!baseValue || typeof baseValue !== 'object' || Array.isArray(baseValue)) {
+                target[key] = {};
+            }
+            deepMergeConfig(target[key], value);
+            continue;
+        }
+
+        if (value !== undefined) {
+            target[key] = value;
+        }
+    }
+
+    return target;
+}
+
+function extractUnifiedOverrides(args = {}) {
+    const overrides = {};
+    const booleanKeys = [
+        'filterMode',
+        'sortEnabled',
+        'reverseSort',
+        'blockQuic',
+        'enableBoost',
+        'enableECN',
+        'forceIPv4',
+        'forceIPv6',
+        'forceTls',
+        'forceWsObfs',
+        'forceSniOverride',
+        'forceObfsOverride',
+        'shadowTlsEnabled',
+        'generateRelayChains',
+        'generateLandingChains',
+    ];
+
+    for (const key of booleanKeys) {
+        const parsed = normalizeBooleanArgument(args[key]);
+        if (parsed !== undefined) {
+            overrides[key] = parsed;
+        }
+    }
+
+    const stringKeys = ['outputMode', 'relayEntryGroupName', 'landingEntryGroupName'];
+    for (const key of stringKeys) {
+        if (typeof args[key] === 'string' && args[key].trim()) {
+            overrides[key] = args[key].trim();
+        }
+    }
+
+    return overrides;
+}
+
 async function operator(proxies = []) {
     try {
         // 🛡️ 防御性检查：确保输入有效
@@ -1261,6 +1352,31 @@ async function operator(proxies = []) {
                 }
             }
         };
+
+        const presetProfiles = {
+            inbound: {
+                outputMode: 'proxies_only',
+                generateRelayChains: false,
+                generateLandingChains: false
+            },
+            relay: {
+                outputMode: 'relay_only',
+                generateRelayChains: true,
+                generateLandingChains: false
+            },
+            egress: {
+                outputMode: 'landing_only',
+                generateRelayChains: false,
+                generateLandingChains: true
+            }
+        };
+
+        const selectedPreset = resolveUnifiedPreset($arguments);
+        deepMergeConfig(cfg, presetProfiles[selectedPreset]);
+        deepMergeConfig(cfg, extractUnifiedOverrides($arguments));
+
+        console.log('[node_rules_unified] 当前预设:', selectedPreset);
+        console.log('[node_rules_unified] 输出模式:', cfg.outputMode);
 
         // 🚀 性能优化：使用更高效的随机选择（避免重复创建）
         const getRandItem = (arr) => {
