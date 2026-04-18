@@ -52,6 +52,9 @@ plugins:
   - tag: matcher_bootstrap
     type: domain_set
     args: {files: ["__MOSDNS_DATA__/steer_Bootstrap.txt"]}
+  - tag: matcher_airport
+    type: domain_set
+    args: {files: ["__MOSDNS_DATA__/steer_Airport.txt"]}
   - tag: cn_domain_matcher
     type: domain_set
     args: {files: ["__MOSDNS_DATA__/cn_domain.txt"]}
@@ -141,6 +144,15 @@ plugins:
       - exec: $forward_intl_general
       - exec: accept
 
+  # Airport control-plane domains must stay on direct intl DoH.
+  # They frequently front nodes on AWS or non-443 ports, so sending them to
+  # SmartDNS fastest-IP selection can collapse into an empty answer.
+  - tag: airport_sequence
+    type: sequence
+    args:
+      - exec: $forward_intl_general
+      - exec: accept
+
   # CN sequence: trust CN resolver answer unconditionally.
   # NO IP verification — avoids Surge SOCKS5 deadlock when CN domain
   # resolves to non-CN CDN IP (Akamai, Fastly, etc.).
@@ -178,6 +190,9 @@ plugins:
       # TikTok
       - matches: qname $matcher_tiktok
         exec: jump tiktok_sequence
+      # Airport subscription / node domains
+      - matches: qname $matcher_airport
+        exec: jump airport_sequence
       # Per-vendor steering
       - matches: qname $matcher_apple
         exec: $forward_apple
