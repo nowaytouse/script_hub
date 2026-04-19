@@ -4,8 +4,9 @@
 SMARTDNS_DIR="$HOME/.config/smartdns"
 mkdir -p "$SMARTDNS_DIR"
 cp /tmp/smartdns.conf "$SMARTDNS_DIR/smartdns.conf"
-# 确保国内域名列表也持久化
+# 确保域名的规则集持久化
 cp /tmp/cn.txt "$SMARTDNS_DIR/cn.txt"
+cp /Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/rules/nsfw.txt "$SMARTDNS_DIR/nsfw.txt"
 
 # --- 2. 持久化 PF 规则脚本 ---
 PF_SCRIPT="$SMARTDNS_DIR/pf_setup.sh"

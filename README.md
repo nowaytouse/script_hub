@@ -2,7 +2,7 @@
 
 A collection of items aggregated from public sources.
 
----
+> **Latest Architecture Update**: The DNS steering engine has been fully migrated from MosDNS to a high-performance **SmartDNS + Surge (True Dual-Stack TCP/UDP)** architecture. Please see the [Surge + SmartDNS Documentation](smartdns/README_SURGE_SMARTDNS.md) for full configuration details and commands.
 
 <details>
 <summary>Disclaimer</summary>
