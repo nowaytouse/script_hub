@@ -1,168 +1,79 @@
-# smartdns-rs — Stable CN Acceleration Beneath mosdns
+# SmartDNS (V44.8 Ultimate Unified Edition)
 
-`smartdns-rs` is now only the CN acceleration bucket beneath `mosdns`. It no longer owns the international path, which means the old `Surge -> mosdns -> smartdns -> Surge SOCKS5` loop is gone.
+SmartDNS has fully replaced `mosdns` in this architecture. It operates as the standalone primary DNS engine beneath Surge, handling exact proxy steering, Apple/Microsoft specialized upstreams, and zero-latency CN acceleration with physical IPv6 dual-stack fallback.
 
-## Architecture
+## 核心架构 (Core Architecture)
 
 ```text
-Surge -> mosdns on 127.0.0.1:53 / [::1]:53
-           |
-           +-> Specialty and intl DoH stay in mosdns
-           \-> CN domain bucket -> smartdns on 127.0.0.1:6353 / [::1]:6353
-                                    -> AliDNS / doh.pub / dns.pub / 360 DoH
-                                    -> speed-check + TTL smoothing + IPv6 preference
+Surge (Direct/Proxy Routing)
+   |
+   \-> SmartDNS on 127.0.0.1:6053 (via SOCKS5/Direct)
+        |
+        +-> [cn]      AliDNS/Tencent (Physical IPv4/IPv6 Fallback)
+        +-> [apple]   doh.dns.apple.com (Direct)
+        +-> [quad9]   Quad9 DoH (via 127.0.0.1:6153 SOCKS5)
+        +-> [twnic]   TWNIC DoH (via 127.0.0.1:6153 SOCKS5)
+        +-> [adguard] AdGuard DoH (via 127.0.0.1:6153 SOCKS5)
+        +-> [nsfw]    Wikimedia Privacy DoH (via 127.0.0.1:6153 SOCKS5)
+        \-> [proxy]   Google/CF/Quad9 Fallback (via 127.0.0.1:6153 SOCKS5)
 ```
 
-## What SmartDNS Adds
+## 网络重定向 (PF Redirection)
 
-- Fastest-IP selection for CN answers with `speed-check-mode ping,tcp:443`
-- TTL smoothing through `serve-expired yes`
-- IPv6 preference through `dualstack-ip-selection yes`
-- Lower local noise inside Surge because `audit-enable no`
+To bypass macOS permissions and Surge's enhanced mode limits, SmartDNS runs on `6053` with kernel-level port `53` redirection for both **TCP** and **UDP**.
 
-## Installation
-
+**验证或应用 PF 规则 (Verify PF Rules):**
 ```bash
-cd ~/Downloads/GitHub/script_hub/smartdns
-./install.sh
+# 自动应用 TCP+UDP 转发
+echo "rdr pass on lo0 inet proto udp from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053
+rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053" | sudo pfctl -a com.apple/smartdns -f -
+
+# 查看规则
+sudo pfctl -a com.apple/smartdns -s nat
 ```
 
-The installer will:
+## 守护进程管理 (Daemon Management)
 
-1. Install or reuse the Homebrew `smartdns` formula.
-2. Copy [smartdns.conf](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/smartdns.conf:1) to `~/.smartdns/smartdns.conf`.
-3. Render [com.smartdns.plist](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/com.smartdns.plist:1) to `~/Library/LaunchAgents/com.smartdns.plist`.
-4. Reload the `gui/$(id -u)/com.smartdns` LaunchAgent.
+The LaunchAgent correctly points to the configuration inside this repository. By default, `smartdns-rs` starts automatically.
 
-If your current install predates April 19, 2026, rerun both the `smartdns` and `mosdns` installers. Older live configs still expose `6354` and keep SmartDNS audit enabled.
-
-## Ports
-
-| Port | Role |
-|---|---|
-| `127.0.0.1:6353` / `[::1]:6353` | CN-only SmartDNS bucket queried by mosdns |
-
-Nothing outside mosdns should use this port as a primary resolver.
-
-## Verification
-
-Check the live job:
-
+**常用操作:**
 ```bash
-launchctl print gui/$(id -u)/com.smartdns | rg "state =|program ="
-```
-
-Check that the live config is the post-refactor version:
-
-```bash
-rg -n "6354|audit-enable yes" ~/.smartdns/smartdns.conf ~/.mosdns/config/config.yaml
-# Expected: no matches
-```
-
-Check the installed plist:
-
-```bash
-plutil -p ~/Library/LaunchAgents/com.smartdns.plist | rg "HardResourceLimits|WorkingDirectory"
-```
-
-Smoke-test the CN bucket and then the end-to-end mosdns path:
-
-```bash
-dig @127.0.0.1 -p 6353 jd.com +stats
-dig @::1 -p 6353 jd.com +stats
-dig @127.0.0.1 jd.com
-dig @127.0.0.1 news.ycombinator.com
-tail -f /tmp/smartdns.log
-```
-
-## Management
-
-### Golden Specification for launchd
-
-1. **bootout** → Clean up old instances
-2. **bootstrap** → Register service
-3. **kickstart** → Run service
-4. **print** → Verify status
-
-### Operations
-
-```bash
-# 1. Status
+# 查看运行状态
 launchctl print "gui/$(id -u)/com.smartdns" | egrep "state|program"
 
-# 2. Complete Reload (Golden Lifecycle)
-launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.plist 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.plist
+# 一键热重启 (Kickstart)
 launchctl kickstart -k "gui/$(id -u)/com.smartdns"
 
-# 3. Quick Restart (Config reload only)
-launchctl kickstart -k "gui/$(id -u)/com.smartdns"
+# 完全重载服务 (Bootstrap)
+launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.service.plist 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.service.plist
 ```
 
-### Unified Management Function
+## 更新与重启 (Updating & Applying Rules)
 
-Add this to your `.zshrc` or `.bashrc` for easy management:
+When you modify `custom_direct.list` or want to update domains:
 
+1. **重新抓取聚合所有列表:**
+   ```bash
+   python3 scripts/merge_shadowrocket_rules.py
+   python3 smartdns/generate_smartdns_rules.py
+   ```
+2. **重启 SmartDNS 以应用新规则:**
+   ```bash
+   launchctl kickstart -k "gui/$(id -u)/com.smartdns"
+   ```
+3. **在 Surge 中清空 DNS 缓存** (Tools -> Clear DNS Cache).
+
+## 排查字典 (Troubleshooting)
+
+**Empty DNS answer 错误复现?**
+Check if the PF Firewall rule dropped tracking for TCP. TCP port 53 is mandatory for `baidu` and other CNAME-heavy sites. Re-run the PF rule command above.
+
+**如何排查特定域名的落点？**
+Read the live audit log:
 ```bash
-reload_service() {
-  local domain=$1
-  local plist=$2
-  local label=$3
-
-  # Use sudo only if domain is 'system'
-  local cmd_prefix=""
-  [[ "$domain" == "system" ]] && cmd_prefix="sudo "
-
-  $cmd_prefix launchctl bootout "$domain" "$plist" 2>/dev/null || true
-  $cmd_prefix launchctl bootstrap "$domain" "$plist"
-  $cmd_prefix launchctl kickstart -k "$domain/$label"
-}
-
-# Usage:
-# reload_service "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.plist com.smartdns
+tail -f /tmp/smartdns_audit.log | grep "<your-domain>"
 ```
 
-
-## Audit and Noise Control
-
-`audit-enable no` is intentional. The older audit-enabled layout could make Surge flag SmartDNS as a local resolver sending very high request volume. The current design keeps SmartDNS limited to the CN bucket and leaves `/tmp/mosdns.log` as the main end-to-end log.
-
-## Troubleshooting
-
-**Surge still reports SmartDNS as red or excessively noisy**
-
-```bash
-rg -n "6354|audit-enable yes" ~/.smartdns/smartdns.conf ~/.mosdns/config/config.yaml
-```
-
-If that returns matches, the live files were not updated yet.
-
-**SmartDNS will not start**
-
-```bash
-cat /tmp/smartdns.stderr.log
-plutil -lint ~/Library/LaunchAgents/com.smartdns.plist
-launchctl print gui/$(id -u)/com.smartdns
-```
-
-**CN answers look obviously wrong**
-
-Inspect the SmartDNS log and temporarily remove the bad upstream from `~/.smartdns/smartdns.conf`, then restart the LaunchAgent.
-
-**Port 6353 is already in use**
-
-```bash
-lsof -nP -iTCP:6353 -sTCP:LISTEN
-lsof -nP -iUDP:6353
-```
-
-## Uninstallation
-
-```bash
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.smartdns.plist
-rm ~/Library/LaunchAgents/com.smartdns.plist
-rm -rf ~/.smartdns
-brew uninstall smartdns
-```
-
-If you remove SmartDNS completely, also update `~/.mosdns/config/config.yaml` or rerun the mosdns installer so the CN bucket does not keep pointing at `127.0.0.1:6353`.
+---
+*Generated by Antigravity.*
