@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# --- 1. 配置持久化 ---
+# --- 1. 配置准备 ---
 SMARTDNS_DIR="$HOME/.config/smartdns"
 mkdir -p "$SMARTDNS_DIR"
-cp /tmp/smartdns.conf "$SMARTDNS_DIR/smartdns.conf"
-# 确保域名的规则集持久化
-cp /tmp/cn.txt "$SMARTDNS_DIR/cn.txt"
-cp /Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/rules/nsfw.txt "$SMARTDNS_DIR/nsfw.txt"
+# (不再复制 cn.txt 等临时文件，配置文件将直接挂载 GitHub 仓库路径中的 rules 文件夹)
 
 # --- 2. 持久化 PF 规则脚本 ---
 PF_SCRIPT="$SMARTDNS_DIR/pf_setup.sh"
@@ -30,9 +27,8 @@ cat <<EOF > "$PLIST_PATH"
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/sbin/smartdns</string>
-        <string>-f</string>
         <string>-c</string>
-        <string>$SMARTDNS_DIR/smartdns.conf</string>
+        <string>/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/smartdns.conf</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
