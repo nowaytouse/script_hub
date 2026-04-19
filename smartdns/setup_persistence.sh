@@ -9,9 +9,10 @@ mkdir -p "$SMARTDNS_DIR"
 PF_SCRIPT="$SMARTDNS_DIR/pf_setup.sh"
 cat <<EOF > "$PF_SCRIPT"
 #!/bin/bash
-# 打通 53 -> 6053 隧道
+# 打通 53 -> 6053 隧道 (Dual-Stack)
 sudo pfctl -d 2>/dev/null
-echo "rdr pass on lo0 proto { udp, tcp } from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053" | sudo pfctl -ef -
+echo "rdr pass on lo0 inet proto { udp, tcp } from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053
+rdr pass on lo0 inet6 proto { udp, tcp } from any to ::1 port 53 -> ::1 port 6053" | sudo pfctl -ef -
 EOF
 chmod +x "$PF_SCRIPT"
 
