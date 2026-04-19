@@ -267,6 +267,14 @@ def main():
     print(f"{'═'*60}\n")
 
     cats = parse_shadowrocket_list(SRC)
+    
+    # --- [New] Merge custom direct rules ---
+    CUSTOM_SRC = os.path.join(ROOT, "ruleset", "custom_direct.list")
+    if os.path.exists(CUSTOM_SRC):
+        print(f"  [*] Loading custom rules from {os.path.basename(CUSTOM_SRC)}...")
+        custom_set = read_rules(CUSTOM_SRC)
+        cats["Direct"].extend(list(custom_set))
+
     total_added = 0
 
     for cat, rules in cats.items():
