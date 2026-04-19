@@ -7,14 +7,21 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/opt/homebrew/sbin/smartdns</string>
-		<string>-f</string>
+		<string>run</string>
 		<string>-c</string>
 		<string>/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/smartdns.conf</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
-	<true/>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+		<key>NetworkState</key>
+		<true/>
+	</dict>
+	<key>ProcessType</key>
+	<string>Interactive</string>
 	<key>StandardErrorPath</key>
 	<string>/tmp/smartdns.err</string>
 	<key>StandardOutPath</key>
