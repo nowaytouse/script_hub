@@ -18,11 +18,19 @@ encrypted-dns-server = https://dns.google/dns-query, https://cloudflare-dns.com/
 encrypted-dns-follow-outbound-mode = true
 
 [Host]
-# SECTION 3: Mainland Acceleration via SmartDNS
-# All domains in Direct.list are steered to local SmartDNS (6053) for racing.
-DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Direct.list,server:127.0.0.1:6053
-# Generic .cn TLD fallback
-*.cn = server:127.0.0.1:6053
+# SECTION 3: Mainland DoH Steering RULE-SETs (Priority — matched first)
+# Mainland domains must be at the top so they hit mainland DoH without
+# falling through to the international global pool (which would be slow).
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_AliDNS.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_114.list,server:https://doh.pub/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_ByteDance.list,server:https://dns.alidns.com/dns-query
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Sources/DNS_mapping/DNS_China_360.list,server:https://doh.pub/dns-query
+# Comprehensive mainland domain catch-all from Direct.list
+DOMAIN-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/Direct.list,server:https://doh.pub/dns-query
+# Generic .cn TLD fallback — last resort for mainland domains
+*.cn = server:https://dns.alidns.com/dns-query
+
+
 
 # SECTION 5: Rule-Based DoH Steering (International Domains → International DoH)
 # International domains are explicitly steered to international DoH to ensure
