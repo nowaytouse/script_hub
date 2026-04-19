@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 76
-# Updated: 2026-04-19 06:00:02
+# Rules: 80
+# Updated: 2026-04-19 21:10:18
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
@@ -81,3 +81,9 @@ DOMAIN-SUFFIX,stripe.com
 DOMAIN-SUFFIX,turn.livekit.cloud
 IP-CIDR,24.199.123.28/32
 IP-CIDR,64.23.132.171/32
+
+# ── merged from shadowrocket.list (2026-04-19) ──
+DOMAIN,copilot.bing.com,PROXY
+DOMAIN-SUFFIX,apple-relay.mask.apple-dns.net,PROXY
+DOMAIN-SUFFIX,cdn.cloudflare.net,PROXY
+DOMAIN-SUFFIX,poe.com,PROXY
