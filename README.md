@@ -1,30 +1,7 @@
-# Script Hub
+# mosdns
 
-A collection of items aggregated from public sources.
+功能概述、配置方式、教程等，详见: [wiki](https://irine-sistiana.gitbook.io/mosdns-wiki/)
 
-> **Latest Architecture Update**: The DNS steering engine has been fully migrated from MosDNS to a high-performance **SmartDNS + Surge (True Dual-Stack TCP/UDP)** architecture. Please see the [Surge + SmartDNS Documentation](smartdns/README_SURGE_SMARTDNS.md) for full configuration details and commands.
+下载预编译文件、更新日志，详见: [release](https://github.com/IrineSistiana/mosdns/releases)
 
-<details>
-<summary>Disclaimer</summary>
-
-### ⚖️ LEGAL DISCLAIMER AND TERMS OF USE
-
-**PLEASE READ THIS SECTION CAREFULLY BEFORE INTERACTING WITH THIS REPOSITORY.**
-
-1. **Third-Party Content**: The scripts and rules contained herein are primarily **aggregated from publicly available sources on the internet**. The maintainer does not claim authorship of the Materials.
-
-2. **No Warranty**: All Materials are provided "AS IS" without any warranties of any kind. The maintainer does not guarantee the accuracy or reliability of any resource. Use is at your own risk.
-
-3. **Liability Limitation**: Under no circumstances shall the maintainer be liable for any damages resulting from the use or inability to use the Materials.
-
-4. **Compliance with Laws**: Users are solely responsible for ensuring that their use complies with all applicable laws and regulations.
-
-5. **Commercial Use**: Commercial use is not authorized.
-
-6. **Takedown Policy**: If you are a copyright holder and wish for a resource to be removed, please contact the maintainer via a GitHub Issue with proof of ownership.
-
-</details>
-
----
-
-**Last Updated**: March 2026
+docker 镜像: [docker hub](https://hub.docker.com/r/irinesistiana/mosdns)

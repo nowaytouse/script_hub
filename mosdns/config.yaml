@@ -1,0 +1,288 @@
+# mosdns Configuration - Final Diversity & Parity Edition
+# Version: 2026.04.21-The_Ultimate_One
+# ══════════════════════════════════════════════════════════════════════
+
+log:
+  level: info
+  file: "/tmp/mosdns.log"
+
+plugins:
+  # ────────────────────────────────────────────────────────────────────
+  # 1. 内部 Hosts (脱敏映射 - 绕避 Surge 劫持审计)
+  # ────────────────────────────────────────────────────────────────────
+  - tag: hosts
+    type: hosts
+    args:
+      entries:
+        - "dns.google 8.8.4.4"
+        - "cloudflare-dns.com 1.0.0.1"
+        - "dns.quad9.net 149.112.112.112"
+        - "doh.dns.apple.com 17.253.144.10"
+        - "wikimedia-dns.org 185.71.138.138"
+        - "dns.alidns.com 223.5.5.5"
+        - "doh.pub 1.12.12.12"
+        - "doh.360.cn 101.226.4.6"            # 360 DoH 隐身辅助
+
+  - tag: cache
+    type: cache
+    args:
+      size: 65535
+
+  # ────────────────────────────────────────────────────────────────────
+  # 2. 规则集：12w+ 域名全量精细化
+  # ────────────────────────────────────────────────────────────────────
+  - tag: matcher_apple
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Apple.txt"]}
+
+  - tag: matcher_google
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Google.txt"]}
+
+  - tag: matcher_github
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_GitHub.txt"]}
+
+  - tag: matcher_microsoft
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Microsoft.txt"]}
+
+  - tag: matcher_ai_cf
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_AI.txt"]}
+
+  - tag: matcher_nsfw
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/nsfw_domain.txt"]}
+
+  - tag: matcher_tw
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_StreamTW.txt"]}
+
+  - tag: matcher_social
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_SocialMedia.txt"]}
+
+  - tag: matcher_tiktok
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_TikTok.txt"]}
+
+  - tag: matcher_ali
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/vendor_ali.txt"]}
+
+  - tag: matcher_tencent
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/vendor_tencent.txt"]}
+
+  - tag: matcher_bootstrap
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Bootstrap.txt"]}
+
+  - tag: matcher_airport
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Airport.txt"]}
+
+  - tag: cn_domain_matcher
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/cn_domain.txt"]}
+
+  - tag: cn_ip_matcher
+    type: ip_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/cn_ip.txt"]}
+
+  # ────────────────────────────────────────────────────────────────────
+  # 3. 超多样化上游矩阵 (Parity Optimized)
+  # ────────────────────────────────────────────────────────────────────
+  
+  # Google
+  - tag: forward_google
+    type: forward
+    args:
+      upstreams:
+        - addr: "https://dns.google/dns-query"
+          socks5: "127.0.0.1:6153"
+
+  # Cloudflare
+  - tag: forward_cloudflare
+    type: forward
+    args:
+      upstreams:
+        - addr: "https://cloudflare-dns.com/dns-query"
+          socks5: "127.0.0.1:6153"
+
+  # MS/Wikimedia
+  - tag: forward_ms
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "https://wikimedia-dns.org/dns-query"
+          socks5: "127.0.0.1:6153"
+        - addr: "https://dns.quad9.net/dns-query"
+          socks5: "127.0.0.1:6153"
+
+  # 流媒体 (TWNIC)
+  - tag: forward_tw
+    type: forward
+    args:
+      upstreams:
+        - addr: "https://dns.twnic.tw/dns-query"
+          socks5: "127.0.0.1:6153"
+
+  # 隐私/安全 (AdGuard)
+  - tag: forward_adguard
+    type: forward
+    args:
+      upstreams:
+        - addr: "https://dns.adguard-dns.com/dns-query"
+          socks5: "127.0.0.1:6153"
+
+  # 中国大陆全明星解析矩阵 (并发竞速)
+  - tag: forward_cn_general
+    type: forward
+    args:
+      concurrent: 7
+      upstreams:
+        - addr: "https://dns.alidns.com/dns-query" # 阿里 DoH
+        - addr: "https://doh.pub/dns-query"        # 腾讯 DoH
+        - addr: "https://doh.360.cn/dns-query"     # 360 DoH (新增)
+        - addr: "180.184.1.1"                      # 字节跳动
+        - addr: "180.76.76.76"                     # 百度
+        - addr: "114.114.114.114"                  # 114DNS
+        - addr: "1.12.12.12"                       # 腾讯备选
+        - addr: "101.226.4.6"                      # 360 节点
+
+  # 国际通用兜底 (聚合 Google/Cloudflare/Wikimedia)
+  - tag: forward_intl_general
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: "https://dns.google/dns-query"
+          socks5: "127.0.0.1:6153"
+        - addr: "https://cloudflare-dns.com/dns-query"
+          socks5: "127.0.0.1:6153"
+        - addr: "https://wikimedia-dns.org/dns-query"
+          socks5: "127.0.0.1:6153"
+
+  # 备份/直连
+  - tag: forward_bootstrap_direct
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "223.5.5.5"
+        - addr: "119.29.29.29"
+
+  # ────────────────────────────────────────────────────────────────────
+  # 4. 逻辑序列
+  # ────────────────────────────────────────────────────────────────────
+  - tag: cn_sequence
+    type: sequence
+    args:
+      - exec: $forward_cn_general
+      - exec: accept
+
+  - tag: intl_sequence
+    type: sequence
+    args:
+      - exec: $forward_ms           # 默认国际首选 MS-style (混合 Wikimedia)
+      - exec: $forward_cloudflare   # 增加 Cloudflare 冗余
+      - matches: "!resp_ip $cn_ip_matcher"
+        exec: accept
+      - exec: $forward_cn_general
+      - exec: accept
+
+  - tag: main_sequence
+    type: sequence
+    args:
+      - exec: $hosts
+      - exec: $cache
+
+      # QUIC/HTTPS 拦截 (Surge 审计绕过)
+      - matches: qtype 65
+        exec: reject 3 
+      - matches: qtype 46 47 48
+        exec: reject 3
+
+      # ──── 精确路由分流 ────
+      - matches: qname $matcher_bootstrap
+        exec: $forward_bootstrap_direct
+      - matches: qname $matcher_bootstrap
+        exec: accept
+
+      - matches: qname $matcher_nsfw
+        exec: $forward_adguard
+      - matches: qname $matcher_nsfw
+        exec: accept
+
+      - matches: qname $matcher_tiktok
+        exec: $forward_tw
+      - matches: qname $matcher_tiktok
+        exec: accept
+
+      - matches: qname $matcher_airport
+        exec: $forward_intl_general
+      - matches: qname $matcher_airport
+        exec: accept
+
+      - matches: qname $matcher_apple
+        exec: $forward_cn_general
+      - matches: qname $matcher_apple
+        exec: accept
+
+      - matches: qname $matcher_google
+        exec: $forward_google
+      - matches: qname $matcher_google
+        exec: accept
+
+      - matches: qname $matcher_ai_cf
+        exec: $forward_cloudflare
+      - matches: qname $matcher_ai_cf
+        exec: accept
+
+      - matches: qname $matcher_microsoft
+        exec: $forward_ms
+      - matches: qname $matcher_microsoft
+        exec: accept
+
+      - matches: qname $matcher_social
+        exec: $forward_adguard
+      - matches: qname $matcher_social
+        exec: accept
+
+      - matches: qname $matcher_tw
+        exec: $forward_tw
+      - matches: qname $matcher_tw
+        exec: accept
+
+      - matches: qname $matcher_github
+        exec: jump intl_sequence
+
+      - matches: qname $matcher_ali
+        exec: $forward_cn_general
+      - matches: qname $matcher_ali
+        exec: accept
+
+      - matches: qname $matcher_tencent
+        exec: $forward_cn_general
+      - matches: qname $matcher_tencent
+        exec: accept
+
+      - matches: qname $cn_domain_matcher
+        exec: jump cn_sequence
+
+      # 兜底
+      - exec: jump intl_sequence
+
+  # ────────────────────────────────────────────────────────────────────
+  # 5. 服务器绑定 (TCP/UDP 同时监听)
+  # ────────────────────────────────────────────────────────────────────
+  - tag: udp_server
+    type: udp_server
+    args: {entry: main_sequence, listen: "127.0.0.1:6053"}
+
+  - tag: tcp_server
+    type: tcp_server
+    args: {entry: main_sequence, listen: "127.0.0.1:6053"}
