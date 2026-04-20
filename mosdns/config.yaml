@@ -1,27 +1,28 @@
-# mosdns Configuration - Final Diversity & Parity Edition
-# Version: 2026.04.21-The_Ultimate_One
+# mosdns Configuration - Ultimate Stealth Edition (Hardened v4.0)
+# Version: 2026.04.21-Stealth_Evasion_Enabled
 # ══════════════════════════════════════════════════════════════════════
 
 log:
   level: info
-  file: "/tmp/mosdns.log"
+  file: "/Users/nyamiiko/Library/Logs/mosdns.log"
 
 plugins:
   # ────────────────────────────────────────────────────────────────────
-  # 1. 内部 Hosts (脱敏映射 - 绕避 Surge 劫持审计)
+  # 1. 内部 Hosts (脱敏 & 绕避 Surge HTTPDNS_Hijack 审计)
   # ────────────────────────────────────────────────────────────────────
   - tag: hosts
     type: hosts
     args:
       entries:
-        - "dns.google 8.8.4.4"
-        - "cloudflare-dns.com 1.0.0.1"
-        - "dns.quad9.net 149.112.112.112"
-        - "doh.dns.apple.com 17.253.144.10"
-        - "wikimedia-dns.org 185.71.138.138"
-        - "dns.alidns.com 223.5.5.5"
-        - "doh.pub 1.12.12.12"
-        - "doh.360.cn 101.226.4.6"            # 360 DoH 隐身辅助
+        - "dns.google 8.8.4.4"                # 避开 8.8.8.8
+        - "dns.google 2001:4860:4860::8888"   # 优先 IPv6
+        - "cloudflare-dns.com 1.0.0.1"        # 避开 1.1.1.1
+        - "cloudflare-dns.com 2606:4700:4700::1111"
+        - "dns.quad9.net 149.112.112.112"     # 避开 9.9.9.9
+        - "dns.quad9.net 2620:fe::fe"
+        - "dns.alidns.com 2400:3200::1"       # 国内 IPv6 脱敏 (避开 223.5.5.5)
+        - "doh.pub 2402:4e00::"               # 腾讯 IPv6 脱敏 (避开 119.29.29.29)
+        - "doh.360.cn 101.124.19.122"         # 360 备选非敏 IP
 
   - tag: cache
     type: cache
@@ -67,18 +68,6 @@ plugins:
     type: domain_set
     args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_TikTok.txt"]}
 
-  - tag: matcher_ali
-    type: domain_set
-    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/vendor_ali.txt"]}
-
-  - tag: matcher_tencent
-    type: domain_set
-    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/vendor_tencent.txt"]}
-
-  - tag: matcher_bootstrap
-    type: domain_set
-    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Bootstrap.txt"]}
-
   - tag: matcher_airport
     type: domain_set
     args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Airport.txt"]}
@@ -92,7 +81,7 @@ plugins:
     args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/cn_ip.txt"]}
 
   # ────────────────────────────────────────────────────────────────────
-  # 3. 超多样化上游矩阵 (Parity Optimized)
+  # 3. 隐身化上游矩阵 (Evasion Optimized)
   # ────────────────────────────────────────────────────────────────────
   
   # Google
@@ -111,7 +100,7 @@ plugins:
         - addr: "https://cloudflare-dns.com/dns-query"
           socks5: "127.0.0.1:6153"
 
-  # MS/Wikimedia
+  # MS / Wikimedia
   - tag: forward_ms
     type: forward
     args:
@@ -122,38 +111,20 @@ plugins:
         - addr: "https://dns.quad9.net/dns-query"
           socks5: "127.0.0.1:6153"
 
-  # 流媒体 (TWNIC)
-  - tag: forward_tw
-    type: forward
-    args:
-      upstreams:
-        - addr: "https://dns.twnic.tw/dns-query"
-          socks5: "127.0.0.1:6153"
-
-  # 隐私/安全 (AdGuard)
-  - tag: forward_adguard
-    type: forward
-    args:
-      upstreams:
-        - addr: "https://dns.adguard-dns.com/dns-query"
-          socks5: "127.0.0.1:6153"
-
-  # 中国大陆全明星解析矩阵 (并发竞速)
+  # 国内“隐身版”解析池 (强制 DoH + 非敏 IP)
   - tag: forward_cn_general
     type: forward
     args:
-      concurrent: 7
+      concurrent: 5
       upstreams:
-        - addr: "https://dns.alidns.com/dns-query" # 阿里 DoH
-        - addr: "https://doh.pub/dns-query"        # 腾讯 DoH
-        - addr: "https://doh.360.cn/dns-query"     # 360 DoH (新增)
-        - addr: "180.184.1.1"                      # 字节跳动
-        - addr: "180.76.76.76"                     # 百度
-        - addr: "114.114.114.114"                  # 114DNS
-        - addr: "1.12.12.12"                       # 腾讯备选
-        - addr: "101.226.4.6"                      # 360 节点
+        - addr: "https://dns.alidns.com/dns-query" # 域名形态 (经 Hosts 脱敏)
+        - addr: "https://doh.pub/dns-query"        # 域名形态 (经 Hosts 脱敏)
+        - addr: "https://doh.360.cn/dns-query"
+        - addr: "180.184.1.1"                      # 字节跳动 (不在劫持名单)
+        - addr: "114.114.114.114"                  # 114DNS (不在劫持名单)
+        - addr: "2400:da00::6666"                  # 百度 IPv6
 
-  # 国际通用兜底 (聚合 Google/Cloudflare/Wikimedia)
+  # 国际通用隐身对齐
   - tag: forward_intl_general
     type: forward
     args:
@@ -166,14 +137,15 @@ plugins:
         - addr: "https://wikimedia-dns.org/dns-query"
           socks5: "127.0.0.1:6153"
 
-  # 备份/直连
+  # 引导解析 (Bootstrap) - 强制 IPv6 优先
   - tag: forward_bootstrap_direct
     type: forward
     args:
-      concurrent: 2
+      concurrent: 3
       upstreams:
-        - addr: "223.5.5.5"
-        - addr: "119.29.29.29"
+        - addr: "2400:3200::1"    # 阿里 IPv6
+        - addr: "2402:4e00::"     # 腾讯 IPv6
+        - addr: "114.114.114.114" # 114 备选
 
   # ────────────────────────────────────────────────────────────────────
   # 4. 逻辑序列
@@ -187,8 +159,7 @@ plugins:
   - tag: intl_sequence
     type: sequence
     args:
-      - exec: $forward_ms           # 默认国际首选 MS-style (混合 Wikimedia)
-      - exec: $forward_cloudflare   # 增加 Cloudflare 冗余
+      - exec: $forward_ms
       - matches: "!resp_ip $cn_ip_matcher"
         exec: accept
       - exec: $forward_cn_general
@@ -200,31 +171,20 @@ plugins:
       - exec: $hosts
       - exec: $cache
 
-      # QUIC/HTTPS 拦截 (Surge 审计绕过)
+      # QUIC/HTTPS 拦截项
       - matches: qtype 65
         exec: reject 3 
       - matches: qtype 46 47 48
         exec: reject 3
 
-      # ──── 精确路由分流 ────
       - matches: qname $matcher_bootstrap
         exec: $forward_bootstrap_direct
       - matches: qname $matcher_bootstrap
         exec: accept
 
       - matches: qname $matcher_nsfw
-        exec: $forward_adguard
-      - matches: qname $matcher_nsfw
-        exec: accept
-
-      - matches: qname $matcher_tiktok
-        exec: $forward_tw
-      - matches: qname $matcher_tiktok
-        exec: accept
-
-      - matches: qname $matcher_airport
         exec: $forward_intl_general
-      - matches: qname $matcher_airport
+      - matches: qname $matcher_nsfw
         exec: accept
 
       - matches: qname $matcher_apple
@@ -247,37 +207,13 @@ plugins:
       - matches: qname $matcher_microsoft
         exec: accept
 
-      - matches: qname $matcher_social
-        exec: $forward_adguard
-      - matches: qname $matcher_social
-        exec: accept
-
-      - matches: qname $matcher_tw
-        exec: $forward_tw
-      - matches: qname $matcher_tw
-        exec: accept
-
-      - matches: qname $matcher_github
-        exec: jump intl_sequence
-
-      - matches: qname $matcher_ali
-        exec: $forward_cn_general
-      - matches: qname $matcher_ali
-        exec: accept
-
-      - matches: qname $matcher_tencent
-        exec: $forward_cn_general
-      - matches: qname $matcher_tencent
-        exec: accept
-
       - matches: qname $cn_domain_matcher
         exec: jump cn_sequence
 
-      # 兜底
       - exec: jump intl_sequence
 
   # ────────────────────────────────────────────────────────────────────
-  # 5. 服务器绑定 (TCP/UDP 同时监听)
+  # 5. 服务启动
   # ────────────────────────────────────────────────────────────────────
   - tag: udp_server
     type: udp_server
