@@ -1,13 +1,14 @@
-# MosDNS v5 生产级运维手册 (Operations Manual)
+# MosDNS v5 生产级运维手册 (Operations Manual) - Stealth v4.0
 
-本项目已成功从 SmartDNS-RS 迁移至 **MosDNS v5.3.4**，实现了 12w+ 规则的秒级匹配与极致的多样化分流。
+本项目已成功从 SmartDNS-RS 迁移至 **MosDNS v5.3.4**，并针对 Surge 的 `HTTPDNS_Hijack` 审计完成了 **Stealth v4.0 隐身加固**。
 
 ## 1. 核心架构逻辑
 *   **本地监听**：`127.0.0.1:6053` (UDP/TCP)。
 *   **规则分流**：
     *   **国内**：并发查询阿里、腾讯、字节、百度、360、114 等节点，取最快结果。
     *   **国际**：按域名桶分流至 Google, Cloudflare, MS (Wikimedia), AdGuard, TWNIC 等节点。
-*   **Surge 联动**：所有国际查询均通过 `127.0.0.1:6153` (SOCKS5) 转发，并利用备向 IP (如 8.8.4.4) 绕过 Surge 的劫持审计。
+*   **Surge 联动**：所有国际查询均通过 `127.0.0.1:6153` (SOCKS5) 转发。
+*   **隐身加固 (Stealth v4.0)**：彻底移除了 8.8.8.8, 1.1.1.1, 223.5.5.5 等敏感公共 IP，全面转向 IPv6 节点及备选隐身 IP (如 8.8.4.4, 1.0.0.1)，确保不命中的 Surge 的劫持审计名单。
 
 ## 2. 自动化规则同步 (12w 规则更新)
 当您的原始规则文件（在 `archive` 目录下）或 Surge 的 `Direct.list` 更新时，请执行：
