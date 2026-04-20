@@ -1,0 +1,46 @@
+=== 1. Binary Path ===
+mosdns not found
+
+=== 2. Version Info ===
+zsh: command not found: mosdns
+
+=== 3. Running Process ===
+22451 /Users/nyamiiko/.mosdns/mosdns start -c /Users/nyamiiko/.mosdns/config/config.yaml
+93751 cat /tmp/mosdns.log
+
+=== 4. Launchd Plist Files ===
+com.mosdns.plist
+
+=== 5. Port 53 Occupation ===
+COMMAND   PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+mosdns  22451     root    4u  IPv4   0xdf6a8b69e86ea8      0t0  UDP localhost:domain
+mosdns  22451     root    8u  IPv6 0x34966c718069cc68      0t0  UDP localhost:domain
+mosdns  22451     root    9u  IPv4 0xba775d5d7622fa4a      0t0  TCP localhost:domain (LISTEN)
+mosdns  22451     root   10u  IPv6 0x3eb5c05bf6ecee03      0t0  TCP localhost:domain (LISTEN)
+mosdns  22451     root   16u  IPv6 0x7680ac26020421e0      0t0  UDP nyamiikos.local:49244->dns.google:domain
+mosdns  22451     root   18u  IPv6 0xe0413e14380993fb      0t0  UDP nyamiikos.local:52284->dns.quad9.net:domain
+mosdns  22451     root   19u  IPv4 0x612ea01bd1b3d0b0      0t0  UDP 192.168.15.185:50226->public1.alidns.com:domain
+mosdns  22451     root   20u  IPv6 0x1ef5895399d8928c      0t0  UDP nyamiikos.local:57034->public1.alidns.com:domain
+mosdns  22451     root   21u  IPv4 0x40598913d8212d52      0t0  UDP 198.18.0.1:64472->one.one.one.one:domain
+mosdns  22451     root   30u  IPv4 0xc4e508c0ad09e37a      0t0  UDP 192.168.15.185:59467->pdns.dnspod.cn:domain
+mosdns  22451     root   53u  IPv6 0xc2b26686729fc951      0t0  UDP nyamiikos.local:55250->[2402:4e00::]:domain
+Surge   23823 nyamiiko   19u  IPv6 0x576ce44d117c6d44      0t0  UDP localhost:52097->localhost:domain
+Surge   23823 nyamiiko   35u  IPv4 0x7df36e74a2033730      0t0  UDP localhost:49676->localhost:domain
+Surge   23823 nyamiiko   41u  IPv6 0x3e179ae72d737e0e      0t0  UDP localhost:56239->localhost:domain
+Surge   23823 nyamiiko   43u  IPv4 0xf36d675f27529ce8      0t0  UDP localhost:64252->localhost:domain
+Surge   23823 nyamiiko   47u  IPv6 0x136d44562f0a8288      0t0  UDP localhost:59749->localhost:domain
+Surge   23823 nyamiiko   48u  IPv4 0x7d537d35bc1d1dae      0t0  UDP localhost:61469->localhost:domain
+Surge   23823 nyamiiko   64u  IPv6 0x293b57ac0b661051      0t0  UDP localhost:53120->localhost:domain
+Surge   23823 nyamiiko   66u  IPv4 0x6aa4bb08935f4f18      0t0  UDP localhost:56897->localhost:domain
+Surge   23823 nyamiiko   67u  IPv6 0xe6b8fccada35b149      0t0  UDP localhost:65474->localhost:domain
+Surge   23823 nyamiiko   68u  IPv4 0x54c4c4a05f84d4ed      0t0  UDP localhost:50350->localhost:domain
+Surge   23823 nyamiiko   69u  IPv4 0x7b3d386d1f53bd40      0t0  UDP localhost:59281->localhost:domain
+Surge   23823 nyamiiko   72u  IPv6 0x6f3094ec26937079      0t0  UDP localhost:64737->localhost:domain
+Surge   23823 nyamiiko   75u  IPv6 0x9324523fbb433aab      0t0  UDP localhost:55335->localhost:domain
+Surge   23823 nyamiiko   76u  IPv4 0x3c5bb678230f5982      0t0  UDP localhost:64697->localhost:domain
+Surge   23823 nyamiiko   77u  IPv6 0xb8f5be2b7209fb9a      0t0  UDP localhost:56894->localhost:domain
+Surge   23823 nyamiiko   78u  IPv4 0xb26fc3b82703e804      0t0  UDP localhost:56130->localhost:domain
+Surge   23823 nyamiiko   86u  IPv6 0x3e894366045f4dff      0t0  UDP localhost:51426->localhost:domain
+Surge   23823 nyamiiko   87u  IPv4 0xe1c8b3843715fe4a      0t0  UDP localhost:63363->localhost:domain
+Surge   23823 nyamiiko   96u  IPv6 0xaa1e8407919f4be1      0t0  UDP localhost:58409->localhost:domain
+Surge   23823 nyamiiko   97u  IPv4 0xada25b1b5c15bab0      0t0  UDP localhost:61647->localhost:domain

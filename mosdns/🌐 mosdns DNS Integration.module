@@ -1,0 +1,45 @@
+# name: 🌐 mosdns DNS Integration
+# desc: [🚀SR] Route all DNS queries to local mosdns via 127.0.0.1 and [::1] with DoH explicitly disabled for deterministic steering.
+# author: nyamiiko
+# homepage: https://github.com/nowaytouse/script_hub
+# icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Server.png
+# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
+# version: 2026.04.18i
+
+[General]
+bypass-system = true
+ipv6 = true
+prefer-ipv6 = true
+hijack-dns = -*
+dns-direct-fallback-proxy = false
+ipv6 = true
+ipv6-vif = auto
+dns-server = 127.0.0.1:5335, [::1]:5335
+doh-server = 
+# [SR不支持,已移除] encrypted-dns-follow-outbound-mode = false
+
+[Host]
+# DNS Bootstrap - Loop Prevention
+# Hardcoded IPs for critical DoH providers to ensure Surge resolves them instantly without querying mosdns.
+dns.google = server:syslib
+cloudflare-dns.com = server:syslib
+doh.pub = server:syslib
+dns.pub = server:syslib
+dot.pub = server:syslib
+doh.360.cn = server:syslib
+dns.alidns.com = server:syslib
+doh.dns.apple.com = server:syslib
+dns.quad9.net = server:syslib
+dns.adguard-dns.com = server:syslib
+wikimedia-dns.org = server:syslib
+
+# Catch-all to MosDNS:5335
+* = server:127.0.0.1:5335
+
+# [Script]
+# DNS Guard Request = type=http-request, pattern=^https?:\/\/(httpdns|dns)\.(alicdn|aliyuncs|baidu|baidubce|bilivideo|meituan|jd|weixin\.qq|weibo|volcengineapi|yunxindns|calorietech|push\.oppomobile)\.(com|cn), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
+# DNS Guard HTTPDNS-IP = type=http-request, pattern=^https?:\/\/(203\.107\.1\.\d+|180\.76\.76\.200|119\.29\.29\.(98|99)|59\.111\.239\.(61|62)|101\.124\.19\.122|103\.224\.222\.208), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=0, timeout=10
+# DNS Guard Response = type=http-response, pattern=^https?:\/\/.*dns(-query|\/resolve|\.weixin|\.jd|\.weibo), script-path=https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/scripts/dns/dns_guard.js, requires-body=1, max-size=65536, timeout=10
+
+[MITM]
+hostname = *.google.cn, *.google.com.hk, httpdns.*, dns.jd.com, dns.weixin.qq.com, dns.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com

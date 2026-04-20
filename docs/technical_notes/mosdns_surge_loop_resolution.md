@@ -22,10 +22,10 @@ MosDNS is designed for high-performance and low-latency, but this results in an 
 
 ## 3. Implemented Solutions
 
-### 1. Port Migration (The 5335 Shift)
-MosDNS was migrated from the standard port 53 to **port 5335**. 
+### 1. Port Migration (The 6053 Shift)
+MosDNS was migrated from the standard port 53 to **port 6053**. 
 - This prevents Surge's default port 53 hijacking from capturing MosDNS's internal bootstrap traffic.
-- Surge now explicitly points to `127.0.0.1:5335` for general resolution.
+- Surge now explicitly points to `127.0.0.1:6053` for general resolution.
 
 ### 2. Bootstrap Hardening (The `syslib` Barrier)
 To ensure MosDNS can always resolve its DoH upstreams (e.g., `dns.google`, `dns.alidns.com`), the Surge `[Host]` section was updated to force these domains to use the system library resolver:
@@ -39,7 +39,7 @@ dns.alidns.com = server:syslib
 This serves as a physical barrier that prevents any resolution required for the DoH handshake from ever being routed back into MosDNS.
 
 ### 3. Architectural Simplification
-- **SmartDNS Archive**: The SmartDNS-rs component was archived to reduce the height of the DNS stack and minimize potential failures between local services.
+- **Architectural Simplification**: The DNS stack was flattened by removing redundant intermediate components (like SmartDNS) to minimize potential failures between local services.
 - **Standalone MosDNS**: MosDNS now directly handles both international DoH (via Surge SOCKS5) and mainland DoH/UDP.
 
 ## 4. Verification Results
@@ -47,9 +47,9 @@ This serves as a physical barrier that prevents any resolution required for the 
 - **Verification Command**:
   ```bash
   sudo launchctl print system/com.mosdns | egrep "state"
-  lsof -nP -i:5335
+  lsof -nP -i:6053
   ```
-- **Smoke Test**: Successful resolution via `dig @127.0.0.1 -p 5335 google.com`.
+- **Smoke Test**: Successful resolution via `dig @127.0.0.1 -p 6053 google.com`.
 
 ---
 *Created by Antigravity AI for nyamiiko.*

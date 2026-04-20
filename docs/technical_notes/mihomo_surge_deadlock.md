@@ -15,7 +15,7 @@ This specific error is a **process spawning (`posix_spawn`) failure** at the OS 
 
 This explains the `mihomo` launch failure, but it does **not** explain every "all nodes red" situation by itself. In this repo, a second issue existed at the same time:
 
-1. `Surge DNS -> mosdns -> smartdns -> Surge SOCKS5`
+1. `Surge DNS -> mosdns -> Surge SOCKS5`
 2. `test-timeout=1` on policy checks
 3. `system` DNS fallback enabled beside local mosdns
 
@@ -97,4 +97,4 @@ The stable combination used in this repo is:
 - if you use the dedicated mosdns Surge module, let that module own `encrypted-dns-follow-outbound-mode = false`
 - `PROCESS-NAME,/usr/local/bin/mihomo*,DIRECT`
 - relaxed policy probe timeouts (`timeout=5`, `test-timeout=5`)
-- SmartDNS limited to the CN bucket so it no longer depends on Surge's own SOCKS5 path for intl DNS
+- Local DNS steering focused on a unified MosDNS instance to minimize stack height

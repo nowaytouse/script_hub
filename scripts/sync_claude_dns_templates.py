@@ -8,7 +8,7 @@ Rules:
    `🌐 DNS & Host Enhanced (Strict Privacy)`.
 3. Shadowrocket syncs DNS-oriented sections from the converted SR module.
 4. Sing-box keeps its own native DNS stack, but mirrors the same steering
-   intent with remote DoH rules instead of local mosdns/smartdns.
+   intent with remote DoH rules instead of local mosdns.
 """
 
 from __future__ import annotations
@@ -20,9 +20,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CLAUDE_DIR = ROOT / ".claude"
-SURGE_TEMPLATE = CLAUDE_DIR / "NyaMiiKo Max 💻「modns」.conf.conf"
+SURGE_TEMPLATE = CLAUDE_DIR / "NyaMiiKo Max 💻「mosdns」.conf.conf"
 SHADOWROCKET_TEMPLATE = CLAUDE_DIR / "shadowroket.conf"
-SINGBOX_TEMPLATE = CLAUDE_DIR / "Singbox1.13.0+.conf"
+SINGBOX_TEMPLATE = ROOT / "scripts" / "Substore" / "Singbox1.13.0+.conf"
 SHADOWROCKET_DNS_MODULE = ROOT / "module" / "shadowrocket" / "amplify_nexus" / "🌐 DNS & Host Enhanced.module"
 
 KEY_VALUE_RE = re.compile(r"^(\s*)([A-Za-z0-9_-]+)(\s*=\s*)(.*)$")

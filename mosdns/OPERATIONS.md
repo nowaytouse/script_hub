@@ -1,6 +1,6 @@
 # MosDNS v5 生产级运维手册 (Operations Manual) - Stealth v4.0
 
-本项目已成功从 SmartDNS-RS 迁移至 **MosDNS v5.3.4**，并针对 Surge 的 `HTTPDNS_Hijack` 审计完成了 **Stealth v4.0 隐身加固**。
+本项目采用 **MosDNS v5.3.4** 架构，并针对 Surge 的 `HTTPDNS_Hijack` 审计完成了 **Stealth v4.0 隐身加固**。
 
 ## 1. 核心架构逻辑
 *   **本地监听**：`127.0.0.1:6053` (UDP/TCP)。
@@ -15,7 +15,7 @@
 
 ```bash
 # 1. 运行同步脚本
-python3 generate_mosdns_rules.py
+python3 scripts/bin/sync_mosdns_rules.py
 
 # 2. 重启 MosDNS 使规则生效 (大约需要 15 秒重新加载 Trie 树)
 sudo killall mosdns

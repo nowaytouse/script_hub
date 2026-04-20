@@ -1,121 +1,207 @@
-# SmartDNS (V45 Safer Dual-Stack Edition)
+# mosdns DNS Setup for Surge
 
-`smartdns-rs` is the maintained replacement for the archived `mosdns` stack in this repo. The current topology keeps SmartDNS as the local DNS entrypoint on `127.0.0.1:6053` and `[::1]:6053`, then splits traffic into direct CN / Apple / bootstrap buckets and proxied specialty buckets.
+Stable dual-stack DNS entrypoint for Surge. `mosdns` stays on `127.0.0.1:6053` and `[::1]:6053`. International or specialty DoH stays inside mosdns for high-performance, precision traffic steering.
 
-## What Changed
+## Architecture
 
-- Dual-stack local listeners are enabled for both UDP and TCP: `127.0.0.1:6053` and `[::1]:6053`.
-- `force-qtype-soa 65` was removed. Returning synthetic SOA for HTTPS/SVCB can make Mail and other system apps slower or behave oddly.
-- Audit logging is disabled by default to reduce local I/O noise and query amplification.
-- The Surge `Host` bootstrap table is folded into SmartDNS static mappings, including IPv4 and IPv6 addresses for the key upstream resolvers.
-- A manual [system_direct.txt](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/rules/system_direct.txt) list keeps OCSP, captive portal, router admin, local, and NTP-style domains out of the generic proxy DNS bucket.
-- The archived `mosdns` split buckets are restored: `bootstrap`, `airport`, `apple`, `google`, `github`, `microsoft`, `ai_cf`, `tw`, `social`, `tiktok`, `nsfw`, `cn`, and `proxy`.
-
-## Routing Summary
-
-- `bootstrap`: DNS infrastructure, captive portal, Surge health-check style domains. Direct UDP only.
-- `system_direct`: certificate validation, local-router, hotspot, and time-sync domains. Forced onto the direct bootstrap path.
-- `airport`: subscription / node domains. Proxied international DoH.
-- `apple`: Apple domains. Direct Apple DoH.
-- `google`: Google-family domains. Proxied Google/Cloudflare DoH.
-- `github`: GitHub-family domains. Proxied multi-upstream DoH.
-- `microsoft`: Microsoft-family domains. Proxied Quad9/Cloudflare DoH.
-- `ai_cf`: AI / Cloudflare-heavy domains. Proxied Cloudflare/Google DoH.
-- `tw`: Taiwan stream domains. TWNIC first, Cloudflare fallback.
-- `social`: social-media domains. AdGuard first, Cloudflare fallback.
-- `tiktok`: TikTok-family domains. Proxied multi-upstream DoH.
-- `nsfw`: privacy-sensitive domains. Wikimedia first, Quad9 fallback.
-- `cn`: mainland domains. Direct AliDNS / DNSPod / DNSPub plus IPv6 UDP fallback.
-- `proxy`: final catch-all for unmatched international domains.
-
-## Local Entry
-
-If you do not use PF redirection, query SmartDNS directly:
-
-```bash
-dig @127.0.0.1 -p 6053 baidu.com
-dig @::1 -p 6053 baidu.com AAAA
+```text
+Surge -> 127.0.0.1:6053 / [::1]:6053 (mosdns)
+           |
+           +-> Bootstrap allowlist         -> plain UDP bootstrap only
+           +-> Apple / Google / MS / AI    -> direct DoH in mosdns
+           +-> TW / Social / NSFW / TikTok -> direct DoH in mosdns
+           +-> Ali / Tencent vendor domains -> direct CN DoH in mosdns
+           +-> CN domains                  -> Ali/Tencent DoH (concurrent)
+           \-> International fallback      -> direct DoH in mosdns via Surge SOCKS5
 ```
 
-The live process should bind all four sockets:
+## Features
+
+- Dual-stack local listeners on `127.0.0.1:6053` and `[::1]:6053`
+- DoH prioritized for steady-state resolution; only the bootstrap allowlist uses plain UDP
+- **Standalone Mode**: Decoupled and simplified DNS stack for maximum stability.
+- IPv4 and IPv6 CN IP sets are both used when mosdns checks whether an intl answer actually landed on a CN CDN
+- Launchd templates include a working directory, persistent restart behavior, and raised file limits
+
+## Installation
 
 ```bash
-lsof -nP -iUDP:6053 -iTCP:6053 | rg smartdns
-```
-
-Expected shape:
-
-- `UDP 127.0.0.1:6053`
-- `TCP 127.0.0.1:6053`
-- `UDP [::1]:6053`
-- `TCP [::1]:6053`
-
-## PF Redirection
-
-For system-wide port `53` capture on macOS, load the SmartDNS anchor instead of disabling PF:
-
-```bash
-echo "rdr pass on lo0 inet proto { udp, tcp } from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053
-rdr pass on lo0 inet6 proto { udp, tcp } from any to ::1 port 53 -> ::1 port 6053" | sudo pfctl -a com.apple/smartdns -f -
-sudo pfctl -e 2>/dev/null || true
-sudo pfctl -a com.apple/smartdns -s nat
-```
-
-If PF is enabled, clients can point to `127.0.0.1:53` and `[::1]:53`. If PF is not enabled, point clients to port `6053` directly.
-
-## Install / Reload
-
-```bash
-cd ~/Downloads/GitHub/script_hub/smartdns
+cd ~/Downloads/GitHub/script_hub/mosdns
 ./install.sh
-launchctl kickstart -k "gui/$(id -u)/com.smartdns"
 ```
 
-Status and logs:
+If either component was installed before April 19, 2026, rerun both installers or manually copy the current repo config and plist files, then reload both jobs. Older live installs still contain the unstable `6354` topology and `smartdns` audit settings.
+
+The installer will:
+
+1. Download the `mosdns` binary for your architecture.
+2. Download `geosite.dat`, `geoip.mmdb`, the CN domain list, and CN IPv4/IPv6 IP lists.
+3. Render [config.yaml](/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/config.yaml:1) into `~/.mosdns/config/config.yaml`.
+4. Render [com.mosdns.daemon.plist](/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/com.mosdns.daemon.plist:1) into `/Library/LaunchDaemons/com.mosdns.plist`.
+5. Reload the `system/com.mosdns` LaunchDaemon.
+
+## Surge Configuration
+
+Update your `[General]` section:
+
+```ini
+[General]
+dns-server = 127.0.0.1:6053, [::1]:6053
+# Remove encrypted-dns-server. mosdns owns DoH.
+```
+
+Or use a minimal module:
+
+```ini
+#!name=mosdns DNS Integration
+#!desc=Route DNS to local mosdns on 127.0.0.1:6053 and [::1]:6053
+
+[General]
+dns-server = 127.0.0.1:6053, [::1]:6053
+```
+
+Check that the launchd job is current and running:
 
 ```bash
-launchctl print "gui/$(id -u)/com.smartdns" | egrep "state|program"
-tail -f /tmp/smartdns.log
+sudo launchctl print system/com.mosdns | rg "state =|program ="
 ```
+
+Check for stale pre-refactor markers in the live configs:
+
+```bash
+rg -n "6354|audit-enable yes" \
+  ~/.mosdns/config/config.yaml
+# Expected: no matches
+```
+
+Check that the installed plists include the hardening that exists in this repo:
+
+```bash
+plutil -p /Library/LaunchDaemons/com.mosdns.plist | rg "HardResourceLimits|WorkingDirectory"
+```
+
+Smoke-test both stacks:
+
+```bash
+dig @127.0.0.1 -p 6053 jd.com
+dig @127.0.0.1 -p 6053 google.com
+dig @::1 -p 6053 jd.com
+tail -f /tmp/mosdns.log
+```
+
+## Management
+
+### Golden Specification for launchd
+
+1. **bootout** → Clean up old instances (use `sudo` for system domain)
+2. **bootstrap** → Register service
+3. **kickstart** → Run service
+4. **print** → Verify status
+
+### Operations
+
+```bash
+# 1. Status
+sudo launchctl print system/com.mosdns | egrep "state|program"
+
+# 2. Complete Reload (Golden Lifecycle)
+sudo launchctl bootout system /Library/LaunchDaemons/com.mosdns.plist 2>/dev/null || true
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.mosdns.plist
+sudo launchctl kickstart -k system/com.mosdns
+
+# 3. Quick Restart (Config reload only)
+sudo launchctl kickstart -k system/com.mosdns
+```
+
+### Unified Management Function
+
+Add this to your `.zshrc` or `.bashrc` for easy management:
+
+```bash
+reload_service() {
+  local domain=$1
+  local plist=$2
+  local label=$3
+
+  # Use sudo only if domain is 'system'
+  local cmd_prefix=""
+  [[ "$domain" == "system" ]] && cmd_prefix="sudo "
+
+  $cmd_prefix launchctl bootout "$domain" "$plist" 2>/dev/null || true
+  $cmd_prefix launchctl bootstrap "$domain" "$plist"
+  $cmd_prefix launchctl kickstart -k "$domain/$label"
+}
+
+# Usage:
+# reload_service system /Library/LaunchDaemons/com.mosdns.plist com.mosdns
+```
+
+
+## Routing Details
+
+### CN acceleration path
+
+`mosdns` forwards general CN domains to AliDNS and DNSPod concurrently via DoH.
+
+### International fallback path
+
+General international lookups stay inside `mosdns` and go to:
+
+- `https://dns.google/dns-query`
+- `https://cloudflare-dns.com/dns-query`
+- `https://dns.quad9.net/dns-query`
+
+All three run through Surge SOCKS5 on `127.0.0.1:6153`.
+
+### Specialty steering
+
+`mosdns` keeps the direct per-domain DoH paths for Apple, Google/GitHub, Microsoft, Cloudflare/AI, TWNIC, AdGuard Social, Wikimedia NSFW, TikTok, Ali vendor domains, and Tencent vendor domains.
 
 ## Troubleshooting
 
-`brew upgrade` still hangs:
+**Surge policies still all red**
 
 ```bash
-dig @127.0.0.1 -p 6053 formulae.brew.sh
-tail -f /tmp/smartdns.log | rg "formulae.brew.sh|TLS handshake timed out|dns.google|cloudflare-dns.com|dns.quad9.net"
+rg -n "6354|audit-enable yes" \
+  ~/.mosdns/config/config.yaml
 ```
 
-Most stalls are either SOCKS5 `127.0.0.1:6153` not ready or stale live configs still missing the new static upstream mappings.
+If that returns matches, the live files were not updated to the April 19, 2026 topology yet.
 
-System / certificate / captive portal lookups still feel wrong:
+**mosdns will not start**
 
 ```bash
-dig @127.0.0.1 -p 6053 ocsp.apple.com
-dig @127.0.0.1 -p 6053 msftconnecttest.com
-dig @127.0.0.1 -p 6053 pool.ntp.org
+cat /tmp/mosdns.stderr.log
+plutil -lint /Library/LaunchDaemons/com.mosdns.plist
+# Status
+sudo launchctl print system/com.mosdns
 ```
 
-Those domains should now match [system_direct.txt](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/rules/system_direct.txt) and stay on the direct bootstrap path instead of being delayed by the proxy bucket.
-
-Mail app still feels slower or less deterministic:
+**IPv6 path looks wrong**
 
 ```bash
-rg -n "force-qtype-soa|audit-enable yes" ~/.smartdns/smartdns.conf
-dig @::1 -p 6053 mail.me.com HTTPS
-dig @::1 -p 6053 outlook.office365.com HTTPS
+dig @::1 jd.com AAAA
+dig @127.0.0.1 google.com AAAA
 ```
 
-The current repo config should return normal HTTPS/SVCB responses again instead of synthetic SOA.
+If the intl fallback returns a CN CDN IPv6 address repeatedly, update both `cn_ip.txt` and `cn_ip_v6.txt` under `~/.mosdns/data/`.
 
-IPv6 still does not work:
+## Updating Data Files
 
 ```bash
-dig @::1 -p 6053 apple.com AAAA
-dig @::1 -p 6053 google.com AAAA
-lsof -nP -iUDP:6053 -iTCP:6053 | rg smartdns
-sudo pfctl -a com.apple/smartdns -s nat
+cd ~/.mosdns/data
+
+curl -fsSL "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" | \
+  sed 's/server=\/\(.*\)\/114.114.114.114/\1/' > cn_domain.txt
+
+curl -fsSL -o cn_ip.txt "https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt"
+curl -fsSL -o cn_ip_v6.txt "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china6.txt"
+
+sudo launchctl kickstart -k system/com.mosdns
 ```
 
-If `::1` is not listening or the `inet6` PF rule is absent, the system will silently fall back to IPv4-only behavior.
+## Security Notes
+
+- Steady-state upstream resolution is DoH-first.
+- The bootstrap allowlist intentionally uses plain UDP to avoid circular dependency during DoH bootstrap.
+- `mosdns` remains the main observability point via `/tmp/mosdns.log`.

@@ -90,7 +90,16 @@ menthako_test_data/
 tools/browser-sync/
 
 # Temporary tools & DB
-scripts/bin/
+# scripts/bin/ - Only ignore binaries and cache
+scripts/bin/mihomo
+scripts/bin/sing-box
+scripts/bin/cache.db
+!scripts/bin/*.py
+!scripts/bin/*.sh
+!scripts/bin/*.plist
+!scripts/bin/install.sh
+!scripts/bin/wrapper.sh
+
 scripts/fetch_config.yaml
 cache.db
 ruleset/kelee/
