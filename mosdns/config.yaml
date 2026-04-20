@@ -1,4 +1,4 @@
-# mosdns Configuration - Ultimate Stealth Edition (Hardened v4.0)
+# mosdns Configuration - Ultimate Stealth Edition (Hardened v4.1 - Fixed)
 # Version: 2026.04.21-Stealth_Evasion_Enabled
 # ══════════════════════════════════════════════════════════════════════
 
@@ -14,20 +14,19 @@ plugins:
     type: hosts
     args:
       entries:
-        - "dns.google 8.8.4.4"                # 避开 8.8.8.8
-        - "dns.google 2001:4860:4860::8888"   # 优先 IPv6
-        - "cloudflare-dns.com 1.0.0.1"        # 避开 1.1.1.1
+        - "dns.google 8.8.4.4"
+        - "dns.google 2001:4860:4860::8888"
+        - "cloudflare-dns.com 1.0.0.1"
         - "cloudflare-dns.com 2606:4700:4700::1111"
-        - "dns.quad9.net 149.112.112.112"     # 避开 9.9.9.9
+        - "dns.quad9.net 149.112.112.112"
         - "dns.quad9.net 2620:fe::fe"
-        - "dns.alidns.com 2400:3200::1"       # 国内 IPv6 脱敏 (避开 223.5.5.5)
-        - "doh.pub 2402:4e00::"               # 腾讯 IPv6 脱敏 (避开 119.29.29.29)
-        - "doh.360.cn 101.124.19.122"         # 360 备选非敏 IP
+        - "dns.alidns.com 2400:3200::1"
+        - "doh.pub 2402:4e00::"
+        - "doh.360.cn 101.124.19.122"
 
   - tag: cache
     type: cache
-    args:
-      size: 65535
+    args: {size: 65535}
 
   # ────────────────────────────────────────────────────────────────────
   # 2. 规则集：12w+ 域名全量精细化
@@ -67,6 +66,10 @@ plugins:
   - tag: matcher_tiktok
     type: domain_set
     args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_TikTok.txt"]}
+
+  - tag: matcher_bootstrap
+    type: domain_set
+    args: {files: ["/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/rules/mosdns/steer_Bootstrap.txt"]}
 
   - tag: matcher_airport
     type: domain_set
@@ -117,12 +120,12 @@ plugins:
     args:
       concurrent: 5
       upstreams:
-        - addr: "https://dns.alidns.com/dns-query" # 域名形态 (经 Hosts 脱敏)
-        - addr: "https://doh.pub/dns-query"        # 域名形态 (经 Hosts 脱敏)
+        - addr: "https://dns.alidns.com/dns-query"
+        - addr: "https://doh.pub/dns-query"
         - addr: "https://doh.360.cn/dns-query"
-        - addr: "180.184.1.1"                      # 字节跳动 (不在劫持名单)
-        - addr: "114.114.114.114"                  # 114DNS (不在劫持名单)
-        - addr: "2400:da00::6666"                  # 百度 IPv6
+        - addr: "180.184.1.1"
+        - addr: "114.114.114.114"
+        - addr: "2400:da00::6666"
 
   # 国际通用隐身对齐
   - tag: forward_intl_general
@@ -143,9 +146,9 @@ plugins:
     args:
       concurrent: 3
       upstreams:
-        - addr: "2400:3200::1"    # 阿里 IPv6
-        - addr: "2402:4e00::"     # 腾讯 IPv6
-        - addr: "114.114.114.114" # 114 备选
+        - addr: "2400:3200::1"
+        - addr: "2402:4e00::"
+        - addr: "114.114.114.114"
 
   # ────────────────────────────────────────────────────────────────────
   # 4. 逻辑序列
@@ -171,7 +174,6 @@ plugins:
       - exec: $hosts
       - exec: $cache
 
-      # QUIC/HTTPS 拦截项
       - matches: qtype 65
         exec: reject 3 
       - matches: qtype 46 47 48
@@ -213,7 +215,7 @@ plugins:
       - exec: jump intl_sequence
 
   # ────────────────────────────────────────────────────────────────────
-  # 5. 服务启动
+  # 5. 服务器绑定
   # ────────────────────────────────────────────────────────────────────
   - tag: udp_server
     type: udp_server
