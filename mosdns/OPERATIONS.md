@@ -22,12 +22,17 @@ sudo killall mosdns
 ```
 
 ## 3. 服务启停与自启
-服务已注册为 LaunchAgent，并开启了 `KeepAlive` (故障自动重启)。
+服务已注册为系统级 **LaunchDaemon**，并开启了 `KeepAlive` (故障自动重启)。
 
-*   **启动服务**：`launchctl start com.mosdns.service`
-*   **停止服务**：`launchctl stop com.mosdns.service`
-*   **完全卸载任务**：`launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.mosdns.service.plist`
-*   **重新注册任务**：`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mosdns.service.plist`
+*   **查看状态**：`sudo launchctl print system/com.mosdns | egrep "state|program"`
+*   **启动服务**：`sudo launchctl start system/com.mosdns`
+*   **停止服务**：`sudo launchctl stop system/com.mosdns`
+*   **完全重载 (Golden Lifecycle)**：
+    ```bash
+    sudo launchctl bootout system /Library/LaunchDaemons/com.mosdns.plist 2>/dev/null || true
+    sudo launchctl bootstrap system /Library/LaunchDaemons/com.mosdns.plist
+    sudo launchctl kickstart -k system/com.mosdns
+    ```
 
 ## 4. 日志审计与排错
 *   **系统日志**：`tail -f /tmp/mosdns.log` (查看解析记录与分流匹配)。

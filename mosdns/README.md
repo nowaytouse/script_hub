@@ -23,22 +23,30 @@ Surge -> 127.0.0.1:6053 / [::1]:6053 (mosdns)
 - IPv4 and IPv6 CN IP sets are both used when mosdns checks whether an intl answer actually landed on a CN CDN
 - Launchd templates include a working directory, persistent restart behavior, and raised file limits
 
-## Installation
+## Installation & Maintenance
+
+Currently, the setup is managed via the rendered `.plist` and centralized binaries. To set up or refresh:
 
 ```bash
-cd ~/Downloads/GitHub/script_hub/mosdns
-./install.sh
+# 1. Ensure binaries are in /usr/local/bin
+bash scripts/bin/install.sh
+
+# 2. Render and Install Plist (requires manual path adjustment or using the rendered template)
+sudo cp mosdns/com.mosdns.plist.rendered /Library/LaunchDaemons/com.mosdns.plist
+sudo chown root:wheel /Library/LaunchDaemons/com.mosdns.plist
+sudo chmod 644 /Library/LaunchDaemons/com.mosdns.plist
+
+# 3. Reload
+sudo launchctl bootout system /Library/LaunchDaemons/com.mosdns.plist 2>/dev/null || true
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.mosdns.plist
+sudo launchctl kickstart -k system/com.mosdns
 ```
 
-If either component was installed before April 19, 2026, rerun both installers or manually copy the current repo config and plist files, then reload both jobs. Older live installs still contain the unstable `6354` topology and `smartdns` audit settings.
+The system setup:
 
-The installer will:
-
-1. Download the `mosdns` binary for your architecture.
-2. Download `geosite.dat`, `geoip.mmdb`, the CN domain list, and CN IPv4/IPv6 IP lists.
-3. Render [config.yaml](/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/config.yaml:1) into `~/.mosdns/config/config.yaml`.
-4. Render [com.mosdns.daemon.plist](/Users/nyamiiko/Downloads/GitHub/script_hub/mosdns/com.mosdns.daemon.plist:1) into `/Library/LaunchDaemons/com.mosdns.plist`.
-5. Reload the `system/com.mosdns` LaunchDaemon.
+1.  **Binary**: Expected at `/usr/local/bin/mosdns`.
+3.  **Config**: Located at `mosdns/config.yaml` within the repo.
+4.  **Service**: Registered as `system/com.mosdns`.
 
 ## Surge Configuration
 
