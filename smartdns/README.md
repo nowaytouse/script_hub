@@ -1,79 +1,121 @@
-# SmartDNS (V44.8 Ultimate Unified Edition)
+# SmartDNS (V45 Safer Dual-Stack Edition)
 
-SmartDNS has fully replaced `mosdns` in this architecture. It operates as the standalone primary DNS engine beneath Surge, handling exact proxy steering, Apple/Microsoft specialized upstreams, and zero-latency CN acceleration with physical IPv6 dual-stack fallback.
+`smartdns-rs` is the maintained replacement for the archived `mosdns` stack in this repo. The current topology keeps SmartDNS as the local DNS entrypoint on `127.0.0.1:6053` and `[::1]:6053`, then splits traffic into direct CN / Apple / bootstrap buckets and proxied specialty buckets.
 
-## 核心架构 (Core Architecture)
+## What Changed
 
-```text
-Surge (Direct/Proxy Routing)
-   |
-   \-> SmartDNS on 127.0.0.1:6053 (via SOCKS5/Direct)
-        |
-        +-> [cn]      AliDNS/Tencent (Physical IPv4/IPv6 Fallback)
-        +-> [apple]   doh.dns.apple.com (Direct)
-        +-> [quad9]   Quad9 DoH (via 127.0.0.1:6153 SOCKS5)
-        +-> [twnic]   TWNIC DoH (via 127.0.0.1:6153 SOCKS5)
-        +-> [adguard] AdGuard DoH (via 127.0.0.1:6153 SOCKS5)
-        +-> [nsfw]    Wikimedia Privacy DoH (via 127.0.0.1:6153 SOCKS5)
-        \-> [proxy]   Google/CF/Quad9 Fallback (via 127.0.0.1:6153 SOCKS5)
+- Dual-stack local listeners are enabled for both UDP and TCP: `127.0.0.1:6053` and `[::1]:6053`.
+- `force-qtype-soa 65` was removed. Returning synthetic SOA for HTTPS/SVCB can make Mail and other system apps slower or behave oddly.
+- Audit logging is disabled by default to reduce local I/O noise and query amplification.
+- The Surge `Host` bootstrap table is folded into SmartDNS static mappings, including IPv4 and IPv6 addresses for the key upstream resolvers.
+- A manual [system_direct.txt](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/rules/system_direct.txt) list keeps OCSP, captive portal, router admin, local, and NTP-style domains out of the generic proxy DNS bucket.
+- The archived `mosdns` split buckets are restored: `bootstrap`, `airport`, `apple`, `google`, `github`, `microsoft`, `ai_cf`, `tw`, `social`, `tiktok`, `nsfw`, `cn`, and `proxy`.
+
+## Routing Summary
+
+- `bootstrap`: DNS infrastructure, captive portal, Surge health-check style domains. Direct UDP only.
+- `system_direct`: certificate validation, local-router, hotspot, and time-sync domains. Forced onto the direct bootstrap path.
+- `airport`: subscription / node domains. Proxied international DoH.
+- `apple`: Apple domains. Direct Apple DoH.
+- `google`: Google-family domains. Proxied Google/Cloudflare DoH.
+- `github`: GitHub-family domains. Proxied multi-upstream DoH.
+- `microsoft`: Microsoft-family domains. Proxied Quad9/Cloudflare DoH.
+- `ai_cf`: AI / Cloudflare-heavy domains. Proxied Cloudflare/Google DoH.
+- `tw`: Taiwan stream domains. TWNIC first, Cloudflare fallback.
+- `social`: social-media domains. AdGuard first, Cloudflare fallback.
+- `tiktok`: TikTok-family domains. Proxied multi-upstream DoH.
+- `nsfw`: privacy-sensitive domains. Wikimedia first, Quad9 fallback.
+- `cn`: mainland domains. Direct AliDNS / DNSPod / DNSPub plus IPv6 UDP fallback.
+- `proxy`: final catch-all for unmatched international domains.
+
+## Local Entry
+
+If you do not use PF redirection, query SmartDNS directly:
+
+```bash
+dig @127.0.0.1 -p 6053 baidu.com
+dig @::1 -p 6053 baidu.com AAAA
 ```
 
-## 网络重定向 (PF Redirection)
+The live process should bind all four sockets:
 
-To bypass macOS permissions and Surge's enhanced mode limits, SmartDNS runs on `6053` with kernel-level port `53` redirection for both **TCP** and **UDP**.
-
-**验证或应用 PF 规则 (Verify PF Rules):**
 ```bash
-# 自动应用 TCP+UDP 转发
-echo "rdr pass on lo0 inet proto udp from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053
-rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053" | sudo pfctl -a com.apple/smartdns -f -
+lsof -nP -iUDP:6053 -iTCP:6053 | rg smartdns
+```
 
-# 查看规则
+Expected shape:
+
+- `UDP 127.0.0.1:6053`
+- `TCP 127.0.0.1:6053`
+- `UDP [::1]:6053`
+- `TCP [::1]:6053`
+
+## PF Redirection
+
+For system-wide port `53` capture on macOS, load the SmartDNS anchor instead of disabling PF:
+
+```bash
+echo "rdr pass on lo0 inet proto { udp, tcp } from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053
+rdr pass on lo0 inet6 proto { udp, tcp } from any to ::1 port 53 -> ::1 port 6053" | sudo pfctl -a com.apple/smartdns -f -
+sudo pfctl -e 2>/dev/null || true
 sudo pfctl -a com.apple/smartdns -s nat
 ```
 
-## 守护进程管理 (Daemon Management)
+If PF is enabled, clients can point to `127.0.0.1:53` and `[::1]:53`. If PF is not enabled, point clients to port `6053` directly.
 
-The LaunchAgent correctly points to the configuration inside this repository. By default, `smartdns-rs` starts automatically.
+## Install / Reload
 
-**常用操作:**
 ```bash
-# 查看运行状态
-launchctl print "gui/$(id -u)/com.smartdns" | egrep "state|program"
-
-# 一键热重启 (Kickstart)
+cd ~/Downloads/GitHub/script_hub/smartdns
+./install.sh
 launchctl kickstart -k "gui/$(id -u)/com.smartdns"
-
-# 完全重载服务 (Bootstrap)
-launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.service.plist 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.smartdns.service.plist
 ```
 
-## 更新与重启 (Updating & Applying Rules)
+Status and logs:
 
-When you modify `custom_direct.list` or want to update domains:
-
-1. **重新抓取聚合所有列表:**
-   ```bash
-   python3 scripts/merge_shadowrocket_rules.py
-   python3 smartdns/generate_smartdns_rules.py
-   ```
-2. **重启 SmartDNS 以应用新规则:**
-   ```bash
-   launchctl kickstart -k "gui/$(id -u)/com.smartdns"
-   ```
-3. **在 Surge 中清空 DNS 缓存** (Tools -> Clear DNS Cache).
-
-## 排查字典 (Troubleshooting)
-
-**Empty DNS answer 错误复现?**
-Check if the PF Firewall rule dropped tracking for TCP. TCP port 53 is mandatory for `baidu` and other CNAME-heavy sites. Re-run the PF rule command above.
-
-**如何排查特定域名的落点？**
-Read the live audit log:
 ```bash
-tail -f /tmp/smartdns_audit.log | grep "<your-domain>"
+launchctl print "gui/$(id -u)/com.smartdns" | egrep "state|program"
+tail -f /tmp/smartdns.log
 ```
 
----
-*Generated by Antigravity.*
+## Troubleshooting
+
+`brew upgrade` still hangs:
+
+```bash
+dig @127.0.0.1 -p 6053 formulae.brew.sh
+tail -f /tmp/smartdns.log | rg "formulae.brew.sh|TLS handshake timed out|dns.google|cloudflare-dns.com|dns.quad9.net"
+```
+
+Most stalls are either SOCKS5 `127.0.0.1:6153` not ready or stale live configs still missing the new static upstream mappings.
+
+System / certificate / captive portal lookups still feel wrong:
+
+```bash
+dig @127.0.0.1 -p 6053 ocsp.apple.com
+dig @127.0.0.1 -p 6053 msftconnecttest.com
+dig @127.0.0.1 -p 6053 pool.ntp.org
+```
+
+Those domains should now match [system_direct.txt](/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/rules/system_direct.txt) and stay on the direct bootstrap path instead of being delayed by the proxy bucket.
+
+Mail app still feels slower or less deterministic:
+
+```bash
+rg -n "force-qtype-soa|audit-enable yes" ~/.smartdns/smartdns.conf
+dig @::1 -p 6053 mail.me.com HTTPS
+dig @::1 -p 6053 outlook.office365.com HTTPS
+```
+
+The current repo config should return normal HTTPS/SVCB responses again instead of synthetic SOA.
+
+IPv6 still does not work:
+
+```bash
+dig @::1 -p 6053 apple.com AAAA
+dig @::1 -p 6053 google.com AAAA
+lsof -nP -iUDP:6053 -iTCP:6053 | rg smartdns
+sudo pfctl -a com.apple/smartdns -s nat
+```
+
+If `::1` is not listening or the `inet6` PF rule is absent, the system will silently fall back to IPv4-only behavior.

@@ -9,10 +9,10 @@ mkdir -p "$SMARTDNS_DIR"
 PF_SCRIPT="$SMARTDNS_DIR/pf_setup.sh"
 cat <<EOF > "$PF_SCRIPT"
 #!/bin/bash
-# 打通 53 -> 6053 隧道 (Dual-Stack)
-sudo pfctl -d 2>/dev/null
+# 仅更新 smartdns anchor，避免关闭系统 PF。
 echo "rdr pass on lo0 inet proto { udp, tcp } from any to 127.0.0.1 port 53 -> 127.0.0.1 port 6053
-rdr pass on lo0 inet6 proto { udp, tcp } from any to ::1 port 53 -> ::1 port 6053" | sudo pfctl -ef -
+rdr pass on lo0 inet6 proto { udp, tcp } from any to ::1 port 53 -> ::1 port 6053" | sudo pfctl -a com.apple/smartdns -f -
+sudo pfctl -e 2>/dev/null || true
 EOF
 chmod +x "$PF_SCRIPT"
 
@@ -28,9 +28,12 @@ cat <<EOF > "$PLIST_PATH"
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/sbin/smartdns</string>
+        <string>run</string>
         <string>-c</string>
         <string>/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/smartdns.conf</string>
     </array>
+    <key>WorkingDirectory</key>
+    <string>$HOME/.config/smartdns</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
