@@ -6,10 +6,13 @@
 	<string>com.smartdns</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/opt/homebrew/sbin/smartdns</string>
+		<string>__SMARTDNS_BIN__</string>
+		<string>run</string>
 		<string>-c</string>
-		<string>/Users/nyamiiko/Downloads/GitHub/script_hub/smartdns/smartdns.conf</string>
+		<string>__SMARTDNS_CONFIG__</string>
 	</array>
+	<key>WorkingDirectory</key>
+	<string>__SMARTDNS_WORKDIR__</string>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
