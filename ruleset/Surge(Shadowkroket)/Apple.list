@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Apple services
-# Rules: 71
-# Updated: 2026-04-19 21:10:18
+# Rules: 67
+# Updated: 2026-04-20 06:17:11
 
 DOMAIN,gateway.icloud.com
 DOMAIN,sandbox.itunes-apple.com.akadns.net
@@ -72,9 +72,3 @@ USER-AGENT,fmflocatord*
 USER-AGENT,geod*
 USER-AGENT,locationd*
 USER-AGENT,passd*
-
-# ── merged from shadowrocket.list (2026-04-19) ──
-DOMAIN-SUFFIX,apple-relay.akamaized.net,PROXY
-DOMAIN-SUFFIX,apple-relay.apple.com,PROXY
-DOMAIN-SUFFIX,apple-relay.cloudflare.com,PROXY
-DOMAIN-SUFFIX,apple-relay.fastly-edge.com,PROXY

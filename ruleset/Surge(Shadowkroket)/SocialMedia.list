@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Social media fallback
-# Rules: 724
-# Updated: 2026-04-19 21:10:18
+# Rules: 713
+# Updated: 2026-04-20 06:17:14
 
 DOMAIN,api.imem.app
 DOMAIN,api.swiftgram.app
@@ -718,16 +718,3 @@ PROCESS-NAME,telegram-desktop
 PROCESS-NAME,tw.nekomimi.nekogram
 PROCESS-NAME,xyz.nextalone.nagram
 USER-AGENT,TikTok*
-
-# ── merged from shadowrocket.list (2026-04-19) ──
-DOMAIN-SUFFIX,ap3.agora.io,PROXY
-DOMAIN-SUFFIX,clubhouse.pubnub.com,PROXY
-DOMAIN-SUFFIX,clubhouseapi.com,PROXY
-DOMAIN-SUFFIX,joinclubhouse.com,PROXY
-DOMAIN-SUFFIX,line-apps.com,PROXY
-DOMAIN-SUFFIX,line-cdn.net,PROXY
-DOMAIN-SUFFIX,line-scdn.net,PROXY
-DOMAIN-SUFFIX,line.me,PROXY
-DOMAIN-SUFFIX,line.naver.jp,PROXY
-DOMAIN-SUFFIX,scdn.co,PROXY
-USER-AGENT,Line*,PROXY

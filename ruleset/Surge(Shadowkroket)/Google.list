@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Google services
-# Rules: 901
-# Updated: 2026-04-19 21:10:18
+# Rules: 897
+# Updated: 2026-04-20 06:17:13
 
 DOMAIN,voice.telephony.goog
 DOMAIN-KEYWORD,appspot
@@ -902,9 +902,3 @@ USER-AGENT,YouTube*
 USER-AGENT,YouTubeMusic*
 USER-AGENT,com.google.ios.youtube*
 USER-AGENT,com.google.ios.youtubemusic*
-
-# ── merged from shadowrocket.list (2026-04-19) ──
-DOMAIN-SUFFIX,admin.recaptcha.net,PROXY
-DOMAIN-SUFFIX,goog,PROXY
-DOMAIN-SUFFIX,telephony.goog,PROXY
-DOMAIN-SUFFIX,youtu.be,PROXY
