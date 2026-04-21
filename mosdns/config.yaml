@@ -14,15 +14,37 @@ plugins:
     type: hosts
     args:
       entries:
+        # ════════════════════════════════════════════════════════════
+        # 关键：DoH 服务器域名 IP 映射（防止循环依赖）
+        # ════════════════════════════════════════════════════════════
+        - "dns.google 8.8.8.8"
         - "dns.google 8.8.4.4"
         - "dns.google 2001:4860:4860::8888"
+        - "dns.google 2001:4860:4860::8844"
+        - "cloudflare-dns.com 1.1.1.1"
         - "cloudflare-dns.com 1.0.0.1"
         - "cloudflare-dns.com 2606:4700:4700::1111"
-        - "dns.quad9.net 9.9.9.11"
+        - "cloudflare-dns.com 2606:4700:4700::1001"
+        - "dns.quad9.net 9.9.9.9"
+        - "dns.quad9.net 149.112.112.112"
         - "dns.quad9.net 2620:fe::fe"
+        - "dns.quad9.net 2620:fe::9"
+        - "wikimedia-dns.org 185.71.138.138"
+        - "dns.alidns.com 223.5.5.5"
+        - "dns.alidns.com 223.6.6.6"
         - "dns.alidns.com 2400:3200::1"
+        - "dns.alidns.com 2400:3200:baba::1"
+        - "doh.pub 1.12.12.12"
+        - "doh.pub 120.53.53.53"
         - "doh.pub 2402:4e00::"
-        - "doh.360.cn 2400:89c0:1111:1111:101:124:19:122"
+        - "dns.pub 1.12.12.12"
+        - "dns.pub 120.53.53.53"
+        - "doh.360.cn 101.198.198.198"
+        - "doh.360.cn 112.65.69.15"
+        - "dns.baidu.com 180.76.76.76"
+        - "dns.baidu.com 2400:da00::6666"
+        - "dns.volcengine.com 180.184.1.1"
+        - "dns.volcengine.com 180.184.2.2"
         # ────────────────────────────────────────────────────────────
         # 额外配置：Telegram 节点优化 (同步自 Surge Host 配置)
         # ────────────────────────────────────────────────────────────
@@ -173,7 +195,7 @@ plugins:
     args:
       upstreams:
         - addr: "https://dns.google/dns-query"
-          socks5: "127.0.0.1:6153"
+          socks5: "127.0.0.1:9810"
 
   # Cloudflare
   - tag: forward_cloudflare
@@ -181,24 +203,24 @@ plugins:
     args:
       upstreams:
         - addr: "https://cloudflare-dns.com/dns-query"
-          socks5: "127.0.0.1:6153"
+          socks5: "127.0.0.1:9810"
 
   # MS / Wikimedia
   - tag: forward_ms
     type: forward
     args:
-      concurrent: 2
+      concurrent: 1
       upstreams:
         - addr: "https://wikimedia-dns.org/dns-query"
-          socks5: "127.0.0.1:6153"
+          socks5: "127.0.0.1:9810"
         - addr: "https://[2620:fe::fe]/dns-query"
-          socks5: "127.0.0.1:6153"
+          socks5: "127.0.0.1:9810"
 
   # 国内“隐身版”解析池 (强制 DoH + 非敏 IP)
   - tag: forward_cn_general
     type: forward
     args:
-      concurrent: 5
+      concurrent: 2
       upstreams:
         - addr: "https://dns.alidns.com/dns-query"
         - addr: "https://doh.pub/dns-query"
@@ -210,24 +232,21 @@ plugins:
   - tag: forward_intl_general
     type: forward
     args:
-      concurrent: 3
+      concurrent: 1
       upstreams:
         - addr: "https://dns.google/dns-query"
-          socks5: "127.0.0.1:6153"
+          socks5: "127.0.0.1:9810"
         - addr: "https://cloudflare-dns.com/dns-query"
-          socks5: "127.0.0.1:6153"
-        - addr: "https://wikimedia-dns.org/dns-query"
-          socks5: "127.0.0.1:6153"
+          socks5: "127.0.0.1:9810"
 
-  # 引导解析 (Bootstrap) - 强制 IPv6 优先
+  # 引导解析 (Bootstrap) - 国内直连
   - tag: forward_bootstrap_direct
     type: forward
     args:
-      concurrent: 3
+      concurrent: 1
       upstreams:
-        - addr: "2400:3200::1"
-        - addr: "2402:4e00::"
-        - addr: "114.114.114.114"
+        - addr: "223.5.5.5"
+        - addr: "119.29.29.29"
 
   # ────────────────────────────────────────────────────────────────────
   # 4. 逻辑序列
@@ -294,12 +313,20 @@ plugins:
       - exec: jump intl_sequence
 
   # ────────────────────────────────────────────────────────────────────
-  # 5. 服务器绑定
+  # 5. 服务器绑定 (IPv4 + IPv6)
   # ────────────────────────────────────────────────────────────────────
   - tag: udp_server
     type: udp_server
     args: {entry: main_sequence, listen: "127.0.0.1:6053"}
 
+  - tag: udp_server_v6
+    type: udp_server
+    args: {entry: main_sequence, listen: "[::1]:6053"}
+
   - tag: tcp_server
     type: tcp_server
     args: {entry: main_sequence, listen: "127.0.0.1:6053"}
+
+  - tag: tcp_server_v6
+    type: tcp_server
+    args: {entry: main_sequence, listen: "[::1]:6053"}
