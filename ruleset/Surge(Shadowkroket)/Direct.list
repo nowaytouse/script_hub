@@ -1,11 +1,10 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 122030
-# Updated: 2026-04-21 06:04:38
+# Rules: 122010
+# Updated: 2026-04-22 06:02:05
 
 DOMAIN,004430.xyz
-DOMAIN,0d.kebhana.mx
 DOMAIN,1-fss24-s0.streamhoster.com
 DOMAIN,1337.abcvg.info
 DOMAIN,14033.live.streamtheworld.com
@@ -22,6 +21,7 @@ DOMAIN,59ec5453559f0.streamlock.net
 DOMAIN,5c3639aa99149.streamlock.net
 DOMAIN,5gzhenjiang.speedtest.jsinfo.net
 DOMAIN,6.mms.vlog.xuite.net
+DOMAIN,6ahddutb1ucc3cp.ru
 DOMAIN,a.xttv.top
 DOMAIN,a1.mzstatic.com
 DOMAIN,a2.mzstatic.com
@@ -82,9 +82,9 @@ DOMAIN,beacons3.gvt2.com
 DOMAIN,bittorrent-tracker.e-n-c-r-y-p-t.net
 DOMAIN,bj1.api.bing.com
 DOMAIN,bookkeeper.itunes.apple.com
-DOMAIN,bt.poletracker.org
 DOMAIN,bt.rer.lol
 DOMAIN,bt1.archive.org
+DOMAIN,bt2.archive.org
 DOMAIN,bvarf.tracker.sh
 DOMAIN,c.admob.com
 DOMAIN,c.pki.goog
@@ -131,7 +131,6 @@ DOMAIN,cn.download.nvidia.com
 DOMAIN,cn.widevine.com
 DOMAIN,cn.windowssearch.com
 DOMAIN,coeus.torrentonline.cc
-DOMAIN,colibri.parrot.run
 DOMAIN,communities.apple.com
 DOMAIN,configuration.apple.com
 DOMAIN,configuration.apple.com.akadns.net
@@ -211,7 +210,6 @@ DOMAIN,fides-pol.apple.com
 DOMAIN,file.hhtv.cc
 DOMAIN,file.mb.leshantv.net
 DOMAIN,firebase-settings.crashlytics.com
-DOMAIN,flv.drs.tv.yatv.tv
 DOMAIN,fm901.cityfm.tw
 DOMAIN,fm929.cityfm.tw
 DOMAIN,fm971.cityfm.tw
@@ -263,10 +261,8 @@ DOMAIN,hls.kqed.org
 DOMAIN,hls.qguiyang.com
 DOMAIN,hls.qxtv0763.com
 DOMAIN,hls.wlrn.mobi
-DOMAIN,home.yxgz.club
 DOMAIN,hospital.pku.edu.cn
 DOMAIN,http1.torrust-tracker-demo.com
-DOMAIN,httpdvb.slave.ttcatv.tv
 DOMAIN,i.dell.com
 DOMAIN,i.pki.goog
 DOMAIN,icecast-ruvr.cdnvideo.ru
@@ -352,7 +348,6 @@ DOMAIN,live-echotv.cdnvideo.ru
 DOMAIN,live.hhtv.cc
 DOMAIN,live.lxzc.net
 DOMAIN,live.ntdimg.com
-DOMAIN,live.qinyangtv.com
 DOMAIN,live.sccxtv.com
 DOMAIN,live.sichuanmianning.com
 DOMAIN,live.streamingfast.net
@@ -368,14 +363,7 @@ DOMAIN,livecdn.fptplay.net
 DOMAIN,livecdnh2.tvanywhere.ae
 DOMAIN,local.adguard.org
 DOMAIN,lv.queniujq.cn
-DOMAIN,m3u8.channel.luzhoubs.com
-DOMAIN,m3u8.channel.yatv.tv
 DOMAIN,m3u8.file.leshantv.net
-DOMAIN,m3u8.lschannel.yatv.tv
-DOMAIN,m3u8.mschannel.yatv.tv
-DOMAIN,m3u8.smchannel.yatv.tv
-DOMAIN,m3u8.ycchannel.yatv.tv
-DOMAIN,m3u8.yjchannel.yatv.tv
 DOMAIN,m3u8channel-bx.wuxianyaan.com
 DOMAIN,m3u8channel-ms.wuxianyaan.com
 DOMAIN,m3u8channel-sm.wuxianyaan.com
@@ -436,7 +424,6 @@ DOMAIN,open.stealth.si
 DOMAIN,opencourse.pku.edu.cn
 DOMAIN,opentor.org
 DOMAIN,opentracker.8880085.xyz
-DOMAIN,opentracker.io
 DOMAIN,oscdn.apple.com
 DOMAIN,oscdn.origin-apple.com.akadns.net
 DOMAIN,osxapps.itunes.apple.com
@@ -553,7 +540,6 @@ DOMAIN,seb.sason.top
 DOMAIN,seed-sequoia.siri.apple.com
 DOMAIN,seed-swallow.siri.apple.com
 DOMAIN,seed.siri.apple.com
-DOMAIN,seeders-paradise.org
 DOMAIN,seedpeer.net
 DOMAIN,sequoia.apple.com
 DOMAIN,service.urchin.com
@@ -606,10 +592,8 @@ DOMAIN,stream.nbbltv.com
 DOMAIN,stream.rcs.revma.com
 DOMAIN,stream.slave.jxtvnet.tv
 DOMAIN,stream.superfm99-1.com.tw
-DOMAIN,stream.sxsztv.com
 DOMAIN,stream.wbez.org
 DOMAIN,stream.xctv.news
-DOMAIN,stream.ysbtv.net
 DOMAIN,stream.zhystv.com
 DOMAIN,stream.zzgd.tv
 DOMAIN,stream0.tv41.ru
@@ -646,7 +630,6 @@ DOMAIN,tj-pod1-smp-device.apple.com
 DOMAIN,tjrate.tjtele.com
 DOMAIN,tl.gscm.tv
 DOMAIN,torrent.bowed.net
-DOMAIN,torrent.hificode.in
 DOMAIN,torrent.tracker.durukanbal.com
 DOMAIN,torrentclub.online
 DOMAIN,torrents.tmtime.dev
@@ -654,6 +637,7 @@ DOMAIN,torrentsmd.com
 DOMAIN,tp.louisvuitton.com
 DOMAIN,tplogin.cn
 DOMAIN,tr.abiir.top
+DOMAIN,tr.abir.ga
 DOMAIN,tr.highstar.shop
 DOMAIN,tr.kxmp.cf
 DOMAIN,tr.nyacat.pw
@@ -669,7 +653,6 @@ DOMAIN,tracker.breizh.pm
 DOMAIN,tracker.bt4g.com
 DOMAIN,tracker.corpscorp.online
 DOMAIN,tracker.cutie.dating
-DOMAIN,tracker.darkness.services
 DOMAIN,tracker.ddunlimited.net
 DOMAIN,tracker.dhitechnical.com
 DOMAIN,tracker.dler.com
@@ -684,10 +667,9 @@ DOMAIN,tracker.ghostchu-services.top
 DOMAIN,tracker.gmi.gd
 DOMAIN,tracker.hismz.cn
 DOMAIN,tracker.iperson.xyz
-DOMAIN,tracker.ipv6tracker.org
 DOMAIN,tracker.ixuexi.click
 DOMAIN,tracker.kuroy.me
-DOMAIN,tracker.lintk.me
+DOMAIN,tracker.moeblog.cn
 DOMAIN,tracker.mywaifu.best
 DOMAIN,tracker.nekomi.cn
 DOMAIN,tracker.nyaa.vc
@@ -705,7 +687,6 @@ DOMAIN,tracker.t-1.org
 DOMAIN,tracker.theoks.net
 DOMAIN,tracker.torrent.eu.org
 DOMAIN,tracker.torrust-demo.com
-DOMAIN,tracker.tritan.gg
 DOMAIN,tracker.tryhackx.org
 DOMAIN,tracker.tvunderground.org.ru
 DOMAIN,tracker.waaa.moe
@@ -713,6 +694,7 @@ DOMAIN,tracker.wildkat.net
 DOMAIN,tracker.xn--djrq4gl4hvoi.top
 DOMAIN,tracker.yemekyedim.com
 DOMAIN,tracker.yggleak.top
+DOMAIN,tracker.yume-hatsuyuki.moe
 DOMAIN,tracker.zhuqiy.com
 DOMAIN,tracker1.520.jp
 DOMAIN,tracker1.itzmx.com
@@ -721,7 +703,6 @@ DOMAIN,tracker2.itzmx.com
 DOMAIN,tracker3.ctix.cn
 DOMAIN,tracker3.itzmx.com
 DOMAIN,tracker4.itzmx.com
-DOMAIN,tracker810.xyz
 DOMAIN,trackthis.cyber.pz.it
 DOMAIN,tts.knitsky.com
 DOMAIN,tv.cnbeijing.xyz
@@ -730,6 +711,7 @@ DOMAIN,tv.nknews.org
 DOMAIN,tx.lilyemby.com
 DOMAIN,uabits.today
 DOMAIN,udp.tracker.projectk.org
+DOMAIN,udp1.torrust-tracker-demo.com
 DOMAIN,uni6rtmp.tulix.tv
 DOMAIN,update.crashlytics.com
 DOMAIN,updates-http.cdn-apple.com
@@ -737,12 +719,12 @@ DOMAIN,updates-http.cdn-apple.com.akadns.net
 DOMAIN,updates.cdn-apple.com
 DOMAIN,uplaypc-s-ubisoft.cdn.ubi.com
 DOMAIN,upp.itunes.apple.com
+DOMAIN,utracker.ghostchu-services.top
 DOMAIN,v1.one-tv.com
 DOMAIN,valid.apple.com
 DOMAIN,valid.origin-apple.com.akadns.net
 DOMAIN,vip888.kuyun99.com
 DOMAIN,vito-tracker.duckdns.org
-DOMAIN,vod.qhdcm.com
 DOMAIN,vss.cbnmtv.com
 DOMAIN,vweixinf.tc.qq.com
 DOMAIN,w3.wifijiangyin.com
@@ -761,7 +743,6 @@ DOMAIN,wowza-stream.wbur.org
 DOMAIN,wowza.montevideo.com.uy
 DOMAIN,wowza.ner.gov.tw
 DOMAIN,wpc.124ce.sigmacdn.net
-DOMAIN,wsad.run.place
 DOMAIN,wup.imtt.qq.com
 DOMAIN,wuwm.streamguys1.com
 DOMAIN,www-csb.dell.com
@@ -784,7 +765,6 @@ DOMAIN,www.routerlogin.com
 DOMAIN,www.soundvideostar.com
 DOMAIN,www.support.apple.com
 DOMAIN,www.szmgiptv.com
-DOMAIN,www.yxssp.com
 DOMAIN,www.ztedevices.com
 DOMAIN,www4-static.gog-statics.com
 DOMAIN,xn--flw351e.com
