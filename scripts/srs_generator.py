@@ -3,12 +3,19 @@ import os
 import json
 import subprocess
 import concurrent.futures
+import re
 from lib.common import Logger, get_project_root
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
+DNS_MAPPING_DIR = os.path.join(ROOT, "ruleset/Sources/DNS_mapping")
+SKK_UPSTREAM_DIR = os.path.join(SURGE_DIR, "skk_upstream")
 SINGBOX_DIR = os.path.join(ROOT, "ruleset/SingBox")
 CACHE_DIR = os.path.join(ROOT, ".cache")
+EXTRA_SOURCE_FILES = [
+    os.path.join(SKK_UPSTREAM_DIR, "reject-drop.conf"),
+    os.path.join(SKK_UPSTREAM_DIR, "reject-no-drop.conf"),
+]
 
 class SRSGenerator:
     def __init__(self):
@@ -53,6 +60,7 @@ class SRSGenerator:
                     elif rtype == "DOMAIN-SUFFIX": rules.append({"domain_suffix": [val]})
                     elif rtype == "DOMAIN-KEYWORD": rules.append({"domain_keyword": [val]})
                     elif rtype == "DOMAIN-REGEX": rules.append({"domain_regex": [val]})
+                    elif rtype == "DOMAIN-WILDCARD": rules.append({"domain_regex": [self._wildcard_to_regex(val)]})
                     elif rtype in ["IP-CIDR", "IP-CIDR6"]: rules.append({"ip_cidr": [val]})
                     elif rtype == "PROCESS-NAME": rules.append({"process_name": [val]})
 
@@ -83,13 +91,30 @@ class SRSGenerator:
         finally:
             if os.path.exists(json_tmp): os.remove(json_tmp)
 
+    @staticmethod
+    def _wildcard_to_regex(value: str) -> str:
+        escaped = re.escape(value)
+        escaped = escaped.replace(r"\*", ".*").replace(r"\?", ".")
+        return f"^{escaped}$"
+
     def run(self):
         Logger.section("Sing-box SRS Generation (English Interface)")
         if not self.singbox_path:
             Logger.error("sing-box binary not found. Skipping SRS generation.")
             return
 
-        list_files = [os.path.join(SURGE_DIR, f) for f in os.listdir(SURGE_DIR) if f.endswith('.list')]
+        source_dirs = [SURGE_DIR, DNS_MAPPING_DIR]
+        list_files = []
+        for source_dir in source_dirs:
+            if not os.path.isdir(source_dir):
+                continue
+            list_files.extend(
+                os.path.join(source_dir, f)
+                for f in os.listdir(source_dir)
+                if f.endswith(".list")
+            )
+        list_files.extend(path for path in EXTRA_SOURCE_FILES if os.path.isfile(path))
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             executor.map(self.compile_srs, list_files)
 
