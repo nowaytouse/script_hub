@@ -70,6 +70,20 @@ class RulesetManager:
         self.policy_map = self._load_policy_map()
         self.stats = {"merged": 0, "skipped": 0, "deleted": 0}
 
+    @staticmethod
+    def _find_case_insensitive_file(directory: str, filename: str) -> Optional[str]:
+        exact = os.path.join(directory, filename)
+        if os.path.exists(exact):
+            return exact
+        filename_lower = filename.lower()
+        try:
+            for entry in os.listdir(directory):
+                if entry.lower() == filename_lower:
+                    return os.path.join(directory, entry)
+        except FileNotFoundError:
+            return None
+        return None
+
     def _download(self, url: str) -> str:
         """Download remote content with hardened protections (via lib/common)."""
         is_lsr = url.lower().endswith('.lsr')
@@ -266,9 +280,11 @@ class RulesetManager:
         # 1. Hash the manifest lists themselves
         manifests = [
             os.path.join(SOURCES_DIR, f"{name}_sources.txt"), 
-            os.path.join(METACUBEX_DIR, f"MetaCubeX_{name}.list")
+            self._find_case_insensitive_file(METACUBEX_DIR, f"MetaCubeX_{name}.list")
         ]
         for f in manifests:
+            if not f:
+                continue
             if os.path.exists(f):
                 with open(f, 'rb') as f_obj: 
                     content = f_obj.read()
@@ -309,8 +325,8 @@ class RulesetManager:
                     cleaned = self.clean_rule(line, name)
                     if cleaned: all_rules.add(cleaned)
         else:
-            m_file = os.path.join(METACUBEX_DIR, f"MetaCubeX_{name}.list")
-            if os.path.exists(m_file):
+            m_file = self._find_case_insensitive_file(METACUBEX_DIR, f"MetaCubeX_{name}.list")
+            if m_file and os.path.exists(m_file):
                 for line in read_file(m_file):
                     cleaned = self.clean_rule(line, name)
                     if cleaned: all_rules.add(cleaned)

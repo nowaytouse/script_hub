@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import re
 from typing import Dict, Iterable
 
 RULESET_DIR = os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkroket)")
@@ -14,6 +15,7 @@ PRIORITY_ORDER = [
     "HTTPDNS_Hijack.list",
     "AI.list",
     "SocialMedia.list",
+    "NSFW.list",
     "StreamUS.list",
     "StreamJP.list",
     "StreamKR.list",
@@ -29,9 +31,9 @@ PRIORITY_ORDER = [
     "GitHub.list",
     "PayPal.list",
     "Binance.list",
-    "CDN.list",
     "Cloudflare.list",
     "Bilibili.list",
+    "CDN.list",
     "Direct.list",
     "GlobalProxy.list",
 ]
@@ -56,6 +58,32 @@ TYPE_RANK = {
     "USER-AGENT": 8,
     "URL-REGEX": 9,
 }
+
+SEMANTIC_COVERAGE_RULESETS = {
+    "AdBlock.list",
+    "AI.list",
+    "SocialMedia.list",
+    "NSFW.list",
+    "StreamUS.list",
+    "StreamJP.list",
+    "StreamKR.list",
+    "StreamEU.list",
+    "StreamHK.list",
+    "StreamTW.list",
+    "Spotify.list",
+    "Gaming.list",
+    "Google.list",
+    "Apple.list",
+    "AppleNews.list",
+    "Microsoft.list",
+    "GitHub.list",
+    "PayPal.list",
+    "Binance.list",
+    "Cloudflare.list",
+    "Bilibili.list",
+}
+
+SEMANTIC_TYPES = {"DOMAIN", "DOMAIN-SUFFIX"}
 
 
 def is_valid_rule(line: str) -> bool:
@@ -113,6 +141,23 @@ def is_cn_tld(rule: str) -> bool:
     return payload == "cn" or payload.endswith(".cn")
 
 
+def iter_domain_parents(payload: str):
+    parts = payload.split(".")
+    if len(parts) < 2:
+        yield payload
+        return
+    for index in range(len(parts) - 1):
+        yield ".".join(parts[index:])
+
+
+def rule_sort_key(rule: str):
+    rule_type = extract_type(rule)
+    payload = extract_payload(rule)
+    if rule_type in SEMANTIC_TYPES:
+        return (0, payload.count("."), len(payload), TYPE_RANK.get(rule_type, 999), payload, rule)
+    return (1, TYPE_RANK.get(rule_type, 999), payload, rule)
+
+
 def load_list(filepath: str) -> Dict[str, str]:
     rules: Dict[str, str] = {}
     if not os.path.exists(filepath):
@@ -146,6 +191,10 @@ def write_list(filepath: str, rules: Dict[str, str]):
     with open(filepath, "w", encoding="utf-8") as f:
         if existing_header:
             for line in existing_header:
+                if re.match(r"^#\s*(Rules|Total|Total Rules):\s*", line):
+                    key = line.split(":", 1)[0]
+                    f.write(f"{key}: {len(sorted_rules)}\n")
+                    continue
                 f.write(line)
             if existing_header[-1].strip():
                 f.write("\n")
@@ -167,6 +216,7 @@ class RulesetCleanup:
             "moved_direct_to_proxy": 0,
             "moved_proxy_to_direct": 0,
             "cross_file_removed": 0,
+            "semantic_cover_removed": 0,
             "direct_proxyish_remaining": 0,
             "globalproxy_cn_remaining": 0,
         }
@@ -211,18 +261,26 @@ class RulesetCleanup:
         all_lists = sorted(self.file_content)
         priority = PRIORITY_ORDER + [name for name in all_lists if name not in PRIORITY_ORDER]
         seen_payloads = set()
+        seen_covering_suffixes = set()
 
         for filename in priority:
             rules = self.file_content.get(filename)
             if rules is None:
                 continue
             kept: Dict[str, str] = {}
-            for payload, rule in sorted(rules.items()):
+            for payload, rule in sorted(rules.items(), key=lambda item: rule_sort_key(item[1])):
+                rule_type = extract_type(rule)
                 if payload in seen_payloads:
                     self.stats["cross_file_removed"] += 1
                     continue
+                if rule_type in SEMANTIC_TYPES:
+                    if any(parent in seen_covering_suffixes for parent in iter_domain_parents(payload)):
+                        self.stats["semantic_cover_removed"] += 1
+                        continue
                 seen_payloads.add(payload)
                 kept[payload] = rule
+                if filename in SEMANTIC_COVERAGE_RULESETS and rule_type == "DOMAIN-SUFFIX":
+                    seen_covering_suffixes.add(payload)
             self.file_content[filename] = kept
 
     def audit(self):
@@ -255,6 +313,7 @@ def format_stats(stats: Dict[str, int]) -> str:
         "moved_direct_to_proxy",
         "moved_proxy_to_direct",
         "cross_file_removed",
+        "semantic_cover_removed",
         "direct_proxyish_remaining",
         "globalproxy_cn_remaining",
     )

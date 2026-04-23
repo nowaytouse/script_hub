@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: HK
 # Description: Hong Kong streaming services
-# Rules: 20
-# Updated: 2026-04-24 06:25:44
+# Rules: 17
+# Updated: 2026-04-24 06:42:56
 
 DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,csifund.org
@@ -17,7 +17,6 @@ DOMAIN-SUFFIX,jos.com
 DOMAIN-SUFFIX,nowestatic.com
 DOMAIN-SUFFIX,speedtest.com.hk
 DOMAIN-SUFFIX,viu.com
-DOMAIN-SUFFIX,viu.now.com
 DOMAIN-SUFFIX,viu.tv
 PROCESS-NAME,com.viu.pad
 PROCESS-NAME,com.viu.phone

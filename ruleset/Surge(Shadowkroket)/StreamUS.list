@@ -2,11 +2,10 @@
 # Policy: PROXY
 # Node: US
 # Description: US streaming services
-# Rules: 1443
-# Updated: 2026-04-24 06:25:50
+# Rules: 1420
+# Updated: 2026-04-24 06:43:06
 
 DOMAIN,e13252.dscg.akamaiedge.net
-DOMAIN,h-netflix.online-metrix.net
 DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
 DOMAIN,netflix.com.edgesuite.net
 DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
@@ -26,20 +25,17 @@ DOMAIN-SUFFIX,adventuresbydisney.com
 DOMAIN-SUFFIX,assetshuluimcom-a.akamaihd.net
 DOMAIN-SUFFIX,babble.com
 DOMAIN-SUFFIX,babyzone.com
-DOMAIN-SUFFIX,bam.nr-data.net
 DOMAIN-SUFFIX,bamgrid.com
 DOMAIN-SUFFIX,bcbolthboa-a.akamaihd.net
 DOMAIN-SUFFIX,beautyandthebeastmusical.co.uk
 DOMAIN-SUFFIX,callhulu.com
 DOMAIN-SUFFIX,cf-images.ap-southeast-1.prod.boltdns.net
 DOMAIN-SUFFIX,cinemax.com
-DOMAIN-SUFFIX,d9.flashtalking.com
 DOMAIN-SUFFIX,dai3fd1oh325y.cloudfront.net
 DOMAIN-SUFFIX,dilcdn.com
 DOMAIN-SUFFIX,disney-asia.com
 DOMAIN-SUFFIX,disney-discount.com
 DOMAIN-SUFFIX,disney-plus.net
-DOMAIN-SUFFIX,disney-portal.my.onetrust.com
 DOMAIN-SUFFIX,disney-studio.com
 DOMAIN-SUFFIX,disney-studio.net
 DOMAIN-SUFFIX,disney.asia
@@ -60,7 +56,6 @@ DOMAIN-SUFFIX,disney.com.hk
 DOMAIN-SUFFIX,disney.com.tw
 DOMAIN-SUFFIX,disney.cz
 DOMAIN-SUFFIX,disney.de
-DOMAIN-SUFFIX,disney.demdex.net
 DOMAIN-SUFFIX,disney.dk
 DOMAIN-SUFFIX,disney.es
 DOMAIN-SUFFIX,disney.fi
@@ -116,9 +111,7 @@ DOMAIN-SUFFIX,disneymusicpromotion.com
 DOMAIN-SUFFIX,disneynewseries.com
 DOMAIN-SUFFIX,disneynow.com
 DOMAIN-SUFFIX,disneypeoplesurveys.com
-DOMAIN-SUFFIX,disneyplus.bn5x.net
 DOMAIN-SUFFIX,disneyplus.com
-DOMAIN-SUFFIX,disneyplus.com.ssl.sc.omtrdc.net
 DOMAIN-SUFFIX,disneyprivacycenter.com
 DOMAIN-SUFFIX,disneyredirects.com
 DOMAIN-SUFFIX,disneysrivieraresort.com
@@ -139,10 +132,8 @@ DOMAIN-SUFFIX,dtci.technology
 DOMAIN-SUFFIX,edgedatg.com
 DOMAIN-SUFFIX,espn.co.uk
 DOMAIN-SUFFIX,espn.com
-DOMAIN-SUFFIX,espn.hb.omtrdc.net
 DOMAIN-SUFFIX,espn.net
 DOMAIN-SUFFIX,espncdn.com
-DOMAIN-SUFFIX,espndotcom.tt.omtrdc.net
 DOMAIN-SUFFIX,espnqa.com
 DOMAIN-SUFFIX,execute-api.ap-southeast-1.amazonaws.com
 DOMAIN-SUFFIX,execute-api.us-east-1.amazonaws.com
@@ -195,10 +186,7 @@ DOMAIN-SUFFIX,hu1u.com
 DOMAIN-SUFFIX,huloo.cc
 DOMAIN-SUFFIX,huloo.tv
 DOMAIN-SUFFIX,hulu.com
-DOMAIN-SUFFIX,hulu.hb.omtrdc.net
 DOMAIN-SUFFIX,hulu.jp
-DOMAIN-SUFFIX,hulu.playback.edge.bamgrid.com
-DOMAIN-SUFFIX,hulu.sc.omtrdc.net
 DOMAIN-SUFFIX,hulu.tv
 DOMAIN-SUFFIX,hulu.us
 DOMAIN-SUFFIX,huluaction.com
@@ -308,7 +296,6 @@ DOMAIN-SUFFIX,warnermediacdn.com
 DOMAIN-SUFFIX,watchdisneyfe.com
 DOMAIN-SUFFIX,watchespn.com
 DOMAIN-SUFFIX,wwwhuluplus.com
-DOMAIN-SUFFIX,yb.uncn.jp
 IP-CIDR,103.87.204.0/22
 IP-CIDR,107.23.255.0/26
 IP-CIDR,108.128.160.0/23
