@@ -235,7 +235,17 @@ for (const hop of HOP_PRESETS) {
 
 log(`\n✅ 三跳总共插入 ${totalInserted} 个节点`);
 
-// 空策略组检查已移除
+// ==================== 清理模板自带的直连占位符 ====================
+log(`\n🧹 清理冗余占位符...`);
+config.outbounds.forEach(outbound => {
+    if (['selector', 'urltest', 'load-balance'].includes(outbound.type) && Array.isArray(outbound.outbounds)) {
+        if (outbound.outbounds.length > 1 && outbound.outbounds.includes('🎯 全球直连') && 
+            !['direct-select', '🛡️ 广告拦截'].includes(outbound.tag)) {
+            outbound.outbounds = outbound.outbounds.filter(tag => tag !== '🎯 全球直连');
+            log(`  ✅ 移除 [${outbound.tag}] 中的 🎯 全球直连 占位符`);
+        }
+    }
+});
 
 // ==================== 验证节点唯一性（优化版本） ====================
 log(`\n🔍 验证节点唯一性...`);
