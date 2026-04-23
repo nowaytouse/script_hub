@@ -1,9 +1,10 @@
 # Ruleset: AdBlock
-# Updated: 2026-04-23 06:08:15
-# Total Rules: 289543
+# Updated: 2026-04-24 06:26:15
+# Total Rules: 289558
 # Source Manifest: ruleset/Sources/Links/AdBlock_sources.txt
 # Build Model: Canonical rebuild from curated sources, no self-reference
 # Whitelist: ruleset/Sources/adblock_whitelist.txt
+
 DOMAIN,0.code.cotsta.ru
 DOMAIN,00-gov.cn
 DOMAIN,0026645142c89aeb1.com
@@ -4658,8 +4659,10 @@ DOMAIN,dnkwgzmuxv.com
 DOMAIN,dnpehliwdvjkp.com
 DOMAIN,dnrywryy.com
 DOMAIN,dns.iqiyi.com
+DOMAIN,dns.jd.com
 DOMAIN,dns.m.sm.cn
 DOMAIN,dns.qiyipic.iqiyi.com
+DOMAIN,dns.weibo.cn
 DOMAIN,dns.ximalaya.com
 DOMAIN,dns2.q2cdn.com
 DOMAIN,dntrax.com
@@ -6652,6 +6655,7 @@ DOMAIN,hcwdcintgl.com
 DOMAIN,hcycanmscyg.com
 DOMAIN,hd.browser.miui.com
 DOMAIN,hd.hupu.com
+DOMAIN,hd.xiaojukeji.com
 DOMAIN,hd.youzu.com
 DOMAIN,hd100546b.com
 DOMAIN,hd149026b.com
@@ -6948,26 +6952,41 @@ DOMAIN,htmvtmglofpbz.com
 DOMAIN,htopensationclie.info
 DOMAIN,httftlckaxj.com
 DOMAIN,http.52dsj.com
+DOMAIN,httpdns-api.aliyuncs.com
 DOMAIN,httpdns-browser.platform.dbankcloud.cn
 DOMAIN,httpdns-euex-push.heytapmobile.com
 DOMAIN,httpdns-ocloud.heytapmobile.com
 DOMAIN,httpdns-push.heytapmobile.com
+DOMAIN,httpdns-sc.aliyuncs.com
 DOMAIN,httpdns-sdk.n.netease.com
 DOMAIN,httpdns-v6.gslb.yy.com
+DOMAIN,httpdns.alicdn.com
+DOMAIN,httpdns.baidu.com
+DOMAIN,httpdns.baidubce.com
+DOMAIN,httpdns.browser.miui.com
+DOMAIN,httpdns.c.cdnhwc2.com
+DOMAIN,httpdns.calorietech.com
 DOMAIN,httpdns.cctv.com
 DOMAIN,httpdns.danuoyi.tbcache.com
 DOMAIN,httpdns.gslb.yy.com
 DOMAIN,httpdns.kg.qq.com
+DOMAIN,httpdns.kwd.inkuai.com
+DOMAIN,httpdns.music.163.com
+DOMAIN,httpdns.n.netease.com
 DOMAIN,httpdns.n.shifen.com
 DOMAIN,httpdns.ocloud.heytapmobi.com
 DOMAIN,httpdns.ocloud.oppomobile.com
 DOMAIN,httpdns.platform.dbankcloud.cn
 DOMAIN,httpdns.platform.dbankcloud.com
 DOMAIN,httpdns.push.heytapmobi.com
+DOMAIN,httpdns.push.oppomobile.com
+DOMAIN,httpdns.volcengineapi.com
 DOMAIN,httpdns.volces.com
+DOMAIN,httpdns.yunxindns.com
 DOMAIN,httpdns.zybang.com
 DOMAIN,httpdns1.cc.cdnhwc5.com
 DOMAIN,httpschecker.net
+DOMAIN,httpsdns.baidu.com
 DOMAIN,htunjeuczuox.com
 DOMAIN,huanbao110.com.cn
 DOMAIN,huangye.miui.com
@@ -8715,6 +8734,7 @@ DOMAIN,loddawqst.com
 DOMAIN,lodoxfwite.com
 DOMAIN,lodqycbq.com
 DOMAIN,loft2126.dedicatedpanel.com
+DOMAIN,lofter.httpdns.c.163.com
 DOMAIN,log-api-mn.huxiu.com
 DOMAIN,log-api.huxiu.com
 DOMAIN,log-api.pangolin-sdk-toutiao-b.com
@@ -9906,6 +9926,7 @@ DOMAIN,murbil.hostei.com
 DOMAIN,murroliving.com.cn
 DOMAIN,musculahq.appspot.com
 DOMAIN,music-desktop.com
+DOMAIN,music.httpdns.c.163.com
 DOMAIN,musighkm.com
 DOMAIN,mutary.com
 DOMAIN,mutaticial.com
@@ -12199,6 +12220,7 @@ DOMAIN,reseireejoch.info
 DOMAIN,resimler.randevum.com
 DOMAIN,resolve.umeng.com
 DOMAIN,resolver.mi.xiaomi.com
+DOMAIN,resolver.msg.xiaomi.net
 DOMAIN,resolvethem.com
 DOMAIN,resource.m0lxcdn.kukuplay.com
 DOMAIN,resources.crowdtwist.com
@@ -17563,7 +17585,6 @@ DOMAIN-KEYWORD,adnewnc
 DOMAIN-KEYWORD,adobeanalytic.
 DOMAIN-KEYWORD,adobeanalytics.
 DOMAIN-KEYWORD,adobemarketing.
-DOMAIN-KEYWORD,adp.atm.youku.com
 DOMAIN-KEYWORD,adproxy.autohome.com
 DOMAIN-KEYWORD,adsage
 DOMAIN-KEYWORD,adsame
@@ -17582,7 +17603,6 @@ DOMAIN-KEYWORD,adstrategy
 DOMAIN-KEYWORD,adsyndication
 DOMAIN-KEYWORD,adsystem
 DOMAIN-KEYWORD,adtarget.
-DOMAIN-KEYWORD,adtrack.ucweb.com
 DOMAIN-KEYWORD,advert
 DOMAIN-KEYWORD,advertmarket
 DOMAIN-KEYWORD,adwords
@@ -17591,7 +17611,6 @@ DOMAIN-KEYWORD,allyes
 DOMAIN-KEYWORD,analysys
 DOMAIN-KEYWORD,analytics-cdn.
 DOMAIN-KEYWORD,analytics.
-DOMAIN-KEYWORD,android.bugly.qq.com
 DOMAIN-KEYWORD,anybest.
 DOMAIN-KEYWORD,ap.51y5.net
 DOMAIN-KEYWORD,api.freed.so
@@ -17607,7 +17626,6 @@ DOMAIN-KEYWORD,appsflyer
 DOMAIN-KEYWORD,asewlfjqwlflkew
 DOMAIN-KEYWORD,asiad.byteactivity
 DOMAIN-KEYWORD,av1.xdrig.com
-DOMAIN-KEYWORD,backstory.ebay.
 DOMAIN-KEYWORD,bdsp.x.jd.com
 DOMAIN-KEYWORD,bj.imp.voiceads.cn
 DOMAIN-KEYWORD,bjimp.voiceads.cn
@@ -17619,10 +17637,8 @@ DOMAIN-KEYWORD,c.51y5.net
 DOMAIN-KEYWORD,c.wkanx.com
 DOMAIN-KEYWORD,c1.wkanx.com
 DOMAIN-KEYWORD,c1img.ali.kugou.com
-DOMAIN-KEYWORD,caclick.baidu.com
 DOMAIN-KEYWORD,cds.51y5.net
 DOMAIN-KEYWORD,click.rum.
-DOMAIN-KEYWORD,client-dmp.suishenyun.cn
 DOMAIN-KEYWORD,clk.gentags.net
 DOMAIN-KEYWORD,cm-10-134.getui.com
 DOMAIN-KEYWORD,cm-10-35.getui.com
@@ -17630,9 +17646,7 @@ DOMAIN-KEYWORD,cmpworker.
 DOMAIN-KEYWORD,collectionpv.che168.com
 DOMAIN-KEYWORD,config.51y5.net
 DOMAIN-KEYWORD,config.y5en.com
-DOMAIN-KEYWORD,count.atm.youku.com
 DOMAIN-KEYWORD,cp-home-pl-
-DOMAIN-KEYWORD,cpu.baidu.com
 DOMAIN-KEYWORD,crashlytics
 DOMAIN-KEYWORD,dat8
 DOMAIN-KEYWORD,dc.pimentaafricana
@@ -17657,7 +17671,6 @@ DOMAIN-KEYWORD,fb-community-standards
 DOMAIN-KEYWORD,fb-restriction-appeal
 DOMAIN-KEYWORD,fb-restriction-case
 DOMAIN-KEYWORD,fc-video.cdn.bcebos.com
-DOMAIN-KEYWORD,fds.api.moji.com
 DOMAIN-KEYWORD,fenxi
 DOMAIN-KEYWORD,flightsy
 DOMAIN-KEYWORD,fzlm
@@ -17669,7 +17682,6 @@ DOMAIN-KEYWORD,haowanyou
 DOMAIN-KEYWORD,highwebmedia
 DOMAIN-KEYWORD,histats
 DOMAIN-KEYWORD,hostingcloud
-DOMAIN-KEYWORD,iflyad.bj.openstorage.cn
 DOMAIN-KEYWORD,image.bianxianmao.com
 DOMAIN-KEYWORD,img1.czb365.com
 DOMAIN-KEYWORD,in-page-push
@@ -17681,7 +17693,6 @@ DOMAIN-KEYWORD,ioslog.
 DOMAIN-KEYWORD,iqmetrics.
 DOMAIN-KEYWORD,itabelog
 DOMAIN-KEYWORD,jads
-DOMAIN-KEYWORD,js.union-wifi.com
 DOMAIN-KEYWORD,jshosting
 DOMAIN-KEYWORD,juruigj
 DOMAIN-KEYWORD,keplerapi.jd.com
@@ -17689,10 +17700,7 @@ DOMAIN-KEYWORD,kgipadstat.kugou.com
 DOMAIN-KEYWORD,kgipadstatbak.kugou.com
 DOMAIN-KEYWORD,kgstaticdlbssdlbig.tx.kugou.com
 DOMAIN-KEYWORD,lieyou
-DOMAIN-KEYWORD,lkme.cc
 DOMAIN-KEYWORD,load.tracking.
-DOMAIN-KEYWORD,log-dmp.suishenyun.cn
-DOMAIN-KEYWORD,log.cs.pp.cn
 DOMAIN-KEYWORD,login.push.51y5.net
 DOMAIN-KEYWORD,m.panda.voiceads.cn
 DOMAIN-KEYWORD,m.suning.com
@@ -17707,8 +17715,6 @@ DOMAIN-KEYWORD,mmiyue
 DOMAIN-KEYWORD,mobaders
 DOMAIN-KEYWORD,mpos-pic.helipay.com
 DOMAIN-KEYWORD,msg.push.51y5.net
-DOMAIN-KEYWORD,nbcollect.kugou.com
-DOMAIN-KEYWORD,nbcollectretry.kugou.com
 DOMAIN-KEYWORD,nbsdk-baichuan
 DOMAIN-KEYWORD,news-log.51y5.net
 DOMAIN-KEYWORD,news.51y5.net
@@ -17735,10 +17741,7 @@ DOMAIN-KEYWORD,pglstatp
 DOMAIN-KEYWORD,pglstatp-toutiao
 DOMAIN-KEYWORD,pingfore
 DOMAIN-KEYWORD,plausible.
-DOMAIN-KEYWORD,policy.jd.com
-DOMAIN-KEYWORD,puds.ucweb.com
 DOMAIN-KEYWORD,r1.ykimg.com
-DOMAIN-KEYWORD,rescn.u3.ucweb.com
 DOMAIN-KEYWORD,rt-m.kugou.com
 DOMAIN-KEYWORD,rtmretry.kugou.com
 DOMAIN-KEYWORD,sanalytics.
@@ -17752,7 +17755,6 @@ DOMAIN-KEYWORD,securemetrics.
 DOMAIN-KEYWORD,securepubads
 DOMAIN-KEYWORD,securetags.
 DOMAIN-KEYWORD,seniorliving.
-DOMAIN-KEYWORD,server.m.pp.cn
 DOMAIN-KEYWORD,smetric.
 DOMAIN-KEYWORD,smetrics.
 DOMAIN-KEYWORD,smetricsadobe.
@@ -17760,8 +17762,6 @@ DOMAIN-KEYWORD,snalytics.
 DOMAIN-KEYWORD,socdm
 DOMAIN-KEYWORD,somniture.
 DOMAIN-KEYWORD,srepdata.
-DOMAIN-KEYWORD,stsdk.vivo.com.cn
-DOMAIN-KEYWORD,stsdk.vivoglobal.com
 DOMAIN-KEYWORD,stunninglover
 DOMAIN-KEYWORD,sunnimiq
 DOMAIN-KEYWORD,supersonicads
@@ -17801,14 +17801,9 @@ DOMAIN-KEYWORD,uedas
 DOMAIN-KEYWORD,umeng
 DOMAIN-KEYWORD,umtrack
 DOMAIN-KEYWORD,utiq.
-DOMAIN-KEYWORD,utp-dmp.ucweb.com
-DOMAIN-KEYWORD,utp.ucweb.com
 DOMAIN-KEYWORD,v0-client-lz.rili.cn
-DOMAIN-KEYWORD,v2.reachmax.cn
-DOMAIN-KEYWORD,val.atm.youku.com
 DOMAIN-KEYWORD,vidoza
 DOMAIN-KEYWORD,vs10.bj2ct.u3.ucweb.com
-DOMAIN-KEYWORD,wgo.mmstat.com
 DOMAIN-KEYWORD,wixsite.com
 DOMAIN-KEYWORD,wlmonitor
 DOMAIN-KEYWORD,www.qmlog.cn
@@ -18557,6 +18552,7 @@ DOMAIN-SUFFIX,1.zhuangxiu567.com
 DOMAIN-SUFFIX,1.zou114.com
 DOMAIN-SUFFIX,1.zuowenjun.com
 DOMAIN-SUFFIX,1.zw3e.com
+DOMAIN-SUFFIX,10-letter-words.com
 DOMAIN-SUFFIX,10.im.cz
 DOMAIN-SUFFIX,100-flannelman.com
 DOMAIN-SUFFIX,100.admin5.com
@@ -34084,6 +34080,7 @@ DOMAIN-SUFFIX,adotsolution.com
 DOMAIN-SUFFIX,adotube.com
 DOMAIN-SUFFIX,adovr.com
 DOMAIN-SUFFIX,adp.adpies.com
+DOMAIN-SUFFIX,adp.atm.youku.com
 DOMAIN-SUFFIX,adp.cnki.net
 DOMAIN-SUFFIX,adp.cnool.net
 DOMAIN-SUFFIX,adp.gazeta.pl
@@ -36080,6 +36077,7 @@ DOMAIN-SUFFIX,adtrack.kireibiz.jp
 DOMAIN-SUFFIX,adtrack.loracle.jp
 DOMAIN-SUFFIX,adtrack.maisonlexia.com
 DOMAIN-SUFFIX,adtrack.ovotaris.com
+DOMAIN-SUFFIX,adtrack.ucweb.com
 DOMAIN-SUFFIX,adtrack.voicestar.com
 DOMAIN-SUFFIX,adtrack.xiaojukeji.com
 DOMAIN-SUFFIX,adtracker.jpchd.veraxen.com
@@ -42231,6 +42229,7 @@ DOMAIN-SUFFIX,android-system-virus-detect.web.app
 DOMAIN-SUFFIX,android-tv-beacons.xumo.com
 DOMAIN-SUFFIX,android.bcfads.com
 DOMAIN-SUFFIX,android.bigresource.com
+DOMAIN-SUFFIX,android.bugly.qq.com
 DOMAIN-SUFFIX,android.push.126.net
 DOMAIN-SUFFIX,android.rqd.qq.com
 DOMAIN-SUFFIX,android.txtsmarter.com
@@ -49961,6 +49960,7 @@ DOMAIN-SUFFIX,backspinreentryupright.com
 DOMAIN-SUFFIX,backstage.funnelenvy.com
 DOMAIN-SUFFIX,backstagedeputy.com
 DOMAIN-SUFFIX,backstageemergencyblame.com
+DOMAIN-SUFFIX,backstory.ebay.
 DOMAIN-SUFFIX,backup.lumion3d.com
 DOMAIN-SUFFIX,backup.lumion3d.net
 DOMAIN-SUFFIX,backupallfresh2030.com
@@ -59451,6 +59451,7 @@ DOMAIN-SUFFIX,cackingpaps.rest
 DOMAIN-SUFFIX,cacklegrievingtank.com
 DOMAIN-SUFFIX,cackoorsoltin.net
 DOMAIN-SUFFIX,cackssandhog.com
+DOMAIN-SUFFIX,caclick.baidu.com
 DOMAIN-SUFFIX,cactoidsuff.com
 DOMAIN-SUFFIX,cactus.joybuy.com
 DOMAIN-SUFFIX,cactusglobal.io
@@ -65514,6 +65515,7 @@ DOMAIN-SUFFIX,clictrck.com
 DOMAIN-SUFFIX,client-analytics.braintreegateway.com
 DOMAIN-SUFFIX,client-analytics.mts.ru
 DOMAIN-SUFFIX,client-api.ele.me
+DOMAIN-SUFFIX,client-dmp.suishenyun.cn
 DOMAIN-SUFFIX,client-event-reporter.twitch.tv
 DOMAIN-SUFFIX,client-events-ingress.bookbub.com
 DOMAIN-SUFFIX,client-events.gurushots.com
@@ -69578,6 +69580,7 @@ DOMAIN-SUFFIX,count.advanseads.com
 DOMAIN-SUFFIX,count.all.biz
 DOMAIN-SUFFIX,count.andreabrandi.com
 DOMAIN-SUFFIX,count.asnetworks.de
+DOMAIN-SUFFIX,count.atm.youku.com
 DOMAIN-SUFFIX,count.bank99.at
 DOMAIN-SUFFIX,count.candou.com
 DOMAIN-SUFFIX,count.carrierzone.com
@@ -70303,6 +70306,7 @@ DOMAIN-SUFFIX,cpu-admin.baidu.cn
 DOMAIN-SUFFIX,cpu-admin.baidu.com
 DOMAIN-SUFFIX,cpu-api.infor.pl
 DOMAIN-SUFFIX,cpu.baidu.cn
+DOMAIN-SUFFIX,cpu.baidu.com
 DOMAIN-SUFFIX,cpu.samsungelectronics.com
 DOMAIN-SUFFIX,cpu2cash.link
 DOMAIN-SUFFIX,cpueaimrtggmd.space
@@ -83609,6 +83613,7 @@ DOMAIN-SUFFIX,dldhulolw.com
 DOMAIN-SUFFIX,dldotl.ouestfrance-auto.com
 DOMAIN-SUFFIX,dldsrs.com
 DOMAIN-SUFFIX,dldvfyshpgftw.website
+DOMAIN-SUFFIX,dldyjy.com
 DOMAIN-SUFFIX,dle-news.pw
 DOMAIN-SUFFIX,dle-news.xyz
 DOMAIN-SUFFIX,dledthebarrowb.com
@@ -96754,6 +96759,7 @@ DOMAIN-SUFFIX,fdqzywhgrvgmo.store
 DOMAIN-SUFFIX,fdrhbw.com
 DOMAIN-SUFFIX,fdrxdr.xyz
 DOMAIN-SUFFIX,fds-1230.cc
+DOMAIN-SUFFIX,fds.api.moji.com
 DOMAIN-SUFFIX,fds.bmfwwz.top
 DOMAIN-SUFFIX,fdsd11.com
 DOMAIN-SUFFIX,fdsd22.com
@@ -119147,6 +119153,7 @@ DOMAIN-SUFFIX,httpaccess.com
 DOMAIN-SUFFIX,httpads.com
 DOMAIN-SUFFIX,httpdns.aliyuncs.com
 DOMAIN-SUFFIX,httpdns.c.163.com
+DOMAIN-SUFFIX,httpdns.pro
 DOMAIN-SUFFIX,httpdns.qcloud.com
 DOMAIN-SUFFIX,httpool.com
 DOMAIN-SUFFIX,httpp.gdn
@@ -121367,6 +121374,7 @@ DOMAIN-SUFFIX,iflow.uczzd.cn
 DOMAIN-SUFFIX,iflow.uczzd.com
 DOMAIN-SUFFIX,iflow.uczzd.com.cn
 DOMAIN-SUFFIX,iflow.uczzd.net
+DOMAIN-SUFFIX,iflyad.bj.openstorage.cn
 DOMAIN-SUFFIX,ifmjzbdyk.com
 DOMAIN-SUFFIX,ifmonx.commercialrealestate.com.au
 DOMAIN-SUFFIX,ifmxhabbjpjrm.website
@@ -131081,6 +131089,7 @@ DOMAIN-SUFFIX,js.szande.com.cn
 DOMAIN-SUFFIX,js.taplytics.com
 DOMAIN-SUFFIX,js.trendmd.com
 DOMAIN-SUFFIX,js.ubaike.cn
+DOMAIN-SUFFIX,js.union-wifi.com
 DOMAIN-SUFFIX,js.verisoul.ai
 DOMAIN-SUFFIX,js.vipyy88.com
 DOMAIN-SUFFIX,js.waqool.com
@@ -141083,6 +141092,7 @@ DOMAIN-SUFFIX,lkluoz.saraceniwines.com
 DOMAIN-SUFFIX,lklwepjsqa.com
 DOMAIN-SUFFIX,lklzo.demandflow.ai
 DOMAIN-SUFFIX,lkmcjmpjchwtk.space
+DOMAIN-SUFFIX,lkme.cc
 DOMAIN-SUFFIX,lkmfehpbaavm.com
 DOMAIN-SUFFIX,lkmgjfkhfh.top
 DOMAIN-SUFFIX,lkmhn.com
@@ -146346,6 +146356,7 @@ DOMAIN-SUFFIX,log-bridge-mobile.kr.karrotmarket.com
 DOMAIN-SUFFIX,log-collector.shopee.
 DOMAIN-SUFFIX,log-collector.shopee.vn
 DOMAIN-SUFFIX,log-dbff2e04.us.v2.we-stats.com
+DOMAIN-SUFFIX,log-dmp.suishenyun.cn
 DOMAIN-SUFFIX,log-dttc.sggp.org.vn
 DOMAIN-SUFFIX,log-en.nhandan.vn
 DOMAIN-SUFFIX,log-en.sggp.org.vn
@@ -146433,6 +146444,7 @@ DOMAIN-SUFFIX,log.collect.yinyuetai.com
 DOMAIN-SUFFIX,log.collectaction.com
 DOMAIN-SUFFIX,log.cookieyes.com
 DOMAIN-SUFFIX,log.cpex.cz
+DOMAIN-SUFFIX,log.cs.pp.cn
 DOMAIN-SUFFIX,log.daibieunhandan.vn
 DOMAIN-SUFFIX,log.daidoanket.vn
 DOMAIN-SUFFIX,log.dance
@@ -164462,6 +164474,8 @@ DOMAIN-SUFFIX,nbbpynkclbynx.online
 DOMAIN-SUFFIX,nbbtcqoejxhgd.online
 DOMAIN-SUFFIX,nbbull.com
 DOMAIN-SUFFIX,nbcnews.black.news
+DOMAIN-SUFFIX,nbcollect.kugou.com
+DOMAIN-SUFFIX,nbcollectretry.kugou.com
 DOMAIN-SUFFIX,nbcshrwcjjuwrjf.xyz
 DOMAIN-SUFFIX,nbcvb.eqvvs.co.uk
 DOMAIN-SUFFIX,nbcxa65t001z.net.jumia.ug
@@ -177456,6 +177470,7 @@ DOMAIN-SUFFIX,pbzgcofnurhyz.website
 DOMAIN-SUFFIX,pbzsf.snagtights.de
 DOMAIN-SUFFIX,pc-ads.com
 DOMAIN-SUFFIX,pc-agency24.de
+DOMAIN-SUFFIX,pc-apps-kaiyunsports.com
 DOMAIN-SUFFIX,pc-gizmos-ssl.com
 DOMAIN-SUFFIX,pc-tc.s3-eu-west-1.amazonaws.com
 DOMAIN-SUFFIX,pc-virus-d0l92j2.pw
@@ -181818,6 +181833,7 @@ DOMAIN-SUFFIX,polhvf.bootbarn.com
 DOMAIN-SUFFIX,policeair.com
 DOMAIN-SUFFIX,policeonline.club
 DOMAIN-SUFFIX,policityseriod.info
+DOMAIN-SUFFIX,policy.jd.com
 DOMAIN-SUFFIX,policy.video.iqiyi.com
 DOMAIN-SUFFIX,policycounsel.org
 DOMAIN-SUFFIX,policyinmateblare.com
@@ -185649,6 +185665,7 @@ DOMAIN-SUFFIX,pudijoghimtoo.net
 DOMAIN-SUFFIX,pudiusykukrby.space
 DOMAIN-SUFFIX,pudrardu.net
 DOMAIN-SUFFIX,puds.test.uae.uc.cn
+DOMAIN-SUFFIX,puds.ucweb.com
 DOMAIN-SUFFIX,pudtyek.com
 DOMAIN-SUFFIX,puduepirotemailes.qpon
 DOMAIN-SUFFIX,puduloaming.shop
@@ -193429,6 +193446,7 @@ DOMAIN-SUFFIX,resaveyobbo.com
 DOMAIN-SUFFIX,resawstawtie.cyou
 DOMAIN-SUFFIX,resbargarettybe.info
 DOMAIN-SUFFIX,rescission77.top
+DOMAIN-SUFFIX,rescn.u3.ucweb.com
 DOMAIN-SUFFIX,rescousmatzah.cfd
 DOMAIN-SUFFIX,rescrubdecenyl.com
 DOMAIN-SUFFIX,rescueaccredited.com
@@ -205727,6 +205745,7 @@ DOMAIN-SUFFIX,server.luxmobiles.com
 DOMAIN-SUFFIX,server.luxocouer.com.br
 DOMAIN-SUFFIX,server.luxuryleatherbd.com
 DOMAIN-SUFFIX,server.m-pilates.com
+DOMAIN-SUFFIX,server.m.pp.cn
 DOMAIN-SUFFIX,server.mabaazar.com
 DOMAIN-SUFFIX,server.machinsalesacademy.com
 DOMAIN-SUFFIX,server.madhumatishop.com
@@ -234456,6 +234475,8 @@ DOMAIN-SUFFIX,sts.weridekorea.com
 DOMAIN-SUFFIX,stsbih.com.ba
 DOMAIN-SUFFIX,stscczovfaipx.website
 DOMAIN-SUFFIX,stscs.ditzo.nl
+DOMAIN-SUFFIX,stsdk.vivo.com.cn
+DOMAIN-SUFFIX,stsdk.vivoglobal.com
 DOMAIN-SUFFIX,stsejehaurbpx.site
 DOMAIN-SUFFIX,stserver.ncartbd.com
 DOMAIN-SUFFIX,stsetra.gibot.it
@@ -258961,6 +258982,8 @@ DOMAIN-SUFFIX,utopiascuttoosmantel.cfd
 DOMAIN-SUFFIX,utorido.com
 DOMAIN-SUFFIX,utouchapp.com
 DOMAIN-SUFFIX,utoumine.net
+DOMAIN-SUFFIX,utp-dmp.ucweb.com
+DOMAIN-SUFFIX,utp.ucweb.com
 DOMAIN-SUFFIX,utpenedwritted.info
 DOMAIN-SUFFIX,utppooxusnnzr.online
 DOMAIN-SUFFIX,utppzuj.buzz
@@ -259630,6 +259653,7 @@ DOMAIN-SUFFIX,v2.hunantv.com
 DOMAIN-SUFFIX,v2.jiathis.com
 DOMAIN-SUFFIX,v2.kiahdi.biz
 DOMAIN-SUFFIX,v2.pixel.newscgp.com
+DOMAIN-SUFFIX,v2.reachmax.cn
 DOMAIN-SUFFIX,v2.viayonetici.com
 DOMAIN-SUFFIX,v2.yieldlove-ad-serving.net
 DOMAIN-SUFFIX,v20.cnnd.vn
@@ -259863,6 +259887,7 @@ DOMAIN-SUFFIX,vaknveb.com
 DOMAIN-SUFFIX,vaksortoaz.net
 DOMAIN-SUFFIX,val.api.youku.com
 DOMAIN-SUFFIX,val.atm.cp31.ott.cibntv.net
+DOMAIN-SUFFIX,val.atm.youku.com
 DOMAIN-SUFFIX,val.valkenstol.de
 DOMAIN-SUFFIX,valack.com
 DOMAIN-SUFFIX,valb.atm.youku.com
@@ -268078,6 +268103,7 @@ DOMAIN-SUFFIX,wgnlz.com
 DOMAIN-SUFFIX,wgnmp.com
 DOMAIN-SUFFIX,wgnpq.com
 DOMAIN-SUFFIX,wgnrrd.culturekings.com
+DOMAIN-SUFFIX,wgo.mmstat.com
 DOMAIN-SUFFIX,wgogmr.lisamayo.pl
 DOMAIN-SUFFIX,wgovzfxfccdpd.site
 DOMAIN-SUFFIX,wgpepw.boatoutfitters.com
@@ -271823,6 +271849,7 @@ DOMAIN-SUFFIX,www.cdbgmj12.com
 DOMAIN-SUFFIX,www.cdert34.com
 DOMAIN-SUFFIX,www.cdn.metrike.com
 DOMAIN-SUFFIX,www.cdnboostcache.com
+DOMAIN-SUFFIX,www.cemerhealth.com
 DOMAIN-SUFFIX,www.centeralbidding.com
 DOMAIN-SUFFIX,www.central-core-7.com
 DOMAIN-SUFFIX,www.centralcore7.com
@@ -272072,6 +272099,7 @@ DOMAIN-SUFFIX,www.exambased.com
 DOMAIN-SUFFIX,www.exasrv.com
 DOMAIN-SUFFIX,www.exceleratehelp.com
 DOMAIN-SUFFIX,www.exe-file.de
+DOMAIN-SUFFIX,www.exoticainmotion.com
 DOMAIN-SUFFIX,www.explore-123.com
 DOMAIN-SUFFIX,www.expolearn.com
 DOMAIN-SUFFIX,www.exposhot.com
@@ -272114,6 +272142,7 @@ DOMAIN-SUFFIX,www.firsttrchfed.com
 DOMAIN-SUFFIX,www.fischereszter.hu
 DOMAIN-SUFFIX,www.fixedshine.com
 DOMAIN-SUFFIX,www.fixingfast.com
+DOMAIN-SUFFIX,www.flaglergrill.com
 DOMAIN-SUFFIX,www.flexibleadmin.com
 DOMAIN-SUFFIX,www.flexibletool.com
 DOMAIN-SUFFIX,www.flow8free.com
@@ -272341,6 +272370,7 @@ DOMAIN-SUFFIX,www.jessicalonda.com
 DOMAIN-SUFFIX,www.jetseeker.com
 DOMAIN-SUFFIX,www.jeuxfortuna.com
 DOMAIN-SUFFIX,www.jeuxjackpotcasino.com
+DOMAIN-SUFFIX,www.jhsmiami.com
 DOMAIN-SUFFIX,www.jinshanju.com
 DOMAIN-SUFFIX,www.jiubuhua.com
 DOMAIN-SUFFIX,www.jiudianxing.cn
@@ -272393,6 +272423,7 @@ DOMAIN-SUFFIX,www.lahoreautismcentre.com
 DOMAIN-SUFFIX,www.laksjd4.com
 DOMAIN-SUFFIX,www.lanaita.com
 DOMAIN-SUFFIX,www.lane5down.com
+DOMAIN-SUFFIX,www.langleyantiques.com
 DOMAIN-SUFFIX,www.lansrv020.com
 DOMAIN-SUFFIX,www.lansrv030.com
 DOMAIN-SUFFIX,www.lansrv040.com
@@ -272420,6 +272451,7 @@ DOMAIN-SUFFIX,www.leanplum.com
 DOMAIN-SUFFIX,www.learn.dunnhumby.com
 DOMAIN-SUFFIX,www.learnnessy.com
 DOMAIN-SUFFIX,www.learntechno.com
+DOMAIN-SUFFIX,www.ledfaucetlight.com
 DOMAIN-SUFFIX,www.ledradn.com
 DOMAIN-SUFFIX,www.leeucode.com
 DOMAIN-SUFFIX,www.left5lock.com
@@ -272465,6 +272497,7 @@ DOMAIN-SUFFIX,www.m1ll1c4n0.com
 DOMAIN-SUFFIX,www.m2trk.com
 DOMAIN-SUFFIX,www.ma-catinfo.com
 DOMAIN-SUFFIX,www.mack7oyes.com
+DOMAIN-SUFFIX,www.maiecaffe.com
 DOMAIN-SUFFIX,www.maillazy.com
 DOMAIN-SUFFIX,www.main5poem.com
 DOMAIN-SUFFIX,www.make6pain.com
@@ -272488,6 +272521,7 @@ DOMAIN-SUFFIX,www.maserati.info
 DOMAIN-SUFFIX,www.mass1soma.com
 DOMAIN-SUFFIX,www.masterspace.biz
 DOMAIN-SUFFIX,www.match3quests.com
+DOMAIN-SUFFIX,www.matifi.com
 DOMAIN-SUFFIX,www.mavic852.com
 DOMAIN-SUFFIX,www.mbljpu9.com
 DOMAIN-SUFFIX,www.mczbf.com
@@ -272521,6 +272555,7 @@ DOMAIN-SUFFIX,www.mikras.nl
 DOMAIN-SUFFIX,www.milawka.com
 DOMAIN-SUFFIX,www.mildpost.com
 DOMAIN-SUFFIX,www.mile0tire.com
+DOMAIN-SUFFIX,www.milgaard.com
 DOMAIN-SUFFIX,www.milkycascadeut.site
 DOMAIN-SUFFIX,www.mill8grip.com
 DOMAIN-SUFFIX,www.minesage.com
@@ -272751,6 +272786,7 @@ DOMAIN-SUFFIX,www.procarsharing.store
 DOMAIN-SUFFIX,www.promoskills.com
 DOMAIN-SUFFIX,www.properrayam.pro
 DOMAIN-SUFFIX,www.proxionet.com
+DOMAIN-SUFFIX,www.proxygeni.com
 DOMAIN-SUFFIX,www.prt-or-067.com
 DOMAIN-SUFFIX,www.prtc.net
 DOMAIN-SUFFIX,www.pruialoatpmye.xyz
@@ -272818,6 +272854,7 @@ DOMAIN-SUFFIX,www.registrovillaslapiedad.com
 DOMAIN-SUFFIX,www.reklam3.net
 DOMAIN-SUFFIX,www.rekonsise.com
 DOMAIN-SUFFIX,www.relaxingcafe.com
+DOMAIN-SUFFIX,www.reliaslearrning.com
 DOMAIN-SUFFIX,www.remorsefuldecentmarried.com
 DOMAIN-SUFFIX,www.remote88.com
 DOMAIN-SUFFIX,www.renderfoest.com
@@ -272919,6 +272956,7 @@ DOMAIN-SUFFIX,www.sidneyman.com
 DOMAIN-SUFFIX,www.signtechapparels.com
 DOMAIN-SUFFIX,www.silebah.com
 DOMAIN-SUFFIX,www.silentgateck.site
+DOMAIN-SUFFIX,www.silverboxcreativestudio.com
 DOMAIN-SUFFIX,www.simplecounter.net
 DOMAIN-SUFFIX,www.simplyartful.com
 DOMAIN-SUFFIX,www.simplyhelper.com
@@ -284415,6 +284453,7 @@ IP-CIDR,10.72.25.0/24
 IP-CIDR,100.20.104.229/32
 IP-CIDR,100.20.13.49/32
 IP-CIDR,100.28.19.138/32
+IP-CIDR,101.124.19.122/32
 IP-CIDR,101.201.29.182/32
 IP-CIDR,101.226.10.8/32
 IP-CIDR,101.227.200.0/24
@@ -284433,6 +284472,7 @@ IP-CIDR,103.19.128.222/32
 IP-CIDR,103.21.91.144/32
 IP-CIDR,103.224.182.210/32
 IP-CIDR,103.224.182.251/32
+IP-CIDR,103.224.222.208/32
 IP-CIDR,103.233.216.77/32
 IP-CIDR,103.249.254.113/32
 IP-CIDR,103.37.152.97/32
@@ -284518,6 +284558,8 @@ IP-CIDR,112.29.211.120/32
 IP-CIDR,112.30.110.58/32
 IP-CIDR,112.30.4.52/32
 IP-CIDR,112.31.211.135/32
+IP-CIDR,112.64.218.119/32
+IP-CIDR,112.65.200.117/32
 IP-CIDR,112.74.95.46/32
 IP-CIDR,113.116.89.1/32
 IP-CIDR,113.12.83.4/31
@@ -284527,6 +284569,7 @@ IP-CIDR,113.57.230.88/32
 IP-CIDR,114.110.97.97/32
 IP-CIDR,114.112.163.232/32
 IP-CIDR,114.112.163.254/32
+IP-CIDR,114.116.215.110/32
 IP-CIDR,114.119.160.0/21
 IP-CIDR,114.247.28.96/32
 IP-CIDR,114.38.176.185/32
@@ -284535,6 +284578,8 @@ IP-CIDR,114.95.102.77/32
 IP-CIDR,115.182.16.79/32
 IP-CIDR,115.194.38.143/32
 IP-CIDR,115.204.119.237/32
+IP-CIDR,115.236.121.195/32
+IP-CIDR,115.236.121.51/32
 IP-CIDR,115.29.141.121/32
 IP-CIDR,115.29.247.48/32
 IP-CIDR,115.50.110.163/32
@@ -284553,10 +284598,14 @@ IP-CIDR,116.17.210.157/32
 IP-CIDR,116.179.138.68/32
 IP-CIDR,116.206.22.7/32
 IP-CIDR,116.55.227.242/32
+IP-CIDR,116.63.10.135/32
+IP-CIDR,116.63.10.31/32
 IP-CIDR,117.121.49.100/32
+IP-CIDR,117.144.238.29/32
 IP-CIDR,117.144.242.32/32
 IP-CIDR,117.177.248.17/32
 IP-CIDR,117.177.248.41/32
+IP-CIDR,117.185.228.108/32
 IP-CIDR,117.185.247.73/32
 IP-CIDR,117.196.49.21/32
 IP-CIDR,117.198.240.157/32
@@ -284575,6 +284624,7 @@ IP-CIDR,118.144.88.215/32
 IP-CIDR,118.144.88.216/32
 IP-CIDR,118.75.87.102/32
 IP-CIDR,118.89.204.198/23
+IP-CIDR,118.89.204.198/32
 IP-CIDR,119.102.7.115/32
 IP-CIDR,119.113.248.74/32
 IP-CIDR,119.179.84.145/32
@@ -284584,6 +284634,8 @@ IP-CIDR,119.188.13.0/24
 IP-CIDR,119.250.236.122/32
 IP-CIDR,119.29.207.87/32
 IP-CIDR,119.29.29.98/31
+IP-CIDR,119.29.29.98/32
+IP-CIDR,119.29.29.99/32
 IP-CIDR,119.4.249.166/32
 IP-CIDR,120.12.138.133/32
 IP-CIDR,120.132.57.41/32
@@ -284597,6 +284649,7 @@ IP-CIDR,120.240.95.37/32
 IP-CIDR,120.26.151.246/32
 IP-CIDR,120.27.34.156/32
 IP-CIDR,120.4.141.185/32
+IP-CIDR,120.46.169.234/32
 IP-CIDR,120.55.199.139/32
 IP-CIDR,120.76.189.132/32
 IP-CIDR,120.80.57.123/32
@@ -284606,6 +284659,7 @@ IP-CIDR,121.201.108.2/32
 IP-CIDR,121.201.11.95/32
 IP-CIDR,121.204.246.13/32
 IP-CIDR,121.251.255.0/24
+IP-CIDR,121.36.72.124/32
 IP-CIDR,121.40.25.88/32
 IP-CIDR,121.43.235.135/32
 IP-CIDR,121.43.75.169/32
@@ -284621,6 +284675,7 @@ IP-CIDR,122.228.236.165/32
 IP-CIDR,122.229.29.89/32
 IP-CIDR,122.229.8.47/32
 IP-CIDR,122.6.254.201/32
+IP-CIDR,122.9.7.134/32
 IP-CIDR,123.10.224.135/32
 IP-CIDR,123.10.225.196/32
 IP-CIDR,123.10.65.201/32
@@ -284633,6 +284688,7 @@ IP-CIDR,123.129.254.16/30
 IP-CIDR,123.151.48.171/32
 IP-CIDR,123.151.48.193/32
 IP-CIDR,123.151.48.208/32
+IP-CIDR,123.151.54.50/32
 IP-CIDR,123.56.152.96/32
 IP-CIDR,123.57.162.39/32
 IP-CIDR,123.57.94.184/32
@@ -284841,6 +284897,7 @@ IP-CIDR,180.76.172.149/32
 IP-CIDR,180.76.181.213/32
 IP-CIDR,180.76.2.18/32
 IP-CIDR,180.76.76.112/32
+IP-CIDR,180.76.76.200/32
 IP-CIDR,180.76.76.220/32
 IP-CIDR,180.96.2.114/32
 IP-CIDR,182.116.104.6/32
@@ -284851,6 +284908,8 @@ IP-CIDR,182.122.196.203/32
 IP-CIDR,182.122.252.69/32
 IP-CIDR,182.123.141.17/32
 IP-CIDR,182.173.0.181/32
+IP-CIDR,182.254.116.117/32
+IP-CIDR,182.254.118.119/32
 IP-CIDR,182.59.69.21/32
 IP-CIDR,182.92.81.104/32
 IP-CIDR,183.131.79.130/32
@@ -284987,11 +285046,14 @@ IP-CIDR,202.106.199.38/32
 IP-CIDR,202.12.80.74/32
 IP-CIDR,202.238.237.234/32
 IP-CIDR,202.238.237.249/32
+IP-CIDR,202.90.108.13/32
+IP-CIDR,202.90.110.46/32
 IP-CIDR,202.98.24.121/32
 IP-CIDR,202.98.24.122/31
 IP-CIDR,202.98.24.124/31
 IP-CIDR,202.99.254.230/31
 IP-CIDR,202.99.254.232/32
+IP-CIDR,203.107.1.0/24
 IP-CIDR,203.107.63.154/32
 IP-CIDR,203.119.204.66/32
 IP-CIDR,203.119.206.64/32
@@ -285283,11 +285345,17 @@ IP-CIDR,39.80.147.239/32
 IP-CIDR,39.81.117.73/32
 IP-CIDR,39.81.68.45/32
 IP-CIDR,39.83.80.247/32
+IP-CIDR,39.97.128.148/32
+IP-CIDR,39.97.130.51/32
 IP-CIDR,42.123.125.237/32
+IP-CIDR,42.187.182.106/32
+IP-CIDR,42.187.182.123/32
+IP-CIDR,42.187.184.154/32
 IP-CIDR,42.235.183.74/32
 IP-CIDR,42.238.151.197/32
 IP-CIDR,42.51.146.207/32
 IP-CIDR,42.53.240.249/32
+IP-CIDR,42.81.232.18/32
 IP-CIDR,43.100.125.58/32
 IP-CIDR,43.128.142.70/32
 IP-CIDR,43.130.30.237/32
@@ -285330,6 +285398,8 @@ IP-CIDR,45.95.169.115/32
 IP-CIDR,46.101.81.149/32
 IP-CIDR,46.165.197.153/32
 IP-CIDR,46.165.197.231/32
+IP-CIDR,47.100.123.169/32
+IP-CIDR,47.101.175.206/32
 IP-CIDR,47.110.187.87/32
 IP-CIDR,47.56.131.76/32
 IP-CIDR,47.76.132.29/32
@@ -285381,6 +285451,8 @@ IP-CIDR,57.128.71.215/32
 IP-CIDR,58.215.179.159/32
 IP-CIDR,58.221.28.166/32
 IP-CIDR,58.249.74.79/32
+IP-CIDR,59.111.239.61/32
+IP-CIDR,59.111.239.62/32
 IP-CIDR,59.47.187.147/32
 IP-CIDR,59.82.99.47/32
 IP-CIDR,60.13.60.19/32
@@ -285521,9 +285593,13 @@ IP-CIDR,96.47.230.70/32
 IP-CIDR,99.83.230.223/32
 IP-CIDR6,2001:240:bb46:8267:0:1:dae1:f840/128
 IP-CIDR6,2001:240:bb5f:1980:0:1:80b:ad00/128
+IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128
+IP-CIDR6,2402:4e00:1900:1700:0:9554:1ad9:c3a/128
 IP-CIDR6,2402:4e00:8030:1::17/128
+IP-CIDR6,2402:db40:5100:1011::5/128
 IP-CIDR6,2408:8711:10:10::20/128
 IP-CIDR6,2409:8702:4860:10::4d/128
+IP-CIDR6,240e:928:1400:10::25/128
 PROCESS-NAME,SogouInput
 PROCESS-NAME,SogouServices
 PROCESS-NAME,SogouTaskManager

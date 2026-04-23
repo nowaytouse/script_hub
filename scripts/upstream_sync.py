@@ -447,6 +447,8 @@ if __name__ == "__main__":
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
-    syncer.sync_direct()
-    syncer.dehydrate_proxy_lists()
-    syncer.global_deduplicate()
+    from ruleset_manager import RulesetManager
+    from smart_cleanup import run_cleanup as run_ruleset_cleanup
+
+    RulesetManager(force=True).run()
+    run_ruleset_cleanup()

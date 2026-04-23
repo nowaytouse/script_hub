@@ -12,6 +12,7 @@ from adblock_manager import AdBlockManager
 from ruleset_manager import RulesetManager
 from srs_generator import SRSGenerator
 from maintenance.mitm_cleanup_github import run_cleanup
+from smart_cleanup import run_cleanup as run_ruleset_cleanup, format_stats as format_ruleset_cleanup_stats
 
 # CONFIGURATION
 
@@ -43,9 +44,25 @@ def main():
     rules_mgr = RulesetManager(force=args.force)
     rules_mgr.run()
 
+    # 2.1 Cross-ruleset cleanup (rebalance generic Direct/Proxy + payload dedupe)
+    Logger.section("Ruleset Cleanup")
+    try:
+        cleanup_stats = run_ruleset_cleanup()
+        Logger.success(f"Ruleset cleanup completed: {format_ruleset_cleanup_stats(cleanup_stats)}")
+    except Exception as e:
+        Logger.error(f"Ruleset cleanup failed: {e}")
+
     # 3. AdBlock Module & Ruleset Merge
     ad_mgr = AdBlockManager()
     ad_mgr.merge(execute=args.execute or args.force)
+
+    # 3.1 Final ruleset cleanup after AdBlock rebuild to keep payloads unique
+    Logger.section("Final Ruleset Cleanup")
+    try:
+        cleanup_stats = run_ruleset_cleanup()
+        Logger.success(f"Final ruleset cleanup completed: {format_ruleset_cleanup_stats(cleanup_stats)}")
+    except Exception as e:
+        Logger.error(f"Final ruleset cleanup failed: {e}")
 
     # 4. Firewall Port Sync
     sync_ports(execute=args.execute or args.force)

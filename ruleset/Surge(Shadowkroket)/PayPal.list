@@ -2,9 +2,21 @@
 # Policy: PROXY
 # Node: US
 # Description: PayPal (recommend US node)
-# Rules: 248
-# Updated: 2026-04-23 06:07:42
+# Rules: 260
+# Updated: 2026-04-24 06:25:38
 
+DOMAIN,.
+DOMAIN,3
+DOMAIN,a
+DOMAIN,c
+DOMAIN,e
+DOMAIN,m
+DOMAIN,n
+DOMAIN,o
+DOMAIN,s
+DOMAIN,v
+DOMAIN,w
+DOMAIN,z
 DOMAIN-KEYWORD,paypal
 DOMAIN-SUFFIX,account-paypal.info
 DOMAIN-SUFFIX,account-paypal.net
@@ -12,8 +24,12 @@ DOMAIN-SUFFIX,account-paypal.org
 DOMAIN-SUFFIX,accountpaypal.com
 DOMAIN-SUFFIX,accountpaypal.net
 DOMAIN-SUFFIX,accountpaypal.org
+DOMAIN-SUFFIX,anfutong.cn
 DOMAIN-SUFFIX,anfutong.com
+DOMAIN-SUFFIX,anfutong.com.cn
+DOMAIN-SUFFIX,beibao.cn
 DOMAIN-SUFFIX,beibao.com
+DOMAIN-SUFFIX,beibao.com.cn
 DOMAIN-SUFFIX,bill-safe.com
 DOMAIN-SUFFIX,billmelater.com
 DOMAIN-SUFFIX,billmelater.info
@@ -155,17 +171,21 @@ DOMAIN-SUFFIX,paypal-team.com
 DOMAIN-SUFFIX,paypal-viewpoints.net
 DOMAIN-SUFFIX,paypal.ca
 DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypal.com.cn
 DOMAIN-SUFFIX,paypal.com.hk
 DOMAIN-SUFFIX,paypal.com.sg
 DOMAIN-SUFFIX,paypal.hk
 DOMAIN-SUFFIX,paypal.info
 DOMAIN-SUFFIX,paypal.jp
 DOMAIN-SUFFIX,paypal.me
+DOMAIN-SUFFIX,paypal.net.cn
+DOMAIN-SUFFIX,paypal.org.cn
 DOMAIN-SUFFIX,paypal.so
 DOMAIN-SUFFIX,paypal.us
 DOMAIN-SUFFIX,paypalbeacon.com
 DOMAIN-SUFFIX,paypalbenefits.com
 DOMAIN-SUFFIX,paypalbrasil.com
+DOMAIN-SUFFIX,paypalcommunity.cn
 DOMAIN-SUFFIX,paypalcommunity.com
 DOMAIN-SUFFIX,paypalcommunity.net
 DOMAIN-SUFFIX,paypalcommunity.org
@@ -173,7 +193,9 @@ DOMAIN-SUFFIX,paypalcorp.com
 DOMAIN-SUFFIX,paypalcredit.com
 DOMAIN-SUFFIX,paypalcreditcard.com
 DOMAIN-SUFFIX,paypalgivingfund.org
+DOMAIN-SUFFIX,paypalhere.cn
 DOMAIN-SUFFIX,paypalhere.com
+DOMAIN-SUFFIX,paypalhere.com.cn
 DOMAIN-SUFFIX,paypalhere.info
 DOMAIN-SUFFIX,paypalhere.net
 DOMAIN-SUFFIX,paypalhere.org
@@ -234,9 +256,11 @@ DOMAIN-SUFFIX,wiremoneytoirelandwithxoomeasierandcheaper.com
 DOMAIN-SUFFIX,www-paypal.info
 DOMAIN-SUFFIX,www-paypal.us
 DOMAIN-SUFFIX,wwwxoom.com
+DOMAIN-SUFFIX,xn--bnq297cix3a.cn
 DOMAIN-SUFFIX,xoom-experience.com
 DOMAIN-SUFFIX,xoom.com
 DOMAIN-SUFFIX,xoom.io
+DOMAIN-SUFFIX,xoom.net.cn
 DOMAIN-SUFFIX,xoom.us
 DOMAIN-SUFFIX,xoomcom.com
 USER-AGENT,PayPal*
