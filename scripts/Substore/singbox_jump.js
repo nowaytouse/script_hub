@@ -281,14 +281,11 @@ log(`✅ 已添加 ${allProxies.length} 个代理节点`);
 
 // ==================== 最终统计 ====================
 log(`\n📊 最终统计:`);
-log(`  ┌─ 原有 outbound: ${config.outbounds.length - allProxies.length - (compatibleAdded ? 1 : 0)}`);
+log(`  ┌─ 原原有 outbound: ${config.outbounds.length - allProxies.length}`);
 log(`  ├─ 新增代理节点: ${allProxies.length}`);
 log(`  │  ├─ 第一跳(入口): ${name1 ? '已配置' : '未配置'}`);
 log(`  │  ├─ 第二跳(中续): ${name2 ? '已配置' : '未配置'}`);
 log(`  │  └─ 第三跳(落地): ${name3 ? '已配置' : '未配置'}`);
-if (compatibleAdded) {
-    log(`  ├─ 兜底节点: 1 (COMPATIBLE)`);
-}
 log(`  └─ 总计 outbound: ${config.outbounds.length}`);
 
 log(`\n📋 策略组插入详情:`);
