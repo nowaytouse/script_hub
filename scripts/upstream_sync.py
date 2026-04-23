@@ -364,9 +364,39 @@ class UpstreamSyncer:
         write_file(os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/Direct.list"), header + "\n".join(final_list) + "\n")
         Logger.success(f"Direct Ruleset: Regenerated with {len(final_list)} pure rules")
 
+    def dehydrate_proxy_lists(self):
+        Logger.section("Dehydrating Proxy Lists (Removing Domestic Water)")
+        lists_to_clean = [
+            "Microsoft.list", "GlobalProxy.list", "PayPal.list", "Bilibili.list", 
+            "Google.list", "Cloudflare.list", "Gaming.list", "CDN.list", "GitHub.list"
+        ]
+        
+        for list_name in lists_to_clean:
+            path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)", list_name)
+            if not os.path.exists(path): continue
+            
+            with open(path, 'r') as f:
+                lines = f.readlines()
+            
+            original_count = len(lines)
+            new_lines = []
+            for line in lines:
+                l_lower = line.lower()
+                # 核心逻辑：如果是国内域名关键字或以 .cn 结尾，则剔除
+                if re.search(r'\.cn(,|\s|$)', l_lower) or any(kw in l_lower for kw in [".tmall.com", "alicdn", "alipay", "aliyun", "baidu", "taobao"]):
+                    if "domain-suffix" in l_lower or "domain," in l_lower:
+                        continue
+                new_lines.append(line)
+            
+            if len(new_lines) < original_count:
+                with open(path, 'w') as f:
+                    f.writelines(new_lines)
+                Logger.success(f"Dehydrated {list_name}: Removed {original_count - len(new_lines)} domestic items")
+
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
     syncer.sync_direct()
+    syncer.dehydrate_proxy_lists()
