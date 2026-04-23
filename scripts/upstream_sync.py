@@ -51,6 +51,18 @@ METACUBEX_RULES = {
     "cloudflare": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cloudflare.srs"
 }
 
+DIRECT_SOURCES = {
+    "felixonmars": "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf",
+    "blackmatrix7": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/China/China.list",
+    "loyalsoldier": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt"
+}
+
+DEHYDRATION_KEYWORDS = [
+    "google", "github", "facebook", "twitter", "instagram", "netflix", 
+    "spotify", "telegram", "discord", "amazon", "akamai", "fastly", 
+    "cloudflare", "aws", "azure", "pypi", "docker", "npm"
+]
+
 NEXUS_MODULES = [
     "https://yfamilys.com/module/bili.module",
     "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule",
@@ -301,8 +313,60 @@ class UpstreamSyncer:
             futures = [executor.submit(self.process_metacubex_rule, name, url) for name, url in METACUBEX_RULES.items()]
             concurrent.futures.wait(futures)
 
+    def sync_direct(self):
+        Logger.section("Syncing & Dehydrating Direct Ruleset (Triple-Source)")
+        combined_rules = set()
+        
+        # 1. Fetch all sources
+        results = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_name = {executor.submit(self.download, url): name for name, url in DIRECT_SOURCES.items()}
+            for future in concurrent.futures.as_completed(future_to_name):
+                name = future_to_name[future]
+                results[name] = future.result().decode('utf-8', errors='ignore')
+
+        # 2. Process Felixonmars (dnsmasq format)
+        if results.get("felixonmars"):
+            # server=/example.com/114.114.114.114 -> DOMAIN-SUFFIX,example.com
+            matches = re.findall(r'^server=/([^/]+)/', results["felixonmars"], re.MULTILINE)
+            for m in matches: combined_rules.add(f"DOMAIN-SUFFIX,{m}")
+
+        # 3. Process Blackmatrix7 (Surge format)
+        if results.get("blackmatrix7"):
+            for line in results["blackmatrix7"].splitlines():
+                line = line.strip()
+                if line and not line.startswith('#'): combined_rules.add(line)
+
+        # 4. Process Loyalsoldier (Raw domain format)
+        if results.get("loyalsoldier"):
+            for line in results["loyalsoldier"].splitlines():
+                domain = line.strip()
+                if domain and not domain.startswith('#'): combined_rules.add(f"DOMAIN-SUFFIX,{domain}")
+
+        # 5. Load Local Non-Domain Rules (Archive fallback)
+        archive_path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/archive/Direct_polluted.list")
+        if os.path.exists(archive_path):
+            with open(archive_path, 'r') as f:
+                for line in f:
+                    if line.startswith(('IP-CIDR', 'IP-CIDR6', 'PROCESS-NAME', 'USER-AGENT')):
+                        combined_rules.add(line.strip())
+
+        # 6. DEHYDRATION (Keyword filtering)
+        final_list = []
+        for rule in combined_rules:
+            if any(kw in rule.lower() for kw in DEHYDRATION_KEYWORDS):
+                continue
+            final_list.append(rule)
+
+        # 7. Finalize and Write
+        final_list.sort()
+        header = f"# Ruleset: Direct (Unified & Dehydrated)\n# Updated: {datetime.now()}\n# Sources: {', '.join(DIRECT_SOURCES.keys())}\n\n"
+        write_file(os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/Direct.list"), header + "\n".join(final_list) + "\n")
+        Logger.success(f"Direct Ruleset: Regenerated with {len(final_list)} pure rules")
+
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
+    syncer.sync_direct()

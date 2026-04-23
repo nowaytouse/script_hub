@@ -18,4 +18,4 @@
 📺 BiliBili.Enhanced.x.v2.channel.region.list = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/channel\/region\/list\?, requires-body=1, script-path=https://github.com/BiliUniverse/Enhanced/releases/download/v0.5.13/response.bundle.js, argument=Home.Switch="{{{Home.Switch}}}"&Home.Tab="{{{Home.Tab}}}"&Home.Tab_default="{{{Home.Tab_default}}}"&Home.Top_left="{{{Home.Top_left}}}"&Home.Top="{{{Home.Top}}}"&Bottom="{{{Bottom}}}"&Region.Switch="{{{Region.Switch}}}"&Mine.Switch="{{{Mine.Switch}}}"&Mine.iPad.Switch="{{{Mine.iPad.Switch}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
 
 [MITM]
-hostname = %APPEND% app.bilibili.com, app.biliapi.net, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% app.bilibili.com, app.biliapi.net
