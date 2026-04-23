@@ -235,30 +235,7 @@ for (const hop of HOP_PRESETS) {
 
 log(`\n✅ 三跳总共插入 ${totalInserted} 个节点`);
 
-// ==================== 空策略组检查 ====================
-log(`\n🔍 检查空策略组...`);
-
-const compatible_outbound = {
-    tag: 'COMPATIBLE',
-    type: 'direct',
-};
-
-let compatibleAdded = false;
-
-config.outbounds.forEach(outbound => {
-    if ((outbound.type === 'selector' || outbound.type === 'urltest') && 
-        Array.isArray(outbound.outbounds) && 
-        outbound.outbounds.length === 0) {
-        
-        if (!compatibleAdded) {
-            config.outbounds.push(compatible_outbound);
-            compatibleAdded = true;
-            log(`  ➕ 添加兜底节点: COMPATIBLE (direct)`);
-        }
-        log(`  ⚠️ [${outbound.tag}] 为空，插入 COMPATIBLE`);
-        outbound.outbounds.push(compatible_outbound.tag);
-    }
-});
+// 空策略组检查已移除
 
 // ==================== 验证节点唯一性（优化版本） ====================
 log(`\n🔍 验证节点唯一性...`);
