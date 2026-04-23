@@ -235,17 +235,7 @@ for (const hop of HOP_PRESETS) {
 
 log(`\n✅ 三跳总共插入 ${totalInserted} 个节点`);
 
-// ==================== 安全兜底：为仍为空的策略组补全直连 ====================
-log(`\n🛡️ 检查空策略组并实施安全兜底...`);
-config.outbounds.forEach(outbound => {
-    if (['selector', 'urltest', 'load-balance'].includes(outbound.type) && 
-        Array.isArray(outbound.outbounds) && 
-        outbound.outbounds.length === 0) {
-        
-        outbound.outbounds.push('🎯 全球直连');
-        log(`  ⚠️ [${outbound.tag}] 为空，已补全 [🎯 全球直连] 以防止 Sing-box 崩溃`);
-    }
-});
+// 空策略组检查已移除
 
 // ==================== 验证节点唯一性（优化版本） ====================
 log(`\n🔍 验证节点唯一性...`);
