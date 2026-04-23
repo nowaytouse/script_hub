@@ -393,6 +393,55 @@ class UpstreamSyncer:
                     f.writelines(new_lines)
                 Logger.success(f"Dehydrated {list_name}: Removed {original_count - len(new_lines)} domestic items")
 
+    def global_deduplicate(self):
+        Logger.section("Global Cross-File Deduplication (One Domain, One List)")
+        # 优先级定义：从高到低排列
+        priority_order = [
+            "HTTPDNS_Hijack.list", "AdBlock.list", "reject-drop.list", "reject-no-drop.list",
+            "Direct.list", "Bilibili.list", "Apple.list", "PayPal.list", "Gaming.list", 
+            "Netflix.list", "Google.list", "Microsoft.list", "GitHub.list", 
+            "StreamUS.list", "StreamJP.list", "StreamTW.list", "StreamHK.list", "GlobalProxy.list"
+        ]
+        
+        seen_domains = set()
+        total_removed = 0
+        
+        for list_name in priority_order:
+            path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)", list_name)
+            if not os.path.exists(path): continue
+            
+            with open(path, 'r') as f:
+                lines = f.readlines()
+            
+            original_count = len(lines)
+            new_lines = []
+            header_lines = []
+            for line in lines:
+                line_s = line.strip()
+                if not line_s or line_s.startswith('#'):
+                    new_lines.append(line)
+                    continue
+                
+                # 提取核心规则内容进行对比
+                # DOMAIN-SUFFIX,example.com -> example.com
+                # DOMAIN,example.com -> example.com
+                parts = line_s.split(',')
+                if len(parts) >= 2:
+                    rule_val = parts[1].lower()
+                    if rule_val in seen_domains:
+                        continue
+                    seen_domains.add(rule_val)
+                new_lines.append(line)
+            
+            if len(new_lines) < original_count:
+                removed_count = original_count - len(new_lines)
+                total_removed += removed_count
+                with open(path, 'w') as f:
+                    f.writelines(new_lines)
+                Logger.success(f"Deduplicated {list_name}: Removed {removed_count} redundant rules")
+        
+        Logger.success(f"Global Cleanup Finished: Total {total_removed} redundant rules purged")
+
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
     syncer.sync_skk()
@@ -400,3 +449,4 @@ if __name__ == "__main__":
     syncer.sync_metacubex()
     syncer.sync_direct()
     syncer.dehydrate_proxy_lists()
+    syncer.global_deduplicate()
