@@ -2,7 +2,7 @@ log(`🚀 开始三跳链式代理节点插入脚本处理`);
 
 // ==================== 参数解析 ====================
 // 第一跳参数（节点入口）
-let { 
+let {
     name1, outbound1, type1, includeUnsupportedProxy1, url1,
     name2, outbound2, type2, includeUnsupportedProxy2, url2,
     name3, outbound3, type3, includeUnsupportedProxy3, url3
@@ -67,7 +67,7 @@ const SANITIZE_CACHE = new Map();
 function sanitizeNodeTag(tag) {
     if (!tag) return tag;
     if (SANITIZE_CACHE.has(tag)) return SANITIZE_CACHE.get(tag);
-    
+
     const cleaned = tag
         .replace(SANITIZE_REGEX, '')
         .replace(/[\t\n\r]/g, ' ')
@@ -80,9 +80,9 @@ function sanitizeNodeTag(tag) {
 // ==================== 获取订阅节点函数 ====================
 async function fetchProxies(name, type, url, includeUnsupportedProxy, hopLabel) {
     log(`\n📥 ${hopLabel}: 获取订阅节点...`);
-    
+
     const typeValue = /^1$|col|组合/i.test(type) ? 'collection' : 'subscription';
-    
+
     let proxies;
     if (url) {
         log(`  从 URL 读取订阅: ${url}`);
@@ -112,14 +112,14 @@ async function fetchProxies(name, type, url, includeUnsupportedProxy, hopLabel) 
             },
         });
     }
-    
+
     // 清理所有代理节点名称（批量处理）
     for (let i = 0; i < proxies.length; i++) {
         proxies[i].tag = sanitizeNodeTag(proxies[i].tag);
     }
-    
+
     log(`  ✅ 获取到 ${proxies.length} 个节点`);
-    
+
     // 显示节点示例
     if (proxies.length > 0) {
         log(`  📋 节点示例（前5个）:`);
@@ -130,19 +130,19 @@ async function fetchProxies(name, type, url, includeUnsupportedProxy, hopLabel) 
             log(`    ... 还有 ${proxies.length - 5} 个节点`);
         }
     }
-    
+
     return proxies;
 }
 
 // ==================== 解析 outbound 规则函数 ====================
 function parseOutboundRules(outbound, hopLabel) {
     log(`\n🔍 ${hopLabel}: 解析插入规则...`);
-    
+
     if (!outbound) {
         log(`  ⚠️ 未配置 outbound 参数，跳过`);
         return [];
     }
-    
+
     const outbounds = outbound
         .split('🕳')
         .filter(i => i)
@@ -152,7 +152,7 @@ function parseOutboundRules(outbound, hopLabel) {
             log(`  规则: 节点匹配 [${tagPattern}] ➜ 插入到 [${outboundPattern}]`);
             return [outboundPattern, tagRegex];
         });
-    
+
     log(`  ✅ 共 ${outbounds.length} 条插入规则`);
     return outbounds;
 }
@@ -162,30 +162,30 @@ function insertProxiesToGroups(proxies, outbounds, hopLabel, stats) {
     log(`\n📝 ${hopLabel}: 插入节点到策略组...`);
     let insertedCount = 0;
     const VALID_TYPES = new Set(['selector', 'urltest', 'load-balance']);
-    
+
     // 预编译所有正则表达式
     const compiledRules = outbounds.map(([pattern, tagRegex]) => ({
         outboundRegex: createOutboundRegExp(pattern),
         tagRegex
     }));
-    
+
     for (let i = 0; i < config.outbounds.length; i++) {
         const outbound = config.outbounds[i];
-        
+
         for (let j = 0; j < compiledRules.length; j++) {
             const { outboundRegex, tagRegex } = compiledRules[j];
-            
+
             if (!outboundRegex.test(outbound.tag)) continue;
             if (!VALID_TYPES.has(outbound.type)) continue;
-            
+
             if (!Array.isArray(outbound.outbounds)) {
                 outbound.outbounds = [];
             }
-            
+
             const matchedTags = getTags(proxies, tagRegex);
             const existingTags = new Set(outbound.outbounds);
             const newTags = [];
-            
+
             if (!stats[outbound.tag]) {
                 stats[outbound.tag] = {
                     before: outbound.outbounds.length,
@@ -194,7 +194,7 @@ function insertProxiesToGroups(proxies, outbounds, hopLabel, stats) {
                     hop: hopLabel
                 };
             }
-            
+
             for (const tag of matchedTags) {
                 if (existingTags.has(tag)) continue;
                 existingTags.add(tag);
@@ -209,7 +209,7 @@ function insertProxiesToGroups(proxies, outbounds, hopLabel, stats) {
             }
         }
     }
-    
+
     log(`  ✅ 本跳共插入 ${insertedCount} 个节点`);
     return insertedCount;
 }
@@ -235,15 +235,15 @@ for (const hop of HOP_PRESETS) {
 
 log(`\n✅ 三跳总共插入 ${totalInserted} 个节点`);
 
-// ==================== 清理模板自带的直连占位符 ====================
-log(`\n🧹 清理冗余占位符...`);
+// ==================== 安全兜底：为仍为空的策略组补全直连 ====================
+log(`\n🛡️ 检查空策略组并实施安全兜底...`);
 config.outbounds.forEach(outbound => {
-    if (['selector', 'urltest', 'load-balance'].includes(outbound.type) && Array.isArray(outbound.outbounds)) {
-        if (outbound.outbounds.length > 1 && outbound.outbounds.includes('🎯 全球直连') && 
-            !['direct-select', '🛡️ 广告拦截'].includes(outbound.tag)) {
-            outbound.outbounds = outbound.outbounds.filter(tag => tag !== '🎯 全球直连');
-            log(`  ✅ 移除 [${outbound.tag}] 中的 🎯 全球直连 占位符`);
-        }
+    if (['selector', 'urltest', 'load-balance'].includes(outbound.type) && 
+        Array.isArray(outbound.outbounds) && 
+        outbound.outbounds.length === 0) {
+        
+        outbound.outbounds.push('🎯 全球直连');
+        log(`  ⚠️ [${outbound.tag}] 为空，已补全 [🎯 全球直连] 以防止 Sing-box 崩溃`);
     }
 });
 
@@ -346,7 +346,7 @@ function sanitizeTag(tag) {
 
 function robustDeduplicateOutbounds(outbounds) {
     log(`🔍 步骤1: 去重和清理节点标签（防碰撞模式）...`);
-    
+
     const finalTags = new Set();
     const tagCounters = new Map();
     const sanitizedToFinalsMap = new Map();
@@ -357,7 +357,7 @@ function robustDeduplicateOutbounds(outbounds) {
         const outbound = outbounds[i];
         const original = outbound.tag;
         const sanitized = sanitizeTag(original);
-        
+
         let finalTag = sanitized;
         let counter = tagCounters.get(sanitized) || 1;
 
@@ -365,11 +365,11 @@ function robustDeduplicateOutbounds(outbounds) {
             finalTag = `${sanitized} #${counter}`;
             counter++;
         }
-        
+
         tagCounters.set(sanitized, counter);
         finalTags.add(finalTag);
         outbound.tag = finalTag;
-        
+
         // 构建映射
         if (!sanitizedToFinalsMap.has(sanitized)) {
             sanitizedToFinalsMap.set(sanitized, []);
@@ -385,7 +385,7 @@ function updateReferences(config, sanitizedToFinalsMap) {
     log(`🔍 步骤2: 更新策略组中的节点引用...`);
     const allFinalTags = new Set();
     const len = config.outbounds.length;
-    
+
     // 预构建标签集合
     for (let i = 0; i < len; i++) {
         allFinalTags.add(config.outbounds[i].tag);
@@ -393,17 +393,17 @@ function updateReferences(config, sanitizedToFinalsMap) {
 
     for (let i = 0; i < len; i++) {
         const outbound = config.outbounds[i];
-        
+
         if (Array.isArray(outbound.outbounds)) {
             const newOutbounds = [];
             const seenTags = new Set();
             const memberLen = outbound.outbounds.length;
-            
+
             for (let j = 0; j < memberLen; j++) {
                 const oldTag = outbound.outbounds[j];
                 const sanitizedOldTag = sanitizeTag(oldTag);
                 const resolvedTags = sanitizedToFinalsMap.get(sanitizedOldTag);
-                
+
                 if (resolvedTags) {
                     for (const tag of resolvedTags) {
                         if (allFinalTags.has(tag) && !seenTags.has(tag)) {
@@ -421,7 +421,7 @@ function updateReferences(config, sanitizedToFinalsMap) {
             }
             outbound.outbounds = newOutbounds;
         }
-        
+
         if (outbound.default) {
             const sanitizedDefault = sanitizeTag(outbound.default);
             const resolvedDefaults = sanitizedToFinalsMap.get(sanitizedDefault);
@@ -448,13 +448,13 @@ const len = config.outbounds.length;
 // 单次遍历完成多个操作
 for (let i = 0; i < len; i++) {
     const outbound = config.outbounds[i];
-    
+
     if (!groupTypes.has(outbound.type)) {
         if (outbound.outbounds) delete outbound.outbounds;
     } else {
         strategyGroups.add(outbound.tag);
     }
-    
+
     if (outbound.detour) delete outbound.detour;
 }
 
@@ -519,7 +519,7 @@ function resolveGroupNodes(groupTag, path = new Set()) {
     if (groupToRealNodesMap.has(groupTag)) return groupToRealNodesMap.get(groupTag);
     if (path.has(groupTag)) return new Set();
     path.add(groupTag);
-    
+
     const group = outboundIndex.get(groupTag);
     const realNodes = new Set();
     if (group && Array.isArray(group.outbounds)) {
@@ -552,7 +552,7 @@ const chainDetails = {};
 for (const [sourceGroup, targetGroup] of validChains) {
     const sourceRealNodes = groupToRealNodesMap.get(sourceGroup) || new Set();
     const targetRealNodes = groupToRealNodesMap.get(targetGroup) || new Set();
-    
+
     if (sourceRealNodes.size === 0) {
         continue;
     }
@@ -561,17 +561,17 @@ for (const [sourceGroup, targetGroup] of validChains) {
     for (const nodeTag of sourceRealNodes) {
         const node = outboundIndex.get(nodeTag);
         if (!node || noDetourTypes.has(node.type)) continue;
-        
+
         if (targetRealNodes.has(nodeTag)) {
             continue;
         }
-        
+
         node.detour = targetGroup;
         groupChainedCount++;
         if (!chainDetails[sourceGroup]) chainDetails[sourceGroup] = [];
         chainDetails[sourceGroup].push({ node: nodeTag, via: targetGroup });
     }
-    
+
     chainedCount += groupChainedCount;
 }
 
