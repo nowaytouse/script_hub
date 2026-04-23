@@ -395,13 +395,17 @@ class UpstreamSyncer:
 
     def global_deduplicate(self):
         Logger.section("Global Cross-File Deduplication (One Domain, One List)")
-        # 优先级定义：从高到低排列
-        priority_order = [
+        # 核心优先级：明确排序的文件
+        defined_priority = [
             "HTTPDNS_Hijack.list", "AdBlock.list", "reject-drop.list", "reject-no-drop.list",
             "Direct.list", "Bilibili.list", "Apple.list", "PayPal.list", "Gaming.list", 
-            "Netflix.list", "Google.list", "Microsoft.list", "GitHub.list", 
+            "Netflix.list", "Google.list", "Microsoft.list", "GitHub.list", "AI.list",
             "StreamUS.list", "StreamJP.list", "StreamTW.list", "StreamHK.list", "GlobalProxy.list"
         ]
+        
+        # 自动获取目录下所有 .list 文件，并将未在 defined_priority 中的放入末尾
+        all_lists = [f for f in os.listdir(os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")) if f.endswith('.list')]
+        priority_order = defined_priority + [f for f in all_lists if f not in defined_priority]
         
         seen_domains = set()
         total_removed = 0
@@ -415,19 +419,15 @@ class UpstreamSyncer:
             
             original_count = len(lines)
             new_lines = []
-            header_lines = []
             for line in lines:
                 line_s = line.strip()
                 if not line_s or line_s.startswith('#'):
                     new_lines.append(line)
                     continue
                 
-                # 提取核心规则内容进行对比
-                # DOMAIN-SUFFIX,example.com -> example.com
-                # DOMAIN,example.com -> example.com
                 parts = line_s.split(',')
                 if len(parts) >= 2:
-                    rule_val = parts[1].lower()
+                    rule_val = parts[1].lower().strip()
                     if rule_val in seen_domains:
                         continue
                     seen_domains.add(rule_val)
