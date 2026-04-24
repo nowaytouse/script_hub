@@ -12,23 +12,30 @@ MAPPING = {
     "01-ai-service.list": "AI",
     "02-crypto.list": "Binance",
     "03-payments.list": "PayPal",
+    "04-email.list": "SocialMedia",
     "05-im.list": "SocialMedia",
     "06-social.list": "SocialMedia",
+    "07-work.list": "GitHub",
     "08-cn-media.list": "Bilibili",
-    "09-sea-media.list": "StreamHK", # Or TW/HK split
+    "09-sea-media.list": "StreamHK",
     "10-us-media.list": "StreamUS",
     "11-hk-media.list": "StreamHK",
     "12-tw-media.list": "StreamTW",
     "13-jp-media.list": "StreamJP",
     "14-eu-media.list": "StreamEU",
+    "15-cn-game.list": "Direct",
     "16-intl-game.list": "Gaming",
-    "17-search.list": "Google", # Or Bing split
+    "17-search.list": "Google",
     "18-dev.list": "GitHub",
     "19-microsoft.list": "Microsoft",
     "20-apple.list": "Apple",
+    "21-download.list": "Direct",
     "22-cloud-cdn.list": "CDN",
+    "24-cn-site.list": "Direct",
     "25-gfw.list": "GlobalProxy",
-    "26-intl-site.list": "GlobalProxy"
+    "26-intl-site.list": "GlobalProxy",
+    "27-final.list": "GlobalProxy",
+    "28-ads.list": "AdBlock"
 }
 
 def parse_sck_list(filepath):
