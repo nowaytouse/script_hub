@@ -48,7 +48,7 @@ MANDATORY_PROXY_KEYWORDS = [
     "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
     "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
     "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
-    "akamai", "fastly", "cloudflare"
+    "akamai", "fastly", "cloudflare", "browserleaks"
 ]
 
 RULESETS = [
