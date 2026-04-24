@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: EU
 # Description: Europe streaming services
-# Rules: 33
-# Updated: 2026-04-24 06:42:56
+# Rules: 38
+# Updated: 2026-04-24 09:48:49
 
 DOMAIN,aod-dash-uk-live.akamaized.net
 DOMAIN,aod-hls-uk-live.akamaized.net
@@ -34,7 +34,12 @@ DOMAIN-SUFFIX,bbcmedia.co.uk
 DOMAIN-SUFFIX,bbcpersian.com
 DOMAIN-SUFFIX,bbcverticals.com
 DOMAIN-SUFFIX,bidi.net.uk
+DOMAIN-SUFFIX,britbox.co.uk
+DOMAIN-SUFFIX,channel4.com
 DOMAIN-SUFFIX,itv.com
 DOMAIN-SUFFIX,itvstatic.com
+DOMAIN-SUFFIX,my5.tv
+DOMAIN-SUFFIX,sky.com
+DOMAIN-SUFFIX,skygo.com
 USER-AGENT,BBCiPlayer*
 USER-AGENT,ITV_Player*

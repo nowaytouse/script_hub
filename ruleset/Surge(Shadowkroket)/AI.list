@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 63
-# Updated: 2026-04-24 06:42:49
+# Rules: 78
+# Updated: 2026-04-24 09:48:45
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalimakersuite-pa.clients6.google.com
@@ -42,11 +42,15 @@ DOMAIN-SUFFIX,auth0.com
 DOMAIN-SUFFIX,bard.google.com
 DOMAIN-SUFFIX,bing-shopping.microsoft-falcon.io
 DOMAIN-SUFFIX,challenges.cloudflare.com
+DOMAIN-SUFFIX,character.ai
 DOMAIN-SUFFIX,chat.com
 DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,chatgpt.livekit.cloud
 DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,client-api.arkoselabs.com
+DOMAIN-SUFFIX,cohere.ai
+DOMAIN-SUFFIX,cohere.com
+DOMAIN-SUFFIX,cursor.com
 DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deepmind.google
 DOMAIN-SUFFIX,edgeservices.bing.com
@@ -54,17 +58,28 @@ DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,generativeai.google
 DOMAIN-SUFFIX,host.livekit.cloud
 DOMAIN-SUFFIX,identrust.com
+DOMAIN-SUFFIX,inflection.ai
 DOMAIN-SUFFIX,intercom.io
 DOMAIN-SUFFIX,intercomcdn.com
 DOMAIN-SUFFIX,launchdarkly.com
+DOMAIN-SUFFIX,midjourney.com
+DOMAIN-SUFFIX,mistral.ai
 DOMAIN-SUFFIX,oaistatic.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,observeit.net
 DOMAIN-SUFFIX,openai.com
 DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
+DOMAIN-SUFFIX,openrouter.ai
+DOMAIN-SUFFIX,pi.ai
 DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
+DOMAIN-SUFFIX,replicate.com
+DOMAIN-SUFFIX,runpod.io
 DOMAIN-SUFFIX,sora.com
 DOMAIN-SUFFIX,stripe.com
+DOMAIN-SUFFIX,suno.ai
+DOMAIN-SUFFIX,suno.com
+DOMAIN-SUFFIX,together.ai
 DOMAIN-SUFFIX,turn.livekit.cloud
+DOMAIN-SUFFIX,v0.dev
 IP-CIDR,24.199.123.28/32
 IP-CIDR,64.23.132.171/32

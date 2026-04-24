@@ -2,11 +2,14 @@
 # Policy: PROXY
 # Node: Any
 # Description: GitHub
-# Rules: 5
-# Updated: 2026-04-24 06:42:45
+# Rules: 8
+# Updated: 2026-04-24 09:48:39
 
 DOMAIN-KEYWORD,github
 DOMAIN-SUFFIX,github-atom-io-herokuapp-com.freetls.fastly.net
 DOMAIN-SUFFIX,github-avatars.oss-cn-hongkong.aliyuncs.com
+DOMAIN-SUFFIX,jetbrains.com
 DOMAIN-SUFFIX,rawgit.com
 DOMAIN-SUFFIX,rawgithub.com
+DOMAIN-SUFFIX,stackexchange.com
+DOMAIN-SUFFIX,stackoverflow.com

@@ -8,7 +8,7 @@ Bili1080P=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/v2\/acco
 
 [MITM]
 
-hostname= %APPEND% app.bilibili.com
+hostname= %APPEND% app.bilibili.com, -github.com, -api.github.com, -*.githubusercontent.com
 
 
 
