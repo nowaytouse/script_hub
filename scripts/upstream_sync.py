@@ -57,6 +57,7 @@ DIRECT_SOURCES = {
     "loyalsoldier": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt"
 }
 
+DEHYDRATION_KEYWORDS = [
     "google", "github", "facebook", "twitter", "instagram", "netflix", 
     "spotify", "telegram", "discord", "amazon", "akamai", "fastly", 
     "cloudflare", "aws", "azure", "pypi", "docker", "npm", "browserleaks"
