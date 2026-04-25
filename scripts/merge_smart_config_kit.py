@@ -1,5 +1,6 @@
 import os
 import re
+from collections import defaultdict
 from lib.common import Logger, get_project_root, write_file
 
 ROOT = get_project_root()
@@ -62,31 +63,45 @@ def parse_sck_list(filepath):
 def merge():
     Logger.section("Merging Smart-Config-Kit Rules")
     os.makedirs(CUSTOM_DIR, exist_ok=True)
-    
+
+    merged_targets = defaultdict(lambda: {"rules": set(), "sources": []})
+
     for sck_file, target_ruleset in MAPPING.items():
         sck_path = os.path.join(SCK_DIR, sck_file)
         rules = parse_sck_list(sck_path)
-        
+
         if not rules:
             continue
-        
+
+        merged_targets[target_ruleset]["rules"].update(rules)
+        merged_targets[target_ruleset]["sources"].append(sck_file)
+        Logger.success(
+            f"Loaded {len(rules)} rules from {sck_file} into {target_ruleset}"
+        )
+
+    for target_ruleset, payload in sorted(merged_targets.items()):
         custom_file = f"SCK_{target_ruleset}.txt"
         custom_path = os.path.join(CUSTOM_DIR, custom_file)
-        
-        # Write unique SCK rules to a separate file
-        header = f"# Rules from Smart-Config-Kit: {sck_file}\n"
-        write_file(custom_path, header + "\n".join(rules) + "\n")
-        Logger.success(f"Extracted {len(rules)} rules to {custom_file}")
-        
-        # Link it in the corresponding _sources.txt
+
+        header = (
+            "# Rules from Smart-Config-Kit: "
+            + ", ".join(payload["sources"])
+            + "\n"
+        )
+        merged_rules = sorted(payload["rules"])
+        write_file(custom_path, header + "\n".join(merged_rules) + "\n")
+        Logger.success(
+            f"Wrote {len(merged_rules)} merged rules to {custom_file}"
+        )
+
         sources_file = os.path.join(SOURCES_DIR, f"{target_ruleset}_sources.txt")
         if os.path.exists(sources_file):
-            with open(sources_file, 'r') as f:
+            with open(sources_file, "r") as f:
                 content = f.read()
-            
+
             relative_link = f"../custom/SmartConfigKit/{custom_file}"
             if relative_link not in content:
-                with open(sources_file, 'a') as f:
+                with open(sources_file, "a") as f:
                     f.write(f"\n# Smart-Config-Kit Supplement\n{relative_link}\n")
                 Logger.info(f"Linked {custom_file} in {target_ruleset}_sources.txt")
 

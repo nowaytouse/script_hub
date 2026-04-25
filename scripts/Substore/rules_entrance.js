@@ -18,7 +18,7 @@
  * v3.6.0 优化内容（2025-11-29）：
  * - 🚀 性能优化：批量处理优化，减少循环次数
  * - 🔒 安全增强：增强节点验证，防止恶意配置
- * - 🎭 隐蔽性提升：优化Chrome 131指纹，更真实的浏览器模拟
+ * - 🎭 隐蔽性提升：优化Chrome 148指纹，更真实的浏览器模拟
  * - 📦 代码质量：简化冗余逻辑，提高可维护性
  * - ⚡ 效率提升：优化去重算法，使用更高效的数据结构
  *
@@ -73,7 +73,7 @@
  * 核心原则：
  * - 🛡️ 安全性：智能证书验证策略，有证书配置时验证证书
  * - 🚀 可用性：无证书配置时允许跳过验证（机场兼容性优先）
- * - 🎭 伪装性：Chrome 131 指纹、TLS 1.3、智能 SNI
+ * - 🎭 伪装性：Chrome 148 指纹、TLS 1.3、智能 SNI
  * - ⚡ 性能：ECN、TFO、多路复用、UDP 转发
  * - 🔒 健壮性：全面异常处理、配置验证、自动回退机制
  *
@@ -85,7 +85,7 @@
  * - 自动识别节点地区、特性类型，并添加相应的 Emoji 标记
  * - 支持生成中继链和落地链
  * - 支持 Clash Meta、Mihomo、sing-box、Surge、Shadowrocket 等代理工具
- * - 新增：Chrome 131 完整浏览器指纹伪装
+ * - 新增：Chrome 148 完整浏览器指纹伪装
  * - 新增：TLS 1.3 exclusive 全协议强制
  * - 新增：AES-GCM 专用加密（智能 ChaCha20 ECH 场景支持）
  * - 新增：智能地区 CDN 映射（6 大提供商）
@@ -101,7 +101,7 @@
  * 作者：基于 Sub-Store 社区脚本深度改进
  *
  * 主要特性：
- * 1. Chrome 131 完整伪装 - TLS 指纹、ALPN、版本全面模拟
+ * 1. Chrome 148 完整伪装 - TLS 指纹、ALPN、版本全面模拟
  * 2. TLS 1.3 Exclusive - 所有协议强制 TLS 1.3（min/max）
  * 3. AES-GCM 专用加密 - VMess/SS 仅用 AES-GCM（ChaCha20 智能场景支持）
  * 4. 智能地区 CDN - 6 大提供商（Cloudflare/Akamai/Fastly/Google/Azure/Bilibili）
@@ -124,7 +124,7 @@
  * - 提取公共检测函数（isRealityNode、hasXtlsFlow、hasEchSupport）
  * - 优化 SNI 缓存机制
  * - 修复乱码 emoji 和注释信息
- * - 增强 Chrome 131 TLS 指纹配置（曲线、签名算法、GREASE）
+ * - 增强 Chrome 148 TLS 指纹配置（曲线、签名算法、GREASE）
  * - 添加 WebSocket 伪装增强（User-Agent、Accept 头）
  *
  * ============================================================
@@ -2985,13 +2985,13 @@ async function operator(proxies = []) {
             // ============================================================
 
             // true: 启用 QUIC 屏蔽，强制所有流量使用传统 TCP/TLS
-            // false: 允许 QUIC 协议（可能被某些网络环境限制或干扰）
-            blockQuic: true,
+            // false: 保持节点原始 QUIC/UDP 行为，优先保证跨客户端可用性
+            blockQuic: false,
 
             // QUIC 屏蔽选项
             quicBlockOptions: {
                 // true: 为所有节点添加 QUIC 屏蔽规则
-                enableForAllNodes: true,
+                enableForAllNodes: false,
 
                 // 需要屏蔽的 QUIC 端口列表
                 blockedPorts: [443, 80, 8443],
@@ -3011,8 +3011,12 @@ async function operator(proxies = []) {
             // ============================================================
 
             // true: 启用节点性能增强（通用优化 + 协议专属优化）
-            // false: 禁用所有增强选项，保持原始配置
-            enableBoost: true,
+            // false: 优先保留原始握手/传输语义，避免跨客户端可用性回退
+            enableBoost: false,
+
+            // true: 允许改写 flow/version/cipher 等协议语义字段
+            // false: 仅做保守增强与命名整理，默认不改协议核心行为
+            enableProtocolMutation: false,
 
             // 通用增强选项
             boostOptions: {
@@ -3023,15 +3027,19 @@ async function operator(proxies = []) {
                 enableUdp: true,
 
                 // true: 为 VMess 启用多路复用 (减少连接开销，某些服务器可能不支持)
-                enableMux: true,
+                enableMux: false,
 
                 // TLS 增强选项（仅当节点已启用 TLS 时生效）
                 tlsBoost: {
-                    // true: 添加 ALPN 协议协商 (优先 HTTP/2，Chrome 131 标准顺序)
+                    // true: 添加 ALPN 协议协商 (优先 HTTP/2，Chrome 148 标准顺序)
                     enableAlpn: true,
 
                     // true: 启用 TLS 客户端指纹伪装
-                    enableClientFingerprint: true,
+                    enableClientFingerprint: false,
+
+                    // true: 允许附加曲线/uTLS 等高级 TLS 表面参数
+                    // false: 保持更稳妥的通用输出，避免引入客户端专属字段
+                    enableAdvancedTlsSurface: false,
 
                     // 🎭 v3.6.1: 智能指纹随机化配置
                     enableSmartFingerprint: true,
@@ -3051,7 +3059,7 @@ async function operator(proxies = []) {
                     },
                     fingerprintType: 'chrome',
 
-                    // 🔒 TLS 版本: 仅 1.3（Chrome 131 默认）
+                    // 🔒 TLS 版本: 仅 1.3（Chrome 148 默认）
                     tlsMinVersion: '1.3',
                     tlsMaxVersion: '1.3',
 
@@ -3061,11 +3069,11 @@ async function operator(proxies = []) {
                     // false = 验证证书（安全但可能导致节点不可用）
                     skipCertVerify: true,
 
-                    // 🎭 Chrome 131 完整 TLS 扩展配置
-                    // 椭圆曲线组（按 Chrome 131 优先顺序）
+                    // 🎭 Chrome 148 完整 TLS 扩展配置
+                    // 椭圆曲线组（按 Chrome 148 优先顺序）
                     curves: ['X25519', 'P-256', 'P-384'],
 
-                    // 签名算法（Chrome 131 标准）
+                    // 签名算法（Chrome 148 标准）
                     signatureAlgorithms: [
                         'ecdsa_secp256r1_sha256',
                         'rsa_pss_rsae_sha256',
@@ -3110,15 +3118,15 @@ async function operator(proxies = []) {
                 // 传输层优化选项
                 transportBoost: {
                     // true: 为 gRPC 传输添加服务名
-                    enableGrpcOptimization: true,
+                    enableGrpcOptimization: false,
 
                     // true: 为 VLESS/VMess 启用 packet-addr 数据包编码（v3.5替代xudp）
-                    enableXudp: true,  // 配置名保持兼容，实际使用 packet-addr
+                    enableXudp: false,  // 配置名保持兼容，实际使用 packet-addr
 
                     // 🎭 WebSocket 伪装增强
                     wsHeaders: {
                         // 模拟真实浏览器 User-Agent
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.56 Safari/537.36',
                         // Accept 头（匹配 Chrome 标准）
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
                         // 语言偏好
@@ -3133,7 +3141,7 @@ async function operator(proxies = []) {
                         // true: 强制使用 AEAD 加密 (alterId = 0)
                         forceAead: true,
 
-                        // 🔒 默认加密方法: 仅使用 AES-GCM（Chrome 131 兼容，不用 chacha20）
+                        // 🔒 默认加密方法: 仅使用 AES-GCM（Chrome 148 兼容，不用 chacha20）
                         defaultCipher: 'aes-128-gcm',
 
                         // Fallback 加密方法（如 aes-128-gcm 不支持）
@@ -3145,14 +3153,14 @@ async function operator(proxies = []) {
 
                     // Shadowsocks 专属
                     shadowsocks: {
-                        // 🔒 默认加密方法: 仅使用 AES-GCM（Chrome 131 兼容，不用 chacha20）
+                        // 🔒 默认加密方法: 仅使用 AES-GCM（Chrome 148 兼容，不用 chacha20）
                         defaultCipher: 'aes-128-gcm',
 
                         // Fallback 加密方法
                         fallbackCipher: 'aes-256-gcm',
 
                         // true: 启用 UDP over TCP
-                        enableUdpOverTcp: true
+                        enableUdpOverTcp: false
                     },
 
                     // Hysteria2 专属
@@ -3208,22 +3216,22 @@ async function operator(proxies = []) {
 
             // true: 为支持的协议 (VLESS, Trojan, VMess) 强制开启 TLS 加密。
             // false: 保持节点原有的 TLS 设置。
-            forceTls: true,
+            forceTls: false,
 
             // true: 为支持的协议 (VLESS, Trojan, VMess) 强制使用 WebSocket 作为传输方式进行伪装。
             // false: 保持节点原有的传输方式。
             forceWsObfs: false,
 
             // true: 强制覆盖 SNI，即使原节点已有 SNI 值。
-            // false: 仅在原节点无 SNI 时添加。
-            forceSniOverride: true,
+            // false: 保留节点原始握手目标，仅在安全场景下回填 server 域名。
+            forceSniOverride: false,
 
             // 严格 TLS/SNI 安全策略：先矫正不安全 SNI，无法矫正再丢弃节点。
             strictSniSecurity: {
-                enabled: true,
-                dropUnsafeTlsNode: true,
+                enabled: false,
+                dropUnsafeTlsNode: false,
                 syncTransportHost: true,
-                forceStrictVerifyAfterCorrection: true,
+                forceStrictVerifyAfterCorrection: false,
                 safeSniPool: [...STRICT_SAFE_SNI_FALLBACK_POOL]
             },
 
@@ -3232,8 +3240,8 @@ async function operator(proxies = []) {
             forceObfsOverride: false,
 
             // true: 开启 ShadowTLS 扩展 (仅限 v2 或 v3)。
-            // false: 禁用 ShadowTLS。
-            shadowTlsEnabled: true,
+            // false: 默认不凭空附加需要服务端配合的协议层扩展。
+            shadowTlsEnabled: false,
 
             // ShadowTLS 版本: 2 或 3。
             shadowTlsVersion: 3,
@@ -3565,6 +3573,28 @@ async function operator(proxies = []) {
         // 原始随机 SNI 选择（仅返回通过安全筛选的域名）
         const getRandomSni = () => getRandItem(getSafeSniCandidates('default'));
         const getRandomObfs = () => getRandItem(cfg.obfs);
+
+        const getConnectionSafeSni = (proxy, regionName) => {
+            const explicitSni = normalizeTlsHost(
+                proxy.sni || proxy.servername || proxy['server-name']
+            );
+            if (explicitSni && !analyzeTlsHostSafety(explicitSni).unsafe) {
+                return explicitSni;
+            }
+
+            const serverHost = normalizeTlsHost(proxy.server);
+            if (serverHost &&
+                TLS_HOST_DOMAIN_REGEX.test(serverHost) &&
+                !analyzeTlsHostSafety(serverHost).unsafe) {
+                return serverHost;
+            }
+
+            if (cfg.forceSniOverride) {
+                return regionName ? getSmartSni(regionName) : getRandomSni();
+            }
+
+            return '';
+        };
 
         const getTlsSurfaceEntries = (proxy) => {
             const entries = [
@@ -3921,7 +3951,7 @@ async function operator(proxies = []) {
                 // 启用 TLS（仅白名单端口）
                 proxy.tls = true;
 
-                // 🔒 TLS 1.3 exclusive（Chrome 131 标准）
+                // 🔒 TLS 1.3 exclusive（Chrome 148 标准）
                 const tlsBoost = cfg.enableBoost && cfg.boostOptions.tlsBoost;
                 proxy['tls-min-version'] = tlsBoost?.tlsMinVersion || '1.3';
                 proxy['tls-max-version'] = tlsBoost?.tlsMaxVersion || '1.3';
@@ -3937,7 +3967,10 @@ async function operator(proxies = []) {
                 // 🌐 智能 SNI 配置（根据地区选择 CDN）
                 // 仅在原节点无 SNI 或强制覆盖时设置
                 if (cfg.forceSniOverride || !proxy.sni) {
-                    proxy.sni = regionName ? getSmartSni(regionName) : getRandomSni();
+                    const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
+                    if (connectionSafeSni) {
+                        proxy.sni = connectionSafeSni;
+                    }
                 }
 
                 // 🛡️ 最终验证 - 确保配置修改后仍然有效
@@ -4002,9 +4035,13 @@ async function operator(proxies = []) {
                     'client-fingerprint': proxy['client-fingerprint']
                 };
 
-                // 🔧 曲线配置：Chrome 131 椭圆曲线偏好（所有 TLS 节点都添加，包括 Reality）
-                // Chrome 131 使用的曲线顺序：X25519 > secp256r1 > secp384r1
-                if (tlsBoost.curves) {
+                // 🔧 曲线配置：Chrome 148 椭圆曲线偏好（所有 TLS 节点都添加，包括 Reality）
+                // Chrome 148 使用的曲线顺序：X25519 > secp256r1 > secp384r1
+                if (
+                    tlsBoost.enableAdvancedTlsSurface &&
+                    Array.isArray(tlsBoost.curves) &&
+                    tlsBoost.curves.length > 0
+                ) {
                     // Clash Meta / Mihomo 格式 (使用冒号分隔)
                     proxy['ecdh-curves'] = tlsBoost.curves.join(':');
 
@@ -4017,7 +4054,7 @@ async function operator(proxies = []) {
                     // 参考: https://sing-box.sagernet.org/configuration/shared/tls/#utls
                     proxy['_utls'] = {
                         enabled: true,
-                        fingerprint: 'chrome'  // Chrome 131 指纹
+                        fingerprint: 'chrome'  // Chrome 148 指纹
                     };
                 }
 
@@ -4094,7 +4131,10 @@ async function operator(proxies = []) {
 
                 // SNI：仅在未设置时添加
                 if (!proxy.sni && !proxy.flow) {
-                    proxy.sni = regionName ? getSmartSni(regionName) : getRandomSni();
+                    const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
+                    if (connectionSafeSni) {
+                        proxy.sni = connectionSafeSni;
+                    }
                 }
 
                 // 🆕 v3.5.6: TLS Fragment 分片（绕过DPI检测）- 修复版
@@ -4221,13 +4261,22 @@ async function operator(proxies = []) {
                         // 🔧 Reality节点：只添加曲线配置和Chrome指纹，不修改其他设置
                         const tlsBoost = cfg.enableBoost && cfg.boostOptions.tlsBoost;
                         if (tlsBoost) {
-                            // � 智i能指纹随机化 - utls自动包含曲线配置
-                            const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
-                            const nodeId = modifiedProxy.server + ':' + modifiedProxy.port;
-                            const smartFp = getSmartFingerprint(regionInfo.r, nodeId);
-                            modifiedProxy['client-fingerprint'] = smartFp;
-                            // Clash Meta格式
-                            if (tlsBoost.curves) modifiedProxy['ecdh-curves'] = tlsBoost.curves.join(':');
+                            if (tlsBoost.enableClientFingerprint) {
+                                const regionInfo = getRegionInfo(
+                                    modifiedProxy._originalName || modifiedProxy.name || '',
+                                    modifiedProxy.server
+                                );
+                                const nodeId = modifiedProxy.server + ':' + modifiedProxy.port;
+                                const smartFp = getSmartFingerprint(regionInfo.r, nodeId);
+                                modifiedProxy['client-fingerprint'] = smartFp;
+                            }
+                            if (
+                                tlsBoost.enableAdvancedTlsSurface &&
+                                Array.isArray(tlsBoost.curves) &&
+                                tlsBoost.curves.length > 0
+                            ) {
+                                modifiedProxy['ecdh-curves'] = tlsBoost.curves.join(':');
+                            }
                         }
                         modifiedProxy['_skip_reason'] = 'reality_vless';
                         break;
@@ -4261,7 +4310,9 @@ async function operator(proxies = []) {
                     }
 
                     // XTLS Flow 优化（仅升级已知不安全的旧版）
-                    if (modifiedProxy.flow === 'xtls-rprx-direct') {
+                    if (!cfg.enableProtocolMutation && modifiedProxy.flow === 'xtls-rprx-direct') {
+                        // preserve original behavior in compatibility-first mode
+                    } else if (modifiedProxy.flow === 'xtls-rprx-direct') {
                         modifiedProxy.flow = 'xtls-rprx-vision';
                     }
 
@@ -4327,7 +4378,9 @@ async function operator(proxies = []) {
                     }
 
                     // XTLS Flow（仅升级非 vision 版本）
-                    if (modifiedProxy.flow && !modifiedProxy.flow.includes('vision')) {
+                    if (!cfg.enableProtocolMutation && modifiedProxy.flow && !modifiedProxy.flow.includes('vision')) {
+                        // preserve original behavior in compatibility-first mode
+                    } else if (modifiedProxy.flow && !modifiedProxy.flow.includes('vision')) {
                         modifiedProxy.flow = 'xtls-rprx-vision';
                     }
 
@@ -4621,7 +4674,7 @@ async function operator(proxies = []) {
                             );
                         }
 
-                        // 🚀 TLS 指纹伪装 - Chrome 131
+                        // 🚀 TLS 指纹伪装 - Chrome 148
                         if (cfg.boostOptions.tlsBoost.enableClientFingerprint && !modifiedProxy['client-fingerprint']) {
                             modifiedProxy['client-fingerprint'] = cfg.boostOptions.tlsBoost.fingerprintType || 'chrome';
                         }
@@ -4692,7 +4745,7 @@ async function operator(proxies = []) {
                     // Snell 优化配置
 
                     // 强制使用 Snell v5（最新版本）
-                    if (!modifiedProxy.version || modifiedProxy.version < 5) {
+                    if (cfg.enableProtocolMutation && (!modifiedProxy.version || modifiedProxy.version < 5)) {
                         modifiedProxy.version = 5;
                     }
 
@@ -4758,7 +4811,10 @@ async function operator(proxies = []) {
                     // 智能 SNI 配置
                     if (!modifiedProxy.sni || cfg.forceSniOverride) {
                         const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
-                        modifiedProxy.sni = regionInfo.r ? getSmartSni(regionInfo.r) : modifiedProxy.server;
+                        const connectionSafeSni = getConnectionSafeSni(modifiedProxy, regionInfo.r);
+                        if (connectionSafeSni) {
+                            modifiedProxy.sni = connectionSafeSni;
+                        }
                     }
 
                     break;

@@ -349,7 +349,7 @@ for url in "${URLS[@]}"; do
     log_info "Downloading: $filename"
     
     # Download with timeout and follow redirects
-    if curl -L -s -m 60 -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -o "$temp_file" "$url" 2>/dev/null; then
+    if curl -L -s -m 60 -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.56 Safari/537.36" -o "$temp_file" "$url" 2>/dev/null; then
         # Check if file is valid
         if [ -s "$temp_file" ] && ! grep -q "<!DOCTYPE html>" "$temp_file" 2>/dev/null; then
             # Process the module

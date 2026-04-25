@@ -9,6 +9,7 @@ from lib.common import Logger, get_project_root
 from firewall_sync import sync_ports
 from upstream_sync import UpstreamSyncer
 from adblock_manager import AdBlockManager
+from merge_smart_config_kit import merge as merge_smart_config_kit
 from ruleset_manager import RulesetManager
 from srs_generator import SRSGenerator
 from maintenance.mitm_cleanup_github import run_cleanup
@@ -39,6 +40,14 @@ def main():
         syncer.sync_metacubex()
     else:
         Logger.info("Quick mode: Skipping upstream sync.")
+
+    # 1.1 Smart-Config-Kit supplemental rules merge
+    Logger.section("Smart-Config-Kit Merge")
+    try:
+        merge_smart_config_kit()
+        Logger.success("Smart-Config-Kit supplemental sources refreshed.")
+    except Exception as e:
+        Logger.error(f"Smart-Config-Kit merge failed: {e}")
 
     # 2. Ruleset Merge (Incremental merge + header injection)
     rules_mgr = RulesetManager(force=args.force)
