@@ -410,6 +410,31 @@ const STRICT_UNSAFE_SNI_PATTERNS = Object.freeze([
     /^0\.0\.0\.0$/i
 ]);
 
+const WEAK_TLS_HOST_PATTERNS = Object.freeze([
+    /^ip-\d+/i,
+    /^ec2-\d+/i,
+    /^droplet-\d+/i,
+    /^lxc/i,
+    /^vm-/i,
+    /^vps-/i,
+    /^server\d+/i,
+    /^node\d+/i,
+    /^host\d+/i,
+    /^instance-/i,
+    /^compute-/i,
+    /^\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3}/i,
+    /^[0-9a-f]{8}-[0-9a-f]{4}/i,
+    /\.rev\./i,
+    /\.compute\./i,
+    /\.amazonaws\./i,
+    /\.googleusercontent\./i,
+    /\.cloudapp\.azure\.com$/i,
+    /\.(digitalocean|vultr|linode)\./i,
+    /\.aptransit\./i,
+    /\.slashdev/i,
+    /\.(duckdns\.org|ddns\.net|no-ip\.(?:org|com)|dynu\.(?:net|com))$/i
+]);
+
 const normalizeTlsHost = (value) => {
     if (Array.isArray(value)) {
         value = value.find(Boolean);
@@ -450,30 +475,34 @@ const isPrivateIpv4Host = (host) => {
 const analyzeTlsHostSafety = (value) => {
     const host = normalizeTlsHost(value);
     if (!host) {
-        return { host: '', unsafe: false, reason: 'missing' };
+        return { host: '', unsafe: false, weak: false, reason: 'missing' };
     }
 
     if (STRICT_UNSAFE_SNI_EXACT_SET.has(host)) {
-        return { host, unsafe: true, reason: '命中明确禁止的 SNI 域名' };
+        return { host, unsafe: true, weak: true, reason: '命中明确禁止的 SNI 域名' };
     }
 
     if (isPrivateIpv4Host(host)) {
-        return { host, unsafe: true, reason: '内网、回环或保留地址不适合作为 TLS SNI' };
+        return { host, unsafe: true, weak: true, reason: '内网、回环或保留地址不适合作为 TLS SNI' };
     }
 
     if (STRICT_UNSAFE_SNI_PATTERNS.some(pattern => pattern.test(host))) {
-        return { host, unsafe: true, reason: '命中不安全或机场域名模式' };
+        return { host, unsafe: true, weak: true, reason: '命中不安全或机场域名模式' };
     }
 
     if (/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) {
-        return { host, unsafe: true, reason: 'IP 地址不适合作为严格 TLS SNI' };
+        return { host, unsafe: true, weak: true, reason: 'IP 地址不适合作为严格 TLS SNI' };
     }
 
     if (!TLS_HOST_DOMAIN_REGEX.test(host)) {
-        return { host, unsafe: true, reason: 'SNI 域名格式无效' };
+        return { host, unsafe: true, weak: true, reason: 'SNI 域名格式无效' };
     }
 
-    return { host, unsafe: false, reason: 'trusted' };
+    if (WEAK_TLS_HOST_PATTERNS.some(pattern => pattern.test(host))) {
+        return { host, unsafe: false, weak: true, reason: 'SNI 可用但会暴露基础设施或弱隐蔽特征' };
+    }
+
+    return { host, unsafe: false, weak: false, reason: 'trusted' };
 };
 
 const isRealityNode = (proxy = {}) => !!(
@@ -3077,12 +3106,12 @@ async function operator(proxies = []) {
 
             // true: 启用 QUIC 屏蔽，强制所有流量使用传统 TCP/TLS
             // false: 允许 QUIC 协议（可能被某些网络环境限制或干扰）
-            blockQuic: true,
+            blockQuic: false,
 
             // QUIC 屏蔽选项
             quicBlockOptions: {
                 // true: 为所有节点添加 QUIC 屏蔽规则
-                enableForAllNodes: true,
+                enableForAllNodes: false,
 
                 // 需要屏蔽的 QUIC 端口列表
                 blockedPorts: [443, 80, 8443],
@@ -3299,7 +3328,7 @@ async function operator(proxies = []) {
 
             // true: 为支持的协议 (VLESS, Trojan, VMess) 强制开启 TLS 加密。
             // false: 保持节点原有的 TLS 设置。
-            forceTls: true,
+            forceTls: false,
 
             // true: 为支持的协议 (VLESS, Trojan, VMess) 强制使用 WebSocket 作为传输方式进行伪装。
             // false: 保持节点原有的传输方式。
@@ -3307,14 +3336,16 @@ async function operator(proxies = []) {
 
             // true: 强制覆盖 SNI，即使原节点已有 SNI 值。
             // false: 仅在原节点无 SNI 时添加。
-            forceSniOverride: true,
+            forceSniOverride: false,
 
             // 严格 TLS/SNI 安全策略：先矫正不安全 SNI，无法矫正再丢弃节点。
             strictSniSecurity: {
                 enabled: true,
-                dropUnsafeTlsNode: true,
+                dropUnsafeTlsNode: false,
                 syncTransportHost: true,
-                forceStrictVerifyAfterCorrection: true,
+                forceStrictVerifyAfterCorrection: false,
+                repairWeakSni: true,
+                stableSelection: true,
                 safeSniPool: [...STRICT_SAFE_SNI_FALLBACK_POOL]
             },
 
@@ -3324,7 +3355,7 @@ async function operator(proxies = []) {
 
             // true: 开启 ShadowTLS 扩展 (仅限 v2 或 v3)。
             // false: 禁用 ShadowTLS。
-            shadowTlsEnabled: true,
+            shadowTlsEnabled: false,
 
             // ShadowTLS 版本: 2 或 3。
             shadowTlsVersion: 3,
@@ -3640,26 +3671,34 @@ async function operator(proxies = []) {
                 candidateGroups.push(cfg.sni);
             }
 
-            const unique = [];
+            const strong = [];
+            const weak = [];
             const seen = new Set();
 
             for (const group of candidateGroups) {
                 for (const item of group) {
                     const normalized = normalizeTlsHost(item);
                     if (!normalized || seen.has(normalized)) continue;
-                    if (analyzeTlsHostSafety(normalized).unsafe) continue;
+                    const analysis = analyzeTlsHostSafety(normalized);
+                    if (analysis.unsafe) continue;
                     seen.add(normalized);
-                    unique.push(normalized);
+                    if (analysis.weak) weak.push(normalized);
+                    else strong.push(normalized);
                 }
             }
 
-            return unique.length > 0 ? unique : [...STRICT_SAFE_SNI_FALLBACK_POOL];
+            const resolved = strong.length > 0 ? strong : weak;
+            return resolved.length > 0 ? resolved : [...STRICT_SAFE_SNI_FALLBACK_POOL];
         };
 
         const getCorrectionSniCandidates = (regionName) => {
             const strictPool = (cfg.strictSniSecurity.safeSniPool || [])
                 .map(item => normalizeTlsHost(item))
-                .filter(item => item && !analyzeTlsHostSafety(item).unsafe);
+                .filter(item => {
+                    if (!item) return false;
+                    const analysis = analyzeTlsHostSafety(item);
+                    return !analysis.unsafe && !analysis.weak;
+                });
 
             if (strictPool.length > 0) {
                 return [...new Set(strictPool)];
@@ -3668,19 +3707,94 @@ async function operator(proxies = []) {
             return getSafeSniCandidates(regionName);
         };
 
+        const getStableHash = (input = '') => {
+            let hash = 0;
+            for (let i = 0; i < input.length; i++) {
+                hash = ((hash << 5) - hash) + input.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        };
+
+        const pickStableCandidate = (items, seedText = '') => {
+            if (!items || items.length === 0) return null;
+            if (!cfg.strictSniSecurity?.stableSelection) {
+                return getRandItem(items);
+            }
+            const seed = seedText || items[0];
+            return items[getStableHash(seed) % items.length];
+        };
+
         // 🌐 智能 SNI 选择：根据节点地区匹配可信 CDN（带缓存）
         const sniCache = new Map();
-        const getSmartSni = (regionName) => {
+        const getSmartSni = (regionName, seedText = '') => {
             const cacheKey = regionName || 'default';
             if (!sniCache.has(cacheKey)) {
                 sniCache.set(cacheKey, getSafeSniCandidates(regionName));
             }
-            return getRandItem(sniCache.get(cacheKey));
+            return pickStableCandidate(sniCache.get(cacheKey), seedText || cacheKey);
         };
 
         // 原始随机 SNI 选择（仅返回通过安全筛选的域名）
-        const getRandomSni = () => getRandItem(getSafeSniCandidates('default'));
-        const getRandomObfs = () => getRandItem(cfg.obfs);
+        const getRandomSni = (seedText = 'default') => pickStableCandidate(getSafeSniCandidates('default'), seedText);
+        const getRandomObfs = (seedText = 'default') => pickStableCandidate(cfg.obfs, seedText);
+
+        const getTransportHostCandidates = (proxy) => {
+            const candidates = [];
+            const appendCandidate = (value) => {
+                if (Array.isArray(value)) {
+                    value.forEach(appendCandidate);
+                    return;
+                }
+
+                const normalized = normalizeTlsHost(value);
+                if (normalized) candidates.push(normalized);
+            };
+
+            appendCandidate(_.get(proxy, 'ws-opts.headers.Host'));
+            appendCandidate(_.get(proxy, 'http-opts.headers.Host'));
+            appendCandidate(_.get(proxy, 'obfs-opts.host'));
+            appendCandidate(_.get(proxy, 'h2-opts.host'));
+
+            return [...new Set(candidates)];
+        };
+
+        const getConnectionSafeSni = (proxy, regionName) => {
+            const explicitSni = normalizeTlsHost(
+                proxy.sni || proxy.servername || proxy['server-name']
+            );
+            const explicitAnalysis = analyzeTlsHostSafety(explicitSni);
+            if (explicitSni &&
+                !explicitAnalysis.unsafe &&
+                !(cfg.strictSniSecurity?.repairWeakSni && explicitAnalysis.weak)) {
+                return explicitSni;
+            }
+
+            const transportHostCandidates = getTransportHostCandidates(proxy);
+            for (const candidate of transportHostCandidates) {
+                const analysis = analyzeTlsHostSafety(candidate);
+                if (!analysis.unsafe &&
+                    !(cfg.strictSniSecurity?.repairWeakSni && analysis.weak)) {
+                    return candidate;
+                }
+            }
+
+            const serverHost = normalizeTlsHost(proxy.server);
+            const serverAnalysis = analyzeTlsHostSafety(serverHost);
+            if (serverHost &&
+                TLS_HOST_DOMAIN_REGEX.test(serverHost) &&
+                !serverAnalysis.unsafe &&
+                !(cfg.strictSniSecurity?.repairWeakSni && serverAnalysis.weak)) {
+                return serverHost;
+            }
+
+            if (cfg.forceSniOverride) {
+                const nodeSeed = `${proxy.server || ''}:${proxy.port || ''}:${proxy.name || ''}:${regionName || 'default'}`;
+                return regionName ? getSmartSni(regionName, nodeSeed) : getRandomSni(nodeSeed);
+            }
+
+            return '';
+        };
 
         const getTlsSurfaceEntries = (proxy) => {
             const entries = [
@@ -3706,29 +3820,72 @@ async function operator(proxies = []) {
                 .filter(entry => entry.normalized);
         };
 
-        const applySecureSniToProxy = (proxy, newSni) => {
+        const shouldReplaceTransportHost = (value, previousSni, overwriteWeakHosts = false) => {
+            const normalized = normalizeTlsHost(value);
+            if (!normalized) return true;
+            if (previousSni && normalized === previousSni) return true;
+
+            const analysis = analyzeTlsHostSafety(normalized);
+            if (analysis.unsafe) return true;
+            if (overwriteWeakHosts && analysis.weak) return true;
+            return false;
+        };
+
+        const applySecureSniToProxy = (proxy, newSni, options = {}) => {
+            const previousSni = normalizeTlsHost(
+                options.previousSni !== undefined
+                    ? options.previousSni
+                    : (proxy.sni || proxy.servername || proxy['server-name'])
+            );
+            const overwriteWeakHosts = !!options.overwriteWeakHosts;
+
             proxy.sni = newSni;
             if (proxy.servername !== undefined) proxy.servername = newSni;
             if (proxy['server-name'] !== undefined) proxy['server-name'] = newSni;
 
             if (cfg.strictSniSecurity.syncTransportHost) {
-                if (proxy.network === 'ws' || _.get(proxy, 'ws-opts.headers.Host') !== undefined) {
-                    _.set(proxy, 'ws-opts.headers.Host', newSni);
+                const wsHost = _.get(proxy, 'ws-opts.headers.Host');
+                if (proxy.network === 'ws' || wsHost !== undefined) {
+                    if (shouldReplaceTransportHost(wsHost, previousSni, overwriteWeakHosts)) {
+                        _.set(proxy, 'ws-opts.headers.Host', newSni);
+                    }
                 }
-                if (proxy.network === 'http' || _.get(proxy, 'http-opts.headers.Host') !== undefined) {
-                    _.set(proxy, 'http-opts.headers.Host', newSni);
+
+                const httpHost = _.get(proxy, 'http-opts.headers.Host');
+                if (proxy.network === 'http' || httpHost !== undefined) {
+                    if (shouldReplaceTransportHost(httpHost, previousSni, overwriteWeakHosts)) {
+                        _.set(proxy, 'http-opts.headers.Host', newSni);
+                    }
                 }
-                if (_.get(proxy, 'obfs-opts.host') !== undefined) {
-                    _.set(proxy, 'obfs-opts.host', newSni);
+
+                const obfsHost = _.get(proxy, 'obfs-opts.host');
+                if (obfsHost !== undefined) {
+                    if (shouldReplaceTransportHost(obfsHost, previousSni, overwriteWeakHosts)) {
+                        _.set(proxy, 'obfs-opts.host', newSni);
+                    }
                 }
 
                 const h2Hosts = _.get(proxy, 'h2-opts.host');
                 if (Array.isArray(h2Hosts)) {
-                    _.set(proxy, 'h2-opts.host', h2Hosts.map(() => newSni));
-                } else if (h2Hosts !== undefined || proxy.network === 'h2') {
+                    const nextHosts = h2Hosts.map(host =>
+                        shouldReplaceTransportHost(host, previousSni, overwriteWeakHosts) ? newSni : host
+                    );
+                    _.set(proxy, 'h2-opts.host', nextHosts.length > 0 ? nextHosts : [newSni]);
+                } else if (h2Hosts !== undefined) {
+                    if (shouldReplaceTransportHost(h2Hosts, previousSni, overwriteWeakHosts)) {
+                        _.set(proxy, 'h2-opts.host', [newSni]);
+                    }
+                } else if (proxy.network === 'h2') {
                     _.set(proxy, 'h2-opts.host', [newSni]);
                 }
             }
+        };
+
+        const shouldRepairWeakTlsSurface = (proxy) => {
+            if (!cfg.strictSniSecurity?.repairWeakSni) return false;
+            if (proxy.ca || proxy['ca-str'] || proxy['ca_str']) return false;
+            if (proxy['skip-cert-verify'] === false) return false;
+            return true;
         };
 
         const enforceStrictSniSecurity = (proxy, regionName) => {
@@ -3744,38 +3901,47 @@ async function operator(proxies = []) {
                 return { shouldDrop: false, corrected: false };
             }
 
-            const unsafeEntries = getTlsSurfaceEntries(proxy)
+            const allowWeakRepair = shouldRepairWeakTlsSurface(proxy);
+            const flaggedEntries = getTlsSurfaceEntries(proxy)
                 .map(entry => ({ ...entry, analysis: analyzeTlsHostSafety(entry.normalized) }))
-                .filter(entry => entry.analysis.unsafe);
+                .filter(entry => entry.analysis.unsafe || (allowWeakRepair && entry.analysis.weak));
 
-            if (unsafeEntries.length === 0) {
+            if (flaggedEntries.length === 0) {
                 return { shouldDrop: false, corrected: false };
             }
 
             const currentSni = normalizeTlsHost(proxy.sni || proxy.servername || proxy['server-name']);
+            const hasUnsafeEntry = flaggedEntries.some(entry => entry.analysis.unsafe);
             const replacementPool = getCorrectionSniCandidates(regionName)
                 .filter(candidate => candidate !== currentSni);
-            const replacementSni = getRandItem(replacementPool) || getRandomSni();
+            const nodeSeed = `${proxy.server || ''}:${proxy.port || ''}:${proxy.name || ''}:${regionName || 'default'}`;
+            const replacementSni = pickStableCandidate(replacementPool, nodeSeed) || getRandomSni(nodeSeed);
+            const replacementAnalysis = analyzeTlsHostSafety(replacementSni);
 
-            if (!replacementSni || analyzeTlsHostSafety(replacementSni).unsafe) {
+            if (!replacementSni || replacementAnalysis.unsafe || replacementAnalysis.weak) {
                 return {
-                    shouldDrop: !!cfg.strictSniSecurity.dropUnsafeTlsNode,
+                    shouldDrop: hasUnsafeEntry && !!cfg.strictSniSecurity.dropUnsafeTlsNode,
                     corrected: false,
-                    reason: unsafeEntries.map(entry => `${entry.key}:${entry.analysis.reason}`).join('; ')
+                    reason: flaggedEntries.map(entry => `${entry.key}:${entry.analysis.reason}`).join('; ')
                 };
             }
 
-            proxy['_unsafe_sni_original'] = currentSni || unsafeEntries[0].normalized;
-            proxy['_unsafe_sni_reason'] = unsafeEntries.map(entry => `${entry.key}:${entry.analysis.reason}`).join('; ');
-            applySecureSniToProxy(proxy, replacementSni);
+            proxy['_unsafe_sni_original'] = currentSni || flaggedEntries[0].normalized;
+            proxy['_unsafe_sni_reason'] = flaggedEntries.map(entry => `${entry.key}:${entry.analysis.reason}`).join('; ');
+            applySecureSniToProxy(proxy, replacementSni, {
+                previousSni: currentSni,
+                overwriteWeakHosts: allowWeakRepair
+            });
 
             if (cfg.strictSniSecurity.forceStrictVerifyAfterCorrection) {
                 proxy['skip-cert-verify'] = false;
                 proxy['_force_strict_tls_verify'] = true;
             }
 
+            const eventName = hasUnsafeEntry ? 'UNSAFE_SNI_CORRECTED' : 'WEAK_SNI_HARDENED';
+            const riskLevel = hasUnsafeEntry ? 'medium' : 'low';
             console.log(`[SNI安全] 🛡️ ${proxy.name || proxy.server}: ${proxy['_unsafe_sni_original']} -> ${replacementSni}`);
-            logSecurityEvent('UNSAFE_SNI_CORRECTED', proxy, proxy['_unsafe_sni_reason'], 'medium');
+            logSecurityEvent(eventName, proxy, proxy['_unsafe_sni_reason'], riskLevel);
 
             return { shouldDrop: false, corrected: true, replacementSni };
         };
@@ -4053,7 +4219,10 @@ async function operator(proxies = []) {
                 // 🌐 智能 SNI 配置（根据地区选择 CDN）
                 // 仅在原节点无 SNI 或强制覆盖时设置
                 if (cfg.forceSniOverride || !proxy.sni) {
-                    proxy.sni = regionName ? getSmartSni(regionName) : getRandomSni();
+                    const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
+                    if (connectionSafeSni) {
+                        applySecureSniToProxy(proxy, connectionSafeSni);
+                    }
                 }
 
                 // 🛡️ 最终验证 - 确保配置修改后仍然有效
@@ -4210,7 +4379,10 @@ async function operator(proxies = []) {
 
                 // SNI：仅在未设置时添加
                 if (!proxy.sni && !proxy.flow) {
-                    proxy.sni = regionName ? getSmartSni(regionName) : getRandomSni();
+                    const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
+                    if (connectionSafeSni) {
+                        applySecureSniToProxy(proxy, connectionSafeSni);
+                    }
                 }
 
                 // 🆕 v3.5.6: TLS Fragment 分片（绕过DPI检测）- 修复版
@@ -4275,7 +4447,7 @@ async function operator(proxies = []) {
             if (!cfg.forceWsObfs) return;
             proxy.network = 'ws';
             if (cfg.forceObfsOverride || _.get(proxy, 'ws-opts.headers.Host')) {
-                _.set(proxy, 'ws-opts.headers.Host', getRandomObfs());
+                _.set(proxy, 'ws-opts.headers.Host', getRandomObfs(`${proxy.server || proxy.name || 'node'}:${proxy.port || ''}:ws`));
             }
         };
 
@@ -4820,7 +4992,7 @@ async function operator(proxies = []) {
                     // 混淆配置 - HTTP 模式
                     _.set(modifiedProxy, 'obfs-opts.mode', 'http');
                     if (cfg.forceObfsOverride || !_.get(modifiedProxy, 'obfs-opts.host')) {
-                        _.set(modifiedProxy, 'obfs-opts.host', getRandomObfs());
+                        _.set(modifiedProxy, 'obfs-opts.host', getRandomObfs(`${modifiedProxy.server || modifiedProxy.name || 'node'}:${modifiedProxy.port || ''}:snell`));
                     }
 
                     // 重用连接（提升性能）
@@ -4874,7 +5046,10 @@ async function operator(proxies = []) {
                     // 智能 SNI 配置
                     if (!modifiedProxy.sni || cfg.forceSniOverride) {
                         const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
-                        modifiedProxy.sni = regionInfo.r ? getSmartSni(regionInfo.r) : modifiedProxy.server;
+                        const connectionSafeSni = getConnectionSafeSni(modifiedProxy, regionInfo.r);
+                        if (connectionSafeSni) {
+                            applySecureSniToProxy(modifiedProxy, connectionSafeSni);
+                        }
                     }
 
                     break;
@@ -4902,7 +5077,7 @@ async function operator(proxies = []) {
             if (cfg.shadowTlsEnabled && ['vless', 'trojan', 'vmess'].includes(protocolType) && !modifiedProxy['shadow-tls']) {
                 modifiedProxy['shadow-tls'] = {
                     version: cfg.shadowTlsVersion,
-                    servername: getRandomSni()
+                    servername: getRandomSni(`${modifiedProxy.server || modifiedProxy.name || 'node'}:${modifiedProxy.port || ''}:shadowtls`)
                 };
             }
 
@@ -4939,7 +5114,7 @@ async function operator(proxies = []) {
                 return null;
             }
 
-            if ((modifiedProxy['_force_strict_tls_verify'] === true || finalSniSecurityResult.corrected) && modifiedProxy.tls) {
+            if (modifiedProxy['_force_strict_tls_verify'] === true && modifiedProxy.tls) {
                 modifiedProxy['skip-cert-verify'] = false;
             }
 
