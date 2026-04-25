@@ -3010,9 +3010,9 @@ async function operator(proxies = []) {
             // 🚀 节点性能增强 (Boost) 配置
             // ============================================================
 
-            // true: 启用节点性能增强（通用优化 + 协议专属优化）
-            // false: 优先保留原始握手/传输语义，避免跨客户端可用性回退
-            enableBoost: false,
+            // true: 启用节点性能增强（默认采用“平衡型”保守增强）
+            // false: 完全保留原始握手/传输语义
+            enableBoost: true,
 
             // true: 允许改写 flow/version/cipher 等协议语义字段
             // false: 仅做保守增强与命名整理，默认不改协议核心行为
@@ -3026,8 +3026,10 @@ async function operator(proxies = []) {
                 // true: 启用 UDP 转发（支持游戏/DNS等）
                 enableUdp: true,
 
-                // true: 为 VMess 启用多路复用 (减少连接开销，某些服务器可能不支持)
-                enableMux: false,
+                // true: 启用多路复用兼容增强
+                // 默认仅在节点已携带 mux/smux 痕迹时做跨客户端归一化，不凭空强加
+                enableMux: true,
+                muxStrategy: 'existing_only',
 
                 // TLS 增强选项（仅当节点已启用 TLS 时生效）
                 tlsBoost: {
@@ -3035,7 +3037,7 @@ async function operator(proxies = []) {
                     enableAlpn: true,
 
                     // true: 启用 TLS 客户端指纹伪装
-                    enableClientFingerprint: false,
+                    enableClientFingerprint: true,
 
                     // true: 允许附加曲线/uTLS 等高级 TLS 表面参数
                     // false: 保持更稳妥的通用输出，避免引入客户端专属字段
@@ -3117,11 +3119,15 @@ async function operator(proxies = []) {
 
                 // 传输层优化选项
                 transportBoost: {
-                    // true: 为 gRPC 传输添加服务名
-                    enableGrpcOptimization: false,
+                    // true: 为 gRPC 传输做兼容归一化
+                    // 默认仅同步节点原本携带的 service name，不再凭空猜测
+                    enableGrpcOptimization: true,
+                    grpcServiceStrategy: 'normalize_existing',
 
                     // true: 为 VLESS/VMess 启用 packet-addr 数据包编码（v3.5替代xudp）
-                    enableXudp: false,  // 配置名保持兼容，实际使用 packet-addr
+                    // 默认仅在节点已有 xudp / packet-encoding 痕迹时补齐兼容字段
+                    enableXudp: true,  // 配置名保持兼容，实际使用 packet-addr
+                    xudpStrategy: 'normalize_existing',
 
                     // 🎭 WebSocket 伪装增强
                     wsHeaders: {
@@ -3140,12 +3146,14 @@ async function operator(proxies = []) {
                     vmess: {
                         // true: 强制使用 AEAD 加密 (alterId = 0)
                         forceAead: true,
+                        aeadStrategy: 'missing_only',
 
                         // 🔒 默认加密方法: 仅使用 AES-GCM（Chrome 148 兼容，不用 chacha20）
                         defaultCipher: 'aes-128-gcm',
 
                         // Fallback 加密方法（如 aes-128-gcm 不支持）
                         fallbackCipher: 'aes-256-gcm',
+                        cipherStrategy: 'missing_only',
 
                         // 🎭 全局填充（增加流量随机性）
                         enableGlobalPadding: true
@@ -3158,9 +3166,11 @@ async function operator(proxies = []) {
 
                         // Fallback 加密方法
                         fallbackCipher: 'aes-256-gcm',
+                        cipherStrategy: 'missing_only',
 
                         // true: 启用 UDP over TCP
-                        enableUdpOverTcp: false
+                        enableUdpOverTcp: true,
+                        udpOverTcpStrategy: 'normalize_existing'
                     },
 
                     // Hysteria2 专属
@@ -3487,6 +3497,8 @@ async function operator(proxies = []) {
 
                 // 是否显示特性emoji
                 showFeatureEmoji: true,
+                stableFeatureEmoji: true,
+                alwaysShowKeyTags: true,
 
                 // 地区名称映射（简化显示）
                 regionShortNames: {
@@ -3573,6 +3585,122 @@ async function operator(proxies = []) {
         // 原始随机 SNI 选择（仅返回通过安全筛选的域名）
         const getRandomSni = () => getRandItem(getSafeSniCandidates('default'));
         const getRandomObfs = () => getRandItem(cfg.obfs);
+
+        const getStableHash = (input = '') => {
+            let hash = 0;
+            for (let i = 0; i < input.length; i++) {
+                hash = ((hash << 5) - hash) + input.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        };
+
+        const getStableFeatureEmoji = (featType, seedText) => {
+            const emojiPool = cfg.emoji[featType] || cfg.emoji.d || [];
+            if (!emojiPool.length) return '';
+            if (!cfg.naming?.stableFeatureEmoji) {
+                return getRandItem(emojiPool) || '';
+            }
+            return emojiPool[getStableHash(seedText || featType) % emojiPool.length];
+        };
+
+        const getExistingGrpcServiceName = (proxy) => {
+            const candidates = [
+                _.get(proxy, 'grpc-opts.grpc-service-name'),
+                proxy['grpc-service-name'],
+                proxy['service-name'],
+                proxy.serviceName,
+                proxy.service_name
+            ];
+
+            for (const candidate of candidates) {
+                if (typeof candidate === 'string' && candidate.trim()) {
+                    return candidate.trim();
+                }
+            }
+
+            return '';
+        };
+
+        const normalizeGrpcTransport = (proxy) => {
+            if (!cfg.enableBoost ||
+                !cfg.boostOptions.transportBoost.enableGrpcOptimization ||
+                proxy.network !== 'grpc') {
+                return;
+            }
+
+            const strategy = cfg.boostOptions.transportBoost.grpcServiceStrategy || 'normalize_existing';
+            const serviceName = getExistingGrpcServiceName(proxy);
+            if (!serviceName && strategy !== 'force_default') {
+                return;
+            }
+
+            proxy['grpc-opts'] = {
+                ...(_.get(proxy, 'grpc-opts') || {}),
+                'grpc-service-name': serviceName || 'GunService'
+            };
+        };
+
+        const normalizePacketEncoding = (proxy) => {
+            if (!cfg.enableBoost || !cfg.boostOptions.transportBoost.enableXudp) return;
+
+            const strategy = cfg.boostOptions.transportBoost.xudpStrategy || 'normalize_existing';
+            const packetEncoding = typeof proxy['packet-encoding'] === 'string'
+                ? proxy['packet-encoding'].trim().toLowerCase()
+                : '';
+            const hasExistingXudp = proxy.xudp === true || packetEncoding.length > 0;
+
+            if (!hasExistingXudp && strategy !== 'force') {
+                return;
+            }
+
+            proxy['packet-encoding'] = 'packetaddr';
+            proxy.xudp = true;
+        };
+
+        const createDefaultSmuxConfig = () => ({
+            enabled: true,
+            protocol: 'smux',
+            'max-connections': 4,
+            'min-streams': 4,
+            'max-streams': 0,
+            padding: true,
+            stateless: false
+        });
+
+        const normalizeMuxConfig = (proxy) => {
+            if (!cfg.enableBoost || !cfg.boostOptions.enableMux) return;
+
+            const strategy = cfg.boostOptions.muxStrategy || 'existing_only';
+            const hasSmux = !!proxy.smux;
+            const hasMuxFlag = proxy.mux === true;
+
+            if (!hasSmux && !hasMuxFlag && strategy !== 'force') {
+                return;
+            }
+
+            if (!proxy.smux) {
+                proxy.smux = createDefaultSmuxConfig();
+            } else if (proxy.smux.enabled === undefined) {
+                proxy.smux.enabled = true;
+            }
+
+            proxy.mux = true;
+        };
+
+        const normalizeUdpOverTcp = (proxy) => {
+            const ssCfg = cfg.boostOptions.protocolSpecific.shadowsocks;
+            if (!cfg.enableBoost || !ssCfg.enableUdpOverTcp) return;
+
+            const strategy = ssCfg.udpOverTcpStrategy || 'normalize_existing';
+            const hasExistingUot = proxy['udp-over-tcp'] === true || proxy.uot === true;
+            if (!hasExistingUot && strategy !== 'force') {
+                return;
+            }
+
+            proxy['udp-over-tcp'] = true;
+            proxy.uot = true;
+        };
 
         const getConnectionSafeSni = (proxy, regionName) => {
             const explicitSni = normalizeTlsHost(
@@ -3813,6 +3941,16 @@ async function operator(proxies = []) {
             const selectedFp = getRandItem(fpPool);
             fingerprintCache.set(cacheKey, selectedFp);
             return selectedFp;
+        };
+
+        const applySmartClientFingerprint = (proxy, regionName) => {
+            const tlsBoost = cfg.boostOptions && cfg.boostOptions.tlsBoost;
+            if (!tlsBoost || !tlsBoost.enableClientFingerprint || proxy['client-fingerprint']) {
+                return;
+            }
+
+            const nodeId = `${proxy.server || proxy.name || 'node'}:${proxy.port || ''}`;
+            proxy['client-fingerprint'] = getSmartFingerprint(regionName || 'default', nodeId);
         };
 
         // 🛡️ 增强过滤检查（更完善的防御性检查）
@@ -4125,9 +4263,7 @@ async function operator(proxies = []) {
                 }
 
                 // 客户端指纹
-                if (tlsBoost.enableClientFingerprint && !proxy['client-fingerprint']) {
-                    proxy['client-fingerprint'] = tlsBoost.fingerprintType || 'chrome';
-                }
+                applySmartClientFingerprint(proxy, regionName);
 
                 // SNI：仅在未设置时添加
                 if (!proxy.sni && !proxy.flow) {
@@ -4261,15 +4397,7 @@ async function operator(proxies = []) {
                         // 🔧 Reality节点：只添加曲线配置和Chrome指纹，不修改其他设置
                         const tlsBoost = cfg.enableBoost && cfg.boostOptions.tlsBoost;
                         if (tlsBoost) {
-                            if (tlsBoost.enableClientFingerprint) {
-                                const regionInfo = getRegionInfo(
-                                    modifiedProxy._originalName || modifiedProxy.name || '',
-                                    modifiedProxy.server
-                                );
-                                const nodeId = modifiedProxy.server + ':' + modifiedProxy.port;
-                                const smartFp = getSmartFingerprint(regionInfo.r, nodeId);
-                                modifiedProxy['client-fingerprint'] = smartFp;
-                            }
+                            applySmartClientFingerprint(modifiedProxy, baseRegionInfo.r);
                             if (
                                 tlsBoost.enableAdvancedTlsSurface &&
                                 Array.isArray(tlsBoost.curves) &&
@@ -4319,29 +4447,16 @@ async function operator(proxies = []) {
                     // 🔧 v3.5.7修复：UDP数据包编码优化
                     // Clash Meta: 使用 packet-encoding 参数
                     // sing-box: 使用 xudp 字段（producer会转换为 packet_encoding）
-                    if (cfg.enableBoost && cfg.boostOptions.transportBoost.enableXudp) {
-                        // Clash Meta 格式
-                        modifiedProxy['packet-encoding'] = 'packetaddr';
-                        // sing-box 格式（通过 xudp 字段触发）
-                        modifiedProxy.xudp = true;
-                    }
+                    normalizePacketEncoding(modifiedProxy);
 
                     applyWsObfsConfig(modifiedProxy);
 
                     // gRPC 传输优化
-                    if (cfg.enableBoost && cfg.boostOptions.transportBoost.enableGrpcOptimization &&
-                        modifiedProxy.network === 'grpc' && !modifiedProxy['grpc-opts']) {
-                        modifiedProxy['grpc-opts'] = { 'grpc-service-name': 'GunService' };
-                    }
+                    normalizeGrpcTransport(modifiedProxy);
 
                     // 🚀 多路复用（不与 XTLS flow 同时使用）
-                    if (cfg.enableBoost && cfg.boostOptions.enableMux && !modifiedProxy.flow && !modifiedProxy.smux) {
-                        modifiedProxy.smux = {
-                            enabled: true, protocol: 'smux',
-                            'max-connections': 4, 'min-streams': 4, 'max-streams': 0,
-                            padding: true, stateless: false
-                        };
-                        modifiedProxy.mux = true;
+                    if (!modifiedProxy.flow) {
+                        normalizeMuxConfig(modifiedProxy);
                     }
 
                     // 🆕 v3.5.4: 最终TLS保护 - Reality节点或非白名单端口
@@ -4386,19 +4501,11 @@ async function operator(proxies = []) {
 
                     applyWsObfsConfig(modifiedProxy);
 
-                    if (cfg.enableBoost && cfg.boostOptions.transportBoost.enableGrpcOptimization &&
-                        modifiedProxy.network === 'grpc' && !modifiedProxy['grpc-opts']) {
-                        modifiedProxy['grpc-opts'] = { 'grpc-service-name': 'TrojanService' };
-                    }
+                    normalizeGrpcTransport(modifiedProxy);
 
                     // 多路复用（不与 XTLS flow 同时使用）
-                    if (cfg.enableBoost && cfg.boostOptions.enableMux && !modifiedProxy.flow && !modifiedProxy.smux) {
-                        modifiedProxy.smux = {
-                            enabled: true, protocol: 'smux',
-                            'max-connections': 4, 'min-streams': 4, 'max-streams': 0,
-                            padding: true, stateless: false
-                        };
-                        modifiedProxy.mux = true;
+                    if (!modifiedProxy.flow) {
+                        normalizeMuxConfig(modifiedProxy);
                     }
                     break;
 
@@ -4437,64 +4544,74 @@ async function operator(proxies = []) {
                     }
 
                     // AEAD 加密模式（alterId = 0）
-                    modifiedProxy['alter-id'] = cfg.enableBoost && cfg.boostOptions.protocolSpecific.vmess.forceAead
-                        ? 0
-                        : (modifiedProxy['alter-id'] ?? 0);
+                    const vmessConfig = cfg.boostOptions.protocolSpecific.vmess;
+                    if (cfg.enableBoost && vmessConfig.forceAead) {
+                        const aeadStrategy = vmessConfig.aeadStrategy || 'missing_only';
+                        if (aeadStrategy === 'force') {
+                            modifiedProxy['alter-id'] = 0;
+                        } else if (modifiedProxy['alter-id'] === undefined ||
+                            modifiedProxy['alter-id'] === null ||
+                            modifiedProxy['alter-id'] === '') {
+                            modifiedProxy['alter-id'] = 0;
+                        }
+                    } else if (modifiedProxy['alter-id'] === undefined) {
+                        modifiedProxy['alter-id'] = 0;
+                    }
 
                     // 智能加密方法选择（ECH 感知 + 替换 auto）
                     if (cfg.enableBoost) {
                         const hasECH = hasEchSupport(modifiedProxy);
-                        const vmessConfig = cfg.boostOptions.protocolSpecific.vmess;
                         const preferredCipher = hasECH ? 'chacha20-poly1305' : (vmessConfig.defaultCipher || 'aes-128-gcm');
+                        const cipherStrategy = vmessConfig.cipherStrategy || 'missing_only';
 
-                        // 🔧 修复 security: auto - 替换为具体加密方法
-                        // auto 会导致某些客户端选择不安全的加密方法
-                        if (!modifiedProxy.cipher || modifiedProxy.cipher === 'auto' || modifiedProxy.cipher === 'none') {
-                            modifiedProxy.cipher = preferredCipher;
-                            modifiedProxy['_cipher_reason'] = 'auto_replaced_with_' + preferredCipher;
-                        }
-                        if (modifiedProxy.security === 'auto' || modifiedProxy.security === 'none') {
-                            modifiedProxy.security = preferredCipher;
-                            modifiedProxy['_cipher_reason'] = 'security_auto_replaced';
-                        }
-
-                        // 非 ECH 场景：替换 ChaCha20 为 AES-GCM（更好的硬件加速）
-                        if (!hasECH) {
-                            if (modifiedProxy.cipher?.includes('chacha20')) {
-                                modifiedProxy.cipher = vmessConfig.defaultCipher || 'aes-128-gcm';
-                                modifiedProxy['_cipher_reason'] = 'chacha20_replaced_no_ech';
+                        if (cipherStrategy === 'force') {
+                            if (!modifiedProxy.cipher || modifiedProxy.cipher === 'auto' || modifiedProxy.cipher === 'none') {
+                                modifiedProxy.cipher = preferredCipher;
+                                modifiedProxy['_cipher_reason'] = 'auto_replaced_with_' + preferredCipher;
                             }
-                            if (modifiedProxy.security?.includes('chacha20')) {
-                                modifiedProxy.security = vmessConfig.defaultCipher || 'aes-128-gcm';
-                                modifiedProxy['_cipher_reason'] = 'chacha20_replaced_no_ech';
+                            if (modifiedProxy.security === 'auto' || modifiedProxy.security === 'none') {
+                                modifiedProxy.security = preferredCipher;
+                                modifiedProxy['_cipher_reason'] = 'security_auto_replaced';
+                            }
+
+                            if (!hasECH) {
+                                if (modifiedProxy.cipher?.includes('chacha20')) {
+                                    modifiedProxy.cipher = vmessConfig.defaultCipher || 'aes-128-gcm';
+                                    modifiedProxy['_cipher_reason'] = 'chacha20_replaced_no_ech';
+                                }
+                                if (modifiedProxy.security?.includes('chacha20')) {
+                                    modifiedProxy.security = vmessConfig.defaultCipher || 'aes-128-gcm';
+                                    modifiedProxy['_cipher_reason'] = 'chacha20_replaced_no_ech';
+                                }
+                            }
+                        } else {
+                            const explicitCipher = typeof modifiedProxy.cipher === 'string' ? modifiedProxy.cipher.trim() : '';
+                            const explicitSecurity = typeof modifiedProxy.security === 'string' ? modifiedProxy.security.trim() : '';
+                            const normalizedCipher = explicitCipher.toLowerCase();
+                            const normalizedSecurity = explicitSecurity.toLowerCase();
+
+                            if (!explicitCipher && !explicitSecurity) {
+                                modifiedProxy.cipher = preferredCipher;
+                                modifiedProxy.security = preferredCipher;
+                                modifiedProxy['_cipher_reason'] = 'missing_cipher_filled';
+                            } else if (!explicitCipher && explicitSecurity &&
+                                normalizedSecurity !== 'auto' && normalizedSecurity !== 'none') {
+                                modifiedProxy.cipher = explicitSecurity;
+                            } else if (!explicitSecurity && explicitCipher &&
+                                normalizedCipher !== 'auto' && normalizedCipher !== 'none') {
+                                modifiedProxy.security = explicitCipher;
                             }
                         }
 
-                        // 🔧 v3.5.7修复：UDP数据包编码优化
-                        // Clash Meta: 使用 packet-encoding 参数
-                        // sing-box: 使用 xudp 字段
-                        if (cfg.boostOptions.transportBoost.enableXudp) {
-                            modifiedProxy['packet-encoding'] = 'packetaddr';
-                            modifiedProxy.xudp = true;
-                        }
+                        normalizePacketEncoding(modifiedProxy);
                     }
 
                     applyWsObfsConfig(modifiedProxy);
 
-                    if (cfg.enableBoost && cfg.boostOptions.transportBoost.enableGrpcOptimization &&
-                        modifiedProxy.network === 'grpc' && !modifiedProxy['grpc-opts']) {
-                        modifiedProxy['grpc-opts'] = { 'grpc-service-name': 'GunService' };
-                    }
+                    normalizeGrpcTransport(modifiedProxy);
 
                     // 多路复用
-                    if (cfg.enableBoost && cfg.boostOptions.enableMux && !modifiedProxy.smux) {
-                        modifiedProxy.smux = {
-                            enabled: true, protocol: 'smux',
-                            'max-connections': 4, 'min-streams': 4, 'max-streams': 0,
-                            padding: true, stateless: false
-                        };
-                        modifiedProxy.mux = true;
-                    }
+                    normalizeMuxConfig(modifiedProxy);
 
                     // 🆕 v3.5.4: 最终TLS保护 - 确保非白名单端口不会被意外启用TLS
                     // 如果原节点没有TLS且端口不在白名单中，强制确保TLS为false
@@ -4509,19 +4626,15 @@ async function operator(proxies = []) {
 
                     if (cfg.enableBoost) {
                         // 🔒 AEAD 加密方法（仅使用 AES-GCM）
+                        const ssConfig = cfg.boostOptions.protocolSpecific.shadowsocks;
                         if (!modifiedProxy.cipher) {
-                            modifiedProxy.cipher = cfg.boostOptions.protocolSpecific.shadowsocks.defaultCipher || 'aes-128-gcm';
-                        }
-                        // 如果已指定但是 chacha20，切换到 AES-GCM
-                        else if (modifiedProxy.cipher && modifiedProxy.cipher.includes('chacha20')) {
-                            modifiedProxy.cipher = cfg.boostOptions.protocolSpecific.shadowsocks.defaultCipher || 'aes-128-gcm';
+                            modifiedProxy.cipher = ssConfig.defaultCipher || 'aes-128-gcm';
+                        } else if ((ssConfig.cipherStrategy || 'missing_only') === 'force' &&
+                            modifiedProxy.cipher.includes('chacha20')) {
+                            modifiedProxy.cipher = ssConfig.defaultCipher || 'aes-128-gcm';
                         }
 
-                        // UDP over TCP - 提升 UDP 可靠性
-                        if (cfg.boostOptions.protocolSpecific.shadowsocks.enableUdpOverTcp &&
-                            !modifiedProxy['udp-over-tcp'] && !modifiedProxy.uot) {
-                            modifiedProxy['udp-over-tcp'] = true;
-                        }
+                        normalizeUdpOverTcp(modifiedProxy);
                     }
 
                     // 插件配置保留（如果已配置）
@@ -4532,18 +4645,7 @@ async function operator(proxies = []) {
                     if (cfg.enableBoost && cfg.boostOptions.enableMux) {
                         // 仅在使用 v2ray-plugin 时启用多路复用
                         if (modifiedProxy.plugin === 'v2ray-plugin' || modifiedProxy.plugin === 'obfs') {
-                            if (!modifiedProxy.smux) {
-                                modifiedProxy.smux = {
-                                    enabled: true,
-                                    protocol: 'smux',
-                                    'max-connections': 4,
-                                    'min-streams': 4,
-                                    'max-streams': 0,
-                                    padding: true,
-                                    stateless: false
-                                };
-                            }
-                            modifiedProxy.mux = true;
+                            normalizeMuxConfig(modifiedProxy);
                         }
                     }
 
@@ -4590,9 +4692,7 @@ async function operator(proxies = []) {
                         }
 
                         // 🚀 TLS 指纹伪装 - 仅在未设置时添加
-                        if (cfg.boostOptions.tlsBoost.enableClientFingerprint && !modifiedProxy['client-fingerprint']) {
-                            modifiedProxy['client-fingerprint'] = cfg.boostOptions.tlsBoost.fingerprintType || 'chrome';
-                        }
+                        applySmartClientFingerprint(modifiedProxy, baseRegionInfo.r);
 
                         // 🚀 ALPN 协议协商 - Hysteria2 专用 HTTP/3
                         // 仅在未设置时添加
@@ -4675,9 +4775,7 @@ async function operator(proxies = []) {
                         }
 
                         // 🚀 TLS 指纹伪装 - Chrome 148
-                        if (cfg.boostOptions.tlsBoost.enableClientFingerprint && !modifiedProxy['client-fingerprint']) {
-                            modifiedProxy['client-fingerprint'] = cfg.boostOptions.tlsBoost.fingerprintType || 'chrome';
-                        }
+                        applySmartClientFingerprint(modifiedProxy, baseRegionInfo.r);
 
                         // 🚀 ALPN 协议协商 - TUIC 专用 HTTP/3
                         if (cfg.boostOptions.tlsBoost.enableAlpn && !modifiedProxy.alpn) {
@@ -5064,12 +5162,12 @@ async function operator(proxies = []) {
             const paddedCount = count < 10 ? `0${count}` : `${count}`;
 
             // 提取关键标签（仅当有特殊关键词时）
-            const keyTags = hasSpecialKeyword ? extractKeyTags(originalName) : [];
+            const keyTags = (namingCfg.alwaysShowKeyTags || hasSpecialKeyword) ? extractKeyTags(originalName) : [];
             const tagStr = keyTags.length > 0 ? ` ${keyTags.join('·')}` : '';
 
             // 获取特性emoji
             const featureEmoji = namingCfg.showFeatureEmoji
-                ? (regionName === '台湾' ? '' : getRandItem(cfg.emoji[featType]))
+                ? (regionName === '台湾' ? '' : getStableFeatureEmoji(featType, `${originalName}|${regionName}|${count}`))
                 : '';
 
             // 根据命名风格生成名称
