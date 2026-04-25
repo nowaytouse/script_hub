@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: HK
 # Description: Hong Kong streaming services
-# Rules: 20
-# Updated: 2026-04-25 05:50:00
+# Rules: 24
+# Updated: 2026-04-26 04:09:47
 
 DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,csifund.org
@@ -14,13 +14,17 @@ DOMAIN-SUFFIX,encoretvb.com
 DOMAIN-SUFFIX,hkbn.com.hk
 DOMAIN-SUFFIX,hkbn.net
 DOMAIN-SUFFIX,hkbnes.net
+DOMAIN-SUFFIX,iq.com
+DOMAIN-SUFFIX,iqiyiintl.com
 DOMAIN-SUFFIX,jos.com
 DOMAIN-SUFFIX,mytvsuper.com
 DOMAIN-SUFFIX,nowestatic.com
 DOMAIN-SUFFIX,rthk.hk
 DOMAIN-SUFFIX,speedtest.com.hk
+DOMAIN-SUFFIX,vidio.com
 DOMAIN-SUFFIX,viu.com
 DOMAIN-SUFFIX,viu.tv
+DOMAIN-SUFFIX,wetv.vip
 PROCESS-NAME,com.viu.pad
 PROCESS-NAME,com.viu.phone
 PROCESS-NAME,com.vuclip.viu
