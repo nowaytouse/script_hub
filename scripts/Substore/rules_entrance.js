@@ -1,202 +1,31 @@
 /**
  * ============================================================
- * Sub-Store 节点隐蔽性与安全性全面增强脚本 【v3.7.0入口版】
- * ============================================================
- * 
- * v3.7.0 TLS安全增强版（2025-01-23）：
- * - 🛡️ TLS安全增强：智能证书验证策略，平衡安全性与机场兼容性
- * - 🛡️ 脚本健壮性：全面异常处理、配置验证、自动回退机制
- * - 🧪 属性测试：12个属性测试验证系统正确性和安全性
- * - 📊 风险评估：智能风险评估模块，详细安全因素分析
- * - 🔐 自签证书处理：专门的自签证书检测和处理逻辑
- * - 📝 安全事件日志：详细的TLS安全事件记录和风险等级标记
- * - 🎯 协议特定策略：针对不同协议的专门安全策略
- * - 🛡️ 配置保护：Reality/XTLS节点特殊保护，确保兼容性
- * - 🔍 SNI诊断：Hysteria2和VLESS节点的SNI配置诊断
- * - 📈 监控系统：安全事件查询、摘要报告和用户友好提示
- *
- * v3.6.0 优化内容（2025-11-29）：
- * - 🚀 性能优化：批量处理优化，减少循环次数
- * - 🔒 安全增强：增强节点验证，防止恶意配置
- * - 🎭 隐蔽性提升：优化Chrome 148指纹，更真实的浏览器模拟
- * - 📦 代码质量：简化冗余逻辑，提高可维护性
- * - ⚡ 效率提升：优化去重算法，使用更高效的数据结构
- *
- * v3.5.7 修复内容（2025-11-29）：
- * - ✅ 去重功能增强：真正去除重复节点（基于server+port+type+uuid/password）
- * - ✅ ALPN修复：确保alpn参数为数组格式['h2','http/1.1']
- * - ✅ UDP转发修复：同时设置packet-encoding和xudp，兼容所有客户端
- * - ⚠️ Hysteria2心跳：不支持heartbeat参数（QUIC内置心跳）
- * - ⚠️ TLS分片：仅sing-box支持，默认关闭
- *
- * v3.5.6 修复内容（2025-11-29）：
- * - ✅ TLS分片参数：_fragment, _fragment_fallback_delay, _record_fragment (仅sing-box)
- *
- * v3.5.5 修复内容（2025-11-29）：
- * - ✅ Reality节点检测增强：支持Shadowrocket格式(publicKey/shortId)
- * - ✅ 最终TLS安全检查：在输出前再次验证非白名单端口
- * - ✅ 端口19202/12800等Reality和普通节点完全保护
- *
- * v3.5.4 修复内容（2025-11-29）：
- * - ✅ TLS分片使用Sub-Store官方参数：_fragment, _fragment_fallback_delay, _record_fragment
- * - ✅ VMess/VLESS最终TLS保护：非白名单端口强制确保TLS=false
- *
- * v3.5.3 修复内容（2025-11-29）：
- * - ✅ applyTlsConfig函数修复：只有白名单端口才启用TLS
- * - ✅ Hysteria2心跳间隔：heartbeat-interval (毫秒)
- *
- * v3.5.2 修复内容（2025-11-29）：
- * - ✅ 端口白名单模式：只有白名单端口(443/8443/2053/2083/2087/2096)才强制启用TLS
- * - ✅ 其他端口(12800/16056/19203等)完全保持原设置，不修改TLS
- *
- * v3.5.1 修复内容（2025-11-29）：
- * - ✅ 端口TLS策略修复：未知端口保持原有TLS设置
- *
- * v3.5 修复内容（2025-11-29）：
- * - ✅ UDP转发模式修复：xudp → packet-addr（更好的兼容性）
- * - ✅ TLS Fragment 分片：启用TLS分片绕过DPI检测
- * - ✅ HTTP/2 滑块：确保HTTP/2配置正确启用
- * - ✅ 端口TLS兼容性：回避不支持TLS的端口（80/8080等）
- * - ✅ CDN语料库增强：新增更多CDN域名和运营商Host
- * - ✅ VMess节点兼容性修复：修复大量VMess节点无法使用的问题
- *
- * v3.4 修复内容（2025-11-29）：
- * - ✅ skip-cert-verify 智能化：有证书配置则验证，无则允许不安全
- * - ✅ VMess security: auto 修复：替换为具体加密方法 (aes-128-gcm)
- * - ✅ 曲线配置：Clash Meta 使用 ecdh-curves，Sing-box 使用 curve_preferences（1.13.0+支持）
- * - ✅ Shadowrocket tls-alpn：字符串格式 "h2"
- * - ✅ Shadowrocket udp-relay：启用 UDP 转发
- * - ✅ Hysteria2/TUIC 智能证书验证：有证书则验证，无则跳过
- * - ✅ 中国节点识别优化：避免误判 CN2 等专线
- * - ✅ 平衡安全性与可用性：智能判断而非一刀切
- *
- * 核心原则：
- * - 🛡️ 安全性：智能证书验证策略，有证书配置时验证证书
- * - 🚀 可用性：无证书配置时允许跳过验证（机场兼容性优先）
- * - 🎭 伪装性：Chrome 148 指纹、TLS 1.3、智能 SNI
- * - ⚡ 性能：ECN、TFO、多路复用、UDP 转发
- * - 🔒 健壮性：全面异常处理、配置验证、自动回退机制
- *
+ * Sub-Store Node Stealth & Security Enhancement Script
+ * Version: v3.8.0 (Standard Entrance)
+ * Updated: 2026-04-26
  * ============================================================
  *
- * 功能说明：
- * - 用于在 Sub-Store 环境下对代理节点进行深度优化和安全增强
- * - 支持节点过滤、排序、命名规范化、协议优化等功能
- * - 自动识别节点地区、特性类型，并添加相应的 Emoji 标记
- * - 支持生成中继链和落地链
- * - 支持 Clash Meta、Mihomo、sing-box、Surge、Shadowrocket 等代理工具
- * - 新增：Chrome 148 完整浏览器指纹伪装
- * - 新增：TLS 1.3 exclusive 全协议强制
- * - 新增：AES-GCM 专用加密（智能 ChaCha20 ECH 场景支持）
- * - 新增：智能地区 CDN 映射（6 大提供商）
- * - 新增：Reality 7 层保护 + XTLS 多重检测
- * - 新增：QUIC 智能屏蔽（保护原生 QUIC 协议）
+ * Core Capabilities:
+ *   - Chrome 148 TLS fingerprint simulation (uTLS / JA3)
+ *   - Deterministic SNI, Obfs-Host & Shadow-TLS assignment
+ *   - Intelligent certificate verification (self-signed aware)
+ *   - Weak/Unsafe SNI auto-correction with stable seeding
+ *   - Metadata sanitization (strip provider tracking headers)
+ *   - QUIC-native protocol protection (Hysteria2/TUIC/WG)
+ *   - Reality / XTLS 7-layer passthrough protection
+ *   - Regional CDN-aware smart SNI selection
+ *   - TLS Fragment support (sing-box only)
+ *   - Protocol-specific boost (VMess AEAD, VLESS packet-addr,
+ *     Trojan WS/gRPC, SS UDP-over-TCP, TUIC 0-RTT)
  *
- * 使用环境：
- * - Sub-Store 订阅管理工具（兼容最新版本）
- * - 支持 Clash Meta、Mihomo、sing-box、Surge、Shadowrocket 等
- *
- * 版本：v3.1 性能优化 + 兼容性修复版
- * 最后更新：2025-11-29
- * 作者：基于 Sub-Store 社区脚本深度改进
- *
- * 主要特性：
- * 1. Chrome 148 完整伪装 - TLS 指纹、ALPN、版本全面模拟
- * 2. TLS 1.3 Exclusive - 所有协议强制 TLS 1.3（min/max）
- * 3. AES-GCM 专用加密 - VMess/SS 仅用 AES-GCM（ChaCha20 智能场景支持）
- * 4. 智能地区 CDN - 6 大提供商（Cloudflare/Akamai/Fastly/Google/Azure/Bilibili）
- * 5. Reality 7 层保护 - 完全不修改 Reality 节点
- * 6. XTLS 多重保护 - 检测所有 Flow 变体
- * 7. 智能 SNI 选择 - 3 层 Fallback（地区精准->通用->原配置）
- * 8. TLS 安全增强 - 智能证书验证策略，平衡安全性与兼容性
- * 9. QUIC 智能屏蔽 - 保护 Hysteria2/TUIC/WireGuard，屏蔽其他
- * 10. Shadowrocket 优化 - ALPN HTTP/2 完整支持
- * 11. 多路复用全协议 - VMess/VLESS/Trojan/SS 完整支持
- * 12. 性能优化 - 预编译正则 + Set查找 + 缓存机制
- * 13. 脚本健壮性 - 全面异常处理、配置验证、自动回退
- * 14. 安全风险评估 - 智能风险评估和详细安全事件日志
- *
- * v3.1 更新内容（2025-11-29）：
- * - 修复 ShadowTLS 配置块语法错误
- * - 修复 TUIC enableZeroRtt 配置引用
- * - 优化预编译正则表达式和 Set 集合
- * - 增强防御性检查（空输入、无效节点）
- * - 提取公共检测函数（isRealityNode、hasXtlsFlow、hasEchSupport）
- * - 优化 SNI 缓存机制
- * - 修复乱码 emoji 和注释信息
- * - 增强 Chrome 148 TLS 指纹配置（曲线、签名算法、GREASE）
- * - 添加 WebSocket 伪装增强（User-Agent、Accept 头）
- *
- * ============================================================
- * 节点性能增强 (Boost) 功能详解
- * ============================================================
- *
- * 通用增强选项（适用于多数协议）：
- * - TCP Fast Open (TFO) - 减少首次连接延迟，优化网页/小包传输
- * - UDP 转发 - 支持全流量代理（游戏、DNS等）
- * - ECN (显式拥塞通知) - 提升拥堵网络下的性能
- * - IPv4 偏好 - 强制使用 IPv4 地址（如果节点支持）
- * - IPv6 偏好 - 优先使用 IPv6 地址（如果节点支持）
- *
- * TLS 增强选项（仅当节点已启用 TLS 时生效）：
- * - ALPN 协议协商 - 优先使用 HTTP/2，减少头部开销
- * - TLS 客户端指纹伪装 - 模拟浏览器流量，提升抗检测能力
- * - SNI 优化 - 绕过 ISP/CDN 检测，伪装为正常流量
- *
- * 协议专属增强：
- *
- * [VMess]
- *   - AEAD 加密模式 (alterId = 0) - 高效加密，抗重放攻击
- *   - 优化加密方法 (AES-128-GCM) - 安全加密，减少特征
- *   - packet-addr UDP优化 - 提升 UDP 转发效率（v3.5替代xudp）
- *   - 多路复用 (smux) - 减少连接开销，改善并发和抗丢包
- *   - ALPN HTTP/2 - 优先使用 HTTP/2 协议
- *   - gRPC 传输 - 基于 HTTP/2 的高效多路复用
- *
- * [VLESS]
- *   - packet-addr 数据包编码 - 优化 UDP 转发，减少开销（v3.5替代xudp）
- *   - XTLS Flow (vision) - 优化 TLS 握手，支持 0-RTT
- *   - 多路复用 (smux) - 减少连接开销（不与XTLS同时使用）
- *   - gRPC 传输优化 - 高效多路复用，提升吞吐
- *
- * [Trojan]
- *   - TLS 必备配置 - 确保 TLS 加密启用
- *   - XTLS Flow (vision) - 低延迟握手，支持 0-RTT
- *   - 多路复用 (smux) - 减少连接开销（不与XTLS同时使用）
- *   - WebSocket/gRPC 传输 - 伪装 HTTP，提升穿透能力
- *
- * [Shadowsocks]
- *   - AEAD 加密方法 (AES-128-GCM) - 高效抗检测
- *   - UDP over TCP - 提升 UDP 可靠性，减少丢包
- *   - 多路复用 (smux) - 使用 v2ray-plugin 时支持
- *
- * [Hysteria2]
- *   - ALPN HTTP/3 - 基于 QUIC 的 HTTP/3 协议，低延迟
- *   - 带宽设置 (默认自动协商) - 优化拥塞控制
- *   - MTU 发现 - 自动优化包大小，减少碎片
- *   - Salamander 混淆 - 流量混淆，抗检测
- *
- * [TUIC]
- *   - ALPN HTTP/3 - 基于 QUIC 的 HTTP/3 协议，低延迟
- *   - BBR 拥塞控制 - 优化高延迟网络，提升速度
- *   - QUIC UDP 中继 - 低延迟，抗丢包
- *   - 0-RTT 握手 - 立即发送数据，减少连接时间
- *   - 心跳保活 (3秒) - 保持连接活跃，提升稳定性
- *
- * [WireGuard]
- *   - MTU 优化 (1420) - 减少碎片，提升效率
- *   - 保留位配置 - 提升特定网络兼容性
- *   - 持续连接 (25s) - Keep Alive 保持连接
- *
- * 重要提示：
- * - 所有增强选项都可以通过配置开关灵活控制
- * - TLS 相关配置采用保守策略，仅在节点已启用 TLS 时才添加增强选项
- * - 某些增强选项（如 mux）可能不被所有服务器支持，请根据实际情况调整
- * - 默认启用所有增强选项，如遇问题可通过 cfg.enableBoost = false 禁用
+ * Design Principles:
+ *   🛡️  Security-first with airport compatibility fallback
+ *   🎭  Maximum stealth through browser-grade TLS surfaces
+ *   🔒  Privacy: strip tracking metadata before output
+ *   ⚡  Performance: pre-compiled regex, Set lookups, caching
  *
  * ============================================================
  */
-
 // 🚀 性能优化：预编译所有正则表达式（避免运行时重复编译）
 const BLOCK_KEYWORDS = [
     '剩余', '到期', '流量', '官网', '客服', '群组', '购买', '续费', '订阅', '重置',
@@ -375,8 +204,67 @@ const PORT_HOPPING_PARAMS = Object.freeze(new Set([
 const CLEANUP_PROPS = Object.freeze([
     '_priority', '_index', '_originalName', '_originalServer', '_testLatency', '_passedEndpoint',
     '_skip_reason', '_cipher_reason', '_quic-blocked', '_force_strict_tls_verify',
-    '_unsafe_sni_reason', '_unsafe_sni_original'
+    '_unsafe_sni_reason', '_unsafe_sni_original',
+    // v3.8.0: 额外清理隐私敏感的临时属性
+    '_error', '_drop_reason', '_subscription_url', '_sub_url', '_provider_url',
+    '_source_url', '_panel_url', '_api_url', '_update_url', '_download_url',
+    '_traffic_info', '_expire_info', '_user_info', '_account_info'
 ]);
+// 🔒 v3.8.0: 元数据清洗 - 剥离机场注入的追踪 Header 和隐私数据
+const PROVIDER_TRACKING_HEADERS = Object.freeze(new Set([
+    'x-api-user', 'x-user-id', 'x-subscription-id', 'x-sub-id',
+    'x-provider', 'x-provider-info', 'x-source', 'x-account',
+    'x-panel-id', 'x-client-id', 'x-auth-token', 'x-access-token',
+    'x-membership', 'x-plan', 'x-tier', 'x-subscription-info',
+    'x-traffic-used', 'x-traffic-total', 'x-expire-date',
+    'x-renewal-date', 'x-affiliate', 'x-referral', 'x-invite-code',
+    'authorization', 'x-custom-header', 'x-tracking-id',
+]));
+
+const sanitizeProxyMetadata = (proxy) => {
+    if (!proxy || typeof proxy !== 'object') return;
+
+    // 清洗 WebSocket headers 中的追踪字段
+    const wsHeaders = proxy['ws-opts']?.headers;
+    if (wsHeaders && typeof wsHeaders === 'object') {
+        for (const key of Object.keys(wsHeaders)) {
+            if (PROVIDER_TRACKING_HEADERS.has(key.toLowerCase())) {
+                delete wsHeaders[key];
+            }
+        }
+    }
+
+    // 清洗 HTTP headers
+    const httpHeaders = proxy['http-opts']?.headers;
+    if (httpHeaders && typeof httpHeaders === 'object') {
+        for (const key of Object.keys(httpHeaders)) {
+            if (PROVIDER_TRACKING_HEADERS.has(key.toLowerCase())) {
+                delete httpHeaders[key];
+            }
+        }
+    }
+
+    // 清洗 gRPC metadata
+    const grpcOpts = proxy['grpc-opts'];
+    if (grpcOpts && typeof grpcOpts === 'object') {
+        for (const key of Object.keys(grpcOpts)) {
+            if (PROVIDER_TRACKING_HEADERS.has(key.toLowerCase())) {
+                delete grpcOpts[key];
+            }
+        }
+    }
+
+    // 剥离明文嵌入的订阅追踪参数
+    const TRACKING_PROXY_KEYS = [
+        '_subscription_url', '_sub_url', '_provider_url', '_source_url',
+        '_panel_url', '_api_url', '_update_url', '_download_url',
+        '_traffic_info', '_expire_info', '_user_info', '_account_info',
+    ];
+    for (const key of TRACKING_PROXY_KEYS) {
+        delete proxy[key];
+    }
+};
+
 
 // 🔒 严格 SNI 安全策略：不再接受明显不可靠的机场/临时域名
 const STRICT_SAFE_SNI_FALLBACK_POOL = Object.freeze([
@@ -4073,7 +3961,7 @@ async function operator(proxies = []) {
             let fpPool = regionalFp[regionName]?.length > 0 ? regionalFp[regionName]
                 : regionalFp['default']?.length > 0 ? regionalFp['default']
                     : ['chrome', 'safari', 'firefox', 'edge'];
-            const selectedFp = getRandItem(fpPool);
+            const selectedFp = pickStableCandidate ? pickStableCandidate(fpPool, cacheKey) : fpPool[getStableHash(cacheKey) % fpPool.length];
             fingerprintCache.set(cacheKey, selectedFp);
             return selectedFp;
         };
@@ -5505,6 +5393,12 @@ async function operator(proxies = []) {
         }
 
         // 🚀 性能优化：使用预编译的属性列表批量清理临时属性
+        // 🔒 v3.8.0: 元数据清洗 - 在输出前剥离追踪数据
+        for (let i = 0, len = finalNodes.length; i < len; i++) {
+            sanitizeProxyMetadata(finalNodes[i]);
+        }
+
+        // 清理临时属性
         for (let i = 0, len = finalNodes.length; i < len; i++) {
             const node = finalNodes[i];
             for (const prop of CLEANUP_PROPS) {
