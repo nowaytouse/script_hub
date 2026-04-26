@@ -3224,7 +3224,7 @@ async function operator(proxies = []) {
 
             // true: 强制覆盖 SNI，即使原节点已有 SNI 值。
             // false: 仅在原节点无 SNI 时添加。
-            forceSniOverride: false,
+            forceSniOverride: true,
 
             // 严格 TLS/SNI 安全策略：先矫正不安全 SNI，无法矫正再丢弃节点。
             strictSniSecurity: {
@@ -3276,52 +3276,52 @@ async function operator(proxies = []) {
             // 🌐 智能 SNI 选择策略（6 大 CDN 提供商 + 地区映射）
             // 根据节点地区智能匹配对应 CDN，提升隐私性和真实性
             regionalCdnMapping: {
-                // 🇯🇵 日本节点
+                // 🇯🇵 日本节点 (专注边缘计算与CDN节点)
                 '日本': [
-                    'cloudflare.net', 'cdnjs.cloudflare.com',
-                    'akamaized.net', 'akamaihd.net', 'edgesuite.net',
-                    'googlevideo.com', 'gstatic.com', 'googleapis.com',
-                    'fastly.net', 'global.fastly.net'
+                    'akamaized.net', 'akamaihd.net', 'edgesuite.net', 'fastly.net', 'global.fastly.net',
+                    'b-cdn.net', 'gcdn.co', 'azureedge.net', 'azurefd.net', 'cloudfront.net',
+                    'edgecastcdn.net', 'cdngc.net', 'llnwd.net'
                 ],
-                // 🇰🇷 韩国节点
+                // 🇰🇷 韩国节点 (韩国常用边缘节点)
                 '韩国': [
-                    'cloudflare.com', 'workers.dev',
-                    'edgesuite.net', 'edgekey.net', 'akamaized.net',
-                    'azureedge.net', 'azure.microsoft.com',
-                    'googleapis.com', 'gstatic.com'
+                    'workers.dev', 'pages.dev', 'edgesuite.net', 'edgekey.net', 'akamaized.net',
+                    'azureedge.net', 'azurefd.net', 'b-cdn.net', 'gcdn.co', 'fastly.net'
                 ],
-                // 🇺🇸 美国节点
+                // 🇺🇸 美国节点 (海量小众 CDN 域名)
                 '美国': [
-                    'cloudfront.net', 'cdn.cloudflare.net', 'd1.awsstatic.com',
-                    's3.amazonaws.com', 'ec2.amazonaws.com',
-                    'akamai.net', 'akadns.net', 'edgesuite.net',
-                    'fastly.net', 'fastlylb.net'
+                    'cloudfront.net', 'd1.awsstatic.com', 's3.amazonaws.com', 'ec2.amazonaws.com',
+                    'akamai.net', 'akadns.net', 'edgesuite.net', 'fastly.net', 'fastlylb.net',
+                    'b-cdn.net', 'gcdn.co', 'azureedge.net', 'azurefd.net', 'trafficmanager.net',
+                    'edgecastcdn.net', 'systemcdn.net', 'cdngc.net', 'llnwd.net'
                 ],
-                // 🇭🇰 香港节点
+                // 🇭🇰 香港节点 (亚太边缘计算枢纽)
                 '香港': [
-                    'cloudflare.com', 'one.one.one.one',
-                    'akamaized.net', 'edgesuite.net',
-                    'googlevideo.com', 'gstatic.com',
-                    'upos-hz-mirrorakam.akamaized.net'  // Bilibili 海外 CDN
+                    'workers.dev', 'pages.dev', 'akamaized.net', 'edgesuite.net',
+                    'fastly.net', 'b-cdn.net', 'gcdn.co', 'azureedge.net', 'azurefd.net',
+                    'cloudfront.net', 'edgecastcdn.net'
                 ],
-                // 🇹🇼 台湾节点
+                // 🇹🇼 台湾节点 (台湾及亚太边缘节点)
                 '台湾': [
-                    'cdnjs.cloudflare.com', 'cloudflare.net',
-                    'gstatic.com', 'googleapis.com',
-                    'akamaihd.net', 'edgekey.net'
+                    'cdnjs.cloudflare.com', 'cloudflare.net', 'akamaihd.net', 'edgekey.net',
+                    'fastly.net', 'b-cdn.net', 'gcdn.co', 'azureedge.net', 'azurefd.net',
+                    'cloudfront.net'
                 ],
-                // 🇸🇬 新加坡节点
+                // 🇸🇬 新加坡节点 (东南亚 CDN 枢纽)
                 '新加坡': [
-                    'cloudflare.net', 'cdn.cloudflare.net',
-                    's3-ap-southeast-1.amazonaws.com',
-                    'akamaized.net', 'edgesuite.net'
+                    'cloudflare.net', 'cdn.cloudflare.net', 's3-ap-southeast-1.amazonaws.com',
+                    'akamaized.net', 'edgesuite.net', 'fastly.net', 'b-cdn.net', 'gcdn.co',
+                    'azureedge.net', 'azurefd.net', 'cloudfront.net'
                 ],
-                // 通用 CDN（用于其他地区或 Fallback）
+                // 🇬🇧 英国/欧洲节点
+                '英国': [
+                    'b-cdn.net', 'gcdn.co', 'fastly.net', 'azureedge.net', 'azurefd.net',
+                    'cloudfront.net', 'akamaized.net', 'edgesuite.net'
+                ],
+                // 通用 CDN（用于其他地区或 Fallback，专注隐蔽性高的边缘域名）
                 'default': [
-                    'cloudflare.net', 'cdnjs.cloudflare.com', 'cloudfront.net',
-                    'akamaized.net', 'edgesuite.net', 'fastly.net',
-                    'gstatic.com', 'googleapis.com', 'youtube.com',
-                    'azureedge.net', 'azure.microsoft.com'
+                    'cloudflare.net', 'cdnjs.cloudflare.com', 'cloudfront.net', 'akamaized.net',
+                    'edgesuite.net', 'fastly.net', 'b-cdn.net', 'gcdn.co', 'azureedge.net',
+                    'azurefd.net', 'edgecastcdn.net', 'systemcdn.net'
                 ]
             },
 
@@ -4110,6 +4110,9 @@ async function operator(proxies = []) {
                     const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
                     if (connectionSafeSni) {
                         applySecureSniToProxy(proxy, connectionSafeSni);
+                        // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
+                        proxy['skip-cert-verify'] = true;
+                        proxy['_force_strict_tls_verify'] = false;
                     }
                 }
 
@@ -4265,11 +4268,14 @@ async function operator(proxies = []) {
                     proxy['client-fingerprint'] = tlsBoost.fingerprintType || 'chrome';
                 }
 
-                // SNI：仅在未设置时添加
-                if (!proxy.sni && !proxy.flow) {
+                // SNI：仅在未设置时添加，或开启强制覆盖时
+                if (cfg.forceSniOverride || (!proxy.sni && !proxy.flow)) {
                     const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
                     if (connectionSafeSni) {
                         applySecureSniToProxy(proxy, connectionSafeSni);
+                        // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
+                        proxy['skip-cert-verify'] = true;
+                        proxy['_force_strict_tls_verify'] = false;
                     }
                 }
 
@@ -4937,6 +4943,9 @@ async function operator(proxies = []) {
                         const connectionSafeSni = getConnectionSafeSni(modifiedProxy, regionInfo.r);
                         if (connectionSafeSni) {
                             applySecureSniToProxy(modifiedProxy, connectionSafeSni);
+                            // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
+                            modifiedProxy['skip-cert-verify'] = true;
+                            modifiedProxy['_force_strict_tls_verify'] = false;
                         }
                     }
 
