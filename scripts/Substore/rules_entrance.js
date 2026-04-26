@@ -3135,11 +3135,11 @@ async function operator(proxies = []) {
 
             // true: 强制使用 IPv4 地址进行连接（如果节点支持）。
             // false: 不改变节点的 IPV4 偏好。
-            forceIPv4: true,
+            forceIPv4: false,
 
             // true: 优先使用 IPv6 地址进行连接（如果节点支持）。
             // false: 不改变节点的 IPV6 偏好。
-            forceIPv6: false,
+            forceIPv6: true,  // 🆕 v3.9.0: 优先 IPv6 连接
 
             // true: 为支持的协议 (VLESS, Trojan, VMess) 强制开启 TLS 加密。
             // false: 保持节点原有的 TLS 设置。
@@ -3198,7 +3198,8 @@ async function operator(proxies = []) {
             outputMode: 'proxies_only',
 
             // 节点协议白名单，只有出现在此列表中的协议类型才会被处理和保留。
-            protocols: ['vless', 'vmess', 'trojan', 'snell', 'hysteria2', 'hysteria', 'tuic', 'wireguard', 'https', 'ss', 'shadowsocks', 'http', 'socks5'],
+            // 🆕 v3.9.0: 仅保留 vless 和 hysteria2 协议
+            protocols: ['vless', 'hysteria2'],
 
             // 🌐 智能 SNI 选择策略（6 大 CDN 提供商 + 地区映射）
             // 根据节点地区智能匹配对应 CDN，提升隐私性和真实性
@@ -4497,6 +4498,7 @@ async function operator(proxies = []) {
                     }
                     break;
 
+                /* ⛔ v3.9.0: trojan 协议已注释 - 仅保留 vless / hysteria2
                 case 'trojan':
                     // Trojan 优化配置
                     // 🆕 v3.5.2: 端口白名单模式
@@ -4537,148 +4539,20 @@ async function operator(proxies = []) {
                         normalizeMuxConfig(modifiedProxy);
                     }
                     break;
+                */
 
+                /* ⛔ v3.9.0: vmess 协议已注释 - 仅保留 vless / hysteria2
                 case 'vmess':
-                    // VMess 优化配置
-                    // 🆕 v3.5.2: 端口白名单模式 - 只有白名单端口才强制启用TLS
-                    const vmessPort = parseInt(modifiedProxy.port) || 443;
-                    // ✅ 白名单模式：只有这些端口才强制启用TLS
-                    const vmessInTlsWhitelist = TLS_WHITELIST_PORTS.has(vmessPort);
-                    // 🚫 黑名单：这些端口明确不支持TLS
-                    const vmessInNonTlsBlacklist = NON_TLS_PORTS.has(vmessPort);
-
-                    // 🛡️ 白名单策略（最保守）：
-                    // 1. 白名单端口(443/8443等) + forceTls + 原节点无TLS → 启用TLS
-                    // 2. 黑名单端口(80/8080等) + 原节点有TLS → 禁用TLS
-                    // 3. 其他所有端口(12800/16056/19203等) → 完全保持原设置
-                    if (cfg.forceTls && !modifiedProxy.tls && vmessInTlsWhitelist) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
-                        applyTlsConfig(modifiedProxy, regionInfo.r);
-                    } else if (vmessInNonTlsBlacklist && modifiedProxy.tls) {
-                        // 黑名单端口，禁用TLS
-                        modifiedProxy.tls = false;
-                        delete modifiedProxy['skip-cert-verify'];
-                        delete modifiedProxy['tls-min-version'];
-                        delete modifiedProxy['tls-max-version'];
-                        delete modifiedProxy['client-fingerprint'];
-                        delete modifiedProxy.alpn;
-                        delete modifiedProxy.sni;
-                    }
-                    // ⚠️ 其他端口(12800/16056/19203等)：完全不修改TLS设置
-
-                    // TLS 增强选项 - 仅在节点原本就有TLS时增强，不强制添加
-                    if (cfg.enableBoost && modifiedProxy.tls && !vmessInNonTlsBlacklist) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
-                        applySmartTlsEnhancement(modifiedProxy, regionInfo.r);
-                    }
-
-                    // AEAD 加密模式（alterId = 0）
-                    const vmessConfig = cfg.boostOptions.protocolSpecific.vmess;
-                    if (cfg.enableBoost && vmessConfig.forceAead) {
-                        const aeadStrategy = vmessConfig.aeadStrategy || 'missing_only';
-                        if (aeadStrategy === 'force') {
-                            modifiedProxy['alter-id'] = 0;
-                        } else if (modifiedProxy['alter-id'] === undefined ||
-                            modifiedProxy['alter-id'] === null ||
-                            modifiedProxy['alter-id'] === '') {
-                            modifiedProxy['alter-id'] = 0;
-                        }
-                    } else if (modifiedProxy['alter-id'] === undefined) {
-                        modifiedProxy['alter-id'] = 0;
-                    }
-
-                    // 智能加密方法选择（ECH 感知 + 替换 auto）
-                    if (cfg.enableBoost) {
-                        const hasECH = hasEchSupport(modifiedProxy);
-                        const preferredCipher = hasECH ? 'chacha20-poly1305' : (vmessConfig.defaultCipher || 'aes-128-gcm');
-                        const cipherStrategy = vmessConfig.cipherStrategy || 'missing_only';
-
-                        if (cipherStrategy === 'force') {
-                            if (!modifiedProxy.cipher || modifiedProxy.cipher === 'auto' || modifiedProxy.cipher === 'none') {
-                                modifiedProxy.cipher = preferredCipher;
-                                modifiedProxy['_cipher_reason'] = 'auto_replaced_with_' + preferredCipher;
-                            }
-                            if (modifiedProxy.security === 'auto' || modifiedProxy.security === 'none') {
-                                modifiedProxy.security = preferredCipher;
-                                modifiedProxy['_cipher_reason'] = 'security_auto_replaced';
-                            }
-
-                            if (!hasECH) {
-                                if (modifiedProxy.cipher?.includes('chacha20')) {
-                                    modifiedProxy.cipher = vmessConfig.defaultCipher || 'aes-128-gcm';
-                                    modifiedProxy['_cipher_reason'] = 'chacha20_replaced_no_ech';
-                                }
-                                if (modifiedProxy.security?.includes('chacha20')) {
-                                    modifiedProxy.security = vmessConfig.defaultCipher || 'aes-128-gcm';
-                                    modifiedProxy['_cipher_reason'] = 'chacha20_replaced_no_ech';
-                                }
-                            }
-                        } else {
-                            const explicitCipher = typeof modifiedProxy.cipher === 'string' ? modifiedProxy.cipher.trim() : '';
-                            const explicitSecurity = typeof modifiedProxy.security === 'string' ? modifiedProxy.security.trim() : '';
-                            const normalizedCipher = explicitCipher.toLowerCase();
-                            const normalizedSecurity = explicitSecurity.toLowerCase();
-
-                            if (!explicitCipher && !explicitSecurity) {
-                                modifiedProxy.cipher = preferredCipher;
-                                modifiedProxy.security = preferredCipher;
-                                modifiedProxy['_cipher_reason'] = 'missing_cipher_filled';
-                            } else if (!explicitCipher && explicitSecurity &&
-                                normalizedSecurity !== 'auto' && normalizedSecurity !== 'none') {
-                                modifiedProxy.cipher = explicitSecurity;
-                            } else if (!explicitSecurity && explicitCipher &&
-                                normalizedCipher !== 'auto' && normalizedCipher !== 'none') {
-                                modifiedProxy.security = explicitCipher;
-                            }
-                        }
-
-                        normalizePacketEncoding(modifiedProxy);
-                    }
-
-                    applyWsObfsConfig(modifiedProxy);
-
-                    normalizeGrpcTransport(modifiedProxy);
-
-                    // 多路复用
-                    normalizeMuxConfig(modifiedProxy);
-
-                    // 🆕 v3.5.4: 最终TLS保护 - 确保非白名单端口不会被意外启用TLS
-                    // 如果原节点没有TLS且端口不在白名单中，强制确保TLS为false
-                    if (!vmessInTlsWhitelist && !proxy.tls) {
-                        modifiedProxy.tls = false;
-                    }
+                    // (省略) VMess 优化配置
                     break;
+                */
 
+                /* ⛔ v3.9.0: ss/shadowsocks 协议已注释 - 仅保留 vless / hysteria2
                 case 'ss':
                 case 'shadowsocks':
-                    // Shadowsocks 优化配置
-
-                    if (cfg.enableBoost) {
-                        // 🔒 AEAD 加密方法（仅使用 AES-GCM）
-                        const ssConfig = cfg.boostOptions.protocolSpecific.shadowsocks;
-                        if (!modifiedProxy.cipher) {
-                            modifiedProxy.cipher = ssConfig.defaultCipher || 'aes-128-gcm';
-                        } else if ((ssConfig.cipherStrategy || 'missing_only') === 'force' &&
-                            modifiedProxy.cipher.includes('chacha20')) {
-                            modifiedProxy.cipher = ssConfig.defaultCipher || 'aes-128-gcm';
-                        }
-
-                        normalizeUdpOverTcp(modifiedProxy);
-                    }
-
-                    // 插件配置保留（如果已配置）
-                    // 不自动添加插件，避免破坏现有配置
-
-                    // 🚀 多路复用（smux）- Shadowsocks 支持多路复用
-                    // 注意：需要服务器端支持 simple-obfs 或 v2ray-plugin 的 mux 功能
-                    if (cfg.enableBoost && cfg.boostOptions.enableMux) {
-                        // 仅在使用 v2ray-plugin 时启用多路复用
-                        if (modifiedProxy.plugin === 'v2ray-plugin' || modifiedProxy.plugin === 'obfs') {
-                            normalizeMuxConfig(modifiedProxy);
-                        }
-                    }
-
+                    // (省略) Shadowsocks 优化配置
                     break;
+                */
 
                 case 'hysteria2':
                     // Hysteria2 优化配置（QUIC 原生协议 - 完全保护 UDP/QUIC）
@@ -4768,186 +4642,29 @@ async function operator(proxies = []) {
 
                     break;
 
+                /* ⛔ v3.9.0: tuic 协议已注释 - 仅保留 vless / hysteria2
                 case 'tuic':
-                    // TUIC 优化配置（QUIC 原生协议 - 完全保护 UDP/QUIC）
-                    // 🛡️ TUIC 节点保护：最小化修改，保留原有配置
-
-                    if (cfg.enableBoost) {
-                        const tuicHasCert = !!(modifiedProxy.ca || modifiedProxy['ca-str'] || modifiedProxy['ca_str']);
-
-                        // 🔒 TLS 1.3 配置（TUIC 需要 TLS 1.3）
-                        // 仅在未设置时添加
-                        if (!modifiedProxy['tls-min-version']) {
-                            modifiedProxy['tls-min-version'] = '1.3';
-                        }
-                        if (!modifiedProxy['tls-max-version']) {
-                            modifiedProxy['tls-max-version'] = '1.3';
-                        }
-
-                        // 🔒 TLS 安全增强：TUIC 智能证书验证
-                        const skipVerify = safeExecute(
-                            () => applySmartCertVerification(modifiedProxy, ''),
-                            'TUIC证书验证',
-                            true
-                        );
-
-                        modifiedProxy['skip-cert-verify'] = skipVerify;
-
-                        // 记录 TUIC 安全事件
-                        if (skipVerify) {
-                            logSecurityEvent(
-                                'TUIC_CERT_SKIP',
-                                modifiedProxy,
-                                tuicHasCert ? '有证书但跳过验证' : '无证书配置，UDP-over-QUIC协议兼容策略',
-                                'low'
-                            );
-                        }
-
-                        // 🚀 TLS 指纹伪装 - Chrome 148
-                        applySmartClientFingerprint(modifiedProxy, baseRegionInfo.r);
-
-                        // 🚀 ALPN 协议协商 - TUIC 专用 HTTP/3
-                        if (cfg.boostOptions.tlsBoost.enableAlpn && !modifiedProxy.alpn) {
-                            modifiedProxy.alpn = ['h3'];  // HTTP/3 over QUIC
-                        }
-
-                        // 拥塞控制算法 - BBR 优化高延迟网络
-                        if (!modifiedProxy['congestion-controller']) {
-                            modifiedProxy['congestion-controller'] = cfg.boostOptions.protocolSpecific.tuic.congestionController;
-                        }
-
-                        // UDP 中继模式
-                        if (modifiedProxy['udp-relay-mode'] === undefined) {
-                            modifiedProxy['udp-relay-mode'] = cfg.boostOptions.protocolSpecific.tuic.udpRelayMode;
-                        }
-
-                        // 零往返时间 (0-RTT) - 使用 enableZeroRtt 配置
-                        if (modifiedProxy['reduce-rtt'] === undefined && cfg.boostOptions.protocolSpecific.tuic.enableZeroRtt) {
-                            modifiedProxy['reduce-rtt'] = true;
-                        }
-                    }
-
-                    // 🛡️ QUIC 原生协议保护：确保不被 QUIC 屏蔽影响
-                    // TUIC 依赖 UDP/QUIC，绝不能屏蔽
-                    if (modifiedProxy['block-quic']) {
-                        delete modifiedProxy['block-quic'];  // 移除 QUIC 屏蔽
-                    }
-                    if (modifiedProxy['udp'] === false) {
-                        modifiedProxy['udp'] = true;  // 强制启用 UDP
-                    }
-
+                    // (省略) TUIC 优化配置
                     break;
+                */
 
+                /* ⛔ v3.9.0: wireguard 协议已注释 - 仅保留 vless / hysteria2
                 case 'wireguard':
-                    // WireGuard 优化配置（UDP 原生协议 - 保护 UDP）
-
-                    if (cfg.enableBoost) {
-                        // MTU 优化 - 减少碎片，提升性能
-                        if (!modifiedProxy.mtu) {
-                            modifiedProxy.mtu = cfg.boostOptions.protocolSpecific.wireguard.defaultMtu || 1420;
-                        }
-
-                        // 保留位（兼容性）
-                        if (!modifiedProxy.reserved) {
-                            modifiedProxy.reserved = [0, 0, 0];
-                        }
-
-                        // 持续连接（Keep Alive）
-                        if (!modifiedProxy['persistent-keepalive'] && !modifiedProxy.keepalive) {
-                            modifiedProxy['persistent-keepalive'] = 25;  // 25秒心跳
-                        }
-                    }
-
-                    // 🛡️ UDP 原生协议保护：WireGuard 依赖 UDP
-                    if (modifiedProxy['udp'] === false) {
-                        modifiedProxy['udp'] = true;  // 强制启用 UDP
-                    }
-
-                    // IP 配置保留现有设置
-                    // 不强制修改 IP 配置
-
+                    // (省略) WireGuard 优化配置
                     break;
+                */
 
+                /* ⛔ v3.9.0: snell 协议已注释 - 仅保留 vless / hysteria2
                 case 'snell':
-                    // Snell 优化配置
-
-                    // 强制使用 Snell v5（最新版本）
-                    if (cfg.enableProtocolMutation && (!modifiedProxy.version || modifiedProxy.version < 5)) {
-                        modifiedProxy.version = 5;
-                    }
-
-                    // TCP Fast Open - 减少握手延迟
-                    if (cfg.enableBoost && cfg.boostOptions.enableTcpFastOpen) {
-                        modifiedProxy['tcp-fast-open'] = true;
-                    }
-
-                    // 混淆配置 - HTTP 模式
-                    _.set(modifiedProxy, 'obfs-opts.mode', 'http');
-                    if (cfg.forceObfsOverride || !_.get(modifiedProxy, 'obfs-opts.host')) {
-                        _.set(modifiedProxy, 'obfs-opts.host', getRandomObfs());
-                    }
-
-                    // 重用连接（提升性能）
-                    if (modifiedProxy['reuse'] === undefined) {
-                        modifiedProxy['reuse'] = true;
-                    }
-
+                    // (省略) Snell 优化配置
                     break;
+                */
 
+                /* ⛔ v3.9.0: https 协议已注释 - 仅保留 vless / hysteria2
                 case 'https':
-                    // HTTPS 代理优化
-
-                    // TLS 配置
-                    if (!modifiedProxy.tls) {
-                        modifiedProxy.tls = true;
-                    }
-
-                    // TLS 1.3 配置（如果启用 Boost）
-                    if (cfg.enableBoost && modifiedProxy.tls) {
-                        if (!modifiedProxy['tls-min-version']) {
-                            modifiedProxy['tls-min-version'] = '1.3';
-                        }
-                        if (!modifiedProxy['tls-max-version']) {
-                            modifiedProxy['tls-max-version'] = '1.3';
-                        }
-
-                        // 🔒 TLS 安全增强：Shadowsocks 智能证书验证
-                        if (modifiedProxy['skip-cert-verify'] === undefined) {
-                            const skipVerify = safeExecute(
-                                () => applySmartCertVerification(modifiedProxy, ''),
-                                'Shadowsocks证书验证',
-                                cfg.boostOptions.tlsBoost.skipCertVerify !== undefined
-                                    ? cfg.boostOptions.tlsBoost.skipCertVerify
-                                    : true // 默认兼容策略
-                            );
-
-                            modifiedProxy['skip-cert-verify'] = skipVerify;
-
-                            // 记录 Shadowsocks 安全事件
-                            if (skipVerify) {
-                                logSecurityEvent(
-                                    'SS_CERT_SKIP',
-                                    modifiedProxy,
-                                    'Shadowsocks协议兼容策略',
-                                    'medium'
-                                );
-                            }
-                        }
-                    }
-
-                    // 智能 SNI 配置
-                    if (!modifiedProxy.sni || cfg.forceSniOverride) {
-                        const regionInfo = getRegionInfo(modifiedProxy._originalName || modifiedProxy.name || '', modifiedProxy.server);
-                        const connectionSafeSni = getConnectionSafeSni(modifiedProxy, regionInfo.r);
-                        if (connectionSafeSni) {
-                            applySecureSniToProxy(modifiedProxy, connectionSafeSni);
-                            // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
-                            modifiedProxy['skip-cert-verify'] = true;
-                            modifiedProxy['_force_strict_tls_verify'] = false;
-                        }
-                    }
-
+                    // (省略) HTTPS 代理优化
                     break;
+                */
             }
 
             // ============================================================
