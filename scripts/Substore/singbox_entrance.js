@@ -1097,7 +1097,7 @@ async function operator(proxies = []) {
 
             // true: 强制覆盖 SNI，即使原节点已有 SNI 值。
             // false: 仅在原节点无 SNI 时添加。
-            forceSniOverride: false,
+            forceSniOverride: true,
 
             // 严格 TLS/SNI 安全策略：自动修正不安全或弱隐蔽性的 SNI，但默认不丢节点。
             strictSniSecurity: {
@@ -1977,6 +1977,9 @@ async function operator(proxies = []) {
                     const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
                     if (connectionSafeSni) {
                         applySecureSniToProxy(proxy, connectionSafeSni);
+                        // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
+                        proxy['skip-cert-verify'] = true;
+                        proxy['_force_strict_tls_verify'] = false;
                     }
                 }
 
@@ -2072,11 +2075,14 @@ async function operator(proxies = []) {
                 // 客户端指纹
                 applySmartClientFingerprint(proxy, regionName);
 
-                // SNI：仅在未设置时添加
-                if (!proxy.sni && !proxy.flow) {
+                // SNI：仅在未设置时添加，或开启强制覆盖时
+                if (cfg.forceSniOverride || (!proxy.sni && !proxy.flow)) {
                     const connectionSafeSni = getConnectionSafeSni(proxy, regionName);
                     if (connectionSafeSni) {
                         applySecureSniToProxy(proxy, connectionSafeSni);
+                        // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
+                        proxy['skip-cert-verify'] = true;
+                        proxy['_force_strict_tls_verify'] = false;
                     }
                 }
 
@@ -2708,6 +2714,9 @@ async function operator(proxies = []) {
                         const connectionSafeSni = getConnectionSafeSni(modifiedProxy, regionInfo.r);
                         if (connectionSafeSni) {
                             applySecureSniToProxy(modifiedProxy, connectionSafeSni);
+                            // ⚠️ 强制替换 SNI 后，必须关闭证书验证，否则会发生证书不匹配错误
+                            modifiedProxy['skip-cert-verify'] = true;
+                            modifiedProxy['_force_strict_tls_verify'] = false;
                         }
                     }
 
