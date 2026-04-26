@@ -1,8 +1,8 @@
 /**
  * ============================================================
  * Sub-Store Node Stealth & Security Enhancement Script
- * Version: v3.8.0 (Standard Entrance)
- * Updated: 2026-04-26
+ * Version: v3.8.1 (Standard Entrance)
+ * Updated: 2026-04-27
  * ============================================================
  *
  * Core Capabilities:
@@ -266,30 +266,197 @@ const sanitizeProxyMetadata = (proxy) => {
 };
 
 
-// 🔒 严格 SNI 安全策略：不再接受明显不可靠的机场/临时域名
+// 🔒 严格 SNI 安全策略：显式白名单优先，黑名单硬拒绝，弱域名只做兜底
+const TRUSTED_SNI_BUCKETS = Object.freeze({
+    gaming: Object.freeze([
+        'download-porter.hoyoverse.com',
+        'ossgamedownload.hoyoverse.com',
+        'launcher-api.hoyoverse.com',
+        'epicgames-download1.akamaized.net',
+        'steamcdn-a.akamaihd.net',
+        'steamcontent.com',
+        'content.cdntwrk.com',
+        'cdnnte.perfectworld.com',
+        'nte.perfectworld.com'
+    ]),
+    developer: Object.freeze([
+        'cdn.jsdelivr.net',
+        'objects.githubusercontent.com',
+        'assets-cdn.github.com',
+        'storage.googleapis.com',
+        'update.googleapis.com',
+        'dl.google.com',
+        'registry.npmjs.org',
+        'pypi.org'
+    ]),
+    enterprise: Object.freeze([
+        'gateway.discord.gg',
+        'assets.twitch.tv',
+        'prod.livechatinc.com',
+        'time.cloudflare.com',
+        'challenges.cloudflare.com'
+    ]),
+    cnOnly: Object.freeze([
+        'yh.wanmei.com'
+    ])
+});
+
 const STRICT_SAFE_SNI_FALLBACK_POOL = Object.freeze([
-    'www.apple.com.cn',
-    'download-porter.hoyoverse.com',
-    'sdk-static.mihoyo.com',
-    'www.microsoft.com',
-    'fonts.gstatic.com',
-    'cdnjs.cloudflare.com',
-    'ajax.googleapis.com'
+    ...TRUSTED_SNI_BUCKETS.gaming,
+    ...TRUSTED_SNI_BUCKETS.developer,
+    ...TRUSTED_SNI_BUCKETS.enterprise
+]);
+
+const REGIONAL_TRUSTED_SNI_POOL = Object.freeze({
+    '日本': Object.freeze([
+        'download-porter.hoyoverse.com',
+        'ossgamedownload.hoyoverse.com',
+        'steamcdn-a.akamaihd.net',
+        'steamcontent.com',
+        'cdn.jsdelivr.net',
+        'objects.githubusercontent.com',
+        'storage.googleapis.com',
+        'gateway.discord.gg',
+        'time.cloudflare.com'
+    ]),
+    '韩国': Object.freeze([
+        'download-porter.hoyoverse.com',
+        'launcher-api.hoyoverse.com',
+        'steamcdn-a.akamaihd.net',
+        'cdn.jsdelivr.net',
+        'update.googleapis.com',
+        'gateway.discord.gg',
+        'assets.twitch.tv'
+    ]),
+    '美国': Object.freeze([
+        'cdnnte.perfectworld.com',
+        'nte.perfectworld.com',
+        'epicgames-download1.akamaized.net',
+        'steamcdn-a.akamaihd.net',
+        'objects.githubusercontent.com',
+        'storage.googleapis.com',
+        'gateway.discord.gg'
+    ]),
+    '香港': Object.freeze([
+        'download-porter.hoyoverse.com',
+        'launcher-api.hoyoverse.com',
+        'cdn.jsdelivr.net',
+        'objects.githubusercontent.com',
+        'update.googleapis.com',
+        'time.cloudflare.com',
+        'challenges.cloudflare.com'
+    ]),
+    '台湾': Object.freeze([
+        'download-porter.hoyoverse.com',
+        'ossgamedownload.hoyoverse.com',
+        'cdn.jsdelivr.net',
+        'objects.githubusercontent.com',
+        'dl.google.com',
+        'gateway.discord.gg'
+    ]),
+    '新加坡': Object.freeze([
+        'download-porter.hoyoverse.com',
+        'cdnnte.perfectworld.com',
+        'cdn.jsdelivr.net',
+        'objects.githubusercontent.com',
+        'storage.googleapis.com',
+        'assets.twitch.tv',
+        'time.cloudflare.com'
+    ]),
+    '英国': Object.freeze([
+        'cdnnte.perfectworld.com',
+        'epicgames-download1.akamaized.net',
+        'steamcdn-a.akamaihd.net',
+        'objects.githubusercontent.com',
+        'storage.googleapis.com',
+        'prod.livechatinc.com'
+    ]),
+    '中国': Object.freeze([
+        'download-porter.hoyoverse.com',
+        'ossgamedownload.hoyoverse.com',
+        'launcher-api.hoyoverse.com',
+        'yh.wanmei.com',
+        'cdn.jsdelivr.net',
+        'objects.githubusercontent.com'
+    ]),
+    'default': Object.freeze([...STRICT_SAFE_SNI_FALLBACK_POOL])
+});
+
+const STRICT_SNI_WHITELIST_EXACT_SET = Object.freeze(new Set([
+    ...STRICT_SAFE_SNI_FALLBACK_POOL,
+    ...TRUSTED_SNI_BUCKETS.cnOnly
+]));
+
+const STRICT_SNI_SAFE_FAMILY_PATTERNS = Object.freeze([
+    /(?:^|\.)hoyoverse\.com$/i,
+    /(?:^|\.)mihoyo\.com$/i,
+    /(?:^|\.)perfectworld\.com$/i,
+    /(?:^|\.)wanmei\.com$/i
 ]);
 
 const STRICT_UNSAFE_SNI_EXACT_SET = Object.freeze(new Set([
+    'www.microsoft.com',
+    'microsoft.com',
     'www.apple.com',
     'apple.com',
+    'www.apple.com.cn',
+    'apple.com.cn',
+    'www.google.com',
+    'google.com',
+    'cloudflare.com',
+    'www.cloudflare.com',
+    'speed.cloudflare.com',
+    'one.one.one.one',
+    '1.0.0.1',
+    'www.bing.com',
+    'bing.com',
+    'gateway.icloud.com',
+    'itunes.apple.com',
+    'captive.apple.com',
+    'www.visa.com',
+    'visa.com',
+    'www.amazon.com',
+    'amazon.com',
     'pages.dev',
     'workers.dev',
     'localhost'
 ]));
 
+const GENERIC_WEAK_SNI_EXACT_SET = Object.freeze(new Set([
+    'akamaized.net',
+    'akamaihd.net',
+    'edgesuite.net',
+    'edgekey.net',
+    'akamai.net',
+    'akadns.net',
+    'fastly.net',
+    'global.fastly.net',
+    'fastlylb.net',
+    'cloudfront.net',
+    'azureedge.net',
+    'azurefd.net',
+    'edgecastcdn.net',
+    'systemcdn.net',
+    'cloudflare.net',
+    'cdn.cloudflare.net',
+    'googleapis.com',
+    'googleusercontent.com',
+    'amazonaws.com',
+    'jsdelivr.net'
+]));
+
 const TLS_HOST_DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 
 const STRICT_UNSAFE_SNI_PATTERNS = Object.freeze([
-    /\.pages\.dev$/i,
-    /\.workers\.dev$/i,
+    /(?:^|\.)pages\.dev$/i,
+    /(?:^|\.)workers\.dev$/i,
+    /(?:^|\.)cloudflare\.com$/i,
+    /(?:^|\.)apple\.com(?:\.cn)?$/i,
+    /(?:^|\.)google\.com$/i,
+    /(?:^|\.)microsoft\.com$/i,
+    /(?:^|\.)bing\.com$/i,
+    /(?:^|\.)amazon\.com$/i,
+    /(?:^|\.)visa\.com$/i,
     /\.biliimg\.com$/i,
     /\.(top|xyz|site|link|info|me|today|rocks|online|shop|life|work|click|lol|monster|stream)(:\d+)?$/i,
     /^(test|temp|demo|example|localhost)(?:\.|$)/i,
@@ -363,34 +530,46 @@ const isPrivateIpv4Host = (host) => {
 const analyzeTlsHostSafety = (value) => {
     const host = normalizeTlsHost(value);
     if (!host) {
-        return { host: '', unsafe: false, weak: false, reason: 'missing' };
+        return { host: '', unsafe: false, weak: false, preferred: false, reason: 'missing' };
+    }
+
+    if (STRICT_SNI_WHITELIST_EXACT_SET.has(host)) {
+        return { host, unsafe: false, weak: false, preferred: true, reason: '命中显式 SNI 白名单' };
     }
 
     if (STRICT_UNSAFE_SNI_EXACT_SET.has(host)) {
-        return { host, unsafe: true, weak: true, reason: '命中明确禁止的 SNI 域名' };
+        return { host, unsafe: true, weak: true, preferred: false, reason: '命中显式 SNI 黑名单' };
     }
 
     if (isPrivateIpv4Host(host)) {
-        return { host, unsafe: true, weak: true, reason: '内网、回环或保留地址不适合作为 TLS SNI' };
+        return { host, unsafe: true, weak: true, preferred: false, reason: '内网、回环或保留地址不适合作为 TLS SNI' };
     }
 
     if (STRICT_UNSAFE_SNI_PATTERNS.some(pattern => pattern.test(host))) {
-        return { host, unsafe: true, weak: true, reason: '命中不安全或机场域名模式' };
+        return { host, unsafe: true, weak: true, preferred: false, reason: '命中不安全或高滥用 SNI 模式' };
     }
 
     if (/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) {
-        return { host, unsafe: true, weak: true, reason: 'IP 地址不适合作为严格 TLS SNI' };
+        return { host, unsafe: true, weak: true, preferred: false, reason: 'IP 地址不适合作为严格 TLS SNI' };
     }
 
     if (!TLS_HOST_DOMAIN_REGEX.test(host)) {
-        return { host, unsafe: true, weak: true, reason: 'SNI 域名格式无效' };
+        return { host, unsafe: true, weak: true, preferred: false, reason: 'SNI 域名格式无效' };
+    }
+
+    if (STRICT_SNI_SAFE_FAMILY_PATTERNS.some(pattern => pattern.test(host))) {
+        return { host, unsafe: false, weak: false, preferred: true, reason: '命中优选游戏业务域族' };
+    }
+
+    if (GENERIC_WEAK_SNI_EXACT_SET.has(host)) {
+        return { host, unsafe: false, weak: true, preferred: false, reason: '通用 CDN 根域过于泛化，建议使用具体业务子域' };
     }
 
     if (WEAK_TLS_HOST_PATTERNS.some(pattern => pattern.test(host))) {
-        return { host, unsafe: false, weak: true, reason: 'SNI 可用但会暴露基础设施或弱隐蔽特征' };
+        return { host, unsafe: false, weak: true, preferred: false, reason: 'SNI 可用但会暴露基础设施或弱隐蔽特征' };
     }
 
-    return { host, unsafe: false, weak: false, reason: 'trusted' };
+    return { host, unsafe: false, weak: false, preferred: false, reason: 'trusted' };
 };
 
 const isRealityNode = (proxy = {}) => !!(
