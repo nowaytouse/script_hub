@@ -1149,52 +1149,65 @@ async function operator(proxies = []) {
             // 🌐 智能 SNI 选择策略（6 大 CDN 提供商 + 地区映射）
             // 根据节点地区智能匹配对应 CDN，提升隐私性和真实性
             regionalCdnMapping: {
-                // 🇯🇵 日本节点
+                // 🇯🇵 日本节点 (高权重日本域名 + 国际CDN日本节点)
                 '日本': [
-                    'cloudflare.net', 'cdnjs.cloudflare.com',
-                    'akamaized.net', 'akamaihd.net', 'edgesuite.net',
-                    'googlevideo.com', 'gstatic.com', 'googleapis.com',
-                    'fastly.net', 'global.fastly.net'
+                    'cloudflare.net', 'cdnjs.cloudflare.com', 'akamaized.net', 'akamaihd.net', 'edgesuite.net',
+                    'googlevideo.com', 'gstatic.com', 'googleapis.com', 'fastly.net', 'global.fastly.net',
+                    'line.me', 'yahoo.co.jp', 'rakuten.co.jp', 'nintendo.co.jp', 'sony.co.jp', 'nhk.or.jp',
+                    'mercari.com', 'recruit.co.jp', 'dmm.com', 'nicovideo.jp', 'pixiv.net', 'softbank.jp',
+                    'kddi.com', 'docomo.ne.jp', 'japan.go.jp', 'toyota.co.jp', 'honda.co.jp'
                 ],
-                // 🇰🇷 韩国节点
+                // 🇰🇷 韩国节点 (韩国本土大厂 + CDN)
                 '韩国': [
-                    'cloudflare.com', 'workers.dev',
-                    'edgesuite.net', 'edgekey.net', 'akamaized.net',
-                    'azureedge.net', 'azure.microsoft.com',
-                    'googleapis.com', 'gstatic.com'
+                    'cloudflare.com', 'workers.dev', 'edgesuite.net', 'edgekey.net', 'akamaized.net',
+                    'azureedge.net', 'azure.microsoft.com', 'googleapis.com', 'gstatic.com',
+                    'naver.com', 'kakao.com', 'daum.net', 'samsung.com', 'nexon.com', 'coupang.com',
+                    'tistory.com', 'korea.kr', 'seoul.go.kr', 'lg.com', 'hyundai.com', 'sktelecom.com',
+                    'kt.com', 'gmarket.co.kr', 'afreecatv.com', 'kakaocorp.com'
                 ],
-                // 🇺🇸 美国节点
+                // 🇺🇸 美国节点 (全美海量高可信域名)
                 '美国': [
-                    'cloudfront.net', 'cdn.cloudflare.net', 'd1.awsstatic.com',
-                    's3.amazonaws.com', 'ec2.amazonaws.com',
-                    'akamai.net', 'akadns.net', 'edgesuite.net',
-                    'fastly.net', 'fastlylb.net'
+                    'cloudfront.net', 'cdn.cloudflare.net', 'd1.awsstatic.com', 's3.amazonaws.com', 'ec2.amazonaws.com',
+                    'akamai.net', 'akadns.net', 'edgesuite.net', 'fastly.net', 'fastlylb.net',
+                    'apple.com', 'microsoft.com', 'github.com', 'reddit.com', 'wikipedia.org',
+                    'netflix.com', 'amazon.com', 'zoom.us', 'salesforce.com', 'linkedin.com',
+                    'adobe.com', 'oracle.com', 'cisco.com', 'ibm.com', 'intel.com',
+                    'nytimes.com', 'cnn.com', 'wsj.com', 'nasa.gov', 'whitehouse.gov'
                 ],
-                // 🇭🇰 香港节点
+                // 🇭🇰 香港节点 (香港高校、政府、大企业)
                 '香港': [
-                    'cloudflare.com', 'one.one.one.one',
-                    'akamaized.net', 'edgesuite.net',
-                    'googlevideo.com', 'gstatic.com',
-                    'upos-hz-mirrorakam.akamaized.net'  // Bilibili 海外 CDN
+                    'cloudflare.com', 'one.one.one.one', 'akamaized.net', 'edgesuite.net',
+                    'googlevideo.com', 'gstatic.com', 'upos-hz-mirrorakam.akamaized.net',
+                    'hku.hk', 'cuhk.edu.hk', 'ust.hk', 'gov.hk', 'scmp.com', 'hkex.com.hk',
+                    'cathaypacific.com', 'hktb.com', 'mtr.com.hk', 'pccw.com', 'hkjc.com',
+                    'hko.gov.hk', 'cityu.edu.hk', 'polyu.edu.hk', 'hongkongairport.com'
                 ],
-                // 🇹🇼 台湾节点
+                // 🇹🇼 台湾节点 (台湾政企、高校、科技公司)
                 '台湾': [
-                    'cdnjs.cloudflare.com', 'cloudflare.net',
-                    'gstatic.com', 'googleapis.com',
-                    'akamaihd.net', 'edgekey.net'
+                    'cdnjs.cloudflare.com', 'cloudflare.net', 'gstatic.com', 'googleapis.com',
+                    'akamaihd.net', 'edgekey.net', 'gamer.com.tw', 'pchome.com.tw', 'hinet.net',
+                    'taipei.gov.tw', 'tsmc.com', 'ntu.edu.tw', 'ncku.edu.tw', 'nthu.edu.tw',
+                    'ruten.com.tw', 'dcard.tw', 'momoshop.com.tw', 'gov.tw', 'twse.com.tw',
+                    'foxconn.com', 'mediatek.com', 'asus.com', 'acer.com', 'cht.com.tw'
                 ],
-                // 🇸🇬 新加坡节点
+                // 🇸🇬 新加坡节点 (东南亚枢纽节点)
                 '新加坡': [
-                    'cloudflare.net', 'cdn.cloudflare.net',
-                    's3-ap-southeast-1.amazonaws.com',
-                    'akamaized.net', 'edgesuite.net'
+                    'cloudflare.net', 'cdn.cloudflare.net', 's3-ap-southeast-1.amazonaws.com',
+                    'akamaized.net', 'edgesuite.net', 'gov.sg', 'nus.edu.sg', 'ntu.edu.sg',
+                    'shopee.sg', 'grab.com', 'singtel.com', 'dbs.com', 'sgx.com',
+                    'changiairport.com', 'straitstimes.com', 'lazada.sg', 'carousell.sg'
+                ],
+                // 🇬🇧 英国节点
+                '英国': [
+                    'bbc.co.uk', 'gov.uk', 'cam.ac.uk', 'ox.ac.uk', 'ucl.ac.uk',
+                    'imperial.ac.uk', 'theguardian.com', 'nature.com', 'nhs.uk', 'hsbc.co.uk'
                 ],
                 // 通用 CDN（用于其他地区或 Fallback）
                 'default': [
-                    'cloudflare.net', 'cdnjs.cloudflare.com', 'cloudfront.net',
-                    'akamaized.net', 'edgesuite.net', 'fastly.net',
-                    'gstatic.com', 'googleapis.com', 'youtube.com',
-                    'azureedge.net', 'azure.microsoft.com'
+                    'cloudflare.net', 'cdnjs.cloudflare.com', 'cloudfront.net', 'akamaized.net',
+                    'edgesuite.net', 'fastly.net', 'gstatic.com', 'googleapis.com', 'youtube.com',
+                    'azureedge.net', 'azure.microsoft.com', 'apple.com', 'microsoft.com', 'windows.net',
+                    'github.com', 'wikipedia.org', 'wordpress.org', 'vimeo.com', 'cloudflare.com'
                 ]
             },
 
