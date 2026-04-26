@@ -277,7 +277,8 @@ const TRUSTED_SNI_BUCKETS = Object.freeze({
         'steamcontent.com',
         'content.cdntwrk.com',
         'cdnnte.perfectworld.com',
-        'nte.perfectworld.com'
+        'nte.perfectworld.com',
+        'tof.perfectworld.com'
     ]),
     developer: Object.freeze([
         'cdn.jsdelivr.net',
@@ -317,7 +318,8 @@ const REGIONAL_TRUSTED_SNI_POOL = Object.freeze({
         'objects.githubusercontent.com',
         'storage.googleapis.com',
         'gateway.discord.gg',
-        'time.cloudflare.com'
+        'time.cloudflare.com',
+        'tof.perfectworld.com'
     ]),
     '韩国': Object.freeze([
         'download-porter.hoyoverse.com',
@@ -326,11 +328,13 @@ const REGIONAL_TRUSTED_SNI_POOL = Object.freeze({
         'cdn.jsdelivr.net',
         'update.googleapis.com',
         'gateway.discord.gg',
-        'assets.twitch.tv'
+        'assets.twitch.tv',
+        'tof.perfectworld.com'
     ]),
     '美国': Object.freeze([
         'cdnnte.perfectworld.com',
         'nte.perfectworld.com',
+        'tof.perfectworld.com',
         'epicgames-download1.akamaized.net',
         'steamcdn-a.akamaihd.net',
         'objects.githubusercontent.com',
@@ -344,7 +348,8 @@ const REGIONAL_TRUSTED_SNI_POOL = Object.freeze({
         'objects.githubusercontent.com',
         'update.googleapis.com',
         'time.cloudflare.com',
-        'challenges.cloudflare.com'
+        'challenges.cloudflare.com',
+        'tof.perfectworld.com'
     ]),
     '台湾': Object.freeze([
         'download-porter.hoyoverse.com',
@@ -352,11 +357,13 @@ const REGIONAL_TRUSTED_SNI_POOL = Object.freeze({
         'cdn.jsdelivr.net',
         'objects.githubusercontent.com',
         'dl.google.com',
-        'gateway.discord.gg'
+        'gateway.discord.gg',
+        'tof.perfectworld.com'
     ]),
     '新加坡': Object.freeze([
         'download-porter.hoyoverse.com',
         'cdnnte.perfectworld.com',
+        'tof.perfectworld.com',
         'cdn.jsdelivr.net',
         'objects.githubusercontent.com',
         'storage.googleapis.com',
@@ -365,6 +372,7 @@ const REGIONAL_TRUSTED_SNI_POOL = Object.freeze({
     ]),
     '英国': Object.freeze([
         'cdnnte.perfectworld.com',
+        'tof.perfectworld.com',
         'epicgames-download1.akamaized.net',
         'steamcdn-a.akamaihd.net',
         'objects.githubusercontent.com',
