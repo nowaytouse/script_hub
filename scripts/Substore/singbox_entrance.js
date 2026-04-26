@@ -193,7 +193,6 @@
  *
  * ============================================================
  */
-
 // 🚀 性能优化：预编译所有正则表达式（避免运行时重复编译）
 const BLOCK_KEYWORDS = [
     '剩余', '到期', '流量', '官网', '客服', '群组', '购买', '续费', '订阅', '重置',
@@ -372,8 +371,67 @@ const PORT_HOPPING_PARAMS = Object.freeze(new Set([
 const CLEANUP_PROPS = Object.freeze([
     '_priority', '_index', '_originalName', '_originalServer', '_testLatency', '_passedEndpoint',
     '_skip_reason', '_cipher_reason', '_quic-blocked', '_force_strict_tls_verify',
-    '_unsafe_sni_reason', '_unsafe_sni_original'
+    '_unsafe_sni_reason', '_unsafe_sni_original',
+    // v3.8.0: 额外清理隐私敏感的临时属性
+    '_error', '_drop_reason', '_subscription_url', '_sub_url', '_provider_url',
+    '_source_url', '_panel_url', '_api_url', '_update_url', '_download_url',
+    '_traffic_info', '_expire_info', '_user_info', '_account_info'
 ]);
+// 🔒 v3.8.0: 元数据清洗 - 剥离机场注入的追踪 Header 和隐私数据
+const PROVIDER_TRACKING_HEADERS = Object.freeze(new Set([
+    'x-api-user', 'x-user-id', 'x-subscription-id', 'x-sub-id',
+    'x-provider', 'x-provider-info', 'x-source', 'x-account',
+    'x-panel-id', 'x-client-id', 'x-auth-token', 'x-access-token',
+    'x-membership', 'x-plan', 'x-tier', 'x-subscription-info',
+    'x-traffic-used', 'x-traffic-total', 'x-expire-date',
+    'x-renewal-date', 'x-affiliate', 'x-referral', 'x-invite-code',
+    'authorization', 'x-custom-header', 'x-tracking-id',
+]));
+
+const sanitizeProxyMetadata = (proxy) => {
+    if (!proxy || typeof proxy !== 'object') return;
+
+    // 清洗 WebSocket headers 中的追踪字段
+    const wsHeaders = proxy['ws-opts']?.headers;
+    if (wsHeaders && typeof wsHeaders === 'object') {
+        for (const key of Object.keys(wsHeaders)) {
+            if (PROVIDER_TRACKING_HEADERS.has(key.toLowerCase())) {
+                delete wsHeaders[key];
+            }
+        }
+    }
+
+    // 清洗 HTTP headers
+    const httpHeaders = proxy['http-opts']?.headers;
+    if (httpHeaders && typeof httpHeaders === 'object') {
+        for (const key of Object.keys(httpHeaders)) {
+            if (PROVIDER_TRACKING_HEADERS.has(key.toLowerCase())) {
+                delete httpHeaders[key];
+            }
+        }
+    }
+
+    // 清洗 gRPC metadata
+    const grpcOpts = proxy['grpc-opts'];
+    if (grpcOpts && typeof grpcOpts === 'object') {
+        for (const key of Object.keys(grpcOpts)) {
+            if (PROVIDER_TRACKING_HEADERS.has(key.toLowerCase())) {
+                delete grpcOpts[key];
+            }
+        }
+    }
+
+    // 剥离明文嵌入的订阅追踪参数
+    const TRACKING_PROXY_KEYS = [
+        '_subscription_url', '_sub_url', '_provider_url', '_source_url',
+        '_panel_url', '_api_url', '_update_url', '_download_url',
+        '_traffic_info', '_expire_info', '_user_info', '_account_info',
+    ];
+    for (const key of TRACKING_PROXY_KEYS) {
+        delete proxy[key];
+    }
+};
+
 
 const STRICT_SAFE_SNI_FALLBACK_POOL = Object.freeze([
     'www.apple.com.cn',
@@ -1933,7 +1991,7 @@ async function operator(proxies = []) {
             let fpPool = regionalFp[regionName]?.length > 0 ? regionalFp[regionName]
                 : regionalFp['default']?.length > 0 ? regionalFp['default']
                     : ['chrome', 'safari', 'firefox', 'edge'];
-            const selectedFp = getRandItem(fpPool);
+            const selectedFp = pickStableCandidate ? pickStableCandidate(fpPool, cacheKey) : fpPool[getStableHash(cacheKey) % fpPool.length];
             fingerprintCache.set(cacheKey, selectedFp);
             return selectedFp;
         };
@@ -3254,6 +3312,12 @@ async function operator(proxies = []) {
         }
 
         // 🚀 性能优化：使用预编译的属性列表批量清理临时属性
+        // 🔒 v3.8.0: 元数据清洗 - 在输出前剥离追踪数据
+        for (let i = 0, len = finalNodes.length; i < len; i++) {
+            sanitizeProxyMetadata(finalNodes[i]);
+        }
+
+        // 清理临时属性
         for (let i = 0, len = finalNodes.length; i < len; i++) {
             const node = finalNodes[i];
             for (const prop of CLEANUP_PROPS) {
