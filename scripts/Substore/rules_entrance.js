@@ -179,12 +179,16 @@ const OBVIOUS_FOREIGN_PATTERNS = Object.freeze([
 const NOISY_PUBLIC_BRAND_PATTERNS = Object.freeze([
     /(^|\.)apple\.com(\.[a-z]{2,})?$/i,
     /(^|\.)icloud\.com(\.[a-z]{2,})?$/i,
-    /(^|\.)biliimg\.com$/i,
-    /(^|\.)hdslb\.com$/i,
     /(^|\.)bilibili\.com$/i,
     /(^|\.)steam(powered|community)?\.com$/i,
     /(^|\.)office\.com$/i,
     /(^|\.)office365\.com$/i
+]);
+
+const REGIONAL_STEALTH_CDN_PATTERNS = Object.freeze([
+    /(^|\.)(?:bilibili-(?:jp|hk|tw|sg|kr|us)\d*|i\d?-hdslb|s\d?-hdslb)\.(?:biliimg\.com|hdslb\.com)$/i,
+    /(^|\.)biliimg\.com$/i,
+    /(^|\.)hdslb\.com$/i
 ]);
 
 const INFRA_HOST_PATTERNS = Object.freeze([
@@ -370,6 +374,20 @@ const looksLikeAirportStyleHostname = (host) => {
     return /[a-z]/i.test(label) && /\d/.test(label) && label.length >= 6;
 };
 
+const inferDomainRegionHint = (host) => {
+    const normalized = normalizeHost(host);
+    if (!normalized) return '';
+
+    if (/(?:^|[.\-])(jp|japan)\d*(?:[.\-]|$)/i.test(normalized)) return '日本';
+    if (/(?:^|[.\-])(hk|hongkong)\d*(?:[.\-]|$)/i.test(normalized)) return '香港';
+    if (/(?:^|[.\-])(tw|taiwan)\d*(?:[.\-]|$)/i.test(normalized)) return '台湾';
+    if (/(?:^|[.\-])(sg|singapore)\d*(?:[.\-]|$)/i.test(normalized)) return '新加坡';
+    if (/(?:^|[.\-])(kr|korea)\d*(?:[.\-]|$)/i.test(normalized)) return '韩国';
+    if (/(?:^|[.\-])(us|usa)\d*(?:[.\-]|$)/i.test(normalized)) return '美国';
+
+    return '';
+};
+
 const getOriginalName = (proxy, index) => normalizeString(proxy?.name) || `${String(proxy?.type || 'NODE').toUpperCase()} ${normalizeString(proxy?.server) || 'unknown'}:${proxy?.port || ''}` || `NODE ${index + 1}`;
 
 const parsePort = (value) => {
@@ -449,6 +467,21 @@ const finalizeSkipCertVerify = (proxy) => {
     } else {
         delete proxy['skip-cert-verify'];
     }
+};
+
+const shouldForceSkipCertVerifyForChoice = (proxy, chosenHost, source) => {
+    const normalizedChosen = normalizeHost(chosenHost);
+    const normalizedServer = normalizeHost(proxy?.server);
+
+    if (!normalizedChosen) return false;
+    if (!normalizedServer) return true;
+    if (normalizedChosen === normalizedServer) return false;
+    if (isLiteralIp(normalizedServer)) return true;
+    if (source === 'fallback-cover') return true;
+    if (source === 'ws-host' || source === 'http-host' || source === 'h2-host' || source === 'obfs-host') return true;
+    if (matchAny(normalizedChosen, REGIONAL_STEALTH_CDN_PATTERNS)) return true;
+
+    return false;
 };
 
 const hasTlsSurface = (proxy) => {
@@ -628,6 +661,22 @@ const scoreCoverDomain = (domain, regionName, serverHost) => {
         reasons.push('常见证书站点后缀');
     }
 
+    if (matchAny(domain, REGIONAL_STEALTH_CDN_PATTERNS)) {
+        score += 50;
+        reasons.push('地区型静态资源 CDN 伪装域');
+    }
+
+    const regionHint = inferDomainRegionHint(domain);
+    if (regionHint && regionName && regionName !== '其他') {
+        if (regionHint === regionName) {
+            score += 28;
+            reasons.push('子域地区与节点地区一致');
+        } else {
+            score -= 8;
+            reasons.push('子域地区与节点地区不一致');
+        }
+    }
+
     if (/^(www|api|cdn|img|res|ad|log|dl|client|app|open|service|update)\./i.test(domain)) {
         score += 6;
     }
@@ -656,7 +705,7 @@ const scoreCoverDomain = (domain, regionName, serverHost) => {
         reasons.push('高暴露公共品牌域');
     }
 
-    if (looksLikeAirportStyleHostname(domain)) {
+    if (!matchAny(domain, REGIONAL_STEALTH_CDN_PATTERNS) && looksLikeAirportStyleHostname(domain)) {
         score -= 10;
         reasons.push('机场风格随机主机名');
     }
@@ -720,7 +769,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: bestExplicit.host,
             source: bestExplicit.source,
-            forceSkipCertVerify: false
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestExplicit.host, bestExplicit.source)
         };
     }
 
@@ -733,7 +782,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: bestExplicit.host,
             source: bestExplicit.source,
-            forceSkipCertVerify: false
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestExplicit.host, bestExplicit.source)
         };
     }
 
@@ -742,21 +791,21 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
             return {
                 host: bestServer.host,
                 source: bestServer.source,
-                forceSkipCertVerify: false
+                forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestServer.host, bestServer.source)
             };
         }
         if (bestExplicit && bestExplicit.score < FORCE_OVERRIDE_POLICY.acceptableSniScore && bestServer.score >= FORCE_OVERRIDE_POLICY.acceptableSniScore) {
             return {
                 host: bestServer.host,
                 source: bestServer.source,
-                forceSkipCertVerify: false
+                forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestServer.host, bestServer.source)
             };
         }
         if (bestServer.score >= FORCE_OVERRIDE_POLICY.acceptableSniScore && bestServer.score >= bestExplicit.score + FORCE_OVERRIDE_POLICY.serverOverrideMargin) {
             return {
                 host: bestServer.host,
                 source: bestServer.source,
-                forceSkipCertVerify: false
+                forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestServer.host, bestServer.source)
             };
         }
     }
@@ -773,7 +822,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: bestTransport.host,
             source: bestTransport.source,
-            forceSkipCertVerify: true
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestTransport.host, bestTransport.source)
         };
     }
 
@@ -786,7 +835,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: fallbackCandidate.host,
             source: fallbackCandidate.source,
-            forceSkipCertVerify: true
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, fallbackCandidate.host, fallbackCandidate.source)
         };
     }
 
@@ -794,7 +843,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: bestExplicit.host,
             source: bestExplicit.source,
-            forceSkipCertVerify: false
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestExplicit.host, bestExplicit.source)
         };
     }
 
@@ -802,7 +851,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: bestServer.host,
             source: bestServer.source,
-            forceSkipCertVerify: false
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestServer.host, bestServer.source)
         };
     }
 
@@ -810,7 +859,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: bestTransport.host,
             source: bestTransport.source,
-            forceSkipCertVerify: true
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, bestTransport.host, bestTransport.source)
         };
     }
 
@@ -818,7 +867,7 @@ const chooseTlsIdentityDecision = (proxy, regionInfo) => {
         return {
             host: fallbackCandidate.host,
             source: fallbackCandidate.source,
-            forceSkipCertVerify: true
+            forceSkipCertVerify: shouldForceSkipCertVerifyForChoice(proxy, fallbackCandidate.host, fallbackCandidate.source)
         };
     }
 
