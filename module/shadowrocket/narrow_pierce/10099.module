@@ -1,0 +1,18 @@
+# name: 去广告｜中国广电
+# desc: [🚀SR] 中国广电去广告 [需卸载重装]\n作者：@keywos
+# category: 『 🎯 Narrow Pierce › 窄域穿刺 』
+
+[General]
+bypass-system = true
+ipv6 = true
+prefer-ipv6 = true
+hijack-dns = *:53
+dns-direct-fallback-proxy = false
+# @mieq @wuhu @EAlyce
+always-real-ip = *.10099.com.cn
+
+[Script]
+^https?:\/\/app\.10099\.com\.cn\/contact-web\/api\/version\/getFlashScreenPage data-type=text data="" status-code=502
+
+[MITM]
+hostname = app.10099.com.cn, -github.com, -api.github.com, -*.githubusercontent.com

@@ -1,6 +1,6 @@
 {
-  "generated": "2026-04-27T17:53:56.925748",
-  "total": 25,
+  "generated": "2026-04-27T18:04:24.544095",
+  "total": 51,
   "modules": [
     {
       "id": "[Sukka] URL Rewrite",
@@ -75,12 +75,12 @@
       "tags": []
     },
     {
-      "id": "Reddit 自动翻译",
-      "filename": "Reddit 自动翻译.sgmodule",
+      "id": "Reddit 增强合集 (翻译 + 广告 + NSFW)",
+      "filename": "Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule",
       "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/Reddit 自动翻译.sgmodule",
-      "name": "Reddit 自动翻译",
-      "desc": "自动注入 x-reddit-translations 开启 Reddit App 翻译功能 (Surge Version)",
+      "path": "module/surge(main)/amplify_nexus/Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule",
+      "name": "Reddit 增强合集 (翻译 + 广告 + NSFW)",
+      "desc": "Reddit 功能增强：自动翻译 + 去广告 + NSFW 解锁 (基于 JQ 引擎)",
       "tags": []
     },
     {
@@ -226,6 +226,44 @@
       ]
     },
     {
+      "id": "10099",
+      "filename": "10099.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/10099.sgmodule",
+      "name": "去广告｜中国广电",
+      "desc": "中国广电去广告 [需卸载重装]\\n作者：@keywos",
+      "tags": []
+    },
+    {
+      "id": "12306去广告.beta",
+      "filename": "12306去广告.beta.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/12306去广告.beta.sgmodule",
+      "name": "12306去广告",
+      "desc": "过滤12306应用内广告及开屏广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "123云盘去广告",
+      "filename": "123云盘去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/123云盘去广告.sgmodule",
+      "name": "123云盘",
+      "desc": "2025-09-09 10:10:26",
+      "tags": []
+    },
+    {
+      "id": "[Sukka] URL Rewrite",
+      "filename": "[Sukka] URL Rewrite.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/[Sukka] URL Rewrite.sgmodule",
+      "name": "[Sukka] URL Rewrite",
+      "desc": "Enable this module to use Sukka URL Rewrite rules",
+      "tags": []
+    },
+    {
       "id": "AWAvenue Ads Rule",
       "filename": "AWAvenue Ads Rule.sgmodule",
       "category": "narrow_pierce",
@@ -235,6 +273,39 @@
       "tags": []
     },
     {
+      "id": "IT之家去广告.beta",
+      "filename": "IT之家去广告.beta.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/IT之家去广告.beta.sgmodule",
+      "name": "IT之家去广告",
+      "desc": "过滤IT之家信息流广告和文末广告，自定义移除置顶和轮播图，自定义移除项需在插件配置。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "Jump去广告",
+      "filename": "Jump去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/Jump去广告.sgmodule",
+      "name": "Jump去广告",
+      "desc": "移除Jump开屏广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "QQ音乐去广告",
+      "filename": "QQ音乐去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/QQ音乐去广告.sgmodule",
+      "name": "QQ音乐去广告",
+      "desc": "过滤QQ音乐广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
       "id": "Reddit 去广告",
       "filename": "Reddit 去广告.sgmodule",
       "category": "narrow_pierce",
@@ -242,6 +313,212 @@
       "name": "Reddit 去广告",
       "desc": "过滤推广, 关 NSFW 提示, 自动开启翻译(JQ 版)",
       "tags": []
+    },
+    {
+      "id": "RedNote",
+      "filename": "RedNote.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/RedNote.sgmodule",
+      "name": "RedNote",
+      "desc": "小红书去广告、去图片视频水印",
+      "tags": []
+    },
+    {
+      "id": "Spotify去广告",
+      "filename": "Spotify去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/Spotify去广告.sgmodule",
+      "name": "Spotify去广告",
+      "desc": "移除播放广告，恢复歌手和专辑列表的正常展示。修改插件自定义配置项需要重新登陆方可生效。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "WeChat_Enhance",
+      "filename": "WeChat_Enhance.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/WeChat_Enhance.sgmodule",
+      "name": "WeChat增强",
+      "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
+      "tags": []
+    },
+    {
+      "id": "京东去广告",
+      "filename": "京东去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/京东去广告.sgmodule",
+      "name": "京东去广告",
+      "desc": "移除京东开屏广告，精简我的页面产品推广。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "哔哩哔哩漫画去广告",
+      "filename": "哔哩哔哩漫画去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/哔哩哔哩漫画去广告.sgmodule",
+      "name": "哔哩哔哩漫画去广告",
+      "desc": "移除开屏广告、应用内悬浮窗、各类横幅广告、你可能喜欢、小说推荐、首页弹窗，精简首页标签、底栏活动按钮和我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "夸克去广告",
+      "filename": "夸克去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/夸克去广告.sgmodule",
+      "name": "夸克去广告",
+      "desc": "移除阅读广告，精简我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "小宇宙去广告",
+      "filename": "小宇宙去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/小宇宙去广告.sgmodule",
+      "name": "小宇宙去广告",
+      "desc": "移除开屏广告、搜索框推荐词和AI总结。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "小红书去广告.beta",
+      "filename": "小红书去广告.beta.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/小红书去广告.beta.sgmodule",
+      "name": "小红书去广告",
+      "desc": "过滤信息流推广，移除图片及视频水印，如有异常，请先清除缓存再尝试。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "扫描全能王解锁",
+      "filename": "扫描全能王解锁.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/扫描全能王解锁.sgmodule",
+      "name": "扫描全能王",
+      "desc": "解锁扫描全能王",
+      "tags": []
+    },
+    {
+      "id": "拼多多去广告",
+      "filename": "拼多多去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/拼多多去广告.sgmodule",
+      "name": "拼多多去广告",
+      "desc": "移除开屏广告、底栏多多视频、会场入口、聊天页面精选推荐及推广，精简首页和个人中心。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "淘宝去广告",
+      "filename": "淘宝去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/淘宝去广告.sgmodule",
+      "name": "淘宝去广告",
+      "desc": "过滤淘宝开屏广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "滴滴出行去广告.beta",
+      "filename": "滴滴出行去广告.beta.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/滴滴出行去广告.beta.sgmodule",
+      "name": "滴滴出行去广告",
+      "desc": "移除开屏广告、精简首页、底栏和我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "百度网盘去广告",
+      "filename": "百度网盘去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/百度网盘去广告.sgmodule",
+      "name": "百度网盘去广告",
+      "desc": "移除开屏广告、首页卡片广告、传输页面广告、各类弹窗，精简侧拉抽屉和我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "知乎去广告",
+      "filename": "知乎去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/知乎去广告.sgmodule",
+      "name": "知乎去广告",
+      "desc": "移除各部分广告，移除知乎安全中心跳转，建议卸载知乎重新安装。如遇安全中心页面移除失败的，请积极反馈。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "菜鸟去广告",
+      "filename": "菜鸟去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/菜鸟去广告.sgmodule",
+      "name": "菜鸟去广告",
+      "desc": "过滤菜鸟广告",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "闲鱼去广告",
+      "filename": "闲鱼去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/闲鱼去广告.sgmodule",
+      "name": "闲鱼去广告",
+      "desc": "移除开屏广告、商品信息流广告、关注推荐、搜索栏填充词、首页签到入口及悬浮广告，精简我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "阿里云盘去广告",
+      "filename": "阿里云盘去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/阿里云盘去广告.sgmodule",
+      "name": "阿里云盘去广告",
+      "desc": "移除首页广告横幅、弹窗和顶部奖励。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "高德地图去广告",
+      "filename": "高德地图去广告.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/高德地图去广告.sgmodule",
+      "name": "高德地图去广告",
+      "desc": "过滤高德地图开屏广告、各页面推广，精简我的页面。",
+      "tags": [
+        "去广告"
+      ]
+    },
+    {
+      "id": "🐦 微博去广告合集",
+      "filename": "🐦 微博去广告合集.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/🐦 微博去广告合集.sgmodule",
+      "name": "🐦 微博去广告合集",
+      "desc": "合并微博+微博国际版去广告 (自动追随上游更新)\\n\\n上游: fmz200/wool_scripts, iab0x00",
+      "tags": [
+        "去广告",
+        "微博",
+        "合并",
+        "自动更新"
+      ]
     }
   ]
 }
