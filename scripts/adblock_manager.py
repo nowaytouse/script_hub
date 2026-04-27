@@ -478,34 +478,29 @@ class AdBlockManager:
         return result
 
     def is_enhancement_line(self, line: str) -> bool:
-        """Check if a line (Script/Header Rewrite/etc) is likely an enhancement rather than ad-block."""
+        """Check if a line is an enhancement. Ad-block takes priority (keep if it looks like ad-block)."""
         lower_line = line.lower()
         
-        # Enhancement keywords that strongly suggest non-adblock features
+        adblock_keywords = [
+            "reject", "clean", "strip", 
+            "blank", "pixel", "广告", "拦截", "去广告",
+            "anti-ad", "adblock", "tracking", "fix", "修复"
+        ]
+        
         enhancement_keywords = [
             "translate", "translation", "翻译", 
             "unlock", "解锁", "crack", "破解",
             "vip", "premium", "会员", "会员解锁",
-            "hook", "script-hub", "conversion", "转换",
-            "feature", "enhanced", "增强", "iap", "receipt",
-            "translations", "nsfw"
+            "hook", "conversion", "转换",
+            "feature", "iap", "receipt", "nsfw"
         ]
-        
-        # Adblock keywords that suggest it IS adblock
-        adblock_keywords = [
-            "reject", "clean", "strip", 
-            "blank", "pixel", "广告", "拦截", "去广告",
-            "anti-ad", "adblock", "tracking"
-        ]
-        
-        # Specific enhancement patterns
-        if "header-" in lower_line and "translation" in lower_line:
-            return True
+
+        # PRIORITY 1: If it looks like ad-block, it's NOT an enhancement (Keep it!)
+        if any(kw in lower_line for kw in adblock_keywords):
+            return False
             
-        # If it has enhancement keywords, it's likely an enhancement
+        # PRIORITY 2: If it ONLY has enhancement keywords, filter it out
         if any(kw in lower_line for kw in enhancement_keywords):
-            # Check if it ALSO has adblock keywords - if so, it's a "mixed" rule
-            # and should still be treated as an enhancement for separation purposes
             return True
             
         return False
