@@ -27,6 +27,21 @@ SPECIAL = {
     "🚫 Universal Ad-Blocking Rules (PROMAX)": "⭐"
 }
 
+# 已合并到合集的模块（应该被排除）
+# 这些单独模块的功能已经完全包含在对应的合集模块中
+# 为避免用户重复安装，脚本会自动排除这些模块
+MERGED_MODULES = {
+    # BiliBili 单独模块已合并到 BiliBili增强合集
+    # 合集包含: Enhanced(UI自定义) + Global(全区搜索) + Redirect(CDN重定向) + ADBlock(去广告) + Helper(禁P2P)
+    "BiliBili.Enhanced.sgmodule": "📺 BiliBili增强合集",
+    "BiliBili.Global.sgmodule": "📺 BiliBili增强合集",
+    "BiliBili.Redirect.sgmodule": "📺 BiliBili增强合集",
+    
+    # YouTube 单独模块已合并到 YouTube增强合集
+    # 合集包含: Enhance(画中画/后台播放/字幕翻译) + ADBlock(去广告)
+    "YouTube.Enhance.sgmodule": "📺 YouTube增强合集",
+}
+
 def scan_modules(base_dir, is_shadowrocket=False):
     """扫描模块目录"""
     modules = {}
@@ -38,7 +53,13 @@ def scan_modules(base_dir, is_shadowrocket=False):
             continue
             
         items = []
+        skipped = []
         for file in sorted(cat_dir.glob("*.sgmodule" if not is_shadowrocket else "*.module")):
+            # 检查是否已合并到合集
+            if file.name in MERGED_MODULES:
+                skipped.append(f"{file.name} → {MERGED_MODULES[file.name]}")
+                continue
+                
             try:
                 with open(file, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -66,6 +87,11 @@ def scan_modules(base_dir, is_shadowrocket=False):
                 })
             except Exception as e:
                 print(f"  ⚠️  跳过 {file.name}: {e}")
+        
+        if skipped:
+            print(f"  ℹ️  已排除 {len(skipped)} 个已合并模块:")
+            for s in skipped:
+                print(f"     - {s}")
         
         modules[cat_key] = {"name": cat_name, "items": items}
     
