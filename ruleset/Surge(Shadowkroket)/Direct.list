@@ -1,8 +1,8 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 119237
-# Updated: 2026-04-27 18:03:30
+# Rules: 119220
+# Updated: 2026-04-27 18:11:10
 
 DOMAIN,004430.xyz
 DOMAIN,0d.kebhana.mx
@@ -73,7 +73,6 @@ DOMAIN,dc1-st.ksn.kaspersky-labs.com
 DOMAIN,dc1.ksn.kaspersky-labs.com
 DOMAIN,dds.dell.com
 DOMAIN,dl.dell.com
-DOMAIN,dldir1.qq.com
 DOMAIN,dnl-00.geo.kaspersky.com
 DOMAIN,dnl-01.geo.kaspersky.com
 DOMAIN,dnl-02.geo.kaspersky.com
@@ -312,7 +311,6 @@ DOMAIN,shahidrazi.online
 DOMAIN,share.hkg-fansub.info
 DOMAIN,shubt.net
 DOMAIN,si.cdn.dell.com
-DOMAIN,slife.xy-asia.com
 DOMAIN,slive.ytn.co.kr
 DOMAIN,sm.dell.com
 DOMAIN,smart.uhdnow.com
@@ -445,9 +443,7 @@ DOMAIN,v1.one-tv.com
 DOMAIN,vip888.kuyun99.com
 DOMAIN,vito-tracker.duckdns.org
 DOMAIN,vss.cbnmtv.com
-DOMAIN,vweixinf.tc.qq.com
 DOMAIN,w3.wifijiangyin.com
-DOMAIN,weixin110.qq.com
 DOMAIN,weizhiyundong.list
 DOMAIN,wepzone.net
 DOMAIN,whybother.torrentonline.cc
@@ -64477,7 +64473,6 @@ DOMAIN-SUFFIX,lbkaiguan.com
 DOMAIN-SUFFIX,lbkrs.com
 DOMAIN-SUFFIX,lbmobi.com
 DOMAIN-SUFFIX,lbrencai.com
-DOMAIN-SUFFIX,lbs.gtimg.com
 DOMAIN-SUFFIX,lbsdermyy.com
 DOMAIN-SUFFIX,lbsdmy.com
 DOMAIN-SUFFIX,lbsrmyy.com
@@ -68950,7 +68945,6 @@ DOMAIN-SUFFIX,maoyun.tv
 DOMAIN-SUFFIX,maoyuncloud.com
 DOMAIN-SUFFIX,maozhishi.com
 DOMAIN-SUFFIX,maozhuashow.com
-DOMAIN-SUFFIX,map.qq.com
 DOMAIN-SUFFIX,map17.com
 DOMAIN-SUFFIX,map456.com
 DOMAIN-SUFFIX,map456.net
@@ -80682,7 +80676,6 @@ DOMAIN-SUFFIX,qlmec.com
 DOMAIN-SUFFIX,qlmf.com
 DOMAIN-SUFFIX,qlmoney.com
 DOMAIN-SUFFIX,qlnonwoven.com
-DOMAIN-SUFFIX,qlogo.cn
 DOMAIN-SUFFIX,qlotc.net
 DOMAIN-SUFFIX,qlrc.com
 DOMAIN-SUFFIX,qlrc114.com
@@ -80806,7 +80799,6 @@ DOMAIN-SUFFIX,qpdiy.com
 DOMAIN-SUFFIX,qpgame.com
 DOMAIN-SUFFIX,qpgczx.com
 DOMAIN-SUFFIX,qphospital.com
-DOMAIN-SUFFIX,qpic.cn
 DOMAIN-SUFFIX,qpjjku.com
 DOMAIN-SUFFIX,qpjylm.com
 DOMAIN-SUFFIX,qpkaifa.com
@@ -99789,7 +99781,6 @@ DOMAIN-SUFFIX,vvzero.com
 DOMAIN-SUFFIX,vw888.com
 DOMAIN-SUFFIX,vwanjia.com
 DOMAIN-SUFFIX,vwaycn.com
-DOMAIN-SUFFIX,vweixinthumb.tc.qq.com
 DOMAIN-SUFFIX,vwhulian.com
 DOMAIN-SUFFIX,vwkbh1674.com
 DOMAIN-SUFFIX,vwo50.club
@@ -100827,10 +100818,8 @@ DOMAIN-SUFFIX,wechatauthdemo.com
 DOMAIN-SUFFIX,wechatdevelop.com
 DOMAIN-SUFFIX,wechatify.net
 DOMAIN-SUFFIX,wechatlegal.com
-DOMAIN-SUFFIX,wechatlegal.net
 DOMAIN-SUFFIX,wechatmessenger.com
 DOMAIN-SUFFIX,wechatmessenger.us
-DOMAIN-SUFFIX,wechatos.net
 DOMAIN-SUFFIX,wechatpay-global.com
 DOMAIN-SUFFIX,wechatpay.com
 DOMAIN-SUFFIX,wechatpay.com.hk
@@ -101171,7 +101160,6 @@ DOMAIN-SUFFIX,weixiaov.club
 DOMAIN-SUFFIX,weixiaozs.com
 DOMAIN-SUFFIX,weiximusic.com
 DOMAIN-SUFFIX,weixin-001.com
-DOMAIN-SUFFIX,weixin.com
 DOMAIN-SUFFIX,weixin.qq.com
 DOMAIN-SUFFIX,weixin12315.com
 DOMAIN-SUFFIX,weixinbang.com
@@ -101198,7 +101186,6 @@ DOMAIN-SUFFIX,weixinqn.com
 DOMAIN-SUFFIX,weixinqz.com
 DOMAIN-SUFFIX,weixinrensheng.com
 DOMAIN-SUFFIX,weixinsir.com
-DOMAIN-SUFFIX,weixinsxy.com
 DOMAIN-SUFFIX,weixinyanxuan.com
 DOMAIN-SUFFIX,weixinyidu.com
 DOMAIN-SUFFIX,weixinyunduan.com
@@ -103805,7 +103792,6 @@ DOMAIN-SUFFIX,wx-xdxc.com
 DOMAIN-SUFFIX,wx-yn.com
 DOMAIN-SUFFIX,wx-youyan.net
 DOMAIN-SUFFIX,wx.com
-DOMAIN-SUFFIX,wx.gtimg.com
 DOMAIN-SUFFIX,wx.qq.com
 DOMAIN-SUFFIX,wx135.com
 DOMAIN-SUFFIX,wx2h.com
@@ -103820,7 +103806,6 @@ DOMAIN-SUFFIX,wxagame.com
 DOMAIN-SUFFIX,wxagyy.com
 DOMAIN-SUFFIX,wxamedia.com
 DOMAIN-SUFFIX,wxamkfyy.com
-DOMAIN-SUFFIX,wxapp.tc.qq.com
 DOMAIN-SUFFIX,wxappclub.com
 DOMAIN-SUFFIX,wxappvideo.com
 DOMAIN-SUFFIX,wxatech.com
@@ -119234,10 +119219,8 @@ PROCESS-NAME,/Applications/Transmission.app/
 PROCESS-NAME,/Applications/evol.app/
 USER-AGENT,%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90*
 USER-AGENT,MOO%E9%9F%B3%E4%B9%90*
-USER-AGENT,MicroMessenger*
 USER-AGENT,NeteaseMusic*
 USER-AGENT,QQ%E9%9F%B3%E4%B9%90
 USER-AGENT,TencentMidasConnect*
-USER-AGENT,WeChat*
 USER-AGENT,live4iphone*
 USER-AGENT,qqlive4iphone*

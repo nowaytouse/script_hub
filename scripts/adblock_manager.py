@@ -800,12 +800,27 @@ class AdBlockManager:
         )
 
         content = [header]
-        for policy in ("REJECT-DROP", "REJECT-NO-DROP"):
-            rules = sorted(self.rules[policy])
-            if not rules:
+        
+        # Define complex rule prefixes that MUST stay in the [Rule] section (unsupported in .list)
+        complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
+        
+        for policy in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP"):
+            all_rules = sorted(self.rules[policy])
+            if not all_rules:
                 continue
-            content.append(f"# Merged {policy} Rules ({len(rules)})\n")
-            content.extend(f"{rule}\n" for rule in rules)
+                
+            # For REJECT policy, only include complex rules in the module.
+            # Simple DOMAIN/IP rules go to the external AdBlock.list.
+            if policy == "REJECT":
+                display_rules = [r for r in all_rules if any(r.startswith(p) for p in complex_prefixes)]
+            else:
+                display_rules = all_rules
+                
+            if not display_rules:
+                continue
+                
+            content.append(f"# Merged {policy} Rules ({len(display_rules)})\n")
+            content.extend(f"{rule}\n" for rule in display_rules)
             content.append("\n")
 
         for section_name in SECTION_NAMES:
@@ -853,28 +868,6 @@ class AdBlockManager:
                 + (" ..." if len(sync_failures) > 10 else "")
             )
 
-        local_modules = self.discover_local_modules()
-        
-        # Merge narrow_pierce modules for PROMAX version (excluding blacklisted ones from merge_promax.py)
-        # Merge narrow_pierce modules for PROMAX version
-        if os.path.exists(NARROW_PIERCE_DIR):
-            blacklist = ["WeChat_Enhance.sgmodule", "扫描全能王解锁.sgmodule", "[Sukka] URL Rewrite.sgmodule"]
-            seen_canonical_narrow = set()
-            for filename in sorted(os.listdir(NARROW_PIERCE_DIR)):
-                if filename.endswith(MODULE_SUFFIXES) and filename not in blacklist:
-                    canonical_name = urllib.parse.unquote(filename)
-                    if canonical_name in seen_canonical_narrow:
-                        continue
-                    seen_canonical_narrow.add(canonical_name)
-                    
-                    # Filter for ad-blocking content as per legacy logic
-                    if any(kw in filename or kw in canonical_name for kw in ["去广告", "Ad", "10099", "RedNote", "Ads"]):
-                        local_modules.append(os.path.join(NARROW_PIERCE_DIR, filename))
-
-        Logger.info(f"Extracting local module sections from {len(local_modules)} files...")
-        for module_path in local_modules:
-            self.extract_from_file(module_path, default_policy="REJECT", include_sections=True)
-
         Logger.section("Fetching Canonical AdBlock Sources")
         failures = self.process_source_entries(source_entries, cached_contents=cached_modules)
         if failures:
@@ -890,7 +883,9 @@ class AdBlockManager:
 
         self.generate_module()
         self.generate_ruleset()
-        self.save_hashes(self.build_input_hashes(local_modules, source_entries))
+        # Save hashes for change tracking
+        local_source_paths = [e.resolved_path for e in source_entries if not e.is_remote]
+        self.save_hashes(self.build_input_hashes(local_source_paths, source_entries))
 
         if sync_failures or failures:
             Logger.warn(
