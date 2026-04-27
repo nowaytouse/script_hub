@@ -101,8 +101,7 @@ https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge
 ../LocalModules/高德地图去广告.sgmodule|REJECT
 ../LocalModules/🐦 微博去广告合集.sgmodule|REJECT
 
-# Head Expanse综合去广告模块 (非Rule部分合并到PROMAX)
-# 这些模块已融入PROMAX,保留在local_sources目录作为源文件
-../../../module/surge(main)/local_sources/AllInOne_Mock.sgmodule|REJECT
-../../../module/surge(main)/local_sources/All-in-One-2.x.sgmodule|REJECT
-../../../module/surge(main)/local_sources/[Sukka] Enhance Better ADBlock for Surge.sgmodule|REJECT
+# Local Sources - 已融入PROMAX的源模块 (仅供脚本读取)
+../../../module/local_sources/AllInOne_Mock.sgmodule|REJECT
+../../../module/local_sources/All-in-One-2.x.sgmodule|REJECT
+../../../module/local_sources/[Sukka] Enhance Better ADBlock for Surge.sgmodule|REJECT
