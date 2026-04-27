@@ -191,15 +191,25 @@ class AdBlockManager:
         return None
 
     def discover_local_modules(self) -> List[str]:
-        discovered = []
+        discovered_paths = []
+        seen_canonical_names = set()
         excluded = {os.path.basename(TARGET_MODULE), os.path.basename(FIREWALL_MODULE)}
+        
+        # Scan HEAD_EXPANSE_DIR
         for entry in sorted(os.listdir(HEAD_EXPANSE_DIR)):
             if not entry.endswith(MODULE_SUFFIXES):
                 continue
             if entry in excluded:
                 continue
-            discovered.append(os.path.join(HEAD_EXPANSE_DIR, entry))
-        return discovered
+            
+            canonical_name = urllib.parse.unquote(entry)
+            if canonical_name in seen_canonical_names:
+                continue
+            
+            seen_canonical_names.add(canonical_name)
+            discovered_paths.append(os.path.join(HEAD_EXPANSE_DIR, entry))
+            
+        return discovered_paths
 
     def load_source_entries(self) -> List[SourceEntry]:
         entries: List[SourceEntry] = []
@@ -848,12 +858,19 @@ class AdBlockManager:
         local_modules = self.discover_local_modules()
         
         # Merge narrow_pierce modules for PROMAX version (excluding blacklisted ones from merge_promax.py)
+        # Merge narrow_pierce modules for PROMAX version
         if os.path.exists(NARROW_PIERCE_DIR):
             blacklist = ["WeChat_Enhance.sgmodule", "扫描全能王解锁.sgmodule", "[Sukka] URL Rewrite.sgmodule"]
-            for filename in os.listdir(NARROW_PIERCE_DIR):
+            seen_canonical_narrow = set()
+            for filename in sorted(os.listdir(NARROW_PIERCE_DIR)):
                 if filename.endswith(MODULE_SUFFIXES) and filename not in blacklist:
+                    canonical_name = urllib.parse.unquote(filename)
+                    if canonical_name in seen_canonical_narrow:
+                        continue
+                    seen_canonical_narrow.add(canonical_name)
+                    
                     # Filter for ad-blocking content as per legacy logic
-                    if any(kw in filename for kw in ["去广告", "Ad", "10099", "RedNote"]):
+                    if any(kw in filename or kw in canonical_name for kw in ["去广告", "Ad", "10099", "RedNote", "Ads"]):
                         local_modules.append(os.path.join(NARROW_PIERCE_DIR, filename))
 
         Logger.info(f"Extracting local module sections from {len(local_modules)} files...")
