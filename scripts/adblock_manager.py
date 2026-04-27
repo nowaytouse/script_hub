@@ -321,8 +321,8 @@ class AdBlockManager:
 
         if "," in rule:
             parts = [p.strip() for p in rule.split(",")]
-            # If the last part is a policy, remove it
-            if parts[-1].upper() in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY", "REJECT-TINYGIF", "REJECT-IMG"):
+            # If the last part is a policy or a placeholder, remove it
+            while parts and (parts[-1].upper() in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY", "REJECT-TINYGIF", "REJECT-IMG") or parts[-1] == "{{{Proxy}}}"):
                 parts = parts[:-1]
             rule = ",".join(parts)
         else:
@@ -346,6 +346,11 @@ class AdBlockManager:
             if " " in payload or payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
                 return None
             return f'DOMAIN-REGEX,"{payload}"'
+
+        if rule.startswith("URL-REGEX,"):
+            payload = rule.split(",", 1)[1].strip().strip('"')
+            if "," in payload:
+                return f'URL-REGEX,"{payload}"'
 
         return rule
 
