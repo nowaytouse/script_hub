@@ -462,9 +462,16 @@ class AdBlockManager:
         if "no-resolve" in raw_rule:
             options.append("no-resolve")
 
+        # Basic rendering
+        result = f"{normalized_rule},{policy}"
+        
+        # Post-validation: ensure we didn't end up with something like PROCESS-NAME,SogouInput without policy
+        # If normalized_rule didn't already have a policy stripped (e.g. it was just type,value)
+        # our simple append is correct.
+        
         if options:
-            return f"{normalized_rule},{policy},{','.join(options)}"
-        return f"{normalized_rule},{policy}"
+            return f"{result},{','.join(options)}"
+        return result
 
     def is_enhancement_line(self, line: str) -> bool:
         """Check if a line (Script/Header Rewrite/etc) is likely an enhancement rather than ad-block."""
