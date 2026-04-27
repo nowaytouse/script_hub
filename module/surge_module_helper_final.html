@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surge/Shadowrocket 模块导入助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: #fff; 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
+        .subtitle { text-align: center; opacity: 0.9; margin-bottom: 30px; }
+        
+        .stats { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .stat { background: rgba(255,255,255,0.15); padding: 15px 25px; border-radius: 15px; text-align: center; }
+        .stat-num { font-size: 2em; font-weight: bold; }
+        .stat-label { font-size: 0.85em; margin-top: 5px; }
+        
+        .category { background: rgba(255,255,255,0.1); border-radius: 20px; margin-bottom: 20px; overflow: hidden; }
+        .category-header { padding: 20px; cursor: pointer; display: flex; align-items: center; }
+        .category-header:hover { background: rgba(255,255,255,0.05); }
+        .category-title { flex: 1; font-size: 1.3em; font-weight: 600; }
+        .category-count { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px; margin-right: 10px; }
+        
+        .modules { padding: 0 20px 20px; }
+        .module { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            padding: 15px; 
+            background: rgba(255,255,255,0.08); 
+            border-radius: 15px; 
+            margin-bottom: 10px;
+        }
+        .module-info { flex: 1; }
+        .module-name { font-weight: 600; margin-bottom: 5px; }
+        .module-desc { font-size: 0.85em; opacity: 0.8; }
+        
+        .copy-btn { 
+            background: rgba(33,150,243,0.5); 
+            border: none; 
+            color: #fff; 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: 600;
+        }
+        .copy-btn:hover { background: rgba(33,150,243,0.7); }
+        .copy-btn.copied { background: rgba(76,175,80,0.5); }
+        
+        .toast { 
+            position: fixed; 
+            bottom: 30px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: rgba(0,0,0,0.9); 
+            padding: 15px 30px; 
+            border-radius: 25px; 
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚀 Surge 模块导入助手</h1>
+    <p class="subtitle">点击复制按钮 → 粘贴到 Surge「从URL安装模块」</p>
+    
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num" id="totalCount">0</div>
+            <div class="stat-label">总模块</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" id="copiedCount">0</div>
+            <div class="stat-label">已复制</div>
+        </div>
+    </div>
+    
+    <div id="moduleList"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    try {
+        console.log('=== 脚本开始执行 ===');
+        
+        // 数据将由Python脚本注入
+        const MODULES_DATA = __MODULES_DATA_PLACEHOLDER__;
+        
+        console.log('数据加载成功:', MODULES_DATA);
+        
+        let copiedModules = {};
+        try {
+            copiedModules = JSON.parse(localStorage.getItem('module_copied') || '{}');
+        } catch (e) {
+            console.warn('读取localStorage失败:', e);
+        }
+        
+        function updateStats() {
+            let total = 0, copied = 0;
+            Object.values(MODULES_DATA.surge).forEach(cat => {
+                total += cat.items.length;
+                cat.items.forEach(m => {
+                    if (copiedModules[m.url]) copied++;
+                });
+            });
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('copiedCount').textContent = copied;
+            console.log('统计更新:', {total, copied});
+        }
+        
+        window.copyUrl = async function(url, btn) {
+            try {
+                await navigator.clipboard.writeText(url);
+                copiedModules[url] = Date.now();
+                localStorage.setItem('module_copied', JSON.stringify(copiedModules));
+                btn.textContent = '✓ 已复制';
+                btn.classList.add('copied');
+                updateStats();
+                showToast('✓ 已复制');
+            } catch (e) {
+                console.error('复制失败:', e);
+                alert('复制失败: ' + e.message);
+            }
+        };
+        
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        function render() {
+            console.log('开始渲染...');
+            const container = document.getElementById('moduleList');
+            container.innerHTML = '';
+            
+            Object.entries(MODULES_DATA.surge).forEach(([catKey, cat]) => {
+                console.log('渲染分类:', catKey, '模块数:', cat.items.length);
+                
+                const categoryEl = document.createElement('div');
+                categoryEl.className = 'category';
+                
+                const copiedCount = cat.items.filter(m => copiedModules[m.url]).length;
+                
+                categoryEl.innerHTML = `
+                    <div class="category-header">
+                        <div class="category-title">${cat.name}</div>
+                        <div class="category-count">${copiedCount}/${cat.items.length}</div>
+                    </div>
+                    <div class="modules"></div>
+                `;
+                
+                const modulesContainer = categoryEl.querySelector('.modules');
+                
+                cat.items.forEach(m => {
+                    const isCopied = !!copiedModules[m.url];
+                    const moduleEl = document.createElement('div');
+                    moduleEl.className = 'module';
+                    moduleEl.innerHTML = `
+                        <div class="module-info">
+                            <div class="module-name">${m.name}</div>
+                            <div class="module-desc">${m.desc || ''}</div>
+                        </div>
+                        <button class="copy-btn ${isCopied ? 'copied' : ''}" onclick="copyUrl('${m.url.replace(/'/g, "\\'")}', this)">
+                            ${isCopied ? '✓ 已复制' : '复制'}
+                        </button>
+                    `;
+                    modulesContainer.appendChild(moduleEl);
+                });
+                
+                container.appendChild(categoryEl);
+            });
+            
+            console.log('渲染完成');
+        }
+        
+        // 初始化
+        console.log('执行初始化...');
+        render();
+        updateStats();
+        console.log('=== 初始化完成 ===');
+        
+    } catch (error) {
+        console.error('=== 发生错误 ===', error);
+        document.body.innerHTML = `
+            <div style="padding:40px; text-align:center;">
+                <h1 style="color:#f44336;">❌ 加载失败</h1>
+                <p style="margin-top:20px; color:#fff;">错误信息: ${error.message}</p>
+                <pre style="margin-top:20px; text-align:left; background:rgba(0,0,0,0.5); padding:20px; border-radius:10px; overflow:auto;">${error.stack}</pre>
+            </div>
+        `;
+    }
+})();
+</script>
+</body>
+</html>

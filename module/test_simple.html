@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>简单测试</title>
+    <style>
+        body { background: #1a1a2e; color: #fff; padding: 20px; font-family: sans-serif; }
+        .module { background: rgba(255,255,255,0.1); padding: 15px; margin: 10px 0; border-radius: 10px; display: flex; gap: 10px; align-items: center; }
+        .copy-btn { background: #2196F3; border: none; color: #fff; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        .copy-btn:hover { background: #1976D2; }
+    </style>
+</head>
+<body>
+    <h1>简单测试 - 检查数据加载</h1>
+    <div id="debug"></div>
+    <div id="modules"></div>
+    
+    <script>
+        const debug = document.getElementById('debug');
+        const modulesContainer = document.getElementById('modules');
+        
+        // 测试数据
+        const testData = {
+            "amplify_nexus": {
+                "name": "测试分组",
+                "items": [
+                    {"name": "测试模块1", "desc": "描述1", "url": "https://example.com/1.sgmodule"},
+                    {"name": "测试模块2", "desc": "描述2", "url": "https://example.com/2.sgmodule"},
+                    {"name": "测试模块3", "desc": "描述3", "url": "https://example.com/3.sgmodule"}
+                ]
+            }
+        };
+        
+        debug.innerHTML = `
+            <p>✅ JavaScript 正在运行</p>
+            <p>✅ 测试数据: ${JSON.stringify(testData).substring(0, 100)}...</p>
+            <p>✅ 模块数量: ${testData.amplify_nexus.items.length}</p>
+        `;
+        
+        // 渲染模块
+        testData.amplify_nexus.items.forEach((m, idx) => {
+            const div = document.createElement('div');
+            div.className = 'module';
+            div.innerHTML = `
+                <div style="flex:1;">
+                    <strong>${m.name}</strong><br>
+                    <small>${m.desc}</small>
+                </div>
+                <button class="copy-btn" onclick="alert('复制: ${m.url}')">复制</button>
+            `;
+            modulesContainer.appendChild(div);
+        });
+        
+        debug.innerHTML += `<p>✅ 已渲染 ${modulesContainer.children.length} 个模块</p>`;
+    </script>
+</body>
+</html>
