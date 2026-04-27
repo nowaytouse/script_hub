@@ -758,7 +758,8 @@ class AdBlockManager:
                 failures.append(entry.display_name)
                 continue
 
-            self.extract_from_text(content, default_policy=entry.policy, include_sections=False)
+            include_sections = self.is_module_source(entry)
+            self.extract_from_text(content, default_policy=entry.policy, include_sections=include_sections)
             Logger.success(f"  ✓ {entry.display_name}")
         return failures
 
