@@ -5,13 +5,13 @@
 
 [Script]
 
-fix-vvebo-user-timeline = type=http-request, pattern=^https:\/\/api\.weibo\.cn\/2\/remind\/unread_count\?, script-path=https://raw.githubusercontent.com/suiyuran/stash/main/scripts/fix-vvebo-user-timeline.js
+fix-vvebo-user-timeline = type=http-request, pattern=^https:\/\/api\.weibo\.cn\/2\/remind\/unread_count\?, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/raw_githubusercontent_com_1fc763_fix-vvebo-user-timeline.js
 
-fix-vvebo-user-timeline2 = type=http-request, pattern=^https:\/\/api\.weibo\.cn\/2\/statuses\/user_timeline\?, script-path=https://raw.githubusercontent.com/suiyuran/stash/main/scripts/fix-vvebo-user-timeline.js
+fix-vvebo-user-timeline2 = type=http-request, pattern=^https:\/\/api\.weibo\.cn\/2\/statuses\/user_timeline\?, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/raw_githubusercontent_com_1fc763_fix-vvebo-user-timeline.js
 
-fix-vvebo-user-timeline3 = type=http-response, pattern=^https:\/\/api\.weibo\.cn\/2\/profile\/statuses\/tab\?, script-path=https://raw.githubusercontent.com/suiyuran/stash/main/scripts/fix-vvebo-user-timeline.js, requires-body=true
+fix-vvebo-user-timeline3 = type=http-response, pattern=^https:\/\/api\.weibo\.cn\/2\/profile\/statuses\/tab\?, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/raw_githubusercontent_com_1fc763_fix-vvebo-user-timeline.js, requires-body=true
 
-fix-vvebo-fans = type=http-response, pattern=^https:\/\/api\.weibo\.cn\/2\/cardlist\?, script-path=https://raw.githubusercontent.com/suiyuran/stash/main/scripts/fix-vvebo-fans.js, requires-body=true
+fix-vvebo-fans = type=http-response, pattern=^https:\/\/api\.weibo\.cn\/2\/cardlist\?, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/raw_githubusercontent_com_47b519_fix-vvebo-fans.js, requires-body=true
 
 [MITM]
 

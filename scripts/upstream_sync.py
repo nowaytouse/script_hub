@@ -453,6 +453,16 @@ if __name__ == "__main__":
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
+    
+    # NEW: Privatize and Localize external scripts after syncing modules
+    Logger.section("Privatizing External Scripts")
+    try:
+        from maintenance.localize_scripts import main as localize_main
+        localize_main()
+        Logger.success("All external scripts localized to module/scripts/")
+    except Exception as e:
+        Logger.error(f"Script localization failed: {e}")
+
     from ruleset_manager import RulesetManager
     from smart_cleanup import run_cleanup as run_ruleset_cleanup
 

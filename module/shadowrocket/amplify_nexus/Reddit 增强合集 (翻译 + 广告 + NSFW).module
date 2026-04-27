@@ -13,7 +13,7 @@ dns-direct-fallback-proxy = false
 
 [Script]
 # 自动翻译注入
-Reddit 自动翻译 = type=http-request, pattern=^https?:\/\/gql(-fed)?\.reddit\.com, script-path=https://gist.github.com/RavelloH/68ed0626dae69a1ce7c8ad6887087ea1/raw/c008127260bc4dcd550fcd98285048cf6176f602/main.js, timeout=30, requires-body=false
+Reddit 自动翻译 = type=http-request, pattern=^https?:\/\/gql(-fed)?\.reddit\.com, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/gist_github_com_523c58_main.js, timeout=30, requires-body=false
 
 [Body Rewrite]
 # NSFW 解锁与去广告 (JQ 版)
