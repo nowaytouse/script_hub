@@ -1,5 +1,5 @@
-# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
 # name: BoxJs
+# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
 # desc: [🚀SR] http://boxjs.com
 # author: ChavyLeung
 # homepage: https://docs.boxjs.app/
@@ -11,10 +11,10 @@ ipv6 = true
 prefer-ipv6 = true
 hijack-dns = *:53
 dns-direct-fallback-proxy = false
-# [SR不支持,已移除] force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
+# [SR不支持] force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
 
 [Script]
 Rewrite: BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/raw_githubusercontent_com_cb5e10_chavy.boxjs.js, requires-body=true, timeout=120
 
 [MITM]
-hostname = boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net

@@ -1,5 +1,5 @@
-# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
 # name: 📺 BiliBili增强合集
+# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
 # desc: [🚀SR] 合并BiliUniverse五大模块 (自动追随上游更新)\n⚙️ Enhanced: UI自定义\n🌐 Global: 全区搜索\n🔀 Redirect: CDN重定向\n🛡️ ADBlock: 去广告\n🛠️ Helper: 禁P2P
 # author: VirgilClyne, ClydeTime, Maasea
 # icon: https://github.com/BiliUniverse/Enhanced/raw/main/src/assets/icon_rounded.png
@@ -15,7 +15,7 @@ ipv6 = true
 prefer-ipv6 = true
 hijack-dns = *:53
 dns-direct-fallback-proxy = false
-# [SR不支持,已移除] force-http-engine-hosts = %APPEND% *:4480, *:4483, *:8000, *:8082, *:9102
+# [SR不支持] force-http-engine-hosts = %APPEND% *:4480, *:4483, *:8000, *:8082, *:9102
 
 [Rule]
 DOMAIN-WILDCARD,*pcdn*.biliapi.net,REJECT

@@ -1,5 +1,5 @@
-# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
 # name: Reddit 增强合集 (翻译 + 广告 + NSFW)
+# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
 # desc: [🚀SR] Reddit 功能增强：自动翻译 + 去广告 + NSFW 解锁 (基于 JQ 引擎)
 # author: RavelloH, ScriptHub
 
@@ -9,7 +9,7 @@ ipv6 = true
 prefer-ipv6 = true
 hijack-dns = *:53
 dns-direct-fallback-proxy = false
-# [SR不支持,已移除] force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
+# [SR不支持] force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
 
 [Script]
 # 自动翻译注入
