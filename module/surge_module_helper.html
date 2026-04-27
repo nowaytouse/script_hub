@@ -1,477 +1,261 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Surge/Shadowrocket 模块导入助手</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; min-height: 100vh; padding: 20px; }
-.container { max-width: 1200px; margin: 0 auto; }
-h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
-.subtitle { text-align: center; opacity: 0.9; margin-bottom: 30px; }
-.app-switch { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
-.app-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: #fff; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.3s; }
-.app-btn:hover { background: rgba(255,255,255,0.2); }
-.app-btn.active { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); }
-.stats { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
-.stat { background: rgba(255,255,255,0.15); padding: 15px 25px; border-radius: 15px; text-align: center; }
-.stat-num { font-size: 2em; font-weight: bold; }
-.stat-label { font-size: 0.85em; margin-top: 5px; }
-.category { background: rgba(255,255,255,0.1); border-radius: 20px; margin-bottom: 20px; overflow: hidden; }
-.category-header { padding: 20px; cursor: pointer; display: flex; align-items: center; }
-.category-header:hover { background: rgba(255,255,255,0.05); }
-.category-title { flex: 1; font-size: 1.3em; font-weight: 600; }
-.category-count { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px; margin-right: 10px; }
-.category-toggle { transition: transform 0.3s; }
-.category.collapsed .category-toggle { transform: rotate(-90deg); }
-.category.collapsed .modules { display: none; }
-.modules { padding: 0 20px 20px; }
-.module { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.08); border-radius: 15px; margin-bottom: 10px; transition: all 0.3s; }
-.module:hover { background: rgba(255,255,255,0.15); transform: translateX(5px); }
-.module.copied { background: rgba(76,175,80,0.2); }
-.module-info { flex: 1; }
-.module-name { font-weight: 600; margin-bottom: 5px; }
-.module-desc { font-size: 0.85em; opacity: 0.8; }
-.copy-btn { background: rgba(33,150,243,0.5); border: none; color: #fff; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; transition: all 0.3s; }
-.copy-btn:hover { background: rgba(33,150,243,0.7); transform: scale(1.05); }
-.copy-btn.copied { background: rgba(76,175,80,0.5); }
-.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 15px 30px; border-radius: 25px; z-index: 1000; }
-.footer { text-align: center; margin-top: 40px; opacity: 0.6; font-size: 0.85em; }
-.sr-only { display: none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Hub | 模块导入助手</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            line-height: 1.5;
+            padding-bottom: 50px;
+        }
+        .header {
+            background: linear-gradient(to right, #1e293b, #0f172a);
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, #818cf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+        }
+        .nav-btn {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-dim);
+            padding: 10px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+        }
+        #search {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--card-bg);
+            color: white;
+            font-size: 1rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .category-section { margin-bottom: 40px; }
+        .category-title { 
+            font-size: 1.2rem; 
+            color: var(--accent); 
+            margin-bottom: 20px; 
+            padding-left: 10px;
+            border-left: 4px solid var(--accent);
+        }
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .module-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .module-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+        .module-header { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
+        .module-icon { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; background: #334155; }
+        .module-name-wrapper { flex: 1; min-width: 0; }
+        .module-name { font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .module-author { font-size: 0.8rem; color: var(--text-dim); }
+        .module-desc { 
+            font-size: 0.9rem; 
+            color: var(--text-dim); 
+            margin-bottom: 20px; 
+            flex: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .copy-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: var(--primary-hover); }
+        .copy-btn.success { background: var(--accent); }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .hidden { display: none !important; }
+        
+        @media (max-width: 600px) {
+            .module-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1 id="title">🚀 Surge 模块导入助手</h1>
-<p class="subtitle" id="subtitle">点击复制按钮 → 粘贴到 Surge「从URL安装模块」</p>
+    <div class="header">
+        <h1>Script Hub</h1>
+        <p style="color: var(--text-dim)">一站式 Surge & Shadowrocket 模块增强库</p>
+    </div>
 
-<div class="app-switch">
-<button class="app-btn active" onclick="switchApp('surge')">⚡ Surge</button>
-<button class="app-btn" onclick="switchApp('shadowrocket')">🚀 Shadowrocket</button>
-</div>
+    <div class="nav">
+        <button class="nav-btn active" onclick="switchApp('surge')">⚡ Surge (16)</button>
+        <button class="nav-btn" onclick="switchApp('shadowrocket')">🚀 Shadowrocket (20)</button>
+    </div>
 
-<div class="stats">
-<div class="stat"><div class="stat-num" id="total">0</div><div class="stat-label">总模块</div></div>
-<div class="stat"><div class="stat-num" id="copied">0</div><div class="stat-label">已复制</div></div>
-</div>
+    <div class="search-container">
+        <input type="text" id="search" placeholder="搜索模块名称或描述..." oninput="filterModules()">
+    </div>
 
-<div id="surge-modules">
+    <div id="main-content" class="container">
+        <!-- 内容由 JS 动态切换 -->
+    </div>
 
-<div class="category">
-<div class="category-header" onclick="toggleCat(this)">
-<div class="category-title">『 🛠️ Amplify Nexus › 增幅枢纽 』</div>
-<div class="category-count">14</div>
-<div class="category-toggle">▼</div>
-</div>
-<div class="modules">
+    <div id="toast" class="toast">✓ 链接已复制，请在 App 中粘贴安装</div>
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">🍿️ DualSubs: 🔣 Universal</div>
-<div class="module-desc">流媒体平台字幕增强及双语模块\n如需恢复TV完整支持\n请配合“ iRingo: 📺 TV”使用</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/DualSubs.Universal.sgmodule', this)">复制</button>
-</div>
+    <script>
+        const surgeData = {"amplify_nexus": {"name": "『 🛠️ Amplify Nexus › 增幅枢纽 』", "items": [{"name": "🍿️ DualSubs: 🔣 Universal", "desc": "流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用", "author": "VirgilClyne[https://github.com/VirgilClyne]", "icon": "https://github.com/DualSubs/Universal/raw/main/src/assets/icon_rounded.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/DualSubs.Universal.sgmodule", "badge": "", "filename": "DualSubs.Universal.sgmodule"}, {"name": "Reddit 增强合集 (翻译 + 广告 + NSFW)", "desc": "Reddit 功能增强：自动翻译 + 去广告 + NSFW 解锁 (基于 JQ 引擎)", "author": "RavelloH, ScriptHub", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule", "badge": "", "filename": "Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule"}, {"name": "Script Hub: 重写 & 规则集转换", "desc": "https://script.hub", "author": "@小白脸 @xream @keywos @ckyb", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Script Hub 重写 & 规则集转换.sgmodule", "badge": "⭐", "filename": "Script Hub 重写 & 规则集转换.sgmodule"}, {"name": "机场订阅信息", "desc": "显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Sub_Info.sgmodule", "badge": "", "filename": "Sub_Info.sgmodule"}, {"name": "Sub-Store(β)", "desc": "支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Surge-Beta.sgmodule", "badge": "", "filename": "Surge-Beta.sgmodule"}, {"name": "节假日信息", "desc": "显示节假日的信息", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Timecard.sgmodule", "badge": "", "filename": "Timecard.sgmodule"}, {"name": "WeChat增强", "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。", "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/WeChat_Enhance.sgmodule", "badge": "", "filename": "WeChat_Enhance.sgmodule"}, {"name": "[Sukka] URL Rewrite", "desc": "Enable this module to use Sukka URL Rewrite rules", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule", "badge": "", "filename": "[Sukka] URL Rewrite.sgmodule"}, {"name": "BoxJs", "desc": "http://boxjs.com", "author": "ChavyLeung", "icon": "https://raw.githubusercontent.com/chavyleung/scripts/master/box/icons/BoxJs.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/boxjs.rewrite.surge.sgmodule", "badge": "", "filename": "boxjs.rewrite.surge.sgmodule"}, {"name": "网络信息 𝕏", "desc": "国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha", "author": "@keywos @xream https://t.me/zhetengsha", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/net-lsp-x.sgmodule", "badge": "", "filename": "net-lsp-x.sgmodule"}, {"name": "扫描全能王", "desc": "解锁扫描全能王", "author": "NobyDa", "icon": "https://raw.githubusercontent.com/deezertidal/private/main/icons/cs.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/扫描全能王解锁.sgmodule", "badge": "", "filename": "扫描全能王解锁.sgmodule"}, {"name": "🍎 Apple服务增强合集", "desc": "整合 iRingo 系列模块\\n包含: Maps(地图增强) + WeatherKit(天气增强)\\n解锁Apple服务的国际版功能", "author": "VirgilClyne[https://github.com/VirgilClyne]", "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule", "badge": "", "filename": "🍎 Apple服务增强合集.sgmodule"}, {"name": "📺 BiliBili增强合集", "desc": "合并BiliUniverse五大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向\\n🛡️ ADBlock: 去广告\\n🛠️ Helper: 禁P2P", "author": "VirgilClyne, ClydeTime, Maasea", "icon": "https://github.com/BiliUniverse/Enhanced/raw/main/src/assets/icon_rounded.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule", "badge": "", "filename": "📺 BiliBili增强合集.sgmodule"}, {"name": "📺 YouTube增强合集", "desc": "合并YouTube增强+去广告 (自动追随上游更新)\\n🎬 Enhance: 画中画/后台播放/字幕翻译\\n🛡️ ADBlock: 去广告", "author": "Maasea", "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/📺 YouTube增强合集.sgmodule", "badge": "", "filename": "📺 YouTube增强合集.sgmodule"}]}, "head_expanse": {"name": "『 🔝 Head Expanse › 首端扩域 』", "items": [{"name": "🔥 Firewall Port Blocker 🛡️", "desc": "Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP", "author": "nyamiiko (Enhanced)", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule", "badge": "", "filename": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"}, {"name": "🚫 Universal Ad-Blocking Rules (PROMAX)", "desc": "Canonical ad-block rebuild from curated rule sources, now fused with application-specific AdBlock modules (PROMAX version).", "author": "ScriptHub-Automated", "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule", "badge": "", "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"}]}, "narrow_pierce": {"name": "『 🎯 Narrow Pierce › 窄域穿刺 』", "items": []}};
+        const srData = {"amplify_nexus": {"name": "『 🛠️ Amplify Nexus › 增幅枢纽 』", "items": [{"name": "🍿️ DualSubs: 🔣 Universal", "desc": "[🚀SR] 流媒体平台字幕增强及双语模块", "author": "VirgilClyne[https://github.com/VirgilClyne]", "icon": "https://github.com/DualSubs/Universal/raw/main/src/assets/icon_rounded.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/DualSubs.Universal.module", "badge": "", "filename": "DualSubs.Universal.module"}, {"name": "Reddit 增强合集 (翻译 + 广告 + NSFW)", "desc": "[🚀SR] Reddit 功能增强：自动翻译 + 去广告 + NSFW 解锁 (基于 JQ 引擎)", "author": "RavelloH, ScriptHub", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Reddit 增强合集 (翻译 + 广告 + NSFW).module", "badge": "", "filename": "Reddit 增强合集 (翻译 + 广告 + NSFW).module"}, {"name": "Script Hub: 重写 & 规则集转换", "desc": "[🚀SR] https://script.hub", "author": "@小白脸 @xream @keywos @ckyb", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Script Hub 重写 & 规则集转换.module", "badge": "⭐", "filename": "Script Hub 重写 & 规则集转换.module"}, {"name": "机场订阅信息", "desc": "[🚀SR] 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Sub_Info.module", "badge": "", "filename": "Sub_Info.module"}, {"name": "Sub-Store(β)", "desc": "[🚀SR] 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Surge-Beta.module", "badge": "", "filename": "Surge-Beta.module"}, {"name": "节假日信息", "desc": "[🚀SR] 显示节假日的信息", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Timecard.module", "badge": "", "filename": "Timecard.module"}, {"name": "WeChat增强", "desc": "[🚀SR] WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。", "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/WeChat_Enhance.module", "badge": "", "filename": "WeChat_Enhance.module"}, {"name": "[Sukka] URL Rewrite", "desc": "[🚀SR] Enable this module to use Sukka URL Rewrite rules", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/[Sukka] URL Rewrite.module", "badge": "", "filename": "[Sukka] URL Rewrite.module"}, {"name": "BoxJs", "desc": "[🚀SR] http://boxjs.com", "author": "ChavyLeung", "icon": "https://raw.githubusercontent.com/chavyleung/scripts/master/box/icons/BoxJs.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/boxjs.rewrite.surge.module", "badge": "", "filename": "boxjs.rewrite.surge.module"}, {"name": " iRingo: 🗺️ Maps", "desc": "[🚀SR] 自定义 Maps app", "author": "VirgilClyne[https://github.com/VirgilClyne]", "icon": "https://developer.apple.com/assets/elements/icons/maps/maps-128x128.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.Maps.module", "badge": "", "filename": "iRingo.Maps.module"}, {"name": " iRingo: 🌤 WeatherKit", "desc": "[🚀SR] iOS 18 & macOS 15 & watchOS 11", "author": "VirgilClyne[https://github.com/VirgilClyne],WordlessEcho[https://github.com/WordlessEcho],001[https://github.com/001ProMax]", "icon": "https://developer.apple.com/assets/elements/icons/weatherkit/weatherkit-128x128.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.WeatherKit.module", "badge": "", "filename": "iRingo.WeatherKit.module"}, {"name": "网络信息 𝕏", "desc": "[🚀SR] 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha", "author": "@keywos @xream https://t.me/zhetengsha", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/net-lsp-x.module", "badge": "", "filename": "net-lsp-x.module"}, {"name": "扫描全能王", "desc": "[🚀SR] 解锁扫描全能王", "author": "NobyDa", "icon": "https://raw.githubusercontent.com/deezertidal/private/main/icons/cs.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/扫描全能王解锁.module", "badge": "", "filename": "扫描全能王解锁.module"}, {"name": "📺 BiliBili增强合集", "desc": "[🚀SR] 合并BiliUniverse五大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向\\n🛡️ ADBlock: 去广告\\n🛠️ Helper: 禁P2P", "author": "VirgilClyne, ClydeTime, Maasea", "icon": "https://github.com/BiliUniverse/Enhanced/raw/main/src/assets/icon_rounded.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/📺 BiliBili增强合集.module", "badge": "", "filename": "📺 BiliBili增强合集.module"}, {"name": "📺 YouTube增强合集", "desc": "[🚀SR] 合并YouTube增强+去广告 (自动追随上游更新)\\n🎬 Enhance: 画中画/后台播放/字幕翻译\\n🛡️ ADBlock: 去广告", "author": "Maasea", "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/📺 YouTube增强合集.module", "badge": "", "filename": "📺 YouTube增强合集.module"}, {"name": "🔥 Firewall Port Blocker 🛡️", "desc": "[🚀SR] Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP", "author": "nyamiiko (Enhanced)", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/🔥 Firewall Port Blocker 🛡️🚫.module", "badge": "", "filename": "🔥 Firewall Port Blocker 🛡️🚫.module"}]}, "head_expanse": {"name": "『 🔝 Head Expanse › 首端扩域 』", "items": [{"name": "AD ByeBye+ 2.x", "desc": "[🚀SR] Most Optimized Ad-free Experience presented with automated updates. | 提供最优化无广告体验，自动同步更新。\\nRepo: https://tuu.cat/repo・Update: 12/04/2025・Support: @bunizao・ Channel: @hututu00", "author": "@hututu0 & Everyone in the community", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/All-in-One-2.x.module", "badge": "", "filename": "All-in-One-2.x.module"}, {"name": "AllInOne", "desc": "[🚀SR] 最后更新时间 2025-08-26 02:12:35", "author": "blackmatrix7", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/AllInOne_Mock.module", "badge": "", "filename": "AllInOne_Mock.module"}, {"name": "[Sukka] Enhance Better ADBlock for Surge", "desc": "[🚀SR] 增强 ADBlock 效果、恢复网站正常功能", "author": "", "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/[Sukka] Enhance Better ADBlock for Surge.module", "badge": "", "filename": "[Sukka] Enhance Better ADBlock for Surge.module"}, {"name": "🚫 Universal Ad-Blocking Rules (PROMAX)", "desc": "[🚀SR] Canonical ad-block rebuild from curated rule sources, now fused with application-specific AdBlock modules (PROMAX version).", "author": "ScriptHub-Automated", "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png", "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module", "badge": "", "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module"}]}, "narrow_pierce": {"name": "『 🎯 Narrow Pierce › 窄域穿刺 』", "items": []}};
+        let currentApp = 'surge';
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">Reddit 增强合集 (翻译 + 广告 + NSFW)</div>
-<div class="module-desc">Reddit 功能增强：自动翻译 + 去广告 + NSFW 解锁 (基于 JQ 引擎)</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule', this)">复制</button>
-</div>
+        function switchApp(app) {
+            currentApp = app;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(app));
+            });
+            render();
+        }
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">⭐Script Hub: 重写 & 规则集转换</div>
-<div class="module-desc">https://script.hub</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Script Hub 重写 & 规则集转换.sgmodule', this)">复制</button>
-</div>
+        function render() {
+            const container = document.getElementById('main-content');
+            const data = currentApp === 'surge' ? surgeData : srData;
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            
+            let html = '';
+            for (const catKey in data) {
+                const cat = data[catKey];
+                const filteredItems = cat.items.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) || 
+                    item.desc.toLowerCase().includes(searchTerm)
+                );
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">机场订阅信息</div>
-<div class="module-desc">显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Sub_Info.sgmodule', this)">复制</button>
-</div>
+                if (filteredItems.length === 0) continue;
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">Sub-Store(β)</div>
-<div class="module-desc">支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Surge-Beta.sgmodule', this)">复制</button>
-</div>
+                html += `
+                    <div class="category-section">
+                        <div class="category-title">${cat.name}</div>
+                        <div class="module-grid">
+                            ${filteredItems.map(item => `
+                                <div class="module-card">
+                                    <div class="module-header">
+                                        <img class="module-icon" src="${item.icon}" onerror="this.src='https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png'">
+                                        <div class="module-name-wrapper">
+                                            <div class="module-name">${item.badge} ${item.name}</div>
+                                            <div class="module-author">by ${item.author || 'Anonymous'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="module-desc" title="${item.desc}">${item.desc}</div>
+                                    <button class="copy-btn" onclick="copyUrl('${item.url}', this)">复制模块链接</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html || '<div style="text-align:center; padding:50px; color:var(--text-dim)">未找到匹配模块</div>';
+        }
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">节假日信息</div>
-<div class="module-desc">显示节假日的信息</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/Timecard.sgmodule', this)">复制</button>
-</div>
+        async function copyUrl(url, btn) {
+            try {
+                await navigator.clipboard.writeText(url);
+            } catch(e) {
+                const t = document.createElement('textarea');
+                t.value = url;
+                document.body.appendChild(t);
+                t.select();
+                document.execCommand('copy');
+                document.body.removeChild(t);
+            }
+            
+            const originalText = btn.textContent;
+            btn.textContent = '✓ 已复制';
+            btn.classList.add('success');
+            
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('success');
+                toast.style.display = 'none';
+            }, 2000);
+        }
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">WeChat增强</div>
-<div class="module-desc">WeChat及微信广告过滤，解锁微信外部链接。\nWeChat用户可在插件内自行设置分流。</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/WeChat_Enhance.sgmodule', this)">复制</button>
-</div>
+        function filterModules() {
+            render();
+        }
 
-<div class="module">
-<div class="module-info">
-<div class="module-name">[Sukka] URL Rewrite</div>
-<div class="module-desc">Enable this module to use Sukka URL Rewrite rules</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">BoxJs</div>
-<div class="module-desc">http://boxjs.com</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/boxjs.rewrite.surge.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">网络信息 𝕏</div>
-<div class="module-desc">国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/net-lsp-x.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">扫描全能王</div>
-<div class="module-desc">解锁扫描全能王</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/扫描全能王解锁.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">🍎 Apple服务增强合集</div>
-<div class="module-desc">整合 iRingo 系列模块\n包含: Maps(地图增强) + WeatherKit(天气增强)\n解锁Apple服务的国际版功能</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">📺 BiliBili增强合集</div>
-<div class="module-desc">合并BiliUniverse五大模块 (自动追随上游更新)\n⚙️ Enhanced: UI自定义\n🌐 Global: 全区搜索\n🔀 Redirect: CDN重定向\n🛡️ ADBlock: 去广告\n🛠️ Helper: 禁P2P</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">📺 YouTube增强合集</div>
-<div class="module-desc">合并YouTube增强+去广告 (自动追随上游更新)\n🎬 Enhance: 画中画/后台播放/字幕翻译\n🛡️ ADBlock: 去广告</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/amplify_nexus/📺 YouTube增强合集.sgmodule', this)">复制</button>
-</div>
-</div></div>
-
-<div class="category">
-<div class="category-header" onclick="toggleCat(this)">
-<div class="category-title">『 🔝 Head Expanse › 首端扩域 』</div>
-<div class="category-count">2</div>
-<div class="category-toggle">▼</div>
-</div>
-<div class="modules">
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">🔥 Firewall Port Blocker 🛡️</div>
-<div class="module-desc">Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">⭐🚫 Universal Ad-Blocking Rules (PROMAX)</div>
-<div class="module-desc">Canonical ad-block rebuild from curated rule sources, now fused with application-specific AdBlock modules (PROMAX version).</div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule', this)">复制</button>
-</div>
-</div></div>
-</div>
-<div id="sr-modules" class="sr-only">
-
-<div class="category">
-<div class="category-header" onclick="toggleCat(this)">
-<div class="category-title">『 🛠️ Amplify Nexus › 增幅枢纽 』</div>
-<div class="category-count">18</div>
-<div class="category-toggle">▼</div>
-</div>
-<div class="modules">
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">DualSubs.Universal</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/DualSubs.Universal.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">Reddit 增强合集 (翻译 + 广告 + NSFW)</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Reddit 增强合集 (翻译 + 广告 + NSFW).module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">Script Hub 重写 & 规则集转换</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Script Hub 重写 & 规则集转换.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">Sub_Info</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Sub_Info.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">Surge-Beta</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Surge-Beta.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">Timecard</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Timecard.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">WeChat_Enhance</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/WeChat_Enhance.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">[Sukka] URL Rewrite</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/[Sukka] URL Rewrite.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">boxjs.rewrite.surge</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/boxjs.rewrite.surge.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">iRingo.Maps</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.Maps.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">iRingo.News</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.News.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">iRingo.TV</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.TV.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">iRingo.WeatherKit</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.WeatherKit.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">net-lsp-x</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/net-lsp-x.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">扫描全能王解锁</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/扫描全能王解锁.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">📺 BiliBili增强合集</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/📺 BiliBili增强合集.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">📺 YouTube增强合集</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/📺 YouTube增强合集.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">🔥 Firewall Port Blocker 🛡️🚫</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/🔥 Firewall Port Blocker 🛡️🚫.module', this)">复制</button>
-</div>
-</div></div>
-
-<div class="category">
-<div class="category-header" onclick="toggleCat(this)">
-<div class="category-title">『 🔝 Head Expanse › 首端扩域 』</div>
-<div class="category-count">4</div>
-<div class="category-toggle">▼</div>
-</div>
-<div class="modules">
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">All-in-One-2.x</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/All-in-One-2.x.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">AllInOne_Mock</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/AllInOne_Mock.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">[Sukka] Enhance Better ADBlock for Surge</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/[Sukka] Enhance Better ADBlock for Surge.module', this)">复制</button>
-</div>
-
-<div class="module">
-<div class="module-info">
-<div class="module-name">🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)</div>
-<div class="module-desc"></div>
-</div>
-<button class="copy-btn" onclick="copy('https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module', this)">复制</button>
-</div>
-</div></div>
-</div>
-
-<div class="footer">
-生成时间: 2026-04-28 04:59:41 | Surge: 16个 | Shadowrocket: 22个
-</div>
-</div>
-
-<script>
-let copied = {};
-try { copied = JSON.parse(localStorage.getItem('copied') || '{}'); } catch(e) {}
-
-function switchApp(app) {
-  document.querySelectorAll('.app-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(app)));
-  document.getElementById('surge-modules').classList.toggle('sr-only', app !== 'surge');
-  document.getElementById('sr-modules').classList.toggle('sr-only', app !== 'shadowrocket');
-  document.getElementById('title').textContent = app === 'surge' ? '⚡ Surge 模块导入助手' : '🚀 Shadowrocket 模块导入助手';
-  document.getElementById('subtitle').textContent = app === 'surge' ? '点击复制按钮 → 粘贴到 Surge「从URL安装模块」' : '点击复制按钮 → 粘贴到 Shadowrocket「配置-模块-添加模块」';
-  updateStats();
-}
-
-async function copy(url, btn) {
-  try {
-    await navigator.clipboard.writeText(url);
-  } catch(e) {
-    const t = document.createElement('textarea');
-    t.value = url;
-    t.style.position = 'fixed';
-    t.style.opacity = '0';
-    document.body.appendChild(t);
-    t.select();
-    document.execCommand('copy');
-    document.body.removeChild(t);
-  }
-  copied[url] = Date.now();
-  localStorage.setItem('copied', JSON.stringify(copied));
-  btn.textContent = '✓ 已复制';
-  btn.classList.add('copied');
-  btn.closest('.module').classList.add('copied');
-  showToast('✓ 已复制到剪贴板');
-  updateStats();
-}
-
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2000);
-}
-
-function toggleCat(el) {
-  el.closest('.category').classList.toggle('collapsed');
-}
-
-function updateStats() {
-  const visible = document.getElementById('surge-modules').classList.contains('sr-only') ? 'sr-modules' : 'surge-modules';
-  const modules = document.querySelectorAll(`#${visible} .module`);
-  const copiedCount = Array.from(modules).filter(m => m.classList.contains('copied')).length;
-  document.getElementById('total').textContent = modules.length;
-  document.getElementById('copied').textContent = copiedCount;
-}
-
-// 初始化
-document.querySelectorAll('.module').forEach(m => {
-  const btn = m.querySelector('.copy-btn');
-  const url = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-  if (copied[url]) {
-    btn.textContent = '✓ 已复制';
-    btn.classList.add('copied');
-    m.classList.add('copied');
-  }
-});
-updateStats();
-</script>
+        // 初始渲染
+        render();
+    </script>
 </body>
 </html>

@@ -1,10 +1,6 @@
-#!/usr/bin/env python3
-"""
-从零构建 Surge/Shadowrocket 模块导入助手
-完全独立，不依赖任何模板或外部JSON
-"""
 import os
 import re
+import json
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -14,8 +10,8 @@ SURGE_DIR = ROOT / "module" / "surge(main)"
 SR_DIR = ROOT / "module" / "shadowrocket"
 OUTPUT = ROOT / "module" / "surge_module_helper.html"
 
-# 过时阈值（天数）
-OUTDATED_DAYS = 365  # 1年未更新视为过时
+# 过时阈值
+OUTDATED_DAYS = 365
 
 # 分类定义
 CATEGORIES = {
@@ -27,31 +23,49 @@ CATEGORIES = {
 # 特殊标记
 SPECIAL = {
     "Script Hub: 重写 & 规则集转换": "⭐",
-    "🚫 Universal Ad-Blocking Rules (PROMAX)": "⭐"
+    "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)": "🔥"
 }
 
-# 已合并到合集的模块（应该被排除）
-# 这些单独模块的功能已经完全包含在对应的合集模块中
-# 为避免用户重复安装，脚本会自动排除这些模块
+# 已合并排除
 MERGED_MODULES = {
-    # BiliBili 单独模块已合并到 BiliBili增强合集
-    # 合集包含: Enhanced(UI自定义) + Global(全区搜索) + Redirect(CDN重定向) + ADBlock(去广告) + Helper(禁P2P)
     "BiliBili.Enhanced.sgmodule": "📺 BiliBili增强合集",
     "BiliBili.Global.sgmodule": "📺 BiliBili增强合集",
     "BiliBili.Redirect.sgmodule": "📺 BiliBili增强合集",
-    
-    # YouTube 单独模块已合并到 YouTube增强合集
-    # 合集包含: Enhance(画中画/后台播放/字幕翻译) + ADBlock(去广告)
     "YouTube.Enhance.sgmodule": "📺 YouTube增强合集",
-    
-    # iRingo 单独模块已合并到 Apple服务增强合集
-    # 合集包含: Maps(地图增强) + WeatherKit(天气增强)
     "iRingo.Maps.sgmodule": "🍎 Apple服务增强合集",
     "iRingo.WeatherKit.sgmodule": "🍎 Apple服务增强合集",
 }
 
+def parse_metadata(content, is_sr=False):
+    """通用的元数据解析逻辑"""
+    meta = {
+        "name": "",
+        "desc": "",
+        "author": "",
+        "icon": "",
+        "date": "",
+        "version": ""
+    }
+    
+    # 针对不同平台的正则模式
+    # Surge: #!name=...  Shadowrocket: # name: ...
+    patterns = {
+        "name": r'^[#!][\s!]*(?:name)\s*[=:]\s*(.+)',
+        "desc": r'^[#!][\s!]*(?:desc)\s*[=:]\s*(.+)',
+        "author": r'^[#!][\s!]*(?:author)\s*[=:]\s*(.+)',
+        "icon": r'^[#!][\s!]*(?:icon)\s*[=:]\s*(.+)',
+        "date": r'^[#!][\s!]*(?:date)\s*[=:]\s*(.+)',
+        "version": r'^[#!][\s!]*(?:version)\s*[=:]\s*(.+)'
+    }
+    
+    for key, pattern in patterns.items():
+        match = re.search(pattern, content, re.MULTILINE | re.IGNORECASE)
+        if match:
+            meta[key] = match.group(1).strip()
+            
+    return meta
+
 def scan_modules(base_dir, is_shadowrocket=False):
-    """扫描模块目录"""
     modules = {}
     now = datetime.now()
     
@@ -62,43 +76,28 @@ def scan_modules(base_dir, is_shadowrocket=False):
             continue
             
         items = []
-        skipped = []
-        outdated = []
-        
         for file in sorted(cat_dir.glob("*.sgmodule" if not is_shadowrocket else "*.module")):
-            # 检查是否已合并到合集
             if file.name in MERGED_MODULES:
-                skipped.append(f"{file.name} → {MERGED_MODULES[file.name]}")
                 continue
                 
             try:
-                with open(file, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                content = file.read_text(encoding='utf-8')
+                meta = parse_metadata(content, is_shadowrocket)
                 
-                # 提取元数据
-                name_match = re.search(r'#!name\s*[=:]\s*(.+)', content)
-                desc_match = re.search(r'#!desc\s*[=:]\s*(.+)', content)
-                date_match = re.search(r'#!date\s*[=:]\s*(.+)', content)
+                name = meta["name"] or file.stem
+                desc = meta["desc"] or "暂无描述"
                 
-                name = name_match.group(1).strip() if name_match else file.stem
-                desc = desc_match.group(1).strip() if desc_match else ""
-                
-                # 检查是否过时
-                if date_match:
+                # 检查过期
+                is_outdated = False
+                if meta["date"]:
                     try:
-                        date_str = date_match.group(1).strip()
-                        module_date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-                        days_old = (now - module_date).days
-                        if days_old > OUTDATED_DAYS:
-                            outdated.append(f"{file.name} (最后更新: {date_str}, {days_old}天前)")
-                            continue
-                    except:
-                        pass
+                        module_date = datetime.strptime(meta["date"], "%Y-%m-%d %H:%M:%S")
+                        if (now - module_date).days > OUTDATED_DAYS:
+                            is_outdated = True
+                    except: pass
                 
-                # 清理特殊字符
-                name = name.replace('"', '&quot;').replace("'", '&#39;')
-                desc = desc.replace('"', '&quot;').replace("'", '&#39;').replace('\n', ' ')
-                
+                if is_outdated: continue
+
                 # 构建URL
                 rel_path = file.relative_to(ROOT)
                 url = f"https://raw.githubusercontent.com/nowaytouse/script_hub/master/{rel_path}"
@@ -106,253 +105,298 @@ def scan_modules(base_dir, is_shadowrocket=False):
                 items.append({
                     "name": name,
                     "desc": desc,
+                    "author": meta["author"],
+                    "icon": meta["icon"] or "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png",
                     "url": url,
-                    "special": SPECIAL.get(name, "")
+                    "badge": SPECIAL.get(name, ""),
+                    "filename": file.name
                 })
             except Exception as e:
-                print(f"  ⚠️  跳过 {file.name}: {e}")
-        
-        if skipped:
-            print(f"  ℹ️  已排除 {len(skipped)} 个已合并模块:")
-            for s in skipped:
-                print(f"     - {s}")
-        
-        if outdated:
-            print(f"  ⚠️  已排除 {len(outdated)} 个过时模块 (>{OUTDATED_DAYS}天未更新):")
-            for o in outdated:
-                print(f"     - {o}")
+                print(f"  ⚠️  Error parsing {file.name}: {e}")
         
         modules[cat_key] = {"name": cat_name, "items": items}
     
     return modules
 
 def generate_html(surge_modules, sr_modules):
-    """生成HTML"""
-    
-    # 统计
     surge_total = sum(len(cat["items"]) for cat in surge_modules.values())
     sr_total = sum(len(cat["items"]) for cat in sr_modules.values())
     
-    html = f'''<!DOCTYPE html>
+    with open(ROOT / "module/surge_module_helper.html", "w", encoding="utf-8") as f:
+        # 这里我将写入一整个非常精美的HTML
+        html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Surge/Shadowrocket 模块导入助手</title>
-<style>
-* {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; min-height: 100vh; padding: 20px; }}
-.container {{ max-width: 1200px; margin: 0 auto; }}
-h1 {{ text-align: center; font-size: 2em; margin-bottom: 10px; }}
-.subtitle {{ text-align: center; opacity: 0.9; margin-bottom: 30px; }}
-.app-switch {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }}
-.app-btn {{ background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: #fff; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.3s; }}
-.app-btn:hover {{ background: rgba(255,255,255,0.2); }}
-.app-btn.active {{ background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); }}
-.stats {{ display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }}
-.stat {{ background: rgba(255,255,255,0.15); padding: 15px 25px; border-radius: 15px; text-align: center; }}
-.stat-num {{ font-size: 2em; font-weight: bold; }}
-.stat-label {{ font-size: 0.85em; margin-top: 5px; }}
-.category {{ background: rgba(255,255,255,0.1); border-radius: 20px; margin-bottom: 20px; overflow: hidden; }}
-.category-header {{ padding: 20px; cursor: pointer; display: flex; align-items: center; }}
-.category-header:hover {{ background: rgba(255,255,255,0.05); }}
-.category-title {{ flex: 1; font-size: 1.3em; font-weight: 600; }}
-.category-count {{ background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px; margin-right: 10px; }}
-.category-toggle {{ transition: transform 0.3s; }}
-.category.collapsed .category-toggle {{ transform: rotate(-90deg); }}
-.category.collapsed .modules {{ display: none; }}
-.modules {{ padding: 0 20px 20px; }}
-.module {{ display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.08); border-radius: 15px; margin-bottom: 10px; transition: all 0.3s; }}
-.module:hover {{ background: rgba(255,255,255,0.15); transform: translateX(5px); }}
-.module.copied {{ background: rgba(76,175,80,0.2); }}
-.module-info {{ flex: 1; }}
-.module-name {{ font-weight: 600; margin-bottom: 5px; }}
-.module-desc {{ font-size: 0.85em; opacity: 0.8; }}
-.copy-btn {{ background: rgba(33,150,243,0.5); border: none; color: #fff; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; transition: all 0.3s; }}
-.copy-btn:hover {{ background: rgba(33,150,243,0.7); transform: scale(1.05); }}
-.copy-btn.copied {{ background: rgba(76,175,80,0.5); }}
-.toast {{ position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 15px 30px; border-radius: 25px; z-index: 1000; }}
-.footer {{ text-align: center; margin-top: 40px; opacity: 0.6; font-size: 0.85em; }}
-.sr-only {{ display: none; }}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Hub | 模块导入助手</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {{
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ 
+            font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            line-height: 1.5;
+            padding-bottom: 50px;
+        }}
+        .header {{
+            background: linear-gradient(to right, #1e293b, #0f172a);
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+        h1 {{ font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, #818cf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .nav {{
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+        }}
+        .nav-btn {{
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-dim);
+            padding: 10px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }}
+        .nav-btn.active {{
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }}
+        .search-container {{
+            max-width: 600px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+        }}
+        #search {{
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--card-bg);
+            color: white;
+            font-size: 1rem;
+        }}
+        .container {{ max-width: 1200px; margin: 0 auto; padding: 0 20px; }}
+        .category-section {{ margin-bottom: 40px; }}
+        .category-title {{ 
+            font-size: 1.2rem; 
+            color: var(--accent); 
+            margin-bottom: 20px; 
+            padding-left: 10px;
+            border-left: 4px solid var(--accent);
+        }}
+        .module-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }}
+        .module-card {{
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }}
+        .module-card:hover {{
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }}
+        .module-header {{ display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }}
+        .module-icon {{ width: 48px; height: 48px; border-radius: 12px; object-fit: cover; background: #334155; }}
+        .module-name-wrapper {{ flex: 1; min-width: 0; }}
+        .module-name {{ font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+        .module-author {{ font-size: 0.8rem; color: var(--text-dim); }}
+        .module-desc {{ 
+            font-size: 0.9rem; 
+            color: var(--text-dim); 
+            margin-bottom: 20px; 
+            flex: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }}
+        .copy-btn {{
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }}
+        .copy-btn:hover {{ background: var(--primary-hover); }}
+        .copy-btn.success {{ background: var(--accent); }}
+        
+        .toast {{
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+        }}
+        
+        .hidden {{ display: none !important; }}
+        
+        @media (max-width: 600px) {{
+            .module-grid {{ grid-template-columns: 1fr; }}
+            h1 {{ font-size: 1.8rem; }}
+        }}
+    </style>
 </head>
 <body>
-<div class="container">
-<h1 id="title">🚀 Surge 模块导入助手</h1>
-<p class="subtitle" id="subtitle">点击复制按钮 → 粘贴到 Surge「从URL安装模块」</p>
+    <div class="header">
+        <h1>Script Hub</h1>
+        <p style="color: var(--text-dim)">一站式 Surge & Shadowrocket 模块增强库</p>
+    </div>
 
-<div class="app-switch">
-<button class="app-btn active" onclick="switchApp('surge')">⚡ Surge</button>
-<button class="app-btn" onclick="switchApp('shadowrocket')">🚀 Shadowrocket</button>
-</div>
+    <div class="nav">
+        <button class="nav-btn active" onclick="switchApp('surge')">⚡ Surge ({surge_total})</button>
+        <button class="nav-btn" onclick="switchApp('shadowrocket')">🚀 Shadowrocket ({sr_total})</button>
+    </div>
 
-<div class="stats">
-<div class="stat"><div class="stat-num" id="total">0</div><div class="stat-label">总模块</div></div>
-<div class="stat"><div class="stat-num" id="copied">0</div><div class="stat-label">已复制</div></div>
-</div>
+    <div class="search-container">
+        <input type="text" id="search" placeholder="搜索模块名称或描述..." oninput="filterModules()">
+    </div>
 
-<div id="surge-modules">
-'''
-    
-    # 生成Surge模块
-    for cat_key, cat in surge_modules.items():
-        if not cat["items"]:
-            continue
-        html += f'''
-<div class="category">
-<div class="category-header" onclick="toggleCat(this)">
-<div class="category-title">{cat["name"]}</div>
-<div class="category-count">{len(cat["items"])}</div>
-<div class="category-toggle">▼</div>
-</div>
-<div class="modules">
-'''
-        for m in cat["items"]:
-            html += f'''
-<div class="module">
-<div class="module-info">
-<div class="module-name">{m["special"]}{m["name"]}</div>
-<div class="module-desc">{m["desc"]}</div>
-</div>
-<button class="copy-btn" onclick="copy('{m["url"]}', this)">复制</button>
-</div>
-'''
-        html += '</div></div>\n'
-    
-    html += '</div>\n<div id="sr-modules" class="sr-only">\n'
-    
-    # 生成Shadowrocket模块
-    for cat_key, cat in sr_modules.items():
-        if not cat["items"]:
-            continue
-        html += f'''
-<div class="category">
-<div class="category-header" onclick="toggleCat(this)">
-<div class="category-title">{cat["name"]}</div>
-<div class="category-count">{len(cat["items"])}</div>
-<div class="category-toggle">▼</div>
-</div>
-<div class="modules">
-'''
-        for m in cat["items"]:
-            html += f'''
-<div class="module">
-<div class="module-info">
-<div class="module-name">{m["special"]}{m["name"]}</div>
-<div class="module-desc">{m["desc"]}</div>
-</div>
-<button class="copy-btn" onclick="copy('{m["url"]}', this)">复制</button>
-</div>
-'''
-        html += '</div></div>\n'
-    
-    html += f'''</div>
+    <div id="main-content" class="container">
+        <!-- 内容由 JS 动态切换 -->
+    </div>
 
-<div class="footer">
-生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | Surge: {surge_total}个 | Shadowrocket: {sr_total}个
-</div>
-</div>
+    <div id="toast" class="toast">✓ 链接已复制，请在 App 中粘贴安装</div>
 
-<script>
-let copied = {{}};
-try {{ copied = JSON.parse(localStorage.getItem('copied') || '{{}}'); }} catch(e) {{}}
+    <script>
+        const surgeData = {json.dumps(surge_modules, ensure_ascii=False)};
+        const srData = {json.dumps(sr_modules, ensure_ascii=False)};
+        let currentApp = 'surge';
 
-function switchApp(app) {{
-  document.querySelectorAll('.app-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(app)));
-  document.getElementById('surge-modules').classList.toggle('sr-only', app !== 'surge');
-  document.getElementById('sr-modules').classList.toggle('sr-only', app !== 'shadowrocket');
-  document.getElementById('title').textContent = app === 'surge' ? '⚡ Surge 模块导入助手' : '🚀 Shadowrocket 模块导入助手';
-  document.getElementById('subtitle').textContent = app === 'surge' ? '点击复制按钮 → 粘贴到 Surge「从URL安装模块」' : '点击复制按钮 → 粘贴到 Shadowrocket「配置-模块-添加模块」';
-  updateStats();
-}}
+        function switchApp(app) {{
+            currentApp = app;
+            document.querySelectorAll('.nav-btn').forEach(btn => {{
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(app));
+            }});
+            render();
+        }}
 
-async function copy(url, btn) {{
-  try {{
-    await navigator.clipboard.writeText(url);
-  }} catch(e) {{
-    const t = document.createElement('textarea');
-    t.value = url;
-    t.style.position = 'fixed';
-    t.style.opacity = '0';
-    document.body.appendChild(t);
-    t.select();
-    document.execCommand('copy');
-    document.body.removeChild(t);
-  }}
-  copied[url] = Date.now();
-  localStorage.setItem('copied', JSON.stringify(copied));
-  btn.textContent = '✓ 已复制';
-  btn.classList.add('copied');
-  btn.closest('.module').classList.add('copied');
-  showToast('✓ 已复制到剪贴板');
-  updateStats();
-}}
+        function render() {{
+            const container = document.getElementById('main-content');
+            const data = currentApp === 'surge' ? surgeData : srData;
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            
+            let html = '';
+            for (const catKey in data) {{
+                const cat = data[catKey];
+                const filteredItems = cat.items.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) || 
+                    item.desc.toLowerCase().includes(searchTerm)
+                );
 
-function showToast(msg) {{
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2000);
-}}
+                if (filteredItems.length === 0) continue;
 
-function toggleCat(el) {{
-  el.closest('.category').classList.toggle('collapsed');
-}}
+                html += `
+                    <div class="category-section">
+                        <div class="category-title">${{cat.name}}</div>
+                        <div class="module-grid">
+                            ${{filteredItems.map(item => `
+                                <div class="module-card">
+                                    <div class="module-header">
+                                        <img class="module-icon" src="${{item.icon}}" onerror="this.src='https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png'">
+                                        <div class="module-name-wrapper">
+                                            <div class="module-name">${{item.badge}} ${{item.name}}</div>
+                                            <div class="module-author">by ${{item.author || 'Anonymous'}}</div>
+                                        </div>
+                                    </div>
+                                    <div class="module-desc" title="${{item.desc}}">${{item.desc}}</div>
+                                    <button class="copy-btn" onclick="copyUrl('${{item.url}}', this)">复制模块链接</button>
+                                </div>
+                            `).join('')}}
+                        </div>
+                    </div>
+                `;
+            }}
+            container.innerHTML = html || '<div style="text-align:center; padding:50px; color:var(--text-dim)">未找到匹配模块</div>';
+        }}
 
-function updateStats() {{
-  const visible = document.getElementById('surge-modules').classList.contains('sr-only') ? 'sr-modules' : 'surge-modules';
-  const modules = document.querySelectorAll(`#${{visible}} .module`);
-  const copiedCount = Array.from(modules).filter(m => m.classList.contains('copied')).length;
-  document.getElementById('total').textContent = modules.length;
-  document.getElementById('copied').textContent = copiedCount;
-}}
+        async function copyUrl(url, btn) {{
+            try {{
+                await navigator.clipboard.writeText(url);
+            }} catch(e) {{
+                const t = document.createElement('textarea');
+                t.value = url;
+                document.body.appendChild(t);
+                t.select();
+                document.execCommand('copy');
+                document.body.removeChild(t);
+            }}
+            
+            const originalText = btn.textContent;
+            btn.textContent = '✓ 已复制';
+            btn.classList.add('success');
+            
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            
+            setTimeout(() => {{
+                btn.textContent = originalText;
+                btn.classList.remove('success');
+                toast.style.display = 'none';
+            }}, 2000);
+        }}
 
-// 初始化
-document.querySelectorAll('.module').forEach(m => {{
-  const btn = m.querySelector('.copy-btn');
-  const url = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-  if (copied[url]) {{
-    btn.textContent = '✓ 已复制';
-    btn.classList.add('copied');
-    m.classList.add('copied');
-  }}
-}});
-updateStats();
-</script>
+        function filterModules() {{
+            render();
+        }}
+
+        // 初始渲染
+        render();
+    </script>
 </body>
-</html>'''
-    
-    return html
+</html>"""
+        f.write(html)
 
 def main():
     print("=" * 60)
-    print("🚀 从零构建模块导入助手")
-    print("=" * 60)
+    print("🚀 正在构建全新的模块导入助手...")
     
-    # 扫描Surge模块
-    print("\n📦 扫描 Surge 模块...")
     surge_modules = scan_modules(SURGE_DIR, False)
-    surge_total = sum(len(cat["items"]) for cat in surge_modules.values())
-    print(f"   找到 {surge_total} 个模块")
-    
-    # 扫描Shadowrocket模块
-    print("\n📦 扫描 Shadowrocket 模块...")
     sr_modules = scan_modules(SR_DIR, True)
-    sr_total = sum(len(cat["items"]) for cat in sr_modules.values())
-    print(f"   找到 {sr_total} 个模块")
     
-    # 生成HTML
-    print("\n🔨 生成 HTML...")
-    html = generate_html(surge_modules, sr_modules)
+    generate_html(surge_modules, sr_modules)
     
-    # 写入文件
-    with open(OUTPUT, 'w', encoding='utf-8') as f:
-        f.write(html)
-    
-    print(f"\n✅ 完成！")
-    print(f"   输出: {OUTPUT}")
-    print(f"   大小: {len(html)} 字节")
+    print(f"✅ 构建成功: {OUTPUT}")
     print("=" * 60)
 
 if __name__ == "__main__":
