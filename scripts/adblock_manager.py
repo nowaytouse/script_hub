@@ -459,6 +459,42 @@ class AdBlockManager:
             return f"{normalized_rule},{policy},{','.join(options)}"
         return f"{normalized_rule},{policy}"
 
+    def is_enhancement_line(self, line: str) -> bool:
+        """Check if a line (Script/Header Rewrite/etc) is likely an enhancement rather than ad-block."""
+        lower_line = line.lower()
+        
+        # Enhancement keywords that strongly suggest non-adblock features
+        enhancement_keywords = [
+            "translate", "translation", "翻译", 
+            "unlock", "解锁", "crack", "破解",
+            "vip", "premium", "会员", "会员解锁",
+            "hook", "script-hub", "conversion", "转换",
+            "feature", "enhanced", "增强", "iap", "receipt",
+            "translations"
+        ]
+        
+        # Adblock keywords that suggest it IS adblock
+        adblock_keywords = [
+            "reject", "clean", "strip", 
+            "blank", "pixel", "广告", "拦截", "去广告",
+            "anti-ad", "adblock", "tracking", "nsfw"
+        ]
+        
+        # Specific enhancement patterns
+        if "header-" in lower_line and "translation" in lower_line:
+            return True
+            
+        # If it has enhancement keywords, check if it's NOT adblock related
+        has_enhancement = any(kw in lower_line for kw in enhancement_keywords)
+        # Use regex for 'ad' and 'block' to avoid partial matches like 'add'
+        has_adblock = any(kw in lower_line for kw in adblock_keywords) or \
+                      re.search(r"\bad\b|\bblock\b", lower_line)
+        
+        if has_enhancement and not has_adblock:
+            return True
+            
+        return False
+
     def extract_from_text(self, text: str, default_policy: str = "REJECT", include_sections: bool = False):
         current_section = None
         in_rule_section = False
@@ -497,6 +533,9 @@ class AdBlockManager:
                 continue
 
             if current_section in self.sections:
+                # Filter out enhancements if we are merging into the AdBlock component
+                if self.is_enhancement_line(stripped):
+                    continue
                 self.sections[current_section].add(stripped)
             elif current_section == "MITM" and stripped.startswith("hostname"):
                 hosts = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped)
