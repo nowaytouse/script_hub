@@ -63,6 +63,7 @@ def scan_modules():
                 desc_match = re.search(r'#!desc\s*[=:]\s*(.+)', content)
                 tag_match = re.search(r'#!tag\s*[=:]\s*(.+)', content)
                 
+                # Clean text - json.dumps will handle escaping
                 info["name"] = name_match.group(1).strip() if name_match else module_file.stem
                 info["desc"] = desc_match.group(1).strip() if desc_match else ""
                 info["tags"] = [t.strip() for t in tag_match.group(1).split(',')] if tag_match else []

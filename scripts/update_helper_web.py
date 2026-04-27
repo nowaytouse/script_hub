@@ -76,18 +76,20 @@ def update():
     with open(HTML_PATH, "r", encoding="utf-8") as f:
         html = f.read()
 
-    # Inject Surge data
+    # Inject Surge data (ensure_ascii=False to keep Unicode, but this properly escapes quotes)
+    surge_json = json.dumps(surge_grouped, ensure_ascii=False)
     html = re.sub(
         r'const surgeModules = \{.*?\};',
-        f'const surgeModules = {json.dumps(surge_grouped, ensure_ascii=False)};',
+        f'const surgeModules = {surge_json};',
         html,
         flags=re.DOTALL
     )
 
     # Inject Shadowrocket data
+    sr_json = json.dumps(sr_grouped, ensure_ascii=False)
     html = re.sub(
         r'const srModules = \{.*?\};',
-        f'const srModules = {json.dumps(sr_grouped, ensure_ascii=False)};',
+        f'const srModules = {sr_json};',
         html,
         flags=re.DOTALL
     )
