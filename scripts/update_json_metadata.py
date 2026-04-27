@@ -32,6 +32,7 @@ merged_names = {
     "菜鸟去广告",
     "闲鱼去广告",
     "阿里云盘去广告",
+    "AWAvenue Ads Rule",
     "高德地图去广告"
 }
 

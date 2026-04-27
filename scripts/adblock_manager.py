@@ -69,9 +69,6 @@ UNSAFE_IP_RULE_PREFIXES = (
     "IP-CIDR,172.16.0.0/12",
 )
 MODULE_TARGET_ALIASES = {
-    "AWAvenue-Ads-Rule-Surge-module.sgmodule": [
-        os.path.join(SURGE_MODULE_DIR, "narrow_pierce/AWAvenue Ads Rule.sgmodule"),
-    ],
 }
 
 

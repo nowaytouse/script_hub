@@ -1,6 +1,6 @@
 {
-  "generated": "2026-04-28T03:25:02.693899",
-  "total": 27,
+  "generated": "2026-04-28T04:14:52.067174",
+  "total": 19,
   "modules": [
     {
       "id": "[Sukka] URL Rewrite",
@@ -9,33 +9,6 @@
       "path": "module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule",
       "name": "[Sukka] URL Rewrite",
       "desc": "Enable this module to use Sukka URL Rewrite rules",
-      "tags": []
-    },
-    {
-      "id": "BiliBili.Enhanced",
-      "filename": "BiliBili.Enhanced.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/BiliBili.Enhanced.sgmodule",
-      "name": "📺 BiliBili: ⚙️ Enhanced",
-      "desc": "哔哩哔哩：增强模式\\n中国站功能增强及UI自定义",
-      "tags": []
-    },
-    {
-      "id": "BiliBili.Global",
-      "filename": "BiliBili.Global.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/BiliBili.Global.sgmodule",
-      "name": "📺 BiliBili: 🌐 Global",
-      "desc": "哔哩哔哩：全球模式\\n中国站自动线路及全区搜索",
-      "tags": []
-    },
-    {
-      "id": "BiliBili.Redirect",
-      "filename": "BiliBili.Redirect.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/BiliBili.Redirect.sgmodule",
-      "name": "📺 BiliBili: 🔀 Redirect",
-      "desc": "哔哩哔哩：重定向\\n中国站CDN自定义",
       "tags": []
     },
     {
@@ -57,48 +30,12 @@
       "tags": []
     },
     {
-      "id": "iCloud_Private_Relay_Gateway",
-      "filename": "iCloud_Private_Relay_Gateway.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iCloud_Private_Relay_Gateway.sgmodule",
-      "name": " Enable iCloud Private Relay on gateway",
-      "desc": "为终端设备启用iCloud专用代理，需要Surge for macOS启用网关模式。",
-      "tags": []
-    },
-    {
-      "id": "iRingo.Maps",
-      "filename": "iRingo.Maps.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iRingo.Maps.sgmodule",
-      "name": " iRingo: 🗺️ Maps",
-      "desc": "自定义 Maps app\\n添加国际版功能\\n自定义服务版本",
-      "tags": []
-    },
-    {
-      "id": "iRingo.News",
-      "filename": "iRingo.News.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iRingo.News.sgmodule",
-      "name": " iRingo: 📰 News",
-      "desc": "1.自定义解锁News的地区\\n2.Coming Soon…",
-      "tags": []
-    },
-    {
       "id": "iRingo.TV",
       "filename": "iRingo.TV.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.TV.sgmodule",
       "name": " iRingo: 📺 TV app",
       "desc": "全面自定义「TV app」功能",
-      "tags": []
-    },
-    {
-      "id": "iRingo.WeatherKit",
-      "filename": "iRingo.WeatherKit.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/iRingo.WeatherKit.sgmodule",
-      "name": " iRingo: 🌤 WeatherKit",
-      "desc": "iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据",
       "tags": []
     },
     {
@@ -147,15 +84,6 @@
       "tags": []
     },
     {
-      "id": "TiKTok-US",
-      "filename": "TiKTok-US.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/TiKTok-US.sgmodule",
-      "name": "TikTok US",
-      "desc": "解锁 TikTok 美國 地区",
-      "tags": []
-    },
-    {
       "id": "Timecard",
       "filename": "Timecard.sgmodule",
       "category": "amplify_nexus",
@@ -198,6 +126,15 @@
       "path": "module/surge(main)/amplify_nexus/扫描全能王解锁.sgmodule",
       "name": "扫描全能王",
       "desc": "解锁扫描全能王",
+      "tags": []
+    },
+    {
+      "id": "🍎 Apple服务增强合集",
+      "filename": "🍎 Apple服务增强合集.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
+      "name": "🍎 Apple服务增强合集",
+      "desc": "整合 iRingo 系列模块\\n包含: Maps(地图增强) + WeatherKit(天气增强)\\n解锁Apple服务的国际版功能",
       "tags": []
     },
     {
@@ -251,15 +188,6 @@
         "Dependency",
         "HTTPDNS"
       ]
-    },
-    {
-      "id": "AWAvenue Ads Rule",
-      "filename": "AWAvenue Ads Rule.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/AWAvenue Ads Rule.sgmodule",
-      "name": "AWAvenue Ads Rule",
-      "desc": "Update time: 2026-04-07 20:55:56 UTC+8\\nHomepage: https://github.com/TG-Twilight/AWAvenue-Ads-Rule",
-      "tags": []
     }
   ]
 }
