@@ -233,29 +233,34 @@ class UpstreamSyncer:
             Logger.error(f"Invalid file (HTML) for {filename}")
             return
 
-        # Category logic (Preserve Chinese group names)
-        if "#!category=" in content:
-            content = re.sub(r'^#!category=.*', f'#!category={NEXUS_GROUP}', content, flags=re.MULTILINE)
-        else:
-            if "#!name=" in content:
-                content = re.sub(r'^(#!name=.*)', f'\\1\n#!category={NEXUS_GROUP}', content, flags=re.MULTILINE)
-            else:
-                content = f"#!category={NEXUS_GROUP}\n" + content
-        
-        content = re.sub(r'^#!group=.*$', '', content, flags=re.MULTILINE)
+        # DEEP CLEANUP: Remove all existing category lines and duplicate metadata
         lines = content.splitlines()
         new_lines = []
-        category_seen = False
+        name_line_idx = -1
+        
         for line in lines:
-            if line.startswith("#!category="):
-                if not category_seen:
-                    new_lines.append(line)
-                    category_seen = True
+            stripped = line.strip()
+            # Skip any existing category lines (to prevent DualSubs-style duplication)
+            if stripped.startswith(("#!category", "#!group", "# category:")):
                 continue
+            
+            if stripped.startswith("#!name"):
+                name_line_idx = len(new_lines)
+            
             new_lines.append(line)
+
+        # Inject standard category
+        category_line = f"#!category={NEXUS_GROUP}"
+        if name_line_idx != -1:
+            new_lines.insert(name_line_idx + 1, category_line)
+        else:
+            new_lines.insert(0, category_line)
+        
+        # Final formatting cleanup
+        final_content = "\n".join(new_lines).strip() + "\n"
         
         target_path = os.path.join(MODULE_DIR, filename)
-        write_file(target_path, "\n".join(new_lines) + "\n")
+        write_file(target_path, final_content)
         Logger.success(f"Nexus: {filename}")
 
     def sync_nexus(self):

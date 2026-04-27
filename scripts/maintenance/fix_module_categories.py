@@ -22,30 +22,35 @@ def fix_categories():
                 if filename.endswith((".sgmodule", ".module")):
                     file_path = os.path.join(dir_path, filename)
                     with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
+                        lines = f.readlines()
                     
-                    # For Surge modules
-                    if filename.endswith(".sgmodule"):
-                        if "#!category=" in content:
-                            new_content = re.sub(r'^#!category=.*', f'#!category={cat_string}', content, flags=re.MULTILINE)
+                    new_lines = []
+                    is_surge = filename.endswith(".sgmodule")
+                    
+                    # 1. 移除所有现有的 category 行
+                    for line in lines:
+                        if is_surge:
+                            if not line.strip().startswith("#!category"):
+                                new_lines.append(line)
                         else:
-                            # Insert after #!name if exists, else at top
-                            if "#!name=" in content:
-                                new_content = re.sub(r'^(#!name=.*)', f'\\1\n#!category={cat_string}', content, flags=re.MULTILINE)
-                            else:
-                                new_content = f"#!category={cat_string}\n" + content
+                            if not line.strip().startswith("# category:"):
+                                new_lines.append(line)
                     
-                    # For Shadowrocket modules
+                    # 2. 寻找插入点并注入唯一的标准 category
+                    content = "".join(new_lines)
+                    if is_surge:
+                        # 插入在 #!name 之后或文件头部
+                        if "#!name" in content:
+                            content = re.sub(r'^(#!name.*)', f'\\1\n#!category={cat_string}', content, flags=re.MULTILINE)
+                        else:
+                            content = f"#!category={cat_string}\n" + content
                     else:
-                        if "# category:" in content:
-                            new_content = re.sub(r'^# category:.*', f'# category: {cat_string}', content, flags=re.MULTILINE)
-                        else:
-                            new_content = f"# category: {cat_string}\n" + content
+                        # Shadowrocket 风格
+                        content = f"# category: {cat_string}\n" + content
                     
-                    if new_content != content:
-                        with open(file_path, "w", encoding="utf-8") as f:
-                            f.write(new_content)
-                        print(f"Fixed category for: {file_path}")
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(content)
+                    print(f"Fixed (cleaned duplicates) for: {file_path}")
 
 if __name__ == "__main__":
     fix_categories()
