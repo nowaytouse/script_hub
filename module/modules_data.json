@@ -1,6 +1,6 @@
 {
-  "generated": "2026-04-27T18:12:02.570598",
-  "total": 24,
+  "generated": "2026-04-28T03:07:37.114475",
+  "total": 30,
   "modules": [
     {
       "id": "[Sukka] URL Rewrite",
@@ -9,6 +9,33 @@
       "path": "module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule",
       "name": "[Sukka] URL Rewrite",
       "desc": "Enable this module to use Sukka URL Rewrite rules",
+      "tags": []
+    },
+    {
+      "id": "BiliBili.Enhanced",
+      "filename": "BiliBili.Enhanced.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/BiliBili.Enhanced.sgmodule",
+      "name": "📺 BiliBili: ⚙️ Enhanced",
+      "desc": "哔哩哔哩：增强模式\\n中国站功能增强及UI自定义",
+      "tags": []
+    },
+    {
+      "id": "BiliBili.Global",
+      "filename": "BiliBili.Global.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/BiliBili.Global.sgmodule",
+      "name": "📺 BiliBili: 🌐 Global",
+      "desc": "哔哩哔哩：全球模式\\n中国站自动线路及全区搜索",
+      "tags": []
+    },
+    {
+      "id": "BiliBili.Redirect",
+      "filename": "BiliBili.Redirect.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/BiliBili.Redirect.sgmodule",
+      "name": "📺 BiliBili: 🔀 Redirect",
+      "desc": "哔哩哔哩：重定向\\n中国站CDN自定义",
       "tags": []
     },
     {
@@ -26,7 +53,16 @@
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/DualSubs.Universal.sgmodule",
       "name": "🍿️ DualSubs: 🔣 Universal",
-      "desc": "流媒体平台字幕增强及双语模块",
+      "desc": "流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
+      "tags": []
+    },
+    {
+      "id": "iCloud_Private_Relay_Gateway",
+      "filename": "iCloud_Private_Relay_Gateway.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/iCloud_Private_Relay_Gateway.sgmodule",
+      "name": " Enable iCloud Private Relay on gateway",
+      "desc": "为终端设备启用iCloud专用代理，需要Surge for macOS启用网关模式。",
       "tags": []
     },
     {
@@ -35,7 +71,7 @@
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.Maps.sgmodule",
       "name": " iRingo: 🗺️ Maps",
-      "desc": "自定义 Maps app",
+      "desc": "自定义 Maps app\\n添加国际版功能\\n自定义服务版本",
       "tags": []
     },
     {
@@ -44,7 +80,7 @@
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.News.sgmodule",
       "name": " iRingo: 📰 News",
-      "desc": "1.自定义解锁News的地区",
+      "desc": "1.自定义解锁News的地区\\n2.Coming Soon…",
       "tags": []
     },
     {
@@ -62,7 +98,7 @@
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.WeatherKit.sgmodule",
       "name": " iRingo: 🌤 WeatherKit",
-      "desc": "iOS 18 & macOS 15 & watchOS 11",
+      "desc": "iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据",
       "tags": []
     },
     {
@@ -129,12 +165,30 @@
       "tags": []
     },
     {
+      "id": "VVebo_Repair",
+      "filename": "VVebo_Repair.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/VVebo_Repair.sgmodule",
+      "name": "VVebo主页时间线修复",
+      "desc": "修复失效的用户主页时间线显示和粉丝列表",
+      "tags": []
+    },
+    {
       "id": "WeChat_Enhance",
       "filename": "WeChat_Enhance.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/WeChat_Enhance.sgmodule",
       "name": "WeChat增强",
       "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
+      "tags": []
+    },
+    {
+      "id": "YouTube.Enhance",
+      "filename": "YouTube.Enhance.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/YouTube.Enhance.sgmodule",
+      "name": "Youtube (Music) Enhance",
+      "desc": "适用于 Youtube & Youtube Music",
       "tags": []
     },
     {
