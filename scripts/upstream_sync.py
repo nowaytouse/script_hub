@@ -13,7 +13,7 @@ from lib.common import Logger, get_project_root, write_file
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
 SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
-MODULE_DIR = os.path.join(ROOT, "module/surge(main)")
+MODULE_DIR = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
 
 # CONFIGURATION
 

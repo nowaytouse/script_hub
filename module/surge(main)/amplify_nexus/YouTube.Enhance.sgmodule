@@ -21,4 +21,4 @@ youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.c
 ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
 
 [MITM]
-hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com
