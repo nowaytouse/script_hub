@@ -19,9 +19,9 @@ OUTDATED_DAYS = 365  # 1年未更新视为过时
 
 # 分类定义
 CATEGORIES = {
-    "amplify_nexus": "🛠️ Amplify Nexus › 增幅枢纽",
-    "head_expanse": "🔝 Head Expanse › 首端扩域", 
-    "narrow_pierce": "🎯 Narrow Pierce › 窄域穿刺"
+    "amplify_nexus": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
+    "head_expanse": "『 🔝 Head Expanse › 首端扩域 』", 
+    "narrow_pierce": "『 🎯 Narrow Pierce › 窄域穿刺 』"
 }
 
 # 特殊标记

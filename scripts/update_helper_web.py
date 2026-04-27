@@ -17,9 +17,9 @@ def update():
 
     # Categories definitions (matching HTML display)
     DISPLAY_NAMES = {
-        "amplify_nexus": {"name": "🛠️ Amplify Nexus › 增幅枢纽", "desc": "功能增强类模块"},
-        "head_expanse": {"name": "🔝 Head Expanse › 首端扩域", "desc": "广告拦截平台类"},
-        "narrow_pierce": {"name": "🎯 Narrow Pierce › 窄域穿刺", "desc": "App专项去广告"}
+        "amplify_nexus": {"name": "『 🛠️ Amplify Nexus › 增幅枢纽 』", "desc": "功能增强类模块"},
+        "head_expanse": {"name": "『 🔝 Head Expanse › 首端扩域 』", "desc": "广告拦截平台类"},
+        "narrow_pierce": {"name": "『 🎯 Narrow Pierce › 窄域穿刺 』", "desc": "App专项去广告"}
     }
 
     # Grouping logic

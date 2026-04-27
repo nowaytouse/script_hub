@@ -27,9 +27,9 @@ HELPER_HTML = OUTPUT_DIR / "surge_module_helper.html"
 
 # Category mapping
 CATEGORIES = {
-    "amplify_nexus": "Amplify Nexus",
-    "head_expanse": "Head Expanse",
-    "narrow_pierce": "Narrow Pierce"
+    "amplify_nexus": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
+    "head_expanse": "『 🔝 Head Expanse › 首端扩域 』",
+    "narrow_pierce": "『 🎯 Narrow Pierce › 窄域穿刺 』"
 }
 
 def scan_modules():

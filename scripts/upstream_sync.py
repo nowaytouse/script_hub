@@ -83,6 +83,8 @@ NEXUS_MODULES = [
 ]
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
+HEAD_EXPANSE_GROUP = "『 🔝 Head Expanse › 首端扩域 』"
+NARROW_PIERCE_GROUP = "『 🎯 Narrow Pierce › 窄域穿刺 』"
 PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
 
 # SYNC CLASS
