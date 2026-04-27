@@ -37,6 +37,7 @@ GROUP_HEAD_EXPANSE = "『 🔝 Head Expanse › 首端扩域 』"
 MODULE_SUFFIXES = (".sgmodule", ".module")
 REMOTE_PREFIXES = ("http://", "https://")
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
+PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
 SUPPORTED_POLICIES = {
     "REJECT",
     "REJECT-DROP",
@@ -873,24 +874,37 @@ class AdBlockManager:
         self.load_hashes()
         self.cleanup_local_lists()
 
+        # 1. Load remote canonical sources
         source_entries = self.load_source_entries()
         Logger.section("Syncing Upstream Ad Modules")
         cached_modules, sync_failures = self.sync_remote_module_sources(source_entries)
-        if sync_failures:
-            Logger.warn(
-                "Some canonical AdBlock module syncs failed. Proceeding with best-effort build: "
-                + ", ".join(sync_failures[:10])
-                + (" ..." if len(sync_failures) > 10 else "")
-            )
+
+        # 2. Automatically load ALL files from module/local_sources
+        Logger.section("Integrating Local AdBlock Sources")
+        local_dir = os.path.join(ROOT, "module/local_sources")
+        if os.path.exists(local_dir):
+            for f in os.listdir(local_dir):
+                if f.endswith((".sgmodule", ".module")):
+                    path = os.path.join(local_dir, f)
+                    Logger.info(f"  + Merging local source: {f}")
+                    self.extract_from_file(path, default_policy="REJECT", include_sections=True)
+
+        # 3. Scan amplify_nexus for ad-blocking components
+        Logger.section("Scanning Amplify Nexus for Ad-Blockers")
+        nexus_dir = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
+        if os.path.exists(nexus_dir):
+            for f in os.listdir(nexus_dir):
+                if f.endswith(".sgmodule") and f not in PROTECTED_MODULES:
+                    path = os.path.join(nexus_dir, f)
+                    with open(path, 'r', encoding='utf-8', errors='ignore') as tf:
+                        text = tf.read().lower()
+                        # If it contains typical ad-block indicators, merge its rewrites/scripts
+                        if any(kw in text for kw in ["reject", "广告", "拦截", "anti-ad"]):
+                            Logger.info(f"  + Merging Nexus ad-block component: {f}")
+                            self.extract_from_file(path, default_policy="REJECT", include_sections=True)
 
         Logger.section("Fetching Canonical AdBlock Sources")
         failures = self.process_source_entries(source_entries, cached_contents=cached_modules)
-        if failures:
-            Logger.warn(
-                "Some canonical AdBlock sources failed. Proceeding with best-effort build: "
-                + ", ".join(failures[:10])
-                + (" ..." if len(failures) > 10 else "")
-            )
 
         if os.path.exists(SKK_REJECT):
             Logger.info("Loading local skk reject fallback...")
