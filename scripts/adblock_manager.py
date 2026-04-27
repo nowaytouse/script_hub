@@ -827,6 +827,7 @@ class AdBlockManager:
             items = sorted(self.sections[section_name])
             if not items:
                 continue
+            Logger.info(f"Writing section '{section_name}' with {len(items)} items")
             content.append(f"[{section_name}]\n")
             content.extend(f"{item}\n" for item in items)
             content.append("\n")
