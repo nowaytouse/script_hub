@@ -480,27 +480,24 @@ class AdBlockManager:
             "vip", "premium", "会员", "会员解锁",
             "hook", "script-hub", "conversion", "转换",
             "feature", "enhanced", "增强", "iap", "receipt",
-            "translations"
+            "translations", "nsfw"
         ]
         
         # Adblock keywords that suggest it IS adblock
         adblock_keywords = [
             "reject", "clean", "strip", 
             "blank", "pixel", "广告", "拦截", "去广告",
-            "anti-ad", "adblock", "tracking", "nsfw"
+            "anti-ad", "adblock", "tracking"
         ]
         
         # Specific enhancement patterns
         if "header-" in lower_line and "translation" in lower_line:
             return True
             
-        # If it has enhancement keywords, check if it's NOT adblock related
-        has_enhancement = any(kw in lower_line for kw in enhancement_keywords)
-        # Use regex for 'ad' and 'block' to avoid partial matches like 'add'
-        has_adblock = any(kw in lower_line for kw in adblock_keywords) or \
-                      re.search(r"\bad\b|\bblock\b", lower_line)
-        
-        if has_enhancement and not has_adblock:
+        # If it has enhancement keywords, it's likely an enhancement
+        if any(kw in lower_line for kw in enhancement_keywords):
+            # Check if it ALSO has adblock keywords - if so, it's a "mixed" rule
+            # and should still be treated as an enhancement for separation purposes
             return True
             
         return False

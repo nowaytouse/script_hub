@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS
-#!date=2026-04-27 17:48:08
+#!date=2026-04-27 17:53:53
 
 [Rule]
 # High-Priority White-list (Prevent DNS failure)
@@ -306,8 +306,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?://\w+\.kakamobi\.cn/api/open/v\d/advert-sdk/ _ reject
 ^https?://\w+\.kingsoft-office-service\.com/ad _ reject
 ^https?://a\.qiumibao\.com/activities/config\.php _ reject
-^https?://act\.vip\.iqiyi\.com/interact/api/show\.do _ reject
-^https?://act\.vip\.iqiyi\.com/interact/api/v\d/show _ reject
 ^https?://ads-img-al\.xhscdn\.com/hera/ _ reject
 ^https?://api-access\.pangolin-sdk-toutiao1?\.com/api/ad/ _ reject
 ^https?://api-mifit-cn2\.zepp\.com/discovery/mi/cards/(startpage_ad|homepage_ad)\? _ reject
@@ -354,7 +352,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?://api\.xueqiu\.com/brand/search/v1\.json _ reject
 ^https?://api\.xueqiu\.com/snowpard/launch_strategy/query\.json _ reject
 ^https?://api\.yizhibo\.com/common/api/(api_)?pz$ _ reject
-^https?://api\.zhihu\.com/\w+/\d+/comments/featured-comment-ad _ reject
 ^https?://api\.zhihu\.com/ad _ reject
 ^https?://api\.zhihu\.com/appview/api/v\d/answers/\d+/recommendations _ reject
 ^https?://api\.zhihu\.com/commercial_api/ _ reject
@@ -530,7 +527,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/(?>csc|osg)-service\.sgcc\.com\.cn:\d+\/.*\/inner\/cache _ reject
 ^https?:\/\/(?>csc|osg)-service\.sgcc\.com\.cn:\d+\/emss-pfa-appset-front\/appForceUpdate _ reject
 ^https?:\/\/(?>csc|osg)-service\.sgcc\.com\.cn:\d+\/emss-pfa-appset-front\/appSync\/getAppForceUpgrade _ reject
-^https?:\/\/(?>webapi|miniapp)\.qmai\.cn\/web\/cmk-center\/marketing\/canvas\/advert _ reject
 ^https?:\/\/(adse\.wsa|adse|adbehavior|xdcs-collector)\.xima.*\.com\/.* _ reject
 ^https?:\/\/(api-mifit|api-mifit-\w+)\.huami\.com\/discovery\/mi\/discovery\/\w+_ad\? - reject
 ^https?:\/\/(api|api-bk\d+)\.tv\.sohu\.com\/agg\/api\/app\/config\/bootstrap _ reject
@@ -818,14 +814,12 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/gw\.aihuishou\.com\/app-portal\/home\/getadvertisement _ reject
 ^https?:\/\/gw\.alicdn\.com\/imgextra\/\w{2}\/[\w!]+-\d-tps-\d{3}-\d{4}\.(jpg|png)$ _ reject
 ^https?:\/\/gw\.alicdn\.com\/mt\/ _ reject
-^https?:\/\/gw\.api\.ddxq\.mobi\/vip-app-service\/vip\/my\/page\/advertising _ reject
 ^https?:\/\/gw\.csdn\.net\/cms-app\/v\d+\/home_page\/open_advertisement _ reject
 ^https?:\/\/gw\.kaola\.com\/gw\/dgmobile\/newOpenAd _ reject
 ^https?:\/\/hcz-member\.pingan\.com\.cn\/micro-api\/homepage\/do\/app\/popbox\/getTopPopBox _ reject
 ^https?:\/\/home\.mi\.com\/cgi-op\/api\/v\d\/recommendation\/banner - reject
 ^https?:\/\/i\.ys7\.com\/api\/ads _ reject
 ^https?:\/\/iadmusicmat\.music.126.net\/.*?jpg$ _ reject
-^https?:\/\/iapi\.bishijie\.com\/actopen\/advertising\/ _ reject
 ^https?:\/\/icc\.one\/iFreeTime\/xid32uxaoecnfv2\/ _ reject
 ^https?:\/\/img-tailor\.11222\.cn\/cms\/upload\/img\/.+ _ reject
 ^https?:\/\/img-tailor\.11222\.cn\/pm\/app\/.+\.gif _ reject
@@ -844,7 +838,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/img\d\.doubanio\.com\/view\/dale-online\/dale_ad\/ _ reject
 ^https?:\/\/init\.sms\.mob\.com\/.*sdk\/init.* _ reject
 ^https?:\/\/intellicc\.bas\.cmbchina\.com\/Edge\/api\/mlife\.intelli\.render\.api\.render\/getDynamicDataSec _ reject
-^https?:\/\/interface\.aomiapp\.com\/aomi-ads _ reject
 ^https?:\/\/ios\.lantouzi\.com\/api\/startpage _ reject
 ^https?:\/\/ios\.wps\.cn\/ad-statistics-service _ reject
 ^https?:\/\/iphone\.ac\.qq\.com\/.*\/Support\/(getSystemConf|bootScreen) _ reject
@@ -876,7 +869,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/maicai\.api\.ddxq\.mobi\/advert\/ _ reject
 ^https?:\/\/maicai\.api\.ddxq\.mobi\/homeApi\/getHomeAdPop _ reject
 ^https?:\/\/mangaapi\.manhuaren\.com\/v\d\/public\/getStartPageAds _ reject
-^https?:\/\/mapi\.appvipshop\.com\/vips-mobile\/rest\/iosAdInfo\/report _ reject
 ^https?:\/\/mapi\.dangdang\.com\/index\.php\?action=init _ reject
 ^https?:\/\/mapi\.dianping\.com\/adshopping _ reject
 ^https?:\/\/mapi\.dianping\.com\/mapi\/operating\/(?>indexopsmodules|loadsplashconfig) _ reject
@@ -923,7 +915,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/open\.e\.kuaishou\.com\/rest\/e\/v3\/open\/univ _ reject
 ^https?:\/\/open\.fitdays\.cn\/uploads\/ad\/ _ reject
 ^https?:\/\/open\.qyer\.com\/qyer\/config\/get _ reject
-^https?:\/\/p0\.pipi\.cn\/mediaplus\/maoyantong_ads_fe\/(0fa3345c|2erwqe2f)\w+.jpg\?imageMogr2\/quality\/85 _ reject
 ^https?:\/\/p1\-lm\.adukwai\.com\/bs2\/adUnionVideo _ reject
 ^https?:\/\/p\.c\.music\.126.net\/.*?jpg$ _ reject
 ^https?:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do _ reject
@@ -936,7 +927,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/pan\.baidu\.com\/act\/v\d\/(bchannel|welfare)\/list _ reject
 ^https?:\/\/pan\.baidu\.com\/api\/certuser\/get _ reject
 ^https?:\/\/pan\.baidu\.com\/api\/useractivity\/activity _ reject
-^https?:\/\/pan\.baidu\.com\/component\/view\/(1510|1130)\?vip _ reject
 ^https?:\/\/pan\.baidu\.com\/pmall\/order\/privilege\/info _ reject
 ^https?:\/\/pan\.baidu\.com\/rest\/.+\/pcs\/adx _ reject
 ^https?:\/\/pan\.baidu\.com\/rest\/2\.0\/pcs\/ad _ reject
@@ -1002,7 +992,6 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 ^https?:\/\/ut2\.shuqistat\.com\/.+\.gif _ reject
 ^https?:\/\/venus\.yhd\.com\/memhome\/launchConfig _ reject
 ^https?:\/\/vod\.pipi\.cn\/\w+\/\w+\/f0\.mp4\?__reqTraceID=.*?optimus_code=10 _ reject
-^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.alsc\.wamai\.store\.detail\.miniapp\.popup _ reject
 ^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.venus\.shopcouponpopupservice\.getshopcouponspopup _ reject
 ^https?:\/\/wanciwangdata\.oss-cn-beijing\.aliyuncs\.com\/startup\/resource\/content.+ _ reject
 ^https?:\/\/wap\.spdb\.com\.cn\/mspmk-web-homeassist\/OpenScreenAdv\.ah$ _ reject
@@ -1146,13 +1135,11 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 "^https:\/\/tm-api\.pin-dao\.cn\/home\/api\/index\/activeConfig\/v2" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/tm-api\.pin-dao\.cn\/home\/api\/resource\/config\/homeBannerNodes" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/triangle\.wearemanner\.com\/mp-api\/v1\/ads" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
-"^https:\/\/vip7\.fzwdyy\.cn:8083\/api\/(getAdvertInfo|getGOOGAdvert)" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^https:\/\/vod-movie\.maoyan\.com\/vod\/video\/onlineMovies\.json" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/webapi\.qmai\.cn\/web\/catering\/advertising\/ad" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/webchatapp\.fcbox\.com\/fcboxactivityweb\/api\/v2\/clientPage" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/wechat-api\.i-xiaoma\.com\.cn\/app\/v1\/bus\/wechat\/content" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/www\.deppon\.com\/gwapi\/memberService\/eco\/member\/grade\/commonInterface" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
-"^https:\/\/wx\.bthhotels\.com\/miniapp\/weixin\/v1\/home\/index_banner" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/wx\.maoyan\.com\/maoyansh\/api\/mobile\/(hotMatchList|eSportsIps)" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/ad\/detail" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/celebrityBasicList\/query" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
@@ -1232,7 +1219,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 "^https?:\/\/api\.wmpvp\.com\/api\/v\d\/config\/promote" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^https?:\/\/api\.xiachufang\.com\/v\d\/ad/" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank_dict.json"
 "^https?:\/\/api\.xiaoheihe\.cn\/.*get_ads_info" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
-"^https?:\/\/api\.yonghuivip\.com\/web\/shensuan\/ad\/getAd" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^https?:\/\/api\.ys7\.com.*\/getAdvertising" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^https?:\/\/api\.zcool\.com\.cn\/.*common\/open-screen" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.txt"
 "^https?:\/\/api\d?\.musical\.ly\/api\/ad\/" data="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/blank/blank.gif"
@@ -1678,7 +1664,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https:\/\/j1\.pupuapi\.com\/client\/assets\/discount\/order data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/j1\.pupuapi\.com\/client\/marketing\/advertisement\/search_input_ranking data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/j1\.pupuapi\.com\/client\/marketing\/channel\/global_redeem\/top_tip\/v2 data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https:\/\/j1\.pupuapi\.com\/client\/member_card\/premium\/user_center data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/j1\.pupuapi\.com\/client\/recommendation\/hub\/interests\/products\/v2 data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/lanfanapp\.com\/api\/v1\/ads\/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/line3-h5-mobile-api\.biligame\.com\/game\/live\/large_card_material\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -1700,7 +1685,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https:\/\/mada-travel\.17u\.cn\/mdapi\/config\/mine data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/mada-travel\.17u\.cn\/mdapi\/config\/tabAct data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/maicai\.api\.ddxq\.mobi\/homeApi\/queryMyPagePopup data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https:\/\/mapi\.appvipshop\.com\/vips-mobile\/rest\/iosAdInfo\/report data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https:\/\/mbd\.baidu\.com\/newspage\/api\/getmobads\?page\=landingshare data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https:\/\/member\.alipan\.com\/v2\/activity\/sign_in_luckyBottle data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https:\/\/mgesq\.api\.mgtv\.com\/search\/goods\/rank data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
@@ -1934,7 +1918,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.trip\.activity\.querytmsresources\/1\.0\?type=originaljson data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-img.gif"
 ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.wdk\.render\.querysinglepage data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/acs\.youku\.com\/gw\/mtop\.youku\.(pisp\.scripts\.get|xspace\.play\.position\.preload\.query|xspace\.poplayer\.position\.query) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/act\.vip\.iqiyi\.com\/interact\/api\/v2\/show\? data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/ad\.cj\.sina\.cn\/(osa\/adpreload|fax\/impress) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/ad\.cyapi\.cn\/v\d data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/ad\.life\.360\.cn\/v2\/app\/advertisement\/config\?sdk_ver= data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
@@ -2136,14 +2119,12 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/api\.ycapp\.yiche\.com\/yicheapp\/getadlist data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-img.gif"
 ^https?:\/\/api\.yikaobang\.com\.cn\/client\/main\/homePageSmallAd data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/api\.yikaobang\.com\.cn\/index\.php\/Client\/main\/startPage data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-^https?:\/\/api\.yonghuivip\.com\/web\/shensuan\/ad\/getAd data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/api\.ys7\.com.*\/getAdvertising data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/api\.ys7\.com\/api\/ads data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/api\.zcool\.com\.cn\/.*common\/open-screen data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/api\.zhihu\.com\/(notifications\/v\d\/count) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/api\.zhihu\.com\/api\/v4\/ecom_data\/config data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/api\.zhihu\.com\/bazaar\/float_window data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/api\.zhihu\.com\/bazaar\/vip_tab\/header data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/api\.zhihu\.com\/commercial_api data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/api\.zhihu\.com\/commercial_api\/answer/\d+/bottom-v2 data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/api\.zhihu\.com\/content-distribution-core\/sections\/ data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
@@ -2295,7 +2276,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.(batch\.show\.v2|index)\.cn data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.(show|mshow)\.cn\/ data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.cainiao\.nbmensa\.research\.researchservice\.(acquire|event|close)\.cn data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.cainiao\.nbopen\.miniapp\.recommend\.cpc\.cn data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.cainiao\.nbpresentation\.(homepage\.merge|tabbar\.marketing)\.get\.cn data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.com\.cainiao\.cnactivitycenter data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/cn-acs\.m\.cainiao\.com\/gw\/mtop\.com\.cainiao\.cncreditmarket\.hit\.getactivityhit\.cn data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
@@ -2328,10 +2308,7 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/delivery-api\.imdada\.cn\/v2_0\/dada\/promote\/imax\?privacyParam data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/device-box\.onethingpcs\.com\/.+\/adConf data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/dict\.youdao\.com\/commonsearch data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/dict\.youdao\.com\/course\/tab\/translateTab data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/dict\.youdao\.com\/dictusertask\/system data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/dict\.youdao\.com\/vip\/activity\/couponinfo data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/dictvip-business\.youdao\.com\/home\/ad data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/dili\.bdatu\.com\/jiekou\/ad data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/direct\.z-bank\.com\/portal\/AdvertImageDownLoad4Mobile\.do data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/discuz\.gtimg\.cn\/cloud\/scripts\/discuz_tips\.js data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-img.gif"
@@ -2424,7 +2401,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/gw\.kaola\.com\/gw\/dgmobile\/newOpenAd data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/gx\.10086\.cn\/zt-portal\/gxhzg\/portal\/app\/api\/v data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/h5api\.sginput\.qq\.com\/v1\/gcenter\/ios\/homepage data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/h5app\.kuwo\.cn\/m\/bdvipact2205\/index\.html\?fromsrc=huodong data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/h5app\.kuwo\.cn\/m\/kwtemplatePage\/index\.html\?id=1157&app=bodianhdzx data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/other_modul data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/other_modul\? data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
@@ -2474,7 +2450,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/image\.suning\.cn\/uimg\/ma\/ad\/ data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/images\.cib\.com\.cn\/commons\/uploads\/commons\/[a-zA-Z0-9]{32}\.jpg\?ver=20221[1-2]{1} data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/images\.cib\.com\.cn\/commons\/uploads\/commons\/[a-zA-Z0-9]{32}\.jpg\?ver=20230[1-9]{1} data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-^https?:\/\/images\.client\.vip\.xunlei\.com\/.+?\/advert\/ data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/images\.pinduoduo\.com\/marketing\_api data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/imcs\.citicbank\.com\/cloud\/.+(1125.+2436|1242.+2688|750.+1638|563.+1218) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/imeclient\.openspeech\.cn\/adservice\/ data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
@@ -2501,7 +2476,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/content\/activity\/music\/jar\/template\/list data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/resource-exposure\/config data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/sp\/flow\/popup\/query data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/vipmall\/couponcfg\/get data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/interface(\d)?\.music\.163\.com\/w?eapi\/(resource-exposure\/)?activity data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/interface3?\.music\.163\.com/eapi/(ad|abtest|sp|hot|store|mlog|search/(specialkeyword|defaultkeyword|hot)) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-img.gif"
 ^https?:\/\/iobs\.pingan\.com\.cn\/download\/bweb-per-sf-prd\/bweb data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
@@ -2574,19 +2548,14 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/magev6\.if\.qidian\.com\/argus\/api\/v2\/adv\/getadvlistbatch data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/magev\d\.if\.qidian\.com\/argus\/api\/v\d\/client\/getsplashscreen data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/maicai\.api\.ddxq\.mobi\/advert\/startUpScreen data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-^https?:\/\/maicai\.api\.ddxq\.mobi\/cart\/vipGuide data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/maicai\.api\.ddxq\.mobi\/homeApi\/userLike data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/maicai\.api\.ddxq\.mobi\/order\/getRecommend data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/maicai\.api\.ddxq\.mobi\/vip\/getVipAd data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/mall\.meituan\.com\/api\/c\/homepage\/bubble\/operate\/info data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/mall\.meituan\.com\/api\/c\/homepage\/splash data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/mama\.dxy\.com\/api\/cms\/client\/popup-window\/list data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/manager\.aiqiangua\.com:8080\/AqgNews\/api\/start_ad\.do data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/mapi-app\.bestpay\.com\.cn\/gapi\/appClient\/noEnc\/getHomePageAds data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/mapi-app\.bestpay\.com\.cn\/gapi\/appclient\/noEnc\/getAppPopup data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/mapi\.appvipshop\.com\/vips-mobile\/rest\/activity\/advertisement\/get data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-^https?:\/\/mapi\.appvipshop\.com\/vips-mobile\/rest\/activity\/coupon\/float_entrance\/get\?api_key data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-^https?:\/\/mapi\.appvipshop\.com\/vips-mobile\/rest\/layout\/productList\/eventData\/v data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/mapi\.dangdang\.com\/index\.php\?action=init data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/mapi\.dianping\.com\/mapi\/intelliindex data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/mapi\.mafengwo\.cn\/system\/config\/(get|mark)_(push|alert)_config data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
@@ -2648,7 +2617,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/mrp\.mcloud\.139\.com\/mc\/mc-client-service\/openapi\/letter\/query data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/ms\.jr\.jd\.com\/gw\/generic\/aladdin\/(new)?na\/m\/getLoadingPicture data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/mtteve\.beacon\.qq\.com\/analytics data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-img.gif"
-^https?:\/\/mystore-gw\.watsonsvip\.com\.cn\/gfu\/popup\/advert\/launch data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/myusmile\.online\/user\/version\/requestAppUpdate data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/newapp2\.szsmk\.com\/app\/config\/queryMainAd data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/newsuperapp\.ftms\.com\.cn\/app-bff\/.*openScreenPicture data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
@@ -2830,7 +2798,6 @@ js\.wpadmngr\.com\/static\/adManager\.js - reject
 ^https?:\/\/vapp\.tmuyun\.com\/api\/app_start_page\/list\/new data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/venus\.yhd\.com\/memhome\/launchConfig data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/vidz\.3hxq\.cn\/api\/app\/(miscs\/mine\/extensions|announcements\/home) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
-^https?:\/\/vip7\.fzwdyy\.cn:8083\/api\/(getAdvertInfo|getGOOGAdvert) data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/vv\.video\.qq\.com\/getvmind\? data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 ^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.alsc\.eleme\.\w+\.trigger\.respond data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 ^https?:\/\/wallpaper\.soutushenqi\.com\/v\d\/dateSignature\/random data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
@@ -2916,7 +2883,6 @@ https://fbchina.flipchina.cn/v2/ad/query/* data="https://raw.githubusercontent.c
 https://guanyu.longfor.com/app-server/api/v1/main/start data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 https://homefront.qunar.com/front/splash/ad data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 https://ios.sspai.com/api/v3/recommend/page/get\?ad.*ios_home_modal data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
-https://mapi.appvipshop.com/vips-mobile/rest/activity/advertisement/get data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 https://mgesq.api.mgtv.com/v2/user/center/icon data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-dict.json"
 https://new-app-api.ylyk.com/v1/user/myinfo/adviser data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
 https://open3.vistastory.com/v3/api.*get_popup data="https://raw.githubusercontent.com/deezertidal/Surge_Module/master/files/reject-200.txt"
@@ -2955,7 +2921,6 @@ https?:\/\/res\.xiaojukeji\.com\/resapi\/activity\/get(Ruled|Preload|PasMultiNot
 91porna(91porna.com) = type=http-response , pattern="^https?:\/\/\w{0,3}(\.){0,1}91porna\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 91porny(91porny.com) = type=http-response , pattern="^https?:\/\/\w{0,3}(\.){0}91porny\.com\/(?!(.*(cdn-cgi|verify|auth\/|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 91short(cn1.91short.com) = type=http-response , pattern="^https?:\/\/(cn1|www)\.(91short\.com)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=-1 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
-AVfactory = type=http-response , pattern="^https?:\/\/(www.tameikegoro.jp|tameikegoro.jp|www.madonna-av.com|madonna-av.com|deeps.net|www.fitch-av.com|fitch-av.com|www.takara-tv.jp|takara-tv.jp|www.moodyz.com|moodyz.com|www.s1s1s1.com|s1s1s1.com|www.prestige-av.com|prestige-av.com|www.sod.co.jp|sod.co.jp|venus-av.com|www.gloryquest.tv|gloryquest.tv|www.premium-beauty.com|premium-beauty.com|www.nagae-style.com|nagae-style.com|www.ideapocket.com|ideapocket.com|www.attackers.net|attackers.net|www.dasdas.jp|dasdas.jp|www.oppai-av.com|oppai-av.com|www.kawaiikawaii.jp|kawaiikawaii.jp|www.to-satsu.com|to-satsu.com|www.wanz-factory.com|wanz-factory.com|www.av-e-body.com|av-e-body.com|www.mgstage.com|mgstage.com|www.mousouzoku-av.com|mousouzoku-av.com|manji-group.com|www.rocket-inc.net|rocket-inc.net|www.dmm.co.jp|dmm.co.jp|www.muku.tv|muku.tv)\/(?!(.*(api|my|cdn-cgi|verify|auth|captch|account|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Avple(avple.tv) = type=http-response , pattern="^https?:\/\/avple\.tv\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 BahamutAnimeAds=type=http-response,pattern=^https?:\/\/api\.gamer\.com\.tw\/mobile_app\/anime\/v\d/(token|m3u8).php\?,requires-body=1,script-path=https://raw.githubusercontent.com/NobyDa/Script/master/Bahamut/BahamutAnimeAds.js
 BiliBili_开屏去广告 = type=http-response,script-path=https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/script/startup/startup.js,pattern="^https?:\/\/app\.bilibili\.com\/x\/v2\/splash\/list",requires-body=1
@@ -2971,7 +2936,6 @@ Javmost(javmost.xyz) = type=http-response , pattern="^https?:\/\/\w{3,5}\.javmos
 Missav(missav.com) = type=http-response , pattern="^https?:\/\/missav\.(ws|live|com|ai)\/(?!(.*(api|login|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 NT动漫(www.ntdm9.com) =  type=http-response , pattern="^https?:\/\/(www.ntdm9.com)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Netflav(netflav|netflav5|.com) = type=http-response , pattern="^https?:\/\/(netflav|netflav5)\.com\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
-PlayerAds = type=http-response , pattern="^https?:\/\/(lk1\.supremejav\.com|trailerhg\.xyz|turboplayers\.xyz|javggvideo\.xyz|turtleviplay\.xyz|findjav\.com|stbturbo\.xyz|emturbovid\.com|streamtape\.com|javplayer|((mmsw02|mmfl04|netflavns1|netflavns2|emturbovid|filemoon|embedrise|mmfl02|embedgram)\.(sx|com))|filemoon\.sx|embedrise\.com|mmfl02\.com|embedgram\.com|fviplions\.com|sfastwish\.com|cabecabean\.lol|belegug\.online|wishfast\.top|vidmoviesb\.xyz|vhmovies\.to|awish\.pro|ankrzkz\.sbs|sub123\.xyz|leakslove\.net|mwish\.pro|embedwish\.com|javhahaha\.us|abkrzkz\.sbs|streamvid\.top|abkrzkr\.sbs|playertv\.net|sbrity\.com|doodporn\.xyz|mycloud123\.top|streamsb\.click|streamxxx\.online|trafficdepot\.re|sblona\.com|filelions\..*|ahvsh\.com|sbrapid\.com|streaamss\.com|louishide\.com|projectfreetv\.lol|streamwish\.to|lvturbo\.com|javb1\.com|sbface\.com|rbtstream\.info|vidgo\.top|sbhight\.com|sbbrisk\.com|streamhide\.to|cloudrls\.com|mm9846\.com|m4uhd\.club|streamm4u\.club|sbchill\.com|fbjav\.com|imfb\.xyz|sbrulz\.xyz|baldrfilms\.xyz|javbigo\.xyz|dizivap\..*|dvapizle\..*|sblongvu\.com|mavavid\.com|fembed9hd\.com|xsub\.cc|sbthe\.com|sbanh\.com|mm9844\..*|anigogo\.net|faptiti\.com|javsubbed\.xyz|sblanh\.com|av4asia\.com|playerjavseen\.com|pornhubed\.com|xvideostream\.net|streamsss\.net|sbspeed\.com|vcdn-stream\.xyz|vanfem\.com|javuncen\.xyz|vidplay\.ch|javenglish\.me|ssbstream\.net|zojav\.com|watch-jav-english\.live|javpornhd\.online|yuamikami\.xyz|embed-media\.com|obaplayer\.xyz|cdn-myhdjav\.info|dlmovies\.link|cinegrabber\.com|watchjavnow\.xyz|luxubu\.review|nsfwzone\.xyz|viplayer\.cc|cinemaemcasa\.xyz|sbfast\.com|iframe2videos\.xyz|javfu\.net|streamas\.cloud|nashstream\.top|yuistream\.xyz|jav247\.top|viewsb\.com|myvideoplayer\.monster|cloudemb\.com|moviesland\.xyz|jvembed\.com|ffem\.club|javleaked\.com|pornhole\.club|ndrama\.xyz|fembed-hd\.com|netflav\.com|netflav5\.com|mambast\.tk|cutl\.xyz|playerjavhd\.com|mycloudzz\.com|suzihaza\.com|embedsb\.com|layarkacaxxi\.icu|nekolink\.site|sbflix\.xyz|javhdfree\.icu|streamsb\.net|rubicstreaming\.com|javside\.com|gdstream\.net|animepl\.xyz|watchsb\.com|sbplay2\..*|hentai4\.me|playersb\.com|streamabc\.xyz|ns21\.online|diasfem\.com|milfnut\.net|pelispop\.net|ondembed\.xyz|tubesb\.com|fplayer\.info|mm9842\.com|sbplay1\.com|javmvp\.com|japopav\.tv|nezuko-ah\.nl|pelistop\.co|vidcloud\..*|mavlecteur\.com|xxxjaa\.xyz|vcdn2\.space|mavplayer\.xyz|sbplay\..*|sbvideo\.net|sbembed4\.com|javcl\.me|dfmagazine\.co\.uk|down-paradise\.com|embedsito\.com|serverf4\.org)\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 Pornhub(cn.pornhub.com) = type=http-response , pattern="^https?:\/\/(\w{0,3}(\.){0,1}(pornhub)(\.)\w{0,3})\/(?!(.*(authenticate|cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 ProtoBuf处理 = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/c\/f\/(frs\/(page|threadlist|generalTabList)|pb\/page|excellent\/personalized)\?cmd, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/tieba-proto.js, requires-body=true, binary-body-mode=true, timeout=10
 PupuSplashAds2=type=http-response,pattern=^https:\/\/j1\.pupuapi\.com\/client\/search\/hot_keywords\/v3,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PupuSplashAds.js
@@ -3189,8 +3153,6 @@ netease.adblock20=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.
 netease.adblock21=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ad\/loading\/get,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
 netease.adblock22=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ad\/loading\/current,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
 netease.adblock23=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ad\/get,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
-netease.adblock2=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/vipnewcenter\/app\/resource\/newaccountpage,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
-netease.adblock3=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/vip\/cashier\/tspopup\/get,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
 netease.adblock4=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/side-bar\/mini-program\/music-service\/account,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
 netease.adblock5=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/suggest\/keyword\/get,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
 netease.adblock6=type=http-response,pattern=^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/specialkeyword\/get,requires-body=1,script-path=https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
@@ -3208,7 +3170,6 @@ pupumarket=type=http-response,pattern=^https?:\/\/j1\.pupuapi\.com\/client\/mark
 qidian2=type=http-response,pattern=^https?:\/\/apps\.teamair\.cn\/app\/version,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/qidian.js
 qidian3=type=http-response,pattern=^https:\/\/magev6\.if\.qidian\.com\/argus\/api\/(v4\/client\/getsplashscreen|v2\/(deeplink\/geturl|dailyrecommend\/getdailyrecommend)|v1\/(client\/getconf$|bookshelf\/getHoverAdv|adv\/getadvlistbatch\?positions=iOS_tab)),requires-body=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/qidian.js
 qidian=type=http-response,pattern=^https?:\/\/magev6\.if\.qidian\.com\/argus\/api\/(v4\/client\/getsplashscreen|v2\/deeplink\/geturl|v1\/(client\/getconf|adv\/getadvlistbatch\?positions=iOS_tab|dailyrecommend\/getdailyrecommend)),requires-body=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/qidian.js
-qmai=type=http-response,pattern=^https?:\/\/(?>webapi|miniapp)\.qmai\.cn\/web\/catering([0-9]-apiserver)?\/advertising\/ad\/advertiseInfo,requires-body=1,script-path=https://raw.githubusercontent.com/zirawell/R-Store/main/Res/Scripts/AntiAd/qmai.js
 qq-news=type=http-response,pattern=^https?:\/\/(news\.ssp\.qq\.com\/app|r\.inews\.qq\.com\/(get(QQNewsUnreadList|TagFeedList)|gw\/page\/event_detail|news_feed\/hot_module_list)),requires-body=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/qq-news.js
 quark2=type=http-response,pattern=^https?:\/\/open-cms-api\.(uc|quark)\.cn\/open-cms,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/quark.js
 quark=type=http-response,pattern=^https?:\/\/open-cms-api\.(uc|quark)\.cn\/open-cms,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/quark.js
@@ -3390,7 +3351,6 @@ zhuanzhuan=type=http-response,pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/tran
 哲也_消息优化 = type=http-response,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/notifications\/v3\/(message\?|timeline\/entry\/system_message)",requires-body=1
 哲也_热榜优化 = type=http-response,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/topstory\/hot-lists?(\?|\/)",requires-body=1
 哲也_猜你想搜去广告 = type=http-response,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/search\/recommend_query",requires-body=1
-哲也_解锁关键词屏蔽 = type=http-request,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/feed-root\/block",requires-body=1
 哲也_评论优化 = type=http-response,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/(comment_v5\/)?(answers|comments?|articles|pins)\/\d+\/(root_|child_)?comments?",requires-body=1
 哲也_评论摘要优化 = type=http-response,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/www\.zhihu\.com\/api\/v4\/comment_v5\/answers\/\d+\/abstract_comment\?",requires-body=1
 哲也_预置关键词优化 = type=http-response,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js,pattern="^https?:\/\/api\.zhihu\.com\/search\/preset_words\?",requires-body=1
@@ -3413,7 +3373,6 @@ zhuanzhuan=type=http-response,pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/tran
 爱奇艺_开屏去广告 = type=http-response,script-path=https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/script/startup/startup.js,pattern="^https?:\/\/(t7z|kjp)\.cupid\.iqiyi\.com\/mixer\?",requires-body=1
 独播库(www.duboku.tv) = type=http-response , pattern="https?:\/\/.*duboku.*\/(?!(.*(cdn-cgi|verify|auth|captch|(\.(js|css|jpg|jpeg|png|webp|gif|zip|woff|woff2|m3u8|mp4|mov|m4v|avi|mkv|flv|rmvb|wmv|rm|asf|asx|mp3|json|ico|otf|ttf))))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 知道搜索广告(zhidao.baidu.com) = type=http-response , pattern="^https?:\/\/(zhidao)\.baidu\.com\/(question|index|\?fr|\?word)" , requires-body=1 , max-size=-1 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
-禁漫天堂(18comic.org|vip) = type=http-response , pattern="^https?:\/\/18comic\.(vip|org)\/(?!(.*(onclick|cdn-cgi|verify|auth|captch|\.))).*" , requires-body=1 , max-size=0 , script-path=https://limbopro.com/Adguard/Adblock4limbo.js , script-update-interval=0
 移除12306应用内广告 = type=http-request, pattern=^https:\/\/mobile\.12306\.cn\/otsmobile\/app\/mgs\/mgw\.htm$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/12306_remove_ads.js
 移除12306开屏广告 = type=http-request, pattern=^https:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/12306_remove_splashscreen_ads.js, requires-body=true
 移除下一个回答推广、评论区顶部推广 = type=http-response, pattern=^https:\/\/api\.zhihu\.com\/next-(?:bff|data|render), script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Zhihu_remove_ads.js, requires-body=true
@@ -3489,7 +3448,6 @@ zhuanzhuan=type=http-response,pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/tran
 [Body Rewrite]
 http-response ^https?:\/\/cmds\.omesoft\.com\/HypnotistWS\.asmx <GetADResult>\.\*\?<\/GetADResult> <GetADResult>{"ret":0,"msg":"正常","err_code":0,"data":{"ad":[]}}</GetADResult>
 http-response-jq ^https?:\/\/api\.fenxianglife\.com\/njia\/index\/popup\/v2 '.data.list=[]'
-http-response-jq ^https?:\/\/gql(-fed)?\.reddit\.com 'walk( if type == "object" then (if .is{{{NSFW}}} == true then .is{{{NSFW}}} = false else . end) | (if .is{{{NSFW}}}MediaBlocked == true then .is{{{NSFW}}}MediaBlocked = false else . end) | (if .is{{{NSFW}}}ContentShown == false then .is{{{NSFW}}}ContentShown = true else . end) | (if (.commentsPageAds | type == "array") then (.commentsPageAds = []) else . end) | (if ( (.node | type == "object") and (.node.cells | type == "array") and (.node.cells | any(.__typename? == "AdMetadataCell" or .isAdPost? == true)) ) then empty else . end) | (if (.node | type == "object") and (.node.adPayload | type == "object") then empty else . end) | (if .__typename == "AdPost" then empty else . end) else . end)'
 
 [Header Rewrite]
 ^https?:\/\/(www\.xvideos)(\.)(\w{0,3})(?!(.*(api|cdn-cgi|verify|auth|captch|\.))).* header-replace Content-Security-Policy *
