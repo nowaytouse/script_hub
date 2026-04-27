@@ -44,6 +44,7 @@ https://ruleset.skk.moe/List/non_ip/sogouinput.conf|REJECT
 
 # ACL4SSR and other list sources
 https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list|REJECT
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list|REJECT
 https://raw.githubusercontent.com/wdmpa/content-farm-list/refs/heads/main/Surge.txt|REJECT
 https://raw.githubusercontent.com/chenyk1219/surge/release/adg.list|REJECT
 ../../MetaCubeX/MetaCubeX_category-ads-all.list|REJECT
