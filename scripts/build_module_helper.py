@@ -47,8 +47,6 @@ def parse_metadata(content, is_sr=False):
         "version": ""
     }
     
-    # 针对不同平台的正则模式
-    # Surge: #!name=...  Shadowrocket: # name: ...
     patterns = {
         "name": r'^[#!][\s!]*(?:name)\s*[=:]\s*(.+)',
         "desc": r'^[#!][\s!]*(?:desc)\s*[=:]\s*(.+)',
@@ -122,181 +120,84 @@ def generate_html(surge_modules, sr_modules):
     surge_total = sum(len(cat["items"]) for cat in surge_modules.values())
     sr_total = sum(len(cat["items"]) for cat in sr_modules.values())
     
-    with open(ROOT / "module/surge_module_helper.html", "w", encoding="utf-8") as f:
-        # 这里我将写入一整个非常精美的HTML
-        html = f"""<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Script Hub | 模块导入助手</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Script Hub | 模块列表</title>
     <style>
         :root {{
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --accent: #10b981;
+            --bg: #f3f4f6;
+            --text: #1f2937;
+            --primary: #2563eb;
+            --accent: #059669;
+            --card: #ffffff;
+            --border: #e5e7eb;
+        }}
+        @media (prefers-color-scheme: dark) {{
+            :root {{
+                --bg: #111827;
+                --text: #f3f4f6;
+                --card: #1f2937;
+                --border: #374151;
+            }}
         }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ 
-            font-family: 'Inter', -apple-system, system-ui, sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text-main); 
-            line-height: 1.5;
-            padding-bottom: 50px;
-        }}
-        .header {{
-            background: linear-gradient(to right, #1e293b, #0f172a);
-            padding: 40px 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }}
-        h1 {{ font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, #818cf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-        .nav {{
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 25px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-        }}
-        .nav-btn {{
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-dim);
-            padding: 10px 25px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }}
-        .nav-btn.active {{
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }}
-        .search-container {{
-            max-width: 600px;
-            margin: 0 auto 30px;
-            padding: 0 20px;
-        }}
-        #search {{
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: var(--card-bg);
-            color: white;
-            font-size: 1rem;
-        }}
-        .container {{ max-width: 1200px; margin: 0 auto; padding: 0 20px; }}
-        .category-section {{ margin-bottom: 40px; }}
-        .category-title {{ 
-            font-size: 1.2rem; 
-            color: var(--accent); 
-            margin-bottom: 20px; 
-            padding-left: 10px;
-            border-left: 4px solid var(--accent);
-        }}
-        .module-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }}
-        .module-card {{
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: transform 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-        }}
-        .module-card:hover {{
-            transform: translateY(-4px);
-            border-color: var(--primary);
-        }}
-        .module-header {{ display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }}
-        .module-icon {{ width: 48px; height: 48px; border-radius: 12px; object-fit: cover; background: #334155; }}
-        .module-name-wrapper {{ flex: 1; min-width: 0; }}
-        .module-name {{ font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
-        .module-author {{ font-size: 0.8rem; color: var(--text-dim); }}
-        .module-desc {{ 
-            font-size: 0.9rem; 
-            color: var(--text-dim); 
-            margin-bottom: 20px; 
-            flex: 1;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }}
-        .copy-btn {{
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }}
-        .copy-btn:hover {{ background: var(--primary-hover); }}
+        body {{ font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }}
+        
+        .header {{ padding: 30px 20px; text-align: center; border-bottom: 1px solid var(--border); background: var(--card); }}
+        .nav {{ position: sticky; top: 0; z-index: 100; background: var(--card); border-bottom: 1px solid var(--border); padding: 10px; display: flex; justify-content: center; gap: 10px; }}
+        
+        .btn {{ padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; font-weight: 600; transition: all 0.2s; }}
+        .btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
+        
+        .search-bar {{ max-width: 800px; margin: 20px auto; padding: 0 20px; }}
+        #search {{ width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 1rem; }}
+        
+        .container {{ max-width: 1000px; margin: 0 auto; padding: 20px; }}
+        .category-title {{ font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); margin: 30px 0 10px 5px; font-weight: 700; }}
+        
+        .module-list {{ background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }}
+        .module-item {{ display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); gap: 15px; }}
+        .module-item:last-child {{ border-bottom: none; }}
+        .module-item:hover {{ background: rgba(0,0,0,0.02); }}
+        
+        .icon {{ width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #eee; }}
+        .info {{ flex: 1; min-width: 0; }}
+        .name {{ font-weight: 600; font-size: 1rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+        .desc {{ font-size: 0.85rem; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+        .author {{ font-size: 0.75rem; opacity: 0.5; font-weight: 400; }}
+        
+        .copy-btn {{ padding: 8px 16px; border-radius: 6px; border: none; background: var(--primary); color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; }}
         .copy-btn.success {{ background: var(--accent); }}
         
-        .toast {{
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-weight: 600;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            display: none;
-            z-index: 1000;
-        }}
-        
-        .hidden {{ display: none !important; }}
+        .toast {{ position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; display: none; z-index: 1000; }}
         
         @media (max-width: 600px) {{
-            .module-grid {{ grid-template-columns: 1fr; }}
-            h1 {{ font-size: 1.8rem; }}
+            .module-item {{ padding: 10px; gap: 10px; }}
+            .icon {{ width: 32px; height: 32px; }}
+            .copy-btn {{ padding: 6px 12px; font-size: 0.8rem; }}
         }}
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Script Hub</h1>
-        <p style="color: var(--text-dim)">一站式 Surge & Shadowrocket 模块增强库</p>
+        <h2>Script Hub 模块列表</h2>
+        <p style="opacity: 0.6; font-size: 0.9rem;">点击复制链接至 Surge / Shadowrocket</p>
     </div>
 
     <div class="nav">
-        <button class="nav-btn active" onclick="switchApp('surge')">⚡ Surge ({surge_total})</button>
-        <button class="nav-btn" onclick="switchApp('shadowrocket')">🚀 Shadowrocket ({sr_total})</button>
+        <button class="btn active" onclick="switchApp('surge')">Surge ({surge_total})</button>
+        <button class="btn" onclick="switchApp('shadowrocket')">Shadowrocket ({sr_total})</button>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="search" placeholder="搜索模块名称或描述..." oninput="filterModules()">
+    <div class="search-bar">
+        <input type="text" id="search" placeholder="搜索模块..." oninput="render()">
     </div>
 
-    <div id="main-content" class="container">
-        <!-- 内容由 JS 动态切换 -->
-    </div>
-
-    <div id="toast" class="toast">✓ 链接已复制，请在 App 中粘贴安装</div>
+    <div id="content" class="container"></div>
+    <div id="toast" class="toast">✓ 链接已复制</div>
 
     <script>
         const surgeData = {json.dumps(surge_modules, ensure_ascii=False)};
@@ -305,98 +206,63 @@ def generate_html(surge_modules, sr_modules):
 
         function switchApp(app) {{
             currentApp = app;
-            document.querySelectorAll('.nav-btn').forEach(btn => {{
-                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(app));
-            }});
+            document.querySelectorAll('.btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(app)));
             render();
         }}
 
         function render() {{
-            const container = document.getElementById('main-content');
             const data = currentApp === 'surge' ? surgeData : srData;
-            const searchTerm = document.getElementById('search').value.toLowerCase();
-            
+            const term = document.getElementById('search').value.toLowerCase();
+            const container = document.getElementById('content');
             let html = '';
-            for (const catKey in data) {{
-                const cat = data[catKey];
-                const filteredItems = cat.items.filter(item => 
-                    item.name.toLowerCase().includes(searchTerm) || 
-                    item.desc.toLowerCase().includes(searchTerm)
-                );
 
-                if (filteredItems.length === 0) continue;
+            for (const k in data) {{
+                const cat = data[k];
+                const items = cat.items.filter(i => i.name.toLowerCase().includes(term) || i.desc.toLowerCase().includes(term));
+                if (items.length === 0) continue;
 
-                html += `
-                    <div class="category-section">
-                        <div class="category-title">${{cat.name}}</div>
-                        <div class="module-grid">
-                            ${{filteredItems.map(item => `
-                                <div class="module-card">
-                                    <div class="module-header">
-                                        <img class="module-icon" src="${{item.icon}}" onerror="this.src='https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png'">
-                                        <div class="module-name-wrapper">
-                                            <div class="module-name">${{item.badge}} ${{item.name}}</div>
-                                            <div class="module-author">by ${{item.author || 'Anonymous'}}</div>
-                                        </div>
-                                    </div>
-                                    <div class="module-desc" title="${{item.desc}}">${{item.desc}}</div>
-                                    <button class="copy-btn" onclick="copyUrl('${{item.url}}', this)">复制模块链接</button>
-                                </div>
-                            `).join('')}}
-                        </div>
-                    </div>
-                `;
+                html += `<div class="category-title">${{cat.name}}</div><div class="module-list">`;
+                items.forEach(i => {{
+                    html += `
+                        <div class="module-item">
+                            <img class="icon" src="${{i.icon}}" onerror="this.src='https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png'">
+                            <div class="info">
+                                <div class="name">${{i.badge}} ${{i.name}} <span class="author">by ${{i.author || 'Anon'}}</span></div>
+                                <div class="desc" title="${{i.desc}}">${{i.desc}}</div>
+                            </div>
+                            <button class="copy-btn" onclick="copy('${{i.url}}', this)">复制</button>
+                        </div>`;
+                }});
+                html += `</div>`;
             }}
-            container.innerHTML = html || '<div style="text-align:center; padding:50px; color:var(--text-dim)">未找到匹配模块</div>';
+            container.innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5;">未发现匹配模块</p>';
         }}
 
-        async function copyUrl(url, btn) {{
-            try {{
-                await navigator.clipboard.writeText(url);
-            }} catch(e) {{
-                const t = document.createElement('textarea');
-                t.value = url;
-                document.body.appendChild(t);
-                t.select();
-                document.execCommand('copy');
-                document.body.removeChild(t);
+        async function copy(url, btn) {{
+            try {{ await navigator.clipboard.writeText(url); }} 
+            catch(e) {{
+                const t = document.createElement('textarea'); t.value = url; document.body.appendChild(t);
+                t.select(); document.execCommand('copy'); document.body.removeChild(t);
             }}
-            
-            const originalText = btn.textContent;
-            btn.textContent = '✓ 已复制';
-            btn.classList.add('success');
-            
-            const toast = document.getElementById('toast');
-            toast.style.display = 'block';
-            
-            setTimeout(() => {{
-                btn.textContent = originalText;
-                btn.classList.remove('success');
-                toast.style.display = 'none';
-            }}, 2000);
+            const old = btn.textContent; btn.textContent = '✓'; btn.classList.add('success');
+            const toast = document.getElementById('toast'); toast.style.display = 'block';
+            setTimeout(() => {{ btn.textContent = old; btn.classList.remove('success'); toast.style.display = 'none'; }}, 1500);
         }}
 
-        function filterModules() {{
-            render();
-        }}
-
-        // 初始渲染
         render();
     </script>
 </body>
 </html>"""
+    with open(OUTPUT, "w", encoding="utf-8") as f:
         f.write(html)
 
 def main():
     print("=" * 60)
-    print("🚀 正在构建全新的模块导入助手...")
-    
+    print("🚀 正在构建紧凑型模块导入助手...")
     surge_modules = scan_modules(SURGE_DIR, False)
     sr_modules = scan_modules(SR_DIR, True)
-    
     generate_html(surge_modules, sr_modules)
-    
-    print(f"✅ 构建成功: {OUTPUT}")
+    print(f"✅ 完成: {OUTPUT}")
     print("=" * 60)
 
 if __name__ == "__main__":
