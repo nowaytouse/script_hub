@@ -319,8 +319,11 @@ class AdBlockManager:
             return None
 
         if "," in rule:
-            parts = rule.split(",", 1)
-            rule = f"{parts[0].strip()},{parts[1].strip()}"
+            parts = [p.strip() for p in rule.split(",")]
+            # If the last part is a policy, remove it
+            if parts[-1].upper() in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY", "REJECT-TINYGIF", "REJECT-IMG"):
+                parts = parts[:-1]
+            rule = ",".join(parts)
         else:
             normalized_bare_rule = self.normalize_bare_rule(rule)
             if not normalized_bare_rule:
@@ -462,13 +465,14 @@ class AdBlockManager:
         if "no-resolve" in raw_rule:
             options.append("no-resolve")
 
-        # Basic rendering
-        result = f"{normalized_rule},{policy}"
-        
-        # Post-validation: ensure we didn't end up with something like PROCESS-NAME,SogouInput without policy
-        # If normalized_rule didn't already have a policy stripped (e.g. it was just type,value)
-        # our simple append is correct.
-        
+        # Core logic: ensure policy is always present
+        parts = [p.strip() for p in normalized_rule.split(",")]
+        # If the last part of normalized_rule is not a policy, we must add it
+        if parts[-1].upper() not in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY", "REJECT-TINYGIF", "REJECT-IMG"):
+            result = f"{normalized_rule},{policy}"
+        else:
+            result = normalized_rule
+            
         if options:
             return f"{result},{','.join(options)}"
         return result
@@ -522,6 +526,7 @@ class AdBlockManager:
                 seen_real_header = True
                 continue
 
+            # Fallback for headerless modules or content before first [Section]
             if not seen_real_header:
                 if self.normalize_rule(stripped):
                     self.add_rule_line(stripped, default_policy)
@@ -537,6 +542,7 @@ class AdBlockManager:
                 continue
 
             if in_rule_section:
+                # IMPORTANT: Always use add_rule_line to ensure policy and normalization
                 self.add_rule_line(stripped, default_policy)
                 continue
 
@@ -544,7 +550,10 @@ class AdBlockManager:
                 continue
 
             if current_section in self.sections:
-                # Filter out enhancements if we are merging into the AdBlock component
+                # Rule section is already handled above, skip here to prevent duplication
+                if current_section == "Rule":
+                    continue
+                # Filter out enhancements
                 if self.is_enhancement_line(stripped):
                     continue
                 self.sections[current_section].add(stripped)
@@ -824,7 +833,12 @@ class AdBlockManager:
                 continue
                 
             content.append(f"# Merged {policy} Rules ({len(display_rules)})\n")
-            content.extend(f"{rule}\n" for rule in display_rules)
+            for r in display_rules:
+                # Final check: does the rule end with a valid policy?
+                if not any(r.endswith(suffix) for suffix in (",REJECT", ",REJECT-DROP", ",REJECT-NO-DROP", ",DIRECT", ",PROXY", ",REJECT-TINYGIF", ",REJECT-IMG")):
+                    # It's missing policy, but we have the policy context here
+                    r = f"{r},{policy}"
+                content.append(f"{r}\n")
             content.append("\n")
 
         for section_name in SECTION_NAMES:
