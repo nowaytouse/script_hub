@@ -18,9 +18,9 @@ MODULE_DIR = os.path.join(ROOT, "module/surge(main)")
 # CONFIGURATION
 
 SKK_SOURCES = {
-    "reject.conf": "https://ruleset.skk.moe/List/non_ip/reject.conf",
-    "reject-no-drop.conf": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
-    "reject-drop.conf": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "reject.list": "https://ruleset.skk.moe/List/non_ip/reject.conf",
+    "reject-no-drop.list": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "reject-drop.list": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
     "BlockHttpDNS.list": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list"
 }
 

@@ -65,7 +65,7 @@ def main():
     ad_mgr = AdBlockManager()
     ad_mgr.merge(execute=args.execute or args.force)
 
-    # 3.1 Final ruleset cleanup after AdBlock rebuild to keep payloads unique
+    # 3.2 Final ruleset cleanup after AdBlock rebuild to keep payloads unique
     Logger.section("Final Ruleset Cleanup")
     try:
         cleanup_stats = run_ruleset_cleanup()

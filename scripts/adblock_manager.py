@@ -24,11 +24,12 @@ WHITELIST_FILE = os.path.join(ROOT, "ruleset/Sources/adblock_whitelist.txt")
 ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "ruleset/Sources/Links/AdBlock_sources.txt")
 TARGET_MODULE = os.path.join(
     HEAD_EXPANSE_DIR,
-    "🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).sgmodule",
+    "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
 )
+NARROW_PIERCE_DIR = os.path.join(ROOT, "module/surge(main)/narrow_pierce")
 ADBLOCK_LIST = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/AdBlock.list")
 SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
-SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.conf")
+SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 
@@ -107,7 +108,7 @@ class AdBlockManager:
             "REJECT-NO-DROP": set(),
             "DIRECT": set(),
         }
-        self.sections: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}
+        self.sections: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}    
         self.mitm_hosts: Set[str] = set()
         self.hashes: Dict[str, str] = {}
 
@@ -722,8 +723,8 @@ class AdBlockManager:
 
     def generate_module(self):
         header = (
-            "#!name=🚫 Universal Ad-Blocking Rules (LITE)\n"
-            "#!desc=Canonical ad-block rebuild from curated rule sources and local module sections. No self-reference, no recursive accumulation.\n"
+            "#!name=🚫 Universal Ad-Blocking Rules (PROMAX)\n"
+            "#!desc=Canonical ad-block rebuild from curated rule sources, now fused with application-specific AdBlock modules (PROMAX version).\n"
             "#!author=ScriptHub-Automated\n"
             "#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png\n"
             f"#!category={GROUP_HEAD_EXPANSE}\n"
@@ -742,13 +743,13 @@ class AdBlockManager:
             "# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.\n"
             "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
             "# REJECT Rules (self-hosted canonical rebuild)\n"
-            "RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
             "# REJECT-NO-DROP Rules (synced from skk upstream)\n"
-            "RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
             "# REJECT-DROP Rules (synced from skk upstream)\n"
-            "RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
             "# BlockHttpDNS Rules (kept separate to preserve REJECT-DROP behavior)\n"
-            "RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/ruleset/Surge(Shadowkroket)/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n"
+            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n"
         )
 
         content = [header]
@@ -806,6 +807,16 @@ class AdBlockManager:
             )
 
         local_modules = self.discover_local_modules()
+        
+        # Merge narrow_pierce modules for PROMAX version (excluding blacklisted ones from merge_promax.py)
+        if os.path.exists(NARROW_PIERCE_DIR):
+            blacklist = ["WeChat_Enhance.sgmodule", "扫描全能王解锁.sgmodule", "[Sukka] URL Rewrite.sgmodule"]
+            for filename in os.listdir(NARROW_PIERCE_DIR):
+                if filename.endswith(MODULE_SUFFIXES) and filename not in blacklist:
+                    # Filter for ad-blocking content as per legacy logic
+                    if any(kw in filename for kw in ["去广告", "Ad", "10099", "RedNote"]):
+                        local_modules.append(os.path.join(NARROW_PIERCE_DIR, filename))
+
         Logger.info(f"Extracting local module sections from {len(local_modules)} files...")
         for module_path in local_modules:
             self.extract_from_file(module_path, default_policy="REJECT", include_sections=True)
