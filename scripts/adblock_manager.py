@@ -782,8 +782,9 @@ class AdBlockManager:
         return filtered
 
     def generate_module(self):
+        current_date = datetime.now().strftime('%Y-%m-%d')
         header = (
-            "#!name=🚫 Universal Ad-Blocking Rules (PROMAX)\n"
+            f"#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]\n"
             "#!desc=Canonical ad-block rebuild from curated rule sources, now fused with application-specific AdBlock modules (PROMAX version).\n"
             "#!author=ScriptHub-Automated\n"
             "#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png\n"
