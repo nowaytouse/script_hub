@@ -6,13 +6,16 @@
 import os
 import re
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 路径
 ROOT = Path(__file__).parent.parent
 SURGE_DIR = ROOT / "module" / "surge(main)"
 SR_DIR = ROOT / "module" / "shadowrocket"
 OUTPUT = ROOT / "module" / "surge_module_helper.html"
+
+# 过时阈值（天数）
+OUTDATED_DAYS = 365  # 1年未更新视为过时
 
 # 分类定义
 CATEGORIES = {
@@ -40,11 +43,17 @@ MERGED_MODULES = {
     # YouTube 单独模块已合并到 YouTube增强合集
     # 合集包含: Enhance(画中画/后台播放/字幕翻译) + ADBlock(去广告)
     "YouTube.Enhance.sgmodule": "📺 YouTube增强合集",
+    
+    # iRingo 单独模块已合并到 Apple服务增强合集
+    # 合集包含: Maps(地图增强) + WeatherKit(天气增强)
+    "iRingo.Maps.sgmodule": "🍎 Apple服务增强合集",
+    "iRingo.WeatherKit.sgmodule": "🍎 Apple服务增强合集",
 }
 
 def scan_modules(base_dir, is_shadowrocket=False):
     """扫描模块目录"""
     modules = {}
+    now = datetime.now()
     
     for cat_key, cat_name in CATEGORIES.items():
         cat_dir = base_dir / cat_key
@@ -54,6 +63,8 @@ def scan_modules(base_dir, is_shadowrocket=False):
             
         items = []
         skipped = []
+        outdated = []
+        
         for file in sorted(cat_dir.glob("*.sgmodule" if not is_shadowrocket else "*.module")):
             # 检查是否已合并到合集
             if file.name in MERGED_MODULES:
@@ -67,9 +78,22 @@ def scan_modules(base_dir, is_shadowrocket=False):
                 # 提取元数据
                 name_match = re.search(r'#!name\s*[=:]\s*(.+)', content)
                 desc_match = re.search(r'#!desc\s*[=:]\s*(.+)', content)
+                date_match = re.search(r'#!date\s*[=:]\s*(.+)', content)
                 
                 name = name_match.group(1).strip() if name_match else file.stem
                 desc = desc_match.group(1).strip() if desc_match else ""
+                
+                # 检查是否过时
+                if date_match:
+                    try:
+                        date_str = date_match.group(1).strip()
+                        module_date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+                        days_old = (now - module_date).days
+                        if days_old > OUTDATED_DAYS:
+                            outdated.append(f"{file.name} (最后更新: {date_str}, {days_old}天前)")
+                            continue
+                    except:
+                        pass
                 
                 # 清理特殊字符
                 name = name.replace('"', '&quot;').replace("'", '&#39;')
@@ -92,6 +116,11 @@ def scan_modules(base_dir, is_shadowrocket=False):
             print(f"  ℹ️  已排除 {len(skipped)} 个已合并模块:")
             for s in skipped:
                 print(f"     - {s}")
+        
+        if outdated:
+            print(f"  ⚠️  已排除 {len(outdated)} 个过时模块 (>{OUTDATED_DAYS}天未更新):")
+            for o in outdated:
+                print(f"     - {o}")
         
         modules[cat_key] = {"name": cat_name, "items": items}
     
