@@ -1,7 +1,16 @@
 {
-  "generated": "2026-04-27T10:34:24.637413",
-  "total": 30,
+  "generated": "2026-04-27T12:18:02.934761",
+  "total": 32,
   "modules": [
+    {
+      "id": "[Sukka] URL Rewrite",
+      "filename": "[Sukka] URL Rewrite.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule",
+      "name": "[Sukka] URL Rewrite",
+      "desc": "Enable this module to use Sukka URL Rewrite rules",
+      "tags": []
+    },
     {
       "id": "boxjs.rewrite.surge",
       "filename": "boxjs.rewrite.surge.sgmodule",
@@ -66,6 +75,24 @@
       "tags": []
     },
     {
+      "id": "Reddit 自动翻译",
+      "filename": "Reddit 自动翻译.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/Reddit 自动翻译.sgmodule",
+      "name": "Reddit 自动翻译",
+      "desc": "自动注入 x-reddit-translations 开启 Reddit App 翻译功能 (Surge Version)",
+      "tags": []
+    },
+    {
+      "id": "Script Hub 重写 & 规则集转换",
+      "filename": "Script Hub 重写 & 规则集转换.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/Script Hub 重写 & 规则集转换.sgmodule",
+      "name": "Script Hub: 重写 & 规则集转换",
+      "desc": "https://script.hub",
+      "tags": []
+    },
+    {
       "id": "Sub_Info",
       "filename": "Sub_Info.sgmodule",
       "category": "amplify_nexus",
@@ -102,6 +129,24 @@
       "tags": []
     },
     {
+      "id": "WeChat_Enhance",
+      "filename": "WeChat_Enhance.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/WeChat_Enhance.sgmodule",
+      "name": "WeChat增强",
+      "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
+      "tags": []
+    },
+    {
+      "id": "扫描全能王解锁",
+      "filename": "扫描全能王解锁.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/扫描全能王解锁.sgmodule",
+      "name": "扫描全能王",
+      "desc": "解锁扫描全能王",
+      "tags": []
+    },
+    {
       "id": "📺 BiliBili增强合集",
       "filename": "📺 BiliBili增强合集.sgmodule",
       "category": "amplify_nexus",
@@ -125,6 +170,19 @@
         "YouTube",
         "增强",
         "去广告"
+      ]
+    },
+    {
+      "id": "🔥 Firewall Port Blocker 🛡️🚫",
+      "filename": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
+      "name": "🔥 Firewall Port Blocker 🛡️",
+      "desc": "Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP",
+      "tags": [
+        "Security",
+        "Firewall",
+        "macOS"
       ]
     },
     {
@@ -205,15 +263,6 @@
       "tags": []
     },
     {
-      "id": "Script Hub 重写 & 规则集转换",
-      "filename": "Script Hub 重写 & 规则集转换.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/Script Hub 重写 & 规则集转换.sgmodule",
-      "name": "Script Hub: 重写 & 规则集转换",
-      "desc": "https://script.hub",
-      "tags": []
-    },
-    {
       "id": "小程序和应用懒人去广告合集.official",
       "filename": "小程序和应用懒人去广告合集.official.sgmodule",
       "category": "head_expanse",
@@ -232,19 +281,6 @@
       "tags": []
     },
     {
-      "id": "🔥 Firewall Port Blocker 🛡️🚫",
-      "filename": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
-      "category": "head_expanse",
-      "path": "module/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
-      "name": "🔥 Firewall Port Blocker 🛡️",
-      "desc": "Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP",
-      "tags": [
-        "Security",
-        "Firewall",
-        "macOS"
-      ]
-    },
-    {
       "id": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)",
       "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
       "category": "head_expanse",
@@ -258,15 +294,6 @@
       ]
     },
     {
-      "id": "[Sukka] URL Rewrite",
-      "filename": "[Sukka] URL Rewrite.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/[Sukka] URL Rewrite.sgmodule",
-      "name": "[Sukka] URL Rewrite",
-      "desc": "Enable this module to use Sukka URL Rewrite rules",
-      "tags": []
-    },
-    {
       "id": "AWAvenue Ads Rule",
       "filename": "AWAvenue Ads Rule.sgmodule",
       "category": "narrow_pierce",
@@ -276,21 +303,12 @@
       "tags": []
     },
     {
-      "id": "WeChat_Enhance",
-      "filename": "WeChat_Enhance.sgmodule",
+      "id": "Reddit 去广告",
+      "filename": "Reddit 去广告.sgmodule",
       "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/WeChat_Enhance.sgmodule",
-      "name": "WeChat增强",
-      "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
-      "tags": []
-    },
-    {
-      "id": "扫描全能王解锁",
-      "filename": "扫描全能王解锁.sgmodule",
-      "category": "narrow_pierce",
-      "path": "module/surge(main)/narrow_pierce/扫描全能王解锁.sgmodule",
-      "name": "扫描全能王",
-      "desc": "解锁扫描全能王",
+      "path": "module/surge(main)/narrow_pierce/Reddit 去广告.sgmodule",
+      "name": "Reddit 去广告",
+      "desc": "过滤推广, 关 NSFW提示 (仅限去广告部分)",
       "tags": []
     }
   ]

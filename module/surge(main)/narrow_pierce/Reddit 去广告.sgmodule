@@ -1,0 +1,10 @@
+#!name=Reddit 去广告
+#!desc=过滤推广, 关 NSFW提示 (仅限去广告部分)
+#!author=fmz200
+#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
+
+[Script]
+Reddit 去广告 = type=http-response, pattern=^https?:\/\/gql(-fed)?\.reddit\.com, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/reddit.js, requires-body=true, timeout=10
+
+[MITM]
+hostname = %APPEND% gql.reddit.com, gql-fed.reddit.com, -github.com, -api.github.com, -*.githubusercontent.com
