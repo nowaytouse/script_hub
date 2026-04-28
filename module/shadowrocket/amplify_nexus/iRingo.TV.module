@@ -18,9 +18,9 @@ DOMAIN,known-issues.apple.com,REJECT
 ^https?:\/\/play-edge-cdn\.itunes\.apple\.com https://play-edge.itunes.apple.com header
 
 [Script]
-📺 TV.uts.request = type=http-request, pattern=^https?:\/\/uts-api\.itunes\.apple\.com\/uts\/(v1|v2|v3)\/, requires-body=1, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_b9f352_request.bundle.js, argument=ThirdParty="{{{ThirdParty}}}"&isWorkaroundSSLPinning="{{{isWorkaroundSSLPinning}}}"&LogLevel="{{{LogLevel}}}"
-📺 TV.uts.response = type=http-response, pattern=^https?:\/\/uts-api\.itunes\.apple\.com\/uts\/(v1|v2|v3)\/, requires-body=1, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_43a014_response.bundle.js, argument=ThirdParty="{{{ThirdParty}}}"&isWorkaroundSSLPinning="{{{isWorkaroundSSLPinning}}}"&LogLevel="{{{LogLevel}}}"
-📺 TV.umc.request = type=http-request, pattern=^https?:\/\/umc-tempo-api\.apple\.com\/(v1|v2|v3)\/, requires-body=1, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_b9f352_request.bundle.js, argument=
+📺 TV.uts.request = type=http-request, pattern=^https?:\/\/uts-api\.itunes\.apple\.com\/uts\/(v1|v2|v3)\/, requires-body=1, script-path=https://github.com/NSRingo/TV/releases/download/v3.4.4/request.bundle.js, argument=ThirdParty="{{{ThirdParty}}}"&isWorkaroundSSLPinning="{{{isWorkaroundSSLPinning}}}"&LogLevel="{{{LogLevel}}}"
+📺 TV.uts.response = type=http-response, pattern=^https?:\/\/uts-api\.itunes\.apple\.com\/uts\/(v1|v2|v3)\/, requires-body=1, script-path=https://github.com/NSRingo/TV/releases/download/v3.4.4/response.bundle.js, argument=ThirdParty="{{{ThirdParty}}}"&isWorkaroundSSLPinning="{{{isWorkaroundSSLPinning}}}"&LogLevel="{{{LogLevel}}}"
+📺 TV.umc.request = type=http-request, pattern=^https?:\/\/umc-tempo-api\.apple\.com\/(v1|v2|v3)\/, requires-body=1, script-path=https://github.com/NSRingo/TV/releases/download/v3.4.4/request.bundle.js, argument=
 
 [MITM]
-hostname = uts-api.itunes.apple.com, umc-tempo-api.apple.com, play-cdn.itunes.apple.com, play-edge-cdn.itunes.apple.com
+hostname = uts-api.itunes.apple.com, umc-tempo-api.apple.com, play-cdn.itunes.apple.com, play-edge-cdn.itunes.apple.com, -github.com, -api.github.com, -*.githubusercontent.com
