@@ -491,11 +491,11 @@ class AdBlockManager:
         absolute_blocks = [
             "zheye", "哲也", "zheye.min.js", 
             "enhanced", "enhancement", "增强", 
-            "crack", "破解", "unlock", "解锁",
+            "crack", "破解", "unlock", "解锁", "unblock", "解除",
             "vip", "premium", "会员", "会员解锁",
-            "camscanner", "扫描全能王", "bilibili.global", "bilibili.enhanced",
+            "camscanner", "扫描全能王", "bilibili.global", "bilibili.enhanced", "biliintl",
             "youtube增强", "bilibili增强", "reddit增强", "apple服务增强",
-            "weatherkit", "wechat_enhance", "eringo"
+            "weatherkit", "wechat_enhance", "eringo", "helper", "助手"
         ]
         if any(kw in lower_line for kw in absolute_blocks):
             return True
@@ -510,14 +510,17 @@ class AdBlockManager:
             "translate", "translation", "翻译", 
             "hook", "conversion", "转换",
             "feature", "iap", "receipt", "nsfw",
-            "优化", "功能增强", "optimize"
+            "优化", "功能增强", "optimize",
+            "intl", "region", "bypass", "绕过", "地区",
+            "dual", "pip", "画中画", "background", "后台播放",
+            "redirect", "重定向"
         ]
 
         # PRIORITY 1: If it looks like ad-block, it's NOT an enhancement (Keep it!)
         if any(kw in lower_line for kw in adblock_keywords):
             return False
             
-        # PRIORITY 2: If it ONLY has enhancement keywords, filter it out
+        # PRIORITY 2: If it has enhancement keywords, filter it out
         if any(kw in lower_line for kw in enhancement_keywords):
             return True
             
