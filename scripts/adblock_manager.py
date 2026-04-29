@@ -484,9 +484,22 @@ class AdBlockManager:
         return result
 
     def is_enhancement_line(self, line: str) -> bool:
-        """Check if a line is an enhancement. Ad-block takes priority (keep if it looks like ad-block)."""
+        """Check if a line is an enhancement. Known enhancements take absolute priority."""
         lower_line = line.lower()
         
+        # Priority 0: Absolute blocks (known enhancement suites and types)
+        absolute_blocks = [
+            "zheye", "哲也", "zheye.min.js", 
+            "enhanced", "enhancement", "增强", 
+            "crack", "破解", "unlock", "解锁",
+            "vip", "premium", "会员", "会员解锁",
+            "camscanner", "扫描全能王", "bilibili.global", "bilibili.enhanced",
+            "youtube增强", "bilibili增强", "reddit增强", "apple服务增强",
+            "weatherkit", "wechat_enhance", "eringo"
+        ]
+        if any(kw in lower_line for kw in absolute_blocks):
+            return True
+
         adblock_keywords = [
             "reject", "clean", "strip", 
             "blank", "pixel", "广告", "拦截", "去广告",
@@ -495,10 +508,9 @@ class AdBlockManager:
         
         enhancement_keywords = [
             "translate", "translation", "翻译", 
-            "unlock", "解锁", "crack", "破解",
-            "vip", "premium", "会员", "会员解锁",
             "hook", "conversion", "转换",
-            "feature", "iap", "receipt", "nsfw"
+            "feature", "iap", "receipt", "nsfw",
+            "优化", "功能增强", "optimize"
         ]
 
         # PRIORITY 1: If it looks like ad-block, it's NOT an enhancement (Keep it!)
