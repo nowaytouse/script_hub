@@ -2,11 +2,13 @@
 # Policy: PROXY
 # Node: Any
 # Description: Apple services
-# Rules: 1637
-# Updated: 2026-05-03 06:27:49
+# Rules: 1636
+# Updated: 2026-05-04 06:40:44
 
 DOMAIN,adcdownload.apple.com.akadns.net
 DOMAIN,apple.com.akadns.net
+DOMAIN,appleworldwidedeveloper.hb-api.omtrdc.net
+DOMAIN,appleworldwidedeveloper.sc.omtrdc.net
 DOMAIN,cds.apple.com.akadns.net
 DOMAIN,certs-lb.apple.com.akadns.net
 DOMAIN,cl1-cdn.origin-apple.com.akadns.net
@@ -214,7 +216,6 @@ DOMAIN-SUFFIX,apple.es
 DOMAIN-SUFFIX,apple.eu
 DOMAIN-SUFFIX,apple.fi
 DOMAIN-SUFFIX,apple.fr
-DOMAIN-SUFFIX,apple.hamburg
 DOMAIN-SUFFIX,apple.hn
 DOMAIN-SUFFIX,apple.hr
 DOMAIN-SUFFIX,apple.hu
@@ -230,7 +231,6 @@ DOMAIN-SUFFIX,apple.lt
 DOMAIN-SUFFIX,apple.lv
 DOMAIN-SUFFIX,apple.me
 DOMAIN-SUFFIX,apple.my
-DOMAIN-SUFFIX,apple.net
 DOMAIN-SUFFIX,apple.net.gr
 DOMAIN-SUFFIX,apple.news
 DOMAIN-SUFFIX,apple.nl
@@ -358,7 +358,6 @@ DOMAIN-SUFFIX,appleonline.net
 DOMAIN-SUFFIX,appleoriginalproductions.com
 DOMAIN-SUFFIX,appleos.tv
 DOMAIN-SUFFIX,applepay.berlin
-DOMAIN-SUFFIX,applepay.co.rs
 DOMAIN-SUFFIX,applepay.com.tw
 DOMAIN-SUFFIX,applepay.hamburg
 DOMAIN-SUFFIX,applepay.hk

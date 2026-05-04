@@ -2,9 +2,10 @@
 # Policy: PROXY
 # Node: Any
 # Description: Microsoft services
-# Rules: 695
-# Updated: 2026-05-03 06:27:52
+# Rules: 691
+# Updated: 2026-05-04 06:40:45
 
+DOMAIN,cn.windowssearch.com
 DOMAIN,github-api.arkoselabs.com
 DOMAIN,github-cloud.s3.amazonaws.com
 DOMAIN,img-s-msn-com.akamaized.net
@@ -38,7 +39,6 @@ DOMAIN-SUFFIX,api-extractor.com
 DOMAIN-SUFFIX,apihub-internal.cn
 DOMAIN-SUFFIX,apisof.net
 DOMAIN-SUFFIX,appcenter.ms
-DOMAIN-SUFFIX,applicationinsights.io
 DOMAIN-SUFFIX,applicationinsights.net
 DOMAIN-SUFFIX,appserviceenvironment.cn
 DOMAIN-SUFFIX,aria.ms
@@ -371,7 +371,6 @@ DOMAIN-SUFFIX,microsoft.vn
 DOMAIN-SUFFIX,microsoft365.com
 DOMAIN-SUFFIX,microsoftaccountguard.com
 DOMAIN-SUFFIX,microsoftadc.com
-DOMAIN-SUFFIX,microsoftadvertising.com
 DOMAIN-SUFFIX,microsoftadvertisingregionalawards.com
 DOMAIN-SUFFIX,microsoftaffiliates.com
 DOMAIN-SUFFIX,microsoftapp.net
@@ -391,7 +390,6 @@ DOMAIN-SUFFIX,microsoftestore.com.hk
 DOMAIN-SUFFIX,microsoftgamestack.com
 DOMAIN-SUFFIX,microsofthouse.com
 DOMAIN-SUFFIX,microsofthouse.net
-DOMAIN-SUFFIX,microsoftinternetsafety.net
 DOMAIN-SUFFIX,microsoftiotcentral.com
 DOMAIN-SUFFIX,microsoftiotinsiderlabs.com
 DOMAIN-SUFFIX,microsoftlatamaitour.com
@@ -532,7 +530,6 @@ DOMAIN-SUFFIX,o365cn.com
 DOMAIN-SUFFIX,o365files.cn
 DOMAIN-SUFFIX,o365weve-dev.com
 DOMAIN-SUFFIX,o365weve-ppe.com
-DOMAIN-SUFFIX,o365weve.com
 DOMAIN-SUFFIX,oaspapps.com
 DOMAIN-SUFFIX,octocaptcha.com
 DOMAIN-SUFFIX,office
@@ -685,7 +682,6 @@ DOMAIN-SUFFIX,windowslive.cn
 DOMAIN-SUFFIX,windowsmarketplace.com
 DOMAIN-SUFFIX,windowsphone-int.com
 DOMAIN-SUFFIX,windowsphone.com
-DOMAIN-SUFFIX,windowssearch.com
 DOMAIN-SUFFIX,windowsupdate.com
 DOMAIN-SUFFIX,winhec.com
 DOMAIN-SUFFIX,winhec.net
