@@ -359,6 +359,13 @@ class AdBlockManager:
         if not stripped:
             return None
 
+        # Support Adblock-style rules (e.g., ||domain.com^)
+        if stripped.startswith("||") and stripped.endswith("^"):
+            candidate = stripped[2:-1]
+            if not candidate or "." not in candidate:
+                return None
+            return f"DOMAIN-SUFFIX,{candidate}"
+
         # Reject rewrite-like freeform lines instead of misclassifying them as DOMAIN rules.
         if self.infer_non_rule_section(stripped):
             return None
@@ -538,7 +545,7 @@ class AdBlockManager:
 
             if stripped.startswith("[") and stripped.endswith("]") and not stripped.startswith("#"):
                 current_section = stripped[1:-1]
-                in_rule_section = current_section == "Rule"
+                in_rule_section = current_section in ("Rule", "Adblock Plus")
                 seen_real_header = True
                 continue
 
