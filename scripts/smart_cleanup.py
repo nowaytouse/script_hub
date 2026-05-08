@@ -3,12 +3,16 @@ import os
 import re
 from typing import Dict, Iterable
 
-RULESET_DIR = os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkroket)")
+RULESET_DIRS = [
+    os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkroket)"),
+    os.path.join(os.path.dirname(__file__), "../ruleset/AdBlock"),
+]
 
 # Specific rulesets should win over generic fallbacks. Direct stays above
 # GlobalProxy, but below service-specific proxy rules, so accidental overlaps
 # do not hijack routing before a more precise ruleset can match.
 PRIORITY_ORDER = [
+    "AdBlock_",
     "AdBlock.list",
     "reject-drop.list",
     "reject-no-drop.list",
@@ -60,6 +64,7 @@ TYPE_RANK = {
 }
 
 SEMANTIC_COVERAGE_RULESETS = {
+    "AdBlock_",
     "AdBlock.list",
     "AI.list",
     "SocialMedia.list",
@@ -207,9 +212,10 @@ def write_list(filepath: str, rules: Dict[str, str]):
 
 
 class RulesetCleanup:
-    def __init__(self, ruleset_dir: str = RULESET_DIR):
-        self.ruleset_dir = ruleset_dir
+    def __init__(self, ruleset_dirs: list = RULESET_DIRS):
+        self.ruleset_dirs = ruleset_dirs
         self.file_content: Dict[str, Dict[str, str]] = {}
+        self.file_paths: Dict[str, str] = {} # filename -> full path
         self.stats = {
             "files": 0,
             "within_file_dedup": 0,
@@ -222,15 +228,18 @@ class RulesetCleanup:
         }
 
     def load(self):
-        filenames = sorted(
-            f for f in os.listdir(self.ruleset_dir)
-            if f.endswith(".list")
-        )
-        self.stats["files"] = len(filenames)
-        for filename in filenames:
-            filepath = os.path.join(self.ruleset_dir, filename)
-            raw_unique = load_list(filepath)
-            self.file_content[filename] = raw_unique
+        for ruleset_dir in self.ruleset_dirs:
+            if not os.path.exists(ruleset_dir): continue
+            filenames = sorted(
+                f for f in os.listdir(ruleset_dir)
+                if f.endswith(".list")
+            )
+            for filename in filenames:
+                filepath = os.path.join(ruleset_dir, filename)
+                raw_unique = load_list(filepath)
+                self.file_content[filename] = raw_unique
+                self.file_paths[filename] = filepath
+        self.stats["files"] = len(self.file_content)
 
     def _upsert(self, rules: Dict[str, str], rule: str):
         payload = extract_payload(rule)
@@ -259,7 +268,25 @@ class RulesetCleanup:
 
     def deduplicate_by_priority(self):
         all_lists = sorted(self.file_content)
-        priority = PRIORITY_ORDER + [name for name in all_lists if name not in PRIORITY_ORDER]
+        
+        # Expand priority order to handle prefixes
+        expanded_priority = []
+        seen_in_priority = set()
+        for p in PRIORITY_ORDER:
+            for filename in all_lists:
+                if filename.startswith(p) and filename not in seen_in_priority:
+                    expanded_priority.append(filename)
+                    seen_in_priority.add(filename)
+        
+        priority = expanded_priority + [name for name in all_lists if name not in seen_in_priority]
+        
+        # Determine semantic coverage for prefixes
+        effective_semantic_coverage = set()
+        for p in SEMANTIC_COVERAGE_RULESETS:
+            for filename in all_lists:
+                if filename.startswith(p):
+                    effective_semantic_coverage.add(filename)
+
         seen_payloads = set()
         seen_covering_suffixes = set()
 
@@ -279,7 +306,7 @@ class RulesetCleanup:
                         continue
                 seen_payloads.add(payload)
                 kept[payload] = rule
-                if filename in SEMANTIC_COVERAGE_RULESETS and rule_type == "DOMAIN-SUFFIX":
+                if filename in effective_semantic_coverage and rule_type == "DOMAIN-SUFFIX":
                     seen_covering_suffixes.add(payload)
             self.file_content[filename] = kept
 
@@ -295,8 +322,9 @@ class RulesetCleanup:
 
     def save(self):
         for filename, rules in self.file_content.items():
-            filepath = os.path.join(self.ruleset_dir, filename)
-            write_list(filepath, rules)
+            filepath = self.file_paths.get(filename)
+            if filepath:
+                write_list(filepath, rules)
 
     def run(self) -> Dict[str, int]:
         self.load()
@@ -320,8 +348,8 @@ def format_stats(stats: Dict[str, int]) -> str:
     return ", ".join(f"{key}={stats[key]}" for key in ordered_keys)
 
 
-def run_cleanup(ruleset_dir: str = RULESET_DIR) -> Dict[str, int]:
-    return RulesetCleanup(ruleset_dir).run()
+def run_cleanup(ruleset_dirs: list = RULESET_DIRS) -> Dict[str, int]:
+    return RulesetCleanup(ruleset_dirs).run()
 
 
 def main():

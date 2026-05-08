@@ -103,7 +103,7 @@ class SRSGenerator:
             Logger.error("sing-box binary not found. Skipping SRS generation.")
             return
 
-        source_dirs = [SURGE_DIR, DNS_MAPPING_DIR]
+        source_dirs = [SURGE_DIR, DNS_MAPPING_DIR, os.path.join(ROOT, "ruleset/AdBlock")]
         list_files = []
         for source_dir in source_dirs:
             if not os.path.isdir(source_dir):

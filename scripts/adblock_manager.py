@@ -27,6 +27,7 @@ TARGET_MODULE = os.path.join(
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
 )
 NARROW_PIERCE_DIR = os.path.join(ROOT, "module/surge(main)/narrow_pierce")
+ADBLOCK_DIR = os.path.join(ROOT, "ruleset/AdBlock")
 ADBLOCK_LIST = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/AdBlock.list")
 SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
 SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
@@ -88,23 +89,49 @@ class SourceEntry:
     def resolved_path(self) -> str:
         if self.is_remote:
             return self.source
-        return os.path.normpath(os.path.join(os.path.dirname(self.manifest_path), self.source))
+        
+        # Decode possible URL encoding in local path (e.g. %E5%B9%BF%E5%91%8A)
+        decoded_source = urllib.parse.unquote(self.source)
+        
+        # If it's an absolute path within the project (starts with /), join with ROOT
+        if decoded_source.startswith("/"):
+            return os.path.normpath(os.path.join(ROOT, decoded_source.lstrip("/")))
+            
+        # Otherwise it's relative to the manifest file
+        return os.path.normpath(os.path.join(os.path.dirname(self.manifest_path), decoded_source))
 
     @property
     def display_name(self) -> str:
         if self.is_remote:
             return self.source.rsplit("/", 1)[-1]
-        return os.path.relpath(self.resolved_path, ROOT)
+        # For local files, show relative path from ROOT for clarity
+        try:
+            return os.path.relpath(self.resolved_path, ROOT)
+        except ValueError:
+            return os.path.basename(self.resolved_path)
 
 
 class AdBlockManager:
     def __init__(self):
         self.whitelist: Set[str] = set()
-        self.rules: Dict[str, Set[str]] = {
-            "REJECT": set(),
-            "REJECT-DROP": set(),
-            "REJECT-NO-DROP": set(),
-            "DIRECT": set(),
+        # rules[policy][category] = set(rules)
+        # Priority: Local > Advertising > Privacy > Security > AntiAD > Hagezi > Other
+        self.category_names = [
+            "Local",
+            "Advertising",
+            "Privacy",
+            "Security",
+            "AntiAD",
+            "Hagezi",
+            "Other"
+        ]
+        self.rules: Dict[str, Dict[str, Set[str]]] = {
+            policy: {cat: set() for cat in self.category_names}
+            for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"]
+        }
+        # seen_rules[policy] = Set(rendered_rule)
+        self.seen_rules: Dict[str, Set[str]] = {
+            policy: set() for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"]
         }
         self.sections: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}    
         self.mitm_hosts: Set[str] = set()
@@ -303,17 +330,17 @@ class AdBlockManager:
         if not rule or rule.startswith("#") or rule.startswith("RULE-SET,"):
             return None
 
-        # Remove policy (case-insensitive)
+        # Remove policy (case-insensitive) - more aggressive to handle middle-of-line
         rule = re.sub(
-            r",(REJECT-NO-DROP|REJECT-DROP|REJECT-TINYGIF|REJECT-IMG|REJECT|DIRECT|PROXY)(,.*)*$",
+            r",(REJECT-NO-DROP|REJECT-DROP|REJECT-TINYGIF|REJECT-IMG|REJECT|DIRECT|PROXY)\b",
             "",
             rule,
             flags=re.IGNORECASE,
         )
         # Remove common parameters (case-insensitive)
-        rule = re.sub(r",extended-matching", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r",pre-matching", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r",no-resolve", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r",extended-matching\b", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r",pre-matching\b", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r",no-resolve\b", "", rule, flags=re.IGNORECASE)
         rule = re.sub(r"\s+", " ", rule).strip()
 
         if not rule:
@@ -443,7 +470,23 @@ class AdBlockManager:
             return "URL Rewrite"
         return None
 
-    def add_rule_line(self, line: str, default_policy: str):
+    def determine_category(self, source: str) -> str:
+        lowered = source.lower()
+        if "hagezi" in lowered:
+            return "Hagezi"
+        if "anti-ad" in lowered:
+            return "AntiAD"
+        if any(kw in lowered for kw in ["privacy", "tracking", "tracking-protection"]):
+            return "Privacy"
+        if any(kw in lowered for kw in ["hijacking", "phishing", "tif", "threat", "banprogram"]):
+            return "Security"
+        if any(kw in lowered for kw in ["advertising", "ads", "banad"]):
+            return "Advertising"
+        if "local_sources" in lowered or "localmodules" in lowered:
+            return "Local"
+        return "Other"
+
+    def add_rule_line(self, line: str, default_policy: str, category: str = "Other"):
         if not line or line.startswith("#"):
             return
         for candidate in self.expand_complex_rule(line):
@@ -455,40 +498,48 @@ class AdBlockManager:
                 continue
 
             # CRITICAL: Apply deep whitelist filtering at ingestion
-            # Extracts the domain/IP from the normalized rule (e.g. DOMAIN,abc.com -> abc.com)
             rule_payload = normalized.split(",", 1)[-1] if "," in normalized else normalized
             if any(white_item in rule_payload for white_item in self.whitelist):
                 continue
 
-            if policy == "REJECT":
-                self.rules["REJECT"].add(normalized)
-                continue
-
             rendered = self.render_policy_rule(normalized, policy, candidate)
-            bucket = self.rules.get(policy)
-            if bucket is not None and rendered:
-                bucket.add(rendered)
+            if not rendered:
+                continue
+            
+            # Ensure the policy bucket exists
+            if policy not in self.rules:
+                self.rules[policy] = {cat: set() for cat in self.category_names}
+                self.seen_rules[policy] = set()
+
+            # CROSS-CATEGORY DEDUPLICATION
+            # If we've already seen this rule in a previous (higher priority) category, skip it.
+            if rendered in self.seen_rules[policy]:
+                return
+                
+            bucket = self.rules[policy].get(category, self.rules[policy]["Other"])
+            bucket.add(rendered)
+            self.seen_rules[policy].add(rendered)
 
     def render_policy_rule(self, normalized_rule: str, policy: str, raw_rule: str) -> str:
-        options = []
-        if "extended-matching" in raw_rule:
-            options.append("extended-matching")
-        if "pre-matching" in raw_rule:
-            options.append("pre-matching")
-        if "no-resolve" in raw_rule:
-            options.append("no-resolve")
-
-        # Core logic: ensure policy is always present
+        # Ensure policy is present and not duplicated
+        # Shadowrocket and Surge both prefer: TYPE,VALUE,POLICY,OPTIONS
         parts = [p.strip() for p in normalized_rule.split(",")]
-        # If the last part of normalized_rule is not a policy, we must add it
-        if parts[-1].upper() not in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY", "REJECT-TINYGIF", "REJECT-IMG"):
-            result = f"{normalized_rule},{policy}"
-        else:
-            result = normalized_rule
+        
+        # Build options set from raw_rule
+        options_found = []
+        if "extended-matching" in raw_rule.lower():
+            options_found.append("extended-matching")
+        if "pre-matching" in raw_rule.lower():
+            options_found.append("pre-matching")
+        if "no-resolve" in raw_rule.lower():
+            options_found.append("no-resolve")
+
+        # Result is: TYPE, VALUE, POLICY
+        result_parts = parts + [policy]
+        if options_found:
+            result_parts.extend(options_found)
             
-        if options:
-            return f"{result},{','.join(options)}"
-        return result
+        return ",".join(result_parts)
 
     def is_enhancement_line(self, line: str) -> bool:
         """Check if a line is an enhancement. Known enhancements take absolute priority."""
@@ -533,7 +584,7 @@ class AdBlockManager:
             
         return False
 
-    def extract_from_text(self, text: str, default_policy: str = "REJECT", include_sections: bool = False):
+    def extract_from_text(self, text: str, default_policy: str = "REJECT", category: str = "Other", include_sections: bool = False):
         current_section = None
         in_rule_section = False
         seen_real_header = False
@@ -552,7 +603,7 @@ class AdBlockManager:
             # Fallback for headerless modules or content before first [Section]
             if not seen_real_header:
                 if self.normalize_rule(stripped):
-                    self.add_rule_line(stripped, default_policy)
+                    self.add_rule_line(stripped, default_policy, category=category)
                     continue
 
                 if include_sections:
@@ -566,7 +617,7 @@ class AdBlockManager:
 
             if in_rule_section:
                 # IMPORTANT: Always use add_rule_line to ensure policy and normalization
-                self.add_rule_line(stripped, default_policy)
+                self.add_rule_line(stripped, default_policy, category=category)
                 continue
 
             if not include_sections or stripped.startswith("#"):
@@ -584,10 +635,10 @@ class AdBlockManager:
                 hosts = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped)
                 self.mitm_hosts.update(host.strip() for host in hosts.split(",") if host.strip())
 
-    def extract_from_file(self, path: str, default_policy: str = "REJECT", include_sections: bool = False):
+    def extract_from_file(self, path: str, default_policy: str = "REJECT", category: str = "Other", include_sections: bool = False):
         if not os.path.exists(path):
             return
-        self.extract_from_text("".join(read_file(path)), default_policy=default_policy, include_sections=include_sections)
+        self.extract_from_text("".join(read_file(path)), default_policy=default_policy, category=category, include_sections=include_sections)
 
     def parse_module_structure(self, text: str) -> Tuple[List[str], List[Tuple[str, List[str]]]]:
         header_lines: List[str] = []
@@ -714,46 +765,61 @@ class AdBlockManager:
         return "\n".join(output).rstrip() + "\n"
 
     def find_sync_targets(self, entry: SourceEntry) -> List[str]:
-        if not entry.is_remote or not self.is_module_source(entry):
+        if not self.is_module_source(entry):
             return []
 
-        base_name = os.path.basename(entry.source)
-        decoded_name = urllib.parse.unquote(base_name)
-        candidates = {base_name, decoded_name}
+        base_name = urllib.parse.unquote(os.path.basename(entry.source))
+        candidates = {base_name}
         matches = set(MODULE_TARGET_ALIASES.get(base_name, []))
 
         for root_dir, _, filenames in os.walk(SURGE_MODULE_DIR):
-            for candidate in candidates:
-                if candidate in filenames:
-                    matches.add(os.path.join(root_dir, candidate))
+            if base_name in filenames:
+                matches.add(os.path.join(root_dir, base_name))
 
         return sorted(matches)
 
-    def sync_remote_module_sources(self, source_entries: List[SourceEntry]) -> Tuple[Dict[str, str], List[str]]:
+    def sync_module_sources(self, source_entries: List[SourceEntry]) -> Tuple[Dict[str, str], List[str]]:
         cached_contents: Dict[str, str] = {}
         failures: List[str] = []
 
         for entry in source_entries:
-            if not entry.is_remote or not self.is_module_source(entry):
+            if not self.is_module_source(entry):
                 continue
 
             Logger.info(f"Syncing upstream module: {entry.display_name}")
-            content = self._download(entry.source)
+            if entry.is_remote:
+                content = self._download(entry.source)
+            else:
+                if not os.path.exists(entry.resolved_path):
+                    content = None
+                else:
+                    content = "".join(read_file(entry.resolved_path))
+
             if not content:
                 Logger.warn(f"  ⚠ Failed module sync: {entry.display_name}")
                 failures.append(entry.display_name)
                 continue
 
-            cached_contents[entry.source] = content
+            if entry.is_remote:
+                cached_contents[entry.source] = content
+
             cleaned_content = self.build_cleaned_module_content(content, entry.policy)
             targets = self.find_sync_targets(entry)
+            
+            # If it's a local source, exclude itself from targets to avoid infinite cycle or overwrite
+            if not entry.is_remote:
+                targets = [t for t in targets if os.path.normpath(t) != os.path.normpath(entry.resolved_path)]
+
             if not targets:
-                Logger.warn(f"  ⚠ No local module target found for: {entry.display_name}")
+                # If no targets found and it's remote, it might be a new module we should track
+                # but for local it's fine
+                if entry.is_remote:
+                    Logger.warn(f"  ⚠ No local module target found for: {entry.display_name}")
                 continue
 
             for target_path in targets:
                 write_file(target_path, cleaned_content)
-            Logger.success(f"  ✓ Synced {len(targets)} local module file(s)")
+            Logger.success(f"  ✓ Synced {len(targets)} local module target(s)")
 
         return cached_contents, failures
 
@@ -765,16 +831,17 @@ class AdBlockManager:
         cached_contents = cached_contents or {}
         failures: List[str] = []
         for entry in source_entries:
+            category = self.determine_category(entry.source)
             if entry.kind == "domainset":
                 if entry.is_remote:
-                    self.add_rule_line(f"DOMAIN-SET,{entry.source}", entry.policy)
+                    self.add_rule_line(f"DOMAIN-SET,{entry.source}", entry.policy, category=category)
                     Logger.success(f"  ✓ domainset: {entry.display_name}")
                 else:
                     Logger.warn(f"  ⚠ domainset sources must be remote: {entry.display_name}")
                     failures.append(entry.display_name)
                 continue
 
-            Logger.info(f"Fetching source: {entry.display_name}")
+            Logger.info(f"Fetching source: {entry.display_name} (Category: {category})")
             if entry.source in cached_contents:
                 content = cached_contents[entry.source]
             elif entry.is_remote:
@@ -792,7 +859,7 @@ class AdBlockManager:
                 continue
 
             include_sections = self.is_module_source(entry)
-            self.extract_from_text(content, default_policy=entry.policy, include_sections=include_sections)
+            self.extract_from_text(content, default_policy=entry.policy, category=category, include_sections=include_sections)
             Logger.success(f"  ✓ {entry.display_name}")
         return failures
 
@@ -804,11 +871,70 @@ class AdBlockManager:
             filtered.append(rule)
         return filtered
 
-    def generate_module(self):
+    def generate_ruleset(self) -> List[str]:
+        """Generate split rulesets and return list of relative paths."""
+        generated_files = []
+        if not os.path.exists(ADBLOCK_DIR):
+            os.makedirs(ADBLOCK_DIR)
+
+        Logger.info(f"Generating split rulesets in {os.path.relpath(ADBLOCK_DIR, ROOT)}")
+        
+        # Max size in bytes (20MB = 20 * 1024 * 1024)
+        MAX_SIZE = 18 * 1024 * 1024  # Use 18MB as safety margin
+
+        for category in self.category_names:
+            rules = self.filter_rules(self.rules["REJECT"][category])
+            if not rules:
+                continue
+
+            # Check if we need to split based on rule count estimation
+            # Roughly 30 bytes per rule average
+            rules_per_file = 500000 
+            
+            chunks = [rules[i:i + rules_per_file] for i in range(0, len(rules), rules_per_file)]
+            
+            for idx, chunk in enumerate(chunks):
+                suffix = f"_{idx+1}" if len(chunks) > 1 else ""
+                filename = f"AdBlock_{category}{suffix}.list"
+                filepath = os.path.join(ADBLOCK_DIR, filename)
+                
+                content = [
+                    f"# Ruleset: AdBlock {category}{suffix}\n",
+                    f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
+                    f"# Total Rules: {len(chunk)}\n",
+                    f"# Category: {category}\n",
+                ]
+                content.extend(f"{rule}\n" for rule in chunk)
+                write_file(filepath, "".join(content))
+                
+                rel_path = os.path.relpath(filepath, ROOT)
+                generated_files.append(rel_path)
+                Logger.success(f"  ✓ {filename} ({len(chunk)} rules)")
+
+        # Also update the legacy AdBlock.list with a notice or a subset
+        legacy_content = [
+            "# Ruleset: AdBlock (LEGACY / REDIRECT)\n",
+            "# This file is now split into multiple files in ruleset/AdBlock/\n",
+            "# Please update your module to use the new split rulesets.\n",
+            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
+        ]
+        # Include top 1000 rules just in case
+        all_reject_rules = []
+        for cat in self.category_names:
+            all_reject_rules.extend(self.filter_rules(self.rules["REJECT"][cat]))
+        
+        legacy_content.extend(f"{rule}\n" for rule in all_reject_rules[:1000])
+        write_file(ADBLOCK_LIST, "".join(legacy_content))
+        
+        return generated_files
+
+    def generate_module(self, generated_rulesets: List[str]):
         current_date = datetime.now().strftime('%Y-%m-%d')
+        base_url = "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+        
         header = (
             f"#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]\n"
-            "#!desc=Canonical ad-block rebuild from curated rule sources, now fused with application-specific AdBlock modules (PROMAX version).\n"
+            "#!desc=Split-ruleset ad-block rebuild from curated rule sources (PROMAX version).\n"
             "#!author=ScriptHub-Automated\n"
             "#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png\n"
             f"#!category={GROUP_HEAD_EXPANSE}\n"
@@ -816,51 +942,50 @@ class AdBlockManager:
             f"#!date={datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
             "[Rule]\n"
             "# High-Priority White-list (Prevent DNS failure)\n"
-            "# These domains are whitelisted from blocking to ensure stability.\n"
-            "# Final routing follows specialized rulesets.\n"
             "DOMAIN,dns.alidns.com,DIRECT\n"
             "DOMAIN,doh.pub,DIRECT\n"
             "DOMAIN,dns.pub,DIRECT\n"
             "DOMAIN,dot.pub,DIRECT\n"
             "DOMAIN,doh.360.cn,DIRECT\n"
             "DOMAIN,doh.dns.apple.com,DIRECT\n"
-            "# Block app-layer HTTPDNS first so apps cannot bypass the host steering above.\n"
-            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
-            "# REJECT Rules (self-hosted canonical rebuild)\n"
-            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/AdBlock.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
-            "# REJECT-NO-DROP Rules (synced from skk upstream)\n"
-            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
-            "# REJECT-DROP Rules (synced from skk upstream)\n"
-            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
-            "# BlockHttpDNS Rules (kept separate to preserve REJECT-DROP behavior)\n"
-            "RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n"
+            "# Block app-layer HTTPDNS first\n"
+            f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
         )
 
         content = [header]
-        
-        # Define complex rule prefixes that MUST stay in the [Rule] section (unsupported in .list)
+        content.append("# Split REJECT Rulesets\n")
+        for rs_path in sorted(generated_rulesets):
+            encoded_path = urllib.parse.quote(rs_path)
+            content.append(f"RULE-SET,{base_url}{encoded_path},REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n")
+
+        content.append("\n# SKK Upstream Rulesets\n")
+        content.append(f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n")
+        content.append(f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n")
+        content.append(f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n")
+
+        # Define complex rule prefixes that MUST stay in the [Rule] section
         complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
         
         for policy in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP"):
-            all_rules = sorted(self.rules[policy])
+            all_rules = set()
+            for cat in self.category_names:
+                all_rules.update(self.rules[policy][cat])
+            
             if not all_rules:
                 continue
                 
-            # For REJECT policy, only include complex rules in the module.
-            # Simple DOMAIN/IP rules go to the external AdBlock.list.
+            # Only include complex rules in the module for REJECT.
             if policy == "REJECT":
-                display_rules = [r for r in all_rules if any(r.startswith(p) for p in complex_prefixes)]
+                display_rules = sorted([r for r in all_rules if any(r.startswith(p) for p in complex_prefixes)])
             else:
-                display_rules = all_rules
+                display_rules = sorted(all_rules)
                 
             if not display_rules:
                 continue
                 
-            content.append(f"# Merged {policy} Rules ({len(display_rules)})\n")
+            content.append(f"# Merged {policy} Complex Rules ({len(display_rules)})\n")
             for r in display_rules:
-                # Final check: does the rule end with a valid policy?
                 if not any(r.endswith(suffix) for suffix in (",REJECT", ",REJECT-DROP", ",REJECT-NO-DROP", ",DIRECT", ",PROXY", ",REJECT-TINYGIF", ",REJECT-IMG")):
-                    # It's missing policy, but we have the policy context here
                     r = f"{r},{policy}"
                 content.append(f"{r}\n")
             content.append("\n")
@@ -869,7 +994,6 @@ class AdBlockManager:
             items = sorted(self.sections[section_name])
             if not items:
                 continue
-            Logger.info(f"Writing section '{section_name}' with {len(items)} items")
             content.append(f"[{section_name}]\n")
             content.extend(f"{item}\n" for item in items)
             content.append("\n")
@@ -881,64 +1005,59 @@ class AdBlockManager:
         write_file(TARGET_MODULE, "".join(content))
         Logger.success(f"Module generated: {os.path.basename(TARGET_MODULE)}")
 
-    def generate_ruleset(self):
-        clean_rules = self.filter_rules(self.rules["REJECT"])
-        content = [
-            "# Ruleset: AdBlock\n",
-            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
-            f"# Total Rules: {len(clean_rules)}\n",
-            "# Source Manifest: ruleset/Sources/Links/AdBlock_sources.txt\n",
-            "# Build Model: Canonical rebuild from curated sources, no self-reference\n",
-            "# Whitelist: ruleset/Sources/adblock_whitelist.txt\n",
-        ]
-        content.extend(f"{rule}\n" for rule in clean_rules)
-        write_file(ADBLOCK_LIST, "".join(content))
-        Logger.success(f"Ruleset generated: AdBlock.list ({len(clean_rules)} rules)")
-
     def merge(self, execute: bool = False):
         Logger.section("AdBlock Module Consolidation (Canonical Rebuild)")
         self.load_whitelist()
         self.load_hashes()
         self.cleanup_local_lists()
 
-        # 1. Load remote canonical sources
+        # 1. Load source entries and sort them by category priority
         source_entries = self.load_source_entries()
-        Logger.section("Syncing Upstream Ad Modules")
-        cached_modules, sync_failures = self.sync_remote_module_sources(source_entries)
+        
+        # Define priority map for sorting
+        priority_map = {cat: i for i, cat in enumerate(self.category_names)}
+        source_entries.sort(key=lambda e: priority_map.get(self.determine_category(e.source), 99))
 
-        # 2. Automatically load ALL files from module/local_sources
+        # 2. Sync upstream module sources (extract non-rule sections)
+        Logger.section("Syncing Upstream Ad Modules")
+        cached_modules, sync_failures = self.sync_module_sources(source_entries)
+
+        # 3. Process Local Sources (highest priority)
         Logger.section("Integrating Local AdBlock Sources")
+        # Local dir sources
         local_dir = os.path.join(ROOT, "module/local_sources")
         if os.path.exists(local_dir):
-            for f in os.listdir(local_dir):
+            for f in sorted(os.listdir(local_dir)):
                 if f.endswith((".sgmodule", ".module")):
                     path = os.path.join(local_dir, f)
                     Logger.info(f"  + Merging local source: {f}")
-                    self.extract_from_file(path, default_policy="REJECT", include_sections=True)
-
-        # 3. Scan amplify_nexus for ad-blocking components
+                    self.extract_from_file(path, default_policy="REJECT", category="Local", include_sections=True)
+        
+        # Amplify Nexus blockers
         Logger.section("Scanning Amplify Nexus for Ad-Blockers")
         nexus_dir = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
         if os.path.exists(nexus_dir):
-            for f in os.listdir(nexus_dir):
+            for f in sorted(os.listdir(nexus_dir)):
                 if f.endswith(".sgmodule") and f not in PROTECTED_MODULES:
                     path = os.path.join(nexus_dir, f)
                     with open(path, 'r', encoding='utf-8', errors='ignore') as tf:
                         text = tf.read().lower()
-                        # If it contains typical ad-block indicators, merge its rewrites/scripts
                         if any(kw in text for kw in ["reject", "广告", "拦截", "anti-ad"]):
                             Logger.info(f"  + Merging Nexus ad-block component: {f}")
-                            self.extract_from_file(path, default_policy="REJECT", include_sections=True)
+                            category = self.determine_category(f)
+                            self.extract_from_file(path, default_policy="REJECT", category=category, include_sections=True)
 
+        # 4. Fetch and extract from all other canonical sources (sorted by priority)
         Logger.section("Fetching Canonical AdBlock Sources")
         failures = self.process_source_entries(source_entries, cached_contents=cached_modules)
 
+        # 5. Load SKK fallback (lowest priority)
         if os.path.exists(SKK_REJECT):
             Logger.info("Loading local skk reject fallback...")
-            self.extract_from_file(SKK_REJECT, default_policy="REJECT", include_sections=False)
+            self.extract_from_file(SKK_REJECT, default_policy="REJECT", category="Other", include_sections=False)
 
-        self.generate_module()
-        self.generate_ruleset()
+        generated_rulesets = self.generate_ruleset()
+        self.generate_module(generated_rulesets)
         # Save hashes for change tracking
         local_source_paths = [e.resolved_path for e in source_entries if not e.is_remote]
         self.save_hashes(self.build_input_hashes(local_source_paths, source_entries))

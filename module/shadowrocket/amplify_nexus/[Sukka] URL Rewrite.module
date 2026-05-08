@@ -1,10 +1,11 @@
-# name: [Sukka] URL Rewrite
-# category: 『 🛠️ Amplify Nexus › 增幅枢纽 』
-# desc: [🚀SR] Enable this module to use Sukka URL Rewrite rules
+#!name=[Sukka] URL Rewrite
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!desc=[🚀SR] Enable this module to use Sukka URL Rewrite rules
 
 [MITM]
 
 hostname = api.abema.io, union.click.jd.com, nomo.dafork.com, -github.com, -api.github.com, -*.githubusercontent.com
+
 
 [URL Rewrite]
 # AbeamTV Unlock

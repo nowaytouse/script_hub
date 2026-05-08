@@ -53,17 +53,26 @@ def fetch_ruleset(url_or_path):
     
     content = ""
     try:
-        # 如果是相对路径
-        if url_or_path.startswith(".."):
-            path = (PROJECT_ROOT / "module/surge(main)/amplify_nexus" / url_or_path).resolve()
-            if path.exists():
-                content = path.read_text(encoding='utf-8')
-        # 如果是远程URL
-        elif url_or_path.startswith("http"):
-            print(f"  🌐 Fetching ruleset: {url_or_path}")
-            req = urllib.request.Request(url_or_path, headers={'User-Agent': 'ClashMeta/1.18.1'})
-            with urllib.request.urlopen(req, timeout=10) as response:
-                content = response.read().decode('utf-8')
+        # 转换 jsdelivr 链接到本地路径
+        if "fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/" in url_or_path:
+            rel_path = url_or_path.split("@master/")[-1]
+            local_path = PROJECT_ROOT / rel_path
+            if local_path.exists():
+                print(f"  🏠 Using local file for {url_or_path}")
+                content = local_path.read_text(encoding='utf-8')
+        
+        if not content:
+            # 如果是相对路径
+            if url_or_path.startswith(".."):
+                path = (PROJECT_ROOT / "module/surge(main)/amplify_nexus" / url_or_path).resolve()
+                if path.exists():
+                    content = path.read_text(encoding='utf-8')
+            # 如果是远程URL
+            elif url_or_path.startswith("http"):
+                print(f"  🌐 Fetching ruleset: {url_or_path}")
+                req = urllib.request.Request(url_or_path, headers={'User-Agent': 'ClashMeta/1.18.1'})
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    content = response.read().decode('utf-8')
         
         # 解析规则
         rules = []
@@ -107,7 +116,7 @@ def convert_content(content: str) -> str:
                 key, val = m.group(1).strip(), m.group(2)
                 if key == "desc":
                     val = f"[🚀SR] {val}" if "[🚀SR]" not in val else val
-                out.append(f"# {key}: {val}")
+                out.append(f"#!{key}={val}")
             continue
 
         if section == "General" and not stripped.startswith('#') and stripped:

@@ -2,13 +2,10 @@
 # Policy: PROXY
 # Node: Any
 # Description: Google services
-# Rules: 855
-# Updated: 2026-05-08 05:59:20
+# Rules: 851
+# Updated: 2026-05-08 15:34:36
 
 DOMAIN,avail.googleflights.net
-DOMAIN,clickserver.googleads.com
-DOMAIN,cnappinstall.googleadapis.com
-DOMAIN,content.googleadapis.com
 DOMAIN,download.qatp1.net
 DOMAIN,google-ohttp-relay-safebrowsing.fastly-edge.com
 DOMAIN,googleapis-cn.com
@@ -30,7 +27,6 @@ DOMAIN,scanservice1.qcpp1.net
 DOMAIN,staging-controlbe.floonet.goog
 DOMAIN,staging-databe.floonet.goog
 DOMAIN,staging.databe.floonet.goog
-DOMAIN,update.crashlytics.com
 DOMAIN,voice.telephony.goog
 DOMAIN,www.pxcc.com
 DOMAIN,www.recaptcha.net
