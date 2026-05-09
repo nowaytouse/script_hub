@@ -2,12 +2,17 @@
 # Policy: PROXY
 # Node: Any
 # Description: Microsoft services
-# Rules: 691
-# Updated: 2026-05-08 15:34:37
+# Rules: 696
+# Updated: 2026-05-09 06:18:55
 
 DOMAIN,cn.windowssearch.com
 DOMAIN,github-api.arkoselabs.com
 DOMAIN,github-cloud.s3.amazonaws.com
+DOMAIN,github-production-release-asset-2e65be.s3.amazonaws.com
+DOMAIN,github-production-repository-file-5c1aeb.s3.amazonaws.com
+DOMAIN,github-production-repository-image-32fea6.s3.amazonaws.com
+DOMAIN,github-production-upload-manifest-file-7fdce7.s3.amazonaws.com
+DOMAIN,github-production-user-asset-6210df.s3.amazonaws.com
 DOMAIN,img-s-msn-com.akamaized.net
 DOMAIN,mwf-service.akamaized.net
 DOMAIN,officecdn-microsoft-com.akamaized.net
