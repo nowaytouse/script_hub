@@ -1,10 +1,11 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 118279
-# Updated: 2026-05-13 06:50:16
+# Rules: 118288
+# Updated: 2026-05-14 06:48:02
 
 DOMAIN,004430.xyz
+DOMAIN,0d.kebhana.mx
 DOMAIN,1-fss24-s0.streamhoster.com
 DOMAIN,1337.abcvg.info
 DOMAIN,14033.live.streamtheworld.com
@@ -35,9 +36,10 @@ DOMAIN,bandito.byterunner.io
 DOMAIN,bbs.ztedevices.com
 DOMAIN,bbstv.clouducs.com
 DOMAIN,bittorrent-tracker.e-n-c-r-y-p-t.net
-DOMAIN,bt.okmp3.ru
 DOMAIN,bt1.archive.org
+DOMAIN,bt1.xxxxbt.cc
 DOMAIN,bt2.archive.org
+DOMAIN,buny.uk
 DOMAIN,bvarf.tracker.sh
 DOMAIN,cast.news98.com.tw
 DOMAIN,cast.uforadio.com.tw
@@ -53,7 +55,6 @@ DOMAIN,chaoan.chaoantv.com
 DOMAIN,client.amplifi.com
 DOMAIN,clientperipherals.dell.com
 DOMAIN,cn.download.nvidia.com
-DOMAIN,cn.pcfreetime.com
 DOMAIN,coeus.torrentonline.cc
 DOMAIN,crl.globalsign.net
 DOMAIN,crl.kaspersky.com
@@ -124,7 +125,6 @@ DOMAIN,hls.qguiyang.com
 DOMAIN,hls.qxtv0763.com
 DOMAIN,hls.wlrn.mobi
 DOMAIN,hospital.pku.edu.cn
-DOMAIN,http1.torrust-tracker-demo.com
 DOMAIN,httpdvb.slave.ttcatv.tv
 DOMAIN,i.dell.com
 DOMAIN,icecast-ruvr.cdnvideo.ru
@@ -135,6 +135,7 @@ DOMAIN,ip.istatmenus.app
 DOMAIN,ipv4announce.sktorrent.eu
 DOMAIN,izattime.qcomgeo2.com
 DOMAIN,jpts.sinovision.net
+DOMAIN,jvavav.com
 DOMAIN,kc.kexinshe.com
 DOMAIN,kcrw.streamguys1.com
 DOMAIN,kjzz.streamguys1.com
@@ -230,6 +231,7 @@ DOMAIN,obey.torrentonline.cc
 DOMAIN,open.demonii.com
 DOMAIN,open.stealth.si
 DOMAIN,open.tracker.ink
+DOMAIN,open.trackerlist.xyz
 DOMAIN,opencourse.pku.edu.cn
 DOMAIN,opentor.org
 DOMAIN,ott-live.olympicchannel.com
@@ -303,6 +305,7 @@ DOMAIN,scene7-cdn.dell.com
 DOMAIN,seb.sason.top
 DOMAIN,seedpeer.net
 DOMAIN,setmeup.arubanetworks.com
+DOMAIN,shubt.net
 DOMAIN,si.cdn.dell.com
 DOMAIN,slive.ytn.co.kr
 DOMAIN,sms.imagetasks.com
@@ -342,13 +345,12 @@ DOMAIN,time.amazonaws.cn
 DOMAIN,time.xtracloud.net
 DOMAIN,tjrate.tjtele.com
 DOMAIN,tl.gscm.tv
-DOMAIN,torrent.bowed.net
+DOMAIN,torrent.hificode.in
 DOMAIN,torrentclub.online
 DOMAIN,torrents.tmtime.dev
 DOMAIN,torrentsmd.com
 DOMAIN,tplogin.cn
 DOMAIN,tr.abiir.top
-DOMAIN,tr.abir.ga
 DOMAIN,tr.highstar.shop
 DOMAIN,tr.kxmp.cf
 DOMAIN,tr.nyacat.pw
@@ -356,23 +358,26 @@ DOMAIN,tr4ck3r.duckdns.org
 DOMAIN,tracker-udp.gbitt.info
 DOMAIN,tracker.004430.xyz
 DOMAIN,tracker.1h.is
+DOMAIN,tracker.23794.top
 DOMAIN,tracker.7471.top
 DOMAIN,tracker.bittor.pw
 DOMAIN,tracker.bluefrog.pw
 DOMAIN,tracker.breizh.pm
 DOMAIN,tracker.bt4g.com
+DOMAIN,tracker.bz
 DOMAIN,tracker.corpscorp.online
 DOMAIN,tracker.ddunlimited.net
 DOMAIN,tracker.dhitechnical.com
 DOMAIN,tracker.dler.com
 DOMAIN,tracker.dler.org
+DOMAIN,tracker.dmcomic.org
 DOMAIN,tracker.ducks.party
 DOMAIN,tracker.filemail.com
 DOMAIN,tracker.flatuslifir.is
 DOMAIN,tracker.fnix.net
 DOMAIN,tracker.gcrenwp.top
 DOMAIN,tracker.gmi.gd
-DOMAIN,tracker.huadongblower.xyz
+DOMAIN,tracker.iperson.xyz
 DOMAIN,tracker.kuroy.me
 DOMAIN,tracker.manager.v6.navy
 DOMAIN,tracker.moeking.me
@@ -381,11 +386,13 @@ DOMAIN,tracker.nekomi.cn
 DOMAIN,tracker.nyaa.vc
 DOMAIN,tracker.opentorrent.top
 DOMAIN,tracker.opentrackr.org
+DOMAIN,tracker.playground.ru
 DOMAIN,tracker.plx.im
 DOMAIN,tracker.pmman.tech
 DOMAIN,tracker.qingwapt.org
 DOMAIN,tracker.qu.ax
 DOMAIN,tracker.renfei.net
+DOMAIN,tracker.sbsub.com
 DOMAIN,tracker.skyts.net
 DOMAIN,tracker.srv00.com
 DOMAIN,tracker.t-1.org
@@ -396,9 +403,12 @@ DOMAIN,tracker.tritan.gg
 DOMAIN,tracker.tryhackx.org
 DOMAIN,tracker.waaa.moe
 DOMAIN,tracker.wildkat.net
+DOMAIN,tracker.xiaoduola.xyz
 DOMAIN,tracker.xn--djrq4gl4hvoi.top
 DOMAIN,tracker.yemekyedim.com
+DOMAIN,tracker.yume-hatsuyuki.moe
 DOMAIN,tracker.zhuqiy.com
+DOMAIN,tracker.zhuqiy.dgj055.icu
 DOMAIN,tracker1.520.jp
 DOMAIN,tracker1.itzmx.com
 DOMAIN,tracker2.dler.org
@@ -415,7 +425,6 @@ DOMAIN,u.peer-exchange.download
 DOMAIN,uabits.today
 DOMAIN,udp.trackarr.org
 DOMAIN,udp.tracker.projectk.org
-DOMAIN,udp1.torrust-tracker-demo.com
 DOMAIN,uni6rtmp.tulix.tv
 DOMAIN,v1.one-tv.com
 DOMAIN,vip888.kuyun99.com
@@ -446,6 +455,7 @@ DOMAIN,www.pxitv.com
 DOMAIN,www.routerlogin.com
 DOMAIN,www.soundvideostar.com
 DOMAIN,www.szmgiptv.com
+DOMAIN,www.torrentsnipe.info
 DOMAIN,www.ztedevices.com
 DOMAIN,xtratime.qcomgeo2.com
 DOMAIN,youku.cdn2-youku.com
@@ -6824,7 +6834,6 @@ DOMAIN-SUFFIX,51touch.com
 DOMAIN-SUFFIX,51toufang.com
 DOMAIN-SUFFIX,51tour.com
 DOMAIN-SUFFIX,51touxiang.com
-DOMAIN-SUFFIX,51toys.store
 DOMAIN-SUFFIX,51tra.com
 DOMAIN-SUFFIX,51tracking.com
 DOMAIN-SUFFIX,51tuiyi.com
@@ -8617,6 +8626,7 @@ DOMAIN-SUFFIX,697e43da249f79cd.com
 DOMAIN-SUFFIX,69853.net
 DOMAIN-SUFFIX,698wan.com
 DOMAIN-SUFFIX,69916666.com
+DOMAIN-SUFFIX,699333.xyz
 DOMAIN-SUFFIX,69981.com
 DOMAIN-SUFFIX,699g.com
 DOMAIN-SUFFIX,699h5.com
@@ -34601,6 +34611,7 @@ DOMAIN-SUFFIX,eilieili.cc
 DOMAIN-SUFFIX,eimoney.com
 DOMAIN-SUFFIX,einfo-tech.com
 DOMAIN-SUFFIX,eingdong.com
+DOMAIN-SUFFIX,einkcn.com
 DOMAIN-SUFFIX,einsteintiles.com
 DOMAIN-SUFFIX,eintone.com
 DOMAIN-SUFFIX,eisoo.com
@@ -40990,7 +41001,6 @@ DOMAIN-SUFFIX,giscafer.com
 DOMAIN-SUFFIX,giser.net
 DOMAIN-SUFFIX,giserdqy.com
 DOMAIN-SUFFIX,gishai.com
-DOMAIN-SUFFIX,gispark.org
 DOMAIN-SUFFIX,gissaas.com
 DOMAIN-SUFFIX,gissinggroup.com
 DOMAIN-SUFFIX,gissky.net
@@ -58641,6 +58651,7 @@ DOMAIN-SUFFIX,jmeizs.com
 DOMAIN-SUFFIX,jmev.com
 DOMAIN-SUFFIX,jmgle.com
 DOMAIN-SUFFIX,jmglg.com
+DOMAIN-SUFFIX,jmgo.com
 DOMAIN-SUFFIX,jmgsgs.com
 DOMAIN-SUFFIX,jmhaofa.com
 DOMAIN-SUFFIX,jmhapp.com
@@ -63267,6 +63278,7 @@ DOMAIN-SUFFIX,labi.com
 DOMAIN-SUFFIX,labixiao.xin
 DOMAIN-SUFFIX,labno3.com
 DOMAIN-SUFFIX,labpyx.com
+DOMAIN-SUFFIX,labuladong.online
 DOMAIN-SUFFIX,labview.help
 DOMAIN-SUFFIX,labxing.com
 DOMAIN-SUFFIX,labzj.com
@@ -72226,7 +72238,6 @@ DOMAIN-SUFFIX,natapp4.cc
 DOMAIN-SUFFIX,natappfree.cc
 DOMAIN-SUFFIX,natashayana.shop
 DOMAIN-SUFFIX,natbbs.com
-DOMAIN-SUFFIX,natchecker.com
 DOMAIN-SUFFIX,natconn.com
 DOMAIN-SUFFIX,natergy.com
 DOMAIN-SUFFIX,natertech.com
@@ -76742,6 +76753,7 @@ DOMAIN-SUFFIX,pengke.com
 DOMAIN-SUFFIX,penglei.name
 DOMAIN-SUFFIX,pengliao.com
 DOMAIN-SUFFIX,pengpailaw.com
+DOMAIN-SUFFIX,pengqi.club
 DOMAIN-SUFFIX,pengqian.win
 DOMAIN-SUFFIX,pengrl.com
 DOMAIN-SUFFIX,pengrui-ssj.com
@@ -81656,7 +81668,6 @@ DOMAIN-SUFFIX,readlink.com
 DOMAIN-SUFFIX,readlishi.com
 DOMAIN-SUFFIX,readm.tech
 DOMAIN-SUFFIX,readmeok.com
-DOMAIN-SUFFIX,readnos.com
 DOMAIN-SUFFIX,readnovel.com
 DOMAIN-SUFFIX,readpai.com
 DOMAIN-SUFFIX,readpaper.com
@@ -81797,7 +81808,6 @@ DOMAIN-SUFFIX,registry.npmmirror.com
 DOMAIN-SUFFIX,reglogo.net
 DOMAIN-SUFFIX,regltd.com
 DOMAIN-SUFFIX,regtm.com
-DOMAIN-SUFFIX,regulatory-ledger-transaction-check.com
 DOMAIN-SUFFIX,reguo.com
 DOMAIN-SUFFIX,rehiy.com
 DOMAIN-SUFFIX,rehn.cc
@@ -82041,7 +82051,6 @@ DOMAIN-SUFFIX,rg950.com
 DOMAIN-SUFFIX,rgaxobcs.com
 DOMAIN-SUFFIX,rgb128.com
 DOMAIN-SUFFIX,rgble.com
-DOMAIN-SUFFIX,rgdse.shop
 DOMAIN-SUFFIX,rgezppvk.com
 DOMAIN-SUFFIX,rgkjyp.com
 DOMAIN-SUFFIX,rgoo.com
@@ -89073,7 +89082,6 @@ DOMAIN-SUFFIX,sooauto.com
 DOMAIN-SUFFIX,soocang.com
 DOMAIN-SUFFIX,soochowchem.com
 DOMAIN-SUFFIX,soocor.com
-DOMAIN-SUFFIX,soodao.com
 DOMAIN-SUFFIX,sooele.com
 DOMAIN-SUFFIX,soofel.com
 DOMAIN-SUFFIX,soogf.com
@@ -100938,7 +100946,6 @@ DOMAIN-SUFFIX,whfeiyou.com
 DOMAIN-SUFFIX,whfengli.com
 DOMAIN-SUFFIX,whfilter.com
 DOMAIN-SUFFIX,whfles.com
-DOMAIN-SUFFIX,whfmg.org
 DOMAIN-SUFFIX,whfph.com
 DOMAIN-SUFFIX,whgas.com
 DOMAIN-SUFFIX,whgayy.com
@@ -102613,6 +102620,7 @@ DOMAIN-SUFFIX,wuhanunion.com
 DOMAIN-SUFFIX,wuhanup.com
 DOMAIN-SUFFIX,wuhanwyg.com
 DOMAIN-SUFFIX,wuhanxingfuwan.com
+DOMAIN-SUFFIX,wuhanyushidai.com
 DOMAIN-SUFFIX,wuhanzdq.com
 DOMAIN-SUFFIX,wuhanzhenye.com
 DOMAIN-SUFFIX,wuhao13.xin
@@ -112800,6 +112808,7 @@ DOMAIN-SUFFIX,yybox.cc
 DOMAIN-SUFFIX,yycec.com
 DOMAIN-SUFFIX,yyclouds.com
 DOMAIN-SUFFIX,yyclub.org
+DOMAIN-SUFFIX,yyclub.work
 DOMAIN-SUFFIX,yycoin.com
 DOMAIN-SUFFIX,yycoo.com
 DOMAIN-SUFFIX,yycqc.com
