@@ -1,6 +1,6 @@
 # Ruleset: AdBlock Privacy
-# Updated: 2026-05-17 06:48:53
-# Total Rules: 1669
+# Updated: 2026-05-18 08:09:21
+# Total Rules: 1678
 # Category: Privacy
 
 DOMAIN,cn.app.chat.xiaomi.net,REJECT
@@ -1030,6 +1030,7 @@ DOMAIN-SUFFIX,a8cv.zeroen-denki.com,REJECT
 DOMAIN-SUFFIX,a8cv.zerorenovation.com,REJECT
 DOMAIN-SUFFIX,a8cv.zita.life,REJECT
 DOMAIN-SUFFIX,a8cv.zoner.com,REJECT
+DOMAIN-SUFFIX,aanalytics.panduit.com,REJECT
 DOMAIN-SUFFIX,ad.kddi-fs.com,REJECT
 DOMAIN-SUFFIX,adbsmetrics.cnpmall.com,REJECT
 DOMAIN-SUFFIX,adbsmetrics.ep.hmc.co.kr,REJECT
@@ -1357,8 +1358,14 @@ DOMAIN-SUFFIX,plausible.campwire.com,REJECT
 DOMAIN-SUFFIX,plausible.corbettbarr.com,REJECT
 DOMAIN-SUFFIX,plausible.deploymentfromscratch.com,REJECT
 DOMAIN-SUFFIX,plausible.dingran.me,REJECT
+DOMAIN-SUFFIX,plausible.doctave.com,REJECT
+DOMAIN-SUFFIX,plausible.eurostocks.nl,REJECT
 DOMAIN-SUFFIX,plausible.f1laps.com,REJECT
 DOMAIN-SUFFIX,plausible.flamekiller.org,REJECT
+DOMAIN-SUFFIX,plausible.flowcv.io,REJECT
+DOMAIN-SUFFIX,plausible.golfbreaks.com,REJECT
+DOMAIN-SUFFIX,plausible.gryka.net,REJECT
+DOMAIN-SUFFIX,plausible.gymglish.com,REJECT
 DOMAIN-SUFFIX,plausible.haltakov.net,REJECT
 DOMAIN-SUFFIX,plausible.k6sbw.net,REJECT
 DOMAIN-SUFFIX,plausible.promlens.com,REJECT
@@ -1430,6 +1437,7 @@ DOMAIN-SUFFIX,smetrics.citibank.com.vn,REJECT
 DOMAIN-SUFFIX,smetrics.client-services.ca,REJECT
 DOMAIN-SUFFIX,smetrics.clubnoble.jp,REJECT
 DOMAIN-SUFFIX,smetrics.coffretdor-makeup.jp,REJECT
+DOMAIN-SUFFIX,smetrics.dandh.ca,REJECT
 DOMAIN-SUFFIX,smetrics.digicert.com,REJECT
 DOMAIN-SUFFIX,smetrics.discova.jp,REJECT
 DOMAIN-SUFFIX,smetrics.dreamlabdata.com,REJECT
@@ -1571,6 +1579,7 @@ DOMAIN-SUFFIX,stpanalytics.tudatalattihatalma.hu,REJECT
 DOMAIN-SUFFIX,stpserver.appleyardflowers.com,REJECT
 DOMAIN-SUFFIX,stts.swisshranalytics.ch,REJECT
 DOMAIN-SUFFIX,sw.broadcom.com,REJECT
+DOMAIN-SUFFIX,swebanalytics.acs.org,REJECT
 DOMAIN-SUFFIX,swebanalytics.degulesider.dk,REJECT
 DOMAIN-SUFFIX,swebanalytics.eniro.se,REJECT
 DOMAIN-SUFFIX,swebanalytics.gulesider.no,REJECT
