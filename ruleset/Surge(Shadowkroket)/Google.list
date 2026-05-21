@@ -2,28 +2,21 @@
 # Policy: PROXY
 # Node: Any
 # Description: Google services
-# Rules: 851
-# Updated: 2026-05-19 07:50:24
+# Rules: 842
+# Updated: 2026-05-21 07:56:57
 
 DOMAIN,avail.googleflights.net
-DOMAIN,download.qatp1.net
 DOMAIN,google-ohttp-relay-safebrowsing.fastly-edge.com
 DOMAIN,googleapis-cn.com
 DOMAIN,googleapps-cn.com
 DOMAIN,gstatic-cn.com
-DOMAIN,monitoring.qpdp1.net
 DOMAIN,prod-controlbe.floonet.goog
 DOMAIN,prod-databe.floonet.goog
 DOMAIN,prod.databe.floonet.goog
-DOMAIN,qagpublic.qatp1.net
-DOMAIN,qgadmin.qcpp1.net
 DOMAIN,qiao-cn.com
 DOMAIN,qpx.googleflights.net
-DOMAIN,qualysapi.qatp1.net
-DOMAIN,qualysguard.qpdp1.net
 DOMAIN,recaptcha-cn.net
 DOMAIN,recaptcha.net
-DOMAIN,scanservice1.qcpp1.net
 DOMAIN,staging-controlbe.floonet.goog
 DOMAIN,staging-databe.floonet.goog
 DOMAIN,staging.databe.floonet.goog
@@ -71,7 +64,6 @@ DOMAIN-SUFFIX,blogblog.com
 DOMAIN-SUFFIX,blogger.com
 DOMAIN-SUFFIX,blogspot.al
 DOMAIN-SUFFIX,blogspot.am
-DOMAIN-SUFFIX,blogspot.ba
 DOMAIN-SUFFIX,blogspot.be
 DOMAIN-SUFFIX,blogspot.bg
 DOMAIN-SUFFIX,blogspot.bj
@@ -118,7 +110,6 @@ DOMAIN-SUFFIX,blogspot.jp
 DOMAIN-SUFFIX,blogspot.kr
 DOMAIN-SUFFIX,blogspot.li
 DOMAIN-SUFFIX,blogspot.lt
-DOMAIN-SUFFIX,blogspot.lu
 DOMAIN-SUFFIX,blogspot.md
 DOMAIN-SUFFIX,blogspot.mk
 DOMAIN-SUFFIX,blogspot.mx

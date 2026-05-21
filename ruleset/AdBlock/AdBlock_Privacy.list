@@ -1,6 +1,6 @@
 # Ruleset: AdBlock Privacy
-# Updated: 2026-05-19 07:51:51
-# Total Rules: 1697
+# Updated: 2026-05-21 07:58:21
+# Total Rules: 1701
 # Category: Privacy
 
 DOMAIN,cn.app.chat.xiaomi.net,REJECT
@@ -10,11 +10,6 @@ DOMAIN,ios-pclog.i4.cn,REJECT
 DOMAIN,m.track.ad.xiaomi.com,REJECT
 DOMAIN,qsb.browser.miui.srv,REJECT
 DOMAIN,rom.pt.miui.srv,REJECT
-DOMAIN-SUFFIX,0tfsd2rwwu3xjstb.edge41.testandtarget.omniture.com,REJECT
-DOMAIN-SUFFIX,1ps6e7sort397gy9.edge46.testandtarget.omniture.com,REJECT
-DOMAIN-SUFFIX,20.edge46.testandtarget.omniture.com,REJECT
-DOMAIN-SUFFIX,3yww9ue5ec1iqn3w.edge41.testandtarget.omniture.com,REJECT
-DOMAIN-SUFFIX,6bc.edge41.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,a.koodomobile.com,REJECT
 DOMAIN-SUFFIX,a8clk.011330.jp,REJECT
 DOMAIN-SUFFIX,a8clk.17skin.jp,REJECT
@@ -1035,7 +1030,6 @@ DOMAIN-SUFFIX,a8cv.zeroen-denki.com,REJECT
 DOMAIN-SUFFIX,a8cv.zerorenovation.com,REJECT
 DOMAIN-SUFFIX,a8cv.zita.life,REJECT
 DOMAIN-SUFFIX,a8cv.zoner.com,REJECT
-DOMAIN-SUFFIX,aanalytics.panduit.com,REJECT
 DOMAIN-SUFFIX,ad.kddi-fs.com,REJECT
 DOMAIN-SUFFIX,adbsmetrics.cnpmall.com,REJECT
 DOMAIN-SUFFIX,adbsmetrics.ep.hmc.co.kr,REJECT
@@ -1100,6 +1094,7 @@ DOMAIN-SUFFIX,analytics.metriko.app,REJECT
 DOMAIN-SUFFIX,analytics.multithread.studio,REJECT
 DOMAIN-SUFFIX,analytics.ooyala.com,REJECT
 DOMAIN-SUFFIX,analytics.raenonx.cc,REJECT
+DOMAIN-SUFFIX,analytics.redistributemag.com,REJECT
 DOMAIN-SUFFIX,analytics.regs.maryland.gov,REJECT
 DOMAIN-SUFFIX,analytics.runpath.com,REJECT
 DOMAIN-SUFFIX,analytics.send.cm,REJECT
@@ -1108,11 +1103,18 @@ DOMAIN-SUFFIX,analytics.smart.mercedes-benz.com,REJECT
 DOMAIN-SUFFIX,analytics.snaptube.app,REJECT
 DOMAIN-SUFFIX,analytics.sona-mira.co.jp,REJECT
 DOMAIN-SUFFIX,analytics.starlink.com,REJECT
+DOMAIN-SUFFIX,analytics.teamcovenant.com,REJECT
+DOMAIN-SUFFIX,analytics.top10-charts.com,REJECT
 DOMAIN-SUFFIX,analytics.touchnote.io,REJECT
 DOMAIN-SUFFIX,analytics.tout.com,REJECT
+DOMAIN-SUFFIX,analytics.trust.page,REJECT
 DOMAIN-SUFFIX,analytics.vanilla-project.guide,REJECT
 DOMAIN-SUFFIX,analytics.verfacto.com,REJECT
 DOMAIN-SUFFIX,analytics.wask.co,REJECT
+DOMAIN-SUFFIX,analytics.wayland.app,REJECT
+DOMAIN-SUFFIX,analytics.winter.ink,REJECT
+DOMAIN-SUFFIX,analytics.yourfitkitchen.nl,REJECT
+DOMAIN-SUFFIX,analytics.zenleven.nl,REJECT
 DOMAIN-SUFFIX,analytics.zoomit.ir,REJECT
 DOMAIN-SUFFIX,app.advertisingsolutions.att-mail.com,REJECT
 DOMAIN-SUFFIX,app.green.omniture.com,REJECT
@@ -1152,7 +1154,6 @@ DOMAIN-SUFFIX,atsmetrics.adobe.com,REJECT
 DOMAIN-SUFFIX,au1.qualtrics.com,REJECT
 DOMAIN-SUFFIX,az416426.vo.msecnd.net,REJECT
 DOMAIN-SUFFIX,bcomniture.focus.de,REJECT
-DOMAIN-SUFFIX,bdrr.edge41.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,bismetrics.experian.com,REJECT
 DOMAIN-SUFFIX,bnc.lt,REJECT
 DOMAIN-SUFFIX,brillen.demarketing.net.brillen.pl,REJECT
@@ -1260,17 +1261,13 @@ DOMAIN-SUFFIX,embeddedanalytics.com,REJECT
 DOMAIN-SUFFIX,ephemeralcounters.api.roblox.com,REJECT
 DOMAIN-SUFFIX,fastly-analytics.com,REJECT
 DOMAIN-SUFFIX,fouanalytics.com,REJECT
-DOMAIN-SUFFIX,gis.edge45.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,happymoose.sk-webanalytics.de,REJECT
 DOMAIN-SUFFIX,https-filtering-check.adtidy.org,REJECT
-DOMAIN-SUFFIX,igetfuckedup.edge45.testandtarget.omniture.com,REJECT
-DOMAIN-SUFFIX,ik8uf01fm7neloo9.edge41.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,images.e.environicsanalytics.com,REJECT
 DOMAIN-SUFFIX,images.ma.marketing.netafim.com,REJECT
 DOMAIN-SUFFIX,images.marketing.netapp.com,REJECT
 DOMAIN-SUFFIX,info.engage.3m.com,REJECT
 DOMAIN-SUFFIX,info.fifthadvertising.com,REJECT
-DOMAIN-SUFFIX,james.edge45.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,junior-a8cv.techacademy.jp,REJECT
 DOMAIN-SUFFIX,kinesis.eu-west-1.amazonaws.com,REJECT
 DOMAIN-SUFFIX,links.info.headspace.com,REJECT
@@ -1335,7 +1332,6 @@ DOMAIN-SUFFIX,omniture.direct.asda.com,REJECT
 DOMAIN-SUFFIX,omniture.groceries-qa.asda.com,REJECT
 DOMAIN-SUFFIX,omniture.groceries.asda.com,REJECT
 DOMAIN-SUFFIX,omniture.kcbd.com,REJECT
-DOMAIN-SUFFIX,omniture.kennametal.com,REJECT
 DOMAIN-SUFFIX,omniture.lg.com,REJECT
 DOMAIN-SUFFIX,omniture.money.asda.com,REJECT
 DOMAIN-SUFFIX,omniture.omgeo.com,REJECT
@@ -1382,18 +1378,26 @@ DOMAIN-SUFFIX,plausible.k6sbw.net,REJECT
 DOMAIN-SUFFIX,plausible.kabaret.no,REJECT
 DOMAIN-SUFFIX,plausible.myvirtualsuper.com,REJECT
 DOMAIN-SUFFIX,plausible.nuqu.org,REJECT
+DOMAIN-SUFFIX,plausible.plausible.tangodelta.media,REJECT
 DOMAIN-SUFFIX,plausible.promlens.com,REJECT
 DOMAIN-SUFFIX,plausible.prufit.co,REJECT
 DOMAIN-SUFFIX,plausible.pumpkint.com,REJECT
+DOMAIN-SUFFIX,plausible.quo.wtf,REJECT
+DOMAIN-SUFFIX,plausible.redchamp.net,REJECT
+DOMAIN-SUFFIX,plausible.sbw.org,REJECT
+DOMAIN-SUFFIX,plausible.shadygrovepca.org,REJECT
+DOMAIN-SUFFIX,plausible.srijn.net,REJECT
+DOMAIN-SUFFIX,plausible.sysloun.cz,REJECT
 DOMAIN-SUFFIX,plausible.tasteslikeme.ca,REJECT
+DOMAIN-SUFFIX,plausible.urbanekuensteruhr.de,REJECT
 DOMAIN-SUFFIX,plausible.visitu.com,REJECT
 DOMAIN-SUFFIX,plausible.west.io,REJECT
 DOMAIN-SUFFIX,plausible.x.baychi.org,REJECT
+DOMAIN-SUFFIX,plausible.zorin.com,REJECT
 DOMAIN-SUFFIX,polpharmaanalytics.pl,REJECT
 DOMAIN-SUFFIX,proxy.telemetry.us-ashburn-1.oci.oraclecloud.com,REJECT
 DOMAIN-SUFFIX,rdstation.com,REJECT
 DOMAIN-SUFFIX,repdata.montgomeryadvertiser.com,REJECT
-DOMAIN-SUFFIX,rolt7it2lhml5rxa.edge41.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,sadobeanalytics.geico.com,REJECT
 DOMAIN-SUFFIX,sadobeanalytics.medline.com,REJECT
 DOMAIN-SUFFIX,sailthru.com,REJECT
@@ -1452,6 +1456,7 @@ DOMAIN-SUFFIX,smetrics.citibank.com.vn,REJECT
 DOMAIN-SUFFIX,smetrics.client-services.ca,REJECT
 DOMAIN-SUFFIX,smetrics.clubnoble.jp,REJECT
 DOMAIN-SUFFIX,smetrics.coffretdor-makeup.jp,REJECT
+DOMAIN-SUFFIX,smetrics.customs.pwc.com,REJECT
 DOMAIN-SUFFIX,smetrics.dandh.ca,REJECT
 DOMAIN-SUFFIX,smetrics.digicert.com,REJECT
 DOMAIN-SUFFIX,smetrics.discova.jp,REJECT
@@ -1531,15 +1536,18 @@ DOMAIN-SUFFIX,smetrics.riteaid.com,REJECT
 DOMAIN-SUFFIX,smetrics.roche-uae.com,REJECT
 DOMAIN-SUFFIX,smetrics.rocheonline.net,REJECT
 DOMAIN-SUFFIX,smetrics.rochepro-eg.com,REJECT
+DOMAIN-SUFFIX,smetrics.scopus.com,REJECT
 DOMAIN-SUFFIX,smetrics.seawheeze.com,REJECT
 DOMAIN-SUFFIX,smetrics.seic.com,REJECT
 DOMAIN-SUFFIX,smetrics.sen.com.au,REJECT
 DOMAIN-SUFFIX,smetrics.shellenergy.co.uk,REJECT
+DOMAIN-SUFFIX,smetrics.shopmyexchange.com,REJECT
 DOMAIN-SUFFIX,smetrics.sixtdirect.com,REJECT
 DOMAIN-SUFFIX,smetrics.skandiabanken.se,REJECT
 DOMAIN-SUFFIX,smetrics.skodafinancialservices.nl,REJECT
 DOMAIN-SUFFIX,smetrics.sparkassendirekt.de,REJECT
 DOMAIN-SUFFIX,smetrics.t-mobilemoney.com,REJECT
+DOMAIN-SUFFIX,smetrics.tacobell.com,REJECT
 DOMAIN-SUFFIX,smetrics.tarceva.com,REJECT
 DOMAIN-SUFFIX,smetrics.textbooks.com,REJECT
 DOMAIN-SUFFIX,smetrics.thebay.com,REJECT
@@ -1595,7 +1603,6 @@ DOMAIN-SUFFIX,stpanalytics.tudatalattihatalma.hu,REJECT
 DOMAIN-SUFFIX,stpserver.appleyardflowers.com,REJECT
 DOMAIN-SUFFIX,stts.swisshranalytics.ch,REJECT
 DOMAIN-SUFFIX,sw.broadcom.com,REJECT
-DOMAIN-SUFFIX,swebanalytics.acs.org,REJECT
 DOMAIN-SUFFIX,swebanalytics.degulesider.dk,REJECT
 DOMAIN-SUFFIX,swebanalytics.eniro.se,REJECT
 DOMAIN-SUFFIX,swebanalytics.gulesider.no,REJECT
@@ -1690,13 +1697,10 @@ DOMAIN-SUFFIX,trksvg.business.hsbc.es,REJECT
 DOMAIN-SUFFIX,trksvg.business.hsbc.fr,REJECT
 DOMAIN-SUFFIX,trksvg.business.hsbc.ie,REJECT
 DOMAIN-SUFFIX,trksvg.business.hsbc.lk,REJECT
-DOMAIN-SUFFIX,ukg6sq48dy4zd6gn.edge41.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,us-east-1.paa-reporting-advertising.amazon,REJECT
-DOMAIN-SUFFIX,vdmwntw1of9t8xgd.edge41.testandtarget.omniture.com,REJECT
 DOMAIN-SUFFIX,visit.webhosting.yahoo.com,REJECT
 DOMAIN-SUFFIX,webanalytics.also.com,REJECT
 DOMAIN-SUFFIX,webcontr.karbenopenair.de,REJECT
 DOMAIN-SUFFIX,webmetrics.nintendo-europe.com,REJECT
 DOMAIN-SUFFIX,webstat.freaks4u.com,REJECT
 DOMAIN-SUFFIX,yvdxij.applevacations.com,REJECT
-DOMAIN-SUFFIX,zisr3w3i2csfa76m.edge41.testandtarget.omniture.com,REJECT
