@@ -1,6 +1,6 @@
 # Ruleset: AdBlock Advertising
-# Updated: 2026-05-24 07:24:54
-# Total Rules: 267739
+# Updated: 2026-05-25 08:24:47
+# Total Rules: 267738
 # Category: Advertising
 
 DOMAIN,0.code.cotsta.ru,REJECT
@@ -1467,6 +1467,7 @@ DOMAIN,adsfilebssdlbig.ali.kugou.com,REJECT,extended-matching,pre-matching
 DOMAIN,adsfilebssdlbig.tx.kugou.com,REJECT
 DOMAIN,adsfileretry.service.kugou.com,REJECT,extended-matching,pre-matching
 DOMAIN,adsfs-sdkconfig.heytapimage.com,REJECT
+DOMAIN,adsfs.heytapimage.com,REJECT,extended-matching,pre-matching
 DOMAIN,adsfs.oppomobile.com,REJECT,extended-matching,pre-matching
 DOMAIN,adshark.site,REJECT
 DOMAIN,adshell.net,REJECT
@@ -4668,7 +4669,6 @@ DOMAIN,dradvice.in,REJECT
 DOMAIN,drank.fa779.com,REJECT
 DOMAIN,draulinehandon.info,REJECT
 DOMAIN,drbwugautcgh.com,REJECT
-DOMAIN,drcn-weather.cloud.huawei.com,REJECT,extended-matching,pre-matching
 DOMAIN,dredkcyex.com,REJECT
 DOMAIN,drivecdn.com,REJECT
 DOMAIN,drjctivspweild.com,REJECT
@@ -31322,7 +31322,6 @@ DOMAIN-SUFFIX,adsflowprime.top,REJECT
 DOMAIN-SUFFIX,adsforallmedia.com,REJECT
 DOMAIN-SUFFIX,adsforcomputercity.com,REJECT
 DOMAIN-SUFFIX,adsforindians.com,REJECT
-DOMAIN-SUFFIX,adsfs.heytapimage.com,REJECT
 DOMAIN-SUFFIX,adsfundi.com,REJECT
 DOMAIN-SUFFIX,adsfuse.com,REJECT
 DOMAIN-SUFFIX,adsgangsta.com,REJECT
