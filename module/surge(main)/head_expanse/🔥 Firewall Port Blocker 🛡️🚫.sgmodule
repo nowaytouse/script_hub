@@ -2,7 +2,7 @@
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP
 #!author=nyamiiko (Enhanced)
-#!version=2026.05.25
+#!version=2026.05.26
 #!tag=Security, Firewall, macOS
 
 # ⚠️  Scope & Usage Information
@@ -23,7 +23,7 @@
 
 # --- SYNCED PORT RULES START ---
 # Automated update from ports source
-# Updated: 2026-05-25 08:25:14
+# Updated: 2026-05-26 07:54:33
 DEST-PORT,8076
 IN-PORT,127.0.0.1:12654
 IN-PORT,8076
