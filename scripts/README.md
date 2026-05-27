@@ -32,6 +32,7 @@ GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github
 | `lib/pipeline_report.py` | 流水线结束统计与 SRS 覆盖率检查 |
 | `lib/common.py` | 日志、路径、安全下载 |
 | `tools/update_cores.sh` | 本地 sing-box / mihomo 更新（`--with-core`） |
+| `generate_surge_host_dns.py` | 将 `DNS_mapping/*.list` 展开写入 Surge `[Host]`（`.claude/NyaMiiKo.conf.conf`） |
 | `maintenance/` | 按需手动维护（合集刷新、iCloud 导入等） |
 
 ## 文档
