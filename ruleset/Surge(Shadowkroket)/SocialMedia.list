@@ -2,8 +2,8 @@
 # Policy: PROXY
 # Node: Any
 # Description: Social media fallback
-# Rules: 713
-# Updated: 2026-05-27 12:20:33
+# Rules: 701
+# Updated: 2026-05-27 14:31:00
 
 DOMAIN,api.imem.app
 DOMAIN,api.swiftgram.app
@@ -11,7 +11,6 @@ DOMAIN,lf16-effectcdn.byteeffecttos-g.com
 DOMAIN,lf16-pkgcdn.pitaya-clientai.com
 DOMAIN,m.cmx.im
 DOMAIN,p16-tiktokcdn-com.akamaized.net
-DOMAIN,trae-api-sg.mchost.guru
 DOMAIN-KEYWORD,atproto
 DOMAIN-KEYWORD,bsky
 DOMAIN-KEYWORD,facebook
@@ -25,7 +24,6 @@ DOMAIN-KEYWORD,nostr
 DOMAIN-KEYWORD,peertube
 DOMAIN-KEYWORD,pixelfed
 DOMAIN-KEYWORD,pleroma
-DOMAIN-KEYWORD,tiktok
 DOMAIN-KEYWORD,twitter
 DOMAIN-SUFFIX,aboutfacebook.com
 DOMAIN-SUFFIX,accessfacebookfromschool.com
@@ -55,7 +53,8 @@ DOMAIN-SUFFIX,buck.build
 DOMAIN-SUFFIX,buckbuild.com
 DOMAIN-SUFFIX,buyingfacebooklikes.com
 DOMAIN-SUFFIX,buyoculus.com
-DOMAIN-SUFFIX,capcut.com
+DOMAIN-SUFFIX,bytegecko-i18n.com
+DOMAIN-SUFFIX,byteintlapi.com
 DOMAIN-SUFFIX,careersatfb.com
 DOMAIN-SUFFIX,carstagram.com
 DOMAIN-SUFFIX,cdn-telegram.org
@@ -299,6 +298,7 @@ DOMAIN-SUFFIX,facecbook.com
 DOMAIN-SUFFIX,facecbook.org
 DOMAIN-SUFFIX,facecook.com
 DOMAIN-SUFFIX,facecook.org
+DOMAIN-SUFFIX,facedbook.com
 DOMAIN-SUFFIX,faceebok.com
 DOMAIN-SUFFIX,faceebook.com
 DOMAIN-SUFFIX,faceebot.com
@@ -442,8 +442,6 @@ DOMAIN-SUFFIX,httpfacebook.com
 DOMAIN-SUFFIX,httpsfacebook.com
 DOMAIN-SUFFIX,httpwwwfacebook.com
 DOMAIN-SUFFIX,i.org
-DOMAIN-SUFFIX,ibytedtos.com
-DOMAIN-SUFFIX,ibyteimg.com
 DOMAIN-SUFFIX,ig.me
 DOMAIN-SUFFIX,igcdn.com
 DOMAIN-SUFFIX,igtv.com
@@ -501,7 +499,6 @@ DOMAIN-SUFFIX,intagrm.com
 DOMAIN-SUFFIX,internet.org
 DOMAIN-SUFFIX,intgram.com
 DOMAIN-SUFFIX,ip6.static.sl-reverse.com
-DOMAIN-SUFFIX,ipstatp.com
 DOMAIN-SUFFIX,isnssdk.com
 DOMAIN-SUFFIX,joinpeertube.org
 DOMAIN-SUFFIX,kingstagram.com
@@ -515,7 +512,6 @@ DOMAIN-SUFFIX,m.me
 DOMAIN-SUFFIX,mail.ru
 DOMAIN-SUFFIX,makeitopen.com
 DOMAIN-SUFFIX,markzuckerberg.com
-DOMAIN-SUFFIX,marscode.com
 DOMAIN-SUFFIX,mastodon.art
 DOMAIN-SUFFIX,mastodon.cloud
 DOMAIN-SUFFIX,mastodon.online
@@ -532,8 +528,6 @@ DOMAIN-SUFFIX,misskey.io
 DOMAIN-SUFFIX,mobilefacebook.com
 DOMAIN-SUFFIX,moneywithfacebook.com
 DOMAIN-SUFFIX,mstdn.jp
-DOMAIN-SUFFIX,muscdn.com
-DOMAIN-SUFFIX,musical.ly
 DOMAIN-SUFFIX,myfbfans.com
 DOMAIN-SUFFIX,nbabot.net
 DOMAIN-SUFFIX,newsfeed.com
@@ -612,17 +606,11 @@ DOMAIN-SUFFIX,thefacebook.com
 DOMAIN-SUFFIX,thefacebook.net
 DOMAIN-SUFFIX,thefind.com
 DOMAIN-SUFFIX,theinstagramhack.com
-DOMAIN-SUFFIX,tik-tokapi.com
-DOMAIN-SUFFIX,tiktok.com
-DOMAIN-SUFFIX,tiktokcdn-us.com
-DOMAIN-SUFFIX,tiktokcdn.com
 DOMAIN-SUFFIX,tiktokd.net
 DOMAIN-SUFFIX,tiktokd.org
 DOMAIN-SUFFIX,tiktokmusic.app
-DOMAIN-SUFFIX,tiktokv.com
 DOMAIN-SUFFIX,tiktokv.us
 DOMAIN-SUFFIX,toplayerserver.com
-DOMAIN-SUFFIX,trae.ai
 DOMAIN-SUFFIX,ttwebview.com
 DOMAIN-SUFFIX,tuta.com
 DOMAIN-SUFFIX,tweetdeck.com
