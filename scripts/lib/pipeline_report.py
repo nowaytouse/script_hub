@@ -51,7 +51,18 @@ def audit_srs_coverage() -> Tuple[int, List[str]]:
             continue
         total += 1
         srs_path = os.path.join(SINGBOX_DIR, f"{base}_Singbox.srs")
-        if not os.path.isfile(srs_path) or os.path.getsize(srs_path) < 32:
+        # Some legitimately-small SRS outputs (e.g. ASN) still compile into a
+        # valid binary with a stable header "SRS". Avoid false negatives by
+        # validating the magic bytes instead of an arbitrary size threshold.
+        if not os.path.isfile(srs_path):
+            missing.append(f"{base}.list -> {os.path.basename(srs_path)}")
+            continue
+        try:
+            with open(srs_path, "rb") as f:
+                magic = f.read(3)
+            if magic != b"SRS":
+                missing.append(f"{base}.list -> {os.path.basename(srs_path)}")
+        except Exception:
             missing.append(f"{base}.list -> {os.path.basename(srs_path)}")
     return total, missing
 
