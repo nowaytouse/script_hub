@@ -1,12 +1,19 @@
 {
-  "generated": "2026-05-27T12:24:08.731411",
+  "generated": "2026-05-27T12:50:37.564841",
   "total": 24,
+  "policy": {
+    "adblock": "仅安装 PROMAX + catalog 分片；勿重复安装 local_sources 源模块",
+    "features": "功能模块各自保留 #!arguments；已标注 merged_into 的勿重复安装"
+  },
   "modules": [
     {
       "id": "[Sukka] URL Rewrite",
       "filename": "[Sukka] URL Rewrite.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%5BSukka%5D%20URL%20Rewrite.sgmodule",
       "name": "[Sukka] URL Rewrite",
       "desc": "Enable this module to use Sukka URL Rewrite rules",
       "tags": []
@@ -16,33 +23,51 @@
       "filename": "BiliBili.Enhanced.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/BiliBili.Enhanced.sgmodule",
+      "has_arguments": true,
+      "merged_into": "📺 BiliBili增强合集",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/BiliBili.Enhanced.sgmodule",
       "name": "📺 BiliBili: ⚙️ Enhanced",
       "desc": "哔哩哔哩：增强模式\\n中国站功能增强及UI自定义",
-      "tags": []
+      "tags": [],
+      "essential": false,
+      "note": "已合并进「📺 BiliBili增强合集」，请勿重复安装"
     },
     {
       "id": "BiliBili.Global",
       "filename": "BiliBili.Global.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/BiliBili.Global.sgmodule",
+      "has_arguments": true,
+      "merged_into": "📺 BiliBili增强合集",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/BiliBili.Global.sgmodule",
       "name": "📺 BiliBili: 🌐 Global",
       "desc": "哔哩哔哩：全球模式\\n中国站自动线路及全区搜索",
-      "tags": []
+      "tags": [],
+      "essential": false,
+      "note": "已合并进「📺 BiliBili增强合集」，请勿重复安装"
     },
     {
       "id": "BiliBili.Redirect",
       "filename": "BiliBili.Redirect.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/BiliBili.Redirect.sgmodule",
+      "has_arguments": true,
+      "merged_into": "📺 BiliBili增强合集",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/BiliBili.Redirect.sgmodule",
       "name": "📺 BiliBili: 🔀 Redirect",
       "desc": "哔哩哔哩：重定向\\n中国站CDN自定义",
-      "tags": []
+      "tags": [],
+      "essential": false,
+      "note": "已合并进「📺 BiliBili增强合集」，请勿重复安装"
     },
     {
       "id": "boxjs.rewrite.surge",
       "filename": "boxjs.rewrite.surge.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/boxjs.rewrite.surge.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/boxjs.rewrite.surge.sgmodule",
       "name": "BoxJs",
       "desc": "http://boxjs.com",
       "tags": []
@@ -52,6 +77,9 @@
       "filename": "DualSubs.Universal.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/DualSubs.Universal.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/DualSubs.Universal.sgmodule",
       "name": "🍿️ DualSubs: 🔣 Universal",
       "desc": "流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
       "tags": []
@@ -61,15 +89,23 @@
       "filename": "iRingo.Maps.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.Maps.sgmodule",
+      "has_arguments": true,
+      "merged_into": "🍎 Apple服务增强合集",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/iRingo.Maps.sgmodule",
       "name": " iRingo: 🗺️ Maps",
       "desc": "自定义 Maps app\\n添加国际版功能\\n自定义服务版本",
-      "tags": []
+      "tags": [],
+      "essential": false,
+      "note": "已合并进「🍎 Apple服务增强合集」，请勿重复安装"
     },
     {
       "id": "iRingo.News",
       "filename": "iRingo.News.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.News.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/iRingo.News.sgmodule",
       "name": " iRingo: 📰 News",
       "desc": "1.自定义解锁News的地区\\n2.Coming Soon…",
       "tags": []
@@ -79,6 +115,9 @@
       "filename": "iRingo.TV.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.TV.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/iRingo.TV.sgmodule",
       "name": " iRingo: 📺 TV app",
       "desc": "全面自定义「TV app」功能",
       "tags": []
@@ -88,15 +127,23 @@
       "filename": "iRingo.WeatherKit.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/iRingo.WeatherKit.sgmodule",
+      "has_arguments": true,
+      "merged_into": "🍎 Apple服务增强合集",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/iRingo.WeatherKit.sgmodule",
       "name": " iRingo: 🌤 WeatherKit",
       "desc": "iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据",
-      "tags": []
+      "tags": [],
+      "essential": false,
+      "note": "已合并进「🍎 Apple服务增强合集」，请勿重复安装"
     },
     {
       "id": "net-lsp-x",
       "filename": "net-lsp-x.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/net-lsp-x.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/net-lsp-x.sgmodule",
       "name": "网络信息 𝕏",
       "desc": "国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha",
       "tags": []
@@ -106,6 +153,9 @@
       "filename": "Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/Reddit 增强合集 (翻译 + 广告 + NSFW).sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Reddit%20%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%20%28%E7%BF%BB%E8%AF%91%20%2B%20%E5%B9%BF%E5%91%8A%20%2B%20NSFW%29.sgmodule",
       "name": "Reddit 增强合集 (翻译 + 广告 + NSFW)",
       "desc": "Reddit 功能增强：自动翻译 + 去广告 + NSFW 解锁 (基于 JQ 引擎)",
       "tags": []
@@ -115,6 +165,9 @@
       "filename": "Script Hub 重写 & 规则集转换.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/Script Hub 重写 & 规则集转换.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Script%20Hub%20%E9%87%8D%E5%86%99%20%26%20%E8%A7%84%E5%88%99%E9%9B%86%E8%BD%AC%E6%8D%A2.sgmodule",
       "name": "Script Hub: 重写 & 规则集转换",
       "desc": "https://script.hub",
       "tags": []
@@ -124,6 +177,9 @@
       "filename": "Sub_Info.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/Sub_Info.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Sub_Info.sgmodule",
       "name": "机场订阅信息",
       "desc": "显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
       "tags": []
@@ -133,6 +189,9 @@
       "filename": "Surge-Beta.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/Surge-Beta.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Surge-Beta.sgmodule",
       "name": "Sub-Store(β)",
       "desc": "支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *",
       "tags": []
@@ -142,6 +201,9 @@
       "filename": "Timecard.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/Timecard.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Timecard.sgmodule",
       "name": "节假日信息",
       "desc": "显示节假日的信息",
       "tags": []
@@ -151,6 +213,9 @@
       "filename": "WeChat_Enhance.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/WeChat_Enhance.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/WeChat_Enhance.sgmodule",
       "name": "WeChat增强",
       "desc": "WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
       "tags": []
@@ -160,15 +225,23 @@
       "filename": "YouTube.Enhance.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/YouTube.Enhance.sgmodule",
+      "has_arguments": true,
+      "merged_into": "📺 YouTube增强合集",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/YouTube.Enhance.sgmodule",
       "name": "Youtube (Music) Enhance",
       "desc": "适用于 Youtube & Youtube Music",
-      "tags": []
+      "tags": [],
+      "essential": false,
+      "note": "已合并进「📺 YouTube增强合集」，请勿重复安装"
     },
     {
       "id": "扫描全能王解锁",
       "filename": "扫描全能王解锁.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/扫描全能王解锁.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.sgmodule",
       "name": "扫描全能王",
       "desc": "解锁扫描全能王",
       "tags": []
@@ -178,6 +251,9 @@
       "filename": "🍎 Apple服务增强合集.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
       "name": "🍎 Apple服务增强合集",
       "desc": "整合 iRingo 系列模块\\n包含: Maps(地图增强) + WeatherKit(天气增强)\\n解锁Apple服务的国际版功能",
       "tags": []
@@ -187,6 +263,9 @@
       "filename": "📺 BiliBili增强合集.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
       "name": "📺 BiliBili增强合集",
       "desc": "合并BiliUniverse五大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向\\n🛡️ ADBlock: 去广告\\n🛠️ Helper: 禁P2P",
       "tags": [
@@ -200,6 +279,9 @@
       "filename": "📺 YouTube增强合集.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/📺 YouTube增强合集.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
       "name": "📺 YouTube增强合集",
       "desc": "合并YouTube增强+去广告 (自动追随上游更新)\\n🎬 Enhance: 画中画/后台播放/字幕翻译\\n🛡️ ADBlock: 去广告",
       "tags": [
@@ -213,6 +295,9 @@
       "filename": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
       "category": "head_expanse",
       "path": "module/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%94%A5%20Firewall%20Port%20Blocker%20%F0%9F%9B%A1%EF%B8%8F%F0%9F%9A%AB.sgmodule",
       "name": "🔥 Firewall Port Blocker 🛡️",
       "desc": "Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP",
       "tags": [
@@ -226,8 +311,11 @@
       "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
       "category": "head_expanse",
       "path": "module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
       "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-05-27]",
-      "desc": "Split-ruleset ad-block rebuild from curated rule sources (PROMAX version).",
+      "desc": "按用途分片(20片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json",
       "tags": [
         "AdBlock",
         "Dependency",

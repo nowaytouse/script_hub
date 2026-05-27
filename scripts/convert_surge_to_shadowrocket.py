@@ -6,6 +6,7 @@ Surge → Shadowrocket module sync with Rule-Set Expansion
 
 import os
 import re
+import sys
 import json
 import shutil
 import urllib.request
@@ -14,7 +15,10 @@ from pathlib import Path
 from datetime import datetime
 
 SCRIPT_DIR = Path(__file__).parent
+sys.path.insert(0, str(SCRIPT_DIR))
 PROJECT_ROOT = SCRIPT_DIR.parent
+
+from lib.module_sanitizer import sanitize_file_content
 SURGE_MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
 
@@ -47,6 +51,9 @@ RULE_REPLACEMENTS = {
 PRESERVE_RULESET_MARKERS = (
     "/ruleset/AdBlock/AdBlock_",
     "ruleset%2FAdBlock%2FAdBlock_",
+    "skk_upstream/",
+    "HTTPDNS_Hijack.list",
+    "nowaytouse/script_hub@master/ruleset/",
 )
 
 REWRITE_MODIFIER_RE = re.compile(r',\s*(extended-matching|pre-matching)\b|'
@@ -120,9 +127,12 @@ def convert_content(content: str) -> str:
             m = re.match(r'^#!\s*(\S+?)\s*=\s*(.*)$', line)
             if m:
                 key, val = m.group(1).strip(), m.group(2)
-                if key == "desc":
-                    val = f"[🚀SR] {val}" if "[🚀SR]" not in val else val
+                if key == "desc" and "[🚀SR]" not in val:
+                    val = f"[🚀SR] {val}"
+                # Preserve arguments / arguments-desc verbatim for module settings UI
                 out.append(f"#!{key}={val}")
+            else:
+                out.append(line)
             continue
 
         if section == "General" and not stripped.startswith('#') and stripped:
@@ -174,7 +184,7 @@ def convert_content(content: str) -> str:
         
         out.append(line)
 
-    return '\n'.join(out)
+    return sanitize_file_content('\n'.join(out), dedupe=True)
 
 def process_all_modules():
     if not SR_MODULE_DIR.exists():

@@ -1,12 +1,12 @@
 #!name=📺 YouTube增强合集
-#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!desc=合并YouTube增强+去广告 (自动追随上游更新)\n🎬 Enhance: 画中画/后台播放/字幕翻译\n🛡️ ADBlock: 去广告
 #!author=Maasea
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png
+#!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=YouTube, 增强, 去广告
 #!date=2025-12-20 03:02:07
-#!arguments = 屏蔽上传按钮:true,屏蔽选段按钮:true,屏蔽Shorts按钮:false,字幕翻译语言:off,歌词翻译语言:off,启用调试模式:false
-#!arguments-desc = \n\n[Youtube (Music) Enhance]\n- 屏蔽参数：[true, false] \n- 翻译参数：[语言代码, off] \n\n1. 语言代码遵循 Google Translate Languages Codes, 当填入 off 时关闭翻译\n2. 开启调试模式用于输出更多日志
+#!arguments=屏蔽上传按钮:true,屏蔽选段按钮:true,屏蔽Shorts按钮:false,字幕翻译语言:off,歌词翻译语言:off,启用调试模式:false
+#!arguments-desc=\n\n[Youtube (Music) Enhance]\n- 屏蔽参数：[true, false] \n- 翻译参数：[语言代码, off] \n\n1. 语言代码遵循 Google Translate Languages Codes, 当填入 off 时关闭翻译\n2. 开启调试模式用于输出更多日志
 
 [Rule]
 AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT

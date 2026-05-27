@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
 from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file
+from lib.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
 
 # ============================================================================
 # CONFIGURATION
@@ -171,7 +172,8 @@ class AdBlockManager:
         self.seen_rules: Dict[str, Set[str]] = {
             policy: set() for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"]
         }
-        self.sections: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}    
+        self.sections: Dict[str, List[str]] = {name: [] for name in SECTION_NAMES}
+        self._section_seen: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}
         self.mitm_hosts: Set[str] = set()
         self.hashes: Dict[str, str] = {}
 
@@ -613,6 +615,21 @@ class AdBlockManager:
             
         return ",".join(result_parts)
 
+    def add_section_line(self, section_name: str, line: str) -> None:
+        """Append a non-rule section line with cross-source deduplication."""
+        if section_name not in self.sections:
+            return
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            return
+        from lib.module_sanitizer import _dedupe_key
+
+        key = _dedupe_key(section_name, stripped)
+        if not key or key in self._section_seen[section_name]:
+            return
+        self._section_seen[section_name].add(key)
+        self.sections[section_name].append(stripped)
+
     def is_enhancement_line(self, line: str) -> bool:
         """Check if a line is an enhancement. Known enhancements take absolute priority."""
         lower_line = line.lower()
@@ -681,7 +698,7 @@ class AdBlockManager:
                 if include_sections:
                     inferred_section = self.infer_non_rule_section(stripped)
                     if inferred_section in self.sections:
-                        self.sections[inferred_section].add(stripped)
+                        self.add_section_line(inferred_section, stripped)
                     elif inferred_section == "MITM" and stripped.startswith("hostname"):
                         hosts = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped)
                         self.mitm_hosts.update(host.strip() for host in hosts.split(",") if host.strip())
@@ -702,7 +719,7 @@ class AdBlockManager:
                 # Filter out enhancements
                 if self.is_enhancement_line(stripped):
                     continue
-                self.sections[current_section].add(stripped)
+                self.add_section_line(current_section, stripped)
             elif current_section == "MITM" and stripped.startswith("hostname"):
                 hosts = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped)
                 self.mitm_hosts.update(host.strip() for host in hosts.split(",") if host.strip())
@@ -930,8 +947,13 @@ class AdBlockManager:
                 failures.append(entry.display_name)
                 continue
 
-            include_sections = self.is_module_source(entry)
-            self.extract_from_text(content, default_policy=entry.policy, category=category, include_sections=include_sections)
+            # Module sources: rules → AdBlock lists only; never merge #!arguments / Script into PROMAX
+            self.extract_from_text(
+                content,
+                default_policy=entry.policy,
+                category=category,
+                include_sections=False,
+            )
             Logger.success(f"  ✓ {entry.display_name}")
         return failures
 
@@ -1115,104 +1137,127 @@ class AdBlockManager:
         write_file(ADBLOCK_README, "".join(lines))
         Logger.success(f"Catalog written: {os.path.relpath(ADBLOCK_CATALOG_JSON, ROOT)}")
 
+    @staticmethod
+    def _attach_policy(rule: str, policy: str) -> str:
+        policies = {
+            "REJECT",
+            "REJECT-DROP",
+            "REJECT-NO-DROP",
+            "DIRECT",
+            "PROXY",
+            "REJECT-TINYGIF",
+            "REJECT-IMG",
+        }
+        parts = [p.strip() for p in rule.split(",") if p.strip()]
+        while parts and parts[-1] in policies:
+            parts.pop()
+        parts.append(policy)
+        return ",".join(parts)
+
     def generate_module(self, generated_rulesets: List[str]):
         current_date = datetime.now().strftime("%Y-%m-%d")
         shard_count = len(generated_rulesets)
+        complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
 
-        header = (
-            f"#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]\n"
-            f"#!desc=按用途分片({shard_count}片)的广告拦截; 索引 ruleset/AdBlock/catalog.json\n"
-            "#!author=ScriptHub-Automated\n"
-            "#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png\n"
-            f"#!category={GROUP_HEAD_EXPANSE}\n"
-            "#!tag=AdBlock, Dependency, HTTPDNS\n"
-            f"#!date={datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-            "[Rule]\n"
-            "# High-Priority White-list (Prevent DNS failure)\n"
-            "DOMAIN,dns.alidns.com,DIRECT\n"
-            "DOMAIN,doh.pub,DIRECT\n"
-            "DOMAIN,dns.pub,DIRECT\n"
-            "DOMAIN,dot.pub,DIRECT\n"
-            "DOMAIN,doh.360.cn,DIRECT\n"
-            "DOMAIN,doh.dns.apple.com,DIRECT\n"
-            "# Block app-layer HTTPDNS first\n"
-            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
-        )
+        rule_lines: List[str] = [
+            "# High-Priority White-list (Prevent DNS failure)",
+            "DOMAIN,dns.alidns.com,DIRECT",
+            "DOMAIN,doh.pub,DIRECT",
+            "DOMAIN,dns.pub,DIRECT",
+            "DOMAIN,dot.pub,DIRECT",
+            "DOMAIN,doh.360.cn,DIRECT",
+            "DOMAIN,doh.dns.apple.com,DIRECT",
+            "# Block app-layer HTTPDNS first",
+            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT",
+            "# Split REJECT Rulesets (purpose-grouped; see ruleset/AdBlock/README.md)",
+        ]
 
         shards_by_category: Dict[str, List[str]] = {}
         for rs_path in generated_rulesets:
             cat = self._category_from_filename(os.path.basename(rs_path))
             shards_by_category.setdefault(cat, []).append(rs_path)
 
-        content = [header]
-        content.append("# Split REJECT Rulesets (purpose-grouped; see ruleset/AdBlock/README.md)\n")
         for category in self.category_names:
             paths = shards_by_category.get(category)
             if not paths:
                 continue
             meta = CATEGORY_META[category]
-            content.append(f"\n# ── {meta['label_zh']} · {meta['desc']} ──\n")
+            rule_lines.append(f"# ── {meta['label_zh']} · {meta['desc']} ──")
             for rs_path in sorted(paths, key=self._shard_sort_key):
                 encoded_path = urllib.parse.quote(rs_path)
-                content.append(
+                rule_lines.append(
                     f"RULE-SET,{CDN_BASE_URL}{encoded_path},REJECT,"
-                    "extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+                    "extended-matching,pre-matching,update-interval=86400,no-resolve"
                 )
 
-        content.append("\n# SKK Upstream Rulesets\n")
-        content.append(
-            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
-            "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
-        )
-        content.append(
-            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
-            "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
-        )
-        content.append(
-            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
-            "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n"
+        rule_lines.extend(
+            [
+                "",
+                "# SKK Upstream Rulesets",
+                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
+                "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
+                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
+                "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
+                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
+                "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
+            ]
         )
 
-        # Define complex rule prefixes that MUST stay in the [Rule] section
-        complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
-        
+        complex_seen: Set[str] = set()
         for policy in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP"):
-            all_rules = set()
+            pool = set()
             for cat in self.category_names:
-                all_rules.update(self.rules[policy][cat])
-            
-            if not all_rules:
+                pool.update(self.rules[policy][cat])
+            if not pool:
                 continue
-                
-            # Only include complex rules in the module for REJECT.
             if policy == "REJECT":
-                display_rules = sorted([r for r in all_rules if any(r.startswith(p) for p in complex_prefixes)])
+                candidates = [r for r in pool if any(r.startswith(p) for p in complex_prefixes)]
             else:
-                display_rules = sorted(all_rules)
-                
-            if not display_rules:
+                candidates = list(pool)
+            if not candidates:
                 continue
-                
-            content.append(f"# Merged {policy} Complex Rules ({len(display_rules)})\n")
-            for r in display_rules:
-                if not any(r.endswith(suffix) for suffix in (",REJECT", ",REJECT-DROP", ",REJECT-NO-DROP", ",DIRECT", ",PROXY", ",REJECT-TINYGIF", ",REJECT-IMG")):
-                    r = f"{r},{policy}"
-                content.append(f"{r}\n")
-            content.append("\n")
+            rule_lines.append(f"# Merged {policy} complex rules ({len(candidates)})")
+            for raw in sorted(candidates):
+                line = self._attach_policy(raw, policy)
+                if line in complex_seen:
+                    continue
+                complex_seen.add(line)
+                rule_lines.append(line)
 
+        extra_sections: List[Tuple[str, List[str]]] = []
         for section_name in SECTION_NAMES:
-            items = sorted(self.sections[section_name])
-            if not items:
-                continue
-            content.append(f"[{section_name}]\n")
-            content.extend(f"{item}\n" for item in items)
-            content.append("\n")
+            items = dedupe_section_lines(section_name, self.sections[section_name])
+            if items:
+                extra_sections.append(
+                    (
+                        section_name,
+                        [f"# from module/local_sources ({len(items)} entries, deduped)", *items],
+                    )
+                )
 
+        all_sections = [("Rule", rule_lines)] + extra_sections
         if self.mitm_hosts:
-            content.append("[MITM]\n")
-            content.append(f"hostname = %APPEND% {', '.join(sorted(self.mitm_hosts))}\n")
+            all_sections.append(
+                ("MITM", [f"hostname = %APPEND% {', '.join(sorted(self.mitm_hosts))}"])
+            )
+        all_sections = merge_mitm_hosts(all_sections)
 
-        write_file(TARGET_MODULE, "".join(content))
+        header_meta = {
+            "name": f"🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]",
+            "desc": (
+                f"按用途分片({shard_count}片); 功能配置请用 amplify_nexus 独立模块; "
+                "索引 ruleset/AdBlock/catalog.json"
+            ),
+            "author": "ScriptHub-Automated",
+            "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png",
+            "category": GROUP_HEAD_EXPANSE,
+            "tag": "AdBlock, Dependency, HTTPDNS",
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        write_file(
+            TARGET_MODULE,
+            format_module(format_header(header_meta), all_sections, dedupe=False),
+        )
         Logger.success(f"Module generated: {os.path.basename(TARGET_MODULE)}")
 
     def merge(self, execute: bool = False):
@@ -1243,19 +1288,24 @@ class AdBlockManager:
                     Logger.info(f"  + Merging local source: {f}")
                     self.extract_from_file(path, default_policy="REJECT", category="Local", include_sections=True)
         
-        # Amplify Nexus blockers
-        Logger.section("Scanning Amplify Nexus for Ad-Blockers")
+        # Amplify Nexus: extract [Rule] into lists only (功能模块保留独立 #!arguments，不并入 PROMAX)
+        Logger.section("Scanning Amplify Nexus for Ad-Block Rules")
         nexus_dir = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
         if os.path.exists(nexus_dir):
             for f in sorted(os.listdir(nexus_dir)):
                 if f.endswith(".sgmodule") and f not in PROTECTED_MODULES:
                     path = os.path.join(nexus_dir, f)
-                    with open(path, 'r', encoding='utf-8', errors='ignore') as tf:
+                    with open(path, "r", encoding="utf-8", errors="ignore") as tf:
                         text = tf.read().lower()
                         if any(kw in text for kw in ["reject", "广告", "拦截", "anti-ad"]):
-                            Logger.info(f"  + Merging Nexus ad-block component: {f}")
+                            Logger.info(f"  + Rules only from Nexus: {f}")
                             category = self.determine_category(f)
-                            self.extract_from_file(path, default_policy="REJECT", category=category, include_sections=True)
+                            self.extract_from_file(
+                                path,
+                                default_policy="REJECT",
+                                category=category,
+                                include_sections=False,
+                            )
 
         # 4. Fetch and extract from all other canonical sources (sorted by priority)
         Logger.section("Fetching Canonical AdBlock Sources")

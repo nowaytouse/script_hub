@@ -36,7 +36,10 @@
 ### 用户
 **请勿直接安装此目录下的模块!**
 
-这些模块的功能已包含在PROMAX模块中,直接安装PROMAX即可:
+这些模块的**域名拦截规则**已进 `ruleset/AdBlock/` 分片；**Script/Rewrite** 经去重后写入 PROMAX。  
+各 **功能增强模块**（B站/YouTube 等带 `#!arguments` 的）请继续单独安装，见 [`docs/Modules_callchain.md`](../../docs/Modules_callchain.md)。
+
+仅广告拦截时安装 PROMAX 即可:
 ```
 https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule
 ```

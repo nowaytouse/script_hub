@@ -1,13 +1,10 @@
-#!name = 🍎 Apple服务增强合集
+#!name=🍎 Apple服务增强合集
+#!desc=整合 iRingo 系列模块\n包含: Maps(地图增强) + WeatherKit(天气增强)\n解锁Apple服务的国际版功能
+#!author=VirgilClyne[https://github.com/VirgilClyne]
+#!icon=https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!desc = 整合 iRingo 系列模块\n包含: Maps(地图增强) + WeatherKit(天气增强)\n解锁Apple服务的国际版功能
-#!author = VirgilClyne[https://github.com/VirgilClyne]
-#!homepage = https://NSRingo.github.io
-#!icon = https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png
-#!date = 2026-04-28 03:50:34
-
-# 本模块整合了以下 iRingo 模块:
-# -  iRingo: 🗺️ Maps |  iRingo: 🌤 WeatherKit
+#!date=2026-04-28 03:50:34
+#!homepage=https://NSRingo.github.io
 
 [Rule]
 DOMAIN-SUFFIX,is.autonavi.com,DIRECT
@@ -22,13 +19,10 @@ DOMAIN,tether.edge.apple,REJECT-DROP,extended-matching
 AND,((OR,((IP-ASN,714,no-resolve),(IP-ASN,6185,no-resolve))),(PROTOCOL,QUIC)),REJECT-DROP
 
 [Script]
-# 🗺️ Network Defaults
 🗺️ Maps.config.defaults.request = type=http-request, pattern=^https?:\/\/configuration\.ls\.apple\.com\/config\/defaults, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_99aa09_request.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
 🗺️ Maps.config.defaults.response = type=http-response, pattern=^https?:\/\/configuration\.ls\.apple\.com\/config\/defaults, requires-body=1, engine=webview, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_0b1afc_response.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
-# 🗺️ Announcements
 🗺️ Maps.config.announcements.request = type=http-request, pattern=^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/config\/announcements, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_99aa09_request.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
 🗺️ Maps.config.announcements.response = type=http-response, pattern=^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/config\/announcements, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_0b1afc_response.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
-# 🗺️ Resource Manifest
 🗺️ Maps.geo_manifest.dynamic.config.request = type=http-request, pattern=^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/geo_manifest\/dynamic\/config, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_99aa09_request.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
 🗺️ Maps.geo_manifest.dynamic.config.response = type=http-response, pattern=^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/geo_manifest\/dynamic\/config, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_0b1afc_response.bundle.js, argument=GeoManifest.Dynamic.Config.CountryCode="{{{GeoManifest.Dynamic.Config.CountryCode}}}"&UrlInfoSet.Dispatcher="{{{UrlInfoSet.Dispatcher}}}"&UrlInfoSet.Directions="{{{UrlInfoSet.Directions}}}"&UrlInfoSet.RAP="{{{UrlInfoSet.RAP}}}"&UrlInfoSet.LocationShift="{{{UrlInfoSet.LocationShift}}}"&TileSet.Earth="{{{TileSet.Earth}}}"&TileSet.Roads="{{{TileSet.Roads}}}"&TileSet.Satellite="{{{TileSet.Satellite}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
 🌤 WeatherKit.api.v1.availability.response = type=http-response, pattern=^https?:\/\/weatherkit\.apple\.com\/api\/v1\/availability\/, requires-body=1, engine=webview, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/github_com_a5b194_response.bundle.js, argument=Weather.Provider="{{{Weather.Provider}}}"&NextHour.Provider="{{{NextHour.Provider}}}"&AirQuality.Calculate.Algorithm="{{{AirQuality.Calculate.Algorithm}}}"&API.ColorfulClouds.Token="{{{API.ColorfulClouds.Token}}}"&API.QWeather.Host="{{{API.QWeather.Host}}}"&API.QWeather.Token="{{{API.QWeather.Token}}}"&API.WAQI.Token="{{{API.WAQI.Token}}}"&Storage="{{{Storage}}}"&LogLevel="{{{LogLevel}}}"
