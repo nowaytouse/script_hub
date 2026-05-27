@@ -86,6 +86,23 @@ SURGE_RULESET_DOH: Dict[str, str] = {
 RULE_LINE = re.compile(
     r"^(DOMAIN(?:-SUFFIX|-KEYWORD)?),(.+)$", re.IGNORECASE
 )
+_IPV4_HOST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
+
+# Telegram DC IP pins + domain keys — never overridden by bulk DoH expansion
+TELEGRAM_DC_IPS = {
+    "91.108.56.100", "91.108.56.101", "91.108.56.104", "91.108.56.107",
+    "91.108.56.120", "91.108.56.125", "91.108.56.126", "91.108.56.128",
+    "91.108.56.156",
+    "149.154.175.10", "149.154.175.50", "149.154.175.54", "149.154.175.55",
+    "149.154.175.56", "149.154.175.57", "149.154.175.100", "149.154.175.101",
+    "149.154.175.102", "149.154.175.103", "149.154.175.117", "149.154.175.40",
+    "91.108.4.0", "91.108.8.0", "91.108.12.0", "91.108.16.0",
+    "149.154.167.0", "149.154.171.0", "149.154.163.0", "149.154.167.40",
+}
+TELEGRAM_DOMAIN_MARKERS = (
+    "telegram.org", "telegram.me", "telegram.dog", "telegram.space",
+    "telegram-cdn.org", "telegramdownload.com", "t.me", "telesco.pe",
+)
 # Surge [Host]: *.suffix, literal FQDN, single-? label, or _special_ names
 _VALID_HOST_KEY = re.compile(
     r"^(\*\.[a-zA-Z0-9_]([a-zA-Z0-9._-]*[a-zA-Z0-9_])?"
@@ -94,10 +111,23 @@ _VALID_HOST_KEY = re.compile(
 )
 
 
+def is_reserved_auto_host(key: str) -> bool:
+    """Keep Telegram DC pins / domains out of auto DoH lists (first-match wins)."""
+    if key in TELEGRAM_DC_IPS:
+        return True
+    low = key.lower().lstrip("*.")
+    for marker in TELEGRAM_DOMAIN_MARKERS:
+        if low == marker or low.endswith("." + marker) or marker in low:
+            return True
+    return False
+
+
 def is_valid_surge_host_key(key: str) -> bool:
     """Reject ruleset paths, Clash-style globs, and multi-? patterns."""
     if not key or len(key) > 253:
         return False
+    if _IPV4_HOST.match(key):
+        return True
     lowered = key.lower()
     if any(ch in key for ch in "/\\()"):
         return False
@@ -168,7 +198,7 @@ def collect_hosts(
         count = 0
         for rule_type, domain in parse_list_file(path):
             key = host_key(rule_type, domain)
-            if not key or key in seen:
+            if not key or key in seen or is_reserved_auto_host(key):
                 continue
             seen.add(key)
             block.append(host_line(key, doh))
@@ -219,89 +249,20 @@ def bootstrap_block() -> List[str]:
         "dns.sudo.is = 2400:8902::f03c:91ff:fe06:787f",
         "dns.captnemo.in = 2606:1a40::, 2606:1a40:1::",
         "doh-pure.onedns.net = 117.50.11.11, 52.80.3.111",
+        "wikimedia-dns.org = 185.71.138.138",
+        "doh.dns4all.eu = 194.0.5.3",
+        "dot.360.cn = 101.198.198.198, 101.198.199.200, 101.198.192.33, 112.65.69.15",
+        "dns.cn = 1.2.4.8, 210.2.4.8, 2001:dc7:1000::1",
+        "dns.tuna.tsinghua.edu.cn = 101.6.6.6, 2001:da8::666",
+        "dns.volcengine.com = 180.184.1.1, 180.184.2.2, 2402:4e00:1020:1404::10, 2402:4e00:1430:1102::a",
+        "dns6.cfiec.net = 240c:6666::6666, 240c:6644::6644",
         "raw.githubusercontent.com = 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133",
         "github.com = 140.82.113.4, 140.82.112.3",
         "",
         "# =============================================================================",
-        "# SECTION B: Mainland China — DNS_mapping + TLD fallbacks",
+        "# SECTION B: Pinned hosts (Telegram DC / FCM / proxy — must stay above bulk DoH)",
         "# =============================================================================",
-        "*.cn = server:" + DOH_CN_ALIDNS,
-        "*.com.cn = server:" + DOH_CN_ALIDNS,
-        "*.net.cn = server:" + DOH_CN_ALIDNS,
-        "*.org.cn = server:" + DOH_CN_ALIDNS,
-        "*.gov.cn = server:" + DOH_CN_ALIDNS,
-        "*.edu.cn = server:" + DOH_CN_ALIDNS,
-        "",
-        "# =============================================================================",
-        "# SECTION C: Taiwan / HK regional TLD & carriers",
-        "# =============================================================================",
-        "*.cht.com.tw = server:" + DOH_TW_TWNIC,
-        "*.hinet.net = server:" + DOH_TW_TWNIC,
-        "*.emome.net = server:" + DOH_TW_TWNIC,
-        "*.tw = server:" + DOH_TW_TWNIC,
-        "*.taipei = server:" + DOH_TW_TWNIC,
-        "*.hk = server:" + DOH_NEXTDNS,
-        "*.he.net = server:" + DOH_HE_ORDNS,
-        "",
-        "# =============================================================================",
-        "# SECTION D: ruleset/Sources/DNS_mapping (manual Host expansion)",
-        "# =============================================================================",
-    ]
-
-
-def infrastructure_block() -> List[str]:
-    return [
-        "",
-        "# =============================================================================",
-        "# SECTION E: Rule-aligned Surge rulesets (from [Rule] DOMAIN entries)",
-        "# GlobalProxy.list omitted (~37k) — use FINAL proxy group + encrypted-dns pool",
-        "# =============================================================================",
-    ]
-
-
-def tail_block() -> List[str]:
-    return [
-        "",
-        "# =============================================================================",
-        "# SECTION F: Inline / connectivity / NSFW exceptions",
-        "# =============================================================================",
-        "hanime1.me = server:" + DOH_MULLVAD_ADBLOCK,
-        "3hentai.net = server:" + DOH_MULLVAD_ADBLOCK,
-        "18comic.vip = server:" + DOH_MULLVAD_ADBLOCK,
-        "connectivitycheck.gstatic.com = server:" + DOH_NEXTDNS,
-        "detectportal.firefox.com = server:" + DOH_DNS_SB,
-        "msftconnecttest.com = server:" + DOH_NEXTDNS,
-        "msftncsi.com = server:" + DOH_NEXTDNS,
-        "www.msftncsi.com = server:" + DOH_NEXTDNS,
-        "connectivitycheck.android.com = server:" + DOH_NEXTDNS,
-        "connectivity-check.ubuntu.com = server:" + DOH_DNS_SB,
-        "connectivitycheck.platform.hicloud.com = server:" + DOH_CN_ALIDNS,
-        "",
-        "# =============================================================================",
-        "# SECTION G: Proxy infra loop prevention",
-        "# =============================================================================",
-        "aws-linkhy15.liangxin1.xyz = 18.183.7.71",
-        "*.liangxin1.xyz = server:system",
-        "",
-        "# =============================================================================",
-        "# SECTION H: Google FCM / WebRTC (static + force-syslib)",
-        "# =============================================================================",
-        "talk.google.com = 108.177.125.188",
-        "mtalk.google.com = 108.177.125.188, 2404:6800:4008:c07::bc, 142.250.31.188",
-        "alt1-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:c0b::bc, 64.233.171.188",
-        "alt2-mtalk.google.com = 3.3.3.3, 142.250.115.188",
-        "alt3-mtalk.google.com = 74.125.200.188, 173.194.77.188",
-        "alt4-mtalk.google.com = 74.125.200.188, 173.194.219.188",
-        "alt5-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:1::bc, 142.250.112.188",
-        "alt6-mtalk.google.com = 3.3.3.3, 172.217.197.188",
-        "alt7-mtalk.google.com = 74.125.200.188, 2607:f8b0:4002:c03::bc, 108.177.12.188",
-        "alt8-mtalk.google.com = 3.3.3.3",
-        "stun.l.google.com = server:force-syslib",
-        "stun?.l.google.com = server:force-syslib",
-        "",
-        "# =============================================================================",
-        "# SECTION I: Telegram DC pinning",
-        "# =============================================================================",
+        "104.236.69.55 = server:1.1.1.1",
         "91.108.56.100 = 91.108.56.147,91.108.56.135,91.108.56.130",
         "91.108.56.101 = 91.108.56.147,91.108.56.135,91.108.56.130",
         "91.108.56.104 = 91.108.56.147,91.108.56.135,91.108.56.130",
@@ -331,9 +292,78 @@ def tail_block() -> List[str]:
         "149.154.163.0 = 149.154.163.1",
         "149.154.167.40 = 149.154.167.41",
         "149.154.175.40 = 149.154.175.41",
+        "talk.google.com = 108.177.125.188",
+        "mtalk.google.com = 108.177.125.188, 2404:6800:4008:c07::bc, 142.250.31.188",
+        "alt1-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:c0b::bc, 64.233.171.188",
+        "alt2-mtalk.google.com = 3.3.3.3, 142.250.115.188",
+        "alt3-mtalk.google.com = 74.125.200.188, 173.194.77.188",
+        "alt4-mtalk.google.com = 74.125.200.188, 173.194.219.188",
+        "alt5-mtalk.google.com = 3.3.3.3, 2607:f8b0:4023:1::bc, 142.250.112.188",
+        "alt6-mtalk.google.com = 3.3.3.3, 172.217.197.188",
+        "alt7-mtalk.google.com = 74.125.200.188, 2607:f8b0:4002:c03::bc, 108.177.12.188",
+        "alt8-mtalk.google.com = 3.3.3.3",
+        "stun.l.google.com = server:force-syslib",
+        "stun?.l.google.com = server:force-syslib",
+        "aws-linkhy15.liangxin1.xyz = 18.183.7.71",
+        "*.liangxin1.xyz = server:system",
         "",
         "# =============================================================================",
-        "# SECTION J: OCSP / certificate verification (system resolver)",
+        "# SECTION C: Mainland China — DNS_mapping + TLD fallbacks",
+        "# =============================================================================",
+        "*.cn = server:" + DOH_CN_ALIDNS,
+        "*.com.cn = server:" + DOH_CN_ALIDNS,
+        "*.net.cn = server:" + DOH_CN_ALIDNS,
+        "*.org.cn = server:" + DOH_CN_ALIDNS,
+        "*.gov.cn = server:" + DOH_CN_ALIDNS,
+        "*.edu.cn = server:" + DOH_CN_ALIDNS,
+        "",
+        "# =============================================================================",
+        "# SECTION D: Taiwan / HK regional TLD & carriers",
+        "# =============================================================================",
+        "*.cht.com.tw = server:" + DOH_TW_TWNIC,
+        "*.hinet.net = server:" + DOH_TW_TWNIC,
+        "*.emome.net = server:" + DOH_TW_TWNIC,
+        "*.tw = server:" + DOH_TW_TWNIC,
+        "*.taipei = server:" + DOH_TW_TWNIC,
+        "*.hk = server:" + DOH_NEXTDNS,
+        "*.he.net = server:" + DOH_HE_ORDNS,
+        "",
+        "# =============================================================================",
+        "# SECTION E: ruleset/Sources/DNS_mapping (manual Host expansion)",
+        "# =============================================================================",
+    ]
+
+
+def infrastructure_block() -> List[str]:
+    return [
+        "",
+        "# =============================================================================",
+        "# SECTION F: Rule-aligned Surge rulesets (from [Rule] DOMAIN entries)",
+        "# GlobalProxy.list omitted (~37k) — use FINAL proxy group + encrypted-dns pool",
+        "# =============================================================================",
+    ]
+
+
+def tail_block() -> List[str]:
+    return [
+        "",
+        "# =============================================================================",
+        "# SECTION G: Inline / connectivity / NSFW exceptions",
+        "# =============================================================================",
+        "hanime1.me = server:" + DOH_MULLVAD_ADBLOCK,
+        "3hentai.net = server:" + DOH_MULLVAD_ADBLOCK,
+        "18comic.vip = server:" + DOH_MULLVAD_ADBLOCK,
+        "connectivitycheck.gstatic.com = server:" + DOH_NEXTDNS,
+        "detectportal.firefox.com = server:" + DOH_DNS_SB,
+        "msftconnecttest.com = server:" + DOH_NEXTDNS,
+        "msftncsi.com = server:" + DOH_NEXTDNS,
+        "www.msftncsi.com = server:" + DOH_NEXTDNS,
+        "connectivitycheck.android.com = server:" + DOH_NEXTDNS,
+        "connectivity-check.ubuntu.com = server:" + DOH_DNS_SB,
+        "connectivitycheck.platform.hicloud.com = server:" + DOH_CN_ALIDNS,
+        "",
+        "# =============================================================================",
+        "# SECTION H: OCSP / certificate verification (system resolver)",
         "# =============================================================================",
         "ocsp.digicert.cn = server:system",
         "ocsp.digicert.com = server:system",
@@ -351,7 +381,7 @@ def tail_block() -> List[str]:
         "ocsp-lb.apple.com.akadns.net = server:system",
         "",
         "# =============================================================================",
-        "# SECTION K: LAN / router admin / IPv6 literals",
+        "# SECTION I: LAN / router admin / IPv6 literals",
         "# =============================================================================",
         "ip6-localhost = ::1",
         "ip6-loopback = ::1",
@@ -396,18 +426,19 @@ def tail_block() -> List[str]:
     ]
 
 
+def _reserve_keys_from_lines(seen: Set[str], lines: Iterable[str]) -> None:
+    for line in lines:
+        if " = " in line and not line.strip().startswith("#"):
+            key = line.split(" = ", 1)[0].strip()
+            if is_valid_surge_host_key(key):
+                seen.add(key)
+    seen.update(TELEGRAM_DC_IPS)
+
+
 def build_host_section() -> str:
     seen: Set[str] = set()
-    for line in bootstrap_block():
-        if " = " in line and not line.strip().startswith("#"):
-            key = line.split(" = ", 1)[0].strip()
-            if is_valid_surge_host_key(key):
-                seen.add(key)
-    for line in tail_block():
-        if " = " in line and not line.strip().startswith("#"):
-            key = line.split(" = ", 1)[0].strip()
-            if is_valid_surge_host_key(key):
-                seen.add(key)
+    _reserve_keys_from_lines(seen, bootstrap_block())
+    _reserve_keys_from_lines(seen, tail_block())
 
     lines: List[str] = [
         "# Surge [Host] DNS steering — auto-generated by scripts/generate_surge_host_dns.py",
