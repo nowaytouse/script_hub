@@ -66,7 +66,8 @@ def main():
         Logger.info("Quick mode: Skipping upstream sync.")
 
     # 1.1 Smart-Config-Kit supplemental rules merge
-    Logger.section("Smart-Config-Kit Merge")
+    # Source files vendored at ruleset/Sources/custom/SmartConfigKit/ (fork removed)
+    Logger.section("Smart-Config-Kit Supplemental Merge")
     try:
         merge_smart_config_kit()
         Logger.success("Smart-Config-Kit supplemental sources refreshed.")
