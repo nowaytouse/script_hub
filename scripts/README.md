@@ -13,7 +13,7 @@ python3 scripts/main_update.py --unattended
 python3 scripts/main_update.py --with-core --execute
 ```
 
-GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github/workflows/update_rulesets.yml)（内部执行 `main_update.py --execute`）。
+GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github/workflows/update_rulesets.yml)。
 
 ## 目录结构
 
@@ -24,15 +24,18 @@ GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github
 | `ruleset_manager.py` | 业务 ruleset 增量合并、策略头、弃用清理 |
 | `smart_cleanup.py` | 跨 ruleset 去重 |
 | `upstream_sync.py` | skk / MetaCubeX / nexus 同步 |
+| `merge_smart_config_kit.py` | Smart-Config-Kit 补充规则合并（从本地 vendor） |
+| `firewall_sync.py` | 防火墙端口模块同步 |
 | `convert_surge_to_shadowrocket.py` | Surge → 小火箭（保留 `#!arguments` 与 AdBlock RULE-SET） |
-| `consolidate_modules.py` | 模块清洗 + `module/modules_data.json` + `surge_module_helper.html` |
-| `lib/module_sanitizer.py` | 模块段内去重、标准段顺序 |
-| `lib/module_catalog.py` | 模块扫描 / JSON / HTML |
-| `lib/merge_upstream_bundle.py` | 上游多模块合并（Bili/YouTube/Weibo 维护脚本共用） |
-| `lib/pipeline_report.py` | 流水线结束统计与 SRS 覆盖率检查 |
+| `consolidate_modules.py` | 模块清洗 + 分组校正 + `modules_data.json` + `surge_module_helper.html` |
+| `srs_generator.py` | 编译 Sing-box `.srs` 规则集 |
+| `generate_surge_host_dns.py` | 将 DNS_mapping ruleset 展开为 Surge `[Host]` 条目 |
 | `lib/common.py` | 日志、路径、安全下载 |
+| `lib/module_sanitizer.py` | 模块段内去重、标准段顺序 |
+| `lib/module_catalog.py` | 模块扫描 / 分组校正 / JSON / HTML |
+| `lib/merge_upstream_bundle.py` | 上游多模块合并（维护脚本共用） |
+| `lib/pipeline_report.py` | 流水线结束统计与 SRS 覆盖率检查 |
 | `tools/update_cores.sh` | 本地 sing-box / mihomo 更新（`--with-core`） |
-| `generate_surge_host_dns.py` | 将 `DNS_mapping/*.list` 展开写入 Surge `[Host]`（`.claude/NyaMiiKo.conf.conf`） |
 | `maintenance/` | 按需手动维护（合集刷新、iCloud 导入等） |
 
 ## 文档
@@ -41,26 +44,18 @@ GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github
 - [docs/Modules_callchain.md](../docs/Modules_callchain.md) — 功能模块与 PROMAX 分工
 - [ruleset/AdBlock/README.md](../ruleset/AdBlock/README.md) — 分片索引
 
-## 已合并 / 废弃（仍保留薄包装，会提示改用 consolidate）
-
-- `build_module_helper.py`
-- `generate_helper_v2.py`
-- `update_helper_web.py`
-
-原 `scripts/archive/` 下 shell 流水线已并入 Python；历史脚本已删除。
-
 ## 按需维护（不纳入 main_update）
 
-- `maintenance/merge_bilibili_bundle.py` — 刷新 BiliBili 增强合集
-- `maintenance/merge_youtube_bundle.py` — 刷新 YouTube 增强合集
-- `maintenance/merge_weibo_bundle.py` — 刷新微博去广告合集
-- `maintenance/merge_apple_modules.py` — Apple 服务增强合集
-- `maintenance/merge_dns_modules.py` — DNS 模块合并
-- `maintenance/import_from_icloud_sr.py` — 从本机 iCloud 小火箭目录导入
-
-执行后请运行：
-
 ```bash
-python3 scripts/consolidate_modules.py
-python3 scripts/convert_surge_to_shadowrocket.py
+# 刷新功能模块合集（执行后运行 consolidate + convert）
+python3 scripts/maintenance/merge_bilibili_bundle.py
+python3 scripts/maintenance/merge_youtube_bundle.py
+python3 scripts/maintenance/merge_weibo_bundle.py
+python3 scripts/maintenance/merge_apple_modules.py
+
+# DNS Host 段重新生成
+python3 scripts/generate_surge_host_dns.py --write
+
+# iCloud 小火箭导入（需先改脚本内 SR_DIR 路径）
+python3 scripts/maintenance/import_from_icloud_sr.py
 ```

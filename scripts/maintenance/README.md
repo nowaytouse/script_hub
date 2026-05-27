@@ -7,11 +7,13 @@
 | `merge_bilibili_bundle.py` | 从 BiliUniverse + Maasea 刷新 📺 BiliBili增强合集 |
 | `merge_youtube_bundle.py` | 从 Maasea 刷新 📺 YouTube增强合集 |
 | `merge_weibo_bundle.py` | 刷新 🐦 微博去广告合集 |
-| `merge_apple_modules.py` | 合并 iRingo Maps/WeatherKit → Apple 服务增强合集 |
+| `merge_apple_modules.py` | 从 iRingo 上游刷新 🍎 Apple服务增强合集 |
 | `merge_dns_modules.py` | 合并 GetSomeFries DNS 上游到 DNS & Host Enhanced |
 | `import_from_icloud_sr.py` | 从 iCloud 小火箭模块目录导入（需修改脚本内 `SR_DIR`） |
 | `mitm_cleanup_github.py` | MITM hostname 加固（`main_update` 也会调用） |
-| `localize_scripts.py` / `fix_module_categories.py` | 批量元数据修正 |
+| `localize_scripts.py` | 批量将模块脚本链接改为本地路径 |
+
+上述模块合并脚本统一通过 `lib/merge_upstream_bundle.py` 实现去重与 `#!arguments` 合并。
 
 执行后请运行：
 
