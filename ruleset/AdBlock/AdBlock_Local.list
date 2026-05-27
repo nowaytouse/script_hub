@@ -1,6 +1,6 @@
 # Ruleset: AdBlock Local
-# Updated: 2026-05-26 07:54:01
-# Total Rules: 56
+# Updated: 2026-05-27 12:23:34
+# Total Rules: 57
 # Category: Local
 
 DOMAIN,ad.maoyan.com,REJECT
@@ -8,6 +8,7 @@ DOMAIN,adpinpai.video.weibocdn.com,REJECT
 DOMAIN,ads-shopping.shouqianba.com,REJECT
 DOMAIN,api.sm.cn,REJECT,extended-matching,pre-matching
 DOMAIN,apm-a.pinduoduo.com,REJECT,extended-matching,pre-matching
+DOMAIN,appcloud.zhihu.com,REJECT,extended-matching,pre-matching
 DOMAIN,cd-1.pddpic.com,REJECT,extended-matching,pre-matching
 DOMAIN,cdl-1.pddpic.com,REJECT,extended-matching,pre-matching
 DOMAIN,cdl-p2.pddpic.com,REJECT,extended-matching,pre-matching
