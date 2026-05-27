@@ -23,9 +23,10 @@ main_update.py
   │    ├─ 保留 #!arguments / #!arguments-desc
   │    ├─ AdBlock 分片保留 RULE-SET（不内联百万行）
   │    └─ module_sanitizer 段内去重
-  └─ consolidate_modules.py
+  └─ consolidate_modules.py（lib/module_catalog.py）
        ├─ 全库 .sgmodule / .module 格式化 + 段内去重
        ├─ modules_data.json（含 merged_into / install_url）
+       ├─ surge_module_helper.html
        └─ 跳过 PROMAX 本体（由 AdBlockManager 生成）
 ```
 

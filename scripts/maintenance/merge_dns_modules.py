@@ -8,7 +8,7 @@ import urllib.request
 from datetime import datetime
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
 OUTPUT_FILE = os.path.join(REPO_ROOT, "module/surge(main)/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule")
 
 GENERAL_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/General.sgmodule"

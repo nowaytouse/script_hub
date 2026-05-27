@@ -15,9 +15,14 @@ from pathlib import Path
 from urllib.parse import unquote
 
 # Project Paths
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
-SR_DIR = Path("/Users/nyamiiko/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules")
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
+SR_DIR = Path(
+    os.environ.get(
+        "SHADOWROCKET_MODULES_DIR",
+        "~/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules",
+    )
+).expanduser()
 SURGE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 
 # Category Mapping (Preserve original Chinese group names as per user instruction)

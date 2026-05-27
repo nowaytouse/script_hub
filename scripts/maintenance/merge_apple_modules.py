@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 AMPLIFY_DIR = ROOT / "module" / "surge(main)" / "amplify_nexus"
 
 # 要合并的模块

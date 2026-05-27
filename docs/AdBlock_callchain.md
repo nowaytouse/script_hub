@@ -33,7 +33,7 @@ flowchart TB
   subgraph downstream [下游]
     Conv["convert_surge_to_shadowrocket.py<br/>保留 AdBlock RULE-SET 引用"]
     SRSGen["scripts/srs_generator.py"]
-    Helper["build_module_helper.py / modules_data.json"]
+    Helper["consolidate_modules.py → modules_data.json + helper HTML"]
   end
 
   CI --> Local
