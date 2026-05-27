@@ -51,7 +51,9 @@ python3 scripts/adblock_manager.py
 1. 读取此目录下的源文件
 2. 提取非Rule部分(URL Rewrite, Map Local, Script, Body Rewrite等)
 3. 合并到PROMAX模块
-4. 提取Rule部分到AdBlock.list
+4. 提取Rule部分到 `ruleset/AdBlock/` 按用途分片（见 `ruleset/AdBlock/README.md`）
+
+完整调用链见仓库根目录 [`docs/AdBlock_callchain.md`](../../docs/AdBlock_callchain.md)。
 
 ## 目录结构对比
 

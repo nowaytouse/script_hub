@@ -1,7 +1,7 @@
 # Ruleset: AdBlock (LEGACY / REDIRECT)
 # This file is now split into multiple files in ruleset/AdBlock/
 # Please update your module to use the new split rulesets.
-# Updated: 2026-05-27 12:30:02
+# Updated: 2026-05-27 12:40:30
 DOMAIN,acs4baichuan.m.taobao.com,REJECT,extended-matching,pre-matching
 DOMAIN,ad.maoyan.com,REJECT
 DOMAIN,ad.tencentmusic.com,REJECT,extended-matching,pre-matching
@@ -231,6 +231,7 @@ DOMAIN,1170.api.swrve.com,REJECT
 DOMAIN,1170.content.swrve.com,REJECT
 DOMAIN,118.107.47.88,REJECT
 DOMAIN,118.144.88.21,REJECT
+DOMAIN,118.89.204.198,REJECT
 DOMAIN,118114.cn,REJECT
 DOMAIN,1188.api.swrve.com,REJECT
 DOMAIN,1188.content.swrve.com,REJECT
@@ -512,6 +513,7 @@ DOMAIN,2559a303164ddde96.com,REJECT
 DOMAIN,2578.api.swrve.com,REJECT
 DOMAIN,2578.content.swrve.com,REJECT
 DOMAIN,258zw.com,REJECT
+DOMAIN,25e87c0802f91cf8cgg.6uzxtlv.cn,REJECT
 DOMAIN,25w.0tzp8c.cn,REJECT
 DOMAIN,27015dbc43d77c.com,REJECT
 DOMAIN,2712.api.swrve.com,REJECT
@@ -1000,5 +1002,3 @@ DOMAIN,9688aae6a392f42.com,REJECT
 DOMAIN,96f2473b9ba9244f.com,REJECT
 DOMAIN,9718.com,REJECT
 DOMAIN,97b1c56132dfcdd90f93-0c5c8388c0a5897e648f883e2c86dc72.r54.cf5.rackcdn.com,REJECT
-DOMAIN,97ff623306ff4c26996.com,REJECT
-DOMAIN,97papa.com,REJECT

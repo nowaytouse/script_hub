@@ -1,0 +1,235 @@
+{
+  "updated": "2026-05-27 12:40:37",
+  "rules_per_shard_max": 100000,
+  "categories": {
+    "Local": {
+      "label_zh": "应用定制",
+      "desc": "LocalModules / local_sources / 仓库内 App 专项规则"
+    },
+    "Advertising": {
+      "label_zh": "通用广告",
+      "desc": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名"
+    },
+    "Privacy": {
+      "label_zh": "隐私追踪",
+      "desc": "Privacy / tracking-protection / 防追踪列表"
+    },
+    "Security": {
+      "label_zh": "安全威胁",
+      "desc": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject"
+    },
+    "AntiAD": {
+      "label_zh": "Anti-AD",
+      "desc": "privacy-protection-tools anti-AD 主列表与 discretion"
+    },
+    "ThreatIntel_Ultimate": {
+      "label_zh": "威胁情报·终极",
+      "desc": "HaGeZi DNS-Blocklists ultimate"
+    },
+    "ThreatIntel_TIF": {
+      "label_zh": "威胁情报·TIF",
+      "desc": "HaGeZi TIF medium 威胁情报"
+    },
+    "ThreatIntel": {
+      "label_zh": "威胁情报·补充",
+      "desc": "HaGeZi / skk 其它威胁与钓鱼域名集"
+    },
+    "Other": {
+      "label_zh": "其他补充",
+      "desc": "社区 sgmodule / 未归类远程源"
+    }
+  },
+  "modules": {
+    "surge_promax": {
+      "path": "module/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "install_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/module/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule"
+    },
+    "shadowrocket_promax": {
+      "path": "module/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module"
+    }
+  },
+  "manifest": "ruleset/Sources/Links/AdBlock_sources.txt",
+  "shards": [
+    {
+      "file": "ruleset/AdBlock/AdBlock_Local.list",
+      "category": "Local",
+      "label_zh": "应用定制",
+      "purpose": "LocalModules / local_sources / 仓库内 App 专项规则",
+      "shard_index": 1,
+      "rule_count": 125,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Advertising_01.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_01.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Advertising_02.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 2,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_02.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Advertising_03.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 3,
+      "rule_count": 78571,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Privacy.list",
+      "category": "Privacy",
+      "label_zh": "隐私追踪",
+      "purpose": "Privacy / tracking-protection / 防追踪列表",
+      "shard_index": 1,
+      "rule_count": 5617,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Security.list",
+      "category": "Security",
+      "label_zh": "安全威胁",
+      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
+      "shard_index": 1,
+      "rule_count": 26246,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_AntiAD.list",
+      "category": "AntiAD",
+      "label_zh": "Anti-AD",
+      "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
+      "shard_index": 1,
+      "rule_count": 4985,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 2,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 3,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 4,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 5,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 6,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 7,
+      "rule_count": 36341,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 2,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 3,
+      "rule_count": 100000,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 4,
+      "rule_count": 81050,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_ThreatIntel.list",
+      "category": "ThreatIntel",
+      "label_zh": "威胁情报·补充",
+      "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
+      "shard_index": 1,
+      "rule_count": 68265,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Other.list",
+      "category": "Other",
+      "label_zh": "其他补充",
+      "purpose": "社区 sgmodule / 未归类远程源",
+      "shard_index": 1,
+      "rule_count": 3775,
+      "cdn_url": "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list"
+    }
+  ]
+}

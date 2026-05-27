@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import ipaddress
+import json
 import os
 import re
 import subprocess
@@ -33,6 +34,52 @@ SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream"
 SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
+ADBLOCK_CATALOG_JSON = os.path.join(ADBLOCK_DIR, "catalog.json")
+ADBLOCK_README = os.path.join(ADBLOCK_DIR, "README.md")
+ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.md")
+
+CDN_BASE_URL = "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+RULES_PER_SHARD = 100_000
+
+# Purpose taxonomy: internal key → display label + dedup priority (earlier = higher)
+CATEGORY_META: Dict[str, Dict[str, str]] = {
+    "Local": {
+        "label_zh": "应用定制",
+        "desc": "LocalModules / local_sources / 仓库内 App 专项规则",
+    },
+    "Advertising": {
+        "label_zh": "通用广告",
+        "desc": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+    },
+    "Privacy": {
+        "label_zh": "隐私追踪",
+        "desc": "Privacy / tracking-protection / 防追踪列表",
+    },
+    "Security": {
+        "label_zh": "安全威胁",
+        "desc": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
+    },
+    "AntiAD": {
+        "label_zh": "Anti-AD",
+        "desc": "privacy-protection-tools anti-AD 主列表与 discretion",
+    },
+    "ThreatIntel_Ultimate": {
+        "label_zh": "威胁情报·终极",
+        "desc": "HaGeZi DNS-Blocklists ultimate",
+    },
+    "ThreatIntel_TIF": {
+        "label_zh": "威胁情报·TIF",
+        "desc": "HaGeZi TIF medium 威胁情报",
+    },
+    "ThreatIntel": {
+        "label_zh": "威胁情报·补充",
+        "desc": "HaGeZi / skk 其它威胁与钓鱼域名集",
+    },
+    "Other": {
+        "label_zh": "其他补充",
+        "desc": "社区 sgmodule / 未归类远程源",
+    },
+}
 
 GROUP_HEAD_EXPANSE = "『 🔝 Head Expanse › 首端扩域 』"
 MODULE_SUFFIXES = (".sgmodule", ".module")
@@ -114,17 +161,8 @@ class SourceEntry:
 class AdBlockManager:
     def __init__(self):
         self.whitelist: Set[str] = set()
-        # rules[policy][category] = set(rules)
-        # Priority: Local > Advertising > Privacy > Security > AntiAD > Hagezi > Other
-        self.category_names = [
-            "Local",
-            "Advertising",
-            "Privacy",
-            "Security",
-            "AntiAD",
-            "Hagezi",
-            "Other"
-        ]
+        # rules[policy][category] = set(rules); order = dedup priority (first wins)
+        self.category_names = list(CATEGORY_META.keys())
         self.rules: Dict[str, Dict[str, Set[str]]] = {
             policy: {cat: set() for cat in self.category_names}
             for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"]
@@ -473,19 +511,52 @@ class AdBlockManager:
 
     def determine_category(self, source: str) -> str:
         lowered = source.lower()
-        if "hagezi" in lowered:
-            return "Hagezi"
+        if "local_sources" in lowered or "localmodules" in lowered:
+            return "Local"
+        if "ultimate.txt" in lowered or "/ultimate" in lowered:
+            return "ThreatIntel_Ultimate"
+        if "tif.medium" in lowered or "/tif." in lowered:
+            return "ThreatIntel_TIF"
+        if "hagezi" in lowered or "reject_phishing" in lowered:
+            return "ThreatIntel"
         if "anti-ad" in lowered:
             return "AntiAD"
         if any(kw in lowered for kw in ["privacy", "tracking", "tracking-protection"]):
             return "Privacy"
-        if any(kw in lowered for kw in ["hijacking", "phishing", "tif", "threat", "banprogram"]):
+        if any(
+            kw in lowered
+            for kw in [
+                "hijacking",
+                "phishing",
+                "threat",
+                "banprogram",
+                "reject.conf",
+                "reject-url",
+                "reject_extra",
+                "blockhttpdns",
+                "httpdns",
+            ]
+        ):
             return "Security"
-        if any(kw in lowered for kw in ["advertising", "ads", "banad"]):
+        if any(kw in lowered for kw in ["advertising", "ads", "banad", "adblock", "adg.list"]):
             return "Advertising"
-        if "local_sources" in lowered or "localmodules" in lowered:
-            return "Local"
         return "Other"
+
+    def _category_from_filename(self, filename: str) -> str:
+        stem = filename.replace(".list", "")
+        if not stem.startswith("AdBlock_"):
+            return "Other"
+        body = stem[len("AdBlock_") :]
+        for cat in sorted(self.category_names, key=len, reverse=True):
+            if body == cat or body.startswith(f"{cat}_"):
+                return cat
+        return "Other"
+
+    @staticmethod
+    def _shard_sort_key(path: str) -> Tuple[int, str]:
+        name = os.path.basename(path)
+        match = re.search(r"_(\d+)\.list$", name)
+        return (int(match.group(1)) if match else 0, name)
 
     def add_rule_line(self, line: str, default_policy: str, category: str = "Other"):
         if not line or line.startswith("#"):
@@ -873,44 +944,50 @@ class AdBlockManager:
         return filtered
 
     def generate_ruleset(self) -> List[str]:
-        """Generate split rulesets and return list of relative paths."""
+        """Generate purpose-split rulesets; shard large categories (~100k rules/file)."""
         generated_files = []
         if not os.path.exists(ADBLOCK_DIR):
             os.makedirs(ADBLOCK_DIR)
 
-        Logger.info(f"Generating split rulesets in {os.path.relpath(ADBLOCK_DIR, ROOT)}")
-        
-        # Max size in bytes (20MB = 20 * 1024 * 1024)
-        MAX_SIZE = 18 * 1024 * 1024  # Use 18MB as safety margin
+        Logger.info(
+            f"Generating split rulesets in {os.path.relpath(ADBLOCK_DIR, ROOT)} "
+            f"(≤{RULES_PER_SHARD:,} rules/shard)"
+        )
 
         for category in self.category_names:
             rules = self.filter_rules(self.rules["REJECT"][category])
             if not rules:
                 continue
 
-            # Check if we need to split based on rule count estimation
-            # Roughly 30 bytes per rule average
-            rules_per_file = 500000 
-            
-            chunks = [rules[i:i + rules_per_file] for i in range(0, len(rules), rules_per_file)]
-            
+            meta = CATEGORY_META[category]
+            chunks = [
+                rules[i : i + RULES_PER_SHARD]
+                for i in range(0, len(rules), RULES_PER_SHARD)
+            ]
+
             for idx, chunk in enumerate(chunks):
-                suffix = f"_{idx+1}" if len(chunks) > 1 else ""
-                filename = f"AdBlock_{category}{suffix}.list"
+                if len(chunks) == 1:
+                    filename = f"AdBlock_{category}.list"
+                    shard_label = "1/1"
+                else:
+                    filename = f"AdBlock_{category}_{idx + 1:02d}.list"
+                    shard_label = f"{idx + 1}/{len(chunks)}"
+
                 filepath = os.path.join(ADBLOCK_DIR, filename)
-                
                 content = [
-                    f"# Ruleset: AdBlock {category}{suffix}\n",
+                    f"# Ruleset: AdBlock · {meta['label_zh']}\n",
+                    f"# Purpose: {meta['desc']}\n",
+                    f"# Category-Key: {category}\n",
+                    f"# Shard: {shard_label}\n",
                     f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
                     f"# Total Rules: {len(chunk)}\n",
-                    f"# Category: {category}\n",
                 ]
                 content.extend(f"{rule}\n" for rule in chunk)
                 write_file(filepath, "".join(content))
-                
+
                 rel_path = os.path.relpath(filepath, ROOT)
                 generated_files.append(rel_path)
-                Logger.success(f"  ✓ {filename} ({len(chunk)} rules)")
+                Logger.success(f"  ✓ {filename} ({len(chunk):,} rules, {meta['label_zh']})")
 
         # Also update the legacy AdBlock.list with a notice or a subset
         legacy_content = [
@@ -947,13 +1024,104 @@ class AdBlockManager:
         if removed:
             Logger.info(f"Pruned {len(removed)} stale AdBlock ruleset(s): {', '.join(removed)}")
 
+    def write_catalog(self, generated_rulesets: List[str]) -> None:
+        """Write machine-readable catalog + README for ruleset shards and module links."""
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        surge_module = os.path.relpath(TARGET_MODULE, ROOT)
+        sr_module = surge_module.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+
+        shards = []
+        for rs_path in generated_rulesets:
+            filename = os.path.basename(rs_path)
+            category = self._category_from_filename(filename)
+            meta = CATEGORY_META.get(category, CATEGORY_META["Other"])
+            match = re.search(r"_(\d+)\.list$", filename)
+            shard_index = int(match.group(1)) if match else 1
+            rule_count = 0
+            full_path = os.path.join(ROOT, rs_path)
+            if os.path.isfile(full_path):
+                with open(full_path, "r", encoding="utf-8", errors="ignore") as handle:
+                    rule_count = sum(
+                        1
+                        for line in handle
+                        if line.strip() and not line.strip().startswith("#")
+                    )
+            encoded = urllib.parse.quote(rs_path)
+            shards.append(
+                {
+                    "file": rs_path,
+                    "category": category,
+                    "label_zh": meta["label_zh"],
+                    "purpose": meta["desc"],
+                    "shard_index": shard_index,
+                    "rule_count": rule_count,
+                    "cdn_url": f"{CDN_BASE_URL}{encoded}",
+                }
+            )
+
+        catalog = {
+            "updated": now,
+            "rules_per_shard_max": RULES_PER_SHARD,
+            "categories": CATEGORY_META,
+            "modules": {
+                "surge_promax": {
+                    "path": surge_module,
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module)}",
+                },
+                "shadowrocket_promax": {
+                    "path": sr_module,
+                    "install_url": f"https://raw.githubusercontent.com/nowaytouse/script_hub/master/{urllib.parse.quote(sr_module)}",
+                },
+            },
+            "manifest": os.path.relpath(ADBLOCK_SOURCES_FILE, ROOT),
+            "shards": shards,
+        }
+        write_file(ADBLOCK_CATALOG_JSON, json.dumps(catalog, ensure_ascii=False, indent=2) + "\n")
+
+        lines = [
+            "# AdBlock 分片规则集\n",
+            "\n",
+            f"> 自动生成于 `{now}` · 每片 ≤ {RULES_PER_SHARD:,} 条 · 详见 [`catalog.json`](catalog.json)\n",
+            "\n",
+            "## 用途分类\n",
+            "\n",
+            "| 分类 | 说明 |\n",
+            "|------|------|\n",
+        ]
+        for key, meta in CATEGORY_META.items():
+            lines.append(f"| **{meta['label_zh']}** (`{key}`) | {meta['desc']} |\n")
+        lines.extend(
+            [
+                "\n",
+                "## 当前分片\n",
+                "\n",
+                "| 用途 | 文件 | 规则数 | CDN |\n",
+                "|------|------|--------|-----|\n",
+            ]
+        )
+        for item in shards:
+            lines.append(
+                f"| {item['label_zh']} | `{item['file']}` | {item['rule_count']:,} | [link]({item['cdn_url']}) |\n"
+            )
+        lines.extend(
+            [
+                "\n",
+                "## 安装模块（引用上述分片，勿重复安装 local_sources）\n",
+                "\n",
+                f"- **Surge PROMAX**: [{catalog['modules']['surge_promax']['install_url']}]({catalog['modules']['surge_promax']['install_url']})\n",
+                f"- **Shadowrocket PROMAX**: [{catalog['modules']['shadowrocket_promax']['install_url']}]({catalog['modules']['shadowrocket_promax']['install_url']})\n",
+            ]
+        )
+        write_file(ADBLOCK_README, "".join(lines))
+        Logger.success(f"Catalog written: {os.path.relpath(ADBLOCK_CATALOG_JSON, ROOT)}")
+
     def generate_module(self, generated_rulesets: List[str]):
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        base_url = "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/"
-        
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        shard_count = len(generated_rulesets)
+
         header = (
             f"#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]\n"
-            "#!desc=Split-ruleset ad-block rebuild from curated rule sources (PROMAX version).\n"
+            f"#!desc=按用途分片({shard_count}片)的广告拦截; 索引 ruleset/AdBlock/catalog.json\n"
             "#!author=ScriptHub-Automated\n"
             "#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png\n"
             f"#!category={GROUP_HEAD_EXPANSE}\n"
@@ -968,19 +1136,42 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT\n"
             "DOMAIN,doh.dns.apple.com,DIRECT\n"
             "# Block app-layer HTTPDNS first\n"
-            f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
+            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT\n"
         )
 
+        shards_by_category: Dict[str, List[str]] = {}
+        for rs_path in generated_rulesets:
+            cat = self._category_from_filename(os.path.basename(rs_path))
+            shards_by_category.setdefault(cat, []).append(rs_path)
+
         content = [header]
-        content.append("# Split REJECT Rulesets\n")
-        for rs_path in sorted(generated_rulesets):
-            encoded_path = urllib.parse.quote(rs_path)
-            content.append(f"RULE-SET,{base_url}{encoded_path},REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n")
+        content.append("# Split REJECT Rulesets (purpose-grouped; see ruleset/AdBlock/README.md)\n")
+        for category in self.category_names:
+            paths = shards_by_category.get(category)
+            if not paths:
+                continue
+            meta = CATEGORY_META[category]
+            content.append(f"\n# ── {meta['label_zh']} · {meta['desc']} ──\n")
+            for rs_path in sorted(paths, key=self._shard_sort_key):
+                encoded_path = urllib.parse.quote(rs_path)
+                content.append(
+                    f"RULE-SET,{CDN_BASE_URL}{encoded_path},REJECT,"
+                    "extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+                )
 
         content.append("\n# SKK Upstream Rulesets\n")
-        content.append(f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n")
-        content.append(f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n")
-        content.append(f"RULE-SET,{base_url}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n")
+        content.append(
+            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
+            "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+        )
+        content.append(
+            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
+            "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+        )
+        content.append(
+            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
+            "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve\n\n"
+        )
 
         # Define complex rule prefixes that MUST stay in the [Rule] section
         complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
@@ -1076,6 +1267,7 @@ class AdBlockManager:
             self.extract_from_file(SKK_REJECT, default_policy="REJECT", category="Other", include_sections=False)
 
         generated_rulesets = self.generate_ruleset()
+        self.write_catalog(generated_rulesets)
         self.generate_module(generated_rulesets)
         # Save hashes for change tracking
         local_source_paths = [e.resolved_path for e in source_entries if not e.is_remote]

@@ -43,6 +43,12 @@ RULE_REPLACEMENTS = {
     "REJECT-DROP": "REJECT", "REJECT-TINYGIF": "REJECT", "REJECT-NO-DROP": "REJECT",
 }
 
+# Keep remote RULE-SET references for purpose-split AdBlock shards (avoid 50MB+ inline expansion)
+PRESERVE_RULESET_MARKERS = (
+    "/ruleset/AdBlock/AdBlock_",
+    "ruleset%2FAdBlock%2FAdBlock_",
+)
+
 REWRITE_MODIFIER_RE = re.compile(r',\s*(extended-matching|pre-matching)\b|'
                                   r'\b(extended-matching|pre-matching)\s*,?')
 
@@ -135,7 +141,16 @@ def convert_content(content: str) -> str:
                 url_or_path = parts[1].strip()
                 policy = parts[2].strip() if len(parts) > 2 else "REJECT"
                 policy = RULE_REPLACEMENTS.get(policy, policy)
-                
+
+                if any(marker in url_or_path for marker in PRESERVE_RULESET_MARKERS):
+                    cleaned = REWRITE_MODIFIER_RE.sub('', line)
+                    cleaned = re.sub(r',update-interval=\d+', '', cleaned)
+                    cleaned = re.sub(r',no-resolve', '', cleaned)
+                    for old, new in RULE_REPLACEMENTS.items():
+                        cleaned = cleaned.replace(old, new)
+                    out.append(cleaned.strip())
+                    continue
+
                 print(f"  📦 Expanding RULE-SET: {url_or_path}")
                 expanded_rules = fetch_ruleset(url_or_path)
                 if expanded_rules:

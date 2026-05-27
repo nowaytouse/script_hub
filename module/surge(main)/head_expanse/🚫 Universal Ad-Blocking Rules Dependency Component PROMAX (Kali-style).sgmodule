@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-05-27]
-#!desc=Split-ruleset ad-block rebuild from curated rule sources (PROMAX version).
+#!desc=按用途分片(20片)的广告拦截; 索引 ruleset/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS
-#!date=2026-05-27 12:30:09
+#!date=2026-05-27 12:40:38
 
 [Rule]
 # High-Priority White-list (Prevent DNS failure)
@@ -16,15 +16,45 @@ DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
 # Block app-layer HTTPDNS first
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
-# Split REJECT Rulesets
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Hagezi_1.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Hagezi_2.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+# Split REJECT Rulesets (purpose-grouped; see ruleset/AdBlock/README.md)
+
+# ── 应用定制 · LocalModules / local_sources / 仓库内 App 专项规则 ──
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 通用广告 · blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名 ──
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 隐私追踪 · Privacy / tracking-protection / 防追踪列表 ──
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 安全威胁 · 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject ──
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 威胁情报·终极 · HaGeZi DNS-Blocklists ultimate ──
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 威胁情报·TIF · HaGeZi TIF medium 威胁情报 ──
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 威胁情报·补充 · HaGeZi / skk 其它威胁与钓鱼域名集 ──
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
+RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 
 # SKK Upstream Rulesets
 RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
