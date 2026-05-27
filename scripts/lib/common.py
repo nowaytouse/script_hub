@@ -72,10 +72,18 @@ def read_file(file_path: str) -> List[str]:
             return f.readlines()
 
 def write_file(file_path: str, content: str):
-    """Writes content to file, ensuring parent directories exist."""
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    """Atomically write *content* to *file_path* (tmp → rename), creating parent dirs."""
+    dir_path = os.path.dirname(file_path) or "."
+    os.makedirs(dir_path, exist_ok=True)
+    tmp = file_path + ".tmp~"
+    try:
+        with open(tmp, 'w', encoding='utf-8') as f:
+            f.write(content)
+        os.replace(tmp, file_path)
+    except Exception:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
 
 # SURGE/SINGBOX SPECIFIC PARSERS
 
@@ -130,55 +138,35 @@ def _has_dangerous_chars(line: str) -> bool:
 
 def safe_download(url: str, binary: bool = False, retries: int = 1,
                   timeout: int = 30) -> Optional[str]:
-    """Download content from a URL with hardened protections."""
-    cmd = ["curl", "-L", "-s", "-m", str(timeout), "-f",
-           "-H", f"User-Agent: {_BROWSER_UA}", url]
+    """Download text content from *url*.  Returns None on failure / HTML response."""
+    raw = _curl_fetch(url, timeout=timeout, retries=retries)
+    if raw is None or _is_html_content(raw):
+        return None
+    return raw.decode("utf-8", errors="replace") if not binary else raw  # type: ignore[return-value]
 
-    for attempt in range(retries + 1):
-        try:
-            if binary:
-                result = subprocess.run(cmd, capture_output=True)
-            else:
-                result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode != 0:
-                if attempt < retries:
-                    time.sleep(2 ** attempt)
-                    continue
-                return None
-
-            content = result.stdout
-            if _is_html_content(content):
-                return None
-
-            return content
-        except Exception:
-            if attempt < retries:
-                time.sleep(2 ** attempt)
-                continue
-            return None
-    return None
 
 def safe_download_binary(url: str, retries: int = 1,
                          timeout: int = 30) -> Optional[bytes]:
-    """Download binary content with hardened protections."""
+    """Download binary content from *url*.  Returns None on failure / HTML response."""
+    raw = _curl_fetch(url, timeout=timeout, retries=retries)
+    if raw is None or _is_html_content(raw):
+        return None
+    return raw
+
+
+# ── internal ──────────────────────────────────────────────────────────────────
+
+def _curl_fetch(url: str, *, timeout: int = 30, retries: int = 1) -> Optional[bytes]:
+    """Low-level curl wrapper shared by safe_download* helpers."""
     cmd = ["curl", "-L", "-s", "-m", str(timeout), "-f",
            "-H", f"User-Agent: {_BROWSER_UA}", url]
-
     for attempt in range(retries + 1):
         try:
             result = subprocess.run(cmd, capture_output=True)
-            if result.returncode != 0:
-                if attempt < retries:
-                    time.sleep(2 ** attempt)
-                    continue
-                return None
-            if _is_html_content(result.stdout):
-                return None
-            return result.stdout
+            if result.returncode == 0:
+                return result.stdout
         except Exception:
-            if attempt < retries:
-                time.sleep(2 ** attempt)
-                continue
-            return None
+            pass
+        if attempt < retries:
+            time.sleep(2 ** attempt)
     return None

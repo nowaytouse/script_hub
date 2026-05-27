@@ -8,7 +8,7 @@ import platform
 import tarfile
 import shutil
 from datetime import datetime
-from lib.common import Logger, get_project_root, write_file
+from lib.common import Logger, get_project_root, write_file, _curl_fetch
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
@@ -51,17 +51,6 @@ METACUBEX_RULES = {
     "cloudflare": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cloudflare.srs"
 }
 
-DIRECT_SOURCES = {
-    "felixonmars": "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf",
-    "blackmatrix7": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/China/China.list",
-    "loyalsoldier": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt"
-}
-
-DEHYDRATION_KEYWORDS = [
-    "google", "github", "facebook", "twitter", "instagram", "netflix", 
-    "spotify", "telegram", "discord", "amazon", "akamai", "fastly", 
-    "cloudflare", "aws", "azure", "pypi", "docker", "npm", "browserleaks"
-]
 
 NEXUS_MODULES = [
     "https://yfamilys.com/module/bili.module",
@@ -164,41 +153,27 @@ class UpstreamSyncer:
         return None
 
     def download_to_file(self, url: str, dest_path: str) -> bool:
-        """Download a large file directly to disk using curl."""
+        """Download a large file directly to disk (streams via curl -o)."""
         try:
-            # -L follow redirects, -s silent, -m timeout, -f fail on error, -o output
-            # Added -k (insecure) to bypass local proxy MITM handshake issues
             subprocess.run(
-                [
-                    "curl", "-L", "-k", "-s", "-m", "300", "-f",
-                    "-H", "User-Agent: curl/7.84.0",
-                    "-o", dest_path, url
-                ],
+                ["curl", "-L", "-s", "-m", "300", "-f",
+                 "-H", "User-Agent: curl/7.84.0", "-o", dest_path, url],
                 check=True
             )
             return True
         except Exception as e:
             Logger.warn(f"File download failed: {url} - {e}")
-            if os.path.exists(dest_path): os.remove(dest_path)
+            if os.path.exists(dest_path):
+                os.remove(dest_path)
             return False
 
     def download(self, url: str) -> bytes:
-        """Use system curl for robust SSL handling while maintaining security."""
-        try:
-            # -L follow redirects, -s silent, -m timeout, -f fail on error
-            # Added -k (insecure) to bypass local proxy MITM handshake issues
-            result = subprocess.run(
-                [
-                    "curl", "-L", "-k", "-s", "-m", "60", "-f",
-                    "-H", "User-Agent: curl/7.84.0",
-                    url
-                ],
-                capture_output=True, check=True
-            )
-            return result.stdout
-        except Exception as e:
-            Logger.warn(f"Download failed: {url} - {e}")
+        """Download URL content; returns empty bytes on failure."""
+        data = _curl_fetch(url, timeout=60, retries=1)
+        if data is None:
+            Logger.warn(f"Download failed: {url}")
             return b""
+        return data
 
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")
@@ -318,152 +293,8 @@ class UpstreamSyncer:
             futures = [executor.submit(self.process_metacubex_rule, name, url) for name, url in METACUBEX_RULES.items()]
             concurrent.futures.wait(futures)
 
-    def sync_direct(self):
-        Logger.section("Syncing & Dehydrating Direct Ruleset (Triple-Source)")
-        combined_rules = set()
-        
-        # 1. Fetch all sources
-        results = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            future_to_name = {executor.submit(self.download, url): name for name, url in DIRECT_SOURCES.items()}
-            for future in concurrent.futures.as_completed(future_to_name):
-                name = future_to_name[future]
-                results[name] = future.result().decode('utf-8', errors='ignore')
-
-        # 2. Process Felixonmars (dnsmasq format)
-        if results.get("felixonmars"):
-            # server=/example.com/114.114.114.114 -> DOMAIN-SUFFIX,example.com
-            matches = re.findall(r'^server=/([^/]+)/', results["felixonmars"], re.MULTILINE)
-            for m in matches: combined_rules.add(f"DOMAIN-SUFFIX,{m}")
-
-        # 3. Process Blackmatrix7 (Surge format)
-        if results.get("blackmatrix7"):
-            for line in results["blackmatrix7"].splitlines():
-                line = line.strip()
-                if line and not line.startswith('#'): combined_rules.add(line)
-
-        # 4. Process Loyalsoldier (Raw domain format)
-        if results.get("loyalsoldier"):
-            for line in results["loyalsoldier"].splitlines():
-                domain = line.strip()
-                if domain and not domain.startswith('#'): combined_rules.add(f"DOMAIN-SUFFIX,{domain}")
-
-        # 5. Load Local Non-Domain Rules (Archive fallback)
-        archive_path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/archive/Direct_polluted.list")
-        if os.path.exists(archive_path):
-            with open(archive_path, 'r') as f:
-                for line in f:
-                    if line.startswith(('IP-CIDR', 'IP-CIDR6', 'PROCESS-NAME', 'USER-AGENT')):
-                        combined_rules.add(line.strip())
-
-        # 6. DEHYDRATION (Keyword filtering)
-        final_list = []
-        for rule in combined_rules:
-            if any(kw in rule.lower() for kw in DEHYDRATION_KEYWORDS):
-                continue
-            final_list.append(rule)
-
-        # 7. Finalize and Write
-        final_list.sort()
-        header = f"# Ruleset: Direct (Unified & Dehydrated)\n# Updated: {datetime.now()}\n# Sources: {', '.join(DIRECT_SOURCES.keys())}\n\n"
-        write_file(os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/Direct.list"), header + "\n".join(final_list) + "\n")
-        Logger.success(f"Direct Ruleset: Regenerated with {len(final_list)} pure rules")
-
-    def dehydrate_proxy_lists(self):
-        Logger.section("Dehydrating Proxy Lists (Removing Domestic Water)")
-        lists_to_clean = [
-            "Microsoft.list", "GlobalProxy.list", "PayPal.list", "Bilibili.list", 
-            "Google.list", "Cloudflare.list", "Gaming.list", "CDN.list", "GitHub.list"
-        ]
-        
-        for list_name in lists_to_clean:
-            path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)", list_name)
-            if not os.path.exists(path): continue
-            
-            with open(path, 'r') as f:
-                lines = f.readlines()
-            
-            original_count = len(lines)
-            new_lines = []
-            for line in lines:
-                l_lower = line.lower()
-                # 核心逻辑：如果是国内域名关键字或以 .cn 结尾，则剔除
-                if re.search(r'\.cn(,|\s|$)', l_lower) or any(kw in l_lower for kw in [".tmall.com", "alicdn", "alipay", "aliyun", "baidu", "taobao"]):
-                    if "domain-suffix" in l_lower or "domain," in l_lower:
-                        continue
-                new_lines.append(line)
-            
-            if len(new_lines) < original_count:
-                with open(path, 'w') as f:
-                    f.writelines(new_lines)
-                Logger.success(f"Dehydrated {list_name}: Removed {original_count - len(new_lines)} domestic items")
-
-    def global_deduplicate(self):
-        Logger.section("Global Cross-File Deduplication (One Domain, One List)")
-        # 核心优先级：明确排序的文件
-        defined_priority = [
-            "HTTPDNS_Hijack.list", "AdBlock.list", "reject-drop.list", "reject-no-drop.list",
-            "Direct.list", "Bilibili.list", "Apple.list", "PayPal.list", "Gaming.list", 
-            "Netflix.list", "Google.list", "Microsoft.list", "GitHub.list", "AI.list",
-            "StreamUS.list", "StreamJP.list", "StreamTW.list", "StreamHK.list", "GlobalProxy.list"
-        ]
-        
-        # 自动获取目录下所有 .list 文件，并将未在 defined_priority 中的放入末尾
-        all_lists = [f for f in os.listdir(os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")) if f.endswith('.list')]
-        priority_order = defined_priority + [f for f in all_lists if f not in defined_priority]
-        
-        seen_domains = set()
-        total_removed = 0
-        
-        for list_name in priority_order:
-            path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)", list_name)
-            if not os.path.exists(path): continue
-            
-            with open(path, 'r') as f:
-                lines = f.readlines()
-            
-            original_count = len(lines)
-            new_lines = []
-            for line in lines:
-                line_s = line.strip()
-                if not line_s or line_s.startswith('#'):
-                    new_lines.append(line)
-                    continue
-                
-                parts = line_s.split(',')
-                if len(parts) >= 2:
-                    rule_val = parts[1].lower().strip()
-                    if rule_val in seen_domains:
-                        continue
-                    seen_domains.add(rule_val)
-                new_lines.append(line)
-            
-            if len(new_lines) < original_count:
-                removed_count = original_count - len(new_lines)
-                total_removed += removed_count
-                with open(path, 'w') as f:
-                    f.writelines(new_lines)
-                Logger.success(f"Deduplicated {list_name}: Removed {removed_count} redundant rules")
-        
-        Logger.success(f"Global Cleanup Finished: Total {total_removed} redundant rules purged")
-
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
-    
-    # NEW: Privatize and Localize external scripts after syncing modules
-    Logger.section("Privatizing External Scripts")
-    try:
-        from maintenance.localize_scripts import main as localize_main
-        localize_main()
-        Logger.success("All external scripts localized to module/scripts/")
-    except Exception as e:
-        Logger.error(f"Script localization failed: {e}")
-
-    from ruleset_manager import RulesetManager
-    from smart_cleanup import run_cleanup as run_ruleset_cleanup
-
-    RulesetManager(force=True).run()
-    run_ruleset_cleanup()

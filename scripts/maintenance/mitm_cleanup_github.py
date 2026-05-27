@@ -1,6 +1,12 @@
 import os
 import re
+import sys
 import argparse
+from pathlib import Path
+
+# Resolve project root so os.walk always starts from an absolute path
+_SCRIPTS_DIR = Path(__file__).resolve().parent.parent
+ROOT = _SCRIPTS_DIR.parent
 
 # Configuration for exclusions
 GITHUB_DOMAINS = [
@@ -9,15 +15,17 @@ GITHUB_DOMAINS = [
 ]
 DEFAULT_EXCLUSIONS = ['-github.com', '-api.github.com', '-*.githubusercontent.com']
 
+def _log(msg: str) -> None:
+    print(msg, file=sys.stderr if msg.startswith("[!]") else sys.stdout)
+
+
 def process_file(filepath, exclusions, dry_run=False):
-    """
-    Processes a module file to remove positive GitHub mappings and add exclusions.
-    """
+    """Remove positive GitHub MITM mappings and enforce exclusion entries."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
     except Exception as e:
-        print(f"[!] Error reading {filepath}: {e}")
+        _log(f"[!] Error reading {filepath}: {e}")
         return False
 
     if '[MITM]' not in content:
@@ -82,18 +90,17 @@ def process_file(filepath, exclusions, dry_run=False):
         return True
     return False
 
-def run_cleanup(directory="module", exclusions=DEFAULT_EXCLUSIONS, dry_run=False):
-    """
-    Main entry point for programmatic cleanup.
-    """
+def run_cleanup(directory=None, exclusions=DEFAULT_EXCLUSIONS, dry_run=False):
+    """Walk *directory* (default: <repo>/module) and harden MITM hostnames."""
+    scan_dir = str(directory) if directory else str(ROOT / "module")
     modified_count = 0
-    for root, _, files in os.walk(directory):
+    for dirpath, _, files in os.walk(scan_dir):
         for file in files:
             if file.endswith(('.sgmodule', '.module')):
-                path = os.path.join(root, file)
+                path = os.path.join(dirpath, file)
                 if process_file(path, exclusions, dry_run):
                     if not dry_run:
-                        print(f"[✓] MITM Cleaned: {path}")
+                        _log(f"[✓] MITM Cleaned: {path}")
                     modified_count += 1
     return modified_count
 

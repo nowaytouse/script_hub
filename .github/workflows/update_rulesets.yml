@@ -50,40 +50,55 @@ jobs:
         # 🔥 配置 git 使用 token 认证
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
-    - name: Install sing-box (for SRS generation only)
+    - name: Resolve sing-box version
+      id: singbox_version
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
-        # Install sing-box CLI tool for SRS file generation only
-        # Singbox config download is skipped by --unattended mode
-        # Prefer authenticated API (higher rate limit); fall back to HTML scrape (no API)
-        SINGBOX_VERSION=""
+        VER=""
         if [ -n "${GITHUB_TOKEN:-}" ]; then
-          SINGBOX_VERSION=$(curl -fsSL \
+          VER=$(curl -fsSL \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/SagerNet/sing-box/releases?per_page=1" \
             | grep '"tag_name"' | head -1 | sed -E 's/.*"v([^"]+)".*/\1/' || true)
         fi
-        if [ -z "${SINGBOX_VERSION}" ]; then
-          SINGBOX_VERSION=$(curl -fsSL "https://github.com/SagerNet/sing-box/releases" \
+        if [ -z "${VER}" ]; then
+          VER=$(curl -fsSL "https://github.com/SagerNet/sing-box/releases" \
             | grep -oE 'href="/SagerNet/sing-box/releases/tag/v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?"' \
             | head -1 \
             | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?' \
             | sed 's/^v//' || true)
         fi
-        if [ -z "${SINGBOX_VERSION}" ]; then
-          echo "::error::Could not resolve sing-box release version (API rate limit or network error)"
+        if [ -z "${VER}" ]; then
+          echo "::error::Could not resolve sing-box release version"
           exit 1
         fi
-        echo "Installing sing-box v${SINGBOX_VERSION} (CLI tool only, pre-release)"
+        echo "version=${VER}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache sing-box binary
+      id: cache_singbox
+      uses: actions/cache@v4
+      with:
+        path: /usr/local/bin/sing-box
+        key: singbox-${{ steps.singbox_version.outputs.version }}-linux-amd64
+
+    - name: Install sing-box (for SRS generation only)
+      if: steps.cache_singbox.outputs.cache-hit != 'true'
+      env:
+        SINGBOX_VERSION: ${{ steps.singbox_version.outputs.version }}
+      run: |
+        set -euo pipefail
+        echo "Installing sing-box v${SINGBOX_VERSION}"
         curl -fsSL -o sing-box.tar.gz \
           "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
         tar -xzf sing-box.tar.gz
         sudo mv "sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/
         rm -rf sing-box.tar.gz "sing-box-${SINGBOX_VERSION}-linux-amd64"
-        sing-box version
+
+    - name: Verify sing-box
+      run: sing-box version
         
     - name: Execute Python Ruleset Update
       run: |

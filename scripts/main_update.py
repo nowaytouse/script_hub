@@ -102,14 +102,16 @@ def main():
     sync_ports(execute=args.execute or args.force)
 
     # 5. Module Consolidation & Shadowrocket Conversion
+    # Order matters: consolidate first (generates / normalises Surge modules),
+    # then convert so Shadowrocket gets the finalised output.
     Logger.section("Module Processing & Conversion")
     try:
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py")],
+            [sys.executable, os.path.join(SCRIPTS_DIR, "consolidate_modules.py")],
             check=True,
         )
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "consolidate_modules.py")],
+            [sys.executable, os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py")],
             check=True,
         )
         Logger.success("Module processing and conversion completed.")
