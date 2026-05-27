@@ -195,6 +195,7 @@ class AdBlockManager:
         write_file(HASH_FILE, content)
 
     def _download(self, url: str) -> Optional[str]:
+        url = urllib.parse.unquote(url)
         for attempt in range(3):
             try:
                 result = subprocess.run(
@@ -925,8 +926,26 @@ class AdBlockManager:
         
         legacy_content.extend(f"{rule}\n" for rule in all_reject_rules[:1000])
         write_file(ADBLOCK_LIST, "".join(legacy_content))
-        
+        self.prune_stale_rulesets(generated_files)
+
         return generated_files
+
+    def prune_stale_rulesets(self, generated_files: List[str]) -> None:
+        """Remove split-list files no longer referenced by the current rebuild."""
+        if not os.path.isdir(ADBLOCK_DIR):
+            return
+        keep = {os.path.basename(path) for path in generated_files}
+        removed = []
+        for filename in sorted(os.listdir(ADBLOCK_DIR)):
+            if not filename.endswith(".list") or filename in keep:
+                continue
+            os.remove(os.path.join(ADBLOCK_DIR, filename))
+            removed.append(filename)
+            srs_path = os.path.join(ROOT, "ruleset/SingBox", f"{os.path.splitext(filename)[0]}_Singbox.srs")
+            if os.path.exists(srs_path):
+                os.remove(srs_path)
+        if removed:
+            Logger.info(f"Pruned {len(removed)} stale AdBlock ruleset(s): {', '.join(removed)}")
 
     def generate_module(self, generated_rulesets: List[str]):
         current_date = datetime.now().strftime('%Y-%m-%d')

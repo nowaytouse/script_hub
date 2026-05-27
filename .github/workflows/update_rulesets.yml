@@ -51,16 +51,38 @@ jobs:
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
     - name: Install sing-box (for SRS generation only)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        set -euo pipefail
         # Install sing-box CLI tool for SRS file generation only
         # Singbox config download is skipped by --unattended mode
-        # 🔥 使用预览版 (1.13.0+) 以支持最新功能
-        SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases | grep '"tag_name"' | head -1 | sed -E 's/.*"v([^"]+)".*/\1/')
+        # Prefer authenticated API (higher rate limit); fall back to HTML scrape (no API)
+        SINGBOX_VERSION=""
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+          SINGBOX_VERSION=$(curl -fsSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/SagerNet/sing-box/releases?per_page=1" \
+            | grep '"tag_name"' | head -1 | sed -E 's/.*"v([^"]+)".*/\1/' || true)
+        fi
+        if [ -z "${SINGBOX_VERSION}" ]; then
+          SINGBOX_VERSION=$(curl -fsSL "https://github.com/SagerNet/sing-box/releases" \
+            | grep -oE 'href="/SagerNet/sing-box/releases/tag/v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?"' \
+            | head -1 \
+            | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?' \
+            | sed 's/^v//' || true)
+        fi
+        if [ -z "${SINGBOX_VERSION}" ]; then
+          echo "::error::Could not resolve sing-box release version (API rate limit or network error)"
+          exit 1
+        fi
         echo "Installing sing-box v${SINGBOX_VERSION} (CLI tool only, pre-release)"
-        curl -Lo sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
+        curl -fsSL -o sing-box.tar.gz \
+          "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
         tar -xzf sing-box.tar.gz
-        sudo mv sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box /usr/local/bin/
-        rm -rf sing-box.tar.gz sing-box-${SINGBOX_VERSION}-linux-amd64
+        sudo mv "sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/
+        rm -rf sing-box.tar.gz "sing-box-${SINGBOX_VERSION}-linux-amd64"
         sing-box version
         
     - name: Execute Python Ruleset Update
