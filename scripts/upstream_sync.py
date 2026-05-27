@@ -8,7 +8,7 @@ import platform
 import tarfile
 import shutil
 from datetime import datetime
-from lib.common import Logger, get_project_root, write_file, _curl_fetch
+from lib.common import Logger, get_project_root, write_file, _curl_fetch, _BROWSER_UA
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
@@ -157,7 +157,7 @@ class UpstreamSyncer:
         try:
             subprocess.run(
                 ["curl", "-L", "-s", "-m", "300", "-f",
-                 "-H", "User-Agent: curl/7.84.0", "-o", dest_path, url],
+                 "-H", f"User-Agent: {_BROWSER_UA}", "-o", dest_path, url],
                 check=True
             )
             return True

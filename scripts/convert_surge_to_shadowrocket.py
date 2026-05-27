@@ -19,6 +19,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 from lib.module_sanitizer import sanitize_file_content
+from lib.common import _BROWSER_UA
 SURGE_MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
 
@@ -83,7 +84,7 @@ def fetch_ruleset(url_or_path):
             # 如果是远程URL
             elif url_or_path.startswith("http"):
                 print(f"  🌐 Fetching ruleset: {url_or_path}")
-                req = urllib.request.Request(url_or_path, headers={'User-Agent': 'ClashMeta/1.18.1'})
+                req = urllib.request.Request(url_or_path, headers={'User-Agent': _BROWSER_UA})
                 with urllib.request.urlopen(req, timeout=10) as response:
                     content = response.read().decode('utf-8')
         

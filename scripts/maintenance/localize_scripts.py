@@ -7,21 +7,19 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 
+import sys
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SCRIPTS_DIR))
+from lib.common import _BROWSER_UA
+
 ROOT = Path(__file__).parent.parent.parent
 MODULE_DIRS = [ROOT / "module/surge(main)", ROOT / "module/shadowrocket"]
 SCRIPTS_DIR = ROOT / "module/scripts"
 LOCAL_URL_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/scripts/"
 
 # User-Agent Pool
-USER_AGENTS = [
-    "ClashMeta/1.18.1 (Clash.Meta; +https://github.com/MetaCubeX/Clash.Meta)",
-    "Mihomo/1.18.1",
-    "Surge/3041 (iPhone; iOS 17.4; Scale/3.00)",
-    "Quantumult%20X/1.5.1 (iPhone; iOS 17.4; Scale/3.00)",
-    "Shadowrocket/2.2.43 (iPhone; iOS 17.4; Scale/3.00)",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-]
+USER_AGENTS = [_BROWSER_UA]
 
 def is_valid_url(url):
     """Filter out regex patterns or invalid mock URLs."""
@@ -54,14 +52,12 @@ def download_script(url):
         return local_filename
 
     proxy = "127.0.0.1:7890"
-    test_uas = random.sample(USER_AGENTS, k=len(USER_AGENTS))
-    
-    for i, ua in enumerate(test_uas[:3]): # Try up to 3 different UAs
+    for i, ua in enumerate(USER_AGENTS[:1]):  # single UA only
         try:
             print(f"  📥 Attempt {i+1} [{ua.split('/')[0]}]: {url}")
             result = subprocess.run(
                 [
-                    "curl", "-L", "-k", "-s", "-m", "10", "-f",
+                    "curl", "-L", "-s", "-m", "10", "-f",
                     "--proxy", proxy,
                     "--user-agent", ua,
                     url

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file
+from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA
 from lib.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
 
 # ============================================================================
@@ -241,7 +241,7 @@ class AdBlockManager:
                 result = subprocess.run(
                     [
                         "curl", "-L", "-s", "-m", "60", "-f",
-                        "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.56 Safari/537.36",
+                        "-H", f"User-Agent: {_BROWSER_UA}",
                         url
                     ],
                     capture_output=True,

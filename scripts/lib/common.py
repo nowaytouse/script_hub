@@ -116,11 +116,10 @@ def clean_rules(rules: List[str]) -> List[str]:
     return sorted(cleaned)
 
 # HARDENED DOWNLOAD UTILITIES
-
-_BROWSER_UA = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.56 Safari/537.36"
-)
+#
+# Kelee / Loon ecosystem expects a Loon UA with version.
+LOON_VERSION = "3.3.9"
+_BROWSER_UA = f"Loon/{LOON_VERSION}"
 
 def _is_html_content(data) -> bool:
     """Detect if downloaded content is HTML (Cloudflare challenge, 404 page, etc.)."""

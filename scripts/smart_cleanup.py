@@ -59,6 +59,12 @@ MANDATORY_PROXY_KEYWORDS = [
     "tiktokw", "muscdn", "tiktokrow", "lark.com",
 ]
 
+# Domains that are ad/trackers and should live ONLY in AdBlock_*,
+# never in routing/diversion rulesets.
+ADBLOCK_ONLY_PREFIXES = (
+    "AdBlock_", "AdBlock.list",
+)
+
 # Keywords that identify adult/NSFW content — must NOT appear in SocialMedia.list
 NSFW_CONTAMINATION_KEYWORDS = [
     "porn", "hentai", "nsfw", "xxx", "adult", "sex", "erotic",
@@ -252,6 +258,7 @@ class RulesetCleanup:
         }
 
     def load(self):
+        self.adblock_payloads = set()
         for ruleset_dir in self.ruleset_dirs:
             if not os.path.exists(ruleset_dir): continue
             filenames = sorted(
@@ -263,6 +270,9 @@ class RulesetCleanup:
                 raw_unique = load_list(filepath)
                 self.file_content[filename] = raw_unique
                 self.file_paths[filename] = filepath
+                # Collect all payloads that belong to dedicated AdBlock shards.
+                if any(filename.startswith(pfx) for pfx in ADBLOCK_ONLY_PREFIXES):
+                    self.adblock_payloads.update(raw_unique.keys())
         self.stats["files"] = len(self.file_content)
 
     def _upsert(self, rules: Dict[str, str], rule: str):
@@ -320,6 +330,12 @@ class RulesetCleanup:
                 continue
             kept: Dict[str, str] = {}
             for payload, rule in sorted(rules.items(), key=lambda item: rule_sort_key(item[1])):
+                # 0. Hard separation: any payload present in AdBlock shards
+                #    must NOT live in routing rulesets.
+                if not any(filename.startswith(pfx) for pfx in ADBLOCK_ONLY_PREFIXES):
+                    if payload in getattr(self, "adblock_payloads", ()):
+                        self.stats["semantic_cover_removed"] += 1
+                        continue
                 rule_type = extract_type(rule)
                 if payload in seen_payloads:
                     self.stats["cross_file_removed"] += 1
