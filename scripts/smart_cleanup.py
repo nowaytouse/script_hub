@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 import os
 import re
+import sys
 from typing import Dict, Iterable
+
+_LIB = os.path.join(os.path.dirname(__file__), "lib")
+if _LIB not in sys.path:
+    sys.path.insert(0, os.path.dirname(__file__))
+from lib.common import write_file as _atomic_write
 
 RULESET_DIRS = [
     os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkroket)"),
@@ -43,11 +49,26 @@ PRIORITY_ORDER = [
 ]
 
 MANDATORY_PROXY_KEYWORDS = [
+    # Western services — never direct
     "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
     "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
     "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
     "akamai", "fastly", "cloudflare",
+    # ByteDance INTERNATIONAL infrastructure (must not be Direct)
+    "byteoversea", "tiktok", "tiktokv", "tiktokcdn", "tiktokeu",
+    "tiktokw", "muscdn", "tiktokrow", "lark.com",
 ]
+
+# Keywords that identify adult/NSFW content — must NOT appear in SocialMedia.list
+NSFW_CONTAMINATION_KEYWORDS = [
+    "porn", "hentai", "nsfw", "xxx", "adult", "sex", "erotic",
+    "nude", "naked", "fetish", "bdsm", "onlyfans",
+    # Typosquatting / phishing variants that leak from upstream Global rules
+    "facebookporn", "facebookofsex", "facboox", "faceboox", "faseboox", "feceboox",
+]
+
+# Keywords that should never appear in NSFW.list (belong in Social/Proxy)
+# (currently not enforced at cleanup level but logged in audit)
 
 TYPE_RANK = {
     "DOMAIN": 0,
@@ -193,22 +214,24 @@ def write_list(filepath: str, rules: Dict[str, str]):
                 else:
                     break
 
-    with open(filepath, "w", encoding="utf-8") as f:
-        if existing_header:
-            for line in existing_header:
-                if re.match(r"^#\s*(Rules|Total|Total Rules):\s*", line):
-                    key = line.split(":", 1)[0]
-                    f.write(f"{key}: {len(sorted_rules)}\n")
-                    continue
-                f.write(line)
-            if existing_header[-1].strip():
-                f.write("\n")
-        else:
-            filename = os.path.basename(filepath)
-            f.write(f"# Ruleset: {filename}\n")
-            f.write("# Cleaned by smart_cleanup.py\n\n")
-        for rule in sorted_rules:
-            f.write(rule + "\n")
+    out_lines = []
+    if existing_header:
+        for line in existing_header:
+            if re.match(r"^#\s*(Rules|Total|Total Rules):\s*", line):
+                key = line.split(":", 1)[0]
+                out_lines.append(f"{key}: {len(sorted_rules)}\n")
+            else:
+                out_lines.append(line)
+        if existing_header and existing_header[-1].strip():
+            out_lines.append("\n")
+    else:
+        filename = os.path.basename(filepath)
+        out_lines.append(f"# Ruleset: {filename}\n")
+        out_lines.append("# Cleaned by smart_cleanup.py\n\n")
+    for rule in sorted_rules:
+        out_lines.append(rule + "\n")
+
+    _atomic_write(filepath, "".join(out_lines))
 
 
 class RulesetCleanup:
@@ -221,6 +244,7 @@ class RulesetCleanup:
             "within_file_dedup": 0,
             "moved_direct_to_proxy": 0,
             "moved_proxy_to_direct": 0,
+            "nsfw_purged_from_social": 0,
             "cross_file_removed": 0,
             "semantic_cover_removed": 0,
             "direct_proxyish_remaining": 0,
@@ -310,6 +334,16 @@ class RulesetCleanup:
                     seen_covering_suffixes.add(payload)
             self.file_content[filename] = kept
 
+    def purge_nsfw_from_social(self):
+        """Remove adult/porn-keyword domains from SocialMedia.list (cross-contamination)."""
+        social = self.file_content.get("SocialMedia.list", {})
+        removed = 0
+        for payload in list(social):
+            if any(kw in payload for kw in NSFW_CONTAMINATION_KEYWORDS):
+                del social[payload]
+                removed += 1
+        self.stats["nsfw_purged_from_social"] = removed
+
     def audit(self):
         direct = self.file_content.get("Direct.list", {})
         proxy = self.file_content.get("GlobalProxy.list", {})
@@ -329,6 +363,7 @@ class RulesetCleanup:
     def run(self) -> Dict[str, int]:
         self.load()
         self.rebalance_generic_rules()
+        self.purge_nsfw_from_social()
         self.deduplicate_by_priority()
         self.audit()
         self.save()
@@ -340,12 +375,13 @@ def format_stats(stats: Dict[str, int]) -> str:
         "files",
         "moved_direct_to_proxy",
         "moved_proxy_to_direct",
+        "nsfw_purged_from_social",
         "cross_file_removed",
         "semantic_cover_removed",
         "direct_proxyish_remaining",
         "globalproxy_cn_remaining",
     )
-    return ", ".join(f"{key}={stats[key]}" for key in ordered_keys)
+    return ", ".join(f"{key}={stats.get(key, 0)}" for key in ordered_keys)
 
 
 def run_cleanup(ruleset_dirs: list = RULESET_DIRS) -> Dict[str, int]:

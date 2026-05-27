@@ -45,10 +45,20 @@ INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]", "["}
 # These keywords are NEVER allowed in the [Direct] ruleset.
 # Even if an upstream source mistakenly lists them as direct, we strip them.
 MANDATORY_PROXY_KEYWORDS = [
+    # Western services (never direct regardless of source)
     "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
     "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
     "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
-    "akamai", "fastly", "cloudflare", "browserleaks"
+    "akamai", "fastly", "cloudflare", "browserleaks",
+    # ByteDance INTERNATIONAL/OVERSEAS infrastructure (not Mainland China)
+    # byteoversea.com = ByteDance global CDN (non-CN), must not be Direct
+    "byteoversea",
+    # TikTok (international brand, distinct from Douyin which is CN-only)
+    "tiktok", "tiktokv", "tiktokcdn", "tiktokeu", "tiktokw", "muscdn",
+    # Lark international (lark.com = global, larkoffice for global users via VPN)
+    "lark.com",
+    # ByteOversea CDN row (tiktokrow = TikTok international row CDN)
+    "tiktokrow",
 ]
 
 RULESETS = [
