@@ -4,6 +4,9 @@
 
 | 脚本 | 用途 |
 |------|------|
+| `merge_bilibili_bundle.py` | 从 BiliUniverse + Maasea 刷新 📺 BiliBili增强合集 |
+| `merge_youtube_bundle.py` | 从 Maasea 刷新 📺 YouTube增强合集 |
+| `merge_weibo_bundle.py` | 刷新 🐦 微博去广告合集 |
 | `merge_apple_modules.py` | 合并 iRingo Maps/WeatherKit → Apple 服务增强合集 |
 | `merge_dns_modules.py` | 合并 GetSomeFries DNS 上游到 DNS & Host Enhanced |
 | `import_from_icloud_sr.py` | 从 iCloud 小火箭模块目录导入（需修改脚本内 `SR_DIR`） |

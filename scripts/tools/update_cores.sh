@@ -26,9 +26,9 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Installation paths
 SINGBOX_SYSTEM_PATH="/usr/local/bin/sing-box"
-SINGBOX_LOCAL_PATH="$PROJECT_ROOT/tools/config-manager-auto-update/bin/sing-box"
+SINGBOX_LOCAL_PATH="$PROJECT_ROOT/scripts/config-manager-auto-update/bin/sing-box"
 MIHOMO_SYSTEM_PATH="/usr/local/bin/mihomo"
-MIHOMO_LOCAL_PATH="$PROJECT_ROOT/tools/config-manager-auto-update/bin/mihomo"
+MIHOMO_LOCAL_PATH="$PROJECT_ROOT/scripts/config-manager-auto-update/bin/mihomo"
 
 # Detect system info
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')

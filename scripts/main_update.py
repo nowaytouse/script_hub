@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
 import argparse
+import subprocess
 import sys
 from datetime import datetime
 from lib.common import Logger, get_project_root
+from lib.pipeline_report import print_pipeline_summary
 
 # Import our managers
 from firewall_sync import sync_ports
@@ -19,18 +21,40 @@ from smart_cleanup import run_cleanup as run_ruleset_cleanup, format_stats as fo
 
 ROOT = get_project_root()
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
+CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "tools/update_cores.sh")
 
 # MAIN ORCHESTRATOR
 
 def main():
-    parser = argparse.ArgumentParser(description="Script Hub Python Main Orchestrator (v1.2 International)")
+    parser = argparse.ArgumentParser(description="Script Hub Python Main Orchestrator (v1.3)")
     parser.add_argument("--quick", action="store_true", help="Skip heavy sync operations")
     parser.add_argument("--execute", action="store_true", help="Apply all changes and push")
+    parser.add_argument(
+        "--unattended",
+        action="store_true",
+        help="CI/local unattended mode (same as --execute)",
+    )
     parser.add_argument("--force", action="store_true", help="Force update everything")
+    parser.add_argument(
+        "--with-core",
+        action="store_true",
+        help="Update local sing-box/mihomo binaries (optional, not for CI)",
+    )
     args = parser.parse_args()
+    if args.unattended:
+        args.execute = True
 
     start_time = datetime.now()
-    Logger.section("Script Hub Python Update Tool (v1.2 Native English)")
+    Logger.section("Script Hub Python Update Tool (v1.3)")
+
+    if args.with_core:
+        Logger.section("Core Binary Update")
+        if os.path.isfile(CORE_UPDATE_SCRIPT):
+            result = subprocess.run(["bash", CORE_UPDATE_SCRIPT], cwd=ROOT)
+            if result.returncode != 0:
+                Logger.warn("Core update script exited with errors (continuing pipeline).")
+        else:
+            Logger.warn(f"Core updater not found: {CORE_UPDATE_SCRIPT}")
 
     # 1. Upstream Sync
     if not args.quick:
@@ -79,11 +103,14 @@ def main():
     # 5. Module Consolidation & Shadowrocket Conversion
     Logger.section("Module Processing & Conversion")
     try:
-        import subprocess
-        # Run conversion script
-        subprocess.run(["python3", os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py")], check=True)
-        # Run consolidation script
-        subprocess.run(["python3", os.path.join(SCRIPTS_DIR, "consolidate_modules.py")], check=True)
+        subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py")],
+            check=True,
+        )
+        subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "consolidate_modules.py")],
+            check=True,
+        )
         Logger.success("Module processing and conversion completed.")
     except Exception as e:
         Logger.error(f"Module processing failed: {e}")
@@ -103,21 +130,30 @@ def main():
     # 7. Git Commit & Push
     if args.execute:
         Logger.section("Git Operations")
-        import subprocess
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
-        commit_msg = f"chore(ruleset): international-python-update {timestamp}"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        commit_msg = f"chore(ruleset): automated update {timestamp}"
         try:
-            subprocess.run(["git", "add", "."], check=True)
-            status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
-            if status.stdout:
-                subprocess.run(["git", "commit", "-m", commit_msg], check=True)
-                subprocess.run(["git", "push", "origin", "master"], check=True)
+            subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                cwd=ROOT,
+            )
+            if status.stdout.strip():
+                subprocess.run(
+                    ["git", "commit", "-m", commit_msg],
+                    check=True,
+                    cwd=ROOT,
+                )
+                subprocess.run(["git", "push", "origin", "master"], check=True, cwd=ROOT)
                 Logger.success("Changes pushed to GitHub successfully.")
             else:
                 Logger.info("No changes to commit (working tree clean).")
         except Exception as e:
             Logger.warn(f"Git operation failed: {e}")
 
+    print_pipeline_summary()
     duration = datetime.now() - start_time
     Logger.section(f"All Tasks Completed Successfully! (Duration: {duration})")
 

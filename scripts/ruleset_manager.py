@@ -61,6 +61,8 @@ RULESETS = [
     "StreamJP", "StreamUS", "StreamKR", "StreamHK", "StreamTW", "StreamEU"
 ]
 
+SPECIAL_MANAGED_RULESETS = {"AdBlock", "substore"}
+
 # --- RULESET MANAGER CLASS ---
 
 class RulesetManager:
@@ -358,14 +360,48 @@ class RulesetManager:
         Logger.section("Ruleset Processing (1:1 Logic)")
         os.makedirs(SURGE_DIR, exist_ok=True)
         # Exclude AdBlock and substore as they have specialized managers
-        SPECIAL_MANAGED = ["AdBlock", "substore"]
         all_files = [f[:-5] for f in os.listdir(SURGE_DIR) if f.endswith('.list')]
-        all_to_process = (set(RULESETS) | set(DEPRECATED_RULESETS) | set(all_files)) - set(SPECIAL_MANAGED)
+        all_to_process = (set(RULESETS) | set(DEPRECATED_RULESETS) | set(all_files)) - SPECIAL_MANAGED_RULESETS
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             executor.map(self.process_ruleset, sorted(list(all_to_process)))
+        self._prune_empty_rulesets()
         self._save_hashes()
-        Logger.info(f"Done: Merged {self.stats['merged']} | Skipped {self.stats['skipped']}")
+        Logger.info(
+            f"Done: Merged {self.stats['merged']} | Skipped {self.stats['skipped']} "
+            f"| Deleted {self.stats['deleted']}"
+        )
+
+    def _count_rules(self, path: str) -> int:
+        n = 0
+        for line in read_file(path):
+            s = line.strip()
+            if s and not s.startswith("#"):
+                n += 1
+        return n
+
+    def _prune_empty_rulesets(self) -> None:
+        """Remove empty deprecated .list files (legacy ruleset_cleaner.sh behavior)."""
+        if not os.path.isdir(SURGE_DIR):
+            return
+        for fname in os.listdir(SURGE_DIR):
+            if not fname.endswith(".list"):
+                continue
+            name = fname[:-5]
+            if name in SPECIAL_MANAGED_RULESETS:
+                continue
+            path = os.path.join(SURGE_DIR, fname)
+            if self._count_rules(path) > 0:
+                continue
+            if name in DEPRECATED_RULESETS:
+                os.remove(path)
+                src = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
+                if os.path.exists(src):
+                    os.remove(src)
+                self.stats["deleted"] += 1
+                Logger.warn(f"Pruned empty deprecated ruleset: {name}")
+            else:
+                Logger.warn(f"Empty ruleset not in deprecated list: {name}")
 
 if __name__ == "__main__":
     import argparse

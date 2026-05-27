@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from lib.module_sanitizer import parse_module, sanitize_file_content
 
@@ -40,6 +41,98 @@ UI_BADGES = {
     "Script Hub: 重写 & 规则集转换": "⭐",
     "🚫 Universal Ad-Blocking Rules (PROMAX)": "🔥",
 }
+
+META_CATEGORY_LINE = re.compile(r"^#!\s*category\s*[=:]\s*.*$", re.IGNORECASE)
+SR_CATEGORY_LINE = re.compile(r"^#\s*category\s*:.*$", re.IGNORECASE)
+
+
+def normalize_categories_tree(base_dir: Path, project_root: Path, pattern: str) -> int:
+    """Align #!category with on-disk folder (Head Expanse only under head_expanse/)."""
+    changed = 0
+    if not base_dir.exists():
+        return 0
+    for path in sorted(base_dir.rglob(pattern)):
+        try:
+            rel = path.relative_to(base_dir)
+        except ValueError:
+            continue
+        if len(rel.parts) < 2:
+            continue
+        cat_key = rel.parts[0]
+        if cat_key not in CATEGORIES:
+            continue
+
+        expected = CATEGORIES[cat_key]
+
+        new_text, modified = _apply_category_to_file(
+            path.read_text(encoding="utf-8"),
+            expected,
+            suffix=path.suffix.lower(),
+        )
+        if modified:
+            path.write_text(new_text, encoding="utf-8")
+            changed += 1
+            print(f"  📂 Category fixed: {path.relative_to(project_root)} → {expected}")
+    return changed
+
+
+def _apply_category_to_file(content: str, expected: str, *, suffix: str) -> Tuple[str, bool]:
+    is_surge = suffix == ".sgmodule"
+    category_line = f"#!category={expected}"
+    sr_line = f"# category: {expected}"
+
+    lines = content.splitlines()
+    out: List[str] = []
+    found = False
+    modified = False
+    name_idx = -1
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.lower().startswith("#!name"):
+            name_idx = len(out)
+
+        if is_surge and META_CATEGORY_LINE.match(stripped):
+            found = True
+            if stripped != category_line:
+                out.append(category_line)
+                modified = True
+            else:
+                out.append(line)
+            continue
+
+        if not is_surge and SR_CATEGORY_LINE.match(stripped):
+            found = True
+            if stripped != sr_line:
+                out.append(sr_line)
+                modified = True
+            else:
+                out.append(line)
+            continue
+
+        if not is_surge and META_CATEGORY_LINE.match(stripped):
+            found = True
+            if stripped != category_line:
+                out.append(category_line)
+                modified = True
+            else:
+                out.append(line)
+            continue
+
+        out.append(line)
+
+    if not found and is_surge:
+        insert_at = name_idx + 1 if name_idx >= 0 else 0
+        out.insert(insert_at, category_line)
+        modified = True
+    elif not found and not is_surge:
+        out.insert(0, sr_line)
+        modified = True
+
+    text = "\n".join(out)
+    if content.endswith("\n"):
+        text += "\n"
+    return text, modified
 
 
 def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:

@@ -16,6 +16,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from lib.module_catalog import (
     CATEGORIES,
     build_helper_html,
+    normalize_categories_tree,
     sanitize_tree,
     scan_modules,
     write_modules_json,
@@ -32,6 +33,11 @@ def run() -> int:
     print("=" * 60)
     print("📦 Module Catalog (sanitize · scan · JSON · HTML)")
     print("=" * 60)
+
+    print("\n📂 Normalizing module categories (folder = source of truth)...")
+    cat_surge = normalize_categories_tree(MODULE_DIR, PROJECT_ROOT, "*.sgmodule")
+    cat_sr = normalize_categories_tree(SR_MODULE_DIR, PROJECT_ROOT, "*.module")
+    print(f"   Fixed {cat_surge + cat_sr} file(s)")
 
     print("\n🧹 Sanitizing Surge modules...")
     surge_changed = sanitize_tree(MODULE_DIR, PROJECT_ROOT, "*.sgmodule")
