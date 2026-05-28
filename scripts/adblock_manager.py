@@ -39,7 +39,7 @@ ADBLOCK_CATALOG_JSON = os.path.join(ADBLOCK_DIR, "catalog.json")
 ADBLOCK_README = os.path.join(ADBLOCK_DIR, "README.md")
 ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.md")
 
-CDN_BASE_URL = "https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
 RULES_PER_SHARD = 100_000
 
 # Purpose taxonomy: internal key → display label + dedup priority (earlier = higher)

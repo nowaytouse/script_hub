@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS
-#!date=2026-05-29 01:28:55
+#!date=2026-05-29 02:11:02
 
 [Rule]
 DOMAIN,dns.alidns.com,DIRECT
@@ -13,30 +13,30 @@ DOMAIN,dns.pub,DIRECT
 DOMAIN,dot.pub,DIRECT
 DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_01.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_02.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT
-RULE-SET,https://fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_01.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_02.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT
 PROCESS-NAME,SogouInput,REJECT
 PROCESS-NAME,SogouServices,REJECT
 PROCESS-NAME,SogouTaskManager,REJECT

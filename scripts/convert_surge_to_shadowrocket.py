@@ -68,7 +68,7 @@ def fetch_ruleset(url_or_path):
     content = ""
     try:
         # 转换 jsdelivr 链接到本地路径
-        if "fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/" in url_or_path:
+        if any(cdn in url_or_path for cdn in ["fastly.jsdelivr.net/gh/nowaytouse/script_hub@master/", "cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/", "gcore.jsdelivr.net/gh/nowaytouse/script_hub@master/"]):
             rel_path = url_or_path.split("@master/")[-1]
             local_path = PROJECT_ROOT / rel_path
             if local_path.exists():
