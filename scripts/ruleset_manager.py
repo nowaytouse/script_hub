@@ -272,8 +272,7 @@ class RulesetManager:
         if p_info.get('node'): header.append(f"# Node: {p_info['node']}")
         header.extend([
             f"# Description: {p_info['desc']}",
-            f"# Rules: {rule_count}",
-            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"# Rules: {rule_count}"
         ])
         return "\n".join(header) + "\n"
 

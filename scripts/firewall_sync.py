@@ -70,7 +70,6 @@ def sync_ports(execute: bool = False):
         if START_MARKER in line:
             new_module_content.append(line)
             new_module_content.append(f"# Automated update from ports source\n")
-            new_module_content.append(f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             for rule in sorted(port_rules): new_module_content.append(f"{rule}\n")
             skip = True
             continue

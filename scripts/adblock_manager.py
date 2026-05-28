@@ -1014,7 +1014,6 @@ class AdBlockManager:
                     f"# Purpose: {meta['desc']}\n",
                     f"# Category-Key: {category}\n",
                     f"# Shard: {shard_label}\n",
-                    f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
                     f"# Total Rules: {len(chunk)}\n",
                 ]
                 content.extend(f"{rule}\n" for rule in chunk)
@@ -1029,7 +1028,6 @@ class AdBlockManager:
             "# Ruleset: AdBlock (LEGACY / REDIRECT)\n",
             "# This file is now split into multiple files in ruleset/AdBlock/\n",
             "# Please update your module to use the new split rulesets.\n",
-            f"# Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
         ]
         # Include top 1000 rules just in case
         all_reject_rules = []

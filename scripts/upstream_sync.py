@@ -186,7 +186,7 @@ class UpstreamSyncer:
                 lines = [l.strip() for l in content.splitlines() if l.strip() and not l.strip().startswith('#')]
                 if name == "reject-no-drop.conf":
                     lines = [l for l in lines if "bilibili" not in l.lower()]
-                final = f"# Ruleset: {name}\n# Updated: {datetime.now()}\n\n" + "\n".join(lines) + "\n"
+                final = f"# Ruleset: {name}\n\n" + "\n".join(lines) + "\n"
                 write_file(os.path.join(SKK_UPSTREAM_DIR, name), final)
                 Logger.success(f"SKK: {name} ({len(lines)} rules)")
 
