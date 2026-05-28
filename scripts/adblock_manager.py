@@ -1016,7 +1016,7 @@ class AdBlockManager:
                     f"# Shard: {shard_label}\n",
                     f"# Total Rules: {len(chunk)}\n",
                 ]
-                content.extend(f"{rule}\n" for rule in chunk)
+                content.extend(f"{self.normalize_rule(rule) or rule}\n" for rule in chunk)
                 write_file(filepath, "".join(content))
 
                 rel_path = os.path.relpath(filepath, ROOT)
@@ -1034,7 +1034,7 @@ class AdBlockManager:
         for cat in self.category_names:
             all_reject_rules.extend(self.filter_rules(self.rules["REJECT"][cat]))
         
-        legacy_content.extend(f"{rule}\n" for rule in all_reject_rules[:1000])
+        legacy_content.extend(f"{self.normalize_rule(rule) or rule}\n" for rule in all_reject_rules[:1000])
         write_file(ADBLOCK_LIST, "".join(legacy_content))
         self.prune_stale_rulesets(generated_files)
 
