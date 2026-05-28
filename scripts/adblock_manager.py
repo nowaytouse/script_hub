@@ -371,17 +371,19 @@ class AdBlockManager:
         if not rule or rule.startswith("#") or rule.startswith("RULE-SET,"):
             return None
 
-        # Remove policy (case-insensitive) - more aggressive to handle middle-of-line
+        # Remove policy (case-insensitive) - handle optional spaces around commas
         rule = re.sub(
-            r",(REJECT-NO-DROP|REJECT-DROP|REJECT-TINYGIF|REJECT-IMG|REJECT|DIRECT|PROXY)\b",
+            r"\s*,\s*(REJECT-NO-DROP|REJECT-DROP|REJECT-TINYGIF|REJECT-IMG|REJECT|DIRECT|PROXY)\b",
             "",
             rule,
             flags=re.IGNORECASE,
         )
-        # Remove common parameters (case-insensitive)
-        rule = re.sub(r",extended-matching\b", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r",pre-matching\b", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r",no-resolve\b", "", rule, flags=re.IGNORECASE)
+        # Remove common parameters (case-insensitive) - handle optional spaces
+        rule = re.sub(r"\s*,\s*extended-matching\b", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r"\s*,\s*pre-matching\b", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r"\s*,\s*no-resolve\b", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r"\s*,\s*force-cellular\b", "", rule, flags=re.IGNORECASE)
+        rule = re.sub(r"\s*,\s*update-interval=\d+", "", rule, flags=re.IGNORECASE)
         rule = re.sub(r"\s+", " ", rule).strip()
 
         if not rule:
@@ -389,8 +391,14 @@ class AdBlockManager:
 
         if "," in rule:
             parts = [p.strip() for p in rule.split(",")]
-            # If the last part is a policy or a placeholder, remove it
-            while parts and (parts[-1].upper() in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY", "REJECT-TINYGIF", "REJECT-IMG") or parts[-1] == "{{{Proxy}}}"):
+            # Strip trailing policies, options, and placeholders
+            strip_upper = {
+                "REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY",
+                "REJECT-TINYGIF", "REJECT-IMG",
+                "EXTENDED-MATCHING", "PRE-MATCHING", "NO-RESOLVE", "FORCE-CELLULAR",
+                "{{{PROXY}}}",
+            }
+            while parts and (parts[-1].upper() in strip_upper or parts[-1].upper().startswith("UPDATE-INTERVAL=")):
                 parts = parts[:-1]
             rule = ",".join(parts)
         else:
@@ -595,25 +603,15 @@ class AdBlockManager:
             self.seen_rules[policy].add(rendered)
 
     def render_policy_rule(self, normalized_rule: str, policy: str, raw_rule: str) -> str:
-        # Ensure policy is present and not duplicated
-        # Shadowrocket and Surge both prefer: TYPE,VALUE,POLICY,OPTIONS
-        parts = [p.strip() for p in normalized_rule.split(",")]
-        
-        # Build options set from raw_rule
-        options_found = []
-        if "extended-matching" in raw_rule.lower():
-            options_found.append("extended-matching")
-        if "pre-matching" in raw_rule.lower():
-            options_found.append("pre-matching")
-        if "no-resolve" in raw_rule.lower():
-            options_found.append("no-resolve")
+        """Return the BARE normalized rule (TYPE,VALUE only).
 
-        # Result is: TYPE, VALUE, POLICY
-        result_parts = parts + [policy]
-        if options_found:
-            result_parts.extend(options_found)
-            
-        return ",".join(result_parts)
+        Policy is already tracked by the dict key in self.rules[policy],
+        and options (extended-matching, pre-matching, no-resolve) belong
+        only on the RULE-SET line inside the .sgmodule, NOT on individual
+        rules stored in .list files.  Storing them here was the root cause
+        of every 'Invalid line' parse error in Surge external rulesets.
+        """
+        return normalized_rule
 
     def add_section_line(self, section_name: str, line: str) -> None:
         """Append a non-rule section line with cross-source deduplication."""
@@ -1016,7 +1014,8 @@ class AdBlockManager:
                     f"# Shard: {shard_label}\n",
                     f"# Total Rules: {len(chunk)}\n",
                 ]
-                content.extend(f"{self.normalize_rule(rule) or rule}\n" for rule in chunk)
+                # Rules are already bare (TYPE,VALUE) — write directly
+                content.extend(f"{rule}\n" for rule in chunk)
                 write_file(filepath, "".join(content))
 
                 rel_path = os.path.relpath(filepath, ROOT)
@@ -1034,7 +1033,7 @@ class AdBlockManager:
         for cat in self.category_names:
             all_reject_rules.extend(self.filter_rules(self.rules["REJECT"][cat]))
         
-        legacy_content.extend(f"{self.normalize_rule(rule) or rule}\n" for rule in all_reject_rules[:1000])
+        legacy_content.extend(f"{rule}\n" for rule in all_reject_rules[:1000])
         write_file(ADBLOCK_LIST, "".join(legacy_content))
         self.prune_stale_rulesets(generated_files)
 
@@ -1150,17 +1149,18 @@ class AdBlockManager:
 
     @staticmethod
     def _attach_policy(rule: str, policy: str) -> str:
-        policies = {
-            "REJECT",
-            "REJECT-DROP",
-            "REJECT-NO-DROP",
-            "DIRECT",
-            "PROXY",
-            "REJECT-TINYGIF",
-            "REJECT-IMG",
+        """Attach policy to a bare rule for inline module output.
+
+        Strips any stale policy / options that might have leaked through,
+        then appends the correct policy.
+        """
+        strip_values = {
+            "REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY",
+            "REJECT-TINYGIF", "REJECT-IMG",
+            "EXTENDED-MATCHING", "PRE-MATCHING", "NO-RESOLVE",
         }
         parts = [p.strip() for p in rule.split(",") if p.strip()]
-        while parts and parts[-1] in policies:
+        while parts and parts[-1].upper() in strip_values:
             parts.pop()
         parts.append(policy)
         return ",".join(parts)

@@ -2,10 +2,8 @@
 # Purpose: privacy-protection-tools anti-AD 主列表与 discretion
 # Category-Key: AntiAD
 # Shard: 1/1
-# Total Rules: 1208
+# Total Rules: 1216
 
-DOMAIN,DOMAIN-SUFFIX-mob-cld.alicdn.com
-DOMAIN,DOMAIN-SUFFIX.advp.apple.com
 DOMAIN,bsccdn.net
 DOMAIN,ietheivaicai.com
 DOMAIN,kuiniuca.com
@@ -67,6 +65,9 @@ DOMAIN-SUFFIX,adanxing.com
 DOMAIN-SUFFIX,adapi.shouji.360.cn
 DOMAIN-SUFFIX,adapter.shouji.360.cn
 DOMAIN-SUFFIX,adashx.ut.uc.cn
+DOMAIN-SUFFIX,adcdn.tencentmusic.com
+DOMAIN-SUFFIX,adclick.tencentmusic.com
+DOMAIN-SUFFIX,adexpo.tencentmusic.com
 DOMAIN-SUFFIX,adfancy.com.cn
 DOMAIN-SUFFIX,adh5.vivo.com.cn
 DOMAIN-SUFFIX,adim.pinduoduo.com
@@ -77,7 +78,6 @@ DOMAIN-SUFFIX,admarvel.top
 DOMAIN-SUFFIX,admate.cn
 DOMAIN-SUFFIX,admatex.cn
 DOMAIN-SUFFIX,admatex.com
-DOMAIN-SUFFIX,admobile.top
 DOMAIN-SUFFIX,adnet.vivo.com.cn
 DOMAIN-SUFFIX,adnetstatic.vivo.com.cn
 DOMAIN-SUFFIX,adnewnc.app.autohome.com.cn
@@ -126,6 +126,7 @@ DOMAIN-SUFFIX,analyticsweb.net
 DOMAIN-SUFFIX,anonm.io
 DOMAIN-SUFFIX,anybest.pw
 DOMAIN-SUFFIX,aoooccc.lizhuizhui.cn
+DOMAIN-SUFFIX,apd-pcdnwxlogin.teg.tencent-cloud.net
 DOMAIN-SUFFIX,api-analytics.huami.com
 DOMAIN-SUFFIX,api.22lianmeng.com
 DOMAIN-SUFFIX,api.baomoi.com
@@ -140,6 +141,7 @@ DOMAIN-SUFFIX,app.convertful.com
 DOMAIN-SUFFIX,app.fdwdqc.cn
 DOMAIN-SUFFIX,app.leadspin.dk
 DOMAIN-SUFFIX,app.sephora.com
+DOMAIN-SUFFIX,appcloud2.in.zhihu.com
 DOMAIN-SUFFIX,applequan.com
 DOMAIN-SUFFIX,applog.musical.ly
 DOMAIN-SUFFIX,applog.reader.qq.com
@@ -213,6 +215,7 @@ DOMAIN-SUFFIX,bn4sch101123110.wns.windows.com
 DOMAIN-SUFFIX,bn4sch101123202.wns.windows.com
 DOMAIN-SUFFIX,bn4sch102110124.wns.windows.com
 DOMAIN-SUFFIX,bnet.playm8ru.win
+DOMAIN-SUFFIX,bootpreload.uve.weibo.com
 DOMAIN-SUFFIX,brg0.com
 DOMAIN-SUFFIX,bsv.atm.youku.com
 DOMAIN-SUFFIX,bugsnag.com
@@ -928,6 +931,8 @@ DOMAIN-SUFFIX,pranmcpkx.com
 DOMAIN-SUFFIX,preciso.net
 DOMAIN-SUFFIX,privacytools.com.br
 DOMAIN-SUFFIX,private.dmscookie.com
+DOMAIN-SUFFIX,proxy-mob-cld.alicdn.com
+DOMAIN-SUFFIX,proxy.advp.apple.com
 DOMAIN-SUFFIX,prt-stsdk.vivo.com.cn
 DOMAIN-SUFFIX,publish-pic-cpu.baidu.com
 DOMAIN-SUFFIX,push-content.springernature.io
@@ -1075,6 +1080,7 @@ DOMAIN-SUFFIX,tingyunfenxi.com
 DOMAIN-SUFFIX,titanpush.com.br
 DOMAIN-SUFFIX,tj.banzhu111.xyz
 DOMAIN-SUFFIX,tl.zcsfs.cn
+DOMAIN-SUFFIX,tmeadbak.y.qq.com
 DOMAIN-SUFFIX,tmuseum.com.cn
 DOMAIN-SUFFIX,toastibar-cdn.makeprosimp.com
 DOMAIN-SUFFIX,tob-tracker.yximgs.com
@@ -1127,6 +1133,7 @@ DOMAIN-SUFFIX,uxek.85nv96.cn
 DOMAIN-SUFFIX,v.miguvideo.com
 DOMAIN-SUFFIX,v10-win.vortex.data.microsoft.com.akadns.net
 DOMAIN-SUFFIX,v2html.atm.youku.com
+DOMAIN-SUFFIX,vali-g1.cp31.ott.cibntv.net
 DOMAIN-SUFFIX,valt.atm.youku.com
 DOMAIN-SUFFIX,vercel-analytics.com
 DOMAIN-SUFFIX,verisoul.ai
@@ -1191,6 +1198,7 @@ DOMAIN-SUFFIX,yap.yahoo.com
 DOMAIN-SUFFIX,yeeok.com.cn
 DOMAIN-SUFFIX,ymph.y8u975.cn
 DOMAIN-SUFFIX,yoke.jyhlo0.com
+DOMAIN-SUFFIX,youku-acs.m.taobao.com
 DOMAIN-SUFFIX,youku-crm-product.youku.com
 DOMAIN-SUFFIX,your-analytics.org
 DOMAIN-SUFFIX,yourbow.com
