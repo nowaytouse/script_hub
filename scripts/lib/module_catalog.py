@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from lib.module_sanitizer import parse_module, sanitize_file_content
+from lib.common import write_file
 
 PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
 CDN_BASE = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
@@ -206,7 +207,7 @@ def write_modules_json(modules: List[Dict[str, Any]], output_path: Path) -> None
         },
         "modules": modules,
     }
-    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_file(str(output_path), json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
 def _modules_to_helper_groups(
@@ -371,4 +372,4 @@ def build_helper_html(
     </script>
 </body>
 </html>"""
-    output_path.write_text(html, encoding="utf-8")
+    write_file(str(output_path), html)

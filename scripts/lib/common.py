@@ -72,7 +72,35 @@ def read_file(file_path: str) -> List[str]:
             return f.readlines()
 
 def write_file(file_path: str, content: str):
-    """Atomically write *content* to *file_path* (tmp → rename), creating parent dirs."""
+    """Atomically write *content* to *file_path* (tmp → rename), creating parent dirs.
+    Only writes if the actual content (excluding dynamic comments like timestamps/dates/versions) changed.
+    """
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                old_content = f.read()
+            
+            def strip_dynamic(text: str) -> str:
+                lines = text.splitlines()
+                filtered = []
+                for line in lines:
+                    stripped = line.strip()
+                    # Skip lines with date, version or update timestamps
+                    if (stripped.startswith("#") and any(k in stripped.lower() for k in ("updated", "date"))):
+                        continue
+                    if stripped.startswith("#!date") or stripped.startswith("#!version"):
+                        continue
+                    if '"generated":' in stripped or '"date":' in stripped:
+                        continue
+                    filtered.append(line)
+                return "\n".join(filtered)
+            
+            if strip_dynamic(old_content) == strip_dynamic(content):
+                # Functionally identical, skip write
+                return
+        except Exception:
+            pass
+
     dir_path = os.path.dirname(file_path) or "."
     os.makedirs(dir_path, exist_ok=True)
     tmp = file_path + ".tmp~"
