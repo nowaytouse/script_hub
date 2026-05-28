@@ -80,20 +80,29 @@ def write_file(file_path: str, content: str):
             with open(file_path, 'r', encoding='utf-8') as f:
                 old_content = f.read()
             
+            import re as _re
+            # Pre-compiled patterns for efficiency
+            _DATE_BRACKET = _re.compile(r'\[\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?\]')
+
             def strip_dynamic(text: str) -> str:
                 lines = text.splitlines()
                 filtered = []
                 for line in lines:
                     stripped = line.strip()
-                    # Skip lines with date, version or update timestamps
+                    # Skip pure timestamp/date comment lines
                     if (stripped.startswith("#") and any(k in stripped.lower() for k in ("updated", "date", "生成于"))):
                         continue
                     if stripped.startswith("#!date") or stripped.startswith("#!version"):
                         continue
-                    if '"generated":' in stripped or '"date":' in stripped or '"updated":' in stripped:
+                    # Skip JSON lines with dynamic timestamp fields
+                    if '\"generated\":' in stripped or '\"date\":' in stripped or '\"updated\":' in stripped:
                         continue
                     if "自动生成于" in stripped or "generated at" in stripped.lower():
                         continue
+                    # Strip inline [YYYY-MM-DD] or [YYYY-MM-DD HH:MM] date tokens
+                    # (e.g. module name "PROMAX - [2026-05-29]" changes daily)
+                    if stripped.startswith("#") and _DATE_BRACKET.search(stripped):
+                        line = _DATE_BRACKET.sub("[DATE]", line)
                     filtered.append(line)
                 return "\n".join(filtered)
             

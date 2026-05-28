@@ -96,7 +96,8 @@ class UpstreamSyncer:
             result = subprocess.run(["which", "sing-box"], capture_output=True, text=True)
             if result.returncode == 0:
                 return result.stdout.strip()
-        except: pass
+        except Exception:
+            pass  # which/not-found is expected on some systems
 
         # 2. Check local root
         local_path = os.path.join(ROOT, "sing-box")
@@ -266,19 +267,29 @@ class UpstreamSyncer:
         Logger.section("Syncing Amplify Nexus Modules")
         os.makedirs(MODULE_DIR, exist_ok=True)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(self.process_nexus_module, url) for url in NEXUS_MODULES]
-            concurrent.futures.wait(futures)
+            futures = {executor.submit(self.process_nexus_module, url): url for url in NEXUS_MODULES}
+            for future in concurrent.futures.as_completed(futures):
+                url = futures[future]
+                try:
+                    future.result()
+                except Exception as exc:
+                    Logger.warn(f"Nexus sync failed [{url}]: {exc}")
 
     def sync_local_sources(self):
         """Sync upstream modules that are merged into PROMAX (not standalone)."""
         Logger.section("Syncing Local-Source Modules (→ PROMAX)")
         os.makedirs(LOCAL_SOURCES_DIR, exist_ok=True)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [
-                executor.submit(self.process_local_source_module, fname, url)
+            futures = {
+                executor.submit(self.process_local_source_module, fname, url): fname
                 for fname, url in LOCAL_SOURCE_MODULES.items()
-            ]
-            concurrent.futures.wait(futures)
+            }
+            for future in concurrent.futures.as_completed(futures):
+                fname = futures[future]
+                try:
+                    future.result()
+                except Exception as exc:
+                    Logger.warn(f"LocalSource sync failed [{fname}]: {exc}")
 
     def process_metacubex_rule(self, name: str, url: str):
         content = self.download(url)
@@ -319,15 +330,23 @@ class UpstreamSyncer:
         try:
             re.compile(pattern)
             return True
-        except:
+        except re.error:
             return False
 
     def sync_metacubex(self):
         Logger.section("Syncing MetaCubeX Rules (Concurrent)")
         os.makedirs(METACUBEX_DIR, exist_ok=True)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(self.process_metacubex_rule, name, url) for name, url in METACUBEX_RULES.items()]
-            concurrent.futures.wait(futures)
+            futures = {
+                executor.submit(self.process_metacubex_rule, name, url): name
+                for name, url in METACUBEX_RULES.items()
+            }
+            for future in concurrent.futures.as_completed(futures):
+                name = futures[future]
+                try:
+                    future.result()
+                except Exception as exc:
+                    Logger.warn(f"MetaCubeX sync failed [{name}]: {exc}")
 
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
