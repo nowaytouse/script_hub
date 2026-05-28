@@ -14,6 +14,7 @@ ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
 SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
 MODULE_DIR = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "module/local_sources")
 
 # CONFIGURATION
 
@@ -68,8 +69,14 @@ NEXUS_MODULES = [
     "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule",
     "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule",
     "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule",
-    "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module"
 ]
+
+# Modules merged directly into PROMAX via local_sources (include_sections=True).
+# These are NOT shown as standalone modules in the helper HTML.
+# Format: { output_filename: upstream_url }
+LOCAL_SOURCE_MODULES = {
+    "XWebAds.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
+}
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
 HEAD_EXPANSE_GROUP = "『 🔝 Head Expanse › 首端扩域 』"
@@ -242,11 +249,35 @@ class UpstreamSyncer:
         write_file(target_path, final_content)
         Logger.success(f"Nexus: {filename}")
 
+    def process_local_source_module(self, filename: str, url: str):
+        """Download an upstream module into local_sources/ for PROMAX merging (include_sections=True)."""
+        content_bytes = self.download(url)
+        if not content_bytes:
+            return
+        content = content_bytes.decode('utf-8', errors='ignore')
+        if "<!DOCTYPE html>" in content:
+            Logger.error(f"Invalid file (HTML) for local_source: {filename}")
+            return
+        target_path = os.path.join(LOCAL_SOURCES_DIR, filename)
+        write_file(target_path, content)
+        Logger.success(f"LocalSource: {filename} ← {url}")
+
     def sync_nexus(self):
         Logger.section("Syncing Amplify Nexus Modules")
         os.makedirs(MODULE_DIR, exist_ok=True)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(self.process_nexus_module, url) for url in NEXUS_MODULES]
+            concurrent.futures.wait(futures)
+
+    def sync_local_sources(self):
+        """Sync upstream modules that are merged into PROMAX (not standalone)."""
+        Logger.section("Syncing Local-Source Modules (→ PROMAX)")
+        os.makedirs(LOCAL_SOURCES_DIR, exist_ok=True)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [
+                executor.submit(self.process_local_source_module, fname, url)
+                for fname, url in LOCAL_SOURCE_MODULES.items()
+            ]
             concurrent.futures.wait(futures)
 
     def process_metacubex_rule(self, name: str, url: str):

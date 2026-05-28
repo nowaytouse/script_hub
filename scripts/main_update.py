@@ -62,6 +62,7 @@ def main():
         syncer.sync_skk()
         syncer.sync_nexus()
         syncer.sync_metacubex()
+        syncer.sync_local_sources()   # Sync upstream modules → PROMAX local_sources
     else:
         Logger.info("Quick mode: Skipping upstream sync.")
 

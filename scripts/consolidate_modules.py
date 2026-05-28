@@ -31,10 +31,10 @@ HELPER_HTML = PROJECT_ROOT / "module" / "surge_module_helper.html"
 # Critical modules that MUST appear in the HTML after every build.
 # Add new module stems here whenever a new module is permanently added.
 REQUIRED_MODULE_STEMS = {
-    "XWebAds",
     "WeChat_Enhance",
     "boxjs.rewrite.surge",
     "Sub_Info",
+    # XWebAds is merged into PROMAX via local_sources — not a standalone module
 }
 
 
