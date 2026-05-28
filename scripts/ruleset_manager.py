@@ -241,8 +241,10 @@ class RulesetManager:
                 return ""
         
         # 2. Cleanup features
-        r = re.sub(r',(REJECT|DIRECT|PROXY|REJECT-DROP|REJECT-TINYGIF|REJECT-NO-DROP|REJECT-IMG)(,.*)*$', '', r)
-        r = r.replace(',extended-matching', '').replace(',pre-matching', '').replace(',no-resolve', '')
+        # Remove trailing policy and any following options robustly (allow optional spaces)
+        r = re.sub(r"\s*,\s*(REJECT|DIRECT|PROXY|REJECT-DROP|REJECT-TINYGIF|REJECT-NO-DROP|REJECT-IMG)(?:,.*)?$", "", r, flags=re.IGNORECASE)
+        # Remove common modifiers with optional surrounding spaces
+        r = re.sub(r"\s*,\s*(extended-matching|pre-matching|no-resolve)\b", "", r, flags=re.IGNORECASE)
         
         if r.startswith('IP-CIDR,') and '::' in r: r = r.replace('IP-CIDR,', 'IP-CIDR6,', 1)
         if any(k in r for k in ["AND,", "OR,", "NOT,"]): return ""
