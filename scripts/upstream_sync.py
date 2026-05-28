@@ -67,7 +67,8 @@ NEXUS_MODULES = [
     "https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule",
     "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule",
     "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule",
-    "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"
+    "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule",
+    "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module"
 ]
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
@@ -193,7 +194,11 @@ class UpstreamSyncer:
         import urllib.parse
         filename = os.path.basename(url)
         filename = urllib.parse.unquote(filename)
-        if not filename.endswith(('.sgmodule', '.module')): filename += ".sgmodule"
+        # Always use .sgmodule for the Surge directory to keep it consistent
+        if filename.endswith(".module"):
+            filename = filename[:-7] + ".sgmodule"
+        elif not filename.endswith(".sgmodule"):
+            filename += ".sgmodule"
         
         if filename in PROTECTED_MODULES:
             Logger.info(f"Skipping protected module: {filename}")

@@ -858,12 +858,25 @@ class AdBlockManager:
             return []
 
         base_name = urllib.parse.unquote(os.path.basename(entry.source))
-        candidates = {base_name}
-        matches = set(MODULE_TARGET_ALIASES.get(base_name, []))
+        
+        # Build list of potential names by stripping known module suffixes and trying all
+        stem = base_name
+        for suffix in MODULE_SUFFIXES:
+            if base_name.endswith(suffix):
+                stem = base_name[:-len(suffix)]
+                break
+                
+        candidates = {stem + suffix for suffix in MODULE_SUFFIXES}
+        candidates.add(base_name)
+        
+        matches = set()
+        for cand in candidates:
+            matches.update(MODULE_TARGET_ALIASES.get(cand, []))
 
         for root_dir, _, filenames in os.walk(SURGE_MODULE_DIR):
-            if base_name in filenames:
-                matches.add(os.path.join(root_dir, base_name))
+            for cand in candidates:
+                if cand in filenames:
+                    matches.add(os.path.join(root_dir, cand))
 
         return sorted(matches)
 

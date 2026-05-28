@@ -2,9 +2,10 @@
 # Policy: PROXY
 # Node: Any
 # Description: Microsoft services
-# Rules: 693
-# Updated: 2026-05-28 16:09:40
+# Rules: 694
+# Updated: 2026-05-29 00:22:14
 
+DOMAIN,cn.windowssearch.com
 DOMAIN,github-api.arkoselabs.com
 DOMAIN,github-cloud.s3.amazonaws.com
 DOMAIN,github-production-release-asset-2e65be.s3.amazonaws.com
