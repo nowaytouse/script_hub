@@ -86,11 +86,13 @@ def write_file(file_path: str, content: str):
                 for line in lines:
                     stripped = line.strip()
                     # Skip lines with date, version or update timestamps
-                    if (stripped.startswith("#") and any(k in stripped.lower() for k in ("updated", "date"))):
+                    if (stripped.startswith("#") and any(k in stripped.lower() for k in ("updated", "date", "生成于"))):
                         continue
                     if stripped.startswith("#!date") or stripped.startswith("#!version"):
                         continue
-                    if '"generated":' in stripped or '"date":' in stripped:
+                    if '"generated":' in stripped or '"date":' in stripped or '"updated":' in stripped:
+                        continue
+                    if "自动生成于" in stripped or "generated at" in stripped.lower():
                         continue
                     filtered.append(line)
                 return "\n".join(filtered)
