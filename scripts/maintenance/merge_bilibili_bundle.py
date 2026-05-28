@@ -20,17 +20,16 @@ SOURCES = [
     ("Enhanced", "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"),
     ("Global", "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"),
     ("Redirect", "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"),
-    ("ADBlock", "https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule"),
     ("Helper", "https://raw.githubusercontent.com/Maasea/sgmodule/master/Bilibili.Helper.sgmodule"),
 ]
 
 HEADER = {
     "name": "📺 BiliBili增强合集",
-    "desc": "合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/ADBlock/Helper）",
+    "desc": "合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/Helper）",
     "author": "BiliUniverse, Maasea",
     "icon": "https://www.bilibili.com/favicon.ico",
     "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
-    "tag": "BiliBili, 增强, 去广告",
+    "tag": "BiliBili, 增强",
 }
 
 

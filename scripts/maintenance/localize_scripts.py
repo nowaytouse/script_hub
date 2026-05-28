@@ -11,7 +11,7 @@ import sys
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
-from lib.common import _BROWSER_UA
+from lib.common import _BROWSER_UA, safe_download_binary, Logger
 
 ROOT = Path(__file__).parent.parent.parent
 MODULE_DIRS = [ROOT / "module/surge(main)", ROOT / "module/shadowrocket"]
@@ -31,7 +31,7 @@ def is_valid_url(url):
     return True
 
 def download_script(url):
-    """Download script with multi-UA retry logic."""
+    """Download script with centralized download utility."""
     if not is_valid_url(url):
         print(f"  ⏭️  Skipping invalid/regex URL: {url}")
         return None
@@ -51,26 +51,12 @@ def download_script(url):
     if local_path.exists():
         return local_filename
 
-    proxy = "127.0.0.1:7890"
-    for i, ua in enumerate(USER_AGENTS[:1]):  # single UA only
-        try:
-            print(f"  📥 Attempt {i+1} [{ua.split('/')[0]}]: {url}")
-            result = subprocess.run(
-                [
-                    "curl", "-L", "-s", "-m", "10", "-f",
-                    "--proxy", proxy,
-                    "--user-agent", ua,
-                    url
-                ],
-                capture_output=True, check=True
-            )
-            if result.stdout:
-                with open(local_path, "wb") as f:
-                    f.write(result.stdout)
-                return local_filename
-        except:
-            time.sleep(0.5)
-            continue
+    print(f"  📥 Downloading script: {url}")
+    content = safe_download_binary(url, retries=2, timeout=15)
+    if content:
+        with open(local_path, "wb") as f:
+            f.write(content)
+        return local_filename
     
     print(f"  ⚠️  Keep remote (download failed): {url}")
     return None

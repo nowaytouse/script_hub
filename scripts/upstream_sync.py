@@ -76,6 +76,7 @@ NEXUS_MODULES = [
 # Format: { output_filename: upstream_url }
 LOCAL_SOURCE_MODULES = {
     "XWebAds.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
+    "BiliBili.ADBlock.sgmodule": "https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule",
 }
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
@@ -162,19 +163,21 @@ class UpstreamSyncer:
         return None
 
     def download_to_file(self, url: str, dest_path: str) -> bool:
-        """Download a large file directly to disk (streams via curl -o)."""
+        """Download a large file directly to disk (streams via curl -o) with detailed error reporting."""
+        cmd = ["curl", "-L", "-s", "-m", "300", "-f",
+               "-H", f"User-Agent: {_BROWSER_UA}", "-o", dest_path, url]
         try:
-            subprocess.run(
-                ["curl", "-L", "-s", "-m", "300", "-f",
-                 "-H", f"User-Agent: {_BROWSER_UA}", "-o", dest_path, url],
-                check=True
-            )
-            return True
+            result = subprocess.run(cmd, capture_output=True)
+            if result.returncode == 0:
+                return True
+            else:
+                stderr = result.stderr.decode("utf-8", errors="ignore").strip()
+                Logger.warn(f"File download failed: {url} | exit code {result.returncode} | stderr: {stderr}")
         except Exception as e:
             Logger.warn(f"File download failed: {url} - {e}")
-            if os.path.exists(dest_path):
-                os.remove(dest_path)
-            return False
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+        return False
 
     def download(self, url: str) -> bytes:
         """Download URL content; returns empty bytes on failure."""
@@ -294,8 +297,10 @@ class UpstreamSyncer:
     def process_metacubex_rule(self, name: str, url: str):
         content = self.download(url)
         if not content: return
-        tmp_srs = f"/tmp/{name}_{os.getpid()}.srs"
-        tmp_json = f"/tmp/{name}_{os.getpid()}.json"
+        cache_dir = os.path.join(ROOT, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        tmp_srs = os.path.join(cache_dir, f"{name}_{os.getpid()}.srs")
+        tmp_json = os.path.join(cache_dir, f"{name}_{os.getpid()}.json")
         try:
             with open(tmp_srs, 'wb') as f: f.write(content)
             if not self.singbox_path:
@@ -353,3 +358,4 @@ if __name__ == "__main__":
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
+    syncer.sync_local_sources()

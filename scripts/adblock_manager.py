@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA
+from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download
 from lib.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
 
 # ============================================================================
@@ -236,25 +236,7 @@ class AdBlockManager:
 
     def _download(self, url: str) -> Optional[str]:
         url = urllib.parse.unquote(url)
-        for attempt in range(3):
-            try:
-                result = subprocess.run(
-                    [
-                        "curl", "-L", "-s", "-m", "60", "-f",
-                        "-H", f"User-Agent: {_BROWSER_UA}",
-                        url
-                    ],
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                )
-                if result.returncode == 0 and result.stdout.strip():
-                    return result.stdout
-            except Exception as exc:
-                if attempt == 2:
-                    Logger.warn(f"Download failed for {url}: {exc}")
-        return None
+        return safe_download(url, retries=2, timeout=60)
 
     def discover_local_modules(self) -> List[str]:
         discovered_paths = []

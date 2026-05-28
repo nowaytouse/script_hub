@@ -373,3 +373,56 @@ def build_helper_html(
 </body>
 </html>"""
     write_file(str(output_path), html)
+
+
+def write_shadowrocket_modules_json(
+    modules: List[Dict[str, Any]],
+    output_path: Path,
+    project_root: Path,
+) -> None:
+    """Generate module/shadowrocket_modules_data.json from modules catalog."""
+    categories_data = {}
+    total_sr_modules = 0
+    cat_keys = ["amplify_nexus", "head_expanse", "narrow_pierce"]
+    category_descs = {
+        "amplify_nexus": "功能增强类模块",
+        "head_expanse": "广告拦截平台类",
+        "narrow_pierce": "App专项去广告",
+    }
+    for cat in cat_keys:
+        categories_data[cat] = {
+            "name": CATEGORY_SHORT[cat],
+            "desc": category_descs[cat],
+            "items": [],
+        }
+
+    for m in modules:
+        if m.get("merged_into"):
+            continue
+        cat = m["category"]
+        if cat not in categories_data:
+            continue
+        path = m["path"]
+        sr_rel_path = path.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+        if not (project_root / sr_rel_path).exists():
+            continue
+        desc = m.get("desc", "")
+        if desc and not desc.startswith("[🚀SR]"):
+            desc = f"[🚀SR] {desc}"
+        url = CDN_BASE + urllib.parse.quote(sr_rel_path)
+        categories_data[cat]["items"].append(
+            {
+                "name": m.get("name", m["filename"]),
+                "desc": desc,
+                "url": url,
+            }
+        )
+        total_sr_modules += 1
+
+    payload = {
+        "generated": datetime.now().isoformat(),
+        "categories": categories_data,
+        "total": total_sr_modules,
+    }
+    write_file(str(output_path), json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+

@@ -196,7 +196,10 @@ def safe_download(url: str, binary: bool = False, retries: int = 1,
                   timeout: int = 30) -> Optional[str]:
     """Download text content from *url*.  Returns None on failure / HTML response."""
     raw = _curl_fetch(url, timeout=timeout, retries=retries)
-    if raw is None or _is_html_content(raw):
+    if raw is None:
+        return None
+    if _is_html_content(raw):
+        Logger.warn(f"Download rejected: {url} returned HTML content instead of raw rule/script data (blocked or redirected).")
         return None
     return raw.decode("utf-8", errors="replace") if not binary else raw  # type: ignore[return-value]
 
@@ -205,7 +208,10 @@ def safe_download_binary(url: str, retries: int = 1,
                          timeout: int = 30) -> Optional[bytes]:
     """Download binary content from *url*.  Returns None on failure / HTML response."""
     raw = _curl_fetch(url, timeout=timeout, retries=retries)
-    if raw is None or _is_html_content(raw):
+    if raw is None:
+        return None
+    if _is_html_content(raw):
+        Logger.warn(f"Download rejected: {url} returned HTML content instead of binary data.")
         return None
     return raw
 
@@ -213,16 +219,23 @@ def safe_download_binary(url: str, retries: int = 1,
 # ── internal ──────────────────────────────────────────────────────────────────
 
 def _curl_fetch(url: str, *, timeout: int = 30, retries: int = 1) -> Optional[bytes]:
-    """Low-level curl wrapper shared by safe_download* helpers."""
+    """Low-level curl wrapper shared by safe_download* helpers with descriptive error reporting."""
     cmd = ["curl", "-L", "-s", "-m", str(timeout), "-f",
            "-H", f"User-Agent: {_BROWSER_UA}", url]
+    last_err = None
     for attempt in range(retries + 1):
         try:
             result = subprocess.run(cmd, capture_output=True)
             if result.returncode == 0:
                 return result.stdout
-        except Exception:
-            pass
+            else:
+                stderr_msg = result.stderr.decode("utf-8", errors="ignore").strip()
+                last_err = f"curl exit code {result.returncode}. Stderr: {stderr_msg or 'No stderr'}"
+        except Exception as e:
+            last_err = f"Exception: {e}"
+        
         if attempt < retries:
             time.sleep(2 ** attempt)
+    
+    Logger.warn(f"Download failed: {url} | Reason: {last_err}")
     return None

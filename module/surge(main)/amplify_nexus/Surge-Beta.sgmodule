@@ -10,4 +10,4 @@ Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=ht
 {{{sync}}}=type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}},argument="sync_success_notify={{{sync_success_notify}}}"
 
 [MITM]
-hostname = %APPEND% sub.store
+hostname = %APPEND% sub.store, -github.com, -api.github.com, -*.githubusercontent.com

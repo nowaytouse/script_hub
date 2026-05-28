@@ -2,12 +2,20 @@
 # Policy: PROXY
 # Node: US
 # Description: US streaming services
-# Rules: 1419
+# Rules: 1441
 
+DOMAIN,cbsi.live.ott.irdeto.com
+DOMAIN,cbsplaylistserver.aws.syncbak.com
+DOMAIN,cbsservice.aws.syncbak.com
+DOMAIN,discovery-us.conax.cloud
+DOMAIN,dplus-northamerica-cloudfront-gcs.prod-vod.h264.io
+DOMAIN,dplus-northamerica.media-edge.prod-vod.h264.io
 DOMAIN,e13252.dscg.akamaiedge.net
+DOMAIN,link.theplatform.com
 DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
 DOMAIN,netflix.com.edgesuite.net
 DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
+DOMAIN-KEYWORD,discovery.uplynk.com
 DOMAIN-KEYWORD,dualstack.apiproxy-
 DOMAIN-KEYWORD,dualstack.ichnaea-web-
 DOMAIN-KEYWORD,netflixdnstest
@@ -28,10 +36,18 @@ DOMAIN-SUFFIX,bamgrid.com
 DOMAIN-SUFFIX,bcbolthboa-a.akamaihd.net
 DOMAIN-SUFFIX,beautyandthebeastmusical.co.uk
 DOMAIN-SUFFIX,callhulu.com
+DOMAIN-SUFFIX,cbsaavideo.com
+DOMAIN-SUFFIX,cbsi.com
+DOMAIN-SUFFIX,cbsivideo.com
 DOMAIN-SUFFIX,cf-images.ap-southeast-1.prod.boltdns.net
 DOMAIN-SUFFIX,cinemax.com
 DOMAIN-SUFFIX,dai3fd1oh325y.cloudfront.net
 DOMAIN-SUFFIX,dilcdn.com
+DOMAIN-SUFFIX,disco-api.com
+DOMAIN-SUFFIX,discovery.com
+DOMAIN-SUFFIX,discoveryplus.co.uk
+DOMAIN-SUFFIX,discoveryplus.com
+DOMAIN-SUFFIX,discoveryplus.in
 DOMAIN-SUFFIX,disney-asia.com
 DOMAIN-SUFFIX,disney-discount.com
 DOMAIN-SUFFIX,disney-plus.net
@@ -123,6 +139,7 @@ DOMAIN-SUFFIX,disneytvajobs.com
 DOMAIN-SUFFIX,disneyworld-go.com
 DOMAIN-SUFFIX,dlp-media.com
 DOMAIN-SUFFIX,dmed.technology
+DOMAIN-SUFFIX,dnitv.com
 DOMAIN-SUFFIX,dssedge.com
 DOMAIN-SUFFIX,dssott.com
 DOMAIN-SUFFIX,dtci.co
@@ -268,6 +285,7 @@ DOMAIN-SUFFIX,payhulu.com
 DOMAIN-SUFFIX,peacocktv.com
 DOMAIN-SUFFIX,players.brightcove.net
 DOMAIN-SUFFIX,playmation.com
+DOMAIN-SUFFIX,pplusstatic.com
 DOMAIN-SUFFIX,prod.hjholdings.tv
 DOMAIN-SUFFIX,registerhulu.com
 DOMAIN-SUFFIX,shopdisney.com
@@ -289,6 +307,7 @@ DOMAIN-SUFFIX,thestationbymaker.com
 DOMAIN-SUFFIX,thewaltdisneycompany.com
 DOMAIN-SUFFIX,thisispolaris.com
 DOMAIN-SUFFIX,twitch.tv
+DOMAIN-SUFFIX,uplynk.com
 DOMAIN-SUFFIX,us-west-2.amazonaws.com
 DOMAIN-SUFFIX,warnermediacdn.com
 DOMAIN-SUFFIX,watchdisneyfe.com
@@ -1419,7 +1438,10 @@ PROCESS-NAME,com.hbo.hbonow
 PROCESS-NAME,com.hulu.plus
 PROCESS-NAME,com.netflix.mediaclient
 USER-AGENT,Argo*
+USER-AGENT,DPlus*
 USER-AGENT,Disney+*
 USER-AGENT,HBO%20NOW*
 USER-AGENT,HBOMAX*
+USER-AGENT,PPlus*
 USER-AGENT,PeacockMobile*
+USER-AGENT,discovery+*

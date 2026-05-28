@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Global proxy fallback
-# Rules: 37550
+# Rules: 37528
 
 DOMAIN,083link.brsserver.com.br
 DOMAIN,10.speedtesttvzamora.com
@@ -406,9 +406,6 @@ DOMAIN,cba-speedtest01.brasiltecpar.com.br
 DOMAIN,cba.allrede.tec.br
 DOMAIN,cbj-speedtest.ebb.my
 DOMAIN,cbr1.speedtest.telstra.net
-DOMAIN,cbsi.live.ott.irdeto.com
-DOMAIN,cbsplaylistserver.aws.syncbak.com
-DOMAIN,cbsservice.aws.syncbak.com
 DOMAIN,ccd-spdtst-srv.convergeict.com
 DOMAIN,ccsspeedtest.reddotech.com
 DOMAIN,cdn-speedtest.mafhen.com.br
@@ -1375,7 +1372,6 @@ DOMAIN,lima10g.mikrotikperu.net
 DOMAIN,lincoln02.speedtest.windstream.net
 DOMAIN,lindu.net
 DOMAIN,linespeed3.nms.tele.dk
-DOMAIN,link.theplatform.com
 DOMAIN,linklitelecom.brsserver.com.br
 DOMAIN,lisboa.speedtest.net.zon.pt
 DOMAIN,lisboa01.speedtest.angolacables.co.ao
@@ -16582,7 +16578,6 @@ DOMAIN-KEYWORD,avoddashs
 DOMAIN-KEYWORD,avtb
 DOMAIN-KEYWORD,beetalk
 DOMAIN-KEYWORD,claude
-DOMAIN-KEYWORD,discovery.uplynk.com
 DOMAIN-KEYWORD,dlercloud
 DOMAIN-KEYWORD,dropbox
 DOMAIN-KEYWORD,hamivideo.cdn.hinet.net
@@ -16592,10 +16587,8 @@ DOMAIN-KEYWORD,japronx
 DOMAIN-KEYWORD,jav
 DOMAIN-KEYWORD,jooxweb-api
 DOMAIN-KEYWORD,nivod
-DOMAIN-KEYWORD,nowtv100
 DOMAIN-KEYWORD,olevod
 DOMAIN-KEYWORD,pinterest
-DOMAIN-KEYWORD,rthklive
 DOMAIN-KEYWORD,sci-hub
 DOMAIN-KEYWORD,telegram
 DOMAIN-KEYWORD,ttvnw
@@ -17660,7 +17653,6 @@ DOMAIN-SUFFIX,akamai-thailand.net
 DOMAIN-SUFFIX,akamai-trials.com
 DOMAIN-SUFFIX,akamai.co.kr
 DOMAIN-SUFFIX,akamai.net
-DOMAIN-SUFFIX,akamai.tvb.com
 DOMAIN-SUFFIX,akamaiedge.net
 DOMAIN-SUFFIX,akamaientrypoint.net
 DOMAIN-SUFFIX,akamaietpcnctest.com
@@ -20312,16 +20304,13 @@ DOMAIN-SUFFIX,cbm.com.mm
 DOMAIN-SUFFIX,cbn.com.br
 DOMAIN-SUFFIX,cbs.com
 DOMAIN-SUFFIX,cbs.ntu.edu.tw
-DOMAIN-SUFFIX,cbsaavideo.com
 DOMAIN-SUFFIX,cbscorporation.com
-DOMAIN-SUFFIX,cbsi.com
 DOMAIN-SUFFIX,cbsi.video
 DOMAIN-SUFFIX,cbsiam.com
 DOMAIN-SUFFIX,cbsig.net
 DOMAIN-SUFFIX,cbsimg.net
 DOMAIN-SUFFIX,cbsinteractive.com
 DOMAIN-SUFFIX,cbsistatic.com
-DOMAIN-SUFFIX,cbsivideo.com
 DOMAIN-SUFFIX,cbsnews.com
 DOMAIN-SUFFIX,cbspressexpress.com
 DOMAIN-SUFFIX,cbssports.com
@@ -21650,12 +21639,10 @@ DOMAIN-SUFFIX,dirtypornvids.com
 DOMAIN-SUFFIX,dirtyscat.org
 DOMAIN-SUFFIX,dirtyshack.com
 DOMAIN-SUFFIX,dirtyship.com
-DOMAIN-SUFFIX,disco-api.com
 DOMAIN-SUFFIX,discoins.com
 DOMAIN-SUFFIX,discomax.com
 DOMAIN-SUFFIX,discountedporn.com
 DOMAIN-SUFFIX,discountporn.club
-DOMAIN-SUFFIX,discoveryplus.com
 DOMAIN-SUFFIX,discreet.com
 DOMAIN-SUFFIX,discuss.com.hk
 DOMAIN-SUFFIX,dish.com
@@ -25498,7 +25485,6 @@ DOMAIN-SUFFIX,indiemerch.com
 DOMAIN-SUFFIX,indienudes.com
 DOMAIN-SUFFIX,indies-av.co.jp
 DOMAIN-SUFFIX,indonesiaporn.name
-DOMAIN-SUFFIX,inews-api.tvb.com
 DOMAIN-SUFFIX,infinitetoons.com
 DOMAIN-SUFFIX,infinitetube.com
 DOMAIN-SUFFIX,info-graf.fr
@@ -33680,7 +33666,6 @@ DOMAIN-SUFFIX,tuvpn.com
 DOMAIN-SUFFIX,tuzaijidi.com
 DOMAIN-SUFFIX,tv.com
 DOMAIN-SUFFIX,tv.jtbc.joins.com
-DOMAIN-SUFFIX,tvb.com
 DOMAIN-SUFFIX,tvb.com.au
 DOMAIN-SUFFIX,tvbanywhere.com
 DOMAIN-SUFFIX,tvbanywhere.com.sg
@@ -33935,7 +33920,6 @@ DOMAIN-SUFFIX,upjav.cc
 DOMAIN-SUFFIX,uplay-istrip.com
 DOMAIN-SUFFIX,uplinq.com
 DOMAIN-SUFFIX,uplust.com
-DOMAIN-SUFFIX,uplynk.com
 DOMAIN-SUFFIX,upmedia.mg
 DOMAIN-SUFFIX,uporno.xxx
 DOMAIN-SUFFIX,uproxy.org
@@ -37507,8 +37491,6 @@ IP-CIDR6,2620:100:3000::/40
 IP-CIDR6,2a0a:f280::/32
 URL-REGEX,^https?:\/\/www\.amazon\.com\/(Amazon-Video|gp\/video)\/
 USER-AGENT,*Spotify*
-USER-AGENT,All4*
-USER-AGENT,DPlus*
 USER-AGENT,Deezer*
 USER-AGENT,Disney*
 USER-AGENT,Duolingo*
@@ -37528,12 +37510,10 @@ USER-AGENT,JOOX*
 USER-AGENT,LINE*
 USER-AGENT,LINETV*
 USER-AGENT,Max*
-USER-AGENT,My5*
 USER-AGENT,Naver%20TV*
 USER-AGENT,NaverTV*
 USER-AGENT,Overcast*
 USER-AGENT,PBS*
-USER-AGENT,PPlus*
 USER-AGENT,Pandora*
 USER-AGENT,Prime%20Video*
 USER-AGENT,PrimeVideo*
@@ -37550,7 +37530,5 @@ USER-AGENT,WhatsApp*
 USER-AGENT,app/bstar*
 USER-AGENT,battleroyale*
 USER-AGENT,com.kktv*
-USER-AGENT,discovery+*
 USER-AGENT,encoreTVB*
 USER-AGENT,hearthstone*
-USER-AGENT,mytv*

@@ -1,14 +1,49 @@
 {
-  "generated": "2026-04-13T02:15:31.066466",
+  "generated": "2026-05-29T03:43:22.701703",
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
       "desc": "功能增强类模块",
       "items": [
         {
+          "name": "[Sukka] URL Rewrite",
+          "desc": "[🚀SR] Enable this module to use Sukka URL Rewrite rules",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/%5BSukka%5D%20URL%20Rewrite.module"
+        },
+        {
+          "name": "bili",
+          "desc": "[🚀SR] Bili1080P",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/bili.module"
+        },
+        {
+          "name": "BoxJs",
+          "desc": "[🚀SR] http://boxjs.com",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/boxjs.rewrite.surge.module"
+        },
+        {
           "name": "🍿️ DualSubs: 🔣 Universal",
-          "desc": "[🚀SR] 流媒体平台字幕增强及双语模块",
+          "desc": "[🚀SR] 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/DualSubs.Universal.module"
+        },
+        {
+          "name": " iRingo: 📰 News",
+          "desc": "[🚀SR] 1.自定义解锁News的地区\\n2.Coming Soon…",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.News.module"
+        },
+        {
+          "name": " iRingo: 📺 TV app",
+          "desc": "[🚀SR] 全面自定义「TV app」功能",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.TV.module"
+        },
+        {
+          "name": "网络信息 𝕏",
+          "desc": "[🚀SR] 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/net-lsp-x.module"
+        },
+        {
+          "name": "Script Hub: 重写 & 规则集转换",
+          "desc": "[🚀SR] https://script.hub",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Script%20Hub%20%E9%87%8D%E5%86%99%20%26%20%E8%A7%84%E5%88%99%E9%9B%86%E8%BD%AC%E6%8D%A2.module"
         },
         {
           "name": "机场订阅信息",
@@ -26,49 +61,29 @@
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/Timecard.module"
         },
         {
-          "name": "BoxJs",
-          "desc": "[🚀SR] http://boxjs.com",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/boxjs.rewrite.surge.module"
+          "name": "WeChat增强",
+          "desc": "[🚀SR] WeChat/微信解锁外部链接与小程序优化。",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/WeChat_Enhance.module"
         },
         {
-          "name": " iRingo: 🗺️ Maps",
-          "desc": "[🚀SR] 自定义 Maps app",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.Maps.module"
+          "name": "扫描全能王",
+          "desc": "[🚀SR] 解锁扫描全能王",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.module"
         },
         {
-          "name": " iRingo: 📰 News",
-          "desc": "[🚀SR] 1.自定义解锁News的地区",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.News.module"
-        },
-        {
-          "name": " iRingo: 📺 TV app",
-          "desc": "[🚀SR] 全面自定义「TV app」功能",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.TV.module"
-        },
-        {
-          "name": " iRingo: 🌤 WeatherKit",
-          "desc": "[🚀SR] iOS 18 & macOS 15 & watchOS 11",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/iRingo.WeatherKit.module"
-        },
-        {
-          "name": "网络信息 𝕏",
-          "desc": "[🚀SR] 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/net-lsp-x.module"
-        },
-        {
-          "name": "🌐 DNS & Host & URL Rewrite Enhanced",
-          "desc": "[🚀SR] 🔒 全量DoH加密DNS + Host分流增强 + URL重写 + 脚本级HTTPDNS拦截 + DoH健康监测 | 🔧 2026.04.12",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/🌐 DNS & Host Enhanced.module"
+          "name": "🍎 Apple服务增强合集",
+          "desc": "[🚀SR] 整合 iRingo 系列模块\\n包含: Maps(地图增强) + WeatherKit(天气增强)\\n解锁Apple服务的国际版功能",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
         },
         {
           "name": "📺 BiliBili增强合集",
-          "desc": "[🚀SR] 合并BiliUniverse五大模块 (自动追随上游更新)\\n⚙️ Enhanced: UI自定义\\n🌐 Global: 全区搜索\\n🔀 Redirect: CDN重定向\\n🛡️ ADBlock: 去广告\\n🛠️ Helper: 禁P2P",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/📺 BiliBili增强合集.module"
+          "desc": "[🚀SR] 合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/Helper）",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
         },
         {
           "name": "📺 YouTube增强合集",
-          "desc": "[🚀SR] 合并YouTube增强+去广告 (自动追随上游更新)\\n🎬 Enhance: 画中画/后台播放/字幕翻译\\n🛡️ ADBlock: 去广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/📺 YouTube增强合集.module"
+          "desc": "[🚀SR] 合并 YouTube 增强 (Maasea 上游)",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
         }
       ]
     },
@@ -77,223 +92,22 @@
       "desc": "广告拦截平台类",
       "items": [
         {
-          "name": "可莉广告过滤器",
-          "desc": "[🚀SR] 可莉自用的广告过滤器",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.module"
-        },
-        {
-          "name": "广告平台拦截器",
-          "desc": "[🚀SR] 此插件是所有去广告插件的基础，只针对广告平台处理。你依然需要安装其他去广告插件来搭配使用，并确保此插件始终排序在顶部。\\n\\n支持拦截腾讯、字节跳动、快手、百度、邑盟、倍孜、艾狄墨搏、袤博、极光、个推、友盟、阿里巴巴、阿里妈妈、阿里百川、超级汇川、优比客思、秒针、网易、美团、小米、京东、天目、讯飞、泛连、锐讯灵通、聚次方、美数、嗨量、维快网络、变现猫、章鱼、分秒、泰之菩、翼信、快易、数萤技术、方麟、益起、上量优选、新义互联、腾云天下、布里奇、塔酷、丽声、推啊、旺脉、新度博望、新多广告、快易科技、封狐信息、互裕科技、旺脉信息、佳量动力、享点科技、游昆信息、小川科技、旺脉科技、萃弈、泛为、米漫、易量跃动、秒针、贵士移动、星讯、倍业科技、创聚科技、硬核聚视、数因科技、芒拓网络、上海领页、神蓍科技、Google、SupersonicAds、APPSAD、Adjust、Sigmob、TradPlus、Fancy、MedPro、AppLovin、Unity3D、Tapjoy、Liftoff、Vungle、Moloco、Smadex、Tapad、Appier、InMobi、AppsFlyer、AppLovin、Moloco、RayJump、RixEngine、Amazon等广告平台的广告请求，更适合iOS平台的应用。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.module"
-        },
-        {
-          "name": "广告联盟去广告",
-          "desc": "[🚀SR] 快手联盟,优量汇,穿山甲",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/%E5%B9%BF%E5%91%8A%E8%81%94%E7%9B%9F.official.module"
-        },
-        {
-          "name": "毒奶特供(2026年04月12日更新)",
-          "desc": "[🚀SR] 毒奶去网页广告计划用户脚本 For Quantumult X & Surge & Shadowrocket & Loon & Stash & 油猴 ；1.新增页面右下角导航；2.通过 JavaScript 移除特定网站网页广告 —— 搜索引擎（Bing/Google）广告及内容农场结果清除/低端影视/欧乐影院/iyf爱壹帆/哔滴影视/Pornhub/Javbus/Supjav/Jable(支持抓取M3U8链接)/MissAv/91porn(支持视频下载)/hitomi/紳士漫畫/禁漫天堂/等视频&ACG&小说&漫画网站上的弹窗广告&视频广告&Gif图片广告等，保持网页清爽干净无打扰！ P.S. 欢迎提交issue",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/Adblock4limbo.module"
-        },
-        {
-          "name": "AD ByeBye+ 2.x",
-          "desc": "[🚀SR] Most Optimized Ad-free Experience presented with automated updates. | 提供最优化无广告体验，自动同步更新。\\nRepo: https://tuu.cat/repo・Update: 12/04/2025・Support: @bunizao・ Channel: @hututu00",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/All-in-One-2.x.module"
-        },
-        {
-          "name": "AllInOne",
-          "desc": "[🚀SR] 最后更新时间 2025-08-26 02:12:35",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/AllInOne_Mock.module"
-        },
-        {
-          "name": "Script Hub: 重写 & 规则集转换",
-          "desc": "[🚀SR] https://script.hub",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/Script Hub 重写 & 规则集转换.module"
-        },
-        {
-          "name": "[Sukka] Enhance Better ADBlock for Surge",
-          "desc": "[🚀SR] 增强 ADBlock 效果、恢复网站正常功能",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/[Sukka] Enhance Better ADBlock for Surge.module"
-        },
-        {
-          "name": "APP启动页去广告ultra+",
-          "desc": "[🚀SR] APP启动页去广告融合ultra+",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/adultraplus.module"
-        },
-        {
-          "name": "可莉广告过滤器",
-          "desc": "[🚀SR] 可莉自用的广告过滤器",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/可莉广告过滤器.beta.module"
-        },
-        {
-          "name": "2.去除小程序和其他应用广告",
-          "desc": "[🚀SR] 仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/小程序和应用懒人去广告合集.official.module"
-        },
-        {
-          "name": "广告平台拦截器",
-          "desc": "[🚀SR] 此插件是所有去广告插件的基础，只针对广告平台处理。你依然需要安装其他去广告插件来搭配使用，并确保此插件始终排序在顶部。\\n\\n支持拦截腾讯、字节跳动、快手、百度、邑盟、倍孜、艾狄墨搏、袤博、极光、个推、友盟、阿里巴巴、阿里妈妈、阿里百川、超级汇川、优比客思、秒针、网易、美团、小米、京东、天目、讯飞、泛连、锐讯灵通、聚次方、美数、嗨量、维快网络、变现猫、章鱼、分秒、泰之菩、翼信、快易、数萤技术、方麟、益起、上量优选、新义互联、腾云天下、布里奇、塔酷、丽声、推啊、旺脉、新度博望、新多广告、快易科技、封狐信息、互裕科技、旺脉信息、佳量动力、享点科技、游昆信息、小川科技、旺脉科技、萃弈、泛为、米漫、易量跃动、秒针、贵士移动、星讯、倍业科技、创聚科技、硬核聚视、数因科技、芒拓网络、上海领页、神蓍科技、Google、SupersonicAds、APPSAD、Adjust、Sigmob、TradPlus、Fancy、MedPro、AppLovin、Unity3D、Tapjoy、Liftoff、Vungle、Moloco、Smadex、Tapad、Appier、InMobi、AppsFlyer、AppLovin、Moloco、RayJump、RixEngine、Amazon等广告平台的广告请求，更适合iOS平台的应用。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/广告平台拦截器.module"
-        },
-        {
-          "name": "1.去除常用软件广告",
-          "desc": "[🚀SR] 仅做整理整合，作者：RuCu6，ZenmoFeiShi，可莉等",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/新手友好の去广告集合.official.module"
-        },
-        {
           "name": "🔥 Firewall Port Blocker 🛡️",
           "desc": "[🚀SR] Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module"
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/%F0%9F%94%A5%20Firewall%20Port%20Blocker%20%F0%9F%9B%A1%EF%B8%8F%F0%9F%9A%AB.module"
         },
         {
-          "name": "🚫 Universal Ad-Blocking Rules (LITE)",
-          "desc": "[🚀SR] Canonical ad-block rebuild from curated rule sources and local module sections. No self-reference, no recursive accumulation.",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component LITE (Kali-style).module"
+          "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-05-29]",
+          "desc": "[🚀SR] 按用途分片(20片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module"
         }
       ]
     },
     "narrow_pierce": {
       "name": "🎯 Narrow Pierce › 窄域穿刺",
       "desc": "App专项去广告",
-      "items": [
-        {
-          "name": "去广告｜中国广电",
-          "desc": "[🚀SR] 中国广电去广告 [需卸载重装]\\n作者：@keywos",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/10099.module"
-        },
-        {
-          "name": "12306去广告",
-          "desc": "[🚀SR] 过滤12306应用内广告及开屏广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/12306去广告.beta.module"
-        },
-        {
-          "name": "123云盘",
-          "desc": "[🚀SR] 2025-09-09 10:10:26",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/123云盘去广告.module"
-        },
-        {
-          "name": "IT之家去广告",
-          "desc": "[🚀SR] 过滤IT之家信息流广告和文末广告，自定义移除置顶和轮播图，自定义移除项需在插件配置。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/IT之家去广告.beta.module"
-        },
-        {
-          "name": "Jump去广告",
-          "desc": "[🚀SR] 移除Jump开屏广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/Jump去广告.module"
-        },
-        {
-          "name": "QQ音乐去广告",
-          "desc": "[🚀SR] 过滤QQ音乐广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/QQ音乐去广告.module"
-        },
-        {
-          "name": "RedNote",
-          "desc": "[🚀SR] 小红书去广告、去图片视频水印",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/RedNote.module"
-        },
-        {
-          "name": "Reddit 去广告",
-          "desc": "[🚀SR] 过滤推广, 关 NSFW 提示, 自动开启翻译(JQ 版)",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/Reddit 去广告.module"
-        },
-        {
-          "name": "Spotify去广告",
-          "desc": "[🚀SR] 移除播放广告，恢复歌手和专辑列表的正常展示。修改插件自定义配置项需要重新登陆方可生效。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/Spotify去广告.module"
-        },
-        {
-          "name": "WeChat增强",
-          "desc": "[🚀SR] WeChat及微信广告过滤，解锁微信外部链接。\\nWeChat用户可在插件内自行设置分流。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/WeChat_Enhance.module"
-        },
-        {
-          "name": "[Sukka] URL Rewrite",
-          "desc": "[🚀SR] Enable this module to use Sukka URL Rewrite rules",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/[Sukka] URL Rewrite.module"
-        },
-        {
-          "name": "京东去广告",
-          "desc": "[🚀SR] 移除京东开屏广告，精简我的页面产品推广。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/京东去广告.module"
-        },
-        {
-          "name": "哔哩哔哩漫画去广告",
-          "desc": "[🚀SR] 移除开屏广告、应用内悬浮窗、各类横幅广告、你可能喜欢、小说推荐、首页弹窗，精简首页标签、底栏活动按钮和我的页面。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/哔哩哔哩漫画去广告.module"
-        },
-        {
-          "name": "夸克去广告",
-          "desc": "[🚀SR] 移除阅读广告，精简我的页面。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/夸克去广告.module"
-        },
-        {
-          "name": "小宇宙去广告",
-          "desc": "[🚀SR] 移除开屏广告、搜索框推荐词和AI总结。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/小宇宙去广告.module"
-        },
-        {
-          "name": "小红书去广告",
-          "desc": "[🚀SR] 过滤信息流推广，移除图片及视频水印，如有异常，请先清除缓存再尝试。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/小红书去广告.beta.module"
-        },
-        {
-          "name": "扫描全能王",
-          "desc": "[🚀SR] 解锁扫描全能王",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/扫描全能王解锁.module"
-        },
-        {
-          "name": "拼多多去广告",
-          "desc": "[🚀SR] 移除开屏广告、底栏多多视频、会场入口、聊天页面精选推荐及推广，精简首页和个人中心。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/拼多多去广告.module"
-        },
-        {
-          "name": "淘宝去广告",
-          "desc": "[🚀SR] 过滤淘宝开屏广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/淘宝去广告.module"
-        },
-        {
-          "name": "滴滴出行去广告",
-          "desc": "[🚀SR] 移除开屏广告、精简首页、底栏和我的页面。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/滴滴出行去广告.beta.module"
-        },
-        {
-          "name": "百度网盘去广告",
-          "desc": "[🚀SR] 移除开屏广告、首页卡片广告、传输页面广告、各类弹窗，精简侧拉抽屉和我的页面。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/百度网盘去广告.module"
-        },
-        {
-          "name": "知乎去广告",
-          "desc": "[🚀SR] 移除各部分广告，移除知乎安全中心跳转，建议卸载知乎重新安装。如遇安全中心页面移除失败的，请积极反馈。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/知乎去广告.module"
-        },
-        {
-          "name": "菜鸟去广告",
-          "desc": "[🚀SR] 过滤菜鸟广告",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/菜鸟去广告.module"
-        },
-        {
-          "name": "闲鱼去广告",
-          "desc": "[🚀SR] 移除开屏广告、商品信息流广告、关注推荐、搜索栏填充词、首页签到入口及悬浮广告，精简我的页面。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/闲鱼去广告.module"
-        },
-        {
-          "name": "阿里云盘去广告",
-          "desc": "[🚀SR] 移除首页广告横幅、弹窗和顶部奖励。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/阿里云盘去广告.module"
-        },
-        {
-          "name": "高德地图去广告",
-          "desc": "[🚀SR] 过滤高德地图开屏广告、各页面推广，精简我的页面。",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/高德地图去广告.module"
-        },
-        {
-          "name": "🐦 微博去广告合集",
-          "desc": "[🚀SR] 合并微博+微博国际版去广告 (自动追随上游更新)\\n\\n上游: fmz200/wool_scripts, iab0x00",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/shadowrocket/narrow_pierce/🐦 微博去广告合集.module"
-        }
-      ]
+      "items": []
     }
   },
-  "total": 57
+  "total": 18
 }

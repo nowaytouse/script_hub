@@ -20,12 +20,14 @@ from lib.module_catalog import (
     sanitize_tree,
     scan_modules,
     write_modules_json,
+    write_shadowrocket_modules_json,
 )
 
 PROJECT_ROOT = SCRIPT_DIR.parent
 MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
 MODULES_JSON = PROJECT_ROOT / "module" / "modules_data.json"
+SR_MODULES_JSON = PROJECT_ROOT / "module" / "shadowrocket_modules_data.json"
 HELPER_HTML = PROJECT_ROOT / "module" / "surge_module_helper.html"
 
 # Critical modules that MUST appear in the HTML after every build.
@@ -100,6 +102,9 @@ def run() -> int:
 
     write_modules_json(modules, MODULES_JSON)
     print(f"\n✅ Wrote {MODULES_JSON.relative_to(PROJECT_ROOT)}")
+
+    write_shadowrocket_modules_json(modules, SR_MODULES_JSON, PROJECT_ROOT)
+    print(f"✅ Wrote {SR_MODULES_JSON.relative_to(PROJECT_ROOT)}")
 
     build_helper_html(modules, PROJECT_ROOT, HELPER_HTML)
     print(f"✅ Wrote {HELPER_HTML.relative_to(PROJECT_ROOT)}")
