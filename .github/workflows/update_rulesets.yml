@@ -23,19 +23,27 @@ name: Update Rulesets
 # Manual trigger: workflow_dispatch
 # ═══════════════════════════════════════════════════════════════
 
-# Manual push trigger
 on:
+  push:
+    branches:
+      - master
   schedule:
-    - cron: '0 4 * * *'   # Runs at 04:00 UTC (12:00 Beijing Time)
+    - cron: '0 4,12,20 * * *'   # Runs 3 times daily (12:00, 20:00, 04:00 Beijing Time)
   workflow_dispatch:      # Allows manual run
 
 jobs:
   update-rules:
     runs-on: ubuntu-latest
+    # Skip runs triggered by automated commits from this workflow itself to prevent infinite loop
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore(ruleset)')
     permissions:
       contents: write  # 🔥 允许 push 到仓库
     
     steps:
+    - name: Delay 1 hour for push events
+      if: github.event_name == 'push'
+      run: sleep 3600
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:

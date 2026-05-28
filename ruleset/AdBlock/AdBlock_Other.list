@@ -2,8 +2,8 @@
 # Purpose: 社区 sgmodule / 未归类远程源
 # Category-Key: Other
 # Shard: 1/1
-# Updated: 2026-05-27 08:08:42
-# Total Rules: 307
+# Updated: 2026-05-28 15:56:48
+# Total Rules: 298
 
 DOMAIN,1b9khekel6.adobe.io,REJECT
 DOMAIN,9ngulmtgqi.adobe.io,REJECT
@@ -25,6 +25,8 @@ DOMAIN,cclibraries-defaults-cdn.adobe.com,REJECT
 DOMAIN,cclibraries-defaults-cdn.adobe.com.edgekey.net,REJECT
 DOMAIN,cn-assets.adobedtm.com.edgekey.net,REJECT
 DOMAIN,crl.verisign.net,REJECT
+DOMAIN,crlog-crcn.adobe.com,REJECT
+DOMAIN,crs.cr.adobe.com,REJECT
 DOMAIN,edgeproxy-irl1.cloud.adobe.io,REJECT
 DOMAIN,ereg.wip.adobe.com,REJECT
 DOMAIN,ereg.wip1.adobe.com,REJECT
@@ -32,6 +34,7 @@ DOMAIN,ereg.wip2.adobe.com,REJECT
 DOMAIN,ereg.wip4.adobe.com,REJECT
 DOMAIN,ethos.ethos02-prod-irl1.ethos.adobe.net,REJECT
 DOMAIN,genuine.adobe.com,REJECT
+DOMAIN,ic.adobe.io,REJECT
 DOMAIN,lcs-cops.adobe.io,REJECT
 DOMAIN,lcs-robs.adobe.io,REJECT
 DOMAIN,ood.opsource.net,REJECT
@@ -108,6 +111,7 @@ DOMAIN-SUFFIX,analytics.zendesk.com,REJECT
 DOMAIN-SUFFIX,api-analytics.metaps.com,REJECT
 DOMAIN-SUFFIX,api.jr.mi.com,REJECT
 DOMAIN-SUFFIX,api.omniture.com,REJECT
+DOMAIN-SUFFIX,appleads-trk.com,REJECT
 DOMAIN-SUFFIX,applog.camera360.com,REJECT
 DOMAIN-SUFFIX,applog.matrix.easebar.com,REJECT
 DOMAIN-SUFFIX,appservice5.omniture.com,REJECT
@@ -132,7 +136,6 @@ DOMAIN-SUFFIX,carrydj.com,REJECT
 DOMAIN-SUFFIX,ccclub.cmbchina.com,REJECT
 DOMAIN-SUFFIX,cdn.ark.qq.com,REJECT
 DOMAIN-SUFFIX,cdn.simpleanalytics.io,REJECT
-DOMAIN-SUFFIX,changetip.com,REJECT
 DOMAIN-SUFFIX,click.admaster.com.cn,REJECT
 DOMAIN-SUFFIX,click.simba.taobao.com,REJECT
 DOMAIN-SUFFIX,clickc.admaster.com.cn,REJECT
@@ -158,12 +161,12 @@ DOMAIN-SUFFIX,eventlog.beacon.qq.com,REJECT
 DOMAIN-SUFFIX,events3.adcolony.com,REJECT
 DOMAIN-SUFFIX,events3alt.adcolony.com,REJECT
 DOMAIN-SUFFIX,ex.qq.com,REJECT
+DOMAIN-SUFFIX,fi-analytics.mgsn.it,REJECT
 DOMAIN-SUFFIX,fldvz.cn,REJECT
 DOMAIN-SUFFIX,fun.adx.admaster.com.cn,REJECT
 DOMAIN-SUFFIX,game.subway.uu.cc,REJECT
 DOMAIN-SUFFIX,geo.moatads.com,REJECT
 DOMAIN-SUFFIX,geo.query.yahoo.com,REJECT
-DOMAIN-SUFFIX,getbtn.com,REJECT
 DOMAIN-SUFFIX,gsp0.baidu.com,REJECT
 DOMAIN-SUFFIX,gsp2.baidu.com,REJECT
 DOMAIN-SUFFIX,gsp3.baidu.com,REJECT
@@ -173,7 +176,6 @@ DOMAIN-SUFFIX,im.jiguang.cn,REJECT
 DOMAIN-SUFFIX,im64.jpush.cn,REJECT
 DOMAIN-SUFFIX,ime.sogou.com,REJECT
 DOMAIN-SUFFIX,img2.autoimg.cn,REJECT
-DOMAIN-SUFFIX,instagram.astv.ru,REJECT
 DOMAIN-SUFFIX,jadserve.postrelease.com.akadns.net,REJECT
 DOMAIN-SUFFIX,jchat.io,REJECT
 DOMAIN-SUFFIX,jyjqdn.cn,REJECT
@@ -189,7 +191,6 @@ DOMAIN-SUFFIX,maozhuar.com,REJECT
 DOMAIN-SUFFIX,maozhuar.com.cn,REJECT
 DOMAIN-SUFFIX,masdpanalytics.azureedge.net,REJECT
 DOMAIN-SUFFIX,mathtag.com.edgekey.net,REJECT
-DOMAIN-SUFFIX,mediabuttons.ru,REJECT
 DOMAIN-SUFFIX,mobi.adsage.com,REJECT
 DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com,REJECT
 DOMAIN-SUFFIX,modh.cn,REJECT
@@ -216,8 +217,6 @@ DOMAIN-SUFFIX,sdk.jiguang.cn,REJECT
 DOMAIN-SUFFIX,sdk.mobad.ijinshan.com,REJECT
 DOMAIN-SUFFIX,server.seadform.net,REJECT
 DOMAIN-SUFFIX,sginput.qq.com,REJECT
-DOMAIN-SUFFIX,share.yandex.net,REJECT
-DOMAIN-SUFFIX,share.yandex.ru,REJECT
 DOMAIN-SUFFIX,shsyfzq.cn,REJECT
 DOMAIN-SUFFIX,sis.jpush.io,REJECT
 DOMAIN-SUFFIX,smetrics.att.com.edgekey.net,REJECT
@@ -225,9 +224,7 @@ DOMAIN-SUFFIX,smmdn.cn,REJECT
 DOMAIN-SUFFIX,smt.admaster.com.cn,REJECT
 DOMAIN-SUFFIX,sss.bxnms.com,REJECT
 DOMAIN-SUFFIX,ssv.admaster.com.cn,REJECT
-DOMAIN-SUFFIX,static.hootsuite.com,REJECT
 DOMAIN-SUFFIX,strategy.beacon.qq.com,REJECT
-DOMAIN-SUFFIX,sumome-140a.kxcdn.com,REJECT
 DOMAIN-SUFFIX,sylqmn.cn,REJECT
 DOMAIN-SUFFIX,t1.baidu.com,REJECT
 DOMAIN-SUFFIX,t10.baidu.com,REJECT
@@ -241,12 +238,10 @@ DOMAIN-SUFFIX,t6.baidu.com,REJECT
 DOMAIN-SUFFIX,t7.baidu.com,REJECT
 DOMAIN-SUFFIX,t8.baidu.com,REJECT
 DOMAIN-SUFFIX,t9.baidu.com,REJECT
-DOMAIN-SUFFIX,tgwidget.com,REJECT
 DOMAIN-SUFFIX,tp-rtb-adserver-eu.eu-west-1.elasticbeanstalk.com,REJECT
 DOMAIN-SUFFIX,track.ad.xiaomi.com,REJECT
 DOMAIN-SUFFIX,track.seadform.net,REJECT
 DOMAIN-SUFFIX,trc.adsage.com,REJECT
-DOMAIN-SUFFIX,twitter.countoon.com,REJECT
 DOMAIN-SUFFIX,uat1.bfsspadserver.8le8le.com,REJECT
 DOMAIN-SUFFIX,ugdesk.cn,REJECT
 DOMAIN-SUFFIX,ugdesk.com,REJECT
@@ -264,12 +259,8 @@ DOMAIN-SUFFIX,vsohu.admaster.com.cn,REJECT
 DOMAIN-SUFFIX,vyk.admaster.com.cn,REJECT
 DOMAIN-SUFFIX,wd.adcolony.com,REJECT
 DOMAIN-SUFFIX,widget.fitanalytics.com,REJECT
-DOMAIN-SUFFIX,widget.instodom.com,REJECT
-DOMAIN-SUFFIX,widgets-code.websta.me,REJECT
-DOMAIN-SUFFIX,widgets.bufferapp.com,REJECT
 DOMAIN-SUFFIX,www.baidushifen.com,REJECT
 DOMAIN-SUFFIX,xcmy0.cn,REJECT
-DOMAIN-SUFFIX,xn--r1a.website,REJECT
 DOMAIN-SUFFIX,xuanyaodang.cn,REJECT
 DOMAIN-SUFFIX,xuanyaodang.com,REJECT
 DOMAIN-SUFFIX,xuanyaodang.net,REJECT
