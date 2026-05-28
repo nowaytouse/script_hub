@@ -17,6 +17,13 @@ from srs_generator import SRSGenerator
 from maintenance.mitm_cleanup_github import run_cleanup
 from smart_cleanup import run_cleanup as run_ruleset_cleanup, format_stats as format_ruleset_cleanup_stats
 
+# Import maintenance bundle merges
+from maintenance.merge_bilibili_bundle import main as merge_bilibili_bundle
+from maintenance.merge_youtube_bundle import main as merge_youtube_bundle
+from maintenance.merge_weibo_bundle import main as merge_weibo_bundle
+from maintenance.merge_apple_modules import main as merge_apple_modules
+from maintenance.merge_dns_modules import main as merge_dns_modules
+
 # CONFIGURATION
 
 ROOT = get_project_root()
@@ -65,6 +72,25 @@ def main():
         syncer.sync_local_sources()   # Sync upstream modules → PROMAX local_sources
     else:
         Logger.info("Quick mode: Skipping upstream sync.")
+
+    # 1.2 Upstream Bundle Merges (BiliBili, YouTube, Weibo, Apple, DNS)
+    Logger.section("Upstream Bundle Merges")
+    try:
+        Logger.info("Executing BiliBili bundle merge...")
+        merge_bilibili_bundle()
+        Logger.info("Executing YouTube bundle merge (with ADBlock extraction)...")
+        merge_youtube_bundle()
+        Logger.info("Executing Weibo bundle merge...")
+        merge_weibo_bundle()
+        Logger.info("Executing Apple bundle merge...")
+        merge_apple_modules()
+        Logger.info("Executing DNS bundle merge...")
+        dns_res = merge_dns_modules()
+        if dns_res and dns_res != 0:
+            raise Exception(f"merge_dns_modules failed with exit code {dns_res}")
+        Logger.success("Upstream bundle merges completed successfully.")
+    except Exception as e:
+        Logger.error(f"Upstream bundle merges failed: {e}")
 
     # 1.1 Smart-Config-Kit supplemental rules merge
     # Source files vendored at ruleset/Sources/custom/SmartConfigKit/ (fork removed)

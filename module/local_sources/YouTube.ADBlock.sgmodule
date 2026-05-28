@@ -1,13 +1,14 @@
 #!name=YouTube 去广告
-#!desc=YouTube 广告过滤 (自动合并进入 PROMAX)
+#!desc=YouTube 广告过滤 (自动从 Maasea 上游提取并合并进入 PROMAX)
 #!category=🪐 local_sources
-
 [Rule]
 AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
 AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
 
+
 [Map Local]
 ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
+
 
 [MITM]
 hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, -github.com, -api.github.com, -*.githubusercontent.com
