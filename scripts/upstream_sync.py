@@ -44,7 +44,14 @@ SKK_SOURCES = {
     "speedtest.list": "https://ruleset.skk.moe/List/domainset/speedtest.conf",
     "cdn.list": "https://ruleset.skk.moe/List/non_ip/cdn.conf",
     "cdn-domainset.list": "https://ruleset.skk.moe/List/domainset/cdn.conf",
-    "BlockHttpDNS.list": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list"
+    "BlockHttpDNS.list": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list",
+    "telegram-ip.list": "https://ruleset.skk.moe/List/ip/telegram.conf",
+    "telegram_asn-ip.list": "https://ruleset.skk.moe/List/ip/telegram_asn.conf",
+    "apple_services-ip.list": "https://ruleset.skk.moe/List/ip/apple_services.conf",
+    "download-ip.list": "https://ruleset.skk.moe/List/ip/download.conf",
+    "neteasemusic-ip.list": "https://ruleset.skk.moe/List/ip/neteasemusic.conf",
+    "cdn-ip.list": "https://ruleset.skk.moe/List/ip/cdn.conf",
+    "domestic-ip.list": "https://ruleset.skk.moe/List/ip/domestic.conf"
 }
 
 METACUBEX_RULES = {

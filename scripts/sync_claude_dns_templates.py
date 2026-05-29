@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CLAUDE_DIR = ROOT / ".claude"
 SURGE_TEMPLATE = CLAUDE_DIR / "NyaMiiKo.conf.conf"
 SHADOWROCKET_TEMPLATE = CLAUDE_DIR / "shadowroket.conf"
-SINGBOX_TEMPLATE = CLAUDE_DIR / "Singbox1.13.0+.conf"
+SINGBOX_TEMPLATE = ROOT / "scripts" / "Substore" / "Singbox1.13.0+.conf"
 SHADOWROCKET_DNS_MODULE = ROOT / "module" / "shadowrocket" / "amplify_nexus" / "🌐 DNS & Host Enhanced.module"
 
 KEY_VALUE_RE = re.compile(r"^(\s*)([A-Za-z0-9_-]+)(\s*=\s*)(.*)$")
@@ -329,24 +329,8 @@ def replace_top_level_object(text: str, key: str, new_object: dict) -> str:
 
 
 def sync_shadowrocket(surge_text: str) -> None:
-    module_text = read_text(SHADOWROCKET_DNS_MODULE)
     shadowrocket_text = read_text(SHADOWROCKET_TEMPLATE)
     shadowrocket_text = update_shadowrocket_general(shadowrocket_text, surge_text)
-    shadowrocket_text = replace_section_body(shadowrocket_text, "Host", get_section_body(module_text, "Host"))
-    shadowrocket_text = upsert_section(
-        shadowrocket_text,
-        "Script",
-        get_section_body(module_text, "Script"),
-        before_section="MITM",
-    )
-    shadowrocket_text = replace_section_body(
-        shadowrocket_text,
-        "MITM",
-        merge_mitm_hostname(
-            get_section_body(shadowrocket_text, "MITM"),
-            get_section_body(module_text, "MITM"),
-        ),
-    )
     write_text(SHADOWROCKET_TEMPLATE, shadowrocket_text)
 
 

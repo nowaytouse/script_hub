@@ -266,7 +266,8 @@ class RulesetManager:
         return r
 
     def generate_header(self, name: str, rule_count: int) -> str:
-        p_info = self.policy_map.get(name, {"policy": "PROXY", "node": "Any", "desc": "Auto-merged ruleset"})
+        base_name = name.replace("_ip", "")
+        p_info = self.policy_map.get(name) or self.policy_map.get(base_name, {"policy": "PROXY", "node": "Any", "desc": "Auto-merged ruleset"})
         header = [
             f"# Ruleset: {name}",
             f"# Policy: {p_info['policy']}"
@@ -362,16 +363,39 @@ class RulesetManager:
                                 if cleaned: all_rules.add(cleaned)
 
         if not all_rules and name not in PROTECTED_RULESETS: return
-        write_file(target_file, self.generate_header(name, len(all_rules)) + "\n".join(sorted(list(all_rules))) + "\n")
+
+        non_ip_rules = set()
+        ip_rules = set()
+        for rule in all_rules:
+            if rule.startswith(("IP-CIDR,", "IP-CIDR6,", "IP-ASN,", "GEOIP,")):
+                ip_rules.add(rule)
+            else:
+                non_ip_rules.add(rule)
+
+        target_ip_file = os.path.join(SURGE_DIR, f"{name}_ip.list")
+        if ip_rules:
+            write_file(target_ip_file, self.generate_header(f"{name}_ip", len(ip_rules)) + "\n".join(sorted(list(ip_rules))) + "\n")
+            Logger.success(f"Processed IP Ruleset: {name}_ip ({len(ip_rules)} rules)")
+        else:
+            if os.path.exists(target_ip_file):
+                os.remove(target_ip_file)
+
+        if non_ip_rules or name in PROTECTED_RULESETS:
+            write_file(target_file, self.generate_header(name, len(non_ip_rules)) + "\n".join(sorted(list(non_ip_rules))) + "\n")
+            Logger.success(f"Processed Domain Ruleset: {name} ({len(non_ip_rules)} rules)")
+        else:
+            if os.path.exists(target_file):
+                os.remove(target_file)
+
         self.hashes[name] = current_hash
         self.stats["merged"] += 1
-        Logger.success(f"Processed Ruleset: {name} ({len(all_rules)} rules)")
+
 
     def run(self):
         Logger.section("Ruleset Processing (1:1 Logic)")
         os.makedirs(SURGE_DIR, exist_ok=True)
-        # Exclude AdBlock and substore as they have specialized managers
-        all_files = [f[:-5] for f in os.listdir(SURGE_DIR) if f.endswith('.list')]
+        # Exclude AdBlock, substore, and IP sub-lists
+        all_files = [f[:-5] for f in os.listdir(SURGE_DIR) if f.endswith('.list') and not f[:-5].endswith('_ip')]
         all_to_process = (set(RULESETS) | set(DEPRECATED_RULESETS) | set(all_files)) - SPECIAL_MANAGED_RULESETS
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -399,7 +423,7 @@ class RulesetManager:
             if not fname.endswith(".list"):
                 continue
             name = fname[:-5]
-            if name in SPECIAL_MANAGED_RULESETS:
+            if name in SPECIAL_MANAGED_RULESETS or name.endswith('_ip'):
                 continue
             path = os.path.join(SURGE_DIR, fname)
             if self._count_rules(path) > 0:
