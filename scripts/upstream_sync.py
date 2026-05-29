@@ -69,6 +69,7 @@ NEXUS_MODULES = [
     "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule",
     "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule",
     "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule",
+    "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
 ]
 
 # Modules merged directly into PROMAX via local_sources (include_sections=True).
@@ -77,6 +78,7 @@ NEXUS_MODULES = [
 LOCAL_SOURCE_MODULES = {
     "XWebAds.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
     "BiliBili.ADBlock.sgmodule": "https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule",
+    "[Sukka] Enhance Better ADBlock for Surge.sgmodule": "https://ruleset.skk.moe/Modules/sukka_enhance_adblock.sgmodule",
 }
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"

@@ -1,25 +1,11 @@
 {
-  "generated": "2026-05-29T12:52:51.621718",
+  "generated": "2026-05-29T18:07:56.942591",
   "total": 26,
   "policy": {
     "adblock": "仅安装 PROMAX + ruleset/AdBlock 分片",
     "features": "功能模块保留独立 #!arguments；merged_into 勿重复安装"
   },
   "modules": [
-    {
-      "id": "[Sukka] URL Rewrite",
-      "filename": "[Sukka] URL Rewrite.sgmodule",
-      "category": "amplify_nexus",
-      "path": "module/surge(main)/amplify_nexus/[Sukka] URL Rewrite.sgmodule",
-      "has_arguments": false,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%5BSukka%5D%20URL%20Rewrite.sgmodule",
-      "name": "[Sukka] URL Rewrite",
-      "desc": "Enable this module to use Sukka URL Rewrite rules",
-      "tags": [],
-      "author": "",
-      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
-    },
     {
       "id": "bili",
       "filename": "bili.sgmodule",
@@ -222,6 +208,20 @@
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/Sub_Info.sgmodule",
       "name": "机场订阅信息",
       "desc": "显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
+      "tags": [],
+      "author": "",
+      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
+    },
+    {
+      "id": "sukka_url_redirect",
+      "filename": "sukka_url_redirect.sgmodule",
+      "category": "amplify_nexus",
+      "path": "module/surge(main)/amplify_nexus/sukka_url_redirect.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/sukka_url_redirect.sgmodule",
+      "name": "[Sukka] URL Redirect",
+      "desc": "Last Updated: 2026-03-10T05:42:43.121Z Size: 90",
       "tags": [],
       "author": "",
       "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"

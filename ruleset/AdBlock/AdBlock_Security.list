@@ -2,8 +2,9 @@
 # Purpose: 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject
 # Category-Key: Security
 # Shard: 1/1
-# Total Rules: 24689
+# Total Rules: 24721
 
+DEST-PORT,7680
 DOMAIN,543874163.ddns.net
 DOMAIN,9ibbcq2d.sina.cn
 DOMAIN,DOMAIN-SUFFIX-review.com
@@ -37,7 +38,6 @@ DOMAIN,api-scout.vercel.app
 DOMAIN,api.cortana.ai
 DOMAIN,api.d.xiaomi.com
 DOMAIN,api.g.micloud.xiaomi.net
-DOMAIN,api.hybrid.xiaomi.com
 DOMAIN,api.sec.intl.miui.com
 DOMAIN,apidns-js.kwd.inkuai.com
 DOMAIN,appupdates.189.cn
@@ -74,6 +74,7 @@ DOMAIN,d1oxlq5h9kq8q5.cloudfront.net
 DOMAIN,d2tnx644ijgq6i.cloudfront.net
 DOMAIN,d3ddidv77grh0f.cloudfront.net
 DOMAIN,d3mjsomixevyw7.cloudfront.net
+DOMAIN,daisydiskapp.com
 DOMAIN,datain.longfor.com
 DOMAIN,device-metrics-us-2.amazon.com
 DOMAIN,device-metrics-us.amazon.com
@@ -89,6 +90,7 @@ DOMAIN,e.jparking.cn
 DOMAIN,e.pubtailer.com
 DOMAIN,e2elog.fetnet.net
 DOMAIN,eco.taobao.com
+DOMAIN,epay.10010.com
 DOMAIN,err.taobao.com
 DOMAIN,eu-ethpool.ddns.net
 DOMAIN,eu-nilupool.ddns.net
@@ -127,6 +129,7 @@ DOMAIN,l6urqh27.sina.cn
 DOMAIN,launch.apple.com
 DOMAIN,line3-h5-mobile-api.biligame.com
 DOMAIN,liteapp.developer.xiaomi.com
+DOMAIN,loan-supermarket.faas.ele.me
 DOMAIN,log.tidbcloud.com
 DOMAIN,mamasearchad.cloudvideocdn.taobao.com
 DOMAIN,marketing-aibox.v.mitvos.com
@@ -138,6 +141,7 @@ DOMAIN,mgepodownload.mediatek.com
 DOMAIN,mini.midonglab.com
 DOMAIN,mixern.sina.cn
 DOMAIN,mmgame.qpic.cn
+DOMAIN,mpush-api.aliyun.com
 DOMAIN,msmetrics-test.ws.sonos.com
 DOMAIN,mvconf.lato.cloud.360safe.com
 DOMAIN,mvconf.uk.cloud.360safe.com
@@ -162,6 +166,7 @@ DOMAIN,paydns.wechatpay.cn
 DOMAIN,ping.ifixit.com
 DOMAIN,proxyhog.prisma-data.net
 DOMAIN,pub.elevate14r.com
+DOMAIN,push.12306.cn
 DOMAIN,qgnu18wo.sina.cn
 DOMAIN,qm.redbullracing.com
 DOMAIN,quickaplus-server-api-cn-zhangjiakou.aliyuncs.com
@@ -280,6 +285,7 @@ DOMAIN-KEYWORD,adobeanalytics.
 DOMAIN-KEYWORD,adobemarketing.
 DOMAIN-KEYWORD,adtarget.
 DOMAIN-KEYWORD,advertmarket
+DOMAIN-KEYWORD,bahoom
 DOMAIN-KEYWORD,dkswshap-
 DOMAIN-KEYWORD,dolce-gusto.
 DOMAIN-KEYWORD,engage.3m.
@@ -316,6 +322,7 @@ DOMAIN-KEYWORD,trksvg.business.
 DOMAIN-KEYWORD,trksvg.gbm.
 DOMAIN-KEYWORD,trksvg.sustainablefinance.
 DOMAIN-KEYWORD,utiq.
+DOMAIN-SUFFIX,0.0.198.in-addr.arpa
 DOMAIN-SUFFIX,000webhostapp.com
 DOMAIN-SUFFIX,001www.com
 DOMAIN-SUFFIX,0022a601.pphost.net
@@ -1160,7 +1167,6 @@ DOMAIN-SUFFIX,ad.360.cn
 DOMAIN-SUFFIX,ad.ehello.jp
 DOMAIN-SUFFIX,ad.india.xiaomi.com
 DOMAIN-SUFFIX,ad.myapple.pl
-DOMAIN-SUFFIX,ad.quickapp.hybrid.xiaomi.com
 DOMAIN-SUFFIX,ad.rus.xiaomi.com
 DOMAIN-SUFFIX,ad.yipinread.com
 DOMAIN-SUFFIX,ad0a3c4a7f.5cc078f5bd.com
@@ -1256,7 +1262,9 @@ DOMAIN-SUFFIX,admozartppc.com
 DOMAIN-SUFFIX,adnordics.com
 DOMAIN-SUFFIX,adnotbad.com
 DOMAIN-SUFFIX,ado.wish-best.com
+DOMAIN-SUFFIX,adobe.io
 DOMAIN-SUFFIX,adobedamfamilygolfcenter.com
+DOMAIN-SUFFIX,adobestats.io
 DOMAIN-SUFFIX,adobeupdater.mcdir.ru
 DOMAIN-SUFFIX,adolphusisomlycyou.pages.dev
 DOMAIN-SUFFIX,adonsonlyd.xyz
@@ -2189,6 +2197,7 @@ DOMAIN-SUFFIX,api.cloudleadia.com
 DOMAIN-SUFFIX,api.consentjs.datagrail.io
 DOMAIN-SUFFIX,api.distribution.hulu.com
 DOMAIN-SUFFIX,api.ezilax.com
+DOMAIN-SUFFIX,api.miwifi.com
 DOMAIN-SUFFIX,api.plyair.com
 DOMAIN-SUFFIX,api.pozvonim.com
 DOMAIN-SUFFIX,api.sorunapp.com
@@ -5957,6 +5966,7 @@ DOMAIN-SUFFIX,cookoven.com
 DOMAIN-SUFFIX,cool-downloads.com
 DOMAIN-SUFFIX,cool-downloads.net
 DOMAIN-SUFFIX,cool-tik-vids.com
+DOMAIN-SUFFIX,cool3c.com
 DOMAIN-SUFFIX,coolbytesgrill.com
 DOMAIN-SUFFIX,coolconcepts.nl
 DOMAIN-SUFFIX,coolmine.top
@@ -9799,6 +9809,7 @@ DOMAIN-SUFFIX,genewholewing.com
 DOMAIN-SUFFIX,gentete.com
 DOMAIN-SUFFIX,gentleshadeox.pro
 DOMAIN-SUFFIX,gentlesleepfunding.com
+DOMAIN-SUFFIX,genuine.autodesk.com
 DOMAIN-SUFFIX,genuinelypossibly.com
 DOMAIN-SUFFIX,geo.linq.gg
 DOMAIN-SUFFIX,geoffchampagnehost.com
@@ -11016,6 +11027,7 @@ DOMAIN-SUFFIX,htex-panel.at
 DOMAIN-SUFFIX,htmail.co.uk
 DOMAIN-SUFFIX,httpdns.aliyuncs.com
 DOMAIN-SUFFIX,httpdns.qcloud.com
+DOMAIN-SUFFIX,httpizza.ele.me
 DOMAIN-SUFFIX,httpssecure.serveftp.com
 DOMAIN-SUFFIX,hu-manity.co
 DOMAIN-SUFFIX,hu.colsex.com
@@ -11099,6 +11111,7 @@ DOMAIN-SUFFIX,hxh.jp
 DOMAIN-SUFFIX,hxzf4er.com
 DOMAIN-SUFFIX,hy.casteovernet.qpon
 DOMAIN-SUFFIX,hybrid.intl.xiaomi.com
+DOMAIN-SUFFIX,hybrid.xiaomi.com
 DOMAIN-SUFFIX,hybridglobalnet.com
 DOMAIN-SUFFIX,hybridkenya.com
 DOMAIN-SUFFIX,hydrotastic.com
@@ -12088,7 +12101,9 @@ DOMAIN-SUFFIX,jqdkkk.com
 DOMAIN-SUFFIX,jqdl2ik4cglrf08-p.clead.xyz
 DOMAIN-SUFFIX,jquery-js.com
 DOMAIN-SUFFIX,jquerylenslider.com
+DOMAIN-SUFFIX,jr.airstarfinance.net
 DOMAIN-SUFFIX,jr.canopidkaf.shop
+DOMAIN-SUFFIX,jr.mi.com
 DOMAIN-SUFFIX,jr.stotinginlands.rest
 DOMAIN-SUFFIX,jrm.digital
 DOMAIN-SUFFIX,jrnrvu.org
@@ -13185,6 +13200,7 @@ DOMAIN-SUFFIX,lline.com.cn
 DOMAIN-SUFFIX,llotujou.online
 DOMAIN-SUFFIX,lloveconection.com
 DOMAIN-SUFFIX,llq.rsq.mybluehost.me
+DOMAIN-SUFFIX,lmk.mipay.com
 DOMAIN-SUFFIX,lmoox5.net
 DOMAIN-SUFFIX,lmy.de
 DOMAIN-SUFFIX,ln.acornfun.com
@@ -13266,6 +13282,7 @@ DOMAIN-SUFFIX,log.miwifi.com
 DOMAIN-SUFFIX,log.open.investorsbank.com
 DOMAIN-SUFFIX,log.scanmypost.co.uk
 DOMAIN-SUFFIX,log.zcool.com.cn
+DOMAIN-SUFFIX,logan.sankuai.com
 DOMAIN-SUFFIX,loganmedia.mobi
 DOMAIN-SUFFIX,logatera.net
 DOMAIN-SUFFIX,logatera.work
@@ -13322,6 +13339,7 @@ DOMAIN-SUFFIX,longfeng188.com
 DOMAIN-SUFFIX,longfengwushi.com
 DOMAIN-SUFFIX,longterminvestmentsolutions.com
 DOMAIN-SUFFIX,longuarthot.com
+DOMAIN-SUFFIX,look.163.com
 DOMAIN-SUFFIX,lookblock.pages.dev
 DOMAIN-SUFFIX,lookingserving.com
 DOMAIN-SUFFIX,loreal-paris-me.com
@@ -13676,6 +13694,7 @@ DOMAIN-SUFFIX,maledisappointingscholarship.com
 DOMAIN-SUFFIX,malenirt.site
 DOMAIN-SUFFIX,maliciouscolognehorrid.com
 DOMAIN-SUFFIX,malignantglance.com
+DOMAIN-SUFFIX,mall.10010.cn
 DOMAIN-SUFFIX,malnutritionscarcelylocksmith.com
 DOMAIN-SUFFIX,malqen.life
 DOMAIN-SUFFIX,malrboro.com
@@ -14121,6 +14140,7 @@ DOMAIN-SUFFIX,michiakari.com
 DOMAIN-SUFFIX,michiakaza.com
 DOMAIN-SUFFIX,michibiki-mori.com
 DOMAIN-SUFFIX,microchromejapan.b-cdn.net
+DOMAIN-SUFFIX,microfin.ele.me
 DOMAIN-SUFFIX,microphonegullible.com
 DOMAIN-SUFFIX,microsoft-notifcation.com
 DOMAIN-SUFFIX,microsoft-verify.glitch.me
@@ -15089,6 +15109,7 @@ DOMAIN-SUFFIX,new.quranushaiqer.org.sa
 DOMAIN-SUFFIX,new2crypto.com
 DOMAIN-SUFFIX,newad.ifeng.com
 DOMAIN-SUFFIX,newblackage.com
+DOMAIN-SUFFIX,newbuy.chinaunicom.cn
 DOMAIN-SUFFIX,newcaiyi.com
 DOMAIN-SUFFIX,newchange.io
 DOMAIN-SUFFIX,newcoinstomine.com
@@ -16404,6 +16425,7 @@ DOMAIN-SUFFIX,pioncoin.org
 DOMAIN-SUFFIX,piparelli.net
 DOMAIN-SUFFIX,pipe.aria.microsoft.com
 DOMAIN-SUFFIX,piperspectaclewade.com
+DOMAIN-SUFFIX,pipi.cn
 DOMAIN-SUFFIX,piratebay.tel
 DOMAIN-SUFFIX,piratechain.org
 DOMAIN-SUFFIX,pirateiro.com
@@ -20100,7 +20122,6 @@ DOMAIN-SUFFIX,stat.s.ee
 DOMAIN-SUFFIX,stat.xtom.com
 DOMAIN-SUFFIX,stat.ykimg.com
 DOMAIN-SUFFIX,stat.youpin.mi.com
-DOMAIN-SUFFIX,stat2.unicompayment.com
 DOMAIN-SUFFIX,statautos.com
 DOMAIN-SUFFIX,statelinear.com
 DOMAIN-SUFFIX,statementsclaw.com
@@ -21539,6 +21560,7 @@ DOMAIN-SUFFIX,tomtom.pages.dev
 DOMAIN-SUFFIX,tomzila.com
 DOMAIN-SUFFIX,toncrc.com
 DOMAIN-SUFFIX,tonczc.com
+DOMAIN-SUFFIX,tongdun.net
 DOMAIN-SUFFIX,tonic.dnsd.info
 DOMAIN-SUFFIX,tonightpotentstiffen.com
 DOMAIN-SUFFIX,tonightshookup.com
@@ -22093,6 +22115,8 @@ DOMAIN-SUFFIX,ukokjxfbdqwffmuvsd.jp
 DOMAIN-SUFFIX,ukpayment.xin
 DOMAIN-SUFFIX,ukrpool.com
 DOMAIN-SUFFIX,ul2tos.cn
+DOMAIN-SUFFIX,ule.com
+DOMAIN-SUFFIX,ulecdn.com
 DOMAIN-SUFFIX,ulinix.com
 DOMAIN-SUFFIX,ulla.com
 DOMAIN-SUFFIX,ultimate-datasecurity.com
@@ -22146,6 +22170,7 @@ DOMAIN-SUFFIX,unfamiliarsexual.com
 DOMAIN-SUFFIX,unfriendlystimulategravity.com
 DOMAIN-SUFFIX,unhealthyincreasing.com
 DOMAIN-SUFFIX,uniararas.com
+DOMAIN-SUFFIX,unicompayment.com
 DOMAIN-SUFFIX,unidentifiedvisitation.com
 DOMAIN-SUFFIX,unieco.com
 DOMAIN-SUFFIX,uniform-factory.ae
@@ -22482,6 +22507,8 @@ DOMAIN-SUFFIX,video-change.digital
 DOMAIN-SUFFIX,video-hub-app.com
 DOMAIN-SUFFIX,video-streaming-app.com
 DOMAIN-SUFFIX,video-watch1.com
+DOMAIN-SUFFIX,video-zb.cloudvideocdn.taobao.com
+DOMAIN-SUFFIX,video.goofish.com
 DOMAIN-SUFFIX,video.redwap.cam
 DOMAIN-SUFFIX,video.xiaomi.com
 DOMAIN-SUFFIX,videoadblocker-api.com
@@ -24478,6 +24505,11 @@ IP-CIDR6,2001:240:bb5f:1980:0:1:80b:ad00/128
 IP-CIDR6,2402:4e00:8030:1::17/128
 IP-CIDR6,2408:8711:10:10::20/128
 IP-CIDR6,2409:8702:4860:10::4d/128
+PROCESS-NAME,LemonAgent
+PROCESS-NAME,LemonDaemon
+PROCESS-NAME,LemonMonitor
+PROCESS-NAME,LemonService
+PROCESS-NAME,Tencent Lemon
 URL-REGEX,"^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/(EcomResourceServer/AdPlayPage/adinfo|MobileAdServer/)"
 URL-REGEX,"^http:\/\/101\.35\.204\.35\/d"
 URL-REGEX,"^http:\/\/101\.35\.212\.35\/d"

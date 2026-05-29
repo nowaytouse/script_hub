@@ -177,3 +177,17 @@ DOMAIN,doh.mullvad.net
 DOMAIN,ffmuc.net
 DOMAIN,doh.ffmuc.net
 DOMAIN,doh-pure.onedns.net
+
+# ============ 脸书 (Facebook) ============
+# 恢复脸书核心 API、图谱与推送服务正常使用，解决被 ThreatIntel 误杀的问题
+DOMAIN,graph.facebook.com
+DOMAIN,graph-fallback.facebook.com
+DOMAIN,b-graph.facebook.com
+DOMAIN,b-graph-fallback.facebook.com
+DOMAIN,z-m-graph.facebook.com
+DOMAIN,connect.facebook.com
+DOMAIN,mqtt-mini.facebook.com
+DOMAIN,web.facebook.com
+DOMAIN,web-fallback.facebook.com
+DOMAIN,dns.facebook.com
+

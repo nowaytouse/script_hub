@@ -1222,11 +1222,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
+                "RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
+                "RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
+                "RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )
