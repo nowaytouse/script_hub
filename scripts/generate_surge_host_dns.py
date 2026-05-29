@@ -17,7 +17,7 @@ SURGE_RULESET_DIR = ROOT / "ruleset" / "Surge(Shadowkroket)"
 # Mainland (matches [General] + encrypted-dns baseline)
 DOH_CN_ALIDNS = "https://dns.alidns.com/dns-query"
 DOH_CN_PUB = "https://doh.pub/dns-query"
-DOH_CN_APPLE = "https://doh.dns.apple.com/dns-query"
+DOH_CN_APPLE = "system"
 DOH_TW_TWNIC = "https://dns.twnic.tw/dns-query"
 DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
 
