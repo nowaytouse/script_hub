@@ -1,6 +1,6 @@
 # AdBlock 分片规则集
 
-> 自动生成于 `2026-05-29 18:14:13` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-05-29 15:53:03` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -34,12 +34,12 @@
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list) |
-| 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list` | 30,136 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list) |
+| 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list` | 50,996 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list) |
-| 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list` | 58,394 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list) |
-| 其他补充 | `ruleset/AdBlock/AdBlock_Other.list` | 17,220 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list) |
+| 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list` | 62,679 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list) |
+| 其他补充 | `ruleset/AdBlock/AdBlock_Other.list` | 17,214 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list) |
 
 ## 安装模块（引用上述分片，勿重复安装 local_sources）
 
