@@ -1,6 +1,6 @@
 # AdBlock 分片规则集
 
-> 自动生成于 `2026-05-29 12:52:38` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-05-29 17:17:15` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -23,23 +23,23 @@
 | 应用定制 | `ruleset/AdBlock/AdBlock_Local.list` | 98 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list) |
 | 通用广告 | `ruleset/AdBlock/AdBlock_Advertising_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_01.list) |
 | 通用广告 | `ruleset/AdBlock/AdBlock_Advertising_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_02.list) |
-| 通用广告 | `ruleset/AdBlock/AdBlock_Advertising_03.list` | 78,795 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list) |
+| 通用广告 | `ruleset/AdBlock/AdBlock_Advertising_03.list` | 78,794 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list) |
 | 隐私追踪 | `ruleset/AdBlock/AdBlock_Privacy.list` | 5,595 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list) |
-| 安全威胁 | `ruleset/AdBlock/AdBlock_Security.list` | 25,876 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list) |
-| Anti-AD | `ruleset/AdBlock/AdBlock_AntiAD.list` | 4,985 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list) |
+| 安全威胁 | `ruleset/AdBlock/AdBlock_Security.list` | 25,886 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list) |
+| Anti-AD | `ruleset/AdBlock/AdBlock_AntiAD.list` | 5,025 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list) |
 | 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list) |
-| 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list` | 29,846 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list) |
+| 威胁情报·终极 | `ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list` | 29,845 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list) |
 | 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list) |
-| 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list` | 5,620 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list) |
-| 威胁情报·补充 | `ruleset/AdBlock/AdBlock_ThreatIntel.list` | 67,580 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list) |
+| 威胁情报·TIF | `ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list` | 5,628 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list) |
+| 威胁情报·补充 | `ruleset/AdBlock/AdBlock_ThreatIntel.list` | 67,331 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list) |
 | 其他补充 | `ruleset/AdBlock/AdBlock_Other.list` | 3,775 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list) |
 
 ## 安装模块（引用上述分片，勿重复安装 local_sources）

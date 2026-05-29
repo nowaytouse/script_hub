@@ -99,9 +99,20 @@ TELEGRAM_DC_IPS = {
     "91.108.4.0", "91.108.8.0", "91.108.12.0", "91.108.16.0",
     "149.154.167.0", "149.154.171.0", "149.154.163.0", "149.154.167.40",
 }
-TELEGRAM_DOMAIN_MARKERS = (
+EXEMPTED_DOMAIN_MARKERS = (
+    # Telegram DC / domains
     "telegram.org", "telegram.me", "telegram.dog", "telegram.space",
     "telegram-cdn.org", "telegramdownload.com", "t.me", "telesco.pe",
+    # Facebook / Instagram / Messenger / WhatsApp / Meta
+    "facebook.com", "fbcdn.net", "fbcdn.com", "fb.me", "messenger.com", "instagram.com", "cdninstagram.com", "ig.me", "igcdn.com", "whatsapp.com", "whatsapp.net", "wa.me", "meta.com", "fbsbx.com", "fbsbx.net",
+    # Twitter / X
+    "twitter.com", "twimg.com", "twimg.org", "t.co", "x.com", "tweetdeck.com",
+    # TikTok
+    "tiktok.com", "tiktokv.com", "tiktokcdn.com", "byteoversea.com", "ibyteimg.com", "ibytetos.com", "tiktokv.us",
+    # Reddit
+    "reddit.com", "redditmedia.com", "redditstatic.com", "redd.it",
+    # Discord
+    "discord.com", "discordapp.com", "discordapp.net", "discordcdn.com", "discord.gg",
 )
 # Surge [Host]: *.suffix, literal FQDN, single-? label, or _special_ names
 _VALID_HOST_KEY = re.compile(
@@ -112,11 +123,11 @@ _VALID_HOST_KEY = re.compile(
 
 
 def is_reserved_auto_host(key: str) -> bool:
-    """Keep Telegram DC pins / domains out of auto DoH lists (first-match wins)."""
+    """Keep Telegram DC pins / domains and blocked social platforms out of auto DoH lists (first-match wins)."""
     if key in TELEGRAM_DC_IPS:
         return True
     low = key.lower().lstrip("*.")
-    for marker in TELEGRAM_DOMAIN_MARKERS:
+    for marker in EXEMPTED_DOMAIN_MARKERS:
         if low == marker or low.endswith("." + marker) or marker in low:
             return True
     return False
