@@ -1,5 +1,5 @@
 {
-  "updated": "2026-05-29 18:07:46",
+  "updated": "2026-05-29 18:14:13",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -115,13 +115,22 @@
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list"
     },
     {
-      "file": "ruleset/AdBlock/AdBlock_Security.list",
+      "file": "ruleset/AdBlock/AdBlock_Security_01.list",
       "category": "Security",
       "label_zh": "安全威胁",
       "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
       "shard_index": 1,
-      "rule_count": 25921,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security.list"
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security_01.list"
+    },
+    {
+      "file": "ruleset/AdBlock/AdBlock_Security_02.list",
+      "category": "Security",
+      "label_zh": "安全威胁",
+      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
+      "shard_index": 2,
+      "rule_count": 25756,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security_02.list"
     },
     {
       "file": "ruleset/AdBlock/AdBlock_AntiAD.list",
@@ -129,7 +138,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 5025,
+      "rule_count": 6007,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list"
     },
     {
@@ -192,7 +201,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 7,
-      "rule_count": 29833,
+      "rule_count": 30136,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list"
     },
     {
@@ -228,26 +237,8 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 4,
-      "rule_count": 100000,
+      "rule_count": 58394,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list"
-    },
-    {
-      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 5,
-      "rule_count": 5628,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list"
-    },
-    {
-      "file": "ruleset/AdBlock/AdBlock_ThreatIntel.list",
-      "category": "ThreatIntel",
-      "label_zh": "威胁情报·补充",
-      "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
-      "shard_index": 1,
-      "rule_count": 67331,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list"
     },
     {
       "file": "ruleset/AdBlock/AdBlock_Other.list",
@@ -255,7 +246,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 3775,
+      "rule_count": 17220,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list"
     }
   ]

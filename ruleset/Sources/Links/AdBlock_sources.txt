@@ -33,13 +33,13 @@ https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.t
 https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt|REJECT
 
 # skk.moe
-https://ruleset.skk.moe/List/domainset/reject.conf|REJECT
-https://ruleset.skk.moe/List/domainset/reject_extra.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/reject.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf|REJECT
-https://ruleset.skk.moe/List/ip/reject.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/sogouinput.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/my_reject.conf|REJECT
+../../Surge(Shadowkroket)/skk_upstream/reject-domainset.list|REJECT
+../../Surge(Shadowkroket)/skk_upstream/reject-extra-domainset.list|REJECT
+../../Surge(Shadowkroket)/skk_upstream/reject.list|REJECT
+../../Surge(Shadowkroket)/skk_upstream/reject-url-regex.list|REJECT
+../../Surge(Shadowkroket)/skk_upstream/reject-ip.list|REJECT
+../../Surge(Shadowkroket)/skk_upstream/sogouinput.list|REJECT
+../../Surge(Shadowkroket)/skk_upstream/my_reject.list|REJECT
 
 # ACL4SSR and other list sources
 https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list|REJECT
@@ -65,7 +65,7 @@ https://gist.githubusercontent.com/RavelloH/68ed0626dae69a1ce7c8ad6887087ea1/raw
 # Hagezi DNS-Blocklists - Ultimate + TIF Medium (Threat Intelligence)
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/ultimate.txt|REJECT
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.medium.txt|REJECT
-https://ruleset.skk.moe/List/domainset/reject_phishing.conf|REJECT
+../../Surge(Shadowkroket)/skk_upstream/reject-phishing-domainset.list|REJECT
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/AdvertisingMiTV/AdvertisingMiTV.list|REJECT
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/AdobeActivation/AdobeActivation.list|REJECT
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Domob/Domob.list|REJECT

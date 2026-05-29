@@ -22,6 +22,13 @@ SKK_SOURCES = {
     "reject.list": "https://ruleset.skk.moe/List/non_ip/reject.conf",
     "reject-no-drop.list": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
     "reject-drop.list": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "reject-url-regex.list": "https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf",
+    "sogouinput.list": "https://ruleset.skk.moe/List/non_ip/sogouinput.conf",
+    "my_reject.list": "https://ruleset.skk.moe/List/non_ip/my_reject.conf",
+    "reject-domainset.list": "https://ruleset.skk.moe/List/domainset/reject.conf",
+    "reject-extra-domainset.list": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "reject-phishing-domainset.list": "https://ruleset.skk.moe/List/domainset/reject_phishing.conf",
+    "reject-ip.list": "https://ruleset.skk.moe/List/ip/reject.conf",
     "BlockHttpDNS.list": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list"
 }
 

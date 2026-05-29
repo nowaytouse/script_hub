@@ -1222,11 +1222,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                "RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,"
+                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                "RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,"
+                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                "RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list,"
+                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )
@@ -1336,11 +1336,6 @@ class AdBlockManager:
         # 4. Fetch and extract from all other canonical sources (sorted by priority)
         Logger.section("Fetching Canonical AdBlock Sources")
         failures = self.process_source_entries(source_entries, cached_contents=cached_modules)
-
-        # 5. Load SKK fallback (lowest priority)
-        if os.path.exists(SKK_REJECT):
-            Logger.info("Loading local skk reject fallback...")
-            self.extract_from_file(SKK_REJECT, default_policy="REJECT", category="Other", include_sections=False)
 
         generated_rulesets = self.generate_ruleset()
         self.write_catalog(generated_rulesets)
