@@ -26,6 +26,8 @@ PRIORITY_ORDER = [
     "AI.list",
     "SocialMedia.list",
     "NSFW.list",
+    "substore.list",
+    "AppleNews.list",
     "StreamUS.list",
     "StreamJP.list",
     "StreamKR.list",
@@ -36,7 +38,6 @@ PRIORITY_ORDER = [
     "Gaming.list",
     "Google.list",
     "Apple.list",
-    "AppleNews.list",
     "Microsoft.list",
     "GitHub.list",
     "PayPal.list",
@@ -374,7 +375,15 @@ class RulesetCleanup:
         for filename, rules in self.file_content.items():
             filepath = self.file_paths.get(filename)
             if filepath:
-                write_list(filepath, rules)
+                if len(rules) == 0 and filename != "AdBlock.list":
+                    if os.path.exists(filepath):
+                        try:
+                            os.remove(filepath)
+                            print(f"Deleted empty ruleset file: {filename}")
+                        except Exception as e:
+                            print(f"Failed to delete empty file {filepath}: {e}")
+                else:
+                    write_list(filepath, rules)
 
     def run(self) -> Dict[str, int]:
         self.load()

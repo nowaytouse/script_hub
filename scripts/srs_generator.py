@@ -117,6 +117,26 @@ class SRSGenerator:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             executor.map(self.compile_srs, list_files)
+        self.prune_stale_srs(list_files)
+
+    def prune_stale_srs(self, list_files: list):
+        expected_srs = {f"{os.path.splitext(os.path.basename(lf))[0]}_Singbox.srs" for lf in list_files}
+        
+        # Explicitly exempt GeoIP files as they are pre-compiled and tracked
+        for fname in os.listdir(SINGBOX_DIR):
+            if fname.startswith("GeoIP_") and fname.endswith(".srs"):
+                expected_srs.add(fname)
+                
+        for fname in sorted(os.listdir(SINGBOX_DIR)):
+            if not fname.endswith(".srs"):
+                continue
+            if fname not in expected_srs:
+                path = os.path.join(SINGBOX_DIR, fname)
+                try:
+                    os.remove(path)
+                    Logger.warn(f"Pruned stale SRS: {fname}")
+                except Exception as e:
+                    Logger.error(f"Failed to prune stale SRS {fname}: {e}")
 
 if __name__ == "__main__":
     generator = SRSGenerator()
