@@ -39,6 +39,7 @@ DOH_APPLIED_PRIVACY = "https://doh.applied-privacy.net/query"
 DOH_DIGITALE_GESELLSCHAFT = "https://dns.digitale-gesellschaft.ch/dns-query"
 DOH_SUDO = "https://dns.sudo.is/dns-query"
 DOH_CAPTNEMO = "https://dns.captnemo.in/dns-query"
+DOH_CLOUDFLARE = "https://cloudflare-dns.com/dns-query"
 
 DNS_MAPPING_DOH: Dict[str, str] = {
     "DNS_China_AliDNS": DOH_CN_ALIDNS,
@@ -51,7 +52,7 @@ DNS_MAPPING_DOH: Dict[str, str] = {
     "DNS_Global_Microsoft": DOH_CONTROL_D,
     "DNS_Global_Apple": DOH_CN_APPLE,
     "DNS_Global_AI": DOH_ADGUARD,
-    "DNS_Global_Social": DOH_ADGUARD,
+    "DNS_Global_Social": DOH_CLOUDFLARE,
     "DNS_Global_Privacy": DOH_LIBREDNS,
     "DNS_Global_Priority": DOH_NEXTDNS,
     "DNS_Global_Quad9": DOH_CONTROL_D,
@@ -70,7 +71,7 @@ SURGE_RULESET_DOH: Dict[str, str] = {
     "AppleNews": DOH_CN_APPLE,
     "StreamEU": DOH_DIGITALE_GESELLSCHAFT,
     "Spotify": DOH_DNS_SB,
-    "SocialMedia": DOH_ADGUARD,
+    "SocialMedia": DOH_CLOUDFLARE,
     "NSFW": DOH_MULLVAD_ADBLOCK,
     "GitHub": DOH_TIAR,
     "Google": DOH_NEXTDNS,
@@ -99,20 +100,9 @@ TELEGRAM_DC_IPS = {
     "91.108.4.0", "91.108.8.0", "91.108.12.0", "91.108.16.0",
     "149.154.167.0", "149.154.171.0", "149.154.163.0", "149.154.167.40",
 }
-EXEMPTED_DOMAIN_MARKERS = (
-    # Telegram DC / domains
+TELEGRAM_DOMAIN_MARKERS = (
     "telegram.org", "telegram.me", "telegram.dog", "telegram.space",
     "telegram-cdn.org", "telegramdownload.com", "t.me", "telesco.pe",
-    # Facebook / Instagram / Messenger / WhatsApp / Meta
-    "facebook.com", "fbcdn.net", "fbcdn.com", "fb.me", "messenger.com", "instagram.com", "cdninstagram.com", "ig.me", "igcdn.com", "whatsapp.com", "whatsapp.net", "wa.me", "meta.com", "fbsbx.com", "fbsbx.net",
-    # Twitter / X
-    "twitter.com", "twimg.com", "twimg.org", "t.co", "x.com", "tweetdeck.com",
-    # TikTok
-    "tiktok.com", "tiktokv.com", "tiktokcdn.com", "byteoversea.com", "ibyteimg.com", "ibytetos.com", "tiktokv.us",
-    # Reddit
-    "reddit.com", "redditmedia.com", "redditstatic.com", "redd.it",
-    # Discord
-    "discord.com", "discordapp.com", "discordapp.net", "discordcdn.com", "discord.gg",
 )
 # Surge [Host]: *.suffix, literal FQDN, single-? label, or _special_ names
 _VALID_HOST_KEY = re.compile(
@@ -123,11 +113,11 @@ _VALID_HOST_KEY = re.compile(
 
 
 def is_reserved_auto_host(key: str) -> bool:
-    """Keep Telegram DC pins / domains and blocked social platforms out of auto DoH lists (first-match wins)."""
+    """Keep Telegram DC pins / domains out of auto DoH lists (first-match wins)."""
     if key in TELEGRAM_DC_IPS:
         return True
     low = key.lower().lstrip("*.")
-    for marker in EXEMPTED_DOMAIN_MARKERS:
+    for marker in TELEGRAM_DOMAIN_MARKERS:
         if low == marker or low.endswith("." + marker) or marker in low:
             return True
     return False
