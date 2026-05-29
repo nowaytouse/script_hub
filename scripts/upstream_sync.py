@@ -29,6 +29,21 @@ SKK_SOURCES = {
     "reject-extra-domainset.list": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "reject-phishing-domainset.list": "https://ruleset.skk.moe/List/domainset/reject_phishing.conf",
     "reject-ip.list": "https://ruleset.skk.moe/List/ip/reject.conf",
+    "ai.list": "https://ruleset.skk.moe/List/non_ip/ai.conf",
+    "apple_cn.list": "https://ruleset.skk.moe/List/non_ip/apple_cn.conf",
+    "apple_intelligence.list": "https://ruleset.skk.moe/List/non_ip/apple_intelligence.conf",
+    "apple_services.list": "https://ruleset.skk.moe/List/non_ip/apple_services.conf",
+    "microsoft.list": "https://ruleset.skk.moe/List/non_ip/microsoft.conf",
+    "telegram.list": "https://ruleset.skk.moe/List/non_ip/telegram.conf",
+    "global.list": "https://ruleset.skk.moe/List/non_ip/global.conf",
+    "direct.list": "https://ruleset.skk.moe/List/non_ip/direct.conf",
+    "domestic.list": "https://ruleset.skk.moe/List/non_ip/domestic.conf",
+    "download.list": "https://ruleset.skk.moe/List/non_ip/download.conf",
+    "neteasemusic.list": "https://ruleset.skk.moe/List/non_ip/neteasemusic.conf",
+    "game-download.list": "https://ruleset.skk.moe/List/domainset/game-download.conf",
+    "speedtest.list": "https://ruleset.skk.moe/List/domainset/speedtest.conf",
+    "cdn.list": "https://ruleset.skk.moe/List/non_ip/cdn.conf",
+    "cdn-domainset.list": "https://ruleset.skk.moe/List/domainset/cdn.conf",
     "BlockHttpDNS.list": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list"
 }
 

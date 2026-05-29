@@ -2,15 +2,26 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 122
+# Rules: 153
 
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 DOMAIN,ai.google.dev
+DOMAIN,aida.googleapis.com
+DOMAIN,aisandbox-pa.googleapis.com
+DOMAIN,alkalicore-pa.clients6.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
+DOMAIN,antigravity-unleash.goog
+DOMAIN,antigravity.google
+DOMAIN,api.github.com
+DOMAIN,api.jetbrains.ai
 DOMAIN,api.msn.com
 DOMAIN,assets.msn.com
 DOMAIN,copilot.microsoft.com
+DOMAIN,daily-cloudcode-pa.googleapis.com
+DOMAIN,gateway.ai.cloudflare.com
 DOMAIN,gateway.bingviz.microsoft.net
 DOMAIN,generativelanguage.googleapis.com
+DOMAIN,jules.google.com
 DOMAIN,makersuite.google.com
 DOMAIN,odc.officeapps.live.com
 DOMAIN,openai-api.arkoselabs.com
@@ -18,8 +29,10 @@ DOMAIN,openaiapi-site.azureedge.net
 DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,openaicom.imgix.net
 DOMAIN,openaicomproductionae4b.blob.core.windows.net
+DOMAIN,openrouter.ai
 DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,r.bing.com
+DOMAIN,robinfrontend-pa.googleapis.com
 DOMAIN,services.bingapis.com
 DOMAIN,sydney.bing.com
 DOMAIN,www.bing.com
@@ -36,6 +49,7 @@ DOMAIN-KEYWORD,tiktokcdn
 DOMAIN-SUFFIX,abtestvm-sg.bytedance.com
 DOMAIN-SUFFIX,abtestvm.bytedance.com
 DOMAIN-SUFFIX,ai.com
+DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,algolia.net
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,api.microsoftapp.net
@@ -57,16 +71,25 @@ DOMAIN-SUFFIX,cici.com
 DOMAIN-SUFFIX,ciciai.com
 DOMAIN-SUFFIX,ciciaicdn.com
 DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,client-api.arkoselabs.com
+DOMAIN-SUFFIX,clipdrop.co
+DOMAIN-SUFFIX,cloudcode-pa.googleapis.com
 DOMAIN-SUFFIX,cohere.ai
 DOMAIN-SUFFIX,cohere.com
 DOMAIN-SUFFIX,cursor.com
 DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deepmind.google
+DOMAIN-SUFFIX,dify.ai
 DOMAIN-SUFFIX,dola.com
 DOMAIN-SUFFIX,edgeservices.bing.com
+DOMAIN-SUFFIX,g.ai
+DOMAIN-SUFFIX,geller-pa.googleapis.com
+DOMAIN-SUFFIX,gemini.google
 DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,generativeai.google
+DOMAIN-SUFFIX,grok.com
+DOMAIN-SUFFIX,groq.com
 DOMAIN-SUFFIX,host.livekit.cloud
 DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,ibyteimg.com
@@ -76,23 +99,29 @@ DOMAIN-SUFFIX,intercom.io
 DOMAIN-SUFFIX,intercomcdn.com
 DOMAIN-SUFFIX,ipstatp.com
 DOMAIN-SUFFIX,itobsnssdk.com
+DOMAIN-SUFFIX,jasper.ai
 DOMAIN-SUFFIX,launchdarkly.com
 DOMAIN-SUFFIX,lemon8-app.com
 DOMAIN-SUFFIX,lemon8cdn.com
 DOMAIN-SUFFIX,lf-rc1.yhgfb-static.com
 DOMAIN-SUFFIX,marscode.com
 DOMAIN-SUFFIX,mchost.guru
+DOMAIN-SUFFIX,meta.ai
 DOMAIN-SUFFIX,midjourney.com
 DOMAIN-SUFFIX,mistral.ai
 DOMAIN-SUFFIX,muscdn.com
 DOMAIN-SUFFIX,musical.ly
+DOMAIN-SUFFIX,notebooklm.google
+DOMAIN-SUFFIX,notebooklm.google.com
 DOMAIN-SUFFIX,oaistatic.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,observeit.net
 DOMAIN-SUFFIX,openai.com
 DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
-DOMAIN-SUFFIX,openrouter.ai
+DOMAIN-SUFFIX,openart.ai
+DOMAIN-SUFFIX,perplexity.ai
 DOMAIN-SUFFIX,pi.ai
+DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
 DOMAIN-SUFFIX,replicate.com
 DOMAIN-SUFFIX,runpod.io
@@ -112,6 +141,7 @@ DOMAIN-SUFFIX,ttwstatic.com
 DOMAIN-SUFFIX,turn.livekit.cloud
 DOMAIN-SUFFIX,ulikecam.com
 DOMAIN-SUFFIX,v0.dev
+DOMAIN-SUFFIX,x.ai
 DOMAIN-SUFFIX,zijieapi.com
 IP-CIDR,23.41.4.0/22
 IP-CIDR,24.199.123.28/32
@@ -126,3 +156,4 @@ PROCESS-NAME,Trae Helper (Plugin)
 PROCESS-NAME,ai
 PROCESS-NAME,ai-agent
 PROCESS-NAME,ai-completion
+URL-REGEX,https://www\.google\.com/.*continue=https://gemini\.google\.com.+
