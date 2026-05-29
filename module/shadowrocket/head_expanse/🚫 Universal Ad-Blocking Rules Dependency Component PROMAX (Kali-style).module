@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-05-29]
-#!desc=[🚀SR] 按用途分片(20片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json
+#!desc=[🚀SR] 按用途分片(21片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS
-#!date=2026-05-29 03:43:10
+#!date=2026-05-29 12:46:00
 
 [Rule]
 DOMAIN,dns.alidns.com,DIRECT
@@ -32,6 +32,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBloc
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_05.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT

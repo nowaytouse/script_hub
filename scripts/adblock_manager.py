@@ -28,6 +28,14 @@ TARGET_MODULE = os.path.join(
     HEAD_EXPANSE_DIR,
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
 )
+TARGET_MODULE_LITE = os.path.join(
+    HEAD_EXPANSE_DIR,
+    "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+)
+
+# Categories included in the Lite (mobile-friendly) tier.
+# Excludes heavy ThreatIntel shards (~1.2M rules) that are desktop-only.
+LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
 NARROW_PIERCE_DIR = os.path.join(ROOT, "module/surge(main)/narrow_pierce")
 ADBLOCK_DIR = os.path.join(ROOT, "ruleset/AdBlock")
 ADBLOCK_LIST = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/AdBlock.list")
@@ -1073,10 +1081,14 @@ class AdBlockManager:
                 }
             )
 
+        surge_module_lite = os.path.relpath(TARGET_MODULE_LITE, ROOT)
+        sr_module_lite = surge_module_lite.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+
         catalog = {
             "updated": now,
             "rules_per_shard_max": RULES_PER_SHARD,
             "categories": CATEGORY_META,
+            "lite_categories": sorted(LITE_CATEGORIES),
             "modules": {
                 "surge_promax": {
                     "path": surge_module,
@@ -1085,6 +1097,16 @@ class AdBlockManager:
                 "shadowrocket_promax": {
                     "path": sr_module,
                     "install_url": f"https://raw.githubusercontent.com/nowaytouse/script_hub/master/{urllib.parse.quote(sr_module)}",
+                },
+                "surge_promax_lite": {
+                    "path": surge_module_lite,
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module_lite)}",
+                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
+                },
+                "shadowrocket_promax_lite": {
+                    "path": sr_module_lite,
+                    "install_url": f"https://raw.githubusercontent.com/nowaytouse/script_hub/master/{urllib.parse.quote(sr_module_lite)}",
+                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
                 },
             },
             "manifest": os.path.relpath(ADBLOCK_SOURCES_FILE, ROOT),
@@ -1122,8 +1144,13 @@ class AdBlockManager:
                 "\n",
                 "## 安装模块（引用上述分片，勿重复安装 local_sources）\n",
                 "\n",
+                "### 🖥️ 桌面完整版（Full）\n",
                 f"- **Surge PROMAX**: [{catalog['modules']['surge_promax']['install_url']}]({catalog['modules']['surge_promax']['install_url']})\n",
                 f"- **Shadowrocket PROMAX**: [{catalog['modules']['shadowrocket_promax']['install_url']}]({catalog['modules']['shadowrocket_promax']['install_url']})\n",
+                "\n",
+                "### 📱 手机轻量版（Lite）\n",
+                f"- **Surge PROMAX Lite**: [{catalog['modules']['surge_promax_lite']['install_url']}]({catalog['modules']['surge_promax_lite']['install_url']})\n",
+                f"- **Shadowrocket PROMAX Lite**: [{catalog['modules']['shadowrocket_promax_lite']['install_url']}]({catalog['modules']['shadowrocket_promax_lite']['install_url']})\n",
             ]
         )
         write_file(ADBLOCK_README, "".join(lines))
@@ -1147,10 +1174,18 @@ class AdBlockManager:
         parts.append(policy)
         return ",".join(parts)
 
-    def generate_module(self, generated_rulesets: List[str]):
+    def generate_module(self, generated_rulesets: List[str], lite_only: bool = False):
         current_date = datetime.now().strftime("%Y-%m-%d")
-        shard_count = len(generated_rulesets)
         complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
+
+        if lite_only:
+            active_rulesets = [p for p in generated_rulesets if self._category_from_filename(os.path.basename(p)) in LITE_CATEGORIES]
+            target_path = TARGET_MODULE_LITE
+        else:
+            active_rulesets = generated_rulesets
+            target_path = TARGET_MODULE
+
+        shard_count = len(active_rulesets)
 
         rule_lines: List[str] = [
             "# High-Priority White-list (Prevent DNS failure)",
@@ -1166,7 +1201,7 @@ class AdBlockManager:
         ]
 
         shards_by_category: Dict[str, List[str]] = {}
-        for rs_path in generated_rulesets:
+        for rs_path in active_rulesets:
             cat = self._category_from_filename(os.path.basename(rs_path))
             shards_by_category.setdefault(cat, []).append(rs_path)
 
@@ -1196,11 +1231,12 @@ class AdBlockManager:
             ]
         )
 
+        active_cats = LITE_CATEGORIES if lite_only else set(self.category_names)
         complex_seen: Set[str] = set()
         for policy in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP"):
             pool = set()
-            for cat in self.category_names:
-                pool.update(self.rules[policy][cat])
+            for cat in active_cats:
+                pool.update(self.rules[policy].get(cat, set()))
             if not pool:
                 continue
             if policy == "REJECT":
@@ -1222,36 +1258,33 @@ class AdBlockManager:
             items = dedupe_section_lines(section_name, self.sections[section_name])
             if items:
                 extra_sections.append(
-                    (
-                        section_name,
-                        [f"# from module/local_sources ({len(items)} entries, deduped)", *items],
-                    )
+                    (section_name, [f"# from module/local_sources ({len(items)} entries, deduped)", *items])
                 )
 
         all_sections = [("Rule", rule_lines)] + extra_sections
         if self.mitm_hosts:
-            all_sections.append(
-                ("MITM", [f"hostname = %APPEND% {', '.join(sorted(self.mitm_hosts))}"])
-            )
+            all_sections.append(("MITM", [f"hostname = %APPEND% {', '.join(sorted(self.mitm_hosts))}"]))
         all_sections = merge_mitm_hosts(all_sections)
 
+        if lite_only:
+            name = f"📱 Universal Ad-Blocking Rules (PROMAX Lite) - [{current_date}]"
+            desc = f"手机轻量版({shard_count}片); 不含 ThreatIntel 重型规则; 功能配置请用 amplify_nexus 独立模块"
+            tag = "AdBlock, Lite, Mobile, HTTPDNS"
+        else:
+            name = f"🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]"
+            desc = f"按用途分片({shard_count}片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json"
+            tag = "AdBlock, Dependency, HTTPDNS"
+
         header_meta = {
-            "name": f"🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]",
-            "desc": (
-                f"按用途分片({shard_count}片); 功能配置请用 amplify_nexus 独立模块; "
-                "索引 ruleset/AdBlock/catalog.json"
-            ),
+            "name": name, "desc": desc,
             "author": "ScriptHub-Automated",
             "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png",
-            "category": GROUP_HEAD_EXPANSE,
-            "tag": "AdBlock, Dependency, HTTPDNS",
+            "category": GROUP_HEAD_EXPANSE, "tag": tag,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        write_file(
-            TARGET_MODULE,
-            format_module(format_header(header_meta), all_sections, dedupe=False),
-        )
-        Logger.success(f"Module generated: {os.path.basename(TARGET_MODULE)}")
+        write_file(target_path, format_module(format_header(header_meta), all_sections, dedupe=False))
+        Logger.success(f"Module generated: {os.path.basename(target_path)}")
+
 
     def merge(self, execute: bool = False):
         Logger.section("AdBlock Module Consolidation (Canonical Rebuild)")
@@ -1311,7 +1344,9 @@ class AdBlockManager:
 
         generated_rulesets = self.generate_ruleset()
         self.write_catalog(generated_rulesets)
-        self.generate_module(generated_rulesets)
+        self.generate_module(generated_rulesets, lite_only=False)
+        Logger.info("Generating PROMAX Lite (mobile-friendly) module...")
+        self.generate_module(generated_rulesets, lite_only=True)
         # Save hashes for change tracking
         local_source_paths = [e.resolved_path for e in source_entries if not e.is_remote]
         self.save_hashes(self.build_input_hashes(local_source_paths, source_entries))

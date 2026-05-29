@@ -1,6 +1,6 @@
 {
-  "generated": "2026-05-29T03:43:22.696635",
-  "total": 25,
+  "generated": "2026-05-29T12:52:51.621718",
+  "total": 26,
   "policy": {
     "adblock": "仅安装 PROMAX + ruleset/AdBlock 分片",
     "features": "功能模块保留独立 #!arguments；merged_into 勿重复安装"
@@ -347,6 +347,25 @@
       "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png"
     },
     {
+      "id": "📱 Universal Ad-Blocking Rules (PROMAX Lite)",
+      "filename": "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+      "category": "head_expanse",
+      "path": "module/surge(main)/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
+      "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-05-29]",
+      "desc": "手机轻量版(8片); 不含 ThreatIntel 重型规则; 功能配置请用 amplify_nexus 独立模块",
+      "tags": [
+        "AdBlock",
+        "Lite",
+        "Mobile",
+        "HTTPDNS"
+      ],
+      "author": "ScriptHub-Automated",
+      "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png"
+    },
+    {
       "id": "🔥 Firewall Port Blocker 🛡️🚫",
       "filename": "🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
       "category": "head_expanse",
@@ -373,7 +392,7 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
       "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-05-29]",
-      "desc": "按用途分片(20片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json",
+      "desc": "按用途分片(21片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json",
       "tags": [
         "AdBlock",
         "Dependency",
