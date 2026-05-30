@@ -154,11 +154,11 @@ def is_valid_rule(line: str) -> bool:
 
 
 def clean_rule(line: str) -> str:
-    line = line.strip()
+    from lib.surge_compliance import strip_inline_comment
+
+    line = strip_inline_comment(line.strip())
     if not line or line.startswith(("#", "//")):
         return ""
-    if "#" in line:
-        line = line.split("#", 1)[0].strip()
     if line.startswith("DOMAIN") and ",no-resolve" in line:
         line = line.replace(",no-resolve", "")
     return line

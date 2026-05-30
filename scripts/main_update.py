@@ -54,6 +54,25 @@ def main():
     Logger.section("Script Hub Python Update Tool (v1.3)")
     has_failures = False
 
+    Logger.section("Surge Compliance Tests")
+    try:
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/test_surge_compliance.py")],
+            cwd=ROOT,
+        )
+        if result.returncode != 0:
+            Logger.error("Surge compliance regression tests failed.")
+            has_failures = True
+        else:
+            Logger.success("Surge compliance regression tests passed.")
+    except Exception as e:
+        Logger.error(f"Compliance tests failed: {e}")
+        has_failures = True
+
+    if has_failures:
+        Logger.error("Aborting pipeline due to compliance test failures.")
+        sys.exit(1)
+
     if args.with_core:
         Logger.section("Core Binary Update")
         if os.path.isfile(CORE_UPDATE_SCRIPT):

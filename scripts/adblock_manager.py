@@ -12,6 +12,11 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
 from lib.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
+from lib.surge_compliance import (
+    format_url_regex_for_surge,
+    is_invalid_domain_regex_payload,
+    strip_trailing_policy,
+)
 
 # ============================================================================
 # CONFIGURATION
@@ -117,7 +122,6 @@ ALLOWED_RULE_PREFIXES = (
     "PROCESS-NAME,",
     "DEST-PORT,",
 )
-INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]"}
 BODY_REWRITE_PREFIXES = ("http-response", "http-request", "http-response-jq", "http-request-jq")
 UNSAFE_IP_RULE_PREFIXES = (
     "IP-CIDR,0.0.0.",
@@ -366,29 +370,8 @@ class AdBlockManager:
         if not rule:
             return None
 
-        strip_upper = {
-            "REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY",
-            "REJECT-TINYGIF", "REJECT-IMG",
-            "EXTENDED-MATCHING", "PRE-MATCHING", "NO-RESOLVE", "FORCE-CELLULAR",
-            "{{{PROXY}}}",
-        }
         if "," in rule:
-            head = rule.split(",", 1)[0].strip().upper()
-            if head in ("URL-REGEX", "DOMAIN-REGEX", "USER-AGENT", "PROCESS-NAME"):
-                rule_type, payload = rule.split(",", 1)
-                payload = payload.strip()
-                while "," in payload:
-                    tail = payload.rsplit(",", 1)[-1].strip().upper()
-                    if tail in strip_upper or tail.startswith("UPDATE-INTERVAL="):
-                        payload = payload.rsplit(",", 1)[0].strip()
-                    else:
-                        break
-                rule = f"{rule_type.strip()},{payload}"
-            else:
-                parts = [p.strip() for p in rule.split(",")]
-                while len(parts) > 2 and (parts[-1].upper() in strip_upper or parts[-1].upper().startswith("UPDATE-INTERVAL=")):
-                    parts = parts[:-1]
-                rule = ",".join(parts)
+            rule = strip_trailing_policy(rule)
         else:
             normalized_bare_rule = self.normalize_bare_rule(rule)
             if not normalized_bare_rule:
@@ -406,15 +389,13 @@ class AdBlockManager:
 
         if rule.startswith("DOMAIN-REGEX,"):
             payload = rule.split(",", 1)[1].strip().strip('"')
-            # Surge does not support spaces in DOMAIN-REGEX in .list files
-            if " " in payload or payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
+            if " " in payload or is_invalid_domain_regex_payload(payload):
                 return None
             return f'DOMAIN-REGEX,"{payload}"'
 
         if rule.startswith("URL-REGEX,"):
             payload = rule.split(",", 1)[1].strip().strip('"')
-            if "," in payload:
-                return f'URL-REGEX,"{payload}"'
+            return format_url_regex_for_surge(payload)
 
         return rule
 

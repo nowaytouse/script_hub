@@ -103,6 +103,9 @@ jobs:
 
     - name: Verify sing-box
       run: sing-box version
+
+    - name: Surge compliance regression tests
+      run: python3 scripts/tools/test_surge_compliance.py
         
     - name: Execute Python Ruleset Update
       run: |

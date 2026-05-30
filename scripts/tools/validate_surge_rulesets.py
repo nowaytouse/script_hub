@@ -3,51 +3,19 @@
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from lib.surge_compliance import validate_surge_ruleset_line  # noqa: E402
+
 SURGE_DIR = ROOT / "ruleset" / "Surge(Shadowkroket)"
-
-INVALID_DOMAIN_REGEX = frozenset({"", "$", ",", "-", ".", "2", "6", "]", "["})
-INVALID_URL_REGEX = frozenset({
-    "", "https:", "http:", "https", "http",
-    "^https?:", "^https?://", "^https?:\\/\\/",
-})
+ADBLOCK_DIR = ROOT / "ruleset" / "AdBlock"
 
 
-def _check_line(path: Path, lineno: int, line: str) -> list[str]:
-    issues: list[str] = []
-    s = line.strip()
-    if not s or s.startswith("#"):
-        return issues
-
-    if s.startswith("DOMAIN-REGEX,"):
-        issues.append(
-            f"{path.name}:{lineno}: DOMAIN-REGEX is not supported in Surge external RULE-SET "
-            f"(use DOMAIN-KEYWORD / DOMAIN-SUFFIX)"
-        )
-
-    if s.startswith("URL-REGEX,"):
-        raw_payload = s.split(",", 1)[1].strip()
-        quoted = raw_payload.startswith('"') and raw_payload.endswith('"')
-        payload = raw_payload[1:-1] if quoted else raw_payload
-        if "," in payload and not quoted:
-            issues.append(f"{path.name}:{lineno}: URL-REGEX must quote payload (comma in pattern)")
-        low = payload.lower()
-        if low in INVALID_URL_REGEX or len(payload) < 3:
-            issues.append(f"{path.name}:{lineno}: truncated/invalid URL-REGEX {payload!r}")
-        else:
-            try:
-                re.compile(payload)
-            except re.error as exc:
-                issues.append(f"{path.name}:{lineno}: URL-REGEX compile error: {exc}")
-
-    return issues
-
-
-def validate_directory(directory: Path) -> list[str]:
+def validate_directory(directory: Path, *, allow_domain_regex: bool) -> list[str]:
     all_issues: list[str] = []
     if not directory.is_dir():
         return [f"missing directory: {directory}"]
@@ -56,16 +24,18 @@ def validate_directory(directory: Path) -> list[str]:
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for i, line in enumerate(text.splitlines(), 1):
-            all_issues.extend(_check_line(path, i, line))
+            err = validate_surge_ruleset_line(line, allow_domain_regex=allow_domain_regex)
+            if err:
+                all_issues.append(f"{path.name}:{i}: {err}")
     return all_issues
 
 
 def main() -> int:
-    targets = [SURGE_DIR, ROOT / "ruleset" / "AdBlock"]
     issues: list[str] = []
-    for target in targets:
-        if target.is_dir():
-            issues.extend(validate_directory(target))
+    if SURGE_DIR.is_dir():
+        issues.extend(validate_directory(SURGE_DIR, allow_domain_regex=False))
+    if ADBLOCK_DIR.is_dir():
+        issues.extend(validate_directory(ADBLOCK_DIR, allow_domain_regex=True))
     if issues:
         print("Surge ruleset validation failed:", file=sys.stderr)
         for item in issues[:50]:

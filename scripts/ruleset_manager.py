@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import re
 import hashlib
 import zlib
 import gzip
@@ -12,6 +11,7 @@ from lib.common import (
     safe_remove
 )
 from lib.rule_processor import RuleProcessor
+from lib.surge_compliance import convert_domain_regex_for_surge
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
@@ -40,7 +40,8 @@ CONFLICT_DOMAINS = [
 ]
 
 DEPRECATED_RULESETS = ["SYSTEM", "BlockHttpDNS", "FirewallPorts", "YouTube", "GoogleCN", "Steam", "Epic", "GamingProcess", "QQ", "WeChat", "DownloadProcess", "GlobalMedia", "XiaoHongShu", "NetEaseMusic", "Tencent", "AIProcess", "LAN", "Manual", "Manual_JP", "Manual_US", "Manual_West", "Manual_Global", "Telegram", "TikTok", "Twitter", "Instagram", "Reddit", "Discord", "Fediverse", "Bing", "Tesla", "ChinaDirect", "DirectProcess", "DownloadDirect"]
-INVALID_DOMAIN_REGEX_VALUES = {"", "$", ",", "-", ".", "2", "6", "]", "["}
+
+# Surge external .list must never contain DOMAIN-REGEX (Clash-only); see lib/surge_compliance.py
 
 # --- HARDENING: PROTECTIVE FILTERS ---
 # These keywords are NEVER allowed in the [Direct] ruleset.
@@ -201,33 +202,7 @@ class RulesetManager:
 
     @staticmethod
     def _surge_convert_domain_regex(rule: str) -> str:
-        """Convert Clash DOMAIN-REGEX into Surge RULE-SET types (DOMAIN-KEYWORD).
-
-        Surge external .list RULE-SET files only accept DOMAIN / DOMAIN-SUFFIX /
-        DOMAIN-KEYWORD / IP-* / etc. DOMAIN-REGEX is invalid and always errors.
-        """
-        payload = rule.split(",", 1)[1].strip().strip('"')
-        if payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
-            return ""
-
-        literal = payload.replace(r"\.", ".")
-
-        # (^|\.)foo-.+\.bar...$  (Netflix AWS NLB, etc.)
-        m = re.match(r"^\(\^\|\.\)(.+?)-\.\+\.", literal)
-        if m:
-            return f"DOMAIN-KEYWORD,{m.group(1)}"
-
-        # (^|\.)foo.bar$  or  ^foo.bar$
-        m = re.match(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$", literal)
-        if m:
-            return f"DOMAIN-KEYWORD,{m.group(1)}"
-
-        # .+literal...$  (awsdns-style)
-        m = re.match(r"^\.\+(.+)$", literal)
-        if m and len(m.group(1)) >= 3:
-            return f"DOMAIN-KEYWORD,{m.group(1)}"
-
-        return ""
+        return convert_domain_regex_for_surge(rule)
 
     def clean_rule(self, rule: str, ruleset_name: str) -> str:
         """使用统一的 RuleProcessor 处理规则"""

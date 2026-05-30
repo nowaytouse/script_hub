@@ -31,6 +31,8 @@ GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github
 | `srs_generator.py` | 编译 Sing-box `.srs` 规则集 |
 | `generate_surge_host_dns.py` | 将 DNS_mapping ruleset 展开为 Surge `[Host]` 条目 |
 | `lib/common.py` | 日志、路径、安全下载 |
+| `lib/surge_compliance.py` | **Surge RULE-SET 合规单源**（URL-REGEX 截断、DOMAIN-REGEX 禁入、IP no-resolve） |
+| `lib/rule_processor.py` | 规则标准化（依赖 `surge_compliance`） |
 | `lib/module_sanitizer.py` | 模块段内去重、标准段顺序 |
 | `lib/module_catalog.py` | 模块扫描 / 分组校正 / JSON / HTML |
 | `lib/merge_upstream_bundle.py` | 上游多模块合并（维护脚本共用） |
@@ -43,6 +45,18 @@ GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github
 - [docs/AdBlock_callchain.md](../docs/AdBlock_callchain.md) — 广告规则流水线
 - [docs/Modules_callchain.md](../docs/Modules_callchain.md) — 功能模块与 PROMAX 分工
 - [ruleset/AdBlock/README.md](../ruleset/AdBlock/README.md) — 分片索引
+
+## 合规门禁（Surge Invalid line 回归）
+
+```bash
+# 单元回归（053a145d / 427a9228 / 0f524ff5 等事故）
+python3 scripts/tools/test_surge_compliance.py
+
+# 扫描已生成的 .list 文件
+python3 scripts/tools/validate_surge_rulesets.py
+```
+
+`main_update.py` 启动时会跑前者；合并后会跑后者。CI 在 `update_rulesets.yml` 中同样执行。
 
 ## 按需维护（不纳入 main_update）
 
