@@ -9,8 +9,10 @@ from datetime import datetime
 from typing import List, Set, Dict, Optional
 from lib.common import (
     Logger, get_project_root, read_file, write_file,
-    safe_download, safe_download_binary, _has_dangerous_chars
+    safe_download, safe_download_binary, _has_dangerous_chars,
+    safe_remove, atomic_write
 )
+from lib.rule_processor import RuleProcessor
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
@@ -283,9 +285,11 @@ class RulesetManager:
         target_file = os.path.join(SURGE_DIR, f"{name}.list")
         if name in DEPRECATED_RULESETS:
             if os.path.exists(target_file):
-                os.remove(target_file)
-                self.stats["deleted"] += 1
-                Logger.warn(f"Removed deprecated: {name}")
+                if safe_remove(target_file):
+                    self.stats["deleted"] += 1
+                    Logger.warn(f"Removed deprecated: {name}")
+                else:
+                    Logger.error(f"Failed to remove deprecated: {name}")
             return
 
         hasher = hashlib.md5()
@@ -378,14 +382,14 @@ class RulesetManager:
             Logger.success(f"Processed IP Ruleset: {name}_ip ({len(ip_rules)} rules)")
         else:
             if os.path.exists(target_ip_file):
-                os.remove(target_ip_file)
+                safe_remove(target_ip_file)
 
         if non_ip_rules or name in PROTECTED_RULESETS:
             write_file(target_file, self.generate_header(name, len(non_ip_rules)) + "\n".join(sorted(list(non_ip_rules))) + "\n")
             Logger.success(f"Processed Domain Ruleset: {name} ({len(non_ip_rules)} rules)")
         else:
             if os.path.exists(target_file):
-                os.remove(target_file)
+                safe_remove(target_file)
 
         self.hashes[name] = current_hash
         self.stats["merged"] += 1
@@ -429,12 +433,12 @@ class RulesetManager:
             if self._count_rules(path) > 0:
                 continue
             if name in DEPRECATED_RULESETS:
-                os.remove(path)
-                src = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
-                if os.path.exists(src):
-                    os.remove(src)
-                self.stats["deleted"] += 1
-                Logger.warn(f"Pruned empty deprecated ruleset: {name}")
+                if safe_remove(path):
+                    src = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
+                    if os.path.exists(src):
+                        safe_remove(src)
+                    self.stats["deleted"] += 1
+                    Logger.warn(f"Pruned empty deprecated ruleset: {name}")
             else:
                 Logger.warn(f"Empty ruleset not in deprecated list: {name}")
 
