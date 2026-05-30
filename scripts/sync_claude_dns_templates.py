@@ -34,7 +34,10 @@ def read_text(path: Path) -> str:
 
 
 def write_text(path: Path, content: str) -> None:
-    path.write_text(content.rstrip() + "\n", encoding="utf-8")
+    """原子写入文件"""
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    tmp_path.write_text(content.rstrip() + "\n", encoding="utf-8")
+    tmp_path.replace(path)
 
 
 def get_section_body(text: str, section: str) -> str:

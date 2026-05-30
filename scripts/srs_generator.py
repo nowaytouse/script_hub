@@ -4,7 +4,7 @@ import json
 import subprocess
 import concurrent.futures
 import re
-from lib.common import Logger, get_project_root
+from lib.common import Logger, get_project_root, safe_remove
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
@@ -72,15 +72,19 @@ class SRSGenerator:
                 for k, v in r.items(): merged_rules[k].extend(v)
             
             final_rules = {k: sorted(list(set(v))) for k, v in merged_rules.items() if v}
-            
+
             srs_json = {"version": 1, "rules": [final_rules]}
-            with open(json_tmp, 'w') as f:
+
+            # 原子写入 JSON
+            json_tmp_write = json_tmp + ".write"
+            with open(json_tmp_write, 'w') as f:
                 json.dump(srs_json, f)
+            os.replace(json_tmp_write, json_tmp)
 
             result = subprocess.run([
                 self.singbox_path, "rule-set", "compile", json_tmp, "-o", srs_file
             ], capture_output=True)
-            
+
             if result.returncode == 0:
                 Logger.success(f"Compiled SRS: {name}")
             else:
@@ -89,7 +93,8 @@ class SRSGenerator:
         except Exception as e:
             Logger.error(f"Error processing {name}: {e}")
         finally:
-            if os.path.exists(json_tmp): os.remove(json_tmp)
+            if os.path.exists(json_tmp):
+                safe_remove(json_tmp)
 
     @staticmethod
     def _wildcard_to_regex(value: str) -> str:
@@ -126,17 +131,16 @@ class SRSGenerator:
         for fname in os.listdir(SINGBOX_DIR):
             if fname.startswith("GeoIP_") and fname.endswith(".srs"):
                 expected_srs.add(fname)
-                
+
         for fname in sorted(os.listdir(SINGBOX_DIR)):
             if not fname.endswith(".srs"):
                 continue
             if fname not in expected_srs:
                 path = os.path.join(SINGBOX_DIR, fname)
-                try:
-                    os.remove(path)
+                if safe_remove(path):
                     Logger.warn(f"Pruned stale SRS: {fname}")
-                except Exception as e:
-                    Logger.error(f"Failed to prune stale SRS {fname}: {e}")
+                else:
+                    Logger.error(f"Failed to prune stale SRS: {fname}")
 
 if __name__ == "__main__":
     generator = SRSGenerator()
