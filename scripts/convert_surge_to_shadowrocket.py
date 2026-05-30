@@ -399,10 +399,21 @@ def convert_main_config(surge_conf_path: Path, output_path: Path, compact_host: 
                 if any(k in line for k in SURGE_ONLY_KEYS):
                     out.append(f"# [SR不支持] {line.lstrip()}")
                     continue
+
+                # 转换字段名
+                converted = False
                 for k, v in GENERAL_KEY_MAP.items():
                     if line.startswith(k):
                         line = line.replace(k, v, 1)
-                out.append(line)
+                        converted = True
+                        # 如果转换了 encrypted-dns-server，添加 dns-direct-fallback-proxy
+                        if k == "encrypted-dns-server":
+                            out.append(line)
+                            out.append("dns-direct-fallback-proxy = false")
+                            break
+
+                if not converted or k != "encrypted-dns-server":
+                    out.append(line)
                 continue
 
             # 处理 [Proxy Group]
