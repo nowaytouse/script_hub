@@ -24,14 +24,20 @@ def _check_line(path: Path, lineno: int, line: str) -> list[str]:
         return issues
 
     if s.startswith("DOMAIN-REGEX,"):
-        payload = s.split(",", 1)[1].strip().strip('"')
+        raw_payload = s.split(",", 1)[1].strip()
+        quoted = raw_payload.startswith('"') and raw_payload.endswith('"')
+        payload = raw_payload[1:-1] if quoted else raw_payload
         if payload in INVALID_DOMAIN_REGEX or len(payload) < 2:
             issues.append(f"{path.name}:{lineno}: invalid DOMAIN-REGEX payload {payload!r}")
-        elif " " in payload and not s.startswith('DOMAIN-REGEX,"'):
-            issues.append(f"{path.name}:{lineno}: DOMAIN-REGEX contains spaces")
+        elif not quoted:
+            issues.append(f"{path.name}:{lineno}: DOMAIN-REGEX payload must be double-quoted for Surge RULE-SET")
 
     if s.startswith("URL-REGEX,"):
-        payload = s.split(",", 1)[1].strip().strip('"')
+        raw_payload = s.split(",", 1)[1].strip()
+        quoted = raw_payload.startswith('"') and raw_payload.endswith('"')
+        payload = raw_payload[1:-1] if quoted else raw_payload
+        if "," in payload and not quoted:
+            issues.append(f"{path.name}:{lineno}: URL-REGEX must quote payload (comma in pattern)")
         low = payload.lower()
         if low in INVALID_URL_REGEX or len(payload) < 3:
             issues.append(f"{path.name}:{lineno}: truncated/invalid URL-REGEX {payload!r}")

@@ -104,15 +104,26 @@ class RuleProcessor:
             self.stats['invalid'] += 1
             return None
 
+        if rule_value.startswith('"') and rule_value.endswith('"'):
+            rule_value = rule_value[1:-1]
+
         # 验证规则值
         if not self._validate_rule_value(rule_type, rule_value):
             self.stats['invalid'] += 1
             return None
 
-        # 标准化格式
-        normalized = f"{rule_type},{rule_value}"
+        normalized = self._format_surge_rule(rule_type, rule_value)
         self.stats['normalized'] += 1
         return normalized
+
+    @staticmethod
+    def _format_surge_rule(rule_type: str, rule_value: str) -> str:
+        """Surge .list / RULE-SET: quote regex payloads (required for | ( ) $ , etc.)."""
+        if rule_type == "DOMAIN-REGEX":
+            return f'DOMAIN-REGEX,"{rule_value}"'
+        if rule_type == "URL-REGEX" and ("," in rule_value or " " in rule_value):
+            return f'URL-REGEX,"{rule_value}"'
+        return f"{rule_type},{rule_value}"
 
     def _validate_rule_value(self, rule_type: str, value: str) -> bool:
         """验证规则值的有效性"""
