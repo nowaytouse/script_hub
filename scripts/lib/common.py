@@ -178,6 +178,100 @@ def clean_rules(rules: List[str]) -> List[str]:
 LOON_VERSION = "3.3.9"
 _BROWSER_UA = f"Loon/{LOON_VERSION}"
 
+# 统一的下载配置
+DEFAULT_DOWNLOAD_TIMEOUT = 60  # 秒
+DEFAULT_DOWNLOAD_RETRIES = 3   # 重试次数
+MAX_DOWNLOAD_SIZE = 50 * 1024 * 1024  # 50MB
+
+def atomic_write(file_path: str, content: str) -> bool:
+    """原子写入文件（先写临时文件，再重命名）
+
+    Args:
+        file_path: 目标文件路径
+        content: 文件内容
+
+    Returns:
+        是否成功
+    """
+    import tempfile
+    import shutil
+
+    try:
+        # 确保目录存在
+        dir_path = os.path.dirname(file_path) or "."
+        os.makedirs(dir_path, exist_ok=True)
+
+        # 写入临时文件
+        fd, tmp_path = tempfile.mkstemp(dir=dir_path, prefix=".tmp_", suffix=".writing")
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                f.write(content)
+            # 原子重命名
+            shutil.move(tmp_path, file_path)
+            return True
+        except Exception as e:
+            # 清理临时文件
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise
+    except Exception as e:
+        Logger.error(f"原子写入失败 {file_path}: {e}")
+        return False
+
+def safe_remove(file_path: str, missing_ok: bool = True) -> bool:
+    """安全删除文件
+
+    Args:
+        file_path: 文件路径
+        missing_ok: 文件不存在时是否视为成功
+
+    Returns:
+        是否成功
+    """
+    try:
+        if not os.path.exists(file_path):
+            if missing_ok:
+                return True
+            Logger.warn(f"文件不存在: {file_path}")
+            return False
+
+        os.remove(file_path)
+        return True
+    except PermissionError:
+        Logger.error(f"权限不足，无法删除: {file_path}")
+        return False
+    except OSError as e:
+        Logger.error(f"删除文件失败 {file_path}: {e}")
+        return False
+
+def safe_remove_tree(dir_path: str, missing_ok: bool = True) -> bool:
+    """安全删除目录树
+
+    Args:
+        dir_path: 目录路径
+        missing_ok: 目录不存在时是否视为成功
+
+    Returns:
+        是否成功
+    """
+    import shutil
+
+    try:
+        if not os.path.exists(dir_path):
+            if missing_ok:
+                return True
+            Logger.warn(f"目录不存在: {dir_path}")
+            return False
+
+        shutil.rmtree(dir_path)
+        return True
+    except PermissionError:
+        Logger.error(f"权限不足，无法删除目录: {dir_path}")
+        return False
+    except OSError as e:
+        Logger.error(f"删除目录失败 {dir_path}: {e}")
+        return False
+
 def _is_html_content(data) -> bool:
     """Detect if downloaded content is HTML (Cloudflare challenge, 404 page, etc.)."""
     if isinstance(data, bytes):

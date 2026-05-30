@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download
+from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
 from lib.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
 
 # ============================================================================
@@ -1038,11 +1038,12 @@ class AdBlockManager:
         for filename in sorted(os.listdir(ADBLOCK_DIR)):
             if not filename.endswith(".list") or filename in keep:
                 continue
-            os.remove(os.path.join(ADBLOCK_DIR, filename))
-            removed.append(filename)
-            srs_path = os.path.join(ROOT, "ruleset/SingBox", f"{os.path.splitext(filename)[0]}_Singbox.srs")
-            if os.path.exists(srs_path):
-                os.remove(srs_path)
+            file_path = os.path.join(ADBLOCK_DIR, filename)
+            if safe_remove(file_path):
+                removed.append(filename)
+                srs_path = os.path.join(ROOT, "ruleset/SingBox", f"{os.path.splitext(filename)[0]}_Singbox.srs")
+                if os.path.exists(srs_path):
+                    safe_remove(srs_path)
         if removed:
             Logger.info(f"Pruned {len(removed)} stale AdBlock ruleset(s): {', '.join(removed)}")
 
