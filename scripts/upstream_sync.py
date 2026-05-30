@@ -176,16 +176,18 @@ class UpstreamSyncer:
                     # Move binary to root and cleanup
                     src_path = os.path.join(ROOT, binary_member.name)
                     dest_path = os.path.join(ROOT, "sing-box")
-                    if os.path.exists(dest_path): os.remove(dest_path)
+                    if os.path.exists(dest_path):
+                        safe_remove(dest_path)
                     shutil.move(src_path, dest_path)
                     os.chmod(dest_path, 0o755)
-                    
+
                     # Cleanup extracted folder if it was in a subfolder
                     if "/" in binary_member.name:
                         top_dir = binary_member.name.split("/")[0]
                         shutil.rmtree(os.path.join(ROOT, top_dir), ignore_errors=True)
-                    
-                    if os.path.exists(tar_path): os.remove(tar_path)
+
+                    if os.path.exists(tar_path):
+                        safe_remove(tar_path)
                     Logger.success(f"sing-box {version} installed successfully at {dest_path}")
                     return dest_path
         except Exception as e:
@@ -361,7 +363,8 @@ class UpstreamSyncer:
             Logger.success(f"MetaCubeX: {name} ({len(rules)} rules)")
         finally:
             for p in [tmp_srs, tmp_json]:
-                if os.path.exists(p): os.remove(p)
+                if os.path.exists(p):
+                    safe_remove(p)
 
     def _is_valid_regex(self, pattern):
         if not pattern or len(pattern) < 2 or pattern in [".", "*", "]", "[", "^", "$", "(", ")", "|"]:
