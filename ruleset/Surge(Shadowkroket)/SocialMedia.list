@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Social media fallback
-# Rules: 659
+# Rules: 653
 
 DOMAIN,api.imem.app
 DOMAIN,api.swiftgram.app
@@ -23,6 +23,7 @@ DOMAIN-KEYWORD,nostr
 DOMAIN-KEYWORD,peertube
 DOMAIN-KEYWORD,pixelfed
 DOMAIN-KEYWORD,pleroma
+DOMAIN-KEYWORD,tiktok
 DOMAIN-KEYWORD,twitter
 DOMAIN-SUFFIX,aboutfacebook.com
 DOMAIN-SUFFIX,accessfacebookfromschool.com
@@ -656,10 +657,3 @@ DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,yogalayout.com
 DOMAIN-SUFFIX,zuckerberg.com
 DOMAIN-SUFFIX,zuckerberg.net
-PROCESS-NAME,com.zhiliaoapp.musically
-PROCESS-NAME,nekox.messenger
-PROCESS-NAME,org.telegram.messenger
-PROCESS-NAME,telegram-desktop
-PROCESS-NAME,tw.nekomimi.nekogram
-PROCESS-NAME,xyz.nextalone.nagram
-USER-AGENT,TikTok*

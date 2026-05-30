@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: HK
 # Description: Hong Kong streaming services
-# Rules: 28
+# Rules: 23
 
 DOMAIN-KEYWORD,nowtv100
 DOMAIN-KEYWORD,rthklive
@@ -27,8 +27,3 @@ DOMAIN-SUFFIX,vidio.com
 DOMAIN-SUFFIX,viu.com
 DOMAIN-SUFFIX,viu.tv
 DOMAIN-SUFFIX,wetv.vip
-PROCESS-NAME,com.viu.pad
-PROCESS-NAME,com.viu.phone
-PROCESS-NAME,com.vuclip.viu
-USER-AGENT,Viu*
-USER-AGENT,mytv*
