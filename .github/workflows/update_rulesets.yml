@@ -32,7 +32,11 @@ on:
   workflow_dispatch:      # Allows manual run
 
 env:
-  PUSH_COOLDOWN_ENABLED: 'true'
+  PUSH_COOLDOWN_ENABLED: 'false'
+
+concurrency:
+  group: update-rulesets-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   update-rules:
@@ -172,6 +176,3 @@ jobs:
         echo "❌ Skip iCloud sync (--unattended)" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY
 
-    - name: Delay 30 minutes for push events (Cool down)
-      if: github.event_name == 'push' && env.PUSH_COOLDOWN_ENABLED == 'true'
-      run: sleep 1800
