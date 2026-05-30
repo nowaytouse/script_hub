@@ -26,6 +26,19 @@ VALID_DOMAIN = re.compile(
 VALID_IPV4_CIDR = re.compile(r'^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$')
 VALID_IPV6_CIDR = re.compile(r'^([0-9a-fA-F:]+)(/\d{1,3})?$')
 
+# Surge rejects these DOMAIN-REGEX payloads; MetaCubeX deco often emits char-split junk.
+INVALID_DOMAIN_REGEX_VALUES = frozenset({"", "$", ",", "-", ".", "2", "6", "]", "["})
+
+# Truncated URL-REGEX values produced when `//` in https:// was stripped as a comment.
+INVALID_URL_REGEX_VALUES = frozenset({
+    "", "https:", "http:", "https", "http",
+    "^https?:", "^https?://", "^https?:\\/\\/",
+})
+
+PAYLOAD_SAFE_RULE_TYPES = frozenset({
+    "DOMAIN-REGEX", "URL-REGEX", "USER-AGENT", "PROCESS-NAME",
+})
+
 
 class RuleProcessor:
     """统一的规则处理器"""
@@ -57,23 +70,32 @@ class RuleProcessor:
 
         # 清理空白和注释
         line = line.strip()
-        if not line or line.startswith(('#', '//', ';')):
+        if not line or line.startswith(('#', ';')):
+            return None
+        if line.startswith('//'):
             return None
 
-        # 移除行内注释
-        if '//' in line:
-            line = line.split('//')[0].strip()
-        if '#' in line and not line.startswith('DOMAIN-REGEX'):
-            line = line.split('#')[0].strip()
+        rule_head = line.split(',', 1)[0].strip().upper() if ',' in line else ''
+        payload_safe = rule_head in PAYLOAD_SAFE_RULE_TYPES
 
-        # 移除策略部分（只保留规则本身）
-        parts = line.split(',')
-        if len(parts) < 2:
+        # Do not treat `https://` inside URL-REGEX as an end-of-line comment.
+        if not payload_safe:
+            if '//' in line:
+                line = line.split('//')[0].strip()
+            if '#' in line:
+                line = line.split('#')[0].strip()
+
+        if ',' not in line:
             self.stats['invalid'] += 1
             return None
 
-        rule_type = parts[0].upper()
-        rule_value = parts[1].strip()
+        rule_type, rule_value = line.split(',', 1)
+        rule_type = rule_type.strip().upper()
+        rule_value = rule_value.strip()
+
+        if rule_type.startswith("IP-"):
+            # Sources often append ,no-resolve; keep CIDR only for validation/output.
+            rule_value = rule_value.split(",", 1)[0].strip()
 
         # 验证规则类型
         if rule_type not in ('DOMAIN', 'DOMAIN-SUFFIX', 'DOMAIN-KEYWORD',
@@ -116,9 +138,9 @@ class RuleProcessor:
         if rule_type == 'IP-CIDR6':
             return bool(VALID_IPV6_CIDR.match(value))
 
-        # 正则表达式（基本检查）
+        # DOMAIN-REGEX（过滤 MetaCubeX 拆散的无效片段）
         if rule_type == 'DOMAIN-REGEX':
-            if len(value.strip()) < 2:
+            if len(value.strip()) < 2 or value in INVALID_DOMAIN_REGEX_VALUES:
                 return False
             try:
                 re.compile(value)
@@ -126,10 +148,10 @@ class RuleProcessor:
             except re.error:
                 return False
 
-        # URL-REGEX 验证
+        # URL-REGEX（只丢弃明显无效项，保留合法规则）
         if rule_type == 'URL-REGEX':
             val_lower = value.lower().strip()
-            if val_lower in {"", "https:", "http:", "https", "http", "^https?:", "^https?://", "^https?:\/\/"}:
+            if val_lower in INVALID_URL_REGEX_VALUES or len(value.strip()) < 3:
                 return False
             try:
                 re.compile(value)

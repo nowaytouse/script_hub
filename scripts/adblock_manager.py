@@ -366,18 +366,29 @@ class AdBlockManager:
         if not rule:
             return None
 
+        strip_upper = {
+            "REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY",
+            "REJECT-TINYGIF", "REJECT-IMG",
+            "EXTENDED-MATCHING", "PRE-MATCHING", "NO-RESOLVE", "FORCE-CELLULAR",
+            "{{{PROXY}}}",
+        }
         if "," in rule:
-            parts = [p.strip() for p in rule.split(",")]
-            # Strip trailing policies, options, and placeholders
-            strip_upper = {
-                "REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT", "PROXY",
-                "REJECT-TINYGIF", "REJECT-IMG",
-                "EXTENDED-MATCHING", "PRE-MATCHING", "NO-RESOLVE", "FORCE-CELLULAR",
-                "{{{PROXY}}}",
-            }
-            while len(parts) > 2 and (parts[-1].upper() in strip_upper or parts[-1].upper().startswith("UPDATE-INTERVAL=")):
-                parts = parts[:-1]
-            rule = ",".join(parts)
+            head = rule.split(",", 1)[0].strip().upper()
+            if head in ("URL-REGEX", "DOMAIN-REGEX", "USER-AGENT", "PROCESS-NAME"):
+                rule_type, payload = rule.split(",", 1)
+                payload = payload.strip()
+                while "," in payload:
+                    tail = payload.rsplit(",", 1)[-1].strip().upper()
+                    if tail in strip_upper or tail.startswith("UPDATE-INTERVAL="):
+                        payload = payload.rsplit(",", 1)[0].strip()
+                    else:
+                        break
+                rule = f"{rule_type.strip()},{payload}"
+            else:
+                parts = [p.strip() for p in rule.split(",")]
+                while len(parts) > 2 and (parts[-1].upper() in strip_upper or parts[-1].upper().startswith("UPDATE-INTERVAL=")):
+                    parts = parts[:-1]
+                rule = ",".join(parts)
         else:
             normalized_bare_rule = self.normalize_bare_rule(rule)
             if not normalized_bare_rule:

@@ -237,6 +237,11 @@ class RulesetManager:
         if not normalized:
             return ""
 
+        if normalized.startswith("DOMAIN-REGEX,"):
+            payload = normalized.split(",", 1)[1]
+            if payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
+                return ""
+
         # 1. Conflict Check (Match original bash behavior)
         if ruleset_name not in SKIP_CONFLICT_CHECK:
             for domain in CONFLICT_DOMAINS:

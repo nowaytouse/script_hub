@@ -137,6 +137,22 @@ def main():
         Logger.error(f"Final ruleset cleanup failed: {e}")
         has_failures = True
 
+    # 3.5 Compliance check (URL-REGEX / DOMAIN-REGEX / IP-CIDR)
+    Logger.section("Ruleset Compliance Validation")
+    try:
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/validate_surge_rulesets.py")],
+            cwd=ROOT,
+        )
+        if result.returncode != 0:
+            Logger.error("Ruleset compliance validation failed.")
+            has_failures = True
+        else:
+            Logger.success("Ruleset compliance validation passed.")
+    except Exception as e:
+        Logger.error(f"Ruleset validation failed: {e}")
+        has_failures = True
+
     # 4. Firewall Port Sync
     try:
         sync_ports(execute=args.execute or args.force)
