@@ -2,12 +2,9 @@
 # Policy: PROXY
 # Node: US
 # Description: Netflix US region
-# Rules: 7
+# Rules: 4
 
-DOMAIN,f
-DOMAIN,l
-DOMAIN,x
-DOMAIN-REGEX,"(^|\.)apiproxy-device-prod-nlb-.+\.amazonaws\.com$"
-DOMAIN-REGEX,"(^|\.)apiproxy-website-nlb-prod-.+\.amazonaws\.com$"
-DOMAIN-REGEX,"(^|\.)dualstack\.apiproxy-.+\.amazonaws\.com$"
-DOMAIN-REGEX,"(^|\.)dualstack\.ichnaea-web-.+\.amazonaws\.com$"
+DOMAIN-REGEX,(^|\.)apiproxy-device-prod-nlb-.+\.amazonaws\.com$
+DOMAIN-REGEX,(^|\.)apiproxy-website-nlb-prod-.+\.amazonaws\.com$
+DOMAIN-REGEX,(^|\.)dualstack\.apiproxy-.+\.amazonaws\.com$
+DOMAIN-REGEX,(^|\.)dualstack\.ichnaea-web-.+\.amazonaws\.com$

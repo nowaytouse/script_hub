@@ -19,34 +19,60 @@ RULESET_DIRS = [
 # do not hijack routing before a more precise ruleset can match.
 PRIORITY_ORDER = [
     "AdBlock_",
-    "AdBlock",
-    "reject-drop",
-    "reject-no-drop",
-    "HTTPDNS_Hijack",
-    "AI",
-    "SocialMedia",
-    "NSFW",
-    "substore",
-    "AppleNews",
-    "StreamUS",
-    "StreamJP",
-    "StreamKR",
-    "StreamEU",
-    "StreamHK",
-    "StreamTW",
-    "Spotify",
-    "Gaming",
-    "Google",
-    "Apple",
-    "Microsoft",
-    "GitHub",
-    "PayPal",
-    "Binance",
-    "Cloudflare",
-    "Bilibili",
-    "CDN",
-    "Direct",
-    "GlobalProxy",
+    "AdBlock.list",
+    "reject-drop.list",
+    "reject-no-drop.list",
+    "HTTPDNS_Hijack.list",
+    "AI.list",
+    "AI_ip.list",
+    "SocialMedia.list",
+    "SocialMedia_ip.list",
+    "NSFW.list",
+    "NSFW_ip.list",
+    "substore.list",
+    "substore_ip.list",
+    "AppleNews.list",
+    "AppleNews_ip.list",
+    "StreamUS.list",
+    "StreamUS_ip.list",
+    "StreamJP.list",
+    "StreamJP_ip.list",
+    "StreamKR.list",
+    "StreamKR_ip.list",
+    "StreamEU.list",
+    "StreamEU_ip.list",
+    "StreamHK.list",
+    "StreamHK_ip.list",
+    "StreamTW.list",
+    "StreamTW_ip.list",
+    "Spotify.list",
+    "Spotify_ip.list",
+    "Gaming.list",
+    "Gaming_ip.list",
+    "Google.list",
+    "Google_ip.list",
+    "Apple.list",
+    "Apple_ip.list",
+    "Microsoft.list",
+    "Microsoft_ip.list",
+    "GitHub.list",
+    "GitHub_ip.list",
+    "PayPal.list",
+    "PayPal_ip.list",
+    "Binance.list",
+    "Binance_ip.list",
+    "Cloudflare.list",
+    "Cloudflare_ip.list",
+    "Bilibili.list",
+    "Bilibili_ip.list",
+    "CDN.list",
+    "CDN_ip.list",
+    "Direct.list",
+    "Direct_ip.list",
+    "ChinaASN.list",
+    "GlobalASN.list",
+    "GlobalProxy.list",
+    "GlobalProxy_ip.list",
 ]
 
 MANDATORY_PROXY_KEYWORDS = [
@@ -304,16 +330,46 @@ class RulesetCleanup:
     def deduplicate_by_priority(self):
         all_lists = sorted(self.file_content)
         
-        # Expand priority order to handle prefixes
-        expanded_priority = []
-        seen_in_priority = set()
-        for p in PRIORITY_ORDER:
-            for filename in all_lists:
-                if filename.startswith(p) and filename not in seen_in_priority:
-                    expanded_priority.append(filename)
-                    seen_in_priority.add(filename)
+        FALLBACK_RULESETS = {
+            "Direct.list",
+            "Direct_ip.list",
+            "ChinaASN.list",
+            "GlobalASN.list",
+            "GlobalProxy.list",
+            "GlobalProxy_ip.list",
+        }
         
-        priority = expanded_priority + [name for name in all_lists if name not in seen_in_priority]
+        # Separate specific rulesets and fallback rulesets
+        fallback_files = [f for f in all_lists if f in FALLBACK_RULESETS]
+        specific_files = [f for f in all_lists if f not in FALLBACK_RULESETS]
+        
+        # 1. Sort specific rulesets based on PRIORITY_ORDER (excluding fallback prefixes)
+        expanded_specific = []
+        seen_specific = set()
+        for p in PRIORITY_ORDER:
+            # Skip fallback prefixes during specific processing
+            if any(fb.startswith(p) for fb in FALLBACK_RULESETS):
+                continue
+            for filename in specific_files:
+                if filename.startswith(p) and filename not in seen_specific:
+                    expanded_specific.append(filename)
+                    seen_specific.add(filename)
+        remaining_specific = [f for f in specific_files if f not in seen_specific]
+        final_specific = expanded_specific + remaining_specific
+        
+        # 2. Sort fallback rulesets based on PRIORITY_ORDER
+        expanded_fallback = []
+        seen_fallback = set()
+        for p in PRIORITY_ORDER:
+            for filename in fallback_files:
+                if filename.startswith(p) and filename not in seen_fallback:
+                    expanded_fallback.append(filename)
+                    seen_fallback.add(filename)
+        remaining_fallback = [f for f in fallback_files if f not in seen_fallback]
+        final_fallback = expanded_fallback + remaining_fallback
+        
+        # Combine: specific rulesets run first, generic fallbacks run last
+        priority = final_specific + final_fallback
         
         # Determine semantic coverage for prefixes
         effective_semantic_coverage = set()
