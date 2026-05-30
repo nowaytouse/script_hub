@@ -3,6 +3,7 @@ import os
 import argparse
 import subprocess
 import sys
+import time
 from datetime import datetime
 from lib.common import Logger, get_project_root, is_ci
 from lib.pipeline_report import print_pipeline_summary
@@ -246,14 +247,21 @@ def main():
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
             commit_msg = f"chore(ruleset): automated update {timestamp}"
             try:
-                subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
                 status = subprocess.run(
                     ["git", "status", "--porcelain"],
                     capture_output=True,
                     text=True,
                     cwd=ROOT,
                 )
-                if status.stdout.strip():
+                if not (status.stdout or "").strip():
+                    Logger.info("No changes to commit (working tree clean).")
+                else:
+                    if os.environ.get("PUSH_COOLDOWN_ENABLED", "").lower() == "true":
+                        Logger.info(
+                            "Push cooldown enabled: waiting 30 minutes before commit/push..."
+                        )
+                        time.sleep(1800)
+                    subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
                     subprocess.run(
                         ["git", "commit", "-m", commit_msg],
                         check=True,
@@ -261,8 +269,6 @@ def main():
                     )
                     subprocess.run(["git", "push", "origin", "master"], check=True, cwd=ROOT)
                     Logger.success("Changes pushed to GitHub successfully.")
-                else:
-                    Logger.info("No changes to commit (working tree clean).")
             except Exception as e:
                 Logger.warn(f"Git operation failed: {e}")
                 has_failures = True
