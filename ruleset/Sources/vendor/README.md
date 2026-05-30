@@ -5,7 +5,7 @@ Committed files here keep CI and local runs reliable when live download fails.
 
 | File | Upstream URL |
 |------|----------------|
-| `adultraplus.sgmodule` | https://yfamilys.com/module/adultraplus.sgmodule |
+| `adultraplus.sgmodule` | https://yfamilys.com/module/adultraplus.sgmodule (standalone module — **not** merged into `ruleset/AdBlock/*.list`) |
 | `bili.module` | https://yfamilys.com/module/bili.module |
 | `yfamilys_Kemono.list` | https://yfamilys.com/rule/Kemono.list |
 | `yfamilys_Cloudflare.list` | https://yfamilys.com/rule/Cloudflare.list |

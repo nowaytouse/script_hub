@@ -16,6 +16,7 @@ from lib.surge_compliance import (  # noqa: E402
     validate_surge_ruleset_line,
 )
 from ruleset_manager import RulesetManager  # noqa: E402
+from adblock_manager import AdBlockManager  # noqa: E402
 
 
 def assert_eq(label: str, got, want) -> None:
@@ -85,6 +86,33 @@ def test_surge_list_forbids_domain_regex() -> None:
     assert_err("forbidden", validate_surge_ruleset_line(line), "not supported")
 
 
+def test_adblock_skips_script_only_module() -> None:
+  m = AdBlockManager()
+  text = (
+      "#!name=Test\n"
+      "[URL Rewrite]\n"
+      "^https://example.com/ad _ reject\n"
+      "[Script]\n"
+      "x=type=http-response,pattern=^https://api.example.com,script-path=https://example.com/a.js\n"
+  )
+  m.extract_from_text(text, rules_only=True)
+  total = sum(len(bucket.get("Other", set())) for bucket in m.rules.values())
+  assert_eq("script-only module rules", total, 0)
+
+
+def test_adblock_rule_section_only() -> None:
+  m = AdBlockManager()
+  text = (
+      "[Rule]\n"
+      "DOMAIN,ad.example.com\n"
+      "x=type=http-response,pattern=^https://api.example.com,script-path=https://example.com/a.js\n"
+  )
+  m.extract_from_text(text, rules_only=True)
+  other = m.rules.get("REJECT", {}).get("Other", set())
+  assert_eq("domain kept", "DOMAIN,ad.example.com" in other, True)
+  assert_eq("script line dropped", any("script-path" in r for r in other), False)
+
+
 def test_surge_list_allows_keyword() -> None:
     assert_none("keyword ok", validate_surge_ruleset_line("DOMAIN-KEYWORD,apiproxy-device-prod-nlb"))
 
@@ -99,6 +127,8 @@ def main() -> int:
         test_netflix_domain_regex_converted,
         test_surge_list_forbids_domain_regex,
         test_surge_list_allows_keyword,
+        test_adblock_skips_script_only_module,
+        test_adblock_rule_section_only,
     ]
     failed = 0
     for fn in tests:

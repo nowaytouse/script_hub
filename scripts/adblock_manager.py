@@ -98,7 +98,9 @@ CATEGORY_META: Dict[str, Dict[str, str]] = {
 GROUP_HEAD_EXPANSE = "『 🔝 Head Expanse › 首端扩域 』"
 MODULE_SUFFIXES = (".sgmodule", ".module")
 REMOTE_PREFIXES = ("http://", "https://")
+# PROMAX only ships RULE-SET references; scripts/rewrites stay in standalone modules.
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
+MODULE_RULE_SECTIONS = frozenset({"Rule", "Adblock Plus"})
 PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
 SUPPORTED_POLICIES = {
     "REJECT",
@@ -469,6 +471,43 @@ class AdBlockManager:
         prefix = "DOMAIN-SUFFIX" if is_suffix else "DOMAIN"
         return f"{prefix},{candidate}"
 
+    @staticmethod
+    def module_has_rule_section(text: str) -> bool:
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("[") and stripped.endswith("]") and not stripped.startswith("#"):
+                name = stripped[1:-1]
+                if name in MODULE_RULE_SECTIONS:
+                    return True
+        return False
+
+    @staticmethod
+    def is_script_or_rewrite_line(line: str) -> bool:
+        """Surge script / rewrite / map-local lines must never become DOMAIN rules."""
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            return False
+        lowered = stripped.lower()
+        if any(
+            token in lowered
+            for token in (
+                "script-path=",
+                "requires-body=",
+                "type=http-request",
+                "type=http-response",
+                "binary-body-mode=",
+                "max-size=",
+                "data-type=",
+                "status-code=",
+            )
+        ):
+            return True
+        if stripped.startswith("^") and (" reject" in lowered or " 302" in lowered):
+            return True
+        if " _ reject" in lowered or " - reject" in lowered:
+            return True
+        return False
+
     def infer_non_rule_section(self, line: str) -> Optional[str]:
         if not line or line.startswith("#!"):
             return None
@@ -539,6 +578,8 @@ class AdBlockManager:
 
     def add_rule_line(self, line: str, default_policy: str, category: str = "Other"):
         if not line or line.startswith("#"):
+            return
+        if self.is_script_or_rewrite_line(line):
             return
         for candidate in self.expand_complex_rule(line):
             policy = self.normalize_policy(candidate, default_policy)
@@ -640,7 +681,15 @@ class AdBlockManager:
             
         return False
 
-    def extract_from_text(self, text: str, default_policy: str = "REJECT", category: str = "Other", include_sections: bool = False):
+    def extract_from_text(
+        self,
+        text: str,
+        default_policy: str = "REJECT",
+        category: str = "Other",
+        include_sections: bool = False,
+        *,
+        rules_only: bool = False,
+    ):
         current_section = None
         in_rule_section = False
         seen_real_header = False
@@ -652,12 +701,16 @@ class AdBlockManager:
 
             if stripped.startswith("[") and stripped.endswith("]") and not stripped.startswith("#"):
                 current_section = stripped[1:-1]
-                in_rule_section = current_section in ("Rule", "Adblock Plus")
+                in_rule_section = current_section in MODULE_RULE_SECTIONS
                 seen_real_header = True
                 continue
 
-            # Fallback for headerless modules or content before first [Section]
+            # Plain .list files may lack [Rule]; sgmodule sources must not guess rules from headers.
             if not seen_real_header:
+                if rules_only:
+                    continue
+                if self.is_script_or_rewrite_line(stripped):
+                    continue
                 if self.normalize_rule(stripped):
                     self.add_rule_line(stripped, default_policy, category=category)
                     continue
@@ -672,11 +725,12 @@ class AdBlockManager:
                 continue
 
             if in_rule_section:
-                # IMPORTANT: Always use add_rule_line to ensure policy and normalization
+                if self.is_script_or_rewrite_line(stripped):
+                    continue
                 self.add_rule_line(stripped, default_policy, category=category)
                 continue
 
-            if not include_sections or stripped.startswith("#"):
+            if rules_only or not include_sections or stripped.startswith("#"):
                 continue
 
             if current_section in self.sections:
@@ -691,10 +745,26 @@ class AdBlockManager:
                 hosts = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped)
                 self.mitm_hosts.update(host.strip() for host in hosts.split(",") if host.strip())
 
-    def extract_from_file(self, path: str, default_policy: str = "REJECT", category: str = "Other", include_sections: bool = False):
+    def extract_from_file(
+        self,
+        path: str,
+        default_policy: str = "REJECT",
+        category: str = "Other",
+        include_sections: bool = False,
+        *,
+        rules_only: Optional[bool] = None,
+    ):
         if not os.path.exists(path):
             return
-        self.extract_from_text("".join(read_file(path)), default_policy=default_policy, category=category, include_sections=include_sections)
+        if rules_only is None:
+            rules_only = path.endswith(MODULE_SUFFIXES)
+        self.extract_from_text(
+            "".join(read_file(path)),
+            default_policy=default_policy,
+            category=category,
+            include_sections=include_sections,
+            rules_only=rules_only,
+        )
 
     def parse_module_structure(self, text: str) -> Tuple[List[str], List[Tuple[str, List[str]]]]:
         header_lines: List[str] = []
@@ -913,6 +983,37 @@ class AdBlockManager:
                     failures.append(entry.display_name)
                 continue
 
+            if self.is_module_source(entry):
+                if entry.source in cached_contents:
+                    mod_text = cached_contents[entry.source]
+                elif entry.is_remote:
+                    mod_text = self._download(entry.source)
+                else:
+                    mod_text = (
+                        "".join(read_file(entry.resolved_path))
+                        if os.path.exists(entry.resolved_path)
+                        else ""
+                    )
+                if not mod_text:
+                    Logger.warn(f"  ⚠ Failed: {entry.display_name}")
+                    failures.append(entry.display_name)
+                    continue
+                if not self.module_has_rule_section(mod_text):
+                    Logger.info(
+                        f"  ⊘ Skip (no [Rule] section, script/rewrite-only): {entry.display_name}"
+                    )
+                    continue
+                Logger.info(f"Fetching source: {entry.display_name} (Category: {category})")
+                self.extract_from_text(
+                    mod_text,
+                    default_policy=entry.policy,
+                    category=category,
+                    include_sections=False,
+                    rules_only=True,
+                )
+                Logger.success(f"  ✓ {entry.display_name}")
+                continue
+
             Logger.info(f"Fetching source: {entry.display_name} (Category: {category})")
             if entry.source in cached_contents:
                 content = cached_contents[entry.source]
@@ -930,12 +1031,12 @@ class AdBlockManager:
                 failures.append(entry.display_name)
                 continue
 
-            # Module sources: rules → AdBlock lists only; never merge #!arguments / Script into PROMAX
             self.extract_from_text(
                 content,
                 default_policy=entry.policy,
                 category=category,
                 include_sections=False,
+                rules_only=False,
             )
             Logger.success(f"  ✓ {entry.display_name}")
         return failures
@@ -1236,17 +1337,8 @@ class AdBlockManager:
                 complex_seen.add(line)
                 rule_lines.append(line)
 
-        extra_sections: List[Tuple[str, List[str]]] = []
-        for section_name in SECTION_NAMES:
-            items = dedupe_section_lines(section_name, self.sections[section_name])
-            if items:
-                extra_sections.append(
-                    (section_name, [f"# from module/local_sources ({len(items)} entries, deduped)", *items])
-                )
-
-        all_sections = [("Rule", rule_lines)] + extra_sections
-        if self.mitm_hosts:
-            all_sections.append(("MITM", [f"hostname = %APPEND% {', '.join(sorted(self.mitm_hosts))}"]))
+        # PROMAX = RULE-SET dependency only. Scripts / rewrites / MITM live in amplify_nexus & local_sources.
+        all_sections = [("Rule", rule_lines)]
         all_sections = merge_mitm_hosts(all_sections)
 
         if lite_only:
@@ -1294,8 +1386,14 @@ class AdBlockManager:
             for f in sorted(os.listdir(local_dir)):
                 if f.endswith((".sgmodule", ".module")):
                     path = os.path.join(local_dir, f)
-                    Logger.info(f"  + Merging local source: {f}")
-                    self.extract_from_file(path, default_policy="REJECT", category="Local", include_sections=True)
+                    Logger.info(f"  + Rules from local source: {f}")
+                    self.extract_from_file(
+                        path,
+                        default_policy="REJECT",
+                        category="Local",
+                        include_sections=False,
+                        rules_only=True,
+                    )
         
         # Amplify Nexus: extract [Rule] into lists only (功能模块保留独立 #!arguments，不并入 PROMAX)
         Logger.section("Scanning Amplify Nexus for Ad-Block Rules")
