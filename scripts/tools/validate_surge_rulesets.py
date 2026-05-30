@@ -24,13 +24,10 @@ def _check_line(path: Path, lineno: int, line: str) -> list[str]:
         return issues
 
     if s.startswith("DOMAIN-REGEX,"):
-        raw_payload = s.split(",", 1)[1].strip()
-        quoted = raw_payload.startswith('"') and raw_payload.endswith('"')
-        payload = raw_payload[1:-1] if quoted else raw_payload
-        if payload in INVALID_DOMAIN_REGEX or len(payload) < 2:
-            issues.append(f"{path.name}:{lineno}: invalid DOMAIN-REGEX payload {payload!r}")
-        elif not quoted:
-            issues.append(f"{path.name}:{lineno}: DOMAIN-REGEX payload must be double-quoted for Surge RULE-SET")
+        issues.append(
+            f"{path.name}:{lineno}: DOMAIN-REGEX is not supported in Surge external RULE-SET "
+            f"(use DOMAIN-KEYWORD / DOMAIN-SUFFIX)"
+        )
 
     if s.startswith("URL-REGEX,"):
         raw_payload = s.split(",", 1)[1].strip()

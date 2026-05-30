@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import re
 import hashlib
 import zlib
 import gzip
@@ -198,6 +199,36 @@ class RulesetManager:
                     }
         return mapping
 
+    @staticmethod
+    def _surge_convert_domain_regex(rule: str) -> str:
+        """Convert Clash DOMAIN-REGEX into Surge RULE-SET types (DOMAIN-KEYWORD).
+
+        Surge external .list RULE-SET files only accept DOMAIN / DOMAIN-SUFFIX /
+        DOMAIN-KEYWORD / IP-* / etc. DOMAIN-REGEX is invalid and always errors.
+        """
+        payload = rule.split(",", 1)[1].strip().strip('"')
+        if payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
+            return ""
+
+        literal = payload.replace(r"\.", ".")
+
+        # (^|\.)foo-.+\.bar...$  (Netflix AWS NLB, etc.)
+        m = re.match(r"^\(\^\|\.\)(.+?)-\.\+\.", literal)
+        if m:
+            return f"DOMAIN-KEYWORD,{m.group(1)}"
+
+        # (^|\.)foo.bar$  or  ^foo.bar$
+        m = re.match(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$", literal)
+        if m:
+            return f"DOMAIN-KEYWORD,{m.group(1)}"
+
+        # .+literal...$  (awsdns-style)
+        m = re.match(r"^\.\+(.+)$", literal)
+        if m and len(m.group(1)) >= 3:
+            return f"DOMAIN-KEYWORD,{m.group(1)}"
+
+        return ""
+
     def clean_rule(self, rule: str, ruleset_name: str) -> str:
         """使用统一的 RuleProcessor 处理规则"""
         r = rule.strip()
@@ -238,9 +269,7 @@ class RulesetManager:
             return ""
 
         if normalized.startswith("DOMAIN-REGEX,"):
-            payload = normalized.split(",", 1)[1]
-            if payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
-                return ""
+            return self._surge_convert_domain_regex(normalized)
 
         # 1. Conflict Check (Match original bash behavior)
         if ruleset_name not in SKIP_CONFLICT_CHECK:
@@ -253,10 +282,6 @@ class RulesetManager:
             r_lower = normalized.lower()
             if any(kw in r_lower for kw in MANDATORY_PROXY_KEYWORDS):
                 return ""
-
-        # 2. Deep clean: Skip regex rules for Google as they are redundant
-        if ruleset_name == "Google" and normalized.startswith("DOMAIN-REGEX,"):
-            return ""
 
         return normalized
 
