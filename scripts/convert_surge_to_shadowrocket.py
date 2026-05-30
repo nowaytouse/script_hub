@@ -45,6 +45,7 @@ SURGE_ONLY_KEYS = {
 
 GENERAL_KEY_MAP = {
     "encrypted-dns-server": "doh-server",
+    "dns-server": "fallback-dns-server",  # 明文 DNS 作为备用
     "tun-excluded-routes": "tun-excluded-routes",
 }
 
@@ -371,12 +372,26 @@ def convert_main_config(surge_conf_path: Path, output_path: Path, compact_host: 
     host_lines_kept = 0
     host_lines_skipped = 0
 
+    # 缓存 DNS 配置，确保正确顺序
+    doh_server_line = None
+    fallback_dns_line = None
+
     try:
         for line in lines:
             stripped = line.strip()
 
             # 检测段落
             if stripped.startswith('[') and stripped.endswith(']'):
+                # 在离开 General 段落前，输出缓存的 DNS 配置（正确顺序）
+                if section == "General" and (doh_server_line or fallback_dns_line):
+                    if doh_server_line:
+                        out.append(doh_server_line)
+                    if fallback_dns_line:
+                        out.append(fallback_dns_line)
+                    # 重置缓存
+                    doh_server_line = None
+                    fallback_dns_line = None
+
                 section = stripped[1:-1]
                 out.append(line)
 
@@ -400,19 +415,23 @@ def convert_main_config(surge_conf_path: Path, output_path: Path, compact_host: 
                     out.append(f"# [SR不支持] {line.lstrip()}")
                     continue
 
-                # 转换字段名
+                # 转换字段名并缓存 DNS 配置
                 converted = False
                 for k, v in GENERAL_KEY_MAP.items():
                     if line.startswith(k):
                         line = line.replace(k, v, 1)
                         converted = True
-                        # 如果转换了 encrypted-dns-server，添加 dns-direct-fallback-proxy
+
+                        # 缓存 DNS 配置，稍后按正确顺序输出
                         if k == "encrypted-dns-server":
-                            out.append(line)
-                            out.append("dns-direct-fallback-proxy = false")
+                            doh_server_line = line
+                            break
+                        elif k == "dns-server":
+                            fallback_dns_line = line
                             break
 
-                if not converted or k != "encrypted-dns-server":
+                # 非 DNS 配置直接输出
+                if not converted or (k not in ("encrypted-dns-server", "dns-server")):
                     out.append(line)
                 continue
 
