@@ -12,6 +12,7 @@
 | `import_from_icloud_sr.py` | 从 iCloud 小火箭模块目录导入（需修改脚本内 `SR_DIR`） |
 | `mitm_cleanup_github.py` | MITM hostname 加固（`main_update` 也会调用） |
 | `localize_scripts.py` | 批量将模块脚本链接改为本地路径 |
+| `patch_netease_adblock_for_surge.py` | 修复 adultraplus 网易云 gist 脚本在 Surge JSC 下的 SyntaxError |
 
 上述模块合并脚本统一通过 `lib/merge_upstream_bundle.py` 实现去重与 `#!arguments` 合并。
 
