@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 import os
-import re
 import hashlib
 import zlib
 import gzip
 import concurrent.futures
-from datetime import datetime
 from typing import List, Set, Dict, Optional
 from lib.common import (
     Logger, get_project_root, read_file, write_file,
     safe_download, safe_download_binary, _has_dangerous_chars,
-    safe_remove, atomic_write
+    safe_remove
 )
 from lib.rule_processor import RuleProcessor
 
