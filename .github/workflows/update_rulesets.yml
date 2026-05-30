@@ -31,9 +31,8 @@ on:
     - cron: '0 4,12,20 * * *'   # Runs 3 times daily (12:00, 20:00, 04:00 Beijing Time)
   workflow_dispatch:      # Allows manual run
 
-# TEMP: false while validating CI — set to true after green runs to restore 30min push cooldown
 env:
-  PUSH_COOLDOWN_ENABLED: 'false'
+  PUSH_COOLDOWN_ENABLED: 'true'
 
 jobs:
   update-rules:
