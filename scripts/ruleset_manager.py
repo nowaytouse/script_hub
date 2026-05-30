@@ -201,11 +201,12 @@ class RulesetManager:
         return mapping
 
     def clean_rule(self, rule: str, ruleset_name: str) -> str:
+        """使用统一的 RuleProcessor 处理规则"""
         r = rule.strip()
-        if not r or r.startswith('#'): return ""
+        if not r or r.startswith('#'):
+            return ""
 
-        # Support Clash YAML payload items so upstream YAML rules can be merged
-        # into native .list outputs without a separate conversion step.
+        # 预处理：支持 Clash YAML payload 格式
         if r in {"payload:", "payload"}:
             return ""
         if r.startswith("-"):
@@ -213,15 +214,16 @@ class RulesetManager:
             if not r:
                 return ""
 
-        # 0. Convert Domain Set formats (no commas) to classical syntax
+        # 预处理：转换无逗号格式（Domain Set）到标准格式
         if "," not in r:
-            # Check if it looks like an IP Address (basic heuristic)
+            # IP 地址检测
             if ":" in r or (r.count(".") == 3 and all(c.isdigit() for c in r.split('/')[0].replace(".", ""))):
                 if "/" in r:
                     r = f"IP-CIDR6,{r}" if ":" in r else f"IP-CIDR,{r}"
                 else:
                     r = f"IP-CIDR6,{r}/128" if ":" in r else f"IP-CIDR,{r}/32"
             else:
+                # 域名格式
                 if r.startswith('.'):
                     r = f"DOMAIN-SUFFIX,{r[1:]}"
                 elif r.startswith('+.'):
@@ -231,41 +233,29 @@ class RulesetManager:
                 else:
                     r = f"DOMAIN,{r}"
 
+        # 使用 RuleProcessor 标准化规则
+        processor = RuleProcessor()
+        normalized = processor.normalize_rule(r)
+        if not normalized:
+            return ""
+
         # 1. Conflict Check (Match original bash behavior)
         if ruleset_name not in SKIP_CONFLICT_CHECK:
             for domain in CONFLICT_DOMAINS:
-                if r.endswith(f",{domain}"): return ""
-        
+                if normalized.endswith(f",{domain}"):
+                    return ""
+
         # 1.1 Hardening: Force Proxy for international services in Direct ruleset
         if ruleset_name == "Direct":
-            r_lower = r.lower()
+            r_lower = normalized.lower()
             if any(kw in r_lower for kw in MANDATORY_PROXY_KEYWORDS):
                 return ""
-        
-        # 2. Cleanup features
-        # Remove trailing policy and any following options robustly (allow optional spaces)
-        r = re.sub(r"\s*,\s*(REJECT|DIRECT|PROXY|REJECT-DROP|REJECT-TINYGIF|REJECT-NO-DROP|REJECT-IMG)(?:,.*)?$", "", r, flags=re.IGNORECASE)
-        # Remove common modifiers with optional surrounding spaces
-        r = re.sub(r"\s*,\s*(extended-matching|pre-matching|no-resolve)\b", "", r, flags=re.IGNORECASE)
-        
-        if r.startswith('IP-CIDR,') and '::' in r: r = r.replace('IP-CIDR,', 'IP-CIDR6,', 1)
-        if any(k in r for k in ["AND,", "OR,", "NOT,"]): return ""
-        if r.startswith("DOMAIN-REGEX,"):
-            # Deep clean: Skip regex rules for Google as they are redundant and break Surge parsing
-            if ruleset_name == "Google":
-                return ""
-            payload = r[13:].strip().strip('"')
-            # Surge does not support spaces in DOMAIN-REGEX in .list files
-            if not payload or " " in payload or payload in INVALID_DOMAIN_REGEX_VALUES or len(payload) < 2:
-                return ""
-            r = f'DOMAIN-REGEX,"{payload}"'
-        elif "," in r:
-            parts = r.split(",", 1)
-            r = f"{parts[0].strip()},{parts[1].strip()}"
-        
-        if not r.startswith(("DOMAIN", "IP-CIDR", "PROCESS-NAME", "URL-REGEX", "USER-AGENT", "GEOIP")):
+
+        # 2. Deep clean: Skip regex rules for Google as they are redundant
+        if ruleset_name == "Google" and normalized.startswith("DOMAIN-REGEX,"):
             return ""
-        return r
+
+        return normalized
 
     def generate_header(self, name: str, rule_count: int) -> str:
         base_name = name.replace("_ip", "")
