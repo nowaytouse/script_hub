@@ -111,7 +111,6 @@ jobs:
 
     - name: Surge compliance regression tests
       run: python3 scripts/tools/test_surge_compliance.py
-      working-directory: scripts
 
     - name: Validate existing Surge rulesets
       run: python3 scripts/tools/validate_surge_rulesets.py
