@@ -31,6 +31,10 @@ on:
     - cron: '0 4,12,20 * * *'   # Runs 3 times daily (12:00, 20:00, 04:00 Beijing Time)
   workflow_dispatch:      # Allows manual run
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   update-rules:
     runs-on: ubuntu-latest
@@ -40,10 +44,6 @@ jobs:
       contents: write  # 🔥 允许 push 到仓库
     
     steps:
-    - name: Delay 1 hour for push events
-      if: github.event_name == 'push'
-      run: sleep 3600
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
