@@ -8,9 +8,8 @@
 #
 # 自动扫描（经 resolve_module_ingest_mode）：
 #   module/local_sources/*.sgmodule
-#   ruleset/Sources/LocalModules/*
-#   module/surge(main)/narrow_pierce/*
-# amplify_nexus 不自动扫描 — 增幅/解锁/翻译仅独立安装；下方 manifest 可点名混合包（如 B 站合集）
+#   ruleset/Sources/LocalModules/*   ← 各 App 去广告（逐文件并入 PROMAX）
+# narrow_pierce 已废弃：勿再复制专项模块到 Surge 安装目录
 
 ../vendor/adultraplus.sgmodule
 

@@ -137,6 +137,14 @@ def test_functional_resolve_includes_split_bundle() -> None:
     assert not any("WeChat_Enhance" in p for p in by_path)
 
 
+def test_localmodules_only_functional_scan() -> None:
+    mgr = AdBlockManager()
+    paths, _ = mgr.load_functional_source_paths()
+    joined = "\n".join(p for p, _m in paths)
+    assert "narrow_pierce" not in joined
+    assert "LocalModules" in joined or any("LocalModules" in p for p, _ in paths)
+
+
 def test_amplify_nexus_not_auto_scanned() -> None:
     mgr = AdBlockManager()
     paths, _ = mgr.load_functional_source_paths()
@@ -169,6 +177,7 @@ if __name__ == "__main__":
     test_filename_gate()
     test_bilibili_bundle_split_keeps_ad_only()
     test_functional_resolve_includes_split_bundle()
+    test_localmodules_only_functional_scan()
     test_amplify_nexus_not_auto_scanned()
     test_sukka_adblock_allowlisted_full()
     print("test_adblock_module_filter: OK")

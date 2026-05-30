@@ -1,5 +1,5 @@
 {
-  "updated": "2026-05-30 18:46:20",
+  "updated": "2026-05-30 19:54:11",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -70,10 +70,10 @@
   "manifest": "ruleset/Sources/Links/AdBlock_sources.txt",
   "functional_manifest": "ruleset/Sources/Links/AdBlock_functional_sources.txt",
   "functional_sections": {
-    "URL Rewrite": 832,
+    "URL Rewrite": 834,
     "Map Local": 1944,
     "Script": 583,
-    "Body Rewrite": 78,
+    "Body Rewrite": 79,
     "Header Rewrite": 0,
     "MITM": 1010
   },
@@ -210,7 +210,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 7,
-      "rule_count": 42995,
+      "rule_count": 40547,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list"
     },
     {

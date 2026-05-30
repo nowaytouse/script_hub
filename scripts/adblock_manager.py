@@ -503,7 +503,7 @@ class AdBlockManager:
                 if name.endswith(MODULE_SUFFIXES):
                     add(os.path.join(LOCAL_SOURCES_DIR, name))
 
-        for scan_dir in (LOCAL_MODULES_DIR, NARROW_PIERCE_DIR):
+        for scan_dir in (LOCAL_MODULES_DIR,):
             if not os.path.isdir(scan_dir):
                 continue
             for name in sorted(os.listdir(scan_dir)):
@@ -1500,7 +1500,8 @@ class AdBlockManager:
                 "\n",
                 "## 安装模块（RULE-SET + 去广告 Script/Rewrite；解锁/增强请用 Amplify Nexus 独立模块）\n",
                 "\n",
-                "专项 `去广告.sgmodule` / `narrow_pierce` 仅作构建源，已并入 PROMAX，**请勿单独安装**。\n",
+                "`ruleset/Sources/LocalModules/*` 各 App 去广告逐文件并入 PROMAX，"
+                "**勿单独安装**专项模块或已废弃的 narrow_pierce 副本。\n",
                 "\n",
                 "### 🖥️ 桌面完整版（Full）\n",
                 f"- **Surge PROMAX**: [{catalog['modules']['surge_promax']['install_url']}]({catalog['modules']['surge_promax']['install_url']})\n",
@@ -1707,21 +1708,16 @@ class AdBlockManager:
                         rules_only=True,
                     )
 
-        Logger.section("Integrating App AdBlock Rules (LocalModules / Narrow Pierce)")
-        for scan_dir, label in (
-            (LOCAL_MODULES_DIR, "LocalModules"),
-            (NARROW_PIERCE_DIR, "narrow_pierce"),
-        ):
-            if not os.path.isdir(scan_dir):
-                continue
-            for f in sorted(os.listdir(scan_dir)):
+        Logger.section("Integrating App AdBlock Rules (LocalModules)")
+        if os.path.isdir(LOCAL_MODULES_DIR):
+            for f in sorted(os.listdir(LOCAL_MODULES_DIR)):
                 if not f.endswith(MODULE_SUFFIXES):
                     continue
-                path = os.path.join(scan_dir, f)
+                path = os.path.join(LOCAL_MODULES_DIR, f)
                 mode = self.resolve_module_ingest_mode(path)
                 if mode == "skip":
                     continue
-                Logger.info(f"  + Rules from {label} ({mode}): {f}")
+                Logger.info(f"  + Rules from LocalModules ({mode}): {f}")
                 self.extract_from_file(
                     path,
                     default_policy="REJECT",
