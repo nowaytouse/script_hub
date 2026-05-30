@@ -8,7 +8,7 @@ import platform
 import tarfile
 import shutil
 from datetime import datetime
-from lib.common import Logger, get_project_root, write_file, _curl_fetch, _BROWSER_UA
+from lib.common import Logger, get_project_root, write_file, safe_download, safe_download_binary, safe_remove
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
@@ -194,27 +194,30 @@ class UpstreamSyncer:
         return None
 
     def download_to_file(self, url: str, dest_path: str) -> bool:
-        """Download a large file directly to disk (streams via curl -o) with detailed error reporting."""
-        cmd = ["curl", "-L", "-s", "-m", "300", "-f",
-               "-H", f"User-Agent: {_BROWSER_UA}", "-o", dest_path, url]
+        """Download content to file with unified retry logic."""
+        data = safe_download_binary(url)
+        if data is None:
+            Logger.warn(f"File download failed after retries: {url}")
+            return False
+
+        tmp_path = dest_path + ".tmp"
         try:
-            result = subprocess.run(cmd, capture_output=True)
-            if result.returncode == 0:
-                return True
-            else:
-                stderr = result.stderr.decode("utf-8", errors="ignore").strip()
-                Logger.warn(f"File download failed: {url} | exit code {result.returncode} | stderr: {stderr}")
+            # 原子写入
+            with open(tmp_path, "wb") as f:
+                f.write(data)
+            os.replace(tmp_path, dest_path)
+            return True
         except Exception as e:
-            Logger.warn(f"File download failed: {url} - {e}")
-        if os.path.exists(dest_path):
-            os.remove(dest_path)
-        return False
+            Logger.warn(f"Failed to write file {dest_path}: {e}")
+            if os.path.exists(tmp_path):
+                safe_remove(tmp_path)
+            return False
 
     def download(self, url: str) -> bytes:
-        """Download URL content; returns empty bytes on failure."""
-        data = _curl_fetch(url, timeout=60, retries=1)
+        """Download URL content with unified retry logic; returns empty bytes on failure."""
+        data = safe_download_binary(url)
         if data is None:
-            Logger.warn(f"Download failed: {url}")
+            Logger.warn(f"Download failed after retries: {url}")
             return b""
         return data
 
