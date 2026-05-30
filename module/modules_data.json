@@ -1,6 +1,6 @@
 {
-  "generated": "2026-05-30T05:40:47.388603",
-  "total": 26,
+  "generated": "2026-05-30T14:46:26.591206",
+  "total": 27,
   "policy": {
     "adblock": "仅安装 PROMAX + ruleset/AdBlock 分片",
     "features": "功能模块保留独立 #!arguments；merged_into 勿重复安装"
@@ -303,7 +303,7 @@
       "filename": "🍎 Apple服务增强合集.sgmodule",
       "category": "amplify_nexus",
       "path": "module/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
-      "has_arguments": false,
+      "has_arguments": true,
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
       "name": "🍎 Apple服务增强合集",
@@ -400,6 +400,25 @@
       ],
       "author": "ScriptHub-Automated",
       "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png"
+    },
+    {
+      "id": "🐦 微博去广告合集",
+      "filename": "🐦 微博去广告合集.sgmodule",
+      "category": "narrow_pierce",
+      "path": "module/surge(main)/narrow_pierce/🐦 微博去广告合集.sgmodule",
+      "has_arguments": false,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/%F0%9F%90%A6%20%E5%BE%AE%E5%8D%9A%E5%8E%BB%E5%B9%BF%E5%91%8A%E5%90%88%E9%9B%86.sgmodule",
+      "name": "🐦 微博去广告合集",
+      "desc": "合并微博+微博国际版去广告 (自动追随上游更新)\\n\\n上游: fmz200/wool_scripts, iab0x00",
+      "tags": [
+        "去广告",
+        "微博",
+        "合并",
+        "自动更新"
+      ],
+      "author": "fmz200, iab0x00, kokoryh, zmqcherish",
+      "icon": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/Weibo-00.png"
     }
   ]
 }

@@ -121,7 +121,7 @@ class SRSGenerator:
         list_files.extend(path for path in EXTRA_SOURCE_FILES if os.path.isfile(path))
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            executor.map(self.compile_srs, list_files)
+            list(executor.map(self.compile_srs, list_files))
         self.prune_stale_srs(list_files)
 
     def prune_stale_srs(self, list_files: list):

@@ -170,6 +170,12 @@ class UpstreamSyncer:
                         break
                 
                 if binary_member:
+                    # Prevent Zip Slip / path traversal
+                    resolved_root = os.path.realpath(ROOT)
+                    target_path = os.path.realpath(os.path.join(resolved_root, binary_member.name))
+                    if os.path.commonpath([resolved_root, target_path]) != resolved_root:
+                        raise Exception(f"Dangerous path in tarball (Zip Slip): {binary_member.name}")
+
                     # Extract binary
                     tar.extract(binary_member, path=ROOT)
                     # Move binary to root and cleanup
@@ -201,7 +207,10 @@ class UpstreamSyncer:
             Logger.warn(f"File download failed after retries: {url}")
             return False
 
-        tmp_path = dest_path + ".tmp"
+        import uuid
+        dir_name = os.path.dirname(dest_path) or "."
+        base_name = os.path.basename(dest_path)
+        tmp_path = os.path.join(dir_name, f".{base_name}.{uuid.uuid4().hex}.tmp")
         try:
             # 原子写入
             with open(tmp_path, "wb") as f:

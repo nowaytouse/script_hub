@@ -361,19 +361,6 @@ class AdBlockManager:
         if not rule or rule.startswith("#") or rule.startswith("RULE-SET,"):
             return None
 
-        # Remove policy (case-insensitive) - handle optional spaces around commas
-        rule = re.sub(
-            r"\s*,\s*(REJECT-NO-DROP|REJECT-DROP|REJECT-TINYGIF|REJECT-IMG|REJECT|DIRECT|PROXY)\b",
-            "",
-            rule,
-            flags=re.IGNORECASE,
-        )
-        # Remove common parameters (case-insensitive) - handle optional spaces
-        rule = re.sub(r"\s*,\s*extended-matching\b", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r"\s*,\s*pre-matching\b", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r"\s*,\s*no-resolve\b", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r"\s*,\s*force-cellular\b", "", rule, flags=re.IGNORECASE)
-        rule = re.sub(r"\s*,\s*update-interval=\d+", "", rule, flags=re.IGNORECASE)
         rule = re.sub(r"\s+", " ", rule).strip()
 
         if not rule:
@@ -388,7 +375,7 @@ class AdBlockManager:
                 "EXTENDED-MATCHING", "PRE-MATCHING", "NO-RESOLVE", "FORCE-CELLULAR",
                 "{{{PROXY}}}",
             }
-            while parts and (parts[-1].upper() in strip_upper or parts[-1].upper().startswith("UPDATE-INTERVAL=")):
+            while len(parts) > 2 and (parts[-1].upper() in strip_upper or parts[-1].upper().startswith("UPDATE-INTERVAL=")):
                 parts = parts[:-1]
             rule = ",".join(parts)
         else:

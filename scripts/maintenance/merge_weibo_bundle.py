@@ -18,7 +18,7 @@ OUTPUT = os.path.join(
 
 SOURCES = [
     ("Main", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/weibo.module"),
-    ("Intl", "https://raw.githubusercontent.com/iab0x00/Surge/main/Module/WeiboIntl.sgmodule"),
+    ("Intl", "https://raw.githubusercontent.com/iab0x00/ProxyRules/main/Rewrite/WeiboIntl.sgmodule"),
 ]
 
 HEADER = {

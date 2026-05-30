@@ -22,7 +22,6 @@ from maintenance.merge_bilibili_bundle import main as merge_bilibili_bundle
 from maintenance.merge_youtube_bundle import main as merge_youtube_bundle
 from maintenance.merge_weibo_bundle import main as merge_weibo_bundle
 from maintenance.merge_apple_modules import main as merge_apple_modules
-from maintenance.merge_dns_modules import main as merge_dns_modules
 
 # CONFIGURATION
 
@@ -53,6 +52,7 @@ def main():
 
     start_time = datetime.now()
     Logger.section("Script Hub Python Update Tool (v1.3)")
+    has_failures = False
 
     if args.with_core:
         Logger.section("Core Binary Update")
@@ -65,11 +65,15 @@ def main():
 
     # 1. Upstream Sync
     if not args.quick:
-        syncer = UpstreamSyncer()
-        syncer.sync_skk()
-        syncer.sync_nexus()
-        syncer.sync_metacubex()
-        syncer.sync_local_sources()   # Sync upstream modules → PROMAX local_sources
+        try:
+            syncer = UpstreamSyncer()
+            syncer.sync_skk()
+            syncer.sync_nexus()
+            syncer.sync_metacubex()
+            syncer.sync_local_sources()   # Sync upstream modules → PROMAX local_sources
+        except Exception as e:
+            Logger.error(f"Upstream sync failed: {e}")
+            has_failures = True
     else:
         Logger.info("Quick mode: Skipping upstream sync.")
 
@@ -84,13 +88,10 @@ def main():
         merge_weibo_bundle()
         Logger.info("Executing Apple bundle merge...")
         merge_apple_modules()
-        Logger.info("Executing DNS bundle merge...")
-        dns_res = merge_dns_modules()
-        if dns_res and dns_res != 0:
-            raise Exception(f"merge_dns_modules failed with exit code {dns_res}")
         Logger.success("Upstream bundle merges completed successfully.")
     except Exception as e:
         Logger.error(f"Upstream bundle merges failed: {e}")
+        has_failures = True
 
     # 1.1 Smart-Config-Kit supplemental rules merge
     # Source files vendored at ruleset/Sources/custom/SmartConfigKit/ (fork removed)
@@ -100,10 +101,15 @@ def main():
         Logger.success("Smart-Config-Kit supplemental sources refreshed.")
     except Exception as e:
         Logger.error(f"Smart-Config-Kit merge failed: {e}")
+        has_failures = True
 
     # 2. Ruleset Merge (Incremental merge + header injection)
-    rules_mgr = RulesetManager(force=args.force)
-    rules_mgr.run()
+    try:
+        rules_mgr = RulesetManager(force=args.force)
+        rules_mgr.run()
+    except Exception as e:
+        Logger.error(f"Ruleset manager failed: {e}")
+        has_failures = True
 
     # 2.1 Cross-ruleset cleanup (rebalance generic Direct/Proxy + payload dedupe)
     Logger.section("Ruleset Cleanup")
@@ -112,10 +118,15 @@ def main():
         Logger.success(f"Ruleset cleanup completed: {format_ruleset_cleanup_stats(cleanup_stats)}")
     except Exception as e:
         Logger.error(f"Ruleset cleanup failed: {e}")
+        has_failures = True
 
     # 3. AdBlock Module & Ruleset Merge
-    ad_mgr = AdBlockManager()
-    ad_mgr.merge(execute=args.execute or args.force)
+    try:
+        ad_mgr = AdBlockManager()
+        ad_mgr.merge(execute=args.execute or args.force)
+    except Exception as e:
+        Logger.error(f"AdBlock manager failed: {e}")
+        has_failures = True
 
     # 3.2 Final ruleset cleanup after AdBlock rebuild to keep payloads unique
     Logger.section("Final Ruleset Cleanup")
@@ -124,9 +135,14 @@ def main():
         Logger.success(f"Final ruleset cleanup completed: {format_ruleset_cleanup_stats(cleanup_stats)}")
     except Exception as e:
         Logger.error(f"Final ruleset cleanup failed: {e}")
+        has_failures = True
 
     # 4. Firewall Port Sync
-    sync_ports(execute=args.execute or args.force)
+    try:
+        sync_ports(execute=args.execute or args.force)
+    except Exception as e:
+        Logger.error(f"Firewall port sync failed: {e}")
+        has_failures = True
 
     # 5. Module Consolidation & Shadowrocket Conversion
     # Order matters: consolidate first (generates / normalises Surge modules),
@@ -144,6 +160,7 @@ def main():
         Logger.success("Module processing and conversion completed.")
     except Exception as e:
         Logger.error(f"Module processing failed: {e}")
+        has_failures = True
 
     # 6. MITM Hardening (Final cleanup pass)
     Logger.section("MITM Hardening")
@@ -152,40 +169,53 @@ def main():
         Logger.success(f"MITM hardening completed: {count} modules reinforced.")
     except Exception as e:
         Logger.error(f"MITM hardening failed: {e}")
+        has_failures = True
 
     # 7. SRS Generation
-    srs_gen = SRSGenerator()
-    srs_gen.run()
+    try:
+        srs_gen = SRSGenerator()
+        srs_gen.run()
+    except Exception as e:
+        Logger.error(f"SRS generator failed: {e}")
+        has_failures = True
 
     # 7. Git Commit & Push
     if args.execute:
-        Logger.section("Git Operations")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        commit_msg = f"chore(ruleset): automated update {timestamp}"
-        try:
-            subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
-            status = subprocess.run(
-                ["git", "status", "--porcelain"],
-                capture_output=True,
-                text=True,
-                cwd=ROOT,
-            )
-            if status.stdout.strip():
-                subprocess.run(
-                    ["git", "commit", "-m", commit_msg],
-                    check=True,
+        if has_failures:
+            Logger.error("Pipeline has errors. Skipping Git operations to prevent pushing broken state.")
+        else:
+            Logger.section("Git Operations")
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            commit_msg = f"chore(ruleset): automated update {timestamp}"
+            try:
+                subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
+                status = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    capture_output=True,
+                    text=True,
                     cwd=ROOT,
                 )
-                subprocess.run(["git", "push", "origin", "master"], check=True, cwd=ROOT)
-                Logger.success("Changes pushed to GitHub successfully.")
-            else:
-                Logger.info("No changes to commit (working tree clean).")
-        except Exception as e:
-            Logger.warn(f"Git operation failed: {e}")
+                if status.stdout.strip():
+                    subprocess.run(
+                        ["git", "commit", "-m", commit_msg],
+                        check=True,
+                        cwd=ROOT,
+                    )
+                    subprocess.run(["git", "push", "origin", "master"], check=True, cwd=ROOT)
+                    Logger.success("Changes pushed to GitHub successfully.")
+                else:
+                    Logger.info("No changes to commit (working tree clean).")
+            except Exception as e:
+                Logger.warn(f"Git operation failed: {e}")
+                has_failures = True
 
     print_pipeline_summary()
     duration = datetime.now() - start_time
-    Logger.section(f"All Tasks Completed Successfully! (Duration: {duration})")
+    if has_failures:
+        Logger.error(f"Pipeline completed with errors. (Duration: {duration})")
+        sys.exit(1)
+    else:
+        Logger.section(f"All Tasks Completed Successfully! (Duration: {duration})")
 
 if __name__ == "__main__":
     main()

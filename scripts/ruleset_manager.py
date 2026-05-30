@@ -391,7 +391,7 @@ class RulesetManager:
         all_to_process = (set(RULESETS) | set(DEPRECATED_RULESETS) | set(all_files)) - SPECIAL_MANAGED_RULESETS
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            executor.map(self.process_ruleset, sorted(list(all_to_process)))
+            list(executor.map(self.process_ruleset, sorted(list(all_to_process))))
         self._prune_empty_rulesets()
         self._save_hashes()
         Logger.info(
