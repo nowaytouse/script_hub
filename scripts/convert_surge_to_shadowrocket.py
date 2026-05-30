@@ -44,8 +44,8 @@ SURGE_ONLY_KEYS = {
 }
 
 GENERAL_KEY_MAP = {
-    "encrypted-dns-server": "doh-server",
-    "dns-server": "fallback-dns-server",  # 明文 DNS 作为备用
+    "encrypted-dns-server": "dns-server",  # DoH 首选 - 使用 dns-server 字段
+    "dns-server": "fallback-dns-server",   # 明文备用
     "tun-excluded-routes": "tun-excluded-routes",
 }
 
@@ -373,8 +373,8 @@ def convert_main_config(surge_conf_path: Path, output_path: Path, compact_host: 
     host_lines_skipped = 0
 
     # 缓存 DNS 配置，确保正确顺序
-    doh_server_line = None
-    fallback_dns_line = None
+    dns_server_line = None  # 首选 DNS（DoH）
+    fallback_dns_line = None  # 备用 DNS（明文）
 
     try:
         for line in lines:
@@ -383,13 +383,13 @@ def convert_main_config(surge_conf_path: Path, output_path: Path, compact_host: 
             # 检测段落
             if stripped.startswith('[') and stripped.endswith(']'):
                 # 在离开 General 段落前，输出缓存的 DNS 配置（正确顺序）
-                if section == "General" and (doh_server_line or fallback_dns_line):
-                    if doh_server_line:
-                        out.append(doh_server_line)
+                if section == "General" and (dns_server_line or fallback_dns_line):
+                    if dns_server_line:
+                        out.append(dns_server_line)
                     if fallback_dns_line:
                         out.append(fallback_dns_line)
                     # 重置缓存
-                    doh_server_line = None
+                    dns_server_line = None
                     fallback_dns_line = None
 
                 section = stripped[1:-1]
@@ -424,10 +424,10 @@ def convert_main_config(surge_conf_path: Path, output_path: Path, compact_host: 
 
                         # 缓存 DNS 配置，稍后按正确顺序输出
                         if k == "encrypted-dns-server":
-                            doh_server_line = line
+                            dns_server_line = line  # DoH 首选
                             break
                         elif k == "dns-server":
-                            fallback_dns_line = line
+                            fallback_dns_line = line  # 明文备用
                             break
 
                 # 非 DNS 配置直接输出
