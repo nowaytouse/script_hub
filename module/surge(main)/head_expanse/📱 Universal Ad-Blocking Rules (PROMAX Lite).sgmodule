@@ -7,37 +7,25 @@
 #!date=2026-05-30 12:24:47
 
 [Rule]
-# High-Priority White-list (Prevent DNS failure)
 DOMAIN,dns.alidns.com,DIRECT
 DOMAIN,doh.pub,DIRECT
 DOMAIN,dns.pub,DIRECT
 DOMAIN,dot.pub,DIRECT
 DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
-# Block app-layer HTTPDNS first
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT
-# Split REJECT Rulesets (purpose-grouped; see ruleset/AdBlock/README.md)
-# ── 应用定制 · LocalModules / local_sources / 仓库内 App 专项规则 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# ── 通用广告 · blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# ── 隐私追踪 · Privacy / tracking-protection / 防追踪列表 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Privacy.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# ── 安全威胁 · 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Security_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_AntiAD.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-
-# SKK Upstream Rulesets
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# Merged REJECT complex rules (246)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -284,7 +272,6 @@ URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
-# Merged REJECT-DROP complex rules (71)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT-DROP
 DOMAIN,apidns.kwd.inkuai.com,REJECT-DROP
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT-DROP
@@ -356,11 +343,9 @@ DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 DOMAIN-SUFFIX,tthr.apple.com,REJECT-DROP
 URL-REGEX,"^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/",REJECT-DROP
 URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload)",REJECT-DROP
-# Merged REJECT-NO-DROP complex rules (1)
 DOMAIN,titan.pinduoduo.com,REJECT-NO-DROP
 
 [URL Rewrite]
-# from module/local_sources (42 entries, deduped)
 ^https?:\/\/203\.107\.1\.1/\d+/ss - reject
 ^https?:\/\/203\.107\.1\.33/\d+/ss - reject
 ^https?:\/\/203\.107\.1\.66/\d+/ss - reject
@@ -405,7 +390,6 @@ DOMAIN,titan.pinduoduo.com,REJECT-NO-DROP
 ^https?://securepubads\.g\.doubleclick\.net/tag/js/gpt\.js https://ruleset.skk.moe/Mock/securepubads-g-doubleclick-net_tag_js_gpt.js 302
 
 [Map Local]
-# from module/local_sources (588 entries, deduped)
 ^https?:\/\/appconf\.mail\.163\.com\/mailmaster\/api\/http\/urlConfig\.do$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/amdc\.alipay\.com\/query data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/msglb\.91160\.com\/msg\/outer\/broker\/get$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -996,7 +980,6 @@ DOMAIN,titan.pinduoduo.com,REJECT-NO-DROP
 ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
 
 [Script]
-# from module/local_sources (119 entries, deduped)
 body_rewrite_34 = type=http-response, pattern=^https:\/\/api\.zhihu\.com\/search\/recommend_query\/v2\?, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/body-rewrite.js, requires-body=true, max-size=-1, timeout=30, argument=%5B%5B%22replace-regex%22%2C%5B%5B%22%5C%22recommend_queries%5C%22%3A%5C%5C%7B.%2B%5C%5C%7D%22%2C%22%5C%22recommend_queries%5C%22%3A%7B%7D%22%5D%5D%5D%5D
 移除回答底部卡片推广 = type=http-response, pattern=^https:\/\/(?:api|page-info)\.zhihu\.com\/(?:answers|articles)\/v2\/\d+, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Zhihu_remove_ads.js, requires-body=true
 移除首页悬浮图标 = type=http-response, pattern=^https:\/\/api\.zhihu\.com\/commercial_api\/app_float_layer, script-path=https://github.com/bunizao/Mirrored/raw/main/Chores/js/Zhihu_remove_ads.js, requires-body=true
@@ -1118,7 +1101,6 @@ T3出行去广告 = type=http-response, pattern=^https:\/\/passenger\.t3go\.cn\/
 X网页版去广告 = type=http-response, pattern=^https?:\/\/x\.com\/i\/api\/graphql\/[^\/]+\/(HomeTimeline|TweetDetail), script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/X/X_ads.js, requires-body=true
 
 [Body Rewrite]
-# from module/local_sources (12 entries, deduped)
 http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
 http-response-jq ^https?:\/\/gql(-fed)?\.reddit\.com 'walk( if type == "object" then (if (.commentsPageAds | type == "array") then (.commentsPageAds = []) else . end) | (if ( (.node | type == "object") and (.node.cells | type == "array") and (.node.cells | any(.__typename? == "AdMetadataCell" or .isAdPost? == true)) ) then empty else . end) | (if (.node | type == "object") and (.node.adPayload | type == "object") then empty else . end) | (if .__typename == "AdPost" then empty else . end) else . end)'
 http-response-jq ^https:\/\/saas-ad\.cloudpnr\.com\/huifuad-base-api\/api\/tactics\/ad$ 'delpaths([["data",0]])'
