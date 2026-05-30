@@ -99,9 +99,8 @@ def write_file(file_path: str, content: str):
                         continue
                     if "自动生成于" in stripped or "generated at" in stripped.lower():
                         continue
-                    # Strip inline [YYYY-MM-DD] or [YYYY-MM-DD HH:MM] date tokens
-                    # (e.g. module name "PROMAX - [2026-05-29]" changes daily)
-                    if stripped.startswith("#") and _DATE_BRACKET.search(stripped):
+                    # Strip inline [YYYY-MM-DD] date tokens EXCEPT in #!name (module name should update daily)
+                    if stripped.startswith("#") and _DATE_BRACKET.search(stripped) and not stripped.startswith("#!name"):
                         line = _DATE_BRACKET.sub("[DATE]", line)
                     filtered.append(line)
                 return "\n".join(filtered)
