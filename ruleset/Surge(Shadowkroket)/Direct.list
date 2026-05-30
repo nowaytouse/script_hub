@@ -1,7 +1,7 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 121156
+# Rules: 121148
 
 DOMAIN,004430.xyz
 DOMAIN,0d.kebhana.mx
@@ -28390,7 +28390,6 @@ DOMAIN-SUFFIX,cmzd.com
 DOMAIN-SUFFIX,cmzi.com
 DOMAIN-SUFFIX,cmzj.net
 DOMAIN-SUFFIX,cmzyk.com
-DOMAIN-SUFFIX,cn
 DOMAIN-SUFFIX,cn-5.com
 DOMAIN-SUFFIX,cn-ab.com
 DOMAIN-SUFFIX,cn-aci.com
@@ -37824,6 +37823,7 @@ DOMAIN-SUFFIX,eoacme2.com
 DOMAIN-SUFFIX,eoacme3.com
 DOMAIN-SUFFIX,eoaluminium.com
 DOMAIN-SUFFIX,eoaoo.com
+DOMAIN-SUFFIX,eobuwieplonline.com
 DOMAIN-SUFFIX,eoeandroid.com
 DOMAIN-SUFFIX,eoemarket.net
 DOMAIN-SUFFIX,eoffcn.com
@@ -121098,14 +121098,6 @@ DOMAIN-SUFFIX,zzzyy.com
 DOMAIN-SUFFIX,zzzyyy.com
 DOMAIN-SUFFIX,zzzzaaaa.com
 DOMAIN-SUFFIX,zzzzzz.me
-DOMAIN-WILDCARD,*.qhimgs?.com
-DOMAIN-WILDCARD,*.s3.*.backblazeb2.com
-DOMAIN-WILDCARD,cdn-*.comaps.app
-DOMAIN-WILDCARD,cdn-*.comaps.tech
-DOMAIN-WILDCARD,cdn-*.organicmaps.app
-DOMAIN-WILDCARD,download*.mediafire.com
-DOMAIN-WILDCARD,ftp.??.debian.org
-DOMAIN-WILDCARD,ftp.??.freebsd.org
 PROCESS-NAME,/Applications/Thunder.app/
 PROCESS-NAME,/Applications/Transmission.app/
 PROCESS-NAME,/Applications/evol.app/
@@ -121144,7 +121136,7 @@ PROCESS-NAME,trojan-go
 PROCESS-NAME,uTorrent
 PROCESS-NAME,v2ray
 PROCESS-NAME,xray
-URL-REGEX,^http://(.+)\.gvt\d\.com/edgedl
+URL-REGEX,^http:
 USER-AGENT,%E4%BC%98%E9%85%B7*
 USER-AGENT,%E6%89%8B%E6%9C%BA%E6%B7%98%E5%AE%9D*
 USER-AGENT,%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90

@@ -2,10 +2,9 @@
 # Policy: PROXY
 # Node: US
 # Description: Netflix US region
-# Rules: 8
+# Rules: 7
 
 DOMAIN,f
-DOMAIN,g
 DOMAIN,l
 DOMAIN,x
 DOMAIN-REGEX,"(^|\.)apiproxy-device-prod-nlb-.+\.amazonaws\.com$"
