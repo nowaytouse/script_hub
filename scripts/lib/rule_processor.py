@@ -118,7 +118,7 @@ class RuleProcessor:
 
         # 正则表达式（基本检查）
         if rule_type == 'DOMAIN-REGEX':
-            if value.strip() in {"", "$", "^", ",", "-", ".", "2", "6", "]", "["}:
+            if len(value.strip()) < 2:
                 return False
             try:
                 re.compile(value)
