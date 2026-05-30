@@ -192,15 +192,17 @@ def main():
             cwd=ROOT,
         )
         # Always refresh SR modules; main Surge conf lives under .claude (gitignored, local-only)
-        subprocess.run(
+        conv = subprocess.run(
             [
                 sys.executable,
                 os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py"),
                 "--modules",
             ],
-            check=True,
             cwd=ROOT,
         )
+        if conv.returncode != 0:
+            Logger.error("Shadowrocket module conversion failed (no modules converted).")
+            has_failures = True
         surge_conf = os.path.join(ROOT, ".claude", "NyaMiiKo.conf.conf")
         if os.path.isfile(surge_conf):
             subprocess.run(

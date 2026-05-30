@@ -65,6 +65,13 @@ PRESERVE_RULESET_MARKERS = (
 REWRITE_MODIFIER_RE = re.compile(r',\s*(extended-matching|pre-matching)\b|'
                                   r'\b(extended-matching|pre-matching)\s*,?')
 
+# Injected once per [General] when Surge module has no General section defaults
+SR_GENERAL_DEFAULTS = """bypass-system = true
+ipv6 = true
+prefer-ipv6 = true
+hijack-dns = *:53
+dns-direct-fallback-proxy = false"""
+
 # Host 部分需要保留的关键域名模式
 HOST_KEEP_PATTERNS = [
     r'^dns\.',           # DNS 提供商
@@ -544,13 +551,12 @@ Examples:
             exit_code = 0 if success else 1
 
         elif args.modules:
-            # 转换所有模块
             try:
                 s = process_all_modules()
                 Logger.success(f"所有模块已转换: {s['converted']}/{s['total']}")
-                if s['failed'] > 0:
+                if s["failed"] > 0:
                     Logger.warn(f"失败: {s['failed']} 个模块")
-                    exit_code = 1
+                exit_code = 1 if s["converted"] == 0 else 0
             except Exception as e:
                 Logger.error(f"转换模块时发生错误: {e}")
                 exit_code = 1
@@ -569,7 +575,7 @@ Examples:
                 Logger.success(f"所有模块已转换: {s['converted']}/{s['total']}")
                 if s["failed"] > 0:
                     Logger.warn(f"失败: {s['failed']} 个模块")
-                    exit_code = 1
+                exit_code = 1 if s["converted"] == 0 else 0
 
     except KeyboardInterrupt:
         Logger.warn("\n用户中断操作")
