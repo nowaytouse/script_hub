@@ -7,6 +7,7 @@ Surge [Host] does not support RULE-SET / DOMAIN-SET — domains must be listed e
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -465,12 +466,31 @@ def build_host_section() -> str:
 
 
 def replace_host_section(conf_path: Path, host_body: str) -> None:
+    """替换配置文件中的 [Host] 段落，带备份和原子写入"""
+    # 读取原文件
     text = conf_path.read_text(encoding="utf-8")
     pattern = re.compile(r"(?ms)^\[Host\]\n.*?(?=^\[[^\n]+\]\n|\Z)")
     if not pattern.search(text):
         raise ValueError(f"No [Host] section in {conf_path}")
+
+    # 生成新内容
     new_text = pattern.sub("[Host]\n" + host_body + "\n", text, count=1)
-    conf_path.write_text(new_text, encoding="utf-8")
+
+    # 创建备份
+    backup_path = conf_path.with_suffix(conf_path.suffix + ".backup")
+    shutil.copy2(conf_path, backup_path)
+
+    try:
+        # 原子写入
+        tmp_path = conf_path.with_suffix(conf_path.suffix + ".tmp")
+        tmp_path.write_text(new_text, encoding="utf-8")
+        tmp_path.replace(conf_path)
+        print(f"✅ Updated {conf_path} (backup: {backup_path})")
+    except Exception as e:
+        # 恢复备份
+        if backup_path.exists():
+            shutil.copy2(backup_path, conf_path)
+        raise RuntimeError(f"Failed to update {conf_path}: {e}") from e
 
 
 def main() -> None:
@@ -491,7 +511,12 @@ def main() -> None:
     args = parser.parse_args()
 
     body = build_host_section()
-    args.output.write_text(body, encoding="utf-8")
+
+    # 原子写入输出文件
+    tmp_path = args.output.with_suffix(args.output.suffix + ".tmp")
+    tmp_path.write_text(body, encoding="utf-8")
+    tmp_path.replace(args.output)
+    print(f"✅ Generated {args.output}")
     print(f"Wrote fragment ({body.count(chr(10))} lines): {args.output}")
 
     if args.write:
