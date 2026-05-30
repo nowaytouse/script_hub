@@ -2,7 +2,8 @@
 # Policy: PROXY
 # Node: US
 # Description: US streaming services
-# Rules: 352
+# Rules: 322
+
 DOMAIN,cbsi.live.ott.irdeto.com
 DOMAIN,cbsplaylistserver.aws.syncbak.com
 DOMAIN,cbsservice.aws.syncbak.com
@@ -10,7 +11,6 @@ DOMAIN,discovery-us.conax.cloud
 DOMAIN,dplus-northamerica-cloudfront-gcs.prod-vod.h264.io
 DOMAIN,dplus-northamerica.media-edge.prod-vod.h264.io
 DOMAIN,e13252.dscg.akamaiedge.net
-DOMAIN,h-netflix.online-metrix.net
 DOMAIN,link.theplatform.com
 DOMAIN,live-mediashield-ava-hulustream-com.akamaized.net
 DOMAIN,netflix.com.edgesuite.net
@@ -32,22 +32,15 @@ DOMAIN-SUFFIX,adventuresbydisney.com
 DOMAIN-SUFFIX,assetshuluimcom-a.akamaihd.net
 DOMAIN-SUFFIX,babble.com
 DOMAIN-SUFFIX,babyzone.com
-DOMAIN-SUFFIX,bam.nr-data.net
 DOMAIN-SUFFIX,bamgrid.com
 DOMAIN-SUFFIX,bcbolthboa-a.akamaihd.net
 DOMAIN-SUFFIX,beautyandthebeastmusical.co.uk
-DOMAIN-SUFFIX,braze.com
 DOMAIN-SUFFIX,callhulu.com
 DOMAIN-SUFFIX,cbsaavideo.com
 DOMAIN-SUFFIX,cbsi.com
 DOMAIN-SUFFIX,cbsivideo.com
-DOMAIN-SUFFIX,cdn.optimizely.com
 DOMAIN-SUFFIX,cf-images.ap-southeast-1.prod.boltdns.net
 DOMAIN-SUFFIX,cinemax.com
-DOMAIN-SUFFIX,conviva.com
-DOMAIN-SUFFIX,cookielaw.org
-DOMAIN-SUFFIX,cws-hulu.conviva.com
-DOMAIN-SUFFIX,d9.flashtalking.com
 DOMAIN-SUFFIX,dai3fd1oh325y.cloudfront.net
 DOMAIN-SUFFIX,dilcdn.com
 DOMAIN-SUFFIX,disco-api.com
@@ -58,7 +51,6 @@ DOMAIN-SUFFIX,discoveryplus.in
 DOMAIN-SUFFIX,disney-asia.com
 DOMAIN-SUFFIX,disney-discount.com
 DOMAIN-SUFFIX,disney-plus.net
-DOMAIN-SUFFIX,disney-portal.my.onetrust.com
 DOMAIN-SUFFIX,disney-studio.com
 DOMAIN-SUFFIX,disney-studio.net
 DOMAIN-SUFFIX,disney.asia
@@ -79,7 +71,6 @@ DOMAIN-SUFFIX,disney.com.hk
 DOMAIN-SUFFIX,disney.com.tw
 DOMAIN-SUFFIX,disney.cz
 DOMAIN-SUFFIX,disney.de
-DOMAIN-SUFFIX,disney.demdex.net
 DOMAIN-SUFFIX,disney.dk
 DOMAIN-SUFFIX,disney.es
 DOMAIN-SUFFIX,disney.fi
@@ -91,7 +82,6 @@ DOMAIN-SUFFIX,disney.in
 DOMAIN-SUFFIX,disney.io
 DOMAIN-SUFFIX,disney.it
 DOMAIN-SUFFIX,disney.my
-DOMAIN-SUFFIX,disney.my.sentry.io
 DOMAIN-SUFFIX,disney.nl
 DOMAIN-SUFFIX,disney.no
 DOMAIN-SUFFIX,disney.ph
@@ -101,7 +91,6 @@ DOMAIN-SUFFIX,disney.ro
 DOMAIN-SUFFIX,disney.ru
 DOMAIN-SUFFIX,disney.se
 DOMAIN-SUFFIX,disney.sg
-DOMAIN-SUFFIX,disneyadsales.com
 DOMAIN-SUFFIX,disneyarena.com
 DOMAIN-SUFFIX,disneyaulani.com
 DOMAIN-SUFFIX,disneybaby.com
@@ -136,9 +125,7 @@ DOMAIN-SUFFIX,disneymusicpromotion.com
 DOMAIN-SUFFIX,disneynewseries.com
 DOMAIN-SUFFIX,disneynow.com
 DOMAIN-SUFFIX,disneypeoplesurveys.com
-DOMAIN-SUFFIX,disneyplus.bn5x.net
 DOMAIN-SUFFIX,disneyplus.com
-DOMAIN-SUFFIX,disneyplus.com.ssl.sc.omtrdc.net
 DOMAIN-SUFFIX,disneyprivacycenter.com
 DOMAIN-SUFFIX,disneyredirects.com
 DOMAIN-SUFFIX,disneysrivieraresort.com
@@ -160,10 +147,8 @@ DOMAIN-SUFFIX,dtci.technology
 DOMAIN-SUFFIX,edgedatg.com
 DOMAIN-SUFFIX,espn.co.uk
 DOMAIN-SUFFIX,espn.com
-DOMAIN-SUFFIX,espn.hb.omtrdc.net
 DOMAIN-SUFFIX,espn.net
 DOMAIN-SUFFIX,espncdn.com
-DOMAIN-SUFFIX,espndotcom.tt.omtrdc.net
 DOMAIN-SUFFIX,espnqa.com
 DOMAIN-SUFFIX,execute-api.ap-southeast-1.amazonaws.com
 DOMAIN-SUFFIX,execute-api.us-east-1.amazonaws.com
@@ -172,8 +157,6 @@ DOMAIN-SUFFIX,findyourlimits.com
 DOMAIN-SUFFIX,flxvpn.net
 DOMAIN-SUFFIX,forthethrone.com
 DOMAIN-SUFFIX,freehulu.com
-DOMAIN-SUFFIX,fwmrm.net
-DOMAIN-SUFFIX,getblueshift.com
 DOMAIN-SUFFIX,go-disneyworldgo.com
 DOMAIN-SUFFIX,go.com
 DOMAIN-SUFFIX,happyon.jp
@@ -217,15 +200,10 @@ DOMAIN-SUFFIX,hsprepack.akamaized.net
 DOMAIN-SUFFIX,hu1u.com
 DOMAIN-SUFFIX,huloo.cc
 DOMAIN-SUFFIX,huloo.tv
-DOMAIN-SUFFIX,hulu.com
-DOMAIN-SUFFIX,hulu.hb.omtrdc.net
 DOMAIN-SUFFIX,hulu.jp
-DOMAIN-SUFFIX,hulu.playback.edge.bamgrid.com
-DOMAIN-SUFFIX,hulu.sc.omtrdc.net
 DOMAIN-SUFFIX,hulu.tv
 DOMAIN-SUFFIX,hulu.us
 DOMAIN-SUFFIX,huluaction.com
-DOMAIN-SUFFIX,huluad.com
 DOMAIN-SUFFIX,huluapp.com
 DOMAIN-SUFFIX,huluasks.com
 DOMAIN-SUFFIX,hulucall.com
@@ -250,8 +228,6 @@ DOMAIN-SUFFIX,huluteam.com
 DOMAIN-SUFFIX,hulutv.com
 DOMAIN-SUFFIX,huluusa.com
 DOMAIN-SUFFIX,joinmaidez.com
-DOMAIN-SUFFIX,js-agent.newrelic.com
-DOMAIN-SUFFIX,litix.io
 DOMAIN-SUFFIX,manifest.prod.boltdns.net
 DOMAIN-SUFFIX,marvel.com
 DOMAIN-SUFFIX,marvel10thanniversary.com
@@ -265,7 +241,6 @@ DOMAIN-SUFFIX,marvelsuperwar.com
 DOMAIN-SUFFIX,max.com
 DOMAIN-SUFFIX,maxgo.com
 DOMAIN-SUFFIX,mickey.tv
-DOMAIN-SUFFIX,mobile-collector.newrelic.com
 DOMAIN-SUFFIX,moviesanywhere.com
 DOMAIN-SUFFIX,mushymush.tv
 DOMAIN-SUFFIX,myhulu.com
@@ -275,7 +250,6 @@ DOMAIN-SUFFIX,nationalgeographicpartners.com
 DOMAIN-SUFFIX,netflix.ca
 DOMAIN-SUFFIX,netflix.com
 DOMAIN-SUFFIX,netflix.com.au
-DOMAIN-SUFFIX,netflix.com.edgesuite.net
 DOMAIN-SUFFIX,netflix.net
 DOMAIN-SUFFIX,netflixdnstest0.com
 DOMAIN-SUFFIX,netflixdnstest1.com
@@ -305,7 +279,6 @@ DOMAIN-SUFFIX,now.com
 DOMAIN-SUFFIX,now.com.hk
 DOMAIN-SUFFIX,nowe.com
 DOMAIN-SUFFIX,nowe.hk
-DOMAIN-SUFFIX,onetrust.com
 DOMAIN-SUFFIX,originalhulu.com
 DOMAIN-SUFFIX,paramountplus.com
 DOMAIN-SUFFIX,payhulu.com
@@ -340,8 +313,6 @@ DOMAIN-SUFFIX,warnermediacdn.com
 DOMAIN-SUFFIX,watchdisneyfe.com
 DOMAIN-SUFFIX,watchespn.com
 DOMAIN-SUFFIX,wwwhuluplus.com
-DOMAIN-SUFFIX,yb.uncn.jp
-DOMAIN-SUFFIX,youboranqs01.com
 PROCESS-NAME,com.disney.datg.videoplatforms.android.abc
 PROCESS-NAME,com.disney.disneyplus
 PROCESS-NAME,com.hbo.hbonow

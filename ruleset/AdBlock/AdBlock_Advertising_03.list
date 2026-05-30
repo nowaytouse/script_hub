@@ -78634,12 +78634,12 @@ IP-CIDR,88.42.84.136/32
 IP-CIDR6,2402:4e00:1900:1700:0:9554:1ad9:c3a/128
 IP-CIDR6,2402:db40:5100:1011::5/128
 IP-CIDR6,240e:928:1400:10::25/128
-URL-REGEX,"^http:\/\/.+\/amdc\/mobileDispatch"
-URL-REGEX,"^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$"
-URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/advertisement\/"
-URL-REGEX,"^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do"
 URL-REGEX,/\d+/resolve
 URL-REGEX,/\d+/sign_d
+URL-REGEX,^http:\/\/.+\/amdc\/mobileDispatch
+URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do
 URL-REGEX,^https?:\/\/.+?\.beacon\.qq\.com
 URL-REGEX,^https?:\/\/.+?\.l\.qq\.com
 URL-REGEX,^https?:\/\/\w+\.gdt\.qq\.com

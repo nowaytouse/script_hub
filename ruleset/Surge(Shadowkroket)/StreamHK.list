@@ -2,9 +2,8 @@
 # Policy: PROXY
 # Node: HK
 # Description: Hong Kong streaming services
-# Rules: 34
-DOMAIN,mytvsuperlimited.hb.omtrdc.net
-DOMAIN,mytvsuperlimited.sc.omtrdc.net
+# Rules: 28
+
 DOMAIN-KEYWORD,nowtv100
 DOMAIN-KEYWORD,rthklive
 DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
@@ -19,17 +18,13 @@ DOMAIN-SUFFIX,hkbnes.net
 DOMAIN-SUFFIX,iq.com
 DOMAIN-SUFFIX,iqiyiintl.com
 DOMAIN-SUFFIX,jos.com
-DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,mytvsuper.com
-DOMAIN-SUFFIX,now.com
-DOMAIN-SUFFIX,nowe.com
 DOMAIN-SUFFIX,nowestatic.com
 DOMAIN-SUFFIX,rthk.hk
 DOMAIN-SUFFIX,speedtest.com.hk
 DOMAIN-SUFFIX,tvb.com
 DOMAIN-SUFFIX,vidio.com
 DOMAIN-SUFFIX,viu.com
-DOMAIN-SUFFIX,viu.now.com
 DOMAIN-SUFFIX,viu.tv
 DOMAIN-SUFFIX,wetv.vip
 PROCESS-NAME,com.viu.pad
