@@ -4,7 +4,7 @@ import argparse
 import subprocess
 import sys
 from datetime import datetime
-from lib.common import Logger, get_project_root
+from lib.common import Logger, get_project_root, is_ci
 from lib.pipeline_report import print_pipeline_summary
 
 # Import our managers
@@ -59,6 +59,7 @@ def main():
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "tools/test_surge_compliance.py")],
             cwd=ROOT,
+            env={**os.environ, "PYTHONPATH": SCRIPTS_DIR},
         )
         if result.returncode != 0:
             Logger.error("Surge compliance regression tests failed.")
@@ -162,6 +163,7 @@ def main():
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "tools/validate_surge_rulesets.py")],
             cwd=ROOT,
+            env={**os.environ, "PYTHONPATH": SCRIPTS_DIR},
         )
         if result.returncode != 0:
             Logger.error("Ruleset compliance validation failed.")
@@ -187,11 +189,30 @@ def main():
         subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "consolidate_modules.py")],
             check=True,
+            cwd=ROOT,
         )
+        # Always refresh SR modules; main Surge conf lives under .claude (gitignored, local-only)
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py")],
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py"),
+                "--modules",
+            ],
             check=True,
+            cwd=ROOT,
         )
+        surge_conf = os.path.join(ROOT, ".claude", "NyaMiiKo.conf.conf")
+        if os.path.isfile(surge_conf):
+            subprocess.run(
+                [
+                    sys.executable,
+                    os.path.join(SCRIPTS_DIR, "convert_surge_to_shadowrocket.py"),
+                    "--config",
+                    surge_conf,
+                ],
+                check=False,
+                cwd=ROOT,
+            )
         Logger.success("Module processing and conversion completed.")
     except Exception as e:
         Logger.error(f"Module processing failed: {e}")

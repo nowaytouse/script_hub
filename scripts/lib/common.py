@@ -42,6 +42,11 @@ class Logger:
 
 # FILE & PATH UTILITIES
 
+def is_ci() -> bool:
+    """True when running under GitHub Actions or explicit CI=1."""
+    return os.environ.get("CI", "").lower() in ("1", "true", "yes")
+
+
 def get_project_root() -> str:
     """Gets the project root based on the script location.
     Current location: scripts/lib/common.py

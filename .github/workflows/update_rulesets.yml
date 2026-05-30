@@ -31,9 +31,14 @@ on:
     - cron: '0 4,12,20 * * *'   # Runs 3 times daily (12:00, 20:00, 04:00 Beijing Time)
   workflow_dispatch:      # Allows manual run
 
+# TEMP: false while validating CI — set to true after green runs to restore 30min push cooldown
+env:
+  PUSH_COOLDOWN_ENABLED: 'false'
+
 jobs:
   update-rules:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     # Skip runs triggered by automated commits from this workflow itself to prevent infinite loop
     if: github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore(ruleset)')
     permissions:
@@ -106,13 +111,17 @@ jobs:
 
     - name: Surge compliance regression tests
       run: python3 scripts/tools/test_surge_compliance.py
-        
+      working-directory: scripts
+
+    - name: Validate existing Surge rulesets
+      run: python3 scripts/tools/validate_surge_rulesets.py
+
     - name: Execute Python Ruleset Update
-      run: |
-        python3 scripts/main_update.py --execute
+      run: python3 scripts/main_update.py --execute
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        CI: true
+        CI: 'true'
+        PYTHONPATH: scripts
         
     - name: Summary
       run: |
@@ -166,5 +175,5 @@ jobs:
         echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY
 
     - name: Delay 30 minutes for push events (Cool down)
-      if: github.event_name == 'push'
+      if: github.event_name == 'push' && env.PUSH_COOLDOWN_ENABLED == 'true'
       run: sleep 1800

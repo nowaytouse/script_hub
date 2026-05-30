@@ -83,6 +83,7 @@ class RulesetManager:
         self.hashes = self._load_hashes()
         self.policy_map = self._load_policy_map()
         self.stats = {"merged": 0, "skipped": 0, "deleted": 0}
+        self._processor = RuleProcessor()
 
     @staticmethod
     def _find_case_insensitive_file(directory: str, filename: str) -> Optional[str]:
@@ -237,9 +238,7 @@ class RulesetManager:
                 else:
                     r = f"DOMAIN,{r}"
 
-        # 使用 RuleProcessor 标准化规则
-        processor = RuleProcessor()
-        normalized = processor.normalize_rule(r)
+        normalized = self._processor.normalize_rule(r)
         if not normalized:
             return ""
 

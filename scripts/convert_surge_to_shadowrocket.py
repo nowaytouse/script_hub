@@ -556,7 +556,7 @@ Examples:
                 exit_code = 1
 
         else:
-            # 默认：转换项目主配置
+            # 默认：本地有 .claude 配置则转换；CI/无配置时仅转换模块（.claude 在 .gitignore）
             surge_conf = PROJECT_ROOT / ".claude" / "NyaMiiKo.conf.conf"
             if surge_conf.exists():
                 output = PROJECT_ROOT / ".claude" / "NyaMiiKo_Shadowrocket.conf"
@@ -564,10 +564,12 @@ Examples:
                 success = convert_main_config(surge_conf, output, compact_host=not args.full_host)
                 exit_code = 0 if success else 1
             else:
-                Logger.error("未找到默认配置: .claude/NyaMiiKo.conf.conf")
-                Logger.info("使用 --config 指定 Surge 配置文件，或使用 --modules 转换模块")
-                parser.print_help()
-                sys.exit(1)
+                Logger.warn("未找到 .claude/NyaMiiKo.conf.conf，跳过主配置，仅转换模块")
+                s = process_all_modules()
+                Logger.success(f"所有模块已转换: {s['converted']}/{s['total']}")
+                if s["failed"] > 0:
+                    Logger.warn(f"失败: {s['failed']} 个模块")
+                    exit_code = 1
 
     except KeyboardInterrupt:
         Logger.warn("\n用户中断操作")
