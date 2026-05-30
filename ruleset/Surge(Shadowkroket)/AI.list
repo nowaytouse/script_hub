@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 172
+# Rules: 168
 
 DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 DOMAIN,ai.google.dev
@@ -46,11 +46,7 @@ DOMAIN-KEYWORD,lemon8
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api
 DOMAIN-KEYWORD,tiktokcdn
-DOMAIN-REGEX,$
-DOMAIN-REGEX,-
-DOMAIN-REGEX,.
 DOMAIN-REGEX,S
-DOMAIN-REGEX,^
 DOMAIN-REGEX,a
 DOMAIN-REGEX,b
 DOMAIN-REGEX,c
