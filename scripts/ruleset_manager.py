@@ -103,12 +103,12 @@ class RulesetManager:
         """Download remote content with hardened protections (via lib/common)."""
         is_lsr = url.lower().endswith('.lsr')
         if is_lsr:
-            raw = safe_download_binary(url, retries=1)
+            raw = safe_download_binary(url, retries=2)
             if raw is None:
                 return ""
             return self._decode_lsr_bytes(raw)
         else:
-            content = safe_download(url, retries=1)
+            content = safe_download(url, retries=2)
             return content if content else ""
 
     @staticmethod

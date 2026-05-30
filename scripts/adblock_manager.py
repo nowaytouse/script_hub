@@ -854,6 +854,9 @@ class AdBlockManager:
         for entry in source_entries:
             if not self.is_module_source(entry):
                 continue
+            # Remote modules with no local sync target: rules extracted later only.
+            if entry.is_remote and not self.find_sync_targets(entry):
+                continue
 
             Logger.info(f"Syncing upstream module: {entry.display_name}")
             if entry.is_remote:

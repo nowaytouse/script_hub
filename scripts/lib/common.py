@@ -290,6 +290,61 @@ def _has_dangerous_chars(line: str) -> bool:
     """Reject lines with HTML/JS artifacts that should never appear in rule files."""
     return any(c in line for c in ('<', '>', '{', '}', 'function(', 'window.', 'document.'))
 
+# Committed snapshots for hosts that often block CI/datacenter IPs (yfamilys.com).
+_VENDOR_DIR = os.path.join(get_project_root(), "ruleset", "Sources", "vendor")
+VENDOR_SNAPSHOT_BY_URL: dict[str, str] = {
+    "https://yfamilys.com/module/adultraplus.sgmodule": "adultraplus.sgmodule",
+    "https://yfamilys.com/module/bili.module": "bili.module",
+    "https://yfamilys.com/rule/Kemono.list": "yfamilys_Kemono.list",
+    "https://yfamilys.com/rule/Cloudflare.list": "yfamilys_Cloudflare.list",
+}
+
+_CURL_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+
+
+def _http_cache_path(url: str) -> str:
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:32]
+    return os.path.join(get_project_root(), ".cache", "http", digest)
+
+
+def _read_http_cache(url: str) -> Optional[bytes]:
+    path = _http_cache_path(url)
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, "rb") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def _write_http_cache(url: str, data: bytes) -> None:
+    path = _http_cache_path(url)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(data)
+    except OSError:
+        pass
+
+
+def _read_vendor_snapshot(url: str) -> Optional[bytes]:
+    rel = VENDOR_SNAPSHOT_BY_URL.get(url)
+    if not rel:
+        return None
+    path = os.path.join(_VENDOR_DIR, rel)
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, "rb") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
 def safe_download(url: str, binary: bool = False, retries: int = 1,
                   timeout: int = 30) -> Optional[str]:
     """Download text content from *url*.  Returns None on failure / HTML response."""
@@ -297,7 +352,10 @@ def safe_download(url: str, binary: bool = False, retries: int = 1,
     if raw is None:
         return None
     if _is_html_content(raw):
-        Logger.warn(f"Download rejected: {url} returned HTML content instead of raw rule/script data (blocked or redirected).")
+        Logger.warn(
+            f"Download rejected: {url} returned HTML instead of raw data "
+            "(blocked or redirected)."
+        )
         return None
     return raw.decode("utf-8", errors="replace") if not binary else raw  # type: ignore[return-value]
 
@@ -309,7 +367,7 @@ def safe_download_binary(url: str, retries: int = 1,
     if raw is None:
         return None
     if _is_html_content(raw):
-        Logger.warn(f"Download rejected: {url} returned HTML content instead of binary data.")
+        Logger.warn(f"Download rejected: {url} returned HTML instead of binary data.")
         return None
     return raw
 
@@ -317,23 +375,44 @@ def safe_download_binary(url: str, retries: int = 1,
 # ── internal ──────────────────────────────────────────────────────────────────
 
 def _curl_fetch(url: str, *, timeout: int = 30, retries: int = 1) -> Optional[bytes]:
-    """Low-level curl wrapper shared by safe_download* helpers with descriptive error reporting."""
-    cmd = ["curl", "-L", "-s", "-m", str(timeout), "-f",
-           "-H", f"User-Agent: {_BROWSER_UA}", url]
+    """curl download with retry, HTTP cache, and vendor snapshot fallback."""
+    cmd_base = ["curl", "-L", "-s", "-m", str(timeout), "-f",
+                "-H", f"User-Agent: {_CURL_UA}",
+                "-H", "Accept: text/plain, application/octet-stream, */*"]
     last_err = None
     for attempt in range(retries + 1):
         try:
-            result = subprocess.run(cmd, capture_output=True)
-            if result.returncode == 0:
+            result = subprocess.run([*cmd_base, url], capture_output=True)
+            if result.returncode == 0 and result.stdout:
+                _write_http_cache(url, result.stdout)
                 return result.stdout
-            else:
-                stderr_msg = result.stderr.decode("utf-8", errors="ignore").strip()
-                last_err = f"curl exit code {result.returncode}. Stderr: {stderr_msg or 'No stderr'}"
+            stderr_msg = result.stderr.decode("utf-8", errors="ignore").strip()
+            http_hint = ""
+            if result.returncode == 22:
+                http_hint = " (HTTP 4xx/5xx — upstream may block datacenter IPs)"
+            last_err = (
+                f"curl exit {result.returncode}{http_hint}. "
+                f"Stderr: {stderr_msg or 'empty'}"
+            )
         except Exception as e:
             last_err = f"Exception: {e}"
-        
+
         if attempt < retries:
             time.sleep(2 ** attempt)
-    
+
+    cached = _read_http_cache(url)
+    if cached and not _is_html_content(cached):
+        Logger.info(f"Using cached copy (upstream unavailable): {url}")
+        return cached
+
+    vendor = _read_vendor_snapshot(url)
+    if vendor and not _is_html_content(vendor):
+        rel = os.path.relpath(
+            os.path.join(_VENDOR_DIR, VENDOR_SNAPSHOT_BY_URL[url]),
+            get_project_root(),
+        )
+        Logger.info(f"Using vendor snapshot: {rel}")
+        return vendor
+
     Logger.warn(f"Download failed: {url} | Reason: {last_err}")
     return None

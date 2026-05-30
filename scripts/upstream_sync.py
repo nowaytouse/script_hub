@@ -202,9 +202,8 @@ class UpstreamSyncer:
 
     def download_to_file(self, url: str, dest_path: str) -> bool:
         """Download content to file with unified retry logic."""
-        data = safe_download_binary(url)
+        data = safe_download_binary(url, retries=2)
         if data is None:
-            Logger.warn(f"File download failed after retries: {url}")
             return False
 
         import uuid
@@ -225,11 +224,8 @@ class UpstreamSyncer:
 
     def download(self, url: str) -> bytes:
         """Download URL content with unified retry logic; returns empty bytes on failure."""
-        data = safe_download_binary(url)
-        if data is None:
-            Logger.warn(f"Download failed after retries: {url}")
-            return b""
-        return data
+        data = safe_download_binary(url, retries=2)
+        return data if data is not None else b""
 
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")

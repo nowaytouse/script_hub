@@ -54,7 +54,8 @@ https://raw.githubusercontent.com/QingRex/LoonKissSurge/refs/heads/main/Surge/%E
 https://raw.githubusercontent.com/QingRex/LoonKissSurge/refs/heads/main/Surge/Beta/%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule|REJECT
 https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/blockHTTPDNS.module|REJECT-DROP
 https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Surge-module.sgmodule|REJECT
-https://yfamilys.com/module/adultraplus.sgmodule|REJECT
+# yfamilys: vendor snapshot (CI/datacenter often blocked); refreshed when upstream fetch succeeds
+../vendor/adultraplus.sgmodule|REJECT
 https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module|REJECT
 # Removed 2026-05-27: upstream 404 (QingRex/LoonKissSurge no longer hosts these Official modules)
 # https://raw.githubusercontent.com/QingRex/LoonKissSurge/refs/heads/main/Surge/Official/小程序和应用懒人去广告合集.official.sgmodule|REJECT
