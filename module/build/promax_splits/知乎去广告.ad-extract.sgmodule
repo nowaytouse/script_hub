@@ -1,5 +1,5 @@
 #!name=PROMAX split · 知乎去广告.sgmodule
-#!desc=从混合模块拆出的去广告行 44/50；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 46/50；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/ruleset/Sources/LocalModules/知乎去广告.sgmodule
 
@@ -53,6 +53,10 @@ IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,no-resolve,pre-matching
 移除回答详情页推广 = type=http-response, pattern=^https:\/\/www\.zhihu\.com\/api\/v4\/(?:articles|answers)\/\d+\/recommendations?\?, script-path=https://kelee.one/Resource/JavaScript/Zhihu/Zhihu_remove_ads.js, requires-body=true
 拦截服务器推送配置 config = type=http-response, pattern=^https:\/\/appcloud2\.zhihu\.com\/v3\/config, script-path=https://kelee.one/Resource/JavaScript/Zhihu/Zhihu_remove_ads.js, requires-body=true
 拦截服务器推送配置 config all = type=http-response, pattern=^https:\/\/m-cloud\.zhihu\.com\/api\/cloud\/zhihu\/config\/all\?, script-path=https://kelee.one/Resource/JavaScript/Zhihu/Zhihu_remove_ads.js, requires-body=true
+
+[Body Rewrite]
+http-response ^https:\/\/api\.zhihu\.com\/search\/recommend_query\/v2\? "recommend_queries":\{.+\} "recommend_queries":{}
+http-response-jq ^https:\/\/api\.zhihu\.com\/questions\/\d+(?:\/answers|\/feeds|\?include=) 'del(.ad_info, .data.ad_info?, .query_info) | if (.data | type) == "array" then .data |= map(select(.target?.answer_type?// "" | tostring | contains("paid") | not)) else . end'
 
 [MITM]
 hostname = %APPEND% api.zhihu.com, appcloud2.zhihu.com, link.zhihu.com, m-cloud.zhihu.com, page-info.zhihu.com, www.zhihu.com, zhuanlan.zhihu.com, -github.com, -api.github.com, -*.githubusercontent.com

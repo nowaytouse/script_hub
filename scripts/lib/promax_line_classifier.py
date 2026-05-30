@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Literal, Optional
 
@@ -17,6 +18,8 @@ AD_SCRIPT_MARKERS = (
     "blockad",
     "remove_ads",
     "remove-ads",
+    "_remove_",
+    "/remove",
     "去广告",
     "/ads/",
     "advertising",
@@ -29,7 +32,37 @@ AD_SCRIPT_MARKERS = (
     "mock",
     "bilibili.helper",
     "helper.v2.js",
-    "camoufox",  # generic block lists — rarely unlock
+    "camoufox",
+    "rednote",
+    "redpaper",
+    "weibo_ads",
+    "weibo_main",
+    "wool_scripts",
+    "kelee.one/resource/javascript",
+    "proxyrules/main/script",
+    "ithome_remove",
+    "zhihu_remove",
+    "amap_remove",
+    "cainiao_remove",
+    "taobao_remove",
+    "jd_remove",
+    "spotify_remove",
+    "bilicomic_remove",
+)
+
+AD_ENTRY_NAME_MARKERS = (
+    "去广告",
+    "adblock",
+    "anti-ad",
+    "xwebads",
+    "移除",
+    "精简",
+    "推广",
+    "开屏",
+    "净化",
+    "广告",
+    "killad",
+    "mock",
 )
 
 ENHANCE_SCRIPT_MARKERS = (
@@ -53,7 +86,7 @@ ENHANCE_SCRIPT_MARKERS = (
     "external_links_unlock",
     "weixin_external",
     "1080p",
-    "bilibili_json.js",  # deezertidal quality unlock
+    "bilibili_json.js",
     "dualsubs",
     "iringo",
     "weatherkit",
@@ -100,6 +133,20 @@ REJECT_POLICIES = frozenset(
     }
 )
 
+PURE_AD_MODULE_NAME_TOKENS = (
+    "去广告",
+    "adblock",
+    "anti-ad",
+    "xwebads",
+    "adultraplus",
+    "allinone",
+    "all-in-one",
+    "rednote",
+    "redpaper",
+    "微博去广告",
+    "remove_ads",
+)
+
 
 def _line_lower(line: str) -> str:
     return line.strip().lower()
@@ -116,7 +163,45 @@ def _entry_name(line: str) -> str:
     return line.split("=", 1)[0].strip().lower()
 
 
-def classify_promax_line(line: str, section: Optional[str] = None) -> LineVerdict:
+def source_is_pure_ad_module(source_path: Optional[str]) -> bool:
+    if not source_path:
+        return False
+    low = os.path.basename(source_path).lower()
+    if any(tok in low for tok in PURE_AD_MODULE_NAME_TOKENS):
+        return True
+    return False
+
+
+def _script_is_ad(name: str, spath: str, low: str) -> bool:
+    if any(m in name for m in AD_NAME_PREFIXES) or any(
+        m in name for m in AD_ENTRY_NAME_MARKERS
+    ):
+        if any(m in name for m in ("解锁", "unlock", "vip", "premium", "破解", "crack")):
+            return False
+        return True
+    if any(m in spath for m in AD_SCRIPT_MARKERS):
+        return True
+    if "helper" in name and "bili" in name:
+        return True
+    return False
+
+
+def _script_is_enhance(name: str, spath: str) -> bool:
+    if any(m in name for m in ENHANCE_NAME_PREFIXES) or any(
+        m in spath for m in ENHANCE_SCRIPT_MARKERS
+    ):
+        return True
+    if any(m in name for m in ("解锁", "unlock", "vip", "premium", "破解", "crack")):
+        return True
+    return False
+
+
+def classify_promax_line(
+    line: str,
+    section: Optional[str] = None,
+    *,
+    source_path: Optional[str] = None,
+) -> LineVerdict:
     """Classify one non-comment module line for PROMAX ingestion."""
     stripped = line.strip()
     if not stripped or stripped.startswith("#"):
@@ -124,6 +209,7 @@ def classify_promax_line(line: str, section: Optional[str] = None) -> LineVerdic
 
     low = _line_lower(stripped)
     sec = (section or "").strip().lower()
+    pure_ad_source = source_is_pure_ad_module(source_path)
 
     if sec == "mitm":
         if "hostname" not in low:
@@ -142,15 +228,11 @@ def classify_promax_line(line: str, section: Optional[str] = None) -> LineVerdic
     spath = _script_path(stripped)
 
     if sec == "script" or "script-path=" in low:
-        if any(m in name for m in AD_NAME_PREFIXES) or any(
-            m in spath for m in AD_SCRIPT_MARKERS
-        ):
-            return "ad"
-        if any(m in name for m in ENHANCE_NAME_PREFIXES) or any(
-            m in spath for m in ENHANCE_SCRIPT_MARKERS
-        ):
+        if _script_is_enhance(name, spath):
             return "enhance"
-        if "helper" in name and "bili" in name:
+        if _script_is_ad(name, spath, low):
+            return "ad"
+        if pure_ad_source:
             return "ad"
         return "enhance"
 
@@ -162,11 +244,23 @@ def classify_promax_line(line: str, section: Optional[str] = None) -> LineVerdic
         return "enhance"
 
     if sec in ("map local", "body rewrite", "maplocal"):
+        if "http-response-jq" in low or "http-request-jq" in low:
+            if any(m in low for m in ENHANCE_SCRIPT_MARKERS):
+                return "enhance"
+            return "ad"
+        if stripped.startswith("http-response ") or stripped.startswith("http-request "):
+            return "ad"
+        if stripped.startswith("^") and (
+            "data-type=" in low or 'data="{}"' in low or "data='{}'" in low
+        ):
+            return "ad"
         if any(m in low for m in ("广告", "adcard", "splash", "deliver", "flash", "e-commerce")):
             return "ad"
         if 'data="{}"' in low or "data='{}'" in low:
             return "ad"
         if "del(.data.payment)" in low or "payment" in low and "del(" in low:
+            return "ad"
+        if pure_ad_source and stripped.startswith("^"):
             return "ad"
         return "neutral"
 
@@ -189,7 +283,6 @@ def classify_promax_line(line: str, section: Optional[str] = None) -> LineVerdic
             if any(m in low for m in ("unlock", "解锁", "vip", "premium", "crack")):
                 return "enhance"
             return "ad"
-        # Bare DOMAIN / IP rules (no trailing policy) → merged as REJECT in AdBlock lists
         if parts and parts[0].upper() in (
             "DOMAIN",
             "DOMAIN-SUFFIX",
@@ -215,8 +308,13 @@ def classify_promax_line(line: str, section: Optional[str] = None) -> LineVerdic
     return "neutral"
 
 
-def should_keep_promax_line(line: str, section: Optional[str] = None) -> bool:
-    verdict = classify_promax_line(line, section)
+def should_keep_promax_line(
+    line: str,
+    section: Optional[str] = None,
+    *,
+    source_path: Optional[str] = None,
+) -> bool:
+    verdict = classify_promax_line(line, section, source_path=source_path)
     if verdict == "ad":
         return True
     if verdict == "enhance":
@@ -234,8 +332,6 @@ def module_ingest_mode(path: str, text: str) -> str:
       - full: pure ad module (all lines considered)
       - split: mixed ad + enhancement — line-level filter
     """
-    import os
-
     name = os.path.basename(path).lower()
     if "解锁" in name or "unlock" in name:
         if not any(t in name for t in ("去广告", "adblock", "anti-ad")):
@@ -252,7 +348,7 @@ def module_ingest_mode(path: str, text: str) -> str:
             continue
         if not stripped or stripped.startswith("#"):
             continue
-        v = classify_promax_line(stripped, current_section)
+        v = classify_promax_line(stripped, current_section, source_path=path)
         if v == "ad":
             ad_lines += 1
         elif v == "enhance":

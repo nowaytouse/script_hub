@@ -11,7 +11,11 @@ from adblock_manager import (  # noqa: E402
     AdBlockManager,
     LOCAL_MODULES_DIR,
 )
-from lib.promax_line_classifier import classify_promax_line, module_ingest_mode
+from lib.promax_line_classifier import (
+    classify_promax_line,
+    module_ingest_mode,
+    should_keep_promax_line,
+)
 from lib.promax_module_split import split_module_sections
 
 
@@ -38,7 +42,7 @@ def test_bilibili_bundle_split_keeps_ad_only() -> None:
     if not os.path.isfile(path):
         return
     text = open(path, encoding="utf-8").read()
-    ad_sections, stats = split_module_sections(text)
+    ad_sections, stats = split_module_sections(text, source_path=path)
     assert stats["kept_lines"] > 0
     assert stats["kept_lines"] < stats["total_lines"]
     scripts = ad_sections.get("Script", [])
@@ -47,6 +51,66 @@ def test_bilibili_bundle_split_keeps_ad_only() -> None:
     assert not any("BiliBili.Global" in s for s in scripts)
     rules = ad_sections.get("Rule", [])
     assert any("REJECT" in r for r in rules)
+
+
+def test_pdd_module_full_ingest_keeps_all_body_rewrite() -> None:
+    path = os.path.join(LOCAL_MODULES_DIR, "拼多多去广告.sgmodule")
+    if not os.path.isfile(path):
+        return
+    text = open(path, encoding="utf-8").read()
+    assert module_ingest_mode(path, text) == "full"
+    jq_count = text.count("http-response-jq")
+    _, stats = split_module_sections(text, source_path=path)
+    assert stats["skipped_lines"] == 0
+    ad_sections, _ = split_module_sections(text, source_path=path)
+    assert len(ad_sections.get("Body Rewrite", [])) == jq_count
+
+
+def test_weibo_ad_scripts_kept_in_split() -> None:
+    path = os.path.join(LOCAL_MODULES_DIR, "🐦 微博去广告合集.sgmodule")
+    if not os.path.isfile(path):
+        return
+    line = (
+        "微博热搜页面广告 = type=http-response, pattern=^https?:\\/\\/m?api\\.weibo\\.c(n|om)\\/2\\/"
+        "(page|flowpage)\\?, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/"
+        "Scripts/weibo/weibo_ads.js, requires-body=true"
+    )
+    assert classify_promax_line(line, "Script", source_path=path) == "ad"
+
+
+def test_zhihu_legacy_body_rewrite_kept() -> None:
+    line = (
+        r'http-response ^https:\/\/api\.zhihu\.com\/search\/recommend_query\/v2\? '
+        r'"recommend_queries":\{.+\} "recommend_queries":{}'
+    )
+    assert classify_promax_line(line, "Body Rewrite") == "ad"
+
+
+def test_rednote_scripts_full_module() -> None:
+    path = os.path.join(LOCAL_MODULES_DIR, "RedNote.sgmodule")
+    if not os.path.isfile(path):
+        return
+    text = open(path, encoding="utf-8").read()
+    assert module_ingest_mode(path, text) == "full"
+    _, stats = split_module_sections(text, source_path=path)
+    assert stats["skipped_lines"] == 0
+
+
+def test_unlock_weibo_script_still_dropped() -> None:
+    path = os.path.join(LOCAL_MODULES_DIR, "🐦 微博去广告合集.sgmodule")
+    line = (
+        "解锁微博会员APP图标 = type=http-response, pattern=^https?:\\/\\/new\\.vip\\.weibo\\.c(n|om)\\/"
+        "aj\\/appicon\\/list, script-path=https://example/unlock.js"
+    )
+    assert not should_keep_promax_line(line, "Script", source_path=path)
+
+
+def test_pdd_bottom_tabs_body_rewrite_kept() -> None:
+    line = (
+        "http-response-jq ^https:\\/\\/api\\.pinduoduo\\.com\\/api\\/alexa\\/homepage\\/hub\\? "
+        "'.result.bottom_tabs? |= map(select(.link | IN(\"index.html\", \"chat_list.html\", \"personal.html\")))'"
+    )
+    assert classify_promax_line(line, "Body Rewrite") == "ad"
 
 
 def test_classifier_adblock_script() -> None:
@@ -74,6 +138,12 @@ def test_functional_resolve_includes_split_bundle() -> None:
 
 
 if __name__ == "__main__":
+    test_pdd_module_full_ingest_keeps_all_body_rewrite()
+    test_weibo_ad_scripts_kept_in_split()
+    test_zhihu_legacy_body_rewrite_kept()
+    test_rednote_scripts_full_module()
+    test_unlock_weibo_script_still_dropped()
+    test_pdd_bottom_tabs_body_rewrite_kept()
     test_classifier_adblock_script()
     test_filename_gate()
     test_bilibili_bundle_split_keeps_ad_only()

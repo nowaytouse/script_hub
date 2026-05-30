@@ -425,7 +425,7 @@ class AdBlockManager:
     def write_promax_split_artifact(self, source_path: str) -> None:
         """Write ad-only extract for mixed modules (review / audit)."""
         text = "".join(read_file(source_path))
-        ad_sections, stats = split_module_sections(text)
+        ad_sections, stats = split_module_sections(text, source_path=source_path)
         if stats.get("kept_lines", 0) == 0:
             return
         os.makedirs(PROMAX_SPLITS_DIR, exist_ok=True)
@@ -532,7 +532,7 @@ class AdBlockManager:
                 include_sections=True,
                 functional_mode=True,
                 sections_only=True,
-                promax_line_split=True,
+                promax_line_split=(ingest_mode == "split"),
             )
             if ingest_mode == "split":
                 self.write_promax_split_artifact(path)
@@ -879,9 +879,17 @@ class AdBlockManager:
         self._section_seen[section_name].add(key)
         self.sections[section_name].append(stripped)
 
-    def is_enhancement_line(self, line: str, section: Optional[str] = None) -> bool:
+    def is_enhancement_line(
+        self,
+        line: str,
+        section: Optional[str] = None,
+        *,
+        source_path: Optional[str] = None,
+    ) -> bool:
         """True if line is unlock/功能增强 (excluded from PROMAX)."""
-        return classify_promax_line(line, section) == "enhance"
+        return (
+            classify_promax_line(line, section, source_path=source_path) == "enhance"
+        )
 
     def extract_from_text(
         self,
@@ -894,6 +902,7 @@ class AdBlockManager:
         functional_mode: bool = False,
         sections_only: bool = False,
         promax_line_split: bool = True,
+        source_path: Optional[str] = None,
     ):
         current_section = None
         in_rule_section = False
@@ -934,7 +943,13 @@ class AdBlockManager:
                     continue
                 if self.is_script_or_rewrite_line(stripped):
                     continue
-                if promax_line_split and classify_promax_line(stripped, "Rule") != "ad":
+                if (
+                    promax_line_split
+                    and classify_promax_line(
+                        stripped, "Rule", source_path=source_path
+                    )
+                    != "ad"
+                ):
                     continue
                 self.add_rule_line(stripped, default_policy, category=category)
                 continue
@@ -947,7 +962,7 @@ class AdBlockManager:
                 if current_section == "Rule":
                     continue
                 if promax_line_split and not should_keep_promax_line(
-                    stripped, current_section
+                    stripped, current_section, source_path=source_path
                 ):
                     continue
                 self.add_section_line(current_section, stripped)
@@ -980,6 +995,7 @@ class AdBlockManager:
             functional_mode=functional_mode,
             sections_only=sections_only,
             promax_line_split=promax_line_split,
+            source_path=os.path.normpath(path),
         )
 
     def parse_module_structure(self, text: str) -> Tuple[List[str], List[Tuple[str, List[str]]]]:
@@ -1279,6 +1295,10 @@ class AdBlockManager:
         for category in self.category_names:
             rules = self.filter_rules(self.rules["REJECT"][category])
             if not rules:
+                Logger.info(
+                    f"  ⊘ Skip shard for {category}: no unique rules "
+                    f"(likely deduped by an earlier source, e.g. Ultimate before TIF)"
+                )
                 continue
 
             meta = CATEGORY_META[category]

@@ -12,7 +12,9 @@ from lib.promax_line_classifier import should_keep_promax_line
 SECTION_HEADER_RE = re.compile(r"^\[([^\]]+)\]\s*$")
 
 
-def split_module_sections(text: str) -> Tuple[Dict[str, List[str]], Dict[str, int]]:
+def split_module_sections(
+    text: str, *, source_path: Optional[str] = None
+) -> Tuple[Dict[str, List[str]], Dict[str, int]]:
     """
     Return (ad_sections, stats).
     stats keys: total_lines, kept_lines, skipped_lines
@@ -36,7 +38,7 @@ def split_module_sections(text: str) -> Tuple[Dict[str, List[str]], Dict[str, in
             total += 1
             continue
         total += 1
-        if should_keep_promax_line(stripped, current_section):
+        if should_keep_promax_line(stripped, current_section, source_path=source_path):
             ad_sections.setdefault(current_section, []).append(stripped)
             kept += 1
         else:
