@@ -1,0 +1,11 @@
+#!name=PROMAX split · YouTube.Enhance.sgmodule
+#!desc=从混合模块拆出的去广告行 3/5；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/module/surge(main)/amplify_nexus/YouTube.Enhance.sgmodule
+
+[Rule]
+AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
+
+[MITM]
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, -github.com, -api.github.com, -*.githubusercontent.com

@@ -1,8 +1,8 @@
-# Ruleset: AdBlock · 应用定制
-# Purpose: LocalModules / local_sources / 仓库内 App 专项规则
+# Ruleset: AdBlock · 应用去广告
+# Purpose: 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）
 # Category-Key: Local
 # Shard: 1/1
-# Total Rules: 53
+# Total Rules: 54
 
 DOMAIN,adcdn6.tencentmusic.com
 DOMAIN,adpinpai.video.weibocdn.com
@@ -30,6 +30,7 @@ DOMAIN,th-a.pinduoduo.com
 DOMAIN,th-b.pinduoduo.com
 DOMAIN,titan.pinduoduo.com
 DOMAIN,tmeadquic.y.qq.com
+DOMAIN,ut.taobao.com
 DOMAIN,vali-ugc.cp31.ott.cibntv.net
 DOMAIN,xg.pinduoduo.com
 DOMAIN-SUFFIX,admobile.top

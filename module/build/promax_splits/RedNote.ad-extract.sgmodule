@@ -1,0 +1,13 @@
+#!name=PROMAX split · RedNote.sgmodule
+#!desc=从混合模块拆出的去广告行 5/21；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/ruleset/Sources/LocalModules/RedNote.sgmodule
+
+[URL Rewrite]
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/surprisebox\/(?:get_style|open|submit_action) - reject-dict
+^https:\/\/www\.xiaohongshu\.com\/api\/marketing\/box\/trigger\? - reject-dict
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/(?:v2\/guide\/user_banner|v3\/note\/guide) - reject-dict
+^https:\/\/www\.xiaohongshu\.com\/api\/sns\/(?:v1\/ads\/resource|v2\/hey\/\w+\/hey_gallery) - reject-dict
+
+[MITM]
+hostname = %APPEND% edith.xiaohongshu.com, www.xiaohongshu.com, -github.com, -api.github.com, -*.githubusercontent.com

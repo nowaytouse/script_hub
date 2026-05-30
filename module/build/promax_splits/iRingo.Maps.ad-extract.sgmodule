@@ -1,0 +1,15 @@
+#!name=PROMAX split · iRingo.Maps.sgmodule
+#!desc=从混合模块拆出的去广告行 7/13；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/module/surge(main)/amplify_nexus/iRingo.Maps.sgmodule
+
+[Rule]
+DOMAIN-SUFFIX,is.autonavi.com,DIRECT
+DOMAIN,gspe11-2-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe12-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe19-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe19-2-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe79-cn-ssl.ls.apple.com,DIRECT
+
+[MITM]
+hostname = %APPEND% configuration.ls.apple.com, gspe35-ssl.ls.apple.com, -github.com, -api.github.com, -*.githubusercontent.com

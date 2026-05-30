@@ -5,8 +5,8 @@
 #
 # Rules:
 #   - Only .list / .txt / domainset URLs, or .sgmodule files that contain a [Rule] section
-#   - Script / URL Rewrite / Map Local modules are NOT listed here (use module/local_sources)
-#   - PROMAX references ruleset/AdBlock/*.list via RULE-SET only (no embedded scripts)
+#   - Script / URL Rewrite modules: ruleset/Sources/Links/AdBlock_functional_sources.txt → PROMAX
+#   - PROMAX references ruleset/AdBlock/*.list via RULE-SET + merged [Script]/[Rewrite] sections
 #
 # Example:
 #   https://example.com/list.txt|REJECT

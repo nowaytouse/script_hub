@@ -295,6 +295,37 @@ def convert_content(content: str) -> str:
 
     return sanitize_file_content('\n'.join(out), dedupe=True)
 
+PROMAX_SURGE_MODULES = (
+    "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+    "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+)
+
+
+def convert_promax_modules() -> bool:
+    """Convert only Surge PROMAX / PROMAX Lite → Shadowrocket head_expanse."""
+    cat = "head_expanse"
+    cat_path = SURGE_MODULE_DIR / cat
+    out_dir = SR_MODULE_DIR / cat
+    out_dir.mkdir(parents=True, exist_ok=True)
+    ok = True
+    for name in PROMAX_SURGE_MODULES:
+        src = cat_path / name
+        if not src.is_file():
+            Logger.warn(f"PROMAX source missing: {name}")
+            ok = False
+            continue
+        Logger.info(f"Converting PROMAX → SR: {name}")
+        try:
+            converted = convert_content(src.read_text(encoding="utf-8"))
+            out_path = out_dir / (src.stem + ".module")
+            write_file(str(out_path), converted)
+            Logger.success(f"SR module written: {out_path.name}")
+        except Exception as exc:
+            Logger.error(f"PROMAX SR conversion failed [{name}]: {exc}")
+            ok = False
+    return ok
+
+
 def process_all_modules():
     if not SR_MODULE_DIR.exists():
         SR_MODULE_DIR.mkdir(parents=True)
@@ -531,6 +562,11 @@ Examples:
         """
     )
     parser.add_argument("--modules", action="store_true", help="Convert all Surge modules to Shadowrocket")
+    parser.add_argument(
+        "--promax-only",
+        action="store_true",
+        help="Convert only PROMAX / PROMAX Lite (after adblock_manager merge)",
+    )
     parser.add_argument("--config", type=Path, help="Convert a specific Surge config file")
     parser.add_argument("--output", type=Path, help="Output path for config conversion")
     parser.add_argument("--full-host", action="store_true", help="Keep full Host section (default: compact)")
@@ -549,6 +585,9 @@ Examples:
             output = args.output or args.config.parent / (args.config.stem + "_Shadowrocket.conf")
             success = convert_main_config(args.config, output, compact_host=not args.full_host)
             exit_code = 0 if success else 1
+
+        elif args.promax_only:
+            exit_code = 0 if convert_promax_modules() else 1
 
         elif args.modules:
             try:

@@ -1,9 +1,9 @@
 {
-  "generated": "2026-05-30T14:46:26.591206",
+  "generated": "2026-05-30T18:20:52.944857",
   "total": 27,
   "policy": {
-    "adblock": "仅安装 PROMAX + ruleset/AdBlock 分片",
-    "features": "功能模块保留独立 #!arguments；merged_into 勿重复安装"
+    "adblock": "仅安装 PROMAX（含各 App 去广告脚本；专项去广告模块勿重复安装）",
+    "features": "解锁/增强/翻译等保留 Amplify Nexus 独立模块"
   },
   "modules": [
     {
@@ -355,12 +355,13 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
       "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-05-30]",
-      "desc": "手机轻量版(9片); 不含 ThreatIntel 重型规则; 功能配置请用 amplify_nexus 独立模块",
+      "desc": "手机轻量版(9片 REJECT 分片 + 应用内去广告脚本); 不含 ThreatIntel 重型规则; URL Rewrite=818, Map Local=359, Script=187, Body Rewrite=1, MITM=1023",
       "tags": [
         "AdBlock",
         "Lite",
         "Mobile",
-        "HTTPDNS"
+        "HTTPDNS",
+        "Script"
       ],
       "author": "ScriptHub-Automated",
       "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png"
@@ -392,11 +393,12 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
       "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-05-30]",
-      "desc": "按用途分片(20片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json",
+      "desc": "按用途分片(16片) + 应用内去广告(URL Rewrite=818, Map Local=359, Script=187, Body Rewrite=1, MITM=1023); 索引 ruleset/AdBlock/catalog.json",
       "tags": [
         "AdBlock",
         "Dependency",
-        "HTTPDNS"
+        "HTTPDNS",
+        "Script"
       ],
       "author": "ScriptHub-Automated",
       "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png"
@@ -407,7 +409,7 @@
       "category": "narrow_pierce",
       "path": "module/surge(main)/narrow_pierce/🐦 微博去广告合集.sgmodule",
       "has_arguments": false,
-      "merged_into": null,
+      "merged_into": "🚫 Universal Ad-Blocking Rules (PROMAX)",
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/module/surge%28main%29/narrow_pierce/%F0%9F%90%A6%20%E5%BE%AE%E5%8D%9A%E5%8E%BB%E5%B9%BF%E5%91%8A%E5%90%88%E9%9B%86.sgmodule",
       "name": "🐦 微博去广告合集",
       "desc": "合并微博+微博国际版去广告 (自动追随上游更新)\\n\\n上游: fmz200/wool_scripts, iab0x00",
@@ -418,7 +420,9 @@
         "自动更新"
       ],
       "author": "fmz200, iab0x00, kokoryh, zmqcherish",
-      "icon": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/Weibo-00.png"
+      "icon": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/Weibo-00.png",
+      "essential": false,
+      "note": "已合并进「🚫 Universal Ad-Blocking Rules (PROMAX)」，请勿重复安装"
     }
   ]
 }

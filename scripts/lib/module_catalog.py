@@ -15,6 +15,8 @@ from lib.module_sanitizer import parse_module, sanitize_file_content
 from lib.common import write_file
 
 PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
+PROMAX_MERGE_LABEL = "🚫 Universal Ad-Blocking Rules (PROMAX)"
+PROMAX_MERGED_NAME_HINTS = ("去广告", "AdBlock", "adblock", "ADBlock")
 CDN_BASE = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
 
 CATEGORIES = {
@@ -163,6 +165,12 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
                     "icon",
                     f"{CDN_BASE}docs/assets/default_icon.png",
                 )
+                if (
+                    not info.get("merged_into")
+                    and cat_key == "narrow_pierce"
+                    and any(h in module_file.name for h in PROMAX_MERGED_NAME_HINTS)
+                ):
+                    info["merged_into"] = PROMAX_MERGE_LABEL
                 if info["merged_into"]:
                     info["essential"] = False
                     info["note"] = f"已合并进「{info['merged_into']}」，请勿重复安装"
@@ -202,8 +210,8 @@ def write_modules_json(modules: List[Dict[str, Any]], output_path: Path) -> None
         "generated": datetime.now().isoformat(),
         "total": len(modules),
         "policy": {
-            "adblock": "仅安装 PROMAX + ruleset/AdBlock 分片",
-            "features": "功能模块保留独立 #!arguments；merged_into 勿重复安装",
+            "adblock": "仅安装 PROMAX（含各 App 去广告脚本；专项去广告模块勿重复安装）",
+            "features": "解锁/增强/翻译等保留 Amplify Nexus 独立模块",
         },
         "modules": modules,
     }

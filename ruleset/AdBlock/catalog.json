@@ -1,10 +1,10 @@
 {
-  "updated": "2026-05-30 16:02:05",
+  "updated": "2026-05-30 18:20:43",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
-      "label_zh": "应用定制",
-      "desc": "LocalModules / local_sources / 仓库内 App 专项规则"
+      "label_zh": "应用去广告",
+      "desc": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）"
     },
     "Advertising": {
       "label_zh": "通用广告",
@@ -68,12 +68,21 @@
     }
   },
   "manifest": "ruleset/Sources/Links/AdBlock_sources.txt",
+  "functional_manifest": "ruleset/Sources/Links/AdBlock_functional_sources.txt",
+  "functional_sections": {
+    "URL Rewrite": 818,
+    "Map Local": 359,
+    "Script": 187,
+    "Body Rewrite": 1,
+    "Header Rewrite": 0,
+    "MITM": 1023
+  },
   "shards": [
     {
       "file": "ruleset/AdBlock/AdBlock_Local.list",
       "category": "Local",
-      "label_zh": "应用定制",
-      "purpose": "LocalModules / local_sources / 仓库内 App 专项规则",
+      "label_zh": "应用去广告",
+      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
       "shard_index": 1,
       "rule_count": 98,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Local.list"
@@ -102,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 3,
-      "rule_count": 79044,
+      "rule_count": 79039,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Advertising_03.list"
     },
     {
@@ -201,44 +210,8 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 7,
-      "rule_count": 42994,
+      "rule_count": 42995,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list"
-    },
-    {
-      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 1,
-      "rule_count": 100000,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_01.list"
-    },
-    {
-      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 2,
-      "rule_count": 100000,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_02.list"
-    },
-    {
-      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 3,
-      "rule_count": 100000,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_03.list"
-    },
-    {
-      "file": "ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 4,
-      "rule_count": 65589,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_ThreatIntel_TIF_04.list"
     },
     {
       "file": "ruleset/AdBlock/AdBlock_Other.list",
@@ -246,7 +219,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 17229,
+      "rule_count": 27983,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/ruleset/AdBlock/AdBlock_Other.list"
     }
   ]

@@ -1,0 +1,10 @@
+#!name=PROMAX split · iRingo.News.sgmodule
+#!desc=从混合模块拆出的去广告行 2/6；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/module/surge(main)/amplify_nexus/iRingo.News.sgmodule
+
+[Rule]
+DOMAIN,gateway.icloud.com,{{{Proxy}}}
+
+[MITM]
+hostname = %APPEND% news-edge.apple.com, news-todayconfig-edge.apple.com, news-events.apple.com, news-sports-events.apple.com, news-client.apple.com, news-client-search.apple.com, -github.com, -api.github.com, -*.githubusercontent.com

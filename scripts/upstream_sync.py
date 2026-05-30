@@ -107,6 +107,7 @@ LOCAL_SOURCE_MODULES = {
     "XWebAds.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
     "BiliBili.ADBlock.sgmodule": "https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule",
     "[Sukka] Enhance Better ADBlock for Surge.sgmodule": "https://ruleset.skk.moe/Modules/sukka_enhance_adblock.sgmodule",
+    "adultraplus.sgmodule": "https://yfamilys.com/module/adultraplus.sgmodule",
 }
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"

@@ -5,6 +5,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
@@ -12,6 +13,12 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from lib.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
 from lib.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
+from lib.promax_line_classifier import (
+    classify_promax_line,
+    module_ingest_mode,
+    should_keep_promax_line,
+)
+from lib.promax_module_split import format_split_module, split_module_sections
 from lib.surge_compliance import (
     format_url_regex_for_surge,
     is_invalid_domain_regex_payload,
@@ -29,6 +36,84 @@ CACHE_DIR = os.path.join(ROOT, ".cache")
 HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.txt")
 WHITELIST_FILE = os.path.join(ROOT, "ruleset/Sources/adblock_whitelist.txt")
 ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "ruleset/Sources/Links/AdBlock_sources.txt")
+ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(
+    ROOT, "ruleset/Sources/Links/AdBlock_functional_sources.txt"
+)
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "module/local_sources")
+LOCAL_MODULES_DIR = os.path.join(ROOT, "ruleset/Sources/LocalModules")
+AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
+# Rule-ingest hint for remote/list sources only (not used to pull amplify 增强 modules).
+NEXUS_AD_RULE_KEYWORDS = (
+    "reject",
+    "广告",
+    "拦截",
+    "anti-ad",
+    "adblock",
+    "去广告",
+)
+
+PROMAX_DISPLAY_NAME = "🚫 Universal Ad-Blocking Rules (PROMAX)"
+
+# Disqualify unlock / 功能增强 / 翻译类模块（永不并入 PROMAX 功能段）
+FUNCTIONAL_BLOCK_NAME_TOKENS = (
+    "解锁",
+    "unlock",
+    "unblock",
+    "破解",
+    "crack",
+    "会员",
+    "vip",
+    "premium",
+    "增强",
+    "enhance",
+    "enhanced",
+    ".global",
+    "global.sgmodule",
+    "redirect",
+    "翻译",
+    "translation",
+    "nsfw",
+    "iringo",
+    "weatherkit",
+    "dualsubs",
+    "sub_info",
+    "boxjs",
+    "timecard",
+    "net-lsp",
+    "surge-beta",
+    "apple服务",
+    "wechat_enhance",
+    "reddit",
+    "扫描全能",
+    "camscanner",
+)
+
+# 专项去广告模块文件名特征（规则 + 脚本并入 PROMAX，不提供单独安装）
+ADBLOCK_MODULE_NAME_TOKENS = (
+    "去广告",
+    "adblock",
+    "anti-ad",
+    "xwebads",
+    "allinone",
+    "all-in-one",
+    "adultraplus",
+    "微博去广告",
+)
+
+# 允许含 “enhance” 字样的经典去广告包
+ADBLOCK_FILENAME_ALLOWLIST = frozenset(
+    {
+        "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
+        "AllInOne_Mock.sgmodule",
+        "All-in-One-2.x.sgmodule",
+        "XWebAds.sgmodule",
+        "BiliBili.ADBlock.sgmodule",
+        "YouTube.ADBlock.sgmodule",
+        "WeChat.ADBlock.sgmodule",
+    }
+)
+
+FUNCTIONAL_BLOCK_LOCAL_SOURCES = frozenset({"Reddit.ADBlock.sgmodule"})
 TARGET_MODULE = os.path.join(
     HEAD_EXPANSE_DIR,
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
@@ -42,6 +127,7 @@ TARGET_MODULE_LITE = os.path.join(
 # Excludes heavy ThreatIntel shards (~1.2M rules) that are desktop-only.
 LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
 NARROW_PIERCE_DIR = os.path.join(ROOT, "module/surge(main)/narrow_pierce")
+PROMAX_SPLITS_DIR = os.path.join(ROOT, "module/build/promax_splits")
 ADBLOCK_DIR = os.path.join(ROOT, "ruleset/AdBlock")
 ADBLOCK_LIST = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/AdBlock.list")
 SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
@@ -58,8 +144,8 @@ RULES_PER_SHARD = 100_000
 # Purpose taxonomy: internal key → display label + dedup priority (earlier = higher)
 CATEGORY_META: Dict[str, Dict[str, str]] = {
     "Local": {
-        "label_zh": "应用定制",
-        "desc": "LocalModules / local_sources / 仓库内 App 专项规则",
+        "label_zh": "应用去广告",
+        "desc": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
     },
     "Advertising": {
         "label_zh": "通用广告",
@@ -98,7 +184,7 @@ CATEGORY_META: Dict[str, Dict[str, str]] = {
 GROUP_HEAD_EXPANSE = "『 🔝 Head Expanse › 首端扩域 』"
 MODULE_SUFFIXES = (".sgmodule", ".module")
 REMOTE_PREFIXES = ("http://", "https://")
-# PROMAX only ships RULE-SET references; scripts/rewrites stay in standalone modules.
+# PROMAX ships RULE-SET refs plus merged functional sections from AdBlock_functional_sources.txt.
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
 MODULE_RULE_SECTIONS = frozenset({"Rule", "Adblock Plus"})
 PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
@@ -188,6 +274,8 @@ class AdBlockManager:
         }
         self.sections: Dict[str, List[str]] = {name: [] for name in SECTION_NAMES}
         self._section_seen: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}
+        self.functional_stats: Dict[str, int] = {}
+        self._functional_manifest_paths: Set[str] = set()
         self.mitm_hosts: Set[str] = set()
         self.hashes: Dict[str, str] = {}
 
@@ -312,9 +400,162 @@ class AdBlockManager:
         Logger.info(f"Loaded {len(entries)} canonical AdBlock sources")
         return entries
 
+    def resolve_module_ingest_mode(self, path: str) -> str:
+        """skip | full | split — see lib.promax_line_classifier.module_ingest_mode."""
+        if not os.path.isfile(path):
+            return "skip"
+        name = os.path.basename(path)
+        if name in FUNCTIONAL_BLOCK_LOCAL_SOURCES:
+            return "skip"
+        text = "".join(read_file(path))
+        mode = module_ingest_mode(path, text)
+        if mode != "skip":
+            return mode
+        if name in ADBLOCK_FILENAME_ALLOWLIST:
+            return "full"
+        low = name.lower()
+        if any(tok in low for tok in FUNCTIONAL_BLOCK_NAME_TOKENS):
+            return "skip"
+        if os.path.dirname(os.path.normpath(path)) == os.path.normpath(LOCAL_SOURCES_DIR):
+            return "full" if name.endswith(MODULE_SUFFIXES) else "skip"
+        if any(tok in low for tok in ADBLOCK_MODULE_NAME_TOKENS):
+            return "full"
+        return "skip"
+
+    def write_promax_split_artifact(self, source_path: str) -> None:
+        """Write ad-only extract for mixed modules (review / audit)."""
+        text = "".join(read_file(source_path))
+        ad_sections, stats = split_module_sections(text)
+        if stats.get("kept_lines", 0) == 0:
+            return
+        os.makedirs(PROMAX_SPLITS_DIR, exist_ok=True)
+        stem = os.path.splitext(os.path.basename(source_path))[0]
+        safe_stem = re.sub(r"[^\w\u4e00-\u9fff.-]+", "_", stem)[:120]
+        out_path = os.path.join(PROMAX_SPLITS_DIR, f"{safe_stem}.ad-extract.sgmodule")
+        note = (
+            f"从混合模块拆出的去广告行 {stats['kept_lines']}/{stats['total_lines']}；"
+            f"解锁/增强仍留在原模块"
+        )
+        write_file(
+            out_path,
+            format_split_module(source_path, ad_sections, note=note),
+        )
+        Logger.info(
+            f"  ↳ split artifact: {os.path.relpath(out_path, ROOT)} "
+            f"({stats['kept_lines']}/{stats['total_lines']} lines)"
+        )
+
+    def load_functional_source_paths(self) -> Tuple[List[Tuple[str, str]], List[str]]:
+        """Resolve module paths (full|split) + remote URLs for PROMAX functional merge."""
+        paths: List[Tuple[str, str]] = []
+        remote_urls: List[str] = []
+        seen: Set[str] = set()
+        self._functional_manifest_paths = set()
+
+        def add(path: str, *, from_manifest: bool = False) -> None:
+            norm = os.path.normpath(path)
+            if norm in seen or not os.path.isfile(norm):
+                return
+            mode = self.resolve_module_ingest_mode(norm)
+            if mode == "skip":
+                Logger.warn(
+                    f"  ⊘ Skipped (no ad / unlock-only): {os.path.relpath(norm, ROOT)}"
+                )
+                return
+            if from_manifest:
+                self._functional_manifest_paths.add(norm)
+            seen.add(norm)
+            paths.append((norm, mode))
+
+        if os.path.isfile(ADBLOCK_FUNCTIONAL_SOURCES_FILE):
+            for raw_line in read_file(ADBLOCK_FUNCTIONAL_SOURCES_FILE):
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith(REMOTE_PREFIXES):
+                    remote_urls.append(line)
+                    continue
+                resolved = os.path.normpath(
+                    os.path.join(os.path.dirname(ADBLOCK_FUNCTIONAL_SOURCES_FILE), line)
+                )
+                add(resolved, from_manifest=True)
+
+        if os.path.isdir(LOCAL_SOURCES_DIR):
+            for name in sorted(os.listdir(LOCAL_SOURCES_DIR)):
+                if name.endswith(MODULE_SUFFIXES):
+                    add(os.path.join(LOCAL_SOURCES_DIR, name))
+
+        for scan_dir in (LOCAL_MODULES_DIR, NARROW_PIERCE_DIR, AMPLIFY_NEXUS_DIR):
+            if not os.path.isdir(scan_dir):
+                continue
+            for name in sorted(os.listdir(scan_dir)):
+                if not name.endswith(MODULE_SUFFIXES) or name in PROTECTED_MODULES:
+                    continue
+                add(os.path.join(scan_dir, name))
+
+        split_n = sum(1 for _, m in paths if m == "split")
+        Logger.info(
+            f"Resolved {len(paths)} functional module(s) "
+            f"({split_n} mixed→line-split), {len(remote_urls)} remote URL(s)"
+        )
+        return paths, remote_urls
+
+    def integrate_functional_sections(self) -> Dict[str, int]:
+        """Merge Script / Rewrite / MITM from local + nexus + manifest into self.sections."""
+        Logger.section("Integrating Functional Sections (Script / Rewrite / MITM)")
+        counts_before = {name: len(self.sections[name]) for name in SECTION_NAMES}
+        mitm_before = len(self.mitm_hosts)
+
+        local_paths, remote_urls = self.load_functional_source_paths()
+        for url in remote_urls:
+            content = self._download(url)
+            if not content:
+                Logger.warn(f"  ⚠ Functional remote fetch failed: {url}")
+                continue
+            Logger.info(f"  + Functional remote: {url.rsplit('/', 1)[-1]}")
+            self.extract_from_text(
+                content,
+                default_policy="REJECT",
+                category="Local",
+                include_sections=True,
+                functional_mode=True,
+                sections_only=True,
+            )
+
+        for path, ingest_mode in local_paths:
+            tag = "split" if ingest_mode == "split" else "full"
+            Logger.info(f"  + Functional ({tag}): {os.path.relpath(path, ROOT)}")
+            self.extract_from_file(
+                path,
+                default_policy="REJECT",
+                category="Local",
+                include_sections=True,
+                functional_mode=True,
+                sections_only=True,
+                promax_line_split=True,
+            )
+            if ingest_mode == "split":
+                self.write_promax_split_artifact(path)
+
+        added = {
+            name: len(self.sections[name]) - counts_before[name] for name in SECTION_NAMES
+        }
+        added["MITM"] = len(self.mitm_hosts) - mitm_before
+        summary = ", ".join(
+            f"{name}={count}" for name, count in added.items() if count > 0
+        )
+        Logger.success(f"Functional sections merged: {summary or 'no new lines'}")
+        return added
+
     def build_input_hashes(self, module_paths: List[str], source_entries: List[SourceEntry]) -> Dict[str, str]:
         hashes: Dict[str, str] = {}
-        tracked_paths = {ADBLOCK_SOURCES_FILE, SKK_REJECT, SKK_HTTPDNS, WHITELIST_FILE}
+        tracked_paths = {
+            ADBLOCK_SOURCES_FILE,
+            ADBLOCK_FUNCTIONAL_SOURCES_FILE,
+            SKK_REJECT,
+            SKK_HTTPDNS,
+            WHITELIST_FILE,
+        }
         tracked_paths.update(module_paths)
         for entry in source_entries:
             if not entry.is_remote:
@@ -638,48 +879,9 @@ class AdBlockManager:
         self._section_seen[section_name].add(key)
         self.sections[section_name].append(stripped)
 
-    def is_enhancement_line(self, line: str) -> bool:
-        """Check if a line is an enhancement. Known enhancements take absolute priority."""
-        lower_line = line.lower()
-        
-        # Priority 0: Absolute blocks (known enhancement suites and types)
-        absolute_blocks = [
-            "zheye", "哲也", "zheye.min.js", 
-            "enhanced", "enhancement", "增强", 
-            "crack", "破解", "unlock", "解锁", "unblock", "解除",
-            "vip", "premium", "会员", "会员解锁",
-            "camscanner", "扫描全能王", "bilibili.global", "bilibili.enhanced", "biliintl",
-            "youtube增强", "bilibili增强", "reddit增强", "apple服务增强",
-            "weatherkit", "wechat_enhance", "eringo", "helper", "助手"
-        ]
-        if any(kw in lower_line for kw in absolute_blocks):
-            return True
-
-        adblock_keywords = [
-            "reject", "clean", "strip", 
-            "blank", "pixel", "广告", "拦截", "去广告",
-            "anti-ad", "adblock", "tracking", "fix", "修复"
-        ]
-        
-        enhancement_keywords = [
-            "translate", "translation", "翻译", 
-            "hook", "conversion", "转换",
-            "feature", "iap", "receipt", "nsfw",
-            "优化", "功能增强", "optimize",
-            "intl", "region", "bypass", "绕过", "地区",
-            "dual", "pip", "画中画", "background", "后台播放",
-            "redirect", "重定向"
-        ]
-
-        # PRIORITY 1: If it looks like ad-block, it's NOT an enhancement (Keep it!)
-        if any(kw in lower_line for kw in adblock_keywords):
-            return False
-            
-        # PRIORITY 2: If it has enhancement keywords, filter it out
-        if any(kw in lower_line for kw in enhancement_keywords):
-            return True
-            
-        return False
+    def is_enhancement_line(self, line: str, section: Optional[str] = None) -> bool:
+        """True if line is unlock/功能增强 (excluded from PROMAX)."""
+        return classify_promax_line(line, section) == "enhance"
 
     def extract_from_text(
         self,
@@ -689,6 +891,9 @@ class AdBlockManager:
         include_sections: bool = False,
         *,
         rules_only: bool = False,
+        functional_mode: bool = False,
+        sections_only: bool = False,
+        promax_line_split: bool = True,
     ):
         current_section = None
         in_rule_section = False
@@ -707,7 +912,7 @@ class AdBlockManager:
 
             # Plain .list files may lack [Rule]; sgmodule sources must not guess rules from headers.
             if not seen_real_header:
-                if rules_only:
+                if rules_only or sections_only:
                     continue
                 if self.is_script_or_rewrite_line(stripped):
                     continue
@@ -725,7 +930,11 @@ class AdBlockManager:
                 continue
 
             if in_rule_section:
+                if sections_only:
+                    continue
                 if self.is_script_or_rewrite_line(stripped):
+                    continue
+                if promax_line_split and classify_promax_line(stripped, "Rule") != "ad":
                     continue
                 self.add_rule_line(stripped, default_policy, category=category)
                 continue
@@ -737,8 +946,9 @@ class AdBlockManager:
                 # Rule section is already handled above, skip here to prevent duplication
                 if current_section == "Rule":
                     continue
-                # Filter out enhancements
-                if self.is_enhancement_line(stripped):
+                if promax_line_split and not should_keep_promax_line(
+                    stripped, current_section
+                ):
                     continue
                 self.add_section_line(current_section, stripped)
             elif current_section == "MITM" and stripped.startswith("hostname"):
@@ -753,17 +963,23 @@ class AdBlockManager:
         include_sections: bool = False,
         *,
         rules_only: Optional[bool] = None,
+        functional_mode: bool = False,
+        sections_only: bool = False,
+        promax_line_split: bool = True,
     ):
         if not os.path.exists(path):
             return
         if rules_only is None:
-            rules_only = path.endswith(MODULE_SUFFIXES)
+            rules_only = path.endswith(MODULE_SUFFIXES) and not include_sections
         self.extract_from_text(
             "".join(read_file(path)),
             default_policy=default_policy,
             category=category,
             include_sections=include_sections,
             rules_only=rules_only,
+            functional_mode=functional_mode,
+            sections_only=sections_only,
+            promax_line_split=promax_line_split,
         )
 
     def parse_module_structure(self, text: str) -> Tuple[List[str], List[Tuple[str, List[str]]]]:
@@ -1194,6 +1410,8 @@ class AdBlockManager:
                 },
             },
             "manifest": os.path.relpath(ADBLOCK_SOURCES_FILE, ROOT),
+            "functional_manifest": os.path.relpath(ADBLOCK_FUNCTIONAL_SOURCES_FILE, ROOT),
+            "functional_sections": dict(self.functional_stats),
             "shards": shards,
         }
         write_file(ADBLOCK_CATALOG_JSON, json.dumps(catalog, ensure_ascii=False, indent=2) + "\n")
@@ -1226,7 +1444,25 @@ class AdBlockManager:
         lines.extend(
             [
                 "\n",
-                "## 安装模块（引用上述分片，勿重复安装 local_sources）\n",
+                "## 应用内脚本层（PROMAX 内嵌）\n",
+                "\n",
+            ]
+        )
+        if self.functional_stats:
+            lines.append("| 段落 | 行数 |\n|------|------|\n")
+            for sec_name in SECTION_NAMES:
+                count = self.functional_stats.get(sec_name, 0)
+                if count:
+                    lines.append(f"| `{sec_name}` | {count:,} |\n")
+            mitm_n = self.functional_stats.get("MITM", 0)
+            if mitm_n:
+                lines.append(f"| `MITM` (hostname) | {mitm_n:,} |\n")
+        lines.extend(
+            [
+                "\n",
+                "## 安装模块（RULE-SET + 去广告 Script/Rewrite；解锁/增强请用 Amplify Nexus 独立模块）\n",
+                "\n",
+                "专项 `去广告.sgmodule` / `narrow_pierce` 仅作构建源，已并入 PROMAX，**请勿单独安装**。\n",
                 "\n",
                 "### 🖥️ 桌面完整版（Full）\n",
                 f"- **Surge PROMAX**: [{catalog['modules']['surge_promax']['install_url']}]({catalog['modules']['surge_promax']['install_url']})\n",
@@ -1337,18 +1573,43 @@ class AdBlockManager:
                 complex_seen.add(line)
                 rule_lines.append(line)
 
-        # PROMAX = RULE-SET dependency only. Scripts / rewrites / MITM live in amplify_nexus & local_sources.
-        all_sections = [("Rule", rule_lines)]
+        functional_sections: List[Tuple[str, List[str]]] = []
+        func_counts: List[str] = []
+        for sec_name in SECTION_NAMES:
+            lines = self.sections.get(sec_name, [])
+            if not lines:
+                continue
+            deduped = dedupe_section_lines(sec_name, lines)
+            if deduped:
+                functional_sections.append((sec_name, deduped))
+                func_counts.append(f"{sec_name}={len(deduped)}")
+        if self.mitm_hosts:
+            functional_sections.append(
+                (
+                    "MITM",
+                    [f"hostname = %APPEND% {', '.join(sorted(self.mitm_hosts))}"],
+                )
+            )
+            func_counts.append(f"MITM={len(self.mitm_hosts)}")
+
+        all_sections = [("Rule", rule_lines)] + functional_sections
         all_sections = merge_mitm_hosts(all_sections)
+        func_summary = ", ".join(func_counts) if func_counts else "无脚本层"
 
         if lite_only:
             name = f"📱 Universal Ad-Blocking Rules (PROMAX Lite) - [{current_date}]"
-            desc = f"手机轻量版({shard_count}片); 不含 ThreatIntel 重型规则; 功能配置请用 amplify_nexus 独立模块"
-            tag = "AdBlock, Lite, Mobile, HTTPDNS"
+            desc = (
+                f"手机轻量版({shard_count}片 REJECT 分片 + 应用内去广告脚本); "
+                f"不含 ThreatIntel 重型规则; {func_summary}"
+            )
+            tag = "AdBlock, Lite, Mobile, HTTPDNS, Script"
         else:
             name = f"🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]"
-            desc = f"按用途分片({shard_count}片); 功能配置请用 amplify_nexus 独立模块; 索引 ruleset/AdBlock/catalog.json"
-            tag = "AdBlock, Dependency, HTTPDNS"
+            desc = (
+                f"按用途分片({shard_count}片) + 应用内去广告({func_summary}); "
+                f"索引 ruleset/AdBlock/catalog.json"
+            )
+            tag = "AdBlock, Dependency, HTTPDNS, Script"
 
         header_meta = {
             "name": name, "desc": desc,
@@ -1360,6 +1621,21 @@ class AdBlockManager:
         write_file(target_path, format_module(format_header(header_meta), all_sections, dedupe=False))
         Logger.success(f"Module generated: {os.path.basename(target_path)}")
 
+    def sync_shadowrocket_promax_modules(self) -> None:
+        """Regenerate SR PROMAX / PROMAX Lite from Surge after functional merge."""
+        Logger.section("Syncing Shadowrocket PROMAX Modules")
+        script = os.path.join(ROOT, "scripts", "convert_surge_to_shadowrocket.py")
+        if not os.path.isfile(script):
+            Logger.warn("convert_surge_to_shadowrocket.py not found; skipping SR sync")
+            return
+        result = subprocess.run(
+            [sys.executable, script, "--promax-only"],
+            cwd=ROOT,
+        )
+        if result.returncode != 0:
+            Logger.warn("Shadowrocket PROMAX conversion exited with errors")
+        else:
+            Logger.success("Shadowrocket PROMAX modules refreshed")
 
     def merge(self, execute: bool = False):
         Logger.section("AdBlock Module Consolidation (Canonical Rebuild)")
@@ -1378,14 +1654,12 @@ class AdBlockManager:
         Logger.section("Syncing Upstream Ad Modules")
         cached_modules, sync_failures = self.sync_module_sources(source_entries)
 
-        # 3. Process Local Sources (highest priority)
+        # 3. Local sources + nexus ad modules → rules (sections merged later in integrate_functional_sections)
         Logger.section("Integrating Local AdBlock Sources")
-        # Local dir sources
-        local_dir = os.path.join(ROOT, "module/local_sources")
-        if os.path.exists(local_dir):
-            for f in sorted(os.listdir(local_dir)):
-                if f.endswith((".sgmodule", ".module")):
-                    path = os.path.join(local_dir, f)
+        if os.path.isdir(LOCAL_SOURCES_DIR):
+            for f in sorted(os.listdir(LOCAL_SOURCES_DIR)):
+                if f.endswith(MODULE_SUFFIXES):
+                    path = os.path.join(LOCAL_SOURCES_DIR, f)
                     Logger.info(f"  + Rules from local source: {f}")
                     self.extract_from_file(
                         path,
@@ -1394,35 +1668,42 @@ class AdBlockManager:
                         include_sections=False,
                         rules_only=True,
                     )
-        
-        # Amplify Nexus: extract [Rule] into lists only (功能模块保留独立 #!arguments，不并入 PROMAX)
-        Logger.section("Scanning Amplify Nexus for Ad-Block Rules")
-        nexus_dir = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
-        if os.path.exists(nexus_dir):
-            for f in sorted(os.listdir(nexus_dir)):
-                if f.endswith(".sgmodule") and f not in PROTECTED_MODULES:
-                    path = os.path.join(nexus_dir, f)
-                    with open(path, "r", encoding="utf-8", errors="ignore") as tf:
-                        text = tf.read().lower()
-                        if any(kw in text for kw in ["reject", "广告", "拦截", "anti-ad"]):
-                            Logger.info(f"  + Rules only from Nexus: {f}")
-                            category = self.determine_category(f)
-                            self.extract_from_file(
-                                path,
-                                default_policy="REJECT",
-                                category=category,
-                                include_sections=False,
-                            )
+
+        Logger.section("Integrating App AdBlock Rules (LocalModules / Narrow Pierce)")
+        for scan_dir, label in (
+            (LOCAL_MODULES_DIR, "LocalModules"),
+            (NARROW_PIERCE_DIR, "narrow_pierce"),
+        ):
+            if not os.path.isdir(scan_dir):
+                continue
+            for f in sorted(os.listdir(scan_dir)):
+                if not f.endswith(MODULE_SUFFIXES):
+                    continue
+                path = os.path.join(scan_dir, f)
+                mode = self.resolve_module_ingest_mode(path)
+                if mode == "skip":
+                    continue
+                Logger.info(f"  + Rules from {label} ({mode}): {f}")
+                self.extract_from_file(
+                    path,
+                    default_policy="REJECT",
+                    category="Local",
+                    include_sections=False,
+                    rules_only=True,
+                    promax_line_split=True,
+                )
 
         # 4. Fetch and extract from all other canonical sources (sorted by priority)
         Logger.section("Fetching Canonical AdBlock Sources")
         failures = self.process_source_entries(source_entries, cached_contents=cached_modules)
 
         generated_rulesets = self.generate_ruleset()
+        self.functional_stats = self.integrate_functional_sections()
         self.write_catalog(generated_rulesets)
         self.generate_module(generated_rulesets, lite_only=False)
         Logger.info("Generating PROMAX Lite (mobile-friendly) module...")
         self.generate_module(generated_rulesets, lite_only=True)
+        self.sync_shadowrocket_promax_modules()
         # Save hashes for change tracking
         local_source_paths = [e.resolved_path for e in source_entries if not e.is_remote]
         self.save_hashes(self.build_input_hashes(local_source_paths, source_entries))
