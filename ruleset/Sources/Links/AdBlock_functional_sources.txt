@@ -10,7 +10,7 @@
 #   module/local_sources/*.sgmodule
 #   ruleset/Sources/LocalModules/*
 #   module/surge(main)/narrow_pierce/*
-#   module/surge(main)/amplify_nexus/*  （仅 ingest 非 skip 的条目）
+# amplify_nexus 不自动扫描 — 增幅/解锁/翻译仅独立安装；下方 manifest 可点名混合包（如 B 站合集）
 
 ../vendor/adultraplus.sgmodule
 

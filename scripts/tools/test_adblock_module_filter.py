@@ -137,6 +137,27 @@ def test_functional_resolve_includes_split_bundle() -> None:
     assert not any("WeChat_Enhance" in p for p in by_path)
 
 
+def test_amplify_nexus_not_auto_scanned() -> None:
+    mgr = AdBlockManager()
+    paths, _ = mgr.load_functional_source_paths()
+    joined = "\n".join(p for p, _m in paths)
+    assert "iRingo" not in joined
+    assert "YouTube.Enhance" not in joined
+    assert "Apple服务增强" not in joined
+
+
+def test_sukka_adblock_allowlisted_full() -> None:
+    from adblock_manager import LOCAL_SOURCES_DIR
+
+    path = os.path.join(
+        LOCAL_SOURCES_DIR, "[Sukka] Enhance Better ADBlock for Surge.sgmodule"
+    )
+    if not os.path.isfile(path):
+        return
+    mgr = AdBlockManager()
+    assert mgr.resolve_module_ingest_mode(path) == "full"
+
+
 if __name__ == "__main__":
     test_pdd_module_full_ingest_keeps_all_body_rewrite()
     test_weibo_ad_scripts_kept_in_split()
@@ -148,4 +169,6 @@ if __name__ == "__main__":
     test_filename_gate()
     test_bilibili_bundle_split_keeps_ad_only()
     test_functional_resolve_includes_split_bundle()
+    test_amplify_nexus_not_auto_scanned()
+    test_sukka_adblock_allowlisted_full()
     print("test_adblock_module_filter: OK")

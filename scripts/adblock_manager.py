@@ -86,6 +86,15 @@ FUNCTIONAL_BLOCK_NAME_TOKENS = (
     "reddit",
     "扫描全能",
     "camscanner",
+    "nsringo",
+    "geoservices",
+    "boxjs",
+    "maasea/sgmodule",
+    "youtube.enhance",
+    "增强合集",
+    "bilibili.enhanced",
+    "bilibili.global",
+    "bilibili.redirect",
 )
 
 # 专项去广告模块文件名特征（规则 + 脚本并入 PROMAX，不提供单独安装）
@@ -98,6 +107,8 @@ ADBLOCK_MODULE_NAME_TOKENS = (
     "all-in-one",
     "adultraplus",
     "微博去广告",
+    "rednote",
+    "redpaper",
 )
 
 # 允许含 “enhance” 字样的经典去广告包
@@ -400,22 +411,29 @@ class AdBlockManager:
         Logger.info(f"Loaded {len(entries)} canonical AdBlock sources")
         return entries
 
-    def resolve_module_ingest_mode(self, path: str) -> str:
+    def resolve_module_ingest_mode(self, path: str, *, from_manifest: bool = False) -> str:
         """skip | full | split — see lib.promax_line_classifier.module_ingest_mode."""
         if not os.path.isfile(path):
             return "skip"
         name = os.path.basename(path)
         if name in FUNCTIONAL_BLOCK_LOCAL_SOURCES:
             return "skip"
+        if name in ADBLOCK_FILENAME_ALLOWLIST:
+            return "full"
+        low = name.lower()
+        # amplify_nexus 默认仅增幅枢纽独立安装；manifest 显式列出的混合包（如 B 站合集）才并入
+        if (
+            not from_manifest
+            and os.path.dirname(os.path.normpath(path))
+            == os.path.normpath(AMPLIFY_NEXUS_DIR)
+        ):
+            return "skip"
+        if not from_manifest and any(tok in low for tok in FUNCTIONAL_BLOCK_NAME_TOKENS):
+            return "skip"
         text = "".join(read_file(path))
         mode = module_ingest_mode(path, text)
         if mode != "skip":
             return mode
-        if name in ADBLOCK_FILENAME_ALLOWLIST:
-            return "full"
-        low = name.lower()
-        if any(tok in low for tok in FUNCTIONAL_BLOCK_NAME_TOKENS):
-            return "skip"
         if os.path.dirname(os.path.normpath(path)) == os.path.normpath(LOCAL_SOURCES_DIR):
             return "full" if name.endswith(MODULE_SUFFIXES) else "skip"
         if any(tok in low for tok in ADBLOCK_MODULE_NAME_TOKENS):
@@ -456,7 +474,7 @@ class AdBlockManager:
             norm = os.path.normpath(path)
             if norm in seen or not os.path.isfile(norm):
                 return
-            mode = self.resolve_module_ingest_mode(norm)
+            mode = self.resolve_module_ingest_mode(norm, from_manifest=from_manifest)
             if mode == "skip":
                 Logger.warn(
                     f"  ⊘ Skipped (no ad / unlock-only): {os.path.relpath(norm, ROOT)}"
@@ -485,7 +503,7 @@ class AdBlockManager:
                 if name.endswith(MODULE_SUFFIXES):
                     add(os.path.join(LOCAL_SOURCES_DIR, name))
 
-        for scan_dir in (LOCAL_MODULES_DIR, NARROW_PIERCE_DIR, AMPLIFY_NEXUS_DIR):
+        for scan_dir in (LOCAL_MODULES_DIR, NARROW_PIERCE_DIR):
             if not os.path.isdir(scan_dir):
                 continue
             for name in sorted(os.listdir(scan_dir)):
