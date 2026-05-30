@@ -126,6 +126,17 @@ class RuleProcessor:
             except re.error:
                 return False
 
+        # URL-REGEX 验证
+        if rule_type == 'URL-REGEX':
+            val_lower = value.lower().strip()
+            if val_lower in {"", "https:", "http:", "https", "http", "^https?:", "^https?://", "^https?:\/\/"}:
+                return False
+            try:
+                re.compile(value)
+                return True
+            except re.error:
+                return False
+
         # 其他类型（宽松）
         return True
 

@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Global proxy fallback
-# Rules: 34576
+# Rules: 34619
 
 DOMAIN,083link.brsserver.com.br
 DOMAIN,10.speedtesttvzamora.com
@@ -34580,3 +34580,46 @@ DOMAIN-SUFFIX,zzdh808.com
 DOMAIN-SUFFIX,zzdh99.com
 DOMAIN-SUFFIX,zzgays.com
 DOMAIN-SUFFIX,zzycdz.com
+URL-REGEX,^https?:\/\/www\.amazon\.com\/(Amazon-Video|gp\/video)\/
+USER-AGENT,*Spotify*
+USER-AGENT,Deezer*
+USER-AGENT,Disney*
+USER-AGENT,Duolingo*
+USER-AGENT,FOX%20NOW*
+USER-AGENT,FOXNOW*
+USER-AGENT,FOXPlus*
+USER-AGENT,HBO%20GO%20PROD%20HKG*
+USER-AGENT,HBO%20GO%20PROD*
+USER-AGENT,HBO*
+USER-AGENT,HBOGOPRODHKG*
+USER-AGENT,HBONOW*
+USER-AGENT,HWTVMobile*
+USER-AGENT,Himalaya*
+USER-AGENT,Hulu*
+USER-AGENT,InstantVideo.US*
+USER-AGENT,JOOX*
+USER-AGENT,LINE*
+USER-AGENT,LINETV*
+USER-AGENT,Max*
+USER-AGENT,Naver%20TV*
+USER-AGENT,NaverTV*
+USER-AGENT,Overcast*
+USER-AGENT,PBS*
+USER-AGENT,Pandora*
+USER-AGENT,Prime%20Video*
+USER-AGENT,PrimeVideo*
+USER-AGENT,Roam*
+USER-AGENT,SoundCloud*
+USER-AGENT,TIDAL*
+USER-AGENT,TIDAL*dia
+USER-AGENT,TaiwanGood*
+USER-AGENT,TwDramas
+USER-AGENT,ViuTV*
+USER-AGENT,WeMusic*
+USER-AGENT,WeTV*
+USER-AGENT,WhatsApp*
+USER-AGENT,app/bstar*
+USER-AGENT,battleroyale*
+USER-AGENT,com.kktv*
+USER-AGENT,encoreTVB*
+USER-AGENT,hearthstone*

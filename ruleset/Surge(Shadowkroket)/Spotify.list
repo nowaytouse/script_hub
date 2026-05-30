@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Spotify
-# Rules: 25
+# Rules: 27
 
 DOMAIN,audio4-ak-spotify-com.akamaized.net
 DOMAIN,heads-ak-spotify-com.akamaized.net
@@ -29,3 +29,5 @@ DOMAIN-SUFFIX,spotifyjobs.com
 DOMAIN-SUFFIX,spotifynewsroom.jp
 DOMAIN-SUFFIX,spotilocal.com
 DOMAIN-SUFFIX,tospotify.com
+PROCESS-NAME,com.spotify.music
+USER-AGENT,Spotify*

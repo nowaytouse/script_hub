@@ -361,7 +361,7 @@ class RulesetManager:
         for rule in all_rules:
             if rule.startswith(("IP-CIDR,", "IP-CIDR6,", "IP-ASN,", "GEOIP,")):
                 ip_rules.add(rule)
-            elif rule.startswith(("DOMAIN,", "DOMAIN-SUFFIX,", "DOMAIN-KEYWORD,", "DOMAIN-REGEX,")):
+            else:
                 non_ip_rules.add(rule)
 
         target_ip_file = os.path.join(SURGE_DIR, f"{name}_ip.list")

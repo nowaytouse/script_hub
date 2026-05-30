@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: JP
 # Description: Japan streaming services
-# Rules: 49
+# Rules: 53
 
 DOMAIN-KEYWORD,voddazn
 DOMAIN-SUFFIX,abema-tv.com
@@ -53,3 +53,7 @@ DOMAIN-SUFFIX,tver.co.jp
 DOMAIN-SUFFIX,tver.jp
 DOMAIN-SUFFIX,vod-abematv.akamaized.net
 DOMAIN-SUFFIX,winticket.jp
+USER-AGENT,AbemaTV*
+USER-AGENT,DAZN*
+USER-AGENT,Niconico*
+USER-AGENT,TVer-Release*

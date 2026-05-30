@@ -1,7 +1,7 @@
 # Ruleset: Direct
 # Policy: DIRECT
 # Description: Unified direct rules (China, Processes, Downloads)
-# Rules: 121095
+# Rules: 121148
 
 DOMAIN,004430.xyz
 DOMAIN,0d.kebhana.mx
@@ -121098,3 +121098,56 @@ DOMAIN-SUFFIX,zzzyy.com
 DOMAIN-SUFFIX,zzzyyy.com
 DOMAIN-SUFFIX,zzzzaaaa.com
 DOMAIN-SUFFIX,zzzzzz.me
+PROCESS-NAME,/Applications/Thunder.app/
+PROCESS-NAME,/Applications/Transmission.app/
+PROCESS-NAME,/Applications/evol.app/
+PROCESS-NAME,BaiduNetdisk_mac
+PROCESS-NAME,BitComet
+PROCESS-NAME,ClashX
+PROCESS-NAME,DownloadService
+PROCESS-NAME,Folx
+PROCESS-NAME,LocalSend
+PROCESS-NAME,Logi Options
+PROCESS-NAME,Logi Options Daemon
+PROCESS-NAME,NetTransport
+PROCESS-NAME,SunloginClient_Desktop
+PROCESS-NAME,SunloginClient_Helper
+PROCESS-NAME,Thunder
+PROCESS-NAME,ThunderVIP
+PROCESS-NAME,Transmission
+PROCESS-NAME,UUBooster
+PROCESS-NAME,WebTorrent
+PROCESS-NAME,WebTorrent Helper
+PROCESS-NAME,amuled
+PROCESS-NAME,aria2c
+PROCESS-NAME,clash
+PROCESS-NAME,fdm
+PROCESS-NAME,parsecd
+PROCESS-NAME,privoxy
+PROCESS-NAME,qBittorrent
+PROCESS-NAME,qbittorrent*
+PROCESS-NAME,qbittorrent-nox
+PROCESS-NAME,ss-local
+PROCESS-NAME,tailscaled
+PROCESS-NAME,transmission-daemon
+PROCESS-NAME,transmission-qt
+PROCESS-NAME,trojan
+PROCESS-NAME,trojan-go
+PROCESS-NAME,uTorrent
+PROCESS-NAME,v2ray
+PROCESS-NAME,xray
+URL-REGEX,^http:
+USER-AGENT,%E4%BC%98%E9%85%B7*
+USER-AGENT,%E6%89%8B%E6%9C%BA%E6%B7%98%E5%AE%9D*
+USER-AGENT,%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90
+USER-AGENT,%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90*
+USER-AGENT,%E8%BF%85%E9%9B%B7
+USER-AGENT,MOO%E9%9F%B3%E4%B9%90*
+USER-AGENT,MicroMessenger*
+USER-AGENT,NeteaseMusic*
+USER-AGENT,QQ%E9%9F%B3%E4%B9%90
+USER-AGENT,TencentMidasConnect*
+USER-AGENT,TeslaMap
+USER-AGENT,WeChat*
+USER-AGENT,live4iphone*
+USER-AGENT,qqlive4iphone*

@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: US
 # Description: US streaming services
-# Rules: 309
+# Rules: 322
 
 DOMAIN,cbsi.live.ott.irdeto.com
 DOMAIN,cbsplaylistserver.aws.syncbak.com
@@ -313,3 +313,16 @@ DOMAIN-SUFFIX,warnermediacdn.com
 DOMAIN-SUFFIX,watchdisneyfe.com
 DOMAIN-SUFFIX,watchespn.com
 DOMAIN-SUFFIX,wwwhuluplus.com
+PROCESS-NAME,com.disney.datg.videoplatforms.android.abc
+PROCESS-NAME,com.disney.disneyplus
+PROCESS-NAME,com.hbo.hbonow
+PROCESS-NAME,com.hulu.plus
+PROCESS-NAME,com.netflix.mediaclient
+USER-AGENT,Argo*
+USER-AGENT,DPlus*
+USER-AGENT,Disney+*
+USER-AGENT,HBO%20NOW*
+USER-AGENT,HBOMAX*
+USER-AGENT,PPlus*
+USER-AGENT,PeacockMobile*
+USER-AGENT,discovery+*

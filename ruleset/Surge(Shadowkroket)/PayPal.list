@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: US
 # Description: PayPal (recommend US node)
-# Rules: 249
+# Rules: 250
 
 DOMAIN-KEYWORD,paypal
 DOMAIN-SUFFIX,account-paypal.info
@@ -253,3 +253,4 @@ DOMAIN-SUFFIX,xoom.io
 DOMAIN-SUFFIX,xoom.net.cn
 DOMAIN-SUFFIX,xoom.us
 DOMAIN-SUFFIX,xoomcom.com
+USER-AGENT,PayPal*

@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 139
+# Rules: 149
 
 DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 DOMAIN,ai.google.dev
@@ -143,3 +143,13 @@ DOMAIN-SUFFIX,ulikecam.com
 DOMAIN-SUFFIX,v0.dev
 DOMAIN-SUFFIX,x.ai
 DOMAIN-SUFFIX,zijieapi.com
+PROCESS-NAME,CapCut
+PROCESS-NAME,Cici
+PROCESS-NAME,Cici Helper
+PROCESS-NAME,Cici Helper (Renderer)
+PROCESS-NAME,TikTok
+PROCESS-NAME,Trae Helper
+PROCESS-NAME,Trae Helper (Plugin)
+PROCESS-NAME,ai
+PROCESS-NAME,ai-agent
+PROCESS-NAME,ai-completion
