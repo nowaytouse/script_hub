@@ -40,10 +40,6 @@ jobs:
       contents: write  # 🔥 允许 push 到仓库
     
     steps:
-    - name: Delay 1 hour for push events
-      if: github.event_name == 'push'
-      run: sleep 3600
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
@@ -165,3 +161,7 @@ jobs:
         echo "❌ Skip core update (--unattended)" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip iCloud sync (--unattended)" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY
+
+    - name: Delay 30 minutes for push events (Cool down)
+      if: github.event_name == 'push'
+      run: sleep 1800
