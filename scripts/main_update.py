@@ -47,9 +47,10 @@ def _push_cooldown_seconds() -> int:
 
 
 def _git_sync_before_push() -> None:
+    """Rebase local commit(s) onto latest master (call only after commit)."""
     subprocess.run(["git", "fetch", "origin", "master"], check=True, cwd=ROOT)
     subprocess.run(
-        ["git", "pull", "--rebase", "origin", "master"],
+        ["git", "rebase", "origin/master"],
         check=True,
         cwd=ROOT,
     )
@@ -281,19 +282,19 @@ def main():
                 if not (status.stdout or "").strip():
                     Logger.info("No changes to commit (working tree clean).")
                 else:
-                    if os.environ.get("PUSH_COOLDOWN_ENABLED", "").lower() == "true":
-                        secs = _push_cooldown_seconds()
-                        Logger.info(
-                            f"Push cooldown: waiting {secs}s, then pull --rebase and push..."
-                        )
-                        time.sleep(secs)
-                        _git_sync_before_push()
                     subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
                     subprocess.run(
                         ["git", "commit", "-m", commit_msg],
                         check=True,
                         cwd=ROOT,
                     )
+                    if os.environ.get("PUSH_COOLDOWN_ENABLED", "").lower() == "true":
+                        secs = _push_cooldown_seconds()
+                        Logger.info(
+                            f"Push cooldown: waiting {secs}s, then rebase onto origin/master and push..."
+                        )
+                        time.sleep(secs)
+                        _git_sync_before_push()
                     subprocess.run(["git", "push", "origin", "master"], check=True, cwd=ROOT)
                     Logger.success("Changes pushed to GitHub successfully.")
             except Exception as e:
