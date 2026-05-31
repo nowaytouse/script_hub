@@ -30,6 +30,31 @@ ROOT = get_project_root()
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
 CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "tools/update_cores.sh")
 
+CI_PUSH_COOLDOWN_MIN_SECONDS = 180  # avoid push→workflow→pull races (≥3 min)
+
+
+def _push_cooldown_seconds() -> int:
+    raw = os.environ.get("PUSH_COOLDOWN_SECONDS", "").strip()
+    if raw.isdigit():
+        seconds = int(raw)
+    elif is_ci():
+        seconds = CI_PUSH_COOLDOWN_MIN_SECONDS
+    else:
+        seconds = 1800
+    if is_ci():
+        seconds = max(seconds, CI_PUSH_COOLDOWN_MIN_SECONDS)
+    return seconds
+
+
+def _git_sync_before_push() -> None:
+    subprocess.run(["git", "fetch", "origin", "master"], check=True, cwd=ROOT)
+    subprocess.run(
+        ["git", "pull", "--rebase", "origin", "master"],
+        check=True,
+        cwd=ROOT,
+    )
+
+
 # MAIN ORCHESTRATOR
 
 def main():
@@ -257,10 +282,12 @@ def main():
                     Logger.info("No changes to commit (working tree clean).")
                 else:
                     if os.environ.get("PUSH_COOLDOWN_ENABLED", "").lower() == "true":
+                        secs = _push_cooldown_seconds()
                         Logger.info(
-                            "Push cooldown enabled: waiting 30 minutes before commit/push..."
+                            f"Push cooldown: waiting {secs}s, then pull --rebase and push..."
                         )
-                        time.sleep(1800)
+                        time.sleep(secs)
+                        _git_sync_before_push()
                     subprocess.run(["git", "add", "."], check=True, cwd=ROOT)
                     subprocess.run(
                         ["git", "commit", "-m", commit_msg],

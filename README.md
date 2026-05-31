@@ -6,7 +6,8 @@ Surge / Shadowrocket 规则集与模块仓库：广告拦截分片、功能增�
 
 | 目标 | 操作 |
 |------|------|
-| 全量更新并推送 Git | `python3 scripts/main_update.py --execute` |
+| 规则集自动更新（推荐） | Actions `Update Rulesets`：跑完 **自动 push**（push 前冷却 ≥3 分钟，见 [scripts/README.md](scripts/README.md)） |
+| 本地紧急全量并推送 | `python3 scripts/main_update.py --execute` |
 | 仅刷新模块目录与导入页 | `python3 scripts/consolidate_modules.py` |
 | 安装广告拦截 | 只装 **PROMAX** → 链接见 [`ruleset/AdBlock/catalog.json`](ruleset/AdBlock/catalog.json) |
 | 安装 B站/YouTube 等增强 | 打开 [`module/surge_module_helper.html`](module/surge_module_helper.html) 复制对应模块链接 |

@@ -1,19 +1,37 @@
 # Script Hub — 脚本目录
 
-## 唯一入口（日常 / CI）
+## 自动维护（推荐）
+
+**master 上的规则集由 GitHub Actions 自动更新**，无需本地定时跑 `--execute`：
+
+| 触发 | 频率 | 工作流 |
+|------|------|--------|
+| `schedule` | 每天 3 次（北京时间 12:00 / 20:00 / 04:00） | [update_rulesets.yml](../.github/workflows/update_rulesets.yml) |
+| `workflow_dispatch` | 手动 | 同上 |
+
+跑完后会 **自动 push 到 master**（raw/CDN 才能用到最新规则）；提交者为 `github-actions[bot]`，消息 `chore(ruleset): automated update …`。
+
+Push 前默认 **等待 3 分钟** 再 `pull --rebase` 后 push，避免与其它 workflow 抢仓库；仅 **bot 的 chore(ruleset) push** 不会再次触发本工作流。需要更长间隔可在 workflow 里把 `PUSH_COOLDOWN_SECONDS` 改为 `1800`（30 分钟）。
+
+本地日常不必 `--execute` push；调试可只跑 `main_update.py` 不 push。
+
+## 本地入口（调试 / 紧急）
 
 ```bash
-# 全量更新：规则集 + 广告分片 + 模块转换 + SRS + 可选 git push
+# 全量跑流水线但不 push
+python3 scripts/main_update.py
+
+# 本地确认后再 push（非日常路径）
 python3 scripts/main_update.py --execute
 
-# CI / 无人值守（等同 --execute）
+# 与 CI 相同：跑完并 push（紧急时用）
 python3 scripts/main_update.py --unattended
 
-# 本地可选：更新 sing-box / mihomo 二进制后再跑流水线
+# 可选：先更新本机 sing-box / mihomo
 python3 scripts/main_update.py --with-core --execute
 ```
 
-GitHub Actions 调用链见 [`.github/workflows/update_rulesets.yml`](../.github/workflows/update_rulesets.yml)。
+sing-box CI 兜底版本见 [`.github/ci/sing-box-linux-amd64.version`](../.github/ci/sing-box-linux-amd64.version)。
 
 ## 目录结构
 

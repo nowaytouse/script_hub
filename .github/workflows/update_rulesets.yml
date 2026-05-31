@@ -1,26 +1,18 @@
 name: Update Rulesets
 
 # ═══════════════════════════════════════════════════════════════
-# GitHub Actions Workflow - Ruleset Auto Update
-# 
-# Scope (CI/CD Only):
-#   ✅ Ruleset update (download and merge from upstream)
-#   ✅ Smart dedup (AdBlock > Specific > Fallback)
-#   ✅ Empty ruleset cleanup
-#   ✅ Port rules sync to firewall module
-#   ✅ AdBlock module merge
-#   ✅ SRS file generation (Sing-box)
-#   ✅ Git commit and push
+# GitHub Actions — ruleset auto maintenance (canonical updater)
 #
-# Skipped Operations (Local Only):
-#   ❌ No backup (CI=true auto-skip)
-#   ❌ No core update (--unattended skip)
-#   ❌ No Singbox config download (--unattended skip)
-#   ❌ No iCloud sync (--unattended skip)
-#   ❌ No Surge profile sync (--unattended skip)
+# Triggers:
+#   • schedule — 3×/day (Beijing 12:00, 20:00, 04:00)
+#   • workflow_dispatch — manual
+#   • push master — skipped only for github-actions[bot] chore(ruleset) (anti-loop)
 #
-# Schedule: Once daily (Beijing Time 12:00)
-# Manual trigger: workflow_dispatch
+# Before git push: wait ≥3 min (PUSH_COOLDOWN), then pull --rebase, then push.
+#
+# Scope (CI only):
+#   ✅ Ruleset update, dedup, SRS (sing-box), git push
+#   ❌ Backup / core update / iCloud / Surge profile (local)
 # ═══════════════════════════════════════════════════════════════
 
 on:
@@ -28,39 +20,44 @@ on:
     branches:
       - master
   schedule:
-    - cron: '0 4,12,20 * * *'   # Runs 3 times daily (12:00, 20:00, 04:00 Beijing Time)
-  workflow_dispatch:      # Allows manual run
+    - cron: '0 4,12,20 * * *'   # UTC → Beijing 12:00, 20:00, 04:00
+  workflow_dispatch:
 
 env:
   PUSH_COOLDOWN_ENABLED: 'true'
+  PUSH_COOLDOWN_SECONDS: '180'   # ≥3 min before push; set 1800 for 30 min if needed
 
 concurrency:
   group: update-rulesets-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   update-rules:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    # Skip runs triggered by automated commits from this workflow itself to prevent infinite loop
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore(ruleset)')
+    # Skip only bot's own chore(ruleset) push (prevents push→immediate re-run loop)
+    if: >-
+      github.event_name != 'push' ||
+      (
+        github.actor != 'github-actions[bot]' &&
+        !contains(github.event.head_commit.message, 'chore(ruleset)')
+      )
     permissions:
-      contents: write  # 🔥 允许 push 到仓库
-    
+      contents: write
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0  # Full history for git operations
-        persist-credentials: true  # 🔥 确保 git push 有权限
-        
+        fetch-depth: 0
+        persist-credentials: true
+
     - name: Configure Git
       run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
-        # 🔥 配置 git 使用 token 认证
-        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
 
     - name: Resolve sing-box version
       id: singbox_version
@@ -68,26 +65,42 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
-        VER=""
-        if [ -n "${GITHUB_TOKEN:-}" ]; then
-          VER=$(curl -fsSL \
+        PIN_FILE=".github/ci/sing-box-linux-amd64.version"
+
+        try_api_latest() {
+          [ -n "${GITHUB_TOKEN:-}" ] || return 1
+          curl -fsSL --retry 3 --retry-delay 2 \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/SagerNet/sing-box/releases?per_page=1" \
-            | grep '"tag_name"' | head -1 | sed -E 's/.*"v([^"]+)".*/\1/' || true)
-        fi
+            "https://api.github.com/repos/SagerNet/sing-box/releases/latest" \
+            | jq -r '.tag_name // empty' | sed 's/^v//'
+        }
+
+        try_redirect_latest() {
+          local url tag
+          url=$(curl -fsSL --retry 3 --retry-delay 2 -o /dev/null -w '%{url_effective}' \
+            "https://github.com/SagerNet/sing-box/releases/latest" || true)
+          tag=$(echo "${url}" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?' | tail -1 | sed 's/^v//')
+          [ -n "${tag}" ] && echo "${tag}"
+        }
+
+        try_pinned() {
+          [ -f "${PIN_FILE}" ] && tr -d ' \n\r' < "${PIN_FILE}"
+        }
+
+        VER=""
+        for resolver in try_api_latest try_redirect_latest try_pinned; do
+          VER=$(${resolver} 2>/dev/null || true)
+          [ -n "${VER}" ] && break
+        done
+
         if [ -z "${VER}" ]; then
-          VER=$(curl -fsSL "https://github.com/SagerNet/sing-box/releases" \
-            | grep -oE 'href="/SagerNet/sing-box/releases/tag/v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?"' \
-            | head -1 \
-            | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?' \
-            | sed 's/^v//' || true)
-        fi
-        if [ -z "${VER}" ]; then
-          echo "::error::Could not resolve sing-box release version"
+          echo "::error::Could not resolve sing-box release version (API, redirect, and pin all failed)"
           exit 1
         fi
+
         echo "version=${VER}" >> "$GITHUB_OUTPUT"
+        echo "Using sing-box ${VER}"
 
     - name: Cache sing-box binary
       id: cache_singbox
@@ -103,8 +116,26 @@ jobs:
       run: |
         set -euo pipefail
         echo "Installing sing-box v${SINGBOX_VERSION}"
-        curl -fsSL -o sing-box.tar.gz \
-          "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
+        ARCHIVE="sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
+        URL="https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/${ARCHIVE}"
+        MIRROR="https://ghproxy.net/${URL}"
+
+        for attempt in 1 2 3; do
+          if curl -fsSL --retry 3 --retry-delay 5 -o sing-box.tar.gz "${URL}"; then
+            break
+          fi
+          echo "::warning::sing-box download attempt ${attempt} failed (primary URL)"
+          if curl -fsSL --retry 3 --retry-delay 5 -o sing-box.tar.gz "${MIRROR}"; then
+            echo "Downloaded via mirror"
+            break
+          fi
+          if [ "${attempt}" -eq 3 ]; then
+            echo "::error::Failed to download sing-box after 3 attempts"
+            exit 1
+          fi
+          sleep 10
+        done
+
         tar -xzf sing-box.tar.gz
         sudo mv "sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/
         rm -rf sing-box.tar.gz "sing-box-${SINGBOX_VERSION}-linux-amd64"
@@ -119,12 +150,13 @@ jobs:
       run: python3 scripts/tools/validate_surge_rulesets.py
 
     - name: Execute Python Ruleset Update
-      run: python3 scripts/main_update.py --execute
+      run: python3 scripts/main_update.py --unattended
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: 'true'
+        GITHUB_ACTIONS: 'true'
         PYTHONPATH: scripts
-        
+
     - name: Summary
       run: |
         echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
@@ -168,11 +200,10 @@ jobs:
         echo "✅ Smart dedup and cleanup" >> $GITHUB_STEP_SUMMARY
         echo "✅ Port rules sync to firewall module" >> $GITHUB_STEP_SUMMARY
         echo "✅ SRS file generation" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Git commit and push" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Git commit and push (github-actions[bot])" >> $GITHUB_STEP_SUMMARY
         echo "✅ Parallel processing enabled" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip backup (CI=true)" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip core update (--unattended)" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip iCloud sync (--unattended)" >> $GITHUB_STEP_SUMMARY
         echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY
-

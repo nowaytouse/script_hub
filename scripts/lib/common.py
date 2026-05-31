@@ -44,6 +44,8 @@ class Logger:
 
 def is_ci() -> bool:
     """True when running under GitHub Actions or explicit CI=1."""
+    if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+        return True
     return os.environ.get("CI", "").lower() in ("1", "true", "yes")
 
 
