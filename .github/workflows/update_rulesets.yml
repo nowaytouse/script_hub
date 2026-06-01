@@ -4,7 +4,7 @@ name: Update Rulesets
 # GitHub Actions — ruleset auto maintenance (canonical updater)
 #
 # Triggers:
-#   • schedule — 3×/day (Beijing 12:00, 20:00, 04:00)
+#   • schedule — 3×/day (Beijing 12:17, 20:17, 04:17; :17 avoids :00 queue delays)
 #   • workflow_dispatch — manual
 #   • push master — skipped only for github-actions[bot] chore(ruleset) (anti-loop)
 #
@@ -20,10 +20,12 @@ on:
     branches:
       - master
   schedule:
-    - cron: '0 4,12,20 * * *'   # UTC → Beijing 12:00, 20:00, 04:00
+    # UTC 04:17 / 12:17 / 20:17 → Beijing 12:17 / 20:17 / 次日 04:17
+    - cron: '17 4,12,20 * * *'
   workflow_dispatch:
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   PUSH_COOLDOWN_ENABLED: 'true'
   PUSH_COOLDOWN_SECONDS: '180'   # ≥3 min before push; set 1800 for 30 min if needed
 
@@ -47,7 +49,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
@@ -104,7 +106,7 @@ jobs:
 
     - name: Cache sing-box binary
       id: cache_singbox
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: /usr/local/bin/sing-box
         key: singbox-${{ steps.singbox_version.outputs.version }}-linux-amd64

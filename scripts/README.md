@@ -6,7 +6,7 @@
 
 | 触发 | 频率 | 工作流 |
 |------|------|--------|
-| `schedule` | 每天 3 次（北京时间 12:00 / 20:00 / 04:00） | [update_rulesets.yml](../.github/workflows/update_rulesets.yml) |
+| `schedule` | 每天 3 次（北京时间约 12:17 / 20:17 / 04:17，错开整点减轻 Actions 排队） | [update_rulesets.yml](../.github/workflows/update_rulesets.yml) |
 | `workflow_dispatch` | 手动 | 同上 |
 
 跑完后会 **自动 push 到 master**（raw/CDN 才能用到最新规则）；提交者为 `github-actions[bot]`，消息 `chore(ruleset): automated update …`。

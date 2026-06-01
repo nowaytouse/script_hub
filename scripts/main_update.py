@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from lib.common import Logger, get_project_root, is_ci
 from lib.pipeline_report import print_pipeline_summary
 
@@ -270,8 +271,8 @@ def main():
             Logger.error("Pipeline has errors. Skipping Git operations to prevent pushing broken state.")
         else:
             Logger.section("Git Operations")
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-            commit_msg = f"chore(ruleset): automated update {timestamp}"
+            timestamp = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M")
+            commit_msg = f"chore(ruleset): automated update {timestamp} CST"
             try:
                 status = subprocess.run(
                     ["git", "status", "--porcelain"],
