@@ -5,16 +5,16 @@ import zlib
 import gzip
 import concurrent.futures
 from typing import List, Set, Dict, Optional
-from core.common import (
+from .core.common import (
     Logger, get_project_root, read_file, write_file,
     safe_download, safe_download_binary, _has_dangerous_chars,
     safe_remove
 )
-from core.rule_processor import RuleProcessor
-from core.surge_compliance import convert_domain_regex_for_surge
+from .core.rule_processor import RuleProcessor
+from .core.surge_compliance import convert_domain_regex_for_surge
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)")
+SURGE_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket")
 SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
 METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
 CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.txt")

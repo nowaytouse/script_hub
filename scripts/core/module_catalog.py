@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from core.module_sanitizer import parse_module, sanitize_file_content
-from core.common import write_file
+from .module_sanitizer import parse_module, sanitize_file_content
+from .common import write_file
 
 PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
 PROMAX_MERGE_LABEL = "🚫 Universal Ad-Blocking Rules (PROMAX)"
@@ -236,7 +236,7 @@ def _modules_to_helper_groups(
             continue
         path = m["path"]
         if shadowrocket:
-            path = path.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+            path = path.replace("modules/surge", "modules/shadowrocket", 1).replace(".sgmodule", ".module")
             if not (project_root / path).exists():
                 continue
             desc = f"[🚀SR] {m.get('desc', '')}"
@@ -411,7 +411,7 @@ def write_shadowrocket_modules_json(
         if cat not in categories_data:
             continue
         path = m["path"]
-        sr_rel_path = path.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+        sr_rel_path = path.replace("modules/surge", "modules/shadowrocket", 1).replace(".sgmodule", ".module")
         if not (project_root / sr_rel_path).exists():
             continue
         desc = m.get("desc", "")

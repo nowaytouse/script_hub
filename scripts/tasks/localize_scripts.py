@@ -11,13 +11,13 @@ import sys
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
-from core.common import _BROWSER_UA, safe_download_binary, Logger
+from ..core.common import _BROWSER_UA, safe_download_binary, Logger
 
 
 ROOT = Path(__file__).parent.parent.parent
-MODULE_DIRS = [ROOT / "modules/surge(main)", ROOT / "modules/shadowrocket"]
-SCRIPTS_DIR = ROOT / "modules/scripts"
-LOCAL_URL_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/scripts/"
+MODULE_DIRS = [ROOT / "modules/surge", ROOT / "modules/shadowrocket"]
+SCRIPTS_DIR = ROOT / "modules/source/scripts"
+LOCAL_URL_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/"
 
 # User-Agent Pool
 USER_AGENTS = [_BROWSER_UA]

@@ -8,7 +8,7 @@
 import re
 from typing import Optional, Set, Dict, List
 
-from core.surge_compliance import (
+from .surge_compliance import (
     INVALID_DOMAIN_REGEX_VALUES,
     INVALID_URL_REGEX_VALUES,
     is_invalid_domain_regex_payload,

@@ -9,7 +9,7 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from core.common import Logger, get_project_root, safe_download, write_file
+from ..core.common import Logger, get_project_root, safe_download, write_file
 
 ROOT = get_project_root()
 GIST_URL = (
@@ -18,15 +18,15 @@ GIST_URL = (
 )
 OUT_PATH = os.path.join(
     ROOT,
-    "modules/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js",
+    "modules/source/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js",
 )
 ADULT_FILES = (
-    os.path.join(ROOT, "modules/local_sources/adultraplus.sgmodule"),
+    os.path.join(ROOT, "modules/source/local_sources/adultraplus.sgmodule"),
     os.path.join(ROOT, "rulesets/Sources/vendor/adultraplus.sgmodule"),
 )
 LOCAL_SCRIPT_URL = (
     "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
-    "modules/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js"
+    "modules/source/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js"
 )
 
 

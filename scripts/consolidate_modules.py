@@ -13,7 +13,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from core.module_catalog import (
+from .core.module_catalog import (
     CATEGORIES,
     build_helper_html,
     normalize_categories_tree,
@@ -24,7 +24,7 @@ from core.module_catalog import (
 )
 
 PROJECT_ROOT = SCRIPT_DIR.parent
-MODULE_DIR = PROJECT_ROOT / "modules" / "surge(main)"
+MODULE_DIR = PROJECT_ROOT / "modules" / "surge"
 SR_MODULE_DIR = PROJECT_ROOT / "modules" / "shadowrocket"
 MODULES_JSON = PROJECT_ROOT / "modules" / "modules_data.json"
 SR_MODULES_JSON = PROJECT_ROOT / "modules" / "shadowrocket_modules_data.json"
@@ -46,7 +46,7 @@ def _verify_html_coverage(modules: list, project_root: Path) -> int:
     missing = REQUIRED_MODULE_STEMS - scanned_stems
     if missing:
         print(f"  ⚠️  WARN: Required modules not found in scan: {sorted(missing)}")
-        print("       → Check that .sgmodule file exists under modules/surge(main)/<category>/")
+        print("       → Check that .sgmodule file exists under modules/surge/<category>/")
     return len(missing)
 
 
@@ -56,7 +56,7 @@ def _check_sr_gaps(modules: list, project_root: Path) -> int:
     for m in modules:
         if m.get("merged_into"):
             continue
-        sr_path = project_root / m["path"].replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+        sr_path = project_root / m["path"].replace("surge", "shadowrocket", 1).replace(".sgmodule", ".module")
         if not sr_path.exists():
             gaps.append(Path(m["path"]).name)
     if gaps:

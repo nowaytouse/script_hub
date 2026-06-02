@@ -9,10 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from core.surge_compliance import validate_surge_ruleset_line  # noqa: E402
+from ..core.surge_compliance import validate_surge_ruleset_line  # noqa: E402
 
-SURGE_DIR = ROOT / "ruleset" / "Surge(Shadowkroket)"
-ADBLOCK_DIR = ROOT / "ruleset" / "AdBlock"
+SURGE_DIR = ROOT / "rulesets" / "surge-shadowrocket"
+ADBLOCK_DIR = ROOT / "rulesets" / "AdBlock"
 
 
 def validate_directory(directory: Path, *, allow_domain_regex: bool) -> list[str]:

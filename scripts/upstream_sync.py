@@ -7,13 +7,13 @@ import concurrent.futures
 import platform
 import tarfile
 import shutil
-from core.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
+from .core.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/skk_upstream")
-MODULE_DIR = os.path.join(ROOT, "modules/surge(main)/amplify_nexus")
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/local_sources")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket/skk_upstream")
+MODULE_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local_sources")
 
 # CONFIGURATION
 

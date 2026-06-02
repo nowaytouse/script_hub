@@ -7,13 +7,13 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from core.common import get_project_root, Logger
-from core.merge_upstream_bundle import merge_upstream_modules
+from ..core.common import get_project_root, Logger
+from ..core.merge_upstream_bundle import merge_upstream_modules
 
 ROOT = get_project_root()
 OUTPUT = os.path.join(
     ROOT,
-    "modules/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
+    "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
 )
 
 SOURCES = [

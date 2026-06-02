@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-02 08:50:34",
+  "updated": "2026-06-02 18:37:31",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -49,16 +49,16 @@
   ],
   "modules": {
     "surge_promax": {
-      "path": "modules/surge(main)/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge%28main%29/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule"
+      "path": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule"
     },
     "shadowrocket_promax": {
       "path": "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module"
     },
     "surge_promax_lite": {
-      "path": "modules/surge(main)/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge%28main%29/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
+      "path": "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
       "note": "手机轻量版 — 不含 ThreatIntel 重型规则"
     },
     "shadowrocket_promax_lite": {
@@ -138,7 +138,7 @@
       "label_zh": "安全威胁",
       "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
       "shard_index": 2,
-      "rule_count": 26305,
+      "rule_count": 26386,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list"
     },
     {
@@ -219,7 +219,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 27940,
+      "rule_count": 27996,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list"
     }
   ]

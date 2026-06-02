@@ -6,14 +6,15 @@ from __future__ import annotations
 import os
 from typing import List, Tuple
 
-from core.common import Logger, get_project_root, read_file
+from .common import Logger, get_project_root, read_file
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)")
+SURGE_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket")
 DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/DNS_mapping")
+DNS_RULES_DIR = os.path.join(ROOT, "rulesets/dns")
 ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
 SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
-MODULE_SURGE = os.path.join(ROOT, "modules/surge(main)")
+MODULE_SURGE = os.path.join(ROOT, "modules/surge")
 MODULE_SR = os.path.join(ROOT, "modules/shadowrocket")
 
 SRS_SOURCE_DIRS = [SURGE_DIR, DNS_MAPPING_DIR, ADBLOCK_DIR]

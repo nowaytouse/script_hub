@@ -4,11 +4,12 @@ import json
 import subprocess
 import concurrent.futures
 import re
-from core.common import Logger, get_project_root, safe_remove
+from .core.common import Logger, get_project_root, safe_remove
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)")
+SURGE_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket")
 DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/DNS_mapping")
+DNS_RULES_DIR = os.path.join(ROOT, "rulesets/dns")
 SKK_UPSTREAM_DIR = os.path.join(SURGE_DIR, "skk_upstream")
 SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
 CACHE_DIR = os.path.join(ROOT, ".cache")

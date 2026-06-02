@@ -16,9 +16,9 @@ SCRIPT_DIR = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_DIR))
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-from core.module_sanitizer import sanitize_file_content
-from core.common import _BROWSER_UA, Logger, write_file
-SURGE_MODULE_DIR = PROJECT_ROOT / "modules" / "surge(main)"
+from .core.module_sanitizer import sanitize_file_content
+from .core.common import _BROWSER_UA, Logger, write_file
+SURGE_MODULE_DIR = PROJECT_ROOT / "modules" / "surge"
 SR_MODULE_DIR = PROJECT_ROOT / "modules" / "shadowrocket"
 
 # 配置常量
@@ -159,7 +159,7 @@ def fetch_ruleset(url_or_path: str) -> List[str]:
 
         # 相对路径处理
         if not content and url_or_path.startswith(".."):
-            path = (PROJECT_ROOT / "modules/surge(main)/amplify_nexus" / url_or_path).resolve()
+            path = (PROJECT_ROOT / "modules/surge/amplify_nexus" / url_or_path).resolve()
             if path.exists():
                 try:
                     content = path.read_text(encoding='utf-8')

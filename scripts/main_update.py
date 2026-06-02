@@ -6,8 +6,8 @@ import sys
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from core.common import Logger, get_project_root, is_ci
-from core.pipeline_report import print_pipeline_summary
+from .core.common import Logger, get_project_root, is_ci
+from .core.pipeline_report import print_pipeline_summary
 
 # Import our managers
 from firewall_sync import sync_ports

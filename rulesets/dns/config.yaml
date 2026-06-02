@@ -1,0 +1,332 @@
+# mosdns Configuration - Ultimate Stealth Edition (Hardened v4.2 - Fixed)
+# Version: 2026.04.21-Stealth_Hardening_v4.2 (Zero-Hijack)
+# ══════════════════════════════════════════════════════════════════════
+
+log:
+  level: info
+  file: "/Users/nyamiiko/Library/Logs/mosdns.log"
+
+plugins:
+  # ────────────────────────────────────────────────────────────────────
+  # 1. 内部 Hosts (脱敏 & 绕避 Surge HTTPDNS_Hijack 审计)
+  # ────────────────────────────────────────────────────────────────────
+  - tag: hosts
+    type: hosts
+    args:
+      entries:
+        # ════════════════════════════════════════════════════════════
+        # 关键：DoH 服务器域名 IP 映射（防止循环依赖）
+        # ════════════════════════════════════════════════════════════
+        - "dns.google 8.8.8.8"
+        - "dns.google 8.8.4.4"
+        - "dns.google 2001:4860:4860::8888"
+        - "dns.google 2001:4860:4860::8844"
+        - "cloudflare-dns.com 1.1.1.1"
+        - "cloudflare-dns.com 1.0.0.1"
+        - "cloudflare-dns.com 2606:4700:4700::1111"
+        - "cloudflare-dns.com 2606:4700:4700::1001"
+        - "dns.quad9.net 9.9.9.9"
+        - "dns.quad9.net 149.112.112.112"
+        - "dns.quad9.net 2620:fe::fe"
+        - "dns.quad9.net 2620:fe::9"
+        - "wikimedia-dns.org 185.71.138.138"
+        - "dns.alidns.com 223.5.5.5"
+        - "dns.alidns.com 223.6.6.6"
+        - "dns.alidns.com 2400:3200::1"
+        - "dns.alidns.com 2400:3200:baba::1"
+        - "doh.pub 1.12.12.12"
+        - "doh.pub 120.53.53.53"
+        - "doh.pub 2402:4e00::"
+        - "dns.pub 1.12.12.12"
+        - "dns.pub 120.53.53.53"
+        - "doh.360.cn 101.198.198.198"
+        - "doh.360.cn 112.65.69.15"
+        - "dns.baidu.com 180.76.76.76"
+        - "dns.baidu.com 2400:da00::6666"
+        - "dns.volcengine.com 180.184.1.1"
+        - "dns.volcengine.com 180.184.2.2"
+        # ────────────────────────────────────────────────────────────
+        # 额外配置：Telegram 节点优化 (同步自 Surge Host 配置)
+        # ────────────────────────────────────────────────────────────
+        - "91.108.56.100 91.108.56.147"
+        - "91.108.56.100 91.108.56.135"
+        - "91.108.56.100 91.108.56.130"
+        - "91.108.56.101 91.108.56.147"
+        - "91.108.56.101 91.108.56.135"
+        - "91.108.56.101 91.108.56.130"
+        - "91.108.56.104 91.108.56.147"
+        - "91.108.56.104 91.108.56.135"
+        - "91.108.56.104 91.108.56.130"
+        - "91.108.56.107 91.108.56.147"
+        - "91.108.56.107 91.108.56.135"
+        - "91.108.56.107 91.108.56.130"
+        - "91.108.56.120 91.108.56.147"
+        - "91.108.56.120 91.108.56.135"
+        - "91.108.56.120 91.108.56.130"
+        - "91.108.56.125 91.108.56.147"
+        - "91.108.56.125 91.108.56.135"
+        - "91.108.56.125 91.108.56.130"
+        - "91.108.56.126 91.108.56.147"
+        - "91.108.56.126 91.108.56.135"
+        - "91.108.56.126 91.108.56.130"
+        - "91.108.56.128 91.108.56.147"
+        - "91.108.56.128 91.108.56.135"
+        - "91.108.56.128 91.108.56.130"
+        - "91.108.56.156 91.108.56.147"
+        - "91.108.56.156 91.108.56.135"
+        - "91.108.56.156 91.108.56.130"
+        - "149.154.175.10 149.154.175.53"
+        - "149.154.175.50 149.154.175.53"
+        - "149.154.175.54 149.154.175.53"
+        - "149.154.175.55 149.154.175.53"
+        - "149.154.175.56 149.154.175.53"
+        - "149.154.175.57 149.154.175.53"
+        - "149.154.175.100 149.154.175.53"
+        - "149.154.175.101 149.154.175.53"
+        - "149.154.175.102 149.154.175.53"
+        - "149.154.175.103 149.154.175.53"
+        - "149.154.175.117 149.154.175.53"
+        - "91.108.4.0 91.108.4.1"
+        - "91.108.8.0 91.108.8.1"
+        - "91.108.12.0 91.108.12.1"
+        - "91.108.16.0 91.108.16.1"
+        - "149.154.167.0 149.154.167.1"
+        - "149.154.171.0 149.154.171.1"
+        - "149.154.163.0 149.154.163.1"
+        - "149.154.167.40 149.154.167.41"
+        - "149.154.175.40 149.154.175.41"
+        # ────────────────────────────────────────────────────────────
+        # GitHub & CDN 优化 (同步自 Surge)
+        # ────────────────────────────────────────────────────────────
+        - "github.com 140.82.113.4"
+        - "github.com 140.82.112.3"
+        - "raw.githubusercontent.com 185.199.108.133"
+        - "raw.githubusercontent.com 185.199.109.133"
+        - "raw.githubusercontent.com 185.199.110.133"
+        - "raw.githubusercontent.com 185.199.111.133"
+        # ────────────────────────────────────────────────────────────
+        # 引导/公共 DNS 备选 (同步自 Surge - 已脱敏)
+        # ────────────────────────────────────────────────────────────
+        - "dns.volcengine.com 180.184.1.1"
+        - "dns.volcengine.com 180.184.2.2"
+        - "dns.twnic.tw 101.101.101.101"
+        - "ordns.he.net 74.82.42.42"
+        - "doh.ffmuc.net 5.1.66.255"
+        - "doh.ffmuc.net 185.150.99.255"
+        - "dns.mullvad.net 194.242.2.2"
+        - "dns.mullvad.net 194.242.2.3"
+        - "freedns.controld.com 76.76.2.0"
+        - "freedns.controld.com 76.76.10.0"
+        # ────────────────────────────────────────────────────────────
+        # 其他实用重定向与证书验证 (同步自 Surge)
+        # ────────────────────────────────────────────────────────────
+        - "104.236.69.55 104.236.69.55" # 固定 Shadowsocks-libev IP
+        - "ocsp.apple.com 17.253.3.201"
+        - "ocsp2.apple.com 17.253.3.201"
+        - "ip6-localhost ::1"
+        - "ip6-loopback ::1"
+
+  - tag: cache
+    type: cache
+    args: {size: 65535}
+
+  # ────────────────────────────────────────────────────────────────────
+  # 2. 规则集：12w+ 域名全量精细化
+  # ────────────────────────────────────────────────────────────────────
+  - tag: matcher_apple
+    type: domain_set
+    args: {files: ["./steer_Apple.txt"]}
+
+  - tag: matcher_google
+    type: domain_set
+    args: {files: ["./steer_Google.txt"]}
+
+  - tag: matcher_github
+    type: domain_set
+    args: {files: ["./steer_GitHub.txt"]}
+
+  - tag: matcher_microsoft
+    type: domain_set
+    args: {files: ["./steer_Microsoft.txt"]}
+
+  - tag: matcher_ai_cf
+    type: domain_set
+    args: {files: ["./steer_AI.txt"]}
+
+  - tag: matcher_nsfw
+    type: domain_set
+    args: {files: ["./nsfw_domain.txt"]}
+
+  - tag: matcher_tw
+    type: domain_set
+    args: {files: ["./steer_StreamTW.txt"]}
+
+  - tag: matcher_social
+    type: domain_set
+    args: {files: ["./steer_SocialMedia.txt"]}
+
+  - tag: matcher_tiktok
+    type: domain_set
+    args: {files: ["./steer_TikTok.txt"]}
+
+  - tag: matcher_bootstrap
+    type: domain_set
+    args: {files: ["./steer_Bootstrap.txt"]}
+
+  - tag: matcher_airport
+    type: domain_set
+    args: {files: ["./steer_Airport.txt"]}
+
+  - tag: cn_domain_matcher
+    type: domain_set
+    args: {files: ["./cn_domain.txt"]}
+
+  - tag: cn_ip_matcher
+    type: ip_set
+    args: {files: ["./cn_ip.txt"]}
+
+  # ────────────────────────────────────────────────────────────────────
+  # 3. 隐身化上游矩阵 (Evasion Optimized)
+  # ────────────────────────────────────────────────────────────────────
+  
+  # Google
+  - tag: forward_google
+    type: forward
+    args:
+      upstreams:
+        - addr: "https://dns.google/dns-query"
+          socks5: "127.0.0.1:9810"
+
+  # Cloudflare
+  - tag: forward_cloudflare
+    type: forward
+    args:
+      upstreams:
+        - addr: "https://cloudflare-dns.com/dns-query"
+          socks5: "127.0.0.1:9810"
+
+  # MS / Wikimedia
+  - tag: forward_ms
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "https://wikimedia-dns.org/dns-query"
+          socks5: "127.0.0.1:9810"
+        - addr: "https://[2620:fe::fe]/dns-query"
+          socks5: "127.0.0.1:9810"
+
+  # 国内“隐身版”解析池 (强制 DoH + 非敏 IP)
+  - tag: forward_cn_general
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "https://dns.alidns.com/dns-query"
+        - addr: "https://doh.pub/dns-query"
+        - addr: "180.184.1.1"
+        - addr: "114.114.114.114"
+        - addr: "2400:da00::6666"
+
+  # 国际通用隐身对齐
+  - tag: forward_intl_general
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "https://dns.google/dns-query"
+          socks5: "127.0.0.1:9810"
+        - addr: "https://cloudflare-dns.com/dns-query"
+          socks5: "127.0.0.1:9810"
+
+  # 引导解析 (Bootstrap) - 国内直连
+  - tag: forward_bootstrap_direct
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "223.5.5.5"
+        - addr: "119.29.29.29"
+
+  # ────────────────────────────────────────────────────────────────────
+  # 4. 逻辑序列
+  # ────────────────────────────────────────────────────────────────────
+  - tag: cn_sequence
+    type: sequence
+    args:
+      - exec: $forward_cn_general
+      - exec: accept
+
+  - tag: intl_sequence
+    type: sequence
+    args:
+      - exec: $forward_ms
+      - matches: "!resp_ip $cn_ip_matcher"
+        exec: accept
+      - exec: $forward_cn_general
+      - exec: accept
+
+  - tag: main_sequence
+    type: sequence
+    args:
+      - exec: $hosts
+      - exec: $cache
+
+      - matches: qtype 65
+        exec: reject 3 
+      - matches: qtype 46 47 48
+        exec: reject 3
+
+      - matches: qname $matcher_bootstrap
+        exec: $forward_bootstrap_direct
+      - matches: qname $matcher_bootstrap
+        exec: accept
+
+      - matches: qname $matcher_nsfw
+        exec: $forward_intl_general
+      - matches: qname $matcher_nsfw
+        exec: accept
+
+      - matches: qname $matcher_apple
+        exec: $forward_cn_general
+      - matches: qname $matcher_apple
+        exec: accept
+
+      - matches: qname $matcher_google
+        exec: $forward_google
+      - matches: qname $matcher_google
+        exec: accept
+
+      - matches: qname $matcher_ai_cf
+        exec: $forward_cloudflare
+      - matches: qname $matcher_ai_cf
+        exec: accept
+
+      - matches: qname $matcher_microsoft
+        exec: $forward_ms
+      - matches: qname $matcher_microsoft
+        exec: accept
+
+      - matches: qname $cn_domain_matcher
+        exec: jump cn_sequence
+
+      - exec: jump intl_sequence
+
+  # ────────────────────────────────────────────────────────────────────
+  # 5. 服务器绑定 (IPv4 + IPv6)
+  # ────────────────────────────────────────────────────────────────────
+  - tag: udp_server
+    type: udp_server
+    args: {entry: main_sequence, listen: "127.0.0.1:6053"}
+
+  - tag: udp_server_v6
+    type: udp_server
+    args: {entry: main_sequence, listen: "[::1]:6053"}
+
+  - tag: tcp_server
+    type: tcp_server
+    args: {entry: main_sequence, listen: "127.0.0.1:6053"}
+
+  - tag: tcp_server_v6
+    type: tcp_server
+    args: {entry: main_sequence, listen: "[::1]:6053"}

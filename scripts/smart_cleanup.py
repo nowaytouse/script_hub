@@ -7,10 +7,10 @@ from typing import Dict, Iterable
 _LIB = os.path.join(os.path.dirname(__file__), "core")
 if _LIB not in sys.path:
     sys.path.insert(0, os.path.dirname(__file__))
-from core.common import write_file as _atomic_write, safe_remove
+from .core.common import write_file as _atomic_write, safe_remove
 
 RULESET_DIRS = [
-    os.path.join(os.path.dirname(__file__), "../rulesets/Surge(Shadowkroket)"),
+    os.path.join(os.path.dirname(__file__), "../rulesets/surge-shadowrocket"),
     os.path.join(os.path.dirname(__file__), "../rulesets/AdBlock"),
 ]
 

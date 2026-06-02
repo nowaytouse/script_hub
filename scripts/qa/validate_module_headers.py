@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_ROOTS = [
-    ROOT / "modules" / "surge(main)",
+    ROOT / "modules" / "surge",
     ROOT / "modules" / "shadowrocket",
 ]
 
@@ -81,7 +81,7 @@ def main() -> int:
         if not base.exists():
             all_issues.append(f"{base}: directory not found")
             continue
-        pattern = "*.sgmodule" if "surge(main)" in str(base) else "*.module"
+        pattern = "*.sgmodule" if "modules/surge" in str(base) else "*.module"
         for fp in sorted(base.rglob(pattern)):
             issues, warnings = validate_module(fp)
             all_issues.extend(issues)

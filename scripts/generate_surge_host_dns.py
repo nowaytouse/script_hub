@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
-DNS_DIR = ROOT / "ruleset" / "Sources" / "DNS_mapping"
-SURGE_RULESET_DIR = ROOT / "ruleset" / "Surge(Shadowkroket)"
+DNS_DIR = ROOT / "rulesets" / "Sources" / "DNS_mapping"
+DNS_RULES_DIR = ROOT / "rulesets" / "dns"
+SURGE_RULESET_DIR = ROOT / "rulesets" / "surge-shadowrocket"
 
 # Mainland (matches [General] + encrypted-dns baseline)
 DOH_CN_ALIDNS = "https://dns.alidns.com/dns-query"

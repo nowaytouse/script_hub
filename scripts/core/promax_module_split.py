@@ -7,7 +7,7 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 
-from core.promax_line_classifier import should_keep_promax_line
+from .promax_line_classifier import should_keep_promax_line
 
 SECTION_HEADER_RE = re.compile(r"^\[([^\]]+)\]\s*$")
 
@@ -57,7 +57,7 @@ def format_split_module(
     *,
     note: str,
 ) -> str:
-    """Minimal sgmodule fragment for review under modules/build/promax_splits/."""
+    """Minimal sgmodule fragment for review under modules/source/build/promax_splits/."""
     base = os.path.basename(source_path)
     lines = [
         f"#!name=PROMAX split · {base}",

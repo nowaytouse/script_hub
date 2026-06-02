@@ -3,7 +3,7 @@ import os
 import re
 import argparse
 from datetime import datetime
-from core.common import (
+from .core.common import (
     Logger, get_project_root, read_file, write_file, 
     extract_section, clean_rules
 )
@@ -12,7 +12,7 @@ from core.common import (
 
 ROOT = get_project_root()
 PORTS_SOURCE = os.path.join(ROOT, "rulesets/Sources/conf/SurgeConf_DirectPorts.list")
-FIREWALL_MODULE = os.path.join(ROOT, "modules/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
+FIREWALL_MODULE = os.path.join(ROOT, "modules/surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 
 # SYNC LOGIC
 

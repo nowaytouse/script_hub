@@ -171,20 +171,20 @@ jobs:
         if [ -d "rulesets/AdBlock" ]; then
           ADBLOCK_TOTAL=$(grep -hcv "^#\|^$" rulesets/AdBlock/*.list 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
           echo "- **AdBlock (Total Split)**: ${ADBLOCK_TOTAL} rules" >> $GITHUB_STEP_SUMMARY
-        elif [ -f "rulesets/Surge(Shadowkroket)/AdBlock.list" ]; then
-          ADBLOCK_COUNT=$(grep -cv "^#\|^$" "rulesets/Surge(Shadowkroket)/AdBlock.list" 2>/dev/null || echo "0")
+        elif [ -f "rulesets/surge-shadowrocket/AdBlock.list" ]; then
+          ADBLOCK_COUNT=$(grep -cv "^#\|^$" "rulesets/surge-shadowrocket/AdBlock.list" 2>/dev/null || echo "0")
           echo "- **AdBlock**: ${ADBLOCK_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -f "rulesets/Surge(Shadowkroket)/ChinaDirect.list" ]; then
-          CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "rulesets/Surge(Shadowkroket)/ChinaDirect.list" 2>/dev/null || echo "0")
+        if [ -f "rulesets/surge-shadowrocket/ChinaDirect.list" ]; then
+          CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "rulesets/surge-shadowrocket/ChinaDirect.list" 2>/dev/null || echo "0")
           echo "- **ChinaDirect** (DNS leak prevention): ${CHINADIRECT_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -f "rulesets/Surge(Shadowkroket)/GlobalProxy.list" ]; then
-          GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "rulesets/Surge(Shadowkroket)/GlobalProxy.list" 2>/dev/null || echo "0")
+        if [ -f "rulesets/surge-shadowrocket/GlobalProxy.list" ]; then
+          GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "rulesets/surge-shadowrocket/GlobalProxy.list" 2>/dev/null || echo "0")
           echo "- **GlobalProxy**: ${GLOBALPROXY_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -f "modules/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" ]; then
-          FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "modules/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" 2>/dev/null || echo "0")
+        if [ -f "modules/surge/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" ]; then
+          FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "modules/surge/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" 2>/dev/null || echo "0")
           echo "- **Firewall** (port blocking): ${FIREWALL_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY

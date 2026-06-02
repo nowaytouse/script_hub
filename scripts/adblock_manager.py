@@ -11,15 +11,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from core.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
-from core.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
-from core.promax_line_classifier import (
+from .core.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
+from .core.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
+from .core.promax_line_classifier import (
     classify_promax_line,
     module_ingest_mode,
     should_keep_promax_line,
 )
-from core.promax_module_split import format_split_module, split_module_sections
-from core.surge_compliance import (
+from .core.promax_module_split import format_split_module, split_module_sections
+from .core.surge_compliance import (
     format_url_regex_for_surge,
     is_invalid_domain_regex_payload,
     strip_trailing_policy,
@@ -30,8 +30,8 @@ from core.surge_compliance import (
 # ============================================================================
 
 ROOT = get_project_root()
-SURGE_MODULE_DIR = os.path.join(ROOT, "modules/surge(main)")
-HEAD_EXPANSE_DIR = os.path.join(ROOT, "modules/surge(main)/head_expanse")
+SURGE_MODULE_DIR = os.path.join(ROOT, "modules/surge")
+HEAD_EXPANSE_DIR = os.path.join(ROOT, "modules/surge/head_expanse")
 CACHE_DIR = os.path.join(ROOT, ".cache")
 HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.txt")
 WHITELIST_FILE = os.path.join(ROOT, "rulesets/Sources/adblock_whitelist.txt")
@@ -39,9 +39,9 @@ ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "rulesets/Sources/Links/AdBlock_source
 ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(
     ROOT, "rulesets/Sources/Links/AdBlock_functional_sources.txt"
 )
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/local_sources")
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local_sources")
 LOCAL_MODULES_DIR = os.path.join(ROOT, "rulesets/Sources/LocalModules")
-AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge(main)/amplify_nexus")
+AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
 # Rule-ingest hint for remote/list sources only (not used to pull amplify 增强 modules).
 NEXUS_AD_RULE_KEYWORDS = (
     "reject",
@@ -137,11 +137,11 @@ TARGET_MODULE_LITE = os.path.join(
 # Categories included in the Lite (mobile-friendly) tier.
 # Excludes heavy ThreatIntel shards (~1.2M rules) that are desktop-only.
 LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
-NARROW_PIERCE_DIR = os.path.join(ROOT, "modules/surge(main)/narrow_pierce")
-PROMAX_SPLITS_DIR = os.path.join(ROOT, "modules/build/promax_splits")
+NARROW_PIERCE_DIR = os.path.join(ROOT, "modules/surge/narrow_pierce")
+PROMAX_SPLITS_DIR = os.path.join(ROOT, "modules/source/build/promax_splits")
 ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
-ADBLOCK_LIST = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/AdBlock.list")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/skk_upstream")
+ADBLOCK_LIST = os.path.join(ROOT, "rulesets/surge-shadowrocket/AdBlock.list")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket/skk_upstream")
 SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
@@ -299,7 +299,7 @@ class AdBlockManager:
             if not entry.is_remote and entry.resolved_path.endswith(".list"):
                 targets.append(entry.resolved_path)
             # Find HTTPDNS_Hijack.list - it's hardcoded in header but let's find its path
-            hijack_path = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/HTTPDNS_Hijack.list")
+            hijack_path = os.path.join(ROOT, "rulesets/surge-shadowrocket/HTTPDNS_Hijack.list")
             if os.path.exists(hijack_path):
                 targets.append(hijack_path)
 
@@ -1388,7 +1388,7 @@ class AdBlockManager:
         """Write machine-readable catalog + README for ruleset shards and module links."""
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         surge_module = os.path.relpath(TARGET_MODULE, ROOT)
-        sr_module = surge_module.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+        sr_module = surge_module.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
 
         shards = []
         for rs_path in generated_rulesets:
@@ -1420,7 +1420,7 @@ class AdBlockManager:
             )
 
         surge_module_lite = os.path.relpath(TARGET_MODULE_LITE, ROOT)
-        sr_module_lite = surge_module_lite.replace("surge(main)", "shadowrocket").replace(".sgmodule", ".module")
+        sr_module_lite = surge_module_lite.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
 
         catalog = {
             "updated": now,

@@ -23,7 +23,7 @@ SR_DIR = Path(
         "~/Library/Mobile Documents/iCloud~com~liguangming~Shadowrocket/Documents/Modules",
     )
 ).expanduser()
-SURGE_DIR = PROJECT_ROOT / "modules" / "surge(main)"
+SURGE_DIR = PROJECT_ROOT / "modules" / "surge"
 
 # Category Mapping (Preserve original Chinese group names as per user instruction)
 CATEGORY_MAP = {
