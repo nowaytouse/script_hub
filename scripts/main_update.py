@@ -102,6 +102,26 @@ def main():
         Logger.error("Aborting pipeline due to compliance test failures.")
         sys.exit(1)
 
+    Logger.section("Module Header Validation")
+    try:
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/validate_module_headers.py")],
+            cwd=ROOT,
+            env={**os.environ, "PYTHONPATH": SCRIPTS_DIR},
+        )
+        if result.returncode != 0:
+            Logger.error("Module header validation failed.")
+            has_failures = True
+        else:
+            Logger.success("Module header validation passed.")
+    except Exception as e:
+        Logger.error(f"Module header validation failed: {e}")
+        has_failures = True
+
+    if has_failures:
+        Logger.error("Aborting pipeline due to module header validation failures.")
+        sys.exit(1)
+
     if args.with_core:
         Logger.section("Core Binary Update")
         if os.path.isfile(CORE_UPDATE_SCRIPT):

@@ -62,6 +62,8 @@ sing-box CI 兜底版本见 [`.github/ci/sing-box-linux-amd64.version`](../.gith
 
 - [docs/AdBlock_callchain.md](../docs/AdBlock_callchain.md) — 广告规则流水线
 - [docs/Modules_callchain.md](../docs/Modules_callchain.md) — 功能模块与 PROMAX 分工
+- [docs/maintenance/module-maintenance.md](../docs/maintenance/module-maintenance.md) — 模块维护映射与修复流程
+- [docs/standards/module-header-spec.md](../docs/standards/module-header-spec.md) — 模块头规范（iOS 清空问题防线）
 - [ruleset/AdBlock/README.md](../ruleset/AdBlock/README.md) — 分片索引
 
 ## 合规门禁（Surge Invalid line 回归）
@@ -72,6 +74,9 @@ python3 scripts/tools/test_surge_compliance.py
 
 # 扫描已生成的 .list 文件
 python3 scripts/tools/validate_surge_rulesets.py
+
+# 扫描所有模块头结构（防止 iOS 模块字段清空）
+python3 scripts/tools/validate_module_headers.py
 ```
 
 `main_update.py` 启动时会跑前者；合并后会跑后者。CI 在 `update_rulesets.yml` 中同样执行。

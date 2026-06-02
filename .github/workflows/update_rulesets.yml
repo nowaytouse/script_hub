@@ -140,6 +140,9 @@ jobs:
     - name: Validate existing Surge rulesets
       run: python3 scripts/tools/validate_surge_rulesets.py
 
+    - name: Validate module headers (Surge/Shadowrocket)
+      run: python3 scripts/tools/validate_module_headers.py
+
     - name: Execute Python Ruleset Update
       run: python3 scripts/main_update.py --unattended
       env:
