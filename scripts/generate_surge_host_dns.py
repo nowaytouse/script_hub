@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Expand ruleset/Sources/DNS_mapping/*.list (+ selected Surge rulesets) into Surge [Host] DoH steering.
+Expand rulesets/Sources/DNS_mapping/*.list (+ selected Surge rulesets) into Surge [Host] DoH steering.
 Surge [Host] does not support RULE-SET / DOMAIN-SET — domains must be listed explicitly.
 """
 
@@ -331,7 +331,7 @@ def bootstrap_block() -> List[str]:
         "*.he.net = server:" + DOH_HE_ORDNS,
         "",
         "# =============================================================================",
-        "# SECTION E: ruleset/Sources/DNS_mapping (manual Host expansion)",
+        "# SECTION E: rulesets/Sources/DNS_mapping (manual Host expansion)",
         "# =============================================================================",
     ]
 

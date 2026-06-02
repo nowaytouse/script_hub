@@ -14,7 +14,7 @@ from core.module_sanitizer import format_header, format_module, merge_mitm_hosts
 ROOT = get_project_root()
 LOCAL_WEIBO = os.path.join(
     ROOT,
-    "ruleset/Sources/LocalModules/🐦 微博去广告合集.sgmodule",
+    "rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule",
 )
 
 SOURCES = [
@@ -75,7 +75,7 @@ def main() -> None:
         SOURCES,
         LOCAL_WEIBO,
         header_meta=HEADER,
-        provenance_comment="# Merged for ruleset/Sources/LocalModules → PROMAX ingest",
+        provenance_comment="# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
     )
     _rewrite_with_preserved(LOCAL_WEIBO, preserved)
     Logger.info(f"Build source: {os.path.relpath(LOCAL_WEIBO, ROOT)}")

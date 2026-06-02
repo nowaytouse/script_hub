@@ -162,7 +162,7 @@ def main():
         has_failures = True
 
     # 1.1 Smart-Config-Kit supplemental rules merge
-    # Source files vendored at ruleset/Sources/custom/SmartConfigKit/ (fork removed)
+    # Source files vendored at rulesets/Sources/custom/SmartConfigKit/ (fork removed)
     Logger.section("Smart-Config-Kit Supplemental Merge")
     try:
         merge_smart_config_kit()

@@ -159,32 +159,32 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "| Category | Count |" >> $GITHUB_STEP_SUMMARY
         echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| MetaCubeX Rules | $(ls ruleset/MetaCubeX/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Surge Rules | $(ls ruleset/Surge\(Shadowkroket\)/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| AdBlock Split | $(ls ruleset/AdBlock/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| SingBox SRS | $(ls ruleset/SingBox/*.srs 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Sources Files | $(ls ruleset/Sources/Links/*_sources.txt 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Modules | $(ls module/surge\(main\)/*.sgmodule 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| MetaCubeX Rules | $(ls rulesets/MetaCubeX/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Surge Rules | $(ls rulesets/Surge\(Shadowkroket\)/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| AdBlock Split | $(ls rulesets/AdBlock/*.list 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| SingBox SRS | $(ls rulesets/SingBox/*.srs 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Sources Files | $(ls rulesets/Sources/Links/*_sources.txt 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Modules | $(ls modules/surge\(main\)/*.sgmodule 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔑 Key Rulesets" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        if [ -d "ruleset/AdBlock" ]; then
-          ADBLOCK_TOTAL=$(grep -hcv "^#\|^$" ruleset/AdBlock/*.list 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
+        if [ -d "rulesets/AdBlock" ]; then
+          ADBLOCK_TOTAL=$(grep -hcv "^#\|^$" rulesets/AdBlock/*.list 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
           echo "- **AdBlock (Total Split)**: ${ADBLOCK_TOTAL} rules" >> $GITHUB_STEP_SUMMARY
-        elif [ -f "ruleset/Surge(Shadowkroket)/AdBlock.list" ]; then
-          ADBLOCK_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/AdBlock.list" 2>/dev/null || echo "0")
+        elif [ -f "rulesets/Surge(Shadowkroket)/AdBlock.list" ]; then
+          ADBLOCK_COUNT=$(grep -cv "^#\|^$" "rulesets/Surge(Shadowkroket)/AdBlock.list" 2>/dev/null || echo "0")
           echo "- **AdBlock**: ${ADBLOCK_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -f "ruleset/Surge(Shadowkroket)/ChinaDirect.list" ]; then
-          CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/ChinaDirect.list" 2>/dev/null || echo "0")
+        if [ -f "rulesets/Surge(Shadowkroket)/ChinaDirect.list" ]; then
+          CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "rulesets/Surge(Shadowkroket)/ChinaDirect.list" 2>/dev/null || echo "0")
           echo "- **ChinaDirect** (DNS leak prevention): ${CHINADIRECT_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -f "ruleset/Surge(Shadowkroket)/GlobalProxy.list" ]; then
-          GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "ruleset/Surge(Shadowkroket)/GlobalProxy.list" 2>/dev/null || echo "0")
+        if [ -f "rulesets/Surge(Shadowkroket)/GlobalProxy.list" ]; then
+          GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "rulesets/Surge(Shadowkroket)/GlobalProxy.list" 2>/dev/null || echo "0")
           echo "- **GlobalProxy**: ${GLOBALPROXY_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -f "module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" ]; then
-          FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "module/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" 2>/dev/null || echo "0")
+        if [ -f "modules/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" ]; then
+          FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "modules/surge(main)/🔥 Firewall Port Blocker 🛡️🚫.sgmodule" 2>/dev/null || echo "0")
           echo "- **Firewall** (port blocking): ${FIREWALL_COUNT} rules" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY

@@ -13,8 +13,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_ROOTS = [
-    ROOT / "module" / "surge(main)",
-    ROOT / "module" / "shadowrocket",
+    ROOT / "modules" / "surge(main)",
+    ROOT / "modules" / "shadowrocket",
 ]
 
 META_RE = re.compile(r"^#!\s*([A-Za-z0-9_-]+)\s*=\s*.*$")

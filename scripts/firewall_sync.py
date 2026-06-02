@@ -11,8 +11,8 @@ from core.common import (
 # CONFIGURATION
 
 ROOT = get_project_root()
-PORTS_SOURCE = os.path.join(ROOT, "ruleset/Sources/conf/SurgeConf_DirectPorts.list")
-FIREWALL_MODULE = os.path.join(ROOT, "module/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
+PORTS_SOURCE = os.path.join(ROOT, "rulesets/Sources/conf/SurgeConf_DirectPorts.list")
+FIREWALL_MODULE = os.path.join(ROOT, "modules/surge(main)/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 
 # SYNC LOGIC
 

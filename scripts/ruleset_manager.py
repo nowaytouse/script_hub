@@ -14,11 +14,11 @@ from core.rule_processor import RuleProcessor
 from core.surge_compliance import convert_domain_regex_for_surge
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
-SOURCES_DIR = os.path.join(ROOT, "ruleset/Sources/Links")
-METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
+SURGE_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)")
+SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
+METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
 CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.txt")
-POLICY_MAP_FILE = os.path.join(ROOT, "ruleset/Sources/ruleset_policy_map.txt")
+POLICY_MAP_FILE = os.path.join(ROOT, "rulesets/Sources/ruleset_policy_map.txt")
 
 # --- CONFIGURATION ---
 

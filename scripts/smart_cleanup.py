@@ -10,8 +10,8 @@ if _LIB not in sys.path:
 from core.common import write_file as _atomic_write, safe_remove
 
 RULESET_DIRS = [
-    os.path.join(os.path.dirname(__file__), "../ruleset/Surge(Shadowkroket)"),
-    os.path.join(os.path.dirname(__file__), "../ruleset/AdBlock"),
+    os.path.join(os.path.dirname(__file__), "../rulesets/Surge(Shadowkroket)"),
+    os.path.join(os.path.dirname(__file__), "../rulesets/AdBlock"),
 ]
 
 # Specific rulesets should win over generic fallbacks. Direct stays above

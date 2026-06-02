@@ -18,8 +18,8 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 
 from core.module_sanitizer import sanitize_file_content
 from core.common import _BROWSER_UA, Logger, write_file
-SURGE_MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
-SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
+SURGE_MODULE_DIR = PROJECT_ROOT / "modules" / "surge(main)"
+SR_MODULE_DIR = PROJECT_ROOT / "modules" / "shadowrocket"
 
 # 配置常量
 DOWNLOAD_TIMEOUT = 10  # 秒
@@ -55,11 +55,11 @@ RULE_REPLACEMENTS = {
 
 # Keep remote RULE-SET references for purpose-split AdBlock shards
 PRESERVE_RULESET_MARKERS = (
-    "/ruleset/AdBlock/AdBlock_",
+    "/rulesets/AdBlock/AdBlock_",
     "ruleset%2FAdBlock%2FAdBlock_",
     "skk_upstream/",
     "HTTPDNS_Hijack.list",
-    "nowaytouse/script_hub@master/ruleset/",
+    "nowaytouse/script_hub@master/rulesets/",
 )
 
 REWRITE_MODIFIER_RE = re.compile(r',\s*(extended-matching|pre-matching)\b|'
@@ -159,7 +159,7 @@ def fetch_ruleset(url_or_path: str) -> List[str]:
 
         # 相对路径处理
         if not content and url_or_path.startswith(".."):
-            path = (PROJECT_ROOT / "module/surge(main)/amplify_nexus" / url_or_path).resolve()
+            path = (PROJECT_ROOT / "modules/surge(main)/amplify_nexus" / url_or_path).resolve()
             if path.exists():
                 try:
                     content = path.read_text(encoding='utf-8')

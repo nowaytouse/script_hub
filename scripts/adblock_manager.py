@@ -30,18 +30,18 @@ from core.surge_compliance import (
 # ============================================================================
 
 ROOT = get_project_root()
-SURGE_MODULE_DIR = os.path.join(ROOT, "module/surge(main)")
-HEAD_EXPANSE_DIR = os.path.join(ROOT, "module/surge(main)/head_expanse")
+SURGE_MODULE_DIR = os.path.join(ROOT, "modules/surge(main)")
+HEAD_EXPANSE_DIR = os.path.join(ROOT, "modules/surge(main)/head_expanse")
 CACHE_DIR = os.path.join(ROOT, ".cache")
 HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.txt")
-WHITELIST_FILE = os.path.join(ROOT, "ruleset/Sources/adblock_whitelist.txt")
-ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "ruleset/Sources/Links/AdBlock_sources.txt")
+WHITELIST_FILE = os.path.join(ROOT, "rulesets/Sources/adblock_whitelist.txt")
+ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "rulesets/Sources/Links/AdBlock_sources.txt")
 ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(
-    ROOT, "ruleset/Sources/Links/AdBlock_functional_sources.txt"
+    ROOT, "rulesets/Sources/Links/AdBlock_functional_sources.txt"
 )
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "module/local_sources")
-LOCAL_MODULES_DIR = os.path.join(ROOT, "ruleset/Sources/LocalModules")
-AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/local_sources")
+LOCAL_MODULES_DIR = os.path.join(ROOT, "rulesets/Sources/LocalModules")
+AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge(main)/amplify_nexus")
 # Rule-ingest hint for remote/list sources only (not used to pull amplify 增强 modules).
 NEXUS_AD_RULE_KEYWORDS = (
     "reject",
@@ -137,11 +137,11 @@ TARGET_MODULE_LITE = os.path.join(
 # Categories included in the Lite (mobile-friendly) tier.
 # Excludes heavy ThreatIntel shards (~1.2M rules) that are desktop-only.
 LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
-NARROW_PIERCE_DIR = os.path.join(ROOT, "module/surge(main)/narrow_pierce")
-PROMAX_SPLITS_DIR = os.path.join(ROOT, "module/build/promax_splits")
-ADBLOCK_DIR = os.path.join(ROOT, "ruleset/AdBlock")
-ADBLOCK_LIST = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/AdBlock.list")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
+NARROW_PIERCE_DIR = os.path.join(ROOT, "modules/surge(main)/narrow_pierce")
+PROMAX_SPLITS_DIR = os.path.join(ROOT, "modules/build/promax_splits")
+ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
+ADBLOCK_LIST = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/AdBlock.list")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/skk_upstream")
 SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
@@ -299,7 +299,7 @@ class AdBlockManager:
             if not entry.is_remote and entry.resolved_path.endswith(".list"):
                 targets.append(entry.resolved_path)
             # Find HTTPDNS_Hijack.list - it's hardcoded in header but let's find its path
-            hijack_path = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/HTTPDNS_Hijack.list")
+            hijack_path = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/HTTPDNS_Hijack.list")
             if os.path.exists(hijack_path):
                 targets.append(hijack_path)
 
@@ -1352,7 +1352,7 @@ class AdBlockManager:
         # Also update the legacy AdBlock.list with a notice or a subset
         legacy_content = [
             "# Ruleset: AdBlock (LEGACY / REDIRECT)\n",
-            "# This file is now split into multiple files in ruleset/AdBlock/\n",
+            "# This file is now split into multiple files in rulesets/AdBlock/\n",
             "# Please update your module to use the new split rulesets.\n",
         ]
         # Include top 1000 rules just in case
@@ -1378,7 +1378,7 @@ class AdBlockManager:
             file_path = os.path.join(ADBLOCK_DIR, filename)
             if safe_remove(file_path):
                 removed.append(filename)
-                srs_path = os.path.join(ROOT, "ruleset/SingBox", f"{os.path.splitext(filename)[0]}_Singbox.srs")
+                srs_path = os.path.join(ROOT, "rulesets/SingBox", f"{os.path.splitext(filename)[0]}_Singbox.srs")
                 if os.path.exists(srs_path):
                     safe_remove(srs_path)
         if removed:
@@ -1500,7 +1500,7 @@ class AdBlockManager:
                 "\n",
                 "## 安装模块（RULE-SET + 去广告 Script/Rewrite；解锁/增强请用 Amplify Nexus 独立模块）\n",
                 "\n",
-                "`ruleset/Sources/LocalModules/*` 各 App 去广告逐文件并入 PROMAX，"
+                "`rulesets/Sources/LocalModules/*` 各 App 去广告逐文件并入 PROMAX，"
                 "**勿单独安装**专项模块或已废弃的 narrow_pierce 副本。\n",
                 "\n",
                 "### 🖥️ 桌面完整版（Full）\n",
@@ -1555,8 +1555,8 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT",
             "DOMAIN,doh.dns.apple.com,DIRECT",
             "# Block app-layer HTTPDNS first",
-            f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT",
-            "# Split REJECT Rulesets (purpose-grouped; see ruleset/AdBlock/README.md)",
+            f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT",
+            "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)",
         ]
 
         shards_by_category: Dict[str, List[str]] = {}
@@ -1581,11 +1581,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}ruleset/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )
@@ -1646,7 +1646,7 @@ class AdBlockManager:
             name = f"🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]"
             desc = (
                 f"按用途分片({shard_count}片) + 应用内去广告({func_summary}); "
-                f"索引 ruleset/AdBlock/catalog.json"
+                f"索引 rulesets/AdBlock/catalog.json"
             )
             tag = "AdBlock, Dependency, HTTPDNS, Script"
 

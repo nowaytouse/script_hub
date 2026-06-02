@@ -9,12 +9,12 @@ from datetime import datetime
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-OUTPUT_FILE = os.path.join(REPO_ROOT, "module/surge(main)/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule")
+OUTPUT_FILE = os.path.join(REPO_ROOT, "modules/surge(main)/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule")
 
-GENERAL_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/General.sgmodule"
-DNS_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/DNS.sgmodule"
-HTTPDNS_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/HTTPDNS.Block.sgmodule"
-ASN_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/ASN.China.sgmodule"
+GENERAL_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodules/General.sgmodule"
+DNS_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodules/DNS.sgmodule"
+HTTPDNS_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodules/HTTPDNS.Block.sgmodule"
+ASN_URL = "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodules/ASN.China.sgmodule"
 
 def download(url, name):
     try:

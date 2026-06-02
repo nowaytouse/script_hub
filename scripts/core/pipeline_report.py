@@ -9,12 +9,12 @@ from typing import List, Tuple
 from core.common import Logger, get_project_root, read_file
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
-DNS_MAPPING_DIR = os.path.join(ROOT, "ruleset/Sources/DNS_mapping")
-ADBLOCK_DIR = os.path.join(ROOT, "ruleset/AdBlock")
-SINGBOX_DIR = os.path.join(ROOT, "ruleset/SingBox")
-MODULE_SURGE = os.path.join(ROOT, "module/surge(main)")
-MODULE_SR = os.path.join(ROOT, "module/shadowrocket")
+SURGE_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)")
+DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/DNS_mapping")
+ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
+SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
+MODULE_SURGE = os.path.join(ROOT, "modules/surge(main)")
+MODULE_SR = os.path.join(ROOT, "modules/shadowrocket")
 
 SRS_SOURCE_DIRS = [SURGE_DIR, DNS_MAPPING_DIR, ADBLOCK_DIR]
 SRS_SKIP_PREFIXES = ("AdBlock_",)  # large shards: optional compile, still audited

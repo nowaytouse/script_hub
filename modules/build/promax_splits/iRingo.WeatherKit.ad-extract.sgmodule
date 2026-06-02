@@ -1,0 +1,13 @@
+#!name=PROMAX split · iRingo.WeatherKit.sgmodule
+#!desc=从混合模块拆出的去广告行 5/7；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/modules/surge(main)/amplify_nexus/iRingo.WeatherKit.sgmodule
+
+[Rule]
+DOMAIN,weather-analytics-events.apple.com,REJECT-DROP
+DOMAIN-SUFFIX,tthr.apple.com,REJECT-DROP,extended-matching
+DOMAIN,tether.edge.apple,REJECT-DROP,extended-matching
+AND,((OR,((IP-ASN,714,no-resolve),(IP-ASN,6185,no-resolve))),(PROTOCOL,QUIC)),REJECT-DROP
+
+[MITM]
+hostname = %APPEND% weatherkit.apple.com, -github.com, -api.github.com, -*.githubusercontent.com

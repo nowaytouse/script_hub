@@ -10,10 +10,10 @@ import shutil
 from core.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
 
 ROOT = get_project_root()
-METACUBEX_DIR = os.path.join(ROOT, "ruleset/MetaCubeX")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)/skk_upstream")
-MODULE_DIR = os.path.join(ROOT, "module/surge(main)/amplify_nexus")
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "module/local_sources")
+METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)/skk_upstream")
+MODULE_DIR = os.path.join(ROOT, "modules/surge(main)/amplify_nexus")
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/local_sources")
 
 # CONFIGURATION
 
@@ -85,9 +85,9 @@ NEXUS_MODULES = [
     "https://yfamilys.com/module/bili.module",
     "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule",
     "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule",
-    "https://raw.githubusercontent.com/Maasea/sgmodule/refs/heads/master/YouTube.Enhance.sgmodule",
+    "https://raw.githubusercontent.com/Maasea/sgmodules/refs/heads/master/YouTube.Enhance.sgmodule",
     "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule",
-    "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.sgmodule",
+    "https://raw.githubusercontent.com/xream/scripts/main/surge/module/network-info/net-lsp-x.sgmodule",
     "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule",
     "https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule",
     "https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule",

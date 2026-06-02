@@ -13,7 +13,7 @@ from core.merge_upstream_bundle import merge_upstream_modules
 ROOT = get_project_root()
 OUTPUT = os.path.join(
     ROOT,
-    "module/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
+    "modules/surge(main)/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
 )
 
 SOURCES = [

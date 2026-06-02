@@ -57,7 +57,7 @@ def format_split_module(
     *,
     note: str,
 ) -> str:
-    """Minimal sgmodule fragment for review under module/build/promax_splits/."""
+    """Minimal sgmodule fragment for review under modules/build/promax_splits/."""
     base = os.path.basename(source_path)
     lines = [
         f"#!name=PROMAX split · {base}",

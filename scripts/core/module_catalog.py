@@ -269,7 +269,7 @@ def build_helper_html(
     project_root: Path,
     output_path: Path,
 ) -> None:
-    """Generate module/surge_module_helper.html from modules_data scan."""
+    """Generate modules/surge_module_helper.html from modules_data scan."""
     surge_groups = _modules_to_helper_groups(modules, project_root, shadowrocket=False)
     sr_groups = _modules_to_helper_groups(modules, project_root, shadowrocket=True)
     surge_total = sum(len(c["items"]) for c in surge_groups.values())
@@ -388,7 +388,7 @@ def write_shadowrocket_modules_json(
     output_path: Path,
     project_root: Path,
 ) -> None:
-    """Generate module/shadowrocket_modules_data.json from modules catalog."""
+    """Generate modules/shadowrocket_modules_data.json from modules catalog."""
     categories_data = {}
     total_sr_modules = 0
     cat_keys = ["amplify_nexus", "head_expanse", "narrow_pierce"]

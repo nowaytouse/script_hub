@@ -7,10 +7,10 @@ import re
 from core.common import Logger, get_project_root, safe_remove
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "ruleset/Surge(Shadowkroket)")
-DNS_MAPPING_DIR = os.path.join(ROOT, "ruleset/Sources/DNS_mapping")
+SURGE_DIR = os.path.join(ROOT, "rulesets/Surge(Shadowkroket)")
+DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/DNS_mapping")
 SKK_UPSTREAM_DIR = os.path.join(SURGE_DIR, "skk_upstream")
-SINGBOX_DIR = os.path.join(ROOT, "ruleset/SingBox")
+SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
 CACHE_DIR = os.path.join(ROOT, ".cache")
 EXTRA_SOURCE_FILES = [
     os.path.join(SKK_UPSTREAM_DIR, "reject-drop.conf"),
@@ -108,7 +108,7 @@ class SRSGenerator:
             Logger.error("sing-box binary not found. Skipping SRS generation.")
             return
 
-        source_dirs = [SURGE_DIR, DNS_MAPPING_DIR, os.path.join(ROOT, "ruleset/AdBlock")]
+        source_dirs = [SURGE_DIR, DNS_MAPPING_DIR, os.path.join(ROOT, "rulesets/AdBlock")]
         list_files = []
         for source_dir in source_dirs:
             if not os.path.isdir(source_dir):

@@ -2,12 +2,12 @@
 Merge Smart-Config-Kit supplemental rules into Script Hub rulesets.
 
 Source rules live at:
-  ruleset/Sources/custom/SmartConfigKit/shunt-rules/  (Passwall2 shunt-rules format)
-  ruleset/Sources/custom/SmartConfigKit/UK.list        (Surge DOMAIN/KEYWORD format)
-  ruleset/Sources/custom/SmartConfigKit/CiciAi.list   (Surge DOMAIN/KEYWORD format)
+  rulesets/Sources/custom/SmartConfigKit/shunt-rules/  (Passwall2 shunt-rules format)
+  rulesets/Sources/custom/SmartConfigKit/UK.list        (Surge DOMAIN/KEYWORD format)
+  rulesets/Sources/custom/SmartConfigKit/CiciAi.list   (Surge DOMAIN/KEYWORD format)
 
 The former fork dependency (Smart-Config-Kit/) has been removed; all source
-files are now vendored under ruleset/Sources/custom/SmartConfigKit/.
+files are now vendored under rulesets/Sources/custom/SmartConfigKit/.
 """
 
 import os
@@ -16,9 +16,9 @@ from collections import defaultdict
 from core.common import Logger, get_project_root, write_file
 
 ROOT = get_project_root()
-SCK_DIR = os.path.join(ROOT, "ruleset/Sources/custom/SmartConfigKit/shunt-rules")
-CUSTOM_DIR = os.path.join(ROOT, "ruleset/Sources/custom/SmartConfigKit")
-SOURCES_DIR = os.path.join(ROOT, "ruleset/Sources/Links")
+SCK_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit/shunt-rules")
+CUSTOM_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit")
+SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
 
 # Surge-format extra lists vendored inside custom/SmartConfigKit/
 EXTRA_LISTS = {

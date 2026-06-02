@@ -18,15 +18,15 @@ GIST_URL = (
 )
 OUT_PATH = os.path.join(
     ROOT,
-    "module/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js",
+    "modules/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js",
 )
 ADULT_FILES = (
-    os.path.join(ROOT, "module/local_sources/adultraplus.sgmodule"),
-    os.path.join(ROOT, "ruleset/Sources/vendor/adultraplus.sgmodule"),
+    os.path.join(ROOT, "modules/local_sources/adultraplus.sgmodule"),
+    os.path.join(ROOT, "rulesets/Sources/vendor/adultraplus.sgmodule"),
 )
 LOCAL_SCRIPT_URL = (
     "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
-    "module/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js"
+    "modules/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js"
 )
 
 

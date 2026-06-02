@@ -24,11 +24,11 @@ from core.module_catalog import (
 )
 
 PROJECT_ROOT = SCRIPT_DIR.parent
-MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
-SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
-MODULES_JSON = PROJECT_ROOT / "module" / "modules_data.json"
-SR_MODULES_JSON = PROJECT_ROOT / "module" / "shadowrocket_modules_data.json"
-HELPER_HTML = PROJECT_ROOT / "module" / "surge_module_helper.html"
+MODULE_DIR = PROJECT_ROOT / "modules" / "surge(main)"
+SR_MODULE_DIR = PROJECT_ROOT / "modules" / "shadowrocket"
+MODULES_JSON = PROJECT_ROOT / "modules" / "modules_data.json"
+SR_MODULES_JSON = PROJECT_ROOT / "modules" / "shadowrocket_modules_data.json"
+HELPER_HTML = PROJECT_ROOT / "modules" / "surge_module_helper.html"
 
 # Critical modules that MUST appear in the HTML after every build.
 # Add new module stems here whenever a new module is permanently added.
@@ -46,7 +46,7 @@ def _verify_html_coverage(modules: list, project_root: Path) -> int:
     missing = REQUIRED_MODULE_STEMS - scanned_stems
     if missing:
         print(f"  ⚠️  WARN: Required modules not found in scan: {sorted(missing)}")
-        print("       → Check that .sgmodule file exists under module/surge(main)/<category>/")
+        print("       → Check that .sgmodule file exists under modules/surge(main)/<category>/")
     return len(missing)
 
 

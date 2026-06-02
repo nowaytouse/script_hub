@@ -1,0 +1,26 @@
+# Functional sources → PROMAX / PROMAX Lite ([Script], [URL Rewrite], …)
+# Relative paths resolve from this file's directory.
+#
+# 混合模块（同时含去广告 + 解锁/增强）：按行拆分，仅广告行并入 PROMAX；
+#   拆分预览 → modules/build/promax_splits/*.ad-extract.sgmodule
+# 纯去广告模块：整模块并入
+# 纯解锁/增强：跳过（继续用 amplify_nexus 独立安装）
+#
+# 自动扫描（经 resolve_module_ingest_mode）：
+#   modules/local_sources/*.sgmodule
+#   rulesets/Sources/LocalModules/*   ← 各 App 去广告（逐文件并入 PROMAX）
+# narrow_pierce 已废弃：勿再复制专项模块到 Surge 安装目录
+
+../vendor/adultraplus.sgmodule
+
+# ── 通用 / 聚合去广告（full）──
+../../../modules/local_sources/AllInOne_Mock.sgmodule
+../../../modules/local_sources/All-in-One-2.x.sgmodule
+../../../modules/local_sources/[Sukka] Enhance Better ADBlock for Surge.sgmodule
+../../../modules/local_sources/XWebAds.sgmodule
+../../../modules/local_sources/BiliBili.ADBlock.sgmodule
+../../../modules/local_sources/YouTube.ADBlock.sgmodule
+../../../modules/local_sources/WeChat.ADBlock.sgmodule
+
+# ── 混合模块（split：只提取 ADBlock / REJECT / helper 等行）──
+../../../modules/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule

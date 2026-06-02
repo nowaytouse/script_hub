@@ -293,7 +293,7 @@ def _has_dangerous_chars(line: str) -> bool:
     return any(c in line for c in ('<', '>', '{', '}', 'function(', 'window.', 'document.'))
 
 # Committed snapshots for hosts that often block CI/datacenter IPs (yfamilys.com).
-_VENDOR_DIR = os.path.join(get_project_root(), "ruleset", "Sources", "vendor")
+_VENDOR_DIR = os.path.join(get_project_root(), "rulesets", "Sources", "vendor")
 VENDOR_SNAPSHOT_BY_URL: dict[str, str] = {
     "https://yfamilys.com/module/adultraplus.sgmodule": "adultraplus.sgmodule",
     "https://yfamilys.com/module/bili.module": "bili.module",

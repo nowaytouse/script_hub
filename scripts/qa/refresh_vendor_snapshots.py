@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Refresh ruleset/Sources/vendor from live yfamilys.com URLs."""
+"""Refresh rulesets/Sources/vendor from live yfamilys.com URLs."""
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-VENDOR = ROOT / "ruleset" / "Sources" / "vendor"
+VENDOR = ROOT / "rulesets" / "Sources" / "vendor"
 UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

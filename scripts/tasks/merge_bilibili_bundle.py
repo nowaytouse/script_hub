@@ -13,14 +13,14 @@ from core.merge_upstream_bundle import merge_upstream_modules
 ROOT = get_project_root()
 OUTPUT = os.path.join(
     ROOT,
-    "module/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+    "modules/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule",
 )
 
 SOURCES = [
     ("Enhanced", "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"),
     ("Global", "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"),
     ("Redirect", "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"),
-    ("Helper", "https://raw.githubusercontent.com/Maasea/sgmodule/master/Bilibili.Helper.sgmodule"),
+    ("Helper", "https://raw.githubusercontent.com/Maasea/sgmodules/master/Bilibili.Helper.sgmodule"),
 ]
 
 HEADER = {

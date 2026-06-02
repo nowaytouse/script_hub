@@ -14,13 +14,13 @@ from core.module_sanitizer import parse_module, format_header, format_module
 ROOT = get_project_root()
 OUTPUT = os.path.join(
     ROOT,
-    "module/surge(main)/amplify_nexus/📺 YouTube增强合集.sgmodule",
+    "modules/surge(main)/amplify_nexus/📺 YouTube增强合集.sgmodule",
 )
 
 
 def main() -> None:
     Logger.section("YouTube upstream bundle merge (Stripped of ADBlock)")
-    url = "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule"
+    url = "https://raw.githubusercontent.com/Maasea/sgmodules/master/YouTube.Enhance.sgmodule"
     Logger.info(f"Downloading {url}...")
     text = safe_download(url)
     if not text:
@@ -110,7 +110,7 @@ def main() -> None:
     # 2. Rebuild and write YouTube.ADBlock.sgmodule
     ADBLOCK_OUTPUT = os.path.join(
         ROOT,
-        "module/local_sources/YouTube.ADBlock.sgmodule",
+        "modules/local_sources/YouTube.ADBlock.sgmodule",
     )
 
     adblock_header = [

@@ -11,8 +11,8 @@ conf隐私🔏/
 *secret*
 # Exception: iCloud Private Relay module is public
 !*iCloud_Private_Relay*.sgmodule
-ruleset/surge ruleset profile
-module/surge/敏感profile 排除上传git
+rulesets/surge ruleset profile
+modules/surge/敏感profile 排除上传git
 
 # User-specific scripts (use .example versions)
 scripts/sync/sync_modules_to_icloud.sh
@@ -106,7 +106,7 @@ scripts/bin/cache.db
 
 scripts/fetch_config.yaml
 cache.db
-ruleset/kelee/
+rulesets/kelee/
 __pycache__/
 Smart-Config-Kit/
 temp_sukka_surge/

@@ -91,8 +91,8 @@ def process_file(filepath, exclusions, dry_run=False):
     return False
 
 def run_cleanup(directory=None, exclusions=DEFAULT_EXCLUSIONS, dry_run=False):
-    """Walk *directory* (default: <repo>/module) and harden MITM hostnames."""
-    scan_dir = str(directory) if directory else str(ROOT / "module")
+    """Walk *directory* (default: <repo>/modules) and harden MITM hostnames."""
+    scan_dir = str(directory) if directory else str(ROOT / "modules")
     modified_count = 0
     for dirpath, _, files in os.walk(scan_dir):
         for file in files:
@@ -106,7 +106,7 @@ def run_cleanup(directory=None, exclusions=DEFAULT_EXCLUSIONS, dry_run=False):
 
 def main():
     parser = argparse.ArgumentParser(description="Mass-cleanup of MITM hostname exclusions.")
-    parser.add_argument("--dir", default="module", help="Directory to scan (default: module)")
+    parser.add_argument("--dir", default="modules", help="Directory to scan (default: modules)")
     parser.add_argument("--dry-run", action="store_true", help="Print changes without saving")
     parser.add_argument("--exclude", nargs="+", default=DEFAULT_EXCLUSIONS, help="List of exclusions to enforce")
     args = parser.parse_args()

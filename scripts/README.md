@@ -48,15 +48,15 @@ sing-box CI 兜底版本见 [`.github/ci/sing-box-linux-amd64.version`](../.gith
 | `consolidate_modules.py` | 模块清洗 + 分组校正 + `modules_data.json` + `surge_module_helper.html` |
 | `srs_generator.py` | 编译 Sing-box `.srs` 规则集 |
 | `generate_surge_host_dns.py` | 将 DNS_mapping ruleset 展开为 Surge `[Host]` 条目 |
-| `lib/common.py` | 日志、路径、安全下载 |
-| `lib/surge_compliance.py` | **Surge RULE-SET 合规单源**（URL-REGEX 截断、DOMAIN-REGEX 禁入、IP no-resolve） |
-| `lib/rule_processor.py` | 规则标准化（依赖 `surge_compliance`） |
-| `lib/module_sanitizer.py` | 模块段内去重、标准段顺序 |
-| `lib/module_catalog.py` | 模块扫描 / 分组校正 / JSON / HTML |
-| `lib/merge_upstream_bundle.py` | 上游多模块合并（维护脚本共用） |
-| `lib/pipeline_report.py` | 流水线结束统计与 SRS 覆盖率检查 |
-| `tools/update_cores.sh` | 本地 sing-box / mihomo 更新（`--with-core`） |
-| `maintenance/` | 按需手动维护（合集刷新、iCloud 导入等） |
+| `core/common.py` | 日志、路径、安全下载 |
+| `core/surge_compliance.py` | **Surge RULE-SET 合规单源**（URL-REGEX 截断、DOMAIN-REGEX 禁入、IP no-resolve） |
+| `core/rule_processor.py` | 规则标准化（依赖 `surge_compliance`） |
+| `core/module_sanitizer.py` | 模块段内去重、标准段顺序 |
+| `core/module_catalog.py` | 模块扫描 / 分组校正 / JSON / HTML |
+| `core/merge_upstream_bundle.py` | 上游多模块合并（维护脚本共用） |
+| `core/pipeline_report.py` | 流水线结束统计与 SRS 覆盖率检查 |
+| `qa/update_cores.sh` | 本地 sing-box / mihomo 更新（`--with-core`） |
+| `tasks/` | 按需手动维护（合集刷新、iCloud 导入等） |
 
 ## 文档
 
@@ -64,7 +64,7 @@ sing-box CI 兜底版本见 [`.github/ci/sing-box-linux-amd64.version`](../.gith
 - [docs/Modules_callchain.md](../docs/Modules_callchain.md) — 功能模块与 PROMAX 分工
 - [docs/maintenance/module-maintenance.md](../docs/maintenance/module-maintenance.md) — 模块维护映射与修复流程
 - [docs/standards/module-header-spec.md](../docs/standards/module-header-spec.md) — 模块头规范（iOS 清空问题防线）
-- [ruleset/AdBlock/README.md](../ruleset/AdBlock/README.md) — 分片索引
+- [rulesets/AdBlock/README.md](../rulesets/AdBlock/README.md) — 分片索引
 
 ## 合规门禁（Surge Invalid line 回归）
 
