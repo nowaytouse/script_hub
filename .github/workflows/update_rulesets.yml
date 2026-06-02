@@ -6,7 +6,6 @@ name: Update Rulesets
 # Triggers:
 #   • schedule — 3×/day (Beijing 12:17, 20:17, 04:17; :17 avoids :00 queue delays)
 #   • workflow_dispatch — manual
-#   • push master — skipped only for github-actions[bot] chore(ruleset) (anti-loop)
 #
 # Before git push: wait ≥3 min (PUSH_COOLDOWN), then pull --rebase, then push.
 #
@@ -16,9 +15,6 @@ name: Update Rulesets
 # ═══════════════════════════════════════════════════════════════
 
 on:
-  push:
-    branches:
-      - master
   schedule:
     # UTC 04:17 / 12:17 / 20:17 → Beijing 12:17 / 20:17 / 次日 04:17
     - cron: '17 4,12,20 * * *'
@@ -37,15 +33,6 @@ jobs:
   update-rules:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    # Skip only bot's own chore(ruleset) push (prevents push→immediate re-run loop)
-    # Ensure we don't reference github.event.head_commit when event is not 'push'
-    if: >-
-      github.event_name != 'push' ||
-      (
-        github.event_name == 'push' &&
-        github.actor != 'github-actions[bot]' &&
-        !contains(github.event.head_commit.message, 'chore(ruleset)')
-      )
     permissions:
       contents: write
 
