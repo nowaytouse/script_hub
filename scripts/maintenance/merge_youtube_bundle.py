@@ -75,7 +75,8 @@ def main() -> None:
 
     HEADER = {
         "name": "📺 YouTube增强合集",
-        "desc": "合并 YouTube 增强 (Maasea 上游)\n🎬 Enhance: 画中画/后台播放/字幕翻译",
+        # Keep desc as single line to avoid breaking module metadata parsing on clients.
+        "desc": "合并 YouTube 增强 (Maasea 上游) | Enhance: 画中画/后台播放/字幕翻译",
         "author": "Maasea",
         "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png",
         "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",

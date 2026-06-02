@@ -62,17 +62,36 @@ def sync_ports(execute: bool = False):
     new_module_content = []
     START_MARKER = "# --- SYNCED PORT RULES START ---"
     END_MARKER = "# --- SYNCED PORT RULES END ---"
+    managed_keys = set()
+    for rule in port_rules:
+        parts = [p.strip().upper() for p in rule.split(',')]
+        if len(parts) >= 2:
+            managed_keys.add(f"{parts[0]},{parts[1]}")
     
     module_content_str = "".join(module_lines)
     if START_MARKER not in module_content_str:
         Logger.info("Initializing markers at end of [Rule] section.")
         rule_found = False
+        in_rule_section = False
         for line in module_lines:
-            new_module_content.append(line)
-            if line.strip().lower() == "[rule]":
+            stripped = line.strip()
+            if stripped.startswith("[") and stripped.endswith("]"):
+                in_rule_section = (stripped.lower() == "[rule]")
+            if stripped.lower() == "[rule]":
                 rule_found = True
+                new_module_content.append(line)
                 new_module_content.append(f"\n{START_MARKER}\n")
                 new_module_content.append(f"{END_MARKER}\n")
+                continue
+
+            # Remove legacy copies of managed rules so marker sync becomes single source of truth.
+            if in_rule_section and stripped and not stripped.startswith('#'):
+                parts = [p.strip().upper() for p in stripped.split(',')]
+                if len(parts) >= 2:
+                    key = f"{parts[0]},{parts[1]}"
+                    if key in managed_keys:
+                        continue
+            new_module_content.append(line)
         if not rule_found:
             Logger.error("Failed to find [Rule] section.")
             return
@@ -80,7 +99,11 @@ def sync_ports(execute: bool = False):
         new_module_content = []
 
     skip = False
+    in_rule_section = False
     for line in module_lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_rule_section = (stripped.lower() == "[rule]")
         if START_MARKER in line:
             new_module_content.append(line)
             new_module_content.append(f"# Automated update from ports source\n")
@@ -91,7 +114,15 @@ def sync_ports(execute: bool = False):
             skip = False
             new_module_content.append(line)
             continue
-        if not skip: new_module_content.append(line)
+        if not skip:
+            # Enforce single source of truth: remove managed port rules outside sync markers.
+            if in_rule_section and stripped and not stripped.startswith('#'):
+                parts = [p.strip().upper() for p in stripped.split(',')]
+                if len(parts) >= 2:
+                    key = f"{parts[0]},{parts[1]}"
+                    if key in managed_keys:
+                        continue
+            new_module_content.append(line)
 
     final_content = "".join(new_module_content)
 
