@@ -1,7 +1,7 @@
 #!name=PROMAX split · 知乎去广告.sgmodule
 #!desc=从混合模块拆出的去广告行 46/50；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/ruleset/Sources/LocalModules/知乎去广告.sgmodule
+#!split-source=/home/runner/work/script_hub/script_hub/ruleset/Sources/LocalModules/知乎去广告.sgmodule
 
 [Rule]
 DOMAIN,appcloud.zhihu.com,REJECT,extended-matching,pre-matching
