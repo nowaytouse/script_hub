@@ -6,8 +6,8 @@ import sys
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from lib.common import Logger, get_project_root, is_ci
-from lib.pipeline_report import print_pipeline_summary
+from core.common import Logger, get_project_root, is_ci
+from core.pipeline_report import print_pipeline_summary
 
 # Import our managers
 from firewall_sync import sync_ports
@@ -16,20 +16,20 @@ from adblock_manager import AdBlockManager
 from merge_smart_config_kit import merge as merge_smart_config_kit
 from ruleset_manager import RulesetManager
 from srs_generator import SRSGenerator
-from maintenance.mitm_cleanup_github import run_cleanup
+from tasks.mitm_cleanup_github import run_cleanup
 from smart_cleanup import run_cleanup as run_ruleset_cleanup, format_stats as format_ruleset_cleanup_stats
 
 # Import maintenance bundle merges
-from maintenance.merge_bilibili_bundle import main as merge_bilibili_bundle
-from maintenance.merge_youtube_bundle import main as merge_youtube_bundle
-from maintenance.merge_weibo_bundle import main as merge_weibo_bundle
-from maintenance.merge_apple_modules import main as merge_apple_modules
+from tasks.merge_bilibili_bundle import main as merge_bilibili_bundle
+from tasks.merge_youtube_bundle import main as merge_youtube_bundle
+from tasks.merge_weibo_bundle import main as merge_weibo_bundle
+from tasks.merge_apple_modules import main as merge_apple_modules
 
 # CONFIGURATION
 
 ROOT = get_project_root()
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
-CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "tools/update_cores.sh")
+CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "qa/update_cores.sh")
 
 CI_PUSH_COOLDOWN_MIN_SECONDS = 180  # avoid push→workflow→pull races (≥3 min)
 
@@ -85,7 +85,7 @@ def main():
     Logger.section("Surge Compliance Tests")
     try:
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/test_surge_compliance.py")],
+            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/test_surge_compliance.py")],
             cwd=ROOT,
             env={**os.environ, "PYTHONPATH": SCRIPTS_DIR},
         )
@@ -105,7 +105,7 @@ def main():
     Logger.section("Module Header Validation")
     try:
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/validate_module_headers.py")],
+            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/validate_module_headers.py")],
             cwd=ROOT,
             env={**os.environ, "PYTHONPATH": SCRIPTS_DIR},
         )
@@ -209,7 +209,7 @@ def main():
     Logger.section("Ruleset Compliance Validation")
     try:
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/validate_surge_rulesets.py")],
+            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/validate_surge_rulesets.py")],
             cwd=ROOT,
             env={**os.environ, "PYTHONPATH": SCRIPTS_DIR},
         )

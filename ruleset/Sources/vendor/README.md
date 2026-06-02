@@ -18,4 +18,4 @@ curl -fL -A "Mozilla/5.0" -o ruleset/Sources/vendor/adultraplus.sgmodule \
 # repeat for other URLs in the table
 ```
 
-`scripts/lib/common.py` also uses `.cache/http/` and these snapshots automatically for matching URLs.
+`scripts/core/common.py` also uses `.cache/http/` and these snapshots automatically for matching URLs.

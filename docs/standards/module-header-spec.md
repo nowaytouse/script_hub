@@ -25,7 +25,7 @@ This spec prevents the iOS "module fields empty" regression.
 
 ## Enforced By
 
-- Local/CI validator: `scripts/tools/validate_module_headers.py`
+- Local/CI validator: `scripts/qa/validate_module_headers.py`
 - CI workflow gate: `.github/workflows/update_rulesets.yml`
 - Main pipeline gate: `scripts/main_update.py`
 

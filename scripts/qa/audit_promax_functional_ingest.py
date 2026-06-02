@@ -11,8 +11,8 @@ ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
 
 from adblock_manager import AdBlockManager, LOCAL_MODULES_DIR  # noqa: E402
-from lib.promax_line_classifier import module_ingest_mode  # noqa: E402
-from lib.promax_module_split import split_module_sections  # noqa: E402
+from core.promax_line_classifier import module_ingest_mode  # noqa: E402
+from core.promax_module_split import split_module_sections  # noqa: E402
 
 
 def audit_path(path: str) -> None:

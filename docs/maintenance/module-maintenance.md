@@ -20,9 +20,9 @@ Regenerate through maintenance scripts only.
 
 | Module | Maintenance Script | Command |
 |--------|--------------------|---------|
-| YouTube增强合集 | `scripts/maintenance/merge_youtube_bundle.py` | `python3 scripts/maintenance/merge_youtube_bundle.py` |
-| BiliBili增强合集 | `scripts/maintenance/merge_bilibili_bundle.py` | `python3 scripts/maintenance/merge_bilibili_bundle.py` |
-| Apple服务增强合集 | `scripts/maintenance/merge_apple_modules.py` | `python3 scripts/maintenance/merge_apple_modules.py` |
+| YouTube增强合集 | `scripts/tasks/merge_youtube_bundle.py` | `python3 scripts/tasks/merge_youtube_bundle.py` |
+| BiliBili增强合集 | `scripts/tasks/merge_bilibili_bundle.py` | `python3 scripts/tasks/merge_bilibili_bundle.py` |
+| Apple服务增强合集 | `scripts/tasks/merge_apple_modules.py` | `python3 scripts/tasks/merge_apple_modules.py` |
 
 ## Fix Workflow (When a module is broken)
 
@@ -30,8 +30,8 @@ Regenerate through maintenance scripts only.
 2. Fix script/source input, not generated module output.
 3. Regenerate modules.
 4. Run validators:
-   - `python3 scripts/tools/validate_module_headers.py`
-   - `python3 scripts/tools/validate_surge_rulesets.py`
+   - `python3 scripts/qa/validate_module_headers.py`
+   - `python3 scripts/qa/validate_surge_rulesets.py`
 5. Commit and push.
 
 ## Current Guardrails

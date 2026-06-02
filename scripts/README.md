@@ -70,13 +70,13 @@ sing-box CI 兜底版本见 [`.github/ci/sing-box-linux-amd64.version`](../.gith
 
 ```bash
 # 单元回归（053a145d / 427a9228 / 0f524ff5 等事故）
-python3 scripts/tools/test_surge_compliance.py
+python3 scripts/qa/test_surge_compliance.py
 
 # 扫描已生成的 .list 文件
-python3 scripts/tools/validate_surge_rulesets.py
+python3 scripts/qa/validate_surge_rulesets.py
 
 # 扫描所有模块头结构（防止 iOS 模块字段清空）
-python3 scripts/tools/validate_module_headers.py
+python3 scripts/qa/validate_module_headers.py
 ```
 
 `main_update.py` 启动时会跑前者；合并后会跑后者。CI 在 `update_rulesets.yml` 中同样执行。
@@ -85,14 +85,14 @@ python3 scripts/tools/validate_module_headers.py
 
 ```bash
 # 刷新功能模块合集（执行后运行 consolidate + convert）
-python3 scripts/maintenance/merge_bilibili_bundle.py
-python3 scripts/maintenance/merge_youtube_bundle.py
-python3 scripts/maintenance/merge_weibo_bundle.py
-python3 scripts/maintenance/merge_apple_modules.py
+python3 scripts/tasks/merge_bilibili_bundle.py
+python3 scripts/tasks/merge_youtube_bundle.py
+python3 scripts/tasks/merge_weibo_bundle.py
+python3 scripts/tasks/merge_apple_modules.py
 
 # DNS Host 段重新生成
 python3 scripts/generate_surge_host_dns.py --write
 
 # iCloud 小火箭导入（需先改脚本内 SR_DIR 路径）
-python3 scripts/maintenance/import_from_icloud_sr.py
+python3 scripts/tasks/import_from_icloud_sr.py
 ```

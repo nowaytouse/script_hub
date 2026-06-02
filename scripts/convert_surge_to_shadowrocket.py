@@ -16,8 +16,8 @@ SCRIPT_DIR = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_DIR))
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-from lib.module_sanitizer import sanitize_file_content
-from lib.common import _BROWSER_UA, Logger, write_file
+from core.module_sanitizer import sanitize_file_content
+from core.common import _BROWSER_UA, Logger, write_file
 SURGE_MODULE_DIR = PROJECT_ROOT / "module" / "surge(main)"
 SR_MODULE_DIR = PROJECT_ROOT / "module" / "shadowrocket"
 

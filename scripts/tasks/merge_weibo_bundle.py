@@ -7,9 +7,9 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from lib.common import get_project_root, Logger, read_file, write_file
-from lib.merge_upstream_bundle import merge_upstream_modules
-from lib.module_sanitizer import format_header, format_module, merge_mitm_hosts, parse_module
+from core.common import get_project_root, Logger, read_file, write_file
+from core.merge_upstream_bundle import merge_upstream_modules
+from core.module_sanitizer import format_header, format_module, merge_mitm_hosts, parse_module
 
 ROOT = get_project_root()
 LOCAL_WEIBO = os.path.join(

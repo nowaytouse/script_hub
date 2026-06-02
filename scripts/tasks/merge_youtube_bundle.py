@@ -8,8 +8,8 @@ import re
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from lib.common import get_project_root, Logger, safe_download
-from lib.module_sanitizer import parse_module, format_header, format_module
+from core.common import get_project_root, Logger, safe_download
+from core.module_sanitizer import parse_module, format_header, format_module
 
 ROOT = get_project_root()
 OUTPUT = os.path.join(
@@ -90,7 +90,7 @@ def main() -> None:
         HEADER["arguments-desc"] = meta["arguments-desc"]
 
     extra = [
-        "# Upstream module processed by scripts/maintenance/merge_youtube_bundle.py",
+        "# Upstream module processed by scripts/tasks/merge_youtube_bundle.py",
         f"# - Source: {url}",
         "# - Stripped: [Rule], [Map Local] and *.googlevideo.com from MITM"
     ]

@@ -11,12 +11,12 @@ from adblock_manager import (  # noqa: E402
     AdBlockManager,
     LOCAL_MODULES_DIR,
 )
-from lib.promax_line_classifier import (
+from core.promax_line_classifier import (
     classify_promax_line,
     module_ingest_mode,
     should_keep_promax_line,
 )
-from lib.promax_module_split import split_module_sections
+from core.promax_module_split import split_module_sections
 
 
 def test_filename_gate() -> None:

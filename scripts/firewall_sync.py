@@ -3,7 +3,7 @@ import os
 import re
 import argparse
 from datetime import datetime
-from lib.common import (
+from core.common import (
     Logger, get_project_root, read_file, write_file, 
     extract_section, clean_rules
 )

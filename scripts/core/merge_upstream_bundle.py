@@ -7,8 +7,8 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from lib.common import Logger, safe_download
-from lib.module_sanitizer import (
+from core.common import Logger, safe_download
+from core.module_sanitizer import (
     format_header,
     format_module,
     merge_mitm_hosts,
@@ -86,7 +86,7 @@ def merge_upstream_modules(
     extra: List[str] = []
     if provenance_comment:
         extra.append(provenance_comment)
-    extra.append("# Upstream modules merged by scripts/lib/merge_upstream_bundle.py")
+    extra.append("# Upstream modules merged by scripts/core/merge_upstream_bundle.py")
     for label, url in sources:
         extra.append(f"# - {label}: {url}")
 

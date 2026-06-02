@@ -7,8 +7,8 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from lib.common import get_project_root, Logger
-from lib.merge_upstream_bundle import merge_upstream_modules
+from core.common import get_project_root, Logger
+from core.merge_upstream_bundle import merge_upstream_modules
 
 ROOT = get_project_root()
 OUTPUT = os.path.join(
