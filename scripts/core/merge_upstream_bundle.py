@@ -7,8 +7,8 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from common import Logger, safe_download
-from module_sanitizer import (
+from core.common import Logger, safe_download
+from core.module_sanitizer import (
     format_header,
     format_module,
     merge_mitm_hosts,
