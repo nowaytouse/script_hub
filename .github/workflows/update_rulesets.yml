@@ -38,9 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     # Skip only bot's own chore(ruleset) push (prevents push→immediate re-run loop)
+    # Ensure we don't reference github.event.head_commit when event is not 'push'
     if: >-
       github.event_name != 'push' ||
       (
+        github.event_name == 'push' &&
         github.actor != 'github-actions[bot]' &&
         !contains(github.event.head_commit.message, 'chore(ruleset)')
       )
