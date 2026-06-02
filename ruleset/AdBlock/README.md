@@ -1,6 +1,6 @@
 # AdBlock 分片规则集
 
-> 自动生成于 `2026-06-02 13:32:40` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-06-02 08:50:34` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -43,7 +43,7 @@
 |------|------|
 | `URL Rewrite` | 834 |
 | `Map Local` | 1,944 |
-| `Script` | 606 |
+| `Script` | 607 |
 | `Body Rewrite` | 79 |
 | `MITM` (hostname) | 1,010 |
 

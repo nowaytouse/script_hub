@@ -1,5 +1,5 @@
 #!name=PROMAX split · adultraplus.sgmodule
-#!desc=从混合模块拆出的去广告行 2444/2560；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 2445/2561；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=/home/runner/work/script_hub/script_hub/module/local_sources/adultraplus.sgmodule
 
@@ -2163,7 +2163,8 @@ quark2=type=http-response,pattern=^https?:\/\/open-cms-api\.(uc|quark)\.cn\/open
 pixivAds=type=http-response,pattern=^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token),requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/pixivAds.js
 baidumap=type=http-response,pattern=^https?:\/\/newclient\.map\.baidu\.com\/client\/phpui2\/\?qt=ads,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/baidumap.js
 ithome=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/news\/indexv\d\/iphone,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ithome.js
-ithome2=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/(news\/index|topmenu\/getfeeds),requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
+ithome2=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/news\/indexv2\/iphone\/927,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
+ithome3=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/(news\/index|topmenu\/getfeeds),requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
 kuwo3=type=http-response,pattern=^https?:\/\/musicpay\.kuwo\.cn\/music\.pay,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/kuwo/kuwo.js
 cnftp4=type=http-response,pattern=^https?:\/\/mobileso\.bz\.mgtv\.com\/mobile\/recommend\/v2\?,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cnftp.js
 abchina=type=http-response,pattern=^https?:\/\/mobilepaas\.abchina\.com\.cn:441\/mgw\.htm url script-response-header https://raw.githubusercontent.com/ddgksf2013/Scripts/master/abchina.js
