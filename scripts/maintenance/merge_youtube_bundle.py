@@ -97,7 +97,12 @@ def main() -> None:
     header_lines = format_header(HEADER, extra_lines=extra)
     os.makedirs(os.path.dirname(OUTPUT) or ".", exist_ok=True)
     with open(OUTPUT, "w", encoding="utf-8") as f:
-        f.write(format_module(header_lines, final_sections, dedupe=True))
+        content = format_module(header_lines, final_sections, dedupe=True)
+        if not content or len(content.strip()) < 100:
+            Logger.error(f"Generated content too small or empty. Aborting write to {OUTPUT}")
+            Logger.error(f"Content length: {len(content) if content else 0}")
+            sys.exit(1)
+        f.write(content)
 
     Logger.success(f"Wrote stripped bundle: {OUTPUT}")
 

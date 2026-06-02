@@ -31,17 +31,31 @@ def sync_ports(execute: bool = False):
     source_lines = read_file(PORTS_SOURCE)
     port_rules = []
     port_pattern = re.compile(r'^(IN-PORT|DEST-PORT|SRC-PORT)')
+    invalid_rules = []
     
     for line in source_lines:
         line = line.strip()
         if not line or line.startswith('#'): continue
-        if port_pattern.match(line): port_rules.append(line)
+        if port_pattern.match(line):
+            # Validate rule has action
+            parts = line.split(',')
+            if len(parts) < 3:
+                invalid_rules.append(line)
+                Logger.warn(f"  Invalid rule (missing action): {line}")
+            else:
+                port_rules.append(line)
+
+    if invalid_rules:
+        Logger.error(f"Found {len(invalid_rules)} invalid rules (missing action)")
+        for rule in invalid_rules:
+            Logger.error(f"  - {rule}")
+        return
 
     if not port_rules:
         Logger.warn("No port rules found in source.")
         return
 
-    Logger.info(f"Extracted {len(port_rules)} rules from source.")
+    Logger.info(f"Extracted {len(port_rules)} valid rules from source.")
 
     # 2. Process module
     module_lines = read_file(FIREWALL_MODULE)
