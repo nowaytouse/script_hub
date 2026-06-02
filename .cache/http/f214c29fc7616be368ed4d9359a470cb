@@ -3,7 +3,7 @@
 #!icon=https://raw.githubusercontent.com/deezertidal/private/main/icons/startingad.png
 #!homepage=https://yfamilys.com
 #!author=Mixed
-# 由yfamilys.com自动维护 202605
+# 由yfamilys.com自动维护 202606
 [URL Rewrite]
 https?:\/\/helper\.2bulu\.com\/(greenPea\/queryTasks|proSpecial\/allData|saveSplashFrequencyStatistics|getPopInfo|getAppEntranceConfig|promote\/list|getSplash|outing\/reqFoundNewList|outing\/reqIndex) _ reject
 https://tg.feidee.com/vis-ad-engine-ws/api/show _ reject
@@ -1012,7 +1012,9 @@ baidumap=type=http-response,pattern=^https?:\/\/newclient\.map\.baidu\.com\/clie
 
 ithome=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/news\/indexv\d\/iphone,requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ithome.js
 
-ithome2=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/(news\/index|topmenu\/getfeeds),requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
+ithome2=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/news\/indexv2\/iphone\/927,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
+
+ithome3=type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/(news\/index|topmenu\/getfeeds),requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
 
 kuwo3=type=http-response,pattern=^https?:\/\/musicpay\.kuwo\.cn\/music\.pay,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/kuwo/kuwo.js
 
