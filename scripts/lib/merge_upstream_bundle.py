@@ -42,7 +42,10 @@ def _combine_arguments(
         raw_desc = meta.get("arguments-desc", "").strip()
         mod_name = meta.get("name", label).strip()
         if raw_desc:
-            desc_blocks.append(f"[{mod_name}]\n{raw_desc}")
+            # Keep arguments-desc strictly single-line metadata:
+            # encode logical line breaks as "\n" so clients won't parse stray pseudo-sections.
+            normalized = raw_desc.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n")
+            desc_blocks.append(f"[{mod_name}]\\n{normalized}")
 
     args_line = ", ".join(arg_tokens) if arg_tokens else None
     desc_line = "\\n\\n".join(desc_blocks) if desc_blocks else None
