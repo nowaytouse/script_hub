@@ -36,6 +36,9 @@ _backup_*/
 *.backup.*
 *.sgmodule.backup.*
 *.list.backup.*
+# Temporary git clones and local repositories
+temp_*/
+/temp_*/
 
 # ============================================
 # macOS System Files
