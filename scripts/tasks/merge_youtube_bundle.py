@@ -8,8 +8,8 @@ import re
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from ..core.common import get_project_root, Logger, safe_download
-from ..core.module_sanitizer import parse_module, format_header, format_module
+from core.common import get_project_root, Logger, safe_download
+from core.module_sanitizer import parse_module, format_header, format_module
 
 ROOT = get_project_root()
 OUTPUT = os.path.join(

@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from typing import List, Tuple
 
-from .common import Logger, get_project_root, read_file
+from common import Logger, get_project_root, read_file
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket")

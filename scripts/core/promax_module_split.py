@@ -7,7 +7,7 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 
-from .promax_line_classifier import should_keep_promax_line
+from promax_line_classifier import should_keep_promax_line
 
 SECTION_HEADER_RE = re.compile(r"^\[([^\]]+)\]\s*$")
 

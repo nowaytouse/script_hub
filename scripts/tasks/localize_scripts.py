@@ -11,7 +11,7 @@ import sys
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
-from ..core.common import _BROWSER_UA, safe_download_binary, Logger
+from core.common import _BROWSER_UA, safe_download_binary, Logger
 
 
 ROOT = Path(__file__).parent.parent.parent

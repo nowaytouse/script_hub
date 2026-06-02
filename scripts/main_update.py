@@ -6,18 +6,18 @@ import sys
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from .core.common import Logger, get_project_root, is_ci
-from .core.pipeline_report import print_pipeline_summary
+from core.common import Logger, get_project_root, is_ci
+from core.pipeline_report import print_pipeline_summary
 
 # Import our managers
-from .firewall_sync import sync_ports
-from .upstream_sync import UpstreamSyncer
-from .adblock_manager import AdBlockManager
-from .merge_smart_config_kit import merge as merge_smart_config_kit
-from .ruleset_manager import RulesetManager
-from .srs_generator import SRSGenerator
-from .tasks.mitm_cleanup_github import run_cleanup
-from .smart_cleanup import run_cleanup as run_ruleset_cleanup, format_stats as format_ruleset_cleanup_stats
+from firewall_sync import sync_ports
+from upstream_sync import UpstreamSyncer
+from adblock_manager import AdBlockManager
+from merge_smart_config_kit import merge as merge_smart_config_kit
+from ruleset_manager import RulesetManager
+from srs_generator import SRSGenerator
+from tasks.mitm_cleanup_github import run_cleanup
+from smart_cleanup import run_cleanup as run_ruleset_cleanup, format_stats as format_ruleset_cleanup_stats
 
 # Import maintenance bundle merges
 from tasks.merge_bilibili_bundle import main as merge_bilibili_bundle

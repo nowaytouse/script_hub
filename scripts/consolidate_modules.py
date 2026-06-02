@@ -13,7 +13,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from .core.module_catalog import (
+from core.module_catalog import (
     CATEGORIES,
     build_helper_html,
     normalize_categories_tree,

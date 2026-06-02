@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from .module_sanitizer import parse_module, sanitize_file_content
-from .common import write_file
+from module_sanitizer import parse_module, sanitize_file_content
+from common import write_file
 
 PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
 PROMAX_MERGE_LABEL = "🚫 Universal Ad-Blocking Rules (PROMAX)"

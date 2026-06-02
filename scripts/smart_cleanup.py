@@ -7,7 +7,7 @@ from typing import Dict, Iterable
 _LIB = os.path.join(os.path.dirname(__file__), "core")
 if _LIB not in sys.path:
     sys.path.insert(0, os.path.dirname(__file__))
-from .core.common import write_file as _atomic_write, safe_remove
+from core.common import write_file as _atomic_write, safe_remove
 
 RULESET_DIRS = [
     os.path.join(os.path.dirname(__file__), "../rulesets/surge-shadowrocket"),
@@ -154,7 +154,7 @@ def is_valid_rule(line: str) -> bool:
 
 
 def clean_rule(line: str) -> str:
-    from .core.surge_compliance import strip_inline_comment
+    from core.surge_compliance import strip_inline_comment
 
     line = strip_inline_comment(line.strip())
     if not line or line.startswith(("#", "//")):

@@ -11,15 +11,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from .core.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
-from .core.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
-from .core.promax_line_classifier import (
+from core.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
+from core.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
+from core.promax_line_classifier import (
     classify_promax_line,
     module_ingest_mode,
     should_keep_promax_line,
 )
-from .core.promax_module_split import format_split_module, split_module_sections
-from .core.surge_compliance import (
+from core.promax_module_split import format_split_module, split_module_sections
+from core.surge_compliance import (
     format_url_regex_for_surge,
     is_invalid_domain_regex_payload,
     strip_trailing_policy,
@@ -889,7 +889,7 @@ class AdBlockManager:
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             return
-        from .core.module_sanitizer import _dedupe_key
+        from core.module_sanitizer import _dedupe_key
 
         key = _dedupe_key(section_name, stripped)
         if not key or key in self._section_seen[section_name]:

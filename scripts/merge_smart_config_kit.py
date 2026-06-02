@@ -13,7 +13,7 @@ files are now vendored under rulesets/Sources/custom/SmartConfigKit/.
 import os
 import re
 from collections import defaultdict
-from .core.common import Logger, get_project_root, write_file
+from core.common import Logger, get_project_root, write_file
 
 ROOT = get_project_root()
 SCK_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit/shunt-rules")

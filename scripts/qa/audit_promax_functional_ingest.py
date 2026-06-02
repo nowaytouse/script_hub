@@ -10,9 +10,9 @@ SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
 
-from ..adblock_manager import AdBlockManager, LOCAL_MODULES_DIR  # noqa: E402
-from ..core.promax_line_classifier import module_ingest_mode  # noqa: E402
-from ..core.promax_module_split import split_module_sections  # noqa: E402
+from adblock_manager import AdBlockManager, LOCAL_MODULES_DIR  # noqa: E402
+from core.promax_line_classifier import module_ingest_mode  # noqa: E402
+from core.promax_module_split import split_module_sections  # noqa: E402
 
 
 def audit_path(path: str) -> None:

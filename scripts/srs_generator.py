@@ -4,7 +4,7 @@ import json
 import subprocess
 import concurrent.futures
 import re
-from .core.common import Logger, get_project_root, safe_remove
+from core.common import Logger, get_project_root, safe_remove
 
 ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket")
