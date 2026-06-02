@@ -154,7 +154,7 @@ def is_valid_rule(line: str) -> bool:
 
 
 def clean_rule(line: str) -> str:
-    from core.surge_compliance import strip_inline_comment
+    from .core.surge_compliance import strip_inline_comment
 
     line = strip_inline_comment(line.strip())
     if not line or line.startswith(("#", "//")):

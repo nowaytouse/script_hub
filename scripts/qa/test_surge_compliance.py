@@ -15,8 +15,8 @@ from ..core.surge_compliance import (  # noqa: E402
     strip_inline_comment,
     validate_surge_ruleset_line,
 )
-from ruleset_manager import RulesetManager  # noqa: E402
-from adblock_manager import AdBlockManager  # noqa: E402
+from ..ruleset_manager import RulesetManager  # noqa: E402
+from ..adblock_manager import AdBlockManager  # noqa: E402
 
 
 def assert_eq(label: str, got, want) -> None:

@@ -889,7 +889,7 @@ class AdBlockManager:
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             return
-        from core.module_sanitizer import _dedupe_key
+        from .core.module_sanitizer import _dedupe_key
 
         key = _dedupe_key(section_name, stripped)
         if not key or key in self._section_seen[section_name]:

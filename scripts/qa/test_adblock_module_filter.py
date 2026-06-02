@@ -6,7 +6,7 @@ import sys
 SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPT_DIR)
 
-from adblock_manager import (  # noqa: E402
+from ..adblock_manager import (  # noqa: E402
     AMPLIFY_NEXUS_DIR,
     AdBlockManager,
     LOCAL_MODULES_DIR,
@@ -155,7 +155,7 @@ def test_amplify_nexus_not_auto_scanned() -> None:
 
 
 def test_sukka_adblock_allowlisted_full() -> None:
-    from adblock_manager import LOCAL_SOURCES_DIR
+    from ..adblock_manager import LOCAL_SOURCES_DIR
 
     path = os.path.join(
         LOCAL_SOURCES_DIR, "[Sukka] Enhance Better ADBlock for Surge.sgmodule"
