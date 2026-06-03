@@ -4,9 +4,12 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-04 02:48:58
+#!date=2026-06-04 02:58:21
 
 [Rule]
+DEST-PORT,8076,REJECT
+IN-PORT,127.0.0.1:12654,REJECT
+IN-PORT,8076,REJECT
 DOMAIN,dns.alidns.com,DIRECT
 DOMAIN,doh.pub,DIRECT
 DOMAIN,dns.pub,DIRECT

@@ -7,12 +7,6 @@
 #!arguments=GeoManifest.Dynamic.Config.CountryCode:"CN",UrlInfoSet.Dispatcher:"AutoNavi",UrlInfoSet.Directions:"AutoNavi",UrlInfoSet.RAP:"Apple",UrlInfoSet.LocationShift:"AUTO",TileSet.Earth:"AUTO",TileSet.Roads:"AUTO",TileSet.Satellite:"AUTO",Storage:"Argument",LogLevel:"WARN",Weather.Provider:"ColorfulClouds",NextHour.Provider:"ColorfulClouds",AirQuality.Calculate.Algorithm:"EU_EAQI",API.ColorfulClouds.Token:"",API.QWeather.Host:"devapi.qweather.com",API.QWeather.Token:"",API.WAQI.Token:"",Proxy:🇺🇸美国,CountryCode:"US",NewsPlusUser:true,ThirdParty:false,isWorkaroundSSLPinning:true,Types:"Official,Translate",Languages[0]:"AUTO",Languages[1]:"ZH",Position:"Reverse",Vendor:"Google",ShowOnly:false
 #!arguments-desc=[ iRingo: 🗺️ Maps] 参数说明请参考上游模块文档\n[ iRingo: 🌤 WeatherKit] 参数说明请参考上游模块文档\n[ iRingo: 📰 News] 参数说明请参考上游模块文档\n[ iRingo: 📺 TV app] 参数说明请参考上游模块文档\n[🍿️ DualSubs: 🔣 Universal] 参数说明请参考上游模块文档
 #!homepage=https://NSRingo.github.io
-# Upstream modules merged by scripts/hub/merge_upstream.py
-# - iRingo.Maps: https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule
-# - iRingo.WeatherKit: https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule
-# - iRingo.News: https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule
-# - iRingo.TV: https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule
-# - DualSubs.Universal: https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule
 
 [General]
 force-http-engine-hosts = %APPEND% *.hls.pv-cdn.net, *.hls.row.aiv-cdn.net, *avodhlss3ww-a.akamaihd.net, s3.amazonaws.com, cf-timedtext.aux.pv-cdn.net, d1v5ir2lpwr8os.cloudfront.net, d22qjgkvxw22r6.cloudfront.net, d25xi40x97liuc.cloudfront.net, d27xxe7juh1us6.cloudfront.net, dmqdd6hw24ucf.cloudfront.net, assets.huluim.com, vod-*.live.cf.md.bbci.co.uk, vod-*-live.akamaized.net
