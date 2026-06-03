@@ -1,113 +1,90 @@
-# ============================================
-# Private & Sensitive Data
-# ============================================
-zip_output/
-zip_output_copy/
-backup/
-conf隐私🔏/
-*敏感*
-*私密*
-*private*
-*secret*
-# Exception: iCloud Private Relay module is public
+
 !*iCloud_Private_Relay*.sgmodule
-rulesets/surge ruleset profile
-modules/surge/敏感profile 排除上传git
-
-# User-specific scripts (use .example versions)
-scripts/sync/sync_modules_to_icloud.sh
-scripts/network/config-manager-auto-update/test-full.sh
-
-# Test media and conversion outputs
-**/Menthako/
-**/compressed/
-COMPRESSION_REPORT.md
-
-# ============================================
-# Backup & Temporary Files
-# ============================================
-*_backup_*/
-_backup_*/
-*.tmp
-*.temp
-/tmp/
-.temp_adblock_merge/
-.temp_*_merge/
-*.backup.*
-*.sgmodule.backup.*
-*.list.backup.*
-# Temporary git clones and local repositories
-temp_*/
-/temp_*/
-
-# ============================================
-# macOS System Files
-# ============================================
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
-
-# ============================================
-# Archives & Logs
-# ============================================
-*.zip
-*.tar.gz
-*.tgz
-archive_part_*.zip
-*.log
-
-# ============================================
-# Build Artifacts & IDE
-# ============================================
-Cargo.lock
-scripts/network/config-manager-auto-update/config.json
-scripts/network/config-manager-auto-update/bin/
-scripts/network/config-manager-auto-update/target/
-# Rust
-target/
-**/target/
-scripts/network/config-manager-auto-update/.cargo/
-.claude/
-sing-box
-sing-box.tar.gz
-
-# ============================================
-# Test & Debug Files
-# ============================================
-test_debug.webp
-test_*.webp
-test_*.gif
-test_*.png
-zip_output_test/
-
-# ============================================
-# Task Summary Files (auto-generated)
-# ============================================
-COMPLETION_SUMMARY.md
-TASK_*_COMPLETION_SUMMARY.md
-TASK_*_*.md
-# Private directories
-conf隐私🔏/
-隐私🔏/
-menthako_test_data/
-tools/browser-sync/
-
-# Temporary tools & DB
-# scripts/bin/ - Only ignore binaries and cache
-scripts/bin/mihomo
-scripts/bin/sing-box
-scripts/bin/cache.db
+!scripts/bin/*.plist
 !scripts/bin/*.py
 !scripts/bin/*.sh
-!scripts/bin/*.plist
 !scripts/bin/install.sh
 !scripts/bin/wrapper.sh
-
-scripts/fetch_config.yaml
-cache.db
-rulesets/kelee/
-__pycache__/
+# ============================================
+# Archives & Logs
+# Backup & Temporary Files
+# Build Artifacts & IDE
+# Exception: iCloud Private Relay module is public
+# Private & Sensitive Data
+# Private directories
+# Rust
+# Task Summary Files (auto-generated)
+# Temporary git clones and local repositories
+# Temporary tools & DB
+# Test & Debug Files
+# Test media and conversion outputs
+# User-specific scripts (use .example versions)
+# macOS System Files
+# scripts/bin/ - Only ignore binaries and cache
+**/Menthako/
+**/compressed/
+**/target/
+*.backup.*
+*.list.backup.*
+*.log
+*.sgmodule.backup.*
+*.tar.gz
+*.temp
+*.tgz
+*.tmp
+*.zip
+*_backup_*/
+*private*
+*secret*
+*敏感*
+*私密*
+.AppleDouble
+.DS_Store
+.LSOverride
+._*
+.cache/
+.claude/
+.temp_*_merge/
+.temp_adblock_merge/
+/temp_*/
+/tmp/
+COMPLETION_SUMMARY.md
+COMPRESSION_REPORT.md
+Cargo.lock
 Smart-Config-Kit/
+TASK_*_*.md
+TASK_*_COMPLETION_SUMMARY.md
+__pycache__/
+_backup_*/
+archive_part_*.zip
+backup/
+cache.db
+conf隐私🔏/
+menthako_test_data/
+modules/surge/敏感profile 排除上传git
+rulesets/kelee/
+rulesets/surge ruleset profile
+scripts/bin/cache.db
+scripts/bin/mihomo
+scripts/bin/sing-box
+scripts/fetch_config.yaml
+scripts/network/config-manager-auto-update/.cargo/
+scripts/network/config-manager-auto-update/bin/
+scripts/network/config-manager-auto-update/config.json
+scripts/network/config-manager-auto-update/target/
+scripts/network/config-manager-auto-update/test-full.sh
+scripts/sync/sync_modules_to_icloud.sh
+sing-box
+sing-box.tar.gz
+target/
+temp_*/
 temp_sukka_surge/
-
+test_*.gif
+test_*.png
+test_*.webp
+test_debug.webp
+tools/browser-sync/
+zip_output/
+zip_output_copy/
+zip_output_test/
+隐私🔏/
