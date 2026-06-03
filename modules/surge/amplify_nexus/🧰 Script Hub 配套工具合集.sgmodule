@@ -4,8 +4,8 @@
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Scriptable.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=ScriptHub, BoxJs, Sub-Store
-#!date=2026-06-03 19:10:43
-#!arguments=ability:http-client-policy, cronexp:55 23 * * *, sync:"Sub-Store Sync", timeout:120, engine:auto, produce:"# Sub-Store Produce", produce_cronexp:50 */6 * * *, sync_success_notify:true, produce_sub:"sub1, sub2", produce_col:"col1, col2", max_size:-1, cors:"https://sub-store.vercel.app", Notify:开启通知
+#!date=2026-06-03 19:46:30
+#!arguments=ability:http-client-policy,cronexp:55 23 * * *,sync:"Sub-Store Sync",timeout:120,engine:auto,produce:"# Sub-Store Produce",produce_cronexp:50 */6 * * *,sync_success_notify:true,produce_sub:"sub1,sub2",produce_col:"col1,col2",max_size:-1,cors:"https://sub-store.vercel.app",Notify:开启通知
 #!arguments-desc=[Sub-Store(β)] 参数说明请参考上游模块文档\n[Script Hub: 重写 & 规则集转换] 参数说明请参考上游模块文档
 #!homepage=https://script.hub
 
@@ -14,7 +14,7 @@ force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.ne
 force-http-engine-hosts = %APPEND% script.hub, *.script.hub
 
 [Script]
-Rewrite: BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_cb5e10_chavy.boxjs.js, requires-body=true, timeout=120
+Rewrite: BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js, requires-body=true, timeout=120
 Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},ability="{{{ability}}}",engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
 Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
 {{{sync}}}=type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,engine={{{engine}}},argument="sync_success_notify={{{sync_success_notify}}}"

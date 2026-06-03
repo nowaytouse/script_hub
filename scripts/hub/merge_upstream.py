@@ -58,7 +58,7 @@ def _combine_arguments(
             # iOS clients are sensitive to oversized metadata lines. Keep concise summaries only.
             desc_blocks.append(f"[{mod_name}] 参数说明请参考上游模块文档")
 
-    args_line = ", ".join(arg_tokens) if arg_tokens else None
+    args_line = ",".join(arg_tokens) if arg_tokens else None
     desc_line = "\\n".join(desc_blocks) if desc_blocks else None
     return args_line, desc_line
 
