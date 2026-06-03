@@ -463,19 +463,32 @@ def merge_host_lines(lines_str: str) -> str:
         if ' = ' in line and not line.strip().startswith('#'):
             domain = line.split(' = ', 1)[0].strip()
             ips_str = line.split(' = ', 1)[1].strip()
-            ips = [ip.strip() for ip in ips_str.split(',')]
             
-            if domain in domain_to_ips:
-                for ip in ips:
-                    if ip not in domain_to_ips[domain]:
-                        domain_to_ips[domain].append(ip)
-                first_idx = domain_to_line_idx[domain]
-                out_lines[first_idx] = f"{domain} = {', '.join(domain_to_ips[domain])}"
-                out_lines.append("")
-                continue
+            # HARDENING: Surge does not support multiple 'server:' definitions.
+            # If the mapping starts with server:, we just keep the first one and ignore duplicates.
+            if ips_str.startswith("server:"):
+                if domain not in domain_to_ips:
+                    domain_to_ips[domain] = [ips_str]
+                    domain_to_line_idx[domain] = len(out_lines)
+                else:
+                    # Skip duplicate server definition
+                    out_lines.append("")
+                    continue
             else:
-                domain_to_ips[domain] = ips
-                domain_to_line_idx[domain] = len(out_lines)
+                ips = [ip.strip() for ip in ips_str.split(',')]
+                if domain in domain_to_ips:
+                    # Only merge if the first mapping was also an IP list (not server:)
+                    if not domain_to_ips[domain][0].startswith("server:"):
+                        for ip in ips:
+                            if ip not in domain_to_ips[domain]:
+                                domain_to_ips[domain].append(ip)
+                        first_idx = domain_to_line_idx[domain]
+                        out_lines[first_idx] = f"{domain} = {', '.join(domain_to_ips[domain])}"
+                    out_lines.append("")
+                    continue
+                else:
+                    domain_to_ips[domain] = ips
+                    domain_to_line_idx[domain] = len(out_lines)
                 
         out_lines.append(line)
     
