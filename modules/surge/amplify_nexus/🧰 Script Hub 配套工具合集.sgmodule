@@ -13,7 +13,6 @@
 force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
 force-http-engine-hosts = %APPEND% script.hub, *.script.hub
 
-
 [Script]
 Rewrite: BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js, requires-body=true, timeout=120
 Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},ability="{{{ability}}}",engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
@@ -24,7 +23,6 @@ Script Hub: 前端 = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit
 Script Hub: 重写转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
 Script Hub: 规则集转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_0aa101_rule-parser.js, timeout=300, argument=Notify={{{Notify}}}
 Script Hub: 脚本转换 = type=http-request, pattern=^https?:\/\/script\.hub\/convert\/, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_95a370_script-converter.js, timeout=300
-
 
 [MITM]
 hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store, -*.githubusercontent.com, -api.github.com, -github.com

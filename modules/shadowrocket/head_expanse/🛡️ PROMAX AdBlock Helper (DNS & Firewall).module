@@ -1,0 +1,194 @@
+#!name=🛡️ PROMAX AdBlock Helper (DNS & Firewall)
+#!desc=[🚀SR] Outbound Port Filtering | DNS Overrides | Hosts steering
+#!author=nyamiiko (Enhanced)
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!tag=Security, Firewall, macOS, DNS
+#!version=2026.06.04
+
+[General]
+bypass-system = true
+ipv6 = true
+prefer-ipv6 = true
+hijack-dns = *:53
+dns-direct-fallback-proxy = false
+geoip-maxmind-url = https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb
+fallback-dns-server = %APPEND% 76.76.10.2, 2606:1a40:1::2, 139.162.110.150, 2400:8902::f03c:91ff:fe06:787f, 185.150.99.255, 2001:678:ed0:f000::, 194.242.2.3, 2a07:e340::3, 116.202.176.26, 2a01:4f8:c2c:548f::1, 185.184.222.222, 2a09::1, 95.215.19.53, 2001:67c:2354:2::53, 146.255.56.98, 2a02:1b8:10:234::2, 185.95.218.42, 2a05:fc84::42
+fallback-dns-server = %APPEND% h3://freedns.controld.com/p2, h3://doh-sg.blahdns.com/dns-query, h3://doh.ffmuc.net/dns-query, https://adblock.dns.mullvad.net/dns-query, https://doh.libredns.gr/noads, h3://doh.dns.sb/dns-query, https://doh.njalla.fo/dns-query, https://doh.applied-privacy.net/query, https://dns.digitale-gesellschaft.ch/dns-query
+
+[Rule]
+DEST-PORT,8076,REJECT
+IN-PORT,127.0.0.1:12654,REJECT
+IN-PORT,8076,REJECT
+DEST-PORT,31337,REJECT
+DEST-PORT,31338,REJECT
+DEST-PORT,12345,REJECT
+DEST-PORT,12346,REJECT
+DEST-PORT,6711,REJECT
+DEST-PORT,6712,REJECT
+DEST-PORT,6713,REJECT
+DEST-PORT,27374,REJECT
+DEST-PORT,6670,REJECT
+DEST-PORT,6771,REJECT
+DEST-PORT,27444,REJECT
+DEST-PORT,27665,REJECT
+DEST-PORT,31335,REJECT
+DEST-PORT,33270,REJECT
+DEST-PORT,16660,REJECT
+DEST-PORT,65000,REJECT
+DEST-PORT,1243,REJECT   # SubSeven variant
+DEST-PORT,1999,REJECT   # TransScout
+DEST-PORT,3150,REJECT   # Deep Throat variant
+DEST-PORT,5569,REJECT   # Robo-Hack
+DEST-PORT,9898,REJECT   # Dabber worm
+DEST-PORT,40421,REJECT  # Masters Paradise
+DEST-PORT,54320,REJECT  # Back Orifice 2000
+DEST-PORT,54321,REJECT  # Back Orifice 2000
+DEST-PORT,61466,REJECT  # Telecommando
+DEST-PORT,4444,REJECT   # Metasploit meterpreter 默认监听
+DEST-PORT,4445,REJECT   # Metasploit 变体
+DEST-PORT,50050,REJECT  # Cobalt Strike teamserver
+DEST-PORT,50051,REJECT  # Cobalt Strike 变体
+DEST-PORT,60000,REJECT  # Sliver C2 默认
+DEST-PORT,1337,REJECT   # 黑客文化端口，常被 RAT/WebShell 用
+DEST-PORT,5554,REJECT   # Sasser 蠕虫
+DEST-PORT,9996,REJECT   # Sasser 蠕虫 FTP 传输
+DEST-PORT,1025,REJECT   # 常被 Windows RAT 占用
+DEST-PORT,1026,REJECT   # Windows messenger spam / RAT
+DEST-PORT,1027,REJECT   # Windows messenger spam
+DEST-PORT,6667,REJECT   # IRC 标准端口，僵尸网络 C2 经典信道
+DEST-PORT,6668,REJECT   # IRC 变体
+DEST-PORT,6669,REJECT   # IRC 变体
+DEST-PORT,7000,REJECT   # IRC 备用，僵尸网络常用
+DEST-PORT,194,REJECT    # IRC 官方分配端口
+DEST-PORT,3333,REJECT   # Stratum 最常用端口（ETH/ETC/XMR）
+DEST-PORT,5555,REJECT   # Stratum 备用
+DEST-PORT,7777,REJECT   # Stratum 备用
+DEST-PORT,8333,REJECT   # Bitcoin P2P（同时被矿机用）
+DEST-PORT,9999,REJECT   # Stratum 备用
+DEST-PORT,14444,REJECT  # XMR 矿池常用
+DEST-PORT,45700,REJECT  # Stratum 高端口
+DEST-PORT,3032,REJECT   # NiceHash Stratum
+DEST-PORT,3092,REJECT   # MiningPoolHub Stratum
+DEST-PORT,20535,REJECT  # 矿池备用
+DEST-PORT,3306,REJECT   # MySQL / MariaDB
+DEST-PORT,5432,REJECT   # PostgreSQL
+DEST-PORT,1433,REJECT   # Microsoft SQL Server
+DEST-PORT,1434,REJECT   # MS SQL Server Browser（UDP 扫描源）
+DEST-PORT,1521,REJECT   # Oracle Database
+DEST-PORT,3050,REJECT   # Firebird Database
+DEST-PORT,27017,REJECT  # MongoDB
+DEST-PORT,27018,REJECT  # MongoDB shard
+DEST-PORT,27019,REJECT  # MongoDB config server
+DEST-PORT,6379,REJECT   # Redis（未授权访问高危）
+DEST-PORT,6380,REJECT   # Redis TLS / 变体
+DEST-PORT,11211,REJECT  # Memcached（DDoS 放大攻击源）
+DEST-PORT,9200,REJECT   # Elasticsearch HTTP API
+DEST-PORT,9300,REJECT   # Elasticsearch transport
+DEST-PORT,5984,REJECT   # CouchDB
+DEST-PORT,8086,REJECT   # InfluxDB HTTP
+DEST-PORT,8082,REJECT   # InfluxDB RPC
+DEST-PORT,7474,REJECT   # Neo4j HTTP
+DEST-PORT,7687,REJECT   # Neo4j Bolt
+DEST-PORT,5672,REJECT   # RabbitMQ AMQP
+DEST-PORT,15672,REJECT  # RabbitMQ 管理后台
+DEST-PORT,9092,REJECT   # Apache Kafka
+DEST-PORT,2181,REJECT   # ZooKeeper（Kafka 依赖）
+DEST-PORT,2375,REJECT   # Docker API（无 TLS，高危）
+DEST-PORT,2376,REJECT   # Docker API（TLS，但仍应内网）
+DEST-PORT,2377,REJECT   # Docker Swarm 管理
+DEST-PORT,4789,REJECT   # Docker overlay network VXLAN
+DEST-PORT,6443,REJECT   # Kubernetes API Server
+DEST-PORT,10250,REJECT  # Kubelet API（常被横向移动利用）
+DEST-PORT,10255,REJECT  # Kubelet 只读端口（信息泄露）
+DEST-PORT,2379,REJECT   # etcd client（K8s 核心存储）
+DEST-PORT,2380,REJECT   # etcd peer
+DEST-PORT,8500,REJECT   # Consul HTTP API
+DEST-PORT,8600,REJECT   # Consul DNS
+DEST-PORT,4001,REJECT   # etcd 旧版 API
+DEST-PORT,50070,REJECT  # Hadoop HDFS NameNode WebUI
+DEST-PORT,50075,REJECT  # Hadoop HDFS DataNode
+DEST-PORT,8032,REJECT   # Hadoop YARN ResourceManager
+DEST-PORT,23,REJECT           # Telnet（明文，用 SSH 替代）
+DEST-PORT,69,REJECT           # TFTP（无认证）
+DEST-PORT,79,REJECT           # Finger（隐私泄露）
+DEST-PORT,113,REJECT          # Ident / AUTH（已废弃）
+DEST-PORT,512,REJECT          # rexec（Berkeley 远程执行，明文）
+DEST-PORT,513,REJECT          # rlogin（明文远程登录）
+DEST-PORT,514,REJECT          # rsh / syslog（明文，无认证）
+DEST-PORT,515,REJECT          # LPD 打印服务（历史漏洞多）
+DEST-PORT,135,REJECT     # RPC Endpoint Mapper / DCOM
+DEST-PORT,137,REJECT     # NetBIOS Name Service
+DEST-PORT,138,REJECT     # NetBIOS Datagram
+DEST-PORT,139,REJECT     # NetBIOS Session / SMBv1
+DEST-PORT,445,REJECT     # SMB（WannaCry / NotPetya 主战场）
+DEST-PORT,593,REJECT     # RPC over HTTP
+DEST-PORT,4045,REJECT    # Windows Lockd（NFS lock manager）
+DEST-PORT,5355,REJECT
+DEST-PORT,7,REJECT      # Echo（放大 ~2x，但量大时危险）
+DEST-PORT,9,REJECT      # Discard（无意义，常被扫描）
+DEST-PORT,13,REJECT     # Daytime（信息泄露 + 反射源）
+DEST-PORT,17,REJECT     # QOTD - Quote of the Day（放大 ~140x）
+DEST-PORT,19,REJECT     # CharGen（放大 ~360x，经典 DRDoS 源）
+DEST-PORT,37,REJECT     # Time Protocol（明文，可反射）
+DEST-PORT,161,REJECT    # SNMP UDP 查询
+DEST-PORT,162,REJECT    # SNMP Trap
+DEST-PORT,389,REJECT    # LDAP 明文（同时防凭证嗅探）
+DEST-PORT,636,REJECT           # LDAPS（TLS 加密，快速失败即可）
+DEST-PORT,1900,REJECT   # SSDP Discovery（UPnP）
+DEST-PORT,3702,REJECT   # WS-Discovery（Windows 设备发现，放大 ~500x）
+DEST-PORT,5353,REJECT   # mDNS（可被用于反射放大）
+DEST-PORT,5683,REJECT   # CoAP UDP
+DEST-PORT,3283,REJECT   # Apple Remote Desktop / ARMS
+DEST-PORT,1883,REJECT   # MQTT 明文（无认证暴露极危险）
+DEST-PORT,8883,REJECT   # MQTT over TLS（仍不应出站到未知服务器）
+DEST-PORT,7547,REJECT   # TR-069 HTTP
+DEST-PORT,7548,REJECT   # TR-069 HTTPS
+DEST-PORT,9100,REJECT   # RAW 打印 / JetDirect（可任意读写文件系统）
+DEST-PORT,554,REJECT    # RTSP（IP 摄像头流媒体，常被未授权访问）
+DEST-PORT,8554,REJECT   # RTSP 备用端口
+DEST-PORT,49152,REJECT  # UPnP SOAP（Broadband Forum TR-064 漏洞）
+DEST-PORT,49153,REJECT  # UPnP 动态端口
+DEST-PORT,49154,REJECT  # UPnP 动态端口
+DEST-PORT,548,REJECT    # AFP over TCP
+DEST-PORT,111,REJECT    # RPC Portmapper / rpcbind（NFS 依赖）
+DEST-PORT,2049,REJECT   # NFS
+DEST-PORT,873,REJECT          # rsync daemon
+DEST-PORT,4659,REJECT   # Xsan / StorNext CVFS
+DEST-PORT,1234,REJECT   # LLDB 远程调试默认端口
+DEST-PORT,4905,REJECT   # Silver Sparrow v2 C2 观测端口
+DEST-PORT,5223,REJECT   # APNs 端口（被伪装成 Apple Push 的 macOS RAT 使用）
+DEST-PORT,8567,REJECT   # macOS 恶意软件 C2 高频观测端口
+DEST-PORT,49475,REJECT  # macOS 后门高端口（ESET/SentinelOne 威胁情报）
+DEST-PORT,102,REJECT    # ISO-TSAP / Siemens S7 / IEC 61850 MMS（Stuxnet 目标协议）
+DEST-PORT,502,REJECT    # Modbus TCP（全球 Shodan 暴露数量最多的 SCADA 协议）
+DEST-PORT,503,REJECT    # Modbus TCP 备用
+DEST-PORT,4840,REJECT   # OPC-UA（工业自动化标准协议）
+DEST-PORT,4843,REJECT   # OPC-UA over TLS
+DEST-PORT,20000,REJECT  # DNP3 over TCP（电力系统 SCADA）
+DEST-PORT,44818,REJECT  # EtherNet/IP（Rockwell/Allen-Bradley PLC）
+DEST-PORT,47808,REJECT  # BACnet（楼宇自动化，UDP/TCP）
+DEST-PORT,34980,REJECT  # EtherNet/IP implicit messaging
+DEST-PORT,2404,REJECT   # IEC 60870-5-104（变电站远动协议）
+DEST-PORT,1911,REJECT   # Niagara Fox（楼控系统，Shodan 大量暴露）
+DEST-PORT,4911,REJECT   # Niagara Fox over TLS
+DEST-PORT,3000,REJECT   # Grafana / Node Server (⚠️ DevOps users comment this)
+DEST-PORT,9090,REJECT   # Prometheus UI
+DEST-PORT,9091,REJECT   # Prometheus Pushgateway
+DEST-PORT,5601,REJECT   # Kibana（Elasticsearch 可视化，常无认证）
+DEST-PORT,9411,REJECT   # Zipkin（分布式追踪）
+DEST-PORT,16686,REJECT  # Jaeger UI（分布式追踪）
+DEST-PORT,9000,REJECT   # Portainer / SonarQube / MinIO（多种危险服务共用）
+DEST-PORT,8888,REJECT   # Jupyter Notebook（常无 Token 暴露，可执行任意代码）
+DEST-PORT,8889,REJECT   # Jupyter 备用端口
+DEST-PORT,9418,REJECT   # Git daemon（明文 Git 协议，无认证可 clone/push）
+DEST-PORT,4040,REJECT   # Spark UI / ngrok 本地端口
+DEST-PORT,18080,REJECT  # Spark History Server
+DEST-PORT,8161,REJECT   # ActiveMQ Web Console（默认无认证）
+DEST-PORT,61616,REJECT  # ActiveMQ Broker（常被用于 RCE）
+DEST-PORT,61617,REJECT  # ActiveMQ SSL Broker
+DEST-PORT,20,REJECT           # FTP 数据（主动模式，现代 FTP 客户端已不需要）
+DEST-PORT,70,REJECT           # Gopher（几乎废弃，SSRF 攻击中常被用作协议跳板）
+DEST-PORT,119,REJECT          # NNTP / Usenet（已废弃，出站无意义）
+DEST-PORT,143,REJECT          # IMAP 明文（应使用 993 IMAPS）
+DEST-PORT,110,REJECT          # POP3 明文（应使用 995 POP3S）
+DEST-PORT,25,REJECT           # SMTP 明文直连（现代邮件应使用 587/465）
