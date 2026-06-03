@@ -44,10 +44,16 @@ APPLE_OUTPUT = os.path.join(
 APPLE_SOURCES = [
     ("iRingo.Maps", "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule"),
     ("iRingo.WeatherKit", "https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule"),
+    ("iRingo.News", "https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule"),
+    ("iRingo.TV", "https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule"),
+    ("DualSubs.Universal", "https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule"),
 ]
 APPLE_HEADER = {
     "name": "🍎 Apple服务增强合集",
-    "desc": "整合 iRingo 系列模块\\n包含: Maps(地图增强) + WeatherKit(天气增强)\\n解锁Apple服务的国际版功能",
+    "desc": (
+        "整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕"
+        "\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区"
+    ),
     "author": "VirgilClyne[https://github.com/VirgilClyne]",
     "homepage": "https://NSRingo.github.io",
     "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png",

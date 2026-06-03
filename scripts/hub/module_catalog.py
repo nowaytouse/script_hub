@@ -40,6 +40,9 @@ MERGED_ALIASES = {
     "YouTube.Enhance.sgmodule": "📺 YouTube增强合集",
     "iRingo.Maps.sgmodule": "🍎 Apple服务增强合集",
     "iRingo.WeatherKit.sgmodule": "🍎 Apple服务增强合集",
+    "iRingo.News.sgmodule": "🍎 Apple服务增强合集",
+    "iRingo.TV.sgmodule": "🍎 Apple服务增强合集",
+    "DualSubs.Universal.sgmodule": "🍎 Apple服务增强合集",
 }
 
 UI_BADGES = {

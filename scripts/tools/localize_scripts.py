@@ -14,10 +14,12 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from hub.common import _BROWSER_UA, safe_download_binary, Logger
 
 
+from hub.paths import SCRIPTS_DIR as SCRIPTS_DIR_STR, SCRIPT_RAW_PREFIX
+
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_DIRS = [ROOT / "modules/surge", ROOT / "modules/shadowrocket"]
-SCRIPTS_DIR = ROOT / "modules/source/scripts"
-LOCAL_URL_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/"
+SCRIPTS_DIR = Path(SCRIPTS_DIR_STR)
+LOCAL_URL_PREFIX = SCRIPT_RAW_PREFIX
 
 # User-Agent Pool
 USER_AGENTS = [_BROWSER_UA]

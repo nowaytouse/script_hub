@@ -1,6 +1,6 @@
 {
-  "generated": "2026-06-03T12:57:43.928405",
-  "total": 26,
+  "generated": "2026-06-03T13:22:00.872765",
+  "total": 21,
   "policy": {
     "adblock": "仅安装 PROMAX（含各 App 去广告脚本；专项去广告模块勿重复安装）",
     "features": "解锁/增强/翻译等保留 Amplify Nexus 独立模块"
@@ -81,80 +81,6 @@
       "tags": [],
       "author": "ChavyLeung",
       "icon": "https://raw.githubusercontent.com/chavyleung/scripts/master/box/icons/BoxJs.png"
-    },
-    {
-      "id": "DualSubs.Universal",
-      "filename": "DualSubs.Universal.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/DualSubs.Universal.sgmodule",
-      "has_arguments": true,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/DualSubs.Universal.sgmodule",
-      "name": "🍿️ DualSubs: 🔣 Universal",
-      "desc": "流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
-      "tags": [],
-      "author": "VirgilClyne[https://github.com/VirgilClyne]",
-      "icon": "https://github.com/DualSubs/Universal/raw/main/src/assets/icon_rounded.png"
-    },
-    {
-      "id": "iRingo.Maps",
-      "filename": "iRingo.Maps.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/iRingo.Maps.sgmodule",
-      "has_arguments": true,
-      "merged_into": "🍎 Apple服务增强合集",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/iRingo.Maps.sgmodule",
-      "name": " iRingo: 🗺️ Maps",
-      "desc": "自定义 Maps app\\n添加国际版功能\\n自定义服务版本",
-      "tags": [],
-      "author": "VirgilClyne[https://github.com/VirgilClyne]",
-      "icon": "https://developer.apple.com/assets/elements/icons/maps/maps-128x128.png",
-      "essential": false,
-      "note": "已合并进「🍎 Apple服务增强合集」，请勿重复安装"
-    },
-    {
-      "id": "iRingo.News",
-      "filename": "iRingo.News.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/iRingo.News.sgmodule",
-      "has_arguments": true,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/iRingo.News.sgmodule",
-      "name": " iRingo: 📰 News",
-      "desc": "1.自定义解锁News的地区\\n2.Coming Soon…",
-      "tags": [],
-      "author": "VirgilClyne[https://github.com/VirgilClyne]",
-      "icon": "https://developer.apple.com/assets/elements/icons/news/news-128x128.png"
-    },
-    {
-      "id": "iRingo.TV",
-      "filename": "iRingo.TV.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/iRingo.TV.sgmodule",
-      "has_arguments": true,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/iRingo.TV.sgmodule",
-      "name": " iRingo: 📺 TV app",
-      "desc": "全面自定义「TV app」功能",
-      "tags": [],
-      "author": "VirgilClyne[https://github.com/VirgilClyne]",
-      "icon": "https://developer.apple.com/assets/elements/icons/apple-tv/apple-tv-128x128.png"
-    },
-    {
-      "id": "iRingo.WeatherKit",
-      "filename": "iRingo.WeatherKit.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/iRingo.WeatherKit.sgmodule",
-      "has_arguments": true,
-      "merged_into": "🍎 Apple服务增强合集",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/iRingo.WeatherKit.sgmodule",
-      "name": " iRingo: 🌤 WeatherKit",
-      "desc": "iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据",
-      "tags": [],
-      "author": "VirgilClyne[https://github.com/VirgilClyne],WordlessEcho[https://github.com/WordlessEcho],001[https://github.com/001ProMax]",
-      "icon": "https://developer.apple.com/assets/elements/icons/weatherkit/weatherkit-128x128.png",
-      "essential": false,
-      "note": "已合并进「🍎 Apple服务增强合集」，请勿重复安装"
     },
     {
       "id": "net-lsp-x",
@@ -307,7 +233,7 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
       "name": "🍎 Apple服务增强合集",
-      "desc": "整合 iRingo 系列模块\\n包含: Maps(地图增强) + WeatherKit(天气增强)\\n解锁Apple服务的国际版功能",
+      "desc": "整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区",
       "tags": [],
       "author": "VirgilClyne[https://github.com/VirgilClyne]",
       "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png"

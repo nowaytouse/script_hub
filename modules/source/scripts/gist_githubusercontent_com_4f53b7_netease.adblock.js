@@ -1,5 +1,5 @@
 const version = '20250319@V1.0.9';
-// Patched for Surge JSC: wrap UMD (module.exports) + obfuscator in IIFE — ScriptHub
+// Patched for Surge JSC (module.exports UMD + obfuscator) — ScriptHub
 (() => {
   var module = { exports: {} };
   var exports = module.exports;

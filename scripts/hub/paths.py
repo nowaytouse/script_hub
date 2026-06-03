@@ -38,3 +38,11 @@ BILIBILI_HELPER_URL = f"{MAASEA_SGMODULE_BASE}/Bilibili.Helper.sgmodule"
 
 # Raw GitHub URL prefix for published list rulesets
 LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}rulesets/list/"
+
+# Vendored Surge/Shadowrocket scripts (localize_scripts.py)
+SCRIPTS_DIR = os.path.join(ROOT, "modules/source/scripts")
+SCRIPT_RAW_PREFIX = f"{REPO_RAW_PREFIX}modules/source/scripts/"
+
+# Legacy paths (pre folder restructure) — repair_script_paths.py rewrites these
+LEGACY_SCRIPT_RAW_PREFIX = f"{REPO_RAW_PREFIX}modules/scripts/"
+LEGACY_LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}ruleset/Surge(Shadowkroket)/"

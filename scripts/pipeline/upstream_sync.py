@@ -89,11 +89,7 @@ NEXUS_MODULES = [
     "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule",
     "https://raw.githubusercontent.com/xream/scripts/main/surge/module/network-info/net-lsp-x.sgmodule",
     "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule",
-    "https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule",
-    "https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule",
-    "https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule",
-    "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule",
-    "https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule",
+    # iRingo.* / DualSubs → merged by merge_bundles.merge_apple() into 🍎 Apple服务增强合集
     "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule",
     "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule",
     "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule",

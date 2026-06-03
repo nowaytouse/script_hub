@@ -10,6 +10,7 @@ SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
 from hub.common import Logger, get_project_root, safe_download, write_file
+from hub.paths import SCRIPTS_DIR, SCRIPT_RAW_PREFIX
 
 ROOT = get_project_root()
 GIST_URL = (
@@ -17,17 +18,14 @@ GIST_URL = (
     "4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js"
 )
 OUT_PATH = os.path.join(
-    ROOT,
-    "modules/source/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js",
+    SCRIPTS_DIR,
+    "gist_githubusercontent_com_4f53b7_netease.adblock.js",
 )
 ADULT_FILES = (
     os.path.join(ROOT, "modules/source/local/adultraplus.sgmodule"),
     os.path.join(ROOT, "rulesets/Sources/vendor/adultraplus.sgmodule"),
 )
-LOCAL_SCRIPT_URL = (
-    "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
-    "modules/source/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js"
-)
+LOCAL_SCRIPT_URL = SCRIPT_RAW_PREFIX + "gist_githubusercontent_com_4f53b7_netease.adblock.js"
 
 
 def wrap_for_surge(raw: str) -> str:

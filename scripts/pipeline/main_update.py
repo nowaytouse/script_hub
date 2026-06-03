@@ -177,6 +177,18 @@ def main():
         Logger.error(f"AdBlock manager failed: {e}")
         has_failures = True
 
+    Logger.section("Repair script-path URLs")
+    try:
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/repair_script_paths.py")],
+            cwd=ROOT,
+            env=_py_env(),
+        )
+        if result.returncode != 0:
+            Logger.warn("script-path repair exited non-zero (continuing).")
+    except Exception as e:
+        Logger.warn(f"script-path repair failed: {e}")
+
     Logger.section("Final Ruleset Cleanup")
     try:
         cleanup_stats = run_ruleset_cleanup()
