@@ -26,14 +26,15 @@ DOH_CN_VOLCANO = "https://dns.volcengine.com/dns-query"
 TRADITIONAL_CN_114 = "114.114.114.114"
 TRADITIONAL_CN_ALI = "223.5.5.5"
 
+# Traditional IPs for International Global Speed
+TRADITIONAL_GLOBAL = "1.1.1.1, 8.8.8.8"
+
 # International pool (aligned with NyaMiiKo.conf [General] encrypted-dns-server)
 DOH_NJALLA = "https://doh.njalla.fo/dns-query"
 DOH_CLOUDFLARE = "https://cloudflare-dns.com/dns-query"
 DOH_GOOGLE = "https://dns.google/dns-query"
 DOH_QUAD9 = "https://dns.quad9.net/dns-query"
 DOH_CONTROLD = "https://dns.controld.com/p2"
-DOH_DNS_SB = "https://doh.dns.sb/dns-query"
-
 DOH_TW_TWNIC = "https://dns.twnic.tw/dns-query"
 DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
 DOH_NEXTDNS = "https://dns.nextdns.io"
@@ -50,17 +51,24 @@ DNS_MAPPING_DOH: Dict[str, str] = {
     "DNS_Global_Cloudflare": DOH_CLOUDFLARE,
     "DNS_Global_Microsoft": DOH_CONTROLD,
     "DNS_Global_Apple": "system",
-    "DNS_Global_Social": DOH_NJALLA,
+    "DNS_Global_Social": DOH_MULLVAD_ADBLOCK,
     "DNS_Global_Quad9": DOH_QUAD9,
 }
 
 SURGE_RULESET_DOH: Dict[str, str] = {
     "NSFW": DOH_NJALLA,
-    "SocialMedia": DOH_NJALLA,
+    "SocialMedia": DOH_MULLVAD_ADBLOCK,
     "Bilibili": TRADITIONAL_CN_ALI,
     "Apple": "system",
     "AppleNews": "system",
-    "Spotify": DOH_DNS_SB,
+    "Spotify": TRADITIONAL_GLOBAL,
+    "Gaming": TRADITIONAL_GLOBAL,
+    "StreamEU": TRADITIONAL_GLOBAL,
+    "StreamHK": TRADITIONAL_GLOBAL,
+    "StreamJP": TRADITIONAL_GLOBAL,
+    "StreamKR": TRADITIONAL_GLOBAL,
+    "StreamTW": TRADITIONAL_GLOBAL,
+    "StreamUS": TRADITIONAL_GLOBAL,
     "GitHub": DOH_CLOUDFLARE,
     "Google": DOH_GOOGLE,
     "Microsoft": DOH_CONTROLD,
