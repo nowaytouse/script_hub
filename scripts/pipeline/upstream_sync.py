@@ -11,9 +11,9 @@ from hub.common import Logger, get_project_root, write_file, safe_download_binar
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket/skk_upstream")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/list/skk_upstream")
 MODULE_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local_sources")
+LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local")
 
 # CONFIGURATION
 
@@ -100,7 +100,7 @@ NEXUS_MODULES = [
     "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
 ]
 
-# Modules merged directly into PROMAX via local_sources (include_sections=True).
+# Modules merged directly into PROMAX via modules/source/local (include_sections=True).
 # These are NOT shown as standalone modules in the helper HTML.
 # Format: { output_filename: upstream_url }
 LOCAL_SOURCE_MODULES = {
@@ -295,7 +295,7 @@ class UpstreamSyncer:
         Logger.success(f"Nexus: {filename}")
 
     def process_local_source_module(self, filename: str, url: str):
-        """Download an upstream module into local_sources/ for PROMAX merging (include_sections=True)."""
+        """Download an upstream module into modules/source/local for PROMAX merging."""
         content_bytes = self.download(url)
         if not content_bytes:
             return

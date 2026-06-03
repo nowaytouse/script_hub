@@ -14,7 +14,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 DNS_DIR = ROOT / "rulesets" / "Sources" / "DNS_mapping"
 DNS_RULES_DIR = ROOT / "rulesets" / "dns"
-SURGE_RULESET_DIR = ROOT / "rulesets" / "surge-shadowrocket"
+SURGE_RULESET_DIR = ROOT / "rulesets" / "list"
 
 # Mainland (matches [General] + encrypted-dns baseline)
 DOH_CN_ALIDNS = "https://dns.alidns.com/dns-query"

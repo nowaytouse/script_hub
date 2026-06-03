@@ -1,0 +1,12 @@
+#!name=Reddit 去广告
+#!desc=Reddit 广告过滤 (基于 JQ 引擎)
+#!category=🪐 local
+
+[General]
+force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
+
+[Body Rewrite]
+http-response-jq ^https?:\/\/gql(-fed)?\.reddit\.com 'walk( if type == "object" then (if (.commentsPageAds | type == "array") then (.commentsPageAds = []) else . end) | (if ( (.node | type == "object") and (.node.cells | type == "array") and (.node.cells | any(.__typename? == "AdMetadataCell" or .isAdPost? == true)) ) then empty else . end) | (if (.node | type == "object") and (.node.adPayload | type == "object") then empty else . end) | (if .__typename == "AdPost" then empty else . end) else . end)'
+
+[MITM]
+hostname = %APPEND% gql.reddit.com, gql-fed.reddit.com, -github.com, -api.github.com, -*.githubusercontent.com

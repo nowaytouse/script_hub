@@ -56,18 +56,31 @@ def merge_upstream_modules(
     *,
     header_meta: Dict[str, str],
     provenance_comment: Optional[str] = None,
+    optional_labels: Optional[Sequence[str]] = None,
 ) -> None:
     """Merge remote modules into output_path using module_sanitizer."""
+    optional = set(optional_labels or ())
     parsed_parts: List[Tuple[str, Dict[str, str], List]] = []
     merged_sections: Dict[str, List[str]] = {}
+    used_sources: List[SourceSpec] = []
 
     for label, url in sources:
         Logger.info(f"Downloading {label}...")
-        text = _download_module(url, label)
+        try:
+            text = _download_module(url, label)
+        except RuntimeError as exc:
+            if label in optional:
+                Logger.warn(f"Skipping optional source {label}: {exc}")
+                continue
+            raise
         meta, sections = parse_module(text)
         parsed_parts.append((label, meta, sections))
+        used_sources.append((label, url))
         for name, lines in sections:
             merged_sections.setdefault(name, []).extend(lines)
+
+    if not parsed_parts:
+        raise RuntimeError(f"No upstream modules downloaded for {output_path}")
 
     combined_args, combined_desc = _combine_arguments(
         [(label, meta) for label, meta, _ in parsed_parts]
@@ -87,7 +100,7 @@ def merge_upstream_modules(
     if provenance_comment:
         extra.append(provenance_comment)
     extra.append("# Upstream modules merged by scripts/hub/merge_upstream.py")
-    for label, url in sources:
+    for label, url in used_sources:
         extra.append(f"# - {label}: {url}")
 
     header_lines = format_header(out_meta, extra_lines=extra)

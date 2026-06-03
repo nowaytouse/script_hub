@@ -1,0 +1,10 @@
+# Ruleset: Netflix
+# Policy: PROXY
+# Node: US
+# Description: Netflix US region
+# Rules: 4
+
+DOMAIN-KEYWORD,apiproxy-device-prod-nlb
+DOMAIN-KEYWORD,apiproxy-website-nlb-prod
+DOMAIN-KEYWORD,dualstack.apiproxy
+DOMAIN-KEYWORD,dualstack.ichnaea-web

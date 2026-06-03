@@ -10,6 +10,7 @@ from pipeline.adblock_manager import (  # noqa: E402
     AMPLIFY_NEXUS_DIR,
     AdBlockManager,
     LOCAL_MODULES_DIR,
+    LOCAL_SOURCES_DIR,
 )
 from hub.promax_line_classifier import (
     classify_promax_line,
@@ -126,13 +127,13 @@ def test_classifier_adblock_script() -> None:
     assert classify_promax_line(enh, "Script") == "enhance"
 
 
-def test_functional_resolve_includes_split_bundle() -> None:
+def test_functional_resolve_includes_bilibili_adblock_local() -> None:
     mgr = AdBlockManager()
     paths, _ = mgr.load_functional_source_paths()
     by_path = {p: m for p, m in paths}
-    bundle = os.path.join(AMPLIFY_NEXUS_DIR, "📺 BiliBili增强合集.sgmodule")
-    if os.path.isfile(bundle):
-        assert by_path.get(os.path.normpath(bundle)) == "split"
+    local_adblock = os.path.join(LOCAL_SOURCES_DIR, "BiliBili.ADBlock.sgmodule")
+    if os.path.isfile(local_adblock):
+        assert by_path.get(os.path.normpath(local_adblock)) == "full"
     assert not any("BiliBili.Enhanced.sgmodule" in p for p in by_path)
     assert not any("WeChat_Enhance" in p for p in by_path)
 
@@ -176,7 +177,7 @@ if __name__ == "__main__":
     test_classifier_adblock_script()
     test_filename_gate()
     test_bilibili_bundle_split_keeps_ad_only()
-    test_functional_resolve_includes_split_bundle()
+    test_functional_resolve_includes_bilibili_adblock_local()
     test_localmodules_only_functional_scan()
     test_amplify_nexus_not_auto_scanned()
     test_sukka_adblock_allowlisted_full()

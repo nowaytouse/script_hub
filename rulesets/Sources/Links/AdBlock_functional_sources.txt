@@ -7,20 +7,20 @@
 # 纯解锁/增强：跳过（继续用 amplify_nexus 独立安装）
 #
 # 自动扫描（经 resolve_module_ingest_mode）：
-#   modules/local_sources/*.sgmodule
+#   modules/source/local/*.sgmodule
 #   rulesets/Sources/LocalModules/*   ← 各 App 去广告（逐文件并入 PROMAX）
 # narrow_pierce 已废弃：勿再复制专项模块到 Surge 安装目录
 
 ../vendor/adultraplus.sgmodule
 
 # ── 通用 / 聚合去广告（full）──
-../../../modules/local_sources/AllInOne_Mock.sgmodule
-../../../modules/local_sources/All-in-One-2.x.sgmodule
-../../../modules/local_sources/[Sukka] Enhance Better ADBlock for Surge.sgmodule
-../../../modules/local_sources/XWebAds.sgmodule
-../../../modules/local_sources/BiliBili.ADBlock.sgmodule
-../../../modules/local_sources/YouTube.ADBlock.sgmodule
-../../../modules/local_sources/WeChat.ADBlock.sgmodule
+../../../modules/source/local/AllInOne_Mock.sgmodule
+../../../modules/source/local/All-in-One-2.x.sgmodule
+../../../modules/source/local/[Sukka] Enhance Better ADBlock for Surge.sgmodule
+../../../modules/source/local/XWebAds.sgmodule
+../../../modules/source/local/BiliBili.ADBlock.sgmodule
+../../../modules/source/local/YouTube.ADBlock.sgmodule
+../../../modules/source/local/WeChat.ADBlock.sgmodule
 
 # ── 混合模块（split：只提取 ADBlock / REJECT / helper 等行）──
 ../../../modules/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule

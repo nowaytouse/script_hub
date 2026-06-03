@@ -138,12 +138,14 @@ def main():
         Logger.info("Quick mode: Skipping upstream sync.")
 
     Logger.section("Upstream Bundle Merges")
-    try:
-        run_upstream_bundles()
-        Logger.success("Upstream bundle merges completed successfully.")
-    except Exception as e:
-        Logger.error(f"Upstream bundle merges failed: {e}")
+    bundle_failures = run_upstream_bundles()
+    if bundle_failures:
+        Logger.warn(
+            f"Upstream bundle merges incomplete ({', '.join(bundle_failures)}); continuing pipeline."
+        )
         has_failures = True
+    else:
+        Logger.success("Upstream bundle merges completed successfully.")
 
     Logger.section("Smart-Config-Kit Supplemental Merge")
     try:

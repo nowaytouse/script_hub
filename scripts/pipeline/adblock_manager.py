@@ -29,6 +29,15 @@ from hub.surge_compliance import (
 # CONFIGURATION
 # ============================================================================
 
+from hub.paths import (
+    ADBLOCK_DIR,
+    ADBLOCK_LIST,
+    HTTPDNS_HIJACK_LIST,
+    LIST_DIR,
+    LOCAL_DIR,
+    SKK_UPSTREAM_DIR,
+)
+
 ROOT = get_project_root()
 SURGE_MODULE_DIR = os.path.join(ROOT, "modules/surge")
 HEAD_EXPANSE_DIR = os.path.join(ROOT, "modules/surge/head_expanse")
@@ -39,7 +48,7 @@ ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "rulesets/Sources/Links/AdBlock_source
 ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(
     ROOT, "rulesets/Sources/Links/AdBlock_functional_sources.txt"
 )
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local_sources")
+LOCAL_SOURCES_DIR = LOCAL_DIR
 LOCAL_MODULES_DIR = os.path.join(ROOT, "rulesets/Sources/LocalModules")
 AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
 # Rule-ingest hint for remote/list sources only (not used to pull amplify 增强 modules).
@@ -139,9 +148,6 @@ TARGET_MODULE_LITE = os.path.join(
 LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
 NARROW_PIERCE_DIR = os.path.join(ROOT, "modules/surge/narrow_pierce")
 PROMAX_SPLITS_DIR = os.path.join(ROOT, "modules/source/build/promax_splits")
-ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
-ADBLOCK_LIST = os.path.join(ROOT, "rulesets/surge-shadowrocket/AdBlock.list")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket/skk_upstream")
 SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
@@ -299,7 +305,7 @@ class AdBlockManager:
             if not entry.is_remote and entry.resolved_path.endswith(".list"):
                 targets.append(entry.resolved_path)
             # Find HTTPDNS_Hijack.list - it's hardcoded in header but let's find its path
-            hijack_path = os.path.join(ROOT, "rulesets/surge-shadowrocket/HTTPDNS_Hijack.list")
+            hijack_path = HTTPDNS_HIJACK_LIST
             if os.path.exists(hijack_path):
                 targets.append(hijack_path)
 
@@ -788,7 +794,7 @@ class AdBlockManager:
 
     def determine_category(self, source: str) -> str:
         lowered = source.lower()
-        if "local_sources" in lowered or "localmodules" in lowered:
+        if "/source/local" in lowered or "localmodules" in lowered:
             return "Local"
         if "ultimate.txt" in lowered or "/ultimate" in lowered:
             return "ThreatIntel_Ultimate"
@@ -1555,7 +1561,7 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT",
             "DOMAIN,doh.dns.apple.com,DIRECT",
             "# Block app-layer HTTPDNS first",
-            f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/HTTPDNS_Hijack.list,REJECT",
+            f"RULE-SET,{CDN_BASE_URL}rulesets/list/HTTPDNS_Hijack.list,REJECT",
             "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)",
         ]
 
@@ -1581,11 +1587,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/skk_upstream/reject-no-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/list/skk_upstream/reject-no-drop.list,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/skk_upstream/reject-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/list/skk_upstream/reject-drop.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/Surge%28Shadowkroket%29/skk_upstream/BlockHttpDNS.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/list/skk_upstream/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )

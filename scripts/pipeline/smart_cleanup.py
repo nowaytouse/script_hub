@@ -8,7 +8,7 @@ from hub.common import get_project_root, write_file as _atomic_write, safe_remov
 
 _ROOT = get_project_root()
 RULESET_DIRS = [
-    os.path.join(_ROOT, "rulesets/surge-shadowrocket"),
+    os.path.join(_ROOT, "rulesets/list"),
     os.path.join(_ROOT, "rulesets/AdBlock"),
 ]
 

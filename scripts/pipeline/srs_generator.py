@@ -7,7 +7,7 @@ import re
 from hub.common import Logger, get_project_root, safe_remove
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/surge-shadowrocket")
+SURGE_DIR = os.path.join(ROOT, "rulesets/list")
 DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/DNS_mapping")
 DNS_RULES_DIR = os.path.join(ROOT, "rulesets/dns")
 SKK_UPSTREAM_DIR = os.path.join(SURGE_DIR, "skk_upstream")

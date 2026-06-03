@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from hub.surge_compliance import validate_surge_ruleset_line  # noqa: E402
 
-SURGE_DIR = ROOT / "rulesets" / "surge-shadowrocket"
+SURGE_DIR = ROOT / "rulesets" / "list"
 ADBLOCK_DIR = ROOT / "rulesets" / "AdBlock"
 
 

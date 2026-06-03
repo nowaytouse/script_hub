@@ -21,7 +21,7 @@ OUT_PATH = os.path.join(
     "modules/source/scripts/gist_githubusercontent_com_4f53b7_netease.adblock.js",
 )
 ADULT_FILES = (
-    os.path.join(ROOT, "modules/source/local_sources/adultraplus.sgmodule"),
+    os.path.join(ROOT, "modules/source/local/adultraplus.sgmodule"),
     os.path.join(ROOT, "rulesets/Sources/vendor/adultraplus.sgmodule"),
 )
 LOCAL_SCRIPT_URL = (
