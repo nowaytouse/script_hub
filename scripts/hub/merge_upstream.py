@@ -123,4 +123,16 @@ def merge_upstream_modules(
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(format_module(header_lines, section_list, dedupe=True))
 
+    _validate_merged_module(output_path)
     Logger.success(f"Wrote bundle: {output_path}")
+
+
+def _validate_merged_module(output_path: str) -> None:
+    """Reject merged bundles with known Surge-breaking merge artifacts."""
+    text = "".join(read_file(output_path))
+    if "%INSERT%" in text:
+        raise RuntimeError(
+            f"Merged module contains invalid MITM token %INSERT%: {output_path}"
+        )
+    if "hostname = %APPEND% %INSERT%" in text or "hostname = %INSERT%" in text:
+        raise RuntimeError(f"Merged MITM hostname line is invalid: {output_path}")

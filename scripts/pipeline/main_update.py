@@ -147,6 +147,22 @@ def main():
     else:
         Logger.success("Upstream bundle merges completed successfully.")
 
+    Logger.section("Bundle Completeness Audit")
+    try:
+        audit_result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/audit_bundle_completeness.py")],
+            cwd=ROOT,
+            env=_py_env(),
+        )
+        if audit_result.returncode != 0:
+            Logger.error("Bundle completeness audit failed.")
+            has_failures = True
+        else:
+            Logger.success("Bundle completeness audit passed.")
+    except Exception as e:
+        Logger.error(f"Bundle completeness audit failed: {e}")
+        has_failures = True
+
     Logger.section("Smart-Config-Kit Supplemental Merge")
     try:
         merge_smart_config_kit()

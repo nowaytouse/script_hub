@@ -174,6 +174,7 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
                 info["tags"] = [t.strip() for t in meta.get("tag", "").split(",") if t.strip()]
                 info["has_arguments"] = "arguments" in meta
                 info["author"] = meta.get("author", "")
+                info["date"] = meta.get("date", "")
                 info["icon"] = meta.get(
                     "icon",
                     f"{CDN_BASE}docs/assets/default_icon.png",
@@ -268,6 +269,7 @@ def _modules_to_helper_groups(
                 "name": name,
                 "desc": desc,
                 "author": m.get("author", ""),
+                "date": m.get("date", ""),
                 "icon": m.get("icon", f"{CDN_BASE}docs/assets/default_icon.png"),
                 "url": url,
                 "badge": badge,
@@ -287,6 +289,7 @@ def build_helper_html(
     sr_groups = _modules_to_helper_groups(modules, project_root, shadowrocket=True)
     surge_total = sum(len(c["items"]) for c in surge_groups.values())
     sr_total = sum(len(c["items"]) for c in sr_groups.values())
+    catalog_generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -336,6 +339,7 @@ def build_helper_html(
     <div class="header">
         <h2>Script Hub</h2>
         <p style="opacity:0.6">PROMAX = 广告规则；带配置的增强模块请单独安装</p>
+        <p style="opacity:0.45;font-size:0.85rem">目录更新: {catalog_generated} · 模块日期见卡片</p>
     </div>
     <div class="nav">
         <button class="btn active" onclick="switchApp('surge')">⚡ Surge ({surge_total})</button>
@@ -369,7 +373,7 @@ def build_helper_html(
                     const isCopied = copiedSet.has(i.url);
                     html += `<div class="module-item ${{isCopied ? 'is-copied' : ''}}" id="row-${{i.id}}">
                         <img class="icon" src="${{i.icon}}" onerror="this.src='{CDN_BASE}docs/assets/default_icon.png'">
-                        <div class="info"><div class="name">${{i.badge}} ${{i.name}} ${{i.author ? `<span class="author">@${{i.author}}</span>` : ''}}</div>
+                        <div class="info"><div class="name">${{i.badge}} ${{i.name}} ${{i.author ? `<span class="author">@${{i.author}}</span>` : ''}}${{i.date ? `<span class="author"> · ${{i.date}}</span>` : ''}}</div>
                         <div class="desc">${{i.desc}}</div></div>
                         <button class="copy-btn ${{isCopied ? 'success' : ''}}" onclick="copy('${{i.url}}','${{i.id}}',this)">${{isCopied ? '✓ 已复制' : '复制'}}</button></div>`;
                 }});
