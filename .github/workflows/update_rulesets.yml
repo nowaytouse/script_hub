@@ -144,7 +144,7 @@ jobs:
       run: python3 scripts/qa/validate_module_headers.py
 
     - name: Execute Python Ruleset Update
-      run: python3 scripts/main_update.py --unattended
+      run: python3 scripts/pipeline/main_update.py --unattended
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: 'true'

@@ -7,7 +7,7 @@ import concurrent.futures
 import platform
 import tarfile
 import shutil
-from core.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
+from hub.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")

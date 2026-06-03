@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from core.module_sanitizer import parse_module, sanitize_file_content
-from core.common import write_file
+from hub.module_sanitizer import parse_module, sanitize_file_content
+from hub.common import write_file
 
 PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
 PROMAX_MERGE_LABEL = "🚫 Universal Ad-Blocking Rules (PROMAX)"
@@ -269,7 +269,7 @@ def build_helper_html(
     project_root: Path,
     output_path: Path,
 ) -> None:
-    """Generate modules/surge_module_helper.html from modules_data scan."""
+    """Generate modules/helper/surge_module_helper.html from modules_data scan."""
     surge_groups = _modules_to_helper_groups(modules, project_root, shadowrocket=False)
     sr_groups = _modules_to_helper_groups(modules, project_root, shadowrocket=True)
     surge_total = sum(len(c["items"]) for c in surge_groups.values())
@@ -388,7 +388,7 @@ def write_shadowrocket_modules_json(
     output_path: Path,
     project_root: Path,
 ) -> None:
-    """Generate modules/shadowrocket_modules_data.json from modules catalog."""
+    """Generate modules/helper/shadowrocket_modules_data.json from modules catalog."""
     categories_data = {}
     total_sr_modules = 0
     cat_keys = ["amplify_nexus", "head_expanse", "narrow_pierce"]

@@ -9,14 +9,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from core.rule_processor import RuleProcessor  # noqa: E402
-from core.surge_compliance import (  # noqa: E402
+from hub.rule_processor import RuleProcessor  # noqa: E402
+from hub.surge_compliance import (  # noqa: E402
     convert_domain_regex_for_surge,
     strip_inline_comment,
     validate_surge_ruleset_line,
 )
-from ruleset_manager import RulesetManager  # noqa: E402
-from adblock_manager import AdBlockManager  # noqa: E402
+from pipeline.ruleset_manager import RulesetManager  # noqa: E402
+from pipeline.adblock_manager import AdBlockManager  # noqa: E402
 
 
 def assert_eq(label: str, got, want) -> None:

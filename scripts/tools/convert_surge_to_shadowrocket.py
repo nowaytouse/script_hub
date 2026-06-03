@@ -12,12 +12,12 @@ import urllib.error
 from pathlib import Path
 from typing import Optional, List, Dict
 
-SCRIPT_DIR = Path(__file__).parent
-sys.path.insert(0, str(SCRIPT_DIR))
-PROJECT_ROOT = SCRIPT_DIR.parent
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SCRIPTS_DIR))
+PROJECT_ROOT = SCRIPTS_DIR.parent
 
-from core.module_sanitizer import sanitize_file_content
-from core.common import _BROWSER_UA, Logger, write_file
+from hub.module_sanitizer import sanitize_file_content
+from hub.common import _BROWSER_UA, Logger, write_file
 SURGE_MODULE_DIR = PROJECT_ROOT / "modules" / "surge"
 SR_MODULE_DIR = PROJECT_ROOT / "modules" / "shadowrocket"
 

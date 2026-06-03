@@ -9,7 +9,7 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from core.common import Logger, get_project_root, safe_download, write_file
+from hub.common import Logger, get_project_root, safe_download, write_file
 
 ROOT = get_project_root()
 GIST_URL = (

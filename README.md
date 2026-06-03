@@ -5,5 +5,14 @@
 1. **PROMAX** 只做域名级拦截（RULE-SET 分片）；不合并各增强模块的 `#!arguments`。
 2. **功能模块** 各自独立安装，保留 Surge/小火箭模块配置界面。
 3. **去重**：规则在 `smart_cleanup` + AdBlock 层；模块段在 `module_sanitizer`。
-4. **勿重复安装** `modules/local_sources` 及 `modules_data.json` 中标注 `merged_into` 的旧模块。
+4. **勿重复安装** `modules/local_sources` 及 `modules/helper/modules_data.json` 中标注 `merged_into` 的旧模块。
+
+## 脚本目录
+
+| 路径 | 用途 |
+|------|------|
+| `scripts/hub/` | 共享库（合规、模块清洗、合并工具） |
+| `scripts/pipeline/` | 主更新流水线（`main_update.py`） |
+| `scripts/qa/` | 回归测试与生成树守卫 |
+| `scripts/tools/` | 独立维护工具（模块目录、SR 转换等） |
 

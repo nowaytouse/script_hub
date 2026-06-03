@@ -50,10 +50,7 @@ def is_ci() -> bool:
 
 
 def get_project_root() -> str:
-    """Gets the project root based on the script location.
-    Current location: scripts/core/common.py
-    Root is 2 levels up.
-    """
+    """Repository root (scripts/hub/common.py → two levels up)."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.abspath(os.path.join(script_dir, "../.."))
 
