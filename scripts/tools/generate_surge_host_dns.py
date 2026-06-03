@@ -22,9 +22,14 @@ DOH_CN_PUB = "https://doh.pub/dns-query"
 DOH_CN_360 = "https://doh.360.cn/dns-query"
 DOH_CN_VOLCANO = "https://dns.volcengine.com/dns-query"
 
-# Traditional IPs for Mainland Speed
-TRADITIONAL_CN_114 = "114.114.114.114"
-TRADITIONAL_CN_ALI = "223.5.5.5"
+# Traditional IPs for Mainland Speed (Dual Stack)
+TRADITIONAL_CN_ALI = "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1"
+TRADITIONAL_CN_PUB = "119.29.29.29, 2402:4e00::"
+TRADITIONAL_CN_360 = "101.226.4.6, 112.65.69.15, 2402:ab80::6"
+TRADITIONAL_CN_VOLCANO = "180.184.1.1, 180.184.2.2, 2402:4e00:1020:1404::10, 2402:4e00:1430:1102::a"
+
+# For generic mainland usage (replacing old legacy 114 with robust dual-stack array)
+TRADITIONAL_CN_GENERIC = "119.29.29.29, 223.5.5.5, 2400:3200::1, 2402:4e00::"
 
 # Traditional IPs for International Global Speed
 TRADITIONAL_GLOBAL = "1.1.1.1, 2606:4700:4700::1111, 9.9.9.9, 2620:fe::fe, 76.76.10.2, 2606:1a40:1::2"
@@ -45,8 +50,8 @@ DNS_MAPPING_DOH: Dict[str, str] = {
     "DNS_China_AliDNS": DOH_CN_ALIDNS,
     "DNS_China_ByteDance": DOH_CN_VOLCANO,
     "DNS_China_360": DOH_CN_360,
-    "DNS_China_114": TRADITIONAL_CN_114,
-    "DNS_China_114_manual": TRADITIONAL_CN_114,
+    "DNS_China_114": TRADITIONAL_CN_GENERIC,
+    "DNS_China_114_manual": TRADITIONAL_CN_GENERIC,
     "DNS_Global_Google": DOH_GOOGLE,
     "DNS_Global_Cloudflare": DOH_CLOUDFLARE,
     "DNS_Global_Microsoft": DOH_CONTROLD,
