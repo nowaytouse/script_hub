@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from hub.common import Logger, safe_download
+from hub.common import Logger, read_file, safe_download
 from hub.module_sanitizer import (
     format_header,
     format_module,
@@ -18,11 +18,24 @@ from hub.module_sanitizer import (
 SourceSpec = Tuple[str, str]  # (label, url)
 
 
-def _download_module(url: str, label: str) -> str:
-    content = safe_download(url, retries=2, timeout=60)
-    if not content or len(content.strip()) < 20:
-        raise RuntimeError(f"Failed to download upstream module: {label} ({url})")
-    return content
+def _fetch_module(
+    url: str,
+    label: str,
+    *,
+    local_fallback: Optional[str] = None,
+) -> str:
+    if url.startswith(("http://", "https://")):
+        content = safe_download(url, retries=2, timeout=60)
+        if content and len(content.strip()) >= 20:
+            return content
+    elif os.path.isfile(url):
+        text = "".join(read_file(url))
+        if len(text.strip()) >= 20:
+            return text
+    if local_fallback and os.path.isfile(local_fallback):
+        Logger.warn(f"Using local fallback for {label}")
+        return "".join(read_file(local_fallback))
+    raise RuntimeError(f"Failed to load upstream module: {label} ({url})")
 
 
 def _combine_arguments(
@@ -57,9 +70,11 @@ def merge_upstream_modules(
     header_meta: Dict[str, str],
     provenance_comment: Optional[str] = None,
     optional_labels: Optional[Sequence[str]] = None,
+    local_fallbacks: Optional[Dict[str, str]] = None,
 ) -> None:
     """Merge remote modules into output_path using module_sanitizer."""
     optional = set(optional_labels or ())
+    fallbacks = local_fallbacks or {}
     parsed_parts: List[Tuple[str, Dict[str, str], List]] = []
     merged_sections: Dict[str, List[str]] = {}
     used_sources: List[SourceSpec] = []
@@ -67,7 +82,7 @@ def merge_upstream_modules(
     for label, url in sources:
         Logger.info(f"Downloading {label}...")
         try:
-            text = _download_module(url, label)
+            text = _fetch_module(url, label, local_fallback=fallbacks.get(label))
         except RuntimeError as exc:
             if label in optional:
                 Logger.warn(f"Skipping optional source {label}: {exc}")

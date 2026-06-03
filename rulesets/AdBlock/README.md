@@ -1,6 +1,6 @@
 # AdBlock 分片规则集
 
-> 自动生成于 `2026-06-03 12:57:32` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-06-03 13:30:12` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -41,11 +41,11 @@
 
 | 段落 | 行数 |
 |------|------|
-| `URL Rewrite` | 834 |
+| `URL Rewrite` | 939 |
 | `Map Local` | 1,944 |
-| `Script` | 600 |
+| `Script` | 577 |
 | `Body Rewrite` | 79 |
-| `MITM` (hostname) | 1,005 |
+| `MITM` (hostname) | 1,061 |
 
 ## 安装模块（RULE-SET + 去广告 Script/Rewrite；解锁/增强请用 Amplify Nexus 独立模块）
 

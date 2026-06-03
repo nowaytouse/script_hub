@@ -124,6 +124,7 @@ ADBLOCK_MODULE_NAME_TOKENS = (
 ADBLOCK_FILENAME_ALLOWLIST = frozenset(
     {
         "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
+        "sukka_url_redirect.sgmodule",
         "AllInOne_Mock.sgmodule",
         "All-in-One-2.x.sgmodule",
         "XWebAds.sgmodule",
@@ -1669,7 +1670,7 @@ class AdBlockManager:
     def sync_shadowrocket_promax_modules(self) -> None:
         """Regenerate SR PROMAX / PROMAX Lite from Surge after functional merge."""
         Logger.section("Syncing Shadowrocket PROMAX Modules")
-        script = os.path.join(ROOT, "scripts", "convert_surge_to_shadowrocket.py")
+        script = os.path.join(ROOT, "scripts", "tools", "convert_surge_to_shadowrocket.py")
         if not os.path.isfile(script):
             Logger.warn("convert_surge_to_shadowrocket.py not found; skipping SR sync")
             return

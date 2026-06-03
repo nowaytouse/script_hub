@@ -28,10 +28,11 @@ BILIBILI_SOURCES = [
     ("Global", "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"),
     ("Redirect", "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"),
     ("Helper", BILIBILI_HELPER_URL),
+    ("Bili1080P", "https://yfamilys.com/module/bili.module"),
 ]
 BILIBILI_HEADER = {
     "name": "📺 BiliBili增强合集",
-    "desc": "合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/Helper）",
+    "desc": "合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）",
     "author": "BiliUniverse, Maasea",
     "icon": "https://www.bilibili.com/favicon.ico",
     "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
@@ -94,6 +95,23 @@ YOUTUBE_LOCAL_FALLBACKS = (
     YOUTUBE_OUTPUT,
 )
 
+UTILITIES_OUTPUT = os.path.join(
+    ROOT, "modules/surge/amplify_nexus/📊 面板工具合集.sgmodule"
+)
+UTILITIES_SOURCES = [
+    ("Timecard", "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule"),
+    ("net-lsp-x", "https://raw.githubusercontent.com/xream/scripts/main/surge/module/network-info/net-lsp-x.sgmodule"),
+    ("Sub_Info", "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule"),
+]
+UTILITIES_HEADER = {
+    "name": "📊 面板工具合集",
+    "desc": "节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板",
+    "author": "Rabbit-Spec, xream, Coldvvater",
+    "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Tool.png",
+    "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
+    "tag": "面板, 工具",
+}
+
 
 def merge_bilibili() -> None:
     Logger.section("BiliBili upstream bundle merge")
@@ -108,6 +126,21 @@ def merge_bilibili() -> None:
 def merge_apple() -> None:
     Logger.section("Apple services upstream bundle merge")
     merge_upstream_modules(APPLE_SOURCES, APPLE_OUTPUT, header_meta=APPLE_HEADER)
+
+
+def merge_utilities() -> None:
+    Logger.section("Panel utilities upstream bundle merge")
+    nexus = os.path.join(ROOT, "modules/surge/amplify_nexus")
+    merge_upstream_modules(
+        UTILITIES_SOURCES,
+        UTILITIES_OUTPUT,
+        header_meta=UTILITIES_HEADER,
+        local_fallbacks={
+            "Timecard": os.path.join(nexus, "Timecard.sgmodule"),
+            "net-lsp-x": os.path.join(nexus, "net-lsp-x.sgmodule"),
+            "Sub_Info": os.path.join(nexus, "Sub_Info.sgmodule"),
+        },
+    )
 
 
 def _load_preserved_rule_sections(path: str) -> dict[str, list[str]]:
@@ -280,6 +313,7 @@ def run_all(*, strict: bool = False) -> List[str]:
         ("youtube", merge_youtube),
         ("weibo", merge_weibo),
         ("apple", merge_apple),
+        ("utilities", merge_utilities),
     ]
     failures: List[str] = []
     for label, fn in steps:

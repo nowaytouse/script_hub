@@ -1,24 +1,14 @@
 {
-  "generated": "2026-06-03T13:22:00.878060",
+  "generated": "2026-06-03T13:30:37.346995",
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
       "desc": "功能增强类模块",
       "items": [
         {
-          "name": "bili",
-          "desc": "[🚀SR] Bili1080P",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/bili.module"
-        },
-        {
           "name": "BoxJs",
           "desc": "[🚀SR] http://boxjs.com",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/boxjs.rewrite.surge.module"
-        },
-        {
-          "name": "网络信息 𝕏",
-          "desc": "[🚀SR] 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/net-lsp-x.module"
         },
         {
           "name": "Reddit 增强合集 (翻译 + NSFW)",
@@ -31,24 +21,9 @@
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/Script%20Hub%20%E9%87%8D%E5%86%99%20%26%20%E8%A7%84%E5%88%99%E9%9B%86%E8%BD%AC%E6%8D%A2.module"
         },
         {
-          "name": "机场订阅信息",
-          "desc": "[🚀SR] 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/Sub_Info.module"
-        },
-        {
-          "name": "[Sukka] URL Redirect",
-          "desc": "[🚀SR] Last Updated: 2026-03-10T05:42:43.121Z Size: 90",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/sukka_url_redirect.module"
-        },
-        {
           "name": "Sub-Store(β)",
           "desc": "[🚀SR] 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/Surge-Beta.module"
-        },
-        {
-          "name": "节假日信息",
-          "desc": "[🚀SR] 显示节假日的信息",
-          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/Timecard.module"
         },
         {
           "name": "WeChat增强",
@@ -66,8 +41,13 @@
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
         },
         {
+          "name": "📊 面板工具合集",
+          "desc": "[🚀SR] 节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module"
+        },
+        {
           "name": "📺 BiliBili增强合集",
-          "desc": "[🚀SR] 合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/Helper）",
+          "desc": "[🚀SR] 合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
         },
         {
@@ -83,7 +63,7 @@
       "items": [
         {
           "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-03]",
-          "desc": "[🚀SR] 手机轻量版(9片 REJECT 分片 + 应用内去广告脚本); 不含 ThreatIntel 重型规则; URL Rewrite=834, Map Local=1944, Script=600, Body Rewrite=79, MITM=1005",
+          "desc": "[🚀SR] 手机轻量版(9片 REJECT 分片 + 应用内去广告脚本); 不含 ThreatIntel 重型规则; URL Rewrite=939, Map Local=1944, Script=577, Body Rewrite=79, MITM=1061",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.module"
         },
         {
@@ -93,7 +73,7 @@
         },
         {
           "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-03]",
-          "desc": "[🚀SR] 按用途分片(16片) + 应用内去广告(URL Rewrite=834, Map Local=1944, Script=600, Body Rewrite=79, MITM=1005); 索引 rulesets/AdBlock/catalog.json",
+          "desc": "[🚀SR] 按用途分片(16片) + 应用内去广告(URL Rewrite=939, Map Local=1944, Script=577, Body Rewrite=79, MITM=1061); 索引 rulesets/AdBlock/catalog.json",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module"
         }
       ]
@@ -104,5 +84,5 @@
       "items": []
     }
   },
-  "total": 17
+  "total": 13
 }

@@ -82,18 +82,13 @@ METACUBEX_RULES = {
 
 
 NEXUS_MODULES = [
-    "https://yfamilys.com/module/bili.module",
     "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule",
     "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule",
     "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule",
-    "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule",
-    "https://raw.githubusercontent.com/xream/scripts/main/surge/module/network-info/net-lsp-x.sgmodule",
-    "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule",
-    # iRingo.* / DualSubs → merged by merge_bundles.merge_apple() into 🍎 Apple服务增强合集
+    # bili / iRingo / DualSubs / 面板工具 → merge_bundles.py 合集
     "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule",
     "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule",
     "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule",
-    "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
 ]
 
 # Modules merged directly into PROMAX via modules/source/local (include_sections=True).
@@ -103,6 +98,7 @@ LOCAL_SOURCE_MODULES = {
     "XWebAds.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
     "BiliBili.ADBlock.sgmodule": "https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule",
     "[Sukka] Enhance Better ADBlock for Surge.sgmodule": "https://ruleset.skk.moe/Modules/sukka_enhance_adblock.sgmodule",
+    "sukka_url_redirect.sgmodule": "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
     "adultraplus.sgmodule": "https://yfamilys.com/module/adultraplus.sgmodule",
 }
 

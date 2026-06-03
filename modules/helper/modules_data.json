@@ -1,25 +1,11 @@
 {
-  "generated": "2026-06-03T13:22:00.872765",
-  "total": 21,
+  "generated": "2026-06-03T13:30:37.342594",
+  "total": 17,
   "policy": {
     "adblock": "仅安装 PROMAX（含各 App 去广告脚本；专项去广告模块勿重复安装）",
     "features": "解锁/增强/翻译等保留 Amplify Nexus 独立模块"
   },
   "modules": [
-    {
-      "id": "bili",
-      "filename": "bili.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/bili.sgmodule",
-      "has_arguments": false,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/bili.sgmodule",
-      "name": "bili",
-      "desc": "Bili1080P",
-      "tags": [],
-      "author": "",
-      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
-    },
     {
       "id": "BiliBili.Enhanced",
       "filename": "BiliBili.Enhanced.sgmodule",
@@ -83,20 +69,6 @@
       "icon": "https://raw.githubusercontent.com/chavyleung/scripts/master/box/icons/BoxJs.png"
     },
     {
-      "id": "net-lsp-x",
-      "filename": "net-lsp-x.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/net-lsp-x.sgmodule",
-      "has_arguments": true,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/net-lsp-x.sgmodule",
-      "name": "网络信息 𝕏",
-      "desc": "国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha",
-      "tags": [],
-      "author": "@keywos @xream https://t.me/zhetengsha",
-      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
-    },
-    {
       "id": "Reddit 增强合集 (翻译 + NSFW)",
       "filename": "Reddit 增强合集 (翻译 + NSFW).sgmodule",
       "category": "amplify_nexus",
@@ -125,34 +97,6 @@
       "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
     },
     {
-      "id": "Sub_Info",
-      "filename": "Sub_Info.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/Sub_Info.sgmodule",
-      "has_arguments": true,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/Sub_Info.sgmodule",
-      "name": "机场订阅信息",
-      "desc": "显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
-      "tags": [],
-      "author": "",
-      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
-    },
-    {
-      "id": "sukka_url_redirect",
-      "filename": "sukka_url_redirect.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/sukka_url_redirect.sgmodule",
-      "has_arguments": false,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/sukka_url_redirect.sgmodule",
-      "name": "[Sukka] URL Redirect",
-      "desc": "Last Updated: 2026-03-10T05:42:43.121Z Size: 90",
-      "tags": [],
-      "author": "",
-      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
-    },
-    {
       "id": "Surge-Beta",
       "filename": "Surge-Beta.sgmodule",
       "category": "amplify_nexus",
@@ -162,20 +106,6 @@
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/Surge-Beta.sgmodule",
       "name": "Sub-Store(β)",
       "desc": "支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *",
-      "tags": [],
-      "author": "",
-      "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
-    },
-    {
-      "id": "Timecard",
-      "filename": "Timecard.sgmodule",
-      "category": "amplify_nexus",
-      "path": "modules/surge/amplify_nexus/Timecard.sgmodule",
-      "has_arguments": false,
-      "merged_into": null,
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/Timecard.sgmodule",
-      "name": "节假日信息",
-      "desc": "显示节假日的信息",
       "tags": [],
       "author": "",
       "icon": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/docs/assets/default_icon.png"
@@ -239,6 +169,23 @@
       "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png"
     },
     {
+      "id": "📊 面板工具合集",
+      "filename": "📊 面板工具合集.sgmodule",
+      "category": "amplify_nexus",
+      "path": "modules/surge/amplify_nexus/📊 面板工具合集.sgmodule",
+      "has_arguments": true,
+      "merged_into": null,
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.sgmodule",
+      "name": "📊 面板工具合集",
+      "desc": "节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板",
+      "tags": [
+        "面板",
+        "工具"
+      ],
+      "author": "Rabbit-Spec, xream, Coldvvater",
+      "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Tool.png"
+    },
+    {
       "id": "📺 BiliBili增强合集",
       "filename": "📺 BiliBili增强合集.sgmodule",
       "category": "amplify_nexus",
@@ -247,7 +194,7 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule",
       "name": "📺 BiliBili增强合集",
-      "desc": "合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/Helper）",
+      "desc": "合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）",
       "tags": [
         "BiliBili",
         "增强"
@@ -281,7 +228,7 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
       "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-03]",
-      "desc": "手机轻量版(9片 REJECT 分片 + 应用内去广告脚本); 不含 ThreatIntel 重型规则; URL Rewrite=834, Map Local=1944, Script=600, Body Rewrite=79, MITM=1005",
+      "desc": "手机轻量版(9片 REJECT 分片 + 应用内去广告脚本); 不含 ThreatIntel 重型规则; URL Rewrite=939, Map Local=1944, Script=577, Body Rewrite=79, MITM=1061",
       "tags": [
         "AdBlock",
         "Lite",
@@ -319,7 +266,7 @@
       "merged_into": null,
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
       "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-03]",
-      "desc": "按用途分片(16片) + 应用内去广告(URL Rewrite=834, Map Local=1944, Script=600, Body Rewrite=79, MITM=1005); 索引 rulesets/AdBlock/catalog.json",
+      "desc": "按用途分片(16片) + 应用内去广告(URL Rewrite=939, Map Local=1944, Script=577, Body Rewrite=79, MITM=1061); 索引 rulesets/AdBlock/catalog.json",
       "tags": [
         "AdBlock",
         "Dependency",

@@ -1,10 +1,10 @@
 #!name=📺 BiliBili增强合集
-#!desc=[🚀SR] 合并 BiliUniverse + Maasea 上游（Enhanced/Global/Redirect/Helper）
+#!desc=[🚀SR] 合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）
 #!author=BiliUniverse, Maasea
 #!icon=https://www.bilibili.com/favicon.ico
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=BiliBili, 增强
-#!date=2026-06-03 13:20:52
+#!date=2026-06-03 13:27:36
 #!arguments=Home.Switch:true, Home.Tab:"直播tab, 推荐tab, hottopic, bangumi, anime, film, koreavtw", Home.Tab_default:"推荐tab", Home.Top_left:"mine", Home.Top:"消息Top", Bottom:"home, dynamic, ogv, 会员购Bottom, 我的Bottom", Region.Switch:true, Mine.Switch:true, Mine.iPad.Switch:true, Storage:"Argument", LogLevel:"WARN", ForceHost:"1", Locales:"CHN, HKG, TWN", Proxies.CHN:"DIRECT", Proxies.HKG:"🇭🇰香港", Proxies.MAC:"🇲🇴澳门", Proxies.TWN:"🇹🇼台湾", Host.OverseaVideo:"upos-sz-mirrorali.bilivideo.com", Host.BStar:"upos-sz-mirrorali.bilivideo.com", Host.PCDN:"upos-sz-mirrorali.bilivideo.com", Host.MCDN:"proxy-tf-all-ws.bilivideo.com", 运营商:cm, 网络信息:CAIQBBoGbW9iaWxl
 #!arguments-desc=[📺 BiliBili: ⚙️ Enhanced] 参数说明请参考上游模块文档\n[📺 BiliBili: 🌐 Global] 参数说明请参考上游模块文档\n[📺 BiliBili: 🔀 Redirect] 参数说明请参考上游模块文档
 
@@ -53,6 +53,7 @@ bilibili.helper.v1.view = type=http-response,pattern=^https:\/\/grpc\.biliapi\.n
 bilibili.helper.mainList = type=http-response,pattern=^https:\/\/grpc\.biliapi\.net\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Bilibili/bilibili.helper.js
 bilibili.helper.searchAll = type=http-response,pattern=^https:\/\/grpc\.biliapi\.net\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Bilibili/bilibili.helper.js
 bilibili.helper.dynAll = type=http-response,pattern=^https:\/\/grpc\.biliapi\.net\/bilibili\.app\.dynamic\.v2\.Dynamic\/DynAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Bilibili/bilibili.helper.js
+Bili1080P=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/v2\/account\/myinfo\?,requires-body=1,script-path=https://raw.githubusercontent.com/deezertidal/private/master/js-backup/Script/bilibili_json.js
 
 [Header Rewrite]
 http-request ^https:\/\/app\.bilibili\.com\/x\/v2\/(splash|search\?|feed\/index) header-del x-tf-isp

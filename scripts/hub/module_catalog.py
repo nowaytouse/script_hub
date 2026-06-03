@@ -34,9 +34,14 @@ CATEGORY_SHORT = {
 }
 
 MERGED_ALIASES = {
+    "bili.sgmodule": "📺 BiliBili增强合集",
     "BiliBili.Enhanced.sgmodule": "📺 BiliBili增强合集",
     "BiliBili.Global.sgmodule": "📺 BiliBili增强合集",
     "BiliBili.Redirect.sgmodule": "📺 BiliBili增强合集",
+    "sukka_url_redirect.sgmodule": PROMAX_MERGE_LABEL,
+    "Timecard.sgmodule": "📊 面板工具合集",
+    "net-lsp-x.sgmodule": "📊 面板工具合集",
+    "Sub_Info.sgmodule": "📊 面板工具合集",
     "YouTube.Enhance.sgmodule": "📺 YouTube增强合集",
     "iRingo.Maps.sgmodule": "🍎 Apple服务增强合集",
     "iRingo.WeatherKit.sgmodule": "🍎 Apple服务增强合集",
