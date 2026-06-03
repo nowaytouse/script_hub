@@ -19,71 +19,51 @@ SURGE_RULESET_DIR = ROOT / "rulesets" / "list"
 # Mainland (matches [General] + encrypted-dns baseline)
 DOH_CN_ALIDNS = "https://dns.alidns.com/dns-query"
 DOH_CN_PUB = "https://doh.pub/dns-query"
-DOH_CN_APPLE = "system"
-DOH_TW_TWNIC = "https://dns.twnic.tw/dns-query"
-DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
+DOH_CN_360 = "https://doh.360.cn/dns-query"
+DOH_CN_VOLCANO = "https://dns.volcengine.com/dns-query"
+
+# Traditional IPs for Mainland Speed
+TRADITIONAL_CN_114 = "114.114.114.114"
+TRADITIONAL_CN_ALI = "223.5.5.5"
 
 # International pool (aligned with NyaMiiKo.conf [General] encrypted-dns-server)
-DOH_ADGUARD = "https://dns.adguard-dns.com/dns-query"
-DOH_NEXTDNS = "https://dns.nextdns.io"
-DOH_CONTROL_D = "https://dns.controld.com/p2"
-DOH_MULLVAD = "https://dns.mullvad.net/dns-query"
-DOH_MULLVAD_ADBLOCK = "https://adblock.dns.mullvad.net/dns-query"
-DOH_LIBREDNS = "https://doh.libredns.gr/noads"
-DOH_DNS_SB = "https://doh.dns.sb/dns-query"
-DOH_TIAR = "https://doh.tiar.app/dns-query"
 DOH_NJALLA = "https://doh.njalla.fo/dns-query"
-DOH_ARAPURAYIL = "https://dns.arapurayil.com/dns-query"
-DOH_JP_BLAH = "https://jp.blahdns.com/dns-query"
-DOH_AHA = "https://doh.ahadns.com/dns-query"
-DOH_FFMUC = "https://doh.ffmuc.net/dns-query"
-DOH_APPLIED_PRIVACY = "https://doh.applied-privacy.net/query"
-DOH_DIGITALE_GESELLSCHAFT = "https://dns.digitale-gesellschaft.ch/dns-query"
-DOH_SUDO = "https://dns.sudo.is/dns-query"
-DOH_CAPTNEMO = "https://dns.captnemo.in/dns-query"
 DOH_CLOUDFLARE = "https://cloudflare-dns.com/dns-query"
+DOH_GOOGLE = "https://dns.google/dns-query"
+DOH_QUAD9 = "https://dns.quad9.net/dns-query"
+DOH_CONTROLD = "https://dns.controld.com/p2"
+DOH_DNS_SB = "https://doh.dns.sb/dns-query"
+
+DOH_TW_TWNIC = "https://dns.twnic.tw/dns-query"
+DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
+DOH_NEXTDNS = "https://dns.nextdns.io"
+DOH_MULLVAD_ADBLOCK = "https://adblock.dns.mullvad.net/dns-query"
+DOH_DNS_SB = "https://doh.dns.sb/dns-query"
 
 DNS_MAPPING_DOH: Dict[str, str] = {
     "DNS_China_AliDNS": DOH_CN_ALIDNS,
-    "DNS_China_ByteDance": DOH_CN_ALIDNS,
-    "DNS_China_114": DOH_CN_PUB,
-    "DNS_China_114_manual": DOH_CN_PUB,
-    "DNS_China_360": DOH_CN_PUB,
-    "DNS_Global_Google": DOH_NEXTDNS,
-    "DNS_Global_Cloudflare": DOH_DNS_SB,
-    "DNS_Global_Microsoft": DOH_CONTROL_D,
-    "DNS_Global_Apple": DOH_CN_APPLE,
-    "DNS_Global_AI": DOH_ADGUARD,
-    "DNS_Global_Social": DOH_CLOUDFLARE,
-    "DNS_Global_Privacy": DOH_LIBREDNS,
-    "DNS_Global_Priority": DOH_NEXTDNS,
-    "DNS_Global_Quad9": DOH_CONTROL_D,
-    "DNS_Global_Infrastructure": DOH_FFMUC,
+    "DNS_China_ByteDance": DOH_CN_VOLCANO,
+    "DNS_China_360": DOH_CN_360,
+    "DNS_China_114": TRADITIONAL_CN_114,
+    "DNS_China_114_manual": TRADITIONAL_CN_114,
+    "DNS_Global_Google": DOH_GOOGLE,
+    "DNS_Global_Cloudflare": DOH_CLOUDFLARE,
+    "DNS_Global_Microsoft": DOH_CONTROLD,
+    "DNS_Global_Apple": "system",
+    "DNS_Global_Social": DOH_NJALLA,
+    "DNS_Global_Quad9": DOH_QUAD9,
 }
 
 SURGE_RULESET_DOH: Dict[str, str] = {
-    "StreamJP": DOH_JP_BLAH,
-    "StreamKR": DOH_JP_BLAH,
-    "CDN": DOH_DNS_SB,
-    "substore": DOH_SUDO,
-    "StreamHK": DOH_NEXTDNS,
-    "StreamTW": DOH_TW_TWNIC,
-    "Cloudflare": DOH_DNS_SB,
-    "StreamUS": DOH_NEXTDNS,
-    "AppleNews": DOH_CN_APPLE,
-    "StreamEU": DOH_DIGITALE_GESELLSCHAFT,
+    "NSFW": DOH_NJALLA,
+    "SocialMedia": DOH_NJALLA,
+    "Bilibili": TRADITIONAL_CN_ALI,
+    "Apple": "system",
+    "AppleNews": "system",
     "Spotify": DOH_DNS_SB,
-    "SocialMedia": DOH_CLOUDFLARE,
-    "NSFW": DOH_MULLVAD_ADBLOCK,
-    "GitHub": DOH_TIAR,
-    "Google": DOH_NEXTDNS,
-    "Microsoft": DOH_CONTROL_D,
-    "AI": DOH_ADGUARD,
-    "Bilibili": DOH_CN_PUB,
-    "Gaming": DOH_JP_BLAH,
-    "Apple": DOH_CN_APPLE,
-    "PayPal": DOH_CN_ALIDNS,
-    "Binance": DOH_ADGUARD,
+    "GitHub": DOH_CLOUDFLARE,
+    "Google": DOH_GOOGLE,
+    "Microsoft": DOH_CONTROLD,
 }
 
 RULE_LINE = re.compile(
@@ -339,7 +319,7 @@ def infrastructure_block() -> List[str]:
     return [
         "",
         "# =============================================================================",
-        "# SECTION F: Rule-aligned Surge rulesets (from [Rule] DOMAIN entries)",
+        "# SECTION F: Rule-aligned Surge rulesets (from Surge DOMAIN entries)",
         "# GlobalProxy.list omitted (~37k) — use FINAL proxy group + encrypted-dns pool",
         "# =============================================================================",
     ]
