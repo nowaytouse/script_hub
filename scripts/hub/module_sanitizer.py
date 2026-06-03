@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 SECTION_ORDER = [
     "General",
+    "Host",
     "Rule",
     "URL Rewrite",
     "Map Local",
