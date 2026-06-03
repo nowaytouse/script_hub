@@ -27,7 +27,7 @@ TRADITIONAL_CN_114 = "114.114.114.114"
 TRADITIONAL_CN_ALI = "223.5.5.5"
 
 # Traditional IPs for International Global Speed
-TRADITIONAL_GLOBAL = "1.1.1.1, 8.8.8.8"
+TRADITIONAL_GLOBAL = "1.1.1.1, 2606:4700:4700::1111, 9.9.9.9, 2620:fe::fe, 76.76.10.2, 2606:1a40:1::2"
 
 # International pool (aligned with NyaMiiKo.conf [General] encrypted-dns-server)
 DOH_NJALLA = "https://doh.njalla.fo/dns-query"
