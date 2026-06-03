@@ -17,7 +17,9 @@ from hub.common import write_file
 PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
 PROMAX_MERGE_LABEL = "🚫 Universal Ad-Blocking Rules (PROMAX)"
 PROMAX_MERGED_NAME_HINTS = ("去广告", "AdBlock", "adblock", "ADBlock")
-CDN_BASE = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
+from hub.paths import REPO_RAW_PREFIX
+
+CDN_BASE = REPO_RAW_PREFIX
 
 CATEGORIES = {
     "amplify_nexus": "『 🛠️ Amplify Nexus › 增幅枢纽 』",

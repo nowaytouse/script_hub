@@ -204,7 +204,7 @@ REMOTE_PREFIXES = ("http://", "https://")
 # PROMAX ships RULE-SET refs plus merged functional sections from AdBlock_functional_sources.txt.
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
 MODULE_RULE_SECTIONS = frozenset({"Rule", "Adblock Plus"})
-PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
+PROTECTED_MODULES: tuple[str, ...] = ()
 SUPPORTED_POLICIES = {
     "REJECT",
     "REJECT-DROP",

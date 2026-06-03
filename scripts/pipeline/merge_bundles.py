@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Upstream Surge module bundle merges (BiliBili, YouTube, Weibo, Apple, DNS)."""
+"""Upstream Surge module bundle merges (BiliBili, YouTube, Weibo, Apple)."""
 
 from __future__ import annotations
 
 import os
 import re
 import sys
-import urllib.request
-from datetime import datetime
 from typing import Callable, List, Optional
 
 from hub.common import Logger, get_project_root, read_file, safe_download, write_file
@@ -18,7 +16,7 @@ from hub.module_sanitizer import (
     merge_mitm_hosts,
     parse_module,
 )
-from hub.paths import LOCAL_DIR, SKK_UPSTREAM_DIR
+from hub.paths import BILIBILI_HELPER_URL, LOCAL_DIR, YOUTUBE_ENHANCE_URL
 
 ROOT = get_project_root()
 
@@ -29,7 +27,7 @@ BILIBILI_SOURCES = [
     ("Enhanced", "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"),
     ("Global", "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"),
     ("Redirect", "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"),
-    ("Helper", "https://raw.githubusercontent.com/Maasea/sgmodules/master/Bilibili.Helper.sgmodule"),
+    ("Helper", BILIBILI_HELPER_URL),
 ]
 BILIBILI_HEADER = {
     "name": "📺 BiliBili增强合集",
@@ -85,26 +83,10 @@ YOUTUBE_OUTPUT = os.path.join(
     ROOT, "modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule"
 )
 YOUTUBE_ADBLOCK_OUTPUT = os.path.join(LOCAL_DIR, "YouTube.ADBlock.sgmodule")
-YOUTUBE_UPSTREAM_URLS = (
-    "https://raw.githubusercontent.com/Maasea/sgmodules/master/YouTube.Enhance.sgmodule",
-    "https://raw.githubusercontent.com/Maasea/sgmodules/refs/heads/master/YouTube.Enhance.sgmodule",
-)
 YOUTUBE_LOCAL_FALLBACKS = (
     os.path.join(ROOT, "modules/surge/amplify_nexus/YouTube.Enhance.sgmodule"),
     YOUTUBE_OUTPUT,
 )
-
-DNS_OUTPUT = os.path.join(
-    ROOT, "modules/surge/amplify_nexus/🌐 DNS & Host Enhanced.sgmodule"
-)
-DNS_HTTPDNS_URLS = (
-    "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodules/HTTPDNS.Block.sgmodule",
-)
-DNS_ASN_URLS = (
-    "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodules/ASN.China.sgmodule",
-)
-DNS_LOCAL_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
-DNS_LOCAL_ASN = os.path.join(SKK_UPSTREAM_DIR, "domestic-ip.list")
 
 
 def merge_bilibili() -> None:
@@ -162,12 +144,11 @@ def merge_weibo() -> None:
 
 
 def _fetch_youtube_upstream() -> Optional[str]:
-    for url in YOUTUBE_UPSTREAM_URLS:
-        text = safe_download(url, retries=2, timeout=60)
-        if text and len(text.strip()) > 100:
-            Logger.info(f"Using upstream: {url}")
-            return text
-        Logger.warn(f"YouTube upstream unavailable: {url}")
+    text = safe_download(YOUTUBE_ENHANCE_URL, retries=2, timeout=60)
+    if text and len(text.strip()) > 100:
+        Logger.info(f"Using upstream: {YOUTUBE_ENHANCE_URL}")
+        return text
+    Logger.warn(f"YouTube upstream unavailable: {YOUTUBE_ENHANCE_URL}")
     for path in YOUTUBE_LOCAL_FALLBACKS:
         if os.path.isfile(path):
             Logger.warn(f"Using local fallback: {os.path.relpath(path, ROOT)}")
@@ -286,111 +267,6 @@ def merge_youtube() -> None:
         Logger.warn("No YouTube adblock sections extracted; kept existing local module if any.")
 
 
-def _dns_download(urls: tuple[str, ...], label: str) -> Optional[str]:
-    for url in urls:
-        try:
-            with urllib.request.urlopen(url, timeout=30) as resp:
-                return resp.read().decode("utf-8")
-        except Exception as exc:
-            Logger.warn(f"{label} download failed ({url}): {exc}")
-    return None
-
-
-def _dns_extract_rules(content: str) -> str:
-    match = re.search(r"\[Rule\](.*?)(?=\n\[|$)", content, re.DOTALL)
-    if not match:
-        return ""
-    lines = []
-    for line in match.group(1).strip().split("\n"):
-        line = line.strip()
-        if line and (
-            line.startswith("#")
-            or line.startswith("DOMAIN")
-            or line.startswith("IP-")
-            or line.startswith("RULE-SET")
-        ):
-            lines.append(line)
-    return "\n".join(lines)
-
-
-def _dns_rules_from_list(path: str) -> str:
-    if not os.path.isfile(path):
-        return ""
-    lines = []
-    for raw in read_file(path):
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith(("DOMAIN", "IP-", "RULE-SET", "URL-REGEX")):
-            lines.append(line)
-    return "\n".join(lines)
-
-
-def merge_dns() -> None:
-    Logger.section("DNS module merge (HTTPDNS + China ASN rules)")
-    if not os.path.exists(DNS_OUTPUT):
-        Logger.warn(
-            f"Skipping DNS merge — local module missing: {os.path.relpath(DNS_OUTPUT, ROOT)}"
-        )
-        return
-
-    httpdns = _dns_download(DNS_HTTPDNS_URLS, "HTTPDNS.Block")
-    asn = _dns_download(DNS_ASN_URLS, "ASN.China")
-    httpdns_source = "GetSomeFries HTTPDNS.Block"
-    asn_source = "GetSomeFries ASN.China"
-
-    if not httpdns:
-        httpdns_rules = _dns_rules_from_list(DNS_LOCAL_HTTPDNS)
-        httpdns_source = f"skk_upstream/{os.path.basename(DNS_LOCAL_HTTPDNS)}"
-        httpdns = f"[Rule]\n{httpdns_rules}\n" if httpdns_rules else ""
-    else:
-        httpdns_rules = _dns_extract_rules(httpdns)
-
-    if not asn:
-        asn_rules = _dns_rules_from_list(DNS_LOCAL_ASN)
-        asn_source = f"skk_upstream/{os.path.basename(DNS_LOCAL_ASN)}"
-        asn = f"[Rule]\n{asn_rules}\n" if asn_rules else ""
-    else:
-        asn_rules = _dns_extract_rules(asn)
-
-    if not httpdns_rules and not asn_rules:
-        raise RuntimeError(
-            "DNS rule merge: no HTTPDNS or ASN rules from upstream or skk_upstream fallback"
-        )
-
-    with open(DNS_OUTPUT, "r", encoding="utf-8") as f:
-        local = f.read()
-
-    local = re.sub(r"\n\[Rule\].*?(?=\n\[MITM\])", "", local, flags=re.DOTALL)
-    date_str = datetime.now().strftime("%Y.%m.%d")
-    rule_section = f"""
-[Rule]
-# FROM: {httpdns_source} (Block HTTPDNS hijacking)
-# AUTO-MERGED: {date_str}
-{httpdns_rules}
-
-# FROM: {asn_source} (China ASN Direct)
-# AUTO-MERGED: {date_str}
-{asn_rules}
-"""
-    if "[MITM]" in local:
-        local = local.replace("[MITM]", rule_section + "\n[MITM]")
-    else:
-        local += rule_section
-
-    local = re.sub(r"^#!version=.*$", f"#!version={date_str}", local, flags=re.MULTILINE)
-    with open(DNS_OUTPUT, "w", encoding="utf-8") as f:
-        f.write(local)
-
-    httpdns_count = len([l for l in httpdns_rules.split("\n") if l.startswith(("DOMAIN", "IP-"))])
-    asn_count = len(
-        [l for l in asn_rules.split("\n") if l.startswith(("IP-ASN", "IP-CIDR"))]
-    )
-    Logger.success(
-        f"DNS merge: HTTPDNS={httpdns_count} rules, ASN={asn_count} rules (DoH preserved)"
-    )
-
-
 def run_all(*, strict: bool = False) -> List[str]:
     """Run all bundle merges. Returns labels that failed (empty if all OK)."""
     steps: list[tuple[str, Callable[[], None]]] = [
@@ -398,7 +274,6 @@ def run_all(*, strict: bool = False) -> List[str]:
         ("youtube", merge_youtube),
         ("weibo", merge_weibo),
         ("apple", merge_apple),
-        ("dns", merge_dns),
     ]
     failures: List[str] = []
     for label, fn in steps:

@@ -85,7 +85,7 @@ NEXUS_MODULES = [
     "https://yfamilys.com/module/bili.module",
     "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule",
     "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule",
-    "https://raw.githubusercontent.com/Maasea/sgmodules/refs/heads/master/YouTube.Enhance.sgmodule",
+    "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule",
     "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule",
     "https://raw.githubusercontent.com/xream/scripts/main/surge/module/network-info/net-lsp-x.sgmodule",
     "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule",
@@ -113,8 +113,6 @@ LOCAL_SOURCE_MODULES = {
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
 HEAD_EXPANSE_GROUP = "『 🔝 Head Expanse › 首端扩域 』"
 NARROW_PIERCE_GROUP = "『 🎯 Narrow Pierce › 窄域穿刺 』"
-PROTECTED_MODULES = ["🌐 DNS & Host Enhanced.sgmodule"]
-
 # SYNC CLASS
 
 class UpstreamSyncer:

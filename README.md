@@ -13,6 +13,12 @@
 |------|------|
 | `rulesets/list/` | Surge / Shadowrocket 编译后的 `.list` 规则集 |
 | `modules/source/local/` | PROMAX 构建用的本地 sgmodule 源（上游同步） |
+| `modules/helper/surge_module_helper.html` | 模块安装助手网页（`main_update` / `consolidate_modules` 自动再生） |
+
+模块助手页（推送后可用）：
+https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/helper/surge_module_helper.html
+
+Maasea 上游仓库已更名为 [Maasea/sgmodule](https://github.com/Maasea/sgmodule)（旧 `sgmodules` 路径 404）。
 
 ## 脚本目录
 

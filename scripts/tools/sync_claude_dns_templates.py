@@ -4,9 +4,8 @@ Sync local `.claude` client templates from the Surge-first DNS design.
 
 Rules:
 1. Surge remains the primary desktop profile.
-2. Shadowrocket and Sing-box must use the non-dns DNS baseline:
-   `🌐 DNS & Host Enhanced (Strict Privacy)`.
-3. Shadowrocket syncs DNS-oriented sections from the converted SR module.
+2. Shadowrocket and Sing-box DNS follow the Surge template General section.
+3. Sing-box mirrors Surge steering intent with remote DoH rules.
 4. Sing-box keeps its own native DNS stack, but mirrors the same steering
    intent with remote DoH rules instead of local dns.
 """
@@ -18,12 +17,11 @@ import re
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 CLAUDE_DIR = ROOT / ".claude"
 SURGE_TEMPLATE = CLAUDE_DIR / "NyaMiiKo.conf.conf"
 SHADOWROCKET_TEMPLATE = CLAUDE_DIR / "shadowroket.conf"
 SINGBOX_TEMPLATE = ROOT / "scripts" / "Substore" / "Singbox1.13.0+.conf"
-SHADOWROCKET_DNS_MODULE = ROOT / "modules" / "shadowrocket" / "amplify_nexus" / "🌐 DNS & Host Enhanced.module"
 
 KEY_VALUE_RE = re.compile(r"^(\s*)([A-Za-z0-9_-]+)(\s*=\s*)(.*)$")
 MITM_HOSTNAME_RE = re.compile(r"(?m)^(\s*hostname\s*=\s*)(.*)$")
