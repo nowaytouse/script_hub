@@ -37,6 +37,7 @@ HEADER_KEYS_ORDER = [
 
 META_LINE_RE = re.compile(r"^#!\s*([A-Za-z0-9_-]+)\s*[=:]\s*(.*)$", re.IGNORECASE)
 SCRIPT_NAME_RE = re.compile(r"\bname\s*=\s*([^,\s]+)", re.IGNORECASE)
+SCRIPT_LABEL_RE = re.compile(r"^(.+?)\s*=\s*type=", re.IGNORECASE)
 SCRIPT_PATH_RE = re.compile(r"\bscript-path\s*=\s*([^,\s]+)", re.IGNORECASE)
 SCRIPT_PATTERN_RE = re.compile(r"\bpattern\s*=\s*([^,]+)", re.IGNORECASE)
 
@@ -82,6 +83,9 @@ def _dedupe_key(section: str, line: str) -> str:
     lowered = stripped.lower()
 
     if section == "Script":
+        label = SCRIPT_LABEL_RE.match(stripped)
+        if label:
+            return f"script:label:{label.group(1).strip()}"
         name = SCRIPT_NAME_RE.search(stripped)
         if name:
             return f"script:name:{name.group(1)}"
@@ -196,6 +200,7 @@ def sanitize_file_content(text: str, *, dedupe: bool = True) -> str:
 def merge_mitm_hosts(sections: List[Tuple[str, List[str]]]) -> List[Tuple[str, List[str]]]:
     hosts: Set[str] = set()
     other: List[Tuple[str, List[str]]] = []
+    skip_tokens = {"%INSERT%", "%APPEND%"}
     for name, lines in sections:
         if name != "MITM":
             other.append((name, lines))
@@ -203,8 +208,15 @@ def merge_mitm_hosts(sections: List[Tuple[str, List[str]]]) -> List[Tuple[str, L
         for line in lines:
             stripped = line.strip()
             if stripped.lower().startswith("hostname"):
-                part = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped, flags=re.I)
-                hosts.update(h.strip() for h in part.split(",") if h.strip())
+                part = re.sub(r"^hostname\s*=\s*", "", stripped, flags=re.I)
+                part = re.sub(r"^(%APPEND%|%INSERT%)\s*", "", part, flags=re.I)
+                for token in part.split(","):
+                    token = token.strip()
+                    if token and token not in skip_tokens:
+                        hosts.update({token})
     if hosts:
-        other.append(("MITM", [f"hostname = %APPEND% {', '.join(sorted(hosts))}"]))
+        inclusions = sorted(h for h in hosts if not h.startswith("-"))
+        exclusions = sorted(h for h in hosts if h.startswith("-"))
+        merged = ", ".join(inclusions + exclusions)
+        other.append(("MITM", [f"hostname = %APPEND% {merged}"]))
     return other

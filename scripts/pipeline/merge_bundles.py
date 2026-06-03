@@ -11,6 +11,7 @@ from typing import Callable, List, Optional
 from hub.common import Logger, get_project_root, read_file, safe_download, safe_download_binary, safe_remove, write_file
 from hub.merge_upstream import merge_upstream_modules
 from hub.module_sanitizer import (
+    SECTION_ORDER,
     format_header,
     format_module,
     merge_mitm_hosts,
@@ -298,6 +299,48 @@ def merge_utilities() -> None:
     )
 
 
+def _finalize_devtools_bundle(output_path: str) -> None:
+    """Ensure merged devtools MITM is valid and Sub-Store scripts are complete."""
+    devtools_mitm_exclusions = (
+        "-github.com",
+        "-api.github.com",
+        "-*.githubusercontent.com",
+    )
+    text = "".join(read_file(output_path))
+    meta, sections = parse_module(text)
+    merged: dict[str, list[str]] = {name: list(lines) for name, lines in sections}
+
+    script_lines = merged.get("Script", [])
+    script_labels = {
+        m.group(1).strip()
+        for line in script_lines
+        if (m := re.match(r"^(.+?)\s*=\s*type=", line.strip(), re.I))
+    }
+    required_sub_store = {"Sub-Store Core", "Sub-Store Simple", "{{{sync}}}", "{{{produce}}}"}
+    missing = required_sub_store - script_labels
+    if missing:
+        Logger.warn(f"Sub-Store scripts incomplete in bundle (missing: {', '.join(sorted(missing))})")
+
+    hosts: set[str] = set()
+    for line in merged.get("MITM", []):
+        if not line.strip().lower().startswith("hostname"):
+            continue
+        part = re.sub(r"^hostname\s*=\s*", "", line.strip(), flags=re.I)
+        part = re.sub(r"^(%APPEND%|%INSERT%)\s*", "", part, flags=re.I)
+        hosts.update(token.strip() for token in part.split(",") if token.strip() and token.strip() not in {"%INSERT%", "%APPEND%"})
+    hosts.update(devtools_mitm_exclusions)
+    inclusions = sorted(h for h in hosts if not h.startswith("-"))
+    exclusions = sorted(h for h in hosts if h.startswith("-"))
+    merged["MITM"] = [f"hostname = %APPEND% {', '.join(inclusions + exclusions)}"]
+
+    section_list = [(name, merged[name]) for name in SECTION_ORDER if name in merged and merged[name]]
+    for name in sorted(merged):
+        if name not in SECTION_ORDER and merged[name]:
+            section_list.append((name, merged[name]))
+    header_lines = format_header(meta)
+    write_file(output_path, format_module(header_lines, section_list, dedupe=False))
+
+
 def merge_devtools() -> None:
     Logger.section("Script Hub devtools upstream bundle merge")
     _sync_script_hub_scripts()
@@ -314,6 +357,7 @@ def merge_devtools() -> None:
         },
     )
     _pin_script_hub_bundle_scripts(DEVTOOLS_OUTPUT)
+    _finalize_devtools_bundle(DEVTOOLS_OUTPUT)
 
 
 def _load_preserved_rule_sections(path: str) -> dict[str, list[str]]:

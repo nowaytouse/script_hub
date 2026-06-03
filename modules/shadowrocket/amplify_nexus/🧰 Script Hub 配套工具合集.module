@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Scriptable.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=ScriptHub, BoxJs, Sub-Store
-#!date=2026-06-03 13:47:32
+#!date=2026-06-03 13:54:43
 #!arguments=ability:http-client-policy, cronexp:55 23 * * *, sync:"Sub-Store Sync", timeout:120, engine:auto, produce:"# Sub-Store Produce", produce_cronexp:50 */6 * * *, sync_success_notify:true, produce_sub:"sub1, sub2", produce_col:"col1, col2", max_size:-1, cors:"https://sub-store.vercel.app", Notify:开启通知
 #!arguments-desc=[Sub-Store(β)] 参数说明请参考上游模块文档\n[Script Hub: 重写 & 规则集转换] 参数说明请参考上游模块文档
 #!homepage=https://script.hub
@@ -21,10 +21,11 @@ Rewrite: BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),s
 Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},ability="{{{ability}}}",engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
 Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
 {{{sync}}}=type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}},argument="sync_success_notify={{{sync_success_notify}}}"
+{{{produce}}}=type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}},argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
 Script Hub: 前端 = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_f59ef7_script-hub.js, timeout=300
 Script Hub: 重写转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
 Script Hub: 规则集转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_0aa101_rule-parser.js, timeout=300, argument=Notify={{{Notify}}}
 Script Hub: 脚本转换 = type=http-request, pattern=^https?:\/\/script\.hub\/convert\/, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_95a370_script-converter.js, timeout=300
 
 [MITM]
-hostname = boxjs.com, *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.net, script.hub, sub.store
+hostname = *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store, -*.githubusercontent.com, -api.github.com, -github.com
