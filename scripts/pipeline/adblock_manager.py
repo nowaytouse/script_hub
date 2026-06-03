@@ -1545,7 +1545,8 @@ class AdBlockManager:
         complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
 
         if lite_only:
-            active_rulesets = [p for p in generated_rulesets if self._category_from_filename(os.path.basename(p)) in LITE_CATEGORIES]
+            # The user explicitly wants to KEEP privacy, threat intel, etc., in Lite.
+            active_rulesets = generated_rulesets
             target_path = TARGET_MODULE_LITE
         else:
             active_rulesets = generated_rulesets
@@ -1610,7 +1611,7 @@ class AdBlockManager:
             ]
         )
 
-        active_cats = LITE_CATEGORIES if lite_only else set(self.category_names)
+        active_cats = set(self.category_names)
         complex_seen: Set[str] = set()
         for policy in ("REJECT", "REJECT-DROP", "REJECT-NO-DROP"):
             pool = set()
@@ -1651,18 +1652,16 @@ class AdBlockManager:
             )
             func_counts.append(f"MITM={len(self.mitm_hosts)}")
 
-        all_sections = [("Rule", rule_lines)] + functional_sections
-        all_sections = merge_mitm_hosts(all_sections)
-        func_summary = ", ".join(func_counts) if func_counts else "无脚本层"
-
         if lite_only:
+            all_sections = [("Rule", rule_lines)]
+            func_summary = "无脚本/重写/MITM"
             name = f"📱 Universal Ad-Blocking Rules (PROMAX Lite) - [{current_date}]"
-            desc = (
-                f"手机轻量版({shard_count}片 REJECT 分片 + 应用内去广告脚本); "
-                f"不含 ThreatIntel 重型规则; {func_summary}"
-            )
-            tag = "AdBlock, Lite, Mobile, HTTPDNS, Script"
+            desc = f"轻量基础版({shard_count}分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满"
+            tag = "AdBlock, Lite, Basic, Mobile"
         else:
+            all_sections = [("Rule", rule_lines)] + functional_sections
+            all_sections = merge_mitm_hosts(all_sections)
+            func_summary = ", ".join(func_counts) if func_counts else "无脚本层"
             name = f"🚫 Universal Ad-Blocking Rules (PROMAX) - [{current_date}]"
             desc = (
                 f"按用途分片({shard_count}片) + 应用内去广告({func_summary}); "
