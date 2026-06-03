@@ -12,7 +12,7 @@ from hub.common import (
 
 ROOT = get_project_root()
 PORTS_SOURCE = os.path.join(ROOT, "rulesets/Sources/conf/SurgeConf_DirectPorts.list")
-FIREWALL_MODULE = os.path.join(ROOT, "modules/surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
+FIREWALL_MODULE = os.path.join(ROOT, "modules/surge/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).sgmodule")
 
 # SYNC LOGIC
 

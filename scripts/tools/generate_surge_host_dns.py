@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 DNS_DIR = ROOT / "rulesets" / "Sources" / "DNS_mapping"
 DNS_RULES_DIR = ROOT / "rulesets" / "dns"
 SURGE_RULESET_DIR = ROOT / "rulesets" / "list"
@@ -25,7 +25,7 @@ DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
 
 # International pool (aligned with NyaMiiKo.conf [General] encrypted-dns-server)
 DOH_ADGUARD = "https://dns.adguard-dns.com/dns-query"
-DOH_NEXTDNS = "https://dns.nextdns.io/7f2fac"
+DOH_NEXTDNS = "https://dns.nextdns.io"
 DOH_CONTROL_D = "https://dns.controld.com/p2"
 DOH_MULLVAD = "https://dns.mullvad.net/dns-query"
 DOH_MULLVAD_ADBLOCK = "https://adblock.dns.mullvad.net/dns-query"
@@ -231,7 +231,6 @@ def bootstrap_block() -> List[str]:
         "dns.baidu.com = 180.76.76.76, 110.242.68.66",
         "dns.twnic.tw = 101.101.101.101, 2001:de4::101",
         "ordns.he.net = 74.82.42.42, 2001:470:20::2",
-        "dns.adguard-dns.com = 94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff",
         "dns.adguard.com = 94.140.14.14, 94.140.15.15",
         "doh.libredns.gr = 116.202.176.26",
         "doh.ffmuc.net = 5.1.66.255, 185.150.99.255, 2001:678:e68:f000::, 2001:678:ed0:f000::",
@@ -240,7 +239,6 @@ def bootstrap_block() -> List[str]:
         "freedns.controld.com = 76.76.2.0, 76.76.10.0",
         "dns.controld.com = 76.76.2.0, 76.76.10.0",
         "doh.dns.apple.com = 17.253.1.201, 17.253.1.202",
-        "dns.nextdns.io = 45.90.28.0, 45.90.30.0",
         "doh.dns.sb = 185.222.222.222, 185.184.222.222",
         "doh.tiar.app = 139.162.110.150",
         "doh.njalla.fo = 146.255.56.98",
@@ -438,8 +436,31 @@ def _reserve_keys_from_lines(seen: Set[str], lines: Iterable[str]) -> None:
     seen.update(TELEGRAM_DC_IPS)
 
 
+
+def manual_hosts_block() -> List[str]:
+    return [
+        "# --- Manual DNS Mappings (from user request) ---",
+        "freedns.controld.com = 76.76.10.2, 2606:1a40:1::2",
+        "doh-sg.blahdns.com = 139.162.110.150, 2400:8902::f03c:91ff:fe06:787f",
+        "doh.ffmuc.net = 185.150.99.255, 2001:678:ed0:f000::",
+        "dns.mullvad.net = 194.242.2.3, 2a07:e340::3",
+        "doh.libredns.gr = 116.202.176.26, 2a01:4f8:c2c:548f::1",
+        "doh.dns.sb = 185.184.222.222, 2a09::1",
+        "doh.njalla.fo = 95.215.19.53, 2001:67c:2354:2::53",
+        "doh.applied-privacy.net = 146.255.56.98, 2a02:1b8:10:234::2",
+        "dns.digitale-gesellschaft.ch = 185.95.218.42, 2a05:fc84::42",
+        "adblock.dns.mullvad.net = 194.242.2.3, 2a07:e340::3",
+        "dns.google = 8.8.8.8, 8.8.4.4, 2001:4860:4860::8888, 2001:4860:4860::8844",
+        "cloudflare-dns.com = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001",
+        "dns.quad9.net = 9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9",
+        "dns.alidns.com = 223.5.5.5, 223.6.6.6",
+        "doh.pub = 1.12.12.12, 120.53.53.53",
+        ""
+    ]
+
 def build_host_section() -> str:
     seen: Set[str] = set()
+    _reserve_keys_from_lines(seen, manual_hosts_block())
     _reserve_keys_from_lines(seen, bootstrap_block())
     _reserve_keys_from_lines(seen, tail_block())
 
@@ -449,6 +470,7 @@ def build_host_section() -> str:
         "# Regenerate: python3 scripts/generate_surge_host_dns.py --write",
         "",
     ]
+    lines.extend(manual_hosts_block())
     lines.extend(bootstrap_block())
 
     dns_sources: List[Tuple[str, Path, str]] = []
@@ -521,7 +543,7 @@ def main() -> None:
     print(f"Wrote fragment ({body.count(chr(10))} lines): {args.output}")
 
     if args.write:
-        target = ROOT / ".claude" / "NyaMiiKo.conf.conf"
+        target = ROOT / "modules" / "surge" / "head_expanse" / "🛡️ PROMAX AdBlock Helper (DNS & Firewall).sgmodule"
         replace_host_section(target, body)
         print(f"Updated [Host] in {target}")
 
