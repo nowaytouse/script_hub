@@ -4,28 +4,56 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Mobile, HTTPDNS, Script
-#!date=2026-06-04 02:16:23
+#!date=2026-06-04 02:42:18
 
 [Rule]
+# --- SYNCED PORT RULES START ---
+# Automated update from ports source
+DEST-PORT,8076,REJECT-DROP
+IN-PORT,127.0.0.1:12654,REJECT-DROP
+IN-PORT,8076,REJECT-DROP
+# --- SYNCED PORT RULES END ---
+
+# 自建防火墙规则 (已注销，拦截功能交由上游列表处理)
+# DEST-PORT,8076,REJECT-DROP
+# IN-PORT,127.0.0.1:12654,REJECT-DROP
+# IN-PORT,8076,REJECT-DROP
+# DEST-PORT,31337,REJECT-DROP
+# DEST-PORT,31338,REJECT-DROP
+# DEST-PORT,12345,REJECT-DROP
+# DEST-PORT,12346,REJECT-DROP
+
+# High-Priority White-list (Prevent DNS failure)
 DOMAIN,dns.alidns.com,DIRECT
 DOMAIN,doh.pub,DIRECT
 DOMAIN,dns.pub,DIRECT
 DOMAIN,dot.pub,DIRECT
 DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
+# Block app-layer HTTPDNS first
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/list/HTTPDNS_Hijack.list,REJECT
+# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)
+# ── 应用去广告 · 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块） ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+# ── 通用广告 · blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+# ── 隐私追踪 · Privacy / tracking-protection / 防追踪列表 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+# ── 安全威胁 · 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+# ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+# ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+
+# SKK Upstream Rulesets
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/list/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/list/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/list/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
+# Merged REJECT complex rules (246)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -272,6 +300,7 @@ URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
+# Merged REJECT-DROP complex rules (68)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT-DROP
 DOMAIN,apidns.kwd.inkuai.com,REJECT-DROP
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT-DROP
@@ -340,6 +369,7 @@ DOMAIN,v6-data.video.dns.iqiyi.com,REJECT-DROP
 DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
 URL-REGEX,^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/,REJECT-DROP
 URL-REGEX,^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload),REJECT-DROP
+# Merged REJECT-NO-DROP complex rules (1)
 DOMAIN,titan.pinduoduo.com,REJECT-NO-DROP
 
 [URL Rewrite]

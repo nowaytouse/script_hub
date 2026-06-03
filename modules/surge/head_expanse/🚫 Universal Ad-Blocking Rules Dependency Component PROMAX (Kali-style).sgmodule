@@ -4,9 +4,25 @@
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-06-04 02:16:22
+#!date=2026-06-04 02:42:17
 
 [Rule]
+# --- SYNCED PORT RULES START ---
+# Automated update from ports source
+DEST-PORT,8076,REJECT-DROP
+IN-PORT,127.0.0.1:12654,REJECT-DROP
+IN-PORT,8076,REJECT-DROP
+# --- SYNCED PORT RULES END ---
+
+# 自建防火墙规则 (已注销，拦截功能交由上游列表处理)
+# DEST-PORT,8076,REJECT-DROP
+# IN-PORT,127.0.0.1:12654,REJECT-DROP
+# IN-PORT,8076,REJECT-DROP
+# DEST-PORT,31337,REJECT-DROP
+# DEST-PORT,31338,REJECT-DROP
+# DEST-PORT,12345,REJECT-DROP
+# DEST-PORT,12346,REJECT-DROP
+
 # High-Priority White-list (Prevent DNS failure)
 DOMAIN,dns.alidns.com,DIRECT
 DOMAIN,doh.pub,DIRECT

@@ -1554,6 +1554,19 @@ class AdBlockManager:
         shard_count = len(active_rulesets)
 
         rule_lines: List[str] = [
+            "# --- SYNCED PORT RULES START ---",
+            "# Automated update from ports source",
+            "# --- SYNCED PORT RULES END ---",
+            "",
+            "# 自建防火墙规则 (已注销，拦截功能交由上游列表处理)",
+            "# DEST-PORT,8076,REJECT-DROP",
+            "# IN-PORT,127.0.0.1:12654,REJECT-DROP",
+            "# IN-PORT,8076,REJECT-DROP",
+            "# DEST-PORT,31337,REJECT-DROP",
+            "# DEST-PORT,31338,REJECT-DROP",
+            "# DEST-PORT,12345,REJECT-DROP",
+            "# DEST-PORT,12346,REJECT-DROP",
+            "",
             "# High-Priority White-list (Prevent DNS failure)",
             "DOMAIN,dns.alidns.com,DIRECT",
             "DOMAIN,doh.pub,DIRECT",

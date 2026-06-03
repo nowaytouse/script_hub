@@ -580,7 +580,7 @@ def main() -> None:
     print(f"Wrote fragment ({body.count(chr(10))} lines): {args.output}")
 
     if args.write:
-        target = ROOT / "modules" / "surge" / "head_expanse" / "🛡️ PROMAX AdBlock Helper (DNS & Firewall).sgmodule"
+        target = ROOT / "modules" / "surge" / "head_expanse" / "🌟 AdBlock Helper .sgmodule"
         replace_host_section(target, body)
         print(f"Updated [Host] in {target}")
 
