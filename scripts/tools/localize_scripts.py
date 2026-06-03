@@ -17,7 +17,12 @@ from hub.common import _BROWSER_UA, safe_download_binary, Logger
 from hub.paths import SCRIPTS_DIR as SCRIPTS_DIR_STR, SCRIPT_RAW_PREFIX
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE_DIRS = [ROOT / "modules/surge", ROOT / "modules/shadowrocket"]
+MODULE_DIRS = [
+    ROOT / "modules/surge",
+    ROOT / "modules/shadowrocket",
+    ROOT / "modules/source/local",
+    ROOT / "rulesets/Sources/LocalModules",
+]
 SCRIPTS_DIR = Path(SCRIPTS_DIR_STR)
 LOCAL_URL_PREFIX = SCRIPT_RAW_PREFIX
 
@@ -68,7 +73,7 @@ def localize_module(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     
-    urls = re.findall(r'https?://[^\s,]+?\.js', content)
+    urls = re.findall(r'https?://[^\s,]+?\.(?:json|js)', content)
     if not urls:
         return
 

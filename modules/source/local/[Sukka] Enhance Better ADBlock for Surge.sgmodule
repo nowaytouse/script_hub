@@ -5,17 +5,17 @@
 hostname = %APPEND% *.google-analytics.com, *.googletagmanager.com, *.googlesyndication.com, *.googletagservices.com, *.doubleclick.net, cdn.ampproject.org, *.addthis.com, static.chartbeat.com, widgets.outbrain.com, -github.com, -api.github.com, -*.githubusercontent.com
 
 [URL Rewrite]
-^https?://.+\.google-analytics\.com/analytics\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_analytics.js 302
-^https?://.+\.googletagmanager\.com/gtm\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_analytics.js 302
-^https?://.+\.google-analytics\.com/ga\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_ga.js 302
-^https?://.+\.google-analytics\.com/cx/api\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_cx_api.js 302
-^https?://.+\.googlesyndication\.com/adsbygoogle\.js https://ruleset.skk.moe/Mock/www-googlesyndication-com_adsbygoogle.js 302
-^https?://.+\.googletagservices\.com/gpt\.js https://ruleset.skk.moe/Mock/www-googletagservices-com_gpt.js 302
-^https?://.+\.google-analytics\.com/inpage_linkid\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_inpage_linkid.js 302
-^https?://.+\.doubleclick\.net/instream/ad_status\.js https://ruleset.skk.moe/Mock/doubleclick-net_instream_ad_status.js 302
-^https?://cdn\.ampproject\.org/v0\.js https://ruleset.skk.moe/Mock/ampproject-org_v0.js 302
-^https?://.+\.addthis\.com/addthis_widget\.js https://ruleset.skk.moe/Mock/addthis-com_addthis_widget.js 302
-^https?://.+\.amazon-adsystem\.com/aax2/apstag\.js https://ruleset.skk.moe/Mock/amazon-adsystem-com_amazon-apstag.js 302
-^https?://static\.chartbeat\.com/chartbeat\.js https://ruleset.skk.moe/Mock/static-chartbeat-com_chartbeat_mab.js 302
-^https?://widgets\.outbrain\.com/outbrain\.js https://ruleset.skk.moe/Mock/widgets-outbrain-com_outbrain.js 302
-^https?://securepubads\.g\.doubleclick\.net/tag/js/gpt\.js https://ruleset.skk.moe/Mock/securepubads-g-doubleclick-net_tag_js_gpt.js 302
+^https?://.+\.google-analytics\.com/analytics\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_0ff394_www-google-analytics-com_analytics.js 302
+^https?://.+\.googletagmanager\.com/gtm\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_0ff394_www-google-analytics-com_analytics.js 302
+^https?://.+\.google-analytics\.com/ga\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_921e39_www-google-analytics-com_ga.js 302
+^https?://.+\.google-analytics\.com/cx/api\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_3f4b8d_www-google-analytics-com_cx_api.js 302
+^https?://.+\.googlesyndication\.com/adsbygoogle\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_0a7a17_www-googlesyndication-com_adsbygoogle.js 302
+^https?://.+\.googletagservices\.com/gpt\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_187dcd_www-googletagservices-com_gpt.js 302
+^https?://.+\.google-analytics\.com/inpage_linkid\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_6cdd90_www-google-analytics-com_inpage_linkid.js 302
+^https?://.+\.doubleclick\.net/instream/ad_status\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_0060ff_doubleclick-net_instream_ad_status.js 302
+^https?://cdn\.ampproject\.org/v0\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_cd58ff_ampproject-org_v0.js 302
+^https?://.+\.addthis\.com/addthis_widget\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_104f7c_addthis-com_addthis_widget.js 302
+^https?://.+\.amazon-adsystem\.com/aax2/apstag\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_ee09cc_amazon-adsystem-com_amazon-apstag.js 302
+^https?://static\.chartbeat\.com/chartbeat\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_89e23f_static-chartbeat-com_chartbeat_mab.js 302
+^https?://widgets\.outbrain\.com/outbrain\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_04b647_widgets-outbrain-com_outbrain.js 302
+^https?://securepubads\.g\.doubleclick\.net/tag/js/gpt\.js https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/ruleset_skk_moe_20ad92_securepubads-g-doubleclick-net_tag_js_gpt.js 302

@@ -300,7 +300,11 @@ def convert_content(content: str, *, module_stem: str = "") -> str:
         elif section == "MITM" and stripped and not stripped.startswith('#'):
             line = adapt_mitm_line_for_sr(line)
 
-        line = re.sub(r'%(?:INSERT|APPEND)%\s*', '', line)
+        # Only strip %APPEND%/%INSERT% from non-MITM lines.
+        # MITM hostname lines are already processed by adapt_mitm_line_for_sr
+        # which preserves %APPEND% (Shadowrocket supports it).
+        if section != "MITM":
+            line = re.sub(r'%(?:INSERT|APPEND)%\s*', '', line)
         for old, new in RULE_REPLACEMENTS.items():
             line = line.replace(old, new)
         line = REWRITE_MODIFIER_RE.sub('', line)

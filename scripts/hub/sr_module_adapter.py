@@ -49,8 +49,13 @@ def _adapt_substore_script_line(line: str, *, module_stem: str = "") -> str:
     out = re.sub(r"timeout=\{\{\{timeout\}\}\}", "timeout=120", out)
     out = re.sub(r',?\s*argument="cors=\{\{\{cors\}\}\}"', "", out)
 
-    if module_stem == DEVTOOLS_STEM and re.search(r"\{\{\{produce\}\}\}", out):
-        return f"# [SR精简] {out.lstrip()}  # 组合订阅定时处理请使用 Surge 版模块"
+    if re.search(r"\{\{\{produce\}\}\}=type=cron", out, re.I):
+        out = re.sub(
+            r"^\{\{\{produce\}\}\}",
+            "Sub-Store Produce",
+            out.strip(),
+            flags=re.I,
+        )
 
     if re.search(r"\{\{\{sync\}\}\}=type=cron", out, re.I):
         out = re.sub(
@@ -64,15 +69,22 @@ def _adapt_substore_script_line(line: str, *, module_stem: str = "") -> str:
 
 
 def adapt_mitm_line_for_sr(line: str) -> str:
+    """Convert Surge MITM hostname line for Shadowrocket.
+    Shadowrocket supports %APPEND% — preserve it so multiple modules
+    can coexist without overwriting each other's MITM hostnames.
+    """
     stripped = line.strip()
     if not stripped.lower().startswith("hostname"):
         return line
     part = re.sub(r"^hostname\s*=\s*", "", stripped, flags=re.I)
+    # Detect whether original had %APPEND% or %INSERT%
+    append_match = re.match(r"^(%APPEND%|%INSERT%)\s*", part, flags=re.I)
+    prefix = "%APPEND% " if append_match else ""
     part = re.sub(r"^(%APPEND%|%INSERT%)\s*", "", part, flags=re.I)
     hosts = [h.strip() for h in part.split(",") if h.strip() and h.strip() not in {"%INSERT%", "%APPEND%"}]
     if not hosts:
         return line
-    return f"hostname = {', '.join(hosts)}"
+    return f"hostname = {prefix}{', '.join(hosts)}"
 
 
 def adapt_section_lines_for_sr(
