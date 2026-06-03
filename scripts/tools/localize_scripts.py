@@ -29,12 +29,17 @@ LOCAL_URL_PREFIX = SCRIPT_RAW_PREFIX
 # User-Agent Pool
 USER_AGENTS = [_BROWSER_UA]
 
+# Domains that block bot downloads — handled separately (e.g. via repair_script_paths)
+_SKIP_DOMAINS = {"kelee.one", "cdn.jsdelivr.net"}
+
 def is_valid_url(url):
-    """Filter out regex patterns or invalid mock URLs."""
+    """Filter out regex patterns, invalid mock URLs, and known-blocked domains."""
     if ".*" in url or "{{" in url or url.endswith(".js*"):
         return False
     parsed = urlparse(url)
     if not parsed.netloc or "." not in parsed.netloc:
+        return False
+    if parsed.netloc in _SKIP_DOMAINS:
         return False
     return True
 
@@ -73,7 +78,8 @@ def localize_module(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     
-    urls = re.findall(r'https?://[^\s,]+?\.(?:json|js)', content)
+    # Extract the full URL including query parameters (up to comma or whitespace)
+    urls = re.findall(r'script-path=([^,\s]+)', content)
     if not urls:
         return
 
