@@ -1,7 +1,7 @@
 #!name=PROMAX split · 🐦 微博去广告合集.sgmodule
 #!desc=从混合模块拆出的去广告行 65/71；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule
+#!split-source=/home/runner/work/script_hub/script_hub/rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule
 
 [Rule]
 DOMAIN,adpinpai.video.weibocdn.com,REJECT
@@ -78,4 +78,4 @@ http-response-jq ^https:\/\/api\.weibo\.cn\/2\/cardlist\? 'del(.items[] | select
 http-response-jq ^https?:\/\/api\.weibo\.cn\/2\/statuses\/unread_hot_timeline$ 'del(.ad, .advertises, .trends) | if .statuses then .statuses |= map(select(((.promotion.type == "ad") or (.mblogtypename | IN("广告", "廣告", "热推", "熱推"))) | not)) end'
 
 [MITM]
-hostname = %APPEND% *.weibo.cn, *.weibo.com, api.weibo.cn, weibo.com, weibointl.api.weibo.cn
+hostname = %APPEND% *.weibo.cn, *.weibo.com, api.weibo.cn, weibo.com, weibointl.api.weibo.cn, -github.com, -api.github.com, -*.githubusercontent.com
