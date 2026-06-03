@@ -140,6 +140,24 @@ DEVTOOLS_SOURCES = [
     ("ScriptHub", SCRIPT_HUB_MODULE_URL),
 ]
 
+SUB_STORE_SCRIPT_SOURCES = {
+    "github_com_sub-store-org_sub-store-1.min.js": (
+        "https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js"
+    ),
+    "github_com_sub-store-org_sub-store-0.min.js": (
+        "https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js"
+    ),
+    "github_com_sub-store-org_cron-sync-artifacts.min.js": (
+        "https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js"
+    ),
+}
+
+SUB_STORE_SCRIPT_PATH_MAP = {
+    "sub-store-1.min.js": "github_com_sub-store-org_sub-store-1.min.js",
+    "sub-store-0.min.js": "github_com_sub-store-org_sub-store-0.min.js",
+    "cron-sync-artifacts.min.js": "github_com_sub-store-org_cron-sync-artifacts.min.js",
+}
+
 SCRIPT_HUB_SCRIPT_SOURCES = {
     "raw_githubusercontent_com_f59ef7_script-hub.js": (
         "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-hub.js"
@@ -177,7 +195,7 @@ DEVTOOLS_HEADER = {
     "name": "🧰 Script Hub 配套工具合集",
     "desc": (
         "Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)"
-        "\\n脚本路径指向本仓库 modules/source/scripts，随 main_update 同步"
+        "\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游"
     ),
     "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org",
     "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Scriptable.png",
@@ -200,6 +218,50 @@ SCRIPT_HUB_SCRIPT_PATH_MAP = {
     "rule-parser.js": "raw_githubusercontent_com_0aa101_rule-parser.js",
     "script-converter.js": "raw_githubusercontent_com_95a370_script-converter.js",
 }
+
+
+def _pin_sub_store_script_paths(module_path: str) -> None:
+    """Pin Sub-Store min.js URLs to this repo's vendored copies."""
+    if not os.path.isfile(module_path):
+        return
+    text = "".join(read_file(module_path))
+    changed = 0
+    for upstream_suffix, local_name in SUB_STORE_SCRIPT_PATH_MAP.items():
+        local = os.path.join(SCRIPTS_DIR, local_name)
+        if not os.path.isfile(local):
+            continue
+        canonical = SCRIPT_RAW_PREFIX + local_name
+        new_text, n = re.subn(
+            rf"script-path=https?://[^\s,]*{re.escape(upstream_suffix)}",
+            f"script-path={canonical}",
+            text,
+        )
+        if n:
+            text = new_text
+            changed += n
+    if changed:
+        write_file(module_path, text)
+        Logger.info(
+            f"  Pinned {changed} Sub-Store script-path URL(s) in {os.path.basename(module_path)}"
+        )
+
+
+def _sync_sub_store_scripts() -> None:
+    """Refresh Sub-Store backend scripts from sub-store-org releases."""
+    os.makedirs(SCRIPTS_DIR, exist_ok=True)
+    updated = 0
+    for local_name, url in SUB_STORE_SCRIPT_SOURCES.items():
+        content = safe_download_binary(url, retries=2, timeout=90)
+        if not content:
+            Logger.warn(f"Sub-Store script sync skipped: {local_name}")
+            continue
+        target = os.path.join(SCRIPTS_DIR, local_name)
+        write_file(target, content.decode("utf-8", errors="replace"))
+        updated += 1
+    if updated:
+        Logger.success(
+            f"Synced {updated}/{len(SUB_STORE_SCRIPT_SOURCES)} Sub-Store scripts to modules/source/scripts/"
+        )
 
 
 def _pin_script_hub_script_paths(module_path: str) -> None:
@@ -343,6 +405,7 @@ def _finalize_devtools_bundle(output_path: str) -> None:
 
 def merge_devtools() -> None:
     Logger.section("Script Hub devtools upstream bundle merge")
+    _sync_sub_store_scripts()
     _sync_script_hub_scripts()
     if os.path.isfile(SCRIPT_HUB_LOCAL):
         _pin_script_hub_script_paths(SCRIPT_HUB_LOCAL)
@@ -356,6 +419,7 @@ def merge_devtools() -> None:
             "ScriptHub": SCRIPT_HUB_LOCAL,
         },
     )
+    _pin_sub_store_script_paths(DEVTOOLS_OUTPUT)
     _pin_script_hub_bundle_scripts(DEVTOOLS_OUTPUT)
     _finalize_devtools_bundle(DEVTOOLS_OUTPUT)
 

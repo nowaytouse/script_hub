@@ -1,10 +1,10 @@
 #!name=🧰 Script Hub 配套工具合集
-#!desc=Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\n脚本路径指向本仓库 modules/source/scripts，随 main_update 同步
+#!desc=Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游
 #!author=@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Scriptable.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=ScriptHub, BoxJs, Sub-Store
-#!date=2026-06-03 14:03:51
+#!date=2026-06-03 18:22:54
 #!arguments=ability:http-client-policy, cronexp:55 23 * * *, sync:"Sub-Store Sync", timeout:120, engine:auto, produce:"# Sub-Store Produce", produce_cronexp:50 */6 * * *, sync_success_notify:true, produce_sub:"sub1, sub2", produce_col:"col1, col2", max_size:-1, cors:"https://sub-store.vercel.app", Notify:开启通知
 #!arguments-desc=[Sub-Store(β)] 参数说明请参考上游模块文档\n[Script Hub: 重写 & 规则集转换] 参数说明请参考上游模块文档
 #!homepage=https://script.hub
@@ -15,10 +15,10 @@ force-http-engine-hosts = %APPEND% script.hub, *.script.hub
 
 [Script]
 Rewrite: BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js, requires-body=true, timeout=120
-Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},ability="{{{ability}}}",engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
-Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
-{{{sync}}}=type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}},argument="sync_success_notify={{{sync_success_notify}}}"
-{{{produce}}}=type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js,engine={{{engine}}},argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
+Sub-Store Core=type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},ability="{{{ability}}}",engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
+Sub-Store Simple=type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},engine={{{engine}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
+{{{sync}}}=type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,engine={{{engine}}},argument="sync_success_notify={{{sync_success_notify}}}"
+{{{produce}}}=type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,engine={{{engine}}},argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
 Script Hub: 前端 = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_f59ef7_script-hub.js, timeout=300
 Script Hub: 重写转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
 Script Hub: 规则集转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_0aa101_rule-parser.js, timeout=300, argument=Notify={{{Notify}}}

@@ -16,8 +16,14 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
 PROJECT_ROOT = SCRIPTS_DIR.parent
 
-from hub.module_sanitizer import sanitize_file_content
+from hub.module_sanitizer import sanitize_file_content, parse_module, format_module, format_header
 from hub.common import _BROWSER_UA, Logger, write_file
+from hub.sr_module_adapter import (
+    DEVTOOLS_STEM,
+    adapt_mitm_line_for_sr,
+    adapt_script_line_for_sr,
+    module_stem_from_meta,
+)
 SURGE_MODULE_DIR = PROJECT_ROOT / "modules" / "surge"
 SR_MODULE_DIR = PROJECT_ROOT / "modules" / "shadowrocket"
 
@@ -213,7 +219,11 @@ def fetch_ruleset(url_or_path: str) -> List[str]:
         Logger.error(f"解析规则集时发生错误 {url_or_path}: {e}")
         return []
 
-def convert_content(content: str) -> str:
+def convert_content(content: str, *, module_stem: str = "") -> str:
+    if not module_stem:
+        meta, _ = parse_module(content)
+        module_stem = module_stem_from_meta(meta)
+
     lines = content.split('\n')
     out = []
     section = None
@@ -285,6 +295,11 @@ def convert_content(content: str) -> str:
                 out.append(f"# [SR不支持PROTOCOL] {line}")
                 continue
 
+        if section == "Script" and stripped and not stripped.startswith('#'):
+            line = adapt_script_line_for_sr(line, module_stem=module_stem)
+        elif section == "MITM" and stripped and not stripped.startswith('#'):
+            line = adapt_mitm_line_for_sr(line)
+
         line = re.sub(r'%(?:INSERT|APPEND)%\s*', '', line)
         for old, new in RULE_REPLACEMENTS.items():
             line = line.replace(old, new)
@@ -294,6 +309,24 @@ def convert_content(content: str) -> str:
         out.append(line)
 
     return sanitize_file_content('\n'.join(out), dedupe=True)
+
+
+def convert_devtools_module_for_sr(content: str) -> str:
+    """Shadowrocket build for devtools bundle: SR script compat + note in header."""
+    meta, sections = parse_module(content)
+    module_stem = module_stem_from_meta(meta, DEVTOOLS_STEM)
+    converted = convert_content(content, module_stem=module_stem)
+    meta, sections = parse_module(converted)
+    desc = meta.get("desc", "")
+    if "[🚀SR]" not in desc:
+        meta["desc"] = (
+            "[🚀SR] " + desc
+            + "\\nSub-Store 已按 Surge-Noability 精简(无 ability)；produce 定时仅 Surge 版可用"
+        )
+    section_map = {name: lines for name, lines in sections}
+    header = format_header(meta)
+    ordered = [(n, section_map[n]) for n in section_map]
+    return sanitize_file_content(format_module(header, ordered, dedupe=True), dedupe=True)
 
 PROMAX_SURGE_MODULES = (
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
@@ -343,9 +376,12 @@ def process_all_modules():
             print(f"🔄 Converting: {module_file.name}")
             try:
                 content = module_file.read_text(encoding="utf-8")
-                converted = convert_content(content)
+                if module_file.stem == DEVTOOLS_STEM:
+                    converted = convert_devtools_module_for_sr(content)
+                else:
+                    converted = convert_content(content, module_stem=module_file.stem)
                 out_path = SR_MODULE_DIR / cat / (module_file.stem + ".module")
-                out_path.write_text(converted, encoding="utf-8")
+                write_file(str(out_path), converted)
                 stats["converted"] += 1
             except Exception as e:
                 print(f"  ❌ Failed {module_file.name}: {e}")

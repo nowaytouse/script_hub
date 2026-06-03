@@ -27,6 +27,7 @@ class BundleSpec:
     sources: Sequence[tuple[str, str]]
     required_script_labels: Sequence[str] = ()
     required_mitm_hosts: Sequence[str] = ()
+    required_script_path_substrings: Sequence[str] = ()
 
 
 def _script_labels(sections: list[tuple[str, list[str]]]) -> set[str]:
@@ -70,6 +71,10 @@ def audit_bundle(spec: BundleSpec) -> list[str]:
 
     if "%INSERT%" in bundle_text:
         issues.append(f"{spec.label}: contains invalid MITM token %INSERT%")
+
+    for needle in spec.required_script_path_substrings:
+        if needle not in bundle_text:
+            issues.append(f"{spec.label}: vendored script-path missing: {needle}")
 
     upstream_scripts: set[str] = set()
     upstream_mitm: set[str] = set()
@@ -143,6 +148,10 @@ def _specs(root: Path) -> list[BundleSpec]:
                 "Script Hub: 前端",
             ),
             required_mitm_hosts=("sub.store", "script.hub", "boxjs.com"),
+            required_script_path_substrings=(
+                "modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js",
+                "modules/source/scripts/raw_githubusercontent_com_f59ef7_script-hub.js",
+            ),
         ),
         BundleSpec(
             "Weibo (PROMAX source)",
