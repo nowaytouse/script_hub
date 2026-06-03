@@ -22,17 +22,17 @@ DOH_CN_PUB = "https://doh.pub/dns-query"
 DOH_CN_360 = "https://doh.360.cn/dns-query"
 DOH_CN_VOLCANO = "https://dns.volcengine.com/dns-query"
 
-# Traditional IPs for Mainland Speed (Dual Stack)
-TRADITIONAL_CN_ALI = "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1"
-TRADITIONAL_CN_PUB = "119.29.29.29, 2402:4e00::"
-TRADITIONAL_CN_360 = "101.226.4.6, 112.65.69.15, 2402:ab80::6"
-TRADITIONAL_CN_VOLCANO = "180.184.1.1, 180.184.2.2, 2402:4e00:1020:1404::10, 2402:4e00:1430:1102::a"
+# Traditional IPs for Mainland Speed (Single Primary IP for Surge server: syntax)
+TRADITIONAL_CN_ALI = "223.5.5.5"
+TRADITIONAL_CN_PUB = "119.29.29.29"
+TRADITIONAL_CN_360 = "112.65.69.15"
+TRADITIONAL_CN_VOLCANO = "180.184.1.1"
 
-# For generic mainland usage (replacing old legacy 114 with robust dual-stack array)
-TRADITIONAL_CN_GENERIC = "119.29.29.29, 223.5.5.5, 2400:3200::1, 2402:4e00::"
+# For generic mainland usage (fast Tencent DNS)
+TRADITIONAL_CN_GENERIC = "119.29.29.29"
 
-# Traditional IPs for International Global Speed
-TRADITIONAL_GLOBAL = "1.1.1.1, 2606:4700:4700::1111, 9.9.9.9, 2620:fe::fe, 76.76.10.2, 2606:1a40:1::2"
+# Traditional IPs for International Global Speed (Single IP for Surge server: syntax)
+TRADITIONAL_GLOBAL = "1.1.1.1"
 
 # International pool (aligned with NyaMiiKo.conf [General] encrypted-dns-server)
 DOH_NJALLA = "https://doh.njalla.fo/dns-query"
