@@ -37,8 +37,8 @@ SR_MODULE_DIR = Path(ROOT) / "modules" / "shadowrocket"
 
 REQUIRED_MODULE_STEMS = {
     "WeChat_Enhance",
-    "boxjs.rewrite.surge",
     "📊 面板工具合集",
+    "🧰 Script Hub 配套工具合集",
 }
 
 

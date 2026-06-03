@@ -8,7 +8,7 @@ import re
 import sys
 from typing import Callable, List, Optional
 
-from hub.common import Logger, get_project_root, read_file, safe_download, write_file
+from hub.common import Logger, get_project_root, read_file, safe_download, safe_download_binary, safe_remove, write_file
 from hub.merge_upstream import merge_upstream_modules
 from hub.module_sanitizer import (
     format_header,
@@ -16,7 +16,14 @@ from hub.module_sanitizer import (
     merge_mitm_hosts,
     parse_module,
 )
-from hub.paths import BILIBILI_HELPER_URL, LOCAL_DIR, YOUTUBE_ENHANCE_URL
+from hub.paths import (
+    AMPLIFY_NEXUS_DIR,
+    BILIBILI_HELPER_URL,
+    LOCAL_DIR,
+    SCRIPTS_DIR,
+    SCRIPT_RAW_PREFIX,
+    YOUTUBE_ENHANCE_URL,
+)
 
 ROOT = get_project_root()
 
@@ -100,7 +107,7 @@ UTILITIES_OUTPUT = os.path.join(
 )
 UTILITIES_SOURCES = [
     ("Timecard", "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule"),
-    ("net-lsp-x", "https://raw.githubusercontent.com/xream/scripts/main/surge/module/network-info/net-lsp-x.sgmodule"),
+    ("net-lsp-x", "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.sgmodule"),
     ("Sub_Info", "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule"),
 ]
 UTILITIES_HEADER = {
@@ -111,6 +118,155 @@ UTILITIES_HEADER = {
     "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
     "tag": "面板, 工具",
 }
+
+DEVTOOLS_OUTPUT = os.path.join(
+    ROOT, "modules/surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule"
+)
+SCRIPT_HUB_MODULE_URL = (
+    "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/modules/script-hub.surge.sgmodule"
+)
+SCRIPT_HUB_LOCAL = os.path.join(LOCAL_DIR, "script_hub.surge.sgmodule")
+
+DEVTOOLS_SOURCES = [
+    (
+        "BoxJs",
+        "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule",
+    ),
+    (
+        "Sub-Store",
+        "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule",
+    ),
+    ("ScriptHub", SCRIPT_HUB_MODULE_URL),
+]
+
+SCRIPT_HUB_SCRIPT_SOURCES = {
+    "raw_githubusercontent_com_f59ef7_script-hub.js": (
+        "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-hub.js"
+    ),
+    "raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js": (
+        "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Rewrite-Parser.js"
+    ),
+    "raw_githubusercontent_com_0aa101_rule-parser.js": (
+        "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/rule-parser.js"
+    ),
+    "raw_githubusercontent_com_95a370_script-converter.js": (
+        "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-converter.js"
+    ),
+}
+
+MERGED_STANDALONE_SURGE = (
+    "boxjs.rewrite.surge.sgmodule",
+    "Surge-Beta.sgmodule",
+    "Script Hub 重写 & 规则集转换.sgmodule",
+    "BiliBili.Enhanced.sgmodule",
+    "BiliBili.Global.sgmodule",
+    "BiliBili.Redirect.sgmodule",
+    "bili.sgmodule",
+    "YouTube.Enhance.sgmodule",
+    "iRingo.Maps.sgmodule",
+    "iRingo.WeatherKit.sgmodule",
+    "iRingo.News.sgmodule",
+    "iRingo.TV.sgmodule",
+    "DualSubs.Universal.sgmodule",
+    "Timecard.sgmodule",
+    "net-lsp-x.sgmodule",
+    "Sub_Info.sgmodule",
+)
+DEVTOOLS_HEADER = {
+    "name": "🧰 Script Hub 配套工具合集",
+    "desc": (
+        "Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)"
+        "\\n脚本路径指向本仓库 modules/source/scripts，随 main_update 同步"
+    ),
+    "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org",
+    "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Scriptable.png",
+    "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
+    "tag": "ScriptHub, BoxJs, Sub-Store",
+    "homepage": "https://script.hub",
+}
+
+SCRIPT_HUB_VENDORED_SCRIPTS = (
+    "raw_githubusercontent_com_f59ef7_script-hub.js",
+    "raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js",
+    "raw_githubusercontent_com_0aa101_rule-parser.js",
+    "raw_githubusercontent_com_95a370_script-converter.js",
+)
+
+
+SCRIPT_HUB_SCRIPT_PATH_MAP = {
+    "script-hub.js": "raw_githubusercontent_com_f59ef7_script-hub.js",
+    "Rewrite-Parser.js": "raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js",
+    "rule-parser.js": "raw_githubusercontent_com_0aa101_rule-parser.js",
+    "script-converter.js": "raw_githubusercontent_com_95a370_script-converter.js",
+}
+
+
+def _pin_script_hub_script_paths(module_path: str) -> None:
+    """Rewrite Script Hub script-path URLs to this repo's vendored copies."""
+    if not os.path.isfile(module_path):
+        return
+    text = "".join(read_file(module_path))
+    changed = 0
+    for upstream_suffix, local_name in SCRIPT_HUB_SCRIPT_PATH_MAP.items():
+        local = os.path.join(SCRIPTS_DIR, local_name)
+        if not os.path.isfile(local):
+            continue
+        canonical = SCRIPT_RAW_PREFIX + local_name
+        new_text, n = re.subn(
+            rf"script-path=https?://[^\s,]*{re.escape(upstream_suffix)}",
+            f"script-path={canonical}",
+            text,
+        )
+        if n:
+            text = new_text
+            changed += n
+        new_text, n = re.subn(
+            rf"script-path=https?://[^\s,]*{re.escape(local_name)}",
+            f"script-path={canonical}",
+            text,
+        )
+        if n:
+            text = new_text
+            changed += n
+    if changed:
+        write_file(module_path, text)
+        Logger.info(f"  Pinned {changed} Script Hub script-path URL(s) in {os.path.basename(module_path)}")
+
+
+def _sync_script_hub_scripts() -> None:
+    """Refresh Script Hub converter scripts from Script-Hub-Org upstream."""
+    os.makedirs(SCRIPTS_DIR, exist_ok=True)
+    updated = 0
+    for local_name, url in SCRIPT_HUB_SCRIPT_SOURCES.items():
+        content = safe_download_binary(url, retries=2, timeout=60)
+        if not content:
+            Logger.warn(f"Script Hub script sync skipped: {local_name}")
+            continue
+        target = os.path.join(SCRIPTS_DIR, local_name)
+        write_file(target, content.decode("utf-8", errors="replace"))
+        updated += 1
+    if updated:
+        Logger.success(f"Synced {updated}/{len(SCRIPT_HUB_SCRIPT_SOURCES)} Script Hub scripts from upstream")
+
+
+def _cleanup_merged_standalone_modules() -> None:
+    """Remove standalone copies superseded by bundle modules in amplify_nexus."""
+    sr_dir = os.path.join(ROOT, "modules/shadowrocket/amplify_nexus")
+    removed = 0
+    for name in MERGED_STANDALONE_SURGE:
+        surge_path = os.path.join(AMPLIFY_NEXUS_DIR, name)
+        if safe_remove(surge_path):
+            removed += 1
+        sr_name = name.replace(".sgmodule", ".module")
+        sr_path = os.path.join(sr_dir, sr_name)
+        if safe_remove(sr_path):
+            removed += 1
+    if removed:
+        Logger.info(f"Removed {removed} merged standalone module file(s)")
+
+
+def _pin_script_hub_bundle_scripts(output_path: str) -> None:
+    _pin_script_hub_script_paths(output_path)
 
 
 def merge_bilibili() -> None:
@@ -130,17 +286,34 @@ def merge_apple() -> None:
 
 def merge_utilities() -> None:
     Logger.section("Panel utilities upstream bundle merge")
-    nexus = os.path.join(ROOT, "modules/surge/amplify_nexus")
     merge_upstream_modules(
         UTILITIES_SOURCES,
         UTILITIES_OUTPUT,
         header_meta=UTILITIES_HEADER,
         local_fallbacks={
-            "Timecard": os.path.join(nexus, "Timecard.sgmodule"),
-            "net-lsp-x": os.path.join(nexus, "net-lsp-x.sgmodule"),
-            "Sub_Info": os.path.join(nexus, "Sub_Info.sgmodule"),
+            "Timecard": os.path.join(AMPLIFY_NEXUS_DIR, "Timecard.sgmodule"),
+            "net-lsp-x": os.path.join(AMPLIFY_NEXUS_DIR, "net-lsp-x.sgmodule"),
+            "Sub_Info": os.path.join(AMPLIFY_NEXUS_DIR, "Sub_Info.sgmodule"),
         },
     )
+
+
+def merge_devtools() -> None:
+    Logger.section("Script Hub devtools upstream bundle merge")
+    _sync_script_hub_scripts()
+    if os.path.isfile(SCRIPT_HUB_LOCAL):
+        _pin_script_hub_script_paths(SCRIPT_HUB_LOCAL)
+    merge_upstream_modules(
+        DEVTOOLS_SOURCES,
+        DEVTOOLS_OUTPUT,
+        header_meta=DEVTOOLS_HEADER,
+        local_fallbacks={
+            "BoxJs": os.path.join(AMPLIFY_NEXUS_DIR, "boxjs.rewrite.surge.sgmodule"),
+            "Sub-Store": os.path.join(AMPLIFY_NEXUS_DIR, "Surge-Beta.sgmodule"),
+            "ScriptHub": SCRIPT_HUB_LOCAL,
+        },
+    )
+    _pin_script_hub_bundle_scripts(DEVTOOLS_OUTPUT)
 
 
 def _load_preserved_rule_sections(path: str) -> dict[str, list[str]]:
@@ -314,6 +487,7 @@ def run_all(*, strict: bool = False) -> List[str]:
         ("weibo", merge_weibo),
         ("apple", merge_apple),
         ("utilities", merge_utilities),
+        ("devtools", merge_devtools),
     ]
     failures: List[str] = []
     for label, fn in steps:
@@ -324,6 +498,7 @@ def run_all(*, strict: bool = False) -> List[str]:
             failures.append(label)
             if strict:
                 raise
+    _cleanup_merged_standalone_modules()
     if failures:
         Logger.warn(f"Bundle merges incomplete: {', '.join(failures)}")
     else:

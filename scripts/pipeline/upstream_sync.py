@@ -81,14 +81,8 @@ METACUBEX_RULES = {
 }
 
 
-NEXUS_MODULES = [
-    "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule",
-    "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule",
-    "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule",
-    # bili / iRingo / DualSubs / 面板工具 → merge_bundles.py 合集
-    "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule",
-    "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule",
-    "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule",
+NEXUS_MODULES: list[str] = [
+    # Amplify Nexus 合集由 merge_bundles.py 维护；勿在此拉取已合并的独立模块
 ]
 
 # Modules merged directly into PROMAX via modules/source/local (include_sections=True).
@@ -100,6 +94,9 @@ LOCAL_SOURCE_MODULES = {
     "[Sukka] Enhance Better ADBlock for Surge.sgmodule": "https://ruleset.skk.moe/Modules/sukka_enhance_adblock.sgmodule",
     "sukka_url_redirect.sgmodule": "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
     "adultraplus.sgmodule": "https://yfamilys.com/module/adultraplus.sgmodule",
+    "script_hub.surge.sgmodule": (
+        "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/modules/script-hub.surge.sgmodule"
+    ),
 }
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"

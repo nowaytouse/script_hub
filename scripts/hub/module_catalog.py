@@ -48,10 +48,13 @@ MERGED_ALIASES = {
     "iRingo.News.sgmodule": "🍎 Apple服务增强合集",
     "iRingo.TV.sgmodule": "🍎 Apple服务增强合集",
     "DualSubs.Universal.sgmodule": "🍎 Apple服务增强合集",
+    "boxjs.rewrite.surge.sgmodule": "🧰 Script Hub 配套工具合集",
+    "Surge-Beta.sgmodule": "🧰 Script Hub 配套工具合集",
+    "Script Hub 重写 & 规则集转换.sgmodule": "🧰 Script Hub 配套工具合集",
 }
 
 UI_BADGES = {
-    "Script Hub: 重写 & 规则集转换": "⭐",
+    "🧰 Script Hub 配套工具合集": "⭐",
     "🚫 Universal Ad-Blocking Rules (PROMAX)": "🔥",
 }
 

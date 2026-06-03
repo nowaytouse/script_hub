@@ -8,6 +8,9 @@ from hub.common import get_project_root
 
 ROOT = get_project_root()
 
+# Surge amplify_nexus published modules
+AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
+
 # Surge / Shadowrocket compiled .list rulesets
 LIST_DIR = os.path.join(ROOT, "rulesets/list")
 SKK_UPSTREAM_DIR = os.path.join(LIST_DIR, "skk_upstream")
