@@ -345,6 +345,8 @@ def merge_bilibili() -> None:
             ('Proxies.TWN:"🇹🇼台湾"', 'Proxies.TWN:"📺 哔哩哔哩 📱"'),
             ('Bottom:"home,dynamic,ogv,会员购Bottom,我的Bottom"', 'Bottom:"home,dynamic,ogv,我的Bottom"'),
             ('Home.Tab:"直播tab,推荐tab,hottopic,bangumi,anime,film,koreavtw"', 'Home.Tab:"直播tab,推荐tab,bangumi,anime"'),
+            ('Host.OverseaVideo:"upos-sz-mirrorali.bilivideo.com"', 'Host.OverseaVideo:"upos-sz-mirrorakam.akamaized.net"'),
+            ('Host.BStar:"upos-sz-mirrorali.bilivideo.com"', 'Host.BStar:"upos-sz-mirrorakam.akamaized.net"'),
         ]
     )
 
@@ -358,6 +360,7 @@ def merge_apple() -> None:
         content_replacements=[
             ('Proxy:🇺🇸美国', 'Proxy:"🍎 Apple 🍏"'),
             (',🇺🇸美国', ',{{{Proxy}}}'), # In case there are hardcoded ones
+            ('AirQuality.Calculate.Algorithm:"EU_EAQI"', 'AirQuality.Calculate.Algorithm:"US_AQI"'),
         ]
     )
 
@@ -433,6 +436,9 @@ def merge_devtools() -> None:
             "Sub-Store": os.path.join(AMPLIFY_NEXUS_DIR, "Surge-Beta.sgmodule"),
             "ScriptHub": SCRIPT_HUB_LOCAL,
         },
+        content_replacements=[
+            ('cors:"https://sub-store.vercel.app"', 'cors:"https://sub.store"'),
+        ],
     )
     _pin_sub_store_script_paths(DEVTOOLS_OUTPUT)
     _pin_script_hub_bundle_scripts(DEVTOOLS_OUTPUT)
