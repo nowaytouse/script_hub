@@ -29,8 +29,9 @@ LOCAL_URL_PREFIX = SCRIPT_RAW_PREFIX
 # User-Agent Pool
 USER_AGENTS = [_BROWSER_UA]
 
-# Domains that block bot downloads — handled separately (e.g. via repair_script_paths)
+# Domains that block bot downloads — handled separately
 _SKIP_DOMAINS = {"cdn.jsdelivr.net"}
+# Note: kelee.one removed from skip list - now downloads with Loon UA
 
 def is_valid_url(url):
     """Filter out regex patterns, invalid mock URLs, and known-blocked domains."""

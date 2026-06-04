@@ -13,9 +13,9 @@ files are now vendored under rulesets/Sources/custom/SmartConfigKit/.
 import os
 import re
 from collections import defaultdict
-from hub.common import Logger, get_project_root, write_file
+from hub.common import Logger, write_file
+from hub.project_paths import ROOT
 
-ROOT = get_project_root()
 SCK_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit/shunt-rules")
 CUSTOM_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit")
 SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")

@@ -7,13 +7,26 @@ import concurrent.futures
 import platform
 import tarfile
 import shutil
-from hub.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
-
-ROOT = get_project_root()
-METACUBEX_DIR = os.path.join(ROOT, "rulesets/Sources/MetaCubeX")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Sources/skk_upstream")
-MODULE_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
-LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local")
+import sys
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hub.common import Logger, write_file, safe_download_binary, safe_remove
+from hub.error_handling import (
+    retry_on_failure,
+    validate_file_exists,
+    validate_output_writable,
+    ensure_parent_dir,
+    safe_write_file,
+)
+from hub.project_paths import (
+    ROOT,
+    METACUBEX_DIR,
+    SKK_UPSTREAM_DIR,
+    SURGE_AMPLIFY_NEXUS_DIR,
+    MODULE_LOCAL_DIR,
+    KELEE_DIR,
+)
 
 # CONFIGURATION
 
@@ -102,6 +115,17 @@ LOCAL_SOURCE_MODULES = {
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
 HEAD_EXPANSE_GROUP = "『 🔝 Head Expanse › 首端扩域 』"
 NARROW_PIERCE_GROUP = "『 🎯 Narrow Pierce › 窄域穿刺 』"
+
+# Kelee Speedtest Sources (YAML)
+KELEE_SOURCES = {
+    "SpeedtestChina.yaml": "https://kelee.one/Resource/Script/Speedtest/Speedtest_China.yaml",
+    "SpeedtestInternational.yaml": "https://kelee.one/Resource/Script/Speedtest/Speedtest_International.yaml"
+}
+
+# Module directories
+MODULE_DIR = SURGE_AMPLIFY_NEXUS_DIR
+LOCAL_SOURCES_DIR = MODULE_LOCAL_DIR
+
 # SYNC CLASS
 
 class UpstreamSyncer:
@@ -215,6 +239,7 @@ class UpstreamSyncer:
         data = safe_download_binary(url, retries=2)
         return data if data is not None else b""
 
+    @retry_on_failure(max_attempts=3, delay=1.0, exceptions=(Exception,))
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")
         os.makedirs(SKK_UPSTREAM_DIR, exist_ok=True)
@@ -382,9 +407,68 @@ class UpstreamSyncer:
                 except Exception as exc:
                     Logger.warn(f"MetaCubeX sync failed [{name}]: {exc}")
 
+    def sync_kelee(self):
+        """Sync Kelee Speedtest YAML files and update their version timestamps."""
+        from datetime import datetime
+        
+        Logger.section("Syncing Kelee Speedtest YAML Files")
+        
+        if not os.path.exists(KELEE_DIR):
+            os.makedirs(KELEE_DIR, exist_ok=True)
+        
+        for filename, url in KELEE_SOURCES.items():
+            try:
+                content_bytes = self.download(url)
+                if not content_bytes:
+                    Logger.warn(f"Failed to download Kelee file: {filename}")
+                    continue
+                
+                content = content_bytes.decode('utf-8', errors='ignore')
+                
+                # Update the UpdateTime timestamp to current time
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                lines = content.splitlines()
+                new_lines = []
+                
+                for line in lines:
+                    if line.strip().startswith("# UpdateTime"):
+                        new_lines.append(f"# UpdateTime：{current_time}")
+                        Logger.info(f"  Updated timestamp for {filename} to {current_time}")
+                    elif line.strip().startswith("# RuleCount"):
+                        # Skip, will be recalculated
+                        continue
+                    else:
+                        new_lines.append(line)
+                
+                # Recalculate rule count
+                rule_count = sum(1 for line in new_lines if line.strip() and not line.strip().startswith("#") and line.strip() != "payload:")
+                
+                # Insert RuleCount after UpdateTime
+                final_lines = []
+                for i, line in enumerate(new_lines):
+                    final_lines.append(line)
+                    if line.strip().startswith("# UpdateTime"):
+                        final_lines.append(f"# RuleCount：{rule_count}")
+                
+                final_content = "\n".join(final_lines)
+                if not final_content.endswith("\n"):
+                    final_content += "\n"
+                
+                target_path = os.path.join(KELEE_DIR, filename)
+                
+                # Use safe_write_file from error_handling
+                if safe_write_file(target_path, final_content, atomic=True):
+                    Logger.success(f"Kelee: {filename} ({rule_count} rules)")
+                else:
+                    Logger.error(f"Failed to write Kelee file: {filename}")
+                
+            except Exception as e:
+                Logger.error(f"Failed to process Kelee file {filename}: {e}")
+
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
     syncer.sync_skk()
     syncer.sync_nexus()
     syncer.sync_metacubex()
     syncer.sync_local_sources()
+    syncer.sync_kelee()

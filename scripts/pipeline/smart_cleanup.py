@@ -2,14 +2,17 @@
 import os
 import re
 import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from typing import Dict, Iterable
 
-from hub.common import get_project_root, write_file as _atomic_write, safe_remove
+from hub.common import write_file as _atomic_write, safe_remove
+from hub.project_paths import ROOT, RULE_SET_DIR, ADBLOCK_DIR
 
-_ROOT = get_project_root()
+_ROOT = ROOT
 RULESET_DIRS = [
-    os.path.join(_ROOT, "rulesets/RULE-SET"),
-    os.path.join(_ROOT, "rulesets/AdBlock"),
+    RULE_SET_DIR,
+    ADBLOCK_DIR,
 ]
 
 # Specific rulesets should win over generic fallbacks. Direct stays above
@@ -435,6 +438,13 @@ class RulesetCleanup:
                             print(f"❌ Failed to delete empty file: {filename}")
                 else:
                     write_list(filepath, rules)
+        
+        # Clean up stray README.md files
+        for root_dir in RULESET_DIRS:
+            readme_path = os.path.join(root_dir, "README.md")
+            if os.path.exists(readme_path):
+                safe_remove(readme_path)
+                print(f"✅ Deleted stray document: {readme_path}")
 
     def run(self) -> Dict[str, int]:
         self.load()

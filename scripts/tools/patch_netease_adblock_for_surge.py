@@ -9,10 +9,9 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS_DIR)
 
-from hub.common import Logger, get_project_root, safe_download, write_file
+from hub.common import Logger, safe_download, write_file
 from hub.paths import SCRIPTS_DIR, SCRIPT_RAW_PREFIX
-
-ROOT = get_project_root()
+from hub.project_paths import ROOT
 GIST_URL = (
     "https://gist.githubusercontent.com/ddgksf2013/"
     "4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js"

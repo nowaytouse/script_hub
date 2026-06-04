@@ -72,16 +72,20 @@ def _combine_metadata(
 
     args_line = ",".join(arg_tokens) if arg_tokens else None
     
-    def _beautify_and_truncate(blocks: List[str], max_len: int = 3000, prefix: str = "") -> Optional[str]:
+    def _beautify_and_truncate(blocks: List[str], max_len: int = 3800, prefix: str = "") -> Optional[str]:
+        """Beautify and truncate description blocks to prevent Surge metadata overflow.
+        
+        Hard cap at ~3800 chars to stay safely under Surge's 4096 limit.
+        """
         if not blocks:
             return None
         combined = prefix + "\\n\\n".join(blocks)
         if len(combined) > max_len:
-            return combined[:max_len-30] + "...\\n(Truncated to prevent overflow)"
+            return combined[:max_len] + "…\\n(see upstream docs for full details)"
         return combined
 
-    args_desc_line = _beautify_and_truncate(args_desc_blocks, 3000)
-    desc_line = _beautify_and_truncate(desc_blocks, 3000, prefix="【Bundled Modules】\\n")
+    args_desc_line = _beautify_and_truncate(args_desc_blocks, 3800)
+    desc_line = _beautify_and_truncate(desc_blocks, 3800, prefix="【Bundled Modules】\\n")
     return args_line, args_desc_line, desc_line
 
 

@@ -2,17 +2,27 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 651
+# Rules: 680
 
 DOMAIN,api.imem.app
 DOMAIN,api.swiftgram.app
 DOMAIN,lf16-effectcdn.byteeffecttos-g.com
 DOMAIN,lf16-pkgcdn.pitaya-clientai.com
+DOMAIN,m.cmx.im
 DOMAIN,p16-tiktokcdn-com.akamaized.net
+DOMAIN-KEYWORD,atproto
+DOMAIN-KEYWORD,bsky
 DOMAIN-KEYWORD,facebook
 DOMAIN-KEYWORD,fbcdn
 DOMAIN-KEYWORD,instagram
+DOMAIN-KEYWORD,lemmy
+DOMAIN-KEYWORD,mastodon
+DOMAIN-KEYWORD,misskey
 DOMAIN-KEYWORD,nicegram
+DOMAIN-KEYWORD,nostr
+DOMAIN-KEYWORD,peertube
+DOMAIN-KEYWORD,pixelfed
+DOMAIN-KEYWORD,pleroma
 DOMAIN-KEYWORD,twitter
 DOMAIN-SUFFIX,aboutfacebook.com
 DOMAIN-SUFFIX,accessfacebookfromschool.com
@@ -30,11 +40,14 @@ DOMAIN-SUFFIX,askfacebook.net
 DOMAIN-SUFFIX,askfacebook.org
 DOMAIN-SUFFIX,atdmt2.com
 DOMAIN-SUFFIX,atlasonepoint.com
+DOMAIN-SUFFIX,atproto.com
 DOMAIN-SUFFIX,atscaleconference.com
 DOMAIN-SUFFIX,bigbeans.solutions
 DOMAIN-SUFFIX,binoculus.com
 DOMAIN-SUFFIX,bookstagram.com
 DOMAIN-SUFFIX,botorch.org
+DOMAIN-SUFFIX,bsky.app
+DOMAIN-SUFFIX,bsky.social
 DOMAIN-SUFFIX,buck.build
 DOMAIN-SUFFIX,buckbuild.com
 DOMAIN-SUFFIX,buyingfacebooklikes.com
@@ -484,15 +497,22 @@ DOMAIN-SUFFIX,intagrm.com
 DOMAIN-SUFFIX,internet.org
 DOMAIN-SUFFIX,intgram.com
 DOMAIN-SUFFIX,ip6.static.sl-reverse.com
+DOMAIN-SUFFIX,joinpeertube.org
 DOMAIN-SUFFIX,kingstagram.com
 DOMAIN-SUFFIX,klik.me
 DOMAIN-SUFFIX,legra.ph
+DOMAIN-SUFFIX,lemmy.ml
+DOMAIN-SUFFIX,lemmy.world
 DOMAIN-SUFFIX,liverail.tv
 DOMAIN-SUFFIX,login-account.net
 DOMAIN-SUFFIX,m.me
 DOMAIN-SUFFIX,mail.ru
 DOMAIN-SUFFIX,makeitopen.com
 DOMAIN-SUFFIX,markzuckerberg.com
+DOMAIN-SUFFIX,mastodon.art
+DOMAIN-SUFFIX,mastodon.cloud
+DOMAIN-SUFFIX,mastodon.online
+DOMAIN-SUFFIX,mastodon.social
 DOMAIN-SUFFIX,mbrx.app
 DOMAIN-SUFFIX,mcrouter.net
 DOMAIN-SUFFIX,mcrouter.org
@@ -500,12 +520,17 @@ DOMAIN-SUFFIX,messenger.com
 DOMAIN-SUFFIX,messengerdevelopers.com
 DOMAIN-SUFFIX,meta.com
 DOMAIN-SUFFIX,midentsolutions.com
+DOMAIN-SUFFIX,misskey-hub.net
+DOMAIN-SUFFIX,misskey.io
 DOMAIN-SUFFIX,mobilefacebook.com
 DOMAIN-SUFFIX,moneywithfacebook.com
+DOMAIN-SUFFIX,mstdn.jp
 DOMAIN-SUFFIX,myfbfans.com
 DOMAIN-SUFFIX,nbabot.net
 DOMAIN-SUFFIX,newsfeed.com
 DOMAIN-SUFFIX,nextstop.com
+DOMAIN-SUFFIX,nostr.info
+DOMAIN-SUFFIX,nostr.wlvs.space
 DOMAIN-SUFFIX,ocul.us
 DOMAIN-SUFFIX,oculus-china.com
 DOMAIN-SUFFIX,oculus.com
@@ -529,7 +554,11 @@ DOMAIN-SUFFIX,opencreate.org
 DOMAIN-SUFFIX,opengraphprotocol.com
 DOMAIN-SUFFIX,opengraphprotocol.org
 DOMAIN-SUFFIX,parse.com
+DOMAIN-SUFFIX,pawoo.net
+DOMAIN-SUFFIX,peertube.video
 DOMAIN-SUFFIX,periscope.tv
+DOMAIN-SUFFIX,pixelfed.org
+DOMAIN-SUFFIX,pixelfed.social
 DOMAIN-SUFFIX,powersunitedvr.com
 DOMAIN-SUFFIX,pscp.tv
 DOMAIN-SUFFIX,pyrobot.org

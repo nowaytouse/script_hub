@@ -2,23 +2,32 @@
 import os
 import hashlib
 import zlib
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import gzip
 import concurrent.futures
 from typing import List, Set, Dict, Optional
 from hub.common import (
-    Logger, get_project_root, read_file, write_file,
+    Logger, read_file, write_file,
     safe_download, safe_download_binary, _has_dangerous_chars,
     safe_remove
 )
 from hub.rule_processor import RuleProcessor
 from hub.surge_compliance import convert_domain_regex_for_surge
+from hub.project_paths import (
+    ROOT,
+    RULE_SET_DIR,
+    LINKS_DIR,
+    METACUBEX_DIR,
+    CACHE_DIR,
+    SOURCES_DIR,
+)
 
-ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
-SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
-METACUBEX_DIR = os.path.join(ROOT, "rulesets/Sources/MetaCubeX")
-CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.list")
-POLICY_MAP_FILE = os.path.join(ROOT, "rulesets/Sources/ruleset_policy_map.list")
+SURGE_DIR = RULE_SET_DIR  # Backward compat
+CACHE_FILE = os.path.join(CACHE_DIR, "merge_hashes.list")
+POLICY_MAP_FILE = os.path.join(SOURCES_DIR, "ruleset_policy_map.list")
 
 # --- CONFIGURATION ---
 

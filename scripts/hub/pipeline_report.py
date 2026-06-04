@@ -6,18 +6,25 @@ from __future__ import annotations
 import os
 from typing import List, Tuple
 
-from hub.common import Logger, get_project_root, read_file
+from hub.common import Logger, read_file
+from hub.project_paths import (
+    ROOT,
+    RULE_SET_DIR,
+    DNS_MAPPING_DIR,
+    DNS_SOURCE_DIR,
+    ADBLOCK_DIR,
+    SINGBOX_DIR,
+    SINGBOX_DNS_DIR,
+    SURGE_MODULE_DIR,
+    SHADOWROCKET_MODULE_DIR,
+)
 
-ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
-DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/dns/mapping")
-DNS_RULES_DIR = os.path.join(ROOT, "rulesets/Dns")
-ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
-SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
-MODULE_SURGE = os.path.join(ROOT, "modules/surge")
-MODULE_SR = os.path.join(ROOT, "modules/shadowrocket")
+# Backward compatibility aliases
+SURGE_DIR = RULE_SET_DIR
+MODULE_SURGE = SURGE_MODULE_DIR
+MODULE_SR = SHADOWROCKET_MODULE_DIR
 
-SRS_SOURCE_DIRS = [SURGE_DIR, DNS_MAPPING_DIR, ADBLOCK_DIR]
+SRS_SOURCE_DIRS = [RULE_SET_DIR, DNS_MAPPING_DIR, ADBLOCK_DIR]
 SRS_SKIP_PREFIXES = ("AdBlock_",)  # large shards: optional compile, still audited
 
 

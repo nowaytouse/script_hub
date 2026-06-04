@@ -4,17 +4,22 @@ import re
 import argparse
 from datetime import datetime
 from hub.common import (
-    Logger, get_project_root, read_file, write_file, 
+    Logger, read_file, write_file, 
     extract_section, clean_rules
+)
+from hub.project_paths import (
+    ROOT,
+    SURGE_HEAD_EXPANSE_DIR,
+    SHADOWROCKET_HEAD_EXPANSE_DIR,
+    SOURCES_DIR,
 )
 
 # CONFIGURATION
 
-ROOT = get_project_root()
-PORTS_SOURCE = os.path.join(ROOT, "rulesets/Sources/conf/SurgeConf_DirectPorts.list")
+PORTS_SOURCE = os.path.join(SOURCES_DIR, "conf/SurgeConf_DirectPorts.list")
 FIREWALL_MODULES = [
-    os.path.join(ROOT, "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"),
-    os.path.join(ROOT, "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule")
+    os.path.join(SURGE_HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
+    os.path.join(SHADOWROCKET_HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.module"),
 ]
 
 # SYNC LOGIC

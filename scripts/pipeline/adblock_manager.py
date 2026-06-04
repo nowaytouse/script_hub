@@ -2,6 +2,10 @@
 import argparse
 import ipaddress
 import json
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import os
 import re
 import subprocess
@@ -11,7 +15,33 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from hub.common import Logger, get_file_hash, get_project_root, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
+from hub.common import Logger, get_file_hash, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
+from hub.project_paths import (
+    ROOT,
+    SURGE_MODULE_DIR,
+    SURGE_HEAD_EXPANSE_DIR,
+    CACHE_DIR,
+    WHITELIST_FILE,
+    ADBLOCK_SOURCES_FILE,
+    ADBLOCK_FUNCTIONAL_SOURCES_FILE,
+    MODULE_LOCAL_DIR,
+    LOCAL_MODULES_DIR,
+    SURGE_AMPLIFY_NEXUS_DIR,
+    SURGE_NARROW_PIERCE_DIR,
+    PROMAX_SPLITS_DIR,
+    SKK_REJECT,
+    SKK_HTTPDNS,
+    FIREWALL_MODULE,
+    ADBLOCK_CATALOG_JSON,
+    PROMAX_MODULE,
+    PROMAX_LITE_MODULE,
+    CDN_BASE_URL,
+    ADBLOCK_DIR,
+    RULE_SET_DIR,
+    ADBLOCK_LIST,
+    HTTPDNS_HIJACK_LIST,
+    SKK_UPSTREAM_DIR,
+)
 from hub.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
 from hub.promax_line_classifier import (
     classify_promax_line,
@@ -25,45 +55,7 @@ from hub.surge_compliance import (
     strip_trailing_policy,
 )
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
-
-from hub.paths import (
-    ADBLOCK_DIR,
-    ADBLOCK_LIST,
-    HTTPDNS_HIJACK_LIST,
-    LIST_DIR,
-    LOCAL_DIR,
-    SKK_UPSTREAM_DIR,
-)
-
-ROOT = get_project_root()
-SURGE_MODULE_DIR = os.path.join(ROOT, "modules/surge")
-HEAD_EXPANSE_DIR = os.path.join(ROOT, "modules/surge/head_expanse")
-CACHE_DIR = os.path.join(ROOT, ".cache")
-HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.list")
-WHITELIST_FILE = os.path.join(ROOT, "rulesets/AdBlock/adblock_whitelist.list")
-ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "rulesets/Sources/Links/AdBlock_sources.list")
-ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(
-    ROOT, "rulesets/Sources/Links/AdBlock_functional_sources.list"
-)
-LOCAL_SOURCES_DIR = LOCAL_DIR
-LOCAL_MODULES_DIR = os.path.join(ROOT, "rulesets/Sources/LocalModules")
-AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
-# Rule-ingest hint for remote/list sources only (not used to pull amplify 增强 modules).
-NEXUS_AD_RULE_KEYWORDS = (
-    "reject",
-    "广告",
-    "拦截",
-    "anti-ad",
-    "adblock",
-    "去广告",
-)
-
-PROMAX_DISPLAY_NAME = "🚫 Universal Ad-Blocking Rules (PROMAX)"
-
-# Disqualify unlock / 功能增强 / 翻译类模块（永不并入 PROMAX 功能段）
+# Purpose taxonomy: internal key → display label + dedup priority (earlier = higher)
 FUNCTIONAL_BLOCK_NAME_TOKENS = (
     "解锁",
     "unlock",
@@ -1578,7 +1570,7 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT",
             "DOMAIN,doh.dns.apple.com,DIRECT",
             "# Block app-layer HTTPDNS first",
-            f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/HTTPDNS_Hijack.list,REJECT",
+            f"RULE-SET,{CDN_BASE_URL}rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT",
             "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)",
         ])
 

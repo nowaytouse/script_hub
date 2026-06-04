@@ -7,8 +7,15 @@ import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from hub.common import Logger, get_project_root, is_ci
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hub.common import Logger, is_ci
 from hub.pipeline_report import print_pipeline_summary
+from hub.project_paths import ROOT, SCRIPTS_DIR
+
+CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "qa/update_cores.sh")
 
 from pipeline.firewall_sync import sync_ports
 from pipeline.upstream_sync import UpstreamSyncer

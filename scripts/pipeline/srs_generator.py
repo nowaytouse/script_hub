@@ -3,19 +3,28 @@ import os
 import json
 import subprocess
 import concurrent.futures
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import re
-from hub.common import Logger, get_project_root, safe_remove
+from hub.common import Logger, safe_remove
+from hub.project_paths import (
+    ROOT,
+    RULE_SET_DIR,
+    DNS_MAPPING_DIR,
+    DNS_SOURCE_DIR,
+    SKK_UPSTREAM_DIR,
+    SINGBOX_DIR,
+    SINGBOX_DNS_DIR,
+    ADBLOCK_DIR,
+    CACHE_DIR,
+)
 
-ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
-DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/dns/mapping")
-DNS_RULES_DIR = os.path.join(ROOT, "rulesets/Dns")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Sources/skk_upstream")
-SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
-CACHE_DIR = os.path.join(ROOT, ".cache")
 EXTRA_SOURCE_FILES = [
     os.path.join(SKK_UPSTREAM_DIR, "reject-drop.list"),
     os.path.join(SKK_UPSTREAM_DIR, "reject-no-drop.list"),
+    os.path.join(ROOT, "rulesets/Sources/custom/substore.list"),
+    os.path.join(ROOT, "rulesets/Sources/custom/shadowrocket.list"),
 ]
 
 class SRSGenerator:
@@ -42,7 +51,18 @@ class SRSGenerator:
 
     def compile_srs(self, list_file: str):
         name = os.path.splitext(os.path.basename(list_file))[0]
-        srs_file = os.path.join(SINGBOX_DIR, f"{name}_Singbox.srs")
+        
+        # Determine output directory based on source location
+        if "dns/mapping" in list_file or "/dns/" in list_file:
+            out_dir = SINGBOX_DNS_DIR
+            os.makedirs(out_dir, exist_ok=True)
+        elif "rulesets/AdBlock" in list_file:
+            out_dir = os.path.join(ROOT, "rulesets/AdBlock")
+            os.makedirs(out_dir, exist_ok=True)
+        else:
+            out_dir = SINGBOX_DIR
+            
+        srs_file = os.path.join(out_dir, f"{name}_Singbox.srs")
         json_tmp = os.path.join(CACHE_DIR, f"{name}.json")
         
         try:
@@ -109,7 +129,7 @@ class SRSGenerator:
             Logger.error("sing-box binary not found. Skipping SRS generation.")
             return
 
-        source_dirs = [SURGE_DIR, DNS_MAPPING_DIR, os.path.join(ROOT, "rulesets/AdBlock")]
+        source_dirs = [RULE_SET_DIR, DNS_MAPPING_DIR, ADBLOCK_DIR]
         list_files = []
         for source_dir in source_dirs:
             if not os.path.isdir(source_dir):
@@ -133,6 +153,7 @@ class SRSGenerator:
             if fname.startswith("GeoIP_") and fname.endswith(".srs"):
                 expected_srs.add(fname)
 
+        # Prune main SingBox directory
         for fname in sorted(os.listdir(SINGBOX_DIR)):
             if not fname.endswith(".srs"):
                 continue
@@ -142,6 +163,18 @@ class SRSGenerator:
                     Logger.warn(f"Pruned stale SRS: {fname}")
                 else:
                     Logger.error(f"Failed to prune stale SRS: {fname}")
+        
+        # Prune DNS directory if it exists
+        if os.path.isdir(SINGBOX_DNS_DIR):
+            for fname in sorted(os.listdir(SINGBOX_DNS_DIR)):
+                if not fname.endswith(".srs"):
+                    continue
+                if fname not in expected_srs:
+                    path = os.path.join(SINGBOX_DNS_DIR, fname)
+                    if safe_remove(path):
+                        Logger.warn(f"Pruned stale DNS SRS: {fname}")
+                    else:
+                        Logger.error(f"Failed to prune stale DNS SRS: {fname}")
 
 if __name__ == "__main__":
     generator = SRSGenerator()
