@@ -6,8 +6,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from hub.common import Logger
-from hub.project_paths import *
-from hub.error_handling import validate_dir_exists, validate_file_exists
+from hub.project_paths import (
+    ROOT,
+    SOURCES_DIR,
+    DNS_SOURCE_DIR,
+    DNS_MAPPING_DIR,
+    SINGBOX_DNS_DIR,
+)
+from hub.error_handling import validate_dir_exists
 
 def test_source_directories():
     """Test that all source directories are properly configured."""
@@ -82,7 +88,7 @@ def test_path_consistency():
     
     # DNS paths should be organized correctly
     tests.append(("DNS mapping in Sources/dns", DNS_MAPPING_DIR.startswith(DNS_SOURCE_DIR)))
-    tests.append(("SingBox DNS in SingBox", SINGBOX_DNS_DIR.startswith(SINGBOX_DIR)))
+    tests.append(("SingBox DNS in Sources/dns", SINGBOX_DNS_DIR.startswith(DNS_SOURCE_DIR)))
     tests.append(("Sources in rulesets", SOURCES_DIR.startswith(os.path.join(ROOT, "rulesets"))))
     
     for description, result in tests:

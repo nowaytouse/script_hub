@@ -9,8 +9,6 @@ import re
 from typing import Optional, Set, Dict, List
 
 from hub.surge_compliance import (
-    INVALID_DOMAIN_REGEX_VALUES,
-    INVALID_URL_REGEX_VALUES,
     is_invalid_domain_regex_payload,
     is_invalid_url_regex_payload,
     strip_inline_comment,

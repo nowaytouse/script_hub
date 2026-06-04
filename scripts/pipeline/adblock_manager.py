@@ -15,32 +15,26 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
-from hub.common import Logger, get_file_hash, read_file, write_file, _BROWSER_UA, safe_download, safe_remove
+from hub.common import Logger, get_file_hash, read_file, write_file, safe_download, safe_remove
 from hub.project_paths import (
     ROOT,
     SURGE_MODULE_DIR,
     SURGE_HEAD_EXPANSE_DIR,
-    CACHE_DIR,
     WHITELIST_FILE,
     ADBLOCK_SOURCES_FILE,
     ADBLOCK_FUNCTIONAL_SOURCES_FILE,
     MODULE_LOCAL_DIR,
     LOCAL_MODULES_DIR,
     SURGE_AMPLIFY_NEXUS_DIR,
-    SURGE_NARROW_PIERCE_DIR,
     PROMAX_SPLITS_DIR,
     SKK_REJECT,
     SKK_HTTPDNS,
     ADBLOCK_CATALOG_JSON,
-    PROMAX_MODULE,
-    PROMAX_LITE_MODULE,
     CDN_BASE_URL,
     ADBLOCK_DIR,
-    RULE_SET_DIR,
     ADBLOCK_LIST,
     ADBLOCK_HASH_FILE,
     HTTPDNS_HIJACK_LIST,
-    SKK_UPSTREAM_DIR,
 )
 from hub.module_sanitizer import dedupe_section_lines, format_header, format_module, merge_mitm_hosts
 from hub.promax_line_classifier import (

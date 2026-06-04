@@ -8,15 +8,11 @@ import platform
 import tarfile
 import shutil
 import sys
-import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hub.common import Logger, write_file, safe_download_binary, safe_remove
 from hub.error_handling import (
     retry_on_failure,
-    validate_file_exists,
-    validate_output_writable,
-    ensure_parent_dir,
     safe_write_file,
 )
 from hub.project_paths import (
@@ -378,11 +374,17 @@ class UpstreamSyncer:
             with open(tmp_json, 'r') as f: data = json.load(f)
             rules = []
             for rule in data.get('rules', []):
-                rules.extend([f"DOMAIN,{d.strip()}" for d in rule.get('domain', [])])
-                rules.extend([f"DOMAIN-SUFFIX,{d.strip()}" for d in rule.get('domain_suffix', [])])
-                rules.extend([f"DOMAIN-KEYWORD,{d.strip()}" for d in rule.get('domain_keyword', [])])
-                rules.extend([f"DOMAIN-REGEX,{d.strip()}" for d in rule.get('domain_regex', []) if self._is_valid_regex(d)])
-                for ip in rule.get('ip_cidr', []):
+                
+                def _ensure_list(val):
+                    if isinstance(val, str):
+                        return [val]
+                    return val or []
+
+                rules.extend([f"DOMAIN,{d.strip()}" for d in _ensure_list(rule.get('domain'))])
+                rules.extend([f"DOMAIN-SUFFIX,{d.strip()}" for d in _ensure_list(rule.get('domain_suffix'))])
+                rules.extend([f"DOMAIN-KEYWORD,{d.strip()}" for d in _ensure_list(rule.get('domain_keyword'))])
+                rules.extend([f"DOMAIN-REGEX,{d.strip()}" for d in _ensure_list(rule.get('domain_regex')) if self._is_valid_regex(d)])
+                for ip in _ensure_list(rule.get('ip_cidr')):
                     prefix = "IP-CIDR6" if ":" in ip else "IP-CIDR"
                     rules.append(f"{prefix},{ip.strip()},no-resolve")
             rules = sorted(list(set(rules)))

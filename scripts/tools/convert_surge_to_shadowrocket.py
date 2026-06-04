@@ -10,7 +10,7 @@ import sys
 import urllib.request
 import urllib.error
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import List
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
@@ -286,7 +286,7 @@ def convert_content(content: str, *, module_stem: str = "") -> str:
                     out.append(f"# --- Expanded from {url_or_path} ---")
                     for r in expanded_rules:
                         out.append(f"{r},{policy}")
-                    out.append(f"# --- End expansion ---")
+                    out.append("# --- End expansion ---")
                 else:
                     out.append(f"# [无法展开] {line}")
                 continue

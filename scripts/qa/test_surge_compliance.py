@@ -11,7 +11,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from hub.rule_processor import RuleProcessor  # noqa: E402
 from hub.surge_compliance import (  # noqa: E402
-    convert_domain_regex_for_surge,
     strip_inline_comment,
     validate_surge_ruleset_line,
 )

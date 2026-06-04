@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 # Surge-only script parameters that break or OOM on Shadowrocket
 _SR_STRIP_SCRIPT_PARAMS = (

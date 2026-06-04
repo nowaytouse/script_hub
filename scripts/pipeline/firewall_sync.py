@@ -4,11 +4,9 @@ import re
 import argparse
 from datetime import datetime
 from hub.common import (
-    Logger, read_file, write_file, 
-    extract_section, clean_rules
+    Logger, read_file, write_file
 )
 from hub.project_paths import (
-    ROOT,
     SURGE_HEAD_EXPANSE_DIR,
     SHADOWROCKET_HEAD_EXPANSE_DIR,
     SOURCES_DIR,
@@ -85,7 +83,7 @@ def sync_ports(execute: bool = False):
                 in_rule_section = (stripped.lower() == "[rule]")
             if START_MARKER in line:
                 new_module_content.append(line)
-                new_module_content.append(f"# Automated update from ports source\n")
+                new_module_content.append("# Automated update from ports source\n")
                 for rule in sorted(port_rules): new_module_content.append(f"{rule}\n")
                 skip = True
                 continue

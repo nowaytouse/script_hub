@@ -8,13 +8,10 @@ from typing import List, Tuple
 
 from hub.common import Logger, read_file
 from hub.project_paths import (
-    ROOT,
     RULE_SET_DIR,
     DNS_MAPPING_DIR,
-    DNS_SOURCE_DIR,
     ADBLOCK_DIR,
     SINGBOX_DIR,
-    SINGBOX_DNS_DIR,
     SURGE_MODULE_DIR,
     SHADOWROCKET_MODULE_DIR,
 )

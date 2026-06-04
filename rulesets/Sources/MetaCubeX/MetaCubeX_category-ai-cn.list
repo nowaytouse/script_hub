@@ -1,5 +1,5 @@
 # MetaCubeX geosite-category-ai-cn
-# Rules: 154
+# Rules: 155
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalicore-pa.clients6.google.com
@@ -27,6 +27,7 @@ DOMAIN,pplx-res.cloudinary.com
 DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,servd-anthropic-website.b-cdn.net
 DOMAIN,webchannel-alkalimakersuite-pa.clients6.google.com
+DOMAIN-REGEX,^chatgpt-async-webps-prod-\S+-\d+\.webpubsub\.azure\.com$
 DOMAIN-SUFFIX,agentclientprotocol.com
 DOMAIN-SUFFIX,ai.studio
 DOMAIN-SUFFIX,aicode.googleapis.com

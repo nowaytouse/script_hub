@@ -40,7 +40,7 @@ def get_module_name(content):
 def get_content_hash(content):
     """Calculate content hash (ignore metadata like category/url)."""
     lines = content.split('\n')
-    filtered = [l for l in lines if not l.startswith('#!category') and not l.startswith('#!url')]
+    filtered = [line_ for line_ in lines if not line_.startswith('#!category') and not line_.startswith('#!url')]
     return hashlib.md5('\n'.join(filtered).encode()).hexdigest()[:8]
 
 def classify_module(name, content):
@@ -65,7 +65,8 @@ def main():
     existing = {}  # name_lower -> {path, hash, name}
     for cat in ["amplify_nexus", "head_expanse", "narrow_pierce"]:
         cat_path = SURGE_DIR / cat
-        if not cat_path.exists(): continue
+        if not cat_path.exists():
+            continue
         for f in cat_path.glob("*.sgmodule"):
             try:
                 content = f.read_text(encoding='utf-8')
@@ -75,16 +76,18 @@ def main():
                     "hash": get_content_hash(content),
                     "name": name
                 }
-            except: pass
+            except Exception:
+                pass
 
     print(f"Existing modules found: {len(existing)}\n")
 
-    added = updated = duplicate = skipped = 0
+    added = duplicate = skipped = 0
 
     # Process SR modules
     for sr_file in sorted(SR_DIR.glob("*.*module")):
         filename = sr_file.name
-        if filename.startswith("__"): continue
+        if filename.startswith("__"):
+            continue
 
         size = sr_file.stat().st_size
         if size > 100000:
@@ -94,7 +97,7 @@ def main():
 
         try:
             content = sr_file.read_text(encoding='utf-8')
-        except:
+        except Exception:
             print(f"❌ Failed to read: {filename}")
             continue
 
@@ -115,7 +118,8 @@ def main():
 
         category = classify_module(module_name, content)
         safe_name = re.sub(r'[<>:"/\\|?*]', '', module_name)
-        if not safe_name.endswith('.sgmodule'): safe_name += '.sgmodule'
+        if not safe_name.endswith('.sgmodule'):
+            safe_name += '.sgmodule'
         dst_path = SURGE_DIR / category / safe_name
 
         # Process content
@@ -123,7 +127,8 @@ def main():
         new_lines = []
         cat_added = False
         for line in lines:
-            if line.startswith('#!url'): continue
+            if line.startswith('#!url'):
+                continue
             if line.startswith('#!category'):
                 if not cat_added:
                     new_lines.append(f"#!category={CATEGORY_MAP[category]}")

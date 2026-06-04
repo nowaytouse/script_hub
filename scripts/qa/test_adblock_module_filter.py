@@ -7,7 +7,7 @@ SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPT_DIR)
 
 from pipeline.adblock_manager import (  # noqa: E402
-    AMPLIFY_NEXUS_DIR,
+    SURGE_AMPLIFY_NEXUS_DIR,
     AdBlockManager,
     LOCAL_MODULES_DIR,
     LOCAL_SOURCES_DIR,
@@ -25,9 +25,9 @@ def test_filename_gate() -> None:
     cases = [
         (os.path.join(LOCAL_MODULES_DIR, "知乎去广告.sgmodule"), "split"),
         (os.path.join(LOCAL_MODULES_DIR, "扫描全能王解锁.sgmodule"), "skip"),
-        (os.path.join(AMPLIFY_NEXUS_DIR, "BiliBili.Enhanced.sgmodule"), "skip"),
-        (os.path.join(AMPLIFY_NEXUS_DIR, "扫描全能王解锁.sgmodule"), "skip"),
-        (os.path.join(AMPLIFY_NEXUS_DIR, "WeChat_Enhance.sgmodule"), "skip"),
+        (os.path.join(SURGE_AMPLIFY_NEXUS_DIR, "BiliBili.Enhanced.sgmodule"), "skip"),
+        (os.path.join(SURGE_AMPLIFY_NEXUS_DIR, "扫描全能王解锁.sgmodule"), "skip"),
+        (os.path.join(SURGE_AMPLIFY_NEXUS_DIR, "WeChat_Enhance.sgmodule"), "skip"),
     ]
     for path, expected in cases:
         if not os.path.isfile(path):
@@ -38,7 +38,7 @@ def test_filename_gate() -> None:
 
 def test_bilibili_bundle_split_keeps_ad_only() -> None:
     path = os.path.join(
-        AMPLIFY_NEXUS_DIR, "📺 BiliBili增强合集.sgmodule"
+        SURGE_AMPLIFY_NEXUS_DIR, "📺 BiliBili增强合集.sgmodule"
     )
     if not os.path.isfile(path):
         return

@@ -1,21 +1,7 @@
 # MetaCubeX geosite-netflix
-# Rules: 42
+# Rules: 28
 
-DOMAIN,.
-DOMAIN,c
-DOMAIN,d
-DOMAIN,e
-DOMAIN,f
-DOMAIN,g
-DOMAIN,i
-DOMAIN,l
-DOMAIN,m
-DOMAIN,n
-DOMAIN,o
-DOMAIN,s
-DOMAIN,t
-DOMAIN,u
-DOMAIN,x
+DOMAIN,netflix.com.edgesuite.net
 DOMAIN-REGEX,(^|\.)apiproxy-device-prod-nlb-.+\.amazonaws\.com$
 DOMAIN-REGEX,(^|\.)apiproxy-website-nlb-prod-.+\.amazonaws\.com$
 DOMAIN-REGEX,(^|\.)dualstack\.apiproxy-.+\.amazonaws\.com$

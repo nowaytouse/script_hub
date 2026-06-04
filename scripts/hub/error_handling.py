@@ -8,7 +8,6 @@ import os
 import time
 import functools
 from typing import Callable, Optional, Any, TypeVar
-from pathlib import Path
 
 from hub.common import Logger
 
@@ -198,7 +197,7 @@ def safe_write_file(path: str, content: str, atomic: bool = True) -> bool:
                 # Atomic rename
                 shutil.move(tmp_path, path)
                 return True
-            except Exception as e:
+            except Exception:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
                 raise

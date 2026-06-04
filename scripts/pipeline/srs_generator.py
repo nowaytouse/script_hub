@@ -12,8 +12,6 @@ from hub.project_paths import (
     ROOT,
     RULE_SET_DIR,
     DNS_MAPPING_DIR,
-    DNS_SOURCE_DIR,
-    SKK_UPSTREAM_DIR,
     SINGBOX_DIR,
     SINGBOX_DNS_DIR,
     ADBLOCK_DIR,

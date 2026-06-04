@@ -4,8 +4,7 @@ import re
 import sys
 import subprocess
 import time
-from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 # COLORS & LOGGING
 
@@ -212,7 +211,7 @@ def atomic_write(file_path: str, content: str) -> bool:
             # 原子重命名
             shutil.move(tmp_path, file_path)
             return True
-        except Exception as e:
+        except Exception:
             # 清理临时文件
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)

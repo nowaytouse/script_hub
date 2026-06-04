@@ -17,9 +17,7 @@ from hub.common import (
 from hub.rule_processor import RuleProcessor
 from hub.surge_compliance import convert_domain_regex_for_surge
 from hub.project_paths import (
-    ROOT,
     RULE_SET_DIR,
-    LINKS_DIR,
     METACUBEX_DIR,
     CACHE_DIR,
     SOURCES_DIR,

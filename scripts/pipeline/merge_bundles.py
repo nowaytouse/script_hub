@@ -12,13 +12,6 @@ from hub.common import Logger, read_file, safe_download, safe_download_binary, s
 from hub.merge_upstream import merge_upstream_modules
 from hub.project_paths import (
     ROOT,
-    SURGE_AMPLIFY_NEXUS_DIR,
-    SHADOWROCKET_AMPLIFY_NEXUS_DIR,
-    MODULE_LOCAL_DIR,
-    SURGE_HEAD_EXPANSE_DIR,
-    MODULES_HELPER_DIR,
-    REPO_RAW_PREFIX,
-    MAASEA_SGMODULE_BASE,
 )
 from hub.module_sanitizer import (
     SECTION_ORDER,
