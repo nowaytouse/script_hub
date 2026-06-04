@@ -23,6 +23,7 @@ from hub.project_paths import (
 EXTRA_SOURCE_FILES = [
     os.path.join(SKK_UPSTREAM_DIR, "reject-drop.list"),
     os.path.join(SKK_UPSTREAM_DIR, "reject-no-drop.list"),
+    os.path.join(ROOT, "rulesets/Sources/custom/substore.list"),
 ]
 
 class SRSGenerator:
