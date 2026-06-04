@@ -55,8 +55,8 @@ def _combine_arguments(
         raw_desc = meta.get("arguments-desc", "").strip()
         mod_name = meta.get("name", label).strip()
         if raw_desc:
-            # iOS clients are sensitive to oversized metadata lines. Keep concise summaries only.
-            desc_blocks.append(f"[{mod_name}] 参数说明请参考上游模块文档")
+            clean_desc = raw_desc.replace("\\n", "  ").replace("\n", "  ")
+            desc_blocks.append(f"[{mod_name}] {clean_desc}")
 
     args_line = ",".join(arg_tokens) if arg_tokens else None
     desc_line = "\\n".join(desc_blocks) if desc_blocks else None

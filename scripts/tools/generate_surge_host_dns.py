@@ -44,7 +44,6 @@ DOH_TW_TWNIC = "https://dns.twnic.tw/dns-query"
 DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
 DOH_NEXTDNS = "https://dns.nextdns.io"
 DOH_MULLVAD_ADBLOCK = "https://adblock.dns.mullvad.net/dns-query"
-DOH_DNS_SB = "https://doh.dns.sb/dns-query"
 
 DNS_MAPPING_DOH: Dict[str, str] = {
     "DNS_China_AliDNS": DOH_CN_ALIDNS,
@@ -232,7 +231,6 @@ def bootstrap_block() -> List[str]:
         "freedns.controld.com = 76.76.2.0, 76.76.10.0",
         "dns.controld.com = 76.76.2.0, 76.76.10.0",
         "doh.dns.apple.com = 17.253.1.201, 17.253.1.202",
-        "doh.dns.sb = 185.222.222.222, 185.184.222.222",
         "doh.tiar.app = 139.162.110.150",
         "doh.njalla.fo = 146.255.56.98",
         "dns.arapurayil.com = 185.95.218.42",
@@ -348,12 +346,12 @@ def tail_block() -> List[str]:
         "3hentai.net = server:" + DOH_MULLVAD_ADBLOCK,
         "18comic.vip = server:" + DOH_MULLVAD_ADBLOCK,
         "connectivitycheck.gstatic.com = server:" + DOH_NEXTDNS,
-        "detectportal.firefox.com = server:" + DOH_DNS_SB,
+        "detectportal.firefox.com = server:" + DOH_NEXTDNS,
         "msftconnecttest.com = server:" + DOH_NEXTDNS,
         "msftncsi.com = server:" + DOH_NEXTDNS,
         "www.msftncsi.com = server:" + DOH_NEXTDNS,
         "connectivitycheck.android.com = server:" + DOH_NEXTDNS,
-        "connectivity-check.ubuntu.com = server:" + DOH_DNS_SB,
+        "connectivity-check.ubuntu.com = server:" + DOH_NEXTDNS,
         "connectivitycheck.platform.hicloud.com = server:" + DOH_CN_ALIDNS,
         "",
         "# =============================================================================",
@@ -438,7 +436,6 @@ def manual_hosts_block() -> List[str]:
         "doh.ffmuc.net = 185.150.99.255, 2001:678:ed0:f000::",
         "dns.mullvad.net = 194.242.2.3, 2a07:e340::3",
         "doh.libredns.gr = 116.202.176.26, 2a01:4f8:c2c:548f::1",
-        "doh.dns.sb = 185.184.222.222, 2a09::1",
         "doh.njalla.fo = 95.215.19.53, 2001:67c:2354:2::53",
         "doh.applied-privacy.net = 146.255.56.98, 2a02:1b8:10:234::2",
         "dns.digitale-gesellschaft.ch = 185.95.218.42, 2a05:fc84::42",
