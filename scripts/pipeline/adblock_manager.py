@@ -38,6 +38,7 @@ from hub.project_paths import (
     ADBLOCK_DIR,
     RULE_SET_DIR,
     ADBLOCK_LIST,
+    ADBLOCK_HASH_FILE,
     HTTPDNS_HIJACK_LIST,
     SKK_UPSTREAM_DIR,
 )
@@ -332,9 +333,9 @@ class AdBlockManager:
         Logger.info(f"Loaded {len(self.whitelist)} whitelist patterns")
 
     def load_hashes(self):
-        if not os.path.exists(HASH_FILE):
+        if not os.path.exists(ADBLOCK_HASH_FILE):
             return
-        for line in read_file(HASH_FILE):
+        for line in read_file(ADBLOCK_HASH_FILE):
             if "|" not in line:
                 continue
             name, digest = line.strip().split("|", 1)
@@ -342,7 +343,7 @@ class AdBlockManager:
 
     def save_hashes(self, hashes: Dict[str, str]):
         content = "\n".join(f"{k}|{v}" for k, v in sorted(hashes.items())) + "\n"
-        write_file(HASH_FILE, content)
+        write_file(ADBLOCK_HASH_FILE, content)
 
     def _download(self, url: str) -> Optional[str]:
         url = urllib.parse.unquote(url)

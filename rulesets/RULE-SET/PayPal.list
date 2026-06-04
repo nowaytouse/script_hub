@@ -2,16 +2,14 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 250
+# Rules: 241
 
-DOMAIN-KEYWORD,paypal
 DOMAIN-SUFFIX,account-paypal.info
 DOMAIN-SUFFIX,account-paypal.net
 DOMAIN-SUFFIX,account-paypal.org
 DOMAIN-SUFFIX,accountpaypal.com
 DOMAIN-SUFFIX,accountpaypal.net
 DOMAIN-SUFFIX,accountpaypal.org
-DOMAIN-SUFFIX,amex.com
 DOMAIN-SUFFIX,anfutong.cn
 DOMAIN-SUFFIX,anfutong.com
 DOMAIN-SUFFIX,anfutong.com.cn
@@ -49,7 +47,6 @@ DOMAIN-SUFFIX,krakenjs.com
 DOMAIN-SUFFIX,loanbuilder.com
 DOMAIN-SUFFIX,login-paypal.com
 DOMAIN-SUFFIX,login-paypal.info
-DOMAIN-SUFFIX,mastercard.com
 DOMAIN-SUFFIX,mywaytopay.info
 DOMAIN-SUFFIX,mywaytopay.net
 DOMAIN-SUFFIX,pa9pal.com
@@ -116,7 +113,6 @@ DOMAIN-SUFFIX,paypal-mainstreet.net
 DOMAIN-SUFFIX,paypal-marketing.com
 DOMAIN-SUFFIX,paypal-media.com
 DOMAIN-SUFFIX,paypal-merchantloyalty.com
-DOMAIN-SUFFIX,paypal-mktg.com
 DOMAIN-SUFFIX,paypal-mobilemoney.com
 DOMAIN-SUFFIX,paypal-network.org
 DOMAIN-SUFFIX,paypal-notice.com
@@ -220,7 +216,6 @@ DOMAIN-SUFFIX,pypl.com
 DOMAIN-SUFFIX,pypl.info
 DOMAIN-SUFFIX,pypl.net
 DOMAIN-SUFFIX,pypl.tv
-DOMAIN-SUFFIX,revolut.com
 DOMAIN-SUFFIX,s-xoom.com
 DOMAIN-SUFFIX,secure-paypal.info
 DOMAIN-SUFFIX,securepaypal.info
@@ -238,11 +233,8 @@ DOMAIN-SUFFIX,venmo.com
 DOMAIN-SUFFIX,venmo.info
 DOMAIN-SUFFIX,venmo.net
 DOMAIN-SUFFIX,venmo.org
-DOMAIN-SUFFIX,venmo.s3.amazonaws.com
-DOMAIN-SUFFIX,visa.com
 DOMAIN-SUFFIX,webmoneyinfo.com
 DOMAIN-SUFFIX,wiremoneytoirelandwithxoomeasierandcheaper.com
-DOMAIN-SUFFIX,wise.com
 DOMAIN-SUFFIX,www-paypal.info
 DOMAIN-SUFFIX,www-paypal.us
 DOMAIN-SUFFIX,wwwxoom.com
@@ -253,4 +245,3 @@ DOMAIN-SUFFIX,xoom.io
 DOMAIN-SUFFIX,xoom.net.cn
 DOMAIN-SUFFIX,xoom.us
 DOMAIN-SUFFIX,xoomcom.com
-USER-AGENT,PayPal*
