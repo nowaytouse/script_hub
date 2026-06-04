@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-05 02:49:00",
+  "updated": "2026-06-05 05:30:25",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -138,7 +138,7 @@
       "label_zh": "安全威胁",
       "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
       "shard_index": 2,
-      "rule_count": 27349,
+      "rule_count": 27079,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list"
     },
     {
@@ -147,7 +147,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 7933,
+      "rule_count": 6401,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list"
     },
     {
@@ -210,7 +210,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 7,
-      "rule_count": 15381,
+      "rule_count": 25351,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list"
     },
     {
@@ -219,7 +219,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 27976,
+      "rule_count": 27928,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list"
     }
   ]

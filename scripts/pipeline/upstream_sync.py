@@ -26,6 +26,7 @@ from hub.project_paths import (
     SURGE_AMPLIFY_NEXUS_DIR,
     MODULE_LOCAL_DIR,
     KELEE_DIR,
+    ADBLOCK_DIR,
 )
 
 # CONFIGURATION
@@ -243,16 +244,27 @@ class UpstreamSyncer:
     def sync_skk(self):
         Logger.section("Syncing SKK Upstream Rulesets")
         os.makedirs(SKK_UPSTREAM_DIR, exist_ok=True)
+        os.makedirs(ADBLOCK_DIR, exist_ok=True)
+        
         for name, url in SKK_SOURCES.items():
             content_bytes = self.download(url)
             if content_bytes:
                 content = content_bytes.decode('utf-8', errors='ignore')
                 lines = [l.strip() for l in content.splitlines() if l.strip() and not l.strip().startswith('#')]
                 if name == "reject-no-drop.list":
-                    lines = [l for l in lines if "bilibili" not in l.lower()]
+                    # Filter out bilibili and AND rules (not supported by standard Surge format)
+                    lines = [l for l in lines if "bilibili" not in l.lower() and not l.startswith("AND,")]
                 final = f"# Ruleset: {name}\n\n" + "\n".join(lines) + "\n"
+                
+                # Write to skk_upstream directory
                 write_file(os.path.join(SKK_UPSTREAM_DIR, name), final)
                 Logger.success(f"SKK: {name} ({len(lines)} rules)")
+                
+                # Also copy reject-drop and reject-no-drop to AdBlock directory
+                if name in ("reject-drop.list", "reject-no-drop.list"):
+                    adblock_path = os.path.join(ADBLOCK_DIR, name)
+                    write_file(adblock_path, final)
+                    Logger.info(f"  → Copied to AdBlock: {name}")
 
     def process_nexus_module(self, url: str):
         import urllib.parse

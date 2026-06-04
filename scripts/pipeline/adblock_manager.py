@@ -127,6 +127,10 @@ ADBLOCK_FILENAME_ALLOWLIST = frozenset(
 )
 
 FUNCTIONAL_BLOCK_LOCAL_SOURCES = frozenset({"Reddit.ADBlock.sgmodule"})
+
+# Define LOCAL_SOURCES_DIR as alias for MODULE_LOCAL_DIR (for code clarity)
+LOCAL_SOURCES_DIR = MODULE_LOCAL_DIR
+
 TARGET_MODULE = os.path.join(
     SURGE_HEAD_EXPANSE_DIR,
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
@@ -139,13 +143,8 @@ TARGET_MODULE_LITE = os.path.join(
 # Categories included in the Lite (mobile-friendly) tier.
 # Excludes heavy ThreatIntel shards (~1.2M rules) that are desktop-only.
 LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
-NARROW_PIERCE_DIR = os.path.join(ROOT, "modules/surge/narrow_pierce")
-PROMAX_SPLITS_DIR = os.path.join(ROOT, "modules/source/build/promax_splits")
-SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
-SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
-ADBLOCK_CATALOG_JSON = os.path.join(ADBLOCK_DIR, "catalog.json")
 ADBLOCK_README = os.path.join(ADBLOCK_DIR, "README.md")
-ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.md")
+ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.doc")
 
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
 RULES_PER_SHARD = 100_000
@@ -423,7 +422,7 @@ class AdBlockManager:
         if (
             not from_manifest
             and os.path.dirname(os.path.normpath(path))
-            == os.path.normpath(AMPLIFY_NEXUS_DIR)
+            == os.path.normpath(SURGE_AMPLIFY_NEXUS_DIR)
         ):
             return "skip"
         if not from_manifest and any(tok in low for tok in FUNCTIONAL_BLOCK_NAME_TOKENS):
