@@ -55,11 +55,12 @@ def _combine_arguments(
         raw_desc = meta.get("arguments-desc", "").strip()
         mod_name = meta.get("name", label).strip()
         if raw_desc:
-            clean_desc = raw_desc.replace("\n", "\\n")
+            import re
+            clean_desc = re.sub(r'\n+', r'\\n', raw_desc.strip())
             desc_blocks.append(f"[{mod_name}]\\n{clean_desc}")
 
     args_line = ",".join(arg_tokens) if arg_tokens else None
-    desc_line = "\\n".join(desc_blocks) if desc_blocks else None
+    desc_line = "\\n\\n".join(desc_blocks) if desc_blocks else None
     return args_line, desc_line
 
 
@@ -96,10 +97,11 @@ def merge_upstream_modules(
         parsed_parts.append((label, meta, sections))
         used_sources.append((label, url))
         for name, lines in sections:
-            if name in merged_sections and merged_sections[name] and lines:
+            filtered_lines = [line for line in lines if line.strip()]
+            if name in merged_sections and merged_sections[name] and filtered_lines:
                 if merged_sections[name][-1] != "":
                     merged_sections[name].append("")
-            merged_sections.setdefault(name, []).extend(lines)
+            merged_sections.setdefault(name, []).extend(filtered_lines)
 
     if not parsed_parts:
         raise RuntimeError(f"No upstream modules downloaded for {output_path}")

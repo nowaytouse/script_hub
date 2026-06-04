@@ -2,7 +2,7 @@
 #!desc=微博+国际版去广告 · PROMAX 构建源（域名规则+脚本已并入 PROMAX，勿单独安装）\n\n上游: fmz200/wool_scripts, iab0x00
 #!author=fmz200, iab0x00, ScriptHub
 #!tag=去广告, 微博, PROMAX-build
-#!date=2026-06-05 00:18:52
+#!date=2026-06-05 00:24:53
 # PROMAX build source — install head_expanse/PROMAX only
 
 [Rule]
@@ -54,24 +54,18 @@ URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\
 ^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=hot_search_users data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 # 微博轻享版热搜词
 ^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=get_searching_info data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-
 # 私信中绿洲的擦边诱导推广
 ^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=treehole&auth= data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-
 # 屏蔽首页左上角每日的弹窗tips
 ^https?:\/\/m?api\.weibo\.c(n|om)\/\d/push\/daily data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-
 # 超话按钮的提示
 ^https?:\/\/m?api\.weibo\.c(n|om)\/2\/!\/huati\/(discovery_home_bottom_getdotinfo|mobile_discovery_searchchange)\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-
 # 开屏广告
 ^https?:\/\/bootrealtime\.uve\.weibo\.com\/v\d\/ad\/realtime data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/bootpreload\.uve\.weibo\.com\/v\d\/ad\/preload data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-
 # 微博长文章推广
 ^https:\/\/card\.weibo\.com\/article\/m\/aj\/(reward|uvead)\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/weibo\.com\/ttarticle\/x\/m\/aj\/(reward|uvead)\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-
 # 微博
 ^https:\/\/m?api\.weibo\.c(n|om)\/2\/!\/huati\/discovery_home_bottom_channels data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/m?api\.weibo\.c(n|om)\/2\/!\/chaohua\/discovery\/home_bottom\/switch data-type=text data="{}" status-code=200 header="Content-Type:application/json"
