@@ -124,6 +124,8 @@ def dedupe_section_lines(section: str, lines: List[str]) -> List[str]:
     for line in lines:
         stripped = line.strip()
         if not stripped:
+            if result and result[-1] != "":
+                result.append("")
             continue
         if stripped.startswith("#"):
             result.append(stripped)

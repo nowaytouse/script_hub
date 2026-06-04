@@ -96,6 +96,9 @@ def merge_upstream_modules(
         parsed_parts.append((label, meta, sections))
         used_sources.append((label, url))
         for name, lines in sections:
+            if name in merged_sections and merged_sections[name] and lines:
+                if merged_sections[name][-1] != "":
+                    merged_sections[name].append("")
             merged_sections.setdefault(name, []).extend(lines)
 
     if not parsed_parts:
