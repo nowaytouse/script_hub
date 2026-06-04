@@ -30,8 +30,6 @@ PRIORITY_ORDER = [
     "SocialMedia_ip.list",
     "NSFW.list",
     "NSFW_ip.list",
-    "substore.list",
-    "substore_ip.list",
     "AppleNews.list",
     "AppleNews_ip.list",
     "StreamUS.list",
