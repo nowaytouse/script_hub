@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATED_PREFIXES = ("modules/", "rulesets/", "dns/")
-SCRIPT_PREFIX = "scripts/"
+VALID_SOURCES = ("scripts/", "rulesets/Sources/")
 BOT_AUTHORS = {"github-actions[bot]"}
 
 
@@ -53,7 +53,7 @@ def main() -> int:
         status = parts[0]
         paths = parts[1:]
         for p in paths:
-            if p.startswith(SCRIPT_PREFIX):
+            if p.startswith(VALID_SOURCES):
                 changed_scripts = True
 
         # Rename/copy status uses old+new paths. Allow pure renames by policy.
@@ -61,7 +61,7 @@ def main() -> int:
             continue
 
         target = paths[-1] if paths else ""
-        if target.startswith(GENERATED_PREFIXES):
+        if target.startswith(GENERATED_PREFIXES) and not target.startswith("rulesets/Sources/"):
             generated_content_changes.append(f"{status}\t{target}")
 
     if generated_content_changes and not changed_scripts:
