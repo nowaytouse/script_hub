@@ -14,9 +14,9 @@ from hub.rule_processor import RuleProcessor
 from hub.surge_compliance import convert_domain_regex_for_surge
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/list")
+SURGE_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
 SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
-METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
+METACUBEX_DIR = os.path.join(ROOT, "rulesets/Sources/MetaCubeX")
 CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.txt")
 POLICY_MAP_FILE = os.path.join(ROOT, "rulesets/Sources/ruleset_policy_map.txt")
 

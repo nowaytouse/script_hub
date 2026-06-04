@@ -38,13 +38,17 @@ def _fetch_module(
     raise RuntimeError(f"Failed to load upstream module: {label} ({url})")
 
 
-def _combine_arguments(
+def _combine_metadata(
     parts: Sequence[Tuple[str, Dict[str, str]]],
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     arg_tokens: List[str] = []
+    args_desc_blocks: List[str] = []
     desc_blocks: List[str] = []
 
     for label, meta in parts:
+        mod_name = meta.get("name", label).strip()
+
+        # Handle arguments
         raw_args = meta.get("arguments", "").strip()
         if raw_args:
             for token in raw_args.split(","):
@@ -52,16 +56,33 @@ def _combine_arguments(
                 if token and token not in arg_tokens:
                     arg_tokens.append(token)
 
-        raw_desc = meta.get("arguments-desc", "").strip()
-        mod_name = meta.get("name", label).strip()
+        # Handle arguments-desc
+        raw_args_desc = meta.get("arguments-desc", "").strip()
+        if raw_args_desc:
+            import re
+            clean_desc = re.sub(r'\n+', r'\\n', raw_args_desc.strip())
+            args_desc_blocks.append(f"[{mod_name}]\\n{clean_desc}")
+
+        # Handle desc
+        raw_desc = meta.get("desc", "").strip()
         if raw_desc:
             import re
             clean_desc = re.sub(r'\n+', r'\\n', raw_desc.strip())
-            desc_blocks.append(f"[{mod_name}]\\n{clean_desc}")
+            desc_blocks.append(f"✦ {mod_name}: {clean_desc}")
 
     args_line = ",".join(arg_tokens) if arg_tokens else None
-    desc_line = "\\n\\n".join(desc_blocks) if desc_blocks else None
-    return args_line, desc_line
+    
+    def _beautify_and_truncate(blocks: List[str], max_len: int = 3000, prefix: str = "") -> Optional[str]:
+        if not blocks:
+            return None
+        combined = prefix + "\\n\\n".join(blocks)
+        if len(combined) > max_len:
+            return combined[:max_len-30] + "...\\n(Truncated to prevent overflow)"
+        return combined
+
+    args_desc_line = _beautify_and_truncate(args_desc_blocks, 3000)
+    desc_line = _beautify_and_truncate(desc_blocks, 3000, prefix="【Bundled Modules】\\n")
+    return args_line, args_desc_line, desc_line
 
 
 def merge_upstream_modules(
@@ -106,7 +127,7 @@ def merge_upstream_modules(
     if not parsed_parts:
         raise RuntimeError(f"No upstream modules downloaded for {output_path}")
 
-    combined_args, combined_desc = _combine_arguments(
+    combined_args, combined_args_desc, combined_desc = _combine_metadata(
         [(label, meta) for label, meta, _ in parsed_parts]
     )
 
@@ -114,8 +135,14 @@ def merge_upstream_modules(
     out_meta["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if combined_args:
         out_meta["arguments"] = combined_args
+    if combined_args_desc:
+        out_meta["arguments-desc"] = combined_args_desc
     if combined_desc:
-        out_meta["arguments-desc"] = combined_desc
+        existing_desc = out_meta.get("desc", "").strip()
+        if existing_desc:
+            out_meta["desc"] = existing_desc + "\\n\\n" + combined_desc
+        else:
+            out_meta["desc"] = combined_desc
 
     section_list = [(name, merged_sections[name]) for name in merged_sections]
     section_list = merge_mitm_hosts(section_list)

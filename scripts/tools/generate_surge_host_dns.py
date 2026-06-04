@@ -42,7 +42,7 @@ DOH_QUAD9 = "https://dns.quad9.net/dns-query"
 DOH_CONTROLD = "https://dns.controld.com/p2"
 DOH_TW_TWNIC = "https://dns.twnic.tw/dns-query"
 DOH_HE_ORDNS = "https://ordns.he.net/dns-query"
-DOH_NEXTDNS = "https://dns.nextdns.io"
+DOH_NEXTDNS = "h3://doh-sg.blahdns.com/dns-query"
 DOH_MULLVAD_ADBLOCK = "https://adblock.dns.mullvad.net/dns-query"
 
 DNS_MAPPING_DOH: Dict[str, str] = {

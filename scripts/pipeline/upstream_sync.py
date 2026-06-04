@@ -10,8 +10,8 @@ import shutil
 from hub.common import Logger, get_project_root, write_file, safe_download_binary, safe_remove
 
 ROOT = get_project_root()
-METACUBEX_DIR = os.path.join(ROOT, "rulesets/MetaCubeX")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/list/skk_upstream")
+METACUBEX_DIR = os.path.join(ROOT, "rulesets/Sources/MetaCubeX")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/RULE-SET/skk_upstream")
 MODULE_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
 LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local")
 

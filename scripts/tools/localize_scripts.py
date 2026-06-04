@@ -30,7 +30,7 @@ LOCAL_URL_PREFIX = SCRIPT_RAW_PREFIX
 USER_AGENTS = [_BROWSER_UA]
 
 # Domains that block bot downloads — handled separately (e.g. via repair_script_paths)
-_SKIP_DOMAINS = {"kelee.one", "cdn.jsdelivr.net"}
+_SKIP_DOMAINS = {"cdn.jsdelivr.net"}
 
 def is_valid_url(url):
     """Filter out regex patterns, invalid mock URLs, and known-blocked domains."""

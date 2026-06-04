@@ -298,10 +298,7 @@ VENDOR_SNAPSHOT_BY_URL: dict[str, str] = {
     "https://yfamilys.com/rule/Cloudflare.list": "yfamilys_Cloudflare.list",
 }
 
-_CURL_UA = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-)
+_CURL_UA = _BROWSER_UA
 
 
 def _http_cache_path(url: str) -> str:

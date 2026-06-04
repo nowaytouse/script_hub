@@ -1578,7 +1578,7 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT",
             "DOMAIN,doh.dns.apple.com,DIRECT",
             "# Block app-layer HTTPDNS first",
-            f"RULE-SET,{CDN_BASE_URL}rulesets/list/HTTPDNS_Hijack.list,REJECT",
+            f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/HTTPDNS_Hijack.list,REJECT",
             "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)",
         ])
 
@@ -1604,11 +1604,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/list/skk_upstream/reject-no-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/skk_upstream/reject-no-drop.list,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/list/skk_upstream/reject-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/skk_upstream/reject-drop.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/list/skk_upstream/BlockHttpDNS.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/skk_upstream/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )

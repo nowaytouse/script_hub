@@ -1,6 +1,6 @@
 # AdBlock 分片规则集
 
-> 自动生成于 `2026-06-04 23:30:34` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-06-05 01:41:39` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -23,28 +23,27 @@
 | 应用去广告 | `rulesets/AdBlock/AdBlock_Local.list` | 98 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list) |
-| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_03.list` | 75,976 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list) |
-| 隐私追踪 | `rulesets/AdBlock/AdBlock_Privacy.list` | 5,590 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list) |
-| 安全威胁 | `rulesets/AdBlock/AdBlock_Security_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_01.list) |
-| 安全威胁 | `rulesets/AdBlock/AdBlock_Security_02.list` | 26,399 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list) |
-| Anti-AD | `rulesets/AdBlock/AdBlock_AntiAD.list` | 7,610 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list) |
+| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_03.list` | 75,580 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list) |
+| 隐私追踪 | `rulesets/AdBlock/AdBlock_Privacy.list` | 5,594 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list) |
+| 安全威胁 | `rulesets/AdBlock/AdBlock_Security.list` | 220 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security.list) |
+| Anti-AD | `rulesets/AdBlock/AdBlock_AntiAD.list` | 7,808 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list) |
-| 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list` | 87,610 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list) |
-| 其他补充 | `rulesets/AdBlock/AdBlock_Other.list` | 27,985 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list) |
+| 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list` | 87,697 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list) |
+| 其他补充 | `rulesets/AdBlock/AdBlock_Other.list` | 3,837 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list) |
 
 ## 应用内脚本层（PROMAX 内嵌）
 
 | 段落 | 行数 |
 |------|------|
 | `URL Rewrite` | 939 |
-| `Map Local` | 1,944 |
-| `Script` | 503 |
+| `Map Local` | 1,946 |
+| `Script` | 504 |
 | `Body Rewrite` | 79 |
-| `MITM` (hostname) | 1,063 |
+| `MITM` (hostname) | 1,064 |
 
 ## 安装模块（RULE-SET + 去广告 Script/Rewrite；解锁/增强请用 Amplify Nexus 独立模块）
 

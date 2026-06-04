@@ -9,9 +9,9 @@ from typing import List, Tuple
 from hub.common import Logger, get_project_root, read_file
 
 ROOT = get_project_root()
-SURGE_DIR = os.path.join(ROOT, "rulesets/list")
+SURGE_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
 DNS_MAPPING_DIR = os.path.join(ROOT, "rulesets/Sources/DNS_mapping")
-DNS_RULES_DIR = os.path.join(ROOT, "rulesets/dns")
+DNS_RULES_DIR = os.path.join(ROOT, "rulesets/Dns")
 ADBLOCK_DIR = os.path.join(ROOT, "rulesets/AdBlock")
 SINGBOX_DIR = os.path.join(ROOT, "rulesets/SingBox")
 MODULE_SURGE = os.path.join(ROOT, "modules/surge")

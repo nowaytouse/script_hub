@@ -12,7 +12,7 @@ ROOT = get_project_root()
 AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
 
 # Surge / Shadowrocket compiled .list rulesets
-LIST_DIR = os.path.join(ROOT, "rulesets/list")
+LIST_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
 SKK_UPSTREAM_DIR = os.path.join(LIST_DIR, "skk_upstream")
 ADBLOCK_LIST = os.path.join(LIST_DIR, "AdBlock.list")
 HTTPDNS_HIJACK_LIST = os.path.join(LIST_DIR, "HTTPDNS_Hijack.list")
@@ -40,7 +40,7 @@ YOUTUBE_ENHANCE_URL = f"{MAASEA_SGMODULE_BASE}/YouTube.Enhance.sgmodule"
 BILIBILI_HELPER_URL = f"{MAASEA_SGMODULE_BASE}/Bilibili.Helper.sgmodule"
 
 # Raw GitHub URL prefix for published list rulesets
-LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}rulesets/list/"
+LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}rulesets/RULE-SET/"
 
 # Vendored Surge/Shadowrocket scripts (localize_scripts.py)
 SCRIPTS_DIR = os.path.join(ROOT, "modules/source/scripts")

@@ -151,7 +151,7 @@ def build_singbox_dns() -> dict:
         "dns.quad9.net",
         "dns.adguard-dns.com",
         "dns.adguard.com",
-        "dns.nextdns.io",
+        "doh-sg.blahdns.com/dns-query",
         "doh.dns.apple.com",
         "dns.twnic.tw",
         "wikimedia-dns.org",
