@@ -1,6 +1,5 @@
 # Ruleset: reject-no-drop.list
 
-# AND,((PROTOCOL,UDP), (DOMAIN-SUFFIX,googlevideo.com))
 DOMAIN,upos-sz-302kodo.bilivideo.com
 DOMAIN,upos-sz-302ppio.bilivideo.com
 DOMAIN-KEYWORD,-p2p-v2.pull.yximgs.com
