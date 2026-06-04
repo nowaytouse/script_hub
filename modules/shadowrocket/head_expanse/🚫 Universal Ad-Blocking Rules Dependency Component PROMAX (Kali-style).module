@@ -1,17 +1,14 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-05]
-#!desc=[🚀SR] 按用途分片(14片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1064); 索引 rulesets/AdBlock/catalog.json
+#!desc=[🚀SR] 按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1064); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-06-05 01:41:39
+#!date=2026-06-05 02:19:03
 
 [Rule]
 # --- SYNCED PORT RULES START ---
 # Automated update from ports source
-IN-PORT,8076,REJECT
-DEST-PORT,8076,REJECT
-IN-PORT,127.0.0.1:12654,REJECT
 DEST-PORT,1025,REJECT   # 常被 Windows RAT 占用
 DEST-PORT,1026,REJECT   # Windows messenger spam / RAT
 DEST-PORT,1027,REJECT   # Windows messenger spam
@@ -83,6 +80,7 @@ DEST-PORT,6771,REJECT
 DEST-PORT,7,REJECT      # Echo（放大 ~2x，但量大时危险）
 DEST-PORT,7000,REJECT   # IRC 备用，僵尸网络常用
 DEST-PORT,7777,REJECT   # Stratum 备用
+DEST-PORT,8076,REJECT
 DEST-PORT,8333,REJECT   # Bitcoin P2P（同时被矿机用）
 DEST-PORT,8567,REJECT   # macOS 恶意软件 C2 高频观测端口
 DEST-PORT,9,REJECT      # Discard（无意义，常被扫描）
@@ -90,6 +88,8 @@ DEST-PORT,9100,REJECT   # RAW 打印 / JetDirect（可任意读写文件系统�
 DEST-PORT,9898,REJECT   # Dabber worm
 DEST-PORT,9996,REJECT   # Sasser 蠕虫 FTP 传输
 DEST-PORT,9999,REJECT   # Stratum 备用
+IN-PORT,127.0.0.1:12654,REJECT
+IN-PORT,8076,REJECT
 # --- SYNCED PORT RULES END ---
 
 # High-Priority White-list (Prevent DNS failure)
@@ -121,6 +121,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list,REJECT
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT
 
@@ -193,7 +194,7 @@ URL-REGEX,^https?:\/\/goblin\.hupu\.com/[^/]+/[^/]+\/interfaceAd\/,REJECT
 URL-REGEX,^https?:\/\/sa\d\.tuisong\.baidu\.com,REJECT
 URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
-# Merged REJECT complex rules (68)
+# Merged REJECT complex rules (78)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT
 DOMAIN,apidns.kwd.inkuai.com,REJECT
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT
@@ -204,6 +205,9 @@ DOMAIN,dns.jd.com.gslb.qianxun.com,REJECT
 DOMAIN,dns.qiyipic.iqiyi.com,REJECT
 DOMAIN,dns.qq.com,REJECT
 DOMAIN,dns.weibo.cn,REJECT
+DOMAIN,dns.weixin.qq.com,REJECT
+DOMAIN,dns.weixin.qq.com.cn,REJECT
+DOMAIN,doh.dns.apple.com,REJECT
 DOMAIN,doh.iqiyi.com,REJECT
 DOMAIN,doh.jd.com,REJECT
 DOMAIN,doh.ptqy.gitv.tv,REJECT
@@ -218,6 +222,7 @@ DOMAIN,httpdns.alicdn.com,REJECT
 DOMAIN,httpdns.aliyuncs.com,REJECT
 DOMAIN,httpdns.baidu.com,REJECT
 DOMAIN,httpdns.baidubce.com,REJECT
+DOMAIN,httpdns.bcelive.com,REJECT
 DOMAIN,httpdns.browser.miui.com,REJECT
 DOMAIN,httpdns.c.163.com,REJECT
 DOMAIN,httpdns.c.cdnhwc2.com,REJECT
@@ -225,8 +230,10 @@ DOMAIN,httpdns.calorietech.com,REJECT
 DOMAIN,httpdns.cctv.com,REJECT
 DOMAIN,httpdns.danuoyi.tbcache.com,REJECT
 DOMAIN,httpdns.gslb.yy.com,REJECT
+DOMAIN,httpdns.huaweicloud.com,REJECT
 DOMAIN,httpdns.kg.qq.com,REJECT
 DOMAIN,httpdns.kwd.inkuai.com,REJECT
+DOMAIN,httpdns.meituan.com,REJECT
 DOMAIN,httpdns.music.163.com,REJECT
 DOMAIN,httpdns.music.ntes53.netease.com,REJECT
 DOMAIN,httpdns.n.netease.com,REJECT
@@ -259,7 +266,11 @@ DOMAIN,resolver.msg.xiaomi.net,REJECT
 DOMAIN,static.dns.qiyipic.iqiyi.com,REJECT
 DOMAIN,union-httpdns.gslb.yy.com,REJECT
 DOMAIN,v6-data.video.dns.iqiyi.com,REJECT
+DOMAIN-SUFFIX,bytedance.com,REJECT
+DOMAIN-SUFFIX,isnssdk.com,REJECT
+DOMAIN-SUFFIX,snssdk.com,REJECT
 DOMAIN-SUFFIX,toutiaoapi.com,REJECT
+DOMAIN-SUFFIX,zijieapi.com,REJECT
 URL-REGEX,^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/,REJECT
 URL-REGEX,^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload),REJECT
 # Merged REJECT complex rules (1)

@@ -17,8 +17,8 @@ ROOT = get_project_root()
 SURGE_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
 SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
 METACUBEX_DIR = os.path.join(ROOT, "rulesets/Sources/MetaCubeX")
-CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.txt")
-POLICY_MAP_FILE = os.path.join(ROOT, "rulesets/Sources/ruleset_policy_map.txt")
+CACHE_FILE = os.path.join(ROOT, ".cache/merge_hashes.list")
+POLICY_MAP_FILE = os.path.join(ROOT, "rulesets/Sources/ruleset_policy_map.list")
 
 # --- CONFIGURATION ---
 
@@ -289,7 +289,7 @@ class RulesetManager:
         
         # 1. Hash the manifest lists themselves
         manifests = [
-            os.path.join(SOURCES_DIR, f"{name}_sources.txt"), 
+            os.path.join(SOURCES_DIR, f"{name}_sources.list"), 
             self._find_case_insensitive_file(METACUBEX_DIR, f"MetaCubeX_{name}.list")
         ]
         for f in manifests:
@@ -300,7 +300,7 @@ class RulesetManager:
                     content = f_obj.read()
                     hasher.update(content)
                     # 2. Deep Dive: If it's a manifest, hash the local files it references
-                    if f.endswith('_sources.txt'):
+                    if f.endswith('_sources.list'):
                         for line in content.decode('utf-8', errors='ignore').splitlines():
                             line = line.strip()
                             if line and not line.startswith(('#', 'http')):
@@ -317,7 +317,7 @@ class RulesetManager:
         current_hash = hasher.hexdigest() if found else ""
         # Detect if any source is remote (http)
         has_remote = False
-        s_file = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
+        s_file = os.path.join(SOURCES_DIR, f"{name}_sources.list")
         if os.path.exists(s_file):
             for line in read_file(s_file):
                 if line.strip().startswith('http'):
@@ -340,7 +340,7 @@ class RulesetManager:
                 for line in read_file(m_file):
                     cleaned = self.clean_rule(line, name)
                     if cleaned: all_rules.add(cleaned)
-            s_file = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
+            s_file = os.path.join(SOURCES_DIR, f"{name}_sources.list")
             if os.path.exists(s_file):
                 for line in read_file(s_file):
                     line = line.strip()
@@ -426,7 +426,7 @@ class RulesetManager:
                 continue
             if name in DEPRECATED_RULESETS:
                 if safe_remove(path):
-                    src = os.path.join(SOURCES_DIR, f"{name}_sources.txt")
+                    src = os.path.join(SOURCES_DIR, f"{name}_sources.list")
                     if os.path.exists(src):
                         safe_remove(src)
                     self.stats["deleted"] += 1

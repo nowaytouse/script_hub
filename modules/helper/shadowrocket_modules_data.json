@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-05T01:41:48.103597",
+  "generated": "2026-06-05T02:19:18.778372",
   "categories": {
     "amplify_nexus": {
       "name": "🛠️ Amplify Nexus › 增幅枢纽",
@@ -21,9 +21,19 @@
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.module"
         },
         {
+          "name": "🍎 Apple服务增强合集",
+          "desc": "[🚀SR] 整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能\\n\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
+        },
+        {
           "name": "📊 面板工具合集",
-          "desc": "[🚀SR] 节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板",
+          "desc": "[🚀SR] 节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板\\n\\n【Bundled Modules】\\n✦ 节假日信息: 显示节假日的信息\\n\\n✦ 网络信息 𝕏: 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha\\n\\n✦ 机场订阅信息: 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module"
+        },
+        {
+          "name": "📺 BiliBili增强合集",
+          "desc": "[🚀SR] 合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）\\n\\n【Bundled Modules】\\n✦ 📺 BiliBili: ⚙️ Enhanced: 哔哩哔哩：增强模式\\n中国站功能增强及UI自定义\\n\\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\\n中国站自动线路及全区搜索\\n\\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\\n中国站CDN自定义\\n\\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接\\n\\n✦ Bili1080P: Bili1080P",
+          "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module"
         },
         {
           "name": "📺 YouTube增强合集",
@@ -32,7 +42,7 @@
         },
         {
           "name": "🧰 Script Hub 配套工具合集",
-          "desc": "[🚀SR] Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游",
+          "desc": "[🚀SR] Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游\\n\\n【Bundled Modules】\\n✦ BoxJs: http://boxjs.com\\n\\n✦ Sub-Store(β): 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *\\n\\n✦ Script Hub: 重写 & 规则集转换: https://script.hub",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify_nexus/%F0%9F%A7%B0%20Script%20Hub%20%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module"
         }
       ]
@@ -48,12 +58,12 @@
         },
         {
           "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-05]",
-          "desc": "[🚀SR] 轻量基础版(14分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满",
+          "desc": "[🚀SR] 轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.module"
         },
         {
           "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-05]",
-          "desc": "[🚀SR] 按用途分片(14片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1064); 索引 rulesets/AdBlock/catalog.json",
+          "desc": "[🚀SR] 按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1064); 索引 rulesets/AdBlock/catalog.json",
           "url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module"
         }
       ]
@@ -64,5 +74,5 @@
       "items": []
     }
   },
-  "total": 9
+  "total": 11
 }

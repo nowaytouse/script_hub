@@ -42,11 +42,11 @@ ROOT = get_project_root()
 SURGE_MODULE_DIR = os.path.join(ROOT, "modules/surge")
 HEAD_EXPANSE_DIR = os.path.join(ROOT, "modules/surge/head_expanse")
 CACHE_DIR = os.path.join(ROOT, ".cache")
-HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.txt")
-WHITELIST_FILE = os.path.join(ROOT, "rulesets/Sources/adblock_whitelist.txt")
-ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "rulesets/Sources/Links/AdBlock_sources.txt")
+HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.list")
+WHITELIST_FILE = os.path.join(ROOT, "rulesets/AdBlock/adblock_whitelist.list")
+ADBLOCK_SOURCES_FILE = os.path.join(ROOT, "rulesets/Sources/Links/AdBlock_sources.list")
 ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(
-    ROOT, "rulesets/Sources/Links/AdBlock_functional_sources.txt"
+    ROOT, "rulesets/Sources/Links/AdBlock_functional_sources.list"
 )
 LOCAL_SOURCES_DIR = LOCAL_DIR
 LOCAL_MODULES_DIR = os.path.join(ROOT, "rulesets/Sources/LocalModules")
@@ -202,7 +202,7 @@ CATEGORY_META: Dict[str, Dict[str, str]] = {
 GROUP_HEAD_EXPANSE = "『 🔝 Head Expanse › 首端扩域 』"
 MODULE_SUFFIXES = (".sgmodule", ".module")
 REMOTE_PREFIXES = ("http://", "https://")
-# PROMAX ships RULE-SET refs plus merged functional sections from AdBlock_functional_sources.txt.
+# PROMAX ships RULE-SET refs plus merged functional sections from AdBlock_functional_sources.list.
 SECTION_NAMES = ("URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite")
 MODULE_RULE_SECTIONS = frozenset({"Rule", "Adblock Plus"})
 PROTECTED_MODULES: tuple[str, ...] = ()
@@ -797,7 +797,7 @@ class AdBlockManager:
         lowered = source.lower()
         if "/source/local" in lowered or "localmodules" in lowered:
             return "Local"
-        if "ultimate.txt" in lowered or "/ultimate" in lowered:
+        if "ultimate.list" in lowered or "/ultimate" in lowered:
             return "ThreatIntel_Ultimate"
         if "tif.medium" in lowered or "/tif." in lowered:
             return "ThreatIntel_TIF"

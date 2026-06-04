@@ -1,8 +1,8 @@
 # Ruleset: AI
 # Policy: PROXY
 # Node: Any
-# Description: AI services (OpenAI/Claude/Gemini)
-# Rules: 229
+# Description: Auto-merged ruleset
+# Rules: 227
 
 DOMAIN,ai.google.dev
 DOMAIN,alkalicore-pa.clients6.google.com
@@ -123,7 +123,6 @@ DOMAIN-SUFFIX,envato-static.com
 DOMAIN-SUFFIX,envato.com
 DOMAIN-SUFFIX,envatousercontent.com
 DOMAIN-SUFFIX,gateway.ai.cloudflare.com
-DOMAIN-SUFFIX,geller-pa.googleapis.com
 DOMAIN-SUFFIX,gemini.google
 DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,gemini.gstatic.com
@@ -143,7 +142,6 @@ DOMAIN-SUFFIX,identrust.com
 DOMAIN-SUFFIX,inflection.ai
 DOMAIN-SUFFIX,intercom.io
 DOMAIN-SUFFIX,intercomcdn.com
-DOMAIN-SUFFIX,ipstatp.com
 DOMAIN-SUFFIX,itobsnssdk.com
 DOMAIN-SUFFIX,jasper.ai
 DOMAIN-SUFFIX,jules.google

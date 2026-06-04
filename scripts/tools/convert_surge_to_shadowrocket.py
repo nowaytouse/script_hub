@@ -17,7 +17,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 PROJECT_ROOT = SCRIPTS_DIR.parent
 
 from hub.module_sanitizer import sanitize_file_content, parse_module, format_module, format_header
-from hub.common import _BROWSER_UA, Logger, write_file, safe_download
+from hub.common import _BROWSER_UA, Logger, write_file
 from hub.sr_module_adapter import (
     DEVTOOLS_STEM,
     adapt_mitm_line_for_sr,
@@ -175,8 +175,21 @@ def fetch_ruleset(url_or_path: str) -> List[str]:
 
         # 远程 URL 下载（带重试）
         if not content and url_or_path.startswith("http"):
-            Logger.info(f"下载规则集: {url_or_path}")
-            content = safe_download(url_or_path, retries=MAX_RETRIES, timeout=DOWNLOAD_TIMEOUT)
+            for attempt in range(MAX_RETRIES):
+                try:
+                    Logger.info(f"下载规则集 (尝试 {attempt + 1}/{MAX_RETRIES}): {url_or_path}")
+                    req = urllib.request.Request(url_or_path, headers={'User-Agent': _BROWSER_UA})
+                    with urllib.request.urlopen(req, timeout=DOWNLOAD_TIMEOUT) as response:
+                        content = response.read().decode('utf-8')
+                    break
+                except urllib.error.URLError as e:
+                    Logger.warn(f"下载失败 (尝试 {attempt + 1}): {e}")
+                    if attempt == MAX_RETRIES - 1:
+                        Logger.error(f"下载规则集失败，已重试 {MAX_RETRIES} 次: {url_or_path}")
+                        return []
+                except Exception as e:
+                    Logger.error(f"下载规则集时发生未知错误: {e}")
+                    return []
 
         if not content:
             Logger.warn(f"无法获取规则集内容: {url_or_path}")

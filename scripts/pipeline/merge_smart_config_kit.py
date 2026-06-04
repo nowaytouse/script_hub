@@ -124,16 +124,16 @@ def merge() -> None:
         merged[target]["sources"].append(list_file)
         Logger.success(f"  {len(rules):4d} rules  {list_file} → {target}")
 
-    # --- write SCK_*.txt and link into *_sources.txt ---
+    # --- write SCK_*.list and link into *_sources.list ---
     for target, payload in sorted(merged.items()):
-        custom_file = f"SCK_{target}.txt"
+        custom_file = f"SCK_{target}.list"
         custom_path = os.path.join(CUSTOM_DIR, custom_file)
 
         header = "# Smart-Config-Kit supplement: " + ", ".join(payload["sources"]) + "\n"
         write_file(custom_path, header + "\n".join(sorted(payload["rules"])) + "\n")
         Logger.success(f"  Wrote {len(payload['rules'])} rules → {custom_file}")
 
-        sources_file = os.path.join(SOURCES_DIR, f"{target}_sources.txt")
+        sources_file = os.path.join(SOURCES_DIR, f"{target}_sources.list")
         if not os.path.exists(sources_file):
             continue
         with open(sources_file, "r", encoding="utf-8") as f:
@@ -142,7 +142,7 @@ def merge() -> None:
         if relative_link not in content:
             with open(sources_file, "a", encoding="utf-8") as f:
                 f.write(f"\n# Smart-Config-Kit supplement\n{relative_link}\n")
-            Logger.info(f"  Linked {custom_file} → {target}_sources.txt")
+            Logger.info(f"  Linked {custom_file} → {target}_sources.list")
 
 
 if __name__ == "__main__":

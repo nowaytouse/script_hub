@@ -1,25 +1,8 @@
 # Ruleset: CDN
 # Policy: PROXY
 # Node: Any
-# Description: CDN services
-# Rules: 19
+# Description: Auto-merged ruleset
+# Rules: 2
 
-DOMAIN,c01049em.ifeng.com
-DOMAIN,c2.ifengimg.com
-DOMAIN,d.ifengimg.com
-DOMAIN,shankapi.ifeng.com
-DOMAIN,x0.ifengimg.com
-DOMAIN,x1.ifengimg.com
-DOMAIN,x2.ifengimg.com
-DOMAIN,x3.ifengimg.com
-DOMAIN,x4.ifengimg.com
-DOMAIN,x5.ifengimg.com
-DOMAIN,x6.ifengimg.com
-DOMAIN,x7.ifengimg.com
-DOMAIN,x8.ifengimg.com
-DOMAIN,x9.ifengimg.com
-DOMAIN,y0.ifengimg.com
-DOMAIN,y1.ifengimg.com
-DOMAIN,y2.ifengimg.com
 DOMAIN-SUFFIX,cloudfront.net
 DOMAIN-SUFFIX,jsdelivr.net

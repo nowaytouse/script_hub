@@ -1,8 +1,8 @@
 # Ruleset: StreamJP
 # Policy: PROXY
-# Node: JP
-# Description: Japan streaming services
-# Rules: 53
+# Node: Any
+# Description: Auto-merged ruleset
+# Rules: 54
 
 DOMAIN-KEYWORD,voddazn
 DOMAIN-SUFFIX,abema-tv.com
@@ -26,6 +26,7 @@ DOMAIN-SUFFIX,dca-ll-voddazn-dznvodjp.s.llnwi.net
 DOMAIN-SUFFIX,dcalivedazn.akamaized.net
 DOMAIN-SUFFIX,dcblivedazn.akamaized.net
 DOMAIN-SUFFIX,dmc.nico
+DOMAIN-SUFFIX,dmm.com
 DOMAIN-SUFFIX,dogatch.jp
 DOMAIN-SUFFIX,dokusho-ojikan.jp
 DOMAIN-SUFFIX,ds-linear-abematv.akamaized.net
