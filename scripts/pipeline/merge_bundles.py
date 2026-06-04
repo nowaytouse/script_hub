@@ -438,6 +438,7 @@ def merge_devtools() -> None:
         },
         content_replacements=[
             ('cors:"https://sub-store.vercel.app"', 'cors:"https://sub.store"'),
+            ('sync_success_notify:true', 'sync_success_notify:false'),
         ],
     )
     _pin_sub_store_script_paths(DEVTOOLS_OUTPUT)
@@ -562,6 +563,9 @@ def merge_youtube() -> None:
         args = args.replace('字幕翻译语言:off', '字幕翻译语言:"zh-Hans"')
         args = args.replace('歌词翻译语言:off', '歌词翻译语言:"zh-Hans"')
         args = args.replace('屏蔽Shorts按钮:false', '屏蔽Shorts按钮:true')
+        args = args.replace('屏蔽上传按钮:false', '屏蔽上传按钮:true')
+        args = args.replace('屏蔽选段按钮:false', '屏蔽选段按钮:true')
+        args = args.replace('增加画中画:false', '增加画中画:true')
         header["arguments"] = args
     if "arguments-desc" in meta:
         header["arguments-desc"] = meta["arguments-desc"]
