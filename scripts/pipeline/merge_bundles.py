@@ -343,6 +343,8 @@ def merge_bilibili() -> None:
             ('Proxies.HKG:"🇭🇰香港"', 'Proxies.HKG:"📺 哔哩哔哩 📱"'),
             ('Proxies.MAC:"🇲🇴澳门"', 'Proxies.MAC:"📺 哔哩哔哩 📱"'),
             ('Proxies.TWN:"🇹🇼台湾"', 'Proxies.TWN:"📺 哔哩哔哩 📱"'),
+            ('Bottom:"home,dynamic,ogv,会员购Bottom,我的Bottom"', 'Bottom:"home,dynamic,ogv,我的Bottom"'),
+            ('Home.Tab:"直播tab,推荐tab,hottopic,bangumi,anime,film,koreavtw"', 'Home.Tab:"直播tab,推荐tab,bangumi,anime"'),
         ]
     )
 
@@ -553,6 +555,7 @@ def merge_youtube() -> None:
         args = meta["arguments"]
         args = args.replace('字幕翻译语言:off', '字幕翻译语言:"zh-Hans"')
         args = args.replace('歌词翻译语言:off', '歌词翻译语言:"zh-Hans"')
+        args = args.replace('屏蔽Shorts按钮:false', '屏蔽Shorts按钮:true')
         header["arguments"] = args
     if "arguments-desc" in meta:
         header["arguments-desc"] = meta["arguments-desc"]
