@@ -13,7 +13,7 @@ AMPLIFY_NEXUS_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
 
 # Surge / Shadowrocket compiled .list rulesets
 LIST_DIR = os.path.join(ROOT, "rulesets/RULE-SET")
-SKK_UPSTREAM_DIR = os.path.join(LIST_DIR, "skk_upstream")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Sources/skk_upstream")
 ADBLOCK_LIST = os.path.join(LIST_DIR, "AdBlock.list")
 HTTPDNS_HIJACK_LIST = os.path.join(LIST_DIR, "HTTPDNS_Hijack.list")
 

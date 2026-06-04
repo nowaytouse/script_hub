@@ -363,7 +363,7 @@ class RulesetManager:
         non_ip_rules = set()
         ip_rules = set()
         for rule in all_rules:
-            if rule.startswith(("IP-CIDR,", "IP-CIDR6,", "IP-ASN,", "GEOIP,")):
+            if name != "Direct" and rule.startswith(("IP-CIDR,", "IP-CIDR6,", "IP-ASN,", "GEOIP,")):
                 ip_rules.add(rule)
             else:
                 non_ip_rules.add(rule)

@@ -11,7 +11,7 @@ from hub.common import Logger, get_project_root, write_file, safe_download_binar
 
 ROOT = get_project_root()
 METACUBEX_DIR = os.path.join(ROOT, "rulesets/Sources/MetaCubeX")
-SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/RULE-SET/skk_upstream")
+SKK_UPSTREAM_DIR = os.path.join(ROOT, "rulesets/Sources/skk_upstream")
 MODULE_DIR = os.path.join(ROOT, "modules/surge/amplify_nexus")
 LOCAL_SOURCES_DIR = os.path.join(ROOT, "modules/source/local")
 
@@ -223,7 +223,7 @@ class UpstreamSyncer:
             if content_bytes:
                 content = content_bytes.decode('utf-8', errors='ignore')
                 lines = [l.strip() for l in content.splitlines() if l.strip() and not l.strip().startswith('#')]
-                if name == "reject-no-drop.conf":
+                if name == "reject-no-drop.list":
                     lines = [l for l in lines if "bilibili" not in l.lower()]
                 final = f"# Ruleset: {name}\n\n" + "\n".join(lines) + "\n"
                 write_file(os.path.join(SKK_UPSTREAM_DIR, name), final)

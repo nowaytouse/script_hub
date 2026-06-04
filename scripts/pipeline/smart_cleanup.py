@@ -67,8 +67,7 @@ PRIORITY_ORDER = [
     "CDN_ip.list",
     "Direct.list",
     "Direct_ip.list",
-    "ChinaASN.list",
-    "GlobalASN.list",
+
     "GlobalProxy.list",
     "GlobalProxy_ip.list",
 ]
@@ -331,8 +330,7 @@ class RulesetCleanup:
         FALLBACK_RULESETS = {
             "Direct.list",
             "Direct_ip.list",
-            "ChinaASN.list",
-            "GlobalASN.list",
+        
             "GlobalProxy.list",
             "GlobalProxy_ip.list",
         }

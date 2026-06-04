@@ -5,10 +5,10 @@
 
 # ========== China Direct (Domestic Domains) ==========
 # Local Manual Rules (Curated)
-../custom/ChinaDirect_manual.txt
+../custom/ChinaDirect_manual.list
 
 # Domestic Speedtest Nodes (Manual High-Precision - 7 Key Domains)
-SpeedtestDomestic_manual.txt
+SpeedtestDomestic_manual.list
 
 # Kelee Speedtest 中国大陆规则 (Local Fallback)
 Kelee_SpeedtestChina_local.yaml
@@ -20,12 +20,12 @@ https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge
 https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/rulesets/direct.txt
 
 # Sukka China Direct & Music
-../../list/skk_upstream/direct.list
-../../list/skk_upstream/domestic.list
-../../list/skk_upstream/domestic-ip.list
-../../list/skk_upstream/neteasemusic.list
-../../list/skk_upstream/neteasemusic-ip.list
-../../list/skk_upstream/speedtest.list
+../skk_upstream/direct.list
+../skk_upstream/domestic.list
+../skk_upstream/domestic-ip.list
+../skk_upstream/neteasemusic.list
+../skk_upstream/neteasemusic-ip.list
+../skk_upstream/speedtest.list
 
 
 
@@ -48,12 +48,12 @@ https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge
 
 # ========== Download Acceleration (High-Speed) ==========
 # Including Steam, Adobe, Microsoft Updates, etc.
-../custom/DownloadDirect_manual.txt
+../custom/DownloadDirect_manual.list
 
 # Sukka Download Acceleration
-../../list/skk_upstream/download.list
-../../list/skk_upstream/download-ip.list
-../../list/skk_upstream/game-download.list
+../skk_upstream/download.list
+../skk_upstream/download-ip.list
+../skk_upstream/game-download.list
 
 # PT (Private Tracker) - GitHub Mirror
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/PrivateTracker/PrivateTracker.list
@@ -72,7 +72,8 @@ https://raw.githubusercontent.com/Loyalsoldier/geoip/refs/heads/release/surge/pr
 https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/private.txt
 
 # Smart-Config-Kit Supplement
-../custom/SmartConfigKit/SCK_Direct.txt
+../custom/SmartConfigKit/SCK_Direct.list
 
 # Smart-Config-Kit supplement
 ../custom/SmartConfigKit/SCK_Direct.list
+../custom/ChinaASN_manual.list

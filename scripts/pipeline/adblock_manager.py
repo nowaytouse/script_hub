@@ -814,7 +814,7 @@ class AdBlockManager:
                 "phishing",
                 "threat",
                 "banprogram",
-                "reject.conf",
+                "reject.list",
                 "reject-url",
                 "reject_extra",
                 "blockhttpdns",
@@ -1604,11 +1604,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/skk_upstream/reject-no-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/Sources/skk_upstream/reject-no-drop.list,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/skk_upstream/reject-drop.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/Sources/skk_upstream/reject-drop.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/RULE-SET/skk_upstream/BlockHttpDNS.list,"
+                f"RULE-SET,{CDN_BASE_URL}rulesets/Sources/skk_upstream/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )

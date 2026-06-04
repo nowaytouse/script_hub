@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Expand rulesets/Sources/DNS_mapping/*.list (+ selected Surge rulesets) into Surge [Host] DoH steering.
+Expand rulesets/Sources/dns/mapping/*.list (+ selected Surge rulesets) into Surge [Host] DoH steering.
 Surge [Host] does not support RULE-SET / DOMAIN-SET — domains must be listed explicitly.
 """
 
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-DNS_DIR = ROOT / "rulesets" / "Sources" / "DNS_mapping"
+DNS_DIR = ROOT / "rulesets" / "Sources" / "dns" / "mapping"
 DNS_RULES_DIR = ROOT / "rulesets" / "dns"
 SURGE_RULESET_DIR = ROOT / "rulesets" / "list"
 
