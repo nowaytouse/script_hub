@@ -550,7 +550,10 @@ def merge_youtube() -> None:
         "tag": "YouTube, 增强",
     }
     if "arguments" in meta:
-        header["arguments"] = meta["arguments"]
+        args = meta["arguments"]
+        args = args.replace('字幕翻译语言:off', '字幕翻译语言:"zh-Hans"')
+        args = args.replace('歌词翻译语言:off', '歌词翻译语言:"zh-Hans"')
+        header["arguments"] = args
     if "arguments-desc" in meta:
         header["arguments-desc"] = meta["arguments-desc"]
 
