@@ -1,6 +1,6 @@
 # AdBlock 分片规则集
 
-> 自动生成于 `2026-06-03 22:36:53` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-06-04 08:37:47` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -23,7 +23,7 @@
 | 应用去广告 | `rulesets/AdBlock/AdBlock_Local.list` | 98 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_02.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list) |
-| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_03.list` | 75,661 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list) |
+| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_03.list` | 75,976 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list) |
 | 隐私追踪 | `rulesets/AdBlock/AdBlock_Privacy.list` | 5,590 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list) |
 | 安全威胁 | `rulesets/AdBlock/AdBlock_Security_01.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_01.list) |
 | 安全威胁 | `rulesets/AdBlock/AdBlock_Security_02.list` | 26,399 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list) |
@@ -33,8 +33,8 @@
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list) |
 | 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list` | 100,000 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list) |
-| 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list` | 88,688 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list) |
-| 其他补充 | `rulesets/AdBlock/AdBlock_Other.list` | 28,202 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list) |
+| 威胁情报·终极 | `rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list` | 76,237 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list) |
+| 其他补充 | `rulesets/AdBlock/AdBlock_Other.list` | 27,987 | [link](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list) |
 
 ## 应用内脚本层（PROMAX 内嵌）
 
