@@ -67,7 +67,7 @@ ADBLOCK_CATALOG_JSON = os.path.join(ADBLOCK_DIR, "catalog.json")
 
 # SingBox compiled outputs
 SINGBOX_DIR = os.path.join(RULESETS_DIR, "SingBox")
-SINGBOX_DNS_DIR = os.path.join(SINGBOX_DIR, "dns")
+SINGBOX_DNS_DIR = os.path.join(SOURCES_DIR, "dns/mapping")
 
 # ============================================================================
 # MODULE DIRECTORIES
@@ -127,9 +127,6 @@ SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
 # Cache hashes
 ADBLOCK_HASH_FILE = os.path.join(CACHE_DIR, "adblock_hashes.list")
 MERGE_HASH_FILE = os.path.join(CACHE_DIR, "merge_hashes.list")
-
-# Firewall module
-FIREWALL_MODULE = os.path.join(SURGE_HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 
 # PROMAX modules
 PROMAX_MODULE = os.path.join(

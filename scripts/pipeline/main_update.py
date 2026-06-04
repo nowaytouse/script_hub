@@ -30,10 +30,6 @@ from pipeline.smart_cleanup import (
 )
 from pipeline.merge_bundles import run_all as run_upstream_bundles
 
-ROOT = get_project_root()
-SCRIPTS_DIR = os.path.join(ROOT, "scripts")
-CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "qa/update_cores.sh")
-
 CI_PUSH_COOLDOWN_MIN_SECONDS = 180
 
 

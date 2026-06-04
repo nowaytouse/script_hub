@@ -31,7 +31,6 @@ from hub.project_paths import (
     PROMAX_SPLITS_DIR,
     SKK_REJECT,
     SKK_HTTPDNS,
-    FIREWALL_MODULE,
     ADBLOCK_CATALOG_JSON,
     PROMAX_MODULE,
     PROMAX_LITE_MODULE,
@@ -128,11 +127,11 @@ ADBLOCK_FILENAME_ALLOWLIST = frozenset(
 
 FUNCTIONAL_BLOCK_LOCAL_SOURCES = frozenset({"Reddit.ADBlock.sgmodule"})
 TARGET_MODULE = os.path.join(
-    HEAD_EXPANSE_DIR,
+    SURGE_HEAD_EXPANSE_DIR,
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
 )
 TARGET_MODULE_LITE = os.path.join(
-    HEAD_EXPANSE_DIR,
+    SURGE_HEAD_EXPANSE_DIR,
     "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
 )
 
@@ -143,7 +142,6 @@ NARROW_PIERCE_DIR = os.path.join(ROOT, "modules/surge/narrow_pierce")
 PROMAX_SPLITS_DIR = os.path.join(ROOT, "modules/source/build/promax_splits")
 SKK_REJECT = os.path.join(SKK_UPSTREAM_DIR, "reject.list")
 SKK_HTTPDNS = os.path.join(SKK_UPSTREAM_DIR, "BlockHttpDNS.list")
-FIREWALL_MODULE = os.path.join(HEAD_EXPANSE_DIR, "🔥 Firewall Port Blocker 🛡️🚫.sgmodule")
 ADBLOCK_CATALOG_JSON = os.path.join(ADBLOCK_DIR, "catalog.json")
 ADBLOCK_README = os.path.join(ADBLOCK_DIR, "README.md")
 ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.md")
@@ -353,10 +351,10 @@ class AdBlockManager:
     def discover_local_modules(self) -> List[str]:
         discovered_paths = []
         seen_canonical_names = set()
-        excluded = {os.path.basename(TARGET_MODULE), os.path.basename(FIREWALL_MODULE)}
+        excluded = {os.path.basename(TARGET_MODULE)}
         
-        # Scan HEAD_EXPANSE_DIR
-        for entry in sorted(os.listdir(HEAD_EXPANSE_DIR)):
+        # Scan SURGE_HEAD_EXPANSE_DIR
+        for entry in sorted(os.listdir(SURGE_HEAD_EXPANSE_DIR)):
             if not entry.endswith(MODULE_SUFFIXES):
                 continue
             if entry in excluded:
@@ -367,7 +365,7 @@ class AdBlockManager:
                 continue
             
             seen_canonical_names.add(canonical_name)
-            discovered_paths.append(os.path.join(HEAD_EXPANSE_DIR, entry))
+            discovered_paths.append(os.path.join(SURGE_HEAD_EXPANSE_DIR, entry))
             
         return discovered_paths
 

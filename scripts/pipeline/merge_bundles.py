@@ -28,15 +28,13 @@ from hub.module_sanitizer import (
     parse_module,
 )
 from hub.paths import (
-    AMPLIFY_NEXUS_DIR,
+    SURGE_AMPLIFY_NEXUS_DIR as AMPLIFY_NEXUS_DIR,
     BILIBILI_HELPER_URL,
-    LOCAL_DIR,
+    MODULE_LOCAL_DIR as LOCAL_DIR,
     SCRIPTS_DIR,
     SCRIPT_RAW_PREFIX,
     YOUTUBE_ENHANCE_URL,
 )
-
-ROOT = get_project_root()
 
 BILIBILI_OUTPUT = os.path.join(
     ROOT, "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule"
