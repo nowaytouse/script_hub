@@ -339,12 +339,25 @@ def merge_bilibili() -> None:
         BILIBILI_OUTPUT,
         header_meta=BILIBILI_HEADER,
         optional_labels=("Helper",),
+        content_replacements=[
+            ('Proxies.HKG:"🇭🇰香港"', 'Proxies.HKG:"📺 哔哩哔哩 📱"'),
+            ('Proxies.MAC:"🇲🇴澳门"', 'Proxies.MAC:"📺 哔哩哔哩 📱"'),
+            ('Proxies.TWN:"🇹🇼台湾"', 'Proxies.TWN:"📺 哔哩哔哩 📱"'),
+        ]
     )
 
 
 def merge_apple() -> None:
     Logger.section("Apple services upstream bundle merge")
-    merge_upstream_modules(APPLE_SOURCES, APPLE_OUTPUT, header_meta=APPLE_HEADER)
+    merge_upstream_modules(
+        APPLE_SOURCES, 
+        APPLE_OUTPUT, 
+        header_meta=APPLE_HEADER,
+        content_replacements=[
+            ('Proxy:🇺🇸美国', 'Proxy:"🍎 Apple 🍏"'),
+            (',🇺🇸美国', ',{{{Proxy}}}'), # In case there are hardcoded ones
+        ]
+    )
 
 
 def merge_utilities() -> None:

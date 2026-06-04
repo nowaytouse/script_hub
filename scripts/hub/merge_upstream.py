@@ -71,6 +71,7 @@ def merge_upstream_modules(
     provenance_comment: Optional[str] = None,
     optional_labels: Optional[Sequence[str]] = None,
     local_fallbacks: Optional[Dict[str, str]] = None,
+    content_replacements: Optional[List[Tuple[str, str]]] = None,
 ) -> None:
     """Merge remote modules into output_path using module_sanitizer."""
     optional = set(optional_labels or ())
@@ -83,6 +84,9 @@ def merge_upstream_modules(
         Logger.info(f"Downloading {label}...")
         try:
             text = _fetch_module(url, label, local_fallback=fallbacks.get(label))
+            if content_replacements:
+                for old_str, new_str in content_replacements:
+                    text = text.replace(old_str, new_str)
         except RuntimeError as exc:
             if label in optional:
                 Logger.warn(f"Skipping optional source {label}: {exc}")
