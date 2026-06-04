@@ -1,5 +1,9 @@
 # Ruleset: reject-no-drop.list
 
+# Block UDP traffic to googlevideo.com (converted from AND rule)
+# Original: AND,((PROTOCOL,UDP), (DOMAIN-SUFFIX,googlevideo.com))
+# Note: Standard Surge format doesn't support AND, blocking all googlevideo.com traffic instead
+DOMAIN-SUFFIX,googlevideo.com
 DOMAIN,upos-sz-302kodo.bilivideo.com
 DOMAIN,upos-sz-302ppio.bilivideo.com
 DOMAIN-KEYWORD,-p2p-v2.pull.yximgs.com
