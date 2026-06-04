@@ -116,9 +116,7 @@ def _dedupe_key(section: str, line: str) -> str:
     if section == "MITM":
         hosts = re.sub(r"^hostname\s*=\s*(%APPEND%\s*)?", "", stripped, flags=re.I)
         return f"mitm:{hosts.strip()}"
-
     return f"{section}:{stripped}"
-
 
 def dedupe_section_lines(section: str, lines: List[str]) -> List[str]:
     seen: Set[str] = set()
@@ -128,12 +126,41 @@ def dedupe_section_lines(section: str, lines: List[str]) -> List[str]:
         if not stripped:
             continue
         if stripped.startswith("#"):
+            result.append(stripped)
             continue
         key = _dedupe_key(section, line)
         if not key or key in seen:
             continue
         seen.add(key)
         result.append(stripped)
+
+    # Beautify alignment for sections with key=value formats
+    if section in ("Script", "Host", "MITM", "General"):
+        parsed = []
+        max_len = 0
+        for r in result:
+            if r.startswith("#"):
+                parsed.append((r, None, None))
+                continue
+            parts = r.split("=", 1)
+            if len(parts) == 2:
+                left = parts[0].strip()
+                right = parts[1].strip()
+                # To prevent absurd padding from malformed lines, cap max_len at 60
+                if len(left) < 60:
+                    max_len = max(max_len, len(left))
+                parsed.append((r, left, right))
+            else:
+                parsed.append((r, None, None))
+        
+        aligned_result = []
+        for r, left, right in parsed:
+            if left is not None and right is not None and len(left) <= 60:
+                aligned_result.append(f"{left:<{max_len}} = {right}")
+            else:
+                aligned_result.append(r)
+        return aligned_result
+
     return result
 
 

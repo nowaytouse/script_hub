@@ -55,8 +55,8 @@ def _combine_arguments(
         raw_desc = meta.get("arguments-desc", "").strip()
         mod_name = meta.get("name", label).strip()
         if raw_desc:
-            clean_desc = raw_desc.replace("\\n", "  ").replace("\n", "  ")
-            desc_blocks.append(f"[{mod_name}] {clean_desc}")
+            clean_desc = raw_desc.replace("\n", "\\n")
+            desc_blocks.append(f"[{mod_name}]\\n{clean_desc}")
 
     args_line = ",".join(arg_tokens) if arg_tokens else None
     desc_line = "\\n".join(desc_blocks) if desc_blocks else None
