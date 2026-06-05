@@ -1810,7 +1810,34 @@ class AdBlockManager:
             "category": GROUP_HEAD_EXPANSE, "tag": tag,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        write_file(target_path, format_module(format_header(header_meta), all_sections, dedupe=False))
+        module_content = format_module(format_header(header_meta), all_sections, dedupe=False)
+
+        if url_source == "github":
+            # Rewrite own-asset CDN refs in [Rule], [Map Local], [Script] sections to GitHub Raw.
+            # [URL Rewrite] intentionally redirects cdn mirror domains → cdn.jsdelivr.net; leave it alone.
+            cdn_own = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+            gh_own = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
+            lines_out = []
+            in_url_rewrite = False
+            for line in module_content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("["):
+                    in_url_rewrite = stripped.lower().startswith("[url rewrite]")
+                if not in_url_rewrite and cdn_own in line:
+                    line = line.replace(cdn_own, gh_own)
+                lines_out.append(line)
+            module_content = "\n".join(lines_out)
+            # Verify no own-asset CDN refs remain outside URL Rewrite
+            leak = sum(
+                1 for l in module_content.splitlines()
+                if cdn_own in l and not l.strip().startswith("#!")
+            )
+            if leak:
+                Logger.warn(f"GitHub module still has {leak} own-asset CDN ref(s) after rewrite")
+            else:
+                Logger.success("GitHub module: 0 own-asset CDN refs (all converted to GitHub Raw)")
+
+        write_file(target_path, module_content)
         Logger.success(f"Module generated: {os.path.basename(target_path)}")
 
     def sync_shadowrocket_promax_modules(self) -> None:
