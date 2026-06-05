@@ -291,7 +291,7 @@ def build_helper_html(
     sr_total = sum(len(c["items"]) for c in sr_groups.values())
     catalog_generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Use a highly reliable relative path to the local logo
+    # Use relative path for local icon as requested
     default_icon = "../../docs/assets/default_icon.svg"
 
     html = f"""<!DOCTYPE html>
@@ -299,34 +299,30 @@ def build_helper_html(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Script Hub | 全局代理模块管理核心</title>
+    <title>Script Hub | 模块便捷管理台</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {{
             --bg-base: #f4f6fa;
-            --bg-card: rgba(255, 255, 255, 0.7);
-            --bg-card-hover: rgba(255, 255, 255, 0.95);
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-card-hover: rgba(255, 255, 255, 1);
             --text-main: #1e293b;
             --text-sub: #64748b;
             --primary: #3b82f6;
-            --primary-glow: rgba(59, 130, 246, 0.3);
+            --primary-glow: rgba(59, 130, 246, 0.2);
             --accent: #10b981;
-            --accent-glow: rgba(16, 185, 129, 0.3);
-            --border: rgba(226, 232, 240, 0.6);
-            --glass-blur: blur(16px);
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --border: rgba(226, 232, 240, 0.8);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.08);
         }}
         @media (prefers-color-scheme: dark) {{
             :root {{
                 --bg-base: #0f172a;
-                --bg-card: rgba(30, 41, 59, 0.6);
-                --bg-card-hover: rgba(30, 41, 59, 0.95);
+                --bg-card: rgba(30, 41, 59, 0.8);
+                --bg-card-hover: rgba(40, 53, 72, 1);
                 --text-main: #f8fafc;
                 --text-sub: #94a3b8;
-                --primary: #60a5fa;
-                --border: rgba(51, 65, 85, 0.6);
-                --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                --border: rgba(51, 65, 85, 0.8);
             }}
         }}
 
@@ -335,326 +331,230 @@ def build_helper_html(
             background: var(--bg-base);
             color: var(--text-main);
             min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 15% 50%, var(--primary-glow) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, var(--accent-glow) 0%, transparent 50%);
-            background-attachment: fixed;
             -webkit-font-smoothing: antialiased;
         }}
 
         .app-header {{
             text-align: center;
-            padding: 50px 20px 30px;
-            background: linear-gradient(180deg, var(--bg-card) 0%, transparent 100%);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
+            padding: 30px 20px 20px;
         }}
         .app-title {{
             font-family: 'Outfit', sans-serif;
-            font-size: 2.8rem;
+            font-size: 2rem;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }}
-        .app-subtitle {{ font-size: 1rem; color: var(--text-sub); font-weight: 500; }}
-        .app-meta {{ font-size: 0.8rem; color: var(--text-sub); opacity: 0.7; margin-top: 15px; font-variant-numeric: tabular-nums; }}
+        .app-subtitle {{ font-size: 0.95rem; color: var(--text-sub); }}
 
         .nav-island {{
             position: sticky;
-            top: 20px;
+            top: 15px;
             z-index: 100;
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin: 0 auto 30px;
-            padding: 8px;
+            gap: 8px;
+            margin: 0 auto 20px;
+            padding: 6px;
             width: fit-content;
             background: var(--bg-card);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border-radius: 100px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 50px;
             border: 1px solid var(--border);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-sm);
         }}
 
         .nav-btn {{
-            padding: 12px 28px;
-            border-radius: 100px;
+            padding: 10px 24px;
+            border-radius: 50px;
             border: none;
             background: transparent;
             color: var(--text-sub);
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }}
-        .nav-btn:hover {{ color: var(--text-main); }}
         .nav-btn.active {{
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 15px var(--primary-glow);
+            background: var(--text-main);
+            color: var(--bg-base);
         }}
 
         .search-container {{
-            max-width: 800px;
-            margin: 0 auto 40px;
+            max-width: 600px;
+            margin: 0 auto 30px;
             padding: 0 20px;
-            position: relative;
         }}
         .search-input {{
             width: 100%;
-            padding: 18px 24px 18px 50px;
-            border-radius: 20px;
+            padding: 14px 20px;
+            border-radius: 14px;
             border: 1px solid var(--border);
             background: var(--bg-card);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
             color: var(--text-main);
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
+            font-size: 1rem;
             box-shadow: var(--shadow-sm);
         }}
         .search-input:focus {{
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-glow);
-            background: var(--bg-card-hover);
-        }}
-        .search-icon {{
-            position: absolute;
-            left: 40px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.2rem;
-            opacity: 0.5;
         }}
 
         .content-container {{
-            max-width: 1100px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 0 20px 80px;
         }}
 
         .category-header {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 40px 0 20px;
-            padding-left: 10px;
-        }}
-        .category-header h3 {{
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
+            margin: 30px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
             color: var(--text-main);
-        }}
-        .category-line {{
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
         }}
 
         .grid-layout {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }}
+        @media (min-width: 1400px) {{
+            .grid-layout {{
+                grid-template-columns: repeat(4, 1fr);
+            }}
         }}
 
-        .module-card {{
+        .compact-item {{
             background: var(--bg-card);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border);
-            border-radius: 28px;
-            padding: 28px;
+            border-radius: 16px;
+            padding: 14px;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.15s, box-shadow 0.15s;
         }}
-        .module-card::before {{
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-            opacity: 0;
-            transition: opacity 0.4s;
-            pointer-events: none;
-        }}
-        .module-card:hover {{
-            transform: translateY(-4px) scale(1.01);
-            box-shadow: var(--shadow-lg);
+        .compact-item:hover {{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
             background: var(--bg-card-hover);
-            border-color: var(--primary-glow);
         }}
-        .module-card:hover::before {{ opacity: 1; }}
 
-        .card-header {{
-            display: flex;
-            align-items: flex-start;
-            gap: 20px;
-        }}
         .icon-wrap {{
-            width: 110px;
-            height: 110px;
-            border-radius: 24px;
-            background: var(--bg-card-hover);
-            padding: 4px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #ffffff;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-        }}
-        .module-card:hover .icon-wrap {{
-            transform: scale(1.05);
         }}
         .card-icon {{
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 20px;
-        }}
-        .card-title-area {{ 
-            flex: 1; 
-            min-width: 0; 
-        }}
-        .card-title {{
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-            line-height: 1.4;
-            word-break: break-all;
-        }}
-        .card-author {{
-            font-size: 0.9rem;
-            color: var(--primary);
-            font-weight: 600;
-            display: inline-block;
-        }}
-        .card-date {{
-            font-size: 0.8rem;
-            color: var(--text-sub);
-            margin-left: 6px;
-            display: inline-block;
         }}
 
-        .card-desc {{
-            font-size: 1rem;
-            line-height: 1.6;
+        .content-wrap {{
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }}
+
+        .item-title {{
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }}
+
+        .item-desc {{
+            font-size: 0.85rem;
             color: var(--text-sub);
             display: -webkit-box;
-            -webkit-line-clamp: 4;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            flex-grow: 1;
-            word-wrap: break-word;
-            word-break: break-word;
+            line-height: 1.4;
         }}
 
-        .card-footer {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
+        .action-wrap {{
+            flex-shrink: 0;
         }}
-        
+
         .copy-btn {{
-            width: 100%;
-            padding: 14px;
-            border-radius: 16px;
+            padding: 10px 16px;
+            border-radius: 12px;
             border: none;
-            background: var(--bg-base);
+            background: var(--primary-glow);
             color: var(--primary);
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid var(--primary-glow);
+            transition: all 0.2s;
+            white-space: nowrap;
         }}
-        .module-card:hover .copy-btn {{
+        .copy-btn:hover {{
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 12px var(--primary-glow);
         }}
         .copy-btn.success {{
             background: var(--accent) !important;
             color: white !important;
-            border-color: var(--accent) !important;
-            box-shadow: 0 4px 12px var(--accent-glow) !important;
-            transform: scale(0.98);
         }}
 
         .toast {{
             position: fixed;
-            bottom: 40px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(20px);
-            background: var(--text-main);
-            color: var(--bg-base);
-            padding: 14px 28px;
-            border-radius: 100px;
+            background: #222;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
             font-weight: 600;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-size: 0.95rem;
             opacity: 0;
-            pointer-events: none;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.3s;
             z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }}
         .toast.show {{
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }}
-
-        @keyframes fadeUp {{
-            from {{ opacity: 0; transform: translateY(20px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-        .animate-item {{ animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }}
-        
     </style>
 </head>
 <body>
     <header class="app-header">
         <h1 class="app-title">Script Hub</h1>
-        <p class="app-subtitle">PROMAX = 广告规则；增强功能模块请在下方按需点击安装</p>
-        <div class="app-meta">云端数据构建于: {{catalog_generated}}</div>
+        <p class="app-subtitle">高效复制代理配置链接 (更新于: {{catalog_generated}})</p>
     </header>
 
     <nav class="nav-island">
-        <button class="nav-btn active" onclick="switchApp('surge')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            Surge ({{surge_total}})
-        </button>
-        <button class="nav-btn" onclick="switchApp('shadowrocket')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2l.5-.5M12 2l3 3 2.5-2.5L20 5l-2.5 2.5L20 10l-3 3M17.5 10l-10 10-3.5-3.5 10-10"/></svg>
-            Shadowrocket ({{sr_total}})
-        </button>
+        <button class="nav-btn active" onclick="switchApp('surge')">Surge ({{surge_total}})</button>
+        <button class="nav-btn" onclick="switchApp('shadowrocket')">Shadowrocket ({{sr_total}})</button>
     </nav>
 
     <div class="search-container">
-        <span class="search-icon">🔍</span>
         <input type="text" id="search" class="search-input" placeholder="输入关键字搜索模块..." oninput="render()" autocomplete="off">
     </div>
 
     <main id="content" class="content-container"></main>
-    <div id="toast" class="toast"><span>✨</span> 链接已成功复制到剪贴板</div>
+    <div id="toast" class="toast">复制成功 ✓</div>
 
     <script>
         const surgeData = {json.dumps(surge_groups, ensure_ascii=False)};
@@ -687,7 +587,6 @@ def build_helper_html(
             const container = document.getElementById('content');
             
             let html = '';
-            let delay = 0;
 
             for (const [k, cat] of Object.entries(data)) {{
                 const items = cat.items.filter(i =>
@@ -696,84 +595,47 @@ def build_helper_html(
                 
                 if (!items.length) continue;
                 
-                html += `
-                    <div class="category-header">
-                        <h3>${{escapeHTML(cat.name)}}</h3>
-                        <div class="category-line"></div>
-                    </div>
-                    <div class="grid-layout">
-                `;
+                html += `<div class="category-header">${{escapeHTML(cat.name)}}</div><div class="grid-layout">`;
                 
                 items.forEach(i => {{
                     const isCopied = copiedSet.has(i.url);
                     const btnClass = isCopied ? 'copy-btn success' : 'copy-btn';
-                    const btnText = isCopied ? '已复制 ✓' : '一键安装';
-                    const iconSrc = (i.icon && !i.icon.includes('default_icon.png')) ? i.icon : defaultIcon;
+                    const btnText = isCopied ? '已复制' : '复制链接';
+                    const iconSrc = (i.icon && !i.icon.includes('default_icon.png') && !i.icon.includes('default_icon.svg')) ? i.icon : defaultIcon;
                     
                     html += `
-                        <article class="module-card animate-item" style="animation-delay: ${{delay * 0.03}}s">
-                            <div class="card-header">
-                                <div class="icon-wrap">
-                                    <img class="card-icon" src="${{escapeHTML(iconSrc)}}" onerror="this.src='${{defaultIcon}}'">
-                                </div>
-                                <div class="card-title-area">
-                                    <h4 class="card-title">${{escapeHTML(i.badge || '')}} ${{escapeHTML(i.name)}}</h4>
-                                    <div>
-                                        ${{i.author ? `<span class="card-author">@${{escapeHTML(i.author)}}</span>` : ''}}
-                                        ${{i.date ? `<span class="card-date">${{escapeHTML(i.date)}}</span>` : ''}}
-                                    </div>
-                                </div>
+                        <div class="compact-item">
+                            <div class="icon-wrap">
+                                <img class="card-icon" src="${{escapeHTML(iconSrc)}}" onerror="this.src='${{defaultIcon}}'">
                             </div>
-                            <p class="card-desc">${{escapeHTML(i.desc)}}</p>
-                            <div class="card-footer">
+                            <div class="content-wrap">
+                                <div class="item-title" title="${{escapeHTML(i.name)}}">${{escapeHTML(i.badge || '')}} ${{escapeHTML(i.name)}}</div>
+                                <div class="item-desc" title="${{escapeHTML(i.desc)}}">${{escapeHTML(i.desc)}}</div>
+                            </div>
+                            <div class="action-wrap">
                                 <button class="${{btnClass}}" onclick="copy('${{i.url}}', this)">${{btnText}}</button>
                             </div>
-                        </article>
+                        </div>
                     `;
-                    delay++;
                 }});
                 html += '</div>';
             }}
 
-            if (!html) {{
-                html = `
-                    <div style="text-align:center; padding: 80px 20px; color: var(--text-sub);">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5; margin-bottom: 16px">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <p style="font-size: 1.1rem; font-weight: 500">未找到匹配的模块</p>
-                    </div>
-                `;
-            }}
-            
+            if (!html) html = '<div style="text-align:center; padding:40px;">未找到结果</div>';
             container.innerHTML = html;
         }}
 
         async function copy(url, btn) {{
-            try {{ 
-                await navigator.clipboard.writeText(url); 
-            }} catch(e) {{
-                const t = document.createElement('textarea'); 
-                t.value = url; 
-                document.body.appendChild(t);
-                t.select(); 
-                document.execCommand('copy'); 
-                document.body.removeChild(t);
+            try {{ await navigator.clipboard.writeText(url); }} catch(e) {{
+                const t = document.createElement('textarea'); t.value = url; 
+                document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
             }}
-            
             copiedSet.add(url);
-            btn.textContent = '已复制 ✓'; 
-            btn.className = 'copy-btn success';
+            btn.textContent = '已复制'; btn.className = 'copy-btn success';
             
             const toast = document.getElementById('toast');
-            toast.classList.remove('show');
-            void toast.offsetWidth;
             toast.classList.add('show');
-            
-            setTimeout(() => {{
-                toast.classList.remove('show');
-            }}, 2500);
+            setTimeout(() => toast.classList.remove('show'), 1500);
         }}
 
         requestAnimationFrame(render);
