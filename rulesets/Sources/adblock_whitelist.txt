@@ -16,11 +16,22 @@
 # 这些域名被拦截会导致 YouTube 完全无法使用！
 DOMAIN,youtubei.googleapis.com
 DOMAIN-SUFFIX,googlevideo.com
+DOMAIN-KEYWORD,googlevideo
 DOMAIN-SUFFIX,s2.youtube.com
 DOMAIN-SUFFIX,youtube.com
 DOMAIN-SUFFIX,ytimg.com
 DOMAIN-SUFFIX,yt3.ggpht.com
 DOMAIN-SUFFIX,yt4.ggpht.com
+# 防止屏蔽整个 Google Video IP 网段
+IP-CIDR,74.125.0.0/16
+IP-CIDR,172.217.0.0/16
+IP-CIDR,142.250.0.0/15
+IP-CIDR,142.251.0.0/16
+IP-CIDR,216.58.192.0/19
+IP-CIDR,216.239.32.0/19
+IP-CIDR,209.85.128.0/17
+IP-CIDR,108.177.0.0/17
+IP-CIDR,173.194.0.0/16
 
 # ============ 🔥 Google 核心服务 ============
 DOMAIN-SUFFIX,googleapis.com

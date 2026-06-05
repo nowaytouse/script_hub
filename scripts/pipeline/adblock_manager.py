@@ -303,7 +303,7 @@ class AdBlockManager:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            cleaned = re.sub(r"^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN),", "", line)
+            cleaned = re.sub(r"^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR6|IP-CIDR),", "", line)
             self.whitelist.add(cleaned)
         Logger.info(f"Loaded {len(self.whitelist)} whitelist patterns")
 
