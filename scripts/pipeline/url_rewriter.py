@@ -41,7 +41,7 @@ def run_url_rewrites(directory: str) -> int:
     modified_count = 0
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.endswith((".sgmodule", ".module", ".list", ".conf")):
+            if file.endswith((".sgmodule", ".module", ".list", ".conf", ".json")):
                 path = os.path.join(root, file)
                 try:
                     with open(path, "r", encoding="utf-8") as f:

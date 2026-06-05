@@ -11,7 +11,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from hub.common import _BROWSER_UA, safe_download_binary
 
 
-from hub.paths import SCRIPTS_DIR as SCRIPTS_DIR_STR, SCRIPT_RAW_PREFIX
+from hub.paths import MODULE_SOURCE_SCRIPTS_DIR as SCRIPTS_DIR_STR, SCRIPT_RAW_PREFIX
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_DIRS = [

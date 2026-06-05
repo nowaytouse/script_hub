@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CLAUDE_DIR = ROOT / ".claude"
 SURGE_TEMPLATE = CLAUDE_DIR / "NyaMiiKo.conf.conf"
 SHADOWROCKET_TEMPLATE = CLAUDE_DIR / "shadowroket.conf"
-SINGBOX_TEMPLATE = ROOT / "scripts" / "Substore" / "Singbox1.13.0+.conf"
+SINGBOX_TEMPLATE = ROOT / "scripts" / "substore" / "Singbox1.13.0+.conf"
 
 KEY_VALUE_RE = re.compile(r"^(\s*)([A-Za-z0-9_-]+)(\s*=\s*)(.*)$")
 MITM_HOSTNAME_RE = re.compile(r"(?m)^(\s*hostname\s*=\s*)(.*)$")
