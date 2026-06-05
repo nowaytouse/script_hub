@@ -399,6 +399,42 @@ def build_helper_html(
             box-shadow: var(--shadow-sm);
         }}
 
+        .url-source-toggle {{
+            display: flex;
+            background: rgba(148, 163, 184, 0.1);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }}
+        .url-source-btn {{
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .url-source-btn:hover {{ color: var(--text-main); }}
+        .url-source-btn.active {{
+            background: var(--bg-list-hover);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }}
+        .url-source-btn::before {{
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }}
+
         .search-input {{
             flex: 1;
             padding: 12px 20px;
@@ -562,6 +598,10 @@ def build_helper_html(
 
         @media (max-width: 600px) {{
             .controls-row {{ flex-direction: column; align-items: stretch; }}
+            .nav-tabs {{ justify-content: stretch; }}
+            .nav-btn {{ flex: 1; padding: 12px 16px; }}
+            .url-source-toggle {{ justify-content: center; }}
+            .url-source-btn {{ flex: 1; justify-content: center; }}
             .list-item {{ flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }}
             .item-action {{ width: 100%; padding-left: 0; }}
             .copy-btn {{ width: 100%; padding: 14px; }}
@@ -580,6 +620,10 @@ def build_helper_html(
                 <button class="nav-btn active" onclick="switchApp('surge')">Surge ({surge_total})</button>
                 <button class="nav-btn" onclick="switchApp('shadowrocket')">Shadowrocket ({sr_total})</button>
             </div>
+            <div class="url-source-toggle">
+                <button class="url-source-btn active" onclick="switchUrlSource('cdn')" title="jsDelivr CDN 加速（推荐）">CDN</button>
+                <button class="url-source-btn" onclick="switchUrlSource('github')" title="GitHub Raw 直连（CDN 缓存未更新时使用）">GitHub</button>
+            </div>
             <input type="text" id="search" class="search-input" placeholder="输入关键字极速搜索..." oninput="render()" autocomplete="off">
         </div>
     </header>
@@ -593,6 +637,7 @@ def build_helper_html(
         const defaultIcon = "{default_icon}";
         
         let currentApp = 'surge';
+        let urlSource = 'cdn'; // 'cdn' or 'github'
         const copiedSet = new Set();
         let renderTimeout;
 
@@ -601,7 +646,28 @@ def build_helper_html(
             document.querySelectorAll('.nav-btn').forEach(b => 
                 b.classList.toggle('active', b.textContent.toLowerCase().includes(app))
             );
+            copiedSet.clear(); // 清除复制状态
             render();
+        }}
+
+        function switchUrlSource(source) {{
+            urlSource = source;
+            document.querySelectorAll('.url-source-btn').forEach(b => 
+                b.classList.toggle('active', b.textContent.toLowerCase() === source || (source === 'cdn' && b.textContent === 'CDN'))
+            );
+            copiedSet.clear(); // 切换 URL 源后清除复制状态
+            render();
+        }}
+
+        function convertUrl(url) {{
+            if (urlSource === 'github') {{
+                // 将 cdn.jsdelivr.net/gh/owner/repo@branch/ 转换为 raw.githubusercontent.com/owner/repo/branch/
+                return url.replace(
+                    /https:\/\/cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/]+)@([^\/]+)\//,
+                    'https://raw.githubusercontent.com/$1/$2/$3/'
+                );
+            }}
+            return url; // 默认返回 CDN URL
         }}
 
         function escapeHTML(str) {{
@@ -633,7 +699,8 @@ def build_helper_html(
                 `;
                 
                 items.forEach(i => {{
-                    const isCopied = copiedSet.has(i.url);
+                    const actualUrl = convertUrl(i.url);
+                    const isCopied = copiedSet.has(actualUrl);
                     const btnClass = isCopied ? 'copy-btn success' : 'copy-btn';
                     const btnText = isCopied ? '已复制 ✓' : '复制链接';
                     const iconSrc = (i.icon && !i.icon.includes('default_icon.png') && !i.icon.includes('default_icon.svg')) ? i.icon : defaultIcon;
@@ -652,7 +719,7 @@ def build_helper_html(
                                 <p class="item-desc">${{escapeHTML(i.desc)}}</p>
                             </div>
                             <div class="item-action">
-                                <button class="${{btnClass}}" onclick="copy('${{i.url}}', this)">${{btnText}}</button>
+                                <button class="${{btnClass}}" onclick="copy('${{actualUrl}}', this)">${{btnText}}</button>
                             </div>
                         </div>
                     `;
