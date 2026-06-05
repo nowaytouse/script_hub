@@ -19,11 +19,13 @@ CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "qa/update_cores.sh")
 
 from pipeline.firewall_sync import sync_ports
 from pipeline.upstream_sync import UpstreamSyncer
+from pipeline.srs_generator import SRSGenerator
+
 from pipeline.adblock_manager import AdBlockManager
 from pipeline.merge_smart_config_kit import merge as merge_smart_config_kit
 from pipeline.ruleset_manager import RulesetManager
-from pipeline.srs_generator import SRSGenerator
 from pipeline.mitm_manager import run_cleanup as run_mitm_cleanup
+from pipeline.sync_mocks import sync_mocks
 from pipeline.url_rewriter import run_url_rewrites
 from pipeline.smart_cleanup import (
     run_cleanup as run_ruleset_cleanup,
@@ -135,6 +137,10 @@ def main():
             syncer.sync_nexus()
             syncer.sync_metacubex()
             syncer.sync_local_sources()
+            
+            Logger.section("Syncing Upstream Mock Resources")
+            count = sync_mocks()
+            Logger.success(f"Synced {count} mock resources from upstream.")
         except Exception as e:
             Logger.error(f"Upstream sync failed: {e}")
             has_failures = True
