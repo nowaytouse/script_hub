@@ -445,6 +445,7 @@ def build_helper_html(
             gap: 20px;
             transition: all 0.2s ease;
             box-shadow: var(--shadow-sm);
+            overflow: hidden;
         }}
         .list-item:hover {{
             transform: translateY(-2px);
@@ -481,19 +482,24 @@ def build_helper_html(
             color: var(--text-main);
             margin-bottom: 6px;
             line-height: 1.3;
-            word-break: break-all;
+            word-wrap: break-word;
+            word-break: break-word;
         }}
         .item-meta {{
             font-size: 0.85rem;
             color: var(--text-sub);
             margin-bottom: 6px;
             display: flex;
+            flex-wrap: wrap;
             gap: 12px;
+            word-wrap: break-word;
+            word-break: break-all;
         }}
         .item-desc {{
             font-size: 0.95rem;
             line-height: 1.5;
             color: var(--text-sub);
+            word-wrap: break-word;
             word-break: break-word;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -634,8 +640,8 @@ def build_helper_html(
                             <div class="item-content">
                                 <h4 class="item-title">${{escapeHTML(i.badge || '')}} ${{escapeHTML(i.name)}}</h4>
                                 <div class="item-meta">
-                                    ${{i.author ? `<span>@${{escapeHTML(i.author)}}</span>` : ''}}
-                                    ${{i.date ? `<span>${{escapeHTML(i.date)}}</span>` : ''}}
+                                    <span style="flex:1;">${{i.author ? `<span>@${{escapeHTML(i.author)}}</span>` : ''}}</span>
+                                    ${{i.date ? `<span style="white-space:nowrap; color:var(--primary);">${{escapeHTML(i.date)}}</span>` : ''}}
                                 </div>
                                 <p class="item-desc">${{escapeHTML(i.desc)}}</p>
                             </div>
