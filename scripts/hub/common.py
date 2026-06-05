@@ -177,7 +177,7 @@ def clean_rules(rules: List[str]) -> List[str]:
 # HARDENED DOWNLOAD UTILITIES
 #
 # Kelee / Loon ecosystem expects a Loon UA with version.
-LOON_VERSION = "3.3.9"
+LOON_VERSION = "3.9.9"
 _BROWSER_UA = f"Loon/{LOON_VERSION}"
 
 # 统一的下载配置
