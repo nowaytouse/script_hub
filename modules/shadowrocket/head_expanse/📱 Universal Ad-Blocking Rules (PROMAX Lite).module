@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-06 05:33:03
+#!date=2026-06-06 05:44:56
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -129,7 +129,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT
-# Merged REJECT complex rules (260)
+# Merged REJECT complex rules (259)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -383,14 +383,13 @@ URL-REGEX,^https?:\/\/ad\d\.sina\.com,REJECT
 URL-REGEX,^https?:\/\/ad\d\.sina\.com.cn,REJECT
 URL-REGEX,^https?:\/\/app\.58\.com\/api\/log\/,REJECT
 URL-REGEX,^https?:\/\/cdn-1rtb\.caiyunapp\.com/creative/.*$,REJECT
-URL-REGEX,^https?:\/\/d\d.sinaimg.cn,REJECT
 URL-REGEX,^https?:\/\/goblin\.hupu\.com/[^/]+/[^/]+\/interfaceAd\/,REJECT
 URL-REGEX,^https?:\/\/sa\d\.tuisong\.baidu\.com,REJECT
 URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
-# Merged REJECT complex rules (72)
+# Merged REJECT complex rules (69)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT
 DOMAIN,apidns.kwd.inkuai.com,REJECT
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT
@@ -400,7 +399,6 @@ DOMAIN,dns.jd.com,REJECT
 DOMAIN,dns.jd.com.gslb.qianxun.com,REJECT
 DOMAIN,dns.qiyipic.iqiyi.com,REJECT
 DOMAIN,dns.qq.com,REJECT
-DOMAIN,dns.weibo.cn,REJECT
 DOMAIN,dns.weixin.qq.com.cn,REJECT
 DOMAIN,doh.iqiyi.com,REJECT
 DOMAIN,doh.jd.com,REJECT
@@ -427,7 +425,6 @@ DOMAIN,httpdns.gslb.yy.com,REJECT
 DOMAIN,httpdns.huaweicloud.com,REJECT
 DOMAIN,httpdns.kg.qq.com,REJECT
 DOMAIN,httpdns.kwd.inkuai.com,REJECT
-DOMAIN,httpdns.music.163.com,REJECT
 DOMAIN,httpdns.music.ntes53.netease.com,REJECT
 DOMAIN,httpdns.n.netease.com,REJECT
 DOMAIN,httpdns.n.shifen.com,REJECT
@@ -442,7 +439,6 @@ DOMAIN,httpdns.tantanapp.com,REJECT
 DOMAIN,httpdns.volcengineapi.com,REJECT
 DOMAIN,httpdns.yunxindns.com,REJECT
 DOMAIN,httpdns.yunxinfw.com,REJECT
-DOMAIN,httpdns.zhihu.com,REJECT
 DOMAIN,httpdns.zybang.com,REJECT
 DOMAIN,httpdns1.cc.cdnhwc5.com,REJECT
 DOMAIN,httpsdns.baidu.com,REJECT

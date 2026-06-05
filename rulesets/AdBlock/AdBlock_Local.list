@@ -2,7 +2,7 @@
 # Purpose: 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）
 # Category-Key: Local
 # Shard: 1/1
-# Total Rules: 232
+# Total Rules: 216
 
 DOMAIN,180.76.76.200
 DOMAIN,adcdn6.tencentmusic.com
@@ -16,7 +16,6 @@ DOMAIN,api.sm.cn
 DOMAIN,apiv4-iyes.youku.com
 DOMAIN,apm-a.pinduoduo.com
 DOMAIN,apm.pinduoduo.com
-DOMAIN,appcloud.zhihu.com
 DOMAIN,cd-1.pddpic.com
 DOMAIN,cdl-1.pddpic.com
 DOMAIN,cdl-p2.pddpic.com
@@ -41,7 +40,6 @@ DOMAIN,mc.atm.youku.com
 DOMAIN,mc.tencentmusic.com
 DOMAIN,meta.pinduoduo.com
 DOMAIN,mobads-logs.baidu.com
-DOMAIN,mqtt.zhihu.com
 DOMAIN,nsclick.baidu.com
 DOMAIN,otheve.beacon.qq.com
 DOMAIN,pre-acs.youku.com
@@ -76,7 +74,6 @@ DOMAIN-SUFFIX,adm.baidu.com
 DOMAIN-SUFFIX,admobile.top
 DOMAIN-SUFFIX,adscdn.baidu.com
 DOMAIN-SUFFIX,adukwai.com
-DOMAIN-SUFFIX,alitui.weibo.com
 DOMAIN-SUFFIX,alitui.weibo.com.cn
 DOMAIN-SUFFIX,analytics.bytescm.com
 DOMAIN-SUFFIX,anquan.baidu.com
@@ -93,7 +90,6 @@ DOMAIN-SUFFIX,baiduace.com
 DOMAIN-SUFFIX,baidujs.cnys.com
 DOMAIN-SUFFIX,baidulao.com
 DOMAIN-SUFFIX,baidustatic.com
-DOMAIN-SUFFIX,baidut.github.io
 DOMAIN-SUFFIX,baiduyubaidu.com
 DOMAIN-SUFFIX,baiduzhidahao.cc
 DOMAIN-SUFFIX,baifen.music.baidu.com
@@ -106,7 +102,6 @@ DOMAIN-SUFFIX,btlaunch.baidu.com
 DOMAIN-SUFFIX,cb.baidu.com
 DOMAIN-SUFFIX,cdn-tos.bytescm.com
 DOMAIN-SUFFIX,cleaner.baidu.com
-DOMAIN-SUFFIX,click.uve.weibo.com
 DOMAIN-SUFFIX,cm.baidu.com
 DOMAIN-SUFFIX,cpro.baidu.cn
 DOMAIN-SUFFIX,cpro.zhidao.baidu.com
@@ -122,23 +117,18 @@ DOMAIN-SUFFIX,dlsw.baidu.com
 DOMAIN-SUFFIX,dlsw.br.baidu.com
 DOMAIN-SUFFIX,download.bav.baidu.com
 DOMAIN-SUFFIX,download.sd.baidu.com
-DOMAIN-SUFFIX,dp.im.weibo.cn
-DOMAIN-SUFFIX,dsp.edm.weibo.cn
 DOMAIN-SUFFIX,duapps.com
 DOMAIN-SUFFIX,duiwai.baidu.com
 DOMAIN-SUFFIX,dzl.baidu.com
 DOMAIN-SUFFIX,em.baidu.com
 DOMAIN-SUFFIX,erebor.douban.com
 DOMAIN-SUFFIX,ers.baidu.com
-DOMAIN-SUFFIX,fastimage.uve.weibo.com
 DOMAIN-SUFFIX,fclick.baidu.com
 DOMAIN-SUFFIX,fe-scm.pglstatp-toutiao.com
 DOMAIN-SUFFIX,fe-tos.pglstatp-toutiao.com
 DOMAIN-SUFFIX,feed.baidu.com
 DOMAIN-SUFFIX,fexclick.baidu.com
 DOMAIN-SUFFIX,g.baidu.com
-DOMAIN-SUFFIX,game.weibo.cn
-DOMAIN-SUFFIX,game.weibo.com
 DOMAIN-SUFFIX,gdt.qq.com
 DOMAIN-SUFFIX,gimg.baidu.com
 DOMAIN-SUFFIX,guanjia.baidu.com
@@ -169,7 +159,6 @@ DOMAIN-SUFFIX,openrcv.baidu.com
 DOMAIN-SUFFIX,paimgcdn.baidu.com
 DOMAIN-SUFFIX,pangle.io
 DOMAIN-SUFFIX,pc.videoclick.baidu.com
-DOMAIN-SUFFIX,promote.biz.weibo.cn
 DOMAIN-SUFFIX,qianclick.baidu.com
 DOMAIN-SUFFIX,release.baidu.com
 DOMAIN-SUFFIX,river.zhidao.baidu.com
@@ -187,7 +176,6 @@ DOMAIN-SUFFIX,sobartop.baidu.com
 DOMAIN-SUFFIX,tkweb.baidu.com
 DOMAIN-SUFFIX,toolbar.baidu.com
 DOMAIN-SUFFIX,toutiaoapi.com
-DOMAIN-SUFFIX,tui.weibo.com
 DOMAIN-SUFFIX,tuijian.baidu.com
 DOMAIN-SUFFIX,tuisong.baidu.com
 DOMAIN-SUFFIX,ugdtimg.com
@@ -199,17 +187,13 @@ DOMAIN-SUFFIX,videopush.baidu.com
 DOMAIN-SUFFIX,w.gdown.baidu.com
 DOMAIN-SUFFIX,w.x.baidu.com
 DOMAIN-SUFFIX,wangmeng.baidu.com
-DOMAIN-SUFFIX,wax.weibo.com
 DOMAIN-SUFFIX,wax.weibo.com.cn
-DOMAIN-SUFFIX,wbapp.uve.weibo.com
 DOMAIN-SUFFIX,weibomingzi.com
 DOMAIN-SUFFIX,weishi.baidu.com
-DOMAIN-SUFFIX,widget.weibo.com
 DOMAIN-SUFFIX,wisepush.video.baidu.com
 DOMAIN-SUFFIX,wm.baidu.com
 DOMAIN-SUFFIX,yingxiao.baidu.com
 DOMAIN-SUFFIX,znsv.baidu.com
-DOMAIN-SUFFIX,zymo.mps.weibo.com
 IP-CIDR,103.41.167.237/32
 IP-CIDR,115.236.121.195/32
 IP-CIDR,115.236.121.51/32

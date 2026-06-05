@@ -226,3 +226,383 @@ DOMAIN,mobile.events.data.microsoft.com
 # 防止上游规则误杀 GitHub 导致脚本更新失败
 DOMAIN-SUFFIX,github.com
 DOMAIN-SUFFIX,githubusercontent.com
+
+DOMAIN-SUFFIX,github.io
+DOMAIN-SUFFIX,githubassets.com
+DOMAIN-SUFFIX,githubcopilot.com
+DOMAIN-SUFFIX,githubnext.com
+DOMAIN-SUFFIX,github.dev
+DOMAIN-KEYWORD,github
+
+# ============ Telegram 全局保护 ============
+# Telegram 核心域名，防止消息收发/媒体加载异常
+DOMAIN-SUFFIX,telegram.org
+DOMAIN-SUFFIX,telegram.me
+DOMAIN-SUFFIX,t.me
+DOMAIN-SUFFIX,telegra.ph
+DOMAIN-SUFFIX,telesco.pe
+DOMAIN-SUFFIX,tdesktop.com
+DOMAIN-SUFFIX,telegram-cdn.org
+DOMAIN-SUFFIX,tgstat.ru
+DOMAIN-KEYWORD,telegram
+# Telegram CDN IP 段保护
+IP-CIDR,91.108.4.0/22,no-resolve
+IP-CIDR,91.108.8.0/22,no-resolve
+IP-CIDR,91.108.12.0/22,no-resolve
+IP-CIDR,91.108.16.0/22,no-resolve
+IP-CIDR,91.108.56.0/22,no-resolve
+IP-CIDR,149.154.160.0/20,no-resolve
+IP-CIDR,185.76.151.0/24,no-resolve
+IP-CIDR6,2001:b28:f23d::/48,no-resolve
+IP-CIDR6,2001:b28:f23f::/48,no-resolve
+IP-CIDR6,2001:67c:4e8::/48,no-resolve
+
+# ============ Discord 全局保护 ============
+DOMAIN-SUFFIX,discord.com
+DOMAIN-SUFFIX,discord.gg
+DOMAIN-SUFFIX,discordapp.com
+DOMAIN-SUFFIX,discordapp.net
+DOMAIN-SUFFIX,discord.media
+DOMAIN-SUFFIX,discordcdn.com
+DOMAIN-KEYWORD,discord
+
+# ============ Signal 全局保护 ============
+DOMAIN-SUFFIX,signal.org
+DOMAIN-SUFFIX,whispersystems.org
+DOMAIN-SUFFIX,signal.art
+DOMAIN-SUFFIX,signal-cdn.org
+
+# ============ WhatsApp 全局保护 ============
+DOMAIN-SUFFIX,whatsapp.com
+DOMAIN-SUFFIX,whatsapp.net
+DOMAIN-SUFFIX,wa.me
+DOMAIN-KEYWORD,whatsapp
+
+# ============ Kiro AI 全局保护 ============
+# Kiro AI 开发环境和相关服务
+DOMAIN-SUFFIX,kiro.dev
+DOMAIN-SUFFIX,kiro.ai
+DOMAIN-KEYWORD,kiro
+
+# ============ 开发者工具 (Developer Tools) ============
+# VS Code / Cursor / 开发环境
+DOMAIN-SUFFIX,vscode.dev
+DOMAIN-SUFFIX,vscode-cdn.net
+DOMAIN-SUFFIX,visualstudio.com
+DOMAIN-SUFFIX,cursor.sh
+DOMAIN-SUFFIX,cursor.com
+DOMAIN-SUFFIX,replit.com
+DOMAIN-SUFFIX,codesandbox.io
+DOMAIN-SUFFIX,codespaces.github.com
+DOMAIN-SUFFIX,stackblitz.com
+DOMAIN-SUFFIX,glitch.com
+DOMAIN-SUFFIX,jsfiddle.net
+DOMAIN-SUFFIX,codepen.io
+
+# npm / yarn / pnpm 包管理器
+DOMAIN-SUFFIX,npmjs.com
+DOMAIN-SUFFIX,npmjs.org
+DOMAIN-SUFFIX,yarnpkg.com
+DOMAIN-SUFFIX,registry.npmmirror.com
+DOMAIN-SUFFIX,registry.npm.taobao.org
+
+# Docker / 容器服务
+DOMAIN-SUFFIX,docker.com
+DOMAIN-SUFFIX,docker.io
+DOMAIN-SUFFIX,dockerhub.com
+
+# ============ CDN 和基础设施保护 ============
+DOMAIN-SUFFIX,jsdelivr.net
+DOMAIN-SUFFIX,unpkg.com
+DOMAIN-SUFFIX,cdnjs.com
+DOMAIN-SUFFIX,cdnjs.cloudflare.com
+DOMAIN-SUFFIX,cdn.jsdelivr.net
+
+# ============ Twitter / X 全局保护 ============
+DOMAIN-SUFFIX,twitter.com
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,t.co
+DOMAIN-KEYWORD,twitter
+
+# ============ Reddit 全局保护 ============
+DOMAIN-SUFFIX,reddit.com
+DOMAIN-SUFFIX,redd.it
+DOMAIN-SUFFIX,redditmedia.com
+DOMAIN-SUFFIX,redditstatic.com
+DOMAIN-KEYWORD,reddit
+
+# ============ Steam / 游戏平台 ============
+DOMAIN-SUFFIX,steampowered.com
+DOMAIN-SUFFIX,steamcommunity.com
+DOMAIN-SUFFIX,steamstatic.com
+DOMAIN-SUFFIX,steamgames.com
+DOMAIN-SUFFIX,steam-chat.com
+DOMAIN-KEYWORD,steam
+
+# Epic Games
+DOMAIN-SUFFIX,epicgames.com
+DOMAIN-SUFFIX,epicgames.dev
+DOMAIN-SUFFIX,unrealengine.com
+
+# ============ Netflix / Disney+ / 流媒体 ============
+DOMAIN-SUFFIX,netflix.com
+DOMAIN-SUFFIX,nflxext.com
+DOMAIN-SUFFIX,nflximg.com
+DOMAIN-SUFFIX,nflxvideo.net
+DOMAIN-KEYWORD,netflix
+
+DOMAIN-SUFFIX,disneyplus.com
+DOMAIN-SUFFIX,disney-plus.net
+DOMAIN-SUFFIX,dssott.com
+
+DOMAIN-SUFFIX,hulu.com
+DOMAIN-SUFFIX,hulustream.com
+
+# ============ Spotify / 音乐流媒体 ============
+DOMAIN-SUFFIX,spotify.com
+DOMAIN-SUFFIX,scdn.co
+DOMAIN-SUFFIX,spotifycdn.com
+DOMAIN-KEYWORD,spotify
+
+# ============ Notion / 笔记工具 ============
+DOMAIN-SUFFIX,notion.so
+DOMAIN-SUFFIX,notion.site
+DOMAIN-SUFFIX,notion-static.com
+DOMAIN-SUFFIX,notion.new
+DOMAIN-KEYWORD,notion
+
+# Obsidian
+DOMAIN-SUFFIX,obsidian.md
+
+# Evernote
+DOMAIN-SUFFIX,evernote.com
+
+# ============ Zoom / Teams / 会议软件 ============
+DOMAIN-SUFFIX,zoom.us
+DOMAIN-SUFFIX,zoom.com
+DOMAIN-SUFFIX,zoomgov.com
+DOMAIN-KEYWORD,zoom
+
+DOMAIN-SUFFIX,teams.microsoft.com
+DOMAIN-SUFFIX,skype.com
+
+# ============ Amazon / AWS ============
+DOMAIN-SUFFIX,amazon.com
+DOMAIN-SUFFIX,amazonaws.com
+DOMAIN-SUFFIX,aws.amazon.com
+DOMAIN-SUFFIX,awsstatic.com
+
+# ============ Wikipedia / Wikimedia ============
+DOMAIN-SUFFIX,wikipedia.org
+DOMAIN-SUFFIX,wikimedia.org
+DOMAIN-SUFFIX,wikidata.org
+DOMAIN-SUFFIX,mediawiki.org
+
+# ============ Medium / Substack / 博客平台 ============
+DOMAIN-SUFFIX,medium.com
+DOMAIN-SUFFIX,substack.com
+DOMAIN-SUFFIX,substackcdn.com
+
+# ============ Cloudflare 相关服务 ============
+DOMAIN-SUFFIX,workers.dev
+DOMAIN-SUFFIX,pages.dev
+DOMAIN-SUFFIX,cloudflare-quic.com
+DOMAIN-SUFFIX,cloudflare-gateway.com
+
+# ============ Vercel / Netlify / 部署平台 ============
+DOMAIN-SUFFIX,vercel.app
+DOMAIN-SUFFIX,vercel.com
+DOMAIN-SUFFIX,vercel.sh
+DOMAIN-SUFFIX,netlify.app
+DOMAIN-SUFFIX,netlify.com
+
+# ============ 网易云音乐 ============
+DOMAIN-SUFFIX,music.163.com
+
+# ============ Perplexity AI ============
+DOMAIN-SUFFIX,perplexity.ai
+DOMAIN-KEYWORD,perplexity
+
+# ============ Linux / Ubuntu / 软件源 ============
+DOMAIN-SUFFIX,ubuntu.com
+DOMAIN-SUFFIX,canonical.com
+DOMAIN-SUFFIX,launchpad.net
+DOMAIN-SUFFIX,debian.org
+DOMAIN-SUFFIX,archlinux.org
+
+# ============ Mozilla / Firefox ============
+DOMAIN-SUFFIX,mozilla.org
+DOMAIN-SUFFIX,firefox.com
+DOMAIN-SUFFIX,getpocket.com
+
+# ============ ProtonMail / ProtonVPN ============
+DOMAIN-SUFFIX,protonmail.com
+DOMAIN-SUFFIX,proton.me
+DOMAIN-SUFFIX,protonvpn.com
+
+# ============ 1Password / Bitwarden ============
+DOMAIN-SUFFIX,1password.com
+DOMAIN-SUFFIX,bitwarden.com
+
+# ============ Figma / 设计工具 ============
+DOMAIN-SUFFIX,figma.com
+DOMAIN-SUFFIX,figmausercontent.com
+DOMAIN-SUFFIX,canva.com
+
+# ============ Slack / 企业协作 ============
+DOMAIN-SUFFIX,slack.com
+DOMAIN-SUFFIX,slack-edge.com
+DOMAIN-SUFFIX,slack-imgs.com
+
+# ============ Linear / Jira / 项目管理 ============
+DOMAIN-SUFFIX,linear.app
+DOMAIN-SUFFIX,atlassian.com
+DOMAIN-SUFFIX,jira.com
+
+# ============ Stripe / PayPal / 支付网关 ============
+DOMAIN-SUFFIX,stripe.com
+DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypalobjects.com
+
+# ============ Apple 开发者 ============
+DOMAIN,developer.apple.com
+DOMAIN,appstoreconnect.apple.com
+DOMAIN,testflight.apple.com
+
+# ============ Google 开发者 ============
+DOMAIN,console.cloud.google.com
+DOMAIN,firebase.google.com
+DOMAIN,firebase.googleapis.com
+
+# ============ 新浪微博 ============
+DOMAIN-SUFFIX,weibo.com
+DOMAIN-SUFFIX,weibo.cn
+DOMAIN-SUFFIX,sinaimg.cn
+
+# ============ 知乎 (Zhihu) ============
+DOMAIN-SUFFIX,zhihu.com
+DOMAIN-SUFFIX,zhimg.com
+
+# ============ V2EX / HackerNews ============
+DOMAIN-SUFFIX,v2ex.com
+DOMAIN-SUFFIX,news.ycombinator.com
+
+# ============ StackOverflow / 技术社区 ============
+DOMAIN-SUFFIX,stackoverflow.com
+DOMAIN-SUFFIX,stackexchange.com
+DOMAIN-SUFFIX,superuser.com
+DOMAIN-SUFFIX,serverfault.com
+
+# ============ MDN / W3C / 开发文档 ============
+DOMAIN-SUFFIX,developer.mozilla.org
+DOMAIN-SUFFIX,w3.org
+
+# ============ Homebrew / 包管理器 ============
+DOMAIN-SUFFIX,brew.sh
+DOMAIN-SUFFIX,formulae.brew.sh
+
+# ============ Python / pip / PyPI ============
+DOMAIN-SUFFIX,python.org
+DOMAIN-SUFFIX,pypi.org
+DOMAIN-SUFFIX,pythonhosted.org
+
+# ============ Rust / Cargo ============
+DOMAIN-SUFFIX,rust-lang.org
+DOMAIN-SUFFIX,crates.io
+
+# ============ Go / Golang ============
+DOMAIN-SUFFIX,golang.org
+DOMAIN-SUFFIX,go.dev
+
+# ============ 极客时间 / 慕课网 / 学习平台 ============
+DOMAIN-SUFFIX,geekbang.org
+DOMAIN-SUFFIX,imooc.com
+
+# ============ 12306 / 中国铁路 ============
+DOMAIN-SUFFIX,12306.cn
+DOMAIN-SUFFIX,95306.cn
+
+# ============ 国内银行 ============
+DOMAIN-SUFFIX,icbc.com.cn
+DOMAIN-SUFFIX,ccb.com
+DOMAIN-SUFFIX,boc.cn
+DOMAIN-SUFFIX,abchina.com
+DOMAIN-SUFFIX,95599.cn
+DOMAIN-SUFFIX,cmbchina.com
+
+# ============ 顺丰 / 快递 ============
+DOMAIN-SUFFIX,sf-express.com
+
+# ============ DuckDuckGo / 隐私搜索 ============
+DOMAIN-SUFFIX,duckduckgo.com
+DOMAIN-SUFFIX,duck.com
+
+# ============ Brave / 浏览器 ============
+DOMAIN-SUFFIX,brave.com
+DOMAIN-SUFFIX,brave.software
+
+# ============ Bluesky / 社交平台 ============
+DOMAIN-SUFFIX,bsky.app
+DOMAIN-SUFFIX,bsky.social
+
+# ============ Mastodon / 联邦宇宙 ============
+DOMAIN-SUFFIX,mastodon.social
+DOMAIN-SUFFIX,joinmastodon.org
+
+# ============ Twitch / 直播平台 ============
+DOMAIN-SUFFIX,twitch.tv
+DOMAIN-SUFFIX,twitchcdn.net
+DOMAIN-KEYWORD,twitch
+
+# ============ YouTube Music ============
+DOMAIN-SUFFIX,music.youtube.com
+DOMAIN,music.youtube.com
+
+# ============ 网易邮箱 ============
+DOMAIN-SUFFIX,mail.163.com
+DOMAIN-SUFFIX,mail.126.com
+
+# ============ QQ 邮箱 ============
+DOMAIN,mail.qq.com
+DOMAIN,exmail.qq.com
+
+# ============ Gmail ============
+DOMAIN,mail.google.com
+DOMAIN,inbox.google.com
+
+# ============ Outlook ============
+DOMAIN,outlook.com
+DOMAIN,outlook.live.com
+DOMAIN,hotmail.com
+
+# ============ iCloud Mail ============
+DOMAIN,icloud.com
+DOMAIN,me.com
+DOMAIN,mac.com
+
+# ============ 钉钉 (DingTalk) ============
+DOMAIN-SUFFIX,dingtalk.com
+DOMAIN-SUFFIX,alibaba-inc.com
+
+# ============ 企业微信 ============
+DOMAIN-SUFFIX,work.weixin.qq.com
+DOMAIN,work.weixin.qq.com
+
+# ============ 飞书 (Lark/Feishu) ============
+DOMAIN-SUFFIX,feishu.cn
+DOMAIN-SUFFIX,larksuite.com
+
+# ============ 测速工具 ============
+DOMAIN-SUFFIX,speedtest.net
+DOMAIN-SUFFIX,fast.com
+
+# ============ 天气服务 ============
+DOMAIN-SUFFIX,weather.com
+DOMAIN,weather.apple.com
+
+# ============ 地图服务 ============
+DOMAIN-SUFFIX,maps.google.com
+DOMAIN,maps.google.com
+DOMAIN-SUFFIX,maps.apple.com
+DOMAIN,maps.apple.com
