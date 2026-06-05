@@ -25,6 +25,8 @@ from hub.project_paths import (
     KELEE_DIR,
     ADBLOCK_DIR,
 )
+# Import at module level to avoid NameError in process_nexus_module
+from pipeline.adblock_manager import PROTECTED_MODULES
 
 # CONFIGURATION
 

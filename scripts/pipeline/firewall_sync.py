@@ -48,10 +48,9 @@ def sync_ports(execute: bool = False):
                 port_rules.append(line)
 
     if invalid_rules:
-        Logger.error(f"Found {len(invalid_rules)} invalid rules (missing action)")
+        Logger.warn(f"Skipping {len(invalid_rules)} invalid rules (missing action)")
         for rule in invalid_rules:
-            Logger.error(f"  - {rule}")
-        return
+            Logger.warn(f"  - {rule}")
 
     if not port_rules:
         Logger.warn("No port rules found in source.")

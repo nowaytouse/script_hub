@@ -111,23 +111,7 @@ def write_file(file_path: str, content: str):
             old_stripped = strip_dynamic(old_content)
             new_stripped = strip_dynamic(content)
             if old_stripped == new_stripped:
-                # Functionally identical, skip write
-                print(f"[SKIP WRITE] {file_path}")
-                return
-            else:
-                print(f"[ACTUAL WRITE] {file_path}")
-                import difflib
-                diff = list(difflib.unified_diff(
-                    old_stripped.splitlines(),
-                    new_stripped.splitlines(),
-                    fromfile='old_stripped',
-                    tofile='new_stripped',
-                    lineterm=''
-                ))
-                if diff:
-                    print(f"--- STRIPPED DIFF for {file_path} ---")
-                    print("\n".join(diff[:30]))
-                    print("-------------------------------------")
+                return  # functionally identical, skip write
         except Exception as e:
             print(f"Error checking write: {e}")
             pass
