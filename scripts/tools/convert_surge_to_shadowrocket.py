@@ -367,7 +367,7 @@ def process_all_modules():
     if not SR_MODULE_DIR.exists():
         SR_MODULE_DIR.mkdir(parents=True)
 
-    categories = ["amplify_nexus", "head_expanse", "narrow_pierce"]
+    categories = ["amplify_nexus", "head_expanse"]
     stats = {"total": 0, "converted": 0, "failed": 0}
     
     for cat in categories:

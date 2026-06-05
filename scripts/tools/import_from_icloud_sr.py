@@ -29,7 +29,6 @@ SURGE_DIR = PROJECT_ROOT / "modules" / "surge"
 CATEGORY_MAP = {
     "amplify_nexus": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
     "head_expanse": "『 🔝 Head Expanse › 首端扩域 』",
-    "narrow_pierce": "『 🎯 Narrow Pierce › 窄域穿刺 』",
 }
 
 def get_module_name(content):
@@ -63,7 +62,7 @@ def main():
 
     # Scan existing modules
     existing = {}  # name_lower -> {path, hash, name}
-    for cat in ["amplify_nexus", "head_expanse", "narrow_pierce"]:
+    for cat in ["amplify_nexus", "head_expanse"]:
         cat_path = SURGE_DIR / cat
         if not cat_path.exists():
             continue

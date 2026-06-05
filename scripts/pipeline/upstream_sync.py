@@ -112,7 +112,6 @@ LOCAL_SOURCE_MODULES = {
 
 NEXUS_GROUP = "『 🛠️ Amplify Nexus › 增幅枢纽 』"
 HEAD_EXPANSE_GROUP = "『 🔝 Head Expanse › 首端扩域 』"
-NARROW_PIERCE_GROUP = "『 🎯 Narrow Pierce › 窄域穿刺 』"
 
 # Kelee Speedtest Sources (YAML)
 KELEE_SOURCES = {

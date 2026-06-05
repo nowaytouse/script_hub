@@ -83,13 +83,11 @@ MODULES_DIR = os.path.join(ROOT, "modules")
 SURGE_MODULE_DIR = os.path.join(MODULES_DIR, "surge")
 SURGE_HEAD_EXPANSE_DIR = os.path.join(SURGE_MODULE_DIR, "head_expanse")
 SURGE_AMPLIFY_NEXUS_DIR = os.path.join(SURGE_MODULE_DIR, "amplify_nexus")
-SURGE_NARROW_PIERCE_DIR = os.path.join(SURGE_MODULE_DIR, "narrow_pierce")
 
 # Shadowrocket modules
 SHADOWROCKET_MODULE_DIR = os.path.join(MODULES_DIR, "shadowrocket")
 SHADOWROCKET_HEAD_EXPANSE_DIR = os.path.join(SHADOWROCKET_MODULE_DIR, "head_expanse")
 SHADOWROCKET_AMPLIFY_NEXUS_DIR = os.path.join(SHADOWROCKET_MODULE_DIR, "amplify_nexus")
-SHADOWROCKET_NARROW_PIERCE_DIR = os.path.join(SHADOWROCKET_MODULE_DIR, "narrow_pierce")
 
 # Module source build directory
 MODULE_SOURCE_DIR = os.path.join(MODULES_DIR, "source")

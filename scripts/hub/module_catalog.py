@@ -181,7 +181,6 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
                 )
                 if (
                     not info.get("merged_into")
-                    and cat_key == "narrow_pierce"
                     and any(h in module_file.name for h in PROMAX_MERGED_NAME_HINTS)
                 ):
                     info["merged_into"] = PROMAX_MERGE_LABEL
@@ -408,11 +407,10 @@ def write_shadowrocket_modules_json(
     """Generate modules/helper/shadowrocket_modules_data.json from modules catalog."""
     categories_data = {}
     total_sr_modules = 0
-    cat_keys = ["amplify_nexus", "head_expanse", "narrow_pierce"]
+    cat_keys = ["amplify_nexus", "head_expanse"]
     category_descs = {
         "amplify_nexus": "功能增强类模块",
-        "head_expanse": "广告拦截平台类",
-        "narrow_pierce": "App专项去广告",
+        "head_expanse": "核心拦截/重写",
     }
     for cat in cat_keys:
         categories_data[cat] = {
