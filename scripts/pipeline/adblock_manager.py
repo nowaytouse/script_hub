@@ -245,7 +245,9 @@ class SourceEntry:
 
 class AdBlockManager:
     def __init__(self):
-        self.whitelist: Set[str] = set()
+        self.whitelist_domain: Set[str] = set()
+        self.whitelist_suffix: Set[str] = set()
+        self.whitelist_keyword: Set[str] = set()
         # rules[policy][category] = set(rules); order = dedup priority (first wins)
         self.category_names = list(CATEGORY_META.keys())
         self.rules: Dict[str, Dict[str, Set[str]]] = {
@@ -285,10 +287,9 @@ class AdBlockManager:
             for line in lines:
                 stripped = line.strip()
                 if not stripped or stripped.startswith("#"):
-                    new_lines.append(line)
-                    continue
-                # Simple domain check in rule line
-                if any(white_item in stripped for white_item in self.whitelist):
+                # Extract rule payload for robust matching
+                rule_payload = stripped.split(",", 1)[-1] if "," in stripped else stripped
+                if self.is_whitelisted(rule_payload):
                     changed = True
                     continue
                 new_lines.append(line)
@@ -303,9 +304,29 @@ class AdBlockManager:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            cleaned = re.sub(r"^(DOMAIN-SUFFIX|DOMAIN-KEYWORD|DOMAIN|IP-CIDR6|IP-CIDR),", "", line)
-            self.whitelist.add(cleaned)
-        Logger.info(f"Loaded {len(self.whitelist)} whitelist patterns")
+            
+            if line.startswith("DOMAIN-SUFFIX,"):
+                self.whitelist_suffix.add(line.split(",", 1)[1].strip())
+            elif line.startswith("DOMAIN-KEYWORD,"):
+                self.whitelist_keyword.add(line.split(",", 1)[1].strip())
+            elif line.startswith("DOMAIN,"):
+                self.whitelist_domain.add(line.split(",", 1)[1].strip())
+            else:
+                pass # Other types like IP-CIDR are currently ignored
+
+        total = len(self.whitelist_domain) + len(self.whitelist_suffix) + len(self.whitelist_keyword)
+        Logger.info(f"Loaded {total} whitelist patterns")
+
+    def is_whitelisted(self, rule_payload: str) -> bool:
+        if rule_payload in self.whitelist_domain:
+            return True
+        for suffix in self.whitelist_suffix:
+            if rule_payload == suffix or rule_payload.endswith(f".{suffix}"):
+                return True
+        for keyword in self.whitelist_keyword:
+            if keyword in rule_payload:
+                return True
+        return False
 
     def load_hashes(self):
         if not os.path.exists(ADBLOCK_HASH_FILE):
@@ -823,12 +844,12 @@ class AdBlockManager:
 
             # CRITICAL: Apply deep whitelist filtering at ingestion
             rule_payload = normalized.split(",", 1)[-1] if "," in normalized else normalized
-            if any(white_item in rule_payload for white_item in self.whitelist):
+            if self.is_whitelisted(rule_payload):
                 continue
             
             # CRITICAL: Drop ridiculously broad malicious keywords that bypass whitelist substring matching
             if normalized.startswith("DOMAIN-KEYWORD,"):
-                if rule_payload.lower() in {"google", "apple", "microsoft", "amazon", "youtube", "baidu", "tencent", "alibaba", "bilibili", "taobao", "jd", "googleads"}:
+                if rule_payload.lower() in {"google", "apple", "microsoft", "amazon", "youtube", "baidu", "tencent", "alibaba", "bilibili", "taobao", "jd", "googleads", "github", "git", "githubusercontent"}:
                     continue
 
             rendered = self.render_policy_rule(normalized, policy, candidate)
@@ -1272,7 +1293,8 @@ class AdBlockManager:
     def filter_rules(self, rules: Set[str]) -> List[str]:
         filtered = []
         for rule in sorted(rules):
-            if any(whitelist_item in rule for whitelist_item in self.whitelist):
+            rule_payload = rule.split(",", 1)[-1] if "," in rule else rule
+            if self.is_whitelisted(rule_payload):
                 continue
             filtered.append(rule)
         return filtered

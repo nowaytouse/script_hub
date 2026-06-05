@@ -1,17 +1,10 @@
 # Ruleset: reject-url-regex.list
 
-DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 URL-REGEX,^https?://premiumyva\.appspot\.com/vmclickstoadvertisersite
 URL-REGEX,^https?://service\.4gtv\.tv/4gtv/Data/(GetAD|ADLog)
 URL-REGEX,^https?://cover\.baidu\.com/cover/page/dspSwitchAds/
 URL-REGEX,^https?://c\.tieba\.baidu\.com/c/s/splashSchedule
 URL-REGEX,^https?://issuecdn\.baidupcs\.com/issue/netdisk/guanggao/
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/(splash/|param|dm/ad|dataflow/report)
-URL-REGEX,^https?://app\.bilibili\.com/x/resource/abtest
-URL-REGEX,^https?://api\.bilibili\.com/pgc/season/(rank/cn|app/related/recommend)
-URL-REGEX,^https?://manga\.bilibili\.com/twirp/comic\.v\d\.comic/(flash|Flash|ListFlash)
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/search/(defaultword|hot|recommend|resource)
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/rank.*rid=(168|5)
 URL-REGEX,^https?://asp\.cntv\.myalicdn\.com/.+\?maxbr=850
 URL-REGEX,^https?://cntv\.hls\.cdn\.myqcloud\.com/.+\?maxbr=850
 URL-REGEX,^https?://v\.cctv\.com/.+\?maxbr=850

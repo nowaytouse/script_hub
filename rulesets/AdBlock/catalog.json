@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-05 16:35:53",
+  "updated": "2026-06-06 01:16:38",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -71,11 +71,11 @@
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
     "URL Rewrite": 939,
-    "Map Local": 1944,
-    "Script": 503,
+    "Map Local": 1946,
+    "Script": 504,
     "Body Rewrite": 79,
     "Header Rewrite": 0,
-    "MITM": 1060
+    "MITM": 1058
   },
   "shards": [
     {
@@ -147,7 +147,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 6091,
+      "rule_count": 7765,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list"
     },
     {
@@ -210,7 +210,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 28318,
+      "rule_count": 28316,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list"
     }
   ]
