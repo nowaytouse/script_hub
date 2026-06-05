@@ -215,3 +215,8 @@ DOMAIN,imap.gmail.com
 DOMAIN,fpinit.itunes.apple.com
 DOMAIN,xp.itunes-apple.com.akadns.net
 DOMAIN,mobile.events.data.microsoft.com
+
+# ============ GitHub 全局保护 ============
+# 防止上游规则误杀 GitHub 导致脚本更新失败
+DOMAIN-SUFFIX,github.com
+DOMAIN-SUFFIX,githubusercontent.com
