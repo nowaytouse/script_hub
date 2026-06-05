@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-06 05:18:15
+#!date=2026-06-06 05:33:03
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -129,7 +129,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# Merged REJECT complex rules (246)
+# Merged REJECT complex rules (260)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -193,9 +193,23 @@ URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns,REJECT
 URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$,REJECT
 URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/,REJECT
 URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do,REJECT
+URL-REGEX,^http:\/\/p\d+-be-pack-sign\.pglstatp-toutiao\.com\/(ad-app-package|web\.business\.image)\/,REJECT
 URL-REGEX,^http:\/\/xmc\.ximalaya\.com\/xmlymain-login-web\/login\/,REJECT
 URL-REGEX,^https://app\.variflight\.com/v4/advert/,REJECT
 URL-REGEX,^https://img-ys011\.didistatic\.com/static/ad_oss/,REJECT
+URL-REGEX,^https:\/\/a\.line\.me\/cs\/v\d\/oa$,REJECT
+URL-REGEX,^https:\/\/a\.line\.me\/lass\/api\/v\d\/ads$,REJECT
+URL-REGEX,^https:\/\/a\.line\.me\/oa\/v\d\/e$,REJECT
+URL-REGEX,^https:\/\/crs-event\.line\.me\/v\d\/imp,REJECT
+URL-REGEX,^https:\/\/obs\.line-scdn\.net\/0h.+\/(o|m)\d+x\d+$,REJECT
+URL-REGEX,^https:\/\/obs\.line-scdn\.net\/0h.+\/\d+p\.mp4$,REJECT
+URL-REGEX,^https:\/\/obs\.line-scdn\.net\/0hGH\d,REJECT
+URL-REGEX,^https:\/\/scdn\.line-apps\.com\/lan\/document\/pageEvent\/line\/ios\/,REJECT
+URL-REGEX,^https:\/\/scdn\.line-apps\.com\/lan\/image\/line\/bannerImageEvent\/,REJECT
+URL-REGEX,^https:\/\/sch\.line\.me\/api\/v\d\/ads$,REJECT
+URL-REGEX,^https:\/\/uts-front\.line-apps\.com\/event$,REJECT
+URL-REGEX,^https:\/\/uts-front\.line-apps\.com\/settings$,REJECT
+URL-REGEX,^https:\/\/w\.line\.me\/adp\/api\/ad\/v\d\/,REJECT
 URL-REGEX,^https?://(114\.115\.217\.129|home\.umetrip\.com)/gateway/api/umetrip/native$,REJECT
 URL-REGEX,^https?://(api|atrace)\.chelaile\.net\.cn/adpub/,REJECT
 URL-REGEX,^https?://(api|b)\.zhuishushenqi\.com/advert,REJECT

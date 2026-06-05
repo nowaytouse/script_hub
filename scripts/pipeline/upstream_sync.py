@@ -101,6 +101,7 @@ NEXUS_MODULES: list[str] = [
 # Format: { output_filename: upstream_url }
 LOCAL_SOURCE_MODULES = {
     "XWebAds.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
+    "Wool.ADBlock.sgmodule": "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/blockAds.module",
     "BiliBili.ADBlock.sgmodule": "https://github.com/BiliUniverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule",
     "[Sukka] Enhance Better ADBlock for Surge.sgmodule": "https://ruleset.skk.moe/Modules/sukka_enhance_adblock.sgmodule",
     "sukka_url_redirect.sgmodule": "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
