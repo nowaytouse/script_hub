@@ -1,22 +1,19 @@
 #!name=Jump去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=移除Jump开屏广告
 #!author=MoonYuki[https://github.com/MoonYuki]
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/Jump.png
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id1529434108
 #!tag=去广告
 #!loon_version=3.3.9
 #!homepage=https://hub.kelee.one
 #!date=2025-05-13 15:17:08
 
-[Rule]
-DOMAIN,zlsdk.1rtb.net,REJECT,extended-matching,pre-matching
-DOMAIN,jp.ad.gameley.com,REJECT,extended-matching,pre-matching
-DOMAIN,toblog.ctobsnssdk.com,REJECT,extended-matching,pre-matching
-DOMAIN,s3plus.meituan.net,REJECT,extended-matching,pre-matching
-DOMAIN,images.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,qh-material.taobao.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,admobile.top,REJECT,extended-matching,pre-matching
+# NOTE: All 7 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [Body Rewrite]
+#   - [MITM]
+# Use AdBlock.list for all blocking rules
 
 [Body Rewrite]
 http-response-jq ^https:?\/\/switch.jumpvg.com\/jump\/getlaunchad\/v2$ 'del(.data.adList)|.data.launchAd.showType=0'
@@ -24,4 +21,3 @@ http-response-jq ^https:?\/\/switch.jumpvg.com\/jump\/recommend\/ad_conf$ '.data
 
 [MITM]
 hostname = %APPEND% switch.jumpvg.com, -github.com, -api.github.com, -*.githubusercontent.com
-

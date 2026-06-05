@@ -1,10 +1,10 @@
-#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-06]
-#!desc=轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
+#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-05]
+#!desc=轻量基础版(12分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-06 06:02:42
+#!date=2026-06-05 23:37:47
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -119,9 +119,6 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 

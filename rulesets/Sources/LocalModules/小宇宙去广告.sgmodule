@@ -1,8 +1,8 @@
 #!name=小宇宙去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=移除开屏广告、搜索框推荐词和AI总结。
 #!author=wish
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/CosmosPodcast.png
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id1488894313
 #!tag=去广告
 #!loon_version=3.3.9
@@ -11,6 +11,7 @@
 
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.data |= map(select(.type != "DISCOVERY_HEADER" and .type != "DISCOVERY_BANNER"))'
+
 
 [Map Local]
 ^https:\/\/api\.xiaoyuzhoufm\.com\/v\d\/flash data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -21,6 +22,6 @@ http-response-jq ^https:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.d
 
 ^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/category data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
+
 [MITM]
 hostname = %APPEND% api.xiaoyuzhoufm.com, -github.com, -api.github.com, -*.githubusercontent.com
-

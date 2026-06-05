@@ -1,8 +1,8 @@
 #!name=百度网盘去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=移除开屏广告、首页卡片广告、传输页面广告、各类弹窗，精简侧拉抽屉和我的页面。
 #!author=可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/BaiduNetDisk.png
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id547166701
 #!tag=去广告
 #!loon_version=3.3.9
@@ -24,6 +24,6 @@
 
 ^https:\/\/pan\.baidu\.com\/rest\/\d\.\d\/pcs\/adv data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
+
 [MITM]
 hostname = %APPEND% pan.baidu.com, -github.com, -api.github.com, -*.githubusercontent.com
-

@@ -1,18 +1,21 @@
 #!name=高德地图去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=过滤高德地图开屏广告、各页面推广，精简我的页面。
 #!author=RuCu6[https://github.com/RuCu6], kelv1n1n[https://github.com/kelv1n1n]
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/Amap.png
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id461703208
 #!tag=去广告
 #!loon_version=3.3.9
 #!homepage=https://hub.kelee.one
 #!date=2025-09-04 23:46:49
 
-[Rule]
-DOMAIN,amap-aos-info-nogw.amap.com,REJECT,extended-matching,pre-matching
-DOMAIN,free-aos-cdn-image.amap.com,REJECT,extended-matching,pre-matching
-DOMAIN-SUFFIX,v.smtcdns.com,REJECT,extended-matching,pre-matching
+# NOTE: All 3 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [Body Rewrite]
+#   - [Map Local]
+#   - [Script]
+#   - [MITM]
+# Use AdBlock.list for all blocking rules
 
 [Body Rewrite]
 http-response-jq ^https:\/\/m5\.amap\.com\/ws\/shield\/search_business\/process\/marketingOperationStructured\? 'delpaths([["data","commonMaterial"]])'
@@ -79,4 +82,3 @@ http-response-jq ^https:\/\/m5-zb\.amap\.com\/ws\/sharedtrip\/taxi\/order_detail
 
 [MITM]
 hostname = %APPEND% *.amap.com, -github.com, -api.github.com, -*.githubusercontent.com
-

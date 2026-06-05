@@ -1,29 +1,20 @@
 #!name=拼多多去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=移除开屏广告、底栏多多视频、会场入口、聊天页面精选推荐及推广，精简首页和个人中心。
 #!author=ZenmoFeiShi[https://github.com/ZenmoFeiShi], 可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/PinDuoDuo.png
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id1044283059
 #!tag=去广告
 #!loon_version=3.3.9
 #!homepage=https://hub.kelee.one
 #!date=2025-11-14 17:26:24
 
-[Rule]
-DOMAIN,titan.pinduoduo.com,REJECT-NO-DROP,extended-matching,pre-matching
-DOMAIN,xg.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,cdl-1.pddpic.com,REJECT,extended-matching,pre-matching
-DOMAIN,titan.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,cdl-p2.pddpic.com,REJECT,extended-matching,pre-matching
-DOMAIN,cd-1.pddpic.com,REJECT,extended-matching,pre-matching
-DOMAIN,apm.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,th-b.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,ta.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,th.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,th-a.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,ta-a.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,meta.pinduoduo.com,REJECT,extended-matching,pre-matching
-DOMAIN,apm-a.pinduoduo.com,REJECT,extended-matching,pre-matching
+# NOTE: All 14 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [Body Rewrite]
+#   - [Map Local]
+#   - [MITM]
+# Use AdBlock.list for all blocking rules
 
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/alexa\/homepage\/hub\? 'delpaths([["result","dy_module","irregular_banner_dy"]])'
@@ -85,4 +76,3 @@ http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/aristotle\/order_list_v4\?
 
 [MITM]
 hostname = %APPEND% api.pinduoduo.com, -github.com, -api.github.com, -*.githubusercontent.com
-

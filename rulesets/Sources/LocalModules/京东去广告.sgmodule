@@ -1,16 +1,21 @@
 #!name=京东去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=移除京东开屏广告，精简我的页面产品推广。
 #!author=RuCu6[https://github.com/RuCu6], Maasea[https://github.com/Maasea]
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/JD.png
-#!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id414245413
 #!tag=去广告
 #!loon_version=3.3.9
 #!homepage=https://hub.kelee.one
 #!date=2025-05-13 15:17:08
 
-[Rule]
-URL-REGEX,"^http:\/\/\w{32}\.jddebug\.com\/diagnose\?",REJECT,extended-matching
+# NOTE: All 1 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [Body Rewrite]
+#   - [Map Local]
+#   - [Script]
+#   - [MITM]
+# Use AdBlock.list for all blocking rules
 
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=basicConfig 'if (getpath(["data","JDMessage","socketmonitor"]) | has("isSocketEstablishedAhead")) then (setpath(["data","JDMessage","socketmonitor","isSocketEstablishedAhead"]; 0)) else . end'
@@ -25,4 +30,3 @@ http-response-jq ^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=basicCon
 
 [MITM]
 hostname = %APPEND% api.m.jd.com, -github.com, -api.github.com, -*.githubusercontent.com
-

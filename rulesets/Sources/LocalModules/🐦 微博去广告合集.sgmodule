@@ -1,44 +1,18 @@
 #!name=🐦 微博去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=微博+国际版去广告 · PROMAX 构建源（域名规则+脚本已并入 PROMAX，勿单独安装）\n\n上游: fmz200/wool_scripts, iab0x00\n\n【Bundled Modules】\n✦ 微博去广告&净化: 去除常见的广告和部分多余的模块\n\n✦ WeiboIntl: 移除开屏、瀑布流、趋势页、用户中心广告
 #!author=fmz200, iab0x00, ScriptHub
 #!tag=去广告, 微博, PROMAX-build
 #!date=2026-06-06 03:17:50
-# PROMAX build source — install head_expanse/PROMAX only
 
-[Rule]
-DOMAIN,adpinpai.video.weibocdn.com,REJECT
-DOMAIN,bootpreload.uve.weibo.com,REJECT
-DOMAIN,datacollection.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,ad.weibo.com,REJECT
-DOMAIN-SUFFIX,adimg.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,adimg.vue.weibo.com,REJECT
-DOMAIN-SUFFIX,ads-d.viber.com,REJECT
-DOMAIN-SUFFIX,ads.aws.viber.com,REJECT
-DOMAIN-SUFFIX,ads.viber.com,REJECT
-DOMAIN-SUFFIX,alitui.weibo.com,REJECT
-DOMAIN-SUFFIX,alitui.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,biz.weibo.com,REJECT
-DOMAIN-SUFFIX,biz.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,click.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,dp.im.weibo.cn,REJECT
-DOMAIN-SUFFIX,dsp.edm.weibo.cn,REJECT
-DOMAIN-SUFFIX,fastimage.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,game.weibo.cn,REJECT
-DOMAIN-SUFFIX,game.weibo.com,REJECT
-DOMAIN-SUFFIX,gw5.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,gw6.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,promote.biz.weibo.cn,REJECT
-DOMAIN-SUFFIX,sdkapp.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,tui.weibo.com,REJECT
-DOMAIN-SUFFIX,wax.weibo.com,REJECT
-DOMAIN-SUFFIX,wax.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,wbapp.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,weibomingzi.com,REJECT
-DOMAIN-SUFFIX,widget.weibo.com,REJECT
-DOMAIN-SUFFIX,zymo.mps.weibo.com,REJECT
-URL-REGEX,"^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/",REJECT-DROP
-URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload)",REJECT-DROP
-
+# NOTE: All 32 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [Map Local]
+#   - [Script]
+#   - [Body Rewrite]
+#   - [MITM]
+# Use AdBlock.list for all blocking rules
 
 [URL Rewrite]
 ^https?:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/(get-lbs-cell-info\.php|sdkconfig\.php) - reject
@@ -46,7 +20,6 @@ URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\
 
 ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?(a=get_searching_info&|ct=feed&a=search_topic&) - reject-dict
 ^https?:\/\/api\.weibo\.cn\/2\/ad\/weibointl\? - reject-dict
-
 
 [Map Local]
 # 热门视频 | 热推荐
@@ -72,7 +45,6 @@ URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\
 ^https:\/\/m?api\.weibo\.c(n|om)\/2\/!\/was\/finder\/searchbarchange\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/m?api\.weibo\.c(n|om)\/2\/push\/info\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
-
 [Script]
 微博移除发现页广告        = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/search\/(finder|container_timeline|container_discover)\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
 微博热搜页面广告         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/(page|flowpage)\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
@@ -88,7 +60,6 @@ URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\
 非会员设置tab皮肤       = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/littleskin\/preview, script-path=https://cdn.jsdelivr.net/gh/zmqcherish/proxy-script@main/weibo_main.js, requires-body=true, timeout=60
 解锁微博会员APP图标      = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/aj\/appicon\/list, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_vip.js, requires-body=true, timeout=60
 
-
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.weibo\.cn\/2\/cardlist\? 'del(.items[] | select(.category == "group"))'
 # 微博轻享版banner广告
@@ -99,7 +70,6 @@ http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=get_coope
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=trends& 'if .data.order then .data.order = ["search_topic"] end'
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=search_topic& 'if .data.search_topic.cards[0].type == "searchtop" then del(.data.search_topic.cards[0]) end'
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=user_center& 'if .data.cards then .data.cards[].items |= map(select(.type != "personal_vip")) | .data.cards |= map(select((.items | length) > 0)) end'
-
 
 [MITM]
 hostname = %APPEND% *.weibo.cn, *.weibo.com, api.weibo.cn, weibo.com, weibointl.api.weibo.cn

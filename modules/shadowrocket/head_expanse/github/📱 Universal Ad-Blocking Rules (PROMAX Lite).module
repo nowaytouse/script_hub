@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-05 23:37:47
+#!date=2026-06-05 23:37:48
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -100,32 +100,32 @@ DOMAIN,dot.pub,DIRECT
 DOMAIN,doh.360.cn,DIRECT
 DOMAIN,doh.dns.apple.com,DIRECT
 # Block app-layer HTTPDNS first
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT
 # Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)
 # ── 应用去广告 · 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块） ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT
 # ── 通用广告 · blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Advertising_02.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Advertising_03.list,REJECT
 # ── 隐私追踪 · Privacy / tracking-protection / 防追踪列表 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Privacy.list,REJECT
 # ── 安全威胁 · 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Security_01.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Security_02.list,REJECT
 # ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT
 # ── 威胁情报·终极 · HaGeZi DNS-Blocklists ultimate ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Other.list,REJECT
 
 # SKK Upstream Rulesets
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT
 # Merged REJECT complex rules (259)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
