@@ -1445,8 +1445,18 @@ class AdBlockManager:
     def write_catalog(self, generated_rulesets: List[str]) -> None:
         """Write machine-readable catalog + README for ruleset shards and module links."""
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        surge_module = os.path.relpath(TARGET_MODULE, ROOT)
-        sr_module = surge_module.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
+        
+        # Define base filenames (without [GitHub] suffix)
+        surge_promax_cdn = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
+        surge_promax_github = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style) [GitHub].sgmodule"
+        surge_lite_cdn = "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"
+        surge_lite_github = "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite) [GitHub].sgmodule"
+        
+        # Shadowrocket variants (will be converted from Surge)
+        sr_promax_cdn = surge_promax_cdn.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
+        sr_promax_github = surge_promax_github.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
+        sr_lite_cdn = surge_lite_cdn.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
+        sr_lite_github = surge_lite_github.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
 
         shards = []
         for rs_path in generated_rulesets:
@@ -1478,36 +1488,67 @@ class AdBlockManager:
                 }
             )
 
-        surge_module_lite = os.path.relpath(TARGET_MODULE_LITE, ROOT)
-        sr_module_lite = surge_module_lite.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
-
         catalog = {
             "updated": now,
             "rules_per_shard_max": RULES_PER_SHARD,
             "categories": CATEGORY_META,
             "lite_categories": sorted(LITE_CATEGORIES),
             "modules": {
-                "surge_promax": {
-                    "path": surge_module,
-                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module, safe='/')}",
-                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(surge_module, safe='/')}",
+                # PROMAX CDN version (default, recommended)
+                "surge_promax_cdn": {
+                    "path": surge_promax_cdn,
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_promax_cdn, safe='/')}",
+                    "url_source": "cdn",
+                    "note": "CDN 加速版（推荐，12-24h 缓存延迟）",
                 },
-                "shadowrocket_promax": {
-                    "path": sr_module,
-                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module, safe='/')}",
-                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(sr_module, safe='/')}",
+                # PROMAX GitHub version (instant updates)
+                "surge_promax_github": {
+                    "path": surge_promax_github,
+                    "install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(surge_promax_github, safe='/')}",
+                    "url_source": "github",
+                    "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）",
                 },
-                "surge_promax_lite": {
-                    "path": surge_module_lite,
-                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module_lite, safe='/')}",
-                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(surge_module_lite, safe='/')}",
-                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
+                # Shadowrocket PROMAX CDN
+                "shadowrocket_promax_cdn": {
+                    "path": sr_promax_cdn,
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(sr_promax_cdn, safe='/')}",
+                    "url_source": "cdn",
+                    "note": "CDN 加速版（推荐，12-24h 缓存延迟）",
                 },
-                "shadowrocket_promax_lite": {
-                    "path": sr_module_lite,
-                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module_lite, safe='/')}",
-                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(sr_module_lite, safe='/')}",
-                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
+                # Shadowrocket PROMAX GitHub
+                "shadowrocket_promax_github": {
+                    "path": sr_promax_github,
+                    "install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(sr_promax_github, safe='/')}",
+                    "url_source": "github",
+                    "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）",
+                },
+                # PROMAX Lite CDN
+                "surge_promax_lite_cdn": {
+                    "path": surge_lite_cdn,
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_lite_cdn, safe='/')}",
+                    "url_source": "cdn",
+                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则（CDN 加速）",
+                },
+                # PROMAX Lite GitHub
+                "surge_promax_lite_github": {
+                    "path": surge_lite_github,
+                    "install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(surge_lite_github, safe='/')}",
+                    "url_source": "github",
+                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）",
+                },
+                # Shadowrocket Lite CDN
+                "shadowrocket_promax_lite_cdn": {
+                    "path": sr_lite_cdn,
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(sr_lite_cdn, safe='/')}",
+                    "url_source": "cdn",
+                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则（CDN 加速）",
+                },
+                # Shadowrocket Lite GitHub
+                "shadowrocket_promax_lite_github": {
+                    "path": sr_lite_github,
+                    "install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(sr_lite_github, safe='/')}",
+                    "url_source": "github",
+                    "note": "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）",
                 },
             },
             "manifest": os.path.relpath(ADBLOCK_SOURCES_FILE, ROOT),
@@ -1596,17 +1637,36 @@ class AdBlockManager:
         parts.append(policy)
         return ",".join(parts)
 
-    def generate_module(self, generated_rulesets: List[str], lite_only: bool = False):
+    def generate_module(self, generated_rulesets: List[str], lite_only: bool = False, url_source: str = "cdn"):
+        """Generate PROMAX module with specified URL source.
+        
+        Args:
+            generated_rulesets: List of ruleset file paths
+            lite_only: Generate Lite version (no ThreatIntel heavy rules)
+            url_source: 'cdn' (jsDelivr) or 'github' (raw.githubusercontent.com)
+        """
         current_date = datetime.now().strftime("%Y-%m-%d")
         complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
+        
+        # Choose URL base based on source
+        base_url = CDN_BASE_URL if url_source == "cdn" else GITHUB_RAW_URL
+        url_suffix = "" if url_source == "cdn" else " [GitHub]"
 
         if lite_only:
             # The user explicitly wants to KEEP privacy, threat intel, etc., in Lite.
             active_rulesets = generated_rulesets
-            target_path = TARGET_MODULE_LITE
+            base_filename = "📱 Universal Ad-Blocking Rules (PROMAX Lite)"
+            target_path = os.path.join(
+                SURGE_HEAD_EXPANSE_DIR,
+                f"{base_filename}{url_suffix}.sgmodule"
+            )
         else:
             active_rulesets = generated_rulesets
-            target_path = TARGET_MODULE
+            base_filename = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)"
+            target_path = os.path.join(
+                SURGE_HEAD_EXPANSE_DIR,
+                f"{base_filename}{url_suffix}.sgmodule"
+            )
 
         shard_count = len(active_rulesets)
 
@@ -1634,7 +1694,7 @@ class AdBlockManager:
             "DOMAIN,doh.360.cn,DIRECT",
             "DOMAIN,doh.dns.apple.com,DIRECT",
             "# Block app-layer HTTPDNS first",
-            f"RULE-SET,{CDN_BASE_URL}rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT",
+            f"RULE-SET,{base_url}rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT",
             "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)",
         ])
 
@@ -1652,7 +1712,7 @@ class AdBlockManager:
             for rs_path in sorted(paths, key=self._shard_sort_key):
                 encoded_path = rs_path
                 rule_lines.append(
-                    f"RULE-SET,{CDN_BASE_URL}{encoded_path},REJECT,"
+                    f"RULE-SET,{base_url}{encoded_path},REJECT,"
                     "extended-matching,pre-matching,update-interval=86400,no-resolve"
                 )
 
@@ -1660,11 +1720,11 @@ class AdBlockManager:
             [
                 "",
                 "# SKK Upstream Rulesets",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/Sources/skk_upstream/reject-no-drop.list,"
+                f"RULE-SET,{base_url}rulesets/Sources/skk_upstream/reject-no-drop.list,"
                 "REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/Sources/skk_upstream/reject-drop.list,"
+                f"RULE-SET,{base_url}rulesets/Sources/skk_upstream/reject-drop.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
-                f"RULE-SET,{CDN_BASE_URL}rulesets/Sources/skk_upstream/BlockHttpDNS.list,"
+                f"RULE-SET,{base_url}rulesets/Sources/skk_upstream/BlockHttpDNS.list,"
                 "REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve",
             ]
         )
@@ -1811,9 +1871,19 @@ class AdBlockManager:
         generated_rulesets = self.generate_ruleset()
         self.functional_stats = self.integrate_functional_sections()
         self.write_catalog(generated_rulesets)
-        self.generate_module(generated_rulesets, lite_only=False)
-        Logger.info("Generating PROMAX Lite (mobile-friendly) module...")
-        self.generate_module(generated_rulesets, lite_only=True)
+        
+        Logger.info("Generating PROMAX modules (CDN + GitHub variants)...")
+        # Generate CDN version (default, recommended)
+        self.generate_module(generated_rulesets, lite_only=False, url_source="cdn")
+        # Generate GitHub Raw version (instant updates)
+        self.generate_module(generated_rulesets, lite_only=False, url_source="github")
+        
+        Logger.info("Generating PROMAX Lite (mobile-friendly) modules (CDN + GitHub variants)...")
+        # Generate CDN version (default, recommended)
+        self.generate_module(generated_rulesets, lite_only=True, url_source="cdn")
+        # Generate GitHub Raw version (instant updates)
+        self.generate_module(generated_rulesets, lite_only=True, url_source="github")
+        
         self.sync_shadowrocket_promax_modules()
         # Save hashes for change tracking
         local_source_paths = [e.resolved_path for e in source_entries if not e.is_remote]
