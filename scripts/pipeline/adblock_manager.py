@@ -287,6 +287,8 @@ class AdBlockManager:
             for line in lines:
                 stripped = line.strip()
                 if not stripped or stripped.startswith("#"):
+                    new_lines.append(line)
+                    continue
                 # Extract rule payload for robust matching
                 rule_payload = stripped.split(",", 1)[-1] if "," in stripped else stripped
                 if self.is_whitelisted(rule_payload):
