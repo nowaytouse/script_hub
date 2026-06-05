@@ -2,34 +2,27 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 53
+# Rules: 43
 
 DOMAIN-KEYWORD,voddazn
 DOMAIN-SUFFIX,abema-tv.com
 DOMAIN-SUFFIX,abema.io
 DOMAIN-SUFFIX,abema.tv
-DOMAIN-SUFFIX,abematv.akamaized.net
 DOMAIN-SUFFIX,ameba.jp
 DOMAIN-SUFFIX,amebame.com
 DOMAIN-SUFFIX,amebaownd.com
 DOMAIN-SUFFIX,amebaowndme.com
 DOMAIN-SUFFIX,ameblo.jp
 DOMAIN-SUFFIX,bucketeer.jp
-DOMAIN-SUFFIX,d151l6v8er5bdm.cloudfront.net
-DOMAIN-SUFFIX,d1sgwhnao7452x.cloudfront.net
 DOMAIN-SUFFIX,dazn-api.com
 DOMAIN-SUFFIX,dazn.com
 DOMAIN-SUFFIX,dazndn.com
 DOMAIN-SUFFIX,dc2-vodhls-perform.secure.footprint.net
 DOMAIN-SUFFIX,dca-ll-livedazn-dznlivejp.s.llnwi.net
 DOMAIN-SUFFIX,dca-ll-voddazn-dznvodjp.s.llnwi.net
-DOMAIN-SUFFIX,dcalivedazn.akamaized.net
-DOMAIN-SUFFIX,dcblivedazn.akamaized.net
 DOMAIN-SUFFIX,dmc.nico
 DOMAIN-SUFFIX,dogatch.jp
 DOMAIN-SUFFIX,dokusho-ojikan.jp
-DOMAIN-SUFFIX,ds-linear-abematv.akamaized.net
-DOMAIN-SUFFIX,ds-vod-abematv.akamaized.net
 DOMAIN-SUFFIX,edge.api.brightcove.com
 DOMAIN-SUFFIX,gorin.jp
 DOMAIN-SUFFIX,hayabusa.dev
@@ -37,12 +30,10 @@ DOMAIN-SUFFIX,hayabusa.io
 DOMAIN-SUFFIX,hayabusa.media
 DOMAIN-SUFFIX,indazn.com
 DOMAIN-SUFFIX,indaznlab.com
-DOMAIN-SUFFIX,linear-abematv.akamaized.net
 DOMAIN-SUFFIX,nicodic.jp
 DOMAIN-SUFFIX,nicomanga.jp
 DOMAIN-SUFFIX,niconico.com
 DOMAIN-SUFFIX,nicoseiga.jp
-DOMAIN-SUFFIX,nicovideo.jp
 DOMAIN-SUFFIX,nimg.jp
 DOMAIN-SUFFIX,rakuten.tv
 DOMAIN-SUFFIX,s.yimg.jp
@@ -51,7 +42,6 @@ DOMAIN-SUFFIX,simg.jp
 DOMAIN-SUFFIX,tv-tokyo.co.jp
 DOMAIN-SUFFIX,tver.co.jp
 DOMAIN-SUFFIX,tver.jp
-DOMAIN-SUFFIX,vod-abematv.akamaized.net
 DOMAIN-SUFFIX,winticket.jp
 USER-AGENT,AbemaTV*
 USER-AGENT,DAZN*

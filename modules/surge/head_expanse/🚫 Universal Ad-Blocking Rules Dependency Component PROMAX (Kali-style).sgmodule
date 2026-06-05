@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-05]
-#!desc=按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1944, Script=503, Body Rewrite=79, MITM=1060); 索引 rulesets/AdBlock/catalog.json
+#!desc=按用途分片(9片) + 应用内去广告(URL Rewrite=939, Map Local=1944, Script=503, Body Rewrite=79, MITM=1060); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-06-05 01:08:13
+#!date=2026-06-05 07:47:25
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -116,13 +116,6 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-# ── 威胁情报·终极 · HaGeZi DNS-Blocklists ultimate ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 

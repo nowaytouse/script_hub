@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 1572
+# Rules: 1561
 
 DOMAIN,adcdownload.apple.com.akadns.net
 DOMAIN,apple.com.akadns.net
@@ -18,11 +18,9 @@ DOMAIN,configuration-lb.ls-apple.com.akadns.net
 DOMAIN,configuration.apple.com.akadns.net
 DOMAIN,crl-lb.apple.com.akadns.net
 DOMAIN,dd-cdn.origin-apple.com.akadns.net
-DOMAIN,gsp4-cn.ls.apple.com.edgekey.net.globalredir.akadns.net
 DOMAIN,gspe19-2-cn-ssl.ls-apple.com.akadns.net
 DOMAIN,gspe19-cn.ls-apple.com.akadns.net
 DOMAIN,icloud-cdn.icloud.com.akadns.net
-DOMAIN,images.apple.com.edgekey.net.globalredir.akadns.net
 DOMAIN,ingest.apple-studies.com
 DOMAIN,init-p01md-lb.push-apple.com.akadns.net
 DOMAIN,init-p01st-lb.push-apple.com.akadns.net
@@ -31,19 +29,13 @@ DOMAIN,init.gc-lb.apple.com.akadns.net
 DOMAIN,iphone-ld.origin-apple.com.akadns.net
 DOMAIN,mesu-cdn.apple.com.akadns.net
 DOMAIN,mesu-china.apple.com.akadns.net
-DOMAIN,notary-submissions-prod.s3-accelerate.amazonaws.com
 DOMAIN,ocsp-lb.apple.com.akadns.net
 DOMAIN,ocsp2-lb.apple.com.akadns.net
 DOMAIN,oscdn.origin-apple.com.akadns.net
-DOMAIN,p-events-delivery.akamaized.net
 DOMAIN,pancake.cdn-apple.com.akadns.net
-DOMAIN,prod-support.apple-support.akadns.net
 DOMAIN,push-apple.com.akadns.net
 DOMAIN,stocks-sparkline-lb.apple.com.akadns.net
-DOMAIN,store.apple.com.edgekey.net
-DOMAIN,store.apple.com.edgekey.net.globalredir.akadns.net
 DOMAIN,store.storeimages.apple.com.akadns.net
-DOMAIN,support-china.apple-support.akadns.net
 DOMAIN,swcatalog-cdn.apple.com.akadns.net
 DOMAIN,swdist.apple.com.akadns.net
 DOMAIN,swscan-cdn.apple.com.akadns.net
@@ -51,7 +43,6 @@ DOMAIN,updates-http.cdn-apple.com.akadns.net
 DOMAIN,valid.origin-apple.com.akadns.net
 DOMAIN,weather-data.apple.com.akadns.net
 DOMAIN,www-cdn.icloud.com.akadns.net
-DOMAIN,www.apple.com.edgekey.net.globalredir.akadns.net
 DOMAIN-SUFFIX,100beatscheap.com
 DOMAIN-SUFFIX,12diasdepresentesdeitunes.com
 DOMAIN-SUFFIX,12diasderegalosdeitunes.cl
@@ -196,7 +187,6 @@ DOMAIN-SUFFIX,apple.com.sv
 DOMAIN-SUFFIX,apple.com.tr
 DOMAIN-SUFFIX,apple.com.tw
 DOMAIN-SUFFIX,apple.com.uy
-DOMAIN-SUFFIX,apple.comscoreresearch.com
 DOMAIN-SUFFIX,apple.cz
 DOMAIN-SUFFIX,apple.de
 DOMAIN-SUFFIX,apple.dk
@@ -222,7 +212,6 @@ DOMAIN-SUFFIX,apple.lv
 DOMAIN-SUFFIX,apple.me
 DOMAIN-SUFFIX,apple.my
 DOMAIN-SUFFIX,apple.net.gr
-DOMAIN-SUFFIX,apple.news
 DOMAIN-SUFFIX,apple.nl
 DOMAIN-SUFFIX,apple.no
 DOMAIN-SUFFIX,apple.pk
