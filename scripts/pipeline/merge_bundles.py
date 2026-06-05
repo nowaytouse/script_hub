@@ -117,7 +117,7 @@ UTILITIES_HEADER = {
     "name": "📊 面板工具合集",
     "desc": "节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板",
     "author": "Rabbit-Spec, xream, Coldvvater",
-    "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Tool.png",
+    "icon": "https://raw.githubusercontent.com/Orz-3/mini/master/Color/Setting.png",
     "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
     "tag": "面板, 工具",
 }
@@ -200,7 +200,7 @@ DEVTOOLS_HEADER = {
         "\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游"
     ),
     "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org",
-    "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Scriptable.png",
+    "icon": "https://raw.githubusercontent.com/Orz-3/mini/master/Color/Terminal.png",
     "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
     "tag": "ScriptHub, BoxJs, Sub-Store",
     "homepage": "https://script.hub",
@@ -556,7 +556,7 @@ def merge_youtube() -> None:
         "name": "📺 YouTube增强合集",
         "desc": "合并 YouTube 增强 (Maasea 上游) | Enhance: 画中画/后台播放/字幕翻译",
         "author": "Maasea",
-        "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png",
+        "icon": "https://raw.githubusercontent.com/Orz-3/mini/master/Color/YouTube.png",
         "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
         "tag": "YouTube, 增强",
     }
