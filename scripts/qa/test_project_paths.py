@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import os
 from hub.common import Logger
 from hub.project_paths import (
     ROOT,
@@ -12,6 +13,15 @@ from hub.project_paths import (
     DNS_SOURCE_DIR,
     DNS_MAPPING_DIR,
     SINGBOX_DNS_DIR,
+    SINGBOX_DIR,
+    RULE_SET_DIR,
+    ADBLOCK_DIR,
+    SURGE_HEAD_EXPANSE_DIR,
+    SURGE_AMPLIFY_NEXUS_DIR,
+    MODULE_LOCAL_DIR,
+    SKK_UPSTREAM_DIR,
+    KELEE_DIR,
+    METACUBEX_DIR,
 )
 from hub.error_handling import validate_dir_exists
 

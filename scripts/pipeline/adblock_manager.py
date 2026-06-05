@@ -261,6 +261,11 @@ class AdBlockManager:
         self.seen_rules: Dict[str, Set[str]] = {
             policy: set() for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"]
         }
+        # seen_suffixes[policy] = Set(domain_suffix_value) — enables subsumption dedup:
+        # DOMAIN,sub.b.com is dropped when DOMAIN-SUFFIX,b.com is already present.
+        self.seen_suffixes: Dict[str, Set[str]] = {
+            policy: set() for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"]
+        }
         self.sections: Dict[str, List[str]] = {name: [] for name in SECTION_NAMES}
         self._section_seen: Dict[str, Set[str]] = {name: set() for name in SECTION_NAMES}
         self.functional_stats: Dict[str, int] = {}
@@ -923,7 +928,22 @@ class AdBlockManager:
             # If we've already seen this rule in a previous (higher priority) category, skip it.
             if rendered in self.seen_rules[policy]:
                 return
-                
+
+            # SUFFIX SUBSUMPTION: lowercase the value for case-insensitive domain matching
+            rtype = normalized.split(",", 1)[0]
+            rval = normalized.split(",", 1)[1].lower() if "," in normalized else ""
+            policy_suffixes = self.seen_suffixes.setdefault(policy, set())
+            if rtype in ("DOMAIN", "DOMAIN-SUFFIX"):
+                # Drop DOMAIN,sub.b.com when DOMAIN-SUFFIX,b.com already accepted
+                if rtype == "DOMAIN":
+                    parts = rval.split(".")
+                    for i in range(len(parts) - 1):
+                        if ".".join(parts[i:]) in policy_suffixes:
+                            return
+                # Register suffix so future sub-domains can be dropped
+                if rtype == "DOMAIN-SUFFIX":
+                    policy_suffixes.add(rval)
+
             bucket = self.rules[policy].get(category, self.rules[policy]["Other"])
             bucket.add(rendered)
             self.seen_rules[policy].add(rendered)
@@ -1446,17 +1466,16 @@ class AdBlockManager:
         """Write machine-readable catalog + README for ruleset shards and module links."""
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Define base filenames (without [GitHub] suffix)
-        surge_promax_cdn = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
-        surge_promax_github = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style) [GitHub].sgmodule"
-        surge_lite_cdn = "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"
-        surge_lite_github = "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite) [GitHub].sgmodule"
-        
-        # Shadowrocket variants (will be converted from Surge)
-        sr_promax_cdn = surge_promax_cdn.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
-        sr_promax_github = surge_promax_github.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
-        sr_lite_cdn = surge_lite_cdn.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
-        sr_lite_github = surge_lite_github.replace("surge", "shadowrocket").replace(".sgmodule", ".module")
+        # CDN variants: head_expanse/   GitHub variants: head_expanse/github/ (folder-isolated, same filename)
+        surge_promax_cdn    = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
+        surge_promax_github = "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
+        surge_lite_cdn      = "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"
+        surge_lite_github   = "modules/surge/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"
+
+        sr_promax_cdn    = "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module"
+        sr_promax_github = "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module"
+        sr_lite_cdn      = "modules/shadowrocket/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).module"
+        sr_lite_github   = "modules/shadowrocket/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).module"
 
         shards = []
         for rs_path in generated_rulesets:
@@ -1608,12 +1627,16 @@ class AdBlockManager:
                 "**勿单独安装**专项模块或已废弃的 narrow_pierce 副本。\n",
                 "\n",
                 "### 🖥️ 桌面完整版（Full）\n",
-                f"- **Surge PROMAX**: [{catalog['modules']['surge_promax']['install_url']}]({catalog['modules']['surge_promax']['install_url']})\n",
-                f"- **Shadowrocket PROMAX**: [{catalog['modules']['shadowrocket_promax']['install_url']}]({catalog['modules']['shadowrocket_promax']['install_url']})\n",
+                f"- **Surge PROMAX** CDN: {catalog['modules']['surge_promax_cdn']['install_url']}\n",
+                f"- **Surge PROMAX** GitHub: {catalog['modules']['surge_promax_github']['install_url']}\n",
+                f"- **Shadowrocket PROMAX** CDN: {catalog['modules']['shadowrocket_promax_cdn']['install_url']}\n",
+                f"- **Shadowrocket PROMAX** GitHub: {catalog['modules']['shadowrocket_promax_github']['install_url']}\n",
                 "\n",
                 "### 📱 手机轻量版（Lite）\n",
-                f"- **Surge PROMAX Lite**: [{catalog['modules']['surge_promax_lite']['install_url']}]({catalog['modules']['surge_promax_lite']['install_url']})\n",
-                f"- **Shadowrocket PROMAX Lite**: [{catalog['modules']['shadowrocket_promax_lite']['install_url']}]({catalog['modules']['shadowrocket_promax_lite']['install_url']})\n",
+                f"- **Surge PROMAX Lite** CDN: {catalog['modules']['surge_promax_lite_cdn']['install_url']}\n",
+                f"- **Surge PROMAX Lite** GitHub: {catalog['modules']['surge_promax_lite_github']['install_url']}\n",
+                f"- **Shadowrocket PROMAX Lite** CDN: {catalog['modules']['shadowrocket_promax_lite_cdn']['install_url']}\n",
+                f"- **Shadowrocket PROMAX Lite** GitHub: {catalog['modules']['shadowrocket_promax_lite_github']['install_url']}\n",
             ]
         )
         write_file(ADBLOCK_README, "".join(lines))
@@ -1648,25 +1671,18 @@ class AdBlockManager:
         current_date = datetime.now().strftime("%Y-%m-%d")
         complex_prefixes = ("URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,")
         
-        # Choose URL base based on source
+        # Choose URL base; GitHub variants go into head_expanse/github/ subfolder (folder isolation, same filename)
         base_url = CDN_BASE_URL if url_source == "cdn" else GITHUB_RAW_URL
-        url_suffix = "" if url_source == "cdn" else " [GitHub]"
+        out_dir = SURGE_HEAD_EXPANSE_DIR if url_source == "cdn" else project_paths.SURGE_HEAD_EXPANSE_GITHUB_DIR
+        os.makedirs(out_dir, exist_ok=True)
 
         if lite_only:
-            # The user explicitly wants to KEEP privacy, threat intel, etc., in Lite.
             active_rulesets = generated_rulesets
             base_filename = "📱 Universal Ad-Blocking Rules (PROMAX Lite)"
-            target_path = os.path.join(
-                SURGE_HEAD_EXPANSE_DIR,
-                f"{base_filename}{url_suffix}.sgmodule"
-            )
         else:
             active_rulesets = generated_rulesets
             base_filename = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)"
-            target_path = os.path.join(
-                SURGE_HEAD_EXPANSE_DIR,
-                f"{base_filename}{url_suffix}.sgmodule"
-            )
+        target_path = os.path.join(out_dir, f"{base_filename}.sgmodule")
 
         shard_count = len(active_rulesets)
 
@@ -1855,6 +1871,10 @@ class AdBlockManager:
                 if mode == "skip":
                     continue
                 Logger.info(f"  + Rules from LocalModules ({mode}): {f}")
+                try:
+                    raw_text = open(path, encoding="utf-8").read()
+                except Exception:
+                    raw_text = None
                 self.extract_from_file(
                     path,
                     default_policy="REJECT",
@@ -1863,6 +1883,15 @@ class AdBlockManager:
                     rules_only=True,
                     promax_line_split=True,
                 )
+                # Spit-out: write back the module with absorbed rules stripped
+                if raw_text is not None:
+                    try:
+                        cleaned = self.build_cleaned_module_content(raw_text, "REJECT")
+                        if cleaned != raw_text:
+                            write_file(path, cleaned)
+                            Logger.info(f"  🧹 Spit-out (rules stripped): {f}")
+                    except Exception as e:
+                        Logger.warn(f"  Spit-out failed for {f}: {e}")
 
         # 4. Fetch and extract from all other canonical sources (sorted by priority)
         Logger.section("Fetching Canonical AdBlock Sources")

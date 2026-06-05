@@ -42,9 +42,27 @@ def run_url_rewrites(directory: str) -> int:
         r"(?<!/)https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^\"'\s]+\.[a-zA-Z0-9]+)": r"https://gh-proxy.com/https://github.com/\1/\2/releases/download/\3/\4",
     }
 
+    # Normalise for consistent prefix matching
+    directory = os.path.normpath(directory)
+    # Paths that intentionally carry GitHub Raw URLs — must not be CDN-rewritten.
+    _GITHUB_SOURCE_DIRS = {
+        os.path.normpath(p) for p in [
+            os.path.join(SURGE_HEAD_EXPANSE_GITHUB_DIR),
+            os.path.join(SHADOWROCKET_HEAD_EXPANSE_GITHUB_DIR),
+        ]
+    }
+
+    def _is_github_source(path: str) -> bool:
+        p = os.path.normpath(path)
+        return any(p == d or p.startswith(d + os.sep) for d in _GITHUB_SOURCE_DIRS)
+
     modified_count = 0
     for root, dirs, files in os.walk(directory):
         if '.git' in root:
+            continue
+        # Skip github/ variant folders — their raw.githubusercontent refs are intentional
+        if _is_github_source(root):
+            dirs.clear()
             continue
         for file in files:
             if file.endswith((".sgmodule", ".module", ".list", ".conf", ".json", ".html", ".md")):

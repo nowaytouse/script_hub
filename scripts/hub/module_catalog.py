@@ -18,8 +18,14 @@ PROMAX_FILENAME = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX 
 PROMAX_MERGE_LABEL = "🚫 Universal Ad-Blocking Rules (PROMAX)"
 PROMAX_MERGED_NAME_HINTS = ("去广告", "AdBlock", "adblock", "ADBlock")
 from hub.paths import REPO_RAW_PREFIX
+from hub.project_paths import GITHUB_RAW_PREFIX
 
 CDN_BASE = REPO_RAW_PREFIX
+GITHUB_BASE = GITHUB_RAW_PREFIX
+# Modules in head_expanse/github/ carry GitHub-raw RULE-SET refs (no url_rewriter CDN clobbering)
+HEAD_EXPANSE_GITHUB_REL = 'modules/surge/head_expanse/github/'
+HEAD_EXPANSE_SR_GITHUB_REL = 'modules/shadowrocket/head_expanse/github/'
+HEAD_EXPANSE_GITHUB_CAT = 'head_expanse'  # only this category has github/ variants
 
 CATEGORIES = {
     "amplify_nexus": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
@@ -162,6 +168,12 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
             relative_path = str(module_file.relative_to(project_root))
             encoded_path = urllib.parse.quote(relative_path, safe='/')
             
+            # For head_expanse modules, also compute the GitHub-source install URL
+            if cat_key == HEAD_EXPANSE_GITHUB_CAT:
+                github_rel = HEAD_EXPANSE_GITHUB_REL + module_file.name
+                github_install_url = GITHUB_BASE + urllib.parse.quote(github_rel, safe="/")
+            else:
+                github_install_url = None
             info: Dict[str, Any] = {
                 "id": module_file.stem,
                 "filename": module_file.name,
@@ -170,6 +182,7 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
                 "has_arguments": False,
                 "merged_into": MERGED_ALIASES.get(module_file.name),
                 "install_url": CDN_BASE + encoded_path,
+                "github_install_url": github_install_url,
             }
             try:
                 meta, _ = parse_module(module_file.read_text(encoding="utf-8"))
@@ -263,6 +276,17 @@ def _modules_to_helper_groups(
         # URL encode the path for CDN compatibility (spaces, emoji, special chars)
         encoded_path = urllib.parse.quote(path, safe='/')
         url = CDN_BASE + encoded_path
+        # github_url: use stored github_install_url if present, else same as cdn url
+        if shadowrocket:
+            ghu = m.get("github_install_url")
+            if ghu:
+                # Convert surge path to SR path
+                sr_github_rel = HEAD_EXPANSE_SR_GITHUB_REL + m["filename"].replace(".sgmodule", ".module")
+                github_url = GITHUB_BASE + urllib.parse.quote(sr_github_rel, safe="/")
+            else:
+                github_url = url
+        else:
+            github_url = m.get("github_install_url") or url
         name = m.get("name", m["filename"])
         badge = ""
         for key, icon in UI_BADGES.items():
@@ -278,6 +302,7 @@ def _modules_to_helper_groups(
                 "date": m.get("date", ""),
                 "icon": m.get("icon", ""),
                 "url": url,
+                "github_url": github_url,
                 "badge": badge,
                 "filename": m.get("filename", ""),
             }
@@ -659,15 +684,11 @@ def build_helper_html(
             render();
         }}
 
-        function convertUrl(url) {{
-            if (urlSource === 'github') {{
-                // 将 cdn.jsdelivr.net/gh/owner/repo@branch/ 转换为 raw.githubusercontent.com/owner/repo/branch/
-                return url.replace(
-                    /https:\/\/cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/]+)@([^\/]+)\//,
-                    'https://raw.githubusercontent.com/$1/$2/$3/'
-                );
-            }}
-            return url; // 默认返回 CDN URL
+        function getUrl(item) {{
+            // Use explicitly stored github_url when switching to GitHub source;
+            // fall back to cdn url for modules that have no GitHub variant (e.g. amplify_nexus).
+            if (urlSource === 'github') return item.github_url || item.url;
+            return item.url;
         }}
 
         function escapeHTML(str) {{
@@ -699,7 +720,7 @@ def build_helper_html(
                 `;
                 
                 items.forEach(i => {{
-                    const actualUrl = convertUrl(i.url);
+                    const actualUrl = getUrl(i);
                     const isCopied = copiedSet.has(actualUrl);
                     const btnClass = isCopied ? 'copy-btn success' : 'copy-btn';
                     const btnText = isCopied ? '已复制 ✓' : '复制链接';

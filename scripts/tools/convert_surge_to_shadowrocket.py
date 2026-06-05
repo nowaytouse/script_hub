@@ -339,27 +339,29 @@ PROMAX_SURGE_MODULES = (
 
 
 def convert_promax_modules() -> bool:
-    """Convert only Surge PROMAX / PROMAX Lite → Shadowrocket head_expanse."""
-    cat = "head_expanse"
-    cat_path = SURGE_MODULE_DIR / cat
-    out_dir = SR_MODULE_DIR / cat
-    out_dir.mkdir(parents=True, exist_ok=True)
+    """Convert Surge PROMAX / PROMAX Lite → Shadowrocket (CDN root + github/ subfolder)."""
     ok = True
-    for name in PROMAX_SURGE_MODULES:
-        src = cat_path / name
-        if not src.is_file():
-            Logger.warn(f"PROMAX source missing: {name}")
-            ok = False
-            continue
-        Logger.info(f"Converting PROMAX → SR: {name}")
-        try:
-            converted = convert_content(src.read_text(encoding="utf-8"))
-            out_path = out_dir / (src.stem + ".module")
-            write_file(str(out_path), converted)
-            Logger.success(f"SR module written: {out_path.name}")
-        except Exception as exc:
-            Logger.error(f"PROMAX SR conversion failed [{name}]: {exc}")
-            ok = False
+    # Convert both the CDN root variant and the github/ folder-isolated variant
+    for subdir in ("", "github"):
+        src_cat = SURGE_MODULE_DIR / "head_expanse" / subdir if subdir else SURGE_MODULE_DIR / "head_expanse"
+        out_cat = SR_MODULE_DIR / "head_expanse" / subdir if subdir else SR_MODULE_DIR / "head_expanse"
+        out_cat.mkdir(parents=True, exist_ok=True)
+        for name in PROMAX_SURGE_MODULES:
+            src = src_cat / name
+            if not src.is_file():
+                if subdir == "":
+                    Logger.warn(f"PROMAX source missing: {name}")
+                    ok = False
+                continue
+            Logger.info(f"Converting PROMAX → SR [{subdir or 'cdn'}]: {name}")
+            try:
+                converted = convert_content(src.read_text(encoding="utf-8"))
+                out_path = out_cat / (src.stem + ".module")
+                write_file(str(out_path), converted)
+                Logger.success(f"SR module written: {out_path.relative_to(SR_MODULE_DIR)}")
+            except Exception as exc:
+                Logger.error(f"PROMAX SR conversion failed [{subdir or 'cdn'}/{name}]: {exc}")
+                ok = False
     return ok
 
 

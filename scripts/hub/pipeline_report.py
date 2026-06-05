@@ -12,6 +12,7 @@ from hub.project_paths import (
     DNS_MAPPING_DIR,
     ADBLOCK_DIR,
     SINGBOX_DIR,
+    SINGBOX_DNS_DIR,
     SURGE_MODULE_DIR,
     SHADOWROCKET_MODULE_DIR,
 )
@@ -55,10 +56,14 @@ def audit_srs_coverage() -> Tuple[int, List[str]]:
         if _rule_count(list_path) == 0:
             continue
         total += 1
-        srs_path = os.path.join(SINGBOX_DIR, f"{base}_Singbox.srs")
-        # Some legitimately-small SRS outputs (e.g. ASN) still compile into a
-        # valid binary with a stable header "SRS". Avoid false negatives by
-        # validating the magic bytes instead of an arbitrary size threshold.
+        # Mirror srs_generator routing: DNS files go to SINGBOX_DNS_DIR, others to SINGBOX_DIR
+        if DNS_MAPPING_DIR in list_path or "/dns/" in list_path:
+            srs_path = os.path.join(SINGBOX_DNS_DIR, f"{base}_Singbox.srs")
+        elif ADBLOCK_DIR in list_path:
+            srs_path = os.path.join(ADBLOCK_DIR, f"{base}_Singbox.srs")
+        else:
+            srs_path = os.path.join(SINGBOX_DIR, f"{base}_Singbox.srs")
+        # Validate magic bytes ("SRS") rather than file size to avoid false negatives.
         if not os.path.isfile(srs_path):
             missing.append(f"{base}.list -> {os.path.basename(srs_path)}")
             continue

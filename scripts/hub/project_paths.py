@@ -82,11 +82,15 @@ MODULES_DIR = os.path.join(ROOT, "modules")
 # Surge modules
 SURGE_MODULE_DIR = os.path.join(MODULES_DIR, "surge")
 SURGE_HEAD_EXPANSE_DIR = os.path.join(SURGE_MODULE_DIR, "head_expanse")
+# GitHub-source PROMAX variants live in a subfolder to prevent url_rewriter from clobbering them
+SURGE_HEAD_EXPANSE_GITHUB_DIR = os.path.join(SURGE_HEAD_EXPANSE_DIR, "github")
 SURGE_AMPLIFY_NEXUS_DIR = os.path.join(SURGE_MODULE_DIR, "amplify_nexus")
 
 # Shadowrocket modules
 SHADOWROCKET_MODULE_DIR = os.path.join(MODULES_DIR, "shadowrocket")
 SHADOWROCKET_HEAD_EXPANSE_DIR = os.path.join(SHADOWROCKET_MODULE_DIR, "head_expanse")
+# GitHub-source PROMAX variants
+SHADOWROCKET_HEAD_EXPANSE_GITHUB_DIR = os.path.join(SHADOWROCKET_HEAD_EXPANSE_DIR, "github")
 SHADOWROCKET_AMPLIFY_NEXUS_DIR = os.path.join(SHADOWROCKET_MODULE_DIR, "amplify_nexus")
 
 # Module source build directory
@@ -156,6 +160,7 @@ CONVERT_SURGE_TO_SHADOWROCKET_SCRIPT = os.path.join(SCRIPTS_DIR, "tools", "conve
 # ============================================================================
 
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+GITHUB_RAW_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
 REPO_RAW_PREFIX = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
 LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}rulesets/RULE-SET/"
 LEGACY_SCRIPT_RAW_PREFIX = f"{REPO_RAW_PREFIX}modules/scripts/"
