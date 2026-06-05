@@ -177,7 +177,7 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
                 info["date"] = meta.get("date", "")
                 info["icon"] = meta.get(
                     "icon",
-                    f"{CDN_BASE}docs/assets/default_icon.png",
+                    "",
                 )
                 if (
                     not info.get("merged_into")
@@ -270,7 +270,7 @@ def _modules_to_helper_groups(
                 "desc": desc,
                 "author": m.get("author", ""),
                 "date": m.get("date", ""),
-                "icon": m.get("icon", f"{CDN_BASE}docs/assets/default_icon.png"),
+                "icon": m.get("icon", ""),
                 "url": url,
                 "badge": badge,
                 "filename": m.get("filename", ""),
@@ -290,6 +290,9 @@ def build_helper_html(
     surge_total = sum(len(c["items"]) for c in surge_groups.values())
     sr_total = sum(len(c["items"]) for c in sr_groups.values())
     catalog_generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # SVG Default Icon encoded as data URI
+    default_icon = "data:image/svg+xml;utf8,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2360a5fa'/%3E%3Cstop offset='100%25' stop-color='%232563eb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23bg)'/%3E%3Cpath d='M35 38 L50 50 L35 62' fill='none' stroke='%23ffffff' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='55' y1='65' x2='70' y2='65' stroke='%23ffffff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E"
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -499,53 +502,62 @@ def build_helper_html(
             gap: 16px;
         }}
         .icon-wrap {{
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: var(--bg-base);
-            padding: 8px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            width: 76px;
+            height: 76px;
+            border-radius: 20px;
+            background: var(--bg-card-hover);
+            padding: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px solid var(--border);
+            overflow: hidden;
+            flex-shrink: 0;
         }}
         .card-icon {{
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
+            object-fit: cover;
         }}
-        .card-title-area {{ flex: 1; min-width: 0; }}
+        .card-title-area {{ 
+            flex: 1; 
+            min-width: 0; 
+        }}
         .card-title {{
             font-size: 1.15rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 6px;
-            line-height: 1.3;
+            line-height: 1.4;
+            word-break: break-all;
         }}
         .card-author {{
             font-size: 0.85rem;
             color: var(--primary);
             font-weight: 600;
+            display: inline-block;
         }}
         .card-date {{
             font-size: 0.75rem;
             color: var(--text-sub);
             margin-left: 6px;
+            display: inline-block;
         }}
 
         .card-desc {{
             font-size: 0.95rem;
-            line-height: 1.5;
+            line-height: 1.6;
             color: var(--text-sub);
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 4;
             -webkit-box-orient: vertical;
             overflow: hidden;
             flex-grow: 1;
+            word-wrap: break-word;
+            word-break: break-word;
         }}
 
         .card-footer {{
@@ -603,7 +615,6 @@ def build_helper_html(
             transform: translateX(-50%) translateY(0);
         }}
 
-        /* Staggered Animation for cards */
         @keyframes fadeUp {{
             from {{ opacity: 0; transform: translateY(20px); }}
             to {{ opacity: 1; transform: translateY(0); }}
@@ -616,17 +627,17 @@ def build_helper_html(
     <header class="app-header">
         <h1 class="app-title">Script Hub</h1>
         <p class="app-subtitle">PROMAX = 广告规则；增强功能模块请在下方按需点击安装</p>
-        <div class="app-meta">云端数据构建于: {catalog_generated}</div>
+        <div class="app-meta">云端数据构建于: {{catalog_generated}}</div>
     </header>
 
     <nav class="nav-island">
         <button class="nav-btn active" onclick="switchApp('surge')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            Surge ({surge_total})
+            Surge ({{surge_total}})
         </button>
         <button class="nav-btn" onclick="switchApp('shadowrocket')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2l.5-.5M12 2l3 3 2.5-2.5L20 5l-2.5 2.5L20 10l-3 3M17.5 10l-10 10-3.5-3.5 10-10"/></svg>
-            Shadowrocket ({sr_total})
+            Shadowrocket ({{sr_total}})
         </button>
     </nav>
 
@@ -641,7 +652,7 @@ def build_helper_html(
     <script>
         const surgeData = {json.dumps(surge_groups, ensure_ascii=False)};
         const srData = {json.dumps(sr_groups, ensure_ascii=False)};
-        const defaultIcon = "{CDN_BASE}docs/assets/default_icon.png";
+        const defaultIcon = "{default_icon}";
         
         let currentApp = 'surge';
         const copiedSet = new Set();
@@ -656,7 +667,8 @@ def build_helper_html(
         }}
 
         function escapeHTML(str) {{
-            return str.replace(/[&<>'"]/g, tag => ({{
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({{
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }}[tag]));
         }}
@@ -672,7 +684,8 @@ def build_helper_html(
 
             for (const [k, cat] of Object.entries(data)) {{
                 const items = cat.items.filter(i =>
-                    i.name.toLowerCase().includes(term) || i.desc.toLowerCase().includes(term));
+                    (i.name && i.name.toLowerCase().includes(term)) || 
+                    (i.desc && i.desc.toLowerCase().includes(term)));
                 
                 if (!items.length) continue;
                 
@@ -688,15 +701,16 @@ def build_helper_html(
                     const isCopied = copiedSet.has(i.url);
                     const btnClass = isCopied ? 'copy-btn success' : 'copy-btn';
                     const btnText = isCopied ? '已复制 ✓' : '一键安装';
+                    const iconSrc = (i.icon && !i.icon.includes('default_icon.png')) ? i.icon : defaultIcon;
                     
                     html += `
                         <article class="module-card animate-item" style="animation-delay: ${{delay * 0.03}}s">
                             <div class="card-header">
                                 <div class="icon-wrap">
-                                    <img class="card-icon" src="${{escapeHTML(i.icon)}}" onerror="this.src='${{defaultIcon}}'">
+                                    <img class="card-icon" src="${{escapeHTML(iconSrc)}}" onerror="this.src='${{defaultIcon}}'">
                                 </div>
                                 <div class="card-title-area">
-                                    <h4 class="card-title">${{i.badge}} ${{escapeHTML(i.name)}}</h4>
+                                    <h4 class="card-title">${{escapeHTML(i.badge || '')}} ${{escapeHTML(i.name)}}</h4>
                                     <div>
                                         ${{i.author ? `<span class="card-author">@${{escapeHTML(i.author)}}</span>` : ''}}
                                         ${{i.date ? `<span class="card-date">${{escapeHTML(i.date)}}</span>` : ''}}
@@ -726,7 +740,6 @@ def build_helper_html(
                 `;
             }}
             
-            // Fast DOM update
             container.innerHTML = html;
         }}
 
@@ -743,15 +756,11 @@ def build_helper_html(
             }}
             
             copiedSet.add(url);
-            
-            // Animate button
             btn.textContent = '已复制 ✓'; 
             btn.className = 'copy-btn success';
             
-            // Show toast
             const toast = document.getElementById('toast');
             toast.classList.remove('show');
-            // Trigger reflow
             void toast.offsetWidth;
             toast.classList.add('show');
             
@@ -760,7 +769,6 @@ def build_helper_html(
             }}, 2500);
         }}
 
-        // Initial render
         requestAnimationFrame(render);
     </script>
 </body>

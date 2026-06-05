@@ -206,53 +206,62 @@
             gap: 16px;
         }
         .icon-wrap {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: var(--bg-base);
-            padding: 8px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            width: 76px;
+            height: 76px;
+            border-radius: 20px;
+            background: var(--bg-card-hover);
+            padding: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px solid var(--border);
+            overflow: hidden;
+            flex-shrink: 0;
         }
         .card-icon {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
+            object-fit: cover;
         }
-        .card-title-area { flex: 1; min-width: 0; }
+        .card-title-area { 
+            flex: 1; 
+            min-width: 0; 
+        }
         .card-title {
             font-size: 1.15rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 6px;
-            line-height: 1.3;
+            line-height: 1.4;
+            word-break: break-all;
         }
         .card-author {
             font-size: 0.85rem;
             color: var(--primary);
             font-weight: 600;
+            display: inline-block;
         }
         .card-date {
             font-size: 0.75rem;
             color: var(--text-sub);
             margin-left: 6px;
+            display: inline-block;
         }
 
         .card-desc {
             font-size: 0.95rem;
-            line-height: 1.5;
+            line-height: 1.6;
             color: var(--text-sub);
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 4;
             -webkit-box-orient: vertical;
             overflow: hidden;
             flex-grow: 1;
+            word-wrap: break-word;
+            word-break: break-word;
         }
 
         .card-footer {
@@ -310,7 +319,6 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* Staggered Animation for cards */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -323,17 +331,17 @@
     <header class="app-header">
         <h1 class="app-title">Script Hub</h1>
         <p class="app-subtitle">PROMAX = 广告规则；增强功能模块请在下方按需点击安装</p>
-        <div class="app-meta">云端数据构建于: 2026-06-06 02:20:08</div>
+        <div class="app-meta">云端数据构建于: {catalog_generated}</div>
     </header>
 
     <nav class="nav-island">
         <button class="nav-btn active" onclick="switchApp('surge')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            Surge (11)
+            Surge ({surge_total})
         </button>
         <button class="nav-btn" onclick="switchApp('shadowrocket')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2l.5-.5M12 2l3 3 2.5-2.5L20 5l-2.5 2.5L20 10l-3 3M17.5 10l-10 10-3.5-3.5 10-10"/></svg>
-            Shadowrocket (11)
+            Shadowrocket ({sr_total})
         </button>
     </nav>
 
@@ -346,9 +354,9 @@
     <div id="toast" class="toast"><span>✨</span> 链接已成功复制到剪贴板</div>
 
     <script>
-        const surgeData = {"amplify_nexus": {"name": "🛠️ Amplify Nexus › 增幅枢纽", "items": [{"id": "bf232a05bda2cb33221a0f8c4c3adb04", "name": "Reddit 增强合集 (翻译 + NSFW)", "desc": "Reddit 功能增强：自动翻译 + NSFW 解锁 (基于 JQ 引擎)", "author": "RavelloH, ScriptHub", "date": "", "icon": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/Reddit%20%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%20%28%E7%BF%BB%E8%AF%91%20%2B%20NSFW%29.sgmodule", "badge": "", "filename": "Reddit 增强合集 (翻译 + NSFW).sgmodule"}, {"id": "6efa28bd3b0bf9b045735151013e7966", "name": "WeChat增强", "desc": "WeChat/微信解锁外部链接与小程序优化。", "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]", "date": "2025-07-20 21:12:00", "icon": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/WeChat_Enhance.sgmodule", "badge": "", "filename": "WeChat_Enhance.sgmodule"}, {"id": "8da08378b8fcebc117157059da736556", "name": "扫描全能王", "desc": "解锁扫描全能王", "author": "NobyDa", "date": "", "icon": "https://cdn.jsdelivr.net/gh/deezertidal/private@main/icons/cs.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.sgmodule", "badge": "", "filename": "扫描全能王解锁.sgmodule"}, {"id": "266c620b97a374e2a47133307b2d80d8", "name": "🍎 Apple服务增强合集", "desc": "整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能\\n\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用", "author": "VirgilClyne[https://github.com/VirgilClyne]", "date": "2026-06-06 02:18:01", "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "🍎 Apple服务增强合集.sgmodule"}, {"id": "607a25a4bda7e5e5cf248c025271f860", "name": "📊 面板工具合集", "desc": "节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板\\n\\n【Bundled Modules】\\n✦ 节假日信息: 显示节假日的信息\\n\\n✦ 网络信息 𝕏: 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha\\n\\n✦ 机场订阅信息: 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间", "author": "Rabbit-Spec, xream, Coldvvater", "date": "2026-06-06 02:18:03", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "📊 面板工具合集.sgmodule"}, {"id": "f1d6495e77042c3a6fceaf65dcf0c800", "name": "📺 BiliBili增强合集", "desc": "合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）\\n\\n【Bundled Modules】\\n✦ 📺 BiliBili: ⚙️ Enhanced: 哔哩哔哩：增强模式\\n中国站功能增强及UI自定义\\n\\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\\n中国站自动线路及全区搜索\\n\\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\\n中国站CDN自定义\\n\\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接\\n\\n✦ Bili1080P: Bili1080P", "author": "BiliUniverse, Maasea", "date": "2026-06-06 02:17:51", "icon": "https://www.bilibili.com/favicon.ico", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "📺 BiliBili增强合集.sgmodule"}, {"id": "611dce9f84ae7374468e4a778a863fc4", "name": "📺 YouTube增强合集", "desc": "合并 YouTube 增强 (Maasea 上游) | Enhance: 画中画/后台播放/字幕翻译", "author": "Maasea", "date": "", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "📺 YouTube增强合集.sgmodule"}, {"id": "c778c9229df1720d96625eb349ecbf0c", "name": "🧰 Script Hub 配套工具合集", "desc": "Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游\\n\\n【Bundled Modules】\\n✦ BoxJs: http://boxjs.com\\n\\n✦ Sub-Store(β): 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *\\n\\n✦ Script Hub: 重写 & 规则集转换: https://script.hub", "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org", "date": "2026-06-06 02:18:13", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Terminal.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%A7%B0%20Script%20Hub%20%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.sgmodule", "badge": "⭐", "filename": "🧰 Script Hub 配套工具合集.sgmodule"}]}, "head_expanse": {"name": "🔝 Head Expanse › 首端扩域", "items": [{"id": "03560c9a7c68bd0be50236f958e20546", "name": "🌟 AdBlock Helper", "desc": "Outbound Port Filtering | DNS Overrides | Hosts steering", "author": "nyamiiko (Enhanced)", "date": "", "icon": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%8C%9F%20AdBlock%20Helper%20.sgmodule", "badge": "", "filename": "🌟 AdBlock Helper .sgmodule"}, {"id": "b7c6fcf2580390e49b3b0096e9939ed7", "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-06]", "desc": "轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule", "badge": "", "filename": "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"}, {"id": "380bac31d37b2151fbedf67c077039b8", "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-06]", "desc": "按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1058); 索引 rulesets/AdBlock/catalog.json", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule", "badge": "🔥", "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"}]}, "narrow_pierce": {"name": "🎯 Narrow Pierce › 窄域穿刺", "items": []}};
-        const srData = {"amplify_nexus": {"name": "🛠️ Amplify Nexus › 增幅枢纽", "items": [{"id": "c6bd728351cff5931d362e4a32cf95c1", "name": "Reddit 增强合集 (翻译 + NSFW)", "desc": "[🚀SR] Reddit 功能增强：自动翻译 + NSFW 解锁 (基于 JQ 引擎)", "author": "RavelloH, ScriptHub", "date": "", "icon": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/Reddit%20%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%20%28%E7%BF%BB%E8%AF%91%20%2B%20NSFW%29.module", "badge": "", "filename": "Reddit 增强合集 (翻译 + NSFW).sgmodule"}, {"id": "b38b16a58616d1b6b31c13ab073a5d94", "name": "WeChat增强", "desc": "[🚀SR] WeChat/微信解锁外部链接与小程序优化。", "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]", "date": "2025-07-20 21:12:00", "icon": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/WeChat_Enhance.module", "badge": "", "filename": "WeChat_Enhance.sgmodule"}, {"id": "d722ea52c0e9b2a365202c38c710b1c4", "name": "扫描全能王", "desc": "[🚀SR] 解锁扫描全能王", "author": "NobyDa", "date": "", "icon": "https://cdn.jsdelivr.net/gh/deezertidal/private@main/icons/cs.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.module", "badge": "", "filename": "扫描全能王解锁.sgmodule"}, {"id": "e0dff57ae751b60c4437f91af9d5d44e", "name": "🍎 Apple服务增强合集", "desc": "[🚀SR] 整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能\\n\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用", "author": "VirgilClyne[https://github.com/VirgilClyne]", "date": "2026-06-06 02:18:01", "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module", "badge": "", "filename": "🍎 Apple服务增强合集.sgmodule"}, {"id": "00519ad219fc25eecb5ea525ca2d423f", "name": "📊 面板工具合集", "desc": "[🚀SR] 节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板\\n\\n【Bundled Modules】\\n✦ 节假日信息: 显示节假日的信息\\n\\n✦ 网络信息 𝕏: 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha\\n\\n✦ 机场订阅信息: 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间", "author": "Rabbit-Spec, xream, Coldvvater", "date": "2026-06-06 02:18:03", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module", "badge": "", "filename": "📊 面板工具合集.sgmodule"}, {"id": "ec4f9bdcec400f35b0f208c0447b7c8d", "name": "📺 BiliBili增强合集", "desc": "[🚀SR] 合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）\\n\\n【Bundled Modules】\\n✦ 📺 BiliBili: ⚙️ Enhanced: 哔哩哔哩：增强模式\\n中国站功能增强及UI自定义\\n\\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\\n中国站自动线路及全区搜索\\n\\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\\n中国站CDN自定义\\n\\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接\\n\\n✦ Bili1080P: Bili1080P", "author": "BiliUniverse, Maasea", "date": "2026-06-06 02:17:51", "icon": "https://www.bilibili.com/favicon.ico", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module", "badge": "", "filename": "📺 BiliBili增强合集.sgmodule"}, {"id": "0983ce653f0231e8942fb99d29bda2d6", "name": "📺 YouTube增强合集", "desc": "[🚀SR] 合并 YouTube 增强 (Maasea 上游) | Enhance: 画中画/后台播放/字幕翻译", "author": "Maasea", "date": "", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module", "badge": "", "filename": "📺 YouTube增强合集.sgmodule"}, {"id": "2566b67e06b079694039c43db14caf93", "name": "🧰 Script Hub 配套工具合集", "desc": "[🚀SR] Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游\\n\\n【Bundled Modules】\\n✦ BoxJs: http://boxjs.com\\n\\n✦ Sub-Store(β): 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *\\n\\n✦ Script Hub: 重写 & 规则集转换: https://script.hub", "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org", "date": "2026-06-06 02:18:13", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Terminal.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%A7%B0%20Script%20Hub%20%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module", "badge": "⭐", "filename": "🧰 Script Hub 配套工具合集.sgmodule"}]}, "head_expanse": {"name": "🔝 Head Expanse › 首端扩域", "items": [{"id": "e38441562283ac5dc46a56c749104154", "name": "🌟 AdBlock Helper", "desc": "[🚀SR] Outbound Port Filtering | DNS Overrides | Hosts steering", "author": "nyamiiko (Enhanced)", "date": "", "icon": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head_expanse/%F0%9F%8C%9F%20AdBlock%20Helper%20.module", "badge": "", "filename": "🌟 AdBlock Helper .sgmodule"}, {"id": "9f5d001fc616f08e6d2ea73a9bde033c", "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-06]", "desc": "[🚀SR] 轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.module", "badge": "", "filename": "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"}, {"id": "ec23b37cb27975965a0dc38c808012a5", "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-06]", "desc": "[🚀SR] 按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1058); 索引 rulesets/AdBlock/catalog.json", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module", "badge": "🔥", "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"}]}, "narrow_pierce": {"name": "🎯 Narrow Pierce › 窄域穿刺", "items": []}};
-        const defaultIcon = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.png";
+        const surgeData = {"amplify_nexus": {"name": "🛠️ Amplify Nexus › 增幅枢纽", "items": [{"id": "bf232a05bda2cb33221a0f8c4c3adb04", "name": "Reddit 增强合集 (翻译 + NSFW)", "desc": "Reddit 功能增强：自动翻译 + NSFW 解锁 (基于 JQ 引擎)", "author": "RavelloH, ScriptHub", "date": "", "icon": "", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/Reddit%20%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%20%28%E7%BF%BB%E8%AF%91%20%2B%20NSFW%29.sgmodule", "badge": "", "filename": "Reddit 增强合集 (翻译 + NSFW).sgmodule"}, {"id": "6efa28bd3b0bf9b045735151013e7966", "name": "WeChat增强", "desc": "WeChat/微信解锁外部链接与小程序优化。", "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]", "date": "2025-07-20 21:12:00", "icon": "", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/WeChat_Enhance.sgmodule", "badge": "", "filename": "WeChat_Enhance.sgmodule"}, {"id": "8da08378b8fcebc117157059da736556", "name": "扫描全能王", "desc": "解锁扫描全能王", "author": "NobyDa", "date": "", "icon": "https://cdn.jsdelivr.net/gh/deezertidal/private@main/icons/cs.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.sgmodule", "badge": "", "filename": "扫描全能王解锁.sgmodule"}, {"id": "266c620b97a374e2a47133307b2d80d8", "name": "🍎 Apple服务增强合集", "desc": "整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能\\n\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用", "author": "VirgilClyne[https://github.com/VirgilClyne]", "date": "2026-06-06 02:18:01", "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "🍎 Apple服务增强合集.sgmodule"}, {"id": "607a25a4bda7e5e5cf248c025271f860", "name": "📊 面板工具合集", "desc": "节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板\\n\\n【Bundled Modules】\\n✦ 节假日信息: 显示节假日的信息\\n\\n✦ 网络信息 𝕏: 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha\\n\\n✦ 机场订阅信息: 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间", "author": "Rabbit-Spec, xream, Coldvvater", "date": "2026-06-06 02:18:03", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "📊 面板工具合集.sgmodule"}, {"id": "f1d6495e77042c3a6fceaf65dcf0c800", "name": "📺 BiliBili增强合集", "desc": "合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）\\n\\n【Bundled Modules】\\n✦ 📺 BiliBili: ⚙️ Enhanced: 哔哩哔哩：增强模式\\n中国站功能增强及UI自定义\\n\\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\\n中国站自动线路及全区搜索\\n\\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\\n中国站CDN自定义\\n\\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接\\n\\n✦ Bili1080P: Bili1080P", "author": "BiliUniverse, Maasea", "date": "2026-06-06 02:17:51", "icon": "https://www.bilibili.com/favicon.ico", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "📺 BiliBili增强合集.sgmodule"}, {"id": "611dce9f84ae7374468e4a778a863fc4", "name": "📺 YouTube增强合集", "desc": "合并 YouTube 增强 (Maasea 上游) | Enhance: 画中画/后台播放/字幕翻译", "author": "Maasea", "date": "", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.sgmodule", "badge": "", "filename": "📺 YouTube增强合集.sgmodule"}, {"id": "c778c9229df1720d96625eb349ecbf0c", "name": "🧰 Script Hub 配套工具合集", "desc": "Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游\\n\\n【Bundled Modules】\\n✦ BoxJs: http://boxjs.com\\n\\n✦ Sub-Store(β): 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *\\n\\n✦ Script Hub: 重写 & 规则集转换: https://script.hub", "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org", "date": "2026-06-06 02:18:13", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Terminal.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/amplify_nexus/%F0%9F%A7%B0%20Script%20Hub%20%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.sgmodule", "badge": "⭐", "filename": "🧰 Script Hub 配套工具合集.sgmodule"}]}, "head_expanse": {"name": "🔝 Head Expanse › 首端扩域", "items": [{"id": "03560c9a7c68bd0be50236f958e20546", "name": "🌟 AdBlock Helper", "desc": "Outbound Port Filtering | DNS Overrides | Hosts steering", "author": "nyamiiko (Enhanced)", "date": "", "icon": "", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%8C%9F%20AdBlock%20Helper%20.sgmodule", "badge": "", "filename": "🌟 AdBlock Helper .sgmodule"}, {"id": "b7c6fcf2580390e49b3b0096e9939ed7", "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-06]", "desc": "轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule", "badge": "", "filename": "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"}, {"id": "380bac31d37b2151fbedf67c077039b8", "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-06]", "desc": "按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1058); 索引 rulesets/AdBlock/catalog.json", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule", "badge": "🔥", "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"}]}, "narrow_pierce": {"name": "🎯 Narrow Pierce › 窄域穿刺", "items": []}};
+        const srData = {"amplify_nexus": {"name": "🛠️ Amplify Nexus › 增幅枢纽", "items": [{"id": "c6bd728351cff5931d362e4a32cf95c1", "name": "Reddit 增强合集 (翻译 + NSFW)", "desc": "[🚀SR] Reddit 功能增强：自动翻译 + NSFW 解锁 (基于 JQ 引擎)", "author": "RavelloH, ScriptHub", "date": "", "icon": "", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/Reddit%20%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%20%28%E7%BF%BB%E8%AF%91%20%2B%20NSFW%29.module", "badge": "", "filename": "Reddit 增强合集 (翻译 + NSFW).sgmodule"}, {"id": "b38b16a58616d1b6b31c13ab073a5d94", "name": "WeChat增强", "desc": "[🚀SR] WeChat/微信解锁外部链接与小程序优化。", "author": "ld2j[https://github.com/LD2J0618],RuCu6[https://github.com/RuCu6],可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md],VirgilClyne,zZPiglet[https://github.com/zZPiglet],wish[https://github.com/mist-whisper],ZenmoFeiShi[https://github.com/ZenmoFeiShi]", "date": "2025-07-20 21:12:00", "icon": "", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/WeChat_Enhance.module", "badge": "", "filename": "WeChat_Enhance.sgmodule"}, {"id": "d722ea52c0e9b2a365202c38c710b1c4", "name": "扫描全能王", "desc": "[🚀SR] 解锁扫描全能王", "author": "NobyDa", "date": "", "icon": "https://cdn.jsdelivr.net/gh/deezertidal/private@main/icons/cs.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81.module", "badge": "", "filename": "扫描全能王解锁.sgmodule"}, {"id": "e0dff57ae751b60c4437f91af9d5d44e", "name": "🍎 Apple服务增强合集", "desc": "[🚀SR] 整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\nTV 需开启 SSL Pinning 绕过以配合 DualSubs；News 可自定义地区\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.替换空气质量数据\\n3.添加下一小时降水数据\\n4.添加天气数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能\\n\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用", "author": "VirgilClyne[https://github.com/VirgilClyne]", "date": "2026-06-06 02:18:01", "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module", "badge": "", "filename": "🍎 Apple服务增强合集.sgmodule"}, {"id": "00519ad219fc25eecb5ea525ca2d423f", "name": "📊 面板工具合集", "desc": "[🚀SR] 节假日信息 · 网络信息 𝕏 · 机场订阅流量/到期面板\\n\\n【Bundled Modules】\\n✦ 节假日信息: 显示节假日的信息\\n\\n✦ 网络信息 𝕏: 国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. https://t.me/zhetengsha\\n\\n✦ 机场订阅信息: 显示机场剩余流量、流量使用情况、流量重置日期、以及套餐到期时间", "author": "Rabbit-Spec, xream, Coldvvater", "date": "2026-06-06 02:18:03", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%93%8A%20%E9%9D%A2%E6%9D%BF%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module", "badge": "", "filename": "📊 面板工具合集.sgmodule"}, {"id": "ec4f9bdcec400f35b0f208c0447b7c8d", "name": "📺 BiliBili增强合集", "desc": "[🚀SR] 合并 BiliUniverse + Maasea + Bili1080P（Enhanced/Global/Redirect/Helper）\\n\\n【Bundled Modules】\\n✦ 📺 BiliBili: ⚙️ Enhanced: 哔哩哔哩：增强模式\\n中国站功能增强及UI自定义\\n\\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\\n中国站自动线路及全区搜索\\n\\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\\n中国站CDN自定义\\n\\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接\\n\\n✦ Bili1080P: Bili1080P", "author": "BiliUniverse, Maasea", "date": "2026-06-06 02:17:51", "icon": "https://www.bilibili.com/favicon.ico", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%93%BA%20BiliBili%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module", "badge": "", "filename": "📺 BiliBili增强合集.sgmodule"}, {"id": "0983ce653f0231e8942fb99d29bda2d6", "name": "📺 YouTube增强合集", "desc": "[🚀SR] 合并 YouTube 增强 (Maasea 上游) | Enhance: 画中画/后台播放/字幕翻译", "author": "Maasea", "date": "", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%93%BA%20YouTube%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86.module", "badge": "", "filename": "📺 YouTube增强合集.sgmodule"}, {"id": "2566b67e06b079694039c43db14caf93", "name": "🧰 Script Hub 配套工具合集", "desc": "[🚀SR] Script Hub 转换 (script.hub) · BoxJs · Sub-Store(β)\\nScript Hub / Sub-Store 脚本已 vendored 至 modules/source/scripts；BoxJs 仍走 chavyleung 上游\\n\\n【Bundled Modules】\\n✦ BoxJs: http://boxjs.com\\n\\n✦ Sub-Store(β): 支持 Surge 正式版的参数设置功能. 测落地功能 ability: http-client-policy, 同步配置的定时 cronexp: 55 23 * * *\\n\\n✦ Script Hub: 重写 & 规则集转换: https://script.hub", "author": "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org", "date": "2026-06-06 02:18:13", "icon": "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Terminal.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify_nexus/%F0%9F%A7%B0%20Script%20Hub%20%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E5%90%88%E9%9B%86.module", "badge": "⭐", "filename": "🧰 Script Hub 配套工具合集.sgmodule"}]}, "head_expanse": {"name": "🔝 Head Expanse › 首端扩域", "items": [{"id": "e38441562283ac5dc46a56c749104154", "name": "🌟 AdBlock Helper", "desc": "[🚀SR] Outbound Port Filtering | DNS Overrides | Hosts steering", "author": "nyamiiko (Enhanced)", "date": "", "icon": "", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head_expanse/%F0%9F%8C%9F%20AdBlock%20Helper%20.module", "badge": "", "filename": "🌟 AdBlock Helper .sgmodule"}, {"id": "9f5d001fc616f08e6d2ea73a9bde033c", "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-06]", "desc": "[🚀SR] 轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.module", "badge": "", "filename": "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"}, {"id": "ec23b37cb27975965a0dc38c808012a5", "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-06]", "desc": "[🚀SR] 按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1058); 索引 rulesets/AdBlock/catalog.json", "author": "ScriptHub-Automated", "date": "2026-06-06 02:19:58", "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png", "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.module", "badge": "🔥", "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"}]}, "narrow_pierce": {"name": "🎯 Narrow Pierce › 窄域穿刺", "items": []}};
+        const defaultIcon = "data:image/svg+xml;utf8,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2360a5fa'/%3E%3Cstop offset='100%25' stop-color='%232563eb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23bg)'/%3E%3Cpath d='M35 38 L50 50 L35 62' fill='none' stroke='%23ffffff' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='55' y1='65' x2='70' y2='65' stroke='%23ffffff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E";
         
         let currentApp = 'surge';
         const copiedSet = new Set();
@@ -363,7 +371,8 @@
         }
 
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag]));
         }
@@ -379,7 +388,8 @@
 
             for (const [k, cat] of Object.entries(data)) {
                 const items = cat.items.filter(i =>
-                    i.name.toLowerCase().includes(term) || i.desc.toLowerCase().includes(term));
+                    (i.name && i.name.toLowerCase().includes(term)) || 
+                    (i.desc && i.desc.toLowerCase().includes(term)));
                 
                 if (!items.length) continue;
                 
@@ -395,15 +405,16 @@
                     const isCopied = copiedSet.has(i.url);
                     const btnClass = isCopied ? 'copy-btn success' : 'copy-btn';
                     const btnText = isCopied ? '已复制 ✓' : '一键安装';
+                    const iconSrc = (i.icon && !i.icon.includes('default_icon.png')) ? i.icon : defaultIcon;
                     
                     html += `
                         <article class="module-card animate-item" style="animation-delay: ${delay * 0.03}s">
                             <div class="card-header">
                                 <div class="icon-wrap">
-                                    <img class="card-icon" src="${escapeHTML(i.icon)}" onerror="this.src='${defaultIcon}'">
+                                    <img class="card-icon" src="${escapeHTML(iconSrc)}" onerror="this.src='${defaultIcon}'">
                                 </div>
                                 <div class="card-title-area">
-                                    <h4 class="card-title">${i.badge} ${escapeHTML(i.name)}</h4>
+                                    <h4 class="card-title">${escapeHTML(i.badge || '')} ${escapeHTML(i.name)}</h4>
                                     <div>
                                         ${i.author ? `<span class="card-author">@${escapeHTML(i.author)}</span>` : ''}
                                         ${i.date ? `<span class="card-date">${escapeHTML(i.date)}</span>` : ''}
@@ -433,7 +444,6 @@
                 `;
             }
             
-            // Fast DOM update
             container.innerHTML = html;
         }
 
@@ -450,15 +460,11 @@
             }
             
             copiedSet.add(url);
-            
-            // Animate button
             btn.textContent = '已复制 ✓'; 
             btn.className = 'copy-btn success';
             
-            // Show toast
             const toast = document.getElementById('toast');
             toast.classList.remove('show');
-            // Trigger reflow
             void toast.offsetWidth;
             toast.classList.add('show');
             
@@ -467,7 +473,6 @@
             }, 2500);
         }
 
-        // Initial render
         requestAnimationFrame(render);
     </script>
 </body>
