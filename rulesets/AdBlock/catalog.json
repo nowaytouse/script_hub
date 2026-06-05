@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-06 01:16:38",
+  "updated": "2026-06-06 01:24:25",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -84,7 +84,7 @@
       "label_zh": "应用去广告",
       "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
       "shard_index": 1,
-      "rule_count": 98,
+      "rule_count": 99,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list"
     },
     {
@@ -111,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 3,
-      "rule_count": 76962,
+      "rule_count": 77248,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list"
     },
     {
@@ -120,7 +120,7 @@
       "label_zh": "隐私追踪",
       "purpose": "Privacy / tracking-protection / 防追踪列表",
       "shard_index": 1,
-      "rule_count": 5578,
+      "rule_count": 5582,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list"
     },
     {
@@ -138,7 +138,7 @@
       "label_zh": "安全威胁",
       "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
       "shard_index": 2,
-      "rule_count": 26743,
+      "rule_count": 26742,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list"
     },
     {
@@ -147,7 +147,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 7765,
+      "rule_count": 7788,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list"
     },
     {
@@ -201,7 +201,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 6,
-      "rule_count": 79893,
+      "rule_count": 80542,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list"
     },
     {
@@ -210,7 +210,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 28316,
+      "rule_count": 28311,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list"
     }
   ]

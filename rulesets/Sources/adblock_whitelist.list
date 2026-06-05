@@ -203,13 +203,15 @@ DOMAIN,web-fallback.facebook.com
 DOMAIN,dns.facebook.com
 
 
-# ============ 终极基础架构保护 (CRITICAL PROTECTION) ============
-# 这些基础域名的任何层级都不应该被全局去广告规则拦截
-DOMAIN-SUFFIX,google.com
-DOMAIN-SUFFIX,apple.com
-DOMAIN-SUFFIX,microsoft.com
-DOMAIN-SUFFIX,github.com
-DOMAIN-SUFFIX,githubusercontent.com
-DOMAIN-SUFFIX,gmail.com
-DOMAIN-SUFFIX,googleapis.com
-DOMAIN-SUFFIX,akadns.net
+
+# ============ 终极基础架构保护 (CRITICAL SUBDOMAINS) ============
+# 保护被上游错误屏蔽的关键子域名 (精确保护，不影响广告屏蔽)
+DOMAIN,www.google.com
+DOMAIN,accounts.google.com
+DOMAIN,mail.google.com
+DOMAIN,play.google.com
+DOMAIN,play.googleapis.com
+DOMAIN,imap.gmail.com
+DOMAIN,fpinit.itunes.apple.com
+DOMAIN,xp.itunes-apple.com.akadns.net
+DOMAIN,mobile.events.data.microsoft.com

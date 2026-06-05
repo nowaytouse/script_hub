@@ -2,45 +2,31 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 1561
+# Rules: 1546
 
 DOMAIN,adcdownload.apple.com.akadns.net
 DOMAIN,apple.com.akadns.net
 DOMAIN,cds.apple.com.akadns.net
 DOMAIN,certs-lb.apple.com.akadns.net
-DOMAIN,cl1-cdn.origin-apple.com.akadns.net
 DOMAIN,cl2-cdn.origin-apple.com.akadns.net
-DOMAIN,cl3-cdn.origin-apple.com.akadns.net
-DOMAIN,cl4-cdn.origin-apple.com.akadns.net
-DOMAIN,cl5-cdn.origin-apple.com.akadns.net
 DOMAIN,clientflow.apple.com.akadns.net
 DOMAIN,configuration-lb.ls-apple.com.akadns.net
 DOMAIN,configuration.apple.com.akadns.net
 DOMAIN,crl-lb.apple.com.akadns.net
-DOMAIN,dd-cdn.origin-apple.com.akadns.net
 DOMAIN,gspe19-2-cn-ssl.ls-apple.com.akadns.net
-DOMAIN,gspe19-cn.ls-apple.com.akadns.net
-DOMAIN,icloud-cdn.icloud.com.akadns.net
 DOMAIN,ingest.apple-studies.com
-DOMAIN,init-p01md-lb.push-apple.com.akadns.net
-DOMAIN,init-p01st-lb.push-apple.com.akadns.net
-DOMAIN,init-s01st-lb.push-apple.com.akadns.net
 DOMAIN,init.gc-lb.apple.com.akadns.net
 DOMAIN,iphone-ld.origin-apple.com.akadns.net
 DOMAIN,mesu-cdn.apple.com.akadns.net
 DOMAIN,mesu-china.apple.com.akadns.net
 DOMAIN,ocsp-lb.apple.com.akadns.net
 DOMAIN,ocsp2-lb.apple.com.akadns.net
-DOMAIN,oscdn.origin-apple.com.akadns.net
-DOMAIN,pancake.cdn-apple.com.akadns.net
 DOMAIN,push-apple.com.akadns.net
 DOMAIN,stocks-sparkline-lb.apple.com.akadns.net
 DOMAIN,store.storeimages.apple.com.akadns.net
 DOMAIN,swcatalog-cdn.apple.com.akadns.net
 DOMAIN,swdist.apple.com.akadns.net
 DOMAIN,swscan-cdn.apple.com.akadns.net
-DOMAIN,updates-http.cdn-apple.com.akadns.net
-DOMAIN,valid.origin-apple.com.akadns.net
 DOMAIN,weather-data.apple.com.akadns.net
 DOMAIN,www-cdn.icloud.com.akadns.net
 DOMAIN-SUFFIX,100beatscheap.com
@@ -1214,7 +1200,6 @@ DOMAIN-SUFFIX,itun.es
 DOMAIN-SUFFIX,itunbes.com
 DOMAIN-SUFFIX,ituneas.com
 DOMAIN-SUFFIX,itunes-apple.cn
-DOMAIN-SUFFIX,itunes-apple.com.akadns.net
 DOMAIN-SUFFIX,itunes-radio.net
 DOMAIN-SUFFIX,itunes.ca
 DOMAIN-SUFFIX,itunes.co

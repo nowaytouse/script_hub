@@ -853,6 +853,11 @@ class AdBlockManager:
             if normalized.startswith("DOMAIN-KEYWORD,"):
                 if rule_payload.lower() in {"google", "apple", "microsoft", "amazon", "youtube", "baidu", "tencent", "alibaba", "bilibili", "taobao", "jd", "googleads", "github", "git", "githubusercontent"}:
                     continue
+            
+            # CRITICAL: Prevent upstream from maliciously or mistakenly blocking root infrastructure domains globally
+            if normalized.startswith("DOMAIN-SUFFIX,") or normalized.startswith("DOMAIN,"):
+                if rule_payload.lower() in {"google.com", "apple.com", "microsoft.com", "github.com", "githubusercontent.com", "gmail.com", "akadns.net", "googleapis.com", "gstatic.com"}:
+                    continue
 
             rendered = self.render_policy_rule(normalized, policy, candidate)
             if not rendered:
