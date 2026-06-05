@@ -123,6 +123,7 @@ ADBLOCK_README = os.path.join(ADBLOCK_DIR, "README.md")
 ADBLOCK_CALLCHAIN_DOC = project_paths.ADBLOCK_CALLCHAIN_DOC
 
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
 RULES_PER_SHARD = 100_000
 
 # Purpose taxonomy: internal key → display label + dedup priority (earlier = higher)
@@ -1473,6 +1474,7 @@ class AdBlockManager:
                     "shard_index": shard_index,
                     "rule_count": rule_count,
                     "cdn_url": f"{CDN_BASE_URL}{encoded}",
+                    "github_url": f"{GITHUB_RAW_URL}{encoded}",
                 }
             )
 
@@ -1488,19 +1490,23 @@ class AdBlockManager:
                 "surge_promax": {
                     "path": surge_module,
                     "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module, safe='/')}",
+                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(surge_module, safe='/')}",
                 },
                 "shadowrocket_promax": {
                     "path": sr_module,
                     "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module, safe='/')}",
+                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(sr_module, safe='/')}",
                 },
                 "surge_promax_lite": {
                     "path": surge_module_lite,
                     "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module_lite, safe='/')}",
+                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(surge_module_lite, safe='/')}",
                     "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
                 },
                 "shadowrocket_promax_lite": {
                     "path": sr_module_lite,
                     "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module_lite, safe='/')}",
+                    "github_install_url": f"{GITHUB_RAW_URL}{urllib.parse.quote(sr_module_lite, safe='/')}",
                     "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
                 },
             },
@@ -1528,13 +1534,13 @@ class AdBlockManager:
                 "\n",
                 "## 当前分片\n",
                 "\n",
-                "| 用途 | 文件 | 规则数 | CDN |\n",
-                "|------|------|--------|-----|\n",
+                "| 用途 | 文件 | 规则数 | CDN | GitHub |\n",
+                "|------|------|--------|-----|--------|\n",
             ]
         )
         for item in shards:
             lines.append(
-                f"| {item['label_zh']} | `{item['file']}` | {item['rule_count']:,} | [link]({item['cdn_url']}) |\n"
+                f"| {item['label_zh']} | `{item['file']}` | {item['rule_count']:,} | [CDN]({item['cdn_url']}) | [GitHub]({item['github_url']}) |\n"
             )
         lines.extend(
             [
