@@ -24,6 +24,7 @@ from pipeline.merge_smart_config_kit import merge as merge_smart_config_kit
 from pipeline.ruleset_manager import RulesetManager
 from pipeline.srs_generator import SRSGenerator
 from pipeline.mitm_manager import run_cleanup as run_mitm_cleanup
+from pipeline.url_rewriter import run_url_rewrites
 from pipeline.smart_cleanup import (
     run_cleanup as run_ruleset_cleanup,
     format_stats as format_ruleset_cleanup_stats,
@@ -270,6 +271,15 @@ def main():
         Logger.success(f"MITM hardening completed: {count} modules reinforced.")
     except Exception as e:
         Logger.error(f"MITM hardening failed: {e}")
+        has_failures = True
+
+    Logger.section("Global Resource Localization & CDN Rewriting")
+    try:
+        count_mod = run_url_rewrites(project_paths.MODULES_DIR)
+        count_rules = run_url_rewrites(project_paths.RULESETS_DIR)
+        Logger.success(f"URL rewrite completed: {count_mod + count_rules} files redirected to CDN/local mocks.")
+    except Exception as e:
+        Logger.error(f"URL rewrite failed: {e}")
         has_failures = True
 
     try:

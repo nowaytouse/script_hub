@@ -102,7 +102,7 @@ PROMAX_SPLITS_DIR = os.path.join(MODULE_BUILD_DIR, "promax_splits")
 # ============================================================================
 
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
-SCRIPT_RAW_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/"
+SCRIPT_RAW_PREFIX = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/"
 
 # SingBox binary paths
 SINGBOX_LOCAL_BIN = os.path.join(SCRIPTS_DIR, "config-manager-auto-update/bin/sing-box")
@@ -123,7 +123,7 @@ CONF_FILE = os.path.join(ROOT, ".conf/NyaMiiKo.conf.conf")
 
 # AdBlock
 # Whitelist for AdBlock domains that shouldn't be blocked (e.g., googlevideo, analytics used for login)
-WHITELIST_FILE = os.path.join(SOURCES_DIR, "adblock_whitelist.txt")
+WHITELIST_FILE = os.path.join(SOURCES_DIR, "adblock_whitelist.list")
 ADBLOCK_SOURCES_FILE = os.path.join(LINKS_DIR, "AdBlock_sources.list")
 ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(LINKS_DIR, "AdBlock_functional_sources.list")
 
@@ -158,7 +158,7 @@ CONVERT_SURGE_TO_SHADOWROCKET_SCRIPT = os.path.join(SCRIPTS_DIR, "tools", "conve
 # ============================================================================
 
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
-REPO_RAW_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
+REPO_RAW_PREFIX = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
 LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}rulesets/RULE-SET/"
 LEGACY_SCRIPT_RAW_PREFIX = f"{REPO_RAW_PREFIX}modules/scripts/"
 LEGACY_LIST_RAW_PREFIX = f"{REPO_RAW_PREFIX}ruleset/Surge(Shadowkroket)/"
@@ -172,7 +172,7 @@ MODULES_COMPATIBILITY_JSON = os.path.join(MODULES_HELPER_DIR, "modules_compatibi
 SURGE_MODULE_HELPER_URL = f"{REPO_RAW_PREFIX}modules/helper/surge_module_helper.html"
 
 # Maasea upstream
-MAASEA_SGMODULE_BASE = "https://raw.githubusercontent.com/Maasea/sgmodule/master"
+MAASEA_SGMODULE_BASE = "https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master"
 YOUTUBE_ENHANCE_URL = f"{MAASEA_SGMODULE_BASE}/YouTube.Enhance.sgmodule"
 BILIBILI_HELPER_URL = f"{MAASEA_SGMODULE_BASE}/Bilibili.Helper.sgmodule"
 

@@ -1,7 +1,7 @@
 #!name=淘宝去广告
 #!desc=过滤淘宝开屏广告
 #!author=RuCu6[https://github.com/RuCu6]
-#!icon=https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Taobao.png
+#!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/App_icon/120px/Taobao.png
 #!category=『 🎯 Narrow Pierce › 窄域穿刺 』
 #!openUrl=https://apps.apple.com/app/id387682726
 #!tag=去广告
@@ -41,9 +41,9 @@ DOMAIN,ut.taobao.com,REJECT,extended-matching,pre-matching
 ^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.(volvo\.secondfloor\.getconfig|wireless\.home\.newface\.awesome\.get) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 [Script]
-移除淘宝开屏广告 = type=http-response, pattern=^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.(cloudvideo\.video\.query|wireless\.home\.splash\.awesome\.get), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/kelee_one_9f2789_Taobao_remove_ads.js, requires-body=true
+移除淘宝开屏广告 = type=http-response, pattern=^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.(cloudvideo\.video\.query|wireless\.home\.splash\.awesome\.get), script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_9f2789_Taobao_remove_ads.js, requires-body=true
 
-移除淘宝开屏广告 = type=http-response, pattern=^https:\/\/poplayer\.template\.alibaba\.com\/\w+\.json, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/kelee_one_9f2789_Taobao_remove_ads.js, requires-body=true
+移除淘宝开屏广告 = type=http-response, pattern=^https:\/\/poplayer\.template\.alibaba\.com\/\w+\.json, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_9f2789_Taobao_remove_ads.js, requires-body=true
 
 [MITM]
 hostname = %APPEND% acs.m.taobao.com, heic.alicdn.com, guide-acs.m.taobao.com, poplayer.template.alibaba.com, -github.com, -api.github.com, -*.githubusercontent.com
