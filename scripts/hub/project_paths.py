@@ -102,8 +102,8 @@ PROMAX_SPLITS_DIR = os.path.join(MODULE_BUILD_DIR, "promax_splits")
 # ============================================================================
 
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
+MODULE_SOURCE_SCRIPTS_DIR = os.path.join(MODULES_DIR, "source", "scripts")
 SCRIPT_RAW_PREFIX = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/"
-
 # SingBox binary paths
 SINGBOX_LOCAL_BIN = os.path.join(SCRIPTS_DIR, "config-manager-auto-update/bin/sing-box")
 SINGBOX_ROOT_BIN = os.path.join(ROOT, "sing-box")

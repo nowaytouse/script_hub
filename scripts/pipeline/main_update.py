@@ -283,7 +283,8 @@ def main():
     try:
         count_mod = run_url_rewrites(project_paths.MODULES_DIR)
         count_rules = run_url_rewrites(project_paths.RULESETS_DIR)
-        Logger.success(f"URL rewrite completed: {count_mod + count_rules} files redirected to CDN/local mocks.")
+        count_root = run_url_rewrites(project_paths.ROOT)
+        Logger.success(f"URL rewrite completed: {count_mod + count_rules + count_root} files redirected to CDN/local mocks.")
     except Exception as e:
         Logger.error(f"URL rewrite failed: {e}")
         has_failures = True

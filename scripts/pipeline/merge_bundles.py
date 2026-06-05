@@ -25,7 +25,7 @@ from hub.paths import (
     SURGE_AMPLIFY_NEXUS_DIR as AMPLIFY_NEXUS_DIR,
     BILIBILI_HELPER_URL,
     MODULE_LOCAL_DIR as LOCAL_DIR,
-    SCRIPTS_DIR,
+    MODULE_SOURCE_SCRIPTS_DIR,
     SCRIPT_RAW_PREFIX,
     YOUTUBE_ENHANCE_URL,
 )
@@ -229,7 +229,7 @@ def _pin_sub_store_script_paths(module_path: str) -> None:
     text = "".join(read_file(module_path))
     changed = 0
     for upstream_suffix, local_name in SUB_STORE_SCRIPT_PATH_MAP.items():
-        local = os.path.join(SCRIPTS_DIR, local_name)
+        local = os.path.join(MODULE_SOURCE_SCRIPTS_DIR, local_name)
         if not os.path.isfile(local):
             continue
         canonical = SCRIPT_RAW_PREFIX + local_name
@@ -250,14 +250,14 @@ def _pin_sub_store_script_paths(module_path: str) -> None:
 
 def _sync_sub_store_scripts() -> None:
     """Refresh Sub-Store backend scripts from sub-store-org releases."""
-    os.makedirs(SCRIPTS_DIR, exist_ok=True)
+    os.makedirs(MODULE_SOURCE_SCRIPTS_DIR, exist_ok=True)
     updated = 0
     for local_name, url in SUB_STORE_SCRIPT_SOURCES.items():
         content = safe_download_binary(url, retries=2, timeout=90)
         if not content:
             Logger.warn(f"Sub-Store script sync skipped: {local_name}")
             continue
-        target = os.path.join(SCRIPTS_DIR, local_name)
+        target = os.path.join(MODULE_SOURCE_SCRIPTS_DIR, local_name)
         write_file(target, content.decode("utf-8", errors="replace"))
         updated += 1
     if updated:
@@ -273,7 +273,7 @@ def _pin_script_hub_script_paths(module_path: str) -> None:
     text = "".join(read_file(module_path))
     changed = 0
     for upstream_suffix, local_name in SCRIPT_HUB_SCRIPT_PATH_MAP.items():
-        local = os.path.join(SCRIPTS_DIR, local_name)
+        local = os.path.join(MODULE_SOURCE_SCRIPTS_DIR, local_name)
         if not os.path.isfile(local):
             continue
         canonical = SCRIPT_RAW_PREFIX + local_name
@@ -300,14 +300,14 @@ def _pin_script_hub_script_paths(module_path: str) -> None:
 
 def _sync_script_hub_scripts() -> None:
     """Refresh Script Hub converter scripts from Script-Hub-Org upstream."""
-    os.makedirs(SCRIPTS_DIR, exist_ok=True)
+    os.makedirs(MODULE_SOURCE_SCRIPTS_DIR, exist_ok=True)
     updated = 0
     for local_name, url in SCRIPT_HUB_SCRIPT_SOURCES.items():
         content = safe_download_binary(url, retries=2, timeout=60)
         if not content:
             Logger.warn(f"Script Hub script sync skipped: {local_name}")
             continue
-        target = os.path.join(SCRIPTS_DIR, local_name)
+        target = os.path.join(MODULE_SOURCE_SCRIPTS_DIR, local_name)
         write_file(target, content.decode("utf-8", errors="replace"))
         updated += 1
     if updated:

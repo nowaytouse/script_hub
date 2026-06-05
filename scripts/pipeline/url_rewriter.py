@@ -34,14 +34,16 @@ def run_url_rewrites(directory: str) -> int:
         r"https://raw\.githubusercontent\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(master|main)/[A-Za-z0-9_.-/]+/blank_dict\.json": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json",
         
         # Generic Github raw and Gist rewrites to CDN
-        r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+\.(js|json|png|gif|txt|list|module|sgmodule|srs))": r"https://cdn.jsdelivr.net/gh/\1/\2@\3/\4",
+        r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^\"'\s]+\.[a-zA-Z0-9]+)": r"https://cdn.jsdelivr.net/gh/\1/\2@\3/\4",
         # Some gist urls are hard to map to cdn.jsdelivr.net directly, so we'll rewrite known internal ones to the localized paths if they exist
     }
 
     modified_count = 0
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        if '.git' in root:
+            continue
         for file in files:
-            if file.endswith((".sgmodule", ".module", ".list", ".conf", ".json")):
+            if file.endswith((".sgmodule", ".module", ".list", ".conf", ".json", ".html", ".md")):
                 path = os.path.join(root, file)
                 try:
                     with open(path, "r", encoding="utf-8") as f:
@@ -64,4 +66,5 @@ if __name__ == "__main__":
     count = 0
     count += run_url_rewrites(MODULES_DIR)
     count += run_url_rewrites(RULESETS_DIR)
+    count += run_url_rewrites(ROOT)
     print(f"URL rewrite completed: {count} files modified.")
