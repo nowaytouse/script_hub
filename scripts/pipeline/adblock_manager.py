@@ -825,6 +825,11 @@ class AdBlockManager:
             rule_payload = normalized.split(",", 1)[-1] if "," in normalized else normalized
             if any(white_item in rule_payload for white_item in self.whitelist):
                 continue
+            
+            # CRITICAL: Drop ridiculously broad malicious keywords that bypass whitelist substring matching
+            if normalized.startswith("DOMAIN-KEYWORD,"):
+                if rule_payload.lower() in {"google", "apple", "microsoft", "amazon", "youtube", "baidu", "tencent", "alibaba", "bilibili", "taobao", "jd", "googleads"}:
+                    continue
 
             rendered = self.render_policy_rule(normalized, policy, candidate)
             if not rendered:
