@@ -165,7 +165,7 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
                 "path": str(module_file.relative_to(project_root)),
                 "has_arguments": False,
                 "merged_into": MERGED_ALIASES.get(module_file.name),
-                "install_url": CDN_BASE + urllib.parse.quote(str(module_file.relative_to(project_root))),
+                "install_url": CDN_BASE + str(module_file.relative_to(project_root)),
             }
             try:
                 meta, _ = parse_module(module_file.read_text(encoding="utf-8"))
@@ -256,7 +256,7 @@ def _modules_to_helper_groups(
             desc = f"[🚀SR] {m.get('desc', '')}"
         else:
             desc = m.get("desc", "")
-        url = CDN_BASE + urllib.parse.quote(path)
+        url = CDN_BASE + path
         name = m.get("name", m["filename"])
         badge = ""
         for key, icon in UI_BADGES.items():
@@ -728,7 +728,7 @@ def write_shadowrocket_modules_json(
         desc = m.get("desc", "")
         if desc and not desc.startswith("[🚀SR]"):
             desc = f"[🚀SR] {desc}"
-        url = CDN_BASE + urllib.parse.quote(sr_rel_path)
+        url = CDN_BASE + sr_rel_path
         categories_data[cat]["items"].append(
             {
                 "name": m.get("name", m["filename"]),
