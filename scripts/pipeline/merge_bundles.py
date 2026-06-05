@@ -71,11 +71,9 @@ APPLE_HEADER = {
     "category": "『 🛠️ Amplify Nexus › 增幅枢纽 』",
 }
 
-WEIBO_LOCAL = os.path.join(
-    ROOT, "rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule"
-)
+WEIBO_LOCAL = os.path.join(ROOT, "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule")
 WEIBO_SOURCES = [
-    ("Main", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/weibo.module"),
+    ("Weibo", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/weibo.module"),
     ("Intl", "https://raw.githubusercontent.com/iab0x00/ProxyRules/main/Rewrite/WeiboIntl.sgmodule"),
 ]
 WEIBO_HEADER = {
@@ -86,6 +84,26 @@ WEIBO_HEADER = {
     ),
     "author": "fmz200, iab0x00, ScriptHub",
     "tag": "去广告, 微博, PROMAX-build",
+}
+
+WOOL_LOCAL = os.path.join(ROOT, "rulesets/Sources/LocalModules/Wool.ADBlock.sgmodule")
+WOOL_SOURCES = [
+    ("Xiaohongshu", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partX/Xiaohongshu.sgmodule"),
+    ("Baidu", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partB/Baidu.sgmodule"),
+    ("BaiduTieba", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partB/BaiduTieba.sgmodule"),
+    ("NetEaseCloudMusic", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partW/NetEaseCloudMusic.sgmodule"),
+    ("AutoNavi", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partG/AutoNavi.sgmodule"),
+    ("Douban", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partD/Douban.sgmodule"),
+    ("WeChatOfficial", "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partW/WeChatOfficialAccount.sgmodule"),
+]
+WOOL_HEADER = {
+    "name": "🐑 综合去广告",
+    "desc": (
+        "国内常用APP去广告集合(小红书/贴吧/高德/爱优腾等) · PROMAX 构建源"
+        "\\n\\n上游: fmz200/wool_scripts"
+    ),
+    "author": "fmz200, ScriptHub",
+    "tag": "去广告, 综合, PROMAX-build",
 }
 WEIBO_SECTION_ORDER = (
     "Rule",
@@ -618,12 +636,26 @@ def merge_youtube() -> None:
         Logger.warn("No YouTube adblock sections extracted; kept existing local module if any.")
 
 
+def merge_wool() -> None:
+    Logger.section("Wool Scripts → LocalModules (PROMAX build source)")
+    preserved = _load_preserved_rule_sections(WOOL_LOCAL)
+    merge_upstream_modules(
+        WOOL_SOURCES,
+        WOOL_LOCAL,
+        header_meta=WOOL_HEADER,
+        provenance_comment="# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
+    )
+    _rewrite_weibo_with_preserved(WOOL_LOCAL, preserved)
+    Logger.info(f"Build source: {os.path.relpath(WOOL_LOCAL, ROOT)}")
+
+
 def run_all(*, strict: bool = False) -> List[str]:
     """Run all bundle merges. Returns labels that failed (empty if all OK)."""
     steps: list[tuple[str, Callable[[], None]]] = [
         ("bilibili", merge_bilibili),
         ("youtube", merge_youtube),
         ("weibo", merge_weibo),
+        ("wool", merge_wool),
         ("apple", merge_apple),
         ("utilities", merge_utilities),
         ("devtools", merge_devtools),

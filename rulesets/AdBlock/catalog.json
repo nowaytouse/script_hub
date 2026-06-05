@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-06 03:19:40",
+  "updated": "2026-06-06 04:06:56",
   "rules_per_shard_max": 100000,
   "categories": {
     "Local": {
@@ -70,12 +70,12 @@
   "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
-    "URL Rewrite": 939,
-    "Map Local": 3234,
-    "Script": 504,
-    "Body Rewrite": 79,
+    "URL Rewrite": 952,
+    "Map Local": 3256,
+    "Script": 518,
+    "Body Rewrite": 80,
     "Header Rewrite": 0,
-    "MITM": 1061
+    "MITM": 1075
   },
   "shards": [
     {
@@ -84,7 +84,7 @@
       "label_zh": "应用去广告",
       "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
       "shard_index": 1,
-      "rule_count": 99,
+      "rule_count": 259,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list"
     },
     {
@@ -111,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 3,
-      "rule_count": 77080,
+      "rule_count": 76928,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list"
     },
     {
@@ -138,7 +138,7 @@
       "label_zh": "安全威胁",
       "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
       "shard_index": 2,
-      "rule_count": 26722,
+      "rule_count": 26720,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_02.list"
     },
     {
@@ -147,7 +147,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 6097,
+      "rule_count": 6096,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list"
     },
     {
@@ -201,7 +201,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 6,
-      "rule_count": 57416,
+      "rule_count": 57415,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list"
     },
     {
