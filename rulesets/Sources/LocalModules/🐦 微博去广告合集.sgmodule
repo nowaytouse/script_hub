@@ -2,7 +2,7 @@
 #!desc=微博+国际版去广告 · PROMAX 构建源（域名规则+脚本已并入 PROMAX，勿单独安装）\n\n上游: fmz200/wool_scripts, iab0x00\n\n【Bundled Modules】\n✦ 微博去广告&净化: 去除常见的广告和部分多余的模块\n\n✦ WeiboIntl: 移除开屏、瀑布流、趋势页、用户中心广告
 #!author=fmz200, iab0x00, ScriptHub
 #!tag=去广告, 微博, PROMAX-build
-#!date=2026-06-06 02:39:29
+#!date=2026-06-06 03:17:50
 # PROMAX build source — install head_expanse/PROMAX only
 
 [Rule]
@@ -86,7 +86,7 @@ URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\
 微博去广告以及去除各部分推广模块 = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)/2/(cardlist|searchall|page|messageflow|statuses/(unread_)?friends(/|_)timeline|groups/timeline|statuses/(container_timeline|container_timeline_hot|unread_hot_timeline|extend|video_mixtimeline)|profile/(me|container_timeline)|video/(community_tab|remind_info|tiny_stream_video_list)|checkin/show|(\!/)?live/media_homelist|comments/build_comments|container/get_item), script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_main.js, requires-body=true, timeout=60
 自定义tab皮肤         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/!\/client\/light_skin, script-path=https://cdn.jsdelivr.net/gh/zmqcherish/proxy-script@main/weibo_main.js, requires-body=true, timeout=60
 非会员设置tab皮肤       = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/littleskin\/preview, script-path=https://cdn.jsdelivr.net/gh/zmqcherish/proxy-script@main/weibo_main.js, requires-body=true, timeout=60
-解锁微博会员APP图标      = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/aj\/appicon\/list, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/weibo/weibo_vip.js, requires-body=true, timeout=60
+解锁微博会员APP图标      = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/aj\/appicon\/list, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_vip.js, requires-body=true, timeout=60
 
 
 [Body Rewrite]

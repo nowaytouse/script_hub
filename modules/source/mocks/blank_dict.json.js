@@ -1,1 +1,2 @@
-Package size exceeded the configured limit of 50 MB. Try https://github.com/blackmatrix7/ios_rule_script/tree/master/blank/blank_dict.json.js instead.
+let body = JSON.stringify({});
+$done({response: {status: 200, body: body}});

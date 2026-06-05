@@ -36,6 +36,10 @@ def run_url_rewrites(directory: str) -> int:
         # Generic Github raw and Gist rewrites to CDN
         r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^\"'\s]+\.[a-zA-Z0-9]+)": r"https://cdn.jsdelivr.net/gh/\1/\2@\3/\4",
         # Some gist urls are hard to map to cdn.jsdelivr.net directly, so we'll rewrite known internal ones to the localized paths if they exist
+        r"(?<!/)https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^\"'\s]+\.[a-zA-Z0-9]+)": r"https://cdn.jsdelivr.net/gh/\1/\2@\3/\4",
+        
+        # Github Releases to gh-proxy
+        r"(?<!/)https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^\"'\s]+\.[a-zA-Z0-9]+)": r"https://gh-proxy.com/https://github.com/\1/\2/releases/download/\3/\4",
     }
 
     modified_count = 0

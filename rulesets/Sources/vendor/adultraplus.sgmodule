@@ -894,9 +894,9 @@ rrtv_json2=type=http-response,pattern=https://api.rr.tv/v3plus/index/channel\?pa
 
 rrtv_json3=type=http-response,pattern=https://api.rr.tv/user/profile,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/rrtv_json.js
 
-rrtv_json4=type=http-response,pattern=https://api.juxingclub.com/v3plus/index/channel\?pageNum=1&position=CHANNEL_INDEX,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/rrtv_json.js
+rrtv_json4=type=http-response,pattern=https://api.juxingclub.com/v3plus/index/channel\?pageNum=1&position=CHANNEL_INDEX,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/rrtv_json.js
 
-coolapk=type=http-response,pattern=https://api.coolapk.com/v6/page/dataList\?.*title=%E9%85,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+coolapk=type=http-response,pattern=https://api.coolapk.com/v6/page/dataList\?.*title=%E9%85,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/coolapk.js
 
 UnblockURLinWeChat=type=http-response,pattern=^https\:\/\/(weixin110\.qq|security.wechat)\.com\/cgi-bin\/mmspamsupport-bin\/newredirectconfirmcgi\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/zZPiglet/Task@master/asset/UnblockURLinWeChat.js
 
@@ -1006,7 +1006,7 @@ quark=type=http-response,pattern=^https?:\/\/open-cms-api\.(uc|quark)\.cn\/open-
 
 quark2=type=http-response,pattern=^https?:\/\/open-cms-api\.(uc|quark)\.cn\/open-cms,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/quark.js
 
-pixivAds=type=http-response,pattern=^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token),requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/pixivAds.js
+pixivAds=type=http-response,pattern=^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/pixivAds.js
 
 baidumap=type=http-response,pattern=^https?:\/\/newclient\.map\.baidu\.com\/client\/phpui2\/\?qt=ads,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/baidumap.js
 
@@ -1148,15 +1148,15 @@ alicdn=type=http-response,pattern=^https?:\/\/g\.alicdn\.com\/.*o2o-ad,requires-
 
 didiAds3=type=http-response,pattern=^https?:\/\/freight\.xiaojukeji\.com\/gateway,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/didi/didiAds.js
 
-xiaohongshu=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/system_service\/splash_config,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/system_service\/splash_config,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu2=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/system_service\/config\?,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu2=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/system_service\/config\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu3=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/(hint|trending)\?,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu3=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/(hint|trending)\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu4=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/(banner_list|hot_list),requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu4=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/(banner_list|hot_list),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu5=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/widgets,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu5=type=http-response,pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/widgets,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
 wechatApplet2=type=http-response,pattern=^https?:\/\/ec\.ems\.com\.cn\/ecr-qry-web\/redis\/pageInfoByChannel,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/zirawell/R-Store@main/Res/Scripts/AntiAd/wechatApplet.js
 
@@ -1324,21 +1324,21 @@ caiyun_json11=type=http-response,pattern=^https?:\/\/api\.caiyunapp\.com\/v\d\/a
 
 dict2=type=http-response,pattern=^https?:\/\/api\.369cx\.cn\/v\d\/Splash\/GetSplashAd,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/dict.js
 
-rrtv_json11=type=http-response,pattern=^https?:\/\/api.juxingclub.com\/v3plus\/index\/channel\?pageNum=1&position=CHANNEL_MY,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/rrtv_json.js
+rrtv_json11=type=http-response,pattern=^https?:\/\/api.juxingclub.com\/v3plus\/index\/channel\?pageNum=1&position=CHANNEL_MY,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/rrtv_json.js
 
-rrtv_json12=type=http-response,pattern=^https?:\/\/api.juxingclub.com\/app\/config\/h5NativeBar,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/rrtv_json.js
+rrtv_json12=type=http-response,pattern=^https?:\/\/api.juxingclub.com\/app\/config\/h5NativeBar,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/rrtv_json.js
 
 coolapk6=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/main\/init,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/coolapk.js
 
-coolapk7=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/main\/init,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+coolapk7=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/main\/init,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/coolapk.js
 
-coolapk8=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/main\/indexV8,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+coolapk8=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/main\/indexV8,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/coolapk.js
 
-coolapk9=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/feed\/replyList,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+coolapk9=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/feed\/replyList,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/coolapk.js
 
-coolapk10=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/feed\/detail,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+coolapk10=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/feed\/detail,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/coolapk.js
 
-coolapk11=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/dataList,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+coolapk11=type=http-response,pattern=^https?:\/\/api.coolapk.com\/v6\/dataList,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/coolapk.js
 
 soul_ads6=type=http-response,pattern=^https?:\/\/api-user\.soulapp\.cn\/v\d\/planet\/config,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/soul/soul_ads.js
 
@@ -1462,7 +1462,7 @@ tieba-proto=type=http-response,pattern=^https?:\/\/(tiebac|c\.tieba)\.baidu\.com
 
 tieba-json=type=http-response,pattern=^https?:\/\/(tiebac|c\.tieba)\.baidu\.com\/(c\/(s\/sync|f\/(ad\/getSplashAd|frs\/(page|threadlist|generalTabList)|pb\/(pic)?page|excellent\/personalized))$|tiebaads\/commonbatch\?),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-json.js
 
-xiaohongshu6=type=http-response,pattern=^https?:\/\/(so|edith)\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/notes\?,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu6=type=http-response,pattern=^https?:\/\/(so|edith)\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/notes\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
 qq-news=type=http-response,pattern=^https?:\/\/(news\.ssp\.qq\.com\/app|r\.inews\.qq\.com\/(get(QQNewsUnreadList|TagFeedList)|gw\/page\/event_detail|news_feed\/hot_module_list)),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/qq-news.js
 
@@ -1470,13 +1470,13 @@ kuwo5=type=http-response,pattern=^https?:\/\/(mgxhtj|nmobi|searchrecterm)\.kuwo\
 
 cnftp26=type=http-response,pattern=^https?:\/\/(kjp|t7z)\.cupid\.iqiyi\.com\/mixer\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/cnftp.js
 
-xiaohongshu7=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/(imagefeed|live_photo\/save),requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu7=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/(imagefeed|live_photo\/save),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu8=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/(followfeed|homefeed)\?,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu8=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/(followfeed|homefeed)\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu9=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/(v4\/note\/videofeed|v10\/note\/video\/save)\?,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu9=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/(v4\/note\/videofeed|v10\/note\/video\/save)\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
-xiaohongshu10=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/(v2\/note\/feed|v3\/note\/videofeed)\?,requires-body=1,script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js
+xiaohongshu10=type=http-response,pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/(v2\/note\/feed|v3\/note\/videofeed)\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js
 
 tuhu=type=http-response,pattern=^https?:\/\/(cl-)?gateway\.tuhu\.cn(\/cl)?\/cl-shop-api\/shopTab\/getModuleForC,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/zirawell/R-Store@main/Res/Scripts/AntiAd/tuhu.js
 
@@ -1574,7 +1574,7 @@ mlxx=type=http-response,pattern=^https:\/\/api\.bevol\.com\/(?:appmain\/app\/hom
 
 adrive2=type=http-response,pattern=^https:\/\/api\.alipan\.com\/apps\/v2\/users\/home\/(news|widgets),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/adrive/adrive.js
 
-rrtv_json13=type=http-response,pattern=^https:\/\/api.juxingclub.com\/ad\/getAll,requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/rrtv_json.js
+rrtv_json13=type=http-response,pattern=^https:\/\/api.juxingclub.com\/ad\/getAll,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/rrtv_json.js
 
 goofish2=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/1\.0,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
 
