@@ -122,7 +122,8 @@ CONF_FILE = os.path.join(ROOT, ".conf/NyaMiiKo.conf.conf")
 # ============================================================================
 
 # AdBlock
-WHITELIST_FILE = os.path.join(ADBLOCK_DIR, "adblock_whitelist.list")
+# Whitelist for AdBlock domains that shouldn't be blocked (e.g., googlevideo, analytics used for login)
+WHITELIST_FILE = os.path.join(SOURCES_DIR, "adblock_whitelist.txt")
 ADBLOCK_SOURCES_FILE = os.path.join(LINKS_DIR, "AdBlock_sources.list")
 ADBLOCK_FUNCTIONAL_SOURCES_FILE = os.path.join(LINKS_DIR, "AdBlock_functional_sources.list")
 

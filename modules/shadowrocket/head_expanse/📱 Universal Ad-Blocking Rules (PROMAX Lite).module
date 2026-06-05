@@ -1,10 +1,10 @@
-#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-04]
-#!desc=[🚀SR] 轻量基础版(16分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
+#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-05]
+#!desc=[🚀SR] 轻量基础版(15分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
 #!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-04 23:30:25
+#!date=2026-06-05 08:31:53
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -122,7 +122,6 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list,REJECT
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT
 
@@ -130,7 +129,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT
-# Merged REJECT complex rules (252)
+# Merged REJECT complex rules (246)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -227,7 +226,6 @@ URL-REGEX,^https?://api-mifit\.huami\.com/discovery/mi/discovery/(homepage_ad|sl
 URL-REGEX,^https?://api-release\.wuta-cam\.com/ad_tree,REJECT
 URL-REGEX,^https?://api01pbmp\.zhuishushenqi\.com/gameAdvert,REJECT
 URL-REGEX,^https?://api5\.futunn\.com/ad/,REJECT
-URL-REGEX,^https?://api\.bilibili\.com/pgc/season/(rank/cn|app/related/recommend),REJECT
 URL-REGEX,^https?://api\.catch\.gift/api/v\d/pagead/,REJECT
 URL-REGEX,^https?://api\.chelaile\.net\.cn/goocity/advert/,REJECT
 URL-REGEX,^https?://api\.daydaycook\.com\.cn/daydaycook/server/ad/,REJECT
@@ -256,10 +254,6 @@ URL-REGEX,^https?://app\.10086\.cn/biz-orange/DN/(findSale|homeSale)/getsaleAdve
 URL-REGEX,^https?://app\.58\.com/api/home/(advertising/|appadv/|invite/popupAdv),REJECT
 URL-REGEX,^https?://app\.58\.com/api/log/,REJECT
 URL-REGEX,^https?://app\.api\.ke\.com/config/config/bootpage,REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/resource/abtest,REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/(splash/|param|dm/ad|dataflow/report),REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/rank.*rid=(168|5),REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/search/(defaultword|hot|recommend|resource),REJECT
 URL-REGEX,^https?://app\.mixcapp\.com/mixc/api/v\d/ad,REJECT
 URL-REGEX,^https?://app\.wy\.guahao\.com/json/white/dayquestion/getpopad,REJECT
 URL-REGEX,^https?://asp\.cntv\.myalicdn\.com/.+\?maxbr=850,REJECT
@@ -310,7 +304,6 @@ URL-REGEX,^https?://m\.client\.10010\.com/uniAdmsInterface/(getWelcomeAd|getHome
 URL-REGEX,^https?://m\.ibuscloud\.com/v\d/app/getStartPage,REJECT
 URL-REGEX,^https?://m\.yap\.yahoo\.com/v18/getAds\.do,REJECT
 URL-REGEX,^https?://m\d\.amap\.com/ws/valueadded/alimama/splash_screen/,REJECT
-URL-REGEX,^https?://manga\.bilibili\.com/twirp/comic\.v\d\.comic/(flash|Flash|ListFlash),REJECT
 URL-REGEX,^https?://mangaapi\.manhuaren\.com/v\d/public/getStartPageAds,REJECT
 URL-REGEX,^https?://mapi\.dangdang\.com/index\.php\?action=init,REJECT
 URL-REGEX,^https?://mapi\.mafengwo\.cn/(travelguide/)?ad/,REJECT
@@ -383,21 +376,17 @@ URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
-# Merged REJECT complex rules (80)
+# Merged REJECT complex rules (68)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT
 DOMAIN,apidns.kwd.inkuai.com,REJECT
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT
 DOMAIN,data.video.dns.iqiyi.com,REJECT
-DOMAIN,dns.alidns.com,REJECT
 DOMAIN,dns.iqiyi.com,REJECT
 DOMAIN,dns.jd.com,REJECT
 DOMAIN,dns.jd.com.gslb.qianxun.com,REJECT
 DOMAIN,dns.qiyipic.iqiyi.com,REJECT
 DOMAIN,dns.qq.com,REJECT
 DOMAIN,dns.weibo.cn,REJECT
-DOMAIN,dns.weixin.qq.com,REJECT
-DOMAIN,dns.weixin.qq.com.cn,REJECT
-DOMAIN,doh.dns.apple.com,REJECT
 DOMAIN,doh.iqiyi.com,REJECT
 DOMAIN,doh.jd.com,REJECT
 DOMAIN,doh.ptqy.gitv.tv,REJECT
@@ -412,8 +401,6 @@ DOMAIN,httpdns.alicdn.com,REJECT
 DOMAIN,httpdns.aliyuncs.com,REJECT
 DOMAIN,httpdns.baidu.com,REJECT
 DOMAIN,httpdns.baidubce.com,REJECT
-DOMAIN,httpdns.bcelive.com,REJECT
-DOMAIN,httpdns.bilivideo.com,REJECT
 DOMAIN,httpdns.browser.miui.com,REJECT
 DOMAIN,httpdns.c.163.com,REJECT
 DOMAIN,httpdns.c.cdnhwc2.com,REJECT
@@ -421,10 +408,8 @@ DOMAIN,httpdns.calorietech.com,REJECT
 DOMAIN,httpdns.cctv.com,REJECT
 DOMAIN,httpdns.danuoyi.tbcache.com,REJECT
 DOMAIN,httpdns.gslb.yy.com,REJECT
-DOMAIN,httpdns.huaweicloud.com,REJECT
 DOMAIN,httpdns.kg.qq.com,REJECT
 DOMAIN,httpdns.kwd.inkuai.com,REJECT
-DOMAIN,httpdns.meituan.com,REJECT
 DOMAIN,httpdns.music.163.com,REJECT
 DOMAIN,httpdns.music.ntes53.netease.com,REJECT
 DOMAIN,httpdns.n.netease.com,REJECT
@@ -457,11 +442,7 @@ DOMAIN,resolver.msg.xiaomi.net,REJECT
 DOMAIN,static.dns.qiyipic.iqiyi.com,REJECT
 DOMAIN,union-httpdns.gslb.yy.com,REJECT
 DOMAIN,v6-data.video.dns.iqiyi.com,REJECT
-DOMAIN-SUFFIX,bytedance.com,REJECT
-DOMAIN-SUFFIX,isnssdk.com,REJECT
-DOMAIN-SUFFIX,snssdk.com,REJECT
 DOMAIN-SUFFIX,toutiaoapi.com,REJECT
-DOMAIN-SUFFIX,zijieapi.com,REJECT
 URL-REGEX,^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/,REJECT
 URL-REGEX,^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload),REJECT
 # Merged REJECT complex rules (1)

@@ -8,6 +8,7 @@ import re
 import sys
 from typing import Callable, List, Optional
 
+import hub.project_paths as project_paths
 from hub.common import Logger, read_file, safe_download, safe_download_binary, safe_remove, write_file
 from hub.merge_upstream import merge_upstream_modules
 from hub.project_paths import (

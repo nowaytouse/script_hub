@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hub.common import Logger, is_ci
 from hub.pipeline_report import print_pipeline_summary
 from hub.project_paths import ROOT, SCRIPTS_DIR
+import hub.project_paths as project_paths
 
 CORE_UPDATE_SCRIPT = os.path.join(SCRIPTS_DIR, "qa/update_cores.sh")
 
@@ -194,18 +195,6 @@ def main():
     except Exception as e:
         Logger.error(f"AdBlock manager failed: {e}")
         has_failures = True
-
-    Logger.section("Repair script-path URLs")
-    try:
-        result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/repair_script_paths.py")],
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        if result.returncode != 0:
-            Logger.warn("script-path repair exited non-zero (continuing).")
-    except Exception as e:
-        Logger.warn(f"script-path repair failed: {e}")
 
     Logger.section("Final Ruleset Cleanup")
     try:

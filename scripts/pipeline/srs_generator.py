@@ -8,15 +8,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import re
 from hub.common import Logger, safe_remove
-from hub.project_paths import (
-    ROOT,
-    RULE_SET_DIR,
-    DNS_MAPPING_DIR,
-    SINGBOX_DIR,
-    SINGBOX_DNS_DIR,
-    ADBLOCK_DIR,
-    CACHE_DIR,
-)
+from hub.project_paths import *
+import hub.project_paths as project_paths
 
 EXTRA_SOURCE_FILES = [
     os.path.join(ADBLOCK_DIR, "reject-drop.list"),

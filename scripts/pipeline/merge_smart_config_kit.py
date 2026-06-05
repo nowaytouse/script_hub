@@ -15,6 +15,7 @@ import re
 from collections import defaultdict
 from hub.common import Logger, write_file
 from hub.project_paths import ROOT
+import hub.project_paths as project_paths
 
 SCK_DIR = project_paths.SCK_SHUNT_RULES_DIR
 CUSTOM_DIR = project_paths.SMART_CONFIG_KIT_DIR

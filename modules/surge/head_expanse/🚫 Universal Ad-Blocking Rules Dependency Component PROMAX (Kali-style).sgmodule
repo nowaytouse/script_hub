@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-05]
-#!desc=按用途分片(16片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1064); 索引 rulesets/AdBlock/catalog.json
+#!desc=按用途分片(15片) + 应用内去广告(URL Rewrite=939, Map Local=1946, Script=504, Body Rewrite=79, MITM=1061); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-06-05 07:08:01
+#!date=2026-06-05 09:03:00
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -123,7 +123,6 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_05.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_06.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_07.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Other.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 
@@ -131,7 +130,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# Merged REJECT complex rules (252)
+# Merged REJECT complex rules (246)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -228,7 +227,6 @@ URL-REGEX,^https?://api-mifit\.huami\.com/discovery/mi/discovery/(homepage_ad|sl
 URL-REGEX,^https?://api-release\.wuta-cam\.com/ad_tree,REJECT
 URL-REGEX,^https?://api01pbmp\.zhuishushenqi\.com/gameAdvert,REJECT
 URL-REGEX,^https?://api5\.futunn\.com/ad/,REJECT
-URL-REGEX,^https?://api\.bilibili\.com/pgc/season/(rank/cn|app/related/recommend),REJECT
 URL-REGEX,^https?://api\.catch\.gift/api/v\d/pagead/,REJECT
 URL-REGEX,^https?://api\.chelaile\.net\.cn/goocity/advert/,REJECT
 URL-REGEX,^https?://api\.daydaycook\.com\.cn/daydaycook/server/ad/,REJECT
@@ -257,10 +255,6 @@ URL-REGEX,^https?://app\.10086\.cn/biz-orange/DN/(findSale|homeSale)/getsaleAdve
 URL-REGEX,^https?://app\.58\.com/api/home/(advertising/|appadv/|invite/popupAdv),REJECT
 URL-REGEX,^https?://app\.58\.com/api/log/,REJECT
 URL-REGEX,^https?://app\.api\.ke\.com/config/config/bootpage,REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/resource/abtest,REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/(splash/|param|dm/ad|dataflow/report),REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/rank.*rid=(168|5),REJECT
-URL-REGEX,^https?://app\.bilibili\.com/x/v\d/search/(defaultword|hot|recommend|resource),REJECT
 URL-REGEX,^https?://app\.mixcapp\.com/mixc/api/v\d/ad,REJECT
 URL-REGEX,^https?://app\.wy\.guahao\.com/json/white/dayquestion/getpopad,REJECT
 URL-REGEX,^https?://asp\.cntv\.myalicdn\.com/.+\?maxbr=850,REJECT
@@ -311,7 +305,6 @@ URL-REGEX,^https?://m\.client\.10010\.com/uniAdmsInterface/(getWelcomeAd|getHome
 URL-REGEX,^https?://m\.ibuscloud\.com/v\d/app/getStartPage,REJECT
 URL-REGEX,^https?://m\.yap\.yahoo\.com/v18/getAds\.do,REJECT
 URL-REGEX,^https?://m\d\.amap\.com/ws/valueadded/alimama/splash_screen/,REJECT
-URL-REGEX,^https?://manga\.bilibili\.com/twirp/comic\.v\d\.comic/(flash|Flash|ListFlash),REJECT
 URL-REGEX,^https?://mangaapi\.manhuaren\.com/v\d/public/getStartPageAds,REJECT
 URL-REGEX,^https?://mapi\.dangdang\.com/index\.php\?action=init,REJECT
 URL-REGEX,^https?://mapi\.mafengwo\.cn/(travelguide/)?ad/,REJECT
@@ -384,21 +377,17 @@ URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
-# Merged REJECT-DROP complex rules (80)
+# Merged REJECT-DROP complex rules (68)
 DOMAIN,api.yuedu.dns.iqiyi.com,REJECT-DROP
 DOMAIN,apidns.kwd.inkuai.com,REJECT-DROP
 DOMAIN,bj.vip.waf.dns.iqiyi.com,REJECT-DROP
 DOMAIN,data.video.dns.iqiyi.com,REJECT-DROP
-DOMAIN,dns.alidns.com,REJECT-DROP
 DOMAIN,dns.iqiyi.com,REJECT-DROP
 DOMAIN,dns.jd.com,REJECT-DROP
 DOMAIN,dns.jd.com.gslb.qianxun.com,REJECT-DROP
 DOMAIN,dns.qiyipic.iqiyi.com,REJECT-DROP
 DOMAIN,dns.qq.com,REJECT-DROP
 DOMAIN,dns.weibo.cn,REJECT-DROP
-DOMAIN,dns.weixin.qq.com,REJECT-DROP
-DOMAIN,dns.weixin.qq.com.cn,REJECT-DROP
-DOMAIN,doh.dns.apple.com,REJECT-DROP
 DOMAIN,doh.iqiyi.com,REJECT-DROP
 DOMAIN,doh.jd.com,REJECT-DROP
 DOMAIN,doh.ptqy.gitv.tv,REJECT-DROP
@@ -413,8 +402,6 @@ DOMAIN,httpdns.alicdn.com,REJECT-DROP
 DOMAIN,httpdns.aliyuncs.com,REJECT-DROP
 DOMAIN,httpdns.baidu.com,REJECT-DROP
 DOMAIN,httpdns.baidubce.com,REJECT-DROP
-DOMAIN,httpdns.bcelive.com,REJECT-DROP
-DOMAIN,httpdns.bilivideo.com,REJECT-DROP
 DOMAIN,httpdns.browser.miui.com,REJECT-DROP
 DOMAIN,httpdns.c.163.com,REJECT-DROP
 DOMAIN,httpdns.c.cdnhwc2.com,REJECT-DROP
@@ -422,10 +409,8 @@ DOMAIN,httpdns.calorietech.com,REJECT-DROP
 DOMAIN,httpdns.cctv.com,REJECT-DROP
 DOMAIN,httpdns.danuoyi.tbcache.com,REJECT-DROP
 DOMAIN,httpdns.gslb.yy.com,REJECT-DROP
-DOMAIN,httpdns.huaweicloud.com,REJECT-DROP
 DOMAIN,httpdns.kg.qq.com,REJECT-DROP
 DOMAIN,httpdns.kwd.inkuai.com,REJECT-DROP
-DOMAIN,httpdns.meituan.com,REJECT-DROP
 DOMAIN,httpdns.music.163.com,REJECT-DROP
 DOMAIN,httpdns.music.ntes53.netease.com,REJECT-DROP
 DOMAIN,httpdns.n.netease.com,REJECT-DROP
@@ -458,11 +443,7 @@ DOMAIN,resolver.msg.xiaomi.net,REJECT-DROP
 DOMAIN,static.dns.qiyipic.iqiyi.com,REJECT-DROP
 DOMAIN,union-httpdns.gslb.yy.com,REJECT-DROP
 DOMAIN,v6-data.video.dns.iqiyi.com,REJECT-DROP
-DOMAIN-SUFFIX,bytedance.com,REJECT-DROP
-DOMAIN-SUFFIX,isnssdk.com,REJECT-DROP
-DOMAIN-SUFFIX,snssdk.com,REJECT-DROP
 DOMAIN-SUFFIX,toutiaoapi.com,REJECT-DROP
-DOMAIN-SUFFIX,zijieapi.com,REJECT-DROP
 URL-REGEX,^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/,REJECT-DROP
 URL-REGEX,^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload),REJECT-DROP
 # Merged REJECT-NO-DROP complex rules (1)

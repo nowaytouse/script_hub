@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hub.common import Logger, write_file, safe_download_binary, safe_remove
+import hub.project_paths as project_paths
 from hub.error_handling import (
     retry_on_failure,
     safe_write_file,
