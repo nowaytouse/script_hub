@@ -23,9 +23,10 @@ def _fetch_module(
     label: str,
     *,
     local_fallback: Optional[str] = None,
+    ua: Optional[str] = None,
 ) -> str:
     if url.startswith(("http://", "https://")):
-        content = safe_download(url, retries=2, timeout=60)
+        content = safe_download(url, retries=2, timeout=60, ua=ua)
         if content and len(content.strip()) >= 20:
             return content
     elif os.path.isfile(url):
@@ -109,7 +110,8 @@ def merge_upstream_modules(
     for label, url in sources:
         Logger.info(f"Downloading {label}...")
         try:
-            text = _fetch_module(url, label, local_fallback=fallbacks.get(label))
+            custom_ua = "Loon/3.9.9 CFNetwork/1496.0.7 Darwin/23.5.0" if "yfamilys.com" in url else None
+            text = _fetch_module(url, label, local_fallback=fallbacks.get(label), ua=custom_ua)
             if content_replacements:
                 for old_str, new_str in content_replacements:
                     text = text.replace(old_str, new_str)

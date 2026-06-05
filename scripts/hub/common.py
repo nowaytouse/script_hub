@@ -341,9 +341,9 @@ def _read_vendor_snapshot(url: str) -> Optional[bytes]:
 
 
 def safe_download(url: str, binary: bool = False, retries: int = 1,
-                  timeout: int = 30) -> Optional[str]:
+                  timeout: int = 30, ua: Optional[str] = None) -> Optional[str]:
     """Download text content from *url*.  Returns None on failure / HTML response."""
-    raw = _curl_fetch(url, timeout=timeout, retries=retries)
+    raw = _curl_fetch(url, timeout=timeout, retries=retries, ua=ua)
     if raw is None:
         return None
     if _is_html_content(raw):
@@ -356,9 +356,9 @@ def safe_download(url: str, binary: bool = False, retries: int = 1,
 
 
 def safe_download_binary(url: str, retries: int = 1,
-                         timeout: int = 30) -> Optional[bytes]:
+                         timeout: int = 30, ua: Optional[str] = None) -> Optional[bytes]:
     """Download binary content from *url*.  Returns None on failure / HTML response."""
-    raw = _curl_fetch(url, timeout=timeout, retries=retries)
+    raw = _curl_fetch(url, timeout=timeout, retries=retries, ua=ua)
     if raw is None:
         return None
     if _is_html_content(raw):
@@ -369,10 +369,11 @@ def safe_download_binary(url: str, retries: int = 1,
 
 # ── internal ──────────────────────────────────────────────────────────────────
 
-def _curl_fetch(url: str, *, timeout: int = 30, retries: int = 1) -> Optional[bytes]:
+def _curl_fetch(url: str, *, timeout: int = 30, retries: int = 1, ua: Optional[str] = None) -> Optional[bytes]:
     """curl download with retry, HTTP cache, and vendor snapshot fallback."""
+    user_agent = ua if ua else _CURL_UA
     cmd_base = ["curl", "-L", "-s", "-m", str(timeout), "-f",
-                "-H", f"User-Agent: {_CURL_UA}",
+                "-H", f"User-Agent: {user_agent}",
                 "-H", "Accept: text/plain, application/octet-stream, */*"]
     last_err = None
     for attempt in range(retries + 1):

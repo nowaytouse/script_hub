@@ -209,9 +209,9 @@ class UpstreamSyncer:
         
         return None
 
-    def download_to_file(self, url: str, dest_path: str) -> bool:
+    def download_to_file(self, url: str, dest_path: str, ua: str = None) -> bool:
         """Download content to file with unified retry logic."""
-        data = safe_download_binary(url, retries=2)
+        data = safe_download_binary(url, retries=2, ua=ua)
         if data is None:
             return False
 
@@ -231,9 +231,9 @@ class UpstreamSyncer:
                 safe_remove(tmp_path)
             return False
 
-    def download(self, url: str) -> bytes:
+    def download(self, url: str, ua: str = None) -> bytes:
         """Download URL content with unified retry logic; returns empty bytes on failure."""
-        data = safe_download_binary(url, retries=2)
+        data = safe_download_binary(url, retries=2, ua=ua)
         return data if data is not None else b""
 
     @retry_on_failure(max_attempts=3, delay=1.0, exceptions=(Exception,))
@@ -314,9 +314,9 @@ class UpstreamSyncer:
         write_file(target_path, final_content)
         Logger.success(f"Nexus: {filename}")
 
-    def process_local_source_module(self, filename: str, url: str):
+    def process_local_source_module(self, filename: str, url: str, ua: str = None):
         """Download an upstream module into modules/source/local for PROMAX merging."""
-        content_bytes = self.download(url)
+        content_bytes = self.download(url, ua=ua)
         if not content_bytes:
             return
         content = content_bytes.decode('utf-8', errors='ignore')
@@ -345,7 +345,7 @@ class UpstreamSyncer:
         os.makedirs(LOCAL_SOURCES_DIR, exist_ok=True)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = {
-                executor.submit(self.process_local_source_module, fname, url): fname
+                executor.submit(self.process_local_source_module, fname, url, "Loon/3.9.9 CFNetwork/1496.0.7 Darwin/23.5.0" if "yfamilys.com" in url else None): fname
                 for fname, url in LOCAL_SOURCE_MODULES.items()
             }
             for future in concurrent.futures.as_completed(futures):
@@ -432,7 +432,7 @@ class UpstreamSyncer:
         
         for filename, url in KELEE_SOURCES.items():
             try:
-                content_bytes = self.download(url)
+                content_bytes = self.download(url, ua="Loon/3.9.9 CFNetwork/1496.0.7 Darwin/23.5.0")
                 if not content_bytes:
                     Logger.warn(f"Failed to download Kelee file: {filename}")
                     continue
