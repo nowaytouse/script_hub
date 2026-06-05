@@ -291,38 +291,42 @@ def build_helper_html(
     sr_total = sum(len(c["items"]) for c in sr_groups.values())
     catalog_generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Use relative path for local icon as requested
-    default_icon = "../../docs/assets/default_icon.svg"
+    default_icon = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/docs/assets/default_icon.svg"
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Script Hub | 模块便捷管理台</title>
+    <title>Script Hub | 模块快速复制中心</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg-base: #f4f6fa;
-            --bg-card: rgba(255, 255, 255, 0.85);
-            --bg-card-hover: rgba(255, 255, 255, 1);
-            --text-main: #1e293b;
-            --text-sub: #64748b;
-            --primary: #3b82f6;
-            --primary-glow: rgba(59, 130, 246, 0.2);
+            --bg-base: #f8fafc;
+            --bg-list: rgba(255, 255, 255, 0.9);
+            --bg-list-hover: rgba(255, 255, 255, 1);
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
             --accent: #10b981;
             --border: rgba(226, 232, 240, 0.8);
+            --glass-blur: blur(20px);
             --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
         }}
         @media (prefers-color-scheme: dark) {{
             :root {{
-                --bg-base: #0f172a;
-                --bg-card: rgba(30, 41, 59, 0.8);
-                --bg-card-hover: rgba(40, 53, 72, 1);
+                --bg-base: #020617;
+                --bg-list: rgba(15, 23, 42, 0.7);
+                --bg-list-hover: rgba(15, 23, 42, 0.95);
                 --text-main: #f8fafc;
                 --text-sub: #94a3b8;
-                --border: rgba(51, 65, 85, 0.8);
+                --primary: #3b82f6;
+                --primary-hover: #60a5fa;
+                --border: rgba(51, 65, 85, 0.6);
+                --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+                --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
             }}
         }}
 
@@ -336,185 +340,192 @@ def build_helper_html(
 
         .app-header {{
             text-align: center;
-            padding: 30px 20px 20px;
+            padding: 40px 20px 20px;
+            background: var(--bg-list);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }}
         .app-title {{
             font-family: 'Outfit', sans-serif;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 800;
+            color: var(--primary);
             margin-bottom: 8px;
             letter-spacing: -0.5px;
         }}
         .app-subtitle {{ font-size: 0.95rem; color: var(--text-sub); }}
-
-        .nav-island {{
-            position: sticky;
-            top: 15px;
-            z-index: 100;
+        
+        .controls-row {{
+            max-width: 900px;
+            margin: 20px auto 0;
             display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin: 0 auto 20px;
-            padding: 6px;
-            width: fit-content;
-            background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 50px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
         }}
 
+        .nav-tabs {{
+            display: flex;
+            background: rgba(148, 163, 184, 0.1);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }}
         .nav-btn {{
             padding: 10px 24px;
-            border-radius: 50px;
+            border-radius: 8px;
             border: none;
             background: transparent;
             color: var(--text-sub);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            transition: all 0.2s ease;
         }}
+        .nav-btn:hover {{ color: var(--text-main); }}
         .nav-btn.active {{
-            background: var(--text-main);
-            color: var(--bg-base);
+            background: var(--bg-list-hover);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
         }}
 
-        .search-container {{
-            max-width: 600px;
-            margin: 0 auto 30px;
-            padding: 0 20px;
-        }}
         .search-input {{
-            width: 100%;
-            padding: 14px 20px;
-            border-radius: 14px;
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 12px;
             border: 1px solid var(--border);
-            background: var(--bg-card);
+            background: var(--bg-list);
             color: var(--text-main);
             font-size: 1rem;
-            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
         }}
         .search-input:focus {{
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }}
 
         .content-container {{
-            max-width: 1600px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 0 20px 80px;
+            padding: 30px 20px 80px;
         }}
 
+        .category-group {{
+            margin-bottom: 40px;
+        }}
         .category-header {{
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            margin: 30px 0 15px;
+            color: var(--text-main);
+            margin-bottom: 16px;
             padding-bottom: 8px;
             border-bottom: 2px solid var(--border);
-            color: var(--text-main);
-        }}
-
-        .grid-layout {{
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-        }}
-        @media (min-width: 1400px) {{
-            .grid-layout {{
-                grid-template-columns: repeat(4, 1fr);
-            }}
-        }}
-
-        .compact-item {{
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 14px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            transition: transform 0.15s, box-shadow 0.15s;
-        }}
-        .compact-item:hover {{
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            background: var(--bg-card-hover);
         }}
 
-        .icon-wrap {{
-            width: 80px;
-            height: 80px;
+        .list-layout {{
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }}
+
+        .list-item {{
+            background: var(--bg-list);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }}
+        .list-item:hover {{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(59, 130, 246, 0.3);
+            background: var(--bg-list-hover);
+        }}
+
+        .item-icon-wrap {{
+            width: 84px;
+            height: 84px;
             border-radius: 18px;
+            background: rgba(148, 163, 184, 0.1);
             overflow: hidden;
             flex-shrink: 0;
-            background: #ffffff;
-            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid var(--border);
         }}
-        .card-icon {{
+        .item-icon {{
             width: 100%;
             height: 100%;
             object-fit: cover;
         }}
 
-        .content-wrap {{
+        .item-content {{
             flex: 1;
             min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
         }}
-
         .item-title {{
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             font-weight: 700;
-            line-height: 1.3;
             color: var(--text-main);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin-bottom: 6px;
+            line-height: 1.3;
+            word-break: break-all;
         }}
-
-        .item-desc {{
+        .item-meta {{
             font-size: 0.85rem;
             color: var(--text-sub);
+            margin-bottom: 6px;
+            display: flex;
+            gap: 12px;
+        }}
+        .item-desc {{
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-sub);
+            word-break: break-word;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.4;
         }}
 
-        .action-wrap {{
+        .item-action {{
             flex-shrink: 0;
+            padding-left: 10px;
         }}
-
         .copy-btn {{
-            padding: 10px 16px;
+            padding: 12px 24px;
             border-radius: 12px;
             border: none;
-            background: var(--primary-glow);
+            background: rgba(59, 130, 246, 0.1);
             color: var(--primary);
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.2s;
-            white-space: nowrap;
+            min-width: 110px;
         }}
-        .copy-btn:hover {{
+        .list-item:hover .copy-btn {{
             background: var(--primary);
             color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }}
         .copy-btn.success {{
             background: var(--accent) !important;
             color: white !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
         }}
 
         .toast {{
@@ -522,36 +533,44 @@ def build_helper_html(
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(20px);
-            background: #222;
-            color: #fff;
+            background: var(--text-main);
+            color: var(--bg-base);
             padding: 12px 24px;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 0.95rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             opacity: 0;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             z-index: 1000;
         }}
         .toast.show {{
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }}
+
+        @media (max-width: 600px) {{
+            .controls-row {{ flex-direction: column; align-items: stretch; }}
+            .list-item {{ flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }}
+            .item-action {{ width: 100%; padding-left: 0; }}
+            .copy-btn {{ width: 100%; padding: 14px; }}
+            .item-icon-wrap {{ width: 72px; height: 72px; }}
+        }}
+        
     </style>
 </head>
 <body>
     <header class="app-header">
         <h1 class="app-title">Script Hub</h1>
-        <p class="app-subtitle">高效复制代理配置链接 (更新于: {{catalog_generated}})</p>
+        <p class="app-subtitle">为了便于代理软件导入，点击右侧按钮即可快速复制链接</p>
+        
+        <div class="controls-row">
+            <div class="nav-tabs">
+                <button class="nav-btn active" onclick="switchApp('surge')">Surge ({surge_total})</button>
+                <button class="nav-btn" onclick="switchApp('shadowrocket')">Shadowrocket ({sr_total})</button>
+            </div>
+            <input type="text" id="search" class="search-input" placeholder="输入关键字极速搜索..." oninput="render()" autocomplete="off">
+        </div>
     </header>
-
-    <nav class="nav-island">
-        <button class="nav-btn active" onclick="switchApp('surge')">Surge ({{surge_total}})</button>
-        <button class="nav-btn" onclick="switchApp('shadowrocket')">Shadowrocket ({{sr_total}})</button>
-    </nav>
-
-    <div class="search-container">
-        <input type="text" id="search" class="search-input" placeholder="输入关键字搜索模块..." oninput="render()" autocomplete="off">
-    </div>
 
     <main id="content" class="content-container"></main>
     <div id="toast" class="toast">复制成功 ✓</div>
@@ -595,47 +614,72 @@ def build_helper_html(
                 
                 if (!items.length) continue;
                 
-                html += `<div class="category-header">${{escapeHTML(cat.name)}}</div><div class="grid-layout">`;
+                html += `
+                    <div class="category-group">
+                        <h3 class="category-header">${{escapeHTML(cat.name)}}</h3>
+                        <div class="list-layout">
+                `;
                 
                 items.forEach(i => {{
                     const isCopied = copiedSet.has(i.url);
                     const btnClass = isCopied ? 'copy-btn success' : 'copy-btn';
-                    const btnText = isCopied ? '已复制' : '复制链接';
+                    const btnText = isCopied ? '已复制 ✓' : '复制链接';
                     const iconSrc = (i.icon && !i.icon.includes('default_icon.png') && !i.icon.includes('default_icon.svg')) ? i.icon : defaultIcon;
                     
                     html += `
-                        <div class="compact-item">
-                            <div class="icon-wrap">
-                                <img class="card-icon" src="${{escapeHTML(iconSrc)}}" onerror="this.src='${{defaultIcon}}'">
+                        <div class="list-item">
+                            <div class="item-icon-wrap">
+                                <img class="item-icon" src="${{escapeHTML(iconSrc)}}" onerror="this.src='${{defaultIcon}}'">
                             </div>
-                            <div class="content-wrap">
-                                <div class="item-title" title="${{escapeHTML(i.name)}}">${{escapeHTML(i.badge || '')}} ${{escapeHTML(i.name)}}</div>
-                                <div class="item-desc" title="${{escapeHTML(i.desc)}}">${{escapeHTML(i.desc)}}</div>
+                            <div class="item-content">
+                                <h4 class="item-title">${{escapeHTML(i.badge || '')}} ${{escapeHTML(i.name)}}</h4>
+                                <div class="item-meta">
+                                    ${{i.author ? `<span>@${{escapeHTML(i.author)}}</span>` : ''}}
+                                    ${{i.date ? `<span>${{escapeHTML(i.date)}}</span>` : ''}}
+                                </div>
+                                <p class="item-desc">${{escapeHTML(i.desc)}}</p>
                             </div>
-                            <div class="action-wrap">
+                            <div class="item-action">
                                 <button class="${{btnClass}}" onclick="copy('${{i.url}}', this)">${{btnText}}</button>
                             </div>
                         </div>
                     `;
                 }});
-                html += '</div>';
+                html += '</div></div>';
             }}
 
-            if (!html) html = '<div style="text-align:center; padding:40px;">未找到结果</div>';
+            if (!html) {{
+                html = `
+                    <div style="text-align:center; padding: 60px 20px; color: var(--text-sub);">
+                        <p style="font-size: 1.1rem;">未找到匹配的模块</p>
+                    </div>
+                `;
+            }}
+            
             container.innerHTML = html;
         }}
 
         async function copy(url, btn) {{
-            try {{ await navigator.clipboard.writeText(url); }} catch(e) {{
-                const t = document.createElement('textarea'); t.value = url; 
-                document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
+            try {{ 
+                await navigator.clipboard.writeText(url); 
+            }} catch(e) {{
+                const t = document.createElement('textarea'); 
+                t.value = url; 
+                document.body.appendChild(t);
+                t.select(); 
+                document.execCommand('copy'); 
+                document.body.removeChild(t);
             }}
+            
             copiedSet.add(url);
-            btn.textContent = '已复制'; btn.className = 'copy-btn success';
+            btn.textContent = '已复制 ✓'; 
+            btn.className = 'copy-btn success';
             
             const toast = document.getElementById('toast');
+            toast.classList.remove('show');
+            void toast.offsetWidth;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 1500);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }}
 
         requestAnimationFrame(render);
