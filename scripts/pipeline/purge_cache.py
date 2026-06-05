@@ -44,8 +44,8 @@ import time
 def purge_url(filepath: str, max_retries: int = 4) -> bool:
     """Send purge request for a single file path with idempotent retry logic."""
     import urllib.parse
-    # JSDelivr API expects encoded paths for spaces and special chars
-    encoded_filepath = urllib.parse.quote(filepath)
+    # JSDelivr API expects encoded paths for spaces and special chars, but MUST preserve slashes
+    encoded_filepath = urllib.parse.quote(filepath, safe='/')
     url = f"https://purge.jsdelivr.net/gh/{REPO_OWNER}/{REPO_NAME}@{BRANCH}/{encoded_filepath}"
     
     for attempt in range(max_retries):

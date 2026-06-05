@@ -158,14 +158,18 @@ def scan_modules(project_root: Path, surge_dir: Path) -> List[Dict[str, Any]]:
         if not cat_path.exists():
             continue
         for module_file in cat_path.glob("*.sgmodule"):
+            # URL encode the path for CDN compatibility (spaces, emoji, special chars)
+            relative_path = str(module_file.relative_to(project_root))
+            encoded_path = urllib.parse.quote(relative_path, safe='/')
+            
             info: Dict[str, Any] = {
                 "id": module_file.stem,
                 "filename": module_file.name,
                 "category": cat_key,
-                "path": str(module_file.relative_to(project_root)),
+                "path": relative_path,
                 "has_arguments": False,
                 "merged_into": MERGED_ALIASES.get(module_file.name),
-                "install_url": CDN_BASE + str(module_file.relative_to(project_root)),
+                "install_url": CDN_BASE + encoded_path,
             }
             try:
                 meta, _ = parse_module(module_file.read_text(encoding="utf-8"))
@@ -256,7 +260,9 @@ def _modules_to_helper_groups(
             desc = f"[🚀SR] {m.get('desc', '')}"
         else:
             desc = m.get("desc", "")
-        url = CDN_BASE + path
+        # URL encode the path for CDN compatibility (spaces, emoji, special chars)
+        encoded_path = urllib.parse.quote(path, safe='/')
+        url = CDN_BASE + encoded_path
         name = m.get("name", m["filename"])
         badge = ""
         for key, icon in UI_BADGES.items():
@@ -728,7 +734,9 @@ def write_shadowrocket_modules_json(
         desc = m.get("desc", "")
         if desc and not desc.startswith("[🚀SR]"):
             desc = f"[🚀SR] {desc}"
-        url = CDN_BASE + sr_rel_path
+        # URL encode the path for CDN compatibility (spaces, emoji, special chars)
+        encoded_sr_path = urllib.parse.quote(sr_rel_path, safe='/')
+        url = CDN_BASE + encoded_sr_path
         categories_data[cat]["items"].append(
             {
                 "name": m.get("name", m["filename"]),

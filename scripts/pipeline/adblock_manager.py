@@ -1413,7 +1413,7 @@ class AdBlockManager:
                         for line in handle
                         if line.strip() and not line.strip().startswith("#")
                     )
-            encoded = urllib.parse.quote(rs_path)
+            encoded = rs_path
             shards.append(
                 {
                     "file": rs_path,
@@ -1437,20 +1437,20 @@ class AdBlockManager:
             "modules": {
                 "surge_promax": {
                     "path": surge_module,
-                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module)}",
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module, safe='/')}",
                 },
                 "shadowrocket_promax": {
                     "path": sr_module,
-                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module)}",
+                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module, safe='/')}",
                 },
                 "surge_promax_lite": {
                     "path": surge_module_lite,
-                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module_lite)}",
+                    "install_url": f"{CDN_BASE_URL}{urllib.parse.quote(surge_module_lite, safe='/')}",
                     "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
                 },
                 "shadowrocket_promax_lite": {
                     "path": sr_module_lite,
-                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module_lite)}",
+                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module_lite, safe='/')}",
                     "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
                 },
             },
@@ -1594,7 +1594,7 @@ class AdBlockManager:
             meta = CATEGORY_META[category]
             rule_lines.append(f"# ── {meta['label_zh']} · {meta['desc']} ──")
             for rs_path in sorted(paths, key=self._shard_sort_key):
-                encoded_path = urllib.parse.quote(rs_path)
+                encoded_path = rs_path
                 rule_lines.append(
                     f"RULE-SET,{CDN_BASE_URL}{encoded_path},REJECT,"
                     "extended-matching,pre-matching,update-interval=86400,no-resolve"
