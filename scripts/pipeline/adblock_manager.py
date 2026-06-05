@@ -1441,7 +1441,7 @@ class AdBlockManager:
                 },
                 "shadowrocket_promax": {
                     "path": sr_module,
-                    "install_url": f"https://raw.githubusercontent.com/nowaytouse/script_hub/master/{urllib.parse.quote(sr_module)}",
+                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module)}",
                 },
                 "surge_promax_lite": {
                     "path": surge_module_lite,
@@ -1450,7 +1450,7 @@ class AdBlockManager:
                 },
                 "shadowrocket_promax_lite": {
                     "path": sr_module_lite,
-                    "install_url": f"https://raw.githubusercontent.com/nowaytouse/script_hub/master/{urllib.parse.quote(sr_module_lite)}",
+                    "install_url": f"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{urllib.parse.quote(sr_module_lite)}",
                     "note": "手机轻量版 — 不含 ThreatIntel 重型规则",
                 },
             },
@@ -1674,7 +1674,7 @@ class AdBlockManager:
         header_meta = {
             "name": name, "desc": desc,
             "author": "ScriptHub-Automated",
-            "icon": "https://raw.githubusercontent.com/luestr/IconResource/main/Other_icon/120px/KeLee.png",
+            "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png",
             "category": GROUP_HEAD_EXPANSE, "tag": tag,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
