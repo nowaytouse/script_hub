@@ -138,7 +138,7 @@ TARGET_MODULE_LITE = os.path.join(
 # Excludes heavy ThreatIntel shards (~1.2M rules) that are desktop-only.
 LITE_CATEGORIES = {"Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"}
 ADBLOCK_README = os.path.join(ADBLOCK_DIR, "README.md")
-ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.doc")
+ADBLOCK_CALLCHAIN_DOC = project_paths.ADBLOCK_CALLCHAIN_DOC
 
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
 RULES_PER_SHARD = 100_000
@@ -1369,7 +1369,7 @@ class AdBlockManager:
             file_path = os.path.join(ADBLOCK_DIR, filename)
             if safe_remove(file_path):
                 removed.append(filename)
-                srs_path = os.path.join(ROOT, "rulesets/SingBox", f"{os.path.splitext(filename)[0]}_Singbox.srs")
+                srs_path = os.path.join(project_paths.SINGBOX_DIR, f"{os.path.splitext(filename)[0]}_Singbox.srs")
                 if os.path.exists(srs_path):
                     safe_remove(srs_path)
         if removed:
@@ -1543,7 +1543,7 @@ class AdBlockManager:
             "# Automated update from ports source"
         ]
         
-        ports_source = os.path.join(ROOT, "rulesets/Sources/conf/SurgeConf_DirectPorts.list")
+        ports_source = project_paths.SURGECONF_DIRECTPORTS_LIST
         if os.path.exists(ports_source):
             with open(ports_source, "r", encoding="utf-8") as f:
                 for line in f:
@@ -1668,7 +1668,7 @@ class AdBlockManager:
     def sync_shadowrocket_promax_modules(self) -> None:
         """Regenerate SR PROMAX / PROMAX Lite from Surge after functional merge."""
         Logger.section("Syncing Shadowrocket PROMAX Modules")
-        script = os.path.join(ROOT, "scripts", "tools", "convert_surge_to_shadowrocket.py")
+        script = project_paths.CONVERT_SURGE_TO_SHADOWROCKET_SCRIPT
         if not os.path.isfile(script):
             Logger.warn("convert_surge_to_shadowrocket.py not found; skipping SR sync")
             return

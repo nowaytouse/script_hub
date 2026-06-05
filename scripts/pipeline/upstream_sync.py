@@ -140,7 +140,7 @@ class UpstreamSyncer:
             pass  # which/not-found is expected on some systems
 
         # 2. Check local root
-        local_path = os.path.join(ROOT, "sing-box")
+        local_path = project_paths.SINGBOX_ROOT_BIN
         if os.path.exists(local_path) and os.access(local_path, os.X_OK):
             return local_path
 
@@ -162,7 +162,7 @@ class UpstreamSyncer:
             mirror_url = f"https://ghproxy.net/https://github.com/SagerNet/sing-box/releases/download/{version}/sing-box-{clean_version}-darwin-{arch}.tar.gz"
             
             Logger.info(f"Downloading sing-box {version} for darwin-{arch}...")
-            tar_path = os.path.join(ROOT, "sing-box.tar.gz")
+            tar_path = project_paths.SINGBOX_TAR_GZ
             
             # Try primary then mirror
             if not self.download_to_file(primary_url, tar_path):
@@ -189,7 +189,7 @@ class UpstreamSyncer:
                     tar.extract(binary_member, path=ROOT)
                     # Move binary to root and cleanup
                     src_path = os.path.join(ROOT, binary_member.name)
-                    dest_path = os.path.join(ROOT, "sing-box")
+                    dest_path = project_paths.SINGBOX_ROOT_BIN
                     if os.path.exists(dest_path):
                         safe_remove(dest_path)
                     shutil.move(src_path, dest_path)
@@ -358,7 +358,7 @@ class UpstreamSyncer:
     def process_metacubex_rule(self, name: str, url: str):
         content = self.download(url)
         if not content: return
-        cache_dir = os.path.join(ROOT, ".cache")
+        cache_dir = project_paths.CACHE_DIR
         os.makedirs(cache_dir, exist_ok=True)
         tmp_srs = os.path.join(cache_dir, f"{name}_{os.getpid()}.srs")
         tmp_json = os.path.join(cache_dir, f"{name}_{os.getpid()}.json")

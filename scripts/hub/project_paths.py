@@ -52,6 +52,10 @@ LOCAL_MODULES_DIR = os.path.join(SOURCES_DIR, "LocalModules")
 SGMODULE_DIR = os.path.join(SOURCES_DIR, "sgmodule")
 LINKS_DIR = os.path.join(SOURCES_DIR, "Links")
 
+# Smart Config Kit
+SMART_CONFIG_KIT_DIR = os.path.join(CUSTOM_DIR, "SmartConfigKit")
+SCK_SHUNT_RULES_DIR = os.path.join(SMART_CONFIG_KIT_DIR, "shunt-rules")
+
 # ============================================================================
 # OUTPUT DIRECTORIES (Final compiled/generated files)
 # ============================================================================
@@ -100,6 +104,11 @@ PROMAX_SPLITS_DIR = os.path.join(MODULE_BUILD_DIR, "promax_splits")
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
 SCRIPT_RAW_PREFIX = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/"
 
+# SingBox binary paths
+SINGBOX_LOCAL_BIN = os.path.join(SCRIPTS_DIR, "config-manager-auto-update/bin/sing-box")
+SINGBOX_ROOT_BIN = os.path.join(ROOT, "sing-box")
+SINGBOX_TAR_GZ = os.path.join(ROOT, "sing-box.tar.gz")
+
 # Cache
 CACHE_DIR = os.path.join(ROOT, ".cache")
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, "http")
@@ -137,6 +146,11 @@ PROMAX_LITE_MODULE = os.path.join(
     SURGE_HEAD_EXPANSE_DIR,
     "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"
 )
+
+# Docs and scripts
+ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.doc")
+SURGECONF_DIRECTPORTS_LIST = os.path.join(CONF_DIR, "SurgeConf_DirectPorts.list")
+CONVERT_SURGE_TO_SHADOWROCKET_SCRIPT = os.path.join(SCRIPTS_DIR, "tools", "convert_surge_to_shadowrocket.py")
 
 # ============================================================================
 # URL PREFIXES

@@ -21,7 +21,7 @@ from hub.project_paths import (
 EXTRA_SOURCE_FILES = [
     os.path.join(ADBLOCK_DIR, "reject-drop.list"),
     os.path.join(ADBLOCK_DIR, "reject-no-drop.list"),
-    os.path.join(ROOT, "rulesets/Sources/custom/substore.list"),
+    os.path.join(project_paths.CUSTOM_DIR, "substore.list"),
 ]
 
 class SRSGenerator:
@@ -37,11 +37,11 @@ class SRSGenerator:
                 return result.stdout.strip()
         except:
             pass
-        local_path = os.path.join(ROOT, "scripts/config-manager-auto-update/bin/sing-box")
+        local_path = project_paths.SINGBOX_LOCAL_BIN
         if os.path.exists(local_path):
             return local_path
         # Also check project root
-        root_path = os.path.join(ROOT, "sing-box")
+        root_path = project_paths.SINGBOX_ROOT_BIN
         if os.path.exists(root_path):
             return root_path
         return None
@@ -54,7 +54,7 @@ class SRSGenerator:
             out_dir = SINGBOX_DNS_DIR
             os.makedirs(out_dir, exist_ok=True)
         elif "rulesets/AdBlock" in list_file:
-            out_dir = os.path.join(ROOT, "rulesets/AdBlock")
+            out_dir = project_paths.ADBLOCK_DIR
             os.makedirs(out_dir, exist_ok=True)
         else:
             out_dir = SINGBOX_DIR

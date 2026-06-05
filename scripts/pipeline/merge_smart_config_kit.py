@@ -16,9 +16,9 @@ from collections import defaultdict
 from hub.common import Logger, write_file
 from hub.project_paths import ROOT
 
-SCK_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit/shunt-rules")
-CUSTOM_DIR = os.path.join(ROOT, "rulesets/Sources/custom/SmartConfigKit")
-SOURCES_DIR = os.path.join(ROOT, "rulesets/Sources/Links")
+SCK_DIR = project_paths.SCK_SHUNT_RULES_DIR
+CUSTOM_DIR = project_paths.SMART_CONFIG_KIT_DIR
+SOURCES_DIR = project_paths.LINKS_DIR
 
 # Surge-format extra lists vendored inside custom/SmartConfigKit/
 EXTRA_LISTS = {

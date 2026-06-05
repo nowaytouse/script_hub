@@ -2,7 +2,7 @@
 #!desc=增强 ADBlock 效果、恢复网站正常功能
 
 [MITM]
-hostname = %APPEND% *.google-analytics.com, *.googletagmanager.com, *.googlesyndication.com, *.googletagservices.com, *.doubleclick.net, cdn.ampproject.org, *.addthis.com, static.chartbeat.com, widgets.outbrain.com, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% *.google-analytics.com, *.googletagmanager.com, *.googlesyndication.com, *.googletagservices.com, *.doubleclick.net, cdn.ampproject.org, *.addthis.com, static.chartbeat.com, widgets.outbrain.com, -*.githubusercontent.com
 
 [URL Rewrite]
 ^https?://.+\.google-analytics\.com/analytics\.js https://ruleset.skk.moe/Mock/www-google-analytics-com_analytics.js 302

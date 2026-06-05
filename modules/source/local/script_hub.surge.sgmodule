@@ -18,4 +18,4 @@ Script Hub: 规则集转换 = type=http-request, pattern=^https?:\/\/script\.hub
 Script Hub: 脚本转换 = type=http-request, pattern=^https?:\/\/script\.hub\/convert\/, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_95a370_script-converter.js, timeout=300
 
 [MITM]
-hostname = %APPEND% script.hub, *.script.hub, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% script.hub, *.script.hub, -*.githubusercontent.com

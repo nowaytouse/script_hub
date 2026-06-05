@@ -22,7 +22,7 @@ from pipeline.adblock_manager import AdBlockManager
 from pipeline.merge_smart_config_kit import merge as merge_smart_config_kit
 from pipeline.ruleset_manager import RulesetManager
 from pipeline.srs_generator import SRSGenerator
-from pipeline.mitm_cleanup_github import run_cleanup
+from pipeline.mitm_manager import run_cleanup as run_mitm_cleanup
 from pipeline.smart_cleanup import (
     run_cleanup as run_ruleset_cleanup,
     format_stats as format_ruleset_cleanup_stats,
@@ -257,7 +257,7 @@ def main():
         if conv.returncode != 0:
             Logger.error("Shadowrocket module conversion failed (no modules converted).")
             has_failures = True
-        surge_conf = os.path.join(ROOT, ".claude", "NyaMiiKo.conf.conf")
+        surge_conf = project_paths.CONF_FILE
         if os.path.isfile(surge_conf):
             subprocess.run(
                 [
@@ -277,7 +277,7 @@ def main():
 
     Logger.section("MITM Hardening")
     try:
-        count = run_cleanup()
+        count = run_mitm_cleanup()
         Logger.success(f"MITM hardening completed: {count} modules reinforced.")
     except Exception as e:
         Logger.error(f"MITM hardening failed: {e}")

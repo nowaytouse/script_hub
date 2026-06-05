@@ -11,4 +11,4 @@ AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
 ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
 
 [MITM]
-hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, -*.githubusercontent.com

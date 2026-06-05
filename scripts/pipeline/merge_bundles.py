@@ -100,7 +100,7 @@ YOUTUBE_OUTPUT = os.path.join(
 )
 YOUTUBE_ADBLOCK_OUTPUT = os.path.join(LOCAL_DIR, "YouTube.ADBlock.sgmodule")
 YOUTUBE_LOCAL_FALLBACKS = (
-    os.path.join(ROOT, "modules/surge/amplify_nexus/YouTube.Enhance.sgmodule"),
+    os.path.join(project_paths.SURGE_AMPLIFY_NEXUS_DIR, "YouTube.Enhance.sgmodule"),
     YOUTUBE_OUTPUT,
 )
 
@@ -315,7 +315,7 @@ def _sync_script_hub_scripts() -> None:
 
 def _cleanup_merged_standalone_modules() -> None:
     """Remove standalone copies superseded by bundle modules in amplify_nexus."""
-    sr_dir = os.path.join(ROOT, "modules/shadowrocket/amplify_nexus")
+    sr_dir = project_paths.SHADOWROCKET_AMPLIFY_NEXUS_DIR
     removed = 0
     for name in MERGED_STANDALONE_SURGE:
         surge_path = os.path.join(AMPLIFY_NEXUS_DIR, name)

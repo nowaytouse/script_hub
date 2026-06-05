@@ -10,4 +10,4 @@
 ^https:\/\/www\.xiaohongshu\.com\/api\/sns\/(?:v1\/ads\/resource|v2\/hey\/\w+\/hey_gallery) - reject-dict
 
 [MITM]
-hostname = %APPEND% edith.xiaohongshu.com, www.xiaohongshu.com, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% edith.xiaohongshu.com, www.xiaohongshu.com, -*.githubusercontent.com

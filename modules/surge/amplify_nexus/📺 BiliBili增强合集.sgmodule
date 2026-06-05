@@ -70,4 +70,4 @@ http-request ^https:\/\/grpc\.biliapi\.net\/bilibili\.pgc\.gateway\.player\.v2\.
 
 
 [MITM]
-hostname = %APPEND% *.mcdn.bilivideo.cn, api.biliapi.net, api.bilibili.com, app.biliapi.net, app.bilibili.com, grpc.biliapi.net, search.bilibili.com, upos-*-mirrorakam.akamaized.net, upos-sz-mirror*bstar1.bilivideo.com, www.bilibili.com, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% *.mcdn.bilivideo.cn, api.biliapi.net, api.bilibili.com, app.biliapi.net, app.bilibili.com, grpc.biliapi.net, search.bilibili.com, upos-*-mirrorakam.akamaized.net, upos-sz-mirror*bstar1.bilivideo.com, www.bilibili.com, -*.githubusercontent.com
