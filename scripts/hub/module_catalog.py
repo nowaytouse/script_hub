@@ -291,8 +291,8 @@ def build_helper_html(
     sr_total = sum(len(c["items"]) for c in sr_groups.values())
     catalog_generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # SVG Default Icon encoded as data URI
-    default_icon = "data:image/svg+xml;utf8,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2360a5fa'/%3E%3Cstop offset='100%25' stop-color='%232563eb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23bg)'/%3E%3Cpath d='M35 38 L50 50 L35 62' fill='none' stroke='%23ffffff' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='55' y1='65' x2='70' y2='65' stroke='%23ffffff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E"
+    # Use a highly reliable relative path to the local logo
+    default_icon = "../../docs/assets/default_icon.svg"
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -461,8 +461,8 @@ def build_helper_html(
 
         .grid-layout {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
         }}
 
         .module-card {{
@@ -470,11 +470,11 @@ def build_helper_html(
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 28px;
+            padding: 28px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -499,35 +499,40 @@ def build_helper_html(
         .card-header {{
             display: flex;
             align-items: flex-start;
-            gap: 16px;
+            gap: 20px;
         }}
         .icon-wrap {{
-            width: 76px;
-            height: 76px;
-            border-radius: 20px;
+            width: 110px;
+            height: 110px;
+            border-radius: 24px;
             background: var(--bg-card-hover);
-            padding: 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 4px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px solid var(--border);
             overflow: hidden;
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }}
+        .module-card:hover .icon-wrap {{
+            transform: scale(1.05);
         }}
         .card-icon {{
             width: 100%;
             height: 100%;
             object-fit: cover;
+            border-radius: 20px;
         }}
         .card-title-area {{ 
             flex: 1; 
             min-width: 0; 
         }}
         .card-title {{
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             display: flex;
             align-items: flex-start;
             gap: 6px;
@@ -535,20 +540,20 @@ def build_helper_html(
             word-break: break-all;
         }}
         .card-author {{
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: var(--primary);
             font-weight: 600;
             display: inline-block;
         }}
         .card-date {{
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: var(--text-sub);
             margin-left: 6px;
             display: inline-block;
         }}
 
         .card-desc {{
-            font-size: 0.95rem;
+            font-size: 1rem;
             line-height: 1.6;
             color: var(--text-sub);
             display: -webkit-box;
@@ -564,18 +569,18 @@ def build_helper_html(
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 8px;
+            margin-top: 10px;
         }}
         
         .copy-btn {{
             width: 100%;
-            padding: 12px;
-            border-radius: 14px;
+            padding: 14px;
+            border-radius: 16px;
             border: none;
             background: var(--bg-base);
             color: var(--primary);
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
             cursor: pointer;
             transition: all 0.3s;
             border: 1px solid var(--primary-glow);
@@ -583,11 +588,13 @@ def build_helper_html(
         .module-card:hover .copy-btn {{
             background: var(--primary);
             color: white;
+            box-shadow: 0 4px 12px var(--primary-glow);
         }}
         .copy-btn.success {{
             background: var(--accent) !important;
             color: white !important;
             border-color: var(--accent) !important;
+            box-shadow: 0 4px 12px var(--accent-glow) !important;
             transform: scale(0.98);
         }}
 
