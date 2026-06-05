@@ -17,15 +17,45 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hub.project_paths import *
 
 # ============================================================================
-# MITM Exclusion List (Exact Domain Matches)
+# MITM Exclusion List (Wildcards supported)
 # ============================================================================
-RESTRICTED_DOMAINS = {
-    'github.com',
-    'api.github.com',
-    'raw.githubusercontent.com',
-    'gist.githubusercontent.com',
-    'objects.githubusercontent.com'
-}
+RESTRICTED_DOMAINS = [
+    # GitHub
+    'github.com', 'api.github.com', '*.github.com', '*.api.github.com',
+    'raw.githubusercontent.com', 'gist.githubusercontent.com',
+    '*.objects.githubusercontent.com', '*.githubusercontent.com', '*.github.io',
+    
+    # Apple
+    '*.apple.com', '*.icloud.com', '*.mzstatic.com', '*.itunes.com',
+    
+    # Social Media
+    '*.facebook.com', '*.instagram.com', '*.twitter.com',
+    
+    # Google
+    '*.google.com', '*.google.cn', '*.gmail.com', '*.youtube.com',
+    '*.googlevideo.com', '*.gstatic.com', '*.googleapis.com',
+    
+    # Banks
+    '*.bankofchina.com', '*.icbc.com.cn', '*.ccb.com', '*.cmbchina.com',
+    '*.abchina.com', '*.boc.cn', '*.psbc.com', '*.spdb.com.cn', '*.cebbank.com',
+    '*.cmbc.com.cn', '*.cib.com.cn', '*.hxb.com.cn', '*.pingan.com',
+    '*.bankcomm.com', '*.cgbchina.com.cn', '*.ghbank.com.cn', '*.czbank.com',
+    '*.ebank.com',
+    
+    # DNS Providers
+    'dns.alidns.com', 'doh.pub', 'dot.pub', 'doh.360.cn', 'dot.360.cn',
+    'dns.baidu.com', 'dns.volcengine.com', 'alidns.com'
+]
+
+import fnmatch
+
+def is_restricted(domain: str) -> bool:
+    """Check if the given domain matches any restricted domain pattern."""
+    domain_lower = domain.lower()
+    for pattern in RESTRICTED_DOMAINS:
+        if fnmatch.fnmatch(domain_lower, pattern.lower()):
+            return True
+    return False
 
 def _log(msg: str) -> None:
     print(msg, file=sys.stderr if msg.startswith("[!]") else sys.stdout)
@@ -72,9 +102,12 @@ def process_file(filepath: str, dry_run: bool = False) -> bool:
             # Remove any domains that match the restricted list
             new_domains = []
             for d in domains:
-                # Remove Surge's negative prefix if it was already there for a restricted domain
+                # Always test the bare domain, ignoring negative prefix if it was there
                 check_domain = d[1:] if d.startswith('-') else d
-                if check_domain.lower() not in RESTRICTED_DOMAINS:
+                
+                # If it's a restricted domain, we DROP it completely.
+                # Otherwise, we KEEP it in the MITM list.
+                if not is_restricted(check_domain):
                     new_domains.append(d)
             
             if sorted(new_domains) != sorted(domains):

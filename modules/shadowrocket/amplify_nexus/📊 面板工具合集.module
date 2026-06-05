@@ -22,4 +22,4 @@ sub_info                = type=generic,timeout=30,script-path=https://raw.github
 
 
 [MITM]
-hostname = %APPEND% net-lsp-x.com, -*.githubusercontent.com
+hostname = %APPEND% net-lsp-x.com

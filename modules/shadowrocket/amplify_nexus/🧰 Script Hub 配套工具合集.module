@@ -35,4 +35,4 @@ Script Hub: 脚本转换  = type=http-request, pattern=^https?:\/\/script\.hub\/
 
 
 [MITM]
-hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store, -*.githubusercontent.com
+hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store

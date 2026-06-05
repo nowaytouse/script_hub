@@ -21,4 +21,4 @@ http-response-jq ^https?:\/\/gql(-fed)?\.reddit\.com 'walk( if type == "object" 
 
 
 [MITM]
-hostname = %APPEND% gql.reddit.com, gql-fed.reddit.com, -*.githubusercontent.com
+hostname = %APPEND% gql.reddit.com, gql-fed.reddit.com

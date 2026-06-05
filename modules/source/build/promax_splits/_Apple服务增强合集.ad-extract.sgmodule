@@ -16,4 +16,4 @@ DOMAIN,tether.edge.apple,REJECT-DROP,extended-matching
 AND,((OR,((IP-ASN,714,no-resolve),(IP-ASN,6185,no-resolve))),(PROTOCOL,QUIC)),REJECT-DROP
 
 [MITM]
-hostname = %APPEND% configuration.ls.apple.com, gspe35-ssl.ls.apple.com, weatherkit.apple.com, -*.githubusercontent.com
+hostname = %APPEND% 
