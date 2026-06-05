@@ -13,7 +13,7 @@ import sys
 import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from hub.common import Logger, get_file_hash, read_file, write_file, safe_download, safe_remove
 from hub.project_paths import *
@@ -248,6 +248,8 @@ class AdBlockManager:
         self.whitelist_domain: Set[str] = set()
         self.whitelist_suffix: Set[str] = set()
         self.whitelist_keyword: Set[str] = set()
+        self.whitelist_ip_networks: List[Union[ipaddress.IPv4Network, ipaddress.IPv6Network]] = []
+        self.whitelist_ip_cidr_raw: Set[str] = set()  # Store raw CIDR strings for fast exact match
         # rules[policy][category] = set(rules); order = dedup priority (first wins)
         self.category_names = list(CATEGORY_META.keys())
         self.rules: Dict[str, Dict[str, Set[str]]] = {
@@ -313,13 +315,36 @@ class AdBlockManager:
                 self.whitelist_keyword.add(line.split(",", 1)[1].strip())
             elif line.startswith("DOMAIN,"):
                 self.whitelist_domain.add(line.split(",", 1)[1].strip())
-            else:
-                pass # Other types like IP-CIDR are currently ignored
+            elif line.startswith("IP-CIDR6,") or line.startswith("IP-CIDR,"):
+                # Parse IP-CIDR and IP-CIDR6 rules
+                parts = line.split(",")
+                if len(parts) >= 2:
+                    cidr = parts[1].strip()
+                    # Store raw CIDR for fast exact match
+                    self.whitelist_ip_cidr_raw.add(cidr)
+                    # Parse as network object for subnet matching
+                    try:
+                        network = ipaddress.ip_network(cidr, strict=False)
+                        self.whitelist_ip_networks.append(network)
+                    except ValueError as e:
+                        Logger.warn(f"Invalid IP-CIDR in whitelist: {cidr} - {e}")
 
-        total = len(self.whitelist_domain) + len(self.whitelist_suffix) + len(self.whitelist_keyword)
-        Logger.info(f"Loaded {total} whitelist patterns")
+        total = (
+            len(self.whitelist_domain) 
+            + len(self.whitelist_suffix) 
+            + len(self.whitelist_keyword)
+            + len(self.whitelist_ip_cidr_raw)
+        )
+        Logger.info(f"Loaded {total} whitelist patterns ({len(self.whitelist_ip_cidr_raw)} IP-CIDR)")
 
     def is_whitelisted(self, rule_payload: str) -> bool:
+        """Check if a rule payload matches any whitelist pattern.
+        
+        For IP-CIDR rules, checks:
+        1. Exact CIDR match (fast path)
+        2. Subnet containment (covers IP within whitelisted range)
+        """
+        # Domain whitelist checks
         if rule_payload in self.whitelist_domain:
             return True
         for suffix in self.whitelist_suffix:
@@ -328,6 +353,31 @@ class AdBlockManager:
         for keyword in self.whitelist_keyword:
             if keyword in rule_payload:
                 return True
+        
+        # IP-CIDR whitelist checks
+        # Fast path: exact CIDR match (e.g., "149.154.160.0/20")
+        if rule_payload in self.whitelist_ip_cidr_raw:
+            return True
+        
+        # Slow path: check if this IP/CIDR is within any whitelisted network
+        # This handles cases where blocked rule has larger/smaller CIDR than whitelist
+        try:
+            blocked_network = ipaddress.ip_network(rule_payload, strict=False)
+            for whitelist_network in self.whitelist_ip_networks:
+                # Only compare networks of same IP version (v4 vs v6)
+                if blocked_network.version != whitelist_network.version:
+                    continue
+                # Check if blocked network overlaps with whitelist network
+                if (
+                    blocked_network.subnet_of(whitelist_network) or
+                    whitelist_network.subnet_of(blocked_network) or
+                    blocked_network == whitelist_network
+                ):
+                    return True
+        except ValueError:
+            # Not a valid IP/CIDR, skip IP checks
+            pass
+        
         return False
 
     def load_hashes(self):
