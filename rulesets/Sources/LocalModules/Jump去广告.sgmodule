@@ -17,5 +17,6 @@ http-response-jq ^https:?\/\/switch.jumpvg.com\/jump\/recommend\/ad_conf$ '.data
 
 
 
+
 [MITM]
 hostname = %APPEND% switch.jumpvg.com, -github.com, -api.github.com, -*.githubusercontent.com

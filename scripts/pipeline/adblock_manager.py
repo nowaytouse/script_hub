@@ -1449,6 +1449,7 @@ class AdBlockManager:
         if not os.path.isdir(ADBLOCK_DIR):
             return
         keep = {os.path.basename(path) for path in generated_files}
+        keep.update({"HTTPDNS_Hijack.list", "reject-drop.list", "reject-no-drop.list", "AdBlock.list"})
         removed = []
         for filename in sorted(os.listdir(ADBLOCK_DIR)):
             if not filename.endswith(".list") or filename in keep:
