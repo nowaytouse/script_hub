@@ -1,10 +1,10 @@
-#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-05]
+#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-06]
 #!desc=[🚀SR] 轻量基础版(12分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-05 23:37:47
+#!date=2026-06-06 08:01:37
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -126,7 +126,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT
-# Merged REJECT complex rules (259)
+# Merged REJECT complex rules (258)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -183,7 +183,6 @@ URL-REGEX,^http:\/\/47\.101\.175\.206\/resolve,REJECT
 URL-REGEX,^http:\/\/54\.222\.159\.138:8053\/httpdns\/,REJECT
 URL-REGEX,^http:\/\/81\.69\.130\.131\/d,REJECT
 URL-REGEX,^http:\/\/\[2402:4e00:1411:201:0:9964:ba21:5a41\]\/d,REJECT
-URL-REGEX,^http:\/\/\w{32}\.jddebug\.com\/diagnose\?,REJECT
 URL-REGEX,^http:\/\/api\.weibo\.cn\/2\/httpdns\/config,REJECT
 URL-REGEX,^http:\/\/api\.weibo\.cn\/httpdns\/config,REJECT
 URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns,REJECT
@@ -456,5 +455,3 @@ DOMAIN-SUFFIX,isnssdk.com,REJECT
 DOMAIN-SUFFIX,toutiaoapi.com,REJECT
 URL-REGEX,^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/,REJECT
 URL-REGEX,^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload),REJECT
-# Merged REJECT complex rules (1)
-DOMAIN,titan.pinduoduo.com,REJECT

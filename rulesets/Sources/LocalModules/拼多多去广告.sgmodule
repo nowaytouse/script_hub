@@ -9,13 +9,6 @@
 #!homepage=https://hub.kelee.one
 #!date=2025-11-14 17:26:24
 
-# NOTE: All 14 rules from this module have been extracted to AdBlock.list
-# This cleaned version only contains non-Rule sections:
-#   - [Body Rewrite]
-#   - [Map Local]
-#   - [MITM]
-# Use AdBlock.list for all blocking rules
-
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/alexa\/homepage\/hub\? 'delpaths([["result","dy_module","irregular_banner_dy"]])'
 http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/alexa\/homepage\/hub\? 'delpaths([["result","icon_set"]])'
@@ -34,6 +27,7 @@ http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/caterham\/v3\/query\/order
 http-response-jq ^https:\/\/api\.pinduoduo\.com\/order\/ 'delpaths([["marketing_banner_vo"]])'
 http-response-jq ^https:\/\/api\.pinduoduo\.com\/order\/ 'delpaths([["shipping","banner_above_recommend"]])'
 http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/aristotle\/order_list_v4\? '.orders |= map(.order_buttons |= map(del(.order_growth_tip)))'
+
 
 [Map Local]
 ^https:\/\/api\.pinduoduo\.com\/api\/aristotle\/unrated_order_for_unreceived_tab\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -73,6 +67,7 @@ http-response-jq ^https:\/\/api\.pinduoduo\.com\/api\/aristotle\/order_list_v4\?
 ^https:\/\/api\.pinduoduo\.com\/api\/engels\/wait\/receive\/review\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 ^https:\/\/api\.pinduoduo\.com\/api\/buffon\/nasus\/recommend\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
 
 [MITM]
 hostname = %APPEND% api.pinduoduo.com, -github.com, -api.github.com, -*.githubusercontent.com

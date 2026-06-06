@@ -23,8 +23,8 @@ def sync_mocks():
     gif_bytes = base64.b64decode(b64_gif)
     
     mocks_data = {
-        "reject-200.txt": b"",
-        "blank.txt": b"",
+        "reject-200.txt": b"  ",
+        "blank.txt": b"#",
         "reject-dict.json": b"{}",
         "blank_dict.json": b"{}",
         "blank_dict.json.js": b"let body = JSON.stringify({});\n$done({response: {status: 200, body: body}});",

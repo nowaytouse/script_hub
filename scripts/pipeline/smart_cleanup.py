@@ -285,6 +285,7 @@ class RulesetCleanup:
         }
 
     def load(self):
+        EXEMPT_FILENAMES = {"HTTPDNS_Hijack.list", "reject-drop.list", "reject-no-drop.list", "AdBlock.list"}
         self.adblock_payloads = set()
         for ruleset_dir in self.ruleset_dirs:
             if not os.path.exists(ruleset_dir): continue
@@ -293,6 +294,8 @@ class RulesetCleanup:
                 if f.endswith(".list")
             )
             for filename in filenames:
+                if filename in EXEMPT_FILENAMES:
+                    continue
                 filepath = os.path.join(ruleset_dir, filename)
                 raw_unique = load_list(filepath)
                 self.file_content[filename] = raw_unique

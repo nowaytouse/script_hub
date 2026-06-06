@@ -13,6 +13,7 @@
 http-response-jq ^https:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.data |= map(select(.type != "DISCOVERY_HEADER" and .type != "DISCOVERY_BANNER"))'
 
 
+
 [Map Local]
 ^https:\/\/api\.xiaoyuzhoufm\.com\/v\d\/flash data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
@@ -21,6 +22,7 @@ http-response-jq ^https:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.d
 ^https:\/\/api\.xiaoyuzhoufm\.com\/v\d\/search\/get data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 ^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/category data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
 
 
 [MITM]

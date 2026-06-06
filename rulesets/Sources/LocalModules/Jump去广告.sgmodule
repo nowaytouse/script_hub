@@ -9,15 +9,10 @@
 #!homepage=https://hub.kelee.one
 #!date=2025-05-13 15:17:08
 
-# NOTE: All 7 rules from this module have been extracted to AdBlock.list
-# This cleaned version only contains non-Rule sections:
-#   - [Body Rewrite]
-#   - [MITM]
-# Use AdBlock.list for all blocking rules
-
 [Body Rewrite]
 http-response-jq ^https:?\/\/switch.jumpvg.com\/jump\/getlaunchad\/v2$ 'del(.data.adList)|.data.launchAd.showType=0'
 http-response-jq ^https:?\/\/switch.jumpvg.com\/jump\/recommend\/ad_conf$ '.data=[]'
+
 
 [MITM]
 hostname = %APPEND% switch.jumpvg.com, -github.com, -api.github.com, -*.githubusercontent.com

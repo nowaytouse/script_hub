@@ -6,5 +6,6 @@
 ^https?:\/\/www\.123pan\.com\/api\/config\/get - reject-dict
 
 
+
 [MITM]
 hostname = %APPEND% www.123pan.com, -github.com, -api.github.com, -*.githubusercontent.com

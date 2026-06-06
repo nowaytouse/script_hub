@@ -2,21 +2,12 @@
 # Purpose: 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）
 # Category-Key: Local
 # Shard: 1/1
-# Total Rules: 223
+# Total Rules: 197
 
 DOMAIN,180.76.76.200
-DOMAIN,adcdn6.tencentmusic.com
 DOMAIN,adpinpai.video.weibocdn.com
 DOMAIN,adx-os.bridgeturbo.com
 DOMAIN,als.baidu.com
-DOMAIN,amdc.m.youku.com
-DOMAIN,api.sm.cn
-DOMAIN,apiv4-iyes.youku.com
-DOMAIN,apm-a.pinduoduo.com
-DOMAIN,apm.pinduoduo.com
-DOMAIN,cd-1.pddpic.com
-DOMAIN,cdl-1.pddpic.com
-DOMAIN,cdl-p2.pddpic.com
 DOMAIN,da.bridgeturbo.com
 DOMAIN,duclick.baidu.com
 DOMAIN,et.ykccn.com
@@ -25,24 +16,11 @@ DOMAIN,httpdns.yunxindns.com
 DOMAIN,huatuocode.huatuo.qq.com
 DOMAIN,icloud-amap.com
 DOMAIN,lf-ad-ies.bytecdn.cn
-DOMAIN,m-vali.cp31.ott.cibntv.net
-DOMAIN,mc.tencentmusic.com
-DOMAIN,meta.pinduoduo.com
 DOMAIN,mobads-logs.baidu.com
 DOMAIN,nsclick.baidu.com
-DOMAIN,pre-acs.youku.com
-DOMAIN,qh-material.taobao.com
 DOMAIN,qzs.qq.com
-DOMAIN,ta-a.pinduoduo.com
-DOMAIN,th-a.pinduoduo.com
-DOMAIN,th-b.pinduoduo.com
-DOMAIN,titan.pinduoduo.com
-DOMAIN,tmeadquic.y.qq.com
 DOMAIN,tpns.qq.com
 DOMAIN,u51.me
-DOMAIN,ut.taobao.com
-DOMAIN,vali-ugc.cp31.ott.cibntv.net
-DOMAIN,xg.pinduoduo.com
 DOMAIN-KEYWORD,api-access.pangolin-sdk-toutiao
 DOMAIN-KEYWORD,asiad.byteactivity
 DOMAIN-KEYWORD,log-api.pangolin-sdk-toutiao
@@ -190,7 +168,6 @@ DOMAIN-SUFFIX,union.baidu.com
 DOMAIN-SUFFIX,unionimage.baidu.com
 DOMAIN-SUFFIX,utility.baidu.com
 DOMAIN-SUFFIX,utk.baidu.com
-DOMAIN-SUFFIX,v.smtcdns.com
 DOMAIN-SUFFIX,videopush.baidu.com
 DOMAIN-SUFFIX,w.gdown.baidu.com
 DOMAIN-SUFFIX,w.x.baidu.com
@@ -206,13 +183,10 @@ IP-CIDR,103.41.167.237/32
 IP-CIDR,115.236.121.195/32
 IP-CIDR,115.236.121.51/32
 IP-CIDR,180.76.76.200/32
-IP-CIDR,182.61.194.7/32
-IP-CIDR,203.107.1.1/24
 IP-CIDR,47.110.187.87/32
 IP-CIDR,59.111.239.61/32
 IP-CIDR,59.111.239.62/32
 IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128
-URL-REGEX,^http:\/\/\w{32}\.jddebug\.com\/diagnose\?
 URL-REGEX,^http:\/\/p\d+-be-pack-sign\.pglstatp-toutiao\.com\/(ad-app-package|web\.business\.image)\/
 URL-REGEX,^https:\/\/a\.line\.me\/cs\/v\d\/oa$
 URL-REGEX,^https:\/\/a\.line\.me\/lass\/api\/v\d\/ads$

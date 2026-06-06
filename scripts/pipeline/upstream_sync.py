@@ -264,6 +264,11 @@ class UpstreamSyncer:
                     adblock_path = os.path.join(ADBLOCK_DIR, name)
                     write_file(adblock_path, final)
                     Logger.info(f"  → Copied to AdBlock: {name}")
+                elif name == "BlockHttpDNS.list":
+                    hijack_final = f"# Ruleset: HTTPDNS_Hijack.list\n\n" + "\n".join(lines) + "\n"
+                    adblock_path = os.path.join(ADBLOCK_DIR, "HTTPDNS_Hijack.list")
+                    write_file(adblock_path, hijack_final)
+                    Logger.info(f"  → Copied to AdBlock: HTTPDNS_Hijack.list")
 
     def process_nexus_module(self, url: str):
         import urllib.parse
