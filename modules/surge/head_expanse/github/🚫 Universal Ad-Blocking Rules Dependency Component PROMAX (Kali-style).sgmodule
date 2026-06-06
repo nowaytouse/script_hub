@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-06-06 08:01:36
+#!date=2026-06-06 08:15:59
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -6502,10 +6502,10 @@ YouTube响应体                                 = type=http-response, pattern=^
 知乎拦截服务器推送配置                                = type=http-response, pattern=^https:\/\/appcloud2\.zhihu\.com\/v3\/config, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/zhihu/zhihu.js, requires-body=true
 转转                                         = type=http-response, pattern=^https?:\/\/app\.zhuanzhuan\.com\/zz\/transfer\/getmyprofilev3, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/zhuanzhuan/zhuanzhuan.js, requires-body=true, timeout=60
 ithome3                                    = type=http-response,pattern=^https?:\/\/napi\.ithome\.com\/api\/(news\/index|topmenu\/getfeeds),requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/ithome/ithome.js
-Script Hub: 前端                             = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-hub.js, timeout=300
-Script Hub: 重写转换                           = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
-Script Hub: 规则集转换                          = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/rule-parser.js, timeout=300, argument=Notify={{{Notify}}}
-Script Hub: 脚本转换                           = type=http-request, pattern=^https?:\/\/script\.hub\/convert\/, script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/script-converter.js, timeout=300
+Script Hub: 前端                             = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_f59ef7_script-hub.js, timeout=300
+Script Hub: 重写转换                           = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
+Script Hub: 规则集转换                          = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=rule-set, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_0aa101_rule-parser.js, timeout=300, argument=Notify={{{Notify}}}
+Script Hub: 脚本转换                           = type=http-request, pattern=^https?:\/\/script\.hub\/convert\/, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_95a370_script-converter.js, timeout=300
 IT之家去广告                                    = type=http-response, pattern=^https:\/\/napi\.ithome\.com\/api\/(news\/indexv2\/iphone\/\d+$|topmenu\/getfeeds\?), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/kelee_one_e31609_IThome_remove_ads.js, requires-body=true, argument="[{{{removeAllBanners}}},{{{removePinnedArticles}}}]"
 小红书                                        = type=http-response, pattern=^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/(v2\/note\/feed|v3\/note\/videofeed)\?, script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_d62d08_rednote.js, requires-body=true, timeout=60
 Protobuf处理                                 = type=http-response, pattern=^https:\/\/(?:\w+-spclient|spclient\.wg)\.spotify\.com(?::443)?\/(?:bootstrap|user-customization-service), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/kelee_one_0e7295_Spotify_remove_ads.js, requires-body=true, binary-body-mode=true, timeout=5, argument="[{{{tab}}},{{{useractivity}}}]"

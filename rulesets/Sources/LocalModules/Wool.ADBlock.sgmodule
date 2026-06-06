@@ -1,195 +1,19 @@
 #!name=🐑 综合去广告
+#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=国内常用APP去广告集合(小红书/贴吧/高德/爱优腾等) · PROMAX 构建源\n\n上游: fmz200/wool_scripts\n\n【Bundled Modules】\n✦ 小红书: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 百度: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 百度贴吧: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 网易云音乐: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 高德地图: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 豆瓣: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 微信公众号: 某些APP要清除缓存或者重新安装拦截广告才会生效！
 #!author=fmz200, ScriptHub
 #!tag=去广告, 综合, PROMAX-build
-#!date=2026-06-06 08:01:33
+#!date=2026-06-06 08:13:16
 #!arguments=xhs_enable:true,per_filter_video_thread:"0",DT:false,FX:true,MY:true,whyiyyybyt_enable:true
-# PROMAX build source — install head_expanse/PROMAX only
 
-[Rule]
-DOMAIN,ads-img-qc.xhscdn.com,REJECT
-DOMAIN,ads-video-al.xhscdn.com,REJECT
-DOMAIN,ads-video-qc.xhscdn.com,REJECT
-DOMAIN,t-ads.xiaohongshu.com,REJECT
-AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
-
-DOMAIN-SUFFIX,duapps.com,REJECT
-DOMAIN-SUFFIX,cpro.baidu.com,REJECT
-DOMAIN-SUFFIX,pos.baidu.com,REJECT
-DOMAIN,afd.baidu.com,REJECT
-DOMAIN,als.baidu.com,REJECT
-DOMAIN,duclick.baidu.com,REJECT
-DOMAIN,mobads.baidu.com,REJECT
-DOMAIN,mobads-logs.baidu.com,REJECT
-DOMAIN,nadvideo2.baidu.com,REJECT
-DOMAIN,nsclick.baidu.com,REJECT
-DOMAIN-SUFFIX,bce.baidu.com,REJECT
-DOMAIN-SUFFIX,bar.baidu.com,REJECT
-DOMAIN-SUFFIX,baiduyubaidu.com,REJECT
-DOMAIN-SUFFIX,baidutv.baidu.com,REJECT
-DOMAIN-SUFFIX,baichuan.baidu.com,REJECT
-DOMAIN-SUFFIX,appc.baidu.com,REJECT
-DOMAIN-SUFFIX,anquan.baidu.com,REJECT
-DOMAIN-SUFFIX,adscdn.baidu.com,REJECT
-DOMAIN-SUFFIX,adm.baidu.com,REJECT
-DOMAIN-SUFFIX,ad.player.baidu.com,REJECT
-DOMAIN-SUFFIX,a.baidu.com,REJECT
-DOMAIN-SUFFIX,antivirus.baidu.com,REJECT
-DOMAIN-SUFFIX,baifen.music.baidu.com,REJECT
-DOMAIN-SUFFIX,banlv.baidu.com,REJECT
-DOMAIN-SUFFIX,cm.baidu.com,REJECT
-DOMAIN-SUFFIX,cpro.zhidao.baidu.com,REJECT
-DOMAIN-SUFFIX,cleaner.baidu.com,REJECT
-DOMAIN-SUFFIX,cjhq.baidu.com,REJECT
-DOMAIN-SUFFIX,cb.baidu.com,REJECT
-DOMAIN-SUFFIX,c.baidu.com,REJECT
-DOMAIN-SUFFIX,btlaunch.baidu.com,REJECT
-DOMAIN-SUFFIX,bdplus.baidu.com,REJECT
-DOMAIN-SUFFIX,cbjs.baidu.com,REJECT
-DOMAIN-SUFFIX,cpro2.baidu.com,REJECT
-DOMAIN-SUFFIX,cpu-admin.baidu.com,REJECT
-DOMAIN-SUFFIX,10086.cn.baidu.cdn.yiwk.com,REJECT
-DOMAIN-SUFFIX,360baidus.com,REJECT
-DOMAIN-SUFFIX,app.ibaiducdn.com,REJECT
-DOMAIN-SUFFIX,baidu.cybcyw.com,REJECT
-DOMAIN-SUFFIX,baidu.dsp.tansuotv.com,REJECT
-DOMAIN-SUFFIX,baidu.greenxf.cn,REJECT
-DOMAIN-SUFFIX,baidu.jz5u.net,REJECT
-DOMAIN-SUFFIX,baiduace.com,REJECT
-DOMAIN-SUFFIX,baidujs.cnys.com,REJECT
-DOMAIN-SUFFIX,baidulao.com,REJECT
-DOMAIN-SUFFIX,baidut.github.io,REJECT
-DOMAIN-SUFFIX,baidu-union-js.xiachufang.com,REJECT
-DOMAIN-SUFFIX,baidu-union-pos.xiachufang.com,REJECT
-DOMAIN-SUFFIX,baiduzhidahao.cc,REJECT
-DOMAIN-SUFFIX,cpro.baidu.cn,REJECT
-DOMAIN-SUFFIX,crs.baidu.com,REJECT
-DOMAIN-SUFFIX,datax.baidu.com,REJECT
-DOMAIN-SUFFIX,dl.client.baidu.com,REJECT
-DOMAIN-SUFFIX,dl.ops.baidu.com,REJECT
-DOMAIN-SUFFIX,dl1sw.baidu.com,REJECT
-DOMAIN-SUFFIX,dl2.bav.baidu.com,REJECT
-DOMAIN-SUFFIX,dlsw.baidu.com,REJECT
-DOMAIN-SUFFIX,dlsw.br.baidu.com,REJECT
-DOMAIN-SUFFIX,dl-vip.bav.baidu.com,REJECT
-DOMAIN-SUFFIX,dl-vip.pcfaster.baidu.co.th,REJECT
-DOMAIN-SUFFIX,download.bav.baidu.com,REJECT
-DOMAIN-SUFFIX,download.sd.baidu.com,REJECT
-DOMAIN-SUFFIX,drmcmm.baidu.com,REJECT
-DOMAIN-SUFFIX,duiwai.baidu.com,REJECT
-DOMAIN-SUFFIX,dxp.baidu.com,REJECT
-DOMAIN-SUFFIX,dzl.baidu.com,REJECT
-DOMAIN-SUFFIX,e.baidu.com,REJECT
-DOMAIN-SUFFIX,eclick.baidu.com,REJECT
-DOMAIN-SUFFIX,eiv.baidu.com,REJECT
-DOMAIN-SUFFIX,em.baidu.com,REJECT
-DOMAIN-SUFFIX,entry.baidu.com,REJECT
-DOMAIN-SUFFIX,ers.baidu.com,REJECT
-DOMAIN-SUFFIX,fclick.baidu.com,REJECT
-DOMAIN-SUFFIX,feed.baidu.com,REJECT
-DOMAIN-SUFFIX,fexclick.baidu.com,REJECT
-DOMAIN-SUFFIX,g.baidu.com,REJECT
-DOMAIN-SUFFIX,gimg.baidu.com,REJECT
-DOMAIN-SUFFIX,guanjia.baidu.com,REJECT
-DOMAIN-SUFFIX,hc.baidu.com,REJECT
-DOMAIN-SUFFIX,hdj.baidu.com,REJECT
-DOMAIN-SUFFIX,hpd.baidu.com,REJECT
-DOMAIN-SUFFIX,idm-su.baidu.com,REJECT
-DOMAIN-SUFFIX,iebar.baidu.com,REJECT
-DOMAIN-SUFFIX,ikcode.baidu.com,REJECT
-DOMAIN-SUFFIX,iwanad.baidu.com,REJECT
-DOMAIN-SUFFIX,j.br.baidu.com,REJECT
-DOMAIN-SUFFIX,jb.mbaidu.top,REJECT
-DOMAIN-SUFFIX,js.mbaidu.top,REJECT
-DOMAIN-SUFFIX,kstj.baidu.com,REJECT
-DOMAIN-SUFFIX,m.baidu.com.yiqisee.cn,REJECT
-DOMAIN-SUFFIX,m.baidu.com.zhiduo.org,REJECT
-DOMAIN-SUFFIX,m1.baidu.com,REJECT
-DOMAIN-SUFFIX,ma.baidu.com,REJECT
-DOMAIN-SUFFIX,mpro.baidu.com,REJECT
-DOMAIN-SUFFIX,msite.baidu.com,REJECT
-DOMAIN-SUFFIX,mssp.baidu.com,REJECT
-DOMAIN-SUFFIX,mtj.baidu.com,REJECT
-DOMAIN-SUFFIX,neirong.baidu.com,REJECT
-DOMAIN-SUFFIX,nlog.baidu.com,REJECT
-DOMAIN-SUFFIX,nsclickvideo.baidu.com,REJECT
-DOMAIN-SUFFIX,openrcv.baidu.com,REJECT
-DOMAIN-SUFFIX,paimgcdn.baidu.com,REJECT
-DOMAIN-SUFFIX,pc.videoclick.baidu.com,REJECT
-DOMAIN-SUFFIX,push.zhanzhang.baidu.com,REJECT
-DOMAIN-SUFFIX,qianclick.baidu.com,REJECT
-DOMAIN-SUFFIX,release.baidu.com,REJECT
-DOMAIN-SUFFIX,river.zhidao.baidu.com,REJECT
-DOMAIN-SUFFIX,rj.baidu.com,REJECT
-DOMAIN-SUFFIX,rplog.baidu.com,REJECT
-DOMAIN-SUFFIX,s.baidu.com,REJECT
-DOMAIN-SUFFIX,sclick.baidu.com,REJECT
-DOMAIN-SUFFIX,sestat.baidu.com,REJECT
-DOMAIN-SUFFIX,shadu.baidu.com,REJECT
-DOMAIN-SUFFIX,sobar.baidu.com,REJECT
-DOMAIN-SUFFIX,sobartop.baidu.com,REJECT
-DOMAIN-SUFFIX,spcode.baidu.com,REJECT
-DOMAIN-SUFFIX,tk.baidu.com,REJECT
-DOMAIN-SUFFIX,tkweb.baidu.com,REJECT
-DOMAIN-SUFFIX,toolbar.baidu.com,REJECT
-DOMAIN-SUFFIX,tuijian.baidu.com,REJECT
-DOMAIN-SUFFIX,tuisong.baidu.com,REJECT
-DOMAIN-SUFFIX,ucstat.baidu.com,REJECT
-DOMAIN-SUFFIX,ulic.baidu.com,REJECT
-DOMAIN-SUFFIX,ulog.imap.baidu.com,REJECT
-DOMAIN-SUFFIX,union.baidu.com,REJECT
-DOMAIN-SUFFIX,union.baidustatic.guannin.com,REJECT
-DOMAIN-SUFFIX,unionimage.baidu.com,REJECT
-DOMAIN-SUFFIX,utility.baidu.com,REJECT
-DOMAIN-SUFFIX,utk.baidu.com,REJECT
-DOMAIN-SUFFIX,videopush.baidu.com,REJECT
-DOMAIN-SUFFIX,w.gdown.baidu.com,REJECT
-DOMAIN-SUFFIX,w.x.baidu.com,REJECT
-DOMAIN-SUFFIX,wangmeng.baidu.com,REJECT
-DOMAIN-SUFFIX,weishi.baidu.com,REJECT
-DOMAIN-SUFFIX,wisepush.video.baidu.com,REJECT
-DOMAIN-SUFFIX,wm.baidu.com,REJECT
-DOMAIN-SUFFIX,yingxiao.baidu.com,REJECT
-DOMAIN-SUFFIX,znsv.baidu.com,REJECT
-DOMAIN-SUFFIX,baidustatic.com,REJECT
-DOMAIN-SUFFIX,als.baidu.com,REJECT
-DOMAIN-SUFFIX,duclick.baidu.com,REJECT
-DOMAIN-SUFFIX,hm.baidu.com,REJECT
-DOMAIN-SUFFIX,hmma.baidu.com,REJECT
-DOMAIN-SUFFIX,mobads.baidu.com,REJECT
-DOMAIN-SUFFIX,mobads-logs.baidu.com,REJECT
-DOMAIN-SUFFIX,nsclick.baidu.com,REJECT
-DOMAIN,hm.baidu.com,REJECT
-DOMAIN,hmma.baidu.com,REJECT
-
-DOMAIN,180.76.76.200,REJECT
-# 屏蔽域名dns查询, REJECT
-IP-CIDR,180.76.76.200/32,REJECT,no-resolve
-
-DOMAIN,iadmusicmat.music.126.net,REJECT
-DOMAIN,iadmat.nosdn.127.net,REJECT
-DOMAIN,iadmatapk.nosdn.127.net,REJECT
-DOMAIN,httpdns.n.netease.com,REJECT
-DOMAIN,httpdns.music.163.com,REJECT
-
-DOMAIN-SUFFIX,adiu.amap.com,REJECT
-DOMAIN,aboard.apilocate.amap.com,REJECT
-DOMAIN,apiinit.amap.com,REJECT
-DOMAIN,icloud-amap.com,REJECT
-DOMAIN,logs.amap.com,REJECT
-DOMAIN-SUFFIX,dualstack-logs.amap.com,REJECT
-DOMAIN-SUFFIX,logs.amap.com,REJECT
-DOMAIN-SUFFIX,optimus-ads.amap.com,REJECT
-DOMAIN-SUFFIX,page.amap.com,REJECT
-DOMAIN,optimus-ads.amap.com,REJECT
-DOMAIN,optimus-ads.amap.com.w.alikunlun.com,REJECT
-DOMAIN-SUFFIX,shouji.sougou.com,REJECT
-DOMAIN,u51.me,REJECT
-DOMAIN-SUFFIX,u51.me,REJECT
-
-DOMAIN-SUFFIX,erebor.douban.com,REJECT
-DOMAIN-SUFFIX,ad.doubanio.com,REJECT
-
+# NOTE: All 176 rules from this module have been extracted to AdBlock.list
+# This cleaned version only contains non-Rule sections:
+#   - [URL Rewrite]
+#   - [Map Local]
+#   - [Script]
+#   - [Body Rewrite]
+#   - [MITM]
+# Use AdBlock.list for all blocking rules
 
 [URL Rewrite]
 ^https?:\/\/fcvbjbcebos\.baidu\.com\/.+.mp4 - reject
@@ -207,7 +31,6 @@ DOMAIN-SUFFIX,ad.doubanio.com,REJECT
 ^https?:\/\/img\d\.doubanio\.com\/view\/dale-online\/dale_ad\/ - reject
 ^https?:\/\/frodo\.douban\.com\/api\/v2\/movie\/banner - reject
 ^https?:\/\/erebor\.douban\.com\/count\/\?ad= - reject
-
 
 [Map Local]
 # 惊喜弹窗
@@ -248,40 +71,37 @@ https?:\/\/(ipv4|interface\d?)\.music\.163.com\/e?api\/ad data-type=text data="{
 # 公众号去除商品推广
 ^https?:\/\/mp\.weixin\.qq\.com\/mp\/cps_product_info\?action data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
-
 [Script]
 # 搜索页
-小红书搜索页                    = type=http-response, pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/(banner|hot)_list, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
+小红书搜索页                    = type=http-response, pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/(banner|hot)_list, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
 # 开屏广告
-小红书开屏广告                   = type=http-response, pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/system_service\/config\?, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
+小红书开屏广告                   = type=http-response, pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/system_service\/config\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
 # 详情页,小部件
-小红书详情页                    = type=http-response, pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/widgets, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
+小红书详情页                    = type=http-response, pattern=^https?:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/widgets, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
 # 图片水印,视频水印
-小红书图片视频水印                 = type=http-response, pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/(imagefeed|live_photo\/save), script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
+小红书图片视频水印                 = type=http-response, pattern=^https?:\/\/(edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/(imagefeed|live_photo\/save), script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
 # 评论区图片、live图水印，表情包下载
-小红书评论区去水印存储               = type=http-response, pattern=^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/(v5\/note\/comment\/list|v3\/note\/comment\/sub_comments)\?, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
-小红书评论区去水印下载               = type=http-response, pattern=^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/interaction\/comment\/video\/download\?, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
+小红书评论区去水印存储               = type=http-response, pattern=^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/(v5\/note\/comment\/list|v3\/note\/comment\/sub_comments)\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
+小红书评论区去水印下载               = type=http-response, pattern=^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/interaction\/comment\/video\/download\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60
 
-贴吧json                    = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/(c\/(s\/sync|f\/(ad\/getSplashAd|frs\/(page|threadlist|generalTabList)|pb\/(pic)?page|excellent\/personalized))$|tiebaads\/commonbatch\?), script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-json.js, requires-body=true, timeout=10
-贴吧proto                   = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/c\/(b\/ad\/adBid|f\/(frs\/(page|threadlist|generalTabList)|ad\/getFeedAd|pb\/page|excellent\/personalized))\?cmd, script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js, requires-body=true, binary-body-mode=true, timeout=10, argument=[{{{per_filter_video_thread}}}]
+贴吧json                    = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/(c\/(s\/sync|f\/(ad\/getSplashAd|frs\/(page|threadlist|generalTabList)|pb\/(pic)?page|excellent\/personalized))$|tiebaads\/commonbatch\?), script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-json.js, requires-body=true, timeout=10
+贴吧proto                   = type=http-response, pattern=^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/c\/(b\/ad\/adBid|f\/(frs\/(page|threadlist|generalTabList)|ad\/getFeedAd|pb\/page|excellent\/personalized))\?cmd, script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-proto.js, requires-body=true, binary-body-mode=true, timeout=10, argument=[{{{per_filter_video_thread}}}]
 
 # mian | 热推、有话想说、分享一下、歌曲下的祝福等小提示去除 ｜ 评论区 乐迷、星评等级 关注 等 图标去除
-NetEaseCloudMusic_mian    = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/(batch|v\d\/resource\/comment\/floor\/get), script-path=https://raw.githubusercontent.com/Keywos/rule/main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
+NetEaseCloudMusic_mian    = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/(batch|v\d\/resource\/comment\/floor\/get), script-path=https://cdn.jsdelivr.net/gh/Keywos/rule@main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
 # tab
-NetEaseCloudMusic_tab     = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/link\/home\/framework\/tab, script-path=https://raw.githubusercontent.com/Keywos/rule/main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20, argument="[{{{MY}}},{{{DT}}},{{{FX}}}]"
+NetEaseCloudMusic_tab     = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/link\/home\/framework\/tab, script-path=https://cdn.jsdelivr.net/gh/Keywos/rule@main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20, argument="[{{{MY}}},{{{DT}}},{{{FX}}}]"
 # 推荐 | home | 主页
-NetEaseCloudMusic_home    = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/(homepage\/block\/page|link\/page\/rcmd\/(resource\/show|block\/resource\/multi\/refresh)), script-path=https://raw.githubusercontent.com/Keywos/rule/main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20, argument="[{PRGG},{PRRK},{PRDRD},{PRSCVPT},{PRST},{PRRR},{HMPR},{PRMST},{PRCN}]"
+NetEaseCloudMusic_home    = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/(homepage\/block\/page|link\/page\/rcmd\/(resource\/show|block\/resource\/multi\/refresh)), script-path=https://cdn.jsdelivr.net/gh/Keywos/rule@main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20, argument="[{PRGG},{PRRK},{PRDRD},{PRSCVPT},{PRST},{PRRR},{HMPR},{PRMST},{PRCN}]"
 # 发现
-NetEaseCloudMusic_fx      = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/link\/page\/discovery\/resource\/show, script-path=https://raw.githubusercontent.com/Keywos/rule/main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
+NetEaseCloudMusic_fx      = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/link\/page\/discovery\/resource\/show, script-path=https://cdn.jsdelivr.net/gh/Keywos/rule@main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
 # 我的 MyPageBar ad
-NetEaseCloudMusic_mybarad = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/link\/position\/show\/resource, script-path=https://raw.githubusercontent.com/Keywos/rule/main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
+NetEaseCloudMusic_mybarad = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/link\/position\/show\/resource, script-path=https://cdn.jsdelivr.net/gh/Keywos/rule@main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
 # 显示未关注你
-NetEaseCloudMusic_foll    = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/user\/follow\/users\/mixed\/get, script-path=https://raw.githubusercontent.com/Keywos/rule/main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
-
+NetEaseCloudMusic_foll    = type=http-response, pattern=^https?:\/\/(ipv4|interface\d?)\.music\.163\.com\/e?api\/user\/follow\/users\/mixed\/get, script-path=https://cdn.jsdelivr.net/gh/Keywos/rule@main/script/wy/js/wyres.js, requires-body=true, binary-body-mode=true, timeout=20
 
 [Body Rewrite]
 http-response ^https?:\/\/mp\.weixin\.qq\.com\/mp\/getappmsgad advertisement fmz200
-
 
 [MITM]
 hostname = %APPEND% afd.baidu.com, amap-aos-info-nogw.amap.com, api*.tuisong.baidu.com, api.douban.com, baichuan.baidu.com, ci.xiaohongshu.com, cover.baidu.com, edith.xiaohongshu.com, fcvbjbcebos.baidu.com, interface.music.163.com, interface3.music.163.com, interface9.music.163.com, ipv4.music.163.com, issuecdn.baidupcs.com, m*.amap.com, m.baidu.com, mobads.baidu.com, mp.weixin.qq.com, optimus-ads.amap.com, rec.xiaohongshu.com, sa*.tuisong.baidu.com, so.xiaohongshu.com, sofire.baidu.com, tiebac.baidu.com, update.pan.baidu.com, www.baidu.com, www.xiaohongshu.com

@@ -1,41 +1,7 @@
 #!name=PROMAX split · Weibo.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 65/71；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 33/39；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule
-
-[Rule]
-URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload)",REJECT-DROP
-URL-REGEX,"^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/",REJECT-DROP
-DOMAIN-SUFFIX,biz.weibo.com,REJECT
-DOMAIN,bootpreload.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,fastimage.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,adimg.vue.weibo.com,REJECT
-DOMAIN-SUFFIX,zymo.mps.weibo.com,REJECT
-DOMAIN-SUFFIX,weibomingzi.com,REJECT
-DOMAIN-SUFFIX,sdkapp.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,promote.biz.weibo.cn,REJECT
-DOMAIN-SUFFIX,gw5.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,gw6.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,game.weibo.cn,REJECT
-DOMAIN-SUFFIX,adimg.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,game.weibo.com,REJECT
-DOMAIN-SUFFIX,ads.viber.com,REJECT
-DOMAIN-SUFFIX,ads-d.viber.com,REJECT
-DOMAIN-SUFFIX,ads.aws.viber.com,REJECT
-DOMAIN-SUFFIX,alitui.weibo.com,REJECT
-DOMAIN-SUFFIX,dp.im.weibo.cn,REJECT
-DOMAIN-SUFFIX,biz.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,click.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,wax.weibo.com,REJECT
-DOMAIN-SUFFIX,wbapp.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,widget.weibo.com,REJECT
-DOMAIN-SUFFIX,dsp.edm.weibo.cn,REJECT
-DOMAIN-SUFFIX,alitui.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,tui.weibo.com,REJECT
-DOMAIN-SUFFIX,wax.weibo.com.cn,REJECT
-DOMAIN-SUFFIX,ad.weibo.com,REJECT
-DOMAIN,datacollection.uve.weibo.com,REJECT
-DOMAIN,adpinpai.video.weibocdn.com,REJECT
 
 [URL Rewrite]
 ^https?:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/(get-lbs-cell-info\.php|sdkconfig\.php) - reject
