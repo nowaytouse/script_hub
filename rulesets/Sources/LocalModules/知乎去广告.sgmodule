@@ -26,12 +26,14 @@
 
 
 
+
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.zhihu\.com\/bazaar\/vip_tab\/header\? 'delpaths([["activity_banner"]])'
 http-response-jq ^https:\/\/api\.zhihu\.com\/bazaar\/vip_tab\/header\? 'delpaths([["activity_window"]])'
 http-response-jq ^https:\/\/api\.zhihu\.com\/bazaar\/vip_tab\/header\? 'delpaths([["vip_tip"]])'
 http-response ^https:\/\/api\.zhihu\.com\/search\/recommend_query\/v2\? "recommend_queries":\{.+\} "recommend_queries":{}
 http-response-jq ^https:\/\/api\.zhihu\.com\/questions\/\d+(?:\/answers|\/feeds|\?include=) 'del(.ad_info, .data.ad_info?, .query_info) | if (.data | type) == "array" then .data |= map(select(.target?.answer_type?// "" | tostring | contains("paid") | not)) else . end'
+
 
 
 
@@ -100,6 +102,7 @@ http-response-jq ^https:\/\/api\.zhihu\.com\/questions\/\d+(?:\/answers|\/feeds|
 
 
 
+
 [Script]
 移除回答底部卡片推广 = type=http-response, pattern=^https:\/\/(?:api|page-info)\.zhihu\.com\/(?:answers|articles)\/v2\/\d+, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_947a21_Zhihu_remove_ads.js, requires-body=true
 
@@ -120,6 +123,7 @@ http-response-jq ^https:\/\/api\.zhihu\.com\/questions\/\d+(?:\/answers|\/feeds|
 拦截服务器推送配置 config = type=http-response, pattern=^https:\/\/appcloud2\.zhihu\.com\/v3\/config, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_947a21_Zhihu_remove_ads.js, requires-body=true
 
 拦截服务器推送配置 config all = type=http-response, pattern=^https:\/\/m-cloud\.zhihu\.com\/api\/cloud\/zhihu\/config\/all\?, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_947a21_Zhihu_remove_ads.js, requires-body=true
+
 
 
 
