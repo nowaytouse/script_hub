@@ -4,7 +4,7 @@ import re
 import sys
 import subprocess
 import time
-from typing import List, Optional
+from typing import List, Optional, Union, overload, Literal
 
 # COLORS & LOGGING
 
@@ -113,20 +113,12 @@ def write_file(file_path: str, content: str):
             if old_stripped == new_stripped:
                 return  # functionally identical, skip write
         except Exception as e:
-            print(f"Error checking write: {e}")
+            Logger.warn(f"Error checking write identity for {file_path}: {e}")
             pass
 
-    dir_path = os.path.dirname(file_path) or "."
-    os.makedirs(dir_path, exist_ok=True)
-    tmp = file_path + ".tmp~"
-    try:
-        with open(tmp, 'w', encoding='utf-8') as f:
-            f.write(content)
-        os.replace(tmp, file_path)
-    except Exception:
-        if os.path.exists(tmp):
-            os.remove(tmp)
-        raise
+    from hub.error_handling import safe_write_file
+    if not safe_write_file(file_path, content, atomic=True):
+        raise IOError(f"Failed to write file: {file_path}")
 
 # SURGE/SINGBOX SPECIFIC PARSERS
 
@@ -170,65 +162,14 @@ DEFAULT_DOWNLOAD_RETRIES = 3   # 重试次数
 MAX_DOWNLOAD_SIZE = 50 * 1024 * 1024  # 50MB
 
 def atomic_write(file_path: str, content: str) -> bool:
-    """原子写入文件（先写临时文件，再重命名）
-
-    Args:
-        file_path: 目标文件路径
-        content: 文件内容
-
-    Returns:
-        是否成功
-    """
-    import tempfile
-    import shutil
-
-    try:
-        # 确保目录存在
-        dir_path = os.path.dirname(file_path) or "."
-        os.makedirs(dir_path, exist_ok=True)
-
-        # 写入临时文件
-        fd, tmp_path = tempfile.mkstemp(dir=dir_path, prefix=".tmp_", suffix=".writing")
-        try:
-            with os.fdopen(fd, 'w', encoding='utf-8') as f:
-                f.write(content)
-            # 原子重命名
-            shutil.move(tmp_path, file_path)
-            return True
-        except Exception:
-            # 清理临时文件
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-            raise
-    except Exception as e:
-        Logger.error(f"原子写入失败 {file_path}: {e}")
-        return False
+    """原子写入文件（先写临时文件，再重命名）"""
+    from hub.error_handling import safe_write_file
+    return safe_write_file(file_path, content, atomic=True)
 
 def safe_remove(file_path: str, missing_ok: bool = True) -> bool:
-    """安全删除文件
-
-    Args:
-        file_path: 文件路径
-        missing_ok: 文件不存在时是否视为成功
-
-    Returns:
-        是否成功
-    """
-    try:
-        if not os.path.exists(file_path):
-            if missing_ok:
-                return True
-            Logger.warn(f"文件不存在: {file_path}")
-            return False
-
-        os.remove(file_path)
-        return True
-    except PermissionError:
-        Logger.error(f"权限不足，无法删除: {file_path}")
-        return False
-    except OSError as e:
-        Logger.error(f"删除文件失败 {file_path}: {e}")
-        return False
+    """安全删除文件"""
+    from hub.error_handling import safe_remove_file
+    return safe_remove_file(file_path, missing_ok=missing_ok)
 
 def safe_remove_tree(dir_path: str, missing_ok: bool = True) -> bool:
     """安全删除目录树
@@ -324,9 +265,17 @@ def _read_vendor_snapshot(url: str) -> Optional[bytes]:
         return None
 
 
+@overload
+def safe_download(url: str, binary: Literal[False] = False, retries: int = 1,
+                  timeout: int = 30, ua: Optional[str] = None) -> Optional[str]: ...
+
+@overload
+def safe_download(url: str, binary: Literal[True], retries: int = 1,
+                  timeout: int = 30, ua: Optional[str] = None) -> Optional[bytes]: ...
+
 def safe_download(url: str, binary: bool = False, retries: int = 1,
-                  timeout: int = 30, ua: Optional[str] = None) -> Optional[str]:
-    """Download text content from *url*.  Returns None on failure / HTML response."""
+                  timeout: int = 30, ua: Optional[str] = None) -> Union[str, bytes, None]:
+    """Download content from *url*. Returns None on failure / HTML response."""
     raw = _curl_fetch(url, timeout=timeout, retries=retries, ua=ua)
     if raw is None:
         return None
@@ -336,7 +285,7 @@ def safe_download(url: str, binary: bool = False, retries: int = 1,
             "(blocked or redirected)."
         )
         return None
-    return raw.decode("utf-8", errors="replace") if not binary else raw  # type: ignore[return-value]
+    return raw.decode("utf-8", errors="replace") if not binary else raw
 
 
 def safe_download_binary(url: str, retries: int = 1,

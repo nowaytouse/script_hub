@@ -106,6 +106,9 @@ class SRSGenerator:
         finally:
             if os.path.exists(json_tmp):
                 safe_remove(json_tmp)
+            json_tmp_write = json_tmp + ".write"
+            if os.path.exists(json_tmp_write):
+                safe_remove(json_tmp_write)
 
     @staticmethod
     def _wildcard_to_regex(value: str) -> str:

@@ -58,6 +58,22 @@ def _py_env() -> dict:
     return {**os.environ, "PYTHONPATH": SCRIPTS_DIR}
 
 
+def _run_script(script_name: str, desc: str, args: list = None) -> bool:
+    """Helper to run a Python script and log its result."""
+    Logger.section(desc)
+    cmd = [sys.executable, os.path.join(SCRIPTS_DIR, script_name)] + (args or [])
+    try:
+        res = subprocess.run(cmd, cwd=ROOT, env=_py_env())
+        if res.returncode != 0:
+            Logger.error(f"{desc} failed.")
+            return False
+        Logger.success(f"{desc} passed.")
+        return True
+    except Exception as e:
+        Logger.error(f"{desc} failed: {e}")
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Script Hub Python Main Orchestrator (v1.4)")
     parser.add_argument("--quick", action="store_true", help="Skip heavy sync operations")
@@ -81,43 +97,11 @@ def main():
     Logger.section("Script Hub Python Update Tool (v1.4)")
     has_failures = False
 
-    Logger.section("Surge Compliance Tests")
-    try:
-        result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/test_surge_compliance.py")],
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        if result.returncode != 0:
-            Logger.error("Surge compliance regression tests failed.")
-            has_failures = True
-        else:
-            Logger.success("Surge compliance regression tests passed.")
-    except Exception as e:
-        Logger.error(f"Compliance tests failed: {e}")
-        has_failures = True
-
-    if has_failures:
+    if not _run_script("qa/test_surge_compliance.py", "Surge Compliance Tests"):
         Logger.error("Aborting pipeline due to compliance test failures.")
         sys.exit(1)
 
-    Logger.section("Module Header Validation")
-    try:
-        result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/validate_module_headers.py")],
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        if result.returncode != 0:
-            Logger.error("Module header validation failed.")
-            has_failures = True
-        else:
-            Logger.success("Module header validation passed.")
-    except Exception as e:
-        Logger.error(f"Module header validation failed: {e}")
-        has_failures = True
-
-    if has_failures:
+    if not _run_script("qa/validate_module_headers.py", "Module Header Validation"):
         Logger.error("Aborting pipeline due to module header validation failures.")
         sys.exit(1)
 
@@ -157,20 +141,7 @@ def main():
     else:
         Logger.success("Upstream bundle merges completed successfully.")
 
-    Logger.section("Bundle Completeness Audit")
-    try:
-        audit_result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/audit_bundle_completeness.py")],
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        if audit_result.returncode != 0:
-            Logger.error("Bundle completeness audit failed.")
-            has_failures = True
-        else:
-            Logger.success("Bundle completeness audit passed.")
-    except Exception as e:
-        Logger.error(f"Bundle completeness audit failed: {e}")
+    if not _run_script("qa/audit_bundle_completeness.py", "Bundle Completeness Audit"):
         has_failures = True
 
     Logger.section("Smart-Config-Kit Supplemental Merge")
@@ -211,20 +182,7 @@ def main():
         Logger.error(f"Final ruleset cleanup failed: {e}")
         has_failures = True
 
-    Logger.section("Ruleset Compliance Validation")
-    try:
-        result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "qa/validate_surge_rulesets.py")],
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        if result.returncode != 0:
-            Logger.error("Ruleset compliance validation failed.")
-            has_failures = True
-        else:
-            Logger.success("Ruleset compliance validation passed.")
-    except Exception as e:
-        Logger.error(f"Ruleset validation failed: {e}")
+    if not _run_script("qa/validate_surge_rulesets.py", "Ruleset Compliance Validation"):
         has_failures = True
 
     try:
@@ -235,37 +193,16 @@ def main():
 
     Logger.section("Module Processing & Conversion")
     try:
-        subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "tools/consolidate_modules.py")],
-            check=True,
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        conv = subprocess.run(
-            [
-                sys.executable,
-                os.path.join(SCRIPTS_DIR, "tools/convert_surge_to_shadowrocket.py"),
-                "--modules",
-            ],
-            cwd=ROOT,
-            env=_py_env(),
-        )
-        if conv.returncode != 0:
-            Logger.error("Shadowrocket module conversion failed (no modules converted).")
+        if not _run_script("tools/consolidate_modules.py", "Module Consolidation"):
             has_failures = True
+        
+        if not _run_script("tools/convert_surge_to_shadowrocket.py", "Shadowrocket Module Conversion", ["--modules"]):
+            has_failures = True
+
         surge_conf = project_paths.CONF_FILE
         if os.path.isfile(surge_conf):
-            subprocess.run(
-                [
-                    sys.executable,
-                    os.path.join(SCRIPTS_DIR, "tools/convert_surge_to_shadowrocket.py"),
-                    "--config",
-                    surge_conf,
-                ],
-                check=False,
-                cwd=ROOT,
-                env=_py_env(),
-            )
+            _run_script("tools/convert_surge_to_shadowrocket.py", "Shadowrocket Config Conversion", ["--config", surge_conf])
+        
         Logger.success("Module processing and conversion completed.")
     except Exception as e:
         Logger.error(f"Module processing failed: {e}")
@@ -321,10 +258,15 @@ def main():
                     )
                     if os.environ.get("PUSH_COOLDOWN_ENABLED", "").lower() == "true":
                         secs = _push_cooldown_seconds()
-                        Logger.info(
-                            f"Push cooldown: waiting {secs}s, then rebase onto origin/master and push..."
-                        )
-                        time.sleep(secs)
+                        Logger.info(f"Push cooldown: waiting {secs}s, then rebase onto origin/master and push...")
+                        
+                        # Visual countdown
+                        for remaining in range(secs, 0, -1):
+                            sys.stdout.write(f"\rWaiting... {remaining}s remaining")
+                            sys.stdout.flush()
+                            time.sleep(1)
+                        sys.stdout.write("\n")
+                        
                         _git_sync_before_push()
                     subprocess.run(["git", "push", "origin", "master"], check=True, cwd=ROOT)
                     Logger.success("Changes pushed to GitHub successfully.")
