@@ -1,7 +1,7 @@
 #!name=PROMAX split · Weibo.ADBlock.sgmodule
 #!desc=从混合模块拆出的去广告行 33/39；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule
+#!split-source=/home/runner/work/script_hub/script_hub/rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule
 
 [URL Rewrite]
 ^https?:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/(get-lbs-cell-info\.php|sdkconfig\.php) - reject
