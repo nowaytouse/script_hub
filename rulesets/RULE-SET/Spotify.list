@@ -2,16 +2,18 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 18
+# Rules: 24
 
 DOMAIN,spotify.com.edgesuite.net
 DOMAIN,spotify.map.fastly.net
 DOMAIN,spotify.map.fastlylb.net
+DOMAIN-KEYWORD,spotify
 DOMAIN-SUFFIX,byspotify.com
 DOMAIN-SUFFIX,pscdn.co
 DOMAIN-SUFFIX,scdn.co
 DOMAIN-SUFFIX,spoti.fi
 DOMAIN-SUFFIX,spotify-everywhere.com
+DOMAIN-SUFFIX,spotify.app.link
 DOMAIN-SUFFIX,spotify.com
 DOMAIN-SUFFIX,spotify.design
 DOMAIN-SUFFIX,spotify.link
@@ -21,4 +23,8 @@ DOMAIN-SUFFIX,spotifycharts.com
 DOMAIN-SUFFIX,spotifycodes.com
 DOMAIN-SUFFIX,spotifyforbrands.com
 DOMAIN-SUFFIX,spotifyjobs.com
+DOMAIN-SUFFIX,spotifynewsroom.jp
+DOMAIN-SUFFIX,spotilocal.com
 DOMAIN-SUFFIX,tospotify.com
+PROCESS-NAME,com.spotify.music
+USER-AGENT,Spotify*

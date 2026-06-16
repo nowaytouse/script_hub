@@ -21,6 +21,7 @@ from hub.project_paths import (
     METACUBEX_DIR,
     CACHE_DIR,
     SOURCES_DIR,
+    LINKS_DIR,
 )
 
 SURGE_DIR = RULE_SET_DIR  # Backward compat
@@ -296,7 +297,7 @@ class RulesetManager:
         
         # 1. Hash the manifest lists themselves
         manifests = [
-            os.path.join(SOURCES_DIR, f"{name}_sources.list"), 
+            os.path.join(LINKS_DIR, f"{name}_sources.list"), 
             self._find_case_insensitive_file(METACUBEX_DIR, f"MetaCubeX_{name}.list")
         ]
         for f in manifests:
@@ -311,7 +312,7 @@ class RulesetManager:
                         for line in content.decode('utf-8', errors='ignore').splitlines():
                             line = line.strip()
                             if line and not line.startswith(('#', 'http')):
-                                local_ref = os.path.join(SOURCES_DIR, line.split('|')[0])
+                                local_ref = os.path.join(LINKS_DIR, line.split('|')[0])
                                 if os.path.exists(local_ref):
                                     with open(local_ref, 'rb') as lr_obj: hasher.update(lr_obj.read())
                 found = True
@@ -324,7 +325,7 @@ class RulesetManager:
         current_hash = hasher.hexdigest() if found else ""
         # Detect if any source is remote (http)
         has_remote = False
-        s_file = os.path.join(SOURCES_DIR, f"{name}_sources.list")
+        s_file = os.path.join(LINKS_DIR, f"{name}_sources.list")
         if os.path.exists(s_file):
             for line in read_file(s_file):
                 if line.strip().startswith('http'):
@@ -347,7 +348,7 @@ class RulesetManager:
                 for line in read_file(m_file):
                     cleaned = self.clean_rule(line, name)
                     if cleaned: all_rules.add(cleaned)
-            s_file = os.path.join(SOURCES_DIR, f"{name}_sources.list")
+            s_file = os.path.join(LINKS_DIR, f"{name}_sources.list")
             if os.path.exists(s_file):
                 for line in read_file(s_file):
                     line = line.strip()
@@ -359,7 +360,7 @@ class RulesetManager:
                                 cleaned = self.clean_rule(r_line, name)
                                 if cleaned: all_rules.add(cleaned)
                     else:
-                        local_path = os.path.join(SOURCES_DIR, line.split('|')[0])
+                        local_path = os.path.join(LINKS_DIR, line.split('|')[0])
                         if os.path.exists(local_path):
                             for r_line in read_file(local_path):
                                 cleaned = self.clean_rule(r_line, name)
@@ -433,7 +434,7 @@ class RulesetManager:
                 continue
             if name in DEPRECATED_RULESETS:
                 if safe_remove(path):
-                    src = os.path.join(SOURCES_DIR, f"{name}_sources.list")
+                    src = os.path.join(LINKS_DIR, f"{name}_sources.list")
                     if os.path.exists(src):
                         safe_remove(src)
                     self.stats["deleted"] += 1

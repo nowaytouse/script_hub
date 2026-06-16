@@ -2,8 +2,9 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 223
+# Rules: 232
 
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 DOMAIN,ai.google.dev
 DOMAIN,aida.googleapis.com
 DOMAIN,aisandbox-pa.googleapis.com
@@ -13,12 +14,15 @@ DOMAIN,antigravity-pa.googleapis.com
 DOMAIN,antigravity-unleash.goog
 DOMAIN,antigravity.google
 DOMAIN,antigravity.googleapis.com
+DOMAIN,api.github.com
 DOMAIN,api.jetbrains.ai
 DOMAIN,api.msn.com
 DOMAIN,assets.msn.com
 DOMAIN,cloudaicompanion.googleapis.com
 DOMAIN,cloudcode-pa.googleapis.com
 DOMAIN,copilot-proxy.githubusercontent.com
+DOMAIN,copilot-telemetry-service.githubusercontent.com
+DOMAIN,copilot-telemetry.githubusercontent.com
 DOMAIN,copilot-workspace.githubnext.com
 DOMAIN,copilotprodattachments.blob.core.windows.net
 DOMAIN,daily-cloudcode-pa.googleapis.com
@@ -36,6 +40,7 @@ DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,openaicom.imgix.net
 DOMAIN,openaicomproductionae4b.blob.core.windows.net
 DOMAIN,openrouter.ai
+DOMAIN,ppl-ai-file-upload.s3.amazonaws.com
 DOMAIN,pplx-res.cloudinary.com
 DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,robinfrontend-pa.googleapis.com
@@ -88,6 +93,7 @@ DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,claudemcpclient.com
+DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com
 DOMAIN-SUFFIX,clawhub.ai
 DOMAIN-SUFFIX,client-api.arkoselabs.com
@@ -122,6 +128,7 @@ DOMAIN-SUFFIX,envato-static.com
 DOMAIN-SUFFIX,envato.com
 DOMAIN-SUFFIX,envatousercontent.com
 DOMAIN-SUFFIX,g.ai
+DOMAIN-SUFFIX,geller-pa.googleapis.com
 DOMAIN-SUFFIX,gemini.google
 DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,gemini.gstatic.com
@@ -168,6 +175,7 @@ DOMAIN-SUFFIX,musical.ly
 DOMAIN-SUFFIX,notebooklm.google
 DOMAIN-SUFFIX,notebooklm.google.com
 DOMAIN-SUFFIX,oaistatic.com
+DOMAIN-SUFFIX,oaistatsig.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,observeit.net
 DOMAIN-SUFFIX,ollama.com
@@ -187,6 +195,7 @@ DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,poecdn.net
 DOMAIN-SUFFIX,pplx.ai
 DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
+DOMAIN-SUFFIX,qoder.com
 DOMAIN-SUFFIX,replicate.com
 DOMAIN-SUFFIX,runpod.io
 DOMAIN-SUFFIX,snapkit.com

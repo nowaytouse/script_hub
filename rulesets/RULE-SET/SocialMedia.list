@@ -2,10 +2,11 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 659
+# Rules: 680
 
 DOMAIN,api.imem.app
 DOMAIN,api.swiftgram.app
+DOMAIN,fbcdn-a.akamaihd.net
 DOMAIN,lf16-effectcdn.byteeffecttos-g.com
 DOMAIN,lf16-pkgcdn.pitaya-clientai.com
 DOMAIN,m.cmx.im
@@ -32,6 +33,7 @@ DOMAIN-SUFFIX,achat-followers-instagram.com
 DOMAIN-SUFFIX,acheter-followers-instagram.com
 DOMAIN-SUFFIX,acheterdesfollowersinstagram.com
 DOMAIN-SUFFIX,acheterfollowersinstagram.com
+DOMAIN-SUFFIX,ads-twitter.com
 DOMAIN-SUFFIX,advancediddetection.com
 DOMAIN-SUFFIX,airhorn.solutions
 DOMAIN-SUFFIX,airhornbot.com
@@ -71,8 +73,10 @@ DOMAIN-SUFFIX,dis.gd
 DOMAIN-SUFFIX,discord-activities.com
 DOMAIN-SUFFIX,discord-attachments-uploads-prd.storage.googleapis.com
 DOMAIN-SUFFIX,discord.co
+DOMAIN-SUFFIX,discord.com
 DOMAIN-SUFFIX,discord.design
 DOMAIN-SUFFIX,discord.dev
+DOMAIN-SUFFIX,discord.gg
 DOMAIN-SUFFIX,discord.gift
 DOMAIN-SUFFIX,discord.gifts
 DOMAIN-SUFFIX,discord.media
@@ -189,6 +193,7 @@ DOMAIN-SUFFIX,facebookawards.com
 DOMAIN-SUFFIX,facebookblueprint.net
 DOMAIN-SUFFIX,facebookbrand.com
 DOMAIN-SUFFIX,facebookbrand.net
+DOMAIN-SUFFIX,facebookcanadianelectionintegrityinitiative.com
 DOMAIN-SUFFIX,facebookcareer.com
 DOMAIN-SUFFIX,facebookcheats.com
 DOMAIN-SUFFIX,facebookck.com
@@ -231,6 +236,7 @@ DOMAIN-SUFFIX,facebookmail.tv
 DOMAIN-SUFFIX,facebookmanager.info
 DOMAIN-SUFFIX,facebookmarketing.info
 DOMAIN-SUFFIX,facebookmarketingpartner.com
+DOMAIN-SUFFIX,facebookmarketingpartners.com
 DOMAIN-SUFFIX,facebookmobile.com
 DOMAIN-SUFFIX,facebookmsn.com
 DOMAIN-SUFFIX,facebooknews.com
@@ -339,7 +345,6 @@ DOMAIN-SUFFIX,fbacebook.com
 DOMAIN-SUFFIX,fbaddins.com
 DOMAIN-SUFFIX,fbbmarket.com
 DOMAIN-SUFFIX,fbboostyourbusiness.com
-DOMAIN-SUFFIX,fbcdn-a.akamaihd.net
 DOMAIN-SUFFIX,fbcdn.com
 DOMAIN-SUFFIX,fbcdn.net
 DOMAIN-SUFFIX,fbf8.com
@@ -421,6 +426,7 @@ DOMAIN-SUFFIX,futureofbusinesssurvey.org
 DOMAIN-SUFFIX,gacebook.com
 DOMAIN-SUFFIX,gameroom.com
 DOMAIN-SUFFIX,gfacecbook.com
+DOMAIN-SUFFIX,graph.org
 DOMAIN-SUFFIX,groups.com
 DOMAIN-SUFFIX,hackerfacebook.com
 DOMAIN-SUFFIX,hackfacebook.com
@@ -467,6 +473,7 @@ DOMAIN-SUFFIX,instagramkusu.com
 DOMAIN-SUFFIX,instagramlogin.com
 DOMAIN-SUFFIX,instagramm.com
 DOMAIN-SUFFIX,instagramn.com
+DOMAIN-SUFFIX,instagrampartners.com
 DOMAIN-SUFFIX,instagramphoto.com
 DOMAIN-SUFFIX,instagramq.com
 DOMAIN-SUFFIX,instagramsepeti.com
@@ -561,6 +568,7 @@ DOMAIN-SUFFIX,reactjs.com
 DOMAIN-SUFFIX,reactjs.org
 DOMAIN-SUFFIX,recoiljs.org
 DOMAIN-SUFFIX,redd.it
+DOMAIN-SUFFIX,reddit.com
 DOMAIN-SUFFIX,redditmail.com
 DOMAIN-SUFFIX,redditmedia.com
 DOMAIN-SUFFIX,redditstatic.com
@@ -578,9 +586,18 @@ DOMAIN-SUFFIX,sportsfacebook.com
 DOMAIN-SUFFIX,sportstream.com
 DOMAIN-SUFFIX,stel.com
 DOMAIN-SUFFIX,supportfacebook.com
+DOMAIN-SUFFIX,t.co
+DOMAIN-SUFFIX,t.me
+DOMAIN-SUFFIX,tdesktop.com
+DOMAIN-SUFFIX,telega.one
+DOMAIN-SUFFIX,telegra.ph
 DOMAIN-SUFFIX,telegram-cdn.org
 DOMAIN-SUFFIX,telegram.dog
+DOMAIN-SUFFIX,telegram.me
+DOMAIN-SUFFIX,telegram.org
 DOMAIN-SUFFIX,telegram.space
+DOMAIN-SUFFIX,telegramdownload.com
+DOMAIN-SUFFIX,telesco.pe
 DOMAIN-SUFFIX,terragraph.com
 DOMAIN-SUFFIX,tg.dev
 DOMAIN-SUFFIX,thefacebook.com
@@ -615,9 +632,11 @@ DOMAIN-SUFFIX,ttwebview.com
 DOMAIN-SUFFIX,tuta.com
 DOMAIN-SUFFIX,tweetdeck.com
 DOMAIN-SUFFIX,twimg.co
+DOMAIN-SUFFIX,twimg.com
 DOMAIN-SUFFIX,twimg.org
 DOMAIN-SUFFIX,twitpic.com
 DOMAIN-SUFFIX,twitter.biz
+DOMAIN-SUFFIX,twitter.com
 DOMAIN-SUFFIX,twitter.jp
 DOMAIN-SUFFIX,twittercommunity.com
 DOMAIN-SUFFIX,twitterflightschool.com
@@ -632,6 +651,7 @@ DOMAIN-SUFFIX,tx.me
 DOMAIN-SUFFIX,usercontent.dev
 DOMAIN-SUFFIX,viewpointsfromfacebook.com
 DOMAIN-SUFFIX,vine.co
+DOMAIN-SUFFIX,wa.me
 DOMAIN-SUFFIX,watchanimeattheoffice.com
 DOMAIN-SUFFIX,web-instagram.net
 DOMAIN-SUFFIX,whatsapp-plus.info
@@ -639,6 +659,7 @@ DOMAIN-SUFFIX,whatsapp-plus.me
 DOMAIN-SUFFIX,whatsapp-plus.net
 DOMAIN-SUFFIX,whatsapp.biz
 DOMAIN-SUFFIX,whatsapp.cc
+DOMAIN-SUFFIX,whatsapp.com
 DOMAIN-SUFFIX,whatsapp.info
 DOMAIN-SUFFIX,whatsapp.net
 DOMAIN-SUFFIX,whatsapp.org

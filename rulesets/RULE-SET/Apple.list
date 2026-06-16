@@ -2,9 +2,11 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 1546
+# Rules: 1593
 
 DOMAIN,adcdownload.apple.com.akadns.net
+DOMAIN,apple-relay.cloudflare.com
+DOMAIN,apple-relay.fastly-edge.com
 DOMAIN,apple.com.akadns.net
 DOMAIN,cds.apple.com.akadns.net
 DOMAIN,certs-lb.apple.com.akadns.net
@@ -12,6 +14,7 @@ DOMAIN,cl2-cdn.origin-apple.com.akadns.net
 DOMAIN,clientflow.apple.com.akadns.net
 DOMAIN,configuration-lb.ls-apple.com.akadns.net
 DOMAIN,configuration.apple.com.akadns.net
+DOMAIN,cp4.cloudflare.com
 DOMAIN,crl-lb.apple.com.akadns.net
 DOMAIN,gspe19-2-cn-ssl.ls-apple.com.akadns.net
 DOMAIN,ingest.apple-studies.com
@@ -20,7 +23,6 @@ DOMAIN,iphone-ld.origin-apple.com.akadns.net
 DOMAIN,mesu-cdn.apple.com.akadns.net
 DOMAIN,mesu-china.apple.com.akadns.net
 DOMAIN,notary-submissions-prod.s3-accelerate.amazonaws.com
-DOMAIN,notary-submissions-prod.s3.us-west-2.amazonaws.com
 DOMAIN,push-apple.com.akadns.net
 DOMAIN,stocks-sparkline-lb.apple.com.akadns.net
 DOMAIN,store.storeimages.apple.com.akadns.net
@@ -29,6 +31,13 @@ DOMAIN,swdist.apple.com.akadns.net
 DOMAIN,swscan-cdn.apple.com.akadns.net
 DOMAIN,weather-data.apple.com.akadns.net
 DOMAIN,www-cdn.icloud.com.akadns.net
+DOMAIN-KEYWORD,apple-support.akadns.net
+DOMAIN-KEYWORD,apple.com.edgekey.net
+DOMAIN-KEYWORD,buy.itunes.apple.com
+DOMAIN-KEYWORD,icloud
+DOMAIN-KEYWORD,icloud.com.akadns.net
+DOMAIN-KEYWORD,smp-device
+DOMAIN-KEYWORD,testflight
 DOMAIN-SUFFIX,100beatscheap.com
 DOMAIN-SUFFIX,12diasdepresentesdeitunes.com
 DOMAIN-SUFFIX,12diasderegalosdeitunes.cl
@@ -421,6 +430,7 @@ DOMAIN-SUFFIX,applw.com
 DOMAIN-SUFFIX,appmediagroup.com
 DOMAIN-SUFFIX,appsto.re
 DOMAIN-SUFFIX,appstore.co.id
+DOMAIN-SUFFIX,appstore.com
 DOMAIN-SUFFIX,appstore.hk
 DOMAIN-SUFFIX,appstore.my
 DOMAIN-SUFFIX,appstore.ph
@@ -1550,3 +1560,40 @@ DOMAIN-SUFFIX,xn--kput3imi374g.xn--hxt814e
 DOMAIN-SUFFIX,xn--ohq11k7pl25iyo8a.cn
 DOMAIN-SUFFIX,xn--ruq8a011kt6y.xn--hxt814e
 DOMAIN-SUFFIX,yourmonsterbeats.com
+PROCESS-NAME,/System/Applications/Music.app/Contents/MacOS/Music
+PROCESS-NAME,/System/Library/PrivateFrameworks/iTunesCloud.framework/Support/itunescloudd
+PROCESS-NAME,CoreLocationAgent
+PROCESS-NAME,LookupViewService
+PROCESS-NAME,Music
+PROCESS-NAME,TV
+PROCESS-NAME,WeatherWidget
+PROCESS-NAME,apsd
+PROCESS-NAME,com.apple.Maps
+PROCESS-NAME,com.apple.geod
+PROCESS-NAME,findmydevice-user-agent
+PROCESS-NAME,fmfd
+PROCESS-NAME,mapspushd
+PROCESS-NAME,netbiosd
+PROCESS-NAME,trustd
+USER-AGENT,*FindMyiPhone?
+USER-AGENT,*Music?
+USER-AGENT,*WeatherFoundation*
+USER-AGENT,*com.apple.Maps?
+USER-AGENT,*com.apple.mobileme.fmip1
+USER-AGENT,AppleNews*
+USER-AGENT,AppleTV*
+USER-AGENT,FMDClient*
+USER-AGENT,FMFD*
+USER-AGENT,FindMyFriends*
+USER-AGENT,FindMyiPhone*
+USER-AGENT,Maps*
+USER-AGENT,Music*
+USER-AGENT,Wallet*
+USER-AGENT,com.apple.appstored*
+USER-AGENT,com.apple.news*
+USER-AGENT,com.apple.trustd*
+USER-AGENT,com.apple.tv*
+USER-AGENT,fmflocatord*
+USER-AGENT,geod*
+USER-AGENT,locationd*
+USER-AGENT,passd*

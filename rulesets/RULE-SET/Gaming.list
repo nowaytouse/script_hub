@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 1040
+# Rules: 1068
 
 DOMAIN,a.ppy.sh
 DOMAIN,a4e8s8k3.map2.ssl.hwcdn.net
@@ -18,6 +18,7 @@ DOMAIN,bnetproduct-a.akamaihd.net
 DOMAIN,c.ppy.sh
 DOMAIN,cdn1-epicgames-1251447533.file.myqcloud.com
 DOMAIN,cdngarenanow-a.akamaihd.net
+DOMAIN,cloudsync-prod.s3.amazonaws.com
 DOMAIN,datarouter.apps.netherrealm.com
 DOMAIN,dlgarenanow-a.akamaihd.net
 DOMAIN,dlmobilegarena-a.akamaihd.net
@@ -28,6 +29,7 @@ DOMAIN,end.shallow.ink
 DOMAIN,f3b7q2p3.ssl.hwcdn.net
 DOMAIN,flightsimulator.azureedge.net
 DOMAIN,gog.qtlglb.com
+DOMAIN,hb.imgix.net
 DOMAIN,lazer.ppy.sh
 DOMAIN,login.live.com
 DOMAIN,logincdn.msauth.net
@@ -40,6 +42,7 @@ DOMAIN,origin-a.akamaihd.net
 DOMAIN,osu.ppy.sh
 DOMAIN,prodforza.blob.core.windows.net
 DOMAIN,pubg1.battleye.com
+DOMAIN,roblox-load-generator-configuration.s3.us-east-2.amazonaws.com
 DOMAIN,roblox-poc.global.ssl.fastly.net
 DOMAIN,robloxcorp.s.llnwi.net
 DOMAIN,spectator.ppy.sh
@@ -48,10 +51,13 @@ DOMAIN,steamcloudsweden.blob.core.windows.net
 DOMAIN,steamcommunity-a.akamaihd.net
 DOMAIN,steamcommunity-a.akamaihd.net.edgesuite.net
 DOMAIN,steamstore-a.akamaihd.net
+DOMAIN,steamugcquincy.blob.core.windows.net
 DOMAIN,steamusercontent-a.akamaihd.net
 DOMAIN,steamuserimages-a.akamaihd.net
 DOMAIN,steamvideo-a.akamaihd.net
 DOMAIN,store-images.s-microsoft.com
+DOMAIN,ubisoft-orbit-savegames.s3.amazonaws.com
+DOMAIN,ubisoft-uplay-savegames.s3.amazonaws.com
 DOMAIN,ubistatic1-a.akamaihd.net
 DOMAIN,ubistatic10-a.akamaihd.net
 DOMAIN,ubistatic11-a.akamaihd.net
@@ -76,6 +82,7 @@ DOMAIN,ubistatic6-a.akamaihd.net
 DOMAIN,ubistatic7-a.akamaihd.net
 DOMAIN,ubistatic8-a.akamaihd.net
 DOMAIN,ubistatic9-a.akamaihd.net
+DOMAIN,wb-agora-hydra-file-storage-k1.s3.amazonaws.com
 DOMAIN,xz.pphimalayanrt.com
 DOMAIN-KEYWORD,epicgames
 DOMAIN-KEYWORD,steambroadcast
@@ -91,6 +98,10 @@ DOMAIN-SUFFIX,2ksports.com
 DOMAIN-SUFFIX,2kweb.online
 DOMAIN-SUFFIX,3304399.com
 DOMAIN-SUFFIX,3304399.net
+DOMAIN-SUFFIX,37.com
+DOMAIN-SUFFIX,37.com.cn
+DOMAIN-SUFFIX,37wan.net
+DOMAIN-SUFFIX,37wanimg.com
 DOMAIN-SUFFIX,3839.com
 DOMAIN-SUFFIX,3839apk.com
 DOMAIN-SUFFIX,3839app.com
@@ -134,7 +145,6 @@ DOMAIN-SUFFIX,abdf002.com
 DOMAIN-SUFFIX,ac-pocketcamp.com
 DOMAIN-SUFFIX,acesofthunder.net
 DOMAIN-SUFFIX,activematter.game
-DOMAIN-SUFFIX,aki-game.com
 DOMAIN-SUFFIX,aligames.com
 DOMAIN-SUFFIX,amiibo.com
 DOMAIN-SUFFIX,anthemgame.com
@@ -212,8 +222,10 @@ DOMAIN-SUFFIX,camelotherald.com
 DOMAIN-SUFFIX,camelotherald.net
 DOMAIN-SUFFIX,capitalgames.com
 DOMAIN-SUFFIX,capturingreality.com
+DOMAIN-SUFFIX,cbjq.com
 DOMAIN-SUFFIX,cdncl.net
 DOMAIN-SUFFIX,championshipseriesleague.com
+DOMAIN-SUFFIX,changyou.com
 DOMAIN-SUFFIX,chillingo.com
 DOMAIN-SUFFIX,chunkbase.com
 DOMAIN-SUFFIX,clash.com
@@ -234,6 +246,7 @@ DOMAIN-SUFFIX,crysis.jp
 DOMAIN-SUFFIX,cubicmotion.com
 DOMAIN-SUFFIX,cubicodyssey.game
 DOMAIN-SUFFIX,curseforge.com
+DOMAIN-SUFFIX,cy.com
 DOMAIN-SUFFIX,cygames.co.jp
 DOMAIN-SUFFIX,cygames.jp
 DOMAIN-SUFFIX,daoc.net
@@ -261,6 +274,7 @@ DOMAIN-SUFFIX,dodi-repacks.download
 DOMAIN-SUFFIX,dodi-repacks.site
 DOMAIN-SUFFIX,donkeykongcountryreturns.com
 DOMAIN-SUFFIX,doom.com
+DOMAIN-SUFFIX,dota2.com
 DOMAIN-SUFFIX,dragonage.com
 DOMAIN-SUFFIX,dragonagekeep.com
 DOMAIN-SUFFIX,dragonagemovie.com
@@ -303,8 +317,6 @@ DOMAIN-SUFFIX,electronicarts.com
 DOMAIN-SUFFIX,electronicarts.fr
 DOMAIN-SUFFIX,embark-studios.com
 DOMAIN-SUFFIX,embark.games
-DOMAIN-SUFFIX,eneba.com
-DOMAIN-SUFFIX,eneba.games
 DOMAIN-SUFFIX,enlisted.net
 DOMAIN-SUFFIX,epicgames.dev
 DOMAIN-SUFFIX,epicgamescdn.com
@@ -317,6 +329,7 @@ DOMAIN-SUFFIX,faceit.com
 DOMAIN-SUFFIX,fanatical.com
 DOMAIN-SUFFIX,feihuo.com
 DOMAIN-SUFFIX,ffbuddy.com
+DOMAIN-SUFFIX,ficgs.com
 DOMAIN-SUFFIX,fifastreet.com
 DOMAIN-SUFFIX,fifastreet3.com
 DOMAIN-SUFFIX,fire-emblem-heroes.com
@@ -339,6 +352,7 @@ DOMAIN-SUFFIX,futunited.com
 DOMAIN-SUFFIX,fxt365.com
 DOMAIN-SUFFIX,gaijin.net
 DOMAIN-SUFFIX,gaijinent.com
+DOMAIN-SUFFIX,game-repack.site
 DOMAIN-SUFFIX,game.maj-soul.com
 DOMAIN-SUFFIX,gameabc.com
 DOMAIN-SUFFIX,gamebonfire.com
@@ -347,6 +361,8 @@ DOMAIN-SUFFIX,gameloop.com
 DOMAIN-SUFFIX,gamemei.com
 DOMAIN-SUFFIX,gamepass.com
 DOMAIN-SUFFIX,gamesfirsthelsinki.com
+DOMAIN-SUFFIX,gamesplanet.com
+DOMAIN-SUFFIX,gametap.com
 DOMAIN-SUFFIX,garena.co.id
 DOMAIN-SUFFIX,garena.co.th
 DOMAIN-SUFFIX,garena.com
@@ -383,6 +399,7 @@ DOMAIN-SUFFIX,goto-game.net.cn
 DOMAIN-SUFFIX,goto-game.org
 DOMAIN-SUFFIX,gotolink.net
 DOMAIN-SUFFIX,gouhuo.qq.com
+DOMAIN-SUFFIX,gpstatic.com
 DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
 DOMAIN-SUFFIX,gstore.val.manlaxy.com
 DOMAIN-SUFFIX,gtgres.com
@@ -448,7 +465,6 @@ DOMAIN-SUFFIX,konamiopen.jp
 DOMAIN-SUFFIX,konamisportsclub.jp
 DOMAIN-SUFFIX,konamistyle.jp
 DOMAIN-SUFFIX,kraftonde.com
-DOMAIN-SUFFIX,kurogames.com
 DOMAIN-SUFFIX,kyurem.com
 DOMAIN-SUFFIX,labycore.cn
 DOMAIN-SUFFIX,langrenclub.com
@@ -581,7 +597,9 @@ DOMAIN-SUFFIX,newsupermariobrosu.com
 DOMAIN-SUFFIX,nexon.co.jp
 DOMAIN-SUFFIX,nexon.com
 DOMAIN-SUFFIX,nexon.io
+DOMAIN-SUFFIX,nexon.net
 DOMAIN-SUFFIX,nexoncdn.co.kr
+DOMAIN-SUFFIX,nexongames.co.kr
 DOMAIN-SUFFIX,nextstudios.com
 DOMAIN-SUFFIX,nextworkshop.net
 DOMAIN-SUFFIX,nexus-cdn.com
@@ -658,6 +676,7 @@ DOMAIN-SUFFIX,play4free.com
 DOMAIN-SUFFIX,playapex.com
 DOMAIN-SUFFIX,playartifact.com
 DOMAIN-SUFFIX,playbattlegrounds.com
+DOMAIN-SUFFIX,playcool.com
 DOMAIN-SUFFIX,playhearthstone.com
 DOMAIN-SUFFIX,playnintendo.com
 DOMAIN-SUFFIX,playoverwatch.com
@@ -795,6 +814,9 @@ DOMAIN-SUFFIX,scsentry.cn
 DOMAIN-SUFFIX,sdo.com
 DOMAIN-SUFFIX,seagroup.com
 DOMAIN-SUFFIX,seaofsolitude.com
+DOMAIN-SUFFIX,seasungames.cn
+DOMAIN-SUFFIX,seasungames.com
+DOMAIN-SUFFIX,seasunwbl.com
 DOMAIN-SUFFIX,seeurlpcl.com
 DOMAIN-SUFFIX,sekai.colorfulpalette.org
 DOMAIN-SUFFIX,shadowcomplex.com
@@ -849,6 +871,7 @@ DOMAIN-SUFFIX,steam.ru.qtlglb.com
 DOMAIN-SUFFIX,steam.tv
 DOMAIN-SUFFIX,steamchina.com
 DOMAIN-SUFFIX,steamcommunity.com
+DOMAIN-SUFFIX,steamconnecttest.com
 DOMAIN-SUFFIX,steamcontent.com
 DOMAIN-SUFFIX,steamcontent.tnkjmec.com
 DOMAIN-SUFFIX,steamdb.info
@@ -860,6 +883,7 @@ DOMAIN-SUFFIX,steamserver.net
 DOMAIN-SUFFIX,steamstat.us
 DOMAIN-SUFFIX,steamstatic.com
 DOMAIN-SUFFIX,steamstatic.com.8686c.com
+DOMAIN-SUFFIX,steamunlocked.net
 DOMAIN-SUFFIX,steamusercontent.com
 DOMAIN-SUFFIX,stellasora.global
 DOMAIN-SUFFIX,stellasora.jp
@@ -930,6 +954,7 @@ DOMAIN-SUFFIX,unrealtournament.com
 DOMAIN-SUFFIX,uo.com
 DOMAIN-SUFFIX,uoherald.com
 DOMAIN-SUFFIX,uplay.com
+DOMAIN-SUFFIX,valve.net
 DOMAIN-SUFFIX,valvesoftware.com
 DOMAIN-SUFFIX,videoxiaoyouxi.com
 DOMAIN-SUFFIX,vigorgame.com
@@ -1011,9 +1036,12 @@ DOMAIN-SUFFIX,xdsummit.com
 DOMAIN-SUFFIX,xenoblade.com
 DOMAIN-SUFFIX,xhlsgs.com
 DOMAIN-SUFFIX,xinwuji.com
+DOMAIN-SUFFIX,xishanju.com
 DOMAIN-SUFFIX,xn--mts47c3w9b1qr.cn
 DOMAIN-SUFFIX,xn--mts47c3w9b1qr.net
 DOMAIN-SUFFIX,xn--owtw8cc49ajfl.cn
+DOMAIN-SUFFIX,xoyo.com
+DOMAIN-SUFFIX,xoyocdn.com
 DOMAIN-SUFFIX,ycgame.com
 DOMAIN-SUFFIX,yingxiong.com
 DOMAIN-SUFFIX,ylands.com

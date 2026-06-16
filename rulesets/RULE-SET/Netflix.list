@@ -2,10 +2,9 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 5
+# Rules: 4
 
 DOMAIN-KEYWORD,apiproxy-device-prod-nlb
 DOMAIN-KEYWORD,apiproxy-website-nlb-prod
 DOMAIN-KEYWORD,dualstack.apiproxy
 DOMAIN-KEYWORD,dualstack.ichnaea-web
-DOMAIN-SUFFIX,netflix.com

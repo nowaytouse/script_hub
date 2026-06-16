@@ -2,10 +2,11 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 24
+# Rules: 26
 
 DOMAIN-KEYWORD,nowtv100
 DOMAIN-KEYWORD,rthklive
+DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,csifund.org
 DOMAIN-SUFFIX,encoretvb.com
 DOMAIN-SUFFIX,hkbn.com.hk
@@ -14,6 +15,7 @@ DOMAIN-SUFFIX,hkbnes.net
 DOMAIN-SUFFIX,iq.com
 DOMAIN-SUFFIX,iqiyiintl.com
 DOMAIN-SUFFIX,jos.com
+DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,mytvsuper.com
 DOMAIN-SUFFIX,nowestatic.com
 DOMAIN-SUFFIX,rthk.hk

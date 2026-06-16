@@ -121,6 +121,7 @@ def main():
             syncer.sync_nexus()
             syncer.sync_metacubex()
             syncer.sync_local_sources()
+            syncer.sync_blocked_sites_korea()
             
             Logger.section("Syncing Upstream Mock Resources")
             count = sync_mocks()

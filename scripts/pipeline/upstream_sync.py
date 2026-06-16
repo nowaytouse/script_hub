@@ -487,6 +487,48 @@ class UpstreamSyncer:
             except Exception as e:
                 Logger.error(f"Failed to process Kelee file {filename}: {e}")
 
+    def sync_blocked_sites_korea(self):
+        """Sync Blocked Sites in South Korea list."""
+        Logger.section("Syncing Blocked Sites in South Korea")
+        url = "https://raw.githubusercontent.com/wpzzz/blocked-sites-in-south-korea/main/list.txt"
+        dest_path = os.path.join(project_paths.SOURCES_DIR, "vendor", "blocked_sites_south_korea.list")
+        
+        try:
+            content_bytes = self.download(url)
+            if not content_bytes:
+                Logger.error("Failed to download Blocked Sites in South Korea list.")
+                return
+            
+            content = content_bytes.decode('utf-8', errors='ignore')
+            lines = []
+            for line in content.splitlines():
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                
+                # If already formatted as a rule (e.g. contains comma), keep it
+                if ',' in line:
+                    lines.append(line)
+                else:
+                    # Clean up dots or plus signs if any
+                    if line.startswith('.'):
+                        line = line[1:]
+                    elif line.startswith('+.'):
+                        line = line[2:]
+                    elif line.startswith('+'):
+                        line = line[1:]
+                    lines.append(f"DOMAIN-SUFFIX,{line}")
+            
+            final = "# Blocked Sites in South Korea\n# Source: https://github.com/wpzzz/blocked-sites-in-south-korea\n\n" + "\n".join(lines) + "\n"
+            
+            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+            if safe_write_file(dest_path, final, atomic=True):
+                Logger.success(f"Blocked Sites South Korea: {len(lines)} rules saved to {dest_path}")
+            else:
+                Logger.error("Failed to write Blocked Sites in South Korea list.")
+        except Exception as e:
+            Logger.error(f"Failed to sync Blocked Sites in South Korea: {e}")
+
 if __name__ == "__main__":
     syncer = UpstreamSyncer()
     syncer.sync_skk()
@@ -494,3 +536,5 @@ if __name__ == "__main__":
     syncer.sync_metacubex()
     syncer.sync_local_sources()
     syncer.sync_kelee()
+    syncer.sync_blocked_sites_korea()
+

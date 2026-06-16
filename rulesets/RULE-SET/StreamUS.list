@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 193
+# Rules: 201
 
 DOMAIN,cbsi.live.ott.irdeto.com
 DOMAIN,cbsplaylistserver.aws.syncbak.com
@@ -35,13 +35,16 @@ DOMAIN-SUFFIX,discovery.com
 DOMAIN-SUFFIX,discoveryplus.co.uk
 DOMAIN-SUFFIX,discoveryplus.com
 DOMAIN-SUFFIX,discoveryplus.in
+DOMAIN-SUFFIX,disney-plus.net
 DOMAIN-SUFFIX,disneylandparis.com
+DOMAIN-SUFFIX,disneyplus.com
 DOMAIN-SUFFIX,disneyprivacycenter.com
 DOMAIN-SUFFIX,disneytermsofuse.com
 DOMAIN-SUFFIX,dlp-media.com
 DOMAIN-SUFFIX,dmed.technology
 DOMAIN-SUFFIX,dnitv.com
 DOMAIN-SUFFIX,dssedge.com
+DOMAIN-SUFFIX,dssott.com
 DOMAIN-SUFFIX,dtci.co
 DOMAIN-SUFFIX,dtci.technology
 DOMAIN-SUFFIX,edgedatg.com
@@ -49,6 +52,8 @@ DOMAIN-SUFFIX,espn.co.uk
 DOMAIN-SUFFIX,espn.net
 DOMAIN-SUFFIX,espncdn.com
 DOMAIN-SUFFIX,espnqa.com
+DOMAIN-SUFFIX,execute-api.ap-southeast-1.amazonaws.com
+DOMAIN-SUFFIX,execute-api.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,fast.com
 DOMAIN-SUFFIX,findyourlimits.com
 DOMAIN-SUFFIX,flxvpn.net
@@ -138,6 +143,7 @@ DOMAIN-SUFFIX,natgeomaps.com
 DOMAIN-SUFFIX,nationalgeographic.com
 DOMAIN-SUFFIX,nationalgeographicpartners.com
 DOMAIN-SUFFIX,netflix.ca
+DOMAIN-SUFFIX,netflix.com
 DOMAIN-SUFFIX,netflix.com.au
 DOMAIN-SUFFIX,netflix.net
 DOMAIN-SUFFIX,netflixdnstest0.com
@@ -180,7 +186,9 @@ DOMAIN-SUFFIX,streaks.jp
 DOMAIN-SUFFIX,thehulubraintrust.com
 DOMAIN-SUFFIX,themarvelexperiencetour.com
 DOMAIN-SUFFIX,thewaltdisneycompany.com
+DOMAIN-SUFFIX,twitch.tv
 DOMAIN-SUFFIX,uplynk.com
+DOMAIN-SUFFIX,us-west-2.amazonaws.com
 DOMAIN-SUFFIX,warnermediacdn.com
 DOMAIN-SUFFIX,watchespn.com
 DOMAIN-SUFFIX,wwwhuluplus.com
