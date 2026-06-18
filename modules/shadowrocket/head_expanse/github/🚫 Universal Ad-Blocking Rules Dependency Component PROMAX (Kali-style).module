@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-06-18]
-#!desc=[🚀SR] 按用途分片(12片) + 应用内去广告(URL Rewrite=1441, Map Local=2714, Script=619, Body Rewrite=161, MITM=1586); 索引 rulesets/AdBlock/catalog.json
+#!desc=[🚀SR] 按用途分片(13片) + 应用内去广告(URL Rewrite=1441, Map Local=2714, Script=619, Body Rewrite=161, MITM=1586); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-06-18 09:08:15
+#!date=2026-06-18 16:00:47
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -119,6 +119,7 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Other.list,REJECT
 
