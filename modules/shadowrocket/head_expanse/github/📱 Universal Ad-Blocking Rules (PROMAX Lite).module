@@ -1,10 +1,10 @@
 #!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-20]
-#!desc=[🚀SR] 轻量基础版(12分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
+#!desc=[🚀SR] 轻量基础版(13分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-20 08:04:58
+#!date=2026-06-20 14:41:01
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -119,6 +119,7 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_03.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_04.list,REJECT
 # ── 其他补充 · 社区 sgmodule / 未归类远程源 ──
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Other.list,REJECT
 
