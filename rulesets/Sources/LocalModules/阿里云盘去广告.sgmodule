@@ -66,10 +66,12 @@
 
 
 
+
 [Script]
 移除阿里云盘广告 = type=http-response, pattern=^https:\/\/(biz)?api\.alipan\.com\/apps\/v\d\/users?\/home\/(news|widgets), script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_cc27c7_AliYunDrive_remove_ads.js, requires-body=true
 
 移除阿里云盘广告 = type=http-response, pattern=^https:\/\/member\.alipan\.com\/v1\/users\/onboard_list, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_cc27c7_AliYunDrive_remove_ads.js, requires-body=true
+
 
 
 
