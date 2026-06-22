@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 676
+# Rules: 681
 
 DOMAIN,cn.windowssearch.com
 DOMAIN,github-api.arkoselabs.com
@@ -95,6 +95,7 @@ DOMAIN-SUFFIX,azure-dns.com
 DOMAIN-SUFFIX,azure-dns.info
 DOMAIN-SUFFIX,azure-dns.net
 DOMAIN-SUFFIX,azure-dns.org
+DOMAIN-SUFFIX,azure-mobile.cn
 DOMAIN-SUFFIX,azure-mobile.net
 DOMAIN-SUFFIX,azure-sphere.com
 DOMAIN-SUFFIX,azure-test.net
@@ -604,6 +605,10 @@ DOMAIN-SUFFIX,skype.net
 DOMAIN-SUFFIX,skypeassets.com
 DOMAIN-SUFFIX,skypeassets.net
 DOMAIN-SUFFIX,skypeforbusiness.com
+DOMAIN-SUFFIX,sovcloud-mx.cn
+DOMAIN-SUFFIX,sovcloud-static.cn
+DOMAIN-SUFFIX,sovcloud-usercontent.cn
+DOMAIN-SUFFIX,sovcloud.cn
 DOMAIN-SUFFIX,spo-msedge.net
 DOMAIN-SUFFIX,spoprod-a.akamaihd.net
 DOMAIN-SUFFIX,sprinklesapp.com
