@@ -1,10 +1,10 @@
-#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-23]
+#!name=📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-25]
 #!desc=轻量基础版(12分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Lite, Basic, Mobile
-#!date=2026-06-23 15:35:09
+#!date=2026-06-25 09:23:43
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -126,7 +126,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/reject-drop.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve
-# Merged REJECT complex rules (255)
+# Merged REJECT complex rules (258)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,LemonAgent,REJECT
 PROCESS-NAME,LemonDaemon,REJECT
@@ -186,6 +186,9 @@ URL-REGEX,^http:\/\/\[2402:4e00:1411:201:0:9964:ba21:5a41\]\/d,REJECT
 URL-REGEX,^http:\/\/api\.weibo\.cn\/2\/httpdns\/config,REJECT
 URL-REGEX,^http:\/\/api\.weibo\.cn\/httpdns\/config,REJECT
 URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns,REJECT
+URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$,REJECT
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/,REJECT
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do,REJECT
 URL-REGEX,^http:\/\/p\d+-be-pack-sign\.pglstatp-toutiao\.com\/(ad-app-package|web\.business\.image)\/,REJECT
 URL-REGEX,^http:\/\/xmc\.ximalaya\.com\/xmlymain-login-web\/login\/,REJECT
 URL-REGEX,^https://app\.variflight\.com/v4/advert/,REJECT
