@@ -20,7 +20,7 @@ var mockReplacements = map[string]string{
 	`https://raw\.githubusercontent\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(master|main)/[A-Za-z0-9_.-/]+/blank_dict\.json`:     "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json",
 	`https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                                    `https://cdn.jsdelivr.net/gh/$1/$2@$3/$4`,
 	`(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                                        `$1https://cdn.jsdelivr.net/gh/$2/$3@$4/$5`,
-	`(^|[^/])https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                          `$1https://gh-proxy.com/https://github.com/$2/$3/releases/download/$4/$5`,
+	`(^|[^/])https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                          `$1https://ghproxy.net/https://github.com/$2/$3/releases/download/$4/$5`,
 }
 
 type urlReplacement struct {
