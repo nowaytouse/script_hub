@@ -40,17 +40,57 @@ func init() {
 }
 
 func isGithubSource(path string) bool {
-	githubSourceDirs := []string{
-		filepath.Clean(hub.SURGE_HEAD_EXPANSE_GITHUB_DIR),
-		filepath.Clean(hub.SHADOWROCKET_HEAD_EXPANSE_GITHUB_DIR),
-	}
-	p := filepath.Clean(path)
-	for _, d := range githubSourceDirs {
-		if p == d || strings.HasPrefix(p, d+string(os.PathSeparator)) {
+	parts := strings.Split(filepath.Clean(path), string(os.PathSeparator))
+	for _, part := range parts {
+		if part == "github" {
 			return true
 		}
 	}
 	return false
+}
+
+func CopyGithubVariants() {
+	dirsToCopy := []string{
+		filepath.Join(hub.MODULES_DIR, "surge", "amplify_nexus"),
+		filepath.Join(hub.MODULES_DIR, "surge", "head_expanse"),
+		filepath.Join(hub.MODULES_DIR, "shadowrocket", "amplify_nexus"),
+		filepath.Join(hub.MODULES_DIR, "shadowrocket", "head_expanse"),
+		filepath.Join(hub.RULESETS_DIR, "RULE-SET"),
+		filepath.Join(hub.RULESETS_DIR, "AdBlock"),
+	}
+
+	skipCopy := map[string]bool{
+		"🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule": true,
+		"📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule":                         true,
+		"🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module":   true,
+		"📱 Universal Ad-Blocking Rules (PROMAX Lite).module":                           true,
+	}
+
+	for _, dir := range dirsToCopy {
+		if !hub.ValidateDirExists(dir, "") {
+			continue
+		}
+		githubDir := filepath.Join(dir, "github")
+		hub.EnsureDir(githubDir)
+
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+
+		for _, f := range files {
+			if f.IsDir() || f.Name() == "github" || skipCopy[f.Name()] {
+				continue
+			}
+			ext := filepath.Ext(f.Name())
+			if ext == ".sgmodule" || ext == ".module" || ext == ".list" {
+				srcPath := filepath.Join(dir, f.Name())
+				destPath := filepath.Join(githubDir, f.Name())
+				content := hub.ReadFileString(srcPath)
+				hub.SafeWriteFile(destPath, content, true)
+			}
+		}
+	}
 }
 
 func RunUrlRewrites(directory string) int {
@@ -103,6 +143,7 @@ func RunUrlRewrites(directory string) int {
 }
 
 func RunAllUrlRewrites() int {
+	CopyGithubVariants()
 	count := 0
 	count += RunUrlRewrites(hub.MODULES_DIR)
 	count += RunUrlRewrites(hub.RULESETS_DIR)
