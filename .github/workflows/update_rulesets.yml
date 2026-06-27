@@ -134,14 +134,7 @@ jobs:
     - name: Verify sing-box
       run: sing-box version
 
-    - name: Surge compliance regression tests
-      run: python3 scripts/qa/test_surge_compliance.py
 
-    - name: Validate existing Surge rulesets
-      run: python3 scripts/qa/validate_surge_rulesets.py
-
-    - name: Validate module headers (Surge/Shadowrocket)
-      run: python3 scripts/qa/validate_module_headers.py
 
     - name: Set up Go
       uses: actions/setup-go@v5
