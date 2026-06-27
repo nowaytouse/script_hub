@@ -5,7 +5,7 @@
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 
 [Script]
-扫描全能王 = type=http-response,pattern=https:\/\/(api|api-cs)\.intsig\.net\/purchase\/cs\/query_property\?,requires-body=1, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_649175_CamScanner.js
+扫描全能王           = type=http-response,pattern=https:\/\/(api|api-cs)\.intsig\.net\/purchase\/cs\/query_property\?,requires-body=1, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_649175_CamScanner.js
 
 
 [MITM]

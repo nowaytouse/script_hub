@@ -143,13 +143,19 @@ jobs:
     - name: Validate module headers (Surge/Shadowrocket)
       run: python3 scripts/qa/validate_module_headers.py
 
-    - name: Execute Python Ruleset Update
-      run: python3 scripts/pipeline/main_update.py --unattended
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+
+    - name: Execute Go Ruleset Update
+      run: |
+        cd go_scripts
+        go run ./cmd/main_update --unattended
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: 'true'
         GITHUB_ACTIONS: 'true'
-        PYTHONPATH: scripts
 
     - name: Summary
       run: |

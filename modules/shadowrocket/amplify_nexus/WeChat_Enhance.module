@@ -7,8 +7,8 @@
 #!arguments-desc=Proxy:选择策略组，将微信&WeChat相关域名分流，默认DIRECT。
 
 [Script]
-微信外部链接解锁   = type=http-response, pattern=^https\:\/\/(weixin110\.qq|security.wechat)\.com\/cgi-bin\/mmspamsupport-bin\/newredirectconfirmcgi\?, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_36f4d2_Weixin_external_links_unlock.js, requires-body=true
-美团小程序tap优化 = type=http-response, pattern=^https:\/\/web\.meituan\.com\/api\/miniprogram\/tabbar\/all\/query, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_b02c6b_MeiTuan.js, requires-body=true, timeout=60
+微信外部链接解锁                 = type=http-response, pattern=^https\:\/\/(weixin110\.qq|security.wechat)\.com\/cgi-bin\/mmspamsupport-bin\/newredirectconfirmcgi\?, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_36f4d2_Weixin_external_links_unlock.js, requires-body=true
+美团小程序tap优化               = type=http-response, pattern=^https:\/\/web\.meituan\.com\/api\/miniprogram\/tabbar\/all\/query, script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_b02c6b_MeiTuan.js, requires-body=true, timeout=60
 
 
 [MITM]

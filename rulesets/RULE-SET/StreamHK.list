@@ -4,29 +4,29 @@
 # Description: Auto-merged ruleset
 # Rules: 26
 
-DOMAIN-KEYWORD,nowtv100
-DOMAIN-KEYWORD,rthklive
-DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
+DOMAIN-SUFFIX,iq.com
+DOMAIN-SUFFIX,viu.tv
+DOMAIN-SUFFIX,jos.com
+DOMAIN-SUFFIX,rthk.hk
+DOMAIN-SUFFIX,tvb.com
+DOMAIN-SUFFIX,viu.com
+DOMAIN-SUFFIX,hkbn.net
+DOMAIN-SUFFIX,wetv.vip
+DOMAIN-SUFFIX,vidio.com
+DOMAIN-SUFFIX,hkbnes.net
 DOMAIN-SUFFIX,csifund.org
 DOMAIN-SUFFIX,encoretvb.com
-DOMAIN-SUFFIX,hkbn.com.hk
-DOMAIN-SUFFIX,hkbn.net
-DOMAIN-SUFFIX,hkbnes.net
-DOMAIN-SUFFIX,iq.com
 DOMAIN-SUFFIX,iqiyiintl.com
-DOMAIN-SUFFIX,jos.com
-DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com
 DOMAIN-SUFFIX,mytvsuper.com
 DOMAIN-SUFFIX,nowestatic.com
-DOMAIN-SUFFIX,rthk.hk
+DOMAIN-SUFFIX,hkbn.com.hk
 DOMAIN-SUFFIX,speedtest.com.hk
-DOMAIN-SUFFIX,tvb.com
-DOMAIN-SUFFIX,vidio.com
-DOMAIN-SUFFIX,viu.com
-DOMAIN-SUFFIX,viu.tv
-DOMAIN-SUFFIX,wetv.vip
+DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com
+DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com
+DOMAIN-KEYWORD,nowtv100
+DOMAIN-KEYWORD,rthklive
 PROCESS-NAME,com.viu.pad
 PROCESS-NAME,com.viu.phone
 PROCESS-NAME,com.vuclip.viu
-USER-AGENT,Viu*
 USER-AGENT,mytv*
+USER-AGENT,Viu*
