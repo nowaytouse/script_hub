@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
@@ -43,9 +44,9 @@ func getLatestVersion(repo string, includePrerelease bool) string {
 	}
 	body := string(bodyBytes)
 
-	pattern := fmt.Sprintf(`href="/%s/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?)`, repo)
+	pattern := fmt.Sprintf(`href="/%s/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?)["']`, repo)
 	if !includePrerelease {
-		pattern = fmt.Sprintf(`href="/%s/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)`, repo)
+		pattern = fmt.Sprintf(`href="/%s/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)["']`, repo)
 	}
 
 	re := regexp.MustCompile(pattern)
@@ -71,11 +72,39 @@ func getArchOs() (string, string) {
 	return osType, archType
 }
 
-func updateSingbox() {
+func verifyInstallation(systemPath, localPath string, isSingbox bool) {
+	fmt.Println("")
+	logInfo("Verification:")
+	
+	var args []string
+	if isSingbox {
+		args = []string{"version"}
+	} else {
+		args = []string{"-v"}
+	}
+
+	if hub.ValidateFileExists(systemPath, "") {
+		out, _ := exec.Command(systemPath, args...).Output()
+		lines := strings.Split(string(out), "\n")
+		if len(lines) > 0 && lines[0] != "" {
+			fmt.Println(lines[0])
+		}
+	}
+
+	if hub.ValidateFileExists(localPath, "") {
+		out, _ := exec.Command(localPath, args...).Output()
+		lines := strings.Split(string(out), "\n")
+		if len(lines) > 0 && lines[0] != "" {
+			fmt.Println(lines[0])
+		}
+	}
+}
+
+func updateSingbox(includePrerelease bool) {
 	logInfo("Checking Sing-box updates...")
 	logInfo("Fetching latest version from GitHub...")
 
-	latestVersion := getLatestVersion("SagerNet/sing-box", true)
+	latestVersion := getLatestVersion("SagerNet/sing-box", includePrerelease)
 	if latestVersion == "" {
 		logError("Cannot get latest version")
 		return
@@ -164,6 +193,8 @@ func updateSingbox() {
 	hub.SafeWriteFile(singboxLocalPath, hub.ReadFileString(binaryPath), false)
 	os.Chmod(singboxLocalPath, 0755)
 	logSuccess(fmt.Sprintf("Local sing-box v%s installed", latestVersion))
+
+	verifyInstallation(singboxSystemPath, singboxLocalPath, true)
 }
 
 func updateMihomo() {
@@ -228,17 +259,29 @@ func updateMihomo() {
 	// Extract gz
 	extractedPath := filepath.Join(tempDir, "mihomo")
 	inFile, err := os.Open(archivePath)
-	if err == nil {
-		defer inFile.Close()
-		gzReader, err := gzip.NewReader(inFile)
-		if err == nil {
-			defer gzReader.Close()
-			outFile, err := os.Create(extractedPath)
-			if err == nil {
-				defer outFile.Close()
-				io.Copy(outFile, gzReader)
-			}
-		}
+	if err != nil {
+		logError("Failed to open downloaded archive")
+		return
+	}
+	defer inFile.Close()
+
+	gzReader, err := gzip.NewReader(inFile)
+	if err != nil {
+		logError("Failed to initialize gzip reader")
+		return
+	}
+	defer gzReader.Close()
+
+	outFile, err := os.Create(extractedPath)
+	if err != nil {
+		logError("Failed to create extracted file")
+		return
+	}
+	defer outFile.Close()
+
+	if _, err := io.Copy(outFile, gzReader); err != nil {
+		logError("Failed to write extracted file")
+		return
 	}
 
 	if !hub.ValidateFileExists(extractedPath, "") {
@@ -260,17 +303,39 @@ func updateMihomo() {
 	hub.SafeWriteFile(mihomoLocalPath, hub.ReadFileString(extractedPath), false)
 	os.Chmod(mihomoLocalPath, 0755)
 	logSuccess(fmt.Sprintf("Local mihomo v%s installed", latestVersion))
+
+	verifyInstallation(mihomoSystemPath, mihomoLocalPath, false)
+}
+
+type UpdateOptions struct {
+	SingboxOnly       bool
+	MihomoOnly        bool
+	IncludePrerelease bool
 }
 
 // RunUpdateCores executes the core update logic native in Go
-func RunUpdateCores() int {
+func RunUpdateCores(opts ...UpdateOptions) int {
+	var opt UpdateOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	} else {
+		// Default matches original bash script defaults
+		opt.IncludePrerelease = true
+	}
+
 	fmt.Println("==============================================================")
 	fmt.Println("       Core Update Tool (Native Go Version)")
 	fmt.Println("==============================================================")
 	
-	updateSingbox()
-	fmt.Println("")
-	updateMihomo()
+	if !opt.MihomoOnly {
+		updateSingbox(opt.IncludePrerelease)
+		fmt.Println("")
+	}
+	
+	if !opt.SingboxOnly {
+		updateMihomo()
+		fmt.Println("")
+	}
 	
 	logSuccess("Core update complete")
 	return 0
