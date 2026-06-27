@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"archive/tar"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -23,15 +24,33 @@ var (
 	mihomoLocalPath   = filepath.Join(hub.ROOT, "scripts/config-manager-auto-update/bin/mihomo")
 )
 
-func logInfo(msg string)    { fmt.Printf("[INFO] %s\n", msg) }
-func logSuccess(msg string) { fmt.Printf("[OK] %s\n", msg) }
-func logWarning(msg string) { fmt.Printf("[WARN] %s\n", msg) }
-func logError(msg string)   { fmt.Printf("[ERROR] %s\n", msg) }
-
-// downloadFile cleanly downloads a file using Go's native http package
+// downloadFile cleanly downloads a file using http package with retry and mirror fallback
 func downloadFile(url, filepath string) error {
-	client := &http.Client{Timeout: 60 * time.Second} // Stable > Speed
-	resp, err := client.Get(url)
+	mirrorURL := "https://ghproxy.net/" + url
+
+	hub.Info(fmt.Sprintf("Downloading from primary source: %s", url))
+	// Try primary URL exactly once with a shorter timeout (15 seconds) to avoid long hangs
+	err := downloadOnce(url, filepath, 15*time.Second)
+	if err == nil {
+		return nil
+	}
+
+	hub.Warn(fmt.Sprintf("Primary source failed: %v. Trying mirror source: %s", err, mirrorURL))
+	// Try mirror URL with retries and a longer 120-second timeout for slow connections
+	return downloadWithRetries(mirrorURL, filepath, 3, 120*time.Second)
+}
+
+func downloadOnce(url, filepath string, timeout time.Duration) error {
+	client := &http.Client{Timeout: timeout}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	// Set browser User-Agent to prevent blockages
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "application/octet-stream, */*")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -51,18 +70,44 @@ func downloadFile(url, filepath string) error {
 	return err
 }
 
+func downloadWithRetries(url, filepath string, maxAttempts int, timeout time.Duration) error {
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		err := downloadOnce(url, filepath, timeout)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		if attempt < maxAttempts {
+			hub.Info(fmt.Sprintf("Download attempt %d failed: %v. Retrying in 1s...", attempt, err))
+			time.Sleep(1 * time.Second)
+		}
+	}
+	return lastErr
+}
+
 func getLatestVersion(repo string, includePrerelease bool) string {
 	url := fmt.Sprintf("https://github.com/%s/releases", repo)
 	if !includePrerelease {
 		url += "/latest"
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	client := &http.Client{Timeout: 10 * time.Second} // Shorter timeout for HTML scraping
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ""
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return ""
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -100,7 +145,7 @@ func getArchOs() (string, string) {
 
 func verifyInstallation(systemPath, localPath string, versionArgs []string) {
 	fmt.Println("")
-	logInfo("Verification:")
+	hub.Info("Verification:")
 
 	if hub.ValidateFileExists(systemPath, "") {
 		out, _ := exec.Command(systemPath, versionArgs...).Output()
@@ -131,21 +176,58 @@ type CoreConfig struct {
 }
 
 func extractSingbox(archivePath, tempDir string) (string, error) {
-	cmd := exec.Command("tar", "-xzf", archivePath, "-C", tempDir)
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("tar extraction failed: %w", err)
+	inFile, err := os.Open(archivePath)
+	if err != nil {
+		return "", fmt.Errorf("open archive failed: %w", err)
+	}
+	defer inFile.Close()
+
+	gzReader, err := gzip.NewReader(inFile)
+	if err != nil {
+		return "", fmt.Errorf("gzip reader failed: %w", err)
+	}
+	defer gzReader.Close()
+
+	tarReader := tar.NewReader(gzReader)
+	var binaryPath string
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("tar reader failed: %w", err)
+		}
+
+		if !header.FileInfo().IsDir() && (strings.HasSuffix(header.Name, "/sing-box") || header.Name == "sing-box") {
+			baseName := filepath.Base(header.Name)
+			targetPath := filepath.Join(tempDir, baseName)
+
+			// Zip Slip Protection
+			cleanTempDir := filepath.Clean(tempDir)
+			cleanTargetPath := filepath.Clean(targetPath)
+			if !strings.HasPrefix(cleanTargetPath, cleanTempDir) {
+				return "", fmt.Errorf("Zip Slip vulnerability detected: %s", header.Name)
+			}
+
+			outFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, header.FileInfo().Mode()|0700)
+			if err != nil {
+				return "", fmt.Errorf("create file failed: %w", err)
+			}
+
+			if _, err := io.Copy(outFile, tarReader); err != nil {
+				outFile.Close()
+				return "", fmt.Errorf("write extracted file failed: %w", err)
+			}
+			outFile.Close()
+			binaryPath = targetPath
+			break
+		}
 	}
 
-	var binaryPath string
-	filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() && info.Name() == "sing-box" {
-			binaryPath = path
-		}
-		return nil
-	})
-
 	if binaryPath == "" {
-		return "", fmt.Errorf("binary not found in archive")
+		return "", fmt.Errorf("sing-box binary not found in archive")
 	}
 	return binaryPath, nil
 }
@@ -164,7 +246,7 @@ func extractMihomo(archivePath, tempDir string) (string, error) {
 	}
 	defer gzReader.Close()
 
-	outFile, err := os.Create(extractedPath)
+	outFile, err := os.OpenFile(extractedPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		return "", fmt.Errorf("create extracted file failed: %w", err)
 	}
@@ -180,13 +262,38 @@ func extractMihomo(archivePath, tempDir string) (string, error) {
 	return extractedPath, nil
 }
 
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
+}
+
 func updateCore(c CoreConfig, includePrerelease bool) error {
-	logInfo(fmt.Sprintf("Checking %s updates...", c.Name))
-	logInfo("Fetching latest version from GitHub...")
+	hub.Info(fmt.Sprintf("Checking %s updates...", c.Name))
+	hub.Info("Fetching latest version from GitHub...")
 
 	latestVersion := getLatestVersion(c.Repo, includePrerelease)
 	if latestVersion == "" {
-		return fmt.Errorf("cannot get latest version for %s", c.Name)
+		if strings.Contains(c.Repo, "sing-box") {
+			latestVersion = "1.14.0-alpha.11"
+			hub.Warn("Failed to fetch latest sing-box version, using fallback: v1.14.0-alpha.11")
+		} else if strings.Contains(c.Repo, "mihomo") {
+			latestVersion = "1.18.8"
+			hub.Warn("Failed to fetch latest mihomo version, using fallback: v1.18.8")
+		} else {
+			return fmt.Errorf("cannot get latest version for %s", c.Name)
+		}
 	}
 
 	systemVersion := "0.0.0"
@@ -207,19 +314,19 @@ func updateCore(c CoreConfig, includePrerelease bool) error {
 		}
 	}
 
-	logInfo(fmt.Sprintf("System version: v%s", systemVersion))
-	logInfo(fmt.Sprintf("Local version: v%s", localVersion))
-	logInfo(fmt.Sprintf("Latest version: v%s", latestVersion))
+	hub.Info(fmt.Sprintf("System version: v%s", systemVersion))
+	hub.Info(fmt.Sprintf("Local version: v%s", localVersion))
+	hub.Info(fmt.Sprintf("Latest version: v%s", latestVersion))
 
 	if systemVersion == latestVersion && localVersion == latestVersion {
-		logSuccess(fmt.Sprintf("%s is already up to date", c.Name))
+		hub.Success(fmt.Sprintf("%s is already up to date", c.Name))
 		return nil
 	}
 
 	osType, archType := getArchOs()
 	downloadURL := c.GetDownloadURL(latestVersion, osType, archType)
 
-	logInfo(fmt.Sprintf("Downloading %s v%s...", c.Name, latestVersion))
+	hub.Info(fmt.Sprintf("Downloading %s v%s...", c.Name, latestVersion))
 
 	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s-update", strings.ToLower(c.Name)))
 	if err != nil {
@@ -231,7 +338,7 @@ func updateCore(c CoreConfig, includePrerelease bool) error {
 	if err := downloadFile(downloadURL, archivePath); err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
-	logSuccess("Download complete")
+	hub.Success("Download complete")
 
 	binaryPath, err := c.ExtractFunc(archivePath, tempDir)
 	if err != nil {
@@ -239,19 +346,21 @@ func updateCore(c CoreConfig, includePrerelease bool) error {
 	}
 
 	// Install to system path
-	cmd := exec.Command("sudo", "cp", binaryPath, c.SystemPath)
+	cmd := exec.Command("sudo", "-n", "cp", binaryPath, c.SystemPath)
 	if err := cmd.Run(); err == nil {
-		exec.Command("sudo", "chmod", "+x", c.SystemPath).Run()
-		logSuccess(fmt.Sprintf("System %s v%s installed", c.Name, latestVersion))
+		exec.Command("sudo", "-n", "chmod", "+x", c.SystemPath).Run()
+		hub.Success(fmt.Sprintf("System %s v%s installed", c.Name, latestVersion))
 	} else {
-		logWarning("Cannot install to system path (no sudo or permission denied)")
+		hub.Warn("Cannot install to system path (no sudo or permission denied)")
 	}
 
 	// Install to local path
 	hub.EnsureDir(filepath.Dir(c.LocalPath))
-	hub.SafeWriteFile(c.LocalPath, hub.ReadFileString(binaryPath), false)
+	if err := copyFile(binaryPath, c.LocalPath); err != nil {
+		return fmt.Errorf("failed to install local path: %w", err)
+	}
 	os.Chmod(c.LocalPath, 0755)
-	logSuccess(fmt.Sprintf("Local %s v%s installed", c.Name, latestVersion))
+	hub.Success(fmt.Sprintf("Local %s v%s installed", c.Name, latestVersion))
 
 	verifyInstallation(c.SystemPath, c.LocalPath, c.VersionArgs)
 	return nil
@@ -272,9 +381,7 @@ func RunUpdateCores(opts ...UpdateOptions) int {
 		opt.IncludePrerelease = true
 	}
 
-	fmt.Println("==============================================================")
 	fmt.Println("       Core Update Tool (Native Go Version)")
-	fmt.Println("==============================================================")
 
 	singboxConfig := CoreConfig{
 		Name:         "Sing-box",
@@ -304,7 +411,7 @@ func RunUpdateCores(opts ...UpdateOptions) int {
 
 	if !opt.MihomoOnly {
 		if err := updateCore(singboxConfig, opt.IncludePrerelease); err != nil {
-			logError(err.Error())
+			hub.Error(err.Error())
 		}
 		fmt.Println("")
 	}
@@ -312,11 +419,11 @@ func RunUpdateCores(opts ...UpdateOptions) int {
 	if !opt.SingboxOnly {
 		// Mihomo always uses stable (false) as per original shell script logic
 		if err := updateCore(mihomoConfig, false); err != nil {
-			logError(err.Error())
+			hub.Error(err.Error())
 		}
 		fmt.Println("")
 	}
 
-	logSuccess("Core update complete")
+	hub.Success("Core update complete")
 	return 0
 }
