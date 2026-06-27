@@ -9,7 +9,7 @@ ipv6                      = true
 prefer-ipv6               = true
 hijack-dns                = *:53
 dns-direct-fallback-proxy = false
-# [SR不支持] force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
+# [SR does not support ] force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
 
 
 [Script]

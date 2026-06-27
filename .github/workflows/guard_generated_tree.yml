@@ -16,6 +16,13 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
       - name: Guard generated-tree edits
-        run: python3 scripts/qa/guard_generated_tree.py
+        run: |
+          cd go_scripts
+          go run ./cmd/guard
 
