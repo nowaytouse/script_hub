@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
@@ -22,17 +23,42 @@ var (
 	mihomoLocalPath   = filepath.Join(hub.ROOT, "scripts/config-manager-auto-update/bin/mihomo")
 )
 
-func logInfo(msg string) { fmt.Printf("[INFO] %s\n", msg) }
+func logInfo(msg string)    { fmt.Printf("[INFO] %s\n", msg) }
 func logSuccess(msg string) { fmt.Printf("[OK] %s\n", msg) }
 func logWarning(msg string) { fmt.Printf("[WARN] %s\n", msg) }
-func logError(msg string) { fmt.Printf("[ERROR] %s\n", msg) }
+func logError(msg string)   { fmt.Printf("[ERROR] %s\n", msg) }
+
+// downloadFile cleanly downloads a file using Go's native http package
+func downloadFile(url, filepath string) error {
+	client := &http.Client{Timeout: 60 * time.Second} // Stable > Speed
+	resp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
 
 func getLatestVersion(repo string, includePrerelease bool) string {
 	url := fmt.Sprintf("https://github.com/%s/releases", repo)
 	if !includePrerelease {
 		url += "/latest"
 	}
-	resp, err := http.Get(url)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
 	if err != nil {
 		return ""
 	}
@@ -72,19 +98,12 @@ func getArchOs() (string, string) {
 	return osType, archType
 }
 
-func verifyInstallation(systemPath, localPath string, isSingbox bool) {
+func verifyInstallation(systemPath, localPath string, versionArgs []string) {
 	fmt.Println("")
 	logInfo("Verification:")
-	
-	var args []string
-	if isSingbox {
-		args = []string{"version"}
-	} else {
-		args = []string{"-v"}
-	}
 
 	if hub.ValidateFileExists(systemPath, "") {
-		out, _ := exec.Command(systemPath, args...).Output()
+		out, _ := exec.Command(systemPath, versionArgs...).Output()
 		lines := strings.Split(string(out), "\n")
 		if len(lines) > 0 && lines[0] != "" {
 			fmt.Println(lines[0])
@@ -92,7 +111,7 @@ func verifyInstallation(systemPath, localPath string, isSingbox bool) {
 	}
 
 	if hub.ValidateFileExists(localPath, "") {
-		out, _ := exec.Command(localPath, args...).Output()
+		out, _ := exec.Command(localPath, versionArgs...).Output()
 		lines := strings.Split(string(out), "\n")
 		if len(lines) > 0 && lines[0] != "" {
 			fmt.Println(lines[0])
@@ -100,70 +119,21 @@ func verifyInstallation(systemPath, localPath string, isSingbox bool) {
 	}
 }
 
-func updateSingbox(includePrerelease bool) {
-	logInfo("Checking Sing-box updates...")
-	logInfo("Fetching latest version from GitHub...")
+type CoreConfig struct {
+	Name           string
+	Repo           string
+	SystemPath     string
+	LocalPath      string
+	VersionArgs    []string
+	VersionRegex   *regexp.Regexp
+	GetDownloadURL func(version, osType, arch string) string
+	ExtractFunc    func(archivePath, tempDir string) (string, error)
+}
 
-	latestVersion := getLatestVersion("SagerNet/sing-box", includePrerelease)
-	if latestVersion == "" {
-		logError("Cannot get latest version")
-		return
-	}
-
-	systemVersion := "0.0.0"
-	if hub.ValidateFileExists(singboxSystemPath, "") {
-		out, _ := exec.Command(singboxSystemPath, "version").Output()
-		re := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?`)
-		match := re.FindString(string(out))
-		if match != "" {
-			systemVersion = match
-		}
-	}
-
-	localVersion := "0.0.0"
-	if hub.ValidateFileExists(singboxLocalPath, "") {
-		out, _ := exec.Command(singboxLocalPath, "version").Output()
-		re := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?`)
-		match := re.FindString(string(out))
-		if match != "" {
-			localVersion = match
-		}
-	}
-
-	logInfo(fmt.Sprintf("System version: v%s", systemVersion))
-	logInfo(fmt.Sprintf("Local version: v%s", localVersion))
-	logInfo(fmt.Sprintf("Latest version: v%s", latestVersion))
-
-	if systemVersion == latestVersion && localVersion == latestVersion {
-		logSuccess("Sing-box is already up to date")
-		return
-	}
-
-	osType, archType := getArchOs()
-	downloadURL := fmt.Sprintf("https://github.com/SagerNet/sing-box/releases/download/v%s/sing-box-%s-%s-%s.tar.gz", latestVersion, latestVersion, osType, archType)
-
-	logInfo(fmt.Sprintf("Downloading Sing-box v%s...", latestVersion))
-	
-	tempDir, err := os.MkdirTemp("", "singbox-update")
-	if err != nil {
-		logError("Failed to create temp directory")
-		return
-	}
-	defer os.RemoveAll(tempDir)
-
-	archivePath := filepath.Join(tempDir, "sing-box.tar.gz")
-	cmd := exec.Command("curl", "-L", "-o", archivePath, downloadURL)
+func extractSingbox(archivePath, tempDir string) (string, error) {
+	cmd := exec.Command("tar", "-xzf", archivePath, "-C", tempDir)
 	if err := cmd.Run(); err != nil {
-		logError("Download failed")
-		return
-	}
-	logSuccess("Download complete")
-
-	// Extract
-	cmd = exec.Command("tar", "-xzf", archivePath, "-C", tempDir)
-	if err := cmd.Run(); err != nil {
-		logError("Extraction failed")
-		return
+		return "", fmt.Errorf("tar extraction failed: %w", err)
 	}
 
 	var binaryPath string
@@ -175,53 +145,63 @@ func updateSingbox(includePrerelease bool) {
 	})
 
 	if binaryPath == "" {
-		logError("Binary not found in archive")
-		return
+		return "", fmt.Errorf("binary not found in archive")
 	}
-
-	// Install to system path
-	cmd = exec.Command("sudo", "cp", binaryPath, singboxSystemPath)
-	if err := cmd.Run(); err == nil {
-		exec.Command("sudo", "chmod", "+x", singboxSystemPath).Run()
-		logSuccess(fmt.Sprintf("System sing-box v%s installed", latestVersion))
-	} else {
-		logWarning("Cannot install to system path (no sudo or permission denied)")
-	}
-
-	// Install to local path
-	hub.EnsureDir(filepath.Dir(singboxLocalPath))
-	hub.SafeWriteFile(singboxLocalPath, hub.ReadFileString(binaryPath), false)
-	os.Chmod(singboxLocalPath, 0755)
-	logSuccess(fmt.Sprintf("Local sing-box v%s installed", latestVersion))
-
-	verifyInstallation(singboxSystemPath, singboxLocalPath, true)
+	return binaryPath, nil
 }
 
-func updateMihomo() {
-	logInfo("Checking Mihomo updates...")
+func extractMihomo(archivePath, tempDir string) (string, error) {
+	extractedPath := filepath.Join(tempDir, "mihomo")
+	inFile, err := os.Open(archivePath)
+	if err != nil {
+		return "", fmt.Errorf("open archive failed: %w", err)
+	}
+	defer inFile.Close()
+
+	gzReader, err := gzip.NewReader(inFile)
+	if err != nil {
+		return "", fmt.Errorf("gzip reader failed: %w", err)
+	}
+	defer gzReader.Close()
+
+	outFile, err := os.Create(extractedPath)
+	if err != nil {
+		return "", fmt.Errorf("create extracted file failed: %w", err)
+	}
+	defer outFile.Close()
+
+	if _, err := io.Copy(outFile, gzReader); err != nil {
+		return "", fmt.Errorf("write extracted file failed: %w", err)
+	}
+
+	if !hub.ValidateFileExists(extractedPath, "") {
+		return "", fmt.Errorf("binary not found after extraction")
+	}
+	return extractedPath, nil
+}
+
+func updateCore(c CoreConfig, includePrerelease bool) error {
+	logInfo(fmt.Sprintf("Checking %s updates...", c.Name))
 	logInfo("Fetching latest version from GitHub...")
 
-	latestVersion := getLatestVersion("MetaCubeX/mihomo", false)
+	latestVersion := getLatestVersion(c.Repo, includePrerelease)
 	if latestVersion == "" {
-		logError("Cannot get latest version")
-		return
+		return fmt.Errorf("cannot get latest version for %s", c.Name)
 	}
 
 	systemVersion := "0.0.0"
-	if hub.ValidateFileExists(mihomoSystemPath, "") {
-		out, _ := exec.Command(mihomoSystemPath, "-v").Output()
-		re := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
-		match := re.FindString(string(out))
+	if hub.ValidateFileExists(c.SystemPath, "") {
+		out, _ := exec.Command(c.SystemPath, c.VersionArgs...).Output()
+		match := c.VersionRegex.FindString(string(out))
 		if match != "" {
 			systemVersion = match
 		}
 	}
 
 	localVersion := "0.0.0"
-	if hub.ValidateFileExists(mihomoLocalPath, "") {
-		out, _ := exec.Command(mihomoLocalPath, "-v").Output()
-		re := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
-		match := re.FindString(string(out))
+	if hub.ValidateFileExists(c.LocalPath, "") {
+		out, _ := exec.Command(c.LocalPath, c.VersionArgs...).Output()
+		match := c.VersionRegex.FindString(string(out))
 		if match != "" {
 			localVersion = match
 		}
@@ -232,79 +212,49 @@ func updateMihomo() {
 	logInfo(fmt.Sprintf("Latest version: v%s", latestVersion))
 
 	if systemVersion == latestVersion && localVersion == latestVersion {
-		logSuccess("Mihomo is already up to date")
-		return
+		logSuccess(fmt.Sprintf("%s is already up to date", c.Name))
+		return nil
 	}
 
 	osType, archType := getArchOs()
-	downloadURL := fmt.Sprintf("https://github.com/MetaCubeX/mihomo/releases/download/v%s/mihomo-%s-%s-v%s.gz", latestVersion, osType, archType, latestVersion)
+	downloadURL := c.GetDownloadURL(latestVersion, osType, archType)
 
-	logInfo(fmt.Sprintf("Downloading Mihomo v%s...", latestVersion))
+	logInfo(fmt.Sprintf("Downloading %s v%s...", c.Name, latestVersion))
 
-	tempDir, err := os.MkdirTemp("", "mihomo-update")
+	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s-update", strings.ToLower(c.Name)))
 	if err != nil {
-		logError("Failed to create temp directory")
-		return
+		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	archivePath := filepath.Join(tempDir, "mihomo.gz")
-	cmd := exec.Command("curl", "-L", "-o", archivePath, downloadURL)
-	if err := cmd.Run(); err != nil {
-		logError("Download failed")
-		return
+	archivePath := filepath.Join(tempDir, "archive")
+	if err := downloadFile(downloadURL, archivePath); err != nil {
+		return fmt.Errorf("download failed: %w", err)
 	}
 	logSuccess("Download complete")
 
-	// Extract gz
-	extractedPath := filepath.Join(tempDir, "mihomo")
-	inFile, err := os.Open(archivePath)
+	binaryPath, err := c.ExtractFunc(archivePath, tempDir)
 	if err != nil {
-		logError("Failed to open downloaded archive")
-		return
-	}
-	defer inFile.Close()
-
-	gzReader, err := gzip.NewReader(inFile)
-	if err != nil {
-		logError("Failed to initialize gzip reader")
-		return
-	}
-	defer gzReader.Close()
-
-	outFile, err := os.Create(extractedPath)
-	if err != nil {
-		logError("Failed to create extracted file")
-		return
-	}
-	defer outFile.Close()
-
-	if _, err := io.Copy(outFile, gzReader); err != nil {
-		logError("Failed to write extracted file")
-		return
-	}
-
-	if !hub.ValidateFileExists(extractedPath, "") {
-		logError("Binary not found after extraction")
-		return
+		return fmt.Errorf("extraction failed: %w", err)
 	}
 
 	// Install to system path
-	cmd = exec.Command("sudo", "cp", extractedPath, mihomoSystemPath)
+	cmd := exec.Command("sudo", "cp", binaryPath, c.SystemPath)
 	if err := cmd.Run(); err == nil {
-		exec.Command("sudo", "chmod", "+x", mihomoSystemPath).Run()
-		logSuccess(fmt.Sprintf("System mihomo v%s installed", latestVersion))
+		exec.Command("sudo", "chmod", "+x", c.SystemPath).Run()
+		logSuccess(fmt.Sprintf("System %s v%s installed", c.Name, latestVersion))
 	} else {
 		logWarning("Cannot install to system path (no sudo or permission denied)")
 	}
 
 	// Install to local path
-	hub.EnsureDir(filepath.Dir(mihomoLocalPath))
-	hub.SafeWriteFile(mihomoLocalPath, hub.ReadFileString(extractedPath), false)
-	os.Chmod(mihomoLocalPath, 0755)
-	logSuccess(fmt.Sprintf("Local mihomo v%s installed", latestVersion))
+	hub.EnsureDir(filepath.Dir(c.LocalPath))
+	hub.SafeWriteFile(c.LocalPath, hub.ReadFileString(binaryPath), false)
+	os.Chmod(c.LocalPath, 0755)
+	logSuccess(fmt.Sprintf("Local %s v%s installed", c.Name, latestVersion))
 
-	verifyInstallation(mihomoSystemPath, mihomoLocalPath, false)
+	verifyInstallation(c.SystemPath, c.LocalPath, c.VersionArgs)
+	return nil
 }
 
 type UpdateOptions struct {
@@ -319,24 +269,54 @@ func RunUpdateCores(opts ...UpdateOptions) int {
 	if len(opts) > 0 {
 		opt = opts[0]
 	} else {
-		// Default matches original bash script defaults
 		opt.IncludePrerelease = true
 	}
 
 	fmt.Println("==============================================================")
 	fmt.Println("       Core Update Tool (Native Go Version)")
 	fmt.Println("==============================================================")
-	
+
+	singboxConfig := CoreConfig{
+		Name:         "Sing-box",
+		Repo:         "SagerNet/sing-box",
+		SystemPath:   singboxSystemPath,
+		LocalPath:    singboxLocalPath,
+		VersionArgs:  []string{"version"},
+		VersionRegex: regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?`),
+		GetDownloadURL: func(version, osType, arch string) string {
+			return fmt.Sprintf("https://github.com/SagerNet/sing-box/releases/download/v%s/sing-box-%s-%s-%s.tar.gz", version, version, osType, arch)
+		},
+		ExtractFunc: extractSingbox,
+	}
+
+	mihomoConfig := CoreConfig{
+		Name:         "Mihomo",
+		Repo:         "MetaCubeX/mihomo",
+		SystemPath:   mihomoSystemPath,
+		LocalPath:    mihomoLocalPath,
+		VersionArgs:  []string{"-v"},
+		VersionRegex: regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`),
+		GetDownloadURL: func(version, osType, arch string) string {
+			return fmt.Sprintf("https://github.com/MetaCubeX/mihomo/releases/download/v%s/mihomo-%s-%s-v%s.gz", version, osType, arch, version)
+		},
+		ExtractFunc: extractMihomo,
+	}
+
 	if !opt.MihomoOnly {
-		updateSingbox(opt.IncludePrerelease)
+		if err := updateCore(singboxConfig, opt.IncludePrerelease); err != nil {
+			logError(err.Error())
+		}
 		fmt.Println("")
 	}
-	
+
 	if !opt.SingboxOnly {
-		updateMihomo()
+		// Mihomo always uses stable (false) as per original shell script logic
+		if err := updateCore(mihomoConfig, false); err != nil {
+			logError(err.Error())
+		}
 		fmt.Println("")
 	}
-	
+
 	logSuccess("Core update complete")
 	return 0
 }
