@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 121268
+# Rules: 121270
 
 DOMAIN-SUFFIX,lan
 DOMAIN-SUFFIX,m2m
@@ -121215,10 +121215,12 @@ IP-CIDR,59.111.19.33/32
 IP-CIDR,59.111.21.14/31
 IP-CIDR,66.203.126.0/23
 IP-CIDR,94.24.36.0/23
+IP-CIDR6,::/127
 IP-CIDR6,::1/128
 IP-CIDR6,fc00::/7
 IP-CIDR6,fd00::/8
 IP-CIDR6,fe80::/10
+IP-CIDR6,ff00::/8
 PROCESS-NAME,/Applications/evol.app/
 PROCESS-NAME,/Applications/Thunder.app/
 PROCESS-NAME,/Applications/Transmission.app/
