@@ -62,18 +62,7 @@ func main() {
 
 	if *withCore {
 		fmt.Println("\n--- Core Binary Update ---")
-		coreScript := filepath.Join(hub.ROOT, "scripts/qa/update_cores.sh")
-		if hub.ValidateFileExists(coreScript, "") {
-			cmd := exec.Command("bash", coreScript)
-			cmd.Dir = hub.ROOT
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			if err := cmd.Run(); err != nil {
-				fmt.Println("⚠️ Core update script exited with errors (continuing pipeline).")
-			}
-		} else {
-			fmt.Printf("⚠️ Core updater not found: %s\n", coreScript)
-		}
+		tools.RunUpdateCores()
 	}
 
 	if !*quick {

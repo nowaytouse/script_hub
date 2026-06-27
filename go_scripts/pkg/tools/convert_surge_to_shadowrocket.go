@@ -202,7 +202,7 @@ func convertContent(content string, moduleStem string) string {
 				}
 			}
 			if hasSurgeKey {
-				out = append(out, "# [SR不支持] "+strings.TrimLeft(line, " \t"))
+				out = append(out, "# [SR does not support ] "+strings.TrimLeft(line, " \t"))
 				continue
 			}
 			for k, v := range generalKeyMap {
@@ -254,13 +254,13 @@ func convertContent(content string, moduleStem string) string {
 					}
 					out = append(out, "# --- End expansion ---")
 				} else {
-					out = append(out, fmt.Sprintf("# [无法展开] %s", line))
+					out = append(out, fmt.Sprintf("# [Cannot expand] %s", line))
 				}
 				continue
 			}
 
 			if strings.HasPrefix(stripped, "PROTOCOL,") {
-				out = append(out, "# [SR不支持PROTOCOL] "+line)
+				out = append(out, "# [SR does not support PROTOCOL] "+line)
 				continue
 			}
 		}
@@ -293,7 +293,7 @@ func convertDevtoolsModuleForSr(content string) string {
 	meta, sections = hub.ParseModule(converted)
 	desc := meta["desc"]
 	if !strings.Contains(desc, "[🚀SR]") {
-		meta["desc"] = "[🚀SR] " + desc + `\nSub-Store 已按 Surge-Noability 精简(无 ability)；produce 定时仅 Surge 版可用`
+		meta["desc"] = "[🚀SR] " + desc + `\nSub-Store simplified for Surge-Noability; produce cron only available on Surge`
 	}
 	header := hub.FormatHeader(meta, nil)
 	ordered := make([]hub.ModuleSection, 0)
@@ -408,10 +408,10 @@ func convertProxyGroupLine(line string) string {
 }
 
 func convertMainConfig(surgeConfPath string, outputPath string, compactHost bool) bool {
-	fmt.Printf("转换主配置: %s\n", filepath.Base(surgeConfPath))
+	fmt.Printf("Converting main config: %s\n", filepath.Base(surgeConfPath))
 
 	if !hub.ValidateFileExists(surgeConfPath, "") {
-		fmt.Printf("配置文件不存在: %s\n", surgeConfPath)
+		fmt.Printf("Config file not found: %s\n", surgeConfPath)
 		return false
 	}
 
@@ -444,15 +444,15 @@ func convertMainConfig(surgeConfPath string, outputPath string, compactHost bool
 			out = append(out, line)
 
 			if section == "Host" && compactHost {
-				out = append(out, "# Shadowrocket 精简版 - 仅保留关键 DNS 配置")
-				out = append(out, "# 完整域名级 DoH 分流通过 [General] doh-server 全局配置实现")
+				out = append(out, "# Shadowrocket Compact - Keep only critical DNS config")
+				out = append(out, "# Full domain-level DoH split via [General] doh-server global config")
 			}
 			continue
 		}
 
 		if section == "Ponte" {
 			if !strings.HasPrefix(stripped, "#") && stripped != "" {
-				out = append(out, "# [SR不支持Ponte] "+line)
+				out = append(out, "# [SR does not support Ponte] "+line)
 			} else {
 				out = append(out, line)
 			}
@@ -468,7 +468,7 @@ func convertMainConfig(surgeConfPath string, outputPath string, compactHost bool
 				}
 			}
 			if hasSurgeKey {
-				out = append(out, "# [SR不支持] "+strings.TrimLeft(line, " \t"))
+				out = append(out, "# [SR does not support ] "+strings.TrimLeft(line, " \t"))
 				continue
 			}
 
@@ -505,7 +505,7 @@ func convertMainConfig(surgeConfPath string, outputPath string, compactHost bool
 			line = regexp.MustCompile(`,\s*extended-matching`).ReplaceAllString(line, "")
 			line = regexp.MustCompile(`,\s*no-resolve\s*$`).ReplaceAllString(line, "")
 			if strings.HasPrefix(stripped, "PROTOCOL,") {
-				out = append(out, "# [SR不支持PROTOCOL] "+line)
+				out = append(out, "# [SR does not support PROTOCOL] "+line)
 				continue
 			}
 			out = append(out, line)
@@ -532,7 +532,7 @@ func convertMainConfig(surgeConfPath string, outputPath string, compactHost bool
 
 		if section == "Script" {
 			if !strings.HasPrefix(stripped, "#") && stripped != "" {
-				out = append(out, "# [SR不支持Script] "+line)
+				out = append(out, "# [SR does not support Script] "+line)
 			} else {
 				out = append(out, line)
 			}
@@ -544,11 +544,11 @@ func convertMainConfig(surgeConfPath string, outputPath string, compactHost bool
 
 	result := strings.Join(out, "\n")
 	hub.SafeWriteFile(outputPath, result, true)
-	fmt.Printf("配置已转换: %s\n", outputPath)
+	fmt.Printf("Config converted: %s\n", outputPath)
 	if compactHost {
-		fmt.Printf("Host 精简: 保留 %d 行，跳过 %d 行\n", hostLinesKept, hostLinesSkipped)
+		fmt.Printf("Host compact: Kept %d lines, skipped %d lines\n", hostLinesKept, hostLinesSkipped)
 	}
-	fmt.Printf("总行数: %d\n", len(out))
+	fmt.Printf("总lines数: %d\n", len(out))
 	return true
 }
 
@@ -562,7 +562,7 @@ func RunConvertSurgeToShadowrocket(args map[string]string) int {
 
 	if config != "" {
 		if !hub.ValidateFileExists(config, "") {
-			fmt.Printf("配置文件不存在: %s\n", config)
+			fmt.Printf("Config file not found: %s\n", config)
 			return 1
 		}
 		if output == "" {
@@ -584,9 +584,9 @@ func RunConvertSurgeToShadowrocket(args map[string]string) int {
 
 	if modules {
 		total, converted, failed := ProcessAllModules()
-		fmt.Printf("所有模块已转换: %d/%d\n", converted, total)
+		fmt.Printf("All modules converted: %d/%d\n", converted, total)
 		if failed > 0 {
-			fmt.Printf("失败: %d 个模块\n", failed)
+			fmt.Printf("Failed: %d modules\n", failed)
 		}
 		if converted == 0 {
 			return 1
@@ -597,7 +597,7 @@ func RunConvertSurgeToShadowrocket(args map[string]string) int {
 	surgeConf := filepath.Join(hub.ROOT, ".claude", "NyaMiiKo.conf.conf")
 	if hub.ValidateFileExists(surgeConf, "") {
 		output := filepath.Join(hub.ROOT, ".claude", "NyaMiiKo_Shadowrocket.conf")
-		fmt.Println("转换项目默认配置")
+		fmt.Println("Converting default project config")
 		success := convertMainConfig(surgeConf, output, !fullHost)
 		if success {
 			return 0
@@ -605,11 +605,11 @@ func RunConvertSurgeToShadowrocket(args map[string]string) int {
 		return 1
 	}
 
-	fmt.Println("未找到 .claude/NyaMiiKo.conf.conf，跳过主配置，仅转换模块")
+	fmt.Println("Not found .claude/NyaMiiKo.conf.conf, skipping main config, converting modules only")
 	total, converted, failed := ProcessAllModules()
-	fmt.Printf("所有模块已转换: %d/%d\n", converted, total)
+	fmt.Printf("All modules converted: %d/%d\n", converted, total)
 	if failed > 0 {
-		fmt.Printf("失败: %d 个模块\n", failed)
+		fmt.Printf("Failed: %d modules\n", failed)
 	}
 	if converted == 0 {
 		return 1
