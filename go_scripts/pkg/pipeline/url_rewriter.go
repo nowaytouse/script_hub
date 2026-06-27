@@ -19,8 +19,8 @@ var mockReplacements = map[string]string{
 	`https://raw\.githubusercontent\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(master|main)/[A-Za-z0-9_.-/]+/blank\.gif`:           "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.gif",
 	`https://raw\.githubusercontent\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(master|main)/[A-Za-z0-9_.-/]+/blank_dict\.json`:     "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json",
 	`https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                                    `https://cdn.jsdelivr.net/gh/$1/$2@$3/$4`,
-	`(?<!/)https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                                          `https://cdn.jsdelivr.net/gh/$1/$2@$3/$4`,
-	`(?<!/)https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                            `https://gh-proxy.com/https://github.com/$1/$2/releases/download/$3/$4`,
+	`(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                                        `$1https://cdn.jsdelivr.net/gh/$2/$3@$4/$5`,
+	`(^|[^/])https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)`:                          `$1https://gh-proxy.com/https://github.com/$2/$3/releases/download/$4/$5`,
 }
 
 type urlReplacement struct {
@@ -32,11 +32,6 @@ var compiledReplacements []urlReplacement
 
 func init() {
 	for pattern, repl := range mockReplacements {
-		// Go doesn't support negative lookbehind (?<!/) in regexp.
-		// We'll approximate by checking string context if needed, but for simple replacements we just drop the lookbehind or replace it with a workaround.
-		if strings.HasPrefix(pattern, `(?<!/)`) {
-			pattern = pattern[6:] // Just drop it and hope for the best, or use a workaround. In practice, the impact here is minimal.
-		}
 		compiledReplacements = append(compiledReplacements, urlReplacement{
 			regex: regexp.MustCompile("(?i)" + pattern),
 			repl:  repl,
