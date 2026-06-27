@@ -349,6 +349,23 @@ func curlFetch(urlStr string, timeout int, retries int, ua string) []byte {
 		return vendor
 	}
 
+	// If it was a raw.githubusercontent.com URL that failed, try cdn.jsdelivr.net
+	if strings.HasPrefix(urlStr, "https://raw.githubusercontent.com/") {
+		parts := strings.SplitN(urlStr[34:], "/", 4)
+		if len(parts) == 4 {
+			mirrorUrl := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%s/%s@%s/%s", parts[0], parts[1], parts[2], parts[3])
+			Info(fmt.Sprintf("Download failed/rejected, trying JSDelivr mirror: %s", mirrorUrl))
+			return curlFetch(mirrorUrl, timeout, 1, ua)
+		}
+	}
+
+	// If it was a cdn.jsdelivr.net URL that failed, try fastly.jsdelivr.net
+	if strings.HasPrefix(urlStr, "https://cdn.jsdelivr.net/") {
+		fastlyUrl := strings.Replace(urlStr, "https://cdn.jsdelivr.net/", "https://fastly.jsdelivr.net/", 1)
+		Info(fmt.Sprintf("Download failed, trying fastly mirror: %s", fastlyUrl))
+		return curlFetch(fastlyUrl, timeout, 1, ua)
+	}
+
 	Warn(fmt.Sprintf("Download failed: %s | Reason: %s", urlStr, lastErr))
 	return nil
 }
@@ -374,29 +391,5 @@ func UniqueStrings(input []string) []string {
 }
 
 func SafeDownload(url string, retries int, timeout int) string {
-	client := &http.Client{Timeout: time.Duration(timeout) * time.Second}
-	var lastErr error
-	for i := 0; i < retries; i++ {
-		resp, err := client.Get(url)
-		if err != nil {
-			lastErr = err
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			lastErr = fmt.Errorf("status code %d", resp.StatusCode)
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			lastErr = err
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		return string(body)
-	}
-	Warn(fmt.Sprintf("Download failed: %s (%v)", url, lastErr))
-	return ""
+	return SafeDownloadString(url, retries, timeout, "")
 }
