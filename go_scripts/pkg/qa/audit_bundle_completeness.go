@@ -151,7 +151,7 @@ func getSpecs() []bundleSpec {
 	return []bundleSpec{
 		{
 			label:  "BiliBili",
-			output: filepath.Join(hub.MODULES_DIR, "surge/head_expanse/📺 Bilibili (Mainland-only).sgmodule"),
+			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/📺 BiliBili增强合集.sgmodule"),
 			sources: []hub.SourceSpec{
 				{Label: "Choler", URL: "https://raw.githubusercontent.com/Choler/Surge/master/Modules/Bilibili.sgmodule"},
 				{Label: "NobyDa", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Bilibili.sgmodule"},
@@ -161,14 +161,14 @@ func getSpecs() []bundleSpec {
 		},
 		{
 			label:  "Apple",
-			output: filepath.Join(hub.MODULES_DIR, "surge/head_expanse/🍎 Apple Global Acceleration.sgmodule"),
+			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule"),
 			sources: []hub.SourceSpec{
 				{Label: "VirgilClyne", URL: "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/Apple.OSUpdates.Global.sgmodule"},
 			},
 		},
 		{
 			label:  "Panel utilities",
-			output: filepath.Join(hub.MODULES_DIR, "surge/head_expanse/🧰 Panel Utilities.sgmodule"),
+			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/📊 面板工具合集.sgmodule"),
 			sources: []hub.SourceSpec{
 				{Label: "NobyDa/8.8.8.8", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Module/8.8.8.8.sgmodule"},
 				{Label: "NobyDa/Network-Info", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Module/Network-Info.sgmodule"},
@@ -180,7 +180,7 @@ func getSpecs() []bundleSpec {
 		},
 		{
 			label:  "Script Hub devtools",
-			output: filepath.Join(hub.MODULES_DIR, "surge/head_expanse/💻 Script Hub DevTools.sgmodule"),
+			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule"),
 			sources: []hub.SourceSpec{
 				{Label: "Sub-Store", URL: "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge.sgmodule"},
 				{Label: "BoxJs", URL: "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule"},
@@ -202,7 +202,7 @@ func getSpecs() []bundleSpec {
 		},
 		{
 			label:  "Weibo (PROMAX source)",
-			output: filepath.Join(hub.MODULES_DIR, "source/weibo_promax.sgmodule"),
+			output: filepath.Join(hub.ROOT, "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule"),
 			sources: []hub.SourceSpec{
 				{Label: "app2smile", URL: "https://raw.githubusercontent.com/app2smile/rules/master/module/weibo.sgmodule"},
 				{Label: "yxiaocheng", URL: "https://raw.githubusercontent.com/yxiaocheng/Surge/main/Module/Weibo.sgmodule"},
