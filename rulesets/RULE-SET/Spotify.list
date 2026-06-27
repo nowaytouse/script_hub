@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 29
+# Rules: 34
 
 DOMAIN-SUFFIX,scdn.co
 DOMAIN-SUFFIX,pscdn.co
@@ -26,7 +26,12 @@ DOMAIN-SUFFIX,spotify-everywhere.com
 DOMAIN-SUFFIX,spotify.app.link
 DOMAIN,bloodhound.spotify.com
 DOMAIN,adstudio-assets.scdn.co
+DOMAIN-SUFFIX,spotify-com.akamaized.net
 DOMAIN,adeventtracker.spotify.com
+DOMAIN,audio-ak-spotify-com.akamaized.net
+DOMAIN,heads-ak-spotify-com.akamaized.net
+DOMAIN,audio4-ak-spotify-com.akamaized.net
+DOMAIN,heads4-ak-spotify-com.akamaized.net
 DOMAIN,spotify.map.fastly.net
 DOMAIN,spotify.map.fastlylb.net
 DOMAIN,spotify.com.edgesuite.net

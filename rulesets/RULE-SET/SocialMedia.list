@@ -2,11 +2,13 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 682
+# Rules: 699
 
+DOMAIN-SUFFIX,m.me
 DOMAIN-SUFFIX,t.co
 DOMAIN-SUFFIX,t.me
 DOMAIN-SUFFIX,fb.gg
+DOMAIN-SUFFIX,fb.me
 DOMAIN-SUFFIX,i.org
 DOMAIN-SUFFIX,ig.me
 DOMAIN-SUFFIX,tx.me
@@ -14,6 +16,7 @@ DOMAIN-SUFFIX,wa.me
 DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,dis.gd
 DOMAIN-SUFFIX,f8.com
+DOMAIN-SUFFIX,fb.com
 DOMAIN-SUFFIX,ogp.me
 DOMAIN-SUFFIX,tg.dev
 DOMAIN-SUFFIX,klik.me
@@ -126,6 +129,7 @@ DOMAIN-SUFFIX,feacboo.com
 DOMAIN-SUFFIX,fecbbok.com
 DOMAIN-SUFFIX,fecbooc.com
 DOMAIN-SUFFIX,fecbook.com
+DOMAIN-SUFFIX,igsonar.com
 DOMAIN-SUFFIX,instagy.com
 DOMAIN-SUFFIX,intagrm.com
 DOMAIN-SUFFIX,intgram.com
@@ -148,6 +152,7 @@ DOMAIN-SUFFIX,twtrdns.net
 DOMAIN-SUFFIX,whatsapp.cc
 DOMAIN-SUFFIX,whatsapp.tv
 DOMAIN-SUFFIX,acebooik.com
+DOMAIN-SUFFIX,atlasdmt.com
 DOMAIN-SUFFIX,comments.app
 DOMAIN-SUFFIX,dacebook.com
 DOMAIN-SUFFIX,discord.gift
@@ -172,6 +177,7 @@ DOMAIN-SUFFIX,facebooe.com
 DOMAIN-SUFFIX,faceboof.com
 DOMAIN-SUFFIX,facebooi.com
 DOMAIN-SUFFIX,facebooj.com
+DOMAIN-SUFFIX,facebook.com
 DOMAIN-SUFFIX,facebook.net
 DOMAIN-SUFFIX,facebook.org
 DOMAIN-SUFFIX,facebool.com
@@ -248,6 +254,7 @@ DOMAIN-SUFFIX,whatsapp.org
 DOMAIN-SUFFIX,binoculus.com
 DOMAIN-SUFFIX,buckbuild.com
 DOMAIN-SUFFIX,buyoculus.com
+DOMAIN-SUFFIX,click-url.com
 DOMAIN-SUFFIX,discord.gifts
 DOMAIN-SUFFIX,discord.media
 DOMAIN-SUFFIX,discord.store
@@ -261,12 +268,14 @@ DOMAIN-SUFFIX,face-book.com
 DOMAIN-SUFFIX,faceabook.com
 DOMAIN-SUFFIX,facebbook.com
 DOMAIN-SUFFIX,facebcook.com
+DOMAIN-SUFFIX,facebgook.com
 DOMAIN-SUFFIX,facebhook.com
 DOMAIN-SUFFIX,facebo-ok.com
 DOMAIN-SUFFIX,facebocke.com
 DOMAIN-SUFFIX,facebokok.com
 DOMAIN-SUFFIX,facebomok.com
 DOMAIN-SUFFIX,faceboock.com
+DOMAIN-SUFFIX,facebooik.com
 DOMAIN-SUFFIX,facebooik.org
 DOMAIN-SUFFIX,facebook.shop
 DOMAIN-SUFFIX,facebook.wang
@@ -283,6 +292,7 @@ DOMAIN-SUFFIX,facebyook.com
 DOMAIN-SUFFIX,facebzook.com
 DOMAIN-SUFFIX,facecbook.com
 DOMAIN-SUFFIX,facecbook.org
+DOMAIN-SUFFIX,facedbook.com
 DOMAIN-SUFFIX,faceebook.com
 DOMAIN-SUFFIX,facegbook.com
 DOMAIN-SUFFIX,faceobook.com
@@ -313,10 +323,13 @@ DOMAIN-SUFFIX,frescolib.org
 DOMAIN-SUFFIX,friendfed.com
 DOMAIN-SUFFIX,imstagram.com
 DOMAIN-SUFFIX,instagify.com
+DOMAIN-SUFFIX,instagram.com
 DOMAIN-SUFFIX,instagran.com
+DOMAIN-SUFFIX,instagrem.com
 DOMAIN-SUFFIX,instastyle.tv
 DOMAIN-SUFFIX,messenger.com
 DOMAIN-SUFFIX,oculuscdn.com
+DOMAIN-SUFFIX,tellapart.com
 DOMAIN-SUFFIX,toncenter.com
 DOMAIN-SUFFIX,ttlivecdn.com
 DOMAIN-SUFFIX,ttwebview.com
@@ -399,6 +412,7 @@ DOMAIN-SUFFIX,expresswifi.com
 DOMAIN-SUFFIX,facebokbook.com
 DOMAIN-SUFFIX,facebook.design
 DOMAIN-SUFFIX,facebook123.org
+DOMAIN-SUFFIX,facebookads.com
 DOMAIN-SUFFIX,facebookcom.com
 DOMAIN-SUFFIX,facebookhome.cc
 DOMAIN-SUFFIX,facebookhub.com
@@ -437,6 +451,7 @@ DOMAIN-SUFFIX,tiktokmusic.app
 DOMAIN-SUFFIX,ttoverseaus.net
 DOMAIN-SUFFIX,usercontent.dev
 DOMAIN-SUFFIX,whyfacebook.com
+DOMAIN-SUFFIX,wwwfacebook.com
 DOMAIN-SUFFIX,cdn-telegram.org
 DOMAIN-SUFFIX,cdninstagram.com
 DOMAIN-SUFFIX,chickstagram.com
@@ -531,6 +546,7 @@ DOMAIN-SUFFIX,hackfacebookid.com
 DOMAIN-SUFFIX,instagram-help.com
 DOMAIN-SUFFIX,instagramlogin.com
 DOMAIN-SUFFIX,instagramphoto.com
+DOMAIN-SUFFIX,lnstagram-help.com
 DOMAIN-SUFFIX,markzuckerberg.com
 DOMAIN-SUFFIX,mobilefacebook.com
 DOMAIN-SUFFIX,powersunitedvr.com
@@ -593,10 +609,10 @@ DOMAIN-SUFFIX,facebookloginhelp.net
 DOMAIN-SUFFIX,facebookpmdcenter.com
 DOMAIN-SUFFIX,facebooksuppliers.com
 DOMAIN-SUFFIX,facebookswagstore.com
+DOMAIN-SUFFIX,fbthirdpartypixel.com
 DOMAIN-SUFFIX,fbthirdpartypixel.net
 DOMAIN-SUFFIX,fbthirdpartypixel.org
 DOMAIN-SUFFIX,instagramhashtags.net
-DOMAIN-SUFFIX,instagrampartners.com
 DOMAIN-SUFFIX,moneywithfacebook.com
 DOMAIN-SUFFIX,oculusforbusiness.com
 DOMAIN-SUFFIX,opengraphprotocol.com
@@ -640,12 +656,10 @@ DOMAIN-SUFFIX,accessfacebookfromschool.com
 DOMAIN-SUFFIX,facebookmarketingpartner.com
 DOMAIN-SUFFIX,achat-followers-instagram.com
 DOMAIN-SUFFIX,acheterfollowersinstagram.com
-DOMAIN-SUFFIX,facebookmarketingpartners.com
 DOMAIN-SUFFIX,howtohackfacebook-account.com
 DOMAIN-SUFFIX,facebookadvertisingsecrets.com
 DOMAIN-SUFFIX,acheter-followers-instagram.com
 DOMAIN-SUFFIX,acheterdesfollowersinstagram.com
-DOMAIN-SUFFIX,facebookcanadianelectionintegrityinitiative.com
 DOMAIN,m.cmx.im
 DOMAIN,api.imem.app
 DOMAIN-SUFFIX,nostr.wlvs.space
@@ -654,11 +668,14 @@ DOMAIN-SUFFIX,graph.whatsapp.com
 DOMAIN-SUFFIX,graph.whatsapp.net
 DOMAIN,fbcdn-a.akamaihd.net
 DOMAIN-SUFFIX,discordapp.page.link
+DOMAIN-SUFFIX,analytics.facebook.com
 DOMAIN,lf16-pkgcdn.pitaya-clientai.com
+DOMAIN,p16-tiktokcdn-com.akamaized.net
 DOMAIN,lf16-effectcdn.byteeffecttos-g.com
 DOMAIN-SUFFIX,tiktokv.com.edgekey.net
 DOMAIN-SUFFIX,ip6.static.sl-reverse.com
 DOMAIN-SUFFIX,tiktokv.com.edgesuite.net
+DOMAIN-SUFFIX,tiktokcdn.com.akamaized.net
 DOMAIN-SUFFIX,tiktokcdn.com.edgesuite.net
 DOMAIN-SUFFIX,tiktokcdn-us.com.edgesuite.net
 DOMAIN-SUFFIX,hammerandchisel.ssl.zendesk.com

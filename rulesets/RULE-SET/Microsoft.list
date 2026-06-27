@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 734
+# Rules: 759
 
 DOMAIN-SUFFIX,bing
 DOMAIN-SUFFIX,azure
@@ -47,6 +47,7 @@ DOMAIN-SUFFIX,azure.cn
 DOMAIN-SUFFIX,bibg.com
 DOMAIN-SUFFIX,binb.com
 DOMAIN-SUFFIX,binf.com
+DOMAIN-SUFFIX,bing.com
 DOMAIN-SUFFIX,bing.net
 DOMAIN-SUFFIX,docs.com
 DOMAIN-SUFFIX,dwh5.com
@@ -104,6 +105,7 @@ DOMAIN-SUFFIX,bingit.net
 DOMAIN-SUFFIX,bingpk.com
 DOMAIN-SUFFIX,biying.com
 DOMAIN-SUFFIX,blazor.net
+DOMAIN-SUFFIX,clarity.ms
 DOMAIN-SUFFIX,cortana.ai
 DOMAIN-SUFFIX,dictate.ms
 DOMAIN-SUFFIX,engkoo.com
@@ -117,6 +119,7 @@ DOMAIN-SUFFIX,joinms.com
 DOMAIN-SUFFIX,kidgrid.tv
 DOMAIN-SUFFIX,msauth.net
 DOMAIN-SUFFIX,msecnd.net
+DOMAIN-SUFFIX,msedge.net
 DOMAIN-SUFFIX,mshome.net
 DOMAIN-SUFFIX,msocdn.com
 DOMAIN-SUFFIX,msocsp.com
@@ -143,6 +146,7 @@ DOMAIN-SUFFIX,azurerms.cn
 DOMAIN-SUFFIX,b2clogin.cn
 DOMAIN-SUFFIX,bing123.com
 DOMAIN-SUFFIX,bing135.com
+DOMAIN-SUFFIX,bingads.com
 DOMAIN-SUFFIX,bingpix.com
 DOMAIN-SUFFIX,dynamics.cn
 DOMAIN-SUFFIX,exp-tas.com
@@ -259,6 +263,7 @@ DOMAIN-SUFFIX,msftncsi.com
 DOMAIN-SUFFIX,msturing.org
 DOMAIN-SUFFIX,msvevent.com
 DOMAIN-SUFFIX,o365files.cn
+DOMAIN-SUFFIX,o365weve.com
 DOMAIN-SUFFIX,oaspapps.com
 DOMAIN-SUFFIX,office365.cn
 DOMAIN-SUFFIX,officedev.cn
@@ -313,6 +318,7 @@ DOMAIN-SUFFIX,renlifang.com
 DOMAIN-SUFFIX,sfbassets.com
 DOMAIN-SUFFIX,sfbassets.net
 DOMAIN-SUFFIX,sharepoint.cn
+DOMAIN-SUFFIX,uservoice.com
 DOMAIN-SUFFIX,vfsforgit.com
 DOMAIN-SUFFIX,vfsforgit.org
 DOMAIN-SUFFIX,vscodeedu.app
@@ -352,6 +358,7 @@ DOMAIN-SUFFIX,msnewskids.org
 DOMAIN-SUFFIX,mspairlift.com
 DOMAIN-SUFFIX,msudalosti.com
 DOMAIN-SUFFIX,msxiaobing.com
+DOMAIN-SUFFIX,nelreports.net
 DOMAIN-SUFFIX,outingsapp.com
 DOMAIN-SUFFIX,playfabapi.com
 DOMAIN-SUFFIX,pwabuilder.com
@@ -406,6 +413,7 @@ DOMAIN-SUFFIX,chinacloudapi.cn
 DOMAIN-SUFFIX,chinacloudapp.cn
 DOMAIN-SUFFIX,discoverbing.com
 DOMAIN-SUFFIX,fluidpreview.com
+DOMAIN-SUFFIX,footprintdns.com
 DOMAIN-SUFFIX,gearstactics.com
 DOMAIN-SUFFIX,github.community
 DOMAIN-SUFFIX,githubassets.com
@@ -413,6 +421,7 @@ DOMAIN-SUFFIX,githubstatus.com
 DOMAIN-SUFFIX,microsoft-smb.cn
 DOMAIN-SUFFIX,microsoft365.com
 DOMAIN-SUFFIX,microsoftadc.com
+DOMAIN-SUFFIX,microsoftads.com
 DOMAIN-SUFFIX,microsoftapp.net
 DOMAIN-SUFFIX,microsofteca.com
 DOMAIN-SUFFIX,microsoftnews.cc
@@ -482,6 +491,7 @@ DOMAIN-SUFFIX,projectmurphy.net
 DOMAIN-SUFFIX,projectsangam.com
 DOMAIN-SUFFIX,thegithubshop.com
 DOMAIN-SUFFIX,trafficmanager.cn
+DOMAIN-SUFFIX,windowssearch.com
 DOMAIN-SUFFIX,windowsupdate.com
 DOMAIN-SUFFIX,apihub-internal.cn
 DOMAIN-SUFFIX,azurecosmosdb.info
@@ -580,6 +590,7 @@ DOMAIN-SUFFIX,powershellgallery.com
 DOMAIN-SUFFIX,serverlesslibrary.net
 DOMAIN-SUFFIX,windowsazurestatus.cn
 DOMAIN-SUFFIX,yammerusercontent.com
+DOMAIN-SUFFIX,applicationinsights.io
 DOMAIN-SUFFIX,femalefounderscomp.com
 DOMAIN-SUFFIX,livingyourambition.com
 DOMAIN-SUFFIX,microsoftgamestack.com
@@ -603,6 +614,7 @@ DOMAIN-SUFFIX,azureserviceprofiler.com
 DOMAIN-SUFFIX,azurestackvalidation.com
 DOMAIN-SUFFIX,crossborderexpansion.com
 DOMAIN-SUFFIX,microsoft-sap-events.com
+DOMAIN-SUFFIX,microsoftadvertising.com
 DOMAIN-SUFFIX,microsoftazuread-sso.com
 DOMAIN-SUFFIX,microsoftcloudsummit.com
 DOMAIN-SUFFIX,microsoftedgeinsider.com
@@ -629,6 +641,7 @@ DOMAIN-SUFFIX,microsofttranslator-int.cn
 DOMAIN-SUFFIX,msunlimitedcloudsummit.com
 DOMAIN-SUFFIX,brazilpartneruniversity.com
 DOMAIN-SUFFIX,management-azure-devices.cn
+DOMAIN-SUFFIX,microsoftinternetsafety.net
 DOMAIN-SUFFIX,microsoftiotinsiderlabs.com
 DOMAIN-SUFFIX,opentranslatorstothings.org
 DOMAIN-SUFFIX,unlocklimitlesslearning.com
@@ -655,10 +668,14 @@ DOMAIN-SUFFIX,ditu.live.com
 DOMAIN-SUFFIX,joinms.com.cn
 DOMAIN-SUFFIX,msa.akadns6.net
 DOMAIN-SUFFIX,msminico.com.cn
+DOMAIN-SUFFIX,b.akamaiedge.net
+DOMAIN-SUFFIX,g.akamaiedge.net
 DOMAIN-SUFFIX,reactorms.com.cn
+DOMAIN,crl.microsoft.com
 DOMAIN-SUFFIX,dcg.microsoft.com
 DOMAIN-SUFFIX,microsoftol.com.cn
 DOMAIN,azure.microsoft.com
+DOMAIN,default.exp-tas.com
 DOMAIN,cn.windowssearch.com
 DOMAIN-SUFFIX,microsoftstore.com.cn
 DOMAIN-SUFFIX,microsoftstore.com.hk
@@ -671,12 +688,20 @@ DOMAIN-SUFFIX,microsoft-online.com.cn
 DOMAIN-SUFFIX,microsoftreactor.com.cn
 DOMAIN-SUFFIX,microsoftonline-p.net.cn
 DOMAIN,github-api.arkoselabs.com
+DOMAIN,mwf-service.akamaized.net
 DOMAIN-SUFFIX,download.windowsupdate.com
 DOMAIN-SUFFIX,microsoftonline-p-i.net.cn
 DOMAIN-SUFFIX,onecollector.cloudapp.aria
+DOMAIN,img-s-msn-com.akamaized.net
 DOMAIN,vsmarketplacebadge.apphb.com
 DOMAIN,azuremarketplace.microsoft.com
 DOMAIN,bingsettingssearch.trafficmanager.net
+DOMAIN,officecdn-microsoft-com.akamaized.net
+DOMAIN-SUFFIX,prod-video-cms-rt-microsoft-com.akamaized.net
+DOMAIN,statics-marketingsites-eas-ms-com.akamaized.net
+DOMAIN,statics-marketingsites-eus-ms-com.akamaized.net
+DOMAIN-SUFFIX,statics-marketingsites-neu-ms-com.akamaized.net
+DOMAIN,statics-marketingsites-wcus-ms-com.akamaized.net
 DOMAIN-SUFFIX,msn.com.nsatc.net
 DOMAIN-SUFFIX,a1158.g.akamai.net
 DOMAIN-SUFFIX,cs11.wpc.v0cdn.net
