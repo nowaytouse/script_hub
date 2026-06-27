@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
+	"github.com/nyamiiko/script_hub/go_scripts/pkg/pipeline"
 )
 
 var scriptLabelRe = regexp.MustCompile(`(?i)^(.+?)\s*=\s*type=`)
@@ -150,42 +151,26 @@ func auditBundle(spec bundleSpec) []string {
 func getSpecs() []bundleSpec {
 	return []bundleSpec{
 		{
-			label:  "BiliBili",
-			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/📺 BiliBili增强合集.sgmodule"),
-			sources: []hub.SourceSpec{
-				{Label: "Choler", URL: "https://raw.githubusercontent.com/Choler/Surge/master/Modules/Bilibili.sgmodule"},
-				{Label: "NobyDa", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Bilibili.sgmodule"},
-				{Label: "app2smile", URL: "https://raw.githubusercontent.com/app2smile/rules/master/module/bilibili.sgmodule"},
-			},
+			label:             "BiliBili",
+			output:            filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/📺 BiliBili增强合集.sgmodule"),
+			sources:           pipeline.BilibiliSources,
 			requiredMitmHosts: []string{"app.bilibili.com"},
 		},
 		{
-			label:  "Apple",
-			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule"),
-			sources: []hub.SourceSpec{
-				{Label: "VirgilClyne", URL: "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/Apple.OSUpdates.Global.sgmodule"},
-			},
+			label:   "Apple",
+			output:  filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule"),
+			sources: pipeline.AppleSources,
 		},
 		{
-			label:  "Panel utilities",
-			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/📊 面板工具合集.sgmodule"),
-			sources: []hub.SourceSpec{
-				{Label: "NobyDa/8.8.8.8", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Module/8.8.8.8.sgmodule"},
-				{Label: "NobyDa/Network-Info", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Module/Network-Info.sgmodule"},
-				{Label: "Tysta", URL: "https://raw.githubusercontent.com/Tysta/rua/main/Surge/Panel/NetInfo/NetInfo.sgmodule"},
-				{Label: "xream", URL: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/network-info.sgmodule"},
-				{Label: "xream/outbound", URL: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/outbound-mode/outbound-mode.sgmodule"},
-			},
+			label:             "Panel utilities",
+			output:            filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/📊 面板工具合集.sgmodule"),
+			sources:           pipeline.UtilitiesSources,
 			requiredMitmHosts: []string{"net-lsp-x.com"},
 		},
 		{
-			label:  "Script Hub devtools",
-			output: filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule"),
-			sources: []hub.SourceSpec{
-				{Label: "Sub-Store", URL: "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge.sgmodule"},
-				{Label: "BoxJs", URL: "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule"},
-				{Label: "Script-Hub", URL: "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Script-Hub.sgmodule"},
-			},
+			label:   "Script Hub devtools",
+			output:  filepath.Join(hub.MODULES_DIR, "surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule"),
+			sources: pipeline.DevtoolsSources,
 			requiredScriptLabels: []string{
 				"Sub-Store Core",
 				"Sub-Store Simple",
@@ -201,12 +186,9 @@ func getSpecs() []bundleSpec {
 			},
 		},
 		{
-			label:  "Weibo (PROMAX source)",
-			output: filepath.Join(hub.ROOT, "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule"),
-			sources: []hub.SourceSpec{
-				{Label: "app2smile", URL: "https://raw.githubusercontent.com/app2smile/rules/master/module/weibo.sgmodule"},
-				{Label: "yxiaocheng", URL: "https://raw.githubusercontent.com/yxiaocheng/Surge/main/Module/Weibo.sgmodule"},
-			},
+			label:   "Weibo (PROMAX source)",
+			output:  filepath.Join(hub.ROOT, "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule"),
+			sources: pipeline.WeiboSources,
 		},
 	}
 }

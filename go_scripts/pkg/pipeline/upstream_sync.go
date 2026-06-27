@@ -205,7 +205,7 @@ func extractTarGz(tarGzPath string, rootPath string, destPath string) error {
 }
 
 func (u *UpstreamSyncer) downloadToFile(urlStr string, destPath string, ua string) bool {
-	data := hub.CurlFetch(urlStr, ua)
+	data := hub.SafeDownloadBinary(urlStr, 2, 60, ua)
 	if data == nil {
 		return false
 	}
@@ -214,7 +214,7 @@ func (u *UpstreamSyncer) downloadToFile(urlStr string, destPath string, ua strin
 }
 
 func (u *UpstreamSyncer) download(urlStr string, ua string) []byte {
-	return hub.CurlFetch(urlStr, ua)
+	return hub.SafeDownloadBinary(urlStr, 2, 60, ua)
 }
 
 func (u *UpstreamSyncer) SyncSkk() {

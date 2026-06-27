@@ -12,7 +12,7 @@ import (
 
 var (
 	bilibiliOutput  = filepath.Join(hub.ROOT, "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule")
-	bilibiliSources = []hub.SourceSpec{
+	BilibiliSources = []hub.SourceSpec{
 		{Label: "Enhanced", URL: "https://github.com/BiliUniverse/Enhanced/releases/latest/download/BiliBili.Enhanced.sgmodule"},
 		{Label: "Global", URL: "https://github.com/BiliUniverse/Global/releases/latest/download/BiliBili.Global.sgmodule"},
 		{Label: "Redirect", URL: "https://github.com/BiliUniverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule"},
@@ -29,7 +29,7 @@ var (
 	}
 
 	appleOutput  = filepath.Join(hub.ROOT, "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule")
-	appleSources = []hub.SourceSpec{
+	AppleSources = []hub.SourceSpec{
 		{Label: "iRingo.Maps", URL: "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule"},
 		{Label: "iRingo.WeatherKit", URL: "https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule"},
 		{Label: "iRingo.News", URL: "https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule"},
@@ -46,7 +46,7 @@ var (
 	}
 
 	weiboLocal   = filepath.Join(hub.ROOT, "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule")
-	weiboSources = []hub.SourceSpec{
+	WeiboSources = []hub.SourceSpec{
 		{Label: "Weibo", URL: "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/weibo.module"},
 		{Label: "Intl", URL: "https://raw.githubusercontent.com/iab0x00/ProxyRules/main/Rewrite/WeiboIntl.sgmodule"},
 	}
@@ -55,40 +55,6 @@ var (
 		"desc":   "微博+国际版去广告 · PROMAX 构建源（域名规则+脚本已并入 PROMAX，勿单独安装）\n\n上游: fmz200/wool_scripts, iab0x00",
 		"author": "fmz200, iab0x00, ScriptHub",
 		"tag":    "去广告, 微博, PROMAX-build",
-	}
-
-	BilibiliOutput  = filepath.Join(hub.MODULES_DIR, "surge/head_expanse/📺 Bilibili (Mainland-only).sgmodule")
-	BilibiliSources = []hub.SourceSpec{
-		{Label: "Choler", URL: "https://raw.githubusercontent.com/Choler/Surge/master/Modules/Bilibili.sgmodule"},
-		{Label: "NobyDa", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Bilibili.sgmodule"},
-		{Label: "app2smile", URL: "https://raw.githubusercontent.com/app2smile/rules/master/module/bilibili.sgmodule"},
-	}
-
-	AppleOutput  = filepath.Join(hub.MODULES_DIR, "surge/head_expanse/🍎 Apple Global Acceleration.sgmodule")
-	AppleSources = []hub.SourceSpec{
-		{Label: "VirgilClyne", URL: "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/sgmodule/Apple.OSUpdates.Global.sgmodule"},
-	}
-
-	UtilitiesOutput  = filepath.Join(hub.MODULES_DIR, "surge/head_expanse/🧰 Panel Utilities.sgmodule")
-	UtilitiesSources = []hub.SourceSpec{
-		{Label: "NobyDa/8.8.8.8", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Module/8.8.8.8.sgmodule"},
-		{Label: "NobyDa/Network-Info", URL: "https://raw.githubusercontent.com/NobyDa/Script/master/Surge/Module/Network-Info.sgmodule"},
-		{Label: "Tysta", URL: "https://raw.githubusercontent.com/Tysta/rua/main/Surge/Panel/NetInfo/NetInfo.sgmodule"},
-		{Label: "xream", URL: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/network-info.sgmodule"},
-		{Label: "xream/outbound", URL: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/outbound-mode/outbound-mode.sgmodule"},
-	}
-
-	DevtoolsOutput  = filepath.Join(hub.MODULES_DIR, "surge/head_expanse/💻 Script Hub DevTools.sgmodule")
-	DevtoolsSources = []hub.SourceSpec{
-		{Label: "Sub-Store", URL: "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge.sgmodule"},
-		{Label: "BoxJs", URL: "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule"},
-		{Label: "Script-Hub", URL: "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Script-Hub.sgmodule"},
-	}
-
-	WeiboLocal   = filepath.Join(hub.MODULES_DIR, "source/weibo_promax.sgmodule")
-	WeiboSources = []hub.SourceSpec{
-		{Label: "app2smile", URL: "https://raw.githubusercontent.com/app2smile/rules/master/module/weibo.sgmodule"},
-		{Label: "yxiaocheng", URL: "https://raw.githubusercontent.com/yxiaocheng/Surge/main/Module/Weibo.sgmodule"},
 	}
 
 	woolLocal   = filepath.Join(hub.ROOT, "rulesets/Sources/LocalModules/Wool.ADBlock.sgmodule")
@@ -117,7 +83,7 @@ var (
 	}
 
 	utilitiesOutput  = filepath.Join(hub.ROOT, "modules/surge/amplify_nexus/📊 面板工具合集.sgmodule")
-	utilitiesSources = []hub.SourceSpec{
+	UtilitiesSources = []hub.SourceSpec{
 		{Label: "Timecard", URL: "https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/Timecard/Moore/Timecard.sgmodule"},
 		{Label: "net-lsp-x", URL: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.sgmodule"},
 		{Label: "Sub_Info", URL: "https://raw.githubusercontent.com/Coldvvater/Mononoke/refs/heads/master/Surge/Module/Tool/Sub_Info.sgmodule"},
@@ -136,7 +102,7 @@ var (
 	scriptHubModuleUrl = "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/modules/script-hub.surge.sgmodule"
 	scriptHubLocal     = filepath.Join(hub.MODULE_LOCAL_DIR, "script_hub.surge.sgmodule")
 
-	devtoolsSources = []hub.SourceSpec{
+	DevtoolsSources = []hub.SourceSpec{
 		{Label: "BoxJs", URL: "https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule"},
 		{Label: "Sub-Store", URL: "https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Surge-Beta.sgmodule"},
 		{Label: "ScriptHub", URL: scriptHubModuleUrl},
@@ -323,7 +289,7 @@ func cleanupMergedStandaloneModules() {
 func MergeBilibili() error {
 	hub.Section("BiliBili upstream bundle merge")
 	return hub.MergeUpstreamModules(
-		bilibiliSources,
+		BilibiliSources,
 		bilibiliOutput,
 		bilibiliHeader,
 		"",
@@ -344,7 +310,7 @@ func MergeBilibili() error {
 func MergeApple() error {
 	hub.Section("Apple services upstream bundle merge")
 	return hub.MergeUpstreamModules(
-		appleSources,
+		AppleSources,
 		appleOutput,
 		appleHeader,
 		"",
@@ -361,7 +327,7 @@ func MergeApple() error {
 func MergeUtilities() error {
 	hub.Section("Panel utilities upstream bundle merge")
 	return hub.MergeUpstreamModules(
-		utilitiesSources,
+		UtilitiesSources,
 		utilitiesOutput,
 		utilitiesHeader,
 		"",

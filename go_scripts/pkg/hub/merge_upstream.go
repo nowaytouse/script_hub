@@ -15,7 +15,7 @@ type SourceSpec struct {
 
 func fetchModule(urlStr, label, localFallback, customUA string) (string, error) {
 	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
-		content := string(CurlFetch(urlStr, customUA))
+		content := SafeDownloadString(urlStr, 2, 60, customUA)
 		if content != "" && len(strings.TrimSpace(content)) >= 20 {
 			time.Sleep(3 * time.Second) // strict delay to avoid shadowban/rate limits
 			return content, nil

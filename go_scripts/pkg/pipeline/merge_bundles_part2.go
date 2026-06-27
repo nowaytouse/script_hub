@@ -117,7 +117,7 @@ func MergeDevtools() error {
 	}
 
 	err := hub.MergeUpstreamModules(
-		devtoolsSources,
+		DevtoolsSources,
 		devtoolsOutput,
 		devtoolsHeader,
 		"",
@@ -200,7 +200,7 @@ func MergeWeibo() error {
 	preserved := loadPreservedRuleSections(weiboLocal)
 
 	err := hub.MergeUpstreamModules(
-		weiboSources,
+		WeiboSources,
 		weiboLocal,
 		weiboHeader,
 		"# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
