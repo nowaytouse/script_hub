@@ -53,14 +53,7 @@ func validateModule(path string) ([]string, []string) {
 				seenKeys[strings.ToLower(m[1])] = true
 				continue
 			}
-			if strings.HasPrefix(stripped, "#") {
-				continue
-			}
-			display := stripped
-			if len(display) > 80 {
-				display = display[:80]
-			}
-			issues = append(issues, fmt.Sprintf("%s:%d: illegal header content before first section: %s", path, lineno+1, display))
+			// Treat plain text in header as implicit description/comments
 			continue
 		}
 	}

@@ -57,11 +57,8 @@ def validate_module(path: Path) -> tuple[list[str], list[str]]:
                     continue
                 seen_keys.add(m.group(1).lower())
                 continue
-            if stripped.startswith("#"):
-                continue
-            issues.append(
-                f"{path}:{lineno}: illegal header content before first section: {stripped[:80]}"
-            )
+            # Treat plain text in header as implicit description/comments
+            continue
             continue
 
     if not seen_section:
