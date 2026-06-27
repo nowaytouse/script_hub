@@ -147,6 +147,7 @@ func main() {
 	fmt.Printf("✅ MITM hardening completed: %d modules reinforced.\n", mitmCount)
 
 	fmt.Println("\n--- Global Resource Localization & CDN Rewriting ---")
+	pipeline.CopyGithubVariants()
 	rwCount1 := pipeline.RunUrlRewrites(filepath.Join(hub.ROOT, "modules"))
 	rwCount2 := pipeline.RunUrlRewrites(filepath.Join(hub.ROOT, "rulesets"))
 	rwCount3 := pipeline.RunUrlRewrites(hub.ROOT)
