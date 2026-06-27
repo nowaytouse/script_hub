@@ -50,6 +50,7 @@ func isGithubSource(path string) bool {
 }
 
 func CopyGithubVariants() {
+	hub.Info("Starting CopyGithubVariants...")
 	dirsToCopy := []string{
 		filepath.Join(hub.MODULES_DIR, "surge", "amplify_nexus"),
 		filepath.Join(hub.MODULES_DIR, "surge", "head_expanse"),
@@ -67,7 +68,9 @@ func CopyGithubVariants() {
 	}
 
 	for _, dir := range dirsToCopy {
+		hub.Info(fmt.Sprintf("Scanning dir to copy: %s", dir))
 		if !hub.ValidateDirExists(dir, "") {
+			hub.Warn(fmt.Sprintf("Directory does not exist: %s", dir))
 			continue
 		}
 		githubDir := filepath.Join(dir, "github")
@@ -75,6 +78,7 @@ func CopyGithubVariants() {
 
 		files, err := os.ReadDir(dir)
 		if err != nil {
+			hub.Warn(fmt.Sprintf("Failed to read dir %s: %v", dir, err))
 			continue
 		}
 
@@ -88,6 +92,7 @@ func CopyGithubVariants() {
 				destPath := filepath.Join(githubDir, f.Name())
 				content := hub.ReadFileString(srcPath)
 				hub.SafeWriteFile(destPath, content, true)
+				hub.Success(fmt.Sprintf("Copied raw variant: %s -> %s", f.Name(), githubDir))
 			}
 		}
 	}
