@@ -631,6 +631,255 @@ func (m *AdBlockManager) generateModule(generatedRulesets []string, liteOnly boo
 	hub.Success(fmt.Sprintf("Module generated: %s", filepath.Base(targetPath)))
 }
 
+func (m *AdBlockManager) generateLoonPlugin(generatedRulesets []string, liteOnly bool, urlSource string) {
+	currentDate := time.Now().Format("2006-01-02")
+	complexPrefixes := []string{"URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,"}
+
+	var baseUrl string
+	var outDir string
+	if urlSource == "cdn" {
+		baseUrl = CDN_BASE_URL
+		outDir = filepath.Join(hub.ROOT, "modules/loon")
+	} else {
+		baseUrl = GITHUB_RAW_URL
+		outDir = filepath.Join(hub.ROOT, "modules/loon/github")
+	}
+	hub.EnsureDir(outDir)
+
+	var baseFilename string
+	if liteOnly {
+		baseFilename = "📱 Universal Ad-Blocking Rules (PROMAX Lite)"
+	} else {
+		baseFilename = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)"
+	}
+	targetPath := filepath.Join(outDir, fmt.Sprintf("%s.plugin", baseFilename))
+
+	shardCount := len(generatedRulesets)
+
+	var ruleLines []string
+	ruleLines = append(ruleLines, "# --- SYNCED PORT RULES START ---")
+	ruleLines = append(ruleLines, "# Automated update from ports source")
+
+	portsSource := filepath.Join(hub.ROOT, "rulesets/Sources/DirectPorts.list")
+	if hub.ValidateFileExists(portsSource, "") {
+		lines := strings.Split(hub.ReadFileString(portsSource), "\n")
+		for _, line := range lines {
+			stripped := strings.TrimSpace(line)
+			if stripped != "" && !strings.HasPrefix(stripped, "#") {
+				ruleLines = append(ruleLines, stripped)
+			}
+		}
+	}
+
+	ruleLines = append(ruleLines, "# --- SYNCED PORT RULES END ---")
+	ruleLines = append(ruleLines, "")
+	ruleLines = append(ruleLines, "# High-Priority White-list (Prevent DNS failure)")
+	ruleLines = append(ruleLines, "DOMAIN,dns.alidns.com,DIRECT")
+	ruleLines = append(ruleLines, "DOMAIN,doh.pub,DIRECT")
+	ruleLines = append(ruleLines, "DOMAIN,dns.pub,DIRECT")
+	ruleLines = append(ruleLines, "DOMAIN,dot.pub,DIRECT")
+	ruleLines = append(ruleLines, "DOMAIN,doh.360.cn,DIRECT")
+	ruleLines = append(ruleLines, "DOMAIN,doh.dns.apple.com,DIRECT")
+	ruleLines = append(ruleLines, "# Block app-layer HTTPDNS first")
+	ruleLines = append(ruleLines, fmt.Sprintf("RULE-SET,%srulesets/AdBlock/HTTPDNS_Hijack.list,REJECT", baseUrl))
+	ruleLines = append(ruleLines, "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)")
+
+	shardsByCategory := make(map[string][]string)
+	for _, rsPath := range generatedRulesets {
+		cat := m.CategoryFromFilename(filepath.Base(rsPath))
+		shardsByCategory[cat] = append(shardsByCategory[cat], rsPath)
+	}
+
+	for _, category := range categoryNames {
+		paths := shardsByCategory[category]
+		if len(paths) == 0 {
+			continue
+		}
+		meta := CATEGORY_META[category]
+		ruleLines = append(ruleLines, fmt.Sprintf("# ── %s · %s ──", meta["label_zh"], meta["desc"]))
+		sort.Strings(paths)
+		for _, rsPath := range paths {
+			ruleLines = append(ruleLines, fmt.Sprintf("RULE-SET,%s%s,REJECT,no-resolve", baseUrl, rsPath))
+		}
+	}
+
+	ruleLines = append(ruleLines, "")
+	ruleLines = append(ruleLines, "# SKK Upstream Rulesets")
+	ruleLines = append(ruleLines, fmt.Sprintf("RULE-SET,%srulesets/Sources/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,no-resolve", baseUrl))
+	ruleLines = append(ruleLines, fmt.Sprintf("RULE-SET,%srulesets/Sources/skk_upstream/reject-drop.list,REJECT-DROP,no-resolve", baseUrl))
+	ruleLines = append(ruleLines, fmt.Sprintf("RULE-SET,%srulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT-DROP,no-resolve", baseUrl))
+
+	for _, policy := range []string{"REJECT", "REJECT-DROP", "REJECT-NO-DROP"} {
+		pool := make(map[string]bool)
+		for _, cat := range categoryNames {
+			for r := range m.Rules[policy][cat] {
+				pool[r] = true
+			}
+		}
+		if len(pool) == 0 {
+			continue
+		}
+
+		var candidates []string
+		for r := range pool {
+			if policy == "REJECT" {
+				hasComplexPrefix := false
+				for _, p := range complexPrefixes {
+					if strings.HasPrefix(r, p) {
+						hasComplexPrefix = true
+						break
+					}
+				}
+				if hasComplexPrefix {
+					candidates = append(candidates, r)
+				}
+			} else {
+				candidates = append(candidates, r)
+			}
+		}
+
+		if len(candidates) == 0 {
+			continue
+		}
+
+		ruleLines = append(ruleLines, fmt.Sprintf("# Merged %s complex rules (%d)", policy, len(candidates)))
+		sort.Strings(candidates)
+		for _, raw := range candidates {
+			line := attachPolicy(raw, policy)
+			ruleLines = append(ruleLines, line)
+		}
+	}
+
+	var rewriteLines []string
+	var funcCounts []string
+
+	for _, secName := range []string{"URL Rewrite", "Map Local", "Body Rewrite", "Header Rewrite"} {
+		lines := m.Sections[secName]
+		if len(lines) == 0 {
+			continue
+		}
+		deduped := hub.DedupeSectionLines(secName, lines)
+		if len(deduped) > 0 {
+			for _, line := range deduped {
+				rewriteLines = append(rewriteLines, hub.AdaptRewriteLineForLoon(line))
+			}
+			funcCounts = append(funcCounts, fmt.Sprintf("%s=%d", secName, len(deduped)))
+		}
+	}
+
+	var scriptLines []string
+	lines := m.Sections["Script"]
+	if len(lines) > 0 {
+		deduped := hub.DedupeSectionLines("Script", lines)
+		if len(deduped) > 0 {
+			for _, line := range deduped {
+				trimmed := strings.TrimSpace(line)
+				if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+					scriptLines = append(scriptLines, line)
+					continue
+				}
+				idx := strings.Index(trimmed, "=")
+				if idx != -1 {
+					tag := strings.TrimSpace(trimmed[:idx])
+					content := strings.TrimSpace(trimmed[idx+1:])
+					converted := hub.AdaptScriptLineForLoon(tag, content)
+					if converted != "" {
+						scriptLines = append(scriptLines, converted)
+					} else {
+						scriptLines = append(scriptLines, line)
+					}
+				} else {
+					scriptLines = append(scriptLines, line)
+				}
+			}
+			funcCounts = append(funcCounts, fmt.Sprintf("Script=%d", len(deduped)))
+		}
+	}
+
+	var mitmLines []string
+	if len(m.MitmHosts) > 0 {
+		var hosts []string
+		for h := range m.MitmHosts {
+			hosts = append(hosts, h)
+		}
+		sort.Strings(hosts)
+		mitmLines = append(mitmLines, fmt.Sprintf("hostname = %s", strings.Join(hosts, ", ")))
+		funcCounts = append(funcCounts, fmt.Sprintf("MITM=%d", len(m.MitmHosts)))
+	}
+
+	var name string
+	var desc string
+
+	if liteOnly {
+		name = fmt.Sprintf("📱 Universal Ad-Blocking Rules (PROMAX Lite) - [%s]", currentDate)
+		desc = fmt.Sprintf("轻量基础版(%d分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", shardCount)
+	} else {
+		funcSummary := "无脚本层"
+		if len(funcCounts) > 0 {
+			funcSummary = strings.Join(funcCounts, ", ")
+		}
+		name = fmt.Sprintf("🚫 Universal Ad-Blocking Rules (PROMAX) - [%s]", currentDate)
+		desc = fmt.Sprintf("按用途分片(%d片) + 应用内去广告(%s); 索引 rulesets/AdBlock/catalog.json", shardCount, funcSummary)
+	}
+
+	var output []string
+	output = append(output, fmt.Sprintf("#!name=%s", name))
+	output = append(output, fmt.Sprintf("#!desc=%s", desc))
+	output = append(output, "#!author=ScriptHub-Automated")
+	output = append(output, "#!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png")
+	output = append(output, fmt.Sprintf("#!date=%s", time.Now().Format("2006-01-02 15:04:05")))
+	output = append(output, "")
+
+	if len(ruleLines) > 0 {
+		output = append(output, "[Rule]")
+		output = append(output, ruleLines...)
+		output = append(output, "")
+	}
+
+	if !liteOnly {
+		if len(rewriteLines) > 0 {
+			output = append(output, "[Rewrite]")
+			output = append(output, rewriteLines...)
+			output = append(output, "")
+		}
+
+		if len(scriptLines) > 0 {
+			output = append(output, "[Script]")
+			output = append(output, scriptLines...)
+			output = append(output, "")
+		}
+
+		if len(mitmLines) > 0 {
+			output = append(output, "[MitM]")
+			output = append(output, mitmLines...)
+			output = append(output, "")
+		}
+	}
+
+	pluginContent := strings.Join(output, "\n")
+
+	if urlSource == "github" {
+		cdnOwn := "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
+		ghOwn := "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
+
+		linesOut := strings.Split(pluginContent, "\n")
+		inUrlRewrite := false
+		for i, line := range linesOut {
+			stripped := strings.TrimSpace(line)
+			if strings.HasPrefix(stripped, "[") {
+				inUrlRewrite = strings.HasPrefix(strings.ToLower(stripped), "[rewrite]")
+			}
+			if !inUrlRewrite && strings.Contains(line, cdnOwn) {
+				linesOut[i] = strings.ReplaceAll(line, cdnOwn, ghOwn)
+			}
+		}
+		pluginContent = strings.Join(linesOut, "\n")
+	}
+
+	hub.SafeWriteFile(targetPath, pluginContent, true)
+	hub.Success(fmt.Sprintf("Loon Plugin generated: %s", filepath.Base(targetPath)))
+}
+
 func (m *AdBlockManager) Merge(execute bool) {
 	hub.Section("AdBlock Module Consolidation (Canonical Rebuild)")
 	m.LoadWhitelist()
@@ -681,6 +930,14 @@ func (m *AdBlockManager) Merge(execute bool) {
 		hub.Info("Generating PROMAX Lite (mobile-friendly) modules (CDN + GitHub variants)...")
 		m.generateModule(generatedRulesets, true, "cdn")
 		m.generateModule(generatedRulesets, true, "github")
+
+		hub.Info("Generating PROMAX Loon plugins (CDN + GitHub variants)...")
+		m.generateLoonPlugin(generatedRulesets, false, "cdn")
+		m.generateLoonPlugin(generatedRulesets, false, "github")
+
+		hub.Info("Generating PROMAX Lite Loon plugins (CDN + GitHub variants)...")
+		m.generateLoonPlugin(generatedRulesets, true, "cdn")
+		m.generateLoonPlugin(generatedRulesets, true, "github")
 
 		// Save hashes for change tracking
 		localSourcePaths := []string{}
