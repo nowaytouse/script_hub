@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/pipeline"
@@ -216,12 +217,37 @@ func auditPromaxModules() []string {
 func RunAuditBundleCompleteness() int {
 	specs := getSpecs()
 	hub.Section("Bundle completeness audit")
+	
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 	var allIssues []string
+
 	for _, spec := range specs {
-		hub.Info(fmt.Sprintf("Checking %s…", spec.label))
-		allIssues = append(allIssues, auditBundle(spec)...)
+		wg.Add(1)
+		go func(s bundleSpec) {
+			defer wg.Done()
+			hub.Info(fmt.Sprintf("Checking %s…", s.label))
+			issues := auditBundle(s)
+			if len(issues) > 0 {
+				mu.Lock()
+				allIssues = append(allIssues, issues...)
+				mu.Unlock()
+			}
+		}(spec)
 	}
-	allIssues = append(allIssues, auditPromaxModules()...)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		issues := auditPromaxModules()
+		if len(issues) > 0 {
+			mu.Lock()
+			allIssues = append(allIssues, issues...)
+			mu.Unlock()
+		}
+	}()
+
+	wg.Wait()
 
 	if len(allIssues) > 0 {
 		hub.Error(fmt.Sprintf("Found %d issue(s):", len(allIssues)))

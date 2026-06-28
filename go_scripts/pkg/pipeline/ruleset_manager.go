@@ -9,9 +9,14 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
+
+var downloadMu sync.Mutex
+
 
 var (
 	surgeDir      = hub.RULE_SET_DIR
@@ -59,8 +64,10 @@ var specialManagedRulesets = map[string]bool{"AdBlock": true, "substore": true}
 type RulesetManager struct {
 	force     bool
 	hashes    map[string]string
+	hashesMu  sync.Mutex
 	policyMap map[string]map[string]string
 	stats     map[string]int
+	statsMu   sync.Mutex
 	processor *hub.RuleProcessor
 }
 
@@ -73,6 +80,24 @@ func NewRulesetManager(force bool) *RulesetManager {
 	rm.hashes = rm.loadHashes()
 	rm.policyMap = rm.loadPolicyMap()
 	return rm
+}
+
+func (rm *RulesetManager) incStat(key string) {
+	rm.statsMu.Lock()
+	defer rm.statsMu.Unlock()
+	rm.stats[key]++
+}
+
+func (rm *RulesetManager) getHash(name string) string {
+	rm.hashesMu.Lock()
+	defer rm.hashesMu.Unlock()
+	return rm.hashes[name]
+}
+
+func (rm *RulesetManager) setHash(name, val string) {
+	rm.hashesMu.Lock()
+	defer rm.hashesMu.Unlock()
+	rm.hashes[name] = val
 }
 
 func (rm *RulesetManager) findCaseInsensitiveFile(directory, filename string) string {
@@ -137,6 +162,12 @@ func (rm *RulesetManager) extractRulesFromText(text string) []string {
 }
 
 func (rm *RulesetManager) download(url string) string {
+	downloadMu.Lock()
+	defer downloadMu.Unlock()
+
+	// Enforce 1-second delay between network requests to prevent high-frequency git/network hits
+	time.Sleep(1000 * time.Millisecond)
+
 	isLsr := strings.HasSuffix(strings.ToLower(url), ".lsr")
 	if isLsr {
 		// Download binary

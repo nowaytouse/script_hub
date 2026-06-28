@@ -16,7 +16,7 @@ func (rm *RulesetManager) surgeConvertDomainRegex(rule string) string {
 	return hub.ConvertDomainRegexForSurge(rule)
 }
 
-func (rm *RulesetManager) cleanRule(rule, rulesetName string) string {
+func (rm *RulesetManager) cleanRule(rule, rulesetName string, rp *hub.RuleProcessor) string {
 	r := strings.TrimSpace(rule)
 	if r == "" || strings.HasPrefix(r, "#") {
 		return ""
@@ -61,7 +61,7 @@ func (rm *RulesetManager) cleanRule(rule, rulesetName string) string {
 		}
 	}
 
-	normalizedPtr := rm.processor.NormalizeRule(r, rulesetName)
+	normalizedPtr := rp.NormalizeRule(r, rulesetName)
 	if normalizedPtr == nil {
 		return ""
 	}
@@ -125,13 +125,13 @@ func (rm *RulesetManager) generateHeader(name string, ruleCount int) string {
 	return strings.Join(header, "\n") + "\n"
 }
 
-func (rm *RulesetManager) processRuleset(name string) {
+func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 	targetFile := filepath.Join(surgeDir, fmt.Sprintf("%s.list", name))
 	for _, dep := range deprecatedRulesets {
 		if name == dep {
 			if hub.ValidateFileExists(targetFile, "") {
 				if err := os.Remove(targetFile); err == nil {
-					rm.stats["deleted"]++
+					rm.incStat("deleted")
 					hub.Warn(fmt.Sprintf("Removed deprecated: %s", name))
 				} else {
 					hub.Error(fmt.Sprintf("Failed to remove deprecated: %s", name))
@@ -201,8 +201,8 @@ func (rm *RulesetManager) processRuleset(name string) {
 		}
 	}
 
-	if !rm.force && hub.ValidateFileExists(targetFile, "") && rm.hashes[name] == currentHash && !hasRemote {
-		rm.stats["skipped"]++
+	if !rm.force && hub.ValidateFileExists(targetFile, "") && rm.getHash(name) == currentHash && !hasRemote {
+		rm.incStat("skipped")
 		return
 	}
 
@@ -217,8 +217,8 @@ func (rm *RulesetManager) processRuleset(name string) {
 
 	if isProtected {
 		if hub.ValidateFileExists(targetFile, "") {
-			for _, line := range strings.Split(hub.ReadFileString(targetFile), "\n") {
-				cleaned := rm.cleanRule(line, name)
+			for line := range hub.IterLines(targetFile) {
+				cleaned := rm.cleanRule(line, name, rp)
 				if cleaned != "" {
 					allRules[cleaned] = true
 				}
@@ -227,15 +227,15 @@ func (rm *RulesetManager) processRuleset(name string) {
 	} else {
 		mFile := rm.findCaseInsensitiveFile(hub.METACUBEX_DIR, fmt.Sprintf("MetaCubeX_%s.list", name))
 		if mFile != "" && hub.ValidateFileExists(mFile, "") {
-			for _, line := range strings.Split(hub.ReadFileString(mFile), "\n") {
-				cleaned := rm.cleanRule(line, name)
+			for line := range hub.IterLines(mFile) {
+				cleaned := rm.cleanRule(line, name, rp)
 				if cleaned != "" {
 					allRules[cleaned] = true
 				}
 			}
 		}
 		if hub.ValidateFileExists(sFile, "") {
-			for _, line := range strings.Split(hub.ReadFileString(sFile), "\n") {
+			for line := range hub.IterLines(sFile) {
 				line = strings.TrimSpace(line)
 				if line == "" || strings.HasPrefix(line, "#") {
 					continue
@@ -244,7 +244,7 @@ func (rm *RulesetManager) processRuleset(name string) {
 					remoteContent := rm.download(line)
 					if remoteContent != "" {
 						for _, rLine := range strings.Split(remoteContent, "\n") {
-							cleaned := rm.cleanRule(rLine, name)
+							cleaned := rm.cleanRule(rLine, name, rp)
 							if cleaned != "" {
 								allRules[cleaned] = true
 							}
@@ -253,8 +253,8 @@ func (rm *RulesetManager) processRuleset(name string) {
 				} else {
 					localPath := filepath.Join(hub.LINKS_DIR, strings.Split(line, "|")[0])
 					if hub.ValidateFileExists(localPath, "") {
-						for _, rLine := range strings.Split(hub.ReadFileString(localPath), "\n") {
-							cleaned := rm.cleanRule(rLine, name)
+						for rLine := range hub.IterLines(localPath) {
+							cleaned := rm.cleanRule(rLine, name, rp)
 							if cleaned != "" {
 								allRules[cleaned] = true
 							}
@@ -301,6 +301,6 @@ func (rm *RulesetManager) processRuleset(name string) {
 		}
 	}
 
-	rm.hashes[name] = currentHash
-	rm.stats["merged"]++
+	rm.setHash(name, currentHash)
+	rm.incStat("merged")
 }

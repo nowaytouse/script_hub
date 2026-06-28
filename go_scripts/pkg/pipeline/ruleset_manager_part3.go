@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
@@ -42,9 +44,27 @@ func (rm *RulesetManager) Run() {
 	}
 	sort.Strings(allToProcess)
 
-	for _, name := range allToProcess {
-		rm.processRuleset(name)
+	// Process rulesets concurrently using a bounded worker pool matching the CPU count.
+	// Network downloads inside processRuleset are strictly rate-limited and locked sequentially via downloadMu.
+	numWorkers := runtime.NumCPU()
+	if numWorkers < 1 {
+		numWorkers = 1
 	}
+	sem := make(chan struct{}, numWorkers)
+	var wg sync.WaitGroup
+
+	for _, name := range allToProcess {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(n string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			// Create a thread-local RuleProcessor to avoid concurrent map writes to stats
+			rp := hub.NewRuleProcessor(false)
+			rm.processRuleset(n, rp)
+		}(name)
+	}
+	wg.Wait()
 
 	rm.pruneEmptyRulesets()
 	rm.saveHashes()

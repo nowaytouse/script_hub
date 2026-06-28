@@ -7,8 +7,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
@@ -229,10 +231,24 @@ func (g *SRSGenerator) Run() {
 		}
 	}
 
-	// Strictly serial compilation to avoid CPU/memory spikes
-	for _, lf := range listFiles {
-		g.compileSrs(lf)
+	// Compile in parallel using a bounded worker pool matching the CPU count to maximize efficiency
+	numWorkers := runtime.NumCPU()
+	if numWorkers < 1 {
+		numWorkers = 1
 	}
+	sem := make(chan struct{}, numWorkers)
+	var wg sync.WaitGroup
+
+	for _, lf := range listFiles {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(path string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			g.compileSrs(path)
+		}(lf)
+	}
+	wg.Wait()
 
 	g.pruneStaleSrs(listFiles)
 }

@@ -1,11 +1,13 @@
 package hub
 
 import (
+	"bufio"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"iter"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -376,6 +378,29 @@ func ReadFileString(path string) string {
 		return ""
 	}
 	return string(content)
+}
+
+// IterLines returns an iterator over the lines of the file at the given path.
+// This is memory-efficient and avoids reading/allocating the entire file in memory.
+func IterLines(path string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		file, err := os.Open(path)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		// Allocate a 64KB buffer that can expand up to 1MB to handle long lines
+		buf := make([]byte, 0, 64*1024)
+		scanner.Buffer(buf, 1024*1024)
+
+		for scanner.Scan() {
+			if !yield(scanner.Text()) {
+				return
+			}
+		}
+	}
 }
 
 func UniqueStrings(input []string) []string {

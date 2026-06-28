@@ -407,8 +407,7 @@ func (m *AdBlockManager) writeCatalog(generatedRulesets []string) {
 		ruleCount := 0
 		fullPath := filepath.Join(hub.ROOT, rsPath)
 		if hub.ValidateFileExists(fullPath, "") {
-			lines := strings.Split(hub.ReadFileString(fullPath), "\n")
-			for _, l := range lines {
+			for l := range hub.IterLines(fullPath) {
 				l = strings.TrimSpace(l)
 				if l != "" && !strings.HasPrefix(l, "#") {
 					ruleCount++
@@ -460,8 +459,7 @@ func (m *AdBlockManager) generateModule(generatedRulesets []string, liteOnly boo
 
 	portsSource := filepath.Join(hub.ROOT, "rulesets/Sources/DirectPorts.list")
 	if hub.ValidateFileExists(portsSource, "") {
-		lines := strings.Split(hub.ReadFileString(portsSource), "\n")
-		for _, line := range lines {
+		for line := range hub.IterLines(portsSource) {
 			stripped := strings.TrimSpace(line)
 			if stripped != "" && !strings.HasPrefix(stripped, "#") {
 				ruleLines = append(ruleLines, stripped)
@@ -662,8 +660,7 @@ func (m *AdBlockManager) generateLoonPlugin(generatedRulesets []string, liteOnly
 
 	portsSource := filepath.Join(hub.ROOT, "rulesets/Sources/DirectPorts.list")
 	if hub.ValidateFileExists(portsSource, "") {
-		lines := strings.Split(hub.ReadFileString(portsSource), "\n")
-		for _, line := range lines {
+		for line := range hub.IterLines(portsSource) {
 			stripped := strings.TrimSpace(line)
 			if stripped != "" && !strings.HasPrefix(stripped, "#") {
 				ruleLines = append(ruleLines, stripped)

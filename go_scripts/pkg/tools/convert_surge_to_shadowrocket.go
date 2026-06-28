@@ -5,8 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
@@ -347,7 +349,15 @@ func ProcessAllModules() (int, int, int) {
 	hub.EnsureDir(srModuleDir)
 
 	categories := []string{"amplify_nexus", "head_expanse"}
+	var mu sync.Mutex
 	total, converted, failed := 0, 0, 0
+
+	numWorkers := runtime.NumCPU()
+	if numWorkers < 1 {
+		numWorkers = 1
+	}
+	sem := make(chan struct{}, numWorkers)
+	var wg sync.WaitGroup
 
 	for _, cat := range categories {
 		hub.EnsureDir(filepath.Join(srModuleDir, cat))
@@ -366,25 +376,38 @@ func ProcessAllModules() (int, int, int) {
 		sort.Strings(files)
 
 		for _, file := range files {
-			total++
-			fmt.Printf("🔄 Converting: %s\n", file)
+			wg.Add(1)
+			sem <- struct{}{}
+			go func(c string, f string, cp string) {
+				defer wg.Done()
+				defer func() { <-sem }()
 
-			moduleFile := filepath.Join(catPath, file)
-			content := hub.ReadFileString(moduleFile)
+				mu.Lock()
+				total++
+				fmt.Printf("🔄 Converting: %s\n", f)
+				mu.Unlock()
 
-			stem := strings.TrimSuffix(file, ".sgmodule")
-			var convertedStr string
-			if stem == hub.DEVTOOLS_STEM {
-				convertedStr = convertDevtoolsModuleForSr(content)
-			} else {
-				convertedStr = convertContent(content, stem)
-			}
+				moduleFile := filepath.Join(cp, f)
+				content := hub.ReadFileString(moduleFile)
 
-			outPath := filepath.Join(srModuleDir, cat, stem+".module")
-			hub.SafeWriteFile(outPath, convertedStr, true)
-			converted++
+				stem := strings.TrimSuffix(f, ".sgmodule")
+				var convertedStr string
+				if stem == hub.DEVTOOLS_STEM {
+					convertedStr = convertDevtoolsModuleForSr(content)
+				} else {
+					convertedStr = convertContent(content, stem)
+				}
+
+				outPath := filepath.Join(srModuleDir, c, stem+".module")
+				hub.SafeWriteFile(outPath, convertedStr, true)
+
+				mu.Lock()
+				converted++
+				mu.Unlock()
+			}(cat, file, catPath)
 		}
 	}
+	wg.Wait()
 	return total, converted, failed
 }
 

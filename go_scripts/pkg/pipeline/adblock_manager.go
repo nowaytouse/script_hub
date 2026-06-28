@@ -212,10 +212,9 @@ func (m *AdBlockManager) CleanupLocalLists() {
 		if !hub.ValidateFileExists(path, "") {
 			continue
 		}
-		lines := strings.Split(hub.ReadFileString(path), "\n")
 		var newLines []string
 		changed := false
-		for _, line := range lines {
+		for line := range hub.IterLines(path) {
 			stripped := strings.TrimSpace(line)
 			if stripped == "" || strings.HasPrefix(stripped, "#") {
 				newLines = append(newLines, line)
@@ -246,7 +245,7 @@ func (m *AdBlockManager) LoadWhitelist() {
 	if !hub.ValidateFileExists(hub.WHITELIST_FILE, "") {
 		return
 	}
-	for _, line := range strings.Split(hub.ReadFileString(hub.WHITELIST_FILE), "\n") {
+	for line := range hub.IterLines(hub.WHITELIST_FILE) {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -320,7 +319,7 @@ func (m *AdBlockManager) LoadHashes() {
 	if !hub.ValidateFileExists(hub.ADBLOCK_HASH_FILE, "") {
 		return
 	}
-	for _, line := range strings.Split(hub.ReadFileString(hub.ADBLOCK_HASH_FILE), "\n") {
+	for line := range hub.IterLines(hub.ADBLOCK_HASH_FILE) {
 		if !strings.Contains(line, "|") {
 			continue
 		}
@@ -356,7 +355,7 @@ func (m *AdBlockManager) LoadSourceEntries() []SourceEntry {
 		return entries
 	}
 
-	for _, line := range strings.Split(hub.ReadFileString(hub.ADBLOCK_SOURCES_FILE), "\n") {
+	for line := range hub.IterLines(hub.ADBLOCK_SOURCES_FILE) {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -435,8 +434,7 @@ func (m *AdBlockManager) LoadFunctionalSourcePaths() ([][2]string, []string) {
 	}
 
 	if hub.ValidateFileExists(hub.ADBLOCK_FUNCTIONAL_SOURCES_FILE, "") {
-		lines := strings.Split(hub.ReadFileString(hub.ADBLOCK_FUNCTIONAL_SOURCES_FILE), "\n")
-		for _, rawLine := range lines {
+		for rawLine := range hub.IterLines(hub.ADBLOCK_FUNCTIONAL_SOURCES_FILE) {
 			line := strings.TrimSpace(rawLine)
 			if line == "" || strings.HasPrefix(line, "#") {
 				continue
