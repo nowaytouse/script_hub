@@ -1,7 +1,7 @@
 package pipeline
 
 /*
-#cgo LDFLAGS: -L../processor/target/release -lrust_processor
+#cgo LDFLAGS: -L../../target/release -lrust_processor
 #include <stdlib.h>
 
 extern char* run_cleanup_ffi(const char* root_dir);

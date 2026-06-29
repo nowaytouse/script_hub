@@ -28,6 +28,7 @@ jobs:
         run: |
           cd create/processor
           cargo build --release
+          # 構建輸出統一至項目根 ../../target/release/librust_processor.a
 
       - name: Guard generated-tree edits
         run: |

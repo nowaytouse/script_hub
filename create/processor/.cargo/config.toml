@@ -1,0 +1,5 @@
+# 構建輸出統一至項目根目錄 target/release
+# Rust 職責：本地處理（規則清洗、文件操作、AST 處理）
+# Go 職責：網絡操作（下載、API 調用、遠程同步）
+[build]
+target-dir = "../../target"

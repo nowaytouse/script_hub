@@ -1,7 +1,7 @@
 package pipeline
 
 /*
-#cgo LDFLAGS: -L../processor/target/release -lrust_processor
+#cgo LDFLAGS: -L../../target/release -lrust_processor
 #include <stdlib.h>
 #include <stdbool.h>
 

@@ -1,7 +1,7 @@
 package hub
 
 /*
-#cgo LDFLAGS: -L../processor/target/release -lrust_processor
+#cgo LDFLAGS: -L../../target/release -lrust_processor
 #include <stdbool.h>
 #include <stdlib.h>
 extern bool safe_write_file_ffi(const char* path, const char* content, bool atomic);

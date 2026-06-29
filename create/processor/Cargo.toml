@@ -2,9 +2,16 @@
 name = "rust_processor"
 version = "0.1.0"
 edition = "2024"
+
 [lib]
 name = "rust_processor"
 crate-type = ["staticlib"]
+
+# 構建輸出統一至項目根目錄 target/
+# Rust 只負責本地處理，Go 只負責網絡操作
+[profile.release]
+strip = true
+lto = true
 
 [dependencies]
 serde_json = "1.0"
