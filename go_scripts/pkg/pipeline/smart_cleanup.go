@@ -2,9 +2,17 @@ package pipeline
 
 import (
 	"strings"
+	"unsafe"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
+
+/*
+#include <stdlib.h>
+char* strip_inline_comment_ffi(const char* line);
+void free_string_ffi(char* s);
+*/
+import "C"
 
 var (
 	rulesetDirs = []string{
@@ -140,14 +148,28 @@ func isValidRule(line string) bool {
 }
 
 func cleanRule(line string) string {
-	line = hub.StripInlineComment(strings.TrimSpace(line))
-	if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+	line = strings.TrimSpace(line)
+	if line == "" {
 		return ""
 	}
-	if strings.HasPrefix(line, "DOMAIN") && strings.Contains(line, ",no-resolve") {
-		line = strings.ReplaceAll(line, ",no-resolve", "")
+	cStr := C.CString(line)
+	defer C.free(unsafe.Pointer(cStr))
+
+	resPtr := C.strip_inline_comment_ffi(cStr)
+	if resPtr == nil {
+		return ""
 	}
-	return line
+	defer C.free_string_ffi(resPtr)
+	
+	stripped := C.GoString(resPtr)
+	
+	if stripped == "" || strings.HasPrefix(stripped, "#") || strings.HasPrefix(stripped, "//") {
+		return ""
+	}
+	if strings.HasPrefix(stripped, "DOMAIN") && strings.Contains(stripped, ",no-resolve") {
+		stripped = strings.ReplaceAll(stripped, ",no-resolve", "")
+	}
+	return stripped
 }
 
 func extractPayload(rule string) string {

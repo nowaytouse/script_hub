@@ -258,6 +258,29 @@ fn generate_header(name: &str, policy: &str, node: &str, desc: &str, count: usiz
     header.join("\n") + "\n"
 }
 
+fn semantic_rules_match(path: &Path, new_rules: &[String]) -> bool {
+    if let Ok(content) = fs::read_to_string(path) {
+        let mut old_rules = Vec::new();
+        for line in content.lines() {
+            let stripped = line.trim();
+            if stripped.is_empty() || stripped.starts_with('#') || stripped.starts_with("//") {
+                continue;
+            }
+            old_rules.push(stripped.to_string());
+        }
+        if old_rules.len() != new_rules.len() {
+            return false;
+        }
+        for (i, r) in old_rules.iter().enumerate() {
+            if r != &new_rules[i] {
+                return false;
+            }
+        }
+        return true;
+    }
+    false
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn process_ruleset_ffi(
     name: *const c_char,
@@ -293,7 +316,6 @@ pub extern "C" fn process_ruleset_ffi(
 
     let mut all_rules = HashSet::new();
     
-    // Read local files directly in Rust
     for path_str in local_paths_str.split('\n') {
         let trimmed_path = path_str.trim();
         if trimmed_path.is_empty() {
@@ -308,7 +330,6 @@ pub extern "C" fn process_ruleset_ffi(
         }
     }
 
-    // Process remote content downloaded by Go
     for line in remote_content_str.lines() {
         if let Some(cleaned) = clean_rule(line, &name_str, &conflict_doms, skip_conflict) {
             all_rules.insert(cleaned);
@@ -333,33 +354,91 @@ pub extern "C" fn process_ruleset_ffi(
     let target_ip_file_path = Path::new(target_dir_str.as_ref()).join(format!("{}_ip.list", name_str));
     
     if !non_ip_rules.is_empty() {
-        if let Ok(mut file) = File::create(&target_file_path) {
-            let header_str = generate_header(&name_str, &policy_str, &node_str, &desc_str, non_ip_rules.len());
-            let _ = write!(file, "{}", header_str);
-            for r in &non_ip_rules {
-                let _ = writeln!(file, "{}", r);
-            }
+        if semantic_rules_match(&target_file_path, &non_ip_rules) {
+            println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", target_file_path.file_name().unwrap_or_default().to_string_lossy());
         } else {
-            return false;
+            if let Ok(mut file) = File::create(&target_file_path) {
+                let header_str = generate_header(&name_str, &policy_str, &node_str, &desc_str, non_ip_rules.len());
+                let _ = write!(file, "{}", header_str);
+                for r in &non_ip_rules {
+                    let _ = writeln!(file, "{}", r);
+                }
+            } else {
+                return false;
+            }
         }
     } else if target_file_path.exists() {
         let _ = fs::remove_file(&target_file_path);
     }
     
     if !ip_rules.is_empty() {
-        if let Ok(mut file) = File::create(&target_ip_file_path) {
-            let ip_name = format!("{}_ip", name_str);
-            let header_str = generate_header(&ip_name, &policy_str, &node_str, &desc_str, ip_rules.len());
-            let _ = write!(file, "{}", header_str);
-            for r in &ip_rules {
-                let _ = writeln!(file, "{}", r);
-            }
+        if semantic_rules_match(&target_ip_file_path, &ip_rules) {
+            println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", target_ip_file_path.file_name().unwrap_or_default().to_string_lossy());
         } else {
-            return false;
+            if let Ok(mut file) = File::create(&target_ip_file_path) {
+                let ip_name = format!("{}_ip", name_str);
+                let header_str = generate_header(&ip_name, &policy_str, &node_str, &desc_str, ip_rules.len());
+                let _ = write!(file, "{}", header_str);
+                for r in &ip_rules {
+                    let _ = writeln!(file, "{}", r);
+                }
+            } else {
+                return false;
+            }
         }
     } else if target_ip_file_path.exists() {
         let _ = fs::remove_file(&target_ip_file_path);
     }
 
     true
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn normalize_rule_ffi(line: *const c_char) -> *mut c_char {
+    if line.is_null() {
+        return std::ptr::null_mut();
+    }
+    let c_str = unsafe { CStr::from_ptr(line) };
+    let r_str = String::from_utf8_lossy(c_str.to_bytes());
+    
+    match normalize_rule(&r_str) {
+        Some(normalized) => {
+            if let Ok(c_string) = std::ffi::CString::new(normalized) {
+                c_string.into_raw()
+            } else {
+                std::ptr::null_mut()
+            }
+        }
+        None => std::ptr::null_mut(),
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn strip_inline_comment_ffi(line: *const c_char) -> *mut c_char {
+    if line.is_null() {
+        return std::ptr::null_mut();
+    }
+    let c_str = unsafe { CStr::from_ptr(line) };
+    let r_str = String::from_utf8_lossy(c_str.to_bytes());
+    
+    let stripped = strip_inline_comment(&r_str);
+    if stripped.is_empty() {
+        return std::ptr::null_mut();
+    }
+    
+    if let Ok(c_string) = std::ffi::CString::new(stripped) {
+        c_string.into_raw()
+    } else {
+        std::ptr::null_mut()
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn free_string_ffi(s: *mut c_char) {
+    if s.is_null() {
+        return;
+    }
+    unsafe {
+        let _ = std::ffi::CString::from_raw(s);
+    }
 }

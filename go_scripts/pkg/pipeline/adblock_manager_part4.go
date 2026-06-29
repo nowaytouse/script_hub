@@ -10,9 +10,17 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
+
+/*
+#include <stdlib.h>
+char* normalize_rule_ffi(const char* line);
+void free_string_ffi(char* s);
+*/
+import "C"
 
 var SECTION_NAMES_MAP = map[string]bool{
 	"URL Rewrite":    true,
@@ -112,32 +120,39 @@ func (m *AdBlockManager) ExtractFromText(text, defaultPolicy, category string, i
 
 func (m *AdBlockManager) AddRuleLine(line, defaultPolicy, category string) {
 	line = strings.TrimSpace(line)
-	if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "!") || strings.HasPrefix(line, "//") || strings.HasPrefix(line, "RULE-SET,") {
+	if line == "" {
+		return
+	}
+	
+	// Ensure line has allowed prefix (quick filter)
+	if !strings.HasPrefix(line, "||") && !strings.HasPrefix(line, ".") {
+		hasPrefix := false
+		for _, p := range ALLOWED_RULE_PREFIXES {
+			if strings.HasPrefix(line, p) {
+				hasPrefix = true
+				break
+			}
+		}
+		if !hasPrefix {
+			return
+		}
+	}
+	
+	cStr := C.CString(line)
+	defer C.free(unsafe.Pointer(cStr))
+	
+	resPtr := C.normalize_rule_ffi(cStr)
+	if resPtr == nil {
+		return
+	}
+	defer C.free_string_ffi(resPtr)
+	
+	normalized := C.GoString(resPtr)
+	if normalized == "" {
 		return
 	}
 
-	// Normalization to support Adblock-style ||domain.com^
-	if strings.HasPrefix(line, "||") && strings.HasSuffix(line, "^") {
-		candidate := line[2 : len(line)-1]
-		if candidate != "" && strings.Contains(candidate, ".") {
-			line = "DOMAIN-SUFFIX," + candidate
-		}
-	}
-
-	// Ensure line has allowed prefix
-	hasPrefix := false
-	for _, p := range ALLOWED_RULE_PREFIXES {
-		if strings.HasPrefix(line, p) {
-			hasPrefix = true
-			break
-		}
-	}
-	if !hasPrefix {
-		return
-	}
-
-	// Normalization and whitelist check
-	parts := strings.Split(line, ",")
+	parts := strings.Split(normalized, ",")
 	if len(parts) >= 2 {
 		rulePayload := strings.TrimSpace(parts[1])
 		if m.IsWhitelisted(rulePayload) {
@@ -145,13 +160,13 @@ func (m *AdBlockManager) AddRuleLine(line, defaultPolicy, category string) {
 		}
 
 		// Malicious drops
-		if strings.HasPrefix(line, "DOMAIN-KEYWORD,") {
+		if strings.HasPrefix(normalized, "DOMAIN-KEYWORD,") {
 			kw := strings.ToLower(rulePayload)
 			if kw == "google" || kw == "apple" || kw == "microsoft" || kw == "github" || kw == "git" {
 				return
 			}
 		}
-		if strings.HasPrefix(line, "DOMAIN-SUFFIX,") || strings.HasPrefix(line, "DOMAIN,") {
+		if strings.HasPrefix(normalized, "DOMAIN-SUFFIX,") || strings.HasPrefix(normalized, "DOMAIN,") {
 			kw := strings.ToLower(rulePayload)
 			if kw == "google.com" || kw == "apple.com" || kw == "github.com" {
 				return
@@ -159,14 +174,7 @@ func (m *AdBlockManager) AddRuleLine(line, defaultPolicy, category string) {
 		}
 
 		policy := defaultPolicy
-		if len(parts) > 2 {
-			p := strings.TrimSpace(strings.ToUpper(parts[len(parts)-1]))
-			if SUPPORTED_POLICIES[p] {
-				policy = p
-			}
-		}
-
-		// Rebuild bare rule
+		// Rebuild bare rule since normalized strips policies
 		bare := fmt.Sprintf("%s,%s", strings.TrimSpace(parts[0]), rulePayload)
 		if m.Rules[policy] != nil && m.Rules[policy][category] != nil {
 			if !m.SeenRules[policy][bare] {

@@ -16,6 +16,10 @@ bool process_ruleset_ffi(
     const char* local_paths,
     const char* remote_content
 );
+
+char* normalize_rule_ffi(const char* line);
+char* strip_inline_comment_ffi(const char* line);
+void free_string_ffi(char* s);
 */
 import "C"
 

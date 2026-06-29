@@ -105,28 +105,18 @@ func ReadFile(filePath string) []string {
 
 var dateBracketRegex = regexp.MustCompile(`\[\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?\]`)
 
-func stripDynamic(text string) string {
+func getSemanticContent(text string) string {
 	lines := strings.Split(text, "\n")
 	var filtered []string
 	for _, line := range lines {
 		stripped := strings.TrimSpace(line)
-		lowerStripped := strings.ToLower(stripped)
-		if strings.HasPrefix(stripped, "#") && (strings.Contains(lowerStripped, "updated") || strings.Contains(lowerStripped, "date") || strings.Contains(lowerStripped, "生成于")) {
+		if stripped == "" {
 			continue
 		}
-		if strings.HasPrefix(stripped, "#!date") || strings.HasPrefix(stripped, "#!version") {
+		if strings.HasPrefix(stripped, "#") || strings.HasPrefix(stripped, "//") {
 			continue
 		}
-		if strings.Contains(stripped, `"generated":`) || strings.Contains(stripped, `"date":`) || strings.Contains(stripped, `"updated":`) {
-			continue
-		}
-		if strings.Contains(stripped, "自动生成于") || strings.Contains(lowerStripped, "generated at") {
-			continue
-		}
-		if strings.HasPrefix(stripped, "#") && dateBracketRegex.MatchString(stripped) && !strings.HasPrefix(stripped, "#!name") {
-			line = dateBracketRegex.ReplaceAllString(line, "[DATE]")
-		}
-		filtered = append(filtered, line)
+		filtered = append(filtered, stripped)
 	}
 	return strings.Join(filtered, "\n")
 }
@@ -135,9 +125,10 @@ func WriteFile(filePath string, content string) error {
 	if _, err := os.Stat(filePath); err == nil {
 		oldContent, err := os.ReadFile(filePath)
 		if err == nil {
-			oldStripped := stripDynamic(string(oldContent))
-			newStripped := stripDynamic(content)
+			oldStripped := getSemanticContent(string(oldContent))
+			newStripped := getSemanticContent(content)
 			if oldStripped == newStripped {
+				Info(fmt.Sprintf("Skipping write for %s: No semantic changes detected.", filepath.Base(filePath)))
 				return nil
 			}
 		}

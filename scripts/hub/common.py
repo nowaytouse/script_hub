@@ -76,43 +76,33 @@ def read_file(file_path: str) -> List[str]:
 
 def write_file(file_path: str, content: str):
     """Atomically write *content* to *file_path* (tmp → rename), creating parent dirs.
-    Only writes if the actual content (excluding dynamic comments like timestamps/dates/versions) changed.
+    Only writes if the actual semantic content (excluding all comments and whitespace) changed.
     """
     if os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 old_content = f.read()
             
-            import re as _re
-            # Pre-compiled patterns for efficiency
-            _DATE_BRACKET = _re.compile(r'\[\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?\]')
-
-            def strip_dynamic(text: str) -> str:
+            def get_semantic_content(text: str) -> str:
                 lines = text.splitlines()
                 filtered = []
                 for line in lines:
                     stripped = line.strip()
-                    # Skip pure timestamp/date comment lines
-                    if (stripped.startswith("#") and any(k in stripped.lower() for k in ("updated", "date", "生成于"))):
+                    if not stripped:
                         continue
-                    if stripped.startswith("#!date") or stripped.startswith("#!version"):
+                    if stripped.startswith("#") or stripped.startswith("//"):
                         continue
-                    # Skip JSON lines with dynamic timestamp fields
-                    if '\"generated\":' in stripped or '\"date\":' in stripped or '\"updated\":' in stripped:
-                        continue
-                    if "自动生成于" in stripped or "generated at" in stripped.lower():
-                        continue
-                    # Strip inline [YYYY-MM-DD] date tokens EXCEPT in #!name (module name should update daily)
-                    if stripped.startswith("#") and _DATE_BRACKET.search(stripped) and not stripped.startswith("#!name"):
-                        line = _DATE_BRACKET.sub("[DATE]", line)
-                    filtered.append(line)
+                    filtered.append(stripped)
                 return "\n".join(filtered)
             
-            old_stripped = strip_dynamic(old_content)
-            new_stripped = strip_dynamic(content)
+            old_stripped = get_semantic_content(old_content)
+            new_stripped = get_semantic_content(content)
             if old_stripped == new_stripped:
+                from hub.error_handling import Logger
+                Logger.info(f"Skipping write for {os.path.basename(file_path)}: No semantic changes detected.")
                 return  # functionally identical, skip write
         except Exception as e:
+            from hub.error_handling import Logger
             Logger.warn(f"Error checking write identity for {file_path}: {e}")
             pass
 
