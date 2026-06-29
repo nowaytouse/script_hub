@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
-	"github.com/nyamiiko/script_hub/go_scripts/pipeline"
+	"github.com/nyamiiko/script_hub/create/hub"
 )
 
 func assertEq(label string, got, want string) error {
@@ -114,44 +113,6 @@ func testSurgeListForbidsDomainRegex() error {
 	return nil
 }
 
-func testAdblockSkipsScriptOnlyModule() error {
-	m := pipeline.NewAdBlockManager()
-	text := `#!name=Test
-[URL Rewrite]
-^https://example.com/ad _ reject
-[Script]
-x=type=http-response,pattern=^https://api.example.com,script-path=https://example.com/a.js
-`
-	m.ExtractFromText(text, "REJECT", "Other", true, false)
-	total := 0
-	for _, bucket := range m.Rules {
-		total += len(bucket["Other"])
-	}
-	if total != 0 {
-		return fmt.Errorf("script-only module rules: got %d, want 0", total)
-	}
-	return nil
-}
-
-func testAdblockRuleSectionOnly() error {
-	m := pipeline.NewAdBlockManager()
-	text := `[Rule]
-DOMAIN,ad.example.com
-x=type=http-response,pattern=^https://api.example.com,script-path=https://example.com/a.js
-`
-	m.ExtractFromText(text, "REJECT", "Other", true, false)
-	other := m.Rules["REJECT"]["Other"]
-	if !other["DOMAIN,ad.example.com"] {
-		return fmt.Errorf("domain kept: expected true")
-	}
-	for r := range other {
-		if strings.Contains(r, "script-path") {
-			return fmt.Errorf("script line dropped: found %q", r)
-		}
-	}
-	return nil
-}
-
 func testSurgeListAllowsKeyword() error {
 	errStr := hub.ValidateSurgeRulesetLine("DOMAIN-KEYWORD,apiproxy-device-prod-nlb", false)
 	if errStr != nil {
@@ -172,8 +133,6 @@ func RunTestSurgeCompliance() int {
 		{"testDomainRegexJunkDropped", testDomainRegexJunkDropped},
 		{"testNetflixDomainRegexConverted", testNetflixDomainRegexConverted},
 		{"testSurgeListForbidsDomainRegex", testSurgeListForbidsDomainRegex},
-		{"testAdblockSkipsScriptOnlyModule", testAdblockSkipsScriptOnlyModule},
-		{"testAdblockRuleSectionOnly", testAdblockRuleSectionOnly},
 		{"testSurgeListAllowsKeyword", testSurgeListAllowsKeyword},
 	}
 	failed := 0

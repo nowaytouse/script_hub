@@ -70,7 +70,7 @@ func IsCI() bool {
 func GetProjectRoot() string {
 	_, b, _, _ := runtime.Caller(0)
 	scriptDir := filepath.Dir(b)
-	// pkg/hub is 2 levels down from go_scripts, but we want the repo root,
+	// create/hub is 2 levels down from repo root, but we want the repo root,
 	// so from create/hub -> create -> repo_root = 2 levels up
 	return filepath.Join(scriptDir, "..", "..")
 }

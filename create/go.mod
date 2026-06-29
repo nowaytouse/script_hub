@@ -1,3 +1,3 @@
-module github.com/nyamiiko/script_hub/go_scripts
+module github.com/nyamiiko/script_hub/create
 
 go 1.26.4

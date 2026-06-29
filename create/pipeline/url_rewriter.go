@@ -12,7 +12,7 @@ import "C"
 import (
 	"fmt"
 	"unsafe"
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
+	"github.com/nyamiiko/script_hub/create/hub"
 )
 
 func CopyGithubVariants() {

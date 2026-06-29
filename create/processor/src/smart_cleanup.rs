@@ -638,3 +638,685 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
 
     stats
 }
+
+#[derive(Clone, Debug)]
+pub struct ModuleSectionPub {
+    pub Name: String,
+    pub Lines: Vec<String>,
+}
+
+static AD_SCRIPT_MARKERS: &[&str] = &[
+    "adblock", "/adblock/", ".adblock.", "anti-ad", "blockad", "remove_ads",
+    "remove-ads", "_remove_", "/remove", "去广告", "/ads/", "advertising", "reject",
+    "spam", "tracking", "xwebads", "adultraplus", "allinone", "mock",
+    "bilibili.helper", "helper.v2.js", "camoufox", "rednote", "redpaper",
+    "weibo_ads", "weibo_main", "wool_scripts", "kelee.one/resource/javascript",
+    "proxyrules/main/script", "ithome_remove", "zhihu_remove", "amap_remove",
+    "cainiao_remove", "taobao_remove", "jd_remove", "spotify_remove", "bilicomic_remove",
+];
+
+static AD_ENTRY_NAME_MARKERS: &[&str] = &[
+    "去广告", "adblock", "anti-ad", "xwebads", "移除", "精简", "推广", "开屏", "净化", "广告", "killad", "mock",
+];
+
+static ENHANCE_SCRIPT_MARKERS: &[&str] = &[
+    "/enhanced/", ".enhanced.", "/enhance/", "biliuniverse/enhanced", "/global/",
+    ".global.", "biliuniverse/global", "/redirect/", ".redirect.", "unlock", "解锁",
+    "unblock", "vip", "premium", "crack", "破解", "camscanner.js", "external_links_unlock",
+    "weixin_external", "1080p", "bilibili_json.js", "dualsubs", "iringo", "weatherkit",
+    "zheye", "哲也", "translation", "翻译", "nsfw", "region", "intl", "bypass", "绕过",
+    "pip", "画中画", "optimize", "功能增强",
+];
+
+static ENHANCE_NAME_PREFIXES: &[&str] = &[
+    "bilibili.enhanced", "bilibili.global", "bilibili.redirect", "youtube.enhance",
+    "wechat_enhance", "iringo.", "dualsubs",
+];
+
+static AD_NAME_PREFIXES: &[&str] = &[
+    "bilibili.adblock", "adblock", "去广告", "xwebads", "anti-ad",
+];
+
+static REJECT_POLICIES: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+    let mut s = HashSet::new();
+    s.insert("REJECT");
+    s.insert("REJECT-DROP");
+    s.insert("REJECT-NO-DROP");
+    s.insert("REJECT-TINYGIF");
+    s.insert("REJECT-IMG");
+    s
+});
+
+static PURE_AD_MODULE_NAME_TOKENS: &[&str] = &[
+    "去广告", "adblock", "anti-ad", "xwebads", "adultraplus", "allinone", "all-in-one",
+    "rednote", "redpaper", "微博去广告", "remove_ads",
+];
+
+static SCRIPT_PATH_RE_STR: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)script-path\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bname\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
+static SCRIPT_PATH_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_PATTERN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
+static SECTION_HEADER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\[([^\]]+)\]\s*$").unwrap());
+
+fn script_path(line: &str) -> String {
+    if let Some(m) = SCRIPT_PATH_RE_STR.captures(line) {
+        return m[1].to_lowercase();
+    }
+    String::new()
+}
+
+fn entry_name(line: &str) -> String {
+    if !line.contains('=') {
+        return String::new();
+    }
+    let parts: Vec<&str> = line.splitn(2, '=').collect();
+    parts[0].trim().to_lowercase()
+}
+
+fn contains_any(s: &str, markers: &[&str]) -> bool {
+    for &m in markers {
+        if s.contains(m) {
+            return true;
+        }
+    }
+    false
+}
+
+pub fn source_is_pure_ad_module_pub(source_path: &str) -> bool {
+    if source_path.is_empty() {
+        return false;
+    }
+    let filename = Path::new(source_path).file_name()
+        .map(|f| f.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let low = filename.to_lowercase();
+    contains_any(&low, PURE_AD_MODULE_NAME_TOKENS)
+}
+
+fn script_is_ad(name: &str, spath: &str) -> bool {
+    if contains_any(name, AD_NAME_PREFIXES) || contains_any(name, AD_ENTRY_NAME_MARKERS) {
+        if contains_any(name, &["解锁", "unlock", "vip", "premium", "破解", "crack"]) {
+            return false;
+        }
+        return true;
+    }
+    if contains_any(spath, AD_SCRIPT_MARKERS) {
+        return true;
+    }
+    if name.contains("helper") && name.contains("bili") {
+        return true;
+    }
+    false
+}
+
+fn script_is_enhance(name: &str, spath: &str) -> bool {
+    if contains_any(name, ENHANCE_NAME_PREFIXES) || contains_any(spath, ENHANCE_SCRIPT_MARKERS) {
+        return true;
+    }
+    if contains_any(name, &["解锁", "unlock", "vip", "premium", "破解", "crack"]) {
+        return true;
+    }
+    #[derive(Clone, Debug)]
+    enum Verdict { Ad, Enhance, Neutral }
+    false
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum LineVerdict {
+    Ad,
+    Enhance,
+    Neutral,
+}
+
+pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) -> LineVerdict {
+    let stripped = line.trim();
+    if stripped.is_empty() || stripped.starts_with('#') {
+        return LineVerdict::Neutral;
+    }
+
+    let low = stripped.to_lowercase();
+    let sec = section.trim().to_lowercase();
+    let pure_ad_source = source_is_pure_ad_module_pub(source_path);
+
+    if sec == "mitm" {
+        if !low.contains("hostname") {
+            return LineVerdict::Neutral;
+        }
+        if contains_any(&low, &["unlock", "解锁", "camscanner", "intsig.net"]) {
+            return LineVerdict::Enhance;
+        }
+        return LineVerdict::Neutral;
+    }
+
+    if sec == "general" || sec == "header rewrite" {
+        return LineVerdict::Enhance;
+    }
+
+    let name = entry_name(stripped);
+    let spath = script_path(stripped);
+
+    if sec == "script" || low.contains("script-path=") {
+        if script_is_enhance(&name, &spath) {
+            return LineVerdict::Enhance;
+        }
+        if script_is_ad(&name, &spath) {
+            return LineVerdict::Ad;
+        }
+        if pure_ad_source {
+            return LineVerdict::Ad;
+        }
+        return LineVerdict::Enhance;
+    }
+
+    if sec == "url rewrite" || (stripped.starts_with('^') && (low.contains(" reject") || low.contains(" _ reject"))) {
+        if low.contains(" reject") || low.contains(" _ reject") {
+            return LineVerdict::Ad;
+        }
+        return LineVerdict::Enhance;
+    }
+
+    if sec == "map local" || sec == "body rewrite" || sec == "maplocal" {
+        if low.contains("http-response-jq") || low.contains("http-request-jq") {
+            if contains_any(&low, ENHANCE_SCRIPT_MARKERS) {
+                return LineVerdict::Enhance;
+            }
+            return LineVerdict::Ad;
+        }
+        if stripped.starts_with("http-response ") || stripped.starts_with("http-request ") {
+            return LineVerdict::Ad;
+        }
+        if stripped.starts_with('^') && (low.contains("data-type=") || low.contains("data=\"{}\"") || low.contains("data='{}'")) {
+            return LineVerdict::Ad;
+        }
+        if contains_any(&low, &["广告", "adcard", "splash", "deliver", "flash", "e-commerce"]) {
+            return LineVerdict::Ad;
+        }
+        if low.contains("data=\"{}\"") || low.contains("data='{}'") {
+            return LineVerdict::Ad;
+        }
+        if low.contains("del(.data.payment)") || (low.contains("payment") && low.contains("del(")) {
+            return LineVerdict::Ad;
+        }
+        if pure_ad_source && stripped.starts_with('^') {
+            return LineVerdict::Ad;
+        }
+        return LineVerdict::Neutral;
+    }
+
+    let parts: Vec<&str> = stripped.split(',').collect();
+    let first_upper = parts[0].trim().to_uppercase();
+    if sec == "rule" || ["DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-REGEX", "DOMAIN-WILDCARD", "URL-REGEX", "IP-CIDR", "IP-CIDR6", "USER-AGENT", "PROCESS-NAME", "DEST-PORT"].contains(&first_upper.as_str()) {
+        let mut policy = String::new();
+        if !parts.is_empty() {
+            policy = parts[parts.len()-1].trim().to_uppercase();
+        }
+        if REJECT_POLICIES.contains(policy.as_str()) {
+            if contains_any(&low, &["unlock", "解锁", "vip", "premium", "crack"]) {
+                return LineVerdict::Enhance;
+            }
+            return LineVerdict::Ad;
+        }
+        if !parts.is_empty() {
+            if ["DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-REGEX", "DOMAIN-WILDCARD", "URL-REGEX", "IP-CIDR", "IP-CIDR6", "USER-AGENT", "PROCESS-NAME", "DEST-PORT"].contains(&first_upper.as_str()) {
+                if contains_any(&low, &["unlock", "解锁", "vip", "premium", "crack"]) {
+                    return LineVerdict::Enhance;
+                }
+                return LineVerdict::Ad;
+            }
+        }
+        return LineVerdict::Enhance;
+    }
+
+    if contains_any(&low, ENHANCE_SCRIPT_MARKERS) {
+        return LineVerdict::Enhance;
+    }
+    if contains_any(&low, AD_SCRIPT_MARKERS) {
+        return LineVerdict::Ad;
+    }
+    LineVerdict::Neutral
+}
+
+pub fn should_keep_promax_line_pub(line: &str, section: &str, source_path: &str) -> bool {
+    let verdict = classify_promax_line_pub(line, section, source_path);
+    if verdict == LineVerdict::Ad {
+        return true;
+    }
+    if verdict == LineVerdict::Enhance {
+        return false;
+    }
+    let sec = section.trim().to_lowercase();
+    if sec == "mitm" && line.to_lowercase().contains("hostname") {
+        return true;
+    }
+    false
+}
+
+pub fn module_ingest_mode_pub(path: &str, text: &str) -> &'static str {
+    let filename = Path::new(path).file_name()
+        .map(|f| f.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let name = filename.to_lowercase();
+    if name.contains("解锁") || name.contains("unlock") {
+        if !contains_any(&name, &["去广告", "adblock", "anti-ad"]) {
+            return "skip";
+        }
+    }
+
+    let mut ad_lines = 0;
+    let mut enhance_lines = 0;
+    let mut current_section = String::new();
+
+    for line in text.lines() {
+        let stripped = line.trim();
+        if stripped.starts_with('[') && stripped.ends_with(']') {
+            current_section = stripped[1..stripped.len()-1].to_string();
+            continue;
+        }
+        if stripped.is_empty() || stripped.starts_with('#') {
+            continue;
+        }
+        let v = classify_promax_line_pub(stripped, &current_section, path);
+        if v == LineVerdict::Ad {
+            ad_lines += 1;
+        } else if v == LineVerdict::Enhance {
+            enhance_lines += 1;
+        }
+    }
+
+    if ad_lines == 0 {
+        return "skip";
+    }
+    if enhance_lines > 0 {
+        return "split";
+    }
+    return "full";
+}
+
+pub fn dedupe_key_pub(section: &str, line: &str) -> String {
+    let stripped = line.trim();
+    if stripped.is_empty() || stripped.starts_with('#') {
+        return String::new();
+    }
+    if section == "Script" {
+        if let Some(caps) = SCRIPT_LABEL_RE.captures(stripped) {
+            return format!("script:label:{}", caps[1].trim());
+        }
+        if let Some(caps) = SCRIPT_NAME_RE.captures(stripped) {
+            return format!("script:name:{}", &caps[1]);
+        }
+        let path_opt = SCRIPT_PATH_RE.captures(stripped).map(|c| c[1].to_string());
+        let pattern_opt = SCRIPT_PATTERN_RE.captures(stripped).map(|c| c[1].trim().to_string());
+        if let (Some(path), Some(pattern)) = (path_opt, pattern_opt) {
+            return format!("script:{}:{}", path, pattern);
+        }
+        if let Some(caps) = SCRIPT_PATH_RE.captures(stripped) {
+            return format!("script:{}", &caps[1]);
+        }
+        return format!("script:{}", stripped);
+    }
+    if section == "URL Rewrite" {
+        let parts: Vec<&str> = stripped.splitn(2, ',').collect();
+        return format!("rewrite:{}", parts[0]);
+    }
+    if section == "Map Local" {
+        return format!("maplocal:{}", stripped);
+    }
+    if section == "Body Rewrite" {
+        return format!("body:{}", stripped);
+    }
+    if section == "Header Rewrite" {
+        return format!("header:{}", stripped);
+    }
+    if section == "Rule" {
+        return format!("rule:{}", stripped);
+    }
+    if section == "MITM" {
+        let re = Regex::new(r"(?i)^hostname\s*=\s*(%APPEND%\s*)?").unwrap();
+        let hosts = re.replace_all(stripped, "");
+        return format!("mitm:{}", hosts.trim());
+    }
+    format!("{}:{}", section, stripped)
+}
+
+pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut result: Vec<String> = Vec::new();
+    for line in lines {
+        let stripped = line.trim();
+        if stripped.is_empty() {
+            if !result.is_empty() && !result.last().unwrap().is_empty() {
+                result.push(String::new());
+            }
+            continue;
+        }
+        if stripped.starts_with('#') {
+            result.push(stripped.to_string());
+            continue;
+        }
+        let key = dedupe_key_pub(section, line);
+        if key.is_empty() || !seen.insert(key) {
+            continue;
+        }
+        result.push(stripped.to_string());
+    }
+
+    if ["Script", "Host", "MITM", "General"].contains(&section) {
+        #[derive(Clone)]
+        struct ParsedLine {
+            raw: String,
+            left: String,
+            right: String,
+        }
+        let mut parsed = Vec::new();
+        let mut max_len = 0;
+        for r in &result {
+            if r.starts_with('#') {
+                parsed.push(ParsedLine { raw: r.clone(), left: String::new(), right: String::new() });
+                continue;
+            }
+            let parts: Vec<&str> = r.splitn(2, '=').collect();
+            if parts.len() == 2 {
+                let left = parts[0].trim().to_string();
+                let right = parts[1].trim().to_string();
+                if left.len() < 60 && left.len() > max_len {
+                    max_len = left.len();
+                }
+                parsed.push(ParsedLine { raw: r.clone(), left, right });
+            } else {
+                parsed.push(ParsedLine { raw: r.clone(), left: String::new(), right: String::new() });
+            }
+        }
+        let mut aligned_result = Vec::new();
+        for p in parsed {
+            if !p.left.is_empty() && !p.right.is_empty() && p.left.len() <= 60 {
+                aligned_result.push(format!("{:<width$} = {}", p.left, p.right, width = max_len));
+            } else {
+                aligned_result.push(p.raw);
+            }
+        }
+        return aligned_result;
+    }
+    result
+}
+
+static HEADER_KEYS_ORDER: &[&str] = &[
+    "name", "desc", "author", "icon", "category", "tag", "date", "arguments", "arguments-desc", "system-proxy", "ability", "update-interval",
+];
+
+pub fn format_header_pub(meta: &HashMap<String, String>) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut used = HashSet::new();
+    for &key in HEADER_KEYS_ORDER {
+        if let Some(val) = meta.get(key) {
+            lines.push(format!("#!{}={}", key, val));
+            used.insert(key);
+        }
+    }
+
+    let mut remaining = Vec::new();
+    for key in meta.keys() {
+        if !used.contains(key.as_str()) {
+            remaining.push(key.clone());
+        }
+    }
+    remaining.sort();
+    for key in remaining {
+        lines.push(format!("#!{}={}", key, meta.get(&key).unwrap()));
+    }
+    lines
+}
+
+static SECTION_ORDER: &[&str] = &[
+    "General", "Host", "Rule", "URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite", "MITM",
+];
+
+pub fn format_module_pub(header_lines: &[String], sections: &[ModuleSectionPub], dedupe: bool) -> String {
+    let mut section_map = HashMap::new();
+    for sec in sections {
+        section_map.insert(sec.Name.clone(), sec.Lines.clone());
+    }
+
+    let mut out = header_lines.to_vec();
+    while !out.is_empty() && out.last().unwrap().trim().is_empty() {
+        out.pop();
+    }
+    if !out.is_empty() {
+        out.push(String::new());
+    }
+
+    for &section_name in SECTION_ORDER {
+        if let Some(lines) = section_map.get(section_name) {
+            if lines.is_empty() {
+                continue;
+            }
+            let lines = if dedupe {
+                dedupe_section_lines_pub(section_name, lines)
+            } else {
+                lines.clone()
+            };
+            if lines.is_empty() {
+                continue;
+            }
+            out.push(format!("[{}]", section_name));
+            out.extend(lines);
+            out.push(String::new());
+        }
+    }
+
+    let mut res = out.join("\n");
+    while res.ends_with('\n') {
+        res.pop();
+    }
+    res.push('\n');
+    res
+}
+
+pub fn split_module_sections_pub(path: &str, text: &str) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
+    let mut ad_sections = HashMap::new();
+    let mut current_section = String::new();
+    let mut total = 0;
+    let mut kept = 0;
+    let mut skipped = 0;
+
+    for line in text.lines() {
+        let stripped = line.trim();
+        if let Some(m) = SECTION_HEADER_RE.captures(stripped) {
+            if !stripped.starts_with('#') {
+                current_section = m[1].to_string();
+                continue;
+            }
+        }
+        if stripped.is_empty() || stripped.starts_with('#') {
+            continue;
+        }
+        if current_section.is_empty() {
+            continue;
+        }
+        let sec_lower = current_section.to_lowercase();
+        if sec_lower == "general" || sec_lower == "ponte" {
+            skipped += 1;
+            total += 1;
+            continue;
+        }
+        total += 1;
+        if should_keep_promax_line_pub(stripped, &current_section, path) {
+            ad_sections.entry(current_section.clone()).or_insert_with(Vec::new).push(stripped.to_string());
+            kept += 1;
+        } else {
+            skipped += 1;
+        }
+    }
+
+    let mut stats = HashMap::new();
+    stats.insert("total_lines".to_string(), total);
+    stats.insert("kept_lines".to_string(), kept);
+    stats.insert("skipped_lines".to_string(), skipped);
+
+    (ad_sections, stats)
+}
+
+pub fn format_split_module_pub(source_path: &str, ad_sections: &HashMap<String, Vec<String>>, note: &str) -> String {
+    let base = Path::new(source_path).file_name()
+        .map(|f| f.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let mut lines = vec![
+        format!("#!name=PROMAX split · {}", base),
+        format!("#!desc={}", note),
+        "#!author=ScriptHub-Automated".to_string(),
+        format!("#!split-source={}", source_path),
+    ];
+
+    let order = &["Rule", "URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite", "MITM"];
+
+    for &sec in order {
+        if let Some(body) = ad_sections.get(sec) {
+            if body.is_empty() {
+                continue;
+            }
+            lines.push(String::new());
+            lines.push(format!("[{}]", sec));
+            lines.extend(body.clone());
+        }
+    }
+
+    let mut remaining = Vec::new();
+    for sec in ad_sections.keys() {
+        if !order.contains(&sec.as_str()) {
+            remaining.push(sec.clone());
+        }
+    }
+    remaining.sort();
+
+    for sec in remaining {
+        if let Some(body) = ad_sections.get(&sec) {
+            lines.push(String::new());
+            lines.push(format!("[{}]", sec));
+            lines.extend(body.clone());
+        }
+    }
+    lines.push(String::new());
+
+    lines.join("\n")
+}
+
+pub fn adapt_rewrite_line_for_loon_pub(line: &str) -> String {
+    let stripped = line.trim();
+    if stripped.is_empty() || stripped.starts_with('#') {
+        return line.to_string();
+    }
+
+    let lower = stripped.to_lowercase();
+    let mut output = line.to_string();
+    if lower.contains(" - reject") {
+        output = output.replace(" - reject", " reject");
+    } else if lower.contains(" - reject-200") {
+        output = output.replace(" - reject-200", " reject-200");
+    } else if lower.contains(" - reject-img") {
+        output = output.replace(" - reject-img", " reject-img");
+    } else if lower.contains(" - reject-tinygif") {
+        output = output.replace(" - reject-tinygif", " reject-tinygif");
+    } else if lower.contains(" - reject-no-drop") {
+        output = output.replace(" - reject-no-drop", " reject-no-drop");
+    } else if lower.contains(" - 302 ") {
+        output = output.replace(" - 302 ", " 302 ");
+    } else if lower.contains(" - 307 ") {
+        output = output.replace(" - 307 ", " 307 ");
+    }
+    output
+}
+
+pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
+    let mut params = HashMap::new();
+    let parts: Vec<&str> = line_content.split(',').collect();
+    for p in parts {
+        if let Some(idx) = p.find('=') {
+            let k = p[..idx].trim().to_lowercase();
+            let v = p[idx+1..].trim().to_string();
+            params.insert(k, v);
+        }
+    }
+
+    let script_type = params.get("type").map(|s| s.as_str()).unwrap_or("http-response");
+    let pattern = match params.get("pattern") {
+        Some(p) => p,
+        None => return String::new(),
+    };
+    let script_path = match params.get("script-path") {
+        Some(p) => p,
+        None => return String::new(),
+    };
+
+    let mut loon_parts = Vec::new();
+    loon_parts.push(format!("script-path={}", script_path));
+    loon_parts.push(format!("tag={}", tag));
+
+    if let Some(req_body) = params.get("requires-body") {
+        if req_body == "1" || req_body == "true" {
+            loon_parts.push("requires-body=true".to_string());
+        }
+    }
+    if let Some(timeout) = params.get("timeout") {
+        loon_parts.push(format!("timeout={}", timeout));
+    }
+    if let Some(argument) = params.get("argument") {
+        let mut arg = argument.clone();
+        if arg.starts_with('"') && arg.ends_with('"') {
+            arg = arg[1..arg.len()-1].to_string();
+        }
+        loon_parts.push(format!("argument=\"{}\"", arg));
+    }
+
+    format!("{} {} {}", script_type, pattern, loon_parts.join(","))
+}
+
+pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionPub> {
+    let mut hosts = HashSet::new();
+    let mut other = Vec::new();
+    let skip_tokens: HashSet<&str> = ["%INSERT%", "%APPEND%"].iter().cloned().collect();
+
+    for sec in sections {
+        if sec.Name != "MITM" {
+            other.push(sec.clone());
+            continue;
+        }
+        for line in &sec.Lines {
+            let stripped = line.trim();
+            if stripped.to_lowercase().starts_with("hostname") {
+                let re1 = Regex::new(r"(?i)^hostname\s*=\s*").unwrap();
+                let part = re1.replace_all(stripped, "");
+                let re2 = Regex::new(r"(?i)^(%APPEND%|%INSERT%)\s*").unwrap();
+                let part = re2.replace_all(&part, "");
+                for token in part.split(',') {
+                    let token = token.trim();
+                    if !token.is_empty() && !skip_tokens.contains(token) {
+                        hosts.insert(token.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    if !hosts.is_empty() {
+        let mut inclusions = Vec::new();
+        let mut exclusions = Vec::new();
+        for h in hosts {
+            if h.starts_with('-') {
+                exclusions.push(h);
+            } else {
+                inclusions.push(h);
+            }
+        }
+        inclusions.sort();
+        exclusions.sort();
+        let mut merged = inclusions;
+        merged.extend(exclusions);
+
+        other.push(ModuleSectionPub {
+            Name: "MITM".to_string(),
+            Lines: vec![format!("hostname = %APPEND% {}", merged.join(", "))],
+        });
+    }
+    other
+}
+

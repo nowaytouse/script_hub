@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
-	"github.com/nyamiiko/script_hub/go_scripts/pipeline"
-	"github.com/nyamiiko/script_hub/go_scripts/qa"
-	"github.com/nyamiiko/script_hub/go_scripts/tools"
+	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nyamiiko/script_hub/create/pipeline"
+	"github.com/nyamiiko/script_hub/create/qa"
+	"github.com/nyamiiko/script_hub/create/tools"
 )
 
 func runQaScript(desc string, fn func() int) bool {

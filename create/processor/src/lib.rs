@@ -585,3 +585,19 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
     }
     std::ptr::null_mut()
 }
+
+pub mod adblock_manager;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn run_adblock_manager_ffi(
+    root_dir: *const std::ffi::c_char,
+    remote_contents_json: *const std::ffi::c_char,
+    execute: bool,
+) -> bool {
+    if root_dir.is_null() || remote_contents_json.is_null() {
+        return false;
+    }
+    let root_str = unsafe { std::ffi::CStr::from_ptr(root_dir) }.to_string_lossy();
+    let remote_str = unsafe { std::ffi::CStr::from_ptr(remote_contents_json) }.to_string_lossy();
+    adblock_manager::run_adblock_manager(&root_str, &remote_str, execute)
+}

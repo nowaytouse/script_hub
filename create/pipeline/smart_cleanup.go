@@ -13,7 +13,7 @@ import (
 	"encoding/json"
 	"unsafe"
 
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
+	"github.com/nyamiiko/script_hub/create/hub"
 )
 
 func RunCleanup() map[string]int {

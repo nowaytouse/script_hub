@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
+	"github.com/nyamiiko/script_hub/create/hub"
 )
 
 func runGitCmd(args ...string) string {
@@ -40,7 +40,7 @@ func RunGuardGeneratedTree() int {
 	changedScripts := false
 	var generatedContentChanges []string
 
-	validSources := []string{"scripts/", "rulesets/Sources/", "go_scripts/"}
+	validSources := []string{"scripts/", "rulesets/Sources/", "create/"}
 	generatedPrefixes := []string{"modules/", "rulesets/", "dns/"}
 
 	for _, row := range rows {

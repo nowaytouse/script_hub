@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
-	"github.com/nyamiiko/script_hub/go_scripts/pipeline"
+	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nyamiiko/script_hub/create/pipeline"
 )
 
 var scriptLabelRe = regexp.MustCompile(`(?i)^(.+?)\s*=\s*type=`)

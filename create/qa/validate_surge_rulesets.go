@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nyamiiko/script_hub/go_scripts/hub"
+	"github.com/nyamiiko/script_hub/create/hub"
 )
 
 func validateDirectory(directory string, allowDomainRegex bool) []string {
