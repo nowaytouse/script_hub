@@ -141,6 +141,14 @@ jobs:
       with:
         go-version: '1.24'
 
+    - name: Set up Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+
+    - name: Build Rust Static Library
+      run: |
+        cd go_scripts/rust_processor
+        cargo build --release
+
     - name: Execute Go Ruleset Update
       run: |
         cd go_scripts
