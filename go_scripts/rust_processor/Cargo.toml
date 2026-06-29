@@ -1,0 +1,11 @@
+[package]
+name = "rust_processor"
+version = "0.1.0"
+edition = "2024"
+[lib]
+name = "rust_processor"
+crate-type = ["staticlib"]
+
+[dependencies]
+regex = "1.10"
+once_cell = "1.19"

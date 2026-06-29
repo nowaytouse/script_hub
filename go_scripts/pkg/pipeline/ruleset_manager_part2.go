@@ -1,129 +1,34 @@
 package pipeline
 
+/*
+#cgo LDFLAGS: -L${SRCDIR}/../../rust_processor/target/release -lrust_processor -lm -ldl
+#include <stdbool.h>
+#include <stdlib.h>
+
+bool process_ruleset_ffi(
+    const char* name,
+    const char* target_dir,
+    const char* conflict_domains,
+    bool skip_conflict,
+    const char* policy,
+    const char* node,
+    const char* desc,
+    const char* all_rules_content
+);
+*/
+import "C"
+
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
+	"unsafe"
 
 	"github.com/nyamiiko/script_hub/go_scripts/pkg/hub"
 )
-
-func (rm *RulesetManager) surgeConvertDomainRegex(rule string) string {
-	return hub.ConvertDomainRegexForSurge(rule)
-}
-
-func (rm *RulesetManager) cleanRule(rule, rulesetName string, rp *hub.RuleProcessor) string {
-	r := strings.TrimSpace(rule)
-	if r == "" || strings.HasPrefix(r, "#") {
-		return ""
-	}
-
-	if r == "payload:" || r == "payload" {
-		return ""
-	}
-	if strings.HasPrefix(r, "-") {
-		r = strings.TrimSpace(r[1:])
-		r = strings.Trim(r, "\"'")
-		if r == "" {
-			return ""
-		}
-	}
-
-	if !strings.Contains(r, ",") {
-		if strings.Contains(r, ":") || (strings.Count(r, ".") == 3 && strings.ContainsAny(strings.Split(r, "/")[0], "0123456789")) {
-			if strings.Contains(r, "/") {
-				if strings.Contains(r, ":") {
-					r = "IP-CIDR6," + r
-				} else {
-					r = "IP-CIDR," + r
-				}
-			} else {
-				if strings.Contains(r, ":") {
-					r = "IP-CIDR6," + r + "/128"
-				} else {
-					r = "IP-CIDR," + r + "/32"
-				}
-			}
-		} else {
-			if strings.HasPrefix(r, ".") {
-				r = "DOMAIN-SUFFIX," + r[1:]
-			} else if strings.HasPrefix(r, "+.") {
-				r = "DOMAIN-SUFFIX," + r[2:]
-			} else if strings.HasPrefix(r, "+") {
-				r = "DOMAIN-SUFFIX," + r[1:]
-			} else {
-				r = "DOMAIN," + r
-			}
-		}
-	}
-
-	normalizedPtr := rp.NormalizeRule(r, rulesetName)
-	if normalizedPtr == nil {
-		return ""
-	}
-	normalized := *normalizedPtr
-
-	if strings.HasPrefix(normalized, "DOMAIN-REGEX,") {
-		return rm.surgeConvertDomainRegex(normalized)
-	}
-
-	skipConflict := false
-	for _, sc := range skipConflictCheck {
-		if sc == rulesetName {
-			skipConflict = true
-			break
-		}
-	}
-	if !skipConflict {
-		for _, domain := range conflictDomains {
-			if strings.HasSuffix(normalized, ","+domain) {
-				return ""
-			}
-		}
-	}
-
-	if rulesetName == "Direct" {
-		rLower := strings.ToLower(normalized)
-		for _, kw := range mandatoryProxyKeywords {
-			if strings.Contains(rLower, kw) {
-				return ""
-			}
-		}
-	}
-
-	return normalized
-}
-
-func (rm *RulesetManager) generateHeader(name string, ruleCount int) string {
-	baseName := strings.ReplaceAll(name, "_ip", "")
-	var pInfo map[string]string
-	if info, ok := rm.policyMap[name]; ok {
-		pInfo = info
-	} else if info, ok := rm.policyMap[baseName]; ok {
-		pInfo = info
-	} else {
-		pInfo = map[string]string{
-			"policy": "PROXY",
-			"node":   "Any",
-			"desc":   "Auto-merged ruleset",
-		}
-	}
-
-	var header []string
-	header = append(header, fmt.Sprintf("# Ruleset: %s", name))
-	header = append(header, fmt.Sprintf("# Policy: %s", pInfo["policy"]))
-	if pInfo["node"] != "" {
-		header = append(header, fmt.Sprintf("# Node: %s", pInfo["node"]))
-	}
-	header = append(header, fmt.Sprintf("# Description: %s", pInfo["desc"]))
-	header = append(header, fmt.Sprintf("# Rules: %d", ruleCount))
-
-	return strings.Join(header, "\n") + "\n"
-}
 
 func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 	targetFile := filepath.Join(surgeDir, fmt.Sprintf("%s.list", name))
@@ -206,7 +111,7 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 		return
 	}
 
-	allRules := make(map[string]bool)
+	allRulesContent := strings.Builder{}
 	isProtected := false
 	for _, p := range protectedRulesets {
 		if name == p {
@@ -217,22 +122,14 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 
 	if isProtected {
 		if hub.ValidateFileExists(targetFile, "") {
-			for line := range hub.IterLines(targetFile) {
-				cleaned := rm.cleanRule(line, name, rp)
-				if cleaned != "" {
-					allRules[cleaned] = true
-				}
-			}
+			allRulesContent.WriteString(hub.ReadFileString(targetFile))
+			allRulesContent.WriteByte('\n')
 		}
 	} else {
 		mFile := rm.findCaseInsensitiveFile(hub.METACUBEX_DIR, fmt.Sprintf("MetaCubeX_%s.list", name))
 		if mFile != "" && hub.ValidateFileExists(mFile, "") {
-			for line := range hub.IterLines(mFile) {
-				cleaned := rm.cleanRule(line, name, rp)
-				if cleaned != "" {
-					allRules[cleaned] = true
-				}
-			}
+			allRulesContent.WriteString(hub.ReadFileString(mFile))
+			allRulesContent.WriteByte('\n')
 		}
 		if hub.ValidateFileExists(sFile, "") {
 			for line := range hub.IterLines(sFile) {
@@ -243,64 +140,84 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 				if strings.HasPrefix(line, "http") {
 					remoteContent := rm.download(line)
 					if remoteContent != "" {
-						for _, rLine := range strings.Split(remoteContent, "\n") {
-							cleaned := rm.cleanRule(rLine, name, rp)
-							if cleaned != "" {
-								allRules[cleaned] = true
-							}
-						}
+						allRulesContent.WriteString(remoteContent)
+						allRulesContent.WriteByte('\n')
 					}
 				} else {
 					localPath := filepath.Join(hub.LINKS_DIR, strings.Split(line, "|")[0])
 					if hub.ValidateFileExists(localPath, "") {
-						for rLine := range hub.IterLines(localPath) {
-							cleaned := rm.cleanRule(rLine, name, rp)
-							if cleaned != "" {
-								allRules[cleaned] = true
-							}
-						}
+						allRulesContent.WriteString(hub.ReadFileString(localPath))
+						allRulesContent.WriteByte('\n')
 					}
 				}
 			}
 		}
 	}
 
-	if len(allRules) == 0 && !isProtected {
+	if allRulesContent.Len() == 0 && !isProtected {
 		return
 	}
 
-	var nonIpRules, ipRules []string
-	for rule := range allRules {
-		if name != "Direct" && (strings.HasPrefix(rule, "IP-CIDR,") || strings.HasPrefix(rule, "IP-CIDR6,") || strings.HasPrefix(rule, "IP-ASN,") || strings.HasPrefix(rule, "GEOIP,")) {
-			ipRules = append(ipRules, rule)
-		} else {
-			nonIpRules = append(nonIpRules, rule)
-		}
-	}
-	sort.Strings(nonIpRules)
-	sort.Strings(ipRules)
-
-	targetIpFile := filepath.Join(surgeDir, fmt.Sprintf("%s_ip.list", name))
-	if len(ipRules) > 0 {
-		content := rm.generateHeader(fmt.Sprintf("%s_ip", name), len(ipRules)) + strings.Join(ipRules, "\n") + "\n"
-		hub.SafeWriteFile(targetIpFile, content, true)
-		hub.Success(fmt.Sprintf("Processed IP Ruleset: %s_ip (%d rules)", name, len(ipRules)))
+	baseName := strings.ReplaceAll(name, "_ip", "")
+	var pInfo map[string]string
+	if info, ok := rm.policyMap[name]; ok {
+		pInfo = info
+	} else if info, ok := rm.policyMap[baseName]; ok {
+		pInfo = info
 	} else {
-		if hub.ValidateFileExists(targetIpFile, "") {
-			os.Remove(targetIpFile)
+		pInfo = map[string]string{
+			"policy": "PROXY",
+			"node":   "Any",
+			"desc":   "Auto-merged ruleset",
 		}
 	}
 
-	if len(nonIpRules) > 0 || isProtected {
-		content := rm.generateHeader(name, len(nonIpRules)) + strings.Join(nonIpRules, "\n") + "\n"
-		hub.SafeWriteFile(targetFile, content, true)
-		hub.Success(fmt.Sprintf("Processed Domain Ruleset: %s (%d rules)", name, len(nonIpRules)))
-	} else {
-		if hub.ValidateFileExists(targetFile, "") {
-			os.Remove(targetFile)
+	skipConflict := false
+	for _, sc := range skipConflictCheck {
+		if sc == name {
+			skipConflict = true
+			break
 		}
+	}
+
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+	
+	cTargetDir := C.CString(surgeDir)
+	defer C.free(unsafe.Pointer(cTargetDir))
+	
+	cConflictDomains := C.CString(strings.Join(conflictDomains, ","))
+	defer C.free(unsafe.Pointer(cConflictDomains))
+	
+	cPolicy := C.CString(pInfo["policy"])
+	defer C.free(unsafe.Pointer(cPolicy))
+	
+	cNode := C.CString(pInfo["node"])
+	defer C.free(unsafe.Pointer(cNode))
+	
+	cDesc := C.CString(pInfo["desc"])
+	defer C.free(unsafe.Pointer(cDesc))
+	
+	cAllRulesContent := C.CString(allRulesContent.String())
+	defer C.free(unsafe.Pointer(cAllRulesContent))
+	
+	success := C.process_ruleset_ffi(
+		cName,
+		cTargetDir,
+		cConflictDomains,
+		C.bool(skipConflict),
+		cPolicy,
+		cNode,
+		cDesc,
+		cAllRulesContent,
+	)
+
+	if !success {
+		hub.Error(fmt.Sprintf("rust_processor FFI failed for %s", name))
+		return
 	}
 
 	rm.setHash(name, currentHash)
 	rm.incStat("merged")
+	hub.Success(fmt.Sprintf("Processed ruleset in Rust (FFI): %s", name))
 }
