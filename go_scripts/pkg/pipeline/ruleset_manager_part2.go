@@ -13,7 +13,8 @@ bool process_ruleset_ffi(
     const char* policy,
     const char* node,
     const char* desc,
-    const char* all_rules_content
+    const char* local_paths,
+    const char* remote_content
 );
 */
 import "C"
@@ -111,7 +112,8 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 		return
 	}
 
-	allRulesContent := strings.Builder{}
+	var localPaths []string
+	remoteContent := strings.Builder{}
 	isProtected := false
 	for _, p := range protectedRulesets {
 		if name == p {
@@ -122,14 +124,12 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 
 	if isProtected {
 		if hub.ValidateFileExists(targetFile, "") {
-			allRulesContent.WriteString(hub.ReadFileString(targetFile))
-			allRulesContent.WriteByte('\n')
+			localPaths = append(localPaths, targetFile)
 		}
 	} else {
 		mFile := rm.findCaseInsensitiveFile(hub.METACUBEX_DIR, fmt.Sprintf("MetaCubeX_%s.list", name))
 		if mFile != "" && hub.ValidateFileExists(mFile, "") {
-			allRulesContent.WriteString(hub.ReadFileString(mFile))
-			allRulesContent.WriteByte('\n')
+			localPaths = append(localPaths, mFile)
 		}
 		if hub.ValidateFileExists(sFile, "") {
 			for line := range hub.IterLines(sFile) {
@@ -138,23 +138,22 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 					continue
 				}
 				if strings.HasPrefix(line, "http") {
-					remoteContent := rm.download(line)
-					if remoteContent != "" {
-						allRulesContent.WriteString(remoteContent)
-						allRulesContent.WriteByte('\n')
+					content := rm.download(line)
+					if content != "" {
+						remoteContent.WriteString(content)
+						remoteContent.WriteByte('\n')
 					}
 				} else {
 					localPath := filepath.Join(hub.LINKS_DIR, strings.Split(line, "|")[0])
 					if hub.ValidateFileExists(localPath, "") {
-						allRulesContent.WriteString(hub.ReadFileString(localPath))
-						allRulesContent.WriteByte('\n')
+						localPaths = append(localPaths, localPath)
 					}
 				}
 			}
 		}
 	}
 
-	if allRulesContent.Len() == 0 && !isProtected {
+	if len(localPaths) == 0 && remoteContent.Len() == 0 && !isProtected {
 		return
 	}
 
@@ -198,8 +197,11 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 	cDesc := C.CString(pInfo["desc"])
 	defer C.free(unsafe.Pointer(cDesc))
 	
-	cAllRulesContent := C.CString(allRulesContent.String())
-	defer C.free(unsafe.Pointer(cAllRulesContent))
+	cLocalPaths := C.CString(strings.Join(localPaths, "\n"))
+	defer C.free(unsafe.Pointer(cLocalPaths))
+	
+	cRemoteContent := C.CString(remoteContent.String())
+	defer C.free(unsafe.Pointer(cRemoteContent))
 	
 	success := C.process_ruleset_ffi(
 		cName,
@@ -209,7 +211,8 @@ func (rm *RulesetManager) processRuleset(name string, rp *hub.RuleProcessor) {
 		cPolicy,
 		cNode,
 		cDesc,
-		cAllRulesContent,
+		cLocalPaths,
+		cRemoteContent,
 	)
 
 	if !success {

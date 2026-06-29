@@ -267,10 +267,12 @@ pub extern "C" fn process_ruleset_ffi(
     policy: *const c_char,
     node: *const c_char,
     desc: *const c_char,
-    all_rules_content: *const c_char,
+    local_paths: *const c_char,
+    remote_content: *const c_char,
 ) -> bool {
     if name.is_null() || target_dir.is_null() || conflict_domains.is_null()
-        || policy.is_null() || node.is_null() || desc.is_null() || all_rules_content.is_null() {
+        || policy.is_null() || node.is_null() || desc.is_null()
+        || local_paths.is_null() || remote_content.is_null() {
         return false;
     }
     
@@ -280,7 +282,8 @@ pub extern "C" fn process_ruleset_ffi(
     let policy_str = unsafe { CStr::from_ptr(policy) }.to_string_lossy();
     let node_str = unsafe { CStr::from_ptr(node) }.to_string_lossy();
     let desc_str = unsafe { CStr::from_ptr(desc) }.to_string_lossy();
-    let rules_content_str = unsafe { CStr::from_ptr(all_rules_content) }.to_string_lossy();
+    let local_paths_str = unsafe { CStr::from_ptr(local_paths) }.to_string_lossy();
+    let remote_content_str = unsafe { CStr::from_ptr(remote_content) }.to_string_lossy();
 
     let conflict_doms: Vec<String> = conflict_domains_str
         .split(',')
@@ -290,7 +293,23 @@ pub extern "C" fn process_ruleset_ffi(
 
     let mut all_rules = HashSet::new();
     
-    for line in rules_content_str.lines() {
+    // Read local files directly in Rust
+    for path_str in local_paths_str.split('\n') {
+        let trimmed_path = path_str.trim();
+        if trimmed_path.is_empty() {
+            continue;
+        }
+        if let Ok(content) = fs::read_to_string(trimmed_path) {
+            for line in content.lines() {
+                if let Some(cleaned) = clean_rule(line, &name_str, &conflict_doms, skip_conflict) {
+                    all_rules.insert(cleaned);
+                }
+            }
+        }
+    }
+
+    // Process remote content downloaded by Go
+    for line in remote_content_str.lines() {
         if let Some(cleaned) = clean_rule(line, &name_str, &conflict_doms, skip_conflict) {
             all_rules.insert(cleaned);
         }
