@@ -442,3 +442,66 @@ pub extern "C" fn free_string_ffi(s: *mut c_char) {
         let _ = std::ffi::CString::from_raw(s);
     }
 }
+
+pub mod url_rewriter;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn run_url_rewrites_ffi(directory: *const std::ffi::c_char) -> i32 {
+    if directory.is_null() {
+        return 0;
+    }
+    let c_str = unsafe { std::ffi::CStr::from_ptr(directory) };
+    let r_str = String::from_utf8_lossy(c_str.to_bytes());
+    url_rewriter::run_url_rewrites(&r_str)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn copy_github_variants_ffi(root_dir: *const std::ffi::c_char) {
+    if root_dir.is_null() {
+        return;
+    }
+    let c_str = unsafe { std::ffi::CStr::from_ptr(root_dir) };
+    let r_str = String::from_utf8_lossy(c_str.to_bytes());
+    url_rewriter::copy_github_variants(&r_str)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn safe_write_file_ffi(
+    path: *const std::ffi::c_char,
+    content: *const std::ffi::c_char,
+    atomic: bool,
+) -> bool {
+    if path.is_null() || content.is_null() {
+        return false;
+    }
+    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
+    let content_str = unsafe { std::ffi::CStr::from_ptr(content) }.to_string_lossy();
+
+    let p = std::path::Path::new(path_str.as_ref());
+    
+    // Semantic Check
+    if p.exists() {
+        if let Ok(old_content) = std::fs::read_to_string(p) {
+            let old_stripped = url_rewriter::get_semantic_content_pub(&old_content);
+            let new_stripped = url_rewriter::get_semantic_content_pub(&content_str);
+            if old_stripped == new_stripped {
+                println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", p.file_name().unwrap_or_default().to_string_lossy());
+                return true;
+            }
+        }
+    }
+
+    if atomic {
+        let parent = p.parent().unwrap_or(std::path::Path::new(""));
+        let temp_path = parent.join(format!(".tmp_{}.writing", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_micros()));
+        if std::fs::write(&temp_path, content_str.as_ref()).is_ok() {
+            if std::fs::rename(&temp_path, p).is_ok() {
+                return true;
+            }
+            let _ = std::fs::remove_file(&temp_path);
+        }
+        false
+    } else {
+        std::fs::write(p, content_str.as_ref()).is_ok()
+    }
+}

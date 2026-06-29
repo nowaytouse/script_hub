@@ -7,24 +7,24 @@ use once_cell::sync::Lazy;
 
 static MOCK_REPLACEMENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
     vec![
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-200\.txt").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"),
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank\.txt").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.txt"),
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-dict\.json").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"),
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-img\.gif").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"),
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json\.js").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json.js"),
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank\.gif").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.gif"),
-        (Regex::new(r"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json").unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json"),
-        (Regex::new(r"(?i)https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)").unwrap(), "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/${4}"),
-        (Regex::new(r"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)").unwrap(), "${1}https://cdn.jsdelivr.net/gh/${2}/${3}@${4}/${5}"),
-        (Regex::new(r"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)").unwrap(), "${1}https://ghproxy.net/https://github.com/${2}/${3}/releases/download/${4}/${5}"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-200\.txt"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank\.txt"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.txt"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-dict\.json"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-img\.gif"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json\.js"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json.js"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank\.gif"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.gif"),
+        (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json"),
+        (Regex::new(r#"(?i)https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/${4}"),
+        (Regex::new(r#"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "${1}https://cdn.jsdelivr.net/gh/${2}/${3}@${4}/${5}"),
+        (Regex::new(r#"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "${1}https://ghproxy.net/https://github.com/${2}/${3}/releases/download/${4}/${5}"),
     ]
 });
 
 static REVERSE_CDN_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?i)(^|[^/])https://cdn\.jsdelivr\.net/gh/([^/]+)/([^/@]+)@([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)").unwrap()
+    Regex::new(r#"(?i)(^|[^/])https://cdn\.jsdelivr\.net/gh/([^/]+)/([^/@]+)@([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap()
 });
 
-fn get_semantic_content(text: &str) -> String {
+pub fn get_semantic_content_pub(text: &str) -> String {
     let mut filtered = Vec::new();
     for line in text.lines() {
         let stripped = line.trim();
@@ -42,8 +42,8 @@ fn get_semantic_content(text: &str) -> String {
 fn safe_write_file(path: &Path, content: &str) -> std::io::Result<()> {
     if path.exists() {
         if let Ok(old_content) = fs::read_to_string(path) {
-            let old_stripped = get_semantic_content(&old_content);
-            let new_stripped = get_semantic_content(content);
+            let old_stripped = get_semantic_content_pub(&old_content);
+            let new_stripped = get_semantic_content_pub(content);
             if old_stripped == new_stripped {
                 return Ok(());
             }
