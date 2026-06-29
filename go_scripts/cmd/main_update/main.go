@@ -199,6 +199,8 @@ func main() {
 					hasFailures = true
 				} else {
 					fmt.Println("✅ Changes pushed to GitHub successfully.")
+					fmt.Println("\n--- Purging CDN Cache ---")
+					pipeline.RunPurgeCache()
 				}
 			}
 		}

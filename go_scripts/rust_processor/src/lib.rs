@@ -230,7 +230,7 @@ fn clean_rule(rule: &str, ruleset_name: &str, conflict_domains: &[String], skip_
             "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
             "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
             "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
-            "akamai", "fastly", "cloudflare",
+            "akamai", "fastly", "cloudflare", "browserleaks",
             "byteoversea", "tiktok", "tiktokv", "tiktokcdn", "tiktokeu",
             "tiktokw", "muscdn", "tiktokrow", "lark.com"
         ];
