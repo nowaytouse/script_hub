@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/nyamiiko/script_hub/create/hub"
@@ -339,4 +340,199 @@ func MergeUtilities() error {
 		},
 		nil,
 	)
+}
+
+var scriptLabelRe = regexp.MustCompile(`(?i)^(.+?)\s*=\s*type=`)
+
+func loadPreservedRuleSections(path string) map[string][]string {
+	if !hub.ValidateFileExists(path, "") {
+		return nil
+	}
+	_, sections := hub.ParseModule(hub.ReadFileString(path))
+	preserved := make(map[string][]string)
+	for _, sec := range sections {
+		if sec.Name == "Rule" && len(sec.Lines) > 0 {
+			preserved[sec.Name] = append([]string(nil), sec.Lines...)
+		}
+	}
+	return preserved
+}
+
+func orderSections(merged map[string][]string, order []string) []hub.ModuleSection {
+	var result []hub.ModuleSection
+	seen := make(map[string]bool)
+	for _, name := range order {
+		if lines, ok := merged[name]; ok && len(lines) > 0 {
+			result = append(result, hub.ModuleSection{Name: name, Lines: lines})
+			seen[name] = true
+		}
+	}
+	var extra []string
+	for name := range merged {
+		if !seen[name] && len(merged[name]) > 0 {
+			extra = append(extra, name)
+		}
+	}
+	sort.Strings(extra)
+	for _, name := range extra {
+		result = append(result, hub.ModuleSection{Name: name, Lines: merged[name]})
+	}
+	return result
+}
+
+func rewriteWithPreserved(path string, preserved map[string][]string, sectionOrder []string, extraHeader []string) {
+	if len(preserved) == 0 {
+		return
+	}
+	meta, sections := hub.ParseModule(hub.ReadFileString(path))
+	merged := make(map[string][]string)
+	for _, sec := range sections {
+		merged[sec.Name] = append([]string(nil), sec.Lines...)
+	}
+	for name, lines := range preserved {
+		merged[name] = lines
+	}
+	ordered := orderSections(merged, sectionOrder)
+	ordered = hub.MergeMitmHosts(ordered)
+	headerLines := hub.FormatHeader(meta, extraHeader)
+	hub.SafeWriteFile(path, hub.FormatModule(headerLines, ordered, true, nil), true)
+}
+
+func finalizeDevtoolsBundle(outputPath string) {
+	devtoolsMitmExclusions := []string{"-github.com", "-api.github.com", "-*.githubusercontent.com"}
+	text := hub.ReadFileString(outputPath)
+	meta, sections := hub.ParseModule(text)
+	merged := make(map[string][]string)
+	for _, sec := range sections {
+		merged[sec.Name] = append([]string(nil), sec.Lines...)
+	}
+
+	scriptLabels := make(map[string]bool)
+	for _, line := range merged["Script"] {
+		if m := scriptLabelRe.FindStringSubmatch(strings.TrimSpace(line)); len(m) > 1 {
+			scriptLabels[strings.TrimSpace(m[1])] = true
+		}
+	}
+	requiredSubStore := []string{"Sub-Store Core", "Sub-Store Simple", "{{{sync}}}", "{{{produce}}}"}
+	var missing []string
+	for _, label := range requiredSubStore {
+		if !scriptLabels[label] {
+			missing = append(missing, label)
+		}
+	}
+	if len(missing) > 0 {
+		hub.Warn(fmt.Sprintf("Sub-Store scripts incomplete in bundle (missing: %s)", strings.Join(missing, ", ")))
+	}
+
+	hosts := make(map[string]bool)
+	for _, line := range merged["MITM"] {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(strings.ToLower(trimmed), "hostname") {
+			continue
+		}
+		part := regexp.MustCompile(`(?i)^hostname\s*=\s*`).ReplaceAllString(trimmed, "")
+		part = regexp.MustCompile(`(?i)^(%APPEND%|%INSERT%)\s*`).ReplaceAllString(part, "")
+		for _, token := range strings.Split(part, ",") {
+			token = strings.TrimSpace(token)
+			if token != "" && token != "%INSERT%" && token != "%APPEND%" {
+				hosts[token] = true
+			}
+		}
+	}
+	for _, h := range devtoolsMitmExclusions {
+		hosts[h] = true
+	}
+	var inclusions, exclusions []string
+	for h := range hosts {
+		if strings.HasPrefix(h, "-") {
+			exclusions = append(exclusions, h)
+		} else {
+			inclusions = append(inclusions, h)
+		}
+	}
+	sort.Strings(inclusions)
+	sort.Strings(exclusions)
+	merged["MITM"] = []string{fmt.Sprintf("hostname = %%APPEND%% %s", strings.Join(append(inclusions, exclusions...), ", "))}
+
+	sectionList := orderSections(merged, hub.SectionOrder)
+	headerLines := hub.FormatHeader(meta, nil)
+	hub.SafeWriteFile(outputPath, hub.FormatModule(headerLines, sectionList, false, nil), true)
+}
+
+func MergeWeibo() error {
+	hub.Section("Weibo → LocalModules (PROMAX build source)")
+	preserved := loadPreservedRuleSections(weiboLocal)
+	err := hub.MergeUpstreamModules(
+		WeiboSources,
+		weiboLocal,
+		weiboHeader,
+		"# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	rewriteWithPreserved(weiboLocal, preserved, weiboSectionOrder, []string{
+		"# PROMAX build source — install head_expanse/PROMAX only",
+	})
+	rel, _ := filepath.Rel(hub.ROOT, weiboLocal)
+	hub.Info(fmt.Sprintf("Build source: %s", rel))
+	return nil
+}
+
+func MergeWool() error {
+	hub.Section("Wool Scripts → LocalModules (PROMAX build source)")
+	preserved := loadPreservedRuleSections(woolLocal)
+	err := hub.MergeUpstreamModules(
+		woolSources,
+		woolLocal,
+		woolHeader,
+		"# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	rewriteWithPreserved(woolLocal, preserved, weiboSectionOrder, []string{
+		"# PROMAX build source — install head_expanse/PROMAX only",
+	})
+	rel, _ := filepath.Rel(hub.ROOT, woolLocal)
+	hub.Info(fmt.Sprintf("Build source: %s", rel))
+	return nil
+}
+
+func MergeDevtools() error {
+	hub.Section("Script Hub devtools upstream bundle merge")
+	syncSubStoreScripts()
+	syncScriptHubScripts()
+	if hub.ValidateFileExists(scriptHubLocal, "") {
+		pinScriptHubScriptPaths(scriptHubLocal)
+	}
+	err := hub.MergeUpstreamModules(
+		DevtoolsSources,
+		devtoolsOutput,
+		devtoolsHeader,
+		"",
+		nil,
+		map[string]string{
+			"BoxJs":     filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "boxjs.rewrite.surge.sgmodule"),
+			"Sub-Store": filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Surge-Beta.sgmodule"),
+			"ScriptHub": scriptHubLocal,
+		},
+		[][2]string{
+			{`cors:"https://sub-store.vercel.app"`, `cors:"https://sub.store"`},
+			{`sync_success_notify:true`, `sync_success_notify:false`},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	pinSubStoreScriptPaths(devtoolsOutput)
+	pinScriptHubScriptPaths(devtoolsOutput)
+	finalizeDevtoolsBundle(devtoolsOutput)
+	return nil
 }

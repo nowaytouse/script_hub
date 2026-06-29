@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 257
+# Rules: 237
 
 DOMAIN-SUFFIX,g.ai
 DOMAIN-SUFFIX,x.ai
@@ -43,7 +43,6 @@ DOMAIN-SUFFIX,jasper.ai
 DOMAIN-SUFFIX,lovart.ai
 DOMAIN-SUFFIX,qoder.com
 DOMAIN-SUFFIX,runpod.io
-DOMAIN-SUFFIX,sentry.io
 DOMAIN-SUFFIX,tapnow.ai
 DOMAIN-SUFFIX,capcut.com
 DOMAIN-SUFFIX,ciciai.com
@@ -63,9 +62,7 @@ DOMAIN-SUFFIX,ollama.com
 DOMAIN-SUFFIX,openai.com
 DOMAIN-SUFFIX,openart.ai
 DOMAIN-SUFFIX,poecdn.net
-DOMAIN-SUFFIX,segment.io
 DOMAIN-SUFFIX,stripe.com
-DOMAIN-SUFFIX,tiktok.com
 DOMAIN-SUFFIX,tripo3d.ai
 DOMAIN-SUFFIX,youmind.ai
 DOMAIN-SUFFIX,algolia.net
@@ -89,7 +86,6 @@ DOMAIN-SUFFIX,bytedapm.com
 DOMAIN-SUFFIX,byteintl.net
 DOMAIN-SUFFIX,character.ai
 DOMAIN-SUFFIX,deepmind.com
-DOMAIN-SUFFIX,ibyteimg.com
 DOMAIN-SUFFIX,jules.google
 DOMAIN-SUFFIX,manuscdn.com
 DOMAIN-SUFFIX,marscode.com
@@ -138,7 +134,6 @@ DOMAIN-SUFFIX,deepmind.google
 DOMAIN-SUFFIX,intercomcdn.com
 DOMAIN-SUFFIX,spicywriter.com
 DOMAIN-SUFFIX,themeforest.net
-DOMAIN-SUFFIX,featuregates.org
 DOMAIN-SUFFIX,launchdarkly.com
 DOMAIN-SUFFIX,tiktokcdn-us.com
 DOMAIN-SUFFIX,comfyregistry.org
@@ -156,16 +151,12 @@ DOMAIN-SUFFIX,envatousercontent.com
 DOMAIN-SUFFIX,diabrowser.engineering
 DOMAIN-SUFFIX,agentclientprotocol.com
 DOMAIN,antigravity-unleash.goog
-DOMAIN,browser-intake-datadoghq.com
-DOMAIN,r.bing.com
 DOMAIN-SUFFIX,grok.x.com
 DOMAIN,api.msn.com
-DOMAIN,www.bing.com
 DOMAIN,ai.google.dev
 DOMAIN,api.github.com
 DOMAIN,assets.msn.com
 DOMAIN,in.appcenter.ms
-DOMAIN,sydney.bing.com
 DOMAIN-SUFFIX,apis.google.com
 DOMAIN-SUFFIX,bard.google.com
 DOMAIN-SUFFIX,labs.google.com
@@ -173,11 +164,7 @@ DOMAIN-SUFFIX,opal.google.com
 DOMAIN,api.jetbrains.ai
 DOMAIN,jules.google.com
 DOMAIN-SUFFIX,api.marscode.com
-DOMAIN-SUFFIX,mcs.zijieapi.com
-DOMAIN-SUFFIX,mon.zijieapi.com
-DOMAIN,cdn.usefathom.com
 DOMAIN-SUFFIX,gemini.google.com
-DOMAIN-SUFFIX,gemini.gstatic.com
 DOMAIN-SUFFIX,host.livekit.cloud
 DOMAIN-SUFFIX,turn.livekit.cloud
 DOMAIN,aida.googleapis.com
@@ -185,16 +172,12 @@ DOMAIN,openaicom.imgix.net
 DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,lf-cdn.marscode.com
 DOMAIN-SUFFIX,api.microsoftapp.net
-DOMAIN,copilot.microsoft.com
 DOMAIN,makersuite.google.com
 DOMAIN,services.bingapis.com
 DOMAIN-SUFFIX,aicode.googleapis.com
 DOMAIN-SUFFIX,chatgpt.livekit.cloud
-DOMAIN-SUFFIX,edgeservices.bing.com
-DOMAIN-SUFFIX,events.statsigapi.net
 DOMAIN-SUFFIX,notebooklm.google.com
 DOMAIN-SUFFIX,stitch.withgoogle.com
-DOMAIN,location.microsoft.com
 DOMAIN-SUFFIX,abtestvm.bytedance.com
 DOMAIN,pplx-res.cloudinary.com
 DOMAIN-SUFFIX,lf-rc1.yhgfb-static.com
@@ -224,14 +207,11 @@ DOMAIN,copilot-telemetry.githubusercontent.com
 DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
 DOMAIN,copilot-telemetry-service.githubusercontent.com
-DOMAIN,o33249.ingest.sentry.io
-DOMAIN,odc.officeapps.live.com
 DOMAIN,gateway.ai.cloudflare.com
 DOMAIN,gateway.bingviz.microsoft.net
 DOMAIN-SUFFIX,coderabbit.gallery.vsassets.io
 DOMAIN,gateway.bingviz.microsoftapp.net
 DOMAIN,alkalicore-pa.clients6.google.com
-DOMAIN,ppl-ai-file-upload.s3.amazonaws.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,webchannel-alkalimakersuite-pa.clients6.google.com

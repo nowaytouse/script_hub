@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 759
+# Rules: 736
 
 DOMAIN-SUFFIX,bing
 DOMAIN-SUFFIX,azure
@@ -47,7 +47,6 @@ DOMAIN-SUFFIX,azure.cn
 DOMAIN-SUFFIX,bibg.com
 DOMAIN-SUFFIX,binb.com
 DOMAIN-SUFFIX,binf.com
-DOMAIN-SUFFIX,bing.com
 DOMAIN-SUFFIX,bing.net
 DOMAIN-SUFFIX,docs.com
 DOMAIN-SUFFIX,dwh5.com
@@ -105,7 +104,6 @@ DOMAIN-SUFFIX,bingit.net
 DOMAIN-SUFFIX,bingpk.com
 DOMAIN-SUFFIX,biying.com
 DOMAIN-SUFFIX,blazor.net
-DOMAIN-SUFFIX,clarity.ms
 DOMAIN-SUFFIX,cortana.ai
 DOMAIN-SUFFIX,dictate.ms
 DOMAIN-SUFFIX,engkoo.com
@@ -153,7 +151,6 @@ DOMAIN-SUFFIX,exp-tas.com
 DOMAIN-SUFFIX,github.blog
 DOMAIN-SUFFIX,groupme.com
 DOMAIN-SUFFIX,heremaps.cn
-DOMAIN-SUFFIX,hotmail.com
 DOMAIN-SUFFIX,hotmail.net
 DOMAIN-SUFFIX,hotmail.org
 DOMAIN-SUFFIX,joinmva.com
@@ -318,7 +315,6 @@ DOMAIN-SUFFIX,renlifang.com
 DOMAIN-SUFFIX,sfbassets.com
 DOMAIN-SUFFIX,sfbassets.net
 DOMAIN-SUFFIX,sharepoint.cn
-DOMAIN-SUFFIX,uservoice.com
 DOMAIN-SUFFIX,vfsforgit.com
 DOMAIN-SUFFIX,vfsforgit.org
 DOMAIN-SUFFIX,vscodeedu.app
@@ -413,7 +409,6 @@ DOMAIN-SUFFIX,chinacloudapi.cn
 DOMAIN-SUFFIX,chinacloudapp.cn
 DOMAIN-SUFFIX,discoverbing.com
 DOMAIN-SUFFIX,fluidpreview.com
-DOMAIN-SUFFIX,footprintdns.com
 DOMAIN-SUFFIX,gearstactics.com
 DOMAIN-SUFFIX,github.community
 DOMAIN-SUFFIX,githubassets.com
@@ -668,10 +663,7 @@ DOMAIN-SUFFIX,ditu.live.com
 DOMAIN-SUFFIX,joinms.com.cn
 DOMAIN-SUFFIX,msa.akadns6.net
 DOMAIN-SUFFIX,msminico.com.cn
-DOMAIN-SUFFIX,b.akamaiedge.net
-DOMAIN-SUFFIX,g.akamaiedge.net
 DOMAIN-SUFFIX,reactorms.com.cn
-DOMAIN,crl.microsoft.com
 DOMAIN-SUFFIX,dcg.microsoft.com
 DOMAIN-SUFFIX,microsoftol.com.cn
 DOMAIN,azure.microsoft.com
@@ -681,27 +673,18 @@ DOMAIN-SUFFIX,microsoftstore.com.cn
 DOMAIN-SUFFIX,microsoftstore.com.hk
 DOMAIN,download.microsoft.com
 DOMAIN-SUFFIX,microsoftestore.com.hk
-DOMAIN-SUFFIX,spoprod-a.akamaihd.net
 DOMAIN,ctldl.windowsupdate.com
 DOMAIN,developer.microsoft.com
 DOMAIN-SUFFIX,microsoft-online.com.cn
 DOMAIN-SUFFIX,microsoftreactor.com.cn
 DOMAIN-SUFFIX,microsoftonline-p.net.cn
 DOMAIN,github-api.arkoselabs.com
-DOMAIN,mwf-service.akamaized.net
 DOMAIN-SUFFIX,download.windowsupdate.com
 DOMAIN-SUFFIX,microsoftonline-p-i.net.cn
 DOMAIN-SUFFIX,onecollector.cloudapp.aria
-DOMAIN,img-s-msn-com.akamaized.net
 DOMAIN,vsmarketplacebadge.apphb.com
 DOMAIN,azuremarketplace.microsoft.com
 DOMAIN,bingsettingssearch.trafficmanager.net
-DOMAIN,officecdn-microsoft-com.akamaized.net
-DOMAIN-SUFFIX,prod-video-cms-rt-microsoft-com.akamaized.net
-DOMAIN,statics-marketingsites-eas-ms-com.akamaized.net
-DOMAIN,statics-marketingsites-eus-ms-com.akamaized.net
-DOMAIN-SUFFIX,statics-marketingsites-neu-ms-com.akamaized.net
-DOMAIN,statics-marketingsites-wcus-ms-com.akamaized.net
 DOMAIN-SUFFIX,msn.com.nsatc.net
 DOMAIN-SUFFIX,a1158.g.akamai.net
 DOMAIN-SUFFIX,cs11.wpc.v0cdn.net
@@ -711,14 +694,8 @@ DOMAIN-SUFFIX,a767.dscg3.akamai.net
 DOMAIN,az764295.vo.msecnd.net
 DOMAIN-SUFFIX,microsoft.com.nsatc.net
 DOMAIN,vscode.search.windows.net
-DOMAIN,github-cloud.s3.amazonaws.com
 DOMAIN,download.visualstudio.microsoft.com
 DOMAIN-SUFFIX,vip5.afdorigin-prod-am02.afdogw.com
-DOMAIN,github-production-user-asset-6210df.s3.amazonaws.com
-DOMAIN,github-production-release-asset-2e65be.s3.amazonaws.com
-DOMAIN,github-production-repository-file-5c1aeb.s3.amazonaws.com
-DOMAIN,github-production-repository-image-32fea6.s3.amazonaws.com
-DOMAIN,github-production-upload-manifest-file-7fdce7.s3.amazonaws.com
 DOMAIN,vscode.blob.core.windows.net
 DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
 DOMAIN,lex.download.prss.microsoft.com
