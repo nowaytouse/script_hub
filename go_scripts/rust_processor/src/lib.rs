@@ -493,15 +493,31 @@ pub extern "C" fn safe_write_file_ffi(
 
     if atomic {
         let parent = p.parent().unwrap_or(std::path::Path::new(""));
-        let temp_path = parent.join(format!(".tmp_{}.writing", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_micros()));
-        if std::fs::write(&temp_path, content_str.as_ref()).is_ok() {
-            if std::fs::rename(&temp_path, p).is_ok() {
-                return true;
+        let file_name = p.file_name().and_then(|f| f.to_str()).unwrap_or("file");
+        let temp_path = parent.join(format!(".tmp_{}_{}.writing", file_name, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        match std::fs::write(&temp_path, content_str.as_ref()) {
+            Ok(_) => {
+                match std::fs::rename(&temp_path, p) {
+                    Ok(_) => true,
+                    Err(e) => {
+                        eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to rename temp file {:?} to {:?}: {:?}", temp_path, p, e);
+                        let _ = std::fs::remove_file(&temp_path);
+                        false
+                    }
+                }
             }
-            let _ = std::fs::remove_file(&temp_path);
+            Err(e) => {
+                eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to write temp file {:?}: {:?}", temp_path, e);
+                false
+            }
         }
-        false
     } else {
-        std::fs::write(p, content_str.as_ref()).is_ok()
+        match std::fs::write(p, content_str.as_ref()) {
+            Ok(_) => true,
+            Err(e) => {
+                eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to write file {:?}: {:?}", p, e);
+                false
+            }
+        }
     }
 }
