@@ -11,11 +11,11 @@ Go 语言版本具有无需安装第三方依赖、单文件运行、内存占�
 在终端中进入项目目录，并执行：
 ```bash
 # 全量更新 + 并推送至 Github (适合每日自动发版)
-cd go_scripts
+cd create
 go run ./cmd/main_update --execute
 
 # 测试/局部更新 (不提交至 Github，本地处理)
-cd go_scripts
+cd create
 go run ./cmd/main_update --quick
 ```
 
@@ -33,10 +33,10 @@ Python 版本是原工程的经典方案，所有重写、正则表达式规则�
 确保已安装 Python 环境（要求 `requests` 库），然后在终端中执行：
 ```bash
 # 全量更新 + 推送至 Github
-python3 scripts/pipeline/main_update.py --execute
+python3 create/scripts/pipeline/main_update.py --execute
 
 # 测试/局部更新 (不提交至 Github，本地处理)
-python3 scripts/pipeline/main_update.py --quick
+python3 create/scripts/pipeline/main_update.py --quick
 ```
 
 **命令行参数说明：**
