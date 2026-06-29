@@ -98,7 +98,7 @@ fn validate_rule_value(rule_type: &str, value: &str) -> bool {
     }
 }
 
-fn strip_inline_comment(line: &str) -> String {
+pub fn strip_inline_comment(line: &str) -> String {
     let line = line.trim();
     if line.is_empty() || line.starts_with("//") {
         return String::new();
@@ -564,4 +564,24 @@ pub extern "C" fn sync_ports_ffi(
 
     let modules_refs: Vec<&str> = modules.iter().map(|s| s.as_ref()).collect();
     firewall_sync::sync_ports(&source_str, &modules_refs, execute, &version_str);
+}
+
+pub mod smart_cleanup;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std::ffi::c_char {
+    if root_dir.is_null() {
+        return std::ptr::null_mut();
+    }
+    let c_str = unsafe { std::ffi::CStr::from_ptr(root_dir) };
+    let r_str = String::from_utf8_lossy(c_str.to_bytes());
+    
+    let stats = smart_cleanup::run_cleanup(&r_str);
+    
+    if let Ok(json_str) = serde_json::to_string(&stats) {
+        if let Ok(c_string) = std::ffi::CString::new(json_str) {
+            return c_string.into_raw();
+        }
+    }
+    std::ptr::null_mut()
 }
