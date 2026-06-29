@@ -405,8 +405,56 @@ func (m *AdBlockManager) LoadSourceEntries() []SourceEntry {
 }
 
 func (m *AdBlockManager) ResolveModuleIngestMode(path string, fromManifest bool) string {
+	if !hub.ValidateFileExists(path, "") {
+		return "skip"
+	}
+	name := filepath.Base(path)
+	if FUNCTIONAL_BLOCK_LOCAL_SOURCES[name] {
+		return "skip"
+	}
+	if ADBLOCK_FILENAME_ALLOWLIST[name] {
+		return "full"
+	}
+	low := strings.ToLower(name)
+
+	if !fromManifest {
+		dir := filepath.Dir(filepath.Clean(path))
+		nexusDir := filepath.Clean(hub.SURGE_AMPLIFY_NEXUS_DIR)
+		if dir == nexusDir {
+			return "skip"
+		}
+	}
+
+	if !fromManifest {
+		for _, tok := range FUNCTIONAL_BLOCK_NAME_TOKENS {
+			if strings.Contains(low, tok) {
+				return "skip"
+			}
+		}
+	}
+
 	text := hub.ReadFileString(path)
-	return hub.ModuleIngestMode(path, text)
+	mode := hub.ModuleIngestMode(path, text)
+	if mode != "skip" {
+		return mode
+	}
+
+	dir := filepath.Dir(filepath.Clean(path))
+	localDir := filepath.Clean(hub.MODULE_LOCAL_DIR)
+	if dir == localDir {
+		if strings.HasSuffix(name, ".sgmodule") || strings.HasSuffix(name, ".module") {
+			return "full"
+		}
+		return "skip"
+	}
+
+	for _, tok := range ADBLOCK_MODULE_NAME_TOKENS {
+		if strings.Contains(low, tok) {
+			return "full"
+		}
+	}
+
+	return "skip"
 }
 
 func (m *AdBlockManager) LoadFunctionalSourcePaths() ([][2]string, []string) {
@@ -449,25 +497,33 @@ func (m *AdBlockManager) LoadFunctionalSourcePaths() ([][2]string, []string) {
 	}
 
 	if hub.ValidateDirExists(filepath.Join(hub.ROOT, "rulesets/Sources"), "") {
-		entries, _ := os.ReadDir(filepath.Join(hub.ROOT, "rulesets/Sources"))
-		for _, entry := range entries {
-			if strings.HasSuffix(entry.Name(), ".sgmodule") || strings.HasSuffix(entry.Name(), ".module") {
-				add(filepath.Join(hub.ROOT, "rulesets/Sources", entry.Name()), false)
+		filepath.WalkDir(filepath.Join(hub.ROOT, "rulesets/Sources"), func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
 			}
-		}
+			if strings.HasSuffix(d.Name(), ".sgmodule") || strings.HasSuffix(d.Name(), ".module") {
+				add(path, false)
+			}
+			return nil
+		})
 	}
 
 	if hub.ValidateDirExists(hub.MODULE_LOCAL_DIR, "") {
-		entries, _ := os.ReadDir(hub.MODULE_LOCAL_DIR)
 		protectedModules := map[string]bool{
 			"script_hub.surge.sgmodule": true,
 		}
-		for _, entry := range entries {
-			if (!strings.HasSuffix(entry.Name(), ".sgmodule") && !strings.HasSuffix(entry.Name(), ".module")) || protectedModules[entry.Name()] {
-				continue
+		filepath.WalkDir(hub.MODULE_LOCAL_DIR, func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
 			}
-			add(filepath.Join(hub.MODULE_LOCAL_DIR, entry.Name()), false)
-		}
+			if protectedModules[d.Name()] {
+				return nil
+			}
+			if strings.HasSuffix(d.Name(), ".sgmodule") || strings.HasSuffix(d.Name(), ".module") {
+				add(path, false)
+			}
+			return nil
+		})
 	}
 
 	splitN := 0

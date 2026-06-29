@@ -127,6 +127,18 @@ func SafeWriteFile(path string, content string, atomic bool) error {
 		return fmt.Errorf("not writable: %s", path)
 	}
 
+	if _, err := os.Stat(path); err == nil {
+		oldContent, err := os.ReadFile(path)
+		if err == nil {
+			oldStripped := getSemanticContent(string(oldContent))
+			newStripped := getSemanticContent(content)
+			if oldStripped == newStripped {
+				Info(fmt.Sprintf("Skipping write for %s: No semantic changes detected.", filepath.Base(path)))
+				return nil
+			}
+		}
+	}
+
 	if atomic {
 		parent := filepath.Dir(path)
 		tmpFile, err := os.CreateTemp(parent, ".tmp_*.writing")
@@ -148,13 +160,12 @@ func SafeWriteFile(path string, content string, atomic bool) error {
 			Error(fmt.Sprintf("Failed to rename temp file: %v", err))
 			return err
 		}
-		return nil
-	}
-
-	err := os.WriteFile(path, []byte(content), 0644)
-	if err != nil {
-		Error(fmt.Sprintf("Failed to write %s: %v", path, err))
-		return err
+	} else {
+		err := os.WriteFile(path, []byte(content), 0644)
+		if err != nil {
+			Error(fmt.Sprintf("Failed to write file: %v", err))
+			return err
+		}
 	}
 	return nil
 }

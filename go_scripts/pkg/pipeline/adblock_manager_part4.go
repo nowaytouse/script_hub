@@ -923,6 +923,47 @@ func (m *AdBlockManager) Merge(execute bool) {
 	hub.Section("Fetching Canonical AdBlock Sources")
 	failures := m.ProcessSourceEntries(sourceEntries, cachedModules)
 
+	hub.Section("Integrating Local AdBlock Sources")
+	if hub.ValidateDirExists(hub.MODULE_LOCAL_DIR, "") {
+		entries, _ := os.ReadDir(hub.MODULE_LOCAL_DIR)
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			if strings.HasSuffix(name, ".sgmodule") || strings.HasSuffix(name, ".module") {
+				path := filepath.Join(hub.MODULE_LOCAL_DIR, name)
+				hub.Info(fmt.Sprintf("  + Rules from local source: %s", name))
+				content := hub.ReadFileString(path)
+				m.ExtractFromText(content, "REJECT", "Local", false, true)
+			}
+		}
+	}
+
+	hub.Section("Integrating App AdBlock Rules (LocalModules)")
+	if hub.ValidateDirExists(hub.LOCAL_MODULES_DIR, "") {
+		entries, _ := os.ReadDir(hub.LOCAL_MODULES_DIR)
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			if !strings.HasSuffix(name, ".sgmodule") && !strings.HasSuffix(name, ".module") {
+				continue
+			}
+			path := filepath.Join(hub.LOCAL_MODULES_DIR, name)
+			mode := m.ResolveModuleIngestMode(path, false)
+			if mode == "skip" {
+				continue
+			}
+			hub.Info(fmt.Sprintf("  + Rules from LocalModules (%s): %s", mode, name))
+			content := hub.ReadFileString(path)
+			m.ExtractFromText(content, "REJECT", "Local", false, true)
+		}
+	}
+
 	if execute {
 		generatedRulesets := m.generateRulesets()
 		m.integrateFunctionalSections()
