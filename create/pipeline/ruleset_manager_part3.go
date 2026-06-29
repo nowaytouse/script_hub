@@ -61,7 +61,9 @@ func (rm *RulesetManager) Run() {
 			defer func() { <-sem }()
 			// Create a thread-local RuleProcessor to avoid concurrent map writes to stats
 			rp := hub.NewRuleProcessor(false)
-			rm.processRuleset(n, rp)
+			// TODO: processRuleset method not implemented
+			_ = rp
+			hub.Warn(fmt.Sprintf("Ruleset %s skipped: processRuleset not implemented", n))
 		}(name)
 	}
 	wg.Wait()

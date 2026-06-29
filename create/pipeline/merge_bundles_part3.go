@@ -186,11 +186,8 @@ func MergeAllBundles(strict bool) []string {
 	}{
 		{"bilibili", MergeBilibili},
 		{"youtube", MergeYoutube},
-		{"weibo", MergeWeibo},
-		{"wool", MergeWool},
 		{"apple", MergeApple},
 		{"utilities", MergeUtilities},
-		{"devtools", MergeDevtools},
 	}
 
 	var failures []string
