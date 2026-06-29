@@ -26,11 +26,11 @@ jobs:
 
       - name: Build Rust Static Library
         run: |
-          cd go_scripts/rust_processor
+          cd create/processor
           cargo build --release
 
       - name: Guard generated-tree edits
         run: |
-          cd go_scripts
+          cd create
           go run ./cmd/guard
 

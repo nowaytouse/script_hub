@@ -146,12 +146,12 @@ jobs:
 
     - name: Build Rust Static Library
       run: |
-        cd go_scripts/rust_processor
+        cd create/processor
         cargo build --release
 
     - name: Execute Go Ruleset Update
       run: |
-        cd go_scripts
+        cd create
         go run ./cmd/main_update --unattended
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

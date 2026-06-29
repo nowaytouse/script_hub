@@ -83,7 +83,7 @@ func RunGuardGeneratedTree() int {
 
 	if len(generatedContentChanges) > 0 && !changedScripts {
 		fmt.Println("❌ guard: generated tree content changed without script-layer changes.")
-		fmt.Println("Please modify generation scripts under scripts/ or go_scripts/ and regenerate outputs.")
+		fmt.Println("Please modify generation scripts under scripts/ or create/ and regenerate outputs.")
 		for _, item := range generatedContentChanges {
 			fmt.Printf("  - %s\n", item)
 		}
