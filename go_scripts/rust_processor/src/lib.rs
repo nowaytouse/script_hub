@@ -478,12 +478,15 @@ pub extern "C" fn safe_write_file_ffi(
     let content_str = unsafe { std::ffi::CStr::from_ptr(content) }.to_string_lossy();
 
     let p = std::path::Path::new(path_str.as_ref());
-    
+    safe_write_file_internal(p, &content_str, atomic)
+}
+
+pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: bool) -> bool {
     // Semantic Check
     if p.exists() {
         if let Ok(old_content) = std::fs::read_to_string(p) {
             let old_stripped = url_rewriter::get_semantic_content_pub(&old_content);
-            let new_stripped = url_rewriter::get_semantic_content_pub(&content_str);
+            let new_stripped = url_rewriter::get_semantic_content_pub(content_str);
             if old_stripped == new_stripped {
                 println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", p.file_name().unwrap_or_default().to_string_lossy());
                 return true;
@@ -495,7 +498,7 @@ pub extern "C" fn safe_write_file_ffi(
         let parent = p.parent().unwrap_or(std::path::Path::new(""));
         let file_name = p.file_name().and_then(|f| f.to_str()).unwrap_or("file");
         let temp_path = parent.join(format!(".tmp_{}_{}.writing", file_name, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
-        match std::fs::write(&temp_path, content_str.as_ref()) {
+        match std::fs::write(&temp_path, content_str) {
             Ok(_) => {
                 match std::fs::rename(&temp_path, p) {
                     Ok(_) => true,
@@ -512,7 +515,7 @@ pub extern "C" fn safe_write_file_ffi(
             }
         }
     } else {
-        match std::fs::write(p, content_str.as_ref()) {
+        match std::fs::write(p, content_str) {
             Ok(_) => true,
             Err(e) => {
                 eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to write file {:?}: {:?}", p, e);
@@ -520,4 +523,45 @@ pub extern "C" fn safe_write_file_ffi(
             }
         }
     }
+}
+
+pub mod mitm_manager;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn run_mitm_cleanup_ffi(directory: *const std::ffi::c_char, dry_run: bool) -> i32 {
+    if directory.is_null() {
+        return 0;
+    }
+    let c_str = unsafe { std::ffi::CStr::from_ptr(directory) };
+    let r_str = String::from_utf8_lossy(c_str.to_bytes());
+    mitm_manager::run_mitm_cleanup(&r_str, dry_run)
+}
+
+pub mod firewall_sync;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn sync_ports_ffi(
+    ports_source: *const std::ffi::c_char,
+    firewall_modules: *const *const std::ffi::c_char,
+    firewall_modules_len: i32,
+    execute: bool,
+    version: *const std::ffi::c_char,
+) {
+    if ports_source.is_null() || firewall_modules.is_null() || version.is_null() {
+        return;
+    }
+    let source_str = unsafe { std::ffi::CStr::from_ptr(ports_source) }.to_string_lossy();
+    let version_str = unsafe { std::ffi::CStr::from_ptr(version) }.to_string_lossy();
+
+    let mut modules = Vec::new();
+    for i in 0..firewall_modules_len {
+        let ptr = unsafe { *firewall_modules.offset(i as isize) };
+        if !ptr.is_null() {
+            let s = unsafe { std::ffi::CStr::from_ptr(ptr) }.to_string_lossy();
+            modules.push(s);
+        }
+    }
+
+    let modules_refs: Vec<&str> = modules.iter().map(|s| s.as_ref()).collect();
+    firewall_sync::sync_ports(&source_str, &modules_refs, execute, &version_str);
 }
