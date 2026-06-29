@@ -1,7 +1,7 @@
 package main
 import (
 	"fmt"
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 func main() {
 	err := hub.SafeWriteFile("/Users/nyamiiko/Downloads/GitHub/script_hub/test_output.txt", "hello world", true)

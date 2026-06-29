@@ -284,6 +284,18 @@ func SafeDownloadBinary(urlStr string, retries int, timeout int, ua string) []by
 }
 
 func curlFetch(urlStr string, timeout int, retries int, ua string) []byte {
+	vendor := readVendorSnapshot(urlStr)
+	if vendor != nil && !isHTMLContent(vendor) {
+		rel := vendorSnapshotByURL[urlStr]
+		Info(fmt.Sprintf("Using vendor snapshot: %s", rel))
+		return vendor
+	}
+
+	cached := readHTTPCache(urlStr)
+	if cached != nil && !isHTMLContent(cached) {
+		return cached
+	}
+
 	userAgent := ua
 	if userAgent == "" {
 		userAgent = CurlUA
@@ -327,19 +339,6 @@ func curlFetch(urlStr string, timeout int, retries int, ua string) []byte {
 		if attempt < retries {
 			time.Sleep(time.Duration(1<<attempt) * time.Second)
 		}
-	}
-
-	cached := readHTTPCache(urlStr)
-	if cached != nil && !isHTMLContent(cached) {
-		Info(fmt.Sprintf("Using cached copy (upstream unavailable): %s", urlStr))
-		return cached
-	}
-
-	vendor := readVendorSnapshot(urlStr)
-	if vendor != nil && !isHTMLContent(vendor) {
-		rel := vendorSnapshotByURL[urlStr]
-		Info(fmt.Sprintf("Using vendor snapshot: %s", rel))
-		return vendor
 	}
 
 	// If it was a raw.githubusercontent.com URL that failed, try cdn.jsdelivr.net

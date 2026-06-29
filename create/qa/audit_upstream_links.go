@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 
 func extractUrls(filePath string) []string {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 
 var metaRe = regexp.MustCompile(`^#!\s*([A-Za-z0-9_-]+)\s*=.*$`)

@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"sort"
 	"strings"
+	"time"
 
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 
 var (
@@ -74,7 +73,6 @@ var (
 		"author": "fmz200, ScriptHub",
 		"tag":    "去广告, 综合, PROMAX-build",
 	}
-	weiboSectionOrder = []string{"Rule", "URL Rewrite", "Body Rewrite", "Map Local", "Script", "MITM"}
 
 	youtubeOutput         = filepath.Join(hub.ROOT, "modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule")
 	youtubeAdblockOutput  = filepath.Join(hub.MODULE_LOCAL_DIR, "YouTube.ADBlock.sgmodule")
@@ -165,36 +163,6 @@ var (
 	}
 )
 
-func pinSubStoreScriptPaths(modulePath string) {
-	if !hub.ValidateFileExists(modulePath, "") {
-		return
-	}
-	text := hub.ReadFileString(modulePath)
-	changed := 0
-
-	for upstreamSuffix, localName := range subStoreScriptPathMap {
-		localPath := filepath.Join(hub.MODULE_SOURCE_SCRIPTS_DIR, localName)
-		if !hub.ValidateFileExists(localPath, "") {
-			continue
-		}
-		canonical := hub.SCRIPT_RAW_PREFIX + localName
-
-		reStr := fmt.Sprintf(`script-path=https?://[^\s,]*%s`, regexp.QuoteMeta(upstreamSuffix))
-		re := regexp.MustCompile(reStr)
-
-		matches := re.FindAllStringIndex(text, -1)
-		if len(matches) > 0 {
-			text = re.ReplaceAllString(text, fmt.Sprintf(`script-path=%s`, canonical))
-			changed += len(matches)
-		}
-	}
-
-	if changed > 0 {
-		hub.SafeWriteFile(modulePath, text, true)
-		hub.Info(fmt.Sprintf("  Pinned %d Sub-Store script-path URL(s) in %s", changed, filepath.Base(modulePath)))
-	}
-}
-
 func syncSubStoreScripts() {
 	hub.EnsureDir(hub.MODULE_SOURCE_SCRIPTS_DIR)
 	updated := 0
@@ -207,46 +175,10 @@ func syncSubStoreScripts() {
 		target := filepath.Join(hub.MODULE_SOURCE_SCRIPTS_DIR, localName)
 		hub.SafeWriteFile(target, content, true)
 		updated++
+		time.Sleep(2 * time.Second)
 	}
 	if updated > 0 {
 		hub.Success(fmt.Sprintf("Synced %d/%d Sub-Store scripts to modules/source/scripts/", updated, len(subStoreScriptSources)))
-	}
-}
-
-func pinScriptHubScriptPaths(modulePath string) {
-	if !hub.ValidateFileExists(modulePath, "") {
-		return
-	}
-	text := hub.ReadFileString(modulePath)
-	changed := 0
-
-	for upstreamSuffix, localName := range scriptHubScriptPathMap {
-		localPath := filepath.Join(hub.MODULE_SOURCE_SCRIPTS_DIR, localName)
-		if !hub.ValidateFileExists(localPath, "") {
-			continue
-		}
-		canonical := hub.SCRIPT_RAW_PREFIX + localName
-
-		reStr1 := fmt.Sprintf(`script-path=https?://[^\s,]*%s`, regexp.QuoteMeta(upstreamSuffix))
-		re1 := regexp.MustCompile(reStr1)
-		matches1 := re1.FindAllStringIndex(text, -1)
-		if len(matches1) > 0 {
-			text = re1.ReplaceAllString(text, fmt.Sprintf(`script-path=%s`, canonical))
-			changed += len(matches1)
-		}
-
-		reStr2 := fmt.Sprintf(`script-path=https?://[^\s,]*%s`, regexp.QuoteMeta(localName))
-		re2 := regexp.MustCompile(reStr2)
-		matches2 := re2.FindAllStringIndex(text, -1)
-		if len(matches2) > 0 {
-			text = re2.ReplaceAllString(text, fmt.Sprintf(`script-path=%s`, canonical))
-			changed += len(matches2)
-		}
-	}
-
-	if changed > 0 {
-		hub.SafeWriteFile(modulePath, text, true)
-		hub.Info(fmt.Sprintf("  Pinned %d Script Hub script-path URL(s) in %s", changed, filepath.Base(modulePath)))
 	}
 }
 
@@ -262,6 +194,7 @@ func syncScriptHubScripts() {
 		target := filepath.Join(hub.MODULE_SOURCE_SCRIPTS_DIR, localName)
 		hub.SafeWriteFile(target, content, true)
 		updated++
+		time.Sleep(2 * time.Second)
 	}
 	if updated > 0 {
 		hub.Success(fmt.Sprintf("Synced %d/%d Script Hub scripts from upstream", updated, len(scriptHubScriptSources)))
@@ -289,14 +222,16 @@ func cleanupMergedStandaloneModules() {
 
 func MergeBilibili() error {
 	hub.Section("BiliBili upstream bundle merge")
-	return hub.MergeUpstreamModules(
-		BilibiliSources,
-		bilibiliOutput,
-		bilibiliHeader,
-		"",
-		[]string{"Helper"},
-		nil,
-		[][2]string{
+	sources, err := fetchBundleSources(BilibiliSources, []string{"Helper"}, nil)
+	if err != nil {
+		return err
+	}
+	return callMergeBundleRust(mergeBundleRequest{
+		Op:         "upstream_merge",
+		OutputPath: bilibiliOutput,
+		HeaderMeta: bilibiliHeader,
+		Sources:    sources,
+		ContentReplacements: [][2]string{
 			{`Proxies.HKG:"🇭🇰香港"`, `Proxies.HKG:"📺 哔哩哔哩 📱"`},
 			{`Proxies.MAC:"🇲🇴澳门"`, `Proxies.MAC:"📺 哔哩哔哩 📱"`},
 			{`Proxies.TWN:"🇹🇼台湾"`, `Proxies.TWN:"📺 哔哩哔哩 📱"`},
@@ -305,234 +240,110 @@ func MergeBilibili() error {
 			{`Host.OverseaVideo:"upos-sz-mirrorali.bilivideo.com"`, `Host.OverseaVideo:"upos-sz-mirrorakam.akamaized.net"`},
 			{`Host.BStar:"upos-sz-mirrorali.bilivideo.com"`, `Host.BStar:"upos-sz-mirrorakam.akamaized.net"`},
 		},
-	)
+	})
 }
 
 func MergeApple() error {
 	hub.Section("Apple services upstream bundle merge")
-	return hub.MergeUpstreamModules(
-		AppleSources,
-		appleOutput,
-		appleHeader,
-		"",
-		nil,
-		nil,
-		[][2]string{
+	sources, err := fetchBundleSources(AppleSources, nil, nil)
+	if err != nil {
+		return err
+	}
+	return callMergeBundleRust(mergeBundleRequest{
+		Op:         "upstream_merge",
+		OutputPath: appleOutput,
+		HeaderMeta: appleHeader,
+		Sources:    sources,
+		ContentReplacements: [][2]string{
 			{`Proxy:🇺🇸美国`, `Proxy:"🍎 Apple 🍏"`},
 			{`,🇺🇸美国`, `,{{{Proxy}}}`},
 			{`AirQuality.Calculate.Algorithm:"EU_EAQI"`, `AirQuality.Calculate.Algorithm:"US_AQI"`},
 		},
-	)
+	})
 }
 
 func MergeUtilities() error {
 	hub.Section("Panel utilities upstream bundle merge")
-	return hub.MergeUpstreamModules(
-		UtilitiesSources,
-		utilitiesOutput,
-		utilitiesHeader,
-		"",
-		nil,
-		map[string]string{
-			"Timecard":  filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Timecard.sgmodule"),
-			"net-lsp-x": filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "net-lsp-x.sgmodule"),
-			"Sub_Info":  filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Sub_Info.sgmodule"),
-		},
-		nil,
-	)
-}
-
-var scriptLabelRe = regexp.MustCompile(`(?i)^(.+?)\s*=\s*type=`)
-
-func loadPreservedRuleSections(path string) map[string][]string {
-	if !hub.ValidateFileExists(path, "") {
-		return nil
+	sources, err := fetchBundleSources(UtilitiesSources, nil, map[string]string{
+		"Timecard":  filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Timecard.sgmodule"),
+		"net-lsp-x": filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "net-lsp-x.sgmodule"),
+		"Sub_Info":  filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Sub_Info.sgmodule"),
+	})
+	if err != nil {
+		return err
 	}
-	_, sections := hub.ParseModule(hub.ReadFileString(path))
-	preserved := make(map[string][]string)
-	for _, sec := range sections {
-		if sec.Name == "Rule" && len(sec.Lines) > 0 {
-			preserved[sec.Name] = append([]string(nil), sec.Lines...)
-		}
-	}
-	return preserved
-}
-
-func orderSections(merged map[string][]string, order []string) []hub.ModuleSection {
-	var result []hub.ModuleSection
-	seen := make(map[string]bool)
-	for _, name := range order {
-		if lines, ok := merged[name]; ok && len(lines) > 0 {
-			result = append(result, hub.ModuleSection{Name: name, Lines: lines})
-			seen[name] = true
-		}
-	}
-	var extra []string
-	for name := range merged {
-		if !seen[name] && len(merged[name]) > 0 {
-			extra = append(extra, name)
-		}
-	}
-	sort.Strings(extra)
-	for _, name := range extra {
-		result = append(result, hub.ModuleSection{Name: name, Lines: merged[name]})
-	}
-	return result
-}
-
-func rewriteWithPreserved(path string, preserved map[string][]string, sectionOrder []string, extraHeader []string) {
-	if len(preserved) == 0 {
-		return
-	}
-	meta, sections := hub.ParseModule(hub.ReadFileString(path))
-	merged := make(map[string][]string)
-	for _, sec := range sections {
-		merged[sec.Name] = append([]string(nil), sec.Lines...)
-	}
-	for name, lines := range preserved {
-		merged[name] = lines
-	}
-	ordered := orderSections(merged, sectionOrder)
-	ordered = hub.MergeMitmHosts(ordered)
-	headerLines := hub.FormatHeader(meta, extraHeader)
-	hub.SafeWriteFile(path, hub.FormatModule(headerLines, ordered, true, nil), true)
-}
-
-func finalizeDevtoolsBundle(outputPath string) {
-	devtoolsMitmExclusions := []string{"-github.com", "-api.github.com", "-*.githubusercontent.com"}
-	text := hub.ReadFileString(outputPath)
-	meta, sections := hub.ParseModule(text)
-	merged := make(map[string][]string)
-	for _, sec := range sections {
-		merged[sec.Name] = append([]string(nil), sec.Lines...)
-	}
-
-	scriptLabels := make(map[string]bool)
-	for _, line := range merged["Script"] {
-		if m := scriptLabelRe.FindStringSubmatch(strings.TrimSpace(line)); len(m) > 1 {
-			scriptLabels[strings.TrimSpace(m[1])] = true
-		}
-	}
-	requiredSubStore := []string{"Sub-Store Core", "Sub-Store Simple", "{{{sync}}}", "{{{produce}}}"}
-	var missing []string
-	for _, label := range requiredSubStore {
-		if !scriptLabels[label] {
-			missing = append(missing, label)
-		}
-	}
-	if len(missing) > 0 {
-		hub.Warn(fmt.Sprintf("Sub-Store scripts incomplete in bundle (missing: %s)", strings.Join(missing, ", ")))
-	}
-
-	hosts := make(map[string]bool)
-	for _, line := range merged["MITM"] {
-		trimmed := strings.TrimSpace(line)
-		if !strings.HasPrefix(strings.ToLower(trimmed), "hostname") {
-			continue
-		}
-		part := regexp.MustCompile(`(?i)^hostname\s*=\s*`).ReplaceAllString(trimmed, "")
-		part = regexp.MustCompile(`(?i)^(%APPEND%|%INSERT%)\s*`).ReplaceAllString(part, "")
-		for _, token := range strings.Split(part, ",") {
-			token = strings.TrimSpace(token)
-			if token != "" && token != "%INSERT%" && token != "%APPEND%" {
-				hosts[token] = true
-			}
-		}
-	}
-	for _, h := range devtoolsMitmExclusions {
-		hosts[h] = true
-	}
-	var inclusions, exclusions []string
-	for h := range hosts {
-		if strings.HasPrefix(h, "-") {
-			exclusions = append(exclusions, h)
-		} else {
-			inclusions = append(inclusions, h)
-		}
-	}
-	sort.Strings(inclusions)
-	sort.Strings(exclusions)
-	merged["MITM"] = []string{fmt.Sprintf("hostname = %%APPEND%% %s", strings.Join(append(inclusions, exclusions...), ", "))}
-
-	sectionList := orderSections(merged, hub.SectionOrder)
-	headerLines := hub.FormatHeader(meta, nil)
-	hub.SafeWriteFile(outputPath, hub.FormatModule(headerLines, sectionList, false, nil), true)
+	return callMergeBundleRust(mergeBundleRequest{
+		Op:         "upstream_merge",
+		OutputPath: utilitiesOutput,
+		HeaderMeta: utilitiesHeader,
+		Sources:    sources,
+	})
 }
 
 func MergeWeibo() error {
 	hub.Section("Weibo → LocalModules (PROMAX build source)")
-	preserved := loadPreservedRuleSections(weiboLocal)
-	err := hub.MergeUpstreamModules(
-		WeiboSources,
-		weiboLocal,
-		weiboHeader,
-		"# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
-		nil,
-		nil,
-		nil,
-	)
+	sources, err := fetchBundleSources(WeiboSources, nil, nil)
 	if err != nil {
 		return err
 	}
-	rewriteWithPreserved(weiboLocal, preserved, weiboSectionOrder, []string{
-		"# PROMAX build source — install head_expanse/PROMAX only",
+	err = callMergeBundleRust(mergeBundleRequest{
+		Op:                "promax_source_merge",
+		OutputPath:        weiboLocal,
+		HeaderMeta:        weiboHeader,
+		ProvenanceComment: "# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
+		Sources:           sources,
 	})
-	rel, _ := filepath.Rel(hub.ROOT, weiboLocal)
-	hub.Info(fmt.Sprintf("Build source: %s", rel))
-	return nil
+	if err == nil {
+		rel, _ := filepath.Rel(hub.ROOT, weiboLocal)
+		hub.Info(fmt.Sprintf("Build source: %s", rel))
+	}
+	return err
 }
 
 func MergeWool() error {
 	hub.Section("Wool Scripts → LocalModules (PROMAX build source)")
-	preserved := loadPreservedRuleSections(woolLocal)
-	err := hub.MergeUpstreamModules(
-		woolSources,
-		woolLocal,
-		woolHeader,
-		"# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
-		nil,
-		nil,
-		nil,
-	)
+	sources, err := fetchBundleSources(woolSources, nil, nil)
 	if err != nil {
 		return err
 	}
-	rewriteWithPreserved(woolLocal, preserved, weiboSectionOrder, []string{
-		"# PROMAX build source — install head_expanse/PROMAX only",
+	err = callMergeBundleRust(mergeBundleRequest{
+		Op:                "promax_source_merge",
+		OutputPath:        woolLocal,
+		HeaderMeta:        woolHeader,
+		ProvenanceComment: "# Merged for rulesets/Sources/LocalModules → PROMAX ingest",
+		Sources:           sources,
 	})
-	rel, _ := filepath.Rel(hub.ROOT, woolLocal)
-	hub.Info(fmt.Sprintf("Build source: %s", rel))
-	return nil
+	if err == nil {
+		rel, _ := filepath.Rel(hub.ROOT, woolLocal)
+		hub.Info(fmt.Sprintf("Build source: %s", rel))
+	}
+	return err
 }
 
 func MergeDevtools() error {
 	hub.Section("Script Hub devtools upstream bundle merge")
 	syncSubStoreScripts()
 	syncScriptHubScripts()
-	if hub.ValidateFileExists(scriptHubLocal, "") {
-		pinScriptHubScriptPaths(scriptHubLocal)
-	}
-	err := hub.MergeUpstreamModules(
-		DevtoolsSources,
-		devtoolsOutput,
-		devtoolsHeader,
-		"",
-		nil,
-		map[string]string{
-			"BoxJs":     filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "boxjs.rewrite.surge.sgmodule"),
-			"Sub-Store": filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Surge-Beta.sgmodule"),
-			"ScriptHub": scriptHubLocal,
-		},
-		[][2]string{
-			{`cors:"https://sub-store.vercel.app"`, `cors:"https://sub.store"`},
-			{`sync_success_notify:true`, `sync_success_notify:false`},
-		},
-	)
+	sources, err := fetchBundleSources(DevtoolsSources, nil, map[string]string{
+		"BoxJs":     filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "boxjs.rewrite.surge.sgmodule"),
+		"Sub-Store": filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, "Surge-Beta.sgmodule"),
+		"ScriptHub": scriptHubLocal,
+	})
 	if err != nil {
 		return err
 	}
-	pinSubStoreScriptPaths(devtoolsOutput)
-	pinScriptHubScriptPaths(devtoolsOutput)
-	finalizeDevtoolsBundle(devtoolsOutput)
-	return nil
+	return callMergeBundleRust(mergeBundleRequest{
+		Op:         "devtools_merge",
+		OutputPath: devtoolsOutput,
+		HeaderMeta: devtoolsHeader,
+		Sources:    sources,
+		ContentReplacements: [][2]string{
+			{`cors:"https://sub-store.vercel.app"`, `cors:"https://sub.store"`},
+			{`sync_success_notify:true`, `sync_success_notify:false`},
+		},
+		ScriptPathSuffixMap: combinedScriptPathMap(),
+		ScriptRawPrefix:     hub.SCRIPT_RAW_PREFIX,
+		ScriptsDir:          hub.MODULE_SOURCE_SCRIPTS_DIR,
+		ScriptHubLocal:      scriptHubLocal,
+	})
 }

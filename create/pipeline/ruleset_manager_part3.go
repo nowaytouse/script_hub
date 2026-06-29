@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
-	"sync"
 
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 
 func (rm *RulesetManager) Run() {
@@ -44,26 +42,11 @@ func (rm *RulesetManager) Run() {
 	}
 	sort.Strings(allToProcess)
 
-	// Process rulesets concurrently using a bounded worker pool matching the CPU count.
-	// Network downloads inside processRuleset are strictly rate-limited and locked sequentially via downloadMu.
-	numWorkers := runtime.NumCPU()
-	if numWorkers < 1 {
-		numWorkers = 1
-	}
-	sem := make(chan struct{}, numWorkers)
-	var wg sync.WaitGroup
-
+	// Process rulesets serially — Go schedules network fetches; Rust handles local merge via FFI.
 	for _, name := range allToProcess {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(n string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			rp := hub.NewRuleProcessor(false)
-			rm.processRuleset(n, rp)
-		}(name)
+		rp := hub.NewRuleProcessor(false)
+		rm.processRuleset(name, rp)
 	}
-	wg.Wait()
 
 	rm.pruneEmptyRulesets()
 	rm.saveHashes()

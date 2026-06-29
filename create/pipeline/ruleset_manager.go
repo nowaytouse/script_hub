@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 
 var downloadMu sync.Mutex

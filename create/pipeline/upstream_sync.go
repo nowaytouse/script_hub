@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nyamiiko/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/hub"
 )
 
 var skkSources = map[string]string{

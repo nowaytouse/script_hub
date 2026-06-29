@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/nyamiiko/script_hub/create/qa"
+	"github.com/nowaytouse/script_hub/create/qa"
 )
 
 func main() {

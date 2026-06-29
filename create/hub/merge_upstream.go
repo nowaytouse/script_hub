@@ -13,6 +13,11 @@ type SourceSpec struct {
 	URL   string
 }
 
+// FetchModule downloads one upstream Surge module (Go network layer only).
+func FetchModule(urlStr, label, localFallback, customUA string) (string, error) {
+	return fetchModule(urlStr, label, localFallback, customUA)
+}
+
 func fetchModule(urlStr, label, localFallback, customUA string) (string, error) {
 	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
 		content := SafeDownloadString(urlStr, 2, 60, customUA)
