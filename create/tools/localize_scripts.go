@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var (
@@ -57,7 +58,7 @@ func downloadScript(u string) string {
 	}
 
 	fmt.Printf("  📥 Downloading script: %s\n", u)
-	content := hub.SafeDownload(u, 2, 15)
+	content := network.SafeDownload(u, 2, 15)
 	if content != "" {
 		hub.SafeWriteFile(localPath, content, true)
 		return localFilename

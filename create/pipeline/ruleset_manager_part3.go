@@ -15,7 +15,7 @@ func (rm *RulesetManager) Run() {
 	hub.EnsureDir(surgeDir)
 
 	var allFiles []string
-	entries, _ := os.ReadDir(surgeDir)
+	entries, _ := ReadDir(surgeDir)
 	for _, entry := range entries {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".list") && !strings.HasSuffix(entry.Name(), "_ip.list") {
 			allFiles = append(allFiles, strings.TrimSuffix(entry.Name(), ".list"))

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var skkSources = map[string]string{
@@ -205,16 +206,11 @@ func extractTarGz(tarGzPath string, rootPath string, destPath string) error {
 }
 
 func (u *UpstreamSyncer) downloadToFile(urlStr string, destPath string, ua string) bool {
-	data := hub.SafeDownloadBinary(urlStr, 2, 60, ua)
-	if data == nil {
-		return false
-	}
-	err := hub.SafeWriteFile(destPath, string(data), true)
-	return err == nil
+	return network.DownloadToFile(urlStr, destPath, ua)
 }
 
 func (u *UpstreamSyncer) download(urlStr string, ua string) []byte {
-	return hub.SafeDownloadBinary(urlStr, 2, 60, ua)
+	return network.DownloadWithUA(urlStr, ua)
 }
 
 func (u *UpstreamSyncer) SyncSkk() {

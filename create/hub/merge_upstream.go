@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 type SourceSpec struct {
@@ -13,31 +15,10 @@ type SourceSpec struct {
 	URL   string
 }
 
-// FetchModule downloads one upstream Surge module (Go network layer only).
+// FetchModule downloads one upstream Surge module.
+// Delegates to network.FetchModule (Go network layer).
 func FetchModule(urlStr, label, localFallback, customUA string) (string, error) {
-	return fetchModule(urlStr, label, localFallback, customUA)
-}
-
-func fetchModule(urlStr, label, localFallback, customUA string) (string, error) {
-	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
-		content := SafeDownloadString(urlStr, 2, 60, customUA)
-		if content != "" && len(strings.TrimSpace(content)) >= 20 {
-			time.Sleep(3 * time.Second) // strict delay to avoid shadowban/rate limits
-			return content, nil
-		}
-	} else if ValidateFileExists(urlStr, "") {
-		content := ReadFileString(urlStr)
-		if len(strings.TrimSpace(content)) >= 20 {
-			return content, nil
-		}
-	}
-
-	if localFallback != "" && ValidateFileExists(localFallback, "") {
-		Warn(fmt.Sprintf("Using local fallback for %s", label))
-		return ReadFileString(localFallback), nil
-	}
-
-	return "", fmt.Errorf("failed to load upstream module: %s (%s)", label, urlStr)
+	return network.FetchModule(urlStr, label, localFallback, customUA)
 }
 
 func combineMetadata(parts []map[string]interface{}) (string, string, string) {
@@ -127,7 +108,7 @@ func MergeUpstreamModules(sources []SourceSpec, outputPath string, headerMeta ma
 			fallback = localFallbacks[src.Label]
 		}
 
-		text, err := fetchModule(src.URL, src.Label, fallback, customUA)
+		text, err := network.FetchModule(src.URL, src.Label, fallback, customUA)
 		if err != nil {
 			if optional[src.Label] {
 				Warn(fmt.Sprintf("Skipping optional source %s: %v", src.Label, err))

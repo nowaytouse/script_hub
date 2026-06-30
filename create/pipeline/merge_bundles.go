@@ -2,12 +2,12 @@ package pipeline
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var (
@@ -167,7 +167,7 @@ func syncSubStoreScripts() {
 	hub.EnsureDir(hub.MODULE_SOURCE_SCRIPTS_DIR)
 	updated := 0
 	for localName, urlStr := range subStoreScriptSources {
-		content := hub.SafeDownload(urlStr, 2, 90)
+		content := network.SafeDownload(urlStr, 2, 90)
 		if content == "" {
 			hub.Warn(fmt.Sprintf("Sub-Store script sync skipped: %s", localName))
 			continue
@@ -186,7 +186,7 @@ func syncScriptHubScripts() {
 	hub.EnsureDir(hub.MODULE_SOURCE_SCRIPTS_DIR)
 	updated := 0
 	for localName, urlStr := range scriptHubScriptSources {
-		content := hub.SafeDownload(urlStr, 2, 60)
+		content := network.SafeDownload(urlStr, 2, 60)
 		if content == "" {
 			hub.Warn(fmt.Sprintf("Script Hub script sync skipped: %s", localName))
 			continue
@@ -206,12 +206,12 @@ func cleanupMergedStandaloneModules() {
 	removed := 0
 	for _, name := range mergedStandaloneSurge {
 		surgePath := filepath.Join(hub.SURGE_AMPLIFY_NEXUS_DIR, name)
-		if err := os.Remove(surgePath); err == nil {
+		if RemoveFile(surgePath, true) {
 			removed++
 		}
 		srName := strings.ReplaceAll(name, ".sgmodule", ".module")
 		srPath := filepath.Join(srDir, srName)
-		if err := os.Remove(srPath); err == nil {
+		if RemoveFile(srPath, true) {
 			removed++
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 func RunRefreshVendorSnapshots() int {
@@ -26,7 +27,7 @@ func RunRefreshVendorSnapshots() int {
 	failed := 0
 	for _, pair := range pairs {
 		dest := filepath.Join(vendorDir, pair.name)
-		content := hub.SafeDownload(pair.url, 2, 90)
+		content := network.SafeDownload(pair.url, 2, 90)
 		if content == "" {
 			fmt.Printf("FAIL %s (%s)\n", pair.name, pair.url)
 			failed++

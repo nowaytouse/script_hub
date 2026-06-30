@@ -3,19 +3,18 @@ package hub
 import (
 	"bufio"
 	"crypto/md5"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"sort"
 	"strings"
-	"time"
+
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 // COLORS & LOGGING
@@ -123,9 +122,9 @@ func getSemanticContent(text string) string {
 
 func WriteFile(filePath string, content string) error {
 	if _, err := os.Stat(filePath); err == nil {
-		oldContent, err := os.ReadFile(filePath)
-		if err == nil {
-			oldStripped := getSemanticContent(string(oldContent))
+		oldBytes, _ := os.ReadFile(filePath)
+		if len(oldBytes) > 0 {
+			oldStripped := getSemanticContent(string(oldBytes))
 			newStripped := getSemanticContent(content)
 			if oldStripped == newStripped {
 				Info(fmt.Sprintf("Skipping write for %s: No semantic changes detected.", filepath.Base(filePath)))
@@ -133,7 +132,11 @@ func WriteFile(filePath string, content string) error {
 			}
 		}
 	}
-	return SafeWriteFile(filePath, content, true)
+	tmp := filePath + ".tmp"
+	if err := os.WriteFile(tmp, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write file: %s: %w", filePath, err)
+	}
+	return os.Rename(tmp, filePath)
 }
 
 func ExtractSection(lines []string, sectionName string) []string {
@@ -177,29 +180,24 @@ var BrowserUA = fmt.Sprintf("Loon/%s", LOON_VERSION)
 var CurlUA = BrowserUA
 
 func AtomicWrite(filePath string, content string) bool {
-	return SafeWriteFile(filePath, content, true) == nil
+	tmp := filePath + ".tmp"
+	if err := os.WriteFile(tmp, []byte(content), 0644); err != nil {
+		return false
+	}
+	return os.Rename(tmp, filePath) == nil
 }
 
 func SafeRemove(filePath string, missingOk bool) bool {
 	err := os.Remove(filePath)
 	if err != nil && !os.IsNotExist(err) {
-		Error(fmt.Sprintf("Failed to remove file %s: %v", filePath, err))
 		return false
 	}
 	return true
 }
 
 func SafeRemoveTree(dirPath string, missingOk bool) bool {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		if missingOk {
-			return true
-		}
-		Warn(fmt.Sprintf("Directory does not exist: %s", dirPath))
-		return false
-	}
 	err := os.RemoveAll(dirPath)
-	if err != nil {
-		Error(fmt.Sprintf("Failed to remove directory %s: %v", dirPath, err))
+	if err != nil && !os.IsNotExist(err) {
 		return false
 	}
 	return true
@@ -218,156 +216,12 @@ func HasDangerousChars(line string) bool {
 	return strings.Contains(line, "<") || strings.Contains(line, ">") || strings.Contains(line, "{") || strings.Contains(line, "}") || strings.Contains(line, "function(") || strings.Contains(line, "window.") || strings.Contains(line, "document.")
 }
 
-var vendorSnapshotByURL = map[string]string{
-	"https://yfamilys.com/module/adultraplus.sgmodule": "adultraplus.sgmodule",
-	"https://yfamilys.com/module/bili.module":          "bili.module",
-	"https://yfamilys.com/rule/Kemono.list":            "yfamilys_Kemono.list",
-	"https://yfamilys.com/rule/Cloudflare.list":        "yfamilys_Cloudflare.list",
-}
-
-func getVendorDir() string {
-	return filepath.Join(GetProjectRoot(), "rulesets", "Sources", "vendor")
-}
-
-func httpCachePath(urlStr string) string {
-	hash := sha256.Sum256([]byte(urlStr))
-	digest := hex.EncodeToString(hash[:])[:32]
-	return filepath.Join(GetProjectRoot(), ".cache", "http", digest)
-}
-
-func readHTTPCache(urlStr string) []byte {
-	path := httpCachePath(urlStr)
+func ReadFileString(path string) string {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil
-	}
-	return data
-}
-
-func writeHTTPCache(urlStr string, data []byte) {
-	path := httpCachePath(urlStr)
-	os.MkdirAll(filepath.Dir(path), 0755)
-	os.WriteFile(path, data, 0644)
-}
-
-func readVendorSnapshot(urlStr string) []byte {
-	rel, ok := vendorSnapshotByURL[urlStr]
-	if !ok {
-		return nil
-	}
-	path := filepath.Join(getVendorDir(), rel)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	return data
-}
-
-func SafeDownloadString(urlStr string, retries int, timeout int, ua string) string {
-	data := SafeDownloadBinary(urlStr, retries, timeout, ua)
-	if data == nil {
 		return ""
 	}
 	return string(data)
-}
-
-func SafeDownloadBinary(urlStr string, retries int, timeout int, ua string) []byte {
-	raw := curlFetch(urlStr, timeout, retries, ua)
-	if raw == nil {
-		return nil
-	}
-	if isHTMLContent(raw) {
-		Warn(fmt.Sprintf("Download rejected: %s returned HTML instead of raw data (blocked or redirected).", urlStr))
-		return nil
-	}
-	return raw
-}
-
-func curlFetch(urlStr string, timeout int, retries int, ua string) []byte {
-	vendor := readVendorSnapshot(urlStr)
-	if vendor != nil && !isHTMLContent(vendor) {
-		rel := vendorSnapshotByURL[urlStr]
-		Info(fmt.Sprintf("Using vendor snapshot: %s", rel))
-		return vendor
-	}
-
-	cached := readHTTPCache(urlStr)
-	if cached != nil && !isHTMLContent(cached) {
-		return cached
-	}
-
-	userAgent := ua
-	if userAgent == "" {
-		userAgent = CurlUA
-	}
-
-	client := &http.Client{
-		Timeout: time.Duration(timeout) * time.Second,
-	}
-
-	var lastErr string
-	for attempt := 0; attempt <= retries; attempt++ {
-		req, err := http.NewRequest("GET", urlStr, nil)
-		if err == nil {
-			req.Header.Set("User-Agent", userAgent)
-			req.Header.Set("Accept", "text/plain, application/octet-stream, */*")
-			resp, err := client.Do(req)
-			if err == nil {
-				defer resp.Body.Close()
-				if resp.StatusCode == 200 {
-					data, err := io.ReadAll(resp.Body)
-					if err == nil {
-						writeHTTPCache(urlStr, data)
-						return data
-					} else {
-						lastErr = fmt.Sprintf("Read error: %v", err)
-					}
-				} else {
-					httpHint := ""
-					if resp.StatusCode >= 400 {
-						httpHint = " (HTTP 4xx/5xx — upstream may block datacenter IPs)"
-					}
-					lastErr = fmt.Sprintf("HTTP exit %d%s", resp.StatusCode, httpHint)
-				}
-			} else {
-				lastErr = fmt.Sprintf("Request Exception: %v", err)
-			}
-		} else {
-			lastErr = fmt.Sprintf("Request Creation Exception: %v", err)
-		}
-
-		if attempt < retries {
-			time.Sleep(time.Duration(1<<attempt) * time.Second)
-		}
-	}
-
-	// If it was a raw.githubusercontent.com URL that failed, try cdn.jsdelivr.net
-	if strings.HasPrefix(urlStr, "https://raw.githubusercontent.com/") {
-		parts := strings.SplitN(urlStr[34:], "/", 4)
-		if len(parts) == 4 {
-			mirrorUrl := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%s/%s@%s/%s", parts[0], parts[1], parts[2], parts[3])
-			Info(fmt.Sprintf("Download failed/rejected, trying JSDelivr mirror: %s", mirrorUrl))
-			return curlFetch(mirrorUrl, timeout, 1, ua)
-		}
-	}
-
-	// If it was a cdn.jsdelivr.net URL that failed, try fastly.jsdelivr.net
-	if strings.HasPrefix(urlStr, "https://cdn.jsdelivr.net/") {
-		fastlyUrl := strings.Replace(urlStr, "https://cdn.jsdelivr.net/", "https://fastly.jsdelivr.net/", 1)
-		Info(fmt.Sprintf("Download failed, trying fastly mirror: %s", fastlyUrl))
-		return curlFetch(fastlyUrl, timeout, 1, ua)
-	}
-
-	Warn(fmt.Sprintf("Download failed: %s | Reason: %s", urlStr, lastErr))
-	return nil
-}
-
-func ReadFileString(path string) string {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	return string(content)
 }
 
 // IterLines returns an iterator over the lines of the file at the given path.
@@ -405,6 +259,17 @@ func UniqueStrings(input []string) []string {
 	return result
 }
 
+// Network function wrappers for backward compatibility
+// These delegate to the network package
+
 func SafeDownload(url string, retries int, timeout int) string {
-	return SafeDownloadString(url, retries, timeout, "")
+	return network.SafeDownload(url, retries, timeout)
+}
+
+func SafeDownloadString(urlStr string, retries int, timeout int, ua string) string {
+	return network.SafeDownloadString(urlStr, retries, timeout, ua)
+}
+
+func SafeDownloadBinary(urlStr string, retries int, timeout int, ua string) []byte {
+	return network.SafeDownloadBinary(urlStr, retries, timeout, ua)
 }

@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var downloadMu sync.Mutex
@@ -106,7 +106,7 @@ func (rm *RulesetManager) findCaseInsensitiveFile(directory, filename string) st
 		return exact
 	}
 	filenameLower := strings.ToLower(filename)
-	entries, err := os.ReadDir(directory)
+	entries, err := ReadDir(directory)
 	if err == nil {
 		for _, entry := range entries {
 			if strings.ToLower(entry.Name()) == filenameLower {
@@ -120,7 +120,7 @@ func (rm *RulesetManager) findCaseInsensitiveFile(directory, filename string) st
 func (rm *RulesetManager) tryDecompress(data []byte) []byte {
 	r, err := gzip.NewReader(bytes.NewReader(data))
 	if err == nil {
-		dec, err := os.ReadFile(r.Name)
+		dec, err := ReadFile(r.Name)
 		if err == nil {
 			return dec
 		}
@@ -171,7 +171,7 @@ func (rm *RulesetManager) download(url string) string {
 	isLsr := strings.HasSuffix(strings.ToLower(url), ".lsr")
 	if isLsr {
 		// Download binary
-		raw := hub.SafeDownload(url, 2, 60)
+		raw := network.SafeDownload(url, 2, 60)
 		if raw == "" {
 			return ""
 		}
@@ -182,7 +182,7 @@ func (rm *RulesetManager) download(url string) string {
 		}
 		return ""
 	} else {
-		return hub.SafeDownload(url, 2, 60)
+		return network.SafeDownload(url, 2, 60)
 	}
 }
 

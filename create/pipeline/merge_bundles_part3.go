@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 func fetchYoutubeUpstream() string {
-	text := hub.SafeDownload(hub.YOUTUBE_ENHANCE_URL, 2, 60)
+	text := network.SafeDownload(hub.YOUTUBE_ENHANCE_URL, 2, 60)
 	if text != "" && len(strings.TrimSpace(text)) > 100 {
 		hub.Info(fmt.Sprintf("Using upstream: %s", hub.YOUTUBE_ENHANCE_URL))
 		return text

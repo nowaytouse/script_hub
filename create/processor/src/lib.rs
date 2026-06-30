@@ -481,6 +481,73 @@ pub extern "C" fn safe_write_file_ffi(
     safe_write_file_internal(p, &content_str, atomic)
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn read_file_to_string_ffi(path: *const std::ffi::c_char) -> *mut std::ffi::c_char {
+    if path.is_null() {
+        return std::ptr::null_mut();
+    }
+    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
+    
+    match std::fs::read_to_string(path_str.as_ref()) {
+        Ok(content) => {
+            if let Ok(c_string) = std::ffi::CString::new(content) {
+                c_string.into_raw()
+            } else {
+                std::ptr::null_mut()
+            }
+        }
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn file_exists_ffi(path: *const std::ffi::c_char) -> bool {
+    if path.is_null() {
+        return false;
+    }
+    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
+    std::path::Path::new(path_str.as_ref()).exists()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn ensure_dir_ffi(path: *const std::ffi::c_char) -> bool {
+    if path.is_null() {
+        return false;
+    }
+    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
+    std::fs::create_dir_all(path_str.as_ref()).is_ok()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn remove_file_ffi(path: *const std::ffi::c_char, missing_ok: bool) -> bool {
+    if path.is_null() {
+        return false;
+    }
+    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
+    let p = std::path::Path::new(path_str.as_ref());
+    
+    if !p.exists() {
+        return missing_ok;
+    }
+    
+    std::fs::remove_file(p).is_ok()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn remove_dir_all_ffi(path: *const std::ffi::c_char, missing_ok: bool) -> bool {
+    if path.is_null() {
+        return false;
+    }
+    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
+    let p = std::path::Path::new(path_str.as_ref());
+    
+    if !p.exists() {
+        return missing_ok;
+    }
+    
+    std::fs::remove_dir_all(p).is_ok()
+}
+
 pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: bool) -> bool {
     // Semantic Check
     if p.exists() {

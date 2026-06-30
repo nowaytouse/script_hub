@@ -3,7 +3,6 @@ package pipeline
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/nowaytouse/script_hub/create/hub"
@@ -29,7 +28,7 @@ func SyncMocks() int {
 	count := 0
 	for filename, content := range mocksData {
 		path := filepath.Join(mocksDir, filename)
-		if err := os.WriteFile(path, content, 0644); err == nil {
+		if err := WriteFile(path, content, 0644); err == nil {
 			hub.Success(fmt.Sprintf("Generated mock locally: %s", filename))
 			count++
 		} else {

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var (
@@ -123,7 +124,7 @@ func fetchRuleset(urlOrPath string) []string {
 
 	if content == "" && strings.HasPrefix(urlOrPath, "http") {
 		// Download with retries
-		content = hub.SafeDownload(urlOrPath, 3, 10)
+		content = network.SafeDownload(urlOrPath, 3, 10)
 	}
 
 	if content == "" {

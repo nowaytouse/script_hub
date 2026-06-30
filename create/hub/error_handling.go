@@ -1,14 +1,5 @@
 package hub
 
-/*
-#cgo LDFLAGS: -L../../target/release -lrust_processor
-#include <stdbool.h>
-#include <stdlib.h>
-extern bool safe_write_file_ffi(const char* path, const char* content, bool atomic);
-*/
-import "C"
-import "unsafe"
-
 import (
 	"fmt"
 	"net/http"
@@ -71,8 +62,7 @@ func EnsureParentDir(filePath string) bool {
 	parent := filepath.Dir(filePath)
 	if parent != "" && parent != "." {
 		if _, err := os.Stat(parent); os.IsNotExist(err) {
-			err = os.MkdirAll(parent, 0755)
-			if err != nil {
+			if err := os.MkdirAll(parent, 0755); err != nil {
 				Error(fmt.Sprintf("Failed to create parent directory for %s: %v", filePath, err))
 				return false
 			}
@@ -135,41 +125,28 @@ func SafeWriteFile(path string, content string, atomic bool) error {
 	if !ValidateOutputWritable(path, "Output file") {
 		return fmt.Errorf("not writable: %s", path)
 	}
-
-	cPath := C.CString(path)
-	defer C.free(unsafe.Pointer(cPath))
-	cContent := C.CString(content)
-	defer C.free(unsafe.Pointer(cContent))
-	
-	success := C.safe_write_file_ffi(cPath, cContent, C.bool(atomic))
-	if !success {
-		err := fmt.Errorf("failed to write file via Rust FFI: %s", path)
-		Error(err.Error())
+	tmp := path
+	if atomic {
+		tmp = path + ".tmp"
+	}
+	if err := os.WriteFile(tmp, []byte(content), 0644); err != nil {
+		Error(fmt.Sprintf("Failed to write file: %s: %v", path, err))
 		return err
+	}
+	if atomic && tmp != path {
+		if err := os.Rename(tmp, path); err != nil {
+			Error(fmt.Sprintf("Failed to rename %s → %s: %v", tmp, path, err))
+			os.Remove(tmp)
+			return err
+		}
 	}
 	return nil
 }
 
 func SafeRemoveFile(path string, missingOk bool) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			if missingOk {
-				return true
-			}
-			Warn(fmt.Sprintf("File does not exist: %s", path))
-			return false
-		}
-		Error(fmt.Sprintf("Stat error: %v", err))
-		return false
-	}
-	if info.IsDir() {
-		Error(fmt.Sprintf("Not a file: %s", path))
-		return false
-	}
-	err = os.Remove(path)
-	if err != nil {
-		Error(fmt.Sprintf("Failed to remove %s: %v", path, err))
+	err := os.Remove(path)
+	if err != nil && !os.IsNotExist(err) {
+		Error(fmt.Sprintf("Failed to remove file: %s: %v", path, err))
 		return false
 	}
 	return true
@@ -201,15 +178,12 @@ func ValidateURL(urlStr string) bool {
 	return true
 }
 
-// HELPER FUNCTIONS
-
+// CheckNetworkConnectivity checks if network is reachable via a test URL.
 func CheckNetworkConnectivity(testURL string, timeoutSeconds int) bool {
 	if testURL == "" {
 		testURL = "https://www.google.com"
 	}
-	client := &http.Client{
-		Timeout: time.Duration(timeoutSeconds) * time.Second,
-	}
+	client := &http.Client{Timeout: time.Duration(timeoutSeconds) * time.Second}
 	_, err := client.Get(testURL)
 	if err != nil {
 		Warn("Network connectivity check failed")

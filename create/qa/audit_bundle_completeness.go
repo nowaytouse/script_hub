@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 	"github.com/nowaytouse/script_hub/create/pipeline"
 )
 
@@ -91,7 +92,7 @@ func auditBundle(spec bundleSpec) []string {
 	upstreamMitm := make(map[string]bool)
 
 	for _, src := range spec.sources {
-		text := hub.SafeDownload(src.URL, 2, 60)
+		text := network.SafeDownload(src.URL, 2, 60)
 		if text == "" {
 			issues = append(issues, fmt.Sprintf("%s: failed to fetch upstream [%s]", spec.label, src.Label))
 			continue

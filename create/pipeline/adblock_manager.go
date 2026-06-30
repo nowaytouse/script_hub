@@ -17,6 +17,7 @@ import (
 	"unsafe"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 type AdBlockManager struct{}
@@ -66,11 +67,11 @@ func (m *AdBlockManager) Merge(execute bool) {
 	// 3. Download remote contents serially
 	hub.Info(fmt.Sprintf("Gathered %d remote URLs to download", len(remoteUrls)))
 	remoteContents := make(map[string]string)
-	
+
 	idx := 1
 	for u := range remoteUrls {
 		hub.Info(fmt.Sprintf("Downloading remote source (%d/%d): %s", idx, len(remoteUrls), u))
-		content := hub.SafeDownload(u, 2, 60)
+		content := network.SafeDownload(u, 2, 60)
 		if content != "" {
 			remoteContents[u] = content
 		} else {

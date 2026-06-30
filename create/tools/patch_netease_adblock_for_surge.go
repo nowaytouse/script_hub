@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var (
@@ -60,7 +61,7 @@ func patchAdultraplusModules() int {
 
 func RunPatchNeteaseAdblockForSurge() int {
 	fmt.Println("Patch netease.adblock.js for Surge")
-	raw := hub.SafeDownload(gistUrl, 2, 60)
+	raw := network.SafeDownload(gistUrl, 2, 60)
 	if raw == "" || len(raw) < 1000 {
 		fmt.Printf("Failed to download upstream: %s\n", gistUrl)
 		return 1
