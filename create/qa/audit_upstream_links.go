@@ -2,7 +2,6 @@ package qa
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 func extractUrls(filePath string) []string {
@@ -20,19 +20,11 @@ func extractUrls(filePath string) []string {
 }
 
 func checkUrl(urlStr string) (string, int, string) {
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-		// Using default transport is fine here, skipping SSL validation isn't strictly necessary
-		// unless there's a specific issue, but we can do a simple GET.
-	}
-	req, _ := http.NewRequest("GET", urlStr, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0")
-	resp, err := client.Do(req)
+	status, err := network.CheckURL(urlStr)
 	if err != nil {
 		return urlStr, 0, err.Error()
 	}
-	defer resp.Body.Close()
-	return urlStr, resp.StatusCode, ""
+	return urlStr, status, ""
 }
 
 func RunAuditUpstreamLinks() int {

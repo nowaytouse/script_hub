@@ -5,16 +5,15 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/nowaytouse/script_hub/create/hub"
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 var (
@@ -24,108 +23,14 @@ var (
 	mihomoLocalPath   = filepath.Join(hub.ROOT, "scripts/config-manager-auto-update/bin/mihomo")
 )
 
-// downloadFile cleanly downloads a file using http package with retry and mirror fallback
+// downloadFile delegates to network.DownloadFile (mirror fallback included).
 func downloadFile(url, filepath string) error {
-	mirrorURL := "https://ghproxy.net/" + url
-
-	hub.Info(fmt.Sprintf("Downloading from primary source: %s", url))
-	// Try primary URL exactly once with a shorter timeout (15 seconds) to avoid long hangs
-	err := downloadOnce(url, filepath, 15*time.Second)
-	if err == nil {
-		return nil
-	}
-
-	hub.Warn(fmt.Sprintf("Primary source failed: %v. Trying mirror source: %s", err, mirrorURL))
-	// Try mirror URL with retries and a longer 120-second timeout for slow connections
-	return downloadWithRetries(mirrorURL, filepath, 3, 120*time.Second)
+	return network.DownloadFile(url, filepath)
 }
 
-func downloadOnce(url, filepath string, timeout time.Duration) error {
-	client := &http.Client{Timeout: timeout}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-	// Set browser User-Agent to prevent blockages
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "application/octet-stream, */*")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	return err
-}
-
-func downloadWithRetries(url, filepath string, maxAttempts int, timeout time.Duration) error {
-	var lastErr error
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		err := downloadOnce(url, filepath, timeout)
-		if err == nil {
-			return nil
-		}
-		lastErr = err
-		if attempt < maxAttempts {
-			hub.Info(fmt.Sprintf("Download attempt %d failed: %v. Retrying in 1s...", attempt, err))
-			time.Sleep(1 * time.Second)
-		}
-	}
-	return lastErr
-}
-
+// getLatestVersion delegates to network.GetLatestGitHubVersion.
 func getLatestVersion(repo string, includePrerelease bool) string {
-	url := fmt.Sprintf("https://github.com/%s/releases", repo)
-	if !includePrerelease {
-		url += "/latest"
-	}
-
-	client := &http.Client{Timeout: 10 * time.Second} // Shorter timeout for HTML scraping
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return ""
-	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return ""
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return ""
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return ""
-	}
-	body := string(bodyBytes)
-
-	pattern := fmt.Sprintf(`href="/%s/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?)["']`, repo)
-	if !includePrerelease {
-		pattern = fmt.Sprintf(`href="/%s/releases/tag/v([0-9]+\.[0-9]+\.[0-9]+)["']`, repo)
-	}
-
-	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(body)
-	if len(matches) > 1 {
-		return matches[1]
-	}
-	return ""
+	return network.GetLatestGitHubVersion(repo, includePrerelease)
 }
 
 func getArchOs() (string, string) {
