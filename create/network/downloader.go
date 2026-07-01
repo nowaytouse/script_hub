@@ -121,3 +121,13 @@ func CheckURL(urlStr string) (int, error) {
 	defer resp.Body.Close()
 	return resp.StatusCode, nil
 }
+
+// CheckConnectivity checks if a URL is reachable within the given timeout (seconds).
+func CheckConnectivity(testURL string, timeoutSeconds int) bool {
+	if testURL == "" {
+		testURL = "https://www.google.com"
+	}
+	client := &http.Client{Timeout: time.Duration(timeoutSeconds) * time.Second}
+	_, err := client.Get(testURL)
+	return err == nil
+}

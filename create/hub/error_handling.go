@@ -2,11 +2,12 @@ package hub
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/nowaytouse/script_hub/create/network"
 )
 
 // PATH VALIDATION
@@ -178,16 +179,7 @@ func ValidateURL(urlStr string) bool {
 	return true
 }
 
-// CheckNetworkConnectivity checks if network is reachable via a test URL.
+// CheckNetworkConnectivity checks if a URL is reachable. Delegates to network package.
 func CheckNetworkConnectivity(testURL string, timeoutSeconds int) bool {
-	if testURL == "" {
-		testURL = "https://www.google.com"
-	}
-	client := &http.Client{Timeout: time.Duration(timeoutSeconds) * time.Second}
-	_, err := client.Get(testURL)
-	if err != nil {
-		Warn("Network connectivity check failed")
-		return false
-	}
-	return true
+	return network.CheckConnectivity(testURL, timeoutSeconds)
 }
