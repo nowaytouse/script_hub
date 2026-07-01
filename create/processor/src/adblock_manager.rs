@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use regex::Regex;
@@ -60,17 +60,27 @@ impl IpNet {
 }
 
 // Regex rules
+#[allow(dead_code)]
 static META_LINE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^#!\s*([A-Za-z0-9_-]+)\s*[=:]\s*(.*)$").unwrap());
+#[allow(dead_code)]
 static SCRIPT_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bname\s*=\s*([^,\s]+)").unwrap());
+#[allow(dead_code)]
 static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
+#[allow(dead_code)]
 static SCRIPT_PATH_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
+#[allow(dead_code)]
 static SCRIPT_PATTERN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
 
+#[allow(dead_code)]
 static M1: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\(\^\|\.\)(.+?)-\.\+\.").unwrap());
+#[allow(dead_code)]
 static M2: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$").unwrap());
+#[allow(dead_code)]
 static M3: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\.\+(.+)$").unwrap());
 
+#[allow(dead_code)]
 static VALID_IPV4_CIDR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
+#[allow(dead_code)]
 static VALID_IPV6_CIDR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9a-fA-F:]+)(/\d{1,3})?$").unwrap());
 
 static FUNCTIONAL_BLOCK_NAME_TOKENS: &[&str] = &[
@@ -136,6 +146,7 @@ static SECTION_ORDER: &[&str] = &[
     "General", "Host", "Rule", "URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite", "MITM",
 ];
 
+#[allow(dead_code)]
 static HEADER_KEYS_ORDER: &[&str] = &[
     "name", "desc", "author", "icon", "category", "tag", "date", "arguments", "arguments-desc", "system-proxy", "ability", "update-interval",
 ];

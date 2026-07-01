@@ -7,8 +7,11 @@ use std::path::Path;
 use regex::Regex;
 use once_cell::sync::Lazy;
 
+#[allow(dead_code)]
 static DOMAIN_RULE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^DOMAIN,([^,]+)$").unwrap());
+#[allow(dead_code)]
 static DOMAIN_SUFFIX_RULE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^DOMAIN-SUFFIX,([^,]+)$").unwrap());
+#[allow(dead_code)]
 static VALID_DOMAIN: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap());
 static VALID_IPV4_CIDR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
 static VALID_IPV6_CIDR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9a-fA-F:]+)(/\d{1,3})?$").unwrap());

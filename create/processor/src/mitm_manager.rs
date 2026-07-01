@@ -1,5 +1,4 @@
 use regex::Regex;
-use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;

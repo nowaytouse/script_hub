@@ -421,7 +421,7 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let mut proxy = file_content.remove("GlobalProxy.list").unwrap_or_default();
 
     let mut moved_direct_to_proxy = 0;
-    let mut direct_keys: Vec<String> = direct.keys().cloned().collect();
+    let direct_keys: Vec<String> = direct.keys().cloned().collect();
     for payload in direct_keys {
         if let Some(rule) = direct.get(&payload) {
             if is_proxyish_domain(rule) {
@@ -640,6 +640,7 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
 }
 
 #[derive(Clone, Debug)]
+#[allow(non_snake_case)]
 pub struct ModuleSectionPub {
     pub Name: String,
     pub Lines: Vec<String>,
@@ -757,6 +758,7 @@ fn script_is_enhance(name: &str, spath: &str) -> bool {
     if contains_any(name, &["解锁", "unlock", "vip", "premium", "破解", "crack"]) {
         return true;
     }
+    #[allow(dead_code)]
     #[derive(Clone, Debug)]
     enum Verdict { Ad, Enhance, Neutral }
     false

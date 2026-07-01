@@ -32,10 +32,10 @@ const DEVTOOLS_MITM_EXCLUSIONS: &[&str] = &[
 ];
 
 #[derive(Debug, Deserialize)]
-struct SourceInput {
-    label: String,
-    url: String,
-    content: String,
+pub struct SourceInput {
+    pub label: String,
+    pub url: String,
+    pub content: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -328,7 +328,7 @@ fn rewrite_preserved_internal(
     }
     let ordered = order_sections(&merged, section_order);
     let ordered = merge_mitm_hosts_pub(&ordered);
-    let mut extra = vec!["# PROMAX build source — install head_expanse/PROMAX only".to_string()];
+    let extra = vec!["# PROMAX build source — install head_expanse/PROMAX only".to_string()];
     let header = format_header_with_extra(&meta, &extra);
     write_module(path, &header, &ordered, true)
 }
