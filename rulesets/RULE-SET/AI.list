@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 238
+# Rules: 241
 
 DOMAIN-SUFFIX,g.ai
 DOMAIN-SUFFIX,x.ai
@@ -72,6 +72,7 @@ DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,clipdrop.co
 DOMAIN-SUFFIX,codeium.com
 DOMAIN-SUFFIX,comfyci.org
+DOMAIN-SUFFIX,copilot.com
 DOMAIN-SUFFIX,intercom.io
 DOMAIN-SUFFIX,ipstatp.com
 DOMAIN-SUFFIX,labs.google
@@ -172,6 +173,7 @@ DOMAIN,aida.googleapis.com
 DOMAIN,openaicom.imgix.net
 DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,lf-cdn.marscode.com
+DOMAIN,openai.qualtrics.com
 DOMAIN-SUFFIX,api.microsoftapp.net
 DOMAIN,makersuite.google.com
 DOMAIN,services.bingapis.com
@@ -218,6 +220,7 @@ DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,webchannel-alkalimakersuite-pa.clients6.google.com
 DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
 DOMAIN,self.events.data.microsoft.com
+DOMAIN,openaiassets.blob.core.windows.net
 DOMAIN,copilotprodattachments.blob.core.windows.net
 DOMAIN,openaicomproductionae4b.blob.core.windows.net
 DOMAIN,chat.openai.com.cdn.cloudflare.net
