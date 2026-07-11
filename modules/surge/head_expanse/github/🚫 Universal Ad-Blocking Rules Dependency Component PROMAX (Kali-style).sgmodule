@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-07-11]
-#!desc=按用途分片(8片) + 应用内去广告(URL Rewrite=1513, Map Local=2747, Script=638, Body Rewrite=170, MITM=1588); 索引 rulesets/AdBlock/catalog.json
+#!desc=按用途分片(8片) + 应用内去广告(URL Rewrite=1513, Map Local=2746, Script=638, Body Rewrite=170, MITM=1588); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-07-11 14:05:10
+#!date=2026-07-11 21:17:56
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -3651,7 +3651,6 @@ http:\/\/dili.sqcosmos.com\/jiekou\/endpage\/ad data="https://raw.githubusercont
 ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash data-type=text data="{}" header="application/json"
 ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? data-type=text data="{}" header="application/json"
 ^https:\/\/api\.bilibili\.com\/pgc\/activity\/deliver\/material\/receive\? header="content-type: application/json" data-type=text data="{"code":0,"data":{"closeType":"close_win","container":[],"showTime":""},"message":"success"}"
-^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad data-type=text data="" status-code=200
 ^https:\/\/wx\.17u\.cn\/xcxhomeapi\/aggregator\/index data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/wx\.17u\.cn\/mytourapi\/mytrip\/blankflight data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/wx\.17u\.cn\/membermessageuserapi\/message\/list data-type=text data="{}" status-code=200 header="Content-Type:application/json"
