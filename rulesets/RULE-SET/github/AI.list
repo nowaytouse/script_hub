@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 246
+# Rules: 250
 
 DOMAIN-SUFFIX,g.ai
 DOMAIN-SUFFIX,x.ai
@@ -40,6 +40,7 @@ DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,cohere.ai
 DOMAIN-SUFFIX,comfy.org
 DOMAIN-SUFFIX,cursor.sh
+DOMAIN-SUFFIX,grazie.ai
 DOMAIN-SUFFIX,jasper.ai
 DOMAIN-SUFFIX,lovart.ai
 DOMAIN-SUFFIX,qoder.com
@@ -90,6 +91,7 @@ DOMAIN-SUFFIX,byteintl.net
 DOMAIN-SUFFIX,character.ai
 DOMAIN-SUFFIX,chatgpt.site
 DOMAIN-SUFFIX,deepmind.com
+DOMAIN-SUFFIX,jetbrains.ai
 DOMAIN-SUFFIX,jules.google
 DOMAIN-SUFFIX,manuscdn.com
 DOMAIN-SUFFIX,marscode.com
@@ -178,6 +180,7 @@ DOMAIN,aida.googleapis.com
 DOMAIN,openaicom.imgix.net
 DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,lf-cdn.marscode.com
+DOMAIN-SUFFIX,notebook.google.com
 DOMAIN,openai.qualtrics.com
 DOMAIN-SUFFIX,api.microsoftapp.net
 DOMAIN,makersuite.google.com
@@ -215,6 +218,7 @@ DOMAIN,copilot-proxy.githubusercontent.com
 DOMAIN,copilot-telemetry.githubusercontent.com
 DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,copilot-telemetry-service.githubusercontent.com
+DOMAIN-SUFFIX,grazie.aws.intellij.net
 DOMAIN,gateway.ai.cloudflare.com
 DOMAIN,gateway.bingviz.microsoft.net
 DOMAIN-SUFFIX,coderabbit.gallery.vsassets.io
