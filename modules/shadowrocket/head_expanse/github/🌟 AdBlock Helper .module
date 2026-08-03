@@ -13,7 +13,7 @@ hijack-dns                = *:53
 dns-direct-fallback-proxy = false
 geoip-maxmind-url         = https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb
 fallback-dns-server       = %APPEND% 76.76.10.2, 2606:1a40:1::2, 139.162.110.150, 2400:8902::f03c:91ff:fe06:787f, 185.150.99.255, 2001:678:ed0:f000::, 194.242.2.3, 2a07:e340::3, 116.202.176.26, 2a01:4f8:c2c:548f::1, 185.184.222.222, 2a09::1, 95.215.19.53, 2001:67c:2354:2::53, 146.255.56.98, 2a02:1b8:10:234::2, 185.95.218.42, 2a05:fc84::42
-dns-server                = %APPEND% h3://freedns.controld.com/p2, h3://doh-sg.blahdns.com/dns-query, h3://doh.ffmuc.net/dns-query, https://adblock.dns.mullvad.net/dns-query, https://doh.libredns.gr/noads, https://doh.njalla.fo/dns-query, https://doh.applied-privacy.net/query, https://dns.digitale-gesellschaft.ch/dns-query
+fallback-dns-server       = %APPEND% h3://freedns.controld.com/p2, h3://doh-sg.blahdns.com/dns-query, h3://doh.ffmuc.net/dns-query, https://adblock.dns.mullvad.net/dns-query, https://doh.libredns.gr/noads, https://doh.njalla.fo/dns-query, https://doh.applied-privacy.net/query, https://dns.digitale-gesellschaft.ch/dns-query
 
 
 [Host]
