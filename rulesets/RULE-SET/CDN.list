@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Auto-merged ruleset
-# Rules: 3579
+# Rules: 3569
 
 DOMAIN,0x0.st
 DOMAIN,eep.io
@@ -753,6 +753,7 @@ DOMAIN-SUFFIX,usercontent.goog
 DOMAIN-SUFFIX,vusercontent.net
 DOMAIN-SUFFIX,wikiplus-app.com
 DOMAIN-SUFFIX,wpcomstaging.com
+DOMAIN,dmm-extension.com
 DOMAIN,fullstackopen.com
 DOMAIN-SUFFIX,adobeccstatic.com
 DOMAIN-SUFFIX,assets-servd.host
@@ -847,12 +848,12 @@ DOMAIN-SUFFIX,superfiliate-cdn.com
 DOMAIN-SUFFIX,superhumanstatic.com
 DOMAIN-SUFFIX,thecontentserver.com
 DOMAIN,conversiongorilla.com
-DOMAIN,navismithapis-cdn.com
 DOMAIN,vanilla-extract.style
 DOMAIN-SUFFIX,chargebeestaticv2.com
 DOMAIN-SUFFIX,fimfiction-static.net
 DOMAIN-SUFFIX,framerusercontent.com
 DOMAIN-SUFFIX,misskeyusercontent.jp
+DOMAIN-SUFFIX,navismithapis-cdn.com
 DOMAIN-SUFFIX,notionusercontent.com
 DOMAIN-SUFFIX,parsecusercontent.com
 DOMAIN-SUFFIX,storjipfs-gateway.com
@@ -963,7 +964,6 @@ DOMAIN,cdn.plot.ly
 DOMAIN,cdn.plyr.io
 DOMAIN,cdn.road.cc
 DOMAIN,cdn.roof.ai
-DOMAIN,cdn.tuk.dev
 DOMAIN,cdn.usd.fan
 DOMAIN,cdn.you.com
 DOMAIN,fa.gsma.com
@@ -1119,7 +1119,6 @@ DOMAIN,cdn.socket.io
 DOMAIN,cdn.sprig.com
 DOMAIN,cdn.stash.com
 DOMAIN,cdn.super.com
-DOMAIN,cdn.tabarn.ap
 DOMAIN,cdn.unwire.hk
 DOMAIN,cdn.vector.co
 DOMAIN,cdn.veeam.com
@@ -1228,7 +1227,6 @@ DOMAIN,cdn.inviter.co
 DOMAIN,cdn.ipwhois.io
 DOMAIN,cdn.jitbit.com
 DOMAIN,cdn.kinsta.com
-DOMAIN,cdn.koala.live
 DOMAIN,cdn.masto.host
 DOMAIN,cdn.micro.blog
 DOMAIN,cdn.nfcube.com
@@ -1290,14 +1288,12 @@ DOMAIN,img.decrypt.co
 DOMAIN,img.fzf404.art
 DOMAIN,img.icons8.com
 DOMAIN,img.manyse.com
-DOMAIN,img.ml0987.com
 DOMAIN,img.moedog.org
 DOMAIN,img.moegirl.tw
 DOMAIN,img.mresou.com
 DOMAIN,img.supjav.com
 DOMAIN,img.timero.xyz
 DOMAIN,img.utdstc.com
-DOMAIN,img.vim-cn.com
 DOMAIN,img.xhacgn.com
 DOMAIN,img04.en25.com
 DOMAIN,img1.yeggi.com
@@ -1483,13 +1479,11 @@ DOMAIN,images.vudu.com
 DOMAIN,img.177pica.com
 DOMAIN,img.appledb.dev
 DOMAIN,img.apponic.com
-DOMAIN,img.catwvod.xyz
 DOMAIN,img.freepik.com
 DOMAIN,img.javynow.com
 DOMAIN,img.logokit.com
 DOMAIN,img.ltyears.com
 DOMAIN,img.perfops.net
-DOMAIN,img.telemetr.io
 DOMAIN,img.voguehk.com
 DOMAIN,imgcn2.bgmbk.tv
 DOMAIN,imgcn3.bgmbk.tv
@@ -2048,7 +2042,6 @@ DOMAIN,cdn-web.tunein.com
 DOMAIN,cdn.accessibly.app
 DOMAIN,cdn.allkeyshop.com
 DOMAIN,cdn.autoketing.org
-DOMAIN,cdn.bigcloud.click
 DOMAIN,cdn.boldmethod.com
 DOMAIN,cdn.britannica.com
 DOMAIN,cdn.bullwhip.cloud
@@ -2692,7 +2685,6 @@ DOMAIN,cdn.earthroulette.com
 DOMAIN,cdn.freebiesupply.com
 DOMAIN,cdn.joincommunity.xyz
 DOMAIN,cdn.prowritingaid.com
-DOMAIN,cdn.recovermycart.com
 DOMAIN,cdn.shoppinggives.com
 DOMAIN,cdn.simplelocalize.io
 DOMAIN,cdn.sitesearch360.com
@@ -2925,7 +2917,6 @@ DOMAIN,static.webclicks24.com
 DOMAIN,statics.streamable.com
 DOMAIN,storage.withfabric.xyz
 DOMAIN,themes.hibootstrap.com
-DOMAIN,tiles.arcticconnect.ca
 DOMAIN,tileserver.memomaps.de
 DOMAIN,top1cdn.top1health.com
 DOMAIN,tracking.inflection.io
@@ -3081,7 +3072,6 @@ DOMAIN,cms-assets.nodecraft.com
 DOMAIN,conf.config-security.com
 DOMAIN,css.blackmagicdesign.com
 DOMAIN,detectportal.firefox.com
-DOMAIN,domain.expiring-soon.xyz
 DOMAIN,featureflags.netlify.com
 DOMAIN,frontend-apps.workos.com
 DOMAIN,gamemedia.armorgames.com
@@ -3441,7 +3431,6 @@ DOMAIN,image.ship.vercel.com
 DOMAIN,images.en.aptoide.com
 DOMAIN,imgs.search.brave.com
 DOMAIN,media.identity.ui.com
-DOMAIN,s3-zen.mds.yandex.net
 DOMAIN,account-cdn.svc.ui.com
 DOMAIN,assets.auth.magic.link
 DOMAIN,assets.video.yahoo.net
@@ -3564,6 +3553,7 @@ DOMAIN,cf-images.ap-northeast-1.prod.boltdns.net
 DOMAIN,talon-website-prod.ecosec.on.epicgames.com
 DOMAIN,net-fe-static-assets.network-controller.svc.ui.com
 DOMAIN,cdn.us-east-1.prod.moon.dubai.aws.dev
+DOMAIN-KEYWORD,-assets.dmm.co.jp
 DOMAIN-KEYWORD,-assets.worldsex.com
 DOMAIN-KEYWORD,-cdn.eporner.com
 DOMAIN-KEYWORD,-files.gitbook.io
