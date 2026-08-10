@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-09 21:01:39",
+  "updated": "2026-08-10 05:54:47",
   "rules_per_shard_max": 100000,
   "lite_categories": [
     "Local",
@@ -10,36 +10,6 @@
     "Other"
   ],
   "modules": {
-    "surge_promax_github": {
-      "path": "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
-      "url_source": "github",
-      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
-    },
-    "shadowrocket_promax_github": {
-      "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
-      "url_source": "github",
-      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
-    },
-    "shadowrocket_promax_lite_github": {
-      "path": "modules/shadowrocket/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).module",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Emodule",
-      "url_source": "github",
-      "note": "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）"
-    },
-    "surge_promax_lite_cdn": {
-      "path": "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Esgmodule",
-      "url_source": "cdn",
-      "note": "手机轻量版 — 不含 ThreatIntel 重型规则（CDN 加速）"
-    },
-    "surge_promax_lite_github": {
-      "path": "modules/surge/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Esgmodule",
-      "url_source": "github",
-      "note": "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）"
-    },
     "shadowrocket_promax_lite_cdn": {
       "path": "modules/shadowrocket/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).module",
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Emodule",
@@ -52,22 +22,52 @@
       "url_source": "cdn",
       "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
     },
+    "surge_promax_lite_github": {
+      "path": "modules/surge/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Esgmodule",
+      "url_source": "github",
+      "note": "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）"
+    },
+    "shadowrocket_promax_github": {
+      "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
+      "url_source": "github",
+      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
+    },
+    "surge_promax_lite_cdn": {
+      "path": "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Esgmodule",
+      "url_source": "cdn",
+      "note": "手机轻量版 — 不含 ThreatIntel 重型规则（CDN 加速）"
+    },
+    "shadowrocket_promax_lite_github": {
+      "path": "modules/shadowrocket/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).module",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%93%B1%20Universal%20Ad%2DBlocking%20Rules%20%28PROMAX%20Lite%29%2Emodule",
+      "url_source": "github",
+      "note": "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）"
+    },
     "surge_promax_cdn": {
       "path": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
       "url_source": "cdn",
       "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
+    },
+    "surge_promax_github": {
+      "path": "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
+      "url_source": "github",
+      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
     }
   },
   "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
-    "Body Rewrite": 170,
-    "MITM": 1588,
-    "Header Rewrite": 0,
     "URL Rewrite": 1513,
+    "Header Rewrite": 0,
+    "MITM": 1588,
     "Script": 638,
-    "Map Local": 2746
+    "Map Local": 2746,
+    "Body Rewrite": 170
   },
   "shards": [
     {
@@ -116,7 +116,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 38791,
+      "rule_count": 39413,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
