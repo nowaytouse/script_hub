@@ -117,6 +117,11 @@ static CATEGORIES: &[&str] = &[
     "Other",
 ];
 
+// jsDelivr refuses GitHub files above 20 MB. Keep the CDN-facing Loon product
+// focused on the highest-value blocking categories; the github variant keeps
+// the complete category set for users who explicitly choose raw GitHub.
+static LOON_CDN_CATEGORIES: &[&str] = &["Local", "Advertising", "Privacy", "Security", "AntiAD"];
+
 struct CategoryMeta {
     label_zh: &'static str,
     desc: &'static str,
@@ -1429,9 +1434,12 @@ impl AdBlockManager {
                 println!("\x1b[0;32m[INFO]\x1b[0m   ⊘ Duplicate functional content: {rel}");
                 continue;
             }
-            self.extract_from_text(&content, "REJECT", "Local", true, false, &rel);
             if ingest_mode == "split" {
-                self.write_promax_split_artifact(&path);
+                if let Some(filtered) = self.stage_promax_split_artifact(&path, &content, &rel) {
+                    self.extract_from_text(&filtered, "REJECT", "Local", true, false, &rel);
+                }
+            } else {
+                self.extract_from_text(&content, "REJECT", "Local", true, false, &rel);
             }
         }
 
@@ -1472,7 +1480,116 @@ impl AdBlockManager {
         added
     }
 
-    fn write_promax_split_artifact(&mut self, source_path: &Path) {
+    fn split_candidate_rejection(
+        &self,
+        section: &str,
+        line: &str,
+    ) -> Option<(String, crate::promax::safety::RiskClass)> {
+        if let Some(error) =
+            crate::promax::validation::validate_surge_section_line(section, line).first()
+        {
+            return Some((
+                format!("invalid-functional-syntax:{}", error.code),
+                crate::promax::safety::RiskClass::Invalid,
+            ));
+        }
+
+        let decision = if section == "Rule" {
+            let parsed = crate::promax::rule::SurgeRule::parse(line).ok()?;
+            self.safety.decision(&parsed)
+        } else if section == "MITM" {
+            return None;
+        } else {
+            self.safety.functional_decision(line)
+        };
+        if let crate::promax::safety::SafetyDecision::Quarantine(reason) = decision {
+            let risk = if reason.contains("protected") {
+                crate::promax::safety::RiskClass::ProtectedService
+            } else {
+                crate::promax::safety::RiskClass::BroadMedia
+            };
+            Some((reason.to_string(), risk))
+        } else {
+            None
+        }
+    }
+
+    fn filter_split_mitm_hosts(
+        &mut self,
+        sections: &mut HashMap<String, Vec<String>>,
+        source_label: &str,
+        source_lines: &HashMap<(String, String), usize>,
+    ) {
+        let functional_lines: Vec<String> = sections
+            .iter()
+            .filter(|(section, _)| section.as_str() != "MITM")
+            .flat_map(|(_, lines)| lines.iter().cloned())
+            .collect();
+        let host_patterns =
+            crate::promax::safety::SafetyPolicy::functional_host_patterns(&functional_lines);
+        let Some(mitm_lines) = sections.get_mut("MITM") else {
+            return;
+        };
+
+        let mut filtered_lines = Vec::new();
+        for line in mitm_lines.iter() {
+            let source_line = *source_lines
+                .get(&("MITM".to_string(), line.trim().to_string()))
+                .unwrap_or(&0);
+            let hosts = line
+                .split_once('=')
+                .map(|(_, hosts)| hosts)
+                .unwrap_or("")
+                .replace("%APPEND%", "")
+                .replace("%INSERT%", "");
+            let mut kept_hosts = Vec::new();
+            for host in hosts
+                .split(',')
+                .map(str::trim)
+                .filter(|host| !host.is_empty())
+            {
+                let rejection = if self.safety.hostname_is_protected(host) {
+                    Some((
+                        "protected-mitm-host",
+                        crate::promax::safety::RiskClass::ProtectedService,
+                    ))
+                } else if !self
+                    .safety
+                    .hostname_is_referenced_by_patterns(host, &host_patterns)
+                {
+                    Some((
+                        "unreferenced-mitm-host",
+                        crate::promax::safety::RiskClass::BroadMedia,
+                    ))
+                } else {
+                    None
+                };
+                if let Some((reason, risk)) = rejection {
+                    self.quarantine
+                        .push(crate::promax::safety::QuarantineRecord {
+                            source: source_label.to_string(),
+                            line: source_line,
+                            candidate: host.to_string(),
+                            reason: reason.to_string(),
+                            risk,
+                        });
+                } else {
+                    kept_hosts.push(host.to_string());
+                }
+            }
+            if !kept_hosts.is_empty() {
+                filtered_lines.push(format!("hostname = %APPEND% {}", kept_hosts.join(", ")));
+            }
+        }
+        *mitm_lines = filtered_lines;
+    }
+
+    fn stage_promax_split_artifact(
+        &mut self,
+        source_path: &Path,
+        text: &str,
+        source_label: &str,
+    ) -> Option<String> {
         let stem = source_path
             .file_stem()
             .unwrap()
@@ -1493,24 +1610,48 @@ impl AdBlockManager {
                 "\x1b[0;32m[INFO]\x1b[0m   ↳ split artifact already staged for {}",
                 safe_stem
             );
-            return;
+            return None;
         }
 
-        if let Ok(text) = fs::read_to_string(source_path) {
+        {
             let (mut ad_sections, mut stats) = crate::smart_cleanup::split_module_sections_pub(
                 source_path.to_str().unwrap(),
-                &text,
+                text,
             );
             let original_kept = *stats.get("kept_lines").unwrap_or(&0);
+            let mut source_lines = HashMap::new();
+            let mut current_section = String::new();
+            for (index, raw_line) in text.lines().enumerate() {
+                let stripped = raw_line.trim();
+                if stripped.starts_with('[') && stripped.ends_with(']') {
+                    current_section = stripped[1..stripped.len() - 1].to_string();
+                } else if !stripped.is_empty() && !stripped.starts_with('#') {
+                    source_lines
+                        .entry((current_section.clone(), stripped.to_string()))
+                        .or_insert(index + 1);
+                }
+            }
             for (section, lines) in &mut ad_sections {
                 lines.retain(|line| {
-                    crate::promax::validation::validate_surge_section_line(section, line).is_empty()
-                        && !matches!(
-                            self.safety.functional_decision(line),
-                            crate::promax::safety::SafetyDecision::Quarantine(_)
-                        )
+                    let rejection = self.split_candidate_rejection(section, line);
+                    if let Some((reason, risk)) = rejection {
+                        self.quarantine
+                            .push(crate::promax::safety::QuarantineRecord {
+                                source: source_label.to_string(),
+                                line: *source_lines
+                                    .get(&(section.clone(), line.trim().to_string()))
+                                    .unwrap_or(&0),
+                                candidate: line.trim().to_string(),
+                                reason,
+                                risk,
+                            });
+                        false
+                    } else {
+                        true
+                    }
                 });
             }
+            self.filter_split_mitm_hosts(&mut ad_sections, source_label, &source_lines);
             ad_sections.retain(|_, lines| !lines.is_empty());
             let filtered_kept: usize = ad_sections.values().map(Vec::len).sum();
             let filtered_out = original_kept.saturating_sub(filtered_kept);
@@ -1519,7 +1660,7 @@ impl AdBlockManager {
             let kept = *stats.get("kept_lines").unwrap_or(&0);
             let total = *stats.get("total_lines").unwrap_or(&0);
             if kept == 0 {
-                return;
+                return None;
             }
             let _ = fs::create_dir_all(&out_dir);
 
@@ -1541,13 +1682,14 @@ impl AdBlockManager {
             self.split_artifacts
                 .push(crate::promax::artifact::GeneratedArtifact {
                     target: out_path,
-                    content: formatted,
+                    content: formatted.clone(),
                     kind: crate::promax::artifact::ArtifactKind::Surge,
                 });
             println!(
                 "\x1b[0;32m[INFO]\x1b[0m   ↳ split artifact: {} ({}/{} lines)",
                 rel, kept, total
             );
+            Some(formatted)
         }
     }
 
@@ -2232,13 +2374,18 @@ impl AdBlockManager {
             "# PROMAX rules are inlined because Loon plugins do not expose Surge RULE-SET semantics".to_string(),
         ]);
 
+        let loon_categories = if url_source == "cdn" {
+            LOON_CDN_CATEGORIES
+        } else {
+            CATEGORIES
+        };
         for policy in &["DIRECT", "REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
             let loon_policy = if *policy == "DIRECT" {
                 "DIRECT"
             } else {
                 "REJECT"
             };
-            for category in CATEGORIES {
+            for category in loon_categories {
                 let empty_set = HashSet::new();
                 let mut candidates: Vec<String> = self
                     .rules
@@ -2341,9 +2488,14 @@ impl AdBlockManager {
             "🚫 Universal Ad-Blocking Rules (PROMAX) - [{}]",
             current_date
         );
+        let coverage = if url_source == "cdn" {
+            "CDN兼容核心规则"
+        } else {
+            "GitHub全量规则"
+        };
         let desc = format!(
-            "按用途分片({}片) + 应用内去广告({}); 索引 rulesets/AdBlock/catalog.json",
-            shard_count, func_summary
+            "{} + 应用内去广告({}); 全量分片{}片，索引 rulesets/AdBlock/catalog.json",
+            coverage, func_summary, shard_count
         );
 
         let mut output = Vec::new();
@@ -2663,7 +2815,7 @@ mod tests {
         .unwrap();
         fs::write(
             links.join("AdBlock_functional_sources.list"),
-            "../fixture.sgmodule\n",
+            "../fixture.sgmodule\n../mixed-adblock.sgmodule\n",
         )
         .unwrap();
         fs::write(
@@ -2682,6 +2834,23 @@ hostname = ads.fixture.test
 "#,
         )
         .unwrap();
+        fs::write(
+            root.join("rulesets/Sources/mixed-adblock.sgmodule"),
+            r#"#!name=Mixed fixture
+[Rule]
+DOMAIN-SUFFIX,split-ad.fixture.test,REJECT
+IP-CIDR,10.0.0.0/24,REJECT
+[URL Rewrite]
+^https://split-ad\.fixture\.test/splash _ reject
+^https://premium\.fixture\.test/ https://example.test/unlocked 302
+[Script]
+remove_ads = type=http-response,pattern=^https://split-ad\.fixture\.test/feed,requires-body=1,script-path=https://scripts.fixture.test/remove-ads.js
+unlock_vip = type=http-response,pattern=^https://premium\.fixture\.test/account,requires-body=1,script-path=https://scripts.fixture.test/unlock.js
+[MITM]
+hostname = split-ad.fixture.test, protected0.example
+"#,
+        )
+        .unwrap();
 
         assert!(AdBlockManager::new(root.clone()).merge(true));
 
@@ -2693,7 +2862,7 @@ hostname = ads.fixture.test
             "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
             "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
         ];
-        for product in products {
+        for product in &products {
             let content = fs::read_to_string(root.join(product)).unwrap();
             assert!(content.contains("scripts.fixture.test/remove.js"));
         }
@@ -2702,6 +2871,18 @@ hostname = ads.fixture.test
         assert!(root.join("rulesets/AdBlock/quarantine.json").is_file());
         let shard = fs::read_to_string(root.join("rulesets/AdBlock/AdBlock_Local.list")).unwrap();
         assert!(shard.contains("functional-ad.fixture.test"));
+        let split = fs::read_to_string(
+            root.join("modules/source/build/promax_splits/mixed-adblock.ad-extract.sgmodule"),
+        )
+        .unwrap();
+        assert!(split.contains("split-ad.fixture.test"));
+        assert!(!split.contains("10.0.0.0/24"));
+        assert!(!split.contains("premium.fixture.test"));
+        assert!(!split.contains("protected0.example"));
+        let loon = fs::read_to_string(root.join(products[2])).unwrap();
+        assert!(!loon.contains("premium.fixture.test"));
+        let quarantine = fs::read_to_string(root.join("rulesets/AdBlock/quarantine.json")).unwrap();
+        assert!(quarantine.contains("10.0.0.0/24"));
 
         fs::remove_dir_all(root).unwrap();
     }

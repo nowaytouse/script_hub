@@ -236,7 +236,16 @@ fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<Valida
         ));
         return;
     }
-    let action = fields.next().unwrap_or("").to_ascii_lowercase();
+    let remaining: Vec<&str> = fields.collect();
+    let action = if matches!(remaining.get(1).copied(), Some("302" | "307")) {
+        remaining[1].to_ascii_lowercase()
+    } else {
+        remaining
+            .first()
+            .copied()
+            .unwrap_or("")
+            .to_ascii_lowercase()
+    };
     let valid_action = matches!(
         action.as_str(),
         "reject"
@@ -273,7 +282,12 @@ fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<Valida
         return;
     }
     if action == "mock-response-body" {
-        let parameters = fields.collect::<Vec<_>>().join(" ");
+        let parameters = remaining
+            .iter()
+            .skip(1)
+            .copied()
+            .collect::<Vec<_>>()
+            .join(" ");
         let has_data = parameters.contains("data=") || parameters.contains("data-path=");
         if !parameters.contains("data-type=") || !has_data {
             errors.push(error(
@@ -723,6 +737,16 @@ RULE-SET,https://example.test/ad.list,REJECT,no-resolve
 DOMAIN-SUFFIX,ads.example,REJECT
 [Rewrite]
 ^https://ads\.example mock-response-body data-type=text data="{}" status-code=200
+"#;
+        assert_eq!(validate_loon_plugin(fixture), Vec::new());
+    }
+
+    #[test]
+    fn loon_validator_accepts_redirect_target_before_status_code() {
+        let fixture = r#"#!name=PROMAX fixture
+[Rewrite]
+^https://ads\.example/ https://example.com/blank 302
+^https://tracker\.example/ https://example.com/blank 307
 "#;
         assert_eq!(validate_loon_plugin(fixture), Vec::new());
     }

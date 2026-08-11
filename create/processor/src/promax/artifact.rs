@@ -23,6 +23,28 @@ pub struct GeneratedArtifact {
     pub kind: ArtifactKind,
 }
 
+const LOON_CDN_MAX_BYTES: usize = 20_000_000;
+
+fn validate_artifact_size(
+    relative: &Path,
+    kind: ArtifactKind,
+    byte_len: usize,
+) -> Result<(), String> {
+    let relative_text = relative.to_string_lossy();
+    let is_cdn_loon = kind == ArtifactKind::Loon
+        && relative_text.starts_with("modules/loon/")
+        && !relative_text.starts_with("modules/loon/github/");
+    if is_cdn_loon && byte_len > LOON_CDN_MAX_BYTES {
+        return Err(format!(
+            "{} is {} bytes; CDN-facing Loon artifacts must stay at or below {} bytes",
+            relative.display(),
+            byte_len,
+            LOON_CDN_MAX_BYTES
+        ));
+    }
+    Ok(())
+}
+
 static SHADOWROCKET_SCRIPT_PARAMS: Lazy<Vec<Regex>> = Lazy::new(|| {
     [
         r#"(?i),?\s*ability=(?:"[^"]*"|[^\s,]+)"#,
@@ -119,6 +141,7 @@ pub fn publish_artifacts(
                 artifact.target.display()
             )
         })?;
+        validate_artifact_size(relative, artifact.kind, artifact.content.len())?;
         let staged = staging_root.join(relative);
         if let Some(parent) = staged.parent() {
             fs::create_dir_all(parent)
@@ -342,8 +365,10 @@ fn shadowrocket_policy(policy: &str) -> &str {
 mod tests {
     use super::{
         ArtifactKind, GeneratedArtifact, convert_surge_to_shadowrocket, publish_artifacts,
+        validate_artifact_size,
     };
     use std::fs;
+    use std::path::Path;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -418,5 +443,14 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
 
         assert!(super::validate_coverage_floor(&root, &artifacts).is_err());
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn cdn_loon_product_has_a_hard_twenty_megabyte_budget() {
+        let cdn = Path::new("modules/loon/promax.plugin");
+        let github = Path::new("modules/loon/github/promax.plugin");
+        assert!(validate_artifact_size(cdn, ArtifactKind::Loon, 20_000_000).is_ok());
+        assert!(validate_artifact_size(cdn, ArtifactKind::Loon, 20_000_001).is_err());
+        assert!(validate_artifact_size(github, ArtifactKind::Loon, 20_000_001).is_ok());
     }
 }
