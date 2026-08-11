@@ -1,6 +1,8 @@
-use regex::Regex;
+use fancy_regex::Regex;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fmt;
+use std::net::IpAddr;
 
 const POLICIES: &[&str] = &[
     "DIRECT",
@@ -121,6 +123,8 @@ impl SurgeRule {
             break;
         }
         options.reverse();
+        let mut seen_options = HashSet::new();
+        options.retain(|option| seen_options.insert(option.clone()));
 
         if !kind.payload_may_contain_commas() && end != 2 {
             return Err(RuleError("unexpected extra rule fields".to_string()));
@@ -130,10 +134,7 @@ impl SurgeRule {
         if payload.is_empty() {
             return Err(RuleError("empty rule payload".to_string()));
         }
-        if kind.requires_regex_validation() {
-            Regex::new(&payload)
-                .map_err(|error| RuleError(format!("invalid regular expression: {error}")))?;
-        }
+        validate_payload(kind, &payload)?;
 
         Ok(Self {
             kind,
@@ -144,21 +145,20 @@ impl SurgeRule {
     }
 
     pub fn render_external(&self) -> String {
-        self.render(false, "")
+        self.render(false, "", true)
     }
 
     pub fn render_module(&self, default_policy: &str) -> String {
-        self.render(true, default_policy)
+        self.render(true, default_policy, false)
     }
 
-    fn render(&self, include_policy: bool, default_policy: &str) -> String {
+    fn render(&self, include_policy: bool, default_policy: &str, external: bool) -> String {
         let payload = if self.payload.contains(',') {
             format!("\"{}\"", self.payload)
         } else {
             self.payload.clone()
         };
         let mut fields = vec![self.kind.as_str().to_string(), payload];
-        fields.extend(self.options.iter().cloned());
         if include_policy {
             fields.push(
                 self.policy
@@ -167,8 +167,119 @@ impl SurgeRule {
                     .to_ascii_uppercase(),
             );
         }
+        fields.extend(
+            self.options
+                .iter()
+                .filter(|option| option_allowed(self.kind, option, external))
+                .cloned(),
+        );
         fields.join(",")
     }
+}
+
+fn option_allowed(kind: RuleKind, option: &str, external: bool) -> bool {
+    match option {
+        "NO-RESOLVE" => matches!(kind, RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::GeoIp),
+        "EXTENDED-MATCHING" => true,
+        "FORCE-CELLULAR" => !external,
+        _ => false,
+    }
+}
+
+fn validate_payload(kind: RuleKind, payload: &str) -> Result<(), RuleError> {
+    if kind.requires_regex_validation() {
+        return Regex::new(payload)
+            .map(|_| ())
+            .map_err(|error| RuleError(format!("invalid regular expression: {error}")));
+    }
+
+    match kind {
+        RuleKind::Domain | RuleKind::DomainSuffix => validate_domain(payload, false),
+        RuleKind::DomainWildcard => validate_domain(payload, true),
+        RuleKind::DomainKeyword => {
+            if payload.contains("://")
+                || payload.contains('/')
+                || payload.chars().any(char::is_whitespace)
+            {
+                Err(RuleError("invalid domain keyword".to_string()))
+            } else {
+                Ok(())
+            }
+        }
+        RuleKind::IpCidr | RuleKind::IpCidr6 => validate_ip_network(kind, payload),
+        RuleKind::IpAsn => payload
+            .trim_start_matches(|character: char| character.eq_ignore_ascii_case(&'a'))
+            .trim_start_matches(|character: char| character.eq_ignore_ascii_case(&'s'))
+            .parse::<u32>()
+            .ok()
+            .filter(|asn| *asn > 0)
+            .map(|_| ())
+            .ok_or_else(|| RuleError("invalid IP-ASN payload".to_string())),
+        RuleKind::GeoIp => {
+            if payload.len() == 2
+                && payload
+                    .chars()
+                    .all(|character| character.is_ascii_alphabetic())
+            {
+                Ok(())
+            } else {
+                Err(RuleError("invalid GEOIP country code".to_string()))
+            }
+        }
+        RuleKind::DestPort | RuleKind::SrcPort | RuleKind::InPort => validate_port(payload),
+        _ => Ok(()),
+    }
+}
+
+fn validate_domain(payload: &str, wildcard: bool) -> Result<(), RuleError> {
+    let valid = !payload.contains("://")
+        && !payload.contains('/')
+        && !payload.chars().any(char::is_whitespace)
+        && payload.split('.').all(|label| {
+            !label.is_empty()
+                && label.chars().all(|character| {
+                    character.is_ascii_alphanumeric()
+                        || character == '-'
+                        || character == '_'
+                        || wildcard && matches!(character, '*' | '?')
+                })
+        });
+    valid
+        .then_some(())
+        .ok_or_else(|| RuleError("invalid domain payload".to_string()))
+}
+
+fn validate_ip_network(kind: RuleKind, payload: &str) -> Result<(), RuleError> {
+    let (address, prefix) = payload
+        .split_once('/')
+        .ok_or_else(|| RuleError("IP rule requires a CIDR prefix".to_string()))?;
+    let address: IpAddr = address
+        .parse()
+        .map_err(|_| RuleError("invalid IP address".to_string()))?;
+    let prefix: u8 = prefix
+        .parse()
+        .map_err(|_| RuleError("invalid CIDR prefix".to_string()))?;
+    let correct_family = matches!(
+        (kind, address),
+        (RuleKind::IpCidr, IpAddr::V4(_)) | (RuleKind::IpCidr6, IpAddr::V6(_))
+    );
+    let max_prefix = if address.is_ipv4() { 32 } else { 128 };
+    if correct_family && prefix <= max_prefix {
+        Ok(())
+    } else {
+        Err(RuleError("invalid CIDR network".to_string()))
+    }
+}
+
+fn validate_port(payload: &str) -> Result<(), RuleError> {
+    let valid_port = |value: &str| value.parse::<u16>().is_ok();
+    let valid = payload.split_once('-').map_or_else(
+        || valid_port(payload),
+        |(start, end)| valid_port(start) && valid_port(end),
+    );
+    valid
+        .then_some(())
+        .ok_or_else(|| RuleError("invalid port payload".to_string()))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -182,14 +293,14 @@ impl fmt::Display for RuleError {
 
 impl Error for RuleError {}
 
-fn is_option(value: &str) -> bool {
+pub(crate) fn is_option(value: &str) -> bool {
     matches!(
         value,
         "NO-RESOLVE" | "EXTENDED-MATCHING" | "PRE-MATCHING" | "FORCE-CELLULAR"
     ) || value.starts_with("UPDATE-INTERVAL=")
 }
 
-fn split_fields(line: &str) -> Result<Vec<String>, RuleError> {
+pub(crate) fn split_fields(line: &str) -> Result<Vec<String>, RuleError> {
     let mut fields = Vec::new();
     let mut current = String::new();
     let mut in_quotes = false;
@@ -220,6 +331,9 @@ fn split_fields(line: &str) -> Result<Vec<String>, RuleError> {
                 fields.push(current.trim().to_string());
                 current.clear();
                 closed_quote = false;
+            }
+            '"' => {
+                return Err(RuleError("quote must begin a field".to_string()));
             }
             value if closed_quote && !value.is_whitespace() => {
                 return Err(RuleError(
@@ -269,5 +383,42 @@ mod tests {
             parsed.render_external(),
             "DOMAIN-WILDCARD,api-*.example.com"
         );
+    }
+
+    #[test]
+    fn module_policy_precedes_rule_options() {
+        let parsed =
+            SurgeRule::parse("IP-CIDR,192.0.2.0/24,REJECT,extended-matching,no-resolve").unwrap();
+
+        assert_eq!(
+            parsed.render_module("REJECT"),
+            "IP-CIDR,192.0.2.0/24,REJECT,EXTENDED-MATCHING,NO-RESOLVE"
+        );
+    }
+
+    #[test]
+    fn accepts_surge_lookaround_regex_dialect() {
+        let parsed =
+            SurgeRule::parse(r#"URL-REGEX,^https://api\.example/recommend/(?!v2),REJECT"#).unwrap();
+
+        assert_eq!(parsed.policy.as_deref(), Some("REJECT"));
+    }
+
+    #[test]
+    fn external_renderer_drops_module_only_options_and_deduplicates() {
+        let parsed = SurgeRule::parse(
+            "IP-CIDR,192.0.2.0/24,NO-RESOLVE,pre-matching,update-interval=86400,no-resolve",
+        )
+        .unwrap();
+
+        assert_eq!(parsed.render_external(), "IP-CIDR,192.0.2.0/24,NO-RESOLVE");
+    }
+
+    #[test]
+    fn rejects_unbalanced_mid_field_quote_and_invalid_typed_payloads() {
+        assert!(SurgeRule::parse(r#"URL-REGEX,^https://host/\"unterminated,REJECT"#).is_err());
+        assert!(SurgeRule::parse("IP-CIDR,not-a-cidr").is_err());
+        assert!(SurgeRule::parse("DEST-PORT,abc").is_err());
+        assert!(SurgeRule::parse("DOMAIN,https://example.com/path").is_err());
     }
 }

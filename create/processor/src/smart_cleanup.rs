@@ -1228,10 +1228,32 @@ pub fn adapt_rewrite_line_for_loon_pub(line: &str) -> String {
     output
 }
 
+pub fn adapt_body_rewrite_line_for_loon_pub(line: &str) -> String {
+    let stripped = line.trim();
+    if stripped.is_empty() || stripped.starts_with('#') {
+        return line.to_string();
+    }
+    let mut fields = stripped.splitn(3, char::is_whitespace);
+    let operation = fields.next().unwrap_or("");
+    let pattern = fields.next().unwrap_or("");
+    let arguments = fields.next().unwrap_or("");
+    let loon_operation = match operation {
+        "http-response-jq" => "response-body-json-jq",
+        "http-request-jq" => "request-body-json-jq",
+        "http-response" => "response-body-replace-regex",
+        "http-request" => "request-body-replace-regex",
+        _ => return String::new(),
+    };
+    if pattern.is_empty() || arguments.is_empty() {
+        String::new()
+    } else {
+        format!("{pattern} {loon_operation} {arguments}")
+    }
+}
+
 pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     let mut params = HashMap::new();
-    let parts: Vec<&str> = line_content.split(',').collect();
-    for p in parts {
+    for p in split_script_parameters(line_content) {
         if let Some(idx) = p.find('=') {
             let k = p[..idx].trim().to_lowercase();
             let v = p[idx+1..].trim().to_string();
@@ -1240,13 +1262,28 @@ pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     }
 
     let script_type = params.get("type").map(|s| s.as_str()).unwrap_or("http-response");
-    let pattern = match params.get("pattern") {
-        Some(p) => p,
-        None => return String::new(),
-    };
     let script_path = match params.get("script-path") {
         Some(p) => p,
         None => return String::new(),
+    };
+
+    let prefix = match script_type {
+        "http-request" | "http-response" => match params.get("pattern") {
+            Some(pattern) => format!("{} {}", script_type, pattern),
+            None => return String::new(),
+        },
+        "cron" => {
+            let expression = params
+                .get("cronexp")
+                .or_else(|| params.get("cron-expression"))
+                .or_else(|| params.get("cron"));
+            match expression {
+                Some(expression) => format!("cron {}", quote_if_needed(expression)),
+                None => return String::new(),
+            }
+        }
+        "network-changed" | "generic" => script_type.to_string(),
+        _ => return String::new(),
     };
 
     let mut loon_parts = Vec::new();
@@ -1261,15 +1298,64 @@ pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     if let Some(timeout) = params.get("timeout") {
         loon_parts.push(format!("timeout={}", timeout));
     }
+    if let Some(binary_mode) = params.get("binary-body-mode") {
+        loon_parts.push(format!("binary-body-mode={}", binary_mode));
+    }
     if let Some(argument) = params.get("argument") {
-        let mut arg = argument.clone();
-        if arg.starts_with('"') && arg.ends_with('"') {
-            arg = arg[1..arg.len()-1].to_string();
-        }
-        loon_parts.push(format!("argument=\"{}\"", arg));
+        loon_parts.push(format!("argument={}", quote_if_needed(argument)));
     }
 
-    format!("{} {} {}", script_type, pattern, loon_parts.join(","))
+    format!("{} {}", prefix, loon_parts.join(","))
+}
+
+fn split_script_parameters(input: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut quote = None;
+    let mut escaped = false;
+    let mut braces = 0_u32;
+    let mut brackets = 0_u32;
+    let mut parentheses = 0_u32;
+
+    for (index, character) in input.char_indices() {
+        if let Some(delimiter) = quote {
+            if character == delimiter && !escaped {
+                quote = None;
+            }
+            escaped = character == '\\' && !escaped;
+            if character != '\\' {
+                escaped = false;
+            }
+            continue;
+        }
+        match character {
+            '\'' | '"' => quote = Some(character),
+            '{' => braces += 1,
+            '}' => braces = braces.saturating_sub(1),
+            '[' => brackets += 1,
+            ']' => brackets = brackets.saturating_sub(1),
+            '(' => parentheses += 1,
+            ')' => parentheses = parentheses.saturating_sub(1),
+            ',' if braces == 0 && brackets == 0 && parentheses == 0 => {
+                parts.push(input[start..index].trim());
+                start = index + character.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    parts.push(input[start..].trim());
+    parts
+}
+
+fn quote_if_needed(value: &str) -> String {
+    let value = value.trim();
+    if (value.starts_with('"') && value.ends_with('"'))
+        || (value.starts_with('\'') && value.ends_with('\''))
+    {
+        value.to_string()
+    } else {
+        format!("\"{}\"", value.replace('"', r#"\""#))
+    }
 }
 
 pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionPub> {
@@ -1322,3 +1408,35 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
     other
 }
 
+#[cfg(test)]
+mod promax_loon_tests {
+    use super::{adapt_body_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub};
+
+    #[test]
+    fn loon_body_rewrite_moves_pattern_before_typed_operation() {
+        assert_eq!(
+            adapt_body_rewrite_line_for_loon_pub(
+                r#"http-response-jq ^https:\/\/api\.example/ad 'del(.data.ad)'"#,
+            ),
+            r#"^https:\/\/api\.example/ad response-body-json-jq 'del(.data.ad)'"#
+        );
+        assert_eq!(
+            adapt_body_rewrite_line_for_loon_pub(
+                r#"http-response ^https:\/\/api\.example/ad banner replacement"#,
+            ),
+            r#"^https:\/\/api\.example/ad response-body-replace-regex banner replacement"#
+        );
+    }
+
+    #[test]
+    fn loon_script_preserves_regex_commas_json_argument_and_binary_mode() {
+        let converted = adapt_script_line_for_loon_pub(
+            "fixture",
+            r#"type=http-response,pattern=^https://example\.com/a{1,4}/x,script-path=https://example.test/a.js,requires-body=1,binary-body-mode=true,argument="{\"a\":1,\"b\":2}""#,
+        );
+
+        assert!(converted.contains(r#"^https://example\.com/a{1,4}/x"#));
+        assert!(converted.contains("binary-body-mode=true"));
+        assert!(converted.contains(r#"argument="{\"a\":1,\"b\":2}""#));
+    }
+}

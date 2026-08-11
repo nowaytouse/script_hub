@@ -1,6 +1,12 @@
+pub mod artifact;
+mod compiler;
+pub mod functional;
 pub mod rule;
 pub mod safety;
 pub mod source;
+pub mod validation;
+
+pub use compiler::run_adblock_manager;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProductKind {
@@ -48,14 +54,16 @@ pub fn published_products() -> &'static [Product] {
 
 #[cfg(test)]
 mod tests {
-    use super::{published_products, ProductKind};
+    use super::{ProductKind, published_products};
 
     #[test]
     fn product_set_has_no_lite() {
         let products = published_products();
-        assert!(products
-            .iter()
-            .all(|product| !product.path.to_ascii_lowercase().contains("lite")));
+        assert!(
+            products
+                .iter()
+                .all(|product| !product.path.to_ascii_lowercase().contains("lite"))
+        );
         assert_eq!(
             products
                 .iter()

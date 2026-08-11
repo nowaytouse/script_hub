@@ -12,6 +12,7 @@ pub struct DownloadConfig {
     pub timeout: Duration,
     pub backoff: Duration,
     pub max_bytes: u64,
+    pub max_total_bytes: u64,
 }
 
 impl Default for DownloadConfig {
@@ -21,6 +22,7 @@ impl Default for DownloadConfig {
             timeout: Duration::from_secs(60),
             backoff: Duration::from_secs(1),
             max_bytes: 64 * 1024 * 1024,
+            max_total_bytes: 256 * 1024 * 1024,
         }
     }
 }
@@ -92,10 +94,23 @@ impl Downloader {
             .map(|url| url.as_ref().to_string())
             .collect();
         let mut batch = DownloadBatch::default();
+        let mut total_bytes = 0_u64;
         for url in urls {
             match self.get(&url) {
                 Ok(content) => {
-                    batch.contents.insert(url, content);
+                    let next_total = total_bytes.saturating_add(content.len() as u64);
+                    if next_total > self.config.max_total_bytes {
+                        batch.failures.push(DownloadFailure {
+                            url,
+                            error: format!(
+                                "PROMAX download batch exceeds {} bytes",
+                                self.config.max_total_bytes
+                            ),
+                        });
+                    } else {
+                        total_bytes = next_total;
+                        batch.contents.insert(url, content);
+                    }
                 }
                 Err(error) => batch.failures.push(DownloadFailure {
                     url,
@@ -151,6 +166,7 @@ mod tests {
             timeout: Duration::from_secs(2),
             backoff: Duration::ZERO,
             max_bytes,
+            max_total_bytes: 1024,
         }
     }
 

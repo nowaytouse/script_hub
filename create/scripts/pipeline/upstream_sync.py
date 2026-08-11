@@ -25,10 +25,9 @@ from hub.project_paths import (
     KELEE_DIR,
     ADBLOCK_DIR,
 )
-# Import at module level to avoid NameError in process_nexus_module
-from pipeline.adblock_manager import PROTECTED_MODULES
-
 # CONFIGURATION
+
+PROTECTED_MODULES: tuple[str, ...] = ()
 
 SKK_SOURCES = {
     "reject.list": "https://ruleset.skk.moe/List/non_ip/reject.conf",
@@ -537,4 +536,3 @@ if __name__ == "__main__":
     syncer.sync_local_sources()
     syncer.sync_kelee()
     syncer.sync_blocked_sites_korea()
-

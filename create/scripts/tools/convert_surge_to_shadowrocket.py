@@ -332,39 +332,6 @@ def convert_devtools_module_for_sr(content: str) -> str:
     ordered = [(n, section_map[n]) for n in section_map]
     return sanitize_file_content(format_module(header, ordered, dedupe=True), dedupe=True)
 
-PROMAX_SURGE_MODULES = (
-    "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-    "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-)
-
-
-def convert_promax_modules() -> bool:
-    """Convert Surge PROMAX / PROMAX Lite → Shadowrocket (CDN root + github/ subfolder)."""
-    ok = True
-    # Convert both the CDN root variant and the github/ folder-isolated variant
-    for subdir in ("", "github"):
-        src_cat = SURGE_MODULE_DIR / "head_expanse" / subdir if subdir else SURGE_MODULE_DIR / "head_expanse"
-        out_cat = SR_MODULE_DIR / "head_expanse" / subdir if subdir else SR_MODULE_DIR / "head_expanse"
-        out_cat.mkdir(parents=True, exist_ok=True)
-        for name in PROMAX_SURGE_MODULES:
-            src = src_cat / name
-            if not src.is_file():
-                if subdir == "":
-                    Logger.warn(f"PROMAX source missing: {name}")
-                    ok = False
-                continue
-            Logger.info(f"Converting PROMAX → SR [{subdir or 'cdn'}]: {name}")
-            try:
-                converted = convert_content(src.read_text(encoding="utf-8"))
-                out_path = out_cat / (src.stem + ".module")
-                write_file(str(out_path), converted)
-                Logger.success(f"SR module written: {out_path.relative_to(SR_MODULE_DIR)}")
-            except Exception as exc:
-                Logger.error(f"PROMAX SR conversion failed [{subdir or 'cdn'}/{name}]: {exc}")
-                ok = False
-    return ok
-
-
 def process_all_modules():
     if not SR_MODULE_DIR.exists():
         SR_MODULE_DIR.mkdir(parents=True)
@@ -604,11 +571,6 @@ Examples:
         """
     )
     parser.add_argument("--modules", action="store_true", help="Convert all Surge modules to Shadowrocket")
-    parser.add_argument(
-        "--promax-only",
-        action="store_true",
-        help="Convert only PROMAX / PROMAX Lite (after adblock_manager merge)",
-    )
     parser.add_argument("--config", type=Path, help="Convert a specific Surge config file")
     parser.add_argument("--output", type=Path, help="Output path for config conversion")
     parser.add_argument("--full-host", action="store_true", help="Keep full Host section (default: compact)")
@@ -627,9 +589,6 @@ Examples:
             output = args.output or args.config.parent / (args.config.stem + "_Shadowrocket.conf")
             success = convert_main_config(args.config, output, compact_host=not args.full_host)
             exit_code = 0 if success else 1
-
-        elif args.promax_only:
-            exit_code = 0 if convert_promax_modules() else 1
 
         elif args.modules:
             try:

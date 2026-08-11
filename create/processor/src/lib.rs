@@ -657,7 +657,6 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
 }
 
 pub mod promax;
-pub mod adblock_manager;
 pub mod merge_bundles;
 
 #[unsafe(no_mangle)]
@@ -669,7 +668,7 @@ pub extern "C" fn run_adblock_manager_ffi(
         return false;
     }
     let root_str = unsafe { std::ffi::CStr::from_ptr(root_dir) }.to_string_lossy();
-    adblock_manager::run_adblock_manager(&root_str, execute)
+    promax::run_adblock_manager(&root_str, execute)
 }
 
 #[unsafe(no_mangle)]

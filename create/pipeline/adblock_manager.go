@@ -22,7 +22,9 @@ func NewAdBlockManager() *AdBlockManager {
 }
 
 // Merge delegates the complete PROMAX pipeline, including network access, to Rust.
-func (m *AdBlockManager) Merge(execute bool) {
+// The result is a publishing gate: callers must not commit generated artifacts
+// when Rust rejects a source, validation, or publication step.
+func (m *AdBlockManager) Merge(execute bool) bool {
 	hub.Section("AdBlock Module Consolidation (Canonical Rebuild)")
 
 	cRoot := C.CString(hub.ROOT)
@@ -35,4 +37,5 @@ func (m *AdBlockManager) Merge(execute bool) {
 	} else {
 		hub.Error("AdBlock Manager FFI execution failed")
 	}
+	return success
 }

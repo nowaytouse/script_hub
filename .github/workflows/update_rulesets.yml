@@ -44,7 +44,8 @@ jobs:
         fetch-depth: 0
         persist-credentials: true
 
-    - name: Configure Git
+    - name: Configure Git for master publication
+      if: github.ref == 'refs/heads/master'
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -144,6 +145,11 @@ jobs:
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
 
+    - name: Validate PROMAX Rust
+      env:
+        CARGO_BUILD_JOBS: '1'
+      run: cargo test --manifest-path create/processor/Cargo.toml 'promax::' -- --test-threads=1
+
     - name: Build Rust Static Library
       run: |
         cd create/processor
@@ -160,51 +166,69 @@ jobs:
         GITHUB_ACTIONS: 'true'
 
     - name: Summary
+      env:
+        PUBLISH_ENABLED: ${{ github.ref == 'refs/heads/master' }}
       run: |
-        echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📁 File Statistics" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Category | Count |" >> $GITHUB_STEP_SUMMARY
-        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| MetaCubeX Rules | $(find rulesets/Sources/MetaCubeX -name '*.list' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| RULE-SET Rules | $(find rulesets/RULE-SET -name '*.list' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| AdBlock Split | $(find rulesets/AdBlock -name '*.list' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| SingBox SRS | $(find rulesets/SingBox rulesets/Sources/dns/mapping -name '*.srs' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Sources Files | $(find rulesets/Sources/Links -name '*_sources*' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Surge Modules | $(find modules/surge -name '*.sgmodule' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "| SR Modules | $(find modules/shadowrocket -name '*.module' 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔑 Key Rulesets" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        # shellcheck disable=SC2129
+        echo "## 📊 Update Summary" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "### 📁 File Statistics" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "| Category | Count |" >> "$GITHUB_STEP_SUMMARY"
+        echo "|----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+        echo "| MetaCubeX Rules | $(find rulesets/Sources/MetaCubeX -name '*.list' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| RULE-SET Rules | $(find rulesets/RULE-SET -name '*.list' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| AdBlock Split | $(find rulesets/AdBlock -name '*.list' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| SingBox SRS | $(find rulesets/SingBox rulesets/Sources/dns/mapping -name '*.srs' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| Sources Files | $(find rulesets/Sources/Links -name '*_sources*' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| Surge Modules | $(find modules/surge -name '*.sgmodule' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| SR Modules | $(find modules/shadowrocket -name '*.module' 2>/dev/null | wc -l) |" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "### 🔑 Key Rulesets" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
         if [ -d "rulesets/AdBlock" ]; then
           ADBLOCK_TOTAL=$(grep -hcv "^#\|^$" rulesets/AdBlock/*.list 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
-          echo "- **AdBlock (Total Split)**: ${ADBLOCK_TOTAL} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **AdBlock (Total Split)**: ${ADBLOCK_TOTAL} rules" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        if [ -f "rulesets/AdBlock/catalog.json" ]; then
+          PROMAX_SHARDS=$(jq '[.shards[]?] | length' rulesets/AdBlock/catalog.json 2>/dev/null || echo "unknown")
+          PROMAX_CATALOG_RULES=$(jq '[.shards[]?.rule_count // 0] | add // 0' rulesets/AdBlock/catalog.json 2>/dev/null || echo "unknown")
+          echo "- **PROMAX Catalog**: ${PROMAX_SHARDS} shards / ${PROMAX_CATALOG_RULES} rules" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        if [ -f "rulesets/AdBlock/quarantine.json" ]; then
+          PROMAX_QUARANTINE=$(jq 'length' rulesets/AdBlock/quarantine.json 2>/dev/null || echo "unknown")
+          echo "- **PROMAX Quarantine**: ${PROMAX_QUARANTINE} rejected candidates" >> "$GITHUB_STEP_SUMMARY"
         fi
         if [ -f "rulesets/RULE-SET/ChinaDirect.list" ]; then
           CHINADIRECT_COUNT=$(grep -cv "^#\|^$" "rulesets/RULE-SET/ChinaDirect.list" 2>/dev/null || echo "0")
-          echo "- **ChinaDirect** (DNS leak prevention): ${CHINADIRECT_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **ChinaDirect** (DNS leak prevention): ${CHINADIRECT_COUNT} rules" >> "$GITHUB_STEP_SUMMARY"
         fi
         if [ -f "rulesets/RULE-SET/GlobalProxy.list" ]; then
           GLOBALPROXY_COUNT=$(grep -cv "^#\|^$" "rulesets/RULE-SET/GlobalProxy.list" 2>/dev/null || echo "0")
-          echo "- **GlobalProxy**: ${GLOBALPROXY_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **GlobalProxy**: ${GLOBALPROXY_COUNT} rules" >> "$GITHUB_STEP_SUMMARY"
         fi
         FIREWALL_MODULE=$(find modules/surge -name '*Firewall*' -o -name '*firewall*' 2>/dev/null | head -1)
         if [ -n "${FIREWALL_MODULE}" ]; then
           FIREWALL_COUNT=$(grep -c "^DEST-PORT\|^IN-PORT\|^SRC-PORT" "${FIREWALL_MODULE}" 2>/dev/null || echo "0")
-          echo "- **Firewall** (port blocking): ${FIREWALL_COUNT} rules" >> $GITHUB_STEP_SUMMARY
+          echo "- **Firewall** (port blocking): ${FIREWALL_COUNT} rules" >> "$GITHUB_STEP_SUMMARY"
         fi
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ⚙️ CI/CD Mode" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Ruleset update and merge" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Smart dedup and cleanup" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Port rules sync to firewall module" >> $GITHUB_STEP_SUMMARY
-        echo "✅ SRS file generation" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Git commit and push (github-actions[bot])" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Parallel processing enabled" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "❌ Skip backup (CI=true)" >> $GITHUB_STEP_SUMMARY
-        echo "❌ Skip core update (--unattended)" >> $GITHUB_STEP_SUMMARY
-        echo "❌ Skip iCloud sync (--unattended)" >> $GITHUB_STEP_SUMMARY
-        echo "❌ Skip Surge profile sync (--unattended)" >> $GITHUB_STEP_SUMMARY
+        # shellcheck disable=SC2129
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "### ⚙️ CI/CD Mode" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "✅ Ruleset update and merge" >> "$GITHUB_STEP_SUMMARY"
+        echo "✅ Smart dedup and cleanup" >> "$GITHUB_STEP_SUMMARY"
+        echo "✅ Port rules sync to firewall module" >> "$GITHUB_STEP_SUMMARY"
+        echo "✅ SRS file generation" >> "$GITHUB_STEP_SUMMARY"
+        echo "✅ PROMAX Rust validation passed (single-threaded)" >> "$GITHUB_STEP_SUMMARY"
+        if [ "${PUBLISH_ENABLED}" = "true" ]; then
+          echo "✅ Master publication enabled (github-actions[bot])" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "ℹ️ Validation-only run; commit and push disabled for ${GITHUB_REF}" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        # shellcheck disable=SC2129
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "❌ Skip backup (CI=true)" >> "$GITHUB_STEP_SUMMARY"
+        echo "❌ Skip core update (--unattended)" >> "$GITHUB_STEP_SUMMARY"
+        echo "❌ Skip iCloud sync (--unattended)" >> "$GITHUB_STEP_SUMMARY"
+        echo "❌ Skip Surge profile sync (--unattended)" >> "$GITHUB_STEP_SUMMARY"
