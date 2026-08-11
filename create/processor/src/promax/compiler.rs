@@ -2408,7 +2408,7 @@ impl AdBlockManager {
                     candidates.len()
                 ));
                 for raw in candidates {
-                    if let Some(line) = self.attach_policy(&raw, loon_policy) {
+                    if let Some(line) = self.attach_loon_policy(&raw, loon_policy) {
                         rule_lines.push(line);
                     }
                 }
@@ -2563,6 +2563,13 @@ impl AdBlockManager {
     fn attach_policy(&self, rule: &str, policy: &str) -> Option<String> {
         let mut parsed = crate::promax::rule::SurgeRule::parse(rule).ok()?;
         parsed.policy = Some(policy.to_ascii_uppercase());
+        Some(parsed.render_module(policy))
+    }
+
+    fn attach_loon_policy(&self, rule: &str, policy: &str) -> Option<String> {
+        let mut parsed = crate::promax::rule::SurgeRule::parse(rule).ok()?;
+        parsed.policy = Some(policy.to_ascii_uppercase());
+        parsed.options.retain(|option| option == "NO-RESOLVE");
         Some(parsed.render_module(policy))
     }
 
@@ -2810,7 +2817,7 @@ mod tests {
         .unwrap();
         fs::write(
             root.join("rulesets/Sources/fixture.list"),
-            "DOMAIN-SUFFIX,ads.fixture.test\nDOMAIN,tracker.fixture.test\nIP-CIDR,192.0.2.0/24\n",
+            "DOMAIN-SUFFIX,ads.fixture.test\nDOMAIN,tracker.fixture.test\nDOMAIN,extended.fixture.test,REJECT,extended-matching\nIP-CIDR,192.0.2.0/24\n",
         )
         .unwrap();
         fs::write(
@@ -2881,6 +2888,7 @@ hostname = split-ad.fixture.test, protected0.example
         assert!(!split.contains("protected0.example"));
         let loon = fs::read_to_string(root.join(products[2])).unwrap();
         assert!(!loon.contains("premium.fixture.test"));
+        assert!(!loon.contains("EXTENDED-MATCHING"));
         let quarantine = fs::read_to_string(root.join("rulesets/AdBlock/quarantine.json")).unwrap();
         assert!(quarantine.contains("10.0.0.0/24"));
 
