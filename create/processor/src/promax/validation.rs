@@ -237,43 +237,49 @@ fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<Valida
         return;
     }
     let remaining: Vec<&str> = fields.collect();
-    let action = if matches!(remaining.get(1).copied(), Some("302" | "307")) {
-        remaining[1].to_ascii_lowercase()
-    } else {
-        remaining
-            .first()
-            .copied()
-            .unwrap_or("")
-            .to_ascii_lowercase()
+    let is_valid_action = |action: &str| {
+        matches!(
+            action,
+            "reject"
+                | "reject-200"
+                | "reject-img"
+                | "reject-dict"
+                | "reject-array"
+                | "302"
+                | "307"
+                | "header"
+                | "header-add"
+                | "header-del"
+                | "header-replace"
+                | "header-replace-regex"
+                | "request-body-replace-regex"
+                | "request-body-json-add"
+                | "request-body-json-replace"
+                | "request-body-json-del"
+                | "request-body-json-jq"
+                | "response-body-replace-regex"
+                | "response-body-json-add"
+                | "response-body-json-replace"
+                | "response-body-json-del"
+                | "response-body-json-jq"
+                | "mock-request-body"
+                | "mock-response-body"
+        )
     };
-    let valid_action = matches!(
-        action.as_str(),
-        "reject"
-            | "reject-200"
-            | "reject-img"
-            | "reject-dict"
-            | "reject-array"
-            | "302"
-            | "307"
-            | "header"
-            | "header-add"
-            | "header-del"
-            | "header-replace"
-            | "header-replace-regex"
-            | "request-body-replace-regex"
-            | "request-body-json-add"
-            | "request-body-json-replace"
-            | "request-body-json-del"
-            | "request-body-json-jq"
-            | "response-body-replace-regex"
-            | "response-body-json-add"
-            | "response-body-json-replace"
-            | "response-body-json-del"
-            | "response-body-json-jq"
-            | "mock-request-body"
-            | "mock-response-body"
-    );
-    if !valid_action {
+    let first = remaining
+        .first()
+        .copied()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let second = remaining.get(1).copied().unwrap_or("").to_ascii_lowercase();
+    let (action_index, action) = if is_valid_action(&first) {
+        (0, first)
+    } else if is_valid_action(&second) {
+        (1, second)
+    } else {
+        (0, first)
+    };
+    if !is_valid_action(&action) {
         errors.push(error(
             line_number,
             "invalid-loon-rewrite-action",
@@ -284,7 +290,7 @@ fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<Valida
     if action == "mock-response-body" {
         let parameters = remaining
             .iter()
-            .skip(1)
+            .skip(action_index + 1)
             .copied()
             .collect::<Vec<_>>()
             .join(" ");
@@ -747,6 +753,7 @@ DOMAIN-SUFFIX,ads.example,REJECT
 [Rewrite]
 ^https://ads\.example/ https://example.com/blank 302
 ^https://tracker\.example/ https://example.com/blank 307
+^https://mirror\.example/(.*) https://origin.example/$1 header
 "#;
         assert_eq!(validate_loon_plugin(fixture), Vec::new());
     }

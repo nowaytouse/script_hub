@@ -94,7 +94,6 @@ static ADBLOCK_MODULE_NAME_TOKENS: &[&str] = &[
 
 static ADBLOCK_FILENAME_ALLOWLIST: &[&str] = &[
     "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
-    "sukka_url_redirect.sgmodule",
     "AllInOne_Mock.sgmodule",
     "All-in-One-2.x.sgmodule",
     "XWebAds.sgmodule",
@@ -647,9 +646,6 @@ impl AdBlockManager {
         let parent = path.parent().unwrap();
         let local_dir = self.root_dir.join("modules/source/local");
         if parent == local_dir {
-            if name.ends_with(".sgmodule") || name.ends_with(".module") {
-                return "full";
-            }
             return "skip";
         }
 
@@ -2782,6 +2778,29 @@ mod tests {
     use super::AdBlockManager;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn local_auto_discovery_does_not_force_unclassified_enhancement_modules() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-local-classifier-{unique}"));
+        let local = root.join("modules/source/local");
+        fs::create_dir_all(&local).unwrap();
+        let module = local.join("url-redirect.sgmodule");
+        fs::write(
+            &module,
+            "#!name=Redirect enhancement\n[URL Rewrite]\n^https://mirror\\.example/(.*) https://origin.example/$1 302\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            AdBlockManager::new(root.clone()).resolve_module_ingest_mode(&module, false),
+            "skip"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn offline_fixture_publishes_complete_promax_product_set() {
