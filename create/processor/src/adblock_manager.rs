@@ -517,6 +517,33 @@ impl AdBlockManager {
         entries
     }
 
+    fn download_remote_contents(
+        &self,
+        source_entries: &[SourceEntry],
+    ) -> Result<HashMap<String, String>, Vec<crate::promax::source::DownloadFailure>> {
+        let mut urls: Vec<String> = source_entries
+            .iter()
+            .filter(|entry| entry.is_remote())
+            .map(|entry| entry.source.clone())
+            .collect();
+        let (_, functional_urls) = self.load_functional_source_paths();
+        urls.extend(functional_urls);
+
+        println!(
+            "\x1b[0;32m[INFO]\x1b[0m Rust downloader resolving {} remote PROMAX source(s)",
+            urls.len()
+        );
+        let downloader = crate::promax::source::Downloader::new(
+            crate::promax::source::DownloadConfig::default(),
+        );
+        let batch = downloader.download_many(urls);
+        if batch.failures.is_empty() {
+            Ok(batch.contents)
+        } else {
+            Err(batch.failures)
+        }
+    }
+
     fn determine_category(&self, source: &str) -> &'static str {
         let lowered = source.to_lowercase();
         if lowered.contains("/source/local") || lowered.contains("localmodules") {
@@ -2169,7 +2196,7 @@ impl AdBlockManager {
         cleaned.join(",")
     }
 
-    pub fn merge(&mut self, execute: bool, remote_contents: &HashMap<String, String>) -> bool {
+    pub fn merge(&mut self, execute: bool) -> bool {
         println!("\x1b[0;32m[INFO]\x1b[0m ============================================================");
         println!("\x1b[0;32m[INFO]\x1b[0m 🚀 AdBlock Module Consolidation (Canonical Rebuild)");
         println!("\x1b[0;32m[INFO]\x1b[0m ============================================================");
@@ -2186,8 +2213,25 @@ impl AdBlockManager {
             *priority_map.get(cat).unwrap_or(&99)
         });
 
+        let remote_contents = match self.download_remote_contents(&source_entries) {
+            Ok(contents) => contents,
+            Err(failures) => {
+                for failure in &failures {
+                    println!(
+                        "\x1b[0;31m[ERROR]\x1b[0m PROMAX source download failed: {} ({})",
+                        failure.url, failure.error
+                    );
+                }
+                println!(
+                    "\x1b[0;31m[ERROR]\x1b[0m Refusing partial PROMAX build after {} download failure(s).",
+                    failures.len()
+                );
+                return false;
+            }
+        };
+
         println!("\x1b[0;32m[INFO]\x1b[0m Syncing Upstream Ad Modules");
-        let (cached_modules, sync_failures) = self.sync_module_sources(&source_entries, remote_contents);
+        let (cached_modules, sync_failures) = self.sync_module_sources(&source_entries, &remote_contents);
 
         println!("\x1b[0;32m[INFO]\x1b[0m Integrating Local AdBlock Sources");
         let local_dir = self.root_dir.join("modules/source/local");
@@ -2236,11 +2280,16 @@ impl AdBlockManager {
         }
 
         println!("\x1b[0;32m[INFO]\x1b[0m Fetching Canonical AdBlock Sources");
-        let failures = self.process_source_entries(&source_entries, &cached_modules, remote_contents);
+        let failures = self.process_source_entries(&source_entries, &cached_modules, &remote_contents);
+
+        if !sync_failures.is_empty() || !failures.is_empty() {
+            println!("\x1b[0;31m[ERROR]\x1b[0m Refusing partial PROMAX build after {} source failure(s).", sync_failures.len() + failures.len());
+            return false;
+        }
 
         if execute {
             let generated_rulesets = self.generate_ruleset();
-            self.functional_stats = self.integrate_functional_sections(remote_contents);
+            self.functional_stats = self.integrate_functional_sections(&remote_contents);
             self.write_catalog(&generated_rulesets);
 
             println!("\x1b[0;32m[INFO]\x1b[0m Generating PROMAX modules (CDN + GitHub variants)...");
@@ -2291,25 +2340,14 @@ impl AdBlockManager {
             println!("\x1b[0;32m[INFO]\x1b[0m Dry Run Mode - Generation skipped.");
         }
 
-        if !sync_failures.is_empty() || !failures.is_empty() {
-            println!("\x1b[0;33m[WARN]\x1b[0m AdBlock merge completed with {} failures.", sync_failures.len() + failures.len());
-        } else {
-            println!("\x1b[0;32m[SUCCESS]\x1b[0m AdBlock merge completed successfully without failures.");
-        }
+        println!("\x1b[0;32m[SUCCESS]\x1b[0m AdBlock merge completed successfully without failures.");
 
         true
     }
 }
 
-pub fn run_adblock_manager(root_dir: &str, remote_contents_json: &str, execute: bool) -> bool {
+pub fn run_adblock_manager(root_dir: &str, execute: bool) -> bool {
     let root_path = PathBuf::from(root_dir);
-    let mut remote_contents: HashMap<String, String> = HashMap::new();
-    if let Ok(parsed) = serde_json::from_str::<HashMap<String, String>>(remote_contents_json) {
-        remote_contents = parsed;
-    } else {
-        println!("\x1b[0;31m[ERROR]\x1b[0m Failed to parse remote contents JSON");
-    }
-
     let mut manager = AdBlockManager::new(root_path);
-    manager.merge(execute, &remote_contents)
+    manager.merge(execute)
 }
