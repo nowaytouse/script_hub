@@ -236,6 +236,8 @@ pub struct AdBlockManager {
     whitelist_keyword: HashSet<String>,
     whitelist_ip_networks: Vec<IpNet>,
     whitelist_ip_cidr_raw: HashSet<String>,
+    safety: crate::promax::safety::SafetyPolicy,
+    quarantine: Vec<crate::promax::safety::QuarantineRecord>,
     rules: HashMap<String, HashMap<String, HashSet<String>>>, // policy -> category -> rules
     seen_rules: HashMap<String, HashSet<String>>, // policy -> rules
     seen_suffixes: HashMap<String, HashSet<String>>, // policy -> suffixes
@@ -276,6 +278,8 @@ impl AdBlockManager {
             whitelist_keyword: HashSet::new(),
             whitelist_ip_networks: Vec::new(),
             whitelist_ip_cidr_raw: HashSet::new(),
+            safety: crate::promax::safety::SafetyPolicy::default(),
+            quarantine: Vec::new(),
             rules,
             seen_rules,
             seen_suffixes,
@@ -319,6 +323,26 @@ impl AdBlockManager {
                 }
             }
         }
+        let typed_lines = self
+            .whitelist_domain
+            .iter()
+            .map(|value| format!("DOMAIN,{value}"))
+            .chain(
+                self.whitelist_suffix
+                    .iter()
+                    .map(|value| format!("DOMAIN-SUFFIX,{value}")),
+            )
+            .chain(
+                self.whitelist_keyword
+                    .iter()
+                    .map(|value| format!("DOMAIN-KEYWORD,{value}")),
+            )
+            .chain(
+                self.whitelist_ip_cidr_raw
+                    .iter()
+                    .map(|value| format!("IP-CIDR,{value}")),
+            );
+        self.safety = crate::promax::safety::SafetyPolicy::from_lines(typed_lines);
         let total = self.whitelist_domain.len() + self.whitelist_suffix.len() + self.whitelist_keyword.len() + self.whitelist_ip_cidr_raw.len();
         println!("\x1b[0;32m[INFO]\x1b[0m Loaded {} whitelist patterns ({} IP-CIDR)", total, self.whitelist_ip_cidr_raw.len());
     }
@@ -714,44 +738,38 @@ impl AdBlockManager {
         };
 
         for candidate in candidates {
-            let policy = match self.normalize_policy(&candidate, default_policy) {
-                Some(p) => p,
-                None => continue,
+            let cleaned = crate::strip_inline_comment(&candidate);
+            let parsed = match crate::promax::rule::SurgeRule::parse(&cleaned) {
+                Ok(rule) => rule,
+                Err(_) => continue,
             };
-            let normalized = match crate::normalize_rule(&candidate) {
-                Some(n) => n,
-                None => continue,
+            let policy = parsed
+                .policy
+                .as_deref()
+                .unwrap_or(default_policy)
+                .to_ascii_uppercase();
+            let policy = match policy.as_str() {
+                "PROXY" => continue,
+                "REJECT-TINYGIF" | "REJECT-IMG" => "REJECT".to_string(),
+                _ => policy,
             };
 
-            let rule_payload = if normalized.contains(',') {
-                normalized.splitn(2, ',').nth(1).unwrap().trim().to_string()
-            } else {
-                normalized.clone()
-            };
-
-            if self.is_whitelisted(&rule_payload) {
+            if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
+                self.safety.decision(&parsed)
+            {
+                self.quarantine
+                    .push(crate::promax::safety::QuarantineRecord {
+                        source: category.to_string(),
+                        line: 0,
+                        candidate: candidate.clone(),
+                        reason: reason.to_string(),
+                        risk: crate::promax::safety::RiskClass::ProtectedService,
+                    });
                 continue;
             }
 
-            if normalized.starts_with("DOMAIN-KEYWORD,") {
-                let kw = rule_payload.to_lowercase();
-                if [
-                    "google", "apple", "microsoft", "amazon", "youtube", "baidu", "tencent", "alibaba",
-                    "bilibili", "taobao", "jd", "googleads", "github", "git", "githubusercontent",
-                ].contains(&kw.as_str()) {
-                    continue;
-                }
-            }
-
-            if normalized.starts_with("DOMAIN-SUFFIX,") || normalized.starts_with("DOMAIN,") {
-                let kw = rule_payload.to_lowercase();
-                if [
-                    "google.com", "apple.com", "microsoft.com", "github.com", "githubusercontent.com",
-                    "gmail.com", "akadns.net", "googleapis.com", "gstatic.com",
-                ].contains(&kw.as_str()) {
-                    continue;
-                }
-            }
+            let normalized = parsed.render_external();
+            let rule_payload = parsed.payload.clone();
 
             let rendered = self.render_policy_rule(&normalized);
 
@@ -762,7 +780,7 @@ impl AdBlockManager {
             }
 
             // Suffix subsumption
-            let rtype = normalized.splitn(2, ',').next().unwrap();
+            let rtype = parsed.kind.as_str();
             let rval = rule_payload.to_lowercase();
             let policy_suffixes = self.seen_suffixes.get_mut(&policy).unwrap();
             if rtype == "DOMAIN" || rtype == "DOMAIN-SUFFIX" {
@@ -798,6 +816,22 @@ impl AdBlockManager {
         let stripped = line.trim();
         if stripped.is_empty() || stripped.starts_with('#') {
             return;
+        }
+
+        if matches!(section_name, "URL Rewrite" | "Map Local" | "Body Rewrite") {
+            if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
+                crate::promax::safety::classify_functional_url(stripped)
+            {
+                self.quarantine
+                    .push(crate::promax::safety::QuarantineRecord {
+                        source: section_name.to_string(),
+                        line: 0,
+                        candidate: stripped.to_string(),
+                        reason: reason.to_string(),
+                        risk: crate::promax::safety::RiskClass::BroadMedia,
+                    });
+                return;
+            }
         }
         
         let key = crate::smart_cleanup::dedupe_key_pub(section_name, stripped);
@@ -1221,13 +1255,13 @@ impl AdBlockManager {
     fn filter_rules(&self, rules: &HashSet<String>) -> Vec<String> {
         let mut filtered = Vec::new();
         for rule in rules {
-            let rule_payload = if rule.contains(',') {
-                rule.splitn(2, ',').nth(1).unwrap().trim().to_string()
-            } else {
-                rule.clone()
-            };
-            if self.is_whitelisted(&rule_payload) {
-                continue;
+            if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(rule) {
+                if matches!(
+                    self.safety.decision(&parsed),
+                    crate::promax::safety::SafetyDecision::Quarantine(_)
+                ) {
+                    continue;
+                }
             }
             filtered.push(rule.clone());
         }
