@@ -1359,6 +1359,32 @@ impl AdBlockManager {
         }
     }
 
+    fn prune_stale_split_artifacts(&self, generated_files: &HashSet<String>) {
+        let split_dir = self.root_dir.join("modules/source/build/promax_splits");
+        if !split_dir.is_dir() {
+            return;
+        }
+        let mut removed = Vec::new();
+        if let Ok(entries) = fs::read_dir(split_dir) {
+            for entry in entries.map_while(Result::ok) {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name.ends_with(".ad-extract.sgmodule") && !generated_files.contains(&name) {
+                    if fs::remove_file(entry.path()).is_ok() {
+                        removed.push(name);
+                    }
+                }
+            }
+        }
+        if !removed.is_empty() {
+            removed.sort();
+            println!(
+                "\x1b[0;32m[INFO]\x1b[0m Pruned {} stale PROMAX split artifact(s): {}",
+                removed.len(),
+                removed.join(", ")
+            );
+        }
+    }
+
     fn integrate_functional_sections(
         &mut self,
         remote_contents: &HashMap<String, String>,
@@ -2681,6 +2707,16 @@ impl AdBlockManager {
                 return false;
             }
             artifacts.extend(self.generate_catalog_artifacts(&generated_rulesets, &artifacts));
+            let generated_splits: HashSet<String> = self
+                .split_artifacts
+                .iter()
+                .filter_map(|artifact| {
+                    artifact
+                        .target
+                        .file_name()
+                        .map(|name| name.to_string_lossy().to_string())
+                })
+                .collect();
             artifacts.append(&mut self.split_artifacts);
 
             println!(
@@ -2725,6 +2761,7 @@ impl AdBlockManager {
                 return false;
             }
             self.prune_stale_rulesets(&generated_rulesets);
+            self.prune_stale_split_artifacts(&generated_splits);
             println!(
                 "\x1b[0;32m[SUCCESS]\x1b[0m Published validated PROMAX artifacts as one transaction."
             );
@@ -2811,6 +2848,13 @@ mod tests {
         let root = std::env::temp_dir().join(format!("promax-offline-{unique}"));
         let links = root.join("rulesets/Sources/Links");
         fs::create_dir_all(&links).unwrap();
+        let split_dir = root.join("modules/source/build/promax_splits");
+        fs::create_dir_all(&split_dir).unwrap();
+        fs::write(
+            split_dir.join("stale-enhancement.ad-extract.sgmodule"),
+            "#!name=stale\n[URL Rewrite]\n^https://premium\\.example/ https://origin.example/ 302\n",
+        )
+        .unwrap();
 
         let mut whitelist = String::new();
         for index in 0..300 {
@@ -2905,6 +2949,11 @@ hostname = split-ad.fixture.test, protected0.example
         assert!(!split.contains("10.0.0.0/24"));
         assert!(!split.contains("premium.fixture.test"));
         assert!(!split.contains("protected0.example"));
+        assert!(
+            !split_dir
+                .join("stale-enhancement.ad-extract.sgmodule")
+                .exists()
+        );
         let loon = fs::read_to_string(root.join(products[2])).unwrap();
         assert!(!loon.contains("premium.fixture.test"));
         assert!(!loon.contains("EXTENDED-MATCHING"));
