@@ -27,6 +27,13 @@ func runQaScript(desc string, fn func() int) bool {
 	return true
 }
 
+func publishingAllowed() bool {
+	if !strings.EqualFold(os.Getenv("GITHUB_ACTIONS"), "true") {
+		return true
+	}
+	return os.Getenv("GITHUB_REF") == "refs/heads/master"
+}
+
 func main() {
 	quick := flag.Bool("quick", false, "Skip heavy sync operations")
 	execute := flag.Bool("execute", false, "Apply all changes and push")
@@ -109,7 +116,9 @@ func main() {
 
 	fmt.Println("\n--- AdBlock Manager ---")
 	adMgr := pipeline.NewAdBlockManager()
-	adMgr.Merge(*execute || *force)
+	if !adMgr.Merge(*execute || *force) {
+		hasFailures = true
+	}
 
 	fmt.Println("\n--- Final Ruleset Cleanup ---")
 	cleanupStats2 := pipeline.RunCleanup()
@@ -158,7 +167,9 @@ func main() {
 	srsGen.Run()
 
 	if *execute {
-		if hasFailures {
+		if !publishingAllowed() {
+			fmt.Printf("ℹ️ Validation-only run on %s; commit and push are disabled outside refs/heads/master.\n", os.Getenv("GITHUB_REF"))
+		} else if hasFailures {
 			fmt.Println("❌ Pipeline has errors. Skipping Git operations to prevent pushing broken state.")
 		} else {
 			fmt.Println("\n--- Git Operations ---")

@@ -198,7 +198,6 @@ func auditPromaxModules() []string {
 	var issues []string
 	rels := []string{
 		"modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-		"modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
 	}
 	for _, rel := range rels {
 		path := filepath.Join(hub.ROOT, rel)

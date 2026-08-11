@@ -165,7 +165,6 @@ def audit_promax_modules(root: Path) -> list[str]:
     issues: list[str] = []
     for rel in (
         "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-        "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
     ):
         path = root / rel
         if not path.is_file():

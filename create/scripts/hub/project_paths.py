@@ -145,10 +145,6 @@ PROMAX_MODULE = os.path.join(
     SURGE_HEAD_EXPANSE_DIR,
     "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"
 )
-PROMAX_LITE_MODULE = os.path.join(
-    SURGE_HEAD_EXPANSE_DIR,
-    "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule"
-)
 
 # Docs and scripts
 ADBLOCK_CALLCHAIN_DOC = os.path.join(ROOT, "docs", "AdBlock_callchain.doc")

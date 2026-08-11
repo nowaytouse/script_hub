@@ -112,10 +112,6 @@ var (
 		SURGE_HEAD_EXPANSE_DIR,
 		"🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
 	)
-	PROMAX_LITE_MODULE = filepath.Join(
-		SURGE_HEAD_EXPANSE_DIR,
-		"📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-	)
 
 	// Docs and scripts
 	ADBLOCK_CALLCHAIN_DOC                = filepath.Join(ROOT, "docs", "AdBlock_callchain.doc")
