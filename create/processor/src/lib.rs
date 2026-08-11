@@ -656,6 +656,7 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
     std::ptr::null_mut()
 }
 
+pub mod promax;
 pub mod adblock_manager;
 pub mod merge_bundles;
 
