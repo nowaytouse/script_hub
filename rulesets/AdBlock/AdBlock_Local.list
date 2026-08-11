@@ -2,77 +2,121 @@
 # Purpose: 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）
 # Category-Key: Local
 # Shard: 1/1
-# Total Rules: 72
-
-DOMAIN-SUFFIX,isnssdk.com
-DOMAIN-SUFFIX,ibyteimg.com
-DOMAIN-SUFFIX,sgsnssdk.com
-DOMAIN-SUFFIX,toutiaoapi.com
-DOMAIN,et.ykccn.com,REJECT
-DOMAIN,dm.pstatp.com,REJECT
-DOMAIN-SUFFIX,adiu.amap.com,REJECT
-DOMAIN-SUFFIX,page.amap.com,REJECT
-DOMAIN-SUFFIX,tui.weibo.com,REJECT
-DOMAIN-SUFFIX,wax.weibo.com,REJECT
-DOMAIN,log.snssdk.com,REJECT
-DOMAIN,s3a.pstatp.com,REJECT
-DOMAIN,api.biliapi.com,REJECT,pre-matching,extended-matching
-DOMAIN,api.biliapi.net,REJECT,pre-matching,extended-matching
-DOMAIN,app.biliapi.com,REJECT,pre-matching,extended-matching
-DOMAIN,app.biliapi.net,REJECT,pre-matching,extended-matching
-DOMAIN,sdfp.snssdk.com,REJECT
-DOMAIN,apiinit.amap.com,REJECT
-DOMAIN,dm.bytedance.com,REJECT
-DOMAIN,mon.zijieapi.com,REJECT
-DOMAIN-SUFFIX,widget.weibo.com,REJECT
-DOMAIN-SUFFIX,short.bytetos.com
-DOMAIN,appcloud.zhihu.com,REJECT
-DOMAIN,da.bridgeturbo.com,REJECT
-DOMAIN-SUFFIX,cdn-tos.bytescm.com
-DOMAIN-SUFFIX,analytics.bytescm.com
-DOMAIN,adx-os.bridgeturbo.com,REJECT
-DOMAIN,mssdk-bu.bytedance.com,REJECT
-DOMAIN,frontier-aweme.snssdk.com,REJECT
-DOMAIN-SUFFIX,fe-scm.pglstatp-toutiao.com
-DOMAIN-SUFFIX,fe-tos.pglstatp-toutiao.com
-DOMAIN,frontier-aweme-hl.snssdk.com,REJECT
-DOMAIN-SUFFIX,be-pack.pglstatp-toutiao.com
-DOMAIN,frontier-quic-test.bytedance.com,REJECT
-DOMAIN,180.76.76.200,REJECT
-DOMAIN-SUFFIX,dp.im.weibo.cn,REJECT
-DOMAIN-SUFFIX,dsp.edm.weibo.cn,REJECT
-DOMAIN-SUFFIX,adimg.vue.weibo.com,REJECT
-DOMAIN-SUFFIX,click.uve.weibo.com,REJECT
-DOMAIN-SUFFIX,wbapp.uve.weibo.com,REJECT
-DOMAIN,httpdns.music.163.com,REJECT
-DOMAIN,iadmatapk.nosdn.127.net,REJECT
-DOMAIN-SUFFIX,fastimage.uve.weibo.com,REJECT
-DOMAIN,aboard.apilocate.amap.com,REJECT
-DOMAIN,adpinpai.video.weibocdn.com,REJECT
-DOMAIN-SUFFIX,gw5.push.mcp.weibo.cn,REJECT
-DOMAIN-SUFFIX,gw6.push.mcp.weibo.cn,REJECT
-DOMAIN-KEYWORD,api-access.pangolin-sdk-toutiao,REJECT
-DOMAIN-KEYWORD,log-api.pangolin-sdk-toutiao,REJECT
-DOMAIN-KEYWORD,video-cn.snssdk.com,REJECT
-IP-CIDR,103.41.167.237/32
-IP-CIDR,115.236.121.195/32
-IP-CIDR,115.236.121.51/32
-IP-CIDR,180.76.76.200/32
-IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128
-IP-CIDR,47.110.187.87/32
-IP-CIDR,59.111.239.61/32
-IP-CIDR,59.111.239.62/32
-URL-REGEX,""^http:\/\/p\d+-be-pack-sign\.pglstatp-toutiao\.com\/(ad-app-package|web\.business\.image)\/",REJECT"
-URL-REGEX,""^https:\/\/a\.line\.me\/cs\/v\d\/oa$", REJECT-DROP"
-URL-REGEX,""^https:\/\/a\.line\.me\/lass\/api\/v\d\/ads$", REJECT-DROP"
-URL-REGEX,""^https:\/\/a\.line\.me\/oa\/v\d\/e$", REJECT-DROP"
-URL-REGEX,""^https:\/\/crs-event\.line\.me\/v\d\/imp", REJECT-DROP"
-URL-REGEX,""^https:\/\/obs\.line-scdn\.net\/0h.+\/(o|m)\d+x\d+$", REJECT-DROP"
-URL-REGEX,""^https:\/\/obs\.line-scdn\.net\/0h.+\/\d+p\.mp4$", REJECT-DROP"
-URL-REGEX,""^https:\/\/obs\.line-scdn\.net\/0hGH\d", REJECT-DROP"
-URL-REGEX,""^https:\/\/scdn\.line-apps\.com\/lan\/document\/pageEvent\/line\/ios\/", REJECT-DROP"
-URL-REGEX,""^https:\/\/scdn\.line-apps\.com\/lan\/image\/line\/bannerImageEvent\/", REJECT-DROP"
-URL-REGEX,""^https:\/\/sch\.line\.me\/api\/v\d\/ads$", REJECT-DROP"
-URL-REGEX,""^https:\/\/uts-front\.line-apps\.com\/event$", REJECT-DROP"
-URL-REGEX,""^https:\/\/uts-front\.line-apps\.com\/settings$", REJECT-DROP"
-URL-REGEX,""^https:\/\/w\.line\.me\/adp\/api\/ad\/v\d\/", REJECT-DROP"
+# Total Rules: 117
+DOMAIN,aaid.umeng.com
+DOMAIN,adreport.adtianmai.com
+DOMAIN,adsmind.gdtimg.com
+DOMAIN,adsmind.ugdtimg.com
+DOMAIN,adx-bj.anythinktech.com
+DOMAIN,adx-os.bridgeturbo.com
+DOMAIN,adx.adtaipo.com
+DOMAIN,adx.kuaiyiad.com
+DOMAIN,adxapi.readgps.com
+DOMAIN,ali-stats.jpush.cn
+DOMAIN,api-htp.beizi.biz
+DOMAIN,api.mobrtb.com
+DOMAIN,aspect-upush.umeng.com
+DOMAIN,ax.admobile.top
+DOMAIN,c2.gdt.qq.com
+DOMAIN,ce3e75d5.jpush.cn
+DOMAIN,cnlogs.umeng.com
+DOMAIN,config-junion.jpush.cn
+DOMAIN,config.jpush.cn
+DOMAIN,da.bridgeturbo.com
+DOMAIN,deeplink.umeng.com
+DOMAIN,errlog.umeng.com
+DOMAIN,errnewlog.umeng.com
+DOMAIN,et.ykccn.com
+DOMAIN,ether-pack.pangolin-sdk-toutiao.com
+DOMAIN,fcapi-ipv6.jpush.cn
+DOMAIN,gd-stats.jpush.cn
+DOMAIN,gdfp.gifshow.com
+DOMAIN,gromore.pangolin-sdk-toutiao.com
+DOMAIN,hc-ssp.sm.cn
+DOMAIN,httpdns-sdk.n.netease.com
+DOMAIN,httpdns.calorietech.com
+DOMAIN,httpdns.n.netease.com
+DOMAIN,httpdns.yunxindns.com
+DOMAIN,huatuocode.huatuo.qq.com
+DOMAIN,iadmat.nosdn.127.net
+DOMAIN,iadmatapk.nosdn.127.net
+DOMAIN,iadmusicmat.music.126.net
+DOMAIN,info4.video.qq.com
+DOMAIN,info6.video.qq.com
+DOMAIN,ios.bugly.qq.com
+DOMAIN,ios.video.mpush.qq.com
+DOMAIN,jump.admobile.top
+DOMAIN,lf-ad-ies.bytecdn.cn
+DOMAIN,lofter.httpdns.c.163.com
+DOMAIN,log.umsns.com
+DOMAIN,log.umtrack.com
+DOMAIN,mi.gdt.qq.com
+DOMAIN,mobads.baidu.com
+DOMAIN,monitor.ssp.admobile.top
+DOMAIN,mssdk.volces.com
+DOMAIN,music.httpdns.c.163.com
+DOMAIN,nfy.slyxmobi.com
+DOMAIN,open.e.kuaishou.com
+DOMAIN,otheve.beacon.qq.com
+DOMAIN,pgdt.gtimg.cn
+DOMAIN,pgdt.ugdtimg.com
+DOMAIN,plbslog.umeng.com
+DOMAIN,qzs.gdtimg.com
+DOMAIN,qzs.qq.com
+DOMAIN,rmonitor.qq.com
+DOMAIN,s.jpush.cn
+DOMAIN,sdk.beizi.biz
+DOMAIN,sdk.e.qq.com
+DOMAIN,sdk.ssp.admobile.top
+DOMAIN,sdk.tianmu.mobi
+DOMAIN,sdk.verification.jiguang.cn
+DOMAIN,sdkconfig.video.qq.com
+DOMAIN,sis-ipv6.jpush.cn
+DOMAIN,smartop-sdkapi.jiguang.cn
+DOMAIN,ssp.maplehaze.cn
+DOMAIN,status-ipv6.jpush.cn
+DOMAIN,t.fanglinad.com
+DOMAIN,t.gdt.qq.com
+DOMAIN,tmead.y.qq.com
+DOMAIN,tmeadbak.y.qq.com
+DOMAIN,tmeadcomm.y.qq.com
+DOMAIN,toblog.ctobsnssdk.com
+DOMAIN,tosv.boe.byted.org
+DOMAIN,tosv.byted.org
+DOMAIN,tpns.qq.com
+DOMAIN,tpstelemetry.tencent.com
+DOMAIN,tracker.tianmu.mobi
+DOMAIN,trk1.17admob.com
+DOMAIN,tsis.jpush.cn
+DOMAIN,ucc.umeng.com
+DOMAIN,ulogs.umeng.com
+DOMAIN,user.jpush.cn
+DOMAIN,utoken.umeng.com
+DOMAIN,v.gdt.qq.com
+DOMAIN,v2.gdt.qq.com
+DOMAIN,v2mi.gdt.qq.com
+DOMAIN,win.gdt.qq.com
+DOMAIN,wup.imtt.qq.com
+DOMAIN,zxid-m.mobileservice.cn
+DOMAIN-KEYWORD,api-access.pangolin-sdk-toutiao
+DOMAIN-KEYWORD,asiad.byteactivity
+DOMAIN-KEYWORD,iyes.youku.com
+DOMAIN-KEYWORD,log-api.pangolin-sdk-toutiao
+DOMAIN-KEYWORD,trace.qq.com
+DOMAIN-KEYWORD,trace.video.qq.com
+DOMAIN-SUFFIX,admobile.top
+DOMAIN-SUFFIX,adukwai.com
+DOMAIN-SUFFIX,gdt.qq.com
+DOMAIN-SUFFIX,jiguang.cn
+DOMAIN-SUFFIX,jpush.cn
+DOMAIN-SUFFIX,jpush.io
+DOMAIN-SUFFIX,l.qq.com
+DOMAIN-SUFFIX,lnk0.com
+DOMAIN-SUFFIX,ugdtimg.com
+IP-CIDR,103.41.167.237/32,NO-RESOLVE
+IP-CIDR,115.236.121.195/32,NO-RESOLVE
+IP-CIDR,115.236.121.51/32,NO-RESOLVE
+IP-CIDR,47.110.187.87/32,NO-RESOLVE
+IP-CIDR,59.111.239.61/32,NO-RESOLVE
+IP-CIDR,59.111.239.62/32,NO-RESOLVE
+IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,NO-RESOLVE
