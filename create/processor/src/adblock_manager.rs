@@ -104,8 +104,6 @@ static ADBLOCK_FILENAME_ALLOWLIST: &[&str] = &[
 
 static FUNCTIONAL_BLOCK_LOCAL_SOURCES: &[&str] = &["Reddit.ADBlock.sgmodule"];
 
-static LITE_CATEGORIES: &[&str] = &["Local", "Advertising", "Privacy", "Security", "AntiAD", "Other"];
-
 static CATEGORIES: &[&str] = &[
     "Local", "Advertising", "Privacy", "Security", "AntiAD", "ThreatIntel_Ultimate", "ThreatIntel_TIF", "ThreatIntel", "Other",
 ];
@@ -180,7 +178,6 @@ struct ShardItem {
 struct CatalogJson {
     updated: String,
     rules_per_shard_max: usize,
-    lite_categories: Vec<String>,
     modules: HashMap<String, CatalogItem>,
     manifest: String,
     functional_manifest: String,
@@ -1589,13 +1586,9 @@ impl AdBlockManager {
 
         let surge_promax_cdn = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
         let surge_promax_github = "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
-        let surge_lite_cdn = "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule";
-        let surge_lite_github = "modules/surge/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule";
 
         let sr_promax_cdn = "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module";
         let sr_promax_github = "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module";
-        let sr_lite_cdn = "modules/shadowrocket/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).module";
-        let sr_lite_github = "modules/shadowrocket/head_expanse/github/📱 Universal Ad-Blocking Rules (PROMAX Lite).module";
 
         let mut modules = HashMap::new();
         modules.insert("surge_promax_cdn".to_string(), CatalogItem {
@@ -1621,30 +1614,6 @@ impl AdBlockManager {
             install_url: format!("{}{}", GITHUB_RAW_URL, percent_encoding::utf8_percent_encode(sr_promax_github, percent_encoding::NON_ALPHANUMERIC)),
             url_source: "github".to_string(),
             note: "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）".to_string(),
-        });
-        modules.insert("surge_promax_lite_cdn".to_string(), CatalogItem {
-            path: surge_lite_cdn.to_string(),
-            install_url: format!("{}{}", CDN_BASE_URL, percent_encoding::utf8_percent_encode(surge_lite_cdn, percent_encoding::NON_ALPHANUMERIC)),
-            url_source: "cdn".to_string(),
-            note: "手机轻量版 — 不含 ThreatIntel 重型规则（CDN 加速）".to_string(),
-        });
-        modules.insert("surge_promax_lite_github".to_string(), CatalogItem {
-            path: surge_lite_github.to_string(),
-            install_url: format!("{}{}", GITHUB_RAW_URL, percent_encoding::utf8_percent_encode(surge_lite_github, percent_encoding::NON_ALPHANUMERIC)),
-            url_source: "github".to_string(),
-            note: "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）".to_string(),
-        });
-        modules.insert("shadowrocket_promax_lite_cdn".to_string(), CatalogItem {
-            path: sr_lite_cdn.to_string(),
-            install_url: format!("{}{}", CDN_BASE_URL, percent_encoding::utf8_percent_encode(sr_lite_cdn, percent_encoding::NON_ALPHANUMERIC)),
-            url_source: "cdn".to_string(),
-            note: "手机轻量版 — 不含 ThreatIntel 重型规则（CDN 加速）".to_string(),
-        });
-        modules.insert("shadowrocket_promax_lite_github".to_string(), CatalogItem {
-            path: sr_lite_github.to_string(),
-            install_url: format!("{}{}", GITHUB_RAW_URL, percent_encoding::utf8_percent_encode(sr_lite_github, percent_encoding::NON_ALPHANUMERIC)),
-            url_source: "github".to_string(),
-            note: "手机轻量版 — 不含 ThreatIntel 重型规则（GitHub Raw，即时更新）".to_string(),
         });
 
         let mut shards = Vec::new();
@@ -1691,7 +1660,6 @@ impl AdBlockManager {
         let catalog_data = CatalogJson {
             updated: now.clone(),
             rules_per_shard_max: RULES_PER_SHARD,
-            lite_categories: LITE_CATEGORIES.iter().map(|s| s.to_string()).collect(),
             modules,
             manifest: "rulesets/Sources/Links/AdBlock_sources.list".to_string(),
             functional_manifest: "rulesets/Sources/Links/AdBlock_functional_sources.list".to_string(),
@@ -1735,18 +1703,12 @@ impl AdBlockManager {
         readme.push(format!("- **Surge PROMAX** GitHub: {}\n", catalog_data.modules.get("surge_promax_github").unwrap().install_url));
         readme.push(format!("- **Shadowrocket PROMAX** CDN: {}\n", catalog_data.modules.get("shadowrocket_promax_cdn").unwrap().install_url));
         readme.push(format!("- **Shadowrocket PROMAX** GitHub: {}\n", catalog_data.modules.get("shadowrocket_promax_github").unwrap().install_url));
-        readme.push("\n### 📱 手机轻量版（Lite）\n".to_string());
-        readme.push(format!("- **Surge PROMAX Lite** CDN: {}\n", catalog_data.modules.get("surge_promax_lite_cdn").unwrap().install_url));
-        readme.push(format!("- **Surge PROMAX Lite** GitHub: {}\n", catalog_data.modules.get("surge_promax_lite_github").unwrap().install_url));
-        readme.push(format!("- **Shadowrocket PROMAX Lite** CDN: {}\n", catalog_data.modules.get("shadowrocket_promax_lite_cdn").unwrap().install_url));
-        readme.push(format!("- **Shadowrocket PROMAX Lite** GitHub: {}\n", catalog_data.modules.get("shadowrocket_promax_lite_github").unwrap().install_url));
-
         let readme_path = self.root_dir.join("rulesets/AdBlock/README.md");
         let _ = crate::safe_write_file_internal(&readme_path, &readme.join(""), false);
         println!("\x1b[0;32m[SUCCESS]\x1b[0m Catalog written: rulesets/AdBlock/catalog.json");
     }
 
-    fn generate_module(&self, generated_rulesets: &[String], lite_only: bool, url_source: &str) {
+    fn generate_module(&self, generated_rulesets: &[String], url_source: &str) {
         let current_date = chrono::Local::now().format("%Y-%m-%d").to_string();
         let complex_prefixes = ["URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,"];
 
@@ -1758,11 +1720,7 @@ impl AdBlockManager {
         };
         let _ = fs::create_dir_all(&out_dir);
 
-        let base_filename = if lite_only {
-            "📱 Universal Ad-Blocking Rules (PROMAX Lite)"
-        } else {
-            "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)"
-        };
+        let base_filename = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)";
         let target_path = out_dir.join(format!("{}.sgmodule", base_filename));
         let shard_count = generated_rulesets.len();
 
@@ -1893,25 +1851,20 @@ impl AdBlockManager {
             func_counts.push(format!("MITM={}", self.mitm_hosts.len()));
         }
 
-        let mut all_sections = Vec::new();
-        let name: String;
-        let desc: String;
-        let tag: String;
-
-        if lite_only {
-            all_sections.push(crate::smart_cleanup::ModuleSectionPub { Name: "Rule".to_string(), Lines: rule_lines });
-            name = format!("📱 Universal Ad-Blocking Rules (PROMAX Lite) - [{}]", current_date);
-            desc = format!("轻量基础版({}分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", shard_count);
-            tag = "AdBlock, Lite, Basic, Mobile".to_string();
+        let mut all_sections = vec![crate::smart_cleanup::ModuleSectionPub {
+            Name: "Rule".to_string(),
+            Lines: rule_lines,
+        }];
+        all_sections.extend(functional_sections);
+        all_sections = crate::smart_cleanup::merge_mitm_hosts_pub(&all_sections);
+        let func_summary = if func_counts.is_empty() {
+            "无脚本层".to_string()
         } else {
-            all_sections.push(crate::smart_cleanup::ModuleSectionPub { Name: "Rule".to_string(), Lines: rule_lines });
-            all_sections.extend(functional_sections);
-            all_sections = crate::smart_cleanup::merge_mitm_hosts_pub(&all_sections);
-            let func_summary = if func_counts.is_empty() { "无脚本层".to_string() } else { func_counts.join(", ") };
-            name = format!("🚫 Universal Ad-Blocking Rules (PROMAX) - [{}]", current_date);
-            desc = format!("按用途分片({}片) + 应用内去广告({}); 索引 rulesets/AdBlock/catalog.json", shard_count, func_summary);
-            tag = "AdBlock, Dependency, HTTPDNS, Script".to_string();
-        }
+            func_counts.join(", ")
+        };
+        let name = format!("🚫 Universal Ad-Blocking Rules (PROMAX) - [{}]", current_date);
+        let desc = format!("按用途分片({}片) + 应用内去广告({}); 索引 rulesets/AdBlock/catalog.json", shard_count, func_summary);
+        let tag = "AdBlock, Dependency, HTTPDNS, Script".to_string();
 
         let mut header_meta = HashMap::new();
         header_meta.insert("name".to_string(), name);
@@ -1948,7 +1901,7 @@ impl AdBlockManager {
         println!("\x1b[0;32m[SUCCESS]\x1b[0m Module generated: {}", target_path.file_name().unwrap().to_string_lossy());
     }
 
-    fn generate_loon_plugin(&self, generated_rulesets: &[String], lite_only: bool, url_source: &str) {
+    fn generate_loon_plugin(&self, generated_rulesets: &[String], url_source: &str) {
         let current_date = chrono::Local::now().format("%Y-%m-%d").to_string();
         let complex_prefixes = ["URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,"];
 
@@ -1960,11 +1913,7 @@ impl AdBlockManager {
         };
         let _ = fs::create_dir_all(&out_dir);
 
-        let base_filename = if lite_only {
-            "📱 Universal Ad-Blocking Rules (PROMAX Lite)"
-        } else {
-            "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)"
-        };
+        let base_filename = "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)";
         let target_path = out_dir.join(format!("{}.plugin", base_filename));
         let shard_count = generated_rulesets.len();
 
@@ -2110,16 +2059,9 @@ impl AdBlockManager {
             func_counts.push(format!("MITM={}", self.mitm_hosts.len()));
         }
 
-        let name: String;
-        let desc: String;
-        if lite_only {
-            name = format!("📱 Universal Ad-Blocking Rules (PROMAX Lite) - [{}]", current_date);
-            desc = format!("轻量基础版({}分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满", shard_count);
-        } else {
-            let func_summary = if func_counts.is_empty() { "无脚本层".to_string() } else { func_counts.join(", ") };
-            name = format!("🚫 Universal Ad-Blocking Rules (PROMAX) - [{}]", current_date);
-            desc = format!("按用途分片({}片) + 应用内去广告({}); 索引 rulesets/AdBlock/catalog.json", shard_count, func_summary);
-        }
+        let func_summary = if func_counts.is_empty() { "无脚本层".to_string() } else { func_counts.join(", ") };
+        let name = format!("🚫 Universal Ad-Blocking Rules (PROMAX) - [{}]", current_date);
+        let desc = format!("按用途分片({}片) + 应用内去广告({}); 索引 rulesets/AdBlock/catalog.json", shard_count, func_summary);
 
         let mut output = Vec::new();
         output.push(format!("#!name={}", name));
@@ -2135,24 +2077,22 @@ impl AdBlockManager {
             output.push(String::new());
         }
 
-        if !lite_only {
-            if !rewrite_lines.is_empty() {
-                output.push("[Rewrite]".to_string());
-                output.extend(rewrite_lines);
-                output.push(String::new());
-            }
+        if !rewrite_lines.is_empty() {
+            output.push("[Rewrite]".to_string());
+            output.extend(rewrite_lines);
+            output.push(String::new());
+        }
 
-            if !script_lines.is_empty() {
-                output.push("[Script]".to_string());
-                output.extend(script_lines);
-                output.push(String::new());
-            }
+        if !script_lines.is_empty() {
+            output.push("[Script]".to_string());
+            output.extend(script_lines);
+            output.push(String::new());
+        }
 
-            if !mitm_lines.is_empty() {
-                output.push("[MitM]".to_string());
-                output.extend(mitm_lines);
-                output.push(String::new());
-            }
+        if !mitm_lines.is_empty() {
+            output.push("[MitM]".to_string());
+            output.extend(mitm_lines);
+            output.push(String::new());
         }
 
         let mut plugin_content = output.join("\n");
@@ -2293,20 +2233,12 @@ impl AdBlockManager {
             self.write_catalog(&generated_rulesets);
 
             println!("\x1b[0;32m[INFO]\x1b[0m Generating PROMAX modules (CDN + GitHub variants)...");
-            self.generate_module(&generated_rulesets, false, "cdn");
-            self.generate_module(&generated_rulesets, false, "github");
-
-            println!("\x1b[0;32m[INFO]\x1b[0m Generating PROMAX Lite (mobile-friendly) modules (CDN + GitHub variants)...");
-            self.generate_module(&generated_rulesets, true, "cdn");
-            self.generate_module(&generated_rulesets, true, "github");
+            self.generate_module(&generated_rulesets, "cdn");
+            self.generate_module(&generated_rulesets, "github");
 
             println!("\x1b[0;32m[INFO]\x1b[0m Generating PROMAX Loon plugins (CDN + GitHub variants)...");
-            self.generate_loon_plugin(&generated_rulesets, false, "cdn");
-            self.generate_loon_plugin(&generated_rulesets, false, "github");
-
-            println!("\x1b[0;32m[INFO]\x1b[0m Generating PROMAX Lite Loon plugins (CDN + GitHub variants)...");
-            self.generate_loon_plugin(&generated_rulesets, true, "cdn");
-            self.generate_loon_plugin(&generated_rulesets, true, "github");
+            self.generate_loon_plugin(&generated_rulesets, "cdn");
+            self.generate_loon_plugin(&generated_rulesets, "github");
 
             // Shadowrocket modules sync: in rust FFI, we can just run the script or do it in Go.
             // Go can invoke shadowrocket conversion, so let's let Go handle SR convert since it's easy.

@@ -174,7 +174,7 @@ fn wildcard_regex(value: &str) -> Regex {
 
 #[cfg(test)]
 mod tests {
-    use super::{SafetyDecision, SafetyPolicy, classify_functional_url};
+    use super::{classify_functional_url, SafetyDecision, SafetyPolicy};
     use crate::promax::rule::SurgeRule;
 
     #[test]

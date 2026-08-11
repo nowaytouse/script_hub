@@ -63,7 +63,6 @@ dns-direct-fallback-proxy = false`
 
 	promaxSurgeModules = []string{
 		"🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-		"📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
 	}
 
 	rulesetCache = make(map[string][]string)

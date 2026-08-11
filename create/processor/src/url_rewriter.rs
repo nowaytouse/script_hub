@@ -80,9 +80,7 @@ pub fn copy_github_variants(root_dir: &str) {
 
     let skip_copy: HashSet<&str> = [
         "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-        "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
         "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-        "📱 Universal Ad-Blocking Rules (PROMAX Lite).module",
     ].iter().cloned().collect();
 
     for dir in dirs_to_copy {

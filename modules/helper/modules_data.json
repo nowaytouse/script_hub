@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-11T05:40:26Z",
+  "generated": "2026-08-11T01:55:30-07:00",
   "modules": [
     {
       "id": "Reddit 增强合集 (翻译 + NSFW)",
@@ -142,7 +142,7 @@
       "has_arguments": false,
       "merged_into": "",
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%8C%9F%20AdBlock%20Helper%20.sgmodule",
-      "github_install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%8C%9F%20AdBlock%20Helper%20.sgmodule",
+      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head_expanse/github/%F0%9F%8C%9F%20AdBlock%20Helper%20.sgmodule",
       "name": "🌟 AdBlock Helper",
       "desc": "Outbound Port Filtering | DNS Overrides | Hosts steering",
       "tags": [
@@ -156,27 +156,6 @@
       "icon": ""
     },
     {
-      "id": "📱 Universal Ad-Blocking Rules (PROMAX Lite)",
-      "filename": "📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-      "category": "head_expanse",
-      "path": "modules/surge/head_expanse/📱 Universal Ad-Blocking Rules (PROMAX Lite).sgmodule",
-      "has_arguments": false,
-      "merged_into": "",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
-      "github_install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%93%B1%20Universal%20Ad-Blocking%20Rules%20%28PROMAX%20Lite%29.sgmodule",
-      "name": "📱 Universal Ad-Blocking Rules (PROMAX Lite) - [2026-06-30]",
-      "desc": "轻量基础版(8分片); 保留完整规则集与防火墙，纯净无脚本无MITM，性能拉满",
-      "tags": [
-        "AdBlock",
-        "Lite",
-        "Basic",
-        "Mobile"
-      ],
-      "author": "ScriptHub-Automated",
-      "date": "2026-06-30 03:23:20",
-      "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png"
-    },
-    {
       "id": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)",
       "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
       "category": "head_expanse",
@@ -184,7 +163,7 @@
       "has_arguments": false,
       "merged_into": "",
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
-      "github_install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
+      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule",
       "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-11]",
       "desc": "按用途分片(8片) + 应用内去广告(URL Rewrite=1513, Map Local=2746, Script=638, Body Rewrite=170, MITM=1588); 索引 rulesets/AdBlock/catalog.json",
       "tags": [
@@ -202,5 +181,5 @@
     "adblock": "仅安装 PROMAX（含各 App 去广告脚本；专项去广告模块勿重复安装）",
     "features": "解锁/增强/翻译等保留 Amplify Nexus 独立模块"
   },
-  "total": 11
+  "total": 10
 }

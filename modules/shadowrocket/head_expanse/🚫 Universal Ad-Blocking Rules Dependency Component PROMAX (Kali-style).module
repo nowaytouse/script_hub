@@ -1363,7 +1363,6 @@ http:\/\/ad\.myfriday\.cn\/d\/json\/1\.1 - reject
 ^https?:\/\/app3\.qdaily\.com\/app3\/boot_advertisements\.json - reject
 ^https?:\/\/open\.fitdays\.cn\/uploads\/ad\/ - reject
 ^https?:\/\/acs(\.|-)m\.(taobao|freshippo)\.com\/gw\/mtop\.wdk\.hippotown\.tabbar\.info - reject
-^https?:\/\/api\.hengdianfilm\.com\/\/cinema\/queryAvailableBannerInfo\/1 https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/hengdian.json 302
 ^https?:\/\/fbchina\.flipchina\.cn\/v\d\/ad\/query - reject
 ^https?:\/\/cmsapi\.wifi8\.com\/v\d\/(emptyAd|adNew)\/ - reject
 ^https?:\/\/api4\.bybutter\.com\/v\d\/app\/placements\/\d\/advertisements - reject

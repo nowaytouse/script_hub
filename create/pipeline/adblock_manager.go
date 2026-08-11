@@ -10,7 +10,6 @@ extern bool run_adblock_manager_ffi(const char* root_dir, bool execute);
 import "C"
 
 import (
-	"fmt"
 	"unsafe"
 
 	"github.com/nowaytouse/script_hub/create/hub"
