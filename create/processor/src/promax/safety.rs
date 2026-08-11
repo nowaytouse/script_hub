@@ -243,6 +243,27 @@ impl SafetyPolicy {
     }
 
     pub fn hostname_is_referenced(&self, hostname: &str, functional_lines: &[String]) -> bool {
+        let patterns = Self::functional_host_patterns(functional_lines);
+        self.hostname_is_referenced_by_patterns(hostname, &patterns)
+    }
+
+    pub fn functional_host_patterns(functional_lines: &[String]) -> Vec<String> {
+        let mut patterns: Vec<String> = functional_lines
+            .iter()
+            .flat_map(|line| request_host_patterns(functional_request_pattern(line)))
+            .map(|hostname| hostname_reference_token(&hostname))
+            .filter(|token| token.len() >= 4)
+            .collect();
+        patterns.sort();
+        patterns.dedup();
+        patterns
+    }
+
+    pub fn hostname_is_referenced_by_patterns(
+        &self,
+        hostname: &str,
+        patterns: &[String],
+    ) -> bool {
         if self.hostname_is_protected(hostname) {
             return false;
         }
@@ -250,11 +271,7 @@ impl SafetyPolicy {
         if token.len() < 4 {
             return false;
         }
-        functional_lines.iter().any(|line| {
-            request_host_patterns(functional_request_pattern(line))
-                .iter()
-                .any(|candidate| host_patterns_intersect(candidate, &token))
-        })
+        patterns.binary_search(&token).is_ok()
     }
 
     fn protected_hosts(&self) -> impl Iterator<Item = &str> {

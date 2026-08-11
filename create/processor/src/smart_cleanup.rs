@@ -1210,7 +1210,9 @@ pub fn adapt_rewrite_line_for_loon_pub(line: &str) -> String {
 
     let lower = stripped.to_lowercase();
     let mut output = line.to_string();
-    if lower.contains(" - reject") {
+    if lower.contains(" _ reject") {
+        output = output.replace(" _ reject", " reject");
+    } else if lower.contains(" - reject") {
         output = output.replace(" - reject", " reject");
     } else if lower.contains(" - reject-200") {
         output = output.replace(" - reject-200", " reject-200");
@@ -1226,6 +1228,49 @@ pub fn adapt_rewrite_line_for_loon_pub(line: &str) -> String {
         output = output.replace(" - 307 ", " 307 ");
     }
     output
+}
+
+pub fn adapt_map_local_line_for_loon_pub(line: &str) -> String {
+    let stripped = line.trim();
+    if stripped.is_empty() || stripped.starts_with('#') {
+        return line.to_string();
+    }
+    let Some((pattern, parameters)) = stripped.split_once(char::is_whitespace) else {
+        return String::new();
+    };
+    let mut converted = Vec::new();
+    let mut data_path = None;
+    for field in split_whitespace_parameters(parameters) {
+        let lower = field.to_ascii_lowercase();
+        if lower.starts_with("header=") {
+            continue;
+        }
+        if lower.starts_with("data=") {
+            let value = field[5..].trim();
+            if value.trim_matches('"').starts_with("http") {
+                data_path = Some(value.to_string());
+                continue;
+            }
+        }
+        converted.push(field.to_string());
+    }
+    if let Some(path) = data_path {
+        if !converted.iter().any(|field| field.starts_with("data-type=")) {
+            let unquoted = path.trim_matches('"').to_ascii_lowercase();
+            let data_type = if unquoted.ends_with(".json") { "json" } else { "text" };
+            converted.push(format!("data-type={data_type}"));
+        }
+        converted.push(format!("data-path={path}"));
+    }
+    if !converted.iter().any(|field| field.starts_with("status-code=")) {
+        converted.push("status-code=200".to_string());
+    }
+    if !converted.iter().any(|field| {
+        field.starts_with("data=") || field.starts_with("data-path=")
+    }) {
+        return String::new();
+    }
+    format!("{pattern} mock-response-body {}", converted.join(" "))
 }
 
 pub fn adapt_body_rewrite_line_for_loon_pub(line: &str) -> String {
@@ -1347,6 +1392,39 @@ fn split_script_parameters(input: &str) -> Vec<&str> {
     parts
 }
 
+fn split_whitespace_parameters(input: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut quote = None;
+    let mut escaped = false;
+    for (index, character) in input.char_indices() {
+        if let Some(delimiter) = quote {
+            if character == delimiter && !escaped {
+                quote = None;
+            }
+            escaped = character == '\\' && !escaped;
+            if character != '\\' {
+                escaped = false;
+            }
+            continue;
+        }
+        match character {
+            '\'' | '"' => quote = Some(character),
+            value if value.is_whitespace() => {
+                if start < index {
+                    parts.push(input[start..index].trim());
+                }
+                start = index + value.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    if start < input.len() {
+        parts.push(input[start..].trim());
+    }
+    parts.into_iter().filter(|field| !field.is_empty()).collect()
+}
+
 fn quote_if_needed(value: &str) -> String {
     let value = value.trim();
     if (value.starts_with('"') && value.ends_with('"'))
@@ -1410,7 +1488,34 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 
 #[cfg(test)]
 mod promax_loon_tests {
-    use super::{adapt_body_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub};
+    use super::{
+        adapt_body_rewrite_line_for_loon_pub, adapt_map_local_line_for_loon_pub,
+        adapt_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub,
+    };
+
+    #[test]
+    fn loon_url_rewrite_removes_surge_placeholder() {
+        assert_eq!(
+            adapt_rewrite_line_for_loon_pub(r#"^https://ads\.example _ reject"#),
+            r#"^https://ads\.example reject"#
+        );
+    }
+
+    #[test]
+    fn loon_map_local_becomes_typed_mock_response() {
+        assert_eq!(
+            adapt_map_local_line_for_loon_pub(
+                r#"^https://ads\.example data-type=text data="{}" status-code=200 header="Content-Type:application/json""#,
+            ),
+            r#"^https://ads\.example mock-response-body data-type=text data="{}" status-code=200"#
+        );
+        assert_eq!(
+            adapt_map_local_line_for_loon_pub(
+                r#"^https://ads\.example data="https://example.test/reject.json""#,
+            ),
+            r#"^https://ads\.example mock-response-body data-type=json data-path="https://example.test/reject.json" status-code=200"#
+        );
+    }
 
     #[test]
     fn loon_body_rewrite_moves_pattern_before_typed_operation() {

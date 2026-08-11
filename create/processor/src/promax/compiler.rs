@@ -866,6 +866,20 @@ impl AdBlockManager {
             return;
         }
 
+        let syntax_errors =
+            crate::promax::validation::validate_surge_section_line(section_name, stripped);
+        if let Some(first_error) = syntax_errors.first() {
+            self.quarantine
+                .push(crate::promax::safety::QuarantineRecord {
+                    source: self.current_source.clone(),
+                    line: self.current_line,
+                    candidate: stripped.to_string(),
+                    reason: format!("invalid-functional-syntax:{}", first_error.code),
+                    risk: crate::promax::safety::RiskClass::Invalid,
+                });
+            return;
+        }
+
         if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
             self.safety.functional_decision(stripped)
         {
@@ -926,13 +940,15 @@ impl AdBlockManager {
             .values()
             .flat_map(|lines| lines.iter().cloned())
             .collect();
+        let host_patterns =
+            crate::promax::safety::SafetyPolicy::functional_host_patterns(&functional_lines);
         let removed: Vec<String> = self
             .mitm_hosts
             .iter()
             .filter(|hostname| {
                 !self
                     .safety
-                    .hostname_is_referenced(hostname, &functional_lines)
+                    .hostname_is_referenced_by_patterns(hostname, &host_patterns)
             })
             .cloned()
             .collect();
@@ -1369,9 +1385,15 @@ impl AdBlockManager {
         let mitm_before = self.mitm_hosts.len();
 
         let (local_paths, remote_urls) = self.load_functional_source_paths();
+        let mut seen_functional_content = HashSet::new();
 
         for u in remote_urls {
             if let Some(content) = remote_contents.get(&u) {
+                let digest = format!("{:x}", md5::compute(content.as_bytes()));
+                if !seen_functional_content.insert(digest) {
+                    println!("\x1b[0;32m[INFO]\x1b[0m   ⊘ Duplicate functional content: {u}");
+                    continue;
+                }
                 let parts: Vec<&str> = u.split('/').collect();
                 println!(
                     "\x1b[0;32m[INFO]\x1b[0m   + Functional remote: {}",
@@ -1399,9 +1421,15 @@ impl AdBlockManager {
                 .to_string();
             println!("\x1b[0;32m[INFO]\x1b[0m   + Functional ({}): {}", tag, rel);
 
-            if let Ok(content) = fs::read_to_string(&path) {
-                self.extract_from_text(&content, "REJECT", "Local", true, false, &rel);
+            let Ok(content) = fs::read_to_string(&path) else {
+                continue;
+            };
+            let digest = format!("{:x}", md5::compute(content.as_bytes()));
+            if !seen_functional_content.insert(digest) {
+                println!("\x1b[0;32m[INFO]\x1b[0m   ⊘ Duplicate functional content: {rel}");
+                continue;
             }
+            self.extract_from_text(&content, "REJECT", "Local", true, false, &rel);
             if ingest_mode == "split" {
                 self.write_promax_split_artifact(&path);
             }
@@ -1445,29 +1473,55 @@ impl AdBlockManager {
     }
 
     fn write_promax_split_artifact(&mut self, source_path: &Path) {
+        let stem = source_path
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        let safe_stem = Regex::new(r"[^\w\u4e00-\u9fff.-]+")
+            .unwrap()
+            .replace_all(&stem, "_")
+            .to_string();
+        let out_dir = self.root_dir.join("modules/source/build/promax_splits");
+        let out_path = out_dir.join(format!("{}.ad-extract.sgmodule", safe_stem));
+        if self
+            .split_artifacts
+            .iter()
+            .any(|artifact| artifact.target == out_path)
+        {
+            println!(
+                "\x1b[0;32m[INFO]\x1b[0m   ↳ split artifact already staged for {}",
+                safe_stem
+            );
+            return;
+        }
+
         if let Ok(text) = fs::read_to_string(source_path) {
-            let (ad_sections, stats) = crate::smart_cleanup::split_module_sections_pub(
+            let (mut ad_sections, mut stats) = crate::smart_cleanup::split_module_sections_pub(
                 source_path.to_str().unwrap(),
                 &text,
             );
+            let original_kept = *stats.get("kept_lines").unwrap_or(&0);
+            for (section, lines) in &mut ad_sections {
+                lines.retain(|line| {
+                    crate::promax::validation::validate_surge_section_line(section, line).is_empty()
+                        && !matches!(
+                            self.safety.functional_decision(line),
+                            crate::promax::safety::SafetyDecision::Quarantine(_)
+                        )
+                });
+            }
+            ad_sections.retain(|_, lines| !lines.is_empty());
+            let filtered_kept: usize = ad_sections.values().map(Vec::len).sum();
+            let filtered_out = original_kept.saturating_sub(filtered_kept);
+            stats.insert("kept_lines".to_string(), filtered_kept);
+            *stats.entry("skipped_lines".to_string()).or_insert(0) += filtered_out;
             let kept = *stats.get("kept_lines").unwrap_or(&0);
             let total = *stats.get("total_lines").unwrap_or(&0);
             if kept == 0 {
                 return;
             }
-            let out_dir = self.root_dir.join("modules/source/build/promax_splits");
             let _ = fs::create_dir_all(&out_dir);
-
-            let stem = source_path
-                .file_stem()
-                .unwrap()
-                .to_string_lossy()
-                .to_string();
-            let safe_stem = Regex::new(r"[^\w\u4e00-\u9fff.-]+")
-                .unwrap()
-                .replace_all(&stem, "_")
-                .to_string();
-            let out_path = out_dir.join(format!("{}.ad-extract.sgmodule", safe_stem));
 
             let note = format!(
                 "从混合模块拆出的去广告行 {}/{}；解锁/增强仍留在原模块",
@@ -2136,13 +2190,6 @@ impl AdBlockManager {
         url_source: &str,
     ) -> crate::promax::artifact::GeneratedArtifact {
         let current_date = chrono::Local::now().format("%Y-%m-%d").to_string();
-        let complex_prefixes = ["URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,"];
-
-        let base_url = if url_source == "cdn" {
-            CDN_BASE_URL
-        } else {
-            GITHUB_RAW_URL
-        };
         let out_dir = if url_source == "cdn" {
             self.root_dir.join("modules/loon")
         } else {
@@ -2182,85 +2229,41 @@ impl AdBlockManager {
             "DOMAIN,dot.pub,DIRECT".to_string(),
             "DOMAIN,doh.360.cn,DIRECT".to_string(),
             "DOMAIN,doh.dns.apple.com,DIRECT".to_string(),
-            "# Block app-layer HTTPDNS first".to_string(),
-            format!(
-                "RULE-SET,{}rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT",
-                base_url
-            ),
-            "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)".to_string(),
+            "# PROMAX rules are inlined because Loon plugins do not expose Surge RULE-SET semantics".to_string(),
         ]);
 
-        let mut shards_by_category: HashMap<String, Vec<String>> = HashMap::new();
-        for rs_path in generated_rulesets {
-            let cat = self.category_from_filename(rs_path.split('/').last().unwrap());
-            shards_by_category
-                .entry(cat.to_string())
-                .or_default()
-                .push(rs_path.clone());
-        }
-
-        for category in CATEGORIES {
-            if let Some(paths) = shards_by_category.get_mut(*category) {
-                if paths.is_empty() {
-                    continue;
-                }
-                let meta = CATEGORY_META.get(*category).unwrap();
-                rule_lines.push(format!("# ── {} · {} ──", meta.label_zh, meta.desc));
-                paths.sort();
-                for rs_path in paths {
-                    rule_lines.push(format!(
-                        "RULE-SET,{}{},REJECT,no-resolve",
-                        base_url, rs_path
-                    ));
-                }
-            }
-        }
-
-        rule_lines.extend(vec![
-            "".to_string(),
-            "# SKK Upstream Rulesets".to_string(),
-            format!("RULE-SET,{}rulesets/Sources/skk_upstream/reject-no-drop.list,REJECT-NO-DROP,no-resolve", base_url),
-            format!("RULE-SET,{}rulesets/Sources/skk_upstream/reject-drop.list,REJECT-DROP,no-resolve", base_url),
-            format!("RULE-SET,{}rulesets/Sources/skk_upstream/BlockHttpDNS.list,REJECT-DROP,no-resolve", base_url),
-        ]);
-
-        for policy in &["REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
-            let mut pool = HashSet::new();
-            for cat in CATEGORIES {
+        for policy in &["DIRECT", "REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
+            let loon_policy = if *policy == "DIRECT" {
+                "DIRECT"
+            } else {
+                "REJECT"
+            };
+            for category in CATEGORIES {
                 let empty_set = HashSet::new();
-                let rules_in_cat = self
+                let mut candidates: Vec<String> = self
                     .rules
                     .get(*policy)
                     .unwrap()
-                    .get(*cat)
-                    .unwrap_or(&empty_set);
-                pool.extend(rules_in_cat.clone());
-            }
-            if pool.is_empty() {
-                continue;
-            }
-            let mut candidates = Vec::new();
-            for r in pool {
-                if *policy == "REJECT" {
-                    if complex_prefixes.iter().any(|p| r.starts_with(p)) {
-                        candidates.push(r);
-                    }
-                } else {
-                    candidates.push(r);
+                    .get(*category)
+                    .unwrap_or(&empty_set)
+                    .iter()
+                    .cloned()
+                    .collect();
+                if candidates.is_empty() {
+                    continue;
                 }
-            }
-            if candidates.is_empty() {
-                continue;
-            }
-            rule_lines.push(format!(
-                "# Merged {} complex rules ({})",
-                policy,
-                candidates.len()
-            ));
-            candidates.sort();
-            for raw in candidates {
-                if let Some(line) = self.attach_policy(&raw, policy) {
-                    rule_lines.push(line);
+                candidates.sort();
+                let meta = CATEGORY_META.get(*category).unwrap();
+                rule_lines.push(format!(
+                    "# ── {} · {} · {} rules ──",
+                    meta.label_zh,
+                    loon_policy,
+                    candidates.len()
+                ));
+                for raw in candidates {
+                    if let Some(line) = self.attach_policy(&raw, loon_policy) {
+                        rule_lines.push(line);
+                    }
                 }
             }
         }
@@ -2275,10 +2278,14 @@ impl AdBlockManager {
             let deduped = crate::smart_cleanup::dedupe_section_lines_pub(sec_name, lines);
             if !deduped.is_empty() {
                 for line in &deduped {
-                    let converted = if *sec_name == "Body Rewrite" {
-                        crate::smart_cleanup::adapt_body_rewrite_line_for_loon_pub(line)
-                    } else {
-                        crate::smart_cleanup::adapt_rewrite_line_for_loon_pub(line)
+                    let converted = match *sec_name {
+                        "Body Rewrite" => {
+                            crate::smart_cleanup::adapt_body_rewrite_line_for_loon_pub(line)
+                        }
+                        "Map Local" => {
+                            crate::smart_cleanup::adapt_map_local_line_for_loon_pub(line)
+                        }
+                        _ => crate::smart_cleanup::adapt_rewrite_line_for_loon_pub(line),
                     };
                     if !converted.is_empty() {
                         rewrite_lines.push(converted);

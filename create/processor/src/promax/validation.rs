@@ -88,6 +88,25 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
     errors
 }
 
+/// Validate one functional line in the same context used by a Surge module.
+///
+/// The compiler calls this before accepting third-party functional entries so
+/// malformed regexes and incomplete scripts can be quarantined without
+/// invalidating the whole generated product.
+pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationError> {
+    let mut errors = Vec::new();
+    match section {
+        "Rule" => validate_module_rule(1, line, &mut errors),
+        "MITM" => validate_mitm(1, line, &mut errors),
+        "Script" => validate_surge_script(1, line, &mut errors),
+        "URL Rewrite" | "Map Local" | "Body Rewrite" | "Header Rewrite" => {
+            validate_regex_entry(section, 1, line, &mut errors);
+        }
+        _ => {}
+    }
+    errors
+}
+
 pub fn validate_external_ruleset(content: &str) -> Vec<ValidationError> {
     let mut errors = Vec::new();
     for (index, raw_line) in content.lines().enumerate() {
@@ -151,9 +170,9 @@ pub fn validate_loon_plugin(content: &str) -> Vec<ValidationError> {
             continue;
         }
         match section {
-            Some("Rule") => validate_module_rule(line_number, line, &mut errors),
+            Some("Rule") => validate_loon_rule(line_number, line, &mut errors),
             Some("MitM") => validate_mitm(line_number, line, &mut errors),
-            Some("Rewrite") => validate_regex_entry("Rewrite", line_number, line, &mut errors),
+            Some("Rewrite") => validate_loon_rewrite(line_number, line, &mut errors),
             Some("Script") => validate_loon_script(line_number, line, &mut errors),
             Some(_) => {}
             None => errors.push(error(
@@ -170,6 +189,100 @@ pub fn validate_loon_plugin(content: &str) -> Vec<ValidationError> {
         );
     }
     errors
+}
+
+fn validate_loon_rule(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+    if line.to_ascii_uppercase().starts_with("RULE-SET,") {
+        errors.push(error(
+            line_number,
+            "unsupported-loon-rule-set",
+            "Loon plugins must use inline rules instead of Surge RULE-SET references",
+        ));
+        return;
+    }
+    match SurgeRule::parse(line) {
+        Ok(rule) => {
+            if !matches!(rule.policy.as_deref(), Some("DIRECT" | "REJECT")) {
+                errors.push(error(
+                    line_number,
+                    "unsupported-policy",
+                    "Loon PROMAX rules require DIRECT or REJECT",
+                ));
+            }
+            if rule.options.iter().any(|option| option != "NO-RESOLVE") {
+                errors.push(error(
+                    line_number,
+                    "invalid-rule-option",
+                    "unsupported Loon inline rule option",
+                ));
+            }
+        }
+        Err(parse_error) => {
+            errors.push(error(line_number, "invalid-rule", parse_error.to_string()))
+        }
+    }
+}
+
+fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+    let mut fields = line.split_whitespace();
+    let Some(pattern) = fields.next() else {
+        return;
+    };
+    if let Err(regex_error) = Regex::new(pattern) {
+        errors.push(error(
+            line_number,
+            "invalid-section-regex",
+            regex_error.to_string(),
+        ));
+        return;
+    }
+    let action = fields.next().unwrap_or("").to_ascii_lowercase();
+    let valid_action = matches!(
+        action.as_str(),
+        "reject"
+            | "reject-200"
+            | "reject-img"
+            | "reject-dict"
+            | "reject-array"
+            | "302"
+            | "307"
+            | "header"
+            | "header-add"
+            | "header-del"
+            | "header-replace"
+            | "header-replace-regex"
+            | "request-body-replace-regex"
+            | "request-body-json-add"
+            | "request-body-json-replace"
+            | "request-body-json-del"
+            | "request-body-json-jq"
+            | "response-body-replace-regex"
+            | "response-body-json-add"
+            | "response-body-json-replace"
+            | "response-body-json-del"
+            | "response-body-json-jq"
+            | "mock-request-body"
+            | "mock-response-body"
+    );
+    if !valid_action {
+        errors.push(error(
+            line_number,
+            "invalid-loon-rewrite-action",
+            format!("unsupported Loon rewrite action: {action}"),
+        ));
+        return;
+    }
+    if action == "mock-response-body" {
+        let parameters = fields.collect::<Vec<_>>().join(" ");
+        let has_data = parameters.contains("data=") || parameters.contains("data-path=");
+        if !parameters.contains("data-type=") || !has_data {
+            errors.push(error(
+                line_number,
+                "invalid-loon-mock-response",
+                "mock-response-body requires data-type and data/data-path",
+            ));
+        }
+    }
 }
 
 fn validate_module_rule(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
@@ -492,7 +605,7 @@ fn error(line: usize, code: &'static str, message: impl Into<String>) -> Validat
 
 #[cfg(test)]
 mod tests {
-    use super::validate_surge_module;
+    use super::{validate_loon_plugin, validate_surge_module, validate_surge_section_line};
 
     #[test]
     fn reports_structural_errors_with_exact_source_lines() {
@@ -558,8 +671,59 @@ bad = type=http-response,pattern=^https://example.com/ad
     }
 
     #[test]
+    fn validates_individual_functional_lines_before_merge() {
+        assert_eq!(
+            validate_surge_section_line(
+                "URL Rewrite",
+                r"^https?:\/\/res\.kfc\.com.\cn\/advertisement\/ _ reject",
+            )[0]
+            .code,
+            "invalid-section-regex"
+        );
+        assert_eq!(
+            validate_surge_section_line(
+                "Script",
+                "bad=type=http-response,pattern=^https://example.com/ad",
+            )[0]
+            .code,
+            "invalid-script"
+        );
+        assert!(
+            validate_surge_section_line("URL Rewrite", r"^https?:\/\/ads\.example\/ - reject",)
+                .is_empty()
+        );
+    }
+
+    #[test]
     fn accepts_representative_surge_regex_dialect_fixture() {
         let fixture = include_str!("../../tests/fixtures/promax_regex_dialect.sgmodule");
         assert_eq!(validate_surge_module(fixture), Vec::new());
+    }
+
+    #[test]
+    fn loon_validator_rejects_surge_rule_sets_and_untyped_map_local() {
+        let fixture = r#"#!name=PROMAX fixture
+[Rule]
+RULE-SET,https://example.test/ad.list,REJECT,no-resolve
+[Rewrite]
+^https://ads\.example data-type=text data="{}"
+"#;
+        let errors = validate_loon_plugin(fixture);
+        let codes: Vec<&str> = errors.iter().map(|error| error.code).collect();
+        assert_eq!(
+            codes,
+            vec!["unsupported-loon-rule-set", "invalid-loon-rewrite-action"]
+        );
+    }
+
+    #[test]
+    fn loon_validator_accepts_inline_rules_and_typed_mock_response() {
+        let fixture = r#"#!name=PROMAX fixture
+[Rule]
+DOMAIN-SUFFIX,ads.example,REJECT
+[Rewrite]
+^https://ads\.example mock-response-body data-type=text data="{}" status-code=200
+"#;
+        assert_eq!(validate_loon_plugin(fixture), Vec::new());
     }
 }
