@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/nowaytouse/script_hub/create/qa"
+	"github.com/nowaytouse/script_hub/create/internal/generatedguard"
 )
 
 func main() {
-	os.Exit(qa.RunGuardGeneratedTree())
+	os.Exit(generatedguard.Run())
 }
