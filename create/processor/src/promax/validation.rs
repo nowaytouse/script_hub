@@ -384,7 +384,7 @@ fn validate_rule_set(line_number: usize, line: &str, errors: &mut Vec<Validation
         ) || option
             .strip_prefix("UPDATE-INTERVAL=")
             .and_then(|value| value.parse::<u32>().ok())
-            .is_some_and(|value| value > 0);
+            .is_some_and(|value| value > 0 && value <= 31_536_000);
         if !valid {
             errors.push(error(
                 line_number,

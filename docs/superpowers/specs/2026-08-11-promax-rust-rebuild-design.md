@@ -34,7 +34,7 @@ PROMAX is one deep Rust module with this small external interface:
 - `artifact`: ruleset shards, the single PROMAX module, platform conversions, catalog, and quarantine report.
 - `validation`: external ruleset grammar, complete module grammar, references, counts, and deterministic output checks.
 
-Go no longer downloads or interprets PROMAX sources. Its existing command entry invokes the Rust FFI only; all Promax inputs and outcomes cross that seam as a root path, execute flag, success status, and report summary.
+The retired Go command is no longer part of the product. The Rust updater owns source downloads, local processing, validation, and publication directly.
 
 ## Rule model and Surge compliance
 
@@ -80,8 +80,8 @@ Implementation is test-first and low-load locally:
 
 - Rust unit tests reproduce nested quotes, policy leakage, wildcard handling, whitelist intersection, media false positives, and section extraction.
 - Fixture tests compile a small offline source graph and validate the complete generated module.
-- Go verifies only that the command calls the Rust entrypoint and reports failure correctly.
-- CI runs formatting, Rust tests, Go build/tests, Surge validation, generated-tree guards, and an offline deterministic fixture on pull requests.
+- Rust verifies the updater result and generated module tree directly.
+- CI runs formatting, Rust tests, module validation, generated-tree guards, and offline deterministic fixtures on pull requests.
 - Scheduled CI performs the full network refresh, validates staged artifacts, and publishes only when every gate passes.
 
 Local commands run with one build job. Full generation is deferred to GitHub Actions unless a narrowly scoped local fixture requires it.

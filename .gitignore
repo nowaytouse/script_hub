@@ -4,10 +4,6 @@
 
 !*iCloud_Private_Relay*.sgmodule
 !scripts/bin/*.plist
-!scripts/bin/*.py
-!scripts/bin/*.sh
-!scripts/bin/install.sh
-!scripts/bin/wrapper.sh
 # ============================================
 # Archives & Logs
 # Backup & Temporary Files
@@ -79,8 +75,6 @@ scripts/network/config-manager-auto-update/.cargo/
 scripts/network/config-manager-auto-update/bin/
 scripts/network/config-manager-auto-update/config.json
 scripts/network/config-manager-auto-update/target/
-scripts/network/config-manager-auto-update/test-full.sh
-scripts/sync/sync_modules_to_icloud.sh
 sing-box
 sing-box.tar.gz
 target/

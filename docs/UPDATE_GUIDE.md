@@ -14,4 +14,4 @@ cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- 
 
 `--execute` 允许生成产物；CI 只有 `master` 会发布。`--quick` 保留 PROMAX 下载、白名单和规则校验，只跳过可选的外部工具步骤。
 
-自动任务由 `.github/workflows/update_rulesets.yml` 调用同一个 Rust 二进制，代理环境变量会由运行环境继承；不要并行启动多个更新任务。
+自动任务由 `.github/workflows/update_rulesets.yml` 调用 Rust 更新器和 Rust 模块校验器，代理环境变量会由运行环境继承；不要并行启动多个更新任务。

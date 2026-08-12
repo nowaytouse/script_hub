@@ -1,4 +1,4 @@
-//! Upstream bundle merge — local-only processing (Go fetches network, passes content via FFI).
+//! Upstream bundle merge — local-only processing for Rust-provided sources.
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;

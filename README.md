@@ -26,7 +26,4 @@ Maasea 上游仓库已更名为 [Maasea/sgmodule](https://github.com/Maasea/sgmo
 |------|------|
 | `create/processor/src/bin/update.rs` | 唯一更新入口（Rust 网络抓取、本地合并、校验、产物生成） |
 | `create/processor/src/bin/guard.rs` | 生成树守卫（Rust） |
-| `scripts/hub/` | 离线维护工具（不参与自动更新） |
-| `scripts/tools/` | 独立维护工具（不参与自动更新） |
-
-Go/Python 主更新入口已移除；GitHub Actions 与部署脚本统一调用 Rust 更新器。
+旧 Go/Python/Shell 更新与维护入口已移除；GitHub Actions、模块校验和产物发布统一调用 Rust。

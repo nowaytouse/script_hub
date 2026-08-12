@@ -275,7 +275,11 @@ fn validate_port(payload: &str) -> Result<(), RuleError> {
     let valid_port = |value: &str| value.parse::<u16>().is_ok();
     let valid = payload.split_once('-').map_or_else(
         || valid_port(payload),
-        |(start, end)| valid_port(start) && valid_port(end),
+        |(start, end)| {
+            valid_port(start)
+                && valid_port(end)
+                && start.parse::<u16>().ok() <= end.parse::<u16>().ok()
+        },
     );
     valid
         .then_some(())

@@ -28,3 +28,6 @@ jobs:
 
       - name: Guard generated-tree edits
         run: cargo run --manifest-path create/processor/Cargo.toml --bin guard
+
+      - name: Validate generated modules
+        run: cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"

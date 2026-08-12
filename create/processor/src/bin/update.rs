@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::process::ExitCode;
 
 fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<PathBuf, String> {
@@ -22,6 +23,11 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     // of the Rust post-processing in one deterministic, low-concurrency pass.
     if !rust_processor::promax::run_adblock_manager(&root.to_string_lossy(), execute) {
         return Err("PROMAX compilation failed".to_string());
+    }
+
+    if !execute {
+        println!("[INFO] dry run: generation and post-processing skipped");
+        return Ok(());
     }
 
     let cleanup = rust_processor::smart_cleanup::run_cleanup(&root.to_string_lossy());
@@ -71,6 +77,17 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
             &singbox.to_string_lossy(),
         ) {
             return Err("SRS generation failed".to_string());
+        }
+    }
+
+    if execute {
+        let status = Command::new("git")
+            .args(["diff", "--check"])
+            .current_dir(root)
+            .status()
+            .map_err(|error| format!("git diff check failed to start: {error}"))?;
+        if !status.success() {
+            return Err("generated tree contains whitespace errors".to_string());
         }
     }
 
