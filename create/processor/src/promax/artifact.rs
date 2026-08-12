@@ -45,6 +45,14 @@ fn validate_artifact_size(
     Ok(())
 }
 
+fn semantic_changed(target: &Path, content: &str) -> bool {
+    let Ok(existing) = fs::read_to_string(target) else {
+        return true;
+    };
+    super::super::url_rewriter::semantic_content_for_path_pub(target, &existing)
+        != super::super::url_rewriter::semantic_content_for_path_pub(target, content)
+}
+
 static SHADOWROCKET_SCRIPT_PARAMS: Lazy<Vec<Regex>> = Lazy::new(|| {
     [
         r#"(?i),?\s*ability=(?:"[^"]*"|[^\s,]+)"#,
@@ -215,6 +223,7 @@ pub fn publish_artifacts(
     let quarantine_target = root.join(quarantine_relative);
     let mut publications: Vec<(PathBuf, PathBuf)> = artifacts
         .iter()
+        .filter(|artifact| semantic_changed(&artifact.target, &artifact.content))
         .map(|artifact| {
             let relative = artifact
                 .target
@@ -223,7 +232,15 @@ pub fn publish_artifacts(
             (artifact.target.clone(), staging_root.join(relative))
         })
         .collect();
-    publications.push((quarantine_target, staged_quarantine));
+    if semantic_changed(&quarantine_target, &quarantine_content) {
+        publications.push((quarantine_target, staged_quarantine));
+    }
+    if publications.is_empty() {
+        fs::remove_dir_all(&staging_root)
+            .map_err(|error| format!("cannot clean unchanged PROMAX staging: {error}"))?;
+        println!("[INFO] PROMAX semantic content unchanged; publication skipped.");
+        return Ok(());
+    }
     promote_transaction(root, &staging_root, &publications)
 }
 
@@ -452,5 +469,29 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         assert!(validate_artifact_size(cdn, ArtifactKind::Loon, 20_000_000).is_ok());
         assert!(validate_artifact_size(cdn, ArtifactKind::Loon, 20_000_001).is_err());
         assert!(validate_artifact_size(github, ArtifactKind::Loon, 20_000_001).is_ok());
+    }
+
+    #[test]
+    fn semantic_noop_does_not_touch_published_artifact() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-noop-{unique}"));
+        let target = root.join("rulesets/AdBlock/rules.list");
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        let old = "# generated 2026-08-11\nDOMAIN-SUFFIX,alpha.example.com\nDOMAIN-SUFFIX,beta.example.com\n";
+        fs::write(&target, old).unwrap();
+        let artifacts = vec![GeneratedArtifact {
+            target: target.clone(),
+            content: "# generated 2026-08-12\n# refreshed\nDOMAIN-SUFFIX,beta.example.com\nDOMAIN-SUFFIX,alpha.example.com\n"
+                .to_string(),
+            kind: ArtifactKind::ExternalRuleset,
+        }];
+
+        publish_artifacts(&root, &artifacts, &[]).unwrap();
+        assert_eq!(fs::read_to_string(&target).unwrap(), old);
+        assert!(!root.join(".cache/promax-staging").exists());
+        fs::remove_dir_all(root).unwrap();
     }
 }

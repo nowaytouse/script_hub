@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
@@ -23,27 +23,204 @@ static MOCK_REPLACEMENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
 static REVERSE_CDN_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(?i)(^|[^/])https://cdn\.jsdelivr\.net/gh/([^/]+)/([^/@]+)@([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap()
 });
+static GENERATED_DATE_SUFFIX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\s*-\s*\[\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2})?\]").unwrap());
+static MODULE_NAME_KEY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^#!name\s*=").unwrap());
+static GENERATED_README_DATE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(自动生成于\s*`|generated\s+(?:at|on)\s+`)[^`]+`").unwrap());
 
-pub fn get_semantic_content_pub(text: &str) -> String {
-    let mut filtered = Vec::new();
+fn is_volatile_metadata(line: &str) -> bool {
+    let lower = line.trim().to_ascii_lowercase().replace(' ', "");
+    [
+        "#!date=",
+        "#!updated=",
+        "#!last-updated=",
+        "#!generated-at=",
+    ]
+    .iter()
+    .any(|prefix| lower.starts_with(prefix))
+}
+
+fn strip_trailing_comment(line: &str) -> String {
+    let bytes = line.as_bytes();
+    let mut quoted = None;
+    let mut escaped = false;
+    for index in 0..bytes.len() {
+        let byte = bytes[index];
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if byte == b'\\' && quoted.is_some() {
+            escaped = true;
+            continue;
+        }
+        if byte == b'"' || byte == b'\'' {
+            if quoted == Some(byte) {
+                quoted = None;
+            } else if quoted.is_none() {
+                quoted = Some(byte);
+            }
+            continue;
+        }
+        if quoted.is_none()
+            && (byte == b'#' || (byte == b'/' && bytes.get(index + 1) == Some(&b'/')))
+        {
+            let preceded_by_space = index == 0 || bytes[index - 1].is_ascii_whitespace();
+            if preceded_by_space {
+                return line[..index].trim_end().to_string();
+            }
+        }
+    }
+    line.trim().to_string()
+}
+
+fn normalize_rule_spacing(line: &str) -> String {
+    let mut output = String::with_capacity(line.len());
+    let mut quoted = None;
+    let mut pending_space = false;
+    for character in line.chars() {
+        if character == '"' || character == '\'' {
+            if quoted == Some(character) {
+                quoted = None;
+            } else if quoted.is_none() {
+                quoted = Some(character);
+            }
+            if pending_space {
+                output.push(' ');
+                pending_space = false;
+            }
+            output.push(character);
+        } else if quoted.is_none() && character.is_whitespace() {
+            pending_space = !output.ends_with(',');
+        } else if quoted.is_none() && character == ',' {
+            while output.ends_with(' ') {
+                output.pop();
+            }
+            output.push(',');
+            pending_space = false;
+        } else {
+            if pending_space {
+                output.push(' ');
+                pending_space = false;
+            }
+            output.push(character);
+        }
+    }
+    output.trim().to_string()
+}
+
+fn canonical_json(value: serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::Object(object) => {
+            let mut sorted = BTreeMap::new();
+            for (key, value) in object {
+                let normalized = key.to_ascii_lowercase().replace(['-', '_'], "");
+                if [
+                    "updated",
+                    "updatedat",
+                    "generatedat",
+                    "lastupdated",
+                    "timestamp",
+                ]
+                .contains(&normalized.as_str())
+                {
+                    continue;
+                }
+                sorted.insert(key, canonical_json(value));
+            }
+            serde_json::Value::Object(sorted.into_iter().collect())
+        }
+        serde_json::Value::Array(values) => {
+            serde_json::Value::Array(values.into_iter().map(canonical_json).collect())
+        }
+        value => value,
+    }
+}
+
+pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
+    if path
+        .extension()
+        .is_some_and(|extension| extension == "json")
+    {
+        if let Ok(value) = serde_json::from_str::<serde_json::Value>(text) {
+            if let Ok(canonical) = serde_json::to_string(&canonical_json(value)) {
+                return canonical;
+            }
+        }
+    }
+
+    let is_module = path.extension().is_some_and(|extension| {
+        matches!(extension.to_str(), Some("sgmodule" | "module" | "plugin"))
+    });
+    let mut current_section = String::new();
+    let mut lines = Vec::new();
     for line in text.lines() {
         let stripped = line.trim();
-        if stripped.is_empty() {
+        if stripped.is_empty() || stripped.starts_with("//") || is_volatile_metadata(stripped) {
             continue;
         }
-        if stripped.starts_with('#') || stripped.starts_with("//") {
+        if is_module {
+            if stripped.starts_with("#!") || (stripped.starts_with('[') && stripped.ends_with(']'))
+            {
+                if stripped.starts_with('[') {
+                    current_section = stripped[1..stripped.len() - 1].to_ascii_lowercase();
+                }
+                let metadata = if MODULE_NAME_KEY.is_match(stripped) {
+                    let normalized = GENERATED_DATE_SUFFIX.replace(stripped, "");
+                    normalized.split_once('=').map_or_else(
+                        || normalized.to_string(),
+                        |(key, value)| format!("{}={}", key.trim(), value.trim()),
+                    )
+                } else {
+                    stripped.split_once('=').map_or_else(
+                        || stripped.to_string(),
+                        |(key, value)| format!("{}={}", key.trim(), value.trim()),
+                    )
+                };
+                lines.push(metadata);
+                continue;
+            }
+            if stripped.starts_with('#') {
+                continue;
+            }
+        } else if stripped.starts_with('#') {
             continue;
         }
-        filtered.push(stripped);
+        let canonical = if path.extension().is_some_and(|extension| extension == "md") {
+            GENERATED_README_DATE
+                .replace(stripped, "generated-at `<volatile>`")
+                .to_string()
+        } else if is_module && current_section == "rule" {
+            normalize_rule_spacing(&strip_trailing_comment(stripped))
+        } else {
+            strip_trailing_comment(stripped)
+        };
+        if !canonical.is_empty() {
+            lines.push(canonical);
+        }
     }
-    filtered.join("\n")
+
+    if path
+        .extension()
+        .is_some_and(|extension| extension == "list")
+    {
+        let mut unique = BTreeSet::new();
+        unique.extend(lines);
+        return unique.into_iter().collect::<Vec<_>>().join("\n");
+    }
+    lines.join("\n")
+}
+
+pub fn get_semantic_content_pub(text: &str) -> String {
+    semantic_content_for_path_pub(Path::new("ruleset.list"), text)
 }
 
 fn safe_write_file(path: &Path, content: &str) -> std::io::Result<()> {
     if path.exists() {
         if let Ok(old_content) = fs::read_to_string(path) {
-            let old_stripped = get_semantic_content_pub(&old_content);
-            let new_stripped = get_semantic_content_pub(content);
+            let old_stripped = semantic_content_for_path_pub(path, &old_content);
+            let new_stripped = semantic_content_for_path_pub(path, content);
             if old_stripped == new_stripped {
                 return Ok(());
             }
@@ -183,4 +360,53 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
         }
     }
     modified_count
+}
+
+#[cfg(test)]
+mod tests {
+    use super::semantic_content_for_path_pub;
+    use std::path::Path;
+
+    #[test]
+    fn semantic_compare_ignores_dates_comments_and_list_order() {
+        let old = "#!name=Rules - [2026-08-11]\n#!date=2026-08-11 10:00:00\nDOMAIN,b.example # source\nDOMAIN,a.example\n";
+        let new = "#!name=Rules - [2026-08-12]\n#!date = 2026-08-12 10:00:00\n// generated\nDOMAIN,a.example\nDOMAIN,b.example # refreshed\n";
+        assert_eq!(
+            semantic_content_for_path_pub(Path::new("rules.list"), old),
+            semantic_content_for_path_pub(Path::new("rules.list"), new)
+        );
+    }
+
+    #[test]
+    fn semantic_compare_keeps_real_module_rule_changes() {
+        let old =
+            "#!name=Rules - [2026-08-11]\n#!date=2026-08-11\n[Rule]\nDOMAIN,a.example,REJECT\n";
+        let new =
+            "#!name=Rules - [2026-08-12]\n#!date=2026-08-12\n[Rule]\nDOMAIN,b.example,REJECT\n";
+        assert_ne!(
+            semantic_content_for_path_pub(Path::new("rules.sgmodule"), old),
+            semantic_content_for_path_pub(Path::new("rules.sgmodule"), new)
+        );
+    }
+
+    #[test]
+    fn semantic_compare_ignores_module_rule_formatting() {
+        let old = "#!name=Rules\n[Rule]\nDOMAIN-SUFFIX,alpha.example,REJECT\n";
+        let new =
+            "#!name = Rules\n[Rule]\n  DOMAIN-SUFFIX , alpha.example , REJECT  # reformatted\n";
+        assert_eq!(
+            semantic_content_for_path_pub(Path::new("rules.sgmodule"), old),
+            semantic_content_for_path_pub(Path::new("rules.sgmodule"), new)
+        );
+    }
+
+    #[test]
+    fn semantic_compare_ignores_catalog_timestamps_but_keeps_counts() {
+        let old = r#"{"updated":"2026-08-11","shards":[{"rule_count":10}]}"#;
+        let new = r#"{"updated":"2026-08-12","shards":[{"rule_count":11}]}"#;
+        assert_ne!(
+            semantic_content_for_path_pub(Path::new("catalog.json"), old),
+            semantic_content_for_path_pub(Path::new("catalog.json"), new)
+        );
+    }
 }

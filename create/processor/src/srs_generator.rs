@@ -141,12 +141,13 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
         return false;
     }
 
+    let srs_tmp = srs_file.with_extension("write.srs");
     let output = Command::new(singbox_path)
         .arg("rule-set")
         .arg("compile")
         .arg(&json_tmp)
         .arg("-o")
-        .arg(&srs_file)
+        .arg(&srs_tmp)
         .output();
 
     let _ = fs::remove_file(&json_tmp);
@@ -154,9 +155,22 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
     match output {
         Ok(out) => {
             if out.status.success() {
+                let changed = fs::read(&srs_tmp).ok().map_or(true, |new_bytes| {
+                    fs::read(&srs_file).map_or(true, |old_bytes| old_bytes != new_bytes)
+                });
+                if changed {
+                    if fs::rename(&srs_tmp, &srs_file).is_err() {
+                        let _ = fs::remove_file(&srs_tmp);
+                        return false;
+                    }
+                } else {
+                    let _ = fs::remove_file(&srs_tmp);
+                    println!("[INFO] SRS unchanged; publication skipped: {}", name);
+                }
                 println!("\x1b[0;32m[SUCCESS]\x1b[0m Compiled SRS: {}", name);
                 true
             } else {
+                let _ = fs::remove_file(&srs_tmp);
                 eprintln!(
                     "\x1b[0;31m[ERROR]\x1b[0m Failed to compile {}: {}",
                     name,
@@ -166,6 +180,7 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
             }
         }
         Err(e) => {
+            let _ = fs::remove_file(&srs_tmp);
             eprintln!(
                 "\x1b[0;31m[ERROR]\x1b[0m Failed to execute sing-box: {:?}",
                 e

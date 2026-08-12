@@ -335,15 +335,10 @@ fn semantic_rules_match(path: &Path, new_rules: &[String]) -> bool {
             }
             old_rules.push(stripped.to_string());
         }
-        if old_rules.len() != new_rules.len() {
-            return false;
-        }
-        for (i, r) in old_rules.iter().enumerate() {
-            if r != &new_rules[i] {
-                return false;
-            }
-        }
-        return true;
+        old_rules.sort();
+        let mut canonical_new = new_rules.to_vec();
+        canonical_new.sort();
+        return old_rules == canonical_new;
     }
     false
 }
@@ -650,8 +645,8 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
     // Semantic Check
     if p.exists() {
         if let Ok(old_content) = std::fs::read_to_string(p) {
-            let old_stripped = url_rewriter::get_semantic_content_pub(&old_content);
-            let new_stripped = url_rewriter::get_semantic_content_pub(content_str);
+            let old_stripped = url_rewriter::semantic_content_for_path_pub(p, &old_content);
+            let new_stripped = url_rewriter::semantic_content_for_path_pub(p, content_str);
             if old_stripped == new_stripped {
                 println!(
                     "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
