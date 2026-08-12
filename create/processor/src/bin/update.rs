@@ -2,6 +2,45 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::ExitCode;
 
+fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
+    let names = Command::new("git")
+        .args(["diff", "--name-only", "--", "modules", "rulesets", "dns"])
+        .current_dir(root)
+        .output()
+        .map_err(|error| format!("cannot inspect generated changes: {error}"))?;
+    if !names.status.success() {
+        return Err("cannot inspect generated changes".to_string());
+    }
+    for name in String::from_utf8_lossy(&names.stdout)
+        .lines()
+        .filter(|line| !line.is_empty())
+    {
+        let path = root.join(name);
+        if !path.is_file() {
+            continue;
+        }
+        let old = Command::new("git")
+            .args(["show", &format!("HEAD:{name}")])
+            .current_dir(root)
+            .output()
+            .map_err(|error| format!("cannot read HEAD:{name}: {error}"))?;
+        if !old.status.success() {
+            continue;
+        }
+        let old_text = String::from_utf8_lossy(&old.stdout);
+        let new_text = std::fs::read_to_string(&path)
+            .map_err(|error| format!("cannot read generated file {name}: {error}"))?;
+        if rust_processor::url_rewriter::semantic_content_for_path_pub(&path, &old_text)
+            == rust_processor::url_rewriter::semantic_content_for_path_pub(&path, &new_text)
+        {
+            std::fs::write(&path, old.stdout)
+                .map_err(|error| format!("cannot restore semantic no-op {name}: {error}"))?;
+            println!("[INFO] Restored semantic no-op: {name}");
+        }
+    }
+    Ok(())
+}
+
 fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<PathBuf, String> {
     args.next()
         .map(PathBuf::from)
@@ -81,6 +120,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     }
 
     if execute {
+        discard_semantic_noop_changes(root)?;
         let status = Command::new("git")
             .args(["diff", "--check"])
             .current_dir(root)
