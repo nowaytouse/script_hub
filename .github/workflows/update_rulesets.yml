@@ -156,7 +156,8 @@ jobs:
       if: github.ref == 'refs/heads/master'
       run: |
         set -euo pipefail
-        git add modules rulesets dns
+        git add modules rulesets
+        if [ -d dns ]; then git add dns; fi
         if git diff --cached --quiet; then
           echo "No generated changes to publish."
           exit 0
