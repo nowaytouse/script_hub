@@ -494,4 +494,26 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         assert!(!root.join(".cache/promax-staging").exists());
         fs::remove_dir_all(root).unwrap();
     }
+
+    #[test]
+    fn semantic_noop_does_not_publish_module_date_only_change() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-module-noop-{unique}"));
+        let target = root.join("modules/surge/promax.sgmodule");
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        let old = "#!name=PROMAX - [2026-08-11]\n#!date=2026-08-11 10:00:00\n[Rule]\nDOMAIN-SUFFIX,alpha.example.com,REJECT\n";
+        fs::write(&target, old).unwrap();
+        let artifacts = vec![GeneratedArtifact {
+            target: target.clone(),
+            content: "#!name=PROMAX - [2026-08-12]\n#!date=2026-08-12 10:00:00\n[Rule]\nDOMAIN-SUFFIX,alpha.example.com,REJECT\n".to_string(),
+            kind: ArtifactKind::Surge,
+        }];
+
+        publish_artifacts(&root, &artifacts, &[]).unwrap();
+        assert_eq!(fs::read_to_string(&target).unwrap(), old);
+        fs::remove_dir_all(root).unwrap();
+    }
 }
