@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use regex::Regex;
 use once_cell::sync::Lazy;
 
@@ -164,6 +164,22 @@ fn normalize_url_regex_rule(line: &str) -> Option<String> {
         return Some(format!("URL-REGEX,{}", &quoted[..end]));
     }
     Some(format!("URL-REGEX,{}", raw.split(',').next()?.trim()))
+}
+
+fn collect_ruleset_dirs(root: &Path) -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    if !root.is_dir() {
+        return dirs;
+    }
+    dirs.push(root.to_path_buf());
+    if let Ok(entries) = fs::read_dir(root) {
+        for entry in entries.flatten() {
+            if entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false) {
+                dirs.extend(collect_ruleset_dirs(&entry.path()));
+            }
+        }
+    }
+    dirs
 }
 
 fn extract_payload(rule: &str) -> String {
@@ -363,10 +379,9 @@ fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
 
 pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let root = Path::new(root_dir);
-    let ruleset_dirs = vec![
-        root.join("rulesets").join("RULE-SET"),
-        root.join("rulesets").join("AdBlock"),
-    ];
+    let mut ruleset_dirs = Vec::new();
+    ruleset_dirs.extend(collect_ruleset_dirs(&root.join("rulesets").join("RULE-SET")));
+    ruleset_dirs.extend(collect_ruleset_dirs(&root.join("rulesets").join("AdBlock")));
 
     let exempt_filenames: HashSet<&str> = [
         "HTTPDNS_Hijack.list",
@@ -1507,7 +1522,9 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 
 #[cfg(test)]
 mod ruleset_cleanup_tests {
-    use super::normalize_url_regex_rule;
+    use super::{normalize_url_regex_rule, run_cleanup};
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn normalizes_legacy_quoted_url_regex_policy() {
@@ -1517,6 +1534,29 @@ mod ruleset_cleanup_tests {
             ),
             Some(r#"URL-REGEX,^https:\/\/ads\.example\/"#.to_string())
         );
+    }
+
+    #[test]
+    fn cleanup_rewrites_legacy_url_regex_entries() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-urlregex-cleanup-{id}"));
+        let dir = root.join("rulesets/AdBlock/github");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("AdBlock_Local.list"),
+            "URL-REGEX,\"\"^https:\\/\\/ads\\.example\\/\",REJECT-DROP\n",
+        )
+        .unwrap();
+
+        run_cleanup(root.to_str().unwrap());
+
+        let output = fs::read_to_string(dir.join("AdBlock_Local.list")).unwrap();
+        assert!(output.contains(r#"URL-REGEX,^https:\/\/ads\.example\/"#));
+        assert!(!output.contains("REJECT-DROP"));
+        fs::remove_dir_all(root).unwrap();
     }
 }
 
