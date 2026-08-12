@@ -20,12 +20,13 @@ https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/helper/surge_mo
 
 Maasea 上游仓库已更名为 [Maasea/sgmodule](https://github.com/Maasea/sgmodule)（旧 `sgmodules` 路径 404）。
 
-## 脚本目录
+## 更新入口
 
 | 路径 | 用途 |
 |------|------|
-| `scripts/hub/` | 共享库（合规、模块清洗、合并工具） |
-| `scripts/pipeline/` | 主更新流水线（`main_update.py`） |
-| `scripts/qa/` | 回归测试与生成树守卫 |
-| `scripts/tools/` | 独立维护工具（模块目录、SR 转换等） |
+| `create/processor/src/bin/update.rs` | 唯一更新入口（Rust 网络抓取、本地合并、校验、产物生成） |
+| `create/processor/src/bin/guard.rs` | 生成树守卫（Rust） |
+| `scripts/hub/` | 离线维护工具（不参与自动更新） |
+| `scripts/tools/` | 独立维护工具（不参与自动更新） |
 
+Go/Python 主更新入口已移除；GitHub Actions 与部署脚本统一调用 Rust 更新器。

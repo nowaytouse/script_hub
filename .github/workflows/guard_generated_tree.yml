@@ -16,11 +16,6 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -32,6 +27,4 @@ jobs:
         run: cargo test --manifest-path create/processor/Cargo.toml 'promax::' -- --test-threads=1
 
       - name: Guard generated-tree edits
-        run: |
-          cd create
-          go run ./cmd/guard
+        run: cargo run --manifest-path create/processor/Cargo.toml --bin guard

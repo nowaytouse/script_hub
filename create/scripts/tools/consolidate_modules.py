@@ -4,7 +4,7 @@
 Module catalog pipeline (canonical entry):
   sanitize → scan → modules/helper/*.json → surge_module_helper.html
 
-Invoked from pipeline/main_update.py after module conversion so the helper
+The Rust updater owns module conversion; this helper remains an offline tool
 web page stays in sync with one-click updates.
 """
 

@@ -66,7 +66,7 @@ def main() -> None:
     Logger.success(f"Wrote {os.path.relpath(OUT_PATH, ROOT)}")
     patched = patch_adultraplus_modules()
     Logger.info(f"Patched {patched} adultraplus module file(s)")
-    Logger.info("Next: python3 create/scripts/pipeline/adblock_manager.py --execute")
+    Logger.info("Next: cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- --root . --execute")
 
 
 if __name__ == "__main__":

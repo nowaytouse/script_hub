@@ -7,7 +7,7 @@ name: Update Rulesets
 #   • schedule — 3×/day (Beijing 12:17, 20:17, 04:17; :17 avoids :00 queue delays)
 #   • workflow_dispatch — manual
 #
-# Before git push: wait ≥3 min (PUSH_COOLDOWN), then pull --rebase, then push.
+# Rust owns processing; the final shell step publishes only validated generated paths.
 #
 # Scope (CI only):
 #   ✅ Ruleset update, dedup, SRS (sing-box), git push
@@ -22,8 +22,6 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-  PUSH_COOLDOWN_ENABLED: 'true'
-  PUSH_COOLDOWN_SECONDS: '180'   # ≥3 min before push; set 1800 for 30 min if needed
 
 concurrency:
   group: update-rulesets-${{ github.ref }}
@@ -137,11 +135,6 @@ jobs:
 
 
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
 
@@ -150,20 +143,26 @@ jobs:
         CARGO_BUILD_JOBS: '1'
       run: cargo test --manifest-path create/processor/Cargo.toml 'promax::' -- --test-threads=1
 
-    - name: Build Rust Static Library
+    - name: Execute Rust Ruleset Update
       run: |
-        cd create/processor
-        cargo build --release
-        # 構建輸出統一至項目根 ../../target/release/librust_processor.a
-
-    - name: Execute Go Ruleset Update
-      run: |
-        cd create
-        go run ./cmd/main_update --unattended
+        cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- \
+          --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: 'true'
         GITHUB_ACTIONS: 'true'
+
+    - name: Publish generated tree
+      if: github.ref == 'refs/heads/master'
+      run: |
+        set -euo pipefail
+        git add modules rulesets dns
+        if git diff --cached --quiet; then
+          echo "No generated changes to publish."
+          exit 0
+        fi
+        git commit -m "chore(ruleset): automated Rust update $(date -u '+%Y-%m-%d %H:%M UTC')"
+        git push origin HEAD:master
 
     - name: Summary
       env:
