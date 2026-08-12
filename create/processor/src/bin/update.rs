@@ -4,7 +4,15 @@ use std::process::ExitCode;
 
 fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
     let names = Command::new("git")
-        .args(["diff", "--name-only", "--", "modules", "rulesets", "dns"])
+        .args([
+            "diff",
+            "--name-only",
+            "-z",
+            "--",
+            "modules",
+            "rulesets",
+            "dns",
+        ])
         .current_dir(root)
         .output()
         .map_err(|error| format!("cannot inspect generated changes: {error}"))?;
@@ -12,7 +20,7 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         return Err("cannot inspect generated changes".to_string());
     }
     for name in String::from_utf8_lossy(&names.stdout)
-        .lines()
+        .split('\0')
         .filter(|line| !line.is_empty())
     {
         let path = root.join(name);
