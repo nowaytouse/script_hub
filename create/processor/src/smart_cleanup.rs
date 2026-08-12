@@ -629,6 +629,9 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     }
 
     for dir in &ruleset_dirs {
+        if dir.file_name().is_some_and(|name| name == "AdBlock") {
+            continue;
+        }
         let readme = dir.join("README.md");
         if readme.exists() {
             let _ = fs::remove_file(&readme);
@@ -1322,3 +1325,85 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
     other
 }
 
+#[cfg(test)]
+mod promax_loon_tests {
+    use super::{
+        adapt_body_rewrite_line_for_loon_pub, adapt_map_local_line_for_loon_pub,
+        adapt_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub, run_cleanup,
+    };
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn cleanup_preserves_promax_catalog_readme_only() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-cleanup-readme-{unique}"));
+        let adblock = root.join("rulesets/AdBlock");
+        let legacy = root.join("rulesets/RULE-SET");
+        fs::create_dir_all(&adblock).unwrap();
+        fs::create_dir_all(&legacy).unwrap();
+        fs::write(adblock.join("README.md"), "PROMAX catalog\n").unwrap();
+        fs::write(legacy.join("README.md"), "stray\n").unwrap();
+
+        run_cleanup(root.to_str().unwrap());
+
+        assert!(adblock.join("README.md").is_file());
+        assert!(!legacy.join("README.md").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn loon_url_rewrite_removes_surge_placeholder() {
+        assert_eq!(
+            adapt_rewrite_line_for_loon_pub(r#"^https://ads\.example _ reject"#),
+            r#"^https://ads\.example reject"#
+        );
+    }
+
+    #[test]
+    fn loon_map_local_becomes_typed_mock_response() {
+        assert_eq!(
+            adapt_map_local_line_for_loon_pub(
+                r#"^https://ads\.example data-type=text data="{}" status-code=200 header="Content-Type:application/json""#,
+            ),
+            r#"^https://ads\.example mock-response-body data-type=text data="{}" status-code=200"#
+        );
+        assert_eq!(
+            adapt_map_local_line_for_loon_pub(
+                r#"^https://ads\.example data="https://example.test/reject.json""#,
+            ),
+            r#"^https://ads\.example mock-response-body data-type=json data-path="https://example.test/reject.json" status-code=200"#
+        );
+    }
+
+    #[test]
+    fn loon_body_rewrite_moves_pattern_before_typed_operation() {
+        assert_eq!(
+            adapt_body_rewrite_line_for_loon_pub(
+                r#"http-response-jq ^https:\/\/api\.example/ad 'del(.data.ad)'"#,
+            ),
+            r#"^https:\/\/api\.example/ad response-body-json-jq 'del(.data.ad)'"#
+        );
+        assert_eq!(
+            adapt_body_rewrite_line_for_loon_pub(
+                r#"http-response ^https:\/\/api\.example/ad banner replacement"#,
+            ),
+            r#"^https:\/\/api\.example/ad response-body-replace-regex banner replacement"#
+        );
+    }
+
+    #[test]
+    fn loon_script_preserves_regex_commas_json_argument_and_binary_mode() {
+        let converted = adapt_script_line_for_loon_pub(
+            "fixture",
+            r#"type=http-response,pattern=^https://example\.com/a{1,4}/x,script-path=https://example.test/a.js,requires-body=1,binary-body-mode=true,argument="{\"a\":1,\"b\":2}""#,
+        );
+
+        assert!(converted.contains(r#"^https://example\.com/a{1,4}/x"#));
+        assert!(converted.contains("binary-body-mode=true"));
+        assert!(converted.contains(r#"argument="{\"a\":1,\"b\":2}""#));
+    }
+}
