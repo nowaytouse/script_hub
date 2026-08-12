@@ -1,9 +1,9 @@
+use regex::escape;
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use serde::Serialize;
-use regex::escape;
 
 #[derive(Serialize)]
 struct SingboxRuleset {
@@ -17,10 +17,10 @@ fn wildcard_to_regex(value: &str) -> String {
     format!("^{}$", r)
 }
 
-fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) {
+fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
     let file_name = match list_file.file_name().and_then(|f| f.to_str()) {
         Some(f) => f,
-        None => return,
+        None => return false,
     };
     let name = file_name.trim_end_matches(".list");
 
@@ -33,13 +33,17 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) {
     }
 
     if !out_dir.exists() {
-        let _ = fs::create_dir_all(&out_dir);
+        if fs::create_dir_all(&out_dir).is_err() {
+            return false;
+        }
     }
 
     let srs_file = out_dir.join(format!("{}_Singbox.srs", name));
     let cache_dir = root_dir.join("rulesets/Sources/Links/.cache");
     if !cache_dir.exists() {
-        let _ = fs::create_dir_all(&cache_dir);
+        if fs::create_dir_all(&cache_dir).is_err() {
+            return false;
+        }
     }
 
     let json_tmp = cache_dir.join(format!("{}.json", name));
@@ -47,7 +51,7 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) {
 
     let content = match fs::read_to_string(list_file) {
         Ok(c) => c,
-        Err(_) => return,
+        Err(_) => return false,
     };
 
     let mut merged_rules: HashMap<String, HashSet<String>> = HashMap::new();
@@ -126,13 +130,16 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) {
 
     let data = match serde_json::to_string(&srs_json) {
         Ok(d) => d,
-        Err(_) => return,
+        Err(_) => return false,
     };
 
     if fs::write(&json_tmp_write, data).is_err() {
-        return;
+        return false;
     }
-    let _ = fs::rename(&json_tmp_write, &json_tmp);
+    if fs::rename(&json_tmp_write, &json_tmp).is_err() {
+        let _ = fs::remove_file(&json_tmp_write);
+        return false;
+    }
 
     let output = Command::new(singbox_path)
         .arg("rule-set")
@@ -148,16 +155,22 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) {
         Ok(out) => {
             if out.status.success() {
                 println!("\x1b[0;32m[SUCCESS]\x1b[0m Compiled SRS: {}", name);
+                true
             } else {
                 eprintln!(
                     "\x1b[0;31m[ERROR]\x1b[0m Failed to compile {}: {}",
                     name,
                     String::from_utf8_lossy(&out.stderr)
                 );
+                false
             }
         }
         Err(e) => {
-            eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to execute sing-box: {:?}", e);
+            eprintln!(
+                "\x1b[0;31m[ERROR]\x1b[0m Failed to execute sing-box: {:?}",
+                e
+            );
+            false
         }
     }
 }
@@ -192,7 +205,10 @@ fn prune_stale_srs(list_files: &[PathBuf], root_dir: &Path) {
                         if fs::remove_file(&path).is_ok() {
                             println!("\x1b[0;33m[WARN]\x1b[0m Pruned stale SRS: {}", name);
                         } else {
-                            eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale SRS: {}", name);
+                            eprintln!(
+                                "\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale SRS: {}",
+                                name
+                            );
                         }
                     }
                 }
@@ -212,7 +228,10 @@ fn prune_stale_srs(list_files: &[PathBuf], root_dir: &Path) {
                             if fs::remove_file(&path).is_ok() {
                                 println!("\x1b[0;33m[WARN]\x1b[0m Pruned stale DNS SRS: {}", name);
                             } else {
-                                eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale DNS SRS: {}", name);
+                                eprintln!(
+                                    "\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale DNS SRS: {}",
+                                    name
+                                );
                             }
                         }
                     }
@@ -225,12 +244,14 @@ fn prune_stale_srs(list_files: &[PathBuf], root_dir: &Path) {
 pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
     let root_dir = Path::new(root_path);
     if singbox_path.is_empty() {
-        eprintln!("\x1b[0;31m[ERROR]\x1b[0m sing-box binary path is empty. Skipping SRS generation.");
+        eprintln!(
+            "\x1b[0;31m[ERROR]\x1b[0m sing-box binary path is empty. Skipping SRS generation."
+        );
         return false;
     }
 
     let source_dirs = vec![
-        root_dir.join("rulesets/RuleSet"),
+        root_dir.join("rulesets/RULE-SET"),
         root_dir.join("rulesets/Sources/dns/mapping"),
         root_dir.join("rulesets/AdBlock"),
     ];
@@ -277,10 +298,11 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
         }
     }
 
+    let mut success = true;
     for lf in &deduped_list {
-        compile_srs(lf, root_dir, singbox_path);
+        success &= compile_srs(lf, root_dir, singbox_path);
     }
 
     prune_stale_srs(&deduped_list, root_dir);
-    true
+    success
 }

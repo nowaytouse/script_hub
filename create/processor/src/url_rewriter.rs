@@ -1,9 +1,9 @@
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
-use once_cell::sync::Lazy;
 
 static MOCK_REPLACEMENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
     vec![
@@ -49,8 +49,14 @@ fn safe_write_file(path: &Path, content: &str) -> std::io::Result<()> {
             }
         }
     }
-    // Simple write for now; atomic temp writing could be added if critical
-    fs::write(path, content)
+    if crate::safe_write_file_internal(path, content, true) {
+        Ok(())
+    } else {
+        Err(std::io::Error::other(format!(
+            "atomic URL rewrite failed for {}",
+            path.display()
+        )))
+    }
 }
 
 fn is_github_source(path: &Path) -> bool {
@@ -81,7 +87,10 @@ pub fn copy_github_variants(root_dir: &str) {
     let skip_copy: HashSet<&str> = [
         "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
         "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     for dir in dirs_to_copy {
         if !dir.exists() {
@@ -92,20 +101,31 @@ pub fn copy_github_variants(root_dir: &str) {
 
         if let Ok(entries) = fs::read_dir(&dir) {
             for entry in entries.flatten() {
-                let file_type = entry.file_type().unwrap();
+                let Ok(file_type) = entry.file_type() else {
+                    continue;
+                };
                 let file_name_os = entry.file_name();
                 let file_name = file_name_os.to_string_lossy();
 
-                if file_type.is_dir() || file_name == "github" || skip_copy.contains(file_name.as_ref()) {
+                if file_type.is_dir()
+                    || file_name == "github"
+                    || skip_copy.contains(file_name.as_ref())
+                {
                     continue;
                 }
 
-                if file_name.ends_with(".sgmodule") || file_name.ends_with(".module") || file_name.ends_with(".list") {
+                if file_name.ends_with(".sgmodule")
+                    || file_name.ends_with(".module")
+                    || file_name.ends_with(".list")
+                {
                     let src_path = entry.path();
                     let dest_path = github_dir.join(file_name.as_ref());
 
                     if let Ok(content) = fs::read_to_string(&src_path) {
-                        let new_content = REVERSE_CDN_REGEX.replace_all(&content, "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}");
+                        let new_content = REVERSE_CDN_REGEX.replace_all(
+                            &content,
+                            "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}",
+                        );
                         let _ = safe_write_file(&dest_path, &new_content);
                     }
                 }
@@ -120,7 +140,10 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
         return 0;
     }
 
-    let valid_exts: HashSet<&str> = ["sgmodule", "module", "list", "conf", "json", "html", "md"].iter().cloned().collect();
+    let valid_exts: HashSet<&str> = ["sgmodule", "module", "list", "conf", "json", "html", "md"]
+        .iter()
+        .cloned()
+        .collect();
     let mut modified_count = 0;
 
     for entry in WalkDir::new(directory).into_iter().filter_map(|e| e.ok()) {

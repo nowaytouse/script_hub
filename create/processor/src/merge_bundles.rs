@@ -9,27 +9,27 @@ use regex::Regex;
 use serde::Deserialize;
 
 use crate::smart_cleanup::{
-    format_header_pub, format_module_pub, merge_mitm_hosts_pub, ModuleSectionPub,
+    ModuleSectionPub, format_header_pub, format_module_pub, merge_mitm_hosts_pub,
 };
 
 static META_LINE_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)^#!\s*([A-Za-z0-9_-]+)\s*[=:]\s*(.*)$").unwrap());
-static SCRIPT_LABEL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
-static HOSTNAME_PREFIX_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)^hostname\s*=\s*").unwrap());
+static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
+static HOSTNAME_PREFIX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^hostname\s*=\s*").unwrap());
 static HOSTNAME_APPEND_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)^(%APPEND%|%INSERT%)\s*").unwrap());
 
 const WEIBO_SECTION_ORDER: &[&str] = &[
-    "Rule", "URL Rewrite", "Body Rewrite", "Map Local", "Script", "MITM",
+    "Rule",
+    "URL Rewrite",
+    "Body Rewrite",
+    "Map Local",
+    "Script",
+    "MITM",
 ];
 
-const DEVTOOLS_MITM_EXCLUSIONS: &[&str] = &[
-    "-github.com",
-    "-api.github.com",
-    "-*.githubusercontent.com",
-];
+const DEVTOOLS_MITM_EXCLUSIONS: &[&str] =
+    &["-github.com", "-api.github.com", "-*.githubusercontent.com"];
 
 #[derive(Debug, Deserialize)]
 pub struct SourceInput {
@@ -68,10 +68,7 @@ fn parse_module(text: &str) -> (HashMap<String, String>, Vec<ModuleSectionPub>) 
 
     for raw in text.lines() {
         let stripped = raw.trim();
-        if stripped.starts_with('[')
-            && stripped.ends_with(']')
-            && !stripped.starts_with('#')
-        {
+        if stripped.starts_with('[') && stripped.ends_with(']') && !stripped.starts_with('#') {
             if !current_name.is_empty() {
                 sections.push(ModuleSectionPub {
                     Name: current_name.clone(),
@@ -85,10 +82,7 @@ fn parse_module(text: &str) -> (HashMap<String, String>, Vec<ModuleSectionPub>) 
         }
         if !in_body {
             if let Some(caps) = META_LINE_RE.captures(stripped) {
-                header_meta.insert(
-                    caps[1].to_lowercase(),
-                    caps[2].trim().to_string(),
-                );
+                header_meta.insert(caps[1].to_lowercase(), caps[2].trim().to_string());
             }
             continue;
         }
@@ -163,10 +157,7 @@ fn combine_metadata(parts: &[(String, HashMap<String, String>)]) -> (String, Str
     )
 }
 
-fn order_sections(
-    merged: &HashMap<String, Vec<String>>,
-    order: &[&str],
-) -> Vec<ModuleSectionPub> {
+fn order_sections(merged: &HashMap<String, Vec<String>>, order: &[&str]) -> Vec<ModuleSectionPub> {
     let mut result = Vec::new();
     let mut seen = HashSet::new();
     for &name in order {
@@ -210,10 +201,18 @@ fn load_preserved_rules(path: &Path) -> HashMap<String, Vec<String>> {
     preserved
 }
 
-fn write_module(path: &Path, header_lines: &[String], sections: &[ModuleSectionPub], dedupe: bool) -> bool {
+fn write_module(
+    path: &Path,
+    header_lines: &[String],
+    sections: &[ModuleSectionPub],
+    dedupe: bool,
+) -> bool {
     let content = format_module_pub(header_lines, sections, dedupe);
     if content.contains("%INSERT%") {
-        eprintln!("\x1b[0;31m[ERROR]\x1b[0m merged module contains %%INSERT%%: {:?}", path);
+        eprintln!(
+            "\x1b[0;31m[ERROR]\x1b[0m merged module contains %%INSERT%%: {:?}",
+            path
+        );
         return false;
     }
     crate::safe_write_file_internal(path, &content, true)
@@ -238,7 +237,10 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
                 .filter(|l| !l.is_empty())
                 .collect();
             if let Some(existing) = merged_sections.get_mut(&sec.Name) {
-                if !existing.is_empty() && !filtered.is_empty() && existing.last() != Some(&String::new()) {
+                if !existing.is_empty()
+                    && !filtered.is_empty()
+                    && existing.last() != Some(&String::new())
+                {
                     existing.push(String::new());
                 }
                 existing.extend(filtered);
@@ -249,13 +251,19 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
     }
 
     if parsed_parts.is_empty() {
-        eprintln!("\x1b[0;31m[ERROR]\x1b[0m no upstream modules for {:?}", req.output_path);
+        eprintln!(
+            "\x1b[0;31m[ERROR]\x1b[0m no upstream modules for {:?}",
+            req.output_path
+        );
         return false;
     }
 
     let (combined_args, combined_args_desc, combined_desc) = combine_metadata(&parsed_parts);
     let mut out_meta = req.header_meta.clone();
-    out_meta.insert("date".to_string(), Local::now().format("%Y-%m-%d %H:%M:%S").to_string());
+    out_meta.insert(
+        "date".to_string(),
+        Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+    );
     if !combined_args.is_empty() {
         out_meta.insert("arguments".to_string(), combined_args);
     }
@@ -274,7 +282,10 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
 
     let mut section_list: Vec<ModuleSectionPub> = merged_sections
         .into_iter()
-        .map(|(name, lines)| ModuleSectionPub { Name: name, Lines: lines })
+        .map(|(name, lines)| ModuleSectionPub {
+            Name: name,
+            Lines: lines,
+        })
         .collect();
     section_list = merge_mitm_hosts_pub(&section_list);
 
@@ -291,7 +302,12 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
     if let Some(parent) = Path::new(&req.output_path).parent() {
         let _ = std::fs::create_dir_all(parent);
     }
-    write_module(Path::new(&req.output_path), &header_lines, &section_list, true)
+    write_module(
+        Path::new(&req.output_path),
+        &header_lines,
+        &section_list,
+        true,
+    )
 }
 
 fn format_header_with_extra(meta: &HashMap<String, String>, extra: &[String]) -> Vec<String> {
@@ -468,7 +484,12 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
     true
 }
 
-fn pin_script_paths_in_text(text: &str, suffix_map: &HashMap<String, String>, raw_prefix: &str, scripts_dir: &str) -> String {
+fn pin_script_paths_in_text(
+    text: &str,
+    suffix_map: &HashMap<String, String>,
+    raw_prefix: &str,
+    scripts_dir: &str,
+) -> String {
     let mut result = text.to_string();
     for (upstream_suffix, local_name) in suffix_map {
         let local_path = Path::new(scripts_dir).join(local_name);
@@ -481,14 +502,15 @@ fn pin_script_paths_in_text(text: &str, suffix_map: &HashMap<String, String>, ra
             regex::escape(upstream_suffix)
         );
         if let Ok(re) = Regex::new(&re_str) {
-            result = re.replace_all(&result, format!("script-path={}", canonical)).to_string();
+            result = re
+                .replace_all(&result, format!("script-path={}", canonical))
+                .to_string();
         }
-        let re_str2 = format!(
-            r"script-path=https?://[^\s,]*{}",
-            regex::escape(local_name)
-        );
+        let re_str2 = format!(r"script-path=https?://[^\s,]*{}", regex::escape(local_name));
         if let Ok(re) = Regex::new(&re_str2) {
-            result = re.replace_all(&result, format!("script-path={}", canonical)).to_string();
+            result = re
+                .replace_all(&result, format!("script-path={}", canonical))
+                .to_string();
         }
     }
     result
@@ -509,7 +531,12 @@ fn finalize_devtools(path: &Path) -> bool {
             script_labels.insert(caps[1].trim().to_string());
         }
     }
-    for required in ["Sub-Store Core", "Sub-Store Simple", "{{{sync}}}", "{{{produce}}}"] {
+    for required in [
+        "Sub-Store Core",
+        "Sub-Store Simple",
+        "{{{sync}}}",
+        "{{{produce}}}",
+    ] {
         if !script_labels.contains(required) {
             eprintln!(
                 "\x1b[0;33m[WARN]\x1b[0m Sub-Store scripts incomplete (missing: {})",
@@ -537,8 +564,16 @@ fn finalize_devtools(path: &Path) -> bool {
     for h in DEVTOOLS_MITM_EXCLUSIONS {
         hosts.insert(h.to_string());
     }
-    let mut inclusions: Vec<String> = hosts.iter().filter(|h| !h.starts_with('-')).cloned().collect();
-    let mut exclusions: Vec<String> = hosts.iter().filter(|h| h.starts_with('-')).cloned().collect();
+    let mut inclusions: Vec<String> = hosts
+        .iter()
+        .filter(|h| !h.starts_with('-'))
+        .cloned()
+        .collect();
+    let mut exclusions: Vec<String> = hosts
+        .iter()
+        .filter(|h| h.starts_with('-'))
+        .cloned()
+        .collect();
     inclusions.sort();
     exclusions.sort();
     inclusions.extend(exclusions);
@@ -548,8 +583,15 @@ fn finalize_devtools(path: &Path) -> bool {
     );
 
     let order = &[
-        "General", "Host", "Rule", "URL Rewrite", "Map Local", "Script",
-        "Body Rewrite", "Header Rewrite", "MITM",
+        "General",
+        "Host",
+        "Rule",
+        "URL Rewrite",
+        "Map Local",
+        "Script",
+        "Body Rewrite",
+        "Header Rewrite",
+        "MITM",
     ];
     let section_list = order_sections(&merged, order);
     let header = format_header_pub(&meta);
@@ -562,9 +604,17 @@ fn devtools_merge(req: &MergeBundleRequest) -> bool {
         if path.is_file() {
             let raw_prefix = req.script_raw_prefix.as_deref().unwrap_or("");
             let scripts_dir = req.scripts_dir.as_deref().unwrap_or("");
-            if !req.script_path_suffix_map.is_empty() && !raw_prefix.is_empty() && !scripts_dir.is_empty() {
+            if !req.script_path_suffix_map.is_empty()
+                && !raw_prefix.is_empty()
+                && !scripts_dir.is_empty()
+            {
                 let text = std::fs::read_to_string(path).unwrap_or_default();
-                let pinned = pin_script_paths_in_text(&text, &req.script_path_suffix_map, raw_prefix, scripts_dir);
+                let pinned = pin_script_paths_in_text(
+                    &text,
+                    &req.script_path_suffix_map,
+                    raw_prefix,
+                    scripts_dir,
+                );
                 let _ = crate::safe_write_file_internal(path, &pinned, true);
             }
         }
@@ -577,7 +627,8 @@ fn devtools_merge(req: &MergeBundleRequest) -> bool {
     let scripts_dir = req.scripts_dir.as_deref().unwrap_or("");
     if !req.script_path_suffix_map.is_empty() && !raw_prefix.is_empty() && !scripts_dir.is_empty() {
         let text = std::fs::read_to_string(path).unwrap_or_default();
-        let pinned = pin_script_paths_in_text(&text, &req.script_path_suffix_map, raw_prefix, scripts_dir);
+        let pinned =
+            pin_script_paths_in_text(&text, &req.script_path_suffix_map, raw_prefix, scripts_dir);
         if !crate::safe_write_file_internal(path, &pinned, true) {
             return false;
         }
@@ -592,7 +643,10 @@ pub fn process_merge_bundle(req: &MergeBundleRequest) -> bool {
         "youtube_merge" => merge_youtube(req),
         "devtools_merge" => devtools_merge(req),
         other => {
-            eprintln!("\x1b[0;31m[ERROR]\x1b[0m unknown merge_bundles op: {}", other);
+            eprintln!(
+                "\x1b[0;31m[ERROR]\x1b[0m unknown merge_bundles op: {}",
+                other
+            );
             false
         }
     }

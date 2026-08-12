@@ -1,23 +1,29 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::HashSet;
-use std::fs::{self, File};
-use std::io::{Write};
 use std::ffi::CStr;
+use std::fs::{self, File};
+use std::io::Write;
 use std::os::raw::c_char;
 use std::path::Path;
-use regex::Regex;
-use once_cell::sync::Lazy;
 
 #[allow(dead_code)]
 static DOMAIN_RULE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^DOMAIN,([^,]+)$").unwrap());
 #[allow(dead_code)]
-static DOMAIN_SUFFIX_RULE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^DOMAIN-SUFFIX,([^,]+)$").unwrap());
+static DOMAIN_SUFFIX_RULE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)^DOMAIN-SUFFIX,([^,]+)$").unwrap());
 #[allow(dead_code)]
-static VALID_DOMAIN: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap());
-static VALID_IPV4_CIDR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
-static VALID_IPV6_CIDR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9a-fA-F:]+)(/\d{1,3})?$").unwrap());
+static VALID_DOMAIN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap()
+});
+static VALID_IPV4_CIDR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
+static VALID_IPV6_CIDR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^([0-9a-fA-F:]+)(/\d{1,3})?$").unwrap());
 
 static M1: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\(\^\|\.\)(.+?)-\.\+\.").unwrap());
-static M2: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$").unwrap());
+static M2: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$").unwrap());
 static M3: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\.\+(.+)$").unwrap());
 
 fn is_invalid_domain_regex(payload: &str) -> bool {
@@ -27,7 +33,17 @@ fn is_invalid_domain_regex(payload: &str) -> bool {
 
 fn is_invalid_url_regex(payload: &str) -> bool {
     let val = payload.trim().to_lowercase();
-    val.len() < 3 || ["https:", "http:", "https", "http", "^https?:", "^https?://", "^https?:\\/\\/"].contains(&val.as_str())
+    val.len() < 3
+        || [
+            "https:",
+            "http:",
+            "https",
+            "http",
+            "^https?:",
+            "^https?://",
+            "^https?:\\/\\/",
+        ]
+        .contains(&val.as_str())
 }
 
 fn convert_domain_regex_for_surge(rule: &str) -> Option<String> {
@@ -112,12 +128,12 @@ pub fn strip_inline_comment(line: &str) -> String {
     } else {
         line.splitn(2, ',').next().unwrap().to_uppercase()
     };
-    
+
     let payload_safe = ["DOMAIN-REGEX", "URL-REGEX", "USER-AGENT", "PROCESS-NAME"];
     if payload_safe.contains(&head.as_str()) {
         return line.to_string();
     }
-    
+
     let mut cleaned = line;
     if let Some(idx) = line.find("//") {
         cleaned = &line[..idx];
@@ -139,37 +155,50 @@ fn normalize_rule(line: &str) -> Option<String> {
     let parts: Vec<&str> = line.splitn(2, ',').collect();
     let rule_type = parts[0].trim().to_uppercase();
     let mut rule_value = parts[1].trim().to_string();
-    
+
     if rule_type.starts_with("IP-") {
         if let Some(idx) = rule_value.find(',') {
             rule_value = rule_value[..idx].trim().to_string();
         }
     }
-    
+
     let valid_types = [
-        "DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR", "IP-CIDR6",
-        "DOMAIN-REGEX", "GEOIP", "USER-AGENT", "URL-REGEX", "PROCESS-NAME"
+        "DOMAIN",
+        "DOMAIN-SUFFIX",
+        "DOMAIN-KEYWORD",
+        "IP-CIDR",
+        "IP-CIDR6",
+        "DOMAIN-REGEX",
+        "GEOIP",
+        "USER-AGENT",
+        "URL-REGEX",
+        "PROCESS-NAME",
     ];
     if !valid_types.contains(&rule_type.as_str()) {
         return None;
     }
-    
+
     if rule_value.starts_with('"') && rule_value.ends_with('"') && rule_value.len() >= 2 {
-        rule_value = rule_value[1..rule_value.len()-1].to_string();
+        rule_value = rule_value[1..rule_value.len() - 1].to_string();
     }
-    
+
     if !validate_rule_value(&rule_type, &rule_value) {
         return None;
     }
-    
+
     if rule_type == "URL-REGEX" {
         return Some(format_url_regex_for_surge(&rule_value));
     }
-    
+
     Some(format!("{},{}", rule_type, rule_value))
 }
 
-fn clean_rule(rule: &str, ruleset_name: &str, conflict_domains: &[String], skip_conflict: bool) -> Option<String> {
+fn clean_rule(
+    rule: &str,
+    ruleset_name: &str,
+    conflict_domains: &[String],
+    skip_conflict: bool,
+) -> Option<String> {
     let mut r = rule.trim().to_string();
     if r.is_empty() || r.starts_with('#') {
         return None;
@@ -178,14 +207,24 @@ fn clean_rule(rule: &str, ruleset_name: &str, conflict_domains: &[String], skip_
         return None;
     }
     if r.starts_with('-') {
-        r = r[1..].trim().trim_matches(|c| c == '\'' || c == '"').to_string();
+        r = r[1..]
+            .trim()
+            .trim_matches(|c| c == '\'' || c == '"')
+            .to_string();
         if r.is_empty() {
             return None;
         }
     }
-    
+
     if !r.contains(',') {
-        if r.contains(':') || (r.split('.').count() == 4 && r.split('.').next().unwrap().chars().all(|c| c.is_ascii_digit())) {
+        if r.contains(':')
+            || (r.split('.').count() == 4
+                && r.split('.')
+                    .next()
+                    .unwrap()
+                    .chars()
+                    .all(|c| c.is_ascii_digit()))
+        {
             if r.contains('/') {
                 if r.contains(':') {
                     r = format!("IP-CIDR6,{}", r);
@@ -211,13 +250,13 @@ fn clean_rule(rule: &str, ruleset_name: &str, conflict_domains: &[String], skip_
             }
         }
     }
-    
+
     let mut normalized = normalize_rule(&r)?;
-    
+
     if normalized.starts_with("DOMAIN-REGEX,") {
         normalized = convert_domain_regex_for_surge(&normalized)?;
     }
-    
+
     if !skip_conflict {
         for dom in conflict_domains {
             let suffix = format!(",{}", dom);
@@ -226,16 +265,41 @@ fn clean_rule(rule: &str, ruleset_name: &str, conflict_domains: &[String], skip_
             }
         }
     }
-    
+
     if ruleset_name == "Direct" {
         let r_lower = normalized.to_lowercase();
         let mandatory_proxy = [
-            "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
-            "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
-            "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
-            "akamai", "fastly", "cloudflare", "browserleaks",
-            "byteoversea", "tiktok", "tiktokv", "tiktokcdn", "tiktokeu",
-            "tiktokw", "muscdn", "tiktokrow", "lark.com"
+            "google",
+            "gstatic",
+            "gmail",
+            "ggpht",
+            "youtube",
+            "ytimg",
+            "facebook",
+            "fbcdn",
+            "instagram",
+            "twitter",
+            "twimg",
+            "t.co",
+            "telegram",
+            "netflix",
+            "nflxvideo",
+            "nflxext",
+            "disney",
+            "github",
+            "akamai",
+            "fastly",
+            "cloudflare",
+            "browserleaks",
+            "byteoversea",
+            "tiktok",
+            "tiktokv",
+            "tiktokcdn",
+            "tiktokeu",
+            "tiktokw",
+            "muscdn",
+            "tiktokrow",
+            "lark.com",
         ];
         for kw in &mandatory_proxy {
             if r_lower.contains(kw) {
@@ -243,7 +307,7 @@ fn clean_rule(rule: &str, ruleset_name: &str, conflict_domains: &[String], skip_
             }
         }
     }
-    
+
     Some(normalized)
 }
 
@@ -257,7 +321,7 @@ fn generate_header(name: &str, policy: &str, node: &str, desc: &str, count: usiz
     }
     header.push(format!("# Description: {}", desc));
     header.push(format!("# Rules: {}", count));
-    
+
     header.join("\n") + "\n"
 }
 
@@ -296,12 +360,18 @@ pub extern "C" fn process_ruleset_ffi(
     local_paths: *const c_char,
     remote_content: *const c_char,
 ) -> bool {
-    if name.is_null() || target_dir.is_null() || conflict_domains.is_null()
-        || policy.is_null() || node.is_null() || desc.is_null()
-        || local_paths.is_null() || remote_content.is_null() {
+    if name.is_null()
+        || target_dir.is_null()
+        || conflict_domains.is_null()
+        || policy.is_null()
+        || node.is_null()
+        || desc.is_null()
+        || local_paths.is_null()
+        || remote_content.is_null()
+    {
         return false;
     }
-    
+
     let name_str = unsafe { CStr::from_ptr(name) }.to_string_lossy();
     let target_dir_str = unsafe { CStr::from_ptr(target_dir) }.to_string_lossy();
     let conflict_domains_str = unsafe { CStr::from_ptr(conflict_domains) }.to_string_lossy();
@@ -318,7 +388,7 @@ pub extern "C" fn process_ruleset_ffi(
         .collect();
 
     let mut all_rules = HashSet::new();
-    
+
     for path_str in local_paths_str.split('\n') {
         let trimmed_path = path_str.trim();
         if trimmed_path.is_empty() {
@@ -338,30 +408,48 @@ pub extern "C" fn process_ruleset_ffi(
             all_rules.insert(cleaned);
         }
     }
-    
+
     let mut ip_rules = Vec::new();
     let mut non_ip_rules = Vec::new();
-    
+
     for rule in all_rules {
-        if name_str != "Direct" && (rule.starts_with("IP-CIDR,") || rule.starts_with("IP-CIDR6,") || rule.starts_with("IP-ASN,") || rule.starts_with("GEOIP,")) {
+        if name_str != "Direct"
+            && (rule.starts_with("IP-CIDR,")
+                || rule.starts_with("IP-CIDR6,")
+                || rule.starts_with("IP-ASN,")
+                || rule.starts_with("GEOIP,"))
+        {
             ip_rules.push(rule);
         } else {
             non_ip_rules.push(rule);
         }
     }
-    
+
     ip_rules.sort();
     non_ip_rules.sort();
-    
+
     let target_file_path = Path::new(target_dir_str.as_ref()).join(format!("{}.list", name_str));
-    let target_ip_file_path = Path::new(target_dir_str.as_ref()).join(format!("{}_ip.list", name_str));
-    
+    let target_ip_file_path =
+        Path::new(target_dir_str.as_ref()).join(format!("{}_ip.list", name_str));
+
     if !non_ip_rules.is_empty() {
         if semantic_rules_match(&target_file_path, &non_ip_rules) {
-            println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", target_file_path.file_name().unwrap_or_default().to_string_lossy());
+            println!(
+                "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
+                target_file_path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+            );
         } else {
             if let Ok(mut file) = File::create(&target_file_path) {
-                let header_str = generate_header(&name_str, &policy_str, &node_str, &desc_str, non_ip_rules.len());
+                let header_str = generate_header(
+                    &name_str,
+                    &policy_str,
+                    &node_str,
+                    &desc_str,
+                    non_ip_rules.len(),
+                );
                 let _ = write!(file, "{}", header_str);
                 for r in &non_ip_rules {
                     let _ = writeln!(file, "{}", r);
@@ -373,14 +461,21 @@ pub extern "C" fn process_ruleset_ffi(
     } else if target_file_path.exists() {
         let _ = fs::remove_file(&target_file_path);
     }
-    
+
     if !ip_rules.is_empty() {
         if semantic_rules_match(&target_ip_file_path, &ip_rules) {
-            println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", target_ip_file_path.file_name().unwrap_or_default().to_string_lossy());
+            println!(
+                "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
+                target_ip_file_path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+            );
         } else {
             if let Ok(mut file) = File::create(&target_ip_file_path) {
                 let ip_name = format!("{}_ip", name_str);
-                let header_str = generate_header(&ip_name, &policy_str, &node_str, &desc_str, ip_rules.len());
+                let header_str =
+                    generate_header(&ip_name, &policy_str, &node_str, &desc_str, ip_rules.len());
                 let _ = write!(file, "{}", header_str);
                 for r in &ip_rules {
                     let _ = writeln!(file, "{}", r);
@@ -403,7 +498,7 @@ pub extern "C" fn normalize_rule_ffi(line: *const c_char) -> *mut c_char {
     }
     let c_str = unsafe { CStr::from_ptr(line) };
     let r_str = String::from_utf8_lossy(c_str.to_bytes());
-    
+
     match normalize_rule(&r_str) {
         Some(normalized) => {
             if let Ok(c_string) = std::ffi::CString::new(normalized) {
@@ -423,12 +518,12 @@ pub extern "C" fn strip_inline_comment_ffi(line: *const c_char) -> *mut c_char {
     }
     let c_str = unsafe { CStr::from_ptr(line) };
     let r_str = String::from_utf8_lossy(c_str.to_bytes());
-    
+
     let stripped = strip_inline_comment(&r_str);
     if stripped.is_empty() {
         return std::ptr::null_mut();
     }
-    
+
     if let Ok(c_string) = std::ffi::CString::new(stripped) {
         c_string.into_raw()
     } else {
@@ -490,7 +585,7 @@ pub extern "C" fn read_file_to_string_ffi(path: *const std::ffi::c_char) -> *mut
         return std::ptr::null_mut();
     }
     let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-    
+
     match std::fs::read_to_string(path_str.as_ref()) {
         Ok(content) => {
             if let Ok(c_string) = std::ffi::CString::new(content) {
@@ -528,11 +623,11 @@ pub extern "C" fn remove_file_ffi(path: *const std::ffi::c_char, missing_ok: boo
     }
     let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
     let p = std::path::Path::new(path_str.as_ref());
-    
+
     if !p.exists() {
         return missing_ok;
     }
-    
+
     std::fs::remove_file(p).is_ok()
 }
 
@@ -543,11 +638,11 @@ pub extern "C" fn remove_dir_all_ffi(path: *const std::ffi::c_char, missing_ok: 
     }
     let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
     let p = std::path::Path::new(path_str.as_ref());
-    
+
     if !p.exists() {
         return missing_ok;
     }
-    
+
     std::fs::remove_dir_all(p).is_ok()
 }
 
@@ -558,7 +653,10 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
             let old_stripped = url_rewriter::get_semantic_content_pub(&old_content);
             let new_stripped = url_rewriter::get_semantic_content_pub(content_str);
             if old_stripped == new_stripped {
-                println!("\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.", p.file_name().unwrap_or_default().to_string_lossy());
+                println!(
+                    "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
+                    p.file_name().unwrap_or_default().to_string_lossy()
+                );
                 return true;
             }
         }
@@ -567,20 +665,31 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
     if atomic {
         let parent = p.parent().unwrap_or(std::path::Path::new(""));
         let file_name = p.file_name().and_then(|f| f.to_str()).unwrap_or("file");
-        let temp_path = parent.join(format!(".tmp_{}_{}.writing", file_name, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_path = parent.join(format!(
+            ".tmp_{}_{}.writing",
+            file_name,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         match std::fs::write(&temp_path, content_str) {
-            Ok(_) => {
-                match std::fs::rename(&temp_path, p) {
-                    Ok(_) => true,
-                    Err(e) => {
-                        eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to rename temp file {:?} to {:?}: {:?}", temp_path, p, e);
-                        let _ = std::fs::remove_file(&temp_path);
-                        false
-                    }
+            Ok(_) => match std::fs::rename(&temp_path, p) {
+                Ok(_) => true,
+                Err(e) => {
+                    eprintln!(
+                        "\x1b[0;31m[ERROR]\x1b[0m Failed to rename temp file {:?} to {:?}: {:?}",
+                        temp_path, p, e
+                    );
+                    let _ = std::fs::remove_file(&temp_path);
+                    false
                 }
-            }
+            },
             Err(e) => {
-                eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to write temp file {:?}: {:?}", temp_path, e);
+                eprintln!(
+                    "\x1b[0;31m[ERROR]\x1b[0m Failed to write temp file {:?}: {:?}",
+                    temp_path, e
+                );
                 false
             }
         }
@@ -588,7 +697,10 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
         match std::fs::write(p, content_str) {
             Ok(_) => true,
             Err(e) => {
-                eprintln!("\x1b[0;31m[ERROR]\x1b[0m Failed to write file {:?}: {:?}", p, e);
+                eprintln!(
+                    "\x1b[0;31m[ERROR]\x1b[0m Failed to write file {:?}: {:?}",
+                    p, e
+                );
                 false
             }
         }
@@ -645,9 +757,9 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
     }
     let c_str = unsafe { std::ffi::CStr::from_ptr(root_dir) };
     let r_str = String::from_utf8_lossy(c_str.to_bytes());
-    
+
     let stats = smart_cleanup::run_cleanup(&r_str);
-    
+
     if let Ok(json_str) = serde_json::to_string(&stats) {
         if let Ok(c_string) = std::ffi::CString::new(json_str) {
             return c_string.into_raw();
@@ -656,8 +768,8 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
     std::ptr::null_mut()
 }
 
-pub mod promax;
 pub mod merge_bundles;
+pub mod promax;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn run_adblock_manager_ffi(

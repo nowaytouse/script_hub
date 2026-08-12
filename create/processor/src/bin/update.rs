@@ -8,8 +8,14 @@ fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<Path
 }
 
 fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String> {
-    if !root.join("rulesets/Sources/adblock_whitelist.list").is_file() {
-        return Err(format!("repository root is missing PROMAX whitelist: {}", root.display()));
+    if !root
+        .join("rulesets/Sources/adblock_whitelist.list")
+        .is_file()
+    {
+        return Err(format!(
+            "repository root is missing PROMAX whitelist: {}",
+            root.display()
+        ));
     }
 
     // PROMAX owns both source downloads and local compilation.  Keep the rest
@@ -19,7 +25,10 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     }
 
     let cleanup = rust_processor::smart_cleanup::run_cleanup(&root.to_string_lossy());
-    println!("[INFO] ruleset cleanup deleted {} file(s)", cleanup.get("deleted").copied().unwrap_or_default());
+    println!(
+        "[INFO] ruleset cleanup deleted {} file(s)",
+        cleanup.get("deleted").copied().unwrap_or_default()
+    );
 
     let modules = root.join("modules");
     let rulesets = root.join("rulesets");
@@ -32,7 +41,9 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     }
 
     let surge = modules.join("surge");
-    if surge.is_dir() && rust_processor::mitm_manager::run_mitm_cleanup(&surge.to_string_lossy(), false) < 0 {
+    if surge.is_dir()
+        && rust_processor::mitm_manager::run_mitm_cleanup(&surge.to_string_lossy(), false) < 0
+    {
         return Err("MITM cleanup failed".to_string());
     }
 
@@ -41,7 +52,10 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
         modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
         modules.join("shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module"),
     ];
-    let firewall_refs: Vec<&str> = firewall_modules.iter().filter_map(|path| path.to_str()).collect();
+    let firewall_refs: Vec<&str> = firewall_modules
+        .iter()
+        .filter_map(|path| path.to_str())
+        .collect();
     if ports_source.is_file() {
         rust_processor::firewall_sync::sync_ports(
             &ports_source.to_string_lossy(),
@@ -52,7 +66,10 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     }
 
     if let Some(singbox) = singbox.filter(|path| path.is_file()) {
-        if !rust_processor::srs_generator::run_srs_generator(&root.to_string_lossy(), &singbox.to_string_lossy()) {
+        if !rust_processor::srs_generator::run_srs_generator(
+            &root.to_string_lossy(),
+            &singbox.to_string_lossy(),
+        ) {
             return Err("SRS generation failed".to_string());
         }
     }
@@ -72,7 +89,9 @@ fn main() -> ExitCode {
             "--execute" | "--unattended" => execute = true,
             "--quick" => {}
             "--help" | "-h" => {
-                println!("Usage: update --root <repository> [--execute|--unattended] [--singbox <path>]");
+                println!(
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>]"
+                );
                 return ExitCode::SUCCESS;
             }
             unknown => {

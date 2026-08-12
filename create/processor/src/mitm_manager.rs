@@ -1,33 +1,69 @@
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
-use once_cell::sync::Lazy;
 
 static RESTRICTED_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     let patterns = vec![
-        "github.com", "api.github.com", "*.github.com", "*.api.github.com",
-        "raw.githubusercontent.com", "gist.githubusercontent.com",
-        "*.objects.githubusercontent.com", "*.githubusercontent.com", "*.github.io",
-        "*.apple.com", "*.icloud.com", "*.mzstatic.com", "*.itunes.com",
-        "*.facebook.com", "*.instagram.com", "*.twitter.com",
-        "*.google.com", "*.google.cn", "*.gmail.com", "*.youtube.com",
-        "*.googlevideo.com", "*.gstatic.com", "*.googleapis.com",
-        "*.bankofchina.com", "*.icbc.com.cn", "*.ccb.com", "*.cmbchina.com",
-        "*.abchina.com", "*.boc.cn", "*.psbc.com", "*.spdb.com.cn", "*.cebbank.com",
-        "*.cmbc.com.cn", "*.cib.com.cn", "*.hxb.com.cn", "*.pingan.com",
-        "*.bankcomm.com", "*.cgbchina.com.cn", "*.ghbank.com.cn", "*.czbank.com",
+        "github.com",
+        "api.github.com",
+        "*.github.com",
+        "*.api.github.com",
+        "raw.githubusercontent.com",
+        "gist.githubusercontent.com",
+        "*.objects.githubusercontent.com",
+        "*.githubusercontent.com",
+        "*.github.io",
+        "*.apple.com",
+        "*.icloud.com",
+        "*.mzstatic.com",
+        "*.itunes.com",
+        "*.facebook.com",
+        "*.instagram.com",
+        "*.twitter.com",
+        "*.google.com",
+        "*.google.cn",
+        "*.gmail.com",
+        "*.youtube.com",
+        "*.googlevideo.com",
+        "*.gstatic.com",
+        "*.googleapis.com",
+        "*.bankofchina.com",
+        "*.icbc.com.cn",
+        "*.ccb.com",
+        "*.cmbchina.com",
+        "*.abchina.com",
+        "*.boc.cn",
+        "*.psbc.com",
+        "*.spdb.com.cn",
+        "*.cebbank.com",
+        "*.cmbc.com.cn",
+        "*.cib.com.cn",
+        "*.hxb.com.cn",
+        "*.pingan.com",
+        "*.bankcomm.com",
+        "*.cgbchina.com.cn",
+        "*.ghbank.com.cn",
+        "*.czbank.com",
         "*.ebank.com",
-        "dns.alidns.com", "doh.pub", "dot.pub", "doh.360.cn", "dot.360.cn",
-        "dns.baidu.com", "dns.volcengine.com", "alidns.com",
+        "dns.alidns.com",
+        "doh.pub",
+        "dot.pub",
+        "doh.360.cn",
+        "dot.360.cn",
+        "dns.baidu.com",
+        "dns.volcengine.com",
+        "alidns.com",
     ];
 
-    patterns.into_iter().map(|pat| {
-        let escaped = regex::escape(pat)
-            .replace("\\*", ".*")
-            .replace("\\?", ".");
-        Regex::new(&format!("(?i)^{}$", escaped)).unwrap()
-    }).collect()
+    patterns
+        .into_iter()
+        .map(|pat| {
+            let escaped = regex::escape(pat).replace("\\*", ".*").replace("\\?", ".");
+            Regex::new(&format!("(?i)^{}$", escaped)).unwrap()
+        })
+        .collect()
 });
 
 fn is_restricted(domain: &str) -> bool {
@@ -58,7 +94,7 @@ fn process_file(path: &Path, dry_run: bool) -> bool {
     let mut new_lines = Vec::new();
     let mut modified = false;
 
-    // Use a line splitter that preserves the original line ending style if possible, 
+    // Use a line splitter that preserves the original line ending style if possible,
     // but standard content.lines() is fine.
     for line in lines {
         let stripped = line.trim();
@@ -122,7 +158,9 @@ fn process_file(path: &Path, dry_run: bool) -> bool {
             if !final_content.ends_with('\n') {
                 final_content.push('\n');
             }
-            let _ = crate::safe_write_file_internal(path, &final_content, true);
+            if !crate::safe_write_file_internal(path, &final_content, true) {
+                return false;
+            }
         }
         true
     } else {

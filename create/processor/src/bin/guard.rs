@@ -7,7 +7,10 @@ fn main() -> std::process::ExitCode {
     {
         Ok(output) if output.status.success() => output,
         Ok(output) => {
-            eprintln!("git diff failed: {}", String::from_utf8_lossy(&output.stderr));
+            eprintln!(
+                "git diff failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
             return std::process::ExitCode::from(1);
         }
         Err(error) => {
@@ -30,12 +33,17 @@ fn main() -> std::process::ExitCode {
     let invalid: Vec<&str> = changed
         .lines()
         .filter(|path| {
-            (path.starts_with("modules/") || path.starts_with("rulesets/") || path.starts_with("dns/"))
+            (path.starts_with("modules/")
+                || path.starts_with("rulesets/")
+                || path.starts_with("dns/"))
                 && !path.starts_with("rulesets/Sources/")
         })
         .collect();
     if !invalid.is_empty() {
-        eprintln!("generated tree changed outside the updater: {}", invalid.join(", "));
+        eprintln!(
+            "generated tree changed outside the updater: {}",
+            invalid.join(", ")
+        );
         return std::process::ExitCode::from(1);
     }
     std::process::ExitCode::SUCCESS

@@ -259,11 +259,7 @@ impl SafetyPolicy {
         patterns
     }
 
-    pub fn hostname_is_referenced_by_patterns(
-        &self,
-        hostname: &str,
-        patterns: &[String],
-    ) -> bool {
+    pub fn hostname_is_referenced_by_patterns(&self, hostname: &str, patterns: &[String]) -> bool {
         if self.hostname_is_protected(hostname) {
             return false;
         }

@@ -1,8 +1,8 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use regex::Regex;
-use once_cell::sync::Lazy;
 
 static PRIORITY_ORDER: &[&str] = &[
     "AdBlock_",
@@ -61,22 +61,60 @@ static PRIORITY_ORDER: &[&str] = &[
 ];
 
 static MANDATORY_PROXY_KEYWORDS: &[&str] = &[
-    "google", "gstatic", "gmail", "ggpht", "youtube", "ytimg",
-    "facebook", "fbcdn", "instagram", "twitter", "twimg", "t.co",
-    "telegram", "netflix", "nflxvideo", "nflxext", "disney", "github",
-    "akamai", "fastly", "cloudflare", "browserleaks",
-    "byteoversea", "tiktok", "tiktokv", "tiktokcdn", "tiktokeu",
-    "tiktokw", "muscdn", "tiktokrow", "lark.com",
+    "google",
+    "gstatic",
+    "gmail",
+    "ggpht",
+    "youtube",
+    "ytimg",
+    "facebook",
+    "fbcdn",
+    "instagram",
+    "twitter",
+    "twimg",
+    "t.co",
+    "telegram",
+    "netflix",
+    "nflxvideo",
+    "nflxext",
+    "disney",
+    "github",
+    "akamai",
+    "fastly",
+    "cloudflare",
+    "browserleaks",
+    "byteoversea",
+    "tiktok",
+    "tiktokv",
+    "tiktokcdn",
+    "tiktokeu",
+    "tiktokw",
+    "muscdn",
+    "tiktokrow",
+    "lark.com",
 ];
 
-static ADBLOCK_ONLY_PREFIXES: &[&str] = &[
-    "AdBlock_", "AdBlock.list",
-];
+static ADBLOCK_ONLY_PREFIXES: &[&str] = &["AdBlock_", "AdBlock.list"];
 
 static NSFW_CONTAMINATION_KEYWORDS: &[&str] = &[
-    "porn", "hentai", "nsfw", "xxx", "adult", "sex", "erotic",
-    "nude", "naked", "fetish", "bdsm", "onlyfans",
-    "facebookporn", "facebookofsex", "facboox", "faceboox", "faseboox", "feceboox",
+    "porn",
+    "hentai",
+    "nsfw",
+    "xxx",
+    "adult",
+    "sex",
+    "erotic",
+    "nude",
+    "naked",
+    "fetish",
+    "bdsm",
+    "onlyfans",
+    "facebookporn",
+    "facebookofsex",
+    "facboox",
+    "faceboox",
+    "faseboox",
+    "feceboox",
 ];
 
 static SEMANTIC_COVERAGE_RULESETS: &[&str] = &[
@@ -104,9 +142,8 @@ static SEMANTIC_COVERAGE_RULESETS: &[&str] = &[
     "Bilibili.list",
 ];
 
-static HEADER_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?i)^#\s*(Rules|Total|Total Rules):\s*").unwrap()
-});
+static HEADER_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)^#\s*(Rules|Total|Total Rules):\s*").unwrap());
 
 fn get_rank(rule_type: &str) -> i32 {
     match rule_type {
@@ -217,7 +254,13 @@ fn is_proxyish_domain(rule: &str) -> bool {
         return false;
     }
     let rtype = extract_type(rule);
-    let valid_types = ["DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-WILDCARD", "DOMAIN-REGEX"];
+    let valid_types = [
+        "DOMAIN",
+        "DOMAIN-SUFFIX",
+        "DOMAIN-KEYWORD",
+        "DOMAIN-WILDCARD",
+        "DOMAIN-REGEX",
+    ];
     if !valid_types.contains(&rtype.as_str()) {
         return false;
     }
@@ -265,7 +308,8 @@ struct SortedRuleItem {
 
 impl Ord for SortedRuleItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.sort_key_0.cmp(&other.sort_key_0)
+        self.sort_key_0
+            .cmp(&other.sort_key_0)
             .then_with(|| self.sort_key_1.cmp(&other.sort_key_1))
             .then_with(|| self.sort_key_2.cmp(&other.sort_key_2))
             .then_with(|| self.sort_key_3.cmp(&other.sort_key_3))
@@ -324,7 +368,8 @@ fn load_list(filepath: &Path) -> HashMap<String, String> {
             if payload.is_empty() {
                 continue;
             }
-            rules.entry(payload)
+            rules
+                .entry(payload)
                 .and_modify(|existing| *existing = prefer_rule(existing, &line))
                 .or_insert(line);
         }
@@ -380,7 +425,9 @@ fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
 pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let root = Path::new(root_dir);
     let mut ruleset_dirs = Vec::new();
-    ruleset_dirs.extend(collect_ruleset_dirs(&root.join("rulesets").join("RULE-SET")));
+    ruleset_dirs.extend(collect_ruleset_dirs(
+        &root.join("rulesets").join("RULE-SET"),
+    ));
     ruleset_dirs.extend(collect_ruleset_dirs(&root.join("rulesets").join("AdBlock")));
 
     let exempt_filenames: HashSet<&str> = [
@@ -388,7 +435,10 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
         "reject-drop.list",
         "reject-no-drop.list",
         "AdBlock.list",
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     let mut file_content = HashMap::new();
     let mut file_paths = HashMap::new();
@@ -505,7 +555,10 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
         "Direct_ip.list",
         "GlobalProxy.list",
         "GlobalProxy_ip.list",
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     let mut fallback_files = Vec::new();
     let mut specific_files = Vec::new();
@@ -584,7 +637,9 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
 
             for payload in sorted_keys {
                 if let Some(rule) = rules.get(&payload) {
-                    let is_adblock_prefix = ADBLOCK_ONLY_PREFIXES.iter().any(|pfx| filename.starts_with(pfx));
+                    let is_adblock_prefix = ADBLOCK_ONLY_PREFIXES
+                        .iter()
+                        .any(|pfx| filename.starts_with(pfx));
                     if !is_adblock_prefix && adblock_payloads.contains(&payload) {
                         semantic_cover_removed += 1;
                         continue;
@@ -612,7 +667,9 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
 
                     seen_payloads.insert(payload.clone());
                     kept.insert(payload.clone(), rule.clone());
-                    if effective_semantic_coverage.contains(filename) && rule_type == "DOMAIN-SUFFIX" {
+                    if effective_semantic_coverage.contains(filename)
+                        && rule_type == "DOMAIN-SUFFIX"
+                    {
                         seen_covering_suffixes.insert(payload);
                     }
                 }
@@ -633,7 +690,10 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
             }
         }
     }
-    stats.insert("direct_proxyish_remaining".to_string(), direct_proxyish_remaining);
+    stats.insert(
+        "direct_proxyish_remaining".to_string(),
+        direct_proxyish_remaining,
+    );
 
     let mut globalproxy_cn_remaining = 0;
     if let Some(proxy) = file_content.get("GlobalProxy.list") {
@@ -643,7 +703,10 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
             }
         }
     }
-    stats.insert("globalproxy_cn_remaining".to_string(), globalproxy_cn_remaining);
+    stats.insert(
+        "globalproxy_cn_remaining".to_string(),
+        globalproxy_cn_remaining,
+    );
 
     // 6. Save
     for (filename, rules) in &file_content {
@@ -651,7 +714,10 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
             if rules.is_empty() && filename != "AdBlock.list" {
                 if filepath.exists() {
                     let _ = fs::remove_file(filepath);
-                    println!("\x1b[0;32m[✓]\x1b[0m Deleted empty ruleset file: {}", filename);
+                    println!(
+                        "\x1b[0;32m[✓]\x1b[0m Deleted empty ruleset file: {}",
+                        filename
+                    );
                 }
             } else {
                 write_list(filepath, rules);
@@ -681,35 +747,116 @@ pub struct ModuleSectionPub {
 }
 
 static AD_SCRIPT_MARKERS: &[&str] = &[
-    "adblock", "/adblock/", ".adblock.", "anti-ad", "blockad", "remove_ads",
-    "remove-ads", "_remove_", "/remove", "去广告", "/ads/", "advertising", "reject",
-    "spam", "tracking", "xwebads", "adultraplus", "allinone", "mock",
-    "bilibili.helper", "helper.v2.js", "camoufox", "rednote", "redpaper",
-    "weibo_ads", "weibo_main", "wool_scripts", "kelee.one/resource/javascript",
-    "proxyrules/main/script", "ithome_remove", "zhihu_remove", "amap_remove",
-    "cainiao_remove", "taobao_remove", "jd_remove", "spotify_remove", "bilicomic_remove",
+    "adblock",
+    "/adblock/",
+    ".adblock.",
+    "anti-ad",
+    "blockad",
+    "remove_ads",
+    "remove-ads",
+    "_remove_",
+    "/remove",
+    "去广告",
+    "/ads/",
+    "advertising",
+    "reject",
+    "spam",
+    "tracking",
+    "xwebads",
+    "adultraplus",
+    "allinone",
+    "mock",
+    "bilibili.helper",
+    "helper.v2.js",
+    "camoufox",
+    "rednote",
+    "redpaper",
+    "weibo_ads",
+    "weibo_main",
+    "wool_scripts",
+    "kelee.one/resource/javascript",
+    "proxyrules/main/script",
+    "ithome_remove",
+    "zhihu_remove",
+    "amap_remove",
+    "cainiao_remove",
+    "taobao_remove",
+    "jd_remove",
+    "spotify_remove",
+    "bilicomic_remove",
 ];
 
 static AD_ENTRY_NAME_MARKERS: &[&str] = &[
-    "去广告", "adblock", "anti-ad", "xwebads", "移除", "精简", "推广", "开屏", "净化", "广告", "killad", "mock",
+    "去广告",
+    "adblock",
+    "anti-ad",
+    "xwebads",
+    "移除",
+    "精简",
+    "推广",
+    "开屏",
+    "净化",
+    "广告",
+    "killad",
+    "mock",
 ];
 
 static ENHANCE_SCRIPT_MARKERS: &[&str] = &[
-    "/enhanced/", ".enhanced.", "/enhance/", "biliuniverse/enhanced", "/global/",
-    ".global.", "biliuniverse/global", "/redirect/", ".redirect.", "unlock", "解锁",
-    "unblock", "vip", "premium", "crack", "破解", "camscanner.js", "external_links_unlock",
-    "weixin_external", "1080p", "bilibili_json.js", "dualsubs", "iringo", "weatherkit",
-    "zheye", "哲也", "translation", "翻译", "nsfw", "region", "intl", "bypass", "绕过",
-    "pip", "画中画", "optimize", "功能增强",
+    "/enhanced/",
+    ".enhanced.",
+    "/enhance/",
+    "biliuniverse/enhanced",
+    "/global/",
+    ".global.",
+    "biliuniverse/global",
+    "/redirect/",
+    ".redirect.",
+    "unlock",
+    "解锁",
+    "unblock",
+    "vip",
+    "premium",
+    "crack",
+    "破解",
+    "camscanner.js",
+    "external_links_unlock",
+    "weixin_external",
+    "1080p",
+    "bilibili_json.js",
+    "dualsubs",
+    "iringo",
+    "weatherkit",
+    "zheye",
+    "哲也",
+    "translation",
+    "翻译",
+    "nsfw",
+    "region",
+    "intl",
+    "bypass",
+    "绕过",
+    "pip",
+    "画中画",
+    "optimize",
+    "功能增强",
 ];
 
 static ENHANCE_NAME_PREFIXES: &[&str] = &[
-    "bilibili.enhanced", "bilibili.global", "bilibili.redirect", "youtube.enhance",
-    "wechat_enhance", "iringo.", "dualsubs",
+    "bilibili.enhanced",
+    "bilibili.global",
+    "bilibili.redirect",
+    "youtube.enhance",
+    "wechat_enhance",
+    "iringo.",
+    "dualsubs",
 ];
 
 static AD_NAME_PREFIXES: &[&str] = &[
-    "bilibili.adblock", "adblock", "去广告", "xwebads", "anti-ad",
+    "bilibili.adblock",
+    "adblock",
+    "去广告",
+    "xwebads",
+    "anti-ad",
 ];
 
 static REJECT_POLICIES: Lazy<HashSet<&'static str>> = Lazy::new(|| {
@@ -723,15 +870,28 @@ static REJECT_POLICIES: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 });
 
 static PURE_AD_MODULE_NAME_TOKENS: &[&str] = &[
-    "去广告", "adblock", "anti-ad", "xwebads", "adultraplus", "allinone", "all-in-one",
-    "rednote", "redpaper", "微博去广告", "remove_ads",
+    "去广告",
+    "adblock",
+    "anti-ad",
+    "xwebads",
+    "adultraplus",
+    "allinone",
+    "all-in-one",
+    "rednote",
+    "redpaper",
+    "微博去广告",
+    "remove_ads",
 ];
 
-static SCRIPT_PATH_RE_STR: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)script-path\s*=\s*([^,\s]+)").unwrap());
-static SCRIPT_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bname\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_PATH_RE_STR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)script-path\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_NAME_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)\bname\s*=\s*([^,\s]+)").unwrap());
 static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
-static SCRIPT_PATH_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
-static SCRIPT_PATTERN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
+static SCRIPT_PATH_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_PATTERN_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
 static SECTION_HEADER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\[([^\]]+)\]\s*$").unwrap());
 
 fn script_path(line: &str) -> String {
@@ -762,7 +922,8 @@ pub fn source_is_pure_ad_module_pub(source_path: &str) -> bool {
     if source_path.is_empty() {
         return false;
     }
-    let filename = Path::new(source_path).file_name()
+    let filename = Path::new(source_path)
+        .file_name()
         .map(|f| f.to_string_lossy().to_string())
         .unwrap_or_default();
     let low = filename.to_lowercase();
@@ -794,7 +955,11 @@ fn script_is_enhance(name: &str, spath: &str) -> bool {
     }
     #[allow(dead_code)]
     #[derive(Clone, Debug)]
-    enum Verdict { Ad, Enhance, Neutral }
+    enum Verdict {
+        Ad,
+        Enhance,
+        Neutral,
+    }
     false
 }
 
@@ -845,7 +1010,9 @@ pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) ->
         return LineVerdict::Enhance;
     }
 
-    if sec == "url rewrite" || (stripped.starts_with('^') && (low.contains(" reject") || low.contains(" _ reject"))) {
+    if sec == "url rewrite"
+        || (stripped.starts_with('^') && (low.contains(" reject") || low.contains(" _ reject")))
+    {
         if low.contains(" reject") || low.contains(" _ reject") {
             return LineVerdict::Ad;
         }
@@ -862,10 +1029,17 @@ pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) ->
         if stripped.starts_with("http-response ") || stripped.starts_with("http-request ") {
             return LineVerdict::Ad;
         }
-        if stripped.starts_with('^') && (low.contains("data-type=") || low.contains("data=\"{}\"") || low.contains("data='{}'")) {
+        if stripped.starts_with('^')
+            && (low.contains("data-type=")
+                || low.contains("data=\"{}\"")
+                || low.contains("data='{}'"))
+        {
             return LineVerdict::Ad;
         }
-        if contains_any(&low, &["广告", "adcard", "splash", "deliver", "flash", "e-commerce"]) {
+        if contains_any(
+            &low,
+            &["广告", "adcard", "splash", "deliver", "flash", "e-commerce"],
+        ) {
             return LineVerdict::Ad;
         }
         if low.contains("data=\"{}\"") || low.contains("data='{}'") {
@@ -882,10 +1056,25 @@ pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) ->
 
     let parts: Vec<&str> = stripped.split(',').collect();
     let first_upper = parts[0].trim().to_uppercase();
-    if sec == "rule" || ["DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-REGEX", "DOMAIN-WILDCARD", "URL-REGEX", "IP-CIDR", "IP-CIDR6", "USER-AGENT", "PROCESS-NAME", "DEST-PORT"].contains(&first_upper.as_str()) {
+    if sec == "rule"
+        || [
+            "DOMAIN",
+            "DOMAIN-SUFFIX",
+            "DOMAIN-KEYWORD",
+            "DOMAIN-REGEX",
+            "DOMAIN-WILDCARD",
+            "URL-REGEX",
+            "IP-CIDR",
+            "IP-CIDR6",
+            "USER-AGENT",
+            "PROCESS-NAME",
+            "DEST-PORT",
+        ]
+        .contains(&first_upper.as_str())
+    {
         let mut policy = String::new();
         if !parts.is_empty() {
-            policy = parts[parts.len()-1].trim().to_uppercase();
+            policy = parts[parts.len() - 1].trim().to_uppercase();
         }
         if REJECT_POLICIES.contains(policy.as_str()) {
             if contains_any(&low, &["unlock", "解锁", "vip", "premium", "crack"]) {
@@ -894,7 +1083,21 @@ pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) ->
             return LineVerdict::Ad;
         }
         if !parts.is_empty() {
-            if ["DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-REGEX", "DOMAIN-WILDCARD", "URL-REGEX", "IP-CIDR", "IP-CIDR6", "USER-AGENT", "PROCESS-NAME", "DEST-PORT"].contains(&first_upper.as_str()) {
+            if [
+                "DOMAIN",
+                "DOMAIN-SUFFIX",
+                "DOMAIN-KEYWORD",
+                "DOMAIN-REGEX",
+                "DOMAIN-WILDCARD",
+                "URL-REGEX",
+                "IP-CIDR",
+                "IP-CIDR6",
+                "USER-AGENT",
+                "PROCESS-NAME",
+                "DEST-PORT",
+            ]
+            .contains(&first_upper.as_str())
+            {
                 if contains_any(&low, &["unlock", "解锁", "vip", "premium", "crack"]) {
                     return LineVerdict::Enhance;
                 }
@@ -929,7 +1132,8 @@ pub fn should_keep_promax_line_pub(line: &str, section: &str, source_path: &str)
 }
 
 pub fn module_ingest_mode_pub(path: &str, text: &str) -> &'static str {
-    let filename = Path::new(path).file_name()
+    let filename = Path::new(path)
+        .file_name()
         .map(|f| f.to_string_lossy().to_string())
         .unwrap_or_default();
     let name = filename.to_lowercase();
@@ -946,7 +1150,7 @@ pub fn module_ingest_mode_pub(path: &str, text: &str) -> &'static str {
     for line in text.lines() {
         let stripped = line.trim();
         if stripped.starts_with('[') && stripped.ends_with(']') {
-            current_section = stripped[1..stripped.len()-1].to_string();
+            current_section = stripped[1..stripped.len() - 1].to_string();
             continue;
         }
         if stripped.is_empty() || stripped.starts_with('#') {
@@ -982,7 +1186,9 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
             return format!("script:name:{}", &caps[1]);
         }
         let path_opt = SCRIPT_PATH_RE.captures(stripped).map(|c| c[1].to_string());
-        let pattern_opt = SCRIPT_PATTERN_RE.captures(stripped).map(|c| c[1].trim().to_string());
+        let pattern_opt = SCRIPT_PATTERN_RE
+            .captures(stripped)
+            .map(|c| c[1].trim().to_string());
         if let (Some(path), Some(pattern)) = (path_opt, pattern_opt) {
             return format!("script:{}:{}", path, pattern);
         }
@@ -1048,7 +1254,11 @@ pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> 
         let mut max_len = 0;
         for r in &result {
             if r.starts_with('#') {
-                parsed.push(ParsedLine { raw: r.clone(), left: String::new(), right: String::new() });
+                parsed.push(ParsedLine {
+                    raw: r.clone(),
+                    left: String::new(),
+                    right: String::new(),
+                });
                 continue;
             }
             let parts: Vec<&str> = r.splitn(2, '=').collect();
@@ -1058,9 +1268,17 @@ pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> 
                 if left.len() < 60 && left.len() > max_len {
                     max_len = left.len();
                 }
-                parsed.push(ParsedLine { raw: r.clone(), left, right });
+                parsed.push(ParsedLine {
+                    raw: r.clone(),
+                    left,
+                    right,
+                });
             } else {
-                parsed.push(ParsedLine { raw: r.clone(), left: String::new(), right: String::new() });
+                parsed.push(ParsedLine {
+                    raw: r.clone(),
+                    left: String::new(),
+                    right: String::new(),
+                });
             }
         }
         let mut aligned_result = Vec::new();
@@ -1077,7 +1295,18 @@ pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> 
 }
 
 static HEADER_KEYS_ORDER: &[&str] = &[
-    "name", "desc", "author", "icon", "category", "tag", "date", "arguments", "arguments-desc", "system-proxy", "ability", "update-interval",
+    "name",
+    "desc",
+    "author",
+    "icon",
+    "category",
+    "tag",
+    "date",
+    "arguments",
+    "arguments-desc",
+    "system-proxy",
+    "ability",
+    "update-interval",
 ];
 
 pub fn format_header_pub(meta: &HashMap<String, String>) -> Vec<String> {
@@ -1104,10 +1333,22 @@ pub fn format_header_pub(meta: &HashMap<String, String>) -> Vec<String> {
 }
 
 static SECTION_ORDER: &[&str] = &[
-    "General", "Host", "Rule", "URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite", "MITM",
+    "General",
+    "Host",
+    "Rule",
+    "URL Rewrite",
+    "Map Local",
+    "Script",
+    "Body Rewrite",
+    "Header Rewrite",
+    "MITM",
 ];
 
-pub fn format_module_pub(header_lines: &[String], sections: &[ModuleSectionPub], dedupe: bool) -> String {
+pub fn format_module_pub(
+    header_lines: &[String],
+    sections: &[ModuleSectionPub],
+    dedupe: bool,
+) -> String {
     let mut section_map = HashMap::new();
     for sec in sections {
         section_map.insert(sec.Name.clone(), sec.Lines.clone());
@@ -1148,7 +1389,10 @@ pub fn format_module_pub(header_lines: &[String], sections: &[ModuleSectionPub],
     res
 }
 
-pub fn split_module_sections_pub(path: &str, text: &str) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
+pub fn split_module_sections_pub(
+    path: &str,
+    text: &str,
+) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
     let mut ad_sections = HashMap::new();
     let mut current_section = String::new();
     let mut total = 0;
@@ -1177,7 +1421,10 @@ pub fn split_module_sections_pub(path: &str, text: &str) -> (HashMap<String, Vec
         }
         total += 1;
         if should_keep_promax_line_pub(stripped, &current_section, path) {
-            ad_sections.entry(current_section.clone()).or_insert_with(Vec::new).push(stripped.to_string());
+            ad_sections
+                .entry(current_section.clone())
+                .or_insert_with(Vec::new)
+                .push(stripped.to_string());
             kept += 1;
         } else {
             skipped += 1;
@@ -1192,8 +1439,13 @@ pub fn split_module_sections_pub(path: &str, text: &str) -> (HashMap<String, Vec
     (ad_sections, stats)
 }
 
-pub fn format_split_module_pub(source_path: &str, ad_sections: &HashMap<String, Vec<String>>, note: &str) -> String {
-    let base = Path::new(source_path).file_name()
+pub fn format_split_module_pub(
+    source_path: &str,
+    ad_sections: &HashMap<String, Vec<String>>,
+    note: &str,
+) -> String {
+    let base = Path::new(source_path)
+        .file_name()
         .map(|f| f.to_string_lossy().to_string())
         .unwrap_or_default();
     let mut lines = vec![
@@ -1203,7 +1455,15 @@ pub fn format_split_module_pub(source_path: &str, ad_sections: &HashMap<String, 
         format!("#!split-source={}", source_path),
     ];
 
-    let order = &["Rule", "URL Rewrite", "Map Local", "Script", "Body Rewrite", "Header Rewrite", "MITM"];
+    let order = &[
+        "Rule",
+        "URL Rewrite",
+        "Map Local",
+        "Script",
+        "Body Rewrite",
+        "Header Rewrite",
+        "MITM",
+    ];
 
     for &sec in order {
         if let Some(body) = ad_sections.get(sec) {
@@ -1289,19 +1549,30 @@ pub fn adapt_map_local_line_for_loon_pub(line: &str) -> String {
         converted.push(field.to_string());
     }
     if let Some(path) = data_path {
-        if !converted.iter().any(|field| field.starts_with("data-type=")) {
+        if !converted
+            .iter()
+            .any(|field| field.starts_with("data-type="))
+        {
             let unquoted = path.trim_matches('"').to_ascii_lowercase();
-            let data_type = if unquoted.ends_with(".json") { "json" } else { "text" };
+            let data_type = if unquoted.ends_with(".json") {
+                "json"
+            } else {
+                "text"
+            };
             converted.push(format!("data-type={data_type}"));
         }
         converted.push(format!("data-path={path}"));
     }
-    if !converted.iter().any(|field| field.starts_with("status-code=")) {
+    if !converted
+        .iter()
+        .any(|field| field.starts_with("status-code="))
+    {
         converted.push("status-code=200".to_string());
     }
-    if !converted.iter().any(|field| {
-        field.starts_with("data=") || field.starts_with("data-path=")
-    }) {
+    if !converted
+        .iter()
+        .any(|field| field.starts_with("data=") || field.starts_with("data-path="))
+    {
         return String::new();
     }
     format!("{pattern} mock-response-body {}", converted.join(" "))
@@ -1335,12 +1606,15 @@ pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     for p in split_script_parameters(line_content) {
         if let Some(idx) = p.find('=') {
             let k = p[..idx].trim().to_lowercase();
-            let v = p[idx+1..].trim().to_string();
+            let v = p[idx + 1..].trim().to_string();
             params.insert(k, v);
         }
     }
 
-    let script_type = params.get("type").map(|s| s.as_str()).unwrap_or("http-response");
+    let script_type = params
+        .get("type")
+        .map(|s| s.as_str())
+        .unwrap_or("http-response");
     let script_path = match params.get("script-path") {
         Some(p) => p,
         None => return String::new(),
@@ -1456,7 +1730,10 @@ fn split_whitespace_parameters(input: &str) -> Vec<&str> {
     if start < input.len() {
         parts.push(input[start..].trim());
     }
-    parts.into_iter().filter(|field| !field.is_empty()).collect()
+    parts
+        .into_iter()
+        .filter(|field| !field.is_empty())
+        .collect()
 }
 
 fn quote_if_needed(value: &str) -> String {
@@ -1529,9 +1806,7 @@ mod ruleset_cleanup_tests {
     #[test]
     fn normalizes_legacy_quoted_url_regex_policy() {
         assert_eq!(
-            normalize_url_regex_rule(
-                r#"URL-REGEX,""^https:\/\/ads\.example\/",REJECT-DROP"#,
-            ),
+            normalize_url_regex_rule(r#"URL-REGEX,""^https:\/\/ads\.example\/",REJECT-DROP"#,),
             Some(r#"URL-REGEX,^https:\/\/ads\.example\/"#.to_string())
         );
     }
