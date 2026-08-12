@@ -72,6 +72,6 @@ func RunPatchNeteaseAdblockForSurge() int {
 
 	patched := patchAdultraplusModules()
 	fmt.Printf("Patched %d adultraplus module file(s)\n", patched)
-	fmt.Println("Next: run main_update adblock or equivalent pipeline")
+	fmt.Println("Next: run the Rust updater: cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- --root . --execute")
 	return 0
 }

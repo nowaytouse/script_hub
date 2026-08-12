@@ -13,7 +13,7 @@
 |------|------|
 | `rulesets/list/` | Surge / Shadowrocket 编译后的 `.list` 规则集 |
 | `modules/source/local/` | PROMAX 构建用的本地 sgmodule 源（上游同步） |
-| `modules/helper/surge_module_helper.html` | 模块安装助手网页（`main_update` / `consolidate_modules` 自动再生） |
+| `modules/helper/surge_module_helper.html` | 模块安装助手网页（由 Rust 更新流程维护） |
 
 模块助手页（推送后可用）：
 https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/helper/surge_module_helper.html
