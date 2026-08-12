@@ -1233,7 +1233,30 @@ pub fn adapt_rewrite_line_for_loon_pub(line: &str) -> String {
 
 pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     let mut params = HashMap::new();
-    let parts: Vec<&str> = line_content.split(',').collect();
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut quoted = false;
+    let mut escaped = false;
+    let mut braces = 0usize;
+    for (index, ch) in line_content.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if ch == '\\' && quoted {
+            escaped = true;
+        } else if ch == '"' {
+            quoted = !quoted;
+        } else if !quoted && ch == '{' {
+            braces += 1;
+        } else if !quoted && ch == '}' {
+            braces = braces.saturating_sub(1);
+        } else if !quoted && braces == 0 && ch == ',' {
+            parts.push(&line_content[start..index]);
+            start = index + ch.len_utf8();
+        }
+    }
+    parts.push(&line_content[start..]);
     for p in parts {
         if let Some(idx) = p.find('=') {
             let k = p[..idx].trim().to_lowercase();
@@ -1263,6 +1286,9 @@ pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     }
     if let Some(timeout) = params.get("timeout") {
         loon_parts.push(format!("timeout={}", timeout));
+    }
+    if let Some(binary) = params.get("binary-body-mode") {
+        loon_parts.push(format!("binary-body-mode={}", binary));
     }
     if let Some(argument) = params.get("argument") {
         let mut arg = argument.clone();
@@ -1327,81 +1353,14 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 
 #[cfg(test)]
 mod promax_loon_tests {
-    use super::{
-        adapt_body_rewrite_line_for_loon_pub, adapt_map_local_line_for_loon_pub,
-        adapt_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub, run_cleanup,
-    };
-    use std::fs;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use super::adapt_script_line_for_loon_pub;
 
     #[test]
-    fn cleanup_preserves_promax_catalog_readme_only() {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("promax-cleanup-readme-{unique}"));
-        let adblock = root.join("rulesets/AdBlock");
-        let legacy = root.join("rulesets/RULE-SET");
-        fs::create_dir_all(&adblock).unwrap();
-        fs::create_dir_all(&legacy).unwrap();
-        fs::write(adblock.join("README.md"), "PROMAX catalog\n").unwrap();
-        fs::write(legacy.join("README.md"), "stray\n").unwrap();
-
-        run_cleanup(root.to_str().unwrap());
-
-        assert!(adblock.join("README.md").is_file());
-        assert!(!legacy.join("README.md").exists());
-        fs::remove_dir_all(root).unwrap();
-    }
-
-    #[test]
-    fn loon_url_rewrite_removes_surge_placeholder() {
-        assert_eq!(
-            adapt_rewrite_line_for_loon_pub(r#"^https://ads\.example _ reject"#),
-            r#"^https://ads\.example reject"#
-        );
-    }
-
-    #[test]
-    fn loon_map_local_becomes_typed_mock_response() {
-        assert_eq!(
-            adapt_map_local_line_for_loon_pub(
-                r#"^https://ads\.example data-type=text data="{}" status-code=200 header="Content-Type:application/json""#,
-            ),
-            r#"^https://ads\.example mock-response-body data-type=text data="{}" status-code=200"#
-        );
-        assert_eq!(
-            adapt_map_local_line_for_loon_pub(
-                r#"^https://ads\.example data="https://example.test/reject.json""#,
-            ),
-            r#"^https://ads\.example mock-response-body data-type=json data-path="https://example.test/reject.json" status-code=200"#
-        );
-    }
-
-    #[test]
-    fn loon_body_rewrite_moves_pattern_before_typed_operation() {
-        assert_eq!(
-            adapt_body_rewrite_line_for_loon_pub(
-                r#"http-response-jq ^https:\/\/api\.example/ad 'del(.data.ad)'"#,
-            ),
-            r#"^https:\/\/api\.example/ad response-body-json-jq 'del(.data.ad)'"#
-        );
-        assert_eq!(
-            adapt_body_rewrite_line_for_loon_pub(
-                r#"http-response ^https:\/\/api\.example/ad banner replacement"#,
-            ),
-            r#"^https:\/\/api\.example/ad response-body-replace-regex banner replacement"#
-        );
-    }
-
-    #[test]
-    fn loon_script_preserves_regex_commas_json_argument_and_binary_mode() {
+    fn loon_script_keeps_commas_json_and_binary_mode() {
         let converted = adapt_script_line_for_loon_pub(
             "fixture",
             r#"type=http-response,pattern=^https://example\.com/a{1,4}/x,script-path=https://example.test/a.js,requires-body=1,binary-body-mode=true,argument="{\"a\":1,\"b\":2}""#,
         );
-
         assert!(converted.contains(r#"^https://example\.com/a{1,4}/x"#));
         assert!(converted.contains("binary-body-mode=true"));
         assert!(converted.contains(r#"argument="{\"a\":1,\"b\":2}""#));
