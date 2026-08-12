@@ -162,6 +162,9 @@ pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
             continue;
         }
         if is_module {
+            if is_volatile_metadata(stripped) {
+                continue;
+            }
             if stripped.starts_with("#!") || (stripped.starts_with('[') && stripped.ends_with(']'))
             {
                 if stripped.starts_with('[') {
