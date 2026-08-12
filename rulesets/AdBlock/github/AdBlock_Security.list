@@ -2,7 +2,7 @@
 # Purpose: 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject
 # Category-Key: Security
 # Shard: 1/1
-# Total Rules: 464
+# Total Rules: 457
 
 DOMAIN-SUFFIX,data
 DOMAIN-SUFFIX,api.bz
@@ -67,18 +67,14 @@ DOMAIN-SUFFIX,jr.mi.com
 DOMAIN-SUFFIX,hola.com.sg
 DOMAIN,dns.weibo.cn,REJECT
 DOMAIN-SUFFIX,look.163.com
-DOMAIN,dns.iqiyi.com
 DOMAIN-SUFFIX,lmk.mipay.com
 DOMAIN-SUFFIX,mall.10010.cn
 DOMAIN-SUFFIX,p2ptun.qq.com
 DOMAIN-SUFFIX,shouji.360.cn
-DOMAIN,dns2.q2cdn.com
 DOMAIN,epay.10010.com
 DOMAIN-SUFFIX,api.miwifi.com
 DOMAIN-SUFFIX,omgmta1.qq.com
-DOMAIN-SUFFIX,cupid.iqiyi.com
 DOMAIN-SUFFIX,httpizza.ele.me
-DOMAIN-SUFFIX,lianmeng.360.cn
 DOMAIN-SUFFIX,mibi.xiaomi.com
 DOMAIN-SUFFIX,microfin.ele.me
 DOMAIN-SUFFIX,hybrid.xiaomi.com
@@ -100,11 +96,8 @@ DOMAIN,dns.weixin.qq.com,REJECT
 DOMAIN-SUFFIX,click.hm.baidu.com
 DOMAIN-SUFFIX,fc-.cdn.bcebos.com
 DOMAIN,aedns.weixin.qq.com,REJECT
-DOMAIN,fyb-2.cdn.bcebos.com
 DOMAIN,httpdns.n.shifen.com
-DOMAIN,dns.qiyipic.iqiyi.com
 DOMAIN,resolver.mi.xiaomi.com
-DOMAIN,apidns-js.kwd.inkuai.com
 DOMAIN-SUFFIX,advert.api.thejoyrun.com
 DOMAIN,loan-supermarket.faas.ele.me
 DOMAIN,httpdns.platform.dbankcloud.cn
