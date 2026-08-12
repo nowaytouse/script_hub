@@ -1492,17 +1492,57 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 #[cfg(test)]
 mod promax_loon_tests {
     use super::{
-        adapt_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub, run_cleanup,
+        adapt_body_rewrite_line_for_loon_pub, adapt_map_local_line_for_loon_pub,
+        adapt_rewrite_line_for_loon_pub, adapt_script_line_for_loon_pub,
     };
-    use std::fs;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
-    fn loon_script_keeps_commas_json_and_binary_mode() {
+    fn loon_url_rewrite_removes_surge_placeholder() {
+        assert_eq!(
+            adapt_rewrite_line_for_loon_pub(r#"^https://ads\.example _ reject"#),
+            r#"^https://ads\.example reject"#
+        );
+    }
+
+    #[test]
+    fn loon_map_local_becomes_typed_mock_response() {
+        assert_eq!(
+            adapt_map_local_line_for_loon_pub(
+                r#"^https://ads\.example data-type=text data="{}" status-code=200 header="Content-Type:application/json""#,
+            ),
+            r#"^https://ads\.example mock-response-body data-type=text data="{}" status-code=200"#
+        );
+        assert_eq!(
+            adapt_map_local_line_for_loon_pub(
+                r#"^https://ads\.example data="https://example.test/reject.json""#,
+            ),
+            r#"^https://ads\.example mock-response-body data-type=json data-path="https://example.test/reject.json" status-code=200"#
+        );
+    }
+
+    #[test]
+    fn loon_body_rewrite_moves_pattern_before_typed_operation() {
+        assert_eq!(
+            adapt_body_rewrite_line_for_loon_pub(
+                r#"http-response-jq ^https:\/\/api\.example/ad 'del(.data.ad)'"#,
+            ),
+            r#"^https:\/\/api\.example/ad response-body-json-jq 'del(.data.ad)'"#
+        );
+        assert_eq!(
+            adapt_body_rewrite_line_for_loon_pub(
+                r#"http-response ^https:\/\/api\.example/ad banner replacement"#,
+            ),
+            r#"^https:\/\/api\.example/ad response-body-replace-regex banner replacement"#
+        );
+    }
+
+    #[test]
+    fn loon_script_preserves_regex_commas_json_argument_and_binary_mode() {
         let converted = adapt_script_line_for_loon_pub(
             "fixture",
             r#"type=http-response,pattern=^https://example\.com/a{1,4}/x,script-path=https://example.test/a.js,requires-body=1,binary-body-mode=true,argument="{\"a\":1,\"b\":2}""#,
         );
+
         assert!(converted.contains(r#"^https://example\.com/a{1,4}/x"#));
         assert!(converted.contains("binary-body-mode=true"));
         assert!(converted.contains(r#"argument="{\"a\":1,\"b\":2}""#));
