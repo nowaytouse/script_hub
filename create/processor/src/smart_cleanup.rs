@@ -143,11 +143,27 @@ fn clean_rule(line: &str) -> String {
     if stripped.is_empty() || stripped.starts_with('#') || stripped.starts_with("//") {
         return String::new();
     }
+    if stripped.to_ascii_uppercase().starts_with("URL-REGEX,") {
+        return normalize_url_regex_rule(&stripped).unwrap_or_default();
+    }
     if stripped.starts_with("DOMAIN") && stripped.contains(",no-resolve") {
         stripped.replace(",no-resolve", "")
     } else {
         stripped
     }
+}
+
+fn normalize_url_regex_rule(line: &str) -> Option<String> {
+    let raw = line.split_once(',')?.1.trim();
+    if let Some(value) = raw.strip_prefix("\"\"") {
+        let body = value.split_once("\",").map_or(value, |(body, _)| body);
+        return Some(format!("URL-REGEX,{}", body));
+    }
+    if let Some(quoted) = raw.strip_prefix('"') {
+        let end = quoted.find('"')?;
+        return Some(format!("URL-REGEX,{}", &quoted[..end]));
+    }
+    Some(format!("URL-REGEX,{}", raw.split(',').next()?.trim()))
 }
 
 fn extract_payload(rule: &str) -> String {
@@ -1487,6 +1503,21 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
         });
     }
     other
+}
+
+#[cfg(test)]
+mod ruleset_cleanup_tests {
+    use super::normalize_url_regex_rule;
+
+    #[test]
+    fn normalizes_legacy_quoted_url_regex_policy() {
+        assert_eq!(
+            normalize_url_regex_rule(
+                r#"URL-REGEX,""^https:\/\/ads\.example\/",REJECT-DROP"#,
+            ),
+            Some(r#"URL-REGEX,^https:\/\/ads\.example\/"#.to_string())
+        );
+    }
 }
 
 #[cfg(test)]
