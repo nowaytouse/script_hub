@@ -33,6 +33,7 @@ fn is_volatile_metadata(line: &str) -> bool {
     let lower = line.trim().to_ascii_lowercase().replace(' ', "");
     [
         "#!date=",
+        "#!version=20",
         "#!updated=",
         "#!last-updated=",
         "#!generated-at=",
