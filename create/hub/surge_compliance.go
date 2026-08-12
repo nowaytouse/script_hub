@@ -173,6 +173,36 @@ func FormatUrlRegexForSurge(payload string) string {
 	return "URL-REGEX," + payload
 }
 
+func splitURLRegexPayload(raw string) (string, []string, bool) {
+	raw = strings.TrimSpace(raw)
+	if !strings.HasPrefix(raw, "\"") {
+		parts := strings.Split(raw, ",")
+		return strings.TrimSpace(parts[0]), parts[1:], true
+	}
+
+	escaped := false
+	for i := 1; i < len(raw); i++ {
+		char := raw[i]
+		if char == '"' && !escaped {
+			body := raw[1:i]
+			tail := strings.TrimSpace(raw[i+1:])
+			if tail == "" {
+				return body, nil, true
+			}
+			if !strings.HasPrefix(tail, ",") {
+				return "", nil, false
+			}
+			return body, strings.Split(tail[1:], ","), true
+		}
+		if char == '\\' {
+			escaped = !escaped
+		} else {
+			escaped = false
+		}
+	}
+	return "", nil, false
+}
+
 func ValidateSurgeRulesetLine(line string, allowDomainRegex bool) *string {
 	s := strings.TrimSpace(line)
 	if s == "" || strings.HasPrefix(s, "#") {
@@ -197,14 +227,16 @@ func ValidateSurgeRulesetLine(line string, allowDomainRegex bool) *string {
 
 	if ruleType == "URL-REGEX" {
 		raw := strings.TrimSpace(strings.SplitN(s, ",", 2)[1])
-		quoted := strings.HasPrefix(raw, "\"") && strings.HasSuffix(raw, "\"")
-		body := raw
-		if quoted && len(raw) >= 2 {
-			body = raw[1 : len(raw)-1]
-		}
-		if strings.Contains(body, ",") && !quoted {
+		body, options, validShape := splitURLRegexPayload(raw)
+		if !validShape {
 			errStr := "URL-REGEX payload with comma must be double-quoted"
 			return &errStr
+		}
+		for _, option := range options {
+			if strings.ToUpper(strings.TrimSpace(option)) != "EXTENDED-MATCHING" {
+				errStr := "URL-REGEX payload with comma must be double-quoted"
+				return &errStr
+			}
 		}
 		if IsInvalidUrlRegexPayload(body) {
 			errStr := fmt.Sprintf("truncated/invalid URL-REGEX %q", body)
