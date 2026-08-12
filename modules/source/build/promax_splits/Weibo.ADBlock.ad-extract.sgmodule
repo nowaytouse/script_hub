@@ -1,7 +1,17 @@
 #!name=PROMAX split · Weibo.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 21/39；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 29/71；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule
+#!split-source=/home/runner/work/script_hub/script_hub/rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule
+
+[Rule]
+DOMAIN-SUFFIX,weibomingzi.com,REJECT
+DOMAIN-SUFFIX,ads.viber.com,REJECT
+DOMAIN-SUFFIX,ads-d.viber.com,REJECT
+DOMAIN-SUFFIX,ads.aws.viber.com,REJECT
+DOMAIN-SUFFIX,biz.weibo.com.cn,REJECT
+DOMAIN-SUFFIX,alitui.weibo.com.cn,REJECT
+DOMAIN-SUFFIX,wax.weibo.com.cn,REJECT
+DOMAIN,adpinpai.video.weibocdn.com,REJECT
 
 [Map Local]
 ^https?:\/\/api\.weibo\.c(n|om)\/\d\/(cardlist\?v_f=\d|ad\/weibointl\?) data-type=text data="{}" status-code=200 header="Content-Type:application/json"

@@ -1,19 +1,52 @@
 #!name=🐦 微博去广告
-#!category=『 🔝 Head Expanse › 首端扩域 』
 #!desc=微博+国际版去广告 · PROMAX 构建源（域名规则+脚本已并入 PROMAX，勿单独安装）
 
+上游: fmz200/wool_scripts, iab0x00\n\n【Bundled Modules】\n✦ 微博去广告&净化: 去除常见的广告和部分多余的模块\n\n✦ WeiboIntl: 移除开屏、瀑布流、趋势页、用户中心广告
 #!author=fmz200, iab0x00, ScriptHub
 #!tag=去广告, 微博, PROMAX-build
-#!date=2026-08-11 05:33:42
+#!date=2026-08-12 17:00:48
+# Merged for rulesets/Sources/LocalModules → PROMAX ingest
+# Upstream modules merged by create/processor/merge_bundles.rs (Rust)
+# - Weibo: https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Surge/module/weibo.module
+# - Intl: https://cdn.jsdelivr.net/gh/iab0x00/ProxyRules@main/Rewrite/WeiboIntl.sgmodule
 
-# NOTE: All 32 rules from this module have been extracted to AdBlock.list
-# This cleaned version only contains non-Rule sections:
-#   - [URL Rewrite]
-#   - [Map Local]
-#   - [Script]
-#   - [Body Rewrite]
-#   - [MITM]
-# Use AdBlock.list for all blocking rules
+[Rule]
+# 收集用户信息，上传用户日志的请求
+URL-REGEX,"^https?:\/\/api\.weibo\.cn\/2\/(push\/active|client\/addlog_batch|ad\/preload)",REJECT-DROP
+URL-REGEX,"^https?:\/\/api-cloudim\.api\.weibo\.com\/v1\/log\/",REJECT-DROP
+# 微博开屏广告
+DOMAIN-SUFFIX,biz.weibo.com,REJECT
+DOMAIN,bootpreload.uve.weibo.com,REJECT
+# 其他广告
+DOMAIN-SUFFIX,fastimage.uve.weibo.com,REJECT
+DOMAIN-SUFFIX,adimg.vue.weibo.com,REJECT
+DOMAIN-SUFFIX,zymo.mps.weibo.com,REJECT
+DOMAIN-SUFFIX,weibomingzi.com,REJECT
+DOMAIN-SUFFIX,sdkapp.uve.weibo.com,REJECT
+DOMAIN-SUFFIX,promote.biz.weibo.cn,REJECT
+DOMAIN-SUFFIX,gw5.push.mcp.weibo.cn,REJECT
+DOMAIN-SUFFIX,gw6.push.mcp.weibo.cn,REJECT
+DOMAIN-SUFFIX,game.weibo.cn,REJECT
+DOMAIN-SUFFIX,adimg.uve.weibo.com,REJECT
+DOMAIN-SUFFIX,game.weibo.com,REJECT
+DOMAIN-SUFFIX,ads.viber.com,REJECT
+DOMAIN-SUFFIX,ads-d.viber.com,REJECT
+DOMAIN-SUFFIX,ads.aws.viber.com,REJECT
+DOMAIN-SUFFIX,alitui.weibo.com,REJECT
+DOMAIN-SUFFIX,dp.im.weibo.cn,REJECT
+DOMAIN-SUFFIX,biz.weibo.com.cn,REJECT
+DOMAIN-SUFFIX,click.uve.weibo.com,REJECT
+DOMAIN-SUFFIX,wax.weibo.com,REJECT
+DOMAIN-SUFFIX,wbapp.uve.weibo.com,REJECT
+DOMAIN-SUFFIX,widget.weibo.com,REJECT
+DOMAIN-SUFFIX,dsp.edm.weibo.cn,REJECT
+DOMAIN-SUFFIX,alitui.weibo.com.cn,REJECT
+DOMAIN-SUFFIX,tui.weibo.com,REJECT
+DOMAIN-SUFFIX,wax.weibo.com.cn,REJECT
+DOMAIN-SUFFIX,ad.weibo.com,REJECT
+# 屏蔽信息收集
+DOMAIN,datacollection.uve.weibo.com,REJECT
+DOMAIN,adpinpai.video.weibocdn.com,REJECT
 
 [URL Rewrite]
 ^https?:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/(get-lbs-cell-info\.php|sdkconfig\.php) - reject
