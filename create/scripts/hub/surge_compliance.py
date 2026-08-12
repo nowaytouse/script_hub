@@ -155,6 +155,28 @@ def format_url_regex_for_surge(payload: str) -> str:
     return f"URL-REGEX,{payload}"
 
 
+def _split_url_regex_payload(raw: str) -> tuple[str, list[str]] | None:
+    raw = raw.strip()
+    if not raw.startswith('"'):
+        parts = raw.split(",")
+        return parts[0].strip(), parts[1:]
+
+    escaped = False
+    for index, char in enumerate(raw[1:], start=1):
+        if char == '"' and not escaped:
+            body = raw[1:index]
+            tail = raw[index + 1 :].strip()
+            if not tail:
+                return body, []
+            if not tail.startswith(","):
+                return None
+            return body, tail[1:].split(",")
+        escaped = char == "\\" and not escaped
+        if char != "\\":
+            escaped = False
+    return None
+
+
 def validate_surge_ruleset_line(line: str, *, allow_domain_regex: bool = False) -> Optional[str]:
     """Return error message if line is invalid for Surge external .list; else None."""
     s = line.strip()
@@ -175,9 +197,11 @@ def validate_surge_ruleset_line(line: str, *, allow_domain_regex: bool = False) 
 
     if rule_type == "URL-REGEX":
         raw = s.split(",", 1)[1].strip()
-        quoted = raw.startswith('"') and raw.endswith('"')
-        body = raw[1:-1] if quoted else raw
-        if "," in body and not quoted:
+        parsed_url_regex = _split_url_regex_payload(raw)
+        if parsed_url_regex is None:
+            return "URL-REGEX payload with comma must be double-quoted"
+        body, options = parsed_url_regex
+        if any(option.strip().upper() != "EXTENDED-MATCHING" for option in options):
             return "URL-REGEX payload with comma must be double-quoted"
         if is_invalid_url_regex_payload(body):
             return f"truncated/invalid URL-REGEX {body!r}"

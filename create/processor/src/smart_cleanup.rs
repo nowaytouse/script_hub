@@ -629,6 +629,9 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     }
 
     for dir in &ruleset_dirs {
+        if dir.file_name().is_some_and(|name| name == "AdBlock") {
+            continue;
+        }
         let readme = dir.join("README.md");
         if readme.exists() {
             let _ = fs::remove_file(&readme);

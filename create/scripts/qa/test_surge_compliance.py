@@ -88,6 +88,28 @@ def test_surge_list_allows_keyword() -> None:
     assert_none("keyword ok", validate_surge_ruleset_line("DOMAIN-KEYWORD,apiproxy-device-prod-nlb"))
 
 
+def test_surge_list_distinguishes_url_regex_options_from_payload_commas() -> None:
+    assert_none(
+        "extended option",
+        validate_surge_ruleset_line(
+            r"URL-REGEX,^https?:\/\/ads\.example\/,EXTENDED-MATCHING"
+        ),
+    )
+    assert_none(
+        "quoted comma plus option",
+        validate_surge_ruleset_line(
+            r'URL-REGEX,"^https?:\/\/ads\.example\/(a{1,3}|b)",EXTENDED-MATCHING'
+        ),
+    )
+    assert_err(
+        "unquoted comma",
+        validate_surge_ruleset_line(
+            r"URL-REGEX,^https?:\/\/ads\.example\/(a{1,3}|b)"
+        ),
+        "double-quoted",
+    )
+
+
 def main() -> int:
     tests = [
         test_url_regex_not_truncated,
@@ -98,6 +120,9 @@ def main() -> int:
         test_netflix_domain_regex_converted,
         test_surge_list_forbids_domain_regex,
         test_surge_list_allows_keyword,
+        test_adblock_skips_script_only_module,
+        test_adblock_rule_section_only,
+        test_surge_list_distinguishes_url_regex_options_from_payload_commas,
     ]
     failed = 0
     for fn in tests:
