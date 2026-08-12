@@ -504,11 +504,11 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         let root = std::env::temp_dir().join(format!("promax-module-noop-{unique}"));
         let target = root.join("modules/surge/promax.sgmodule");
         fs::create_dir_all(target.parent().unwrap()).unwrap();
-        let old = "#!name=PROMAX - [2026-08-11]\n#!date=2026-08-11 10:00:00\n[Rule]\nDOMAIN-SUFFIX,alpha.example.com,REJECT\n";
+        let old = "#!name=PROMAX - [2026-08-11]\n#!version=2026.06.28\n#!date=2026-08-11 10:00:00\n[Rule]\nDOMAIN-SUFFIX,alpha.example.com,REJECT\n";
         fs::write(&target, old).unwrap();
         let artifacts = vec![GeneratedArtifact {
             target: target.clone(),
-            content: "#!name=PROMAX - [2026-08-12]\n#!date=2026-08-12 10:00:00\n[Rule]\nDOMAIN-SUFFIX,alpha.example.com,REJECT\n".to_string(),
+            content: "#!name=PROMAX - [2026-08-12]\n#!version=2026.08.12\n#!date=2026-08-12 10:00:00\n[Rule]\nDOMAIN-SUFFIX,alpha.example.com,REJECT\n".to_string(),
             kind: ArtifactKind::Surge,
         }];
 
