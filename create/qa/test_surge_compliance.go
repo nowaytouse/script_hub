@@ -121,6 +121,20 @@ func testSurgeListAllowsKeyword() error {
 	return nil
 }
 
+func testUrlRegexPolicySuffixIsNormalized() error {
+	p := hub.NewRuleProcessor(false)
+	for _, raw := range []string{
+		`URL-REGEX,""^https:\\/\\/ads\\.example\\/",REJECT`,
+		`URL-REGEX,"^https:\\/\\/ads\\.example\\/",REJECT-DROP`,
+	} {
+		normalized := p.NormalizeRule(raw, "")
+		if normalized == nil || *normalized != `URL-REGEX,^https:\\/\\/ads\\.example\\/` {
+			return fmt.Errorf("URL-REGEX policy suffix not normalized: %q -> %v", raw, normalized)
+		}
+	}
+	return nil
+}
+
 func RunTestSurgeCompliance() int {
 	tests := []struct {
 		name string
@@ -134,6 +148,7 @@ func RunTestSurgeCompliance() int {
 		{"testNetflixDomainRegexConverted", testNetflixDomainRegexConverted},
 		{"testSurgeListForbidsDomainRegex", testSurgeListForbidsDomainRegex},
 		{"testSurgeListAllowsKeyword", testSurgeListAllowsKeyword},
+		{"testUrlRegexPolicySuffixIsNormalized", testUrlRegexPolicySuffixIsNormalized},
 	}
 	failed := 0
 	for _, t := range tests {

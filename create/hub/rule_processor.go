@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+var surgePolicyOptions = map[string]bool{
+	"DIRECT": true, "REJECT": true, "REJECT-DROP": true, "REJECT-NO-DROP": true,
+	"REJECT-TINYGIF": true, "REJECT-IMG": true, "PROXY": true,
+}
+
 var (
 	domainRule        = regexp.MustCompile(`(?i)^DOMAIN,([^,]+)$`)
 	domainSuffixRule  = regexp.MustCompile(`(?i)^DOMAIN-SUFFIX,([^,]+)$`)
@@ -68,7 +73,26 @@ func (rp *RuleProcessor) NormalizeRule(line string, source string) *string {
 		return nil
 	}
 
-	if strings.HasPrefix(ruleValue, "\"") && strings.HasSuffix(ruleValue, "\"") && len(ruleValue) >= 2 {
+	if ruleType == "URL-REGEX" {
+		// External RULE-SET entries carry the pattern only; strip a source policy
+		// suffix before formatting so quoted patterns are not double-wrapped.
+		if strings.HasPrefix(ruleValue, "\"\"") {
+			ruleValue = ruleValue[1:]
+		}
+		body, options, validShape := splitURLRegexPayload(ruleValue)
+		if !validShape || len(body) == 0 {
+			rp.stats["invalid"]++
+			return nil
+		}
+		for _, option := range options {
+			option = strings.ToUpper(strings.TrimSpace(option))
+			if option != "" && option != "EXTENDED-MATCHING" && !surgePolicyOptions[option] {
+				rp.stats["invalid"]++
+				return nil
+			}
+		}
+		ruleValue = body
+	} else if strings.HasPrefix(ruleValue, "\"") && strings.HasSuffix(ruleValue, "\"") && len(ruleValue) >= 2 {
 		ruleValue = ruleValue[1 : len(ruleValue)-1]
 	}
 
