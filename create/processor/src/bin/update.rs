@@ -35,9 +35,14 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         if !old.status.success() {
             continue;
         }
+        let Ok(new_bytes) = std::fs::read(&path) else {
+            return Err(format!("cannot read generated file {name}"));
+        };
+        if old.stdout.contains(&0) || new_bytes.contains(&0) {
+            continue;
+        }
         let old_text = String::from_utf8_lossy(&old.stdout);
-        let new_text = std::fs::read_to_string(&path)
-            .map_err(|error| format!("cannot read generated file {name}: {error}"))?;
+        let new_text = String::from_utf8_lossy(&new_bytes);
         if rust_processor::url_rewriter::semantic_content_for_path_pub(&path, &old_text)
             == rust_processor::url_rewriter::semantic_content_for_path_pub(&path, &new_text)
         {
