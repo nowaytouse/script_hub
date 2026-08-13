@@ -18,7 +18,10 @@ pub fn normalize_domain_source_line(line: &str) -> Option<String> {
     }
     candidate = candidate.strip_prefix("- ").unwrap_or(candidate).trim();
     if let Some(stripped) = candidate.strip_prefix("||") {
-        candidate = stripped.strip_suffix('^').unwrap_or(stripped);
+        candidate = stripped
+            .strip_suffix("^|")
+            .or_else(|| stripped.strip_suffix('^'))
+            .unwrap_or(stripped);
     } else if candidate.split_whitespace().count() >= 2 {
         let mut fields = candidate.split_whitespace();
         let address = fields.next()?;

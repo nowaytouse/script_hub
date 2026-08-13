@@ -70,6 +70,12 @@ https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release
 # https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/Official/新手友好の去广告集合.official.sgmodule|REJECT
 
 # Smart-Config-Kit Extensions
+# AdGuard official ecosystem - DNS-safe aggregate + CNAME-cloaked ad endpoints
+# The DNS aggregate already combines Base, Mobile Ads, Tracking Protection,
+# EasyList and EasyPrivacy; avoid adding those component lists again.
+https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT
+https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset
+
 # Hagezi DNS-Blocklists - Ultimate + TIF Medium (Threat Intelligence)
 https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt|REJECT
 https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt|REJECT

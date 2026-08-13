@@ -325,6 +325,7 @@ pub struct AdBlockManager {
     rules: HashMap<String, HashMap<String, HashSet<String>>>, // policy -> category -> rules
     seen_rules: HashMap<String, HashSet<String>>,             // policy -> rules
     seen_suffixes: HashMap<String, HashSet<String>>,          // policy -> suffixes
+    source_exceptions: HashSet<String>,                       // AdGuard/ABP @@ domain exceptions
     sections: HashMap<String, Vec<String>>,                   // section_name -> lines
     section_seen: HashMap<String, HashSet<String>>,           // section_name -> seen keys
     functional_stats: HashMap<String, usize>,
@@ -372,6 +373,7 @@ impl AdBlockManager {
             rules,
             seen_rules,
             seen_suffixes,
+            source_exceptions: HashSet::new(),
             sections,
             section_seen,
             functional_stats: HashMap::new(),
@@ -734,6 +736,14 @@ impl AdBlockManager {
         if stripped.is_empty() || stripped.starts_with('#') {
             return;
         }
+        if let Some(exception) = stripped.strip_prefix("@@") {
+            if let Some(rule) = crate::promax::functional::normalize_domain_source_line(exception) {
+                if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(&rule) {
+                    self.source_exceptions.insert(parsed.payload);
+                }
+            }
+            return;
+        }
         if self.is_script_or_rewrite_line(stripped) {
             return;
         }
@@ -1008,7 +1018,8 @@ impl AdBlockManager {
                 if self.is_script_or_rewrite_line(stripped) {
                     continue;
                 }
-                if crate::promax::rule::SurgeRule::parse(stripped).is_ok()
+                if stripped.starts_with("@@")
+                    || crate::promax::rule::SurgeRule::parse(stripped).is_ok()
                     || crate::promax::functional::normalize_domain_source_line(stripped).is_some()
                 {
                     self.add_rule_line(stripped, default_policy, category);
@@ -1196,6 +1207,11 @@ impl AdBlockManager {
         let mut filtered = Vec::new();
         for rule in rules {
             if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(rule) {
+                if self.source_exceptions.iter().any(|domain| {
+                    parsed.payload == *domain || parsed.payload.ends_with(&format!(".{domain}"))
+                }) {
+                    continue;
+                }
                 if matches!(
                     self.safety.decision(&parsed),
                     crate::promax::safety::SafetyDecision::Quarantine(_)
@@ -2815,6 +2831,21 @@ mod tests {
     use super::AdBlockManager;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn adguard_domain_exception_removes_a_merged_block_rule() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.extract_from_text(
+            "||ads.example.test^\n||media.ads.example.test^\n@@||ads.example.test^|\n",
+            "REJECT",
+            "Advertising",
+            false,
+            false,
+            "fixture",
+        );
+        let rules = &manager.rules["REJECT"]["Advertising"];
+        assert!(manager.filter_rules(rules).is_empty());
+    }
 
     #[test]
     fn local_auto_discovery_does_not_force_unclassified_enhancement_modules() {
