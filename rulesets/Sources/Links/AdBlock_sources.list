@@ -74,7 +74,7 @@ https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release
 # The DNS aggregate already combines Base, Mobile Ads, Tracking Protection,
 # EasyList and EasyPrivacy; avoid adding those component lists again.
 https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT
-https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset
+https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset
 
 # Hagezi DNS-Blocklists - Ultimate + TIF Medium (Threat Intelligence)
 https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt|REJECT
