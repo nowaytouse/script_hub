@@ -1,7 +1,25 @@
 {
-  "updated": "2026-08-13 21:11:54",
+  "updated": "2026-08-14 05:52:33",
   "rules_per_shard_max": 100000,
   "modules": {
+    "surge_promax_cdn": {
+      "path": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
+      "url_source": "cdn",
+      "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
+    },
+    "loon_promax_github": {
+      "path": "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Floon%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
+      "url_source": "github",
+      "note": "Loon GitHub Raw 版（即时更新）"
+    },
+    "shadowrocket_promax_cdn": {
+      "path": "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
+      "url_source": "cdn",
+      "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
+    },
     "surge_promax_github": {
       "path": "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
@@ -14,40 +32,22 @@
       "url_source": "cdn",
       "note": "Loon CDN 加速版（推荐）"
     },
-    "shadowrocket_promax_cdn": {
-      "path": "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
-      "url_source": "cdn",
-      "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
-    },
-    "surge_promax_cdn": {
-      "path": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
-      "url_source": "cdn",
-      "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
-    },
     "shadowrocket_promax_github": {
       "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
       "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
       "url_source": "github",
       "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
-    },
-    "loon_promax_github": {
-      "path": "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Floon%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
-      "url_source": "github",
-      "note": "Loon GitHub Raw 版（即时更新）"
     }
   },
   "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
-    "URL Rewrite": 1087,
+    "Header Rewrite": 0,
+    "Script": 405,
+    "MITM": 1140,
     "Body Rewrite": 128,
     "Map Local": 2142,
-    "MITM": 1140,
-    "Header Rewrite": 0,
-    "Script": 405
+    "URL Rewrite": 1087
   },
   "shards": [
     {
@@ -186,7 +186,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 41828,
+      "rule_count": 41927,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FOther%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FOther%2Elist"
     }
