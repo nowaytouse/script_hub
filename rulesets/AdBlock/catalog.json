@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-17 05:05:20",
+  "updated": "2026-08-17 13:12:21",
   "rules_per_shard_max": 100000,
   "modules": {
     "surge_promax_cdn": {
@@ -7,12 +7,6 @@
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
       "url_source": "cdn",
       "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
-    },
-    "loon_promax_github": {
-      "path": "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Floon%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
-      "url_source": "github",
-      "note": "Loon GitHub Raw 版（即时更新）"
     },
     "surge_promax_github": {
       "path": "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
@@ -26,28 +20,34 @@
       "url_source": "cdn",
       "note": "Loon CDN 加速版（推荐）"
     },
-    "shadowrocket_promax_github": {
-      "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
+    "loon_promax_github": {
+      "path": "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Floon%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
       "url_source": "github",
-      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
+      "note": "Loon GitHub Raw 版（即时更新）"
     },
     "shadowrocket_promax_cdn": {
       "path": "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
       "url_source": "cdn",
       "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
+    },
+    "shadowrocket_promax_github": {
+      "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
+      "url_source": "github",
+      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
     }
   },
   "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
+    "Map Local": 2142,
     "URL Rewrite": 1087,
+    "MITM": 1140,
     "Body Rewrite": 128,
     "Header Rewrite": 0,
-    "Script": 405,
-    "Map Local": 2142,
-    "MITM": 1140
+    "Script": 405
   },
   "shards": [
     {
@@ -86,7 +86,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 3,
-      "rule_count": 81831,
+      "rule_count": 82132,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist"
     },
@@ -96,7 +96,7 @@
       "label_zh": "隐私追踪",
       "purpose": "Privacy / tracking-protection / 防追踪列表",
       "shard_index": 1,
-      "rule_count": 5574,
+      "rule_count": 5577,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist"
     },
@@ -126,7 +126,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 5934,
+      "rule_count": 5924,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist"
     },
@@ -146,7 +146,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 2,
-      "rule_count": 58925,
+      "rule_count": 60527,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },
@@ -176,7 +176,7 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 3,
-      "rule_count": 53784,
+      "rule_count": 54665,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist"
     },
@@ -186,7 +186,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 42156,
+      "rule_count": 41938,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FOther%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FOther%2Elist"
     }
