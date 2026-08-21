@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-20 20:56:38",
+  "updated": "2026-08-21 05:02:08",
   "rules_per_shard_max": 100000,
   "modules": {
     "surge_promax_cdn": {
@@ -42,11 +42,11 @@
   "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
-    "Script": 405,
     "Body Rewrite": 128,
+    "Map Local": 2142,
+    "Script": 405,
     "URL Rewrite": 1087,
     "MITM": 1140,
-    "Map Local": 2142,
     "Header Rewrite": 0
   },
   "shards": [
@@ -196,7 +196,7 @@
       "label_zh": "其他补充",
       "purpose": "社区 sgmodule / 未归类远程源",
       "shard_index": 1,
-      "rule_count": 26970,
+      "rule_count": 27078,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FOther%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FOther%2Elist"
     }
