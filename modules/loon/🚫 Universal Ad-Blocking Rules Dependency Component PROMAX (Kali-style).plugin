@@ -2,7 +2,7 @@
 #!desc=CDN兼容核心规则 + 应用内去广告(URL Rewrite=1087, Map Local=2142, Body Rewrite=128, Script=405, MITM=1140); 全量分片15片，索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
-#!date=2026-08-21 13:16:30
+#!date=2026-08-21 20:53:09
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -373,7 +373,7 @@ IP-CIDR,47.110.187.87/32,REJECT,NO-RESOLVE
 IP-CIDR,59.111.239.61/32,REJECT,NO-RESOLVE
 IP-CIDR,59.111.239.62/32,REJECT,NO-RESOLVE
 IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,NO-RESOLVE
-# ── 通用广告 · REJECT · 302614 rules ──
+# ── 通用广告 · REJECT · 302615 rules ──
 DOMAIN,0.code.cotsta.ru,REJECT
 DOMAIN,00-gov.cn,REJECT
 DOMAIN,0026645142c89aeb1.com,REJECT
@@ -34059,7 +34059,6 @@ DOMAIN-SUFFIX,ads.prd.ie.internal.unity3d.com,REJECT
 DOMAIN-SUFFIX,ads.premiumnetwork.net,REJECT
 DOMAIN-SUFFIX,ads.pressdemo.com,REJECT
 DOMAIN-SUFFIX,ads.pricescan.com,REJECT
-DOMAIN-SUFFIX,ads.priel.co.kr,REJECT
 DOMAIN-SUFFIX,ads.printscr.com,REJECT
 DOMAIN-SUFFIX,ads.prisacom.com,REJECT
 DOMAIN-SUFFIX,ads.pro-market.net.edgesuite.net,REJECT
@@ -45272,7 +45271,6 @@ DOMAIN-SUFFIX,aqbron.battlepage.com,REJECT
 DOMAIN-SUFFIX,aqburrae.xyz,REJECT
 DOMAIN-SUFFIX,aqbusmueljfy.com,REJECT
 DOMAIN-SUFFIX,aqc.gucheng.com,REJECT
-DOMAIN-SUFFIX,aqcaphatjoxv.com,REJECT
 DOMAIN-SUFFIX,aqccc.com,REJECT
 DOMAIN-SUFFIX,aqcmxzeydufys.website,REJECT
 DOMAIN-SUFFIX,aqcolwxuzyjyg.space,REJECT
@@ -202012,7 +202010,6 @@ DOMAIN-SUFFIX,rand.propspotter.com.au,REJECT
 DOMAIN-SUFFIX,randalelepaio.qpon,REJECT
 DOMAIN-SUFFIX,randallbesin.com,REJECT
 DOMAIN-SUFFIX,randeriridium.com,REJECT
-DOMAIN-SUFFIX,randisphotos.com,REJECT
 DOMAIN-SUFFIX,randiul.com,REJECT
 DOMAIN-SUFFIX,randki-sex.com,REJECT
 DOMAIN-SUFFIX,randkuj.xyz,REJECT
@@ -289718,6 +289715,7 @@ DOMAIN-SUFFIX,www.kindwebdg.site,REJECT
 DOMAIN-SUFFIX,www.kingfreetube.com,REJECT
 DOMAIN-SUFFIX,www.kings-email.com,REJECT
 DOMAIN-SUFFIX,www.kingssthparty.com,REJECT
+DOMAIN-SUFFIX,www.kishangarhlawcollege.com,REJECT
 DOMAIN-SUFFIX,www.kitchentablegang.org,REJECT
 DOMAIN-SUFFIX,www.kittayaroyalbeauty.com,REJECT
 DOMAIN-SUFFIX,www.kiwicares.com,REJECT
@@ -289969,6 +289967,7 @@ DOMAIN-SUFFIX,www.occoquananimalhospital.com,REJECT
 DOMAIN-SUFFIX,www.odyssey.on.ca,REJECT
 DOMAIN-SUFFIX,www.officerreport.com,REJECT
 DOMAIN-SUFFIX,www.offres.goaserv.com,REJECT
+DOMAIN-SUFFIX,www.ofimaniaweb.com,REJECT
 DOMAIN-SUFFIX,www.ogopond.com,REJECT
 DOMAIN-SUFFIX,www.oilbasics.com,REJECT
 DOMAIN-SUFFIX,www.oletipmegroup.com,REJECT
@@ -290012,6 +290011,7 @@ DOMAIN-SUFFIX,www.paradisepcgames.com,REJECT
 DOMAIN-SUFFIX,www.paramutplus.com,REJECT
 DOMAIN-SUFFIX,www.parejaamateur.com,REJECT
 DOMAIN-SUFFIX,www.parsads.com,REJECT
+DOMAIN-SUFFIX,www.partilla.com,REJECT
 DOMAIN-SUFFIX,www.partner.hubatacernoska.cz,REJECT
 DOMAIN-SUFFIX,www.partneri.zuzanaondrisova.sk,REJECT
 DOMAIN-SUFFIX,www.partsttown.com,REJECT
@@ -290108,8 +290108,10 @@ DOMAIN-SUFFIX,www.qcoldtui1999.com,REJECT
 DOMAIN-SUFFIX,www.qualitygamer.com,REJECT
 DOMAIN-SUFFIX,www.quartersnorth.lat,REJECT
 DOMAIN-SUFFIX,www.quarvions.com,REJECT
+DOMAIN-SUFFIX,www.quintaalegrealgarve.com,REJECT
 DOMAIN-SUFFIX,www.quintingwatches.com,REJECT
 DOMAIN-SUFFIX,www.quipla.com,REJECT
+DOMAIN-SUFFIX,www.quotling.com,REJECT
 DOMAIN-SUFFIX,www.r7.goaserv.com,REJECT
 DOMAIN-SUFFIX,www.rackusread.com,REJECT
 DOMAIN-SUFFIX,www.racun.go-static.info,REJECT
@@ -302434,7 +302436,6 @@ DOMAIN-SUFFIX,zzthmu.com,REJECT
 DOMAIN-SUFFIX,zzttbg.com,REJECT
 DOMAIN-SUFFIX,zzuccikqt.com,REJECT
 DOMAIN-SUFFIX,zzuml.nordicware.com,REJECT
-DOMAIN-SUFFIX,zzuolmapj.com,REJECT
 DOMAIN-SUFFIX,zzveirrwywhgc.store,REJECT
 DOMAIN-SUFFIX,zzvozljdjszqi.site,REJECT
 DOMAIN-SUFFIX,zzvuvnvgfamfy.online,REJECT
@@ -452018,7 +452019,7 @@ URL-REGEX,^https?://www\.flyertea\.com/source/plugin/mobile/mobile\.php\?module=
 URL-REGEX,^https?://www\.myhug\.cn/ad/,REJECT
 URL-REGEX,^https?://www\.shihuo\.cn/app3/saveAppInfo,REJECT
 URL-REGEX,^https?://y\.gtimg\.cn/music/common/upload/targeted_ads,REJECT
-# ── Anti-AD · REJECT · 5933 rules ──
+# ── Anti-AD · REJECT · 5934 rules ──
 DOMAIN-SUFFIX,01.yd-jun.com,REJECT
 DOMAIN-SUFFIX,01daa.luzdz.com,REJECT
 DOMAIN-SUFFIX,0202.com.tw,REJECT
@@ -456550,6 +456551,7 @@ DOMAIN-SUFFIX,rabc2.iteye.com,REJECT
 DOMAIN-SUFFIX,raddus.bayescom.com,REJECT
 DOMAIN-SUFFIX,ralf.curvo.eu,REJECT
 DOMAIN-SUFFIX,ramirex.ro,REJECT
+DOMAIN-SUFFIX,randisphotos.com,REJECT
 DOMAIN-SUFFIX,ras.yahoo.com,REJECT
 DOMAIN-SUFFIX,rathodsoftware.in,REJECT
 DOMAIN-SUFFIX,raw.okwan.cn,REJECT
