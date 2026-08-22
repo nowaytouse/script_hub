@@ -1,8 +1,8 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-21]
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-22]
 #!desc=CDN兼容核心规则 + 应用内去广告(URL Rewrite=1087, Map Local=2142, Body Rewrite=128, Script=405, MITM=1140); 全量分片15片，索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
-#!date=2026-08-21 20:53:09
+#!date=2026-08-22 04:55:18
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -302989,7 +302989,7 @@ URL-REGEX,^https?:\/\/goblin\.hupu\.com/[^/]+/[^/]+\/interfaceAd\/,REJECT
 URL-REGEX,^https?:\/\/sa\d\.tuisong\.baidu\.com,REJECT
 URL-REGEX,^https?:\/\/sax\w?\.sina\.com\.cn,REJECT
 URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
-# ── 隐私追踪 · REJECT · 5348 rules ──
+# ── 隐私追踪 · REJECT · 5358 rules ──
 DOMAIN,a0.app.xiaomi.com,REJECT
 DOMAIN,api.jr.mi.com,REJECT
 DOMAIN,cn.app.chat.xiaomi.net,REJECT
@@ -305522,9 +305522,11 @@ DOMAIN-SUFFIX,analytics.realestate.com.au,REJECT
 DOMAIN-SUFFIX,analytics.redlink.com.ar,REJECT
 DOMAIN-SUFFIX,analytics.refurbed.de,REJECT
 DOMAIN-SUFFIX,analytics.runpath.com,REJECT
+DOMAIN-SUFFIX,analytics.sen.go.kr,REJECT
 DOMAIN-SUFFIX,analytics.sixt.jobs,REJECT
 DOMAIN-SUFFIX,analytics.smart.mercedes-benz.com,REJECT
 DOMAIN-SUFFIX,analytics.sona-mira.co.jp,REJECT
+DOMAIN-SUFFIX,analytics.sportera.fans,REJECT
 DOMAIN-SUFFIX,analytics.ticinolibero.ch,REJECT
 DOMAIN-SUFFIX,analytics.tomato.gg,REJECT
 DOMAIN-SUFFIX,analytics.tradedoubler.com,REJECT
@@ -305641,6 +305643,7 @@ DOMAIN-SUFFIX,beacon.taboola.com,REJECT
 DOMAIN-SUFFIX,beacons.digital.disneyadvertising.com,REJECT
 DOMAIN-SUFFIX,beam.remp.nv.ua,REJECT
 DOMAIN-SUFFIX,beanworks.actonservice.com,REJECT
+DOMAIN-SUFFIX,beastbook.net,REJECT
 DOMAIN-SUFFIX,beaumont.actonservice.com,REJECT
 DOMAIN-SUFFIX,beck.met.vgwort.de,REJECT
 DOMAIN-SUFFIX,berliner-kurier.met.vgwort.de,REJECT
@@ -305814,6 +305817,7 @@ DOMAIN-SUFFIX,ctg.actonservice.com,REJECT
 DOMAIN-SUFFIX,ctiimage.actonservice.com,REJECT
 DOMAIN-SUFFIX,cttest.branch.rocks,REJECT
 DOMAIN-SUFFIX,ctx.citiservi.es,REJECT
+DOMAIN-SUFFIX,cubeface.com,REJECT
 DOMAIN-SUFFIX,culliganwaterco.actonservice.com,REJECT
 DOMAIN-SUFFIX,cust01-cucm-sub-07-cl6.int.net.jumia.ug,REJECT
 DOMAIN-SUFFIX,cv.aedi.ai,REJECT
@@ -305840,6 +305844,7 @@ DOMAIN-SUFFIX,de.sharpmarketing.eu,REJECT
 DOMAIN-SUFFIX,de01.rayjump.com,REJECT
 DOMAIN-SUFFIX,dedola.actonservice.com,REJECT
 DOMAIN-SUFFIX,deepcrawl.actonservice.com,REJECT
+DOMAIN-SUFFIX,defyingbelief.com,REJECT
 DOMAIN-SUFFIX,degruyter.met.vgwort.de,REJECT
 DOMAIN-SUFFIX,delivery.email-pepipost.branch.rocks,REJECT
 DOMAIN-SUFFIX,detect.rayjump.com,REJECT
@@ -305865,6 +305870,7 @@ DOMAIN-SUFFIX,dmp.sbermarketing.ru,REJECT
 DOMAIN-SUFFIX,dmp.truoptik.com,REJECT
 DOMAIN-SUFFIX,docodoco.jp,REJECT
 DOMAIN-SUFFIX,dohmen.actonservice.com,REJECT
+DOMAIN-SUFFIX,dollarpuzzle.com,REJECT
 DOMAIN-SUFFIX,dolphin.deliver.ifeng.com,REJECT
 DOMAIN-SUFFIX,dotvox.actonservice.com,REJECT
 DOMAIN-SUFFIX,downtownit.actonservice.com,REJECT
@@ -306060,6 +306066,7 @@ DOMAIN-SUFFIX,goldencomm.actonservice.com,REJECT
 DOMAIN-SUFFIX,goldenhelix.actonservice.com,REJECT
 DOMAIN-SUFFIX,goldenpaints.actonservice.com,REJECT
 DOMAIN-SUFFIX,golem.met.vgwort.de,REJECT
+DOMAIN-SUFFIX,golfinglounge.com,REJECT
 DOMAIN-SUFFIX,gosenergy.actonservice.com,REJECT
 DOMAIN-SUFFIX,govirtualoffice.actonservice.com,REJECT
 DOMAIN-SUFFIX,gowestgroup.actonservice.com,REJECT
@@ -306454,6 +306461,7 @@ DOMAIN-SUFFIX,oncourselearning.actonservice.com,REJECT
 DOMAIN-SUFFIX,onelinksmartscript.appsflyer.com,REJECT
 DOMAIN-SUFFIX,onesourcebackground.actonservice.com,REJECT
 DOMAIN-SUFFIX,onlineis.actonservice.com,REJECT
+DOMAIN-SUFFIX,onlinemediahelper.com,REJECT
 DOMAIN-SUFFIX,onlinevacationcenter.actonservice.com,REJECT
 DOMAIN-SUFFIX,opoffice.actonservice.com,REJECT
 DOMAIN-SUFFIX,opportunityfund.actonservice.com,REJECT
@@ -307360,6 +307368,7 @@ DOMAIN-SUFFIX,studentadvantage.actonservice.com,REJECT
 DOMAIN-SUFFIX,su.addthis.com,REJECT
 DOMAIN-SUFFIX,sugabyte.actonservice.com,REJECT
 DOMAIN-SUFFIX,suite101.met.vgwort.de,REJECT
+DOMAIN-SUFFIX,sumetrika.com,REJECT
 DOMAIN-SUFFIX,sumologic.com,REJECT
 DOMAIN-SUFFIX,suncorp.activate.ensighten.com,REJECT
 DOMAIN-SUFFIX,superiorgroup.actonservice.com,REJECT
@@ -308317,6 +308326,7 @@ DOMAIN-SUFFIX,www.zcbmn14.com,REJECT
 DOMAIN-SUFFIX,www.zmxncb5.com,REJECT
 DOMAIN-SUFFIX,xait.actonservice.com,REJECT
 DOMAIN-SUFFIX,xseedwealth.actonservice.com,REJECT
+DOMAIN-SUFFIX,xstats.st,REJECT
 DOMAIN-SUFFIX,y.one.impact-ad.jp,REJECT
 DOMAIN-SUFFIX,yardianalytics.com,REJECT
 DOMAIN-SUFFIX,yield-manager.browsiprod.com,REJECT
@@ -452019,7 +452029,7 @@ URL-REGEX,^https?://www\.flyertea\.com/source/plugin/mobile/mobile\.php\?module=
 URL-REGEX,^https?://www\.myhug\.cn/ad/,REJECT
 URL-REGEX,^https?://www\.shihuo\.cn/app3/saveAppInfo,REJECT
 URL-REGEX,^https?://y\.gtimg\.cn/music/common/upload/targeted_ads,REJECT
-# ── Anti-AD · REJECT · 5934 rules ──
+# ── Anti-AD · REJECT · 5933 rules ──
 DOMAIN-SUFFIX,01.yd-jun.com,REJECT
 DOMAIN-SUFFIX,01daa.luzdz.com,REJECT
 DOMAIN-SUFFIX,0202.com.tw,REJECT
@@ -457800,7 +457810,6 @@ DOMAIN-SUFFIX,xsapp.cdn.bcebos.com,REJECT
 DOMAIN-SUFFIX,xshop.com.tr,REJECT
 DOMAIN-SUFFIX,xsolid.baidu.com,REJECT
 DOMAIN-SUFFIX,xspadvertising.com,REJECT
-DOMAIN-SUFFIX,xstats.st,REJECT
 DOMAIN-SUFFIX,xsweb.pxuns.com,REJECT
 DOMAIN-SUFFIX,xt.eh6q.cn,REJECT
 DOMAIN-SUFFIX,xtsk.6yush.cn,REJECT
