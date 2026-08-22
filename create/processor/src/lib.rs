@@ -7,6 +7,12 @@ use std::io::Write;
 use std::os::raw::c_char;
 use std::path::Path;
 
+pub fn publication_now() -> chrono::DateTime<chrono::FixedOffset> {
+    chrono::Utc::now().with_timezone(
+        &chrono::FixedOffset::east_opt(8 * 60 * 60).expect("UTC+8 is a valid fixed offset"),
+    )
+}
+
 #[allow(dead_code)]
 static DOMAIN_RULE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^DOMAIN,([^,]+)$").unwrap());
 #[allow(dead_code)]

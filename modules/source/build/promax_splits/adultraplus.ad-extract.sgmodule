@@ -1,7 +1,7 @@
 #!name=PROMAX split · adultraplus.sgmodule
 #!desc=从混合模块拆出的去广告行 1964/2560；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/home/runner/work/script_hub/script_hub/rulesets/Sources/vendor/adultraplus.sgmodule
+#!split-source=rulesets/Sources/vendor/adultraplus.sgmodule
 
 [URL Rewrite]
 https?:\/\/helper\.2bulu\.com\/(greenPea\/queryTasks|proSpecial\/allData|saveSplashFrequencyStatistics|getPopInfo|getAppEntranceConfig|promote\/list|getSplash|outing\/reqFoundNewList|outing\/reqIndex) _ reject

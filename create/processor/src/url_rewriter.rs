@@ -28,6 +28,8 @@ static GENERATED_DATE_SUFFIX: Lazy<Regex> =
 static MODULE_NAME_KEY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^#!name\s*=").unwrap());
 static GENERATED_README_DATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(自动生成于\s*`|generated\s+(?:at|on)\s+`)[^`]+`").unwrap());
+static INLINE_CATALOG_DATE_FIELD: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)(\"(?:generated|date)\"\s*:\s*)\"[^\"]*\""#).unwrap());
 
 fn is_volatile_metadata(line: &str) -> bool {
     let lower = line.trim().to_ascii_lowercase().replace(' ', "");
@@ -111,7 +113,7 @@ fn normalize_rule_spacing(line: &str) -> String {
     output.trim().to_string()
 }
 
-fn canonical_json(value: serde_json::Value) -> serde_json::Value {
+fn canonical_json(value: serde_json::Value, module_catalog: bool) -> serde_json::Value {
     match value {
         serde_json::Value::Object(object) => {
             let mut sorted = BTreeMap::new();
@@ -125,15 +127,22 @@ fn canonical_json(value: serde_json::Value) -> serde_json::Value {
                     "timestamp",
                 ]
                 .contains(&normalized.as_str())
+                    || (module_catalog && matches!(normalized.as_str(), "generated" | "date"))
                 {
                     continue;
                 }
-                sorted.insert(key, canonical_json(value));
+                sorted.insert(key, canonical_json(value, module_catalog));
             }
             serde_json::Value::Object(sorted.into_iter().collect())
         }
-        serde_json::Value::Array(values) => {
-            serde_json::Value::Array(values.into_iter().map(canonical_json).collect())
+        serde_json::Value::Array(values) => serde_json::Value::Array(
+            values
+                .into_iter()
+                .map(|value| canonical_json(value, module_catalog))
+                .collect(),
+        ),
+        serde_json::Value::String(value) if module_catalog => {
+            serde_json::Value::String(GENERATED_DATE_SUFFIX.replace(&value, "").into_owned())
         }
         value => value,
     }
@@ -141,11 +150,24 @@ fn canonical_json(value: serde_json::Value) -> serde_json::Value {
 
 pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
     if path
+        .file_name()
+        .is_some_and(|name| name == "surge_module_helper.html")
+    {
+        let without_fields = INLINE_CATALOG_DATE_FIELD.replace_all(text, "${1}\"<volatile>\"");
+        return GENERATED_DATE_SUFFIX
+            .replace_all(&without_fields, "")
+            .into_owned();
+    }
+    if path
         .extension()
         .is_some_and(|extension| extension == "json")
     {
         if let Ok(value) = serde_json::from_str::<serde_json::Value>(text) {
-            if let Ok(canonical) = serde_json::to_string(&canonical_json(value)) {
+            let module_catalog = path
+                .to_string_lossy()
+                .replace('\\', "/")
+                .contains("modules/helper/");
+            if let Ok(canonical) = serde_json::to_string(&canonical_json(value, module_catalog)) {
                 return canonical;
             }
         }
@@ -432,11 +454,28 @@ mod tests {
 
     #[test]
     fn semantic_compare_ignores_catalog_timestamps_but_keeps_counts() {
-        let old = r#"{"updated":"2026-08-11","shards":[{"rule_count":10}]}"#;
-        let new = r#"{"updated":"2026-08-12","shards":[{"rule_count":11}]}"#;
+        let old = r#"{"generated":"2026-08-11","modules":[{"name":"PROMAX - [2026-08-11]","date":"2026-08-11","rule_count":10}]}"#;
+        let date_only = r#"{"generated":"2026-08-12","modules":[{"name":"PROMAX - [2026-08-12]","date":"2026-08-12","rule_count":10}]}"#;
+        let changed = r#"{"generated":"2026-08-12","modules":[{"name":"PROMAX - [2026-08-12]","date":"2026-08-12","rule_count":11}]}"#;
+        let path = Path::new("modules/helper/modules_data.json");
+        assert_eq!(
+            semantic_content_for_path_pub(path, old),
+            semantic_content_for_path_pub(path, date_only)
+        );
         assert_ne!(
-            semantic_content_for_path_pub(Path::new("catalog.json"), old),
-            semantic_content_for_path_pub(Path::new("catalog.json"), new)
+            semantic_content_for_path_pub(path, old),
+            semantic_content_for_path_pub(path, changed)
+        );
+    }
+
+    #[test]
+    fn semantic_compare_ignores_embedded_helper_dates() {
+        let old = r#"const surgeData = {"items":[{"name":"PROMAX - [2026-08-11]","date":"2026-08-11"}]};"#;
+        let new = r#"const surgeData = {"items":[{"name":"PROMAX - [2026-08-12]","date":"2026-08-12"}]};"#;
+        let path = Path::new("modules/helper/surge_module_helper.html");
+        assert_eq!(
+            semantic_content_for_path_pub(path, old),
+            semantic_content_for_path_pub(path, new)
         );
     }
 

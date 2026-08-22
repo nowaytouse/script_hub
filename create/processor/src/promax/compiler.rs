@@ -340,6 +340,7 @@ pub struct AdBlockManager {
 
 impl AdBlockManager {
     pub fn new(root_dir: PathBuf) -> Self {
+        let root_dir = root_dir.canonicalize().unwrap_or(root_dir);
         let mut rules = HashMap::new();
         let mut seen_rules = HashMap::new();
         let mut seen_suffixes = HashMap::new();
@@ -1752,11 +1753,8 @@ impl AdBlockManager {
                 kept, total
             );
 
-            let formatted = crate::smart_cleanup::format_split_module_pub(
-                source_path.to_str().unwrap(),
-                &ad_sections,
-                &note,
-            );
+            let formatted =
+                crate::smart_cleanup::format_split_module_pub(source_label, &ad_sections, &note);
             let rel = out_path
                 .strip_prefix(&self.root_dir)
                 .unwrap_or(&out_path)
@@ -1881,7 +1879,9 @@ impl AdBlockManager {
         generated_rulesets: &[String],
         ruleset_artifacts: &[crate::promax::artifact::GeneratedArtifact],
     ) -> Vec<crate::promax::artifact::GeneratedArtifact> {
-        let now = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let now = crate::publication_now()
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string();
 
         let surge_promax_cdn = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
         let surge_promax_github = "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
@@ -2168,7 +2168,7 @@ impl AdBlockManager {
         generated_rulesets: &[String],
         url_source: &str,
     ) -> crate::promax::artifact::GeneratedArtifact {
-        let current_date = chrono::Local::now().format("%Y-%m-%d").to_string();
+        let current_date = crate::publication_now().format("%Y-%m-%d").to_string();
         let complex_prefixes = ["URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,"];
 
         let base_url = if url_source == "cdn" {
@@ -2376,7 +2376,9 @@ impl AdBlockManager {
         header_meta.insert("tag".to_string(), tag);
         header_meta.insert(
             "date".to_string(),
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            crate::publication_now()
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string(),
         );
 
         let header_lines = crate::smart_cleanup::format_header_pub(&header_meta);
@@ -2414,7 +2416,7 @@ impl AdBlockManager {
         generated_rulesets: &[String],
         url_source: &str,
     ) -> crate::promax::artifact::GeneratedArtifact {
-        let current_date = chrono::Local::now().format("%Y-%m-%d").to_string();
+        let current_date = crate::publication_now().format("%Y-%m-%d").to_string();
         let out_dir = if url_source == "cdn" {
             self.root_dir.join("modules/loon")
         } else {
@@ -2588,7 +2590,7 @@ impl AdBlockManager {
         output.push("#!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png".to_string());
         output.push(format!(
             "#!date={}",
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+            crate::publication_now().format("%Y-%m-%d %H:%M:%S")
         ));
         output.push(String::new());
 
@@ -2881,6 +2883,11 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
+    fn manager_normalizes_an_existing_relative_root() {
+        assert!(AdBlockManager::new(".".into()).root_dir.is_absolute());
+    }
+
+    #[test]
     fn adguard_domain_exception_removes_a_merged_block_rule() {
         let mut manager = AdBlockManager::new(std::env::temp_dir());
         manager.extract_from_text(
@@ -3034,6 +3041,8 @@ hostname = split-ad.fixture.test, protected0.example
             root.join("modules/source/build/promax_splits/mixed-adblock.ad-extract.sgmodule"),
         )
         .unwrap();
+        assert!(split.contains("#!split-source=rulesets/Sources/mixed-adblock.sgmodule"));
+        assert!(!split.contains(root.to_str().unwrap()));
         assert!(split.contains("split-ad.fixture.test"));
         assert!(!split.contains("10.0.0.0/24"));
         assert!(!split.contains("premium.fixture.test"));

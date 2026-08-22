@@ -24,7 +24,9 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         .filter(|line| !line.is_empty())
     {
         let path = root.join(name);
-        if !path.is_file() || rust_processor::url_rewriter::is_pipeline_source_path_pub(&path) {
+        let source_input = rust_processor::url_rewriter::is_pipeline_source_path_pub(&path)
+            && !name.starts_with("modules/source/build/");
+        if !path.is_file() || source_input {
             continue;
         }
         let old = Command::new("git")
@@ -132,7 +134,9 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
             &ports_source.to_string_lossy(),
             &firewall_refs,
             execute,
-            &chrono::Local::now().format("%Y.%m.%d").to_string(),
+            &rust_processor::publication_now()
+                .format("%Y.%m.%d")
+                .to_string(),
         );
     }
     rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy());

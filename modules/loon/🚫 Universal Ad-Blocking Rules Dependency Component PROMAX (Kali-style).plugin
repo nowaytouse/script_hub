@@ -1,8 +1,8 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-22]
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-23]
 #!desc=CDN兼容核心规则 + 应用内去广告(URL Rewrite=686, Map Local=1287, Body Rewrite=128, Script=405, MITM=1140); 全量分片14片，索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
-#!date=2026-08-22 22:33:48
+#!date=2026-08-23 06:53:33
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -285,7 +285,7 @@ IP-CIDR,47.110.187.87/32,REJECT,NO-RESOLVE
 IP-CIDR,59.111.239.61/32,REJECT,NO-RESOLVE
 IP-CIDR,59.111.239.62/32,REJECT,NO-RESOLVE
 IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,REJECT,NO-RESOLVE
-# ── 通用广告 · REJECT · 329189 rules ──
+# ── 通用广告 · REJECT · 329190 rules ──
 DEST-PORT,7680,REJECT
 DOMAIN,0.code.cotsta.ru,REJECT
 DOMAIN,00-gov.cn,REJECT
@@ -274653,6 +274653,7 @@ DOMAIN-SUFFIX,supportnestframe.uk,REJECT
 DOMAIN-SUFFIX,supportpiousworkroom.com,REJECT
 DOMAIN-SUFFIX,supports.amputee-coalition.org,REJECT
 DOMAIN-SUFFIX,supportsentparticle.com,REJECT
+DOMAIN-SUFFIX,supportservice-dragonfly.duckdns.org,REJECT
 DOMAIN-SUFFIX,supporttoancau.com,REJECT
 DOMAIN-SUFFIX,supportwaves.com,REJECT
 DOMAIN-SUFFIX,supportwindowlane.uk,REJECT

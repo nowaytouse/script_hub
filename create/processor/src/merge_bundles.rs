@@ -3,7 +3,6 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use chrono::Local;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Deserialize;
@@ -280,7 +279,9 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
     let mut out_meta = req.header_meta.clone();
     out_meta.insert(
         "date".to_string(),
-        Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+        crate::publication_now()
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string(),
     );
     if !combined_args.is_empty() {
         out_meta.insert("arguments".to_string(), combined_args);
