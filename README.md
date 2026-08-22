@@ -1,29 +1,37 @@
 # Script Hub
 
-## 原则
+面向 Surge、Shadowrocket、Loon 与 sing-box 的规则集和功能模块仓库。更新、网络抓取、合并、格式转换、校验与发布均由 Rust 完成。
 
-1. **PROMAX** 只做域名级拦截（RULE-SET 分片）；不合并各增强模块的 `#!arguments`。
-2. **功能模块** 各自独立安装，保留 Surge/小火箭模块配置界面。
-3. **去重**：规则在 `smart_cleanup` + AdBlock 层；模块段在 `module_sanitizer`。
-4. **勿重复安装** `modules/source/local` 及 `modules/helper/modules_data.json` 中标注 `merged_into` 的旧模块。
+## 广告拦截体系
 
-## 目录命名
+- **PROMAX** 是唯一推荐安装的广告拦截模块：外部规则按用途分片，并合并经筛选的 URL Rewrite、Map Local、Body Rewrite、Script 与 MITM 功能段。
+- **分类隔离**：Advertising、Privacy、Security、AntiAD 与各 ThreatIntel 类别由源清单显式声明；编译器不会按 URL 猜分类。
+- **误屏蔽防护**：正常媒体、受保护服务、无对应请求规则的 MITM 主机会进入 `rulesets/AdBlock/quarantine.json`，不会直接发布。
+- **旧 Helper**：原 AdBlock Helper 会全局注入 DNS 和大量 Host，现仅保留无操作占位以兼容旧订阅链接；请勿与 PROMAX 重复安装。端口阻断仍是独立、按需安装的模块。
+- **旧 PROMAX 链接保持兼容**：
+  `https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule`
 
-| 路径 | 含义 |
-|------|------|
-| `rulesets/list/` | Surge / Shadowrocket 编译后的 `.list` 规则集 |
-| `modules/source/local/` | PROMAX 构建用的本地 sgmodule 源（上游同步） |
-| `modules/helper/surge_module_helper.html` | 模块安装助手网页（由 Rust 更新流程维护） |
+规则索引与分片说明见 `rulesets/AdBlock/README.md` 和 `rulesets/AdBlock/catalog.json`。
 
-模块助手页（推送后可用）：
-https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/helper/surge_module_helper.html
+## 功能模块
 
-Maasea 上游仓库已更名为 [Maasea/sgmodule](https://github.com/Maasea/sgmodule)（旧 `sgmodules` 路径 404）。
+- `modules/surge/amplify_nexus/`：可独立安装的增强、翻译、解锁与工具合集。
+- `modules/shadowrocket/amplify_nexus/`：由 Rust 从已校验的 Surge 合集同步生成。
+- `modules/source/local/`、`rulesets/Sources/LocalModules/`：编译输入，不应直接当作公开安装目录。
+- 混合模块只把明确的广告行拆入 PROMAX；非广告增强功能继续留在独立模块中。
+- 模块安装助手：`modules/helper/surge_module_helper.html`。其目录、兼容性和 Shadowrocket 状态均在同一次 Rust 更新中确定性刷新。
 
-## 更新入口
+Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；WeatherKit、Maps、News、TV 与 DualSubs 不从公告文本或第三方转载页抓取。
 
-| 路径 | 用途 |
-|------|------|
-| `create/processor/src/bin/update.rs` | 唯一更新入口（Rust 网络抓取、本地合并、校验、产物生成） |
-| `create/processor/src/bin/guard.rs` | 生成树守卫（Rust） |
-旧 Go/Python/Shell 更新与维护入口已移除；GitHub Actions、模块校验和产物发布统一调用 Rust。
+## Rust 更新入口
+
+```bash
+cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- \
+  --root . --execute --singbox /path/to/sing-box
+
+cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root .
+```
+
+`--quick` 仅跳过可选的功能模块上游刷新，PROMAX 规则仍会完整抓取、编译和验证。生成器会保留仅日期、注释、排版或顺序变化的旧文件，避免没有实质更新时产生自动提交。
+
+规则源在 `rulesets/Sources/Links/AdBlock_sources.list` 中以 `SOURCE|POLICY|KIND|CATEGORY` 明确登记；脚本/重写源在 `AdBlock_functional_sources.list` 中维护。项目自有更新流程不再使用 Go、Python 或 Shell 脚本。

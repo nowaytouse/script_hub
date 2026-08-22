@@ -424,11 +424,7 @@ fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
 
 pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let root = Path::new(root_dir);
-    let mut ruleset_dirs = Vec::new();
-    ruleset_dirs.extend(collect_ruleset_dirs(
-        &root.join("rulesets").join("RULE-SET"),
-    ));
-    ruleset_dirs.extend(collect_ruleset_dirs(&root.join("rulesets").join("AdBlock")));
+    let ruleset_dirs = collect_ruleset_dirs(&root.join("rulesets").join("RULE-SET"));
 
     let exempt_filenames: HashSet<&str> = [
         "HTTPDNS_Hijack.list",
@@ -443,6 +439,22 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let mut file_content = HashMap::new();
     let mut file_paths = HashMap::new();
     let mut adblock_payloads = HashSet::new();
+    let adblock_dir = root.join("rulesets").join("AdBlock");
+    if let Ok(entries) = fs::read_dir(adblock_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let filename = entry.file_name();
+            let filename = filename.to_string_lossy();
+            if path.is_file()
+                && filename.ends_with(".list")
+                && ADBLOCK_ONLY_PREFIXES
+                    .iter()
+                    .any(|prefix| filename.starts_with(prefix))
+            {
+                adblock_payloads.extend(load_list(&path).into_keys());
+            }
+        }
+    }
     let mut stats = HashMap::new();
 
     stats.insert("files".to_string(), 0);
@@ -483,15 +495,6 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
                 let raw_unique = load_list(&filepath);
                 file_content.insert(filename.clone(), raw_unique.clone());
                 file_paths.insert(filename.clone(), filepath);
-
-                for pfx in ADBLOCK_ONLY_PREFIXES {
-                    if filename.starts_with(pfx) {
-                        for k in raw_unique.keys() {
-                            adblock_payloads.insert(k.clone());
-                        }
-                        break;
-                    }
-                }
             }
         }
     }
@@ -1180,7 +1183,7 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
     }
     if section == "Script" {
         if let Some(caps) = SCRIPT_LABEL_RE.captures(stripped) {
-            return format!("script:label:{}", caps[1].trim());
+            return format!("script:label:{}", caps[1].trim().to_ascii_lowercase());
         }
         if let Some(caps) = SCRIPT_NAME_RE.captures(stripped) {
             return format!("script:name:{}", &caps[1]);
@@ -1198,11 +1201,24 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
         return format!("script:{}", stripped);
     }
     if section == "URL Rewrite" {
-        let parts: Vec<&str> = stripped.splitn(2, ',').collect();
-        return format!("rewrite:{}", parts[0]);
+        return format!(
+            "rewrite:{}",
+            stripped
+                .split_whitespace()
+                .next()
+                .unwrap_or(stripped)
+                .trim_matches(['\'', '"'])
+        );
     }
     if section == "Map Local" {
-        return format!("maplocal:{}", stripped);
+        return format!(
+            "maplocal:{}",
+            stripped
+                .split_whitespace()
+                .next()
+                .unwrap_or(stripped)
+                .trim_matches(['\'', '"'])
+        );
     }
     if section == "Body Rewrite" {
         return format!("body:{}", stripped);
@@ -1799,7 +1815,7 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 
 #[cfg(test)]
 mod ruleset_cleanup_tests {
-    use super::{normalize_url_regex_rule, run_cleanup};
+    use super::{dedupe_key_pub, normalize_url_regex_rule, run_cleanup};
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -1812,25 +1828,54 @@ mod ruleset_cleanup_tests {
     }
 
     #[test]
-    fn cleanup_rewrites_legacy_url_regex_entries() {
+    fn functional_dedupe_uses_request_pattern_and_case_folded_script_label() {
+        assert_eq!(
+            dedupe_key_pub("URL Rewrite", r#"^https://ads\.example _ reject"#),
+            dedupe_key_pub(
+                "URL Rewrite",
+                r#"^https://ads\.example https://origin.example 302"#
+            )
+        );
+        assert_eq!(
+            dedupe_key_pub(
+                "Script",
+                "Remove_Ads = type=http-response,pattern=^https://ads.example"
+            ),
+            dedupe_key_pub(
+                "Script",
+                "remove_ads = type=http-response,pattern=^https://ads.example/v2"
+            )
+        );
+    }
+
+    #[test]
+    fn cleanup_keeps_compiler_owned_adblock_files_while_using_their_coverage() {
         let id = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let root = std::env::temp_dir().join(format!("promax-urlregex-cleanup-{id}"));
-        let dir = root.join("rulesets/AdBlock/github");
-        fs::create_dir_all(&dir).unwrap();
+        let adblock_dir = root.join("rulesets/AdBlock");
+        let general_dir = root.join("rulesets/RULE-SET");
+        fs::create_dir_all(&adblock_dir).unwrap();
+        fs::create_dir_all(&general_dir).unwrap();
+        let generated = "# compiler-owned\nDOMAIN-SUFFIX,ads.example\n";
+        fs::write(adblock_dir.join("AdBlock_Local.list"), generated).unwrap();
         fs::write(
-            dir.join("AdBlock_Local.list"),
-            "URL-REGEX,\"\"^https:\\/\\/ads\\.example\\/\",REJECT-DROP\n",
+            general_dir.join("Example.list"),
+            "DOMAIN-SUFFIX,ads.example\nDOMAIN-SUFFIX,keep.example\n",
         )
         .unwrap();
 
         run_cleanup(root.to_str().unwrap());
 
-        let output = fs::read_to_string(dir.join("AdBlock_Local.list")).unwrap();
-        assert!(output.contains(r#"URL-REGEX,^https:\/\/ads\.example\/"#));
-        assert!(!output.contains("REJECT-DROP"));
+        assert_eq!(
+            fs::read_to_string(adblock_dir.join("AdBlock_Local.list")).unwrap(),
+            generated
+        );
+        let output = fs::read_to_string(general_dir.join("Example.list")).unwrap();
+        assert!(!output.contains("ads.example"));
+        assert!(output.contains("keep.example"));
         fs::remove_dir_all(root).unwrap();
     }
 }

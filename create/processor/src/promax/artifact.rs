@@ -199,12 +199,18 @@ pub fn publish_artifacts(
 
     let mut sorted_quarantine = quarantine.to_vec();
     sorted_quarantine.sort_by(|left, right| {
-        (&left.source, left.line, &left.candidate, &left.reason).cmp(&(
+        (&left.source, &left.candidate, &left.reason, left.risk).cmp(&(
             &right.source,
-            right.line,
             &right.candidate,
             &right.reason,
+            right.risk,
         ))
+    });
+    sorted_quarantine.dedup_by(|left, right| {
+        left.source == right.source
+            && left.candidate == right.candidate
+            && left.reason == right.reason
+            && left.risk == right.risk
     });
     let quarantine_content = format!(
         "{}\n",

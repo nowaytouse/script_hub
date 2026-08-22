@@ -1,7 +1,7 @@
 #!name=PROMAX split · 🐦 微博去广告合集.sgmodule
 #!desc=从混合模块拆出的去广告行 21/39；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/home/runner/work/script_hub/script_hub/rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule
 
 [Map Local]
 ^https?:\/\/api\.weibo\.c(n|om)\/\d\/(cardlist\?v_f=\d|ad\/weibointl\?) data-type=text data="{}" status-code=200 header="Content-Type:application/json"

@@ -4,29 +4,24 @@
 #!icon=https://raw.githubusercontent.com/Orz-3/mini/master/Color/Terminal.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 #!tag=ScriptHub, BoxJs, Sub-Store
-#!date=2026-06-29 12:08:27
+#!date=2026-08-12 17:02:55
 #!arguments=ability:http-client-policy,cronexp:55 23 * * *,sync:"Sub-Store Sync",timeout:900,engine:auto,produce:"# Sub-Store Produce",produce_cronexp:50 */6 * * *,sync_success_notify:false,produce_sub:"sub1,sub2",produce_col:"col1,col2",max_size:-1,cors:"https://sub-store.vercel.app,http://substore.stash,https://substore.stash",Notify:开启通知
 #!arguments-desc=[Sub-Store(β)]\n\n1️⃣ ability\n\n默认已开启测落地能力\n需要配合脚本操作\n如 https://raw.githubusercontent.com/Keywos/rule/main/cname.js\n填写任意其他值关闭\n\n2️⃣ cronexp\n\n同步配置定时任务\n默认为每天 23 点 55 分\n\n定时任务指定时将订阅/文件上传到私有 Gist. 在前端, 叫做 '同步' 或 '同步配置'\n\n3️⃣ sync\n\n自定义定时任务名\n便于在脚本编辑器中选择\n若设为 # 可取消定时任务\n\n4️⃣ timeout\n\n脚本超时, 单位为秒\n\n5️⃣ engine\n\n默认为自动使用 webview 引擎, 可设为指定 jsc, 但 jsc 容易爆内存\n\n6️⃣ produce\n\n自定义处理订阅的定时任务名\n一般用于定时处理耗时较长的订阅, 以更新缓存\n这样 Surge 中拉取的时候就能用到缓存, 不至于总是超时\n若设为 # 可取消此定时任务\n默认不开启\n\n7️⃣ produce_cronexp\n\n配置处理订阅的定时任务\n\n默认为每 6 小时\n\n8️⃣ sync_success_notify\n\n同步配置全部成功时是否发送完成通知\n默认为 true, 填 false/0/no/off 可关闭\n\n9️⃣ produce_sub\n\n自定义需定时处理的单条订阅名\n多个用 , 连接\n\n🔟 produce_col\n\n自定义需定时处理的组合订阅名\n多个用 , 连接\n\n1️⃣1️⃣ cors\n\n允许浏览器跨域访问 Sub-Store 后端的 origin. 默认为 https://sub-store.vercel.app,http://substore.stash,https://substore.stash. 多个用 , 连接. 设为 * 可恢复旧的任意来源访问行为, 存在钓鱼网站读取配置的风险\n\n⚠️ 注意: 是 名称(name) 不是 显示名称(displayName)\n如果名称需要编码, 请编码后再用 , 连接\n顺序: 并发执行单条订阅, 然后并发执行组合订阅\n\n[Script Hub: 重写 & 规则集转换]\nNotify:\nScriptHub通知设置, 可选 开启通知, 关闭通知, 跟随链接
 #!homepage=https://script.hub
 
 [General]
-bypass-system             = true
-ipv6                      = true
-prefer-ipv6               = true
-hijack-dns                = *:53
-dns-direct-fallback-proxy = false
-# [SR does not support ] force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
+force-http-engine-hosts = boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
 
-# [SR does not support ] force-http-engine-hosts = %APPEND% script.hub, *.script.hub
+force-http-engine-hosts = script.hub, *.script.hub
 
 
 [Script]
 Rewrite: BoxJs              = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js, requires-body=true, timeout=120
 
-Sub-Store Core              = type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout=120,
-Sub-Store Simple            = type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-0.min.js,requires-body=true,timeout=120,
-{{{sync}}}                  = type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sync_success_notify={{{sync_success_notify}}}"
-{{{produce}}}               = type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
+Sub-Store Core              = type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
+Sub-Store Simple            = type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
+{{{sync}}}                  = type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sync_success_notify={{{sync_success_notify}}}"
+{{{produce}}}               = type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
 
 Script Hub: 前端              = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_f59ef7_script-hub.js, timeout=300
 Script Hub: 重写转换            = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
@@ -35,4 +30,4 @@ Script Hub: 脚本转换            = type=http-request, pattern=^https?:\/\/scr
 
 
 [MITM]
-hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store, -*.githubusercontent.com, -api.github.com, -github.com
+hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store

@@ -2,7 +2,7 @@
 # Relative paths resolve from this file's directory.
 #
 # 混合模块（同时含去广告 + 解锁/增强）：按行拆分，仅广告行并入 PROMAX；
-#   拆分预览 → modules/build/promax_splits/*.ad-extract.sgmodule
+#   拆分预览 → modules/source/build/promax_splits/*.ad-extract.sgmodule
 # 纯去广告模块：整模块并入
 # 纯解锁/增强：跳过（继续用 amplify_nexus 独立安装）
 #
@@ -23,4 +23,4 @@
 ../../../modules/source/local/WeChat.ADBlock.sgmodule
 
 # ── 混合模块（split：只提取 ADBlock / REJECT / helper 等行）──
-../../../modules/surge(main)/amplify_nexus/📺 BiliBili增强合集.sgmodule
+../../../modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule

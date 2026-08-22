@@ -4,12 +4,7 @@
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
 
 [General]
-bypass-system             = true
-ipv6                      = true
-prefer-ipv6               = true
-hijack-dns                = *:53
-dns-direct-fallback-proxy = false
-# [SR does not support ] force-http-engine-hosts = %APPEND% gql.reddit.com, gql-fed.reddit.com
+force-http-engine-hosts = gql.reddit.com, gql-fed.reddit.com
 
 
 [Script]

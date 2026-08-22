@@ -24,7 +24,7 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         .filter(|line| !line.is_empty())
     {
         let path = root.join(name);
-        if !path.is_file() {
+        if !path.is_file() || rust_processor::url_rewriter::is_pipeline_source_path_pub(&path) {
             continue;
         }
         let old = Command::new("git")
@@ -60,7 +60,7 @@ fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<Path
         .ok_or_else(|| format!("missing value for {flag}"))
 }
 
-fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String> {
+fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Result<(), String> {
     if !root
         .join("rulesets/Sources/adblock_whitelist.list")
         .is_file()
@@ -69,6 +69,17 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
             "repository root is missing PROMAX whitelist: {}",
             root.display()
         ));
+    }
+
+    if execute && !quick {
+        let failures = rust_processor::functional_update::run_functional_updates(root);
+        if !failures.is_empty() {
+            eprintln!(
+                "[WARN] {} functional bundle(s) kept at their last validated version: {}",
+                failures.len(),
+                failures.join(", ")
+            );
+        }
     }
 
     // PROMAX owns both source downloads and local compilation.  Keep the rest
@@ -90,8 +101,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
 
     let modules = root.join("modules");
     let rulesets = root.join("rulesets");
-    rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy());
-    for directory in [&modules, &rulesets, root] {
+    for directory in [&modules, &rulesets] {
         let changed = rust_processor::url_rewriter::run_url_rewrites(&directory.to_string_lossy());
         if changed < 0 {
             return Err(format!("URL rewrite failed for {}", directory.display()));
@@ -104,6 +114,8 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     {
         return Err("MITM cleanup failed".to_string());
     }
+    let converted = rust_processor::functional_update::sync_shadowrocket_variants(root)?;
+    println!("[INFO] synchronized {converted} Shadowrocket module variant(s)");
 
     let ports_source = root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
     let firewall_modules = [
@@ -112,6 +124,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
     ];
     let firewall_refs: Vec<&str> = firewall_modules
         .iter()
+        .filter(|path| path.is_file())
         .filter_map(|path| path.to_str())
         .collect();
     if ports_source.is_file() {
@@ -122,6 +135,8 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>) -> Result<(), String>
             &chrono::Local::now().format("%Y.%m.%d").to_string(),
         );
     }
+    rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy());
+    rust_processor::module_catalog::refresh(root)?;
 
     if let Some(singbox) = singbox.filter(|path| path.is_file()) {
         if !rust_processor::srs_generator::run_srs_generator(
@@ -152,12 +167,13 @@ fn main() -> ExitCode {
     let mut root = None;
     let mut singbox = None;
     let mut execute = false;
+    let mut quick = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--root" => root = Some(arg_value(&mut args, "--root")),
             "--singbox" => singbox = Some(arg_value(&mut args, "--singbox")),
             "--execute" | "--unattended" => execute = true,
-            "--quick" => {}
+            "--quick" => quick = true,
             "--help" | "-h" => {
                 println!(
                     "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>]"
@@ -191,7 +207,7 @@ fn main() -> ExitCode {
         None => None,
     };
 
-    match run(&root, execute, singbox.as_deref()) {
+    match run(&root, execute, singbox.as_deref(), quick) {
         Ok(()) => {
             println!("[SUCCESS] Rust ruleset update completed");
             ExitCode::SUCCESS

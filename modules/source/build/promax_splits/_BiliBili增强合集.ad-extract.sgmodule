@@ -1,0 +1,7 @@
+#!name=PROMAX split · 📺 BiliBili增强合集.sgmodule
+#!desc=从混合模块拆出的去广告行 1/42；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule
+
+[Rule]
+DOMAIN-WILDCARD,*pcdn*.biliapi.net,REJECT

@@ -2,10 +2,9 @@
 # Purpose: 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）
 # Category-Key: Local
 # Shard: 1/1
-# Total Rules: 278
+# Total Rules: 267
 DOMAIN,180.76.76.200
 DOMAIN,aaid.umeng.com
-DOMAIN,adpinpai.video.weibocdn.com
 DOMAIN,adreport.adtianmai.com
 DOMAIN,adsmind.gdtimg.com
 DOMAIN,adsmind.ugdtimg.com
@@ -35,7 +34,6 @@ DOMAIN,et.ykccn.com
 DOMAIN,ether-pack.pangolin-sdk-toutiao.com
 DOMAIN,fcapi-ipv6.jpush.cn
 DOMAIN,gd-stats.jpush.cn
-DOMAIN,gdfp.gifshow.com
 DOMAIN,gromore.pangolin-sdk-toutiao.com
 DOMAIN,hc-ssp.sm.cn
 DOMAIN,httpdns-sdk.n.netease.com
@@ -47,10 +45,7 @@ DOMAIN,iadmat.nosdn.127.net
 DOMAIN,iadmatapk.nosdn.127.net
 DOMAIN,iadmusicmat.music.126.net
 DOMAIN,icloud-amap.com
-DOMAIN,info4.video.qq.com
-DOMAIN,info6.video.qq.com
 DOMAIN,ios.bugly.qq.com
-DOMAIN,ios.video.mpush.qq.com
 DOMAIN,jump.admobile.top
 DOMAIN,lf-ad-ies.bytecdn.cn
 DOMAIN,lofter.httpdns.c.163.com
@@ -62,7 +57,6 @@ DOMAIN,mobads.baidu.com
 DOMAIN,monitor.ssp.admobile.top
 DOMAIN,mssdk.volces.com
 DOMAIN,music.httpdns.c.163.com
-DOMAIN,nadvideo2.baidu.com
 DOMAIN,nfy.slyxmobi.com
 DOMAIN,nsclick.baidu.com
 DOMAIN,open.e.kuaishou.com
@@ -80,7 +74,6 @@ DOMAIN,sdk.e.qq.com
 DOMAIN,sdk.ssp.admobile.top
 DOMAIN,sdk.tianmu.mobi
 DOMAIN,sdk.verification.jiguang.cn
-DOMAIN,sdkconfig.video.qq.com
 DOMAIN,sis-ipv6.jpush.cn
 DOMAIN,smartop-sdkapi.jiguang.cn
 DOMAIN,ssp.maplehaze.cn
@@ -228,10 +221,8 @@ DOMAIN-SUFFIX,mtj.baidu.com
 DOMAIN-SUFFIX,neirong.baidu.com
 DOMAIN-SUFFIX,nlog.baidu.com
 DOMAIN-SUFFIX,nsclick.baidu.com
-DOMAIN-SUFFIX,nsclickvideo.baidu.com
 DOMAIN-SUFFIX,openrcv.baidu.com
 DOMAIN-SUFFIX,paimgcdn.baidu.com
-DOMAIN-SUFFIX,pc.videoclick.baidu.com
 DOMAIN-SUFFIX,pos.baidu.com
 DOMAIN-SUFFIX,push.zhanzhang.baidu.com
 DOMAIN-SUFFIX,qianclick.baidu.com
@@ -259,20 +250,18 @@ DOMAIN-SUFFIX,ulic.baidu.com
 DOMAIN-SUFFIX,ulog.imap.baidu.com
 DOMAIN-SUFFIX,union.baidu.com
 DOMAIN-SUFFIX,union.baidustatic.guannin.com
-DOMAIN-SUFFIX,unionimage.baidu.com
 DOMAIN-SUFFIX,utility.baidu.com
 DOMAIN-SUFFIX,utk.baidu.com
-DOMAIN-SUFFIX,videopush.baidu.com
 DOMAIN-SUFFIX,w.gdown.baidu.com
 DOMAIN-SUFFIX,w.x.baidu.com
 DOMAIN-SUFFIX,wangmeng.baidu.com
 DOMAIN-SUFFIX,wax.weibo.com.cn
 DOMAIN-SUFFIX,weibomingzi.com
 DOMAIN-SUFFIX,weishi.baidu.com
-DOMAIN-SUFFIX,wisepush.video.baidu.com
 DOMAIN-SUFFIX,wm.baidu.com
 DOMAIN-SUFFIX,yingxiao.baidu.com
 DOMAIN-SUFFIX,znsv.baidu.com
+DOMAIN-WILDCARD,*pcdn*.biliapi.net
 IP-CIDR,103.41.167.237/32,NO-RESOLVE
 IP-CIDR,115.236.121.195/32,NO-RESOLVE
 IP-CIDR,115.236.121.51/32,NO-RESOLVE

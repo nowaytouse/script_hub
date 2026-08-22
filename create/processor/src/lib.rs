@@ -134,13 +134,11 @@ pub fn strip_inline_comment(line: &str) -> String {
         return line.to_string();
     }
 
-    let mut cleaned = line;
-    if let Some(idx) = line.find("//") {
-        cleaned = &line[..idx];
-    }
-    if let Some(idx) = cleaned.find('#') {
-        cleaned = &cleaned[..idx];
-    }
+    let comment_start = [" //", "\t//", " #", "\t#"]
+        .iter()
+        .filter_map(|marker| line.find(marker))
+        .min();
+    let cleaned = comment_start.map_or(line, |index| &line[..index]);
     cleaned.trim().to_string()
 }
 
@@ -763,7 +761,9 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
     std::ptr::null_mut()
 }
 
+pub mod functional_update;
 pub mod merge_bundles;
+pub mod module_catalog;
 pub mod promax;
 
 #[unsafe(no_mangle)]
@@ -800,4 +800,23 @@ pub extern "C" fn run_srs_generator_ffi(
     let root_str = unsafe { std::ffi::CStr::from_ptr(root_dir) }.to_string_lossy();
     let singbox_str = unsafe { std::ffi::CStr::from_ptr(singbox_path) }.to_string_lossy();
     srs_generator::run_srs_generator(&root_str, &singbox_str)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::strip_inline_comment;
+
+    #[test]
+    fn inline_comment_stripping_preserves_urls() {
+        assert_eq!(
+            strip_inline_comment(
+                "RULE-SET,https://example.test/rules.list,REJECT # refreshed upstream"
+            ),
+            "RULE-SET,https://example.test/rules.list,REJECT"
+        );
+        assert_eq!(
+            strip_inline_comment("DEST-PORT,3306,REJECT // database"),
+            "DEST-PORT,3306,REJECT"
+        );
+    }
 }

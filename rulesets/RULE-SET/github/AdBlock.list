@@ -3,7 +3,6 @@
 # Please update your module to use the new split rulesets.
 DOMAIN,180.76.76.200
 DOMAIN,aaid.umeng.com
-DOMAIN,adpinpai.video.weibocdn.com
 DOMAIN,adreport.adtianmai.com
 DOMAIN,adsmind.gdtimg.com
 DOMAIN,adsmind.ugdtimg.com
@@ -33,7 +32,6 @@ DOMAIN,et.ykccn.com
 DOMAIN,ether-pack.pangolin-sdk-toutiao.com
 DOMAIN,fcapi-ipv6.jpush.cn
 DOMAIN,gd-stats.jpush.cn
-DOMAIN,gdfp.gifshow.com
 DOMAIN,gromore.pangolin-sdk-toutiao.com
 DOMAIN,hc-ssp.sm.cn
 DOMAIN,httpdns-sdk.n.netease.com
@@ -45,10 +43,7 @@ DOMAIN,iadmat.nosdn.127.net
 DOMAIN,iadmatapk.nosdn.127.net
 DOMAIN,iadmusicmat.music.126.net
 DOMAIN,icloud-amap.com
-DOMAIN,info4.video.qq.com
-DOMAIN,info6.video.qq.com
 DOMAIN,ios.bugly.qq.com
-DOMAIN,ios.video.mpush.qq.com
 DOMAIN,jump.admobile.top
 DOMAIN,lf-ad-ies.bytecdn.cn
 DOMAIN,lofter.httpdns.c.163.com
@@ -60,7 +55,6 @@ DOMAIN,mobads.baidu.com
 DOMAIN,monitor.ssp.admobile.top
 DOMAIN,mssdk.volces.com
 DOMAIN,music.httpdns.c.163.com
-DOMAIN,nadvideo2.baidu.com
 DOMAIN,nfy.slyxmobi.com
 DOMAIN,nsclick.baidu.com
 DOMAIN,open.e.kuaishou.com
@@ -78,7 +72,6 @@ DOMAIN,sdk.e.qq.com
 DOMAIN,sdk.ssp.admobile.top
 DOMAIN,sdk.tianmu.mobi
 DOMAIN,sdk.verification.jiguang.cn
-DOMAIN,sdkconfig.video.qq.com
 DOMAIN,sis-ipv6.jpush.cn
 DOMAIN,smartop-sdkapi.jiguang.cn
 DOMAIN,ssp.maplehaze.cn
@@ -226,10 +219,8 @@ DOMAIN-SUFFIX,mtj.baidu.com
 DOMAIN-SUFFIX,neirong.baidu.com
 DOMAIN-SUFFIX,nlog.baidu.com
 DOMAIN-SUFFIX,nsclick.baidu.com
-DOMAIN-SUFFIX,nsclickvideo.baidu.com
 DOMAIN-SUFFIX,openrcv.baidu.com
 DOMAIN-SUFFIX,paimgcdn.baidu.com
-DOMAIN-SUFFIX,pc.videoclick.baidu.com
 DOMAIN-SUFFIX,pos.baidu.com
 DOMAIN-SUFFIX,push.zhanzhang.baidu.com
 DOMAIN-SUFFIX,qianclick.baidu.com
@@ -257,20 +248,18 @@ DOMAIN-SUFFIX,ulic.baidu.com
 DOMAIN-SUFFIX,ulog.imap.baidu.com
 DOMAIN-SUFFIX,union.baidu.com
 DOMAIN-SUFFIX,union.baidustatic.guannin.com
-DOMAIN-SUFFIX,unionimage.baidu.com
 DOMAIN-SUFFIX,utility.baidu.com
 DOMAIN-SUFFIX,utk.baidu.com
-DOMAIN-SUFFIX,videopush.baidu.com
 DOMAIN-SUFFIX,w.gdown.baidu.com
 DOMAIN-SUFFIX,w.x.baidu.com
 DOMAIN-SUFFIX,wangmeng.baidu.com
 DOMAIN-SUFFIX,wax.weibo.com.cn
 DOMAIN-SUFFIX,weibomingzi.com
 DOMAIN-SUFFIX,weishi.baidu.com
-DOMAIN-SUFFIX,wisepush.video.baidu.com
 DOMAIN-SUFFIX,wm.baidu.com
 DOMAIN-SUFFIX,yingxiao.baidu.com
 DOMAIN-SUFFIX,znsv.baidu.com
+DOMAIN-WILDCARD,*pcdn*.biliapi.net
 IP-CIDR,103.41.167.237/32,NO-RESOLVE
 IP-CIDR,115.236.121.195/32,NO-RESOLVE
 IP-CIDR,115.236.121.51/32,NO-RESOLVE
@@ -279,6 +268,7 @@ IP-CIDR,47.110.187.87/32,NO-RESOLVE
 IP-CIDR,59.111.239.61/32,NO-RESOLVE
 IP-CIDR,59.111.239.62/32,NO-RESOLVE
 IP-CIDR6,2402:4e00:1200:ed00:0:9089:6dac:96b6/128,NO-RESOLVE
+DEST-PORT,7680
 DOMAIN,0.code.cotsta.ru
 DOMAIN,00-gov.cn
 DOMAIN,0026645142c89aeb1.com
@@ -452,9 +442,6 @@ DOMAIN,146.148.85.61
 DOMAIN,1460689281.rsc.cdn77.org
 DOMAIN,1480876790.rsc.cdn77.org
 DOMAIN,14b41d7ec7766122d.com
-DOMAIN,1500020991.vodplayer.wxamedia.com,EXTENDED-MATCHING
-DOMAIN,1500022744.vodplayer.wxamedia.com,EXTENDED-MATCHING
-DOMAIN,1500026601.vodplayer.wxamedia.com,EXTENDED-MATCHING
 DOMAIN,153105c2f9564.com
 DOMAIN,154.196.143.171
 DOMAIN,154.212.147.231
@@ -726,7 +713,6 @@ DOMAIN,344dea1d6d130a7e8e.com
 DOMAIN,34c2f22e9503ace.com
 DOMAIN,35.227.234.222
 DOMAIN,35.232.188.118
-DOMAIN,350media.com
 DOMAIN,3581a62b.api.splkmobile.com
 DOMAIN,3585656d9351553f.com
 DOMAIN,35d59588f15966.com
@@ -1001,3 +987,17 @@ DOMAIN,7089e5b41f87.com
 DOMAIN,70ee6484605f.com
 DOMAIN,70fd25cf5a7b1c57.com
 DOMAIN,710070.com
+DOMAIN,71aa8ed2ff1c8f.com
+DOMAIN,71bcab8994dbe2.com
+DOMAIN,720-trail.co.uk
+DOMAIN,72072vip.com
+DOMAIN,729dcbaa57e80c1e.com
+DOMAIN,72b8869dfc34690.com
+DOMAIN,736f35dde67b7da2976.com
+DOMAIN,739c49a8c68917.com
+DOMAIN,73c6c063b238097.com
+DOMAIN,73g509fk9a.com
+DOMAIN,7437b300fa98b98.com
+DOMAIN,743e6b34be13fb105e0.com
+DOMAIN,746fyw2v.com
+DOMAIN,74b21e9fbd36.com

@@ -10,23 +10,18 @@
 #!homepage=https://script.hub
 
 [General]
-bypass-system             = true
-ipv6                      = true
-prefer-ipv6               = true
-hijack-dns                = *:53
-dns-direct-fallback-proxy = false
-# [SR does not support ] force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
+force-http-engine-hosts = boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net
 
-# [SR does not support ] force-http-engine-hosts = %APPEND% script.hub, *.script.hub
+force-http-engine-hosts = script.hub, *.script.hub
 
 
 [Script]
 Rewrite: BoxJs              = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://cdn.jsdelivr.net/gh/chavyleung/scripts@master/box/chavy.boxjs.js, requires-body=true, timeout=120
 
-Sub-Store Core              = type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout=120,
-Sub-Store Simple            = type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_sub-store-0.min.js,requires-body=true,timeout=120,
-{{{sync}}}                  = type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout=120,script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sync_success_notify={{{sync_success_notify}}}"
-{{{produce}}}               = type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout=120,script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
+Sub-Store Core              = type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_sub-store-1.min.js,requires-body=true,timeout={{{timeout}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
+Sub-Store Simple            = type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_sub-store-0.min.js,requires-body=true,timeout={{{timeout}}},max-size={{{max_size}}},argument="cors={{{cors}}}"
+{{{sync}}}                  = type=cron,cronexp="{{{cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sync_success_notify={{{sync_success_notify}}}"
+{{{produce}}}               = type=cron,cronexp="{{{produce_cronexp}}}",wake-system=1,timeout={{{timeout}}},script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_sub-store-org_cron-sync-artifacts.min.js,argument="sub={{{produce_sub}}}&col={{{produce_col}}}"
 
 Script Hub: 前端              = type=http-request, pattern=^https?:\/\/script\.hub\/($|edit\/|reload), script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_f59ef7_script-hub.js, timeout=300
 Script Hub: 重写转换            = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|loon-plugin|all-module), script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/raw_githubusercontent_com_4fd0f5_Rewrite-Parser.js, timeout=300, argument=Notify={{{Notify}}}
@@ -35,4 +30,4 @@ Script Hub: 脚本转换            = type=http-request, pattern=^https?:\/\/scr
 
 
 [MITM]
-hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store, -*.githubusercontent.com, -api.github.com, -github.com
+hostname = %APPEND% *.boxjs.com, *.boxjs.net, *.script.hub, boxjs.com, boxjs.net, script.hub, sub.store

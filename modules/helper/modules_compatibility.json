@@ -1,327 +1,51 @@
 {
-  "generated": "2025-12-08T17:05:26.215483",
-  "total": 40,
-  "compatible": 7,
-  "surge_only": 65,
+  "compatible": 10,
+  "generated": "2026-08-23 06:14:48",
   "modules": {
     "compatible": [
       {
-        "name": "URL Rewrite Module 🔄🌐",
-        "category": "amplify_nexus"
+        "category": "amplify_nexus",
+        "name": "Reddit 增强合集 (翻译 + NSFW)"
       },
       {
-        "name": "Wi-Fi Calling UK",
-        "category": "amplify_nexus"
+        "category": "amplify_nexus",
+        "name": "WeChat增强"
       },
       {
-        "name": "Wi-Fi Calling US",
-        "category": "amplify_nexus"
+        "category": "amplify_nexus",
+        "name": "扫描全能王"
       },
       {
-        "name": "苹果助手模块",
-        "category": "amplify_nexus"
+        "category": "amplify_nexus",
+        "name": "🍎 Apple服务增强合集"
+      },
+      {
+        "category": "amplify_nexus",
+        "name": "📊 面板工具合集"
+      },
+      {
+        "category": "amplify_nexus",
+        "name": "📺 BiliBili增强合集"
+      },
+      {
+        "category": "amplify_nexus",
+        "name": "📺 YouTube增强合集"
+      },
+      {
+        "category": "amplify_nexus",
+        "name": "🧰 Script Hub 配套工具合集"
+      },
+      {
+        "category": "head_expanse",
+        "name": "🌟 AdBlock Helper（已退役）"
+      },
+      {
+        "category": "head_expanse",
+        "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-23]"
       }
     ],
-    "surge_only": [
-      {
-        "name": "📺 BiliBili: ⚙️ Enhanced",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "📺 BiliBili: 🌐 Global",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "📺 BiliBili: 🔀 Redirect",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "🍿️ DualSubs: 🔣 Universal",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "功能｜预览 QX 资源",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "机场订阅信息",
-        "category": "amplify_nexus",
-        "issues": [
-          "更新间隔",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "Sub-Store(β)",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "能力声明",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "节假日信息",
-        "category": "amplify_nexus",
-        "issues": [
-          "更新间隔",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "Youtube (Music) Enhance",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "BoxJs",
-        "category": "amplify_nexus",
-        "issues": [
-          "插入规则",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": " iRingo: 🗺️ Maps",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": " iRingo: 📰 News",
-        "category": "amplify_nexus",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": " iRingo: 📺 TV app",
-        "category": "amplify_nexus",
-        "issues": [
-          "静默拒绝",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": " iRingo: 🌤 WeatherKit",
-        "category": "amplify_nexus",
-        "issues": [
-          "扩展匹配",
-          "静默拒绝",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "网络信息 𝕏",
-        "category": "amplify_nexus",
-        "issues": [
-          "更新间隔",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "🚀💪General Enhanced⬆️⬆️ plus",
-        "category": "amplify_nexus",
-        "issues": [
-          "插入规则",
-          "追加规则"
-        ]
-      },
-      {
-        "name": "毒奶特供(2025年12月08日更新)",
-        "category": "head_expanse",
-        "issues": [
-          "更新间隔",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "AD ByeBye+ 2.x",
-        "category": "head_expanse",
-        "issues": [
-          "扩展匹配",
-          "拒绝返回GIF",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "AllInOne",
-        "category": "head_expanse",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "[Sukka] Enhance Better ADBlock for Surge",
-        "category": "head_expanse",
-        "issues": [
-          "追加规则"
-        ]
-      },
-      {
-        "name": "[Sukka] URL Rewrite",
-        "category": "head_expanse",
-        "issues": [
-          "追加规则"
-        ]
-      },
-      {
-        "name": "Script Hub: 重写 & 规则集转换",
-        "category": "head_expanse",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "可莉广告过滤器",
-        "category": "head_expanse",
-        "issues": [
-          "扩展匹配",
-          "预匹配",
-          "拒绝返回GIF",
-          "追加规则"
-        ]
-      },
-      {
-        "name": "2.去除小程序和其他应用广告",
-        "category": "head_expanse",
-        "issues": [
-          "扩展匹配",
-          "预匹配",
-          "拒绝返回GIF",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "广告平台拦截器",
-        "category": "head_expanse",
-        "issues": [
-          "扩展匹配",
-          "预匹配",
-          "追加规则"
-        ]
-      },
-      {
-        "name": "广告联盟去广告",
-        "category": "head_expanse",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "1.去除常用软件广告",
-        "category": "head_expanse",
-        "issues": [
-          "扩展匹配",
-          "预匹配",
-          "拒绝不丢弃",
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "🔥 Firewall Port Blocker 🛡️🚫",
-        "category": "head_expanse",
-        "issues": [
-          "静默拒绝"
-        ]
-      },
-      {
-        "name": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)",
-        "category": "head_expanse",
-        "issues": [
-          "扩展匹配",
-          "预匹配",
-          "静默拒绝",
-          "拒绝不丢弃",
-          "更新间隔",
-          "插入规则",
-          "追加规则"
-        ]
-      },
-      {
-        "name": "📺 BiliBili: 🛡️ ADBlock",
-        "category": "narrow_pierce",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "Bilibili Helper",
-        "category": "narrow_pierce",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "WeChat增强",
-        "category": "narrow_pierce",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "YouTube去广告",
-        "category": "narrow_pierce",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      },
-      {
-        "name": "WeiboIntl",
-        "category": "narrow_pierce",
-        "issues": [
-          "追加规则"
-        ]
-      },
-      {
-        "name": "扫描全能王",
-        "category": "narrow_pierce",
-        "issues": [
-          "追加规则",
-          "脚本路径(部分)"
-        ]
-      }
-    ]
-  }
+    "surge_only": []
+  },
+  "surge_only": 0,
+  "total": 10
 }

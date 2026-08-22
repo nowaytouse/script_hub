@@ -14,9 +14,9 @@ static MOCK_REPLACEMENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
         (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json\.js"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json.js"),
         (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank\.gif"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.gif"),
         (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json"),
+        (Regex::new(r#"(?i)https://ghproxy\.net/https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "https://github.com/${1}/${2}/releases/download/${3}/${4}"),
         (Regex::new(r#"(?i)https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/${4}"),
         (Regex::new(r#"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "${1}https://cdn.jsdelivr.net/gh/${2}/${3}@${4}/${5}"),
-        (Regex::new(r#"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "${1}https://ghproxy.net/https://github.com/${2}/${3}/releases/download/${4}/${5}"),
     ]
 });
 
@@ -220,6 +220,11 @@ pub fn get_semantic_content_pub(text: &str) -> String {
     semantic_content_for_path_pub(Path::new("ruleset.list"), text)
 }
 
+pub fn is_pipeline_source_path_pub(path: &Path) -> bool {
+    let path = path.to_string_lossy().replace('\\', "/");
+    path.contains("/rulesets/Sources/") || path.contains("/modules/source/")
+}
+
 fn safe_write_file(path: &Path, content: &str) -> std::io::Result<()> {
     if path.exists() {
         if let Ok(old_content) = fs::read_to_string(path) {
@@ -279,6 +284,7 @@ pub fn copy_github_variants(root_dir: &str) {
         }
         let github_dir = dir.join("github");
         let _ = fs::create_dir_all(&github_dir);
+        let mut expected = HashSet::new();
 
         if let Ok(entries) = fs::read_dir(&dir) {
             for entry in entries.flatten() {
@@ -288,10 +294,7 @@ pub fn copy_github_variants(root_dir: &str) {
                 let file_name_os = entry.file_name();
                 let file_name = file_name_os.to_string_lossy();
 
-                if file_type.is_dir()
-                    || file_name == "github"
-                    || skip_copy.contains(file_name.as_ref())
-                {
+                if file_type.is_dir() || file_name == "github" {
                     continue;
                 }
 
@@ -299,8 +302,12 @@ pub fn copy_github_variants(root_dir: &str) {
                     || file_name.ends_with(".module")
                     || file_name.ends_with(".list")
                 {
+                    expected.insert(file_name.into_owned());
+                    if skip_copy.contains(file_name_os.to_string_lossy().as_ref()) {
+                        continue;
+                    }
                     let src_path = entry.path();
-                    let dest_path = github_dir.join(file_name.as_ref());
+                    let dest_path = github_dir.join(file_name_os);
 
                     if let Ok(content) = fs::read_to_string(&src_path) {
                         let new_content = REVERSE_CDN_REGEX.replace_all(
@@ -309,6 +316,20 @@ pub fn copy_github_variants(root_dir: &str) {
                         );
                         let _ = safe_write_file(&dest_path, &new_content);
                     }
+                }
+            }
+        }
+
+        if let Ok(entries) = fs::read_dir(&github_dir) {
+            for entry in entries.flatten() {
+                let name = entry.file_name().to_string_lossy().into_owned();
+                if entry.path().is_file()
+                    && (name.ends_with(".sgmodule")
+                        || name.ends_with(".module")
+                        || name.ends_with(".list"))
+                    && !expected.contains(&name)
+                {
+                    let _ = fs::remove_file(entry.path());
                 }
             }
         }
@@ -337,7 +358,7 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
         if entry_path.to_string_lossy().contains(".git") {
             continue;
         }
-        if is_github_source(entry_path) {
+        if is_github_source(entry_path) || is_pipeline_source_path_pub(entry_path) {
             continue;
         }
 
@@ -368,8 +389,13 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use super::semantic_content_for_path_pub;
+    use super::{
+        MOCK_REPLACEMENTS, copy_github_variants, is_pipeline_source_path_pub,
+        semantic_content_for_path_pub,
+    };
+    use std::fs;
     use std::path::Path;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn semantic_compare_ignores_dates_comments_and_list_order() {
@@ -412,5 +438,55 @@ mod tests {
             semantic_content_for_path_pub(Path::new("catalog.json"), old),
             semantic_content_for_path_pub(Path::new("catalog.json"), new)
         );
+    }
+
+    #[test]
+    fn source_inputs_are_not_rewritten_as_published_artifacts() {
+        assert!(is_pipeline_source_path_pub(Path::new(
+            "/repo/rulesets/Sources/Links/AdBlock_sources.list"
+        )));
+        assert!(is_pipeline_source_path_pub(Path::new(
+            "/repo/modules/source/local/YouTube.ADBlock.sgmodule"
+        )));
+        assert!(!is_pipeline_source_path_pub(Path::new(
+            "/repo/modules/surge/head_expanse/PROMAX.sgmodule"
+        )));
+    }
+
+    #[test]
+    fn published_release_urls_are_official_and_stale_mirrors_are_pruned() {
+        let proxied =
+            "https://ghproxy.net/https://github.com/example/tool/releases/download/v1/a.js";
+        let official = MOCK_REPLACEMENTS
+            .iter()
+            .fold(proxied.to_string(), |value, (re, replacement)| {
+                re.replace_all(&value, *replacement).to_string()
+            });
+        assert_eq!(
+            official,
+            "https://github.com/example/tool/releases/download/v1/a.js"
+        );
+
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("github-mirror-prune-{id}"));
+        let dir = root.join("rulesets/AdBlock");
+        let github = dir.join("github");
+        fs::create_dir_all(&github).unwrap();
+        fs::write(dir.join("Current.list"), "DOMAIN,current.example\n").unwrap();
+        fs::write(github.join("Stale.list"), "DOMAIN,stale.example\n").unwrap();
+        let promax =
+            "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
+        fs::write(dir.join(promax), "#!name=PROMAX\n").unwrap();
+        fs::write(github.join(promax), "#!name=PROMAX GitHub\n").unwrap();
+
+        copy_github_variants(root.to_str().unwrap());
+
+        assert!(github.join("Current.list").is_file());
+        assert!(github.join(promax).is_file());
+        assert!(!github.join("Stale.list").exists());
+        fs::remove_dir_all(root).unwrap();
     }
 }

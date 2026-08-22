@@ -18,6 +18,9 @@ const SECTIONS: &[&str] = &[
     "Script",
     "Body Rewrite",
     "Header Rewrite",
+    "Panel",
+    "SSID Setting",
+    "Port Forwarding",
     "MITM",
 ];
 
@@ -26,6 +29,10 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
     let mut section = None;
     let mut has_name = false;
     let mut seen_sections = HashSet::new();
+    let strict_promax = content.lines().any(|line| {
+        line.trim().to_ascii_lowercase().starts_with("#!name")
+            && line.to_ascii_lowercase().contains("promax")
+    });
 
     for (index, raw_line) in content.lines().enumerate() {
         let line_number = index + 1;
@@ -41,7 +48,10 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
         }
         if line.starts_with('[') && line.ends_with(']') {
             let name = &line[1..line.len() - 1];
-            if !SECTIONS.contains(&name) {
+            if !SECTIONS.contains(&name)
+                && !name.starts_with("Ruleset ")
+                && !name.starts_with("WireGuard ")
+            {
                 errors.push(error(
                     line_number,
                     "unsupported-section",
@@ -62,7 +72,7 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
         }
 
         match section {
-            Some("Rule") => validate_module_rule(line_number, line, &mut errors),
+            Some("Rule") => validate_module_rule(line_number, line, strict_promax, &mut errors),
             Some("MITM") => validate_mitm(line_number, line, &mut errors),
             Some("Script") => {
                 validate_surge_script(line_number, line, &mut errors);
@@ -96,7 +106,7 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
 pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationError> {
     let mut errors = Vec::new();
     match section {
-        "Rule" => validate_module_rule(1, line, &mut errors),
+        "Rule" => validate_module_rule(1, line, false, &mut errors),
         "MITM" => validate_mitm(1, line, &mut errors),
         "Script" => validate_surge_script(1, line, &mut errors),
         "URL Rewrite" | "Map Local" | "Body Rewrite" | "Header Rewrite" => {
@@ -223,6 +233,21 @@ fn validate_loon_rule(line_number: usize, line: &str, errors: &mut Vec<Validatio
     }
 }
 
+fn validate_generic_module_rule(line: &str) -> bool {
+    let Ok(fields) = split_fields(line) else {
+        return false;
+    };
+    if fields.len() < 3 || fields[2].trim().is_empty() {
+        return false;
+    }
+    let payload = if fields[1].contains(',') {
+        format!("\"{}\"", fields[1].replace('"', "\\\""))
+    } else {
+        fields[1].clone()
+    };
+    SurgeRule::parse(&format!("{},{}", fields[0], payload)).is_ok()
+}
+
 fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
     let mut fields = line.split_whitespace();
     let Some(pattern) = fields.next() else {
@@ -305,19 +330,50 @@ fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<Valida
     }
 }
 
-fn validate_module_rule(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+fn validate_module_rule(
+    line_number: usize,
+    line: &str,
+    strict_promax: bool,
+    errors: &mut Vec<ValidationError>,
+) {
+    let cleaned = crate::strip_inline_comment(line);
+    let line = cleaned.trim();
     if line.to_ascii_uppercase().starts_with("RULE-SET,") {
-        validate_rule_set(line_number, line, errors);
+        validate_rule_set(line_number, line, strict_promax, errors);
+        return;
+    }
+    if ["AND,", "OR,", "NOT,"]
+        .iter()
+        .any(|prefix| line.to_ascii_uppercase().starts_with(prefix))
+    {
+        let balanced = line.chars().filter(|character| *character == '(').count()
+            == line.chars().filter(|character| *character == ')').count();
+        let policy = line.rsplit_once(',').map(|(_, policy)| policy.trim());
+        if !balanced || policy.is_none_or(str::is_empty) {
+            errors.push(error(
+                line_number,
+                "invalid-logical-rule",
+                "logical rule is unbalanced or missing a policy",
+            ));
+        } else if strict_promax && !is_internal_reject_policy(policy.unwrap()) {
+            errors.push(error(
+                line_number,
+                "unsupported-policy",
+                "PROMAX logical rules require an internal policy",
+            ));
+        }
         return;
     }
     match SurgeRule::parse(line) {
         Ok(rule) => {
             match rule.policy.as_deref() {
-                Some("PROXY") => errors.push(error(
-                    line_number,
-                    "unsupported-policy",
-                    "PROMAX rules may not route traffic through PROXY",
-                )),
+                Some(policy) if strict_promax && !is_internal_reject_policy(policy) => {
+                    errors.push(error(
+                        line_number,
+                        "unsupported-policy",
+                        "PROMAX rules require an internal policy",
+                    ))
+                }
                 Some(_) => {}
                 None => errors.push(error(
                     line_number,
@@ -337,13 +393,19 @@ fn validate_module_rule(line_number: usize, line: &str, errors: &mut Vec<Validat
                 }
             }
         }
+        Err(_) if !strict_promax && validate_generic_module_rule(line) => {}
         Err(parse_error) => {
             errors.push(error(line_number, "invalid-rule", parse_error.to_string()))
         }
     }
 }
 
-fn validate_rule_set(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+fn validate_rule_set(
+    line_number: usize,
+    line: &str,
+    strict_promax: bool,
+    errors: &mut Vec<ValidationError>,
+) {
     let fields = match split_fields(line) {
         Ok(fields) => fields,
         Err(parse_error) => {
@@ -360,16 +422,7 @@ fn validate_rule_set(line_number: usize, line: &str, errors: &mut Vec<Validation
         return;
     }
     let policy = fields[2].to_ascii_uppercase();
-    if ![
-        "DIRECT",
-        "REJECT",
-        "REJECT-DROP",
-        "REJECT-NO-DROP",
-        "REJECT-TINYGIF",
-        "REJECT-IMG",
-    ]
-    .contains(&policy.as_str())
-    {
+    if strict_promax && !is_internal_reject_policy(&policy) {
         errors.push(error(
             line_number,
             "unsupported-policy",
@@ -393,6 +446,13 @@ fn validate_rule_set(line_number: usize, line: &str, errors: &mut Vec<Validation
             ));
         }
     }
+}
+
+fn is_internal_reject_policy(policy: &str) -> bool {
+    matches!(
+        policy.to_ascii_uppercase().as_str(),
+        "DIRECT" | "REJECT" | "REJECT-DROP" | "REJECT-NO-DROP" | "REJECT-TINYGIF" | "REJECT-IMG"
+    )
 }
 
 fn validate_mitm(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {

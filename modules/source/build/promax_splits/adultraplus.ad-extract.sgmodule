@@ -1,7 +1,7 @@
 #!name=PROMAX split · adultraplus.sgmodule
-#!desc=从混合模块拆出的去广告行 1962/2560；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 1964/2560；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
-#!split-source=/home/runner/work/script_hub/script_hub/rulesets/Sources/vendor/adultraplus.sgmodule
+#!split-source=/Users/nyamiiko/Downloads/GitHub/script_hub/rulesets/Sources/vendor/adultraplus.sgmodule
 
 [URL Rewrite]
 https?:\/\/helper\.2bulu\.com\/(greenPea\/queryTasks|proSpecial\/allData|saveSplashFrequencyStatistics|getPopInfo|getAppEntranceConfig|promote\/list|getSplash|outing\/reqFoundNewList|outing\/reqIndex) _ reject
@@ -144,6 +144,7 @@ http:\/\/ad\.myfriday\.cn\/d\/json\/1\.1 _ reject
 ^https?:\/\/magev6\.if\.qidian\.com\/argus\/api\/v1\/adv\/getadvlistbatch _ reject
 ^https?:\/\/mage\.if\.qidian\.com\/argus\/api\/v\d\/client\/getsplashscreen _ reject
 ^https?:\/\/ma\.ofo\.com\/ads _ reject
+^https?:\/\/ma-adx\.ctrip\.com\/_ma\.gif _ reject
 ^https?:\/\/m\.you\.163\.com\/activity\/popWindow _ reject
 ^https?:\/\/m\.yap\.yahoo\.com\/v\d{2}\/getAds\.do _ reject
 ^https?:\/\/m\.qianbao\.qq\.com\/pages\/walletHome\?invisible _ reject
@@ -1586,6 +1587,7 @@ https://homefront.qunar.com/front/splash/ad data="https://cdn.jsdelivr.net/gh/no
 ^https:\/\/mada-travel\.17u\.cn\/mdapi\/config\/tabAct data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
 ^https:\/\/mada-travel\.17u\.cn\/mdapi\/config\/mine data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
 ^https:\/\/mada-travel\.17u\.cn\/mdapi\/config\/ads data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
+^https:\/\/ma-adx\.ctrip\.com\/_ma\.gif data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https:\/\/j1\.pupuapi\.com\/client\/recommendation\/hub\/interests\/products\/v2 data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
 ^https:\/\/j1\.pupuapi\.com\/client\/member_card\/premium\/user_center data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
 ^https:\/\/j1\.pupuapi\.com\/client\/marketing\/channel\/global_redeem\/top_tip\/v2 data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"

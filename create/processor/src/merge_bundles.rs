@@ -99,6 +99,10 @@ fn parse_module(text: &str) -> (HashMap<String, String>, Vec<ModuleSectionPub>) 
     (header_meta, sections)
 }
 
+pub fn module_metadata_pub(text: &str) -> HashMap<String, String> {
+    parse_module(text).0
+}
+
 fn apply_replacements(mut text: String, replacements: &[[String; 2]]) -> String {
     for pair in replacements {
         if pair.len() == 2 {
@@ -212,6 +216,20 @@ fn write_module(
         eprintln!(
             "\x1b[0;31m[ERROR]\x1b[0m merged module contains %%INSERT%%: {:?}",
             path
+        );
+        return false;
+    }
+    let validation = crate::promax::validation::validate_surge_module(&content);
+    if !validation.is_empty() {
+        let summary = validation
+            .iter()
+            .take(5)
+            .map(|error| format!("line {} {}", error.line, error.code))
+            .collect::<Vec<_>>()
+            .join(", ");
+        eprintln!(
+            "\x1b[0;31m[ERROR]\x1b[0m refusing invalid merged module {:?}: {}",
+            path, summary
         );
         return false;
     }

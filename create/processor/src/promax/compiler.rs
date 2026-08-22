@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -264,10 +264,10 @@ struct ShardItem {
 struct CatalogJson {
     updated: String,
     rules_per_shard_max: usize,
-    modules: HashMap<String, CatalogItem>,
+    modules: BTreeMap<String, CatalogItem>,
     manifest: String,
     functional_manifest: String,
-    functional_sections: HashMap<String, usize>,
+    functional_sections: BTreeMap<String, usize>,
     shards: Vec<ShardItem>,
 }
 
@@ -277,6 +277,7 @@ struct SourceEntry {
     source: String,
     policy: String,
     kind: String,
+    category: Option<String>,
 }
 
 impl SourceEntry {
@@ -471,6 +472,7 @@ impl AdBlockManager {
                 } else {
                     "auto".to_string()
                 };
+                let category = parts.get(3).filter(|value| !value.is_empty()).cloned();
 
                 let valid_policies = [
                     "REJECT",
@@ -495,14 +497,31 @@ impl AdBlockManager {
                     );
                     continue;
                 }
+                if category
+                    .as_deref()
+                    .is_some_and(|value| !CATEGORIES.contains(&value))
+                {
+                    println!(
+                        "\x1b[0;33m[WARN]\x1b[0m Skipping invalid category in AdBlock manifest: {}",
+                        line
+                    );
+                    continue;
+                }
 
                 let entry = SourceEntry {
                     manifest_path: path.clone(),
                     source,
                     policy,
                     kind,
+                    category,
                 };
-                let key = format!("{}|{}|{}", entry.source, entry.policy, entry.kind);
+                let key = format!(
+                    "{}|{}|{}|{}",
+                    entry.source,
+                    entry.policy,
+                    entry.kind,
+                    entry.category.as_deref().unwrap_or_default()
+                );
                 if seen.insert(key) {
                     entries.push(entry);
                 }
@@ -822,6 +841,27 @@ impl AdBlockManager {
                 continue;
             }
 
+            if !category.starts_with("ThreatIntel")
+                && category != "Security"
+                && matches!(
+                    parsed.kind,
+                    crate::promax::rule::RuleKind::Domain
+                        | crate::promax::rule::RuleKind::DomainSuffix
+                )
+                && let crate::promax::safety::SafetyDecision::Quarantine(reason) =
+                    crate::promax::safety::classify_domain_payload(&parsed.payload)
+            {
+                self.quarantine
+                    .push(crate::promax::safety::QuarantineRecord {
+                        source: self.current_source.clone(),
+                        line: self.current_line,
+                        candidate: candidate.clone(),
+                        reason: reason.to_string(),
+                        risk: crate::promax::safety::RiskClass::BroadMedia,
+                    });
+                continue;
+            }
+
             let normalized = parsed.render_external();
             let rule_payload = parsed.payload.clone();
 
@@ -1106,7 +1146,10 @@ impl AdBlockManager {
     ) -> Vec<String> {
         let mut failures = Vec::new();
         for entry in source_entries {
-            let category = self.determine_category(&entry.source).to_string();
+            let category = entry
+                .category
+                .clone()
+                .unwrap_or_else(|| self.determine_category(&entry.source).to_string());
             let is_module = entry.source.ends_with(".sgmodule")
                 || entry.source.ends_with(".module")
                 || entry
@@ -1350,6 +1393,10 @@ impl AdBlockManager {
         keep.insert("reject-drop.list".to_string());
         keep.insert("reject-no-drop.list".to_string());
         keep.insert("AdBlock.list".to_string());
+        let keep_srs: HashSet<String> = keep
+            .iter()
+            .map(|name| format!("{}_Singbox.srs", name.trim_end_matches(".list")))
+            .collect();
 
         let mut removed = Vec::new();
         if let Ok(entries) = fs::read_dir(adblock_dir) {
@@ -1358,11 +1405,9 @@ impl AdBlockManager {
                 if name.ends_with(".list") && !keep.contains(&name) {
                     let _ = fs::remove_file(entry.path());
                     removed.push(name.clone());
-                    let srs_name = format!("{}_Singbox.srs", name.replace(".list", ""));
-                    let srs_path = self.root_dir.join("rulesets/SingBox").join(&srs_name);
-                    if srs_path.exists() {
-                        let _ = fs::remove_file(srs_path);
-                    }
+                } else if name.ends_with("_Singbox.srs") && !keep_srs.contains(&name) {
+                    let _ = fs::remove_file(entry.path());
+                    removed.push(name);
                 }
             }
         }
@@ -1846,7 +1891,7 @@ impl AdBlockManager {
         let sr_promax_cdn = "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module";
         let sr_promax_github = "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module";
 
-        let mut modules = HashMap::new();
+        let mut modules = BTreeMap::new();
         modules.insert(
             "surge_promax_cdn".to_string(),
             CatalogItem {
@@ -1982,7 +2027,7 @@ impl AdBlockManager {
             });
         }
 
-        let mut functional_stats = HashMap::new();
+        let mut functional_stats = BTreeMap::new();
         for (k, v) in &self.sections {
             functional_stats.insert(k.clone(), v.len());
         }
@@ -2636,7 +2681,10 @@ impl AdBlockManager {
             .map(|(i, &c)| (c.to_string(), i))
             .collect();
         source_entries.sort_by_key(|e| {
-            let cat = self.determine_category(&e.source);
+            let cat = e
+                .category
+                .as_deref()
+                .unwrap_or_else(|| self.determine_category(&e.source));
             *priority_map.get(cat).unwrap_or(&99)
         });
 
@@ -2881,6 +2929,14 @@ mod tests {
         fs::create_dir_all(&links).unwrap();
         let split_dir = root.join("modules/source/build/promax_splits");
         fs::create_dir_all(&split_dir).unwrap();
+        let adblock_dir = root.join("rulesets/AdBlock");
+        fs::create_dir_all(&adblock_dir).unwrap();
+        fs::write(
+            adblock_dir.join("AdBlock_Stale.list"),
+            "DOMAIN,stale.test\n",
+        )
+        .unwrap();
+        fs::write(adblock_dir.join("AdBlock_Stale_Singbox.srs"), b"stale").unwrap();
         fs::write(
             split_dir.join("stale-enhancement.ad-extract.sgmodule"),
             "#!name=stale\n[URL Rewrite]\n^https://premium\\.example/ https://origin.example/ 302\n",
@@ -2970,6 +3026,8 @@ hostname = split-ad.fixture.test, protected0.example
         assert!(root.join("rulesets/AdBlock/catalog.json").is_file());
         assert!(root.join("rulesets/AdBlock/README.md").is_file());
         assert!(root.join("rulesets/AdBlock/quarantine.json").is_file());
+        assert!(!adblock_dir.join("AdBlock_Stale.list").exists());
+        assert!(!adblock_dir.join("AdBlock_Stale_Singbox.srs").exists());
         let shard = fs::read_to_string(root.join("rulesets/AdBlock/AdBlock_Local.list")).unwrap();
         assert!(shard.contains("functional-ad.fixture.test"));
         let split = fs::read_to_string(

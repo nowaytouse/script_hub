@@ -1,106 +1,86 @@
 # Canonical AdBlock source manifest
-# Format: SOURCE|POLICY|KIND(optional)
+# Format: SOURCE|POLICY|KIND(optional)|CATEGORY(optional)
 # POLICY: REJECT, REJECT-DROP, REJECT-NO-DROP, DIRECT
 # KIND: auto (default), domainset
+# CATEGORY: Local, Advertising, Privacy, Security, AntiAD,
+#           ThreatIntel_Ultimate, ThreatIntel_TIF, ThreatIntel, Other
 #
 # Rules:
 #   - Only .list / .txt / domainset URLs, or .sgmodule files that contain a [Rule] section
-#   - Script / URL Rewrite modules: rulesets/Sources/Links/AdBlock_functional_sources.txt → PROMAX
-#   - PROMAX references rulesets/AdBlock/*.list via RULE-SET + merged [Script]/[Rewrite] sections
+#   - Script / URL Rewrite modules: rulesets/Sources/Links/AdBlock_functional_sources.list → PROMAX
+#   - PROMAX references rulesets/AdBlock/*.list via RULE-SET + merged functional sections
 #
 # Example:
-#   https://example.com/list.txt|REJECT
-#   https://example.com/domainset.txt|REJECT|domainset
+#   https://example.com/list.txt|REJECT|auto|Advertising
+#   https://example.com/domainset.txt|REJECT|domainset|Advertising
 
 # blackmatrix7 - broad ad/privacy coverage
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Privacy/Privacy_All.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Hijacking/Hijacking.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Privacy/Privacy_All_No_Resolve.list|REJECT
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Privacy/Privacy_All.list|REJECT|auto|Privacy
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Hijacking/Hijacking.list|REJECT|auto|Security
 
 # limbopro
-https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list|REJECT
+https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list|REJECT|auto|Advertising
 
-# Loyalsoldier (High-quality ad/privacy blocking)
-https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt|REJECT
+# Loyalsoldier
+https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt|REJECT|auto|Advertising
 
 # anti-AD
-https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt|REJECT
-https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@refs/heads/master/discretion/dns.txt|REJECT-DROP
-https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@refs/heads/master/discretion/pcdn.txt|REJECT
+https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt|REJECT|auto|AntiAD
+https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@refs/heads/master/discretion/dns.txt|REJECT-DROP|auto|AntiAD
+https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@refs/heads/master/discretion/pcdn.txt|REJECT|auto|AntiAD
 
 # geekdada
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt|REJECT
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt|REJECT
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt|REJECT
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt|REJECT
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt|REJECT|domainset|Privacy
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt|REJECT|domainset|Advertising
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt|REJECT|domainset|Advertising
 
-# skk.moe
-../skk_upstream/reject-domainset.list|REJECT
-../skk_upstream/reject-extra-domainset.list|REJECT
-../skk_upstream/reject.list|REJECT
-../skk_upstream/reject-url-regex.list|REJECT
-../skk_upstream/reject-ip.list|REJECT
-../skk_upstream/sogouinput.list|REJECT
-../skk_upstream/my_reject.list|REJECT
+# Sukka Ruleset
+../skk_upstream/reject-domainset.list|REJECT|auto|Advertising
+../skk_upstream/reject-extra-domainset.list|REJECT|auto|Advertising
+../skk_upstream/reject.list|REJECT|auto|Advertising
+../skk_upstream/reject-url-regex.list|REJECT|auto|Advertising
+../skk_upstream/reject-ip.list|REJECT|auto|Advertising
+../skk_upstream/sogouinput.list|REJECT|auto|Privacy
+../skk_upstream/my_reject.list|REJECT|auto|Advertising
 
 # ACL4SSR and other list sources
-https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/BanAD.list|REJECT
-https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/BanProgramAD.list|REJECT
-https://cdn.jsdelivr.net/gh/wdmpa/content-farm-list@refs/heads/main/Surge.txt|REJECT
-https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list|REJECT
-../MetaCubeX/MetaCubeX_category-ads-all.list|REJECT
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list|REJECT|auto|Advertising
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list|REJECT|auto|Advertising
+../MetaCubeX/MetaCubeX_category-ads-all.list|REJECT|auto|Advertising
 
-# Third-party sgmodule sources — must include [Rule] (script-only modules belong in modules/source/local)
-https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule|REJECT
-https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/Beta/%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule|REJECT
-https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@refs/heads/main/Surge/module/blockHTTPDNS.module|REJECT-DROP
-https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@refs/heads/main/Filters/AWAvenue-Ads-Rule-Surge-module.sgmodule|REJECT
+# Third-party sgmodule sources — must include [Rule]
+https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/Beta/%E5%8F%AF%E8%8E%89%E5%B9%BF%E5%91%8A%E8%BF%87%E6%BB%A4%E5%99%A8.beta.sgmodule|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@refs/heads/main/Surge/module/blockHTTPDNS.module|REJECT-DROP|auto|Security
+https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@refs/heads/main/Filters/AWAvenue-Ads-Rule-Surge-module.sgmodule|REJECT|auto|Advertising
 
-# Johnshall Shadowrocket ADBlock Rules Forever
-https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_ad_only.conf|REJECT
-https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_adb.conf|REJECT
+# Johnshall ad-only rules. sr_adb.conf is intentionally excluded: it also contains routing policies.
+https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_ad_only.conf|REJECT|auto|Advertising
 
-# Removed: 广告联盟.official.sgmodule (no [Rule], script-only)
-# Removed: adultraplus.sgmodule (URL Rewrite + Script only — install https://yfamilys.com/module/adultraplus.sgmodule separately)
-# Removed: XWebAds.module (script-only; synced via upstream_sync → modules/source/local)
-# Removed: gist loon.plugin (Reddit translation script, not ad domains)
-# Removed 2026-05-27: upstream 404 (QingRex/LoonKissSurge no longer hosts these Official modules)
-# https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/Official/小程序和应用懒人去广告合集.official.sgmodule|REJECT
-# https://cdn.jsdelivr.net/gh/QingRex/LoonKissSurge@refs/heads/main/Surge/Official/新手友好の去广告集合.official.sgmodule|REJECT
+# AdGuard official ecosystem - aggregate + CNAME-cloaked ad endpoints
+# The aggregate already includes Base, Mobile Ads, Tracking Protection, EasyList and EasyPrivacy.
+https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset|Advertising
 
-# Smart-Config-Kit Extensions
-# AdGuard official ecosystem - DNS-safe aggregate + CNAME-cloaked ad endpoints
-# The DNS aggregate already combines Base, Mobile Ads, Tracking Protection,
-# EasyList and EasyPrivacy; avoid adding those component lists again.
-https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT
-https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset
+# HaGeZi and phishing threat intelligence (kept in dedicated categories)
+https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt|REJECT|auto|ThreatIntel_Ultimate
+https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt|REJECT|auto|ThreatIntel_TIF
+../skk_upstream/reject-phishing-domainset.list|REJECT|auto|ThreatIntel
 
-# Hagezi DNS-Blocklists - Ultimate + TIF Medium (Threat Intelligence)
-https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt|REJECT
-https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt|REJECT
-../skk_upstream/reject-phishing-domainset.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/AdvertisingMiTV/AdvertisingMiTV.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/AdobeActivation/AdobeActivation.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Domob/Domob.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/JiGuangTuiSong/JiGuangTuiSong.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Marketing/Marketing.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/MIUIPrivacy/MIUIPrivacy.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/YouMengChuangXiang/YouMengChuangXiang.list|REJECT
+# App/vendor advertising and privacy endpoints
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/AdvertisingMiTV/AdvertisingMiTV.list|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Domob/Domob.list|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Marketing/Marketing.list|REJECT|auto|Advertising
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/MIUIPrivacy/MIUIPrivacy.list|REJECT|auto|Privacy
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/YouMengChuangXiang/YouMengChuangXiang.list|REJECT|auto|Advertising
 
-# LocalModules with [Rule] sections (script/rewrite-only locals are omitted)
-../LocalModules/12306去广告.beta.sgmodule|REJECT
-../LocalModules/Jump去广告.sgmodule|REJECT
-../LocalModules/QQ音乐去广告.sgmodule|REJECT
-../LocalModules/RedNote.sgmodule|REJECT
-../LocalModules/Spotify去广告.sgmodule|REJECT
-../LocalModules/京东去广告.sgmodule|REJECT
-../LocalModules/小红书去广告.beta.sgmodule|REJECT
-../LocalModules/拼多多去广告.sgmodule|REJECT
-../LocalModules/淘宝去广告.sgmodule|REJECT
-../LocalModules/滴滴出行去广告.beta.sgmodule|REJECT
-../LocalModules/知乎去广告.sgmodule|REJECT
-../LocalModules/菜鸟去广告.sgmodule|REJECT
-../LocalModules/阿里云盘去广告.sgmodule|REJECT
-../LocalModules/高德地图去广告.sgmodule|REJECT
-../LocalModules/🐦 微博去广告合集.sgmodule|REJECT
+# Excluded as category pollution or high breakage risk:
+# - geekdada/social-media-filter: social sharing widgets, not advertising
+# - wdmpa/content-farm-list: search-result content farms, not advertising
+# - blackmatrix7/AdobeActivation: activation/licensing, not advertising
+# - blackmatrix7/JiGuangTuiSong: push notification delivery, blocking may break notifications
+# - blackmatrix7/Privacy_All_No_Resolve: semantic duplicate of Privacy_All
+
+# LocalModules are auto-discovered by the Rust compiler; do not duplicate them here.

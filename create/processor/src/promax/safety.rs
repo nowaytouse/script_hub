@@ -15,7 +15,7 @@ static MEDIA_MARKER: Lazy<Regex> = Lazy::new(|| {
 
 static AD_INTENT: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
-        r"(?i)(^|[./_?&=\\-])(ads?|adverts?|advertis(?:e|ing|ement)?|splash(?:_?ad)?|promotion|promote|commercial|launchad|feed_ad)([./_?&=$\\-]|$)",
+        r"(?i)(^|[./_?&=\\-])(ads?|adx|adserver|adnet|adtech|adverts?|advertis(?:e|ing|ement)?|splash(?:_?ad)?|promotion|promote|commercial|launchad|feed_ad|rtb|sponsor)([./_?&=$\\-]|$)",
     )
     .unwrap()
 });
@@ -30,7 +30,7 @@ pub enum SafetyDecision {
     Quarantine(&'static str),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum RiskClass {
     Invalid,
@@ -41,6 +41,7 @@ pub enum RiskClass {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct QuarantineRecord {
     pub source: String,
+    #[serde(skip_serializing)]
     pub line: usize,
     pub candidate: String,
     pub reason: String,
@@ -176,20 +177,20 @@ impl SafetyPolicy {
                 .ok()
                 .is_some_and(|pattern| self.fancy_pattern_intersects(&pattern)),
             RuleKind::UrlRegex => {
-                request_host_patterns(&payload).iter().any(|candidate| {
-                    self.protected_hosts()
-                        .any(|host| host_patterns_intersect(candidate, host))
-                }) || FancyRegex::new(&payload).ok().is_some_and(|pattern| {
-                    self.protected_hosts().any(|host| {
-                        [
-                            format!("https://{host}/"),
-                            format!("https://probe.{host}/"),
-                            format!("https://r1---sn-probe.{host}/videoplayback"),
-                        ]
-                        .iter()
-                        .any(|probe| pattern.is_match(probe).unwrap_or(false))
+                request_host_patterns(&payload)
+                    .iter()
+                    .any(|candidate| self.candidate_intersects_protected(candidate))
+                    || FancyRegex::new(&payload).ok().is_some_and(|pattern| {
+                        self.protected_hosts().any(|host| {
+                            [
+                                format!("https://{host}/"),
+                                format!("https://probe.{host}/"),
+                                format!("https://r1---sn-probe.{host}/videoplayback"),
+                            ]
+                            .iter()
+                            .any(|probe| pattern.is_match(probe).unwrap_or(false))
+                        })
                     })
-                })
             }
             RuleKind::IpCidr | RuleKind::IpCidr6 => {
                 IpNetwork::parse(&payload).is_some_and(|blocked| {
@@ -214,8 +215,7 @@ impl SafetyPolicy {
         let request = functional_request_pattern(line);
         let hosts = request_host_patterns(request);
         let protected = hosts.iter().any(|candidate| {
-            self.protected_hosts()
-                .any(|host| host_patterns_intersect(candidate, host))
+            self.candidate_intersects_protected(candidate)
                 || self
                     .protected_keywords
                     .iter()
@@ -275,6 +275,21 @@ impl SafetyPolicy {
             .iter()
             .chain(self.protected_suffixes.iter())
             .map(String::as_str)
+    }
+
+    fn candidate_intersects_protected(&self, candidate: &str) -> bool {
+        let candidate = candidate.trim_matches('.');
+        if candidate.contains(['*', '?']) {
+            let pattern = wildcard_regex(candidate);
+            return self
+                .protected_hosts()
+                .any(|host| pattern.is_match(host) || pattern.is_match(&format!("probe.{host}")));
+        }
+        self.protected_hosts().any(|host| {
+            candidate == host
+                || candidate.ends_with(&format!(".{host}"))
+                || host.ends_with(&format!(".{candidate}"))
+        })
     }
 
     fn domain_is_protected(&self, domain: &str) -> bool {
@@ -385,20 +400,6 @@ fn request_host_patterns(request: &str) -> Vec<String> {
         .collect()
 }
 
-fn host_patterns_intersect(left: &str, right: &str) -> bool {
-    let left = left.trim_matches('.');
-    let right = right.trim_matches('.');
-    if left.contains(['*', '?']) {
-        return wildcard_regex(left).is_match(right)
-            || wildcard_regex(left).is_match(&format!("probe.{right}"));
-    }
-    if right.contains(['*', '?']) {
-        return wildcard_regex(right).is_match(left)
-            || wildcard_regex(right).is_match(&format!("probe.{left}"));
-    }
-    left == right || left.ends_with(&format!(".{right}")) || right.ends_with(&format!(".{left}"))
-}
-
 fn hostname_reference_token(hostname: &str) -> String {
     let hostname = hostname
         .trim()
@@ -430,6 +431,14 @@ pub fn classify_functional_url(line: &str) -> SafetyDecision {
     }
 }
 
+pub fn classify_domain_payload(payload: &str) -> SafetyDecision {
+    if MEDIA_MARKER.is_match(payload) && !AD_INTENT.is_match(payload) {
+        SafetyDecision::Quarantine("broad-media-domain")
+    } else {
+        SafetyDecision::Keep
+    }
+}
+
 fn wildcard_regex(value: &str) -> Regex {
     let escaped = regex::escape(value)
         .replace(r"\*", ".*")
@@ -439,7 +448,10 @@ fn wildcard_regex(value: &str) -> Regex {
 
 #[cfg(test)]
 mod tests {
-    use super::{SafetyDecision, SafetyPolicy, classify_functional_url};
+    use super::{
+        QuarantineRecord, RiskClass, SafetyDecision, SafetyPolicy, classify_domain_payload,
+        classify_functional_url,
+    };
     use crate::promax::rule::SurgeRule;
 
     #[test]
@@ -467,6 +479,32 @@ mod tests {
             classify_functional_url(r#"^https?://cdn.example.com/advert/splash.webp$ _ reject"#);
 
         assert_eq!(decision, SafetyDecision::Keep);
+    }
+
+    #[test]
+    fn generic_media_domain_is_quarantined_but_ad_cdn_is_kept() {
+        assert_eq!(
+            classify_domain_payload("feed-image.example.com"),
+            SafetyDecision::Quarantine("broad-media-domain")
+        );
+        assert_eq!(
+            classify_domain_payload("cdn.adserver.example.com"),
+            SafetyDecision::Keep
+        );
+    }
+
+    #[test]
+    fn quarantine_report_omits_volatile_upstream_line_numbers() {
+        let record = QuarantineRecord {
+            source: "source.list".to_string(),
+            line: 42,
+            candidate: "DOMAIN,media.example".to_string(),
+            reason: "broad-media-domain".to_string(),
+            risk: RiskClass::BroadMedia,
+        };
+        let json = serde_json::to_string(&record).unwrap();
+        assert!(!json.contains("line"));
+        assert!(json.contains("broad-media-domain"));
     }
 
     #[test]
