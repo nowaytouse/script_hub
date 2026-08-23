@@ -1,6 +1,156 @@
-#!name=🛡️ PROMAX AdBlock Helper（已退役）
-#!desc=[🚀SR] 兼容旧订阅链接的无操作占位。DNS 与广告规则不再重复注入；广告拦截请只安装 PROMAX，端口规则请按需单独安装 Firewall Port Blocker。
+#!name=🛡️ PROMAX AdBlock Helper (DNS & Firewall)
+#!desc=[🚀SR] 轻量 DNS 补充 + Apple 账户/iCloud 直连、系统 DNS 与 MITM 排除。只追加 2 个区域 DNS 和 1 个 DoH，不覆盖 IPv6、DNS 劫持或系统网络设置。附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。
 #!author=ScriptHub
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!tag=Deprecated, Compatibility
+#!tag=AdBlock, DNS, Apple Safety
 #!version=2026.08.23
+
+[General]
+fallback-dns-server = %APPEND% 223.5.5.5, 119.29.29.29, https://dns.alidns.com/dns-query
+
+[Rule]
+DOMAIN,account.apple.com,DIRECT
+DOMAIN,apple-native-relay.apple.com,DIRECT
+DOMAIN,appleid.cdn-apple.com,DIRECT
+DOMAIN,gateway.icloud.com,DIRECT
+DOMAIN,gsa.apple.com,DIRECT
+DOMAIN,idmsa.apple.com,DIRECT
+DOMAIN,known-issues.apple.com,DIRECT
+DOMAIN,mask-api.icloud.com,DIRECT
+DOMAIN,mask-h2.icloud.com,DIRECT
+DOMAIN,mask.icloud.com,DIRECT
+DOMAIN,metrics.icloud.com,DIRECT
+DOMAIN,pong.icloud.com,DIRECT
+DOMAIN,probe.icloud.com,DIRECT
+DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT
+DOMAIN-SUFFIX,apple-dns.net,DIRECT
+DOMAIN-SUFFIX,apple-livephotoskit.com,DIRECT
+DOMAIN-SUFFIX,apzones.com,DIRECT
+DOMAIN-SUFFIX,cdn-apple.com,DIRECT
+DOMAIN-SUFFIX,gc.apple.com,DIRECT
+DOMAIN-SUFFIX,icloud-content.com,DIRECT
+DOMAIN-SUFFIX,icloud.apple.com,DIRECT
+DOMAIN-SUFFIX,icloud.com,DIRECT
+DOMAIN-SUFFIX,icloud.com.cn,DIRECT
+DOMAIN-SUFFIX,iwork.apple.com,DIRECT
+# --- SYNCED PORT RULES START ---
+# Automated update from ports source
+DEST-PORT,1025,REJECT-DROP   # 常被 Windows RAT 占用
+DEST-PORT,1026,REJECT-DROP   # Windows messenger spam / RAT
+DEST-PORT,1027,REJECT-DROP   # Windows messenger spam
+DEST-PORT,11211,REJECT-DROP  # Memcached（DDoS 放大攻击源）
+DEST-PORT,1234,REJECT-DROP   # LLDB 远程调试默认端口
+DEST-PORT,12345,REJECT-DROP
+DEST-PORT,12346,REJECT-DROP
+DEST-PORT,1243,REJECT-DROP   # SubSeven variant
+DEST-PORT,13,REJECT-DROP     # Daytime（信息泄露 + 反射源）
+DEST-PORT,1337,REJECT-DROP   # 黑客文化端口，常被 RAT/WebShell 用
+DEST-PORT,135,REJECT-DROP     # RPC Endpoint Mapper / DCOM
+DEST-PORT,14444,REJECT-DROP  # XMR 矿池常用
+DEST-PORT,161,REJECT-DROP    # SNMP UDP 查询
+DEST-PORT,162,REJECT-DROP    # SNMP Trap
+DEST-PORT,16660,REJECT-DROP
+DEST-PORT,16686,REJECT-DROP  # Jaeger UI（分布式追踪）
+DEST-PORT,17,REJECT-DROP     # QOTD - Quote of the Day（放大 ~140x）
+DEST-PORT,19,REJECT-DROP     # CharGen（放大 ~360x，经典 DRDoS 源）
+DEST-PORT,194,REJECT-DROP    # IRC 官方分配端口
+DEST-PORT,1999,REJECT-DROP   # TransScout
+DEST-PORT,20535,REJECT-DROP  # 矿池备用
+DEST-PORT,27374,REJECT-DROP
+DEST-PORT,27444,REJECT-DROP
+DEST-PORT,27665,REJECT-DROP
+DEST-PORT,3032,REJECT-DROP   # NiceHash Stratum
+DEST-PORT,3050,REJECT-DROP   # Firebird Database
+DEST-PORT,3092,REJECT-DROP   # MiningPoolHub Stratum
+DEST-PORT,31335,REJECT-DROP
+DEST-PORT,31337,REJECT-DROP
+DEST-PORT,31338,REJECT-DROP
+DEST-PORT,3150,REJECT-DROP   # Deep Throat variant
+DEST-PORT,33270,REJECT-DROP
+DEST-PORT,3333,REJECT-DROP   # Stratum 最常用端口（ETH/ETC/XMR）
+DEST-PORT,37,REJECT-DROP     # Time Protocol（明文，可反射）
+DEST-PORT,389,REJECT-DROP    # LDAP 明文（同时防凭证嗅探）
+DEST-PORT,4001,REJECT-DROP   # etcd 旧版 API
+DEST-PORT,40421,REJECT-DROP  # Masters Paradise
+DEST-PORT,4444,REJECT-DROP   # Metasploit meterpreter 默认监听
+DEST-PORT,4445,REJECT-DROP   # Metasploit 变体
+DEST-PORT,45700,REJECT-DROP  # Stratum 高端口
+DEST-PORT,4905,REJECT-DROP   # Silver Sparrow v2 C2 观测端口
+DEST-PORT,49152,REJECT-DROP  # UPnP SOAP（Broadband Forum TR-064 漏洞）
+DEST-PORT,49153,REJECT-DROP  # UPnP 动态端口
+DEST-PORT,49154,REJECT-DROP  # UPnP 动态端口
+DEST-PORT,49475,REJECT-DROP  # macOS 后门高端口（ESET/SentinelOne 威胁情报）
+DEST-PORT,50050,REJECT-DROP  # Cobalt Strike teamserver
+DEST-PORT,50051,REJECT-DROP  # Cobalt Strike 变体
+DEST-PORT,5355,REJECT-DROP
+DEST-PORT,54320,REJECT-DROP  # Back Orifice 2000
+DEST-PORT,54321,REJECT-DROP  # Back Orifice 2000
+DEST-PORT,5554,REJECT-DROP   # Sasser 蠕虫
+DEST-PORT,5555,REJECT-DROP   # Stratum 备用
+DEST-PORT,5569,REJECT-DROP   # Robo-Hack
+DEST-PORT,5683,REJECT-DROP   # CoAP UDP
+DEST-PORT,593,REJECT-DROP     # RPC over HTTP
+DEST-PORT,60000,REJECT-DROP  # Sliver C2 默认
+DEST-PORT,61466,REJECT-DROP  # Telecommando
+DEST-PORT,65000,REJECT-DROP
+DEST-PORT,6667,REJECT-DROP   # IRC 标准端口，僵尸网络 C2 经典信道
+DEST-PORT,6668,REJECT-DROP   # IRC 变体
+DEST-PORT,6669,REJECT-DROP   # IRC 变体
+DEST-PORT,6670,REJECT-DROP
+DEST-PORT,6711,REJECT-DROP
+DEST-PORT,6712,REJECT-DROP
+DEST-PORT,6713,REJECT-DROP
+DEST-PORT,6771,REJECT-DROP
+DEST-PORT,7,REJECT-DROP      # Echo（放大 ~2x，但量大时危险）
+DEST-PORT,7777,REJECT-DROP   # Stratum 备用
+DEST-PORT,8076,REJECT-DROP
+DEST-PORT,8076,REJECT-DROP
+DEST-PORT,8333,REJECT-DROP   # Bitcoin P2P（同时被矿机用）
+DEST-PORT,8567,REJECT-DROP   # macOS 恶意软件 C2 高频观测端口
+DEST-PORT,9,REJECT-DROP      # Discard（无意义，常被扫描）
+DEST-PORT,9898,REJECT-DROP   # Dabber worm
+DEST-PORT,9996,REJECT-DROP   # Sasser 蠕虫 FTP 传输
+DEST-PORT,9999,REJECT-DROP   # Stratum 备用
+IN-PORT,12654,REJECT-DROP
+IN-PORT,8076,REJECT-DROP
+# --- SYNCED PORT RULES END ---
+
+[Host]
+*.apple-cloudkit.com = server:system
+*.apple-dns.net = server:system
+*.apple-livephotoskit.com = server:system
+*.apzones.com = server:system
+*.cdn-apple.com = server:system
+*.gc.apple.com = server:system
+*.icloud-content.com = server:system
+*.icloud.apple.com = server:system
+*.icloud.com = server:system
+*.icloud.com.cn = server:system
+*.iwork.apple.com = server:system
+account.apple.com = server:system
+apple-cloudkit.com = server:system
+apple-dns.net = server:system
+apple-livephotoskit.com = server:system
+apple-native-relay.apple.com = server:system
+appleid.cdn-apple.com = server:system
+apzones.com = server:system
+cdn-apple.com = server:system
+gateway.icloud.com = server:system
+gc.apple.com = server:system
+gsa.apple.com = server:system
+icloud-content.com = server:system
+icloud.apple.com = server:system
+icloud.com = server:system
+icloud.com.cn = server:system
+idmsa.apple.com = server:system
+iwork.apple.com = server:system
+known-issues.apple.com = server:system
+mask-api.icloud.com = server:system
+mask-h2.icloud.com = server:system
+mask.icloud.com = server:system
+metrics.icloud.com = server:system
+pong.icloud.com = server:system
+probe.icloud.com = server:system
+
+[MITM]
+hostname = %INSERT% -*.apple-cloudkit.com, -*.apple-dns.net, -*.apple-livephotoskit.com, -*.apzones.com, -*.cdn-apple.com, -*.gc.apple.com, -*.icloud-content.com, -*.icloud.apple.com, -*.icloud.com, -*.icloud.com.cn, -*.iwork.apple.com, -account.apple.com, -apple-cloudkit.com, -apple-dns.net, -apple-livephotoskit.com, -apple-native-relay.apple.com, -appleid.cdn-apple.com, -apzones.com, -cdn-apple.com, -gateway.icloud.com, -gc.apple.com, -gsa.apple.com, -icloud-content.com, -icloud.apple.com, -icloud.com, -icloud.com.cn, -idmsa.apple.com, -iwork.apple.com, -known-issues.apple.com, -mask-api.icloud.com, -mask-h2.icloud.com, -mask.icloud.com, -metrics.icloud.com, -pong.icloud.com, -probe.icloud.com

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-23 06:53:29",
+  "updated": "2026-08-23 12:34:51",
   "rules_per_shard_max": 100000,
   "modules": {
     "loon_promax_cdn": {
@@ -45,9 +45,9 @@
     "Body Rewrite": 128,
     "Header Rewrite": 0,
     "MITM": 1140,
-    "Map Local": 1287,
-    "Script": 405,
-    "URL Rewrite": 686
+    "Map Local": 1277,
+    "Script": 396,
+    "URL Rewrite": 671
   },
   "shards": [
     {
@@ -96,7 +96,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 29151,
+      "rule_count": 29222,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
@@ -116,7 +116,7 @@
       "label_zh": "安全威胁",
       "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
       "shard_index": 1,
-      "rule_count": 84,
+      "rule_count": 83,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist"
     },
@@ -146,7 +146,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 2,
-      "rule_count": 66914,
+      "rule_count": 66906,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },

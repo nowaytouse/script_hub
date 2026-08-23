@@ -39,10 +39,22 @@
           "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify%5Fnexus/%E6%89%AB%E6%8F%8F%E5%85%A8%E8%83%BD%E7%8E%8B%E8%A7%A3%E9%94%81%2Emodule"
         },
         {
+          "author": "DualSubs",
+          "badge": "",
+          "date": "2026-08-23 07:25:14",
+          "desc": "[🚀SR] 全平台字幕增强与双语翻译；MITM/脚本覆盖面较大，请按需独立安装，不再混入 Apple 合集\\n\\n【Bundled Modules】\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
+          "filename": "🌐 DualSubs字幕增强合集.module",
+          "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify%5Fnexus/github/%F0%9F%8C%90%20DualSubs%E5%AD%97%E5%B9%95%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%2Emodule",
+          "icon": "",
+          "id": "91c96fc944c9dfb6a250321a4d18f8c1",
+          "name": "🌐 DualSubs字幕增强合集",
+          "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/amplify%5Fnexus/%F0%9F%8C%90%20DualSubs%E5%AD%97%E5%B9%95%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%2Emodule"
+        },
+        {
           "author": "VirgilClyne[https://github.com/VirgilClyne]",
           "badge": "",
-          "date": "2026-08-23 05:17:25",
-          "desc": "[🚀SR] 整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.修改空气质量数据\\n3.修改下一小时降水数据\\n4.修改天气数据\\n5.修改天气预警数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能\\n\\n✦ 🍿️ DualSubs: 🔣 Universal: 流媒体平台字幕增强及双语模块\\n如需恢复TV完整支持\\n请配合“ iRingo: 📺 TV”使用",
+          "date": "2026-08-23 07:55:59",
+          "desc": "[🚀SR] 整合 Apple 生态增强：Maps · WeatherKit · News · TV；Apple 账户与 iCloud 强制直连并排除 MITM\\n\\n【Bundled Modules】\\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\\n添加国际版功能\\n自定义服务版本\\n\\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\\n1.解锁全部天气功能\\n2.修改空气质量数据\\n3.修改下一小时降水数据\\n4.修改天气数据\\n5.修改天气预警数据\\n\\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\\n2.Coming Soon…\\n\\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能",
           "filename": "🍎 Apple服务增强合集.module",
           "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/amplify%5Fnexus/github/%F0%9F%8D%8E%20Apple%E6%9C%8D%E5%8A%A1%E5%A2%9E%E5%BC%BA%E5%90%88%E9%9B%86%2Emodule",
           "icon": "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png",
@@ -104,10 +116,22 @@
     "head_expanse": {
       "items": [
         {
-          "author": "nyamiiko (Enhanced)",
+          "author": "ScriptHub",
           "badge": "",
           "date": "",
-          "desc": "[🚀SR] Outbound Port Filtering | Protection against C2/RAT/Miners/Botnets/DDoS/IoT/SCADA | Zero impact on Games/P2P/RDP",
+          "desc": "[🚀SR] 轻量 DNS 补充 + Apple 账户/iCloud 直连、系统 DNS 与 MITM 排除。只追加 2 个区域 DNS 和 1 个 DoH，不覆盖 IPv6、DNS 劫持或系统网络设置。",
+          "filename": "🌟 AdBlock Helper .module",
+          "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head%5Fexpanse/github/%F0%9F%8C%9F%20AdBlock%20Helper%20%2Emodule",
+          "icon": "",
+          "id": "2302e518179faeb55afba74241c1a209",
+          "name": "🌟 AdBlock Helper",
+          "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head%5Fexpanse/%F0%9F%8C%9F%20AdBlock%20Helper%20%2Emodule"
+        },
+        {
+          "author": "ScriptHub",
+          "badge": "",
+          "date": "",
+          "desc": "[🚀SR] 高级可选出站端口过滤。会阻断部分开发、数据库、矿池与 IRC 服务；Apple、Bonjour、AirPlay、打印和 Xcode 常用端口永久排除。",
           "filename": "🔥 Firewall Port Blocker 🛡️🚫.module",
           "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head%5Fexpanse/github/%F0%9F%94%A5%20Firewall%20Port%20Blocker%20%F0%9F%9B%A1%EF%B8%8F%F0%9F%9A%AB%2Emodule",
           "icon": "",
@@ -118,14 +142,26 @@
         {
           "author": "ScriptHub-Automated",
           "badge": "🔥",
-          "date": "2026-08-22 22:33:48",
-          "desc": "[🚀SR] 按用途分片(14片) + 应用内去广告(URL Rewrite=686, Map Local=1287, Script=405, Body Rewrite=128, MITM=1140); 索引 rulesets/AdBlock/catalog.json",
+          "date": "2026-08-23 12:23:00",
+          "desc": "[🚀SR] 按用途分片(14片) + 应用内去广告(URL Rewrite=671, Map Local=1277, Script=396, Body Rewrite=128, MITM=1140); 索引 rulesets/AdBlock/catalog.json",
           "filename": "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
           "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head%5Fexpanse/github/%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
           "icon": "https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png",
           "id": "435bef47d7048a9de10efbf2dedc9b1c",
-          "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-22]",
+          "name": "🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-23]",
           "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head%5Fexpanse/%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule"
+        },
+        {
+          "author": "ScriptHub",
+          "badge": "🔥",
+          "date": "",
+          "desc": "[🚀SR] 轻量 DNS 补充 + Apple 账户/iCloud 直连、系统 DNS 与 MITM 排除。只追加 2 个区域 DNS 和 1 个 DoH，不覆盖 IPv6、DNS 劫持或系统网络设置。附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。",
+          "filename": "🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
+          "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/shadowrocket/head%5Fexpanse/github/%F0%9F%9B%A1%EF%B8%8F%20PROMAX%20AdBlock%20Helper%20%28DNS%20%26%20Firewall%29%2Emodule",
+          "icon": "",
+          "id": "5627a7586d3f6d346e2d73f242ac8645",
+          "name": "🛡️ PROMAX AdBlock Helper (DNS & Firewall)",
+          "url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/shadowrocket/head%5Fexpanse/%F0%9F%9B%A1%EF%B8%8F%20PROMAX%20AdBlock%20Helper%20%28DNS%20%26%20Firewall%29%2Emodule"
         }
       ],
       "name": "🔝 Head Expanse › 首端扩域"
@@ -135,6 +171,6 @@
       "name": "🎯 Narrow Pierce › 窄域穿刺"
     }
   },
-  "generated": "2026-08-22 22:33:48",
-  "total": 10
+  "generated": "2026-08-23 12:23:00",
+  "total": 13
 }

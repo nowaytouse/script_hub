@@ -62,12 +62,13 @@ const APPLE: &[RemoteSource] = &[
         url: "https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule",
         required: true,
     },
-    RemoteSource {
-        label: "DualSubs.Universal",
-        url: "https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule",
-        required: true,
-    },
 ];
+
+const DUALSUBS: &[RemoteSource] = &[RemoteSource {
+    label: "DualSubs.Universal",
+    url: "https://github.com/DualSubs/Universal/releases/latest/download/DualSubs.Universal.sgmodule",
+    required: true,
+}];
 
 const BILIBILI: &[RemoteSource] = &[
     RemoteSource {
@@ -166,6 +167,7 @@ fn downloader() -> Downloader {
         attempts: 2,
         timeout: Duration::from_secs(45),
         backoff: Duration::from_secs(1),
+        concurrency: 4,
         max_bytes: 16 * 1024 * 1024,
         max_total_bytes: 128 * 1024 * 1024,
     })
@@ -188,16 +190,17 @@ fn fetch_sources(
     downloader: &Downloader,
     specs: &[RemoteSource],
 ) -> Result<Vec<SourceInput>, String> {
+    let batch = downloader.download_many(specs.iter().map(|spec| spec.url));
     let mut sources = Vec::new();
     let mut missing = Vec::new();
     for spec in specs {
-        match downloader.get(spec.url) {
-            Ok(content) if valid_module(&content) => sources.push(SourceInput {
+        match batch.contents.get(spec.url) {
+            Some(content) if valid_module(content) => sources.push(SourceInput {
                 label: spec.label.to_string(),
                 url: spec.url.to_string(),
-                content,
+                content: content.clone(),
             }),
-            Ok(_) => {
+            Some(_) => {
                 let message = format!("{} returned non-module content", spec.label);
                 if spec.required {
                     missing.push(message);
@@ -205,7 +208,13 @@ fn fetch_sources(
                     eprintln!("[WARN] optional functional source skipped: {message}");
                 }
             }
-            Err(error) => {
+            None => {
+                let error = batch
+                    .failures
+                    .iter()
+                    .find(|failure| failure.url == spec.url)
+                    .map(|failure| failure.error.as_str())
+                    .unwrap_or("missing download result");
                 let message = format!("{} ({error})", spec.label);
                 if spec.required {
                     missing.push(message);
@@ -293,6 +302,68 @@ fn run_step(label: &str, result: Result<(), String>, failures: &mut Vec<String>)
     }
 }
 
+fn harden_apple_bundle(root: &Path) -> Result<(), String> {
+    let path = root.join("modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule");
+    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    let mut output = Vec::new();
+    for line in content.lines() {
+        let line = line.replace(
+            "isWorkaroundSSLPinning:true",
+            "isWorkaroundSSLPinning:false",
+        );
+        let trimmed = line.trim();
+        let replacement = match trimmed {
+            "DOMAIN,weather-analytics-events.apple.com,REJECT-DROP" => {
+                Some("DOMAIN,weather-analytics-events.apple.com,DIRECT")
+            }
+            "DOMAIN-SUFFIX,tthr.apple.com,REJECT-DROP,extended-matching" => {
+                Some("DOMAIN-SUFFIX,tthr.apple.com,DIRECT")
+            }
+            "DOMAIN,tether.edge.apple,REJECT-DROP,extended-matching" => {
+                Some("DOMAIN,tether.edge.apple,DIRECT")
+            }
+            "DOMAIN,gateway.icloud.com,{{{Proxy}}}" => Some("DOMAIN,gateway.icloud.com,DIRECT"),
+            "DOMAIN,known-issues.apple.com,REJECT-DROP" => {
+                Some("DOMAIN,known-issues.apple.com,DIRECT")
+            }
+            _ => None,
+        };
+        if let Some(replacement) = replacement {
+            output.push(replacement.to_string());
+        } else if trimmed.starts_with("AND,")
+            && trimmed.contains("IP-ASN,714")
+            && trimmed.contains("PROTOCOL,QUIC")
+        {
+            output.push(
+                "# Apple-wide QUIC rejection removed; Surge already handles MITM-scoped QUIC fallback"
+                    .to_string(),
+            );
+        } else if let Some(hosts) = trimmed.strip_prefix("hostname = %APPEND% ") {
+            let mut exclusions: Vec<String> = crate::promax::safety::APPLE_CRITICAL_EXACT
+                .iter()
+                .map(|host| format!("-{host}"))
+                .collect();
+            for suffix in crate::promax::safety::APPLE_CRITICAL_SUFFIXES {
+                exclusions.push(format!("-{suffix}"));
+                exclusions.push(format!("-*.{suffix}"));
+            }
+            exclusions.sort();
+            exclusions.dedup();
+            output.push(format!(
+                "hostname = %INSERT% {}, {hosts}",
+                exclusions.join(", ")
+            ));
+        } else {
+            output.push(line);
+        }
+    }
+    let hardened = output.join("\n") + "\n";
+    if !crate::safe_write_file_internal(&path, &hardened, true) {
+        return Err(format!("failed to harden {}", path.display()));
+    }
+    Ok(())
+}
+
 pub fn run_functional_updates(root: &Path) -> Vec<String> {
     let downloader = downloader();
     sync_local_sources(root, &downloader);
@@ -309,7 +380,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 ("name", "🍎 Apple服务增强合集"),
                 (
                     "desc",
-                    "整合 Apple 生态增强：Maps · WeatherKit · News · TV · DualSubs 双语字幕",
+                    "整合 Apple 生态增强：Maps · WeatherKit · News · TV；Apple 账户与 iCloud 强制直连并排除 MITM",
                 ),
                 ("author", "VirgilClyne[https://github.com/VirgilClyne]"),
                 ("homepage", "https://NSRingo.github.io"),
@@ -323,7 +394,36 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
             &[
                 ("Proxy:🇺🇸美国", "Proxy:\"🍎 Apple 🍏\""),
                 (",🇺🇸美国", ",{{{Proxy}}}"),
+                (
+                    "isWorkaroundSSLPinning:true",
+                    "isWorkaroundSSLPinning:false",
+                ),
             ],
+            None,
+        )
+        .and(harden_apple_bundle(root)),
+        &mut failures,
+    );
+    run_step(
+        "DualSubs",
+        merge(
+            root,
+            &downloader,
+            "upstream_merge",
+            "modules/surge/amplify_nexus/🌐 DualSubs字幕增强合集.sgmodule",
+            &[
+                ("name", "🌐 DualSubs字幕增强合集"),
+                (
+                    "desc",
+                    "全平台字幕增强与双语翻译；MITM/脚本覆盖面较大，请按需独立安装，不再混入 Apple 合集",
+                ),
+                ("author", "DualSubs"),
+                ("homepage", "https://github.com/DualSubs/Universal"),
+                ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+                ("tag", "Subtitles, Translation, Advanced"),
+            ],
+            DUALSUBS,
+            &[],
             None,
         ),
         &mut failures,

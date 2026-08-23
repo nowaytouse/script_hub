@@ -1,6 +1,76 @@
-#!name=🌟 AdBlock Helper（已退役）
-#!desc=兼容旧订阅链接的无操作占位。原模块会全局注入数千条 Host 与多组 DNS，容易造成解析冲突、日志噪音和不可预期的误屏蔽；广告拦截请只安装 PROMAX，端口策略请按需单独安装 Firewall Port Blocker。
+#!name=🌟 AdBlock Helper
+#!desc=轻量 DNS 补充 + Apple 账户/iCloud 直连、系统 DNS 与 MITM 排除。只追加 2 个区域 DNS 和 1 个 DoH，不覆盖 IPv6、DNS 劫持或系统网络设置。
 #!author=ScriptHub
 #!category=『 🔝 Head Expanse › 首端扩域 』
-#!tag=Deprecated, Compatibility
+#!tag=AdBlock, DNS, Apple Safety
 #!version=2026.08.23
+
+[General]
+dns-server = %APPEND% 223.5.5.5, 119.29.29.29
+encrypted-dns-server = %APPEND% https://dns.alidns.com/dns-query
+
+[Rule]
+DOMAIN,account.apple.com,DIRECT
+DOMAIN,apple-native-relay.apple.com,DIRECT
+DOMAIN,appleid.cdn-apple.com,DIRECT
+DOMAIN,gateway.icloud.com,DIRECT
+DOMAIN,gsa.apple.com,DIRECT
+DOMAIN,idmsa.apple.com,DIRECT
+DOMAIN,known-issues.apple.com,DIRECT
+DOMAIN,mask-api.icloud.com,DIRECT
+DOMAIN,mask-h2.icloud.com,DIRECT
+DOMAIN,mask.icloud.com,DIRECT
+DOMAIN,metrics.icloud.com,DIRECT
+DOMAIN,pong.icloud.com,DIRECT
+DOMAIN,probe.icloud.com,DIRECT
+DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT
+DOMAIN-SUFFIX,apple-dns.net,DIRECT
+DOMAIN-SUFFIX,apple-livephotoskit.com,DIRECT
+DOMAIN-SUFFIX,apzones.com,DIRECT
+DOMAIN-SUFFIX,cdn-apple.com,DIRECT
+DOMAIN-SUFFIX,gc.apple.com,DIRECT
+DOMAIN-SUFFIX,icloud-content.com,DIRECT
+DOMAIN-SUFFIX,icloud.apple.com,DIRECT
+DOMAIN-SUFFIX,icloud.com,DIRECT
+DOMAIN-SUFFIX,icloud.com.cn,DIRECT
+DOMAIN-SUFFIX,iwork.apple.com,DIRECT
+
+[Host]
+*.apple-cloudkit.com = server:system
+*.apple-dns.net = server:system
+*.apple-livephotoskit.com = server:system
+*.apzones.com = server:system
+*.cdn-apple.com = server:system
+*.gc.apple.com = server:system
+*.icloud-content.com = server:system
+*.icloud.apple.com = server:system
+*.icloud.com = server:system
+*.icloud.com.cn = server:system
+*.iwork.apple.com = server:system
+account.apple.com = server:system
+apple-cloudkit.com = server:system
+apple-dns.net = server:system
+apple-livephotoskit.com = server:system
+apple-native-relay.apple.com = server:system
+appleid.cdn-apple.com = server:system
+apzones.com = server:system
+cdn-apple.com = server:system
+gateway.icloud.com = server:system
+gc.apple.com = server:system
+gsa.apple.com = server:system
+icloud-content.com = server:system
+icloud.apple.com = server:system
+icloud.com = server:system
+icloud.com.cn = server:system
+idmsa.apple.com = server:system
+iwork.apple.com = server:system
+known-issues.apple.com = server:system
+mask-api.icloud.com = server:system
+mask-h2.icloud.com = server:system
+mask.icloud.com = server:system
+metrics.icloud.com = server:system
+pong.icloud.com = server:system
+probe.icloud.com = server:system
+
+[MITM]
+hostname = %INSERT% -*.apple-cloudkit.com, -*.apple-dns.net, -*.apple-livephotoskit.com, -*.apzones.com, -*.cdn-apple.com, -*.gc.apple.com, -*.icloud-content.com, -*.icloud.apple.com, -*.icloud.com, -*.icloud.com.cn, -*.iwork.apple.com, -account.apple.com, -apple-cloudkit.com, -apple-dns.net, -apple-livephotoskit.com, -apple-native-relay.apple.com, -appleid.cdn-apple.com, -apzones.com, -cdn-apple.com, -gateway.icloud.com, -gc.apple.com, -gsa.apple.com, -icloud-content.com, -icloud.apple.com, -icloud.com, -icloud.com.cn, -idmsa.apple.com, -iwork.apple.com, -known-issues.apple.com, -mask-api.icloud.com, -mask-h2.icloud.com, -mask.icloud.com, -metrics.icloud.com, -pong.icloud.com, -probe.icloud.com

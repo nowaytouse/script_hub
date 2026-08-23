@@ -1,8 +1,8 @@
 # Ruleset: NSFW
-# Policy: PROXY
+# Policy: REJECT
 # Node: Any
-# Description: Auto-merged ruleset
-# Rules: 1861
+# Description: Rust-merged canonical ruleset
+# Rules: 1848
 DOMAIN,n1.kemono.cr
 DOMAIN-SUFFIX,0xxx.ws
 DOMAIN-SUFFIX,100bucksbabes.com
@@ -110,7 +110,6 @@ DOMAIN-SUFFIX,amateurs-gone-wild.com
 DOMAIN-SUFFIX,amatura.com
 DOMAIN-SUFFIX,amourangels.com
 DOMAIN-SUFFIX,amourhub.com
-DOMAIN-SUFFIX,amz123.com
 DOMAIN-SUFFIX,androidadult.com
 DOMAIN-SUFFIX,anilos.com
 DOMAIN-SUFFIX,animeflv.net
@@ -141,7 +140,6 @@ DOMAIN-SUFFIX,arbxcomix.com
 DOMAIN-SUFFIX,arirangmeari.com
 DOMAIN-SUFFIX,arktan.com
 DOMAIN-SUFFIX,artnudegalleries.com
-DOMAIN-SUFFIX,artstation.com
 DOMAIN-SUFFIX,arzon.jp
 DOMAIN-SUFFIX,ashemaletube.com
 DOMAIN-SUFFIX,ashley-madison.com
@@ -285,7 +283,6 @@ DOMAIN-SUFFIX,cartoonpornvideos.com
 DOMAIN-SUFFIX,cartoontube.com
 DOMAIN-SUFFIX,cashvideotube.com
 DOMAIN-SUFFIX,cdn.pixiv.net
-DOMAIN-SUFFIX,cdn.statically.io
 DOMAIN-SUFFIX,cehd.uchicago.edu
 DOMAIN-SUFFIX,celebjihad.com
 DOMAIN-SUFFIX,celebratehentai.com
@@ -385,7 +382,6 @@ DOMAIN-SUFFIX,dispcam.com
 DOMAIN-SUFFIX,dlsite.co.jp
 DOMAIN-SUFFIX,dlsite.com
 DOMAIN-SUFFIX,dmm.co.jp
-DOMAIN-SUFFIX,dmm.com
 DOMAIN-SUFFIX,dogfart.com
 DOMAIN-SUFFIX,dogfartnetwork.com
 DOMAIN-SUFFIX,domerotica.com
@@ -607,7 +603,6 @@ DOMAIN-SUFFIX,girlsdelta.com
 DOMAIN-SUFFIX,girlsfuck-tube.com
 DOMAIN-SUFFIX,girlssexxxx.com
 DOMAIN-SUFFIX,girlswelustfor.com
-DOMAIN-SUFFIX,github.com
 DOMAIN-SUFFIX,gladporn.com
 DOMAIN-SUFFIX,glam0ur.com
 DOMAIN-SUFFIX,glamourmagazine.co.uk
@@ -644,6 +639,7 @@ DOMAIN-SUFFIX,hamsterfucktube.com
 DOMAIN-SUFFIX,hamsterporn.tv
 DOMAIN-SUFFIX,hanime.tv
 DOMAIN-SUFFIX,hanime1.me
+DOMAIN-SUFFIX,happymag.tv
 DOMAIN-SUFFIX,hardcoregayblog.com
 DOMAIN-SUFFIX,hardsex8.com
 DOMAIN-SUFFIX,hath.network
@@ -761,7 +757,6 @@ DOMAIN-SUFFIX,hqporner.com
 DOMAIN-SUFFIX,hqtube.xxx
 DOMAIN-SUFFIX,hqxxxmovies.com
 DOMAIN-SUFFIX,hugesex.tv
-DOMAIN-SUFFIX,hulu.com
 DOMAIN-SUFFIX,hustler.com
 DOMAIN-SUFFIX,hydrusnetwork.github.io
 DOMAIN-SUFFIX,hypnohub.net
@@ -775,7 +770,6 @@ DOMAIN-SUFFIX,igayporn.tv
 DOMAIN-SUFFIX,iknowthatgirl.com
 DOMAIN-SUFFIX,imagefap.com
 DOMAIN-SUFFIX,imagepost.com
-DOMAIN-SUFFIX,images.weserv.nl
 DOMAIN-SUFFIX,imhentai.com
 DOMAIN-SUFFIX,imhentai.xxx
 DOMAIN-SUFFIX,imilfs.com
@@ -1030,7 +1024,6 @@ DOMAIN-SUFFIX,mirar.xxx
 DOMAIN-SUFFIX,missav.com
 DOMAIN-SUFFIX,misskey.art
 DOMAIN-SUFFIX,misskey.design
-DOMAIN-SUFFIX,misskey.io
 DOMAIN-SUFFIX,misskon.com
 DOMAIN-SUFFIX,mitaku.net
 DOMAIN-SUFFIX,mixasiansex.com
@@ -1176,7 +1169,6 @@ DOMAIN-SUFFIX,pantswalker.net
 DOMAIN-SUFFIX,paradise-bl.com
 DOMAIN-SUFFIX,passion.com
 DOMAIN-SUFFIX,patreon.com
-DOMAIN-SUFFIX,pawoo.net
 DOMAIN-SUFFIX,payserve.com
 DOMAIN-SUFFIX,pbabes.com
 DOMAIN-SUFFIX,peachy18.com
@@ -1199,7 +1191,6 @@ DOMAIN-SUFFIX,pinkpussy.tv
 DOMAIN-SUFFIX,pinkteentube.net
 DOMAIN-SUFFIX,pinkvelvetvault.com
 DOMAIN-SUFFIX,pinkworld.com
-DOMAIN-SUFFIX,pinterest.com
 DOMAIN-SUFFIX,pinupfiles.com
 DOMAIN-SUFFIX,pinuphunter.com
 DOMAIN-SUFFIX,pixiv.me
@@ -1381,7 +1372,6 @@ DOMAIN-SUFFIX,reelsmunkey.com
 DOMAIN-SUFFIX,reface.ai
 DOMAIN-SUFFIX,rentmen.com
 DOMAIN-SUFFIX,retroclassicporn.com
-DOMAIN-SUFFIX,retrocrush.tv
 DOMAIN-SUFFIX,rk.com
 DOMAIN-SUFFIX,rocksextube.com
 DOMAIN-SUFFIX,rodong.rep.kp
@@ -1615,12 +1605,10 @@ DOMAIN-SUFFIX,tubesex.me
 DOMAIN-SUFFIX,tubev.sex
 DOMAIN-SUFFIX,tubevintageporn.com
 DOMAIN-SUFFIX,tubexclips.com
-DOMAIN-SUFFIX,tubi.tv
 DOMAIN-SUFFIX,tubous.com
 DOMAIN-SUFFIX,tubsexer.com
 DOMAIN-SUFFIX,tubxporn.com
 DOMAIN-SUFFIX,tufos.com.br
-DOMAIN-SUFFIX,tumblr.com
 DOMAIN-SUFFIX,tushy.com
 DOMAIN-SUFFIX,tushyraw.com
 DOMAIN-SUFFIX,twibooru.org
@@ -1645,10 +1633,8 @@ DOMAIN-SUFFIX,undressaitools.net
 DOMAIN-SUFFIX,undressbaby.com
 DOMAIN-SUFFIX,undressly.app
 DOMAIN-SUFFIX,unusualporn.net
-DOMAIN-SUFFIX,uploads-ssl.webflow.com
 DOMAIN-SUFFIX,upornia.com
 DOMAIN-SUFFIX,uporno.xxx
-DOMAIN-SUFFIX,uriminzokkiri.com
 DOMAIN-SUFFIX,vagina.nl
 DOMAIN-SUFFIX,vanillaswingers.com
 DOMAIN-SUFFIX,vepornhd.club
@@ -1717,6 +1703,7 @@ DOMAIN-SUFFIX,wonporn.net
 DOMAIN-SUFFIX,woodmancastingx.com
 DOMAIN-SUFFIX,worldpornvideos.com
 DOMAIN-SUFFIX,worldsex.com
+DOMAIN-SUFFIX,wortfm.org
 DOMAIN-SUFFIX,wowgirls.com
 DOMAIN-SUFFIX,wowindianporn.com
 DOMAIN-SUFFIX,wowsweeties.com

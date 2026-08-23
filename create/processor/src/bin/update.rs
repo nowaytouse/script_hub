@@ -82,6 +82,14 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
                 failures.join(", ")
             );
         }
+        let failures = rust_processor::general_update::run_general_updates(root);
+        if !failures.is_empty() {
+            eprintln!(
+                "[WARN] {} general ruleset(s) kept at their last validated version: {}",
+                failures.len(),
+                failures.join(", ")
+            );
+        }
     }
 
     // PROMAX owns both source downloads and local compilation.  Keep the rest
@@ -100,6 +108,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
         "[INFO] ruleset cleanup deleted {} file(s)",
         cleanup.get("deleted").copied().unwrap_or_default()
     );
+    rust_processor::general_update::enforce_category_boundaries(root)?;
 
     let modules = root.join("modules");
     let rulesets = root.join("rulesets");
@@ -119,10 +128,18 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     let converted = rust_processor::functional_update::sync_shadowrocket_variants(root)?;
     println!("[INFO] synchronized {converted} Shadowrocket module variant(s)");
 
+    let publication_version = rust_processor::publication_now()
+        .format("%Y.%m.%d")
+        .to_string();
+    let refreshed =
+        rust_processor::firewall_sync::refresh_security_modules(root, &publication_version)?;
+    println!("[INFO] refreshed {refreshed} DNS/Apple/firewall helper module(s)");
+
     let ports_source = root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
     let firewall_modules = [
         modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
         modules.join("shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module"),
+        modules.join("shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
     ];
     let firewall_refs: Vec<&str> = firewall_modules
         .iter()
@@ -134,9 +151,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
             &ports_source.to_string_lossy(),
             &firewall_refs,
             execute,
-            &rust_processor::publication_now()
-                .format("%Y.%m.%d")
-                .to_string(),
+            &publication_version,
         );
     }
     rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy());

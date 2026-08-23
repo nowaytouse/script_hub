@@ -168,6 +168,12 @@
     "risk": "broad-media"
   },
   {
+    "source": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",
+    "candidate": "URL-REGEX,\"^http:\\/\\/.+\\/amdc\\/mobileDispatch\",REJECT,extended-matching",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "protected-service"
+  },
+  {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,1500020991.vodplayer.wxamedia.com,REJECT,extended-matching,pre-matching",
     "reason": "broad-media-domain",
@@ -34699,6 +34705,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,books-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,bornkaejpngkp.website",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -43207,6 +43219,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,notes-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,notioncarpplash.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -45691,6 +45709,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,stocks-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,storageimagedisplay.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -47320,6 +47344,12 @@
     "candidate": "DOMAIN-SUFFIX,wbamedia.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,weather-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "adg.list",
@@ -59407,6 +59437,12 @@
   },
   {
     "source": "blockHTTPDNS.module",
+    "candidate": "URL-REGEX,\"^http:\\/\\/\\[2402:4e00:1411:201:0:9964:ba21:5a41\\]\\/d\",REJECT",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "protected-service"
+  },
+  {
+    "source": "blockHTTPDNS.module",
     "candidate": "URL-REGEX,\"^http:\\/\\/api\\.weibo\\.cn\\/2\\/httpdns\\/config\",REJECT",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -63262,6 +63298,12 @@
     "candidate": "||bnijec.colorfulimages.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
+    "candidate": "||books-analytics-events.news.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "filter.txt",
@@ -71773,6 +71815,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||notes-analytics-events.news.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||notioncarpplash.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -74215,6 +74263,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||steamedkipper.cyou^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||steamers77.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -74254,6 +74308,12 @@
     "candidate": "||stepwisevideo.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
+    "candidate": "||stocks-analytics-events.news.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "filter.txt",
@@ -75886,6 +75946,12 @@
     "candidate": "||wbamedia.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
+    "candidate": "||weather-analytics-events.news.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "filter.txt",
@@ -77761,6 +77827,12 @@
   },
   {
     "source": "modules/source/local/AllInOne_Mock.sgmodule",
+    "candidate": "\"^https?:\\/\\/[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+){1,3}(:\\d+)?\\/.*?\\/v\\d\\/(version|notice\\?|top_notice\\?|advert\\?position=[^2]+)\" data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/AllInOne_Mock.sgmodule",
     "candidate": "\"^https?:\\/\\/adv\\.ccb\\.com\\/ebda\\/ctm_adv\" data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.txt\"",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
@@ -77776,6 +77848,12 @@
     "candidate": "\"^https?:\\/\\/amap\\-aos\\-info\\-nogw\\.amap\\.com\\/ws\\/aos\\/alimama\\/\" data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.txt\"",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/AllInOne_Mock.sgmodule",
+    "candidate": "\"^https?:\\/\\/api-access\\.[0-9a-zA-Z_-]+\\.com\\/api\\/ad\" data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/AllInOne_Mock.sgmodule",
@@ -79891,6 +79969,12 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "555影视广告 = type=http-response, pattern=\"^https?:\\/\\/[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+){1,3}(:\\d+)?\\/api\\/v\\d\\/movie\\/index_recommend\", script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/555Ad.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "AND,((DOMAIN-KEYWORD,-ad-),(DOMAIN-SUFFIX,byteimg.com)),REJECT",
     "reason": "logical-rule-not-flattened",
     "risk": "invalid"
@@ -80749,6 +80833,12 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\/music\\/common\\/upload\\/t_splash_info\\/ - reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/(nr-op|cube)\\.elemecdn\\.com\\/.+\\.jpeg\\?x-oss-process=image\\/resize,m_fill,w_\\d{4,},h_\\d{4,}\\/($|format,webp\\/$) - reject",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -80767,8 +80857,32 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/.+?\\/music\\/common\\/upload\\/t_splash_info\\/ - reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/.+\\.(amemv|musical|snssdk|tiktokv)\\.com\\/(api|motor)\\/ad\\/ data-type=text data=\" \" status-code=200",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/.+\\.(pglstatp-toutiao|pstatp)\\.com\\/(obj|img)\\/(ad-app-package|ad)\\/.+ - reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/.+\\.(pglstatp-toutiao|pstatp)\\.com\\/(obj|img)\\/web\\.business\\.image\\/.+ - reject",
     "reason": "broad-media-match",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/.+\\.(pglstatp-toutiao|pstatp)\\.com\\/obj\\/ad-pattern\\/renderer - reject",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -80863,6 +80977,18 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/[\\d\\.]+:\\d{5}\\/\\?cmd=indexes - reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/[\\d\\.]+\\/odin\\/c1\\/(channel\\/ads|skin\\/config)\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/[\\w-]+\\.amemv\\.com\\/aweme\\/v\\d\\/ad\\/ - reject",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
@@ -80875,6 +81001,18 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/[^(apple|10010)]+\\.(com|cn)\\/(a|A)d(s|v)?(\\/|\\.js) data-type=tiny-gif status-code=200",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+){1,3}(:\\d+)?\\/api\\/v\\d\\/advert - reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/adstatic\\.peopleapp\\.com\\/upload\\/AppLoad\\/.*.(jpg|png) data-type=text data=\" \" status-code=200",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -80883,6 +81021,18 @@
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/aimg\\.babytreeimg\\.com\\/group1\\/M00\\/*\\/*\\/.*.jpg data-type=text data=\" \" status-code=200",
     "reason": "broad-media-match",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/api-access\\.(pangolin-sdk-toutiao|pangolin-sdk-toutiao1)\\.com\\/api\\/ad - reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/api\\.(pinduoduo|yangkeduo)\\.com\\/api\\/cappuccino\\/splash - reject",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -82015,6 +82165,12 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/www\\.(binance|yingwangtech)\\.(com|info|net)\\/bapi\\/composite\\/v1\\/public\\/market\\/holiday-atmosphere data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/www\\.cmbc\\.com\\.cn\\/m\\/image\\/banner\\/.*.png data-type=text data=\" \" status-code=200",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -82466,25 +82622,25 @@
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "http-response-jq ^https:\\/\\/(apissl|az2-api(-js|-idc)?)\\.(gifshow|ksapisrv)\\.com\\/rest\\/system\\/startup\\? '.sidebarExSquareStyle.commonlyUsedList |= map(select(.title == \"设置\" or .title == \"历史记录\" or .title == \"草稿箱\" or .title == \"我的钱包\" or .title == \"小程序\" or .title == \"未成年人模式\" or .title == \"官方客服\" or .title == \"内容偏好\" or .title == \"离线模式\" or .title == \"稍后再看\" or .title == \"举报中心\" or .title == \"挂件\"))'",
-    "reason": "broad-media-match",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "http-response-jq ^https:\\/\\/(apissl|az2-api(-js|-idc)?)\\.(gifshow|ksapisrv)\\.com\\/rest\\/system\\/startup\\? 'delpaths([[\"reskinConfig\"]])'",
-    "reason": "broad-media-match",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "http-response-jq ^https:\\/\\/(apissl|az2-api(-js|-idc)?)\\.(gifshow|ksapisrv)\\.com\\/rest\\/system\\/startup\\? 'delpaths([[\"sidebarExSquareStyle\",\"moreList\"]])'",
-    "reason": "broad-media-match",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "http-response-jq ^https:\\/\\/(apissl|az2-api(-js|-idc)?)\\.(gifshow|ksapisrv)\\.com\\/rest\\/system\\/startup\\? 'delpaths([[\"sidebarExSquareStyle\",\"topList\"]])'",
-    "reason": "broad-media-match",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -83146,6 +83302,12 @@
     "candidate": "大众点评 = type=http-response, pattern=^https?:\\/\\/img\\.meituan\\.net\\/(?>dpmobile|goodsawardpic)\\/, script-path=https://cdn.jsdelivr.net/gh/zirawell/R-Store@main/Res/Scripts/AntiAd/dianping.js, requires-body=true, timeout=60",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "夸克 = type=http-response, pattern=^https?:\\/\\/open-cms-api\\.(uc|quark)\\.cn\\/open-cms, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/quark.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -86158,6 +86320,12 @@
     "candidate": ".bnijec.colorfulimages.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
+    "candidate": ".books-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "reject.txt",
@@ -95641,6 +95809,12 @@
   },
   {
     "source": "reject.txt",
+    "candidate": ".notes-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject.txt",
     "candidate": ".notioncarpplash.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -98395,6 +98569,12 @@
   },
   {
     "source": "reject.txt",
+    "candidate": ".stocks-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject.txt",
     "candidate": ".storageimagedisplay.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -100342,6 +100522,12 @@
     "candidate": ".wbamedia.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
+    "candidate": ".weather-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "reject.txt",
@@ -140479,6 +140665,18 @@
   },
   {
     "source": "rulesets/Sources/Links/../skk_upstream/reject-url-regex.list",
+    "candidate": "URL-REGEX,^http://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/(EcomResourceServer/AdPlayPage/adinfo|MobileAdServer/)",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/Links/../skk_upstream/reject-url-regex.list",
+    "candidate": "URL-REGEX,^http://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/(adgateway|adv)/",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/Links/../skk_upstream/reject-url-regex.list",
     "candidate": "URL-REGEX,^https?://(api|www)\\.zhihu\\.com/(fringe|adx|commercial|ad-style-service|banners|mqtt)",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -140559,6 +140757,12 @@
     "source": "rulesets/Sources/Links/../skk_upstream/reject-url-regex.list",
     "candidate": "URL-REGEX,^https?://client\\.mail\\.163\\.com/apptrack/confinfo/searchMultiAds",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/Links/../skk_upstream/reject-url-regex.list",
+    "candidate": "URL-REGEX,^https?://ctrl\\.(playcvn|zmzapi)\\.(com|net)/app/(ads|init)",
+    "reason": "broad-cross-site-rewrite",
     "risk": "protected-service"
   },
   {
@@ -142771,8 +142975,26 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "555Ad2=type=http-response,pattern=^https?:\\/\\/[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+){1,3}(:\\d+)?\\/api\\/v\\d\\/movie\\/index_recommend,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/555Ad.js",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "555Ad=type=http-response,pattern=^https?:\\/\\/[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+){1,4}(:\\d+)?\\/api\\/v\\d\\/movie\\/index_recommend,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/555Ad.js",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "BahamutAnimeAds=type=http-response,pattern=^https?:\\/\\/api\\.gamer\\.com\\.tw\\/mobile_app\\/anime\\/v\\d/(token|m3u8).php\\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/NobyDa/Script@master/Bahamut/BahamutAnimeAds.js",
     "reason": "broad-media-match",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^http:\\/\\/[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+){1,4}(:\\d+)?\\/\\w+\\/resolv data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -143011,6 +143233,36 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://.+?/(outadservice|ting/preload)/ _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://.+?/api/v\\d/adRealTime _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://.+?/c/s/splashSchedule _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://.+?/music/common/upload/t_splash_info/ _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://.+?/promotion/(display_cache|display_ad|feed_display|search_ad) _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?://.+?\\.ott\\.cibntv\\.net/[\\w/-]+.mp4\\?sid= data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -143019,6 +143271,12 @@
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?://.+?\\.tc\\.qq\\.com/.+?p20\\d\\.1\\.mp4\\? _ reject",
     "reason": "broad-media-match",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://[\\w-]+\\.(amemv|musical|snssdk|tiktokv)\\.(com|ly)/(api|motor)/ad/ _ reject",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -143050,6 +143308,12 @@
     "candidate": "^https?://amap-aos-info-nogw\\.amap\\.com/ws/aos/alimama/ data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?://api\\.(pinduoduo|yangkeduo)\\.com/api/cappuccino/splash _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -143347,6 +143611,12 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\/music\\/common\\/upload\\/t_splash_info\\/ _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/(nr-op|cube)\\.elemecdn\\.com\\/.+\\.jpeg\\?x-oss-process=image\\/resize,m_fill,w_\\d{4,},h_\\d{4,}\\/($|format,webp\\/$) _ reject",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -143443,8 +143713,32 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/.+?\\/music\\/common\\/upload\\/t_splash_info\\/ _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/.+\\.(amemv|musical|snssdk|tiktokv)\\.com\\/(api|motor)\\/ad\\/ data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/.+\\.(pglstatp-toutiao|pstatp)\\.com\\/(obj|img)\\/(ad-app-package|ad)\\/.+ _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/.+\\.(pglstatp-toutiao|pstatp)\\.com\\/(obj|img)\\/web\\.business\\.image\\/.+ _ reject",
     "reason": "broad-media-match",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/.+\\.(pglstatp-toutiao|pstatp)\\.com\\/obj\\/ad-pattern\\/renderer _ reject",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -143539,6 +143833,24 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/2402:4e00:1200:ed00:0:9089:6dac:96b6 data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/[\\d\\.]+:\\d{5}\\/\\?cmd=indexes _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/[\\d\\.]+\\/odin\\/c1\\/(channel\\/ads|skin\\/config)\\? data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/[\\w-]+\\.amemv\\.com\\/aweme\\/v\\d\\/ad\\/ _ reject",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
@@ -143548,6 +143860,24 @@
     "candidate": "^https?:\\/\\/[\\w-]+\\.snssdk\\.com\\/.+_ad\\/ _ reject",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/[^(apple|10010)]+\\.(com|cn)\\/(a|A)d(s|v)?(\\/|\\.js) data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+){1,3}(:\\d+)?\\/api\\/v\\d\\/advert _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+){1,4}(:\\d+)?\\/.*?\\/v\\d\\/(version$|notice\\?|top_notice\\?|advert\\?position=[^2]+) data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -143632,6 +143962,30 @@
     "candidate": "^https?:\\/\\/amap-aos-info-nogw\\.amap\\.com\\/ws\\/aos\\/alimama\\/splash_screen_rt _ reject",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/api-access\\.(pangolin-sdk-toutiao|pangolin-sdk-toutiao1)\\.com\\/api\\/ad _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/api-access\\.[0-9a-zA-Z_-]+\\.com\\/api\\/ad data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/api\\.(pinduoduo|yangkeduo)\\.com\\/api\\/cappuccino\\/splash _ reject",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/api\\.(pinduoduo|yangkeduo)\\.com\\/api\\/cappuccino\\/splash data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -145051,6 +145405,12 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/www\\.(binance|yingwangtech)\\.(com|info|net)\\/bapi\\/composite\\/v1\\/public\\/market\\/holiday-atmosphere data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/www\\.cmbc\\.com\\.cn\\/m\\/image\\/banner\\/.*.png data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -145159,6 +145519,12 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "ahfs=type=http-response,pattern=^https?:\\/\\/.*(xbwpys|ahhhhfs)\\.com\\/($|[0-9a-zA-Z_/]+\\/$),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/ahfs.js",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "ai.amap.com",
     "reason": "protected-mitm-host",
     "risk": "protected-service"
@@ -145228,6 +145594,12 @@
     "candidate": "amap=type=http-response,pattern=^https?:\\/\\/.*\\.amap\\.com\\/ws\\/valueadded\\/alimama\\/splash_screen,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/amap.js",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "amdc2=type=http-response,pattern=^http:\\/\\/[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+){1,4}(:\\d+)?\\/amdc\\/mobileDispatch,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/amdc.js",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -145306,6 +145678,12 @@
     "candidate": "appconf.mail.163.com",
     "reason": "protected-mitm-host",
     "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "applet=type=http-response,pattern=^(https?://)?([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)+[a-zA-Z]{2,}(:\\d+)?/wp-json/[a-zA-Z0-9_-]+/(mp\\/)?v\\d/posts,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/applet.js",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -145653,6 +146031,18 @@
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "qj.bpojie.com",
     "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "quark2=type=http-response,pattern=^https?:\\/\\/open-cms-api\\.(uc|quark)\\.cn\\/open-cms,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/quark.js",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "quark=type=http-response,pattern=^https?:\\/\\/open-cms-api\\.(uc|quark)\\.cn\\/open-cms,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/quark.js",
+    "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
   },
   {
@@ -167467,6 +167857,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".books-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".bqjbjpgu.mygarage.dk",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -173083,6 +173479,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".notes-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".nr-beacon.movingimage.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -174421,6 +174823,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".stocks-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".stp.mediaathome.de",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -175234,6 +175642,12 @@
     "candidate": ".wa.gifts.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".weather-analytics-events.news.apple-dns.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "tracking-protection-filter.txt",
@@ -182875,6 +183289,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||books-analytics-events.news.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||bouncer-telemetry.ms2738.workers.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -185906,6 +186326,24 @@
   {
     "source": "ultimate.txt",
     "candidate": "||feedback-pa.googleapis.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||feedbackws.fe.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||feedbackws.fe2.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||feedbackws.icloud.com.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -190591,6 +191029,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||me.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||measure-codfw.wikimedia.org^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -192248,6 +192692,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||nodejs-unified-errors-handler-docs.vercel.app^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||notes-analytics-events.news.apple-dns.net^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -196789,6 +197239,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||stocks-analytics-events.news.apple-dns.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||store-steampowereed.ru^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -199604,6 +200060,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||we-telegram.hl.cn^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||weather-analytics-events.news.apple-dns.net^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },

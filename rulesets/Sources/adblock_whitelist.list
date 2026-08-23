@@ -39,13 +39,31 @@ DOMAIN-SUFFIX,gstatic.com
 
 # ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
 # 注意: 不要添加 apple.com 整体，会让广告规则失效
+DOMAIN,account.apple.com
+DOMAIN,appleid.cdn-apple.com
+DOMAIN,idmsa.apple.com
+DOMAIN,gsa.apple.com
 DOMAIN,known-issues.apple.com
 DOMAIN,gateway.icloud.com
+DOMAIN,mask.icloud.com
+DOMAIN,mask-h2.icloud.com
+DOMAIN,mask-api.icloud.com
+DOMAIN,probe.icloud.com
+DOMAIN,pong.icloud.com
+DOMAIN,metrics.icloud.com
+DOMAIN,apple-native-relay.apple.com
 DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud.com.cn
+DOMAIN-SUFFIX,icloud.apple.com
 DOMAIN-SUFFIX,icloud-content.com
 DOMAIN-SUFFIX,mzstatic.com
 DOMAIN-SUFFIX,apple-cloudkit.com
+DOMAIN-SUFFIX,apple-livephotoskit.com
+DOMAIN-SUFFIX,apzones.com
 DOMAIN-SUFFIX,cdn-apple.com
+DOMAIN-SUFFIX,gc.apple.com
+DOMAIN-SUFFIX,iwork.apple.com
+DOMAIN-SUFFIX,apple-dns.net
 DOMAIN-SUFFIX,itunes.com
 DOMAIN-SUFFIX,apple.com.akadns.net
 

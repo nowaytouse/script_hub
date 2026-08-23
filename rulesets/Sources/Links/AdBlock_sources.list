@@ -76,11 +76,11 @@ https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Marke
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/MIUIPrivacy/MIUIPrivacy.list|REJECT|auto|Privacy
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/YouMengChuangXiang/YouMengChuangXiang.list|REJECT|auto|Advertising
 
-# Excluded as category pollution or high breakage risk:
-# - geekdada/social-media-filter: social sharing widgets, not advertising
-# - wdmpa/content-farm-list: search-result content farms, not advertising
-# - blackmatrix7/AdobeActivation: activation/licensing, not advertising
-# - blackmatrix7/JiGuangTuiSong: push notification delivery, blocking may break notifications
-# - blackmatrix7/Privacy_All_No_Resolve: semantic duplicate of Privacy_All
+# Separate optional sources remain catalogued in
+# rulesets/Sources/sgmodule/AdBlock_sources_manual.list. They are not enabled by
+# PROMAX because content farms, social widgets, activation and push delivery are
+# different product behaviours, not advertising. sr_ad_only.conf above retains
+# the advertising subset without importing sr_adb.conf routing policies.
+# Privacy_All_No_Resolve is the same payload class as Privacy_All and is deduped.
 
 # LocalModules are auto-discovered by the Rust compiler; do not duplicate them here.

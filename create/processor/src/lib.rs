@@ -768,6 +768,7 @@ pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std
 }
 
 pub mod functional_update;
+pub mod general_update;
 pub mod merge_bundles;
 pub mod module_catalog;
 pub mod promax;

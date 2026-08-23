@@ -138,10 +138,10 @@ jobs:
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
 
-    - name: Validate PROMAX Rust
+    - name: Validate Rust pipeline
       env:
         CARGO_BUILD_JOBS: '1'
-      run: cargo test --manifest-path create/processor/Cargo.toml 'promax::' -- --test-threads=1
+      run: cargo test --manifest-path create/processor/Cargo.toml -- --test-threads=1
 
     - name: Execute Rust Ruleset Update
       run: |
@@ -151,6 +151,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: 'true'
         GITHUB_ACTIONS: 'true'
+        CARGO_BUILD_JOBS: '1'
+        SCRIPTHUB_DOWNLOAD_CONCURRENCY: '4'
 
     - name: Validate generated modules
       run: cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"

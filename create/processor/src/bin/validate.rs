@@ -46,6 +46,12 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
                 } else {
                     rust_processor::promax::validation::validate_surge_module(&content)
                 };
+                let mut validation = validation;
+                validation.extend(
+                    rust_processor::promax::validation::validate_apple_compatibility(
+                        &content, false,
+                    ),
+                );
                 if !validation.is_empty() {
                     eprintln!(
                         "[ERROR] {}: {} validation error(s)",
@@ -85,6 +91,13 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
             artifacts += 1;
             let validation =
                 rust_processor::promax::validation::validate_external_ruleset(&content);
+            let mut validation = validation;
+            validation.extend(
+                rust_processor::promax::validation::validate_apple_compatibility(
+                    &content,
+                    directory.ends_with("AdBlock"),
+                ),
+            );
             if !validation.is_empty() {
                 eprintln!(
                     "[ERROR] {}: {} validation error(s)",
@@ -98,6 +111,32 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
             }
         }
     }
+
+    let port_source = root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
+    if port_source.is_file() {
+        let content = std::fs::read_to_string(&port_source).map_err(|error| error.to_string())?;
+        let validation =
+            rust_processor::promax::validation::validate_apple_compatibility(&content, false);
+        artifacts += 1;
+        if !validation.is_empty() {
+            eprintln!(
+                "[ERROR] {}: {} Apple compatibility error(s)",
+                port_source.display(),
+                validation.len()
+            );
+            for item in validation.iter().take(3) {
+                eprintln!("        line {} {}", item.line, item.code);
+            }
+            errors += validation.len();
+        }
+    }
+
+    artifacts += 1;
+    let boundary_errors = rust_processor::general_update::validate_category_boundaries(root)?;
+    for message in &boundary_errors {
+        eprintln!("[ERROR] ruleset category contamination: {message}");
+    }
+    errors += boundary_errors.len();
     Ok((artifacts, errors))
 }
 

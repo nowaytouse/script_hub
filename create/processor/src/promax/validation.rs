@@ -1,4 +1,4 @@
-use super::rule::{SurgeRule, split_fields};
+use super::rule::{RuleKind, SurgeRule, split_fields};
 use fancy_regex::Regex;
 use std::collections::HashSet;
 
@@ -95,6 +95,7 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
             error(1, "missing-name", "module metadata is missing #!name"),
         );
     }
+    errors.extend(validate_transport_security(content));
     errors
 }
 
@@ -113,6 +114,61 @@ pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationE
             validate_regex_entry(section, 1, line, &mut errors);
         }
         _ => {}
+    }
+    errors.extend(validate_transport_security(line));
+    errors
+}
+
+/// Reject settings and rewrites that weaken transport security by default.
+pub fn validate_transport_security(content: &str) -> Vec<ValidationError> {
+    let mut errors = Vec::new();
+    for (index, raw_line) in content.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') && !line.starts_with("#!") {
+            continue;
+        }
+        let compact: String = line
+            .chars()
+            .filter(|character| !character.is_whitespace())
+            .flat_map(char::to_lowercase)
+            .collect();
+        if compact.contains("skip-server-cert-verify=true") {
+            errors.push(error(
+                index + 1,
+                "tls-verification-disabled",
+                "certificate verification must not be disabled",
+            ));
+        }
+        if compact.contains("isworkaroundsslpinning:true")
+            || compact.contains("isworkaroundsslpinning=true")
+        {
+            errors.push(error(
+                index + 1,
+                "tls-pinning-workaround-default",
+                "SSL-pinning workarounds must be opt-in instead of enabled by default",
+            ));
+        }
+
+        let normalized = line.replace(r"\/", "/");
+        let tokens: Vec<&str> = normalized.split_whitespace().collect();
+        let strict_https_source = tokens
+            .first()
+            .map(|token| token.trim_matches(['\"', '\'']))
+            .is_some_and(|token| token.starts_with("^https://"));
+        if strict_https_source
+            && tokens.iter().skip(1).any(|token| {
+                token
+                    .trim_matches(['\"', '\'', ','])
+                    .to_ascii_lowercase()
+                    .starts_with("http://")
+            })
+        {
+            errors.push(error(
+                index + 1,
+                "tls-downgrade-rewrite",
+                "HTTPS requests must not be redirected to plaintext HTTP",
+            ));
+        }
     }
     errors
 }
@@ -144,6 +200,106 @@ pub fn validate_external_ruleset(content: &str) -> Vec<ValidationError> {
             Err(parse_error) => {
                 errors.push(error(index + 1, "invalid-rule", parse_error.to_string()))
             }
+        }
+    }
+    errors
+}
+
+/// Reject project artifacts that can interfere with Apple Account, iCloud, or APNs.
+/// `implicit_reject` is used for files published inside the AdBlock tree, where
+/// rules intentionally omit their policy.
+pub fn validate_apple_compatibility(content: &str, implicit_reject: bool) -> Vec<ValidationError> {
+    let mut errors = Vec::new();
+    let mut section = None;
+    for (index, raw_line) in content.lines().enumerate() {
+        let line_number = index + 1;
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if line.starts_with('[') && line.ends_with(']') {
+            section = Some(&line[1..line.len() - 1]);
+            continue;
+        }
+
+        if section == Some("MITM") {
+            if let Some((key, value)) = line.split_once('=')
+                && key.trim().eq_ignore_ascii_case("hostname")
+            {
+                for candidate in value.split(',').map(str::trim) {
+                    let candidate = candidate
+                        .strip_prefix("%APPEND%")
+                        .or_else(|| candidate.strip_prefix("%INSERT%"))
+                        .unwrap_or(candidate)
+                        .trim();
+                    if !candidate.starts_with('-')
+                        && crate::promax::safety::apple_host_pattern_is_critical(candidate)
+                    {
+                        errors.push(error(
+                            line_number,
+                            "apple-critical-mitm",
+                            format!("Apple critical host must be excluded from MITM: {candidate}"),
+                        ));
+                    }
+                }
+            }
+            continue;
+        }
+
+        if section == Some("Host") {
+            if let Some((host, resolver)) = line.split_once('=')
+                && crate::promax::safety::apple_host_pattern_is_critical(host)
+                && !resolver.trim().eq_ignore_ascii_case("server:system")
+            {
+                errors.push(error(
+                    line_number,
+                    "apple-critical-host-mapping",
+                    "Apple critical hosts must use server:system instead of fixed or third-party DNS",
+                ));
+            }
+            continue;
+        }
+
+        if section != Some("Rule") && !implicit_reject {
+            continue;
+        }
+        let cleaned = crate::strip_inline_comment(line);
+        let cleaned = cleaned.trim();
+        let upper = cleaned.to_ascii_uppercase();
+        if upper.starts_with("DEST-PORT,5223,") && upper.contains("REJECT") {
+            errors.push(error(
+                line_number,
+                "apple-apns-port-block",
+                "TCP 5223 is required by Apple Push Notification Service",
+            ));
+            continue;
+        }
+
+        let Ok(rule) = SurgeRule::parse(cleaned) else {
+            continue;
+        };
+        let targets_critical = match rule.kind {
+            RuleKind::Domain
+            | RuleKind::DomainSuffix
+            | RuleKind::DomainWildcard
+            | RuleKind::DomainRegex => {
+                crate::promax::safety::apple_host_pattern_is_critical(&rule.payload)
+            }
+            RuleKind::DomainKeyword => crate::promax::safety::APPLE_CRITICAL_EXACT
+                .iter()
+                .chain(crate::promax::safety::APPLE_CRITICAL_SUFFIXES.iter())
+                .any(|host| host.contains(&rule.payload.to_ascii_lowercase())),
+            _ => false,
+        };
+        let is_direct = rule.policy.as_deref() == Some("DIRECT");
+        if targets_critical && (implicit_reject || !is_direct) {
+            errors.push(error(
+                line_number,
+                "apple-critical-nondirect",
+                format!(
+                    "Apple critical rule must be DIRECT and outside ad-block output: {cleaned}"
+                ),
+            ));
         }
     }
     errors
@@ -198,6 +354,7 @@ pub fn validate_loon_plugin(content: &str) -> Vec<ValidationError> {
             error(1, "missing-name", "plugin metadata is missing #!name"),
         );
     }
+    errors.extend(validate_transport_security(content));
     errors
 }
 
@@ -685,7 +842,10 @@ fn error(line: usize, code: &'static str, message: impl Into<String>) -> Validat
 
 #[cfg(test)]
 mod tests {
-    use super::{validate_loon_plugin, validate_surge_module, validate_surge_section_line};
+    use super::{
+        validate_apple_compatibility, validate_loon_plugin, validate_surge_module,
+        validate_surge_section_line, validate_transport_security,
+    };
 
     #[test]
     fn reports_structural_errors_with_exact_source_lines() {
@@ -816,5 +976,68 @@ DOMAIN-SUFFIX,ads.example,REJECT
 ^https://mirror\.example/(.*) https://origin.example/$1 header
 "#;
         assert_eq!(validate_loon_plugin(fixture), Vec::new());
+    }
+
+    #[test]
+    fn apple_compatibility_rejects_auth_mitm_dns_and_apns_blocks() {
+        let fixture = r#"#!name=unsafe
+[Rule]
+DOMAIN,account.apple.com,REJECT-DROP
+DEST-PORT,5223,REJECT
+[Host]
+*.icloud.com = 1.2.3.4
+[MITM]
+hostname = %APPEND% *.icloud.com, -idmsa.apple.com
+"#;
+        let codes: Vec<&str> = validate_apple_compatibility(fixture, false)
+            .iter()
+            .map(|error| error.code)
+            .collect();
+        assert_eq!(
+            codes,
+            vec![
+                "apple-critical-nondirect",
+                "apple-apns-port-block",
+                "apple-critical-host-mapping",
+                "apple-critical-mitm",
+            ]
+        );
+    }
+
+    #[test]
+    fn apple_compatibility_accepts_direct_system_dns_and_mitm_exclusions() {
+        let fixture = r#"#!name=safe
+[Rule]
+DOMAIN,account.apple.com,DIRECT
+DOMAIN-SUFFIX,icloud.com,DIRECT
+[Host]
+account.apple.com = server:system
+*.icloud.com = server:system
+[MITM]
+hostname = %INSERT% -account.apple.com, -*.icloud.com, weatherkit.apple.com
+"#;
+        assert_eq!(validate_apple_compatibility(fixture, false), Vec::new());
+    }
+
+    #[test]
+    fn transport_security_rejects_unsafe_defaults_and_https_downgrades() {
+        let fixture = r#"#!arguments=isWorkaroundSSLPinning:true
+skip-server-cert-verify = true
+^https:\/\/link\.example\/\?target=(.*) http://$1 302
+^https?:\/\/legacy\.example\/(.*) http://$1 302
+"#;
+        let actual: Vec<(usize, &str)> = validate_transport_security(fixture)
+            .iter()
+            .map(|error| (error.line, error.code))
+            .collect();
+
+        assert_eq!(
+            actual,
+            vec![
+                (1, "tls-pinning-workaround-default"),
+                (2, "tls-verification-disabled"),
+                (3, "tls-downgrade-rewrite"),
+            ]
+        );
     }
 }

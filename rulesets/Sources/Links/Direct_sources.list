@@ -17,7 +17,7 @@ Kelee_SpeedtestChina_local.yaml
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/ChinaMax/ChinaMax_Domain.list
 
 # Loyalsoldier - 中国域名列表
-https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/rulesets/direct.txt
+https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
 
 # Sukka China Direct & Music
 ../skk_upstream/direct.list
@@ -63,7 +63,7 @@ https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Loon/Privat
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Shadowrocket/Lan/Lan.list
 
 # LocalAreaNetwork (ACL4SSR)
-https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/LocalAreaNetwork.list
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list
 
 # Private IPs (Loyalsoldier)
 https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@refs/heads/release/surge/private.txt
@@ -74,6 +74,4 @@ https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/private.txt
 # Smart-Config-Kit Supplement
 ../custom/SmartConfigKit/SCK_Direct.list
 
-# Smart-Config-Kit supplement
-../custom/SmartConfigKit/SCK_Direct.list
 ../custom/ChinaASN_manual.list

@@ -23,6 +23,38 @@ static AD_INTENT: Lazy<Regex> = Lazy::new(|| {
 static HOST_CANDIDATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(?:[a-z0-9*?_-]+\.)+[a-z0-9*?_-]+").unwrap());
 
+/// Apple documents these hosts as required for Apple Account authentication.
+pub const APPLE_CRITICAL_EXACT: &[&str] = &[
+    "account.apple.com",
+    "appleid.cdn-apple.com",
+    "idmsa.apple.com",
+    "gsa.apple.com",
+    "gateway.icloud.com",
+    "known-issues.apple.com",
+    "mask.icloud.com",
+    "mask-h2.icloud.com",
+    "mask-api.icloud.com",
+    "probe.icloud.com",
+    "pong.icloud.com",
+    "metrics.icloud.com",
+    "apple-native-relay.apple.com",
+];
+
+/// Apple documents these domains as required for iCloud and related services.
+pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
+    "apple-cloudkit.com",
+    "apple-livephotoskit.com",
+    "apzones.com",
+    "cdn-apple.com",
+    "gc.apple.com",
+    "icloud.com",
+    "icloud.com.cn",
+    "icloud.apple.com",
+    "icloud-content.com",
+    "iwork.apple.com",
+    "apple-dns.net",
+];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SafetyDecision {
     Keep,
@@ -61,6 +93,26 @@ pub struct ProtectionStats {
     pub domain_patterns: usize,
     pub ip_networks: usize,
     pub invalid_entries: usize,
+}
+
+pub fn apple_host_pattern_is_critical(pattern: &str) -> bool {
+    let pattern = pattern
+        .trim()
+        .trim_start_matches('-')
+        .trim_start_matches("*.")
+        .split(':')
+        .next()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    APPLE_CRITICAL_EXACT.iter().any(|host| {
+        pattern == *host
+            || host.ends_with(&format!(".{pattern}"))
+            || pattern.ends_with(&format!(".{host}"))
+    }) || APPLE_CRITICAL_SUFFIXES.iter().any(|suffix| {
+        pattern == *suffix
+            || suffix.ends_with(&format!(".{pattern}"))
+            || pattern.ends_with(&format!(".{suffix}"))
+    })
 }
 
 impl ProtectionStats {
@@ -424,7 +476,19 @@ fn hostname_reference_token(hostname: &str) -> String {
 }
 
 pub fn classify_functional_url(line: &str) -> SafetyDecision {
-    if MEDIA_MARKER.is_match(line) && !AD_INTENT.is_match(line) {
+    let normalized = line
+        .trim_matches(['"', '\''])
+        .replace(r"\/", "/")
+        .to_ascii_lowercase();
+    let has_url_scheme = normalized.starts_with("^http://")
+        || normalized.starts_with("^https://")
+        || normalized.starts_with("^https?://")
+        || normalized.starts_with("^(http://")
+        || normalized.starts_with("^(https://")
+        || normalized.starts_with("^(https?://");
+    if has_url_scheme && request_host_patterns(line).is_empty() {
+        SafetyDecision::Quarantine("broad-cross-site-rewrite")
+    } else if MEDIA_MARKER.is_match(line) && !AD_INTENT.is_match(line) {
         SafetyDecision::Quarantine("broad-media-match")
     } else {
         SafetyDecision::Keep
@@ -449,8 +513,8 @@ fn wildcard_regex(value: &str) -> Regex {
 #[cfg(test)]
 mod tests {
     use super::{
-        QuarantineRecord, RiskClass, SafetyDecision, SafetyPolicy, classify_domain_payload,
-        classify_functional_url,
+        QuarantineRecord, RiskClass, SafetyDecision, SafetyPolicy, apple_host_pattern_is_critical,
+        classify_domain_payload, classify_functional_url,
     };
     use crate::promax::rule::SurgeRule;
 
@@ -596,5 +660,30 @@ mod tests {
         ];
 
         assert!(!safety.hostname_is_referenced("*.ads.example", &functions));
+    }
+
+    #[test]
+    fn hostless_and_malformed_cross_site_rewrites_are_quarantined() {
+        for pattern in [
+            r"^https?:\/\/[^(apple|10010)]+\.(com|cn)\/(a|A)d(s|v)?",
+            r"^(https?://)?([a-z0-9-]+\.)+[a-z]{2,}/wp-json/.+",
+        ] {
+            assert_eq!(
+                classify_functional_url(pattern),
+                SafetyDecision::Quarantine("broad-cross-site-rewrite")
+            );
+        }
+        assert_eq!(
+            classify_functional_url(r"^https://ads\.example\.com/banner"),
+            SafetyDecision::Keep
+        );
+    }
+
+    #[test]
+    fn apple_critical_host_matching_catches_broad_patterns() {
+        assert!(apple_host_pattern_is_critical("account.apple.com"));
+        assert!(apple_host_pattern_is_critical("*.icloud.com"));
+        assert!(apple_host_pattern_is_critical("*.apple.com"));
+        assert!(!apple_host_pattern_is_critical("weatherkit.apple.com"));
     }
 }

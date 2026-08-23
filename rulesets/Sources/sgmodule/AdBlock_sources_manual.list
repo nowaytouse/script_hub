@@ -1,54 +1,26 @@
-# Legacy AdBlock source reference
-# Canonical manifest: rulesets/Sources/Links/AdBlock_sources.txt
-# This file is kept only as historical reference for the archived shell pipeline.
-# Updated: 2026-04-09
+# Optional filter source catalogue (not merged into PROMAX)
 #
-# Format: URL|POLICY (optional)
-# Supported policies: REJECT, REJECT-DROP, REJECT-NO-DROP
-# If no policy specified, defaults to REJECT
+# PROMAX's canonical advertising manifest is:
+#   rulesets/Sources/Links/AdBlock_sources.list
+#
+# These sources are retained for users who explicitly want their separate
+# behaviour. Mixing them into a default advertising module would make category
+# semantics and failure modes unpredictable.
+# Format: SOURCE|SUGGESTED_POLICY|PURPOSE|RISK
 
-# blackmatrix7 - Advertising & Privacy
-# Note: BlockHttpDNS.list is used directly in module to preserve
-#       REJECT-DROP policy
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@refs/heads/master/rule/Surge/Advertising/Advertising_All.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@refs/heads/master/rule/Surge/Privacy/Privacy_All.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Hijacking/Hijacking.list|REJECT
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Privacy/Privacy_All_No_Resolve.list|REJECT
-# https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/BlockHttpDNS/BlockHttpDNS.list|REJECT-DROP  # Excluded - used in module
+# Search-result content farms (content quality, not advertising)
+https://cdn.jsdelivr.net/gh/wdmpa/content-farm-list@refs/heads/main/Surge.txt|REJECT|ContentFilter|May hide legitimate search results
 
-# limbopro - Adblock4limbo
-https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list|REJECT
-https://limbopro.com/Adblock4limbo_surge.list|REJECT
+# Social sharing widgets (privacy/UI choice, not social-media routing)
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt|REJECT|SocialWidgets|May break share/login widgets
 
-# anti-AD (privacy-protection-tools)
-https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt|REJECT
-https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@refs/heads/master/discretion/dns.txt|REJECT-DROP
-https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@refs/heads/master/discretion/pcdn.txt|REJECT
+# Third-party push delivery (privacy choice)
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/JiGuangTuiSong/JiGuangTuiSong.list|REJECT|PushPrivacy|May break application notifications
 
-# geekdada - surge-list
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/tracking-protection-filter.txt|REJECT
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/adaway.txt|REJECT
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt|REJECT
-https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/neohosts.txt|REJECT
+# Adobe activation is retained only as provenance. It is not advertising and
+# must not be enabled by PROMAX because it can disrupt licensed applications.
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/AdobeActivation/AdobeActivation.list|REJECT|Activation|Breaks licensing and update flows
 
-# skk.moe - Sukka Ruleset (Policy-Specific)
-# Note: reject-no-drop.conf and reject-drop.conf are used directly
-#       in module to preserve their specific policies
-https://ruleset.skk.moe/List/domainset/reject.conf|REJECT
-https://ruleset.skk.moe/List/domainset/reject_extra.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/reject.conf|REJECT
-# https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf|REJECT-NO-DROP  # Excluded - used in module
-# https://ruleset.skk.moe/List/non_ip/reject-drop.conf|REJECT-DROP  # Excluded - used in module
-https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf|REJECT
-https://ruleset.skk.moe/List/ip/reject.conf|REJECT
-https://ruleset.skk.moe/List/non_ip/sogouinput.conf|REJECT
-
-# ACL4SSR
-https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/BanAD.list|REJECT
-
-# Other Sources
-https://cdn.jsdelivr.net/gh/wdmpa/content-farm-list@refs/heads/main/Surge.txt|REJECT
-https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list|REJECT
-
-# MetaCubeX 本地规则 (从.srs反编译)
-../MetaCubeX/MetaCubeX_category-ads-all.list
+# Full Shadowrocket routing profile retained as provenance only. PROMAX uses
+# sr_ad_only.conf so proxy/direct/final policies are never interpreted as ads.
+https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_adb.conf|REFERENCE|RoutingProfile|Do not compile as an ad ruleset

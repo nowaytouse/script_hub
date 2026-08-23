@@ -21,10 +21,10 @@ jobs:
         with:
           rust-src-dir: create/processor
 
-      - name: Validate PROMAX Rust
+      - name: Validate Rust pipeline
         env:
           CARGO_BUILD_JOBS: '1'
-        run: cargo test --manifest-path create/processor/Cargo.toml 'promax::' -- --test-threads=1
+        run: cargo test --manifest-path create/processor/Cargo.toml -- --test-threads=1
 
       - name: Guard generated-tree edits
         run: cargo run --manifest-path create/processor/Cargo.toml --bin guard

@@ -2,7 +2,7 @@
 # Purpose: 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject
 # Category-Key: Security
 # Shard: 1/1
-# Total Rules: 84
+# Total Rules: 83
 DOMAIN,paydns.wechatpay.cn
 IP-CIDR,106.39.206.21/32,NO-RESOLVE
 IP-CIDR,106.39.206.25/32,NO-RESOLVE
@@ -84,6 +84,5 @@ URL-REGEX,^http:\/\/47\.100\.123\.169\/resolve
 URL-REGEX,^http:\/\/47\.101\.175\.206\/resolve
 URL-REGEX,^http:\/\/54\.222\.159\.138:8053\/httpdns\/
 URL-REGEX,^http:\/\/81\.69\.130\.131\/d
-URL-REGEX,^http:\/\/\[2402:4e00:1411:201:0:9964:ba21:5a41\]\/d
 URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns
 URL-REGEX,^http:\/\/xmc\.ximalaya\.com\/xmlymain-login-web\/login\/

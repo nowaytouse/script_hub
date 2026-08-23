@@ -1,6 +1,8 @@
+# Advanced opt-in outbound denylist. Normal Apple, Bonjour, AirPlay, printing,
+# Xcode and LAN service ports are intentionally excluded by the Rust publisher.
 IN-PORT,8076,REJECT-DROP
 DEST-PORT,8076,REJECT-DROP
-IN-PORT,127.0.0.1:12654,REJECT-DROP
+IN-PORT,12654,REJECT-DROP
 DEST-PORT,1025,REJECT-DROP   # 常被 Windows RAT 占用
 DEST-PORT,1026,REJECT-DROP   # Windows messenger spam / RAT
 DEST-PORT,1027,REJECT-DROP   # Windows messenger spam
@@ -41,7 +43,6 @@ DEST-PORT,40421,REJECT-DROP  # Masters Paradise
 DEST-PORT,4444,REJECT-DROP   # Metasploit meterpreter 默认监听
 DEST-PORT,4445,REJECT-DROP   # Metasploit 变体
 DEST-PORT,45700,REJECT-DROP  # Stratum 高端口
-DEST-PORT,4659,REJECT-DROP   # Xsan / StorNext CVFS
 DEST-PORT,4905,REJECT-DROP   # Silver Sparrow v2 C2 观测端口
 DEST-PORT,49152,REJECT-DROP  # UPnP SOAP（Broadband Forum TR-064 漏洞）
 DEST-PORT,49153,REJECT-DROP  # UPnP 动态端口
@@ -49,7 +50,6 @@ DEST-PORT,49154,REJECT-DROP  # UPnP 动态端口
 DEST-PORT,49475,REJECT-DROP  # macOS 后门高端口（ESET/SentinelOne 威胁情报）
 DEST-PORT,50050,REJECT-DROP  # Cobalt Strike teamserver
 DEST-PORT,50051,REJECT-DROP  # Cobalt Strike 变体
-DEST-PORT,5223,REJECT-DROP   # APNs 端口（被伪装成 Apple Push 的 macOS RAT 使用）
 DEST-PORT,5355,REJECT-DROP
 DEST-PORT,54320,REJECT-DROP  # Back Orifice 2000
 DEST-PORT,54321,REJECT-DROP  # Back Orifice 2000
@@ -70,13 +70,11 @@ DEST-PORT,6712,REJECT-DROP
 DEST-PORT,6713,REJECT-DROP
 DEST-PORT,6771,REJECT-DROP
 DEST-PORT,7,REJECT-DROP      # Echo（放大 ~2x，但量大时危险）
-DEST-PORT,7000,REJECT-DROP   # IRC 备用，僵尸网络常用
 DEST-PORT,7777,REJECT-DROP   # Stratum 备用
 DEST-PORT,8076,REJECT-DROP
 DEST-PORT,8333,REJECT-DROP   # Bitcoin P2P（同时被矿机用）
 DEST-PORT,8567,REJECT-DROP   # macOS 恶意软件 C2 高频观测端口
 DEST-PORT,9,REJECT-DROP      # Discard（无意义，常被扫描）
-DEST-PORT,9100,REJECT-DROP   # RAW 打印 / JetDirect（可任意读写文件系统）
 DEST-PORT,9898,REJECT-DROP   # Dabber worm
 DEST-PORT,9996,REJECT-DROP   # Sasser 蠕虫 FTP 传输
 DEST-PORT,9999,REJECT-DROP   # Stratum 备用

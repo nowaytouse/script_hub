@@ -126,11 +126,11 @@ fn process_file(path: &Path, dry_run: bool) -> bool {
 
             let mut new_domains = Vec::new();
             for d in &domains {
-                let mut check_domain = *d;
                 if d.starts_with('-') {
-                    check_domain = &d[1..];
+                    new_domains.push(*d);
+                    continue;
                 }
-                if !is_restricted(check_domain) {
+                if !is_restricted(d) {
                     new_domains.push(*d);
                 }
             }
@@ -192,4 +192,32 @@ pub fn run_mitm_cleanup(directory: &str, dry_run: bool) -> i32 {
         }
     }
     modified_count
+}
+
+#[cfg(test)]
+mod tests {
+    use super::process_file;
+    use std::fs;
+
+    #[test]
+    fn cleanup_removes_restricted_mitm_but_keeps_safety_exclusions() {
+        let directory =
+            std::env::temp_dir().join(format!("script-hub-mitm-cleanup-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&directory);
+        fs::create_dir_all(&directory).unwrap();
+        let module = directory.join("test.sgmodule");
+        fs::write(
+            &module,
+            "#!name=test\n[MITM]\nhostname = %INSERT% gsa.apple.com, -account.apple.com, -*.apple.com, api.example.com\n",
+        )
+        .unwrap();
+
+        assert!(process_file(&module, false));
+        let content = fs::read_to_string(&module).unwrap();
+        assert!(!content.contains("%INSERT% gsa.apple.com"));
+        assert!(content.contains("-account.apple.com"));
+        assert!(content.contains("-*.apple.com"));
+        assert!(content.contains("api.example.com"));
+        fs::remove_dir_all(directory).unwrap();
+    }
 }
