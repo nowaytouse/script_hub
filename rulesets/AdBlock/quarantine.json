@@ -48223,12 +48223,6 @@
   },
   {
     "source": "anti-ad-surge2.txt",
-    "candidate": ".40images25.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
     "candidate": ".595image.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -56497,6 +56491,12 @@
   },
   {
     "source": "anti-ad-surge2.txt",
+    "candidate": ".onlinemediahelper.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
     "candidate": ".onlinepromogift.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -56887,6 +56887,12 @@
   },
   {
     "source": "anti-ad-surge2.txt",
+    "candidate": ".poosh.wizzo.media",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
     "candidate": ".popads.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -57046,6 +57052,12 @@
     "candidate": ".rad.live.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
+    "candidate": ".radar.wizzo.media",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
   },
   {
     "source": "anti-ad-surge2.txt",
@@ -146618,12 +146630,6 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,247media.com,Reject",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "sr_ad_only.conf",
-    "candidate": "DOMAIN-SUFFIX,40images25.com,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
