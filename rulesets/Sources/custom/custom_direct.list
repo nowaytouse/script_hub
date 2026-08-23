@@ -1,5 +1,10 @@
 # --- Private DNS Upstreams ---
 
-IP-CIDR,1.2.4.8/32,DIRECT,no-resolve
-IP-CIDR,114.114.114.114/32,DIRECT,no-resolve
-IP-CIDR,114.114.115.115/32,DIRECT,no-resolve
+IP-CIDR,1.2.4.8/32,no-resolve
+IP-CIDR,114.114.114.114/32,no-resolve
+IP-CIDR,114.114.115.115/32,no-resolve
+DOMAIN,dns.alidns.com
+DOMAIN,doh.pub
+DOMAIN,dns.pub
+DOMAIN,dot.pub
+DOMAIN,doh.360.cn

@@ -2,7 +2,7 @@
 #!desc=国内常用 App 去广告集合 · PROMAX 构建源\n\n【Bundled Modules】\n✦ 小红书: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 百度: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 百度贴吧: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 网易云音乐: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 高德地图: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 豆瓣: 某些APP要清除缓存或者重新安装拦截广告才会生效！\n\n✦ 微信公众号: 某些APP要清除缓存或者重新安装拦截广告才会生效！
 #!author=fmz200, ScriptHub
 #!tag=去广告, 综合, PROMAX-build
-#!date=2026-08-23 06:02:17
+#!date=2026-08-23 18:46:17
 #!arguments=xhs_enable:true,per_filter_video_thread:"0",DT:false,FX:true,MY:true,whyiyyybyt_enable:true
 # Upstream modules merged by create/processor/merge_bundles.rs (Rust)
 # - Xiaohongshu: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/split/partX/Xiaohongshu.sgmodule
@@ -169,7 +169,6 @@ DOMAIN-SUFFIX,nsclick.baidu.com,REJECT
 DOMAIN,hm.baidu.com,REJECT
 DOMAIN,hmma.baidu.com,REJECT
 
-DOMAIN,180.76.76.200,REJECT
 # 屏蔽域名dns查询, REJECT
 IP-CIDR,180.76.76.200/32,REJECT,no-resolve
 

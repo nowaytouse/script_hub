@@ -157,13 +157,13 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy());
     rust_processor::module_catalog::refresh(root)?;
 
-    if let Some(singbox) = singbox.filter(|path| path.is_file()) {
-        if !rust_processor::srs_generator::run_srs_generator(
+    if let Some(singbox) = singbox.filter(|path| path.is_file())
+        && !rust_processor::srs_generator::run_srs_generator(
             &root.to_string_lossy(),
             &singbox.to_string_lossy(),
-        ) {
-            return Err("SRS generation failed".to_string());
-        }
+        )
+    {
+        return Err("SRS generation failed".to_string());
     }
 
     if execute {

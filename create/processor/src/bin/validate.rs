@@ -5,6 +5,16 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     let mut artifacts = 0;
     let mut errors = 0;
     let modules_root = root.join("modules");
+    let legacy_promax = modules_root.join(
+        "surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+    );
+    if !legacy_promax.is_file() {
+        eprintln!(
+            "[ERROR] missing legacy PROMAX publication: {}",
+            legacy_promax.display()
+        );
+        errors += 1;
+    }
     for directory in [
         modules_root.join("surge"),
         modules_root.join("shadowrocket"),
@@ -21,12 +31,6 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
                 continue;
             }
             let path = entry.path();
-            if path
-                .components()
-                .any(|component| component.as_os_str() == "github")
-            {
-                continue;
-            }
             let extension = path
                 .extension()
                 .and_then(|value| value.to_str())
@@ -71,16 +75,19 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         root.join("rulesets/AdBlock"),
         root.join("rulesets/RULE-SET"),
     ] {
-        let Ok(entries) = std::fs::read_dir(&directory) else {
+        if !directory.is_dir() {
             continue;
-        };
-        for entry in entries.filter_map(Result::ok) {
+        }
+        for entry in walkdir::WalkDir::new(&directory)
+            .into_iter()
+            .filter_map(Result::ok)
+        {
             let path = entry.path();
             if !path.is_file() || path.extension().and_then(|value| value.to_str()) != Some("list")
             {
                 continue;
             }
-            let content = match std::fs::read_to_string(&path) {
+            let content = match std::fs::read_to_string(path) {
                 Ok(content) => content,
                 Err(error) => {
                     eprintln!("[ERROR] {}: {error}", path.display());
@@ -150,7 +157,7 @@ fn main() -> ExitCode {
         }
     };
     match validate_tree(Path::new(&root)) {
-        Ok((artifacts, errors)) if errors == 0 => {
+        Ok((artifacts, 0)) => {
             println!("[SUCCESS] validated {artifacts} published artifacts");
             ExitCode::SUCCESS
         }

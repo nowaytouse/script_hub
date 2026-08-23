@@ -1,5 +1,5 @@
 #!name=PROMAX split · 🐦 微博去广告合集.sgmodule
-#!desc=从混合模块拆出的去广告行 21/39；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 5/39；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=rulesets/Sources/LocalModules/🐦 微博去广告合集.sgmodule
 
@@ -8,22 +8,6 @@
 ^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=hot_search_users data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=get_searching_info data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=treehole&auth= data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https?:\/\/m?api\.weibo\.c(n|om)\/\d/push\/daily data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https?:\/\/m?api\.weibo\.c(n|om)\/2\/!\/huati\/(discovery_home_bottom_getdotinfo|mobile_discovery_searchchange)\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https:\/\/m?api\.weibo\.c(n|om)\/2\/!\/huati\/discovery_home_bottom_channels data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https:\/\/m?api\.weibo\.c(n|om)\/2\/!\/chaohua\/discovery\/home_bottom\/switch data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https:\/\/m?api\.weibo\.c(n|om)\/2\/!\/was\/finder\/searchbarchange\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https:\/\/m?api\.weibo\.c(n|om)\/2\/push\/info\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 
 [Script]
-微博移除发现页广告        = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/search\/(finder|container_timeline|container_discover)\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博热搜页面广告         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/(page|flowpage)\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博话题页面广告         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/searchall\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博超话页面广告         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/statuses\/container_timeline_topicpage\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博超话tab页净化       = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/statuses\/container_timeline_topic\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博详情页面广告         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/statuses\/extend\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博最顶部的tab页分组     = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/groups\/allgroups\/v2, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博评论区广告          = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/comments\/mix_comments\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-微博转发区广告          = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/statuses\/container_detail_forward\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/weibo/weibo_ads.js, requires-body=true, timeout=60
-自定义tab皮肤         = type=http-response, pattern=^https?:\/\/m?api\.weibo\.c(n|om)\/2\/!\/client\/light_skin, script-path=https://cdn.jsdelivr.net/gh/zmqcherish/proxy-script@main/weibo_main.js, requires-body=true, timeout=60
-非会员设置tab皮肤       = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/littleskin\/preview, script-path=https://cdn.jsdelivr.net/gh/zmqcherish/proxy-script@main/weibo_main.js, requires-body=true, timeout=60
+非会员设置tab皮肤               = type=http-response, pattern=^https?:\/\/new\.vip\.weibo\.c(n|om)\/littleskin\/preview, script-path=https://cdn.jsdelivr.net/gh/zmqcherish/proxy-script@main/weibo_main.js, requires-body=true, timeout=60

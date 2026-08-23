@@ -164,8 +164,9 @@ const UTILITIES: &[RemoteSource] = &[
 
 fn downloader() -> Downloader {
     Downloader::new(DownloadConfig {
-        attempts: 2,
-        timeout: Duration::from_secs(45),
+        attempts: 3,
+        timeout: Duration::from_secs(75),
+        batch_timeout: Duration::from_secs(5 * 60),
         backoff: Duration::from_secs(1),
         concurrency: 4,
         max_bytes: 16 * 1024 * 1024,
@@ -238,16 +239,24 @@ fn metadata(values: &[(&str, &str)]) -> HashMap<String, String> {
         .collect()
 }
 
-fn merge(
-    root: &Path,
-    downloader: &Downloader,
-    op: &str,
-    output: &str,
-    header: &[(&str, &str)],
-    specs: &[RemoteSource],
-    replacements: &[(&str, &str)],
-    youtube_adblock_output: Option<&str>,
-) -> Result<(), String> {
+struct MergeJob<'a> {
+    op: &'a str,
+    output: &'a str,
+    header: &'a [(&'a str, &'a str)],
+    specs: &'a [RemoteSource],
+    replacements: &'a [(&'a str, &'a str)],
+    youtube_adblock_output: Option<&'a str>,
+}
+
+fn merge(root: &Path, downloader: &Downloader, job: MergeJob<'_>) -> Result<(), String> {
+    let MergeJob {
+        op,
+        output,
+        header,
+        specs,
+        replacements,
+        youtube_adblock_output,
+    } = job;
     let sources = fetch_sources(downloader, specs)?;
     let request = MergeBundleRequest {
         op: op.to_string(),
@@ -279,15 +288,24 @@ fn sync_local_sources(root: &Path, downloader: &Downloader) {
         eprintln!("[WARN] cannot create local functional source directory: {error}");
         return;
     }
+    let batch = downloader.download_many(LOCAL_SOURCES.iter().map(|(_, url)| *url));
     for (name, url) in LOCAL_SOURCES {
-        match downloader.get(url) {
-            Ok(content) if valid_module(&content) => {
-                if !crate::safe_write_file_internal(&directory.join(name), &content, true) {
+        match batch.contents.get(*url) {
+            Some(content) if valid_module(content) => {
+                if !crate::safe_write_file_internal(&directory.join(name), content, true) {
                     eprintln!("[WARN] failed to publish local functional source: {name}");
                 }
             }
-            Ok(_) => eprintln!("[WARN] local functional source returned invalid content: {name}"),
-            Err(error) => eprintln!("[WARN] keeping existing {name}: {error}"),
+            Some(_) => eprintln!("[WARN] local functional source returned invalid content: {name}"),
+            None => {
+                let error = batch
+                    .failures
+                    .iter()
+                    .find(|failure| failure.url == *url)
+                    .map(|failure| failure.error.as_str())
+                    .unwrap_or("missing download result");
+                eprintln!("[WARN] keeping existing {name}: {error}");
+            }
         }
     }
 }
@@ -302,62 +320,124 @@ fn run_step(label: &str, result: Result<(), String>, failures: &mut Vec<String>)
     }
 }
 
-fn harden_apple_bundle(root: &Path) -> Result<(), String> {
-    let path = root.join("modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule");
-    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+fn strip_rule_section(content: &str) -> String {
+    let mut in_rule = false;
     let mut output = Vec::new();
     for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            in_rule = trimmed.eq_ignore_ascii_case("[Rule]");
+            if in_rule {
+                continue;
+            }
+        }
+        if !in_rule {
+            output.push(line);
+        }
+    }
+    output.join("\n") + "\n"
+}
+
+fn strip_routing_rules(root: &Path, relative: &str) -> Result<(), String> {
+    let path = root.join(relative);
+    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    if !crate::safe_write_file_internal(&path, &strip_rule_section(&content), true) {
+        return Err(format!(
+            "failed to remove routing rules from {}",
+            path.display()
+        ));
+    }
+    Ok(())
+}
+
+const APPLE_FUNCTIONAL_MITM_HOSTS: &[&str] = &[
+    "play-cdn.itunes.apple.com",
+    "play-edge-cdn.itunes.apple.com",
+    "configuration.ls.apple.com",
+    "gspe35-ssl.ls.apple.com",
+    "gspe35-ssl.ls.apple.cn",
+    "weatherkit.apple.com",
+    "news-edge.apple.com",
+    "news-todayconfig-edge.apple.com",
+    "news-events.apple.com",
+    "news-sports-events.apple.com",
+    "news-client-search.apple.com",
+    "uts-api.itunes.apple.com",
+    "umc-tempo-api.apple.com",
+];
+
+fn harden_apple_content(content: &str) -> Result<String, String> {
+    let exclusions = crate::promax::safety::apple_mitm_exclusions();
+    let mut output = Vec::new();
+    let mut replaced_hostname = false;
+    for line in strip_rule_section(content).lines() {
         let line = line.replace(
             "isWorkaroundSSLPinning:true",
             "isWorkaroundSSLPinning:false",
         );
-        let trimmed = line.trim();
-        let replacement = match trimmed {
-            "DOMAIN,weather-analytics-events.apple.com,REJECT-DROP" => {
-                Some("DOMAIN,weather-analytics-events.apple.com,DIRECT")
+        if line.trim().starts_with("hostname =") {
+            if !replaced_hostname {
+                output.push(format!(
+                    "hostname = %INSERT% {}, {}",
+                    exclusions.join(", "),
+                    APPLE_FUNCTIONAL_MITM_HOSTS.join(", ")
+                ));
+                replaced_hostname = true;
             }
-            "DOMAIN-SUFFIX,tthr.apple.com,REJECT-DROP,extended-matching" => {
-                Some("DOMAIN-SUFFIX,tthr.apple.com,DIRECT")
-            }
-            "DOMAIN,tether.edge.apple,REJECT-DROP,extended-matching" => {
-                Some("DOMAIN,tether.edge.apple,DIRECT")
-            }
-            "DOMAIN,gateway.icloud.com,{{{Proxy}}}" => Some("DOMAIN,gateway.icloud.com,DIRECT"),
-            "DOMAIN,known-issues.apple.com,REJECT-DROP" => {
-                Some("DOMAIN,known-issues.apple.com,DIRECT")
-            }
-            _ => None,
-        };
-        if let Some(replacement) = replacement {
-            output.push(replacement.to_string());
-        } else if trimmed.starts_with("AND,")
-            && trimmed.contains("IP-ASN,714")
-            && trimmed.contains("PROTOCOL,QUIC")
-        {
-            output.push(
-                "# Apple-wide QUIC rejection removed; Surge already handles MITM-scoped QUIC fallback"
-                    .to_string(),
-            );
-        } else if let Some(hosts) = trimmed.strip_prefix("hostname = %APPEND% ") {
-            let mut exclusions: Vec<String> = crate::promax::safety::APPLE_CRITICAL_EXACT
-                .iter()
-                .map(|host| format!("-{host}"))
-                .collect();
-            for suffix in crate::promax::safety::APPLE_CRITICAL_SUFFIXES {
-                exclusions.push(format!("-{suffix}"));
-                exclusions.push(format!("-*.{suffix}"));
-            }
-            exclusions.sort();
-            exclusions.dedup();
-            output.push(format!(
-                "hostname = %INSERT% {}, {hosts}",
-                exclusions.join(", ")
-            ));
         } else {
             output.push(line);
         }
     }
-    let hardened = output.join("\n") + "\n";
+    if !replaced_hostname {
+        return Err("Apple bundle has no MITM hostname entry".to_string());
+    }
+    Ok(output.join("\n") + "\n")
+}
+
+fn harden_apple_bundle(root: &Path) -> Result<(), String> {
+    let path = root.join("modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule");
+    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    let hardened = harden_apple_content(&content)?;
+    if !crate::safe_write_file_internal(&path, &hardened, true) {
+        return Err(format!("failed to harden {}", path.display()));
+    }
+    Ok(())
+}
+
+fn harden_youtube_content(content: &str) -> Result<String, String> {
+    let mut in_script = false;
+    let mut in_mitm = false;
+    let mut output = Vec::new();
+    let mut replaced_hostname = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            let section = &trimmed[1..trimmed.len() - 1];
+            in_script = section == "Script";
+            in_mitm = section == "MITM";
+        }
+        if in_script && trimmed.contains("googlevideo\\.com") {
+            continue;
+        }
+        if in_mitm && trimmed.starts_with("hostname =") {
+            if !replaced_hostname {
+                output.push("hostname = %APPEND% youtubei.googleapis.com");
+                replaced_hostname = true;
+            }
+            continue;
+        }
+        output.push(line);
+    }
+    if !replaced_hostname {
+        return Err("YouTube bundle has no MITM hostname entry".to_string());
+    }
+    Ok(output.join("\n") + "\n")
+}
+
+fn harden_youtube_bundle(root: &Path) -> Result<(), String> {
+    let path = root.join("modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule");
+    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    let hardened = harden_youtube_content(&content)?;
     if !crate::safe_write_file_internal(&path, &hardened, true) {
         return Err(format!("failed to harden {}", path.display()));
     }
@@ -374,13 +454,14 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "upstream_merge",
-            "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
-            &[
+            MergeJob {
+                op: "upstream_merge",
+                output: "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
+                header: &[
                 ("name", "🍎 Apple服务增强合集"),
                 (
                     "desc",
-                    "整合 Apple 生态增强：Maps · WeatherKit · News · TV；Apple 账户与 iCloud 强制直连并排除 MITM",
+                    "整合 Apple 生态增强：Maps · WeatherKit · News · TV；路由由外部 Apple 规则集与用户策略决定，关键服务排除 MITM",
                 ),
                 ("author", "VirgilClyne[https://github.com/VirgilClyne]"),
                 ("homepage", "https://NSRingo.github.io"),
@@ -390,8 +471,8 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 ),
                 ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
             ],
-            APPLE,
-            &[
+                specs: APPLE,
+                replacements: &[
                 ("Proxy:🇺🇸美国", "Proxy:\"🍎 Apple 🍏\""),
                 (",🇺🇸美国", ",{{{Proxy}}}"),
                 (
@@ -399,9 +480,10 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     "isWorkaroundSSLPinning:false",
                 ),
             ],
-            None,
+                youtube_adblock_output: None,
+            },
         )
-        .and(harden_apple_bundle(root)),
+        .and_then(|_| harden_apple_bundle(root)),
         &mut failures,
     );
     run_step(
@@ -409,22 +491,24 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "upstream_merge",
-            "modules/surge/amplify_nexus/🌐 DualSubs字幕增强合集.sgmodule",
-            &[
-                ("name", "🌐 DualSubs字幕增强合集"),
-                (
-                    "desc",
-                    "全平台字幕增强与双语翻译；MITM/脚本覆盖面较大，请按需独立安装，不再混入 Apple 合集",
-                ),
-                ("author", "DualSubs"),
-                ("homepage", "https://github.com/DualSubs/Universal"),
-                ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                ("tag", "Subtitles, Translation, Advanced"),
-            ],
-            DUALSUBS,
-            &[],
-            None,
+            MergeJob {
+                op: "upstream_merge",
+                output: "modules/surge/amplify_nexus/🌐 DualSubs字幕增强合集.sgmodule",
+                header: &[
+                    ("name", "🌐 DualSubs字幕增强合集"),
+                    (
+                        "desc",
+                        "全平台字幕增强与双语翻译；MITM/脚本覆盖面较大，请按需独立安装，不再混入 Apple 合集",
+                    ),
+                    ("author", "DualSubs"),
+                    ("homepage", "https://github.com/DualSubs/Universal"),
+                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+                    ("tag", "Subtitles, Translation, Advanced"),
+                ],
+                specs: DUALSUBS,
+                replacements: &[],
+                youtube_adblock_output: None,
+            },
         ),
         &mut failures,
     );
@@ -433,23 +517,31 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "upstream_merge",
-            "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-            &[
-                ("name", "📺 BiliBili增强合集"),
-                (
-                    "desc",
-                    "合并 BiliUniverse 与 Maasea 的增强、全球、重定向和广告辅助能力",
-                ),
-                ("author", "BiliUniverse, Maasea"),
-                ("icon", "https://www.bilibili.com/favicon.ico"),
-                ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                ("tag", "BiliBili, 增强"),
-            ],
-            BILIBILI,
-            &[],
-            None,
-        ),
+            MergeJob {
+                op: "upstream_merge",
+                output: "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+                header: &[
+                    ("name", "📺 BiliBili增强合集"),
+                    (
+                        "desc",
+                        "合并 BiliUniverse 与 Maasea 的增强、全球、重定向和广告辅助能力",
+                    ),
+                    ("author", "BiliUniverse, Maasea"),
+                    ("icon", "https://www.bilibili.com/favicon.ico"),
+                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+                    ("tag", "BiliBili, 增强"),
+                ],
+                specs: BILIBILI,
+                replacements: &[("ForceHost:\"1\"", "ForceHost:\"2\"")],
+                youtube_adblock_output: None,
+            },
+        )
+        .and_then(|_| {
+            strip_routing_rules(
+                root,
+                "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+            )
+        }),
         &mut failures,
     );
     run_step(
@@ -457,26 +549,29 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "youtube_merge",
-            "modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule",
-            &[
-                ("name", "📺 YouTube增强合集"),
-                ("desc", "YouTube 功能增强；广告行由 Rust 拆分后并入 PROMAX"),
-                ("author", "Maasea"),
-                (
-                    "icon",
-                    "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png",
-                ),
-                ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-            ],
-            &[RemoteSource {
-                label: "YouTube.Enhance",
-                url: "https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/YouTube.Enhance.sgmodule",
-                required: true,
-            }],
-            &[],
-            Some("modules/source/local/YouTube.ADBlock.sgmodule"),
-        ),
+            MergeJob {
+                op: "youtube_merge",
+                output: "modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule",
+                header: &[
+                    ("name", "📺 YouTube增强合集"),
+                    ("desc", "YouTube 功能增强；广告行由 Rust 拆分后并入 PROMAX"),
+                    ("author", "Maasea"),
+                    (
+                        "icon",
+                        "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png",
+                    ),
+                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+                ],
+                specs: &[RemoteSource {
+                    label: "YouTube.Enhance",
+                    url: "https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/YouTube.Enhance.sgmodule",
+                    required: true,
+                }],
+                replacements: &[],
+                youtube_adblock_output: Some("modules/source/local/YouTube.ADBlock.sgmodule"),
+            },
+        )
+        .and_then(|_| harden_youtube_bundle(root)),
         &mut failures,
     );
     run_step(
@@ -484,17 +579,19 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "promax_source_merge",
-            "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule",
-            &[
-                ("name", "🐦 微博去广告"),
-                ("desc", "微博与国际版去广告 · PROMAX 构建源"),
-                ("author", "fmz200, iab0x00, ScriptHub"),
-                ("tag", "去广告, 微博, PROMAX-build"),
-            ],
-            WEIBO,
-            &[],
-            None,
+            MergeJob {
+                op: "promax_source_merge",
+                output: "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule",
+                header: &[
+                    ("name", "🐦 微博去广告"),
+                    ("desc", "微博与国际版去广告 · PROMAX 构建源"),
+                    ("author", "fmz200, iab0x00, ScriptHub"),
+                    ("tag", "去广告, 微博, PROMAX-build"),
+                ],
+                specs: WEIBO,
+                replacements: &[],
+                youtube_adblock_output: None,
+            },
         ),
         &mut failures,
     );
@@ -503,17 +600,19 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "promax_source_merge",
-            "rulesets/Sources/LocalModules/Wool.ADBlock.sgmodule",
-            &[
-                ("name", "🐑 综合去广告"),
-                ("desc", "国内常用 App 去广告集合 · PROMAX 构建源"),
-                ("author", "fmz200, ScriptHub"),
-                ("tag", "去广告, 综合, PROMAX-build"),
-            ],
-            WOOL,
-            &[],
-            None,
+            MergeJob {
+                op: "promax_source_merge",
+                output: "rulesets/Sources/LocalModules/Wool.ADBlock.sgmodule",
+                header: &[
+                    ("name", "🐑 综合去广告"),
+                    ("desc", "国内常用 App 去广告集合 · PROMAX 构建源"),
+                    ("author", "fmz200, ScriptHub"),
+                    ("tag", "去广告, 综合, PROMAX-build"),
+                ],
+                specs: WOOL,
+                replacements: &[],
+                youtube_adblock_output: None,
+            },
         ),
         &mut failures,
     );
@@ -522,22 +621,24 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         merge(
             root,
             &downloader,
-            "upstream_merge",
-            "modules/surge/amplify_nexus/📊 面板工具合集.sgmodule",
-            &[
-                ("name", "📊 面板工具合集"),
-                ("desc", "节假日、网络信息与订阅流量面板"),
-                ("author", "Rabbit-Spec, xream, Coldvvater"),
-                (
-                    "icon",
-                    "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png",
-                ),
-                ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                ("tag", "面板, 工具"),
-            ],
-            UTILITIES,
-            &[],
-            None,
+            MergeJob {
+                op: "upstream_merge",
+                output: "modules/surge/amplify_nexus/📊 面板工具合集.sgmodule",
+                header: &[
+                    ("name", "📊 面板工具合集"),
+                    ("desc", "节假日、网络信息与订阅流量面板"),
+                    ("author", "Rabbit-Spec, xream, Coldvvater"),
+                    (
+                        "icon",
+                        "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png",
+                    ),
+                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+                    ("tag", "面板, 工具"),
+                ],
+                specs: UTILITIES,
+                replacements: &[],
+                youtube_adblock_output: None,
+            },
         ),
         &mut failures,
     );
@@ -587,7 +688,7 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::valid_module;
+    use super::{harden_apple_content, harden_youtube_content, strip_rule_section, valid_module};
 
     #[test]
     fn rejects_html_and_accepts_real_module_shape() {
@@ -595,5 +696,36 @@ mod tests {
         assert!(valid_module(
             "#!name=Fixture functional module with enough bytes for validation\n#!desc=fixture\n[Script]\nfixture = type=generic,script-path=https://example.test/a.js\n"
         ));
+    }
+
+    #[test]
+    fn functional_bundle_does_not_publish_routing_rules() {
+        let module = "#!name=Fixture\n[Rule]\nDOMAIN,apple.example,DIRECT\n[Script]\nfixture = type=generic,script-path=https://example.test/a.js\n";
+        let stripped = strip_rule_section(module);
+        assert!(!stripped.contains("[Rule]"));
+        assert!(!stripped.contains("apple.example"));
+        assert!(stripped.contains("[Script]"));
+    }
+
+    #[test]
+    fn apple_hardening_keeps_only_bounded_function_hosts() {
+        let input = "#!name=Apple\n#!arguments=isWorkaroundSSLPinning:true\n[Rule]\nDOMAIN,account.apple.com,DIRECT\n[Script]\nweather = type=http-response,pattern=^https://weatherkit\\.apple\\.com,script-path=https://example.test/a.js\n[MITM]\nhostname = %APPEND% *.apple.com, arbitrary.apple.com\n";
+        let hardened = harden_apple_content(input).unwrap();
+        assert!(!hardened.contains("[Rule]"));
+        assert!(!hardened.contains("isWorkaroundSSLPinning:true"));
+        assert!(hardened.contains("-account.apple.com"));
+        assert!(hardened.contains("weatherkit.apple.com"));
+        assert!(hardened.contains("uts-api.itunes.apple.com"));
+        assert!(!hardened.contains("arbitrary.apple.com"));
+    }
+
+    #[test]
+    fn youtube_hardening_moves_googlevideo_work_out_of_feature_bundle() {
+        let input = "#!name=YouTube\n[Script]\nyoutube = type=http-response,pattern=^https://youtubei\\.googleapis\\.com,script-path=https://example.test/a.js\ninit = type=http-request,pattern=^https://x\\.googlevideo\\.com/initplayback,script-path=https://example.test/b.js\n[MITM]\nhostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com\n";
+        let hardened = harden_youtube_content(input).unwrap();
+        assert!(hardened.contains("youtubei.googleapis.com"));
+        assert!(!hardened.contains("googlevideo\\.com"));
+        assert!(!hardened.contains("*.googlevideo.com"));
+        assert!(!hardened.contains("hostname = %APPEND%\n"));
     }
 }

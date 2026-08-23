@@ -3,15 +3,14 @@ name = "rust_processor"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-name = "rust_processor"
-crate-type = ["staticlib", "rlib"]
-
 # 構建輸出統一至項目根目錄 target/
 # PROMAX 的本地处理、网络下载和产物验证均由 Rust 负责。
 [profile.release]
 strip = true
 lto = true
+
+[lints.rust]
+unsafe_code = "forbid"
 
 [dependencies]
 serde_json = "1.0"
@@ -23,4 +22,4 @@ walkdir = "2.5.0"
 percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.7"
-ureq = "3.4.0"
+ureq = { version = "3.4.0", features = ["socks-proxy"] }

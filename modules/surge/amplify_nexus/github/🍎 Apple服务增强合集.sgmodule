@@ -1,9 +1,9 @@
 #!name=🍎 Apple服务增强合集
-#!desc=整合 Apple 生态增强：Maps · WeatherKit · News · TV；Apple 账户与 iCloud 强制直连并排除 MITM\n\n【Bundled Modules】\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\n添加国际版功能\n自定义服务版本\n\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\n1.解锁全部天气功能\n2.修改空气质量数据\n3.修改下一小时降水数据\n4.修改天气数据\n5.修改天气预警数据\n\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\n2.Coming Soon…\n\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能
+#!desc=整合 Apple 生态增强：Maps · WeatherKit · News · TV；路由由外部 Apple 规则集与用户策略决定，关键服务排除 MITM\n\n【Bundled Modules】\n✦  iRingo: 🗺️ Maps: 自定义 Maps app\n添加国际版功能\n自定义服务版本\n\n✦  iRingo: 🌤 WeatherKit: iOS 18 & macOS 15 & watchOS 11\n1.解锁全部天气功能\n2.修改空气质量数据\n3.修改下一小时降水数据\n4.修改天气数据\n5.修改天气预警数据\n\n✦  iRingo: 📰 News: 1.自定义解锁News的地区\n2.Coming Soon…\n\n✦  iRingo: 📺 TV app: 全面自定义「TV app」功能
 #!author=VirgilClyne[https://github.com/VirgilClyne]
 #!icon=https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
-#!date=2026-08-23 12:42:00
+#!date=2026-08-23 18:44:54
 #!arguments=GeoManifest.Dynamic.Config.CountryCode:"CN",UrlInfoSet.Dispatcher:"AutoNavi",UrlInfoSet.Directions:"AutoNavi",UrlInfoSet.RAP:"Apple",UrlInfoSet.LocationShift:"AUTO",TileSet.Earth:"AUTO",TileSet.Roads:"AUTO",TileSet.Satellite:"AUTO",Storage:"Argument",LogLevel:"WARN",DataSets:"airQuality,currentWeather,forecastDaily,forecastHourly,forecastNextHour,weatherAlerts",Weather.Provider:"ColorfulClouds",WeatherAlerts.Provider:"QWeatherWeb",NextHour.Provider:"ColorfulClouds",AirQuality.Current.Pollutants.Provider:"ColorfulClouds",AirQuality.Calculate.Algorithm:"EU_EAQI",API.ColorfulClouds.Token:"",API.QWeather.Host:"devapi.qweather.com",API.QWeather.Token:"",API.WAQI.Token:"",Proxy:"🍎 Apple 🍏",CountryCode:"US",NewsPlusUser:true,ThirdParty:false,isWorkaroundSSLPinning:false
 #!arguments-desc=[ iRingo: 🗺️ Maps]\nGeoManifest.Dynamic.Config.CountryCode: [动态配置] 资源清单的国家或地区代码\n    ├ AUTO: 🇺🇳自动（跟随用户当前所在地区）\n    ├ CN: 🇨🇳中国大陆\n    ├ HK: 🇭🇰中国香港\n    ├ TW: 🇹🇼中国台湾\n    ├ SG: 🇸🇬新加坡\n    ├ US: 🇺🇸美国\n    ├ JP: 🇯🇵日本\n    ├ AU: 🇦🇺澳大利亚\n    ├ GB: 🇬🇧英国\n    ├ KR: 🇰🇷韩国\n    ├ CA: 🇨🇦加拿大\n    └ IE: 🇮🇪爱尔兰\n此选项影响“地图”整体配置内容，包括以下的地图功能与服务。\n\nUrlInfoSet.Dispatcher: [URL信息集] 调度器\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ AutoNavi: 🧭高德（🇨🇳:互动百科/大众点评/携程 | 🇺🇳:维基百科/Yelp/Booking）\n    └ Apple: Apple（维基百科/Yelp/Booking）\n地点数据接口，此选项影响公共指南，兴趣点(POI)与位置信息等功能。\n\nUrlInfoSet.Directions: [URL信息集] 导航与ETA\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ AutoNavi: 🧭高德（🇨🇳:高德地图 | 🇺🇳:TomTom）\n    └ Apple: Apple（🇨🇳:🈚️ | 🇺🇳:TomTom）\n导航与ETA服务接口，此选项影响导航与ETA(到达时间)等功能。\n\nUrlInfoSet.RAP: [URL信息集] 评分和照片\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ AutoNavi: 🧭高德（🇨🇳:🈶️但未开放 | 🇺🇳:🈚️）\n    └ Apple: Apple（🇨🇳:🈚️ | 🇺🇳:🈶️）\n评分和照片服务接口，此选项影响评分和照片服务以及照片使用。\n\nUrlInfoSet.LocationShift: [URL信息集] 定位漂移\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ AutoNavi: 🧭高德（🈚️坐标，使用🇨🇳GCJ-02坐标）\n    └ Apple: Apple（🈶️坐标，使用🇺🇳WGS-84坐标）\n定位漂移修正服务接口，控制定位漂移和🧭指南针与📍坐标的经纬度。\n\nTileSet.Earth: [瓦片数据集] 地球图像\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ AutoNavi: 🧭高德版（主要显示国家与国界）\n    └ Apple: Apple（主要显示城市与地貌）\n此选项影响地球视图下行政区划、地貌等信息的显示。\n\nTileSet.Roads: [瓦片数据集] 道路图像与四处看看\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ CN: 🇨🇳中国（🇨🇳:卫星视图道路正确 | 🇺🇳:无四处看看）\n    └ XX: Apple（🇨🇳:卫星视图道路偏移 | 🇺🇳:有四处看看）\n此选项影响卫星视图下的道路图像与四处看看可用路段。\n\nTileSet.Satellite: [瓦片数据集] 卫星图像\n    ├ AUTO: 🇺🇳自动（随[动态配置]版本自动选择）\n    ├ CN: 🇨🇳中国四维（仅🇨🇳）\n    └ XX: 🇺🇳DigitalGlobe（全球，但🇨🇳较旧）\n此选项影响 2D 卫星图像的版本。\n\nStorage: [储存] 配置类型\n    ├ Argument: 优先使用插件选项与模块参数等，由 $argument 传入的配置，$argument 不包含的设置项由 PersistentStore (BoxJs) 提供\n    ├ PersistentStore: 只使用来自 BoxJs 等，由 $persistentStore 提供的配置\n    └ database: 只使用由作者的 database.mjs 文件提供的默认配置，其他任何自定义配置不再起作用\n选择要使用的配置类型。未设置此选项或不通过此选项的旧版本的配置顺序依旧是 $persistentStore (BoxJs) > $argument > database。\n\nLogLevel: [调试] 日志等级\n    ├ OFF: 关闭\n    ├ ERROR: ❌ 错误\n    ├ WARN: ⚠️ 警告\n    ├ INFO: ℹ️ 信息…\n(see upstream docs for full details)
 #!homepage=https://NSRingo.github.io
@@ -12,28 +12,6 @@
 # - iRingo.WeatherKit: https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule
 # - iRingo.News: https://github.com/NSRingo/News/releases/latest/download/iRingo.News.sgmodule
 # - iRingo.TV: https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule
-
-[Rule]
-# 🗺️ Amap
-DOMAIN-SUFFIX,is.autonavi.com,DIRECT
-# 🗺️ Maps
-DOMAIN,gspe11-2-cn-ssl.ls.apple.com,DIRECT
-DOMAIN,gspe12-cn-ssl.ls.apple.com,DIRECT
-DOMAIN,gspe19-cn-ssl.ls.apple.com,DIRECT
-DOMAIN,gspe19-2-cn-ssl.ls.apple.com,DIRECT
-DOMAIN,gspe79-cn-ssl.ls.apple.com,DIRECT
-
-DOMAIN,weather-analytics-events.apple.com,DIRECT
-DOMAIN-SUFFIX,tthr.apple.com,DIRECT
-DOMAIN,tether.edge.apple,DIRECT
-# Apple-wide QUIC rejection removed; Surge already handles MITM-scoped QUIC fallback
-
-# ☁️ iCloud
-DOMAIN,gateway.icloud.com,DIRECT
-# 📰 News
-RULE-SET,https://github.com/NSRingo/News/releases/download/v3.2.1/News.list,{{{Proxy}}}
-
-DOMAIN,known-issues.apple.com,DIRECT
 
 [URL Rewrite]
 ^https?:\/\/play-cdn\.itunes\.apple\.com https://play.itunes.apple.com header
@@ -65,4 +43,4 @@ DOMAIN,known-issues.apple.com,DIRECT
 📺 TV.umc.request                                    = type=http-request, pattern=^https?:\/\/umc-tempo-api\.apple\.com\/(v1|v2|v3)\/, requires-body=1, script-path=https://github.com/NSRingo/TV/releases/download/v3.4.4/request.bundle.js, argument=
 
 [MITM]
-hostname = %INSERT% -*.apple-cloudkit.com, -*.apple-dns.net, -*.apple-livephotoskit.com, -*.apzones.com, -*.cdn-apple.com, -*.gc.apple.com, -*.icloud-content.com, -*.icloud.apple.com, -*.icloud.com, -*.icloud.com.cn, -*.iwork.apple.com, -account.apple.com, -apple-cloudkit.com, -apple-dns.net, -apple-livephotoskit.com, -apple-native-relay.apple.com, -appleid.cdn-apple.com, -apzones.com, -cdn-apple.com, -gateway.icloud.com, -gc.apple.com, -gsa.apple.com, -icloud-content.com, -icloud.apple.com, -icloud.com, -icloud.com.cn, -idmsa.apple.com, -iwork.apple.com, -known-issues.apple.com, -mask-api.icloud.com, -mask-h2.icloud.com, -mask.icloud.com, -metrics.icloud.com, -pong.icloud.com, -probe.icloud.com
+hostname = %INSERT% -*.apple-cloudkit.com, -*.apple-dns.net, -*.apple-livephotoskit.com, -*.apzones.com, -*.cdn-apple.com, -*.gc.apple.com, -*.icloud-content.com, -*.icloud.apple.com, -*.icloud.com, -*.icloud.com.cn, -*.iwork.apple.com, -account.apple.com, -apple-cloudkit.com, -apple-dns.net, -apple-livephotoskit.com, -apple-native-relay.apple.com, -appleid.cdn-apple.com, -apzones.com, -cdn-apple.com, -gateway.icloud.com, -gc.apple.com, -gsa.apple.com, -icloud-content.com, -icloud.apple.com, -icloud.com, -icloud.com.cn, -idmsa.apple.com, -iwork.apple.com, -known-issues.apple.com, -mask-api.icloud.com, -mask-h2.icloud.com, -mask.icloud.com, -metrics.icloud.com, -pong.icloud.com, -probe.icloud.com, play-cdn.itunes.apple.com, play-edge-cdn.itunes.apple.com, configuration.ls.apple.com, gspe35-ssl.ls.apple.com, gspe35-ssl.ls.apple.cn, weatherkit.apple.com, news-edge.apple.com, news-todayconfig-edge.apple.com, news-events.apple.com, news-sports-events.apple.com, news-client-search.apple.com, uts-api.itunes.apple.com, umc-tempo-api.apple.com

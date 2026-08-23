@@ -38,16 +38,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
-        persist-credentials: true
+        persist-credentials: false
 
     - name: Configure Git for master publication
       if: github.ref == 'refs/heads/master'
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
 
     - name: Resolve sing-box version
       id: singbox_version
@@ -58,77 +56,80 @@ jobs:
         PIN_FILE=".github/ci/sing-box-linux-amd64.version"
 
         try_api_latest() {
-          [ -n "${GITHUB_TOKEN:-}" ] || return 1
-          curl -fsSL --retry 3 --retry-delay 2 \
+          local release version asset digest
+          release=$(curl -fsSL --retry 3 --retry-delay 2 \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/SagerNet/sing-box/releases/latest" \
-            | jq -r '.tag_name // empty' | sed 's/^v//'
-        }
-
-        try_redirect_latest() {
-          local url tag
-          url=$(curl -fsSL --retry 3 --retry-delay 2 -o /dev/null -w '%{url_effective}' \
-            "https://github.com/SagerNet/sing-box/releases/latest" || true)
-          tag=$(echo "${url}" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?' | tail -1 | sed 's/^v//')
-          [ -n "${tag}" ] && echo "${tag}"
+            "https://api.github.com/repos/SagerNet/sing-box/releases/latest") || return 1
+          version=$(jq -r '.tag_name // empty' <<<"${release}" | sed 's/^v//')
+          asset="sing-box-${version}-linux-amd64.tar.gz"
+          digest=$(jq -r --arg asset "${asset}" \
+            '.assets[] | select(.name == $asset) | .digest // empty' <<<"${release}")
+          [ -n "${version}" ] && [ -n "${digest}" ] || return 1
+          printf '%s %s\n' "${version}" "${digest}"
         }
 
         try_pinned() {
-          [ -f "${PIN_FILE}" ] && tr -d ' \n\r' < "${PIN_FILE}"
+          [ -f "${PIN_FILE}" ] && sed -n '1p' "${PIN_FILE}"
         }
 
-        VER=""
-        for resolver in try_api_latest try_redirect_latest try_pinned; do
-          VER=$(${resolver} 2>/dev/null || true)
-          [ -n "${VER}" ] && break
-        done
-
-        if [ -z "${VER}" ]; then
-          echo "::error::Could not resolve sing-box release version (API, redirect, and pin all failed)"
+        RESOLVED=$(try_api_latest 2>/dev/null || try_pinned)
+        read -r VER DIGEST <<<"${RESOLVED}"
+        if ! [[ "${VER:-}" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]] \
+          || ! [[ "${DIGEST:-}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+          echo "::error::Could not resolve a trusted sing-box version and SHA256 digest"
           exit 1
         fi
 
         echo "version=${VER}" >> "$GITHUB_OUTPUT"
-        echo "Using sing-box ${VER}"
+        echo "sha256=${DIGEST#sha256:}" >> "$GITHUB_OUTPUT"
+        echo "Using verified sing-box ${VER}"
 
-    - name: Cache sing-box binary
+    - name: Cache verified sing-box archive
       id: cache_singbox
       uses: actions/cache@v5
       with:
-        path: /usr/local/bin/sing-box
-        key: singbox-${{ steps.singbox_version.outputs.version }}-linux-amd64
+        path: .cache/sing-box/sing-box.tar.gz
+        key: singbox-${{ steps.singbox_version.outputs.version }}-${{ steps.singbox_version.outputs.sha256 }}-linux-amd64
 
     - name: Install sing-box (for SRS generation only)
-      if: steps.cache_singbox.outputs.cache-hit != 'true'
       env:
         SINGBOX_VERSION: ${{ steps.singbox_version.outputs.version }}
+        SINGBOX_SHA256: ${{ steps.singbox_version.outputs.sha256 }}
+        SINGBOX_CACHE_HIT: ${{ steps.cache_singbox.outputs.cache-hit }}
       run: |
         set -euo pipefail
         echo "Installing sing-box v${SINGBOX_VERSION}"
         ARCHIVE="sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz"
+        ARCHIVE_PATH=".cache/sing-box/sing-box.tar.gz"
         URL="https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/${ARCHIVE}"
         MIRROR="https://ghproxy.net/${URL}"
+        mkdir -p "$(dirname "${ARCHIVE_PATH}")"
 
-        for attempt in 1 2 3; do
-          if curl -fsSL --retry 3 --retry-delay 5 -o sing-box.tar.gz "${URL}"; then
-            break
-          fi
-          echo "::warning::sing-box download attempt ${attempt} failed (primary URL)"
-          if curl -fsSL --retry 3 --retry-delay 5 -o sing-box.tar.gz "${MIRROR}"; then
-            echo "Downloaded via mirror"
-            break
-          fi
-          if [ "${attempt}" -eq 3 ]; then
-            echo "::error::Failed to download sing-box after 3 attempts"
+        if [ "${SINGBOX_CACHE_HIT}" != true ]; then
+          verified=false
+          for attempt in 1 2 3; do
+            for candidate in "${URL}" "${MIRROR}"; do
+              rm -f "${ARCHIVE_PATH}"
+              if curl -fsSL --retry 3 --retry-delay 5 -o "${ARCHIVE_PATH}" "${candidate}" \
+                && echo "${SINGBOX_SHA256}  ${ARCHIVE_PATH}" | sha256sum --check --status; then
+                verified=true
+                break 2
+              fi
+              echo "::warning::sing-box download or checksum verification failed on attempt ${attempt}: ${candidate}"
+            done
+            sleep 10
+          done
+          if [ "${verified}" != true ]; then
+            echo "::error::Failed to download a verified sing-box archive"
             exit 1
           fi
-          sleep 10
-        done
+        fi
 
-        tar -xzf sing-box.tar.gz
+        echo "${SINGBOX_SHA256}  ${ARCHIVE_PATH}" | sha256sum --check
+        tar -xzf "${ARCHIVE_PATH}"
         sudo mv "sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/
-        rm -rf sing-box.tar.gz "sing-box-${SINGBOX_VERSION}-linux-amd64"
+        rm -rf "sing-box-${SINGBOX_VERSION}-linux-amd64"
 
     - name: Verify sing-box
       run: sing-box version
@@ -137,18 +138,22 @@ jobs:
 
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        rust-src-dir: create/processor
 
     - name: Validate Rust pipeline
       env:
         CARGO_BUILD_JOBS: '1'
-      run: cargo test --manifest-path create/processor/Cargo.toml -- --test-threads=1
+      run: |
+        cargo fmt --manifest-path create/processor/Cargo.toml -- --check
+        cargo clippy --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
+        cargo test --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
 
     - name: Execute Rust Ruleset Update
       run: |
         cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- \
           --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CI: 'true'
         GITHUB_ACTIONS: 'true'
         CARGO_BUILD_JOBS: '1'
@@ -159,8 +164,15 @@ jobs:
 
     - name: Publish generated tree
       if: github.ref == 'refs/heads/master'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
+        git fetch origin master
+        if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/master)" ]; then
+          echo "::error::origin/master advanced during generation; refusing to publish stale artifacts"
+          exit 1
+        fi
         git add modules rulesets
         if [ -d dns ]; then git add dns; fi
         if git diff --cached --quiet; then
@@ -168,7 +180,7 @@ jobs:
           exit 0
         fi
         git commit -m "chore(ruleset): automated Rust update $(date -u '+%Y-%m-%d %H:%M UTC')"
-        git push origin HEAD:master
+        git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:master
 
     - name: Summary
       env:

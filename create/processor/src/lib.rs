@@ -1,11 +1,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
-use std::ffi::CStr;
 use std::fs::{self, File};
 use std::io::Write;
-use std::os::raw::c_char;
-use std::path::Path;
+use std::net::IpAddr;
+use std::path::{Path, PathBuf};
 
 pub fn publication_now() -> chrono::DateTime<chrono::FixedOffset> {
     chrono::Utc::now().with_timezone(
@@ -13,15 +12,6 @@ pub fn publication_now() -> chrono::DateTime<chrono::FixedOffset> {
     )
 }
 
-#[allow(dead_code)]
-static DOMAIN_RULE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^DOMAIN,([^,]+)$").unwrap());
-#[allow(dead_code)]
-static DOMAIN_SUFFIX_RULE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)^DOMAIN-SUFFIX,([^,]+)$").unwrap());
-#[allow(dead_code)]
-static VALID_DOMAIN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").unwrap()
-});
 static VALID_IPV4_CIDR: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
 static VALID_IPV6_CIDR: Lazy<Regex> =
@@ -77,14 +67,6 @@ fn convert_domain_regex_for_surge(rule: &str) -> Option<String> {
     None
 }
 
-fn format_url_regex_for_surge(payload: &str) -> String {
-    if payload.contains(',') || payload.contains(' ') {
-        format!("URL-REGEX,\"{}\"", payload)
-    } else {
-        format!("URL-REGEX,{}", payload)
-    }
-}
-
 fn validate_rule_value(rule_type: &str, value: &str) -> bool {
     if value.is_empty() {
         return false;
@@ -92,7 +74,7 @@ fn validate_rule_value(rule_type: &str, value: &str) -> bool {
     match rule_type {
         "DOMAIN" | "DOMAIN-SUFFIX" => {
             let val = value.trim_start_matches('.');
-            val.contains('.') || val.len() > 2
+            val.parse::<IpAddr>().is_err() && (val.contains('.') || val.len() > 2)
         }
         "DOMAIN-KEYWORD" => {
             if value.len() < 2 {
@@ -132,7 +114,7 @@ pub fn strip_inline_comment(line: &str) -> String {
     let head = if !line.contains(',') {
         line.to_uppercase()
     } else {
-        line.splitn(2, ',').next().unwrap().to_uppercase()
+        line.split(',').next().unwrap().to_uppercase()
     };
 
     let payload_safe = ["DOMAIN-REGEX", "URL-REGEX", "USER-AGENT", "PROCESS-NAME"];
@@ -148,23 +130,23 @@ pub fn strip_inline_comment(line: &str) -> String {
     cleaned.trim().to_string()
 }
 
+pub fn is_ruleset_watermark(value: &str) -> bool {
+    let value = value.to_ascii_lowercase();
+    value.ends_with(".skk.moe")
+        && (value.contains("ru1353t.1s.m4d3.by.5ukk4w")
+            || value.contains("ru1353t_1s_m4d3_by_5ukk4w")
+            || value.contains("rul35et_i5_mad3_by_5ukk4w")
+            || value.contains("rule5et_1s_m4d3_by_5ukk4w")
+            || value.contains("ruleset_is_made_by_sukkaw"))
+}
+
 fn normalize_rule(line: &str) -> Option<String> {
-    let line = strip_inline_comment(&line);
+    let line = strip_inline_comment(line);
     if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
         return None;
     }
-    if !line.contains(',') {
-        return None;
-    }
-    let parts: Vec<&str> = line.splitn(2, ',').collect();
-    let rule_type = parts[0].trim().to_uppercase();
-    let mut rule_value = parts[1].trim().to_string();
-
-    if rule_type.starts_with("IP-") {
-        if let Some(idx) = rule_value.find(',') {
-            rule_value = rule_value[..idx].trim().to_string();
-        }
-    }
+    let rule = crate::promax::rule::SurgeRule::parse(&line).ok()?;
+    let rule_type = rule.kind.as_str();
 
     let valid_types = [
         "DOMAIN",
@@ -178,23 +160,19 @@ fn normalize_rule(line: &str) -> Option<String> {
         "URL-REGEX",
         "PROCESS-NAME",
     ];
-    if !valid_types.contains(&rule_type.as_str()) {
+    if !valid_types.contains(&rule_type) {
         return None;
     }
 
-    if rule_value.starts_with('"') && rule_value.ends_with('"') && rule_value.len() >= 2 {
-        rule_value = rule_value[1..rule_value.len() - 1].to_string();
-    }
-
-    if !validate_rule_value(&rule_type, &rule_value) {
+    if is_ruleset_watermark(&rule.payload) {
         return None;
     }
 
-    if rule_type == "URL-REGEX" {
-        return Some(format_url_regex_for_surge(&rule_value));
+    if !validate_rule_value(rule_type, &rule.payload) {
+        return None;
     }
 
-    Some(format!("{},{}", rule_type, rule_value))
+    Some(rule.render_external())
 }
 
 fn clean_rule(
@@ -347,63 +325,45 @@ fn semantic_rules_match(path: &Path, new_rules: &[String]) -> bool {
     false
 }
 
-#[unsafe(no_mangle)]
-pub extern "C" fn process_ruleset_ffi(
-    name: *const c_char,
-    target_dir: *const c_char,
-    conflict_domains: *const c_char,
-    skip_conflict: bool,
-    policy: *const c_char,
-    node: *const c_char,
-    desc: *const c_char,
-    local_paths: *const c_char,
-    remote_content: *const c_char,
-) -> bool {
-    if name.is_null()
-        || target_dir.is_null()
-        || conflict_domains.is_null()
-        || policy.is_null()
-        || node.is_null()
-        || desc.is_null()
-        || local_paths.is_null()
-        || remote_content.is_null()
-    {
-        return false;
-    }
+pub struct RulesetInput<'a> {
+    pub name: &'a str,
+    pub target_dir: &'a Path,
+    pub conflict_domains: &'a [String],
+    pub skip_conflict: bool,
+    pub policy: &'a str,
+    pub node: &'a str,
+    pub description: &'a str,
+    pub local_paths: &'a [PathBuf],
+    pub remote_content: &'a str,
+}
 
-    let name_str = unsafe { CStr::from_ptr(name) }.to_string_lossy();
-    let target_dir_str = unsafe { CStr::from_ptr(target_dir) }.to_string_lossy();
-    let conflict_domains_str = unsafe { CStr::from_ptr(conflict_domains) }.to_string_lossy();
-    let policy_str = unsafe { CStr::from_ptr(policy) }.to_string_lossy();
-    let node_str = unsafe { CStr::from_ptr(node) }.to_string_lossy();
-    let desc_str = unsafe { CStr::from_ptr(desc) }.to_string_lossy();
-    let local_paths_str = unsafe { CStr::from_ptr(local_paths) }.to_string_lossy();
-    let remote_content_str = unsafe { CStr::from_ptr(remote_content) }.to_string_lossy();
-
-    let conflict_doms: Vec<String> = conflict_domains_str
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
+pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
+    let RulesetInput {
+        name,
+        target_dir,
+        conflict_domains,
+        skip_conflict,
+        policy,
+        node,
+        description,
+        local_paths,
+        remote_content,
+    } = input;
 
     let mut all_rules = HashSet::new();
 
-    for path_str in local_paths_str.split('\n') {
-        let trimmed_path = path_str.trim();
-        if trimmed_path.is_empty() {
-            continue;
-        }
-        if let Ok(content) = fs::read_to_string(trimmed_path) {
-            for line in content.lines() {
-                if let Some(cleaned) = clean_rule(line, &name_str, &conflict_doms, skip_conflict) {
-                    all_rules.insert(cleaned);
-                }
+    for path in local_paths {
+        let content = fs::read_to_string(path)
+            .map_err(|error| format!("failed to read {}: {error}", path.display()))?;
+        for line in content.lines() {
+            if let Some(cleaned) = clean_rule(line, name, conflict_domains, skip_conflict) {
+                all_rules.insert(cleaned);
             }
         }
     }
 
-    for line in remote_content_str.lines() {
-        if let Some(cleaned) = clean_rule(line, &name_str, &conflict_doms, skip_conflict) {
+    for line in remote_content.lines() {
+        if let Some(cleaned) = clean_rule(line, name, conflict_domains, skip_conflict) {
             all_rules.insert(cleaned);
         }
     }
@@ -412,7 +372,7 @@ pub extern "C" fn process_ruleset_ffi(
     let mut non_ip_rules = Vec::new();
 
     for rule in all_rules {
-        if name_str != "Direct"
+        if name != "Direct"
             && (rule.starts_with("IP-CIDR,")
                 || rule.starts_with("IP-CIDR6,")
                 || rule.starts_with("IP-ASN,")
@@ -427,9 +387,8 @@ pub extern "C" fn process_ruleset_ffi(
     ip_rules.sort();
     non_ip_rules.sort();
 
-    let target_file_path = Path::new(target_dir_str.as_ref()).join(format!("{}.list", name_str));
-    let target_ip_file_path =
-        Path::new(target_dir_str.as_ref()).join(format!("{}_ip.list", name_str));
+    let target_file_path = target_dir.join(format!("{name}.list"));
+    let target_ip_file_path = target_dir.join(format!("{name}_ip.list"));
 
     if !non_ip_rules.is_empty() {
         if semantic_rules_match(&target_file_path, &non_ip_rules) {
@@ -441,20 +400,13 @@ pub extern "C" fn process_ruleset_ffi(
                     .to_string_lossy()
             );
         } else {
-            if let Ok(mut file) = File::create(&target_file_path) {
-                let header_str = generate_header(
-                    &name_str,
-                    &policy_str,
-                    &node_str,
-                    &desc_str,
-                    non_ip_rules.len(),
-                );
-                let _ = write!(file, "{}", header_str);
-                for r in &non_ip_rules {
-                    let _ = writeln!(file, "{}", r);
-                }
-            } else {
-                return false;
+            let mut file = File::create(&target_file_path).map_err(|error| {
+                format!("failed to create {}: {error}", target_file_path.display())
+            })?;
+            let header_str = generate_header(name, policy, node, description, non_ip_rules.len());
+            write!(file, "{header_str}").map_err(|error| error.to_string())?;
+            for rule in &non_ip_rules {
+                writeln!(file, "{rule}").map_err(|error| error.to_string())?;
             }
         }
     } else if target_file_path.exists() {
@@ -471,193 +423,41 @@ pub extern "C" fn process_ruleset_ffi(
                     .to_string_lossy()
             );
         } else {
-            if let Ok(mut file) = File::create(&target_ip_file_path) {
-                let ip_name = format!("{}_ip", name_str);
-                let header_str =
-                    generate_header(&ip_name, &policy_str, &node_str, &desc_str, ip_rules.len());
-                let _ = write!(file, "{}", header_str);
-                for r in &ip_rules {
-                    let _ = writeln!(file, "{}", r);
-                }
-            } else {
-                return false;
+            let mut file = File::create(&target_ip_file_path).map_err(|error| {
+                format!(
+                    "failed to create {}: {error}",
+                    target_ip_file_path.display()
+                )
+            })?;
+            let ip_name = format!("{name}_ip");
+            let header_str = generate_header(&ip_name, policy, node, description, ip_rules.len());
+            write!(file, "{header_str}").map_err(|error| error.to_string())?;
+            for rule in &ip_rules {
+                writeln!(file, "{rule}").map_err(|error| error.to_string())?;
             }
         }
     } else if target_ip_file_path.exists() {
         let _ = fs::remove_file(&target_ip_file_path);
     }
 
-    true
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn normalize_rule_ffi(line: *const c_char) -> *mut c_char {
-    if line.is_null() {
-        return std::ptr::null_mut();
-    }
-    let c_str = unsafe { CStr::from_ptr(line) };
-    let r_str = String::from_utf8_lossy(c_str.to_bytes());
-
-    match normalize_rule(&r_str) {
-        Some(normalized) => {
-            if let Ok(c_string) = std::ffi::CString::new(normalized) {
-                c_string.into_raw()
-            } else {
-                std::ptr::null_mut()
-            }
-        }
-        None => std::ptr::null_mut(),
-    }
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn strip_inline_comment_ffi(line: *const c_char) -> *mut c_char {
-    if line.is_null() {
-        return std::ptr::null_mut();
-    }
-    let c_str = unsafe { CStr::from_ptr(line) };
-    let r_str = String::from_utf8_lossy(c_str.to_bytes());
-
-    let stripped = strip_inline_comment(&r_str);
-    if stripped.is_empty() {
-        return std::ptr::null_mut();
-    }
-
-    if let Ok(c_string) = std::ffi::CString::new(stripped) {
-        c_string.into_raw()
-    } else {
-        std::ptr::null_mut()
-    }
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn free_string_ffi(s: *mut c_char) {
-    if s.is_null() {
-        return;
-    }
-    unsafe {
-        let _ = std::ffi::CString::from_raw(s);
-    }
+    Ok(())
 }
 
 pub mod url_rewriter;
 
-#[unsafe(no_mangle)]
-pub extern "C" fn run_url_rewrites_ffi(directory: *const std::ffi::c_char) -> i32 {
-    if directory.is_null() {
-        return 0;
-    }
-    let c_str = unsafe { std::ffi::CStr::from_ptr(directory) };
-    let r_str = String::from_utf8_lossy(c_str.to_bytes());
-    url_rewriter::run_url_rewrites(&r_str)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn copy_github_variants_ffi(root_dir: *const std::ffi::c_char) {
-    if root_dir.is_null() {
-        return;
-    }
-    let c_str = unsafe { std::ffi::CStr::from_ptr(root_dir) };
-    let r_str = String::from_utf8_lossy(c_str.to_bytes());
-    url_rewriter::copy_github_variants(&r_str)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn safe_write_file_ffi(
-    path: *const std::ffi::c_char,
-    content: *const std::ffi::c_char,
-    atomic: bool,
-) -> bool {
-    if path.is_null() || content.is_null() {
-        return false;
-    }
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-    let content_str = unsafe { std::ffi::CStr::from_ptr(content) }.to_string_lossy();
-
-    let p = std::path::Path::new(path_str.as_ref());
-    safe_write_file_internal(p, &content_str, atomic)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn read_file_to_string_ffi(path: *const std::ffi::c_char) -> *mut std::ffi::c_char {
-    if path.is_null() {
-        return std::ptr::null_mut();
-    }
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-
-    match std::fs::read_to_string(path_str.as_ref()) {
-        Ok(content) => {
-            if let Ok(c_string) = std::ffi::CString::new(content) {
-                c_string.into_raw()
-            } else {
-                std::ptr::null_mut()
-            }
-        }
-        Err(_) => std::ptr::null_mut(),
-    }
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn file_exists_ffi(path: *const std::ffi::c_char) -> bool {
-    if path.is_null() {
-        return false;
-    }
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-    std::path::Path::new(path_str.as_ref()).exists()
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn ensure_dir_ffi(path: *const std::ffi::c_char) -> bool {
-    if path.is_null() {
-        return false;
-    }
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-    std::fs::create_dir_all(path_str.as_ref()).is_ok()
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn remove_file_ffi(path: *const std::ffi::c_char, missing_ok: bool) -> bool {
-    if path.is_null() {
-        return false;
-    }
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-    let p = std::path::Path::new(path_str.as_ref());
-
-    if !p.exists() {
-        return missing_ok;
-    }
-
-    std::fs::remove_file(p).is_ok()
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn remove_dir_all_ffi(path: *const std::ffi::c_char, missing_ok: bool) -> bool {
-    if path.is_null() {
-        return false;
-    }
-    let path_str = unsafe { std::ffi::CStr::from_ptr(path) }.to_string_lossy();
-    let p = std::path::Path::new(path_str.as_ref());
-
-    if !p.exists() {
-        return missing_ok;
-    }
-
-    std::fs::remove_dir_all(p).is_ok()
-}
-
 pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: bool) -> bool {
     // Semantic Check
-    if p.exists() {
-        if let Ok(old_content) = std::fs::read_to_string(p) {
-            let old_stripped = url_rewriter::semantic_content_for_path_pub(p, &old_content);
-            let new_stripped = url_rewriter::semantic_content_for_path_pub(p, content_str);
-            if old_stripped == new_stripped {
-                println!(
-                    "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
-                    p.file_name().unwrap_or_default().to_string_lossy()
-                );
-                return true;
-            }
+    if p.exists()
+        && let Ok(old_content) = std::fs::read_to_string(p)
+    {
+        let old_stripped = url_rewriter::semantic_content_for_path_pub(p, &old_content);
+        let new_stripped = url_rewriter::semantic_content_for_path_pub(p, content_str);
+        if old_stripped == new_stripped {
+            println!(
+                "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
+                p.file_name().unwrap_or_default().to_string_lossy()
+            );
+            return true;
         }
     }
 
@@ -708,64 +508,9 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
 
 pub mod mitm_manager;
 
-#[unsafe(no_mangle)]
-pub extern "C" fn run_mitm_cleanup_ffi(directory: *const std::ffi::c_char, dry_run: bool) -> i32 {
-    if directory.is_null() {
-        return 0;
-    }
-    let c_str = unsafe { std::ffi::CStr::from_ptr(directory) };
-    let r_str = String::from_utf8_lossy(c_str.to_bytes());
-    mitm_manager::run_mitm_cleanup(&r_str, dry_run)
-}
-
 pub mod firewall_sync;
 
-#[unsafe(no_mangle)]
-pub extern "C" fn sync_ports_ffi(
-    ports_source: *const std::ffi::c_char,
-    firewall_modules: *const *const std::ffi::c_char,
-    firewall_modules_len: i32,
-    execute: bool,
-    version: *const std::ffi::c_char,
-) {
-    if ports_source.is_null() || firewall_modules.is_null() || version.is_null() {
-        return;
-    }
-    let source_str = unsafe { std::ffi::CStr::from_ptr(ports_source) }.to_string_lossy();
-    let version_str = unsafe { std::ffi::CStr::from_ptr(version) }.to_string_lossy();
-
-    let mut modules = Vec::new();
-    for i in 0..firewall_modules_len {
-        let ptr = unsafe { *firewall_modules.offset(i as isize) };
-        if !ptr.is_null() {
-            let s = unsafe { std::ffi::CStr::from_ptr(ptr) }.to_string_lossy();
-            modules.push(s);
-        }
-    }
-
-    let modules_refs: Vec<&str> = modules.iter().map(|s| s.as_ref()).collect();
-    firewall_sync::sync_ports(&source_str, &modules_refs, execute, &version_str);
-}
-
 pub mod smart_cleanup;
-
-#[unsafe(no_mangle)]
-pub extern "C" fn run_cleanup_ffi(root_dir: *const std::ffi::c_char) -> *mut std::ffi::c_char {
-    if root_dir.is_null() {
-        return std::ptr::null_mut();
-    }
-    let c_str = unsafe { std::ffi::CStr::from_ptr(root_dir) };
-    let r_str = String::from_utf8_lossy(c_str.to_bytes());
-
-    let stats = smart_cleanup::run_cleanup(&r_str);
-
-    if let Ok(json_str) = serde_json::to_string(&stats) {
-        if let Ok(c_string) = std::ffi::CString::new(json_str) {
-            return c_string.into_raw();
-        }
-    }
-    std::ptr::null_mut()
-}
 
 pub mod functional_update;
 pub mod general_update;
@@ -773,45 +518,11 @@ pub mod merge_bundles;
 pub mod module_catalog;
 pub mod promax;
 
-#[unsafe(no_mangle)]
-pub extern "C" fn run_adblock_manager_ffi(
-    root_dir: *const std::ffi::c_char,
-    execute: bool,
-) -> bool {
-    if root_dir.is_null() {
-        return false;
-    }
-    let root_str = unsafe { std::ffi::CStr::from_ptr(root_dir) }.to_string_lossy();
-    promax::run_adblock_manager(&root_str, execute)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn process_merge_bundle_ffi(json: *const std::ffi::c_char) -> bool {
-    if json.is_null() {
-        return false;
-    }
-    let json_str = unsafe { std::ffi::CStr::from_ptr(json) }.to_string_lossy();
-    merge_bundles::run_merge_bundle_json(&json_str)
-}
-
 pub mod srs_generator;
-
-#[unsafe(no_mangle)]
-pub extern "C" fn run_srs_generator_ffi(
-    root_dir: *const std::ffi::c_char,
-    singbox_path: *const std::ffi::c_char,
-) -> bool {
-    if root_dir.is_null() || singbox_path.is_null() {
-        return false;
-    }
-    let root_str = unsafe { std::ffi::CStr::from_ptr(root_dir) }.to_string_lossy();
-    let singbox_str = unsafe { std::ffi::CStr::from_ptr(singbox_path) }.to_string_lossy();
-    srs_generator::run_srs_generator(&root_str, &singbox_str)
-}
 
 #[cfg(test)]
 mod tests {
-    use super::strip_inline_comment;
+    use super::{is_ruleset_watermark, normalize_rule, strip_inline_comment};
 
     #[test]
     fn inline_comment_stripping_preserves_urls() {
@@ -824,6 +535,39 @@ mod tests {
         assert_eq!(
             strip_inline_comment("DEST-PORT,3306,REJECT // database"),
             "DEST-PORT,3306,REJECT"
+        );
+    }
+
+    #[test]
+    fn identifies_upstream_ruleset_watermarks_without_matching_normal_hosts() {
+        assert!(is_ruleset_watermark(
+            "7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe"
+        ));
+        assert!(is_ruleset_watermark(
+            "this_ruleset_is_made_by_sukkaw.ruleset.skk.moe"
+        ));
+        assert!(!is_ruleset_watermark("cdn.skk.moe"));
+    }
+
+    #[test]
+    fn domain_rules_reject_ip_literals_instead_of_retyping_them() {
+        assert_eq!(normalize_rule("DOMAIN,10.10.34.34"), None);
+        assert_eq!(normalize_rule("DOMAIN-SUFFIX,180.76.76.200"), None);
+        assert_eq!(
+            normalize_rule("IP-CIDR,180.76.76.200/32"),
+            Some("IP-CIDR,180.76.76.200/32".to_string())
+        );
+    }
+
+    #[test]
+    fn external_rules_drop_inline_policy_but_keep_supported_options() {
+        assert_eq!(
+            normalize_rule("DOMAIN,dns.alidns.com,DIRECT"),
+            Some("DOMAIN,dns.alidns.com".to_string())
+        );
+        assert_eq!(
+            normalize_rule("IP-CIDR,223.5.5.5/32,DIRECT,no-resolve"),
+            Some("IP-CIDR,223.5.5.5/32,NO-RESOLVE".to_string())
         );
     }
 }

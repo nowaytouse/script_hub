@@ -180,6 +180,9 @@ fn clean_rule(line: &str) -> String {
     if stripped.is_empty() || stripped.starts_with('#') || stripped.starts_with("//") {
         return String::new();
     }
+    if crate::is_ruleset_watermark(extract_payload(&stripped).as_str()) {
+        return String::new();
+    }
     if stripped.to_ascii_uppercase().starts_with("URL-REGEX,") {
         return normalize_url_regex_rule(&stripped).unwrap_or_default();
     }
@@ -239,9 +242,7 @@ fn extract_type(rule: &str) -> String {
 fn prefer_rule(current: &str, candidate: &str) -> String {
     let current_rank = get_rank(&extract_type(current));
     let candidate_rank = get_rank(&extract_type(candidate));
-    if candidate_rank < current_rank {
-        candidate.to_string()
-    } else if candidate_rank == current_rank && candidate < current {
+    if candidate_rank < current_rank || candidate_rank == current_rank && candidate < current {
         candidate.to_string()
     } else {
         current.to_string()
@@ -381,14 +382,14 @@ fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
     let sorted_rules = get_sorted_rules(rules);
     let mut existing_header = Vec::new();
 
-    if filepath.exists() {
-        if let Ok(content) = fs::read_to_string(filepath) {
-            for line in content.lines() {
-                if line.trim().starts_with('#') || line.trim().is_empty() {
-                    existing_header.push(line.to_string());
-                } else {
-                    break;
-                }
+    if filepath.exists()
+        && let Ok(content) = fs::read_to_string(filepath)
+    {
+        for line in content.lines() {
+            if line.trim().starts_with('#') || line.trim().is_empty() {
+                existing_header.push(line.to_string());
+            } else {
+                break;
             }
         }
     }
@@ -397,16 +398,16 @@ fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
     if !existing_header.is_empty() {
         for line in existing_header {
             if HEADER_RE.is_match(&line) {
-                let key = line.splitn(2, ':').next().unwrap_or(&line);
+                let key = line.split(':').next().unwrap_or(&line);
                 out_lines.push(format!("{}: {}\n", key, sorted_rules.len()));
             } else {
                 out_lines.push(format!("{}\n", line));
             }
         }
-        if let Some(last) = out_lines.last() {
-            if !last.trim().is_empty() {
-                out_lines.push("\n".to_string());
-            }
+        if let Some(last) = out_lines.last()
+            && !last.trim().is_empty()
+        {
+            out_lines.push("\n".to_string());
         }
     } else {
         let file_name = filepath.file_name().unwrap_or_default().to_string_lossy();
@@ -440,6 +441,12 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let mut file_paths = HashMap::new();
     let mut adblock_payloads = HashSet::new();
     let adblock_dir = root.join("rulesets").join("AdBlock");
+    for filename in ["reject-drop.list", "reject-no-drop.list"] {
+        let path = adblock_dir.join(filename);
+        if path.is_file() {
+            write_list(&path, &load_list(&path));
+        }
+    }
     if let Ok(entries) = fs::read_dir(adblock_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -475,13 +482,13 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
         if let Ok(entries) = fs::read_dir(dir) {
             let mut filenames = Vec::new();
             for entry in entries.flatten() {
-                if let Ok(file_type) = entry.file_type() {
-                    if !file_type.is_dir() {
-                        let name = entry.file_name();
-                        let name_str = name.to_string_lossy();
-                        if name_str.ends_with(".list") {
-                            filenames.push(name_str.into_owned());
-                        }
+                if let Ok(file_type) = entry.file_type()
+                    && !file_type.is_dir()
+                {
+                    let name = entry.file_name();
+                    let name_str = name.to_string_lossy();
+                    if name_str.ends_with(".list") {
+                        filenames.push(name_str.into_owned());
                     }
                 }
             }
@@ -507,12 +514,12 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let mut moved_direct_to_proxy = 0;
     let direct_keys: Vec<String> = direct.keys().cloned().collect();
     for payload in direct_keys {
-        if let Some(rule) = direct.get(&payload) {
-            if is_proxyish_domain(rule) {
-                proxy.insert(payload.clone(), rule.clone());
-                direct.remove(&payload);
-                moved_direct_to_proxy += 1;
-            }
+        if let Some(rule) = direct.get(&payload)
+            && is_proxyish_domain(rule)
+        {
+            proxy.insert(payload.clone(), rule.clone());
+            direct.remove(&payload);
+            moved_direct_to_proxy += 1;
         }
     }
     stats.insert("moved_direct_to_proxy".to_string(), moved_direct_to_proxy);
@@ -520,12 +527,13 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let mut moved_proxy_to_direct = 0;
     let proxy_keys: Vec<String> = proxy.keys().cloned().collect();
     for payload in proxy_keys {
-        if let Some(rule) = proxy.get(&payload) {
-            if is_cn_tld(rule) && !is_proxyish_domain(rule) {
-                direct.insert(payload.clone(), rule.clone());
-                proxy.remove(&payload);
-                moved_proxy_to_direct += 1;
-            }
+        if let Some(rule) = proxy.get(&payload)
+            && is_cn_tld(rule)
+            && !is_proxyish_domain(rule)
+        {
+            direct.insert(payload.clone(), rule.clone());
+            proxy.remove(&payload);
+            moved_proxy_to_direct += 1;
         }
     }
     stats.insert("moved_proxy_to_direct".to_string(), moved_proxy_to_direct);
@@ -743,10 +751,9 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
 }
 
 #[derive(Clone, Debug)]
-#[allow(non_snake_case)]
 pub struct ModuleSectionPub {
-    pub Name: String,
-    pub Lines: Vec<String>,
+    pub name: String,
+    pub lines: Vec<String>,
 }
 
 static AD_SCRIPT_MARKERS: &[&str] = &[
@@ -893,9 +900,13 @@ static SCRIPT_NAME_RE: Lazy<Regex> =
 static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
 static SCRIPT_PATH_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
+static SCRIPT_TYPE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)\btype\s*=\s*([^,\s]+)").unwrap());
 static SCRIPT_PATTERN_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
 static SECTION_HEADER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\[([^\]]+)\]\s*$").unwrap());
+static BODY_REWRITE_JQ_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(http-(?:request|response)-jq)\s+(\S+)\s+'([^']+)'$").unwrap());
 
 fn script_path(line: &str) -> String {
     if let Some(m) = SCRIPT_PATH_RE_STR.captures(line) {
@@ -955,13 +966,6 @@ fn script_is_enhance(name: &str, spath: &str) -> bool {
     }
     if contains_any(name, &["解锁", "unlock", "vip", "premium", "破解", "crack"]) {
         return true;
-    }
-    #[allow(dead_code)]
-    #[derive(Clone, Debug)]
-    enum Verdict {
-        Ad,
-        Enhance,
-        Neutral,
     }
     false
 }
@@ -1085,8 +1089,8 @@ pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) ->
             }
             return LineVerdict::Ad;
         }
-        if !parts.is_empty() {
-            if [
+        if !parts.is_empty()
+            && [
                 "DOMAIN",
                 "DOMAIN-SUFFIX",
                 "DOMAIN-KEYWORD",
@@ -1100,12 +1104,11 @@ pub fn classify_promax_line_pub(line: &str, section: &str, source_path: &str) ->
                 "DEST-PORT",
             ]
             .contains(&first_upper.as_str())
-            {
-                if contains_any(&low, &["unlock", "解锁", "vip", "premium", "crack"]) {
-                    return LineVerdict::Enhance;
-                }
-                return LineVerdict::Ad;
+        {
+            if contains_any(&low, &["unlock", "解锁", "vip", "premium", "crack"]) {
+                return LineVerdict::Enhance;
             }
+            return LineVerdict::Ad;
         }
         return LineVerdict::Enhance;
     }
@@ -1140,10 +1143,10 @@ pub fn module_ingest_mode_pub(path: &str, text: &str) -> &'static str {
         .map(|f| f.to_string_lossy().to_string())
         .unwrap_or_default();
     let name = filename.to_lowercase();
-    if name.contains("解锁") || name.contains("unlock") {
-        if !contains_any(&name, &["去广告", "adblock", "anti-ad"]) {
-            return "skip";
-        }
+    if (name.contains("解锁") || name.contains("unlock"))
+        && !contains_any(&name, &["去广告", "adblock", "anti-ad"])
+    {
+        return "skip";
     }
 
     let mut ad_lines = 0;
@@ -1173,7 +1176,7 @@ pub fn module_ingest_mode_pub(path: &str, text: &str) -> &'static str {
     if enhance_lines > 0 {
         return "split";
     }
-    return "full";
+    "full"
 }
 
 pub fn dedupe_key_pub(section: &str, line: &str) -> String {
@@ -1223,6 +1226,11 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
     if section == "Body Rewrite" {
         return format!("body:{}", stripped);
     }
+    if section == "Rewrite"
+        && let Some(matcher) = functional_matcher_key_pub(section, stripped)
+    {
+        return format!("rewrite:{matcher}");
+    }
     if section == "Header Rewrite" {
         return format!("header:{}", stripped);
     }
@@ -1237,8 +1245,76 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
     format!("{}:{}", section, stripped)
 }
 
+pub fn functional_matcher_key_pub(section: &str, line: &str) -> Option<String> {
+    let mut fields = line.split_whitespace();
+    let first = fields.next()?;
+    let matcher = match section {
+        "URL Rewrite" | "Map Local" => first,
+        "Body Rewrite" | "Header Rewrite" => fields.next()?,
+        "Rewrite"
+            if first.eq_ignore_ascii_case("http-request")
+                || first.eq_ignore_ascii_case("http-response") =>
+        {
+            return fields.next().map(|matcher| format!("{first}:{matcher}"));
+        }
+        "Rewrite" => first,
+        _ => return None,
+    };
+    Some(matcher.trim_matches(['\'', '"']).to_string())
+}
+
+fn merge_body_rewrite_jq(lines: &[String]) -> Vec<String> {
+    let mut output = Vec::new();
+    let mut groups: HashMap<String, (usize, Vec<String>)> = HashMap::new();
+    for line in lines {
+        let stripped = line.trim();
+        let Some(captures) = BODY_REWRITE_JQ_RE.captures(stripped) else {
+            output.push(line.clone());
+            continue;
+        };
+        let operation = captures[1].to_string();
+        let matcher = captures[2].to_string();
+        let expression = captures[3].to_string();
+        let key = format!("{}:{}", operation.to_ascii_lowercase(), matcher);
+        if let Some((index, expressions)) = groups.get_mut(&key) {
+            expressions.push(expression);
+            output[*index] = format!(
+                "{operation} {matcher} '{}'",
+                expressions
+                    .iter()
+                    .map(|expression| format!("({expression})"))
+                    .collect::<Vec<_>>()
+                    .join(" | ")
+            );
+        } else {
+            let index = output.len();
+            output.push(stripped.to_string());
+            groups.insert(key, (index, vec![expression]));
+        }
+    }
+    output
+}
+
+pub fn script_matcher_key_pub(line: &str) -> Option<String> {
+    let script_type = SCRIPT_TYPE_RE
+        .captures(line)
+        .map(|captures| captures[1].to_ascii_lowercase());
+    let pattern = SCRIPT_PATTERN_RE
+        .captures(line)
+        .map(|captures| captures[1].trim().to_string());
+    match (script_type.as_deref(), pattern) {
+        (Some(script_type @ ("http-request" | "http-response")), Some(pattern)) => {
+            Some(format!("script:matcher:{script_type}:{pattern}"))
+        }
+        _ => None,
+    }
+}
+
 pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> {
+    let merged_body_lines = (section == "Body Rewrite").then(|| merge_body_rewrite_jq(lines));
+    let lines = merged_body_lines.as_deref().unwrap_or(lines);
     let mut seen = HashSet::new();
+    let mut seen_script_matchers = HashSet::new();
     let mut result: Vec<String> = Vec::new();
     for line in lines {
         let stripped = line.trim();
@@ -1250,6 +1326,12 @@ pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> 
         }
         if stripped.starts_with('#') {
             result.push(stripped.to_string());
+            continue;
+        }
+        if section == "Script"
+            && let Some(key) = script_matcher_key_pub(stripped)
+            && !seen_script_matchers.insert(key)
+        {
             continue;
         }
         let key = dedupe_key_pub(section, line);
@@ -1367,7 +1449,7 @@ pub fn format_module_pub(
 ) -> String {
     let mut section_map = HashMap::new();
     for sec in sections {
-        section_map.insert(sec.Name.clone(), sec.Lines.clone());
+        section_map.insert(sec.name.clone(), sec.lines.clone());
     }
 
     let mut out = header_lines.to_vec();
@@ -1388,7 +1470,10 @@ pub fn format_module_pub(
             } else {
                 lines.clone()
             };
-            if lines.is_empty() {
+            if lines.iter().all(|line| {
+                let line = line.trim();
+                line.is_empty() || line.starts_with('#')
+            }) {
                 continue;
             }
             out.push(format!("[{}]", section_name));
@@ -1417,11 +1502,11 @@ pub fn split_module_sections_pub(
 
     for line in text.lines() {
         let stripped = line.trim();
-        if let Some(m) = SECTION_HEADER_RE.captures(stripped) {
-            if !stripped.starts_with('#') {
-                current_section = m[1].to_string();
-                continue;
-            }
+        if let Some(m) = SECTION_HEADER_RE.captures(stripped)
+            && !stripped.starts_with('#')
+        {
+            current_section = m[1].to_string();
+            continue;
         }
         if stripped.is_empty() || stripped.starts_with('#') {
             continue;
@@ -1659,10 +1744,10 @@ pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     loon_parts.push(format!("script-path={}", script_path));
     loon_parts.push(format!("tag={}", tag));
 
-    if let Some(req_body) = params.get("requires-body") {
-        if req_body == "1" || req_body == "true" {
-            loon_parts.push("requires-body=true".to_string());
-        }
+    if let Some(req_body) = params.get("requires-body")
+        && (req_body == "1" || req_body == "true")
+    {
+        loon_parts.push("requires-body=true".to_string());
     }
     if let Some(timeout) = params.get("timeout") {
         loon_parts.push(format!("timeout={}", timeout));
@@ -1769,18 +1854,22 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
     let skip_tokens: HashSet<&str> = ["%INSERT%", "%APPEND%"].iter().cloned().collect();
 
     for sec in sections {
-        if sec.Name != "MITM" {
+        if sec.name != "MITM" {
             other.push(sec.clone());
             continue;
         }
-        for line in &sec.Lines {
+        for line in &sec.lines {
             let stripped = line.trim();
-            if stripped.to_lowercase().starts_with("hostname") {
-                let re1 = Regex::new(r"(?i)^hostname\s*=\s*").unwrap();
-                let part = re1.replace_all(stripped, "");
-                let re2 = Regex::new(r"(?i)^(%APPEND%|%INSERT%)\s*").unwrap();
-                let part = re2.replace_all(&part, "");
-                for token in part.split(',') {
+            if let Some((key, value)) = stripped.split_once('=')
+                && key.trim().eq_ignore_ascii_case("hostname")
+            {
+                let value = value.trim();
+                let value = value
+                    .strip_prefix("%APPEND%")
+                    .or_else(|| value.strip_prefix("%INSERT%"))
+                    .unwrap_or(value)
+                    .trim();
+                for token in value.split(',') {
                     let token = token.trim();
                     if !token.is_empty() && !skip_tokens.contains(token) {
                         hosts.insert(token.to_string());
@@ -1802,12 +1891,36 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
         }
         inclusions.sort();
         exclusions.sort();
-        let mut merged = inclusions;
-        merged.extend(exclusions);
+        let wildcard_suffixes: Vec<String> = inclusions
+            .iter()
+            .filter_map(|host| host.strip_prefix("*."))
+            .filter(|host| !host.contains(['*', '?', ':']))
+            .map(str::to_ascii_lowercase)
+            .collect();
+        inclusions.retain(|host| {
+            if host.contains(['*', '?', ':']) {
+                return true;
+            }
+            let host = host.to_ascii_lowercase();
+            !wildcard_suffixes
+                .iter()
+                .any(|suffix| host.ends_with(&format!(".{suffix}")))
+        });
+        inclusions.retain(|host| {
+            let Some(suffix) = host.strip_prefix("*.") else {
+                return true;
+            };
+            !wildcard_suffixes
+                .iter()
+                .any(|parent| suffix != parent && suffix.ends_with(&format!(".{parent}")))
+        });
+        // Host List exclusions are order-sensitive and must precede inclusions.
+        let mut merged = exclusions;
+        merged.extend(inclusions);
 
         other.push(ModuleSectionPub {
-            Name: "MITM".to_string(),
-            Lines: vec![format!("hostname = %APPEND% {}", merged.join(", "))],
+            name: "MITM".to_string(),
+            lines: vec![format!("hostname = %APPEND% {}", merged.join(", "))],
         });
     }
     other
@@ -1815,7 +1928,10 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 
 #[cfg(test)]
 mod ruleset_cleanup_tests {
-    use super::{dedupe_key_pub, normalize_url_regex_rule, run_cleanup};
+    use super::{
+        ModuleSectionPub, dedupe_key_pub, dedupe_section_lines_pub, format_module_pub,
+        merge_mitm_hosts_pub, normalize_url_regex_rule, run_cleanup, script_matcher_key_pub,
+    };
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -1846,6 +1962,80 @@ mod ruleset_cleanup_tests {
                 "remove_ads = type=http-response,pattern=^https://ads.example/v2"
             )
         );
+        assert_eq!(
+            script_matcher_key_pub(
+                "first = type=http-response,pattern=^https://ads.example,script-path=a.js"
+            ),
+            script_matcher_key_pub(
+                "second = type=http-response,pattern=^https://ads.example,script-path=b.js"
+            )
+        );
+        assert_ne!(
+            script_matcher_key_pub(
+                "request = type=http-request,pattern=^https://ads.example,script-path=a.js"
+            ),
+            script_matcher_key_pub(
+                "response = type=http-response,pattern=^https://ads.example,script-path=a.js"
+            )
+        );
+        assert_eq!(
+            dedupe_key_pub("Rewrite", r"^https://ads\.example reject"),
+            dedupe_key_pub(
+                "Rewrite",
+                r#"^https://ads\.example mock-response-body data=\"{}\""#
+            )
+        );
+    }
+
+    #[test]
+    fn body_rewrite_jq_filters_are_chained_in_source_order() {
+        let lines = vec![
+            r#"http-response-jq ^https://api\.example/feed 'del(.first)'"#.to_string(),
+            r#"http-response-jq ^https://api\.example/feed 'del(.second)'"#.to_string(),
+        ];
+
+        assert_eq!(
+            dedupe_section_lines_pub("Body Rewrite", &lines),
+            vec![
+                r#"http-response-jq ^https://api\.example/feed '(del(.first)) | (del(.second))'"#
+                    .to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn mitm_merge_puts_exclusions_first_and_removes_covered_hosts() {
+        let sections = vec![ModuleSectionPub {
+            name: "MITM".to_string(),
+            lines: vec![
+                "hostname = %APPEND% api.example.com, *.example.com, *.sub.example.com, example.com, -account.apple.com"
+                    .to_string(),
+            ],
+        }];
+
+        let merged = merge_mitm_hosts_pub(&sections);
+        assert_eq!(
+            merged[0].lines[0],
+            "hostname = %APPEND% -account.apple.com, *.example.com, example.com"
+        );
+    }
+
+    #[test]
+    fn module_formatter_omits_comment_only_sections() {
+        let sections = [
+            ModuleSectionPub {
+                name: "General".to_string(),
+                lines: vec!["# removed unsafe global interception".to_string()],
+            },
+            ModuleSectionPub {
+                name: "Script".to_string(),
+                lines: vec!["remove_ads = type=http-response".to_string()],
+            },
+        ];
+        let output = format_module_pub(&["#!name=fixture".to_string()], &sections, true);
+
+        assert!(!output.contains("[General]"));
+        assert!(output.contains("[Script]"));
     }
 
     #[test]
@@ -1862,6 +2052,11 @@ mod ruleset_cleanup_tests {
         let generated = "# compiler-owned\nDOMAIN-SUFFIX,ads.example\n";
         fs::write(adblock_dir.join("AdBlock_Local.list"), generated).unwrap();
         fs::write(
+            adblock_dir.join("reject-drop.list"),
+            "# Ruleset: reject-drop.list\nDOMAIN,7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe\nDOMAIN,ads.example\n",
+        )
+        .unwrap();
+        fs::write(
             general_dir.join("Example.list"),
             "DOMAIN-SUFFIX,ads.example\nDOMAIN-SUFFIX,keep.example\n",
         )
@@ -1876,6 +2071,9 @@ mod ruleset_cleanup_tests {
         let output = fs::read_to_string(general_dir.join("Example.list")).unwrap();
         assert!(!output.contains("ads.example"));
         assert!(output.contains("keep.example"));
+        let reject = fs::read_to_string(adblock_dir.join("reject-drop.list")).unwrap();
+        assert!(!reject.contains("ru1353t"));
+        assert!(reject.contains("DOMAIN,ads.example"));
         fs::remove_dir_all(root).unwrap();
     }
 }

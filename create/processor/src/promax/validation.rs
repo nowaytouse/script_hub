@@ -29,6 +29,8 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
     let mut section = None;
     let mut has_name = false;
     let mut seen_sections = HashSet::new();
+    let mut seen_general_keys = HashSet::new();
+    let mut seen_script_matchers = HashSet::new();
     let strict_promax = content.lines().any(|line| {
         line.trim().to_ascii_lowercase().starts_with("#!name")
             && line.to_ascii_lowercase().contains("promax")
@@ -72,14 +74,28 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
         }
 
         match section {
+            Some("General") => {
+                validate_general(line_number, line, &mut seen_general_keys, &mut errors)
+            }
             Some("Rule") => validate_module_rule(line_number, line, strict_promax, &mut errors),
             Some("MITM") => validate_mitm(line_number, line, &mut errors),
             Some("Script") => {
                 validate_surge_script(line_number, line, &mut errors);
+                if let Some(key) = crate::smart_cleanup::script_matcher_key_pub(line)
+                    && !seen_script_matchers.insert(key)
+                {
+                    errors.push(error(
+                        line_number,
+                        "shadowed-script-matcher",
+                        "only the first HTTP script for a request phase and pattern can run",
+                    ));
+                }
             }
-            Some("URL Rewrite" | "Map Local" | "Body Rewrite" | "Header Rewrite") => {
+            Some("URL Rewrite" | "Body Rewrite" | "Header Rewrite") => {
                 validate_regex_entry(section.unwrap(), line_number, line, &mut errors)
             }
+            Some("Map Local") => validate_map_local(line_number, line, &mut errors),
+            Some("Host") => validate_host(line_number, line, &mut errors),
             Some(_) => {}
             None => errors.push(error(
                 line_number,
@@ -107,12 +123,18 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
 pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationError> {
     let mut errors = Vec::new();
     match section {
+        "General" => {
+            let mut seen = HashSet::new();
+            validate_general(1, line, &mut seen, &mut errors);
+        }
         "Rule" => validate_module_rule(1, line, false, &mut errors),
         "MITM" => validate_mitm(1, line, &mut errors),
         "Script" => validate_surge_script(1, line, &mut errors),
-        "URL Rewrite" | "Map Local" | "Body Rewrite" | "Header Rewrite" => {
+        "URL Rewrite" | "Body Rewrite" | "Header Rewrite" => {
             validate_regex_entry(section, 1, line, &mut errors);
         }
+        "Map Local" => validate_map_local(1, line, &mut errors),
+        "Host" => validate_host(1, line, &mut errors),
         _ => {}
     }
     errors.extend(validate_transport_security(line));
@@ -369,11 +391,11 @@ fn validate_loon_rule(line_number: usize, line: &str, errors: &mut Vec<Validatio
     }
     match SurgeRule::parse(line) {
         Ok(rule) => {
-            if !matches!(rule.policy.as_deref(), Some("DIRECT" | "REJECT")) {
+            if rule.policy.as_deref() != Some("REJECT") {
                 errors.push(error(
                     line_number,
                     "unsupported-policy",
-                    "Loon PROMAX rules require DIRECT or REJECT",
+                    "Loon PROMAX rules must use the intrinsic REJECT policy",
                 ));
             }
             if rule.options.iter().any(|option| option != "NO-RESOLVE") {
@@ -608,8 +630,47 @@ fn validate_rule_set(
 fn is_internal_reject_policy(policy: &str) -> bool {
     matches!(
         policy.to_ascii_uppercase().as_str(),
-        "DIRECT" | "REJECT" | "REJECT-DROP" | "REJECT-NO-DROP" | "REJECT-TINYGIF" | "REJECT-IMG"
+        "REJECT" | "REJECT-DROP" | "REJECT-NO-DROP" | "REJECT-TINYGIF" | "REJECT-IMG"
     )
+}
+
+fn validate_general(
+    line_number: usize,
+    line: &str,
+    seen_keys: &mut HashSet<String>,
+    errors: &mut Vec<ValidationError>,
+) {
+    let Some((key, value)) = line.split_once('=') else {
+        errors.push(error(
+            line_number,
+            "invalid-general-entry",
+            "General entry must use key = value syntax",
+        ));
+        return;
+    };
+    let key = key.trim().to_ascii_lowercase();
+    if !seen_keys.insert(key.clone()) {
+        errors.push(error(
+            line_number,
+            "duplicate-general-key",
+            format!("duplicate General key: {key}"),
+        ));
+    }
+    if key == "force-http-engine-hosts"
+        && value.split(',').map(str::trim).any(|host| {
+            host.strip_prefix("%APPEND%")
+                .or_else(|| host.strip_prefix("%INSERT%"))
+                .unwrap_or(host)
+                .trim()
+                .starts_with("*:")
+        })
+    {
+        errors.push(error(
+            line_number,
+            "global-http-engine-port",
+            "force-http-engine-hosts must not intercept every host on a port",
+        ));
+    }
 }
 
 fn validate_mitm(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
@@ -625,6 +686,8 @@ fn validate_mitm(line_number: usize, line: &str, errors: &mut Vec<ValidationErro
         errors.push(error(line_number, "invalid-mitm", "unsupported MITM key"));
         return;
     }
+    let mut saw_candidate = false;
+    let mut saw_inclusion = false;
     for candidate in value.split(',').map(str::trim) {
         let candidate = candidate
             .strip_prefix("%APPEND%")
@@ -633,6 +696,18 @@ fn validate_mitm(line_number: usize, line: &str, errors: &mut Vec<ValidationErro
             .trim();
         if candidate.is_empty() {
             continue;
+        }
+        saw_candidate = true;
+        if candidate.starts_with('-') {
+            if saw_inclusion {
+                errors.push(error(
+                    line_number,
+                    "mitm-exclusion-order",
+                    "MITM exclusions must precede inclusions because Host List order is significant",
+                ));
+            }
+        } else {
+            saw_inclusion = true;
         }
         if candidate.contains("://")
             || candidate.contains('/')
@@ -644,6 +719,79 @@ fn validate_mitm(line_number: usize, line: &str, errors: &mut Vec<ValidationErro
                 format!("invalid MITM hostname: {candidate}"),
             ));
         }
+    }
+    if !saw_candidate {
+        errors.push(error(
+            line_number,
+            "empty-mitm-host-list",
+            "MITM hostname entry must contain at least one host or exclusion",
+        ));
+    }
+}
+
+fn validate_host(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+    let Some((host, resolver)) = line.split_once('=') else {
+        errors.push(error(
+            line_number,
+            "invalid-host-mapping",
+            "Host entry must use host = address syntax",
+        ));
+        return;
+    };
+    let host = host.trim();
+    if host.is_empty()
+        || resolver.trim().is_empty()
+        || host.contains("://")
+        || host.contains('/')
+        || host.chars().any(char::is_whitespace)
+    {
+        errors.push(error(
+            line_number,
+            "invalid-host-mapping",
+            "Host entry contains an invalid host or empty resolver",
+        ));
+    }
+}
+
+fn validate_map_local(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+    validate_regex_entry("Map Local", line_number, line, errors);
+    let data_type = line
+        .split_whitespace()
+        .find_map(|field| field.strip_prefix("data-type="))
+        .unwrap_or("file")
+        .trim_matches(['\'', '"'])
+        .to_ascii_lowercase();
+    if !matches!(data_type.as_str(), "file" | "text" | "tiny-gif" | "base64") {
+        errors.push(error(
+            line_number,
+            "invalid-map-local-data-type",
+            format!("unsupported Map Local data-type: {data_type}"),
+        ));
+    }
+    if data_type != "tiny-gif"
+        && !line
+            .split_whitespace()
+            .any(|field| field.starts_with("data="))
+    {
+        errors.push(error(
+            line_number,
+            "missing-map-local-data",
+            "Map Local requires data unless data-type=tiny-gif",
+        ));
+    }
+    if let Some(status) = line
+        .split_whitespace()
+        .find_map(|field| field.strip_prefix("status-code="))
+        && !status
+            .trim_matches(['\'', '"'])
+            .parse::<u16>()
+            .is_ok_and(|status| (200..=999).contains(&status))
+    {
+        errors.push(error(
+            line_number,
+            "invalid-map-local-status",
+            "Map Local status-code must be between 200 and 999",
+        ));
     }
 }
 
@@ -700,14 +848,14 @@ fn validate_surge_script(line_number: usize, line: &str, errors: &mut Vec<Valida
     let valid = match script_type {
         Some("http-request" | "http-response") => {
             let pattern = parameter(&params, "pattern");
-            if let Some(pattern) = pattern {
-                if let Err(regex_error) = Regex::new(pattern) {
-                    errors.push(error(
-                        line_number,
-                        "invalid-script-regex",
-                        regex_error.to_string(),
-                    ));
-                }
+            if let Some(pattern) = pattern
+                && let Err(regex_error) = Regex::new(pattern)
+            {
+                errors.push(error(
+                    line_number,
+                    "invalid-script-regex",
+                    regex_error.to_string(),
+                ));
             }
             pattern.is_some() && script_path.is_some()
         }
@@ -874,6 +1022,29 @@ hostname = good.example, https://bad.example
     }
 
     #[test]
+    fn rejects_empty_mitm_hostname_entries() {
+        let fixture = "#!name=empty MITM\n[MITM]\nhostname = %APPEND%\n";
+        let codes: Vec<&str> = validate_surge_module(fixture)
+            .iter()
+            .map(|error| error.code)
+            .collect();
+        assert_eq!(codes, vec!["empty-mitm-host-list"]);
+    }
+
+    #[test]
+    fn rejects_duplicate_general_keys_and_global_http_engine_ports() {
+        let fixture = "#!name=noisy\n[General]\nforce-http-engine-hosts = %APPEND% example.com\nforce-http-engine-hosts = %APPEND% *:8082\n";
+        let codes: Vec<&str> = validate_surge_module(fixture)
+            .iter()
+            .map(|error| error.code)
+            .collect();
+        assert_eq!(
+            codes,
+            vec!["duplicate-general-key", "global-http-engine-port"]
+        );
+    }
+
+    #[test]
     fn rejects_unknown_rule_set_options() {
         let fixture = "#!name=PROMAX fixture\n[Rule]\nRULE-SET,https://example.test/ad.list,REJECT,magic-option\n";
         let errors = validate_surge_module(fixture);
@@ -908,6 +1079,44 @@ bad = type=http-response,pattern=^https://example.com/ad
 
         assert_eq!(errors.len(), 1);
         assert_eq!(errors[0].code, "invalid-script");
+    }
+
+    #[test]
+    fn rejects_shadowed_scripts_and_late_mitm_exclusions() {
+        let fixture = r#"#!name=PROMAX fixture
+[Script]
+first = type=http-response,pattern=^https://ads.example,script-path=a.js
+second = type=http-response,pattern=^https://ads.example,script-path=b.js
+[MITM]
+hostname = %APPEND% *.example.com, -account.apple.com
+"#;
+        let codes: Vec<&str> = validate_surge_module(fixture)
+            .iter()
+            .map(|error| error.code)
+            .collect();
+
+        assert_eq!(
+            codes,
+            vec!["shadowed-script-matcher", "mitm-exclusion-order"]
+        );
+    }
+
+    #[test]
+    fn validates_map_local_payload_and_status() {
+        let fixture = r#"#!name=PROMAX fixture
+[Map Local]
+^https://ads\.example data-type=text status-code=199
+^https://pixel\.example data-type=tiny-gif status-code=200
+"#;
+        let codes: Vec<&str> = validate_surge_module(fixture)
+            .iter()
+            .map(|error| error.code)
+            .collect();
+
+        assert_eq!(
+            codes,
+            vec!["missing-map-local-data", "invalid-map-local-status"]
+        );
     }
 
     #[test]

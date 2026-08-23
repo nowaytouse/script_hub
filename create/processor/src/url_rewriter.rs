@@ -113,6 +113,66 @@ fn normalize_rule_spacing(line: &str) -> String {
     output.trim().to_string()
 }
 
+fn normalize_assignment_key(line: &str) -> String {
+    line.split_once('=').map_or_else(
+        || line.trim().to_string(),
+        |(key, value)| format!("{}={}", key.trim(), value.trim()),
+    )
+}
+
+fn flush_force_http_engine_hosts(output: &mut Vec<String>, hosts: &mut Vec<String>) {
+    if !hosts.is_empty() {
+        output.push(format!(
+            "force-http-engine-hosts = %APPEND% {}",
+            hosts.join(", ")
+        ));
+        hosts.clear();
+    }
+}
+
+pub(crate) fn normalize_force_http_engine_hosts(content: &str) -> String {
+    let mut output = Vec::new();
+    let mut in_general = false;
+    let mut hosts = Vec::new();
+    let mut seen = HashSet::new();
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            if in_general {
+                flush_force_http_engine_hosts(&mut output, &mut hosts);
+            }
+            in_general = trimmed.eq_ignore_ascii_case("[General]");
+            output.push(line.to_string());
+            continue;
+        }
+        if in_general
+            && let Some((key, value)) = trimmed.split_once('=')
+            && key.trim().eq_ignore_ascii_case("force-http-engine-hosts")
+            && let Some(value) = value.trim().strip_prefix("%APPEND%")
+        {
+            for host in value
+                .split(',')
+                .map(str::trim)
+                .filter(|host| !host.is_empty())
+            {
+                if !host.starts_with("*:") && seen.insert(host.to_ascii_lowercase()) {
+                    hosts.push(host.to_string());
+                }
+            }
+            continue;
+        }
+        output.push(line.to_string());
+    }
+    if in_general {
+        flush_force_http_engine_hosts(&mut output, &mut hosts);
+    }
+    let mut normalized = output.join("\n");
+    if content.ends_with('\n') {
+        normalized.push('\n');
+    }
+    normalized
+}
+
 fn canonical_json(value: serde_json::Value, module_catalog: bool) -> serde_json::Value {
     match value {
         serde_json::Value::Object(object) => {
@@ -161,15 +221,14 @@ pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
     if path
         .extension()
         .is_some_and(|extension| extension == "json")
+        && let Ok(value) = serde_json::from_str::<serde_json::Value>(text)
     {
-        if let Ok(value) = serde_json::from_str::<serde_json::Value>(text) {
-            let module_catalog = path
-                .to_string_lossy()
-                .replace('\\', "/")
-                .contains("modules/helper/");
-            if let Ok(canonical) = serde_json::to_string(&canonical_json(value, module_catalog)) {
-                return canonical;
-            }
+        let module_catalog = path
+            .to_string_lossy()
+            .replace('\\', "/")
+            .contains("modules/helper/");
+        if let Ok(canonical) = serde_json::to_string(&canonical_json(value, module_catalog)) {
+            return canonical;
         }
     }
 
@@ -219,6 +278,10 @@ pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
                 .to_string()
         } else if is_module && current_section == "rule" {
             normalize_rule_spacing(&strip_trailing_comment(stripped))
+        } else if is_module && matches!(current_section.as_str(), "general" | "host" | "mitm") {
+            normalize_assignment_key(&normalize_rule_spacing(&strip_trailing_comment(stripped)))
+        } else if is_module && current_section == "script" {
+            normalize_assignment_key(&strip_trailing_comment(stripped))
         } else {
             strip_trailing_comment(stripped)
         };
@@ -248,13 +311,13 @@ pub fn is_pipeline_source_path_pub(path: &Path) -> bool {
 }
 
 fn safe_write_file(path: &Path, content: &str) -> std::io::Result<()> {
-    if path.exists() {
-        if let Ok(old_content) = fs::read_to_string(path) {
-            let old_stripped = semantic_content_for_path_pub(path, &old_content);
-            let new_stripped = semantic_content_for_path_pub(path, content);
-            if old_stripped == new_stripped {
-                return Ok(());
-            }
+    if path.exists()
+        && let Ok(old_content) = fs::read_to_string(path)
+    {
+        let old_stripped = semantic_content_for_path_pub(path, &old_content);
+        let new_stripped = semantic_content_for_path_pub(path, content);
+        if old_stripped == new_stripped {
+            return Ok(());
         }
     }
     if crate::safe_write_file_internal(path, content, true) {
@@ -269,10 +332,10 @@ fn safe_write_file(path: &Path, content: &str) -> std::io::Result<()> {
 
 fn is_github_source(path: &Path) -> bool {
     for comp in path.components() {
-        if let Some(s) = comp.as_os_str().to_str() {
-            if s == "github" {
-                return true;
-            }
+        if let Some(s) = comp.as_os_str().to_str()
+            && s == "github"
+        {
+            return true;
         }
     }
     false
@@ -394,7 +457,14 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
 
         if let Ok(content) = fs::read_to_string(entry_path) {
             let orig_content = content.clone();
-            let mut new_content = content;
+            let mut new_content = if entry_path
+                .extension()
+                .is_some_and(|extension| matches!(extension.to_str(), Some("sgmodule" | "module")))
+            {
+                normalize_force_http_engine_hosts(&content)
+            } else {
+                content
+            };
 
             for (re, repl) in MOCK_REPLACEMENTS.iter() {
                 new_content = re.replace_all(&new_content, *repl).to_string();
@@ -413,7 +483,7 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
 mod tests {
     use super::{
         MOCK_REPLACEMENTS, copy_github_variants, is_pipeline_source_path_pub,
-        semantic_content_for_path_pub,
+        normalize_force_http_engine_hosts, semantic_content_for_path_pub,
     };
     use std::fs;
     use std::path::Path;
@@ -450,6 +520,28 @@ mod tests {
             semantic_content_for_path_pub(Path::new("rules.sgmodule"), old),
             semantic_content_for_path_pub(Path::new("rules.sgmodule"), new)
         );
+    }
+
+    #[test]
+    fn semantic_compare_ignores_safe_module_section_alignment() {
+        let old = "#!name=Module\n[General]\ndns-server = %APPEND% 1.1.1.1, 8.8.8.8\n[Script]\njob = type=http-request,pattern=^https://example.test\n[MITM]\nhostname = %APPEND% api.example.test, www.example.test\n";
+        let new = "#!name = Module\n[General]\n dns-server=%APPEND% 1.1.1.1,8.8.8.8 \n[Script]\njob        =    type=http-request,pattern=^https://example.test\n[MITM]\nhostname=%APPEND% api.example.test,www.example.test\n";
+        assert_eq!(
+            semantic_content_for_path_pub(Path::new("module.sgmodule"), old),
+            semantic_content_for_path_pub(Path::new("module.sgmodule"), new)
+        );
+    }
+
+    #[test]
+    fn force_http_engine_hosts_are_merged_and_global_port_wildcards_removed() {
+        let input = "#!name=tools\n[General]\nforce-http-engine-hosts = %APPEND% boxjs.com, *.boxjs.com\nforce-http-engine-hosts = %APPEND% *.boxjs.com, script.hub, *:8082\n[MITM]\nhostname = script.hub\n";
+        let normalized = normalize_force_http_engine_hosts(input);
+        assert_eq!(normalized.matches("force-http-engine-hosts").count(), 1);
+        assert!(
+            normalized
+                .contains("force-http-engine-hosts = %APPEND% boxjs.com, *.boxjs.com, script.hub")
+        );
+        assert!(!normalized.contains("*:8082"));
     }
 
     #[test]

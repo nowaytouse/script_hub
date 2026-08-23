@@ -18,6 +18,17 @@ static HOSTNAME_PREFIX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^hostname
 static HOSTNAME_APPEND_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)^(%APPEND%|%INSERT%)\s*").unwrap());
 
+fn hostname_tokens(line: &str) -> Vec<String> {
+    let value = HOSTNAME_PREFIX_RE.replace(line.trim(), "");
+    let value = HOSTNAME_APPEND_RE.replace(&value, "");
+    value
+        .split(',')
+        .map(str::trim)
+        .filter(|host| !host.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
 const WEIBO_SECTION_ORDER: &[&str] = &[
     "Rule",
     "URL Rewrite",
@@ -70,8 +81,8 @@ fn parse_module(text: &str) -> (HashMap<String, String>, Vec<ModuleSectionPub>) 
         if stripped.starts_with('[') && stripped.ends_with(']') && !stripped.starts_with('#') {
             if !current_name.is_empty() {
                 sections.push(ModuleSectionPub {
-                    Name: current_name.clone(),
-                    Lines: current_lines.clone(),
+                    name: current_name.clone(),
+                    lines: current_lines.clone(),
                 });
             }
             current_name = stripped[1..stripped.len() - 1].to_string();
@@ -91,8 +102,8 @@ fn parse_module(text: &str) -> (HashMap<String, String>, Vec<ModuleSectionPub>) 
     }
     if !current_name.is_empty() {
         sections.push(ModuleSectionPub {
-            Name: current_name,
-            Lines: current_lines,
+            name: current_name,
+            lines: current_lines,
         });
     }
     (header_meta, sections)
@@ -164,14 +175,14 @@ fn order_sections(merged: &HashMap<String, Vec<String>>, order: &[&str]) -> Vec<
     let mut result = Vec::new();
     let mut seen = HashSet::new();
     for &name in order {
-        if let Some(lines) = merged.get(name) {
-            if !lines.is_empty() {
-                result.push(ModuleSectionPub {
-                    Name: name.to_string(),
-                    Lines: lines.clone(),
-                });
-                seen.insert(name.to_string());
-            }
+        if let Some(lines) = merged.get(name)
+            && !lines.is_empty()
+        {
+            result.push(ModuleSectionPub {
+                name: name.to_string(),
+                lines: lines.clone(),
+            });
+            seen.insert(name.to_string());
         }
     }
     let mut extra: Vec<String> = merged
@@ -182,8 +193,8 @@ fn order_sections(merged: &HashMap<String, Vec<String>>, order: &[&str]) -> Vec<
     extra.sort();
     for name in extra {
         result.push(ModuleSectionPub {
-            Name: name.clone(),
-            Lines: merged[&name].clone(),
+            name: name.clone(),
+            lines: merged[&name].clone(),
         });
     }
     result
@@ -197,8 +208,8 @@ fn load_preserved_rules(path: &Path) -> HashMap<String, Vec<String>> {
     let (_, sections) = parse_module(&text);
     let mut preserved = HashMap::new();
     for sec in sections {
-        if sec.Name == "Rule" && !sec.Lines.is_empty() {
-            preserved.insert(sec.Name.clone(), sec.Lines);
+        if sec.name == "Rule" && !sec.lines.is_empty() {
+            preserved.insert(sec.name.clone(), sec.lines);
         }
     }
     preserved
@@ -210,7 +221,37 @@ fn write_module(
     sections: &[ModuleSectionPub],
     dedupe: bool,
 ) -> bool {
-    let content = format_module_pub(header_lines, sections, dedupe);
+    let mut dropped = 0;
+    let sections: Vec<ModuleSectionPub> = sections
+        .iter()
+        .cloned()
+        .map(|mut section| {
+            let section_name = section.name.clone();
+            section.lines.retain(|line| {
+                let line = line.trim();
+                let valid = line.is_empty()
+                    || line.starts_with('#')
+                    || crate::promax::validation::validate_surge_section_line(&section_name, line)
+                        .is_empty();
+                if !valid {
+                    dropped += 1;
+                }
+                valid
+            });
+            section
+        })
+        .collect();
+    if dropped > 0 {
+        eprintln!(
+            "\x1b[0;33m[WARN]\x1b[0m dropped {dropped} invalid upstream line(s) while merging {:?}",
+            path
+        );
+    }
+    let content = crate::url_rewriter::normalize_force_http_engine_hosts(&format_module_pub(
+        header_lines,
+        &sections,
+        dedupe,
+    ));
     if content.contains("%INSERT%") {
         eprintln!(
             "\x1b[0;31m[ERROR]\x1b[0m merged module contains %%INSERT%%: {:?}",
@@ -248,12 +289,12 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
 
         for sec in sections {
             let filtered: Vec<String> = sec
-                .Lines
+                .lines
                 .iter()
                 .map(|l| l.trim().to_string())
                 .filter(|l| !l.is_empty())
                 .collect();
-            if let Some(existing) = merged_sections.get_mut(&sec.Name) {
+            if let Some(existing) = merged_sections.get_mut(&sec.name) {
                 if !existing.is_empty()
                     && !filtered.is_empty()
                     && existing.last() != Some(&String::new())
@@ -262,7 +303,7 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
                 }
                 existing.extend(filtered);
             } else {
-                merged_sections.insert(sec.Name, filtered);
+                merged_sections.insert(sec.name, filtered);
             }
         }
     }
@@ -301,10 +342,7 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
 
     let mut section_list: Vec<ModuleSectionPub> = merged_sections
         .into_iter()
-        .map(|(name, lines)| ModuleSectionPub {
-            Name: name,
-            Lines: lines,
-        })
+        .map(|(name, lines)| ModuleSectionPub { name, lines })
         .collect();
     section_list = merge_mitm_hosts_pub(&section_list);
 
@@ -356,7 +394,7 @@ fn rewrite_preserved_internal(
     let (meta, sections) = parse_module(&text);
     let mut merged: HashMap<String, Vec<String>> = HashMap::new();
     for sec in sections {
-        merged.insert(sec.Name, sec.Lines);
+        merged.insert(sec.name, sec.lines);
     }
     for (name, lines) in preserved {
         merged.insert(name.clone(), lines.clone());
@@ -382,31 +420,26 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
     let mut adblock_mitm_hosts: HashSet<String> = HashSet::new();
 
     for sec in sections {
-        if sec.Name == "Rule" {
-            adblock_rules.extend(sec.Lines);
+        if sec.name == "Rule" {
+            adblock_rules.extend(sec.lines);
             continue;
         }
-        if sec.Name == "Map Local" {
-            adblock_map_locals.extend(sec.Lines);
+        if sec.name == "Map Local" {
+            adblock_map_locals.extend(sec.lines);
             continue;
         }
         cleaned_sections.push(sec.clone());
-        if sec.Name == "MITM" {
-            for line in &sec.Lines {
+        if sec.name == "MITM" {
+            for line in &sec.lines {
                 let trimmed = line.trim();
                 if trimmed.to_lowercase().starts_with("hostname") {
-                    let hosts_str = HOSTNAME_PREFIX_RE.replace(trimmed, "");
-                    for h in hosts_str.split(',') {
-                        let h_clean = h.trim();
-                        if h_clean.is_empty() {
-                            continue;
-                        }
+                    for h_clean in hostname_tokens(trimmed) {
                         if h_clean == "*.googlevideo.com" {
-                            adblock_mitm_hosts.insert(h_clean.to_string());
+                            adblock_mitm_hosts.insert(h_clean);
                         } else {
-                            mitm_hosts.insert(h_clean.to_string());
+                            mitm_hosts.insert(h_clean.clone());
                             if h_clean.contains("youtubei") {
-                                adblock_mitm_hosts.insert(h_clean.to_string());
+                                adblock_mitm_hosts.insert(h_clean);
                             }
                         }
                     }
@@ -418,13 +451,13 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
     let mut final_sections: Vec<ModuleSectionPub> = Vec::new();
     let mut mitm_merged = false;
     for sec in cleaned_sections {
-        if sec.Name == "MITM" {
+        if sec.name == "MITM" {
             if !mitm_merged && !mitm_hosts.is_empty() {
                 let mut sorted: Vec<String> = mitm_hosts.iter().cloned().collect();
                 sorted.sort();
                 final_sections.push(ModuleSectionPub {
-                    Name: "MITM".to_string(),
-                    Lines: vec![format!("hostname = %APPEND% {}", sorted.join(", "))],
+                    name: "MITM".to_string(),
+                    lines: vec![format!("hostname = %APPEND% {}", sorted.join(", "))],
                 });
                 mitm_merged = true;
             }
@@ -450,7 +483,7 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
 
     let extra = vec![
         "# Upstream module processed by create/processor/merge_bundles.rs".to_string(),
-        "# - Stripped: [Rule], [Map Local] and *.googlevideo.com from MITM".to_string(),
+        "# - Moved: [Rule], [Map Local] and *.googlevideo.com ad handling to PROMAX".to_string(),
     ];
     let header_lines = format_header_with_extra(&header, &extra);
     if let Some(parent) = Path::new(&req.output_path).parent() {
@@ -540,7 +573,7 @@ fn finalize_devtools(path: &Path) -> bool {
     let (meta, sections) = parse_module(&text);
     let mut merged: HashMap<String, Vec<String>> = HashMap::new();
     for sec in sections {
-        merged.insert(sec.Name, sec.Lines);
+        merged.insert(sec.name, sec.lines);
     }
 
     let script_lines = merged.get("Script").cloned().unwrap_or_default();
@@ -595,10 +628,10 @@ fn finalize_devtools(path: &Path) -> bool {
         .collect();
     inclusions.sort();
     exclusions.sort();
-    inclusions.extend(exclusions);
+    exclusions.extend(inclusions);
     merged.insert(
         "MITM".to_string(),
-        vec![format!("hostname = %APPEND% {}", inclusions.join(", "))],
+        vec![format!("hostname = %APPEND% {}", exclusions.join(", "))],
     );
 
     let order = &[
@@ -678,5 +711,48 @@ pub fn run_merge_bundle_json(json: &str) -> bool {
             eprintln!("\x1b[0;31m[ERROR]\x1b[0m merge_bundles JSON: {}", e);
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ModuleSectionPub, hostname_tokens, write_module};
+
+    #[test]
+    fn hostname_tokens_remove_module_merge_directives() {
+        assert_eq!(
+            hostname_tokens("hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com"),
+            [
+                "*.googlevideo.com".to_string(),
+                "youtubei.googleapis.com".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn write_module_drops_only_invalid_upstream_rule_lines() {
+        let path = std::env::temp_dir().join(format!(
+            "script-hub-merge-invalid-rule-{}.sgmodule",
+            std::process::id()
+        ));
+        let sections = [ModuleSectionPub {
+            name: "Rule".to_string(),
+            lines: vec![
+                "DOMAIN,10.10.34.34,REJECT".to_string(),
+                "DOMAIN,ads.example,REJECT".to_string(),
+            ],
+        }];
+
+        assert!(write_module(
+            &path,
+            &["#!name=fixture".to_string()],
+            &sections,
+            true
+        ));
+        let output = std::fs::read_to_string(&path).unwrap();
+        std::fs::remove_file(path).unwrap();
+
+        assert!(!output.contains("DOMAIN,10.10.34.34,REJECT"));
+        assert!(output.contains("DOMAIN,ads.example,REJECT"));
     }
 }

@@ -2,7 +2,7 @@
 #!desc=微博与国际版去广告 · PROMAX 构建源\n\n【Bundled Modules】\n✦ 微博去广告&净化: 去除常见的广告和部分多余的模块\n\n✦ WeiboIntl: 移除开屏、瀑布流、趋势页、用户中心广告
 #!author=fmz200, iab0x00, ScriptHub
 #!tag=去广告, 微博, PROMAX-build
-#!date=2026-08-23 06:02:15
+#!date=2026-08-23 19:56:57
 # Upstream modules merged by create/processor/merge_bundles.rs (Rust)
 # - Weibo: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Surge/module/weibo.module
 # - Intl: https://raw.githubusercontent.com/iab0x00/ProxyRules/main/Rewrite/WeiboIntl.sgmodule
@@ -94,13 +94,12 @@ DOMAIN,adpinpai.video.weibocdn.com,REJECT
 [Body Rewrite]
 http-response-jq ^https:\/\/api\.weibo\.cn\/2\/cardlist\? 'del(.items[] | select(.category == "group"))'
 # 微博轻享版banner广告
-http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=trends& 'del(.data.banner)'
+http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=trends& '(del(.data.banner)) | (if .data.order then .data.order = ["search_topic"] end)'
 
 http-response-jq ^https?:\/\/api\.weibo\.cn\/2\/statuses\/unread_hot_timeline$ 'del(.ad, .advertises, .trends) | if .statuses then .statuses |= map(select(((.promotion.type == "ad") or (.mblogtypename | IN("广告", "廣告", "热推", "熱推"))) | not)) end'
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=get_coopen_ads& '.data |= . + {"ad_list":[],"pic_ad":[],"gdt_video_ad_ios":[],"display_ad":0,"ad_ios_id":null,"app_ad_ios_id":null,"reserve_ad_ios_id":"","reserve_app_ad_ios_id":"","ad_duration":604800,"ad_cd_interval":604800}'
-http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=trends& 'if .data.order then .data.order = ["search_topic"] end'
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=search_topic& 'if .data.search_topic.cards[0].type == "searchtop" then del(.data.search_topic.cards[0]) end'
 http-response-jq ^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=user_center& 'if .data.cards then .data.cards[].items |= map(select(.type != "personal_vip")) | .data.cards |= map(select((.items | length) > 0)) end'
 
 [MITM]
-hostname = %APPEND% *.weibo.cn, *.weibo.com, api.weibo.cn, weibo.com, weibointl.api.weibo.cn
+hostname = %APPEND% *.weibo.cn, *.weibo.com, weibo.com

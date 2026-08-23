@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::path::Path;
 
@@ -72,6 +72,8 @@ pub fn sync_ports(ports_source: &str, firewall_modules: &[&str], execute: bool, 
             }
         }
     }
+    port_rules.sort();
+    port_rules.dedup();
 
     if !invalid_rules.is_empty() {
         println!(
@@ -230,44 +232,94 @@ pub fn sync_ports(ports_source: &str, firewall_modules: &[&str], execute: bool, 
     }
 }
 
-fn apple_sections() -> (Vec<String>, Vec<String>, Vec<String>) {
-    let mut rules: Vec<String> = crate::promax::safety::APPLE_CRITICAL_EXACT
-        .iter()
-        .map(|host| format!("DOMAIN,{host},DIRECT"))
-        .chain(
-            crate::promax::safety::APPLE_CRITICAL_SUFFIXES
-                .iter()
-                .map(|host| format!("DOMAIN-SUFFIX,{host},DIRECT")),
-        )
-        .collect();
-    rules.sort();
+const SYSTEM_DNS_HOSTS: &[&str] = &[
+    "localhost",
+    "*.localhost",
+    "*.local",
+    "*.lan",
+    "*.home.arpa",
+    "*.localdomain",
+    "router.asus.com",
+    "routerlogin.net",
+    "orbilogin.com",
+    "miwifi.com",
+    "www.miwifi.com",
+    "tplogin.cn",
+    "tplinklogin.net",
+    "tplinkwifi.net",
+    "melogin.cn",
+    "falogin.cn",
+    "tendawifi.com",
+];
 
-    let mut hosts: Vec<String> = crate::promax::safety::APPLE_CRITICAL_EXACT
-        .iter()
-        .map(|host| format!("{host} = server:system"))
-        .collect();
-    for suffix in crate::promax::safety::APPLE_CRITICAL_SUFFIXES {
-        hosts.push(format!("{suffix} = server:system"));
-        hosts.push(format!("*.{suffix} = server:system"));
+fn covered_by_wildcard_parent(host: &str, hosts: &BTreeSet<String>) -> bool {
+    let mut candidate = host.strip_prefix("*.").unwrap_or(host);
+    while let Some((_, parent)) = candidate.split_once('.') {
+        if hosts.contains(&format!("*.{parent}")) {
+            return true;
+        }
+        candidate = parent;
     }
-    hosts.sort();
-    hosts.dedup();
-
-    let mut exclusions: Vec<String> = crate::promax::safety::APPLE_CRITICAL_EXACT
-        .iter()
-        .map(|host| format!("-{host}"))
-        .collect();
-    for suffix in crate::promax::safety::APPLE_CRITICAL_SUFFIXES {
-        exclusions.push(format!("-{suffix}"));
-        exclusions.push(format!("-*.{suffix}"));
-    }
-    exclusions.sort();
-    exclusions.dedup();
-    (rules, hosts, exclusions)
+    false
 }
 
-fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> String {
-    let (rules, hosts, exclusions) = apple_sections();
+fn prune_redundant_system_hosts(hosts: &mut BTreeSet<String>) {
+    let redundant: Vec<String> = hosts
+        .iter()
+        .filter(|host| covered_by_wildcard_parent(host, hosts))
+        .cloned()
+        .collect();
+    for host in redundant {
+        hosts.remove(&host);
+    }
+}
+
+fn helper_sections(root: &Path) -> Result<(Vec<String>, Vec<String>), String> {
+    let apple_path = root.join("rulesets/RULE-SET/Apple.list");
+    let content = fs::read_to_string(&apple_path)
+        .map_err(|error| format!("failed to read {}: {error}", apple_path.display()))?;
+    let mut system_hosts = BTreeSet::new();
+    for line in content.lines().map(str::trim) {
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let rule = crate::promax::rule::SurgeRule::parse(line)
+            .map_err(|error| format!("invalid Apple rule {line:?}: {error}"))?;
+        match rule.kind {
+            crate::promax::rule::RuleKind::Domain => {
+                system_hosts.insert(rule.payload);
+            }
+            crate::promax::rule::RuleKind::DomainSuffix => {
+                system_hosts.insert(rule.payload.clone());
+                system_hosts.insert(format!("*.{}", rule.payload));
+            }
+            crate::promax::rule::RuleKind::DomainWildcard => {
+                system_hosts.insert(rule.payload);
+            }
+            _ => {}
+        }
+    }
+    system_hosts.extend(SYSTEM_DNS_HOSTS.iter().map(|host| (*host).to_string()));
+    prune_redundant_system_hosts(&mut system_hosts);
+    system_hosts.remove("dns.alidns.com");
+    let mut hosts: Vec<String> = system_hosts
+        .into_iter()
+        .map(|host| format!("{host} = server:system"))
+        .collect();
+    hosts.push("dns.alidns.com = 223.5.5.5, 223.6.6.6".to_string());
+    hosts.sort();
+
+    let exclusions = crate::promax::safety::apple_mitm_exclusions();
+    Ok((hosts.into_iter().collect(), exclusions))
+}
+
+fn render_helper(
+    root: &Path,
+    shadowrocket: bool,
+    with_firewall: bool,
+    version: &str,
+) -> Result<String, String> {
+    let (hosts, exclusions) = helper_sections(root)?;
     let name = if with_firewall {
         "🛡️ PROMAX AdBlock Helper (DNS & Firewall)"
     } else {
@@ -282,7 +334,7 @@ fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> Stri
     let mut output = vec![
         format!("#!name={name}"),
         format!(
-            "#!desc={prefix}轻量 DNS 补充 + Apple 账户/iCloud 直连、系统 DNS 与 MITM 排除。只追加 2 个区域 DNS 和 1 个 DoH，不覆盖 IPv6、DNS 劫持或系统网络设置。{}",
+            "#!desc={prefix}轻量 DNS 补充 + Apple/局域网系统解析、DoH 引导与关键服务 MITM 排除。模块不注入分流策略；Apple 分流由外部规则集和用户策略组决定。{}",
             if with_firewall {
                 "附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。"
             } else {
@@ -296,12 +348,11 @@ fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> Stri
         String::new(),
         "[General]".to_string(),
         general.to_string(),
-        String::new(),
-        "[Rule]".to_string(),
     ];
-    output.extend(rules);
     if with_firewall {
         output.extend([
+            String::new(),
+            "[Rule]".to_string(),
             "# --- SYNCED PORT RULES START ---".to_string(),
             "# Automated update from ports source".to_string(),
             "# --- SYNCED PORT RULES END ---".to_string(),
@@ -315,7 +366,7 @@ fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> Stri
         format!("hostname = %INSERT% {}", exclusions.join(", ")),
         String::new(),
     ]);
-    output.join("\n")
+    Ok(output.join("\n"))
 }
 
 fn render_firewall(shadowrocket: bool, version: &str) -> String {
@@ -330,16 +381,16 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
     let outputs = [
         (
             modules.join("surge/head_expanse/🌟 AdBlock Helper .sgmodule"),
-            render_helper(false, false, version),
+            render_helper(root, false, false, version)?,
         ),
         (
             modules.join("shadowrocket/head_expanse/🌟 AdBlock Helper .module"),
-            render_helper(true, false, version),
+            render_helper(root, true, false, version)?,
         ),
         (
             modules
                 .join("shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
-            render_helper(true, true, version),
+            render_helper(root, true, true, version)?,
         ),
         (
             modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
@@ -365,7 +416,7 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
 
 #[cfg(test)]
 mod tests {
-    use super::sync_ports;
+    use super::{render_helper, sync_ports};
     use std::fs;
 
     #[test]
@@ -378,7 +429,7 @@ mod tests {
         let module = directory.join("firewall.sgmodule");
         fs::write(
             &source,
-            "DEST-PORT,4444,REJECT-DROP\nDEST-PORT,5223,REJECT-DROP\n",
+            "DEST-PORT,4444,REJECT-DROP\nDEST-PORT,4444,REJECT-DROP\nDEST-PORT,5223,REJECT-DROP\n",
         )
         .unwrap();
         fs::write(
@@ -396,8 +447,41 @@ mod tests {
         let actual = fs::read_to_string(&module).unwrap();
         assert!(actual.contains("# --- SYNCED PORT RULES START ---"));
         assert!(actual.contains("DEST-PORT,4444,REJECT-DROP"));
+        assert_eq!(actual.matches("DEST-PORT,4444,REJECT-DROP").count(), 1);
         assert!(!actual.contains("5223"));
         assert!(!actual.contains("3283"));
         fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn helper_keeps_dns_hosts_and_mitm_without_forcing_apple_policy() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-helper-render-{}", std::process::id()));
+        let rulesets = root.join("rulesets/RULE-SET");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&rulesets).unwrap();
+        fs::write(
+            rulesets.join("Apple.list"),
+            "DOMAIN,account.apple.com\nDOMAIN-SUFFIX,icloud.com\nDOMAIN,a1.media.apple.test\nDOMAIN-SUFFIX,media.apple.test\n",
+        )
+        .unwrap();
+
+        let helper = render_helper(&root, false, false, "test").unwrap();
+        assert!(helper.contains("[Host]"));
+        assert!(helper.contains("account.apple.com = server:system"));
+        assert!(helper.contains("*.icloud.com = server:system"));
+        assert!(helper.contains("media.apple.test = server:system"));
+        assert!(helper.contains("*.media.apple.test = server:system"));
+        assert!(!helper.contains("a1.media.apple.test = server:system"));
+        assert!(helper.contains("dns.alidns.com = 223.5.5.5, 223.6.6.6"));
+        assert!(helper.contains("-account.apple.com"));
+        assert!(!helper.contains("[Rule]"));
+        assert!(!helper.contains(",DIRECT"));
+
+        let firewall_helper = render_helper(&root, true, true, "test").unwrap();
+        assert!(firewall_helper.contains("[Rule]"));
+        assert!(firewall_helper.contains("SYNCED PORT RULES START"));
+        assert!(!firewall_helper.contains(",DIRECT"));
+        fs::remove_dir_all(root).unwrap();
     }
 }

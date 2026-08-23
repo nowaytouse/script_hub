@@ -153,7 +153,8 @@ impl SurgeRule {
     }
 
     fn render(&self, include_policy: bool, default_policy: &str, external: bool) -> String {
-        let payload = if self.payload.contains(',') {
+        let payload = if self.payload.contains(',') || self.payload.chars().any(char::is_whitespace)
+        {
             format!("\"{}\"", self.payload)
         } else {
             self.payload.clone()
@@ -232,6 +233,11 @@ fn validate_payload(kind: RuleKind, payload: &str) -> Result<(), RuleError> {
 }
 
 fn validate_domain(payload: &str, wildcard: bool) -> Result<(), RuleError> {
+    if payload.parse::<IpAddr>().is_ok() {
+        return Err(RuleError(
+            "IP literal must use an IP-CIDR or IP-CIDR6 rule".to_string(),
+        ));
+    }
     let valid = !payload.contains("://")
         && !payload.contains('/')
         && !payload.chars().any(char::is_whitespace)
@@ -424,5 +430,7 @@ mod tests {
         assert!(SurgeRule::parse("IP-CIDR,not-a-cidr").is_err());
         assert!(SurgeRule::parse("DEST-PORT,abc").is_err());
         assert!(SurgeRule::parse("DOMAIN,https://example.com/path").is_err());
+        assert!(SurgeRule::parse("DOMAIN,10.10.34.34").is_err());
+        assert!(SurgeRule::parse("DOMAIN-SUFFIX,180.76.76.200").is_err());
     }
 }

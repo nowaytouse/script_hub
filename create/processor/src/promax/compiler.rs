@@ -6,36 +6,7 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
-// Regex rules
-#[allow(dead_code)]
-static META_LINE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)^#!\s*([A-Za-z0-9_-]+)\s*[=:]\s*(.*)$").unwrap());
-#[allow(dead_code)]
-static SCRIPT_NAME_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)\bname\s*=\s*([^,\s]+)").unwrap());
-#[allow(dead_code)]
-static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
-#[allow(dead_code)]
-static SCRIPT_PATH_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
-#[allow(dead_code)]
-static SCRIPT_PATTERN_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
-
-#[allow(dead_code)]
-static M1: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\(\^\|\.\)(.+?)-\.\+\.").unwrap());
-#[allow(dead_code)]
-static M2: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$").unwrap());
-#[allow(dead_code)]
-static M3: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\.\+(.+)$").unwrap());
-
-#[allow(dead_code)]
-static VALID_IPV4_CIDR: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
-#[allow(dead_code)]
-static VALID_IPV6_CIDR: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^([0-9a-fA-F:]+)(/\d{1,3})?$").unwrap());
+static SHARD_INDEX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"_(\d+)\.list$").unwrap());
 
 static FUNCTIONAL_BLOCK_NAME_TOKENS: &[&str] = &[
     "解锁",
@@ -199,7 +170,7 @@ fn format_commas(n: usize) -> String {
     let mut res = String::new();
     let len = bytes.len();
     for (i, &b) in bytes.iter().enumerate() {
-        if i > 0 && (len - i) % 3 == 0 {
+        if i > 0 && (len - i).is_multiple_of(3) {
             res.push(',');
         }
         res.push(b as char);
@@ -217,22 +188,6 @@ static SECTION_ORDER: &[&str] = &[
     "Body Rewrite",
     "Header Rewrite",
     "MITM",
-];
-
-#[allow(dead_code)]
-static HEADER_KEYS_ORDER: &[&str] = &[
-    "name",
-    "desc",
-    "author",
-    "icon",
-    "category",
-    "tag",
-    "date",
-    "arguments",
-    "arguments-desc",
-    "system-proxy",
-    "ability",
-    "update-interval",
 ];
 
 static GROUP_HEAD_EXPANSE: &str = "『 🔝 Head Expanse › 首端扩域 』";
@@ -303,7 +258,7 @@ impl SourceEntry {
         if self.is_remote() {
             self.source
                 .split('/')
-                .last()
+                .next_back()
                 .unwrap_or(&self.source)
                 .to_string()
         } else {
@@ -398,8 +353,29 @@ impl AdBlockManager {
                 path.display()
             )
         })?;
-        let (safety, stats) =
-            crate::promax::safety::SafetyPolicy::from_lines_with_stats(content.lines());
+        let apple_path = self.root_dir.join("rulesets/RULE-SET/Apple.list");
+        let apple_content = fs::read_to_string(&apple_path).map_err(|error| {
+            format!(
+                "required Apple safety ruleset {} is unreadable: {error}",
+                apple_path.display()
+            )
+        })?;
+        let apple_network_rules = apple_content.lines().filter(|line| {
+            crate::promax::rule::SurgeRule::parse(line).is_ok_and(|rule| {
+                !crate::is_ruleset_watermark(&rule.payload)
+                    && matches!(
+                        rule.kind,
+                        crate::promax::rule::RuleKind::Domain
+                            | crate::promax::rule::RuleKind::DomainSuffix
+                            | crate::promax::rule::RuleKind::DomainKeyword
+                            | crate::promax::rule::RuleKind::IpCidr
+                            | crate::promax::rule::RuleKind::IpCidr6
+                    )
+            })
+        });
+        let (safety, stats) = crate::promax::safety::SafetyPolicy::from_lines_with_stats(
+            content.lines().chain(apple_network_rules),
+        );
         if !stats.is_publish_ready() {
             return Err(format!(
                 "whitelist safety floor failed: {} domain patterns, {} IP networks, {} invalid entries",
@@ -757,10 +733,10 @@ impl AdBlockManager {
             return;
         }
         if let Some(exception) = stripped.strip_prefix("@@") {
-            if let Some(rule) = crate::promax::functional::normalize_domain_source_line(exception) {
-                if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(&rule) {
-                    self.source_exceptions.insert(parsed.payload);
-                }
+            if let Some(rule) = crate::promax::functional::normalize_domain_source_line(exception)
+                && let Ok(parsed) = crate::promax::rule::SurgeRule::parse(&rule)
+            {
+                self.source_exceptions.insert(parsed.payload);
             }
             return;
         }
@@ -807,6 +783,17 @@ impl AdBlockManager {
                     continue;
                 }
             };
+            if crate::is_ruleset_watermark(&parsed.payload) {
+                self.quarantine
+                    .push(crate::promax::safety::QuarantineRecord {
+                        source: self.current_source.clone(),
+                        line: self.current_line,
+                        candidate: candidate.clone(),
+                        reason: "upstream-ruleset-watermark".to_string(),
+                        risk: crate::promax::safety::RiskClass::Invalid,
+                    });
+                continue;
+            }
             let policy = parsed
                 .policy
                 .as_deref()
@@ -956,12 +943,18 @@ impl AdBlockManager {
             return;
         }
         let seen = self.section_seen.get_mut(section_name).unwrap();
-        if seen.insert(key) {
-            self.sections
-                .get_mut(section_name)
-                .unwrap()
-                .push(stripped.to_string());
+        let matcher_key = (section_name == "Script")
+            .then(|| crate::smart_cleanup::script_matcher_key_pub(stripped))
+            .flatten();
+        if seen.contains(&key) || matcher_key.as_ref().is_some_and(|key| seen.contains(key)) {
+            return;
         }
+        seen.insert(key);
+        seen.extend(matcher_key);
+        self.sections
+            .get_mut(section_name)
+            .unwrap()
+            .push(stripped.to_string());
     }
 
     fn add_mitm_host(&mut self, hostname: &str) {
@@ -1019,6 +1012,33 @@ impl AdBlockManager {
                     risk: crate::promax::safety::RiskClass::BroadMedia,
                 });
         }
+        self.mitm_hosts
+            .extend(crate::promax::safety::apple_mitm_exclusions());
+        self.mitm_hosts
+            .retain(|host| host.starts_with('-') || !crate::mitm_manager::is_restricted(host));
+        let normalized =
+            crate::smart_cleanup::merge_mitm_hosts_pub(&[crate::smart_cleanup::ModuleSectionPub {
+                name: "MITM".to_string(),
+                lines: vec![format!(
+                    "hostname = %APPEND% {}",
+                    self.mitm_hosts
+                        .iter()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )],
+            }]);
+        if let Some(line) = normalized.first().and_then(|section| section.lines.first()) {
+            self.mitm_hosts = line
+                .split_once('=')
+                .map(|(_, hosts)| hosts.trim().trim_start_matches("%APPEND%").trim())
+                .unwrap_or("")
+                .split(',')
+                .map(str::trim)
+                .filter(|host| !host.is_empty())
+                .map(str::to_string)
+                .collect();
+        }
     }
 
     fn extract_from_text(
@@ -1066,24 +1086,22 @@ impl AdBlockManager {
                     self.add_rule_line(stripped, default_policy, category);
                     continue;
                 }
-                if include_sections {
-                    if let Some(inferred) = self.infer_non_rule_section(stripped) {
-                        if inferred == "MITM" && stripped.starts_with("hostname") {
-                            let hosts = stripped
-                                .splitn(2, '=')
-                                .nth(1)
-                                .unwrap_or("")
-                                .replace("%APPEND%", "")
-                                .replace("%INSERT%", "");
-                            for h in hosts.split(',') {
-                                let h = h.trim();
-                                if !h.is_empty() {
-                                    self.add_mitm_host(h);
-                                }
+                if include_sections && let Some(inferred) = self.infer_non_rule_section(stripped) {
+                    if inferred == "MITM" && stripped.starts_with("hostname") {
+                        let hosts = stripped
+                            .split_once('=')
+                            .map(|x| x.1)
+                            .unwrap_or("")
+                            .replace("%APPEND%", "")
+                            .replace("%INSERT%", "");
+                        for h in hosts.split(',') {
+                            let h = h.trim();
+                            if !h.is_empty() {
+                                self.add_mitm_host(h);
                             }
-                        } else {
-                            self.add_section_line(inferred, stripped);
                         }
+                    } else {
+                        self.add_section_line(inferred, stripped);
                     }
                 }
                 continue;
@@ -1096,8 +1114,8 @@ impl AdBlockManager {
                     self.add_section_line(&current_section, stripped);
                 } else if current_section == "MITM" && stripped.starts_with("hostname") {
                     let hosts = stripped
-                        .splitn(2, '=')
-                        .nth(1)
+                        .split_once('=')
+                        .map(|x| x.1)
                         .unwrap_or("")
                         .replace("%APPEND%", "")
                         .replace("%INSERT%", "");
@@ -1250,18 +1268,12 @@ impl AdBlockManager {
     fn filter_rules(&self, rules: &HashSet<String>) -> Vec<String> {
         let mut filtered = Vec::new();
         for rule in rules {
-            if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(rule) {
-                if self.source_exceptions.iter().any(|domain| {
+            if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(rule)
+                && self.source_exceptions.iter().any(|domain| {
                     parsed.payload == *domain || parsed.payload.ends_with(&format!(".{domain}"))
-                }) {
-                    continue;
-                }
-                if matches!(
-                    self.safety.decision(&parsed),
-                    crate::promax::safety::SafetyDecision::Quarantine(_)
-                ) {
-                    continue;
-                }
+                })
+            {
+                continue;
             }
             filtered.push(rule.clone());
         }
@@ -1388,7 +1400,7 @@ impl AdBlockManager {
         }
         let mut keep = HashSet::new();
         for f in generated_files {
-            keep.insert(f.split('/').last().unwrap().to_string());
+            keep.insert(f.split('/').next_back().unwrap().to_string());
         }
         keep.insert("HTTPDNS_Hijack.list".to_string());
         keep.insert("reject-drop.list".to_string());
@@ -1430,10 +1442,11 @@ impl AdBlockManager {
         if let Ok(entries) = fs::read_dir(split_dir) {
             for entry in entries.map_while(Result::ok) {
                 let name = entry.file_name().to_string_lossy().to_string();
-                if name.ends_with(".ad-extract.sgmodule") && !generated_files.contains(&name) {
-                    if fs::remove_file(entry.path()).is_ok() {
-                        removed.push(name);
-                    }
+                if name.ends_with(".ad-extract.sgmodule")
+                    && !generated_files.contains(&name)
+                    && fs::remove_file(entry.path()).is_ok()
+                {
+                    removed.push(name);
                 }
             }
         }
@@ -1527,6 +1540,23 @@ impl AdBlockManager {
             }
         }
 
+        for section in [
+            "URL Rewrite",
+            "Map Local",
+            "Script",
+            "Body Rewrite",
+            "Header Rewrite",
+        ] {
+            let lines = self.sections.get_mut(section).unwrap();
+            *lines = crate::smart_cleanup::dedupe_section_lines_pub(section, lines);
+        }
+        let mut claimed_matchers = HashSet::new();
+        for section in ["Map Local", "Body Rewrite", "URL Rewrite"] {
+            self.sections.get_mut(section).unwrap().retain(|line| {
+                crate::smart_cleanup::functional_matcher_key_pub(section, line)
+                    .is_none_or(|matcher| claimed_matchers.insert(matcher))
+            });
+        }
         self.retain_referenced_mitm_hosts();
 
         let mut added = HashMap::new();
@@ -1540,7 +1570,7 @@ impl AdBlockManager {
         ] {
             let before = *counts_before.get(*name).unwrap();
             let after = self.sections.get(*name).unwrap().len();
-            let diff = after - before;
+            let diff = after.saturating_sub(before);
             if diff > 0 {
                 added.insert(name.to_string(), diff);
                 summary_parts.push(format!("{}={}", name, diff));
@@ -1734,6 +1764,7 @@ impl AdBlockManager {
                         true
                     }
                 });
+                *lines = crate::smart_cleanup::dedupe_section_lines_pub(section, lines);
             }
             self.filter_split_mitm_hosts(&mut ad_sections, source_label, &source_lines);
             ad_sections.retain(|_, lines| !lines.is_empty());
@@ -1782,56 +1813,55 @@ impl AdBlockManager {
         let func_sources_file = self
             .root_dir
             .join("rulesets/Sources/Links/AdBlock_functional_sources.list");
-        if func_sources_file.exists() {
-            if let Ok(file) = File::open(&func_sources_file) {
-                let reader = BufReader::new(file);
-                for line in reader.lines().map_while(Result::ok) {
-                    let line = line.trim();
-                    if line.is_empty() || line.starts_with('#') {
+        if func_sources_file.exists()
+            && let Ok(file) = File::open(&func_sources_file)
+        {
+            let reader = BufReader::new(file);
+            for line in reader.lines().map_while(Result::ok) {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                if line.starts_with("http://") || line.starts_with("https://") {
+                    remote_urls.push(line.to_string());
+                    continue;
+                }
+                let resolved = func_sources_file.parent().unwrap().join(line);
+                let norm = resolved.canonicalize().unwrap_or(resolved);
+                if seen.insert(norm.clone()) && norm.is_file() {
+                    let mode = self.resolve_module_ingest_mode(&norm, true);
+                    if mode == "skip" {
+                        let rel = norm
+                            .strip_prefix(&self.root_dir)
+                            .unwrap_or(&norm)
+                            .to_string_lossy()
+                            .to_string();
+                        println!(
+                            "\x1b[0;33m[WARN]\x1b[0m   ⊘ Skipped (no ad / unlock-only): {}",
+                            rel
+                        );
                         continue;
                     }
-                    if line.starts_with("http://") || line.starts_with("https://") {
-                        remote_urls.push(line.to_string());
-                        continue;
-                    }
-                    let resolved = func_sources_file.parent().unwrap().join(line);
-                    let norm = resolved.canonicalize().unwrap_or(resolved);
-                    if seen.insert(norm.clone()) && norm.is_file() {
-                        let mode = self.resolve_module_ingest_mode(&norm, true);
-                        if mode == "skip" {
-                            let rel = norm
-                                .strip_prefix(&self.root_dir)
-                                .unwrap_or(&norm)
-                                .to_string_lossy()
-                                .to_string();
-                            println!(
-                                "\x1b[0;33m[WARN]\x1b[0m   ⊘ Skipped (no ad / unlock-only): {}",
-                                rel
-                            );
-                            continue;
-                        }
-                        paths.push((norm, mode));
-                    }
+                    paths.push((norm, mode));
                 }
             }
         }
 
         // Local local modules dir
         let local_dir = self.root_dir.join("modules/source/local");
-        if local_dir.is_dir() {
-            if let Ok(entries) = fs::read_dir(local_dir) {
-                let mut files: Vec<PathBuf> =
-                    entries.map_while(Result::ok).map(|e| e.path()).collect();
-                files.sort();
-                for f in files {
-                    let name = f.file_name().unwrap().to_string_lossy().to_string();
-                    if name.ends_with(".sgmodule") || name.ends_with(".module") {
-                        let norm = f.canonicalize().unwrap_or(f);
-                        if seen.insert(norm.clone()) {
-                            let mode = self.resolve_module_ingest_mode(&norm, false);
-                            if mode != "skip" {
-                                paths.push((norm, mode));
-                            }
+        if local_dir.is_dir()
+            && let Ok(entries) = fs::read_dir(local_dir)
+        {
+            let mut files: Vec<PathBuf> = entries.map_while(Result::ok).map(|e| e.path()).collect();
+            files.sort();
+            for f in files {
+                let name = f.file_name().unwrap().to_string_lossy().to_string();
+                if name.ends_with(".sgmodule") || name.ends_with(".module") {
+                    let norm = f.canonicalize().unwrap_or(f);
+                    if seen.insert(norm.clone()) {
+                        let mode = self.resolve_module_ingest_mode(&norm, false);
+                        if mode != "skip" {
+                            paths.push((norm, mode));
                         }
                     }
                 }
@@ -1840,24 +1870,23 @@ impl AdBlockManager {
 
         // LocalModules dir
         let local_modules_dir = self.root_dir.join("rulesets/Sources/LocalModules");
-        if local_modules_dir.is_dir() {
-            if let Ok(entries) = fs::read_dir(local_modules_dir) {
-                let mut files: Vec<PathBuf> =
-                    entries.map_while(Result::ok).map(|e| e.path()).collect();
-                files.sort();
-                let protected = ["script_hub.surge.sgmodule"];
-                for f in files {
-                    let name = f.file_name().unwrap().to_string_lossy().to_string();
-                    if protected.contains(&name.as_str()) {
-                        continue;
-                    }
-                    if name.ends_with(".sgmodule") || name.ends_with(".module") {
-                        let norm = f.canonicalize().unwrap_or(f);
-                        if seen.insert(norm.clone()) {
-                            let mode = self.resolve_module_ingest_mode(&norm, false);
-                            if mode != "skip" {
-                                paths.push((norm, mode));
-                            }
+        if local_modules_dir.is_dir()
+            && let Ok(entries) = fs::read_dir(local_modules_dir)
+        {
+            let mut files: Vec<PathBuf> = entries.map_while(Result::ok).map(|e| e.path()).collect();
+            files.sort();
+            let protected = ["script_hub.surge.sgmodule"];
+            for f in files {
+                let name = f.file_name().unwrap().to_string_lossy().to_string();
+                if protected.contains(&name.as_str()) {
+                    continue;
+                }
+                if name.ends_with(".sgmodule") || name.ends_with(".module") {
+                    let norm = f.canonicalize().unwrap_or(f);
+                    if seen.insert(norm.clone()) {
+                        let mode = self.resolve_module_ingest_mode(&norm, false);
+                        if mode != "skip" {
+                            paths.push((norm, mode));
                         }
                     }
                 }
@@ -1991,11 +2020,10 @@ impl AdBlockManager {
 
         let mut shards = Vec::new();
         for rs_path in generated_rulesets {
-            let filename = rs_path.split('/').last().unwrap();
+            let filename = rs_path.split('/').next_back().unwrap();
             let category = self.category_from_filename(filename);
             let meta = CATEGORY_META.get(category).unwrap();
-            let match_idx = Regex::new(r"_(\d+)\.list$").unwrap();
-            let shard_index = match_idx
+            let shard_index = SHARD_INDEX_RE
                 .captures(filename)
                 .and_then(|caps| caps[1].parse::<usize>().ok())
                 .unwrap_or(1);
@@ -2193,28 +2221,20 @@ impl AdBlockManager {
         rule_lines.push("# Automated update from ports source".to_string());
 
         let ports_source = self.root_dir.join("rulesets/Sources/DirectPorts.list");
-        if ports_source.exists() {
-            if let Ok(file) = File::open(&ports_source) {
-                let reader = BufReader::new(file);
-                for line in reader.lines().map_while(Result::ok) {
-                    let stripped = line.trim();
-                    if !stripped.is_empty() && !stripped.starts_with('#') {
-                        rule_lines.push(stripped.to_string());
-                    }
+        if ports_source.exists()
+            && let Ok(file) = File::open(&ports_source)
+        {
+            let reader = BufReader::new(file);
+            for line in reader.lines().map_while(Result::ok) {
+                let stripped = line.trim();
+                if !stripped.is_empty() && !stripped.starts_with('#') {
+                    rule_lines.push(stripped.to_string());
                 }
             }
         }
 
         rule_lines.extend(vec![
             "# --- SYNCED PORT RULES END ---".to_string(),
-            "".to_string(),
-            "# High-Priority White-list (Prevent DNS failure)".to_string(),
-            "DOMAIN,dns.alidns.com,DIRECT".to_string(),
-            "DOMAIN,doh.pub,DIRECT".to_string(),
-            "DOMAIN,dns.pub,DIRECT".to_string(),
-            "DOMAIN,dot.pub,DIRECT".to_string(),
-            "DOMAIN,doh.360.cn,DIRECT".to_string(),
-            "DOMAIN,doh.dns.apple.com,DIRECT".to_string(),
             "# Block app-layer HTTPDNS first".to_string(),
             format!(
                 "RULE-SET,{}rulesets/AdBlock/HTTPDNS_Hijack.list,REJECT",
@@ -2225,7 +2245,7 @@ impl AdBlockManager {
 
         let mut shards_by_category: HashMap<String, Vec<String>> = HashMap::new();
         for rs_path in generated_rulesets {
-            let cat = self.category_from_filename(rs_path.split('/').last().unwrap());
+            let cat = self.category_from_filename(rs_path.split('/').next_back().unwrap());
             shards_by_category
                 .entry(cat.to_string())
                 .or_default()
@@ -2240,9 +2260,8 @@ impl AdBlockManager {
                 let meta = CATEGORY_META.get(*category).unwrap();
                 rule_lines.push(format!("# ── {} · {} ──", meta.label_zh, meta.desc));
                 paths.sort_by_key(|p| {
-                    let name = p.split('/').last().unwrap();
-                    let match_idx = Regex::new(r"_(\d+)\.list$").unwrap();
-                    let shard_index = match_idx
+                    let name = p.split('/').next_back().unwrap();
+                    let shard_index = SHARD_INDEX_RE
                         .captures(name)
                         .and_then(|caps| caps[1].parse::<usize>().ok())
                         .unwrap_or(0);
@@ -2299,13 +2318,14 @@ impl AdBlockManager {
             ));
             candidates.sort();
             for raw in candidates {
-                if let Some(line) = self.attach_policy(&raw, policy) {
-                    if complex_seen.insert(line.clone()) {
-                        rule_lines.push(line);
-                    }
+                if let Some(line) = self.attach_policy(&raw, policy)
+                    && complex_seen.insert(line.clone())
+                {
+                    rule_lines.push(line);
                 }
             }
         }
+        let rule_lines = crate::smart_cleanup::dedupe_section_lines_pub("Rule", &rule_lines);
 
         let mut functional_sections = Vec::new();
         let mut func_counts = Vec::new();
@@ -2324,8 +2344,8 @@ impl AdBlockManager {
             let deduped = crate::smart_cleanup::dedupe_section_lines_pub(sec_name, lines);
             if !deduped.is_empty() {
                 functional_sections.push(crate::smart_cleanup::ModuleSectionPub {
-                    Name: sec_name.to_string(),
-                    Lines: deduped.clone(),
+                    name: sec_name.to_string(),
+                    lines: deduped.clone(),
                 });
                 func_counts.push(format!("{}={}", sec_name, deduped.len()));
             }
@@ -2336,15 +2356,15 @@ impl AdBlockManager {
             hosts.sort();
             let mitm_line = format!("hostname = %APPEND% {}", hosts.join(", "));
             functional_sections.push(crate::smart_cleanup::ModuleSectionPub {
-                Name: "MITM".to_string(),
-                Lines: vec![mitm_line],
+                name: "MITM".to_string(),
+                lines: vec![mitm_line],
             });
             func_counts.push(format!("MITM={}", self.mitm_hosts.len()));
         }
 
         let mut all_sections = vec![crate::smart_cleanup::ModuleSectionPub {
-            Name: "Rule".to_string(),
-            Lines: rule_lines,
+            name: "Rule".to_string(),
+            lines: rule_lines,
         }];
         all_sections.extend(functional_sections);
         all_sections = crate::smart_cleanup::merge_mitm_hosts_pub(&all_sections);
@@ -2434,28 +2454,20 @@ impl AdBlockManager {
         rule_lines.push("# Automated update from ports source".to_string());
 
         let ports_source = self.root_dir.join("rulesets/Sources/DirectPorts.list");
-        if ports_source.exists() {
-            if let Ok(file) = File::open(&ports_source) {
-                let reader = BufReader::new(file);
-                for line in reader.lines().map_while(Result::ok) {
-                    let stripped = line.trim();
-                    if !stripped.is_empty() && !stripped.starts_with('#') {
-                        rule_lines.push(stripped.to_string());
-                    }
+        if ports_source.exists()
+            && let Ok(file) = File::open(&ports_source)
+        {
+            let reader = BufReader::new(file);
+            for line in reader.lines().map_while(Result::ok) {
+                let stripped = line.trim();
+                if !stripped.is_empty() && !stripped.starts_with('#') {
+                    rule_lines.push(stripped.to_string());
                 }
             }
         }
 
         rule_lines.extend(vec![
             "# --- SYNCED PORT RULES END ---".to_string(),
-            "".to_string(),
-            "# High-Priority White-list (Prevent DNS failure)".to_string(),
-            "DOMAIN,dns.alidns.com,DIRECT".to_string(),
-            "DOMAIN,doh.pub,DIRECT".to_string(),
-            "DOMAIN,dns.pub,DIRECT".to_string(),
-            "DOMAIN,dot.pub,DIRECT".to_string(),
-            "DOMAIN,doh.360.cn,DIRECT".to_string(),
-            "DOMAIN,doh.dns.apple.com,DIRECT".to_string(),
             "# PROMAX rules are inlined because Loon plugins do not expose Surge RULE-SET semantics".to_string(),
         ]);
 
@@ -2464,12 +2476,8 @@ impl AdBlockManager {
         } else {
             CATEGORIES
         };
-        for policy in &["DIRECT", "REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
-            let loon_policy = if *policy == "DIRECT" {
-                "DIRECT"
-            } else {
-                "REJECT"
-            };
+        for policy in &["REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
+            let loon_policy = "REJECT";
             for category in loon_categories {
                 let empty_set = HashSet::new();
                 let mut candidates: Vec<String> = self
@@ -2499,10 +2507,11 @@ impl AdBlockManager {
                 }
             }
         }
+        let rule_lines = crate::smart_cleanup::dedupe_section_lines_pub("Rule", &rule_lines);
 
         let mut rewrite_lines = Vec::new();
         let mut func_counts = Vec::new();
-        for sec_name in &["URL Rewrite", "Map Local", "Body Rewrite", "Header Rewrite"] {
+        for sec_name in &["Map Local", "Body Rewrite", "URL Rewrite", "Header Rewrite"] {
             let lines = self.sections.get(*sec_name).unwrap();
             if lines.is_empty() {
                 continue;
@@ -2526,6 +2535,8 @@ impl AdBlockManager {
                 func_counts.push(format!("{}={}", sec_name, deduped.len()));
             }
         }
+        let rewrite_lines =
+            crate::smart_cleanup::dedupe_section_lines_pub("Rewrite", &rewrite_lines);
 
         let mut script_lines = Vec::new();
         let s_lines = self.sections.get("Script").unwrap();
@@ -2559,7 +2570,7 @@ impl AdBlockManager {
         let mut mitm_lines = Vec::new();
         if !self.mitm_hosts.is_empty() {
             let mut hosts: Vec<String> = self.mitm_hosts.iter().cloned().collect();
-            hosts.sort();
+            hosts.sort_by_key(|host| (!host.starts_with('-'), host.to_ascii_lowercase()));
             mitm_lines.push(format!("hostname = {}", hosts.join(", ")));
             func_counts.push(format!("MITM={}", self.mitm_hosts.len()));
         }
@@ -2709,46 +2720,44 @@ impl AdBlockManager {
 
         println!("\x1b[0;32m[INFO]\x1b[0m Integrating Local AdBlock Sources");
         let local_dir = self.root_dir.join("modules/source/local");
-        if local_dir.is_dir() {
-            if let Ok(entries) = fs::read_dir(&local_dir) {
-                let mut files: Vec<PathBuf> =
-                    entries.map_while(Result::ok).map(|e| e.path()).collect();
-                files.sort();
-                for f in files {
-                    let name = f.file_name().unwrap().to_string_lossy().to_string();
-                    if name.ends_with(".sgmodule") || name.ends_with(".module") {
-                        println!(
-                            "\x1b[0;32m[INFO]\x1b[0m   + Rules from local source: {}",
-                            name
-                        );
-                        self.extract_from_file(&f, "REJECT", "Local", false, true);
-                    }
+        if local_dir.is_dir()
+            && let Ok(entries) = fs::read_dir(&local_dir)
+        {
+            let mut files: Vec<PathBuf> = entries.map_while(Result::ok).map(|e| e.path()).collect();
+            files.sort();
+            for f in files {
+                let name = f.file_name().unwrap().to_string_lossy().to_string();
+                if name.ends_with(".sgmodule") || name.ends_with(".module") {
+                    println!(
+                        "\x1b[0;32m[INFO]\x1b[0m   + Rules from local source: {}",
+                        name
+                    );
+                    self.extract_from_file(&f, "REJECT", "Local", false, true);
                 }
             }
         }
 
         println!("\x1b[0;32m[INFO]\x1b[0m Integrating App AdBlock Rules (LocalModules)");
         let local_modules_dir = self.root_dir.join("rulesets/Sources/LocalModules");
-        if local_modules_dir.is_dir() {
-            if let Ok(entries) = fs::read_dir(&local_modules_dir) {
-                let mut files: Vec<PathBuf> =
-                    entries.map_while(Result::ok).map(|e| e.path()).collect();
-                files.sort();
-                for f in files {
-                    let name = f.file_name().unwrap().to_string_lossy().to_string();
-                    if !name.ends_with(".sgmodule") && !name.ends_with(".module") {
-                        continue;
-                    }
-                    let mode = self.resolve_module_ingest_mode(&f, false);
-                    if mode == "skip" {
-                        continue;
-                    }
-                    println!(
-                        "\x1b[0;32m[INFO]\x1b[0m   + Rules from LocalModules ({}): {}",
-                        mode, name
-                    );
-                    self.extract_from_file(&f, "REJECT", "Local", false, true);
+        if local_modules_dir.is_dir()
+            && let Ok(entries) = fs::read_dir(&local_modules_dir)
+        {
+            let mut files: Vec<PathBuf> = entries.map_while(Result::ok).map(|e| e.path()).collect();
+            files.sort();
+            for f in files {
+                let name = f.file_name().unwrap().to_string_lossy().to_string();
+                if !name.ends_with(".sgmodule") && !name.ends_with(".module") {
+                    continue;
                 }
+                let mode = self.resolve_module_ingest_mode(&f, false);
+                if mode == "skip" {
+                    continue;
+                }
+                println!(
+                    "\x1b[0;32m[INFO]\x1b[0m   + Rules from LocalModules ({}): {}",
+                    mode, name
+                );
+                self.extract_from_file(&f, "REJECT", "Local", false, true);
             }
         }
 
@@ -2847,14 +2856,12 @@ impl AdBlockManager {
 
             let mut input_hashes = HashMap::new();
             for p in unique_local {
-                if p.exists() {
-                    if let Ok(rel) = p.strip_prefix(&self.root_dir) {
-                        if let Ok(bytes) = fs::read(&p) {
-                            let digest = md5::compute(bytes);
-                            input_hashes
-                                .insert(rel.to_string_lossy().to_string(), format!("{:x}", digest));
-                        }
-                    }
+                if p.exists()
+                    && let Ok(rel) = p.strip_prefix(&self.root_dir)
+                    && let Ok(bytes) = fs::read(&p)
+                {
+                    let digest = md5::compute(bytes);
+                    input_hashes.insert(rel.to_string_lossy().to_string(), format!("{:x}", digest));
                 }
             }
             self.save_hashes(&input_hashes);
@@ -2926,6 +2933,29 @@ mod tests {
     }
 
     #[test]
+    fn loon_mitm_exclusions_precede_inclusions() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-loon-mitm-{unique}"));
+        let mut manager = AdBlockManager::new(root.clone());
+        manager.mitm_hosts.extend([
+            "*.ads.example".to_string(),
+            "-account.apple.com".to_string(),
+        ]);
+        let artifact = manager.generate_loon_plugin(&[], "cdn");
+        let hostname = artifact
+            .content
+            .lines()
+            .find(|line| line.starts_with("hostname ="))
+            .unwrap();
+        assert!(hostname.find("-account.apple.com") < hostname.find("*.ads.example"));
+        assert!(crate::promax::validation::validate_loon_plugin(&artifact.content).is_empty());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn offline_fixture_publishes_complete_promax_product_set() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -2966,6 +2996,12 @@ mod tests {
             whitelist,
         )
         .unwrap();
+        fs::create_dir_all(root.join("rulesets/RULE-SET")).unwrap();
+        fs::write(
+            root.join("rulesets/RULE-SET/Apple.list"),
+            "DOMAIN,account.apple.com\nDOMAIN-SUFFIX,icloud.com\nPROCESS-NAME,apsd\n",
+        )
+        .unwrap();
 
         fs::write(
             links.join("AdBlock_sources.list"),
@@ -2975,6 +3011,11 @@ mod tests {
         fs::write(
             root.join("rulesets/Sources/fixture.list"),
             "DOMAIN-SUFFIX,ads.fixture.test\nDOMAIN,tracker.fixture.test\nDOMAIN,extended.fixture.test,REJECT,extended-matching\nIP-CIDR,192.0.2.0/24\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("rulesets/Sources/DirectPorts.list"),
+            "DEST-PORT,4444,REJECT\nDEST-PORT,4444,REJECT\n",
         )
         .unwrap();
         fs::write(
@@ -2989,12 +3030,14 @@ mod tests {
 DOMAIN-SUFFIX,functional-ad.fixture.test,REJECT
 [URL Rewrite]
 ^https://ads\.fixture\.test/splash _ reject
+[Map Local]
+^https://ads\.fixture\.test/splash data-type=text data="{}" status-code=200
 [Script]
 fixture = type=http-response,pattern=^https://ads\.fixture\.test/feed,requires-body=1,script-path=https://scripts.fixture.test/remove.js
 [Body Rewrite]
 http-response-jq ^https:\/\/ads\.fixture\.test\/feed 'del(.data.ad)'
 [MITM]
-hostname = ads.fixture.test
+hostname = ads.fixture.test, creditcardapp.bankcomm.com
 "#,
         )
         .unwrap();
@@ -3009,6 +3052,7 @@ IP-CIDR,10.0.0.0/24,REJECT
 ^https://premium\.fixture\.test/ https://example.test/unlocked 302
 [Script]
 remove_ads = type=http-response,pattern=^https://split-ad\.fixture\.test/feed,requires-body=1,script-path=https://scripts.fixture.test/remove-ads.js
+remove_ads_duplicate = type=http-response,pattern=^https://split-ad\.fixture\.test/feed,requires-body=1,script-path=https://scripts.fixture.test/remove-ads-duplicate.js
 unlock_vip = type=http-response,pattern=^https://premium\.fixture\.test/account,requires-body=1,script-path=https://scripts.fixture.test/unlock.js
 [MITM]
 hostname = split-ad.fixture.test, protected0.example
@@ -3029,6 +3073,7 @@ hostname = split-ad.fixture.test, protected0.example
         for product in &products {
             let content = fs::read_to_string(root.join(product)).unwrap();
             assert!(content.contains("scripts.fixture.test/remove.js"));
+            assert!(!content.contains("creditcardapp.bankcomm.com"));
         }
         assert!(root.join("rulesets/AdBlock/catalog.json").is_file());
         assert!(root.join("rulesets/AdBlock/README.md").is_file());
@@ -3044,6 +3089,8 @@ hostname = split-ad.fixture.test, protected0.example
         assert!(split.contains("#!split-source=rulesets/Sources/mixed-adblock.sgmodule"));
         assert!(!split.contains(root.to_str().unwrap()));
         assert!(split.contains("split-ad.fixture.test"));
+        assert!(split.contains("remove-ads.js"));
+        assert!(!split.contains("remove-ads-duplicate.js"));
         assert!(!split.contains("10.0.0.0/24"));
         assert!(!split.contains("premium.fixture.test"));
         assert!(!split.contains("protected0.example"));
@@ -3055,6 +3102,24 @@ hostname = split-ad.fixture.test, protected0.example
         let loon = fs::read_to_string(root.join(products[2])).unwrap();
         assert!(!loon.contains("premium.fixture.test"));
         assert!(!loon.contains("EXTENDED-MATCHING"));
+        assert_eq!(loon.matches("DEST-PORT,4444,REJECT").count(), 1);
+        assert!(loon.contains("mock-response-body data-type=text data=\"{}\""));
+        assert!(!loon.contains("^https://ads\\.fixture\\.test/splash reject"));
+        let catalog: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(root.join("rulesets/AdBlock/catalog.json")).unwrap(),
+        )
+        .unwrap();
+        let catalog_mitm = catalog["functional_sections"]["MITM"].as_u64().unwrap() as usize;
+        let loon_mitm = loon
+            .lines()
+            .find(|line| line.starts_with("hostname ="))
+            .unwrap()
+            .split_once('=')
+            .unwrap()
+            .1
+            .split(',')
+            .count();
+        assert_eq!(catalog_mitm, loon_mitm);
         let quarantine = fs::read_to_string(root.join("rulesets/AdBlock/quarantine.json")).unwrap();
         assert!(quarantine.contains("10.0.0.0/24"));
 

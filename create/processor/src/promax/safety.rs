@@ -55,6 +55,20 @@ pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
     "apple-dns.net",
 ];
 
+pub fn apple_mitm_exclusions() -> Vec<String> {
+    let mut exclusions: Vec<String> = APPLE_CRITICAL_EXACT
+        .iter()
+        .map(|host| format!("-{host}"))
+        .collect();
+    for suffix in APPLE_CRITICAL_SUFFIXES {
+        exclusions.push(format!("-{suffix}"));
+        exclusions.push(format!("-*.{suffix}"));
+    }
+    exclusions.sort();
+    exclusions.dedup();
+    exclusions
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SafetyDecision {
     Keep,
@@ -86,6 +100,7 @@ pub struct SafetyPolicy {
     protected_suffixes: HashSet<String>,
     protected_keywords: HashSet<String>,
     protected_ips: Vec<IpNetwork>,
+    reversed_hosts: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -215,6 +230,14 @@ impl SafetyPolicy {
             ip_networks: policy.protected_ips.len(),
             invalid_entries,
         };
+        policy.reversed_hosts = policy
+            .protected_domains
+            .iter()
+            .chain(&policy.protected_suffixes)
+            .map(|host| host.split('.').rev().collect::<Vec<_>>().join("."))
+            .collect();
+        policy.reversed_hosts.sort();
+        policy.reversed_hosts.dedup();
         (policy, stats)
     }
 
@@ -337,19 +360,12 @@ impl SafetyPolicy {
                 .protected_hosts()
                 .any(|host| pattern.is_match(host) || pattern.is_match(&format!("probe.{host}")));
         }
-        self.protected_hosts().any(|host| {
-            candidate == host
-                || candidate.ends_with(&format!(".{host}"))
-                || host.ends_with(&format!(".{candidate}"))
-        })
+        self.hierarchy_intersects(candidate)
     }
 
     fn domain_is_protected(&self, domain: &str) -> bool {
         self.protected_domains.contains(domain)
-            || self
-                .protected_suffixes
-                .iter()
-                .any(|suffix| domain == suffix || domain.ends_with(&format!(".{suffix}")))
+            || self.has_ancestor(domain, &self.protected_suffixes)
             || self
                 .protected_keywords
                 .iter()
@@ -357,14 +373,40 @@ impl SafetyPolicy {
     }
 
     fn suffix_intersects(&self, blocked: &str) -> bool {
-        self.protected_hosts().any(|protected| {
-            protected == blocked
-                || protected.ends_with(&format!(".{blocked}"))
-                || blocked.ends_with(&format!(".{protected}"))
-        }) || self
-            .protected_keywords
-            .iter()
-            .any(|keyword| blocked.contains(keyword))
+        self.hierarchy_intersects(blocked)
+            || self
+                .protected_keywords
+                .iter()
+                .any(|keyword| blocked.contains(keyword))
+    }
+
+    fn hierarchy_intersects(&self, host: &str) -> bool {
+        self.has_ancestor(host, &self.protected_domains)
+            || self.has_ancestor(host, &self.protected_suffixes)
+            || self.has_descendant(host)
+    }
+
+    fn has_ancestor(&self, host: &str, protected: &HashSet<String>) -> bool {
+        let mut candidate = host;
+        loop {
+            if protected.contains(candidate) {
+                return true;
+            }
+            let Some((_, parent)) = candidate.split_once('.') else {
+                return false;
+            };
+            candidate = parent;
+        }
+    }
+
+    fn has_descendant(&self, host: &str) -> bool {
+        let prefix = format!("{}.", host.split('.').rev().collect::<Vec<_>>().join("."));
+        let index = self
+            .reversed_hosts
+            .partition_point(|candidate| candidate < &prefix);
+        self.reversed_hosts
+            .get(index)
+            .is_some_and(|candidate| candidate.starts_with(&prefix))
     }
 
     fn keyword_intersects(&self, blocked: &str) -> bool {
@@ -446,8 +488,16 @@ fn request_host_patterns(request: &str) -> Vec<String> {
         .replace(r"\.", ".")
         .replace(r"\/", "/")
         .to_ascii_lowercase();
+    let authority = normalized
+        .find("://")
+        .map_or(normalized.as_str(), |scheme| {
+            normalized[scheme + 3..]
+                .split(['/', '?', '#'])
+                .next()
+                .unwrap_or("")
+        });
     HOST_CANDIDATE
-        .find_iter(&normalized)
+        .find_iter(authority)
         .map(|candidate| candidate.as_str().trim_matches('.').to_string())
         .collect()
 }
@@ -462,8 +512,7 @@ fn hostname_reference_token(hostname: &str) -> String {
         .to_ascii_lowercase();
     let cleaned = hostname
         .trim_matches(['*', '.', '?'])
-        .replace('*', "")
-        .replace('?', "");
+        .replace(['*', '?'], "");
     let labels: Vec<&str> = cleaned
         .split('.')
         .filter(|label| !label.is_empty())
@@ -675,6 +724,16 @@ mod tests {
         }
         assert_eq!(
             classify_functional_url(r"^https://ads\.example\.com/banner"),
+            SafetyDecision::Keep
+        );
+        assert_eq!(
+            classify_functional_url(r"^https?://.*/yyting/advertclient/ClientAdvertList.action"),
+            SafetyDecision::Quarantine("broad-cross-site-rewrite")
+        );
+        assert_eq!(
+            classify_functional_url(
+                r"^https?://dapis\.mting\.info/yyting/advertclient/ClientAdvertList.action"
+            ),
             SafetyDecision::Keep
         );
     }

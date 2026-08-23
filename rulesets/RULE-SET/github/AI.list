@@ -1,9 +1,8 @@
 # Ruleset: AI
 # Policy: PROXY
 # Node: Any
-# Description: Auto-merged ruleset
-# Rules: 301
-DOMAIN,7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe
+# Description: Rust-merged canonical ruleset
+# Rules: 300
 DOMAIN,ai.google.dev
 DOMAIN,aida.googleapis.com
 DOMAIN,aisandbox-pa.googleapis.com
@@ -292,14 +291,14 @@ DOMAIN-SUFFIX,youmind.ai
 DOMAIN-SUFFIX,youmind.com
 DOMAIN-SUFFIX,youmind.site
 DOMAIN-SUFFIX,zijieapi.com
+PROCESS-NAME,"Cici Helper (Renderer)"
+PROCESS-NAME,"Cici Helper"
+PROCESS-NAME,"Trae Helper (Plugin)"
+PROCESS-NAME,"Trae Helper"
 PROCESS-NAME,CapCut
 PROCESS-NAME,Cici
-PROCESS-NAME,Cici Helper
-PROCESS-NAME,Cici Helper (Renderer)
 PROCESS-NAME,Lemon8
 PROCESS-NAME,TikTok
-PROCESS-NAME,Trae Helper
-PROCESS-NAME,Trae Helper (Plugin)
 PROCESS-NAME,ai
 PROCESS-NAME,ai-agent
 PROCESS-NAME,ai-completion

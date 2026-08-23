@@ -21,8 +21,10 @@ fn invalid_generated_paths(changed: &str, bot_commit: bool) -> Vec<&str> {
 }
 
 fn main() -> std::process::ExitCode {
+    let base = std::env::var("DIFF_BASE").unwrap_or_else(|_| "HEAD~1".to_string());
+    let head = std::env::var("DIFF_HEAD").unwrap_or_else(|_| "HEAD".to_string());
     let output = match Command::new("git")
-        .args(["diff", "--name-only", "HEAD~1", "HEAD"])
+        .args(["diff", "--name-only", &base, &head])
         .output()
     {
         Ok(output) if output.status.success() => output,
@@ -39,14 +41,10 @@ fn main() -> std::process::ExitCode {
         }
     };
 
-    let author = Command::new("git")
-        .args(["show", "-s", "--format=%an <%ae>", "HEAD"])
-        .output()
-        .ok()
-        .map(|value| String::from_utf8_lossy(&value.stdout).to_ascii_lowercase())
-        .unwrap_or_default();
     let changed = String::from_utf8_lossy(&output.stdout);
-    let invalid = invalid_generated_paths(&changed, author.contains("github-actions[bot]"));
+    let trusted_updater =
+        std::env::var("TRUSTED_UPDATER").is_ok_and(|value| value.eq_ignore_ascii_case("true"));
+    let invalid = invalid_generated_paths(&changed, trusted_updater);
     if !invalid.is_empty() {
         eprintln!(
             "generated tree changed outside the updater: {}",

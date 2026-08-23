@@ -1,79 +1,61 @@
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
-static RESTRICTED_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
-    let patterns = vec![
-        "github.com",
-        "api.github.com",
-        "*.github.com",
-        "*.api.github.com",
-        "raw.githubusercontent.com",
-        "gist.githubusercontent.com",
-        "*.objects.githubusercontent.com",
-        "*.githubusercontent.com",
-        "*.github.io",
-        "*.apple.com",
-        "*.icloud.com",
-        "*.mzstatic.com",
-        "*.itunes.com",
-        "*.facebook.com",
-        "*.instagram.com",
-        "*.twitter.com",
-        "*.google.com",
-        "*.google.cn",
-        "*.gmail.com",
-        "*.youtube.com",
-        "*.googlevideo.com",
-        "*.gstatic.com",
-        "*.googleapis.com",
-        "*.bankofchina.com",
-        "*.icbc.com.cn",
-        "*.ccb.com",
-        "*.cmbchina.com",
-        "*.abchina.com",
-        "*.boc.cn",
-        "*.psbc.com",
-        "*.spdb.com.cn",
-        "*.cebbank.com",
-        "*.cmbc.com.cn",
-        "*.cib.com.cn",
-        "*.hxb.com.cn",
-        "*.pingan.com",
-        "*.bankcomm.com",
-        "*.cgbchina.com.cn",
-        "*.ghbank.com.cn",
-        "*.czbank.com",
-        "*.ebank.com",
-        "dns.alidns.com",
-        "doh.pub",
-        "dot.pub",
-        "doh.360.cn",
-        "dot.360.cn",
-        "dns.baidu.com",
-        "dns.volcengine.com",
-        "alidns.com",
-    ];
+const RESTRICTED_SUFFIXES: &[&str] = &[
+    // Script supply-chain and credential-bearing endpoints.
+    "github.com",
+    "githubusercontent.com",
+    "github.io",
+    // Financial services are not required by any supported enhancement bundle.
+    "bankofchina.com",
+    "icbc.com.cn",
+    "ccb.com",
+    "cmbchina.com",
+    "abchina.com",
+    "boc.cn",
+    "psbc.com",
+    "spdb.com.cn",
+    "cebbank.com",
+    "cmbc.com.cn",
+    "cib.com.cn",
+    "hxb.com.cn",
+    "pingan.com",
+    "bankcomm.com",
+    "cgbchina.com.cn",
+    "ghbank.com.cn",
+    "czbank.com",
+    "ebank.com",
+    // Keep narrower YouTube/Google API hosts usable while excluding accounts.
+    "accounts.google.com",
+    "gmail.com",
+];
 
-    patterns
-        .into_iter()
-        .map(|pat| {
-            let escaped = regex::escape(pat).replace("\\*", ".*").replace("\\?", ".");
-            Regex::new(&format!("(?i)^{}$", escaped)).unwrap()
-        })
-        .collect()
-});
+const RESTRICTED_EXACT: &[&str] = &[
+    "dns.alidns.com",
+    "doh.pub",
+    "dot.pub",
+    "doh.360.cn",
+    "dot.360.cn",
+    "dns.baidu.com",
+    "dns.volcengine.com",
+    "alidns.com",
+];
 
-fn is_restricted(domain: &str) -> bool {
-    let domain_lower = domain.to_lowercase();
-    for re in RESTRICTED_PATTERNS.iter() {
-        if re.is_match(&domain_lower) {
-            return true;
-        }
+pub(crate) fn is_restricted(domain: &str) -> bool {
+    if crate::promax::safety::apple_host_pattern_is_critical(domain) {
+        return true;
     }
-    false
+
+    let domain = domain
+        .trim()
+        .trim_start_matches("*.")
+        .trim_end_matches('.')
+        .to_ascii_lowercase();
+    RESTRICTED_EXACT.contains(&domain.as_str())
+        || RESTRICTED_SUFFIXES
+            .iter()
+            .any(|suffix| domain == *suffix || domain.ends_with(&format!(".{suffix}")))
 }
 
 fn process_file(path: &Path, dry_run: bool) -> bool {
@@ -111,9 +93,9 @@ fn process_file(path: &Path, dry_run: bool) -> bool {
             let mut tag_with_space = String::new();
             let mut remaining_val = val_part;
             for t in &["%APPEND%", "%INSERT%", "%SET%"] {
-                if val_part.starts_with(t) {
+                if let Some(value) = val_part.strip_prefix(t) {
                     tag_with_space = format!("{} ", t);
-                    remaining_val = val_part[t.len()..].trim();
+                    remaining_val = value.trim();
                     break;
                 }
             }
@@ -182,13 +164,13 @@ pub fn run_mitm_cleanup(directory: &str, dry_run: bool) -> i32 {
         }
 
         let name = entry.file_name().to_string_lossy();
-        if name.ends_with(".sgmodule") || name.ends_with(".module") {
-            if process_file(entry_path, dry_run) {
-                if !dry_run {
-                    println!("\x1b[0;32m[✓]\x1b[0m MITM Cleaned: {:?}", entry_path);
-                }
-                modified_count += 1;
+        if (name.ends_with(".sgmodule") || name.ends_with(".module"))
+            && process_file(entry_path, dry_run)
+        {
+            if !dry_run {
+                println!("\x1b[0;32m[✓]\x1b[0m MITM Cleaned: {:?}", entry_path);
             }
+            modified_count += 1;
         }
     }
     modified_count
@@ -208,15 +190,23 @@ mod tests {
         let module = directory.join("test.sgmodule");
         fs::write(
             &module,
-            "#!name=test\n[MITM]\nhostname = %INSERT% gsa.apple.com, -account.apple.com, -*.apple.com, api.example.com\n",
+            "#!name=test\n[MITM]\nhostname = %INSERT% gsa.apple.com, gateway.icloud.com, api.github.com, accounts.google.com, online.bankofchina.com, -account.apple.com, -*.apple.com, weatherkit.apple.com, uts-api.itunes.apple.com, youtubei.googleapis.com, *.googlevideo.com, api.example.com\n",
         )
         .unwrap();
 
         assert!(process_file(&module, false));
         let content = fs::read_to_string(&module).unwrap();
         assert!(!content.contains("%INSERT% gsa.apple.com"));
+        assert!(!content.contains("gateway.icloud.com"));
+        assert!(!content.contains("api.github.com"));
+        assert!(!content.contains("accounts.google.com"));
+        assert!(!content.contains("online.bankofchina.com"));
         assert!(content.contains("-account.apple.com"));
         assert!(content.contains("-*.apple.com"));
+        assert!(content.contains("weatherkit.apple.com"));
+        assert!(content.contains("uts-api.itunes.apple.com"));
+        assert!(content.contains("youtubei.googleapis.com"));
+        assert!(content.contains("*.googlevideo.com"));
         assert!(content.contains("api.example.com"));
         fs::remove_dir_all(directory).unwrap();
     }

@@ -32,18 +32,14 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
         out_dir = root_dir.join("rulesets/AdBlock");
     }
 
-    if !out_dir.exists() {
-        if fs::create_dir_all(&out_dir).is_err() {
-            return false;
-        }
+    if !out_dir.exists() && fs::create_dir_all(&out_dir).is_err() {
+        return false;
     }
 
     let srs_file = out_dir.join(format!("{}_Singbox.srs", name));
     let cache_dir = root_dir.join("rulesets/Sources/Links/.cache");
-    if !cache_dir.exists() {
-        if fs::create_dir_all(&cache_dir).is_err() {
-            return false;
-        }
+    if !cache_dir.exists() && fs::create_dir_all(&cache_dir).is_err() {
+        return false;
     }
 
     let json_tmp = cache_dir.join(format!("{}.json", name));
@@ -155,7 +151,7 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
     match output {
         Ok(out) => {
             if out.status.success() {
-                let changed = fs::read(&srs_tmp).ok().map_or(true, |new_bytes| {
+                let changed = fs::read(&srs_tmp).ok().is_none_or(|new_bytes| {
                     fs::read(&srs_file).map_or(true, |old_bytes| old_bytes != new_bytes)
                 });
                 if changed {
@@ -202,10 +198,11 @@ fn prune_stale_srs(list_files: &[PathBuf], root_dir: &Path) {
     let singbox_dir = root_dir.join("rulesets/SingBox");
     if let Ok(entries) = fs::read_dir(&singbox_dir) {
         for entry in entries.flatten() {
-            if let Ok(name) = entry.file_name().into_string() {
-                if name.starts_with("GeoIP_") && name.ends_with(".srs") {
-                    expected_srs.insert(name);
-                }
+            if let Ok(name) = entry.file_name().into_string()
+                && name.starts_with("GeoIP_")
+                && name.ends_with(".srs")
+            {
+                expected_srs.insert(name);
             }
         }
     }
@@ -214,18 +211,18 @@ fn prune_stale_srs(list_files: &[PathBuf], root_dir: &Path) {
     if let Ok(entries) = fs::read_dir(&singbox_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() {
-                if let Ok(name) = entry.file_name().into_string() {
-                    if name.ends_with(".srs") && !expected_srs.contains(&name) {
-                        if fs::remove_file(&path).is_ok() {
-                            println!("\x1b[0;33m[WARN]\x1b[0m Pruned stale SRS: {}", name);
-                        } else {
-                            eprintln!(
-                                "\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale SRS: {}",
-                                name
-                            );
-                        }
-                    }
+            if path.is_file()
+                && let Ok(name) = entry.file_name().into_string()
+                && name.ends_with(".srs")
+                && !expected_srs.contains(&name)
+            {
+                if fs::remove_file(&path).is_ok() {
+                    println!("\x1b[0;33m[WARN]\x1b[0m Pruned stale SRS: {}", name);
+                } else {
+                    eprintln!(
+                        "\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale SRS: {}",
+                        name
+                    );
                 }
             }
         }
@@ -233,23 +230,23 @@ fn prune_stale_srs(list_files: &[PathBuf], root_dir: &Path) {
 
     // Prune SINGBOX_DNS_DIR
     let dns_dir = root_dir.join("rulesets/Sources/dns/mapping");
-    if dns_dir.exists() {
-        if let Ok(entries) = fs::read_dir(&dns_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() {
-                    if let Ok(name) = entry.file_name().into_string() {
-                        if name.ends_with(".srs") && !expected_srs.contains(&name) {
-                            if fs::remove_file(&path).is_ok() {
-                                println!("\x1b[0;33m[WARN]\x1b[0m Pruned stale DNS SRS: {}", name);
-                            } else {
-                                eprintln!(
-                                    "\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale DNS SRS: {}",
-                                    name
-                                );
-                            }
-                        }
-                    }
+    if dns_dir.exists()
+        && let Ok(entries) = fs::read_dir(&dns_dir)
+    {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file()
+                && let Ok(name) = entry.file_name().into_string()
+                && name.ends_with(".srs")
+                && !expected_srs.contains(&name)
+            {
+                if fs::remove_file(&path).is_ok() {
+                    println!("\x1b[0;33m[WARN]\x1b[0m Pruned stale DNS SRS: {}", name);
+                } else {
+                    eprintln!(
+                        "\x1b[0;31m[ERROR]\x1b[0m Failed to prune stale DNS SRS: {}",
+                        name
+                    );
                 }
             }
         }
@@ -280,12 +277,11 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
         if let Ok(entries) = fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.is_file() {
-                    if let Some(ext) = path.extension() {
-                        if ext == "list" {
-                            list_files.push(path);
-                        }
-                    }
+                if path.is_file()
+                    && let Some(ext) = path.extension()
+                    && ext == "list"
+                {
+                    list_files.push(path);
                 }
             }
         }

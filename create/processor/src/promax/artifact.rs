@@ -289,11 +289,11 @@ fn promote_transaction(
     }
 
     for (target, staged) in publications {
-        if let Some(parent) = target.parent() {
-            if let Err(error) = fs::create_dir_all(parent) {
-                rollback(&backups);
-                return Err(format!("cannot create {}: {error}", parent.display()));
-            }
+        if let Some(parent) = target.parent()
+            && let Err(error) = fs::create_dir_all(parent)
+        {
+            rollback(&backups);
+            return Err(format!("cannot create {}: {error}", parent.display()));
         }
         if let Err(error) = fs::rename(staged, target) {
             rollback(&backups);

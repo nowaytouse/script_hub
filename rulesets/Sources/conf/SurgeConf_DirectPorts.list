@@ -1,7 +1,6 @@
 # Advanced opt-in outbound denylist. Normal Apple, Bonjour, AirPlay, printing,
 # Xcode and LAN service ports are intentionally excluded by the Rust publisher.
 IN-PORT,8076,REJECT-DROP
-DEST-PORT,8076,REJECT-DROP
 IN-PORT,12654,REJECT-DROP
 DEST-PORT,1025,REJECT-DROP   # 常被 Windows RAT 占用
 DEST-PORT,1026,REJECT-DROP   # Windows messenger spam / RAT
