@@ -17995,6 +17995,12 @@
   },
   {
     "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,onlinemediahelper.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,onlinepromogift.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -46435,6 +46441,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,steamedkipper.cyou",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,steamers77.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -74041,12 +74053,6 @@
   },
   {
     "source": "filter.txt",
-    "candidate": "||rack-media.com^",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "filter.txt",
     "candidate": "||radar.wizzo.media^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -99476,6 +99482,12 @@
   {
     "source": "reject.txt",
     "candidate": ".steamabundanceslope.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject.txt",
+    "candidate": ".steamedkipper.cyou",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -151418,6 +151430,12 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,steamabundanceslope.com,Reject",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,steamedkipper.cyou,Reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
