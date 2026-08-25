@@ -64261,6 +64261,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||beaconimages.netflix.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||beacons.mediamelon.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
