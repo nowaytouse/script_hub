@@ -3805,12 +3805,6 @@
   },
   {
     "source": "Advertising_All.list",
-    "candidate": "DOMAIN-SUFFIX,1puq9cnwjpgoxicjgu8co28k.rest",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,1tdscpamedia.xyz",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -17749,12 +17743,6 @@
   },
   {
     "source": "Advertising_All.list",
-    "candidate": "DOMAIN-SUFFIX,njoyk5h8e4brtxnot79x88jmr5jh.rest",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,nkgwlp.geminiduo.hu",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -18085,12 +18073,6 @@
   },
   {
     "source": "Advertising_All.list",
-    "candidate": "DOMAIN-SUFFIX,otusszjpgcxoq.online",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,otwaagpjpgctw.online",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -18158,6 +18140,12 @@
   {
     "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,p.raidmedia.com.cn",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,p.softmedia.cz",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -20881,6 +20869,12 @@
   },
   {
     "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,steamedkipper.cyou",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,steamers77.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -22238,12 +22232,6 @@
   {
     "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,trk.stroeermediabrands.de",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "Advertising_All.list",
-    "candidate": "DOMAIN-SUFFIX,trkfomedia.eu",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -35134,6 +35122,12 @@
     "candidate": "DOMAIN-SUFFIX,beacon.webpresence.work",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,beaconimages.netflix.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "adg.list",
@@ -57499,12 +57493,6 @@
   },
   {
     "source": "anti-ad-surge2.txt",
-    "candidate": ".otusszjpgcxoq.online",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
     "candidate": ".otwaagpjpgctw.online",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -58006,12 +57994,6 @@
     "candidate": ".r.mail.163.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
-    "candidate": ".rack-media.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
   },
   {
     "source": "anti-ad-surge2.txt",
@@ -86860,6 +86842,12 @@
     "candidate": ".beacon.webpresence.work",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
+    "candidate": ".beaconimages.netflix.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "reject.txt",
@@ -170804,6 +170792,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".beacon.shazam.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".beaconimages.netflix.net",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
