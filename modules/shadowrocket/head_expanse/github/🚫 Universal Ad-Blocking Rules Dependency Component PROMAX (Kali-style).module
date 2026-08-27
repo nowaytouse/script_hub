@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-23]
-#!desc=[🚀SR] 按用途分片(14片) + 应用内去广告(URL Rewrite=548, Map Local=1234, Script=270, Body Rewrite=85, MITM=734); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-27]
+#!desc=[🚀SR] 按用途分片(14片) + 应用内去广告(URL Rewrite=548, Map Local=1234, Script=270, Body Rewrite=86, MITM=734); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-08-23 20:36:27
+#!date=2026-08-27 23:21:35
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -2417,6 +2417,7 @@ http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.circle
 http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.circle\.visited\/1\.0 '.data.visitedCircleList = []'
 http-response ^https?:\/\/lcen\.xiaote\.net\/api\/graphql screenSplashAd fmz200
 http-response-jq ^https?:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.data |= map(select(.type != "DISCOVERY_HEADER" and .type != "DISCOVERY_BANNER"))'
+http-response-jq ^https?:\/\/api\.xiaoyuzhoufm\.com\/v1\/(related-episode|operation-resource)\/list '.data = []'
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/discovery-feed\/v\d\/mix\/ '.heData |= map(select(.item.list[].bizType != "SceneListenCard"))'
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/football-portal\/diff2\/batch\? '(delpaths([["json","ad"]])) | (delpaths([["json","toc"]]))'
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/nexus-web\/v\d\/tabs\/customTabs\? '.data.feedTabs |= map(select(.name != "大赛"))'

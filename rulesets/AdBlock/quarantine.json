@@ -44029,6 +44029,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,oaesnjpgvsmms.space",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,objective-wright-961fed.netlify.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -73144,6 +73150,12 @@
     "candidate": "||o9tt6h08li.execute-api.eu-west-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
+    "candidate": "||oaesnjpgvsmms.space^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
   },
   {
     "source": "filter.txt",
@@ -150907,6 +150919,12 @@
   },
   {
     "source": "sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,oaesnjpgvsmms.space,Reject",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,objective-wright-961fed.netlify.com,Reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152155,6 +152173,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||24192-icloud.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||24198-icloud.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152198,12 +152222,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||29403-icloud.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||29578-icloud.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152762,12 +152780,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||922-google.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||938262-gemini.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -153355,6 +153367,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||api-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||api.30737da5-c294-417f-b7fd-57f409728355.rtelegram.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153757,6 +153775,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||ban-whatsappbk.com.cn^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||banca-en-linea-prod-alb-1551230938.us-east-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153907,6 +153931,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||blastmatic.s3.us-east-2.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||block-whatsappp.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153925,6 +153955,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||blog-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||blog-whatsapps.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153938,6 +153974,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||bokamalas.s3.eu-west-3.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||book-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154052,6 +154094,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||buskwet.s3.eu-west-1.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||buy-telegram.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154459,7 +154507,7 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||chatwhatsapp.club^",
+    "candidate": "||cheaper-netflix.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154657,6 +154705,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||cloud-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||cloud-zoom.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -154742,12 +154796,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||cn.telegrampcam.com.cn^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||cnweb-whatsapp.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -155197,6 +155245,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||data-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||dctdownload.s3.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -155264,6 +155318,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||dent-cirrus.s3.ap-southeast-2.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||descarga-zoom.lat^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -155389,6 +155449,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||digital-zoomlane.pro^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||digitalgrowthlabs-7es25624.s3.us-east-2.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -155474,12 +155540,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||discord-net.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||discord-plugins.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -155672,12 +155732,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||discordsdota.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||discordsetupbot.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -155977,6 +156031,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||e-telegram.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||e22uab72m2qbbp93zy6x.s3.us-east-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156043,6 +156103,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||eco-zoom.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||economic-poet-b50.notion.site^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156050,12 +156116,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||edge-telegram.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||ef-whatsappdf.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -156241,6 +156301,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||event-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||every-whatsapps.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156379,6 +156445,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||file-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||file-whatsappn.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156410,12 +156482,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||find-icloud.support^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||findmap-icloud.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -156638,6 +156704,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||gate.dark-whatsapp.hl.cn^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||gb99spotify.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157021,12 +157093,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||gemininewsletter.press^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||gemining.net^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -157040,6 +157106,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||gemininla.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||gemininorthamerica.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157225,12 +157297,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||github-beta.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||github-clientlibs.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -157310,6 +157376,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||github.cafe^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||github.claims^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157861,12 +157933,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||google-kvojob.vip^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||google-le.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -157910,6 +157976,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||google-meet-call.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||google-meet-verification.icu^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157982,6 +158054,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||google-playmarket.top^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||google-playstore.click^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -158173,6 +158251,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||google-suite.info^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||google-support.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -158191,12 +158275,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||google-temporary.my.id^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||google-ticket.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -158210,6 +158288,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||google-tls.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||google-uk.biz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -158677,12 +158761,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||googlefirstpageseo.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||googleforge.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -158852,6 +158930,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||googleplaiby.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||googleplay.guru^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -159145,6 +159229,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||guide-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||gvaridioll.s3.eu-north-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -159361,12 +159451,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||huaweicloudfabric.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||hub-for-whatsapp.com.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -159428,12 +159512,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||icloud-account-support.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||icloud-accounts.help^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -159511,12 +159589,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||icloud-findmy.co^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||icloud-findmy.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -159542,6 +159614,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||icloud-h.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||icloud-i-cl.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -159637,12 +159715,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||icloud-mydeviced.life^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||icloud-network.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -159662,12 +159734,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||icloud-photo.app^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||icloud-photos-support.help^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -159836,18 +159902,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||icloudfind.live^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||icloudfind.support^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||icloudfindmy.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -160069,6 +160123,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||info-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||info-zoom.net^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -160154,12 +160214,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||invite-zoom.help^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||invite-zoommeeting.top^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -160321,13 +160375,13 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||join-zoom-meeting.online^",
+    "candidate": "||join-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||joingooglemeetcall.com^",
+    "candidate": "||join-zoom-meeting.online^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -160573,6 +160627,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||kupit-telegram-premium.ru^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||kw-icloud.top^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -160705,6 +160765,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||link-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||linkbuildersteam.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -160730,6 +160796,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||live-telegram.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||live-zoom.click^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -160784,6 +160856,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||login-netflix.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||login-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -160898,6 +160976,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||mail-google.fr^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||mail-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161299,18 +161383,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||msteam-invitation-meeting.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||msteamzbooking.top^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||msteamzbookingz.top^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -161384,12 +161456,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||myabo-netflix.fr^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||myaccount-google.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161533,12 +161599,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||netflix-24.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||netflix-abonnement.fr^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -161605,6 +161665,30 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-au.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-au.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-ca.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-ca.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||netflix-casino-de.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -161653,6 +161737,30 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-hr.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-hr.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-hu.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-hu.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||netflix-casino-it.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -161677,7 +161785,19 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-online.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||netflix-casino-online.it^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-online.shop^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161702,6 +161822,30 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||netflix-casino-se.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-sl.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-sl.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-uk.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino-uk.shop^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161732,6 +161876,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||netflix-casino.nl^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-casino.sk^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161798,12 +161948,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||netflix-compte.fr^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||netflix-crp.8d-securiscore.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161917,6 +162061,18 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||netflix-nl-casino.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-nl-casino.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||netflix-nl.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -161924,6 +162080,18 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||netflix-office.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-online-nl.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-online-nl.shop^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162031,6 +162199,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||netflix-se.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||netflix-sec.fr^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162038,6 +162212,42 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||netflix-security.de^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-slot-be.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-slot-be.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-slot-pt.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-slot-pt.shop^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-slot-se.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||netflix-slot-se.shop^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162571,6 +162781,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||news-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||newsgoogle.fr^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162614,6 +162830,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||note-telegram.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||note-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162698,6 +162920,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||ntiein.s3.us-east-1.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||nuhavenn.s3.us-east-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162991,6 +163219,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||page-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||page.dingtalk.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -163195,7 +163429,19 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||place-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||plaguealacritytwitter.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||plan-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -163334,6 +163580,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||posizionamentogooglebrescia.it^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||post-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -163813,12 +164065,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||repo.huaweicloud.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||repogoogle.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164065,6 +164311,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||search-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||sec-whatsapp.org^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164161,6 +164413,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||service-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||servicio-icloud.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164239,6 +164497,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||shop-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||shopzoomx.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164252,6 +164516,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||shu-whatsapp.hk.cn^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||sign-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -164287,6 +164557,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||site-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||sitepay-google.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164300,6 +164576,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||slimzyss.s3.us-east-1.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||smart-google.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165091,12 +165373,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||steamhelp.net^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||steamhost.info^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165355,6 +165631,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||store-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||stream-whatsapps.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165434,6 +165716,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||support-utilisateur-netflix.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||support-whatsapp.xyz^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165523,6 +165811,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||task-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||tbiodpt0-spsksjd33.s3.eu-north-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165542,12 +165836,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||teleg-telegram.com.cn^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||telegram-2-max.ru^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165638,12 +165926,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||telegram-coin.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||telegram-dialogs.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165751,12 +166033,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||telegram-market.top^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||telegram-message.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165824,12 +166100,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||telegram-secure.fr^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||telegram-security.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -166081,12 +166351,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||telegram.xn--io0a7i^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||telegram.yt^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -166315,12 +166579,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||telegramim.net^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||telegramim.org^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -166394,12 +166652,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||telegrammessage.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||telegrammns.com.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -166556,6 +166808,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||telegramscn.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||telegramsignalcopier.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167059,6 +167317,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||trade-whatsapp.xyz^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||transfer-google.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167066,12 +167330,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||translate-google.top^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||trezorsubreddit.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167090,6 +167348,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||true-telegram.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||trusticloud.us^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167257,12 +167521,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||twitter.now^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||twitterbahis.coinbase-assists.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167365,12 +167623,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||unique-username-whatsapp.click^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||uniquely-peaceful-hagfish.edgecompute.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167396,6 +167648,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||update-netflix.info^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||updates-gemini.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167545,12 +167803,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||us41webzoom.us^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||us41webzoom.wiki^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167690,12 +167942,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||verify-auth.s3.us-west-1.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||verify-google-business-profile.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167876,12 +168122,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||waying-whatsapps.hl.cn^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||wb-whatsappsh.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -168301,18 +168541,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||whatsapp-189.click^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||whatsapp-189.sbs^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||whatsapp-5.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -168613,12 +168841,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||whatsapp-wrapped.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||whatsapp.123zoeken.be^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -168907,12 +169129,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||whatsappp.cn^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||whatsappp.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -168932,12 +169148,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||whatsapppq.top^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||whatsappq.club^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -168974,6 +169184,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||whatsappsemsalvarcontato.com.br^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||whatsappss.com.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -169507,6 +169723,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||x-twitter.online^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||x4rtvzxy15pnxdcyajoh.s3.us-east-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -169705,6 +169927,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||zh-kc-whatsappo.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||zh-netflix.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -169789,6 +170017,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||zoom-app.org^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||zoom-authenmeet.pro^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -169843,12 +170077,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||zoom-clientupdate.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||zoom-cn.site^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -169897,12 +170125,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||zoom-join.us^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||zoom-justin.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -169945,12 +170167,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||zoom-meeting.uk^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||zoom-meetings.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -169976,6 +170192,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||zoom-out-lab.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||zoom-pc.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -170132,6 +170354,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||zoom.d0c-web.org^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||zoom.discount^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -170395,12 +170623,6 @@
   },
   {
     "source": "tif.medium.txt",
-    "candidate": "||zoommeetingapp.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
     "candidate": "||zoommeetings-invite.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -170414,12 +170636,6 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||zoommeetingsetup.info^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "tif.medium.txt",
-    "candidate": "||zoommeetus.us^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -179407,12 +179623,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||29831-icloud.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||3233310444.log.outlook.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -179551,12 +179761,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||aaspp-matomo-ingress-alb-1741779242.us-east-1.elb.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||aax-us-iad.amazon.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -179672,12 +179876,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||account-track-fr-pubgw-uxuqce0-1972019483.eu-west-3.elb.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||account-track-sg-pubgw-bjscyjo-1156958859.ap-southeast-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -179882,12 +180080,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||ad-task-center.xiaohongshu.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||ad-tech-pyxis-uat-1649189048.us-west-2.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -181142,6 +181334,18 @@
   {
     "source": "ultimate.txt",
     "candidate": "||ads-splash-i2.xhscdn.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||ads-splash-v1.xhscdn.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||ads-splash-v2.xhscdn.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -185179,12 +185383,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||analytics-alb-269776019.us-east-1.elb.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||analytics-alv.google.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -187933,12 +188131,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||collector-8c9b408a540e1709.elb.eu-west-1.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||collector-apis-1580790986.us-west-2.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -188294,6 +188486,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||create-newworld.netlify.app^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||creative-ads.s3.us-east-2.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -189505,12 +189703,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||err.ghar-6f3.workers.dev^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||err2.vercel.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -190112,6 +190304,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||fight-logger.vercel.app^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||file-whatsappn.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -190897,12 +191095,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||google-forms.click^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||google-google-chrome-google-com.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -190922,6 +191114,18 @@
   {
     "source": "ultimate.txt",
     "candidate": "||google-guge.hl.cn^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||google-meet-call.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||google-meet-verification.icu^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -192722,12 +192926,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||inv-901156.vercel.app^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||iobit.com.s3.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -196471,19 +196669,13 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||netflix-lordlfilme.ru^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||netflix-online.fr^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||netflix-renouveler-mon-abonnement.com^",
+    "candidate": "||netflix-play.fr^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -196520,42 +196712,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||netflixapp.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixcasino.fyi^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixcasino.one^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixcasino.sk^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixcasinogreece.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixcasinoromania.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixcasinouk.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -198361,12 +198517,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||play-google.cam^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||playapprecommendations.googleapis.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -198686,12 +198836,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||prod-analytics-api-1407320161.ap-east-1.elb.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||prod-analytics-events-lb-1831464947.us-east-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -199484,6 +199628,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||rocket.snssdk.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||rocketreels-all-log.s3.ap-south-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -200923,12 +201073,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||snowplow-collector-lb-1821647824.us-east-1.elb.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||snowplow-collector-lb-756545761.eu-west-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -201458,12 +201602,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||steamcommunitly-workspaceshop.shop^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||steamcommunity.blog^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -203011,12 +203149,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||track.forum.figma.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||track.googleusacontent.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -203324,6 +203456,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||trk-esa-ob-va-gs-trickcal.bilibiligame.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||trk.netflix.shop^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -204775,12 +204913,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||whatsapp-uk-web.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||whatsappb.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -205496,6 +205628,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||zoomessytreatment.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||zoomgrid-deck.pro^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
