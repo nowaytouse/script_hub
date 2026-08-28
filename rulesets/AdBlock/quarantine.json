@@ -96763,6 +96763,12 @@
   },
   {
     "source": "reject.txt",
+    "candidate": ".oaesnjpgvsmms.space",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
     "candidate": ".oas-central.east.realmedia.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -155209,6 +155215,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||danbroproperties.s3.us-east-2.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||dark-telegram.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156373,6 +156385,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||faq-gemini.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||faq-telegram.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -157058,6 +157076,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||geminiimageai.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||geminim.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -159547,6 +159571,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||icloud-contact.app^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||icloud-device.info^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -160585,6 +160615,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||kl-icloud.top^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||kl-telegram.hl.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -161162,6 +161198,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||melbet-telegram.ru^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||melbet-telegram1.top^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162475,6 +162517,12 @@
   },
   {
     "source": "tif.medium.txt",
+    "candidate": "||netflixcainfo.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
     "candidate": "||netflixcasino-au.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162896,6 +162944,12 @@
   {
     "source": "tif.medium.txt",
     "candidate": "||notionpl.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tif.medium.txt",
+    "candidate": "||notions.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -184909,6 +184963,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||alkalimetricsink-pa.clients6.google.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||alpha-19298661.us-east-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -192200,6 +192260,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||ichnaea.netflix.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||icloud-i-cl.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -201596,12 +201662,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||steamcommummity.cam^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||steamcommunitly-workspaceshop.shop^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
