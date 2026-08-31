@@ -8833,6 +8833,12 @@
   },
   {
     "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,ftuzoomrapyjp.website",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,fuck-ads.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -17059,6 +17065,12 @@
   },
   {
     "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,mergusgifts.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,meta.video.qiyi.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -18679,6 +18691,12 @@
   },
   {
     "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,pooinc-7dw.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,poorlytwitter.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -19322,6 +19340,12 @@
   {
     "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,rjilbs.intermediair.nl",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,rlmkr6fpngw6kjz.cfd",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -51769,6 +51793,12 @@
   },
   {
     "source": "anti-ad-surge2.txt",
+    "candidate": ".ftuzoomrapyjp.website",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
     "candidate": ".fuck-ads.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -51994,6 +52024,12 @@
     "candidate": ".giftplanning.westmont.edu",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
+    "candidate": ".github-software.su",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "anti-ad-surge2.txt",
@@ -56947,6 +56983,12 @@
   },
   {
     "source": "anti-ad-surge2.txt",
+    "candidate": ".mergusgifts.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
     "candidate": ".meta.video.qiyi.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -58747,12 +58789,6 @@
   },
   {
     "source": "anti-ad-surge2.txt",
-    "candidate": ".steamrub.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
     "candidate": ".steamtraffic.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -59846,12 +59882,6 @@
   {
     "source": "anti-ad-surge2.txt",
     "candidate": ".videocdnmetrika.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
-    "candidate": ".videocdnshop.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -151790,12 +151820,6 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,videocdnmetrika.com,Reject",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "sr_ad_only.conf",
-    "candidate": "DOMAIN-SUFFIX,videocdnshop.com,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
