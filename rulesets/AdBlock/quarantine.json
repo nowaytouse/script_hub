@@ -65779,6 +65779,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||dormietwitch.cfd^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||download-stats.mozilla.org^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
