@@ -100027,6 +100027,12 @@
   },
   {
     "source": "reject.txt",
+    "candidate": ".thy7v872x26qot4.cfd",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
     "candidate": ".tikivideo.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -151598,6 +151604,12 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,thumbb86.com,Reject",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,thy7v872x26qot4.cfd,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
