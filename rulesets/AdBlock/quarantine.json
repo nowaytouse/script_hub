@@ -7783,6 +7783,12 @@
   },
   {
     "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,dormietwitch.cfd",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,download-stats.mozilla.org",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -21614,6 +21620,12 @@
   {
     "source": "Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,thumbs.net.anwalt.de",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,thy7v872x26qot4.cfd",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -64324,6 +64336,12 @@
     "candidate": "||beap.gemini.yahoo.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
+    "candidate": "||begravevideos.qpon^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
   },
   {
     "source": "filter.txt",
