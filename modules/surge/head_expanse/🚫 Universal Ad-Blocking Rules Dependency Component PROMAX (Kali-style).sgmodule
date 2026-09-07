@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-08-27]
-#!desc=按用途分片(14片) + 应用内去广告(URL Rewrite=548, Map Local=1234, Script=270, Body Rewrite=86, MITM=734); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-09-07]
+#!desc=按用途分片(15片) + 应用内去广告(URL Rewrite=548, Map Local=1234, Script=270, Body Rewrite=86, MITM=734); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-08-27 23:21:35
+#!date=2026-09-07 17:25:06
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -33,6 +33,7 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 威胁情报·补充 · HaGeZi / skk 其它威胁与钓鱼域名集 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 
