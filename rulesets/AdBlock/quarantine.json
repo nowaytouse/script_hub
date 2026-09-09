@@ -35593,6 +35593,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,cdn-media.brightline.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,cdn.comedia.coccoc.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -37664,6 +37670,12 @@
   {
     "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,gifcode-lienquan.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,gifpxobkcwkpk.online",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -66793,6 +66805,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||gifpxobkcwkpk.online^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||gift.skmshopbd.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -87415,6 +87433,12 @@
   },
   {
     "source": "reject.txt",
+    "candidate": ".cdn-media.brightline.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
     "candidate": ".cdn.acloudvideos.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -89648,6 +89672,12 @@
   {
     "source": "reject.txt",
     "candidate": ".gifii.fr",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
+    "candidate": ".gifpxobkcwkpk.online",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -150110,6 +150140,12 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,ggxwb.miguvideo.com,Reject",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,gifpxobkcwkpk.online,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
