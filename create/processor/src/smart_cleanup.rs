@@ -1131,10 +1131,7 @@ pub fn should_keep_promax_line_pub(line: &str, section: &str, source_path: &str)
         return false;
     }
     let sec = section.trim().to_lowercase();
-    if sec == "mitm" && line.to_lowercase().contains("hostname") {
-        return true;
-    }
-    false
+    sec == "mitm" && line.to_lowercase().contains("hostname")
 }
 
 pub fn module_ingest_mode_pub(path: &str, text: &str) -> &'static str {

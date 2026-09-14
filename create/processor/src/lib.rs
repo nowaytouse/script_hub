@@ -445,19 +445,37 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
 
 pub mod url_rewriter;
 
+fn normalize_generated_text(content: &str) -> String {
+    let mut lines = content.lines().map(str::trim_end).collect::<Vec<_>>();
+    while lines.last().is_some_and(|line| line.is_empty()) {
+        lines.pop();
+    }
+    if lines.is_empty() {
+        String::new()
+    } else {
+        lines.join("\n") + "\n"
+    }
+}
+
 pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: bool) -> bool {
+    let mut normalized_content = normalize_generated_text(content_str);
+
     // Semantic Check
     if p.exists()
         && let Ok(old_content) = std::fs::read_to_string(p)
     {
         let old_stripped = url_rewriter::semantic_content_for_path_pub(p, &old_content);
-        let new_stripped = url_rewriter::semantic_content_for_path_pub(p, content_str);
+        let new_stripped = url_rewriter::semantic_content_for_path_pub(p, &normalized_content);
         if old_stripped == new_stripped {
-            println!(
-                "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
-                p.file_name().unwrap_or_default().to_string_lossy()
-            );
-            return true;
+            let normalized_old = normalize_generated_text(&old_content);
+            if normalized_old == old_content {
+                println!(
+                    "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
+                    p.file_name().unwrap_or_default().to_string_lossy()
+                );
+                return true;
+            }
+            normalized_content = normalized_old;
         }
     }
 
@@ -472,7 +490,7 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
                 .unwrap()
                 .as_nanos()
         ));
-        match std::fs::write(&temp_path, content_str) {
+        match std::fs::write(&temp_path, &normalized_content) {
             Ok(_) => match std::fs::rename(&temp_path, p) {
                 Ok(_) => true,
                 Err(e) => {
@@ -493,7 +511,7 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
             }
         }
     } else {
-        match std::fs::write(p, content_str) {
+        match std::fs::write(p, &normalized_content) {
             Ok(_) => true,
             Err(e) => {
                 eprintln!(
@@ -522,7 +540,18 @@ pub mod srs_generator;
 
 #[cfg(test)]
 mod tests {
-    use super::{is_ruleset_watermark, normalize_rule, strip_inline_comment};
+    use super::{
+        is_ruleset_watermark, normalize_generated_text, normalize_rule, strip_inline_comment,
+    };
+
+    #[test]
+    fn generated_text_has_clean_line_endings_and_one_final_newline() {
+        assert_eq!(
+            normalize_generated_text("# comment \r\nvalue\t\r\n\r\n"),
+            "# comment\nvalue\n"
+        );
+        assert_eq!(normalize_generated_text(""), "");
+    }
 
     #[test]
     fn inline_comment_stripping_preserves_urls() {
