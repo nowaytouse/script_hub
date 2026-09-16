@@ -50743,12 +50743,6 @@
   },
   {
     "source": "anti-ad-surge2.txt",
-    "candidate": ".charltonmedia.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
     "candidate": ".checkip.amazonaws.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -56941,6 +56935,12 @@
   },
   {
     "source": "anti-ad-surge2.txt",
+    "candidate": ".mediamaker.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
     "candidate": ".mediamathrdrt.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -57442,6 +57442,12 @@
     "candidate": ".nitrous-analytics.s3.amazonaws.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
+    "candidate": ".nlcjpgcumycks.website",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
   },
   {
     "source": "anti-ad-surge2.txt",
@@ -59158,12 +59164,6 @@
     "candidate": ".thequickbooksteam.intuit.ca",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
-  },
-  {
-    "source": "anti-ad-surge2.txt",
-    "candidate": ".thumbb86.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
   },
   {
     "source": "anti-ad-surge2.txt",
@@ -72452,6 +72452,12 @@
   {
     "source": "filter.txt",
     "candidate": "||medialand.ru^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
+    "candidate": "||mediamaker.net^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
