@@ -43297,6 +43297,12 @@
   },
   {
     "source": "adg.list",
+    "candidate": "DOMAIN-SUFFIX,mediamaker.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "adg.list",
     "candidate": "DOMAIN-SUFFIX,mediameter.by",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -46978,12 +46984,6 @@
     "candidate": "DOMAIN-SUFFIX,thequickbooksteam.intuit.ca",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
-  },
-  {
-    "source": "adg.list",
-    "candidate": "DOMAIN-SUFFIX,thumbb86.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
   },
   {
     "source": "adg.list",
@@ -97477,6 +97477,12 @@
   },
   {
     "source": "reject.txt",
+    "candidate": ".mediamaker.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
     "candidate": ".mediamath.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -101653,12 +101659,6 @@
   },
   {
     "source": "reject.txt",
-    "candidate": ".thumbb86.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "reject.txt",
     "candidate": ".thumbs.net.anwalt.de",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -103540,6 +103540,12 @@
     "candidate": ".www.gifttifyagency.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "reject.txt",
+    "candidate": ".www.githubuser.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "reject.txt",
@@ -153262,12 +153268,6 @@
     "candidate": "DOMAIN-SUFFIX,teslaamg.obs.cn-east-3.myhuaweicloud.com,Reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
-  },
-  {
-    "source": "sr_ad_only.conf",
-    "candidate": "DOMAIN-SUFFIX,thumbb86.com,Reject",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
   },
   {
     "source": "sr_ad_only.conf",
