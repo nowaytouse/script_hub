@@ -155,9 +155,13 @@ fn combine_metadata(parts: &[(String, HashMap<String, String>)]) -> (String, Str
         }
         let combined = format!("{}{}", prefix, blocks.join("\\n\\n"));
         if combined.len() > max_len {
+            let mut end = max_len;
+            while !combined.is_char_boundary(end) {
+                end -= 1;
+            }
             format!(
                 "{}…\\n(see upstream docs for full details)",
-                &combined[..max_len]
+                &combined[..end]
             )
         } else {
             combined
@@ -716,7 +720,22 @@ pub fn run_merge_bundle_json(json: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{ModuleSectionPub, hostname_tokens, write_module};
+    use super::{ModuleSectionPub, combine_metadata, hostname_tokens, write_module};
+    use std::collections::HashMap;
+
+    #[test]
+    fn metadata_truncation_does_not_split_utf8_characters() {
+        for character in ["地", "🇰"] {
+            let mut meta = HashMap::new();
+            meta.insert(
+                "arguments-desc".to_string(),
+                format!("{}{}", "a".repeat(3799 - "[fixture]\\n".len()), character),
+            );
+            let (_, args_desc, _) = combine_metadata(&[("fixture".to_string(), meta)]);
+            assert!(args_desc.ends_with("…\\n(see upstream docs for full details)"));
+            assert!(!args_desc.contains(character));
+        }
+    }
 
     #[test]
     fn hostname_tokens_remove_module_merge_directives() {
