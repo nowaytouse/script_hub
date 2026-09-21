@@ -150763,6 +150763,12 @@
   },
   {
     "source": "sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,74rmp4h3xmgfhyme1.cfd,Reject",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,7ng6v3lu3c.execute-api.us-east-1.amazonaws.com,Reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153248,6 +153254,12 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,sjpagifahohnk.space,Reject",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,snugifysiuslaw.shop,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
