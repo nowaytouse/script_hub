@@ -188395,12 +188395,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||aaspp-matomo-ingress-alb-1741779242.us-east-1.elb.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||aax-us-iad.amazon.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -188870,12 +188864,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||addshoppers.s3.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||addurltogoogle.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -190136,6 +190124,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||ads.mozilla.org^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||ads.netflix.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -192230,6 +192224,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||adsimg2021.s3.us-west-2.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||adsk-pnxproxy-prd-1753980530.us-east-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -197533,6 +197533,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||ct-developer-acct-logs.s3.us-east-1.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||ct-production-acct-logs.s3.eu-central-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -197798,6 +197804,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||datahub.zhihu.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||dataplane.rum.af-south-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -199129,6 +199141,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||exchange-tracker-2026-09-23-927148824.us-east-1.elb.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||expenses-fe.meituan.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -199435,12 +199453,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||fintechszoom.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||fire-ads.pages.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -199466,6 +199478,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||firebasepredictions.googleapis.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||firefly-071591.s3.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -200911,12 +200929,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||guicloud.org^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||guidedtrack-error-pages.s3.us-west-2.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -201043,6 +201055,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||healthy-minds-measure-baselines.s3.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||heartbeat-pearl.vercel.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -201116,12 +201134,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||hkshort.weixin.qq.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||hmnshudhmn24.medium.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -202339,13 +202351,13 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||jams-prod-collectors-us-west-1-1788978950.us-west-1.elb.amazonaws.com^",
+    "candidate": "||james-link-analytics.julliaxxx228.workers.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||javascript-tracker-snowplow-static-site.s3.us-east-1.amazonaws.com^",
+    "candidate": "||jams-prod-collectors-us-west-1-1788978950.us-west-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -202543,6 +202555,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||k8s-tracking-adsproda-aef05f23f9-382743223.eu-west-1.elb.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||kapot-tracker.vercel.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -202634,6 +202652,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||kinstruments-measurements.s3-external-1.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||kirona.ru^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -203120,12 +203144,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||live-video-log16-normal-alisg.tiktokv.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||livesteaming.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -204829,12 +204847,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||metrics.np.caldera-227.cbae.dev.use1a.on.epicgames.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||metrics.np.charts.cbae.dev.use1a.on.epicgames.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -205291,12 +205303,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||metrics.prod.netflix.net^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||metrics.sflb.project-227.cbae.dev.use1a.on.epicgames.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -205460,6 +205466,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||mjca-yijws.global.ssl.fastly.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||mlb-tracker-256.pages.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -206485,6 +206497,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||narnanug.workers.dev^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||nativead.s3.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -206635,19 +206653,7 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||netflixparty1.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||netflixporno.net^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||netflixtunisie.com.tn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -206726,6 +206732,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||nextdaymedia-ads.s3.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||nexus-tracker-prod.nexustracker.workers.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -208148,6 +208160,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||photorankstatics-a.akamaihd.net^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||photozoomchina.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -210049,12 +210067,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||rum.af-south-1.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||rum.ap-northeast-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -211201,6 +211213,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||sp-collector-lb-1064368878.eu-west-1.elb.amazonaws.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||sp-collector-lb-2104379155.us-east-1.elb.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -211310,12 +211328,6 @@
   {
     "source": "ultimate.txt",
     "candidate": "||spontaneous-bubblegum-6d5740.netlify.app^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
-    "candidate": "||sporcle-web-errors.s3.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -211699,12 +211711,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||steamcommnity.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||steamcommumminnty.cam^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -211771,6 +211777,12 @@
   },
   {
     "source": "ultimate.txt",
+    "candidate": "||steamcommunlty.su^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
     "candidate": "||steamcommunutty.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -211819,12 +211831,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||steamconmunnity.icu^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||steamdesktopauthenticator.net^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -211838,6 +211844,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||steame.ru^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||steamedcheeseburger.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -212623,12 +212635,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||telegramwr.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||telegramzn.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -213356,6 +213362,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||tracert.alipay.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||track-edge.global.ssl.fastly.net^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -215281,12 +215293,6 @@
   },
   {
     "source": "ultimate.txt",
-    "candidate": "||vupulse-api-production.s3.amazonaws.com^",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "ultimate.txt",
     "candidate": "||vvww-icloud.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -216440,6 +216446,12 @@
   {
     "source": "ultimate.txt",
     "candidate": "||zoom-attendance-tracker.outdatedguy.rocks^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "ultimate.txt",
+    "candidate": "||zoom.cn^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
