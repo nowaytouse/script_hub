@@ -67537,6 +67537,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||heatmap-tracking-do-to-s3-worker-prod.flipdesk.workers.dev^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||heavenomitzoom.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
