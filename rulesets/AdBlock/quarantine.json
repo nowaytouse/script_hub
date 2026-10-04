@@ -51523,6 +51523,12 @@
   },
   {
     "source": "anti-ad-surge2.txt",
+    "candidate": ".donutsmp-mod.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
     "candidate": ".doppler-beacon.cbsivideo.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -58084,6 +58090,18 @@
     "candidate": ".policy.video.ptqy.gitv.tv",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
+    "candidate": ".polksvo.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
+    "candidate": ".pomorutecvo.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "anti-ad-surge2.txt",
