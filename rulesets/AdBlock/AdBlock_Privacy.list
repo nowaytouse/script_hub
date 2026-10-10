@@ -2,7 +2,7 @@
 # Purpose: Privacy / tracking-protection / 防追踪列表
 # Category-Key: Privacy
 # Shard: 1/1
-# Total Rules: 4881
+# Total Rules: 4903
 DOMAIN,cn.app.chat.xiaomi.net
 DOMAIN,etl-xlmc-ssl.sandai.net
 DOMAIN,ios-pclog.i4.cn
@@ -2257,6 +2257,7 @@ DOMAIN-SUFFIX,a8780.actonservice.com
 DOMAIN-SUFFIX,a8clk.assecli.com
 DOMAIN-SUFFIX,a8clk.birai-cm.com
 DOMAIN-SUFFIX,a8clk.booking.jetfi.jp
+DOMAIN-SUFFIX,a8clk.camerakaitori.jp
 DOMAIN-SUFFIX,a8clk.carbattery110.com
 DOMAIN-SUFFIX,a8clk.chuko-truck.com
 DOMAIN-SUFFIX,a8clk.cocorotherapy.com
@@ -2266,11 +2267,14 @@ DOMAIN-SUFFIX,a8clk.guruyaku.jp
 DOMAIN-SUFFIX,a8clk.hotman-onlineshop.com
 DOMAIN-SUFFIX,a8clk.hozon.sp-site.jp
 DOMAIN-SUFFIX,a8clk.hurugicom.jp
+DOMAIN-SUFFIX,a8clk.jobspring.jp
+DOMAIN-SUFFIX,a8clk.joppy.jp
 DOMAIN-SUFFIX,a8clk.kanagawa-zero.com
 DOMAIN-SUFFIX,a8clk.kenkoukazoku.co.jp
 DOMAIN-SUFFIX,a8clk.kyoto-health.co.jp
 DOMAIN-SUFFIX,a8clk.kyoyu-mochibun.com
 DOMAIN-SUFFIX,a8clk.macpaw.com
+DOMAIN-SUFFIX,a8clk.mens-mr.jp
 DOMAIN-SUFFIX,a8clk.nobirun.jp
 DOMAIN-SUFFIX,a8clk.order.banana-wifi.com
 DOMAIN-SUFFIX,a8clk.shop.shareme.jp
@@ -2341,6 +2345,7 @@ DOMAIN-SUFFIX,a8cv.palms-gym.com
 DOMAIN-SUFFIX,a8cv.perrot.co
 DOMAIN-SUFFIX,a8cv.phonim.com
 DOMAIN-SUFFIX,a8cv.picksitter.com
+DOMAIN-SUFFIX,a8cv.pre-sana.com
 DOMAIN-SUFFIX,a8cv.premium.aidemy.net
 DOMAIN-SUFFIX,a8cv.repairman.jp
 DOMAIN-SUFFIX,a8cv.sabusuta.jp
@@ -2358,6 +2363,7 @@ DOMAIN-SUFFIX,a8cv.wellcrew.net
 DOMAIN-SUFFIX,a8cv.whynot.jp
 DOMAIN-SUFFIX,a8cv.willfu.jp
 DOMAIN-SUFFIX,a8cv.winkle.online
+DOMAIN-SUFFIX,a8cv.www.chara-ani.com
 DOMAIN-SUFFIX,a8cv.www.monologue.watch
 DOMAIN-SUFFIX,a8cv.ygm-clinic.or.jp
 DOMAIN-SUFFIX,a8cv.yobybo-japan.com
@@ -3365,6 +3371,8 @@ DOMAIN-SUFFIX,sanalytics.chvnoticias.cl
 DOMAIN-SUFFIX,sanalytics.cnfanart.com
 DOMAIN-SUFFIX,sanalytics.lovemoney.com
 DOMAIN-SUFFIX,sanalytics.smart.mercedes-benz.com
+DOMAIN-SUFFIX,sanalytics.tcmuk.tv
+DOMAIN-SUFFIX,sanalytics.tnt.africa
 DOMAIN-SUFFIX,sanalytics.tntgo.tv
 DOMAIN-SUFFIX,sanalytics.toonamiafrica.com
 DOMAIN-SUFFIX,sc.actonservice.com
@@ -3671,10 +3679,13 @@ DOMAIN-SUFFIX,smetrics.bloomberglaw.com
 DOMAIN-SUFFIX,smetrics.bloombergtax.com
 DOMAIN-SUFFIX,smetrics.bloombergtaxtech.com
 DOMAIN-SUFFIX,smetrics.bna.com
+DOMAIN-SUFFIX,smetrics.buytickets.virgintrains.co.uk
 DOMAIN-SUFFIX,smetrics.calwater.com
+DOMAIN-SUFFIX,smetrics.carbonite.com
 DOMAIN-SUFFIX,smetrics.care.com
 DOMAIN-SUFFIX,smetrics.cdiscount.com
 DOMAIN-SUFFIX,smetrics.cedars-sinai.org
+DOMAIN-SUFFIX,smetrics.charter.com
 DOMAIN-SUFFIX,smetrics.chron.com
 DOMAIN-SUFFIX,smetrics.circulodelasalud.mx
 DOMAIN-SUFFIX,smetrics.citibank.com.au
@@ -3703,6 +3714,7 @@ DOMAIN-SUFFIX,smetrics.experian.co.uk
 DOMAIN-SUFFIX,smetrics.expressnews.com
 DOMAIN-SUFFIX,smetrics.facitlaan.dk
 DOMAIN-SUFFIX,smetrics.financing.vwfinance.ca
+DOMAIN-SUFFIX,smetrics.fireballwhisky.com
 DOMAIN-SUFFIX,smetrics.flex.amazon.ca
 DOMAIN-SUFFIX,smetrics.flex.amazon.co.jp
 DOMAIN-SUFFIX,smetrics.flex.amazon.co.uk
@@ -3714,6 +3726,7 @@ DOMAIN-SUFFIX,smetrics.flexerasoftware.com
 DOMAIN-SUFFIX,smetrics.foeniksprivatlaan.dk
 DOMAIN-SUFFIX,smetrics.fokuslaan.dk
 DOMAIN-SUFFIX,smetrics.fokuslan.no
+DOMAIN-SUFFIX,smetrics.g-tune.jp
 DOMAIN-SUFFIX,smetrics.gordonsjewelers.com
 DOMAIN-SUFFIX,smetrics.greenstate.com
 DOMAIN-SUFFIX,smetrics.guess.eu
@@ -3723,7 +3736,9 @@ DOMAIN-SUFFIX,smetrics.hibiyakadan.com
 DOMAIN-SUFFIX,smetrics.higheroneaccount.com
 DOMAIN-SUFFIX,smetrics.hillrom.com
 DOMAIN-SUFFIX,smetrics.hks-power.co.jp
+DOMAIN-SUFFIX,smetrics.hoken.zexy.net
 DOMAIN-SUFFIX,smetrics.i22.nadro.mx
+DOMAIN-SUFFIX,smetrics.insurancesaver.com
 DOMAIN-SUFFIX,smetrics.insurewithaudi.co.uk
 DOMAIN-SUFFIX,smetrics.insurewithseat.co.uk
 DOMAIN-SUFFIX,smetrics.insurewithskoda.co.uk
@@ -3731,6 +3746,7 @@ DOMAIN-SUFFIX,smetrics.insurewithvolkswagen.co.uk
 DOMAIN-SUFFIX,smetrics.insurewithvwcv.co.uk
 DOMAIN-SUFFIX,smetrics.investmentnews.com
 DOMAIN-SUFFIX,smetrics.ivivva.com
+DOMAIN-SUFFIX,smetrics.jcrew.com
 DOMAIN-SUFFIX,smetrics.kanebocos.net
 DOMAIN-SUFFIX,smetrics.keysight.com.cn
 DOMAIN-SUFFIX,smetrics.kipling.com
@@ -3750,8 +3766,10 @@ DOMAIN-SUFFIX,smetrics.lululemon.co.uk
 DOMAIN-SUFFIX,smetrics.lululemon.com.au
 DOMAIN-SUFFIX,smetrics.lululemon.com.hk
 DOMAIN-SUFFIX,smetrics.lululemon.de
+DOMAIN-SUFFIX,smetrics.lululemon.es
 DOMAIN-SUFFIX,smetrics.lululemon.fr
 DOMAIN-SUFFIX,smetrics.mabanque.bnpparibas
+DOMAIN-SUFFIX,smetrics.madewell.com
 DOMAIN-SUFFIX,smetrics.markantalo.fi
 DOMAIN-SUFFIX,smetrics.mastercardadvisors.com
 DOMAIN-SUFFIX,smetrics.med.roche.ru
@@ -3767,6 +3785,7 @@ DOMAIN-SUFFIX,smetrics.mrhandyman.ca
 DOMAIN-SUFFIX,smetrics.mrrooter.com
 DOMAIN-SUFFIX,smetrics.multiview.com
 DOMAIN-SUFFIX,smetrics.mum.edu
+DOMAIN-SUFFIX,smetrics.mutua.es
 DOMAIN-SUFFIX,smetrics.mybenefits.com.au
 DOMAIN-SUFFIX,smetrics.mysanantonio.com
 DOMAIN-SUFFIX,smetrics.nadaguides.com
@@ -3813,6 +3832,7 @@ DOMAIN-SUFFIX,smetrics.riteaid.com
 DOMAIN-SUFFIX,smetrics.roche-uae.com
 DOMAIN-SUFFIX,smetrics.rocheonline.net
 DOMAIN-SUFFIX,smetrics.rochepro-eg.com
+DOMAIN-SUFFIX,smetrics.sazeracbarrelselect.com
 DOMAIN-SUFFIX,smetrics.schindler.ar
 DOMAIN-SUFFIX,smetrics.seat-italia.it
 DOMAIN-SUFFIX,smetrics.seawheeze.com
@@ -3825,6 +3845,8 @@ DOMAIN-SUFFIX,smetrics.shop.mrbostondrinks.com
 DOMAIN-SUFFIX,smetrics.shopmyexchange.com
 DOMAIN-SUFFIX,smetrics.showtimeanytime.com
 DOMAIN-SUFFIX,smetrics.skandiabanken.se
+DOMAIN-SUFFIX,smetrics.sloc.co.uk
+DOMAIN-SUFFIX,smetrics.southerncomfort.com
 DOMAIN-SUFFIX,smetrics.srptelecom.com
 DOMAIN-SUFFIX,smetrics.super8.com
 DOMAIN-SUFFIX,smetrics.t-mobilemoney.com
