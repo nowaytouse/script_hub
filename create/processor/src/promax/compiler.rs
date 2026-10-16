@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
@@ -723,10 +724,6 @@ impl AdBlockManager {
         None
     }
 
-    fn render_policy_rule(&self, normalized_rule: &str) -> String {
-        normalized_rule.to_string()
-    }
-
     fn add_rule_line(&mut self, line: &str, default_policy: &str, category: &str) {
         let stripped = line.trim();
         if stripped.is_empty() || stripped.starts_with('#') {
@@ -757,143 +754,133 @@ impl AdBlockManager {
                 });
             return;
         }
-        let candidates = vec![stripped.to_string()];
-
-        for candidate in candidates {
-            let cleaned = crate::strip_inline_comment(&candidate);
-            let parse_candidate = if cleaned.contains(',') {
-                Some(cleaned.clone())
-            } else {
+        let cleaned = crate::strip_inline_comment(stripped);
+        let parse_candidate = if cleaned.contains(',') {
+            Cow::Borrowed(cleaned.as_str())
+        } else {
+            let Some(normalized) =
                 crate::promax::functional::normalize_domain_source_line(&cleaned)
+            else {
+                return;
             };
-            let Some(parse_candidate) = parse_candidate else {
-                continue;
-            };
-            let parsed = match crate::promax::rule::SurgeRule::parse(&parse_candidate) {
-                Ok(rule) => rule,
-                Err(parse_error) => {
-                    self.quarantine
-                        .push(crate::promax::safety::QuarantineRecord {
-                            source: self.current_source.clone(),
-                            line: self.current_line,
-                            candidate: candidate.clone(),
-                            reason: parse_error.to_string(),
-                            risk: crate::promax::safety::RiskClass::Invalid,
-                        });
-                    continue;
-                }
-            };
-            if crate::is_ruleset_watermark(&parsed.payload) {
+            Cow::Owned(normalized)
+        };
+        let mut parsed = match crate::promax::rule::SurgeRule::parse(&parse_candidate) {
+            Ok(rule) => rule,
+            Err(parse_error) => {
                 self.quarantine
                     .push(crate::promax::safety::QuarantineRecord {
                         source: self.current_source.clone(),
                         line: self.current_line,
-                        candidate: candidate.clone(),
-                        reason: "upstream-ruleset-watermark".to_string(),
+                        candidate: stripped.to_string(),
+                        reason: parse_error.to_string(),
                         risk: crate::promax::safety::RiskClass::Invalid,
                     });
-                continue;
+                return;
             }
-            let policy = parsed
-                .policy
-                .as_deref()
-                .unwrap_or(default_policy)
-                .to_ascii_uppercase();
-            let policy = match policy.as_str() {
-                "PROXY" => {
-                    self.quarantine
-                        .push(crate::promax::safety::QuarantineRecord {
-                            source: self.current_source.clone(),
-                            line: self.current_line,
-                            candidate: candidate.clone(),
-                            reason: "unsupported-proxy-policy".to_string(),
-                            risk: crate::promax::safety::RiskClass::Invalid,
-                        });
-                    continue;
-                }
-                "REJECT-TINYGIF" | "REJECT-IMG" => "REJECT".to_string(),
-                _ => policy,
-            };
-
-            if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
-                self.safety.decision(&parsed)
-            {
-                self.quarantine
-                    .push(crate::promax::safety::QuarantineRecord {
-                        source: self.current_source.clone(),
-                        line: self.current_line,
-                        candidate: candidate.clone(),
-                        reason: reason.to_string(),
-                        risk: crate::promax::safety::RiskClass::ProtectedService,
-                    });
-                continue;
-            }
-
-            if !category.starts_with("ThreatIntel")
-                && category != "Security"
-                && matches!(
-                    parsed.kind,
-                    crate::promax::rule::RuleKind::Domain
-                        | crate::promax::rule::RuleKind::DomainSuffix
-                )
-                && let crate::promax::safety::SafetyDecision::Quarantine(reason) =
-                    crate::promax::safety::classify_domain_payload(&parsed.payload)
-            {
-                self.quarantine
-                    .push(crate::promax::safety::QuarantineRecord {
-                        source: self.current_source.clone(),
-                        line: self.current_line,
-                        candidate: candidate.clone(),
-                        reason: reason.to_string(),
-                        risk: crate::promax::safety::RiskClass::BroadMedia,
-                    });
-                continue;
-            }
-
-            let normalized = parsed.render_external();
-            let rule_payload = parsed.payload.clone();
-
-            let rendered = self.render_policy_rule(&normalized);
-
-            // Deduplication
-            let seen_bucket = self.seen_rules.get_mut(&policy).unwrap();
-            if seen_bucket.contains(&rendered) {
-                continue;
-            }
-
-            // Suffix subsumption
-            let rtype = parsed.kind.as_str();
-            let rval = rule_payload.to_lowercase();
-            let policy_suffixes = self.seen_suffixes.get_mut(&policy).unwrap();
-            if rtype == "DOMAIN" || rtype == "DOMAIN-SUFFIX" {
-                if rtype == "DOMAIN" {
-                    let parts: Vec<&str> = rval.split('.').collect();
-                    let mut matched = false;
-                    for i in 0..(parts.len() - 1) {
-                        let suffix = parts[i..].join(".");
-                        if policy_suffixes.contains(&suffix) {
-                            matched = true;
-                            break;
-                        }
-                    }
-                    if matched {
-                        continue;
-                    }
-                }
-                if rtype == "DOMAIN-SUFFIX" {
-                    policy_suffixes.insert(rval);
-                }
-            }
-
-            let cat_bucket = self
-                .rules
-                .get_mut(&policy)
-                .unwrap()
-                .get_mut(category)
-                .unwrap();
-            cat_bucket.insert(rendered.clone());
-            seen_bucket.insert(rendered);
+        };
+        if crate::is_ruleset_watermark(&parsed.payload) {
+            self.quarantine
+                .push(crate::promax::safety::QuarantineRecord {
+                    source: self.current_source.clone(),
+                    line: self.current_line,
+                    candidate: stripped.to_string(),
+                    reason: "upstream-ruleset-watermark".to_string(),
+                    risk: crate::promax::safety::RiskClass::Invalid,
+                });
+            return;
         }
+        let policy = parsed
+            .policy
+            .as_deref()
+            .map(Cow::Borrowed)
+            .unwrap_or_else(|| Cow::Owned(default_policy.to_ascii_uppercase()));
+        let policy = match policy.as_ref() {
+            "PROXY" => {
+                self.quarantine
+                    .push(crate::promax::safety::QuarantineRecord {
+                        source: self.current_source.clone(),
+                        line: self.current_line,
+                        candidate: stripped.to_string(),
+                        reason: "unsupported-proxy-policy".to_string(),
+                        risk: crate::promax::safety::RiskClass::Invalid,
+                    });
+                return;
+            }
+            "REJECT-TINYGIF" | "REJECT-IMG" => "REJECT",
+            policy => policy,
+        };
+
+        if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
+            self.safety.decision(&parsed)
+        {
+            self.quarantine
+                .push(crate::promax::safety::QuarantineRecord {
+                    source: self.current_source.clone(),
+                    line: self.current_line,
+                    candidate: stripped.to_string(),
+                    reason: reason.to_string(),
+                    risk: crate::promax::safety::RiskClass::ProtectedService,
+                });
+            return;
+        }
+
+        if !category.starts_with("ThreatIntel")
+            && category != "Security"
+            && matches!(
+                parsed.kind,
+                crate::promax::rule::RuleKind::Domain | crate::promax::rule::RuleKind::DomainSuffix
+            )
+            && let crate::promax::safety::SafetyDecision::Quarantine(reason) =
+                crate::promax::safety::classify_domain_payload(&parsed.payload)
+        {
+            self.quarantine
+                .push(crate::promax::safety::QuarantineRecord {
+                    source: self.current_source.clone(),
+                    line: self.current_line,
+                    candidate: stripped.to_string(),
+                    reason: reason.to_string(),
+                    risk: crate::promax::safety::RiskClass::BroadMedia,
+                });
+            return;
+        }
+
+        let rendered = parsed.render_external();
+
+        // Deduplication
+        let seen_bucket = self.seen_rules.get_mut(policy).unwrap();
+        if seen_bucket.contains(&rendered) {
+            return;
+        }
+
+        // Validated domain payloads are ASCII; borrow ancestor slices instead of joining labels.
+        if matches!(
+            parsed.kind,
+            crate::promax::rule::RuleKind::Domain | crate::promax::rule::RuleKind::DomainSuffix
+        ) {
+            parsed.payload.make_ascii_lowercase();
+            let policy_suffixes = self.seen_suffixes.get_mut(policy).unwrap();
+            if parsed.kind == crate::promax::rule::RuleKind::Domain {
+                let mut candidate = parsed.payload.as_str();
+                while let Some((_, parent)) = candidate.split_once('.') {
+                    if policy_suffixes.contains(candidate) {
+                        return;
+                    }
+                    candidate = parent;
+                }
+            } else {
+                policy_suffixes.insert(parsed.payload);
+            }
+        }
+
+        let cat_bucket = self
+            .rules
+            .get_mut(policy)
+            .unwrap()
+            .get_mut(category)
+            .unwrap();
+        cat_bucket.insert(rendered.clone());
+        seen_bucket.insert(rendered);
     }
 
     fn add_section_line(&mut self, section_name: &str, line: &str) {
@@ -1050,15 +1037,12 @@ impl AdBlockManager {
         rules_only: bool,
         source: &str,
     ) {
-        let lines: Vec<&str> = text.lines().collect();
-        let mut current_section = String::new();
+        let mut current_section = "";
         let mut in_rule_section = false;
         let mut seen_real_header = false;
 
-        let rule_sections: HashSet<&str> = ["Rule", "Adblock Plus"].iter().cloned().collect();
-
         self.current_source = source.to_string();
-        for (index, line) in lines.into_iter().enumerate() {
+        for (index, line) in text.lines().enumerate() {
             self.current_line = index + 1;
             let stripped = line.trim();
             if stripped.is_empty() {
@@ -1066,8 +1050,8 @@ impl AdBlockManager {
             }
 
             if stripped.starts_with('[') && stripped.ends_with(']') && !stripped.starts_with('#') {
-                current_section = stripped[1..stripped.len() - 1].to_string();
-                in_rule_section = rule_sections.contains(current_section.as_str());
+                current_section = &stripped[1..stripped.len() - 1];
+                in_rule_section = matches!(current_section, "Rule" | "Adblock Plus");
                 seen_real_header = true;
                 continue;
             }
@@ -1110,8 +1094,8 @@ impl AdBlockManager {
             if in_rule_section {
                 self.add_rule_line(stripped, default_policy, category);
             } else if include_sections && !stripped.starts_with('#') {
-                if self.sections.contains_key(&current_section) {
-                    self.add_section_line(&current_section, stripped);
+                if self.sections.contains_key(current_section) {
+                    self.add_section_line(current_section, stripped);
                 } else if current_section == "MITM" && stripped.starts_with("hostname") {
                     let hosts = stripped
                         .split_once('=')
@@ -2881,6 +2865,7 @@ pub fn run_adblock_manager(root_dir: &str, execute: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::AdBlockManager;
+    use std::collections::HashSet;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -2902,6 +2887,155 @@ mod tests {
         );
         let rules = &manager.rules["REJECT"]["Advertising"];
         assert!(manager.filter_rules(rules).is_empty());
+    }
+
+    #[test]
+    fn suffix_subsumption_is_case_insensitive_policy_scoped_and_label_bounded() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        for line in [
+            "DOMAIN-SUFFIX,Metrics.Example.test,REJECT",
+            "DOMAIN,Ads.METRICS.EXAMPLE.test,REJECT",
+            "DOMAIN,Metrics.Example.test,REJECT",
+            "DOMAIN,Ads.METRICS.EXAMPLE.test,REJECT-DROP",
+            "DOMAIN,ads.othermetrics.example.test,REJECT",
+            "DOMAIN,ads.othermetrics.example.test,REJECT",
+        ] {
+            manager.add_rule_line(line, "REJECT", "Advertising");
+        }
+
+        assert_eq!(
+            manager.rules["REJECT"]["Advertising"],
+            HashSet::from([
+                "DOMAIN-SUFFIX,Metrics.Example.test".to_string(),
+                "DOMAIN,ads.othermetrics.example.test".to_string(),
+            ])
+        );
+        assert_eq!(
+            manager.rules["REJECT-DROP"]["Advertising"],
+            HashSet::from(["DOMAIN,Ads.METRICS.EXAMPLE.test".to_string()])
+        );
+    }
+
+    #[test]
+    fn script_classifier_keeps_ascii_case_and_unicode_fallback_behavior() {
+        let manager = AdBlockManager::new(std::env::temp_dir());
+        for (line, expected) in [
+            ("DOMAIN,ads.example.test,REJECT", false),
+            ("# script-path=https://example.test/a.js", false),
+            ("fixture = TYPE=HTTP-RESPONSE", true),
+            ("^https://ads.example.test/ _ REJECT", true),
+            ("^https://ads.example.test/ https://example.test 302", true),
+            ("DOMAIN-KEYWORD,example 302", false),
+            ("DOMAIN-KEYWORD,example reject", false),
+            ("fixture = status-code=200", true),
+            ("脚本 = SCRIPT-PATH=https://example.test/a.js", true),
+            ("USER-AGENT,普通客户端", false),
+        ] {
+            assert_eq!(manager.is_script_or_rewrite_line(line), expected, "{line}");
+        }
+    }
+
+    #[test]
+    fn suffix_insertion_keeps_preexisting_domains_and_single_label_behavior() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        for line in [
+            "DOMAIN,ads.metrics.example.test",
+            "DOMAIN-SUFFIX,metrics.example.test",
+            "DOMAIN-SUFFIX,localhost",
+            "DOMAIN,localhost",
+            "DOMAIN-SUFFIX,test",
+            "DOMAIN,metrics.test",
+        ] {
+            manager.add_rule_line(line, "reject", "Advertising");
+        }
+
+        assert_eq!(manager.rules["REJECT"]["Advertising"].len(), 6);
+    }
+
+    #[test]
+    fn rule_ingestion_preserves_quarantine_provenance_and_tinygif_normalization() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.safety = crate::promax::safety::SafetyPolicy::from_lines([
+            "DOMAIN-SUFFIX,protected.example.test",
+        ]);
+        manager.current_source = "fixture".to_string();
+        manager.current_line = 42;
+        for line in [
+            "DOMAIN,invalid/path,REJECT",
+            "DOMAIN,ads.example.test,PROXY",
+            "DOMAIN,auth.protected.example.test,REJECT",
+            "DOMAIN,ads.example.test,REJECT-TINYGIF # comment",
+        ] {
+            manager.add_rule_line(line, "REJECT", "Advertising");
+        }
+
+        assert_eq!(
+            manager.rules["REJECT"]["Advertising"],
+            HashSet::from(["DOMAIN,ads.example.test".to_string()])
+        );
+        assert_eq!(manager.quarantine.len(), 3);
+        assert!(
+            manager
+                .quarantine
+                .iter()
+                .all(|record| record.source == "fixture" && record.line == 42)
+        );
+        assert_eq!(manager.quarantine[1].reason, "unsupported-proxy-policy");
+        assert_eq!(
+            manager.quarantine[2].risk,
+            crate::promax::safety::RiskClass::ProtectedService
+        );
+    }
+
+    #[test]
+    #[ignore = "offline release diagnostic; run with --release --ignored --nocapture"]
+    fn benchmark_rule_ingestion() {
+        use std::hint::black_box;
+        use std::time::Instant;
+
+        let mut body = String::new();
+        for index in 0..250 {
+            body.push_str(&format!("DOMAIN-SUFFIX,metrics{index}.example.test\n"));
+        }
+        for index in 0..6_000 {
+            let line = format!(
+                "DOMAIN,ads{index}.metrics{}.example.test,REJECT\n",
+                index % 500
+            );
+            body.push_str(&line);
+            if index % 4 == 0 {
+                body.push_str(&line);
+            }
+        }
+        for with_section in [false, true] {
+            let text = if with_section {
+                format!("[Rule]\n{body}")
+            } else {
+                body.clone()
+            };
+            let mut elapsed = Vec::with_capacity(7);
+            for _ in 0..7 {
+                let mut manager = AdBlockManager::new(std::env::temp_dir());
+                let start = Instant::now();
+                manager.extract_from_text(
+                    black_box(&text),
+                    "REJECT",
+                    "Advertising",
+                    false,
+                    false,
+                    "benchmark",
+                );
+                elapsed.push(start.elapsed());
+                assert_eq!(manager.rules["REJECT"]["Advertising"].len(), 3_250);
+                assert!(manager.quarantine.is_empty());
+                black_box(manager);
+            }
+            elapsed.sort_unstable();
+            eprintln!(
+                "rule ingestion: section={with_section}, lines=7750, rounds=7, median={:?}",
+                elapsed[elapsed.len() / 2]
+            );
+        }
     }
 
     #[test]

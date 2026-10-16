@@ -94,7 +94,7 @@ pub struct SurgeRule {
 
 impl SurgeRule {
     pub fn parse(line: &str) -> Result<Self, RuleError> {
-        let fields = split_fields(line.trim())?;
+        let mut fields = split_fields(line.trim())?;
         if fields.len() < 2 {
             return Err(RuleError("missing rule payload".to_string()));
         }
@@ -130,7 +130,11 @@ impl SurgeRule {
             return Err(RuleError("unexpected extra rule fields".to_string()));
         }
 
-        let payload = fields[1..end].join(",").trim().to_string();
+        let payload = if end == 2 {
+            std::mem::take(&mut fields[1])
+        } else {
+            fields[1..end].join(",")
+        };
         if payload.is_empty() {
             return Err(RuleError("empty rule payload".to_string()));
         }
@@ -153,28 +157,34 @@ impl SurgeRule {
     }
 
     fn render(&self, include_policy: bool, default_policy: &str, external: bool) -> String {
-        let payload = if self.payload.contains(',') || self.payload.chars().any(char::is_whitespace)
-        {
-            format!("\"{}\"", self.payload)
-        } else {
-            self.payload.clone()
-        };
-        let mut fields = vec![self.kind.as_str().to_string(), payload];
+        let quoted = self.payload.contains(',') || self.payload.chars().any(char::is_whitespace);
+        let mut output = String::with_capacity(self.payload.len().saturating_add(64));
+        output.push_str(self.kind.as_str());
+        output.push(',');
+        if quoted {
+            output.push('"');
+        }
+        output.push_str(&self.payload);
+        if quoted {
+            output.push('"');
+        }
         if include_policy {
-            fields.push(
+            output.push(',');
+            output.extend(
                 self.policy
                     .as_deref()
                     .unwrap_or(default_policy)
-                    .to_ascii_uppercase(),
+                    .chars()
+                    .map(|character| character.to_ascii_uppercase()),
             );
         }
-        fields.extend(
-            self.options
-                .iter()
-                .filter(|option| option_allowed(self.kind, option, external))
-                .cloned(),
-        );
-        fields.join(",")
+        for option in &self.options {
+            if option_allowed(self.kind, option, external) {
+                output.push(',');
+                output.push_str(option);
+            }
+        }
+        output
     }
 }
 
@@ -422,6 +432,31 @@ mod tests {
         .unwrap();
 
         assert_eq!(parsed.render_external(), "IP-CIDR,192.0.2.0/24,NO-RESOLVE");
+    }
+
+    #[test]
+    fn renderer_keeps_quoted_payload_and_default_policy_option_order() {
+        let parsed =
+            SurgeRule::parse("USER-AGENT,\"Example, Agent\",force-cellular,extended-matching")
+                .unwrap();
+
+        assert_eq!(
+            parsed.render_module("reject"),
+            "USER-AGENT,\"Example, Agent\",REJECT,FORCE-CELLULAR,EXTENDED-MATCHING"
+        );
+        assert_eq!(
+            parsed.render_external(),
+            "USER-AGENT,\"Example, Agent\",EXTENDED-MATCHING"
+        );
+    }
+
+    #[test]
+    fn parser_preserves_trimmed_payloads_when_reusing_a_single_field() {
+        let single = SurgeRule::parse("DOMAIN, \" ads.example.test \" ,REJECT").unwrap();
+        let multiple = SurgeRule::parse("USER-AGENT, Example , Agent ,REJECT").unwrap();
+
+        assert_eq!(single.payload, "ads.example.test");
+        assert_eq!(multiple.payload, "Example,Agent");
     }
 
     #[test]
