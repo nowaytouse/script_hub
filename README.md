@@ -7,7 +7,7 @@
 - **PROMAX** 是唯一推荐安装的广告拦截模块：外部规则按用途分片，并合并经筛选的 URL Rewrite、Map Local、Body Rewrite、Script 与 MITM 功能段。
 - **分类隔离**：Advertising、Privacy、Security、AntiAD 与各 ThreatIntel 类别由源清单显式声明；编译器不会按 URL 猜分类。
 - **误屏蔽防护**：正常媒体、受保护服务、无对应请求规则的 MITM 主机会进入 `rulesets/AdBlock/quarantine.json`，不会直接发布。
-- **旧 Helper**：原 AdBlock Helper 会全局注入 DNS 和大量 Host，现仅保留无操作占位以兼容旧订阅链接；请勿与 PROMAX 重复安装。端口阻断仍是独立、按需安装的模块。
+- **Helper**：保留 DNS 补充、必要的 Host/系统解析映射和关键服务 MITM 排除，不注入分流策略；分流由外部规则集和用户策略组决定。端口阻断仍是独立、按需安装的模块。
 - **旧 PROMAX 链接保持兼容**：
   `https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule`
 
@@ -57,6 +57,8 @@ cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root .
 ```
 
 `--quick` 仅跳过可选的功能模块上游刷新，PROMAX 规则仍会完整抓取、编译和验证。生成器会保留仅日期、注释、排版或顺序变化的旧文件，避免没有实质更新时产生自动提交。
+
+下载器拒绝空响应和以 HTML 文档标记开头的错误页；GitHub 限流遵守 `Retry-After` 与已耗尽额度的重置时间，没有明确等待时间时从 60 秒开始退避，并受批次时限约束。通用规则集解析后若没有有效规则会报错并保留旧产物；若仅域名或 IP 一类变为空，则保留既有订阅路径并原子写入零条规则的占位文件，避免删除公开文件导致 404。
 
 `--gaming-only` 用当前的 `Gaming.list`、游戏下载源结果与本地分类端点重新生成三类游戏规则及镜像，不下载上游源。带 `--singbox` 时同时同步 SRS；适合轻量验证游戏分类改动。
 

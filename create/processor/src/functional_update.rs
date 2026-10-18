@@ -727,7 +727,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     ("author", "Rabbit-Spec, xream, Coldvvater"),
                     (
                         "icon",
-                        "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Setting.png",
+                        "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Auto.png",
                     ),
                     ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
                     ("tag", "面板, 工具"),

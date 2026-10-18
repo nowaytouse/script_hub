@@ -1,8 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
-use std::fs::{self, File};
-use std::io::Write;
+use std::fs;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 
@@ -366,6 +365,12 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
         }
     }
 
+    if all_rules.is_empty() {
+        return Err(format!(
+            "ruleset {name} contains no valid rules; preserving existing outputs"
+        ));
+    }
+
     let mut ip_rules = Vec::new();
     let mut non_ip_rules = Vec::new();
 
@@ -398,17 +403,23 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
                     .to_string_lossy()
             );
         } else {
-            let mut file = File::create(&target_file_path).map_err(|error| {
-                format!("failed to create {}: {error}", target_file_path.display())
-            })?;
             let header_str = generate_header(name, policy, node, description, non_ip_rules.len());
-            write!(file, "{header_str}").map_err(|error| error.to_string())?;
-            for rule in &non_ip_rules {
-                writeln!(file, "{rule}").map_err(|error| error.to_string())?;
+            let content = format!("{header_str}{}", non_ip_rules.join("\n") + "\n");
+            if !safe_write_file_internal(&target_file_path, &content, true) {
+                return Err(format!(
+                    "failed to atomically publish {}",
+                    target_file_path.display()
+                ));
             }
         }
     } else if target_file_path.exists() {
-        let _ = fs::remove_file(&target_file_path);
+        let content = generate_header(name, policy, node, description, 0);
+        if !safe_write_file_internal(&target_file_path, &content, true) {
+            return Err(format!(
+                "failed to atomically clear {}",
+                target_file_path.display()
+            ));
+        }
     }
 
     if !ip_rules.is_empty() {
@@ -421,21 +432,25 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
                     .to_string_lossy()
             );
         } else {
-            let mut file = File::create(&target_ip_file_path).map_err(|error| {
-                format!(
-                    "failed to create {}: {error}",
-                    target_ip_file_path.display()
-                )
-            })?;
             let ip_name = format!("{name}_ip");
             let header_str = generate_header(&ip_name, policy, node, description, ip_rules.len());
-            write!(file, "{header_str}").map_err(|error| error.to_string())?;
-            for rule in &ip_rules {
-                writeln!(file, "{rule}").map_err(|error| error.to_string())?;
+            let content = format!("{header_str}{}", ip_rules.join("\n") + "\n");
+            if !safe_write_file_internal(&target_ip_file_path, &content, true) {
+                return Err(format!(
+                    "failed to atomically publish {}",
+                    target_ip_file_path.display()
+                ));
             }
         }
     } else if target_ip_file_path.exists() {
-        let _ = fs::remove_file(&target_ip_file_path);
+        let ip_name = format!("{name}_ip");
+        let content = generate_header(&ip_name, policy, node, description, 0);
+        if !safe_write_file_internal(&target_ip_file_path, &content, true) {
+            return Err(format!(
+                "failed to atomically clear {}",
+                target_ip_file_path.display()
+            ));
+        }
     }
 
     Ok(())
@@ -539,8 +554,84 @@ pub mod srs_generator;
 #[cfg(test)]
 mod tests {
     use super::{
-        is_ruleset_watermark, normalize_generated_text, normalize_rule, strip_inline_comment,
+        RulesetInput, is_ruleset_watermark, normalize_generated_text, normalize_rule,
+        process_ruleset, strip_inline_comment,
     };
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn output_dir() -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "script-hub-ruleset-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&path).unwrap();
+        path
+    }
+
+    fn process(
+        name: &str,
+        target_dir: &std::path::Path,
+        remote_content: &str,
+    ) -> Result<(), String> {
+        process_ruleset(RulesetInput {
+            name,
+            target_dir,
+            conflict_domains: &[],
+            skip_conflict: true,
+            policy: "Proxy",
+            node: "",
+            description: "test",
+            local_paths: &[],
+            remote_content,
+        })
+    }
+
+    #[test]
+    fn empty_invalid_input_preserves_existing_outputs() {
+        let dir = output_dir();
+        let domain = dir.join("test.list");
+        let ip = dir.join("test_ip.list");
+        fs::write(&domain, "old domain\n").unwrap();
+        fs::write(&ip, "old ip\n").unwrap();
+
+        assert!(process("test", &dir, "DOMAIN,").is_err());
+        assert_eq!(fs::read_to_string(domain).unwrap(), "old domain\n");
+        assert_eq!(fs::read_to_string(ip).unwrap(), "old ip\n");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn empty_family_is_cleared_without_deleting_its_path() {
+        let dir = output_dir();
+        let ip = dir.join("test_ip.list");
+        fs::write(&ip, "IP-CIDR,10.0.0.0/8\n").unwrap();
+
+        process("test", &dir, "DOMAIN,example.test").unwrap();
+        assert!(ip.exists());
+        assert_eq!(
+            fs::read_to_string(ip).unwrap(),
+            "# Ruleset: test_ip\n# Policy: Proxy\n# Description: test\n# Rules: 0\n"
+        );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn publication_failure_is_returned() {
+        let dir = output_dir();
+        fs::create_dir(dir.join("test.list")).unwrap();
+        assert!(
+            process("test", &dir, "DOMAIN,example.test")
+                .unwrap_err()
+                .contains("failed to atomically publish")
+        );
+        assert!(dir.join("test.list").is_dir());
+        fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn generated_text_has_clean_line_endings_and_one_final_newline() {

@@ -9,6 +9,7 @@ const USER_AGENT: &str = "ScriptHub-PROMAX/1.0";
 const MIN_DOWNLOAD_CONCURRENCY: usize = 1;
 const MAX_DOWNLOAD_CONCURRENCY: usize = 6;
 const GITHUB_REQUEST_INTERVAL: Duration = Duration::from_millis(125);
+const DEFAULT_RATE_LIMIT_DELAY: Duration = Duration::from_secs(60);
 // Hard safety ceiling for malformed server headers; normal Retry-After values
 // are otherwise honored in full and the batch deadline stops the current run.
 const MAX_RATE_LIMIT_DELAY: Duration = Duration::from_secs(24 * 60 * 60);
@@ -80,6 +81,7 @@ impl Downloader {
         let attempts = self.config.attempts.max(1);
         let candidates = download_candidates(url);
         let mut last_error = None;
+        let mut performed_attempts = 0;
         for attempt in 1..=attempts {
             let candidate = &candidates[(attempt - 1) % candidates.len()];
             if !self.wait_for_github_slot(candidate, deadline) {
@@ -96,6 +98,7 @@ impl Downloader {
             }
             let mut delay_override = None;
             let mut retryable = true;
+            performed_attempts += 1;
             match self
                 .agent
                 .get(candidate)
@@ -111,7 +114,11 @@ impl Downloader {
                         .limit(self.config.max_bytes)
                         .read_to_string()
                     {
-                        Ok(body) => return Ok(body),
+                        Ok(body) if valid_source_body(&body) => return Ok(body),
+                        Ok(_) => {
+                            last_error =
+                                Some(format!("{candidate}: empty source or HTML error response"));
+                        }
                         Err(error) => last_error = Some(error.to_string()),
                     }
                 }
@@ -119,26 +126,8 @@ impl Downloader {
                     let status = response.status().as_u16();
                     retryable = status == 403 || status == 429 || status >= 500;
                     if status == 403 || status == 429 {
-                        let delay = response
-                            .headers()
-                            .get("retry-after")
-                            .and_then(|value| value.to_str().ok())
-                            .and_then(|value| value.parse::<u64>().ok())
-                            .map(Duration::from_secs)
-                            .or_else(|| {
-                                let reset = response
-                                    .headers()
-                                    .get("x-ratelimit-reset")?
-                                    .to_str()
-                                    .ok()?
-                                    .parse::<u64>()
-                                    .ok()?;
-                                let now =
-                                    SystemTime::now().duration_since(UNIX_EPOCH).ok()?.as_secs();
-                                Some(Duration::from_secs(reset.saturating_sub(now)))
-                            })
-                            .unwrap_or(MAX_RATE_LIMIT_DELAY)
-                            .min(MAX_RATE_LIMIT_DELAY);
+                        let delay =
+                            rate_limit_delay(response.headers(), SystemTime::now(), attempt);
                         if is_github_url(candidate) {
                             self.defer_github(delay);
                             delay_override = Some(Duration::ZERO);
@@ -146,7 +135,7 @@ impl Downloader {
                             delay_override = Some(delay);
                         }
                     }
-                    last_error = Some(format!("http status {status}"));
+                    last_error = Some(format!("{candidate}: http status {status}"));
                 }
                 Err(error) => last_error = Some(format!("{candidate}: {error}")),
             }
@@ -167,7 +156,7 @@ impl Downloader {
         }
 
         Err(DownloadError(format!(
-            "failed to download {url} after {attempts} attempt(s): {}",
+            "failed to download {url} after {performed_attempts} attempt(s): {}",
             last_error.unwrap_or_else(|| "unknown download error".to_string())
         )))
     }
@@ -310,6 +299,56 @@ impl Downloader {
     }
 }
 
+fn valid_source_body(body: &str) -> bool {
+    let body = body.trim_matches(|ch: char| ch.is_whitespace() || ch == '\u{feff}');
+    !body.is_empty()
+        && !["<!doctype html", "<html"].iter().any(|prefix| {
+            body.get(..prefix.len())
+                .is_some_and(|head| head.eq_ignore_ascii_case(prefix))
+        })
+}
+
+fn rate_limit_delay(headers: &ureq::http::HeaderMap, now: SystemTime, attempt: usize) -> Duration {
+    let retry_after = headers
+        .get("retry-after")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| {
+            value
+                .trim()
+                .parse::<u64>()
+                .ok()
+                .map(Duration::from_secs)
+                .or_else(|| {
+                    let timestamp = chrono::DateTime::parse_from_rfc2822(value.trim())
+                        .ok()?
+                        .timestamp();
+                    let timestamp = u64::try_from(timestamp).ok()?;
+                    let retry_at = UNIX_EPOCH.checked_add(Duration::from_secs(timestamp))?;
+                    Some(retry_at.duration_since(now).unwrap_or(Duration::ZERO))
+                })
+        });
+    let reset_delay = || {
+        if headers.get("x-ratelimit-remaining")?.to_str().ok()?.trim() != "0" {
+            return None;
+        }
+        let reset = headers
+            .get("x-ratelimit-reset")?
+            .to_str()
+            .ok()?
+            .parse::<u64>()
+            .ok()?;
+        let now = now.duration_since(UNIX_EPOCH).ok()?.as_secs();
+        Some(Duration::from_secs(reset.saturating_sub(now)))
+    };
+    retry_after
+        .or_else(reset_delay)
+        .unwrap_or_else(|| {
+            let exponent = attempt.saturating_sub(1).min(31) as u32;
+            DEFAULT_RATE_LIMIT_DELAY.saturating_mul(2_u32.saturating_pow(exponent))
+        })
+        .min(MAX_RATE_LIMIT_DELAY)
+}
+
 fn configured_proxy() -> Option<ureq::Proxy> {
     let value = |names: &[&str]| names.iter().find_map(|name| std::env::var(name).ok());
     proxy_from_values(
@@ -385,15 +424,20 @@ fn download_candidates(url: &str) -> Vec<String> {
 }
 
 fn is_github_url(url: &str) -> bool {
-    [
-        "github.com/",
-        "raw.githubusercontent.com/",
-        "githubusercontent.com/",
-        "github.io/",
-        "cdn.jsdelivr.net/gh/",
-    ]
-    .iter()
-    .any(|host| url.contains(host))
+    let Ok(uri) = url.parse::<ureq::http::Uri>() else {
+        return false;
+    };
+    let Some(host) = uri.host() else {
+        return false;
+    };
+    let host = host.to_ascii_lowercase();
+    host == "github.com"
+        || host.ends_with(".github.com")
+        || host == "githubusercontent.com"
+        || host.ends_with(".githubusercontent.com")
+        || host == "github.io"
+        || host.ends_with(".github.io")
+        || host == "cdn.jsdelivr.net" && uri.path().starts_with("/gh/")
 }
 
 fn bounded_concurrency(configured: usize, jobs: usize) -> usize {
@@ -416,12 +460,13 @@ impl Error for DownloadError {}
 #[cfg(test)]
 mod tests {
     use super::{
-        DownloadConfig, Downloader, bounded_concurrency, download_candidates, proxy_from_values,
+        DownloadConfig, Downloader, bounded_concurrency, download_candidates, is_github_url,
+        proxy_from_values, rate_limit_delay, valid_source_body,
     };
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::thread::{self, JoinHandle};
-    use std::time::Duration;
+    use std::time::{Duration, UNIX_EPOCH};
 
     fn serve_once(status: &str, body: &str) -> (String, JoinHandle<()>) {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -501,6 +546,89 @@ mod tests {
         server.join().unwrap();
 
         assert_eq!(result, "DOMAIN,ads.example.com");
+    }
+
+    #[test]
+    fn downloader_rejects_html_served_with_success_status() {
+        let (url, server) =
+            serve_once("200 OK", "\u{feff} <!DOCTYPE HTML><html>Unavailable</html>");
+        let result = Downloader::new(test_config(1024)).get(&url);
+        server.join().unwrap();
+
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("HTML error response")
+        );
+        assert!(!valid_source_body(" \r\n"));
+        assert!(!valid_source_body(" \u{feff}<!DOCTYPE html>"));
+        assert!(valid_source_body(
+            "# upstream header\nDOMAIN,ads.example.com"
+        ));
+    }
+
+    #[test]
+    fn permanent_http_failure_reports_the_actual_attempt_count() {
+        let (url, server) = serve_once("404 Not Found", "Not Found");
+        let mut config = test_config(1024);
+        config.attempts = 3;
+        let result = Downloader::new(config).get(&url);
+        server.join().unwrap();
+
+        let message = result.unwrap_err().to_string();
+        assert!(message.contains("after 1 attempt(s)"));
+        assert!(message.contains("http status 404"));
+    }
+
+    #[test]
+    fn github_rate_gate_matches_the_authority_instead_of_paths() {
+        assert!(is_github_url(
+            "https://raw.githubusercontent.com/owner/repo/main/a.list"
+        ));
+        assert!(is_github_url("https://API.GITHUB.COM/repos/owner/repo"));
+        assert!(is_github_url(
+            "https://cdn.jsdelivr.net/gh/owner/repo@main/a.list"
+        ));
+        assert!(!is_github_url("https://example.test/github.com/a.list"));
+        assert!(!is_github_url("https://github.com.example.test/a.list"));
+        assert!(!is_github_url("https://cdn.jsdelivr.net/npm/package"));
+    }
+
+    #[test]
+    fn rate_limit_wait_honors_server_dates_and_exhausted_primary_limits() {
+        let now = UNIX_EPOCH + Duration::from_secs(1_445_412_480);
+        let mut headers = ureq::http::HeaderMap::new();
+        headers.insert(
+            "retry-after",
+            "Wed, 21 Oct 2015 07:29:00 GMT".parse().unwrap(),
+        );
+        assert_eq!(rate_limit_delay(&headers, now, 1), Duration::from_secs(60));
+        headers.insert("retry-after", "15".parse().unwrap());
+        assert_eq!(rate_limit_delay(&headers, now, 1), Duration::from_secs(15));
+        headers.remove("retry-after");
+        headers.insert("x-ratelimit-remaining", "10".parse().unwrap());
+        headers.insert("x-ratelimit-reset", "1445413000".parse().unwrap());
+        assert_eq!(rate_limit_delay(&headers, now, 1), Duration::from_secs(60));
+        headers.insert("x-ratelimit-remaining", "0".parse().unwrap());
+        assert_eq!(rate_limit_delay(&headers, now, 1), Duration::from_secs(520));
+    }
+
+    #[test]
+    fn rate_limit_default_is_bounded_and_increases_between_attempts() {
+        let headers = ureq::http::HeaderMap::new();
+        assert_eq!(
+            rate_limit_delay(&headers, UNIX_EPOCH, 1),
+            Duration::from_secs(60)
+        );
+        assert_eq!(
+            rate_limit_delay(&headers, UNIX_EPOCH, 2),
+            Duration::from_secs(120)
+        );
+        assert_eq!(
+            rate_limit_delay(&headers, UNIX_EPOCH, usize::MAX),
+            Duration::from_secs(86400)
+        );
     }
 
     #[test]
