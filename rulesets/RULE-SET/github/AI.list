@@ -2,7 +2,7 @@
 # Policy: PROXY
 # Node: Any
 # Description: Rust-merged canonical ruleset
-# Rules: 310
+# Rules: 311
 DOMAIN,ai.google.dev
 DOMAIN,ai.zhaomi.cn
 DOMAIN,aida.googleapis.com
@@ -229,6 +229,7 @@ DOMAIN-SUFFIX,observeit.net
 DOMAIN-SUFFIX,oceancloudapi.com
 DOMAIN-SUFFIX,openai.com
 DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
+DOMAIN-SUFFIX,openai.org
 DOMAIN-SUFFIX,openaiapi-site.azureedge.net
 DOMAIN-SUFFIX,openaicom.imgix.net
 DOMAIN-SUFFIX,openart.ai
