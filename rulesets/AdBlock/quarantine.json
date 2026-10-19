@@ -77833,6 +77833,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||tpvjpgvjfyhez.online^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||tr.actu.infopro-digital-media.fr^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -168878,12 +168884,6 @@
   {
     "source": "sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,imageplus.baidu.com,Reject",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "sr_ad_only.conf",
-    "candidate": "DOMAIN-SUFFIX,imageropaque.cyou,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
