@@ -156,6 +156,21 @@ pub fn publish_artifacts(
     artifacts: &[GeneratedArtifact],
     quarantine: &[QuarantineRecord],
 ) -> Result<(), String> {
+    publish_artifacts_inner(root, artifacts, Some(quarantine))
+}
+
+pub(crate) fn publish_generated_artifacts(
+    root: &Path,
+    artifacts: &[GeneratedArtifact],
+) -> Result<(), String> {
+    publish_artifacts_inner(root, artifacts, None)
+}
+
+fn publish_artifacts_inner(
+    root: &Path,
+    artifacts: &[GeneratedArtifact],
+    quarantine: Option<&[QuarantineRecord]>,
+) -> Result<(), String> {
     let staging_root = root.join(".cache/promax-staging");
     if staging_root.exists() {
         fs::remove_dir_all(&staging_root)
@@ -217,36 +232,6 @@ pub fn publish_artifacts(
         }
     }
 
-    let mut sorted_quarantine = quarantine.to_vec();
-    sorted_quarantine.sort_by(|left, right| {
-        (&left.source, &left.candidate, &left.reason, left.risk).cmp(&(
-            &right.source,
-            &right.candidate,
-            &right.reason,
-            right.risk,
-        ))
-    });
-    sorted_quarantine.dedup_by(|left, right| {
-        left.source == right.source
-            && left.candidate == right.candidate
-            && left.reason == right.reason
-            && left.risk == right.risk
-    });
-    let quarantine_content = format!(
-        "{}\n",
-        serde_json::to_string_pretty(&sorted_quarantine)
-            .map_err(|error| format!("cannot serialize quarantine report: {error}"))?
-    );
-    let quarantine_relative = Path::new("rulesets/AdBlock/quarantine.json");
-    let staged_quarantine = staging_root.join(quarantine_relative);
-    if let Some(parent) = staged_quarantine.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("cannot create quarantine staging directory: {error}"))?;
-    }
-    fs::write(&staged_quarantine, &quarantine_content)
-        .map_err(|error| format!("cannot stage quarantine report: {error}"))?;
-
-    let quarantine_target = root.join(quarantine_relative);
     let mut publications: Vec<(PathBuf, PathBuf)> = artifacts
         .iter()
         .filter(|artifact| semantic_changed(&artifact.target, &artifact.content))
@@ -258,8 +243,40 @@ pub fn publish_artifacts(
             (artifact.target.clone(), staging_root.join(relative))
         })
         .collect();
-    if semantic_changed(&quarantine_target, &quarantine_content) {
-        publications.push((quarantine_target, staged_quarantine));
+    if let Some(quarantine) = quarantine {
+        let mut sorted_quarantine = quarantine.to_vec();
+        sorted_quarantine.sort_by(|left, right| {
+            (&left.source, &left.candidate, &left.reason, left.risk).cmp(&(
+                &right.source,
+                &right.candidate,
+                &right.reason,
+                right.risk,
+            ))
+        });
+        sorted_quarantine.dedup_by(|left, right| {
+            left.source == right.source
+                && left.candidate == right.candidate
+                && left.reason == right.reason
+                && left.risk == right.risk
+        });
+        let quarantine_content = format!(
+            "{}\n",
+            serde_json::to_string_pretty(&sorted_quarantine)
+                .map_err(|error| format!("cannot serialize quarantine report: {error}"))?
+        );
+        let quarantine_relative = Path::new("rulesets/AdBlock/quarantine.json");
+        let staged_quarantine = staging_root.join(quarantine_relative);
+        if let Some(parent) = staged_quarantine.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("cannot create quarantine staging directory: {error}"))?;
+        }
+        fs::write(&staged_quarantine, &quarantine_content)
+            .map_err(|error| format!("cannot stage quarantine report: {error}"))?;
+
+        let quarantine_target = root.join(quarantine_relative);
+        if semantic_changed(&quarantine_target, &quarantine_content) {
+            publications.push((quarantine_target, staged_quarantine));
+        }
     }
     if publications.is_empty() {
         fs::remove_dir_all(&staging_root)
@@ -323,8 +340,9 @@ fn promote_transaction(
             ));
         }
     }
-    fs::remove_dir_all(staging_root)
-        .map_err(|error| format!("PROMAX published but staging cleanup failed: {error}"))?;
+    if let Err(error) = fs::remove_dir_all(staging_root) {
+        eprintln!("[WARN] artifacts published but staging cleanup failed: {error}");
+    }
     Ok(())
 }
 

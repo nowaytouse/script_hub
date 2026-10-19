@@ -545,20 +545,22 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
         }
         if !adblock_mitm_hosts.is_empty() {
             let mut sorted: Vec<String> = adblock_mitm_hosts.into_iter().collect();
-            sorted.sort();
+            sorted.sort_by(|left, right| {
+                (!left.starts_with('-'), left).cmp(&(!right.starts_with('-'), right))
+            });
             adblock_lines.push("[MITM]".to_string());
             adblock_lines.push(format!(
-                "hostname = %APPEND% {}, -github.com, -api.github.com, -*.githubusercontent.com",
+                "hostname = %APPEND% -github.com, -api.github.com, -*.githubusercontent.com, {}",
                 sorted.join(", ")
             ));
             adblock_lines.push(String::new());
         }
-        if adblock_lines.len() > 4 {
-            let adblock_content = adblock_lines.join("\n").trim().to_string() + "\n";
-            if let Some(parent) = Path::new(adblock_out).parent() {
-                let _ = std::fs::create_dir_all(parent);
-            }
-            crate::safe_write_file_internal(Path::new(adblock_out), &adblock_content, true);
+        let adblock_content = adblock_lines.join("\n").trim().to_string() + "\n";
+        if let Some(parent) = Path::new(adblock_out).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        if !crate::safe_write_file_internal(Path::new(adblock_out), &adblock_content, true) {
+            return false;
         }
     }
     true

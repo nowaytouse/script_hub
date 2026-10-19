@@ -5,6 +5,11 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
+static EXPLICIT_CDN_REF_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?i)https://cdn\.jsdelivr\.net/gh/([^/]+)/([^/@]+)@refs/(?:heads|tags)/([^/]+)/"#)
+        .unwrap()
+});
+
 static MOCK_REPLACEMENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
     vec![
         (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/reject-200\.txt"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"),
@@ -15,8 +20,9 @@ static MOCK_REPLACEMENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
         (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank\.gif"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank.gif"),
         (Regex::new(r#"(?i)https://(?:raw\.githubusercontent\.com|cdn\.jsdelivr\.net/gh)/[^"'\s]+/blank_dict\.json"#).unwrap(), "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/blank_dict.json"),
         (Regex::new(r#"(?i)https://ghproxy\.net/https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "https://github.com/${1}/${2}/releases/download/${3}/${4}"),
-        (Regex::new(r#"(?i)https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/${4}"),
-        (Regex::new(r#"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "${1}https://cdn.jsdelivr.net/gh/${2}/${3}@${4}/${5}"),
+        (EXPLICIT_CDN_REF_REGEX.clone(), "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/"),
+        (Regex::new(r#"(?i)https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/(?:refs/(?:heads|tags)/)?([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/${4}"),
+        (Regex::new(r#"(?i)(^|[^/])https://github\.com/([^/]+)/([^/]+)/raw/(?:refs/(?:heads|tags)/)?([^/]+)/([^"'\s]+\.[a-zA-Z0-9]+)"#).unwrap(), "${1}https://cdn.jsdelivr.net/gh/${2}/${3}@${4}/${5}"),
     ]
 });
 
@@ -341,7 +347,7 @@ fn is_github_source(path: &Path) -> bool {
     false
 }
 
-pub fn copy_github_variants(root_dir: &str) {
+pub fn copy_github_variants(root_dir: &str) -> Result<(), String> {
     let root = Path::new(root_dir);
     let modules_dir = root.join("modules");
     let rulesets_dir = root.join("rulesets");
@@ -364,61 +370,73 @@ pub fn copy_github_variants(root_dir: &str) {
     .collect();
 
     for dir in dirs_to_copy {
-        if !dir.exists() {
-            continue;
+        let entries = match fs::read_dir(&dir) {
+            Ok(entries) => entries.collect::<Result<Vec<_>, _>>(),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("cannot scan {}: {error}", dir.display())),
         }
+        .map_err(|error| format!("cannot enumerate {}: {error}", dir.display()))?;
         let github_dir = dir.join("github");
-        let _ = fs::create_dir_all(&github_dir);
         let mut expected = HashSet::new();
+        fs::create_dir_all(&github_dir)
+            .map_err(|error| format!("cannot create {}: {error}", github_dir.display()))?;
 
-        if let Ok(entries) = fs::read_dir(&dir) {
-            for entry in entries.flatten() {
-                let Ok(file_type) = entry.file_type() else {
-                    continue;
-                };
-                let file_name_os = entry.file_name();
-                let file_name = file_name_os.to_string_lossy();
+        for entry in entries {
+            let file_type = entry
+                .file_type()
+                .map_err(|error| format!("cannot inspect {}: {error}", entry.path().display()))?;
+            let file_name_os = entry.file_name();
+            let file_name = file_name_os.to_string_lossy();
 
-                if file_type.is_dir() || file_name == "github" {
+            if file_type.is_dir() || file_name == "github" {
+                continue;
+            }
+
+            if file_name.ends_with(".sgmodule")
+                || file_name.ends_with(".module")
+                || file_name.ends_with(".list")
+            {
+                expected.insert(file_name.into_owned());
+                if skip_copy.contains(file_name_os.to_string_lossy().as_ref()) {
                     continue;
                 }
+                let src_path = entry.path();
+                let dest_path = github_dir.join(file_name_os);
 
-                if file_name.ends_with(".sgmodule")
-                    || file_name.ends_with(".module")
-                    || file_name.ends_with(".list")
-                {
-                    expected.insert(file_name.into_owned());
-                    if skip_copy.contains(file_name_os.to_string_lossy().as_ref()) {
-                        continue;
-                    }
-                    let src_path = entry.path();
-                    let dest_path = github_dir.join(file_name_os);
-
-                    if let Ok(content) = fs::read_to_string(&src_path) {
-                        let new_content = REVERSE_CDN_REGEX.replace_all(
-                            &content,
-                            "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}",
-                        );
-                        let _ = safe_write_file(&dest_path, &new_content);
-                    }
-                }
+                let content = fs::read_to_string(&src_path).map_err(|error| {
+                    format!("cannot read mirror source {}: {error}", src_path.display())
+                })?;
+                let new_content = REVERSE_CDN_REGEX.replace_all(
+                    &content,
+                    "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}",
+                );
+                safe_write_file(&dest_path, &new_content)
+                    .map_err(|error| format!("cannot write {}: {error}", dest_path.display()))?;
             }
         }
 
-        if let Ok(entries) = fs::read_dir(&github_dir) {
-            for entry in entries.flatten() {
-                let name = entry.file_name().to_string_lossy().into_owned();
-                if entry.path().is_file()
-                    && (name.ends_with(".sgmodule")
-                        || name.ends_with(".module")
-                        || name.ends_with(".list"))
-                    && !expected.contains(&name)
-                {
-                    let _ = fs::remove_file(entry.path());
-                }
+        let entries = fs::read_dir(&github_dir)
+            .map_err(|error| format!("cannot scan {}: {error}", github_dir.display()))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|error| format!("cannot enumerate {}: {error}", github_dir.display()))?;
+        for entry in entries {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if entry.path().is_file()
+                && (name.ends_with(".sgmodule")
+                    || name.ends_with(".module")
+                    || name.ends_with(".list"))
+                && !expected.contains(&name)
+            {
+                fs::remove_file(entry.path()).map_err(|error| {
+                    format!(
+                        "cannot remove stale mirror {}: {error}",
+                        entry.path().display()
+                    )
+                })?;
             }
         }
     }
+    Ok(())
 }
 
 pub fn run_url_rewrites(directory: &str) -> i32 {
@@ -427,13 +445,22 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
         return 0;
     }
 
-    let valid_exts: HashSet<&str> = ["sgmodule", "module", "list", "conf", "json", "html", "md"]
-        .iter()
-        .cloned()
-        .collect();
+    let valid_exts: HashSet<&str> = [
+        "sgmodule", "module", "plugin", "list", "conf", "json", "html", "md",
+    ]
+    .iter()
+    .cloned()
+    .collect();
     let mut modified_count = 0;
 
-    for entry in WalkDir::new(directory).into_iter().filter_map(|e| e.ok()) {
+    for entry in WalkDir::new(directory) {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) => {
+                eprintln!("[ERROR] URL rewrite traversal failed: {error}");
+                return -1;
+            }
+        };
         let entry_path = entry.path();
 
         if entry.file_type().is_dir() {
@@ -443,7 +470,7 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
         if entry_path.to_string_lossy().contains(".git") {
             continue;
         }
-        if is_github_source(entry_path) || is_pipeline_source_path_pub(entry_path) {
+        if is_pipeline_source_path_pub(entry_path) {
             continue;
         }
 
@@ -455,25 +482,42 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
             continue;
         }
 
-        if let Ok(content) = fs::read_to_string(entry_path) {
-            let orig_content = content.clone();
-            let mut new_content = if entry_path
-                .extension()
-                .is_some_and(|extension| matches!(extension.to_str(), Some("sgmodule" | "module")))
-            {
-                normalize_force_http_engine_hosts(&content)
-            } else {
-                content
-            };
+        let content = match fs::read_to_string(entry_path) {
+            Ok(content) => content,
+            Err(error) => {
+                eprintln!(
+                    "[ERROR] cannot read {} for URL rewriting: {error}",
+                    entry_path.display()
+                );
+                return -1;
+            }
+        };
+        let orig_content = content.clone();
+        let mut new_content = if entry_path
+            .extension()
+            .is_some_and(|extension| matches!(extension.to_str(), Some("sgmodule" | "module")))
+        {
+            normalize_force_http_engine_hosts(&content)
+        } else {
+            content
+        };
 
+        if is_github_source(entry_path) {
+            new_content = EXPLICIT_CDN_REF_REGEX
+                .replace_all(&new_content, "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/")
+                .into_owned();
+        } else {
             for (re, repl) in MOCK_REPLACEMENTS.iter() {
                 new_content = re.replace_all(&new_content, *repl).to_string();
             }
+        }
 
-            if new_content != orig_content {
-                let _ = safe_write_file(entry_path, &new_content);
-                modified_count += 1;
+        if new_content != orig_content {
+            if let Err(error) = safe_write_file(entry_path, &new_content) {
+                eprintln!("[ERROR] cannot rewrite {}: {error}", entry_path.display());
+                return -1;
             }
+            modified_count += 1;
         }
     }
     modified_count
@@ -483,7 +527,7 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
 mod tests {
     use super::{
         MOCK_REPLACEMENTS, copy_github_variants, is_pipeline_source_path_pub,
-        normalize_force_http_engine_hosts, semantic_content_for_path_pub,
+        normalize_force_http_engine_hosts, run_url_rewrites, semantic_content_for_path_pub,
     };
     use std::fs;
     use std::path::Path;
@@ -613,11 +657,105 @@ mod tests {
         fs::write(dir.join(promax), "#!name=PROMAX\n").unwrap();
         fs::write(github.join(promax), "#!name=PROMAX GitHub\n").unwrap();
 
-        copy_github_variants(root.to_str().unwrap());
+        copy_github_variants(root.to_str().unwrap()).unwrap();
 
         assert!(github.join("Current.list").is_file());
         assert!(github.join(promax).is_file());
         assert!(!github.join("Stale.list").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn explicit_github_refs_do_not_become_a_branch_named_refs() {
+        for input in [
+            "https://raw.githubusercontent.com/owner/repo/refs/heads/main/a.list",
+            "https://github.com/owner/repo/raw/refs/heads/main/a.list",
+            "https://cdn.jsdelivr.net/gh/owner/repo@refs/heads/main/a.list",
+        ] {
+            let rewritten = MOCK_REPLACEMENTS
+                .iter()
+                .fold(input.to_string(), |value, (re, replacement)| {
+                    re.replace_all(&value, *replacement).to_string()
+                });
+            assert_eq!(
+                rewritten,
+                "https://cdn.jsdelivr.net/gh/owner/repo@main/a.list"
+            );
+        }
+    }
+
+    #[test]
+    fn failed_mirror_source_read_preserves_existing_mirrors() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("github-mirror-read-failure-{id}"));
+        let dir = root.join("rulesets/RULE-SET");
+        let github = dir.join("github");
+        fs::create_dir_all(&github).unwrap();
+        fs::write(dir.join("Invalid.list"), [0xff]).unwrap();
+        fs::write(github.join("Existing.list"), "DOMAIN,existing.test\n").unwrap();
+
+        assert!(copy_github_variants(root.to_str().unwrap()).is_err());
+        assert_eq!(
+            fs::read_to_string(github.join("Existing.list")).unwrap(),
+            "DOMAIN,existing.test\n"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn mirror_write_failure_is_not_reported_as_success() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("github-mirror-write-failure-{id}"));
+        let dir = root.join("rulesets/RULE-SET");
+        fs::create_dir_all(dir.join("github/Current.list")).unwrap();
+        fs::write(dir.join("Current.list"), "DOMAIN,current.test\n").unwrap();
+
+        assert!(copy_github_variants(root.to_str().unwrap()).is_err());
+        assert!(dir.join("github/Current.list").is_dir());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn unreadable_rewrite_input_returns_failure() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("url-rewrite-read-failure-{id}"));
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("Invalid.list"), [0xff]).unwrap();
+
+        assert_eq!(run_url_rewrites(root.to_str().unwrap()), -1);
+        assert_eq!(fs::read(root.join("Invalid.list")).unwrap(), [0xff]);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn github_and_loon_outputs_normalize_refs_without_replacing_raw_mirrors() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("url-rewrite-github-refs-{id}"));
+        fs::create_dir_all(root.join("github")).unwrap();
+        let raw = "https://raw.githubusercontent.com/owner/repo/main/a.js";
+        let cdn = "https://cdn.jsdelivr.net/gh/owner/repo@refs/heads/main/b.js";
+        let mirror = root.join("github/Example.sgmodule");
+        let loon = root.join("Example.plugin");
+        fs::write(&mirror, format!("{raw}\n{cdn}\n")).unwrap();
+        fs::write(&loon, format!("{cdn}\n")).unwrap();
+
+        assert_eq!(run_url_rewrites(root.to_str().unwrap()), 2);
+        let content = fs::read_to_string(mirror).unwrap();
+        assert!(content.contains(raw));
+        assert!(!content.contains("@refs/"));
+        assert!(!fs::read_to_string(loon).unwrap().contains("@refs/"));
         fs::remove_dir_all(root).unwrap();
     }
 }

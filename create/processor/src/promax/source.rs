@@ -78,12 +78,35 @@ impl Downloader {
     }
 
     fn get_until(&self, url: &str, deadline: Option<Instant>) -> Result<String, DownloadError> {
+        self.get_candidates_until(url, &download_candidates(url), deadline)
+    }
+
+    fn get_candidates_until(
+        &self,
+        url: &str,
+        candidates: &[String],
+        deadline: Option<Instant>,
+    ) -> Result<String, DownloadError> {
         let attempts = self.config.attempts.max(1);
-        let candidates = download_candidates(url);
+        let mut attempted_candidates = BTreeSet::new();
+        let mut missing_candidates = BTreeSet::new();
         let mut last_error = None;
         let mut performed_attempts = 0;
         for attempt in 1..=attempts {
-            let candidate = &candidates[(attempt - 1) % candidates.len()];
+            let Some(candidate) = candidates
+                .iter()
+                .find(|candidate| !attempted_candidates.contains(candidate.as_str()))
+                .or_else(|| {
+                    candidates
+                        .iter()
+                        .cycle()
+                        .skip((attempt - 1) % candidates.len().max(1))
+                        .take(candidates.len())
+                        .find(|candidate| !missing_candidates.contains(candidate.as_str()))
+                })
+            else {
+                break;
+            };
             if !self.wait_for_github_slot(candidate, deadline) {
                 last_error = Some("batch deadline exceeded".to_string());
                 break;
@@ -98,6 +121,7 @@ impl Downloader {
             }
             let mut delay_override = None;
             let mut retryable = true;
+            attempted_candidates.insert(candidate.as_str());
             performed_attempts += 1;
             match self
                 .agent
@@ -124,7 +148,14 @@ impl Downloader {
                 }
                 Ok(response) => {
                     let status = response.status().as_u16();
-                    retryable = status == 403 || status == 429 || status >= 500;
+                    retryable = status == 403
+                        || status == 429
+                        || status >= 500
+                        || status == 404 && attempted_candidates.len() < candidates.len();
+                    if status == 404 {
+                        // A CDN miss may be stale; never repeat it, but try an independent mirror.
+                        missing_candidates.insert(candidate.as_str());
+                    }
                     if status == 403 || status == 429 {
                         let delay =
                             rate_limit_delay(response.headers(), SystemTime::now(), attempt);
@@ -140,7 +171,7 @@ impl Downloader {
                 Err(error) => last_error = Some(format!("{candidate}: {error}")),
             }
 
-            if !retryable {
+            if !retryable || missing_candidates.len() == candidates.len() {
                 break;
             }
             if attempt < attempts {
@@ -582,6 +613,55 @@ mod tests {
     }
 
     #[test]
+    fn missing_source_tries_its_independent_mirror() {
+        let (url, origin) = serve_once("404 Not Found", "Not Found");
+        let (mirror_url, mirror) = serve_once("200 OK", "DOMAIN,ads.example.com");
+        let mut config = test_config(1024);
+        config.attempts = 3;
+        let result =
+            Downloader::new(config).get_candidates_until(&url, &[url.clone(), mirror_url], None);
+
+        assert_eq!(result.unwrap(), "DOMAIN,ads.example.com");
+        origin.join().unwrap();
+        mirror.join().unwrap();
+    }
+
+    #[test]
+    fn missing_source_and_mirror_are_each_requested_only_once() {
+        let (url, origin) = serve_once("404 Not Found", "Not Found");
+        let (mirror_url, mirror) = serve_once("404 Not Found", "Not Found");
+        let mut config = test_config(1024);
+        config.attempts = 3;
+        let result = Downloader::new(config).get_candidates_until(
+            &url,
+            &[url.clone(), mirror_url.clone()],
+            None,
+        );
+
+        let message = result.unwrap_err().to_string();
+        assert!(message.contains("after 2 attempt(s)"), "{message}");
+        assert!(message.contains(&format!("{mirror_url}: http status 404")));
+        origin.join().unwrap();
+        mirror.join().unwrap();
+    }
+
+    #[test]
+    fn missing_mirror_does_not_retry_an_already_attempted_source() {
+        let (url, origin) = serve_once("503 Service Unavailable", "Unavailable");
+        let (mirror_url, mirror) = serve_once("404 Not Found", "Not Found");
+        let mut config = test_config(1024);
+        config.attempts = 3;
+        let result =
+            Downloader::new(config).get_candidates_until(&url, &[url.clone(), mirror_url], None);
+
+        let message = result.unwrap_err().to_string();
+        assert!(message.contains("after 2 attempt(s)"), "{message}");
+        assert!(message.contains("http status 404"));
+        origin.join().unwrap();
+        mirror.join().unwrap();
+    }
+
+    #[test]
     fn github_rate_gate_matches_the_authority_instead_of_paths() {
         assert!(is_github_url(
             "https://raw.githubusercontent.com/owner/repo/main/a.list"
@@ -728,6 +808,26 @@ mod tests {
         assert_eq!(
             download_candidates("https://github.com/acme/rules/releases/latest/download/ad.list"),
             ["https://github.com/acme/rules/releases/latest/download/ad.list"]
+        );
+    }
+
+    #[test]
+    fn github_branch_refs_use_a_canonical_cdn_reference() {
+        assert_eq!(
+            download_candidates(
+                "https://raw.githubusercontent.com/acme/rules/refs/heads/main/Surge/ad.list"
+            ),
+            [
+                "https://raw.githubusercontent.com/acme/rules/refs/heads/main/Surge/ad.list",
+                "https://cdn.jsdelivr.net/gh/acme/rules@main/Surge/ad.list",
+            ]
+        );
+        assert_eq!(
+            download_candidates("https://cdn.jsdelivr.net/gh/acme/rules@main/Surge/ad.list"),
+            [
+                "https://cdn.jsdelivr.net/gh/acme/rules@main/Surge/ad.list",
+                "https://raw.githubusercontent.com/acme/rules/main/Surge/ad.list",
+            ]
         );
     }
 

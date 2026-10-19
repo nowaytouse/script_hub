@@ -12,6 +12,19 @@ struct SingboxRuleset {
     rules: Vec<HashMap<String, Vec<String>>>,
 }
 
+impl SingboxRuleset {
+    fn new(rules: HashMap<String, Vec<String>>) -> Self {
+        Self {
+            version: 1,
+            rules: if rules.is_empty() {
+                Vec::new()
+            } else {
+                vec![rules]
+            },
+        }
+    }
+}
+
 fn wildcard_to_regex(value: &str) -> String {
     let escaped = escape(value);
     let r = escaped.replace(r"\*", ".*").replace(r"\?", ".");
@@ -149,10 +162,7 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
         }
     }
 
-    let srs_json = SingboxRuleset {
-        version: 1,
-        rules: vec![final_rules],
-    };
+    let srs_json = SingboxRuleset::new(final_rules);
 
     let data = match serde_json::to_string(&srs_json) {
         Ok(d) => d,
@@ -384,7 +394,8 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{files_equal, prune_stale_srs, rule_fields, run_srs_generator};
+    use super::{SingboxRuleset, files_equal, prune_stale_srs, rule_fields, run_srs_generator};
+    use std::collections::HashMap;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -394,6 +405,29 @@ mod tests {
             .unwrap()
             .as_nanos();
         std::env::temp_dir().join(format!("script-hub-srs-{name}-{unique}"))
+    }
+
+    #[test]
+    fn empty_rules_serialize_as_no_matchers_instead_of_an_empty_matcher() {
+        let ruleset = SingboxRuleset::new(HashMap::new());
+
+        assert_eq!(
+            serde_json::to_value(ruleset).unwrap(),
+            serde_json::json!({"version": 1, "rules": []})
+        );
+    }
+
+    #[test]
+    fn nonempty_rules_keep_their_single_matcher() {
+        let ruleset = SingboxRuleset::new(HashMap::from([(
+            "domain".to_string(),
+            vec!["example.com".to_string()],
+        )]));
+
+        assert_eq!(
+            serde_json::to_value(ruleset).unwrap(),
+            serde_json::json!({"version": 1, "rules": [{"domain": ["example.com"]}]})
+        );
     }
 
     #[test]

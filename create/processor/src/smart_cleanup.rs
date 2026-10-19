@@ -206,20 +206,21 @@ fn normalize_url_regex_rule(line: &str) -> Option<String> {
     Some(format!("URL-REGEX,{}", raw.split(',').next()?.trim()))
 }
 
-fn collect_ruleset_dirs(root: &Path) -> Vec<PathBuf> {
-    let mut dirs = Vec::new();
-    if !root.is_dir() {
-        return dirs;
-    }
-    dirs.push(root.to_path_buf());
-    if let Ok(entries) = fs::read_dir(root) {
-        for entry in entries.flatten() {
-            if entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false) {
-                dirs.extend(collect_ruleset_dirs(&entry.path()));
-            }
+fn collect_ruleset_dirs(root: &Path) -> Result<Vec<PathBuf>, String> {
+    let mut dirs = vec![root.to_path_buf()];
+    let entries =
+        fs::read_dir(root).map_err(|error| format!("cannot list {}: {error}", root.display()))?;
+    for entry in entries {
+        let entry =
+            entry.map_err(|error| format!("cannot read {} entry: {error}", root.display()))?;
+        let file_type = entry
+            .file_type()
+            .map_err(|error| format!("cannot inspect {}: {error}", entry.path().display()))?;
+        if file_type.is_dir() {
+            dirs.extend(collect_ruleset_dirs(&entry.path())?);
         }
     }
-    dirs
+    Ok(dirs)
 }
 
 fn extract_payload(rule: &str) -> String {
@@ -354,43 +355,41 @@ fn get_sorted_rules(rules: &HashMap<String, String>) -> Vec<String> {
     items.into_iter().map(|item| item.rule).collect()
 }
 
-fn load_list(filepath: &Path) -> HashMap<String, String> {
-    let mut rules = HashMap::new();
-    if !filepath.exists() {
-        return rules;
-    }
-    if let Ok(content) = fs::read_to_string(filepath) {
-        for raw_line in content.lines() {
-            let line = clean_rule(raw_line);
-            if line.is_empty() || !is_valid_rule(&line) {
-                continue;
-            }
-            let payload = extract_payload(&line);
-            if payload.is_empty() {
-                continue;
-            }
-            rules
-                .entry(payload)
-                .and_modify(|existing| *existing = prefer_rule(existing, &line))
-                .or_insert(line);
+fn load_list(filepath: &Path) -> Result<HashMap<String, String>, String> {
+    let mut rules: HashMap<String, String> = HashMap::new();
+    let content = fs::read_to_string(filepath)
+        .map_err(|error| format!("cannot read {}: {error}", filepath.display()))?;
+    for raw_line in content.lines() {
+        let line = clean_rule(raw_line);
+        if line.is_empty() || !is_valid_rule(&line) {
+            continue;
         }
+        let payload = extract_payload(&line);
+        if payload.is_empty() {
+            continue;
+        }
+        rules
+            .entry(payload)
+            .and_modify(|existing| *existing = prefer_rule(existing, &line))
+            .or_insert(line);
     }
-    rules
+    Ok(rules)
 }
 
-fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
+fn write_list(filepath: &Path, rules: &HashMap<String, String>) -> Result<(), String> {
     let sorted_rules = get_sorted_rules(rules);
     let mut existing_header = Vec::new();
 
-    if filepath.exists()
-        && let Ok(content) = fs::read_to_string(filepath)
-    {
-        for line in content.lines() {
-            if line.trim().starts_with('#') || line.trim().is_empty() {
-                existing_header.push(line.to_string());
-            } else {
-                break;
-            }
+    let content = match fs::read_to_string(filepath) {
+        Ok(content) => content,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(error) => return Err(format!("cannot read {}: {error}", filepath.display())),
+    };
+    for line in content.lines() {
+        if line.trim().starts_with('#') || line.trim().is_empty() {
+            existing_header.push(line.to_string());
+        } else {
+            break;
         }
     }
 
@@ -420,12 +419,19 @@ fn write_list(filepath: &Path, rules: &HashMap<String, String>) {
     }
 
     let final_content = out_lines.join("");
-    let _ = crate::safe_write_file_internal(filepath, &final_content, true);
+    if crate::safe_write_file_internal(filepath, &final_content, true) {
+        Ok(())
+    } else {
+        Err(format!(
+            "cannot write cleaned ruleset {}",
+            filepath.display()
+        ))
+    }
 }
 
-pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
+pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
     let root = Path::new(root_dir);
-    let ruleset_dirs = collect_ruleset_dirs(&root.join("rulesets").join("RULE-SET"));
+    let ruleset_dirs = collect_ruleset_dirs(&root.join("rulesets").join("RULE-SET"))?;
 
     let exempt_filenames: HashSet<&str> = [
         "HTTPDNS_Hijack.list",
@@ -441,25 +447,33 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     let mut file_paths = HashMap::new();
     let mut adblock_payloads = HashSet::new();
     let adblock_dir = root.join("rulesets").join("AdBlock");
-    for filename in ["reject-drop.list", "reject-no-drop.list"] {
-        let path = adblock_dir.join(filename);
-        if path.is_file() {
-            write_list(&path, &load_list(&path));
-        }
-    }
-    if let Ok(entries) = fs::read_dir(adblock_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let filename = entry.file_name();
-            let filename = filename.to_string_lossy();
-            if path.is_file()
-                && filename.ends_with(".list")
-                && ADBLOCK_ONLY_PREFIXES
-                    .iter()
-                    .any(|prefix| filename.starts_with(prefix))
-            {
-                adblock_payloads.extend(load_list(&path).into_keys());
-            }
+    let mut reject_lists = Vec::new();
+    let entries = fs::read_dir(&adblock_dir)
+        .map_err(|error| format!("cannot list {}: {error}", adblock_dir.display()))?;
+    for entry in entries {
+        let entry = entry
+            .map_err(|error| format!("cannot read {} entry: {error}", adblock_dir.display()))?;
+        let file_type = entry
+            .file_type()
+            .map_err(|error| format!("cannot inspect {}: {error}", entry.path().display()))?;
+        let path = entry.path();
+        let filename = entry.file_name();
+        let filename = filename.to_string_lossy();
+        if file_type.is_file()
+            && matches!(
+                filename.as_ref(),
+                "reject-drop.list" | "reject-no-drop.list"
+            )
+        {
+            let rules = load_list(&path)?;
+            reject_lists.push((path, rules));
+        } else if file_type.is_file()
+            && filename.ends_with(".list")
+            && ADBLOCK_ONLY_PREFIXES
+                .iter()
+                .any(|prefix| filename.starts_with(prefix))
+        {
+            adblock_payloads.extend(load_list(&path)?.into_keys());
         }
     }
     let mut stats = HashMap::new();
@@ -476,33 +490,33 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
 
     // 1. Load lists
     for dir in &ruleset_dirs {
-        if !dir.exists() {
-            continue;
+        let entries =
+            fs::read_dir(dir).map_err(|error| format!("cannot list {}: {error}", dir.display()))?;
+        let mut filenames = Vec::new();
+        for entry in entries {
+            let entry =
+                entry.map_err(|error| format!("cannot read {} entry: {error}", dir.display()))?;
+            let file_type = entry
+                .file_type()
+                .map_err(|error| format!("cannot inspect {}: {error}", entry.path().display()))?;
+            if file_type.is_file() {
+                let name = entry.file_name();
+                let name_str = name.to_string_lossy();
+                if name_str.ends_with(".list") {
+                    filenames.push(name_str.into_owned());
+                }
+            }
         }
-        if let Ok(entries) = fs::read_dir(dir) {
-            let mut filenames = Vec::new();
-            for entry in entries.flatten() {
-                if let Ok(file_type) = entry.file_type()
-                    && !file_type.is_dir()
-                {
-                    let name = entry.file_name();
-                    let name_str = name.to_string_lossy();
-                    if name_str.ends_with(".list") {
-                        filenames.push(name_str.into_owned());
-                    }
-                }
-            }
-            filenames.sort();
+        filenames.sort();
 
-            for filename in filenames {
-                if exempt_filenames.contains(filename.as_str()) {
-                    continue;
-                }
-                let filepath = dir.join(&filename);
-                let raw_unique = load_list(&filepath);
-                file_content.insert(filename.clone(), raw_unique.clone());
-                file_paths.insert(filename.clone(), filepath);
+        for filename in filenames {
+            if exempt_filenames.contains(filename.as_str()) {
+                continue;
             }
+            let filepath = dir.join(&filename);
+            let raw_unique = load_list(&filepath)?;
+            file_content.insert(filename.clone(), raw_unique);
+            file_paths.insert(filename.clone(), filepath);
         }
     }
     stats.insert("files".to_string(), file_content.len() as i32);
@@ -720,34 +734,16 @@ pub fn run_cleanup(root_dir: &str) -> HashMap<String, i32> {
     );
 
     // 6. Save
+    for (path, rules) in &reject_lists {
+        write_list(path, rules)?;
+    }
     for (filename, rules) in &file_content {
         if let Some(filepath) = file_paths.get(filename) {
-            if rules.is_empty() && filename != "AdBlock.list" {
-                if filepath.exists() {
-                    let _ = fs::remove_file(filepath);
-                    println!(
-                        "\x1b[0;32m[✓]\x1b[0m Deleted empty ruleset file: {}",
-                        filename
-                    );
-                }
-            } else {
-                write_list(filepath, rules);
-            }
+            write_list(filepath, rules)?;
         }
     }
 
-    for dir in &ruleset_dirs {
-        if dir.file_name().is_some_and(|name| name == "AdBlock") {
-            continue;
-        }
-        let readme = dir.join("README.md");
-        if readme.exists() {
-            let _ = fs::remove_file(&readme);
-            println!("\x1b[0;32m[✓]\x1b[0m Deleted stray document: {:?}", readme);
-        }
-    }
-
-    stats
+    Ok(stats)
 }
 
 #[derive(Clone, Debug)]
@@ -1912,10 +1908,94 @@ mod ruleset_cleanup_tests {
     use super::{
         LineVerdict, ModuleSectionPub, classify_promax_line_pub, dedupe_key_pub,
         dedupe_section_lines_pub, format_module_pub, merge_mitm_hosts_pub,
-        normalize_url_regex_rule, run_cleanup, script_matcher_key_pub,
+        normalize_url_regex_rule, run_cleanup, script_matcher_key_pub, write_list,
     };
     use std::fs;
+    use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn cleanup_fixture(label: &str) -> PathBuf {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("ruleset-cleanup-{label}-{id}"));
+        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+        fs::create_dir_all(root.join("rulesets/RULE-SET")).unwrap();
+        root
+    }
+
+    #[test]
+    fn invalid_utf8_preserves_all_inputs_before_cleanup_writes() {
+        for bad_path in [
+            "rulesets/AdBlock/reject-drop.list",
+            "rulesets/AdBlock/reject-no-drop.list",
+            "rulesets/RULE-SET/Broken.list",
+        ] {
+            let root = cleanup_fixture("invalid-utf8");
+            let reject = root.join("rulesets/AdBlock/reject-drop.list");
+            let original = "# Existing\nDOMAIN,7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe\n";
+            fs::write(&reject, original).unwrap();
+            let bad = root.join(bad_path);
+            fs::write(&bad, [0xff]).unwrap();
+
+            let error = run_cleanup(root.to_str().unwrap()).unwrap_err();
+
+            assert!(error.contains(bad_path));
+            assert_eq!(fs::read(&bad).unwrap(), [0xff]);
+            if bad != reject {
+                assert_eq!(fs::read_to_string(reject).unwrap(), original);
+            }
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[test]
+    fn fully_deduplicated_ruleset_keeps_its_public_path_and_readme() {
+        let root = cleanup_fixture("empty-publication");
+        let rulesets = root.join("rulesets/RULE-SET");
+        fs::write(rulesets.join("AI.list"), "DOMAIN,shared.example\n").unwrap();
+        let fallback = rulesets.join("Direct.list");
+        fs::write(&fallback, "DOMAIN,shared.example\n").unwrap();
+        let readme = rulesets.join("README.md");
+        fs::write(&readme, "Documentation retained\n").unwrap();
+
+        run_cleanup(root.to_str().unwrap()).unwrap();
+
+        let output = fs::read_to_string(fallback).unwrap();
+        assert!(output.starts_with('#'));
+        assert!(!output.contains("DOMAIN,"));
+        assert_eq!(
+            fs::read_to_string(readme).unwrap(),
+            "Documentation retained\n"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn cleanup_reports_directory_inventory_failure() {
+        let root = cleanup_fixture("inventory-error");
+        let rulesets = root.join("rulesets/RULE-SET");
+        fs::remove_dir(&rulesets).unwrap();
+        fs::write(&rulesets, "not a directory").unwrap();
+
+        let error = run_cleanup(root.to_str().unwrap()).unwrap_err();
+
+        assert!(error.contains("cannot list"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn cleaned_ruleset_write_failure_is_returned() {
+        let root = cleanup_fixture("write-error");
+        let output = root.join("missing-parent/Example.list");
+
+        let error = write_list(&output, &Default::default()).unwrap_err();
+
+        assert!(error.contains("cannot write cleaned ruleset"));
+        assert!(!output.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn normalizes_legacy_quoted_url_regex_policy() {
@@ -2064,7 +2144,7 @@ mod ruleset_cleanup_tests {
         )
         .unwrap();
 
-        run_cleanup(root.to_str().unwrap());
+        run_cleanup(root.to_str().unwrap()).unwrap();
 
         assert_eq!(
             fs::read_to_string(adblock_dir.join("AdBlock_Local.list")).unwrap(),

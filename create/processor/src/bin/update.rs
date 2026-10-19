@@ -200,7 +200,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
         return Ok(());
     }
 
-    let cleanup = rust_processor::smart_cleanup::run_cleanup(&root.to_string_lossy());
+    let cleanup = rust_processor::smart_cleanup::run_cleanup(&root.to_string_lossy())?;
     println!(
         "[INFO] ruleset cleanup deleted {} file(s)",
         cleanup.get("deleted").copied().unwrap_or_default()
@@ -252,7 +252,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
             &publication_version,
         );
     }
-    rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy());
+    rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
     rust_processor::module_catalog::refresh(root)?;
 
     if let Some(singbox) = singbox.filter(|path| path.is_file())

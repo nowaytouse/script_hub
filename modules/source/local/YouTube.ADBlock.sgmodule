@@ -3,4 +3,4 @@
 #!category=🪐 local
 
 [MITM]
-hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, -github.com, -api.github.com, -*.githubusercontent.com
+hostname = %APPEND% -github.com, -api.github.com, -*.githubusercontent.com, *.googlevideo.com, youtubei.googleapis.com

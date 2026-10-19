@@ -1,10 +1,12 @@
 //! Rust-owned upstream refresh for functional modules and PROMAX build inputs.
 
 use std::collections::HashMap;
+use std::fs;
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::merge_bundles::{MergeBundleRequest, SourceInput, process_merge_bundle};
+use crate::promax::artifact::{ArtifactKind, GeneratedArtifact, publish_generated_artifacts};
 use crate::promax::source::{DownloadBatch, DownloadConfig, Downloader};
 
 #[derive(Clone, Copy)]
@@ -278,6 +280,8 @@ fn metadata(values: &[(&str, &str)]) -> HashMap<String, String> {
         .collect()
 }
 
+type BundlePostprocessor = fn(&str) -> Result<String, String>;
+
 struct MergeJob<'a> {
     op: &'a str,
     output: &'a str,
@@ -285,6 +289,7 @@ struct MergeJob<'a> {
     specs: &'a [RemoteSource],
     replacements: &'a [(&'a str, &'a str)],
     youtube_adblock_output: Option<&'a str>,
+    postprocess: Option<BundlePostprocessor>,
 }
 
 fn merge(root: &Path, downloader: &Downloader, job: MergeJob<'_>) -> Result<(), String> {
@@ -295,6 +300,7 @@ fn merge(root: &Path, downloader: &Downloader, job: MergeJob<'_>) -> Result<(), 
         specs,
         replacements,
         youtube_adblock_output,
+        postprocess,
     } = job;
     let sources = fetch_sources(downloader, specs)?;
     let request = MergeBundleRequest {
@@ -316,9 +322,75 @@ fn merge(root: &Path, downloader: &Downloader, job: MergeJob<'_>) -> Result<(), 
         scripts_dir: None,
         script_hub_local: None,
     };
-    process_merge_bundle(&request)
-        .then_some(())
-        .ok_or_else(|| format!("merge failed for {output}"))
+    publish_bundle(root, request, postprocess)
+}
+
+fn publish_bundle(
+    root: &Path,
+    mut request: MergeBundleRequest,
+    postprocess: Option<BundlePostprocessor>,
+) -> Result<(), String> {
+    let target = std::path::PathBuf::from(&request.output_path);
+    let adblock_target = request
+        .youtube_adblock_output
+        .as_ref()
+        .map(std::path::PathBuf::from);
+    let cache = root.join(".cache");
+    fs::create_dir_all(&cache)
+        .map_err(|error| format!("cannot create functional cache: {error}"))?;
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("cannot name functional staging directory: {error}"))?
+        .as_nanos();
+    let staging = cache.join(format!(
+        "functional-bundle-{}-{timestamp}",
+        std::process::id()
+    ));
+    fs::create_dir(&staging)
+        .map_err(|error| format!("cannot create functional staging: {error}"))?;
+    let result = (|| {
+        let staged_output = staging.join("bundle.sgmodule");
+        if request.op == "promax_source_merge" && target.exists() {
+            fs::copy(&target, &staged_output)
+                .map_err(|error| format!("cannot stage preserved {}: {error}", target.display()))?;
+        }
+        request.output_path = staged_output.to_string_lossy().to_string();
+        let staged_adblock = staging.join("youtube-adblock.sgmodule");
+        request.youtube_adblock_output = adblock_target
+            .as_ref()
+            .map(|_| staged_adblock.to_string_lossy().to_string());
+        if !process_merge_bundle(&request) {
+            return Err(format!("merge failed for {}", target.display()));
+        }
+        let content = fs::read_to_string(&staged_output)
+            .map_err(|error| format!("cannot read staged bundle: {error}"))?;
+        let content = match postprocess {
+            Some(transform) => transform(&content)?,
+            None => content,
+        };
+        let mut artifacts = vec![GeneratedArtifact {
+            target,
+            content,
+            kind: ArtifactKind::Surge,
+        }];
+        if let Some(target) = adblock_target {
+            artifacts.push(GeneratedArtifact {
+                target,
+                content: fs::read_to_string(&staged_adblock).map_err(|error| {
+                    format!("cannot read staged YouTube adblock source: {error}")
+                })?,
+                kind: ArtifactKind::Surge,
+            });
+        }
+        publish_generated_artifacts(root, &artifacts)
+    })();
+    if let Err(error) = fs::remove_dir_all(&staging) {
+        eprintln!(
+            "[WARN] cannot clean functional staging {}: {error}",
+            staging.display()
+        );
+    }
+    result
 }
 
 fn sync_local_sources(root: &Path, downloader: &Downloader) {
@@ -385,18 +457,6 @@ fn push_output_line(output: &mut String, first_line: &mut bool, line: &str) {
     }
     output.push_str(line);
     *first_line = false;
-}
-
-fn strip_routing_rules(root: &Path, relative: &str) -> Result<(), String> {
-    let path = root.join(relative);
-    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
-    if !crate::safe_write_file_internal(&path, &strip_rule_section(&content), true) {
-        return Err(format!(
-            "failed to remove routing rules from {}",
-            path.display()
-        ));
-    }
-    Ok(())
 }
 
 const APPLE_FUNCTIONAL_MITM_HOSTS: &[&str] = &[
@@ -481,16 +541,6 @@ fn harden_apple_content(content: &str) -> Result<String, String> {
     Ok(output)
 }
 
-fn harden_apple_bundle(root: &Path) -> Result<(), String> {
-    let path = root.join("modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule");
-    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
-    let hardened = harden_apple_content(&content)?;
-    if !crate::safe_write_file_internal(&path, &hardened, true) {
-        return Err(format!("failed to harden {}", path.display()));
-    }
-    Ok(())
-}
-
 fn harden_youtube_content(content: &str) -> Result<String, String> {
     let mut in_script = false;
     let mut in_mitm = false;
@@ -531,16 +581,6 @@ fn harden_youtube_content(content: &str) -> Result<String, String> {
     Ok(output)
 }
 
-fn harden_youtube_bundle(root: &Path) -> Result<(), String> {
-    let path = root.join("modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule");
-    let content = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
-    let hardened = harden_youtube_content(&content)?;
-    if !crate::safe_write_file_internal(&path, &hardened, true) {
-        return Err(format!("failed to harden {}", path.display()));
-    }
-    Ok(())
-}
-
 pub fn run_functional_updates(root: &Path) -> Vec<String> {
     let downloader = downloader();
     sync_local_sources(root, &downloader);
@@ -555,32 +595,32 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 op: "upstream_merge",
                 output: "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
                 header: &[
-                ("name", "🍎 Apple服务增强合集"),
-                (
-                    "desc",
-                    "整合 Apple 生态增强：Maps · WeatherKit · News · TV；路由由外部 Apple 规则集与用户策略决定，关键服务排除 MITM",
-                ),
-                ("author", "VirgilClyne[https://github.com/VirgilClyne]"),
-                ("homepage", "https://NSRingo.github.io"),
-                (
-                    "icon",
-                    "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png",
-                ),
-                ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-            ],
+                    ("name", "🍎 Apple服务增强合集"),
+                    (
+                        "desc",
+                        "整合 Apple 生态增强：Maps · WeatherKit · News · TV；路由由外部 Apple 规则集与用户策略决定，关键服务排除 MITM",
+                    ),
+                    ("author", "VirgilClyne[https://github.com/VirgilClyne]"),
+                    ("homepage", "https://NSRingo.github.io"),
+                    (
+                        "icon",
+                        "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png",
+                    ),
+                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+                ],
                 specs: APPLE,
                 replacements: &[
-                ("Proxy:🇺🇸美国", "Proxy:\"🍎 Apple 🍏\""),
-                (",🇺🇸美国", ",{{{Proxy}}}"),
-                (
-                    "isWorkaroundSSLPinning:true",
-                    "isWorkaroundSSLPinning:false",
-                ),
-            ],
+                    ("Proxy:🇺🇸美国", "Proxy:\"🍎 Apple 🍏\""),
+                    (",🇺🇸美国", ",{{{Proxy}}}"),
+                    (
+                        "isWorkaroundSSLPinning:true",
+                        "isWorkaroundSSLPinning:false",
+                    ),
+                ],
                 youtube_adblock_output: None,
+                postprocess: Some(harden_apple_content),
             },
-        )
-        .and_then(|_| harden_apple_bundle(root)),
+        ),
         &mut failures,
     );
     run_step(
@@ -605,6 +645,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 specs: DUALSUBS,
                 replacements: &[],
                 youtube_adblock_output: None,
+                postprocess: None,
             },
         ),
         &mut failures,
@@ -631,14 +672,9 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 specs: BILIBILI,
                 replacements: &[("ForceHost:\"1\"", "ForceHost:\"2\"")],
                 youtube_adblock_output: None,
+                postprocess: Some(|content| Ok(strip_rule_section(content))),
             },
-        )
-        .and_then(|_| {
-            strip_routing_rules(
-                root,
-                "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-            )
-        }),
+        ),
         &mut failures,
     );
     run_step(
@@ -666,9 +702,9 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 }],
                 replacements: &[],
                 youtube_adblock_output: Some("modules/source/local/YouTube.ADBlock.sgmodule"),
+                postprocess: Some(harden_youtube_content),
             },
-        )
-        .and_then(|_| harden_youtube_bundle(root)),
+        ),
         &mut failures,
     );
     run_step(
@@ -688,6 +724,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 specs: WEIBO,
                 replacements: &[],
                 youtube_adblock_output: None,
+                postprocess: None,
             },
         ),
         &mut failures,
@@ -709,6 +746,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 specs: WOOL,
                 replacements: &[],
                 youtube_adblock_output: None,
+                postprocess: None,
             },
         ),
         &mut failures,
@@ -735,6 +773,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                 specs: UTILITIES,
                 replacements: &[],
                 youtube_adblock_output: None,
+                postprocess: None,
             },
         ),
         &mut failures,
@@ -746,10 +785,9 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
 pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
     let source = root.join("modules/surge");
     let mut count = 0;
-    for entry in walkdir::WalkDir::new(&source)
-        .into_iter()
-        .filter_map(Result::ok)
-    {
+    for entry in walkdir::WalkDir::new(&source) {
+        let entry =
+            entry.map_err(|error| format!("cannot traverse Surge module sources: {error}"))?;
         if !entry.file_type().is_file()
             || entry.path().extension().and_then(|value| value.to_str()) != Some("sgmodule")
             || entry
@@ -786,10 +824,172 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        RemoteSource, harden_apple_content, harden_youtube_content, sources_from_batch,
-        strip_rule_section, valid_module,
+        RemoteSource, harden_apple_content, harden_youtube_content, publish_bundle,
+        sources_from_batch, strip_rule_section, sync_shadowrocket_variants, valid_module,
     };
+    use crate::merge_bundles::MergeBundleRequest;
     use std::collections::HashMap;
+    use std::path::{Path, PathBuf};
+
+    fn temporary_root(label: &str) -> PathBuf {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-functional-{label}-{}-{timestamp}",
+            std::process::id()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        root
+    }
+
+    fn request(root: &Path, op: &str, content: &str) -> MergeBundleRequest {
+        serde_json::from_value(serde_json::json!({
+            "op": op,
+            "output_path": root.join("bundle.sgmodule"),
+            "header_meta": {"name": "fixture"},
+            "sources": [{"label": "fixture", "url": "https://example.test/source", "content": content}],
+            "youtube_adblock_output": (op == "youtube_merge").then(|| root.join("adblock.sgmodule"))
+        })).unwrap()
+    }
+
+    #[test]
+    fn postprocessing_failure_preserves_published_bundles() {
+        for op in ["upstream_merge", "youtube_merge"] {
+            let root = temporary_root(op);
+            let old = "#!name=previous validated publication\n";
+            for name in ["bundle.sgmodule", "adblock.sgmodule"] {
+                std::fs::write(root.join(name), old).unwrap();
+            }
+            let input = "#!name=upstream\n[Rule]\nDOMAIN,example.test,DIRECT\n";
+            let transform = if op == "youtube_merge" {
+                harden_youtube_content
+            } else {
+                harden_apple_content
+            };
+            let result = publish_bundle(&root, request(&root, op, input), Some(transform));
+            assert!(result.is_err());
+            for name in ["bundle.sgmodule", "adblock.sgmodule"] {
+                assert_eq!(std::fs::read_to_string(root.join(name)).unwrap(), old);
+            }
+            std::fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[test]
+    fn invalid_youtube_secondary_output_preserves_both_publications() {
+        let root = temporary_root("invalid-youtube");
+        let old = "#!name=previous validated publication\n";
+        for name in ["bundle.sgmodule", "adblock.sgmodule"] {
+            std::fs::write(root.join(name), old).unwrap();
+        }
+        let input = "#!name=upstream\n[Map Local]\nNOT_A_VALID_MAP_LOCAL\n[MITM]\nhostname = %APPEND% youtubei.googleapis.com\n";
+        let result = publish_bundle(
+            &root,
+            request(&root, "youtube_merge", input),
+            Some(harden_youtube_content),
+        );
+        assert!(result.is_err());
+        for name in ["bundle.sgmodule", "adblock.sgmodule"] {
+            assert_eq!(std::fs::read_to_string(root.join(name)).unwrap(), old);
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn secondary_publication_io_failure_rolls_back_the_primary() {
+        let root = temporary_root("youtube-rollback");
+        let old = "#!name=previous validated publication\n";
+        std::fs::write(root.join("bundle.sgmodule"), old).unwrap();
+        std::fs::write(root.join("blocked"), "not a directory").unwrap();
+        let input = "#!name=upstream\n[MITM]\nhostname = %APPEND% youtubei.googleapis.com\n";
+        let mut request = request(&root, "youtube_merge", input);
+        request.youtube_adblock_output = Some(
+            root.join("blocked/adblock.sgmodule")
+                .to_string_lossy()
+                .to_string(),
+        );
+        assert!(publish_bundle(&root, request, Some(harden_youtube_content)).is_err());
+        assert_eq!(
+            std::fs::read_to_string(root.join("bundle.sgmodule")).unwrap(),
+            old
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("blocked")).unwrap(),
+            "not a directory"
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn successful_bundle_staging_preserves_rules_and_quarantine() {
+        let root = temporary_root("preserved-source");
+        std::fs::write(
+            root.join("bundle.sgmodule"),
+            "#!name=old\n[Rule]\nDOMAIN,preserved.example,REJECT\n",
+        )
+        .unwrap();
+        let quarantine = root.join("rulesets/AdBlock/quarantine.json");
+        std::fs::create_dir_all(quarantine.parent().unwrap()).unwrap();
+        std::fs::write(&quarantine, "existing quarantine report\n").unwrap();
+        let input = "#!name=upstream\n[MITM]\nhostname = %APPEND% ads.example\n";
+        publish_bundle(&root, request(&root, "promax_source_merge", input), None).unwrap();
+        let content = std::fs::read_to_string(root.join("bundle.sgmodule")).unwrap();
+        assert!(content.contains("DOMAIN,preserved.example,REJECT"));
+        assert!(content.contains("#!name=fixture"));
+        assert_eq!(
+            std::fs::read_to_string(quarantine).unwrap(),
+            "existing quarantine report\n"
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn youtube_without_ads_clears_the_previous_adblock_source() {
+        let root = temporary_root("empty-youtube-ads");
+        std::fs::write(
+            root.join("adblock.sgmodule"),
+            "#!name=old ads\n[Rule]\nDOMAIN,old-ads.example,REJECT\n",
+        )
+        .unwrap();
+        let input = "#!name=upstream\n[MITM]\nhostname = %APPEND% cdn.example\n";
+        publish_bundle(
+            &root,
+            request(&root, "youtube_merge", input),
+            Some(harden_youtube_content),
+        )
+        .unwrap();
+        let adblock = std::fs::read_to_string(root.join("adblock.sgmodule")).unwrap();
+        assert!(!adblock.contains("old-ads.example"));
+        assert!(crate::promax::validation::validate_surge_module(&adblock).is_empty());
+        let functional = std::fs::read_to_string(root.join("bundle.sgmodule")).unwrap();
+        assert!(functional.contains("hostname = %APPEND% youtubei.googleapis.com"));
+        assert!(!functional.contains("cdn.example"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn missing_surge_source_directory_is_not_a_successful_empty_sync() {
+        let root = temporary_root("missing-surge");
+        assert!(sync_shadowrocket_variants(&root).is_err());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn youtube_adblock_exclusions_precede_inclusions() {
+        let root = temporary_root("youtube-mitm-order");
+        let input = "#!name=upstream\n[MITM]\nhostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com\n";
+        publish_bundle(
+            &root,
+            request(&root, "youtube_merge", input),
+            Some(harden_youtube_content),
+        )
+        .unwrap();
+        let adblock = std::fs::read_to_string(root.join("adblock.sgmodule")).unwrap();
+        assert!(adblock.contains("hostname = %APPEND% -github.com, -api.github.com, -*.githubusercontent.com, *.googlevideo.com"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn rejects_html_and_accepts_real_module_shape() {
