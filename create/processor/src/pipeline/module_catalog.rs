@@ -363,7 +363,7 @@ mod tests {
 
     #[test]
     fn generated_helper_has_visible_interface_and_no_script_fallback() {
-        let html = include_str!("../../../modules/helper/surge_module_helper.html");
+        let html = include_str!("../../../../modules/helper/surge_module_helper.html");
         assert!(html.contains("<main"));
         assert!(html.contains("id=\"platform\""));
         assert!(html.contains("id=\"search\""));

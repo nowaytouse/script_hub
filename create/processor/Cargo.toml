@@ -31,4 +31,7 @@ percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.8"
 ureq = { version = "3.4.2", features = ["socks-proxy"] }
-eframe = { version = "0.37", optional = true, default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow", "system_fonts", "wayland", "x11"] }
+
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+sys-locale = "0.3.2"
+eframe = { version = "0.37", optional = true, default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow", "system_fonts"] }

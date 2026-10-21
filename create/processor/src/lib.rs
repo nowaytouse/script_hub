@@ -485,8 +485,6 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
     Ok(())
 }
 
-pub mod url_rewriter;
-
 fn normalize_generated_text(content: &str) -> String {
     let mut lines = content.lines().map(str::trim_end).collect::<Vec<_>>();
     while lines.last().is_some_and(|line| line.is_empty()) {
@@ -566,22 +564,21 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
     }
 }
 
-pub mod mitm_manager;
-
-pub mod firewall_sync;
-
-pub mod smart_cleanup;
-
-pub mod functional_update;
-pub mod general_update;
-pub mod gui_job;
-pub mod merge_bundles;
-pub mod module_catalog;
 pub mod promax;
-pub mod update_cli;
-pub mod validate_cli;
 
-pub mod srs_generator;
+pub mod app;
+pub mod desktop;
+pub mod pipeline;
+pub mod transforms;
+
+// Preserve the historical crate-root module paths while the implementation is
+// organized under its owning subsystems.
+pub use app::{update_cli, validate_cli};
+pub use desktop::job as gui_job;
+pub use pipeline::{
+    firewall_sync, functional_update, general_update, merge_bundles, module_catalog, srs_generator,
+};
+pub use transforms::{mitm_manager, smart_cleanup, url_rewriter};
 
 #[cfg(test)]
 mod tests {

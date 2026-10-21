@@ -59,20 +59,28 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/RULE-
 
 ## Rust 更新入口
 
-### Rust GUI（Windows / macOS / Linux）
+### Rust GUI（Windows / macOS）
 
-同一个原生 Rust 界面提供 Surge / Shadowrocket 模块搜索、CDN / GitHub 订阅地址复制、活动广告分片与分流规则浏览，以及只读校验、本地目录刷新和联网全量更新。界面与命令行共用更新和校验实现，不需要 Node.js、Python 或另外安装更新器。
+原生 Rust 桌面界面面向 Windows 与 macOS；Linux 继续支持命令行处理器，但不构建此 GUI。桌面界面与命令行共用更新和校验实现，不需要 Node.js、Python 或另外安装更新器。界面包含概览、模块/规则/来源目录、任务、仓库、设置和帮助页面：可搜索模块与规则、复制订阅地址、管理 Wool / Weibo / Devtools 自定义来源，并查看任务和仓库状态。目录浏览和仓库状态读取不自动执行网络操作。
 
 ```bash
 cargo run --release --locked --manifest-path create/processor/Cargo.toml \
   --features gui --bin script-hub-gui -- --root .
 ```
 
-GUI 需要 Rust 1.95+；`gui` 为可选功能，普通规则更新 CI 不编译图形依赖。[Rust GUI 工作流](https://github.com/nowaytouse/script_hub/actions/workflows/gui.yml)分别在 Windows、macOS、Linux 构建并提供可执行文件下载。下载后选择本仓库的本地目录即可使用，不能把任意文件夹当作工作区。Linux 源码构建需安装 Fontconfig、XKB 与 OpenGL 开发包；中文由系统字体按需补全，精简 Linux 系统需要安装 CJK 字体。
+GUI 需要 Rust 1.95+；`gui` 为可选功能，普通规则更新 CI 不编译图形依赖。[Rust GUI 工作流](https://github.com/nowaytouse/script_hub/actions/workflows/gui.yml)在 Windows 与 macOS 构建。下载时请按制品名称中的操作系统和实际 runner 架构选择；Windows 提供 `.exe`，macOS 提供 `.app` 的 tar.gz 包。选择仓库目录作为工作区；显式传入的 CLI `--root` 优先于已保存的工作区路径。
 
-Windows 提供 `.exe`，macOS 提供 `.app` 的 tar.gz 包，Linux 提供保留执行权限的 tar.gz 包。macOS 包会进行本地 ad-hoc 签名和完整性校验，但开发构建尚无受信任开发者签名或公证，不声称通过平台商店或系统发行认证。GUI 写入任务之间由操作系统文件锁互斥，锁由实际执行更新的子进程持有，退出后自动释放；不要同时从外部命令行运行另一套更新。
+macOS 包会进行本地 ad-hoc 签名和完整性校验，但开发构建尚无受信任开发者签名或公证，不声称通过平台商店或系统发行认证。GUI 写入任务之间由操作系统文件锁互斥，锁由实际执行更新的子进程持有，退出后自动释放；不要同时从外部命令行运行另一套更新。
 
-浏览与只读校验不联网；写入操作要求确认，每次只运行一个后台任务，界面显示真实退出结果、警告和有界日志。任务执行期间会阻止正常关闭窗口，避免在发布中途强杀；操作系统强制结束进程仍可能中断任务。联网更新沿用 `https_proxy` / `http_proxy` / `all_proxy` 环境变量，不更改系统代理、不自动提交或推送。未指定 sing-box 时保留现有 SRS，不声称已更新 SRS。
+浏览与只读校验不联网；联网与写入操作要求确认，每次只运行一个后台任务。支持只读校验、目录刷新、全量/快速更新和游戏规则更新。进度展示来自真实阶段和经过时间；不具备可信测量依据时不显示估算百分比。界面显示真实退出结果、警告和有界日志。联网更新沿用 `https_proxy` / `http_proxy` / `all_proxy` 环境变量，不更改系统代理、不自动提交或推送。
+
+仓库页提供人工触发的 fast-forward-only pull、按明确选择文件的 commit 和非强制 push；不会自动执行 Git 操作。自定义来源保存在工作区 `modules/source/custom_sources.json`，添加和移除均需确认，并在下一次全量更新中重新合并对应合集；快速更新跳过功能合集。未指定 sing-box 时保留现有 SRS，不声称已更新 SRS。
+
+偏好设置保存在 macOS `~/Library/Application Support/Script Hub/settings.json` 或 Windows `%APPDATA%\ScriptHub\settings.json`。设置模型支持主题、强调色、系统/简体中文/英文/日文、80–150% 界面缩放、窗口尺寸和紧凑度；保存的工作区路径不会覆盖显式 CLI `--root`。
+
+默认启动只读取应用自身设置，不自动扫描工作区或探测父目录。可手动加载、拖入项目文件夹，或明确开启“启动时重新打开已保存的工作区”；CLI `--root` 也表示明确打开该路径。目录加载在单个后台线程执行，等待权限时仍可操作界面和关闭窗口，不会重复启动读取任务。
+
+macOS 的桌面、文稿、下载、网络卷和可移动卷受系统权限控制。当前 ad-hoc 开发签名的权限身份与具体构建绑定，更换构建后可能需要重新授权；项目不能绕过系统同意，也不要求完全磁盘访问。无人值守建议使用明确指定、位于上述受保护目录之外的本地仓库，并从固定位置运行同一构建；跨版本稳定授权的发行版需要开发者提供一致的 Developer ID 签名身份。此限制与“记住路径”不同，不能靠保存路径消除。
 
 桌面 GUI 不等于 iOS / Android 原生应用；手机和平板可继续使用 `modules/helper/surge_module_helper.html` 响应式安装助手。该网页包含实际目录界面和无脚本时的可见说明，可下载后本地打开；GitHub Raw / 部分 CDN 可能直接显示源码或下载 HTML，不能当作已部署的网页站点。
 

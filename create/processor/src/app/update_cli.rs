@@ -1,4 +1,5 @@
 use crate as rust_processor;
+use crate::desktop::progress::{Stage, emit_stage};
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
@@ -161,6 +162,7 @@ fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<Path
 }
 
 fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Result<(), String> {
+    emit_stage(Stage::Prepare);
     if !root
         .join("rulesets/Sources/adblock_whitelist.list")
         .is_file()
@@ -172,6 +174,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     }
 
     if execute && !quick {
+        emit_stage(Stage::Functional);
         let failures = rust_processor::functional_update::run_functional_updates(root);
         if !failures.is_empty() {
             eprintln!(
@@ -180,6 +183,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
                 failures.join(", ")
             );
         }
+        emit_stage(Stage::General);
         let failures = rust_processor::general_update::run_general_updates(root);
         if !failures.is_empty() {
             eprintln!(
@@ -192,6 +196,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
 
     // PROMAX owns both source downloads and local compilation.  Keep the rest
     // of the Rust post-processing in one deterministic, low-concurrency pass.
+    emit_stage(Stage::Adblock);
     if !rust_processor::promax::run_adblock_manager(&root.to_string_lossy(), execute) {
         return Err("PROMAX compilation failed".to_string());
     }
@@ -201,16 +206,20 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
         return Ok(());
     }
 
+    emit_stage(Stage::Cleanup);
     let cleanup = rust_processor::smart_cleanup::run_cleanup(&root.to_string_lossy())?;
     println!(
         "[INFO] ruleset cleanup deleted {} file(s)",
         cleanup.get("deleted").copied().unwrap_or_default()
     );
+    emit_stage(Stage::Categories);
     rust_processor::general_update::enforce_category_boundaries(root)?;
+    emit_stage(Stage::Gaming);
     rust_processor::general_update::split_gaming_rules(root)?;
 
     let modules = root.join("modules");
     let rulesets = root.join("rulesets");
+    emit_stage(Stage::Rewrites);
     for directory in [&modules, &rulesets] {
         let changed = rust_processor::url_rewriter::run_url_rewrites(&directory.to_string_lossy());
         if changed < 0 {
@@ -219,14 +228,17 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     }
 
     let surge = modules.join("surge");
+    emit_stage(Stage::Mitm);
     if surge.is_dir()
         && rust_processor::mitm_manager::run_mitm_cleanup(&surge.to_string_lossy(), false) < 0
     {
         return Err("MITM cleanup failed".to_string());
     }
+    emit_stage(Stage::Shadowrocket);
     let converted = rust_processor::functional_update::sync_shadowrocket_variants(root)?;
     println!("[INFO] synchronized {converted} Shadowrocket module variant(s)");
 
+    emit_stage(Stage::Security);
     let publication_version = rust_processor::publication_now()
         .format("%Y.%m.%d")
         .to_string();
@@ -253,9 +265,14 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
             &publication_version,
         );
     }
+    emit_stage(Stage::Mirrors);
     rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
+    emit_stage(Stage::Catalog);
     rust_processor::module_catalog::refresh(root)?;
 
+    if singbox.is_some_and(|path| path.is_file()) {
+        emit_stage(Stage::Srs);
+    }
     if let Some(singbox) = singbox.filter(|path| path.is_file())
         && !rust_processor::srs_generator::run_srs_generator(
             &root.to_string_lossy(),
@@ -266,6 +283,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     }
 
     if execute {
+        emit_stage(Stage::Finalize);
         discard_semantic_noop_changes(root)?;
         let status = Command::new("git")
             .args(["diff", "--check"])
@@ -330,14 +348,17 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         println!("[INFO] dry run: game classification skipped");
         Ok(())
     } else if gaming_only {
+        emit_stage(Stage::Prepare);
+        emit_stage(Stage::Gaming);
         rust_processor::general_update::split_gaming_rules(&root).and_then(|()| {
-            if let Some(singbox) = &singbox
-                && !rust_processor::srs_generator::run_srs_generator(
+            if let Some(singbox) = &singbox {
+                emit_stage(Stage::Srs);
+                if !rust_processor::srs_generator::run_srs_generator(
                     &root.to_string_lossy(),
                     &singbox.to_string_lossy(),
-                )
-            {
-                return Err("SRS generation failed".to_string());
+                ) {
+                    return Err("SRS generation failed".to_string());
+                }
             }
             Ok(())
         })

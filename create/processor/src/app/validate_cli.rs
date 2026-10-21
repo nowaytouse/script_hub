@@ -1,4 +1,5 @@
 use crate as rust_processor;
+use crate::desktop::progress::{Stage, emit_stage};
 use std::path::Path;
 use std::process::ExitCode;
 
@@ -52,6 +53,7 @@ fn report_walkdir_error(error: walkdir::Error, errors: &mut usize) {
 }
 
 fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
+    emit_stage(Stage::Validate);
     let mut artifacts = 0;
     let mut errors = 0;
     let modules_root = root.join("modules");
@@ -170,6 +172,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         Some("--file") => match args.next() {
             Some(file) => {
                 let path = Path::new(&file);
+                emit_stage(Stage::Validate);
                 match validate_file(path) {
                     Ok(validation) if report_validation(path, &validation, 50) == 0 => {
                         println!("[SUCCESS] validated {}", path.display());

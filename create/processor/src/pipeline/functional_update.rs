@@ -6,6 +6,7 @@ use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::merge_bundles::{MergeBundleRequest, SourceInput, process_merge_bundle};
+use crate::pipeline::custom_sources::{self, CustomSource, SourceCategory};
 use crate::promax::artifact::{ArtifactKind, GeneratedArtifact, publish_generated_artifacts};
 use crate::promax::source::{DownloadBatch, DownloadConfig, Downloader};
 
@@ -208,6 +209,53 @@ fn fetch_sources(
     sources_from_batch(specs, batch)
 }
 
+fn fetch_custom_sources(
+    downloader: &Downloader,
+    specs: &[CustomSource],
+) -> Result<Vec<SourceInput>, String> {
+    if specs.is_empty() {
+        return Ok(Vec::new());
+    }
+    let batch = downloader.download_many(specs.iter().map(|spec| spec.url.as_str()));
+    custom_sources_from_batch(specs, batch)
+}
+
+fn custom_sources_from_batch(
+    specs: &[CustomSource],
+    batch: DownloadBatch,
+) -> Result<Vec<SourceInput>, String> {
+    let DownloadBatch { contents, failures } = batch;
+    let failure_by_url: HashMap<&str, &str> = failures
+        .iter()
+        .map(|failure| (failure.url.as_str(), failure.error.as_str()))
+        .collect();
+    let mut sources = Vec::with_capacity(specs.len());
+    let mut errors = Vec::new();
+    for spec in specs {
+        match contents.get(spec.url.as_str()) {
+            Some(content) if valid_module(content) => sources.push(SourceInput {
+                label: spec.name.clone(),
+                url: spec.url.clone(),
+                content: content.clone(),
+            }),
+            Some(_) => errors.push(format!("{} returned non-module content", spec.name)),
+            None => errors.push(format!(
+                "{} ({})",
+                spec.name,
+                failure_by_url
+                    .get(spec.url.as_str())
+                    .copied()
+                    .unwrap_or("missing download result")
+            )),
+        }
+    }
+    if errors.is_empty() {
+        Ok(sources)
+    } else {
+        Err(errors.join("; "))
+    }
+}
+
 fn sources_from_batch(
     specs: &[RemoteSource],
     batch: DownloadBatch,
@@ -287,6 +335,7 @@ struct MergeJob<'a> {
     output: &'a str,
     header: &'a [(&'a str, &'a str)],
     specs: &'a [RemoteSource],
+    custom_sources: Option<&'a [CustomSource]>,
     replacements: &'a [(&'a str, &'a str)],
     youtube_adblock_output: Option<&'a str>,
     postprocess: Option<BundlePostprocessor>,
@@ -298,11 +347,15 @@ fn merge(root: &Path, downloader: &Downloader, job: MergeJob<'_>) -> Result<(), 
         output,
         header,
         specs,
+        custom_sources,
         replacements,
         youtube_adblock_output,
         postprocess,
     } = job;
-    let sources = fetch_sources(downloader, specs)?;
+    let mut sources = fetch_sources(downloader, specs)?;
+    if let Some(custom_sources) = custom_sources {
+        sources.extend(fetch_custom_sources(downloader, custom_sources)?);
+    }
     let request = MergeBundleRequest {
         op: op.to_string(),
         output_path: root.join(output).to_string_lossy().to_string(),
@@ -428,6 +481,17 @@ fn run_step(label: &str, result: Result<(), String>, failures: &mut Vec<String>)
             eprintln!("[WARN] functional bundle kept unchanged: {label} ({error})");
             failures.push(label.to_string());
         }
+    }
+}
+
+fn require_valid_custom_sources<T>(
+    source_error: &Option<String>,
+    action: impl FnOnce() -> Result<T, String>,
+) -> Result<T, String> {
+    if let Some(error) = source_error {
+        Err(format!("invalid custom source configuration: {error}"))
+    } else {
+        action()
     }
 }
 
@@ -581,10 +645,100 @@ fn harden_youtube_content(content: &str) -> Result<String, String> {
     Ok(output)
 }
 
+const DEVTOOLS_OUTPUT: &str = "modules/surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule";
+const DEVTOOLS_CUSTOM_MARKER: &str = "#!script-hub-custom-sources=merged";
+
+fn custom_devtools_request(
+    root: &Path,
+    custom_sources: Vec<SourceInput>,
+) -> Result<MergeBundleRequest, String> {
+    const BASE: &str = include_str!("../../assets/DevTools.Base.sgmodule");
+    let body_start = BASE
+        .find("\n[General]")
+        .ok_or_else(|| "curated DevTools base is missing [General]".to_string())?
+        + 1;
+    let mut sources = vec![SourceInput {
+        label: "Script Hub curated base".to_string(),
+        url: "local:create/processor/assets/DevTools.Base.sgmodule".to_string(),
+        content: BASE[body_start..].to_string(),
+    }];
+    sources.extend(custom_sources);
+    let mut header_meta = crate::merge_bundles::module_metadata_pub(BASE);
+    header_meta.remove("date");
+    if sources.len() > 1 {
+        header_meta.insert(
+            "script-hub-custom-sources".to_string(),
+            "merged".to_string(),
+        );
+    }
+    Ok(MergeBundleRequest {
+        op: "devtools_merge".to_string(),
+        output_path: root.join(DEVTOOLS_OUTPUT).to_string_lossy().to_string(),
+        header_meta,
+        provenance_comment: None,
+        sources,
+        content_replacements: Vec::new(),
+        extra_header_lines: Vec::new(),
+        youtube_adblock_output: None,
+        section_order: Vec::new(),
+        script_path_suffix_map: HashMap::new(),
+        script_raw_prefix: None,
+        scripts_dir: None,
+        script_hub_local: None,
+    })
+}
+
+fn publish_custom_devtools_sources(
+    root: &Path,
+    custom_sources: Vec<SourceInput>,
+) -> Result<(), String> {
+    let request = custom_devtools_request(root, custom_sources)?;
+    publish_bundle(root, request, None)
+}
+
+fn merge_custom_devtools(
+    root: &Path,
+    downloader: &Downloader,
+    custom_sources: &[CustomSource],
+) -> Result<(), String> {
+    let custom_sources = fetch_custom_sources(downloader, custom_sources)?;
+    publish_custom_devtools_sources(root, custom_sources)
+}
+
+fn devtools_output_has_custom_marker(root: &Path) -> Result<bool, String> {
+    match fs::read_to_string(root.join(DEVTOOLS_OUTPUT)) {
+        Ok(content) => Ok(content.lines().any(|line| line == DEVTOOLS_CUSTOM_MARKER)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(format!("cannot inspect current DevTools bundle: {error}")),
+    }
+}
+
 pub fn run_functional_updates(root: &Path) -> Vec<String> {
     let downloader = downloader();
     sync_local_sources(root, &downloader);
     let mut failures = Vec::new();
+    let configured_sources = custom_sources::load(root);
+    let (custom_wool, custom_weibo, custom_devtools, custom_source_error) = match configured_sources
+    {
+        Ok(sources) => (
+            sources
+                .iter()
+                .filter(|source| source.category == SourceCategory::Wool)
+                .cloned()
+                .collect::<Vec<_>>(),
+            sources
+                .iter()
+                .filter(|source| source.category == SourceCategory::Weibo)
+                .cloned()
+                .collect::<Vec<_>>(),
+            sources
+                .into_iter()
+                .filter(|source| source.category == SourceCategory::Devtools)
+                .collect::<Vec<_>>(),
+            None,
+        ),
+        Err(error) => (Vec::new(), Vec::new(), Vec::new(), Some(error)),
+    };
 
     run_step(
         "Apple",
@@ -609,6 +763,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
                 ],
                 specs: APPLE,
+                custom_sources: None,
                 replacements: &[
                     ("Proxy:🇺🇸美国", "Proxy:\"🍎 Apple 🍏\""),
                     (",🇺🇸美国", ",{{{Proxy}}}"),
@@ -643,6 +798,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     ("tag", "Subtitles, Translation, Advanced"),
                 ],
                 specs: DUALSUBS,
+                custom_sources: None,
                 replacements: &[],
                 youtube_adblock_output: None,
                 postprocess: None,
@@ -670,6 +826,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     ("tag", "BiliBili, 增强"),
                 ],
                 specs: BILIBILI,
+                custom_sources: None,
                 replacements: &[("ForceHost:\"1\"", "ForceHost:\"2\"")],
                 youtube_adblock_output: None,
                 postprocess: Some(|content| Ok(strip_rule_section(content))),
@@ -700,6 +857,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     url: "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule",
                     required: true,
                 }],
+                custom_sources: None,
                 replacements: &[],
                 youtube_adblock_output: Some("modules/source/local/YouTube.ADBlock.sgmodule"),
                 postprocess: Some(harden_youtube_content),
@@ -709,46 +867,71 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
     );
     run_step(
         "Weibo PROMAX source",
-        merge(
-            root,
-            &downloader,
-            MergeJob {
-                op: "promax_source_merge",
-                output: "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule",
-                header: &[
-                    ("name", "🐦 微博去广告"),
-                    ("desc", "微博与国际版去广告 · PROMAX 构建源"),
-                    ("author", "fmz200, iab0x00, ScriptHub"),
-                    ("tag", "去广告, 微博, PROMAX-build"),
-                ],
-                specs: WEIBO,
-                replacements: &[],
-                youtube_adblock_output: None,
-                postprocess: None,
-            },
-        ),
+        require_valid_custom_sources(&custom_source_error, || {
+            merge(
+                root,
+                &downloader,
+                MergeJob {
+                    op: "promax_source_merge",
+                    output: "rulesets/Sources/LocalModules/Weibo.ADBlock.sgmodule",
+                    header: &[
+                        ("name", "🐦 微博去广告"),
+                        ("desc", "微博与国际版去广告 · PROMAX 构建源"),
+                        ("author", "fmz200, iab0x00, ScriptHub"),
+                        ("tag", "去广告, 微博, PROMAX-build"),
+                    ],
+                    specs: WEIBO,
+                    custom_sources: Some(&custom_weibo),
+                    replacements: &[],
+                    youtube_adblock_output: None,
+                    postprocess: None,
+                },
+            )
+        }),
         &mut failures,
     );
+    let devtools_has_custom_marker = devtools_output_has_custom_marker(root);
+    if custom_source_error.is_some() {
+        failures.push("DevTools custom sources".to_string());
+    } else {
+        match devtools_has_custom_marker {
+            Ok(has_custom_marker) if !custom_devtools.is_empty() || has_custom_marker => {
+                run_step(
+                    "DevTools custom sources",
+                    merge_custom_devtools(root, &downloader, &custom_devtools),
+                    &mut failures,
+                );
+            }
+            Ok(_) => {}
+            Err(error) => {
+                eprintln!("[WARN] cannot inspect DevTools custom output: {error}");
+                failures.push("DevTools custom sources".to_string());
+            }
+        }
+    }
     run_step(
         "Wool PROMAX source",
-        merge(
-            root,
-            &downloader,
-            MergeJob {
-                op: "promax_source_merge",
-                output: "rulesets/Sources/LocalModules/Wool.ADBlock.sgmodule",
-                header: &[
-                    ("name", "🐑 综合去广告"),
-                    ("desc", "国内常用 App 去广告集合 · PROMAX 构建源"),
-                    ("author", "fmz200, ScriptHub"),
-                    ("tag", "去广告, 综合, PROMAX-build"),
-                ],
-                specs: WOOL,
-                replacements: &[],
-                youtube_adblock_output: None,
-                postprocess: None,
-            },
-        ),
+        require_valid_custom_sources(&custom_source_error, || {
+            merge(
+                root,
+                &downloader,
+                MergeJob {
+                    op: "promax_source_merge",
+                    output: "rulesets/Sources/LocalModules/Wool.ADBlock.sgmodule",
+                    header: &[
+                        ("name", "🐑 综合去广告"),
+                        ("desc", "国内常用 App 去广告集合 · PROMAX 构建源"),
+                        ("author", "fmz200, ScriptHub"),
+                        ("tag", "去广告, 综合, PROMAX-build"),
+                    ],
+                    specs: WOOL,
+                    custom_sources: Some(&custom_wool),
+                    replacements: &[],
+                    youtube_adblock_output: None,
+                    postprocess: None,
+                },
+            )
+        }),
         &mut failures,
     );
     run_step(
@@ -771,6 +954,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
                     ("tag", "面板, 工具"),
                 ],
                 specs: UTILITIES,
+                custom_sources: None,
                 replacements: &[],
                 youtube_adblock_output: None,
                 postprocess: None,
@@ -824,10 +1008,14 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        RemoteSource, harden_apple_content, harden_youtube_content, publish_bundle,
-        sources_from_batch, strip_rule_section, sync_shadowrocket_variants, valid_module,
+        DEVTOOLS_CUSTOM_MARKER, RemoteSource, custom_sources_from_batch,
+        devtools_output_has_custom_marker, harden_apple_content, harden_youtube_content,
+        publish_bundle, publish_custom_devtools_sources, sources_from_batch, strip_rule_section,
+        sync_shadowrocket_variants, valid_module,
     };
-    use crate::merge_bundles::MergeBundleRequest;
+    use crate::merge_bundles::{MergeBundleRequest, SourceInput};
+    use crate::pipeline::custom_sources::{CustomSource, SourceCategory};
+    use crate::promax::source::{DownloadBatch, DownloadFailure};
     use std::collections::HashMap;
     use std::path::{Path, PathBuf};
 
@@ -1108,5 +1296,72 @@ mod tests {
         assert!(!hardened.contains("googlevideo\\.com"));
         assert!(!hardened.contains("*.googlevideo.com"));
         assert!(!hardened.contains("hostname = %APPEND%\n"));
+    }
+
+    #[test]
+    fn custom_source_batch_requires_every_configured_source_to_be_a_module() {
+        let good_url = "https://raw.githubusercontent.com/example/repo/main/good.sgmodule";
+        let bad_url = "https://cdn.jsdelivr.net/gh/example/repo/bad.module";
+        let sources = [
+            CustomSource {
+                category: SourceCategory::Wool,
+                name: "Good".to_string(),
+                url: good_url.to_string(),
+            },
+            CustomSource {
+                category: SourceCategory::Wool,
+                name: "Bad".to_string(),
+                url: bad_url.to_string(),
+            },
+        ];
+        let batch = DownloadBatch {
+            contents: HashMap::from([
+                (
+                    good_url.to_string(),
+                    "#!name=Fixture functional module with enough bytes for validation\n[Script]\nscript = ok\n".to_string(),
+                ),
+                (bad_url.to_string(), "<!doctype html><html>error</html>".to_string()),
+            ]),
+            failures: Vec::<DownloadFailure>::new(),
+        };
+
+        let error = custom_sources_from_batch(&sources, batch).unwrap_err();
+        assert!(error.contains("Bad returned non-module content"));
+    }
+
+    #[test]
+    fn custom_devtools_marker_survives_finalize_and_empty_sources_restore_curated_base() {
+        let root = temporary_root("devtools-custom-marker");
+        let custom_rule = "DOMAIN,custom-devtools.example.test,DIRECT";
+        publish_custom_devtools_sources(
+            &root,
+            vec![SourceInput {
+                label: "Fixture custom DevTools".to_string(),
+                url: "https://raw.githubusercontent.com/example/repo/main/custom.sgmodule"
+                    .to_string(),
+                content: format!(
+                    "#!name=Custom DevTools fixture\n[Rule]\n{custom_rule}\n[MITM]\nhostname = %APPEND% custom-devtools.example.test\n"
+                ),
+            }],
+        )
+        .unwrap();
+
+        assert!(devtools_output_has_custom_marker(&root).unwrap());
+        let output = root.join(super::DEVTOOLS_OUTPUT);
+        let with_custom = std::fs::read_to_string(&output).unwrap();
+        assert!(
+            with_custom
+                .lines()
+                .any(|line| line == DEVTOOLS_CUSTOM_MARKER)
+        );
+        assert!(with_custom.contains(custom_rule));
+
+        publish_custom_devtools_sources(&root, Vec::new()).unwrap();
+
+        assert!(!devtools_output_has_custom_marker(&root).unwrap());
+        let restored = std::fs::read_to_string(output).unwrap();
+        assert!(restored.contains("Sub-Store Core"));
+        assert!(!restored.contains(custom_rule));
+        let _ = std::fs::remove_dir_all(root);
     }
 }
