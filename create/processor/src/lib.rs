@@ -11,6 +11,35 @@ pub fn publication_now() -> chrono::DateTime<chrono::FixedOffset> {
     )
 }
 
+pub(crate) fn verify_missing_directory(directory: &Path) -> Result<(), String> {
+    // Windows may report NotFound when an ancestor is a file, not a missing directory.
+    for ancestor in directory.ancestors() {
+        match fs::metadata(ancestor) {
+            Ok(metadata) if metadata.is_dir() && ancestor != directory => return Ok(()),
+            Ok(_) => {
+                return Err(format!(
+                    "cannot verify missing directory {} at {}",
+                    directory.display(),
+                    ancestor.display()
+                ));
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                match fs::symlink_metadata(ancestor) {
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                    Err(error) => {
+                        return Err(format!("cannot inspect {}: {error}", ancestor.display()));
+                    }
+                    Ok(_) => {
+                        return Err(format!("unresolved directory path: {}", ancestor.display()));
+                    }
+                }
+            }
+            Err(error) => return Err(format!("cannot inspect {}: {error}", ancestor.display())),
+        }
+    }
+    Err(format!("cannot verify a parent of {}", directory.display()))
+}
+
 static VALID_IPV4_CIDR: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
 static VALID_IPV6_CIDR: Lazy<Regex> =
@@ -562,6 +591,16 @@ mod tests {
     };
     use std::fs;
     use std::path::PathBuf;
+
+    #[test]
+    fn missing_directory_check_distinguishes_absence_from_blocking_file() {
+        let root = output_dir();
+        let missing = root.join("missing/child");
+        assert!(super::verify_missing_directory(&missing).is_ok());
+        fs::write(root.join("missing"), "not a directory").unwrap();
+        assert!(super::verify_missing_directory(&missing).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
 
     fn output_dir() -> PathBuf {
         let path = std::env::temp_dir().join(format!(

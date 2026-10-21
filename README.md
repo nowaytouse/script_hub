@@ -70,7 +70,7 @@ cargo run --release --locked --manifest-path create/processor/Cargo.toml \
 
 GUI 需要 Rust 1.95+；`gui` 为可选功能，普通规则更新 CI 不编译图形依赖。[Rust GUI 工作流](https://github.com/nowaytouse/script_hub/actions/workflows/gui.yml)分别在 Windows、macOS、Linux 构建并提供可执行文件下载。下载后选择本仓库的本地目录即可使用，不能把任意文件夹当作工作区。Linux 源码构建需安装 Fontconfig、XKB 与 OpenGL 开发包；中文由系统字体按需补全，精简 Linux 系统需要安装 CJK 字体。
 
-Windows 提供 `.exe`，macOS 提供 `.app` 的 tar.gz 包，Linux 提供保留执行权限的 tar.gz 包。当前为未签名/未公证的开发构建，不声称通过平台商店或系统发行认证。GUI 写入任务之间由操作系统文件锁互斥，锁由实际执行更新的子进程持有，退出后自动释放；不要同时从外部命令行运行另一套更新。
+Windows 提供 `.exe`，macOS 提供 `.app` 的 tar.gz 包，Linux 提供保留执行权限的 tar.gz 包。macOS 包会进行本地 ad-hoc 签名和完整性校验，但开发构建尚无受信任开发者签名或公证，不声称通过平台商店或系统发行认证。GUI 写入任务之间由操作系统文件锁互斥，锁由实际执行更新的子进程持有，退出后自动释放；不要同时从外部命令行运行另一套更新。
 
 浏览与只读校验不联网；写入操作要求确认，每次只运行一个后台任务，界面显示真实退出结果、警告和有界日志。任务执行期间会阻止正常关闭窗口，避免在发布中途强杀；操作系统强制结束进程仍可能中断任务。联网更新沿用 `https_proxy` / `http_proxy` / `all_proxy` 环境变量，不更改系统代理、不自动提交或推送。未指定 sing-box 时保留现有 SRS，不声称已更新 SRS。
 

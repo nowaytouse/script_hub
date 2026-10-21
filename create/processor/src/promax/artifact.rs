@@ -75,17 +75,24 @@ pub fn shadowrocket_variant(
         .target
         .strip_prefix(root)
         .map_err(|_| "Surge artifact target escapes repository".to_string())?;
-    let relative_text = relative.to_string_lossy();
-    let converted_path = relative_text
-        .replace(
-            "modules/surge/head_expanse",
-            "modules/shadowrocket/head_expanse",
-        )
-        .strip_suffix(".sgmodule")
-        .map(|path| format!("{path}.module"))
-        .ok_or_else(|| "Surge artifact does not use the .sgmodule suffix".to_string())?;
+    let surge_directory = Path::new("modules").join("surge").join("head_expanse");
+    let mut module_path = relative
+        .strip_prefix(&surge_directory)
+        .map_err(|_| "Surge artifact is outside its expected publication directory".to_string())?
+        .to_path_buf();
+    if module_path
+        .extension()
+        .is_none_or(|extension| extension != "sgmodule")
+    {
+        return Err("Surge artifact does not use the .sgmodule suffix".to_string());
+    }
+    module_path.set_extension("module");
     Ok(GeneratedArtifact {
-        target: root.join(converted_path),
+        target: root
+            .join("modules")
+            .join("shadowrocket")
+            .join("head_expanse")
+            .join(module_path),
         content: convert_surge_to_shadowrocket(&surge.content),
         kind: ArtifactKind::Shadowrocket,
     })
@@ -547,7 +554,7 @@ fn shadowrocket_policy(policy: &str) -> &str {
 mod tests {
     use super::{
         ArtifactKind, GeneratedArtifact, convert_surge_to_shadowrocket, publish_artifacts,
-        validate_artifact_size, validate_coverage_floor,
+        shadowrocket_variant, validate_artifact_size, validate_coverage_floor,
     };
     use std::fs;
     use std::path::Path;
@@ -575,6 +582,35 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         assert!(!converted.contains("no-resolve"));
         assert!(!converted.contains("ability="));
         assert!(!converted.contains("engine=auto"));
+    }
+
+    #[test]
+    fn shadowrocket_variant_maps_native_cdn_and_github_paths() {
+        let root = Path::new("fixture-root");
+        for mirror in [None, Some("github")] {
+            let mut surge_target = root.join("modules").join("surge").join("head_expanse");
+            let mut expected = root
+                .join("modules")
+                .join("shadowrocket")
+                .join("head_expanse");
+            if let Some(mirror) = mirror {
+                surge_target.push(mirror);
+                expected.push(mirror);
+            }
+            surge_target.push("PROMAX.sgmodule");
+            expected.push("PROMAX.module");
+
+            let converted = shadowrocket_variant(
+                root,
+                &GeneratedArtifact {
+                    target: surge_target,
+                    content: "#!name=PROMAX\n[Rule]\nDOMAIN,example.test,REJECT\n".to_string(),
+                    kind: ArtifactKind::Surge,
+                },
+            )
+            .unwrap();
+            assert_eq!(converted.target, expected);
+        }
     }
 
     #[test]

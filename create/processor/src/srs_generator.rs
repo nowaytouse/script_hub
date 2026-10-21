@@ -227,7 +227,9 @@ fn compile_srs(list_file: &Path, root_dir: &Path, singbox_path: &str) -> bool {
 fn collect_srs_outputs(directory: &Path, outputs: &mut Vec<PathBuf>) -> Result<(), String> {
     let entries = match fs::read_dir(directory) {
         Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return crate::verify_missing_directory(directory);
+        }
         Err(error) => return Err(format!("cannot list {}: {error}", directory.display())),
     };
 
@@ -313,6 +315,10 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
         let entries = match fs::read_dir(&dir) {
             Ok(entries) => entries,
             Err(error) if !required && error.kind() == std::io::ErrorKind::NotFound => {
+                if let Err(error) = crate::verify_missing_directory(&dir) {
+                    eprintln!("[ERROR] Cannot enumerate optional SRS sources: {error}");
+                    return false;
+                }
                 continue;
             }
             Err(error) => {

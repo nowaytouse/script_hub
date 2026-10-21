@@ -1941,7 +1941,7 @@ mod ruleset_cleanup_tests {
 
             let error = run_cleanup(root.to_str().unwrap()).unwrap_err();
 
-            assert!(error.contains(bad_path));
+            assert!(error.contains(&bad.display().to_string()));
             assert_eq!(fs::read(&bad).unwrap(), [0xff]);
             if bad != reject {
                 assert_eq!(fs::read_to_string(reject).unwrap(), original);

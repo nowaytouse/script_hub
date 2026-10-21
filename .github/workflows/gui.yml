@@ -64,6 +64,8 @@ jobs:
           mkdir -p ../../target/ScriptHub.app/Contents/MacOS
           cp ../../target/release/script-hub-gui ../../target/ScriptHub.app/Contents/MacOS/
           cp assets/Info.plist ../../target/ScriptHub.app/Contents/Info.plist
+          codesign --force --sign - ../../target/ScriptHub.app
+          codesign --verify --deep --strict ../../target/ScriptHub.app
           tar -czf ../../target/script-hub-gui-macos.tar.gz -C ../../target ScriptHub.app
       - name: Package Linux executable
         if: runner.os == 'Linux'

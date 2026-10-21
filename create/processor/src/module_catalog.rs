@@ -63,7 +63,10 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
         let dir = root.join("modules").join(platform).join(category);
         let entries = match fs::read_dir(&dir) {
             Ok(entries) => entries,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                crate::verify_missing_directory(&dir)?;
+                continue;
+            }
             Err(error) => return Err(format!("cannot scan {}: {error}", dir.display())),
         };
         let mut paths: Vec<PathBuf> = entries
