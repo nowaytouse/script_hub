@@ -214,6 +214,22 @@ fn canonical_json(value: serde_json::Value, module_catalog: bool) -> serde_json:
     }
 }
 
+fn canonical_adblock_catalog_json(value: serde_json::Value) -> serde_json::Value {
+    let mut value = canonical_json(value, false);
+    if let Some(feeds) = value
+        .as_object_mut()
+        .and_then(|object| object.get_mut("verified_rolling_feeds"))
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        for feed in feeds.values_mut() {
+            if let Some(feed) = feed.as_object_mut() {
+                feed.remove("version");
+            }
+        }
+    }
+    value
+}
+
 pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
     if path
         .file_name()
@@ -233,7 +249,12 @@ pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
             .to_string_lossy()
             .replace('\\', "/")
             .contains("modules/helper/");
-        if let Ok(canonical) = serde_json::to_string(&canonical_json(value, module_catalog)) {
+        let canonical_value = if path.ends_with(Path::new("rulesets/AdBlock/catalog.json")) {
+            canonical_adblock_catalog_json(value)
+        } else {
+            canonical_json(value, module_catalog)
+        };
+        if let Ok(canonical) = serde_json::to_string(&canonical_value) {
             return canonical;
         }
     }
@@ -601,6 +622,28 @@ mod tests {
         assert_ne!(
             semantic_content_for_path_pub(path, old),
             semantic_content_for_path_pub(path, changed)
+        );
+    }
+
+    #[test]
+    fn adblock_catalog_compare_ignores_only_rolling_feed_versions() {
+        let old = r#"{"version":1,"verified_rolling_feeds":{"ThreatIntel_TIF":{"version":"2026-10-20T00:00:00Z","source":"https://feed.example/tif","declared_entries":100}}}"#;
+        let version_only = r#"{"version":1,"verified_rolling_feeds":{"ThreatIntel_TIF":{"version":"2026-10-21T00:00:00Z","source":"https://feed.example/tif","declared_entries":100}}}"#;
+        let changed_count = r#"{"version":1,"verified_rolling_feeds":{"ThreatIntel_TIF":{"version":"2026-10-21T00:00:00Z","source":"https://feed.example/tif","declared_entries":101}}}"#;
+        let changed_source = r#"{"version":1,"verified_rolling_feeds":{"ThreatIntel_TIF":{"version":"2026-10-21T00:00:00Z","source":"https://other.example/tif","declared_entries":100}}}"#;
+        let changed_membership = r#"{"version":1,"verified_rolling_feeds":{"ThreatIntel_Ultimate":{"version":"2026-10-21T00:00:00Z","source":"https://feed.example/tif","declared_entries":100}}}"#;
+        let changed_catalog_version = r#"{"version":2,"verified_rolling_feeds":{"ThreatIntel_TIF":{"version":"2026-10-21T00:00:00Z","source":"https://feed.example/tif","declared_entries":100}}}"#;
+        let path = Path::new("rulesets/AdBlock/catalog.json");
+        let semantic = |json| semantic_content_for_path_pub(path, json);
+
+        assert_eq!(semantic(old), semantic(version_only));
+        assert_ne!(semantic(old), semantic(changed_count));
+        assert_ne!(semantic(old), semantic(changed_source));
+        assert_ne!(semantic(old), semantic(changed_membership));
+        assert_ne!(semantic(old), semantic(changed_catalog_version));
+        assert_ne!(
+            semantic_content_for_path_pub(Path::new("other.json"), r#"{"version":1}"#),
+            semantic_content_for_path_pub(Path::new("other.json"), r#"{"version":2}"#)
         );
     }
 

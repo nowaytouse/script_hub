@@ -7,7 +7,9 @@
 - **PROMAX** 是唯一推荐安装的广告拦截模块：外部规则按用途分片，并合并经筛选的 URL Rewrite、Map Local、Body Rewrite、Script 与 MITM 功能段。
 - **分类隔离**：Advertising、Privacy、Security、AntiAD 与各 ThreatIntel 类别由源清单显式声明；编译器不会按 URL 猜分类。
 - **误屏蔽防护**：正常媒体、受保护服务、无对应请求规则的 MITM 主机会进入 `rulesets/AdBlock/quarantine.json`，不会直接发布。
+- **防止不完整更新**：稳定广告分类合计不得低于上一份 catalog 的 90%。HaGeZi TIF medium 是会清退过期域名的滚动情报源，仅官方地址、完整元数据、声明条数与逐条域名校验全部通过后才独立计算；去重和安全过滤后的 TIF 分片还须保留本次源条目的至少 80%。检查失败时保留已发布产物，不以旧情报永久冻结上游更新。catalog 记录上次实质更新时的源版本与条数，仅源版本时间戳改变不触发写入。
 - **Helper**：保留 DNS 补充、必要的 Host/系统解析映射和关键服务 MITM 排除，不注入分流策略；分流由外部规则集和用户策略组决定。端口阻断仍是独立、按需安装的模块。
+- **旧分片兼容**：已发布但不再需要的规则分片保留为空规则兼容文件，不加入新版模块或活动 catalog；旧模块缓存不会因分片缩减而遇到 404，旧拦截条目也不会继续生效。
 - **旧 PROMAX 链接保持兼容**：
   `https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule`
 

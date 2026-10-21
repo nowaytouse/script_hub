@@ -224,6 +224,8 @@ struct CatalogJson {
     manifest: String,
     functional_manifest: String,
     functional_sections: BTreeMap<String, usize>,
+    #[serde(default)]
+    verified_rolling_feeds: BTreeMap<String, super::feed::VerifiedFeed>,
     shards: Vec<ShardItem>,
 }
 
@@ -283,8 +285,9 @@ pub struct AdBlockManager {
     seen_rules: HashMap<String, HashSet<String>>,             // policy -> rules
     seen_suffixes: HashMap<String, HashSet<String>>,          // policy -> suffixes
     source_exceptions: HashSet<String>,                       // AdGuard/ABP @@ domain exceptions
-    sections: HashMap<String, Vec<String>>,                   // section_name -> lines
-    section_seen: HashMap<String, HashSet<String>>,           // section_name -> seen keys
+    verified_rolling_feeds: BTreeMap<String, super::feed::VerifiedFeed>,
+    sections: HashMap<String, Vec<String>>, // section_name -> lines
+    section_seen: HashMap<String, HashSet<String>>, // section_name -> seen keys
     functional_stats: HashMap<String, usize>,
     mitm_hosts: HashSet<String>,
     mitm_provenance: HashMap<String, (String, usize)>,
@@ -332,6 +335,7 @@ impl AdBlockManager {
             seen_rules,
             seen_suffixes,
             source_exceptions: HashSet::new(),
+            verified_rolling_feeds: BTreeMap::new(),
             sections,
             section_seen,
             functional_stats: HashMap::new(),
@@ -1148,11 +1152,14 @@ impl AdBlockManager {
         remote_contents: &HashMap<String, String>,
     ) -> Vec<String> {
         let mut failures = Vec::new();
+        let mut category_sources = HashMap::<String, usize>::new();
+        self.verified_rolling_feeds.clear();
         for entry in source_entries {
             let category = entry
                 .category
                 .clone()
                 .unwrap_or_else(|| self.determine_category(&entry.source).to_string());
+            *category_sources.entry(category.clone()).or_default() += 1;
             let is_module = entry.source.ends_with(".sgmodule")
                 || entry.source.ends_with(".module")
                 || entry
@@ -1183,6 +1190,23 @@ impl AdBlockManager {
                     continue;
                 }
             };
+
+            if entry.policy == "REJECT" {
+                match super::feed::verify_rolling_feed(&entry.source, &category, mod_text) {
+                    Ok(Some(feed)) => {
+                        println!(
+                            "[INFO] Verified rolling source {} version {}: {} declared entries match its complete body.",
+                            feed.source, feed.version, feed.declared_entries
+                        );
+                        self.verified_rolling_feeds.insert(category.clone(), feed);
+                    }
+                    Ok(None) => {}
+                    Err(error) => {
+                        failures.push(format!("{}: {error}", entry.display_name(&self.root_dir)));
+                        continue;
+                    }
+                }
+            }
 
             if is_module {
                 let has_rule_section = {
@@ -1246,26 +1270,41 @@ impl AdBlockManager {
                 );
             }
         }
+        self.verified_rolling_feeds
+            .retain(|category, _| category_sources.get(category) == Some(&1));
         failures
     }
 
-    fn filter_rules(&self, rules: &HashSet<String>) -> Vec<String> {
+    fn filter_rules(&self, rules: &HashSet<String>) -> Result<Vec<String>, String> {
+        let exceptions = regex::RegexSet::new(self.source_exceptions.iter().map(|domain| {
+            let pattern = regex::escape(domain)
+                .replace("\\*", ".*")
+                .replace("\\?", ".");
+            format!("(?i)(?:^|\\.){pattern}$")
+        }))
+        .map_err(|error| format!("cannot compile AdGuard domain exceptions: {error}"))?;
         let mut filtered = Vec::new();
         for rule in rules {
             if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(rule)
-                && self.source_exceptions.iter().any(|domain| {
-                    parsed.payload == *domain || parsed.payload.ends_with(&format!(".{domain}"))
-                })
+                && matches!(
+                    parsed.kind,
+                    crate::promax::rule::RuleKind::Domain
+                        | crate::promax::rule::RuleKind::DomainSuffix
+                        | crate::promax::rule::RuleKind::DomainWildcard
+                )
+                && exceptions.is_match(&parsed.payload)
             {
                 continue;
             }
             filtered.push(rule.clone());
         }
         filtered.sort();
-        filtered
+        Ok(filtered)
     }
 
-    fn generate_ruleset(&self) -> (Vec<String>, Vec<crate::promax::artifact::GeneratedArtifact>) {
+    fn generate_ruleset(
+        &self,
+    ) -> Result<(Vec<String>, Vec<crate::promax::artifact::GeneratedArtifact>), String> {
         let mut generated_files = Vec::new();
         let mut artifacts = Vec::new();
         let adblock_dir = self.root_dir.join("rulesets/AdBlock");
@@ -1286,7 +1325,7 @@ impl AdBlockManager {
                 .unwrap()
                 .get(*category)
                 .unwrap_or(&empty_set);
-            let rules = self.filter_rules(rules_in_cat);
+            let rules = self.filter_rules(rules_in_cat)?;
 
             if rules.is_empty() {
                 println!(
@@ -1359,7 +1398,7 @@ impl AdBlockManager {
                 .unwrap()
                 .get(*cat)
                 .unwrap_or(&empty_set);
-            all_reject.extend(self.filter_rules(rules_in_cat));
+            all_reject.extend(self.filter_rules(rules_in_cat)?);
         }
         let limit = std::cmp::min(1000, all_reject.len());
         for r in &all_reject[..limit] {
@@ -1374,47 +1413,70 @@ impl AdBlockManager {
             kind: crate::promax::artifact::ArtifactKind::ExternalRuleset,
         });
 
-        (generated_files, artifacts)
+        Ok((generated_files, artifacts))
     }
 
-    fn prune_stale_rulesets(&self, generated_files: &[String]) {
-        let adblock_dir = self.root_dir.join("rulesets/AdBlock");
-        if !adblock_dir.is_dir() {
-            return;
-        }
-        let mut keep = HashSet::new();
-        for f in generated_files {
-            keep.insert(f.split('/').next_back().unwrap().to_string());
-        }
-        keep.insert("HTTPDNS_Hijack.list".to_string());
-        keep.insert("reject-drop.list".to_string());
-        keep.insert("reject-no-drop.list".to_string());
-        keep.insert("AdBlock.list".to_string());
-        let keep_srs: HashSet<String> = keep
-            .iter()
-            .map(|name| format!("{}_Singbox.srs", name.trim_end_matches(".list")))
-            .collect();
-
-        let mut removed = Vec::new();
-        if let Ok(entries) = fs::read_dir(adblock_dir) {
-            for entry in entries.map_while(Result::ok) {
-                let name = entry.file_name().to_string_lossy().to_string();
-                if name.ends_with(".list") && !keep.contains(&name) {
-                    let _ = fs::remove_file(entry.path());
-                    removed.push(name.clone());
-                } else if name.ends_with("_Singbox.srs") && !keep_srs.contains(&name) {
-                    let _ = fs::remove_file(entry.path());
-                    removed.push(name);
-                }
+    fn retired_ruleset_artifacts(
+        &self,
+        generated_files: &[String],
+    ) -> Result<Vec<crate::promax::artifact::GeneratedArtifact>, String> {
+        let catalog_path = self.root_dir.join("rulesets/AdBlock/catalog.json");
+        let catalog = match fs::read_to_string(&catalog_path) {
+            Ok(content) => content,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(error) => return Err(format!("cannot read previous shard catalog: {error}")),
+        };
+        let value: serde_json::Value = serde_json::from_str(&catalog)
+            .map_err(|error| format!("cannot parse previous shard catalog: {error}"))?;
+        let shards = value["shards"]
+            .as_array()
+            .ok_or_else(|| "previous shard catalog is missing a shards array".to_string())?;
+        let mut retired = HashSet::new();
+        for shard in shards {
+            let file = shard["file"]
+                .as_str()
+                .ok_or_else(|| "previous shard catalog contains a missing file path".to_string())?;
+            let name = file.strip_prefix("rulesets/AdBlock/").ok_or_else(|| {
+                format!("previous shard path is outside rulesets/AdBlock: {file}")
+            })?;
+            if name.contains('/')
+                || name.contains('\\')
+                || !Self::is_known_shard_filename(name)
+                || Path::new(file).parent() != Some(Path::new("rulesets/AdBlock"))
+            {
+                return Err(format!(
+                    "previous shard path is not a direct AdBlock shard: {file}"
+                ));
+            }
+            if !generated_files.iter().any(|generated| generated == file) {
+                retired.insert(file.to_string());
             }
         }
-        if !removed.is_empty() {
-            println!(
-                "\x1b[0;32m[INFO]\x1b[0m Pruned {} stale AdBlock ruleset(s): {}",
-                removed.len(),
-                removed.join(", ")
-            );
-        }
+        Ok(retired
+            .into_iter()
+            .map(|file| crate::promax::artifact::GeneratedArtifact {
+                target: self.root_dir.join(file),
+                content: "# Retired PROMAX shard; intentionally empty.\n".to_string(),
+                kind: crate::promax::artifact::ArtifactKind::ExternalRuleset,
+            })
+            .collect())
+    }
+
+    fn is_known_shard_filename(filename: &str) -> bool {
+        let Some(body) = filename
+            .strip_prefix("AdBlock_")
+            .and_then(|stem| stem.strip_suffix(".list"))
+        else {
+            return false;
+        };
+        CATEGORIES.iter().any(|category| {
+            body == *category
+                || body
+                    .strip_prefix(&format!("{category}_"))
+                    .is_some_and(|index| {
+                        !index.is_empty() && index.bytes().all(|b| b.is_ascii_digit())
+                    })
+        })
     }
 
     fn prune_stale_split_artifacts(&self, generated_files: &HashSet<String>) {
@@ -2055,6 +2117,7 @@ impl AdBlockManager {
             functional_manifest: "rulesets/Sources/Links/AdBlock_functional_sources.list"
                 .to_string(),
             functional_sections: functional_stats,
+            verified_rolling_feeds: self.verified_rolling_feeds.clone(),
             shards,
         };
 
@@ -2753,10 +2816,18 @@ impl AdBlockManager {
 
         if execute {
             self.functional_stats = self.integrate_functional_sections(&remote_contents);
-            let (generated_rulesets, mut artifacts) = self.generate_ruleset();
-            if let Err(error) =
-                crate::promax::artifact::validate_coverage_floor(&self.root_dir, &artifacts)
-            {
+            let (generated_rulesets, mut artifacts) = match self.generate_ruleset() {
+                Ok(generated) => generated,
+                Err(error) => {
+                    eprintln!("[ERROR] Refusing PROMAX generation: {error}");
+                    return false;
+                }
+            };
+            if let Err(error) = crate::promax::artifact::validate_coverage_floor_with_rolling(
+                &self.root_dir,
+                &artifacts,
+                &self.verified_rolling_feeds,
+            ) {
                 println!("\x1b[0;31m[ERROR]\x1b[0m Refusing PROMAX coverage regression: {error}");
                 return false;
             }
@@ -2806,6 +2877,14 @@ impl AdBlockManager {
                 shadowrocket_cdn,
                 shadowrocket_github,
             ]);
+            let retired = match self.retired_ruleset_artifacts(&generated_rulesets) {
+                Ok(artifacts) => artifacts,
+                Err(error) => {
+                    println!("\x1b[0;31m[ERROR]\x1b[0m Refusing PROMAX publication: {error}");
+                    return false;
+                }
+            };
+            artifacts.extend(retired);
             if let Err(error) = crate::promax::artifact::publish_artifacts(
                 &self.root_dir,
                 &artifacts,
@@ -2814,7 +2893,6 @@ impl AdBlockManager {
                 println!("\x1b[0;31m[ERROR]\x1b[0m Refusing PROMAX publication: {error}");
                 return false;
             }
-            self.prune_stale_rulesets(&generated_rulesets);
             self.prune_stale_split_artifacts(&generated_splits);
             println!(
                 "\x1b[0;32m[SUCCESS]\x1b[0m Published validated PROMAX artifacts as one transaction."
@@ -2865,13 +2943,107 @@ pub fn run_adblock_manager(root_dir: &str, execute: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::AdBlockManager;
-    use std::collections::HashSet;
+    use std::collections::{HashMap, HashSet};
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn manager_normalizes_an_existing_relative_root() {
         assert!(AdBlockManager::new(".".into()).root_dir.is_absolute());
+    }
+
+    #[test]
+    fn retired_catalog_shards_publish_empty_noops_without_entering_current_catalog() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-retired-shards-{unique}"));
+        fs::create_dir_all(&root).unwrap();
+        let root = fs::canonicalize(root).unwrap();
+        let catalog = root.join("rulesets/AdBlock/catalog.json");
+        fs::create_dir_all(catalog.parent().unwrap()).unwrap();
+        fs::write(
+            &catalog,
+            r#"{"shards":[{"file":"rulesets/AdBlock/AdBlock_Advertising.list"},{"file":"rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list"},{"file":"rulesets/AdBlock/AdBlock_Other.list"}]}"#,
+        )
+        .unwrap();
+        let manager = AdBlockManager::new(root.clone());
+        let generated = vec!["rulesets/AdBlock/AdBlock_Advertising.list".to_string()];
+        let retired = manager.retired_ruleset_artifacts(&generated).unwrap();
+        assert_eq!(retired.len(), 2);
+        assert!(
+            retired
+                .iter()
+                .any(|artifact| artifact.target.ends_with("AdBlock_ThreatIntel_TIF_07.list"))
+        );
+        assert!(
+            retired
+                .iter()
+                .any(|artifact| artifact.target.ends_with("AdBlock_Other.list"))
+        );
+
+        let live = super::super::artifact::GeneratedArtifact {
+            target: root.join(&generated[0]),
+            content: "DOMAIN,live.example\n".to_string(),
+            kind: super::super::artifact::ArtifactKind::ExternalRuleset,
+        };
+        let mut artifacts = vec![live.clone()];
+        artifacts.extend(retired);
+        super::super::artifact::publish_artifacts(&root, &artifacts, &[]).unwrap();
+        let retired_path = root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list");
+        assert_eq!(fs::read_to_string(&live.target).unwrap(), live.content);
+        assert_eq!(
+            fs::read_to_string(&retired_path).unwrap(),
+            "# Retired PROMAX shard; intentionally empty.\n"
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("rulesets/AdBlock/AdBlock_Other.list")).unwrap(),
+            "# Retired PROMAX shard; intentionally empty.\n"
+        );
+
+        fs::write(
+            &catalog,
+            r#"{"shards":[{"file":"rulesets/AdBlock/AdBlock_Advertising.list"}]}"#,
+        )
+        .unwrap();
+        assert!(
+            manager
+                .retired_ruleset_artifacts(&generated)
+                .unwrap()
+                .is_empty()
+        );
+        super::super::artifact::publish_artifacts(&root, &[live], &[]).unwrap();
+        for path in [
+            retired_path,
+            root.join("rulesets/AdBlock/AdBlock_Other.list"),
+        ] {
+            assert_eq!(
+                fs::read_to_string(path).unwrap(),
+                "# Retired PROMAX shard; intentionally empty.\n"
+            );
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn retired_shard_catalog_rejects_traversal_paths() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-retired-shard-path-{unique}"));
+        let catalog = root.join("rulesets/AdBlock/catalog.json");
+        fs::create_dir_all(catalog.parent().unwrap()).unwrap();
+        let manager = AdBlockManager::new(root.clone());
+        for file in [
+            "rulesets/AdBlock/../outside.list",
+            "rulesets/AdBlock/AdBlock_Unknown.list",
+        ] {
+            fs::write(&catalog, format!(r#"{{"shards":[{{"file":"{file}"}}]}}"#)).unwrap();
+            assert!(manager.retired_ruleset_artifacts(&[]).is_err());
+        }
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2886,7 +3058,78 @@ mod tests {
             "fixture",
         );
         let rules = &manager.rules["REJECT"]["Advertising"];
-        assert!(manager.filter_rules(rules).is_empty());
+        assert!(manager.filter_rules(rules).unwrap().is_empty());
+    }
+
+    #[test]
+    fn adguard_wildcard_exceptions_preserve_domain_boundaries_and_case() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.extract_from_text(
+            "DOMAIN,Safe1.ads.example.test\nDOMAIN,media.safe2.ads.example.test\nDOMAIN,unsafe1.ads.example.test\nDOMAIN,ads.example.test\n@@||safe*.ads.example.test^\n",
+            "REJECT", "Advertising", false, false, "fixture",
+        );
+        assert_eq!(
+            manager
+                .filter_rules(&manager.rules["REJECT"]["Advertising"])
+                .unwrap(),
+            vec![
+                "DOMAIN,ads.example.test".to_string(),
+                "DOMAIN,unsafe1.ads.example.test".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn rolling_source_is_verified_before_ingestion_and_recorded_in_catalog() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-rolling-source-{unique}"));
+        let mut manager = AdBlockManager::new(root.clone());
+        let source =
+            "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.medium.txt";
+        let entry = super::SourceEntry {
+            manifest_path: manager
+                .root_dir
+                .join("rulesets/Sources/Links/AdBlock_sources.list"),
+            source: source.to_string(),
+            policy: "REJECT".to_string(),
+            kind: "auto".to_string(),
+            category: Some("ThreatIntel_TIF".to_string()),
+        };
+        let text = "[Adblock Plus]\n! Version: fixture\n! Last modified: 20 Oct 2026 14:31 UTC\n! Number of entries: 2\n||one.fixture.test^\n||two.fixture.test^\n";
+        let contents = HashMap::from([(source.to_string(), text.to_string())]);
+        assert!(
+            manager
+                .process_source_entries(std::slice::from_ref(&entry), &contents)
+                .is_empty()
+        );
+        assert_eq!(manager.rules["REJECT"]["ThreatIntel_TIF"].len(), 2);
+        let (paths, artifacts) = manager.generate_ruleset().unwrap();
+        let metadata = manager.generate_catalog_artifacts(&paths, &artifacts);
+        let json = metadata
+            .iter()
+            .find(|artifact| artifact.target.ends_with("catalog.json"))
+            .unwrap();
+        let catalog: serde_json::Value = serde_json::from_str(&json.content).unwrap();
+        assert_eq!(
+            catalog["verified_rolling_feeds"]["ThreatIntel_TIF"]["declared_entries"],
+            2
+        );
+
+        let mut manager = AdBlockManager::new(root.clone());
+        let truncated = HashMap::from([(
+            source.to_string(),
+            text.replace("||two.fixture.test^\n", ""),
+        )]);
+        assert_eq!(
+            manager.process_source_entries(&[entry], &truncated).len(),
+            1
+        );
+        assert!(manager.rules["REJECT"]["ThreatIntel_TIF"].is_empty());
+        assert!(manager.verified_rolling_feeds.is_empty());
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -3219,8 +3462,15 @@ hostname = split-ad.fixture.test, protected0.example
         assert!(root.join("rulesets/AdBlock/catalog.json").is_file());
         assert!(root.join("rulesets/AdBlock/README.md").is_file());
         assert!(root.join("rulesets/AdBlock/quarantine.json").is_file());
-        assert!(!adblock_dir.join("AdBlock_Stale.list").exists());
-        assert!(!adblock_dir.join("AdBlock_Stale_Singbox.srs").exists());
+        // Unknown files are not catalog-owned and must never be deleted as cleanup.
+        assert_eq!(
+            fs::read_to_string(adblock_dir.join("AdBlock_Stale.list")).unwrap(),
+            "DOMAIN,stale.test\n"
+        );
+        assert_eq!(
+            fs::read(adblock_dir.join("AdBlock_Stale_Singbox.srs")).unwrap(),
+            b"stale"
+        );
         let shard = fs::read_to_string(root.join("rulesets/AdBlock/AdBlock_Local.list")).unwrap();
         assert!(shard.contains("functional-ad.fixture.test"));
         let split = fs::read_to_string(
@@ -3264,6 +3514,15 @@ hostname = split-ad.fixture.test, protected0.example
         let quarantine = fs::read_to_string(root.join("rulesets/AdBlock/quarantine.json")).unwrap();
         assert!(quarantine.contains("10.0.0.0/24"));
 
+        assert!(AdBlockManager::new(root.clone()).merge(true));
+        assert_eq!(
+            fs::read_to_string(adblock_dir.join("AdBlock_Stale.list")).unwrap(),
+            "DOMAIN,stale.test\n"
+        );
+        assert_eq!(
+            fs::read(adblock_dir.join("AdBlock_Stale_Singbox.srs")).unwrap(),
+            b"stale"
+        );
         fs::remove_dir_all(root).unwrap();
     }
 }

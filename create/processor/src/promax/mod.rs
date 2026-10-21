@@ -1,5 +1,6 @@
 pub mod artifact;
 mod compiler;
+pub(crate) mod feed;
 pub mod functional;
 pub mod rule;
 pub mod safety;

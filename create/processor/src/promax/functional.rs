@@ -36,7 +36,8 @@ pub fn normalize_domain_source_line(line: &str) -> Option<String> {
         .trim_start_matches("+.")
         .trim_start_matches('.')
         .trim_end_matches('^');
-    if candidate.starts_with("*.") {
+    let subdomain_wildcard = candidate.starts_with("*.");
+    if subdomain_wildcard {
         candidate = &candidate[2..];
     }
     if !candidate.contains('.')
@@ -48,17 +49,43 @@ pub fn normalize_domain_source_line(line: &str) -> Option<String> {
         return None;
     }
 
-    let kind = if candidate.contains('*') || candidate.contains('?') {
+    let kind = if subdomain_wildcard || candidate.contains('*') || candidate.contains('?') {
         "DOMAIN-WILDCARD"
     } else {
         "DOMAIN-SUFFIX"
     };
-    Some(format!("{kind},{}", candidate.to_ascii_lowercase()))
+    let domain = candidate.to_ascii_lowercase();
+    let domain = if subdomain_wildcard {
+        format!("*.{domain}")
+    } else {
+        domain
+    };
+    Some(format!("{kind},{domain}"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::normalize_domain_source_line;
+
+    #[test]
+    fn preserves_subdomain_only_wildcards() {
+        assert_eq!(
+            normalize_domain_source_line("*.example.test").as_deref(),
+            Some("DOMAIN-WILDCARD,*.example.test")
+        );
+        assert_eq!(
+            normalize_domain_source_line("||*.example.test^").as_deref(),
+            Some("DOMAIN-WILDCARD,*.example.test")
+        );
+        assert_eq!(
+            normalize_domain_source_line("+.example.test").as_deref(),
+            Some("DOMAIN-SUFFIX,example.test")
+        );
+        assert_eq!(
+            normalize_domain_source_line(".example.test").as_deref(),
+            Some("DOMAIN-SUFFIX,example.test")
+        );
+    }
 
     #[test]
     fn recognizes_plain_hosts_and_adblock_domain_lines() {

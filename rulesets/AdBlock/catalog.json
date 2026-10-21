@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-19 17:58:16",
+  "updated": "2026-10-21 09:25:40",
   "rules_per_shard_max": 100000,
   "modules": {
     "loon_promax_cdn": {
@@ -49,6 +49,13 @@
     "Script": 273,
     "URL Rewrite": 547
   },
+  "verified_rolling_feeds": {
+    "ThreatIntel_TIF": {
+      "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt",
+      "version": "2026.1020.1431.44",
+      "declared_entries": 606218
+    }
+  },
   "shards": [
     {
       "file": "rulesets/AdBlock/AdBlock_Local.list",
@@ -96,7 +103,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 32896,
+      "rule_count": 37274,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
@@ -106,7 +113,7 @@
       "label_zh": "隐私追踪",
       "purpose": "Privacy / tracking-protection / 防追踪列表",
       "shard_index": 1,
-      "rule_count": 4912,
+      "rule_count": 4913,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist"
     },
@@ -126,7 +133,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 4245,
+      "rule_count": 4247,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist"
     },
@@ -146,7 +153,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 2,
-      "rule_count": 41070,
+      "rule_count": 42167,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },
@@ -206,39 +213,9 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 6,
-      "rule_count": 100000,
+      "rule_count": 6554,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F06%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F06%2Elist"
-    },
-    {
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 7,
-      "rule_count": 100000,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F07%2Elist",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F07%2Elist"
-    },
-    {
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_08.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 8,
-      "rule_count": 100000,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F08%2Elist",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F08%2Elist"
-    },
-    {
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_09.list",
-      "category": "ThreatIntel_TIF",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "shard_index": 9,
-      "rule_count": 34742,
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F09%2Elist",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F09%2Elist"
     },
     {
       "file": "rulesets/AdBlock/AdBlock_ThreatIntel.list",
@@ -246,7 +223,7 @@
       "label_zh": "威胁情报·补充",
       "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
       "shard_index": 1,
-      "rule_count": 63011,
+      "rule_count": 62676,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist"
     }

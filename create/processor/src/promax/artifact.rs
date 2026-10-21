@@ -3,7 +3,7 @@ use super::safety::QuarantineRecord;
 use super::validation::{validate_loon_plugin, validate_surge_module};
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -92,10 +92,18 @@ pub fn shadowrocket_variant(
 }
 
 pub fn validate_coverage_floor(root: &Path, artifacts: &[GeneratedArtifact]) -> Result<(), String> {
+    validate_coverage_floor_with_rolling(root, artifacts, &BTreeMap::new())
+}
+
+pub(crate) fn validate_coverage_floor_with_rolling(
+    root: &Path,
+    artifacts: &[GeneratedArtifact],
+    verified_rolling_feeds: &BTreeMap<String, super::feed::VerifiedFeed>,
+) -> Result<(), String> {
     let catalog_path = root.join("rulesets/AdBlock/catalog.json");
     let catalog_content = match fs::read_to_string(&catalog_path) {
         Ok(content) => content,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => "{\"shards\":[]}".to_string(),
         Err(error) => {
             return Err(format!(
                 "cannot read previous PROMAX coverage at {}: {error}",
@@ -108,26 +116,55 @@ pub fn validate_coverage_floor(root: &Path, artifacts: &[GeneratedArtifact]) -> 
     let shards = catalog["shards"]
         .as_array()
         .ok_or_else(|| "previous PROMAX coverage is missing a shards array".to_string())?;
+    let mut previous_rolling = std::collections::BTreeMap::<String, u64>::new();
+    let mut previous_total = 0_u64;
     let previous = shards.iter().enumerate().try_fold(
         0_u64,
         |total, (index, shard)| -> Result<u64, String> {
             let count = shard["rule_count"].as_u64().ok_or_else(|| {
                 format!("previous PROMAX coverage shard {index} has an invalid rule_count")
             })?;
+            previous_total = previous_total.checked_add(count).ok_or_else(|| {
+                "previous PROMAX coverage rule_count total overflows u64".to_string()
+            })?;
+            if let Some(category) = shard["category"].as_str()
+                && verified_rolling_feeds.contains_key(category)
+            {
+                let previous = previous_rolling.entry(category.to_string()).or_default();
+                *previous = previous
+                    .checked_add(count)
+                    .ok_or_else(|| "previous rolling coverage count overflows u64".to_string())?;
+                return Ok(total);
+            }
             total.checked_add(count).ok_or_else(|| {
                 "previous PROMAX coverage rule_count total overflows u64".to_string()
             })
         },
     )?;
-    if previous == 0 {
+    if previous_total == 0 && verified_rolling_feeds.is_empty() {
         return Ok(());
     }
 
     let mut current = 0_u64;
+    let mut current_rolling = std::collections::BTreeMap::<String, u64>::new();
+    let mut counted_shards = HashSet::new();
     for artifact in artifacts
         .iter()
         .filter(|artifact| artifact.kind == ArtifactKind::ExternalRuleset)
     {
+        let Ok(relative) = artifact.target.strip_prefix(root) else {
+            continue;
+        };
+        let Some(filename) = relative.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+        if relative.parent() != Some(Path::new("rulesets/AdBlock"))
+            || !filename.starts_with("AdBlock_")
+            || !filename.ends_with(".list")
+            || !counted_shards.insert(relative.to_path_buf())
+        {
+            continue;
+        }
         let count = artifact
             .content
             .lines()
@@ -138,9 +175,36 @@ pub fn validate_coverage_floor(root: &Path, artifacts: &[GeneratedArtifact]) -> 
             .count();
         let count = u64::try_from(count)
             .map_err(|_| "PROMAX coverage rule count exceeds u64".to_string())?;
+        if let Some(category) = artifact
+            .content
+            .lines()
+            .find_map(|line| line.strip_prefix("# Category-Key: "))
+            && verified_rolling_feeds.contains_key(category)
+        {
+            let current = current_rolling.entry(category.to_string()).or_default();
+            *current = current
+                .checked_add(count)
+                .ok_or_else(|| "rolling coverage count overflows u64".to_string())?;
+            continue;
+        }
         current = current
             .checked_add(count)
             .ok_or_else(|| "PROMAX coverage rule count total overflows u64".to_string())?;
+    }
+    for (category, feed) in verified_rolling_feeds {
+        let current = current_rolling.get(category).copied().unwrap_or_default();
+        // TIF currently retains 83-89% after cross-source deduplication and safety filtering.
+        let floor = (feed.declared_entries as u128 * 80).div_ceil(100);
+        if u128::from(current) < floor {
+            return Err(format!(
+                "verified rolling category {category} retained {current} of {} source entries (minimum {floor})",
+                feed.declared_entries
+            ));
+        }
+        println!(
+            "[INFO] Verified rolling feed {category}: {} -> {current} published rules; source integrity checked independently.",
+            previous_rolling.get(category).copied().unwrap_or_default()
+        );
     }
     let floor = (u128::from(previous) * 90 / 100) as u64;
     if current < floor {
@@ -497,12 +561,99 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
             .collect::<Vec<_>>()
             .join("\n");
         let artifacts = vec![GeneratedArtifact {
-            target: root.join("rulesets/AdBlock/new.list"),
+            target: root.join("rulesets/AdBlock/AdBlock_Advertising.list"),
             content: rules,
             kind: ArtifactKind::ExternalRuleset,
         }];
 
         assert!(super::validate_coverage_floor(&root, &artifacts).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn coverage_floor_excludes_legacy_and_github_mirror_rulesets() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-coverage-mirrors-{unique}"));
+        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+        fs::write(
+            root.join("rulesets/AdBlock/catalog.json"),
+            r#"{"shards":[{"file":"rulesets/AdBlock/AdBlock_Advertising.list","rule_count":100}]}"#,
+        )
+        .unwrap();
+        let rules = (0..89)
+            .map(|index| format!("DOMAIN,ad{index}.example"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let artifacts = [
+            GeneratedArtifact {
+                target: root.join("rulesets/AdBlock/AdBlock_Advertising.list"),
+                content: rules.clone(),
+                kind: ArtifactKind::ExternalRuleset,
+            },
+            GeneratedArtifact {
+                target: root.join("rulesets/RULE-SET/AdBlock.list"),
+                content: rules.clone(),
+                kind: ArtifactKind::ExternalRuleset,
+            },
+            GeneratedArtifact {
+                target: root.join("rulesets/AdBlock/github/AdBlock_Advertising.list"),
+                content: rules,
+                kind: ArtifactKind::ExternalRuleset,
+            },
+        ];
+
+        let error = validate_coverage_floor(&root, &artifacts).unwrap_err();
+        assert!(error.contains("from 100 to 89 rules (minimum 90)"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn verified_rolling_feed_can_expire_without_weakening_stable_coverage() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-rolling-coverage-{unique}"));
+        let catalog = root.join("rulesets/AdBlock/catalog.json");
+        fs::create_dir_all(catalog.parent().unwrap()).unwrap();
+        fs::write(catalog, r#"{"shards":[{"category":"Advertising","rule_count":100},{"category":"ThreatIntel_TIF","rule_count":1000}]}"#).unwrap();
+        let make_rules = |count| {
+            (0..count)
+                .map(|index| format!("DOMAIN,ad{index}.example\n"))
+                .collect::<String>()
+        };
+        let mut artifacts = vec![
+            GeneratedArtifact {
+                target: root.join("rulesets/AdBlock/AdBlock_Advertising.list"),
+                content: make_rules(100),
+                kind: ArtifactKind::ExternalRuleset,
+            },
+            GeneratedArtifact {
+                target: root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF.list"),
+                content: format!("# Category-Key: ThreatIntel_TIF\n{}", make_rules(500)),
+                kind: ArtifactKind::ExternalRuleset,
+            },
+        ];
+        let verified = std::collections::BTreeMap::from([(
+            "ThreatIntel_TIF".to_string(),
+            super::super::feed::VerifiedFeed {
+                source: "fixture".to_string(),
+                version: "fixture".to_string(),
+                declared_entries: 600,
+            },
+        )]);
+        assert!(validate_coverage_floor(&root, &artifacts).is_err());
+        assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_ok());
+        artifacts[0].content = make_rules(89);
+        assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_err());
+        artifacts[0].content = make_rules(100);
+        artifacts[1].content = format!("# Category-Key: ThreatIntel_TIF\n{}", make_rules(1));
+        assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_err());
+        artifacts.pop();
+        assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_err());
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -515,6 +666,78 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         let root = std::env::temp_dir().join(format!("promax-coverage-first-run-{unique}"));
 
         assert!(validate_coverage_floor(&root, &[]).is_ok());
+    }
+
+    #[test]
+    fn verified_rolling_feed_floor_applies_without_a_historical_baseline() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-rolling-first-run-{unique}"));
+        let verified = std::collections::BTreeMap::from([(
+            "ThreatIntel_TIF".to_string(),
+            super::super::feed::VerifiedFeed {
+                source: "fixture".to_string(),
+                version: "fixture".to_string(),
+                declared_entries: 10,
+            },
+        )]);
+        let artifact = |count| GeneratedArtifact {
+            target: root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF.list"),
+            content: format!(
+                "# Category-Key: ThreatIntel_TIF\n{}",
+                (0..count)
+                    .map(|index| format!("DOMAIN,tif{index}.example\n"))
+                    .collect::<String>()
+            ),
+            kind: ArtifactKind::ExternalRuleset,
+        };
+
+        assert!(
+            super::validate_coverage_floor_with_rolling(&root, &[artifact(1)], &verified).is_err()
+        );
+        assert!(
+            super::validate_coverage_floor_with_rolling(&root, &[artifact(8)], &verified).is_ok()
+        );
+    }
+
+    #[test]
+    fn verified_rolling_feed_floor_applies_to_zero_rule_baseline() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-rolling-zero-baseline-{unique}"));
+        let catalog = root.join("rulesets/AdBlock/catalog.json");
+        fs::create_dir_all(catalog.parent().unwrap()).unwrap();
+        fs::write(&catalog, r#"{"shards":[]}"#).unwrap();
+        let verified = std::collections::BTreeMap::from([(
+            "ThreatIntel_TIF".to_string(),
+            super::super::feed::VerifiedFeed {
+                source: "fixture".to_string(),
+                version: "fixture".to_string(),
+                declared_entries: 10,
+            },
+        )]);
+        let artifact = |count| GeneratedArtifact {
+            target: root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF.list"),
+            content: format!(
+                "# Category-Key: ThreatIntel_TIF\n{}",
+                (0..count)
+                    .map(|index| format!("DOMAIN,tif{index}.example\n"))
+                    .collect::<String>()
+            ),
+            kind: ArtifactKind::ExternalRuleset,
+        };
+
+        assert!(
+            super::validate_coverage_floor_with_rolling(&root, &[artifact(1)], &verified).is_err()
+        );
+        assert!(
+            super::validate_coverage_floor_with_rolling(&root, &[artifact(8)], &verified).is_ok()
+        );
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
