@@ -1522,7 +1522,8 @@ pub fn format_split_module_pub(
     ad_sections: &HashMap<String, Vec<String>>,
     note: &str,
 ) -> String {
-    let base = Path::new(source_path)
+    let source_path = source_path.replace('\\', "/");
+    let base = Path::new(&source_path)
         .file_name()
         .map(|f| f.to_string_lossy().to_string())
         .unwrap_or_default();
@@ -1530,7 +1531,7 @@ pub fn format_split_module_pub(
         format!("#!name=PROMAX split · {}", base),
         format!("#!desc={}", note),
         "#!author=ScriptHub-Automated".to_string(),
-        format!("#!split-source={}", source_path),
+        format!("#!split-source={source_path}"),
     ];
 
     let order = &[
@@ -1907,7 +1908,7 @@ pub fn merge_mitm_hosts_pub(sections: &[ModuleSectionPub]) -> Vec<ModuleSectionP
 mod ruleset_cleanup_tests {
     use super::{
         LineVerdict, ModuleSectionPub, classify_promax_line_pub, dedupe_key_pub,
-        dedupe_section_lines_pub, format_module_pub, merge_mitm_hosts_pub,
+        dedupe_section_lines_pub, format_module_pub, format_split_module_pub, merge_mitm_hosts_pub,
         normalize_url_regex_rule, run_cleanup, script_matcher_key_pub, write_list,
     };
     use std::fs;
@@ -1920,28 +1921,34 @@ mod ruleset_cleanup_tests {
             .unwrap()
             .as_nanos();
         let root = std::env::temp_dir().join(format!("ruleset-cleanup-{label}-{id}"));
-        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
-        fs::create_dir_all(root.join("rulesets/RULE-SET")).unwrap();
+        fs::create_dir_all(root.join("rulesets").join("AdBlock")).unwrap();
+        fs::create_dir_all(root.join("rulesets").join("RULE-SET")).unwrap();
         root
     }
 
     #[test]
     fn invalid_utf8_preserves_all_inputs_before_cleanup_writes() {
-        for bad_path in [
-            "rulesets/AdBlock/reject-drop.list",
-            "rulesets/AdBlock/reject-no-drop.list",
-            "rulesets/RULE-SET/Broken.list",
+        for (directory, filename) in [
+            ("AdBlock", "reject-drop.list"),
+            ("AdBlock", "reject-no-drop.list"),
+            ("RULE-SET", "Broken.list"),
         ] {
             let root = cleanup_fixture("invalid-utf8");
-            let reject = root.join("rulesets/AdBlock/reject-drop.list");
+            let reject = root
+                .join("rulesets")
+                .join("AdBlock")
+                .join("reject-drop.list");
             let original = "# Existing\nDOMAIN,7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe\n";
             fs::write(&reject, original).unwrap();
-            let bad = root.join(bad_path);
+            let bad = root.join("rulesets").join(directory).join(filename);
             fs::write(&bad, [0xff]).unwrap();
 
             let error = run_cleanup(root.to_str().unwrap()).unwrap_err();
 
-            assert!(error.contains(&bad.display().to_string()));
+            assert!(
+                error.contains(&bad.display().to_string()),
+                "diagnostic did not identify {bad:?}: {error}"
+            );
             assert_eq!(fs::read(&bad).unwrap(), [0xff]);
             if bad != reject {
                 assert_eq!(fs::read_to_string(reject).unwrap(), original);
@@ -2118,6 +2125,19 @@ mod ruleset_cleanup_tests {
 
         assert!(!output.contains("[General]"));
         assert!(output.contains("[Script]"));
+    }
+
+    #[test]
+    fn split_module_metadata_uses_portable_forward_slashes() {
+        let output = format_split_module_pub(
+            r"rulesets\Sources\mixed-adblock.sgmodule",
+            &std::collections::HashMap::new(),
+            "fixture",
+        );
+
+        assert!(output.contains("#!name=PROMAX split · mixed-adblock.sgmodule"));
+        assert!(output.contains("#!split-source=rulesets/Sources/mixed-adblock.sgmodule"));
+        assert!(!output.contains('\\'));
     }
 
     #[test]
