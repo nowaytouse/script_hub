@@ -1739,7 +1739,7 @@ pub fn adapt_script_line_for_loon_pub(tag: &str, line_content: &str) -> String {
     format!("{} {}", prefix, loon_parts.join(","))
 }
 
-fn split_script_parameters(input: &str) -> Vec<&str> {
+pub(crate) fn split_script_parameters(input: &str) -> Vec<&str> {
     let mut parts = Vec::new();
     let mut start = 0;
     let mut quote = None;

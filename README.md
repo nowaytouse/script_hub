@@ -15,6 +15,14 @@
 
 规则索引与分片说明见 `rulesets/AdBlock/README.md` 和 `rulesets/AdBlock/catalog.json`。
 
+### 移动端运行开销
+
+保留现有广告源、规则分片和响应处理功能，不通过裁剪规则、强制脚本引擎或统一降低 body 大小上限换取静态指标。编译器会把简单 HTTP 主机正则中的跨路径通配符限制在 URL authority 内，避免路径中的域名文本误触发脚本/重写；MITM 仅在请求主机可被严格证明时收束到实际引用的完整主机，复杂正则保留兼容范围，排除项始终先于包含项。
+
+Surge 已为大型规则集建立索引；规则数量、MITM 主机条数和脚本匹配次数不能直接换算成电池收益。实际耗电需在同一设备、网络、应用负载及缓存状态下对照观测。相关语义见 [Surge 规则集](https://manual.nssurge.com/rules/ruleset.html)、[脚本与 body 缓冲](https://manual.nssurge.com/scripting/overview.html)。
+
+若发布失败且回滚也失败，更新器会报告恢复路径并保留 staging/backup，后续更新会停止覆盖这些恢复数据；检查并恢复后再继续发布，不要直接删除错误信息所指的备份目录。
+
 ## 功能模块
 
 - `modules/surge/amplify_nexus/`：可独立安装的增强、翻译、解锁与工具合集。

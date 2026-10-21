@@ -325,9 +325,29 @@ impl SafetyPolicy {
     pub fn functional_host_patterns(functional_lines: &[String]) -> Vec<String> {
         let mut patterns: Vec<String> = functional_lines
             .iter()
-            .flat_map(|line| request_host_patterns(functional_request_pattern(line)))
-            .map(|hostname| hostname_reference_token(&hostname))
-            .filter(|token| token.len() >= 4)
+            .flat_map(|line| {
+                let request = functional_request_pattern(line);
+                if let Some(hostname) = literal_request_hostname(request) {
+                    vec![
+                        format!("observed:{}", hostname_reference_token(&hostname)),
+                        format!("host:{hostname}"),
+                    ]
+                } else {
+                    request_host_patterns(request)
+                        .into_iter()
+                        .flat_map(|hostname| {
+                            let token = hostname_reference_token(&hostname);
+                            [format!("observed:{token}"), format!("fallback:{token}")]
+                        })
+                        .collect()
+                }
+            })
+            .filter(|pattern| {
+                pattern
+                    .rsplit(':')
+                    .next()
+                    .is_some_and(|token| token.len() >= 4)
+            })
             .collect();
         patterns.sort();
         patterns.dedup();
@@ -335,14 +355,90 @@ impl SafetyPolicy {
     }
 
     pub fn hostname_is_referenced_by_patterns(&self, hostname: &str, patterns: &[String]) -> bool {
+        let hostname = hostname.trim();
+        if hostname.starts_with('-') {
+            return true;
+        }
+        let hostname = hostname.split_once(':').map_or(hostname, |(host, _)| host);
         if self.hostname_is_protected(hostname) {
             return false;
         }
         let token = hostname_reference_token(hostname);
+        // Refinement may reduce the old scope, never activate a previously unreferenced wildcard.
+        if patterns
+            .binary_search(&format!("observed:{token}"))
+            .is_err()
+        {
+            return false;
+        }
+        let normalized = hostname.to_ascii_lowercase();
+        if normalized.is_empty() {
+            return false;
+        }
+        let has_glob = normalized.contains(['*', '?']);
+        let glob = has_glob.then(|| wildcard_regex(&normalized));
+        if patterns
+            .iter()
+            .filter_map(|pattern| pattern.strip_prefix("host:"))
+            .any(|host| {
+                glob.as_ref()
+                    .map_or_else(|| normalized == host, |glob| glob.is_match(host))
+            })
+        {
+            return true;
+        }
         if token.len() < 4 {
             return false;
         }
-        patterns.binary_search(&token).is_ok()
+        patterns.binary_search(&format!("fallback:{token}")).is_ok()
+    }
+
+    pub fn refine_mitm_hosts(&self, hosts: &[String], patterns: &[String]) -> Vec<String> {
+        let mut refined = Vec::new();
+        for host in hosts {
+            if host.starts_with('-') {
+                refined.push(host.clone());
+                continue;
+            }
+            let (pattern_host, port) =
+                host.split_once(':')
+                    .map_or((host.as_str(), None), |(value, port)| {
+                        if !port.is_empty() && port.bytes().all(|byte| byte.is_ascii_digit()) {
+                            (value, Some(port))
+                        } else {
+                            (host.as_str(), None)
+                        }
+                    });
+            let Some(suffix) = pattern_host.strip_prefix("*.") else {
+                refined.push(host.clone());
+                continue;
+            };
+            let token = hostname_reference_token(suffix);
+            if patterns.binary_search(&format!("fallback:{token}")).is_ok() {
+                refined.push(host.clone());
+                continue;
+            }
+            let glob = wildcard_regex(pattern_host);
+            let mut matches: Vec<String> = patterns
+                .iter()
+                .filter_map(|pattern| pattern.strip_prefix("host:"))
+                .filter(|hostname| glob.is_match(hostname))
+                .map(|hostname| match port {
+                    Some(port) => format!("{hostname}:{port}"),
+                    None => hostname.to_string(),
+                })
+                .collect();
+            matches.sort();
+            matches.dedup();
+            if matches.is_empty() {
+                refined.push(host.clone());
+            } else {
+                refined.extend(matches);
+            }
+        }
+        refined.sort();
+        refined.dedup();
+        refined
     }
 
     fn protected_hosts(&self) -> impl Iterator<Item = &str> {
@@ -440,7 +536,7 @@ impl SafetyPolicy {
     }
 }
 
-fn functional_request_pattern(line: &str) -> &str {
+pub(crate) fn functional_request_pattern(line: &str) -> &str {
     if let Some((_, pattern)) = line.split_once("pattern=") {
         return top_level_parameter_value(pattern);
     }
@@ -450,6 +546,34 @@ fn functional_request_pattern(line: &str) -> &str {
         fields.next().unwrap_or(first)
     } else {
         first
+    }
+}
+
+fn literal_request_hostname(request: &str) -> Option<String> {
+    let normalized = request.replace(r"\/", "/");
+    let rest = normalized
+        .strip_prefix("^https://")
+        .or_else(|| normalized.strip_prefix("^https?://"))?;
+    let authority = rest.split_once('/')?.0;
+    if authority.is_empty()
+        || authority.contains(':')
+        || authority.contains(['*', '?', '+', '|', '[', ']', '(', ')', '{', '}', '^', '$'])
+    {
+        return None;
+    }
+    let hostname = authority.replace(r"\.", ".");
+    if hostname.contains('.')
+        && hostname.split('.').all(|label| {
+            !label.is_empty()
+                && label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        })
+        && authority.matches(r"\.").count() == hostname.matches('.').count()
+    {
+        Some(hostname.to_ascii_lowercase())
+    } else {
+        None
     }
 }
 
@@ -484,6 +608,7 @@ fn top_level_parameter_value(value: &str) -> &str {
 }
 
 fn request_host_patterns(request: &str) -> Vec<String> {
+    // Keep source admission unchanged; runtime refinements must not enable extra handlers.
     let normalized = request
         .replace(r"\.", ".")
         .replace(r"\/", "/")
@@ -500,6 +625,28 @@ fn request_host_patterns(request: &str) -> Vec<String> {
         .find_iter(authority)
         .map(|candidate| candidate.as_str().trim_matches('.').to_string())
         .collect()
+}
+
+pub(crate) fn regex_authority_end(pattern: &str) -> usize {
+    let mut in_class = false;
+    let mut escaped = false;
+    for (index, character) in pattern.char_indices() {
+        if escaped {
+            escaped = false;
+            if !in_class && (character == '/' || character == '?') {
+                return index.saturating_sub(1);
+            }
+            continue;
+        }
+        match character {
+            '\\' => escaped = true,
+            '[' if !in_class => in_class = true,
+            ']' if in_class => in_class = false,
+            '/' | '#' if !in_class => return index,
+            _ => {}
+        }
+    }
+    pattern.len()
 }
 
 fn hostname_reference_token(hostname: &str) -> String {
@@ -709,6 +856,117 @@ mod tests {
         ];
 
         assert!(!safety.hostname_is_referenced("*.ads.example", &functions));
+    }
+
+    #[test]
+    fn literal_request_hosts_do_not_cross_retain_sibling_or_public_suffix_hosts() {
+        let safety = SafetyPolicy::default();
+        let functions = vec![
+            r#"x = type=http-response,pattern=^https://api\.example\.com/feed,script-path=https://scripts.example/x.js"#.to_string(),
+            r#"^https://api\.service\.com\.cn/path _ reject"#.to_string(),
+        ];
+
+        assert!(safety.hostname_is_referenced("api.example.com", &functions));
+        assert!(!safety.hostname_is_referenced("telemetry.example.com", &functions));
+        assert!(safety.hostname_is_referenced("api.service.com.cn", &functions));
+        assert!(!safety.hostname_is_referenced("other.service.com.cn", &functions));
+        assert!(!safety.hostname_is_referenced("scripts.example", &functions));
+    }
+
+    #[test]
+    fn wildcard_mitm_hosts_refine_only_for_proven_literal_requests() {
+        let safety = SafetyPolicy::default();
+        let wildcard = vec!["*.example.com".to_string()];
+        let literal = vec![r#"^https://api\.example\.com/feed _ reject"#.to_string()];
+        let complex = vec![r#"^https://api[0-9]+\.example\.com/feed _ reject"#.to_string()];
+
+        assert_eq!(
+            safety.refine_mitm_hosts(&wildcard, &SafetyPolicy::functional_host_patterns(&literal)),
+            vec!["api.example.com"]
+        );
+        assert_eq!(
+            safety.refine_mitm_hosts(&wildcard, &SafetyPolicy::functional_host_patterns(&complex)),
+            wildcard
+        );
+        assert!(safety.hostname_is_referenced("api.example.com", &literal));
+    }
+
+    #[test]
+    fn literal_escaped_slashes_still_filter_sibling_hosts() {
+        let safety = SafetyPolicy::default();
+        let functions = vec![r#"^https?:\/\/api\.example\.test/path _ reject"#.to_string()];
+
+        assert!(safety.hostname_is_referenced("api.example.test", &functions));
+        assert!(!safety.hostname_is_referenced("telemetry.example.test", &functions));
+    }
+
+    #[test]
+    fn narrowed_authority_character_class_preserves_host_fallback_and_safety() {
+        let broad = vec![r#"^https?://.*\.example\.test/ads _ reject"#.to_string()];
+        let narrowed =
+            vec![r#"^https?://[^\x2f\x3f\x23]*\.example\.test/ads _ reject"#.to_string()];
+
+        assert_eq!(
+            SafetyPolicy::functional_host_patterns(&broad),
+            SafetyPolicy::functional_host_patterns(&narrowed)
+        );
+        assert_eq!(
+            SafetyPolicy::default().functional_decision(&narrowed[0]),
+            SafetyDecision::Keep
+        );
+    }
+
+    #[test]
+    fn runtime_refinement_does_not_activate_previously_unclassified_sources() {
+        let source = r"^https?://[^/]+\.example\.test/ads _ reject";
+        assert!(matches!(
+            SafetyPolicy::default().functional_decision(source),
+            SafetyDecision::Quarantine(_)
+        ));
+    }
+
+    #[test]
+    fn precise_references_do_not_activate_a_new_broad_mitm_glob() {
+        let patterns = SafetyPolicy::functional_host_patterns(&[
+            r"^https://api\.ximalaya\.com/ads _ reject".to_string(),
+        ]);
+        assert!(
+            !SafetyPolicy::default().hostname_is_referenced_by_patterns("*.xima*.*", &patterns)
+        );
+        assert!(
+            SafetyPolicy::default().hostname_is_referenced_by_patterns("*.ximalaya.com", &patterns)
+        );
+    }
+
+    #[test]
+    fn wildcard_reference_matching_handles_internal_stars_and_question_marks() {
+        let safety = SafetyPolicy::default();
+        let patterns = SafetyPolicy::functional_host_patterns(&[
+            r"^https://api\.example\.test/ads _ reject".to_string(),
+            r"^https://api1\.example\.test/ads _ reject".to_string(),
+        ]);
+
+        assert!(safety.hostname_is_referenced_by_patterns("api*.example.test", &patterns));
+        assert!(safety.hostname_is_referenced_by_patterns("api?.example.test", &patterns));
+    }
+
+    #[test]
+    fn mitm_ports_and_exclusions_are_preserved_for_reference_filtering() {
+        let safety = SafetyPolicy::from_lines(["DOMAIN-SUFFIX,protected.test"]);
+        let patterns = SafetyPolicy::functional_host_patterns(&[
+            r"^https://api\.example\.test/ads _ reject".to_string(),
+        ]);
+
+        assert!(safety.hostname_is_referenced_by_patterns("*.example.test:443", &patterns));
+        assert_eq!(
+            safety.refine_mitm_hosts(&["*.example.test:443".to_string()], &patterns),
+            vec!["api.example.test:443"]
+        );
+        assert!(safety.hostname_is_referenced_by_patterns("-protected.test", &[]));
+        assert_eq!(
+            safety.refine_mitm_hosts(&["-protected.test".to_string()], &[]),
+            vec!["-protected.test"]
+        );
     }
 
     #[test]

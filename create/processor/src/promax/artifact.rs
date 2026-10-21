@@ -237,6 +237,13 @@ fn publish_artifacts_inner(
 ) -> Result<(), String> {
     let staging_root = root.join(".cache/promax-staging");
     if staging_root.exists() {
+        if staging_root.join(".recovery-required").exists() || staging_root.join(".backup").exists()
+        {
+            return Err(format!(
+                "PROMAX staging or recovery data must be reviewed before another publication: {}",
+                staging_root.display()
+            ));
+        }
         fs::remove_dir_all(&staging_root)
             .map_err(|error| format!("cannot reset PROMAX staging directory: {error}"))?;
     }
@@ -368,6 +375,8 @@ fn promote_transaction(
 
     let backup_root = staging_root.join(".backup");
     let mut backups = Vec::new();
+    fs::create_dir_all(&backup_root)
+        .map_err(|error| format!("cannot create PROMAX backup directory: {error}"))?;
     for (target, _) in publications {
         let relative = target.strip_prefix(root).map_err(|_| {
             format!(
@@ -393,15 +402,18 @@ fn promote_transaction(
         if let Some(parent) = target.parent()
             && let Err(error) = fs::create_dir_all(parent)
         {
-            rollback(&backups);
-            return Err(format!("cannot create {}: {error}", parent.display()));
+            return abort_promotion(
+                staging_root,
+                &backups,
+                format!("cannot create {}: {error}", parent.display()),
+            );
         }
         if let Err(error) = fs::rename(staged, target) {
-            rollback(&backups);
-            return Err(format!(
-                "cannot atomically publish {}: {error}",
-                target.display()
-            ));
+            return abort_promotion(
+                staging_root,
+                &backups,
+                format!("cannot atomically publish {}: {error}", target.display()),
+            );
         }
     }
     if let Err(error) = fs::remove_dir_all(staging_root) {
@@ -410,14 +422,59 @@ fn promote_transaction(
     Ok(())
 }
 
-fn rollback(backups: &[(PathBuf, Option<PathBuf>)]) {
+fn abort_promotion(
+    staging_root: &Path,
+    backups: &[(PathBuf, Option<PathBuf>)],
+    publish_error: String,
+) -> Result<(), String> {
+    let rollback_errors = rollback(backups);
+    if !rollback_errors.is_empty() {
+        let marker = staging_root.join(".recovery-required");
+        let marker_error = fs::write(&marker, rollback_errors.join("\n"))
+            .err()
+            .map(|error| format!("; cannot write recovery marker: {error}"))
+            .unwrap_or_default();
+        return Err(format!(
+            "{publish_error}; rollback failed: {}; recovery data preserved at {}{}",
+            rollback_errors.join("; "),
+            staging_root.display(),
+            marker_error
+        ));
+    }
+    if let Err(error) = fs::remove_dir_all(staging_root) {
+        return Err(format!(
+            "{publish_error}; rollback completed, but staging cleanup failed at {}: {error}",
+            staging_root.display()
+        ));
+    }
+    Err(publish_error)
+}
+
+fn rollback(backups: &[(PathBuf, Option<PathBuf>)]) -> Vec<String> {
+    let mut errors = Vec::new();
     for (target, backup) in backups.iter().rev() {
-        if let Some(backup) = backup {
-            let _ = fs::copy(backup, target);
-        } else if target.exists() {
-            let _ = fs::remove_file(target);
+        let result = match backup {
+            Some(backup) => fs::copy(backup, target).map(|_| ()).map_err(|error| {
+                format!(
+                    "cannot restore {} from {}: {error}",
+                    target.display(),
+                    backup.display()
+                )
+            }),
+            None => match fs::remove_file(target) {
+                Ok(()) => Ok(()),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+                Err(error) => Err(format!(
+                    "cannot remove partially published {}: {error}",
+                    target.display()
+                )),
+            },
+        };
+        if let Err(error) = result {
+            errors.push(error);
         }
     }
+    errors
 }
 
 pub fn convert_surge_to_shadowrocket(content: &str) -> String {
@@ -540,6 +597,38 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
 
         assert!(publish_artifacts(&root, &artifacts, &[]).is_err());
         assert_eq!(fs::read_to_string(&target).unwrap(), "stable\n");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn failed_rollback_reports_error_and_preserves_recovery_data() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-rollback-failure-{unique}"));
+        fs::create_dir_all(&root).unwrap();
+        let target = root.join("removed-parent/artifact.list");
+        let staging = root.join(".cache/promax-staging");
+        let backup = staging.join(".backup/artifact.list");
+        fs::create_dir_all(backup.parent().unwrap()).unwrap();
+        fs::write(&backup, "last-known-good\n").unwrap();
+
+        let error = super::abort_promotion(
+            &staging,
+            &[(target.clone(), Some(backup.clone()))],
+            "publish failed".to_string(),
+        )
+        .unwrap_err();
+
+        assert!(error.contains("publish failed"));
+        assert!(error.contains(&target.display().to_string()));
+        assert!(error.contains(&backup.display().to_string()));
+        assert!(error.contains(&staging.display().to_string()));
+        assert!(backup.is_file());
+        assert!(staging.join(".recovery-required").is_file());
+        assert!(super::publish_artifacts_inner(&root, &[], None).is_err());
+        assert!(backup.is_file());
         fs::remove_dir_all(root).unwrap();
     }
 

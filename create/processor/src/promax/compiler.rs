@@ -1003,6 +1003,14 @@ impl AdBlockManager {
                     risk: crate::promax::safety::RiskClass::BroadMedia,
                 });
         }
+        self.mitm_hosts = self
+            .safety
+            .refine_mitm_hosts(
+                &self.mitm_hosts.iter().cloned().collect::<Vec<_>>(),
+                &host_patterns,
+            )
+            .into_iter()
+            .collect();
         self.mitm_hosts
             .extend(crate::promax::safety::apple_mitm_exclusions());
         self.mitm_hosts
@@ -1030,6 +1038,25 @@ impl AdBlockManager {
                 .map(str::to_string)
                 .collect();
         }
+    }
+
+    fn optimize_runtime_sections(&mut self) {
+        for section in [
+            "URL Rewrite",
+            "Map Local",
+            "Script",
+            "Body Rewrite",
+            "Header Rewrite",
+        ] {
+            let lines = self.sections.get_mut(section).unwrap();
+            *lines = lines
+                .iter()
+                .map(|line| crate::promax::functional::narrow_functional_authority(section, line))
+                .collect();
+        }
+        // Surge runs only the first matching script per HTTP event; retain that priority.
+        let scripts = self.sections.get_mut("Script").unwrap();
+        *scripts = crate::smart_cleanup::dedupe_section_lines_pub("Script", scripts);
     }
 
     fn extract_from_text(
@@ -1604,6 +1631,7 @@ impl AdBlockManager {
             });
         }
         self.retain_referenced_mitm_hosts();
+        self.optimize_runtime_sections();
 
         let mut added = HashMap::new();
         let mut summary_parts = Vec::new();
@@ -2950,6 +2978,78 @@ mod tests {
     #[test]
     fn manager_normalizes_an_existing_relative_root() {
         assert!(AdBlockManager::new(".".into()).root_dir.is_absolute());
+    }
+
+    #[test]
+    fn mobile_runtime_keeps_features_but_avoids_unneeded_mitm_and_exclusion_reordering() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        let script = r"remove_ads = type=http-response,pattern=^https://api\.example\.test/ads,requires-body=true,script-path=https://scripts.fixture.test/remove.js";
+        manager.add_section_line("Script", script);
+        for host in [
+            "*.example.test",
+            "telemetry.example.test",
+            "-login.example.test",
+            "*.complex.test",
+        ] {
+            manager.add_mitm_host(host);
+        }
+        manager.add_section_line(
+            "Map Local",
+            r#"^https://(api|feed)\.complex\.test/ads data="https://example.test/empty.json""#,
+        );
+        manager.retain_referenced_mitm_hosts();
+        assert_eq!(manager.sections["Script"], [script]);
+        assert!(manager.mitm_hosts.contains("api.example.test"));
+        assert!(!manager.mitm_hosts.contains("*.example.test"));
+        assert!(!manager.mitm_hosts.contains("telemetry.example.test"));
+        assert!(manager.mitm_hosts.contains("*.complex.test"));
+        assert!(manager.mitm_hosts.contains("-login.example.test"));
+        let module = manager.generate_module(&[], "github");
+        let hosts = module
+            .content
+            .lines()
+            .find(|line| line.starts_with("hostname ="))
+            .unwrap();
+        let hosts = hosts
+            .split_once("%APPEND%")
+            .unwrap()
+            .1
+            .split(',')
+            .map(str::trim)
+            .collect::<Vec<_>>();
+        let first_inclusion = hosts
+            .iter()
+            .position(|host| !host.starts_with('-'))
+            .unwrap();
+        assert!(
+            hosts[first_inclusion..]
+                .iter()
+                .all(|host| !host.starts_with('-'))
+        );
+    }
+
+    #[test]
+    fn runtime_optimization_preserves_first_script_priority_without_changing_admission() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.add_section_line("Script", r"first = type=http-response,pattern=^https://.*\.example\.test/ads,requires-body=true,script-path=https://scripts.test/first.js");
+        manager.add_section_line("Script", r"shadowed = type=http-response,pattern=^https://[^\x2f\x3f\x23]*\.example\.test/ads,requires-body=true,script-path=https://scripts.test/shadowed.js");
+        assert_eq!(manager.sections["Script"].len(), 2);
+        manager.optimize_runtime_sections();
+        assert_eq!(manager.sections["Script"].len(), 1);
+        assert!(manager.sections["Script"][0].contains("first.js"));
+        assert!(manager.sections["Script"][0].contains("requires-body=true"));
+        assert!(manager.sections["Script"][0].contains(r"[^\x2f\x3f\x23]*"));
+    }
+
+    #[test]
+    fn runtime_narrowing_does_not_remove_mitm_required_by_opaque_original_hosts() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.add_section_line("Script", r"flyert = type=http-response,pattern=^https://.*flyert.*/ads,requires-body=true,script-path=https://scripts.test/flyert.js");
+        manager.add_mitm_host("*.flyert.*");
+        manager.retain_referenced_mitm_hosts();
+        manager.optimize_runtime_sections();
+        assert_eq!(manager.sections["Script"].len(), 1);
+        assert!(manager.mitm_hosts.contains("*.flyert.*"));
     }
 
     #[test]
