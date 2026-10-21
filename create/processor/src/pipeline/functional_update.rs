@@ -693,7 +693,13 @@ fn publish_custom_devtools_sources(
     custom_sources: Vec<SourceInput>,
 ) -> Result<(), String> {
     let request = custom_devtools_request(root, custom_sources)?;
-    publish_bundle(root, request, None)
+    // Functional modules must not take over routing policies from the user's
+    // rulesets, including when an added upstream source contains [Rule].
+    publish_bundle(
+        root,
+        request,
+        Some(|content| Ok(strip_rule_section(content))),
+    )
 }
 
 fn merge_custom_devtools(
@@ -1332,7 +1338,7 @@ mod tests {
     #[test]
     fn custom_devtools_marker_survives_finalize_and_empty_sources_restore_curated_base() {
         let root = temporary_root("devtools-custom-marker");
-        let custom_rule = "DOMAIN,custom-devtools.example.test,DIRECT";
+        let custom_rule = "^https://custom-devtools\\.example\\.test/ads - reject";
         publish_custom_devtools_sources(
             &root,
             vec![SourceInput {
@@ -1340,7 +1346,7 @@ mod tests {
                 url: "https://raw.githubusercontent.com/example/repo/main/custom.sgmodule"
                     .to_string(),
                 content: format!(
-                    "#!name=Custom DevTools fixture\n[Rule]\n{custom_rule}\n[MITM]\nhostname = %APPEND% custom-devtools.example.test\n"
+                    "#!name=Custom DevTools fixture\n[Rule]\nDOMAIN,custom-devtools.example.test,DIRECT\n[URL Rewrite]\n{custom_rule}\n[MITM]\nhostname = %APPEND% custom-devtools.example.test\n"
                 ),
             }],
         )
@@ -1355,6 +1361,8 @@ mod tests {
                 .any(|line| line == DEVTOOLS_CUSTOM_MARKER)
         );
         assert!(with_custom.contains(custom_rule));
+        assert!(!with_custom.contains("[Rule]"));
+        assert!(!with_custom.contains("DOMAIN,custom-devtools.example.test,DIRECT"));
 
         publish_custom_devtools_sources(&root, Vec::new()).unwrap();
 
