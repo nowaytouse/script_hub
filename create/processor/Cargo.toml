@@ -3,6 +3,14 @@ name = "rust_processor"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "script-hub-gui"
+path = "src/bin/gui.rs"
+required-features = ["gui"]
+
+[features]
+gui = ["dep:eframe"]
+
 # 構建輸出統一至項目根目錄 target/
 # PROMAX 的本地处理、网络下载和产物验证均由 Rust 负责。
 [profile.release]
@@ -23,3 +31,4 @@ percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.8"
 ureq = { version = "3.4.2", features = ["socks-proxy"] }
+eframe = { version = "0.37", optional = true, default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow", "system_fonts", "wayland", "x11"] }

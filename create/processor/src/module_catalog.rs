@@ -61,11 +61,15 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
     let mut modules = Vec::new();
     for (category, _) in CATEGORIES {
         let dir = root.join("modules").join(platform).join(category);
-        let Ok(entries) = fs::read_dir(&dir) else {
-            continue;
+        let entries = match fs::read_dir(&dir) {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("cannot scan {}: {error}", dir.display())),
         };
         let mut paths: Vec<PathBuf> = entries
-            .flatten()
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|error| format!("cannot scan {}: {error}", dir.display()))?
+            .into_iter()
             .map(|entry| entry.path())
             .filter(|path| path.is_file() && path.extension().is_some_and(|ext| ext == extension))
             .collect();
@@ -269,7 +273,7 @@ pub fn refresh(root: &Path) -> Result<(), String> {
             "generated": generated,
             "total": surge.len(),
             "policy": {
-                "adblock": "仅安装 PROMAX；旧 AdBlock Helper 为无操作兼容占位",
+                "adblock": "广告拦截安装 PROMAX；AdBlock Helper 按需补充 DNS、Host 与关键服务 MITM 排除，不承担分流",
                 "features": "解锁、增强、翻译模块保持独立安装"
             },
             "modules": surge,
@@ -337,11 +341,64 @@ pub fn refresh(root: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Returns the platform module catalog without writing generated files.
+pub fn catalog_snapshot(root: &Path, shadowrocket: bool) -> Result<Value, String> {
+    let (platform, extension) = if shadowrocket {
+        ("shadowrocket", "module")
+    } else {
+        ("surge", "sgmodule")
+    };
+    serde_json::to_value(scan_modules(root, platform, extension)?)
+        .map_err(|error| format!("cannot encode module catalog: {error}"))
+}
+
 #[cfg(test)]
 mod tests {
-    use super::refresh;
+    use super::{catalog_snapshot, refresh};
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn generated_helper_has_visible_interface_and_no_script_fallback() {
+        let html = include_str!("../../../modules/helper/surge_module_helper.html");
+        assert!(html.contains("<main"));
+        assert!(html.contains("id=\"platform\""));
+        assert!(html.contains("id=\"search\""));
+        assert!(html.contains("disabled"));
+        assert!(html.contains("JavaScript"));
+    }
+
+    #[test]
+    fn catalog_snapshot_is_read_only_and_includes_retired_modules() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("module-snapshot-{id}"));
+        let surge = root.join("modules/surge/head_expanse");
+        fs::create_dir_all(&surge).unwrap();
+        fs::write(surge.join("Old.sgmodule"), "#!name=Old（已退役）\n").unwrap();
+
+        let snapshot = catalog_snapshot(&root, false).unwrap();
+        assert_eq!(snapshot[0]["merged_into"], "PROMAX");
+        assert_eq!(snapshot[0]["essential"], false);
+        assert!(!root.join("modules/helper").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn unreadable_category_is_an_error_not_a_silent_empty_catalog() {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("module-scan-error-{id}"));
+        let surge = root.join("modules/surge");
+        fs::create_dir_all(&surge).unwrap();
+        fs::write(surge.join("head_expanse"), "not a directory").unwrap();
+        assert!(catalog_snapshot(&root, false).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn refreshes_catalog_and_hides_deprecated_helper_from_install_ui() {

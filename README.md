@@ -59,6 +59,25 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/RULE-
 
 ## Rust 更新入口
 
+### Rust GUI（Windows / macOS / Linux）
+
+同一个原生 Rust 界面提供 Surge / Shadowrocket 模块搜索、CDN / GitHub 订阅地址复制、活动广告分片与分流规则浏览，以及只读校验、本地目录刷新和联网全量更新。界面与命令行共用更新和校验实现，不需要 Node.js、Python 或另外安装更新器。
+
+```bash
+cargo run --release --locked --manifest-path create/processor/Cargo.toml \
+  --features gui --bin script-hub-gui -- --root .
+```
+
+GUI 需要 Rust 1.95+；`gui` 为可选功能，普通规则更新 CI 不编译图形依赖。[Rust GUI 工作流](https://github.com/nowaytouse/script_hub/actions/workflows/gui.yml)分别在 Windows、macOS、Linux 构建并提供可执行文件下载。下载后选择本仓库的本地目录即可使用，不能把任意文件夹当作工作区。Linux 源码构建需安装 Fontconfig、XKB 与 OpenGL 开发包；中文由系统字体按需补全，精简 Linux 系统需要安装 CJK 字体。
+
+Windows 提供 `.exe`，macOS 提供 `.app` 的 tar.gz 包，Linux 提供保留执行权限的 tar.gz 包。当前为未签名/未公证的开发构建，不声称通过平台商店或系统发行认证。GUI 写入任务之间由操作系统文件锁互斥，锁由实际执行更新的子进程持有，退出后自动释放；不要同时从外部命令行运行另一套更新。
+
+浏览与只读校验不联网；写入操作要求确认，每次只运行一个后台任务，界面显示真实退出结果、警告和有界日志。任务执行期间会阻止正常关闭窗口，避免在发布中途强杀；操作系统强制结束进程仍可能中断任务。联网更新沿用 `https_proxy` / `http_proxy` / `all_proxy` 环境变量，不更改系统代理、不自动提交或推送。未指定 sing-box 时保留现有 SRS，不声称已更新 SRS。
+
+桌面 GUI 不等于 iOS / Android 原生应用；手机和平板可继续使用 `modules/helper/surge_module_helper.html` 响应式安装助手。该网页包含实际目录界面和无脚本时的可见说明，可下载后本地打开；GitHub Raw / 部分 CDN 可能直接显示源码或下载 HTML，不能当作已部署的网页站点。
+
+### 命令行
+
 ```bash
 cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- \
   --root . --execute --singbox /path/to/sing-box

@@ -545,9 +545,12 @@ pub mod smart_cleanup;
 
 pub mod functional_update;
 pub mod general_update;
+pub mod gui_job;
 pub mod merge_bundles;
 pub mod module_catalog;
 pub mod promax;
+pub mod update_cli;
+pub mod validate_cli;
 
 pub mod srs_generator;
 
