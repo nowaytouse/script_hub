@@ -1,5 +1,5 @@
 # AdBlock 分片规则集
-> 自动生成于 `2026-10-23 01:14:03` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-10-23 07:28:26` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -23,7 +23,7 @@
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_01.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_02.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_03.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist) |
-| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_04.list` | 38,050 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) |
+| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_04.list` | 38,135 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) |
 | 隐私追踪 | `rulesets/AdBlock/AdBlock_Privacy.list` | 4,913 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist) |
 | 安全威胁 | `rulesets/AdBlock/AdBlock_Security.list` | 80 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist) |
 | Anti-AD | `rulesets/AdBlock/AdBlock_AntiAD.list` | 4,246 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist) |
@@ -36,7 +36,7 @@
 | 威胁情报·TIF | `rulesets/AdBlock/AdBlock_ThreatIntel_TIF_05.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F05%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F05%2Elist) |
 | 威胁情报·TIF | `rulesets/AdBlock/AdBlock_ThreatIntel_TIF_06.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F06%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F06%2Elist) |
 | 威胁情报·TIF | `rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list` | 11,215 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F07%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F07%2Elist) |
-| 威胁情报·补充 | `rulesets/AdBlock/AdBlock_ThreatIntel.list` | 62,751 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist) |
+| 威胁情报·补充 | `rulesets/AdBlock/AdBlock_ThreatIntel.list` | 63,054 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist) |
 
 ## 应用内脚本层（PROMAX 内嵌）
 
