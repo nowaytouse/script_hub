@@ -69013,6 +69013,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||gifteddonut.com^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||giftedhazelsecond.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -84295,36 +84301,6 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "DOMAIN, ads-img-al.xhscdn.com, REJECT",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "DOMAIN, ads-img-qc.xhscdn.com, REJECT",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "DOMAIN, ads-video-al.xhscdn.com, REJECT",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "DOMAIN, ads-video-qc.xhscdn.com, REJECT",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "DOMAIN, t-ads.xiaohongshu.com, REJECT",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "DOMAIN,118.89.204.198,REJECT",
     "reason": "IP literal must use an IP-CIDR or IP-CIDR6 rule",
     "risk": "invalid"
@@ -86131,9 +86107,9 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v1\\/surprisebox\\/(?:get_style|open|submit_action) data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "^https:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v1\\/surprisebox\\/(?:get_style|open|submit_action) data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -86809,9 +86785,9 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https?:\\/\\/ci\\.xiaohongshu\\.com\\/system_config\\/watermark data-type=tiny-gif status-code=200",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "^https?:\\/\\/ci\\.(xiaohongshu|rnote)\\.com\\/system_config\\/watermark data-type=tiny-gif status-code=200",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -86917,21 +86893,21 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/guide\\/user_banner data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/guide\\/user_banner data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/note\\/detailfeed\\/preload\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/note\\/detailfeed\\/preload\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/note\\/guide\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/note\\/guide\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -87769,6 +87745,18 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/www\\.(xiaohongshu|rnote)\\.com\\/api\\/marketing\\/box\\/trigger\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/www\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/(v\\d+\\/ads\\/resource|v\\d+\\/hey\\/\\w+\\/hey_gallery) data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/www\\.cmbc\\.com\\.cn\\/m\\/image\\/banner\\/.*.png data-type=text data=\" \" status-code=200",
     "reason": "broad-media-match",
     "risk": "broad-media"
@@ -87796,18 +87784,6 @@
     "candidate": "^https?:\\/\\/www\\.nfmovies\\.com\\/uploads\\/images\\/play\\.jpg data-type=tiny-gif status-code=200",
     "reason": "broad-media-match",
     "risk": "broad-media"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https?:\\/\\/www\\.xiaohongshu\\.com\\/api\\/marketing\\/box\\/trigger\\? data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "^https?:\\/\\/www\\.xiaohongshu\\.com\\/api\\/sns\\/(v\\d+\\/ads\\/resource|v\\d+\\/hey\\/\\w+\\/hey_gallery) data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -87877,7 +87853,7 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "hostname = %APPEND% gab.122.gov.cn, ad.12306.cn, api.21jingji.com, tianqi.2345.com, ad.life.360.cn, gateway.36kr.com, evs.500.com, api.u51.com, vip7.fzwdyy.cn, *.qyfxgd.cn, *.weilai555.com, *.ecoliving168.com, *.58cdn.com.cn, app.58.com, aes.acfun.cn, api-new.app.acfun.cn, gw.aihuishou.com, api.bjxkhc.com, b2baifanfan.baidu.com, manager.aiqiangua.com, list-app-m.i4.cn, mapi.txcmapp.com, icc.one, acs.m.taobao.com, heic.alicdn.com, guide-acs.m.taobao.com, poplayer.template.alibaba.com, api.alipan.com, member.alipan.com, api-cslp-emt.amazon.cn, www.ahzs10000.com, interface.aomiapp.com, sso.ifanr.com, www.onstar.com.cn, api.shanghaionstar.com, -i.vip.iqiyi.com, *.iqiyi.com, cache.bydauto.com.cn, aimg.babytreeimg.com, plough.babytree.com, mapiweb.babytree.com, go.babytree.com, www.baidu.com, fcvbjbcebos.baidu.com, cover.baidu.com, baichuan.baidu.com, api*.tuisong.baidu.com, afd.baidu.com, mobads.baidu.com, issuecdn.baidupcs.com, update.pan.baidu.com, sa*.tuisong.baidu.com, m.baidu.com, sofire.baidu.com, r6.mo.baidu.com, res.mi.baidu.com, mime.baidu.com, mbd.baidu.com, dss0.bdstatic.com, tb1.bdstatic.com, tb2.bdstatic.com, ss0.bdstatic.com, gss0.bdstatic.com, newclient.map.baidu.com, pan.baidu.com, ndstatic.cdn.bcebos.com, staticsns.cdn.bcebos.com, fc-video.cdn.bcebos.com, rp.hpplay.cn, tiebac.baidu.com, appwk.baidu.com, mres.aibank.com, www.banyuetanapp.com, cdnmobibank.bankofbeijing.com.cn, apps.api.ke.com, gateway.shouqiev.com, channel.beitaichufang.com, iapi.bishijie.com, pan-api.bitqiu.com, manga.bilibili.com, i*.hdslb.com, www.binance.info, www.yingwangtech.net, www.binance.com, social.blued.cn, bd-api.kuwo.cn, h5app.kuwo.cn, bodianimgcdn.kuwo.cn, api.boohee.com, bohe.sfo-tx-shanghai-01.saas.sensorsdata.cn, lego.boohee.com, status.boohee.com, api.sfacg.com, lens.leoao.com, res.pizzahut.com.cn, cdn-xyk-app.bankofbeijing.com.cn, grpc.biliapi.net, app.bilibili.com, api.bilibili.com, api.live.bilibili.com, line3-h5-mobile-api.biligame.com, api.caijingmobile.com, api3.cls.cn, cn-acs.m.cainiao.com, amdc.m.taobao.com, ptmpcap.caocaokeji.cn, cap.caocaokeji.cn, fintechappdr.cgws.com, 182.92.244.70, ad.myfriday.cn, ios-api.lucklyworld.com, learn.chaoxing.com, pic1.chelaile.net.cn, api.chelaile.net.cn, atrace.chelaile.net.cn, web.chelaile.net.cn, cdn.*.chelaileapp.cn, gw.chuangkit.com, app.hbooker.com, beta-api.crunchyroll.com, js-ad.ayximgs.com, app-gw.csdn.net, gw.csdn.net, ap.dongdianqiu.com, se-api.djiits.com, dudian-oss.oss-cn-shenzhen.aliyuncs.com, imagepc.ctaiot.com, delivery-api.imdada.cn, sdk.alibaba.com.ailbaba.me, adservice.sigmob.cn, ssp.dzh.com.cn, e.dangdang.com, api.dangdang.com, mapi.dangdang.com, appdmkj.5idream.net, capis*.didapinche.com, adx-cn.anythinktech.com, www.didapinche.com, pt-starimg.didistatic.com, omgup*.xiaojukeji.com, res.xiaojukeji.com, common.diditaxi.com.cn, hd.xiaojukeji.com, freight.xiaojukeji.com, daijia.kuaidadi.com, ct.xiaojukeji.com, conf.diditaxi.com.cn, as.xiaojukeji.com, img.ddrk.me, ddrk.me, app.95598pay.com, 103.37.155.60, *.dianping.com, img.meituan.net, p.meituan.com, rms.meituan.com, www.dpfile.com, awp-assets.meituan.net, s3plus.meituan.net, p*.meituan.net, ddplus.meituan.net, api.gaoqingdianshi.com, cdn.dianshihome.com, app-v1.ecoliving168.com, img.admobile.top, webcdn.m.qq.com, *.pglstatp-toutiao.com, api.htp.ad-scope.com.cn, appgw.ddpai.com, init.sms.mob.com, apphw.ddpai.com, maicai.api.ddxq.mobi, gw.api.ddxq.mobi, user.api.ddxq.mobi, gw.alicdn.com, img.alicdn.com, dxy.com, dq.dxy.cn, app.ceair.com, api.gamer.com.tw, ump.sz.creditcard.ecitic.com, m.creditcard.ecitic.com, api.douban.com, daoyu.sdo.com, rtbapi.douyucdn.cn, staticlive.douyucdn.cn, capi.douyucdn.cn, douyucdn.cn, elemecdn.com, fuss10.elemecdn.com, cube.elemecdn.com, www1.elecfans.com, nr-op.elemecdn.com, cdn-evone-ceph.echargenet.com, pic.edaijia.cn, static.95508.com, gateway-api.dushu365.com, l*.51fanli.net, *.pangolin-sdk-toutiao.com, *.pangolin-sdk-toutiao.*, *.pstatp.com, *.pstatp.com.*, *.pglstatp-toutiao.com.*, gurd.snssdk.com, gurd.snssdk.com.*, i-lq.snssdk.com, i-lq.snssdk.com.*, *default.ixigua.com, api.flydigi.com, app.flymodem.com.cn, fm.fenqile.com, external.fcbox.com, dsp.fcbox.com, consumer.fcbox.com, rtm.fcbox.com, dsa-mfp.fengshows.cn, api.fengshows.com, ecloud.tppension.cntaiping.com, apis.folidaymall.com, api*.futunn.com, app.variflight.com, m*.amap.com, optimus-ads.amap.com, amap-aos-info-nogw.amap.com, mobile.cebbank.com, yghsh.cebbank.com, mps.95508.com, gha.ghac.cn, gsp.gacmotor.com, zone.guiderank-app.com, cdn.133.cn, jt.rsscc.com, jp.rsscc.com, prom.mobile.gome.com.cn, api.gongkaoleida.com, yun.tuitiger.com, mi.gdt.qq.com, open.e.kuaishou.com, pagead2.googlesyndication.com, kano.guahao.cn, app.wy.guahao.com, awg.enmonster.com, aag.enmonster.com, guanyu.longfor.com, mbank.grcbank.com, dl.app.gtja.com, dl*.app.gtja.com, v.icbc.com.cn, pv.elife.icbc.com.cn, elife.icbc.com.cn, fuwu.nhsa.gov.cn, m.prod.app.hsbcfts.com.cn, emisdatacenteraws.hafoo.com, hmbaby.simshine.cn, *.townmalls.cn, www.haixue.com, service.haiersmarthomes.com, gfp.veta.naver.com, api.hanju.koudaibaobao.com, home.umetrip.com, discardrp.umetrip.com, startup.umetrip.com, oss.umetrip.com, m.ibuscloud.com, ads.iconntech.com, smkmp.96225.com, api.haohaozhu.cn, notch.qdaily.com, app3.qdaily.com, open.fitdays.cn, hfapp-service.qweather.net, promote-trx.helipay.com, acs-m.freshippo.com, fbchina.flipchina.cn, api.touker.com, static.creditcard.hxb.com.cn, cmsapi.wifi8.com, cmsfile.wifi8.com, interface.hstong.com, res.hongyibo.com.cn, api4.bybutter.com, appapi.huazhu.com, hweb-hotel.huazhu.com, hweb-manager.huazhu.com, api.huomao.com, games.mobileapi.hupu.com, du.hupucdn.com, i*.hoopchina.com.cn, goblin.hupu.com, api-ad-product.huxiu.com, cdn.wup.huya.com, business.msstatic.com, cdnfile1.msstatic.com, live-ads.huya.com, api-one-wscn.awtmt.com, api.wallstreetcn.com, www.i3zh.com, mbank5.jsbchina.cn, cdn.jlbank.com.cn, yunbusiness.ccb.com, g.alicdn.com, waimai-guide.ele.me, api.m.jd.com, dns.jd.com, router-app-api.jdcloud.com, m.360buyimg.com, bdsp-x.jd.com, dsp-x.jd.com, ms.jr.jd.com, appconf.mail.163.com, support.you.163.com, jdread-api.jd.com, www.gcores.com, explorer.tratao.com, *.kakamobi.cn, smart.789.image.mucang.cn, richmanrules.ksedt.com, api.jxedt.com, richmanapi.jxedt.com, img.gdoil.cn, api.tipsoon.com, s.jiediankeji.com, img.jiemian.com, api.sogaha.cn, p*.pstatp.com, jad-api.jin10.com, jiucaigongshe.oss-cn-beijing.aliyuncs.com, dict-mobile.iciba.com, mobile-pic.cache.iciba.com, service.iciba.com, *.kingsoft-office-service.com, api.coolapk.com, www.coolapk.com, res.kfc.com.cn, bp-api.bestv.com.cn, bp-api.bestv.cn, api.vistopia.com.cn, open3.vistastory.com, api.gotokeep.com, kad.gotokeep.com, static1.keepcdn.com, pocketuni.net, p.kuaidi100.com, video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.kkmh.com, az4-api.ksapisrv.com, az4-api-idc.ksapisrv.com, az2-api.ksapisrv.com, az2-api-idc.ksapisrv.com, apissl.gifshow.com, apissl.ksapisrv.com, az2-api-js.gifshow.com, az2-live.ksapisrv.com, audiobookpay.kuwo.cn, mgxhtj.kuwo.cn, nmobi.kuwo.cn, searchrecterm.kuwo.cn, musicpay.kuwo.cn, vip1.kuwo.cn, www.oschina.net, mobile.laichon.com, shop.laichon.com, mobile-api.imlaidian.com, api.laifeng.com, gmp.lakala.com, wallet.lakala.com, tk.lanjiyin.com.cn, tagit.hyhuo.com, 118.178.214.118, dapis.mting.info, display.wting.info, ios.lantouzi.com, dl-cu-hz.lechange.cn, api.club.lenovo.cn, abcapi.lenovoimage.com, api-ac.liepin.com, api-wanda.liepin.com, a.line.me, ad.line-scdn.net, w.line.me, gw.line.naver.jp, lan.line.me, buy.line.me, crs-event.line.me, obs.line-scdn.net, d.line-scdn.net, scdn.line-apps.com, sch.line.me, static.line-scdn.net, nelo2-col.linecorp.com, uts-front.line-apps.com, cix.line-apps.com, legy.line-apps.com, ec-bot-obs.line-scdn.net, app.aa-ab.com, ad.lofter.com, lofter.lf127.net, order-app-api.lbdj.com, plt.yorentown.com, lawsonapi.yorentown.com, www.iyingdi.cn, www.1314zhilv.com, api.internetofcity.cn, www.cmbc.com.cn, rs.creditcard.cmbc.com.cn, dispatcher.camera360.com, mada-travel.17u.cn, ebk.17u.cn, app.api.versa-ai.com, static01.versa-ai.com, qimg.cdnmama.com, mapi.mafengwo.cn, creditcardapp.bankcomm.cn, creditcardapp.bankcomm.com, creditcard.bankcomm.cn, creditcard.bankcomm.com, sfo.mddcloud.com.cn, mob.mddcloud.com.cn, toblog.ctobsnssdk.com, mobads-pre-config.cdn.bcebos.com, sdk1xyajs.data.kuiniuca.com, conf-darwin.xycdn.com, *.ubixioe.com, open.taou.com, h3.open.taou.com, mangaapi.manhuaren.com, *mangaapi.manhuaren.*, *.mgtv.com, app.missevan.com, p0.pipi.cn, api.mcd.cn, api.bevol.com, j-image.missfresh.cn, capi.mwee.cn, mea.meitudata.com, adui.tg.meitu.com, flowplus.meituan.net, cdb.meituan.com, peisongapi.meituan.com, x.seeyouyima.com, axxd.xmseeyouyima.com, config-service.seeyouyima.com, b-api.ins.miaopai.com, ggc.miguvideo.com, public-deliver9.miguvideo.com, display*-sc.miguvideo.com, recommend-dy.miguvideo.com, app-sc.miguvideo.com, common-sc.miguvideo.com, ggx*.miguvideo.com, ggic*.miguvideo.com, home.mi.com, api.mgzf.com, midc.cdn-static.abchina.com.cn, enjoy.cdn-static.abchina.com, 3g.csair.com, blog.nilbt.com, www.nfmovies.com, api.nj.nbtv.cn, gateway.benewtech.cn, ntt-app.benewtech.cn, oxadmin.cp.com.cn, v3.wufazhuce.com, app.api.d3yuiw4.com, api.21ec74.com, slapi.oray.net, supportda.ofo.com, ma.ofo.com, activity2.api.ofo.com, 103.91.210.141, adapi.izuiyou.com, pss.txffp.com, appapi.caiyicloud.com, api.pinduoduo.com, api.yangkeduo.com, mobile.yangkeduo.com, iobs.pingan.com.cn, hcz-member.pingan.com.cn, cdn.sdb.com.cn, pacdn.m.stock.pingan.com, mobile.1qianbao.com, image.spdbccc.com.cn, j1.pupuapi.com, image.pushplus.plus, www.pushplus.plus, lban.spdb.com.cn, wap.spdb.com.cn, adpai.thepaper.cn, access.mypikpak.com, appapi.51job*.com, cupid.51job*.comhostname, adproxy.autohome.com.cn, app2.autoimg.cn, mobile-consumer-sapp.chery.cn, fmapp.chinafamilymart.com.cn, facade-api.black-unique.com, ipv4.music.163.com, interface.music.163.com, interface3.music.163.com, interface9.music.163.com, us.l.qq.com, y.gtimg.cn, music.y.qq.com, m.qianbao.qq.com, qidian.qpic.cn, mage.if.qidian.com, magev6.if.qidian.com, webapi.qmai.cn, miniapp.qmai.cn, open.e.kuaishou.cn, api-access.pangolin-sdk-toutiao-b.com, api-access.pangolin-sdk-toutiao.com, api-access.pangolin-sdk-toutiao1.com, api-cfg.wtzw.com, p1-lm.adukwai.com, lf-cdn-tos.bytescm.com, webcast-open.douyin.com, beta-luna.douyin.com, ether-pack.pangolin-sdk-toutiao.com, api-access.pangolin-sdk-toutiao?.com, sf*-fe-tos.pglstatp-toutiao.com, api.qbb6.com, open.qyer.com, media.qyer.com, a.qiumibao.com, qde.qunar.com, homefront.qunar.com, client.qunar.com, acs.m.goofish.com, g-acs.m.goofish.com, edith.xiaohongshu.com, www.xiaohongshu.com, ci.xiaohongshu.com, rec.xiaohongshu.com, so.xiaohongshu.com, gw3.ykccn.com, api.zhihu.com, www.zhihu.com, appcloud2.zhihu.com, m-cloud.zhihu.com, zhuanlan.zhihu.com, link.zhihu.com, capi.lkcoffee.com, ecapi.lkcoffee.com, m.lkcoffee.com, img0*.luckincoffeecdn.com, oneapph5.dongfeng-nissan.com.cn, app.peopleapp.com, stat.peopleapp.com, adstatic.peopleapp.com, dyncdn.me, api.rr.tv, cms.daydaycook.com.cn, api.daydaycook.com.cn, app.meruki.cn, app.homeinns.com, api.mos.csvw.com, mapi.sfbest.com, ccsp-egmas.sf-express.com, ucmp.sf-express.com, mcs-mimp-web.sf-express.com, homepage-api.smzdm.com, haojia-api.smzdm.com, app-api.smzdm.com, user-api.smzdm.com, article-api.smzdm.com, qianbao.smzdm.com, s-api.smzdm.com, haojia.m.smzdm.com, api-sams.walmartmobile.cn, apis.lifeweek.com.cn, api.huachenjie.com, ad.shunchangzhixing.com, zlsdk.1rtb.net, api.gameplus.qq.com, ios.sspai.com, editor.sm.cn, img01.10101111cdn.com, www.ymm56.com, ecard.shenzhentong.com, sh-gateway.shihuo.cn, static.shihuocdn.cn, gw-passenger.01zhuanche.com, img.yun.01zhuanche, ut2.shuqistat.com, dsp.toutiao.com, sf3-be-pack.pglstatp-toutiao.com, sq.sljkj.com, ocean.shuqireader.com, img-tailor.11222.cn, message.shuqireader.com, feedback.uc.cn, *.shuqireader.com, 101.91.69.26, service.4gtv.tv, mapi.sichuanair.com, business-cdn.shouji.sogou.com, ios.sogou.com, android.sogou.com, h5api.sginput.qq.com, *.souhu.com, wxs-weixin.sd.zhumanggroup.com, 47.110.187.87, ssp.soulapp.cn, chat-live.soulapp.cn, api-chat.soulapp.cn, api-account.soulapp.cn, api-global.soulapp.me, api-a.soulapp.cn, api-pay.soulapp.cn, gateway-mobile-gray.soulapp.cn, post.soulapp.cn, api-user.soulapp.cn, *-spclient.spotify.com, spclient.wg.spotify.com, api.sodalife.xyz, api.bwton.com, szdmobile.suzhou.gov.cn, mpcs.suning.com, image.suning.com, luckman.suning.com, mrobot.pconline.com.cn, mrobot.pcauto.com.cn, agent-count.pconline.com.cn, ga-album-cdnqn.52tt.com, www.tailgdd.com, alt-r.my.com, imgx.jampp.com, bid.adview.cn, api.taptapdada.com, btrace.qq.com, api2.helper.qq.com, *.beacon.qq.com, lives.l.qq.com, imgcache.qq.com, mtteve.beacon.qq.com, vv.video.qq.com, qt.qq.com, 3gimg.qq.com, splashqqlive.gtimg.com, qzonestyle.gtimg.cn, discuz.gtimg.cn, bla.gtimg.com, mmgr.gtimg.com, bk.bingo.qq.com, static.gameplus.qq.com, 4gimg.map.qq.com, otheve.beacon.qq.com, ccmsupport-sz.tenpay.com, news.ssp.qq.com, sports3.gtimg.com, images.client.vip.xunlei.com, api-shoulei-ssl.xunlei.com, chl.tf.cn, wechat.tf.cn, cgbank.oss-cn-shenzhen.aliyuncs.com, tfsmy.chengdu.gov.cn, tft-app.cdtft.cn, ams-cdn.cdtft.cn, www.tsytv.com.cn, j5.dfcfw.com, appactive.1234567.com.cn, t1.market.xiaomi.com, api.cloud.189.cn, api.ncarzone.com, ossgw.alicdn.com, zconfig.alibabausercontent.com, *.ly.com, *.17usoft.com, *.17u.cn, mobilehotelapi.elong.com, quic-tcmapi.elong.com, truthsocial.com, *.i18n-pglstatp.com, mkt-gateway.tuhu.cn, cl-gateway.tuhu.cn, gateway.tuhu.cn, m.pvp.xoyo.com, client.tujia.com, m.tuniu.com, adm.10jqka.com.cn, iphone.ac.qq.com, stat.10jqka.com.cn, top-widgets-api.xiaozujian.com, api-marketing.zhinengxiyifang.cn, adsoss.zhinengxiyifang.cn, ads.zhinengxiyifang.cn, pubads.g.doubleclick.net, pagead2.googleadservices.com, img0*.benlailife.com, qiye.gaoding.com, god.gameyw.netease.com, app-conf.ds.163.com, kaola-haitao.oss.kaolacdn.com, sp.kaola.com, gw.kaola.com, *.music.126.net, img1.126.net, www.icourse163.org, nex.163.com, g1.163.com, client.mail.163.com, c.m.163.com, interface*.music.163.com, easyreadfs.nosdn.127.net, p.du.163.com, m.you.163.com, yanxuan.nosdn.127.net, dict.youdao.com, api-overmind.youdao.com, cdke.youdao.com, dictvip-business.youdao.com, dsp-impr2.youdao.com, impservice.dictapp.youdao.com, oral.youdao.com, oimage*.ydstatic.com, api.wmpvp.com, snailsleep.net, b.appsimg.com, mapi.appvipshop.com, ios.wps.cn, wanciwangdata.oss-cn-beijing.aliyuncs.com, recite.perfectlingo.com, misc-api-prd-mx.wandafilm.com, osg-static.sgcc.com.cn, osg-service.sgcc.com.cn, mp.weixin.qq.com, weixin110.qq.com, security.wechat.com, api.wfdata.club, overseas.weico.cc, thor.weidian.com, cds.wifi188.com, api.51credit.com, img.wukongtv.com, api-release.wuta-cam.com, res-release.wuta-cam.com, m.ctrip.com, ma-adx.ctrip.com, wcprd.hilton.com.cn, file.cibfintech.com, apiwz.midukanshu.com, upload-bbs.mihoyo.com, cstore-en-public-tx.seewo.com, edit.sinaapp.com, app.chinahxzq.com.cn, client-api-v2.oray.com, lchttpapi.xczim.com, pzoap.moedot.net, vapp.tmuyun.com, res1.hubcloud.com.cnhostname, mobileapi.xiamenair.com, info.mina.xiaoaisound.com, marketing-aibox.v.mitvos.com, api.xbxxhz.com, shcss.suning.com, web2.realtech-inc.com, sdk.1rtb.net, gw.xiaocantech.com, smarket.dian.so, file.dian.so, xhtz.oss-cn-guangzhou.aliyuncs.com, mpos-pic.helipay.com, mgesq.api.mgtv.com, *.hitv.com, app-api.niu.com, api.petkit.cn, myusmile.online, wemallh5.usmile.com, www.myusmile.online, api.psy-1.com, lcen.xiaote.net, ad.xiaotucc.com, mapi.xiaotucc.com, portal-portm.meituan.com, mall.meituan.com, xxyx-client-api.xiaoxiaoyouxuan.com, statistic.live.126.net, www.xiaoxiongmeishu.com, spamblocker-api.zeekstudio.com, api.xiaoyi.com, api.xiaoyuzhoufm.com, api.jr.mi.com, api-miprint.hannto.com, api.indeedpower.com, api-mifit*.huami.com, shopapi.io.mi.com, gslbali.ximalaya.com, search.ximalaya.com, searchwsa.ximalaya.com, mobile.ximalaya.com, mobilehera.ximalaya.com, mobwsa.ximalaya.com, m.ximalaya.com, mwsa.ximalaya.com, app.xinpianchang.com, bgw.xinyue.qq.com, operationapi.fosunhanig.com, api*.sparke.cn, static.xyzq.cn, static.api.m.panda.tv, api.xueqiu.com, open.xueqiu.com, stock.xueqiu.com, 39.103.79.14, 39.106.97.84, 47.95.49.75, 101.201.62.20, 101.201.62.26, 101.201.175.228, 124.250.48.3, 182.92.145.50, 182.92.251.113, portal-xunyou.qingcdn.com, imeclient.openspeech.cn, e-static.aia.com.cn, api2.yaduo.com, www.cntv.cn, cdn.cmgadx.com, mobile-api2011.elong.com, webboot.zhangyue.com, saad.ms.zhangyue.net, app.yinxiang.com, i.ys7.com, oneapp-api.faw-vw.com, app02.vgtime.com, www.vgtime.com, *.gamersky.com, service.busi.inke.cn, static.psbc.com, mcc.psbc.com, static.mobile-bank.psbc.com, d.psbc.com, pipi.4kya.com, m.yap.yahoo.com, patient-api.suh.cn, userpms-api.suh.cn, venus.yhd.com, a.sinopecsales.com, ocrifs.ejoy.sinopec.com, api.yikaobang.com.cn, api.17kjs.com, compus.xiaofubao.com, mapi-app.bestpay.com.cn, api.ycapp.yiche.com, cheyouapi.ycapp.yiche.com, ad.ysepay.com, ads.ysepay.com, api.winbull8.com, hz.yxzq.com, api5.youonbike.com, api.yonghuivip.com, new-app-api.ylyk.com, gongdu.youshu.cc, img.dailmo.com, img.allahall.com, app.zhoudamozi.com, rr*.googlevideo.com, youtubei.googleapis.com, api.ulife.group, acs.youku.com, push.m.youku.com, un-acs.youku.com, *.yuxueyuan.cn, xyst.yuanfudao.com, nnapp.cloudbae.cn, restapi.iyunmai.com, openapi.boc.cn, mlife.jf365.boc.cn, amemv.com, musical.com, snssdk.com, tiktokv.com, xyz.cnki.net, app.10099.com.cn, wap.bank.ecitic.com, imcs.citicbank.com, ecssmobile.e-chinalife.com, webappcfg.paas.cmbchina.com, mbmodule-openapi.paas.cmbchina.com, marketing.cmschina.com, client.app.coc.10086.cn, app.10086.cn, mcmm.caiyun.feixin.10086.cn, mrp.mcloud.139.com, ad.mcloud.139.com, middle.yun.139.com, cloud.189.cn, zt-app.go189.cn, m.client.10010.com, m1.ad.10010.com, res.mall.10010.cn, e.weather.com.cn, zgrb.epicc.com.cn, apicloud.zol.com.cn, c.zhangle.com, live.inst-service.htsc.com, geetest.htsc.com, 119.29.29.*, djcapp.game.qq.com, quanguo.mygolbs.com, wx.mygolbs.com, ossweb-img.qq.com, mlol.qt.qq.com, mbasecc.bas.cmbchina.com, mbasecc.bcs.cmbchina.com, intellicc.bas.cmbchina.com, intellicc.bcs.cmbchina.com, beehiveapi.58.com, portal.zjzwfw.gov.cn, app-izz.zhengzhou.gov.cn, apio.zhengqi100.com, zua.zhidiantianxia.cn, preprod.cdzghome.com, direct.z-bank.com, hdgateway.zto.com, minipro.95504.net, sichuan.95504.net, app.badmintoncn.com, fastbuyer.zbj.com, z.onewo.com, app.zhuanzhuan.com, zjdr666.com, ztoread.ziroom.com, api.izuiyou.com, syh.zybang.com, www.zybang.com, ih2.ireader.com, book.img.ireader.com",
+    "candidate": "hostname = %APPEND% gab.122.gov.cn, ad.12306.cn, api.21jingji.com, tianqi.2345.com, ad.life.360.cn, gateway.36kr.com, evs.500.com, api.u51.com, vip7.fzwdyy.cn, *.qyfxgd.cn, *.weilai555.com, *.ecoliving168.com, *.58cdn.com.cn, app.58.com, aes.acfun.cn, api-new.app.acfun.cn, gw.aihuishou.com, api.bjxkhc.com, b2baifanfan.baidu.com, manager.aiqiangua.com, list-app-m.i4.cn, mapi.txcmapp.com, icc.one, acs.m.taobao.com, heic.alicdn.com, guide-acs.m.taobao.com, poplayer.template.alibaba.com, api.alipan.com, member.alipan.com, api-cslp-emt.amazon.cn, www.ahzs10000.com, interface.aomiapp.com, sso.ifanr.com, www.onstar.com.cn, api.shanghaionstar.com, -i.vip.iqiyi.com, *.iqiyi.com, cache.bydauto.com.cn, aimg.babytreeimg.com, plough.babytree.com, mapiweb.babytree.com, go.babytree.com, www.baidu.com, fcvbjbcebos.baidu.com, cover.baidu.com, baichuan.baidu.com, api*.tuisong.baidu.com, afd.baidu.com, mobads.baidu.com, issuecdn.baidupcs.com, update.pan.baidu.com, sa*.tuisong.baidu.com, m.baidu.com, sofire.baidu.com, r6.mo.baidu.com, res.mi.baidu.com, mime.baidu.com, mbd.baidu.com, dss0.bdstatic.com, tb1.bdstatic.com, tb2.bdstatic.com, ss0.bdstatic.com, gss0.bdstatic.com, newclient.map.baidu.com, pan.baidu.com, ndstatic.cdn.bcebos.com, staticsns.cdn.bcebos.com, fc-video.cdn.bcebos.com, rp.hpplay.cn, tiebac.baidu.com, appwk.baidu.com, mres.aibank.com, www.banyuetanapp.com, cdnmobibank.bankofbeijing.com.cn, apps.api.ke.com, gateway.shouqiev.com, channel.beitaichufang.com, iapi.bishijie.com, pan-api.bitqiu.com, manga.bilibili.com, i*.hdslb.com, www.binance.info, www.yingwangtech.net, www.binance.com, social.blued.cn, bd-api.kuwo.cn, h5app.kuwo.cn, bodianimgcdn.kuwo.cn, api.boohee.com, bohe.sfo-tx-shanghai-01.saas.sensorsdata.cn, lego.boohee.com, status.boohee.com, api.sfacg.com, lens.leoao.com, res.pizzahut.com.cn, cdn-xyk-app.bankofbeijing.com.cn, grpc.biliapi.net, app.bilibili.com, api.bilibili.com, api.live.bilibili.com, line3-h5-mobile-api.biligame.com, api.caijingmobile.com, api3.cls.cn, cn-acs.m.cainiao.com, amdc.m.taobao.com, ptmpcap.caocaokeji.cn, cap.caocaokeji.cn, fintechappdr.cgws.com, 182.92.244.70, ad.myfriday.cn, ios-api.lucklyworld.com, learn.chaoxing.com, pic1.chelaile.net.cn, api.chelaile.net.cn, atrace.chelaile.net.cn, web.chelaile.net.cn, cdn.*.chelaileapp.cn, gw.chuangkit.com, app.hbooker.com, beta-api.crunchyroll.com, js-ad.ayximgs.com, app-gw.csdn.net, gw.csdn.net, ap.dongdianqiu.com, se-api.djiits.com, dudian-oss.oss-cn-shenzhen.aliyuncs.com, imagepc.ctaiot.com, delivery-api.imdada.cn, sdk.alibaba.com.ailbaba.me, adservice.sigmob.cn, ssp.dzh.com.cn, e.dangdang.com, api.dangdang.com, mapi.dangdang.com, appdmkj.5idream.net, capis*.didapinche.com, adx-cn.anythinktech.com, www.didapinche.com, pt-starimg.didistatic.com, omgup*.xiaojukeji.com, res.xiaojukeji.com, common.diditaxi.com.cn, hd.xiaojukeji.com, freight.xiaojukeji.com, daijia.kuaidadi.com, ct.xiaojukeji.com, conf.diditaxi.com.cn, as.xiaojukeji.com, img.ddrk.me, ddrk.me, app.95598pay.com, 103.37.155.60, *.dianping.com, img.meituan.net, p.meituan.com, rms.meituan.com, www.dpfile.com, awp-assets.meituan.net, s3plus.meituan.net, p*.meituan.net, ddplus.meituan.net, api.gaoqingdianshi.com, cdn.dianshihome.com, app-v1.ecoliving168.com, img.admobile.top, webcdn.m.qq.com, *.pglstatp-toutiao.com, api.htp.ad-scope.com.cn, appgw.ddpai.com, init.sms.mob.com, apphw.ddpai.com, maicai.api.ddxq.mobi, gw.api.ddxq.mobi, user.api.ddxq.mobi, gw.alicdn.com, img.alicdn.com, dxy.com, dq.dxy.cn, app.ceair.com, api.gamer.com.tw, ump.sz.creditcard.ecitic.com, m.creditcard.ecitic.com, api.douban.com, daoyu.sdo.com, rtbapi.douyucdn.cn, staticlive.douyucdn.cn, capi.douyucdn.cn, douyucdn.cn, elemecdn.com, fuss10.elemecdn.com, cube.elemecdn.com, www1.elecfans.com, nr-op.elemecdn.com, cdn-evone-ceph.echargenet.com, pic.edaijia.cn, static.95508.com, gateway-api.dushu365.com, l*.51fanli.net, *.pangolin-sdk-toutiao.com, *.pangolin-sdk-toutiao.*, *.pstatp.com, *.pstatp.com.*, *.pglstatp-toutiao.com.*, gurd.snssdk.com, gurd.snssdk.com.*, i-lq.snssdk.com, i-lq.snssdk.com.*, *default.ixigua.com, api.flydigi.com, app.flymodem.com.cn, fm.fenqile.com, external.fcbox.com, dsp.fcbox.com, consumer.fcbox.com, rtm.fcbox.com, dsa-mfp.fengshows.cn, api.fengshows.com, ecloud.tppension.cntaiping.com, apis.folidaymall.com, api*.futunn.com, app.variflight.com, m*.amap.com, optimus-ads.amap.com, amap-aos-info-nogw.amap.com, mobile.cebbank.com, yghsh.cebbank.com, mps.95508.com, gha.ghac.cn, gsp.gacmotor.com, zone.guiderank-app.com, cdn.133.cn, jt.rsscc.com, jp.rsscc.com, prom.mobile.gome.com.cn, api.gongkaoleida.com, yun.tuitiger.com, mi.gdt.qq.com, open.e.kuaishou.com, pagead2.googlesyndication.com, kano.guahao.cn, app.wy.guahao.com, awg.enmonster.com, aag.enmonster.com, guanyu.longfor.com, mbank.grcbank.com, dl.app.gtja.com, dl*.app.gtja.com, v.icbc.com.cn, pv.elife.icbc.com.cn, elife.icbc.com.cn, fuwu.nhsa.gov.cn, m.prod.app.hsbcfts.com.cn, emisdatacenteraws.hafoo.com, hmbaby.simshine.cn, *.townmalls.cn, www.haixue.com, service.haiersmarthomes.com, gfp.veta.naver.com, api.hanju.koudaibaobao.com, home.umetrip.com, discardrp.umetrip.com, startup.umetrip.com, oss.umetrip.com, m.ibuscloud.com, ads.iconntech.com, smkmp.96225.com, api.haohaozhu.cn, notch.qdaily.com, app3.qdaily.com, open.fitdays.cn, hfapp-service.qweather.net, promote-trx.helipay.com, acs-m.freshippo.com, fbchina.flipchina.cn, api.touker.com, static.creditcard.hxb.com.cn, cmsapi.wifi8.com, cmsfile.wifi8.com, interface.hstong.com, res.hongyibo.com.cn, api4.bybutter.com, appapi.huazhu.com, hweb-hotel.huazhu.com, hweb-manager.huazhu.com, api.huomao.com, games.mobileapi.hupu.com, du.hupucdn.com, i*.hoopchina.com.cn, goblin.hupu.com, api-ad-product.huxiu.com, cdn.wup.huya.com, business.msstatic.com, cdnfile1.msstatic.com, live-ads.huya.com, api-one-wscn.awtmt.com, api.wallstreetcn.com, www.i3zh.com, mbank5.jsbchina.cn, cdn.jlbank.com.cn, yunbusiness.ccb.com, g.alicdn.com, waimai-guide.ele.me, api.m.jd.com, dns.jd.com, router-app-api.jdcloud.com, m.360buyimg.com, bdsp-x.jd.com, dsp-x.jd.com, ms.jr.jd.com, appconf.mail.163.com, support.you.163.com, jdread-api.jd.com, www.gcores.com, explorer.tratao.com, *.kakamobi.cn, smart.789.image.mucang.cn, richmanrules.ksedt.com, api.jxedt.com, richmanapi.jxedt.com, img.gdoil.cn, api.tipsoon.com, s.jiediankeji.com, img.jiemian.com, api.sogaha.cn, p*.pstatp.com, jad-api.jin10.com, jiucaigongshe.oss-cn-beijing.aliyuncs.com, dict-mobile.iciba.com, mobile-pic.cache.iciba.com, service.iciba.com, *.kingsoft-office-service.com, api.coolapk.com, www.coolapk.com, res.kfc.com.cn, bp-api.bestv.com.cn, bp-api.bestv.cn, api.vistopia.com.cn, open3.vistastory.com, api.gotokeep.com, kad.gotokeep.com, static1.keepcdn.com, pocketuni.net, p.kuaidi100.com, video-dsp.pddpic.com, t-dsp.pinduoduo.com, images.pinduoduo.com, api.kkmh.com, az4-api.ksapisrv.com, az4-api-idc.ksapisrv.com, az2-api.ksapisrv.com, az2-api-idc.ksapisrv.com, apissl.gifshow.com, apissl.ksapisrv.com, az2-api-js.gifshow.com, az2-live.ksapisrv.com, audiobookpay.kuwo.cn, mgxhtj.kuwo.cn, nmobi.kuwo.cn, searchrecterm.kuwo.cn, musicpay.kuwo.cn, vip1.kuwo.cn, www.oschina.net, mobile.laichon.com, shop.laichon.com, mobile-api.imlaidian.com, api.laifeng.com, gmp.lakala.com, wallet.lakala.com, tk.lanjiyin.com.cn, tagit.hyhuo.com, 118.178.214.118, dapis.mting.info, display.wting.info, ios.lantouzi.com, dl-cu-hz.lechange.cn, api.club.lenovo.cn, abcapi.lenovoimage.com, lzmh.lz-qs.com:6025, yuudnn.lz-qs.com:9220, yuudnn.lz-qs.com, api-ac.liepin.com, api-wanda.liepin.com, a.line.me, ad.line-scdn.net, w.line.me, gw.line.naver.jp, lan.line.me, buy.line.me, crs-event.line.me, obs.line-scdn.net, d.line-scdn.net, scdn.line-apps.com, sch.line.me, static.line-scdn.net, nelo2-col.linecorp.com, uts-front.line-apps.com, cix.line-apps.com, legy.line-apps.com, ec-bot-obs.line-scdn.net, app.aa-ab.com, ad.lofter.com, lofter.lf127.net, order-app-api.lbdj.com, plt.yorentown.com, lawsonapi.yorentown.com, www.iyingdi.cn, www.1314zhilv.com, api.internetofcity.cn, www.cmbc.com.cn, rs.creditcard.cmbc.com.cn, dispatcher.camera360.com, mada-travel.17u.cn, ebk.17u.cn, app.api.versa-ai.com, static01.versa-ai.com, qimg.cdnmama.com, mapi.mafengwo.cn, creditcardapp.bankcomm.cn, creditcardapp.bankcomm.com, creditcard.bankcomm.cn, creditcard.bankcomm.com, sfo.mddcloud.com.cn, mob.mddcloud.com.cn, toblog.ctobsnssdk.com, mobads-pre-config.cdn.bcebos.com, sdk1xyajs.data.kuiniuca.com, conf-darwin.xycdn.com, *.ubixioe.com, open.taou.com, h3.open.taou.com, mangaapi.manhuaren.com, *mangaapi.manhuaren.*, *.mgtv.com, app.missevan.com, p0.pipi.cn, api.mcd.cn, api.bevol.com, j-image.missfresh.cn, capi.mwee.cn, mea.meitudata.com, adui.tg.meitu.com, flowplus.meituan.net, cdb.meituan.com, peisongapi.meituan.com, x.seeyouyima.com, axxd.xmseeyouyima.com, config-service.seeyouyima.com, b-api.ins.miaopai.com, ggc.miguvideo.com, public-deliver9.miguvideo.com, display*-sc.miguvideo.com, recommend-dy.miguvideo.com, app-sc.miguvideo.com, common-sc.miguvideo.com, ggx*.miguvideo.com, ggic*.miguvideo.com, home.mi.com, api.mgzf.com, midc.cdn-static.abchina.com.cn, enjoy.cdn-static.abchina.com, 3g.csair.com, blog.nilbt.com, www.nfmovies.com, api.nj.nbtv.cn, gateway.benewtech.cn, ntt-app.benewtech.cn, oxadmin.cp.com.cn, v3.wufazhuce.com, app.api.d3yuiw4.com, api.21ec74.com, slapi.oray.net, supportda.ofo.com, ma.ofo.com, activity2.api.ofo.com, 103.91.210.141, adapi.izuiyou.com, pss.txffp.com, appapi.caiyicloud.com, api.pinduoduo.com, api.yangkeduo.com, mobile.yangkeduo.com, iobs.pingan.com.cn, hcz-member.pingan.com.cn, cdn.sdb.com.cn, pacdn.m.stock.pingan.com, mobile.1qianbao.com, image.spdbccc.com.cn, j1.pupuapi.com, image.pushplus.plus, www.pushplus.plus, lban.spdb.com.cn, wap.spdb.com.cn, adpai.thepaper.cn, access.mypikpak.com, appapi.51job*.com, cupid.51job*.comhostname, adproxy.autohome.com.cn, app2.autoimg.cn, mobile-consumer-sapp.chery.cn, fmapp.chinafamilymart.com.cn, facade-api.black-unique.com, ipv4.music.163.com, interface.music.163.com, interface3.music.163.com, interface9.music.163.com, us.l.qq.com, y.gtimg.cn, music.y.qq.com, m.qianbao.qq.com, qidian.qpic.cn, mage.if.qidian.com, magev6.if.qidian.com, webapi.qmai.cn, miniapp.qmai.cn, open.e.kuaishou.cn, api-access.pangolin-sdk-toutiao-b.com, api-access.pangolin-sdk-toutiao.com, api-access.pangolin-sdk-toutiao1.com, api-cfg.wtzw.com, p1-lm.adukwai.com, lf-cdn-tos.bytescm.com, webcast-open.douyin.com, beta-luna.douyin.com, ether-pack.pangolin-sdk-toutiao.com, api-access.pangolin-sdk-toutiao?.com, sf*-fe-tos.pglstatp-toutiao.com, api.qbb6.com, open.qyer.com, media.qyer.com, a.qiumibao.com, qde.qunar.com, homefront.qunar.com, client.qunar.com, capi.lkcoffee.com, ecapi.lkcoffee.com, m.lkcoffee.com, img0*.luckincoffeecdn.com, oneapph5.dongfeng-nissan.com.cn, app.peopleapp.com, stat.peopleapp.com, adstatic.peopleapp.com, dyncdn.me, api.rr.tv, cms.daydaycook.com.cn, api.daydaycook.com.cn, app.meruki.cn, app.homeinns.com, api.mos.csvw.com, mapi.sfbest.com, ccsp-egmas.sf-express.com, ucmp.sf-express.com, mcs-mimp-web.sf-express.com, homepage-api.smzdm.com, haojia-api.smzdm.com, app-api.smzdm.com, user-api.smzdm.com, article-api.smzdm.com, qianbao.smzdm.com, s-api.smzdm.com, haojia.m.smzdm.com, api-sams.walmartmobile.cn, apis.lifeweek.com.cn, api.huachenjie.com, ad.shunchangzhixing.com, zlsdk.1rtb.net, api.gameplus.qq.com, ios.sspai.com, editor.sm.cn, img01.10101111cdn.com, www.ymm56.com, ecard.shenzhentong.com, sh-gateway.shihuo.cn, static.shihuocdn.cn, gw-passenger.01zhuanche.com, img.yun.01zhuanche, ut2.shuqistat.com, dsp.toutiao.com, sf3-be-pack.pglstatp-toutiao.com, sq.sljkj.com, ocean.shuqireader.com, img-tailor.11222.cn, message.shuqireader.com, feedback.uc.cn, *.shuqireader.com, 101.91.69.26, service.4gtv.tv, mapi.sichuanair.com, business-cdn.shouji.sogou.com, ios.sogou.com, android.sogou.com, h5api.sginput.qq.com, *.souhu.com, wxs-weixin.sd.zhumanggroup.com, 47.110.187.87, ssp.soulapp.cn, chat-live.soulapp.cn, api-chat.soulapp.cn, api-account.soulapp.cn, api-global.soulapp.me, api-a.soulapp.cn, api-pay.soulapp.cn, gateway-mobile-gray.soulapp.cn, post.soulapp.cn, api-user.soulapp.cn, *-spclient.spotify.com, spclient.wg.spotify.com, api.sodalife.xyz, api.bwton.com, szdmobile.suzhou.gov.cn, mpcs.suning.com, image.suning.com, luckman.suning.com, mrobot.pconline.com.cn, mrobot.pcauto.com.cn, agent-count.pconline.com.cn, ga-album-cdnqn.52tt.com, www.tailgdd.com, alt-r.my.com, imgx.jampp.com, bid.adview.cn, api.taptapdada.com, btrace.qq.com, api2.helper.qq.com, *.beacon.qq.com, lives.l.qq.com, imgcache.qq.com, mtteve.beacon.qq.com, vv.video.qq.com, qt.qq.com, 3gimg.qq.com, splashqqlive.gtimg.com, qzonestyle.gtimg.cn, discuz.gtimg.cn, bla.gtimg.com, mmgr.gtimg.com, bk.bingo.qq.com, static.gameplus.qq.com, 4gimg.map.qq.com, otheve.beacon.qq.com, ccmsupport-sz.tenpay.com, news.ssp.qq.com, sports3.gtimg.com, images.client.vip.xunlei.com, api-shoulei-ssl.xunlei.com, chl.tf.cn, wechat.tf.cn, cgbank.oss-cn-shenzhen.aliyuncs.com, tfsmy.chengdu.gov.cn, tft-app.cdtft.cn, ams-cdn.cdtft.cn, www.tsytv.com.cn, j5.dfcfw.com, appactive.1234567.com.cn, t1.market.xiaomi.com, api.cloud.189.cn, api.ncarzone.com, ossgw.alicdn.com, zconfig.alibabausercontent.com, *.ly.com, *.17usoft.com, *.17u.cn, mobilehotelapi.elong.com, quic-tcmapi.elong.com, truthsocial.com, *.i18n-pglstatp.com, mkt-gateway.tuhu.cn, cl-gateway.tuhu.cn, gateway.tuhu.cn, m.pvp.xoyo.com, client.tujia.com, m.tuniu.com, adm.10jqka.com.cn, iphone.ac.qq.com, stat.10jqka.com.cn, top-widgets-api.xiaozujian.com, api-marketing.zhinengxiyifang.cn, adsoss.zhinengxiyifang.cn, ads.zhinengxiyifang.cn, pubads.g.doubleclick.net, pagead2.googleadservices.com, img0*.benlailife.com, qiye.gaoding.com, god.gameyw.netease.com, app-conf.ds.163.com, kaola-haitao.oss.kaolacdn.com, sp.kaola.com, gw.kaola.com, *.music.126.net, img1.126.net, www.icourse163.org, nex.163.com, g1.163.com, client.mail.163.com, c.m.163.com, interface*.music.163.com, easyreadfs.nosdn.127.net, p.du.163.com, m.you.163.com, yanxuan.nosdn.127.net, dict.youdao.com, api-overmind.youdao.com, cdke.youdao.com, dictvip-business.youdao.com, dsp-impr2.youdao.com, impservice.dictapp.youdao.com, oral.youdao.com, oimage*.ydstatic.com, api.wmpvp.com, snailsleep.net, b.appsimg.com, mapi.appvipshop.com, ios.wps.cn, wanciwangdata.oss-cn-beijing.aliyuncs.com, recite.perfectlingo.com, misc-api-prd-mx.wandafilm.com, osg-static.sgcc.com.cn, osg-service.sgcc.com.cn, mp.weixin.qq.com, weixin110.qq.com, security.wechat.com, api.wfdata.club, overseas.weico.cc, thor.weidian.com, cds.wifi188.com, api.51credit.com, img.wukongtv.com, api-release.wuta-cam.com, res-release.wuta-cam.com, m.ctrip.com, ma-adx.ctrip.com, wcprd.hilton.com.cn, file.cibfintech.com, apiwz.midukanshu.com, upload-bbs.mihoyo.com, cstore-en-public-tx.seewo.com, edit.sinaapp.com, app.chinahxzq.com.cn, client-api-v2.oray.com, lchttpapi.xczim.com, pzoap.moedot.net, vapp.tmuyun.com, res1.hubcloud.com.cnhostname, mobileapi.xiamenair.com, acs.m.goofish.com, g-acs.m.goofish.com, info.mina.xiaoaisound.com, marketing-aibox.v.mitvos.com, api.xbxxhz.com, shcss.suning.com, web2.realtech-inc.com, sdk.1rtb.net, gw.xiaocantech.com, smarket.dian.so, file.dian.so, xhtz.oss-cn-guangzhou.aliyuncs.com, mpos-pic.helipay.com, mgesq.api.mgtv.com, *.hitv.com, app-api.niu.com, api.petkit.cn, myusmile.online, wemallh5.usmile.com, www.myusmile.online, api.psy-1.com, lcen.xiaote.net, ad.xiaotucc.com, mapi.xiaotucc.com, portal-portm.meituan.com, mall.meituan.com, xxyx-client-api.xiaoxiaoyouxuan.com, statistic.live.126.net, www.xiaoxiongmeishu.com, spamblocker-api.zeekstudio.com, api.xiaoyi.com, api.xiaoyuzhoufm.com, edith.xiaohongshu.com, www.xiaohongshu.com, ci.xiaohongshu.com, rec.xiaohongshu.com, so.xiaohongshu.com, edith.rnote.com, www.rnote.com, ci.rnote.com, so.rnote.com, rec.rnote.com, api.jr.mi.com, api-miprint.hannto.com, api.indeedpower.com, api-mifit*.huami.com, shopapi.io.mi.com, gslbali.ximalaya.com, search.ximalaya.com, searchwsa.ximalaya.com, mobile.ximalaya.com, mobilehera.ximalaya.com, mobwsa.ximalaya.com, m.ximalaya.com, mwsa.ximalaya.com, app.xinpianchang.com, bgw.xinyue.qq.com, operationapi.fosunhanig.com, api*.sparke.cn, static.xyzq.cn, static.api.m.panda.tv, api.xueqiu.com, open.xueqiu.com, stock.xueqiu.com, 39.103.79.14, 39.106.97.84, 47.95.49.75, 101.201.62.20, 101.201.62.26, 101.201.175.228, 124.250.48.3, 182.92.145.50, 182.92.251.113, portal-xunyou.qingcdn.com, imeclient.openspeech.cn, e-static.aia.com.cn, api2.yaduo.com, www.cntv.cn, cdn.cmgadx.com, mobile-api2011.elong.com, webboot.zhangyue.com, saad.ms.zhangyue.net, app.yinxiang.com, i.ys7.com, oneapp-api.faw-vw.com, app02.vgtime.com, www.vgtime.com, *.gamersky.com, service.busi.inke.cn, static.psbc.com, mcc.psbc.com, static.mobile-bank.psbc.com, d.psbc.com, pipi.4kya.com, m.yap.yahoo.com, patient-api.suh.cn, userpms-api.suh.cn, venus.yhd.com, a.sinopecsales.com, ocrifs.ejoy.sinopec.com, api.yikaobang.com.cn, api.17kjs.com, compus.xiaofubao.com, mapi-app.bestpay.com.cn, api.ycapp.yiche.com, cheyouapi.ycapp.yiche.com, ad.ysepay.com, ads.ysepay.com, api.winbull8.com, hz.yxzq.com, api5.youonbike.com, api.yonghuivip.com, new-app-api.ylyk.com, gongdu.youshu.cc, img.dailmo.com, img.allahall.com, app.zhoudamozi.com, rr*.googlevideo.com, youtubei.googleapis.com, api.ulife.group, acs.youku.com, push.m.youku.com, un-acs.youku.com, *.yuxueyuan.cn, xyst.yuanfudao.com, nnapp.cloudbae.cn, gw3.ykccn.com, restapi.iyunmai.com, openapi.boc.cn, mlife.jf365.boc.cn, amemv.com, musical.com, snssdk.com, tiktokv.com, xyz.cnki.net, app.10099.com.cn, wap.bank.ecitic.com, imcs.citicbank.com, ecssmobile.e-chinalife.com, webappcfg.paas.cmbchina.com, mbmodule-openapi.paas.cmbchina.com, marketing.cmschina.com, client.app.coc.10086.cn, app.10086.cn, mcmm.caiyun.feixin.10086.cn, mrp.mcloud.139.com, ad.mcloud.139.com, middle.yun.139.com, cloud.189.cn, zt-app.go189.cn, m.client.10010.com, m1.ad.10010.com, res.mall.10010.cn, e.weather.com.cn, zgrb.epicc.com.cn, apicloud.zol.com.cn, c.zhangle.com, live.inst-service.htsc.com, geetest.htsc.com, 119.29.29.*, djcapp.game.qq.com, quanguo.mygolbs.com, wx.mygolbs.com, ossweb-img.qq.com, mlol.qt.qq.com, mbasecc.bas.cmbchina.com, mbasecc.bcs.cmbchina.com, intellicc.bas.cmbchina.com, intellicc.bcs.cmbchina.com, beehiveapi.58.com, portal.zjzwfw.gov.cn, app-izz.zhengzhou.gov.cn, apio.zhengqi100.com, zua.zhidiantianxia.cn, preprod.cdzghome.com, api.zhihu.com, www.zhihu.com, appcloud2.zhihu.com, m-cloud.zhihu.com, zhuanlan.zhihu.com, link.zhihu.com, direct.z-bank.com, hdgateway.zto.com, minipro.95504.net, sichuan.95504.net, app.badmintoncn.com, fastbuyer.zbj.com, z.onewo.com, app.zhuanzhuan.com, zjdr666.com, ztoread.ziroom.com, api.izuiyou.com, syh.zybang.com, www.zybang.com, ih2.ireader.com, book.img.ireader.com",
     "reason": "invalid-functional-syntax:mitm-exclusion-order",
     "risk": "invalid"
   },
@@ -88093,75 +88069,75 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.xiaohongshu\\.com\\/api\\/sns\\/(v2\\/note\\/feed|v3\\/note\\/videofeed)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/(v2\\/note\\/feed|v3\\/note\\/videofeed)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.xiaohongshu\\.com\\/api\\/sns\\/(v4\\/note\\/videofeed|v10\\/note\\/video\\/save)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/(v4\\/note\\/videofeed|v10\\/note\\/video\\/save)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/(followfeed|homefeed)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/(followfeed|homefeed)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/note\\/(imagefeed|live_photo\\/save), script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书图片视频水印 = type=http-response, pattern=^https?:\\/\\/(edith|rec|www)\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/note\\/(imagefeed|live_photo\\/save), script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书开屏广告 = type=http-response, pattern=^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/system_service\\/config\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书开屏广告 = type=http-response, pattern=^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/system_service\\/config\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书开屏广告 = type=http-response, pattern=^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/system_service\\/splash_config, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书开屏广告 = type=http-response, pattern=^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/system_service\\/splash_config, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书搜索页 = type=http-response, pattern=^https?:\\/\\/(so|edith)\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/search\\/notes\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书搜索页 = type=http-response, pattern=^https?:\\/\\/(so|edith)\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/search\\/notes\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书搜索页 = type=http-response, pattern=^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/search\\/(banner|hot)_list, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书搜索页 = type=http-response, pattern=^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/search\\/(banner|hot)_list, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书搜索页 = type=http-response, pattern=^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/search\\/(hint|trending)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书搜索页 = type=http-response, pattern=^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/search\\/(hint|trending)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书评论区去水印下载 = type=http-response, pattern=^https:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v1\\/interaction\\/comment\\/video\\/download\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书评论区去水印下载 = type=http-response, pattern=^https:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v1\\/interaction\\/comment\\/video\\/download\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书评论区去水印存储 = type=http-response, pattern=^https:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/(v5\\/note\\/comment\\/list|v3\\/note\\/comment\\/sub_comments)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书评论区去水印存储 = type=http-response, pattern=^https:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/(v5\\/note\\/comment\\/list|v3\\/note\\/comment\\/sub_comments)\\?, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "小红书详情页 = type=http-response, pattern=^https?:\\/\\/edith\\.xiaohongshu\\.com\\/api\\/sns\\/v\\d+\\/note\\/widgets, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
+    "candidate": "小红书详情页 = type=http-response, pattern=^https?:\\/\\/edith\\.(xiaohongshu|rnote)\\.com\\/api\\/sns\\/v\\d+\\/note\\/widgets, script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/xiaohongshu/xiaohongshu.js, requires-body=true, timeout=60",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -88634,6 +88610,12 @@
   {
     "source": "my_reject.conf",
     "candidate": "DOMAIN,userlocation.googleapis.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "my_reject.conf",
+    "candidate": "DOMAIN,userlocations.googleapis.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -92534,6 +92516,12 @@
   {
     "source": "reject.conf",
     "candidate": ".giftclothings.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "reject.conf",
+    "candidate": ".gifteddonut.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -134209,6 +134197,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".11-5tg.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".1130867761-doradztwo.storage.googleapis.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -134389,12 +134383,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".11sw8-t7r-820c-sjdzr-30-09-2026-hh.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".1231069676-doradztwo.storage.googleapis.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -134497,12 +134485,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".1581-g1gx-h9a-xsfi-tq8w5f.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".15tyesy.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -134510,6 +134492,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".15xwq5-edp-ar6lu-jijfj7-ml8.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".16-6st.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -134779,18 +134767,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".214-stonkbroker-clutchmarkets.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".215-stonkbroker-clutchmarkets.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".21t060-7fk-z7p-mis3m-isrum.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -134798,6 +134774,18 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".2220875948-doradztwo.storage.googleapis.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".225-stonkbroker-clutchmarkets.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".226-stonkbroker-clutchmarkets.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -134816,12 +134804,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".23f2-cq804-dxdro-edjfoc-0h8.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".23p-mpc-6lnhq-ic8cjl-g10e.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -134852,6 +134834,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".2fd86-j7ic3-7s49z5-jkffss.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".2lm-huts-6uupj3-74k-mpr49w.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -134899,6 +134887,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".3-fables-votes.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".3147459c.92ea2438071f378d2627edbe.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -134911,12 +134905,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".33-proposal-saturncredit.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".33455677.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -134924,12 +134912,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".380t-i7z-4k214-hyov-lzyfii.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".3b9jhv-2h9i-j0o3-lbsl-2719n6.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -134978,6 +134960,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".3yz2-zjubz-zcus-wkv7fh-fnh.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".4-fables-votes.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -135685,6 +135673,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".5985n9mff-funfn994784ecd853-8478h84.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".5992943901-prawnicy.storage.googleapis.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -135727,7 +135721,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".5k7xi5io-appleid.pages.dev",
+    "candidate": ".5kc-nk2xdn-posm8-73w8n-sick7.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -135776,6 +135770,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".5zti-wx9w-z3v-tswk-5evrn.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".6-portal-papertradegov.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -136633,12 +136633,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".6je05g-qqykxc-65b-ba4ix-4hq.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".6lny4-kuwwnc-jwcx-i828z-2948.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -137066,6 +137060,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".7o443-thpa-o3om3e-ng5f-ob34m.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".7p6wx2-4nowm-qdh5-rirc4-nslcv.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -137689,6 +137689,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".8kn4sx-x1n1f-puy5-6oab-agi.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".8o1-cil-p35-7ywss9-mwhnd.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -138169,6 +138175,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".aadityasinghh01.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".aaofrx1mfv-76a5a3a10d.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -138176,6 +138188,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".aarambhband-dev.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".aarti-dental-clinic.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -138205,6 +138223,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".abdelhakem-lamine.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".abdrsd.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -138229,7 +138253,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".abotgado.pages.dev",
+    "candidate": ".aboutme-ddk.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -138278,12 +138302,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".account-verification-case864.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".account.zoom-in.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -138523,6 +138541,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".aff-2j6.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".afriquant-click.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -138613,7 +138637,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".ai-with-spr.vercel.app",
+    "candidate": ".ai-news-autopilot-frontend.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -138632,12 +138656,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".aipomai-engine-com.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".airbnb-clone-hisham.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -138961,7 +138979,19 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".amal-cms-admin.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".amazingly-cuddly-eagle.edgecompute.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".amazon-frontend-clone-project.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -139099,6 +139129,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".anandanand39981-blip.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".anandsr-dev.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -139190,12 +139226,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".anj-whatsapp.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".annuverma72.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -139549,6 +139579,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".architect-playbook.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".arezocolection.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -139651,6 +139687,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".assurances-toledano-2.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".asticoctobcarnival.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -139705,12 +139747,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".atif-kader.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".atlas-adv.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -139718,12 +139754,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".atlas-contacto.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".att-asm.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -140041,12 +140071,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".azure-dawn-2429-139ca17b.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".azzzgoconty.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -140156,6 +140180,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".ban-amiga-soluciones.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".bancadigital-a6c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -140402,6 +140432,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".beradrome-claim.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".berisik-tampil-dislot8808.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -140809,6 +140845,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".blocalians-19.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".blocchecker10.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -140941,13 +140983,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".bluecheckservices-gold.vercel.app",
+    "candidate": ".bluecheckservices.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".bluecheckservices.vercel.app",
+    "candidate": ".bluequbitai-pro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -141415,6 +141457,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".bokji-portal-test.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".bol-whatsapp.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -141512,12 +141560,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".bou-2cz.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".boulevard-mechanical.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -141673,18 +141715,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".breezy-tide-b7f7-8bed144e.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".breezy-tide-d32c-b660df2b.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".brekutiosai-pro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -141704,12 +141734,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".bright-lab-a57.cf-dy6gqzh2.workers.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".bright-willow-87e1-e7214f6e.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -141764,6 +141788,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".bronvalnexsystem-com.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".brownsvillehurricaneshutters.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -142147,12 +142177,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".bvldq64x-fghwc29zfn-7t4k-yrp63k.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".bwf-whatsapp.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -142232,6 +142256,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".bxchx.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".bxjknq-2f6y8-hhmd-z4i7-qf1v.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -142405,13 +142435,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".calm-canyon-2969-07cd94d0.pages.dev",
+    "candidate": ".calm-sun-283a.ianzyvnee.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".calm-sun-283a.ianzyvnee.workers.dev",
+    "candidate": ".calm-valley-26d1-447dd805.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -142579,6 +142609,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".casewww.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".cash-vaultshire-shop.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -142669,30 +142705,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".cedar-canyon-0f34-0fb399d3.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".cedar-grove-55da-730ad471.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".cedar-hollow-c9a2-25a1e1a8.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".cedar-lark-bb8e-8f955993.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".cedreplacivect-shop.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -142748,6 +142760,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".cesar6jvpereira-lgtm.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".cesia-zoom-access.kp-gcp.mhgi.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -142838,6 +142856,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".chaseonlineacces.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".chat-group-as-ruby.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -142970,12 +142994,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".chimerical-banoffee-0eba60.netlify.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".chimerical-froyo-20e011-ve1004hj-2406szm.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -143437,12 +143455,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".clinica-dentaria-central-norte.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".clisplusinicio.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -143480,12 +143492,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".clouddns-whatsapp.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".cloudflare-launch-portfolio.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -143605,12 +143611,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".codex-zoom-companion-remote.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".coinbase-connetct.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -143654,12 +143654,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".colliercynthia.github.io",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".colorfulhome-support.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -143756,6 +143750,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".commit-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".community-policy-info.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -143917,19 +143917,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".copiloto-8kr.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".corailrendif-click.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".coral-ridge-0363-aa7bf737.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -144055,25 +144043,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".cozy-birch-1bf1-0bada28a.pages.dev",
+    "candidate": ".cozy-haven-8e9b-e03fa24e.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".cozy-harbor-591f-3b299f35.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".cozy-poppy-c9be-9db24918.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".cozy-tide-db80-56a9087a.pages.dev",
+    "candidate": ".cozy-tide-cbce-8b8985c3.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -144589,6 +144565,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".d2i-r45-oikve-8q9-9dkz-x4l6.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".d78cumentspdfviewer98eonline98pdfhgrteee564gyy67j9.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -144673,12 +144655,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".daoruining.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".dappbridge.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -144757,12 +144733,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".data.dhemling.workers.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".databaseserver-sigma.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -144818,6 +144788,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".dbs-secure.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".dci-ledger-test197.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -145117,12 +145093,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".dewy-grove-9089-802127b7.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".dexfi-next-js.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -145196,12 +145166,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".diagnostyka-wp.netlify.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".differentroofing.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -145477,6 +145441,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".doh-node-034.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".dominairex-shop.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -145525,12 +145495,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".downtheflue.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".dpa-s8jh-i4mv4t-uhc-xawm6p.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -145538,12 +145502,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".dqkj-fq6-o46svx-qht-e3eofu.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".draftwebxpor912.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -145670,6 +145628,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".dry-night-e9b0.access-tracking.workers.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".dsfs-bhn.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -145903,6 +145867,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".ee-legalzoom-bank.ph",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".efawatercom.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -145952,6 +145922,18 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".egrweb-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ehduhtohtoh.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ehe-s40-qjba1-yn1-r7yi-il2id.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146059,12 +146041,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".emiratesnbd-legalzoom-leboncoinauths.ph",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".empirepeakpro-xyz.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -146108,6 +146084,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".encode-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".endoftheworlddiary-3ax.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146239,12 +146221,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".ernesto2406.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".errorpagebanrural.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -146336,6 +146312,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".evaeva-cmd.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".evaibanezcano.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146581,7 +146563,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".facebook-clone-nu-two.vercel.app",
+    "candidate": ".facebook-clone1-ten.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146671,7 +146653,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".facebookaccount-zoomxwowzzspark.ph",
+    "candidate": ".facebookaccount-zoomxangel.ph",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146684,12 +146666,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".facebookk-k.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".facebookloginbayshub-google-com.ph",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146791,13 +146767,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".fastidious-khapse-f62527-bvg1004rw-2406jag.pages.dev",
+    "candidate": ".fastidious-tanuki-1d7a77.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".fastidious-tanuki-1d7a77.netlify.app",
+    "candidate": ".fastip-mininin.sayes.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -146941,12 +146917,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".fdhgde.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".fe30zv-33bql-wjwz-oc4fk-o1w.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -146978,12 +146948,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".fenaluxai-digital.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".fencesalinas.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147037,18 +147001,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".fghwc332nh-kxtrnlpw-1q3l5e-fgh29c.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".fghwc36nhw-kxtrnlpw-1q0l8e-fgh79c.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".fhnweb-whatsapp.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -147056,12 +147008,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".fiashapp-three.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".fictional-couscous-yo8.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147415,18 +147361,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".foundbyreader.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".foundbyreaders.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".fqjq38s-c07s.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -147535,19 +147469,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".frosty-daisy-d6bf-d6ddcdc4.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".frosty-dust-7e81.turnerlilianehu25236uh21-7d2.workers.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".frosty-tide-2659-4126216c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147560,6 +147482,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".ftbcemolizolpa.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ftwfm5-jci8qe-yrfev-l7m-gx8qws.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147601,12 +147529,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".g-d76.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".g1globoagora.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -147631,7 +147553,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".gabrist-2-interactive.pages.dev",
+    "candidate": ".gain-frame-privacy.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147656,12 +147578,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".gaorangerrtungsha.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".garagedoorlongisland.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147769,6 +147685,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".gentle-fern-bf0e-0fe560ef.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".gentle-grass-2e20.adaleeailaniqkpati0133.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -147859,7 +147781,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".ghscy51lkwg-pxvbmpli-0ps96d-ghs77c.pages.dev",
+    "candidate": ".ghscy517pt-mldpt82mch-8o5q0g-pxv41x35h.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -147943,12 +147865,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".glowing-happiness.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".gmail-account.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -147997,6 +147913,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".godisableipm-website.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".gogo-smoky-nine.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -148009,7 +147931,19 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".golden-dawn-aa97-a7f70f7e.pages.dev",
+    "candidate": ".golden-canyon-3bb1-7d22096f.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".golden-grove-dd35-9445435b.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".golden-willow-8428-687ca4d9.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148052,12 +147986,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".golvurikenzia-digital.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".good-spirit-store.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148124,6 +148052,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".google.drive03.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".google.workspacedoc.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148441,6 +148375,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".grill-guardians.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".grn-microsoft-outlook.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -148580,12 +148520,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".hacher666.github.io",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".haha212toronto-com.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148789,19 +148723,13 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".hermes-tech-nexus.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".heroic-gingersnap-c91d12.netlify.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".heroxstore.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".herramientas-comerciales-vita.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148820,12 +148748,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".hf-8zk.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".hfhh.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148903,6 +148825,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".home-pharma.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".home-webmail-login-mvefi1z5snnoqy2ekh.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -148915,7 +148843,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".hongtaipharma.pages.dev",
+    "candidate": ".honolulucabinetrefacing.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -148946,6 +148874,24 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".hostcdn-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".hostinger-legalzoom-amazonbookawar.ph",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".hostinger-mail-ewgjnwrkgnkrw-shpgeeddmsgtpaynyekoizul.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".hostinger-mail-ewgjnwrkgnkrw-zcqyggymzitvclfeurmajsrx.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -149024,6 +148970,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".htyd.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".hua-chuang.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -149347,12 +149299,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".indesx-mauve.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".indexarkfertinex-digital.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -149432,6 +149378,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".infostates.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ingra-ledger-private.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -149570,6 +149522,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".instagram-frontpage.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".instagram-groupe-invite.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -149827,12 +149785,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".interrelate.netlify.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".inv-strategy.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -149888,6 +149840,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".io-trust.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ioa-hfs-s235p-h5o9-shqi-gd1y7.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -149960,12 +149918,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".irx-1na-zv7-3vcrw6-jrye-tfwwb6.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".islandlocks.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -150049,12 +150001,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".ivory-wren-96b0-e29bfe08.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".iz7kc-4ev-s4jr-722p-imzlhq.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -150097,6 +150043,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".ja-cen.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".ja-losangelesyonimassage-com.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -150115,19 +150067,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".jade-clover-02e2-3e4eb01c.pages.dev",
+    "candidate": ".jade-garden-2043-6487dfb6.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
     "candidate": ".jadlogaavis.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".jal-legalzoom-online.ph",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -150193,6 +150139,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".jenniferandjosh.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".jertyiomex-feriuonezer.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -150223,25 +150175,19 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".jimporritomtom.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".jiolatest.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".jisooooo0201.github.io",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".jjhdgtv.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".jjstudios.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -150331,12 +150277,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".joplincranerental.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".jordancardumniahzainorange.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -150350,6 +150290,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".jpwa10s-h17s.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".jpxqn616mj-kvtrmren-9m6m1g-py922a.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -150386,6 +150332,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".jsdhferncxvkjskdfjertuxcv-wwjkjdhf7.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".jtkonzult.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -150625,12 +150577,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".kg3-setup.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".kgstinvest-pro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -150764,6 +150710,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".klusoos.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".km-subfolders-in-cluster-2-klinika-diame-a6212c6c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -150937,6 +150889,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".kvtrm53hwu-jpxqn81fyn-3o1m8g-py755c.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".kw20b-dvq-8le3-lsdwg-08-09-2026-hh.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -150949,13 +150907,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".kxtrn819m-bvldq341k-5p7r-mjs259p.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".kxtrn81mjwy-bvldqren-3q4r5g-yr833a.pages.dev",
+    "candidate": ".kxtrn428mjw-bvldqrel-3q8p5g-yr899a.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -151099,12 +151051,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".lawpocket.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".layer-whatsapp.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -151130,6 +151076,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".lcs5-7bfe-tji-4o5-04nrzp.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ldgr-lives-app.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -151196,6 +151148,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".legacybitfundexengine-com.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".legendary-bassoon-6tl.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -151381,12 +151339,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".linenandlists.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".lingering-mountain-7c50.usdllirywvjetyf.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -151501,6 +151453,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".live-and-local-website.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".livelo-promo.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -151513,13 +151471,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".lively-poppy-260b-03a9599b.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".lively-resonance-4a57.gnjtfa.workers.dev",
+    "candidate": ".lively-robin-89d1-e3acc76e.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -151574,12 +151526,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".lnstagramcom572.github.io",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".lnstagrarn-reel-paoa2oajo.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -151723,6 +151669,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".longislandexterminators.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".lookblock.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -151801,6 +151753,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".lrsindia.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".lssmag.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -151808,12 +151766,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".lucidoinviora-digital.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".luciferjgm.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152161,6 +152113,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".main-dex-giveaway-chain-1ey.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".maintenance2608.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152203,18 +152161,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".maple-birch-f30d-e161b11b.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".maple-fern-e184-cd7d0df2.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".mapper-whatsapp.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152222,6 +152168,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".maps.google.rs",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".marfeli-mpt-quzvano-k5x7pe83.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152341,7 +152293,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".mbtzp4c01pl-fsgcyyhy-8s5q9g-qw511a.pages.dev",
+    "candidate": ".mbtzp420kf-fsgcypdr-8u7m4c-qw32n.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152353,7 +152305,19 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".mbtzp62kfly-fsgcypdr-8u9m6c-qw433c.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".mc7-t7r-mueh-8or-yqhlqk-74qrb.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".mdg-migration-preview.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152413,6 +152377,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".member-huaydee88-prod.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".memes-airdrop-live.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152425,25 +152395,19 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".meridian-bet-bet.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".merry-dasik-02adea.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".mervelo-kxt-qorqumi-c2x7hp84.pages.dev",
+    "candidate": ".mervuni-mpt-qalvoro-c8h2ka74.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".mervuni-mpt-qalvoro-c8h2ka74.pages.dev",
+    "candidate": ".mestogo-blog.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152563,12 +152527,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".metamask-docs-keec0mi8n-consensys-ddffed67.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".metamask-launchpad.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152671,12 +152629,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".metrobank-zoom-meeting.com.ph",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".metta-verifiield-access.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -152720,6 +152672,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".mi-solicitud-card-9194.andres457646.workers.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".micrcosoft231.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152779,19 +152737,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".mister-vet-clinica-veterinaria-24h.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".misty-night-93da.uwouwvaet.workers.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".misty-otter-2f05-5d4e11ea.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152809,37 +152755,19 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".mjigxt-9rp-m87b4d-i8e-ol9.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".mjszp34kxt-fghwc82yrp-6p1n9g-bv492d.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".mjszp4avstr-fghwcmja-5s4r6g-mjs03c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".mjszp521low-yrpknyr-5p0o7g-mjs42c.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".mjszp5avstr-fghwcmja-5s2r7g-mjs20c.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".mkwweb-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".mldpt220lkw-wjlnfwur-8p5q7b-mldq70p.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -152924,12 +152852,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".model-whatsapp.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".modestocranerental.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -153140,6 +153062,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".morning-wood-7030.s2119827.workers.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".morsebeep.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -153397,6 +153325,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".mysterybox17.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".myworkingthing.dook7c-g9y2101f031f.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153404,12 +153338,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".n1lo21fhthcxhrgfxxdxg1bb40negizrpps39-h06.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".n2e-nexmining-preview.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -153481,19 +153409,25 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".naturepaw.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".naukpi-vf9-2km-ys0-jj1-teyrk.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".nav-ledgr-eng.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".navzelo-mpt-farqura-m2c8le73.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".nbddut-i6esa064.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -153637,6 +153571,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".netflix-clone-seven-liard.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".netflix-colombia.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -153680,12 +153620,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".netflix-pay.click",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".netflix-recovery.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -153943,12 +153877,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".newfrees.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".newlogss.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -154117,7 +154045,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".nlgjh4avstr-bcfxsmja-0n9l1g-nlq03c.pages.dev",
+    "candidate": ".nlgjh620low-myktrmy-0k7j9g-nlq07c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154441,7 +154369,19 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".nutradiabs-whatsapp.orderyuk.info",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".nw-updater.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".nwc6xu-3xakr-hwnl-t7a-6wc060.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154502,12 +154442,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".o310-9hdjn-fh1n1h-l2jdt-3jbc.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".o3wx-pqv8t-zsiz-5ma-p0f8g.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154591,6 +154525,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".of7b-r0h-vfrcf-5tu5-k6fnk.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".oferta-do-dia-magalu.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -154663,12 +154603,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".official-ledger.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".ohc0f-v85-fk0f-b9fm8-07-09-2026-aa.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -154682,6 +154616,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".oilprofit-click.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".oily-bbt-lqc-1a8n-jydsi-dbx.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154717,13 +154657,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".okb-34.pages.dev",
+    "candidate": ".okningfundex-pro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".okningfundex-pro.pages.dev",
+    "candidate": ".okvml.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154766,6 +154706,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".olekgaiha2011-sketch.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".olive-and-ivy.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -154886,6 +154832,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".op-3oz.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".opel-challenge-at.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -155246,6 +155198,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".oznormali.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".p0by7-f74j-mse-u3sh5-94qh.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -156013,6 +155971,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".pon-family-accounting.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".poosta.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156121,12 +156085,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".premium-kebaphaus-de.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".premium-vendour.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156163,6 +156121,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".preview-cs1-v2.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".primenipponai-club.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156187,12 +156151,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".pro-drt.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".proactivereliabilit.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156200,6 +156158,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".process-exodus.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".processbridge-solutions.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -156266,12 +156230,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".project-s10-pl-sams-lnk.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".projection-3tg.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -156523,24 +156481,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".pxvbm5c80sk-trzkqwur-2s7q9d-ml611a.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".pxvbm61kwg-ghscy38pli-9ps15d-pxv83k.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".pxvbm72cwjl-mldpt64mld-2s6q4d-ghs51t.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".pygq-lulrq-wnc-lv1v2a-hsie2.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156644,12 +156584,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".qooopwie8jdkjbfsihbifhiyufbiuybifds-chi.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".qorvani-mpt-xelfuzo-k6d3me91.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -156799,12 +156733,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".quiet-field-9d05-e2f631a7.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".quiet-seahorse-393bb9.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156889,18 +156817,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".qwxkn72mjwr-mbtzprel-4r7p5g-yd777a.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".qwxkn8bskra-mbtzpwur-4u1s6d-yd000a.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".qxfaoai-click.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -156956,6 +156872,18 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".rainbow-speculoos-2f3715.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".raja-rajaan-hoki.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".rakeshnira.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157028,6 +156956,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".ravilizia-digital.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ravqulo-kxt-belmavi-a9x3dw74.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157435,6 +157369,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".resto-studio-preview.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".restricted-account-identity-verify.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -157687,12 +157627,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".royal-glitter-f884.gnjtfa.workers.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".royal-phoenix-3jlny.luckymoney2026.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -157772,6 +157706,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".runuse-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".rvljh222sk-ydktryd-6s5s9e-rvl61a.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -157892,12 +157832,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".sandeeppk03.github.io",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sandy-harbor-7a48-2ef64883.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -158048,6 +157982,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".sddftyrdyfwaru.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sdsdsd-cxc.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -158857,7 +158797,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".silver-finch-d3c0-2c186977.pages.dev",
+    "candidate": ".silver-fern-5f4d-92a54afc.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -158906,12 +158846,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".sitemyasd.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sitestudio-preview.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -159085,12 +159019,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".snowy-mode-86fa.vyasetssh.workers.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".snowy-unit-b50d.nslmexrltlbqdvm.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -159259,6 +159187,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".solutionmda-8np.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".solvecto-click.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -159296,6 +159230,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".sort-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sotekpower.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161347,19 +161287,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp14ct-velsak-biz-pronor-felvik.pages.dev",
+    "candidate": ".sp18ct-kelva-biz-ravik-zumex.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp18ct10-vazlek-biz-vunero.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp19ct-murin-biz-pavel-saku.pages.dev",
+    "candidate": ".sp19ct-vorel-biz-zarik-muno.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161893,7 +161827,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp20ct10-ranvilo-biz-zunema.pages.dev",
+    "candidate": ".sp21ct-pavok-biz-lumi-zera.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -161977,19 +161911,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp26ct10-zanvako-biz-rumeli.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp26ct10-zorvake-biz-lumati.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp28ct-dazem-biz-vorel-zirek.pages.dev",
+    "candidate": ".sp28ct-davel-biz-qurum-zirek.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162007,19 +161929,25 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".sp28ct-horel-biz-munav-zanek.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sp28ct-jazem-biz-zunor-qalek.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".sp28ct-qovel-biz-zumav-ranek.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp28ct5-felun-biz-korvi-zemti.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp28ct5-mavri-biz-nemti-zorak.pages.dev",
+    "candidate": ".sp28ct5-femun-biz-zavri-kelro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162037,7 +161965,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp28ct5-ravun-biz-zulro-femki.pages.dev",
+    "candidate": ".sp28ct5-zemor-biz-rulak-kavti.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162050,6 +161978,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".sp29ct-belnok-biz-lensar-hortik.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sp29ct-felak-biz-korun-zemri.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162079,18 +162013,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp29ct-murak-biz-zavun-fekro.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp29ct-vurvi-biz-nemak-lorti.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".sp29ct-zemik-biz-rulro-vakti.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162109,19 +162031,25 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp30ct-zarik-biz-qemur-koval.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp30ct10-davreko-biz-kuneti.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".sp30ct10-dorlevo-biz-zuneri.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sp30ct10-kavlemi-biz-zurelo.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sp30ct10-kavvilo-biz-zuneri.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sp30ct10-melreko-biz-zureti.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162133,13 +162061,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sp30ct10-rumvilo-biz-zaketi.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sp30ct10-varkilo-biz-zunaro.pages.dev",
+    "candidate": ".sp30ct10-melvuni-biz-zunaro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162469,6 +162391,18 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".sso-godaddy-fyirrgteygedypmpgmuptege.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".sso-godaddy-hlfbjvzqjgfmzdilljnyutpf.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".sso.cuban.workers.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162559,6 +162493,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".staystack-new-website.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".stcitbgtsoefb.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162584,12 +162524,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".steamcommnunmity.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".steamcommuminty.cam",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -162877,12 +162811,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".stromech-web.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".strong-bienenstitch-8dce96.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -162967,12 +162895,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".suhelkhanv35-sys.github.io",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".sukkie12.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -163015,13 +162937,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".sunny-birch-4886-39126380.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".sunny-finch-0273-a4d62092.pages.dev",
+    "candidate": ".sunny-daisy-6d72-65fda523.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -163213,6 +163129,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".swaglift-project-hub.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".swap-11x-renova-com.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -163280,6 +163202,18 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".swift-bintex-pro.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".swift-ridge-a2ee-12e6444b.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".swift-wren-b45c-c8e53ee5.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -163447,12 +163381,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".targetcavs.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".tarjetasprodubancsosiality.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -163537,7 +163465,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".telastudios.pages.dev",
+    "candidate": ".telecom-board.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -163718,6 +163646,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".terminal-repair.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".tesst555.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -163915,12 +163849,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".tobari-tarot.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".token360day-pro.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164101,12 +164029,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".tracyhomeelevators.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".tradeluxpro-shop.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164269,6 +164191,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".trustifybep.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".trustwallet-gules.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164329,12 +164257,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".trzkq0dqtwil-pxvbmnnx-6p5n2e-pxv477a.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".trzkq62kfly-ghscypdr-6s7k4c-pxv433c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164348,12 +164270,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".tsatw-81n-d7u-0c6u-952iy.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".ttq9-33h9-4whas-jy6nin-tlsz.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -164402,12 +164318,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".txnodemicermode.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".txorliva-mest617283945.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -164605,6 +164515,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".um49zt-kta-548z-glvkbz-7af9b.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".umbrewance-shop.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -164696,12 +164612,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".uqsvj5qzawzpgoq8j-7idbffv8fzazn7daza9je3q.vercel.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".ur-eng.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -164809,13 +164719,13 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".us-cideng02.pages.dev",
+    "candidate": ".usaafixsolution.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".usaafixsolution.pages.dev",
+    "candidate": ".usdt-bep20-check.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -164906,6 +164816,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".uyotrasel-click.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".uz8jtq-nbah-dnd027-l4f67.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165044,6 +164960,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".v0-superoddth2.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".v0-trezor-suite-website.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165188,12 +165110,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".vdofj2-r7viq-8ozld-t6a1-6g84.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".vdpf-gqdb-aua-20x-6wfp02.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165427,6 +165343,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".verifiedbadgehub.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".verifiedblbusipges.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165619,12 +165541,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".visaliacranerental.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".vishal07xi.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165656,6 +165572,18 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".viva-sorte-oficial-promo.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".vivaah-ledger.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".vixa-btj.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -165841,12 +165769,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".vqwxkn428mjw-mbtzprel-4r9p6g-yd899a.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".vrf-d7zj-oeea74-5hio-fd8pl8.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -165991,6 +165913,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".waitback.charles.workers.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".wakeywakopldjd3.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -166004,6 +165932,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".wallet-meta-mask-cdn-us.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".walletsupportlive-vc8n.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -166040,12 +165974,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".warebelegstein-shop.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".warm-canyon-3c94-7bff32fd.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -166309,18 +166237,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".website-42o.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".website-5lj.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".webstart-whatsapp.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -166370,6 +166286,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".weizihua.github.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".welcome-back-nine.vercel.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -166681,6 +166603,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".willow-grove-3338-3eeb4bcd.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".willowy-moxie-4d085f.netlify.app",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -166712,18 +166640,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".wixossdavdsteamworkspace.myclickfunnels.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".wjlnf1b41dr-mldptpli-4o3m7g-wjl85c.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".wjlnf328sk-mldptml-4q1q5e-wjl38c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167365,12 +167281,6 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".y0bsfz-arft6u-sm6e-ns55h.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".y4vtvy-rcg-qry-cfdl95-cwy7do.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167395,19 +167305,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".yasi-mini-web.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
     "candidate": ".ycgvh2ekqlo-pjbrqlos-6c5d1a-ycg33w.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".ydktr32bfrn-rvljhskr-0t1o2g-ydkq65c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167450,6 +167348,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".yksmv7c93qt-wzprbnnx-6f9e1e-wz990a.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".ylpxt2c31pz-jmkslsi-1v8t2b-ylpkr68c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167521,13 +167425,7 @@
   },
   {
     "source": "reject_phishing.conf",
-    "candidate": ".yrpkn0b58pz-mjszplsi-9t4r6b-yrpkq20c.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".yrpkn311lkw-mjszpwur-9q8r3b-yrpkq64p.pages.dev",
+    "candidate": ".yrpkn24zgo-mjszp81lsi-8t4r5b-mjs24c.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167551,6 +167449,18 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".yusr-demo-clinic.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".yusr-demo-services.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".yxcx11473.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167569,6 +167479,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".z2g298-xine-q9l-dgguiu-tp5bsx.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".z4dw-4nio-cw5vf-z3p-kf4-rl7b6.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167576,6 +167492,12 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".z54e30nps12yacho-vvemauifdcclp7azcabhfg.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".za2-hprnc1-3ztit-4ci-apk.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167719,6 +167641,12 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".zesty-horse-7b04a2.netlify.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".zftvw02nhwu-ghjscfyn-8j1h9g-mr222a.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -167737,7 +167665,19 @@
   },
   {
     "source": "reject_phishing.conf",
+    "candidate": ".zgaxec-5qz4-4632z4-m704-0bp.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
     "candidate": ".zh.wave-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject_phishing.conf",
+    "candidate": ".zhamancell-sistema-test.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -167810,12 +167750,6 @@
   {
     "source": "reject_phishing.conf",
     "candidate": ".zoom-meeting-183774885.pages.dev",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject_phishing.conf",
-    "candidate": ".zoom-zoom.ph",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },

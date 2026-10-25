@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-10-25]
-#!desc=按用途分片(16片) + 应用内去广告(URL Rewrite=547, Map Local=1234, Script=273, Body Rewrite=88, MITM=720); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-10-26]
+#!desc=按用途分片(16片) + 应用内去广告(URL Rewrite=547, Map Local=1243, Script=273, Body Rewrite=89, MITM=720); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-10-25 00:00:42
+#!date=2026-10-26 00:25:04
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -2077,6 +2077,15 @@ https?:\/\/awg\.enmonster\.com\/apa\/(advert\/demand\/home\/poster|index\/advert
 ^https?:\/\/p\.kuaidi100\.com\/advertisement\/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/p\.kuaidi100\.com\/e-commerce\/act\/actInfo\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/p\.kuaidi100\.com\/apicenter\/card\.dox data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://lzmh\.lz-qs\.com:6025/lzmh_app_api/api/v1/app3rd/getApp3rdGenreList\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://lzmh\.lz-qs\.com:6025/lzmh_app_api/api/v1/ad/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://yuudnn\.lz-qs\.com:9220/mssp-api/api/v1/mrtb/getAdSlotList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://yuudnn\.lz-qs\.com:9220/mssp-api/api/v1/mrtb/requestAd$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://yuudnn\.lz-qs\.com:9220/mssp-api/api/v1/mrtb/getSdkStartConfigList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://lzmh\.lz-qs\.com:6025/lzmh_app_api/api/v1/index/getRecommendList\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://yuudnn\.lz-qs\.com/lzmh_app_api/o2o/api/v2/o2o/homeInfo$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://yuudnn\.lz-qs\.com/lzmh_app_api/o2o/api/v2/o2o/homeShopList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+(?i)^https://yuudnn\.lz-qs\.com:9220/mssp-api/api/v1/mrtb/getSdkAdSlotList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 http:\/\/dili.sqcosmos.com\/jiekou\/endpage\/ad data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 https?:\/\/(ipv4|interface\d?)\.music\.163.com\/e?api\/ad data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 https://api.rr.tv/storage/business/rootName/app/homePage\?dataType=JSON data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -2401,14 +2410,10 @@ http-response-jq ^https:\/\/bp-api\.bestv\.cn\/cms\/api\/c\/search\/hot\/v(2|4) 
 http-response-jq ^https?:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do$ '(delpaths([["adsplash"]])) | (delpaths([["adIsConsumable"]])) | (delpaths([["adProductId"]])) | (delpaths([["nologin_tips"]])) | (delpaths([["index_banner"]])) | (delpaths([["me_banner"]])) | (delpaths([["index_banner_shadow"]])) | (delpaths([["adshongbao"]])) | (delpaths([["adsapp_homepage_ticket_pop"]])) | (delpaths([["adsoptimizationsend"]])) | (delpaths([["adsapp_activity_ad_array"]])) | (delpaths([["adbanner"]])) | (delpaths([["adposition"]])) | (delpaths([["adShowAgainTime"]]))'
 http-response-jq ^https?:\/\/p\.kuaidi100\.com\/apicenter\/xcx\.dox 'delpaths([["data","secondMenuList"]])'
 http-response-jq ^https:\/\/az2-live\.ksapisrv\.com\/rest\/n\/live\/feed\/square\/refresh\? 'delpaths([["data","banners"]])'
+http-response-jq (?i)^https://lzmh\.lz-qs\.com:6025/lzmh_app_api/api/v2/user/getUserBaseInfoAndConfig\? 'del(.value.config)'
 http-response-jq http:\/\/dili.sqcosmos.com\/jiekou\/mains\/p\d+.html '.album |= map(select(.id != "4154" and .id != "4165"))'
 http-response ^https?:\/\/mobile\.yangkeduo\.com\/proxy\/api\/api\/express\/post\/waybill\/red_packet\/goods_list$ "list":\[.+\] "list":[]
 http-response-jq ^https:\/\/j1\.pupuapi\.com\/client\/notification\/message_center\/unread_number '.data = []'
-http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.group\.myself\.banner\/ '(.data.bannerList = []) | (.data.bannerList = [])'
-http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.playboy\.recommend\/2\.0 '(.data.recommends = [] | .data.items = [] | .data.next = false) | (.data.recommends = [] | .data.items = [] | .data.next = false)'
-http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.fun\.follow\.often\.visit '(.data.sections = []) | (.data.sections = [])'
-http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.circle\.myself\.banner\/1\.0 '(.data.bannerList = []) | (.data.bannerList = [])'
-http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.circle\.visited\/1\.0 '(.data.visitedCircleList = []) | (.data.visitedCircleList = [])'
 http-response ^https?:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew \{.+\} {"status":"SUCCESS"}
 http-response ^https?:\/\/m\.lkcoffee\.com\/ecapi\/resource\/m\/member\/exchange\/page \{.+\} {"status":"SUCCESS"}
 http-response ^https?:\/\/m\.lkcoffee\.com\/capi\/resource\/m\/growUp\/main "popTitle":".+?" "popTitle":""
@@ -2425,6 +2430,11 @@ http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/football-
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/nexus-web\/v\d\/tabs\/customTabs\? '.data.feedTabs |= map(select(.name != "大赛"))'
 http-response-jq ^https:\/\/mobwsa\.ximalaya\.com\/mobile-playpage\/playpage\/tabs\/v2\/ '(delpaths([["data","playpage","resourceMap","defaultResource"]])) | (delpaths([["data","playpage","resourceMap","playPageTip"]]))'
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/mobile-user\/v\d\/homePage\/ '(delpaths([["data","freeListenV2"]])) | (.data.serviceModule.entrances |= map(select(.name == "全部服务")))'
+http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.group\.myself\.banner\/ '.data.bannerList = []'
+http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.playboy\.recommend\/2\.0 '.data.recommends = [] | .data.items = [] | .data.next = false'
+http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.fun\.follow\.often\.visit '.data.sections = []'
+http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.circle\.myself\.banner\/1\.0 '.data.bannerList = []'
+http-response-jq ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.circle\.visited\/1\.0 '.data.visitedCircleList = []'
 http-response ^https?:\/\/lcen\.xiaote\.net\/api\/graphql screenSplashAd fmz200
 http-response-jq ^https?:\/\/api\.xiaoyuzhoufm\.com\/v1\/discovery-feed\/list '.data |= map(select(.type != "DISCOVERY_HEADER" and .type != "DISCOVERY_BANNER"))'
 http-response-jq ^https?:\/\/api\.xiaoyuzhoufm\.com\/v1\/(related-episode|operation-resource)\/list '.data = []'
