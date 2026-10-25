@@ -3,7 +3,7 @@
 #!author=ScriptHub
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, DNS, Apple Safety
-#!version=2026.08.23
+#!version=2026.10.25
 
 [General]
 fallback-dns-server = %APPEND% 223.5.5.5, 119.29.29.29, https://dns.alidns.com/dns-query
@@ -1087,7 +1087,6 @@ IN-PORT,8076,REJECT-DROP
 *.icloud-isupport.com = server:system
 *.icloud-sandbox.com = server:system
 *.icloud.ch = server:system
-*.icloud.cn = server:system
 *.icloud.com = server:system
 *.icloud.com.cn = server:system
 *.icloud.de = server:system
@@ -2657,7 +2656,6 @@ icloud-content.com.cn = server:system
 icloud-isupport.com = server:system
 icloud-sandbox.com = server:system
 icloud.ch = server:system
-icloud.cn = server:system
 icloud.com = server:system
 icloud.com.cn = server:system
 icloud.de = server:system
