@@ -742,7 +742,7 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
     }
 
     #[test]
-    fn coverage_floor_excludes_legacy_and_github_mirror_rulesets() {
+    fn coverage_floor_excludes_github_mirror_rulesets() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -761,11 +761,6 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         let artifacts = [
             GeneratedArtifact {
                 target: root.join("rulesets/AdBlock/AdBlock_Advertising.list"),
-                content: rules.clone(),
-                kind: ArtifactKind::ExternalRuleset,
-            },
-            GeneratedArtifact {
-                target: root.join("rulesets/RULE-SET/AdBlock.list"),
                 content: rules.clone(),
                 kind: ArtifactKind::ExternalRuleset,
             },

@@ -1,0 +1,9 @@
+# Ruleset: StreamTW_extra
+# Policy: USER-DEFINED
+# Description: Internal upstream snapshot; not a subscription
+# Rules: 5
+PROCESS-NAME,com.linecorp.linetv
+USER-AGENT,Anime*
+USER-AGENT,KKTV*
+USER-AGENT,LINE%20TV*
+USER-AGENT,com.kktv.ios.kktv*

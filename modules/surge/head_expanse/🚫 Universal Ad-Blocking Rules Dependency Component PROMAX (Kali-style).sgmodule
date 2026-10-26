@@ -14,15 +14,22 @@
 # Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)
 # ── 应用去广告 · 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块） ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local_ip.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local_other_extra.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 通用广告 · blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_ip.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_other_extra.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 隐私追踪 · Privacy / tracking-protection / 防追踪列表 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_other_extra.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 安全威胁 · 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_ip.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_other_extra.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 威胁情报·终极 · HaGeZi DNS-Blocklists ultimate ──

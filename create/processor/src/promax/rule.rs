@@ -190,7 +190,10 @@ impl SurgeRule {
 
 fn option_allowed(kind: RuleKind, option: &str, external: bool) -> bool {
     match option {
-        "NO-RESOLVE" => matches!(kind, RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::GeoIp),
+        "NO-RESOLVE" => matches!(
+            kind,
+            RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::GeoIp | RuleKind::IpAsn
+        ),
         "EXTENDED-MATCHING" => true,
         "FORCE-CELLULAR" => !external,
         _ => false,
@@ -432,6 +435,12 @@ mod tests {
         .unwrap();
 
         assert_eq!(parsed.render_external(), "IP-CIDR,192.0.2.0/24,NO-RESOLVE");
+    }
+
+    #[test]
+    fn asn_no_resolve_survives_external_export() {
+        let parsed = SurgeRule::parse("IP-ASN,13335,no-resolve").unwrap();
+        assert_eq!(parsed.render_external(), "IP-ASN,13335,NO-RESOLVE");
     }
 
     #[test]

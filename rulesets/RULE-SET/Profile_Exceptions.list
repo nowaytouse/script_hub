@@ -1,0 +1,6 @@
+# Ruleset: Profile_Exceptions
+# Policy: USER-DEFINED
+# Description: Optional explicit profile domain exceptions; user selects the policy
+# Rules: 2
+DOMAIN-SUFFIX,amazonaws.com
+DOMAIN-SUFFIX,microsoftonline.com

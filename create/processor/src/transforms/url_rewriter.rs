@@ -297,13 +297,12 @@ pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
                 continue;
             }
         } else if stripped.starts_with('#') {
-            // Removing a route/node recommendation is an intentional metadata
-            // migration, unlike volatile dates or ordinary source comments.
+            // Routing metadata and real rule counts must not be hidden as cosmetic changes.
             if path
                 .extension()
                 .is_some_and(|extension| extension == "list")
                 && let Some((key, value)) = stripped.trim_start_matches('#').trim().split_once(':')
-                && matches!(key.trim(), "Policy" | "Node")
+                && matches!(key.trim(), "Policy" | "Node" | "Rules" | "Total Rules")
             {
                 lines.push(format!("# {}: {}", key.trim(), value.trim()));
             }

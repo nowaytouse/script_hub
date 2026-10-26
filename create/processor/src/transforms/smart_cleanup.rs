@@ -20,6 +20,8 @@ static PRIORITY_ORDER: &[&str] = &[
     "substore_ip.list",
     "AppleNews.list",
     "AppleNews_ip.list",
+    "Netflix.list",
+    "Netflix_ip.list",
     "StreamUS.list",
     "StreamUS_ip.list",
     "StreamJP.list",
@@ -216,7 +218,7 @@ fn collect_ruleset_dirs(root: &Path) -> Result<Vec<PathBuf>, String> {
         let file_type = entry
             .file_type()
             .map_err(|error| format!("cannot inspect {}: {error}", entry.path().display()))?;
-        if file_type.is_dir() {
+        if file_type.is_dir() && entry.file_name() != "github" {
             dirs.extend(collect_ruleset_dirs(&entry.path())?);
         }
     }
@@ -241,8 +243,15 @@ fn extract_type(rule: &str) -> String {
 }
 
 fn prefer_rule(current: &str, candidate: &str) -> String {
-    let current_rank = get_rank(&extract_type(current));
-    let candidate_rank = get_rank(&extract_type(candidate));
+    // Equal payloads are not equal coverage: retain the union of domain scopes.
+    let coverage_rank = |kind: &str| match kind {
+        "DOMAIN-KEYWORD" => -3,
+        "DOMAIN-SUFFIX" => -2,
+        "DOMAIN" => -1,
+        _ => get_rank(kind),
+    };
+    let current_rank = coverage_rank(&extract_type(current));
+    let candidate_rank = coverage_rank(&extract_type(candidate));
     if candidate_rank < current_rank || candidate_rank == current_rank && candidate < current {
         candidate.to_string()
     } else {
@@ -377,6 +386,16 @@ fn load_list(filepath: &Path) -> Result<HashMap<String, String>, String> {
 }
 
 fn write_list(filepath: &Path, rules: &HashMap<String, String>) -> Result<(), String> {
+    if rules.is_empty() {
+        return match fs::remove_file(filepath) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(format!(
+                "cannot remove empty cleaned ruleset {}: {error}",
+                filepath.display()
+            )),
+        };
+    }
     let sorted_rules = get_sorted_rules(rules);
     let mut existing_header = Vec::new();
 
@@ -443,6 +462,10 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
         "JP_ip.list",
         "TW.list",
         "TW_ip.list",
+        "Profile_Exceptions.list",
+        "Profile_Exceptions_ip.list",
+        "Pixiv.list",
+        "Pixiv_ip.list",
     ]
     .iter()
     .cloned()
@@ -515,7 +538,7 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
         filenames.sort();
 
         for filename in filenames {
-            if exempt_filenames.contains(filename.as_str()) {
+            if exempt_filenames.contains(filename.as_str()) || filename.ends_with("_extra.list") {
                 continue;
             }
             let filepath = dir.join(&filename);
@@ -676,7 +699,7 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
                     }
 
                     let rule_type = extract_type(rule);
-                    if seen_payloads.contains(&payload) {
+                    if seen_payloads.contains(&(rule_type.clone(), payload.clone())) {
                         cross_file_removed += 1;
                         continue;
                     }
@@ -695,7 +718,7 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
                         }
                     }
 
-                    seen_payloads.insert(payload.clone());
+                    seen_payloads.insert((rule_type.clone(), payload.clone()));
                     kept.insert(payload.clone(), rule.clone());
                     if effective_semantic_coverage.contains(filename)
                         && rule_type == "DOMAIN-SUFFIX"
@@ -1963,7 +1986,39 @@ mod ruleset_cleanup_tests {
     }
 
     #[test]
-    fn fully_deduplicated_ruleset_keeps_its_public_path_and_readme() {
+    fn equal_domain_payloads_preserve_broader_upstream_coverage() {
+        let root = cleanup_fixture("domain-scope");
+        let path = root.join("rulesets/RULE-SET/Example.list");
+        fs::write(&path, "DOMAIN,service.example\nDOMAIN-SUFFIX,service.example\nDOMAIN-KEYWORD,other.example\nDOMAIN,other.example\n").unwrap();
+        run_cleanup(root.to_str().unwrap()).unwrap();
+        let output = fs::read_to_string(path).unwrap();
+        assert!(output.contains("DOMAIN-SUFFIX,service.example\n"));
+        assert!(output.contains("DOMAIN-KEYWORD,other.example\n"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn stale_github_mirrors_cannot_replace_canonical_rules() {
+        let root = cleanup_fixture("stale-mirror");
+        let rulesets = root.join("rulesets/RULE-SET");
+        fs::create_dir(rulesets.join("github")).unwrap();
+        let canonical = rulesets.join("Example.list");
+        let mirror = rulesets.join("github/Example.list");
+        fs::write(&canonical, "DOMAIN,current.example\n").unwrap();
+        let stale = "DOMAIN,stale.example\n";
+        fs::write(&mirror, stale).unwrap();
+
+        run_cleanup(root.to_str().unwrap()).unwrap();
+
+        let output = fs::read_to_string(canonical).unwrap();
+        assert!(output.contains("DOMAIN,current.example"));
+        assert!(!output.contains("stale.example"));
+        assert_eq!(fs::read_to_string(mirror).unwrap(), stale);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn fully_deduplicated_ruleset_is_removed_without_touching_readme() {
         let root = cleanup_fixture("empty-publication");
         let rulesets = root.join("rulesets/RULE-SET");
         fs::write(rulesets.join("AI.list"), "DOMAIN,shared.example\n").unwrap();
@@ -1974,9 +2029,7 @@ mod ruleset_cleanup_tests {
 
         run_cleanup(root.to_str().unwrap()).unwrap();
 
-        let output = fs::read_to_string(fallback).unwrap();
-        assert!(output.starts_with('#'));
-        assert!(!output.contains("DOMAIN,"));
+        assert!(!fallback.exists());
         assert_eq!(
             fs::read_to_string(readme).unwrap(),
             "Documentation retained\n"
@@ -2002,7 +2055,11 @@ mod ruleset_cleanup_tests {
         let root = cleanup_fixture("write-error");
         let output = root.join("missing-parent/Example.list");
 
-        let error = write_list(&output, &Default::default()).unwrap_err();
+        let rules = std::collections::HashMap::from([(
+            "example.test".to_string(),
+            "DOMAIN,example.test".to_string(),
+        )]);
+        let error = write_list(&output, &rules).unwrap_err();
 
         assert!(error.contains("cannot write cleaned ruleset"));
         assert!(!output.exists());

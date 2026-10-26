@@ -207,6 +207,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     }
 
     emit_stage(Stage::Cleanup);
+    rust_processor::general_update::prepare_ruleset_inputs(root)?;
     let cleanup = rust_processor::smart_cleanup::run_cleanup(&root.to_string_lossy())?;
     println!(
         "[INFO] ruleset cleanup deleted {} file(s)",
@@ -217,6 +218,10 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     emit_stage(Stage::Gaming);
     rust_processor::general_update::split_gaming_rules(root)?;
     rust_processor::general_update::consolidate_rulesets(root)?;
+    rust_processor::general_update::enforce_jp_ownership(root)?;
+    rust_processor::general_update::split_published_rulesets(root)?;
+    let retired = rust_processor::general_update::retire_ruleset_inputs(root)?;
+    println!("[INFO] retired {retired} superseded ruleset artifacts; current subscriptions only");
 
     let modules = root.join("modules");
     let rulesets = root.join("rulesets");
@@ -352,6 +357,8 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         emit_stage(Stage::Prepare);
         emit_stage(Stage::Gaming);
         rust_processor::general_update::split_gaming_rules(&root).and_then(|()| {
+            rust_processor::general_update::split_published_rulesets(&root)?;
+            rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
             if let Some(singbox) = &singbox {
                 emit_stage(Stage::Srs);
                 if !rust_processor::srs_generator::run_srs_generator(

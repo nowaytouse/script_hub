@@ -19,6 +19,34 @@ fn validate_file(
         "list" => rust_processor::promax::validation::validate_external_ruleset(&content),
         _ => return Err(format!("unsupported validation file type: .{extension}")),
     };
+    if extension == "list" {
+        let actual = content
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
+            .collect::<std::collections::HashSet<_>>()
+            .len();
+        let declared: Vec<_> = content
+            .lines()
+            .filter_map(|line| {
+                line.trim()
+                    .strip_prefix("# Rules:")
+                    .or_else(|| line.trim().strip_prefix("# Total Rules:"))
+            })
+            .collect();
+        if actual == 0
+            || declared.len() != 1
+            || declared[0].trim().parse::<usize>().ok() != Some(actual)
+        {
+            validation.push(rust_processor::promax::validation::ValidationError {
+                line: 1,
+                code: "ruleset-count",
+                message: format!(
+                    "expected a non-empty ruleset with its actual unique count ({actual})"
+                ),
+            });
+        }
+    }
     let adblock_ruleset = extension == "list"
         && path
             .ancestors()
@@ -159,7 +187,10 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     }
 
     artifacts += 1;
-    let boundary_errors = rust_processor::general_update::validate_category_boundaries(root)?;
+    let mut boundary_errors = rust_processor::general_update::validate_category_boundaries(root)?;
+    boundary_errors.extend(rust_processor::general_update::validate_published_layout(
+        root,
+    )?);
     for message in &boundary_errors {
         eprintln!("[ERROR] ruleset category contamination: {message}");
     }
@@ -245,12 +276,30 @@ mod tests {
             "script-hub-validate-one-{}.list",
             std::process::id()
         ));
-        std::fs::write(&path, "DOMAIN-SUFFIX,ads.example\n").unwrap();
+        std::fs::write(&path, "# Rules: 1\nDOMAIN-SUFFIX,ads.example\n").unwrap();
 
         let validation = validate_file(&path);
         std::fs::remove_file(path).unwrap();
         let validation = validation.unwrap();
         assert!(validation.is_empty());
+    }
+
+    #[test]
+    fn rejects_empty_or_falsely_counted_rulesets() {
+        let path = std::env::temp_dir().join(format!(
+            "script-hub-validate-count-{}.list",
+            std::process::id()
+        ));
+        for content in ["# Rules: 0\n", "# Rules: 1000\nDOMAIN,example.test\n"] {
+            std::fs::write(&path, content).unwrap();
+            assert!(
+                validate_file(&path)
+                    .unwrap()
+                    .iter()
+                    .any(|error| error.code == "ruleset-count")
+            );
+        }
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]

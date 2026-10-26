@@ -191,8 +191,10 @@ fn normalize_rule(line: &str) -> Option<String> {
         "DOMAIN",
         "DOMAIN-SUFFIX",
         "DOMAIN-KEYWORD",
+        "DOMAIN-WILDCARD",
         "IP-CIDR",
         "IP-CIDR6",
+        "IP-ASN",
         "DOMAIN-REGEX",
         "GEOIP",
         "USER-AGENT",
@@ -312,6 +314,16 @@ fn semantic_rules_match(path: &Path, sorted_new_rules: &[String]) -> bool {
         {
             return false;
         }
+        let expected_count = format!("# Rules: {}", sorted_new_rules.len());
+        let mut rule_count_headers = content
+            .lines()
+            .map(str::trim)
+            .filter(|line| line.starts_with("# Rules:"));
+        if rule_count_headers.next() != Some(expected_count.as_str())
+            || rule_count_headers.next().is_some()
+        {
+            return false;
+        }
         let mut old_rules = Vec::new();
         for line in content.lines() {
             let stripped = line.trim();
@@ -371,85 +383,68 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
         ));
     }
 
+    let mut domain_rules = Vec::new();
     let mut ip_rules = Vec::new();
-    let mut non_ip_rules = Vec::new();
+    let mut extra_rules = Vec::new();
 
     for rule in all_rules {
-        if name != "Direct"
-            && (rule.starts_with("IP-CIDR,")
-                || rule.starts_with("IP-CIDR6,")
-                || rule.starts_with("IP-ASN,")
-                || rule.starts_with("GEOIP,"))
-        {
+        let rule_type = rule.split(',').next().unwrap_or_default();
+        if matches!(
+            rule_type,
+            "DOMAIN" | "DOMAIN-SUFFIX" | "DOMAIN-KEYWORD" | "DOMAIN-WILDCARD" | "DOMAIN-REGEX"
+        ) {
+            domain_rules.push(rule);
+        } else if matches!(rule_type, "IP-CIDR" | "IP-CIDR6" | "IP-ASN" | "GEOIP") {
             ip_rules.push(rule);
         } else {
-            non_ip_rules.push(rule);
+            extra_rules.push(rule);
         }
     }
 
+    domain_rules.sort();
     ip_rules.sort();
-    non_ip_rules.sort();
+    extra_rules.sort();
 
     let target_file_path = target_dir.join(format!("{name}.list"));
     let target_ip_file_path = target_dir.join(format!("{name}_ip.list"));
+    let target_extra_file_path = target_dir.join(format!("{name}_extra.list"));
 
-    if !non_ip_rules.is_empty() {
-        if semantic_rules_match(&target_file_path, &non_ip_rules) {
-            println!(
-                "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
-                target_file_path
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-            );
-        } else {
-            let header_str = generate_header(name, description, non_ip_rules.len());
-            let content = format!("{header_str}{}", non_ip_rules.join("\n") + "\n");
-            if !safe_write_file_internal(&target_file_path, &content, true) {
-                return Err(format!(
-                    "failed to atomically publish {}",
-                    target_file_path.display()
-                ));
+    for (path, output_name, rules) in [
+        (&target_file_path, name.to_string(), &domain_rules),
+        (&target_ip_file_path, format!("{name}_ip"), &ip_rules),
+        (
+            &target_extra_file_path,
+            format!("{name}_extra"),
+            &extra_rules,
+        ),
+    ] {
+        if rules.is_empty() {
+            match fs::remove_file(path) {
+                Ok(()) => (),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+                Err(error) => {
+                    return Err(format!(
+                        "failed to remove empty ruleset {}: {error}",
+                        path.display()
+                    ));
+                }
             }
+            continue;
         }
-    } else if target_file_path.exists() {
-        let content = generate_header(name, description, 0);
-        if !safe_write_file_internal(&target_file_path, &content, true) {
-            return Err(format!(
-                "failed to atomically clear {}",
-                target_file_path.display()
-            ));
+        if semantic_rules_match(path, rules) {
+            continue;
         }
-    }
-
-    if !ip_rules.is_empty() {
-        if semantic_rules_match(&target_ip_file_path, &ip_rules) {
-            println!(
-                "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
-                target_ip_file_path
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-            );
-        } else {
-            let ip_name = format!("{name}_ip");
-            let header_str = generate_header(&ip_name, description, ip_rules.len());
-            let content = format!("{header_str}{}", ip_rules.join("\n") + "\n");
-            if !safe_write_file_internal(&target_ip_file_path, &content, true) {
-                return Err(format!(
-                    "failed to atomically publish {}",
-                    target_ip_file_path.display()
-                ));
+        let content = format!(
+            "{}{}",
+            generate_header(&output_name, description, rules.len()),
+            if rules.is_empty() {
+                String::new()
+            } else {
+                rules.join("\n") + "\n"
             }
-        }
-    } else if target_ip_file_path.exists() {
-        let ip_name = format!("{name}_ip");
-        let content = generate_header(&ip_name, description, 0);
-        if !safe_write_file_internal(&target_ip_file_path, &content, true) {
-            return Err(format!(
-                "failed to atomically clear {}",
-                target_ip_file_path.display()
-            ));
+        );
+        if !safe_write_file_internal(path, &content, true) {
+            return Err(format!("failed to atomically publish {}", path.display()));
         }
     }
 
@@ -616,31 +611,104 @@ mod tests {
     }
 
     #[test]
-    fn empty_invalid_input_preserves_existing_outputs() {
+    fn all_invalid_input_preserves_existing_outputs() {
         let dir = output_dir();
         let domain = dir.join("test.list");
         let ip = dir.join("test_ip.list");
-        fs::write(&domain, "old domain\n").unwrap();
-        fs::write(&ip, "old ip\n").unwrap();
+        let extra = dir.join("test_extra.list");
+        fs::write(
+            &domain,
+            "# Ruleset: test\n# Policy: USER-DEFINED\n# Rules: 1\nDOMAIN,old.example\n",
+        )
+        .unwrap();
+        fs::write(
+            &ip,
+            "# Ruleset: test_ip\n# Policy: USER-DEFINED\n# Rules: 1\nIP-CIDR,10.0.0.0/8\n",
+        )
+        .unwrap();
+        fs::write(&extra, "# Ruleset: test_extra\n# Policy: USER-DEFINED\n# Rules: 1\nURL-REGEX,^https://old\\.example\n").unwrap();
 
         assert!(process("test", &dir, "DOMAIN,").is_err());
-        assert_eq!(fs::read_to_string(domain).unwrap(), "old domain\n");
-        assert_eq!(fs::read_to_string(ip).unwrap(), "old ip\n");
+        assert!(
+            fs::read_to_string(domain)
+                .unwrap()
+                .contains("DOMAIN,old.example\n")
+        );
+        assert!(
+            fs::read_to_string(ip)
+                .unwrap()
+                .contains("IP-CIDR,10.0.0.0/8\n")
+        );
+        assert!(
+            fs::read_to_string(extra)
+                .unwrap()
+                .contains("URL-REGEX,^https://old\\.example\n")
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
-    fn empty_family_is_cleared_without_deleting_its_path() {
+    fn empty_ip_family_is_removed_without_writing_an_empty_file() {
         let dir = output_dir();
         let ip = dir.join("test_ip.list");
         fs::write(&ip, "IP-CIDR,10.0.0.0/8\n").unwrap();
 
         process("test", &dir, "DOMAIN,example.test").unwrap();
-        assert!(ip.exists());
-        assert_eq!(
-            fs::read_to_string(ip).unwrap(),
-            "# Ruleset: test_ip\n# Policy: USER-DEFINED\n# Description: test\n# Rules: 0\n"
+        assert!(!ip.exists());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn failed_empty_family_removal_is_returned() {
+        let dir = output_dir();
+        fs::create_dir(dir.join("test_ip.list")).unwrap();
+
+        let error = process("test", &dir, "DOMAIN,example.test").unwrap_err();
+        assert!(error.contains("failed to remove empty ruleset"));
+        assert!(dir.join("test_ip.list").is_dir());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn direct_and_mixed_rulesets_split_domain_ip_and_extra_rules() {
+        let dir = output_dir();
+        let input = "DOMAIN,example.test\nDOMAIN-WILDCARD,api-*.example.test\nIP-CIDR,10.0.0.0/8\nIP-ASN,123\nGEOIP,CN\nURL-REGEX,^https://example\\.test\n";
+        for name in ["Direct", "mixed"] {
+            process(name, &dir, input).unwrap();
+            let domain = fs::read_to_string(dir.join(format!("{name}.list"))).unwrap();
+            let ip = fs::read_to_string(dir.join(format!("{name}_ip.list"))).unwrap();
+            let extra = fs::read_to_string(dir.join(format!("{name}_extra.list"))).unwrap();
+            assert!(domain.contains("DOMAIN,example.test\n"));
+            assert!(domain.contains("DOMAIN-WILDCARD,api-*.example.test\n"));
+            assert!(domain.contains("# Rules: 2\n"));
+            assert!(!domain.contains("IP-CIDR"));
+            assert!(ip.contains("IP-CIDR,10.0.0.0/8\n"));
+            assert!(ip.contains("IP-ASN,123\n"));
+            assert!(ip.contains("GEOIP,CN\n"));
+            assert!(ip.contains("# Rules: 3\n"));
+            assert!(extra.contains("URL-REGEX,^https://example\\.test\n"));
+            assert!(extra.contains("# Rules: 1\n"));
+        }
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn empty_groups_are_not_published_and_stale_extra_is_removed() {
+        let dir = output_dir();
+        let extra = dir.join("test_extra.list");
+        fs::write(&extra, "# old extra\n").unwrap();
+
+        process("test", &dir, "IP-CIDR,10.0.0.0/8").unwrap();
+        assert!(!dir.join("test.list").exists());
+        assert!(
+            fs::read_to_string(dir.join("test_ip.list"))
+                .unwrap()
+                .contains("IP-CIDR,10.0.0.0/8\n")
         );
+        assert!(!extra.exists());
+        process("test", &dir, "IP-CIDR,10.0.0.0/8").unwrap();
+        assert!(!dir.join("test.list").exists());
+        assert!(!extra.exists());
         fs::remove_dir_all(dir).unwrap();
     }
 
@@ -688,6 +756,35 @@ mod tests {
         )
         .unwrap();
         assert_eq!(fs::read_to_string(&path).unwrap(), neutral);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn incorrect_rules_header_count_is_repaired_to_the_actual_count() {
+        let dir = output_dir();
+        let path = dir.join("test.list");
+        fs::write(
+            &path,
+            "# Ruleset: test\n# Policy: USER-DEFINED\n# Rules: 999999\nDOMAIN,a.example\nDOMAIN,b.example\n",
+        )
+        .unwrap();
+
+        process("test", &dir, "DOMAIN,a.example\nDOMAIN,b.example").unwrap();
+        let output = fs::read_to_string(&path).unwrap();
+        assert!(output.contains("# Rules: 2\n"));
+        assert!(!output.contains("# Rules: 999999\n"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn correct_rules_count_does_not_rewrite_other_header_formatting() {
+        let dir = output_dir();
+        let path = dir.join("test.list");
+        let existing = "# Ruleset: test\n# Policy: USER-DEFINED\n# Updated: 2026-01-02\n# Rules: 2\nDOMAIN,a.example\nDOMAIN,b.example\n";
+        fs::write(&path, existing).unwrap();
+
+        process("test", &dir, "DOMAIN,a.example\nDOMAIN,b.example").unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), existing);
         fs::remove_dir_all(dir).unwrap();
     }
 

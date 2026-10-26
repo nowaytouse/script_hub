@@ -1416,90 +1416,82 @@ impl AdBlockManager {
             }
 
             let meta = CATEGORY_META.get(category).unwrap();
-            let chunks: Vec<&[String]> = rules.chunks(RULES_PER_SHARD).collect();
-
-            for (idx, chunk) in chunks.iter().enumerate() {
-                let filename = if chunks.len() == 1 {
-                    format!("AdBlock_{}.list", category)
-                } else {
-                    format!("AdBlock_{}_{:02}.list", category, idx + 1)
-                };
-                let shard_label = if chunks.len() == 1 {
-                    "1/1".to_string()
-                } else {
-                    format!("{}/{}", idx + 1, chunks.len())
-                };
-
-                let filepath = adblock_dir.join(&filename);
-                let mut content = Vec::new();
-                content.push(format!("# Ruleset: AdBlock · {}", meta.label_zh));
-                content.push(format!("# Purpose: {}", meta.desc));
-                content.push(format!("# Category-Key: {}", category));
-                content.push(format!("# Shard: {}", shard_label));
-                content.push(format!("# Total Rules: {}", chunk.len()));
-
-                for r in *chunk {
-                    content.push(r.clone());
+            let mut domains = Vec::new();
+            let mut ips = Vec::new();
+            let mut other = Vec::new();
+            for rule in rules {
+                match crate::promax::rule::SurgeRule::parse(&rule).map(|parsed| parsed.kind) {
+                    Ok(
+                        crate::promax::rule::RuleKind::Domain
+                        | crate::promax::rule::RuleKind::DomainSuffix
+                        | crate::promax::rule::RuleKind::DomainKeyword
+                        | crate::promax::rule::RuleKind::DomainWildcard
+                        | crate::promax::rule::RuleKind::DomainRegex,
+                    ) => domains.push(rule),
+                    Ok(
+                        crate::promax::rule::RuleKind::IpCidr
+                        | crate::promax::rule::RuleKind::IpCidr6
+                        | crate::promax::rule::RuleKind::IpAsn
+                        | crate::promax::rule::RuleKind::GeoIp,
+                    ) => ips.push(rule),
+                    _ => other.push(rule),
                 }
+            }
 
-                let mut out_str = content.join("\n");
-                out_str.push('\n');
-                let rel_path = format!("rulesets/AdBlock/{}", filename);
-                artifacts.push(crate::promax::artifact::GeneratedArtifact {
-                    target: filepath,
-                    content: out_str,
-                    kind: crate::promax::artifact::ArtifactKind::ExternalRuleset,
-                });
-                generated_files.push(rel_path);
-                println!(
-                    "\x1b[0;32m[SUCCESS]\x1b[0m   ✓ {} ({} rules, {})",
-                    filename,
-                    chunk.len(),
-                    meta.label_zh
-                );
+            for (suffix, part_rules) in [("", domains), ("_ip", ips), ("_other_extra", other)] {
+                let chunk_count = part_rules.len().div_ceil(RULES_PER_SHARD);
+                for (idx, chunk) in part_rules.chunks(RULES_PER_SHARD).enumerate() {
+                    let filename = if suffix.is_empty() {
+                        if chunk_count == 1 {
+                            format!("AdBlock_{}.list", category)
+                        } else {
+                            format!("AdBlock_{}_{:02}.list", category, idx + 1)
+                        }
+                    } else if chunk_count == 1 {
+                        format!("AdBlock_{}{}.list", category, suffix)
+                    } else {
+                        format!("AdBlock_{}{}_{:02}.list", category, suffix, idx + 1)
+                    };
+                    let shard_label = if chunk_count == 1 {
+                        "1/1".to_string()
+                    } else {
+                        format!("{}/{}", idx + 1, chunk_count)
+                    };
+
+                    let mut content = Vec::new();
+                    content.push(format!("# Ruleset: AdBlock · {}", meta.label_zh));
+                    content.push(format!("# Purpose: {}", meta.desc));
+                    content.push(format!("# Category-Key: {}", category));
+                    content.push(format!("# Shard: {}", shard_label));
+                    content.push(format!("# Total Rules: {}", chunk.len()));
+                    content.extend(chunk.iter().cloned());
+
+                    let mut out_str = content.join("\n");
+                    out_str.push('\n');
+                    let rel_path = format!("rulesets/AdBlock/{filename}");
+                    artifacts.push(crate::promax::artifact::GeneratedArtifact {
+                        target: adblock_dir.join(&filename),
+                        content: out_str,
+                        kind: crate::promax::artifact::ArtifactKind::ExternalRuleset,
+                    });
+                    generated_files.push(rel_path);
+                    println!(
+                        "\x1b[0;32m[SUCCESS]\x1b[0m   ✓ {} ({} rules, {})",
+                        filename,
+                        chunk.len(),
+                        meta.label_zh
+                    );
+                }
             }
         }
-
-        // Legacy AdBlock.list
-        let legacy_path = self.root_dir.join("rulesets/RULE-SET/AdBlock.list");
-        let mut legacy_content = Vec::new();
-        legacy_content.push("# Ruleset: AdBlock (LEGACY / REDIRECT)".to_string());
-        legacy_content
-            .push("# This file is now split into multiple files in rulesets/AdBlock/".to_string());
-        legacy_content
-            .push("# Please update your module to use the new split rulesets.".to_string());
-
-        let mut all_reject = Vec::new();
-        for cat in CATEGORIES {
-            let empty_set = HashSet::new();
-            let rules_in_cat = self
-                .rules
-                .get("REJECT")
-                .unwrap()
-                .get(*cat)
-                .unwrap_or(&empty_set);
-            all_reject.extend(self.filter_rules(rules_in_cat)?);
-        }
-        let limit = std::cmp::min(1000, all_reject.len());
-        for r in &all_reject[..limit] {
-            legacy_content.push(r.clone());
-        }
-
-        let mut legacy_str = legacy_content.join("\n");
-        legacy_str.push('\n');
-        artifacts.push(crate::promax::artifact::GeneratedArtifact {
-            target: legacy_path,
-            content: legacy_str,
-            kind: crate::promax::artifact::ArtifactKind::ExternalRuleset,
-        });
 
         Ok((generated_files, artifacts))
     }
 
-    fn retired_ruleset_artifacts(
+    fn stale_ruleset_shard_paths(
         &self,
         generated_files: &[String],
-    ) -> Result<Vec<crate::promax::artifact::GeneratedArtifact>, String> {
+    ) -> Result<Vec<PathBuf>, String> {
         let catalog_path = self.root_dir.join("rulesets/AdBlock/catalog.json");
         let catalog = match fs::read_to_string(&catalog_path) {
             Ok(content) => content,
@@ -1534,12 +1526,71 @@ impl AdBlockManager {
         }
         Ok(retired
             .into_iter()
-            .map(|file| crate::promax::artifact::GeneratedArtifact {
-                target: self.root_dir.join(file),
-                content: "# Retired PROMAX shard; intentionally empty.\n".to_string(),
-                kind: crate::promax::artifact::ArtifactKind::ExternalRuleset,
-            })
+            .map(|file| self.root_dir.join(file))
             .collect())
+    }
+
+    fn prune_legacy_and_stale_rulesets(&self, stale_shards: &[PathBuf]) -> Result<(), String> {
+        let mut retired = stale_shards.to_vec();
+        retired.extend([
+            self.root_dir.join("rulesets/RULE-SET/AdBlock.list"),
+            self.root_dir.join("rulesets/RULE-SET/github/AdBlock.list"),
+        ]);
+        for path in retired {
+            let parent = path.parent().ok_or_else(|| {
+                format!("retired PROMAX artifact has no parent: {}", path.display())
+            })?;
+            let relative_parent = parent.strip_prefix(&self.root_dir).map_err(|_| {
+                format!(
+                    "retired PROMAX artifact escapes repository: {}",
+                    path.display()
+                )
+            })?;
+            let mut directory = self.root_dir.clone();
+            let mut parent_missing = false;
+            for component in relative_parent.components() {
+                let std::path::Component::Normal(name) = component else {
+                    return Err(format!(
+                        "invalid retired PROMAX artifact parent: {}",
+                        parent.display()
+                    ));
+                };
+                directory.push(name);
+                let metadata = match fs::symlink_metadata(&directory) {
+                    Ok(metadata) => metadata,
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                        parent_missing = true;
+                        break;
+                    }
+                    Err(error) => {
+                        return Err(format!(
+                            "cannot inspect retired PROMAX artifact parent {}: {error}",
+                            directory.display()
+                        ));
+                    }
+                };
+                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                    return Err(format!(
+                        "refusing to prune through non-directory or symlink {}",
+                        directory.display()
+                    ));
+                }
+            }
+            if parent_missing {
+                continue;
+            }
+            match fs::remove_file(&path) {
+                Ok(()) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => {
+                    return Err(format!(
+                        "cannot remove retired PROMAX artifact {}: {error}",
+                        path.display()
+                    ));
+                }
+            }
+        }
+        Ok(())
     }
 
     fn is_known_shard_filename(filename: &str) -> bool {
@@ -1550,12 +1601,23 @@ impl AdBlockManager {
             return false;
         };
         CATEGORIES.iter().any(|category| {
-            body == *category
-                || body
-                    .strip_prefix(&format!("{category}_"))
-                    .is_some_and(|index| {
-                        !index.is_empty() && index.bytes().all(|b| b.is_ascii_digit())
-                    })
+            if body == *category {
+                return true;
+            }
+            let Some(suffix) = body.strip_prefix(&format!("{category}_")) else {
+                return false;
+            };
+            if !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit()) {
+                return true;
+            }
+            ["ip", "other_extra"].iter().any(|kind| {
+                suffix == *kind
+                    || suffix
+                        .strip_prefix(&format!("{kind}_"))
+                        .is_some_and(|index| {
+                            !index.is_empty() && index.bytes().all(|byte| byte.is_ascii_digit())
+                        })
+            })
         })
     }
 
@@ -2960,20 +3022,25 @@ impl AdBlockManager {
                 shadowrocket_cdn,
                 shadowrocket_github,
             ]);
-            let retired = match self.retired_ruleset_artifacts(&generated_rulesets) {
-                Ok(artifacts) => artifacts,
+            let stale_shards = match self.stale_ruleset_shard_paths(&generated_rulesets) {
+                Ok(paths) => paths,
                 Err(error) => {
                     println!("\x1b[0;31m[ERROR]\x1b[0m Refusing PROMAX publication: {error}");
                     return false;
                 }
             };
-            artifacts.extend(retired);
             if let Err(error) = crate::promax::artifact::publish_artifacts(
                 &self.root_dir,
                 &artifacts,
                 &self.quarantine,
             ) {
                 println!("\x1b[0;31m[ERROR]\x1b[0m Refusing PROMAX publication: {error}");
+                return false;
+            }
+            if let Err(error) = self.prune_legacy_and_stale_rulesets(&stale_shards) {
+                println!(
+                    "\x1b[0;31m[ERROR]\x1b[0m PROMAX publication completed but retired artifact cleanup failed: {error}"
+                );
                 return false;
             }
             self.prune_stale_split_artifacts(&generated_splits);
@@ -3021,6 +3088,331 @@ pub fn run_adblock_manager(root_dir: &str, execute: bool) -> bool {
     let root_path = PathBuf::from(root_dir);
     let mut manager = AdBlockManager::new(root_path);
     manager.merge(execute)
+}
+
+fn rewrite_module_rule_sets(
+    content: &str,
+    old_categories: &HashMap<String, String>,
+    new_paths: &HashMap<String, Vec<String>>,
+) -> Result<String, String> {
+    let mut output = String::with_capacity(content.len());
+    let mut expanded = HashSet::new();
+    for line in content.split_inclusive('\n') {
+        let body = line.trim_end_matches(['\r', '\n']);
+        let ending = &line[body.len()..];
+        let trimmed = body.trim_start();
+        if !trimmed.starts_with("RULE-SET,") {
+            output.push_str(line);
+            continue;
+        }
+        let matching = old_categories
+            .iter()
+            .filter(|(path, _)| body.contains(path.as_str()))
+            .max_by_key(|(path, _)| path.len());
+        let Some((old_path, category)) = matching else {
+            if body.contains("rulesets/AdBlock/") {
+                return Err(format!(
+                    "module contains an unlisted PROMAX shard reference: {body}"
+                ));
+            }
+            output.push_str(line);
+            continue;
+        };
+        let start = body.find(old_path).expect("matched path is present");
+        let end = start + old_path.len();
+        let prefix = &body[..start];
+        let suffix = &body[end..];
+        let key = format!("{category}\0{prefix}\0{suffix}");
+        if !expanded.insert(key) {
+            continue;
+        }
+        let paths = new_paths
+            .get(category)
+            .ok_or_else(|| format!("no migrated PROMAX shards for category {category}"))?;
+        for path in paths {
+            output.push_str(prefix);
+            output.push_str(path);
+            output.push_str(suffix);
+            output.push_str(ending);
+        }
+    }
+    Ok(output)
+}
+
+fn ensure_migration_target_inside_root(root: &Path, target: &Path) -> Result<(), String> {
+    let parent = target
+        .parent()
+        .ok_or_else(|| format!("migration target has no parent: {}", target.display()))?;
+    let resolved = parent.canonicalize().map_err(|error| {
+        format!(
+            "cannot resolve migration target parent {}: {error}",
+            parent.display()
+        )
+    })?;
+    if !resolved.starts_with(root) {
+        return Err(format!(
+            "migration target escapes root: {}",
+            target.display()
+        ));
+    }
+    Ok(())
+}
+
+fn update_migration_readme(content: &str, shards: &[serde_json::Value]) -> Result<String, String> {
+    const HEADER: &str = "| 用途 | 文件 | 规则数 | CDN | GitHub |";
+    const NEXT_SECTION: &str = "\n## 应用内脚本层";
+    let header_start = content
+        .find(HEADER)
+        .ok_or_else(|| "PROMAX README is missing the current-shards table".to_string())?;
+    let mut body_start = header_start + HEADER.len();
+    if content[body_start..].starts_with("\r\n") {
+        body_start += 2;
+    } else if content[body_start..].starts_with('\n') {
+        body_start += 1;
+    }
+    let next_start = content[body_start..]
+        .find(NEXT_SECTION)
+        .map(|offset| body_start + offset)
+        .ok_or_else(|| "PROMAX README is missing the following section marker".to_string())?;
+    let mut rows = String::new();
+    for shard in shards {
+        let label = shard["label_zh"].as_str().unwrap_or_default();
+        let file = shard["file"].as_str().unwrap_or_default();
+        let count = shard["rule_count"].as_u64().unwrap_or_default();
+        let cdn = shard["cdn_url"].as_str().unwrap_or_default();
+        let github = shard["github_url"].as_str().unwrap_or_default();
+        rows.push_str(&format!(
+            "| {label} | `{file}` | {count} | [CDN]({cdn}) | [GitHub]({github}) |\n"
+        ));
+    }
+    let mut updated = String::with_capacity(content.len() + rows.len());
+    updated.push_str(&content[..body_start]);
+    updated.push_str(&rows);
+    updated.push_str(&content[next_start..]);
+    Ok(updated)
+}
+
+/// Mechanically split the published, validated PROMAX shards without fetching sources.
+pub fn migrate_published_rule_layout(root: &Path) -> Result<(), String> {
+    let root = root
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve migration root: {error}"))?;
+    let catalog_path = root.join("rulesets/AdBlock/catalog.json");
+    ensure_migration_target_inside_root(&root, &catalog_path)?;
+    let catalog_content = fs::read_to_string(&catalog_path)
+        .map_err(|error| format!("cannot read PROMAX catalog: {error}"))?;
+    let mut catalog: serde_json::Value = serde_json::from_str(&catalog_content)
+        .map_err(|error| format!("cannot parse PROMAX catalog: {error}"))?;
+    let old_shards = catalog["shards"]
+        .as_array()
+        .ok_or_else(|| "PROMAX catalog is missing its shard list".to_string())?;
+    if old_shards.is_empty() {
+        return Err("PROMAX catalog has no published shards to migrate".to_string());
+    }
+
+    let mut manager = AdBlockManager::new(root.clone());
+    let mut old_categories = HashMap::new();
+    let mut source_rules = HashMap::<String, HashSet<String>>::new();
+    let mut source_counts = HashMap::<String, usize>::new();
+    for shard in old_shards {
+        let file = shard["file"]
+            .as_str()
+            .ok_or_else(|| "PROMAX catalog contains a shard without a file path".to_string())?;
+        let category = shard["category"]
+            .as_str()
+            .filter(|category| CATEGORIES.contains(category))
+            .ok_or_else(|| format!("PROMAX catalog contains an unknown shard category: {file}"))?;
+        let name = file
+            .strip_prefix("rulesets/AdBlock/")
+            .ok_or_else(|| format!("PROMAX shard is outside rulesets/AdBlock: {file}"))?;
+        if name.contains('/')
+            || name.contains('\\')
+            || !AdBlockManager::is_known_shard_filename(name)
+            || Path::new(file).parent() != Some(Path::new("rulesets/AdBlock"))
+            || manager.category_from_filename(name) != category
+            || old_categories
+                .insert(file.to_string(), category.to_string())
+                .is_some()
+        {
+            return Err(format!(
+                "invalid or duplicate PROMAX catalog shard path: {file}"
+            ));
+        }
+        let shard_path = root.join(file);
+        ensure_migration_target_inside_root(&root, &shard_path)?;
+        let content = fs::read_to_string(&shard_path)
+            .map_err(|error| format!("cannot read published shard {file}: {error}"))?;
+        let validation = crate::promax::validation::validate_external_ruleset(&content);
+        if !validation.is_empty() {
+            return Err(format!("published shard {file} no longer validates"));
+        }
+        let expected_count = shard["rule_count"]
+            .as_u64()
+            .and_then(|count| usize::try_from(count).ok())
+            .ok_or_else(|| format!("PROMAX catalog has an invalid rule count for {file}"))?;
+        let mut count = 0usize;
+        for line in content.lines().map(str::trim) {
+            if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+                continue;
+            }
+            crate::promax::rule::SurgeRule::parse(line)
+                .map_err(|error| format!("invalid rule in {file}: {error}"))?;
+            count = count.saturating_add(1);
+            source_rules
+                .entry(category.to_string())
+                .or_default()
+                .insert(line.to_string());
+            manager
+                .rules
+                .get_mut("REJECT")
+                .and_then(|policies| policies.get_mut(category))
+                .ok_or_else(|| format!("PROMAX category is unavailable: {category}"))?
+                .insert(line.to_string());
+        }
+        if count != expected_count {
+            return Err(format!(
+                "published shard {file} has {count} rules but catalog records {expected_count}"
+            ));
+        }
+        *source_counts.entry(category.to_string()).or_default() += count;
+    }
+
+    let (generated_files, mut artifacts) = manager.generate_ruleset()?;
+    let mut new_paths = HashMap::<String, Vec<String>>::new();
+    let mut migrated_rules = HashMap::<String, HashSet<String>>::new();
+    let mut migrated_counts = HashMap::<String, usize>::new();
+    let mut new_shards = Vec::new();
+    for artifact in &artifacts {
+        let category = artifact
+            .content
+            .lines()
+            .find_map(|line| line.strip_prefix("# Category-Key: "))
+            .ok_or_else(|| {
+                format!(
+                    "generated shard has no category key: {}",
+                    artifact.target.display()
+                )
+            })?;
+        let category_meta = CATEGORY_META
+            .get(category)
+            .ok_or_else(|| format!("generated shard has unknown category {category}"))?;
+        let relative = artifact
+            .target
+            .strip_prefix(&root)
+            .map_err(|_| {
+                format!(
+                    "generated shard escapes migration root: {}",
+                    artifact.target.display()
+                )
+            })?
+            .to_string_lossy()
+            .to_string();
+        let count = artifact
+            .content
+            .lines()
+            .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
+            .count();
+        let rules = migrated_rules.entry(category.to_string()).or_default();
+        for line in artifact.content.lines().map(str::trim) {
+            if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+                continue;
+            }
+            rules.insert(line.to_string());
+        }
+        *migrated_counts.entry(category.to_string()).or_default() += count;
+        new_paths
+            .entry(category.to_string())
+            .or_default()
+            .push(relative.clone());
+        let shard_index = SHARD_INDEX_RE
+            .captures(&relative)
+            .and_then(|captures| captures[1].parse::<usize>().ok())
+            .unwrap_or(1);
+        let encoded =
+            percent_encoding::utf8_percent_encode(&relative, percent_encoding::NON_ALPHANUMERIC);
+        new_shards.push(serde_json::json!({
+            "file": relative,
+            "category": category,
+            "label_zh": category_meta.label_zh,
+            "purpose": category_meta.desc,
+            "shard_index": shard_index,
+            "rule_count": count,
+            "cdn_url": format!("{}{}", CDN_BASE_URL, encoded),
+            "github_url": format!("{}{}", GITHUB_RAW_URL, encoded),
+        }));
+    }
+    if migrated_rules != source_rules || migrated_counts != source_counts {
+        return Err("PROMAX shard migration changed a category rule set or count".to_string());
+    }
+
+    let readme_path = root.join("rulesets/AdBlock/README.md");
+    if readme_path.is_file() {
+        ensure_migration_target_inside_root(&root, &readme_path)?;
+        let readme = fs::read_to_string(&readme_path)
+            .map_err(|error| format!("cannot read PROMAX README: {error}"))?;
+        artifacts.push(crate::promax::artifact::GeneratedArtifact {
+            target: readme_path,
+            content: update_migration_readme(&readme, &new_shards)?,
+            kind: crate::promax::artifact::ArtifactKind::Metadata,
+        });
+    }
+
+    let modules = catalog["modules"]
+        .as_object()
+        .ok_or_else(|| "PROMAX catalog is missing its module map".to_string())?;
+    let mut module_paths = modules
+        .values()
+        .map(|module| {
+            module["path"]
+                .as_str()
+                .ok_or_else(|| "PROMAX catalog contains a module without a path".to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    module_paths.sort_unstable();
+    if module_paths.is_empty() {
+        return Err("PROMAX catalog has no modules to migrate".to_string());
+    }
+    for relative in module_paths {
+        if relative.contains('\\')
+            || Path::new(relative).is_absolute()
+            || Path::new(relative)
+                .components()
+                .any(|component| !matches!(component, std::path::Component::Normal(_)))
+            || !relative.starts_with("modules/")
+        {
+            return Err(format!("invalid PROMAX module path in catalog: {relative}"));
+        }
+        let target = root.join(relative);
+        ensure_migration_target_inside_root(&root, &target)?;
+        let content = fs::read_to_string(&target)
+            .map_err(|error| format!("cannot read PROMAX module {relative}: {error}"))?;
+        let migrated = rewrite_module_rule_sets(&content, &old_categories, &new_paths)?;
+        let kind = match target.extension().and_then(|extension| extension.to_str()) {
+            Some("sgmodule") => crate::promax::artifact::ArtifactKind::Surge,
+            Some("module") => crate::promax::artifact::ArtifactKind::Shadowrocket,
+            Some("plugin") => crate::promax::artifact::ArtifactKind::Loon,
+            _ => return Err(format!("unsupported PROMAX module artifact: {relative}")),
+        };
+        artifacts.push(crate::promax::artifact::GeneratedArtifact {
+            target,
+            content: migrated,
+            kind,
+        });
+    }
+
+    catalog["shards"] = serde_json::Value::Array(new_shards);
+    artifacts.push(crate::promax::artifact::GeneratedArtifact {
+        target: catalog_path,
+        content: format!(
+            "{}\n",
+            serde_json::to_string_pretty(&catalog).map_err(|error| error.to_string())?
+        ),
+        kind: crate::promax::artifact::ArtifactKind::Metadata,
+    });
+    let stale_shards = manager.stale_ruleset_shard_paths(&generated_files)?;
+    crate::promax::artifact::publish_generated_artifacts(&root, &artifacts)?;
+    manager.prune_legacy_and_stale_rulesets(&stale_shards)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -3149,7 +3541,7 @@ mod tests {
     }
 
     #[test]
-    fn retired_catalog_shards_publish_empty_noops_without_entering_current_catalog() {
+    fn published_current_shards_prune_only_catalogued_stale_and_legacy_rulesets() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -3161,64 +3553,45 @@ mod tests {
         fs::create_dir_all(catalog.parent().unwrap()).unwrap();
         fs::write(
             &catalog,
-            r#"{"shards":[{"file":"rulesets/AdBlock/AdBlock_Advertising.list"},{"file":"rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list"},{"file":"rulesets/AdBlock/AdBlock_Other.list"}]}"#,
+            r#"{"shards":[{"file":"rulesets/AdBlock/AdBlock_Advertising.list"},{"file":"rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list"},{"file":"rulesets/AdBlock/AdBlock_Other.list"},{"file":"rulesets/AdBlock/AdBlock_Advertising_ip_01.list"},{"file":"rulesets/AdBlock/AdBlock_Security_other_extra.list"}]}"#,
         )
         .unwrap();
         let manager = AdBlockManager::new(root.clone());
         let generated = vec!["rulesets/AdBlock/AdBlock_Advertising.list".to_string()];
-        let retired = manager.retired_ruleset_artifacts(&generated).unwrap();
-        assert_eq!(retired.len(), 2);
-        assert!(
-            retired
-                .iter()
-                .any(|artifact| artifact.target.ends_with("AdBlock_ThreatIntel_TIF_07.list"))
-        );
-        assert!(
-            retired
-                .iter()
-                .any(|artifact| artifact.target.ends_with("AdBlock_Other.list"))
-        );
+        let stale = manager.stale_ruleset_shard_paths(&generated).unwrap();
+        assert_eq!(stale.len(), 4);
+        let stale_tif = root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list");
+        let stale_other = root.join("rulesets/AdBlock/AdBlock_Other.list");
+        let stale_ip = root.join("rulesets/AdBlock/AdBlock_Advertising_ip_01.list");
+        let stale_extra = root.join("rulesets/AdBlock/AdBlock_Security_other_extra.list");
+        fs::write(&stale_tif, "old stale rules\n").unwrap();
+        fs::write(&stale_other, "old stale rules\n").unwrap();
+        fs::write(&stale_ip, "old stale IP rules\n").unwrap();
+        fs::write(&stale_extra, "old stale extra rules\n").unwrap();
+        let unknown = root.join("rulesets/AdBlock/AdBlock_Unknown.list");
+        fs::write(&unknown, "keep unknown file\n").unwrap();
+        let legacy = root.join("rulesets/RULE-SET/AdBlock.list");
+        let legacy_mirror = root.join("rulesets/RULE-SET/github/AdBlock.list");
+        fs::create_dir_all(legacy.parent().unwrap()).unwrap();
+        fs::create_dir_all(legacy_mirror.parent().unwrap()).unwrap();
+        fs::write(&legacy, "legacy union\n").unwrap();
+        fs::write(&legacy_mirror, "legacy mirror\n").unwrap();
 
         let live = super::super::artifact::GeneratedArtifact {
             target: root.join(&generated[0]),
             content: "DOMAIN,live.example\n".to_string(),
             kind: super::super::artifact::ArtifactKind::ExternalRuleset,
         };
-        let mut artifacts = vec![live.clone()];
-        artifacts.extend(retired);
-        super::super::artifact::publish_artifacts(&root, &artifacts, &[]).unwrap();
-        let retired_path = root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF_07.list");
+        super::super::artifact::publish_artifacts(&root, std::slice::from_ref(&live), &[]).unwrap();
+        manager.prune_legacy_and_stale_rulesets(&stale).unwrap();
         assert_eq!(fs::read_to_string(&live.target).unwrap(), live.content);
-        assert_eq!(
-            fs::read_to_string(&retired_path).unwrap(),
-            "# Retired PROMAX shard; intentionally empty.\n"
-        );
-        assert_eq!(
-            fs::read_to_string(root.join("rulesets/AdBlock/AdBlock_Other.list")).unwrap(),
-            "# Retired PROMAX shard; intentionally empty.\n"
-        );
-
-        fs::write(
-            &catalog,
-            r#"{"shards":[{"file":"rulesets/AdBlock/AdBlock_Advertising.list"}]}"#,
-        )
-        .unwrap();
-        assert!(
-            manager
-                .retired_ruleset_artifacts(&generated)
-                .unwrap()
-                .is_empty()
-        );
-        super::super::artifact::publish_artifacts(&root, &[live], &[]).unwrap();
-        for path in [
-            retired_path,
-            root.join("rulesets/AdBlock/AdBlock_Other.list"),
-        ] {
-            assert_eq!(
-                fs::read_to_string(path).unwrap(),
-                "# Retired PROMAX shard; intentionally empty.\n"
-            );
-        }
+        assert!(!stale_tif.exists());
+        assert!(!stale_other.exists());
+        assert!(!stale_ip.exists());
+        assert!(!stale_extra.exists());
+        assert!(!legacy.exists());
+        assert!(!legacy_mirror.exists());
+        assert_eq!(fs::read_to_string(unknown).unwrap(), "keep unknown file\n");
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -3235,10 +3608,197 @@ mod tests {
         for file in [
             "rulesets/AdBlock/../outside.list",
             "rulesets/AdBlock/AdBlock_Unknown.list",
+            "rulesets/AdBlock/AdBlock_Advertising_unknown.list",
+            "rulesets/AdBlock/AdBlock_Advertising_ip_nope.list",
         ] {
             fs::write(&catalog, format!(r#"{{"shards":[{{"file":"{file}"}}]}}"#)).unwrap();
-            assert!(manager.retired_ruleset_artifacts(&[]).is_err());
+            assert!(manager.stale_ruleset_shard_paths(&[]).is_err());
         }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn generated_shards_separate_domain_ip_and_other_rules_without_loss() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-mixed-shards-{unique}"));
+        let mut manager = AdBlockManager::new(root.clone());
+        let source_rules = [
+            "DOMAIN-SUFFIX,ads.example".to_string(),
+            "DOMAIN-KEYWORD,tracking".to_string(),
+            "IP-CIDR,192.0.2.0/24,no-resolve".to_string(),
+            "GEOIP,CN".to_string(),
+            "PROCESS-NAME,ad-app".to_string(),
+        ];
+        manager
+            .rules
+            .get_mut("REJECT")
+            .unwrap()
+            .get_mut("Advertising")
+            .unwrap()
+            .extend(source_rules.iter().cloned());
+
+        let (_, artifacts) = manager.generate_ruleset().unwrap();
+        let domain = artifacts
+            .iter()
+            .find(|artifact| artifact.target.ends_with("AdBlock_Advertising.list"))
+            .unwrap();
+        let ip = artifacts
+            .iter()
+            .find(|artifact| artifact.target.ends_with("AdBlock_Advertising_ip.list"))
+            .unwrap();
+        let extra = artifacts
+            .iter()
+            .find(|artifact| {
+                artifact
+                    .target
+                    .ends_with("AdBlock_Advertising_other_extra.list")
+            })
+            .unwrap();
+        let rules_in = |content: &str| {
+            content
+                .lines()
+                .filter(|line| !line.trim().is_empty() && !line.starts_with('#'))
+                .map(str::to_string)
+                .collect::<HashSet<_>>()
+        };
+        let domain_rules = rules_in(&domain.content);
+        let ip_rules = rules_in(&ip.content);
+        let extra_rules = rules_in(&extra.content);
+        let mut emitted = domain_rules.clone();
+        emitted.extend(ip_rules.iter().cloned());
+        emitted.extend(extra_rules.iter().cloned());
+
+        assert_eq!(emitted, source_rules.into_iter().collect());
+        assert!(domain_rules.iter().all(|rule| rule.starts_with("DOMAIN")));
+        assert_eq!(
+            ip_rules,
+            HashSet::from([
+                "IP-CIDR,192.0.2.0/24,no-resolve".to_string(),
+                "GEOIP,CN".to_string(),
+            ])
+        );
+        assert_eq!(
+            extra_rules,
+            HashSet::from(["PROCESS-NAME,ad-app".to_string()])
+        );
+        for artifact in [domain, ip, extra] {
+            assert!(artifact.content.contains("# Category-Key: Advertising\n"));
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn offline_layout_migration_preserves_catalog_metadata_and_module_policy() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-offline-layout-{unique}"));
+        let old_file = "rulesets/AdBlock/AdBlock_Advertising.list";
+        let shard_content = "# Ruleset: fixture\n# Category-Key: Advertising\n# Total Rules: 3\nDOMAIN-SUFFIX,ads.example\nIP-CIDR,192.0.2.0/24\nPROCESS-NAME,ad-app\n";
+        let catalog_path = root.join("rulesets/AdBlock/catalog.json");
+        fs::create_dir_all(catalog_path.parent().unwrap()).unwrap();
+        fs::write(root.join(old_file), shard_content).unwrap();
+        let rule_set = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising.list";
+        let module_content = format!(
+            "#!name=PROMAX migration fixture\n[Rule]\nRULE-SET,{rule_set},REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve\n"
+        );
+        let module_paths = (0..6)
+            .map(|index| format!("modules/surge/head_expanse/PROMAX-fixture-{index}.sgmodule"))
+            .collect::<Vec<_>>();
+        for path in &module_paths {
+            let target = root.join(path);
+            fs::create_dir_all(target.parent().unwrap()).unwrap();
+            fs::write(target, &module_content).unwrap();
+        }
+        let modules = module_paths
+            .iter()
+            .enumerate()
+            .map(|(index, path)| {
+                (
+                    format!("fixture_{index}"),
+                    serde_json::json!({
+                        "path": path,
+                        "install_url": format!("https://example.test/{index}"),
+                        "url_source": "fixture",
+                        "note": "preserve me",
+                    }),
+                )
+            })
+            .collect::<serde_json::Map<_, _>>();
+        let original_catalog = serde_json::json!({
+            "updated": "preserve timestamp",
+            "manifest": "preserve manifest",
+            "verified_rolling_feeds": {"ThreatIntel_TIF": {"source": "preserve source", "version": "preserve version"}},
+            "modules": modules,
+            "shards": [{
+                "file": old_file,
+                "category": "Advertising",
+                "label_zh": "fixture label",
+                "purpose": "fixture purpose",
+                "shard_index": 1,
+                "rule_count": 3,
+                "cdn_url": "old cdn",
+                "github_url": "old github",
+            }],
+        });
+        fs::write(
+            &catalog_path,
+            serde_json::to_vec_pretty(&original_catalog).unwrap(),
+        )
+        .unwrap();
+
+        super::migrate_published_rule_layout(&root).unwrap();
+
+        let migrated_catalog: serde_json::Value =
+            serde_json::from_slice(&fs::read(catalog_path).unwrap()).unwrap();
+        assert_eq!(migrated_catalog["updated"], original_catalog["updated"]);
+        assert_eq!(migrated_catalog["manifest"], original_catalog["manifest"]);
+        assert_eq!(
+            migrated_catalog["verified_rolling_feeds"],
+            original_catalog["verified_rolling_feeds"]
+        );
+        assert_eq!(migrated_catalog["modules"], original_catalog["modules"]);
+        assert_eq!(migrated_catalog["shards"].as_array().unwrap().len(), 3);
+        let new_files = migrated_catalog["shards"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|shard| shard["file"].as_str().unwrap().to_string())
+            .collect::<HashSet<_>>();
+        assert!(new_files.contains("rulesets/AdBlock/AdBlock_Advertising.list"));
+        assert!(new_files.contains("rulesets/AdBlock/AdBlock_Advertising_ip.list"));
+        assert!(new_files.contains("rulesets/AdBlock/AdBlock_Advertising_other_extra.list"));
+        for path in module_paths {
+            let module = fs::read_to_string(root.join(path)).unwrap();
+            assert_eq!(module.matches("RULE-SET,").count(), 3);
+            assert!(module.contains(
+                ",REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve"
+            ));
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn retired_artifact_prune_propagates_remove_failures() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-retired-shard-remove-{unique}"));
+        let manager = AdBlockManager::new(root.clone());
+        let stale = root.join("rulesets/AdBlock/AdBlock_Advertising_01.list");
+        fs::create_dir_all(&stale).unwrap();
+
+        assert!(
+            manager
+                .prune_legacy_and_stale_rulesets(std::slice::from_ref(&stale))
+                .is_err()
+        );
+        assert!(stale.is_dir());
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -3303,6 +3863,11 @@ mod tests {
         );
         assert_eq!(manager.rules["REJECT"]["ThreatIntel_TIF"].len(), 2);
         let (paths, artifacts) = manager.generate_ruleset().unwrap();
+        assert!(
+            !artifacts
+                .iter()
+                .any(|artifact| artifact.target.ends_with("rulesets/RULE-SET/AdBlock.list"))
+        );
         let metadata = manager.generate_catalog_artifacts(&paths, &artifacts);
         let json = metadata
             .iter()

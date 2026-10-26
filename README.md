@@ -9,8 +9,8 @@
 - **误屏蔽防护**：正常媒体、受保护服务、无对应请求规则的 MITM 主机会进入 `rulesets/AdBlock/quarantine.json`，不会直接发布。
 - **防止不完整更新**：稳定广告分类合计不得低于上一份 catalog 的 90%。HaGeZi TIF medium 是会清退过期域名的滚动情报源，仅官方地址、完整元数据、声明条数与逐条唯一域名校验全部通过后才独立计算；跨活动分片的实际域名后缀匹配仍须覆盖本次源条目的至少 80%，不会把在其他分类已去重覆盖的规则误算为丢失。检查失败时保留已发布产物，不以旧情报永久冻结上游更新。catalog 记录上次实质更新时的源版本与条数，仅源版本时间戳改变不触发写入。
 - **Helper**：保留 DNS 补充、必要的 Host/系统解析映射和关键服务 MITM 排除，不注入分流策略；分流由外部规则集和用户策略组决定。端口阻断仍是独立、按需安装的模块。
-- **旧分片兼容**：已发布但不再需要的规则分片保留为空规则兼容文件，不加入新版模块或活动 catalog；旧模块缓存不会因分片缩减而遇到 404，旧拦截条目也不会继续生效。
-- **旧 PROMAX 链接保持兼容**：
+- **仅发布当前版本**：不再生成旧 `AdBlock.list`、已合并的细分类订阅或退役空分片。删除产物前保留必要的内部构建输入，当前模块只引用活动 catalog；旧配置必须迁移，不再以空文件或别名维持旧订阅。
+- **当前 PROMAX 入口**：
   `https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule`
 
 规则索引与分片说明见 `rulesets/AdBlock/README.md` 和 `rulesets/AdBlock/catalog.json`。
@@ -19,9 +19,9 @@
 
 ### Apple 服务与分流
 
-Apple Music、iTunes、Apple News 与 Apple 自有媒体端点归入 `Apple.list` / `Apple_ip.list`，不混入通用服务分类。旧 `AppleNews.list` 保留为细分类兼容入口；共享 CDN 的整个父域不会被当成 Apple 专有域名。
+Apple Music、iTunes、Apple News 与 Apple 自有媒体端点归入 `Apple.list` / `Apple_ip.list`，不混入通用服务分类。`AppleNews.list` 已退役；共享 CDN 的整个父域不会被当成 Apple 专有域名。
 
-规则集只描述匹配范围，不指定路由、节点或拦截动作。包括 NSFW、Apple、Direct、GlobalProxy 在内，所有分类头统一标记 `Policy: USER-DEFINED`，不提供默认策略或节点。历史文件名不代表强制路由；实际动作和规则顺序始终由使用者自己的客户端配置决定。NSFW 是独立内容分类，不加入 PROMAX 的广告拒绝输入。
+规则集只描述匹配范围，不指定路由、节点或拦截动作。所有普通分类头统一标记 `Policy: USER-DEFINED`，不提供默认策略或节点。文件名不代表强制路由；实际动作和规则顺序始终由使用者自己的客户端配置决定。NSFW 作为 JP 组合的内部分类输入，不加入 PROMAX 的广告拒绝输入。
 
 ### 服务分类与自动更新
 
@@ -29,12 +29,26 @@ Apple Music、iTunes、Apple News 与 Apple 自有媒体端点归入 `Apple.list
 
 | 简化入口 | 包含内容 | 可替代的旧引用 |
 | --- | --- | --- |
-| `JP.list` | NSFW 分类、日本流媒体、Misskey.io | `NSFW.list`、`StreamJP.list`、单独的 Misskey.io 规则 |
+| `JP.list` | NSFW 分类、日本流媒体、Misskey.io、Pixiv 生态 | `NSFW.list`、`StreamJP.list`、单独的 Misskey/Pixiv 规则 |
 | `Apple.list` | Apple 服务、音乐、Apple News | `Apple.list`、`AppleNews.list` |
 | `TW.list` | 台湾及香港流媒体 | `StreamTW.list`、`StreamHK.list` |
 | `GlobalProxy.list` | 原全球集合、CDN、Cloudflare、Sub-Store | `GlobalProxy.list`、`CDN.list`、`Cloudflare.list`、`substore.list` |
 
-合并集合按源列表更新、去重并稳定排序，不需要同时引用其旧细分类。`JP` 包含按使用偏好合并的全球 NSFW 站点，不表示这些站点全部位于日本；`TW` 同样明确包含香港服务。旧细分类继续保持原有内容范围，尤其不会把 `NSFW.list` 扩大为含普通日本服务的合集。合并入口有对应的 GitHub 镜像和 sing-box SRS；IP 规则仍按现有约定放在对应的 `*_ip.list`，需要 IP 兜底时可单独使用。
+合并集合按源列表更新、去重并稳定排序。`JP` 包含按使用偏好合并的全球 NSFW 站点，不表示这些站点全部位于日本；`TW` 同样明确包含香港服务。已替代的公开细分类和 `Gaming.list` 全集已移除，不再保留兼容订阅。上游清单仍自动更新；仅供聚合与游戏细分使用的中间产物保存在 `rulesets/Sources/compiled/`，不应订阅该目录。Pixiv 专属域名由维护源和明确端点收束到 JP，不把共享 CDN 父域整体划为日本。
+
+### 域名、IP 与其他匹配器
+
+- `<分类>.list` 只包含 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`DOMAIN-WILDCARD`、`DOMAIN-REGEX`。
+- `<分类>_ip.list` 只包含 `IP-CIDR`、`IP-CIDR6`、`IP-ASN`、`GEOIP`。仅在存在有效条目时发布，不为凑齐域名/IP 配对生成空文件；没有 IP 文件表示当前没有可发布的 IP 规则。
+- `<分类>_extra.list` 只在需要时提供进程、User-Agent、URL 等非地址匹配，按需独立引用，不能混称为域名或 IP。PROMAX 也按相同边界将其活动广告分片拆为域名、`_ip` 与 `_other_extra`，原拒绝动作不变。
+
+所有公开规则文件必须至少包含一条有效规则，`Rules` 按当前文件去重后的有效条目逐条统计，无显示上限或截断采样；PROMAX 的分片大小只决定文件组织，全部规则和各分片真实条数仍完整记录。失效下载或全无有效输入会报错并保留上次有效产物，不以空文件冒充成功更新。
+
+旧静态 `Singbox1.13.0+.conf` 因没有维护链且引用多项已退役规则集而移除；不将新合集机械替换进其旧策略，避免改变使用者路由范围。当前 SRS 以实际发布文件为准。
+
+sing-box 与 Surge 的匹配能力不同。含 User-Agent、URL、GEOIP、ASN 等当前转换器无法无损表示的文件，不会再无声地漏项并冒充完整 SRS：仍能表示的 CIDR、域名、进程等会保存在明确标为 `_supported_Singbox.srs` 的子集中，日志说明覆盖限制，旧的无标注 SRS 移除。完全可转换的列表继续使用常规 SRS 名称；Surge 的完整列表与模块不丢失这些匹配器。
+
+`Profile_Exceptions` 是所给配置中明确的域名例外集合，不是新的通用服务分类，也不指定策略。私人进程路径、端口和地区兜底保留在本地配置的具名 `[Ruleset ...]` 段，不发布到公共仓库。
 
 合并边界只限上表明确列出的成员，不按“当前恰好使用相同策略”把无关服务归为一组。Bilibili、PayPal、Google、Microsoft、AI、社交，以及游戏的下载/联机/网页类别继续独立。CDN 与其他分类可能有正常交集，GlobalProxy 因此次明确合并而继承这些交集；规则顺序与动作由用户配置控制，不能把合集当成互斥的服务分类。
 
@@ -86,7 +100,7 @@ Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；Wea
 
 通用 Microsoft 登录域名 `login.live.com`、`logincdn.msauth.net` 不进入专用游戏组，以免游戏策略覆盖其他应用的账号登录；由用户的 Microsoft/普通分流规则处理。旧 `Gaming_ip.list` 也不自动并入专用联机组，其共享云 IP 无法仅凭地址确定是游戏流量。
 
-旧 `Gaming.list` 继续保留兼容全集，包括既有进程/关键词规则；全集与细分类同时引用时可能抢先匹配，保留哪些引用由使用者决定。游戏下载组同时吸收 Sukka 官方 game-download 规则和本地精确端点；联机分类端点维护于 `rulesets/Sources/custom/Gaming_Play_manual.list`。更新时由 Rust 合并上游与手动分类，再生成镜像和 SRS。专用组不含启动器整进程、公司域名关键词或写死的 DIRECT/PROXY 策略。
+`Gaming` 全集仅作为内部分类输入，不再公开发布。游戏下载组吸收 Sukka 官方 game-download 规则和本地精确端点；联机分类端点维护于 `rulesets/Sources/custom/Gaming_Play_manual.list`。上游的共享平台 IP 和启动器进程保留在 `Gaming_Web_ip` / `Gaming_Web_extra`，不冒充纯对局流量，默认示例不启用这些宽泛兜底。更新时由 Rust 合并上游与手动分类，再生成镜像和 SRS；专用对局组不含启动器整进程、公司域名关键词或写死的策略。
 
 ## Rust 更新入口
 

@@ -72,6 +72,311 @@ struct Manifest {
     remote_urls: Vec<String>,
 }
 
+const INTERNAL_RULESETS: &[&str] = &[
+    "NSFW",
+    "StreamJP",
+    "StreamHK",
+    "StreamTW",
+    "AppleNews",
+    "CDN",
+    "Cloudflare",
+    "substore",
+    "Gaming",
+    "Pixiv",
+];
+
+fn input_path(root: &Path, name: &str, suffix: &str) -> PathBuf {
+    let public = root.join(format!("rulesets/RULE-SET/{name}{suffix}.list"));
+    if public.is_file() || !INTERNAL_RULESETS.contains(&name) {
+        public
+    } else {
+        root.join(format!("rulesets/Sources/compiled/{name}{suffix}.list"))
+    }
+}
+
+/// Internal categories are build inputs, not backwards-compatible subscriptions.
+pub fn prepare_ruleset_inputs(root: &Path) -> Result<(), String> {
+    let snapshot = root.join("rulesets/Sources/compiled");
+    fs::create_dir_all(&snapshot).map_err(|e| e.to_string())?;
+    for name in INTERNAL_RULESETS {
+        let source = snapshot.join(format!("{name}.list"));
+        if !source.is_file() {
+            let paths: Vec<PathBuf> = ["", "_ip", "_extra"]
+                .iter()
+                .map(|suffix| root.join(format!("rulesets/RULE-SET/{name}{suffix}.list")))
+                .filter(|path| path.is_file())
+                .collect();
+            if paths.is_empty() {
+                return Err(format!(
+                    "missing internal ruleset input {name}; run a full upstream update"
+                ));
+            }
+            crate::process_ruleset(crate::RulesetInput {
+                name,
+                target_dir: &snapshot,
+                conflict_domains: &[],
+                skip_conflict: false,
+                description: "Internal upstream snapshot; not a subscription",
+                local_paths: &paths,
+                remote_content: "",
+            })?;
+        }
+        let snapshot_paths: Vec<PathBuf> = ["", "_ip", "_extra"]
+            .iter()
+            .map(|suffix| snapshot.join(format!("{name}{suffix}.list")))
+            .filter(|path| path.is_file())
+            .collect();
+        crate::process_ruleset(crate::RulesetInput {
+            name,
+            target_dir: &snapshot,
+            conflict_domains: &[],
+            skip_conflict: false,
+            description: "Internal typed upstream snapshot; not a subscription",
+            local_paths: &snapshot_paths,
+            remote_content: "",
+        })?;
+        for suffix in ["", "_ip", "_extra"] {
+            let from = snapshot.join(format!("{name}{suffix}.list"));
+            match fs::read_to_string(&from) {
+                Ok(content) => {
+                    let to = root.join(format!("rulesets/RULE-SET/{name}{suffix}.list"));
+                    if !crate::safe_write_file_internal(&to, &content, true) {
+                        return Err(format!("cannot prepare {}", to.display()));
+                    }
+                }
+                Err(e) if !suffix.is_empty() && e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(format!("cannot prepare {}: {e}", from.display())),
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Remove only retired public names, after their cleaned inputs were persisted.
+pub fn retire_ruleset_inputs(root: &Path) -> Result<usize, String> {
+    let snapshot = root.join("rulesets/Sources/compiled");
+    fs::create_dir_all(&snapshot).map_err(|e| e.to_string())?;
+    for name in INTERNAL_RULESETS {
+        for suffix in ["", "_ip", "_extra"] {
+            let from = root.join(format!("rulesets/RULE-SET/{name}{suffix}.list"));
+            match fs::read_to_string(&from) {
+                Ok(content) => {
+                    let to = snapshot.join(format!("{name}{suffix}.list"));
+                    if !crate::safe_write_file_internal(&to, &content, true) {
+                        return Err(format!("cannot preserve {}", to.display()));
+                    }
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(format!("cannot preserve {}: {e}", from.display())),
+            }
+        }
+    }
+    let mut removed = 0;
+    for name in INTERNAL_RULESETS
+        .iter()
+        .copied()
+        .chain(std::iter::once("AdBlock"))
+    {
+        for suffix in ["", "_ip", "_extra"] {
+            for directory in ["rulesets/RULE-SET", "rulesets/RULE-SET/github"] {
+                let path = root.join(format!("{directory}/{name}{suffix}.list"));
+                match fs::remove_file(&path) {
+                    Ok(()) => removed += 1,
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(format!("cannot retire {}: {e}", path.display())),
+                }
+            }
+            let path = root.join(format!("rulesets/SingBox/{name}{suffix}_Singbox.srs"));
+            match fs::remove_file(&path) {
+                Ok(()) => removed += 1,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(format!("cannot retire {}: {e}", path.display())),
+            }
+        }
+    }
+    let adblock = root.join("rulesets/AdBlock");
+    if adblock.is_dir() {
+        for entry in fs::read_dir(&adblock).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            if !entry.file_type().map_err(|e| e.to_string())?.is_file() {
+                continue;
+            }
+            let file = entry.file_name().to_string_lossy().into_owned();
+            if !file.starts_with("AdBlock_") || !file.ends_with(".list") {
+                continue;
+            }
+            let content = fs::read_to_string(entry.path()).map_err(|e| e.to_string())?;
+            if content.starts_with("# Retired PROMAX shard") && parse_rules(&content).is_empty() {
+                for path in [entry.path(), adblock.join("github").join(&file)] {
+                    match fs::remove_file(&path) {
+                        Ok(()) => removed += 1,
+                        Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+                        Err(error) => {
+                            return Err(format!("cannot retire {}: {error}", path.display()));
+                        }
+                    }
+                }
+            }
+        }
+        for file in ["reject-drop.list", "reject-no-drop.list"] {
+            for directory in ["rulesets/AdBlock", "rulesets/AdBlock/github"] {
+                let path = root.join(directory).join(file);
+                match fs::remove_file(&path) {
+                    Ok(()) => removed += 1,
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(format!("cannot retire {}: {e}", path.display())),
+                }
+            }
+        }
+    }
+    Ok(removed)
+}
+
+/// Normalize every upstream-derived category, including Direct, through the
+/// same splitter. Non-domain matchers survive only in explicit extra files.
+pub fn split_published_rulesets(root: &Path) -> Result<(), String> {
+    let directory = root.join("rulesets/RULE-SET");
+    let mut names = Vec::new();
+    for entry in fs::read_dir(&directory).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if entry.file_type().map_err(|e| e.to_string())?.is_file()
+            && let Some(stem) = name.strip_suffix(".list")
+            && stem != "AdBlock"
+        {
+            names.push(
+                stem.strip_suffix("_ip")
+                    .or_else(|| stem.strip_suffix("_extra"))
+                    .unwrap_or(stem)
+                    .to_string(),
+            );
+        }
+    }
+    names.sort();
+    names.dedup();
+    for name in names {
+        let paths: Vec<PathBuf> = ["", "_ip", "_extra"]
+            .iter()
+            .map(|suffix| directory.join(format!("{name}{suffix}.list")))
+            .filter(|path| path.is_file())
+            .collect();
+        let mut count = 0;
+        for path in &paths {
+            count += read_rules(path)?.len();
+        }
+        if count == 0 {
+            for path in paths {
+                fs::remove_file(&path).map_err(|error| {
+                    format!("cannot remove empty ruleset {}: {error}", path.display())
+                })?;
+            }
+        } else {
+            crate::process_ruleset(crate::RulesetInput {
+                name: &name,
+                target_dir: &directory,
+                conflict_domains: &[],
+                skip_conflict: false,
+                description: "Current typed ruleset; policy selected by consumer",
+                local_paths: &paths,
+                remote_content: "",
+            })?;
+        }
+    }
+    let adblock = root.join("rulesets/AdBlock");
+    let httpdns: Vec<PathBuf> = ["HTTPDNS_Hijack.list", "HTTPDNS_Hijack_ip.list"]
+        .iter()
+        .map(|name| adblock.join(name))
+        .filter(|path| path.is_file())
+        .collect();
+    if !httpdns.is_empty() {
+        crate::process_ruleset(crate::RulesetInput {
+            name: "HTTPDNS_Hijack",
+            target_dir: &adblock,
+            conflict_domains: &[],
+            skip_conflict: false,
+            description: "HTTPDNS endpoints; domain and IP matchers published separately",
+            local_paths: &httpdns,
+            remote_content: "",
+        })?;
+    }
+    Ok(())
+}
+
+pub fn validate_published_layout(root: &Path) -> Result<Vec<String>, String> {
+    let directory = root.join("rulesets/RULE-SET");
+    let mut errors = Vec::new();
+    for entry in fs::read_dir(&directory).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        if !entry.file_type().map_err(|e| e.to_string())?.is_file() {
+            continue;
+        }
+        let file = entry.file_name().to_string_lossy().into_owned();
+        let Some(name) = file.strip_suffix(".list") else {
+            continue;
+        };
+        let base = name
+            .strip_suffix("_ip")
+            .or_else(|| name.strip_suffix("_extra"))
+            .unwrap_or(name);
+        if INTERNAL_RULESETS.contains(&base) || base == "AdBlock" {
+            errors.push(format!("retired subscription remains published: {file}"));
+        }
+        let rules = read_rules(&entry.path())?;
+        if rules.is_empty() {
+            errors.push(format!("empty ruleset remains published: {file}"));
+        }
+        for rule in rules {
+            let kind = rule.split(',').next().unwrap_or("");
+            let domain = matches!(
+                kind,
+                "DOMAIN" | "DOMAIN-SUFFIX" | "DOMAIN-KEYWORD" | "DOMAIN-WILDCARD" | "DOMAIN-REGEX"
+            );
+            let ip = matches!(kind, "IP-CIDR" | "IP-CIDR6" | "IP-ASN" | "GEOIP");
+            if (name.ends_with("_ip") && !ip)
+                || (name.ends_with("_extra") && (domain || ip))
+                || (!name.ends_with("_ip") && !name.ends_with("_extra") && !domain)
+            {
+                errors.push(format!(
+                    "{file} contains a matcher outside its declared type: {kind}"
+                ));
+                break;
+            }
+        }
+    }
+    Ok(errors)
+}
+
+pub fn enforce_jp_ownership(root: &Path) -> Result<usize, String> {
+    let mut owned = read_rules(&root.join("rulesets/Sources/custom/JP_manual.list"))?;
+    owned.extend(read_rules(&input_path(root, "Pixiv", ""))?);
+    let boundary = RuleBoundary::from_rules(&owned);
+    let mut jp = read_rules(&root.join("rulesets/RULE-SET/JP.list"))?;
+    jp.extend(owned);
+    write_rules(&root.join("rulesets/RULE-SET/JP.list"), "JP", &jp)?;
+    let directory = root.join("rulesets/RULE-SET");
+    let mut removed = 0;
+    for entry in fs::read_dir(&directory).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        if !entry.file_type().map_err(|e| e.to_string())?.is_file() {
+            continue;
+        }
+        let file = entry.file_name().to_string_lossy().into_owned();
+        let Some(name) = file.strip_suffix(".list") else {
+            continue;
+        };
+        if name == "JP" || name == "Pixiv" || name.ends_with("_ip") || name.ends_with("_extra") {
+            continue;
+        }
+        let mut rules = read_rules(&entry.path())?;
+        let count = remove_covered(&mut rules, &boundary);
+        if count > 0 {
+            write_rules(&entry.path(), name, &rules)?;
+            removed += count;
+        }
+    }
+    Ok(removed)
+}
+
 fn discover_manifests(root: &Path) -> Result<Vec<Manifest>, String> {
     let directory = root.join("rulesets/Sources/Links");
     let mut paths: Vec<PathBuf> = fs::read_dir(&directory)
@@ -195,7 +500,11 @@ fn process_manifest(
         ));
     }
 
-    let target = root.join("rulesets/RULE-SET");
+    let target = root.join(if INTERNAL_RULESETS.contains(&manifest.name.as_str()) {
+        "rulesets/Sources/compiled"
+    } else {
+        "rulesets/RULE-SET"
+    });
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
     let mut remote_content = remote_content(&manifest.remote_urls, downloads);
     if manifest.name == "Apple" {
@@ -212,6 +521,9 @@ fn process_manifest(
     // Do not turn a service classification into an ad-platform routing overlay.
     let conflicts = if manifest.name == "SocialMedia" {
         vec!["adsgram.ai".to_string()]
+    } else if manifest.name == "Pixiv" {
+        // The ecosystem aggregate also names its advertising domain.
+        vec!["ads-pixiv.net".to_string()]
     } else {
         Vec::new()
     };
@@ -276,7 +588,13 @@ fn parse_rules(content: &str) -> BTreeSet<String> {
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(str::to_string)
+        .map(|line| {
+            if line.starts_with("IP-") || line.starts_with("GEOIP,") {
+                crate::normalize_rule(line).unwrap_or_else(|| line.to_string())
+            } else {
+                line.to_string()
+            }
+        })
         .collect()
 }
 
@@ -292,7 +610,7 @@ fn read_optional_rules(path: &Path) -> Result<BTreeSet<String>, String> {
 }
 
 const CONSOLIDATED_RULESETS: &[(&str, &[&str])] = &[
-    ("JP", &["NSFW", "StreamJP"]),
+    ("JP", &["NSFW", "StreamJP", "Pixiv"]),
     ("TW", &["StreamTW", "StreamHK"]),
     ("Apple", &["Apple", "AppleNews"]),
     (
@@ -308,12 +626,10 @@ pub fn consolidate_rulesets(root: &Path) -> Result<(), String> {
     let mut outputs = Vec::new();
     for (target, inputs) in CONSOLIDATED_RULESETS {
         let mut domains = BTreeSet::new();
-        let mut ips = BTreeSet::new();
         for input in *inputs {
-            domains.extend(read_rules(&directory.join(format!("{input}.list")))?);
-            ips.extend(read_optional_rules(
-                &directory.join(format!("{input}_ip.list")),
-            )?);
+            domains.extend(read_rules(&input_path(root, input, ""))?);
+            domains.extend(read_optional_rules(&input_path(root, input, "_ip"))?);
+            domains.extend(read_optional_rules(&input_path(root, input, "_extra"))?);
         }
         if *target == "JP" {
             domains.extend(read_rules(
@@ -324,15 +640,19 @@ pub fn consolidate_rulesets(root: &Path) -> Result<(), String> {
             return Err(format!("refusing empty consolidated ruleset {target}"));
         }
         outputs.push((target.to_string(), domains));
-        let ip_name = format!("{target}_ip");
-        if !ips.is_empty() || directory.join(format!("{ip_name}.list")).is_file() {
-            outputs.push((ip_name, ips));
-        }
     }
     // Read every dependency before changing any target: a missing leaf must not
     // publish an incomplete union or replace the previous good subscription.
     for (name, rules) in outputs {
-        write_rules(&directory.join(format!("{name}.list")), &name, &rules)?;
+        crate::process_ruleset(crate::RulesetInput {
+            name: &name,
+            target_dir: &directory,
+            conflict_domains: &[],
+            skip_conflict: false,
+            description: "Current consolidated subscription; policy selected by consumer",
+            local_paths: &[],
+            remote_content: &rules.into_iter().collect::<Vec<_>>().join("\n"),
+        })?;
     }
     Ok(())
 }
@@ -351,10 +671,12 @@ fn validate_consolidated_rulesets(root: &Path) -> Result<Vec<String>, String> {
     for (target, inputs) in CONSOLIDATED_RULESETS {
         let output = read_rules(&directory.join(format!("{target}.list")))?;
         let output_ip = read_optional_rules(&directory.join(format!("{target}_ip.list")))?;
+        let output_extra = read_optional_rules(&directory.join(format!("{target}_extra.list")))?;
         for input in *inputs {
-            if !read_rules(&directory.join(format!("{input}.list")))?.is_subset(&output)
-                || !read_optional_rules(&directory.join(format!("{input}_ip.list")))?
-                    .is_subset(&output_ip)
+            if !read_rules(&input_path(root, input, ""))?.is_subset(&output)
+                || !read_optional_rules(&input_path(root, input, "_ip"))?.is_subset(&output_ip)
+                || !read_optional_rules(&input_path(root, input, "_extra"))?
+                    .is_subset(&output_extra)
             {
                 errors.push(format!("{target} is missing consolidated {input} rules"));
             }
@@ -369,6 +691,16 @@ fn validate_consolidated_rulesets(root: &Path) -> Result<Vec<String>, String> {
 }
 
 fn write_rules(path: &Path, name: &str, rules: &BTreeSet<String>) -> Result<(), String> {
+    if rules.is_empty() {
+        return match fs::remove_file(path) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(format!(
+                "cannot remove empty ruleset {}: {error}",
+                path.display()
+            )),
+        };
+    }
     let description = match name {
         "JP" => {
             "Japan-oriented subscription: NSFW, Japanese streaming and explicit services; not a location assertion"
@@ -395,7 +727,7 @@ fn write_rules(path: &Path, name: &str, rules: &BTreeSet<String>) -> Result<(), 
 /// publisher domains only in the last, shared-platform fallback group.
 pub fn split_gaming_rules(root: &Path) -> Result<(), String> {
     let directory = root.join("rulesets/RULE-SET");
-    let legacy = read_rules(&directory.join("Gaming.list"))?;
+    let legacy = read_rules(&input_path(root, "Gaming", ""))?;
     let load = |name: &str| -> Result<BTreeSet<String>, String> {
         read_rules(&root.join(format!("rulesets/Sources/custom/{name}_manual.list")))?
             .into_iter()
@@ -443,6 +775,16 @@ pub fn split_gaming_rules(root: &Path) -> Result<(), String> {
         write_rules(&directory.join(format!("{name}.list")), name, rules)?;
         write_rules(&mirror.join(format!("{name}.list")), name, rules)?;
     }
+    let extra = read_optional_rules(&input_path(root, "Gaming", "_extra"))?;
+    if !extra.is_empty() {
+        write_rules(
+            &directory.join("Gaming_Web_extra.list"),
+            "Gaming_Web_extra",
+            &extra,
+        )?;
+    }
+    let ips = read_optional_rules(&input_path(root, "Gaming", "_ip"))?;
+    write_rules(&directory.join("Gaming_Web_ip.list"), "Gaming_Web_ip", &ips)?;
     Ok(())
 }
 
@@ -642,10 +984,10 @@ fn read_adblock_boundary(
 }
 
 fn read_nsfw_protected_rules(root: &Path) -> Result<BTreeSet<String>, String> {
-    let directory = root.join("rulesets/RULE-SET");
     let mut protected = BTreeSet::new();
     for name in NSFW_PROTECTED_CATEGORY_FILES {
-        let path = directory.join(name);
+        let stem = name.trim_end_matches(".list");
+        let path = input_path(root, stem, "");
         if path.is_file() {
             protected.extend(read_rules(&path)?);
         }
@@ -741,7 +1083,6 @@ fn read_apple_source_domain_rules(root: &Path) -> Result<BTreeSet<String>, Strin
 }
 
 fn read_apple_ownership_rules(root: &Path) -> Result<BTreeSet<String>, String> {
-    let directory = root.join("rulesets/RULE-SET");
     let mut rules = BTreeSet::new();
     for name in [
         "Apple.list",
@@ -749,7 +1090,11 @@ fn read_apple_ownership_rules(root: &Path) -> Result<BTreeSet<String>, String> {
         "AppleNews.list",
         "AppleNews_ip.list",
     ] {
-        let path = directory.join(name);
+        let stem = name.trim_end_matches(".list");
+        let (base, suffix) = stem
+            .strip_suffix("_ip")
+            .map_or((stem, ""), |base| (base, "_ip"));
+        let path = input_path(root, base, suffix);
         if path.is_file() {
             rules.extend(read_rules(&path)?);
         }
@@ -792,7 +1137,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     let proxy = read_rules(&directory.join("GlobalProxy.list"))?;
     let apple_rules = read_apple_ownership_rules(root)?;
     let apple = (!apple_rules.is_empty()).then(|| RuleBoundary::from_rules(&apple_rules));
-    let cdn_path = directory.join("CDN.list");
+    let cdn_path = input_path(root, "CDN", "");
     let cdn = if cdn_path.is_file() {
         Some(read_rules(&cdn_path)?)
     } else {
@@ -847,9 +1192,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     }
     let mut requested_proxy_additions = BTreeSet::new();
     for name in ["CDN", "Cloudflare", "substore"] {
-        requested_proxy_additions.extend(read_optional_rules(
-            &directory.join(format!("{name}.list")),
-        )?);
+        requested_proxy_additions.extend(read_optional_rules(&input_path(root, name, ""))?);
     }
     let direct_proxy = direct
         .intersection(&proxy)
@@ -891,7 +1234,10 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
                 "CDN_ip contains {count} Apple-owned IP rule(s); Apple service routing belongs to Apple_ip",
             ),
         ] {
-            let path = directory.join(format!("{name}.list"));
+            let (base, suffix) = name
+                .strip_suffix("_ip")
+                .map_or((name, ""), |base| (base, "_ip"));
+            let path = input_path(root, base, suffix);
             if path.is_file() {
                 let rules = read_rules(&path)?;
                 let count = coverage_count(&rules, apple);
@@ -921,7 +1267,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
             }
         }
     }
-    let nsfw_path = directory.join("NSFW.list");
+    let nsfw_path = input_path(root, "NSFW", "");
     if nsfw_path.is_file() {
         let nsfw = read_rules(&nsfw_path)?;
         let protected = read_nsfw_protected_rules(root)?;
@@ -953,7 +1299,7 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
     let apple = RuleBoundary::from_rules(&apple_rules);
     let removed_apple_from_direct = remove_covered(&mut direct, &apple);
     let removed_apple_from_proxy = remove_covered(&mut proxy, &apple);
-    let cdn_path = directory.join("CDN.list");
+    let cdn_path = input_path(root, "CDN", "");
     let mut cdn = if cdn_path.is_file() {
         Some(read_rules(&cdn_path)?)
     } else {
@@ -973,7 +1319,7 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
         .as_mut()
         .map(|rules| remove_covered(rules, &apple))
         .unwrap_or(0);
-    let cdn_ip_path = directory.join("CDN_ip.list");
+    let cdn_ip_path = input_path(root, "CDN", "_ip");
     let mut cdn_ip = if cdn_ip_path.is_file() {
         Some(read_rules(&cdn_ip_path)?)
     } else {
@@ -991,7 +1337,7 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
     let removed_direct_from_proxy = proxy_before - proxy.len();
     let removed_from_proxy = removed_apple_from_proxy + removed_direct_from_proxy;
 
-    let nsfw_path = directory.join("NSFW.list");
+    let nsfw_path = input_path(root, "NSFW", "");
     let removed_from_nsfw = if nsfw_path.is_file() {
         let mut nsfw = read_rules(&nsfw_path)?;
         let protected = read_nsfw_protected_rules(root)?;
@@ -1063,9 +1409,11 @@ mod tests {
     use std::path::Path;
 
     fn consolidation_fixture() -> std::path::PathBuf {
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let root = std::env::temp_dir().join(format!(
-            "script-hub-consolidation-{}-{}",
+            "script-hub-consolidation-{}-{}-{}",
             std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -1078,6 +1426,7 @@ mod tests {
         fs::write(custom.join("JP_manual.list"), "DOMAIN-SUFFIX,misskey.io\n").unwrap();
         for name in [
             "NSFW",
+            "Pixiv",
             "StreamJP",
             "StreamTW",
             "StreamHK",
@@ -1108,9 +1457,10 @@ mod tests {
             "IP-CIDR,198.51.100.0/24,no-resolve\n",
         )
         .unwrap();
+        fs::write(rules.join("CDN_extra.list"), "USER-AGENT,Example*\n").unwrap();
         super::consolidate_rulesets(&root).unwrap();
         let jp = read_rules(&rules.join("JP.list")).unwrap();
-        assert_eq!(jp.len(), 3);
+        assert_eq!(jp.len(), 4);
         assert!(jp.contains("DOMAIN-SUFFIX,misskey.io"));
         assert_eq!(read_rules(&rules.join("TW.list")).unwrap().len(), 2);
         assert_eq!(read_rules(&rules.join("Apple.list")).unwrap().len(), 2);
@@ -1131,6 +1481,13 @@ mod tests {
             super::validate_consolidated_rulesets(&root)
                 .unwrap()
                 .is_empty()
+        );
+        fs::remove_file(rules.join("GlobalProxy_extra.list")).unwrap();
+        assert!(
+            super::validate_consolidated_rulesets(&root)
+                .unwrap()
+                .iter()
+                .any(|error| error.contains("GlobalProxy is missing consolidated CDN"))
         );
         fs::remove_dir_all(root).unwrap();
     }
@@ -1235,6 +1592,88 @@ mod tests {
     }
 
     #[test]
+    fn latest_publication_retires_aliases_but_keeps_reusable_internal_inputs() {
+        let root = consolidation_fixture();
+        let directory = root.join("rulesets/RULE-SET");
+        let adblock = root.join("rulesets/AdBlock");
+        fs::create_dir_all(adblock.join("github")).unwrap();
+        for (name, header) in [
+            (
+                "AdBlock_Old_01.list",
+                "# Retired PROMAX shard: upstream coverage changed.\n",
+            ),
+            (
+                "AdBlock_Old_02.list",
+                "# Retired PROMAX shard; refresh required.\n",
+            ),
+        ] {
+            fs::write(adblock.join(name), header).unwrap();
+            fs::write(adblock.join("github").join(name), header).unwrap();
+        }
+        fs::write(
+            adblock.join("AdBlock_User.list"),
+            "# User-owned empty list\n",
+        )
+        .unwrap();
+        fs::write(
+            directory.join("Gaming.list"),
+            "DOMAIN-SUFFIX,game.example.test\n",
+        )
+        .unwrap();
+        super::prepare_ruleset_inputs(&root).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        super::split_published_rulesets(&root).unwrap();
+        super::retire_ruleset_inputs(&root).unwrap();
+        assert!(!adblock.join("AdBlock_Old_01.list").exists());
+        assert!(!adblock.join("github/AdBlock_Old_02.list").exists());
+        assert!(adblock.join("AdBlock_User.list").exists());
+        assert!(!directory.join("NSFW.list").exists());
+        assert!(!directory.join("Gaming.list").exists());
+        assert!(root.join("rulesets/Sources/compiled/NSFW.list").is_file());
+        assert!(!directory.join("JP_ip.list").exists());
+        assert!(super::validate_published_layout(&root).unwrap().is_empty());
+        let before = fs::read(directory.join("JP.list")).unwrap();
+        super::prepare_ruleset_inputs(&root).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        super::retire_ruleset_inputs(&root).unwrap();
+        assert_eq!(before, fs::read(directory.join("JP.list")).unwrap());
+        assert!(
+            super::validate_consolidated_rulesets(&root)
+                .unwrap()
+                .is_empty()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn jp_ownership_removes_pixiv_children_without_claiming_shared_cdn_parents() {
+        let root = consolidation_fixture();
+        let directory = root.join("rulesets/RULE-SET");
+        fs::write(
+            root.join("rulesets/Sources/custom/JP_manual.list"),
+            "DOMAIN-SUFFIX,misskey.io\nDOMAIN-SUFFIX,pixiv.net\nDOMAIN-SUFFIX,pximg.net\n",
+        )
+        .unwrap();
+        fs::write(
+            directory.join("GlobalProxy.list"),
+            "DOMAIN-SUFFIX,pixiv.net\nDOMAIN,i.pximg.net\nDOMAIN-SUFFIX,cloudfront.net\n",
+        )
+        .unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        super::enforce_jp_ownership(&root).unwrap();
+        let global = read_rules(&directory.join("GlobalProxy.list")).unwrap();
+        assert!(!global.contains("DOMAIN-SUFFIX,pixiv.net"));
+        assert!(!global.contains("DOMAIN,i.pximg.net"));
+        assert!(global.contains("DOMAIN-SUFFIX,cloudfront.net"));
+        assert!(
+            read_rules(&directory.join("JP.list"))
+                .unwrap()
+                .contains("DOMAIN-SUFFIX,pixiv.net")
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn category_headers_leave_routing_to_the_consumer() {
         let header = crate::generate_header(
             "Apple",
@@ -1314,7 +1753,7 @@ mod tests {
                 "Apple.list should own {host}"
             );
             for category in ["GlobalProxy", "CDN", "AppleNews"] {
-                let rules = read_rules(&directory.join(format!("{category}.list"))).unwrap();
+                let rules = read_rules(&super::input_path(&root, category, "")).unwrap();
                 let matching: Vec<_> = rules
                     .iter()
                     .filter(|rule| rule_matches_host(rule, host))
