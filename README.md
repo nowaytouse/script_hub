@@ -19,11 +19,24 @@
 
 ### Apple 服务与分流
 
-Apple Music、iTunes 与 Apple 自有媒体端点归入 `Apple.list` / `Apple_ip.list`，不混入通用服务分类。Apple News 保留独立的地区服务分类；共享 CDN 的整个父域不会被当成 Apple 专有域名。
+Apple Music、iTunes、Apple News 与 Apple 自有媒体端点归入 `Apple.list` / `Apple_ip.list`，不混入通用服务分类。旧 `AppleNews.list` 保留为细分类兼容入口；共享 CDN 的整个父域不会被当成 Apple 专有域名。
 
 规则集只描述匹配范围，不指定路由、节点或拦截动作。包括 NSFW、Apple、Direct、GlobalProxy 在内，所有分类头统一标记 `Policy: USER-DEFINED`，不提供默认策略或节点。历史文件名不代表强制路由；实际动作和规则顺序始终由使用者自己的客户端配置决定。NSFW 是独立内容分类，不加入 PROMAX 的广告拒绝输入。
 
 ### 服务分类与自动更新
+
+日常配置可优先使用以下四个合并入口。文件名表示匹配集合，不指定节点、路由或拒绝动作；请在自己的客户端配置中选择策略。
+
+| 简化入口 | 包含内容 | 可替代的旧引用 |
+| --- | --- | --- |
+| `JP.list` | NSFW 分类、日本流媒体、Misskey.io | `NSFW.list`、`StreamJP.list`、单独的 Misskey.io 规则 |
+| `Apple.list` | Apple 服务、音乐、Apple News | `Apple.list`、`AppleNews.list` |
+| `TW.list` | 台湾及香港流媒体 | `StreamTW.list`、`StreamHK.list` |
+| `GlobalProxy.list` | 原全球集合、CDN、Cloudflare、Sub-Store | `GlobalProxy.list`、`CDN.list`、`Cloudflare.list`、`substore.list` |
+
+合并集合按源列表更新、去重并稳定排序，不需要同时引用其旧细分类。`JP` 包含按使用偏好合并的全球 NSFW 站点，不表示这些站点全部位于日本；`TW` 同样明确包含香港服务。旧细分类继续保持原有内容范围，尤其不会把 `NSFW.list` 扩大为含普通日本服务的合集。合并入口有对应的 GitHub 镜像和 sing-box SRS；IP 规则仍按现有约定放在对应的 `*_ip.list`，需要 IP 兜底时可单独使用。
+
+合并边界只限上表明确列出的成员，不按“当前恰好使用相同策略”把无关服务归为一组。Bilibili、PayPal、Google、Microsoft、AI、社交，以及游戏的下载/联机/网页类别继续独立。CDN 与其他分类可能有正常交集，GlobalProxy 因此次明确合并而继承这些交集；规则顺序与动作由用户配置控制，不能把合集当成互斥的服务分类。
 
 - `AI.list`：补充 MetaCubeX 的 Anthropic 分类源。
 - `Apple.list`：补充 Apple TV / TV+ 与受维护的 Apple DNS 精确别名；Apple IP 继续独立存放。

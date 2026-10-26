@@ -268,16 +268,112 @@ pub fn run_general_updates(root: &Path) -> Vec<String> {
 
 fn read_rules(path: &Path) -> Result<BTreeSet<String>, String> {
     let content = fs::read_to_string(path).map_err(|error| error.to_string())?;
-    Ok(content
+    Ok(parse_rules(&content))
+}
+
+fn parse_rules(content: &str) -> BTreeSet<String> {
+    content
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .map(str::to_string)
-        .collect())
+        .collect()
+}
+
+fn read_optional_rules(path: &Path) -> Result<BTreeSet<String>, String> {
+    match fs::read_to_string(path) {
+        Ok(content) => Ok(parse_rules(&content)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            crate::verify_missing_directory(path)?;
+            Ok(BTreeSet::new())
+        }
+        Err(error) => Err(format!("cannot read {}: {error}", path.display())),
+    }
+}
+
+const CONSOLIDATED_RULESETS: &[(&str, &[&str])] = &[
+    ("JP", &["NSFW", "StreamJP"]),
+    ("TW", &["StreamTW", "StreamHK"]),
+    ("Apple", &["Apple", "AppleNews"]),
+    (
+        "GlobalProxy",
+        &["GlobalProxy", "CDN", "Cloudflare", "substore"],
+    ),
+];
+
+/// Rebuild the requested subscription unions from sanitized categories. Legacy
+/// inputs keep their scope; a quick update reuses their last validated snapshot.
+pub fn consolidate_rulesets(root: &Path) -> Result<(), String> {
+    let directory = root.join("rulesets/RULE-SET");
+    let mut outputs = Vec::new();
+    for (target, inputs) in CONSOLIDATED_RULESETS {
+        let mut domains = BTreeSet::new();
+        let mut ips = BTreeSet::new();
+        for input in *inputs {
+            domains.extend(read_rules(&directory.join(format!("{input}.list")))?);
+            ips.extend(read_optional_rules(
+                &directory.join(format!("{input}_ip.list")),
+            )?);
+        }
+        if *target == "JP" {
+            domains.extend(read_rules(
+                &root.join("rulesets/Sources/custom/JP_manual.list"),
+            )?);
+        }
+        if domains.is_empty() {
+            return Err(format!("refusing empty consolidated ruleset {target}"));
+        }
+        outputs.push((target.to_string(), domains));
+        let ip_name = format!("{target}_ip");
+        if !ips.is_empty() || directory.join(format!("{ip_name}.list")).is_file() {
+            outputs.push((ip_name, ips));
+        }
+    }
+    // Read every dependency before changing any target: a missing leaf must not
+    // publish an incomplete union or replace the previous good subscription.
+    for (name, rules) in outputs {
+        write_rules(&directory.join(format!("{name}.list")), &name, &rules)?;
+    }
+    Ok(())
+}
+
+fn validate_consolidated_rulesets(root: &Path) -> Result<Vec<String>, String> {
+    let directory = root.join("rulesets/RULE-SET");
+    if !root
+        .join("rulesets/Sources/custom/JP_manual.list")
+        .is_file()
+        && !directory.join("JP.list").is_file()
+        && !directory.join("TW.list").is_file()
+    {
+        return Ok(Vec::new());
+    }
+    let mut errors = Vec::new();
+    for (target, inputs) in CONSOLIDATED_RULESETS {
+        let output = read_rules(&directory.join(format!("{target}.list")))?;
+        let output_ip = read_optional_rules(&directory.join(format!("{target}_ip.list")))?;
+        for input in *inputs {
+            if !read_rules(&directory.join(format!("{input}.list")))?.is_subset(&output)
+                || !read_optional_rules(&directory.join(format!("{input}_ip.list")))?
+                    .is_subset(&output_ip)
+            {
+                errors.push(format!("{target} is missing consolidated {input} rules"));
+            }
+        }
+        if *target == "JP"
+            && !read_rules(&root.join("rulesets/Sources/custom/JP_manual.list"))?.is_subset(&output)
+        {
+            errors.push("JP is missing explicitly maintained services".to_string());
+        }
+    }
+    Ok(errors)
 }
 
 fn write_rules(path: &Path, name: &str, rules: &BTreeSet<String>) -> Result<(), String> {
     let description = match name {
+        "JP" => {
+            "Japan-oriented subscription: NSFW, Japanese streaming and explicit services; not a location assertion"
+        }
+        "TW" => "Taiwan and Hong Kong streaming services",
         "Gaming_Download" => "Game packages and patches",
         "Gaming_Play" => "Game networking and matchmaking",
         "Gaming_Web" => {
@@ -576,6 +672,7 @@ const APPLE_OWNERSHIP_EXCLUDED_RULESETS: &[&str] = &[
     "Apple.list",
     "Apple_ip.list",
     "AppleNews.list",
+    "AppleNews_ip.list",
     // Legacy ad rules are compiled from rulesets/AdBlock under a separate guard.
     "AdBlock.list",
 ];
@@ -646,7 +743,12 @@ fn read_apple_source_domain_rules(root: &Path) -> Result<BTreeSet<String>, Strin
 fn read_apple_ownership_rules(root: &Path) -> Result<BTreeSet<String>, String> {
     let directory = root.join("rulesets/RULE-SET");
     let mut rules = BTreeSet::new();
-    for name in ["Apple.list", "Apple_ip.list"] {
+    for name in [
+        "Apple.list",
+        "Apple_ip.list",
+        "AppleNews.list",
+        "AppleNews_ip.list",
+    ] {
         let path = directory.join(name);
         if path.is_file() {
             rules.extend(read_rules(&path)?);
@@ -697,7 +799,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
         None
     };
     let (adblock, apple_adblock) = read_adblock_boundary(root, apple.as_ref())?;
-    let mut errors = Vec::new();
+    let mut errors = validate_consolidated_rulesets(root)?;
     let apple_owner_domains = read_apple_source_domain_rules(root)?;
     if !apple_owner_domains.is_empty() {
         let owner_path = directory.join("Apple.list");
@@ -743,7 +845,16 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
             "Direct contains {direct_adblock} AdBlock-covered rule(s)"
         ));
     }
-    let direct_proxy = direct.intersection(&proxy).count();
+    let mut requested_proxy_additions = BTreeSet::new();
+    for name in ["CDN", "Cloudflare", "substore"] {
+        requested_proxy_additions.extend(read_optional_rules(
+            &directory.join(format!("{name}.list")),
+        )?);
+    }
+    let direct_proxy = direct
+        .intersection(&proxy)
+        .filter(|rule| !requested_proxy_additions.contains(*rule))
+        .count();
     if direct_proxy > 0 {
         errors.push(format!(
             "GlobalProxy contains {direct_proxy} exact Direct overlap(s)"
@@ -950,6 +1061,178 @@ mod tests {
     use std::collections::HashMap;
     use std::fs;
     use std::path::Path;
+
+    fn consolidation_fixture() -> std::path::PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-consolidation-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let rules = root.join("rulesets/RULE-SET");
+        fs::create_dir_all(&rules).unwrap();
+        let custom = root.join("rulesets/Sources/custom");
+        fs::create_dir_all(&custom).unwrap();
+        fs::write(custom.join("JP_manual.list"), "DOMAIN-SUFFIX,misskey.io\n").unwrap();
+        for name in [
+            "NSFW",
+            "StreamJP",
+            "StreamTW",
+            "StreamHK",
+            "Apple",
+            "AppleNews",
+            "GlobalProxy",
+            "CDN",
+            "Cloudflare",
+            "substore",
+        ] {
+            fs::write(
+                rules.join(format!("{name}.list")),
+                format!("DOMAIN-SUFFIX,{}.example.test\n", name.to_ascii_lowercase()),
+            )
+            .unwrap();
+        }
+        root
+    }
+
+    #[test]
+    fn consolidation_preserves_leaf_scope_and_merges_only_requested_services() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        let nsfw = fs::read(rules.join("NSFW.list")).unwrap();
+        let jp_stream = fs::read(rules.join("StreamJP.list")).unwrap();
+        fs::write(
+            rules.join("CDN_ip.list"),
+            "IP-CIDR,198.51.100.0/24,no-resolve\n",
+        )
+        .unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        let jp = read_rules(&rules.join("JP.list")).unwrap();
+        assert_eq!(jp.len(), 3);
+        assert!(jp.contains("DOMAIN-SUFFIX,misskey.io"));
+        assert_eq!(read_rules(&rules.join("TW.list")).unwrap().len(), 2);
+        assert_eq!(read_rules(&rules.join("Apple.list")).unwrap().len(), 2);
+        assert_eq!(
+            read_rules(&rules.join("GlobalProxy.list")).unwrap().len(),
+            4
+        );
+        assert_eq!(
+            read_rules(&rules.join("GlobalProxy_ip.list")).unwrap(),
+            read_rules(&rules.join("CDN_ip.list")).unwrap()
+        );
+        assert_eq!(fs::read(rules.join("NSFW.list")).unwrap(), nsfw);
+        assert_eq!(fs::read(rules.join("StreamJP.list")).unwrap(), jp_stream);
+        let before = fs::read(rules.join("JP.list")).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        assert_eq!(fs::read(rules.join("JP.list")).unwrap(), before);
+        assert!(
+            super::validate_consolidated_rulesets(&root)
+                .unwrap()
+                .is_empty()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn consolidation_rebuilds_regions_and_follows_refreshed_base_removals() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        super::consolidate_rulesets(&root).unwrap();
+        for name in ["NSFW", "CDN", "AppleNews"] {
+            fs::write(
+                rules.join(format!("{name}.list")),
+                format!(
+                    "DOMAIN-SUFFIX,new-{}.example.test\n",
+                    name.to_ascii_lowercase()
+                ),
+            )
+            .unwrap();
+        }
+        // A full manifest update refreshes these bases before consolidation.
+        fs::write(
+            rules.join("Apple.list"),
+            "DOMAIN-SUFFIX,apple.example.test\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("GlobalProxy.list"),
+            "DOMAIN-SUFFIX,globalproxy.example.test\n",
+        )
+        .unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        for (target, removed) in [
+            ("JP", "nsfw"),
+            ("Apple", "applenews"),
+            ("GlobalProxy", "cdn"),
+        ] {
+            let content = read_rules(&rules.join(format!("{target}.list"))).unwrap();
+            assert!(!content.contains(&format!("DOMAIN-SUFFIX,{removed}.example.test")));
+            assert!(content.contains(&format!("DOMAIN-SUFFIX,new-{removed}.example.test")));
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn missing_consolidation_dependency_preserves_all_existing_outputs() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        super::consolidate_rulesets(&root).unwrap();
+        let before = fs::read(rules.join("JP.list")).unwrap();
+        let apple = fs::read(rules.join("Apple.list")).unwrap();
+        fs::write(rules.join("NSFW.list"), "DOMAIN-SUFFIX,new.example.test\n").unwrap();
+        fs::remove_file(rules.join("CDN.list")).unwrap();
+        assert!(super::consolidate_rulesets(&root).is_err());
+        assert_eq!(fs::read(rules.join("JP.list")).unwrap(), before);
+        assert_eq!(fs::read(rules.join("Apple.list")).unwrap(), apple);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn cleanup_does_not_let_regional_unions_consume_legacy_members() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+        fs::write(
+            rules.join("Direct.list"),
+            "DOMAIN-SUFFIX,direct.example.test\n",
+        )
+        .unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        let nsfw = read_rules(&rules.join("NSFW.list")).unwrap();
+        let hk = read_rules(&rules.join("StreamHK.list")).unwrap();
+        for _ in 0..2 {
+            crate::smart_cleanup::run_cleanup(&root.to_string_lossy()).unwrap();
+            enforce_category_boundaries(&root).unwrap();
+            super::consolidate_rulesets(&root).unwrap();
+            assert_eq!(read_rules(&rules.join("NSFW.list")).unwrap(), nsfw);
+            assert_eq!(read_rules(&rules.join("StreamHK.list")).unwrap(), hk);
+            assert!(
+                super::validate_consolidated_rulesets(&root)
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn consolidated_coverage_guard_rejects_missing_members() {
+        let root = consolidation_fixture();
+        super::consolidate_rulesets(&root).unwrap();
+        fs::write(
+            root.join("rulesets/RULE-SET/JP.list"),
+            "DOMAIN-SUFFIX,misskey.io\n",
+        )
+        .unwrap();
+        assert!(
+            !super::validate_consolidated_rulesets(&root)
+                .unwrap()
+                .is_empty()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn category_headers_leave_routing_to_the_consumer() {

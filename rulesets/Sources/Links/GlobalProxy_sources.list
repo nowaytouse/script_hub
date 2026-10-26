@@ -26,3 +26,13 @@ Kelee_SpeedtestInternational_local.yaml
 
 # Sukka Global Proxy
 https://ruleset.skk.moe/List/non_ip/global.conf
+
+# Consolidated CDN / Cloudflare / Sub-Store sources; fetched once per update.
+https://ruleset.skk.moe/List/non_ip/cdn.conf
+https://ruleset.skk.moe/List/ip/cdn.conf
+https://ruleset.skk.moe/List/domainset/cdn.conf
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Cloudflare/Cloudflare.list
+../custom/CDN_manual.list
+../vendor/yfamilys_Cloudflare.list
+../custom/SmartConfigKit/SCK_CDN.list
+../custom/substore.list

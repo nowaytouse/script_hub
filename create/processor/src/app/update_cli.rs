@@ -216,6 +216,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     rust_processor::general_update::enforce_category_boundaries(root)?;
     emit_stage(Stage::Gaming);
     rust_processor::general_update::split_gaming_rules(root)?;
+    rust_processor::general_update::consolidate_rulesets(root)?;
 
     let modules = root.join("modules");
     let rulesets = root.join("rulesets");

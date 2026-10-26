@@ -438,6 +438,11 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
         "reject-drop.list",
         "reject-no-drop.list",
         "AdBlock.list",
+        // Subscription unions are rebuilt from cleaned leaf categories later.
+        "JP.list",
+        "JP_ip.list",
+        "TW.list",
+        "TW_ip.list",
     ]
     .iter()
     .cloned()
