@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3745/4633；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3751/4633；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -916,6 +916,7 @@ DOMAIN-SUFFIX,ad.ganji.com,REJECT
 DOMAIN-SUFFIX,ganjituiguang.ganji.com,REJECT
 DOMAIN-SUFFIX,sta.ganji.com,REJECT
 DOMAIN-SUFFIX,tralog.ganji.com,REJECT
+DOMAIN,icloud-amap.com,REJECT
 DOMAIN,optimus-ads.amap.com.w.alikunlun.com,REJECT
 DOMAIN-SUFFIX,shouji.sougou.com,REJECT
 DOMAIN,u51.me,REJECT
@@ -1024,6 +1025,7 @@ DOMAIN-SUFFIX,delivery-pc.wasu.cn,REJECT
 DOMAIN-SUFFIX,adsystem.wasu.tv,REJECT
 DOMAIN-SUFFIX,adwasu.tv,REJECT
 DOMAIN-SUFFIX,hiad.vmall.com,REJECT
+DOMAIN-SUFFIX,ad.hicloud.com,REJECT
 DOMAIN-SUFFIX,boardx.huanqiu.com,REJECT
 DOMAIN-SUFFIX,interactive.huanqiu.com,REJECT
 DOMAIN-SUFFIX,ipengtai.huanqiu.com,REJECT
@@ -2253,6 +2255,8 @@ DOMAIN-SUFFIX,metok.sys.miui.com,REJECT
 DOMAIN-SUFFIX,api.xk.miui.com,REJECT
 DOMAIN-SUFFIX,fb.xk.miui.com,REJECT
 DOMAIN-SUFFIX,lxcdn.dl.files.xiaomi.net,REJECT
+DOMAIN-SUFFIX,pdc.micloud.xiaomi.net,REJECT
+DOMAIN-SUFFIX,migrate.driveapi.micloud.xiaomi.net,REJECT
 DOMAIN-SUFFIX,resolver.msg.xiaomi.net,REJECT
 DOMAIN-SUFFIX,mlog.search.xiaomi.net,REJECT
 DOMAIN-SUFFIX,staging.admin.e.mi.com,REJECT
@@ -3281,6 +3285,7 @@ http:\/\/dili.sqcosmos.com\/jiekou\/endpage\/ad data-type=text data="{}" status-
 ^https?:\/\/blog\.nilbt\.com\/static\/api\/update data-type=text data=" " status-code=200
 ^https?:\/\/v3\.wufazhuce\.com:8000\/api\/adpreloadlist data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/adapi\.izuiyou\.com\/ad\/fetch_api_ads\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+^https:\/\/appapi\.caiyicloud\.com\/cyy_gatewayapi\/home\/pub\/v3\/banners\/app_start_page data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/api\.pinduoduo\.com\/api\/aquarius\/hungary\/global\/homepage\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/iobs\.pingan\.com\.cn\/download\/bweb-per-sf-prd\/bweb data-type=text data=" " status-code=200
 ^https?:\/\/iobs\.pingan\.com\.cn\/download\/icore-aops-base-dmz-prd\/(YourSystemName|icore-apps-ad) data-type=text data=" " status-code=200
@@ -3578,6 +3583,7 @@ https://.+\.gamersky.com/v1/statisticAd data-type=text data="{}" status-code=200
 ^https?:\/\/apio\.zhengqi100\.com\/forum\/thread\/listsHome data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/preprod\.cdzghome\.com:8100\/banner\/bootUp data-type=text data=" " status-code=200
 ^https?:\/\/m\.ctrip\.com\/restapi\/soa2\/13916\/scjson\/tripAds data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+^https?:\/\/apicloud\.zol\.com\.cn\/Article\/WapLaunchLogo data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/zt-app\.go189\.cn\/zt-app\/welcome\/.*?Animation data-type=tiny-gif status-code=200
 ^https?:\/\/app\.10099\.com\.cn\/contact-web\/api\/version\/getFlashScreenPage data-type=text data=" " status-code=200
 ^https?:\/\/m\.client\.10010\.com\/mobileService\/(activity|customer)\/(accountListData|get_client_adv|get_startadv) data-type=tiny-gif status-code=200
