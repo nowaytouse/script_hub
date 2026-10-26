@@ -462,6 +462,8 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
         "JP_ip.list",
         "TW.list",
         "TW_ip.list",
+        "us.list",
+        "us_ip.list",
         "Profile_Exceptions.list",
         "Profile_Exceptions_ip.list",
         "Pixiv.list",

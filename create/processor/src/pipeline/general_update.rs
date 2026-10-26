@@ -32,6 +32,7 @@ const NSFW_PROTECTED_CATEGORY_FILES: &[&str] = &[
     "StreamKR.list",
     "StreamTW.list",
     "StreamUS.list",
+    "us.list",
 ];
 
 const NSFW_PROTECTED_DOMAINS: &[&str] = &[
@@ -83,6 +84,10 @@ const INTERNAL_RULESETS: &[&str] = &[
     "substore",
     "Gaming",
     "Pixiv",
+    "Spotify",
+    "StreamEU",
+    "StreamUS",
+    "Binance",
 ];
 
 fn input_path(root: &Path, name: &str, suffix: &str) -> PathBuf {
@@ -610,12 +615,13 @@ fn read_optional_rules(path: &Path) -> Result<BTreeSet<String>, String> {
 }
 
 const CONSOLIDATED_RULESETS: &[(&str, &[&str])] = &[
+    ("us", &["StreamUS", "StreamEU", "Spotify"]),
     ("JP", &["NSFW", "StreamJP", "Pixiv"]),
     ("TW", &["StreamTW", "StreamHK"]),
     ("Apple", &["Apple", "AppleNews"]),
     (
         "GlobalProxy",
-        &["GlobalProxy", "CDN", "Cloudflare", "substore"],
+        &["GlobalProxy", "CDN", "Cloudflare", "substore", "Binance"],
     ),
 ];
 
@@ -1191,7 +1197,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
         ));
     }
     let mut requested_proxy_additions = BTreeSet::new();
-    for name in ["CDN", "Cloudflare", "substore"] {
+    for name in ["CDN", "Cloudflare", "substore", "Binance"] {
         requested_proxy_additions.extend(read_optional_rules(&input_path(root, name, ""))?);
     }
     let direct_proxy = direct
@@ -1436,6 +1442,11 @@ mod tests {
             "CDN",
             "Cloudflare",
             "substore",
+            "Spotify",
+            "StreamEU",
+            "StreamUS",
+            "Binance",
+            "Gaming",
         ] {
             fs::write(
                 rules.join(format!("{name}.list")),
@@ -1466,7 +1477,7 @@ mod tests {
         assert_eq!(read_rules(&rules.join("Apple.list")).unwrap().len(), 2);
         assert_eq!(
             read_rules(&rules.join("GlobalProxy.list")).unwrap().len(),
-            4
+            5
         );
         assert_eq!(
             read_rules(&rules.join("GlobalProxy_ip.list")).unwrap(),
@@ -1489,6 +1500,78 @@ mod tests {
                 .iter()
                 .any(|error| error.contains("GlobalProxy is missing consolidated CDN"))
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn us_and_binance_unions_preserve_types_refreshes_and_retire_old_public_names() {
+        let root = consolidation_fixture();
+        let directory = root.join("rulesets/RULE-SET");
+        fs::write(
+            directory.join("Spotify_ip.list"),
+            "IP-CIDR,192.0.2.0/24,no-resolve\n",
+        )
+        .unwrap();
+        fs::write(
+            directory.join("Spotify_extra.list"),
+            "PROCESS-NAME,Spotify\n",
+        )
+        .unwrap();
+        fs::write(
+            directory.join("StreamEU_extra.list"),
+            "USER-AGENT,Europe*\n",
+        )
+        .unwrap();
+        fs::write(
+            directory.join("StreamUS_extra.list"),
+            "USER-AGENT,America*\n",
+        )
+        .unwrap();
+        fs::write(
+            directory.join("Binance_ip.list"),
+            "IP-CIDR,198.51.100.0/24,no-resolve\n",
+        )
+        .unwrap();
+        super::prepare_ruleset_inputs(&root).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        super::retire_ruleset_inputs(&root).unwrap();
+        assert_eq!(read_rules(&directory.join("us.list")).unwrap().len(), 3);
+        assert_eq!(read_rules(&directory.join("us_ip.list")).unwrap().len(), 1);
+        assert_eq!(
+            read_rules(&directory.join("us_extra.list")).unwrap().len(),
+            3
+        );
+        assert!(
+            read_rules(&directory.join("GlobalProxy.list"))
+                .unwrap()
+                .contains("DOMAIN-SUFFIX,binance.example.test")
+        );
+        assert!(
+            read_rules(&directory.join("GlobalProxy_ip.list"))
+                .unwrap()
+                .contains("IP-CIDR,198.51.100.0/24,NO-RESOLVE")
+        );
+        for old in ["Spotify", "StreamEU", "StreamUS", "Binance"] {
+            assert!(!directory.join(format!("{old}.list")).exists());
+            assert!(
+                root.join(format!("rulesets/Sources/compiled/{old}.list"))
+                    .is_file()
+            );
+        }
+        let source = root.join("rulesets/Sources/compiled/Spotify.list");
+        fs::write(source, "DOMAIN-SUFFIX,new-spotify.example.test\n").unwrap();
+        super::prepare_ruleset_inputs(&root).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        super::retire_ruleset_inputs(&root).unwrap();
+        let current = read_rules(&directory.join("us.list")).unwrap();
+        assert!(current.contains("DOMAIN-SUFFIX,new-spotify.example.test"));
+        assert!(!current.contains("DOMAIN-SUFFIX,spotify.example.test"));
+        assert!(
+            super::validate_consolidated_rulesets(&root)
+                .unwrap()
+                .is_empty()
+        );
+        assert!(super::validate_published_layout(&root).unwrap().is_empty());
         fs::remove_dir_all(root).unwrap();
     }
 

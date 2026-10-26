@@ -25,16 +25,17 @@ Apple Music、iTunes、Apple News 与 Apple 自有媒体端点归入 `Apple.list
 
 ### 服务分类与自动更新
 
-日常配置可优先使用以下四个合并入口。文件名表示匹配集合，不指定节点、路由或拒绝动作；请在自己的客户端配置中选择策略。
+日常配置可优先使用以下五个合并入口。文件名表示匹配集合，不指定节点、路由或拒绝动作；请在自己的客户端配置中选择策略。
 
 | 简化入口 | 包含内容 | 可替代的旧引用 |
 | --- | --- | --- |
 | `JP.list` | NSFW 分类、日本流媒体、Misskey.io、Pixiv 生态 | `NSFW.list`、`StreamJP.list`、单独的 Misskey/Pixiv 规则 |
 | `Apple.list` | Apple 服务、音乐、Apple News | `Apple.list`、`AppleNews.list` |
 | `TW.list` | 台湾及香港流媒体 | `StreamTW.list`、`StreamHK.list` |
-| `GlobalProxy.list` | 原全球集合、CDN、Cloudflare、Sub-Store | `GlobalProxy.list`、`CDN.list`、`Cloudflare.list`、`substore.list` |
+| `us.list` | Spotify、StreamEU 与 StreamUS | `Spotify.list`、`StreamEU.list`、`StreamUS.list` |
+| `GlobalProxy.list` | 原全球集合、CDN、Cloudflare、Sub-Store 与 Binance | `GlobalProxy.list`、`CDN.list`、`Cloudflare.list`、`substore.list`、`Binance.list` |
 
-合并集合按源列表更新、去重并稳定排序。`JP` 包含按使用偏好合并的全球 NSFW 站点，不表示这些站点全部位于日本；`TW` 同样明确包含香港服务。已替代的公开细分类和 `Gaming.list` 全集已移除，不再保留兼容订阅。上游清单仍自动更新；仅供聚合与游戏细分使用的中间产物保存在 `rulesets/Sources/compiled/`，不应订阅该目录。Pixiv 专属域名由维护源和明确端点收束到 JP，不把共享 CDN 父域整体划为日本。
+合并集合按源列表更新、去重并稳定排序。小写 `us` 合并 Spotify、StreamEU 与 StreamUS 的域名和有效 extra；`us_ip.list` 合并这些源中的有效 IP 条目，当前来自 Spotify，不限制未来其他成员的 IP 更新。`us` 包含欧洲流媒体，是用户指定的组合，不表示所有端点位于美国。Binance 并入 GlobalProxy。`JP` 包含按使用偏好合并的全球 NSFW 站点，不表示这些站点全部位于日本；`TW` 同样明确包含香港服务。已替代的公开细分类和 `Gaming.list` 全集已移除，不再保留兼容订阅。上游清单仍自动更新；仅供聚合与游戏细分使用的中间产物保存在 `rulesets/Sources/compiled/`，不应订阅该目录。Pixiv 专属域名由维护源和明确端点收束到 JP，不把共享 CDN 父域整体划为日本。
 
 ### 域名、IP 与其他匹配器
 
@@ -50,7 +51,7 @@ sing-box 与 Surge 的匹配能力不同。含 User-Agent、URL、GEOIP、ASN �
 
 `Profile_Exceptions` 是所给配置中明确的域名例外集合，不是新的通用服务分类，也不指定策略。私人进程路径、端口和地区兜底保留在本地配置的具名 `[Ruleset ...]` 段，不发布到公共仓库。
 
-合并边界只限上表明确列出的成员，不按“当前恰好使用相同策略”把无关服务归为一组。Bilibili、PayPal、Google、Microsoft、AI、社交，以及游戏的下载/联机/网页类别继续独立。CDN 与其他分类可能有正常交集，GlobalProxy 因此次明确合并而继承这些交集；规则顺序与动作由用户配置控制，不能把合集当成互斥的服务分类。
+合并边界只限上表明确列出的成员，不按“当前恰好使用相同策略”把无关服务归为一组。Bilibili、PayPal、Google、Microsoft、AI、社交，以及游戏的下载/联机/网页类别继续独立；Spotify、StreamEU、StreamUS 仅合并为小写 `us`。CDN 与其他分类可能有正常交集，GlobalProxy 因此次明确合并而继承 CDN、Cloudflare、Sub-Store 与 Binance 的交集；规则顺序与动作由用户配置控制，不能把合集当成互斥的服务分类。
 
 - `AI.list`：补充 MetaCubeX 的 Anthropic 分类源。
 - `Apple.list`：补充 Apple TV / TV+ 与受维护的 Apple DNS 精确别名；Apple IP 继续独立存放。
