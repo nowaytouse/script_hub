@@ -80,6 +80,7 @@ static CATEGORIES: &[&str] = &[
     "Local",
     "Advertising",
     "Privacy",
+    "Privacy_CNAME",
     "Security",
     "AntiAD",
     "ThreatIntel_Ultimate",
@@ -119,6 +120,13 @@ static CATEGORY_META: Lazy<HashMap<&'static str, CategoryMeta>> = Lazy::new(|| {
         CategoryMeta {
             label_zh: "隐私追踪",
             desc: "Privacy / tracking-protection / 防追踪列表",
+        },
+    );
+    m.insert(
+        "Privacy_CNAME",
+        CategoryMeta {
+            label_zh: "CNAME 伪装追踪",
+            desc: "AdGuard CNAME 与邮件追踪域名；Loon CDN 核心版不内嵌此大列表，GitHub 全量版包含",
         },
     );
     m.insert(
@@ -539,8 +547,8 @@ impl AdBlockManager {
         if !batch.failures.is_empty() {
             return Err(batch.failures);
         }
-        // These two retired script URLs survived inside an older vendor module.
-        // Probe only their maintained replacements, not every embedded script.
+        // Probe maintained replacements and explicitly licensed app dependencies,
+        // not every embedded script or any client-gated resource.
         let mut resources = std::collections::BTreeSet::new();
         for body in batch.contents.values() {
             if body.contains("[Script]") {
@@ -1689,7 +1697,8 @@ impl AdBlockManager {
                     "\x1b[0;32m[INFO]\x1b[0m   + Functional remote: {}",
                     parts.last().unwrap_or(&u.as_str())
                 );
-                self.extract_from_text(content, "REJECT", "Local", true, false, &u);
+                let prepared = super::functional::prepare_functional_source(&u, content);
+                self.extract_from_text(&prepared, "REJECT", "Local", true, false, &u);
             } else {
                 println!(
                     "\x1b[0;33m[WARN]\x1b[0m   ⚠ Functional remote fetch failed: {}",
@@ -1698,6 +1707,12 @@ impl AdBlockManager {
             }
         }
 
+        // Current official app modules own their scripts; do not re-add stale aggregate copies.
+        let official_app_scripts: HashSet<&str> =
+            super::script_resources::required_resources(&self.sections["Script"].join("\n"))
+                .into_iter()
+                .filter(|url| url.starts_with("https://raw.githubusercontent.com/app2smile/"))
+                .collect();
         for (path, ingest_mode) in local_paths {
             let tag = if ingest_mode == "split" {
                 "split"
@@ -1719,6 +1734,14 @@ impl AdBlockManager {
                 println!("\x1b[0;32m[INFO]\x1b[0m   ⊘ Duplicate functional content: {rel}");
                 continue;
             }
+            let content = content
+                .lines()
+                .filter(|line| {
+                    super::script_resources::script_resource_url(line)
+                        .is_none_or(|url| !official_app_scripts.contains(url))
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
             if ingest_mode == "split" {
                 if let Some(filtered) = self.stage_promax_split_artifact(&path, &content, &rel) {
                     self.extract_from_text(&filtered, "REJECT", "Local", true, false, &rel);
@@ -2160,7 +2183,8 @@ impl AdBlockManager {
                     )
                 ),
                 url_source: "cdn".to_string(),
-                note: "Loon CDN 加速版（推荐）".to_string(),
+                note: "Loon CDN 核心版（不含 CNAME 和威胁情报大列表；完整覆盖请选择 GitHub 版）"
+                    .to_string(),
             },
         );
         modules.insert(
@@ -2176,7 +2200,7 @@ impl AdBlockManager {
                     )
                 ),
                 url_source: "github".to_string(),
-                note: "Loon GitHub Raw 版（即时更新）".to_string(),
+                note: "Loon GitHub Raw 全量版（含 CNAME 与威胁情报）".to_string(),
             },
         );
         modules.insert(
@@ -2587,7 +2611,11 @@ impl AdBlockManager {
                 .to_string(),
         );
 
-        let header_lines = crate::smart_cleanup::format_header_pub(&header_meta);
+        let mut header_lines = crate::smart_cleanup::format_header_pub(&header_meta);
+        header_lines.push(
+            "# app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md"
+                .to_string(),
+        );
         let mut module_content =
             crate::smart_cleanup::format_module_pub(&header_lines, &all_sections, false);
 
@@ -2771,7 +2799,7 @@ impl AdBlockManager {
             current_date
         );
         let coverage = if url_source == "cdn" {
-            "CDN兼容核心规则"
+            "CDN核心规则（不含CNAME和威胁情报大列表；完整覆盖请选择GitHub全量版）"
         } else {
             "GitHub全量规则"
         };
@@ -2784,6 +2812,10 @@ impl AdBlockManager {
         output.push(format!("#!name={}", name));
         output.push(format!("#!desc={}", desc));
         output.push("#!author=ScriptHub-Automated".to_string());
+        output.push(
+            "# app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md"
+                .to_string(),
+        );
         output.push("#!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png".to_string());
         output.push(format!(
             "#!date={}",
@@ -3306,7 +3338,7 @@ pub fn migrate_published_rule_layout(root: &Path) -> Result<(), String> {
                 )
             })?
             .to_string_lossy()
-            .to_string();
+            .replace(std::path::MAIN_SEPARATOR, "/");
         let count = artifact
             .content
             .lines()
@@ -3449,6 +3481,52 @@ mod tests {
         assert!(!module.contains("upos-sz-302kodo.bilivideo.com"));
         assert!(!module.contains("audio-ssl.itunes.apple.com"));
         assert!(module.contains("DOMAIN,pcdn.fixture.test,REJECT-NO-DROP"));
+    }
+
+    #[test]
+    fn licensed_remote_app_modules_keep_templates_and_ruleset_boundaries() {
+        let root = std::env::temp_dir().join(format!(
+            "promax-licensed-apps-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(root.join("rulesets/Sources/Links")).unwrap();
+        let url = "https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule";
+        fs::write(
+            root.join("rulesets/Sources/Links/AdBlock_functional_sources.list"),
+            format!("{url}\n../legacy-ad.sgmodule\n"),
+        )
+        .unwrap();
+        fs::write(
+            root.join("rulesets/Sources/legacy-ad.sgmodule"),
+            "[Script]\nlegacy_ad = type=http-response,pattern=^https://tiebac\\.baidu\\.com/legacy/ads,requires-body=true,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js,argument=per_filter_video_thread=1\nunrelated_ad = type=http-response,pattern=^https://ads\\.example/ad,requires-body=true,script-path=https://scripts.example/remove-ads.js\n",
+        ).unwrap();
+        let fixture = r"#!name=贴吧去广告
+[Rule]
+RULE-SET,https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list,REJECT-DROP
+[Script]
+贴吧 = type=http-response,pattern=^https://tiebac\.baidu\.com/c/f/ad/getFeedAd,requires-body=true,binary-body-mode=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js,argument=per_filter_video_thread={{{per_filter_video}}}
+[MITM]
+hostname = %APPEND% tiebac.baidu.com
+";
+        let mut manager = AdBlockManager::new(root.clone());
+        manager.integrate_functional_sections(&HashMap::from([(
+            url.to_string(),
+            fixture.to_string(),
+        )]));
+        let output = manager.generate_module(&[], "cdn").content;
+        assert!(output.contains("argument=per_filter_video_thread=0"));
+        assert!(output.contains("binary-body-mode=1"));
+        assert!(!output.contains("{{{per_filter_video}}}"));
+        assert!(!output.contains("RULE-SET,https://raw.githubusercontent.com/app2smile/"));
+        assert!(output.contains("tiebac.baidu.com"));
+        assert_eq!(output.matches("script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js").count(), 1);
+        assert!(!output.contains("per_filter_video_thread=1"));
+        assert!(output.contains("script-path=https://scripts.example/remove-ads.js"));
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -4066,7 +4144,7 @@ mod tests {
     }
 
     #[test]
-    fn loon_mitm_exclusions_precede_inclusions() {
+    fn loon_coverage_is_explicit_and_mitm_exclusions_precede_inclusions() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -4077,7 +4155,26 @@ mod tests {
             "*.ads.example".to_string(),
             "-account.apple.com".to_string(),
         ]);
+        manager
+            .rules
+            .get_mut("REJECT")
+            .unwrap()
+            .get_mut("Privacy_CNAME")
+            .unwrap()
+            .insert("DOMAIN,cloaked-tracker.example".to_string());
         let artifact = manager.generate_loon_plugin(&[], "cdn");
+        assert!(
+            !artifact
+                .content
+                .contains("DOMAIN,cloaked-tracker.example,REJECT")
+        );
+        assert!(artifact.content.contains("不含CNAME和威胁情报"));
+        let full = manager.generate_loon_plugin(&[], "github");
+        assert!(
+            full.content
+                .contains("DOMAIN,cloaked-tracker.example,REJECT")
+        );
+        assert!(crate::promax::validation::validate_loon_plugin(&full.content).is_empty());
         let hostname = artifact
             .content
             .lines()

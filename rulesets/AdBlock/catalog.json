@@ -1,281 +1,331 @@
 {
+  "updated": "2026-10-27 00:49:27",
+  "rules_per_shard_max": 100000,
+  "modules": {
+    "loon_promax_cdn": {
+      "path": "modules/loon/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Floon%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
+      "url_source": "cdn",
+      "note": "Loon CDN 核心版（不含 CNAME 和威胁情报大列表；完整覆盖请选择 GitHub 版）"
+    },
+    "loon_promax_github": {
+      "path": "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Floon%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
+      "url_source": "github",
+      "note": "Loon GitHub Raw 全量版（含 CNAME 与威胁情报）"
+    },
+    "shadowrocket_promax_cdn": {
+      "path": "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
+      "url_source": "cdn",
+      "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
+    },
+    "shadowrocket_promax_github": {
+      "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
+      "url_source": "github",
+      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
+    },
+    "surge_promax_cdn": {
+      "path": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
+      "url_source": "cdn",
+      "note": "CDN 加速版（推荐，12-24h 缓存延迟）"
+    },
+    "surge_promax_github": {
+      "path": "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
+      "url_source": "github",
+      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）"
+    }
+  },
+  "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
   "functional_manifest": "rulesets/Sources/Links/AdBlock_functional_sources.list",
   "functional_sections": {
     "Body Rewrite": 89,
     "Header Rewrite": 0,
     "MITM": 732,
     "Map Local": 1245,
-    "Script": 273,
+    "Script": 274,
     "URL Rewrite": 547
   },
-  "manifest": "rulesets/Sources/Links/AdBlock_sources.list",
-  "modules": {
-    "loon_promax_cdn": {
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Floon%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
-      "note": "Loon CDN 加速版（推荐）",
-      "path": "modules/loon/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
-      "url_source": "cdn"
-    },
-    "loon_promax_github": {
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Floon%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Eplugin",
-      "note": "Loon GitHub Raw 版（即时更新）",
-      "path": "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
-      "url_source": "github"
-    },
-    "shadowrocket_promax_cdn": {
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
-      "note": "CDN 加速版（推荐，12-24h 缓存延迟）",
-      "path": "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-      "url_source": "cdn"
-    },
-    "shadowrocket_promax_github": {
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fshadowrocket%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Emodule",
-      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）",
-      "path": "modules/shadowrocket/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module",
-      "url_source": "github"
-    },
-    "surge_promax_cdn": {
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules%2Fsurge%2Fhead%5Fexpanse%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
-      "note": "CDN 加速版（推荐，12-24h 缓存延迟）",
-      "path": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "url_source": "cdn"
-    },
-    "surge_promax_github": {
-      "install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules%2Fsurge%2Fhead%5Fexpanse%2Fgithub%2F%F0%9F%9A%AB%20Universal%20Ad%2DBlocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali%2Dstyle%29%2Esgmodule",
-      "note": "GitHub Raw 版（即时更新，内部规则集也用 GitHub Raw）",
-      "path": "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "url_source": "github"
-    }
-  },
-  "rules_per_shard_max": 100000,
-  "shards": [
-    {
-      "category": "Local",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Local.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist",
-      "label_zh": "应用去广告",
-      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
-      "rule_count": 2447,
-      "shard_index": 1
-    },
-    {
-      "category": "Local",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fip%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Local_ip.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fip%2Elist",
-      "label_zh": "应用去广告",
-      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
-      "rule_count": 32,
-      "shard_index": 1
-    },
-    {
-      "category": "Local",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fother%5Fextra%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Local_other_extra.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fother%5Fextra%2Elist",
-      "label_zh": "应用去广告",
-      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
-      "rule_count": 1,
-      "shard_index": 1
-    },
-    {
-      "category": "Advertising",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Advertising_01.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist",
-      "label_zh": "通用广告",
-      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
-      "rule_count": 100000,
-      "shard_index": 1
-    },
-    {
-      "category": "Advertising",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Advertising_02.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist",
-      "label_zh": "通用广告",
-      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
-      "rule_count": 100000,
-      "shard_index": 2
-    },
-    {
-      "category": "Advertising",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Advertising_03.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist",
-      "label_zh": "通用广告",
-      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
-      "rule_count": 100000,
-      "shard_index": 3
-    },
-    {
-      "category": "Advertising",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Advertising_04.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
-      "label_zh": "通用广告",
-      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
-      "rule_count": 36993,
-      "shard_index": 4
-    },
-    {
-      "category": "Advertising",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fip%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Advertising_ip.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fip%2Elist",
-      "label_zh": "通用广告",
-      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
-      "rule_count": 1228,
-      "shard_index": 1
-    },
-    {
-      "category": "Advertising",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fother%5Fextra%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Advertising_other_extra.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fother%5Fextra%2Elist",
-      "label_zh": "通用广告",
-      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
-      "rule_count": 158,
-      "shard_index": 1
-    },
-    {
-      "category": "Privacy",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Privacy.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
-      "label_zh": "隐私追踪",
-      "purpose": "Privacy / tracking-protection / 防追踪列表",
-      "rule_count": 4913,
-      "shard_index": 1
-    },
-    {
-      "category": "Privacy",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5Fother%5Fextra%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Privacy_other_extra.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5Fother%5Fextra%2Elist",
-      "label_zh": "隐私追踪",
-      "purpose": "Privacy / tracking-protection / 防追踪列表",
-      "rule_count": 5,
-      "shard_index": 1
-    },
-    {
-      "category": "Security",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Security.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist",
-      "label_zh": "安全威胁",
-      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
-      "rule_count": 1,
-      "shard_index": 1
-    },
-    {
-      "category": "Security",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fip%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Security_ip.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fip%2Elist",
-      "label_zh": "安全威胁",
-      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
-      "rule_count": 37,
-      "shard_index": 1
-    },
-    {
-      "category": "Security",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fother%5Fextra%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_Security_other_extra.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fother%5Fextra%2Elist",
-      "label_zh": "安全威胁",
-      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
-      "rule_count": 42,
-      "shard_index": 1
-    },
-    {
-      "category": "AntiAD",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_AntiAD.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
-      "label_zh": "Anti-AD",
-      "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
-      "rule_count": 4282,
-      "shard_index": 1
-    },
-    {
-      "category": "ThreatIntel_Ultimate",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F01%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F01%2Elist",
-      "label_zh": "威胁情报·终极",
-      "purpose": "HaGeZi DNS-Blocklists ultimate",
-      "rule_count": 100000,
-      "shard_index": 1
-    },
-    {
-      "category": "ThreatIntel_Ultimate",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
-      "label_zh": "威胁情报·终极",
-      "purpose": "HaGeZi DNS-Blocklists ultimate",
-      "rule_count": 44219,
-      "shard_index": 2
-    },
-    {
-      "category": "ThreatIntel_TIF",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F01%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F01%2Elist",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "rule_count": 100000,
-      "shard_index": 1
-    },
-    {
-      "category": "ThreatIntel_TIF",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F02%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F02%2Elist",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "rule_count": 100000,
-      "shard_index": 2
-    },
-    {
-      "category": "ThreatIntel_TIF",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "rule_count": 100000,
-      "shard_index": 3
-    },
-    {
-      "category": "ThreatIntel_TIF",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist",
-      "label_zh": "威胁情报·TIF",
-      "purpose": "HaGeZi TIF medium 威胁情报",
-      "rule_count": 36014,
-      "shard_index": 4
-    },
-    {
-      "category": "ThreatIntel",
-      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
-      "file": "rulesets/AdBlock/AdBlock_ThreatIntel.list",
-      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
-      "label_zh": "威胁情报·补充",
-      "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
-      "rule_count": 63400,
-      "shard_index": 1
-    }
-  ],
-  "updated": "2026-10-26 19:44:06",
   "verified_rolling_feeds": {
     "ThreatIntel_TIF": {
-      "declared_entries": 434732,
       "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt",
-      "version": "2026.1026.0902.25"
+      "version": "2026.1026.0902.25",
+      "declared_entries": 434732
     }
-  }
+  },
+  "shards": [
+    {
+      "file": "rulesets/AdBlock/AdBlock_Local.list",
+      "category": "Local",
+      "label_zh": "应用去广告",
+      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
+      "shard_index": 1,
+      "rule_count": 2447,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Local_ip.list",
+      "category": "Local",
+      "label_zh": "应用去广告",
+      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
+      "shard_index": 1,
+      "rule_count": 32,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fip%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fip%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Local_other_extra.list",
+      "category": "Local",
+      "label_zh": "应用去广告",
+      "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
+      "shard_index": 1,
+      "rule_count": 1,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fother%5Fextra%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%5Fother%5Fextra%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Advertising_01.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Advertising_02.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 2,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Advertising_03.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 3,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Advertising_04.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 4,
+      "rule_count": 54074,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Advertising_ip.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 1,
+      "rule_count": 1228,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fip%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fip%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Advertising_other_extra.list",
+      "category": "Advertising",
+      "label_zh": "通用广告",
+      "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
+      "shard_index": 1,
+      "rule_count": 158,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fother%5Fextra%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fother%5Fextra%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy.list",
+      "category": "Privacy",
+      "label_zh": "隐私追踪",
+      "purpose": "Privacy / tracking-protection / 防追踪列表",
+      "shard_index": 1,
+      "rule_count": 4913,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy_other_extra.list",
+      "category": "Privacy",
+      "label_zh": "隐私追踪",
+      "purpose": "Privacy / tracking-protection / 防追踪列表",
+      "shard_index": 1,
+      "rule_count": 5,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5Fother%5Fextra%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5Fother%5Fextra%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy_CNAME_01.list",
+      "category": "Privacy_CNAME",
+      "label_zh": "CNAME 伪装追踪",
+      "purpose": "AdGuard CNAME 与邮件追踪域名；Loon CDN 核心版不内嵌此大列表，GitHub 全量版包含",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F01%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F01%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy_CNAME_02.list",
+      "category": "Privacy_CNAME",
+      "label_zh": "CNAME 伪装追踪",
+      "purpose": "AdGuard CNAME 与邮件追踪域名；Loon CDN 核心版不内嵌此大列表，GitHub 全量版包含",
+      "shard_index": 2,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F02%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F02%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy_CNAME_03.list",
+      "category": "Privacy_CNAME",
+      "label_zh": "CNAME 伪装追踪",
+      "purpose": "AdGuard CNAME 与邮件追踪域名；Loon CDN 核心版不内嵌此大列表，GitHub 全量版包含",
+      "shard_index": 3,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F03%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F03%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy_CNAME_04.list",
+      "category": "Privacy_CNAME",
+      "label_zh": "CNAME 伪装追踪",
+      "purpose": "AdGuard CNAME 与邮件追踪域名；Loon CDN 核心版不内嵌此大列表，GitHub 全量版包含",
+      "shard_index": 4,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F04%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F04%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Privacy_CNAME_05.list",
+      "category": "Privacy_CNAME",
+      "label_zh": "CNAME 伪装追踪",
+      "purpose": "AdGuard CNAME 与邮件追踪域名；Loon CDN 核心版不内嵌此大列表，GitHub 全量版包含",
+      "shard_index": 5,
+      "rule_count": 52718,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F05%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F05%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Security.list",
+      "category": "Security",
+      "label_zh": "安全威胁",
+      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
+      "shard_index": 1,
+      "rule_count": 1,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Security_ip.list",
+      "category": "Security",
+      "label_zh": "安全威胁",
+      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
+      "shard_index": 1,
+      "rule_count": 37,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fip%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fip%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_Security_other_extra.list",
+      "category": "Security",
+      "label_zh": "安全威胁",
+      "purpose": "劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject",
+      "shard_index": 1,
+      "rule_count": 42,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fother%5Fextra%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FSecurity%5Fother%5Fextra%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_AntiAD.list",
+      "category": "AntiAD",
+      "label_zh": "Anti-AD",
+      "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
+      "shard_index": 1,
+      "rule_count": 4277,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F01%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F01%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list",
+      "category": "ThreatIntel_Ultimate",
+      "label_zh": "威胁情报·终极",
+      "purpose": "HaGeZi DNS-Blocklists ultimate",
+      "shard_index": 2,
+      "rule_count": 43204,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 1,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F01%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F01%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 2,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F02%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F02%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 3,
+      "rule_count": 100000,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list",
+      "category": "ThreatIntel_TIF",
+      "label_zh": "威胁情报·TIF",
+      "purpose": "HaGeZi TIF medium 威胁情报",
+      "shard_index": 4,
+      "rule_count": 36003,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist"
+    },
+    {
+      "file": "rulesets/AdBlock/AdBlock_ThreatIntel.list",
+      "category": "ThreatIntel",
+      "label_zh": "威胁情报·补充",
+      "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
+      "shard_index": 1,
+      "rule_count": 63547,
+      "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
+      "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist"
+    }
+  ]
 }

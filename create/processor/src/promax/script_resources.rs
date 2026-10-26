@@ -5,6 +5,13 @@ const MLXX_RESOURCE: &str =
 const GOOFISH_RESOURCE: &str =
     "https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js";
 
+const APP2SMILE_RESOURCES: &[&str] = &[
+    "https://raw.githubusercontent.com/app2smile/rules/master/js/qidian.js",
+    "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-json.js",
+    "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js",
+    "https://raw.githubusercontent.com/app2smile/rules/master/js/qq-news.js",
+];
+
 fn script_path_range(line: &str) -> Option<(usize, usize)> {
     if line.trim_start().starts_with('#') {
         return None;
@@ -171,6 +178,11 @@ pub fn required_resources(content: &str) -> BTreeSet<&'static str> {
                 resources.insert(MLXX_RESOURCE);
             } else if url.eq_ignore_ascii_case(GOOFISH_RESOURCE) {
                 resources.insert(GOOFISH_RESOURCE);
+            } else if let Some(resource) = APP2SMILE_RESOURCES
+                .iter()
+                .find(|resource| **resource == url)
+            {
+                resources.insert(*resource);
             }
         }
     }
@@ -209,6 +221,19 @@ mod tests {
         required_resources, script_resource_url, validate_script_body,
     };
     use std::collections::BTreeSet;
+
+    #[test]
+    fn licensed_app_dependencies_are_checked_without_crawling_other_resources() {
+        let content = format!(
+            "a = type=http-response,script-path={}\nb = type=http-response,script-path=https://example.test/unknown.js\n",
+            super::APP2SMILE_RESOURCES[0]
+        );
+        assert_eq!(
+            required_resources(&content),
+            BTreeSet::from([super::APP2SMILE_RESOURCES[0]])
+        );
+        assert!(required_resources("a = type=http-response,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/qidian.js.evil").is_empty());
+    }
 
     #[test]
     fn replaces_only_known_mlxx_raw_and_jsdelivr_references() {

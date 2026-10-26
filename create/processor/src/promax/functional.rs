@@ -7,6 +7,18 @@ static DOMAIN: Lazy<Regex> = Lazy::new(|| {
         .expect("domain source regex must compile")
 });
 
+pub(crate) fn prepare_functional_source<'a>(
+    source: &str,
+    content: &'a str,
+) -> std::borrow::Cow<'a, str> {
+    // PROMAX does not expose the child module's template arguments; keep ordinary video posts.
+    if source == "https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule" {
+        content.replace("{{{per_filter_video}}}", "0").into()
+    } else {
+        content.into()
+    }
+}
+
 pub(crate) fn narrow_http_authority_pattern(pattern: &str) -> String {
     let Some(prefix) = [
         r"^https?:\/\/",
@@ -145,6 +157,22 @@ pub fn normalize_domain_source_line(line: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::normalize_domain_source_line;
+
+    #[test]
+    fn tieba_merge_keeps_video_posts_and_does_not_change_unrelated_templates() {
+        let template = "argument=per_filter_video_thread={{{per_filter_video}}}";
+        assert_eq!(
+            super::prepare_functional_source(
+                "https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule",
+                template
+            ),
+            "argument=per_filter_video_thread=0"
+        );
+        assert_eq!(
+            super::prepare_functional_source("https://example.test/other.sgmodule", template),
+            template
+        );
+    }
 
     #[test]
     fn host_wildcards_do_not_trigger_body_scripts_for_domains_in_url_paths() {

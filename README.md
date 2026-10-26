@@ -85,6 +85,14 @@ Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；Wea
 
 旧快照中的美丽修行与闲鱼脚本引用由 Rust 资源适配层迁移到当前维护源；仅替换这两种已确认失效的资源族，不改请求匹配或脚本参数。每次 PROMAX 编译会对实际引用的两个维护资源做有次数、体积与时间上限的 HTTPS 内容检查，404、TLS 失败或 HTML/空响应都会阻止这轮不完整发布，保留上次有效产物；发布校验也拒绝旧失效引用重新进入 Surge、Shadowrocket 或 Loon。脚本继续从维护源加载，不复制无明确授权的第三方脚本，也不降低 TLS 校验。
 
+### 许可清楚的扩充来源
+
+PROMAX 新增 app2smile 的起点、贴吧和腾讯新闻原生 Surge 去广告模块，以及 AdGuard 的 CNAME 伪装追踪、邮件追踪域名源。源模块、配套规则和四个官方脚本依赖随同一更新链检查，脚本仍从作者仓库加载；贴吧不启用隐藏普通视频帖的选项。去重后的伪装追踪域名归入 Privacy_CNAME，App 配套规则归入 Local，脚本/MITM 仍由功能层统一收束。广告/追踪域名不需要额外 HTTPS 解密；不启用会影响正常链接与页面的 CNAME clickthrough/microsites 全集。
+
+Surge 和 Shadowrocket 的现有 PROMAX 入口自动引用全部活动分片，无需新增订阅。Loon 插件必须内嵌规则，不能套用 Surge 的 `RULE-SET` 语法；CDN 单文件有 20 MB 限制，因此 CDN 入口明确为核心版，不内嵌 Privacy_CNAME 和威胁情报大列表。需要完整 Loon 覆盖时请选择 catalog 中的 GitHub Raw 全量版；不会截断规则数或放宽发布体积检查。
+
+许可正文、修改范围及未接入 luestr 受限资源的原因见 [来源与许可说明](rulesets/Sources/licenses/README.md)。本次不复制 Loon 专属或要求客户端身份验证的内容、不伪装 User-Agent，既有高德功能保留。配置仍只安装现有 PROMAX 入口，不需要另装一组重复模块。
+
 ## 游戏规则分流
 
 `rulesets/RULE-SET/` 提供三个可独立选择策略的规则集，其 `github/` 镜像和 `rulesets/SingBox/` 下的 SRS 在同一 Rust 更新中生成：
@@ -108,6 +116,8 @@ Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；Wea
 ### CI 与网络调度
 
 自动更新仍为每天三次，更新任务串行发布，不因省时而降低上游检查频率。Guard 只浅拉当前提交和比较所需的基准提交；文档等无关改动保留检查结果，但不启动 Rust 构建。相关改动仍运行格式、严格 Clippy、测试、生成树检查与模块校验；Windows/macOS GUI 构建、测试和无界面 worker 校验保持不变。新提交可取消过时的只读检查，不能中断正在发布的更新任务。
+
+GitHub 对公开仓库使用标准托管 runner 的运行分钟免费；账户通知中的私有仓库免费分钟额度与本仓库的公开标准 runner 不应混算。若额度告警，先在账户用量明细确认仓库和 SKU，不通过关闭质量检查、降低上游更新频率或更改账单预算来掩盖问题。缓存、制品存储及大型 runner 有独立计费边界，见 [GitHub Actions 官方计费说明](https://docs.github.com/en/billing/concepts/product-billing/github-actions)。
 
 三套工作流显式统一 `CARGO_TARGET_DIR` 与 Rust 缓存目录，避免从仓库根目录使用 `--manifest-path` 时忽略子目录 Cargo 配置、写入另一份构建目录。缓存按平台、工具链和依赖区分，仅 master 保存成功运行的缓存；PR 只恢复。所有编译与运行使用锁定依赖。sing-box 下载不再嵌套多层重试，主站和镜像各有次数/时间上限，缓存命中和新下载都必须校验 SHA-256，HTTPS 重定向不得降级。
 
