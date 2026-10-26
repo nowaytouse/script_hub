@@ -5,6 +5,17 @@ use std::fs;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 
+pub(crate) fn redact_url(url: &str) -> String {
+    let Some((scheme, rest)) = url.split_once("://") else {
+        return url.to_string();
+    };
+    let rest = rest.split(['?', '#']).next().unwrap_or(rest);
+    let authority_end = rest.find('/').unwrap_or(rest.len());
+    let authority = &rest[..authority_end];
+    let host = authority.rsplit('@').next().unwrap_or(authority);
+    format!("{scheme}://{host}{}", &rest[authority_end..])
+}
+
 pub fn publication_now() -> chrono::DateTime<chrono::FixedOffset> {
     chrono::Utc::now().with_timezone(
         &chrono::FixedOffset::east_opt(8 * 60 * 60).expect("UTC+8 is a valid fixed offset"),
@@ -548,6 +559,22 @@ mod tests {
     };
     use std::fs;
     use std::path::PathBuf;
+
+    #[test]
+    fn url_diagnostics_remove_credentials_queries_and_fragments() {
+        assert_eq!(
+            super::redact_url("https://user:secret@example.test/rules.list?token=private#hidden"),
+            "https://example.test/rules.list"
+        );
+        assert_eq!(
+            super::redact_url("https://user:secret@example.test?token=private"),
+            "https://example.test"
+        );
+        assert_eq!(
+            super::redact_url("https://cdn.jsdelivr.net/gh/owner/repo@master/list"),
+            "https://cdn.jsdelivr.net/gh/owner/repo@master/list"
+        );
+    }
 
     #[test]
     fn missing_directory_check_distinguishes_absence_from_blocking_file() {

@@ -2831,7 +2831,8 @@ impl AdBlockManager {
                 for failure in &failures {
                     println!(
                         "\x1b[0;31m[ERROR]\x1b[0m PROMAX source download failed: {} ({})",
-                        failure.url, failure.error
+                        crate::redact_url(&failure.url),
+                        failure.error
                     );
                 }
                 println!(

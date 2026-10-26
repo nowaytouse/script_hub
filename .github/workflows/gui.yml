@@ -29,6 +29,7 @@ jobs:
     timeout-minutes: 35
     env:
       CARGO_BUILD_JOBS: '1'
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     defaults:
       run:
         working-directory: create/processor
@@ -38,6 +39,10 @@ jobs:
         with:
           rust-src-dir: create/processor
           toolchain: stable
+          cache-workspaces: create/processor -> ../../target
+          cache-shared-key: script-hub-processor
+          cache-save-if: ${{ github.ref == 'refs/heads/master' }}
+          cache-on-failure: false
       - name: Format and lint
         run: |
           cargo fmt -- --check

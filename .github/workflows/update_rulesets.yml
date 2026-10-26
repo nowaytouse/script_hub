@@ -31,6 +31,9 @@ jobs:
   update-rules:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      CARGO_BUILD_JOBS: '1'
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     permissions:
       contents: write
 
@@ -38,7 +41,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        fetch-depth: 0
+        fetch-depth: 1
         persist-credentials: false
 
     - name: Configure Git for master publication
@@ -57,7 +60,9 @@ jobs:
 
         try_api_latest() {
           local release version asset digest
-          release=$(curl -fsSL --retry 3 --retry-delay 2 \
+          release=$(curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 5 \
+            --connect-timeout 10 --max-time 20 \
+            --retry 2 --retry-delay 2 --retry-max-time 50 \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/SagerNet/sing-box/releases/latest") || return 1
@@ -73,7 +78,12 @@ jobs:
           [ -f "${PIN_FILE}" ] && sed -n '1p' "${PIN_FILE}"
         }
 
-        RESOLVED=$(try_api_latest 2>/dev/null || try_pinned)
+        if RESOLVED=$(try_api_latest 2>/dev/null); then
+          echo "Resolved sing-box version from the latest release API."
+        else
+          echo "::warning::Could not resolve sing-box latest release; falling back to the pinned version and digest."
+          RESOLVED=$(try_pinned)
+        fi
         read -r VER DIGEST <<<"${RESOLVED}"
         if ! [[ "${VER:-}" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]] \
           || ! [[ "${DIGEST:-}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
@@ -108,20 +118,20 @@ jobs:
 
         if [ "${SINGBOX_CACHE_HIT}" != true ]; then
           verified=false
-          for attempt in 1 2 3; do
-            for candidate in "${URL}" "${MIRROR}"; do
-              rm -f "${ARCHIVE_PATH}"
-              if curl -fsSL --retry 3 --retry-delay 5 -o "${ARCHIVE_PATH}" "${candidate}" \
-                && echo "${SINGBOX_SHA256}  ${ARCHIVE_PATH}" | sha256sum --check --status; then
-                verified=true
-                break 2
-              fi
-              echo "::warning::sing-box download or checksum verification failed on attempt ${attempt}: ${candidate}"
-            done
-            sleep 10
+          for candidate in "${URL}" "${MIRROR}"; do
+            rm -f "${ARCHIVE_PATH}"
+            if curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 5 \
+              --connect-timeout 10 --max-time 60 \
+              --retry 2 --retry-delay 5 --retry-max-time 120 \
+              -o "${ARCHIVE_PATH}" "${candidate}" \
+              && echo "${SINGBOX_SHA256}  ${ARCHIVE_PATH}" | sha256sum --check --status; then
+              verified=true
+              break
+            fi
+            echo "::warning::sing-box download or checksum verification failed: ${candidate}"
           done
           if [ "${verified}" != true ]; then
-            echo "::error::Failed to download a verified sing-box archive"
+            echo "::error::Failed to download a verified sing-box archive from the primary URL and mirror"
             exit 1
           fi
         fi
@@ -140,27 +150,28 @@ jobs:
       uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
       with:
         rust-src-dir: create/processor
+        cache-workspaces: create/processor -> ../../target
+        cache-shared-key: script-hub-processor
+        cache-save-if: ${{ github.ref == 'refs/heads/master' }}
+        cache-on-failure: false
 
     - name: Validate Rust pipeline
-      env:
-        CARGO_BUILD_JOBS: '1'
       run: |
         cargo fmt --manifest-path create/processor/Cargo.toml -- --check
-        cargo clippy --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
-        cargo test --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
+        cargo clippy --locked --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
+        cargo test --locked --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
 
     - name: Execute Rust Ruleset Update
       run: |
-        cargo run --release --manifest-path create/processor/Cargo.toml --bin update -- \
+        cargo run --release --locked --manifest-path create/processor/Cargo.toml --bin update -- \
           --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
       env:
         CI: 'true'
         GITHUB_ACTIONS: 'true'
-        CARGO_BUILD_JOBS: '1'
         SCRIPTHUB_DOWNLOAD_CONCURRENCY: '4'
 
     - name: Validate generated modules
-      run: cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
+      run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
 
     - name: Publish generated tree
       if: github.ref == 'refs/heads/master'

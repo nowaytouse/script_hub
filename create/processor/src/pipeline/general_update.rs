@@ -187,7 +187,11 @@ fn process_manifest(
     if !missing_remote.is_empty() {
         return Err(format!(
             "missing remote source(s): {}",
-            missing_remote.join(", ")
+            missing_remote
+                .iter()
+                .map(|url| crate::redact_url(url))
+                .collect::<Vec<_>>()
+                .join(", ")
         ));
     }
 
@@ -241,7 +245,8 @@ pub fn run_general_updates(root: &Path) -> Vec<String> {
     for failure in &batch.failures {
         eprintln!(
             "[WARN] general source unavailable: {} ({})",
-            failure.url, failure.error
+            crate::redact_url(&failure.url),
+            failure.error
         );
     }
 

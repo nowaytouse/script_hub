@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 use std::error::Error;
 use std::fmt;
 use std::sync::Mutex;
@@ -42,8 +42,9 @@ impl Default for DownloadConfig {
 pub struct Downloader {
     agent: ureq::Agent,
     config: DownloadConfig,
-    github_not_before: Mutex<Option<Instant>>,
 }
+
+static ORIGIN_NOT_BEFORE: Mutex<BTreeMap<String, Instant>> = Mutex::new(BTreeMap::new());
 
 #[derive(Debug, Default)]
 pub struct DownloadBatch {
@@ -69,12 +70,11 @@ impl Downloader {
         Self {
             agent: agent_config.into(),
             config,
-            github_not_before: Mutex::new(None),
         }
     }
 
     pub fn get(&self, url: &str) -> Result<String, DownloadError> {
-        self.get_until(url, None)
+        self.get_until(url, Some(Instant::now() + self.config.batch_timeout))
     }
 
     fn get_until(&self, url: &str, deadline: Option<Instant>) -> Result<String, DownloadError> {
@@ -107,8 +107,23 @@ impl Downloader {
             else {
                 break;
             };
-            if !self.wait_for_github_slot(candidate, deadline) {
-                last_error = Some("batch deadline exceeded".to_string());
+            if candidate
+                .parse::<ureq::http::Uri>()
+                .ok()
+                .and_then(|uri| {
+                    uri.authority()
+                        .map(|authority| authority.as_str().contains('@'))
+                })
+                .unwrap_or(false)
+            {
+                return Err(DownloadError(
+                    "source URLs must not contain credentials".to_string(),
+                ));
+            }
+            if !self.wait_for_origin_slot(candidate, deadline) {
+                last_error = Some(
+                    "batch deadline reached or origin cooldown exceeds remaining time".to_string(),
+                );
                 break;
             }
             let timeout = deadline
@@ -128,6 +143,7 @@ impl Downloader {
                 .get(candidate)
                 .config()
                 .timeout_global(Some(timeout))
+                .https_only(requires_https(candidate))
                 .build()
                 .call()
             {
@@ -140,8 +156,10 @@ impl Downloader {
                     {
                         Ok(body) if valid_source_body(&body) => return Ok(body),
                         Ok(_) => {
-                            last_error =
-                                Some(format!("{candidate}: empty source or HTML error response"));
+                            last_error = Some(format!(
+                                "{}: empty source or HTML error response",
+                                crate::redact_url(candidate)
+                            ));
                         }
                         Err(error) => last_error = Some(error.to_string()),
                     }
@@ -156,19 +174,29 @@ impl Downloader {
                         // A CDN miss may be stale; never repeat it, but try an independent mirror.
                         missing_candidates.insert(candidate.as_str());
                     }
-                    if status == 403 || status == 429 {
-                        let delay =
-                            rate_limit_delay(response.headers(), SystemTime::now(), attempt);
-                        if is_github_url(candidate) {
-                            self.defer_github(delay);
-                            delay_override = Some(Duration::ZERO);
-                        } else {
-                            delay_override = Some(delay);
-                        }
+                    if let Some(delay) = server_cooldown_delay(
+                        status,
+                        response.headers(),
+                        SystemTime::now(),
+                        attempt,
+                    ) {
+                        self.defer_origin(candidate, delay);
+                        delay_override = Some(Duration::ZERO);
                     }
-                    last_error = Some(format!("{candidate}: http status {status}"));
+                    last_error = Some(format!(
+                        "{}: http status {status}",
+                        crate::redact_url(candidate)
+                    ));
                 }
-                Err(error) => last_error = Some(format!("{candidate}: {error}")),
+                Err(error) => {
+                    last_error = Some(format!(
+                        "{}: {}",
+                        crate::redact_url(candidate),
+                        error
+                            .to_string()
+                            .replace(candidate.as_str(), &crate::redact_url(candidate))
+                    ))
+                }
             }
 
             if !retryable || missing_candidates.len() == candidates.len() {
@@ -187,7 +215,8 @@ impl Downloader {
         }
 
         Err(DownloadError(format!(
-            "failed to download {url} after {performed_attempts} attempt(s): {}",
+            "failed to download {} after {performed_attempts} attempt(s): {}",
+            crate::redact_url(url),
             last_error.unwrap_or_else(|| "unknown download error".to_string())
         )))
     }
@@ -286,26 +315,29 @@ impl Downloader {
         batch
     }
 
-    fn wait_for_github_slot(&self, url: &str, deadline: Option<Instant>) -> bool {
-        if !is_github_url(url) {
+    fn wait_for_origin_slot(&self, url: &str, deadline: Option<Instant>) -> bool {
+        let Some(origin) = origin_key(url) else {
             return deadline.is_none_or(|deadline| Instant::now() < deadline);
-        }
+        };
+        let github = is_github_url(url);
         loop {
             let wait = {
-                let mut not_before = self
-                    .github_not_before
-                    .lock()
-                    .expect("GitHub rate gate poisoned");
+                let mut not_before = ORIGIN_NOT_BEFORE.lock().expect("origin rate gate poisoned");
                 let now = Instant::now();
                 if deadline.is_some_and(|deadline| now >= deadline) {
                     return false;
                 }
-                match *not_before {
-                    Some(next) if next > now => next.duration_since(now),
-                    _ => {
-                        *not_before = Some(now + GITHUB_REQUEST_INTERVAL);
-                        return true;
+                not_before.retain(|key, next| key == "github" || *next > now);
+                if let Some(next) = not_before.get(&origin).copied().filter(|next| *next > now) {
+                    if deadline.is_some_and(|deadline| next >= deadline) {
+                        return false;
                     }
+                    next.duration_since(now)
+                } else if github {
+                    not_before.insert(origin.clone(), now + GITHUB_REQUEST_INTERVAL);
+                    return true;
+                } else {
+                    return true;
                 }
             };
             let wait = deadline
@@ -318,14 +350,17 @@ impl Downloader {
         }
     }
 
-    fn defer_github(&self, delay: Duration) {
+    fn defer_origin(&self, url: &str, delay: Duration) {
+        let Some(origin) = origin_key(url) else {
+            return;
+        };
         let target = Instant::now() + delay.min(MAX_RATE_LIMIT_DELAY);
-        let mut not_before = self
-            .github_not_before
-            .lock()
-            .expect("GitHub rate gate poisoned");
-        if not_before.is_none_or(|current| current < target) {
-            *not_before = Some(target);
+        let mut not_before = ORIGIN_NOT_BEFORE.lock().expect("origin rate gate poisoned");
+        if not_before
+            .get(&origin)
+            .is_none_or(|current| *current < target)
+        {
+            not_before.insert(origin, target);
         }
     }
 }
@@ -380,6 +415,45 @@ fn rate_limit_delay(headers: &ureq::http::HeaderMap, now: SystemTime, attempt: u
         .min(MAX_RATE_LIMIT_DELAY)
 }
 
+fn server_cooldown_delay(
+    status: u16,
+    headers: &ureq::http::HeaderMap,
+    now: SystemTime,
+    attempt: usize,
+) -> Option<Duration> {
+    (status == 403 || status == 429 || status == 503 && headers.get("retry-after").is_some())
+        .then(|| rate_limit_delay(headers, now, attempt))
+}
+
+fn origin_key(url: &str) -> Option<String> {
+    let uri = url.parse::<ureq::http::Uri>().ok()?;
+    let scheme = uri.scheme_str()?;
+    let host = uri.host()?;
+    if is_github_url(url) {
+        return Some("github".to_string());
+    }
+    let port = uri.port_u16().or(match scheme {
+        "http" => Some(80),
+        "https" => Some(443),
+        _ => None,
+    })?;
+    Some(format!(
+        "{}://{}:{port}",
+        scheme.to_ascii_lowercase(),
+        host.to_ascii_lowercase()
+    ))
+}
+
+fn requires_https(url: &str) -> bool {
+    url.parse::<ureq::http::Uri>()
+        .ok()
+        .and_then(|uri| {
+            uri.scheme_str()
+                .map(|scheme| scheme.eq_ignore_ascii_case("https"))
+        })
+        .unwrap_or(false)
+}
+
 fn configured_proxy() -> Option<ureq::Proxy> {
     let value = |names: &[&str]| names.iter().find_map(|name| std::env::var(name).ok());
     proxy_from_values(
@@ -424,6 +498,19 @@ fn proxy_from_values(
 
 fn download_candidates(url: &str) -> Vec<String> {
     let mut candidates = vec![url.to_string()];
+    // Authenticated/signed URLs must never be forwarded to a different mirror.
+    if url.contains(['?', '#'])
+        || url
+            .parse::<ureq::http::Uri>()
+            .ok()
+            .and_then(|uri| {
+                uri.authority()
+                    .map(|authority| authority.as_str().contains('@'))
+            })
+            .unwrap_or(false)
+    {
+        return candidates;
+    }
     if let Some(rest) = url.strip_prefix("https://raw.githubusercontent.com/") {
         let parts: Vec<&str> = rest.split('/').collect();
         if parts.len() >= 4 {
@@ -491,8 +578,9 @@ impl Error for DownloadError {}
 #[cfg(test)]
 mod tests {
     use super::{
-        DownloadConfig, Downloader, bounded_concurrency, download_candidates, is_github_url,
-        proxy_from_values, rate_limit_delay, valid_source_body,
+        DownloadConfig, Downloader, ORIGIN_NOT_BEFORE, bounded_concurrency, download_candidates,
+        is_github_url, origin_key, proxy_from_values, rate_limit_delay, requires_https,
+        server_cooldown_delay, valid_source_body,
     };
     use std::io::{Read, Write};
     use std::net::TcpListener;
@@ -676,6 +764,13 @@ mod tests {
     }
 
     #[test]
+    fn https_only_is_required_for_https_request_uris() {
+        assert!(requires_https("https://example.test/rules.list"));
+        assert!(requires_https("HTTPS://example.test/rules.list"));
+        assert!(!requires_https("http://127.0.0.1/rules.list"));
+    }
+
+    #[test]
     fn rate_limit_wait_honors_server_dates_and_exhausted_primary_limits() {
         let now = UNIX_EPOCH + Duration::from_secs(1_445_412_480);
         let mut headers = ureq::http::HeaderMap::new();
@@ -709,6 +804,100 @@ mod tests {
             rate_limit_delay(&headers, UNIX_EPOCH, usize::MAX),
             Duration::from_secs(86400)
         );
+    }
+
+    #[test]
+    fn service_unavailable_retry_after_is_honored_without_changing_other_503_backoff() {
+        let mut headers = ureq::http::HeaderMap::new();
+        headers.insert("retry-after", "15".parse().unwrap());
+
+        assert_eq!(
+            server_cooldown_delay(503, &headers, UNIX_EPOCH, 1),
+            Some(Duration::from_secs(15))
+        );
+        assert_eq!(
+            server_cooldown_delay(503, &ureq::http::HeaderMap::new(), UNIX_EPOCH, 1),
+            None
+        );
+        assert_eq!(server_cooldown_delay(500, &headers, UNIX_EPOCH, 1), None);
+    }
+
+    #[test]
+    fn source_credentials_are_rejected_without_exposing_them() {
+        let error = Downloader::new(test_config(1024))
+            .get("https://user:private@example.test/rules?token=secret")
+            .unwrap_err()
+            .to_string();
+        assert_eq!(error, "source URLs must not contain credentials");
+    }
+
+    #[test]
+    fn sensitive_source_queries_are_not_mirrored_or_reported_in_errors() {
+        let signed = "https://raw.githubusercontent.com/owner/repo/main/rules.list?token=secret";
+        assert_eq!(download_candidates(signed), vec![signed.to_string()]);
+        let (url, server) = serve_once("404 Not Found", "missing");
+        let url = format!("{url}?token=secret#private");
+        let error = Downloader::new(test_config(1024))
+            .get(&url)
+            .unwrap_err()
+            .to_string();
+        server.join().unwrap();
+        assert!(
+            !error.contains("secret") && !error.contains("private"),
+            "{error}"
+        );
+        assert!(error.contains("404"), "{error}");
+    }
+
+    #[test]
+    fn https_only_transport_refuses_plaintext_before_connecting() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let url = format!("http://{}/rules.list", listener.local_addr().unwrap());
+        let result = ureq::Agent::new_with_defaults()
+            .get(url)
+            .config()
+            .https_only(true)
+            .build()
+            .call();
+        assert!(result.is_err());
+        assert_eq!(
+            listener.accept().unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
+    }
+
+    #[test]
+    fn github_cooldown_is_shared_between_downloader_instances() {
+        let url = "https://raw.githubusercontent.com/owner/repo/main/rules.list";
+        let key = origin_key(url).unwrap();
+        let downloader = Downloader::new(test_config(1024));
+        downloader.defer_origin(url, Duration::from_secs(30));
+        let another_downloader = Downloader::new(test_config(1024));
+
+        assert!(!another_downloader.wait_for_origin_slot(
+            url,
+            Some(std::time::Instant::now() + Duration::from_millis(1))
+        ));
+        ORIGIN_NOT_BEFORE.lock().unwrap().remove(&key);
+    }
+
+    #[test]
+    fn non_github_cooldown_blocks_same_origin_only_within_deadline() {
+        let url = "https://origin.example:8443/rules.list";
+        let another_path = "https://origin.example:8443/other.list";
+        let independent_origin = "https://other.example:8443/rules.list";
+        let key = origin_key(url).unwrap();
+        let downloader = Downloader::new(test_config(1024));
+        downloader.defer_origin(url, Duration::from_secs(30));
+        let another_downloader = Downloader::new(test_config(1024));
+
+        assert!(!another_downloader.wait_for_origin_slot(
+            another_path,
+            Some(std::time::Instant::now() + Duration::from_millis(1))
+        ));
+        assert!(another_downloader.wait_for_origin_slot(independent_origin, None));
+        ORIGIN_NOT_BEFORE.lock().unwrap().remove(&key);
     }
 
     #[test]

@@ -300,21 +300,8 @@ fn origin_url(root: &Path, push: bool) -> Result<String, String> {
 }
 
 fn sanitize_remote(remote: &str) -> String {
-    if let Some((scheme, rest)) = remote.split_once("://") {
-        let path_end = rest.find(['?', '#']).unwrap_or(rest.len());
-        let url_without_query = &rest[..path_end];
-        let authority_end = url_without_query
-            .find('/')
-            .unwrap_or(url_without_query.len());
-        let authority = &rest[..authority_end];
-        if let Some(at) = authority.rfind('@') {
-            return format!(
-                "{scheme}://{}{}",
-                &authority[at + 1..],
-                &url_without_query[authority_end..]
-            );
-        }
-        return format!("{scheme}://{url_without_query}");
+    if remote.contains("://") {
+        return crate::redact_url(remote);
     }
 
     // SSH scp-style remotes use `user@host:path`; hide the user component too.

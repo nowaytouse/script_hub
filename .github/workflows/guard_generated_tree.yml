@@ -5,36 +5,73 @@ on:
     branches: [master]
   pull_request:
 
+concurrency:
+  group: guard-generated-tree-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   guard:
     runs-on: ubuntu-latest
+    env:
+      CARGO_BUILD_JOBS: '1'
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
-      - name: Set up Rust
-        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
-        with:
-          rust-src-dir: create/processor
-
-      - name: Validate Rust pipeline
+      - name: Fetch diff base
+        if: github.event_name == 'pull_request' || github.event.before != '0000000000000000000000000000000000000000'
         env:
-          CARGO_BUILD_JOBS: '1'
-        run: |
-          cargo fmt --manifest-path create/processor/Cargo.toml -- --check
-          cargo clippy --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
-          cargo test --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
+          DIFF_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: git fetch --no-tags --depth=1 origin "$DIFF_BASE"
 
-      - name: Guard generated-tree edits
+      - name: Detect relevant changes
+        id: changes
         env:
           DIFF_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           DIFF_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$DIFF_BASE" == 0000000000000000000000000000000000000000 ]]; then
+            DIFF_BASE=$(git hash-object -w -t tree /dev/null)
+          fi
+          echo "base=$DIFF_BASE" >> "$GITHUB_OUTPUT"
+          changed_paths=$(git diff --name-only "$DIFF_BASE" "$DIFF_HEAD")
+          if grep -E '^(create/processor/|modules/|rulesets/|dns/|\.github/ci/|\.github/workflows/)' <<< "$changed_paths" > /dev/null; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Rust
+        if: steps.changes.outputs.relevant == 'true'
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        with:
+          rust-src-dir: create/processor
+          cache-workspaces: create/processor -> ../../target
+          cache-shared-key: script-hub-processor
+          cache-save-if: ${{ github.ref == 'refs/heads/master' }}
+          cache-on-failure: false
+
+      - name: Validate Rust pipeline
+        if: steps.changes.outputs.relevant == 'true'
+        run: |
+          cargo fmt --manifest-path create/processor/Cargo.toml -- --check
+          cargo clippy --locked --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
+          cargo test --locked --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
+
+      - name: Guard generated-tree edits
+        if: steps.changes.outputs.relevant == 'true'
+        env:
+          DIFF_BASE: ${{ steps.changes.outputs.base }}
+          DIFF_HEAD: ${{ github.sha }}
           TRUSTED_UPDATER: ${{ github.event_name == 'push' && github.actor == 'github-actions[bot]' }}
-        run: cargo run --manifest-path create/processor/Cargo.toml --bin guard
+        run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin guard
 
       - name: Validate generated modules
-        run: cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
+        if: steps.changes.outputs.relevant == 'true'
+        run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
