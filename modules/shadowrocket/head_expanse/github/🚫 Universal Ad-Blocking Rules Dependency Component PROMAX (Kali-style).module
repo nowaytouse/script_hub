@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-10-27 02:44:54
+#!date=2026-10-27 07:56:51
 # app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
@@ -256,7 +256,7 @@ URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,AVOS*,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
-# Merged REJECT-DROP complex rules (99)
+# Merged REJECT-DROP complex rules (102)
 DOMAIN,nom.telemetrydeck.com,REJECT
 DOMAIN,stat.youpin.mi.com,REJECT
 DOMAIN,stats.grafana.org,REJECT
@@ -303,6 +303,7 @@ DOMAIN-SUFFIX,httpdns.cctv.com,REJECT
 DOMAIN-SUFFIX,httpdns.danuoyi.tbcache.com,REJECT
 DOMAIN-SUFFIX,httpdns.gslb.yy.com,REJECT
 DOMAIN-SUFFIX,httpdns.huaweicloud.com,REJECT
+DOMAIN-SUFFIX,httpdns.immomo.com,REJECT
 DOMAIN-SUFFIX,httpdns.kg.qq.com,REJECT
 DOMAIN-SUFFIX,httpdns.kwd.inkuai.com,REJECT
 DOMAIN-SUFFIX,httpdns.music.ntes53.netease.com,REJECT
@@ -336,6 +337,7 @@ DOMAIN-SUFFIX,resolver.gslb.mi-idc.com,REJECT
 DOMAIN-SUFFIX,resolver.mi.xiaomi.com,REJECT
 DOMAIN-SUFFIX,resolver.msg.global.xiaomi.net,REJECT
 DOMAIN-SUFFIX,resolver.msg.xiaomi.net,REJECT
+DOMAIN-SUFFIX,resolvers-cn.httpdns.aliyuncs.com,REJECT
 DOMAIN-SUFFIX,slackb.com,REJECT
 DOMAIN-SUFFIX,static.dns.qiyipic.iqiyi.com,REJECT
 DOMAIN-SUFFIX,trace.qq.com,REJECT
@@ -343,6 +345,7 @@ DOMAIN-SUFFIX,tracking.intl.miui.com,REJECT
 DOMAIN-SUFFIX,tracking.miui.com,REJECT
 DOMAIN-SUFFIX,undefined,REJECT
 DOMAIN-SUFFIX,union-httpdns.gslb.yy.com,REJECT
+DOMAIN-SUFFIX,yuyin-httpdns.gslb.yy.com,REJECT
 DOMAIN-WILDCARD,f-log*.grammarly.io,REJECT
 IP-CIDR,180.76.76.200/32,REJECT
 URL-REGEX,^https:\/\/a\.line\.me\/cs\/v\d\/oa$,REJECT
