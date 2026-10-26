@@ -1,7 +1,7 @@
 # Ruleset: Microsoft
 # Policy: USER-DEFINED
-# Description: Typed migration preserving published source scopes
-# Rules: 759
+# Description: Rust-merged canonical ruleset
+# Rules: 756
 
 DOMAIN-SUFFIX,bing
 DOMAIN-SUFFIX,azure
@@ -106,7 +106,6 @@ DOMAIN-SUFFIX,dictate.ms
 DOMAIN-SUFFIX,engkoo.com
 DOMAIN-SUFFIX,gears5.com
 DOMAIN-SUFFIX,gigjam.com
-DOMAIN-SUFFIX,github.com
 DOMAIN-SUFFIX,github.dev
 DOMAIN-SUFFIX,hotmail.co
 DOMAIN-SUFFIX,hotmail.eu
@@ -659,7 +658,6 @@ DOMAIN-SUFFIX,mmais.com.cn
 DOMAIN-SUFFIX,biying.com.cn
 DOMAIN-SUFFIX,ditu.live.com
 DOMAIN-SUFFIX,joinms.com.cn
-DOMAIN-SUFFIX,cafe.github.com
 DOMAIN-SUFFIX,msa.akadns6.net
 DOMAIN-SUFFIX,msminico.com.cn
 DOMAIN-SUFFIX,b.akamaiedge.net
@@ -670,7 +668,6 @@ DOMAIN-SUFFIX,dcg.microsoft.com
 DOMAIN-SUFFIX,microsoftol.com.cn
 DOMAIN,azure.microsoft.com
 DOMAIN,cn.windowssearch.com
-DOMAIN-SUFFIX,collector.github.com
 DOMAIN-SUFFIX,microsoftstore.com.cn
 DOMAIN-SUFFIX,microsoftstore.com.hk
 DOMAIN,download.microsoft.com

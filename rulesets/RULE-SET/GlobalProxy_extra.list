@@ -1,7 +1,8 @@
 # Ruleset: GlobalProxy_extra
 # Policy: USER-DEFINED
-# Description: Current typed ruleset; policy selected by consumer
-# Rules: 79
+# Description: Rust-merged canonical ruleset
+# Rules: 83
+PROCESS-NAME,LookupViewService
 PROCESS-NAME,com.viu.pad
 PROCESS-NAME,com.viu.phone
 PROCESS-NAME,com.vuclip.viu
@@ -13,6 +14,7 @@ USER-AGENT,*youtube*
 USER-AGENT,AbemaTV*
 USER-AGENT,All4*
 USER-AGENT,Anime*
+USER-AGENT,AppleTV*
 USER-AGENT,Argo*
 USER-AGENT,BBCiPlayer*
 USER-AGENT,DAZN*
@@ -73,6 +75,8 @@ USER-AGENT,YouTube*
 USER-AGENT,YouTubeMusic*
 USER-AGENT,app/bstar*
 USER-AGENT,battleroyale*
+USER-AGENT,com.apple.trustd*
+USER-AGENT,com.apple.tv*
 USER-AGENT,com.google.ios.youtube*
 USER-AGENT,com.google.ios.youtubemusic*
 USER-AGENT,com.kktv*

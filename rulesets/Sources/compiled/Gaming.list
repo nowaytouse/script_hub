@@ -1,7 +1,7 @@
 # Ruleset: Gaming
 # Policy: USER-DEFINED
-# Description: Typed migration preserving published source scopes
-# Rules: 1179
+# Description: Rust-merged canonical ruleset
+# Rules: 1176
 
 DOMAIN-SUFFIX,xbox
 DOMAIN-SUFFIX,playstation
@@ -27,7 +27,6 @@ DOMAIN-SUFFIX,dkr.com
 DOMAIN-SUFFIX,easy.ac
 DOMAIN-SUFFIX,fab.com
 DOMAIN-SUFFIX,gog.com
-DOMAIN-SUFFIX,itch.io
 DOMAIN-SUFFIX,kiwi.jp
 DOMAIN-SUFFIX,pvp.net
 DOMAIN-SUFFIX,rblx.co
@@ -539,7 +538,6 @@ DOMAIN-SUFFIX,4399youpai.com
 DOMAIN-SUFFIX,activision.com
 DOMAIN-SUFFIX,anthemgame.com
 DOMAIN-SUFFIX,arcraiders.com
-DOMAIN-SUFFIX,artstation.com
 DOMAIN-SUFFIX,battlecare.net
 DOMAIN-SUFFIX,bcfmglobal.com
 DOMAIN-SUFFIX,bluearchive.jp
@@ -1126,7 +1124,6 @@ DOMAIN-SUFFIX,media-rockstargames-com.akamaized.net
 DOMAIN-SUFFIX,videos-rockstargames-com.akamaized.net
 DOMAIN,img-prod-cms-rt-microsoft-com.akamaized.net
 DOMAIN-SUFFIX,gamedownloads-rockstargames-com.akamaized.net
-DOMAIN-SUFFIX,ea.tt.omtrdc.net
 DOMAIN-SUFFIX,st.dl.eccdnx.com
 DOMAIN-SUFFIX,steam.cdn.on.net
 DOMAIN-SUFFIX,blz.nosdn.127.net
