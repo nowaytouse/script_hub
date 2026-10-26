@@ -525,7 +525,7 @@ impl AdBlockManager {
             .filter(|entry| entry.is_remote())
             .map(|entry| entry.source.clone())
             .collect();
-        let (_, functional_urls) = self.load_functional_source_paths();
+        let (functional_paths, functional_urls) = self.load_functional_source_paths();
         urls.extend(functional_urls);
 
         println!(
@@ -536,11 +536,57 @@ impl AdBlockManager {
             crate::promax::source::DownloadConfig::default(),
         );
         let batch = downloader.download_many(urls);
-        if batch.failures.is_empty() {
-            Ok(batch.contents)
-        } else {
-            Err(batch.failures)
+        if !batch.failures.is_empty() {
+            return Err(batch.failures);
         }
+        // These two retired script URLs survived inside an older vendor module.
+        // Probe only their maintained replacements, not every embedded script.
+        let mut resources = std::collections::BTreeSet::new();
+        for body in batch.contents.values() {
+            if body.contains("[Script]") {
+                resources.extend(super::script_resources::required_resources(body));
+            }
+        }
+        for (path, _) in functional_paths {
+            let body = fs::read_to_string(&path).map_err(|error| {
+                vec![crate::promax::source::DownloadFailure {
+                    url: path
+                        .strip_prefix(&self.root_dir)
+                        .unwrap_or(&path)
+                        .display()
+                        .to_string(),
+                    error: format!("cannot inspect functional script dependencies: {error}"),
+                }]
+            })?;
+            resources.extend(super::script_resources::required_resources(&body));
+        }
+        if !resources.is_empty() {
+            println!(
+                "[INFO] validating {} maintained script dependency resource(s)",
+                resources.len()
+            );
+            let probe =
+                crate::promax::source::Downloader::new(crate::promax::source::DownloadConfig {
+                    attempts: 2,
+                    timeout: std::time::Duration::from_secs(30),
+                    batch_timeout: std::time::Duration::from_secs(65),
+                    backoff: std::time::Duration::from_millis(250),
+                    concurrency: 2,
+                    max_bytes: 2 * 1024 * 1024,
+                    max_total_bytes: 4 * 1024 * 1024,
+                })
+                .download_many(resources);
+            let mut failures = probe.failures;
+            for (url, body) in probe.contents {
+                if let Err(error) = super::script_resources::validate_script_body(&body) {
+                    failures.push(crate::promax::source::DownloadFailure { url, error });
+                }
+            }
+            if !failures.is_empty() {
+                return Err(failures);
+            }
+        }
+        Ok(batch.contents)
     }
 
     fn determine_category(&self, source: &str) -> &'static str {
@@ -891,6 +937,13 @@ impl AdBlockManager {
         if !self.sections.contains_key(section_name) {
             return;
         }
+        let normalized;
+        let line = if section_name == "Script" {
+            normalized = super::script_resources::normalize_script_line(line);
+            normalized.as_str()
+        } else {
+            line
+        };
         let stripped = line.trim();
         if stripped.is_empty() || stripped.starts_with('#') {
             return;
@@ -1820,6 +1873,11 @@ impl AdBlockManager {
                 }
             }
             for (section, lines) in &mut ad_sections {
+                if section == "Script" {
+                    for line in lines.iter_mut() {
+                        *line = super::script_resources::normalize_script_line(line);
+                    }
+                }
                 lines.retain(|line| {
                     let rejection = self.split_candidate_rejection(section, line);
                     if let Some((reason, risk)) = rejection {
@@ -2998,6 +3056,23 @@ mod tests {
         assert!(!module.contains("upos-sz-302kodo.bilivideo.com"));
         assert!(!module.contains("audio-ssl.itunes.apple.com"));
         assert!(module.contains("DOMAIN,pcdn.fixture.test,REJECT-NO-DROP"));
+    }
+
+    #[test]
+    fn obsolete_embedded_scripts_follow_verified_maintained_resources() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.add_section_line("Script", "mlxx = type=http-response,pattern=^https://api\\.bevol\\.com/ads,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/Yu9191/Rewrite@main/mlxx.js");
+        manager.add_section_line("Script", "fish = type=http-response,pattern=^https://acs\\.m\\.goofish\\.com/ads,requires-body=true,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=fixture");
+        let module = manager.generate_module(&[], "cdn").content;
+        assert!(!module.contains("Yu9191/Rewrite"));
+        assert!(!module.contains("klraw.pages.dev"));
+        assert!(module.contains(
+            "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/mlxx/mlxx.js"
+        ));
+        assert!(
+            module.contains("https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js")
+        );
+        assert!(module.contains("requires-body=true"));
     }
 
     #[test]

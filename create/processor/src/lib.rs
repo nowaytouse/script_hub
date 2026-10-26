@@ -205,7 +205,7 @@ fn normalize_rule(line: &str) -> Option<String> {
 
 fn clean_rule(
     rule: &str,
-    ruleset_name: &str,
+    _ruleset_name: &str,
     conflict_domains: &[String],
     skip_conflict: bool,
 ) -> Option<String> {
@@ -276,59 +276,14 @@ fn clean_rule(
         }
     }
 
-    if ruleset_name == "Direct" {
-        let r_lower = normalized.to_lowercase();
-        let mandatory_proxy = [
-            "google",
-            "gstatic",
-            "gmail",
-            "ggpht",
-            "youtube",
-            "ytimg",
-            "facebook",
-            "fbcdn",
-            "instagram",
-            "twitter",
-            "twimg",
-            "t.co",
-            "telegram",
-            "netflix",
-            "nflxvideo",
-            "nflxext",
-            "disney",
-            "github",
-            "akamai",
-            "fastly",
-            "cloudflare",
-            "browserleaks",
-            "byteoversea",
-            "tiktok",
-            "tiktokv",
-            "tiktokcdn",
-            "tiktokeu",
-            "tiktokw",
-            "muscdn",
-            "tiktokrow",
-            "lark.com",
-        ];
-        for kw in &mandatory_proxy {
-            if r_lower.contains(kw) {
-                return None;
-            }
-        }
-    }
-
     Some(normalized)
 }
 
-fn generate_header(name: &str, policy: &str, node: &str, desc: &str, count: usize) -> String {
+fn generate_header(name: &str, desc: &str, count: usize) -> String {
     let mut header = vec![
         format!("# Ruleset: {}", name),
-        format!("# Policy: {}", policy),
+        "# Policy: USER-DEFINED".to_string(),
     ];
-    if !node.is_empty() {
-        header.push(format!("# Node: {}", node));
-    }
     header.push(format!("# Description: {}", desc));
     header.push(format!("# Rules: {}", count));
 
@@ -337,6 +292,15 @@ fn generate_header(name: &str, policy: &str, node: &str, desc: &str, count: usiz
 
 fn semantic_rules_match(path: &Path, sorted_new_rules: &[String]) -> bool {
     if let Ok(content) = fs::read_to_string(path) {
+        if !content
+            .lines()
+            .any(|line| line.trim() == "# Policy: USER-DEFINED")
+            || content
+                .lines()
+                .any(|line| line.trim_start().starts_with("# Node:"))
+        {
+            return false;
+        }
         let mut old_rules = Vec::new();
         for line in content.lines() {
             let stripped = line.trim();
@@ -356,8 +320,6 @@ pub struct RulesetInput<'a> {
     pub target_dir: &'a Path,
     pub conflict_domains: &'a [String],
     pub skip_conflict: bool,
-    pub policy: &'a str,
-    pub node: &'a str,
     pub description: &'a str,
     pub local_paths: &'a [PathBuf],
     pub remote_content: &'a str,
@@ -369,8 +331,6 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
         target_dir,
         conflict_domains,
         skip_conflict,
-        policy,
-        node,
         description,
         local_paths,
         remote_content,
@@ -432,7 +392,7 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
                     .to_string_lossy()
             );
         } else {
-            let header_str = generate_header(name, policy, node, description, non_ip_rules.len());
+            let header_str = generate_header(name, description, non_ip_rules.len());
             let content = format!("{header_str}{}", non_ip_rules.join("\n") + "\n");
             if !safe_write_file_internal(&target_file_path, &content, true) {
                 return Err(format!(
@@ -442,7 +402,7 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
             }
         }
     } else if target_file_path.exists() {
-        let content = generate_header(name, policy, node, description, 0);
+        let content = generate_header(name, description, 0);
         if !safe_write_file_internal(&target_file_path, &content, true) {
             return Err(format!(
                 "failed to atomically clear {}",
@@ -462,7 +422,7 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
             );
         } else {
             let ip_name = format!("{name}_ip");
-            let header_str = generate_header(&ip_name, policy, node, description, ip_rules.len());
+            let header_str = generate_header(&ip_name, description, ip_rules.len());
             let content = format!("{header_str}{}", ip_rules.join("\n") + "\n");
             if !safe_write_file_internal(&target_ip_file_path, &content, true) {
                 return Err(format!(
@@ -473,7 +433,7 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
         }
     } else if target_ip_file_path.exists() {
         let ip_name = format!("{name}_ip");
-        let content = generate_header(&ip_name, policy, node, description, 0);
+        let content = generate_header(&ip_name, description, 0);
         if !safe_write_file_internal(&target_ip_file_path, &content, true) {
             return Err(format!(
                 "failed to atomically clear {}",
@@ -622,8 +582,6 @@ mod tests {
             target_dir,
             conflict_domains: &[],
             skip_conflict: true,
-            policy: "Proxy",
-            node: "",
             description: "test",
             local_paths: &[],
             remote_content,
@@ -654,9 +612,64 @@ mod tests {
         assert!(ip.exists());
         assert_eq!(
             fs::read_to_string(ip).unwrap(),
-            "# Ruleset: test_ip\n# Policy: Proxy\n# Description: test\n# Rules: 0\n"
+            "# Ruleset: test_ip\n# Policy: USER-DEFINED\n# Description: test\n# Rules: 0\n"
         );
         fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn generated_ruleset_metadata_never_recommends_routing() {
+        for name in ["NSFW", "Apple", "Direct", "GlobalProxy"] {
+            let header = super::generate_header(name, "classification only", 1);
+            assert!(header.lines().any(|line| line == "# Policy: USER-DEFINED"));
+            for route in ["DIRECT", "PROXY", "REJECT"] {
+                assert!(!header.contains(&format!("# Policy: {route}")));
+            }
+            assert!(!header.contains("# Node:"));
+        }
+    }
+
+    #[test]
+    fn exported_classification_rules_have_no_inline_routing_policy() {
+        let dir = output_dir();
+        process("NSFW", &dir, "DOMAIN,example.test,PROXY").unwrap();
+        let output = fs::read_to_string(dir.join("NSFW.list")).unwrap();
+        assert!(output.contains("# Policy: USER-DEFINED\n"));
+        assert!(output.contains("DOMAIN,example.test\n"));
+        assert!(!output.contains("# Policy: PROXY"));
+        assert!(!output.contains("DOMAIN,example.test,PROXY"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn neutral_metadata_migrates_once_without_reordering_unchanged_rules() {
+        let dir = output_dir();
+        let path = dir.join("test.list");
+        fs::write(
+            &path,
+            "# Ruleset: test\n# Policy: PROXY\n# Node: Any\nDOMAIN,a.example\nDOMAIN,b.example\n",
+        )
+        .unwrap();
+        process("test", &dir, "DOMAIN,b.example\nDOMAIN,a.example").unwrap();
+        let neutral = fs::read_to_string(&path).unwrap();
+        assert!(neutral.contains("# Policy: USER-DEFINED\n"));
+        assert!(!neutral.contains("# Node:"));
+        process(
+            "test",
+            &dir,
+            "DOMAIN,a.example\nDOMAIN,b.example\n# different input order/comment",
+        )
+        .unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), neutral);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn category_names_do_not_impose_hidden_proxy_decisions() {
+        for domain in ["project.com", "google.example", "github.example"] {
+            let line = format!("DOMAIN,{domain}");
+            assert_eq!(super::clean_rule(&line, "Direct", &[], false), Some(line));
+        }
     }
 
     #[test]

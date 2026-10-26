@@ -1,6 +1,5 @@
 # Ruleset: StreamUS_ip
-# Policy: PROXY
-# Node: Any
+# Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
 # Rules: 1119
 IP-CIDR,103.87.204.0/22,NO-RESOLVE

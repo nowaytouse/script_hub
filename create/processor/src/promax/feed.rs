@@ -1,10 +1,16 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct VerifiedFeed {
     pub(crate) source: String,
     pub(crate) version: String,
     pub(crate) declared_entries: usize,
+    // Runtime proof from this download, not trusted catalog metadata. Arc keeps
+    // catalog snapshots cheap without serializing hundreds of thousands of hosts.
+    #[serde(skip)]
+    pub(crate) domains: Arc<HashSet<String>>,
 }
 
 pub(crate) fn verify_rolling_feed(
@@ -25,6 +31,7 @@ pub(crate) fn verify_rolling_feed(
     let mut last_modified = None;
     let mut declared_entries = None;
     let mut entries = 0usize;
+    let mut domains = HashSet::new();
     for (index, raw_line) in text.lines().enumerate() {
         let line = raw_line.trim();
         if line.is_empty() {
@@ -80,6 +87,9 @@ pub(crate) fn verify_rolling_feed(
         {
             return Err(format!("invalid TIF domain rule at line {}", index + 1));
         }
+        if !domains.insert(parsed.payload) {
+            return Err(format!("duplicate TIF domain at line {}", index + 1));
+        }
         entries += 1;
     }
 
@@ -103,6 +113,7 @@ pub(crate) fn verify_rolling_feed(
         source: source.to_string(),
         version: version.to_string(),
         declared_entries,
+        domains: Arc::new(domains),
     }))
 }
 
@@ -136,6 +147,30 @@ mod tests {
     fn truncated_feed_does_not_match_declared_count() {
         let text = format!("{HEADER}! Number of entries: 2\n||one.example^");
         assert!(verify_rolling_feed(SOURCE, "ThreatIntel_TIF", &text).is_err());
+    }
+
+    #[test]
+    fn verified_domain_proof_is_shared_but_never_published_as_metadata() {
+        let text = format!("{HEADER}! Number of entries: 2\n||one.example^\n||two.example^");
+        let feed = verify_rolling_feed(SOURCE, "ThreatIntel_TIF", &text)
+            .unwrap()
+            .unwrap();
+        assert!(feed.domains.contains("one.example"));
+        assert_eq!(feed.domains.len(), 2);
+        assert!(std::sync::Arc::ptr_eq(&feed.domains, &feed.clone().domains));
+        let json = serde_json::to_string(&feed).unwrap();
+        assert!(!json.contains("domains"));
+        assert!(!json.contains("one.example"));
+    }
+
+    #[test]
+    fn duplicate_entries_cannot_inflate_verified_source_coverage() {
+        let text = format!("{HEADER}! Number of entries: 2\n||one.example^\n||one.example^");
+        assert!(
+            verify_rolling_feed(SOURCE, "ThreatIntel_TIF", &text)
+                .unwrap_err()
+                .contains("duplicate TIF domain")
+        );
     }
 
     #[test]

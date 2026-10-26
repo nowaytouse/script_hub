@@ -7,7 +7,7 @@
 - **PROMAX** 是唯一推荐安装的广告拦截模块：外部规则按用途分片，并合并经筛选的 URL Rewrite、Map Local、Body Rewrite、Script 与 MITM 功能段。
 - **分类隔离**：Advertising、Privacy、Security、AntiAD 与各 ThreatIntel 类别由源清单显式声明；编译器不会按 URL 猜分类。
 - **误屏蔽防护**：正常媒体、受保护服务、无对应请求规则的 MITM 主机会进入 `rulesets/AdBlock/quarantine.json`，不会直接发布。
-- **防止不完整更新**：稳定广告分类合计不得低于上一份 catalog 的 90%。HaGeZi TIF medium 是会清退过期域名的滚动情报源，仅官方地址、完整元数据、声明条数与逐条域名校验全部通过后才独立计算；去重和安全过滤后的 TIF 分片还须保留本次源条目的至少 80%。检查失败时保留已发布产物，不以旧情报永久冻结上游更新。catalog 记录上次实质更新时的源版本与条数，仅源版本时间戳改变不触发写入。
+- **防止不完整更新**：稳定广告分类合计不得低于上一份 catalog 的 90%。HaGeZi TIF medium 是会清退过期域名的滚动情报源，仅官方地址、完整元数据、声明条数与逐条唯一域名校验全部通过后才独立计算；跨活动分片的实际域名后缀匹配仍须覆盖本次源条目的至少 80%，不会把在其他分类已去重覆盖的规则误算为丢失。检查失败时保留已发布产物，不以旧情报永久冻结上游更新。catalog 记录上次实质更新时的源版本与条数，仅源版本时间戳改变不触发写入。
 - **Helper**：保留 DNS 补充、必要的 Host/系统解析映射和关键服务 MITM 排除，不注入分流策略；分流由外部规则集和用户策略组决定。端口阻断仍是独立、按需安装的模块。
 - **旧分片兼容**：已发布但不再需要的规则分片保留为空规则兼容文件，不加入新版模块或活动 catalog；旧模块缓存不会因分片缩减而遇到 404，旧拦截条目也不会继续生效。
 - **旧 PROMAX 链接保持兼容**：
@@ -19,14 +19,21 @@
 
 ### Apple 服务与分流
 
-Apple Music、iTunes 与 Apple 自有媒体端点归入 `Apple.list`，不混入通用 `CDN.list` / `GlobalProxy.list`。使用时把 Apple 规则放在通用 CDN、代理兜底规则之前，并在自己的配置中选择策略；文件头的 `Policy` 只是推荐说明，不会改变客户端实际分流。例如希望 Apple 服务直连时：
+Apple Music、iTunes 与 Apple 自有媒体端点归入 `Apple.list` / `Apple_ip.list`，不混入通用服务分类。Apple News 保留独立的地区服务分类；共享 CDN 的整个父域不会被当成 Apple 专有域名。
 
-```ini
-# 若单独使用 AppleNews 地区服务策略，应先放 AppleNews，再放 Apple。
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/RULE-SET/Apple.list,DIRECT
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/RULE-SET/Apple_ip.list,DIRECT,no-resolve
-# 用户自己的 CDN / GlobalProxy 规则放在后面。
-```
+规则集只描述匹配范围，不指定路由、节点或拦截动作。包括 NSFW、Apple、Direct、GlobalProxy 在内，所有分类头统一标记 `Policy: USER-DEFINED`，不提供默认策略或节点。历史文件名不代表强制路由；实际动作和规则顺序始终由使用者自己的客户端配置决定。NSFW 是独立内容分类，不加入 PROMAX 的广告拒绝输入。
+
+### 服务分类与自动更新
+
+- `AI.list`：补充 MetaCubeX 的 Anthropic 分类源。
+- `Apple.list`：补充 Apple TV / TV+ 与受维护的 Apple DNS 精确别名；Apple IP 继续独立存放。
+- `Bilibili.list`：合并 blackmatrix7 的 BiliBili 服务列表。
+- `Google.list` / `Microsoft.list`：分别补充 Google Drive / OneDrive 官方分类源。
+- `GlobalProxy.list`：补充 Dropbox 与 MetaCubeX 开发生态聚合源；`SocialMedia.list` 补充通信聚合源，独立广告平台不作为社交服务收录。
+
+新增上游合并进现有订阅文件，不需要新增 `RULE-SET` 引用或更改使用者的策略组。聚合分类可能与服务专集重叠，不是互斥的路由指令；Apple 自有端点按独立所有权边界归入 Apple 分类，共享提供商父域保留。源清单位于现有 `rulesets/Sources/Links/*_sources.list`，由同一个 Rust/CI 更新器自动发现、抓取、校验、生成 GitHub 镜像与 SRS；上游失败时保留上一份有效产物。
+
+规则集使用固定元数据字段、去重后的字典序与统一换行；同一输入顺序不同不产生不同产物。模块的 Script/Rewrite 则保留有意义的执行优先级，不为追求视觉排序改变先匹配行为。仅日期、注释或无实质差异的排版变化不触发发布；本次策略推荐字段中立化是一次明确的元数据迁移。
 
 账号、iCloud、证书校验与音乐播放/鉴权端点排除 MITM 和固定/第三方 Host 映射；WeatherKit、TV 等明确的功能端点仍保留。此边界用于降低连接破坏风险，不降低 TLS 校验强度，也不能据此认定某次账号锁定的原因。端点依据见 [Apple 网络要求](https://support.apple.com/en-us/101555)。
 
@@ -48,6 +55,8 @@ Surge 已为大型规则集建立索引；规则数量、MITM 主机条数和脚
 
 Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；WeatherKit、Maps、News、TV 与 DualSubs 不从公告文本或第三方转载页抓取。
 
+旧快照中的美丽修行与闲鱼脚本引用由 Rust 资源适配层迁移到当前维护源；仅替换这两种已确认失效的资源族，不改请求匹配或脚本参数。每次 PROMAX 编译会对实际引用的两个维护资源做有次数、体积与时间上限的 HTTPS 内容检查，404、TLS 失败或 HTML/空响应都会阻止这轮不完整发布，保留上次有效产物；发布校验也拒绝旧失效引用重新进入 Surge、Shadowrocket 或 Loon。脚本继续从维护源加载，不复制无明确授权的第三方脚本，也不降低 TLS 校验。
+
 ## 游戏规则分流
 
 `rulesets/RULE-SET/` 提供三个可独立选择策略的规则集，其 `github/` 镜像和 `rulesets/SingBox/` 下的 SRS 在同一 Rust 更新中生成：
@@ -58,19 +67,13 @@ Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；Wea
 | `Gaming_Play.list` | 明确的游戏网络、匹配发现、好友/在线服务及对局相关端点 |
 | `Gaming_Web.list` | 官网、商店、账号、社区，以及无法按域名拆分的共享平台兜底 |
 
-Surge 按 **Download → Play → Web → Direct/GlobalProxy → FINAL** 排列，三个策略名称由用户自己的配置决定，例如：
-
-```ini
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/RULE-SET/Gaming_Download.list,游戏下载
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/RULE-SET/Gaming_Play.list,游戏联机
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/RULE-SET/Gaming_Web.list,游戏平台
-```
+三组是独立分类，使用哪些策略、怎样排列以及如何兜底，均由使用者的客户端配置决定；仓库不生成默认路由或策略组。
 
 `Gaming_Web` 的平台父域名可包含 Download/Play 的子域名，故顺序是分流语义的一部分。域名无法区分同一主机上的网页、登录和对局；这类共享域名保留在平台兜底，不宣称是纯联机流量。专用联机组也不覆盖任意 IP 的 P2P 对局：如需此类覆盖，在用户配置中按具体游戏进程/设备追加规则，不全局匹配 UDP 或 443。
 
 通用 Microsoft 登录域名 `login.live.com`、`logincdn.msauth.net` 不进入专用游戏组，以免游戏策略覆盖其他应用的账号登录；由用户的 Microsoft/普通分流规则处理。旧 `Gaming_ip.list` 也不自动并入专用联机组，其共享云 IP 无法仅凭地址确定是游戏流量。
 
-旧 `Gaming.list` 继续保留兼容全集，包括既有进程/关键词规则；迁移到上述三个文件后，应移除旧全集引用，避免其抢先匹配。游戏下载组同时吸收 Sukka 官方 game-download 规则和本地精确端点；联机分类端点维护于 `rulesets/Sources/custom/Gaming_Play_manual.list`。更新时由 Rust 合并上游与手动分类，再生成镜像和 SRS。专用组不含启动器整进程、公司域名关键词或写死的 DIRECT/PROXY 策略。
+旧 `Gaming.list` 继续保留兼容全集，包括既有进程/关键词规则；全集与细分类同时引用时可能抢先匹配，保留哪些引用由使用者决定。游戏下载组同时吸收 Sukka 官方 game-download 规则和本地精确端点；联机分类端点维护于 `rulesets/Sources/custom/Gaming_Play_manual.list`。更新时由 Rust 合并上游与手动分类，再生成镜像和 SRS。专用组不含启动器整进程、公司域名关键词或写死的 DIRECT/PROXY 策略。
 
 ## Rust 更新入口
 

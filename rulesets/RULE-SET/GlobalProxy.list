@@ -1,8 +1,7 @@
 # Ruleset: GlobalProxy
-# Policy: PROXY
-# Node: Any
+# Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 40142
+# Rules: 40173
 DOMAIN,083link.brsserver.com.br
 DOMAIN,10.speedtesttvzamora.com
 DOMAIN,1010.hkspeedtest.com
@@ -547,6 +546,7 @@ DOMAIN,cpt-cs-speedtest-01.o-it.co.za
 DOMAIN,cpt-ookla-01.toomuchwifi.co.za
 DOMAIN,cpt-speedtest.metrofibre.co.za
 DOMAIN,cpt-ter-speedtest1-vl145.atomic.ac
+DOMAIN,crashlyticsreports-pa.googleapis.com
 DOMAIN,crb.majumapan.info
 DOMAIN,creo2-speedtest.creolink.cm
 DOMAIN,crl.microsoft.com
@@ -721,6 +721,7 @@ DOMAIN,dnsprive.moov-africa.cf
 DOMAIN,dnvrco-speedtest-ookla-01.st.charter.com
 DOMAIN,docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com
 DOMAIN,docker-pinata-support.s3.amazonaws.com
+DOMAIN,download.visualstudio.microsoft.com
 DOMAIN,doy2mn9upadnk.cloudfront.net
 DOMAIN,dps.speedtest.jinom.net
 DOMAIN,dqd0jw5gvbchn.cloudfront.net
@@ -728,6 +729,7 @@ DOMAIN,dqrpb9wgowsf5.cloudfront.net
 DOMAIN,dracaryscorp.site
 DOMAIN,drinternettelecom.com.br
 DOMAIN,drnet.in
+DOMAIN,dropbox.zendesk.com
 DOMAIN,drs1.com.br
 DOMAIN,drw1.speedtest.telstra.net
 DOMAIN,dry.myspeed.net.sa
@@ -848,6 +850,7 @@ DOMAIN,fibrasky.es
 DOMAIN,fibraturbo.brsserver.com.br
 DOMAIN,fibretest.kcom.com
 DOMAIN,firatnet.link
+DOMAIN,firebase-settings.crashlytics.com
 DOMAIN,firebase.googleapis.com
 DOMAIN,firebaseappcheck.googleapis.com
 DOMAIN,firebaseappdistribution.googleapis.com
@@ -13972,6 +13975,7 @@ DOMAIN,unisp.unilink.com.mm
 DOMAIN,unjha.minpl.com
 DOMAIN,unms.komputersat.pl
 DOMAIN,unp-velocimetro.lv.network
+DOMAIN,update.crashlytics.com
 DOMAIN,upnet-velocidade.consultisp.com.br
 DOMAIN,uruguaianaspeed.fronteirainternet.com.br
 DOMAIN,us-iad01.speed.misaka.one
@@ -15558,6 +15562,7 @@ DOMAIN-SUFFIX,addthis.com
 DOMAIN-SUFFIX,addthiscdn.com
 DOMAIN-SUFFIX,addthisedge.com
 DOMAIN-SUFFIX,addtoany.com
+DOMAIN-SUFFIX,addtodropbox.com
 DOMAIN-SUFFIX,addyoutube.com
 DOMAIN-SUFFIX,adelaidenow.com.au
 DOMAIN-SUFFIX,adgoogle.net
@@ -16482,6 +16487,7 @@ DOMAIN-SUFFIX,analsaga.com
 DOMAIN-SUFFIX,analscreen.com
 DOMAIN-SUFFIX,analtime.org
 DOMAIN-SUFFIX,analvids.com
+DOMAIN-SUFFIX,analytics.cloud.unity3d.com
 DOMAIN-SUFFIX,analytictech.com
 DOMAIN-SUFFIX,anandtech.com
 DOMAIN-SUFFIX,anatomy.tv
@@ -18980,6 +18986,7 @@ DOMAIN-SUFFIX,cadmep.com
 DOMAIN-SUFFIX,cadoverlay.com
 DOMAIN-SUFFIX,cadren.com
 DOMAIN-SUFFIX,cafe
+DOMAIN-SUFFIX,cafe.github.com
 DOMAIN-SUFFIX,cafr.ca
 DOMAIN-SUFFIX,caice.com
 DOMAIN-SUFFIX,caijinglengyan.com
@@ -19304,6 +19311,7 @@ DOMAIN-SUFFIX,cdnvideo.ru
 DOMAIN-SUFFIX,cdnvideohub.com
 DOMAIN-SUFFIX,cdnxxx-proxy.co
 DOMAIN-SUFFIX,cdnxxx-proxy.xyz
+DOMAIN-SUFFIX,cdp.cloud.unity3d.com
 DOMAIN-SUFFIX,cdp1998.org
 DOMAIN-SUFFIX,cdp2006.org
 DOMAIN-SUFFIX,cdpeu.org
@@ -19917,6 +19925,7 @@ DOMAIN-SUFFIX,collateralmurder.org
 DOMAIN-SUFFIX,collection-3d.com
 DOMAIN-SUFFIX,collectionofbestporn.com
 DOMAIN-SUFFIX,collective99.com
+DOMAIN-SUFFIX,collector.github.com
 DOMAIN-SUFFIX,colleee.net
 DOMAIN-SUFFIX,collegejournal.com
 DOMAIN-SUFFIX,collegepornonly.com
@@ -19974,6 +19983,7 @@ DOMAIN-SUFFIX,comsoc.org
 DOMAIN-SUFFIX,conair.me
 DOMAIN-SUFFIX,conan.xxx
 DOMAIN-SUFFIX,conda.io
+DOMAIN-SUFFIX,config.uca.cloud.unity3d.com
 DOMAIN-SUFFIX,connaissancesfinancierespratiques.ca
 DOMAIN-SUFFIX,connect-in-canada.com
 DOMAIN-SUFFIX,connectcommerce.hk
@@ -20370,6 +20380,7 @@ DOMAIN-SUFFIX,dartsearch-cn.net
 DOMAIN-SUFFIX,dartsearch.net
 DOMAIN-SUFFIX,darwindimensions.com
 DOMAIN-SUFFIX,dasaob.online
+DOMAIN-SUFFIX,dash.ai
 DOMAIN-SUFFIX,dashlane.com
 DOMAIN-SUFFIX,dashly.app
 DOMAIN-SUFFIX,dashly.help
@@ -21128,6 +21139,7 @@ DOMAIN-SUFFIX,docs.com
 DOMAIN-SUFFIX,docs.new
 DOMAIN-SUFFIX,docs.rs
 DOMAIN-SUFFIX,docs.rw
+DOMAIN-SUFFIX,docsend.com
 DOMAIN-SUFFIX,doctor-videos.com
 DOMAIN-SUFFIX,documentforce.com
 DOMAIN-SUFFIX,documentingreality.com
@@ -21271,12 +21283,15 @@ DOMAIN-SUFFIX,dropbox.tech
 DOMAIN-SUFFIX,dropboxapi.com
 DOMAIN-SUFFIX,dropboxbusiness.com
 DOMAIN-SUFFIX,dropboxcaptcha.com
+DOMAIN-SUFFIX,dropboxexperiment.com
 DOMAIN-SUFFIX,dropboxforum.com
 DOMAIN-SUFFIX,dropboxforums.com
 DOMAIN-SUFFIX,dropboxinsiders.com
+DOMAIN-SUFFIX,dropboxlegal.com
 DOMAIN-SUFFIX,dropboxmail.com
 DOMAIN-SUFFIX,dropboxpartners.com
 DOMAIN-SUFFIX,dropboxstatic.com
+DOMAIN-SUFFIX,dropboxteam.com
 DOMAIN-SUFFIX,dropboxusercontent.com
 DOMAIN-SUFFIX,drpc.org
 DOMAIN-SUFFIX,drtuber.com
@@ -21719,6 +21734,7 @@ DOMAIN-SUFFIX,economistgroupcareers.com
 DOMAIN-SUFFIX,ecotect.com
 DOMAIN-SUFFIX,ecotect.net
 DOMAIN-SUFFIX,ecpa.fr
+DOMAIN-SUFFIX,ecr.aws
 DOMAIN-SUFFIX,ecscad.com
 DOMAIN-SUFFIX,ecspublisher.com
 DOMAIN-SUFFIX,ecuatorianas.best
@@ -22907,6 +22923,7 @@ DOMAIN-SUFFIX,fire-emblem-heroes.com
 DOMAIN-SUFFIX,firearmsworld.net
 DOMAIN-SUFFIX,firebase.com
 DOMAIN-SUFFIX,firebase.dev
+DOMAIN-SUFFIX,firebase.google.com
 DOMAIN-SUFFIX,firebase.io
 DOMAIN-SUFFIX,firebaseapp.com
 DOMAIN-SUFFIX,firebaseio.com
@@ -24956,8 +24973,10 @@ DOMAIN-SUFFIX,heise360182.buzz
 DOMAIN-SUFFIX,helixstudios.net
 DOMAIN-SUFFIX,helloandroid.com
 DOMAIN-SUFFIX,helloavgirls.com
+DOMAIN-SUFFIX,hellofax.com
 DOMAIN-SUFFIX,hellomoto.com
 DOMAIN-SUFFIX,helloqueer.com
+DOMAIN-SUFFIX,hellosign.com
 DOMAIN-SUFFIX,hellosmartbook.com
 DOMAIN-SUFFIX,hellporno.com
 DOMAIN-SUFFIX,hellven.net
@@ -25825,6 +25844,7 @@ DOMAIN-SUFFIX,i69.com.tw
 DOMAIN-SUFFIX,i818hk.com
 DOMAIN-SUFFIX,i91dz.com
 DOMAIN-SUFFIX,iaablog.com
+DOMAIN-SUFFIX,iads.unity3d.com
 DOMAIN-SUFFIX,iaea.org
 DOMAIN-SUFFIX,iafd.com
 DOMAIN-SUFFIX,iam.soy
@@ -27008,6 +27028,7 @@ DOMAIN-SUFFIX,jessicaturner.com
 DOMAIN-SUFFIX,jetbrains.ai
 DOMAIN-SUFFIX,jetbrains.cloud
 DOMAIN-SUFFIX,jetbrains.com
+DOMAIN-SUFFIX,jetbrains.com.cn
 DOMAIN-SUFFIX,jetbrains.dev
 DOMAIN-SUFFIX,jetbrains.net
 DOMAIN-SUFFIX,jetbrains.org
@@ -28590,6 +28611,7 @@ DOMAIN-SUFFIX,mcdonaldsparties.co.nz
 DOMAIN-SUFFIX,mceindex.com
 DOMAIN-SUFFIX,mcisco.com
 DOMAIN-SUFFIX,mcpeaceofmind.com
+DOMAIN-SUFFIX,mcr.microsoft.com
 DOMAIN-SUFFIX,mcrouter.net
 DOMAIN-SUFFIX,mcrouter.org
 DOMAIN-SUFFIX,mcs.st
@@ -28876,6 +28898,8 @@ DOMAIN-SUFFIX,microsoftonline.com
 DOMAIN-SUFFIX,microsoftpartnercommunity.com
 DOMAIN-SUFFIX,microsoftpartnersolutions.com
 DOMAIN-SUFFIX,microsoftpersonalcontent.com
+DOMAIN-SUFFIX,microsoftreactor.cn
+DOMAIN-SUFFIX,microsoftreactor.com.cn
 DOMAIN-SUFFIX,microsoftreactor.info
 DOMAIN-SUFFIX,microsoftreactor.net
 DOMAIN-SUFFIX,microsoftreactor.org
@@ -31729,6 +31753,8 @@ DOMAIN-SUFFIX,peopledreamfunding.com
 DOMAIN-SUFFIX,peoplenews.tw
 DOMAIN-SUFFIX,peopo.org
 DOMAIN-SUFFIX,pepabo.com
+DOMAIN-SUFFIX,perf-events.cloud.unity3d.com
+DOMAIN-SUFFIX,perf.cloud.unity3d.com
 DOMAIN-SUFFIX,perfect-privacy.com
 DOMAIN-SUFFIX,perfectgirls.net
 DOMAIN-SUFFIX,perfectgonzo.com
@@ -32504,6 +32530,7 @@ DOMAIN-SUFFIX,prastitutki.ru
 DOMAIN-SUFFIX,prayforchina.net
 DOMAIN-SUFFIX,prcleader.org
 DOMAIN-SUFFIX,prcm.jp
+DOMAIN-SUFFIX,prd-lender.cdp.internal.unity3d.com
 DOMAIN-SUFFIX,pre-bmwgroup.jobs
 DOMAIN-SUFFIX,precisionhydration.com
 DOMAIN-SUFFIX,predb.me
@@ -33045,6 +33072,7 @@ DOMAIN-SUFFIX,reachtheworldonfacebook.com
 DOMAIN-SUFFIX,react.com
 DOMAIN-SUFFIX,reactjs.com
 DOMAIN-SUFFIX,reactjs.org
+DOMAIN-SUFFIX,reactorms.com.cn
 DOMAIN-SUFFIX,read01.com
 DOMAIN-SUFFIX,readerswivesonline.com
 DOMAIN-SUFFIX,readingtimes.com.tw
@@ -36817,6 +36845,7 @@ DOMAIN-SUFFIX,uniswap.org
 DOMAIN-SUFFIX,united.ru
 DOMAIN-SUFFIX,unity.com
 DOMAIN-SUFFIX,unity3d.com
+DOMAIN-SUFFIX,unityads.unity3d.com
 DOMAIN-SUFFIX,universalorlando.com
 DOMAIN-SUFFIX,universalpictures.com
 DOMAIN-SUFFIX,universalpicturesinternational.com
@@ -39881,6 +39910,7 @@ DOMAIN-SUFFIX,zdnet.redvideo.io
 DOMAIN-SUFFIX,zdusercontent.com
 DOMAIN-SUFFIX,zdxbeta.net
 DOMAIN-SUFFIX,zdxcloud.net
+DOMAIN-SUFFIX,zed.dev
 DOMAIN-SUFFIX,zee.com
 DOMAIN-SUFFIX,zee5.com
 DOMAIN-SUFFIX,zee5.in

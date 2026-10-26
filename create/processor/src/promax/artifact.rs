@@ -154,6 +154,7 @@ pub(crate) fn validate_coverage_floor_with_rolling(
 
     let mut current = 0_u64;
     let mut current_rolling = std::collections::BTreeMap::<String, u64>::new();
+    let mut published_suffixes = HashSet::<&str>::new();
     let mut counted_shards = HashSet::new();
     for artifact in artifacts
         .iter()
@@ -182,6 +183,26 @@ pub(crate) fn validate_coverage_floor_with_rolling(
             .count();
         let count = u64::try_from(count)
             .map_err(|_| "PROMAX coverage rule count exceeds u64".to_string())?;
+        for line in artifact
+            .content
+            .lines()
+            .filter(|_| !verified_rolling_feeds.is_empty())
+        {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+                continue;
+            }
+            if let Ok(rule) = SurgeRule::parse(line)
+                && rule.kind == super::rule::RuleKind::DomainSuffix
+                && rule.policy.is_none()
+                && let Some((_, payload)) = line.split_once(',')
+            {
+                let suffix = payload.split(',').next().unwrap_or_default().trim();
+                if !suffix.is_empty() {
+                    published_suffixes.insert(suffix);
+                }
+            }
+        }
         if let Some(category) = artifact
             .content
             .lines()
@@ -199,17 +220,41 @@ pub(crate) fn validate_coverage_floor_with_rolling(
             .ok_or_else(|| "PROMAX coverage rule count total overflows u64".to_string())?;
     }
     for (category, feed) in verified_rolling_feeds {
-        let current = current_rolling.get(category).copied().unwrap_or_default();
-        // TIF currently retains 83-89% after cross-source deduplication and safety filtering.
-        let floor = (feed.declared_entries as u128 * 80).div_ceil(100);
-        if u128::from(current) < floor {
+        if feed.domains.len() != feed.declared_entries {
             return Err(format!(
-                "verified rolling category {category} retained {current} of {} source entries (minimum {floor})",
+                "verified rolling category {category} has {} source-domain proofs for {} declared entries",
+                feed.domains.len(),
+                feed.declared_entries
+            ));
+        }
+        let current = current_rolling.get(category).copied().unwrap_or_default();
+        // Count effective source coverage, not ownership of globally deduplicated shards.
+        let floor = (feed.declared_entries as u128 * 80).div_ceil(100);
+        let covered = feed
+            .domains
+            .iter()
+            .filter(|domain| {
+                let mut candidate = domain.as_str();
+                loop {
+                    if published_suffixes.contains(candidate) {
+                        return true;
+                    }
+                    let Some((_, parent)) = candidate.split_once('.') else {
+                        return false;
+                    };
+                    candidate = parent;
+                }
+            })
+            .count();
+        if (covered as u128) < floor {
+            return Err(format!(
+                "verified rolling category {category} has {covered} of {} source suffix domains covered by canonical staged rules (minimum {floor}); own shard contains {current} rules",
                 feed.declared_entries
             ));
         }
         println!(
-            "[INFO] Verified rolling feed {category}: {} -> {current} published rules; source integrity checked independently.",
+            "[INFO] Verified rolling feed {category}: effective suffix coverage {covered}/{} source domains; own shard {} -> {current} rules.",
+            feed.declared_entries,
             previous_rolling.get(category).copied().unwrap_or_default()
         );
     }
@@ -558,6 +603,7 @@ mod tests {
     };
     use std::fs;
     use std::path::Path;
+    use std::sync::Arc;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -758,7 +804,12 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
             },
             GeneratedArtifact {
                 target: root.join("rulesets/AdBlock/AdBlock_ThreatIntel_TIF.list"),
-                content: format!("# Category-Key: ThreatIntel_TIF\n{}", make_rules(500)),
+                content: format!(
+                    "# Category-Key: ThreatIntel_TIF\n{}",
+                    (0..500)
+                        .map(|index| format!("DOMAIN-SUFFIX,tif{index}.example\n"))
+                        .collect::<String>()
+                ),
                 kind: ArtifactKind::ExternalRuleset,
             },
         ];
@@ -768,6 +819,11 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
                 source: "fixture".to_string(),
                 version: "fixture".to_string(),
                 declared_entries: 600,
+                domains: Arc::new(
+                    (0..600)
+                        .map(|index| format!("tif{index}.example"))
+                        .collect(),
+                ),
             },
         )]);
         assert!(validate_coverage_floor(&root, &artifacts).is_err());
@@ -775,7 +831,8 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         artifacts[0].content = make_rules(89);
         assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_err());
         artifacts[0].content = make_rules(100);
-        artifacts[1].content = format!("# Category-Key: ThreatIntel_TIF\n{}", make_rules(1));
+        artifacts[1].content =
+            "# Category-Key: ThreatIntel_TIF\nDOMAIN-SUFFIX,tif0.example\n".to_string();
         assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_err());
         artifacts.pop();
         assert!(super::validate_coverage_floor_with_rolling(&root, &artifacts, &verified).is_err());
@@ -806,6 +863,7 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
                 source: "fixture".to_string(),
                 version: "fixture".to_string(),
                 declared_entries: 10,
+                domains: Arc::new((0..10).map(|index| format!("tif{index}.example")).collect()),
             },
         )]);
         let artifact = |count| GeneratedArtifact {
@@ -813,7 +871,7 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
             content: format!(
                 "# Category-Key: ThreatIntel_TIF\n{}",
                 (0..count)
-                    .map(|index| format!("DOMAIN,tif{index}.example\n"))
+                    .map(|index| format!("DOMAIN-SUFFIX,tif{index}.example\n"))
                     .collect::<String>()
             ),
             kind: ArtifactKind::ExternalRuleset,
@@ -824,6 +882,99 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         );
         assert!(
             super::validate_coverage_floor_with_rolling(&root, &[artifact(8)], &verified).is_ok()
+        );
+    }
+
+    #[test]
+    fn verified_tif_coverage_counts_domain_suffixes_across_canonical_categories() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-tif-cross-category-{unique}"));
+        let verified = std::collections::BTreeMap::from([(
+            "ThreatIntel_TIF".to_string(),
+            super::super::feed::VerifiedFeed {
+                source: "fixture".to_string(),
+                version: "fixture".to_string(),
+                declared_entries: 10,
+                domains: Arc::new((0..10).map(|index| format!("tif{index}.example")).collect()),
+            },
+        )]);
+        let artifact = |category: &str, content: String| GeneratedArtifact {
+            target: root.join(format!("rulesets/AdBlock/AdBlock_{category}.list")),
+            content,
+            kind: ArtifactKind::ExternalRuleset,
+        };
+        let suffix = |indices: std::ops::Range<usize>| {
+            indices
+                .map(|index| format!("DOMAIN-SUFFIX,tif{index}.example\n"))
+                .collect::<String>()
+        };
+        let covered_across_categories = [
+            artifact(
+                "ThreatIntel_TIF",
+                format!("# Category-Key: ThreatIntel_TIF\n{}", suffix(0..6)),
+            ),
+            artifact("Advertising", suffix(6..8)),
+        ];
+        assert!(
+            super::validate_coverage_floor_with_rolling(
+                &root,
+                &covered_across_categories,
+                &verified,
+            )
+            .is_ok()
+        );
+        let mut missing_proof = verified.clone();
+        missing_proof.get_mut("ThreatIntel_TIF").unwrap().domains = Arc::new(Default::default());
+        assert!(
+            super::validate_coverage_floor_with_rolling(
+                &root,
+                &covered_across_categories,
+                &missing_proof
+            )
+            .is_err()
+        );
+
+        let unrelated = [
+            artifact(
+                "ThreatIntel_TIF",
+                format!(
+                    "# Category-Key: ThreatIntel_TIF\n{}",
+                    (0..8)
+                        .map(|index| format!("DOMAIN-SUFFIX,other{index}.example\n"))
+                        .collect::<String>()
+                ),
+            ),
+            artifact("Advertising", String::new()),
+        ];
+        assert!(super::validate_coverage_floor_with_rolling(&root, &unrelated, &verified).is_err());
+
+        let exact_only = [artifact(
+            "ThreatIntel_TIF",
+            format!(
+                "# Category-Key: ThreatIntel_TIF\n{}",
+                (0..8)
+                    .map(|index| format!("DOMAIN,tif{index}.example\n"))
+                    .collect::<String>()
+            ),
+        )];
+        assert!(
+            super::validate_coverage_floor_with_rolling(&root, &exact_only, &verified).is_err()
+        );
+
+        let missing_published_suffix = [artifact(
+            "ThreatIntel_TIF",
+            format!("# Category-Key: ThreatIntel_TIF\n{}", suffix(0..7)),
+        )];
+        assert!(
+            super::validate_coverage_floor_with_rolling(
+                &root,
+                &missing_published_suffix,
+                &verified,
+            )
+            .is_err()
         );
     }
 
@@ -843,6 +994,7 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
                 source: "fixture".to_string(),
                 version: "fixture".to_string(),
                 declared_entries: 10,
+                domains: Arc::new((0..10).map(|index| format!("tif{index}.example")).collect()),
             },
         )]);
         let artifact = |count| GeneratedArtifact {
@@ -850,7 +1002,7 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
             content: format!(
                 "# Category-Key: ThreatIntel_TIF\n{}",
                 (0..count)
-                    .map(|index| format!("DOMAIN,tif{index}.example\n"))
+                    .map(|index| format!("DOMAIN-SUFFIX,tif{index}.example\n"))
                     .collect::<String>()
             ),
             kind: ArtifactKind::ExternalRuleset,

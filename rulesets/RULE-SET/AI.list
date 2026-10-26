@@ -1,8 +1,7 @@
 # Ruleset: AI
-# Policy: PROXY
-# Node: Any
-# Description: Rust-merged canonical ruleset
-# Rules: 312
+# Policy: USER-DEFINED
+# Description: Upstream classification rules
+# Rules: 327
 DOMAIN,ai.google.dev
 DOMAIN,ai.zhaomi.cn
 DOMAIN,aida.googleapis.com
@@ -46,6 +45,7 @@ DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN,r.bing.com
 DOMAIN,robinfrontend-pa.googleapis.com
 DOMAIN,self.events.data.microsoft.com
+DOMAIN,servd-anthropic-website.b-cdn.net
 DOMAIN,server.codeium.com
 DOMAIN,server.self-serve.windsurf.com
 DOMAIN,services.bingapis.com
@@ -69,9 +69,12 @@ DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,aispeech.com
 DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,algolia.net
+DOMAIN-SUFFIX,ant.dev
 DOMAIN-SUFFIX,antafu.com
 DOMAIN-SUFFIX,antaq.com
 DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,anthropic.team
+DOMAIN-SUFFIX,antspace.dev
 DOMAIN-SUFFIX,aorizon.cn
 DOMAIN-SUFFIX,api-building.fun
 DOMAIN-SUFFIX,api-sg-central.marscode.com
@@ -97,6 +100,7 @@ DOMAIN-SUFFIX,capcutapi.com
 DOMAIN-SUFFIX,challenges.cloudflare.com
 DOMAIN-SUFFIX,character.ai
 DOMAIN-SUFFIX,chat.com
+DOMAIN-SUFFIX,chatbotclaude.com
 DOMAIN-SUFFIX,chatglm.cn
 DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,chatgpt.livekit.cloud
@@ -106,7 +110,17 @@ DOMAIN-SUFFIX,ciciai.com
 DOMAIN-SUFFIX,ciciaicdn.com
 DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.app
 DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claude.dev
+DOMAIN-SUFFIX,claude.new
+DOMAIN-SUFFIX,claude.site
+DOMAIN-SUFFIX,claudeacademy.com
+DOMAIN-SUFFIX,claudemcpclient.com
+DOMAIN-SUFFIX,claudemcpcontent.com
+DOMAIN-SUFFIX,claudepages.dev
+DOMAIN-SUFFIX,claudestudio.com
+DOMAIN-SUFFIX,claudeusercontent.com
 DOMAIN-SUFFIX,clawhub-mirror.com
 DOMAIN-SUFFIX,client-api.arkoselabs.com
 DOMAIN-SUFFIX,clipdrop.co

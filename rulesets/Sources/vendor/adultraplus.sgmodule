@@ -1530,7 +1530,7 @@ myBlockAds3=type=http-response,pattern=^https:\/\/guide-acs\.m\.taobao\.com\/gw\
 
 cainiao4=type=http-response,pattern=^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.mshow,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/cainiao/cainiao.js
 
-goofish=type=http-response,pattern=^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\/,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish=type=http-response,pattern=^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\/,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
 meiyou_ads=type=http-response,pattern=^https:\/\/config-service\.seeyouyima\.com\/api\/configs\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/meiyou/meiyou_ads.js
 
@@ -1570,19 +1570,19 @@ bohe_ads2=type=http-response,pattern=^https:\/\/api\.boohee\.com\/meta-interface
 
 bohe_ads3=type=http-response,pattern=^https:\/\/api\.boohee\.com\/meta-interface\/v1\/index\/plaza\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/bohe/bohe_ads.js
 
-mlxx=type=http-response,pattern=^https:\/\/api\.bevol\.com\/(?:appmain\/app\/home\/page|usercenter\/account\/info|personal\/page|appmain\/app\/home\/launch|trialbox\/shop\/app\/homePage)$,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/Yu9191/Rewrite@refs/heads/main/mlxx.js
+mlxx=type=http-response,pattern=^https:\/\/api\.bevol\.com\/(?:appmain\/app\/home\/page|usercenter\/account\/info|personal\/page|appmain\/app\/home\/launch|trialbox\/shop\/app\/homePage)$,requires-body=1,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/mlxx/mlxx.js
 
 adrive2=type=http-response,pattern=^https:\/\/api\.alipan\.com\/apps\/v2\/users\/home\/(news|widgets),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/adrive/adrive.js
 
 rrtv_json13=type=http-response,pattern=^https:\/\/api.juxingclub.com\/ad\/getAll,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@master/rrtv_json.js
 
-goofish2=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/1\.0,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish2=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/1\.0,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
-goofish3=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.nearby\.itemdetail\.enter\/1\.0,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish3=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.nearby\.itemdetail\.enter\/1\.0,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
-goofish4=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.flow\.plat\.section,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish4=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.flow\.plat\.section,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
-goofish5=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish5=type=http-response,pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
 spotify-qx-header=type=http-response,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/user-customization-service\/v1\/customize$ url script-request-header https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/spotify-qx-header.js
 
@@ -1592,9 +1592,9 @@ maimai_ads=type=http-response,pattern=^https:\/\/(h3\.)?open\.taou\.com\/maimai\
 
 maimai_ads2=type=http-response,pattern=^https:\/\/(h3\.)?open\.taou\.com\/maimai\/(feed|gossip)\/v\d\/(focus_feed|gossip_detail_comment|feed_detail_comment?)\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/maimai/maimai_ads.js
 
-goofish6=type=http-response,pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish6=type=http-response,pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
-goofish7=type=http-response,pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/,requires-body=1,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=209863
+goofish7=type=http-response,pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/,requires-body=1,script-path=https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js
 
 zheye.min15=type=http-response,pattern=^https:\/\/(api|web-render)\.zhihu\.com\/topstory\/recommend,requires-body=1,script-path=https://gist.githubusercontent.com/blackmatrix7/f5f780d0f56b319b6ad9848fd080bb18/raw/zheye.min.js
 

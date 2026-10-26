@@ -2,7 +2,7 @@
 
 use crate::promax::safety::IpNetwork;
 use crate::promax::source::{DownloadConfig, Downloader};
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -161,15 +161,6 @@ fn remote_content(remote_urls: &[String], downloads: &HashMap<String, String>) -
     output
 }
 
-fn manifest_header_policy(name: &str) -> &'static str {
-    match name {
-        "Direct" => "DIRECT",
-        "Apple" => "DIRECT",
-        "NSFW" => "REJECT",
-        _ => "PROXY",
-    }
-}
-
 fn process_manifest(
     root: &Path,
     manifest: &Manifest,
@@ -202,15 +193,29 @@ fn process_manifest(
 
     let target = root.join("rulesets/RULE-SET");
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
-    let remote_content = remote_content(&manifest.remote_urls, downloads);
-    let policy = manifest_header_policy(&manifest.name);
+    let mut remote_content = remote_content(&manifest.remote_urls, downloads);
+    if manifest.name == "Apple" {
+        let aliases = read_apple_alias_rules(root)?;
+        if !aliases.is_empty() {
+            remote_content.push('\n');
+            for alias in aliases {
+                remote_content.push_str(&alias);
+                remote_content.push('\n');
+            }
+        }
+    }
+    // AdsGram is an advertising platform, not a messaging/collaboration service.
+    // Do not turn a service classification into an ad-platform routing overlay.
+    let conflicts = if manifest.name == "SocialMedia" {
+        vec!["adsgram.ai".to_string()]
+    } else {
+        Vec::new()
+    };
     crate::process_ruleset(crate::RulesetInput {
         name: &manifest.name,
         target_dir: &target,
-        conflict_domains: &[],
+        conflict_domains: &conflicts,
         skip_conflict: false,
-        policy,
-        node: "Any",
         description: "Rust-merged canonical ruleset",
         local_paths: &manifest.local_paths,
         remote_content: &remote_content,
@@ -266,25 +271,16 @@ fn read_rules(path: &Path) -> Result<BTreeSet<String>, String> {
         .collect())
 }
 
-fn write_rules(
-    path: &Path,
-    name: &str,
-    policy: &str,
-    rules: &BTreeSet<String>,
-) -> Result<(), String> {
+fn write_rules(path: &Path, name: &str, rules: &BTreeSet<String>) -> Result<(), String> {
     let description = match name {
-        "Gaming_Download" => {
-            "Game packages and patches; place before Gaming_Web and generic routing"
-        }
-        "Gaming_Play" => {
-            "Game networking and matchmaking; place before Gaming_Web and generic routing"
-        }
+        "Gaming_Download" => "Game packages and patches",
+        "Gaming_Play" => "Game networking and matchmaking",
         "Gaming_Web" => {
             "Stores, accounts, communities and shared-platform fallback; not a gameplay-only list"
         }
         _ => "Rust-merged canonical ruleset",
     };
-    let mut content = crate::generate_header(name, policy, "Any", description, rules.len());
+    let mut content = crate::generate_header(name, description, rules.len());
     for rule in rules {
         content.push_str(rule);
         content.push('\n');
@@ -343,18 +339,8 @@ pub fn split_gaming_rules(root: &Path) -> Result<(), String> {
         ("Gaming_Play", &play),
         ("Gaming_Web", &web),
     ] {
-        write_rules(
-            &directory.join(format!("{name}.list")),
-            name,
-            "USER-DEFINED",
-            rules,
-        )?;
-        write_rules(
-            &mirror.join(format!("{name}.list")),
-            name,
-            "USER-DEFINED",
-            rules,
-        )?;
+        write_rules(&directory.join(format!("{name}.list")), name, rules)?;
+        write_rules(&mirror.join(format!("{name}.list")), name, rules)?;
     }
     Ok(())
 }
@@ -581,6 +567,106 @@ fn coverage_count(rules: &BTreeSet<String>, boundary: &RuleBoundary) -> usize {
     rules.iter().filter(|rule| boundary.covers(rule)).count()
 }
 
+const APPLE_OWNERSHIP_EXCLUDED_RULESETS: &[&str] = &[
+    "Apple.list",
+    "Apple_ip.list",
+    "AppleNews.list",
+    // Legacy ad rules are compiled from rulesets/AdBlock under a separate guard.
+    "AdBlock.list",
+];
+
+fn apple_ownership_category_paths(directory: &Path) -> Result<Vec<(String, PathBuf)>, String> {
+    let mut paths = Vec::new();
+    for entry in fs::read_dir(directory).map_err(|error| error.to_string())? {
+        let path = entry.map_err(|error| error.to_string())?.path();
+        if path.extension().and_then(|value| value.to_str()) != Some("list") {
+            continue;
+        }
+        let Some(file_name) = path.file_name().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if APPLE_OWNERSHIP_EXCLUDED_RULESETS.contains(&file_name) {
+            continue;
+        }
+        let Some(name) = path.file_stem().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        paths.push((name.to_string(), path));
+    }
+    paths.sort_by(|left, right| left.0.cmp(&right.0));
+    Ok(paths)
+}
+
+fn read_apple_manual_domain_rules(root: &Path) -> Result<BTreeSet<String>, String> {
+    let manual = root.join("rulesets/Sources/custom/Apple_manual.list");
+    let mut rules = BTreeSet::new();
+    if manual.is_file() {
+        rules.extend(
+            read_rules(&manual)?
+                .into_iter()
+                .filter(|rule| rule.starts_with("DOMAIN,") || rule.starts_with("DOMAIN-SUFFIX,")),
+        );
+    }
+    Ok(rules)
+}
+
+fn read_apple_alias_rules(root: &Path) -> Result<BTreeSet<String>, String> {
+    // Follow the maintained Apple DNS mapping only for exact CNAME-style
+    // aliases under shared CDN/DNS providers; never import provider suffixes.
+    let aliases = root.join("rulesets/Sources/dns/mapping/DNS_Global_Apple.list");
+    let mut rules = BTreeSet::new();
+    if aliases.is_file() {
+        for rule in read_rules(&aliases)? {
+            let Some(host) = rule.strip_prefix("DOMAIN,") else {
+                continue;
+            };
+            let host = host.to_ascii_lowercase();
+            if [".akadns.net", ".edgesuite.net", ".edgekey.net"]
+                .iter()
+                .any(|suffix| host.ends_with(suffix))
+            {
+                rules.insert(rule);
+            }
+        }
+    }
+    Ok(rules)
+}
+
+fn read_apple_source_domain_rules(root: &Path) -> Result<BTreeSet<String>, String> {
+    let mut rules = read_apple_manual_domain_rules(root)?;
+    rules.extend(read_apple_alias_rules(root)?);
+    Ok(rules)
+}
+
+fn read_apple_ownership_rules(root: &Path) -> Result<BTreeSet<String>, String> {
+    let directory = root.join("rulesets/RULE-SET");
+    let mut rules = BTreeSet::new();
+    for name in ["Apple.list", "Apple_ip.list"] {
+        let path = directory.join(name);
+        if path.is_file() {
+            rules.extend(read_rules(&path)?);
+        }
+    }
+    rules.extend(read_apple_source_domain_rules(root)?);
+    Ok(rules)
+}
+
+fn sync_apple_owner_domains(root: &Path) -> Result<usize, String> {
+    let path = root.join("rulesets/RULE-SET/Apple.list");
+    let mut owner = if path.is_file() {
+        read_rules(&path)?
+    } else {
+        BTreeSet::new()
+    };
+    let before = owner.len();
+    owner.extend(read_apple_source_domain_rules(root)?);
+    let added = owner.len() - before;
+    if added > 0 {
+        write_rules(&path, "Apple", &owner)?;
+    }
+    Ok(added)
+}
+
 fn remove_overlaps(rules: &mut BTreeSet<String>, boundary: &RuleBoundary) -> usize {
     let before = rules.len();
     rules.retain(|rule| !boundary.intersects(rule));
@@ -597,13 +683,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     let directory = root.join("rulesets/RULE-SET");
     let direct = read_rules(&directory.join("Direct.list"))?;
     let proxy = read_rules(&directory.join("GlobalProxy.list"))?;
-    let mut apple_rules = BTreeSet::new();
-    for name in ["Apple.list", "Apple_ip.list"] {
-        let path = directory.join(name);
-        if path.is_file() {
-            apple_rules.extend(read_rules(&path)?);
-        }
-    }
+    let apple_rules = read_apple_ownership_rules(root)?;
     let apple = (!apple_rules.is_empty()).then(|| RuleBoundary::from_rules(&apple_rules));
     let cdn_path = directory.join("CDN.list");
     let cdn = if cdn_path.is_file() {
@@ -613,6 +693,25 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     };
     let (adblock, apple_adblock) = read_adblock_boundary(root, apple.as_ref())?;
     let mut errors = Vec::new();
+    let apple_owner_domains = read_apple_source_domain_rules(root)?;
+    if !apple_owner_domains.is_empty() {
+        let owner_path = directory.join("Apple.list");
+        let owner_rules = if owner_path.is_file() {
+            read_rules(&owner_path)?
+        } else {
+            BTreeSet::new()
+        };
+        let owner_boundary = RuleBoundary::from_rules(&owner_rules);
+        let missing = apple_owner_domains
+            .iter()
+            .filter(|rule| !owner_boundary.covers(rule))
+            .count();
+        if missing > 0 {
+            errors.push(format!(
+                "Apple.list is missing {missing} curated Apple service domain(s)"
+            ));
+        }
+    }
     if directory.join("Gaming_Web.list").exists() {
         let download = read_rules(&directory.join("Gaming_Download.list"))?;
         let play = read_rules(&directory.join("Gaming_Play.list"))?;
@@ -685,6 +784,26 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
                 }
             }
         }
+        for (name, path) in apple_ownership_category_paths(&directory)? {
+            if matches!(
+                name.as_str(),
+                "Direct" | "GlobalProxy" | "CDN" | "GlobalProxy_ip" | "CDN_ip"
+            ) {
+                continue;
+            }
+            let rules = read_rules(&path)?;
+            let count = coverage_count(&rules, apple);
+            if count > 0 {
+                let owner = if name.ends_with("_ip") {
+                    "Apple_ip"
+                } else {
+                    "Apple.list"
+                };
+                errors.push(format!(
+                    "{name} contains {count} Apple-owned rule(s); Apple routing belongs to {owner}"
+                ));
+            }
+        }
     }
     let nsfw_path = directory.join("NSFW.list");
     if nsfw_path.is_file() {
@@ -708,16 +827,13 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
 
 pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, usize), String> {
     let directory = root.join("rulesets/RULE-SET");
+    let synced_apple_owner_domains = sync_apple_owner_domains(root)?;
     let direct_path = directory.join("Direct.list");
     let proxy_path = directory.join("GlobalProxy.list");
     let mut direct = read_rules(&direct_path)?;
     let mut proxy = read_rules(&proxy_path)?;
 
-    let mut apple_rules = read_rules(&directory.join("Apple.list"))?;
-    let apple_ip_path = directory.join("Apple_ip.list");
-    if apple_ip_path.is_file() {
-        apple_rules.extend(read_rules(&apple_ip_path)?);
-    }
+    let apple_rules = read_apple_ownership_rules(root)?;
     let apple = RuleBoundary::from_rules(&apple_rules);
     let removed_apple_from_direct = remove_covered(&mut direct, &apple);
     let removed_apple_from_proxy = remove_covered(&mut proxy, &apple);
@@ -765,31 +881,52 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
         let protected = read_nsfw_protected_rules(root)?;
         let protected = RuleBoundary::from_rules(&protected);
         let removed = remove_overlaps(&mut nsfw, &protected);
-        write_rules(&nsfw_path, "NSFW", "REJECT", &nsfw)?;
+        write_rules(&nsfw_path, "NSFW", &nsfw)?;
         removed
     } else {
         0
     };
 
-    write_rules(&direct_path, "Direct", "DIRECT", &direct)?;
-    write_rules(&proxy_path, "GlobalProxy", "PROXY", &proxy)?;
+    write_rules(&direct_path, "Direct", &direct)?;
+    write_rules(&proxy_path, "GlobalProxy", &proxy)?;
     if removed_apple_from_cdn > 0
         && let Some(cdn) = &cdn
     {
-        write_rules(&cdn_path, "CDN", "PROXY", cdn)?;
+        write_rules(&cdn_path, "CDN", cdn)?;
     }
     if removed_apple_from_global_proxy_ip > 0
         && let Some(rules) = &global_proxy_ip
     {
-        write_rules(&global_proxy_ip_path, "GlobalProxy_ip", "PROXY", rules)?;
+        write_rules(&global_proxy_ip_path, "GlobalProxy_ip", rules)?;
     }
     if removed_apple_from_cdn_ip > 0
         && let Some(rules) = &cdn_ip
     {
-        write_rules(&cdn_ip_path, "CDN_ip", "PROXY", rules)?;
+        write_rules(&cdn_ip_path, "CDN_ip", rules)?;
     }
+    let mut removed_apple_by_category = BTreeMap::new();
+    for (name, path) in apple_ownership_category_paths(&directory)? {
+        if matches!(
+            name.as_str(),
+            "Direct" | "GlobalProxy" | "CDN" | "GlobalProxy_ip" | "CDN_ip"
+        ) {
+            continue;
+        }
+        let mut rules = read_rules(&path)?;
+        let removed = remove_covered(&mut rules, &apple);
+        if removed > 0 {
+            write_rules(&path, &name, &rules)?;
+            removed_apple_by_category.insert(name, removed);
+        }
+    }
+    let category_counts = removed_apple_by_category
+        .iter()
+        .map(|(name, count)| format!("{name}={count}"))
+        .collect::<Vec<_>>()
+        .join(", ");
     println!(
-        "[INFO] category boundaries removed {removed_from_direct} AdBlock-covered and {removed_apple_from_direct} Apple-owned rule(s) from Direct, {removed_apple_from_proxy} Apple-owned and {removed_direct_from_proxy} Direct overlap(s) from GlobalProxy, {removed_apple_from_cdn} Apple-owned rule(s) from CDN, {removed_apple_from_global_proxy_ip} Apple-owned IP rule(s) from GlobalProxy_ip, {removed_apple_from_cdn_ip} Apple-owned IP rule(s) from CDN_ip, and {removed_from_nsfw} shared-service overlap(s) from NSFW"
+        "[INFO] category boundaries synced {synced_apple_owner_domains} curated Apple service domain(s) into Apple.list; removed {removed_from_direct} AdBlock-covered and {removed_apple_from_direct} Apple-owned rule(s) from Direct, {removed_apple_from_proxy} Apple-owned and {removed_direct_from_proxy} Direct overlap(s) from GlobalProxy, {removed_apple_from_cdn} Apple-owned rule(s) from CDN, {removed_apple_from_global_proxy_ip} Apple-owned IP rule(s) from GlobalProxy_ip, {removed_apple_from_cdn_ip} Apple-owned IP rule(s) from CDN_ip, and {removed_from_nsfw} shared-service overlap(s) from NSFW; other Apple ownership removals: [{}]",
+        category_counts,
     );
     Ok((
         removed_from_direct,
@@ -802,7 +939,7 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
 #[cfg(test)]
 mod tests {
     use super::{
-        discover_manifests, enforce_category_boundaries, manifest_header_policy, read_rules,
+        Manifest, discover_manifests, enforce_category_boundaries, process_manifest, read_rules,
         remote_content, reverse_domain_labels, split_gaming_rules, validate_category_boundaries,
     };
     use std::collections::HashMap;
@@ -810,18 +947,40 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn apple_header_recommends_direct_without_inline_policy() {
-        assert_eq!(manifest_header_policy("Apple"), "DIRECT");
-        assert_eq!(manifest_header_policy("AppleNews"), "PROXY");
+    fn category_headers_leave_routing_to_the_consumer() {
         let header = crate::generate_header(
             "Apple",
-            manifest_header_policy("Apple"),
-            "Any",
             "Apple service domains; routing is selected by the consumer",
             1,
         );
-        assert!(header.lines().any(|line| line == "# Policy: DIRECT"));
+        assert!(header.lines().any(|line| line == "# Policy: USER-DEFINED"));
         assert!(header.lines().all(|line| line.starts_with('#')));
+    }
+
+    #[test]
+    fn social_service_sources_exclude_an_ad_platform_without_blocking_services() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-collaboration-{}", std::process::id()));
+        let manifest = super::Manifest {
+            name: "SocialMedia".to_string(),
+            local_paths: Vec::new(),
+            remote_urls: vec!["https://fixture.test/communication.list".to_string()],
+        };
+        let downloads = HashMap::from([(
+            manifest.remote_urls[0].clone(),
+            "+.slack.com\n+.adsgram.ai\n+.matrix.org\n".to_string(),
+        )]);
+        super::process_manifest(&root, &manifest, &downloads).unwrap();
+        let path = root.join("rulesets/RULE-SET/SocialMedia.list");
+        let content = fs::read_to_string(&path).unwrap();
+        assert!(!content.contains("adsgram.ai"));
+        assert!(content.contains("DOMAIN-SUFFIX,slack.com\n"));
+        assert!(content.contains("DOMAIN-SUFFIX,matrix.org\n"));
+        assert!(content.contains("# Policy: USER-DEFINED\n"));
+        let before = fs::read(&path).unwrap();
+        super::process_manifest(&root, &manifest, &downloads).unwrap();
+        assert_eq!(fs::read(path).unwrap(), before);
+        fs::remove_dir_all(root).unwrap();
     }
 
     fn rule_matches_host(rule: &str, host: &str) -> bool {
@@ -997,7 +1156,7 @@ mod tests {
         let direct = fs::read_to_string(root.join("rulesets/RULE-SET/Direct.list")).unwrap();
         let proxy = fs::read_to_string(root.join("rulesets/RULE-SET/GlobalProxy.list")).unwrap();
         let nsfw = fs::read_to_string(root.join("rulesets/RULE-SET/NSFW.list")).unwrap();
-        assert!(direct.contains("# Policy: DIRECT"));
+        assert!(direct.contains("# Policy: USER-DEFINED"));
         assert!(direct.contains("DOMAIN,cn.example"));
         assert!(direct.contains("DOMAIN-SUFFIX,shop.test"));
         assert!(!direct.contains("track.ads.example"));
@@ -1155,6 +1314,161 @@ mod tests {
             fs::read_to_string(rules.join("AppleNews.list")).unwrap(),
             apple_news
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn apple_ownership_is_enforced_across_categories_without_broad_parent_removal() {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-apple-all-category-boundary-{}",
+            std::process::id()
+        ));
+        let rules = root.join("rulesets/RULE-SET");
+        let adblock = root.join("rulesets/AdBlock");
+        let custom = root.join("rulesets/Sources/custom");
+        let apple_mapping = root.join("rulesets/Sources/dns/mapping");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&rules).unwrap();
+        fs::create_dir_all(&adblock).unwrap();
+        fs::create_dir_all(&custom).unwrap();
+        fs::create_dir_all(&apple_mapping).unwrap();
+
+        fs::write(rules.join("Direct.list"), "DOMAIN,direct.example\n").unwrap();
+        fs::write(rules.join("GlobalProxy.list"), "DOMAIN,proxy.example\n").unwrap();
+        fs::write(
+            rules.join("Apple.list"),
+            "DOMAIN-SUFFIX,apple.com\nDOMAIN,store.apple.com.edgekey.net\nDOMAIN,ocsp-lb.apple.com.akadns.net\nDOMAIN,icloud-cdn.icloud.com.akadns.net\n",
+        )
+        .unwrap();
+        fs::write(
+            custom.join("Apple_manual.list"),
+            "DOMAIN,manual-alias.apple.test\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("Google.list"),
+            "DOMAIN,store.apple.com.edgekey.net\nDOMAIN-SUFFIX,akadns.net\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("Microsoft.list"),
+            "DOMAIN,ocsp-lb.apple.com.akadns.net\nDOMAIN-SUFFIX,edgesuite.net\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("StreamUS.list"),
+            "DOMAIN-SUFFIX,itunes.apple.com\nDOMAIN-SUFFIX,amazonaws.com\n",
+        )
+        .unwrap();
+        fs::write(
+            apple_mapping.join("DNS_Global_Apple.list"),
+            "DOMAIN,login.apple.com.edgesuite.net\nDOMAIN-SUFFIX,edgesuite.net\nDOMAIN-SUFFIX,akadns.net\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("SocialMedia.list"),
+            "DOMAIN,login.apple.com.edgesuite.net\nDOMAIN-SUFFIX,edgesuite.net\nDOMAIN-SUFFIX,akadns.net\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("Gaming.list"),
+            "DOMAIN,icloud-cdn.icloud.com.akadns.net\nDOMAIN-SUFFIX,game-cdn.example\n",
+        )
+        .unwrap();
+        let apple_news = "DOMAIN,gspe1-ssl.ls.apple.com\nDOMAIN,manual-alias.apple.test\n";
+        fs::write(rules.join("AppleNews.list"), apple_news).unwrap();
+        fs::write(
+            rules.join("AdBlock.list"),
+            "DOMAIN,manual-alias.apple.test\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            validate_category_boundaries(&root).unwrap(),
+            vec![
+                "Apple.list is missing 2 curated Apple service domain(s)",
+                "Gaming contains 1 Apple-owned rule(s); Apple routing belongs to Apple.list",
+                "Google contains 1 Apple-owned rule(s); Apple routing belongs to Apple.list",
+                "Microsoft contains 1 Apple-owned rule(s); Apple routing belongs to Apple.list",
+                "SocialMedia contains 1 Apple-owned rule(s); Apple routing belongs to Apple.list",
+                "StreamUS contains 1 Apple-owned rule(s); Apple routing belongs to Apple.list",
+            ]
+        );
+        assert_eq!(enforce_category_boundaries(&root).unwrap(), (0, 0, 0, 0));
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        let apple = fs::read_to_string(rules.join("Apple.list")).unwrap();
+        assert!(apple.contains("DOMAIN,manual-alias.apple.test"));
+        assert!(apple.contains("DOMAIN,login.apple.com.edgesuite.net"));
+
+        for (name, alias, preserved_parent) in [
+            (
+                "Gaming",
+                "icloud-cdn.icloud.com.akadns.net",
+                "game-cdn.example",
+            ),
+            ("Google", "store.apple.com.edgekey.net", "akadns.net"),
+            ("Microsoft", "ocsp-lb.apple.com.akadns.net", "edgesuite.net"),
+            (
+                "SocialMedia",
+                "login.apple.com.edgesuite.net",
+                "edgesuite.net",
+            ),
+            ("StreamUS", "itunes.apple.com", "amazonaws.com"),
+        ] {
+            let content = fs::read_to_string(rules.join(format!("{name}.list"))).unwrap();
+            assert!(!content.contains(alias), "{name} retained {alias}");
+            assert!(
+                content.contains(preserved_parent),
+                "{name} lost {preserved_parent}"
+            );
+            let entries: Vec<_> = content
+                .lines()
+                .filter(|line| !line.starts_with('#'))
+                .collect();
+            let sorted: std::collections::BTreeSet<_> = entries.iter().copied().collect();
+            assert_eq!(entries, sorted.into_iter().collect::<Vec<_>>());
+        }
+        assert_eq!(
+            fs::read_to_string(rules.join("AppleNews.list")).unwrap(),
+            apple_news
+        );
+        assert!(
+            fs::read_to_string(rules.join("AdBlock.list"))
+                .unwrap()
+                .contains("manual-alias.apple.test")
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn apple_refresh_publishes_exact_aliases_from_maintained_mapping() {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-apple-alias-refresh-{}",
+            std::process::id()
+        ));
+        let mapping = root.join("rulesets/Sources/dns/mapping");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&mapping).unwrap();
+        fs::write(
+            mapping.join("DNS_Global_Apple.list"),
+            "DOMAIN,ocsp-lb.apple.com.akadns.net\nDOMAIN-SUFFIX,akadns.net\n",
+        )
+        .unwrap();
+
+        process_manifest(
+            &root,
+            &Manifest {
+                name: "Apple".to_string(),
+                local_paths: Vec::new(),
+                remote_urls: Vec::new(),
+            },
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        let apple = fs::read_to_string(root.join("rulesets/RULE-SET/Apple.list")).unwrap();
+        assert!(apple.contains("DOMAIN,ocsp-lb.apple.com.akadns.net"));
+        assert!(!apple.contains("DOMAIN-SUFFIX,akadns.net"));
         fs::remove_dir_all(root).unwrap();
     }
 

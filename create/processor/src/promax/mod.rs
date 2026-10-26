@@ -4,6 +4,7 @@ pub(crate) mod feed;
 pub mod functional;
 pub mod rule;
 pub mod safety;
+pub mod script_resources;
 pub mod source;
 pub mod validation;
 

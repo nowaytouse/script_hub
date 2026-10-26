@@ -1,8 +1,7 @@
 # Ruleset: Direct
-# Policy: DIRECT
-# Node: Any
+# Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 123647
+# Rules: 123643
 DOMAIN,004430.xyz
 DOMAIN,021912.xyz
 DOMAIN,1-fss24-s0.streamhoster.com
@@ -357,7 +356,6 @@ DOMAIN,i.dell.com
 DOMAIN,i.pki.goog
 DOMAIN,iad-eqx10-ookla-1.99.network
 DOMAIN,icecast-ruvr.cdnvideo.ru
-DOMAIN,icloud-cdn.icloud.com.akadns.net
 DOMAIN,images-cn-8.ssl-images-amazon.com
 DOMAIN,images-cn.ssl-images-amazon.com
 DOMAIN,imrteixeira.brsserver.com.br
@@ -649,10 +647,8 @@ DOMAIN,o.pki.goog
 DOMAIN,oak-speedtest.otelco.com
 DOMAIN,oasisauth.h3c.com
 DOMAIN,obey.torrentonline.cc
-DOMAIN,ocsp-lb.apple.com.akadns.net
 DOMAIN,ocsp.globalsign.com
 DOMAIN,ocsp.pki.goog
-DOMAIN,ocsp2-lb.apple.com.akadns.net
 DOMAIN,ocsp2.globalsign.com
 DOMAIN,ogtm-speedtest.f5.si
 DOMAIN,ok.conectmastelecom.com.br
@@ -842,7 +838,6 @@ DOMAIN,p6-novel.byteimg.com
 DOMAIN,p7-juejin.byteimg.com
 DOMAIN,p8-juejin.byteimg.com
 DOMAIN,p9-juejin.byteimg.com
-DOMAIN,pancake.cdn-apple.com.akadns.net
 DOMAIN,par1speedtest01.skylogic.com
 DOMAIN,pathsalaspeedtest.ngcbroadband.com
 DOMAIN,pauseq4vost1.datamossa.cloud

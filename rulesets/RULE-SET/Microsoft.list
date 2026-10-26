@@ -1,8 +1,7 @@
 # Ruleset: Microsoft
-# Policy: PROXY
-# Node: Any
-# Description: Rust-merged canonical ruleset
-# Rules: 889
+# Policy: USER-DEFINED
+# Description: Upstream classification rules
+# Rules: 895
 DOMAIN,az764295.vo.msecnd.net
 DOMAIN,azure.microsoft.com
 DOMAIN,azuremarketplace.microsoft.com
@@ -699,12 +698,14 @@ DOMAIN-SUFFIX,officeplus.cn
 DOMAIN-SUFFIX,officeppe.net
 DOMAIN-SUFFIX,officewebapps.cn
 DOMAIN-SUFFIX,omniroot.com
+DOMAIN-SUFFIX,oneclient.sfx.ms
 DOMAIN-SUFFIX,onecollector.cloudapp.aria
 DOMAIN-SUFFIX,onedrive
 DOMAIN-SUFFIX,onedrive.co
 DOMAIN-SUFFIX,onedrive.co.uk
 DOMAIN-SUFFIX,onedrive.com
 DOMAIN-SUFFIX,onedrive.eu
+DOMAIN-SUFFIX,onedrive.live.com
 DOMAIN-SUFFIX,onedrive.net
 DOMAIN-SUFFIX,onedrive.org
 DOMAIN-SUFFIX,onedriveupdater
@@ -728,6 +729,7 @@ DOMAIN-SUFFIX,ovi.com.cn
 DOMAIN-SUFFIX,passport.net
 DOMAIN-SUFFIX,pbiwebcontent.cn
 DOMAIN-SUFFIX,phonefactor.net
+DOMAIN-SUFFIX,photos.live.com
 DOMAIN-SUFFIX,pixapp.net
 DOMAIN-SUFFIX,playfab.com
 DOMAIN-SUFFIX,playfabapi.cn
@@ -769,6 +771,7 @@ DOMAIN-SUFFIX,sharepoint.cn
 DOMAIN-SUFFIX,sharepoint.com
 DOMAIN-SUFFIX,sharepointonline.com
 DOMAIN-SUFFIX,signalr.net
+DOMAIN-SUFFIX,skydrive.wns.windows.com
 DOMAIN-SUFFIX,skype
 DOMAIN-SUFFIX,skype-edf.akadns.net
 DOMAIN-SUFFIX,skype.com
@@ -791,6 +794,8 @@ DOMAIN-SUFFIX,statics-marketingsites-eas-ms-com.akamaized.net
 DOMAIN-SUFFIX,statics-marketingsites-eus-ms-com.akamaized.net
 DOMAIN-SUFFIX,statics-marketingsites-neu-ms-com.akamaized.net
 DOMAIN-SUFFIX,statics-marketingsites-wcus-ms-com.akamaized.net
+DOMAIN-SUFFIX,storage.live.com
+DOMAIN-SUFFIX,storage.msn.com
 DOMAIN-SUFFIX,successwithteams.com
 DOMAIN-SUFFIX,surface.com
 DOMAIN-SUFFIX,svc.ms

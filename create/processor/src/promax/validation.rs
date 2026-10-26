@@ -872,6 +872,13 @@ fn validate_surge_script(line_number: usize, line: &str, errors: &mut Vec<Valida
     let params = parse_parameters(content);
     let script_type = parameter(&params, "type");
     let script_path = parameter(&params, "script-path");
+    if script_path.is_some_and(|url| super::script_resources::replacement_for(url).is_some()) {
+        errors.push(error(
+            line_number,
+            "obsolete-script-resource",
+            "script resource has a maintained replacement; refusing the retired 404/TLS proxy reference",
+        ));
+    }
     let valid = match script_type {
         Some("http-request" | "http-response") => {
             let pattern = parameter(&params, "pattern");
@@ -905,6 +912,15 @@ fn validate_surge_script(line_number: usize, line: &str, errors: &mut Vec<Valida
 }
 
 fn validate_loon_script(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+    if super::script_resources::script_resource_url(line)
+        .is_some_and(|url| super::script_resources::replacement_for(url).is_some())
+    {
+        errors.push(error(
+            line_number,
+            "obsolete-script-resource",
+            "script resource has a maintained replacement",
+        ));
+    }
     let mut fields = line.split_whitespace();
     let script_type = fields.next().unwrap_or("");
     let valid_type = matches!(
@@ -1078,6 +1094,31 @@ hostname = good.example, https://bad.example
 
         assert_eq!(errors.len(), 1);
         assert_eq!((errors[0].line, errors[0].code), (3, "invalid-rule-option"));
+    }
+
+    #[test]
+    fn obsolete_embedded_script_resources_cannot_be_published() {
+        for url in [
+            "https://cdn.jsdelivr.net/gh/Yu9191/Rewrite@main/mlxx.js",
+            "https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=fixture",
+        ] {
+            let module = format!(
+                "#!name=fixture\n[Script]\nfixture = type=http-response,pattern=^https://ads.example.test/,script-path={url}\n"
+            );
+            assert!(
+                validate_surge_module(&module)
+                    .iter()
+                    .any(|error| error.code == "obsolete-script-resource")
+            );
+            let module = format!(
+                "#!name=fixture\n[Script]\nhttp-response ^https://ads.example.test/ script-path={url}\n"
+            );
+            assert!(
+                validate_loon_plugin(&module)
+                    .iter()
+                    .any(|error| error.code == "obsolete-script-resource")
+            );
+        }
     }
 
     #[test]
