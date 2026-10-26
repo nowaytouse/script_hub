@@ -39,6 +39,8 @@ https://raw.githubusercontent.com/geekdada/surge-list/master/domain-set/neohosts
 https://ruleset.skk.moe/List/domainset/reject.conf|REJECT|domainset|Advertising
 https://ruleset.skk.moe/List/domainset/reject_extra.conf|REJECT|domainset|Advertising
 https://ruleset.skk.moe/List/non_ip/reject.conf|REJECT|auto|Advertising
+https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf|REJECT-NO-DROP|auto|Security
+https://ruleset.skk.moe/List/non_ip/reject-drop.conf|REJECT-DROP|auto|Privacy
 https://ruleset.skk.moe/List/non_ip/reject-url-regex.conf|REJECT|auto|Advertising
 https://ruleset.skk.moe/List/ip/reject.conf|REJECT|auto|Advertising
 https://ruleset.skk.moe/List/non_ip/sogouinput.conf|REJECT|auto|Privacy

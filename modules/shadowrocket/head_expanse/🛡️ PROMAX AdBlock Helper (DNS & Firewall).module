@@ -3,7 +3,7 @@
 #!author=ScriptHub
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, DNS, Apple Safety
-#!version=2026.10.25
+#!version=2026.10.26
 
 [General]
 fallback-dns-server = %APPEND% 223.5.5.5, 119.29.29.29, https://dns.alidns.com/dns-query
@@ -3236,4 +3236,4 @@ xn--ruq8a011kt6y.xn--hxt814e = server:system
 yourmonsterbeats.com = server:system
 
 [MITM]
-hostname = %INSERT% -*.apple-cloudkit.com, -*.apple-dns.net, -*.apple-livephotoskit.com, -*.apzones.com, -*.cdn-apple.com, -*.gc.apple.com, -*.icloud-content.com, -*.icloud.apple.com, -*.icloud.com, -*.icloud.com.cn, -*.iwork.apple.com, -account.apple.com, -apple-cloudkit.com, -apple-dns.net, -apple-livephotoskit.com, -apple-native-relay.apple.com, -appleid.cdn-apple.com, -apzones.com, -cdn-apple.com, -gateway.icloud.com, -gc.apple.com, -gsa.apple.com, -icloud-content.com, -icloud.apple.com, -icloud.com, -icloud.com.cn, -idmsa.apple.com, -iwork.apple.com, -known-issues.apple.com, -mask-api.icloud.com, -mask-h2.icloud.com, -mask.icloud.com, -metrics.icloud.com, -pong.icloud.com, -probe.icloud.com
+hostname = %INSERT% -*.apple-cloudkit.com, -*.apple-dns.net, -*.apple-livephotoskit.com, -*.apzones.com, -*.cdn-apple.com, -*.gc.apple.com, -*.icloud-content.com, -*.icloud.apple.com, -*.icloud.com, -*.icloud.com.cn, -*.iwork.apple.com, -*.music.apple.com, -account.apple.com, -aod-ssl.itunes.apple.com, -aod.itunes.apple.com, -apple-cloudkit.com, -apple-dns.net, -apple-livephotoskit.com, -apple-native-relay.apple.com, -appleid.cdn-apple.com, -apzones.com, -audio-ssl.itunes.apple.com, -audio.itunes.apple.com, -cdn-apple.com, -certs.apple.com, -crl.apple.com, -gateway.icloud.com, -gc.apple.com, -gsa.apple.com, -icloud-content.com, -icloud.apple.com, -icloud.com, -icloud.com.cn, -idmsa.apple.com, -iwork.apple.com, -known-issues.apple.com, -mask-api.icloud.com, -mask-h2.icloud.com, -mask.icloud.com, -metrics.icloud.com, -music.apple.com, -ocsp.apple.com, -ocsp2.apple.com, -pong.icloud.com, -probe.icloud.com, -valid.apple.com

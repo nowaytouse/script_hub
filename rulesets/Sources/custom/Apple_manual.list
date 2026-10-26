@@ -1,14 +1,13 @@
 # Apple 手动规则
 # 用于添加自定义的 Apple 相关规则
 
-# iCloud 关键词匹配
-DOMAIN-KEYWORD,icloud
-
-# Core Apple/iCloud Domains (Hardened for Direct Routing)
+# Apple service ownership; outbound routing is selected by the consumer.
 DOMAIN,gateway.icloud.com
 DOMAIN-SUFFIX,apple.com
 DOMAIN-SUFFIX,icloud.com
 DOMAIN-SUFFIX,icloud-content.com
+# Store and Apple Music service endpoints are Apple's own services.
+DOMAIN-SUFFIX,itunes.apple.com
 DOMAIN-SUFFIX,mzstatic.com
 DOMAIN-SUFFIX,itunes.com
 DOMAIN-SUFFIX,apple-cloudkit.com

@@ -23,7 +23,8 @@ static AD_INTENT: Lazy<Regex> = Lazy::new(|| {
 static HOST_CANDIDATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(?:[a-z0-9*?_-]+\.)+[a-z0-9*?_-]+").unwrap());
 
-/// Apple documents these hosts as required for Apple Account authentication.
+/// Authentication, certificate validation and Apple media transport endpoints.
+/// Keep these outside interception without disabling WeatherKit or TV scripts.
 pub const APPLE_CRITICAL_EXACT: &[&str] = &[
     "account.apple.com",
     "appleid.cdn-apple.com",
@@ -38,6 +39,15 @@ pub const APPLE_CRITICAL_EXACT: &[&str] = &[
     "pong.icloud.com",
     "metrics.icloud.com",
     "apple-native-relay.apple.com",
+    "certs.apple.com",
+    "crl.apple.com",
+    "ocsp.apple.com",
+    "ocsp2.apple.com",
+    "valid.apple.com",
+    "audio-ssl.itunes.apple.com",
+    "audio.itunes.apple.com",
+    "aod-ssl.itunes.apple.com",
+    "aod.itunes.apple.com",
 ];
 
 /// Apple documents these domains as required for iCloud and related services.
@@ -53,6 +63,7 @@ pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
     "icloud-content.com",
     "iwork.apple.com",
     "apple-dns.net",
+    "music.apple.com",
 ];
 
 pub fn apple_mitm_exclusions() -> Vec<String> {
@@ -137,13 +148,13 @@ impl ProtectionStats {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct IpNetwork {
+pub(crate) struct IpNetwork {
     address: IpAddr,
     prefix: u8,
 }
 
 impl IpNetwork {
-    fn parse(value: &str) -> Option<Self> {
+    pub(crate) fn parse(value: &str) -> Option<Self> {
         let (address, prefix) = value.split_once('/').unwrap_or((value, ""));
         let address: IpAddr = address.parse().ok()?;
         let max_prefix = if address.is_ipv4() { 32 } else { 128 };
@@ -155,7 +166,7 @@ impl IpNetwork {
         (prefix <= max_prefix).then_some(Self { address, prefix })
     }
 
-    fn overlaps(self, other: Self) -> bool {
+    pub(crate) fn overlaps(self, other: Self) -> bool {
         let prefix = self.prefix.min(other.prefix);
         match (self.address, other.address) {
             (IpAddr::V4(left), IpAddr::V4(right)) => {
@@ -176,6 +187,10 @@ impl IpNetwork {
             }
             _ => false,
         }
+    }
+
+    pub(crate) fn covers(self, other: Self) -> bool {
+        self.prefix <= other.prefix && self.overlaps(other)
     }
 }
 
@@ -243,6 +258,9 @@ impl SafetyPolicy {
 
     pub fn decision(&self, rule: &SurgeRule) -> SafetyDecision {
         let payload = rule.payload.to_ascii_lowercase();
+        if rule.kind == RuleKind::UrlRegex && is_bilibili_playurl_endpoint(&payload) {
+            return SafetyDecision::Quarantine("broad-media-match");
+        }
         let intersects = match rule.kind {
             RuleKind::Domain => self.domain_is_protected(&payload),
             RuleKind::DomainSuffix => self.suffix_intersects(&payload),
@@ -298,6 +316,10 @@ impl SafetyPolicy {
         });
         if protected {
             SafetyDecision::Quarantine("protected-functional-intersection")
+        } else if is_bilibili_playurl_endpoint(request)
+            && (is_empty_map_local(line) || is_reject_action(line))
+        {
+            SafetyDecision::Quarantine("broad-media-match")
         } else if let SafetyDecision::Quarantine(reason) = classify_functional_url(request) {
             SafetyDecision::Quarantine(reason)
         } else {
@@ -691,6 +713,56 @@ pub fn classify_functional_url(line: &str) -> SafetyDecision {
     }
 }
 
+fn is_bilibili_playurl_endpoint(pattern: &str) -> bool {
+    let normalized = pattern
+        .replace(r"\\/", "/")
+        .replace(r"\/", "/")
+        .replace(r"\\.", ".")
+        .replace(r"\.", ".");
+    let normalized = normalized.to_ascii_lowercase();
+    let Some((_, authority_and_path)) = normalized.split_once("://") else {
+        return false;
+    };
+    let Some((authority, path)) = authority_and_path.split_once('/') else {
+        return false;
+    };
+    let bili_api_host = matches!(authority, "api.bilibili.com" | "api.biliapi.net")
+        || authority == "api.bili(bili.com|api.net)";
+    if !bili_api_host {
+        return false;
+    }
+    [
+        "pgc/player/api/playurl",
+        "pgc/player/web/playurl",
+        "pgc/player/(api|web)/playurl",
+        "x/player/playurl",
+    ]
+    .iter()
+    .any(|endpoint| {
+        path.strip_prefix(endpoint).is_some_and(|tail| {
+            tail.is_empty()
+                || tail.starts_with(r"\?")
+                || tail.starts_with(r"\\?")
+                || tail.starts_with('?')
+                || tail.starts_with('$')
+        })
+    })
+}
+
+fn is_empty_map_local(line: &str) -> bool {
+    let normalized = line.to_ascii_lowercase();
+    normalized.contains("data=\"\"") || normalized.contains("data=''")
+}
+
+fn is_reject_action(line: &str) -> bool {
+    let action = line
+        .split_whitespace()
+        .last()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    action == "reject" || action.starts_with("reject-")
+}
+
 pub fn classify_domain_payload(payload: &str) -> SafetyDecision {
     if MEDIA_MARKER.is_match(payload) && !AD_INTENT.is_match(payload) {
         SafetyDecision::Quarantine("broad-media-domain")
@@ -1002,5 +1074,68 @@ mod tests {
         assert!(apple_host_pattern_is_critical("*.icloud.com"));
         assert!(apple_host_pattern_is_critical("*.apple.com"));
         assert!(!apple_host_pattern_is_critical("weatherkit.apple.com"));
+    }
+
+    #[test]
+    fn whole_bilibili_playurl_reject_is_quarantined() {
+        let rule = SurgeRule::parse(
+            r"URL-REGEX,^https?://api\.bilibili\.com/pgc/player/(api|web)/playurl\?,REJECT",
+        )
+        .unwrap();
+
+        assert_eq!(
+            SafetyPolicy::default().decision(&rule),
+            SafetyDecision::Quarantine("broad-media-match")
+        );
+    }
+
+    #[test]
+    fn empty_maplocal_for_bilibili_playurl_is_quarantined() {
+        let map_local = r#"^https?://api\.bili(bili\.com|api\.net)/pgc/player/(api|web)/playurl\? data-type=text data="" status-code=200"#;
+
+        assert_eq!(
+            SafetyPolicy::default().functional_decision(map_local),
+            SafetyDecision::Quarantine("broad-media-match")
+        );
+    }
+
+    #[test]
+    fn whole_bilibili_playurl_rewrite_reject_is_quarantined() {
+        let rewrite = r#"^https?://api\.bilibili\.com/pgc/player/api/playurl\? - ReJeCt-DROP"#;
+
+        assert_eq!(
+            SafetyPolicy::default().functional_decision(rewrite),
+            SafetyDecision::Quarantine("broad-media-match")
+        );
+    }
+
+    #[test]
+    fn non_reject_bilibili_playurl_redirect_is_kept() {
+        let redirect = r#"^https?://api\.bilibili\.com/pgc/player/api/playurl\? https://api.bilibili.com/pgc/player/api/playurl 302"#;
+
+        assert_eq!(
+            SafetyPolicy::default().functional_decision(redirect),
+            SafetyDecision::Keep
+        );
+    }
+
+    #[test]
+    fn non_destructive_bilibili_playurl_response_script_is_kept() {
+        let script = r#"BiliBili.PlayURL.response = type=http-response, pattern=^https?://api\.bilibili\.com/pgc/player/api/playurl\?, script-path=https://example.test/response.js"#;
+
+        assert_eq!(
+            SafetyPolicy::default().functional_decision(script),
+            SafetyDecision::Keep
+        );
+    }
+
+    #[test]
+    fn official_bilibili_adblock_playurl_response_script_is_kept() {
+        let script = r#"📺 BiliBili.ADBlock.playurl.response.grpc = type=http-response, pattern=^https?:\\/\\/(grpc|app)\\.bili(bili\\.com|api\\.net)\\/bilibili\\.app\\.playurl\\.v1\\.PlayURL\\/PlayView$, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/Biliverse/ADBlock/releases/download/v0.7.5/response.bundle.js"#;
+
+        assert_eq!(
+            SafetyPolicy::default().functional_decision(script),
+            SafetyDecision::Keep
+        );
     }
 }

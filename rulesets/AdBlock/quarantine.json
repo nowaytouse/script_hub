@@ -80802,6 +80802,72 @@
     "risk": "broad-media"
   },
   {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "candidate": "DOMAIN,7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe",
+    "reason": "upstream-ruleset-watermark",
+    "risk": "invalid"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "candidate": "DOMAIN,data.bilibili.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "candidate": "DOMAIN,dataflow.biliapi.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "candidate": "DOMAIN-SUFFIX,data.microsoft.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-drop.conf",
+    "candidate": "DOMAIN-SUFFIX,telemetry.mozilla.org",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "candidate": "AND,((PROTOCOL,UDP), (DOMAIN-SUFFIX,googlevideo.com))",
+    "reason": "logical-rule-not-flattened",
+    "risk": "invalid"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "candidate": "DOMAIN,7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe",
+    "reason": "upstream-ruleset-watermark",
+    "risk": "invalid"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "candidate": "DOMAIN,upos-sz-302kodo.bilivideo.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "candidate": "DOMAIN,upos-sz-302ppio.bilivideo.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "candidate": "DOMAIN-SUFFIX,mcdn.bilivideo.cn",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf",
+    "candidate": "DOMAIN-WILDCARD,upos-sz-302*.bilivideo.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
     "source": "modules/source/local/All-in-One-2.x.sgmodule",
     "candidate": "*.amap.com",
     "reason": "protected-mitm-host",

@@ -15,6 +15,21 @@
 
 规则索引与分片说明见 `rulesets/AdBlock/README.md` 和 `rulesets/AdBlock/catalog.json`。
 
+所有 PROMAX 上游规则（包括 Sukka 的 `REJECT-DROP` / `REJECT-NO-DROP`）均经过同一白名单和安全检查，再以原拒绝策略合并；模块不直接加载绕过检查的第三方规则集。正常视频 CDN 与整段播放接口的拒绝/空响应会被隔离，官方广告响应处理脚本继续保留。
+
+### Apple 服务与分流
+
+Apple Music、iTunes 与 Apple 自有媒体端点归入 `Apple.list`，不混入通用 `CDN.list` / `GlobalProxy.list`。使用时把 Apple 规则放在通用 CDN、代理兜底规则之前，并在自己的配置中选择策略；文件头的 `Policy` 只是推荐说明，不会改变客户端实际分流。例如希望 Apple 服务直连时：
+
+```ini
+# 若单独使用 AppleNews 地区服务策略，应先放 AppleNews，再放 Apple。
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/RULE-SET/Apple.list,DIRECT
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/RULE-SET/Apple_ip.list,DIRECT,no-resolve
+# 用户自己的 CDN / GlobalProxy 规则放在后面。
+```
+
+账号、iCloud、证书校验与音乐播放/鉴权端点排除 MITM 和固定/第三方 Host 映射；WeatherKit、TV 等明确的功能端点仍保留。此边界用于降低连接破坏风险，不降低 TLS 校验强度，也不能据此认定某次账号锁定的原因。端点依据见 [Apple 网络要求](https://support.apple.com/en-us/101555)。
+
 ### 移动端运行开销
 
 保留现有广告源、规则分片和响应处理功能，不通过裁剪规则、强制脚本引擎或统一降低 body 大小上限换取静态指标。编译器会把简单 HTTP 主机正则中的跨路径通配符限制在 URL authority 内，避免路径中的域名文本误触发脚本/重写；MITM 仅在请求主机可被严格证明时收束到实际引用的完整主机，复杂正则保留兼容范围，排除项始终先于包含项。

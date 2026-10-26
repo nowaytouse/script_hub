@@ -726,10 +726,14 @@ mod tests {
         bare
     }
 
-    fn clone_from(bare: &Fixture, label: &str) -> Fixture {
+    fn clone_from_with_autocrlf(bare: &Fixture, label: &str, autocrlf: bool) -> Fixture {
         let clone = Fixture::new(label);
-        let output = Command::new("git")
-            .arg("clone")
+        let mut command = Command::new("git");
+        command.arg("clone");
+        if autocrlf {
+            command.args(["--config", "core.autocrlf=true"]);
+        }
+        let output = command
             .arg("--branch")
             .arg("main")
             .arg(bare.path())
@@ -758,17 +762,24 @@ mod tests {
     }
 
     fn seeded_remote(label: &str) -> (Fixture, Fixture) {
+        seeded_remote_with_autocrlf(label, false)
+    }
+
+    fn seeded_remote_with_autocrlf(label: &str, autocrlf: bool) -> (Fixture, Fixture) {
         let bare = bare_origin(label);
         let seed = Fixture::new(&format!("{label}-seed"));
         seed.git(&["init", "-b", "main"]);
         seed.git(&["config", "user.name", "Script Hub Test"]);
         seed.git(&["config", "user.email", "script-hub@example.invalid"]);
+        if autocrlf {
+            seed.git(&["config", "core.autocrlf", "true"]);
+        }
         fs::write(seed.path().join("tracked.txt"), "initial\n").unwrap();
         seed.git(&["add", "--", "tracked.txt"]);
         seed.git(&["commit", "-m", "initial"]);
         seed.git(&["remote", "add", "origin", bare.path().to_str().unwrap()]);
         seed.git(&["push", "--set-upstream", "origin", "main"]);
-        let work = clone_from(&bare, &format!("{label}-clone"));
+        let work = clone_from_with_autocrlf(&bare, &format!("{label}-clone"), autocrlf);
         (bare, work)
     }
 
@@ -942,12 +953,33 @@ mod tests {
 
     #[test]
     fn pull_requires_a_clean_worktree_and_push_targets_origin_branch() {
-        let (bare, repo) = seeded_remote("pull-push");
-        assert!(push(repo.path()).is_ok());
-        fs::write(repo.path().join("tracked.txt"), "dirty\n").unwrap();
-        assert!(pull(repo.path()).unwrap_err().contains("dirty worktree"));
-        fs::write(repo.path().join("tracked.txt"), "initial\n").unwrap();
-        assert!(pull(repo.path()).is_ok());
+        let (bare, repo) = seeded_remote_with_autocrlf("pull-push", true);
+        push(repo.path()).unwrap_or_else(|error| panic!("push fixture setup failed: {error}"));
+        let tracked_path = repo.path().join("tracked.txt");
+        let original_bytes = fs::read(&tracked_path).unwrap();
+        assert_eq!(
+            original_bytes, b"initial\r\n",
+            "fixture must reproduce a CRLF checkout"
+        );
+        fs::write(&tracked_path, "dirty\n").unwrap();
+        let dirty_error = pull(repo.path()).expect_err("pull must reject a dirty worktree");
+        assert!(
+            dirty_error.contains("dirty worktree"),
+            "expected dirty-worktree rejection, got: {dirty_error}"
+        );
+        fs::write(&tracked_path, original_bytes).unwrap();
+        let status = repo.git(&["status", "--porcelain=v1", "--untracked-files=all"]);
+        let index_contents = repo.git(&["show", "HEAD:tracked.txt"]);
+        let diff = repo.git(&["diff", "--", "tracked.txt"]);
+        let attributes = repo.git(&["check-attr", "--all", "--", "tracked.txt"]);
+        let snapshot_status = snapshot(repo.path()).unwrap();
+        assert!(
+            status.is_empty() && snapshot_status.changes.is_empty(),
+            "fixture restore must be clean: raw_status={status:?}, snapshot_changes={:?}, index={index_contents:?}, diff={diff:?}, attributes={attributes:?}",
+            snapshot_status.changes
+        );
+        pull(repo.path())
+            .unwrap_or_else(|error| panic!("pull after fixture restore failed: {error}"));
         let origin_refs = Command::new("git")
             .arg("--git-dir")
             .arg(bare.path())

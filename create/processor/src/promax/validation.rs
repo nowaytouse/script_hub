@@ -601,6 +601,13 @@ fn validate_rule_set(
         return;
     }
     let policy = fields[2].to_ascii_uppercase();
+    if strict_promax && !is_compiled_adblock_ruleset(&fields[1]) {
+        errors.push(error(
+            line_number,
+            "unfiltered-promax-ruleset",
+            "PROMAX RULE-SET must reference this repository's safety-filtered AdBlock output",
+        ));
+    }
     if strict_promax && !is_internal_reject_policy(&policy) {
         errors.push(error(
             line_number,
@@ -625,6 +632,26 @@ fn validate_rule_set(
             ));
         }
     }
+}
+
+fn is_compiled_adblock_ruleset(url: &str) -> bool {
+    const PREFIXES: &[&str] = &[
+        "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/",
+        "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/",
+    ];
+    PREFIXES.iter().any(|prefix| {
+        url.strip_prefix(prefix).is_some_and(|path| {
+            path.strip_prefix("github/")
+                .unwrap_or(path)
+                .strip_suffix(".list")
+                .is_some_and(|name| {
+                    !name.is_empty()
+                        && name
+                            .bytes()
+                            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+                })
+        })
+    })
 }
 
 fn is_internal_reject_policy(policy: &str) -> bool {
@@ -1046,7 +1073,7 @@ hostname = good.example, https://bad.example
 
     #[test]
     fn rejects_unknown_rule_set_options() {
-        let fixture = "#!name=PROMAX fixture\n[Rule]\nRULE-SET,https://example.test/ad.list,REJECT,magic-option\n";
+        let fixture = "#!name=PROMAX fixture\n[Rule]\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/Ads_Local.list,REJECT,magic-option\n";
         let errors = validate_surge_module(fixture);
 
         assert_eq!(errors.len(), 1);
@@ -1226,6 +1253,81 @@ account.apple.com = server:system
 hostname = %INSERT% -account.apple.com, -*.icloud.com, weatherkit.apple.com
 "#;
         assert_eq!(validate_apple_compatibility(fixture, false), Vec::new());
+    }
+
+    #[test]
+    fn apple_music_playback_rejects_and_mitm_are_rejected() {
+        let fixture = "#!name=unsafe\n[Rule]\nDOMAIN,audio-ssl.itunes.apple.com,REJECT\n[MITM]\nhostname = %APPEND% audio-ssl.itunes.apple.com, *.music.apple.com\n";
+        let codes: Vec<_> = validate_apple_compatibility(fixture, false)
+            .into_iter()
+            .map(|error| error.code)
+            .collect();
+        assert_eq!(
+            codes,
+            [
+                "apple-critical-nondirect",
+                "apple-critical-mitm",
+                "apple-critical-mitm"
+            ]
+        );
+    }
+
+    #[test]
+    fn apple_certificate_validation_cannot_be_remapped() {
+        let fixture = "#!name=unsafe\n[Host]\nocsp.apple.com = 0.0.0.0\n[MITM]\nhostname = %APPEND% certs.apple.com\n";
+        let codes: Vec<_> = validate_apple_compatibility(fixture, false)
+            .into_iter()
+            .map(|error| error.code)
+            .collect();
+        assert_eq!(
+            codes,
+            ["apple-critical-host-mapping", "apple-critical-mitm"]
+        );
+    }
+
+    #[test]
+    fn apple_music_protection_keeps_weather_and_tv_enhancements_available() {
+        assert!(validate_apple_compatibility("[MITM]\nhostname = %APPEND% weatherkit.apple.com, uts-api.itunes.apple.com, play-cdn.itunes.apple.com, hls.itunes.apple.com, hls-svod.itunes.apple.com\n", false).is_empty());
+    }
+
+    #[test]
+    fn promax_rejects_unfiltered_third_party_ruleset_references() {
+        let errors = validate_surge_module(
+            "#!name=PROMAX\n[Rule]\nRULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP\n",
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.code == "unfiltered-promax-ruleset")
+        );
+    }
+
+    #[test]
+    fn promax_ruleset_boundary_accepts_only_published_list_paths() {
+        for base in [
+            "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/",
+            "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/",
+        ] {
+            for path in [
+                "Ads_Local.list",
+                "github/Ads_Local.list",
+                "Ads_Security_01.list",
+            ] {
+                assert!(super::is_compiled_adblock_ruleset(&format!("{base}{path}")));
+            }
+            for path in [
+                "../Apple.list",
+                "%2e%2e/Apple.list",
+                "Ads.list?raw=1",
+                "github/../Ads.list",
+                "Ads.list#fragment",
+                "sub/Ads.list",
+            ] {
+                assert!(!super::is_compiled_adblock_ruleset(&format!(
+                    "{base}{path}"
+                )));
+            }
+        }
     }
 
     #[test]

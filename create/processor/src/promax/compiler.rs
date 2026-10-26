@@ -2344,12 +2344,8 @@ impl AdBlockManager {
             }
         }
 
-        rule_lines.extend(vec![
-            "".to_string(),
-            "# Sukka live upstream rulesets".to_string(),
-            "RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve".to_string(),
-            "RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,extended-matching,pre-matching,update-interval=86400,no-resolve".to_string(),
-        ]);
+        // Every upstream, including DROP/NO-DROP lists, must pass the same
+        // whitelist and safety checks before its rules reach the module.
 
         let mut complex_seen = HashSet::new();
         let active_cats: HashSet<&str> = CATEGORIES.iter().cloned().collect();
@@ -2981,6 +2977,30 @@ mod tests {
     }
 
     #[test]
+    fn generated_modules_cannot_bypass_whitelist_with_live_upstream_rulesets() {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        manager.safety = crate::promax::safety::SafetyPolicy::from_lines([
+            "DOMAIN-SUFFIX,bilivideo.cn",
+            "DOMAIN-SUFFIX,bilivideo.com",
+            "DOMAIN-SUFFIX,apple.com",
+        ]);
+        for line in [
+            "DOMAIN-SUFFIX,mcdn.bilivideo.cn",
+            "DOMAIN,upos-sz-302kodo.bilivideo.com",
+            "DOMAIN,audio-ssl.itunes.apple.com",
+            "DOMAIN,pcdn.fixture.test",
+        ] {
+            manager.add_rule_line(line, "REJECT-NO-DROP", "Security");
+        }
+        let module = manager.generate_module(&[], "cdn").content;
+        assert!(!module.contains("RULE-SET,https://ruleset.skk.moe/"));
+        assert!(!module.contains("mcdn.bilivideo.cn"));
+        assert!(!module.contains("upos-sz-302kodo.bilivideo.com"));
+        assert!(!module.contains("audio-ssl.itunes.apple.com"));
+        assert!(module.contains("DOMAIN,pcdn.fixture.test,REJECT-NO-DROP"));
+    }
+
+    #[test]
     fn mobile_runtime_keeps_features_but_avoids_unneeded_mitm_and_exclusion_reordering() {
         let mut manager = AdBlockManager::new(std::env::temp_dir());
         let script = r"remove_ads = type=http-response,pattern=^https://api\.example\.test/ads,requires-body=true,script-path=https://scripts.fixture.test/remove.js";
@@ -3477,7 +3497,17 @@ mod tests {
 
         fs::write(
             links.join("AdBlock_sources.list"),
-            "../fixture.list | REJECT | auto\n",
+            "../fixture.list | REJECT | auto\n../drop-fixture.list|REJECT-DROP|auto|Privacy\n../no-drop-fixture.list|REJECT-NO-DROP|auto|Security\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("rulesets/Sources/drop-fixture.list"),
+            "DOMAIN,telemetry.fixture.test\nDOMAIN,account.apple.com\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("rulesets/Sources/no-drop-fixture.list"),
+            "DOMAIN,pcdn.fixture.test\nDOMAIN,protected0.example\n",
         )
         .unwrap();
         fs::write(
@@ -3547,15 +3577,17 @@ hostname = split-ad.fixture.test, protected0.example
             assert!(content.contains("scripts.fixture.test/remove.js"));
             assert!(!content.contains("creditcardapp.bankcomm.com"));
             if product.contains("surge/") || product.contains("shadowrocket/") {
-                assert!(
-                    content.contains("https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf")
-                );
-                assert!(content.contains("https://ruleset.skk.moe/List/non_ip/reject-drop.conf"));
+                assert!(!content.contains("RULE-SET,https://ruleset.skk.moe/"));
+                assert!(!content.contains("DOMAIN,account.apple.com,REJECT"));
+                assert!(!content.contains("DOMAIN,protected0.example,REJECT"));
                 assert!(!content.contains("rulesets/Sources/skk_upstream/"));
                 assert!(!content.contains("rulesets/AdBlock/HTTPDNS_Hijack.list"));
                 if product.contains("shadowrocket/") {
-                    assert!(content.contains("reject-no-drop.conf,REJECT"));
-                    assert!(content.contains("reject-drop.conf,REJECT"));
+                    assert!(content.contains("DOMAIN,pcdn.fixture.test,REJECT"));
+                    assert!(content.contains("DOMAIN,telemetry.fixture.test,REJECT"));
+                } else {
+                    assert!(content.contains("DOMAIN,pcdn.fixture.test,REJECT-NO-DROP"));
+                    assert!(content.contains("DOMAIN,telemetry.fixture.test,REJECT-DROP"));
                 }
             }
         }

@@ -1,5 +1,6 @@
 //! Rust-owned refresh for the non-PROMAX ruleset manifests.
 
+use crate::promax::safety::IpNetwork;
 use crate::promax::source::{DownloadConfig, Downloader};
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
@@ -160,6 +161,15 @@ fn remote_content(remote_urls: &[String], downloads: &HashMap<String, String>) -
     output
 }
 
+fn manifest_header_policy(name: &str) -> &'static str {
+    match name {
+        "Direct" => "DIRECT",
+        "Apple" => "DIRECT",
+        "NSFW" => "REJECT",
+        _ => "PROXY",
+    }
+}
+
 fn process_manifest(
     root: &Path,
     manifest: &Manifest,
@@ -193,11 +203,7 @@ fn process_manifest(
     let target = root.join("rulesets/RULE-SET");
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
     let remote_content = remote_content(&manifest.remote_urls, downloads);
-    let policy = match manifest.name.as_str() {
-        "Direct" => "DIRECT",
-        "NSFW" => "REJECT",
-        _ => "PROXY",
-    };
+    let policy = manifest_header_policy(&manifest.name);
     crate::process_ruleset(crate::RulesetInput {
         name: &manifest.name,
         target_dir: &target,
@@ -359,6 +365,24 @@ struct RuleBoundary {
     suffixes: HashSet<String>,
     other: HashSet<String>,
     reversed_hosts: Vec<String>,
+    ip_networks: Vec<IpNetwork>,
+}
+
+fn parse_ip_rule(rule: &str) -> Option<IpNetwork> {
+    let mut fields = rule.split(',');
+    let kind = fields.next()?;
+    let value = fields.next()?;
+    let expected_ipv6 = if kind.eq_ignore_ascii_case("IP-CIDR") {
+        false
+    } else if kind.eq_ignore_ascii_case("IP-CIDR6") {
+        true
+    } else {
+        return None;
+    };
+    let address = value.split('/').next()?;
+    (address.contains(':') == expected_ipv6)
+        .then(|| IpNetwork::parse(value))
+        .flatten()
 }
 
 fn reverse_domain_labels(host: &str) -> String {
@@ -392,6 +416,16 @@ impl RuleBoundary {
             }
             (Some(kind), Some(value)) if kind.eq_ignore_ascii_case("DOMAIN-SUFFIX") => {
                 self.suffixes.insert(value.to_ascii_lowercase());
+            }
+            (Some(kind), Some(_))
+                if kind.eq_ignore_ascii_case("IP-CIDR")
+                    || kind.eq_ignore_ascii_case("IP-CIDR6") =>
+            {
+                if let Some(network) = parse_ip_rule(rule) {
+                    self.ip_networks.push(network);
+                } else {
+                    self.other.insert(rule.to_string());
+                }
             }
             _ => {
                 self.other.insert(rule.to_string());
@@ -446,6 +480,19 @@ impl RuleBoundary {
                 let value = value.to_ascii_lowercase();
                 self.suffix_ancestor(&value) || self.has_descendant(&value)
             }
+            (Some(kind), Some(_))
+                if kind.eq_ignore_ascii_case("IP-CIDR")
+                    || kind.eq_ignore_ascii_case("IP-CIDR6") =>
+            {
+                parse_ip_rule(rule).map_or_else(
+                    || self.other.contains(rule),
+                    |network| {
+                        self.ip_networks
+                            .iter()
+                            .any(|boundary| boundary.overlaps(network))
+                    },
+                )
+            }
             _ => self.other.contains(rule),
         }
     }
@@ -466,6 +513,19 @@ impl RuleBoundary {
             }
             (Some(kind), Some(value)) if kind.eq_ignore_ascii_case("DOMAIN-SUFFIX") => {
                 self.suffix_ancestor(&value.to_ascii_lowercase())
+            }
+            (Some(kind), Some(_))
+                if kind.eq_ignore_ascii_case("IP-CIDR")
+                    || kind.eq_ignore_ascii_case("IP-CIDR6") =>
+            {
+                parse_ip_rule(rule).map_or_else(
+                    || self.other.contains(rule),
+                    |network| {
+                        self.ip_networks
+                            .iter()
+                            .any(|boundary| boundary.covers(network))
+                    },
+                )
             }
             _ => self.other.contains(rule),
         }
@@ -537,10 +597,17 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     let directory = root.join("rulesets/RULE-SET");
     let direct = read_rules(&directory.join("Direct.list"))?;
     let proxy = read_rules(&directory.join("GlobalProxy.list"))?;
-    let apple_path = directory.join("Apple.list");
-    let apple = if apple_path.is_file() {
-        let rules = read_rules(&apple_path)?;
-        Some(RuleBoundary::from_rules(&rules))
+    let mut apple_rules = BTreeSet::new();
+    for name in ["Apple.list", "Apple_ip.list"] {
+        let path = directory.join(name);
+        if path.is_file() {
+            apple_rules.extend(read_rules(&path)?);
+        }
+    }
+    let apple = (!apple_rules.is_empty()).then(|| RuleBoundary::from_rules(&apple_rules));
+    let cdn_path = directory.join("CDN.list");
+    let cdn = if cdn_path.is_file() {
+        Some(read_rules(&cdn_path)?)
     } else {
         None
     };
@@ -591,6 +658,33 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
                 "GlobalProxy contains {proxy_apple} Apple-owned rule(s); Apple routing belongs to Apple.list"
             ));
         }
+        if let Some(cdn) = &cdn {
+            let cdn_apple = coverage_count(cdn, apple);
+            if cdn_apple > 0 {
+                errors.push(format!(
+                    "CDN contains {cdn_apple} Apple-owned rule(s); Apple service routing belongs to Apple.list"
+                ));
+            }
+        }
+        for (name, message) in [
+            (
+                "GlobalProxy_ip",
+                "GlobalProxy_ip contains {count} Apple-owned IP rule(s); Apple routing belongs to Apple_ip",
+            ),
+            (
+                "CDN_ip",
+                "CDN_ip contains {count} Apple-owned IP rule(s); Apple service routing belongs to Apple_ip",
+            ),
+        ] {
+            let path = directory.join(format!("{name}.list"));
+            if path.is_file() {
+                let rules = read_rules(&path)?;
+                let count = coverage_count(&rules, apple);
+                if count > 0 {
+                    errors.push(message.replace("{count}", &count.to_string()));
+                }
+            }
+        }
     }
     let nsfw_path = directory.join("NSFW.list");
     if nsfw_path.is_file() {
@@ -619,10 +713,44 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
     let mut direct = read_rules(&direct_path)?;
     let mut proxy = read_rules(&proxy_path)?;
 
-    let apple_rules = read_rules(&directory.join("Apple.list"))?;
+    let mut apple_rules = read_rules(&directory.join("Apple.list"))?;
+    let apple_ip_path = directory.join("Apple_ip.list");
+    if apple_ip_path.is_file() {
+        apple_rules.extend(read_rules(&apple_ip_path)?);
+    }
     let apple = RuleBoundary::from_rules(&apple_rules);
     let removed_apple_from_direct = remove_covered(&mut direct, &apple);
     let removed_apple_from_proxy = remove_covered(&mut proxy, &apple);
+    let cdn_path = directory.join("CDN.list");
+    let mut cdn = if cdn_path.is_file() {
+        Some(read_rules(&cdn_path)?)
+    } else {
+        None
+    };
+    let removed_apple_from_cdn = cdn
+        .as_mut()
+        .map(|rules| remove_covered(rules, &apple))
+        .unwrap_or(0);
+    let global_proxy_ip_path = directory.join("GlobalProxy_ip.list");
+    let mut global_proxy_ip = if global_proxy_ip_path.is_file() {
+        Some(read_rules(&global_proxy_ip_path)?)
+    } else {
+        None
+    };
+    let removed_apple_from_global_proxy_ip = global_proxy_ip
+        .as_mut()
+        .map(|rules| remove_covered(rules, &apple))
+        .unwrap_or(0);
+    let cdn_ip_path = directory.join("CDN_ip.list");
+    let mut cdn_ip = if cdn_ip_path.is_file() {
+        Some(read_rules(&cdn_ip_path)?)
+    } else {
+        None
+    };
+    let removed_apple_from_cdn_ip = cdn_ip
+        .as_mut()
+        .map(|rules| remove_covered(rules, &apple))
+        .unwrap_or(0);
     let (adblock, _) = read_adblock_boundary(root, None)?;
 
     let removed_from_direct = remove_covered(&mut direct, &adblock);
@@ -645,8 +773,23 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
 
     write_rules(&direct_path, "Direct", "DIRECT", &direct)?;
     write_rules(&proxy_path, "GlobalProxy", "PROXY", &proxy)?;
+    if removed_apple_from_cdn > 0
+        && let Some(cdn) = &cdn
+    {
+        write_rules(&cdn_path, "CDN", "PROXY", cdn)?;
+    }
+    if removed_apple_from_global_proxy_ip > 0
+        && let Some(rules) = &global_proxy_ip
+    {
+        write_rules(&global_proxy_ip_path, "GlobalProxy_ip", "PROXY", rules)?;
+    }
+    if removed_apple_from_cdn_ip > 0
+        && let Some(rules) = &cdn_ip
+    {
+        write_rules(&cdn_ip_path, "CDN_ip", "PROXY", rules)?;
+    }
     println!(
-        "[INFO] category boundaries removed {removed_from_direct} AdBlock-covered and {removed_apple_from_direct} Apple-owned rule(s) from Direct, {removed_apple_from_proxy} Apple-owned and {removed_direct_from_proxy} Direct overlap(s) from GlobalProxy, and {removed_from_nsfw} shared-service overlap(s) from NSFW"
+        "[INFO] category boundaries removed {removed_from_direct} AdBlock-covered and {removed_apple_from_direct} Apple-owned rule(s) from Direct, {removed_apple_from_proxy} Apple-owned and {removed_direct_from_proxy} Direct overlap(s) from GlobalProxy, {removed_apple_from_cdn} Apple-owned rule(s) from CDN, {removed_apple_from_global_proxy_ip} Apple-owned IP rule(s) from GlobalProxy_ip, {removed_apple_from_cdn_ip} Apple-owned IP rule(s) from CDN_ip, and {removed_from_nsfw} shared-service overlap(s) from NSFW"
     );
     Ok((
         removed_from_direct,
@@ -659,11 +802,83 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
 #[cfg(test)]
 mod tests {
     use super::{
-        discover_manifests, enforce_category_boundaries, remote_content, reverse_domain_labels,
-        split_gaming_rules, validate_category_boundaries,
+        discover_manifests, enforce_category_boundaries, manifest_header_policy, read_rules,
+        remote_content, reverse_domain_labels, split_gaming_rules, validate_category_boundaries,
     };
     use std::collections::HashMap;
     use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn apple_header_recommends_direct_without_inline_policy() {
+        assert_eq!(manifest_header_policy("Apple"), "DIRECT");
+        assert_eq!(manifest_header_policy("AppleNews"), "PROXY");
+        let header = crate::generate_header(
+            "Apple",
+            manifest_header_policy("Apple"),
+            "Any",
+            "Apple service domains; routing is selected by the consumer",
+            1,
+        );
+        assert!(header.lines().any(|line| line == "# Policy: DIRECT"));
+        assert!(header.lines().all(|line| line.starts_with('#')));
+    }
+
+    fn rule_matches_host(rule: &str, host: &str) -> bool {
+        let Some((kind, value)) = rule.split_once(',') else {
+            return false;
+        };
+        let host = host.to_ascii_lowercase();
+        let value = value.to_ascii_lowercase();
+        match kind.to_ascii_uppercase().as_str() {
+            "DOMAIN" => host == value,
+            "DOMAIN-SUFFIX" => host == value || host.ends_with(&format!(".{value}")),
+            "DOMAIN-KEYWORD" => host.contains(&value),
+            "DOMAIN-WILDCARD" => {
+                let pattern = regex::escape(&value).replace(r"\*", ".*");
+                regex::Regex::new(&format!("^{pattern}$"))
+                    .is_ok_and(|pattern| pattern.is_match(&host))
+            }
+            "DOMAIN-REGEX" => {
+                regex::Regex::new(&value).is_ok_and(|pattern| pattern.is_match(&host))
+            }
+            _ => false,
+        }
+    }
+
+    #[test]
+    fn apple_music_hosts_are_owned_by_apple_and_not_generic_routing_categories() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let directory = root.join("rulesets/RULE-SET");
+        let apple = read_rules(&directory.join("Apple.list")).unwrap();
+        let apple_boundary = super::RuleBoundary::from_rules(&apple);
+        let music_hosts = [
+            "music.apple.com",
+            "amp-api-edge.music.apple.com",
+            "audio-ssl.itunes.apple.com",
+            "aod-ssl.itunes.apple.com",
+            "is1-ssl.mzstatic.com",
+            "s.mzstatic.com",
+        ];
+
+        for host in music_hosts {
+            assert!(
+                apple_boundary.covers(&format!("DOMAIN,{host}")),
+                "Apple.list should own {host}"
+            );
+            for category in ["GlobalProxy", "CDN", "AppleNews"] {
+                let rules = read_rules(&directory.join(format!("{category}.list"))).unwrap();
+                let matching: Vec<_> = rules
+                    .iter()
+                    .filter(|rule| rule_matches_host(rule, host))
+                    .collect();
+                assert!(
+                    matching.is_empty(),
+                    "{host} also matches {category}: {matching:?}"
+                );
+            }
+        }
+    }
 
     #[test]
     fn remote_content_joins_borrowed_sources_in_order_including_empty_bodies() {
@@ -845,6 +1060,101 @@ mod tests {
         assert!(!direct.contains("weather.apple.test"));
         assert!(!proxy.contains("store.apple.test"));
         assert!(proxy.contains("DOMAIN-SUFFIX,shared.test"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn category_boundaries_remove_only_apple_owned_cdn_rules() {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-apple-cdn-boundary-{}",
+            std::process::id()
+        ));
+        let rules = root.join("rulesets/RULE-SET");
+        let adblock = root.join("rulesets/AdBlock");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&rules).unwrap();
+        fs::create_dir_all(&adblock).unwrap();
+        fs::write(rules.join("Direct.list"), "DOMAIN,direct.example\n").unwrap();
+        fs::write(rules.join("GlobalProxy.list"), "DOMAIN,proxy.example\n").unwrap();
+        fs::write(
+            rules.join("Apple.list"),
+            "DOMAIN-SUFFIX,apple.com\nDOMAIN-SUFFIX,itunes.apple.com\nDOMAIN-SUFFIX,mzstatic.com\n",
+        )
+        .unwrap();
+        let cdn = rules.join("CDN.list");
+        fs::write(
+            &cdn,
+            "DOMAIN,hls-svod.itunes.apple.com\nDOMAIN,music.apple.com\nDOMAIN-SUFFIX,akamaized.net\nDOMAIN,cdn.fastly.net\n",
+        )
+        .unwrap();
+
+        assert_eq!(
+            validate_category_boundaries(&root).unwrap(),
+            vec!["CDN contains 2 Apple-owned rule(s); Apple service routing belongs to Apple.list"]
+        );
+        assert_eq!(enforce_category_boundaries(&root).unwrap(), (0, 0, 0, 0));
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        let cdn = fs::read_to_string(cdn).unwrap();
+        assert!(!cdn.contains("hls-svod.itunes.apple.com"));
+        assert!(!cdn.contains("music.apple.com"));
+        assert!(cdn.contains("DOMAIN-SUFFIX,akamaized.net"));
+        assert!(cdn.contains("DOMAIN,cdn.fastly.net"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn category_boundaries_move_only_apple_covered_networks_to_apple_ip() {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-apple-ip-boundary-{}",
+            std::process::id()
+        ));
+        let rules = root.join("rulesets/RULE-SET");
+        let adblock = root.join("rulesets/AdBlock");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&rules).unwrap();
+        fs::create_dir_all(&adblock).unwrap();
+        fs::write(rules.join("Direct.list"), "DOMAIN,direct.example\n").unwrap();
+        fs::write(rules.join("GlobalProxy.list"), "DOMAIN,proxy.example\n").unwrap();
+        fs::write(rules.join("Apple.list"), "DOMAIN-SUFFIX,apple.com\n").unwrap();
+        fs::write(
+            rules.join("Apple_ip.list"),
+            "IP-CIDR,17.0.0.0/8,NO-RESOLVE\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("GlobalProxy_ip.list"),
+            "IP-CIDR,17.252.156.0/23,NO-RESOLVE\nIP-CIDR,17.0.0.0/7,NO-RESOLVE\nIP-CIDR6,2001:db8::/32,NO-RESOLVE\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("CDN_ip.list"),
+            "IP-CIDR,17.252.156.0/23,NO-RESOLVE\nIP-CIDR6,2606:4700::/32,NO-RESOLVE\n",
+        )
+        .unwrap();
+        let apple_news = "DOMAIN,gspe1-ssl.ls.apple.com\nDOMAIN,news-client-search.apple.com\n";
+        fs::write(rules.join("AppleNews.list"), apple_news).unwrap();
+
+        assert_eq!(
+            validate_category_boundaries(&root).unwrap(),
+            vec![
+                "GlobalProxy_ip contains 1 Apple-owned IP rule(s); Apple routing belongs to Apple_ip",
+                "CDN_ip contains 1 Apple-owned IP rule(s); Apple service routing belongs to Apple_ip",
+            ]
+        );
+        assert_eq!(enforce_category_boundaries(&root).unwrap(), (0, 0, 0, 0));
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+
+        let proxy_ip = fs::read_to_string(rules.join("GlobalProxy_ip.list")).unwrap();
+        assert!(!proxy_ip.contains("17.252.156.0/23"));
+        assert!(proxy_ip.contains("17.0.0.0/7"));
+        assert!(proxy_ip.contains("2001:db8::/32"));
+        let cdn_ip = fs::read_to_string(rules.join("CDN_ip.list")).unwrap();
+        assert!(!cdn_ip.contains("17.252.156.0/23"));
+        assert!(cdn_ip.contains("2606:4700::/32"));
+        assert_eq!(
+            fs::read_to_string(rules.join("AppleNews.list")).unwrap(),
+            apple_news
+        );
         fs::remove_dir_all(root).unwrap();
     }
 

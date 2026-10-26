@@ -1,7 +1,7 @@
 # Ruleset: Apple
-# Policy: PROXY
+# Policy: DIRECT
 # Node: Any
-# Description: Rust-merged canonical ruleset
+# Description: Apple service domains; recommended DIRECT before generic CDN/proxy rules
 # Rules: 1852
 DOMAIN,a1.mzstatic.com
 DOMAIN,a2.mzstatic.com
@@ -266,7 +266,6 @@ DOMAIN-KEYWORD,apple-support.akadns.net
 DOMAIN-KEYWORD,apple.com.akadns.net
 DOMAIN-KEYWORD,apple.com.edgekey.net
 DOMAIN-KEYWORD,buy.itunes.apple.com
-DOMAIN-KEYWORD,icloud
 DOMAIN-KEYWORD,icloud.com.akadns.net
 DOMAIN-KEYWORD,smp-device
 DOMAIN-KEYWORD,testflight
@@ -1463,6 +1462,7 @@ DOMAIN-SUFFIX,ituneas.com
 DOMAIN-SUFFIX,itunes-apple.cn
 DOMAIN-SUFFIX,itunes-apple.com.akadns.net
 DOMAIN-SUFFIX,itunes-radio.net
+DOMAIN-SUFFIX,itunes.apple.com
 DOMAIN-SUFFIX,itunes.ca
 DOMAIN-SUFFIX,itunes.co
 DOMAIN-SUFFIX,itunes.co.th
