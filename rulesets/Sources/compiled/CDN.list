@@ -1,7 +1,7 @@
 # Ruleset: CDN
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 3677
+# Rules: 3728
 DOMAIN,0x0.st
 DOMAIN,3dna.nationbuilder.com
 DOMAIN,4gtvimg2.4gtv.tv
@@ -10,7 +10,6 @@ DOMAIN,a.deviantart.net
 DOMAIN,a.fireside.fm
 DOMAIN,a.gawby.com
 DOMAIN,a.kickstarter.com
-DOMAIN,a5.behance.net
 DOMAIN,a57.foxnews.com
 DOMAIN,account-cdn.svc.ui.com
 DOMAIN,account-widget-mfe.gcore.com
@@ -310,7 +309,6 @@ DOMAIN,avatars.micro.blog
 DOMAIN,avatars.plurk.com
 DOMAIN,axiecdn.axieinfinity.com
 DOMAIN,b-tiles.locationiq.com
-DOMAIN,b.manufact.com
 DOMAIN,b.peatio.com
 DOMAIN,b.sf-syn.com
 DOMAIN,b2b-contenthub.com
@@ -1429,7 +1427,6 @@ DOMAIN,images.nebula.tv
 DOMAIN,images.newrepublic.com
 DOMAIN,images.nvidia.com
 DOMAIN,images.opencollective.com
-DOMAIN,images.pexels.com
 DOMAIN,images.pling.com
 DOMAIN,images.plurk.com
 DOMAIN,images.pluto.tv
@@ -1457,7 +1454,6 @@ DOMAIN,images.vexels.com
 DOMAIN,images.videolan.org
 DOMAIN,images.vudu.com
 DOMAIN,images.web3.storage
-DOMAIN,images.weserv.nl
 DOMAIN,images.whoer.com
 DOMAIN,images.wikia.com
 DOMAIN,images.wsj.net
@@ -1718,7 +1714,6 @@ DOMAIN,m.wsj.net
 DOMAIN,m3.gab.com
 DOMAIN,m3u8-0.c-spanvideo.org
 DOMAIN,m3u8.girigirilove.com
-DOMAIN,magic.scalar.com
 DOMAIN,makerworld.bblmw.com
 DOMAIN,mangaz-books.j-comi.jp
 DOMAIN,mangaz-static.j-comi.jp
@@ -1833,7 +1828,6 @@ DOMAIN,melonbooks.akamaized.net
 DOMAIN,meteorclient.com
 DOMAIN,mgx-backend-cdn.metadl.com
 DOMAIN,mintlify.b-cdn.net
-DOMAIN,mir-s3-cdn-cf.behance.net
 DOMAIN,miro.medium.com
 DOMAIN,mixin-images.zeromesh.net
 DOMAIN,mkt-site-asset.crypto.com
@@ -1852,7 +1846,6 @@ DOMAIN,mui.com
 DOMAIN,mwcm.nyt.com
 DOMAIN,mweb-cdn.karousell.com
 DOMAIN,my-json-server.typicode.com
-DOMAIN,n.approveit.today
 DOMAIN,namedotcom-cdn.name.tools
 DOMAIN,nas2.d.tube
 DOMAIN,nav.yumenosora.co.jp
@@ -1898,7 +1891,6 @@ DOMAIN,oss.1p3a.com
 DOMAIN,oss.moe.cat
 DOMAIN,ovo.wxw.moe
 DOMAIN,p-smith.com
-DOMAIN,p.depot.dev
 DOMAIN,p.inari.site
 DOMAIN,p.sda1.dev
 DOMAIN,p16-hera-sg.larksuitecdn.com
@@ -2502,7 +2494,6 @@ DOMAIN,static.tp-link.com
 DOMAIN,static.tronscan.org
 DOMAIN,static.truemed.com
 DOMAIN,static.tryprofound.com
-DOMAIN,static.tumblr.com
 DOMAIN,static.tvtropes.org
 DOMAIN,static.twitchcdn.net
 DOMAIN,static.typingclub.com
@@ -3018,7 +3009,6 @@ DOMAIN-SUFFIX,csb.app
 DOMAIN-SUFFIX,ctfassets.net
 DOMAIN-SUFFIX,cthd.icu
 DOMAIN-SUFFIX,cursor-cdn.com
-DOMAIN-SUFFIX,customeriomail.com
 DOMAIN-SUFFIX,cwwcdn.com
 DOMAIN-SUFFIX,dam-cdn.atl.orangelogic.com
 DOMAIN-SUFFIX,datocms-assets.com
@@ -3679,3 +3669,64 @@ DOMAIN-SUFFIX,zohowebstatic.com
 DOMAIN-SUFFIX,zorocdn.xyz
 DOMAIN-SUFFIX,zpi.cx
 DOMAIN-SUFFIX,zpicdn.lol
+DOMAIN-WILDCARD,*-intake-*-datadoghq.com
+DOMAIN-WILDCARD,*-intake.*.datadoghq.com
+DOMAIN-WILDCARD,*.fsvod?.com
+DOMAIN-WILDCARD,*.img.*.sendibm?.com
+DOMAIN-WILDCARD,*.kuaikan-cdn?.com
+DOMAIN-WILDCARD,*.skyearth?.xyz
+DOMAIN-WILDCARD,appcenter-filemanagement-*.cloudapp.net
+DOMAIN-WILDCARD,assets*.freshdesk.com
+DOMAIN-WILDCARD,assets.*.imaga.co
+DOMAIN-WILDCARD,blog-imgs-??.2nt.com
+DOMAIN-WILDCARD,blog-imgs-??.fc2.com
+DOMAIN-WILDCARD,cdn*.boysfood.com
+DOMAIN-WILDCARD,cdn*.pigav.com
+DOMAIN-WILDCARD,cdn*.porn87.com
+DOMAIN-WILDCARD,cdn*.pornhost.com
+DOMAIN-WILDCARD,cdn-*.microsoft.com
+DOMAIN-WILDCARD,cdn-msp?.18comic.org
+DOMAIN-WILDCARD,cdn-msp?.18comic.vip
+DOMAIN-WILDCARD,cdn-msp?.jmcomic-zzz.one
+DOMAIN-WILDCARD,cdn-msp?.jmcomic.me
+DOMAIN-WILDCARD,cdn.*.dmm.co.jp
+DOMAIN-WILDCARD,cdn.*.microsoft.com
+DOMAIN-WILDCARD,cdn.*.office.net
+DOMAIN-WILDCARD,cdn?-dl.pornhost.com
+DOMAIN-WILDCARD,cdn?.18girlssex.com
+DOMAIN-WILDCARD,cdn?.mikuclub.fun
+DOMAIN-WILDCARD,cdns.*.gigya.com
+DOMAIN-WILDCARD,cf-images.*.prod.boltdns.net
+DOMAIN-WILDCARD,chunk-*.mux.com
+DOMAIN-WILDCARD,fastly-*.allmovie.com
+DOMAIN-WILDCARD,file?.mikuclub.fun
+DOMAIN-WILDCARD,i?.nhentai.net
+DOMAIN-WILDCARD,image*.cloudokyo.cloud
+DOMAIN-WILDCARD,img-*.now.com
+DOMAIN-WILDCARD,img?.porngo.com
+DOMAIN-WILDCARD,img??.porngo.com
+DOMAIN-WILDCARD,object-storage-*.vexxhost.net
+DOMAIN-WILDCARD,ocsp.*.amazontrust.com
+DOMAIN-WILDCARD,proxy-*.dailymotion.com
+DOMAIN-WILDCARD,rr?---??.ouo.si
+DOMAIN-WILDCARD,rum-ingest.*.signalfx.com
+DOMAIN-WILDCARD,s3-*.figma.com
+DOMAIN-WILDCARD,s3.*.wasabisys.com
+DOMAIN-WILDCARD,s?.maxstream.org
+DOMAIN-WILDCARD,s??.maxstream.org
+DOMAIN-WILDCARD,s???.pornone.com
+DOMAIN-WILDCARD,sdk.*.braze.eu
+DOMAIN-WILDCARD,static?.tgstat.ru
+DOMAIN-WILDCARD,static??.tgstat.ru
+DOMAIN-WILDCARD,stream?.kissjav.com
+DOMAIN-WILDCARD,stream??.kissjav.com
+DOMAIN-WILDCARD,t?.nhentai.net
+DOMAIN-WILDCARD,th-*.pornone.com
+DOMAIN-WILDCARD,uploads-*.insided.com
+DOMAIN-WILDCARD,v.rn???.xyz
+DOMAIN-WILDCARD,video*.cloudokyo.cloud
+DOMAIN-WILDCARD,video-thumbnail2.fc2.com
+DOMAIN-WILDCARD,video-thumbnail?.liaoningmovie.net
+DOMAIN-WILDCARD,video?-thumbnail?.fc2.com
+DOMAIN-WILDCARD,video?-thumbnail?.liaoningmovie.net
+DOMAIN-WILDCARD,vip-videoprem*-thumbnail?.fc2.com
