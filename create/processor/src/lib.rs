@@ -861,7 +861,7 @@ mod tests {
         );
         assert_eq!(
             normalize_rule("IP-CIDR,223.5.5.5/32,DIRECT,no-resolve"),
-            Some("IP-CIDR,223.5.5.5/32,NO-RESOLVE".to_string())
+            Some("IP-CIDR,223.5.5.5/32,no-resolve".to_string())
         );
     }
 }

@@ -1549,7 +1549,7 @@ mod tests {
         assert!(
             read_rules(&directory.join("GlobalProxy_ip.list"))
                 .unwrap()
-                .contains("IP-CIDR,198.51.100.0/24,NO-RESOLVE")
+                .contains("IP-CIDR,198.51.100.0/24,no-resolve")
         );
         for old in ["Spotify", "StreamEU", "StreamUS", "Binance"] {
             assert!(!directory.join(format!("{old}.list")).exists());

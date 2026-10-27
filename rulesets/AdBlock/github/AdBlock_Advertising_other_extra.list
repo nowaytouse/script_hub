@@ -12,9 +12,9 @@ PROCESS-NAME,LemonService
 URL-REGEX,/\d+/resolve
 URL-REGEX,/\d+/sign_d
 URL-REGEX,/igd\.xml
-URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$,EXTENDED-MATCHING
-URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/,EXTENDED-MATCHING
-URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do,EXTENDED-MATCHING
+URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$,extended-matching
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/,extended-matching
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do,extended-matching
 URL-REGEX,^https://app\.variflight\.com/v4/advert/
 URL-REGEX,^https://img-ys011\.didistatic\.com/static/ad_oss/
 URL-REGEX,^https?://(114\.115\.217\.129|home\.umetrip\.com)/gateway/api/umetrip/native$

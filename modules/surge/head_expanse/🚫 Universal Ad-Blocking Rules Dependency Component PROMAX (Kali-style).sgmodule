@@ -103,9 +103,9 @@ URL-REGEX,^http:\/\/47\.101\.175\.206\/resolve,REJECT
 URL-REGEX,^http:\/\/54\.222\.159\.138:8053\/httpdns\/,REJECT
 URL-REGEX,^http:\/\/81\.69\.130\.131\/d,REJECT
 URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns,REJECT
-URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$,REJECT,EXTENDED-MATCHING
-URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/,REJECT,EXTENDED-MATCHING
-URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do,REJECT,EXTENDED-MATCHING
+URL-REGEX,^http:\/\/cdn\.wup\.huya\.com\/launch\/queryHttpDns$,REJECT,extended-matching
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/advertisement\/,REJECT,extended-matching
+URL-REGEX,^http:\/\/p\.kuaidi100\.com\/mobile\/mobileapi\.do,REJECT,extended-matching
 URL-REGEX,^http:\/\/xmc\.ximalaya\.com\/xmlymain-login-web\/login\/,REJECT
 URL-REGEX,^https://app\.variflight\.com/v4/advert/,REJECT
 URL-REGEX,^https://img-ys011\.didistatic\.com/static/ad_oss/,REJECT
@@ -347,7 +347,7 @@ DOMAIN-SUFFIX,undefined,REJECT-DROP
 DOMAIN-SUFFIX,union-httpdns.gslb.yy.com,REJECT-DROP
 DOMAIN-SUFFIX,yuyin-httpdns.gslb.yy.com,REJECT-DROP
 DOMAIN-WILDCARD,f-log*.grammarly.io,REJECT-DROP
-IP-CIDR,180.76.76.200/32,REJECT-DROP,NO-RESOLVE
+IP-CIDR,180.76.76.200/32,REJECT-DROP,no-resolve
 URL-REGEX,^https:\/\/a\.line\.me\/cs\/v\d\/oa$,REJECT-DROP
 URL-REGEX,^https:\/\/a\.line\.me\/lass\/api\/v\d\/ads$,REJECT-DROP
 URL-REGEX,^https:\/\/a\.line\.me\/oa\/v\d\/e$,REJECT-DROP

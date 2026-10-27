@@ -25,6 +25,17 @@ const SECTIONS: &[&str] = &[
 ];
 
 pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
+    validate_module(content, true)
+}
+
+/// Validate a Shadowrocket module while retaining shared PROMAX safety checks.
+///
+/// Shadowrocket does not preserve Surge's inline IP-rule options during conversion.
+pub fn validate_shadowrocket_module(content: &str) -> Vec<ValidationError> {
+    validate_module(content, false)
+}
+
+fn validate_module(content: &str, require_surge_no_resolve: bool) -> Vec<ValidationError> {
     let mut errors = Vec::new();
     let mut section = None;
     let mut has_name = false;
@@ -77,7 +88,13 @@ pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
             Some("General") => {
                 validate_general(line_number, line, &mut seen_general_keys, &mut errors)
             }
-            Some("Rule") => validate_module_rule(line_number, line, strict_promax, &mut errors),
+            Some("Rule") => validate_module_rule(
+                line_number,
+                line,
+                strict_promax,
+                require_surge_no_resolve,
+                &mut errors,
+            ),
             Some("MITM") => validate_mitm(line_number, line, &mut errors),
             Some("Script") => {
                 validate_surge_script(line_number, line, &mut errors);
@@ -127,7 +144,7 @@ pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationE
             let mut seen = HashSet::new();
             validate_general(1, line, &mut seen, &mut errors);
         }
-        "Rule" => validate_module_rule(1, line, false, &mut errors),
+        "Rule" => validate_module_rule(1, line, false, false, &mut errors),
         "MITM" => validate_mitm(1, line, &mut errors),
         "Script" => validate_surge_script(1, line, &mut errors),
         "URL Rewrite" | "Body Rewrite" | "Header Rewrite" => {
@@ -513,12 +530,19 @@ fn validate_module_rule(
     line_number: usize,
     line: &str,
     strict_promax: bool,
+    require_surge_no_resolve: bool,
     errors: &mut Vec<ValidationError>,
 ) {
     let cleaned = crate::strip_inline_comment(line);
     let line = cleaned.trim();
     if line.to_ascii_uppercase().starts_with("RULE-SET,") {
-        validate_rule_set(line_number, line, strict_promax, errors);
+        validate_rule_set(
+            line_number,
+            line,
+            strict_promax,
+            require_surge_no_resolve,
+            errors,
+        );
         return;
     }
     if ["AND,", "OR,", "NOT,"]
@@ -545,6 +569,21 @@ fn validate_module_rule(
     }
     match SurgeRule::parse(line) {
         Ok(rule) => {
+            if strict_promax
+                && require_surge_no_resolve
+                && matches!(
+                    rule.kind,
+                    RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::IpAsn | RuleKind::GeoIp
+                )
+                && !split_fields(line)
+                    .is_ok_and(|fields| fields.iter().skip(2).any(|field| field == "no-resolve"))
+            {
+                errors.push(error(
+                    line_number,
+                    "ip-rule-missing-no-resolve",
+                    "PROMAX inline IP rules require the canonical lowercase no-resolve option",
+                ));
+            }
             match rule.policy.as_deref() {
                 Some(policy) if strict_promax && !is_internal_reject_policy(policy) => {
                     errors.push(error(
@@ -583,6 +622,7 @@ fn validate_rule_set(
     line_number: usize,
     line: &str,
     strict_promax: bool,
+    require_surge_no_resolve: bool,
     errors: &mut Vec<ValidationError>,
 ) {
     let fields = match split_fields(line) {
@@ -599,6 +639,16 @@ fn validate_rule_set(
             "RULE-SET requires a URL and policy",
         ));
         return;
+    }
+    if strict_promax
+        && require_surge_no_resolve
+        && !fields[3..].iter().any(|option| option == "no-resolve")
+    {
+        errors.push(error(
+            line_number,
+            "ruleset-missing-no-resolve",
+            "PROMAX Surge RULE-SET references require the canonical lowercase no-resolve option",
+        ));
     }
     let policy = fields[2].to_ascii_uppercase();
     if strict_promax && !is_compiled_adblock_ruleset(&fields[1]) {
@@ -1034,8 +1084,9 @@ fn error(line: usize, code: &'static str, message: impl Into<String>) -> Validat
 #[cfg(test)]
 mod tests {
     use super::{
-        validate_apple_compatibility, validate_loon_plugin, validate_surge_module,
-        validate_surge_section_line, validate_transport_security,
+        validate_apple_compatibility, validate_external_ruleset, validate_loon_plugin,
+        validate_shadowrocket_module, validate_surge_module, validate_surge_section_line,
+        validate_transport_security,
     };
 
     #[test]
@@ -1089,11 +1140,103 @@ hostname = good.example, https://bad.example
 
     #[test]
     fn rejects_unknown_rule_set_options() {
-        let fixture = "#!name=PROMAX fixture\n[Rule]\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/Ads_Local.list,REJECT,magic-option\n";
+        let fixture = "#!name=PROMAX fixture\n[Rule]\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/Ads_Local.list,REJECT,magic-option,no-resolve\n";
         let errors = validate_surge_module(fixture);
 
         assert_eq!(errors.len(), 1);
         assert_eq!((errors[0].line, errors[0].code), (3, "invalid-rule-option"));
+    }
+
+    #[test]
+    fn promax_inline_ip_rules_require_lowercase_no_resolve_only() {
+        let missing_options = [
+            "IP-CIDR,192.0.2.1/32,REJECT-DROP",
+            "IP-CIDR6,2001:db8::1/128,REJECT-DROP",
+            "IP-ASN,13335,REJECT-DROP",
+            "GEOIP,CN,REJECT-DROP",
+        ];
+        for rule in missing_options {
+            let module = format!("#!name=PROMAX fixture\n[Rule]\n{rule}\n");
+            assert!(
+                validate_surge_module(&module)
+                    .iter()
+                    .any(|error| error.code == "ip-rule-missing-no-resolve"),
+                "expected guard for {rule}"
+            );
+        }
+
+        let fixture = r#"#!name=PROMAX fixture
+[Rule]
+IP-CIDR,192.0.2.1/32,REJECT-DROP,no-resolve
+IP-CIDR6,2001:db8::1/128,REJECT-DROP,no-resolve
+IP-ASN,13335,REJECT-DROP,no-resolve
+GEOIP,CN,REJECT-DROP,no-resolve
+DOMAIN-SUFFIX,ads.example,REJECT-DROP
+"#;
+        assert!(validate_surge_module(fixture).is_empty());
+
+        let uppercase_option =
+            "#!name=PROMAX fixture\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT-DROP,NO-RESOLVE\n";
+        assert!(
+            validate_surge_module(uppercase_option)
+                .iter()
+                .any(|error| error.code == "ip-rule-missing-no-resolve")
+        );
+
+        let non_promax = "#!name=Other module\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT-DROP\nRULE-SET,https://example.test/any.list,PROXY\n";
+        assert!(validate_surge_module(non_promax).is_empty());
+        assert!(
+            validate_external_ruleset("IP-CIDR,192.0.2.1/32\n").is_empty(),
+            "policy-neutral standalone IP rulesets remain unaffected"
+        );
+    }
+
+    #[test]
+    fn promax_surge_rule_sets_require_lowercase_no_resolve() {
+        let base = "RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/Ads_Local.list,REJECT-DROP";
+        for suffix in ["", ",NO-RESOLVE"] {
+            let module = format!("#!name=PROMAX fixture\n[Rule]\n{base}{suffix}\n");
+            assert!(
+                validate_surge_module(&module)
+                    .iter()
+                    .any(|error| error.code == "ruleset-missing-no-resolve"),
+                "expected canonical option guard for {suffix:?}"
+            );
+        }
+        let module = format!("#!name=PROMAX fixture\n[Rule]\n{base},no-resolve\n");
+        assert!(validate_surge_module(&module).is_empty());
+    }
+
+    #[test]
+    fn shadowrocket_validation_keeps_promax_safety_without_surge_ip_options() {
+        let valid_shadowrocket = r#"#!name=PROMAX fixture
+[Rule]
+IP-CIDR,192.0.2.1/32,REJECT-DROP
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/Ads_Local.list,REJECT-DROP
+"#;
+        assert!(validate_shadowrocket_module(valid_shadowrocket).is_empty());
+        let surge_errors = validate_surge_module(valid_shadowrocket);
+        assert!(
+            surge_errors
+                .iter()
+                .any(|error| error.code == "ip-rule-missing-no-resolve")
+        );
+        assert!(
+            surge_errors
+                .iter()
+                .any(|error| error.code == "ruleset-missing-no-resolve")
+        );
+
+        let unsafe_shadowrocket = r#"#!name=PROMAX fixture
+[Rule]
+RULE-SET,https://example.test/unfiltered.list,PROXY
+"#;
+        let codes: Vec<_> = validate_shadowrocket_module(unsafe_shadowrocket)
+            .iter()
+            .map(|error| error.code)
+            .collect();
+        assert!(codes.contains(&"unfiltered-promax-ruleset"));
+        assert!(codes.contains(&"unsupported-policy"));
     }
 
     #[test]

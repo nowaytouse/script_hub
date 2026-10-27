@@ -156,6 +156,16 @@ impl SurgeRule {
         self.render(true, default_policy, false)
     }
 
+    pub(crate) fn prevent_dns_resolution(&mut self) {
+        if matches!(
+            self.kind,
+            RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::GeoIp | RuleKind::IpAsn
+        ) && !self.options.iter().any(|option| option == "NO-RESOLVE")
+        {
+            self.options.push("NO-RESOLVE".to_string());
+        }
+    }
+
     fn render(&self, include_policy: bool, default_policy: &str, external: bool) -> String {
         let quoted = self.payload.contains(',') || self.payload.chars().any(char::is_whitespace);
         let mut output = String::with_capacity(self.payload.len().saturating_add(64));
@@ -181,7 +191,13 @@ impl SurgeRule {
         for option in &self.options {
             if option_allowed(self.kind, option, external) {
                 output.push(',');
-                output.push_str(option);
+                // Parsing uses uppercase keys for comparison; Surge's published
+                // option spelling is lowercase, independently of rule/policy case.
+                output.extend(
+                    option
+                        .chars()
+                        .map(|character| character.to_ascii_lowercase()),
+                );
             }
         }
         output
@@ -415,8 +431,24 @@ mod tests {
 
         assert_eq!(
             parsed.render_module("REJECT"),
-            "IP-CIDR,192.0.2.0/24,REJECT,EXTENDED-MATCHING,NO-RESOLVE"
+            "IP-CIDR,192.0.2.0/24,REJECT,extended-matching,no-resolve"
         );
+    }
+
+    #[test]
+    fn dns_safety_options_render_in_documented_lowercase() {
+        for source in [
+            "IP-CIDR,180.76.76.200/32,REJECT-DROP,no-resolve",
+            "IP-CIDR6,2001:db8::/32,REJECT-DROP,NO-RESOLVE",
+            "IP-ASN,13335,REJECT-DROP,No-Resolve",
+            "GEOIP,US,REJECT-DROP,no-resolve,NO-RESOLVE",
+        ] {
+            let parsed = SurgeRule::parse(source).unwrap();
+            let rendered = parsed.render_module("REJECT");
+            assert!(rendered.ends_with(",no-resolve"), "{rendered}");
+            assert_eq!(rendered.matches(",no-resolve").count(), 1);
+            assert!(parsed.render_external().ends_with(",no-resolve"));
+        }
     }
 
     #[test]
@@ -434,13 +466,13 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(parsed.render_external(), "IP-CIDR,192.0.2.0/24,NO-RESOLVE");
+        assert_eq!(parsed.render_external(), "IP-CIDR,192.0.2.0/24,no-resolve");
     }
 
     #[test]
     fn asn_no_resolve_survives_external_export() {
         let parsed = SurgeRule::parse("IP-ASN,13335,no-resolve").unwrap();
-        assert_eq!(parsed.render_external(), "IP-ASN,13335,NO-RESOLVE");
+        assert_eq!(parsed.render_external(), "IP-ASN,13335,no-resolve");
     }
 
     #[test]
@@ -451,11 +483,11 @@ mod tests {
 
         assert_eq!(
             parsed.render_module("reject"),
-            "USER-AGENT,\"Example, Agent\",REJECT,FORCE-CELLULAR,EXTENDED-MATCHING"
+            "USER-AGENT,\"Example, Agent\",REJECT,force-cellular,extended-matching"
         );
         assert_eq!(
             parsed.render_external(),
-            "USER-AGENT,\"Example, Agent\",EXTENDED-MATCHING"
+            "USER-AGENT,\"Example, Agent\",extended-matching"
         );
     }
 

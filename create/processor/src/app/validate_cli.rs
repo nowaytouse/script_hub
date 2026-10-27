@@ -13,9 +13,8 @@ fn validate_file(
     let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
     let mut validation = match extension {
         "plugin" => rust_processor::promax::validation::validate_loon_plugin(&content),
-        "sgmodule" | "module" => {
-            rust_processor::promax::validation::validate_surge_module(&content)
-        }
+        "sgmodule" => rust_processor::promax::validation::validate_surge_module(&content),
+        "module" => rust_processor::promax::validation::validate_shadowrocket_module(&content),
         "list" => rust_processor::promax::validation::validate_external_ruleset(&content),
         _ => return Err(format!("unsupported validation file type: .{extension}")),
     };
@@ -268,6 +267,24 @@ mod tests {
         assert_eq!(validation.len(), 1);
         assert_eq!(validation[0].line, 3);
         assert_eq!(validation[0].code, "invalid-rule");
+    }
+
+    #[test]
+    fn validates_shadowrocket_module_without_surge_only_ip_options() {
+        let path = std::env::temp_dir().join(format!(
+            "script-hub-validate-shadowrocket-{}.module",
+            std::process::id()
+        ));
+        std::fs::write(
+            &path,
+            "#!name=PROMAX fixture\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT-DROP\n",
+        )
+        .unwrap();
+
+        let validation = validate_file(&path);
+        std::fs::remove_file(path).unwrap();
+
+        assert!(validation.unwrap().is_empty());
     }
 
     #[test]

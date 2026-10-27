@@ -1,6 +1,8 @@
 use super::rule::{SurgeRule, split_fields};
 use super::safety::QuarantineRecord;
-use super::validation::{validate_loon_plugin, validate_surge_module};
+use super::validation::{
+    validate_loon_plugin, validate_shadowrocket_module, validate_surge_module,
+};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{BTreeMap, HashSet};
@@ -317,9 +319,8 @@ fn publish_artifacts_inner(
             .map_err(|error| format!("cannot stage {}: {error}", relative.display()))?;
 
         let validation_errors = match artifact.kind {
-            ArtifactKind::Surge | ArtifactKind::Shadowrocket => {
-                validate_surge_module(&artifact.content)
-            }
+            ArtifactKind::Surge => validate_surge_module(&artifact.content),
+            ArtifactKind::Shadowrocket => validate_shadowrocket_module(&artifact.content),
             ArtifactKind::Loon => validate_loon_plugin(&artifact.content),
             ArtifactKind::ExternalRuleset => {
                 super::validation::validate_external_ruleset(&artifact.content)

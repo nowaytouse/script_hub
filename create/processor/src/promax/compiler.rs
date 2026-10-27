@@ -2877,12 +2877,16 @@ impl AdBlockManager {
     fn attach_policy(&self, rule: &str, policy: &str) -> Option<String> {
         let mut parsed = crate::promax::rule::SurgeRule::parse(rule).ok()?;
         parsed.policy = Some(policy.to_ascii_uppercase());
+        // Modules precede consumer routing rules: never resolve a domain just
+        // to test an IP block supplied by PROMAX (including future upstreams).
+        parsed.prevent_dns_resolution();
         Some(parsed.render_module(policy))
     }
 
     fn attach_loon_policy(&self, rule: &str, policy: &str) -> Option<String> {
         let mut parsed = crate::promax::rule::SurgeRule::parse(rule).ok()?;
         parsed.policy = Some(policy.to_ascii_uppercase());
+        parsed.prevent_dns_resolution();
         parsed.options.retain(|option| option == "NO-RESOLVE");
         Some(parsed.render_module(policy))
     }
@@ -3457,6 +3461,33 @@ mod tests {
     #[test]
     fn manager_normalizes_an_existing_relative_root() {
         assert!(AdBlockManager::new(".".into()).root_dir.is_absolute());
+    }
+
+    #[test]
+    fn promax_inline_ip_rules_never_trigger_dns_resolution() {
+        let manager = AdBlockManager::new(std::env::temp_dir());
+        for rule in [
+            "IP-CIDR,180.76.76.200/32",
+            "IP-CIDR6,2001:db8::/32",
+            "IP-ASN,13335",
+            "GEOIP,US",
+            "IP-CIDR,192.0.2.0/24,NO-RESOLVE,no-resolve",
+        ] {
+            for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
+                let rendered = manager.attach_policy(rule, policy).unwrap();
+                assert!(rendered.ends_with(",no-resolve"), "{rendered}");
+                assert_eq!(rendered.matches(",no-resolve").count(), 1);
+                assert!(rendered.contains(&format!(",{policy},")));
+                let loon = manager.attach_loon_policy(rule, policy).unwrap();
+                assert!(loon.ends_with(",no-resolve"), "{loon}");
+            }
+        }
+        assert_eq!(
+            manager
+                .attach_policy("DOMAIN,ads.example.test", "REJECT-DROP")
+                .unwrap(),
+            "DOMAIN,ads.example.test,REJECT-DROP"
+        );
     }
 
     #[test]
@@ -4240,7 +4271,7 @@ hostname = %APPEND% tiebac.baidu.com
         .unwrap();
         fs::write(
             root.join("rulesets/Sources/drop-fixture.list"),
-            "DOMAIN,telemetry.fixture.test\nDOMAIN,account.apple.com\n",
+            "DOMAIN,telemetry.fixture.test\nDOMAIN,account.apple.com\nIP-CIDR,180.76.76.200/32\n",
         )
         .unwrap();
         fs::write(
@@ -4326,6 +4357,8 @@ hostname = split-ad.fixture.test, protected0.example
                 } else {
                     assert!(content.contains("DOMAIN,pcdn.fixture.test,REJECT-NO-DROP"));
                     assert!(content.contains("DOMAIN,telemetry.fixture.test,REJECT-DROP"));
+                    assert!(content.contains("IP-CIDR,180.76.76.200/32,REJECT-DROP,no-resolve"));
+                    assert!(!content.contains(",NO-RESOLVE"));
                 }
             }
         }
@@ -4363,6 +4396,7 @@ hostname = split-ad.fixture.test, protected0.example
         let loon = fs::read_to_string(root.join(products[2])).unwrap();
         assert!(!loon.contains("premium.fixture.test"));
         assert!(!loon.contains("EXTENDED-MATCHING"));
+        assert!(loon.contains("IP-CIDR,180.76.76.200/32,REJECT,no-resolve"));
         assert_eq!(loon.matches("DEST-PORT,4444,REJECT").count(), 1);
         assert!(loon.contains("mock-response-body data-type=text data=\"{}\""));
         assert!(!loon.contains("^https://ads\\.fixture\\.test/splash reject"));
