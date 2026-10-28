@@ -1,7 +1,7 @@
 # Ruleset: Google
 # Policy: USER-DEFINED
-# Description: Typed migration preserving published source scopes
-# Rules: 910
+# Description: Rust-merged canonical ruleset
+# Rules: 913
 
 DOMAIN-SUFFIX,gle
 DOMAIN-SUFFIX,dclk
@@ -882,6 +882,7 @@ DOMAIN-SUFFIX,staging-controlbe.floonet.goog
 DOMAIN,cloudaicompanion.googleapis.com
 DOMAIN,firebaseappcheck.googleapis.com
 DOMAIN,cache-management-prod.google.com
+DOMAIN,appsgenaiserver-pa.googleapis.com
 DOMAIN,firebase-settings.crashlytics.com
 DOMAIN,firebaseapptesters.googleapis.com
 DOMAIN,firebasedynamiclinks.googleapis.com
@@ -904,6 +905,8 @@ DOMAIN,download.tensorflow.google.com
 DOMAIN,geminiweb-pa.clients.google.com
 DOMAIN,geminiweb-pa.clients6.google.com
 DOMAIN,redirector.c.youtubeeducation.com
+DOMAIN,appsgenaiserver-pa.clients.google.com
+DOMAIN,appsgenaiserver-pa.clients6.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,c.android.clients.google.com
 DOMAIN-KEYWORD,appspot
