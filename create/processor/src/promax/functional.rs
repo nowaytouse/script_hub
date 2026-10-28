@@ -13,7 +13,14 @@ pub(crate) fn prepare_functional_source<'a>(
 ) -> std::borrow::Cow<'a, str> {
     // PROMAX does not expose the child module's template arguments; keep ordinary video posts.
     if source == "https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule" {
-        content.replace("{{{per_filter_video}}}", "0").into()
+        content
+            .replace("{{{per_filter_video}}}", "0")
+            // Keep full alternative hosts visible to safety checks, not a spurious baidu.com parent.
+            .replace(
+                r"(tiebac|c\.tieba)\.baidu\.com",
+                r"(tiebac\.baidu\.com|c\.tieba\.baidu\.com)",
+            )
+            .into()
     } else {
         content.into()
     }
@@ -172,6 +179,29 @@ mod tests {
             super::prepare_functional_source("https://example.test/other.sgmodule", template),
             template
         );
+    }
+
+    #[test]
+    fn tieba_host_expansion_preserves_matching_without_touching_image_hosts() {
+        let pattern = r"^https?:\/\/(tiebac|c\.tieba)\.baidu\.com/c/f/ad/getFeedAd";
+        let prepared = super::prepare_functional_source(
+            "https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule",
+            pattern,
+        );
+        let original = regex::Regex::new(pattern).unwrap();
+        let expanded = regex::Regex::new(&prepared).unwrap();
+        for (url, expected) in [
+            ("https://tiebac.baidu.com/c/f/ad/getFeedAd", true),
+            ("http://c.tieba.baidu.com/c/f/ad/getFeedAd?x=1", true),
+            ("https://t10.baidu.com/c/f/ad/getFeedAd", false),
+            (
+                "https://unrelated.test/c.tieba.baidu.com/c/f/ad/getFeedAd",
+                false,
+            ),
+        ] {
+            assert_eq!(original.is_match(url), expected, "{url}");
+            assert_eq!(expanded.is_match(url), expected, "{url}");
+        }
     }
 
     #[test]

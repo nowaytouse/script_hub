@@ -22,6 +22,8 @@ DOMAIN-SUFFIX,youtube.com
 DOMAIN-SUFFIX,ytimg.com
 DOMAIN-SUFFIX,yt3.ggpht.com
 DOMAIN-SUFFIX,yt4.ggpht.com
+# YouTube channel/avatar image delivery, separate from advertising endpoints.
+DOMAIN,yt3.googleusercontent.com
 # 防止屏蔽整个 Google Video IP 网段
 IP-CIDR,74.125.0.0/16
 IP-CIDR,172.217.0.0/16
@@ -36,6 +38,31 @@ IP-CIDR,173.194.0.0/16
 # ============ 🔥 Google 核心服务 ============
 DOMAIN-SUFFIX,googleapis.com
 DOMAIN-SUFFIX,gstatic.com
+
+# ============ 搜索缩略图 / 共享图片代理 ============
+# These hosts also deliver ordinary result images; do not reject a whole host
+# or replace every response with a transparent image. Keep dedicated ad hosts blocked.
+DOMAIN,t0.baidu.com
+DOMAIN,t1.baidu.com
+DOMAIN,t2.baidu.com
+DOMAIN,t3.baidu.com
+DOMAIN,t4.baidu.com
+DOMAIN,t5.baidu.com
+DOMAIN,t6.baidu.com
+DOMAIN,t7.baidu.com
+DOMAIN,t8.baidu.com
+DOMAIN,t9.baidu.com
+DOMAIN,t10.baidu.com
+DOMAIN,t11.baidu.com
+DOMAIN,t12.baidu.com
+DOMAIN,dss0.bdstatic.com
+DOMAIN,dss1.bdstatic.com
+DOMAIN,dss2.bdstatic.com
+DOMAIN,dss3.bdstatic.com
+DOMAIN,ss0.bdstatic.com
+DOMAIN,ss1.bdstatic.com
+DOMAIN,ss2.bdstatic.com
+DOMAIN,ss3.bdstatic.com
 
 # ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
 # 注意: 不要添加 apple.com 整体，会让广告规则失效

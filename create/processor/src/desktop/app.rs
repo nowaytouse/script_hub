@@ -1115,6 +1115,189 @@ mod tests {
         }
     }
 
+    #[test]
+    fn catalog_tabs_keep_accesskit_nodes_across_pointer_navigation() {
+        fn draw(
+            ctx: &egui::Context,
+            app: &mut HubApp,
+            frame: &mut eframe::Frame,
+            events: Vec<egui::Event>,
+        ) -> egui::FullOutput {
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1160.0, 760.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| eframe::App::ui(app, ui, frame),
+            );
+            output.textures_delta.clear();
+            output
+        }
+
+        fn label_center(output: &egui::FullOutput, label: &str) -> egui::Pos2 {
+            let update = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .expect("AccessKit update should be produced");
+            let (node_id, node) = update
+                .nodes
+                .iter()
+                .find(|(_, node)| node.label() == Some(label))
+                .unwrap_or_else(|| panic!("missing AccessKit node {label:?}"));
+            let mut reachable = std::collections::HashSet::new();
+            let mut pending = vec![update.tree.as_ref().unwrap().root];
+            while let Some(id) = pending.pop() {
+                if reachable.insert(id)
+                    && let Some((_, node)) =
+                        update.nodes.iter().find(|(candidate, _)| *candidate == id)
+                {
+                    pending.extend(node.children());
+                }
+            }
+            assert!(
+                reachable.contains(node_id),
+                "unreachable AccessKit node {label:?}"
+            );
+            let bounds = node.bounds().expect("tab node should have bounds");
+            egui::pos2(
+                ((bounds.x0 + bounds.x1) * 0.5) as f32,
+                ((bounds.y0 + bounds.y1) * 0.5) as f32,
+            )
+        }
+
+        fn click(
+            ctx: &egui::Context,
+            app: &mut HubApp,
+            frame: &mut eframe::Frame,
+            position: egui::Pos2,
+        ) -> egui::FullOutput {
+            let button = |pressed| egui::Event::PointerButton {
+                pos: position,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::default(),
+            };
+            draw(
+                ctx,
+                app,
+                frame,
+                vec![egui::Event::PointerMoved(position), button(true)],
+            );
+            draw(
+                ctx,
+                app,
+                frame,
+                vec![egui::Event::PointerMoved(position), button(false)],
+            )
+        }
+
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut frame = eframe::Frame::_new_kittest();
+        let mut app = HubApp::new(None, Preferences::default(), None, None);
+        app.catalog =
+            Catalog::load(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."), false).unwrap();
+        app.page = Page::Catalog;
+
+        let modules = draw(&ctx, &mut app, &mut frame, Vec::new());
+        let rules_position = label_center(&modules, text(app.draft.language, Text::Rules));
+        assert!(
+            modules
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label()
+                    == Some(text(app.draft.language, Text::CopySelectedCdn)))
+        );
+        modules.drop_without_applying_deltas();
+
+        app.catalog.modules.truncate(3);
+        app.catalog.modules[0].name = "Visible module".into();
+        app.catalog.modules[0].merged_into.clear();
+        app.catalog.modules[1].name = "Visible retired module".into();
+        app.catalog.modules[1].merged_into = "PROMAX".into();
+        app.catalog.modules[2].name = "Hidden module".into();
+        app.module_search = "Visible".into();
+        app.selected_modules.insert(2);
+        let filtered = draw(&ctx, &mut app, &mut frame, Vec::new());
+        let select = label_center(&filtered, text(app.draft.language, Text::SelectVisible));
+        filtered.drop_without_applying_deltas();
+        click(&ctx, &mut app, &mut frame, select).drop_without_applying_deltas();
+        assert_eq!(app.selected_modules, BTreeSet::from([0, 2]));
+
+        let rules = click(&ctx, &mut app, &mut frame, rules_position);
+        assert!(matches!(app.catalog_tab, CatalogTab::Rules));
+        label_center(&rules, text(app.draft.language, Text::CopyRuleSetCdn));
+        assert!(
+            rules
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label()
+                    == Some(text(app.draft.language, Text::CopyRuleSetCdn)))
+        );
+        let modules_position = label_center(&rules, text(app.draft.language, Text::Modules));
+        rules.drop_without_applying_deltas();
+
+        let modules = click(&ctx, &mut app, &mut frame, modules_position);
+        assert!(matches!(app.catalog_tab, CatalogTab::Modules));
+        assert!(
+            modules
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label()
+                    == Some(text(app.draft.language, Text::CopySelectedCdn)))
+        );
+        modules.drop_without_applying_deltas();
+
+        app.catalog.rules.truncate(3);
+        app.catalog.rules[0].name = "Visible domain rules".into();
+        app.catalog.rules[1].name = "Visible IP rules".into();
+        app.catalog.rules[2].name = "Hidden rules".into();
+        app.rule_search = "Visible".into();
+        app.selected_rules.insert(2);
+        app.catalog_tab = CatalogTab::Rules;
+        let filtered = draw(&ctx, &mut app, &mut frame, Vec::new());
+        let select = label_center(&filtered, text(app.draft.language, Text::SelectVisible));
+        filtered.drop_without_applying_deltas();
+        click(&ctx, &mut app, &mut frame, select).drop_without_applying_deltas();
+        assert_eq!(app.selected_rules, BTreeSet::from([0, 1, 2]));
+
+        app.rule_search = "no matching rows".into();
+        let empty = draw(&ctx, &mut app, &mut frame, Vec::new());
+        let select = label_center(&empty, text(app.draft.language, Text::SelectVisible));
+        empty.drop_without_applying_deltas();
+        let selected = click(&ctx, &mut app, &mut frame, select);
+        assert_eq!(app.selected_rules, BTreeSet::from([0, 1, 2]));
+        let copy = label_center(&selected, text(app.draft.language, Text::CopySelectedCdn));
+        selected.drop_without_applying_deltas();
+        let copied = click(&ctx, &mut app, &mut frame, copy);
+        let expected = super::super::catalog::selected_rule_urls(
+            &app.catalog.rules,
+            &app.selected_rules,
+            false,
+        );
+        assert!(copied.platform_output.commands.iter().any(|command| {
+            matches!(command, egui::OutputCommand::CopyText(value) if value == &expected)
+        }));
+        copied.drop_without_applying_deltas();
+    }
+
     fn wait_for_workspace(app: &mut HubApp) -> bool {
         let result = app
             .workspace_loader

@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3749/4630；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3746/4630；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -3042,10 +3042,7 @@ hostname - reject
 ^https?:\/\/api-cslp-emt\.amazon\.cn\/gateway\/recommend data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/api\d\.tuisong\.baidu\.com data-type=tiny-gif status-code=200
 ^https?:\/\/issuecdn\.baidupcs\.com\/issue\/netdisk\/guanggao\/ data-type=text data=" " status-code=200
-^https?:\/\/[\s\S]*\.baidu\.com/.*?ad[xs]\.php data-type=tiny-gif status-code=200
-^https?:\/\/t\d{2}\.baidu\.com data-type=tiny-gif status-code=200
 ^https?:\/\/sa\d\.tuisong\.baidu\.com data-type=tiny-gif status-code=200
-^https?:\/\/dss0\.bdstatic\.com\/-0U0bnSm1A5BphGlnYG\/ data-type=text data=" " status-code=200
 ^https?:\/\/tb2\.bdstatic\.com\/tb\/mobile\/spb\/widget\/jump data-type=tiny-gif status-code=200
 ^https?:\/\/mime\.baidu\.com\/v5\/start_screen_ads/list data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/mime\.baidu\.com\/sapi\/v1\/lccorpus\/(applist|pannellist) data-type=text data="{}" status-code=200 header="Content-Type:application/json"

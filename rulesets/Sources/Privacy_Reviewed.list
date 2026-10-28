@@ -1,6 +1,6 @@
 # Reviewed, exact ad/analytics endpoints; do not widen to parent domains.
 # Attribution: AdGuard HostlistsRegistry maintained DNS/mobile ad filters.
-# filter_40 includes the Firebase, Twitter, Reddit and TikTok hosts below:
+# filter_40 includes the Firebase, Twitter, Reddit, TikTok and Weather analytics hosts below:
 # https://github.com/AdguardTeam/HostlistsRegistry/blob/main/assets/filter_40.txt
 # filter_2 supplies the Twitter pixel host:
 # https://github.com/AdguardTeam/HostlistsRegistry/blob/main/assets/filter_2.txt
@@ -10,6 +10,13 @@ DOMAIN,ads-api.twitter.com
 DOMAIN,events.redditmedia.com
 DOMAIN,analytics-sg.tiktok.com
 DOMAIN,ads.tiktok.com
+DOMAIN,alb.reddit.com
+DOMAIN,weather-analytics-events.apple.com
+
+# HaGeZi's maintained Amazon native advertising/tracking feed:
+# https://github.com/hagezi/dns-blocklists/blob/main/wildcard/native.amazon-onlydomains.txt
+# Upstream license: https://github.com/hagezi/dns-blocklists/blob/main/LICENSE (GPL-3.0).
+DOMAIN,mads-eu.amazon.com
 
 # Apple-specific ad endpoints (not Apple auth, iCloud, media, or service parents).
 # AdGuard HostlistsRegistry's AWAvenue Ads Rule includes both exact hosts:

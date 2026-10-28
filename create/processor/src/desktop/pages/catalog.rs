@@ -6,7 +6,6 @@ use crate::desktop::catalog::{
 };
 use crate::desktop::i18n::{Text, text};
 use eframe::egui::{self, RichText};
-
 impl HubApp {
     pub(crate) fn catalog_page(&mut self, ui: &mut egui::Ui) {
         ui.heading(self.tr(Text::Library));
@@ -75,11 +74,42 @@ impl HubApp {
                 .desired_width(f32::INFINITY),
         );
         ui.add_space(12.0);
+        let query = self.module_search.trim().to_lowercase();
+        let indices: Vec<_> = self
+            .catalog
+            .modules
+            .iter()
+            .enumerate()
+            .filter_map(|(index, module)| module.matches(&query, &self.category).then_some(index))
+            .collect();
+        let visible_copyable: Vec<_> = indices
+            .iter()
+            .copied()
+            .filter(|&index| self.catalog.modules[index].merged_into.is_empty())
+            .collect();
+        if !self
+            .selected_module
+            .is_some_and(|index| indices.contains(&index))
+        {
+            self.selected_module = indices.first().copied();
+        }
         let selected_count = self.selected_modules.len();
         let cdn_urls = selected_module_urls(&self.catalog.modules, &self.selected_modules, false);
         let github_urls = selected_module_urls(&self.catalog.modules, &self.selected_modules, true);
         ui.horizontal_wrapped(|ui| {
             ui.label(format!("{}: {selected_count}", tr(Text::Selected)));
+            if ui
+                .add_enabled(
+                    visible_copyable
+                        .iter()
+                        .any(|index| !self.selected_modules.contains(index)),
+                    egui::Button::new(tr(Text::SelectVisible)),
+                )
+                .clicked()
+            {
+                self.selected_modules
+                    .extend(visible_copyable.iter().copied());
+            }
             if ui
                 .add_enabled(
                     !cdn_urls.is_empty(),
@@ -109,20 +139,6 @@ impl HubApp {
             }
         });
         ui.add_space(8.0);
-        let query = self.module_search.trim().to_lowercase();
-        let indices: Vec<_> = self
-            .catalog
-            .modules
-            .iter()
-            .enumerate()
-            .filter_map(|(index, module)| module.matches(&query, &self.category).then_some(index))
-            .collect();
-        if !self
-            .selected_module
-            .is_some_and(|index| indices.contains(&index))
-        {
-            self.selected_module = indices.first().copied();
-        }
         let wide = ui.available_width() > 820.0;
         if wide {
             egui::Panel::right("module-details")
@@ -148,34 +164,36 @@ impl HubApp {
                 if indices.is_empty() {
                     ui.label(tr(Text::NoResults));
                 }
-                for index in indices {
+                for &index in &indices {
                     let module = &self.catalog.modules[index];
-                    ui.horizontal(|ui| {
-                        let mut selected = self.selected_modules.contains(&index);
-                        ui.add_enabled_ui(module.merged_into.is_empty(), |ui| {
-                            if ui
-                                .checkbox(&mut selected, tr(Text::SelectForCopy))
-                                .changed()
-                            {
+                    ui.push_id(index, |ui| {
+                        ui.horizontal(|ui| {
+                            let mut selected = self.selected_modules.contains(&index);
+                            let checkbox = ui
+                                .add_enabled_ui(module.merged_into.is_empty(), |ui| {
+                                    ui.checkbox(&mut selected, tr(Text::SelectForCopy))
+                                })
+                                .inner;
+                            let response = ui.add(
+                                egui::Button::new("")
+                                    .left_text(RichText::new(&module.name).strong())
+                                    .right_text(&module.category)
+                                    .selected(self.selected_module == Some(index))
+                                    .min_size(egui::vec2(ui.available_width(), 54.0))
+                                    .wrap()
+                                    .corner_radius(7),
+                            );
+                            if checkbox.labelled_by(response.id).changed() {
                                 if selected {
                                     self.selected_modules.insert(index);
                                 } else {
                                     self.selected_modules.remove(&index);
                                 }
                             }
-                        });
-                        let response = ui.add(
-                            egui::Button::new("")
-                                .left_text(RichText::new(&module.name).strong())
-                                .right_text(&module.category)
-                                .selected(self.selected_module == Some(index))
-                                .min_size(egui::vec2(ui.available_width(), 54.0))
-                                .wrap()
-                                .corner_radius(7),
-                        );
-                        if response.clicked() {
-                            self.selected_module = Some(index);
-                        }
+                            if response.clicked() {
+                                self.selected_module = Some(index);
+                            }
+                        })
                     });
                 }
             });
@@ -243,6 +261,31 @@ impl HubApp {
         if !policy_valid && !self.copy_policy.is_empty() {
             ui.colored_label(self.colors.warning, self.tr(Text::InvalidRuleSetPolicy));
         }
+        let hint = self.tr(Text::SearchRules);
+        ui.add(
+            egui::TextEdit::singleline(&mut self.rule_search)
+                .hint_text(hint)
+                .desired_width(f32::INFINITY),
+        );
+        ui.add_space(12.0);
+        let query = self.rule_search.trim().to_lowercase();
+        let indices: Vec<_> = self
+            .catalog
+            .rules
+            .iter()
+            .enumerate()
+            .filter_map(|(index, rule)| {
+                (rule.name.to_lowercase().contains(&query)
+                    || rule.category.to_lowercase().contains(&query))
+                .then_some(index)
+            })
+            .collect();
+        if !self
+            .selected_rule
+            .is_some_and(|index| indices.contains(&index))
+        {
+            self.selected_rule = indices.first().copied();
+        }
         let selected_count = self.selected_rules.len();
         let cdn_urls = selected_rule_urls(&self.catalog.rules, &self.selected_rules, false);
         let github_urls = selected_rule_urls(&self.catalog.rules, &self.selected_rules, true);
@@ -260,6 +303,17 @@ impl HubApp {
         );
         ui.horizontal_wrapped(|ui| {
             ui.label(format!("{}: {selected_count}", self.tr(Text::Selected)));
+            if ui
+                .add_enabled(
+                    indices
+                        .iter()
+                        .any(|index| !self.selected_rules.contains(index)),
+                    egui::Button::new(self.tr(Text::SelectVisible)),
+                )
+                .clicked()
+            {
+                self.selected_rules.extend(indices.iter().copied());
+            }
             if ui
                 .add_enabled(
                     !cdn_urls.is_empty(),
@@ -309,31 +363,6 @@ impl HubApp {
             }
         });
         ui.add_space(8.0);
-        let hint = self.tr(Text::SearchRules);
-        ui.add(
-            egui::TextEdit::singleline(&mut self.rule_search)
-                .hint_text(hint)
-                .desired_width(f32::INFINITY),
-        );
-        ui.add_space(12.0);
-        let query = self.rule_search.trim().to_lowercase();
-        let indices: Vec<_> = self
-            .catalog
-            .rules
-            .iter()
-            .enumerate()
-            .filter_map(|(index, rule)| {
-                (rule.name.to_lowercase().contains(&query)
-                    || rule.category.to_lowercase().contains(&query))
-                .then_some(index)
-            })
-            .collect();
-        if !self
-            .selected_rule
-            .is_some_and(|index| indices.contains(&index))
-        {
-            self.selected_rule = indices.first().copied();
-        }
         let wide = ui.available_width() > 820.0;
         if wide {
             egui::Panel::right("rule-details")
@@ -364,22 +393,13 @@ impl HubApp {
                 } else {
                     46.0
                 };
-                for index in indices {
+                for &index in &indices {
                     let rule = &self.catalog.rules[index];
-                    ui.horizontal(|ui| {
-                        let mut selected = self.selected_rules.contains(&index);
-                        if ui
-                            .checkbox(&mut selected, tr(Text::SelectForCopy))
-                            .changed()
-                        {
-                            if selected {
-                                self.selected_rules.insert(index);
-                            } else {
-                                self.selected_rules.remove(&index);
-                            }
-                        }
-                        if ui
-                            .add(
+                    ui.push_id(index, |ui| {
+                        ui.horizontal(|ui| {
+                            let mut selected = self.selected_rules.contains(&index);
+                            let checkbox = ui.checkbox(&mut selected, tr(Text::SelectForCopy));
+                            let response = ui.add(
                                 egui::Button::new("")
                                     .left_text(&rule.name)
                                     .right_text(rule.count.map_or_else(
@@ -390,11 +410,18 @@ impl HubApp {
                                     .min_size(egui::vec2(ui.available_width(), row_height))
                                     .wrap()
                                     .corner_radius(7),
-                            )
-                            .clicked()
-                        {
-                            self.selected_rule = Some(index);
-                        }
+                            );
+                            if checkbox.labelled_by(response.id).changed() {
+                                if selected {
+                                    self.selected_rules.insert(index);
+                                } else {
+                                    self.selected_rules.remove(&index);
+                                }
+                            }
+                            if response.clicked() {
+                                self.selected_rule = Some(index);
+                            }
+                        })
                     });
                 }
             });

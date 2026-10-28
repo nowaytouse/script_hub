@@ -17,6 +17,8 @@
 
 所有 PROMAX 上游规则（包括 Sukka 的 `REJECT-DROP` / `REJECT-NO-DROP`）均经过同一白名单和安全检查，再以原拒绝策略合并；模块不直接加载绕过检查的第三方规则集。正常视频 CDN 与整段播放接口的拒绝/空响应会被隔离，官方广告响应处理脚本继续保留。
 
+共享搜索图片代理（百度 `t0`–`t12.baidu.com`、`dss0`–`dss3.bdstatic.com`、`ss0`–`ss3.bdstatic.com`）按精确主机保护，保留 YouTube 已有图片 CDN 保护并补充频道头像主机；整域拒绝与透明图替换不得覆盖正常缩略图。专用广告主机仍参与拦截；这些保护不向整个 `baidu.com`、`bdstatic.com` 或 `googleusercontent.com` 扩大。
+
 ### Apple 服务与分流
 
 Apple Music、iTunes、Apple News 与 Apple 自有媒体端点归入 `Apple.list` / `Apple_ip.list`，不混入通用服务分类。`AppleNews.list` 已退役；共享 CDN 的整个父域不会被当成 Apple 专有域名。
@@ -90,6 +92,10 @@ Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；Wea
 PROMAX 新增 app2smile 的起点、贴吧和腾讯新闻原生 Surge 去广告模块，以及 AdGuard 的 CNAME 伪装追踪、邮件追踪域名源。源模块、配套规则和四个官方脚本依赖随同一更新链检查，脚本仍从作者仓库加载；贴吧不启用隐藏普通视频帖的选项。去重后的伪装追踪域名归入 Privacy_CNAME，App 配套规则归入 Local，脚本/MITM 仍由功能层统一收束。广告/追踪域名不需要额外 HTTPS 解密；不启用会影响正常链接与页面的 CNAME clickthrough/microsites 全集。
 
 测试反馈中的精确广告与统计端点由 `rulesets/Sources/Privacy_Reviewed.list` 补充，并记录核对来源。补充只作用于已审查的完整域名，不扩大为整站、共享 CDN 或 Apple 父域拦截；明确的单主机白名单与 Apple 关键服务保护仍优先。网络规则不能替代浏览器的页面元素隐藏，也不以测试分数为由拦截用途不明的共享服务。
+
+IPCheck 的“未拦截”不能直接当成应封禁清单：当前精确补充包含 Firebase、X、Reddit、TikTok、Amazon 广告以及 Apple 广告/天气分析端点；`static.ads-twitter.com` 的域名拒绝也覆盖其 `/uwt.js` 请求。`metrics.icloud.com` 继续遵循 Apple 网络要求保留；用途不够明确的 `ngfts.lge.com` 不因测试得分而整域封禁。Pinterest 的 `s.pinimg.com/ct/core.js` 是跟踪脚本，但不能封禁整个共享图片 CDN，也不为该测试额外解密图片主机；路径拦截和页面元素隐藏应由浏览器内容拦截器承担。
+
+若最终分片已经包含精确拒绝但客户端仍显示放行，应刷新 PROMAX **及其外部规则资源**，并核对客户端请求记录中的实际命中规则；旧缓存、未启用模块或先命中的用户规则不能靠重复添加相同条目解决。本仓库不会通过模块里的放行/分流规则改写使用者的策略组或规则顺序。
 
 Surge 和 Shadowrocket 的现有 PROMAX 入口自动引用全部活动分片，无需新增订阅。Loon 产物、转换器及其目录条目已移除，不再为旧入口保留空文件；规则覆盖继续完整保留在活动分片中。
 

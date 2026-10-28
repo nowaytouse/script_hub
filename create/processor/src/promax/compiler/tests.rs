@@ -4,6 +4,65 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn shared_thumbnail_hosts_and_baidu_image_proxy_are_not_adblock_targets() {
+    let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(repo_root);
+    manager.load_whitelist().unwrap();
+    for host in [
+        "t0.baidu.com",
+        "t1.baidu.com",
+        "t2.baidu.com",
+        "t3.baidu.com",
+        "t4.baidu.com",
+        "t5.baidu.com",
+        "t6.baidu.com",
+        "t7.baidu.com",
+        "t8.baidu.com",
+        "t9.baidu.com",
+        "t10.baidu.com",
+        "t11.baidu.com",
+        "t12.baidu.com",
+        "dss0.bdstatic.com",
+        "dss1.bdstatic.com",
+        "dss2.bdstatic.com",
+        "dss3.bdstatic.com",
+        "ss0.bdstatic.com",
+        "ss1.bdstatic.com",
+        "ss2.bdstatic.com",
+        "ss3.bdstatic.com",
+        "i.ytimg.com",
+        "i9.ytimg.com",
+        "yt3.googleusercontent.com",
+    ] {
+        for category in ["Advertising", "Local", "ThreatIntel_Ultimate"] {
+            let rule = format!("DOMAIN-SUFFIX,{host}");
+            manager.add_rule_line(&rule, "REJECT", category);
+            assert!(
+                manager
+                    .quarantine
+                    .iter()
+                    .any(|record| record.candidate == rule),
+                "shared image host was admitted: {host} in {category}"
+            );
+        }
+    }
+    let pattern = r"^https?:\/\/t\d{2}\.baidu\.com";
+    assert!(
+        fancy_regex::Regex::new(pattern)
+            .unwrap()
+            .is_match("https://t10.baidu.com/it/u=2178613570,2866529354&fm=58")
+            .unwrap()
+    );
+    manager.add_section_line(
+        "Map Local",
+        &format!(r#"{pattern} data="https://example.test/reject-img.gif""#),
+    );
+    assert!(manager.sections["Map Local"].is_empty());
+    manager.add_rule_line("DOMAIN-SUFFIX,mobads.baidu.com", "REJECT", "Advertising");
+    assert!(manager.rules["REJECT"]["Advertising"].contains("DOMAIN-SUFFIX,mobads.baidu.com"));
+}
+
+#[test]
 fn reviewed_privacy_sources_survive_safety_filter_and_keep_suffixes_protected() {
     let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
@@ -49,6 +108,9 @@ fn reviewed_privacy_sources_survive_safety_filter_and_keep_suffixes_protected() 
         "ads.tiktok.com",
         "api-adservices.apple.com",
         "iadsdk.apple.com",
+        "alb.reddit.com",
+        "mads-eu.amazon.com",
+        "weather-analytics-events.apple.com",
     ] {
         assert!(
             rendered_hosts.contains(host),
@@ -155,11 +217,12 @@ fn licensed_remote_app_modules_keep_templates_and_ruleset_boundaries() {
 [Rule]
 RULE-SET,https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list,REJECT-DROP
 [Script]
-贴吧 = type=http-response,pattern=^https://tiebac\.baidu\.com/c/f/ad/getFeedAd,requires-body=true,binary-body-mode=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js,argument=per_filter_video_thread={{{per_filter_video}}}
+贴吧 = type=http-response,pattern=^https?:\/\/(tiebac|c\.tieba)\.baidu\.com/c/f/ad/getFeedAd,requires-body=true,binary-body-mode=1,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js,argument=per_filter_video_thread={{{per_filter_video}}}
 [MITM]
 hostname = %APPEND% tiebac.baidu.com
 ";
     let mut manager = AdBlockManager::new(root.clone());
+    manager.safety = crate::promax::safety::SafetyPolicy::from_lines(["DOMAIN,t10.baidu.com"]);
     manager.integrate_functional_sections(&HashMap::from([(url.to_string(), fixture.to_string())]));
     let output = manager.generate_module(&[], "cdn").content;
     assert!(output.contains("argument=per_filter_video_thread=0"));

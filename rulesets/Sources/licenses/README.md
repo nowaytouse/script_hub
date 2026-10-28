@@ -11,7 +11,7 @@ app2smile 模块由现有 Rust 编译器下载、去重、筛选广告功能并�
 
 AdGuard 仅启用广告、追踪和邮件追踪类别；不启用会影响正常跳转或页面的 clickthrough/microsites 全集。重复域名和已有父域覆盖不会重复发布，Apple、媒体与正常图片等安全保护继续生效。这些列表不需要 HTTPS 解密，新增脚本解密范围仅限各 App 的精确请求主机。
 
-CNAME 追踪单独归入 `Privacy_CNAME`，Surge / Shadowrocket 自动引用完整分片，Loon GitHub Raw 全量版完整内嵌。Loon CDN 核心版沿用原有核心分类范围，因插件不能引用 Surge RULE-SET 且 CDN 单文件限 20 MB，不包含此大型类别和威胁情报；入口说明明确标注差异，不截断或伪报规则数量。
+CNAME 追踪单独归入 `Privacy_CNAME`，Surge / Shadowrocket 自动引用完整分片；已退役的 Loon 产物不再生成或提供兼容入口，不截断或伪报规则数量。
 
 上述模块的变更包括格式转换、默认参数落地、安全隔离、MITM 按实际引用收束，以及重复匹配的优先级处理；不代表上游作者为本项目或所有客户端提供运行保证。合并产物中的对应内容保留上游 MIT 许可，本项目不更改这些内容的许可。
 

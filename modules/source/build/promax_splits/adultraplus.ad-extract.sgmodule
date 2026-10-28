@@ -1,5 +1,5 @@
 #!name=PROMAX split · adultraplus.sgmodule
-#!desc=从混合模块拆出的去广告行 1843/2560；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 1838/2560；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=rulesets/Sources/vendor/adultraplus.sgmodule
 
@@ -704,7 +704,6 @@ https://homefront.qunar.com/front/splash/ad data="https://cdn.jsdelivr.net/gh/no
 ^https?:\/\/tcmobileapi\.17usoft\.com\/appindexnew\/index\/getappindexconfig data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/tbgapplet\.carlsberg\.asia\/tuborg\/banner\/(loading|index) data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
 ^https?:\/\/tb2\.bdstatic\.com\/tb\/mobile\/spb\/widget\/jump data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"
-^https?:\/\/t\d{2}\.baidu\.com data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"
 ^https?:\/\/t\.wind\.com\.cn\/smartad\/ad data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/t-dsp\.pinduoduo\.com data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/szdmobile\.suzhou\.gov\.cn\/thirdapp-center\/appUpdate\/update data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
@@ -1049,7 +1048,6 @@ https://homefront.qunar.com/front/splash/ad data="https://cdn.jsdelivr.net/gh/no
 ^https?:\/\/e-static\.aia\.com\.cn\/kyh\/resourcefolder\/ads data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json"
 ^https?:\/\/dyncdn\.me\/static\/\d{0,2}\/js\/expla\d{0,4}\.js$ data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/du\.hupucdn\.com\/\w+h\d{4} data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"
-^https?:\/\/dss0\.bdstatic\.com\/-0U0bnSm1A5BphGlnYG\/ data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/dsp-impr2\.youdao\.com\/adload data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/dq\.dxy\.cn\/api\.php\?action=getpostbanners data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/douyucdn\.cn\/.+?\/appapi\/getinfo data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"
@@ -1415,7 +1413,6 @@ https://homefront.qunar.com/front/splash/ad data="https://cdn.jsdelivr.net/gh/no
 ^https?:\/\/[a-zA-Z0-9_-]+\.tianmu\.mobi\/ad data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/[a-zA-Z0-9_-]+\.ranfenghd\.com\/ad data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/[a-zA-Z0-9_-]+\.admobile.top\/ data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
-^https?:\/\/[\s\S]*\.baidu\.com/.*?ad[xs]\.php data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"
 ^https?:\/\/789\.kakamobi\.cn\/.+adver data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif"
 ^https?:\/\/4gimg\.map\.qq\.com\/mwaSplash\/ data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
 ^https?:\/\/3gimg\.qq\.com\/tencentMapTouch\/splash\/ data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt"
@@ -1807,8 +1804,6 @@ ximalaya_json2     = type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/foc
 ximalaya_json3     = type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-feed\/v\d\/mix,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/ximalaya_json.js
 ximalaya_json4     = type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-category\/v\d/category,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/ximalaya_json.js
 ximalaya_json5     = type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-category\/customCategories,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/ddgksf2013/Scripts@refs/heads/master/ximalaya_json.js
-tieba-proto        = type=http-response,pattern=^https?:\/\/(tiebac|c\.tieba)\.baidu\.com\/c\/(b\/ad\/adBid|f\/(frs\/(page|threadlist|generalTabList)|ad\/getFeedAd|pb\/page|excellent\/personalized))\?cmd,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-proto.js
-tieba-json         = type=http-response,pattern=^https?:\/\/(tiebac|c\.tieba)\.baidu\.com\/(c\/(s\/sync|f\/(ad\/getSplashAd|frs\/(page|threadlist|generalTabList)|pb\/(pic)?page|excellent\/personalized))$|tiebaads\/commonbatch\?),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-json.js
 qq-news            = type=http-response,pattern=^https?:\/\/(news\.ssp\.qq\.com\/app|r\.inews\.qq\.com\/(get(QQNewsUnreadList|TagFeedList)|gw\/page\/event_detail|news_feed\/hot_module_list)),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/qq-news.js
 kuwo5              = type=http-response,pattern=^https?:\/\/(mgxhtj|nmobi|searchrecterm)\.kuwo\.cn\/(mgxh|mobi|recterm)\.s,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/kuwo/kuwo.js
 cnftp26            = type=http-response,pattern=^https?:\/\/(kjp|t7z)\.cupid\.iqiyi\.com\/mixer\?,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/cnftp.js

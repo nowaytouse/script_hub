@@ -105,6 +105,18 @@ const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
         "iadsdk.apple.com",
         "https://adguardteam.github.io/HostlistsRegistry/assets/filter_53.txt",
     ),
+    (
+        "alb.reddit.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "weather-analytics-events.apple.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "mads-eu.amazon.com",
+        "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.amazon-onlydomains.txt",
+    ),
 ];
 
 /// Whether a parsed DNS rule is one of the specifically reviewed exact-host
@@ -864,6 +876,7 @@ mod tests {
             "DOMAIN-SUFFIX,googleapis.com",
             "DOMAIN-KEYWORD,twitter",
             "DOMAIN-SUFFIX,redditmedia.com",
+            "DOMAIN-SUFFIX,reddit.com",
             "DOMAIN-SUFFIX,tiktok.com",
             "DOMAIN-SUFFIX,amazon.com",
             "DOMAIN-SUFFIX,apple.com",
@@ -875,13 +888,22 @@ mod tests {
             "static.ads-twitter.com",
             "ads-api.twitter.com",
             "events.redditmedia.com",
+            "alb.reddit.com",
             "analytics-sg.tiktok.com",
             "ads.tiktok.com",
             "api-adservices.apple.com",
             "iadsdk.apple.com",
+            "weather-analytics-events.apple.com",
+            "mads-eu.amazon.com",
         ] {
             let exact = SurgeRule::parse(&format!("DOMAIN,{host}")).unwrap();
             assert_eq!(safety.decision(&exact), SafetyDecision::Keep, "{host}");
+            let explicit = SafetyPolicy::from_lines([format!("DOMAIN,{host}")]);
+            assert_eq!(
+                explicit.decision(&exact),
+                SafetyDecision::Quarantine("protected-domain-intersection"),
+                "explicit host protection must win: {host}"
+            );
         }
 
         for line in [
@@ -890,14 +912,17 @@ mod tests {
             "DOMAIN,images.redditmedia.com",
             "DOMAIN,video.tiktok.com",
             "DOMAIN,images.amazon.com",
-            "DOMAIN,mads-eu.amazon.com",
+            "DOMAIN,sub.alb.reddit.com",
+            "DOMAIN-SUFFIX,alb.reddit.com",
+            "DOMAIN-SUFFIX,mads-eu.amazon.com",
+            "DOMAIN-SUFFIX,weather-analytics-events.apple.com",
+            "DOMAIN,weather-data.apple.com",
             "DOMAIN-SUFFIX,ads-api.twitter.com",
             "DOMAIN-SUFFIX,googleapis.com",
             "DOMAIN-KEYWORD,tiktok",
             "DOMAIN-SUFFIX,apple.com",
             "DOMAIN,metrics.icloud.com",
             "DOMAIN-SUFFIX,icloud.com",
-            "DOMAIN,weather-analytics-events.apple.com",
         ] {
             let rule = SurgeRule::parse(line).unwrap();
             assert_eq!(
