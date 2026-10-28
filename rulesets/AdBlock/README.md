@@ -1,5 +1,5 @@
 # AdBlock 分片规则集
-> 自动生成于 `2026-10-28 20:37:42` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
+> 自动生成于 `2026-10-28 21:09:17` · 每片 ≤ 100,000 条 · 详见 [`catalog.json`](catalog.json)
 
 ## 用途分类
 
@@ -26,7 +26,7 @@
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_01.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F01%2Elist) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_02.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F02%2Elist) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_03.list` | 100,000 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F03%2Elist) |
-| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_04.list` | 37,714 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) |
+| 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_04.list` | 37,712 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_ip.list` | 1,228 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fip%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fip%2Elist) |
 | 通用广告 | `rulesets/AdBlock/AdBlock_Advertising_other_extra.list` | 158 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fother%5Fextra%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5Fother%5Fextra%2Elist) |
 | 隐私追踪 | `rulesets/AdBlock/AdBlock_Privacy.list` | 4,927 | [CDN](https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist) | [GitHub](https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist) |

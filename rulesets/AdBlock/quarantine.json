@@ -1177,6 +1177,12 @@
   },
   {
     "source": "Adblock4limbo_surge.list",
+    "candidate": "DOMAIN-KEYWORD,adservice,reject",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Adblock4limbo_surge.list",
     "candidate": "DOMAIN-SUFFIX,alitui.weibo.com,reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -3518,6 +3524,18 @@
   {
     "source": "Advertising_All.list",
     "candidate": "DOMAIN-KEYWORD,adproxy.autohome.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Advertising_All.list",
+    "candidate": "DOMAIN-KEYWORD,adsdk",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "Advertising_All.list",
+    "candidate": "DOMAIN-KEYWORD,adservice",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -127795,6 +127813,12 @@
   },
   {
     "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+    "candidate": "biliverse.github.io",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
     "candidate": "cn-hk-eq-*.bilivideo.com",
     "reason": "protected-mitm-host",
     "risk": "protected-service"
@@ -141602,6 +141626,12 @@
   {
     "source": "reject.conf",
     "candidate": "DOMAIN-KEYWORD,-tracker.biliapi.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "reject.conf",
+    "candidate": "DOMAIN-KEYWORD,adsdk",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
