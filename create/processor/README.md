@@ -49,6 +49,8 @@ Crate-root module paths remain available through re-exports; `functional_update`
 
 ## Local commands
 
+The scheduled updater runs offline tests against the real published PROMAX conversion and validates the published baseline before fetching upstream rules. It validates again after generation and publishes only on success. Failures include a per-stage outcome summary; publication is not force-pushed or blindly retried after a concurrent master update.
+
 Core processor checks and CLI work do not require the GUI feature. Build or test the GUI only on a supported desktop target:
 
 ```sh

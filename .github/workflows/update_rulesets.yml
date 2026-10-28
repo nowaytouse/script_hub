@@ -103,6 +103,7 @@ jobs:
         key: singbox-${{ steps.singbox_version.outputs.version }}-${{ steps.singbox_version.outputs.sha256 }}-linux-amd64
 
     - name: Install sing-box (for SRS generation only)
+      id: singbox_install
       env:
         SINGBOX_VERSION: ${{ steps.singbox_version.outputs.version }}
         SINGBOX_SHA256: ${{ steps.singbox_version.outputs.sha256 }}
@@ -147,6 +148,7 @@ jobs:
 
 
     - name: Set up Rust
+      id: rust_setup
       uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
       with:
         rust-src-dir: create/processor
@@ -156,12 +158,18 @@ jobs:
         cache-on-failure: false
 
     - name: Validate Rust pipeline
+      id: rust_checks
       run: |
         cargo fmt --manifest-path create/processor/Cargo.toml -- --check
         cargo clippy --locked --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
         cargo test --locked --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
 
+    - name: Validate published baseline before network update
+      id: baseline_validation
+      run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
+
     - name: Execute Rust Ruleset Update
+      id: update
       run: |
         cargo run --release --locked --manifest-path create/processor/Cargo.toml --bin update -- \
           --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
@@ -171,9 +179,11 @@ jobs:
         SCRIPTHUB_DOWNLOAD_CONCURRENCY: '4'
 
     - name: Validate generated modules
+      id: generated_validation
       run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
 
     - name: Publish generated tree
+      id: publication
       if: github.ref == 'refs/heads/master'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -192,6 +202,34 @@ jobs:
         fi
         git commit -m "chore(ruleset): automated Rust update $(date -u '+%Y-%m-%d %H:%M UTC')"
         git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:master
+
+    - name: Report failed stage
+      if: failure()
+      env:
+        SINGBOX_RESOLUTION: ${{ steps.singbox_version.outcome }}
+        SINGBOX_INSTALLATION: ${{ steps.singbox_install.outcome }}
+        RUST_SETUP: ${{ steps.rust_setup.outcome }}
+        RUST_CHECKS: ${{ steps.rust_checks.outcome }}
+        BASELINE_VALIDATION: ${{ steps.baseline_validation.outcome }}
+        RULESET_UPDATE: ${{ steps.update.outcome }}
+        GENERATED_VALIDATION: ${{ steps.generated_validation.outcome }}
+        PUBLICATION: ${{ steps.publication.outcome }}
+      run: |
+        {
+          echo '## Ruleset update failed — no checks were bypassed'
+          echo '| Stage | Outcome |'
+          echo '| --- | --- |'
+          printf '| sing-box resolution | %s |\n' "${SINGBOX_RESOLUTION:-not reached}"
+          printf '| sing-box installation | %s |\n' "${SINGBOX_INSTALLATION:-not reached}"
+          printf '| Rust setup | %s |\n' "${RUST_SETUP:-not reached}"
+          printf '| Rust checks | %s |\n' "${RUST_CHECKS:-not reached}"
+          printf '| Published baseline | %s |\n' "${BASELINE_VALIDATION:-not reached}"
+          printf '| Ruleset generation | %s |\n' "${RULESET_UPDATE:-not reached}"
+          printf '| Generated validation | %s |\n' "${GENERATED_VALIDATION:-not reached}"
+          printf '| Publication | %s |\n' "${PUBLICATION:-not reached}"
+          echo
+          echo 'Publication is not retried automatically; check the publication log and remote commit before retrying.'
+        } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Summary
       env:

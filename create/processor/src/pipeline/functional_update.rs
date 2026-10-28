@@ -1185,6 +1185,31 @@ mod tests {
     }
 
     #[test]
+    fn published_promax_round_trips_through_shadowrocket_sync_offline() {
+        let root = temporary_root("published-promax-sync");
+        let relative = Path::new(
+            "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+        );
+        let published = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(relative);
+        let content = std::fs::read_to_string(&published).unwrap();
+        assert!(crate::promax::validation::validate_surge_module(&content).is_empty());
+        let source = root.join(relative);
+        std::fs::create_dir_all(source.parent().unwrap()).unwrap();
+        std::fs::write(&source, &content).unwrap();
+
+        assert_eq!(sync_shadowrocket_variants(&root).unwrap(), 1);
+        let converted = std::fs::read_to_string(root.join("modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module")).unwrap();
+        assert_eq!(
+            converted,
+            crate::promax::artifact::convert_surge_to_shadowrocket(&content)
+        );
+        assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn shadowrocket_sync_validates_converted_promax_with_target_rules() {
         let root = temporary_root("shadowrocket-sync-promax");
         let source_dir = root.join("modules/surge/head_expanse");
