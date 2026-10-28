@@ -4,6 +4,51 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn pinterest_pin_widgets_remain_available_without_allowing_tracking_siblings() {
+    let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(repo_root);
+    manager.load_whitelist().unwrap();
+    for (rule, category) in [
+        (
+            "DOMAIN,widgets.pinterest.com,extended-matching",
+            "Advertising",
+        ),
+        ("DOMAIN-SUFFIX,widgets.pinterest.com", "AntiAD"),
+    ] {
+        manager.add_rule_line(rule, "REJECT", category);
+        assert!(
+            manager
+                .quarantine
+                .iter()
+                .any(|record| record.candidate == rule),
+            "normal Pin widget was rejected: {rule}"
+        );
+    }
+    for host in ["log.pinterest.com", "ct.pinterest.com", "ads.pinterest.com"] {
+        let rule = format!("DOMAIN,{host}");
+        manager.add_rule_line(&rule, "REJECT", "Privacy");
+        assert!(
+            manager.rules["REJECT"]["Privacy"].contains(&rule),
+            "dedicated tracking host lost: {host}"
+        );
+    }
+    for parent in ["pinterest.com", "pinimg.com"] {
+        let rule = format!("DOMAIN-SUFFIX,{parent}");
+        manager.add_rule_line(&rule, "REJECT", "Advertising");
+        assert!(
+            manager
+                .quarantine
+                .iter()
+                .any(|record| record.candidate == rule),
+            "parent rejection would still break content: {parent}"
+        );
+    }
+    let sibling = "DOMAIN-SUFFIX,s-passets.pinimg.com";
+    manager.add_rule_line(sibling, "REJECT", "ThreatIntel_Ultimate");
+    assert!(manager.rules["REJECT"]["ThreatIntel_Ultimate"].contains(sibling));
+}
+
+#[test]
 fn shared_thumbnail_hosts_and_baidu_image_proxy_are_not_adblock_targets() {
     let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut manager = AdBlockManager::new(repo_root);
@@ -33,6 +78,8 @@ fn shared_thumbnail_hosts_and_baidu_image_proxy_are_not_adblock_targets() {
         "i.ytimg.com",
         "i9.ytimg.com",
         "yt3.googleusercontent.com",
+        "i.pinimg.com",
+        "s.pinimg.com",
     ] {
         for category in ["Advertising", "Local", "ThreatIntel_Ultimate"] {
             let rule = format!("DOMAIN-SUFFIX,{host}");

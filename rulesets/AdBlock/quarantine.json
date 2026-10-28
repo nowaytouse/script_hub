@@ -1003,6 +1003,12 @@
   },
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
+    "candidate": "DOMAIN,widgets.pinterest.com,REJECT,extended-matching,pre-matching",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,wxa.wxs.qq.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -61106,6 +61112,12 @@
   {
     "source": "anti-ad-surge2.txt",
     "candidate": ".widgets.itunes.apple.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "anti-ad-surge2.txt",
+    "candidate": ".widgets.pinterest.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },

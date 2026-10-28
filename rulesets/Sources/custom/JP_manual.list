@@ -1,5 +1,10 @@
 # Additional services in the user-selected Japan-oriented aggregate.
 # This is a matching list, not a country-of-origin or routing-policy assertion.
+# Explicit regional web entry only; pinimg.com remains shared image infrastructure.
+# https://jp.pinterest.com/
+DOMAIN,jp.pinterest.com
+# Independent Japan-facing domain from the maintained Pinterest service-family feed.
+DOMAIN-SUFFIX,pinterest.jp
 DOMAIN-SUFFIX,misskey.io
 DOMAIN-SUFFIX,pixiv.net
 DOMAIN-SUFFIX,pximg.net

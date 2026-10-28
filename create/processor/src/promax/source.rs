@@ -511,7 +511,15 @@ fn download_candidates(url: &str) -> Vec<String> {
     {
         return candidates;
     }
-    if let Some(rest) = url.strip_prefix("https://raw.githubusercontent.com/") {
+    if let Some(name) =
+        url.strip_prefix("https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/")
+        && matches!(name, "tif.medium.txt" | "ultimate.txt")
+    {
+        // Only the publisher's two known identical feeds may cross this host boundary.
+        candidates.push(format!(
+            "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/{name}"
+        ));
+    } else if let Some(rest) = url.strip_prefix("https://raw.githubusercontent.com/") {
         let parts: Vec<&str> = rest.split('/').collect();
         if parts.len() >= 4 {
             let (reference, path_start) = if parts.get(2..4) == Some(&["refs", "heads"]) {
@@ -983,6 +991,33 @@ mod tests {
         let batch = Downloader::new(config).download_many(urls);
 
         assert_eq!(batch.failures.len(), 2);
+    }
+
+    #[test]
+    fn hagezi_gitlab_feeds_have_exact_official_github_fallbacks() {
+        for name in ["tif.medium.txt", "ultimate.txt"] {
+            let original = format!(
+                "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/{name}"
+            );
+            assert_eq!(
+                download_candidates(&original),
+                [
+                    original.clone(),
+                    format!(
+                        "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/{name}"
+                    ),
+                ]
+            );
+            for untrusted in [
+                original.replace("gitlab.com/", "gitlab.com.example/"),
+                original.replace("/hagezi/", "/other/"),
+                format!("{original}?token=secret"),
+                format!("{original}#fragment"),
+                format!("{original}/extra"),
+            ] {
+                assert_eq!(download_candidates(&untrusted), [untrusted]);
+            }
+        }
     }
 
     #[test]

@@ -24,6 +24,17 @@ DOMAIN-SUFFIX,yt3.ggpht.com
 DOMAIN-SUFFIX,yt4.ggpht.com
 # YouTube channel/avatar image delivery, separate from advertising endpoints.
 DOMAIN,yt3.googleusercontent.com
+# Pinterest's public Pin API uses i.pinimg.com for images; the public web app
+# loads essential code from s.pinimg.com. Do not widen to all of pinimg.com.
+# https://developers.pinterest.com/docs/api/v5/pins-list/
+# https://jp.pinterest.com/
+DOMAIN,i.pinimg.com
+DOMAIN,s.pinimg.com
+# The official embed script fetches Pin/board/user content here, not only counters.
+# https://assets.pinterest.com/js/pinit_main.js
+DOMAIN,widgets.pinterest.com
+# Reject rules for a whole parent would also block these hosts, so they are quarantined;
+# independent log/ct/ads and unprotected pinimg sibling rejections remain eligible.
 # 防止屏蔽整个 Google Video IP 网段
 IP-CIDR,74.125.0.0/16
 IP-CIDR,172.217.0.0/16

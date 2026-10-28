@@ -29,7 +29,8 @@ concurrency:
 
 jobs:
   update-rules:
-    runs-on: ubuntu-latest
+    # Pin the supported image to avoid the ubuntu-latest migration notice.
+    runs-on: ubuntu-26.04
     timeout-minutes: 120
     env:
       CARGO_BUILD_JOBS: '1'

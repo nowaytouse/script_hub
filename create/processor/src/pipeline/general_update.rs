@@ -1470,6 +1470,113 @@ mod tests {
     }
 
     #[test]
+    fn published_service_families_keep_global_and_china_variants() {
+        let directory = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../rulesets/RULE-SET");
+        for (family, hosts) in [
+            (
+                "GlobalProxy",
+                vec![
+                    "example.cdn.cloudflareanycast.net",
+                    "example.cdn.cloudflarecn.net",
+                ],
+            ),
+            (
+                "Google",
+                vec!["googleapis.cn", "gstatic-cn.com", "googlecnapps.cn"],
+            ),
+            (
+                "Microsoft",
+                vec![
+                    "login.partner.microsoftonline.cn",
+                    "office365.cn",
+                    "chinacloudapi.cn",
+                ],
+            ),
+        ] {
+            let rules = read_rules(&directory.join(format!("{family}.list"))).unwrap();
+            let boundary = super::RuleBoundary::from_rules(&rules);
+            for host in hosts {
+                assert!(
+                    boundary.covers(&format!("DOMAIN,{host}")),
+                    "missing {family} service variant {host}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn pinterest_service_family_follows_upstream_variants_without_claiming_shared_cdn_parents() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let mut manifest = discover_manifests(&repo)
+            .unwrap()
+            .into_iter()
+            .find(|manifest| manifest.name == "SocialMedia")
+            .unwrap();
+        let source = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/pinterest.list";
+        assert!(manifest.remote_urls.iter().any(|url| url == source));
+        manifest.remote_urls.retain(|url| url == source);
+        manifest.local_paths.clear();
+        let root = consolidation_fixture();
+        for feed in [
+            "+.pinterest.com\n+.pinterest.de\n+.pinterest.com.au\n+.pinimg.com\n+.pinterest.map.fastly.net\n",
+            "+.pinterest.com\n+.pinterest.de\n+.pinterest.com.au\n+.pinimg.com\n+.pinterest.map.fastly.net\n+.pinterest.co.nz\n",
+        ] {
+            process_manifest(
+                &root,
+                &manifest,
+                &HashMap::from([(source.into(), feed.into())]),
+            )
+            .unwrap();
+            let rules = read_rules(&root.join("rulesets/RULE-SET/SocialMedia.list")).unwrap();
+            for domain in [
+                "pinterest.com",
+                "pinterest.de",
+                "pinterest.com.au",
+                "pinimg.com",
+                "pinterest.map.fastly.net",
+            ] {
+                assert!(
+                    rules.contains(&format!("DOMAIN-SUFFIX,{domain}")),
+                    "missing service variant {domain}"
+                );
+            }
+            assert_eq!(
+                rules.contains("DOMAIN-SUFFIX,pinterest.co.nz"),
+                feed.contains("+.pinterest.co.nz")
+            );
+            assert!(!rules.contains("DOMAIN-SUFFIX,fastly.net"));
+            assert!(!root.join("rulesets/RULE-SET/SocialMedia_ip.list").exists());
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn jp_regional_web_entry_preserves_the_shared_pinterest_image_boundary() {
+        let root = consolidation_fixture();
+        let manual = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../rulesets/Sources/custom/JP_manual.list");
+        fs::copy(manual, root.join("rulesets/Sources/custom/JP_manual.list")).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        let jp = read_rules(&root.join("rulesets/RULE-SET/JP.list")).unwrap();
+        assert!(jp.contains("DOMAIN,jp.pinterest.com"));
+        assert!(jp.contains("DOMAIN-SUFFIX,pinterest.jp"));
+        for unrelated in [
+            "DOMAIN-SUFFIX,pinterest.com",
+            "DOMAIN-SUFFIX,pinimg.com",
+            "DOMAIN,i.pinimg.com",
+            "DOMAIN,www.pinterest.com",
+            "DOMAIN,uk.pinterest.com",
+        ] {
+            assert!(
+                !jp.contains(unrelated),
+                "unrequested regional scope: {unrelated}"
+            );
+        }
+        assert!(!root.join("rulesets/RULE-SET/JP_ip.list").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn consolidation_preserves_leaf_scope_and_merges_only_requested_services() {
         let root = consolidation_fixture();
         let rules = root.join("rulesets/RULE-SET");
