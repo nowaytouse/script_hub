@@ -996,12 +996,26 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
         let content = std::fs::read_to_string(entry.path())
             .map_err(|error| format!("cannot read {}: {error}", entry.path().display()))?;
         let converted = crate::promax::artifact::convert_surge_to_shadowrocket(&content);
-        let errors = crate::promax::validation::validate_surge_module(&converted);
+        let errors = crate::promax::validation::validate_shadowrocket_module(&converted);
         if !errors.is_empty() {
+            let diagnostics = errors
+                .iter()
+                .take(3)
+                .map(|error| format!("line {} {}", error.line, error.code))
+                .collect::<Vec<_>>()
+                .join("; ");
             return Err(format!(
-                "Shadowrocket conversion failed validation for {}",
-                entry.path().display()
+                "Shadowrocket conversion failed validation for {}: {diagnostics}",
+                entry.path().display(),
             ));
+        }
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent).map_err(|error| {
+                format!(
+                    "cannot create Shadowrocket output directory {}: {error}",
+                    parent.display()
+                )
+            })?;
         }
         if !crate::safe_write_file_internal(&target, &converted, true) {
             return Err(format!("cannot publish {}", target.display()));
@@ -1167,6 +1181,34 @@ mod tests {
     fn missing_surge_source_directory_is_not_a_successful_empty_sync() {
         let root = temporary_root("missing-surge");
         assert!(sync_shadowrocket_variants(&root).is_err());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn shadowrocket_sync_validates_converted_promax_with_target_rules() {
+        let root = temporary_root("shadowrocket-sync-promax");
+        let source_dir = root.join("modules/surge/head_expanse");
+        std::fs::create_dir_all(&source_dir).unwrap();
+        let source = source_dir.join("PROMAX.sgmodule");
+        let valid = "#!name=PROMAX\n#!desc=fixture\n[Rule]\nIP-CIDR,192.0.2.0/24,REJECT,no-resolve\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT,no-resolve\n";
+        std::fs::write(&source, valid).unwrap();
+
+        assert_eq!(sync_shadowrocket_variants(&root).unwrap(), 1);
+        let target = root.join("modules/shadowrocket/head_expanse/PROMAX.module");
+        let converted = std::fs::read_to_string(&target).unwrap();
+        assert!(converted.contains("IP-CIDR,192.0.2.0/24,REJECT"));
+        assert!(converted.contains("RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT"));
+        assert!(!converted.contains("no-resolve"));
+        assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+
+        for invalid in [
+            "#!name=PROMAX\n[Rule]\nDOMAIN,ads.example,PROXY\n",
+            "#!name=PROMAX\n[Rule]\nRULE-SET,https://external.example/ads.list,REJECT,no-resolve\n",
+        ] {
+            std::fs::write(&source, invalid).unwrap();
+            assert!(sync_shadowrocket_variants(&root).is_err());
+            assert_eq!(std::fs::read_to_string(&target).unwrap(), converted);
+        }
         std::fs::remove_dir_all(root).unwrap();
     }
 

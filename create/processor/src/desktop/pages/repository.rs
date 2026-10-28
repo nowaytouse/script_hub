@@ -29,7 +29,11 @@ impl HubApp {
             ui.colored_label(self.colors.error, error);
         }
         let Some(repository) = self.repository.clone() else {
-            ui.label(tr(Text::GitUnavailable));
+            if self.repository_loader.is_some() {
+                ui.label(tr(Text::LoadingRepository));
+            } else if self.repository_error.is_none() {
+                ui.label(tr(Text::GitUnavailable));
+            }
             return;
         };
         let ready = self.workspace_ready() && !self.active();

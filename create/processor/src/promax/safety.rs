@@ -66,6 +66,57 @@ pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
     "music.apple.com",
 ];
 
+/// Exact ad/analytics endpoints present in maintained upstream feeds already
+/// ingested by this project. These override parent-whitelist intersections only
+/// for DOMAIN rules matching a hostname byte-for-byte; suffix, keyword,
+/// wildcard, regex, and functional rules remain protected.
+/// Reviewed exact host → maintained upstream source evidence. The rule inputs
+/// are kept in rulesets/Sources/Privacy_Reviewed.list with matching citations.
+const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
+    (
+        "firebaselogging-pa.googleapis.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "static.ads-twitter.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
+    ),
+    (
+        "ads-api.twitter.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "events.redditmedia.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "analytics-sg.tiktok.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "ads.tiktok.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
+    ),
+    (
+        "api-adservices.apple.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_53.txt",
+    ),
+    (
+        "iadsdk.apple.com",
+        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_53.txt",
+    ),
+];
+
+/// Whether a parsed DNS rule is one of the specifically reviewed exact-host
+/// privacy rules. Callers must still run the normal protected-service policy;
+/// this identity check does not grant a general whitelist exemption.
+pub(crate) fn is_reviewed_exact_privacy_domain(rule: &SurgeRule) -> bool {
+    rule.kind == RuleKind::Domain
+        && REVIEWED_EXACT_PRIVACY_HOSTS
+            .iter()
+            .any(|(host, _source)| *host == rule.payload.as_str())
+}
+
 pub fn apple_mitm_exclusions() -> Vec<String> {
     let mut exclusions: Vec<String> = APPLE_CRITICAL_EXACT
         .iter()
@@ -262,7 +313,16 @@ impl SafetyPolicy {
             return SafetyDecision::Quarantine("broad-media-match");
         }
         let intersects = match rule.kind {
-            RuleKind::Domain => self.domain_is_protected(&payload),
+            RuleKind::Domain => {
+                let reviewed_exact_privacy_host = is_reviewed_exact_privacy_domain(rule)
+                    && !self.protected_domains.contains(&payload)
+                    && !apple_host_pattern_is_critical(&payload);
+                if reviewed_exact_privacy_host {
+                    false
+                } else {
+                    self.domain_is_protected(&payload)
+                }
+            }
             RuleKind::DomainSuffix => self.suffix_intersects(&payload),
             RuleKind::DomainKeyword => self.keyword_intersects(&payload),
             RuleKind::DomainWildcard => self.pattern_intersects(&wildcard_regex(&payload)),
@@ -781,10 +841,11 @@ fn wildcard_regex(value: &str) -> Regex {
 #[cfg(test)]
 mod tests {
     use super::{
-        QuarantineRecord, RiskClass, SafetyDecision, SafetyPolicy, apple_host_pattern_is_critical,
-        classify_domain_payload, classify_functional_url,
+        QuarantineRecord, REVIEWED_EXACT_PRIVACY_HOSTS, RiskClass, SafetyDecision, SafetyPolicy,
+        apple_host_pattern_is_critical, classify_domain_payload, classify_functional_url,
     };
-    use crate::promax::rule::SurgeRule;
+    use crate::promax::rule::{RuleKind, SurgeRule};
+    use std::{collections::BTreeSet, fs, path::Path};
 
     #[test]
     fn keyword_rule_intersecting_protected_media_is_quarantined() {
@@ -795,6 +856,136 @@ mod tests {
             safety.decision(&rule),
             SafetyDecision::Quarantine("protected-domain-intersection")
         );
+    }
+
+    #[test]
+    fn reviewed_exact_privacy_hosts_override_only_their_parent_whitelist_match() {
+        let safety = SafetyPolicy::from_lines([
+            "DOMAIN-SUFFIX,googleapis.com",
+            "DOMAIN-KEYWORD,twitter",
+            "DOMAIN-SUFFIX,redditmedia.com",
+            "DOMAIN-SUFFIX,tiktok.com",
+            "DOMAIN-SUFFIX,amazon.com",
+            "DOMAIN-SUFFIX,apple.com",
+            "DOMAIN-SUFFIX,icloud.com",
+        ]);
+
+        for host in [
+            "firebaselogging-pa.googleapis.com",
+            "static.ads-twitter.com",
+            "ads-api.twitter.com",
+            "events.redditmedia.com",
+            "analytics-sg.tiktok.com",
+            "ads.tiktok.com",
+            "api-adservices.apple.com",
+            "iadsdk.apple.com",
+        ] {
+            let exact = SurgeRule::parse(&format!("DOMAIN,{host}")).unwrap();
+            assert_eq!(safety.decision(&exact), SafetyDecision::Keep, "{host}");
+        }
+
+        for line in [
+            "DOMAIN,firebaselogging.googleapis.com",
+            "DOMAIN,api.twitter.com",
+            "DOMAIN,images.redditmedia.com",
+            "DOMAIN,video.tiktok.com",
+            "DOMAIN,images.amazon.com",
+            "DOMAIN,mads-eu.amazon.com",
+            "DOMAIN-SUFFIX,ads-api.twitter.com",
+            "DOMAIN-SUFFIX,googleapis.com",
+            "DOMAIN-KEYWORD,tiktok",
+            "DOMAIN-SUFFIX,apple.com",
+            "DOMAIN,metrics.icloud.com",
+            "DOMAIN-SUFFIX,icloud.com",
+            "DOMAIN,weather-analytics-events.apple.com",
+        ] {
+            let rule = SurgeRule::parse(line).unwrap();
+            assert_eq!(
+                safety.decision(&rule),
+                SafetyDecision::Quarantine("protected-domain-intersection"),
+                "{line}"
+            );
+        }
+
+        let exact_whitelist =
+            SafetyPolicy::from_lines(["DOMAIN-SUFFIX,twitter.com", "DOMAIN,ads-api.twitter.com"]);
+        let exact = SurgeRule::parse("DOMAIN,ads-api.twitter.com").unwrap();
+        assert_eq!(
+            exact_whitelist.decision(&exact),
+            SafetyDecision::Quarantine("protected-domain-intersection")
+        );
+    }
+
+    #[test]
+    fn reviewed_privacy_input_matches_safety_exceptions_and_real_whitelist() {
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let source_path = repo_root.join("rulesets/Sources/Privacy_Reviewed.list");
+        let source_text = fs::read_to_string(&source_path)
+            .unwrap_or_else(|error| panic!("read {}: {error}", source_path.display()));
+        let manifest_path = repo_root.join("rulesets/Sources/Links/AdBlock_sources.list");
+        let manifest = fs::read_to_string(&manifest_path)
+            .unwrap_or_else(|error| panic!("read {}: {error}", manifest_path.display()));
+        assert_eq!(
+            manifest
+                .lines()
+                .filter(|line| line.trim() == "../Privacy_Reviewed.list|REJECT|auto|Privacy")
+                .count(),
+            1,
+            "the reviewed local privacy input must be referenced exactly once"
+        );
+
+        let source_rules: Vec<SurgeRule> = source_text
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .map(|line| {
+                SurgeRule::parse(line)
+                    .unwrap_or_else(|_| panic!("invalid reviewed privacy rule: {line}"))
+            })
+            .collect();
+        assert!(
+            source_rules
+                .iter()
+                .all(|rule| rule.kind == RuleKind::Domain),
+            "reviewed privacy input must contain only exact DOMAIN rules"
+        );
+
+        let actual_hosts: BTreeSet<String> = source_rules
+            .iter()
+            .map(|rule| rule.payload.to_ascii_lowercase())
+            .collect();
+        let expected_hosts: BTreeSet<String> = REVIEWED_EXACT_PRIVACY_HOSTS
+            .iter()
+            .map(|(host, _source)| (*host).to_string())
+            .collect();
+        assert_eq!(
+            source_rules.len(),
+            actual_hosts.len(),
+            "reviewed privacy input must not duplicate exact hosts"
+        );
+        assert_eq!(actual_hosts, expected_hosts);
+
+        let whitelist_path = repo_root.join("rulesets/Sources/adblock_whitelist.list");
+        let whitelist_text = fs::read_to_string(&whitelist_path)
+            .unwrap_or_else(|error| panic!("read {}: {error}", whitelist_path.display()));
+        let (whitelist, stats) = SafetyPolicy::from_lines_with_stats(whitelist_text.lines());
+        assert!(
+            stats.domain_patterns > 0,
+            "real whitelist has no domain protections"
+        );
+        assert!(
+            stats.ip_networks > 0,
+            "real whitelist has no IP protections"
+        );
+
+        for rule in &source_rules {
+            assert_eq!(
+                whitelist.decision(rule),
+                SafetyDecision::Keep,
+                "real whitelist still protects {}",
+                rule.payload
+            );
+        }
     }
 
     #[test]

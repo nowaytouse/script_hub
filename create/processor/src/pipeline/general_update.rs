@@ -978,7 +978,19 @@ fn read_adblock_boundary(
         if path.extension().and_then(|value| value.to_str()) == Some("list") {
             let rules = read_rules(&path)?;
             if let Some(apple) = apple {
-                apple_overlaps += overlap_count(&rules, apple);
+                apple_overlaps += rules
+                    .iter()
+                    .filter(|rule| {
+                        let reviewed_ad_host = crate::promax::rule::SurgeRule::parse(rule)
+                            .is_ok_and(|parsed| {
+                                crate::promax::safety::is_reviewed_exact_privacy_domain(&parsed)
+                                    && !crate::promax::safety::apple_host_pattern_is_critical(
+                                        &parsed.payload,
+                                    )
+                            });
+                        apple.intersects(rule) && !reviewed_ad_host
+                    })
+                    .count();
             }
             for rule in rules {
                 boundary.insert(&rule);
@@ -2029,6 +2041,32 @@ mod tests {
         assert!(!direct.contains("weather.apple.test"));
         assert!(!proxy.contains("store.apple.test"));
         assert!(proxy.contains("DOMAIN-SUFFIX,shared.test"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn apple_ad_boundary_allows_only_reviewed_exact_ad_hosts() {
+        let root = consolidation_fixture();
+        let adblock = root.join("rulesets/AdBlock");
+        fs::create_dir_all(&adblock).unwrap();
+        let apple = super::RuleBoundary::from_rules(&std::collections::BTreeSet::from([
+            "DOMAIN-SUFFIX,apple.com".into(),
+            "DOMAIN-SUFFIX,icloud.com".into(),
+        ]));
+        let path = adblock.join("fixture.list");
+        fs::write(
+            &path,
+            "DOMAIN,api-adservices.apple.com\nDOMAIN,iadsdk.apple.com\n",
+        )
+        .unwrap();
+        let (boundary, overlaps) = super::read_adblock_boundary(&root, Some(&apple)).unwrap();
+        assert_eq!(overlaps, 0);
+        assert!(boundary.intersects("DOMAIN,api-adservices.apple.com"));
+        fs::write(&path, "DOMAIN-SUFFIX,api-adservices.apple.com\nDOMAIN,metrics.icloud.com\nDOMAIN,account.apple.com\n").unwrap();
+        assert_eq!(
+            super::read_adblock_boundary(&root, Some(&apple)).unwrap().1,
+            3
+        );
         fs::remove_dir_all(root).unwrap();
     }
 

@@ -1,4 +1,6 @@
+use super::app_history::HistoryLoader;
 use super::catalog::Catalog;
+use super::history::{HistoryOptions, HistoryRecord};
 use super::i18n::{Text, text};
 use super::job::{Job, JobKind, JobOptions, JobOutcome, Snapshot, validate_root};
 use super::progress::Stage;
@@ -30,10 +32,26 @@ pub(super) enum CatalogTab {
     Sources,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum SupportTab {
+    Help,
+    About,
+    Licenses,
+    Privacy,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum TaskTab {
+    Current,
+    History,
+}
+
 pub(super) enum Pending {
     Job(JobKind, JobOptions),
     AddSource(PathBuf, CustomSource),
     RemoveSource(PathBuf, SourceCategory, String),
+    ClearHistory(PathBuf),
+    RemoveUnfinishedHistory(PathBuf),
 }
 
 struct WorkspaceLoader {
@@ -47,6 +65,12 @@ struct LoadedWorkspace {
     root: PathBuf,
     catalog: Catalog,
     sources: Result<Vec<CustomSource>, String>,
+}
+
+pub(super) struct RepositoryLoader {
+    receiver: Receiver<Result<RepositoryStatus, String>>,
+    worker: JoinHandle<()>,
+    requested_root: PathBuf,
 }
 
 fn load_workspace(
@@ -81,12 +105,16 @@ pub struct HubApp {
     pub(super) category: String,
     pub(super) selected_module: Option<usize>,
     pub(super) selected_rule: Option<usize>,
+    pub(super) selected_modules: BTreeSet<usize>,
+    pub(super) selected_rules: BTreeSet<usize>,
+    pub(super) copy_policy: String,
     pub(super) sources: Vec<CustomSource>,
     pub(super) source_name: String,
     pub(super) source_url: String,
     pub(super) source_category: SourceCategory,
     pub(super) repository: Option<RepositoryStatus>,
     pub(super) repository_error: Option<String>,
+    pub(super) repository_loader: Option<RepositoryLoader>,
     pub(super) selected_files: BTreeSet<String>,
     pub(super) commit_message: String,
     pub(super) task_kind: JobKind,
@@ -97,6 +125,14 @@ pub struct HubApp {
     refresh_repository_after_load: bool,
     pub(super) job_finished_handled: bool,
     pub(super) show_logs: bool,
+    pub(super) support_tab: SupportTab,
+    pub(super) task_tab: TaskTab,
+    pub(super) log_search: String,
+    pub(super) problems_only: bool,
+    pub(super) history_records: Vec<HistoryRecord>,
+    pub(super) history_loader: Option<HistoryLoader>,
+    pub(super) history_error: Option<String>,
+    pub(super) history_search: String,
     pub(super) pending: Option<Pending>,
     pub(super) error: Option<String>,
     pub(super) notice: Option<Text>,
@@ -153,12 +189,16 @@ impl HubApp {
             category: String::new(),
             selected_module: None,
             selected_rule: None,
+            selected_modules: BTreeSet::new(),
+            selected_rules: BTreeSet::new(),
+            copy_policy: String::new(),
             sources: Vec::new(),
             source_name: String::new(),
             source_url: String::new(),
             source_category: SourceCategory::Wool,
             repository: None,
             repository_error: None,
+            repository_loader: None,
             selected_files: BTreeSet::new(),
             commit_message: String::new(),
             task_kind: JobKind::Validate,
@@ -169,6 +209,14 @@ impl HubApp {
             refresh_repository_after_load: false,
             job_finished_handled: true,
             show_logs: false,
+            support_tab: SupportTab::Help,
+            task_tab: TaskTab::Current,
+            log_search: String::new(),
+            problems_only: false,
+            history_records: Vec::new(),
+            history_loader: None,
+            history_error: None,
+            history_search: String::new(),
             pending: None,
             error: None,
             notice: None,
@@ -181,6 +229,7 @@ impl HubApp {
             app.start_workspace_load_with(root, loader);
             app.initial_load = true;
         }
+        app.refresh_history(false);
         app
     }
 
@@ -188,7 +237,9 @@ impl HubApp {
         text(self.draft.language, key)
     }
     pub(super) fn active(&self) -> bool {
-        self.job.as_ref().is_some_and(Job::is_running) || self.workspace_loader.is_some()
+        self.job.as_ref().is_some_and(Job::is_running)
+            || self.workspace_loader.is_some()
+            || self.repository_loader.is_some()
     }
     fn job_active(&self) -> bool {
         self.job.as_ref().is_some_and(Job::is_running)
@@ -217,8 +268,13 @@ impl HubApp {
         self.catalog = Catalog::default();
         self.sources.clear();
         self.repository = None;
+        self.repository_error = None;
+        self.repository_loader = None;
         self.selected_module = None;
         self.selected_rule = None;
+        self.selected_modules.clear();
+        self.selected_rules.clear();
+        self.copy_policy.clear();
         self.selected_files.clear();
         let shadowrocket = self.shadowrocket;
         self.error = self.startup_error.clone();
@@ -323,10 +379,80 @@ impl HubApp {
     }
 
     pub(super) fn refresh_repository(&mut self) {
-        let Some(root) = self.loaded_root.as_deref() else {
+        self.refresh_repository_with(repository::snapshot);
+    }
+
+    fn refresh_repository_with<F>(&mut self, reader: F)
+    where
+        F: FnOnce(&Path) -> Result<RepositoryStatus, String> + Send + 'static,
+    {
+        if self.repository_loader.is_some() || self.workspace_loader.is_some() || self.job_active()
+        {
+            return;
+        }
+        let Some(root) = self.loaded_root.clone().filter(|_| self.workspace_ready()) else {
             return;
         };
-        match repository::snapshot(root) {
+        self.repository = None;
+        self.repository_error = None;
+        let worker_root = root.clone();
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let worker = match thread::Builder::new()
+            .name("script-hub-repository-reader".to_owned())
+            .spawn(move || {
+                let result =
+                    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| reader(&worker_root)))
+                        .unwrap_or_else(|_| {
+                            Err("repository reader stopped unexpectedly".to_owned())
+                        });
+                let _ = sender.send(result);
+            }) {
+            Ok(worker) => worker,
+            Err(error) => {
+                self.repository_error = Some(format!("cannot start repository reader: {error}"));
+                return;
+            }
+        };
+        self.repository_loader = Some(RepositoryLoader {
+            receiver,
+            worker,
+            requested_root: root,
+        });
+    }
+
+    fn poll_repository_loader(&mut self, ctx: &egui::Context) {
+        let Some(loader) = self.repository_loader.as_ref() else {
+            return;
+        };
+        let result = match loader.receiver.try_recv() {
+            Ok(result) => Some(result),
+            Err(TryRecvError::Empty) => None,
+            Err(TryRecvError::Disconnected) => {
+                Some(Err("repository reader stopped without a result".to_owned()))
+            }
+        };
+        let Some(result) = result else {
+            ctx.request_repaint_after(Duration::from_millis(100));
+            return;
+        };
+        let Some(loader) = self.repository_loader.take() else {
+            return;
+        };
+        self.finish_repository_loader(loader, result);
+    }
+
+    fn finish_repository_loader(
+        &mut self,
+        loader: RepositoryLoader,
+        mut result: Result<RepositoryStatus, String>,
+    ) {
+        if loader.worker.join().is_err() {
+            result = Err("repository reader stopped unexpectedly".to_owned());
+        }
+        if self.loaded_root.as_ref() != Some(&loader.requested_root) || !self.workspace_ready() {
+            return;
+        }
+        match result {
             Ok(status) => {
                 self.selected_files
                     .retain(|path| status.changes.iter().any(|change| &change.path == path));
@@ -353,6 +479,14 @@ impl HubApp {
                 .then(|| PathBuf::from(self.draft.singbox.trim())),
             commit_message: Some(self.commit_message.clone()),
             paths: self.selected_files.iter().cloned().collect(),
+            history: if self.draft.record_history {
+                self.history_path().map(|path| HistoryOptions {
+                    path,
+                    keep_logs: self.draft.developer_mode && self.draft.diagnostic_logs,
+                })
+            } else {
+                None
+            },
         };
         if kind == JobKind::Validate {
             self.start(kind, options);
@@ -376,6 +510,7 @@ impl HubApp {
                 }
                 self.job_finished_handled = false;
                 self.page = Page::Tasks;
+                self.task_tab = TaskTab::Current;
                 self.error = None;
                 self.notice = None;
             }
@@ -395,6 +530,8 @@ impl HubApp {
             JobKind::Update => Text::FullUpdate,
             JobKind::QuickUpdate => Text::QuickUpdate,
             JobKind::GamingOnly => Text::GamingUpdate,
+            JobKind::AdBlockOnly => Text::AdBlockUpdate,
+            JobKind::SrsOnly => Text::RebuildSrs,
             JobKind::GitPull => Text::Pull,
             JobKind::GitCommit => Text::Commit,
             JobKind::GitPush => Text::Push,
@@ -442,11 +579,11 @@ impl HubApp {
                 .strong()
                 .color(self.colors.accent),
         );
-        ui.weak("WORKSPACE");
+        ui.weak(self.tr(Text::Workspace));
         ui.add_space(24.0);
         for (page, key, shortcut) in [
             (Page::Overview, Text::Overview, "1"),
-            (Page::Catalog, Text::Modules, "2"),
+            (Page::Catalog, Text::Library, "2"),
             (Page::Tasks, Text::Tasks, "3"),
             (Page::Repository, Text::Repository, "4"),
         ] {
@@ -509,11 +646,19 @@ impl HubApp {
                 Some(Pending::Job(kind, options)) => (self.task_label(*kind), &options.root),
                 Some(Pending::AddSource(root, _)) => (self.tr(Text::AddSource), root),
                 Some(Pending::RemoveSource(root, _, _)) => (self.tr(Text::RemoveSource), root),
+                Some(Pending::ClearHistory(path)) => (self.tr(Text::ClearHistory), path),
+                Some(Pending::RemoveUnfinishedHistory(path)) => {
+                    (self.tr(Text::RemoveUnfinishedHistory), path)
+                }
                 None => return,
             };
             ui.heading(title);
             ui.add_space(8.0);
-            ui.label(self.tr(Text::ConfirmWrite));
+            ui.label(self.tr(match self.pending.as_ref() {
+                Some(Pending::ClearHistory(_)) => Text::ConfirmClearHistory,
+                Some(Pending::RemoveUnfinishedHistory(_)) => Text::ConfirmRemoveUnfinishedHistory,
+                _ => Text::ConfirmWrite,
+            }));
             ui.label(
                 RichText::new(root.display().to_string())
                     .small()
@@ -525,6 +670,7 @@ impl HubApp {
                         kind,
                         JobKind::Update
                             | JobKind::QuickUpdate
+                            | JobKind::AdBlockOnly
                             | JobKind::GitPull
                             | JobKind::GitPush
                     ) {
@@ -563,6 +709,8 @@ impl HubApp {
                 Some(Pending::RemoveSource(_, _, name)) => {
                     ui.label(name);
                 }
+                Some(Pending::ClearHistory(_)) => {}
+                Some(Pending::RemoveUnfinishedHistory(_)) => {}
                 None => {}
             }
             ui.add_space(16.0);
@@ -585,6 +733,8 @@ impl HubApp {
                             .and_then(|_lock| custom_sources::remove(&root, category, &name));
                         self.source_result(result);
                     }
+                    Pending::ClearHistory(_) => self.refresh_history(true),
+                    Pending::RemoveUnfinishedHistory(_) => self.remove_unfinished_history(),
                 }
             }
         } else if cancel || response.should_close() {
@@ -608,6 +758,8 @@ impl HubApp {
 impl eframe::App for HubApp {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_workspace_loader(ctx);
+        self.poll_repository_loader(ctx);
+        self.poll_history(ctx);
         let dark = ctx.global_style().visuals.dark_mode;
         if self.appearance.as_ref() != Some(&(self.draft.clone(), dark)) {
             theme::apply(ctx, &self.draft);
@@ -618,6 +770,7 @@ impl eframe::App for HubApp {
             self.job_finished_handled = true;
             self.refresh_repository_after_load = true;
             self.reload();
+            self.refresh_history(false);
         }
         if self.active() {
             ctx.request_repaint_after(Duration::from_millis(250));
@@ -668,7 +821,7 @@ impl eframe::App for HubApp {
                     if self.workspace_loader.is_some() {
                         ui.colored_label(self.colors.accent, self.tr(Text::LoadingWorkspace));
                     } else if let Some(job) = &self.job {
-                        let snapshot = job.snapshot();
+                        let snapshot = job.summary();
                         let (label, color) = self.outcome(&snapshot);
                         ui.colored_label(color, label);
                         ui.weak(format!(
@@ -703,7 +856,7 @@ impl eframe::App for HubApp {
                 ui.horizontal_wrapped(|ui| {
                     for (page, key) in [
                         (Page::Overview, Text::Overview),
-                        (Page::Catalog, Text::Modules),
+                        (Page::Catalog, Text::Library),
                         (Page::Tasks, Text::Tasks),
                         (Page::Repository, Text::Repository),
                         (Page::Settings, Text::Settings),
@@ -753,14 +906,14 @@ impl eframe::App for HubApp {
                         });
                     ui.add_space(12.0);
                 }
-                match self.page {
+                ui.push_id(("page", self.page as u8), |ui| match self.page {
                     Page::Overview => self.overview_page(ui),
                     Page::Catalog => self.catalog_page(ui),
                     Page::Tasks => self.tasks_page(ui),
                     Page::Repository => self.repository_page(ui),
                     Page::Settings => self.settings_page(ui),
                     Page::Support => self.support_page(ui),
-                }
+                });
             });
         self.confirm(ui.ctx());
     }
@@ -825,6 +978,143 @@ mod tests {
     use std::sync::mpsc::RecvTimeoutError;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    #[test]
+    fn catalog_copy_dispatches_the_exact_multiline_clipboard_payload() {
+        let ctx = egui::Context::default();
+        let mut app = HubApp::new(None, Preferences::default(), None, None);
+        let payload = "https://example.test/one.sgmodule\nhttps://example.test/two.sgmodule";
+        let mut output = ctx.run_ui(Default::default(), |ui| app.copy(ui.ctx(), payload));
+        assert!(output.platform_output.commands.iter().any(|command| {
+            matches!(command, egui::OutputCommand::CopyText(value) if value == payload)
+        }));
+        assert!(app.job.is_none());
+        output.textures_delta.clear();
+    }
+
+    #[test]
+    fn pages_render_in_supported_languages_themes_and_compact_layout() {
+        use super::super::settings::{Language, Theme};
+        let ctx = egui::Context::default();
+        for language in [Language::En, Language::ZhCn, Language::Ja] {
+            for theme in [Theme::Light, Theme::Dark] {
+                for size in [[740.0, 540.0], [1160.0, 760.0]] {
+                    let preferences = Preferences {
+                        language,
+                        theme,
+                        ..Default::default()
+                    };
+                    let mut app = HubApp::new(None, preferences.clone(), None, None);
+                    theme::apply(&ctx, &preferences);
+                    app.colors = theme::palette(theme == Theme::Dark, preferences.accent);
+                    app.catalog =
+                        Catalog::load(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."), false)
+                            .unwrap();
+                    for (page, catalog_tab, task_tab, support_tab) in [
+                        (
+                            Page::Overview,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Catalog,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Catalog,
+                            CatalogTab::Rules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Catalog,
+                            CatalogTab::Sources,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Tasks,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Tasks,
+                            CatalogTab::Modules,
+                            TaskTab::History,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Repository,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Settings,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Support,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Help,
+                        ),
+                        (
+                            Page::Support,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::About,
+                        ),
+                        (
+                            Page::Support,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Licenses,
+                        ),
+                        (
+                            Page::Support,
+                            CatalogTab::Modules,
+                            TaskTab::Current,
+                            SupportTab::Privacy,
+                        ),
+                    ] {
+                        app.catalog_tab = catalog_tab;
+                        app.task_tab = task_tab;
+                        app.support_tab = support_tab;
+                        let output = ctx.run_ui(
+                            egui::RawInput {
+                                screen_rect: Some(egui::Rect::from_min_size(
+                                    egui::Pos2::ZERO,
+                                    size.into(),
+                                )),
+                                ..Default::default()
+                            },
+                            |ui| {
+                                egui::CentralPanel::default().show(ui, |ui| match page {
+                                    Page::Overview => app.overview_page(ui),
+                                    Page::Catalog => app.catalog_page(ui),
+                                    Page::Tasks => app.tasks_page(ui),
+                                    Page::Repository => app.repository_page(ui),
+                                    Page::Settings => app.settings_page(ui),
+                                    Page::Support => app.support_page(ui),
+                                });
+                            },
+                        );
+                        assert!(!output.shapes.is_empty(), "empty page: {page:?}");
+                        output.drop_without_applying_deltas();
+                    }
+                    assert_eq!(app.preferences, preferences);
+                    assert!(app.pending.is_none() && app.job.is_none());
+                }
+            }
+        }
+    }
+
     fn wait_for_workspace(app: &mut HubApp) -> bool {
         let result = app
             .workspace_loader
@@ -838,6 +1128,23 @@ mod tests {
         };
         if let Some(loader) = app.workspace_loader.take() {
             app.finish_workspace_loader(loader, result);
+        }
+        true
+    }
+
+    fn wait_for_repository(app: &mut HubApp) -> bool {
+        let result = app
+            .repository_loader
+            .as_ref()
+            .expect("repository loader should be active")
+            .receiver
+            .recv_timeout(Duration::from_secs(10));
+        let result = match result {
+            Ok(result) => result,
+            Err(RecvTimeoutError::Timeout | RecvTimeoutError::Disconnected) => return false,
+        };
+        if let Some(loader) = app.repository_loader.take() {
+            app.finish_repository_loader(loader, result);
         }
         true
     }
@@ -966,6 +1273,44 @@ mod tests {
         release_sender.send(()).unwrap();
         assert!(wait_for_workspace(&mut app));
         assert!(app.workspace_ready());
+    }
+
+    #[test]
+    fn repository_refresh_is_backgrounded_and_ignores_a_stale_root_result() {
+        let workspace = Workspace::new();
+        let root = workspace.0.canonicalize().unwrap();
+        let mut app = HubApp::new(None, Preferences::default(), None, None);
+        app.loaded_root = Some(root.clone());
+        app.root_input = root.to_string_lossy().into_owned();
+        app.selected_files.insert("selected.list".to_string());
+        let (entered_sender, entered_receiver) = mpsc::sync_channel(1);
+        let (release_sender, release_receiver) = mpsc::sync_channel(1);
+
+        app.refresh_repository_with(move |_| {
+            entered_sender.send(()).map_err(|error| error.to_string())?;
+            release_receiver
+                .recv_timeout(Duration::from_secs(5))
+                .map_err(|error| format!("test reader gate failed: {error}"))?;
+            Err("stale repository result".to_string())
+        });
+
+        assert!(
+            entered_receiver
+                .recv_timeout(Duration::from_secs(2))
+                .is_ok()
+        );
+        assert!(matches!(
+            app.repository_loader.as_ref().unwrap().receiver.try_recv(),
+            Err(TryRecvError::Empty)
+        ));
+        assert!(app.active());
+        assert!(app.repository.is_none());
+
+        app.root_input = "/different/workspace".to_string();
+        release_sender.send(()).unwrap();
+        assert!(wait_for_repository(&mut app));
+        assert!(app.repository.is_none() && app.repository_error.is_none());
+        assert!(app.selected_files.contains("selected.list"));
     }
 
     #[test]

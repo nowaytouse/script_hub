@@ -1,7 +1,6 @@
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 use serde::Serialize;
-use serde_json::{Value, json};
-use std::collections::{BTreeMap, HashSet};
+use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -33,12 +32,6 @@ struct ModuleInfo {
     essential: Option<bool>,
     #[serde(skip_serializing_if = "String::is_empty")]
     note: String,
-}
-
-#[derive(Serialize)]
-struct HelperGroup {
-    name: String,
-    items: Vec<Value>,
 }
 
 fn encode_path(path: &str) -> String {
@@ -127,7 +120,7 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
                 github_install_url: if mirror.is_file() {
                     format!("{RAW}{}", encode_path(&mirror_rel))
                 } else {
-                    format!("{CDN}{}", encode_path(&rel))
+                    format!("{RAW}{}", encode_path(&rel))
                 },
                 name,
                 desc: meta.get("desc").cloned().unwrap_or_default(),
@@ -147,203 +140,6 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
     Ok(modules)
 }
 
-fn generated_version(modules: &[ModuleInfo]) -> String {
-    modules
-        .iter()
-        .filter_map(|module| (!module.date.is_empty()).then_some(module.date.as_str()))
-        .max()
-        .unwrap_or("deterministic")
-        .to_string()
-}
-
-fn helper_groups(modules: &[ModuleInfo], shadowrocket: bool) -> BTreeMap<String, HelperGroup> {
-    let mut groups = BTreeMap::new();
-    for (category, name) in CATEGORIES {
-        groups.insert(
-            category.to_string(),
-            HelperGroup {
-                name: name.to_string(),
-                items: Vec::new(),
-            },
-        );
-    }
-    for module in modules
-        .iter()
-        .filter(|module| module.merged_into.is_empty())
-    {
-        let badge = if module.name.contains("PROMAX") {
-            "🔥"
-        } else if module.name.contains("Script Hub") {
-            "⭐"
-        } else {
-            ""
-        };
-        let url = &module.install_url;
-        let id = format!("{:x}", md5::compute(url.as_bytes()));
-        let desc = if shadowrocket && !module.desc.starts_with("[🚀SR]") {
-            format!("[🚀SR] {}", module.desc)
-        } else {
-            module.desc.clone()
-        };
-        if let Some(group) = groups.get_mut(&module.category) {
-            group.items.push(json!({
-                "id": id,
-                "name": module.name,
-                "desc": desc,
-                "author": module.author,
-                "date": module.date,
-                "icon": module.icon,
-                "url": url,
-                "github_url": module.github_install_url,
-                "badge": badge,
-                "filename": module.filename,
-            }));
-        }
-    }
-    groups
-}
-
-fn write_json(path: &Path, value: &Value) -> Result<(), String> {
-    let content = serde_json::to_string_pretty(value)
-        .map_err(|error| format!("cannot encode {}: {error}", path.display()))?
-        + "\n";
-    if crate::safe_write_file_internal(path, &content, true) {
-        Ok(())
-    } else {
-        Err(format!("cannot write {}", path.display()))
-    }
-}
-
-fn update_helper_html(path: &Path, surge: &Value, shadowrocket: &Value) -> Result<(), String> {
-    let html = fs::read_to_string(path)
-        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
-    let inline_json = |value: &Value| {
-        serde_json::to_string(value)
-            .map(|json| {
-                json.replace('&', "\\u0026")
-                    .replace('<', "\\u003c")
-                    .replace('>', "\\u003e")
-            })
-            .map_err(|error| error.to_string())
-    };
-    let surge = inline_json(surge)?;
-    let shadowrocket = inline_json(shadowrocket)?;
-    let mut replaced = 0;
-    let mut content = String::with_capacity(html.len());
-    for line in html.lines() {
-        let trimmed = line.trim_start();
-        let indent = &line[..line.len() - trimmed.len()];
-        if trimmed.starts_with("const surgeData = ") {
-            content.push_str(indent);
-            content.push_str("const surgeData = ");
-            content.push_str(&surge);
-            content.push(';');
-            replaced += 1;
-        } else if trimmed.starts_with("const srData = ") {
-            content.push_str(indent);
-            content.push_str("const srData = ");
-            content.push_str(&shadowrocket);
-            content.push(';');
-            replaced += 1;
-        } else {
-            content.push_str(line);
-        }
-        content.push('\n');
-    }
-    if replaced != 2 {
-        return Err("module helper template is missing embedded data slots".to_string());
-    }
-    if content == html {
-        return Ok(());
-    }
-    if crate::safe_write_file_internal(path, &content, true) {
-        Ok(())
-    } else {
-        Err(format!("cannot write {}", path.display()))
-    }
-}
-
-pub fn refresh(root: &Path) -> Result<(), String> {
-    let surge = scan_modules(root, "surge", "sgmodule")?;
-    let shadowrocket = scan_modules(root, "shadowrocket", "module")?;
-    let helper = root.join("modules/helper");
-    fs::create_dir_all(&helper).map_err(|error| error.to_string())?;
-    let generated = generated_version(&surge);
-
-    write_json(
-        &helper.join("modules_data.json"),
-        &json!({
-            "generated": generated,
-            "total": surge.len(),
-            "policy": {
-                "adblock": "广告拦截安装 PROMAX；AdBlock Helper 按需补充 DNS、Host 与关键服务 MITM 排除，不承担分流",
-                "features": "解锁、增强、翻译模块保持独立安装"
-            },
-            "modules": surge,
-        }),
-    )?;
-    let sr_groups = helper_groups(&shadowrocket, true);
-    write_json(
-        &helper.join("shadowrocket_modules_data.json"),
-        &json!({
-            "generated": generated,
-            "total": shadowrocket.iter().filter(|module| module.merged_into.is_empty()).count(),
-            "categories": sr_groups,
-        }),
-    )?;
-
-    let sr_keys: HashSet<(&str, &str)> = shadowrocket
-        .iter()
-        .map(|module| (module.category.as_str(), module.id.as_str()))
-        .collect();
-    let (compatible, surge_only): (Vec<_>, Vec<_>) = surge
-        .iter()
-        .partition(|module| sr_keys.contains(&(module.category.as_str(), module.id.as_str())));
-    write_json(
-        &helper.join("modules_compatibility.json"),
-        &json!({
-            "generated": generated,
-            "total": surge.len(),
-            "compatible": compatible.len(),
-            "surge_only": surge_only.len(),
-            "modules": {
-                "compatible": compatible.iter().map(|module| json!({"name": module.name, "category": module.category})).collect::<Vec<_>>(),
-                "surge_only": surge_only.iter().map(|module| json!({"name": module.name, "category": module.category, "issues": ["无对应 Shadowrocket 发布产物"]})).collect::<Vec<_>>()
-            }
-        }),
-    )?;
-    write_json(
-        &helper.join("shadowrocket_conversion_log.json"),
-        &json!({
-            "generated": generated,
-            "stats": {"total": surge.len(), "converted": compatible.len(), "failed": surge_only.len()},
-            "log": surge.iter().map(|module| {
-                let ok = sr_keys.contains(&(module.category.as_str(), module.id.as_str()));
-                json!({
-                    "src": module.filename,
-                    "dst": format!("{}.module", module.id),
-                    "status": if ok { "ok" } else { "missing" }
-                })
-            }).collect::<Vec<_>>()
-        }),
-    )?;
-
-    let surge_groups =
-        serde_json::to_value(helper_groups(&surge, false)).map_err(|error| error.to_string())?;
-    let sr_groups = serde_json::to_value(sr_groups).map_err(|error| error.to_string())?;
-    update_helper_html(
-        &helper.join("surge_module_helper.html"),
-        &surge_groups,
-        &sr_groups,
-    )?;
-    println!(
-        "[INFO] refreshed module catalog: Surge={}, Shadowrocket={}",
-        surge.len(),
-        shadowrocket.len()
-    );
-    Ok(())
-}
-
 /// Returns the platform module catalog without writing generated files.
 pub fn catalog_snapshot(root: &Path, shadowrocket: bool) -> Result<Value, String> {
     let (platform, extension) = if shadowrocket {
@@ -357,19 +153,9 @@ pub fn catalog_snapshot(root: &Path, shadowrocket: bool) -> Result<Value, String
 
 #[cfg(test)]
 mod tests {
-    use super::{catalog_snapshot, refresh};
+    use super::catalog_snapshot;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
-
-    #[test]
-    fn generated_helper_has_visible_interface_and_no_script_fallback() {
-        let html = include_str!("../../../../modules/helper/surge_module_helper.html");
-        assert!(html.contains("<main"));
-        assert!(html.contains("id=\"platform\""));
-        assert!(html.contains("id=\"search\""));
-        assert!(html.contains("disabled"));
-        assert!(html.contains("JavaScript"));
-    }
 
     #[test]
     fn catalog_snapshot_is_read_only_and_includes_retired_modules() {
@@ -385,6 +171,10 @@ mod tests {
         let snapshot = catalog_snapshot(&root, false).unwrap();
         assert_eq!(snapshot[0]["merged_into"], "PROMAX");
         assert_eq!(snapshot[0]["essential"], false);
+        assert_eq!(
+            snapshot[0]["github_install_url"],
+            "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head%5Fexpanse/Old%2Esgmodule"
+        );
         assert!(!root.join("modules/helper").exists());
         fs::remove_dir_all(root).unwrap();
     }
@@ -400,51 +190,6 @@ mod tests {
         fs::create_dir_all(&surge).unwrap();
         fs::write(surge.join("head_expanse"), "not a directory").unwrap();
         assert!(catalog_snapshot(&root, false).is_err());
-        fs::remove_dir_all(root).unwrap();
-    }
-
-    #[test]
-    fn refreshes_catalog_and_hides_deprecated_helper_from_install_ui() {
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("module-catalog-{id}"));
-        let surge = root.join("modules/surge/head_expanse");
-        let sr = root.join("modules/shadowrocket/head_expanse");
-        let helper = root.join("modules/helper");
-        fs::create_dir_all(&surge).unwrap();
-        fs::create_dir_all(&sr).unwrap();
-        fs::create_dir_all(&helper).unwrap();
-        fs::write(
-            surge.join("PROMAX.sgmodule"),
-            "#!name=PROMAX\n#!date=2026-08-23\n",
-        )
-        .unwrap();
-        fs::write(
-            sr.join("PROMAX.module"),
-            "#!name=PROMAX\n#!date=2026-08-23\n",
-        )
-        .unwrap();
-        fs::write(
-            surge.join("Helper.sgmodule"),
-            "#!name=Helper（已退役）\n#!tag=Deprecated\n",
-        )
-        .unwrap();
-        fs::write(
-            helper.join("surge_module_helper.html"),
-            "<script>\nconst surgeData = {};\nconst srData = {};\n</script>\n",
-        )
-        .unwrap();
-
-        refresh(&root).unwrap();
-        refresh(&root).unwrap();
-
-        let html = fs::read_to_string(helper.join("surge_module_helper.html")).unwrap();
-        assert!(html.contains("PROMAX"));
-        assert!(!html.contains("Helper（已退役）"));
-        let catalog = fs::read_to_string(helper.join("modules_data.json")).unwrap();
-        assert!(catalog.contains("兼容旧链接的无操作占位"));
         fs::remove_dir_all(root).unwrap();
     }
 }

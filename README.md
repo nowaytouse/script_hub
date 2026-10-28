@@ -1,6 +1,6 @@
 # Script Hub
 
-面向 Surge、Shadowrocket、Loon 与 sing-box 的规则集和功能模块仓库。更新、网络抓取、合并、格式转换、校验与发布均由 Rust 完成。
+面向 Surge、Shadowrocket 与 sing-box 的规则集和功能模块仓库。更新、网络抓取、合并、格式转换、校验与发布均由 Rust 完成。
 
 ## 广告拦截体系
 
@@ -8,7 +8,7 @@
 - **分类隔离**：Advertising、Privacy、Security、AntiAD 与各 ThreatIntel 类别由源清单显式声明；编译器不会按 URL 猜分类。
 - **误屏蔽防护**：正常媒体、受保护服务、无对应请求规则的 MITM 主机会进入 `rulesets/AdBlock/quarantine.json`，不会直接发布。
 - **防止不完整更新**：稳定广告分类合计不得低于上一份 catalog 的 90%。HaGeZi TIF medium 是会清退过期域名的滚动情报源，仅官方地址、完整元数据、声明条数与逐条唯一域名校验全部通过后才独立计算；跨活动分片的实际域名后缀匹配仍须覆盖本次源条目的至少 80%，不会把在其他分类已去重覆盖的规则误算为丢失。检查失败时保留已发布产物，不以旧情报永久冻结上游更新。catalog 记录上次实质更新时的源版本与条数，仅源版本时间戳改变不触发写入。
-- **Helper**：保留 DNS 补充、必要的 Host/系统解析映射和关键服务 MITM 排除，不注入分流策略；分流由外部规则集和用户策略组决定。端口阻断仍是独立、按需安装的模块。
+- **DNS/Host 助手模块**：保留 DNS 补充、必要的 Host/系统解析映射和关键服务 MITM 排除，不注入分流策略；分流由外部规则集和用户策略组决定。端口阻断仍是独立、按需安装的模块。此功能模块与已移除的网页安装助手不同。
 - **仅发布当前版本**：不再生成旧 `AdBlock.list`、已合并的细分类订阅或退役空分片。删除产物前保留必要的内部构建输入，当前模块只引用活动 catalog；旧配置必须迁移，不再以空文件或别名维持旧订阅。
 - **当前 PROMAX 入口**：
   `https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule`
@@ -79,17 +79,19 @@ Surge 已为大型规则集建立索引；规则数量、MITM 主机条数和脚
 - `modules/shadowrocket/amplify_nexus/`：由 Rust 从已校验的 Surge 合集同步生成。
 - `modules/source/local/`、`rulesets/Sources/LocalModules/`：编译输入，不应直接当作公开安装目录。
 - 混合模块只把明确的广告行拆入 PROMAX；非广告增强功能继续留在独立模块中。
-- 模块安装助手：`modules/helper/surge_module_helper.html`。其目录、兼容性和 Shadowrocket 状态均在同一次 Rust 更新中确定性刷新。
+- 模块与规则集的查找、筛选和复制统一使用 Rust GUI 资源库。目录按现有产物只读生成，不再维护额外的网页和嵌入 JSON 副本。
 
 Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；WeatherKit、Maps、News、TV 与 DualSubs 不从公告文本或第三方转载页抓取。
 
-旧快照中的美丽修行与闲鱼脚本引用由 Rust 资源适配层迁移到当前维护源；仅替换这两种已确认失效的资源族，不改请求匹配或脚本参数。每次 PROMAX 编译会对实际引用的两个维护资源做有次数、体积与时间上限的 HTTPS 内容检查，404、TLS 失败或 HTML/空响应都会阻止这轮不完整发布，保留上次有效产物；发布校验也拒绝旧失效引用重新进入 Surge、Shadowrocket 或 Loon。脚本继续从维护源加载，不复制无明确授权的第三方脚本，也不降低 TLS 校验。
+旧快照中的美丽修行与闲鱼脚本引用由 Rust 资源适配层迁移到当前维护源；仅替换这两种已确认失效的资源族，不改请求匹配或脚本参数。每次 PROMAX 编译会对实际引用的两个维护资源做有次数、体积与时间上限的 HTTPS 内容检查，404、TLS 失败或 HTML/空响应都会阻止这轮不完整发布，保留上次有效产物；发布校验也拒绝旧失效引用重新进入 Surge 或 Shadowrocket。脚本继续从维护源加载，不复制无明确授权的第三方脚本，也不降低 TLS 校验。
 
 ### 许可清楚的扩充来源
 
 PROMAX 新增 app2smile 的起点、贴吧和腾讯新闻原生 Surge 去广告模块，以及 AdGuard 的 CNAME 伪装追踪、邮件追踪域名源。源模块、配套规则和四个官方脚本依赖随同一更新链检查，脚本仍从作者仓库加载；贴吧不启用隐藏普通视频帖的选项。去重后的伪装追踪域名归入 Privacy_CNAME，App 配套规则归入 Local，脚本/MITM 仍由功能层统一收束。广告/追踪域名不需要额外 HTTPS 解密；不启用会影响正常链接与页面的 CNAME clickthrough/microsites 全集。
 
-Surge 和 Shadowrocket 的现有 PROMAX 入口自动引用全部活动分片，无需新增订阅。Loon 插件必须内嵌规则，不能套用 Surge 的 `RULE-SET` 语法；CDN 单文件有 20 MB 限制，因此 CDN 入口明确为核心版，不内嵌 Privacy_CNAME 和威胁情报大列表。需要完整 Loon 覆盖时请选择 catalog 中的 GitHub Raw 全量版；不会截断规则数或放宽发布体积检查。
+测试反馈中的精确广告与统计端点由 `rulesets/Sources/Privacy_Reviewed.list` 补充，并记录核对来源。补充只作用于已审查的完整域名，不扩大为整站、共享 CDN 或 Apple 父域拦截；明确的单主机白名单与 Apple 关键服务保护仍优先。网络规则不能替代浏览器的页面元素隐藏，也不以测试分数为由拦截用途不明的共享服务。
+
+Surge 和 Shadowrocket 的现有 PROMAX 入口自动引用全部活动分片，无需新增订阅。Loon 产物、转换器及其目录条目已移除，不再为旧入口保留空文件；规则覆盖继续完整保留在活动分片中。
 
 许可正文、修改范围及未接入 luestr 受限资源的原因见 [来源与许可说明](rulesets/Sources/licenses/README.md)。本次不复制 Loon 专属或要求客户端身份验证的内容、不伪装 User-Agent，既有高德功能保留。配置仍只安装现有 PROMAX 入口，不需要另装一组重复模块。
 
@@ -134,7 +136,9 @@ cargo run --release --locked --manifest-path create/processor/Cargo.toml \
   --features gui --bin script-hub-gui -- --root .
 ```
 
-GUI 需要 Rust 1.95+；`gui` 为可选功能，普通规则更新 CI 不编译图形依赖。[Rust GUI 工作流](https://github.com/nowaytouse/script_hub/actions/workflows/gui.yml)在 Windows 与 macOS 构建。下载时请按制品名称中的操作系统和实际 runner 架构选择；Windows 提供 `.exe`，macOS 提供 `.app` 的 tar.gz 包。选择仓库目录作为工作区；显式传入的 CLI `--root` 优先于已保存的工作区路径。
+GUI 需要 Rust 1.95+；`gui` 为可选功能，普通规则更新 CI 不编译图形依赖。[Rust GUI 工作流](https://github.com/nowaytouse/script_hub/actions/workflows/gui.yml)在 Windows 与 macOS 构建。下载时请按制品名称中的操作系统和实际 runner 架构选择；Windows 提供含 `.exe` 与合规说明的 zip，macOS 提供含说明文件的 `.app` tar.gz 包。选择仓库目录作为工作区；显式传入的 CLI `--root` 优先于已保存的工作区路径。
+
+许可与数据处理说明见 [LICENSE](LICENSE)、[隐私说明](PRIVACY.md)、[安全报告说明](SECURITY.md) 和 [第三方内容声明](THIRD_PARTY_NOTICES.md)。桌面制品包含这些说明及当前已登记的上游 MIT 许可文本；第三方来源和依赖的完整许可清单尚未完成，不能据此视为完整合规审计。GPLv3 许可只声明适用于项目作者有权许可的项目自有代码，不改变嵌入或引用的第三方内容所适用的许可。
 
 macOS 包会进行本地 ad-hoc 签名和完整性校验，但开发构建尚无受信任开发者签名或公证，不声称通过平台商店或系统发行认证。GUI 写入任务之间由操作系统文件锁互斥，锁由实际执行更新的子进程持有，退出后自动释放；不要同时从外部命令行运行另一套更新。
 
@@ -148,7 +152,7 @@ macOS 包会进行本地 ad-hoc 签名和完整性校验，但开发构建尚无
 
 macOS 的桌面、文稿、下载、网络卷和可移动卷受系统权限控制。当前 ad-hoc 开发签名的权限身份与具体构建绑定，更换构建后可能需要重新授权；项目不能绕过系统同意，也不要求完全磁盘访问。无人值守建议使用明确指定、位于上述受保护目录之外的本地仓库，并从固定位置运行同一构建；跨版本稳定授权的发行版需要开发者提供一致的 Developer ID 签名身份。此限制与“记住路径”不同，不能靠保存路径消除。
 
-桌面 GUI 不等于 iOS / Android 原生应用；手机和平板可继续使用 `modules/helper/surge_module_helper.html` 响应式安装助手。该网页包含实际目录界面和无脚本时的可见说明，可下载后本地打开；GitHub Raw / 部分 CDN 可能直接显示源码或下载 HTML，不能当作已部署的网页站点。
+桌面 GUI 不等于 iOS / Android 原生应用。网页安装助手已移除；在 Windows / macOS GUI 的资源库勾选项目，批量复制 CDN / GitHub 链接后粘贴到客户端。规则片段需要先填写自己的策略或策略组名称，程序不代选路由。DNS/Host 助手模块仍按原有模块入口提供。
 
 ### 命令行
 
@@ -161,9 +165,9 @@ cargo run --manifest-path create/processor/Cargo.toml --bin validate -- --root .
 
 `--quick` 仅跳过可选的功能模块上游刷新，PROMAX 规则仍会完整抓取、编译和验证。生成器会保留仅日期、注释、排版或顺序变化的旧文件，避免没有实质更新时产生自动提交。
 
-下载器拒绝空响应和以 HTML 文档标记开头的错误页；GitHub 限流遵守 `Retry-After` 与已耗尽额度的重置时间，没有明确等待时间时从 60 秒开始退避，并受批次时限约束。通用规则集解析后若没有有效规则会报错并保留旧产物；若仅域名或 IP 一类变为空，则保留既有订阅路径并原子写入零条规则的占位文件，避免删除公开文件导致 404。
+下载器拒绝空响应和以 HTML 文档标记开头的错误页；GitHub 限流遵守 `Retry-After` 与已耗尽额度的重置时间，没有明确等待时间时从 60 秒开始退避，并受批次时限约束。通用规则集解析后若没有有效规则会报错并保留旧产物；若某一类型没有有效规则，则移除该类型的旧产物，不生成零规则占位。
 
-功能合集先在缓存中完成合并、安全处理与校验，再成组发布；YouTube 功能和广告源一起提交，后处理或任一输出失败时保留旧版。规则清理、镜像同步和 Shadowrocket 遍历的 I/O 失败会传到主更新，不再记作成功；去重至零的规则集保留公开路径，对应 SRS 使用空规则数组而不是空匹配器。下载遇到 404 时只在既有次数预算内切换到未尝试的备选入口，不重复请求已确认 404 的地址；发布时将显式 `refs/heads`、`refs/tags` 引用规范化，避免产生 `@refs/...` CDN 链接。
+功能合集先在缓存中完成合并、安全处理与校验，再成组发布；YouTube 功能和广告源一起提交，后处理或任一输出失败时保留旧版。规则清理、镜像同步和 Shadowrocket 遍历的 I/O 失败会传到主更新，不再记作成功；去重至零的列表及对应旧 SRS 会移除，不冒充有覆盖的有效产物。下载遇到 404 时只在既有次数预算内切换到未尝试的备选入口，不重复请求已确认 404 的地址；发布时将显式 `refs/heads`、`refs/tags` 引用规范化，避免产生 `@refs/...` CDN 链接。
 
 `--gaming-only` 用当前的 `Gaming.list`、游戏下载源结果与本地分类端点重新生成三类游戏规则及镜像，不下载上游源。带 `--singbox` 时同时同步 SRS；适合轻量验证游戏分类改动。
 

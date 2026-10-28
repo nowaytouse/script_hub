@@ -1,0 +1,19 @@
+Script Hub Rust dependency license texts
+Generated from the locked desktop dependency graph with cargo-about.
+This inventory does not cover runtime-downloaded modules, rules or scripts.
+Asset-specific notices for bundled fonts are included under `licenses/epaint_default_fonts/`.
+The bundled `libsqlite3-sys` crate declares MIT; its bundled SQLite amalgamation separately carries the following source notice. This does not replace the crate MIT license text below:
+
+The author disclaims copyright to this source code. In place of a legal notice, here is a blessing:
+
+    May you do good and not evil.
+    May you find forgiveness for yourself and forgive others.
+    May you share freely, never taking more than you give.
+{{#each licenses}}
+
+==============================================================================
+{{name}}
+Used by:{{#each used_by}} {{crate.name}} {{crate.version}};{{/each}}
+==============================================================================
+{{{text}}}
+{{/each}}

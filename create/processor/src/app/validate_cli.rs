@@ -12,7 +12,6 @@ fn validate_file(
         .unwrap_or_default();
     let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
     let mut validation = match extension {
-        "plugin" => rust_processor::promax::validation::validate_loon_plugin(&content),
         "sgmodule" => rust_processor::promax::validation::validate_surge_module(&content),
         "module" => rust_processor::promax::validation::validate_shadowrocket_module(&content),
         "list" => rust_processor::promax::validation::validate_external_ruleset(&content),
@@ -79,8 +78,23 @@ fn report_walkdir_error(error: walkdir::Error, errors: &mut usize) {
     *errors += 1;
 }
 
+fn validate_retired_outputs(root: &Path) -> Result<(), String> {
+    for retired in ["modules/loon", "modules/helper"] {
+        let path = root.join(retired);
+        match std::fs::symlink_metadata(&path) {
+            Ok(_) => return Err(format!("retired output must not be published: {retired}")),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => {
+                return Err(format!("cannot inspect retired output {retired}: {error}"));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     emit_stage(Stage::Validate);
+    validate_retired_outputs(root)?;
     let mut artifacts = 0;
     let mut errors = 0;
     let modules_root = root.join("modules");
@@ -97,7 +111,6 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     for directory in [
         modules_root.join("surge"),
         modules_root.join("shadowrocket"),
-        modules_root.join("loon"),
     ] {
         if !directory.is_dir() {
             continue;
@@ -118,7 +131,7 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
                 .extension()
                 .and_then(|value| value.to_str())
                 .unwrap_or_default();
-            if matches!(extension, "sgmodule" | "module" | "plugin") {
+            if matches!(extension, "sgmodule" | "module") {
                 let validation = match validate_file(path) {
                     Ok(validation) => validation,
                     Err(error) => {
@@ -251,7 +264,40 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{report_walkdir_error, validate_file};
+    use super::{report_walkdir_error, validate_file, validate_retired_outputs};
+
+    #[test]
+    fn rejects_reintroduced_retired_outputs_without_removing_local_data() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-retired-output-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        assert!(validate_retired_outputs(&root).is_ok());
+        for retired in ["modules/loon", "modules/helper"] {
+            let directory = root.join(retired);
+            std::fs::create_dir_all(&directory).unwrap();
+            let sentinel = directory.join("user-data");
+            std::fs::write(&sentinel, "keep").unwrap();
+            assert!(
+                validate_retired_outputs(&root)
+                    .unwrap_err()
+                    .contains(retired)
+            );
+            assert_eq!(std::fs::read_to_string(&sentinel).unwrap(), "keep");
+            std::fs::remove_dir_all(directory).unwrap();
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn retired_output_guard_rejects_dangling_symlinks() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-retired-symlink-{}", std::process::id()));
+        std::fs::create_dir_all(root.join("modules")).unwrap();
+        std::os::unix::fs::symlink("missing-target", root.join("modules/loon")).unwrap();
+        assert!(validate_retired_outputs(&root).is_err());
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn validates_one_module_file_without_scanning_the_tree() {

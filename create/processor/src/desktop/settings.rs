@@ -141,6 +141,9 @@ pub struct Preferences {
     /// Opening protected folders is opt-in; merely launching the GUI stays local
     /// to its own settings until a workspace is explicitly opened.
     pub reopen_workspace: bool,
+    pub record_history: bool,
+    pub developer_mode: bool,
+    pub diagnostic_logs: bool,
 }
 
 impl Default for Preferences {
@@ -156,6 +159,9 @@ impl Default for Preferences {
             window: WindowSize::default(),
             density: Density::default(),
             reopen_workspace: false,
+            record_history: true,
+            developer_mode: false,
+            diagnostic_logs: false,
         }
     }
 }
@@ -454,6 +460,14 @@ mod tests {
         let loaded = load(&path).unwrap().unwrap();
         assert_eq!(loaded.root, "/rules");
         assert_eq!(loaded, Preferences::default().with_root("/rules"));
+    }
+
+    #[test]
+    fn diagnostic_storage_requires_explicit_opt_in() {
+        let preferences: Preferences = serde_json::from_str("{}").unwrap();
+        assert!(preferences.record_history);
+        assert!(!preferences.developer_mode);
+        assert!(!preferences.diagnostic_logs);
     }
 
     #[test]

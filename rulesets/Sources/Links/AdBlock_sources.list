@@ -64,6 +64,8 @@ https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release
 # AdGuard official ecosystem - aggregate + CNAME-cloaked ad endpoints
 # The aggregate already includes Base, Mobile Ads, Tracking Protection, EasyList and EasyPrivacy.
 https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT|auto|Advertising
+# Internal exact-host privacy rules; not a public subscriber list.
+../Privacy_Reviewed.list|REJECT|auto|Privacy
 https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset|Advertising
 
 # AdGuard CNAME privacy categories (MIT; see ../licenses/README.md).

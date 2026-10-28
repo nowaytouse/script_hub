@@ -13,7 +13,6 @@ pub use compiler::{migrate_published_rule_layout, run_adblock_manager};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProductKind {
     Surge,
-    Loon,
     Shadowrocket,
 }
 
@@ -31,14 +30,6 @@ const PRODUCTS: &[Product] = &[
     Product {
         kind: ProductKind::Surge,
         path: "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-    },
-    Product {
-        kind: ProductKind::Loon,
-        path: "modules/loon/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
-    },
-    Product {
-        kind: ProductKind::Loon,
-        path: "modules/loon/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).plugin",
     },
     Product {
         kind: ProductKind::Shadowrocket,
@@ -59,19 +50,22 @@ mod tests {
     use super::{ProductKind, published_products};
 
     #[test]
-    fn product_set_has_no_lite() {
+    fn product_set_contains_only_four_surge_and_shadowrocket_variants() {
         let products = published_products();
-        assert!(
-            products
-                .iter()
-                .all(|product| !product.path.to_ascii_lowercase().contains("lite"))
-        );
-        assert_eq!(
-            products
-                .iter()
-                .filter(|product| product.kind == ProductKind::Surge)
-                .count(),
-            2
-        );
+        assert_eq!(products.len(), 4);
+        assert!(products.iter().all(|product| {
+            !product.path.to_ascii_lowercase().contains("lite")
+                && !product.path.to_ascii_lowercase().contains("loon")
+                && matches!(product.kind, ProductKind::Surge | ProductKind::Shadowrocket)
+        }));
+        for kind in [ProductKind::Surge, ProductKind::Shadowrocket] {
+            assert_eq!(
+                products
+                    .iter()
+                    .filter(|product| product.kind == kind)
+                    .count(),
+                2
+            );
+        }
     }
 }

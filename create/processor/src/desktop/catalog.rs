@@ -1,6 +1,7 @@
 //! Read-only catalog models shared by the desktop views and their tests.
 
 use serde::Deserialize;
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, Deserialize)]
@@ -42,6 +43,98 @@ pub struct Catalog {
     pub modules: Vec<ModuleItem>,
     pub counterparts: Vec<ModuleItem>,
     pub rules: Vec<RuleItem>,
+}
+
+pub(super) fn safe_https_single_field_url(url: &str) -> bool {
+    if url.chars().any(|character| {
+        character.is_whitespace()
+            || character.is_control()
+            || matches!(character, ',' | '#' | '\'' | '"')
+    }) {
+        return false;
+    }
+    let Some((authority, path)) = url
+        .strip_prefix("https://")
+        .and_then(|remainder| remainder.split_once('/'))
+    else {
+        return false;
+    };
+    !authority.is_empty()
+        && !authority.starts_with(':')
+        && !authority.contains('@')
+        && !path.is_empty()
+}
+
+pub fn selected_module_urls(
+    modules: &[ModuleItem],
+    selected: &BTreeSet<usize>,
+    github: bool,
+) -> String {
+    selected
+        .iter()
+        .filter_map(|index| modules.get(*index))
+        .filter(|module| module.merged_into.is_empty())
+        .map(|module| {
+            if github {
+                module.github_install_url.as_str()
+            } else {
+                module.install_url.as_str()
+            }
+        })
+        .filter(|url| safe_https_single_field_url(url))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+pub fn selected_rule_urls(rules: &[RuleItem], selected: &BTreeSet<usize>, github: bool) -> String {
+    selected
+        .iter()
+        .filter_map(|index| rules.get(*index))
+        .map(|rule| {
+            if github {
+                rule.github.as_str()
+            } else {
+                rule.cdn.as_str()
+            }
+        })
+        .filter(|url| safe_https_single_field_url(url))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+pub fn valid_rule_set_policy(policy: &str) -> bool {
+    !policy.is_empty()
+        && policy.trim() == policy
+        && !policy.chars().any(|character| {
+            character.is_control()
+                || (character.is_whitespace() && character != ' ')
+                || matches!(character, ',' | '#' | ';' | '\'' | '"')
+        })
+        && !policy.contains("//")
+}
+
+pub fn selected_surge_rule_set_snippets(
+    rules: &[RuleItem],
+    selected: &BTreeSet<usize>,
+    github: bool,
+    policy: &str,
+) -> Option<String> {
+    if !valid_rule_set_policy(policy) {
+        return None;
+    }
+    let snippets: Vec<_> = selected
+        .iter()
+        .filter_map(|index| rules.get(*index))
+        .filter(|rule| {
+            let url = if github { &rule.github } else { &rule.cdn };
+            safe_https_single_field_url(url)
+        })
+        .map(|rule| {
+            let url = if github { &rule.github } else { &rule.cdn };
+            format!("RULE-SET,{url},{policy},no-resolve")
+        })
+        .collect();
+    (!snippets.is_empty()).then(|| snippets.join("\n"))
 }
 
 impl Catalog {
@@ -201,6 +294,10 @@ mod tests {
         for platform in [false, true] {
             let catalog = Catalog::load(root, platform).unwrap();
             assert!(!catalog.modules.is_empty());
+            assert!(catalog.modules.iter().all(|module| {
+                safe_https_single_field_url(&module.install_url)
+                    && safe_https_single_field_url(&module.github_install_url)
+            }));
             assert!(catalog.rules.iter().any(|rule| rule.count.is_some()));
             assert!(
                 catalog
@@ -224,6 +321,165 @@ mod tests {
         assert_eq!(
             select_root(None, "", "discovered".into()),
             PathBuf::from("discovered")
+        );
+    }
+
+    #[test]
+    fn batch_copy_uses_only_selected_urls_and_never_includes_retired_modules() {
+        let modules = vec![
+            ModuleItem {
+                name: "one".into(),
+                desc: String::new(),
+                category: String::new(),
+                install_url: "https://cdn.example.test/modules/one.sgmodule".into(),
+                github_install_url: "https://raw.example.test/modules/one.sgmodule".into(),
+                merged_into: String::new(),
+                author: String::new(),
+                date: String::new(),
+                filename: String::new(),
+            },
+            ModuleItem {
+                name: "retired".into(),
+                desc: String::new(),
+                category: String::new(),
+                install_url: "https://cdn.example.test/modules/retired.sgmodule".into(),
+                github_install_url: "https://raw.example.test/modules/retired.sgmodule".into(),
+                merged_into: "PROMAX".into(),
+                author: String::new(),
+                date: String::new(),
+                filename: String::new(),
+            },
+            ModuleItem {
+                name: "injected".into(),
+                desc: String::new(),
+                category: String::new(),
+                install_url: "https://cdn.example.test/rules.list,\nRULE-SET,evil,DIRECT".into(),
+                github_install_url: "https://raw.example.test/rules.list#comment".into(),
+                merged_into: String::new(),
+                author: String::new(),
+                date: String::new(),
+                filename: String::new(),
+            },
+        ];
+        let selected = BTreeSet::from([0, 1, 2, 99]);
+        assert_eq!(
+            selected_module_urls(&modules, &selected, false),
+            "https://cdn.example.test/modules/one.sgmodule"
+        );
+        assert_eq!(
+            selected_module_urls(&modules, &selected, true),
+            "https://raw.example.test/modules/one.sgmodule"
+        );
+    }
+
+    #[test]
+    fn ruleset_copy_requires_an_explicit_single_field_policy() {
+        let rules = vec![
+            RuleItem {
+                name: "ads.list".into(),
+                category: "AdBlock".into(),
+                cdn: "https://cdn.example.test/rules.list".into(),
+                github: "https://raw.example.test/rules.list".into(),
+                count: None,
+            },
+            RuleItem {
+                name: "tracking.list".into(),
+                category: "AdBlock".into(),
+                cdn: "https://cdn.example.test/tracking.list".into(),
+                github: "https://raw.example.test/tracking.list".into(),
+                count: None,
+            },
+            RuleItem {
+                name: "injected.list".into(),
+                category: "AdBlock".into(),
+                cdn: "https://cdn.example.test/rules.list,\nRULE-SET,evil,DIRECT".into(),
+                github: "https://raw.example.test/rules.list#comment".into(),
+                count: None,
+            },
+        ];
+        let selected = BTreeSet::from([0]);
+        for malformed in [
+            "http://cdn.example.test/rules.list",
+            "https:///rules.list",
+            "https://cdn.example.test",
+            "https://cdn.example.test/rules.list,\nRULE-SET,evil,DIRECT",
+            "https://cdn.example.test/rules.list#comment",
+        ] {
+            assert!(!safe_https_single_field_url(malformed));
+        }
+        assert!(safe_https_single_field_url(
+            "https://cdn.example.test/rules%2Clist"
+        ));
+        assert_eq!(
+            selected_rule_urls(&rules, &selected, false),
+            "https://cdn.example.test/rules.list"
+        );
+        assert_eq!(
+            selected_rule_urls(&rules, &selected, true),
+            "https://raw.example.test/rules.list"
+        );
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, false, "Reject Ads"),
+            Some("RULE-SET,https://cdn.example.test/rules.list,Reject Ads,no-resolve".into())
+        );
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, false, "REJECT"),
+            Some("RULE-SET,https://cdn.example.test/rules.list,REJECT,no-resolve".into())
+        );
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, true, "MyProxy"),
+            Some("RULE-SET,https://raw.example.test/rules.list,MyProxy,no-resolve".into())
+        );
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, false, ""),
+            None
+        );
+        for invalid in [
+            "REJECT,PROXY",
+            "REJECT\nRULE-SET,host,PROXY",
+            "US\u{2028}Proxy",
+            "US\tProxy",
+            " REJECT",
+            "REJECT ",
+            "REJECT#comment",
+            "REJECT;comment",
+            "REJECT//comment",
+            "REJECT'comment",
+            "REJECT\"comment",
+        ] {
+            assert!(
+                !valid_rule_set_policy(invalid),
+                "accepted unsafe policy {invalid:?}"
+            );
+        }
+        assert!(valid_rule_set_policy("US Proxy"));
+        assert!(valid_rule_set_policy("🇯🇵 日本"));
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, false, "🇯🇵 日本"),
+            Some("RULE-SET,https://cdn.example.test/rules.list,🇯🇵 日本,no-resolve".into())
+        );
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &BTreeSet::new(), false, "REJECT"),
+            None
+        );
+
+        let selected = BTreeSet::from([2, 1, 0, 1, 99]);
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, false, "  US Proxy  "),
+            None
+        );
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &selected, false, "US Proxy"),
+            Some(
+                "RULE-SET,https://cdn.example.test/rules.list,US Proxy,no-resolve\nRULE-SET,https://cdn.example.test/tracking.list,US Proxy,no-resolve"
+                    .into()
+            )
+        );
+        let invalid_url_only = BTreeSet::from([2]);
+        assert!(selected_rule_urls(&rules, &invalid_url_only, false).is_empty());
+        assert_eq!(
+            selected_surge_rule_set_snippets(&rules, &invalid_url_only, false, "US Proxy"),
+            None
         );
     }
 }

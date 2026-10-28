@@ -10,6 +10,7 @@ pub struct Palette {
     pub text: Color32,
     pub muted: Color32,
     pub accent: Color32,
+    pub on_accent: Color32,
     pub success: Color32,
     pub warning: Color32,
     pub error: Color32,
@@ -58,6 +59,11 @@ pub fn palette(dark: bool, accent: Accent) -> Palette {
         text: color(text),
         muted: color(muted),
         accent: color(accent),
+        on_accent: if dark {
+            color([19, 24, 33])
+        } else {
+            Color32::WHITE
+        },
         success: color(success),
         warning: color(warning),
         error: color(error),
@@ -152,6 +158,16 @@ mod tests {
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn primary_action_text_meets_aa_for_every_theme_and_accent() {
+        for dark in [false, true] {
+            for accent in [Accent::Blue, Accent::Teal, Accent::Amber] {
+                let colors = palette(dark, accent);
+                assert!(contrast(colors.on_accent, colors.accent) >= 4.5);
             }
         }
     }

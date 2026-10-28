@@ -34,8 +34,6 @@ static GENERATED_DATE_SUFFIX: Lazy<Regex> =
 static MODULE_NAME_KEY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^#!name\s*=").unwrap());
 static GENERATED_README_DATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(自动生成于\s*`|generated\s+(?:at|on)\s+`)[^`]+`").unwrap());
-static INLINE_CATALOG_DATE_FIELD: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"(?i)(\"(?:generated|date)\"\s*:\s*)\"[^\"]*\""#).unwrap());
 
 fn is_volatile_metadata(line: &str) -> bool {
     let lower = line.trim().to_ascii_lowercase().replace(' ', "");
@@ -179,7 +177,7 @@ pub(crate) fn normalize_force_http_engine_hosts(content: &str) -> String {
     normalized
 }
 
-fn canonical_json(value: serde_json::Value, module_catalog: bool) -> serde_json::Value {
+fn canonical_json(value: serde_json::Value) -> serde_json::Value {
     match value {
         serde_json::Value::Object(object) => {
             let mut sorted = BTreeMap::new();
@@ -193,29 +191,22 @@ fn canonical_json(value: serde_json::Value, module_catalog: bool) -> serde_json:
                     "timestamp",
                 ]
                 .contains(&normalized.as_str())
-                    || (module_catalog && matches!(normalized.as_str(), "generated" | "date"))
                 {
                     continue;
                 }
-                sorted.insert(key, canonical_json(value, module_catalog));
+                sorted.insert(key, canonical_json(value));
             }
             serde_json::Value::Object(sorted.into_iter().collect())
         }
-        serde_json::Value::Array(values) => serde_json::Value::Array(
-            values
-                .into_iter()
-                .map(|value| canonical_json(value, module_catalog))
-                .collect(),
-        ),
-        serde_json::Value::String(value) if module_catalog => {
-            serde_json::Value::String(GENERATED_DATE_SUFFIX.replace(&value, "").into_owned())
+        serde_json::Value::Array(values) => {
+            serde_json::Value::Array(values.into_iter().map(canonical_json).collect())
         }
         value => value,
     }
 }
 
 fn canonical_adblock_catalog_json(value: serde_json::Value) -> serde_json::Value {
-    let mut value = canonical_json(value, false);
+    let mut value = canonical_json(value);
     if let Some(feeds) = value
         .as_object_mut()
         .and_then(|object| object.get_mut("verified_rolling_feeds"))
@@ -232,36 +223,23 @@ fn canonical_adblock_catalog_json(value: serde_json::Value) -> serde_json::Value
 
 pub fn semantic_content_for_path_pub(path: &Path, text: &str) -> String {
     if path
-        .file_name()
-        .is_some_and(|name| name == "surge_module_helper.html")
-    {
-        let without_fields = INLINE_CATALOG_DATE_FIELD.replace_all(text, "${1}\"<volatile>\"");
-        return GENERATED_DATE_SUFFIX
-            .replace_all(&without_fields, "")
-            .into_owned();
-    }
-    if path
         .extension()
         .is_some_and(|extension| extension == "json")
         && let Ok(value) = serde_json::from_str::<serde_json::Value>(text)
     {
-        let module_catalog = path
-            .to_string_lossy()
-            .replace('\\', "/")
-            .contains("modules/helper/");
         let canonical_value = if path.ends_with(Path::new("rulesets/AdBlock/catalog.json")) {
             canonical_adblock_catalog_json(value)
         } else {
-            canonical_json(value, module_catalog)
+            canonical_json(value)
         };
         if let Ok(canonical) = serde_json::to_string(&canonical_value) {
             return canonical;
         }
     }
 
-    let is_module = path.extension().is_some_and(|extension| {
-        matches!(extension.to_str(), Some("sgmodule" | "module" | "plugin"))
-    });
+    let is_module = path
+        .extension()
+        .is_some_and(|extension| matches!(extension.to_str(), Some("sgmodule" | "module")));
     let mut current_section = String::new();
     let mut lines = Vec::new();
     for line in text.lines() {
@@ -475,12 +453,10 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
         return 0;
     }
 
-    let valid_exts: HashSet<&str> = [
-        "sgmodule", "module", "plugin", "list", "conf", "json", "html", "md",
-    ]
-    .iter()
-    .cloned()
-    .collect();
+    let valid_exts: HashSet<&str> = ["sgmodule", "module", "list", "conf", "json", "md"]
+        .iter()
+        .cloned()
+        .collect();
     let mut modified_count = 0;
 
     for entry in WalkDir::new(directory) {
@@ -620,10 +596,10 @@ mod tests {
 
     #[test]
     fn semantic_compare_ignores_catalog_timestamps_but_keeps_counts() {
-        let old = r#"{"generated":"2026-08-11","modules":[{"name":"PROMAX - [2026-08-11]","date":"2026-08-11","rule_count":10}]}"#;
-        let date_only = r#"{"generated":"2026-08-12","modules":[{"name":"PROMAX - [2026-08-12]","date":"2026-08-12","rule_count":10}]}"#;
-        let changed = r#"{"generated":"2026-08-12","modules":[{"name":"PROMAX - [2026-08-12]","date":"2026-08-12","rule_count":11}]}"#;
-        let path = Path::new("modules/helper/modules_data.json");
+        let old = r#"{"updated":"2026-08-11","rule_count":10}"#;
+        let date_only = r#"{"updated":"2026-08-12","rule_count":10}"#;
+        let changed = r#"{"updated":"2026-08-12","rule_count":11}"#;
+        let path = Path::new("rulesets/AdBlock/catalog.json");
         assert_eq!(
             semantic_content_for_path_pub(path, old),
             semantic_content_for_path_pub(path, date_only)
@@ -653,17 +629,6 @@ mod tests {
         assert_ne!(
             semantic_content_for_path_pub(Path::new("other.json"), r#"{"version":1}"#),
             semantic_content_for_path_pub(Path::new("other.json"), r#"{"version":2}"#)
-        );
-    }
-
-    #[test]
-    fn semantic_compare_ignores_embedded_helper_dates() {
-        let old = r#"const surgeData = {"items":[{"name":"PROMAX - [2026-08-11]","date":"2026-08-11"}]};"#;
-        let new = r#"const surgeData = {"items":[{"name":"PROMAX - [2026-08-12]","date":"2026-08-12"}]};"#;
-        let path = Path::new("modules/helper/surge_module_helper.html");
-        assert_eq!(
-            semantic_content_for_path_pub(path, old),
-            semantic_content_for_path_pub(path, new)
         );
     }
 
@@ -789,7 +754,7 @@ mod tests {
     }
 
     #[test]
-    fn github_and_loon_outputs_normalize_refs_without_replacing_raw_mirrors() {
+    fn github_outputs_normalize_refs_without_replacing_raw_mirrors() {
         let id = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -799,15 +764,15 @@ mod tests {
         let raw = "https://raw.githubusercontent.com/owner/repo/main/a.js";
         let cdn = "https://cdn.jsdelivr.net/gh/owner/repo@refs/heads/main/b.js";
         let mirror = root.join("github/Example.sgmodule");
-        let loon = root.join("Example.plugin");
+        let canonical = root.join("Example.sgmodule");
         fs::write(&mirror, format!("{raw}\n{cdn}\n")).unwrap();
-        fs::write(&loon, format!("{cdn}\n")).unwrap();
+        fs::write(&canonical, format!("{cdn}\n")).unwrap();
 
         assert_eq!(run_url_rewrites(root.to_str().unwrap()), 2);
         let content = fs::read_to_string(mirror).unwrap();
         assert!(content.contains(raw));
         assert!(!content.contains("@refs/"));
-        assert!(!fs::read_to_string(loon).unwrap().contains("@refs/"));
+        assert!(!fs::read_to_string(canonical).unwrap().contains("@refs/"));
         fs::remove_dir_all(root).unwrap();
     }
 }

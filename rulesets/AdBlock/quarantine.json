@@ -61,12 +61,6 @@
   },
   {
     "source": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",
-    "candidate": "DOMAIN,firebaselogging-pa.googleapis.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0%E6%8B%A6%E6%88%AA%E5%99%A8.sgmodule",
     "candidate": "DOMAIN,fundingchoicesmessages.google.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -229,12 +223,6 @@
   },
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,ads-api.twitter.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,ads-img-al.xhscdn.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -272,12 +260,6 @@
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,ads.google.cn,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,ads.tiktok.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -439,12 +421,6 @@
   },
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,api-adservices.apple.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,api5-normal-quic-lf.ixigua.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -547,21 +523,9 @@
   },
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,events.redditmedia.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,feed-image.baidu.com,REJECT,extended-matching,pre-matching",
     "reason": "broad-media-domain",
     "risk": "broad-media"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,firebaselogging-pa.googleapis.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
   },
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
@@ -692,12 +656,6 @@
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,iadmoo.apple.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,iadsdk.apple.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -938,12 +896,6 @@
   {
     "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,sentry.music.163.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,static.ads-twitter.com,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -1226,12 +1178,6 @@
   {
     "source": "Adblock4limbo_surge.list",
     "candidate": "DOMAIN,t-ads.xiaohongshu.com,reject",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "Adblock4limbo_surge.list",
-    "candidate": "DOMAIN-KEYWORD,adservice,reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -3578,18 +3524,6 @@
   {
     "source": "Advertising_All.list",
     "candidate": "DOMAIN-KEYWORD,adproxy.autohome.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "Advertising_All.list",
-    "candidate": "DOMAIN-KEYWORD,adsdk",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "Advertising_All.list",
-    "candidate": "DOMAIN-KEYWORD,adservice",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -108223,6 +108157,12 @@
   },
   {
     "source": "filter.txt",
+    "candidate": "||giftedbamboo.com^",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "filter.txt",
     "candidate": "||gifteddonut.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -123517,12 +123457,6 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
-    "candidate": "DOMAIN,api-adservices.apple.com,REJECT",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "DOMAIN,api.biliapi.com,REJECT",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -127623,12 +127557,6 @@
     "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
     "candidate": "bilibili.helper.v2                                    = type=http-response,pattern=^https:\\/\\/app\\.bilibili\\.com\\/x\\/v2\\/(splash|search\\?|feed\\/index),requires-body=1,max-size=-1,binary-body-mode=0,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.v2.js",
     "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "biliverse.github.io",
-    "reason": "protected-mitm-host",
     "risk": "protected-service"
   },
   {
@@ -141374,12 +141302,6 @@
   {
     "source": "reject.conf",
     "candidate": "DOMAIN-KEYWORD,-tracker.biliapi.net",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "reject.conf",
-    "candidate": "DOMAIN-KEYWORD,adsdk",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -242395,6 +242317,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".avatar2zh1.net.mydays.de",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".b.videoamp.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -242581,6 +242509,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".capi.aussiesparkmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".capi.giftitbd.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -242672,6 +242606,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".clc.stackoverflow.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".click.zoominfo-notification.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -242960,6 +242900,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".data.communications.mediasuper.com.au",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".data.dialogify.io",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -243451,12 +243397,6 @@
   },
   {
     "source": "tracking-protection-filter.txt",
-    "candidate": ".export.system.netsalesmedia.pl",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "tracking-protection-filter.txt",
     "candidate": ".fairfaxmedia.sharedcount.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -243487,6 +243427,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".fbcapi.halalgiftbd.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".fbcapi.holygift.com.bd",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -243494,6 +243440,18 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".fbcapi.holygift.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".fbcapi.holygift.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".fbcapi.offer.holygiftbd.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -243598,12 +243556,6 @@
     "candidate": ".g.whatsapp.net.iberostar.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
-  },
-  {
-    "source": "tracking-protection-filter.txt",
-    "candidate": ".gamma.ui.system.netsalesmedia.pl",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
   },
   {
     "source": "tracking-protection-filter.txt",
@@ -243895,6 +243847,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".gtm.vexusmedia.com.br",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".gtmfsstatic.getgoogletagmanager.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -244057,6 +244015,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".image.el.nttcoms.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".image.go.aricent.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -244076,6 +244040,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".image.larksuite-marketing.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".image.learn.volvotrucks.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -244160,6 +244130,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".images.aepinfo.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".images.airports.magairports.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -245126,6 +245102,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".images.go.elementfleet.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".images.go.employee.vsp.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -246499,6 +246481,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".images.refinitiv.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".images.register.lighthouse-media.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -246943,12 +246931,6 @@
   },
   {
     "source": "tracking-protection-filter.txt",
-    "candidate": ".img.system.netsalesmedia.pl",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "tracking-protection-filter.txt",
     "candidate": ".imk.neweggimages.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -247093,6 +247075,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".ivy.pocgifts.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".j0v36abmdj.execute-api.us-east-1.amazonaws.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -247100,6 +247088,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".jaomlf.giftmall.co.jp",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".jcuau.travelintelligence.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -247195,6 +247189,18 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".load.a1.firmmedia.org",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.apigifts.librodesuenos.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".load.art.giffa-spray.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -247207,7 +247213,7 @@
   },
   {
     "source": "tracking-protection-filter.txt",
-    "candidate": ".load.data.dialogify.io",
+    "candidate": ".load.content.webpervade.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -247225,21 +247231,21 @@
   },
   {
     "source": "tracking-protection-filter.txt",
-    "candidate": ".load.fbcapi.halalgiftbd.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "tracking-protection-filter.txt",
-    "candidate": ".load.fbcapi.offer.holygiftbd.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "tracking-protection-filter.txt",
     "candidate": ".load.fine.giftcardnow.uk",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.gift.proyex.io",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.googletagmanager.fleetstreetclinic.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "tracking-protection-filter.txt",
@@ -247262,6 +247268,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".load.gtm.mediaus.it",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.gtm.videosquecolam.co",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -247297,7 +247309,25 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".load.metrics.mediamix.ch",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".load.mrabx.camedia.de",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.nd.giftgallerybd.shop",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.nd.giftgallerybd.xyz",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -247315,6 +247345,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".load.s2.carmedia24.fr",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".load.s2.carmedia24.pl",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -247322,6 +247358,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".load.s2.carmediaeurope.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.server.aphmedia.com.br",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -247363,6 +247405,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".load.ss.irsvideos.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".load.ss.mediacharge.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -247372,6 +247420,12 @@
     "candidate": ".load.ssd.steamtherapy.com.au",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".load.sst.apexmediapromotions.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
   },
   {
     "source": "tracking-protection-filter.txt",
@@ -247897,12 +247951,6 @@
   },
   {
     "source": "tracking-protection-filter.txt",
-    "candidate": ".media.system.netsalesmedia.pl",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "tracking-protection-filter.txt",
     "candidate": ".media.theartisansapproach.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -248108,6 +248156,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".metrics.commonclaimsmistakesvideo.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".metrics.crossmediaservices.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -248341,6 +248395,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".nis.stats.rogueportmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".nkgwlp.geminiduo.hu",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -248527,9 +248587,9 @@
   },
   {
     "source": "tracking-protection-filter.txt",
-    "candidate": ".partner.system.netsalesmedia.pl",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
+    "candidate": ".path.theautozoom.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "tracking-protection-filter.txt",
@@ -248692,6 +248752,12 @@
     "candidate": ".pqdlno.winecountrygiftbaskets.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".preference.capgemini.adobesandbox.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "tracking-protection-filter.txt",
@@ -249007,13 +249073,31 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".server.ghlvideo.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".server.giftpay.app",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".server.giftsandcrafts.store",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".server.googledominado.com.br",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".server.homzoom.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -249625,6 +249709,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".sstr.optimedia-online.de",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".sstsrv.macromedia-ausbildung.de",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -249920,6 +250010,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".system.j5media.de",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".system.netsalesmedia.pl",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -250280,6 +250376,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".track.vio-media.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".track1.embrogift.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -250729,6 +250831,12 @@
   },
   {
     "source": "tracking-protection-filter.txt",
+    "candidate": ".wdss.mediaexperten.dk",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
     "candidate": ".weather-analytics-events.apple.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -250874,6 +250982,12 @@
   {
     "source": "tracking-protection-filter.txt",
     "candidate": ".yjpgxf.svsound.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "tracking-protection-filter.txt",
+    "candidate": ".yourgiftedbaby.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },

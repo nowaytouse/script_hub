@@ -52,7 +52,7 @@ fn manifest_path(root: &Path) -> PathBuf {
     root.join(MANIFEST_RELATIVE_PATH)
 }
 
-fn validate_name(name: &str) -> Result<(), String> {
+pub(crate) fn validate_name(name: &str) -> Result<(), String> {
     if name.trim() != name
         || name.is_empty()
         || name.len() > MAX_NAME_BYTES

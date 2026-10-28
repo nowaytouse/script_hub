@@ -2,6 +2,11 @@
 name = "rust_processor"
 version = "0.1.0"
 edition = "2024"
+description = "Rust core and native desktop workspace for Script Hub rules and modules"
+license = "GPL-3.0-only"
+repository = "https://github.com/nowaytouse/script_hub"
+readme = "README.md"
+publish = false
 
 [[bin]]
 name = "script-hub-gui"
@@ -31,6 +36,7 @@ percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.8"
 ureq = { version = "3.5.0", features = ["socks-proxy"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 sys-locale = "0.3.2"

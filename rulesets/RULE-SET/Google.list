@@ -1,7 +1,7 @@
 # Ruleset: Google
 # Policy: USER-DEFINED
 # Description: Typed migration preserving published source scopes
-# Rules: 911
+# Rules: 910
 
 DOMAIN-SUFFIX,gle
 DOMAIN-SUFFIX,dclk
@@ -884,7 +884,6 @@ DOMAIN,firebaseappcheck.googleapis.com
 DOMAIN,cache-management-prod.google.com
 DOMAIN,firebase-settings.crashlytics.com
 DOMAIN,firebaseapptesters.googleapis.com
-DOMAIN,firebaselogging-pa.googleapis.com
 DOMAIN,firebasedynamiclinks.googleapis.com
 DOMAIN,firebaseremoteconfig.googleapis.com
 DOMAIN,crashlyticsreports-pa.googleapis.com

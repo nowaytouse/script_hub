@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
+use crate::desktop::history::{HistoryOptions, HistoryStore};
 use crate::desktop::progress::{EVENT_PREFIX, ProgressEvent, Stage};
 
 const MAX_LOG_LINES: usize = 1_000;
@@ -20,6 +21,8 @@ pub enum JobKind {
     Update,
     QuickUpdate,
     GamingOnly,
+    AdBlockOnly,
+    SrsOnly,
     GitPull,
     GitCommit,
     GitPush,
@@ -27,7 +30,22 @@ pub enum JobKind {
 
 impl JobKind {
     fn is_mutating(self) -> bool {
-        !matches!(self, Self::Validate)
+        !matches!(self, Self::Validate | Self::RefreshCatalog)
+    }
+
+    fn history_name(self) -> &'static str {
+        match self {
+            Self::Validate => "validate",
+            Self::RefreshCatalog => "refresh_catalog",
+            Self::Update => "update",
+            Self::QuickUpdate => "quick_update",
+            Self::GamingOnly => "gaming_only",
+            Self::AdBlockOnly => "adblock",
+            Self::SrsOnly => "srs",
+            Self::GitPull => "git_pull",
+            Self::GitCommit => "git_commit",
+            Self::GitPush => "git_push",
+        }
     }
 }
 
@@ -37,6 +55,7 @@ pub struct JobOptions {
     pub singbox: Option<PathBuf>,
     pub commit_message: Option<String>,
     pub paths: Vec<String>,
+    pub history: Option<HistoryOptions>,
 }
 
 #[derive(Clone, Debug)]
@@ -58,6 +77,7 @@ pub enum JobOutcome {
     Failed,
 }
 
+#[derive(Clone)]
 struct State {
     running: bool,
     status: String,
@@ -89,7 +109,7 @@ impl State {
 
     fn push(&mut self, line: String) {
         let line = plain_log_line(&line);
-        self.has_warnings |= line.contains("[WARN]");
+        self.has_warnings |= line.contains("[WARN]") || line.contains("[WARNING]");
         let bytes = line.len();
         self.logs.push_back(line);
         self.log_bytes += bytes;
@@ -104,6 +124,24 @@ impl State {
         self.finished_at
             .unwrap_or_else(Instant::now)
             .saturating_duration_since(self.started_at)
+    }
+
+    fn snapshot(&self, summary: bool) -> Snapshot {
+        let logs = if summary {
+            self.logs.back().cloned().into_iter().collect()
+        } else {
+            self.logs.clone()
+        };
+        Snapshot {
+            running: self.running,
+            status: self.status.clone(),
+            logs,
+            stage: self.progress.map(|progress| progress.stage),
+            progress: self.progress,
+            outcome: self.outcome,
+            elapsed: self.elapsed(),
+            exit_code: self.exit_code,
+        }
     }
 }
 
@@ -144,7 +182,14 @@ impl Job {
     pub fn start(kind: JobKind, options: JobOptions) -> Result<Self, String> {
         let root = validate_root(&options.root)?;
         let singbox = match (kind, options.singbox.clone()) {
-            (JobKind::Update | JobKind::QuickUpdate | JobKind::GamingOnly, Some(path)) => {
+            (
+                JobKind::Update
+                | JobKind::QuickUpdate
+                | JobKind::GamingOnly
+                | JobKind::AdBlockOnly
+                | JobKind::SrsOnly,
+                Some(path),
+            ) => {
                 let path = path.canonicalize().map_err(|error| {
                     format!(
                         "cannot resolve sing-box executable {}: {error}",
@@ -158,6 +203,9 @@ impl Job {
                     ));
                 }
                 Some(path)
+            }
+            (JobKind::SrsOnly, None) => {
+                return Err("SRS rebuild requires a sing-box executable".to_string());
             }
             _ => None,
         };
@@ -174,7 +222,6 @@ impl Job {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         if kind.is_mutating()
-            && kind != JobKind::RefreshCatalog
             && let Some(path) = singbox
         {
             command.arg("--singbox").arg(path);
@@ -188,19 +235,61 @@ impl Job {
             JobKind::Update => "全量更新正在运行".to_string(),
             JobKind::QuickUpdate => "快速更新正在运行".to_string(),
             JobKind::GamingOnly => "游戏规则更新正在运行".to_string(),
+            JobKind::AdBlockOnly => "广告拦截规则更新正在运行".to_string(),
+            JobKind::SrsOnly => "正在重建 SRS 规则".to_string(),
             JobKind::GitPull => "正在拉取仓库更新".to_string(),
             JobKind::GitCommit => "正在提交所选更改".to_string(),
             JobKind::GitPush => "正在推送仓库更新".to_string(),
         })));
         let worker_state = Arc::clone(&state);
+        let history_options = options.history.clone();
+        let history_kind = kind.history_name();
         let worker = thread::Builder::new()
             .name("script-hub-gui-job".to_string())
             .spawn(move || {
+                let history =
+                    history_options.as_ref().and_then(|options| {
+                        match HistoryStore::open(&options.path) {
+                            Ok(store) => match store.start(history_kind) {
+                                Ok(id) => Some((store, id)),
+                                Err(error) => {
+                                    journal_warning(
+                                        &worker_state,
+                                        format!("cannot start task history: {error}"),
+                                    );
+                                    None
+                                }
+                            },
+                            Err(error) => {
+                                journal_warning(
+                                    &worker_state,
+                                    format!("task history unavailable: {error}"),
+                                );
+                                None
+                            }
+                        }
+                    });
                 let result = run_worker(command, Arc::clone(&worker_state));
-                let mut state = worker_state
+                let mut finished_state = {
+                    let state = worker_state
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+                    let mut finished_state = state.clone();
+                    finish_state(&mut finished_state, result);
+                    finished_state
+                };
+                let snapshot = finished_state.snapshot(false);
+                if let (Some((store, id)), Some(options)) = (history, history_options.as_ref())
+                    && let Err(error) = store.finish(id, &snapshot, options.keep_logs)
+                {
+                    journal_warning_state(
+                        &mut finished_state,
+                        format!("cannot finish task history: {error}"),
+                    );
+                }
+                *worker_state
                     .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                finish_state(&mut state, result);
+                    .unwrap_or_else(|poisoned| poisoned.into_inner()) = finished_state;
             })
             .map_err(|error| format!("cannot create job monitor: {error}"))?;
         Ok(Self {
@@ -223,16 +312,16 @@ impl Job {
             .state
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
-        Snapshot {
-            running: state.running,
-            status: state.status.clone(),
-            logs: state.logs.clone(),
-            stage: state.progress.map(|progress| progress.stage),
-            progress: state.progress,
-            outcome: state.outcome,
-            elapsed: state.elapsed(),
-            exit_code: state.exit_code,
-        }
+        state.snapshot(false)
+    }
+
+    pub fn summary(&self) -> Snapshot {
+        self.reconcile_finished_monitor();
+        let state = self
+            .state
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.snapshot(true)
     }
 
     fn reconcile_finished_monitor(&self) {
@@ -268,6 +357,8 @@ fn worker_name(kind: JobKind) -> &'static str {
         JobKind::RefreshCatalog => "catalog",
         JobKind::Update | JobKind::QuickUpdate => "update",
         JobKind::GamingOnly => "update",
+        JobKind::AdBlockOnly => "adblock",
+        JobKind::SrsOnly => "srs",
         JobKind::GitPull => "git-pull",
         JobKind::GitCommit => "git-commit",
         JobKind::GitPush => "git-push",
@@ -281,7 +372,7 @@ fn add_job_arguments(
 ) -> Result<(), String> {
     if matches!(
         kind,
-        JobKind::Update | JobKind::QuickUpdate | JobKind::GamingOnly
+        JobKind::Update | JobKind::QuickUpdate | JobKind::GamingOnly | JobKind::AdBlockOnly
     ) {
         command.arg("--execute");
     }
@@ -309,6 +400,8 @@ fn add_job_arguments(
         JobKind::Validate
         | JobKind::RefreshCatalog
         | JobKind::Update
+        | JobKind::AdBlockOnly
+        | JobKind::SrsOnly
         | JobKind::GitPull
         | JobKind::GitPush => {}
     }
@@ -511,12 +604,27 @@ fn finish_state(state: &mut State, result: Result<(), String>) {
     state.finished_at = Some(Instant::now());
 }
 
+fn journal_warning(shared: &Arc<Mutex<State>>, message: String) {
+    let mut state = shared
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    journal_warning_state(&mut state, message);
+}
+
+fn journal_warning_state(state: &mut State, message: String) {
+    state.push(format!("[WARN] {message}"));
+    if state.outcome == Some(JobOutcome::Success) {
+        state.outcome = Some(JobOutcome::Warnings);
+        state.status = "已完成（历史记录警告）".to_string();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
         EVENT_PREFIX, JobKind, JobOptions, JobOutcome, MAX_LOG_BYTES, OutputStream, Stage, State,
-        acquire_write_lock, add_job_arguments, drain, finish_state, run_worker, validate_root,
-        worker_name,
+        acquire_write_lock, add_job_arguments, drain, finish_state, journal_warning, run_worker,
+        validate_root, worker_name,
     };
     use std::io::{self, Read};
     use std::path::Path;
@@ -635,8 +743,58 @@ mod tests {
     }
 
     #[test]
+    fn summary_matches_snapshot_except_for_recent_logs() {
+        let mut state = State::new("finished".to_string());
+        state.push("first".to_string());
+        state.push("last".to_string());
+        state.running = false;
+        state.outcome = Some(JobOutcome::Warnings);
+        state.exit_code = Some(0);
+        state.finished_at = Some(std::time::Instant::now());
+        let job = super::Job {
+            state: Arc::new(Mutex::new(state)),
+            worker: None,
+        };
+        let full = job.snapshot();
+        let summary = job.summary();
+        assert_eq!(
+            summary.logs.iter().cloned().collect::<Vec<_>>(),
+            vec!["last"]
+        );
+        assert_eq!(summary.running, full.running);
+        assert_eq!(summary.status, full.status);
+        assert_eq!(summary.stage, full.stage);
+        assert_eq!(summary.progress, full.progress);
+        assert_eq!(summary.outcome, full.outcome);
+        assert_eq!(summary.elapsed, full.elapsed);
+        assert_eq!(summary.exit_code, full.exit_code);
+    }
+
+    #[test]
+    fn history_journal_failure_downgrades_success_not_failure() {
+        let shared = Arc::new(Mutex::new(State::new("running".to_string())));
+        {
+            let mut state = shared.lock().unwrap();
+            finish_state(&mut state, Ok(()));
+        }
+        journal_warning(&shared, "history unavailable".to_string());
+        let state = shared.lock().unwrap();
+        assert_eq!(state.outcome, Some(JobOutcome::Warnings));
+        assert!(state.logs.back().unwrap().contains("history unavailable"));
+
+        let failed = Arc::new(Mutex::new(State::new("running".to_string())));
+        {
+            let mut state = failed.lock().unwrap();
+            finish_state(&mut state, Err("worker failed".to_string()));
+        }
+        journal_warning(&failed, "history unavailable".to_string());
+        assert_eq!(failed.lock().unwrap().outcome, Some(JobOutcome::Failed));
+    }
+
+    #[test]
     fn operations_are_explicit() {
         assert!(!JobKind::Validate.is_mutating());
+        assert!(!JobKind::RefreshCatalog.is_mutating());
         assert!(JobKind::Update.is_mutating());
         assert!(JobKind::GamingOnly.is_mutating());
         let _options = JobOptions {
@@ -671,6 +829,20 @@ mod tests {
         assert_eq!(worker_name(JobKind::GitPull), "git-pull");
         assert_eq!(worker_name(JobKind::GitCommit), "git-commit");
         assert_eq!(worker_name(JobKind::GitPush), "git-push");
+        assert_eq!(worker_name(JobKind::AdBlockOnly), "adblock");
+        assert_eq!(worker_name(JobKind::SrsOnly), "srs");
+        assert_eq!(JobKind::AdBlockOnly.history_name(), "adblock");
+        assert_eq!(JobKind::SrsOnly.history_name(), "srs");
+
+        let mut adblock = Command::new("worker");
+        add_job_arguments(&mut adblock, JobKind::AdBlockOnly, &JobOptions::default()).unwrap();
+        assert_eq!(
+            adblock
+                .get_args()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>(),
+            vec!["--execute"]
+        );
 
         let options = JobOptions {
             commit_message: Some("message with spaces".to_string()),

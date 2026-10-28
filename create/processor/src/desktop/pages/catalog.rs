@@ -1,11 +1,15 @@
 use super::card;
 use crate::desktop::app::{CatalogTab, HubApp};
+use crate::desktop::catalog::{
+    safe_https_single_field_url, selected_module_urls, selected_rule_urls,
+    selected_surge_rule_set_snippets, valid_rule_set_policy,
+};
 use crate::desktop::i18n::{Text, text};
 use eframe::egui::{self, RichText};
 
 impl HubApp {
     pub(crate) fn catalog_page(&mut self, ui: &mut egui::Ui) {
-        ui.heading(self.tr(Text::Modules));
+        ui.heading(self.tr(Text::Library));
         ui.add_space(14.0);
         ui.horizontal_wrapped(|ui| {
             for (tab, key) in [
@@ -22,11 +26,13 @@ impl HubApp {
             }
         });
         ui.add_space(12.0);
-        match self.catalog_tab {
-            CatalogTab::Modules => self.modules_view(ui),
-            CatalogTab::Rules => self.rules_view(ui),
-            CatalogTab::Sources => self.sources_page(ui),
-        }
+        ui.push_id(("catalog-view", self.catalog_tab as u8), |ui| {
+            match self.catalog_tab {
+                CatalogTab::Modules => self.modules_view(ui),
+                CatalogTab::Rules => self.rules_view(ui),
+                CatalogTab::Sources => self.sources_page(ui),
+            }
+        });
     }
 
     fn modules_view(&mut self, ui: &mut egui::Ui) {
@@ -69,6 +75,40 @@ impl HubApp {
                 .desired_width(f32::INFINITY),
         );
         ui.add_space(12.0);
+        let selected_count = self.selected_modules.len();
+        let cdn_urls = selected_module_urls(&self.catalog.modules, &self.selected_modules, false);
+        let github_urls = selected_module_urls(&self.catalog.modules, &self.selected_modules, true);
+        ui.horizontal_wrapped(|ui| {
+            ui.label(format!("{}: {selected_count}", tr(Text::Selected)));
+            if ui
+                .add_enabled(
+                    !cdn_urls.is_empty(),
+                    egui::Button::new(tr(Text::CopySelectedCdn)),
+                )
+                .clicked()
+            {
+                self.copy(ui.ctx(), &cdn_urls);
+            }
+            if ui
+                .add_enabled(
+                    !github_urls.is_empty(),
+                    egui::Button::new(tr(Text::CopySelectedGithub)),
+                )
+                .clicked()
+            {
+                self.copy(ui.ctx(), &github_urls);
+            }
+            if ui
+                .add_enabled(
+                    selected_count > 0,
+                    egui::Button::new(tr(Text::ClearSelection)),
+                )
+                .clicked()
+            {
+                self.selected_modules.clear();
+            }
+        });
+        ui.add_space(8.0);
         let query = self.module_search.trim().to_lowercase();
         let indices: Vec<_> = self
             .catalog
@@ -110,18 +150,33 @@ impl HubApp {
                 }
                 for index in indices {
                     let module = &self.catalog.modules[index];
-                    let response = ui.add(
-                        egui::Button::new("")
-                            .left_text(RichText::new(&module.name).strong())
-                            .right_text(&module.category)
-                            .selected(self.selected_module == Some(index))
-                            .min_size(egui::vec2(ui.available_width(), 54.0))
-                            .wrap()
-                            .corner_radius(7),
-                    );
-                    if response.clicked() {
-                        self.selected_module = Some(index);
-                    }
+                    ui.horizontal(|ui| {
+                        let mut selected = self.selected_modules.contains(&index);
+                        ui.add_enabled_ui(module.merged_into.is_empty(), |ui| {
+                            if ui
+                                .checkbox(&mut selected, tr(Text::SelectForCopy))
+                                .changed()
+                            {
+                                if selected {
+                                    self.selected_modules.insert(index);
+                                } else {
+                                    self.selected_modules.remove(&index);
+                                }
+                            }
+                        });
+                        let response = ui.add(
+                            egui::Button::new("")
+                                .left_text(RichText::new(&module.name).strong())
+                                .right_text(&module.category)
+                                .selected(self.selected_module == Some(index))
+                                .min_size(egui::vec2(ui.available_width(), 54.0))
+                                .wrap()
+                                .corner_radius(7),
+                        );
+                        if response.clicked() {
+                            self.selected_module = Some(index);
+                        }
+                    });
                 }
             });
         if !wide {
@@ -174,6 +229,86 @@ impl HubApp {
     }
 
     fn rules_view(&mut self, ui: &mut egui::Ui) {
+        let language = self.draft.language;
+        let tr = |key| text(language, key);
+        ui.horizontal_wrapped(|ui| {
+            ui.label(self.tr(Text::RuleSetPolicy));
+            ui.add(
+                egui::TextEdit::singleline(&mut self.copy_policy)
+                    .hint_text(tr(Text::RuleSetPolicyHint))
+                    .desired_width(220.0),
+            );
+        });
+        let policy_valid = valid_rule_set_policy(&self.copy_policy);
+        if !policy_valid && !self.copy_policy.is_empty() {
+            ui.colored_label(self.colors.warning, self.tr(Text::InvalidRuleSetPolicy));
+        }
+        let selected_count = self.selected_rules.len();
+        let cdn_urls = selected_rule_urls(&self.catalog.rules, &self.selected_rules, false);
+        let github_urls = selected_rule_urls(&self.catalog.rules, &self.selected_rules, true);
+        let cdn_snippets = selected_surge_rule_set_snippets(
+            &self.catalog.rules,
+            &self.selected_rules,
+            false,
+            &self.copy_policy,
+        );
+        let github_snippets = selected_surge_rule_set_snippets(
+            &self.catalog.rules,
+            &self.selected_rules,
+            true,
+            &self.copy_policy,
+        );
+        ui.horizontal_wrapped(|ui| {
+            ui.label(format!("{}: {selected_count}", self.tr(Text::Selected)));
+            if ui
+                .add_enabled(
+                    !cdn_urls.is_empty(),
+                    egui::Button::new(self.tr(Text::CopySelectedCdn)),
+                )
+                .clicked()
+            {
+                self.copy(ui.ctx(), &cdn_urls);
+            }
+            if ui
+                .add_enabled(
+                    !github_urls.is_empty(),
+                    egui::Button::new(self.tr(Text::CopySelectedGithub)),
+                )
+                .clicked()
+            {
+                self.copy(ui.ctx(), &github_urls);
+            }
+            if ui
+                .add_enabled(
+                    cdn_snippets.is_some(),
+                    egui::Button::new(self.tr(Text::CopyRuleSetCdn)),
+                )
+                .clicked()
+                && let Some(snippets) = &cdn_snippets
+            {
+                self.copy(ui.ctx(), snippets);
+            }
+            if ui
+                .add_enabled(
+                    github_snippets.is_some(),
+                    egui::Button::new(self.tr(Text::CopyRuleSetGithub)),
+                )
+                .clicked()
+                && let Some(snippets) = &github_snippets
+            {
+                self.copy(ui.ctx(), snippets);
+            }
+            if ui
+                .add_enabled(
+                    selected_count > 0,
+                    egui::Button::new(self.tr(Text::ClearSelection)),
+                )
+                .clicked()
+            {
+                self.selected_rules.clear();
+            }
+        });
+        ui.add_space(8.0);
         let hint = self.tr(Text::SearchRules);
         ui.add(
             egui::TextEdit::singleline(&mut self.rule_search)
@@ -231,23 +366,36 @@ impl HubApp {
                 };
                 for index in indices {
                     let rule = &self.catalog.rules[index];
-                    if ui
-                        .add(
-                            egui::Button::new("")
-                                .left_text(&rule.name)
-                                .right_text(rule.count.map_or_else(
-                                    || rule.category.clone(),
-                                    |count| count.to_string(),
-                                ))
-                                .selected(self.selected_rule == Some(index))
-                                .min_size(egui::vec2(ui.available_width(), row_height))
-                                .wrap()
-                                .corner_radius(7),
-                        )
-                        .clicked()
-                    {
-                        self.selected_rule = Some(index);
-                    }
+                    ui.horizontal(|ui| {
+                        let mut selected = self.selected_rules.contains(&index);
+                        if ui
+                            .checkbox(&mut selected, tr(Text::SelectForCopy))
+                            .changed()
+                        {
+                            if selected {
+                                self.selected_rules.insert(index);
+                            } else {
+                                self.selected_rules.remove(&index);
+                            }
+                        }
+                        if ui
+                            .add(
+                                egui::Button::new("")
+                                    .left_text(&rule.name)
+                                    .right_text(rule.count.map_or_else(
+                                        || rule.category.clone(),
+                                        |count| count.to_string(),
+                                    ))
+                                    .selected(self.selected_rule == Some(index))
+                                    .min_size(egui::vec2(ui.available_width(), row_height))
+                                    .wrap()
+                                    .corner_radius(7),
+                            )
+                            .clicked()
+                        {
+                            self.selected_rule = Some(index);
+                        }
+                    });
                 }
             });
         if !wide {
@@ -280,10 +428,22 @@ impl HubApp {
 
     fn subscription_controls(&mut self, ui: &mut egui::Ui, cdn: &str, github: &str) {
         ui.horizontal_wrapped(|ui| {
-            if ui.button(self.tr(Text::CopyCdn)).clicked() {
+            if ui
+                .add_enabled(
+                    safe_https_single_field_url(cdn),
+                    egui::Button::new(self.tr(Text::CopyCdn)),
+                )
+                .clicked()
+            {
                 self.copy(ui.ctx(), cdn);
             }
-            if ui.button(self.tr(Text::CopyGithub)).clicked() {
+            if ui
+                .add_enabled(
+                    safe_https_single_field_url(github),
+                    egui::Button::new(self.tr(Text::CopyGithub)),
+                )
+                .clicked()
+            {
                 self.copy(ui.ctx(), github);
             }
         });

@@ -79,7 +79,7 @@ impl HubApp {
                 ui.add_space(10.0);
                 card(ui, self.colors, |ui| {
                     if let Some(job) = &self.job {
-                        let snapshot = job.snapshot();
+                        let snapshot = job.summary();
                         let (label, color) = self.outcome(&snapshot);
                         ui.colored_label(color, RichText::new(label).strong());
                         if let Some(stage) = snapshot.stage {

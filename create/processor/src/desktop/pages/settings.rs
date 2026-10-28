@@ -1,4 +1,4 @@
-use super::card;
+use super::{card, primary_button};
 use crate::desktop::app::HubApp;
 use crate::desktop::i18n::{Text, text};
 use crate::desktop::settings::{self, Accent, Density, Language, Theme, WindowSize};
@@ -143,12 +143,52 @@ impl HubApp {
                     ui.weak(tr(Text::SingboxOptional));
                 });
                 ui.add_space(16.0);
+                card(ui, self.colors, |ui| {
+                    ui.label(
+                        RichText::new(tr(Text::DataAndDiagnostics))
+                            .size(18.0)
+                            .strong(),
+                    );
+                    ui.add_space(10.0);
+                    ui.add_enabled_ui(!self.active(), |ui| {
+                        ui.checkbox(&mut self.draft.record_history, tr(Text::RecordHistory));
+                        ui.weak(tr(Text::RecordHistoryHelp));
+                        ui.add_space(12.0);
+                        if ui
+                            .checkbox(&mut self.draft.developer_mode, tr(Text::DeveloperMode))
+                            .changed()
+                            && !self.draft.developer_mode
+                        {
+                            self.draft.diagnostic_logs = false;
+                        }
+                        ui.weak(tr(Text::DeveloperModeHelp));
+                        if self.draft.developer_mode {
+                            ui.add_space(10.0);
+                            ui.add_enabled(
+                                self.draft.record_history,
+                                egui::Checkbox::new(
+                                    &mut self.draft.diagnostic_logs,
+                                    tr(Text::DiagnosticLogs),
+                                ),
+                            );
+                            ui.weak(tr(Text::DiagnosticLogsHelp));
+                            if let Some(path) = self.history_path() {
+                                ui.label(tr(Text::DatabaseLocation));
+                                ui.add(egui::Label::new(path.display().to_string()).wrap());
+                            }
+                        }
+                    });
+                });
+                ui.add_space(16.0);
                 if self.draft != self.preferences {
                     ui.colored_label(self.colors.warning, tr(Text::UnsavedChanges));
                 }
                 ui.horizontal_wrapped(|ui| {
                     if ui
-                        .add_enabled(!self.active(), egui::Button::new(tr(Text::SaveSettings)))
+                        .add_enabled(
+                            !self.active(),
+                            primary_button(self.colors, tr(Text::SaveSettings)),
+                        )
                         .clicked()
                     {
                         let result = self
@@ -170,8 +210,10 @@ impl HubApp {
                         .clicked()
                     {
                         self.draft = self.preferences.clone();
-                        self.root_input = self.preferences.root.clone();
-                        self.reload();
+                        self.root_input = self.loaded_root.as_deref().map_or_else(
+                            || self.preferences.root.clone(),
+                            |root| root.display().to_string(),
+                        );
                         ui.ctx().send_viewport_cmd(egui::ViewportCommand::InnerSize(
                             self.draft.window.dimensions().into(),
                         ));

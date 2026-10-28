@@ -93,7 +93,8 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         .filter_map(|name| {
             let path = root.join(name);
             let source_input = rust_processor::url_rewriter::is_pipeline_source_path_pub(&path)
-                && !name.starts_with("modules/source/build/");
+                && !name.starts_with("modules/source/build/")
+                && !name.starts_with("rulesets/Sources/compiled/");
             (path.is_file() && !source_input).then(|| (name.to_string(), path))
         })
         .collect();
@@ -161,7 +162,13 @@ fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<Path
         .ok_or_else(|| format!("missing value for {flag}"))
 }
 
-fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Result<(), String> {
+fn run(
+    root: &Path,
+    execute: bool,
+    singbox: Option<&Path>,
+    quick: bool,
+    adblock_only: bool,
+) -> Result<(), String> {
     emit_stage(Stage::Prepare);
     if !root
         .join("rulesets/Sources/adblock_whitelist.list")
@@ -173,7 +180,7 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
         ));
     }
 
-    if execute && !quick {
+    if execute && !quick && !adblock_only {
         emit_stage(Stage::Functional);
         let failures = rust_processor::functional_update::run_functional_updates(root);
         if !failures.is_empty() {
@@ -273,9 +280,6 @@ fn run(root: &Path, execute: bool, singbox: Option<&Path>, quick: bool) -> Resul
     }
     emit_stage(Stage::Mirrors);
     rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
-    emit_stage(Stage::Catalog);
-    rust_processor::module_catalog::refresh(root)?;
-
     if singbox.is_some_and(|path| path.is_file()) {
         emit_stage(Stage::Srs);
     }
@@ -310,6 +314,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut execute = false;
     let mut quick = false;
     let mut gaming_only = false;
+    let mut adblock_only = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--root" => root = Some(arg_value(&mut args, "--root")),
@@ -317,9 +322,10 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--execute" | "--unattended" => execute = true,
             "--quick" => quick = true,
             "--gaming-only" => gaming_only = true,
+            "--adblock-only" => adblock_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--gaming-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -328,6 +334,11 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
                 return ExitCode::from(2);
             }
         }
+    }
+
+    if adblock_only && (quick || gaming_only) {
+        eprintln!("--adblock-only cannot be combined with --quick or --gaming-only");
+        return ExitCode::from(2);
     }
 
     let root = match root {
@@ -371,7 +382,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             Ok(())
         })
     } else {
-        run(&root, execute, singbox.as_deref(), quick)
+        run(&root, execute, singbox.as_deref(), quick, adblock_only)
     };
     match result {
         Ok(()) => {
@@ -387,9 +398,9 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{discard_semantic_noop_changes, read_batch_blob};
+    use super::{discard_semantic_noop_changes, read_batch_blob, run_cli};
     use std::io::Cursor;
-    use std::process::Command;
+    use std::process::{Command, ExitCode};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -427,6 +438,79 @@ mod tests {
             read_batch_blob(&mut Vec::new(), &mut output, "oid").unwrap_err(),
             "invalid git object header for oid"
         );
+    }
+
+    #[test]
+    fn adblock_only_rejects_other_update_modes() {
+        for mode in ["--quick", "--gaming-only"] {
+            assert_eq!(
+                run_cli(
+                    ["--root", ".", "--adblock-only", mode]
+                        .into_iter()
+                        .map(str::to_string)
+                ),
+                ExitCode::from(2)
+            );
+        }
+    }
+
+    #[test]
+    fn semantic_noop_filter_restores_compiled_outputs_but_not_authored_sources() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-compiled-noop-{}-{unique}",
+            std::process::id()
+        ));
+        let compiled = "rulesets/Sources/compiled/Cloudflare_ip.list";
+        let local = "rulesets/Sources/Local/fixture.list";
+        let links = "rulesets/Sources/Links/fixture.list";
+        for relative in [compiled, local, links] {
+            std::fs::create_dir_all(root.join(relative).parent().unwrap()).unwrap();
+        }
+        let compiled_original = b"# generated baseline\nDOMAIN-SUFFIX,example.test\n";
+        let local_original = b"# authored baseline\nDOMAIN-SUFFIX,local.example\n";
+        let links_original = b"# authored manifest baseline\nfixture.list\n";
+        std::fs::write(root.join(compiled), compiled_original).unwrap();
+        std::fs::write(root.join(local), local_original).unwrap();
+        std::fs::write(root.join(links), links_original).unwrap();
+
+        let git = |arguments: &[&str]| {
+            let output = Command::new("git")
+                .args(arguments)
+                .current_dir(&root)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "git {arguments:?} failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        };
+        git(&["init", "--quiet"]);
+        git(&["config", "user.email", "test@example.invalid"]);
+        git(&["config", "user.name", "Script Hub Test"]);
+        git(&["add", "--", compiled, local, links]);
+        git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let compiled_changed = b"# generated refreshed timestamp\nDOMAIN-SUFFIX,example.test\n";
+        let local_changed = b"# authored refreshed timestamp\nDOMAIN-SUFFIX,local.example\n";
+        let links_changed = b"# authored refreshed manifest\nfixture.list\n";
+        std::fs::write(root.join(compiled), compiled_changed).unwrap();
+        std::fs::write(root.join(local), local_changed).unwrap();
+        std::fs::write(root.join(links), links_changed).unwrap();
+
+        discard_semantic_noop_changes(&root).unwrap();
+
+        assert_eq!(
+            std::fs::read(root.join(compiled)).unwrap(),
+            compiled_original
+        );
+        assert_eq!(std::fs::read(root.join(local)).unwrap(), local_changed);
+        assert_eq!(std::fs::read(root.join(links)).unwrap(), links_changed);
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]

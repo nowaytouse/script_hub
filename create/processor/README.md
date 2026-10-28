@@ -21,27 +21,31 @@ macOS protects Desktop, Documents, Downloads, network and removable volumes. Ad-
 
 Custom source entries are stored in the workspace at `modules/source/custom_sources.json`; Wool, Weibo, and Devtools are supported source categories. Source add/remove actions are explicit and confirmed. Run a full update to rebuild the affected bundle after changing sources; quick update skips functional bundles.
 
-Repository actions are always user-initiated. Pull requires a clean working tree and is fast-forward-only; commits include only explicitly selected changed paths; push targets the same-named branch on `origin` and is non-forced. Do not add automatic Git operations. Preserve the public mobile helper at `modules/helper/surge_module_helper.html`.
+Repository actions are always user-initiated. Pull requires a clean working tree and is fast-forward-only; commits include only explicitly selected changed paths; push targets the same-named branch on `origin` and is non-forced. Do not add automatic Git operations.
 
-The unmaintained compiled React/Tauri distribution under `create/ui/frontend/dist` has been retired after porting its theme, language, source-management, update, and manual Git workflows into the native app. Its historical files remain recoverable from Git history. The mobile HTML helper is a separate supported interface and is retained.
+The unmaintained compiled React/Tauri distribution and the HTML module helper have been retired in favor of the native app. The Library reads current local modules directly, supports batch URL copying, and creates Surge RULE-SET snippets only after the user supplies a policy. No helper-only JSON snapshots are generated. Loon output and its conversion/validation code are retired; supported module outputs are Surge and Shadowrocket. Historical files remain recoverable from Git history.
 
 ## Source organization
 
 ```text
 src/
 ├── app/             # update_cli, validate_cli
-├── desktop/         # app, catalog, i18n, job, progress, repository, settings,
-│                    # theme, worker, pages/{overview,catalog,tasks,repository,
+├── desktop/         # app, app_history, history, catalog, i18n, job, progress,
+│                    # repository, settings, theme, worker,
+│                    # pages/{overview,catalog,tasks,history,repository,
 │                    # settings,sources,support}
 ├── pipeline/        # custom_sources, firewall_sync, functional_update,
 │                    # general_update, merge_bundles, module_catalog, srs_generator
 ├── transforms/      # mitm_manager, smart_cleanup, url_rewriter
-├── promax/
+├── promax/          # parsing, safety, sources, compilation and publication;
+│   └── compiler/    # compiler regression tests, separate from production code
 ├── bin/
 └── lib.rs           # shared ruleset utilities and compatibility re-exports
 ```
 
 Crate-root module paths remain available through re-exports; `functional_update` now lives under `pipeline` while callers can continue using its historical root path. Keep public CLI entry points and generated output paths stable during the refactor.
+
+`pipeline/module_catalog` only inspects published module files; `desktop/catalog` adds rule/source models and safe copy formatting. Neither maintains a second generated web catalog. Reviewed local privacy endpoints live in `rulesets/Sources/Privacy_Reviewed.list` and enter the same PROMAX source manifest, validation and publication pipeline as upstream inputs. An exact reviewed advertising host never authorizes blocking its parent domain or bypassing an explicit host whitelist or critical Apple service protection.
 
 ## Local commands
 
@@ -52,4 +56,4 @@ cargo test --manifest-path create/processor/Cargo.toml
 cargo run --manifest-path create/processor/Cargo.toml --features gui --bin script-hub-gui
 ```
 
-The GUI CI workflow runs on macOS and Windows and names artifacts with the runner OS and actual runner architecture. A local build or CI artifact does not imply signing, notarization, or runtime acceptance on every supported device.
+The GUI CI workflow runs on macOS and Windows and names artifacts with the runner OS and actual runner architecture. Release packages include the repository license and compliance notices, plus a source link pinned to the exact build commit. A local build or CI artifact does not imply trusted signing, notarization, or runtime acceptance on every supported device.

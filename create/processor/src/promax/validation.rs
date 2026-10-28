@@ -344,91 +344,6 @@ pub fn validate_apple_compatibility(content: &str, implicit_reject: bool) -> Vec
     errors
 }
 
-pub fn validate_loon_plugin(content: &str) -> Vec<ValidationError> {
-    let mut errors = Vec::new();
-    let mut section = None;
-    let mut has_name = false;
-    for (index, raw_line) in content.lines().enumerate() {
-        let line_number = index + 1;
-        let line = raw_line.trim();
-        if line.is_empty() || line.starts_with('#') && !line.starts_with("#!") {
-            continue;
-        }
-        if line.starts_with("#!") {
-            has_name |= line.split_once(['=', ':']).is_some_and(|(key, value)| {
-                key.eq_ignore_ascii_case("#!name") && !value.trim().is_empty()
-            });
-            continue;
-        }
-        if line.starts_with('[') && line.ends_with(']') {
-            let name = &line[1..line.len() - 1];
-            if !["Rule", "Rewrite", "Script", "MitM"].contains(&name) {
-                errors.push(error(
-                    line_number,
-                    "unsupported-section",
-                    format!("unsupported Loon section [{name}]"),
-                ));
-                section = None;
-            } else {
-                section = Some(name);
-            }
-            continue;
-        }
-        match section {
-            Some("Rule") => validate_loon_rule(line_number, line, &mut errors),
-            Some("MitM") => validate_mitm(line_number, line, &mut errors),
-            Some("Rewrite") => validate_loon_rewrite(line_number, line, &mut errors),
-            Some("Script") => validate_loon_script(line_number, line, &mut errors),
-            Some(_) => {}
-            None => errors.push(error(
-                line_number,
-                "line-outside-section",
-                "content appears outside a Loon section",
-            )),
-        }
-    }
-    if !has_name {
-        errors.insert(
-            0,
-            error(1, "missing-name", "plugin metadata is missing #!name"),
-        );
-    }
-    errors.extend(validate_transport_security(content));
-    errors
-}
-
-fn validate_loon_rule(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
-    if line.to_ascii_uppercase().starts_with("RULE-SET,") {
-        errors.push(error(
-            line_number,
-            "unsupported-loon-rule-set",
-            "Loon plugins must use inline rules instead of Surge RULE-SET references",
-        ));
-        return;
-    }
-    match SurgeRule::parse(line) {
-        Ok(rule) => {
-            if rule.policy.as_deref() != Some("REJECT") {
-                errors.push(error(
-                    line_number,
-                    "unsupported-policy",
-                    "Loon PROMAX rules must use the intrinsic REJECT policy",
-                ));
-            }
-            if rule.options.iter().any(|option| option != "NO-RESOLVE") {
-                errors.push(error(
-                    line_number,
-                    "invalid-rule-option",
-                    "unsupported Loon inline rule option",
-                ));
-            }
-        }
-        Err(parse_error) => {
-            errors.push(error(line_number, "invalid-rule", parse_error.to_string()))
-        }
-    }
-}
-
 fn validate_generic_module_rule(line: &str) -> bool {
     let Ok(fields) = split_fields(line) else {
         return false;
@@ -442,88 +357,6 @@ fn validate_generic_module_rule(line: &str) -> bool {
         fields[1].clone()
     };
     SurgeRule::parse(&format!("{},{}", fields[0], payload)).is_ok()
-}
-
-fn validate_loon_rewrite(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
-    let mut fields = line.split_whitespace();
-    let Some(pattern) = fields.next() else {
-        return;
-    };
-    if let Err(regex_error) = Regex::new(pattern) {
-        errors.push(error(
-            line_number,
-            "invalid-section-regex",
-            regex_error.to_string(),
-        ));
-        return;
-    }
-    let remaining: Vec<&str> = fields.collect();
-    let is_valid_action = |action: &str| {
-        matches!(
-            action,
-            "reject"
-                | "reject-200"
-                | "reject-img"
-                | "reject-dict"
-                | "reject-array"
-                | "302"
-                | "307"
-                | "header"
-                | "header-add"
-                | "header-del"
-                | "header-replace"
-                | "header-replace-regex"
-                | "request-body-replace-regex"
-                | "request-body-json-add"
-                | "request-body-json-replace"
-                | "request-body-json-del"
-                | "request-body-json-jq"
-                | "response-body-replace-regex"
-                | "response-body-json-add"
-                | "response-body-json-replace"
-                | "response-body-json-del"
-                | "response-body-json-jq"
-                | "mock-request-body"
-                | "mock-response-body"
-        )
-    };
-    let first = remaining
-        .first()
-        .copied()
-        .unwrap_or("")
-        .to_ascii_lowercase();
-    let second = remaining.get(1).copied().unwrap_or("").to_ascii_lowercase();
-    let (action_index, action) = if is_valid_action(&first) {
-        (0, first)
-    } else if is_valid_action(&second) {
-        (1, second)
-    } else {
-        (0, first)
-    };
-    if !is_valid_action(&action) {
-        errors.push(error(
-            line_number,
-            "invalid-loon-rewrite-action",
-            format!("unsupported Loon rewrite action: {action}"),
-        ));
-        return;
-    }
-    if action == "mock-response-body" {
-        let parameters = remaining
-            .iter()
-            .skip(action_index + 1)
-            .copied()
-            .collect::<Vec<_>>()
-            .join(" ");
-        let has_data = parameters.contains("data=") || parameters.contains("data-path=");
-        if !parameters.contains("data-type=") || !has_data {
-            errors.push(error(
-                line_number,
-                "invalid-loon-mock-response",
-                "mock-response-body requires data-type and data/data-path",
-            ));
-        }
-    }
 }
 
 fn validate_module_rule(
@@ -961,50 +794,6 @@ fn validate_surge_script(line_number: usize, line: &str, errors: &mut Vec<Valida
     }
 }
 
-fn validate_loon_script(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
-    if super::script_resources::script_resource_url(line)
-        .is_some_and(|url| super::script_resources::replacement_for(url).is_some())
-    {
-        errors.push(error(
-            line_number,
-            "obsolete-script-resource",
-            "script resource has a maintained replacement",
-        ));
-    }
-    let mut fields = line.split_whitespace();
-    let script_type = fields.next().unwrap_or("");
-    let valid_type = matches!(
-        script_type,
-        "http-request" | "http-response" | "cron" | "network-changed" | "generic"
-    );
-    let has_path = line.to_ascii_lowercase().contains("script-path=");
-    if !valid_type || !has_path {
-        errors.push(error(
-            line_number,
-            "invalid-script",
-            "invalid Loon script entry",
-        ));
-        return;
-    }
-    if matches!(script_type, "http-request" | "http-response") {
-        let Some(pattern) = fields.next() else {
-            errors.push(error(
-                line_number,
-                "invalid-script",
-                "Loon HTTP script is missing a pattern",
-            ));
-            return;
-        };
-        if let Err(regex_error) = Regex::new(pattern) {
-            errors.push(error(
-                line_number,
-                "invalid-script-regex",
-                regex_error.to_string(),
-            ));
-        }
-    }
-}
-
 fn parse_parameters(content: &str) -> Vec<String> {
     let mut fields = Vec::new();
     let mut current = String::new();
@@ -1084,9 +873,8 @@ fn error(line: usize, code: &'static str, message: impl Into<String>) -> Validat
 #[cfg(test)]
 mod tests {
     use super::{
-        validate_apple_compatibility, validate_external_ruleset, validate_loon_plugin,
-        validate_shadowrocket_module, validate_surge_module, validate_surge_section_line,
-        validate_transport_security,
+        validate_apple_compatibility, validate_external_ruleset, validate_shadowrocket_module,
+        validate_surge_module, validate_surge_section_line, validate_transport_security,
     };
 
     #[test]
@@ -1253,14 +1041,6 @@ RULE-SET,https://example.test/unfiltered.list,PROXY
                     .iter()
                     .any(|error| error.code == "obsolete-script-resource")
             );
-            let module = format!(
-                "#!name=fixture\n[Script]\nhttp-response ^https://ads.example.test/ script-path={url}\n"
-            );
-            assert!(
-                validate_loon_plugin(&module)
-                    .iter()
-                    .any(|error| error.code == "obsolete-script-resource")
-            );
         }
     }
 
@@ -1358,44 +1138,6 @@ hostname = %APPEND% *.example.com, -account.apple.com
     fn accepts_representative_surge_regex_dialect_fixture() {
         let fixture = include_str!("../../tests/fixtures/promax_regex_dialect.sgmodule");
         assert_eq!(validate_surge_module(fixture), Vec::new());
-    }
-
-    #[test]
-    fn loon_validator_rejects_surge_rule_sets_and_untyped_map_local() {
-        let fixture = r#"#!name=PROMAX fixture
-[Rule]
-RULE-SET,https://example.test/ad.list,REJECT,no-resolve
-[Rewrite]
-^https://ads\.example data-type=text data="{}"
-"#;
-        let errors = validate_loon_plugin(fixture);
-        let codes: Vec<&str> = errors.iter().map(|error| error.code).collect();
-        assert_eq!(
-            codes,
-            vec!["unsupported-loon-rule-set", "invalid-loon-rewrite-action"]
-        );
-    }
-
-    #[test]
-    fn loon_validator_accepts_inline_rules_and_typed_mock_response() {
-        let fixture = r#"#!name=PROMAX fixture
-[Rule]
-DOMAIN-SUFFIX,ads.example,REJECT
-[Rewrite]
-^https://ads\.example mock-response-body data-type=text data="{}" status-code=200
-"#;
-        assert_eq!(validate_loon_plugin(fixture), Vec::new());
-    }
-
-    #[test]
-    fn loon_validator_accepts_redirect_target_before_status_code() {
-        let fixture = r#"#!name=PROMAX fixture
-[Rewrite]
-^https://ads\.example/ https://example.com/blank 302
-^https://tracker\.example/ https://example.com/blank 307
-^https://mirror\.example/(.*) https://origin.example/$1 header
-"#;
-        assert_eq!(validate_loon_plugin(fixture), Vec::new());
     }
 
     #[test]

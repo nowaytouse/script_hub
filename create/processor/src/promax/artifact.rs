@@ -1,8 +1,6 @@
 use super::rule::{SurgeRule, split_fields};
 use super::safety::QuarantineRecord;
-use super::validation::{
-    validate_loon_plugin, validate_shadowrocket_module, validate_surge_module,
-};
+use super::validation::{validate_shadowrocket_module, validate_surge_module};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{BTreeMap, HashSet};
@@ -12,7 +10,6 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArtifactKind {
     Surge,
-    Loon,
     Shadowrocket,
     ExternalRuleset,
     Metadata,
@@ -23,28 +20,6 @@ pub struct GeneratedArtifact {
     pub target: PathBuf,
     pub content: String,
     pub kind: ArtifactKind,
-}
-
-const LOON_CDN_MAX_BYTES: usize = 20_000_000;
-
-fn validate_artifact_size(
-    relative: &Path,
-    kind: ArtifactKind,
-    byte_len: usize,
-) -> Result<(), String> {
-    let relative_text = relative.to_string_lossy();
-    let is_cdn_loon = kind == ArtifactKind::Loon
-        && relative_text.starts_with("modules/loon/")
-        && !relative_text.starts_with("modules/loon/github/");
-    if is_cdn_loon && byte_len > LOON_CDN_MAX_BYTES {
-        return Err(format!(
-            "{} is {} bytes; CDN-facing Loon artifacts must stay at or below {} bytes",
-            relative.display(),
-            byte_len,
-            LOON_CDN_MAX_BYTES
-        ));
-    }
-    Ok(())
 }
 
 fn semantic_changed(target: &Path, content: &str) -> bool {
@@ -309,7 +284,6 @@ fn publish_artifacts_inner(
                 artifact.target.display()
             )
         })?;
-        validate_artifact_size(relative, artifact.kind, artifact.content.len())?;
         let staged = staging_root.join(relative);
         if let Some(parent) = staged.parent() {
             fs::create_dir_all(parent)
@@ -321,7 +295,6 @@ fn publish_artifacts_inner(
         let validation_errors = match artifact.kind {
             ArtifactKind::Surge => validate_surge_module(&artifact.content),
             ArtifactKind::Shadowrocket => validate_shadowrocket_module(&artifact.content),
-            ArtifactKind::Loon => validate_loon_plugin(&artifact.content),
             ArtifactKind::ExternalRuleset => {
                 super::validation::validate_external_ruleset(&artifact.content)
             }
@@ -600,7 +573,7 @@ fn shadowrocket_policy(policy: &str) -> &str {
 mod tests {
     use super::{
         ArtifactKind, GeneratedArtifact, convert_surge_to_shadowrocket, publish_artifacts,
-        shadowrocket_variant, validate_artifact_size, validate_coverage_floor,
+        shadowrocket_variant, validate_coverage_floor,
     };
     use std::fs;
     use std::path::Path;
@@ -1060,15 +1033,6 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
 
         assert!(validate_coverage_floor(&root, &[]).is_err());
         fs::remove_dir_all(root).unwrap();
-    }
-
-    #[test]
-    fn cdn_loon_product_has_a_hard_twenty_megabyte_budget() {
-        let cdn = Path::new("modules/loon/promax.plugin");
-        let github = Path::new("modules/loon/github/promax.plugin");
-        assert!(validate_artifact_size(cdn, ArtifactKind::Loon, 20_000_000).is_ok());
-        assert!(validate_artifact_size(cdn, ArtifactKind::Loon, 20_000_001).is_err());
-        assert!(validate_artifact_size(github, ArtifactKind::Loon, 20_000_001).is_ok());
     }
 
     #[test]
