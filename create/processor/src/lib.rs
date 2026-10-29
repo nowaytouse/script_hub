@@ -281,9 +281,9 @@ fn clean_rule(
     }
 
     if !skip_conflict {
+        let payload = normalized.split(',').nth(1);
         for dom in conflict_domains {
-            let suffix = format!(",{}", dom);
-            if normalized.ends_with(&suffix) {
+            if payload == Some(dom.as_str()) {
                 return None;
             }
         }
@@ -850,6 +850,29 @@ mod tests {
         assert_eq!(
             normalize_rule("IP-CIDR,180.76.76.200/32"),
             Some("IP-CIDR,180.76.76.200/32".to_string())
+        );
+    }
+
+    #[test]
+    fn conflict_domains_match_the_payload_even_with_rule_options() {
+        let conflicts = vec!["sentry.io".to_string()];
+        assert_eq!(
+            super::clean_rule(
+                "DOMAIN-SUFFIX,sentry.io,extended-matching",
+                "AI",
+                &conflicts,
+                false
+            ),
+            None,
+        );
+        assert_eq!(
+            super::clean_rule(
+                "DOMAIN,o33249.ingest.sentry.io,extended-matching",
+                "AI",
+                &conflicts,
+                false
+            ),
+            Some("DOMAIN,o33249.ingest.sentry.io,extended-matching".to_string()),
         );
     }
 
