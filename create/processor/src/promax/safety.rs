@@ -23,7 +23,7 @@ static AD_INTENT: Lazy<Regex> = Lazy::new(|| {
 static HOST_CANDIDATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(?:[a-z0-9*?_-]+\.)+[a-z0-9*?_-]+").unwrap());
 
-/// Authentication, certificate validation and Apple media transport endpoints.
+/// Authentication, certificate validation, media transport and protected Apple diagnostics.
 /// Keep these outside interception without disabling WeatherKit or TV scripts.
 pub const APPLE_CRITICAL_EXACT: &[&str] = &[
     "account.apple.com",
@@ -38,6 +38,7 @@ pub const APPLE_CRITICAL_EXACT: &[&str] = &[
     "probe.icloud.com",
     "pong.icloud.com",
     "metrics.icloud.com",
+    "weather-analytics-events.apple.com",
     "apple-native-relay.apple.com",
     "certs.apple.com",
     "crl.apple.com",
@@ -74,10 +75,6 @@ pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
 /// are kept in rulesets/Sources/Privacy_Reviewed.list with matching citations.
 const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
     (
-        "firebaselogging-pa.googleapis.com",
-        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
-    ),
-    (
         "static.ads-twitter.com",
         "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
     ),
@@ -107,10 +104,6 @@ const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
     ),
     (
         "alb.reddit.com",
-        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
-    ),
-    (
-        "weather-analytics-events.apple.com",
         "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt",
     ),
     (
@@ -884,7 +877,6 @@ mod tests {
         ]);
 
         for host in [
-            "firebaselogging-pa.googleapis.com",
             "static.ads-twitter.com",
             "ads-api.twitter.com",
             "events.redditmedia.com",
@@ -893,7 +885,6 @@ mod tests {
             "ads.tiktok.com",
             "api-adservices.apple.com",
             "iadsdk.apple.com",
-            "weather-analytics-events.apple.com",
             "mads-eu.amazon.com",
         ] {
             let exact = SurgeRule::parse(&format!("DOMAIN,{host}")).unwrap();
@@ -907,6 +898,8 @@ mod tests {
         }
 
         for line in [
+            "DOMAIN,firebaselogging-pa.googleapis.com",
+            "DOMAIN,weather-analytics-events.apple.com",
             "DOMAIN,firebaselogging.googleapis.com",
             "DOMAIN,api.twitter.com",
             "DOMAIN,images.redditmedia.com",

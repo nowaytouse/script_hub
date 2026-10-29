@@ -524,7 +524,7 @@ fn process_manifest(
     }
     // AdsGram is an advertising platform, not a messaging/collaboration service.
     // Do not turn a service classification into an ad-platform routing overlay.
-    let conflicts = if manifest.name == "SocialMedia" {
+    let mut conflicts = if manifest.name == "SocialMedia" {
         vec!["adsgram.ai".to_string()]
     } else if manifest.name == "Pixiv" {
         // The ecosystem aggregate also names its advertising domain.
@@ -532,6 +532,19 @@ fn process_manifest(
     } else {
         Vec::new()
     };
+    if manifest.name != "GlobalProxy" {
+        // Shared providers belong to the fallback; exact app/region project hosts remain.
+        conflicts.extend(
+            [
+                "sentry.io",
+                "bam.nr-data.net",
+                "js-agent.newrelic.com",
+                "mobile-collector.newrelic.com",
+            ]
+            .into_iter()
+            .map(str::to_string),
+        );
+    }
     crate::process_ruleset(crate::RulesetInput {
         name: &manifest.name,
         target_dir: &target,
@@ -1909,6 +1922,183 @@ mod tests {
         let before = fs::read(&path).unwrap();
         super::process_manifest(&root, &manifest, &downloads).unwrap();
         assert_eq!(fs::read(path).unwrap(), before);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn shared_diagnostics_do_not_claim_ai_or_streaming_ownership() {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-operational-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
+        ));
+        for (name, body, retained, excluded) in [
+            (
+                "AI",
+                "+.sentry.io\no33249.ingest.sentry.io\n+.openai.com\n",
+                "DOMAIN,o33249.ingest.sentry.io",
+                vec!["DOMAIN-SUFFIX,sentry.io"],
+            ),
+            (
+                "StreamUS",
+                "+.bam.nr-data.net\n+.js-agent.newrelic.com\n+.mobile-collector.newrelic.com\n+.hulu.com\n",
+                "DOMAIN-SUFFIX,hulu.com",
+                vec![
+                    "DOMAIN-SUFFIX,bam.nr-data.net",
+                    "DOMAIN-SUFFIX,js-agent.newrelic.com",
+                    "DOMAIN-SUFFIX,mobile-collector.newrelic.com",
+                ],
+            ),
+            (
+                "StreamJP",
+                "+.sentry.io\n+.niconico.jp\n",
+                "DOMAIN-SUFFIX,niconico.jp",
+                vec!["DOMAIN-SUFFIX,sentry.io"],
+            ),
+            (
+                "Pixiv",
+                "+.sentry.io\n+.pixiv.net\n",
+                "DOMAIN-SUFFIX,pixiv.net",
+                vec!["DOMAIN-SUFFIX,sentry.io"],
+            ),
+        ] {
+            let manifest = super::Manifest {
+                name: name.into(),
+                local_paths: Vec::new(),
+                remote_urls: vec!["https://fixture.test/services.list".into()],
+            };
+            process_manifest(
+                &root,
+                &manifest,
+                &HashMap::from([(manifest.remote_urls[0].clone(), body.into())]),
+            )
+            .unwrap();
+            let rules = read_rules(&super::input_path(&root, name, "")).unwrap();
+            assert!(rules.contains(retained), "missing {name}: {retained}");
+            for rule in excluded {
+                assert!(!rules.contains(rule), "shared provider in {name}: {rule}");
+            }
+        }
+        let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../rulesets/Sources/conf/SurgeConf_GlobalProxy.list");
+        let fallback = read_rules(&source).unwrap();
+        for rule in [
+            "DOMAIN-SUFFIX,sentry.io",
+            "DOMAIN-SUFFIX,bam.nr-data.net",
+            "DOMAIN-SUFFIX,js-agent.newrelic.com",
+            "DOMAIN-SUFFIX,mobile-collector.newrelic.com",
+        ] {
+            assert!(fallback.contains(rule), "lost shared fallback: {rule}");
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn service_upstreams_refresh_typed_domains_without_broadening_shared_parents() {
+        const CURSOR: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cursor.list";
+        const PERPLEXITY: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/perplexity.list";
+        const BLUESKY: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/bluesky.list";
+        const THREADS: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/threads.list";
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let mut ai = None;
+        let mut social = None;
+        for manifest in super::discover_manifests(&repo_root).unwrap() {
+            match manifest.name.as_str() {
+                "AI" => ai = Some(manifest),
+                "SocialMedia" => social = Some(manifest),
+                _ => {}
+            }
+        }
+        let mut ai = ai.unwrap();
+        let mut social = social.unwrap();
+        assert!(
+            [CURSOR, PERPLEXITY]
+                .iter()
+                .all(|url| ai.remote_urls.iter().any(|source| source == *url))
+        );
+        assert!(
+            [BLUESKY, THREADS]
+                .iter()
+                .all(|url| social.remote_urls.iter().any(|source| source == *url))
+        );
+
+        ai.local_paths.clear();
+        social.local_paths.clear();
+        let mut downloads: HashMap<String, String> = ai
+            .remote_urls
+            .iter()
+            .chain(&social.remote_urls)
+            .map(|url| (url.clone(), String::new()))
+            .collect();
+        for (url, body) in [
+            (CURSOR, "+.cursorapi.com\n+.cursorvm.com\n+.cursor-cdn.com"),
+            (
+                PERPLEXITY,
+                "ppl-ai-file-upload.s3.amazonaws.com\npplx-res.cloudinary.com\n+.perplexity.com\n+.pplx.ai",
+            ),
+            (BLUESKY, "+.bsky.app\n+.bsky.network\n+.bsky.social"),
+            (THREADS, "+.threads.com\n+.threads.net"),
+        ] {
+            downloads.insert(url.to_string(), body.to_string());
+        }
+
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-service-refresh-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let output = root.join("rulesets/RULE-SET");
+        fs::create_dir_all(&output).unwrap();
+        fs::write(output.join("AI.list"), "DOMAIN,retired-ai.example\n").unwrap();
+        fs::write(
+            output.join("SocialMedia.list"),
+            "DOMAIN,retired-social.example\n",
+        )
+        .unwrap();
+        let apple_before = b"DOMAIN-SUFFIX,apple.com\n";
+        fs::write(output.join("Apple.list"), apple_before).unwrap();
+
+        process_manifest(&root, &ai, &downloads).unwrap();
+        process_manifest(&root, &social, &downloads).unwrap();
+
+        let ai_rules = fs::read_to_string(output.join("AI.list")).unwrap();
+        let social_rules = fs::read_to_string(output.join("SocialMedia.list")).unwrap();
+        for rule in [
+            "DOMAIN-SUFFIX,cursorapi.com",
+            "DOMAIN-SUFFIX,cursorvm.com",
+            "DOMAIN-SUFFIX,cursor-cdn.com",
+            "DOMAIN-SUFFIX,perplexity.com",
+            "DOMAIN-SUFFIX,pplx.ai",
+            "DOMAIN,ppl-ai-file-upload.s3.amazonaws.com",
+            "DOMAIN,pplx-res.cloudinary.com",
+        ] {
+            assert!(ai_rules.lines().any(|line| line == rule), "missing {rule}");
+        }
+        for rule in [
+            "DOMAIN-SUFFIX,bsky.network",
+            "DOMAIN-SUFFIX,threads.com",
+            "DOMAIN-SUFFIX,threads.net",
+        ] {
+            assert!(
+                social_rules.lines().any(|line| line == rule),
+                "missing {rule}"
+            );
+        }
+        assert!(!ai_rules.contains("retired-ai.example"));
+        assert!(!social_rules.contains("retired-social.example"));
+        assert!(!ai_rules.contains("DOMAIN-SUFFIX,amazonaws.com"));
+        assert!(!ai_rules.contains("DOMAIN-SUFFIX,cloudinary.com"));
+        assert_eq!(fs::read(output.join("Apple.list")).unwrap(), apple_before);
+        assert!(!output.join("AI_ip.list").exists());
+        assert!(!output.join("SocialMedia_ip.list").exists());
+        assert!(!output.join("AI_extra.list").exists());
+        assert!(!output.join("SocialMedia_extra.list").exists());
         fs::remove_dir_all(root).unwrap();
     }
 

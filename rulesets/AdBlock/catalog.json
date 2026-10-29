@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-29 08:03:41",
+  "updated": "2026-10-29 14:32:31",
   "rules_per_shard_max": 100000,
   "modules": {
     "shadowrocket_promax_cdn": {
@@ -51,7 +51,7 @@
       "label_zh": "应用去广告",
       "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
       "shard_index": 1,
-      "rule_count": 2448,
+      "rule_count": 2434,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist"
     },
@@ -111,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 37861,
+      "rule_count": 63330,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
@@ -141,7 +141,7 @@
       "label_zh": "隐私追踪",
       "purpose": "Privacy / tracking-protection / 防追踪列表",
       "shard_index": 1,
-      "rule_count": 4927,
+      "rule_count": 4921,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist"
     },
@@ -201,7 +201,7 @@
       "label_zh": "CNAME 伪装追踪",
       "purpose": "AdGuard CNAME 与邮件追踪域名",
       "shard_index": 5,
-      "rule_count": 43709,
+      "rule_count": 43707,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F05%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%5FCNAME%5F05%2Elist"
     },
@@ -241,7 +241,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 4307,
+      "rule_count": 7796,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist"
     },
@@ -261,7 +261,7 @@
       "label_zh": "威胁情报·终极",
       "purpose": "HaGeZi DNS-Blocklists ultimate",
       "shard_index": 2,
-      "rule_count": 48163,
+      "rule_count": 21859,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },
@@ -301,7 +301,7 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 4,
-      "rule_count": 34580,
+      "rule_count": 34584,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist"
     },
@@ -311,7 +311,7 @@
       "label_zh": "威胁情报·补充",
       "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
       "shard_index": 1,
-      "rule_count": 63262,
+      "rule_count": 63267,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist"
     }

@@ -1,7 +1,7 @@
 # Ruleset: Microsoft
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 759
+# Rules: 761
 
 DOMAIN-SUFFIX,bing
 DOMAIN-SUFFIX,azure
@@ -664,6 +664,7 @@ DOMAIN-SUFFIX,b.akamaiedge.net
 DOMAIN-SUFFIX,g.akamaiedge.net
 DOMAIN-SUFFIX,oneclient.sfx.ms
 DOMAIN-SUFFIX,reactorms.com.cn
+DOMAIN,crl.microsoft.com
 DOMAIN-SUFFIX,dcg.microsoft.com
 DOMAIN-SUFFIX,data.microsoft.com
 DOMAIN-SUFFIX,microsoftol.com.cn
@@ -717,6 +718,7 @@ DOMAIN,github-production-release-asset-2e65be.s3.amazonaws.com
 DOMAIN,github-production-repository-file-5c1aeb.s3.amazonaws.com
 DOMAIN,github-production-repository-image-32fea6.s3.amazonaws.com
 DOMAIN,github-production-upload-manifest-file-7fdce7.s3.amazonaws.com
+DOMAIN-SUFFIX,browser.events.data.msn.com
 DOMAIN,vscode.blob.core.windows.net
 DOMAIN-SUFFIX,dl.delivery.mp.microsoft.com
 DOMAIN,lex.download.prss.microsoft.com

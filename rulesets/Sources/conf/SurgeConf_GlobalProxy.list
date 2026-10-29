@@ -1,2 +1,9 @@
 # Placeholder for GlobalProxy ruleset export
 DOMAIN-SUFFIX,browserleaks.com
+# Shared diagnostic infrastructure; not an AI or regional streaming service.
+# https://docs.sentry.io/api/projects/list-a-projects-client-keys/
+# https://docs.newrelic.com/docs/new-relic-solutions/get-started/networks/
+DOMAIN-SUFFIX,sentry.io
+DOMAIN-SUFFIX,bam.nr-data.net
+DOMAIN-SUFFIX,js-agent.newrelic.com
+DOMAIN-SUFFIX,mobile-collector.newrelic.com

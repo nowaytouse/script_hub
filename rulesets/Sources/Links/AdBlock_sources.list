@@ -80,13 +80,17 @@ https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list|REJE
 # HaGeZi and phishing threat intelligence (kept in dedicated categories)
 https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt|REJECT|auto|ThreatIntel_Ultimate
 https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt|REJECT|auto|ThreatIntel_TIF
+# Same publisher, GPL-3.0: pop-up ads and fake/scam sites stay in distinct categories.
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/popupads.txt|REJECT|auto|Advertising
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt|REJECT|auto|ThreatIntel
 https://ruleset.skk.moe/List/domainset/reject_phishing.conf|REJECT|domainset|ThreatIntel
 
 # App/vendor advertising and privacy endpoints
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/AdvertisingMiTV/AdvertisingMiTV.list|REJECT|auto|Advertising
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Domob/Domob.list|REJECT|auto|Advertising
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Marketing/Marketing.list|REJECT|auto|Advertising
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/MIUIPrivacy/MIUIPrivacy.list|REJECT|auto|Privacy
+# MIUIPrivacy is retired here: it mixes OS security/update/diagnostic services with ads.
+# Dedicated advertising sources remain enabled; operational endpoints are protected locally.
 https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/YouMengChuangXiang/YouMengChuangXiang.list|REJECT|auto|Advertising
 
 # Separate optional sources remain catalogued in

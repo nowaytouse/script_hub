@@ -1,7 +1,7 @@
 # Ruleset: StreamUS
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 285
+# Rules: 286
 
 DOMAIN-SUFFIX,go.com
 DOMAIN-SUFFIX,abc.com
@@ -272,6 +272,7 @@ DOMAIN-SUFFIX,espn.hb.omtrdc.net
 DOMAIN-SUFFIX,hbo.map.fastly.net
 DOMAIN-SUFFIX,hulu.hb.omtrdc.net
 DOMAIN-SUFFIX,hulu.sc.omtrdc.net
+DOMAIN-SUFFIX,disney.my.sentry.io
 DOMAIN-SUFFIX,hbo.com.edgesuite.net
 DOMAIN-SUFFIX,hbomaxdash.s.llnwi.net
 DOMAIN-SUFFIX,hbogeo.cust.footprint.net

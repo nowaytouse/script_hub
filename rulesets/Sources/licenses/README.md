@@ -21,6 +21,16 @@ CNAME 追踪单独归入 `Privacy_CNAME`，Surge / Shadowrocket 自动引用完�
 
 日本网页入口单独由 `JP_manual.list` 维护；共享 `pinimg.com` 不划为日本。服务族用于分流匹配，不能作为广告拒绝名单，本文也不声称已审查所有既有第三方来源的许可。
 
+`AI_sources.list` 另接入同一 MetaCubeX 上游的 Cursor、Perplexity 专集，`SocialMedia_sources.list` 接入 Bluesky、Threads 专集，沿用上述来源与许可说明。保留上游精确云主机与独立后缀的区别，不把应用专用 S3/Cloudinary 地址扩大成整个提供商；现有订阅随同一更新流程刷新，不为每个来源另建公开入口。
+
+## HaGeZi 补充与维护边界
+
+除既有 Ultimate/TIF 外，接入官方 [Pop-Up Ads](https://github.com/hagezi/dns-blocklists/blob/main/adblock/popupads.txt) 和 [Fake](https://github.com/hagezi/dns-blocklists/blob/main/adblock/fake.txt)：弹窗进入 Advertising，假冒商店、诈骗与订阅陷阱进入 ThreatIntel。两者沿用 HaGeZi 仓库的 [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE)，许可正文见根目录 `LICENSE`；本项目转换域名格式、去重、分类并隔离受保护服务，不添加第三方脚本或解密范围，保留作者与可追随的原始源地址。
+
+源的“可下载”“未归档”“内容仍更新”“许可清楚”是不同检查。本轮核对活动清单和模块引用中的仓库状态，未确认活动源所属仓库已归档；未把多年不变但仍承担功能的脚本自动认定为重复项。1Hosts 的候选快照未显示近期更新，本轮不新增；未验证再分发许可的第三方模块也不继续扩充。已混入系统服务的 MIUIPrivacy 输入因语义不符合本项目当前策略而停用，不宣称其上游已停止维护。
+
+GitHub API 状态只是本轮观察，不保证上游未来持续维护。未知失效/迁移仍须核对官方新仓库与接口语义，不能通过随意改为相似脚本、删除最后一份功能或降低 TLS 验证“修复”。既有无明确许可的历史输入仍是后续逐项核对范围，本文不宣称全仓库第三方版权审计已经完成。
+
 ## luestr 资源的接入边界
 
 [ProxyResource 官方 README](https://github.com/luestr/ProxyResource) 说明仓库是索引、只对配置模板开源，并附带转载条件；[官方插件中心](https://hub.kelee.one/) 的受限资源不能当作可自由再分发的脚本。当前没有获得适用于 PROMAX 聚合发布的额外许可，因此不新增复制、转换或镜像，也不伪装新版 Loon User-Agent 获取资源。可在 Loon 中按作者的官方说明单独安装；这不等同于 Surge 兼容。高德现有功能继续保留，本次不将另一份未经许可的高德脚本叠加进来。

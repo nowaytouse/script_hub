@@ -93,9 +93,17 @@ Apple 合集从 NSRingo 各官方 GitHub Release 的 `latest` 资源生成；Wea
 
 PROMAX 新增 app2smile 的起点、贴吧和腾讯新闻原生 Surge 去广告模块，以及 AdGuard 的 CNAME 伪装追踪、邮件追踪域名源。源模块、配套规则和四个官方脚本依赖随同一更新链检查，脚本仍从作者仓库加载；贴吧不启用隐藏普通视频帖的选项。去重后的伪装追踪域名归入 Privacy_CNAME，App 配套规则归入 Local，脚本/MITM 仍由功能层统一收束。广告/追踪域名不需要额外 HTTPS 解密；不启用会影响正常链接与页面的 CNAME clickthrough/microsites 全集。
 
-测试反馈中的精确广告与统计端点由 `rulesets/Sources/Privacy_Reviewed.list` 补充，并记录核对来源。补充只作用于已审查的完整域名，不扩大为整站、共享 CDN 或 Apple 父域拦截；明确的单主机白名单与 Apple 关键服务保护仍优先。网络规则不能替代浏览器的页面元素隐藏，也不以测试分数为由拦截用途不明的共享服务。
+HaGeZi 官方 Pop-Up Ads 与 Fake 清单补充弹窗广告、假冒站点和诈骗覆盖，分别进入 Advertising 与 ThreatIntel；使用可追随的官方源、沿用 GPL-3.0 与现有完整性/白名单检查，不因扩充而绕过系统、诊断和普通媒体保护。AI 的 Cursor/Perplexity、社交的 Bluesky/Threads 专集也随原有订阅自动更新，补充独立域名和精确云主机，不把共享云父域整体归给某个服务。
 
-IPCheck 的“未拦截”不能直接当成应封禁清单：当前精确补充包含 Firebase、X、Reddit、TikTok、Amazon 广告以及 Apple 广告/天气分析端点；`static.ads-twitter.com` 的域名拒绝也覆盖其 `/uwt.js` 请求。`metrics.icloud.com` 继续遵循 Apple 网络要求保留；用途不够明确的 `ngfts.lge.com` 不因测试得分而整域封禁。Pinterest 的 `s.pinimg.com/ct/core.js` 是跟踪脚本，但不能封禁整个共享图片 CDN，也不为该测试额外解密图片主机；路径拦截和页面元素隐藏应由浏览器内容拦截器承担。
+共享 `sentry.io` 与三条通用 New Relic 接收端不归入单一应用或地区分类，改由现有 GlobalProxy 分类保留兜底覆盖；不会在移出 AI 后又被日本流媒体输入重新归入 JP。应用专属的精确 Sentry 项目主机仍可留在对应分类。分类不指定出口国家或策略，实际分流仍由使用者决定。
+
+测试反馈中的精确广告与营销统计端点由 `rulesets/Sources/Privacy_Reviewed.list` 补充，并记录核对来源。运行诊断、崩溃上报与系统服务不再以隐私测试分数为由拦截；已审查的广告拒绝不扩大为整站、共享 CDN 或 Apple 父域。网络规则不能替代浏览器的页面元素隐藏，也不以测试分数为由拦截用途不明的共享服务。
+
+IPCheck 的“未拦截”不能直接当成应封禁清单：当前精确补充包含 X、Reddit、TikTok、Amazon 与 Apple 的广告/营销端点；`static.ads-twitter.com` 的域名拒绝也覆盖其 `/uwt.js` 请求。Firebase logging 与 `weather-analytics-events.apple.com` 已撤销拒绝例外，后者也不再参与 MITM 或固定 Host 映射；`metrics.icloud.com` 继续遵循 Apple 网络要求保留。用途不够明确的 `ngfts.lge.com` 不因测试得分而整域封禁。Pinterest 的 `s.pinimg.com/ct/core.js` 是跟踪脚本，但不能封禁整个共享图片 CDN，也不为该测试额外解密图片主机；路径拦截和页面元素隐藏应由浏览器内容拦截器承担。
+
+`adblock_whitelist.list` 集中维护运行服务的编译豁免：Windows 诊断/更新/连通性，Android 连通性和 Crashlytics，已核对的小米系统端点，以及 Sentry 地区接收端、Bugsnag、New Relic 与 Rollbar 等错误/性能监控。BetterDisplay 报告的 `o4506746191020032.ingest.sentry.io` 属于受保护接收端；开源应用与代理客户端使用相同服务时也适用，不根据应用名字猜域名、不放行整个共享云。Surge、Shadowrocket、FlClash、sing-box 的用户自定义服务器地址不因客户端身份自动受信任。豁免会隔离覆盖目标的拒绝、重写和 MITM，不注入 DIRECT 或替用户选策略；广告、营销跟踪、恶意与仿冒域名仍保持拦截。混合系统诊断与广告的 MIUIPrivacy 独立输入已停用，广告仍由专用来源提供。
+
+此策略也有意豁免 Sentry 旧版 API/SDK CDN、Bugsnag 服务族及 Firebase 的混合用途日志，不声称它们只上传崩溃数据；Android 核心 API和小米系统数据端点也不是“诊断专用”。这些服务可能上传设备标识、错误上下文、日志或会话数据，需要关闭收集时使用软件/系统自身设置。此策略减少已知网络层干扰，不保证消除所有应用重试，也不能从静态规则推断耗电或稳定性收益。自托管诊断、未知 OEM 与未来新服务需要继续按明确域名核对，不能承诺“所有开源应用”永不误拦。
 
 Pinterest 已确认用于普通图片的 `i.pinimg.com`、网页必要代码的 `s.pinimg.com` 与嵌入 Pin／画板内容接口 `widgets.pinterest.com` 按精确主机保护；后者也承载计数接口，这是共享内容接口的功能取舍。会覆盖这些主机的整段父域拒绝也会被隔离，否则普通内容仍会被父域规则拦截；未保护的兄弟主机及独立 `log`／`ct`／`ads` 跟踪端点仍可拦截，不注入整站放行或分流动作。分流分类与广告拒绝是两条独立链路：页面与图片可能命中不同用户策略，网站卡顿不能仅从规则条数判断，也不能把一次网络失败当成已测量的性能改善。当前未确认 `s-passets.pinimg.com` 的整域拒绝与页面卡顿之间的因果关系，修改该候选前需要对应请求地址与命中记录。
 

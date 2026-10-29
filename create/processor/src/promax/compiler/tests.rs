@@ -4,6 +4,120 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn supplemental_hagezi_sources_keep_categories_and_diagnostic_exemptions() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(root);
+    manager.load_whitelist().unwrap();
+    let entries = manager.load_source_entries();
+    assert!(
+        !entries
+            .iter()
+            .any(|entry| entry.source.contains("MIUIPrivacy"))
+    );
+    for (name, category, host) in [
+        ("popupads.txt", "Advertising", "ads.fixture.test"),
+        ("fake.txt", "ThreatIntel", "scam.fixture.test"),
+    ] {
+        let url =
+            format!("https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/{name}");
+        let entry = entries.iter().find(|entry| entry.source == url).unwrap();
+        assert_eq!(entry.category.as_deref(), Some(category));
+        let body = format!(
+            "[Adblock Plus]\n||{host}^\n||weather-analytics-events.apple.com^\n||o4506746191020032.ingest.sentry.io^\n"
+        );
+        assert!(
+            manager
+                .process_source_entries(std::slice::from_ref(entry), &HashMap::from([(url, body)]),)
+                .is_empty()
+        );
+        assert_eq!(
+            manager.rules["REJECT"][category],
+            HashSet::from([format!("DOMAIN-SUFFIX,{host}")]),
+        );
+    }
+}
+
+#[test]
+fn operational_services_are_not_rejected_rewritten_or_intercepted() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(root);
+    manager.load_whitelist().unwrap();
+    for host in [
+        "weather-analytics-events.apple.com",
+        "firebaselogging-pa.googleapis.com",
+        "crashlyticsreports-pa.googleapis.com",
+        "sentry.io",
+        "sentry.iobroker.net",
+        "o4506746191020032.ingest.sentry.io",
+        "o123.ingest.us.sentry.io",
+        "o123.ingest.de.sentry.io",
+        "notify.bugsnag.com",
+        "sessions.bugsnag.com",
+        "reports.crashlytics.com",
+        "bam.nr-data.net",
+        "mobile-crash.newrelic.com",
+        "api.rollbar.com",
+        "vortex.data.microsoft.com",
+        "v10.vortex-win.data.microsoft.com",
+        "ceuswatcab01.blob.core.windows.net",
+        "v10.events.data.microsoft.com",
+        "watson.telemetry.microsoft.com",
+        "settings-win.data.microsoft.com",
+        "crl.microsoft.com",
+        "cp.wd.microsoft.com",
+        "ctldl.windowsupdate.com",
+        "www.msftconnecttest.com",
+        "connectivitycheck.gstatic.com",
+        "android.clients.google.com",
+        "clients2.google.com",
+        "data.mistat.intl.xiaomi.com",
+        "tracking.miui.com",
+        "auth.be.sec.miui.com",
+        "update.avlyun.sec.miui.com",
+    ] {
+        for category in ["Advertising", "Privacy", "ThreatIntel_Ultimate"] {
+            for kind in ["DOMAIN", "DOMAIN-SUFFIX"] {
+                let rule = format!("{kind},{host}");
+                manager.add_rule_line(&rule, "REJECT", category);
+                assert!(
+                    !manager.rules["REJECT"][category].contains(&rule),
+                    "diagnostic endpoint rejected: {category}/{rule}"
+                );
+            }
+        }
+        let pattern = format!(r"^https://{}/", host.replace('.', r"\."));
+        manager.add_section_line("URL Rewrite", &format!("{pattern} - reject"));
+        manager.add_section_line(
+            "Map Local",
+            &format!(r#"{pattern} data="https://example.test/empty.json""#),
+        );
+        manager.add_mitm_host(host);
+        assert!(
+            !manager.mitm_hosts.contains(host),
+            "diagnostic MITM: {host}"
+        );
+    }
+    assert!(manager.sections["URL Rewrite"].is_empty());
+    assert!(manager.sections["Map Local"].is_empty());
+    for (rule, category) in [
+        ("DOMAIN,ads-api.twitter.com", "Privacy"),
+        ("DOMAIN-SUFFIX,doubleclick.net", "Advertising"),
+        ("DOMAIN,mobileads.msn.com", "Advertising"),
+        ("DOMAIN,ad.xiaomi.com", "Advertising"),
+        ("DOMAIN,telemetry.adsninja.ca", "Privacy"),
+        ("DOMAIN,malware.fixture.test", "ThreatIntel_Ultimate"),
+        ("DOMAIN,sentry.io.attacker.test", "ThreatIntel_Ultimate"),
+        (
+            "DOMAIN,ingest.sentry.io.attacker.test",
+            "ThreatIntel_Ultimate",
+        ),
+    ] {
+        manager.add_rule_line(rule, "REJECT", category);
+        assert!(manager.rules["REJECT"][category].contains(rule));
+    }
+}
+
+#[test]
 fn pinterest_pin_widgets_remain_available_without_allowing_tracking_siblings() {
     let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut manager = AdBlockManager::new(repo_root);
@@ -147,7 +261,6 @@ fn reviewed_privacy_sources_survive_safety_filter_and_keep_suffixes_protected() 
         .map(|rule| rule.payload.to_ascii_lowercase())
         .collect();
     for host in [
-        "firebaselogging-pa.googleapis.com",
         "static.ads-twitter.com",
         "ads-api.twitter.com",
         "events.redditmedia.com",
@@ -157,7 +270,6 @@ fn reviewed_privacy_sources_survive_safety_filter_and_keep_suffixes_protected() 
         "iadsdk.apple.com",
         "alb.reddit.com",
         "mads-eu.amazon.com",
-        "weather-analytics-events.apple.com",
     ] {
         assert!(
             rendered_hosts.contains(host),

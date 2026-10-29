@@ -89,6 +89,7 @@ DOMAIN,mask-api.icloud.com
 DOMAIN,probe.icloud.com
 DOMAIN,pong.icloud.com
 DOMAIN,metrics.icloud.com
+DOMAIN,weather-analytics-events.apple.com
 DOMAIN,apple-native-relay.apple.com
 DOMAIN-SUFFIX,icloud.com
 DOMAIN-SUFFIX,icloud.com.cn
@@ -104,6 +105,111 @@ DOMAIN-SUFFIX,iwork.apple.com
 DOMAIN-SUFFIX,apple-dns.net
 DOMAIN-SUFFIX,itunes.com
 DOMAIN-SUFFIX,apple.com.akadns.net
+
+# ============ 系统运行 / 错误诊断（不包含广告投放） ============
+# These are compiler exclusions, never DIRECT rules or client settings changes.
+# Diagnostic collection can contain identifiers/logs; disable it in the app/OS if desired.
+# Windows diagnostic/control/update endpoints; do not exempt all microsoft.com or msn.com.
+# https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+# https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+DOMAIN-SUFFIX,events.data.microsoft.com
+DOMAIN-SUFFIX,telemetry.microsoft.com
+DOMAIN-SUFFIX,telemetry.microsoft.com.nsatc.net
+DOMAIN-SUFFIX,vortex.data.microsoft.com
+DOMAIN-SUFFIX,vortex-win.data.microsoft.com
+DOMAIN,settings-win.data.microsoft.com
+DOMAIN,settings.data.microsoft.com
+DOMAIN,watson.microsoft.com
+DOMAIN,www.telecommandsvc.microsoft.com
+DOMAIN,browser.events.data.msn.com
+DOMAIN,ceuswatcab01.blob.core.windows.net
+DOMAIN,ceuswatcab02.blob.core.windows.net
+DOMAIN,eaus2watcab01.blob.core.windows.net
+DOMAIN,eaus2watcab02.blob.core.windows.net
+DOMAIN,weus2watcab01.blob.core.windows.net
+DOMAIN,weus2watcab02.blob.core.windows.net
+DOMAIN-SUFFIX,windowsupdate.com
+DOMAIN-SUFFIX,update.microsoft.com
+DOMAIN-SUFFIX,delivery.mp.microsoft.com
+# Defender cloud protection, certificate revocation and security downloads.
+# https://learn.microsoft.com/en-us/defender-endpoint/configure-network-connections-microsoft-defender-antivirus
+DOMAIN-SUFFIX,wdcp.microsoft.com
+DOMAIN-SUFFIX,wdcpalt.microsoft.com
+DOMAIN-SUFFIX,wd.microsoft.com
+DOMAIN-SUFFIX,download.microsoft.com
+DOMAIN,definitionupdates.microsoft.com
+DOMAIN,crl.microsoft.com
+DOMAIN,www.microsoft.com
+DOMAIN,go.microsoft.com
+DOMAIN,licensing.mp.microsoft.com
+DOMAIN,www.msftconnecttest.com
+DOMAIN,dns.msftncsi.com
+# Android/ChromeOS connectivity, core APIs and app logging/reporting, not all Google domains.
+# https://support.google.com/chrome/a/answer/6334001
+# https://firebase.google.com/docs/crashlytics/troubleshooting
+DOMAIN,connectivitycheck.android.com
+DOMAIN,connectivitycheck.gstatic.com
+DOMAIN,android.clients.google.com
+DOMAIN,clients2.google.com
+DOMAIN,clients4.google.com
+DOMAIN,tools.google.com
+DOMAIN,dl.google.com
+DOMAIN,safebrowsing.google.com
+DOMAIN,firebaselogging-pa.googleapis.com
+# Firebase logging is mixed-use telemetry, not Crashlytics-only; allow by current policy.
+DOMAIN,crashlyticsreports-pa.googleapis.com
+DOMAIN,firebasecrashlytics.googleapis.com
+DOMAIN-SUFFIX,crashlytics.com
+# Xiaomi system/update/diagnostic hosts; no ad.*, log.ad.* or sdkconfig.ad.* exemption.
+# Observed in the retired MIUIPrivacy input; ownership: maintained xiaomi service family.
+# https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Surge/MIUIPrivacy/MIUIPrivacy.list
+# https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/xiaomi.list
+DOMAIN,api.installer.xiaomi.com
+DOMAIN,auth.be.sec.miui.com
+DOMAIN,ccc.sys.miui.com
+DOMAIN,data.mistat.xiaomi.com
+DOMAIN,data.mistat.india.xiaomi.com
+DOMAIN,data.mistat.intl.xiaomi.com
+DOMAIN,data.mistat.rus.xiaomi.com
+DOMAIN,flash.sec.miui.com
+DOMAIN,idm.api.io.mi.com
+DOMAIN,jupiter.sys.miui.com
+DOMAIN,log.avlyun.sec.intl.miui.com
+DOMAIN,logupdate.avlyun.sec.miui.com
+DOMAIN,mazu.sec.miui.com
+DOMAIN,metok.sys.miui.com
+DOMAIN,sentry.d.mi.com
+DOMAIN,sentry.d.xiaomi.net
+DOMAIN,ssl-cdn.static.browser.mi-img.com
+DOMAIN,tracking.miui.com
+DOMAIN,update.avlyun.sec.miui.com
+# Sentry ingestion includes projects used by open-source and proxy apps, across regions.
+# The apex supports legacy SDK API URLs; the SDK CDN is also intentionally exempted.
+# https://docs.sentry.io/api/projects/list-a-projects-client-keys/
+# https://sentry.io/changelog/ingestion-ip-addresses-are-changing/
+# BetterDisplay's reported tenant is covered without trusting unrelated cloud hosting.
+# https://github.com/waydabber/BetterDisplay/discussions/739
+DOMAIN,sentry.io
+DOMAIN-SUFFIX,ingest.sentry.io
+DOMAIN-SUFFIX,ingest.us.sentry.io
+DOMAIN-SUFFIX,ingest.de.sentry.io
+DOMAIN-SUFFIX,sentry-cdn.com
+# Open-source ioBroker adapters use this self-hosted Sentry, not Sentry's SaaS domain.
+# https://github.com/ioBroker/ioBroker.sayit/blob/master/io-package.json
+DOMAIN,sentry.iobroker.net
+# Provider families include their dashboards/APIs, not only upload endpoints.
+# Dedicated marketing analytics outside these operational services remain blockable.
+# https://docs.bugsnag.com/platforms/android/configuration-options/#endpoints
+DOMAIN-SUFFIX,bugsnag.com
+# https://docs.newrelic.com/docs/new-relic-solutions/get-started/networks/
+DOMAIN-SUFFIX,nr-data.net
+DOMAIN,collector.newrelic.com
+DOMAIN,collector.eu.newrelic.com
+DOMAIN,mobile-collector.newrelic.com
+DOMAIN,mobile-crash.newrelic.com
+DOMAIN,js-agent.newrelic.com
+# https://docs.rollbar.com/reference/getting-started-1
+DOMAIN,api.rollbar.com
 
 # ============ 危险 IP 规则 (会导致无法上网) ============
 # 这些 IP 规则过于宽泛，会导致网络异常

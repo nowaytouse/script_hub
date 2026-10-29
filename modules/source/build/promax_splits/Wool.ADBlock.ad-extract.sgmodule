@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3746/4630；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3732/4630；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -960,7 +960,6 @@ DOMAIN-SUFFIX,py.qlogo.cn,REJECT
 DOMAIN-SUFFIX,py2.qlogo.cn,REJECT
 DOMAIN-SUFFIX,app-measurement.com,REJECT
 DOMAIN-SUFFIX,admob.com,REJECT
-DOMAIN-SUFFIX,crashlytics.com,REJECT
 DOMAIN-SUFFIX,pagespeed-mod,REJECT
 DOMAIN-SUFFIX,beacon.gtimg.com,REJECT
 DOMAIN-SUFFIX,bla.gtimg.com,REJECT
@@ -972,9 +971,6 @@ DOMAIN-SUFFIX,swa.gtimg.com,REJECT
 DOMAIN-SUFFIX,tui.gtimg.com,REJECT
 DOMAIN-SUFFIX,wa.gtimg.com,REJECT
 DOMAIN-SUFFIX,wb.gtimg.com,REJECT
-DOMAIN-SUFFIX,e.crashlytics.com,REJECT
-DOMAIN-SUFFIX,setting.crashlytics.com,REJECT
-DOMAIN-SUFFIX,settings.crashlytics.com,REJECT
 DOMAIN-SUFFIX,gcdn.2mdn.net,REJECT
 DOMAIN-SUFFIX,s0.2mdn.net,REJECT
 DOMAIN-SUFFIX,s1.2mdn.net,REJECT
@@ -1501,10 +1497,8 @@ DOMAIN-SUFFIX,zryydi.com,REJECT
 DOMAIN-SUFFIX,cjmakeding.com,REJECT
 DOMAIN-SUFFIX,makeding.com,REJECT
 DOMAIN-SUFFIX,c.msn.com.cn,REJECT
-DOMAIN-SUFFIX,crl.microsoft.com,REJECT
 DOMAIN-SUFFIX,ieonline.microsoft.com,REJECT
 DOMAIN-SUFFIX,rad.microsoft.com,REJECT
-DOMAIN-SUFFIX,watson.microsoft.com,REJECT
 DOMAIN-SUFFIX,ac2.msn.com,REJECT
 DOMAIN-SUFFIX,ac3.msn.com,REJECT
 DOMAIN-SUFFIX,adsyndication.msn.com,REJECT
@@ -1539,9 +1533,6 @@ DOMAIN-SUFFIX,ad.naver.com,REJECT
 DOMAIN-SUFFIX,adcr.naver.com,REJECT
 DOMAIN-SUFFIX,adcreative.naver.com,REJECT
 DOMAIN-SUFFIX,adimg3.search.naver.net,REJECT
-DOMAIN-SUFFIX,newrelic.com,REJECT
-DOMAIN-SUFFIX,js-agent.newrelic.com,REJECT
-DOMAIN-SUFFIX,bam.nr-data.net,REJECT
 DOMAIN-SUFFIX,ad.openmultimedia.biz,REJECT
 DOMAIN,adsfs.oppomobile.com,REJECT
 DOMAIN-SUFFIX,ads.oppomobile.com,REJECT
@@ -2224,7 +2215,6 @@ DOMAIN-SUFFIX,ad.intl.xiaomi.com,REJECT
 DOMAIN-SUFFIX,sdkconfig.ad.intl.xiaomi.com,REJECT
 DOMAIN-SUFFIX,wtradv.market.xiaomi.com,REJECT
 DOMAIN-SUFFIX,abtest.mistat.xiaomi.com,REJECT
-DOMAIN-SUFFIX,data.mistat.xiaomi.com,REJECT
 DOMAIN-SUFFIX,storeconfig.mistat.xiaomi.com,REJECT
 DOMAIN-SUFFIX,bss.pandora.xiaomi.com,REJECT
 DOMAIN-SUFFIX,dvb.pandora.xiaomi.com,REJECT
@@ -2234,7 +2224,6 @@ DOMAIN-SUFFIX,resolver.gslb.mi-idc.com,REJECT
 DOMAIN-SUFFIX,f3.mi-stat.gslb.mi-idc.com,REJECT
 DOMAIN-SUFFIX,app01.nodes.gslb.mi-idc.com,REJECT
 DOMAIN-SUFFIX,app02.nodes.gslb.mi-idc.com,REJECT
-DOMAIN-SUFFIX,tracking.miui.com,REJECT
 DOMAIN-SUFFIX,hot.browser.miui.com,REJECT
 DOMAIN-SUFFIX,r.browser.miui.com,REJECT
 DOMAIN-SUFFIX,reader.browser.miui.com,REJECT
@@ -2246,13 +2235,10 @@ DOMAIN-SUFFIX,adv.sec.miui.com,REJECT
 DOMAIN-SUFFIX,api.sec.miui.com,REJECT
 DOMAIN-SUFFIX,info.sec.miui.com,REJECT
 DOMAIN-SUFFIX,proxy.sec.miui.com,REJECT
-DOMAIN-SUFFIX,logupdate.avlyun.sec.miui.com,REJECT
-DOMAIN-SUFFIX,update.avlyun.sec.miui.com,REJECT
 DOMAIN-SUFFIX,etl.xlmc.sec.miui.com,REJECT
 DOMAIN-SUFFIX,adinfo.ra1.xlmc.sec.miui.com,REJECT
 DOMAIN-SUFFIX,api.ra2.xlmc.sec.miui.com,REJECT
 DOMAIN-SUFFIX,api.tw06.xlmc.sec.miui.com,REJECT
-DOMAIN-SUFFIX,metok.sys.miui.com,REJECT
 DOMAIN-SUFFIX,api.xk.miui.com,REJECT
 DOMAIN-SUFFIX,fb.xk.miui.com,REJECT
 DOMAIN-SUFFIX,lxcdn.dl.files.xiaomi.net,REJECT
