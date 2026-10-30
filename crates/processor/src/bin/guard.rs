@@ -10,7 +10,7 @@ fn invalid_generated_paths(changed: &str, bot_commit: bool) -> Vec<&str> {
     if bot_commit
         || changed
             .lines()
-            .any(|path| path.starts_with("create/processor/"))
+            .any(|path| path.starts_with("crates/processor/"))
     {
         return Vec::new();
     }
@@ -71,7 +71,7 @@ mod tests {
         assert!(invalid_generated_paths("modules/surge/output.sgmodule\n", true).is_empty());
         assert!(
             invalid_generated_paths(
-                "create/processor/src/update.rs\nmodules/surge/output.sgmodule\n",
+                "crates/processor/src/update.rs\nmodules/surge/output.sgmodule\n",
                 false
             )
             .is_empty()

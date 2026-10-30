@@ -1,0 +1,56 @@
+name: Dependency Audit
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'crates/processor/Cargo.toml'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/dependency_audit.yml'
+  pull_request:
+    paths:
+      - 'crates/processor/Cargo.toml'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/dependency_audit.yml'
+  schedule:
+    - cron: '43 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        with:
+          toolchain: stable
+          cache: false
+      - name: Cache audit tool
+        id: cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: cargo-audit-lock-0.22.2-${{ runner.os }}-${{ runner.arch }}
+      - name: Install lockfile auditor
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: cargo install cargo-audit --version 0.22.2 --locked --no-default-features
+      - name: Audit locked dependencies
+        run: |
+          cargo audit --version
+          cargo audit --file Cargo.lock --deny unsound --deny yanked

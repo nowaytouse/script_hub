@@ -3,7 +3,7 @@
 GUI：Windows / macOS。Linux：仅命令行。仓库根目录启动：
 
 ```sh
-cargo run --release --locked --manifest-path create/processor/Cargo.toml --target-dir target --features gui --bin script-hub-gui -- --root .
+cargo run --release --locked --manifest-path crates/processor/Cargo.toml --target-dir target --features gui --bin script-hub-gui -- --root .
 ```
 
 设置与任务历史留在本地；联网、写入及 Git 操作需主动发起。

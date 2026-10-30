@@ -1,55 +1,14 @@
+//! Normalize, deduplicate and publish policy-neutral typed ruleset families.
+
+#[cfg(test)]
+use crate::redact_url;
+use crate::safe_write_file_internal;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
-
-pub(crate) fn redact_url(url: &str) -> String {
-    let Some((scheme, rest)) = url.split_once("://") else {
-        return url.to_string();
-    };
-    let rest = rest.split(['?', '#']).next().unwrap_or(rest);
-    let authority_end = rest.find('/').unwrap_or(rest.len());
-    let authority = &rest[..authority_end];
-    let host = authority.rsplit('@').next().unwrap_or(authority);
-    format!("{scheme}://{host}{}", &rest[authority_end..])
-}
-
-pub fn publication_now() -> chrono::DateTime<chrono::FixedOffset> {
-    chrono::Utc::now().with_timezone(
-        &chrono::FixedOffset::east_opt(8 * 60 * 60).expect("UTC+8 is a valid fixed offset"),
-    )
-}
-
-pub(crate) fn verify_missing_directory(directory: &Path) -> Result<(), String> {
-    // Windows may report NotFound when an ancestor is a file, not a missing directory.
-    for ancestor in directory.ancestors() {
-        match fs::metadata(ancestor) {
-            Ok(metadata) if metadata.is_dir() && ancestor != directory => return Ok(()),
-            Ok(_) => {
-                return Err(format!(
-                    "cannot verify missing directory {} at {}",
-                    directory.display(),
-                    ancestor.display()
-                ));
-            }
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                match fs::symlink_metadata(ancestor) {
-                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
-                    Err(error) => {
-                        return Err(format!("cannot inspect {}: {error}", ancestor.display()));
-                    }
-                    Ok(_) => {
-                        return Err(format!("unresolved directory path: {}", ancestor.display()));
-                    }
-                }
-            }
-            Err(error) => return Err(format!("cannot inspect {}: {error}", ancestor.display())),
-        }
-    }
-    Err(format!("cannot verify a parent of {}", directory.display()))
-}
 
 static VALID_IPV4_CIDR: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$").unwrap());
@@ -179,7 +138,7 @@ pub fn is_ruleset_watermark(value: &str) -> bool {
             || value.contains("ruleset_is_made_by_sukkaw"))
 }
 
-fn normalize_rule(line: &str) -> Option<String> {
+pub(crate) fn normalize_rule(line: &str) -> Option<String> {
     let line = strip_inline_comment(line);
     if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
         return None;
@@ -292,7 +251,7 @@ fn clean_rule(
     Some(normalized)
 }
 
-fn generate_header(name: &str, desc: &str, count: usize) -> String {
+pub(crate) fn generate_header(name: &str, desc: &str, count: usize) -> String {
     let mut header = vec![
         format!("# Ruleset: {}", name),
         "# Policy: USER-DEFINED".to_string(),
@@ -338,6 +297,7 @@ fn semantic_rules_match(path: &Path, sorted_new_rules: &[String]) -> bool {
     false
 }
 
+/// Inputs for one classification, published as nonempty domain, IP and extra families.
 pub struct RulesetInput<'a> {
     pub name: &'a str,
     pub target_dir: &'a Path,
@@ -348,6 +308,11 @@ pub struct RulesetInput<'a> {
     pub remote_content: &'a str,
 }
 
+/// Merge, normalize and stably publish a classification without choosing its policy.
+///
+/// Returns an error for unreadable local inputs, an all-invalid input, or a failed
+/// output removal/write. Invalid individual rules are omitted; an all-invalid input
+/// leaves existing outputs untouched.
 pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
     let RulesetInput {
         name,
@@ -451,107 +416,9 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
     Ok(())
 }
 
-fn normalize_generated_text(content: &str) -> String {
-    let mut lines = content.lines().map(str::trim_end).collect::<Vec<_>>();
-    while lines.last().is_some_and(|line| line.is_empty()) {
-        lines.pop();
-    }
-    if lines.is_empty() {
-        String::new()
-    } else {
-        lines.join("\n") + "\n"
-    }
-}
-
-pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: bool) -> bool {
-    let mut normalized_content = normalize_generated_text(content_str);
-
-    // Semantic Check
-    if p.exists()
-        && let Ok(old_content) = std::fs::read_to_string(p)
-    {
-        let old_stripped = url_rewriter::semantic_content_for_path_pub(p, &old_content);
-        let new_stripped = url_rewriter::semantic_content_for_path_pub(p, &normalized_content);
-        if old_stripped == new_stripped {
-            let normalized_old = normalize_generated_text(&old_content);
-            if normalized_old == old_content {
-                println!(
-                    "\x1b[0;34m[INFO]\x1b[0m Skipping write for {}: No semantic changes detected.",
-                    p.file_name().unwrap_or_default().to_string_lossy()
-                );
-                return true;
-            }
-            normalized_content = normalized_old;
-        }
-    }
-
-    if atomic {
-        let parent = p.parent().unwrap_or(std::path::Path::new(""));
-        let file_name = p.file_name().and_then(|f| f.to_str()).unwrap_or("file");
-        let temp_path = parent.join(format!(
-            ".tmp_{}_{}.writing",
-            file_name,
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        match std::fs::write(&temp_path, &normalized_content) {
-            Ok(_) => match std::fs::rename(&temp_path, p) {
-                Ok(_) => true,
-                Err(e) => {
-                    eprintln!(
-                        "\x1b[0;31m[ERROR]\x1b[0m Failed to rename temp file {:?} to {:?}: {:?}",
-                        temp_path, p, e
-                    );
-                    let _ = std::fs::remove_file(&temp_path);
-                    false
-                }
-            },
-            Err(e) => {
-                eprintln!(
-                    "\x1b[0;31m[ERROR]\x1b[0m Failed to write temp file {:?}: {:?}",
-                    temp_path, e
-                );
-                false
-            }
-        }
-    } else {
-        match std::fs::write(p, &normalized_content) {
-            Ok(_) => true,
-            Err(e) => {
-                eprintln!(
-                    "\x1b[0;31m[ERROR]\x1b[0m Failed to write file {:?}: {:?}",
-                    p, e
-                );
-                false
-            }
-        }
-    }
-}
-
-pub mod promax;
-
-pub mod app;
-pub mod desktop;
-pub mod pipeline;
-pub mod transforms;
-
-// Preserve the historical crate-root module paths while the implementation is
-// organized under its owning subsystems.
-pub use app::{update_cli, validate_cli};
-pub use desktop::job as gui_job;
-pub use pipeline::{
-    firewall_sync, functional_update, general_update, merge_bundles, module_catalog, srs_generator,
-};
-pub use transforms::{mitm_manager, smart_cleanup, url_rewriter};
-
 #[cfg(test)]
 mod tests {
-    use super::{
-        RulesetInput, is_ruleset_watermark, normalize_generated_text, normalize_rule,
-        process_ruleset, strip_inline_comment,
-    };
+    use super::{is_ruleset_watermark, normalize_rule, strip_inline_comment};
     use std::fs;
     use std::path::PathBuf;
 
@@ -569,16 +436,6 @@ mod tests {
             super::redact_url("https://cdn.jsdelivr.net/gh/owner/repo@master/list"),
             "https://cdn.jsdelivr.net/gh/owner/repo@master/list"
         );
-    }
-
-    #[test]
-    fn missing_directory_check_distinguishes_absence_from_blocking_file() {
-        let root = output_dir();
-        let missing = root.join("missing/child");
-        assert!(super::verify_missing_directory(&missing).is_ok());
-        fs::write(root.join("missing"), "not a directory").unwrap();
-        assert!(super::verify_missing_directory(&missing).is_err());
-        fs::remove_dir_all(root).unwrap();
     }
 
     fn output_dir() -> PathBuf {
@@ -599,7 +456,7 @@ mod tests {
         target_dir: &std::path::Path,
         remote_content: &str,
     ) -> Result<(), String> {
-        process_ruleset(RulesetInput {
+        crate::process_ruleset(crate::RulesetInput {
             name,
             target_dir,
             conflict_domains: &[],
@@ -807,15 +664,6 @@ mod tests {
         );
         assert!(dir.join("test.list").is_dir());
         fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn generated_text_has_clean_line_endings_and_one_final_newline() {
-        assert_eq!(
-            normalize_generated_text("# comment \r\nvalue\t\r\n\r\n"),
-            "# comment\nvalue\n"
-        );
-        assert_eq!(normalize_generated_text(""), "");
     }
 
     #[test]

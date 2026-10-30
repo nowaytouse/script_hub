@@ -1345,7 +1345,7 @@ mod tests {
                     .as_nanos()
             ));
             for directory in [
-                "create/processor",
+                "crates/processor",
                 "modules/source",
                 "rulesets/Sources",
                 "rulesets/AdBlock",
@@ -1353,7 +1353,7 @@ mod tests {
             ] {
                 fs::create_dir_all(root.join(directory)).unwrap();
             }
-            fs::write(root.join("create/processor/Cargo.toml"), "").unwrap();
+            fs::write(root.join("crates/processor/Cargo.toml"), "").unwrap();
             fs::write(root.join("rulesets/Sources/adblock_whitelist.list"), "").unwrap();
             fs::write(
                 root.join("rulesets/AdBlock/catalog.json"),

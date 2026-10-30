@@ -659,7 +659,7 @@ fn custom_devtools_request(
         + 1;
     let mut sources = vec![SourceInput {
         label: "Script Hub curated base".to_string(),
-        url: "local:create/processor/assets/DevTools.Base.sgmodule".to_string(),
+        url: "local:crates/processor/assets/DevTools.Base.sgmodule".to_string(),
         content: BASE[body_start..].to_string(),
     }];
     sources.extend(custom_sources);

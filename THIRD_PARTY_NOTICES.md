@@ -2,7 +2,7 @@
 
 [GPLv3](LICENSE) 仅适用于作者有权许可的项目代码，不改变第三方材料的许可。
 
-[Rust 依赖正文](create/processor/THIRD_PARTY_LICENSES.txt) · [字体声明](create/processor/licenses/epaint_default_fonts/) · [上游来源](rulesets/Sources/licenses/README.md)
+[Rust 依赖正文](crates/processor/THIRD_PARTY_LICENSES.txt) · [字体声明](crates/processor/licenses/epaint_default_fonts/) · [上游来源](rulesets/Sources/licenses/README.md)
 
 依赖清单由 cargo-about 根据锁定的 Windows / macOS 桌面依赖生成；不覆盖运行时下载内容，不是完整 SBOM 或法律合规认定。app2smile 与 AdGuard 等已登记来源保留各自许可。
 

@@ -5,7 +5,11 @@ on:
   push:
     branches: [master]
     paths:
-      - 'create/processor/**'
+      - 'crates/processor/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.cargo/**'
       - '.github/workflows/gui.yml'
       - 'LICENSE'
       - 'README.md'
@@ -15,7 +19,11 @@ on:
       - 'rulesets/Sources/licenses/**'
   pull_request:
     paths:
-      - 'create/processor/**'
+      - 'crates/processor/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.cargo/**'
       - '.github/workflows/gui.yml'
       - 'LICENSE'
       - 'README.md'
@@ -44,14 +52,14 @@ jobs:
       CARGO_TARGET_DIR: ${{ github.workspace }}/target
     defaults:
       run:
-        working-directory: create/processor
+        working-directory: crates/processor
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
         with:
-          rust-src-dir: create/processor
+          rust-src-dir: .
           toolchain: stable
-          cache-workspaces: create/processor -> ../../target
+          cache-workspaces: . -> target
           cache-shared-key: script-hub-processor
           cache-save-if: ${{ github.ref == 'refs/heads/master' }}
           cache-on-failure: false
