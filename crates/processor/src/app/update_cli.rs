@@ -621,6 +621,7 @@ mod tests {
     fn semantic_noop_filter_restores_tracked_files_with_whitespace_in_their_paths() {
         for relative in [
             "rulesets/RULE-SET/Direct routing.list",
+            #[cfg(unix)] // Windows rejects control characters in filenames.
             "rulesets/RULE-SET/line\nbreak.list",
         ] {
             let unique = SystemTime::now()
