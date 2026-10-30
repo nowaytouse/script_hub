@@ -1,9 +1,11 @@
 # Privacy
 
-工作区、设置与 SQLite 任务历史不自动上传。诊断日志需主动开启；分享前检查敏感信息。
+[English](PRIVACY.md) · [简体中文](PRIVACY.zh-CN.md)
 
-默认不扫描工作区。更新与 Git 由明确操作或 CI 计划发起；构建、外部脚本及客户端可能联网。
+Workspaces, settings and SQLite task history are not automatically uploaded. Diagnostic logging is opt-in; check for sensitive information before sharing.
 
-系统与诊断端点豁免不关闭数据收集。退出收集请使用应用或系统设置，不视为匿名保证。
+Workspaces are not scanned by default. Updates and Git run through explicit actions or CI schedules; builds, external scripts and clients may access the network.
 
-本地数据由使用者管理；不承诺安全擦除。疑虑请按[安全渠道](SECURITY.md)报告。
+System and diagnostic endpoint exemptions do not disable collection. Use app or system settings to opt out; exemptions do not guarantee anonymity.
+
+Local data is user-managed; secure erasure is not promised. Report concerns through the [security channel](SECURITY.md).

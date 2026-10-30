@@ -230,16 +230,16 @@ impl Job {
         command.env("SCRIPT_HUB_GUI_EVENTS", "1");
 
         let state = Arc::new(Mutex::new(State::new(match kind {
-            JobKind::Validate => "校验正在运行".to_string(),
-            JobKind::RefreshCatalog => "目录刷新正在运行".to_string(),
-            JobKind::Update => "全量更新正在运行".to_string(),
-            JobKind::QuickUpdate => "快速更新正在运行".to_string(),
-            JobKind::GamingOnly => "游戏规则更新正在运行".to_string(),
-            JobKind::AdBlockOnly => "广告拦截规则更新正在运行".to_string(),
-            JobKind::SrsOnly => "正在重建 SRS 规则".to_string(),
-            JobKind::GitPull => "正在拉取仓库更新".to_string(),
-            JobKind::GitCommit => "正在提交所选更改".to_string(),
-            JobKind::GitPush => "正在推送仓库更新".to_string(),
+            JobKind::Validate => "Validation in progress".to_string(),
+            JobKind::RefreshCatalog => "Refreshing catalog".to_string(),
+            JobKind::Update => "Full update in progress".to_string(),
+            JobKind::QuickUpdate => "Quick update in progress".to_string(),
+            JobKind::GamingOnly => "Updating gaming rules".to_string(),
+            JobKind::AdBlockOnly => "Updating adblock rules".to_string(),
+            JobKind::SrsOnly => "Rebuilding SRS rules".to_string(),
+            JobKind::GitPull => "Pulling repository updates".to_string(),
+            JobKind::GitCommit => "Committing selected changes".to_string(),
+            JobKind::GitPush => "Pushing repository updates".to_string(),
         })));
         let worker_state = Arc::clone(&state);
         let history_options = options.history.clone();
@@ -332,7 +332,7 @@ impl Job {
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             if state.running {
                 state.running = false;
-                state.status = "任务监控异常退出".to_string();
+                state.status = "Task monitor stopped unexpectedly".to_string();
                 state.push("[GUI ERROR] worker monitor stopped unexpectedly".to_string());
                 state.outcome = Some(JobOutcome::Failed);
                 state.finished_at = Some(Instant::now());
@@ -559,7 +559,7 @@ fn push_line(state: &Arc<Mutex<State>>, bytes: &[u8], truncated: bool, stream: O
         .trim_end_matches('\r')
         .to_string();
     if truncated {
-        line.push_str(" …[行已截断]");
+        line.push_str(" ...[line truncated]");
     }
     let mut state = state
         .lock()
@@ -588,16 +588,16 @@ fn finish_state(state: &mut State, result: Result<(), String>) {
     state.status = match result {
         Ok(()) if state.has_warnings => {
             state.outcome = Some(JobOutcome::Warnings);
-            "已完成（有警告）".to_string()
+            "Succeeded with warnings".to_string()
         }
         Ok(()) => {
             state.outcome = Some(JobOutcome::Success);
-            "已完成".to_string()
+            "Succeeded".to_string()
         }
         Err(error) => {
             state.push(format!("[GUI ERROR] {error}"));
             state.outcome = Some(JobOutcome::Failed);
-            "失败".to_string()
+            "Failed".to_string()
         }
     };
     state.running = false;
@@ -615,7 +615,7 @@ fn journal_warning_state(state: &mut State, message: String) {
     state.push(format!("[WARN] {message}"));
     if state.outcome == Some(JobOutcome::Success) {
         state.outcome = Some(JobOutcome::Warnings);
-        state.status = "已完成（历史记录警告）".to_string();
+        state.status = "Succeeded with a history warning".to_string();
     }
 }
 
@@ -638,6 +638,18 @@ mod tests {
             super::plain_log_line("\u{1b}[0;34m[INFO]\u{1b}[0m 中文\r"),
             "[INFO] 中文"
         );
+    }
+
+    #[test]
+    fn task_status_uses_english_without_changing_the_outcome() {
+        let mut state = State::new(String::new());
+        finish_state(&mut state, Ok(()));
+        assert_eq!(state.status, "Succeeded");
+        assert_eq!(state.outcome, Some(JobOutcome::Success));
+        state.has_warnings = true;
+        finish_state(&mut state, Ok(()));
+        assert_eq!(state.status, "Succeeded with warnings");
+        assert_eq!(state.outcome, Some(JobOutcome::Warnings));
     }
 
     #[test]

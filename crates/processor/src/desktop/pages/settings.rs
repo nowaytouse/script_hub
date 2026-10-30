@@ -65,9 +65,9 @@ impl HubApp {
                                 "language",
                                 &mut self.draft.language,
                                 &[
-                                    (Language::System, tr(Text::System)),
-                                    (Language::ZhCn, "简体中文"),
                                     (Language::En, "English"),
+                                    (Language::ZhCn, "简体中文"),
+                                    (Language::System, tr(Text::System)),
                                     (Language::Ja, "日本語"),
                                 ],
                             );

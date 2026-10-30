@@ -1,12 +1,14 @@
-# 维护
+# Maintenance
 
-仓库根目录执行；替换 sing-box 路径。
+[English](UPDATE_GUIDE.md) · [简体中文](UPDATE_GUIDE.zh-CN.md)
+
+Run from the repository root; replace the sing-box path.
 
 ```sh
-cargo run --release --locked --manifest-path crates/processor/Cargo.toml --target-dir target --bin update -- --root . --execute --singbox /path/to/sing-box
-cargo run --locked --manifest-path crates/processor/Cargo.toml --target-dir target --bin validate -- --root .
+cargo run --release --locked --bin update -- --root . --execute --singbox /path/to/sing-box
+cargo run --locked --bin validate -- --root .
 ```
 
-`--quick` 仍联网；更新不自动提交或推送。失败后检查日志与工作区，不删除恢复备份。
+`--quick` still accesses the network. Updates do not automatically commit or push. On failure, inspect logs and the worktree; preserve recovery backups.
 
-[入口](../README.md) · [工作流](../.github/workflows/update_rulesets.yml)
+[Home](../README.md) · [Workflow](../.github/workflows/update_rulesets.yml)

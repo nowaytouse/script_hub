@@ -286,4 +286,10 @@ mod tests {
         assert_eq!(text(Language::Ja, Text::Overview), "概要");
         assert!(!text(Language::System, Text::Overview).trim().is_empty());
     }
+
+    #[test]
+    fn default_language_is_english_and_chinese_is_explicit() {
+        assert_eq!(text(Language::default(), Text::Settings), "Settings");
+        assert_eq!(text(Language::ZhCn, Text::Settings), "设置");
+    }
 }

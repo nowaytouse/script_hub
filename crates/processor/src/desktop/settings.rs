@@ -32,12 +32,12 @@ pub enum Accent {
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Language {
-    #[default]
     #[serde(rename = "system")]
     System,
     #[serde(rename = "zh_cn")]
     #[serde(alias = "ZH")]
     ZhCn,
+    #[default]
     #[serde(rename = "en")]
     #[serde(alias = "EN")]
     En,
@@ -468,6 +468,31 @@ mod tests {
         assert!(preferences.record_history);
         assert!(!preferences.developer_mode);
         assert!(!preferences.diagnostic_logs);
+    }
+
+    #[test]
+    fn new_preferences_use_english() {
+        assert_eq!(Preferences::default().language, Language::En);
+    }
+
+    #[test]
+    fn preferences_without_a_language_use_english() {
+        let preferences: Preferences = serde_json::from_str(r#"{"theme":"dark"}"#).unwrap();
+        assert_eq!(preferences.language, Language::En);
+    }
+
+    #[test]
+    fn saved_language_choices_are_preserved() {
+        let dir = TestDir::new();
+        let path = dir.path().join("settings.json");
+        for language in [Language::ZhCn, Language::En, Language::System, Language::Ja] {
+            let preferences = Preferences {
+                language,
+                ..Preferences::default()
+            };
+            save(&path, &preferences).unwrap();
+            assert_eq!(load(&path).unwrap().unwrap().language, language);
+        }
     }
 
     #[test]

@@ -1,0 +1,61 @@
+name: Actions Retention
+
+on:
+  workflow_run:
+    workflows: [Guard Generated Tree, Rust GUI, Dependency Audit, Update Rulesets, Dependency Graph]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview the deletion plan without deleting runs
+        type: boolean
+        default: true
+      max_deletions:
+        description: Maximum completed runs deleted in this batch
+        type: choice
+        options: ['100', '200', '500']
+        default: '100'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: actions-retention-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  retain:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/scripts
+            .github/workflows
+      - name: Test retention policy
+        run: node --test .github/scripts/retain-runs.test.cjs
+      - name: Retain newest ten runs per workflow
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RETENTION_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          RETENTION_LIMIT: ${{ inputs.max_deletions || '100' }}
+        with:
+          retries: 0
+          script: |
+            const { retainRuns } = require('./.github/scripts/retain-runs.cjs');
+            const result = await retainRuns({
+              github, repo: context.repo, currentRunId: context.runId,
+              dryRun: process.env.RETENTION_DRY_RUN === 'true',
+              maxDeletions: Number(process.env.RETENTION_LIMIT), log: core.info,
+            });
+            core.info(JSON.stringify(result));
+            await core.summary.addHeading('Actions retention')
+              .addRaw(`Deleted: ${result.deleted.length}; already absent: ${result.missing.length}; deferred: ${result.deferred.length}; remaining snapshot candidates: ${result.remaining}.`)
+              .write();

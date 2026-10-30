@@ -232,6 +232,28 @@ struct CatalogJson {
     shards: Vec<ShardItem>,
 }
 
+fn render_catalog_readme(catalog: &CatalogJson) -> String {
+    let mut readme = format!(
+        "# AdBlock\n\n[English](README.md) · [简体中文](README.zh-CN.md)\n\n> Generated `{}` · [`catalog.json`](catalog.json)\n\n| Category | File | Rules | CDN | GitHub |\n| --- | --- | --- | --- | --- |\n",
+        catalog.updated
+    );
+    for item in &catalog.shards {
+        readme.push_str(&format!(
+            "| {} | `{}` | {} | [CDN]({}) | [GitHub]({}) |\n",
+            item.category,
+            item.file,
+            format_commas(item.rule_count),
+            item.cdn_url,
+            item.github_url
+        ));
+    }
+    readme.push_str("\n## Modules\n\n");
+    for (key, item) in &catalog.modules {
+        readme.push_str(&format!("- [{key}]({})\n", item.install_url));
+    }
+    readme
+}
+
 #[derive(Clone)]
 struct SourceEntry {
     manifest_path: PathBuf,
@@ -2257,89 +2279,7 @@ impl AdBlockManager {
         let catalog_path = self.root_dir.join("rulesets/AdBlock/catalog.json");
         let json_str = serde_json::to_string_pretty(&catalog_data).unwrap();
 
-        // Generate README.md
-        let mut readme = Vec::new();
-        readme.push("# AdBlock 分片规则集\n".to_string());
-        readme.push(format!(
-            "> 自动生成于 `{}` · 每片 ≤ {} 条 · 详见 [`catalog.json`](catalog.json)\n\n",
-            now,
-            format_commas(RULES_PER_SHARD)
-        ));
-        readme.push("## 用途分类\n\n| 分类 | 说明 |\n|------|------|\n".to_string());
-        for key in CATEGORIES {
-            let meta = CATEGORY_META.get(*key).unwrap();
-            readme.push(format!(
-                "| **{}** (`{}`) | {} |\n",
-                meta.label_zh, key, meta.desc
-            ));
-        }
-        readme.push("\n## 当前分片\n\n| 用途 | 文件 | 规则数 | CDN | GitHub |\n|------|------|--------|-----|--------|\n".to_string());
-        for item in &catalog_data.shards {
-            readme.push(format!(
-                "| {} | `{}` | {} | [CDN]({}) | [GitHub]({}) |\n",
-                item.label_zh,
-                item.file,
-                format_commas(item.rule_count),
-                item.cdn_url,
-                item.github_url
-            ));
-        }
-
-        readme.push("\n## 应用内脚本层（PROMAX 内嵌）\n\n".to_string());
-        for sec_name in &[
-            "URL Rewrite",
-            "Map Local",
-            "Script",
-            "Body Rewrite",
-            "Header Rewrite",
-        ] {
-            let count = self.sections.get(*sec_name).unwrap().len();
-            if count > 0 {
-                readme.push(format!("| `{}` | {} |\n", sec_name, format_commas(count)));
-            }
-        }
-        if !self.mitm_hosts.is_empty() {
-            readme.push(format!(
-                "| `MITM` (hostname) | {} |\n",
-                format_commas(self.mitm_hosts.len())
-            ));
-        }
-
-        readme.push("\n## 安装模块（RULE-SET + 去广告 Script/Rewrite；解锁/增强请用 Amplify Nexus 独立模块）\n\n".to_string());
-        readme.push("`rulesets/Sources/LocalModules/*` 各 App 去广告逐文件并入 PROMAX，**勿单独安装**专项模块或已废弃的 narrow_pierce 副本。\n\n".to_string());
-        readme.push("### 🖥️ 桌面完整版（Full）\n".to_string());
-        readme.push(format!(
-            "- **Surge PROMAX** CDN: {}\n",
-            catalog_data
-                .modules
-                .get("surge_promax_cdn")
-                .unwrap()
-                .install_url
-        ));
-        readme.push(format!(
-            "- **Surge PROMAX** GitHub: {}\n",
-            catalog_data
-                .modules
-                .get("surge_promax_github")
-                .unwrap()
-                .install_url
-        ));
-        readme.push(format!(
-            "- **Shadowrocket PROMAX** CDN: {}\n",
-            catalog_data
-                .modules
-                .get("shadowrocket_promax_cdn")
-                .unwrap()
-                .install_url
-        ));
-        readme.push(format!(
-            "- **Shadowrocket PROMAX** GitHub: {}\n",
-            catalog_data
-                .modules
-                .get("shadowrocket_promax_github")
-                .unwrap()
-                .install_url
-        ));
+        let readme = render_catalog_readme(&catalog_data);
         let readme_path = self.root_dir.join("rulesets/AdBlock/README.md");
         vec![
             crate::promax::artifact::GeneratedArtifact {
@@ -2349,7 +2289,7 @@ impl AdBlockManager {
             },
             crate::promax::artifact::GeneratedArtifact {
                 target: readme_path,
-                content: readme.join(""),
+                content: readme,
                 kind: crate::promax::artifact::ArtifactKind::Metadata,
             },
         ]
@@ -2900,25 +2840,98 @@ fn ensure_migration_target_inside_root(root: &Path, target: &Path) -> Result<(),
     Ok(())
 }
 
+/// Refreshes only the published README from the local catalog and validated shards, without network access.
+pub fn refresh_published_index(root: &Path) -> Result<(), String> {
+    let root = root
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve index root: {error}"))?;
+    let catalog_path = root.join("rulesets/AdBlock/catalog.json");
+    ensure_migration_target_inside_root(&root, &catalog_path)?;
+    let content = fs::read_to_string(&catalog_path)
+        .map_err(|error| format!("cannot read PROMAX catalog: {error}"))?;
+    let catalog: CatalogJson = serde_json::from_str(&content)
+        .map_err(|error| format!("cannot parse PROMAX catalog: {error}"))?;
+    let module_keys = [
+        "surge_promax_cdn",
+        "surge_promax_github",
+        "shadowrocket_promax_cdn",
+        "shadowrocket_promax_github",
+    ];
+    if catalog.shards.is_empty()
+        || catalog.modules.len() != module_keys.len()
+        || module_keys
+            .iter()
+            .any(|key| !catalog.modules.contains_key(*key))
+    {
+        return Err("PROMAX catalog is missing published shards or modules".to_string());
+    }
+    let mut files = HashSet::new();
+    for shard in &catalog.shards {
+        let relative = Path::new(&shard.file);
+        if relative.parent() != Some(Path::new("rulesets/AdBlock"))
+            || !relative
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(AdBlockManager::is_known_shard_filename)
+            || !CATEGORIES.contains(&shard.category.as_str())
+            || !files.insert(&shard.file)
+        {
+            return Err(format!("invalid PROMAX catalog shard: {}", shard.file));
+        }
+        let target = root.join(relative);
+        ensure_migration_target_inside_root(&root, &target)?;
+        let content = fs::read_to_string(&target)
+            .map_err(|error| format!("cannot read published shard {}: {error}", shard.file))?;
+        let count = content
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with(['#', ';', '/']))
+            .collect::<HashSet<_>>()
+            .len();
+        if count == 0
+            || count != shard.rule_count
+            || !crate::promax::validation::validate_external_ruleset(&content).is_empty()
+        {
+            return Err(format!("published shard {} failed validation", shard.file));
+        }
+    }
+    let target = root.join("rulesets/AdBlock/README.md");
+    ensure_migration_target_inside_root(&root, &target)?;
+    crate::promax::artifact::publish_generated_artifacts(
+        &root,
+        &[crate::promax::artifact::GeneratedArtifact {
+            target,
+            content: render_catalog_readme(&catalog),
+            kind: crate::promax::artifact::ArtifactKind::Metadata,
+        }],
+    )
+}
+
 fn update_migration_readme(content: &str, shards: &[serde_json::Value]) -> Result<String, String> {
-    const HEADER: &str = "| 用途 | 文件 | 规则数 | CDN | GitHub |";
-    const NEXT_SECTION: &str = "\n## 应用内脚本层";
-    let header_start = content
-        .find(HEADER)
+    const ENGLISH_HEADER: &str = "| Category | File | Rules | CDN | GitHub |";
+    let (header, header_start) = [ENGLISH_HEADER, "| 用途 | 文件 | 规则数 | CDN | GitHub |"]
+        .into_iter()
+        .find_map(|header| content.find(header).map(|start| (header, start)))
         .ok_or_else(|| "PROMAX README is missing the current-shards table".to_string())?;
-    let mut body_start = header_start + HEADER.len();
+    let mut body_start = header_start + header.len();
     if content[body_start..].starts_with("\r\n") {
         body_start += 2;
     } else if content[body_start..].starts_with('\n') {
         body_start += 1;
     }
     let next_start = content[body_start..]
-        .find(NEXT_SECTION)
+        .find("\n## ")
         .map(|offset| body_start + offset)
         .ok_or_else(|| "PROMAX README is missing the following section marker".to_string())?;
-    let mut rows = String::new();
+    let mut rows = "| --- | --- | --- | --- | --- |\n".to_string();
     for shard in shards {
-        let label = shard["label_zh"].as_str().unwrap_or_default();
+        let label = shard[if header == ENGLISH_HEADER {
+            "category"
+        } else {
+            "label_zh"
+        }]
+        .as_str()
+        .unwrap_or_default();
         let file = shard["file"].as_str().unwrap_or_default();
         let count = shard["rule_count"].as_u64().unwrap_or_default();
         let cdn = shard["cdn_url"].as_str().unwrap_or_default();

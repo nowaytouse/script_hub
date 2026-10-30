@@ -4,6 +4,86 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn published_index_refresh_is_english_and_preserves_local_inputs() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!("promax-index-{unique}"));
+    let mut manager = AdBlockManager::new(root.clone());
+    manager
+        .rules
+        .get_mut("REJECT")
+        .unwrap()
+        .get_mut("Advertising")
+        .unwrap()
+        .insert("DOMAIN,ads.fixture.test".to_string());
+    let (paths, artifacts) = manager.generate_ruleset().unwrap();
+    let metadata = manager.generate_catalog_artifacts(&paths, &artifacts);
+    for artifact in artifacts.iter().chain(&metadata) {
+        fs::create_dir_all(artifact.target.parent().unwrap()).unwrap();
+        fs::write(&artifact.target, &artifact.content).unwrap();
+    }
+    let catalog_path = root.join("rulesets/AdBlock/catalog.json");
+    let catalog = fs::read(&catalog_path).unwrap();
+    let shard = fs::read(&artifacts[0].target).unwrap();
+    let readme_path = root.join("rulesets/AdBlock/README.md");
+    fs::write(&readme_path, "old index\n").unwrap();
+
+    super::refresh_published_index(&root).unwrap();
+
+    let readme = fs::read_to_string(&readme_path).unwrap();
+    assert!(readme.starts_with("# AdBlock\n"));
+    assert!(readme.contains("[English](README.md) · [简体中文](README.zh-CN.md)"));
+    assert!(readme.contains("| Category | File | Rules | CDN | GitHub |"));
+    assert!(readme.contains("| Advertising | `rulesets/AdBlock/AdBlock_Advertising.list` | 1 |"));
+    assert_eq!(fs::read(&catalog_path).unwrap(), catalog);
+    assert_eq!(fs::read(&artifacts[0].target).unwrap(), shard);
+    super::refresh_published_index(&root).unwrap();
+    assert_eq!(fs::read_to_string(&readme_path).unwrap(), readme);
+
+    let mut invalid: serde_json::Value = serde_json::from_slice(&catalog).unwrap();
+    invalid["shards"][0]["rule_count"] = serde_json::json!(2);
+    fs::write(&catalog_path, serde_json::to_vec(&invalid).unwrap()).unwrap();
+    assert!(super::refresh_published_index(&root).is_err());
+    assert_eq!(fs::read_to_string(&readme_path).unwrap(), readme);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn published_index_migration_keeps_language_and_table_separator() {
+    let shards = [serde_json::json!({
+        "category": "Advertising",
+        "label_zh": "通用广告",
+        "file": "rulesets/AdBlock/AdBlock_Advertising.list",
+        "rule_count": 2,
+        "cdn_url": "https://example.test/cdn",
+        "github_url": "https://example.test/github",
+    })];
+    for (header, next, label) in [
+        (
+            "| Category | File | Rules | CDN | GitHub |",
+            "## Modules",
+            "Advertising",
+        ),
+        (
+            "| 用途 | 文件 | 规则数 | CDN | GitHub |",
+            "## 应用内脚本层",
+            "通用广告",
+        ),
+    ] {
+        let content =
+            format!("# Index\n\n{header}\n| old separator |\n| old row |\n\n{next}\nunchanged\n");
+        assert_eq!(
+            super::update_migration_readme(&content, &shards).unwrap(),
+            format!(
+                "# Index\n\n{header}\n| --- | --- | --- | --- | --- |\n| {label} | `rulesets/AdBlock/AdBlock_Advertising.list` | 2 | [CDN](https://example.test/cdn) | [GitHub](https://example.test/github) |\n\n{next}\nunchanged\n"
+            )
+        );
+    }
+}
+
+#[test]
 fn supplemental_hagezi_sources_keep_categories_and_diagnostic_exemptions() {
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut manager = AdBlockManager::new(root);

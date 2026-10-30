@@ -1,6 +1,7 @@
 use super::card;
 use crate::desktop::app::{HubApp, SupportTab};
 use crate::desktop::i18n::{Text, text};
+use crate::desktop::settings::Language;
 use eframe::egui::{self, RichText};
 
 const LICENSE: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../LICENSE"));
@@ -9,15 +10,31 @@ const NOTICES: &str = include_str!(concat!(
     "/../../THIRD_PARTY_NOTICES.md"
 ));
 const PRIVACY: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../PRIVACY.md"));
+const NOTICES_ZH_CN: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../THIRD_PARTY_NOTICES.zh-CN.md"
+));
+const PRIVACY_ZH_CN: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../PRIVACY.zh-CN.md"
+));
 const DEPENDENCIES: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/THIRD_PARTY_LICENSES.txt"
 ));
 
+fn localized_documents(language: Language) -> (&'static str, &'static str) {
+    match language.resolved() {
+        Language::ZhCn => (NOTICES_ZH_CN, PRIVACY_ZH_CN),
+        _ => (NOTICES, PRIVACY),
+    }
+}
+
 impl HubApp {
     pub(crate) fn support_page(&mut self, ui: &mut egui::Ui) {
         let language = self.draft.language;
         let tr = |key| text(language, key);
+        let (notices, privacy) = localized_documents(language);
         ui.heading(tr(Text::Help));
         ui.label(tr(Text::HelpIntro));
         ui.add_space(12.0);
@@ -46,7 +63,11 @@ impl HubApp {
                         }
                         ui.add_space(12.0);
                         ui.horizontal_wrapped(|ui| {
-                            ui.hyperlink_to(tr(Text::Documentation), "https://github.com/nowaytouse/script_hub#readme");
+                            ui.hyperlink_to(tr(Text::Documentation), if language.resolved() == Language::ZhCn {
+                                "https://github.com/nowaytouse/script_hub/blob/master/README.zh-CN.md"
+                            } else {
+                                "https://github.com/nowaytouse/script_hub#readme"
+                            });
                             ui.hyperlink_to(tr(Text::IssueTracker), "https://github.com/nowaytouse/script_hub/issues");
                         });
                     }
@@ -80,14 +101,18 @@ impl HubApp {
                             ui.ctx().copy_text(DEPENDENCIES.to_string());
                         }
                         ui.add_space(16.0);
-                        document(ui, NOTICES);
+                        document(ui, notices);
                         egui::CollapsingHeader::new("GNU General Public License v3.0").show(ui, |ui| { ui.label(LICENSE); });
-                        ui.hyperlink_to(tr(Text::LicensesAndNotices), "https://github.com/nowaytouse/script_hub/tree/master/rulesets/Sources/licenses");
+                        ui.hyperlink_to(tr(Text::LicensesAndNotices), if language.resolved() == Language::ZhCn {
+                            "https://github.com/nowaytouse/script_hub/blob/master/rulesets/Sources/licenses/README.zh-CN.md"
+                        } else {
+                            "https://github.com/nowaytouse/script_hub/tree/master/rulesets/Sources/licenses"
+                        });
                     }
                     SupportTab::Privacy => {
                         ui.label(tr(Text::HelpPrivacy));
                         ui.add_space(12.0);
-                        document(ui, PRIVACY);
+                        document(ui, privacy);
                     }
                 }
             });
@@ -111,7 +136,22 @@ fn document(ui: &mut egui::Ui, content: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{DEPENDENCIES, LICENSE, NOTICES, PRIVACY};
+    use super::{
+        DEPENDENCIES, LICENSE, NOTICES, NOTICES_ZH_CN, PRIVACY, PRIVACY_ZH_CN, localized_documents,
+    };
+    use crate::desktop::settings::Language;
+
+    #[test]
+    fn support_documents_follow_the_selected_language() {
+        assert_eq!(localized_documents(Language::En), (NOTICES, PRIVACY));
+        assert_eq!(
+            localized_documents(Language::ZhCn),
+            (NOTICES_ZH_CN, PRIVACY_ZH_CN)
+        );
+        assert_eq!(localized_documents(Language::Ja), (NOTICES, PRIVACY));
+        assert_ne!(PRIVACY, PRIVACY_ZH_CN);
+        assert_ne!(NOTICES, NOTICES_ZH_CN);
+    }
     #[test]
     fn legal_material_is_bundled_for_offline_use() {
         assert!(LICENSE.contains("GNU GENERAL PUBLIC LICENSE"));

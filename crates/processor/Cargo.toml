@@ -1,6 +1,6 @@
 [package]
 name = "rust_processor"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 description = "Rust core and native desktop workspace for Script Hub rules and modules"
 license = "GPL-3.0-only"

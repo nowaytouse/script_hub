@@ -8,7 +8,7 @@ pub mod script_resources;
 pub mod source;
 pub mod validation;
 
-pub use compiler::{migrate_published_rule_layout, run_adblock_manager};
+pub use compiler::{migrate_published_rule_layout, refresh_published_index, run_adblock_manager};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProductKind {

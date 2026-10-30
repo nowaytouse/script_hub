@@ -21,6 +21,9 @@ fn invalid_generated_paths(changed: &str, bot_commit: bool) -> Vec<&str> {
 }
 
 fn main() -> std::process::ExitCode {
+    if rust_processor::app::print_version("guard") {
+        return std::process::ExitCode::SUCCESS;
+    }
     let base = std::env::var("DIFF_BASE").unwrap_or_else(|_| "HEAD~1".to_string());
     let head = std::env::var("DIFF_HEAD").unwrap_or_else(|_| "HEAD".to_string());
     let output = match Command::new("git")

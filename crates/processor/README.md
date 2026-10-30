@@ -1,12 +1,14 @@
-# 桌面与处理器
+# Desktop & processor
 
-GUI：Windows / macOS。Linux：仅命令行。仓库根目录启动：
+[English](README.md) · [简体中文](README.zh-CN.md)
+
+GUI: Windows / macOS. Linux: CLI only. Run from the repository root:
 
 ```sh
-cargo run --release --locked --manifest-path crates/processor/Cargo.toml --target-dir target --features gui --bin script-hub-gui -- --root .
+cargo run --release --locked --features gui --bin script-hub-gui -- --root .
 ```
 
-设置与任务历史留在本地；联网、写入及 Git 操作需主动发起。
-macOS 开发包未受信任签名或公证；原生辅助功能仍有验收缺口。
+Settings and task history stay local; network, write and Git actions are explicit.
+macOS development packages lack trusted signing and notarization; native accessibility acceptance remains incomplete.
 
-[入口](../../README.md) · [维护](../../docs/UPDATE_GUIDE.md) · [隐私](../../PRIVACY.md)
+[Home](../../README.md) · [Maintenance](../../docs/UPDATE_GUIDE.md) · [Privacy](../../PRIVACY.md)

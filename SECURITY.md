@@ -1,9 +1,11 @@
 # Security
 
-[私密报告](https://github.com/nowaytouse/script_hub/security/advisories/new)
+[English](SECURITY.md) · [简体中文](SECURITY.zh-CN.md)
 
-请勿公开凭据、个人数据或利用细节；确认 GitHub 已接收报告。渠道不可用时，先联系维护者的可信私密渠道。
+[Private reporting](https://github.com/nowaytouse/script_hub/security/advisories/new)
 
-上游脚本与 MITM 需独立审阅，不要关闭证书校验来绕过错误。豁免不代表信任任意代理服务器。
+Do not publish credentials, personal data or exploit details. Confirm GitHub received the report; if unavailable, use an established private maintainer channel first.
 
-未完成全面安全与许可审计。构建或 CI 通过不是安全认证。
+Review upstream scripts and MITM independently. Do not bypass errors by disabling certificate validation. Exemptions do not establish trust in arbitrary proxy servers.
+
+A full security and license audit is incomplete. A passing build or CI run is not a security certification.
