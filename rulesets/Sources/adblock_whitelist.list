@@ -1,0 +1,1056 @@
+# AdBlock Whitelist - 白名单配置
+# 合并规则时自动排除这些域名/规则
+# 
+# 用途: 防止误拦截导致功能异常
+# 例如: 微信内置浏览器的链接重定向被拦截
+#
+# 格式说明:
+#   - 每行一条规则
+#   - 支持 DOMAIN, DOMAIN-SUFFIX, DOMAIN-KEYWORD 格式
+#   - 以 # 开头的行为注释
+#   - 空行会被忽略
+#
+# 更新: 2025-12-20
+
+# ============ 🔥 YouTube 核心域名 (CRITICAL) ============
+# 这些域名被拦截会导致 YouTube 完全无法使用！
+DOMAIN,youtubei.googleapis.com
+DOMAIN-SUFFIX,googlevideo.com
+DOMAIN-KEYWORD,googlevideo
+DOMAIN-SUFFIX,s2.youtube.com
+DOMAIN-SUFFIX,youtube.com
+DOMAIN-SUFFIX,ytimg.com
+DOMAIN-SUFFIX,yt3.ggpht.com
+DOMAIN-SUFFIX,yt4.ggpht.com
+# YouTube channel/avatar image delivery, separate from advertising endpoints.
+DOMAIN,yt3.googleusercontent.com
+# Pinterest's public Pin API uses i.pinimg.com for images; the public web app
+# loads essential code from s.pinimg.com. Do not widen to all of pinimg.com.
+# https://developers.pinterest.com/docs/api/v5/pins-list/
+# https://jp.pinterest.com/
+DOMAIN,i.pinimg.com
+DOMAIN,s.pinimg.com
+# The official embed script fetches Pin/board/user content here, not only counters.
+# https://assets.pinterest.com/js/pinit_main.js
+DOMAIN,widgets.pinterest.com
+# Reject rules for a whole parent would also block these hosts, so they are quarantined;
+# independent log/ct/ads and unprotected pinimg sibling rejections remain eligible.
+# 防止屏蔽整个 Google Video IP 网段
+IP-CIDR,74.125.0.0/16
+IP-CIDR,172.217.0.0/16
+IP-CIDR,142.250.0.0/15
+IP-CIDR,142.251.0.0/16
+IP-CIDR,216.58.192.0/19
+IP-CIDR,216.239.32.0/19
+IP-CIDR,209.85.128.0/17
+IP-CIDR,108.177.0.0/17
+IP-CIDR,173.194.0.0/16
+
+# ============ 🔥 Google 核心服务 ============
+DOMAIN-SUFFIX,googleapis.com
+DOMAIN-SUFFIX,gstatic.com
+
+# ============ 搜索缩略图 / 共享图片代理 ============
+# These hosts also deliver ordinary result images; do not reject a whole host
+# or replace every response with a transparent image. Keep dedicated ad hosts blocked.
+DOMAIN,t0.baidu.com
+DOMAIN,t1.baidu.com
+DOMAIN,t2.baidu.com
+DOMAIN,t3.baidu.com
+DOMAIN,t4.baidu.com
+DOMAIN,t5.baidu.com
+DOMAIN,t6.baidu.com
+DOMAIN,t7.baidu.com
+DOMAIN,t8.baidu.com
+DOMAIN,t9.baidu.com
+DOMAIN,t10.baidu.com
+DOMAIN,t11.baidu.com
+DOMAIN,t12.baidu.com
+DOMAIN,dss0.bdstatic.com
+DOMAIN,dss1.bdstatic.com
+DOMAIN,dss2.bdstatic.com
+DOMAIN,dss3.bdstatic.com
+DOMAIN,ss0.bdstatic.com
+DOMAIN,ss1.bdstatic.com
+DOMAIN,ss2.bdstatic.com
+DOMAIN,ss3.bdstatic.com
+
+# ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
+# 注意: 不要添加 apple.com 整体，会让广告规则失效
+DOMAIN,account.apple.com
+DOMAIN,appleid.cdn-apple.com
+DOMAIN,idmsa.apple.com
+DOMAIN,gsa.apple.com
+DOMAIN,known-issues.apple.com
+DOMAIN,gateway.icloud.com
+DOMAIN,mask.icloud.com
+DOMAIN,mask-h2.icloud.com
+DOMAIN,mask-api.icloud.com
+DOMAIN,probe.icloud.com
+DOMAIN,pong.icloud.com
+DOMAIN,metrics.icloud.com
+DOMAIN,weather-analytics-events.apple.com
+DOMAIN,apple-native-relay.apple.com
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud.com.cn
+DOMAIN-SUFFIX,icloud.apple.com
+DOMAIN-SUFFIX,icloud-content.com
+DOMAIN-SUFFIX,mzstatic.com
+DOMAIN-SUFFIX,apple-cloudkit.com
+DOMAIN-SUFFIX,apple-livephotoskit.com
+DOMAIN-SUFFIX,apzones.com
+DOMAIN-SUFFIX,cdn-apple.com
+DOMAIN-SUFFIX,gc.apple.com
+DOMAIN-SUFFIX,iwork.apple.com
+DOMAIN-SUFFIX,apple-dns.net
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,apple.com.akadns.net
+
+# ============ 系统运行 / 错误诊断（不包含广告投放） ============
+# These are compiler exclusions, never DIRECT rules or client settings changes.
+# Diagnostic collection can contain identifiers/logs; disable it in the app/OS if desired.
+# Windows diagnostic/control/update endpoints; do not exempt all microsoft.com or msn.com.
+# https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+# https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+DOMAIN-SUFFIX,events.data.microsoft.com
+DOMAIN-SUFFIX,telemetry.microsoft.com
+DOMAIN-SUFFIX,telemetry.microsoft.com.nsatc.net
+DOMAIN-SUFFIX,vortex.data.microsoft.com
+DOMAIN-SUFFIX,vortex-win.data.microsoft.com
+DOMAIN,settings-win.data.microsoft.com
+DOMAIN,settings.data.microsoft.com
+DOMAIN,watson.microsoft.com
+DOMAIN,www.telecommandsvc.microsoft.com
+DOMAIN,browser.events.data.msn.com
+DOMAIN,ceuswatcab01.blob.core.windows.net
+DOMAIN,ceuswatcab02.blob.core.windows.net
+DOMAIN,eaus2watcab01.blob.core.windows.net
+DOMAIN,eaus2watcab02.blob.core.windows.net
+DOMAIN,weus2watcab01.blob.core.windows.net
+DOMAIN,weus2watcab02.blob.core.windows.net
+DOMAIN-SUFFIX,windowsupdate.com
+DOMAIN-SUFFIX,update.microsoft.com
+DOMAIN-SUFFIX,delivery.mp.microsoft.com
+# Defender cloud protection, certificate revocation and security downloads.
+# https://learn.microsoft.com/en-us/defender-endpoint/configure-network-connections-microsoft-defender-antivirus
+DOMAIN-SUFFIX,wdcp.microsoft.com
+DOMAIN-SUFFIX,wdcpalt.microsoft.com
+DOMAIN-SUFFIX,wd.microsoft.com
+DOMAIN-SUFFIX,download.microsoft.com
+DOMAIN,definitionupdates.microsoft.com
+DOMAIN,crl.microsoft.com
+DOMAIN,www.microsoft.com
+DOMAIN,go.microsoft.com
+DOMAIN,licensing.mp.microsoft.com
+DOMAIN,www.msftconnecttest.com
+DOMAIN,dns.msftncsi.com
+# Android/ChromeOS connectivity, core APIs and app logging/reporting, not all Google domains.
+# https://support.google.com/chrome/a/answer/6334001
+# https://firebase.google.com/docs/crashlytics/troubleshooting
+DOMAIN,connectivitycheck.android.com
+DOMAIN,connectivitycheck.gstatic.com
+DOMAIN,android.clients.google.com
+DOMAIN,clients2.google.com
+DOMAIN,clients4.google.com
+DOMAIN,tools.google.com
+DOMAIN,dl.google.com
+DOMAIN,safebrowsing.google.com
+DOMAIN,firebaselogging-pa.googleapis.com
+# Firebase logging is mixed-use telemetry, not Crashlytics-only; allow by current policy.
+DOMAIN,crashlyticsreports-pa.googleapis.com
+DOMAIN,firebasecrashlytics.googleapis.com
+DOMAIN-SUFFIX,crashlytics.com
+# Xiaomi system/update/diagnostic hosts; no ad.*, log.ad.* or sdkconfig.ad.* exemption.
+# Observed in the retired MIUIPrivacy input; ownership: maintained xiaomi service family.
+# https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Surge/MIUIPrivacy/MIUIPrivacy.list
+# https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/xiaomi.list
+DOMAIN,api.installer.xiaomi.com
+DOMAIN,auth.be.sec.miui.com
+DOMAIN,ccc.sys.miui.com
+DOMAIN,data.mistat.xiaomi.com
+DOMAIN,data.mistat.india.xiaomi.com
+DOMAIN,data.mistat.intl.xiaomi.com
+DOMAIN,data.mistat.rus.xiaomi.com
+DOMAIN,flash.sec.miui.com
+DOMAIN,idm.api.io.mi.com
+DOMAIN,jupiter.sys.miui.com
+DOMAIN,log.avlyun.sec.intl.miui.com
+DOMAIN,logupdate.avlyun.sec.miui.com
+DOMAIN,mazu.sec.miui.com
+DOMAIN,metok.sys.miui.com
+DOMAIN,sentry.d.mi.com
+DOMAIN,sentry.d.xiaomi.net
+DOMAIN,ssl-cdn.static.browser.mi-img.com
+DOMAIN,tracking.miui.com
+DOMAIN,update.avlyun.sec.miui.com
+# Sentry ingestion includes projects used by open-source and proxy apps, across regions.
+# The apex supports legacy SDK API URLs; the SDK CDN is also intentionally exempted.
+# https://docs.sentry.io/api/projects/list-a-projects-client-keys/
+# https://sentry.io/changelog/ingestion-ip-addresses-are-changing/
+# BetterDisplay's reported tenant is covered without trusting unrelated cloud hosting.
+# https://github.com/waydabber/BetterDisplay/discussions/739
+DOMAIN,sentry.io
+DOMAIN-SUFFIX,ingest.sentry.io
+DOMAIN-SUFFIX,ingest.us.sentry.io
+DOMAIN-SUFFIX,ingest.de.sentry.io
+DOMAIN-SUFFIX,sentry-cdn.com
+# Open-source ioBroker adapters use this self-hosted Sentry, not Sentry's SaaS domain.
+# https://github.com/ioBroker/ioBroker.sayit/blob/master/io-package.json
+DOMAIN,sentry.iobroker.net
+# Provider families include their dashboards/APIs, not only upload endpoints.
+# Dedicated marketing analytics outside these operational services remain blockable.
+# https://docs.bugsnag.com/platforms/android/configuration-options/#endpoints
+DOMAIN-SUFFIX,bugsnag.com
+# https://docs.newrelic.com/docs/new-relic-solutions/get-started/networks/
+DOMAIN-SUFFIX,nr-data.net
+DOMAIN,collector.newrelic.com
+DOMAIN,collector.eu.newrelic.com
+DOMAIN,mobile-collector.newrelic.com
+DOMAIN,mobile-crash.newrelic.com
+DOMAIN,js-agent.newrelic.com
+# https://docs.rollbar.com/reference/getting-started-1
+DOMAIN,api.rollbar.com
+
+# ============ 危险 IP 规则 (会导致无法上网) ============
+# 这些 IP 规则过于宽泛，会导致网络异常
+IP-CIDR,0.0.0.0/24
+IP-CIDR,0.0.0.0/8
+IP-CIDR,0.0.0.1/32
+
+# ============ 微信相关 (WeChat) ============
+# 微信内置浏览器链接跳转/重定向必需
+DOMAIN-SUFFIX,weixin.qq.com
+DOMAIN-SUFFIX,wx.qq.com
+DOMAIN-SUFFIX,wechat.com
+DOMAIN-SUFFIX,weixinbridge.com
+DOMAIN,open.weixin.qq.com
+DOMAIN,res.wx.qq.com
+DOMAIN,mp.weixin.qq.com
+
+# 微信小程序相关
+DOMAIN-SUFFIX,servicewechat.com
+DOMAIN-SUFFIX,wxs.qq.com
+
+# ============ 支付相关 (Payment) ============
+# 支付宝
+DOMAIN-SUFFIX,alipay.com
+DOMAIN-SUFFIX,alipayobjects.com
+
+# 微信支付
+DOMAIN-SUFFIX,tenpay.com
+DOMAIN-SUFFIX,wechatpay.com
+
+# ============ Sukka 规则集签名域名 ============
+# Sukka 用于检测规则集是否正确加载的测试域名
+# 这不是真实域名，但 Surge 会报错，需要排除
+DOMAIN,7h1s_rul35et_i5_mad3_by_5ukk4w-ruleset.skk.moe
+
+# ============ 哔哩哔哩 (BiliBili) ============
+# 哔哩哔哩视频播放必需域名
+DOMAIN-SUFFIX,bilibili.com
+DOMAIN-SUFFIX,bilivideo.com
+DOMAIN-SUFFIX,biliapi.net
+DOMAIN-SUFFIX,biliapi.com
+DOMAIN-KEYWORD,bilibili
+DOMAIN-KEYWORD,bilivideo
+DOMAIN,upos-sz-302ppio.bilivideo.com
+DOMAIN,upos-sz-302kodo.bilivideo.com
+DOMAIN,mcdn.bilivideo.cn
+
+# ============ 虎扑 (Hupu) ============
+# 恢复虎扑图片和论坛缩略图加载
+DOMAIN,t1.hoopchina.com.cn
+DOMAIN,w2.hoopchina.com.cn
+
+# ============ 其他常用服务 ============
+# 可根据需要添加更多白名单域名
+# DOMAIN-SUFFIX,example.com
+
+# ============ 抖音 (Douyin) & TikTok ============
+# 抖音/TikTok 视频播放及核心业务必需
+DOMAIN-SUFFIX,douyin.com
+DOMAIN-SUFFIX,amemv.com
+DOMAIN-SUFFIX,snssdk.com
+DOMAIN-SUFFIX,douyinvod.com
+DOMAIN-SUFFIX,douyinpic.com
+DOMAIN-SUFFIX,douyincdn.com
+DOMAIN-SUFFIX,byteimg.com
+DOMAIN-SUFFIX,bytemastatic.com
+DOMAIN-SUFFIX,douyinstatic.com
+DOMAIN-SUFFIX,zijieapi.com
+DOMAIN-SUFFIX,bytedance.com
+DOMAIN-SUFFIX,ixigua.com
+DOMAIN-SUFFIX,pstatp.com
+DOMAIN-SUFFIX,toutiao.com
+# TikTok International
+DOMAIN-SUFFIX,tiktok.com
+DOMAIN-SUFFIX,tiktokv.com
+DOMAIN-SUFFIX,tiktokcdn.com
+DOMAIN-SUFFIX,byteoversea.com
+DOMAIN-SUFFIX,ibytedtos.com
+DOMAIN-SUFFIX,muscdn.com
+
+# ============ 小红书 (XiaoHongShu) ============
+DOMAIN-SUFFIX,xiaohongshu.com
+DOMAIN-SUFFIX,xhscdn.com
+
+# ============ 美团/点评 (Meituan/Dianping) ============
+DOMAIN-SUFFIX,meituan.com
+DOMAIN-SUFFIX,meituan.net
+DOMAIN-SUFFIX,dianping.com
+
+# ============ 高德 (Amap/AutoNavi) ============
+DOMAIN-SUFFIX,amap.com
+
+# ============ AI 核心服务 (AI Services) ============
+DOMAIN-SUFFIX,openai.com
+DOMAIN-SUFFIX,chatgpt.com
+DOMAIN-SUFFIX,oaistatic.com
+DOMAIN-SUFFIX,oaiusercontent.com
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,gemini.google.com
+DOMAIN-SUFFIX,aistudio.google.com
+DOMAIN-SUFFIX,makersuite.google.com
+DOMAIN,gemini.google.com
+DOMAIN-KEYWORD,gemini
+DOMAIN-KEYWORD,google
+
+# ============ 支付与基础设施 (Infrastructure) ============
+DOMAIN-SUFFIX,pay.google.com
+DOMAIN-SUFFIX,stripe.com
+DOMAIN-SUFFIX,fastly.net
+DOMAIN-SUFFIX,akamaihd.net
+DOMAIN-SUFFIX,edgecompute.app
+
+# ============ 办公与云存储 (Productivity) ============
+DOMAIN-SUFFIX,microsoftonline.com
+DOMAIN-SUFFIX,live.com
+DOMAIN-SUFFIX,office.com
+DOMAIN-SUFFIX,dropbox.com
+DOMAIN-SUFFIX,terabox.com
+
+
+# DNS over HTTPS (DoH) Providers (Amplify Nexus)
+DOMAIN,dns.alidns.com
+DOMAIN,doh.pub
+DOMAIN,dns.pub
+DOMAIN,dot.pub
+DOMAIN,doh.360.cn
+DOMAIN,dot.360.cn
+DOMAIN,dns.google
+DOMAIN,dns.google.com
+DOMAIN,cloudflare-dns.com
+DOMAIN,1dot1dot1dot1.cloudflare-dns.com
+DOMAIN,one.one.one.one
+DOMAIN,dns.quad9.net
+DOMAIN,dns.adguard-dns.com
+DOMAIN,dns.nextdns.io
+DOMAIN,doh.opendns.com
+DOMAIN,doh.dns.apple.com
+DOMAIN,wikimedia-dns.org
+DOMAIN,dns.twnic.tw
+DOMAIN,libredns.gr
+DOMAIN,dns4all.eu
+DOMAIN,doh.mullvad.net
+DOMAIN,ffmuc.net
+DOMAIN,doh.ffmuc.net
+DOMAIN,doh-pure.onedns.net
+
+# ============ 脸书 (Facebook) ============
+# 恢复脸书核心 API、图谱与推送服务正常使用，解决被 ThreatIntel 误杀的问题
+DOMAIN,graph.facebook.com
+DOMAIN,graph-fallback.facebook.com
+DOMAIN,b-graph.facebook.com
+DOMAIN,b-graph-fallback.facebook.com
+DOMAIN,z-m-graph.facebook.com
+DOMAIN,connect.facebook.com
+DOMAIN,mqtt-mini.facebook.com
+DOMAIN,web.facebook.com
+DOMAIN,web-fallback.facebook.com
+DOMAIN,dns.facebook.com
+
+
+
+# ============ 终极基础架构保护 (CRITICAL SUBDOMAINS) ============
+# 保护被上游错误屏蔽的关键子域名 (精确保护，不影响广告屏蔽)
+DOMAIN,www.google.com
+DOMAIN,accounts.google.com
+DOMAIN,mail.google.com
+DOMAIN,play.google.com
+DOMAIN,play.googleapis.com
+DOMAIN,imap.gmail.com
+DOMAIN,fpinit.itunes.apple.com
+DOMAIN,xp.itunes-apple.com.akadns.net
+DOMAIN,mobile.events.data.microsoft.com
+
+# ============ GitHub 全局保护 ============
+# 防止上游规则误杀 GitHub 导致脚本更新失败
+DOMAIN-SUFFIX,github.com
+DOMAIN-SUFFIX,githubusercontent.com
+
+DOMAIN-SUFFIX,github.io
+DOMAIN-SUFFIX,githubassets.com
+DOMAIN-SUFFIX,githubcopilot.com
+DOMAIN-SUFFIX,githubnext.com
+DOMAIN-SUFFIX,github.dev
+DOMAIN-KEYWORD,github
+
+# ============ Telegram 全局保护 ============
+# Telegram 核心域名，防止消息收发/媒体加载异常
+DOMAIN-SUFFIX,telegram.org
+DOMAIN-SUFFIX,telegram.me
+DOMAIN-SUFFIX,t.me
+DOMAIN-SUFFIX,telegra.ph
+DOMAIN-SUFFIX,telesco.pe
+DOMAIN-SUFFIX,tdesktop.com
+DOMAIN-SUFFIX,telegram-cdn.org
+DOMAIN-SUFFIX,cdn-telegram.org
+DOMAIN-SUFFIX,telegram.dog
+DOMAIN-SUFFIX,telegram.space
+DOMAIN-SUFFIX,tg.dev
+DOMAIN-SUFFIX,tx.me
+DOMAIN-SUFFIX,tgstat.ru
+DOMAIN-SUFFIX,telega.one
+DOMAIN-SUFFIX,graph.org
+DOMAIN-SUFFIX,fragment.com
+DOMAIN-SUFFIX,contest.com
+DOMAIN-SUFFIX,comments.app
+DOMAIN-SUFFIX,quiz.directory
+DOMAIN-SUFFIX,usercontent.dev
+DOMAIN-SUFFIX,ton.org
+DOMAIN-SUFFIX,toncenter.com
+DOMAIN-KEYWORD,telegram
+# Telegram CDN IP 段保护（完整覆盖）
+IP-CIDR,91.105.192.0/23,no-resolve
+IP-CIDR,91.108.4.0/22,no-resolve
+IP-CIDR,91.108.8.0/21,no-resolve
+IP-CIDR,91.108.16.0/21,no-resolve
+IP-CIDR,91.108.56.0/22,no-resolve
+IP-CIDR,95.161.64.0/20,no-resolve
+IP-CIDR,139.59.210.98/32,no-resolve
+IP-CIDR,149.154.160.0/20,no-resolve
+IP-CIDR,185.76.151.0/24,no-resolve
+IP-CIDR,194.221.250.50/32,no-resolve
+IP-CIDR,196.55.216.167/32,no-resolve
+IP-CIDR6,2001:b28:f23c::/48,no-resolve
+IP-CIDR6,2001:b28:f23d::/48,no-resolve
+IP-CIDR6,2001:b28:f23f::/48,no-resolve
+IP-CIDR6,2001:67c:4e8::/48,no-resolve
+IP-CIDR6,2a0a:f280::/32,no-resolve
+
+# ============ Discord 全局保护 ============
+DOMAIN-SUFFIX,discord.com
+DOMAIN-SUFFIX,discord.gg
+DOMAIN-SUFFIX,discordapp.com
+DOMAIN-SUFFIX,discordapp.net
+DOMAIN-SUFFIX,discord.media
+DOMAIN-SUFFIX,discordcdn.com
+DOMAIN-KEYWORD,discord
+# Discord IP 段保护
+IP-CIDR,66.22.196.0/22,no-resolve
+IP-CIDR,66.22.200.0/21,no-resolve
+IP-CIDR,66.22.208.0/20,no-resolve
+IP-CIDR,66.22.224.0/22,no-resolve
+IP-CIDR,66.22.232.0/21,no-resolve
+
+# ============ Signal 全局保护 ============
+DOMAIN-SUFFIX,signal.org
+DOMAIN-SUFFIX,whispersystems.org
+DOMAIN-SUFFIX,signal.art
+DOMAIN-SUFFIX,signal-cdn.org
+
+# ============ WhatsApp 全局保护 ============
+DOMAIN-SUFFIX,whatsapp.com
+DOMAIN-SUFFIX,whatsapp.net
+DOMAIN-SUFFIX,wa.me
+DOMAIN-KEYWORD,whatsapp
+
+# ============ Kiro AI 全局保护 ============
+# Kiro AI 开发环境和相关服务
+DOMAIN-SUFFIX,kiro.dev
+DOMAIN-SUFFIX,kiro.ai
+DOMAIN-KEYWORD,kiro
+
+# ============ 开发者工具 (Developer Tools) ============
+# VS Code / Cursor / 开发环境
+DOMAIN-SUFFIX,vscode.dev
+DOMAIN-SUFFIX,vscode-cdn.net
+DOMAIN-SUFFIX,visualstudio.com
+DOMAIN-SUFFIX,cursor.sh
+DOMAIN-SUFFIX,cursor.com
+DOMAIN-SUFFIX,replit.com
+DOMAIN-SUFFIX,codesandbox.io
+DOMAIN-SUFFIX,codespaces.github.com
+DOMAIN-SUFFIX,stackblitz.com
+DOMAIN-SUFFIX,glitch.com
+DOMAIN-SUFFIX,jsfiddle.net
+DOMAIN-SUFFIX,codepen.io
+
+# npm / yarn / pnpm 包管理器
+DOMAIN-SUFFIX,npmjs.com
+DOMAIN-SUFFIX,npmjs.org
+DOMAIN-SUFFIX,yarnpkg.com
+DOMAIN-SUFFIX,registry.npmmirror.com
+DOMAIN-SUFFIX,registry.npm.taobao.org
+
+# Docker / 容器服务
+DOMAIN-SUFFIX,docker.com
+DOMAIN-SUFFIX,docker.io
+DOMAIN-SUFFIX,dockerhub.com
+
+# ============ CDN 和基础设施保护 ============
+DOMAIN-SUFFIX,jsdelivr.net
+DOMAIN-SUFFIX,unpkg.com
+DOMAIN-SUFFIX,cdnjs.com
+DOMAIN-SUFFIX,cdnjs.cloudflare.com
+DOMAIN-SUFFIX,cdn.jsdelivr.net
+
+# ============ Twitter / X 全局保护 ============
+DOMAIN-SUFFIX,twitter.com
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,t.co
+DOMAIN-KEYWORD,twitter
+
+# ============ Reddit 全局保护 ============
+DOMAIN-SUFFIX,reddit.com
+DOMAIN-SUFFIX,redd.it
+DOMAIN-SUFFIX,redditmedia.com
+DOMAIN-SUFFIX,redditstatic.com
+DOMAIN-KEYWORD,reddit
+
+# ============ Steam / 游戏平台 ============
+DOMAIN-SUFFIX,steampowered.com
+DOMAIN-SUFFIX,steamcommunity.com
+DOMAIN-SUFFIX,steamstatic.com
+DOMAIN-SUFFIX,steamgames.com
+DOMAIN-SUFFIX,steam-chat.com
+DOMAIN-KEYWORD,steam
+
+# Epic Games
+DOMAIN-SUFFIX,epicgames.com
+DOMAIN-SUFFIX,epicgames.dev
+DOMAIN-SUFFIX,unrealengine.com
+
+# ============ Netflix / Disney+ / 流媒体 ============
+DOMAIN-SUFFIX,netflix.com
+DOMAIN-SUFFIX,nflxext.com
+DOMAIN-SUFFIX,nflximg.com
+DOMAIN-SUFFIX,nflxvideo.net
+DOMAIN-KEYWORD,netflix
+
+DOMAIN-SUFFIX,disneyplus.com
+DOMAIN-SUFFIX,disney-plus.net
+DOMAIN-SUFFIX,dssott.com
+
+DOMAIN-SUFFIX,hulu.com
+DOMAIN-SUFFIX,hulustream.com
+
+# ============ Spotify / 音乐流媒体 ============
+DOMAIN-SUFFIX,spotify.com
+DOMAIN-SUFFIX,scdn.co
+DOMAIN-SUFFIX,spotifycdn.com
+DOMAIN-KEYWORD,spotify
+
+# ============ Notion / 笔记工具 ============
+DOMAIN-SUFFIX,notion.so
+DOMAIN-SUFFIX,notion.site
+DOMAIN-SUFFIX,notion-static.com
+DOMAIN-SUFFIX,notion.new
+DOMAIN-KEYWORD,notion
+
+# Obsidian
+DOMAIN-SUFFIX,obsidian.md
+
+# Evernote
+DOMAIN-SUFFIX,evernote.com
+
+# ============ Zoom / Teams / 会议软件 ============
+DOMAIN-SUFFIX,zoom.us
+DOMAIN-SUFFIX,zoom.com
+DOMAIN-SUFFIX,zoomgov.com
+DOMAIN-KEYWORD,zoom
+
+DOMAIN-SUFFIX,teams.microsoft.com
+DOMAIN-SUFFIX,skype.com
+
+# ============ Amazon / AWS ============
+DOMAIN-SUFFIX,amazon.com
+DOMAIN-SUFFIX,amazonaws.com
+DOMAIN-SUFFIX,aws.amazon.com
+DOMAIN-SUFFIX,awsstatic.com
+
+# ============ Wikipedia / Wikimedia ============
+DOMAIN-SUFFIX,wikipedia.org
+DOMAIN-SUFFIX,wikimedia.org
+DOMAIN-SUFFIX,wikidata.org
+DOMAIN-SUFFIX,mediawiki.org
+
+# ============ Medium / Substack / 博客平台 ============
+DOMAIN-SUFFIX,medium.com
+DOMAIN-SUFFIX,substack.com
+DOMAIN-SUFFIX,substackcdn.com
+
+# ============ Cloudflare 相关服务 ============
+DOMAIN-SUFFIX,workers.dev
+DOMAIN-SUFFIX,pages.dev
+DOMAIN-SUFFIX,cloudflare-quic.com
+DOMAIN-SUFFIX,cloudflare-gateway.com
+
+# ============ Vercel / Netlify / 部署平台 ============
+DOMAIN-SUFFIX,vercel.app
+DOMAIN-SUFFIX,vercel.com
+DOMAIN-SUFFIX,vercel.sh
+DOMAIN-SUFFIX,netlify.app
+DOMAIN-SUFFIX,netlify.com
+
+# ============ 网易云音乐 ============
+DOMAIN-SUFFIX,music.163.com
+
+# ============ Perplexity AI ============
+DOMAIN-SUFFIX,perplexity.ai
+DOMAIN-KEYWORD,perplexity
+
+# ============ Linux / Ubuntu / 软件源 ============
+DOMAIN-SUFFIX,ubuntu.com
+DOMAIN-SUFFIX,canonical.com
+DOMAIN-SUFFIX,launchpad.net
+DOMAIN-SUFFIX,debian.org
+DOMAIN-SUFFIX,archlinux.org
+
+# ============ Mozilla / Firefox ============
+DOMAIN-SUFFIX,mozilla.org
+DOMAIN-SUFFIX,firefox.com
+DOMAIN-SUFFIX,getpocket.com
+
+# ============ ProtonMail / ProtonVPN ============
+DOMAIN-SUFFIX,protonmail.com
+DOMAIN-SUFFIX,proton.me
+DOMAIN-SUFFIX,protonvpn.com
+
+# ============ 1Password / Bitwarden ============
+DOMAIN-SUFFIX,1password.com
+DOMAIN-SUFFIX,bitwarden.com
+
+# ============ Figma / 设计工具 ============
+DOMAIN-SUFFIX,figma.com
+DOMAIN-SUFFIX,figmausercontent.com
+DOMAIN-SUFFIX,canva.com
+
+# ============ Slack / 企业协作 ============
+DOMAIN-SUFFIX,slack.com
+DOMAIN-SUFFIX,slack-edge.com
+DOMAIN-SUFFIX,slack-imgs.com
+
+# ============ Linear / Jira / 项目管理 ============
+DOMAIN-SUFFIX,linear.app
+DOMAIN-SUFFIX,atlassian.com
+DOMAIN-SUFFIX,jira.com
+
+# ============ Stripe / PayPal / 支付网关 ============
+DOMAIN-SUFFIX,stripe.com
+DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypalobjects.com
+
+# ============ Apple 开发者 ============
+DOMAIN,developer.apple.com
+DOMAIN,appstoreconnect.apple.com
+DOMAIN,testflight.apple.com
+
+# ============ Google 开发者 ============
+DOMAIN,console.cloud.google.com
+DOMAIN,firebase.google.com
+DOMAIN,firebase.googleapis.com
+
+# ============ 新浪微博 ============
+DOMAIN-SUFFIX,weibo.com
+DOMAIN-SUFFIX,weibo.cn
+DOMAIN-SUFFIX,sinaimg.cn
+
+# ============ 知乎 (Zhihu) ============
+DOMAIN-SUFFIX,zhihu.com
+DOMAIN-SUFFIX,zhimg.com
+
+# ============ V2EX / HackerNews ============
+DOMAIN-SUFFIX,v2ex.com
+DOMAIN-SUFFIX,news.ycombinator.com
+
+# ============ StackOverflow / 技术社区 ============
+DOMAIN-SUFFIX,stackoverflow.com
+DOMAIN-SUFFIX,stackexchange.com
+DOMAIN-SUFFIX,superuser.com
+DOMAIN-SUFFIX,serverfault.com
+
+# ============ MDN / W3C / 开发文档 ============
+DOMAIN-SUFFIX,developer.mozilla.org
+DOMAIN-SUFFIX,w3.org
+
+# ============ Homebrew / 包管理器 ============
+DOMAIN-SUFFIX,brew.sh
+DOMAIN-SUFFIX,formulae.brew.sh
+
+# ============ Python / pip / PyPI ============
+DOMAIN-SUFFIX,python.org
+DOMAIN-SUFFIX,pypi.org
+DOMAIN-SUFFIX,pythonhosted.org
+
+# ============ Rust / Cargo ============
+DOMAIN-SUFFIX,rust-lang.org
+DOMAIN-SUFFIX,crates.io
+
+# ============ Go / Golang ============
+DOMAIN-SUFFIX,golang.org
+DOMAIN-SUFFIX,go.dev
+
+# ============ 极客时间 / 慕课网 / 学习平台 ============
+DOMAIN-SUFFIX,geekbang.org
+DOMAIN-SUFFIX,imooc.com
+
+# ============ 12306 / 中国铁路 ============
+DOMAIN-SUFFIX,12306.cn
+DOMAIN-SUFFIX,95306.cn
+
+# ============ 国内银行 ============
+DOMAIN-SUFFIX,icbc.com.cn
+DOMAIN-SUFFIX,ccb.com
+DOMAIN-SUFFIX,boc.cn
+DOMAIN-SUFFIX,abchina.com
+DOMAIN-SUFFIX,95599.cn
+DOMAIN-SUFFIX,cmbchina.com
+
+# ============ 顺丰 / 快递 ============
+DOMAIN-SUFFIX,sf-express.com
+
+# ============ DuckDuckGo / 隐私搜索 ============
+DOMAIN-SUFFIX,duckduckgo.com
+DOMAIN-SUFFIX,duck.com
+
+# ============ Brave / 浏览器 ============
+DOMAIN-SUFFIX,brave.com
+DOMAIN-SUFFIX,brave.software
+
+# ============ Bluesky / 社交平台 ============
+DOMAIN-SUFFIX,bsky.app
+DOMAIN-SUFFIX,bsky.social
+
+# ============ Mastodon / 联邦宇宙 ============
+DOMAIN-SUFFIX,mastodon.social
+DOMAIN-SUFFIX,joinmastodon.org
+
+# ============ Twitch / 直播平台 ============
+DOMAIN-SUFFIX,twitch.tv
+DOMAIN-SUFFIX,twitchcdn.net
+DOMAIN-KEYWORD,twitch
+
+# ============ YouTube Music ============
+DOMAIN-SUFFIX,music.youtube.com
+DOMAIN,music.youtube.com
+
+# ============ 网易邮箱 ============
+DOMAIN-SUFFIX,mail.163.com
+DOMAIN-SUFFIX,mail.126.com
+
+# ============ QQ 邮箱 ============
+DOMAIN,mail.qq.com
+DOMAIN,exmail.qq.com
+
+# ============ Gmail ============
+DOMAIN,mail.google.com
+DOMAIN,inbox.google.com
+
+# ============ Outlook ============
+DOMAIN,outlook.com
+DOMAIN,outlook.live.com
+DOMAIN,hotmail.com
+
+# ============ iCloud Mail ============
+DOMAIN,icloud.com
+DOMAIN,me.com
+DOMAIN,mac.com
+
+# ============ 钉钉 (DingTalk) ============
+DOMAIN-SUFFIX,dingtalk.com
+DOMAIN-SUFFIX,alibaba-inc.com
+
+# ============ 企业微信 ============
+DOMAIN-SUFFIX,work.weixin.qq.com
+DOMAIN,work.weixin.qq.com
+
+# ============ 飞书 (Lark/Feishu) ============
+DOMAIN-SUFFIX,feishu.cn
+DOMAIN-SUFFIX,larksuite.com
+
+# ============ 测速工具 ============
+DOMAIN-SUFFIX,speedtest.net
+DOMAIN-SUFFIX,fast.com
+
+# ============ 天气服务 ============
+DOMAIN-SUFFIX,weather.com
+DOMAIN,weather.apple.com
+
+# ============ 地图服务 ============
+DOMAIN-SUFFIX,maps.google.com
+DOMAIN,maps.google.com
+DOMAIN-SUFFIX,maps.apple.com
+DOMAIN,maps.apple.com
+
+
+# ============ Cloudflare 核心 IP 保护 ============
+# Cloudflare CDN 节点 IP 段
+IP-CIDR,162.159.200.0/24,no-resolve
+IP-CIDR,185.199.108.0/22,no-resolve
+IP-CIDR,104.16.0.0/12,no-resolve
+IP-CIDR,172.64.0.0/13,no-resolve
+IP-CIDR,173.245.48.0/20,no-resolve
+
+# ============ Google 核心 IP 保护 ============
+# Google Public DNS
+IP-CIDR,8.8.8.8/32,no-resolve
+IP-CIDR,8.8.4.4/32,no-resolve
+IP-CIDR6,2001:4860:4860::8888/128,no-resolve
+IP-CIDR6,2001:4860:4860::8844/128,no-resolve
+
+# ============ GitHub IP 保护 ============
+# GitHub Pages & Assets
+IP-CIDR,185.199.108.0/22,no-resolve
+IP-CIDR,140.82.112.0/20,no-resolve
+IP-CIDR,143.55.64.0/20,no-resolve
+
+# ============ Twitter/X IP 保护 ============
+IP-CIDR,104.244.42.0/24,no-resolve
+IP-CIDR,104.244.43.0/24,no-resolve
+IP-CIDR,192.133.76.0/22,no-resolve
+
+# ============ 网易云音乐 IP 保护 ============
+IP-CIDR,59.111.160.0/20,no-resolve
+IP-CIDR,223.252.192.0/19,no-resolve
+
+# ============ 哔哩哔哩 IP 保护 ============
+IP-CIDR,106.75.0.0/16,no-resolve
+IP-CIDR,111.206.0.0/16,no-resolve
+IP-CIDR,119.3.0.0/16,no-resolve
+IP-CIDR,120.92.0.0/16,no-resolve
+
+# ============ 抖音/TikTok IP 保护 ============
+IP-CIDR,110.249.200.0/21,no-resolve
+IP-CIDR,111.225.0.0/16,no-resolve
+IP-CIDR,220.181.0.0/16,no-resolve
+
+# ============ Apple iCloud IP 保护 ============
+IP-CIDR,17.0.0.0/8,no-resolve
+
+# ============ Steam IP 保护 ============
+IP-CIDR,23.50.24.0/22,no-resolve
+IP-CIDR,103.10.124.0/23,no-resolve
+IP-CIDR,103.28.54.0/23,no-resolve
+IP-CIDR,146.66.152.0/21,no-resolve
+IP-CIDR,153.254.86.0/24,no-resolve
+IP-CIDR,155.133.224.0/19,no-resolve
+IP-CIDR,162.254.192.0/21,no-resolve
+IP-CIDR,185.25.180.0/22,no-resolve
+IP-CIDR,190.217.33.0/24,no-resolve
+IP-CIDR,192.69.96.0/22,no-resolve
+IP-CIDR,205.196.6.0/24,no-resolve
+IP-CIDR,208.64.200.0/22,no-resolve
+IP-CIDR,208.78.164.0/22,no-resolve
+
+# ============ Netflix IP 保护 ============
+IP-CIDR,23.246.0.0/18,no-resolve
+IP-CIDR,37.77.184.0/21,no-resolve
+IP-CIDR,45.57.0.0/17,no-resolve
+IP-CIDR,64.120.128.0/17,no-resolve
+IP-CIDR,66.197.128.0/17,no-resolve
+IP-CIDR,69.53.224.0/19,no-resolve
+IP-CIDR,108.175.32.0/20,no-resolve
+IP-CIDR,185.2.220.0/22,no-resolve
+IP-CIDR,185.9.188.0/22,no-resolve
+IP-CIDR,192.173.64.0/18,no-resolve
+IP-CIDR,198.38.96.0/19,no-resolve
+IP-CIDR,198.45.48.0/20,no-resolve
+IP-CIDR,207.45.72.0/22,no-resolve
+IP-CIDR,208.75.76.0/22,no-resolve
+
+# ============ AWS CloudFront IP 保护 ============
+IP-CIDR,13.32.0.0/15,no-resolve
+IP-CIDR,13.35.0.0/16,no-resolve
+IP-CIDR,13.224.0.0/14,no-resolve
+IP-CIDR,52.84.0.0/15,no-resolve
+IP-CIDR,54.192.0.0/16,no-resolve
+IP-CIDR,54.230.0.0/16,no-resolve
+IP-CIDR,99.84.0.0/16,no-resolve
+IP-CIDR,143.204.0.0/16,no-resolve
+IP-CIDR,204.246.164.0/22,no-resolve
+IP-CIDR,204.246.168.0/22,no-resolve
+IP-CIDR,205.251.192.0/19,no-resolve
+
+# ============ Fastly CDN IP 保护 ============
+IP-CIDR,23.235.32.0/20,no-resolve
+IP-CIDR,43.249.72.0/22,no-resolve
+IP-CIDR,103.244.50.0/24,no-resolve
+IP-CIDR,103.245.222.0/23,no-resolve
+IP-CIDR,103.245.224.0/24,no-resolve
+IP-CIDR,104.156.80.0/20,no-resolve
+IP-CIDR,140.248.64.0/18,no-resolve
+IP-CIDR,140.248.128.0/17,no-resolve
+IP-CIDR,146.75.0.0/17,no-resolve
+IP-CIDR,151.101.0.0/16,no-resolve
+IP-CIDR,157.52.64.0/18,no-resolve
+IP-CIDR,167.82.0.0/17,no-resolve
+IP-CIDR,167.82.128.0/20,no-resolve
+IP-CIDR,167.82.160.0/20,no-resolve
+IP-CIDR,167.82.224.0/20,no-resolve
+IP-CIDR,172.111.64.0/18,no-resolve
+IP-CIDR,185.31.16.0/22,no-resolve
+IP-CIDR,199.27.72.0/21,no-resolve
+IP-CIDR,199.232.0.0/16,no-resolve
+
+# ============ Akamai CDN IP 保护 ============
+IP-CIDR,2.16.0.0/13,no-resolve
+IP-CIDR,23.0.0.0/12,no-resolve
+IP-CIDR,23.32.0.0/11,no-resolve
+IP-CIDR,23.192.0.0/11,no-resolve
+IP-CIDR,72.246.0.0/15,no-resolve
+IP-CIDR,96.6.0.0/15,no-resolve
+IP-CIDR,96.16.0.0/15,no-resolve
+IP-CIDR,104.64.0.0/10,no-resolve
+IP-CIDR,184.24.0.0/13,no-resolve
+IP-CIDR,184.50.0.0/15,no-resolve
+
+# ============ Microsoft / Azure IP 保护 ============
+IP-CIDR,13.64.0.0/11,no-resolve
+IP-CIDR,13.96.0.0/13,no-resolve
+IP-CIDR,13.104.0.0/14,no-resolve
+IP-CIDR,20.0.0.0/11,no-resolve
+IP-CIDR,40.64.0.0/10,no-resolve
+IP-CIDR,52.96.0.0/12,no-resolve
+IP-CIDR,104.40.0.0/13,no-resolve
+
+# ============ 阿里云 IP 保护 ============
+IP-CIDR,47.52.0.0/14,no-resolve
+IP-CIDR,47.56.0.0/15,no-resolve
+IP-CIDR,47.74.0.0/15,no-resolve
+IP-CIDR,47.88.0.0/14,no-resolve
+IP-CIDR,47.236.0.0/14,no-resolve
+IP-CIDR,116.62.0.0/15,no-resolve
+IP-CIDR,118.178.0.0/16,no-resolve
+IP-CIDR,119.23.0.0/16,no-resolve
+IP-CIDR,120.24.0.0/14,no-resolve
+IP-CIDR,139.196.0.0/14,no-resolve
+IP-CIDR,140.205.0.0/16,no-resolve
+IP-CIDR,47.241.0.0/16,no-resolve
+
+# ============ 腾讯云 IP 保护 ============
+IP-CIDR,49.51.0.0/16,no-resolve
+IP-CIDR,101.32.0.0/14,no-resolve
+IP-CIDR,111.230.0.0/15,no-resolve
+IP-CIDR,118.89.0.0/16,no-resolve
+IP-CIDR,119.28.0.0/15,no-resolve
+IP-CIDR,129.28.0.0/16,no-resolve
+IP-CIDR,148.70.0.0/16,no-resolve
+IP-CIDR,150.109.0.0/16,no-resolve
+
+# ============ jsDelivr CDN 特定 IP 保护 ============
+IP-CIDR,104.16.0.0/13,no-resolve
+IP-CIDR,172.64.0.0/13,no-resolve
+
+# ============ Zoom IP 保护 ============
+IP-CIDR,3.7.35.0/25,no-resolve
+IP-CIDR,3.21.137.128/25,no-resolve
+IP-CIDR,3.22.11.0/24,no-resolve
+IP-CIDR,3.23.93.0/24,no-resolve
+IP-CIDR,3.25.41.128/25,no-resolve
+IP-CIDR,3.25.42.0/25,no-resolve
+IP-CIDR,3.25.49.0/24,no-resolve
+IP-CIDR,3.80.20.128/25,no-resolve
+IP-CIDR,3.96.19.128/25,no-resolve
+IP-CIDR,3.101.32.128/25,no-resolve
+IP-CIDR,3.101.52.0/25,no-resolve
+IP-CIDR,3.104.34.128/25,no-resolve
+IP-CIDR,3.120.121.0/25,no-resolve
+IP-CIDR,3.127.194.128/25,no-resolve
+IP-CIDR,3.208.72.0/25,no-resolve
+IP-CIDR,3.211.241.0/25,no-resolve
+IP-CIDR,3.235.69.0/25,no-resolve
+IP-CIDR,3.235.71.128/25,no-resolve
+IP-CIDR,3.235.72.128/25,no-resolve
+IP-CIDR,3.235.73.0/25,no-resolve
+IP-CIDR,3.235.82.0/23,no-resolve
+IP-CIDR,3.235.96.0/23,no-resolve
+IP-CIDR,4.34.125.128/25,no-resolve
+IP-CIDR,4.35.64.128/25,no-resolve
+IP-CIDR,8.5.128.0/23,no-resolve
+IP-CIDR,13.52.6.128/25,no-resolve
+IP-CIDR,13.52.146.0/25,no-resolve
+IP-CIDR,18.157.88.0/24,no-resolve
+IP-CIDR,18.205.93.128/25,no-resolve
+IP-CIDR,50.239.202.0/23,no-resolve
+IP-CIDR,50.239.204.0/24,no-resolve
+IP-CIDR,52.61.100.128/25,no-resolve
+IP-CIDR,64.125.62.0/24,no-resolve
+IP-CIDR,64.211.144.0/24,no-resolve
+IP-CIDR,65.39.152.0/24,no-resolve
+IP-CIDR,69.174.57.0/24,no-resolve
+IP-CIDR,69.174.108.0/22,no-resolve
+IP-CIDR,99.79.20.0/25,no-resolve
+IP-CIDR,101.36.167.0/24,no-resolve
+IP-CIDR,103.122.166.0/23,no-resolve
+IP-CIDR,111.33.181.0/25,no-resolve
+IP-CIDR,115.110.154.192/26,no-resolve
+IP-CIDR,115.114.56.192/26,no-resolve
+IP-CIDR,115.114.115.0/26,no-resolve
+IP-CIDR,115.114.131.0/26,no-resolve
+IP-CIDR,120.29.148.0/24,no-resolve
+IP-CIDR,129.151.0.0/19,no-resolve
+IP-CIDR,129.151.40.0/22,no-resolve
+IP-CIDR,129.151.48.0/20,no-resolve
+IP-CIDR,129.159.2.0/24,no-resolve
+IP-CIDR,129.159.6.0/23,no-resolve
+IP-CIDR,129.159.160.0/19,no-resolve
+IP-CIDR,129.159.208.0/20,no-resolve
+IP-CIDR,130.61.164.0/22,no-resolve
+IP-CIDR,134.224.0.0/16,no-resolve
+IP-CIDR,140.238.128.0/24,no-resolve
+IP-CIDR,147.124.96.0/19,no-resolve
+IP-CIDR,147.124.224.0/19,no-resolve
+IP-CIDR,158.101.64.0/24,no-resolve
+IP-CIDR,160.1.56.128/25,no-resolve
+IP-CIDR,161.189.199.0/25,no-resolve
+IP-CIDR,161.199.136.0/22,no-resolve
+IP-CIDR,162.12.232.0/22,no-resolve
+IP-CIDR,162.255.36.0/22,no-resolve
+IP-CIDR,165.1.102.0/24,no-resolve
+IP-CIDR,165.1.103.0/24,no-resolve
+IP-CIDR,168.138.16.0/22,no-resolve
+IP-CIDR,168.138.48.0/24,no-resolve
+IP-CIDR,168.138.56.0/21,no-resolve
+IP-CIDR,168.138.72.0/24,no-resolve
+IP-CIDR,168.138.74.0/25,no-resolve
+IP-CIDR,168.138.80.0/21,no-resolve
+IP-CIDR,168.138.96.0/22,no-resolve
+IP-CIDR,168.138.116.0/22,no-resolve
+IP-CIDR,168.138.244.0/24,no-resolve
+IP-CIDR,170.114.0.0/16,no-resolve
+IP-CIDR,173.231.80.0/20,no-resolve
+IP-CIDR,192.204.12.0/22,no-resolve
+IP-CIDR,193.122.16.0/20,no-resolve
+IP-CIDR,193.122.32.0/20,no-resolve
+IP-CIDR,193.122.208.0/20,no-resolve
+IP-CIDR,193.122.224.0/20,no-resolve
+IP-CIDR,193.123.0.0/19,no-resolve
+IP-CIDR,193.123.40.0/21,no-resolve
+IP-CIDR,193.123.128.0/19,no-resolve
+IP-CIDR,198.251.128.0/17,no-resolve
+IP-CIDR,202.177.207.128/27,no-resolve
+IP-CIDR,204.80.104.0/21,no-resolve
+IP-CIDR,206.247.0.0/16,no-resolve
+IP-CIDR,207.226.132.0/24,no-resolve
+IP-CIDR,209.9.211.0/24,no-resolve
+IP-CIDR,209.9.215.0/24,no-resolve
+IP-CIDR,213.19.144.0/24,no-resolve
+IP-CIDR,213.19.153.0/24,no-resolve
+IP-CIDR,213.244.140.0/24,no-resolve
+IP-CIDR,221.122.88.64/27,no-resolve
+IP-CIDR,221.122.88.128/25,no-resolve
+IP-CIDR,221.122.89.128/25,no-resolve
+IP-CIDR,221.123.139.192/27,no-resolve

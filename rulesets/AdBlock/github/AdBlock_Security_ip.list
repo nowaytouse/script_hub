@@ -1,0 +1,42 @@
+# Ruleset: AdBlock · 安全威胁
+# Purpose: 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject
+# Category-Key: Security
+# Shard: 1/1
+# Total Rules: 37
+IP-CIDR,106.39.206.21/32,no-resolve
+IP-CIDR,106.39.206.25/32,no-resolve
+IP-CIDR,106.39.206.70/32,no-resolve
+IP-CIDR,111.31.201.194/32,no-resolve
+IP-CIDR,111.31.241.140/32,no-resolve
+IP-CIDR,111.31.241.76/32,no-resolve
+IP-CIDR,116.128.177.249/32,no-resolve
+IP-CIDR,116.130.224.150/32,no-resolve
+IP-CIDR,116.130.224.205/32,no-resolve
+IP-CIDR,117.185.247.73/32,no-resolve
+IP-CIDR,118.144.88.216/32,no-resolve
+IP-CIDR,123.151.48.171/32,no-resolve
+IP-CIDR,123.151.48.193/32,no-resolve
+IP-CIDR,123.151.48.208/32,no-resolve
+IP-CIDR,180.153.202.85/32,no-resolve
+IP-CIDR,183.192.196.31/32,no-resolve
+IP-CIDR,186.76.76.200/32,no-resolve
+IP-CIDR,203.205.129.102/32,no-resolve
+IP-CIDR,203.205.234.132/32,no-resolve
+IP-CIDR,211.161.101.106/32,no-resolve
+IP-CIDR,220.196.159.73/32,no-resolve
+IP-CIDR,39.156.140.245/32,no-resolve
+IP-CIDR,39.156.140.30/32,no-resolve
+IP-CIDR,39.156.140.47/32,no-resolve
+IP-CIDR,43.130.30.237/32,no-resolve
+IP-CIDR,43.130.30.240/32,no-resolve
+IP-CIDR,43.137.153.151/32,no-resolve
+IP-CIDR,43.137.159.31/32,no-resolve
+IP-CIDR,43.152.112.101/32,no-resolve
+IP-CIDR,43.153.248.120/32,no-resolve
+IP-CIDR,60.28.172.100/32,no-resolve
+IP-CIDR,61.151.231.157/32,no-resolve
+IP-CIDR,8.134.241.67/32,no-resolve
+IP-CIDR,81.71.61.216/32,no-resolve
+IP-CIDR6,2402:4e00:8030:1::17/128,no-resolve
+IP-CIDR6,2408:8711:10:10::20/128,no-resolve
+IP-CIDR6,2409:8702:4860:10::4d/128,no-resolve

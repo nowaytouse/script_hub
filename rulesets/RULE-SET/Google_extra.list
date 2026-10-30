@@ -1,0 +1,21 @@
+# Ruleset: Google_extra
+# Policy: USER-DEFINED
+# Description: Current typed ruleset; policy selected by consumer
+# Rules: 17
+PROCESS-NAME,/Applications/Antigravity.app/
+PROCESS-NAME,/Applications/Antigravity.app/Contents/Resources/bin/language_server
+PROCESS-NAME,BackupandSync
+PROCESS-NAME,com.android.vending
+PROCESS-NAME,com.google.android.gms
+PROCESS-NAME,com.google.android.gsf
+PROCESS-NAME,com.google.android.play.games
+USER-AGENT,%E4%BA%91%E7%AB%AF%E7%A1%AC%E7%9B%98*
+USER-AGENT,*YouTubeMusic*
+USER-AGENT,*com.google.Drive*
+USER-AGENT,*com.google.ios.youtubemusic*
+USER-AGENT,*youtube*
+USER-AGENT,Google.Drive*
+USER-AGENT,YouTube*
+USER-AGENT,YouTubeMusic*
+USER-AGENT,com.google.ios.youtube*
+USER-AGENT,com.google.ios.youtubemusic*

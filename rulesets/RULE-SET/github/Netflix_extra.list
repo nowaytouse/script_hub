@@ -1,0 +1,6 @@
+# Ruleset: Netflix_extra
+# Policy: USER-DEFINED
+# Description: Current typed ruleset; policy selected by consumer
+# Rules: 2
+PROCESS-NAME,com.netflix.mediaclient
+USER-AGENT,Argo*

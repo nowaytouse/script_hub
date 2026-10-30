@@ -1,0 +1,16 @@
+# Explicit game network / matchmaking endpoints, not entire publishers or launchers.
+# Existing canonical Gaming sources: DDNet master discovery, Steam network,
+# Demonware multiplayer services and game anti-cheat.
+DOMAIN,master1.ddnet.org
+DOMAIN-SUFFIX,steamserver.net
+DOMAIN-SUFFIX,demonware.net
+DOMAIN,pubg1.battleye.com
+# Epic's official network allowlist: friends, online availability and UT service.
+# https://www.epicgames.com/help/c-36624475/c-35761596/a15422130
+DOMAIN,friends-public-service-prod06.ol.epicgames.com
+DOMAIN,lightswitch-public-service-prod06.ol.epicgames.com
+DOMAIN,ut-public-service-prod10.ol.epicgames.com
+# osu! game session / spectator services already present in the canonical source.
+DOMAIN,m1.ppy.sh
+DOMAIN,c.ppy.sh
+DOMAIN,spectator.ppy.sh

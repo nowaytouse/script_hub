@@ -1,0 +1,10 @@
+# Ruleset: AdBlock · 隐私追踪
+# Purpose: Privacy / tracking-protection / 防追踪列表
+# Category-Key: Privacy
+# Shard: 1/1
+# Total Rules: 5
+PROCESS-NAME,SogouInput
+PROCESS-NAME,SogouServices
+PROCESS-NAME,SogouTaskManager
+USER-AGENT,SogouInput
+USER-AGENT,com.sogou.sogouinput.BaseKeyboard

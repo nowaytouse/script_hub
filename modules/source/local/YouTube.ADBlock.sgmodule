@@ -1,0 +1,6 @@
+#!name=YouTube 去广告
+#!desc=YouTube 广告过滤 (自动从 Maasea 上游提取并合并进入 PROMAX)
+#!category=🪐 local
+
+[MITM]
+hostname = %APPEND% -github.com, -api.github.com, -*.githubusercontent.com, *.googlevideo.com, youtubei.googleapis.com

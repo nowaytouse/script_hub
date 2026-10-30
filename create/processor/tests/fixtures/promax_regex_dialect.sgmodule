@@ -1,0 +1,9 @@
+#!name=PROMAX regex dialect fixture
+[Rule]
+URL-REGEX,^https:\/\/api\.example\/recommend\/(?!v2),REJECT
+[URL Rewrite]
+^https:\/\/(?<=media\.)example\.com\/ads - reject
+[Body Rewrite]
+http-response-jq ^https:\/\/api\.example\/advertise(?!\/banner) 'del(.data.ad)'
+[Script]
+fixture = type=http-response,pattern=^https:\/\/api\.example\/v[0-9]{1,4}\/(?!content),requires-body=1,script-path=https://example.test/remove.js

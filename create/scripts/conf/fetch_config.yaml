@@ -1,0 +1,25 @@
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: true
+
+rule-providers:
+  SpeedtestChina:
+    type: http
+    behavior: domain
+    url: "https://kelee.one/Tool/Clash/Rule/SpeedtestChina.yaml"
+    path: ./rulesets/kelee/SpeedtestChina.yaml
+    interval: 86400
+
+  SpeedtestInternational:
+    type: http
+    behavior: domain
+    url: "https://kelee.one/Tool/Clash/Rule/SpeedtestInternational.yaml"
+    path: ./rulesets/kelee/SpeedtestInternational.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,SpeedtestChina,DIRECT
+  - RULE-SET,SpeedtestInternational,DIRECT
+  - MATCH,DIRECT

@@ -1,0 +1,86 @@
+# DNS分流: 阿里DNS (223.5.5.5)
+# 适用于: 阿里系、百度、B站核心域名
+# 说明: 已并入本地维护的阿里中国 / 滴滴 / 小米 / 华为域名，用于减少模块内联散落规则
+
+https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/alibaba.conf
+https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/baidu.conf
+https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/bilibili.conf
+# Alibaba & Ant
+alibaba.cn
+alibaba.com.cn
+china.alibaba.com
+1688.com
+taobao.com
+tbcache.com
+tmall.com
+alicdn.com
+alikunlun.com
+aliapp.com
+aliapp.org
+alibabausercontent.com
+mmstat.com
+tb.cn
+aliyun.*
+aliyuncdn.*
+aliyuncs.com
+aliyunddos????.com
+aliyundrive.com
+aliyundun.com
+aliyundunwaf.com
+aliyun-inc.com
+antgroup.com
+antfin.com
+antfinancial.com
+alipay.com
+alipay.com.cn
+alipaydns.com
+alipayeshop.com
+alipaylog.com
+alipayobjects.com
+alipay-eco.com
+# Baidu
+baidu
+baidu.com
+bdimg.com
+bdstatic.com
+baidupcs.*
+baiduyuncdn.*
+baiduyundns.*
+bdydns.*
+bdycdn.*
+bdysite.com
+bdysites.com
+baidubce.*
+bcedns.*
+bcebos.com
+bcevod.com
+bceimg.com
+bcehost.com
+bcehosts.com
+dwz.cn
+# Xiaomi
+mi.com
+miui.com
+xiaomi.com
+xiaomi.net
+mi-img.com
+# Huawei
+huawei.com
+hicloud.com
+dbankcloud.com
+hwcdn.net
+vmall.com
+hihonor.com
+# DiDi
+didichuxing.com
+didiglobal.com
+udache.com
+xiaojukeji.com
+# Bilibili CDN (AliDNS)
+upos-sz-mirrorali.bilivideo.com
+upos-sz-mirrorali?.bilivideo.com
+upos-sz-mirrorali??.bilivideo.com
+upos-sz-mirrorbos.bilivideo.com
+upos-sz-upcdnbd??.bilivideo.com
+xiaohongshu.com
+bytecdn.cn

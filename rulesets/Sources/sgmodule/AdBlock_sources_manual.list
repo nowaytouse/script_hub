@@ -1,0 +1,26 @@
+# Optional filter source catalogue (not merged into PROMAX)
+#
+# PROMAX's canonical advertising manifest is:
+#   rulesets/Sources/Links/AdBlock_sources.list
+#
+# These sources are retained for users who explicitly want their separate
+# behaviour. Mixing them into a default advertising module would make category
+# semantics and failure modes unpredictable.
+# Format: SOURCE|SUGGESTED_POLICY|PURPOSE|RISK
+
+# Search-result content farms (content quality, not advertising)
+https://cdn.jsdelivr.net/gh/wdmpa/content-farm-list@refs/heads/main/Surge.txt|REJECT|ContentFilter|May hide legitimate search results
+
+# Social sharing widgets (privacy/UI choice, not social-media routing)
+https://cdn.jsdelivr.net/gh/geekdada/surge-list/domain-set/social-media-filter.txt|REJECT|SocialWidgets|May break share/login widgets
+
+# Third-party push delivery (privacy choice)
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/JiGuangTuiSong/JiGuangTuiSong.list|REJECT|PushPrivacy|May break application notifications
+
+# Adobe activation is retained only as provenance. It is not advertising and
+# must not be enabled by PROMAX because it can disrupt licensed applications.
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/AdobeActivation/AdobeActivation.list|REJECT|Activation|Breaks licensing and update flows
+
+# Full Shadowrocket routing profile retained as provenance only. PROMAX uses
+# sr_ad_only.conf so proxy/direct/final policies are never interpreted as ads.
+https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_adb.conf|REFERENCE|RoutingProfile|Do not compile as an ad ruleset

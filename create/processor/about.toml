@@ -1,0 +1,6 @@
+# Notice generation selects one declared license branch; it is not legal clearance.
+accepted = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "Unicode-3.0", "Unicode-DFS-2016", "OFL-1.1", "Ubuntu-font-1.0", "BSL-1.0", "CDLA-Permissive-2.0", "CC0-1.0", "GPL-3.0-only"]
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
+ignore-build-dependencies = false
+ignore-dev-dependencies = false
+ignore-transitive-dependencies = false

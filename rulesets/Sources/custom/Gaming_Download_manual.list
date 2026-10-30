@@ -1,0 +1,33 @@
+# Explicit game package / patch endpoints; never use an entire publisher domain.
+# Steam content delivery (includes mainland China mirrors).
+# https://help.steampowered.com/en/faqs/view/5ac5-8056-e88f-f3ff
+DOMAIN-SUFFIX,steamcontent.com
+DOMAIN-SUFFIX,content.steamchina.com
+DOMAIN-SUFFIX,dl.steam.clngaa.com
+DOMAIN-SUFFIX,dl.steam.ksyna.com
+DOMAIN,steampipe.akamaized.net
+DOMAIN,steampipe-kr.akamaized.net
+DOMAIN,steampipe-partner.akamaized.net
+# Epic's official network allowlist separates download endpoints from store/account APIs.
+# https://www.epicgames.com/help/c-36624475/c-35761596/a15422130
+DOMAIN,download.epicgames.com
+DOMAIN,download2.epicgames.com
+DOMAIN,download3.epicgames.com
+DOMAIN,download4.epicgames.com
+DOMAIN,fastly-download.epicgames.com
+DOMAIN,epicgames-download1.akamaized.net
+DOMAIN,cdn1-epicgames-1251447533.file.myqcloud.com
+# Explicit distribution endpoints already present in the canonical Gaming sources.
+DOMAIN,blzddist1-a.akamaihd.net
+DOMAIN,blzddistkr1-a.akamaihd.net
+DOMAIN-SUFFIX,blz.nosdn.127.net
+DOMAIN-SUFFIX,di.res.netease.com
+DOMAIN-SUFFIX,diablo3.nosdn.127.net
+DOMAIN-SUFFIX,wow.nosdn.127.net
+DOMAIN,gamedownloads-rockstargames-com.akamaized.net
+DOMAIN,gog-cdn.akamaized.net
+DOMAIN,gog-cdn-lumen.secure2.footprint.net
+DOMAIN,gog.qtlglb.com
+DOMAIN-SUFFIX,gs2.ww.prod.dl.playstation.net
+DOMAIN-SUFFIX,gs2-ww-prod.psn.akadns.net
+DOMAIN,uplaypc-s-ubisoft.cdn.ubi.com

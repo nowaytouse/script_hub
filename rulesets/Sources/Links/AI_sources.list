@@ -1,0 +1,40 @@
+# AI Services - 人工智能服务规则源
+# 增量合并所有AI相关服务
+# 更新: 2025-12-07
+
+# OpenAI (ChatGPT, DALL-E, etc.)
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/OpenAI/OpenAI.list
+
+# Claude (Anthropic)
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Claude/Claude.list
+
+# Google Gemini/Bard
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Gemini/Gemini.list
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/BardAI/BardAI.list
+
+# GitHub Copilot
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Copilot/Copilot.list
+
+
+
+# MetaCubeX official geosite source
+https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/openai.list
+https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/anthropic.list
+https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cursor.list
+https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/perplexity.list
+
+# MetaCubeX local rules
+https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-ai-cn.list
+# AI Process - AI应用进程规则
+# 更新: 2025-12-07
+
+# 本地进程规则 (手动维护)
+# PROCESS-NAME,ChatGPT
+# PROCESS-NAME,Claude
+# PROCESS-NAME,Copilot
+
+# Smart-Config-Kit Supplement
+../custom/SmartConfigKit/SCK_AI.list
+
+# Sukka AI
+https://ruleset.skk.moe/List/non_ip/ai.conf

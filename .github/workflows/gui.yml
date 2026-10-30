@@ -1,0 +1,114 @@
+name: Rust GUI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'create/processor/**'
+      - '.github/workflows/gui.yml'
+      - 'LICENSE'
+      - 'README.md'
+      - 'PRIVACY.md'
+      - 'SECURITY.md'
+      - 'THIRD_PARTY_NOTICES.md'
+      - 'rulesets/Sources/licenses/**'
+  pull_request:
+    paths:
+      - 'create/processor/**'
+      - '.github/workflows/gui.yml'
+      - 'LICENSE'
+      - 'README.md'
+      - 'PRIVACY.md'
+      - 'SECURITY.md'
+      - 'THIRD_PARTY_NOTICES.md'
+      - 'rulesets/Sources/licenses/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    env:
+      CARGO_BUILD_JOBS: '1'
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
+    defaults:
+      run:
+        working-directory: create/processor
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        with:
+          rust-src-dir: create/processor
+          toolchain: stable
+          cache-workspaces: create/processor -> ../../target
+          cache-shared-key: script-hub-processor
+          cache-save-if: ${{ github.ref == 'refs/heads/master' }}
+          cache-on-failure: false
+      - name: Format and lint
+        run: |
+          cargo fmt -- --check
+          cargo clippy --locked --all-targets --features gui -- -D warnings
+      - name: Tests
+        run: cargo test --locked --all-targets --features gui -- --test-threads=1
+      - name: Build standalone GUI
+        run: cargo build --release --locked --features gui --bin script-hub-gui
+      - name: Worker smoke test without a display
+        if: runner.os != 'Windows'
+        run: ../../target/release/script-hub-gui --worker validate --root ../..
+      - name: Windows worker smoke test without a display
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $worker = Start-Process -FilePath ../../target/release/script-hub-gui.exe -ArgumentList '--worker','validate','--root','../..' -Wait -PassThru
+          if ($worker.ExitCode -ne 0) { throw "GUI worker failed: $($worker.ExitCode)" }
+      - name: Package macOS application
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p ../../target/ScriptHub.app/Contents/MacOS
+          mkdir -p ../../target/ScriptHub.app/Contents/Resources/licenses
+          mkdir -p ../../target/ScriptHub.app/Contents/Resources/licenses/epaint_default_fonts
+          cp ../../target/release/script-hub-gui ../../target/ScriptHub.app/Contents/MacOS/
+          cp assets/Info.plist ../../target/ScriptHub.app/Contents/Info.plist
+          cp ../../LICENSE ../../PRIVACY.md ../../SECURITY.md ../../THIRD_PARTY_NOTICES.md ../../target/ScriptHub.app/Contents/Resources/
+          cp THIRD_PARTY_LICENSES.txt ../../target/ScriptHub.app/Contents/Resources/
+          cp ../../rulesets/Sources/licenses/*.txt ../../target/ScriptHub.app/Contents/Resources/licenses/
+          cp ../../rulesets/Sources/licenses/README.md ../../target/ScriptHub.app/Contents/Resources/licenses/
+          cp licenses/epaint_default_fonts/* ../../target/ScriptHub.app/Contents/Resources/licenses/epaint_default_fonts/
+          printf 'Source commit: %s\nSource: https://github.com/nowaytouse/script_hub/tree/%s\n' "$GITHUB_SHA" "$GITHUB_SHA" > ../../target/ScriptHub.app/Contents/Resources/SOURCE.txt
+          codesign --force --sign - ../../target/ScriptHub.app
+          codesign --verify --deep --strict ../../target/ScriptHub.app
+          tar -czf ../../target/script-hub-gui-macos.tar.gz -C ../../target ScriptHub.app
+      - name: Package Windows application
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $package = '../../target/script-hub-gui-windows'
+          New-Item -ItemType Directory -Force -Path $package, "$package/licenses", "$package/licenses/epaint_default_fonts" | Out-Null
+          Copy-Item ../../target/release/script-hub-gui.exe $package
+          Copy-Item ../../LICENSE, ../../PRIVACY.md, ../../SECURITY.md, ../../THIRD_PARTY_NOTICES.md $package
+          Copy-Item THIRD_PARTY_LICENSES.txt $package
+          Copy-Item ../../rulesets/Sources/licenses/*.txt "$package/licenses"
+          Copy-Item ../../rulesets/Sources/licenses/README.md "$package/licenses"
+          Copy-Item licenses/epaint_default_fonts/* "$package/licenses/epaint_default_fonts"
+          "Source commit: $env:GITHUB_SHA`nSource: https://github.com/nowaytouse/script_hub/tree/$env:GITHUB_SHA" | Set-Content "$package/SOURCE.txt"
+          Compress-Archive -Path "$package/*" -DestinationPath ../../target/script-hub-gui-windows.zip
+      - name: Upload desktop executable
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 (Node 24)
+        with:
+          name: script-hub-gui-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            target/script-hub-gui-*.tar.gz
+            target/script-hub-gui-*.zip
+          if-no-files-found: error
+          retention-days: 30

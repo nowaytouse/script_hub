@@ -1,0 +1,8 @@
+# Ruleset: StreamEU_extra
+# Policy: USER-DEFINED
+# Description: Internal upstream snapshot; not a subscription
+# Rules: 4
+USER-AGENT,All4*
+USER-AGENT,BBCiPlayer*
+USER-AGENT,ITV_Player*
+USER-AGENT,My5*
