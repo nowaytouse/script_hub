@@ -1,15 +1,9 @@
 # Security
 
-## Reporting a vulnerability
+[私密报告](https://github.com/nowaytouse/script_hub/security/advisories/new)
 
-Please report suspected vulnerabilities through GitHub's private repository security advisory flow:
+请勿公开凭据、个人数据或利用细节；确认 GitHub 已接收报告。渠道不可用时，先联系维护者的可信私密渠道。
 
-<https://github.com/nowaytouse/script_hub/security/advisories/new>
+上游脚本与 MITM 需独立审阅，不要关闭证书校验来绕过错误。豁免不代表信任任意代理服务器。
 
-If private reporting is unavailable, contact the maintainers through an established private channel before sharing details. Do not post exploit steps, credentials, personal data, or other sensitive information in a public issue. Do not assume that the advisory feature is enabled or that a report has been received until GitHub confirms submission.
-
-When reporting, include the affected version or commit, platform, concise impact, and reproduction details that do not expose real secrets or user data. Avoid attaching private workspace files or unredacted logs.
-
-## Scope and limitations
-
-This repository has not completed a full security audit or a comprehensive third-party dependency/source inventory. A passing build or CI job is not a security certification. Script Hub's explicit-action network model does not make upstream sources or scripts inherently trustworthy; review configured sources and generated output before use.
+未完成全面安全与许可审计。构建或 CI 通过不是安全认证。

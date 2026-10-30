@@ -1,22 +1,9 @@
 # Privacy
 
-Script Hub is a local desktop and command-line tool. It does not automatically upload workspace files, settings, task history, or diagnostic logs.
+工作区、设置与 SQLite 任务历史不自动上传。诊断日志需主动开启；分享前检查敏感信息。
 
-## Local data
+默认不扫描工作区。更新与 Git 由明确操作或 CI 计划发起；构建、外部脚本及客户端可能联网。
 
-- Application preferences are stored in the platform-specific settings JSON file documented in the README.
-- The desktop app stores task-history summaries in a local SQLite database and keeps up to 100 records by default. This history is local application data, not a cloud account or synchronization service.
-- Diagnostic logging is opt-in. Logs are bounded and redacted, but redaction is not a guarantee that every secret or sensitive value is removed. Review logs before copying, attaching, or sharing them.
-- The application does not automatically scan workspaces at startup by default. A workspace is read or written only after the user opens it or explicitly starts an action that operates on it.
+系统与诊断端点豁免不关闭数据收集。退出收集请使用应用或系统设置，不视为匿名保证。
 
-## Network activity
-
-Network access is initiated only by an explicit action such as updating project sources, refreshing a configured custom source, or a manually requested Git operation. These actions contact the configured upstream services and Git remotes. External scripts referenced by project configuration may be fetched and executed by the user's client at runtime; those requests are made by that client, outside Script Hub's local processing.
-
-Review the action, selected workspace, source, and destination before confirming. Review generated files and logs before exporting or sharing them. Script Hub does not promise that upstream services retain no connection metadata.
-
-## Retention and deletion
-
-Settings and task-history summaries remain in local application data until changed or removed by the user or the operating system. Diagnostic logging is opt-in and bounded; its retention depends on the selected output and is not an upload mechanism. This document does not claim a secure-erasure mechanism. The task-history default limit is 100 records; changing application settings or removing local data can affect the app's remembered state.
-
-This notice describes the current application behavior, not a legal privacy guarantee. Report suspected privacy or security issues using the process in [SECURITY.md](SECURITY.md).
+本地数据由使用者管理；不承诺安全擦除。疑虑请按[安全渠道](SECURITY.md)报告。

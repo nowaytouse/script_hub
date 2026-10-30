@@ -117,7 +117,22 @@ mod tests {
         assert!(LICENSE.contains("GNU GENERAL PUBLIC LICENSE"));
         assert!(NOTICES.contains("app2smile"));
         assert!(PRIVACY.contains("SQLite"));
-        assert!(DEPENDENCIES.contains("rusqlite 0.41.0"));
         assert!(DEPENDENCIES.contains("Ubuntu Font"));
+    }
+
+    #[test]
+    fn sqlite_notice_matches_the_locked_version() {
+        let package = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.lock"))
+            .split("[[package]]")
+            .find(|package| package.lines().any(|line| line == "name = \"rusqlite\""))
+            .expect("rusqlite must be present in the lockfile");
+        let version = package
+            .lines()
+            .find_map(|line| {
+                line.strip_prefix("version = \"")
+                    .and_then(|s| s.strip_suffix('"'))
+            })
+            .expect("the locked rusqlite package must declare its version");
+        assert!(DEPENDENCIES.contains(&format!("rusqlite {version};")));
     }
 }

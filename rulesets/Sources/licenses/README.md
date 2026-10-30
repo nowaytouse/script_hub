@@ -1,36 +1,14 @@
-# PROMAX 扩充来源与许可
+# Sources & licenses
 
-## 本次新增的许可来源
+| 来源 | 许可 |
+| --- | --- |
+| [app2smile/rules](https://github.com/app2smile/rules) | [MIT](app2smile-MIT.txt) |
+| [AdGuard CNAME](https://github.com/AdguardTeam/cname-trackers) | [MIT](AdGuard-CNAME-MIT.txt) |
+| [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
+| [HaGeZi](https://github.com/hagezi/dns-blocklists) | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
 
-| 来源 | 用途 | 许可与原始内容 |
-| --- | --- | --- |
-| app2smile/rules | 起点、贴吧、腾讯新闻的 Surge 响应去广告模块，贴吧规则配套 | [MIT](app2smile-MIT.txt)；[官方模块与源代码](https://github.com/app2smile/rules) |
-| AdguardTeam/cname-trackers | CNAME 伪装追踪、邮件追踪域名；与已有广告域名分类分开 | [MIT](AdGuard-CNAME-MIT.txt)；[分类说明](https://github.com/AdguardTeam/cname-trackers) |
+接入范围以[源清单](../Links/)为准。转换、去重、分类与安全隔离不改变原许可；App 参数保留普通视频帖，CNAME clickthrough / microsites 全集不启用。
 
-app2smile 模块由现有 Rust 编译器下载、去重、筛选广告功能并合入 PROMAX；保留官方脚本 URL，不镜像脚本。贴吧默认不启用过滤普通视频帖，模板参数在合并时固定为 `0`。外部 RULE-SET 不能绕过本仓库编译器的白名单、分类和语法校验；贴吧配套列表先编入本地活动分片。自动更新继续沿用现有频率与网络限速，不为每个源创建独立 workflow。
+app2smile 脚本引用作者维护源。引用不等于再分发授权；luestr 受限资源不复制、不转换、不伪装客户端身份获取。
 
-AdGuard 仅启用广告、追踪和邮件追踪类别；不启用会影响正常跳转或页面的 clickthrough/microsites 全集。重复域名和已有父域覆盖不会重复发布，Apple、媒体与正常图片等安全保护继续生效。这些列表不需要 HTTPS 解密，新增脚本解密范围仅限各 App 的精确请求主机。
-
-CNAME 追踪单独归入 `Privacy_CNAME`，Surge / Shadowrocket 自动引用完整分片；已退役的 Loon 产物不再生成或提供兼容入口，不截断或伪报规则数量。
-
-上述模块的变更包括格式转换、默认参数落地、安全隔离、MITM 按实际引用收束，以及重复匹配的优先级处理；不代表上游作者为本项目或所有客户端提供运行保证。合并产物中的对应内容保留上游 MIT 许可，本项目不更改这些内容的许可。
-
-## Pinterest 服务族规则来源
-
-`SocialMedia_sources.list` 通过现有 Rust 更新器跟随 [MetaCubeX 的 Pinterest 数据](https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/pinterest.list)，覆盖地区独立域名、短链接及 Pinterest 专属 CDN 别名，不扩展到整个 Fastly 或 Cloudflare 父域。该输入按 MetaCubeX 仓库的 [GPL-3.0 许可](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) 使用，GPLv3 正文已随本仓库根目录 `LICENSE` 提供；不推定其中的条目获得其他许可或重新许可。生成时仅转换匹配格式、去重、稳定排序和执行本仓库的分类保护，不添加用户路由策略。
-
-日本网页入口单独由 `JP_manual.list` 维护；共享 `pinimg.com` 不划为日本。服务族用于分流匹配，不能作为广告拒绝名单，本文也不声称已审查所有既有第三方来源的许可。
-
-`AI_sources.list` 另接入同一 MetaCubeX 上游的 Cursor、Perplexity 专集，`SocialMedia_sources.list` 接入 Bluesky、Threads 专集，沿用上述来源与许可说明。保留上游精确云主机与独立后缀的区别，不把应用专用 S3/Cloudinary 地址扩大成整个提供商；现有订阅随同一更新流程刷新，不为每个来源另建公开入口。
-
-## HaGeZi 补充与维护边界
-
-除既有 Ultimate/TIF 外，接入官方 [Pop-Up Ads](https://github.com/hagezi/dns-blocklists/blob/main/adblock/popupads.txt) 和 [Fake](https://github.com/hagezi/dns-blocklists/blob/main/adblock/fake.txt)：弹窗进入 Advertising，假冒商店、诈骗与订阅陷阱进入 ThreatIntel。两者沿用 HaGeZi 仓库的 [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE)，许可正文见根目录 `LICENSE`；本项目转换域名格式、去重、分类并隔离受保护服务，不添加第三方脚本或解密范围，保留作者与可追随的原始源地址。
-
-源的“可下载”“未归档”“内容仍更新”“许可清楚”是不同检查。本轮核对活动清单和模块引用中的仓库状态，未确认活动源所属仓库已归档；未把多年不变但仍承担功能的脚本自动认定为重复项。1Hosts 的候选快照未显示近期更新，本轮不新增；未验证再分发许可的第三方模块也不继续扩充。已混入系统服务的 MIUIPrivacy 输入因语义不符合本项目当前策略而停用，不宣称其上游已停止维护。
-
-GitHub API 状态只是本轮观察，不保证上游未来持续维护。未知失效/迁移仍须核对官方新仓库与接口语义，不能通过随意改为相似脚本、删除最后一份功能或降低 TLS 验证“修复”。既有无明确许可的历史输入仍是后续逐项核对范围，本文不宣称全仓库第三方版权审计已经完成。
-
-## luestr 资源的接入边界
-
-[ProxyResource 官方 README](https://github.com/luestr/ProxyResource) 说明仓库是索引、只对配置模板开源，并附带转载条件；[官方插件中心](https://hub.kelee.one/) 的受限资源不能当作可自由再分发的脚本。当前没有获得适用于 PROMAX 聚合发布的额外许可，因此不新增复制、转换或镜像，也不伪装新版 Loon User-Agent 获取资源。可在 Loon 中按作者的官方说明单独安装；这不等同于 Surge 兼容。高德现有功能继续保留，本次不将另一份未经许可的高德脚本叠加进来。
+仅部分来源已核对，不保证未来维护状态。[完整声明](../../../THIRD_PARTY_NOTICES.md)
