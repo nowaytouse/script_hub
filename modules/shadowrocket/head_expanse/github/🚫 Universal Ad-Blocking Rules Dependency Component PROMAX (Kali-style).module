@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-10-29]
-#!desc=[🚀SR] 按用途分片(27片) + 应用内去广告(URL Rewrite=547, Map Local=1242, Script=274, Body Rewrite=89, MITM=730); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-10-30]
+#!desc=[🚀SR] 按用途分片(26片) + 应用内去广告(URL Rewrite=547, Map Local=1242, Script=274, Body Rewrite=89, MITM=730); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-10-29 14:41:10
+#!date=2026-10-30 18:58:28
 # app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
@@ -46,7 +46,6 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT
 # ── 威胁情报·补充 · HaGeZi / skk 其它威胁与钓鱼域名集 ──
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel.list,REJECT
 # Merged REJECT complex rules (206)
