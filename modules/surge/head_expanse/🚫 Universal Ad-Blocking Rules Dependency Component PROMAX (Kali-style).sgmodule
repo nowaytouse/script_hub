@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-10-30]
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-10-31]
 #!desc=按用途分片(26片) + 应用内去广告(URL Rewrite=547, Map Local=1242, Script=274, Body Rewrite=89, MITM=730); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-10-30 18:58:27
+#!date=2026-10-31 02:04:30
 # app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
@@ -2163,10 +2163,10 @@ https?:\/\/awg\.enmonster\.com\/apa\/(advert\/demand\/home\/poster|index\/advert
 (?i)^https://yuudnn\.lz-qs\.com/lzmh_app_api/o2o/api/v2/o2o/homeShopList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 (?i)^https://yuudnn\.lz-qs\.com:9220/mssp-api/api/v1/mrtb/getSdkAdSlotList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 http:\/\/dili.sqcosmos.com\/jiekou\/endpage\/ad data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-https?:\/\/(ipv4|interface\d?)\.music\.163.com\/e?api\/ad data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 https://api.rr.tv/storage/business/rootName/app/homePage\?dataType=JSON data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/(ec|c)api\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList data-type=text data="{"status":"SUCCESS"}" header="Content-Type:application/json"
 ^https:\/\/god\.gameyw\.netease\.com\/v\d\/app\/static\/conf\/getByModuleNameList$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+https?:\/\/(ipv4|interface\d?)\.music\.163.com\/e?api\/ad data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/(m|mwsa)\.ximalaya\.com\/community\/square\/v\d\/stream\? data-type=text data="{"data":{"cards":[{"content":{},"type":"RECOMMENDS"}]},"ret":0}" status-code=200 header="Content-Type:application/json"
 https://mgesq.api.mgtv.com/v2/user/center/icon data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 https://.+\.gamersky.com/v1/statisticAd data-type=text data="{}" status-code=200 header="Content-Type:application/json"
