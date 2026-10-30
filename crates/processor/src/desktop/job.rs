@@ -500,7 +500,7 @@ pub fn validate_root(root: &Path) -> Result<PathBuf, String> {
         .canonicalize()
         .map_err(|error| format!("cannot open project directory {}: {error}", root.display()))?;
     for relative in [
-        Path::new("create/processor/Cargo.toml"),
+        Path::new("crates/processor/Cargo.toml"),
         Path::new("rulesets/Sources/adblock_whitelist.list"),
     ] {
         if !root.join(relative).is_file() {
@@ -702,10 +702,10 @@ mod tests {
                 .unwrap()
                 .as_nanos()
         ));
-        std::fs::create_dir_all(root.join("create/processor")).unwrap();
+        std::fs::create_dir_all(root.join("crates/processor")).unwrap();
         std::fs::create_dir_all(root.join("rulesets/Sources")).unwrap();
         std::fs::create_dir_all(root.join("modules")).unwrap();
-        std::fs::write(root.join("create/processor/Cargo.toml"), "").unwrap();
+        std::fs::write(root.join("crates/processor/Cargo.toml"), "").unwrap();
         std::fs::write(root.join("rulesets/Sources/adblock_whitelist.list"), "").unwrap();
         assert_eq!(validate_root(&root).unwrap(), root.canonicalize().unwrap());
         std::fs::remove_dir_all(root).unwrap();
@@ -722,10 +722,10 @@ mod tests {
                 .unwrap()
                 .as_nanos()
         ));
-        std::fs::create_dir_all(root.join("create/processor")).unwrap();
+        std::fs::create_dir_all(root.join("crates/processor")).unwrap();
         std::fs::create_dir_all(root.join("rulesets/Sources")).unwrap();
         std::fs::create_dir_all(root.join("modules")).unwrap();
-        std::fs::write(root.join("create/processor/Cargo.toml"), "").unwrap();
+        std::fs::write(root.join("crates/processor/Cargo.toml"), "").unwrap();
         std::fs::write(root.join("rulesets/Sources/adblock_whitelist.list"), "").unwrap();
         let writer = acquire_write_lock(&root).unwrap();
         let state = Arc::new(Mutex::new(State::new(String::new())));

@@ -378,7 +378,7 @@ fn merge_upstream(req: &MergeBundleRequest) -> bool {
     if let Some(ref c) = req.provenance_comment {
         extra.push(c.clone());
     }
-    extra.push("# Upstream modules merged by create/processor/merge_bundles.rs (Rust)".to_string());
+    extra.push("# Upstream modules merged by Script Hub (Rust)".to_string());
     for (label, url) in &used_sources {
         extra.push(format!("# - {}: {}", label, url));
     }
@@ -510,7 +510,7 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
     }
 
     let extra = vec![
-        "# Upstream module processed by create/processor/merge_bundles.rs".to_string(),
+        "# Upstream module processed by Script Hub (Rust)".to_string(),
         "# - Moved: [Rule], [Map Local] and *.googlevideo.com ad handling to PROMAX".to_string(),
     ];
     let header_lines = format_header_with_extra(&header, &extra);

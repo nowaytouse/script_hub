@@ -1,0 +1,7 @@
+[workspace]
+members = ["crates/processor"]
+resolver = "3"
+
+[profile.release]
+strip = true
+lto = true

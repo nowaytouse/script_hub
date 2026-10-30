@@ -122,7 +122,7 @@ mod tests {
 
     #[test]
     fn sqlite_notice_matches_the_locked_version() {
-        let package = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.lock"))
+        let package = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../Cargo.lock"))
             .split("[[package]]")
             .find(|package| package.lines().any(|line| line == "name = \"rusqlite\""))
             .expect("rusqlite must be present in the lockfile");

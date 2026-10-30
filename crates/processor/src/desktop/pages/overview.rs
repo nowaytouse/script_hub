@@ -1,4 +1,4 @@
-use super::card;
+use super::{card, primary_button};
 use crate::desktop::app::{CatalogTab, HubApp, Page};
 use crate::desktop::i18n::Text;
 use crate::desktop::job::JobKind;
@@ -7,7 +7,7 @@ use eframe::egui::{self, RichText};
 impl HubApp {
     pub(crate) fn overview_page(&mut self, ui: &mut egui::Ui) {
         ui.heading(self.tr(Text::Overview));
-        ui.label(self.tr(Text::OverviewDescription));
+        ui.weak(self.tr(Text::OverviewDescription));
         ui.add_space(24.0);
         egui::ScrollArea::vertical()
             .id_salt("overview")
@@ -15,10 +15,16 @@ impl HubApp {
                 card(ui, self.colors, |ui| {
                     ui.label(RichText::new(self.tr(Text::Workspace)).strong());
                     ui.add_space(8.0);
-                    ui.label(&self.root_input);
+                    ui.add(egui::Label::new(RichText::new(&self.root_input).monospace()).wrap());
                     ui.add_space(8.0);
                     ui.horizontal_wrapped(|ui| {
-                        if ui.button(self.tr(Text::LoadWorkspace)).clicked() {
+                        let ready = self.workspace_ready();
+                        let load = if ready {
+                            egui::Button::new(self.tr(Text::LoadWorkspace))
+                        } else {
+                            primary_button(self.colors, self.tr(Text::LoadWorkspace))
+                        };
+                        if ui.add_enabled(!self.active(), load).clicked() {
                             if self.root_input.trim().is_empty() {
                                 self.page = Page::Settings;
                             } else {
@@ -28,7 +34,11 @@ impl HubApp {
                         if ui
                             .add_enabled(
                                 self.workspace_ready() && !self.active(),
-                                egui::Button::new(self.tr(Text::Validate)),
+                                if ready {
+                                    primary_button(self.colors, self.tr(Text::Validate))
+                                } else {
+                                    egui::Button::new(self.tr(Text::Validate))
+                                },
                             )
                             .clicked()
                         {
@@ -54,14 +64,14 @@ impl HubApp {
                         let value = if self.workspace_ready() {
                             count.to_string()
                         } else {
-                            "—".to_string()
+                            "...".to_string()
                         };
                         let label = format!("{value}  {}", self.tr(key));
                         if ui
                             .add(
-                                egui::Button::new(RichText::new(label).size(18.0))
-                                    .min_size(egui::vec2(180.0, 72.0))
-                                    .corner_radius(10),
+                                egui::Button::new(label)
+                                    .frame(false)
+                                    .min_size(egui::vec2(0.0, ui.spacing().interact_size.y)),
                             )
                             .clicked()
                         {
@@ -92,7 +102,7 @@ impl HubApp {
                             snapshot.elapsed.as_secs() % 60
                         ));
                         if let Some(last) = snapshot.logs.back() {
-                            ui.label(last);
+                            ui.add(egui::Label::new(last).wrap());
                         }
                     } else {
                         ui.label(self.tr(Text::NoTask));

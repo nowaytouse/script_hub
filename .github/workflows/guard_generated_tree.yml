@@ -42,7 +42,7 @@ jobs:
           fi
           echo "base=$DIFF_BASE" >> "$GITHUB_OUTPUT"
           changed_paths=$(git diff --name-only "$DIFF_BASE" "$DIFF_HEAD")
-          if grep -E '^(create/processor/|modules/|rulesets/|dns/|\.github/ci/|\.github/workflows/)' <<< "$changed_paths" > /dev/null; then
+          if grep -E '^(Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.cargo/|crates/|modules/|rulesets/|dns/|\.github/ci/|\.github/workflows/)' <<< "$changed_paths" > /dev/null; then
             echo "relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "relevant=false" >> "$GITHUB_OUTPUT"
@@ -52,8 +52,8 @@ jobs:
         if: steps.changes.outputs.relevant == 'true'
         uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
         with:
-          rust-src-dir: create/processor
-          cache-workspaces: create/processor -> ../../target
+          rust-src-dir: .
+          cache-workspaces: . -> target
           cache-shared-key: script-hub-processor
           cache-save-if: ${{ github.ref == 'refs/heads/master' }}
           cache-on-failure: false
@@ -61,9 +61,9 @@ jobs:
       - name: Validate Rust pipeline
         if: steps.changes.outputs.relevant == 'true'
         run: |
-          cargo fmt --manifest-path create/processor/Cargo.toml -- --check
-          cargo clippy --locked --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
-          cargo test --locked --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
+          cargo fmt --manifest-path crates/processor/Cargo.toml -- --check
+          cargo clippy --locked --manifest-path crates/processor/Cargo.toml --all-targets -- -D warnings
+          cargo test --locked --manifest-path crates/processor/Cargo.toml --all-targets -- --test-threads=1
 
       - name: Guard generated-tree edits
         if: steps.changes.outputs.relevant == 'true'
@@ -71,8 +71,8 @@ jobs:
           DIFF_BASE: ${{ steps.changes.outputs.base }}
           DIFF_HEAD: ${{ github.sha }}
           TRUSTED_UPDATER: ${{ github.event_name == 'push' && github.actor == 'github-actions[bot]' }}
-        run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin guard
+        run: cargo run --locked --manifest-path crates/processor/Cargo.toml --bin guard
 
       - name: Validate generated modules
         if: steps.changes.outputs.relevant == 'true'
-        run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
+        run: cargo run --locked --manifest-path crates/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"

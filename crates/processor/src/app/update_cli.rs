@@ -1,8 +1,10 @@
 use crate as rust_processor;
 use crate::desktop::progress::{Stage, emit_stage};
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
+
+const MAX_GENERATED_FILE_BYTES: usize = 128 * 1024 * 1024;
 
 fn read_batch_blob(
     input: &mut impl Write,
@@ -38,6 +40,11 @@ fn read_batch_blob(
     let size = size
         .parse::<usize>()
         .map_err(|error| format!("invalid git object size for {object}: {error}"))?;
+    if size > MAX_GENERATED_FILE_BYTES {
+        return Err(format!(
+            "git object {object} exceeds the generated-file byte limit"
+        ));
+    }
     let mut content = vec![0; size];
     output
         .read_exact(&mut content)
@@ -60,11 +67,21 @@ fn read_head_blob(
 ) -> Result<Option<Vec<u8>>, String> {
     if name.contains('\n') || name.contains('\r') {
         let old = Command::new("git")
-            .args(["show", &format!("HEAD:{name}")])
+            .args([
+                "rev-parse",
+                "--verify",
+                "--end-of-options",
+                &format!("HEAD:{name}"),
+            ])
             .current_dir(root)
             .output()
             .map_err(|error| format!("cannot read HEAD:{name}: {error}"))?;
-        return Ok(old.status.success().then_some(old.stdout));
+        if !old.status.success() {
+            return Ok(None);
+        }
+        let object = String::from_utf8(old.stdout)
+            .map_err(|error| format!("invalid git object ID: {error}"))?;
+        return read_batch_blob(input, output, object.trim());
     }
     read_batch_blob(input, output, &format!("HEAD:{name}"))
 }
@@ -87,17 +104,42 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         return Err("cannot inspect generated changes".to_string());
     }
     let changed_names = String::from_utf8_lossy(&names.stdout);
-    let files: Vec<(String, PathBuf)> = changed_names
-        .split('\0')
-        .filter(|line| !line.is_empty())
-        .filter_map(|name| {
-            let path = root.join(name);
-            let source_input = rust_processor::url_rewriter::is_pipeline_source_path_pub(&path)
-                && !name.starts_with("modules/source/build/")
-                && !name.starts_with("rulesets/Sources/compiled/");
-            (path.is_file() && !source_input).then(|| (name.to_string(), path))
-        })
-        .collect();
+    let mut files = Vec::new();
+    for name in changed_names.split('\0').filter(|name| !name.is_empty()) {
+        let path = root.join(name);
+        let source_input = rust_processor::url_rewriter::is_pipeline_source_path_pub(&path)
+            && !name.starts_with("modules/source/build/")
+            && !name.starts_with("rulesets/Sources/compiled/");
+        if source_input {
+            continue;
+        }
+        let metadata = match std::fs::symlink_metadata(&path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("cannot inspect generated file {name}: {error}")),
+        };
+        if metadata.file_type().is_symlink() {
+            return Err(format!("generated file is a symlink: {name}"));
+        }
+        if !metadata.is_file() {
+            continue;
+        }
+        for parent in path
+            .ancestors()
+            .skip(1)
+            .take_while(|parent| *parent != root)
+        {
+            let metadata = std::fs::symlink_metadata(parent)
+                .map_err(|error| format!("cannot inspect generated parent: {error}"))?;
+            if metadata.file_type().is_symlink() {
+                return Err(format!(
+                    "generated parent is a symlink: {}",
+                    parent.display()
+                ));
+            }
+        }
+        files.push((name.to_string(), path));
+    }
     if files.is_empty() {
         return Ok(());
     }
@@ -126,9 +168,16 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
             let Some(old_bytes) = read_head_blob(root, &name, &mut input, &mut output)? else {
                 continue;
             };
-            let Ok(new_bytes) = std::fs::read(&path) else {
-                return Err(format!("cannot read generated file {name}"));
-            };
+            let mut new_bytes = Vec::new();
+            std::fs::File::open(&path)
+                .and_then(|file| {
+                    file.take(MAX_GENERATED_FILE_BYTES as u64 + 1)
+                        .read_to_end(&mut new_bytes)
+                })
+                .map_err(|error| format!("cannot read generated file {name}: {error}"))?;
+            if new_bytes.len() > MAX_GENERATED_FILE_BYTES {
+                return Err(format!("generated file {name} exceeds the byte limit"));
+            }
             if old_bytes.contains(&0) || new_bytes.contains(&0) {
                 continue;
             }
@@ -137,7 +186,7 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
             if rust_processor::url_rewriter::semantic_content_for_path_pub(&path, &old_text)
                 == rust_processor::url_rewriter::semantic_content_for_path_pub(&path, &new_text)
             {
-                std::fs::write(&path, old_bytes)
+                crate::filesystem::replace_file(&path, &old_bytes)
                     .map_err(|error| format!("cannot restore semantic no-op {name}: {error}"))?;
                 println!("[INFO] Restored semantic no-op: {name}");
             }
@@ -441,6 +490,61 @@ mod tests {
     }
 
     #[test]
+    fn rejects_oversized_git_blobs_before_reading_payload() {
+        let mut output = Cursor::new(b"oid blob 134217729\n".to_vec());
+        assert!(
+            read_batch_blob(&mut Vec::new(), &mut output, "oid")
+                .unwrap_err()
+                .contains("exceeds")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn semantic_noop_filter_does_not_write_through_symlinks() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("script-hub-noop-symlink-{unique}"));
+        let path = root.join("rulesets/RULE-SET/fixture.list");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, b"# baseline\nDOMAIN-SUFFIX,example.test\n").unwrap();
+        for arguments in [
+            vec!["init", "--quiet"],
+            vec!["add", "--", "rulesets/RULE-SET/fixture.list"],
+            vec![
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "baseline",
+            ],
+        ] {
+            assert!(
+                Command::new("git")
+                    .args(arguments)
+                    .current_dir(&root)
+                    .status()
+                    .unwrap()
+                    .success()
+            );
+        }
+        let sentinel = root.join("unrelated.list");
+        let contents = b"# keep this metadata\nDOMAIN-SUFFIX,example.test\n";
+        std::fs::write(&sentinel, contents).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        std::os::unix::fs::symlink(&sentinel, &path).unwrap();
+        let result = discard_semantic_noop_changes(&root);
+        assert_eq!(std::fs::read(&sentinel).unwrap(), contents);
+        assert!(result.unwrap_err().contains("symlink"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn adblock_only_rejects_other_update_modes() {
         for mode in ["--quick", "--gaming-only"] {
             assert_eq!(
@@ -514,41 +618,45 @@ mod tests {
     }
 
     #[test]
-    fn semantic_noop_filter_restores_a_tracked_file_with_spaces_in_its_path() {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let root =
-            std::env::temp_dir().join(format!("script-hub-noop-{}-{unique}", std::process::id()));
-        let relative = "rulesets/RULE-SET/Direct routing.list";
-        let path = root.join(relative);
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        let original = b"# baseline\nDOMAIN-SUFFIX,example.test\n";
-        std::fs::write(&path, original).unwrap();
+    fn semantic_noop_filter_restores_tracked_files_with_whitespace_in_their_paths() {
+        for relative in [
+            "rulesets/RULE-SET/Direct routing.list",
+            "rulesets/RULE-SET/line\nbreak.list",
+        ] {
+            let unique = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let root = std::env::temp_dir()
+                .join(format!("script-hub-noop-{}-{unique}", std::process::id()));
+            let path = root.join(relative);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            let original = b"# baseline\nDOMAIN-SUFFIX,example.test\n";
+            std::fs::write(&path, original).unwrap();
 
-        let git = |arguments: &[&str]| {
-            let output = Command::new("git")
-                .args(arguments)
-                .current_dir(&root)
-                .output()
-                .unwrap();
-            assert!(
-                output.status.success(),
-                "git {arguments:?} failed: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-        };
-        git(&["init", "--quiet"]);
-        git(&["config", "user.email", "test@example.invalid"]);
-        git(&["config", "user.name", "Script Hub Test"]);
-        git(&["add", "--", relative]);
-        git(&["commit", "--quiet", "-m", "baseline"]);
-        std::fs::write(&path, b"# updated date\nDOMAIN-SUFFIX,example.test\n").unwrap();
+            let git = |arguments: &[&str]| {
+                let output = Command::new("git")
+                    .args(arguments)
+                    .current_dir(&root)
+                    .output()
+                    .unwrap();
+                assert!(
+                    output.status.success(),
+                    "git {arguments:?} failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            };
+            git(&["init", "--quiet"]);
+            git(&["config", "user.email", "test@example.invalid"]);
+            git(&["config", "user.name", "Script Hub Test"]);
+            git(&["add", "--", relative]);
+            git(&["commit", "--quiet", "-m", "baseline"]);
+            std::fs::write(&path, b"# updated date\nDOMAIN-SUFFIX,example.test\n").unwrap();
 
-        discard_semantic_noop_changes(&root).unwrap();
+            discard_semantic_noop_changes(&root).unwrap();
 
-        assert_eq!(std::fs::read(&path).unwrap(), original);
-        let _ = std::fs::remove_dir_all(root);
+            assert_eq!(std::fs::read(&path).unwrap(), original);
+            let _ = std::fs::remove_dir_all(root);
+        }
     }
 }

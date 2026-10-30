@@ -152,8 +152,8 @@ jobs:
       id: rust_setup
       uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
       with:
-        rust-src-dir: create/processor
-        cache-workspaces: create/processor -> ../../target
+        rust-src-dir: .
+        cache-workspaces: . -> target
         cache-shared-key: script-hub-processor
         cache-save-if: ${{ github.ref == 'refs/heads/master' }}
         cache-on-failure: false
@@ -161,18 +161,18 @@ jobs:
     - name: Validate Rust pipeline
       id: rust_checks
       run: |
-        cargo fmt --manifest-path create/processor/Cargo.toml -- --check
-        cargo clippy --locked --manifest-path create/processor/Cargo.toml --all-targets -- -D warnings
-        cargo test --locked --manifest-path create/processor/Cargo.toml --all-targets -- --test-threads=1
+        cargo fmt --manifest-path crates/processor/Cargo.toml -- --check
+        cargo clippy --locked --manifest-path crates/processor/Cargo.toml --all-targets -- -D warnings
+        cargo test --locked --manifest-path crates/processor/Cargo.toml --all-targets -- --test-threads=1
 
     - name: Validate published baseline before network update
       id: baseline_validation
-      run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
+      run: cargo run --locked --manifest-path crates/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
 
     - name: Execute Rust Ruleset Update
       id: update
       run: |
-        cargo run --release --locked --manifest-path create/processor/Cargo.toml --bin update -- \
+        cargo run --release --locked --manifest-path crates/processor/Cargo.toml --bin update -- \
           --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
       env:
         CI: 'true'
@@ -181,7 +181,7 @@ jobs:
 
     - name: Validate generated modules
       id: generated_validation
-      run: cargo run --locked --manifest-path create/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
+      run: cargo run --locked --manifest-path crates/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
 
     - name: Publish generated tree
       id: publication

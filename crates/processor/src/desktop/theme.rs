@@ -80,13 +80,11 @@ pub fn apply(ctx: &egui::Context, preferences: &Preferences) {
     let colors = palette(ctx.global_style().visuals.dark_mode, preferences.accent);
     ctx.global_style_mut(|style| {
         style.animation_time = 0.0;
-        style.spacing.item_spacing = egui::vec2(10.0, 10.0);
-        style.spacing.button_padding = egui::vec2(12.0, 8.0);
-        style.spacing.interact_size.y = if preferences.density == Density::Compact {
-            30.0
-        } else {
-            36.0
-        };
+        let compact = preferences.density == Density::Compact;
+        style.spacing.item_spacing = egui::Vec2::splat(if compact { 8.0 } else { 12.0 });
+        style.spacing.button_padding = egui::vec2(12.0, if compact { 6.0 } else { 10.0 });
+        style.spacing.window_margin = egui::Margin::same(if compact { 16 } else { 20 });
+        style.spacing.interact_size.y = if compact { 32.0 } else { 40.0 };
         for (kind, size) in [
             (TextStyle::Body, 15.0),
             (TextStyle::Button, 14.0),
@@ -121,9 +119,15 @@ pub fn apply(ctx: &egui::Context, preferences: &Preferences) {
         visuals.widgets.hovered.bg_fill = colors.raised;
         visuals.widgets.hovered.weak_bg_fill = colors.raised;
         visuals.widgets.hovered.bg_stroke = Stroke::new(1.5, colors.accent);
+        visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, colors.text);
         visuals.widgets.active.bg_fill = colors.raised;
         visuals.widgets.active.weak_bg_fill = colors.raised;
         visuals.widgets.active.bg_stroke = Stroke::new(1.5, colors.accent);
+        visuals.widgets.active.fg_stroke = Stroke::new(1.0, colors.text);
+        visuals.widgets.open.bg_fill = colors.raised;
+        visuals.widgets.open.weak_bg_fill = colors.raised;
+        visuals.widgets.open.bg_stroke = Stroke::new(1.5, colors.accent);
+        visuals.widgets.open.fg_stroke = Stroke::new(1.0, colors.text);
     });
 }
 
@@ -169,6 +173,49 @@ mod tests {
                 let colors = palette(dark, accent);
                 assert!(contrast(colors.on_accent, colors.accent) >= 4.5);
             }
+        }
+    }
+
+    #[test]
+    fn interactive_text_remains_readable_in_each_active_state() {
+        for theme in [Theme::Light, Theme::Dark] {
+            for accent in [Accent::Blue, Accent::Teal, Accent::Amber] {
+                let ctx = egui::Context::default();
+                apply(
+                    &ctx,
+                    &Preferences {
+                        theme,
+                        accent,
+                        ..Default::default()
+                    },
+                );
+                let style = ctx.global_style();
+                for state in [
+                    style.visuals.widgets.inactive,
+                    style.visuals.widgets.hovered,
+                    style.visuals.widgets.active,
+                    style.visuals.widgets.open,
+                ] {
+                    assert!(contrast(state.fg_stroke.color, state.bg_fill) >= 4.5);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn density_changes_spacing_without_shrinking_controls_below_target_size() {
+        let ctx = egui::Context::default();
+        for (density, margin) in [(Density::Compact, 16), (Density::Comfortable, 20)] {
+            apply(
+                &ctx,
+                &Preferences {
+                    density,
+                    ..Default::default()
+                },
+            );
+            let style = ctx.global_style();
+            assert_eq!(style.spacing.window_margin.left, margin);
+            assert!(style.spacing.interact_size.y >= 32.0);
         }
     }
 }

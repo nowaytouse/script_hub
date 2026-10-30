@@ -16,12 +16,6 @@ required-features = ["gui"]
 [features]
 gui = ["dep:eframe"]
 
-# 構建輸出統一至項目根目錄 target/
-# PROMAX 的本地处理、网络下载和产物验证均由 Rust 负责。
-[profile.release]
-strip = true
-lto = true
-
 [lints.rust]
 unsafe_code = "forbid"
 
