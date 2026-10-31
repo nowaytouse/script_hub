@@ -1,7 +1,7 @@
 # Ruleset: Microsoft
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 760
+# Rules: 762
 
 DOMAIN-SUFFIX,bing
 DOMAIN-SUFFIX,azure
@@ -333,6 +333,7 @@ DOMAIN-SUFFIX,azure-dns-8.cn
 DOMAIN-SUFFIX,azure-dns-9.cn
 DOMAIN-SUFFIX,azure-dns.info
 DOMAIN-SUFFIX,azure-test.net
+DOMAIN-SUFFIX,bingstatic.com
 DOMAIN-SUFFIX,cegid-cloud.cn
 DOMAIN-SUFFIX,dependabot.com
 DOMAIN-SUFFIX,gamesstack.com
@@ -344,6 +345,7 @@ DOMAIN-SUFFIX,mncmsidlab1.cn
 DOMAIN-SUFFIX,momentumms.com
 DOMAIN-SUFFIX,msappproxy.net
 DOMAIN-SUFFIX,msftcloudes.cn
+DOMAIN-SUFFIX,msftstatic.com
 DOMAIN-SUFFIX,msidentity.com
 DOMAIN-SUFFIX,msidlabpbmc.cn
 DOMAIN-SUFFIX,msnewskids.com
