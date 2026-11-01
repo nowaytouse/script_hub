@@ -304,7 +304,50 @@ fn mainland_override_keeps_common_splash_prefix_and_dedicated_telemetry_host() {
 }
 
 #[test]
-fn reviewed_exact_ip_drops_get_vif_drop_and_proxy_server_rule_fallback() {
+fn compiled_ip_networks_keep_reject_and_drop_actions_in_vif_and_proxy_paths() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!("promax-ip-actions-{unique}"));
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.extract_from_text(
+        "IP-CIDR,198.51.100.0/24,REJECT\nIP-CIDR,203.0.113.64/26,REJECT-DROP\n",
+        "REJECT",
+        "Security",
+        false,
+        false,
+        "fixture",
+    );
+    let module = manager.generate_module(&[], "cdn").content;
+    let rewrites = module
+        .split_once("[IP Rewrite]\n")
+        .unwrap()
+        .1
+        .split('[')
+        .next()
+        .unwrap();
+    let rules: Vec<_> = rewrites
+        .lines()
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .collect();
+    assert_eq!(
+        rules,
+        ["198.51.100.0/24 = reject", "203.0.113.64/26 = drop"]
+    );
+    assert!(module.contains("IP-CIDR,198.51.100.0/24,REJECT,no-resolve"));
+    assert!(module.contains("IP-CIDR,203.0.113.64/26,REJECT-DROP,no-resolve"));
+    assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
+    let converted = crate::promax::artifact::convert_surge_to_shadowrocket(&module);
+    assert!(!converted.contains("[IP Rewrite]"));
+    assert!(converted.contains("IP-CIDR,198.51.100.0/24,REJECT,no-resolve"));
+    assert!(converted.contains("IP-CIDR,203.0.113.64/26,REJECT,no-resolve"));
+    assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn reviewed_exact_ip_drops_keep_priority_with_other_accepted_networks() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -329,31 +372,37 @@ fn reviewed_exact_ip_drops_get_vif_drop_and_proxy_server_rule_fallback() {
         .lines()
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .collect();
-    assert_eq!(drops, ["180.76.76.200 = drop"]);
+    assert_eq!(
+        drops,
+        [
+            "180.76.76.200 = drop",
+            "180.76.76.0/24 = drop",
+            "47.106.88.76 = drop",
+            "8.8.8.8 = drop"
+        ]
+    );
     assert!(module.contains("IP-CIDR,180.76.76.200/32,REJECT-DROP,no-resolve"));
     assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
     manager.safety = crate::promax::safety::SafetyPolicy::from_lines(["IP-CIDR,180.76.76.0/24"]);
+    let protected_module = manager.generate_module(&[], "cdn").content;
     assert!(
-        !manager
-            .generate_module(&[], "cdn")
-            .content
-            .contains("[IP Rewrite]")
+        compiled_ip_rewrite_lines(&protected_module)
+            .iter()
+            .all(|line| !line.starts_with("180.76.76."))
     );
+    assert!(protected_module.contains("47.106.88.76 = drop"));
     let mut unreviewed = AdBlockManager::new(root.clone());
     unreviewed.extract_from_text(
-        "IP-CIDR,180.76.76.200/32",
+        "IP-CIDR,180.76.76.200/32,REJECT",
         "REJECT-DROP",
         "Advertising",
         false,
         false,
         "unknown-source",
     );
-    assert!(
-        !unreviewed
-            .generate_module(&[], "cdn")
-            .content
-            .contains("[IP Rewrite]")
-    );
+    let unreviewed_module = unreviewed.generate_module(&[], "cdn").content;
+    assert!(unreviewed_module.contains("180.76.76.200 = reject"));
+    assert!(!unreviewed_module.contains("180.76.76.200 = drop"));
     let mut protected = AdBlockManager::new(root.clone());
     protected.safety = crate::promax::safety::SafetyPolicy::from_lines(["IP-CIDR,180.76.76.0/24"]);
     protected.extract_from_text(
@@ -370,6 +419,180 @@ fn reviewed_exact_ip_drops_get_vif_drop_and_proxy_server_rule_fallback() {
             .content
             .contains("[IP Rewrite]")
     );
+    fs::remove_dir_all(root).unwrap();
+}
+
+fn compiled_ip_rewrite_lines(module: &str) -> Vec<&str> {
+    module
+        .split_once("[IP Rewrite]\n")
+        .map(|(_, section)| section.split('[').next().unwrap())
+        .unwrap_or("")
+        .lines()
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .collect()
+}
+
+#[test]
+fn compiled_ip_rewrites_normalize_ipv6_and_host_bits_without_widening_prefixes() {
+    let root = std::env::temp_dir().join(format!(
+        "promax-ip-v6-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.extract_from_text(
+        "IP-CIDR6,2001:db8::1/128,REJECT\nIP-CIDR6,2001:0db8:0:0:0:0:0:1/128,REJECT\nIP-CIDR6,2001:db8:1::a/48,REJECT-DROP\nIP-CIDR,203.107.1.1/24,REJECT\nIP-CIDR,203.107.1.0/24,REJECT\n",
+        "REJECT", "Security", false, false, "fixture",
+    );
+    let module = manager.generate_module(&[], "cdn").content;
+    assert_eq!(
+        compiled_ip_rewrite_lines(&module),
+        [
+            "2001:db8::1 = reject",
+            "203.107.1.0/24 = reject",
+            "2001:db8:1::/48 = drop"
+        ]
+    );
+    assert!(module.contains("IP-CIDR6,2001:db8:1::a/48,REJECT-DROP,no-resolve"));
+    assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
+    let converted = crate::promax::artifact::convert_surge_to_shadowrocket(&module);
+    assert!(!converted.contains("[IP Rewrite]"));
+    assert!(converted.contains("IP-CIDR6,2001:db8:1::a/48,REJECT,no-resolve"));
+    assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn compiled_ip_rewrites_preserve_policy_priority_and_ignore_source_order() {
+    let root = std::env::temp_dir().join(format!(
+        "promax-ip-order-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let rows = [
+        "IP-CIDR,180.76.76.200/32,REJECT",
+        "IP-CIDR,198.51.100.0/24,REJECT-DROP",
+        "IP-CIDR,198.51.100.7/32,REJECT",
+        "IP-CIDR,203.0.113.0/24,REJECT",
+        "IP-CIDR,203.0.113.7/32,REJECT-DROP",
+    ];
+    let mut outputs = Vec::new();
+    for reverse in [false, true] {
+        let mut manager = AdBlockManager::new(root.clone());
+        manager.extract_from_text(
+            "IP-CIDR,180.76.76.200/32",
+            "REJECT-DROP",
+            "Local",
+            false,
+            false,
+            "https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list",
+        );
+        let mut input = rows.to_vec();
+        if reverse {
+            input.reverse();
+        }
+        manager.extract_from_text(
+            &input.join("\n"),
+            "REJECT",
+            "Security",
+            false,
+            false,
+            "fixture",
+        );
+        let module = manager.generate_module(&[], "cdn").content;
+        assert_eq!(
+            compiled_ip_rewrite_lines(&module),
+            [
+                "180.76.76.200 = drop",
+                "198.51.100.7 = reject",
+                "203.0.113.0/24 = reject",
+                "198.51.100.0/24 = drop",
+                "203.0.113.7 = drop"
+            ]
+        );
+        assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
+        outputs.push(module);
+    }
+    assert_eq!(outputs[0], outputs[1]);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn compiled_ip_rewrites_use_only_unconditional_fallbacks_for_a_shared_network() {
+    let root = std::env::temp_dir().join(format!(
+        "promax-ip-shared-options-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let mut outputs = Vec::new();
+    for input in [
+        "IP-CIDR,198.51.100.0/24,REJECT,extended-matching\nIP-CIDR,198.51.100.7/24,REJECT\n",
+        "IP-CIDR,198.51.100.7/24,REJECT\nIP-CIDR,198.51.100.0/24,REJECT,extended-matching\n",
+    ] {
+        let mut manager = AdBlockManager::new(root.clone());
+        manager.extract_from_text(input, "REJECT", "Security", false, false, "fixture");
+        let module = manager.generate_module(&[], "cdn").content;
+        assert!(module.contains("IP-CIDR,198.51.100.7/24,REJECT,no-resolve\n"));
+        assert!(!module.contains("IP-CIDR,198.51.100.0/24,REJECT,extended-matching"));
+        assert_eq!(
+            compiled_ip_rewrite_lines(&module),
+            ["198.51.100.0/24 = reject"]
+        );
+        outputs.push(module);
+    }
+    assert_eq!(outputs[0], outputs[1]);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn compiled_ip_rewrites_do_not_erase_source_network_requirements() {
+    let root = std::env::temp_dir().join(format!(
+        "promax-ip-conditions-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.extract_from_text(
+        "IP-CIDR,198.51.100.0/24,REJECT,force-cellular\nIP-CIDR6,2001:db8::1/128,REJECT\n",
+        "REJECT",
+        "Security",
+        false,
+        false,
+        "fixture",
+    );
+    let module = manager.generate_module(&[], "cdn").content;
+    assert_eq!(compiled_ip_rewrite_lines(&module), ["2001:db8::1 = reject"]);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn compiled_ip_rewrites_respect_protected_direct_and_no_drop_intersections() {
+    let root = std::env::temp_dir().join(format!(
+        "promax-ip-exclusions-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.safety = crate::promax::safety::SafetyPolicy::from_lines(["IP-CIDR,198.51.100.1/32"]);
+    manager.extract_from_text(
+        "IP-CIDR,198.51.100.0/24,REJECT\nIP-CIDR,203.0.113.0/24,REJECT\nIP-CIDR,203.0.113.7/32,DIRECT\nIP-CIDR,192.0.2.0/24,REJECT-DROP\nIP-CIDR,192.0.2.7/32,REJECT-NO-DROP\nIP-CIDR6,2001:db8::1/128,REJECT\nIP-ASN,64512,REJECT\nGEOIP,CN,REJECT\nDOMAIN,ads.example.test,REJECT\n",
+        "REJECT", "Security", false, false, "fixture",
+    );
+    let module = manager.generate_module(&[], "cdn").content;
+    assert_eq!(compiled_ip_rewrite_lines(&module), ["2001:db8::1 = reject"]);
+    assert!(module.contains("IP-CIDR,192.0.2.0/24,REJECT-DROP,no-resolve"));
+    assert!(module.contains("IP-CIDR,192.0.2.7/32,REJECT-NO-DROP,no-resolve"));
+    assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
     fs::remove_dir_all(root).unwrap();
 }
 

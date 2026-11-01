@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.3.2 · 2026-11-01
+
+- Compile accepted IPv4/IPv6 reject and drop networks into Surge's early IP path.
+- Preserve IP policy priority, protected networks and no-resolve client fallbacks.
+- Skip timestamp-only writes of the generated catalog documentation.
+
 ## 0.3.1 · 2026-11-01
 
 - Add four device-confirmed exact IP drops; preserve Shadowrocket DNS-resolution controls.

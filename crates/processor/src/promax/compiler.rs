@@ -315,6 +315,7 @@ pub struct AdBlockManager {
     seen_suffixes: HashMap<String, HashSet<String>>,          // policy -> suffixes
     source_exceptions: HashSet<String>,                       // AdGuard/ABP @@ domain exceptions
     reviewed_ip_drops: HashSet<String>,
+    ip_rewrite_candidates: HashMap<String, HashSet<String>>,
     verified_rolling_feeds: BTreeMap<String, super::feed::VerifiedFeed>,
     sections: HashMap<String, Vec<String>>, // section_name -> lines
     section_seen: HashMap<String, HashSet<String>>, // section_name -> seen keys
@@ -366,6 +367,7 @@ impl AdBlockManager {
             seen_suffixes,
             source_exceptions: HashSet::new(),
             reviewed_ip_drops: HashSet::new(),
+            ip_rewrite_candidates: HashMap::new(),
             verified_rolling_feeds: BTreeMap::new(),
             sections,
             section_seen,
@@ -930,7 +932,20 @@ impl AdBlockManager {
 
         let rendered = parsed.render_external();
 
+        // External rulesets cannot retain module-only network requirements.
+        let unconditional = parsed.options.iter().all(|option| option == "NO-RESOLVE");
+        if unconditional
+            && matches!(policy, "REJECT" | "REJECT-DROP")
+            && let Some(target) = parsed.ip_rewrite_target()
+        {
+            self.ip_rewrite_candidates
+                .entry(policy.to_string())
+                .or_default()
+                .insert(target);
+        }
+
         if policy == "REJECT-DROP"
+            && unconditional
             && category == "Local"
             && parsed.kind == crate::promax::rule::RuleKind::IpCidr
             && let Some((address, _)) =
@@ -2324,6 +2339,68 @@ impl AdBlockManager {
         ]
     }
 
+    fn ip_rewrite_rules(&self) -> Vec<(u8, String, crate::promax::rule::SurgeRule)> {
+        use crate::promax::rule::SurgeRule;
+        use crate::promax::safety::{IpNetwork, SafetyDecision};
+
+        let exceptions: Vec<_> = ["DIRECT", "REJECT-NO-DROP"]
+            .iter()
+            .flat_map(|policy| self.rules[*policy].values())
+            .flatten()
+            .filter_map(|raw| SurgeRule::parse(raw).ok())
+            .filter(|rule| rule.ip_rewrite_target().is_some())
+            .filter_map(|rule| IpNetwork::parse(&rule.payload))
+            .collect();
+        let mut candidates = Vec::new();
+        for (policy, priority) in [("REJECT", 1), ("REJECT-DROP", 2)] {
+            for raw in self.rules[policy].values().flatten() {
+                if !raw.starts_with("IP-CIDR,") && !raw.starts_with("IP-CIDR6,") {
+                    continue;
+                }
+                let Ok(mut rule) = SurgeRule::parse(raw) else {
+                    continue;
+                };
+                if rule.options.iter().any(|option| option != "NO-RESOLVE") {
+                    continue;
+                }
+                let Some(target) = rule.ip_rewrite_target() else {
+                    continue;
+                };
+                if !self
+                    .ip_rewrite_candidates
+                    .get(policy)
+                    .is_some_and(|targets| targets.contains(&target))
+                {
+                    continue;
+                }
+                if self.safety.decision(&rule) != SafetyDecision::Keep {
+                    continue;
+                }
+                let reviewed = policy == "REJECT-DROP" && self.reviewed_ip_drops.contains(&target);
+                if !reviewed
+                    && IpNetwork::parse(&rule.payload).is_some_and(|network| {
+                        exceptions
+                            .iter()
+                            .any(|exception| exception.overlaps(network))
+                    })
+                {
+                    continue;
+                }
+                // Match the existing IP policy order, not longest-prefix or blanket DROP precedence.
+                let priority = if reviewed { 0 } else { priority };
+                rule.policy = Some(policy.to_string());
+                rule.prevent_dns_resolution();
+                candidates.push((priority, target, rule));
+            }
+        }
+        candidates.sort_by(|left, right| {
+            (&left.0, &left.1, &left.2.payload).cmp(&(&right.0, &right.1, &right.2.payload))
+        });
+        let mut seen = HashSet::new();
+        candidates.retain(|(_, target, _)| seen.insert(target.clone()));
+        candidates
+    }
+
     fn generate_module(
         &self,
         generated_rulesets: &[String],
@@ -2349,32 +2426,16 @@ impl AdBlockManager {
         let target_path = out_dir.join(format!("{}.sgmodule", base_filename));
         let shard_count = generated_rulesets.len();
 
-        let mut ip_drops: Vec<String> = self
-            .reviewed_ip_drops
-            .iter()
-            .filter(|address| {
-                self.rules["REJECT-DROP"].values().any(|rules| {
-                    rules.iter().any(|raw| {
-                        crate::promax::rule::SurgeRule::parse(raw).is_ok_and(|rule| {
-                            rule.kind == crate::promax::rule::RuleKind::IpCidr
-                                && rule.payload == format!("{address}/32")
-                                && self.safety.decision(&rule)
-                                    == crate::promax::safety::SafetyDecision::Keep
-                        })
-                    })
-                })
-            })
-            .cloned()
-            .collect();
-        ip_drops.sort();
+        let ip_rewrites = self.ip_rewrite_rules();
 
         let mut rule_lines = Vec::new();
-        if !ip_drops.is_empty() {
+        if !ip_rewrites.is_empty() {
             rule_lines.push("# IP Rewrite is VIF-only; proxy-server requests still need these no-resolve rules.".to_string());
             rule_lines.extend(
-                ip_drops
+                ip_rewrites
                     .iter()
-                    .map(|address| format!("IP-CIDR,{address}/32,REJECT-DROP,no-resolve")),
+                    .filter(|(priority, _, _)| *priority == 0)
+                    .map(|(_, _, rule)| rule.render_module("REJECT-DROP")),
             );
         }
         rule_lines.push("# --- SYNCED PORT RULES START ---".to_string());
@@ -2398,6 +2459,13 @@ impl AdBlockManager {
             "# HTTPDNS rules are compiled from the maintained AdBlock source manifest.".to_string(),
             "# Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)".to_string(),
         ]);
+
+        rule_lines.extend(
+            ip_rewrites
+                .iter()
+                .filter(|(priority, _, _)| *priority == 1)
+                .map(|(_, _, rule)| rule.render_module("REJECT")),
+        );
 
         let mut shards_by_category: HashMap<String, Vec<String>> = HashMap::new();
         for rs_path in generated_rulesets {
@@ -2429,6 +2497,17 @@ impl AdBlockManager {
             }
         }
 
+        rule_lines.extend(
+            ip_rewrites
+                .iter()
+                .filter(|(priority, _, _)| *priority == 2)
+                .map(|(_, _, rule)| rule.render_module("REJECT-DROP")),
+        );
+        let promoted: HashSet<_> = ip_rewrites
+            .iter()
+            .map(|(_, target, rule)| (rule.policy.as_deref().unwrap(), target.as_str()))
+            .collect();
+
         // Every upstream, including DROP/NO-DROP lists, must pass the same
         // whitelist and safety checks before its rules reach the module.
 
@@ -2451,12 +2530,10 @@ impl AdBlockManager {
             }
             let mut candidates = Vec::new();
             for r in pool {
-                if *policy == "REJECT-DROP"
+                if *policy != "REJECT"
                     && crate::promax::rule::SurgeRule::parse(&r).is_ok_and(|rule| {
-                        rule.kind == crate::promax::rule::RuleKind::IpCidr
-                            && ip_drops
-                                .iter()
-                                .any(|address| rule.payload == format!("{address}/32"))
+                        rule.ip_rewrite_target()
+                            .is_some_and(|target| promoted.contains(&(*policy, target.as_str())))
                     })
                 {
                     continue;
@@ -2490,15 +2567,24 @@ impl AdBlockManager {
 
         let mut functional_sections = Vec::new();
         let mut func_counts = Vec::new();
-        if !ip_drops.is_empty() {
+        if !ip_rewrites.is_empty() {
             functional_sections.push(crate::smart_cleanup::ModuleSectionPub {
                 name: "IP Rewrite".to_string(),
-                lines: ip_drops
+                lines: ip_rewrites
                     .iter()
-                    .map(|address| format!("{address} = drop"))
+                    .map(|(_, target, rule)| {
+                        format!(
+                            "{target} = {}",
+                            if rule.policy.as_deref() == Some("REJECT-DROP") {
+                                "drop"
+                            } else {
+                                "reject"
+                            }
+                        )
+                    })
                     .collect(),
             });
-            func_counts.push(format!("IP Rewrite={}", ip_drops.len()));
+            func_counts.push(format!("IP Rewrite={}", ip_rewrites.len()));
         }
         for sec_name in SECTION_ORDER {
             if *sec_name == "Rule"
@@ -2573,7 +2659,7 @@ impl AdBlockManager {
         );
 
         let mut header_lines = crate::smart_cleanup::format_header_pub(&header_meta);
-        if !ip_drops.is_empty() {
+        if !ip_rewrites.is_empty() {
             header_lines.push("#!requirement=CORE_VERSION>=6010000".to_string());
         }
         header_lines.push(

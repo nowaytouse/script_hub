@@ -32,8 +32,9 @@ static REVERSE_CDN_REGEX: Lazy<Regex> = Lazy::new(|| {
 static GENERATED_DATE_SUFFIX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\s*-\s*\[\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2})?\]").unwrap());
 static MODULE_NAME_KEY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^#!name\s*=").unwrap());
-static GENERATED_README_DATE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)(自动生成于\s*`|generated\s+(?:at|on)\s+`)[^`]+`").unwrap());
+static GENERATED_README_DATE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)(自动生成于\s*`|generated\s+(?:at|on)\s+`)[^`]+`|^> Generated `\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`").unwrap()
+});
 
 fn is_volatile_metadata(line: &str) -> bool {
     let lower = line.trim().to_ascii_lowercase().replace(' ', "");
@@ -592,6 +593,45 @@ mod tests {
                 .contains("force-http-engine-hosts = %APPEND% boxjs.com, *.boxjs.com, script.hub")
         );
         assert!(!normalized.contains("*:8082"));
+    }
+
+    #[test]
+    fn generated_catalog_readme_ignores_only_its_timestamp() {
+        let path = Path::new("rulesets/AdBlock/README.md");
+        let old = "> Generated `2026-11-01 22:33:07` · [`catalog.json`](catalog.json)\n| Ads | ads.list | 10 |\n";
+        let date_only = old.replace("2026-11-01 22:33:07", "2026-11-02 01:02:03");
+        assert_eq!(
+            semantic_content_for_path_pub(path, old),
+            semantic_content_for_path_pub(path, &date_only)
+        );
+        assert_ne!(
+            semantic_content_for_path_pub(path, old),
+            semantic_content_for_path_pub(path, &date_only.replace("| 10 |", "| 11 |"))
+        );
+        assert_ne!(
+            semantic_content_for_path_pub(path, old),
+            semantic_content_for_path_pub(
+                path,
+                &date_only.replace("(catalog.json)", "(other.json)")
+            )
+        );
+        assert_ne!(
+            semantic_content_for_path_pub(path, "Generated `v1`"),
+            semantic_content_for_path_pub(path, "Generated `v2`")
+        );
+        let target = std::env::temp_dir().join(format!(
+            "script-hub-readme-noop-{}-{}.md",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::write(&target, old).unwrap();
+        super::safe_write_file(&target, &date_only).unwrap();
+        let retained = std::fs::read_to_string(&target).unwrap();
+        std::fs::remove_file(&target).unwrap();
+        assert_eq!(retained, old);
     }
 
     #[test]

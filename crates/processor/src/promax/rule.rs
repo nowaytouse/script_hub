@@ -156,6 +156,36 @@ impl SurgeRule {
         self.render(true, default_policy, false)
     }
 
+    pub(crate) fn ip_rewrite_target(&self) -> Option<String> {
+        if !matches!(self.kind, RuleKind::IpCidr | RuleKind::IpCidr6) {
+            return None;
+        }
+        let (address, prefix) = self.payload.split_once('/')?;
+        let prefix: u8 = prefix.parse().ok()?;
+        let (address, bits) = match address.parse::<IpAddr>().ok()? {
+            IpAddr::V4(address) if prefix <= 32 => {
+                let mask = u32::MAX.checked_shl(u32::from(32 - prefix)).unwrap_or(0);
+                (
+                    IpAddr::V4(std::net::Ipv4Addr::from(u32::from(address) & mask)),
+                    32,
+                )
+            }
+            IpAddr::V6(address) if prefix <= 128 => {
+                let mask = u128::MAX.checked_shl(u32::from(128 - prefix)).unwrap_or(0);
+                (
+                    IpAddr::V6(std::net::Ipv6Addr::from(u128::from(address) & mask)),
+                    128,
+                )
+            }
+            _ => return None,
+        };
+        Some(if prefix == bits {
+            address.to_string()
+        } else {
+            format!("{address}/{prefix}")
+        })
+    }
+
     pub(crate) fn prevent_dns_resolution(&mut self) {
         if matches!(
             self.kind,

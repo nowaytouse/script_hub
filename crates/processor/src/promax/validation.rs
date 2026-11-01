@@ -47,6 +47,36 @@ fn validate_module(content: &str, surge_dialect: bool) -> Vec<ValidationError> {
         line.trim().to_ascii_lowercase().starts_with("#!name")
             && line.to_ascii_lowercase().contains("promax")
     });
+    let ip_rewrite_core = content.lines().any(|line| {
+        line.trim()
+            .strip_prefix("#!requirement=CORE_VERSION>=")
+            .and_then(|version| version.parse::<u32>().ok())
+            .is_some_and(|version| version >= 6_010_000)
+    });
+    let mut ip_fallbacks = HashSet::new();
+    if strict_promax {
+        let mut in_rule = false;
+        for line in content.lines().map(str::trim) {
+            if line.starts_with('[') && line.ends_with(']') {
+                in_rule = line == "[Rule]";
+            }
+            if !in_rule || !(line.starts_with("IP-CIDR,") || line.starts_with("IP-CIDR6,")) {
+                continue;
+            }
+            if let Ok(rule) = SurgeRule::parse(line)
+                && rule.options.iter().any(|option| option == "NO-RESOLVE")
+                && rule.options.iter().all(|option| option == "NO-RESOLVE")
+                && let Some(target) = rule.ip_rewrite_target()
+            {
+                let action = match rule.policy.as_deref() {
+                    Some("REJECT" | "REJECT-NO-DROP") => "reject",
+                    Some("REJECT-DROP") => "drop",
+                    _ => continue,
+                };
+                ip_fallbacks.insert((target, action));
+            }
+        }
+    }
 
     for (index, raw_line) in content.lines().enumerate() {
         let line_number = index + 1;
@@ -111,9 +141,14 @@ fn validate_module(content: &str, surge_dialect: bool) -> Vec<ValidationError> {
             }
             Some("Map Local") => validate_map_local(line_number, line, &mut errors),
             Some("Host") => validate_host(line_number, line, &mut errors),
-            Some("IP Rewrite") => {
-                validate_ip_rewrite(line_number, line, strict_promax, content, &mut errors)
-            }
+            Some("IP Rewrite") => validate_ip_rewrite(
+                line_number,
+                line,
+                strict_promax,
+                ip_rewrite_core,
+                &ip_fallbacks,
+                &mut errors,
+            ),
             Some(_) => {}
             None => errors.push(error(
                 line_number,
@@ -137,7 +172,8 @@ fn validate_ip_rewrite(
     line_number: usize,
     line: &str,
     strict_promax: bool,
-    content: &str,
+    core_supported: bool,
+    fallbacks: &HashSet<(String, &'static str)>,
     errors: &mut Vec<ValidationError>,
 ) {
     let Some((address, action)) = line.split_once('=') else {
@@ -171,28 +207,30 @@ fn validate_ip_rewrite(
     if !strict_promax {
         return;
     }
-    if action != "drop"
-        || !super::safety::REVIEWED_IP_DROPS
-            .iter()
-            .any(|(reviewed, _)| *reviewed == address)
-    {
-        errors.push(error(line_number, "unreviewed-ip-rewrite", "PROMAX IP Rewrite only mirrors reviewed exact drops; no ranges, DNS expansion or routing"));
+    if !matches!(action, "reject" | "drop") {
+        errors.push(error(
+            line_number,
+            "unsupported-promax-ip-rewrite",
+            "PROMAX IP Rewrite only compiles reject/drop actions",
+        ));
     }
-    if !content.lines().any(|line| {
-        line.trim()
-            .strip_prefix("#!requirement=CORE_VERSION>=")
-            .and_then(|version| version.parse::<u32>().ok())
-            .is_some_and(|version| version >= 6_010_000)
-    }) {
+    if !core_supported {
         errors.push(error(
             line_number,
             "ip-rewrite-core-requirement",
             "IP Rewrite requires CORE_VERSION>=6010000 (iOS 5.23 / macOS 6.10)",
         ));
     }
-    let fallback = format!("IP-CIDR,{address}/32,REJECT-DROP,no-resolve");
-    if !content.lines().any(|line| line.trim() == fallback) {
-        errors.push(error(line_number, "ip-rewrite-missing-proxy-fallback", "VIF-only IP Rewrite requires an equivalent no-resolve REJECT-DROP rule for proxy-server requests"));
+    let payload = if address.contains('/') {
+        address.to_string()
+    } else {
+        format!("{address}/{}", if kind == "IP-CIDR6" { 128 } else { 32 })
+    };
+    let target = SurgeRule::parse(&format!("{kind},{payload}"))
+        .ok()
+        .and_then(|rule| rule.ip_rewrite_target());
+    if !target.is_some_and(|target| fallbacks.contains(&(target, action))) {
+        errors.push(error(line_number, "ip-rewrite-missing-proxy-fallback", "VIF-only IP Rewrite requires an equivalent no-resolve rule with the same action in [Rule]"));
     }
 }
 
@@ -216,7 +254,7 @@ pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationE
         }
         "Map Local" => validate_map_local(1, line, &mut errors),
         "Host" => validate_host(1, line, &mut errors),
-        "IP Rewrite" => validate_ip_rewrite(1, line, false, "", &mut errors),
+        "IP Rewrite" => validate_ip_rewrite(1, line, false, false, &HashSet::new(), &mut errors),
         _ => {}
     }
     errors.extend(validate_transport_security(line));
@@ -966,7 +1004,7 @@ mod tests {
     }
 
     #[test]
-    fn user_confirmed_ip_rewrite_drops_are_exact_and_require_proxy_fallbacks() {
+    fn ip_rewrite_drops_require_equivalent_proxy_fallbacks() {
         for address in [
             "101.36.166.17",
             "101.36.166.18",
@@ -994,7 +1032,7 @@ mod tests {
             assert!(
                 validate_surge_module(&module)
                     .iter()
-                    .any(|error| error.code == "unreviewed-ip-rewrite"),
+                    .any(|error| error.code == "ip-rewrite-missing-proxy-fallback"),
                 "{target}"
             );
         }
@@ -1141,7 +1179,7 @@ RULE-SET,https://example.test/unfiltered.list,PROXY
     }
 
     #[test]
-    fn ip_rewrite_is_surge_only_and_requires_safe_exact_drop_with_proxy_fallback() {
+    fn ip_rewrite_is_surge_only_and_requires_safe_action_with_proxy_fallback() {
         assert!(validate_surge_module("#!name=fixture\n[IP Rewrite]\n2001:db8::/32 = drop\n203.0.113.0/24 = reject\n10.7.0.1 = reflect\n").is_empty());
         assert!(
             !validate_surge_module("#!name=fixture\n[IP Rewrite]\n8.8.8.8/ = drop\n").is_empty()
@@ -1161,6 +1199,55 @@ RULE-SET,https://example.test/unfiltered.list,PROXY
                 "{unsafe_module}"
             );
         }
+    }
+
+    #[test]
+    fn ip_rewrite_fallback_matches_canonical_network_family_and_action() {
+        for (target, action, fallback) in [
+            (
+                "203.0.113.42/24",
+                "reject",
+                "IP-CIDR,203.0.113.0/24,REJECT,no-resolve",
+            ),
+            (
+                "2001:db8::1",
+                "drop",
+                "IP-CIDR6,2001:db8::1/128,REJECT-DROP,no-resolve",
+            ),
+            (
+                "2001:db8::1234/64",
+                "reject",
+                "IP-CIDR6,2001:db8::/64,REJECT,no-resolve",
+            ),
+        ] {
+            let module = format!(
+                "#!name=PROMAX fixture\n#!requirement=CORE_VERSION>=6010000\n[IP Rewrite]\n{target} = {action}\n[Rule]\n{fallback}\n"
+            );
+            assert!(validate_surge_module(&module).is_empty(), "{module}");
+        }
+
+        for fallback in [
+            "IP-CIDR,192.0.2.1/32,REJECT-DROP,no-resolve",
+            "IP-CIDR6,2001:db8::1/128,REJECT,no-resolve",
+            "IP-CIDR6,2001:db8::1/128,REJECT-DROP",
+            "IP-CIDR6,2001:db8::1/128,REJECT-DROP,no-resolve,extended-matching",
+        ] {
+            let module = format!(
+                "#!name=PROMAX fixture\n#!requirement=CORE_VERSION>=6010000\n[IP Rewrite]\n2001:db8::1 = drop\n[Rule]\n{fallback}\n"
+            );
+            assert!(
+                validate_surge_module(&module)
+                    .iter()
+                    .any(|error| error.code == "ip-rewrite-missing-proxy-fallback"),
+                "{module}"
+            );
+        }
+        let wrong_section = "#!name=PROMAX fixture\n#!requirement=CORE_VERSION>=6010000\n[IP Rewrite]\n2001:db8::1 = drop\n[Other]\nIP-CIDR6,2001:db8::1/128,REJECT-DROP,no-resolve\n";
+        assert!(
+            validate_surge_module(wrong_section)
+                .iter()
+                .any(|error| error.code == "ip-rewrite-missing-proxy-fallback")
+        );
     }
 
     #[test]
