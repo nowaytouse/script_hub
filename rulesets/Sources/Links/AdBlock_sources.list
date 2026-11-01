@@ -78,7 +78,7 @@ https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combine
 https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list|REJECT-DROP|auto|Local
 
 # Explicit user-confirmed exact IP drops; no DNS or network-range expansion.
-../IP_Drop_Reviewed.list|REJECT-DROP|auto|Local
+/rulesets/Sources/IP_Drop_Reviewed.list|REJECT-DROP|auto|Local
 
 # HaGeZi and phishing threat intelligence (kept in dedicated categories)
 https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt|REJECT|auto|ThreatIntel_Ultimate

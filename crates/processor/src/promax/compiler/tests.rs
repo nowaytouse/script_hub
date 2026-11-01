@@ -4,6 +4,54 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn authored_source_identity_is_root_relative_and_portable() {
+    let root = std::env::temp_dir().join("promax-source-identity");
+    let entry = super::SourceEntry {
+        manifest_path: root.join("rulesets/Sources/Links/AdBlock_sources.list"),
+        source: "/rulesets/Sources/IP_Drop_Reviewed.list".to_string(),
+        policy: "REJECT-DROP".to_string(),
+        kind: "auto".to_string(),
+        category: Some("Local".to_string()),
+    };
+    let expected = "rulesets/Sources/IP_Drop_Reviewed.list";
+    assert_eq!(entry.resolved_path(&root), root.join(expected));
+    assert_eq!(entry.display_name(&root), expected);
+    for (address, source) in crate::promax::safety::REVIEWED_IP_DROPS {
+        if [
+            "101.36.166.17",
+            "101.36.166.18",
+            "101.36.166.19",
+            "47.106.88.76",
+        ]
+        .contains(address)
+        {
+            assert_eq!(*source, entry.display_name(&root));
+        }
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn local_source_identity_does_not_alias_a_literal_unix_backslash() {
+    let root = std::env::temp_dir().join("promax-source-identity");
+    let entry = super::SourceEntry {
+        manifest_path: root.join("rulesets/Sources/Links/AdBlock_sources.list"),
+        source: r"/rulesets\Sources\IP_Drop_Reviewed.list".to_string(),
+        policy: "REJECT-DROP".to_string(),
+        kind: "auto".to_string(),
+        category: Some("Local".to_string()),
+    };
+    assert_eq!(
+        entry.display_name(&root),
+        r"rulesets\Sources\IP_Drop_Reviewed.list"
+    );
+    assert_ne!(
+        entry.display_name(&root),
+        "rulesets/Sources/IP_Drop_Reviewed.list"
+    );
+}
+
+#[test]
 fn user_confirmed_ip_drops_are_authored_exact_inputs_and_generated_with_fallbacks() {
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut manager = AdBlockManager::new(root.clone());
@@ -11,7 +59,7 @@ fn user_confirmed_ip_drops_are_authored_exact_inputs_and_generated_with_fallback
     let entries = manager.load_source_entries();
     let entry = entries
         .iter()
-        .find(|entry| entry.source == "../IP_Drop_Reviewed.list")
+        .find(|entry| entry.source == "/rulesets/Sources/IP_Drop_Reviewed.list")
         .expect("explicit user IP drops must have a checked-in authored source");
     assert_eq!(entry.policy, "REJECT-DROP");
     assert_eq!(entry.category.as_deref(), Some("Local"));

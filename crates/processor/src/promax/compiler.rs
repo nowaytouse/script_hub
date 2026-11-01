@@ -291,7 +291,11 @@ impl SourceEntry {
                 .to_string()
         } else {
             match self.resolved_path(root_dir).strip_prefix(root_dir) {
-                Ok(rel) => rel.to_string_lossy().to_string(),
+                Ok(rel) => rel
+                    .components()
+                    .map(|component| component.as_os_str().to_string_lossy().into_owned())
+                    .collect::<Vec<_>>()
+                    .join("/"),
                 Err(_) => self
                     .resolved_path(root_dir)
                     .file_name()

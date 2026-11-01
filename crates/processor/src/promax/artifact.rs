@@ -503,6 +503,9 @@ fn rollback(backups: &[(PathBuf, Option<PathBuf>)]) -> Vec<String> {
     errors
 }
 
+static SHADOWROCKET_IP_REWRITE_SUMMARY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"IP Rewrite=\d+(?:, )?").unwrap());
+
 pub fn convert_surge_to_shadowrocket(content: &str) -> String {
     let mut output = Vec::new();
     let mut section = "";
@@ -521,6 +524,7 @@ pub fn convert_surge_to_shadowrocket(content: &str) -> String {
         }
         if let Some(description) = trimmed.strip_prefix("#!desc=") {
             let description = description.strip_prefix("[🚀SR] ").unwrap_or(description);
+            let description = SHADOWROCKET_IP_REWRITE_SUMMARY.replace_all(description, "");
             output.push(format!("#!desc=[🚀SR] {description}"));
             continue;
         }
@@ -602,6 +606,16 @@ mod tests {
     use std::path::Path;
     use std::sync::Arc;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn shadowrocket_description_omits_unsupported_ip_rewrite_metric() {
+        let source = "#!name=PROMAX fixture\n#!desc=按用途分片(26片) + 应用内去广告(IP Rewrite=5, URL Rewrite=550, Script=275); 索引 rulesets/AdBlock/catalog.json\n[Rule]\nDOMAIN,ads.example.test,REJECT\n";
+        let converted = convert_surge_to_shadowrocket(source);
+        assert!(converted.contains("#!desc=[🚀SR] 按用途分片(26片) + 应用内去广告(URL Rewrite=550, Script=275); 索引 rulesets/AdBlock/catalog.json"));
+        assert!(!converted.contains("IP Rewrite="));
+        assert_eq!(converted, convert_surge_to_shadowrocket(&converted));
+        assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+    }
 
     #[test]
     fn shadowrocket_conversion_preserves_no_resolve_without_surge_only_options() {

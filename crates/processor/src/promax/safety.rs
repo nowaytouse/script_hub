@@ -64,7 +64,7 @@ const MAINLAND_SERVICE_SUFFIXES: &[&str] = &[
     "zijieapi.com",
 ];
 
-const USER_CONFIRMED_IP_DROP_SOURCE: &str = "rulesets/Sources/Links/../IP_Drop_Reviewed.list";
+const USER_CONFIRMED_IP_DROP_SOURCE: &str = "rulesets/Sources/IP_Drop_Reviewed.list";
 
 // Existing Tieba HTTPDNS policy plus explicitly user-confirmed targets; never infer additional IPs.
 // https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list
