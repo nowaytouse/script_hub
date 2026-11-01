@@ -1,0 +1,8 @@
+#!name=PROMAX split · 知乎去广告.sgmodule
+#!desc=从混合模块拆出的去广告行 2/40；解锁/增强仍留在原模块
+#!author=ScriptHub-Automated
+#!split-source=rulesets/Sources/LocalModules/知乎去广告.sgmodule
+
+[Map Local]
+^https:\/\/api\.zhihu\.com\/ad-style-service\/request data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+^https:\/\/api\.zhihu\.com\/distribute\/rhea\/qa_ad_card\/h5\/recommendation\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"

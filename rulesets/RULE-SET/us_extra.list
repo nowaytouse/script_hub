@@ -1,0 +1,23 @@
+# Ruleset: us_extra
+# Policy: USER-DEFINED
+# Description: Current consolidated subscription; policy selected by consumer
+# Rules: 19
+PROCESS-NAME,com.disney.datg.videoplatforms.android.abc
+PROCESS-NAME,com.disney.disneyplus
+PROCESS-NAME,com.hbo.hbonow
+PROCESS-NAME,com.hulu.plus
+PROCESS-NAME,com.netflix.mediaclient
+PROCESS-NAME,com.spotify.music
+USER-AGENT,All4*
+USER-AGENT,Argo*
+USER-AGENT,BBCiPlayer*
+USER-AGENT,DPlus*
+USER-AGENT,Disney+*
+USER-AGENT,HBO%20NOW*
+USER-AGENT,HBOMAX*
+USER-AGENT,ITV_Player*
+USER-AGENT,My5*
+USER-AGENT,PPlus*
+USER-AGENT,PeacockMobile*
+USER-AGENT,Spotify*
+USER-AGENT,discovery+*

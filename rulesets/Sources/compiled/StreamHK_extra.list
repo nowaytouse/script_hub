@@ -1,0 +1,9 @@
+# Ruleset: StreamHK_extra
+# Policy: USER-DEFINED
+# Description: Internal upstream snapshot; not a subscription
+# Rules: 5
+PROCESS-NAME,com.viu.pad
+PROCESS-NAME,com.viu.phone
+PROCESS-NAME,com.vuclip.viu
+USER-AGENT,Viu*
+USER-AGENT,mytv*

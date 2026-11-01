@@ -1,0 +1,16 @@
+# Ruleset: AI_extra
+# Policy: USER-DEFINED
+# Description: Current typed ruleset; policy selected by consumer
+# Rules: 12
+PROCESS-NAME,"Cici Helper (Renderer)"
+PROCESS-NAME,"Cici Helper"
+PROCESS-NAME,"Trae Helper (Plugin)"
+PROCESS-NAME,"Trae Helper"
+PROCESS-NAME,CapCut
+PROCESS-NAME,Cici
+PROCESS-NAME,Lemon8
+PROCESS-NAME,TikTok
+PROCESS-NAME,ai
+PROCESS-NAME,ai-agent
+PROCESS-NAME,ai-completion
+URL-REGEX,https://www\.google\.com/.*continue=https://gemini\.google\.com.+

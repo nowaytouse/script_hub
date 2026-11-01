@@ -1,0 +1,32 @@
+# Functional sources → PROMAX ([Script], [URL Rewrite], …)
+# Relative paths resolve from this file's directory.
+#
+# 混合模块（同时含去广告 + 解锁/增强）：按行拆分，仅广告行并入 PROMAX；
+#   拆分预览 → modules/source/build/promax_splits/*.ad-extract.sgmodule
+# 纯去广告模块：整模块并入
+# 纯解锁/增强：跳过（继续用 amplify_nexus 独立安装）
+#
+# 自动扫描（经 resolve_module_ingest_mode）：
+#   modules/source/local/*.sgmodule
+#   rulesets/Sources/LocalModules/*   ← 各 App 去广告（逐文件并入 PROMAX）
+# narrow_pierce 已废弃：勿再复制专项模块到 Surge 安装目录
+
+../vendor/adultraplus.sgmodule
+
+# ── 通用 / 聚合去广告（full）──
+../../../modules/source/local/AllInOne_Mock.sgmodule
+../../../modules/source/local/All-in-One-2.x.sgmodule
+../../../modules/source/local/[Sukka] Enhance Better ADBlock for Surge.sgmodule
+../../../modules/source/local/XWebAds.sgmodule
+../../../modules/source/local/BiliBili.ADBlock.sgmodule
+../../../modules/source/local/YouTube.ADBlock.sgmodule
+../../../modules/source/local/WeChat.ADBlock.sgmodule
+
+# ── 混合模块（split：只提取 ADBlock / REJECT / helper 等行）──
+../../../modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule
+
+# app2smile / rules — MIT, attribution in ../licenses/README.md.
+# Native Surge sources; scripts stay at the official repository, no Loon UA spoofing.
+https://raw.githubusercontent.com/app2smile/rules/master/module/qidian.sgmodule
+https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule
+https://raw.githubusercontent.com/app2smile/rules/master/module/qqnews.sgmodule

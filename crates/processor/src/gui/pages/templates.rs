@@ -1,0 +1,470 @@
+use super::{card, primary_button};
+use crate::gui::app::HubApp;
+use crate::gui::i18n::{Text, text};
+use crate::gui::templates::{CONFIRM_ID, PASSWORD_ID};
+use crate::vault::Client;
+use eframe::egui::{self, RichText};
+
+impl HubApp {
+    pub(crate) fn templates_page(&mut self, ui: &mut egui::Ui) {
+        let language = self.draft.language;
+        let tr = |key| text(language, key);
+        let colors = self.colors;
+        let workspace = self.loaded_root.clone();
+        let project = self.template_project_root();
+        let state = &mut self.templates;
+        if let Some(project) = project {
+            state.visit_project(&project);
+        } else {
+            state.visit_without_project();
+        }
+        ui.heading(tr(Text::Templates));
+        ui.label(tr(Text::VaultIntro));
+        ui.add_space(14.0);
+        if let Some(error) = &state.error {
+            ui.colored_label(colors.error, error);
+            ui.add_space(8.0);
+        }
+        if let Some(notice) = state.notice {
+            ui.label(tr(notice));
+            ui.add_space(8.0);
+        }
+        if state.busy() {
+            card(ui, colors, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(tr(Text::VaultWorking));
+                });
+                if ui.button(tr(Text::VaultLock)).clicked() {
+                    state.lock(ui.ctx());
+                }
+            });
+            return;
+        }
+        egui::ScrollArea::vertical()
+            .id_salt("templates-page")
+            .show(ui, |ui| {
+                if !state.unlocked() {
+                    card(ui, colors, |ui| {
+                        ui.label(
+                            RichText::new(tr(if state.preparing() {
+                                Text::VaultPrepare
+                            } else {
+                                Text::VaultLocked
+                            }))
+                            .size(20.0)
+                            .strong(),
+                        );
+                        ui.add_space(10.0);
+                        let previous_mode = if state.preparing() {
+                            2
+                        } else if state.creating {
+                            1
+                        } else {
+                            0
+                        };
+                        let mut mode = previous_mode;
+                        ui.horizontal_wrapped(|ui| {
+                            ui.selectable_value(&mut mode, 0, tr(Text::VaultOpenExisting));
+                            ui.selectable_value(&mut mode, 1, tr(Text::VaultCreateNew));
+                            ui.selectable_value(&mut mode, 2, tr(Text::VaultPrepare));
+                        });
+                        if mode != previous_mode {
+                            state.prepare_mode = mode == 2;
+                            state.creating = mode == 1;
+                            if mode != 0 {
+                                state.use_originals = false;
+                            }
+                            state.clear_passwords(ui.ctx());
+                            state.error = None;
+                            state.notice = None;
+                        }
+                        ui.add_space(10.0);
+                        ui.weak(tr(Text::VaultManagedStorage));
+                        if !state.storage_available() {
+                            ui.weak(tr(Text::VaultStorageUnavailable));
+                        }
+                        if state.preparing() {
+                            ui.label(tr(Text::VaultPrepareHelp));
+                            let label = ui.label(tr(Text::VaultPrepareSources));
+                            let field = egui::TextEdit::multiline(&mut state.prepare_sources)
+                                .id_salt("vault-prepare-sources")
+                                .desired_rows(3)
+                                .desired_width(f32::INFINITY)
+                                .show(ui);
+                            let _ = (*field.response).clone().labelled_by(label.id);
+                            ui.weak(tr(Text::VaultPrepareSourcesHelp));
+                            ui.horizontal_wrapped(|ui| {
+                                ui.label(tr(Text::VaultPrepareClient));
+                                ui.selectable_value(
+                                    &mut state.import_client,
+                                    Client::Other,
+                                    tr(Text::VaultDetectClient),
+                                );
+                                ui.selectable_value(
+                                    &mut state.import_client,
+                                    Client::Surge,
+                                    "Surge",
+                                );
+                                ui.selectable_value(
+                                    &mut state.import_client,
+                                    Client::Shadowrocket,
+                                    "Shadowrocket",
+                                );
+                            });
+                            ui.label(tr(Text::VaultPreparePublic));
+                            ui.monospace(&state.prepare_public);
+                            ui.label(tr(Text::VaultPrepareBackup));
+                            ui.monospace(&state.prepare_backup);
+                        } else {
+                            if !state.creating {
+                                ui.horizontal_wrapped(|ui| {
+                                    if ui
+                                        .selectable_label(
+                                            !state.use_originals,
+                                            tr(Text::VaultLibraryTemplates),
+                                        )
+                                        .clicked()
+                                    {
+                                        state.select_library(false, ui.ctx());
+                                    }
+                                    if state.originals_available()
+                                        && ui
+                                            .selectable_label(
+                                                state.use_originals,
+                                                tr(Text::VaultLibraryOriginals),
+                                            )
+                                            .clicked()
+                                    {
+                                        state.select_library(true, ui.ctx());
+                                    }
+                                });
+                                ui.weak(tr(Text::VaultImportEncryptedHint));
+                            }
+                            ui.label(tr(Text::VaultFile));
+                            if state.creating {
+                                if let Some(path) = state.save_destination() {
+                                    ui.monospace(path.display().to_string());
+                                }
+                            } else {
+                                ui.monospace(&state.path);
+                            }
+                        }
+                        ui.add_space(10.0);
+                        secret_field(
+                            ui,
+                            &mut state.password,
+                            PASSWORD_ID,
+                            tr(Text::VaultPassword),
+                            "",
+                        );
+                        if state.creating || state.preparing() {
+                            ui.add_space(8.0);
+                            secret_field(
+                                ui,
+                                &mut state.confirmation,
+                                CONFIRM_ID,
+                                tr(Text::VaultConfirmPassword),
+                                "",
+                            );
+                            ui.weak(tr(Text::VaultPasswordHelp));
+                        }
+                        if state.queued_imports() > 0 {
+                            ui.label(format!(
+                                "{}: {}",
+                                tr(Text::VaultQueuedImports),
+                                state.queued_imports()
+                            ));
+                        }
+                        ui.add_space(12.0);
+                        if ui
+                            .add_enabled(
+                                !state.password.is_empty()
+                                    && (!state.creating || state.storage_available()),
+                                primary_button(
+                                    colors,
+                                    tr(if state.preparing() {
+                                        Text::VaultPrepare
+                                    } else if state.creating {
+                                        Text::VaultCreateNew
+                                    } else {
+                                        Text::VaultUnlock
+                                    }),
+                                ),
+                            )
+                            .clicked()
+                        {
+                            state.open(ui.ctx());
+                        }
+                        ui.add_space(12.0);
+                        ui.weak(tr(Text::VaultLockedHelp));
+                    });
+                    return;
+                }
+                card(ui, colors, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(RichText::new(tr(Text::VaultUnlocked)).size(20.0).strong());
+                        if state.dirty {
+                            ui.label(tr(Text::UnsavedChanges));
+                        }
+                        if ui.button(tr(Text::VaultLock)).clicked() {
+                            state.lock(ui.ctx());
+                        }
+                    });
+                    if !state.unlocked() {
+                        return;
+                    }
+                    ui.add_space(10.0);
+                    ui.label(tr(Text::VaultFile));
+                    if let Some(path) = state.save_destination() {
+                        ui.monospace(path.display().to_string());
+                    } else {
+                        ui.weak(tr(Text::VaultStorageUnavailable));
+                    }
+                    ui.checkbox(&mut state.overwrite_vault, tr(Text::VaultOverwrite));
+                    if ui
+                        .add_enabled(
+                            state.storage_available(),
+                            primary_button(colors, tr(Text::VaultSave)),
+                        )
+                        .clicked()
+                    {
+                        state.save();
+                    }
+                    ui.weak(tr(Text::VaultSessionHelp));
+                });
+                if !state.unlocked() || state.busy() {
+                    return;
+                }
+                ui.add_space(14.0);
+                card(ui, colors, |ui| {
+                    ui.label(RichText::new(tr(Text::VaultAddTemplate)).strong());
+                    ui.label(tr(Text::VaultImportHint));
+                    ui.add(
+                        egui::TextEdit::singleline(&mut state.import_path)
+                            .id_salt("vault-import-path")
+                            .desired_width(f32::INFINITY),
+                    );
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(tr(Text::Platform));
+                        ui.selectable_value(&mut state.import_client, Client::Surge, "Surge");
+                        ui.selectable_value(
+                            &mut state.import_client,
+                            Client::Shadowrocket,
+                            "Shadowrocket",
+                        );
+                        ui.selectable_value(
+                            &mut state.import_client,
+                            Client::Other,
+                            tr(Text::VaultOther),
+                        );
+                        if ui
+                            .add_enabled(
+                                !state.import_path.trim().is_empty() || state.queued_imports() > 0,
+                                egui::Button::new(tr(Text::VaultImport)),
+                            )
+                            .clicked()
+                        {
+                            state.import();
+                        }
+                    });
+                    if state.queued_imports() > 0 {
+                        ui.label(format!(
+                            "{}: {}",
+                            tr(Text::VaultQueuedImports),
+                            state.queued_imports()
+                        ));
+                    }
+                    ui.weak(tr(Text::VaultImportHelp));
+                });
+                if state.busy() {
+                    return;
+                }
+                ui.add_space(14.0);
+                let previous = state.selected;
+                card(ui, colors, |ui| {
+                    ui.label(RichText::new(tr(Text::VaultChooseTemplate)).strong());
+                    if let Some(vault) = state.vault.as_ref() {
+                        if vault.library().templates.is_empty() {
+                            ui.label(tr(Text::VaultEmpty));
+                        }
+                        for (index, template) in vault.library().templates.iter().enumerate() {
+                            ui.selectable_value(&mut state.selected, index, &template.name);
+                        }
+                    }
+                });
+                if state.selected != previous {
+                    state.refresh_selection(ui.ctx());
+                }
+                if state.selected_template().is_none() {
+                    return;
+                }
+                ui.add_space(14.0);
+                card(ui, colors, |ui| {
+                    ui.label(RichText::new(tr(Text::VaultConfigure)).strong());
+                    for (index, (slot, value)) in state.subscriptions.iter_mut().enumerate() {
+                        let label = if slot.is_empty() {
+                            tr(Text::VaultSeparateSubscription).to_owned()
+                        } else {
+                            format!("{} {}", tr(Text::VaultSubscription), index + 1)
+                        };
+                        secret_field(
+                            ui,
+                            value,
+                            &format!("template-vault-url-{index}"),
+                            &label,
+                            "https://example.com/subscription",
+                        );
+                        if slot.is_empty() {
+                            ui.weak(tr(Text::VaultShadowrocketHelp));
+                        }
+                        ui.add_space(8.0);
+                    }
+                    ui.weak(tr(Text::VaultNoFetch));
+                    ui.add_space(10.0);
+                    if ui
+                        .checkbox(&mut state.show_preview, tr(Text::VaultShowTemplate))
+                        .changed()
+                    {
+                        state.show_template();
+                    }
+                    if state.show_preview {
+                        ui.weak(tr(Text::VaultTemplatePreviewHelp));
+                        let row_height = ui.text_style_height(&egui::TextStyle::Monospace);
+                        egui::ScrollArea::both()
+                            .id_salt("vault-template-preview")
+                            .max_height(260.0)
+                            .show_rows(
+                                ui,
+                                row_height,
+                                state.preview.lines().count(),
+                                |ui, rows| {
+                                    for line in
+                                        state.preview.lines().skip(rows.start).take(rows.len())
+                                    {
+                                        ui.add(
+                                            egui::Label::new(RichText::new(line).monospace())
+                                                .selectable(false)
+                                                .wrap_mode(egui::TextWrapMode::Extend),
+                                        );
+                                    }
+                                },
+                            );
+                    }
+                    ui.add_space(12.0);
+                    ui.checkbox(&mut state.allow_plaintext, tr(Text::VaultPlaintextConsent));
+                    ui.weak(tr(Text::VaultClipboardWarning));
+                    ui.add_space(8.0);
+                    ui.horizontal_wrapped(|ui| {
+                        if ui
+                            .add_enabled(
+                                state.allow_plaintext,
+                                egui::Button::new(tr(Text::VaultCopyConfiguration)),
+                            )
+                            .clicked()
+                        {
+                            state.copy(ui.ctx());
+                        }
+                        if state.subscriptions.iter().any(|(slot, _)| slot.is_empty())
+                            && ui
+                                .add_enabled(
+                                    state.allow_plaintext,
+                                    egui::Button::new(tr(Text::VaultCopySubscription)),
+                                )
+                                .clicked()
+                        {
+                            state.copy_subscription(ui.ctx());
+                        }
+                    });
+                    ui.add_space(12.0);
+                    ui.label(tr(Text::VaultExportFile));
+                    ui.add(
+                        egui::TextEdit::singleline(&mut state.export_path)
+                            .id_salt("vault-export-path")
+                            .desired_width(f32::INFINITY)
+                            .hint_text(tr(Text::VaultExportHint)),
+                    );
+                    ui.checkbox(&mut state.overwrite_export, tr(Text::VaultOverwrite));
+                    if ui
+                        .add_enabled(
+                            state.allow_plaintext && !state.export_path.trim().is_empty(),
+                            egui::Button::new(tr(Text::VaultExport)),
+                        )
+                        .clicked()
+                    {
+                        state.export(workspace.as_deref());
+                    }
+                    ui.add_space(14.0);
+                    if !state.remove_pending {
+                        if ui
+                            .add(
+                                egui::Button::new(tr(Text::VaultRemove))
+                                    .fill(colors.surface)
+                                    .stroke(egui::Stroke::new(1.0, colors.error)),
+                            )
+                            .clicked()
+                        {
+                            state.remove_pending = true;
+                        }
+                    } else {
+                        ui.colored_label(colors.error, tr(Text::VaultRemoveConfirm));
+                        ui.horizontal_wrapped(|ui| {
+                            if ui
+                                .add(
+                                    egui::Button::new(tr(Text::VaultRemove))
+                                        .fill(colors.surface)
+                                        .stroke(egui::Stroke::new(1.0, colors.error)),
+                                )
+                                .clicked()
+                            {
+                                state.remove_selected(ui.ctx());
+                            }
+                            if ui.button(tr(Text::Cancel)).clicked() {
+                                state.remove_pending = false;
+                            }
+                        });
+                    }
+                });
+            });
+    }
+}
+
+fn secret_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str, hint: &str) {
+    let label = ui.label(label);
+    let mut output = egui::TextEdit::singleline(value)
+        .id(egui::Id::unique(id))
+        .password(true)
+        .hint_text(hint)
+        .desired_width(f32::INFINITY)
+        .show(ui);
+    let _ = (*output.response).clone().labelled_by(label.id);
+    output.state.clear_undoer();
+    output.state.store(ui.ctx(), output.response.id);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn password_widget_does_not_retain_undo_history() {
+        let ctx = egui::Context::default();
+        let mut password = "synthetic-password-fixture".to_owned();
+        let mut initial = egui::text_edit::TextEditState::default();
+        let mut undoer = initial.undoer();
+        undoer.add_undo(&(Default::default(), "old fixture".to_owned()));
+        undoer.add_undo(&(Default::default(), "new fixture".to_owned()));
+        initial.set_undoer(undoer);
+        initial.store(&ctx, egui::Id::unique(PASSWORD_ID));
+        let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            egui::CentralPanel::default().show(ui, |ui| {
+                secret_field(ui, &mut password, PASSWORD_ID, "Password", "")
+            });
+        });
+        output.drop_without_applying_deltas();
+        let state =
+            egui::text_edit::TextEditState::load(&ctx, egui::Id::unique(PASSWORD_ID)).unwrap();
+        let current = (Default::default(), String::new());
+        assert!(!state.undoer().has_undo(&current) && !state.undoer().has_redo(&current));
+    }
+}

@@ -1,0 +1,20 @@
+# CDN - Content Delivery Networks
+# Policy Group: 🌍 海外通用 🌍
+# Purpose: CDN services that need overseas proxy
+# 更新: 2025-12-07
+
+# CDN (SukkaW) - Non-IP
+https://ruleset.skk.moe/List/non_ip/cdn.conf
+https://ruleset.skk.moe/List/ip/cdn.conf
+
+# CDN Domainset (SukkaW)
+https://ruleset.skk.moe/List/domainset/cdn.conf
+
+# CDN Custom Manual Rules
+../custom/CDN_manual.list
+
+# Cloudflare
+../vendor/yfamilys_Cloudflare.list
+
+# Smart-Config-Kit Supplement
+../custom/SmartConfigKit/SCK_CDN.list

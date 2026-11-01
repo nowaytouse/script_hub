@@ -1,0 +1,524 @@
+use super::*;
+use serde_json::json;
+
+fn unchanged() -> EnhanceOptions {
+    EnhanceOptions {
+        rename: false,
+        sort: false,
+    }
+}
+
+#[test]
+fn anytls_projection_preserves_quoted_password_alpn_and_tls_identity() {
+    let source = r#""HK, A" = anytls, node.example.invalid, 443, password="p,a=ss#word", sni=identity.example.invalid, alpn="h2,http/1.1", skip-cert-verify=false
+"#;
+    let subscription = Subscription::parse(source).unwrap();
+    let node = &subscription.nodes()[0];
+    assert_eq!(node.name(), "HK, A");
+    assert_eq!(node.server(), "node.example.invalid");
+    assert_eq!(node.protocol(), "anytls");
+    assert_eq!(
+        node.to_sing_box(false).unwrap(),
+        json!({
+            "type":"anytls", "tag":"HK, A", "server":"node.example.invalid", "server_port":443,
+            "password":"p,a=ss#word", "tls":{"enabled":true,"server_name":"identity.example.invalid","alpn":["h2","http/1.1"],"insecure":false}
+        })
+    );
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Healthy { latency_ms: 1 }], &unchanged())
+            .unwrap(),
+        source
+    );
+}
+
+#[test]
+fn insecure_profile_is_security_blocked_until_explicit_compatibility() {
+    let subscription = Subscription::parse(
+        "A = anytls, node.example.invalid, 443, password=synthetic, skip-cert-verify=true\n",
+    )
+    .unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::SecurityBlocked)
+    );
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(true).unwrap()["tls"]["insecure"],
+        true
+    );
+}
+
+#[test]
+fn unknown_surge_field_is_retained_but_never_silently_projected() {
+    let source = "# original\nA = anytls, node.example.invalid, 443, password=synthetic, future-option=\"a,b=#\"\n";
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap(),
+        source
+    );
+}
+
+#[test]
+fn unknown_protocol_is_not_lost_when_another_node_fails() {
+    let subscription = Subscription::parse("A = future-protocol, future.example.invalid, 443, future=\"x,y\"\nB = socks5, failed.example.invalid, 1080\n").unwrap();
+    let rendered = subscription
+        .render(&[Health::Unknown, Health::Failed], &unchanged())
+        .unwrap();
+    assert_eq!(
+        &*rendered,
+        "A = future-protocol, future.example.invalid, 443, future=\"x,y\"\n"
+    );
+}
+
+#[test]
+fn native_json_preserves_unknown_fields_and_original_dialect() {
+    let source = r#"{"outbounds":[{"type":"anytls","tag":"A","server":"node.example.invalid","server_port":443,"password":"synthetic","tls":{"enabled":true,"server_name":"identity.example.invalid","alpn":["h2"]},"future":{"keep":[1,2]}}]}"#;
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap(),
+        source
+    );
+}
+
+#[test]
+fn native_projection_preserves_reality_and_transport_without_config_injection() {
+    let source = r#"[{"type":"vless","tag":"A","server":"node.example.invalid","server_port":443,"uuid":"11111111-1111-4111-8111-111111111111","flow":"xtls-rprx-vision","tls":{"enabled":true,"server_name":"identity.example.invalid","utls":{"enabled":true,"fingerprint":"chrome"},"reality":{"enabled":true,"public_key":"synthetic-public-key","short_id":"00112233"}}}]"#;
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).unwrap(),
+        serde_json::from_str::<Value>(source).unwrap()[0]
+    );
+}
+
+#[test]
+fn native_local_files_processes_and_ambient_dialers_are_not_executed() {
+    for field in [
+        r#""tls":{"enabled":true,"certificate_path":"/private/synthetic"}"#,
+        r#""bind_interface":"en0""#,
+        r#""routing_mark":1"#,
+        r#""plugin":"synthetic-executable""#,
+    ] {
+        let source = format!(
+            r#"[{{"type":"anytls","tag":"A","server":"node.example.invalid","server_port":443,"password":"synthetic",{field}}}]"#
+        );
+        let subscription = Subscription::parse(&source).unwrap();
+        assert_eq!(
+            subscription.nodes()[0].to_sing_box(true).err(),
+            Some(ModelError::Unsupported)
+        );
+    }
+}
+
+#[test]
+fn complete_configs_settings_and_ambiguous_nodes_are_rejected() {
+    for source in [
+        "[General]\nloglevel=notify\n[Proxy]\nA = socks5, node.example.invalid, 1080\n",
+        r#"{"outbounds":[],"route":{"rules":[]}}"#,
+        r#"{"outbounds":[],"inbounds":[]}"#,
+        r#"{"subscriptions":[],"settings":{}}"#,
+        r#"[{"type":"direct","tag":"DIRECT"}]"#,
+        "A = anytls, node.example.invalid, 443, password=one, password=two\n",
+        "A = socks5, node.example.invalid, 1080\nA = socks5, another.example.invalid, 1080\n",
+        "A = socks5, node.example.invalid, 1080, password=\"unterminated\n",
+    ] {
+        assert!(Subscription::parse(source).is_err());
+    }
+}
+
+#[test]
+fn surge_proxy_section_is_retained_without_admitting_other_sections() {
+    let source = "# source\n[Proxy]\nA = socks5, node.example.invalid, 1080\n";
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap(),
+        source
+    );
+}
+
+#[test]
+fn failed_dependency_removes_only_required_dependent_closure() {
+    let source = "Base = socks5, base.example.invalid, 1080\nChild = socks5, child.example.invalid, 1080, underlying-proxy=Base\nGrandchild = socks5, grand.example.invalid, 1080, underlying-proxy=Child\nKeep = socks5, keep.example.invalid, 1080\n";
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        &*subscription
+            .render(
+                &[
+                    Health::Failed,
+                    Health::Unknown,
+                    Health::SecurityBlocked,
+                    Health::Healthy { latency_ms: 1 }
+                ],
+                &unchanged()
+            )
+            .unwrap(),
+        "Keep = socks5, keep.example.invalid, 1080\n"
+    );
+}
+
+#[test]
+fn rename_updates_chain_references_and_is_idempotent() {
+    let source = "Base = socks5, base.example.invalid, 1080\nChild = socks5, child.example.invalid, 1080, underlying-proxy=Base, password=synthetic\n";
+    let subscription = Subscription::parse(source).unwrap();
+    let options = EnhanceOptions::default();
+    let rendered = subscription
+        .render(&[Health::Unknown; 2], &options)
+        .unwrap();
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    assert_eq!(reparsed.nodes().len(), 2);
+    assert_ne!(reparsed.nodes()[0].name(), "Base");
+    assert_eq!(
+        &*reparsed.render(&[Health::Unknown; 2], &options).unwrap(),
+        &*rendered
+    );
+    let without_base = reparsed
+        .render(&[Health::Failed, Health::Unknown], &unchanged())
+        .unwrap();
+    assert_eq!(
+        Subscription::parse(&without_base)
+            .map(|s| s.nodes().len())
+            .unwrap_or(0),
+        0
+    );
+}
+
+#[test]
+fn invalid_dependencies_are_visible_instead_of_silently_rewired() {
+    for source in [
+        "A = socks5, a.example.invalid, 1080, underlying-proxy=Missing\n",
+        "A = socks5, a.example.invalid, 1080, underlying-proxy=B\nB = socks5, b.example.invalid, 1080, underlying-proxy=A\n",
+    ] {
+        let subscription = Subscription::parse(source).unwrap();
+        assert_eq!(
+            subscription
+                .render(
+                    &[Health::Unknown; 2][..subscription.nodes().len()],
+                    &EnhanceOptions::default()
+                )
+                .err(),
+            Some(ModelError::InvalidDependency)
+        );
+    }
+}
+
+#[test]
+fn long_node_names_are_not_subject_to_gist_filename_limit() {
+    let name = "节点".repeat(40);
+    let source = format!("{name} = socks5, node.example.invalid, 1080\n");
+    let subscription = Subscription::parse(&source).unwrap();
+    let rendered = subscription
+        .render(&[Health::Unknown], &EnhanceOptions::default())
+        .unwrap();
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    assert!(reparsed.nodes()[0].name().contains(&name));
+}
+
+#[test]
+fn alias_names_remain_distinct_with_identical_endpoints() {
+    let subscription = Subscription::parse(
+        "A = socks5, same.example.invalid, 1080\nB = socks5, same.example.invalid, 1080\n",
+    )
+    .unwrap();
+    let rendered = subscription
+        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+        .unwrap();
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    assert_eq!(reparsed.nodes().len(), 2);
+    assert_ne!(reparsed.nodes()[0].name(), reparsed.nodes()[1].name());
+}
+
+#[test]
+fn local_region_hints_group_before_protocol_and_keep_names_idempotent() {
+    let source = "US West = socks5, us.example.invalid, 1080\n日本 Main = trojan, jp.example.invalid, 443, password=synthetic\nASUS = socks5, unknown.example.invalid, 1080\n";
+    let subscription = Subscription::parse(source).unwrap();
+    let options = EnhanceOptions::default();
+    let rendered = subscription
+        .render(&[Health::Unknown; 3], &options)
+        .unwrap();
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    let names: Vec<_> = reparsed.nodes().iter().map(Node::name).collect();
+    assert_eq!(
+        names,
+        [
+            "TROJAN | [JP] 日本 Main",
+            "SOCKS5 | [US] US West",
+            "SOCKS5 | ASUS"
+        ]
+    );
+    assert_eq!(
+        reparsed
+            .render(&[Health::Unknown; 3], &options)
+            .unwrap()
+            .as_str(),
+        rendered.as_str()
+    );
+}
+
+#[test]
+fn region_sort_can_leave_original_names_and_endpoint_identity_untouched() {
+    let source = r#"[{"type":"socks","tag":"US First","server":"same.example.invalid","server_port":443},{"type":"socks","tag":"🇯🇵 Second","server":"same.example.invalid","server_port":443,"future":{"preserve":true}}]"#;
+    let subscription = Subscription::parse(source).unwrap();
+    let rendered = subscription
+        .render(
+            &[Health::Unknown; 2],
+            &EnhanceOptions {
+                rename: false,
+                sort: true,
+            },
+        )
+        .unwrap();
+    let original: Value = serde_json::from_str(source).unwrap();
+    let actual: Value = serde_json::from_str(&rendered).unwrap();
+    assert_eq!(actual, json!([original[1], original[0]]));
+}
+
+#[test]
+fn region_renaming_updates_chain_references_and_retains_named_aliases() {
+    let source = "Japan Base = socks5, same.example.invalid, 1080\n\"[JP] Alias\" = socks5, same.example.invalid, 1080\nUS Child = socks5, child.example.invalid, 1080, underlying-proxy=\"Japan Base\", future=\"keep,a=b\"\n";
+    let subscription = Subscription::parse(source).unwrap();
+    let rendered = subscription
+        .render(&[Health::Unknown; 3], &EnhanceOptions::default())
+        .unwrap();
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    let names: Vec<_> = reparsed.nodes().iter().map(Node::name).collect();
+    assert!(names.contains(&"SOCKS5 | [JP] Japan Base"));
+    assert!(names.contains(&"SOCKS5 | [JP] Alias"));
+    assert!(rendered.contains("underlying-proxy=\"SOCKS5 | [JP] Japan Base\""));
+    assert!(rendered.contains("future=\"keep,a=b\""));
+    assert!(reparsed.dependencies().is_ok());
+}
+
+#[test]
+fn health_length_mismatch_cannot_drop_nodes() {
+    let subscription = Subscription::parse("A = socks5, node.example.invalid, 1080\n").unwrap();
+    assert_eq!(
+        subscription.render(&[], &unchanged()).err(),
+        Some(ModelError::InvalidHealth)
+    );
+}
+
+#[test]
+fn semantic_equality_ignores_formatting_comments_not_secrets_order_or_transport() {
+    let source =
+        "# x\nA = anytls, node.example.invalid, 443, password=\"a,b\", alpn=\"h2,http/1.1\"\n";
+    assert!(semantic_equal(
+        source,
+        "A=anytls,node.example.invalid,443,alpn=\"h2,http/1.1\",password=\"a,b\"\n# y\n"
+    ));
+    assert!(!semantic_equal(
+        source,
+        "A=anytls,node.example.invalid,443,alpn=\"h2,http/1.1\",password=\"b,a\"\n"
+    ));
+    assert!(!semantic_equal(
+        "A=socks5,a.example.invalid,1080\nB=socks5,b.example.invalid,1080\n",
+        "B=socks5,b.example.invalid,1080\nA=socks5,a.example.invalid,1080\n"
+    ));
+    assert!(!semantic_equal(
+        r#"[{"type":"anytls","tag":"A","server":"a.example.invalid","server_port":443,"password":"x"}]"#,
+        r#"[{"type":"anytls","tag":"A","server":"a.example.invalid","server_port":443,"password":"y"}]"#
+    ));
+    assert!(!semantic_equal("not a subscription", "not a subscription"));
+}
+
+#[test]
+fn common_surge_protocols_project_only_faithful_known_fields() {
+    let subscription = Subscription::parse("S = socks5, socks.example.invalid, 1080, username=alice, password=synthetic\nT = trojan, tls.example.invalid, 443, password=synthetic, sni=identity.example.invalid\nSS = ss, ss.example.invalid, 8388, encrypt-method=aes-128-gcm, password=synthetic\n").unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).unwrap(),
+        json!({"type":"socks","version":"5","tag":"S","server":"socks.example.invalid","server_port":1080,"username":"alice","password":"synthetic"})
+    );
+    assert_eq!(
+        subscription.nodes()[1].to_sing_box(false).unwrap()["tls"],
+        json!({"enabled":true,"server_name":"identity.example.invalid"})
+    );
+    assert_eq!(
+        subscription.nodes()[2].to_sing_box(false).unwrap()["method"],
+        "aes-128-gcm"
+    );
+}
+
+#[test]
+fn duplicate_json_keys_cannot_hide_credentials_or_routing_settings() {
+    assert!(Subscription::parse(r#"[{"type":"anytls","tag":"A","server":"a.example.invalid","server_port":443,"password":"one","password":"two"}]"#).is_err());
+    assert!(Subscription::parse(r#"{"outbounds":[],"outbounds":[]}"#).is_err());
+}
+
+#[test]
+fn transformations_preserve_unknown_surge_bytes_and_separate_unterminated_final_line() {
+    let source =
+        "Z = socks5, z.example.invalid, 1080, future=\"a,b\"\nA = socks5, a.example.invalid, 1080";
+    let subscription = Subscription::parse(source).unwrap();
+    let rendered = subscription
+        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+        .unwrap();
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    assert_eq!(reparsed.nodes().len(), 2);
+    assert!(rendered.contains("future=\"a,b\""));
+}
+
+#[test]
+fn native_chain_rename_and_failed_dependency_removal_preserve_unknown_json_values() {
+    let source = r#"{"outbounds":[{"type":"socks","tag":"Base","server":"base.example.invalid","server_port":1080},{"type":"socks","tag":"Child","server":"child.example.invalid","server_port":1080,"detour":"Base","future":{"keep":true}}]}"#;
+    let subscription = Subscription::parse(source).unwrap();
+    let rendered = subscription
+        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+        .unwrap();
+    let value: Value = serde_json::from_str(&rendered).unwrap();
+    assert_eq!(
+        value["outbounds"][1]["detour"],
+        value["outbounds"][0]["tag"]
+    );
+    assert_eq!(value["outbounds"][1]["future"], json!({"keep":true}));
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    assert_eq!(
+        reparsed.nodes()[1].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+    let removed = reparsed
+        .render(&[Health::Failed, Health::Unknown], &unchanged())
+        .unwrap();
+    assert_eq!(
+        serde_json::from_str::<Value>(&removed).unwrap(),
+        json!({"outbounds":[]})
+    );
+}
+
+#[test]
+fn projection_decodes_escaped_quote_and_backslash_without_changing_password() {
+    let source = r#"A = anytls, node.example.invalid, 443, password="a\"b\\c"
+"#;
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).unwrap()["password"],
+        "a\"b\\c"
+    );
+}
+
+#[test]
+fn client_probe_metadata_cannot_override_engine_targets_or_timeouts() {
+    let source = "A = anytls, node.example.invalid, 443, password=synthetic, tfo=true, udp-relay=false, block-quic=true, test-url=https://never-fetch.example.invalid/, test-timeout=99999\n";
+    let subscription = Subscription::parse(source).unwrap();
+    let projected = subscription.nodes()[0].to_sing_box(false).unwrap();
+    assert_eq!(projected["tcp_fast_open"], true);
+    assert!(projected.get("test-url").is_none());
+    assert!(projected.get("test-timeout").is_none());
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap(),
+        source
+    );
+    let invalid = Subscription::parse(
+        "A = anytls, node.example.invalid, 443, password=synthetic, udp-relay=maybe\n",
+    )
+    .unwrap();
+    assert_eq!(
+        invalid.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+}
+
+#[test]
+fn unverified_quoted_escapes_are_preserved_not_probed_or_semantically_collapsed() {
+    let source = r#"A = anytls, node.example.invalid, 443, password="a\nb"
+"#;
+    let literal_backslash = r#"A = anytls, node.example.invalid, 443, password="a\\nb"
+"#;
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap(),
+        source
+    );
+    assert!(!semantic_equal(source, literal_backslash));
+
+    let ambiguous_name = r#""Base\nA" = socks5, base.example.invalid, 1080
+"#;
+    let subscription = Subscription::parse(ambiguous_name).unwrap();
+    assert_eq!(
+        subscription
+            .render(&[Health::Unknown], &EnhanceOptions::default())
+            .err(),
+        Some(ModelError::Unsupported)
+    );
+    let ambiguous_reference = r#""Base\\nA" = socks5, base.example.invalid, 1080
+Child = socks5, child.example.invalid, 1080, underlying-proxy="Base\nA"
+"#;
+    let subscription = Subscription::parse(ambiguous_reference).unwrap();
+    assert_eq!(
+        subscription
+            .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+            .err(),
+        Some(ModelError::Unsupported)
+    );
+}
+
+#[test]
+fn inline_comment_quotes_and_backslashes_are_not_node_syntax() {
+    let source = r#"A = anytls, node.example.invalid, 443, password="synthetic#data" # note "unfinished\
+"#;
+    let without_comment = r#"A = anytls, node.example.invalid, 443, password="synthetic#data"
+"#;
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(
+        subscription.nodes()[0].to_sing_box(false).unwrap()["password"],
+        "synthetic#data"
+    );
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap(),
+        source
+    );
+    assert!(semantic_equal(source, without_comment));
+}
+
+#[test]
+fn leading_bom_stays_outside_node_names_and_survives_chain_renaming() {
+    let source = "\u{feff}Base = socks5, node.example.invalid, 443\nChild = socks5, node2.example.invalid, 443, underlying-proxy=Base\n";
+    let subscription = Subscription::parse(source).unwrap();
+    assert_eq!(subscription.nodes()[0].name(), "Base");
+    assert_eq!(
+        &*subscription
+            .render(&[Health::Unknown; 2], &unchanged())
+            .unwrap(),
+        source
+    );
+    let rendered = subscription
+        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+        .unwrap();
+    assert!(rendered.starts_with('\u{feff}'));
+    assert_eq!(rendered.matches('\u{feff}').count(), 1);
+    let reparsed = Subscription::parse(&rendered).unwrap();
+    assert_eq!(reparsed.nodes().len(), 2);
+    assert!(
+        reparsed
+            .nodes()
+            .iter()
+            .all(|node| !node.name().contains('\u{feff}'))
+    );
+    assert_eq!(
+        &*reparsed
+            .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+            .unwrap(),
+        &*rendered
+    );
+}

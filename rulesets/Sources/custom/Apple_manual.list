@@ -1,0 +1,24 @@
+# Apple 手动规则
+# 用于添加自定义的 Apple 相关规则
+
+# Apple service ownership; outbound routing is selected by the consumer.
+DOMAIN,gateway.icloud.com
+DOMAIN-SUFFIX,apple.com
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud-content.com
+# Store and Apple Music service endpoints are Apple's own services.
+DOMAIN-SUFFIX,itunes.apple.com
+DOMAIN-SUFFIX,mzstatic.com
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,apple-cloudkit.com
+DOMAIN,sandbox.itunes-apple.com.akadns.net
+DOMAIN,push.apple.com
+# Exact Apple service aliases from the maintained DNS_Global_Apple mapping.
+DOMAIN,apple.com.edgesuite.net
+DOMAIN,icloud.com.edgesuite.net
+DOMAIN,mzstatic.com.edgesuite.net
+DOMAIN,icloud-cdn.icloud.com.akadns.net
+DOMAIN,ocsp-lb.apple.com.akadns.net
+DOMAIN,ocsp2-lb.apple.com.akadns.net
+DOMAIN,pancake.cdn-apple.com.akadns.net
+DOMAIN,store.apple.com.edgekey.net

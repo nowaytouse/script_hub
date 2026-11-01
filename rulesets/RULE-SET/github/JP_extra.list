@@ -1,0 +1,9 @@
+# Ruleset: JP_extra
+# Policy: USER-DEFINED
+# Description: Current typed ruleset; policy selected by consumer
+# Rules: 5
+PROCESS-NAME,com.hulu.plus
+USER-AGENT,AbemaTV*
+USER-AGENT,DAZN*
+USER-AGENT,Niconico*
+USER-AGENT,TVer-Release*

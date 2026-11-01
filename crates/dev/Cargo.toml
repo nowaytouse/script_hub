@@ -1,0 +1,13 @@
+[package]
+name = "script_hub_dev"
+version.workspace = true
+edition = "2024"
+license = "GPL-3.0-only"
+publish = false
+
+[[bin]]
+name = "smart_build"
+path = "src/main.rs"
+
+[lints.rust]
+unsafe_code = "forbid"

@@ -1,0 +1,77 @@
+# Direct Sources - Unified Connection Manifest
+# Includes: ChinaDirect, DirectProcess, and DownloadDirect
+# Policy Group: 🗺️ 直连通用 🌏 (DIRECT)
+# Updated: 2026-04-08
+
+# ========== China Direct (Domestic Domains) ==========
+# Local Manual Rules (Curated)
+../custom/ChinaDirect_manual.list
+../custom/custom_direct.list
+
+# Domestic Speedtest Nodes (Manual High-Precision - 7 Key Domains)
+SpeedtestDomestic_manual.list
+
+# Kelee Speedtest 中国大陆规则 (Local Fallback)
+Kelee_SpeedtestChina_local.yaml
+
+# blackmatrix7 - 最全面的中国域名规则
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/ChinaMax/ChinaMax_Domain.list
+
+# Loyalsoldier - 中国域名列表
+https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
+
+# Sukka China Direct & Music
+https://ruleset.skk.moe/List/non_ip/direct.conf
+https://ruleset.skk.moe/List/non_ip/domestic.conf
+https://ruleset.skk.moe/List/ip/domestic.conf
+https://ruleset.skk.moe/List/non_ip/neteasemusic.conf
+https://ruleset.skk.moe/List/ip/neteasemusic.conf
+https://ruleset.skk.moe/List/domainset/speedtest.conf
+
+
+
+# XiaoHongShu
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/XiaoHongShu/XiaoHongShu.list
+
+# NetEaseMusic
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/NetEaseMusic/NetEaseMusic.list
+
+# Tencent Series (QQ, WeChat, etc.)
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Tencent/Tencent.list
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/WeChat/WeChat.list
+
+# Tesla
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Tesla/Tesla.list
+
+# ========== Direct Process Rules ==========
+../conf/SurgeConf_Manual.list
+../conf/SurgeConf_DirectProcess.list
+
+# ========== Download Acceleration (High-Speed) ==========
+# General software/package sources; game packages are maintained separately.
+../custom/DownloadDirect_manual.list
+
+# Sukka Download Acceleration
+https://ruleset.skk.moe/List/non_ip/download.conf
+https://ruleset.skk.moe/List/ip/download.conf
+
+# PT (Private Tracker) - GitHub Mirror
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Loon/PrivateTracker/PrivateTracker.list
+
+# ========== LAN & Private IPs (Merged from SYSTEM) ==========
+# LAN (blackmatrix7)
+https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Shadowrocket/Lan/Lan.list
+
+# LocalAreaNetwork (ACL4SSR)
+https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list
+
+# Private IPs (Loyalsoldier)
+https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@refs/heads/release/surge/private.txt
+
+# Private (Loyalsoldier)
+https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/private.txt
+
+# Smart-Config-Kit Supplement
+../custom/SmartConfigKit/SCK_Direct.list
+
+../custom/ChinaASN_manual.list

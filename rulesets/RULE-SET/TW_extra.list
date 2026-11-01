@@ -1,0 +1,14 @@
+# Ruleset: TW_extra
+# Policy: USER-DEFINED
+# Description: Current typed ruleset; policy selected by consumer
+# Rules: 10
+PROCESS-NAME,com.linecorp.linetv
+PROCESS-NAME,com.viu.pad
+PROCESS-NAME,com.viu.phone
+PROCESS-NAME,com.vuclip.viu
+USER-AGENT,Anime*
+USER-AGENT,KKTV*
+USER-AGENT,LINE%20TV*
+USER-AGENT,Viu*
+USER-AGENT,com.kktv.ios.kktv*
+USER-AGENT,mytv*

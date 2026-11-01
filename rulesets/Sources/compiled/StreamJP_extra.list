@@ -1,0 +1,9 @@
+# Ruleset: StreamJP_extra
+# Policy: USER-DEFINED
+# Description: Internal upstream snapshot; not a subscription
+# Rules: 5
+PROCESS-NAME,com.hulu.plus
+USER-AGENT,AbemaTV*
+USER-AGENT,DAZN*
+USER-AGENT,Niconico*
+USER-AGENT,TVer-Release*
