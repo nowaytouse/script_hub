@@ -10,6 +10,10 @@ use std::{
 const REPOSITORY: &str = "https://github.com/nowaytouse/script_hub";
 const IDENTIFIER: &str = "io.github.nowaytouse.script-hub";
 const ROOT_FILES: &[&str] = &[
+    "CHANGELOG.md",
+    "CHANGELOG.zh-CN.md",
+    "docs/TEMPLATES.md",
+    "docs/TEMPLATES.zh-CN.md",
     "LICENSE",
     "PRIVACY.md",
     "PRIVACY.zh-CN.md",

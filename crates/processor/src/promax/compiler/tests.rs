@@ -4,6 +4,72 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn user_confirmed_ip_drops_are_authored_exact_inputs_and_generated_with_fallbacks() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.load_whitelist().unwrap();
+    let entries = manager.load_source_entries();
+    let entry = entries
+        .iter()
+        .find(|entry| entry.source == "../IP_Drop_Reviewed.list")
+        .expect("explicit user IP drops must have a checked-in authored source");
+    assert_eq!(entry.policy, "REJECT-DROP");
+    assert_eq!(entry.category.as_deref(), Some("Local"));
+    let content = fs::read_to_string(entry.resolved_path(&root)).unwrap();
+    let inputs: Vec<_> = content
+        .lines()
+        .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
+        .map(|line| crate::promax::rule::SurgeRule::parse(line).unwrap())
+        .collect();
+    let addresses = [
+        "101.36.166.17",
+        "101.36.166.18",
+        "101.36.166.19",
+        "47.106.88.76",
+    ];
+    assert_eq!(inputs.len(), addresses.len());
+    assert_eq!(
+        inputs
+            .iter()
+            .map(|rule| rule.payload.clone())
+            .collect::<HashSet<_>>(),
+        addresses
+            .iter()
+            .map(|address| format!("{address}/32"))
+            .collect()
+    );
+    assert!(
+        inputs
+            .iter()
+            .all(|rule| rule.kind == crate::promax::rule::RuleKind::IpCidr
+                && rule.options.iter().any(|option| option == "NO-RESOLVE"))
+    );
+    assert!(
+        manager
+            .process_source_entries(std::slice::from_ref(entry), &HashMap::new())
+            .is_empty()
+    );
+    for mirror in ["cdn", "github"] {
+        let module = manager.generate_module(&[], mirror).content;
+        let drops: Vec<_> = module
+            .split_once("[IP Rewrite]\n")
+            .unwrap()
+            .1
+            .split('[')
+            .next()
+            .unwrap()
+            .lines()
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .collect();
+        assert_eq!(drops, addresses.map(|address| format!("{address} = drop")));
+        for address in addresses {
+            assert!(module.contains(&format!("IP-CIDR,{address}/32,REJECT-DROP,no-resolve")));
+        }
+        assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
+    }
+}
+
+#[test]
 fn mainland_diagnostics_from_existing_music_weibo_and_zhihu_sources_are_retained() {
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut manager = AdBlockManager::new(root);

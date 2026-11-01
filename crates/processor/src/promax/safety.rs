@@ -64,12 +64,20 @@ const MAINLAND_SERVICE_SUFFIXES: &[&str] = &[
     "zijieapi.com",
 ];
 
-// Already-blocked Tieba HTTPDNS only; not a claim of dedicated advertising hosting.
+const USER_CONFIRMED_IP_DROP_SOURCE: &str = "rulesets/Sources/Links/../IP_Drop_Reviewed.list";
+
+// Existing Tieba HTTPDNS policy plus explicitly user-confirmed targets; never infer additional IPs.
 // https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list
-pub(crate) const REVIEWED_IP_DROPS: &[(&str, &str)] = &[(
-    "180.76.76.200",
-    "https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list",
-)];
+pub(crate) const REVIEWED_IP_DROPS: &[(&str, &str)] = &[
+    (
+        "180.76.76.200",
+        "https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list",
+    ),
+    ("101.36.166.17", USER_CONFIRMED_IP_DROP_SOURCE),
+    ("101.36.166.18", USER_CONFIRMED_IP_DROP_SOURCE),
+    ("101.36.166.19", USER_CONFIRMED_IP_DROP_SOURCE),
+    ("47.106.88.76", USER_CONFIRMED_IP_DROP_SOURCE),
+];
 
 fn mainland_service_hostname(hostname: &str) -> bool {
     MAINLAND_SERVICE_SUFFIXES.iter().any(|suffix| {

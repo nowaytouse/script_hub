@@ -1,55 +1,59 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-01]
-#!desc=[🚀SR] 按用途分片(26片) + 应用内去广告(IP Rewrite=1, URL Rewrite=550, Map Local=1248, Script=275, Body Rewrite=90, MITM=735); 索引 rulesets/AdBlock/catalog.json
+#!desc=[🚀SR] 按用途分片(26片) + 应用内去广告(IP Rewrite=5, URL Rewrite=550, Map Local=1248, Script=275, Body Rewrite=90, MITM=735); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Dependency, HTTPDNS, Script
-#!date=2026-11-01 20:10:07
+#!date=2026-11-01 21:33:13
 # app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
 # IP Rewrite is VIF-only; proxy-server requests still need these no-resolve rules.
-IP-CIDR,180.76.76.200/32,REJECT
+IP-CIDR,101.36.166.17/32,REJECT,no-resolve
+IP-CIDR,101.36.166.18/32,REJECT,no-resolve
+IP-CIDR,101.36.166.19/32,REJECT,no-resolve
+IP-CIDR,180.76.76.200/32,REJECT,no-resolve
+IP-CIDR,47.106.88.76/32,REJECT,no-resolve
 # --- SYNCED PORT RULES START ---
 # Automated update from ports source
 # --- SYNCED PORT RULES END ---
 # HTTPDNS rules are compiled from the maintained AdBlock source manifest.
 # Split REJECT Rulesets (purpose-grouped; see rulesets/AdBlock/README.md)
 # ── 应用去广告 · 各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块） ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local_ip.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local_other_extra.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local_ip.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local_other_extra.list,REJECT,no-resolve
 # ── 通用广告 · blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_ip.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_other_extra.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_04.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_ip.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_other_extra.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_02.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_03.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_04.list,REJECT,no-resolve
 # ── 隐私追踪 · Privacy / tracking-protection / 防追踪列表 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_other_extra.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_other_extra.list,REJECT,no-resolve
 # ── CNAME 伪装追踪 · AdGuard CNAME 与邮件追踪域名 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_02.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_03.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_04.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_05.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_01.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_02.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_03.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_04.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Privacy_CNAME_05.list,REJECT,no-resolve
 # ── 安全威胁 · 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_ip.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_other_extra.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_ip.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Security_other_extra.list,REJECT,no-resolve
 # ── Anti-AD · privacy-protection-tools anti-AD 主列表与 discretion ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_AntiAD.list,REJECT,no-resolve
 # ── 威胁情报·终极 · HaGeZi DNS-Blocklists ultimate ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list,REJECT,no-resolve
 # ── 威胁情报·TIF · HaGeZi TIF medium 威胁情报 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT,no-resolve
 # ── 威胁情报·补充 · HaGeZi / skk 其它威胁与钓鱼域名集 ──
-RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel.list,REJECT
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel.list,REJECT,no-resolve
 # Merged REJECT complex rules (209)
 DEST-PORT,7680,REJECT
 PROCESS-NAME,"Tencent Lemon",REJECT

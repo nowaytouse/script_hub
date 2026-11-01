@@ -1,7 +1,8 @@
 use super::{card, primary_button};
 use crate::gui::app::HubApp;
 use crate::gui::i18n::{Text, text};
-use crate::gui::templates::{CONFIRM_ID, PASSWORD_ID};
+use crate::gui::templates::{CONFIRM_ID, EDIT_CONTENT_ID, EDIT_NAME_ID, PASSWORD_ID};
+use crate::runtime::settings::Language;
 use crate::vault::Client;
 use eframe::egui::{self, RichText};
 
@@ -20,6 +21,15 @@ impl HubApp {
         }
         ui.heading(tr(Text::Templates));
         ui.label(tr(Text::VaultIntro));
+        ui.weak(tr(Text::VaultPublicGateHelp));
+        ui.hyperlink_to(
+            tr(Text::Documentation),
+            if language.resolved() == Language::ZhCn {
+                "https://github.com/nowaytouse/script_hub/blob/master/docs/TEMPLATES.zh-CN.md"
+            } else {
+                "https://github.com/nowaytouse/script_hub/blob/master/docs/TEMPLATES.md"
+            },
+        );
         ui.add_space(14.0);
         if let Some(error) = &state.error {
             ui.colored_label(colors.error, error);
@@ -224,7 +234,7 @@ impl HubApp {
                     ui.checkbox(&mut state.overwrite_vault, tr(Text::VaultOverwrite));
                     if ui
                         .add_enabled(
-                            state.storage_available(),
+                            state.storage_available() && !state.editing,
                             primary_button(colors, tr(Text::VaultSave)),
                         )
                         .clicked()
@@ -260,7 +270,9 @@ impl HubApp {
                         );
                         if ui
                             .add_enabled(
-                                !state.import_path.trim().is_empty() || state.queued_imports() > 0,
+                                !state.editing
+                                    && (!state.import_path.trim().is_empty()
+                                        || state.queued_imports() > 0),
                                 egui::Button::new(tr(Text::VaultImport)),
                             )
                             .clicked()
@@ -288,9 +300,11 @@ impl HubApp {
                         if vault.library().templates.is_empty() {
                             ui.label(tr(Text::VaultEmpty));
                         }
-                        for (index, template) in vault.library().templates.iter().enumerate() {
-                            ui.selectable_value(&mut state.selected, index, &template.name);
-                        }
+                        ui.add_enabled_ui(!state.editing, |ui| {
+                            for (index, template) in vault.library().templates.iter().enumerate() {
+                                ui.selectable_value(&mut state.selected, index, &template.name);
+                            }
+                        });
                     }
                 });
                 if state.selected != previous {
@@ -300,6 +314,63 @@ impl HubApp {
                     return;
                 }
                 ui.add_space(14.0);
+                if !state.editing && ui.button(tr(Text::VaultEditTemplate)).clicked() {
+                    state.edit_selected(ui.ctx());
+                }
+                if state.editing {
+                    card(ui, colors, |ui| {
+                        ui.label(RichText::new(tr(Text::VaultEditTemplate)).strong());
+                        ui.weak(tr(Text::VaultEditHelp));
+                        let label = ui.label(tr(Text::VaultEditName));
+                        let mut name = egui::TextEdit::singleline(&mut *state.edit_name)
+                            .id(egui::Id::unique(EDIT_NAME_ID))
+                            .char_limit(256)
+                            .desired_width(f32::INFINITY)
+                            .show(ui);
+                        let _ = (*name.response).clone().labelled_by(label.id);
+                        name.state.clear_undoer();
+                        name.state.store(ui.ctx(), name.response.id);
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(tr(Text::Platform));
+                            ui.selectable_value(&mut state.edit_client, Client::Surge, "Surge");
+                            ui.selectable_value(
+                                &mut state.edit_client,
+                                Client::Shadowrocket,
+                                "Shadowrocket",
+                            );
+                            ui.selectable_value(
+                                &mut state.edit_client,
+                                Client::Other,
+                                tr(Text::VaultOther),
+                            );
+                        });
+                        let label = ui.label(tr(Text::VaultEditContent));
+                        egui::ScrollArea::vertical()
+                            .id_salt("vault-template-editor")
+                            .max_height(320.0)
+                            .show(ui, |ui| {
+                                let mut content = egui::TextEdit::multiline(&mut *state.preview)
+                                    .id(egui::Id::unique(EDIT_CONTENT_ID))
+                                    .font(egui::TextStyle::Monospace)
+                                    .char_limit(crate::vault::MAX_TEMPLATE_BYTES)
+                                    .desired_rows(12)
+                                    .desired_width(f32::INFINITY)
+                                    .show(ui);
+                                let _ = (*content.response).clone().labelled_by(label.id);
+                                content.state.clear_undoer();
+                                content.state.store(ui.ctx(), content.response.id);
+                            });
+                        ui.horizontal_wrapped(|ui| {
+                            if ui.button(tr(Text::VaultApplyEdit)).clicked() {
+                                state.apply_edit(ui.ctx());
+                            }
+                            if ui.button(tr(Text::Cancel)).clicked() {
+                                state.cancel_edit(ui.ctx());
+                            }
+                        });
+                    });
+                    return;
+                }
                 card(ui, colors, |ui| {
                     ui.label(RichText::new(tr(Text::VaultConfigure)).strong());
                     for (index, (slot, value)) in state.subscriptions.iter_mut().enumerate() {

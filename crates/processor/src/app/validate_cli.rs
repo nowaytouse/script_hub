@@ -316,14 +316,14 @@ mod tests {
     }
 
     #[test]
-    fn validates_shadowrocket_module_without_surge_only_ip_options() {
+    fn validates_shadowrocket_module_with_supported_no_resolve() {
         let path = std::env::temp_dir().join(format!(
             "script-hub-validate-shadowrocket-{}.module",
             std::process::id()
         ));
         std::fs::write(
             &path,
-            "#!name=PROMAX fixture\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT-DROP\n",
+            "#!name=PROMAX fixture\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT-DROP,no-resolve\n",
         )
         .unwrap();
 

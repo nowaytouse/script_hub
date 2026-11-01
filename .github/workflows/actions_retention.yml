@@ -14,7 +14,7 @@ on:
         description: Maximum completed runs deleted in this batch
         type: choice
         options: ['100', '200', '500']
-        default: '100'
+        default: '500'
 
 permissions:
   contents: read
@@ -45,7 +45,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           RETENTION_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
-          RETENTION_LIMIT: ${{ inputs.max_deletions || '100' }}
+          RETENTION_LIMIT: ${{ inputs.max_deletions || '500' }}
         with:
           retries: 0
           script: |
@@ -56,6 +56,10 @@ jobs:
               maxDeletions: Number(process.env.RETENTION_LIMIT), log: core.info,
             });
             core.info(JSON.stringify(result));
+            const protectedExcess = result.workflows.reduce((count, workflow) => count + workflow.protected.length, 0);
             await core.summary.addHeading('Actions retention')
-              .addRaw(`Deleted: ${result.deleted.length}; already absent: ${result.missing.length}; deferred: ${result.deferred.length}; remaining snapshot candidates: ${result.remaining}.`)
+              .addRaw(`Deleted: ${result.deleted.length}; already absent: ${result.missing.length}; deferred: ${result.deferred.length}; remaining completed candidates: ${result.remaining}; protected older active/current runs: ${protectedExcess}; fresh verification: ${result.refreshed}.`)
               .write();
+            if (!result.dryRun && (!result.refreshed || result.remaining > 0 || protectedExcess > 0)) {
+              core.setFailed(`Retention incomplete: ${result.remaining} completed candidates and ${protectedExcess} older active/current runs remain. Safe budgets are unchanged; active runs are never cancelled and the next CI completion rechecks temporary exceptions.`);
+            }

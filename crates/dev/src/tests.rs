@@ -5,6 +5,10 @@ use std::{
 };
 
 const ROOT_FILES: &[&str] = &[
+    "CHANGELOG.md",
+    "CHANGELOG.zh-CN.md",
+    "docs/TEMPLATES.md",
+    "docs/TEMPLATES.zh-CN.md",
     "LICENSE",
     "PRIVACY.md",
     "PRIVACY.zh-CN.md",
@@ -145,6 +149,33 @@ fn metadata_rejects_xml_or_source_marker_injection() {
         ("0.2.0", COMMIT, "7\nprivate"),
     ] {
         assert!(Metadata::new(version, commit, false, number).is_err());
+    }
+}
+
+#[test]
+fn native_packages_keep_public_template_help_and_release_notes() {
+    for (platform, directory) in [
+        (Platform::MacOs, "ScriptHub.app/Contents/Resources"),
+        (Platform::Windows, "ScriptHub.resources"),
+    ] {
+        let fixture = Fixture::new();
+        stage(&fixture.0, &fixture.stage(), platform, &Fixture::metadata()).unwrap();
+        for (relative, expected) in [
+            ("docs/TEMPLATES.md", "synthetic docs/TEMPLATES.md"),
+            (
+                "docs/TEMPLATES.zh-CN.md",
+                "synthetic docs/TEMPLATES.zh-CN.md",
+            ),
+            ("CHANGELOG.md", "synthetic CHANGELOG.md"),
+            ("CHANGELOG.zh-CN.md", "synthetic CHANGELOG.zh-CN.md"),
+        ] {
+            let path = fixture.stage().join(directory).join(relative);
+            assert!(
+                path.is_file(),
+                "Public help is missing from the native package"
+            );
+            assert_eq!(fs::read_to_string(path).unwrap(), expected);
+        }
     }
 }
 

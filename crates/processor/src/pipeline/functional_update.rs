@@ -1221,9 +1221,8 @@ mod tests {
         assert_eq!(sync_shadowrocket_variants(&root).unwrap(), 1);
         let target = root.join("modules/shadowrocket/head_expanse/PROMAX.module");
         let converted = std::fs::read_to_string(&target).unwrap();
-        assert!(converted.contains("IP-CIDR,192.0.2.0/24,REJECT"));
-        assert!(converted.contains("RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT"));
-        assert!(!converted.contains("no-resolve"));
+        assert!(converted.contains("IP-CIDR,192.0.2.0/24,REJECT,no-resolve"));
+        assert!(converted.contains("RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT,no-resolve"));
         assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
 
         for invalid in [

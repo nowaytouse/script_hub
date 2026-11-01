@@ -1,4 +1,4 @@
-use super::rule::{SurgeRule, split_fields};
+use super::rule::{RuleKind, SurgeRule, split_fields};
 use super::safety::QuarantineRecord;
 use super::validation::{validate_shadowrocket_module, validate_surge_module};
 use once_cell::sync::Lazy;
@@ -531,7 +531,12 @@ pub fn convert_surge_to_shadowrocket(content: &str) -> String {
                 rule.policy = rule
                     .policy
                     .map(|policy| shadowrocket_policy(&policy).to_string());
-                rule.options.clear();
+                let ip_rule = matches!(
+                    rule.kind,
+                    RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::IpAsn | RuleKind::GeoIp
+                );
+                rule.options
+                    .retain(|option| ip_rule && option == "NO-RESOLVE");
                 output.push(rule.render_module("REJECT"));
             } else {
                 output.push(raw_line.to_string());
@@ -548,7 +553,7 @@ pub fn convert_surge_to_shadowrocket(content: &str) -> String {
         if section != "MITM" {
             line = line.replace("%APPEND% ", "").replace("%INSERT% ", "");
         }
-        for modifier in [",extended-matching", ",pre-matching", ",no-resolve"] {
+        for modifier in [",extended-matching", ",pre-matching"] {
             line = line.replace(modifier, "");
         }
         output.push(line);
@@ -564,7 +569,20 @@ fn convert_rule_set(line: &str) -> String {
     if fields.len() < 3 {
         return line.to_string();
     }
-    format!("RULE-SET,{},{}", fields[1], shadowrocket_policy(&fields[2]))
+    let no_resolve = if fields
+        .iter()
+        .skip(3)
+        .any(|option| option.eq_ignore_ascii_case("no-resolve"))
+    {
+        ",no-resolve"
+    } else {
+        ""
+    };
+    format!(
+        "RULE-SET,{},{}{no_resolve}",
+        fields[1],
+        shadowrocket_policy(&fields[2])
+    )
 }
 
 fn shadowrocket_policy(policy: &str) -> &str {
@@ -586,13 +604,52 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
+    fn shadowrocket_conversion_preserves_no_resolve_without_surge_only_options() {
+        let source = r#"#!name=PROMAX fixture
+[Rule]
+IP-CIDR,101.36.166.17/32,REJECT-DROP,extended-matching,no-resolve
+IP-CIDR,101.36.166.18/32,REJECT-DROP,no-resolve
+IP-CIDR,101.36.166.19/32,REJECT-DROP,no-resolve
+IP-CIDR,47.106.88.76/32,REJECT-DROP,no-resolve
+IP-CIDR6,2001:db8::1/128,REJECT-DROP,no-resolve
+IP-ASN,13335,REJECT-DROP,no-resolve
+GEOIP,CN,REJECT-DROP,no-resolve
+DOMAIN,ads.example.test,REJECT,no-resolve
+RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local_ip.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+"#;
+        let converted = convert_surge_to_shadowrocket(source);
+        for address in [
+            "101.36.166.17",
+            "101.36.166.18",
+            "101.36.166.19",
+            "47.106.88.76",
+        ] {
+            assert!(converted.contains(&format!("IP-CIDR,{address}/32,REJECT,no-resolve\n")));
+        }
+        for line in [
+            "IP-CIDR6,2001:db8::1/128,REJECT,no-resolve",
+            "IP-ASN,13335,REJECT,no-resolve",
+            "GEOIP,CN,REJECT,no-resolve",
+        ] {
+            assert!(converted.contains(line));
+        }
+        assert!(converted.contains("AdBlock_Local_ip.list,REJECT,no-resolve"));
+        assert!(converted.contains("DOMAIN,ads.example.test,REJECT\n"));
+        assert!(!converted.contains("extended-matching"));
+        assert!(!converted.contains("pre-matching"));
+        assert!(!converted.contains("update-interval="));
+        assert_eq!(converted, convert_surge_to_shadowrocket(&converted));
+        assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+    }
+
+    #[test]
     fn shadowrocket_conversion_strips_ip_rewrite_but_keeps_rule_fallback() {
         let source = "#!name=PROMAX fixture\n#!requirement=CORE_VERSION>=6010000\n[IP Rewrite]\n180.76.76.200 = drop\n[Rule]\nIP-CIDR,180.76.76.200/32,REJECT-DROP,no-resolve\n";
         let converted = convert_surge_to_shadowrocket(source);
         assert!(!converted.contains("[IP Rewrite]"));
         assert!(!converted.contains(" = drop"));
         assert!(!converted.contains("#!requirement="));
-        assert!(converted.contains("IP-CIDR,180.76.76.200/32,REJECT\n"));
+        assert!(converted.contains("IP-CIDR,180.76.76.200/32,REJECT,no-resolve\n"));
         assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
     }
 
@@ -615,7 +672,7 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         assert!(!converted.contains("extended-matching"));
         assert!(!converted.contains("pre-matching"));
         assert!(!converted.contains("update-interval="));
-        assert!(!converted.contains("no-resolve"));
+        assert!(converted.contains("RULE-SET,https://example.test/ad.list,REJECT,no-resolve"));
         assert!(!converted.contains("ability="));
         assert!(!converted.contains("engine=auto"));
     }

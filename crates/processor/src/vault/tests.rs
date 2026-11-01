@@ -16,6 +16,66 @@ fn fixture() -> Library {
     }
 }
 
+fn documented_sample_password(document: &str) -> &str {
+    let mut lines = document.lines();
+    let mut password = None;
+    while let Some(line) = lines.next() {
+        if line == "```text" {
+            assert!(
+                password.is_none(),
+                "Use one public-password text block per document"
+            );
+            let value = lines
+                .next()
+                .expect("Missing public-password text block content");
+            assert!(!value.is_empty(), "The public-password text block is empty");
+            assert!(
+                lines.next() == Some("```"),
+                "The public-password block must contain exactly one line"
+            );
+            password = Some(value);
+        }
+    }
+    password.expect("Missing public-password text block")
+}
+
+#[test]
+fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
+    let english = documented_sample_password(include_str!("../../../../docs/TEMPLATES.md"));
+    let chinese = documented_sample_password(include_str!("../../../../docs/TEMPLATES.zh-CN.md"));
+    assert!(english == chinese, "The public-password documents disagree");
+    let password = zeroize::Zeroizing::new(english.to_owned());
+    let vault = unlock(include_bytes!("../../assets/templates.vault"), &password)
+        .expect("The public-password documents and encrypted sample do not authenticate");
+    drop(password);
+    assert!(
+        !vault.library().templates.is_empty(),
+        "The public encrypted sample is empty"
+    );
+    assert!(
+        validate_library(vault.library()).is_ok(),
+        "The public encrypted sample is invalid"
+    );
+    for template in &vault.library().templates {
+        let sanitized = template::sanitize(template)
+            .expect("The public encrypted sample cannot pass the sanitizer");
+        assert!(
+            sanitized.name == template.name
+                && sanitized.client == template.client
+                && sanitized.content == template.content,
+            "The public encrypted sample still requires sanitization"
+        );
+        let subscriptions = template::subscription_slots(template)
+            .into_iter()
+            .map(|slot| (slot, "https://example.invalid/subscription".to_owned()))
+            .collect::<std::collections::BTreeMap<_, _>>();
+        assert!(
+            template::render(template, &subscriptions).is_ok(),
+            "The public encrypted sample has invalid subscription slots"
+        );
+    }
+}
+
 #[test]
 fn created_library_is_hidden_until_correct_password_unlocks_it() {
     let vault = create(fixture(), PASSWORD).unwrap();

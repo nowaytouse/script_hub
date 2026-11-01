@@ -21,6 +21,8 @@ const STORAGE_ERROR: &str =
     "Managed project storage is unavailable. Open the project once to enable encrypted saving.";
 pub(super) const PASSWORD_ID: &str = "template-vault-password";
 pub(super) const CONFIRM_ID: &str = "template-vault-confirm";
+pub(super) const EDIT_NAME_ID: &str = "template-vault-edit-name";
+pub(super) const EDIT_CONTENT_ID: &str = "template-vault-edit-content";
 
 pub(super) struct TemplateState {
     pub path: String,
@@ -37,6 +39,9 @@ pub(super) struct TemplateState {
     pub subscriptions: Vec<(String, Zeroizing<String>)>,
     pub preview: Zeroizing<String>,
     pub show_preview: bool,
+    pub editing: bool,
+    pub edit_name: Zeroizing<String>,
+    pub edit_client: Client,
     pub export_path: String,
     pub allow_plaintext: bool,
     pub overwrite_export: bool,
@@ -93,6 +98,9 @@ impl Default for TemplateState {
             subscriptions: Vec::new(),
             preview: Zeroizing::new(String::new()),
             show_preview: false,
+            editing: false,
+            edit_name: Zeroizing::new(String::new()),
+            edit_client: Client::Other,
             export_path: String::new(),
             allow_plaintext: false,
             overwrite_export: false,
@@ -433,8 +441,13 @@ impl TemplateState {
             });
         let expired = self.last_activity.elapsed() >= IDLE_TIMEOUT;
         if sensitive && (!focused || expired) {
+            let unsaved = self.dirty || self.editing;
             self.lock(ctx);
-            self.notice = Some(Text::VaultAutoLocked);
+            self.notice = Some(if unsaved {
+                Text::VaultAutoLockedUnsaved
+            } else {
+                Text::VaultAutoLocked
+            });
         } else if focused && ctx.input(|input| !input.events.is_empty() || input.pointer.any_down())
         {
             self.last_activity = Instant::now();
@@ -556,8 +569,7 @@ impl TemplateState {
             clear_secret_widget(ctx, &format!("template-vault-url-{index}"));
         }
         self.subscriptions.clear();
-        self.preview.zeroize();
-        self.show_preview = false;
+        self.cancel_edit(ctx);
         self.export_path.zeroize();
         self.allow_plaintext = false;
         self.overwrite_export = false;
@@ -713,7 +725,7 @@ impl TemplateState {
     }
 
     pub(super) fn import(&mut self) {
-        if self.busy() || !self.unlocked() {
+        if self.busy() || self.editing || !self.unlocked() {
             return;
         }
         let selected_count = self.imports.len() + usize::from(!self.import_path.trim().is_empty());
@@ -745,7 +757,7 @@ impl TemplateState {
     }
 
     pub(super) fn save(&mut self) {
-        if self.busy() {
+        if self.busy() || self.editing {
             return;
         }
         let Some(store) = self.store.clone() else {
@@ -793,12 +805,75 @@ impl TemplateState {
     }
 
     pub(super) fn show_template(&mut self) {
+        if self.editing {
+            return;
+        }
         self.preview.zeroize();
         if self.show_preview
             && let Some(template) = self.selected_template()
         {
             self.preview = Zeroizing::new(template.content.clone());
         }
+    }
+
+    pub(super) fn edit_selected(&mut self, ctx: &egui::Context) {
+        if self.busy() {
+            return;
+        }
+        let Some(template) = self.selected_template() else {
+            return;
+        };
+        let name = Zeroizing::new(template.name.clone());
+        let client = template.client;
+        let content = Zeroizing::new(template.content.clone());
+        self.cancel_edit(ctx);
+        self.edit_name = name;
+        self.edit_client = client;
+        self.preview = content;
+        self.editing = true;
+        self.remove_pending = false;
+        self.error = None;
+        self.notice = None;
+    }
+
+    pub(super) fn apply_edit(&mut self, ctx: &egui::Context) {
+        if self.busy() || !self.editing {
+            return;
+        }
+        let Some(vault) = self.vault.as_mut() else {
+            return;
+        };
+        let Some(selected) = vault.library_mut().templates.get_mut(self.selected) else {
+            self.error = Some(vault::VaultError::Format.to_string());
+            return;
+        };
+        let previous = std::mem::replace(
+            selected,
+            Template {
+                name: self.edit_name.to_string(),
+                client: self.edit_client,
+                content: self.preview.to_string(),
+            },
+        );
+        if let Err(error) = vault.validate_for_storage() {
+            vault.library_mut().templates[self.selected] = previous;
+            self.error = Some(error.to_string());
+            return;
+        }
+        self.dirty = true;
+        self.refresh_selection(ctx);
+        self.error = None;
+        self.notice = None;
+    }
+
+    pub(super) fn cancel_edit(&mut self, ctx: &egui::Context) {
+        self.editing = false;
+        self.edit_name.zeroize();
+        self.edit_client = Client::Other;
+        self.preview.zeroize();
+        self.show_preview = false;
+        clear_secret_widget(ctx, EDIT_NAME_ID);
+        clear_secret_widget(ctx, EDIT_CONTENT_ID);
     }
 
     pub(super) fn rendered(&self) -> Result<Zeroizing<String>, String> {
@@ -918,6 +993,7 @@ impl Drop for TemplateState {
         self.password.zeroize();
         self.confirmation.zeroize();
         self.preview.zeroize();
+        self.edit_name.zeroize();
     }
 }
 
@@ -1212,6 +1288,128 @@ fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn editable_state() -> TemplateState {
+        let mut state = TemplateState::default();
+        state.vault = Some(
+            vault::create(
+                Library {
+                    templates: vec![Template {
+                        name: "original.conf".to_owned(),
+                        client: Client::Surge,
+                        content: "[Rule]\nDOMAIN,original.example,DIRECT\n".to_owned(),
+                    }],
+                },
+                "synthetic editor fixture password",
+            )
+            .unwrap(),
+        );
+        state
+    }
+
+    #[test]
+    fn template_changes_auto_lock_clears_plaintext_and_reports_unsaved_discard() {
+        for apply in [false, true] {
+            let ctx = egui::Context::default();
+            let mut state = editable_state();
+            state.edit_selected(&ctx);
+            state.preview = Zeroizing::new("synthetic unsaved template changes".to_owned());
+            if apply {
+                state.apply_edit(&ctx);
+            }
+            assert!(state.unlocked() && (state.editing || state.dirty));
+            let mut input = egui::RawInput {
+                focused: false,
+                ..Default::default()
+            };
+            input
+                .viewports
+                .get_mut(&egui::ViewportId::ROOT)
+                .unwrap()
+                .focused = Some(false);
+            let output = ctx.run_ui(input, |ui| state.tick(ui.ctx()));
+            output.drop_without_applying_deltas();
+            assert!(!state.unlocked() && !state.editing && !state.dirty);
+            assert!(state.preview.is_empty() && state.edit_name.is_empty());
+            assert!(state.password.is_empty() && state.confirmation.is_empty());
+            assert_eq!(state.notice, Some(Text::VaultAutoLockedUnsaved));
+        }
+    }
+
+    #[test]
+    fn template_edit_is_explicit_and_apply_updates_the_encrypted_library() {
+        let ctx = egui::Context::default();
+        let mut state = editable_state();
+        assert!(!state.editing && state.preview.is_empty() && state.edit_name.is_empty());
+        state.edit_selected(&ctx);
+        assert!(state.editing);
+        assert_eq!(state.edit_name.as_str(), "original.conf");
+        assert_eq!(state.edit_client, Client::Surge);
+        assert_eq!(
+            state.preview.as_str(),
+            "[Rule]\nDOMAIN,original.example,DIRECT\n"
+        );
+        state.save();
+        assert!(
+            !state.busy() && state.error.is_none(),
+            "Apply the draft before encrypted saving"
+        );
+        state.edit_name = Zeroizing::new("edited.conf".to_owned());
+        state.edit_client = Client::Shadowrocket;
+        state.preview = Zeroizing::new("[Rule]\nDOMAIN,edited.example,DIRECT\n".to_owned());
+        state.apply_edit(&ctx);
+        assert!(!state.editing && state.dirty && state.error.is_none());
+        assert!(state.preview.is_empty() && state.edit_name.is_empty());
+        let sealed = state.vault.as_ref().unwrap().seal().unwrap();
+        let reopened = vault::unlock(&sealed, "synthetic editor fixture password").unwrap();
+        let template = &reopened.library().templates[0];
+        assert_eq!(template.name, "edited.conf");
+        assert_eq!(template.client, Client::Shadowrocket);
+        assert_eq!(template.content, "[Rule]\nDOMAIN,edited.example,DIRECT\n");
+    }
+
+    #[test]
+    fn template_edit_invalid_draft_preserves_the_original_and_draft() {
+        let ctx = egui::Context::default();
+        let mut state = editable_state();
+        for (name, content) in [("invalid\nname", "valid content"), ("valid.conf", "")] {
+            state.editing = true;
+            state.edit_name = Zeroizing::new(name.to_owned());
+            state.edit_client = Client::Other;
+            state.preview = Zeroizing::new(content.to_owned());
+            state.apply_edit(&ctx);
+            assert!(state.editing && state.error.is_some() && !state.dirty);
+            assert_eq!(state.edit_name.as_str(), name);
+            assert_eq!(state.preview.as_str(), content);
+            let template = state.selected_template().unwrap();
+            assert_eq!(template.name, "original.conf");
+            assert_eq!(template.client, Client::Surge);
+            assert_eq!(template.content, "[Rule]\nDOMAIN,original.example,DIRECT\n");
+        }
+    }
+
+    #[test]
+    fn template_edit_cancel_lock_and_selection_clear_draft_and_widget_history() {
+        let ctx = egui::Context::default();
+        let mut state = editable_state();
+        for action in 0..3 {
+            state.editing = true;
+            state.edit_name = Zeroizing::new("private draft name".to_owned());
+            state.preview = Zeroizing::new("private synthetic draft".to_owned());
+            for id in [EDIT_NAME_ID, EDIT_CONTENT_ID] {
+                egui::text_edit::TextEditState::default().store(&ctx, egui::Id::unique(id));
+            }
+            match action {
+                0 => state.cancel_edit(&ctx),
+                1 => state.refresh_selection(&ctx),
+                _ => state.lock(&ctx),
+            }
+            assert!(!state.editing && state.edit_name.is_empty() && state.preview.is_empty());
+            for id in [EDIT_NAME_ID, EDIT_CONTENT_ID] {
+                assert!(egui::text_edit::TextEditState::load(&ctx, egui::Id::unique(id)).is_none());
+            }
+        }
+    }
 
     struct ManagedFixture(PathBuf);
 

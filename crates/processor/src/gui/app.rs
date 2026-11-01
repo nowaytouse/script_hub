@@ -301,7 +301,25 @@ impl HubApp {
     }
 
     fn blocks_close(&self) -> bool {
-        self.job_active() || self.templates.busy() || self.relay.busy()
+        self.job_active()
+            || self.templates.busy()
+            || self.relay.busy()
+            || self.templates.dirty
+            || self.templates.editing
+    }
+
+    fn close_notice(&self, had_template_changes: bool) -> Option<Text> {
+        if self.templates.dirty || self.templates.editing {
+            Some(Text::VaultUnsavedChanges)
+        } else if had_template_changes {
+            Some(Text::VaultAutoLockedUnsaved)
+        } else if self.relay.busy() {
+            Some(Text::RelayCancelling)
+        } else if self.blocks_close() {
+            Some(Text::Running)
+        } else {
+            None
+        }
     }
 
     fn route_file_drop(&mut self, paths: Vec<PathBuf>) {
@@ -857,6 +875,8 @@ impl HubApp {
 
 impl eframe::App for HubApp {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Auto-lock may clear drafts before close handling; keep the reason for this frame.
+        let had_template_changes = self.templates.dirty || self.templates.editing;
         self.templates.tick(ctx);
         self.relay.tick(ctx);
         self.poll_workspace_loader(ctx);
@@ -877,14 +897,14 @@ impl eframe::App for HubApp {
         if self.active() {
             ctx.request_repaint_after(Duration::from_millis(250));
         }
-        if self.blocks_close() && ctx.input(|input| input.viewport().close_requested()) {
+        if ctx.input(|input| input.viewport().close_requested())
+            && let Some(notice) = self.close_notice(had_template_changes)
+        {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             if self.relay.busy() {
                 self.relay.request_cancel();
-                self.notice = Some(Text::RelayCancelling);
-            } else {
-                self.notice = Some(Text::Running);
             }
+            self.notice = Some(notice);
         }
         let dropped = ctx.input(|input| {
             input
@@ -1154,6 +1174,70 @@ mod tests {
     }
 
     #[test]
+    fn template_changes_disable_selection_during_an_unapplied_draft() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = HubApp::new(None, Preferences::default(), None, None);
+        app.templates.vault = Some(
+            crate::vault::create(
+                crate::vault::Library {
+                    templates: ["First synthetic template", "Second synthetic template"]
+                        .into_iter()
+                        .map(|name| crate::vault::Template {
+                            name: name.to_owned(),
+                            client: crate::vault::Client::Surge,
+                            content: "[Rule]\nDOMAIN,synthetic.example,DIRECT\n".to_owned(),
+                        })
+                        .collect(),
+                },
+                "synthetic selection fixture password",
+            )
+            .unwrap(),
+        );
+        app.templates.edit_selected(&ctx);
+        app.templates.preview = zeroize::Zeroizing::new("unapplied synthetic draft".to_owned());
+        for editing in [true, false] {
+            if !editing {
+                app.templates.cancel_edit(&ctx);
+            }
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1160.0, 2200.0),
+                    )),
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, |ui| app.templates_page(ui));
+                },
+            );
+            let disabled = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .and_then(|update| {
+                    update.nodes.iter().find_map(|(_, node)| {
+                        (node.label() == Some("Second synthetic template"))
+                            .then(|| node.is_disabled())
+                    })
+                });
+            output.textures_delta.clear();
+            output.drop_without_applying_deltas();
+            let disabled = disabled.expect("The second template selector must be accessible");
+            assert_eq!(
+                disabled, editing,
+                "Template selection must not discard an unapplied draft"
+            );
+            assert_eq!(app.templates.selected, 0);
+            if editing {
+                assert!(app.templates.editing);
+                assert_eq!(app.templates.preview.as_str(), "unapplied synthetic draft");
+            }
+        }
+    }
+
+    #[test]
     fn relay_is_reachable_without_workspace_and_never_exposes_masked_session_inputs() {
         let ctx = egui::Context::default();
         ctx.enable_accesskit();
@@ -1359,6 +1443,34 @@ mod tests {
             "visible shortcut help must include the relay's fifth navigation key"
         );
         assert!(app.loaded_root.is_none() && app.workspace_loader.is_none() && app.job.is_none());
+    }
+
+    #[test]
+    fn unsaved_template_changes_block_close_until_explicit_lock() {
+        let mut app = HubApp::new(None, Preferences::default(), None, None);
+        let ctx = egui::Context::default();
+        assert!(!app.blocks_close());
+        app.templates.editing = true;
+        assert!(
+            app.blocks_close(),
+            "An unapplied template draft must not be lost on close"
+        );
+        app.templates.lock(&ctx);
+        assert!(!app.blocks_close());
+        app.templates.dirty = true;
+        assert!(
+            app.blocks_close(),
+            "Applied but unsaved changes must not be lost on close"
+        );
+        app.templates.lock(&ctx);
+        assert!(!app.blocks_close());
+    }
+
+    #[test]
+    fn auto_locked_template_changes_keep_a_close_notice() {
+        let app = HubApp::new(None, Preferences::default(), None, None);
+        assert_eq!(app.close_notice(false), None);
+        assert_eq!(app.close_notice(true), Some(Text::VaultAutoLockedUnsaved));
     }
 
     #[test]

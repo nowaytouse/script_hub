@@ -64,7 +64,7 @@ test('creation-time ties and duplicate pages do not change the retention boundar
   assert.equal(plan.workflows[0].total, 12);
 });
 
-test('all repository pages include orphan workflows and precede every deletion', async () => {
+test('complete inventories include orphan workflows and refresh after deletion', async () => {
   const f = fixture([{ id: 1, name: 'first', runs: Array.from({ length: 120 }, (_, i) => run(i + 1)) },
     { id: 2, name: 'second', runs: Array.from({ length: 12 }, (_, i) => run(1000 + i, 2)) }]);
   const result = await retainRuns({ ...f.options, dryRun: false, maxDeletions: 500 });
@@ -72,7 +72,9 @@ test('all repository pages include orphan workflows and precede every deletion',
   assert.equal(result.remaining, 0);
   assert.equal(f.live.size, 20);
   const firstDelete = f.calls.findIndex((call) => call.method === 'DELETE');
-  assert.ok(f.calls.every((call, index) => !/\/runs\?/.test(call.path) || index < firstDelete));
+  assert.equal(f.calls.slice(0, firstDelete).filter((call) => /\/runs\?/.test(call.path)).length, 2);
+  const lastDelete = f.calls.findLastIndex((call) => call.method === 'DELETE');
+  assert.ok(f.calls.slice(lastDelete + 1).some((call) => /\/runs\?/.test(call.path)));
   assert.ok(!f.calls.some((call) => call.path.includes('/workflows')));
   assert.equal(result.workflows.length, 2);
   const writes = f.calls.filter((call) => call.method === 'DELETE');
@@ -88,6 +90,29 @@ test('dry run and batch limits never silently exceed the selected scope', async 
   const applied = await retainRuns({ ...f.options, dryRun: false, maxDeletions: 2 });
   assert.deepEqual(applied.deleted, [1, 2]);
   assert.equal(applied.remaining, 3);
+});
+
+test('fresh reconciliation retains only the latest ten when runs arrive during deletion', async () => {
+  const f = fixture([{ id: 1, runs: Array.from({ length: 12 }, (_, i) => run(i + 1)) }], ({ method, path, live }) => {
+    if (method === 'DELETE' && path.endsWith('/runs/1')) live.set(13, run(13));
+  });
+  const result = await retainRuns({ ...f.options, dryRun: false });
+  assert.deepEqual([...f.live.keys()].sort((a, b) => a - b), [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  assert.deepEqual(result.deleted, [1, 2, 3]);
+  assert.equal(result.remaining, 0);
+  assert.deepEqual(result.workflows[0].kept, [13, 12, 11, 10, 9, 8, 7, 6, 5, 4]);
+});
+
+test('a failed final inventory exposes unverified partial cleanup instead of snapshot success', async () => {
+  let inventories = 0;
+  const f = fixture([{ id: 1, runs: Array.from({ length: 11 }, (_, i) => run(i + 1)) }], ({ path }) => {
+    if (path.includes('/runs?') && ++inventories > 1) throw error(502);
+  });
+  await assert.rejects(retainRuns({ ...f.options, dryRun: false }), (failure) => {
+    assert.deepEqual(failure.retention.deleted, [1]);
+    assert.equal(failure.retention.refreshed, false);
+    return true;
+  });
 });
 
 test('fresh status and attempt checks preserve a queued or rerun candidate', async () => {
@@ -202,6 +227,51 @@ test('malformed identities and limits are rejected before live requests', async 
     await assert.rejects(retainRuns({ ...f.options, ...options }));
     assert.equal(f.calls.length, 0);
   }
+});
+
+async function workflowRetention(f, maxDeletions = 100, dryRun = false) {
+  const workflow = readFileSync(require('node:path').join(__dirname, '../workflows/actions_retention.yml'), 'utf8');
+  const script = workflow.match(/script: \|\n([\s\S]*)/)[1].replace(/^ {12}/gm, '');
+  const failures = [];
+  const summary = { addHeading() { return this; }, addRaw() { return this; }, async write() {} };
+  const core = { info() {}, setFailed: (message) => failures.push(message), summary };
+  const load = (path) => {
+    assert.equal(path, './.github/scripts/retain-runs.cjs');
+    return { retainRuns: (options) => retainRuns({ ...options, ...f.options }) };
+  };
+  const AsyncFunction = (async () => {}).constructor;
+  await new AsyncFunction('require', 'core', 'context', 'process', 'github', script)(load, core,
+    { repo, runId: 9999 }, { env: { RETENTION_DRY_RUN: String(dryRun), RETENTION_LIMIT: String(maxDeletions) } }, f.github);
+  return failures;
+}
+
+test('automatic workflow accepts verified latest-ten inventories for each workflow', async () => {
+  const f = fixture([{ id: 1, runs: Array.from({ length: 12 }, (_, i) => run(i + 1)) },
+    { id: 2, runs: Array.from({ length: 11 }, (_, i) => run(100 + i, 2)) }]);
+  assert.deepEqual(await workflowRetention(f), []);
+  assert.equal(f.live.size, 20);
+});
+
+test('workflow previews never delete runs or fail for the displayed backlog', async () => {
+  const f = fixture([{ id: 1, runs: Array.from({ length: 12 }, (_, i) => run(i + 1)) }]);
+  assert.deepEqual(await workflowRetention(f, 100, true), []);
+  assert.equal(f.live.size, 12);
+});
+
+test('automatic workflow fails visibly when its fresh inventory still has completed excess runs', async () => {
+  const f = fixture([{ id: 1, runs: Array.from({ length: 12 }, (_, i) => run(i + 1)) }]);
+  const failures = await workflowRetention(f, 1);
+  assert.equal(failures.length, 1);
+  assert.equal(f.live.size, 11);
+});
+
+test('automatic workflow explains protected active excess without cancelling or deleting it', async () => {
+  const f = fixture([{ id: 1, runs: [run(1, 1, 'queued'), ...Array.from({ length: 10 }, (_, i) => run(i + 2))] }]);
+  const failures = await workflowRetention(f);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /active|current/i);
+  assert.equal(f.live.get(1).status, 'queued');
+  assert.equal(f.live.size, 11);
 });
 
 test('privileged workflow uses only default-branch code and cannot recursively trigger itself', () => {

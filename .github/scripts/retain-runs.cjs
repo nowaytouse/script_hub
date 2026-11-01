@@ -135,52 +135,70 @@ async function retainRuns({ github, repo, currentRunId, dryRun = true, maxDeleti
     return [...values.values()];
   }
 
-  const runs = await pages(`${base}/runs`, 'workflow_runs');
-  const groups = new Map();
-  for (const run of runs) {
-    if (!integer(run.workflow_id)) throw new Error('Invalid workflow ID in repository snapshot');
-    if (!groups.has(run.workflow_id)) groups.set(run.workflow_id, {
-      id: run.workflow_id, name: run.name, runs: [],
-    });
-    groups.get(run.workflow_id).runs.push(run);
+  async function snapshot() {
+    const runs = await pages(`${base}/runs`, 'workflow_runs');
+    const groups = new Map();
+    for (const run of runs) {
+      if (!integer(run.workflow_id)) throw new Error('Invalid workflow ID in repository snapshot');
+      if (!groups.has(run.workflow_id)) groups.set(run.workflow_id, {
+        id: run.workflow_id, name: run.name, runs: [],
+      });
+      groups.get(run.workflow_id).runs.push(run);
+    }
+    return planRetention([...groups.values()].sort((a, b) => a.id - b.id), currentRunId);
   }
   // Complete every page before deleting: changing page offsets must not skip old runs.
-  const plan = planRetention([...groups.values()].sort((a, b) => a.id - b.id), currentRunId);
+  let plan = await snapshot();
   // A fresh status check and deletion each cost one request; leave room for other CI jobs.
-  const available = Math.max(0, Math.floor((remainingRequests - 50) / 2));
-  const selected = plan.candidates.slice(0, Math.min(maxDeletions, available));
+  const available = () => Math.max(0, Math.floor((remainingRequests - 50) / 2));
+  let selected = plan.candidates.slice(0, Math.min(maxDeletions, available()));
   const result = {
     dryRun, keep: KEEP, workflows: plan.workflows, candidates: plan.candidates.length,
     selected: selected.map((run) => run.id), deleted: [], missing: [], deferred: [],
-    remaining: plan.candidates.length,
+    remaining: plan.candidates.length, refreshed: false,
   };
   if (dryRun) return result;
+  const attempted = new Set();
+  const candidates = new Set(plan.candidates.map((run) => run.id));
   try {
-    for (const run of selected) {
-      try {
-        await request('DELETE', `${base}/runs/${run.id}`, async () => {
-          // Recheck after pacing and every cooldown, immediately before the mutation.
-          const current = (await request('GET', `${base}/runs/${run.id}`)).data;
-          if (current.id !== run.id || current.workflow_id !== run.workflow_id) {
-            throw new Error(`GitHub run identity changed: ${run.id}`);
+    do {
+      result.refreshed = false;
+      for (const run of selected) {
+        attempted.add(run.id);
+        try {
+          await request('DELETE', `${base}/runs/${run.id}`, async () => {
+            // Recheck after pacing and every cooldown, immediately before the mutation.
+            const current = (await request('GET', `${base}/runs/${run.id}`)).data;
+            if (current.id !== run.id || current.workflow_id !== run.workflow_id) {
+              throw new Error(`GitHub run identity changed: ${run.id}`);
+            }
+            if (current.status !== 'completed' || current.id === currentRunId || current.run_attempt !== run.run_attempt) {
+              throw Object.assign(new Error(`Run ${run.id} became active or was rerun`), { deferred: true });
+            }
+          });
+          result.deleted.push(run.id);
+          result.remaining--;
+          log(`Deleted workflow run ${run.id} (workflow ${run.workflow_id}), including logs and artifacts`);
+        } catch (error) {
+          if (error.deferred) {
+            result.deferred.push(run.id);
+            continue;
           }
-          if (current.status !== 'completed' || current.id === currentRunId || current.run_attempt !== run.run_attempt) {
-            throw Object.assign(new Error(`Run ${run.id} became active or was rerun`), { deferred: true });
-          }
-        });
-        result.deleted.push(run.id);
-        result.remaining--;
-        log(`Deleted workflow run ${run.id} (workflow ${run.workflow_id}), including logs and artifacts`);
-      } catch (error) {
-        if (error.deferred) {
-          result.deferred.push(run.id);
-          continue;
+          if (error.status !== 404) throw error;
+          result.missing.push(run.id);
+          result.remaining--;
         }
-        if (error.status !== 404) throw error;
-        result.missing.push(run.id);
-        result.remaining--;
       }
-    }
+      plan = await snapshot();
+      result.refreshed = true;
+      result.workflows = plan.workflows;
+      result.remaining = plan.candidates.length;
+      for (const run of plan.candidates) candidates.add(run.id);
+      result.candidates = candidates.size;
+      selected = plan.candidates.filter((run) => !attempted.has(run.id))
+        .slice(0, Math.min(maxDeletions - attempted.size, available()));
+      result.selected.push(...selected.map((run) => run.id));
+    } while (selected.length);
   } catch (error) {
     error.retention = result;
     throw error;

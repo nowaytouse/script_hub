@@ -6,7 +6,7 @@
 
 [规则](rulesets/RULE-SET/) · [PROMAX](modules/surge/head_expanse/) · [模块](modules/) · [桌面](crates/processor/README.zh-CN.md)
 
-[维护](docs/UPDATE_GUIDE.zh-CN.md) · [来源](rulesets/Sources/Links/)
+[更新](CHANGELOG.zh-CN.md) · [维护](docs/UPDATE_GUIDE.zh-CN.md) · [来源](rulesets/Sources/Links/)
 
 匹配由此提供，去向由你决定。
 

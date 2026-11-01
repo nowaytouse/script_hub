@@ -1,0 +1,6 @@
+# Explicit user-confirmed IP drop targets. Keep exact /32 inputs only.
+# Do not resolve domains or expand these addresses into cloud/provider ranges.
+IP-CIDR,101.36.166.17/32,no-resolve
+IP-CIDR,101.36.166.18/32,no-resolve
+IP-CIDR,101.36.166.19/32,no-resolve
+IP-CIDR,47.106.88.76/32,no-resolve
