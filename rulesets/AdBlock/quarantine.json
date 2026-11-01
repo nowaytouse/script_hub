@@ -42817,6 +42817,18 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-KEYWORD,adsdk",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-KEYWORD,adservice",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-KEYWORD,adshare.toutiao.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -86534,6 +86546,12 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list",
     "candidate": "DOMAIN,sugar.zhihu.com,reject",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list",
+    "candidate": "DOMAIN-KEYWORD,adservice,reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -306469,6 +306487,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/non_ip/reject.conf",
+    "candidate": "DOMAIN-KEYWORD,adsdk",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/non_ip/reject.conf",
     "candidate": "DOMAIN-KEYWORD,mon.zijieapi.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -314031,6 +314055,12 @@
     "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
     "candidate": "bilibili.helper.v2                                    = type=http-response,pattern=^https:\\/\\/app\\.bilibili\\.com\\/x\\/v2\\/(splash|search\\?|feed\\/index),requires-body=1,max-size=-1,binary-body-mode=0,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.v2.js",
     "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
+    "candidate": "biliverse.github.io",
+    "reason": "protected-mitm-host",
     "risk": "protected-service"
   },
   {
