@@ -145,11 +145,15 @@ fn mainland_functional_hostname(request: &str) -> Option<String> {
     let click_report = path == "x/report/click"
         || path == "x/report/click$"
         || path.starts_with(r"x/report/click\?") && query_boundary;
+    // The reviewed source is narrowed to this complete endpoint and boundary.
+    let meituan_wechat_ad = hostname == "rms.meituan.com"
+        && path == r"api/v\d/rmsmina/c/queryWechatAdvertisement(?:\?|$)";
     (MAINLAND_AD_INTENT.is_match(&hostname)
         || TELEMETRY_INTENT.is_match(&hostname)
         || MAINLAND_AD_INTENT.is_match(literal_prefix)
         || TELEMETRY_INTENT.is_match(literal_prefix)
-        || click_report)
+        || click_report
+        || meituan_wechat_ad)
         .then_some(hostname)
 }
 
@@ -242,6 +246,10 @@ const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
     (
         "mads-eu.amazon.com",
         "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.amazon-onlydomains.txt",
+    ),
+    (
+        "adstrategy.biz.weibo.com",
+        "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
     ),
 ];
 
@@ -513,6 +521,20 @@ impl SafetyPolicy {
 
     pub fn functional_decision(&self, line: &str) -> SafetyDecision {
         let request = functional_request_pattern(line);
+        let normalized = request
+            .replace(r"\\/", "/")
+            .replace(r"\/", "/")
+            .replace(r"\\.", ".")
+            .replace(r"\.", ".")
+            .to_ascii_lowercase();
+        if matches!(
+            normalized.trim_end_matches('$'),
+            r"^https?://waimai-guide.ele.me/\w+/mtop.alsc.eleme.\w+.trigger.respond"
+                | r"^https://waimai-guide.ele.me/\w+/mtop.alsc.eleme.\w+.trigger.respond"
+        ) && line.to_ascii_lowercase().contains("data=")
+        {
+            return SafetyDecision::Quarantine("broad-commerce-handler");
+        }
         let hosts = request_host_patterns(request);
         let protected = hosts.iter().any(|candidate| {
             self.candidate_intersects_protected(candidate)
@@ -1020,6 +1042,64 @@ mod tests {
     use std::{collections::BTreeSet, fs, path::Path};
 
     #[test]
+    fn commerce_login_and_shared_image_hosts_are_protected_by_real_whitelist() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../rulesets/Sources/adblock_whitelist.list");
+        let content = fs::read_to_string(path).unwrap();
+        let safety = SafetyPolicy::from_lines(content.lines());
+        for host in [
+            "wgo.mmstat.com",
+            "app-monitor.ele.me",
+            "fuss10.elemecdn.com",
+        ] {
+            for kind in ["DOMAIN", "DOMAIN-SUFFIX"] {
+                let rule = SurgeRule::parse(&format!("{kind},{host}")).unwrap();
+                assert_eq!(
+                    safety.decision(&rule),
+                    SafetyDecision::Quarantine("protected-domain-intersection"),
+                    "{kind},{host}"
+                );
+            }
+        }
+        for host in ["ads.mmstat.com", "ads.ele.me", "ads.elemecdn.com"] {
+            let rule = SurgeRule::parse(&format!("DOMAIN,{host}")).unwrap();
+            assert_eq!(safety.decision(&rule), SafetyDecision::Keep, "{host}");
+        }
+        assert_eq!(
+            safety.functional_decision(
+                r"^https?:\/\/fuss10\.elemecdn\.com\/.+\/w\/750\/h\/\d{3,4} _ reject"
+            ),
+            SafetyDecision::Quarantine("protected-functional-intersection")
+        );
+    }
+
+    #[test]
+    fn broad_eleme_trigger_handler_is_quarantined_without_blocking_other_handlers() {
+        let safety = SafetyPolicy::default();
+        for pattern in [
+            r"^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.alsc\.eleme\.\w+\.trigger\.respond",
+            r"^https?://waimai-guide\.ele\.me/\w+/mtop\.alsc\.eleme\.\w+\.trigger\.respond",
+        ] {
+            assert_eq!(
+                safety.functional_decision(&format!(
+                    r#"{pattern} data-type=text data="{{}}" status-code=200"#
+                )),
+                SafetyDecision::Quarantine("broad-commerce-handler")
+            );
+        }
+        for line in [
+            r"^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.alsc\.wamai\.store\.detail\.miniapp\.popup _ reject",
+            r"^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.alsc\.eleme\.shop\.trigger\.respond _ reject",
+        ] {
+            assert_eq!(
+                safety.functional_decision(line),
+                SafetyDecision::Keep,
+                "{line}"
+            );
+        }
+    }
+
+    #[test]
     fn keyword_rule_intersecting_protected_media_is_quarantined() {
         let safety = SafetyPolicy::from_lines(["DOMAIN-SUFFIX,googlevideo.com"]);
         let rule = SurgeRule::parse("DOMAIN-KEYWORD,googlevideo").unwrap();
@@ -1041,6 +1121,7 @@ mod tests {
             "DOMAIN-SUFFIX,amazon.com",
             "DOMAIN-SUFFIX,apple.com",
             "DOMAIN-SUFFIX,icloud.com",
+            "DOMAIN-SUFFIX,weibo.com",
         ]);
 
         for host in [
@@ -1053,6 +1134,7 @@ mod tests {
             "api-adservices.apple.com",
             "iadsdk.apple.com",
             "mads-eu.amazon.com",
+            "adstrategy.biz.weibo.com",
         ] {
             let exact = SurgeRule::parse(&format!("DOMAIN,{host}")).unwrap();
             assert_eq!(safety.decision(&exact), SafetyDecision::Keep, "{host}");
@@ -1083,6 +1165,9 @@ mod tests {
             "DOMAIN-SUFFIX,apple.com",
             "DOMAIN,metrics.icloud.com",
             "DOMAIN-SUFFIX,icloud.com",
+            "DOMAIN,sub.adstrategy.biz.weibo.com",
+            "DOMAIN-SUFFIX,adstrategy.biz.weibo.com",
+            "DOMAIN,api.weibo.com",
         ] {
             let rule = SurgeRule::parse(line).unwrap();
             assert_eq!(
@@ -1099,6 +1184,40 @@ mod tests {
             exact_whitelist.decision(&exact),
             SafetyDecision::Quarantine("protected-domain-intersection")
         );
+    }
+
+    #[test]
+    fn reviewed_meituan_ad_endpoint_is_exactly_bounded() {
+        let safety =
+            SafetyPolicy::from_lines(["DOMAIN-SUFFIX,meituan.com", "DOMAIN-SUFFIX,apple.com"]);
+        for request in [
+            r"^https?:\/\/rms\.meituan\.com\/api\/v\d\/rmsmina\/c\/queryWechatAdvertisement(?:\?|$)",
+            r"^https?://rms\.meituan\.com/api/v\d/rmsmina/c/queryWechatAdvertisement(?:\?|$)",
+        ] {
+            assert_eq!(
+                safety.functional_decision(&format!(
+                    r#"{request} data-type=text data="{{}}" status-code=200"#
+                )),
+                SafetyDecision::Keep,
+                "{request}"
+            );
+        }
+        for request in [
+            r"^https?://rms\.meituan\.com/api/v\d/rmsmina/c/queryWechatAdvertisement",
+            r"^https?://rms\.meituan\.com/api/v\d/rmsmina/c/queryWechatAdvertisementExtra(?:\?|$)",
+            r"^https?://other\.meituan\.com/api/v\d/rmsmina/c/queryWechatAdvertisement(?:\?|$)",
+            r"^https?://rms\.meituan\.com/api/login(?:\?|$)",
+            r"^https?://rms\.meituan\.com/images/photo(?:\?|$)",
+            r"^https?://account\.apple\.com/login(?:\?|$)",
+        ] {
+            assert_ne!(
+                safety.functional_decision(&format!(
+                    r#"{request} data-type=text data="{{}}" status-code=200"#
+                )),
+                SafetyDecision::Keep,
+                "{request}"
+            );
+        }
     }
 
     #[test]

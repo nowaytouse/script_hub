@@ -10393,6 +10393,12 @@
   },
   {
     "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "candidate": "||mmstat.com^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
     "candidate": "||mmvideocdn.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -20278,6 +20284,12 @@
     "candidate": "DOMAIN-SUFFIX,mklygiferedme.site,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,mmstat.com,Reject",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_ad_only.conf",
@@ -33049,6 +33061,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".mmstat.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".mmvideocdn.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -39859,12 +39877,6 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@main/Filters/AWAvenue-Ads-Rule-Surge-module.sgmodule",
-    "candidate": "DOMAIN,adstrategy.biz.weibo.com,REJECT,extended-matching,pre-matching",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@main/Filters/AWAvenue-Ads-Rule-Surge-module.sgmodule",
     "candidate": "DOMAIN,adstudio-assets.scdn.co,REJECT,extended-matching,pre-matching",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -42817,18 +42829,6 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
-    "candidate": "DOMAIN-KEYWORD,adsdk",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
-    "candidate": "DOMAIN-KEYWORD,adservice",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-KEYWORD,adshare.toutiao.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -44536,6 +44536,12 @@
     "candidate": "DOMAIN-SUFFIX,apnmedia.ask.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,app-monitor.ele.me",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -56906,6 +56912,12 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,mmg.whatsapp.net.iberostar.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,mmstat.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -80875,6 +80887,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
+    "candidate": "DOMAIN-SUFFIX,mmstat.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
     "candidate": "DOMAIN-SUFFIX,mmvideocdn.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -86551,12 +86569,6 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list",
-    "candidate": "DOMAIN-KEYWORD,adservice,reject",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list",
     "candidate": "DOMAIN-SUFFIX,alitui.weibo.com,reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -87658,6 +87670,12 @@
     "candidate": ".apnmedia.ask.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".app-monitor.ele.me",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
@@ -88790,12 +88808,6 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".dbhyflmvdngif.site",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
-    "candidate": ".debugify.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -132349,6 +132361,12 @@
   },
   {
     "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt",
+    "candidate": "||app-monitor.ele.me^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt",
     "candidate": "||app-rcb-eu-central-1-978814483201-lb-logs.s3.eu-central-1.amazonaws.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -158384,6 +158402,12 @@
   {
     "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt",
     "candidate": "||mmintnftsession406.vercel.app^",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/ultimate.txt",
+    "candidate": "||mmstat.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -185726,6 +185750,12 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/BanProgramAD.list",
     "candidate": "DOMAIN-SUFFIX,analytics.twitter.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/BanProgramAD.list",
+    "candidate": "DOMAIN-SUFFIX,app-monitor.ele.me",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -228961,6 +228991,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/geekdada/surge-list@master/domain-set/adaway.txt",
+    "candidate": ".wgo.mmstat.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/geekdada/surge-list@master/domain-set/adaway.txt",
     "candidate": ".whitelabel.media.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -229688,6 +229724,12 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/geekdada/surge-list@master/domain-set/neohosts.txt",
     "candidate": ".wbapp.uve.weibo.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/geekdada/surge-list@master/domain-set/neohosts.txt",
+    "candidate": ".wgo.mmstat.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -236144,6 +236186,12 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/geekdada/surge-list@master/domain-set/tracking-protection-filter.txt",
     "candidate": ".mmg.whatsapp.net.iberostar.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/geekdada/surge-list@master/domain-set/tracking-protection-filter.txt",
+    "candidate": ".mmstat.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -258817,6 +258865,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject.conf",
+    "candidate": "app-monitor.ele.me",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject.conf",
     "candidate": "audio-ak-spotify-com.akamaized.net",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -266774,6 +266828,12 @@
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".mkwweb-whatsapp.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".mmstat.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -306265,12 +306325,6 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/non_ip/reject.conf",
-    "candidate": "DOMAIN-KEYWORD,adsdk",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://ruleset.skk.moe/List/non_ip/reject.conf",
     "candidate": "DOMAIN-KEYWORD,mon.zijieapi.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -306916,6 +306970,18 @@
     "candidate": "ci.xiaohongshu.com",
     "reason": "unreferenced-mitm-host",
     "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/All-in-One-2.x.sgmodule",
+    "candidate": "elemecdn.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/All-in-One-2.x.sgmodule",
+    "candidate": "fuss10.elemecdn.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
   },
   {
     "source": "modules/source/local/All-in-One-2.x.sgmodule",
@@ -308083,6 +308149,12 @@
   },
   {
     "source": "modules/source/local/AllInOne_Mock.sgmodule",
+    "candidate": "elemecdn.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/AllInOne_Mock.sgmodule",
     "candidate": "file.mylyg.net",
     "reason": "unreferenced-mitm-host",
     "risk": "broad-media"
@@ -308110,6 +308182,12 @@
     "candidate": "formysql.com",
     "reason": "unreferenced-mitm-host",
     "risk": "broad-media"
+  },
+  {
+    "source": "modules/source/local/AllInOne_Mock.sgmodule",
+    "candidate": "fuss10.elemecdn.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
   },
   {
     "source": "modules/source/local/AllInOne_Mock.sgmodule",
@@ -309439,12 +309517,6 @@
   },
   {
     "source": "modules/source/local/WeChat.ADBlock.sgmodule",
-    "candidate": "rms.meituan.com",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/source/local/WeChat.ADBlock.sgmodule",
     "candidate": "ucmp.sf-express.com",
     "reason": "protected-mitm-host",
     "risk": "protected-service"
@@ -310375,6 +310447,12 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "DOMAIN-SUFFIX,app-monitor.ele.me,REJECT",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "DOMAIN-SUFFIX,appnext-a.akamaihd.net,REJECT",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -311137,6 +311215,12 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "DOMAIN-SUFFIX,wgo.mmstat.com,REJECT",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "DOMAIN-SUFFIX,whistleout.s3.amazonaws.com,REJECT",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -311684,8 +311768,8 @@
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/(nr-op|cube)\\.elemecdn\\.com\\/.+\\.jpeg\\?x-oss-process=image\\/resize,m_fill,w_\\d{4,},h_\\d{4,}\\/($|format,webp\\/$) - reject",
-    "reason": "broad-media-match",
-    "risk": "broad-media"
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -312241,6 +312325,12 @@
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/elemecdn\\.com\\/.+\\/sitemap - reject",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/elife\\.icbc\\.com\\.cn\\/OFSTNEWBASE\\/floorinfo\\/getMantlePages\\.do data-type=text data=\" \" status-code=200",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
@@ -312272,8 +312362,20 @@
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/fuss10\\.elemecdn\\.com\\/.+?\\.mp4 data-type=tiny-gif status-code=200",
-    "reason": "broad-media-match",
-    "risk": "broad-media"
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/fuss10\\.elemecdn\\.com\\/.+\\/w\\/640\\/h\\/\\d{3,4} - reject",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/fuss10\\.elemecdn\\.com\\/.+\\/w\\/750\\/h\\/\\d{3,4} - reject",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
@@ -313047,6 +313149,12 @@
     "source": "modules/source/local/Wool.ADBlock.sgmodule",
     "candidate": "^https?:\\/\\/v\\.icbc\\.com\\.cn\\/userfiles\\/Resources\\/WAP\\/advertisement\\/ data-type=text data=\" \" status-code=200",
     "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "modules/source/local/Wool.ADBlock.sgmodule",
+    "candidate": "^https?:\\/\\/waimai-guide\\.ele\\.me\\/\\w+\\/mtop\\.alsc\\.eleme\\.\\w+\\.trigger\\.respond data-type=text data=\"{}\" status-code=200 header=\"Content-Type:application/json\"",
+    "reason": "broad-commerce-handler",
     "risk": "protected-service"
   },
   {
@@ -313833,12 +313941,6 @@
     "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
     "candidate": "bilibili.helper.v2                                    = type=http-response,pattern=^https:\\/\\/app\\.bilibili\\.com\\/x\\/v2\\/(splash|search\\?|feed\\/index),requires-body=1,max-size=-1,binary-body-mode=0,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.v2.js",
     "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "biliverse.github.io",
-    "reason": "protected-mitm-host",
     "risk": "protected-service"
   },
   {
@@ -316544,8 +316646,8 @@
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/(nr-op|cube)\\.elemecdn\\.com\\/.+\\.jpeg\\?x-oss-process=image\\/resize,m_fill,w_\\d{4,},h_\\d{4,}\\/($|format,webp\\/$) _ reject",
-    "reason": "broad-media-match",
-    "risk": "broad-media"
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -317479,6 +317581,18 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/elemecdn.com\\/.+\\/sitemap data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/elemecdn\\.com\\/.+\\/sitemap _ reject",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/elife\\.icbc\\.com\\.cn\\/OFSTNEWBASE\\/floorinfo\\/getMantlePages\\.do data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
@@ -317516,14 +317630,38 @@
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/fuss10.elemecdn.com\\/.+.mp4 data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
-    "reason": "broad-media-match",
-    "risk": "broad-media"
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/fuss10.elemecdn.com\\/.+\\/w\\/640\\/h\\/\\d{3,4} data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/fuss10.elemecdn.com\\/.+\\/w\\/750\\/h\\/\\d{3,4} data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/fuss10\\.elemecdn\\.com\\/.+?\\.mp4 data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-img.gif\"",
-    "reason": "broad-media-match",
-    "risk": "broad-media"
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/fuss10\\.elemecdn\\.com\\/.+\\/w\\/640\\/h\\/\\d{3,4} _ reject",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/fuss10\\.elemecdn\\.com\\/.+\\/w\\/750\\/h\\/\\d{3,4} _ reject",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
@@ -318391,6 +318529,12 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "^https?:\\/\\/waimai-guide\\.ele\\.me\\/\\w+\\/mtop\\.alsc\\.eleme\\.\\w+\\.trigger\\.respond data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-dict.json\"",
+    "reason": "broad-commerce-handler",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "^https?:\\/\\/webappcfg\\.paas\\.cmbchina\\.com\\/v\\d\\/func\\/getmarketconfig data=\"https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt\"",
     "reason": "protected-functional-intersection",
     "risk": "protected-service"
@@ -318805,6 +318949,12 @@
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "elemecdn.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
     "candidate": "file.mylyg.net",
     "reason": "unreferenced-mitm-host",
     "risk": "broad-media"
@@ -318820,6 +318970,12 @@
     "candidate": "freshippo=type=http-response,pattern=^https?:\\/\\/acs(\\.|-)m\\.(taobao|freshippo)\\.com\\/gw\\/mtop\\.wdk\\.render\\.query(?>indexpage|mypage|tabfeedstream),requires-body=1,script-path=https://cdn.jsdelivr.net/gh/zirawell/R-Store@main/Res/Scripts/AntiAd/freshippo.js",
     "reason": "broad-cross-site-rewrite",
     "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/vendor/adultraplus.sgmodule",
+    "candidate": "fuss10.elemecdn.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
   },
   {
     "source": "rulesets/Sources/vendor/adultraplus.sgmodule",

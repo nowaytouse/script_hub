@@ -5,6 +5,11 @@
 ## Unreleased
 
 - Reuse exception matching and parse rules once when generating ad-block shards; avoid intermediate rule-string copies.
+- Select module-only rules before collecting them, without cloning complete rule categories.
+- Keep one IP fallback per equivalent rule in PROMAX and stop loading redundant IP shards; standalone lists remain available. Embedded IP updates follow module refreshes.
+- Preserve supported inline pre-matching and no-resolve options across validation and client conversion.
+- Protect narrowly identified commerce compatibility and shared-image hosts; quarantine a broad business-response replacement.
+- Restore a reviewed Weibo ad host and a bounded Meituan advertising endpoint without widening platform blocks.
 
 ## 0.3.2 · 2026-11-01
 

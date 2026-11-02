@@ -82,6 +82,22 @@ impl RuleKind {
     fn requires_regex_validation(self) -> bool {
         matches!(self, Self::DomainRegex | Self::UrlRegex)
     }
+
+    pub(crate) fn supports_pre_matching(self) -> bool {
+        matches!(
+            self,
+            Self::Domain
+                | Self::DomainSuffix
+                | Self::DomainKeyword
+                | Self::DomainWildcard
+                | Self::IpCidr
+                | Self::IpCidr6
+                | Self::IpAsn
+                | Self::GeoIp
+                | Self::DestPort
+                | Self::SrcPort
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -241,6 +257,7 @@ fn option_allowed(kind: RuleKind, option: &str, external: bool) -> bool {
             RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::GeoIp | RuleKind::IpAsn
         ),
         "EXTENDED-MATCHING" => true,
+        "PRE-MATCHING" => !external && kind.supports_pre_matching(),
         "FORCE-CELLULAR" => !external,
         _ => false,
     }

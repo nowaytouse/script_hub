@@ -18,6 +18,10 @@ DOMAIN,alb.reddit.com
 # Upstream license: https://github.com/hagezi/dns-blocklists/blob/main/LICENSE (GPL-3.0).
 DOMAIN,mads-eu.amazon.com
 
+# AdGuard DNS filter includes this exact Weibo advertising host:
+# https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+DOMAIN,adstrategy.biz.weibo.com
+
 # Apple-specific ad endpoints (not Apple auth, iCloud, media, or service parents).
 # AdGuard HostlistsRegistry's AWAvenue Ads Rule includes both exact hosts:
 # https://github.com/AdguardTeam/HostlistsRegistry/blob/main/assets/filter_53.txt

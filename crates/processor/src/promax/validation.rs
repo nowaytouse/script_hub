@@ -65,7 +65,10 @@ fn validate_module(content: &str, surge_dialect: bool) -> Vec<ValidationError> {
             }
             if let Ok(rule) = SurgeRule::parse(line)
                 && rule.options.iter().any(|option| option == "NO-RESOLVE")
-                && rule.options.iter().all(|option| option == "NO-RESOLVE")
+                && rule
+                    .options
+                    .iter()
+                    .all(|option| matches!(option.as_str(), "NO-RESOLVE" | "PRE-MATCHING"))
                 && let Some(target) = rule.ip_rewrite_target()
             {
                 let action = match rule.policy.as_deref() {
@@ -530,9 +533,20 @@ fn validate_module_rule(
                 )),
             }
             for option in &rule.options {
-                if matches!(option.as_str(), "PRE-MATCHING")
-                    || option.starts_with("UPDATE-INTERVAL=")
+                if option == "PRE-MATCHING"
+                    && (!rule.kind.supports_pre_matching()
+                        || !rule
+                            .policy
+                            .as_deref()
+                            .is_some_and(is_internal_reject_policy))
                 {
+                    errors.push(error(
+                        line_number,
+                        "invalid-rule-option",
+                        "pre-matching requires a supported inline rule type and a REJECT policy",
+                    ));
+                }
+                if option.starts_with("UPDATE-INTERVAL=") {
                     errors.push(error(
                         line_number,
                         "invalid-rule-option",
@@ -1001,6 +1015,31 @@ mod tests {
             )
             .is_empty()
         );
+    }
+
+    #[test]
+    fn inline_ip_pre_matching_preserves_ip_rewrite_proxy_coverage() {
+        let module = "#!name=PROMAX fixture\n#!requirement=CORE_VERSION>=6010000\n[IP Rewrite]\n192.0.2.0/24 = reject\n2001:db8::/32 = reject\n[Rule]\nIP-CIDR,192.0.2.0/24,REJECT,no-resolve,pre-matching\nIP-CIDR6,2001:db8::/32,REJECT,pre-matching,no-resolve\nIP-ASN,64496,REJECT,no-resolve,pre-matching\nGEOIP,CN,REJECT,no-resolve,pre-matching\n";
+        assert_eq!(validate_surge_module(module), Vec::new());
+    }
+
+    #[test]
+    fn inline_pre_matching_requires_supported_rule_kind_and_reject_policy() {
+        for rule in [
+            "DOMAIN,ads.example.test,DIRECT,pre-matching",
+            "DOMAIN-REGEX,^ads\\.example\\.test$,REJECT,pre-matching",
+            "URL-REGEX,^https://ads.example.test/,REJECT,pre-matching",
+            "USER-AGENT,ad-client,REJECT,pre-matching",
+            "PROCESS-NAME,ad-client,REJECT,pre-matching",
+        ] {
+            let module = format!("#!name=fixture\n[Rule]\n{rule}\n");
+            assert!(
+                validate_surge_module(&module)
+                    .iter()
+                    .any(|error| error.code == "invalid-rule-option"),
+                "{rule}"
+            );
+        }
     }
 
     #[test]

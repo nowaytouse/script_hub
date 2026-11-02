@@ -4,6 +4,226 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn published_promax_keeps_one_ip_fallback_without_external_ip_shards() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for mirror in ["", "github/"] {
+        let path = root.join(format!("modules/surge/head_expanse/{mirror}🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"));
+        let content = fs::read_to_string(path).unwrap();
+        let mut section = "";
+        let mut seen = HashSet::new();
+        let mut rewrites = 0;
+        let mut subscriptions = 0;
+        for line in content.lines().map(str::trim) {
+            if line.starts_with('[') && line.ends_with(']') {
+                section = line;
+                continue;
+            }
+            if section == "[IP Rewrite]" && line.contains('=') {
+                rewrites += 1;
+            }
+            if section != "[Rule]" || line.starts_with('#') || line.is_empty() {
+                continue;
+            }
+            if line.starts_with("RULE-SET,") {
+                subscriptions += 1;
+                let file = line.split(',').nth(1).unwrap().rsplit('/').next().unwrap();
+                assert!(
+                    !file.ends_with("_ip.list") && !file.contains("_ip_"),
+                    "{line}"
+                );
+            } else if let Ok(rule) = crate::promax::rule::SurgeRule::parse(line)
+                && matches!(
+                    rule.kind,
+                    crate::promax::rule::RuleKind::IpCidr
+                        | crate::promax::rule::RuleKind::IpCidr6
+                        | crate::promax::rule::RuleKind::IpAsn
+                        | crate::promax::rule::RuleKind::GeoIp
+                )
+            {
+                let target = rule
+                    .ip_rewrite_target()
+                    .unwrap_or_else(|| rule.payload.clone());
+                let mut options = rule.options.clone();
+                options.sort_unstable();
+                assert!(
+                    seen.insert((rule.kind.as_str(), target, rule.policy, options)),
+                    "duplicate IP fallback: {line}"
+                );
+            }
+        }
+        assert!(rewrites > 0 && subscriptions > 0 && !seen.is_empty());
+        let shadowrocket = root.join(format!("modules/shadowrocket/head_expanse/{mirror}🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module"));
+        assert_eq!(
+            crate::promax::artifact::convert_surge_to_shadowrocket(&content),
+            fs::read_to_string(shadowrocket).unwrap()
+        );
+        eprintln!(
+            "published PROMAX {mirror}: IP rewrites={rewrites}, unique inline IP rules={}, external non-IP shards={subscriptions}",
+            seen.len()
+        );
+    }
+}
+
+#[test]
+fn reviewed_mainland_module_is_discovered_and_keeps_only_precise_ad_handlers() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.load_whitelist().unwrap();
+    let path = root.join("rulesets/Sources/LocalModules/Mainland_Ads_Reviewed.sgmodule");
+    assert_eq!(manager.resolve_module_ingest_mode(&path, false), "full");
+    let text = fs::read_to_string(path).unwrap();
+    manager.extract_from_text(&text, "REJECT", "Local", true, false, "reviewed-mainland");
+    assert!(
+        manager.sections["Map Local"]
+            .iter()
+            .any(|line| line.contains("queryWechatAdvertisement(?:\\?|$)")),
+        "kept={:?}, quarantined={:?}",
+        manager.sections["Map Local"],
+        manager.quarantine
+    );
+    assert!(manager.quarantine.is_empty());
+    manager.retain_referenced_mitm_hosts();
+    assert_eq!(
+        manager
+            .mitm_hosts
+            .iter()
+            .filter(|host| !host.starts_with('-'))
+            .cloned()
+            .collect::<HashSet<_>>(),
+        HashSet::from(["rms.meituan.com".to_string()])
+    );
+    assert!(manager.mitm_hosts.contains("-account.apple.com"));
+}
+
+#[test]
+fn staged_ip_shards_are_inlined_without_losing_nonidentical_rules() {
+    use crate::promax::artifact::{ArtifactKind, GeneratedArtifact};
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "promax-staged-ip-inline-{}-{unique}",
+        std::process::id()
+    ));
+    fs::create_dir(&root).unwrap();
+    let manager = AdBlockManager::new(root.clone());
+    let path = "rulesets/AdBlock/AdBlock_Advertising_ip.list".to_string();
+    let content = "IP-ASN,13335\nIP-CIDR,198.51.100.1/24\nIP-CIDR,198.51.100.0/24\nIP-CIDR,198.51.100.0/25\nIP-CIDR6,2001:db8::1/128\n";
+    let artifacts = vec![GeneratedArtifact {
+        target: manager.root_dir.join(&path),
+        content: content.to_string(),
+        kind: ArtifactKind::ExternalRuleset,
+    }];
+    for mirror in ["cdn", "github"] {
+        let module = manager
+            .generate_module_with_artifacts(std::slice::from_ref(&path), &artifacts, mirror)
+            .unwrap()
+            .content;
+        assert!(
+            !module
+                .lines()
+                .any(|line| line.starts_with("RULE-SET,") && line.contains(&path))
+        );
+        assert!(
+            module.contains("IP-ASN,13335,REJECT,no-resolve,pre-matching")
+                || module.contains("IP-ASN,13335,REJECT,pre-matching,no-resolve")
+        );
+        assert_eq!(
+            module.matches("198.51.100.1/24").count() + module.matches("198.51.100.0/24").count(),
+            1
+        );
+        assert!(module.contains("198.51.100.0/25"));
+        assert!(module.contains("2001:db8::1/128"));
+        assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
+        let sr = crate::promax::artifact::convert_surge_to_shadowrocket(&module);
+        assert!(!sr.contains("pre-matching"));
+        assert!(sr.contains("IP-ASN,13335,REJECT,no-resolve"));
+        assert!(crate::promax::validation::validate_shadowrocket_module(&sr).is_empty());
+    }
+    assert_eq!(artifacts[0].content, content);
+    assert!(
+        manager
+            .generate_module_with_artifacts(std::slice::from_ref(&path), &[], "cdn")
+            .is_err()
+    );
+    let invalid = GeneratedArtifact {
+        target: manager.root_dir.join(&path),
+        content: "DOMAIN,invalid.example\n".to_string(),
+        kind: ArtifactKind::ExternalRuleset,
+    };
+    assert!(
+        manager
+            .generate_module_with_artifacts(std::slice::from_ref(&path), &[invalid], "cdn")
+            .is_err()
+    );
+    let empty = GeneratedArtifact {
+        target: manager.root_dir.join(&path),
+        content: "# empty\n".to_string(),
+        kind: ArtifactKind::ExternalRuleset,
+    };
+    assert!(
+        manager
+            .generate_module_with_artifacts(std::slice::from_ref(&path), &[empty], "cdn")
+            .is_err()
+    );
+    assert!(
+        manager
+            .generate_module_with_artifacts(
+                &[path],
+                &[artifacts[0].clone(), artifacts[0].clone()],
+                "cdn"
+            )
+            .is_err()
+    );
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn inlined_reject_keeps_distinct_drop_fallback() {
+    use crate::promax::artifact::{ArtifactKind, GeneratedArtifact};
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "promax-ip-inline-conflict-{}-{unique}",
+        std::process::id()
+    ));
+    fs::create_dir(&root).unwrap();
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.extract_from_text(
+        "IP-CIDR,198.51.100.0/24,REJECT\nIP-CIDR,198.51.100.0/24,REJECT-DROP\n",
+        "REJECT",
+        "Security",
+        false,
+        false,
+        "fixture",
+    );
+    let path = "rulesets/AdBlock/AdBlock_Security_ip.list".to_string();
+    let artifact = GeneratedArtifact {
+        target: manager.root_dir.join(&path),
+        content: "IP-CIDR,198.51.100.0/24\n".to_string(),
+        kind: ArtifactKind::ExternalRuleset,
+    };
+    let module = manager
+        .generate_module_with_artifacts(&[path], &[artifact], "cdn")
+        .unwrap()
+        .content;
+    assert!(
+        module
+            .lines()
+            .any(|line| line.starts_with("IP-CIDR,198.51.100.0/24,REJECT,")
+                && line.contains("pre-matching"))
+    );
+    assert!(module.contains("IP-CIDR,198.51.100.0/24,REJECT-DROP,no-resolve"));
+    assert!(crate::promax::validation::validate_surge_module(&module).is_empty());
+    let sr = crate::promax::artifact::convert_surge_to_shadowrocket(&module);
+    assert!(crate::promax::validation::validate_shadowrocket_module(&sr).is_empty());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn authored_source_identity_is_root_relative_and_portable() {
     let root = std::env::temp_dir().join("promax-source-identity");
     let entry = super::SourceEntry {
@@ -1804,6 +2024,8 @@ fn benchmark_published_shard_generation() {
             .map(|index| format!("safe{index}?.benchmark.example"))
             .collect();
         let mut elapsed = Vec::new();
+        let mut module_elapsed = Vec::new();
+        let mut module_digest = None;
         for _ in 0..3 {
             let start = Instant::now();
             let (paths, artifacts) = black_box(&manager).generate_ruleset().unwrap();
@@ -1818,13 +2040,35 @@ fn benchmark_published_shard_generation() {
                     artifact.target.display()
                 );
             }
-            black_box(artifacts);
+            let start = Instant::now();
+            let module = manager
+                .generate_module_with_artifacts(&paths, &artifacts, "github")
+                .unwrap();
+            module_elapsed.push(start.elapsed());
+            let stable_content = module
+                .content
+                .lines()
+                .filter(|line| !line.starts_with("#!date="))
+                .collect::<Vec<_>>()
+                .join("\n");
+            let digest = format!("{:x}", md5::compute(stable_content.as_bytes()));
+            if let Some(previous) = &module_digest {
+                assert_eq!(&digest, previous);
+            }
+            module_digest = Some(digest);
+            black_box((artifacts, module));
         }
         elapsed.sort_unstable();
+        module_elapsed.sort_unstable();
         eprintln!(
             "published shard generation: rules={count}, shards={}, exceptions={exception_count}, rounds=3, median={:?}",
             expected.len(),
             elapsed[1]
+        );
+        eprintln!(
+            "published module generation: rules={count}, exceptions={exception_count}, rounds=3, median={:?}, digest={}",
+            module_elapsed[1],
+            module_digest.unwrap()
         );
     }
     fs::remove_dir_all(root).unwrap();

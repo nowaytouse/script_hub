@@ -1027,7 +1027,10 @@ impl AdBlockManager {
         if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
             self.safety.functional_decision(stripped)
         {
-            let risk = if reason == "protected-functional-intersection" {
+            let risk = if matches!(
+                reason,
+                "protected-functional-intersection" | "broad-commerce-handler"
+            ) {
                 crate::promax::safety::RiskClass::ProtectedService
             } else {
                 crate::promax::safety::RiskClass::BroadMedia
@@ -1893,7 +1896,7 @@ impl AdBlockManager {
             self.safety.functional_decision(line)
         };
         if let crate::promax::safety::SafetyDecision::Quarantine(reason) = decision {
-            let risk = if reason.contains("protected") {
+            let risk = if reason.contains("protected") || reason == "broad-commerce-handler" {
                 crate::promax::safety::RiskClass::ProtectedService
             } else {
                 crate::promax::safety::RiskClass::BroadMedia
@@ -2405,11 +2408,22 @@ impl AdBlockManager {
         candidates
     }
 
+    #[cfg(test)]
     fn generate_module(
         &self,
         generated_rulesets: &[String],
         url_source: &str,
     ) -> crate::promax::artifact::GeneratedArtifact {
+        self.generate_module_with_artifacts(generated_rulesets, &[], url_source)
+            .unwrap()
+    }
+
+    fn generate_module_with_artifacts(
+        &self,
+        generated_rulesets: &[String],
+        artifacts: &[crate::promax::artifact::GeneratedArtifact],
+        url_source: &str,
+    ) -> Result<crate::promax::artifact::GeneratedArtifact, String> {
         let current_date = crate::publication_now().format("%Y-%m-%d").to_string();
         let complex_prefixes = ["URL-REGEX,", "USER-AGENT,", "PROCESS-NAME,", "DEST-PORT,"];
 
@@ -2428,10 +2442,69 @@ impl AdBlockManager {
         let base_filename =
             "🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style)";
         let target_path = out_dir.join(format!("{}.sgmodule", base_filename));
-        let shard_count = generated_rulesets.len();
 
         let ip_rewrites = self.ip_rewrite_rules();
 
+        let mut inline_shards = HashMap::new();
+        let mut inline_targets = HashSet::new();
+        for path in generated_rulesets {
+            let name = path.rsplit('/').next().unwrap_or(path);
+            let is_ip = name.ends_with("_ip.list")
+                || name.rsplit_once("_ip_").is_some_and(|(_, suffix)| {
+                    suffix.strip_suffix(".list").is_some_and(|index| {
+                        !index.is_empty() && index.bytes().all(|b| b.is_ascii_digit())
+                    })
+                });
+            if !is_ip {
+                continue;
+            }
+            let mut matches = artifacts
+                .iter()
+                .filter(|artifact| artifact.target == self.root_dir.join(path));
+            let artifact = matches
+                .next()
+                .ok_or_else(|| format!("missing staged IP ruleset: {path}"))?;
+            if matches.next().is_some()
+                || artifact.kind != crate::promax::artifact::ArtifactKind::ExternalRuleset
+            {
+                return Err(format!("ambiguous or invalid staged IP ruleset: {path}"));
+            }
+            let mut rows = Vec::new();
+            for line in artifact
+                .content
+                .lines()
+                .map(str::trim)
+                .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            {
+                let mut rule = crate::promax::rule::SurgeRule::parse(line)
+                    .map_err(|error| format!("invalid staged IP ruleset {path}: {error}"))?;
+                if !matches!(
+                    rule.kind,
+                    crate::promax::rule::RuleKind::IpCidr
+                        | crate::promax::rule::RuleKind::IpCidr6
+                        | crate::promax::rule::RuleKind::IpAsn
+                        | crate::promax::rule::RuleKind::GeoIp
+                ) || rule.policy.is_some()
+                    || rule.options.iter().any(|option| option != "NO-RESOLVE")
+                {
+                    return Err(format!("invalid staged IP ruleset entry in {path}: {line}"));
+                }
+                let target = rule.ip_rewrite_target();
+                if let Some(target) = &target {
+                    inline_targets.insert(target.clone());
+                }
+                rule.prevent_dns_resolution();
+                rule.options.push("PRE-MATCHING".to_string());
+                let key = target.unwrap_or_else(|| format!("{:?},{}", rule.kind, rule.payload));
+                rows.push((key, rule.render_module("REJECT")));
+            }
+            if rows.is_empty() {
+                return Err(format!("empty staged IP ruleset: {path}"));
+            }
+            inline_shards.insert(path.clone(), rows);
+        }
+
+        let shard_count = generated_rulesets.len() - inline_shards.len();
         let mut rule_lines = Vec::new();
         if !ip_rewrites.is_empty() {
             rule_lines.push("# IP Rewrite is VIF-only; proxy-server requests still need these no-resolve rules.".to_string());
@@ -2467,7 +2540,7 @@ impl AdBlockManager {
         rule_lines.extend(
             ip_rewrites
                 .iter()
-                .filter(|(priority, _, _)| *priority == 1)
+                .filter(|(priority, target, _)| *priority == 1 && !inline_targets.contains(target))
                 .map(|(_, _, rule)| rule.render_module("REJECT")),
         );
 
@@ -2480,6 +2553,7 @@ impl AdBlockManager {
                 .push(rs_path.clone());
         }
 
+        let mut seen_inline = HashSet::new();
         for category in CATEGORIES {
             if let Some(paths) = shards_by_category.get_mut(*category) {
                 if paths.is_empty() {
@@ -2496,7 +2570,15 @@ impl AdBlockManager {
                     (shard_index, name.to_string())
                 });
                 for rs_path in paths {
-                    rule_lines.push(format!("RULE-SET,{}{},REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve", base_url, rs_path));
+                    if let Some(rows) = inline_shards.get(rs_path) {
+                        for (key, line) in rows {
+                            if seen_inline.insert(key.clone()) {
+                                rule_lines.push(line.clone());
+                            }
+                        }
+                    } else {
+                        rule_lines.push(format!("RULE-SET,{}{},REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve", base_url, rs_path));
+                    }
                 }
             }
         }
@@ -2520,14 +2602,15 @@ impl AdBlockManager {
         for policy in &["REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
             let mut pool = HashSet::new();
             for cat in &active_cats {
-                let empty_set = HashSet::new();
-                let rules_in_cat = self
-                    .rules
-                    .get(*policy)
-                    .unwrap()
-                    .get(*cat)
-                    .unwrap_or(&empty_set);
-                pool.extend(rules_in_cat.clone());
+                let Some(rules_in_cat) = self.rules.get(*policy).unwrap().get(*cat) else {
+                    continue;
+                };
+                pool.extend(rules_in_cat.iter().map(String::as_str).filter(|rule| {
+                    *policy != "REJECT"
+                        || complex_prefixes
+                            .iter()
+                            .any(|prefix| rule.starts_with(prefix))
+                }));
             }
             if pool.is_empty() {
                 continue;
@@ -2535,20 +2618,14 @@ impl AdBlockManager {
             let mut candidates = Vec::new();
             for r in pool {
                 if *policy != "REJECT"
-                    && crate::promax::rule::SurgeRule::parse(&r).is_ok_and(|rule| {
+                    && crate::promax::rule::SurgeRule::parse(r).is_ok_and(|rule| {
                         rule.ip_rewrite_target()
                             .is_some_and(|target| promoted.contains(&(*policy, target.as_str())))
                     })
                 {
                     continue;
                 }
-                if *policy == "REJECT" {
-                    if complex_prefixes.iter().any(|p| r.starts_with(p)) {
-                        candidates.push(r);
-                    }
-                } else {
-                    candidates.push(r);
-                }
+                candidates.push(r);
             }
             if candidates.is_empty() {
                 continue;
@@ -2560,7 +2637,7 @@ impl AdBlockManager {
             ));
             candidates.sort();
             for raw in candidates {
-                if let Some(line) = self.attach_policy(&raw, policy)
+                if let Some(line) = self.attach_policy(raw, policy)
                     && complex_seen.insert(line.clone())
                 {
                     rule_lines.push(line);
@@ -2692,11 +2769,11 @@ impl AdBlockManager {
             module_content = lines_out.join("\n") + "\n";
         }
 
-        crate::promax::artifact::GeneratedArtifact {
+        Ok(crate::promax::artifact::GeneratedArtifact {
             target: target_path,
             content: module_content,
             kind: crate::promax::artifact::ArtifactKind::Surge,
-        }
+        })
     }
 
     fn attach_policy(&self, rule: &str, policy: &str) -> Option<String> {
@@ -2845,8 +2922,25 @@ impl AdBlockManager {
             println!(
                 "\x1b[0;32m[INFO]\x1b[0m Rendering PROMAX Surge and Shadowrocket artifacts..."
             );
-            let surge_cdn = self.generate_module(&generated_rulesets, "cdn");
-            let surge_github = self.generate_module(&generated_rulesets, "github");
+            let surge_cdn =
+                match self.generate_module_with_artifacts(&generated_rulesets, &artifacts, "cdn") {
+                    Ok(module) => module,
+                    Err(error) => {
+                        eprintln!("[ERROR] Refusing PROMAX generation: {error}");
+                        return false;
+                    }
+                };
+            let surge_github = match self.generate_module_with_artifacts(
+                &generated_rulesets,
+                &artifacts,
+                "github",
+            ) {
+                Ok(module) => module,
+                Err(error) => {
+                    eprintln!("[ERROR] Refusing PROMAX generation: {error}");
+                    return false;
+                }
+            };
             let shadowrocket_cdn =
                 match crate::promax::artifact::shadowrocket_variant(&self.root_dir, &surge_cdn) {
                     Ok(artifact) => artifact,

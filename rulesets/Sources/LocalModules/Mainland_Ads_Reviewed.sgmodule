@@ -1,0 +1,8 @@
+#!name=Mainland reviewed advertising endpoints
+
+# Narrowed from the queryWechatAdvertisement rule in vendor/adultraplus.sgmodule.
+[Map Local]
+^https?:\/\/rms\.meituan\.com\/api\/v\d\/rmsmina\/c\/queryWechatAdvertisement(?:\?|$) data-type=text data="{}" status-code=200 header="Content-Type:application/json"
+
+[MITM]
+hostname = %APPEND% rms.meituan.com

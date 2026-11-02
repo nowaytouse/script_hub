@@ -509,6 +509,7 @@ static SHADOWROCKET_IP_REWRITE_SUMMARY: Lazy<Regex> =
 pub fn convert_surge_to_shadowrocket(content: &str) -> String {
     let mut output = Vec::new();
     let mut section = "";
+    let mut seen_ip_rules = HashSet::new();
 
     for raw_line in content.lines() {
         let trimmed = raw_line.trim();
@@ -541,7 +542,10 @@ pub fn convert_surge_to_shadowrocket(content: &str) -> String {
                 );
                 rule.options
                     .retain(|option| ip_rule && option == "NO-RESOLVE");
-                output.push(rule.render_module("REJECT"));
+                let rendered = rule.render_module("REJECT");
+                if !ip_rule || seen_ip_rules.insert(rendered.clone()) {
+                    output.push(rendered);
+                }
             } else {
                 output.push(raw_line.to_string());
             }
@@ -654,6 +658,15 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets
         assert!(!converted.contains("update-interval="));
         assert_eq!(converted, convert_surge_to_shadowrocket(&converted));
         assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
+    }
+
+    #[test]
+    fn shadowrocket_conversion_deduplicates_rules_after_policy_downgrade() {
+        let source = "#!name=PROMAX\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT-DROP,no-resolve\nDOMAIN,ads.example.test,REJECT\nIP-CIDR,192.0.2.1/32,REJECT,pre-matching,no-resolve\n";
+        assert_eq!(
+            convert_surge_to_shadowrocket(source),
+            "#!name=PROMAX\n[Rule]\nIP-CIDR,192.0.2.1/32,REJECT,no-resolve\nDOMAIN,ads.example.test,REJECT\n"
+        );
     }
 
     #[test]

@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3754/4614；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3748/4614；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -859,7 +859,6 @@ DOMAIN-SUFFIX,ad.doubanio.com,REJECT
 DOMAIN-SUFFIX,bayescom.com,REJECT
 DOMAIN-SUFFIX,ad.duoduo.link,REJECT
 IP-CIDR,211.161.101.110/32,REJECT,no-resolve
-DOMAIN-SUFFIX,app-monitor.ele.me,REJECT
 DOMAIN-SUFFIX,client-api.ele.me,REJECT
 DOMAIN-SUFFIX,grand.ele.me,REJECT
 DOMAIN-SUFFIX,mobile-pubt.ele.me,REJECT
@@ -2002,7 +2001,6 @@ DOMAIN-SUFFIX,v.admaster.com.cn,REJECT
 DOMAIN-SUFFIX,v2.reachmax.cn,REJECT
 DOMAIN-SUFFIX,server.m.pp.cn,REJECT
 DOMAIN-SUFFIX,puds.ucweb.com,REJECT
-DOMAIN-SUFFIX,wgo.mmstat.com,REJECT
 DOMAIN-SUFFIX,log.cs.pp.cn,REJECT
 DOMAIN-SUFFIX,applog.uc.cn,REJECT
 DOMAIN-SUFFIX,afpapi.alimama.com,REJECT
@@ -2708,9 +2706,6 @@ http:\/\/ad\.myfriday\.cn\/d\/json\/1\.1 - reject
 ^https?:\/\/frodo\.douban\.com\/api\/v2\/movie\/banner - reject
 ^https?:\/\/erebor\.douban\.com\/count\/\?ad= - reject
 ^https:\/\/dudian-oss\.oss-cn-shenzhen\.aliyuncs\.com\/dlabel\/1\/startpage - reject
-^https?:\/\/elemecdn\.com\/.+\/sitemap - reject
-^https?:\/\/fuss10\.elemecdn\.com\/.+\/w\/640\/h\/\d{3,4} - reject
-^https?:\/\/fuss10\.elemecdn\.com\/.+\/w\/750\/h\/\d{3,4} - reject
 ^https?:\/\/www1\.elecfans\.com\/www\/delivery\/ - reject
 ^https?:\/\/.+\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/sdk\/(get_ads|stats|settings)\/ - reject
 ^https?:\/\/gateway-api\.dushu365\.com\/chief-orch\/config\/config\/v100\/appConfig - reject
@@ -3199,7 +3194,6 @@ https?:\/\/awg\.enmonster\.com\/apa\/(advert\/demand\/home\/poster|index\/advert
 ^https?:\/\/api\.jxedt\.com\/jump\/EMiCcDNp data-type=tiny-gif status-code=200
 ^https?:\/\/richmanmain\.jxedt\.com\/advertisement\/fallback data-type=tiny-gif status-code=200
 ^https?:\/\/api\.tipsoon\.com\/api\/v1\/top\/ad data-type=tiny-gif status-code=200
-^https?:\/\/waimai-guide\.ele\.me\/\w+\/mtop\.alsc\.eleme\.\w+\.trigger\.respond data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/mbank5\.jsbchina\.cn:443 data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/s\.jiediankeji\.com\/adv data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/api\.sogaha\.cn\/ssp\/ad\/get\?ip data-type=text data="{}" status-code=200 header="Content-Type:application/json"

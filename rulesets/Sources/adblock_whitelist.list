@@ -223,6 +223,11 @@ DOMAIN-SUFFIX,servicewechat.com
 DOMAIN-SUFFIX,wxs.qq.com
 
 # ============ 支付相关 (Payment) ============
+# Exact hosts observed in failed Taobao Shanguo login; do not exempt their parents.
+DOMAIN,wgo.mmstat.com
+DOMAIN,app-monitor.ele.me
+# Shared food-image delivery: size alone does not identify an advertisement.
+DOMAIN,fuss10.elemecdn.com
 # 支付宝
 DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipayobjects.com
