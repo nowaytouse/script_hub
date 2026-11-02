@@ -103,7 +103,7 @@ impl Node {
     }
 
     pub fn to_sing_box(&self, compatibility: bool) -> Result<Value, ModelError> {
-        if self.dependency.is_some() {
+        if self.protocol() == "external" || self.dependency.is_some() {
             return Err(ModelError::Unsupported);
         }
         match &self.source {
@@ -707,10 +707,14 @@ pub fn semantic_equal(left: &str, right: &str) -> bool {
         {
             return false;
         }
+        let external = left.protocol() == "external";
         match (&left.source, &right.source) {
             (NodeSource::Native(left), NodeSource::Native(right))
             | (NodeSource::SubStore(left), NodeSource::SubStore(right)) => left.0 == right.0,
             (NodeSource::Surge(left), NodeSource::Surge(right)) => {
+                if external {
+                    return left.raw == right.raw;
+                }
                 uncertain_identity(left) == uncertain_identity(right)
                     && semantic_fields(left) == semantic_fields(right)
             }
@@ -929,25 +933,23 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
             return Err(ModelError::InvalidInput);
         }
         let protocol_range = ranges[0].clone();
-        let server_range = ranges[1].clone();
         let protocol = Zeroizing::new(decode_surge(&line[protocol_range.clone()])?.to_lowercase());
-        let server = decode_surge(&line[ranges[1].clone()])?;
-        let port = decode_surge(&line[ranges[2].clone()])?
-            .parse::<u16>()
-            .map_err(|_| ModelError::InvalidInput)?;
-        if !valid_label(&name) || !valid_label(&protocol) || !valid_label(&server) || port == 0 {
-            return Err(ModelError::InvalidInput);
-        }
+        let external = protocol.as_str() == "external";
+        let server_range = if external {
+            protocol_range.clone()
+        } else {
+            ranges[1].clone()
+        };
         let mut fields = Vec::new();
         let mut keys = HashSet::new();
-        for range in ranges.into_iter().skip(3) {
+        for range in ranges.iter().skip(if external { 1 } else { 3 }).cloned() {
             let relative = unquoted_positions(&line[range.clone()], '=')?
                 .into_iter()
                 .next()
                 .ok_or(ModelError::InvalidInput)?;
             let equal = range.start + relative;
             let key = line[range.start..equal].trim().to_lowercase();
-            if !valid_label(&key) || !keys.insert(key.clone()) {
+            if !valid_label(&key) || (!keys.insert(key.clone()) && !(external && key == "args")) {
                 return Err(ModelError::InvalidInput);
             }
             let value_range = trimmed_range(line, equal + 1..range.end);
@@ -956,6 +958,33 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
                 value: decode_surge(&line[value_range.clone()])?,
                 value_range,
             });
+        }
+        let (server, port) = if external {
+            let exec = fields
+                .iter()
+                .find(|field| field.key == "exec")
+                .ok_or(ModelError::InvalidInput)?;
+            if !valid_label(exec.value.trim()) {
+                return Err(ModelError::InvalidInput);
+            }
+            let port = fields
+                .iter()
+                .find(|field| field.key == "local-port")
+                .ok_or(ModelError::InvalidInput)?
+                .value
+                .parse::<u16>()
+                .map_err(|_| ModelError::InvalidInput)?;
+            (Zeroizing::new("127.0.0.1".to_owned()), port)
+        } else {
+            (
+                decode_surge(&line[ranges[1].clone()])?,
+                decode_surge(&line[ranges[2].clone()])?
+                    .parse::<u16>()
+                    .map_err(|_| ModelError::InvalidInput)?,
+            )
+        };
+        if !valid_label(&name) || !valid_label(&protocol) || !valid_label(&server) || port == 0 {
+            return Err(ModelError::InvalidInput);
         }
         let dependency = fields
             .iter()

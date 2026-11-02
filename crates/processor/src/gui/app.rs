@@ -617,15 +617,23 @@ impl HubApp {
         if self.active() || self.pending.is_some() {
             return;
         }
-        self.relay.start_with(
-            mode,
-            Path::new(if self.draft.singbox.trim().is_empty() {
-                "sing-box"
-            } else {
-                self.draft.singbox.trim()
-            }),
-            crate::relay::run,
-        );
+        let engine = self.relay.engine_path().to_owned();
+        if mode == crate::relay::RunMode::Publish {
+            let Some(prepared) = self.relay.result.take() else {
+                return;
+            };
+            let mut upload = prepared.clone();
+            upload.published = false;
+            upload.created = None;
+            upload.unchanged = false;
+            self.relay
+                .start_with(mode, &engine, move |config, token, _, cancel, progress| {
+                    crate::relay::upload_prepared(config, token, upload, cancel, progress)
+                });
+            self.relay.result = Some(prepared);
+        } else {
+            self.relay.start_with(mode, &engine, crate::relay::run);
+        }
     }
 
     fn start(&mut self, kind: JobKind, options: JobOptions) {
@@ -1273,7 +1281,7 @@ mod tests {
                 update
                     .nodes
                     .iter()
-                    .any(|(_, node)| node.label() == Some(app.tr(Text::RelayPreview)))
+                    .any(|(_, node)| node.label() == Some(app.tr(Text::RelayImportGist)))
             });
         let accessible = format!("{:?}", output.platform_output.accesskit_update);
         output.drop_without_applying_deltas();
@@ -1320,7 +1328,7 @@ mod tests {
     }
 
     #[test]
-    fn relay_explains_why_upload_is_disabled_when_preview_is_ready() {
+    fn relay_publish_step_explains_missing_upload_permissions() {
         for (missing, expected) in [
             ("token", Text::RelayTokenInvalid),
             ("consent", Text::RelayConsentRequired),
@@ -1328,6 +1336,7 @@ mod tests {
             let ctx = egui::Context::default();
             ctx.enable_accesskit();
             let mut app = relay_app();
+            app.relay.step = super::super::relay::RelayStep::Publish;
             if missing == "token" {
                 app.relay.token.clear();
             }
@@ -1363,7 +1372,7 @@ mod tests {
             assert!(
                 accessible_text
                     .iter()
-                    .any(|text| text == app.tr(Text::RelayPreview))
+                    .any(|text| text == app.tr(Text::RelayPublish))
             );
             assert!(
                 accessible_text.iter().any(|text| text == app.tr(expected)),

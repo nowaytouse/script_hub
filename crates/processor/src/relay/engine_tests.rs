@@ -2,6 +2,26 @@ use super::*;
 use serde_json::json;
 
 #[test]
+fn engine_lookup_ignores_relative_directories_and_preserves_order() {
+    let root = std::env::temp_dir().join(format!("engine-discovery-{}", std::process::id()));
+    std::fs::create_dir(&root).unwrap();
+    let first = root.join("first");
+    let second = root.join("second");
+    std::fs::create_dir(&first).unwrap();
+    std::fs::create_dir(&second).unwrap();
+    std::fs::write(first.join("sing-box"), []).unwrap();
+    std::fs::write(second.join("sing-box"), []).unwrap();
+    assert_eq!(
+        find_in_directories(
+            "sing-box".as_ref(),
+            [PathBuf::from("."), second.clone(), first]
+        ),
+        Some(second.join("sing-box").canonicalize().unwrap())
+    );
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn one_verified_https_success_wins_over_an_unavailable_target() {
     assert_eq!(
         classify(

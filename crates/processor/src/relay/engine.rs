@@ -374,27 +374,26 @@ fn executable(path: &Path) -> Result<PathBuf, EngineError> {
             }
             name
         };
-        std::env::var_os("PATH")
-            .into_iter()
-            .flat_map(|paths| std::env::split_paths(&paths).collect::<Vec<_>>())
-            .filter(|directory| directory.is_absolute())
-            .map(|directory| directory.join(&name))
-            .chain({
-                #[cfg(target_os = "macos")]
-                {
-                    vec![
-                        PathBuf::from("/opt/homebrew/bin").join(&name),
-                        PathBuf::from("/usr/local/bin").join(&name),
-                    ]
-                }
-                #[cfg(not(target_os = "macos"))]
-                {
-                    Vec::<PathBuf>::new()
-                }
-            })
-            .find(|candidate| candidate.is_file())
-            .and_then(|candidate| candidate.canonicalize().ok())
-            .ok_or(EngineError::Unavailable)?
+        find_in_directories(
+            &name,
+            std::env::var_os("PATH")
+                .into_iter()
+                .flat_map(|paths| std::env::split_paths(&paths).collect::<Vec<_>>())
+                .chain({
+                    #[cfg(target_os = "macos")]
+                    {
+                        vec![
+                            PathBuf::from("/opt/homebrew/bin"),
+                            PathBuf::from("/usr/local/bin"),
+                        ]
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        Vec::<PathBuf>::new()
+                    }
+                }),
+        )
+        .ok_or(EngineError::Unavailable)?
     };
     if !candidate.is_file() {
         return Err(EngineError::Unavailable);
@@ -408,6 +407,32 @@ fn executable(path: &Path) -> Result<PathBuf, EngineError> {
         return Err(EngineError::Unavailable);
     }
     Ok(candidate)
+}
+
+fn find_in_directories(
+    name: &std::ffi::OsStr,
+    directories: impl IntoIterator<Item = PathBuf>,
+) -> Option<PathBuf> {
+    directories
+        .into_iter()
+        .filter(|directory| directory.is_absolute())
+        .map(|directory| directory.join(name))
+        .find(|candidate| candidate.is_file())
+        .and_then(|candidate| candidate.canonicalize().ok())
+}
+
+/// Locate an existing sing-box executable without launching it.
+pub fn discover_engine() -> Option<PathBuf> {
+    if let Ok(engine) = executable(Path::new("sing-box")) {
+        return Some(engine);
+    }
+    #[cfg(windows)]
+    {
+        let directory = std::env::current_exe().ok()?.parent()?.to_path_buf();
+        executable(&directory.join("sing-box.exe")).ok()
+    }
+    #[cfg(not(windows))]
+    None
 }
 
 fn agent(proxy: Option<ureq::Proxy>, timeout: Duration) -> ureq::Agent {

@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+- Read explicit Gist raw links directly; respect rate-limit cooldowns and upload prepared results without repeated node checks.
+- Focus relay on one step at a time; discover the connection checker automatically and replace path entry with a native picker.
+- Preserve unsupported Surge external definitions without running their programs or discarding the rest of the subscription.
 - Guide relay import, cleanup and Gist publication through three steps, with automatic file discovery and Sub-Store Plain JSON recognition.
 - Add native node-file and relay-backup import/export without storing GitHub tokens or restoring unsafe permissions.
 - Preserve Sub-Store proxy dependencies, unknown nodes and explicit TLS checks during cleanup.

@@ -1,5 +1,5 @@
 use super::*;
-use gist::tests::{Fixture, ID, INPUT_ID, api, created, document};
+use gist::tests::{Fixture, ID, INPUT_ID, api, created, document, response};
 use model::Health;
 
 const SOURCE: &str = "A = anytls, a.example.invalid, 443, password=synthetic-a\nB = anytls, b.example.invalid, 443, password=synthetic-b\n";
@@ -16,6 +16,33 @@ fn config() -> RelayConfig {
         test_nodes: true,
         ..RelayConfig::default()
     }
+}
+
+#[test]
+fn import_ignores_publication_and_probe_settings_and_preserves_original() {
+    let fixture = Fixture::new(vec![input(SOURCE)]);
+    let mut config = config();
+    config.engine.clear();
+    config.output = "invalid output".into();
+    config.title = "x".repeat(65);
+    config.rename = true;
+    config.sort = true;
+    let result = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Import,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| panic!("import must not check nodes"),
+    )
+    .unwrap();
+    assert_eq!(result.content.as_str(), SOURCE);
+    assert!(!result.tested && !result.published);
+    assert_eq!(
+        (result.total, result.healthy, result.unknown, result.removed),
+        (2, 0, 2, 0)
+    );
+    assert_eq!(fixture.request_methods(), ["GET"]);
 }
 fn input(content: &str) -> Option<String> {
     let mut doc = document(content);
@@ -290,6 +317,99 @@ fn source_changed_during_checking_prevents_publication() {
     );
     assert!(matches!(result, Err(RelayError::SourceChanged)));
     assert_eq!(fixture.request_methods(), ["GET", "GET", "GET"]);
+}
+
+#[test]
+fn raw_source_changed_before_creation_never_posts() {
+    let changed = SOURCE.replace("a.example.invalid", "changed.example.invalid");
+    let fixture = Fixture::new(vec![
+        Some(response(200, "Content-Type: text/plain\r\n", SOURCE)),
+        Some(response(200, "Content-Type: text/plain\r\n", &changed)),
+    ]);
+    let mut config = config();
+    config.source = format!("https://gist.githubusercontent.com/example/{INPUT_ID}/raw/nodes.txt");
+    config.output.clear();
+    let result = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Publish,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    );
+    assert!(matches!(result, Err(RelayError::SourceChanged)));
+    assert_eq!(fixture.request_methods(), ["GET", "GET"]);
+}
+
+#[test]
+fn prepared_raw_result_uploads_without_rechecking_nodes() {
+    let cleaned = candidate();
+    let fixture = Fixture::new(vec![
+        Some(response(200, "Content-Type: text/plain\r\n", SOURCE)),
+        Some(response(200, "Content-Type: text/plain\r\n", SOURCE)),
+        created(document(&cleaned)),
+        api(document(&cleaned)),
+    ]);
+    let mut config = config();
+    config.source = format!("https://gist.githubusercontent.com/example/{INPUT_ID}/raw/nodes.txt");
+    config.output.clear();
+    let prepared = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    config.engine.clear();
+    let result = upload_with(
+        &config,
+        &fixture.client(),
+        prepared,
+        &AtomicBool::new(false),
+        &|_| {},
+    )
+    .unwrap();
+    assert_eq!(result.content.as_str(), cleaned.as_str());
+    assert_eq!(
+        (result.total, result.healthy, result.failed, result.removed),
+        (2, 1, 1, 1)
+    );
+    assert!(result.tested && result.published);
+    assert_eq!(fixture.request_methods(), ["GET", "GET", "POST", "GET"]);
+}
+
+#[test]
+fn prepared_raw_result_refuses_changed_source_before_post() {
+    let changed = SOURCE.replace("a.example.invalid", "changed.example.invalid");
+    let fixture = Fixture::new(vec![
+        Some(response(200, "Content-Type: text/plain\r\n", SOURCE)),
+        Some(response(200, "Content-Type: text/plain\r\n", &changed)),
+    ]);
+    let mut config = config();
+    config.source = format!("https://gist.githubusercontent.com/example/{INPUT_ID}/raw/nodes.txt");
+    config.output.clear();
+    let prepared = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert!(matches!(
+        upload_with(
+            &config,
+            &fixture.client(),
+            prepared,
+            &AtomicBool::new(false),
+            &|_| {}
+        ),
+        Err(RelayError::SourceChanged)
+    ));
+    assert_eq!(fixture.request_methods(), ["GET", "GET"]);
 }
 
 #[test]

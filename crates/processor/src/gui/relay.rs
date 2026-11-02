@@ -9,7 +9,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread::{self, JoinHandle};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use zeroize::{Zeroize, Zeroizing};
 
 pub(super) const SECRET_IDS: [&str; 6] = [
@@ -24,6 +24,14 @@ pub(super) const SECRET_IDS: [&str; 6] = [
 pub(super) enum Failure {
     Validation(Text),
     Operation(crate::relay::RelayError),
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum RelayStep {
+    #[default]
+    Source,
+    Review,
+    Publish,
 }
 
 pub(super) fn failure_message(
@@ -58,6 +66,19 @@ pub(super) fn failure_message(
                 GistError::InvalidToken => Text::RelayTokenInvalid,
                 GistError::Cancelled => Text::RelayCancelled,
                 GistError::Transport => Text::RelayConnectionFailed,
+                GistError::RateLimited {
+                    retry_after_seconds,
+                } => {
+                    return match retry_after_seconds {
+                        Some(seconds) => format!(
+                            "{} {seconds} s",
+                            super::i18n::text(language, Text::RelayRateLimited)
+                        ),
+                        None => {
+                            super::i18n::text(language, Text::RelayRateLimitedUnknown).to_owned()
+                        }
+                    };
+                }
                 GistError::HttpStatus(status) => {
                     return format!(
                         "{} {status}",
@@ -86,6 +107,12 @@ pub(super) fn failure_message(
 }
 
 pub(super) struct RelayState {
+    pub step: RelayStep,
+    pub selected_engine: Option<std::path::PathBuf>,
+    pub reveal_source: bool,
+    pub reveal_token: bool,
+    pub reveal_output: bool,
+    cooldown_until: Option<Instant>,
     pub local_content: Option<Zeroizing<String>>,
     pub local_summary: Option<(usize, &'static str)>,
     pub token: Zeroizing<String>,
@@ -124,9 +151,11 @@ struct FilePending {
 enum FileCompleted {
     Imported(Box<crate::relay::backup::RelayBackup>),
     Saved,
+    Engine(std::path::PathBuf),
 }
 
 struct Pending {
+    mode: RunMode,
     worker: JoinHandle<()>,
     receiver: mpsc::Receiver<Result<RelayResult, RelayError>>,
     cancel: Arc<AtomicBool>,
@@ -150,6 +179,12 @@ impl Default for RelayState {
     fn default() -> Self {
         let defaults = RelayConfig::default();
         Self {
+            step: RelayStep::Source,
+            selected_engine: crate::relay::engine::discover_engine(),
+            reveal_source: false,
+            reveal_token: false,
+            reveal_output: false,
+            cooldown_until: None,
             local_content: None,
             local_summary: None,
             token: Zeroizing::new(String::new()),
@@ -182,6 +217,33 @@ impl Default for RelayState {
 }
 
 impl RelayState {
+    pub(super) fn engine_path(&self) -> &Path {
+        self.selected_engine
+            .as_deref()
+            .unwrap_or_else(|| Path::new("sing-box"))
+    }
+
+    pub(super) fn cooldown_seconds(&self) -> u64 {
+        self.cooldown_until
+            .and_then(|deadline| deadline.checked_duration_since(Instant::now()))
+            .map_or(0, |remaining| remaining.as_secs().saturating_add(1))
+    }
+
+    pub(super) fn input_changed(&mut self) {
+        self.error = None;
+        self.notice = None;
+        self.cooldown_until = None;
+        self.result = None;
+        self.result_format = None;
+        self.completed_config = None;
+        self.allow_plaintext = false;
+        self.acknowledge_publish = false;
+    }
+
+    pub(super) fn clear_request_error(&mut self) {
+        self.error = None;
+        self.cooldown_until = None;
+    }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some() || self.file_pending.is_some()
     }
@@ -202,6 +264,9 @@ impl RelayState {
                 })?,
             )
         };
+        if mode == RunMode::Import {
+            return Ok(());
+        }
         if !self.output.trim().is_empty() {
             let output = GistFile::parse(self.output.trim(), &self.output_file).map_err(
                 |error| match error {
@@ -218,10 +283,11 @@ impl RelayState {
         if validate_name(&self.title).is_err() || self.output_file.chars().count() > 64 {
             return Err(Text::RelayNameInvalid);
         }
-        if self.test_nodes && engine.as_os_str().is_empty() {
+        if mode != RunMode::Publish && self.test_nodes && engine.as_os_str().is_empty() {
             return Err(Text::SingboxRequired);
         }
-        if self.test_nodes
+        if mode != RunMode::Publish
+            && self.test_nodes
             && (!(1..=8).contains(&self.concurrency) || !(1..=20).contains(&self.timeout_seconds))
         {
             return Err(Text::RelayOptionsInvalid);
@@ -276,6 +342,11 @@ impl RelayState {
             pending.cancel.store(true, Ordering::Release);
         }
         self.token.zeroize();
+        self.step = RelayStep::Source;
+        self.reveal_source = false;
+        self.reveal_token = false;
+        self.reveal_output = false;
+        self.cooldown_until = None;
         self.local_content = None;
         self.local_summary = None;
         self.completed_config = None;
@@ -284,6 +355,9 @@ impl RelayState {
         self.output.zeroize();
         self.output_file.zeroize();
         self.title.zeroize();
+        let defaults = RelayConfig::default();
+        self.output_file.push_str(&defaults.output_file);
+        self.title.push_str(&defaults.title);
         self.result = None;
         self.result_format = None;
         self.progress = None;
@@ -315,6 +389,12 @@ impl RelayState {
     pub(super) fn tick(&mut self, ctx: &egui::Context) {
         if !ctx.input(|input| input.viewport().focused.unwrap_or(true)) {
             self.allow_plaintext = false;
+            self.reveal_source = false;
+            self.reveal_token = false;
+            self.reveal_output = false;
+        }
+        if self.cooldown_seconds() > 0 {
+            ctx.request_repaint_after(Duration::from_secs(1));
         }
         self.tick_file(ctx);
         let Some(pending) = &self.pending else { return };
@@ -342,6 +422,11 @@ impl RelayState {
         self.compatibility = false;
         match (joined, result) {
             (Ok(()), Ok(Ok(result))) => {
+                self.step = if pending.mode == RunMode::Publish {
+                    RelayStep::Publish
+                } else {
+                    RelayStep::Review
+                };
                 self.result_format = crate::relay::model::Subscription::parse(&result.content)
                     .ok()
                     .map(|subscription| subscription.format_label());
@@ -361,6 +446,13 @@ impl RelayState {
                 self.result = Some(result);
             }
             (Ok(()), Ok(Err(error))) => {
+                if let RelayError::Gist(crate::relay::gist::GistError::RateLimited {
+                    retry_after_seconds,
+                }) = &error
+                {
+                    self.cooldown_until = Instant::now()
+                        .checked_add(Duration::from_secs(retry_after_seconds.unwrap_or(60)));
+                }
                 if let RelayError::Gist(crate::relay::gist::GistError::CreatedUnverified(created)) =
                     &error
                 {
@@ -392,10 +484,13 @@ impl RelayState {
         path: Option<std::path::PathBuf>,
         workspace: Option<&Path>,
     ) {
-        if self.busy() || (!matches!(action, FileAction::Import) && !self.allow_plaintext) {
+        if self.busy()
+            || (!matches!(action, FileAction::Import | FileAction::ChooseEngine)
+                && !self.allow_plaintext)
+        {
             return;
         }
-        let payload = if matches!(action, FileAction::Import) {
+        let payload = if matches!(action, FileAction::Import | FileAction::ChooseEngine) {
             None
         } else {
             let Some(result) = &self.result else { return };
@@ -436,6 +531,9 @@ impl RelayState {
                             None => return Ok(None),
                         },
                     };
+                    if matches!(action, FileAction::ChooseEngine) {
+                        return Ok(Some(FileCompleted::Engine(path)));
+                    }
                     if matches!(action, FileAction::Import) {
                         let bytes = Zeroizing::new(
                             crate::vault::read_bounded(&path).map_err(|_| Text::RelayFileError)?,
@@ -530,6 +628,13 @@ impl RelayState {
                     .map(|subscription| (subscription.nodes().len(), subscription.format_label()));
                 self.local_content = Some(std::mem::take(&mut backup.content));
                 self.notice = Some(Text::RelayImported);
+                self.step = RelayStep::Review;
+                let engine = self.engine_path().to_owned();
+                self.start_with(RunMode::Import, &engine, crate::relay::run);
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::Engine(path))))) => {
+                self.selected_engine = Some(path);
+                self.notice = Some(Text::RelayEngineSelected);
             }
             (Ok(()), Ok(Ok(Some(FileCompleted::Saved)))) => {
                 self.notice = Some(Text::RelayFileSaved)
@@ -552,7 +657,7 @@ impl RelayState {
             + Send
             + 'static,
     {
-        if self.busy() {
+        if self.busy() || self.cooldown_seconds() > 0 {
             return;
         }
         if let Err(error) = self.validate(mode, engine) {
@@ -588,6 +693,7 @@ impl RelayState {
             }) {
             Ok(worker) => {
                 self.pending = Some(Pending {
+                    mode,
                     worker,
                     receiver,
                     cancel,
@@ -631,6 +737,7 @@ mod tests {
         RelayResult {
             content: Zeroizing::new("synthetic private node".to_owned()),
             tested: true,
+            source: None,
             created: None,
             total: 2,
             healthy: 1,
@@ -842,8 +949,8 @@ mod tests {
                 && state.source.is_empty()
                 && state.source_file.is_empty()
                 && state.output.is_empty()
-                && state.output_file.is_empty()
-                && state.title.is_empty()
+                && state.output_file.as_str() == RelayConfig::default().output_file
+                && state.title.as_str() == RelayConfig::default().title
         );
         release.send(()).unwrap();
         finish(&mut state, &ctx);
@@ -958,6 +1065,51 @@ mod tests {
         let translated = failure_message(crate::runtime::settings::Language::ZhCn, &failure);
         assert_ne!(translated, original);
         assert!(translated.contains("节点"));
+    }
+
+    #[test]
+    fn import_is_engine_independent_and_opens_review_without_health_claims() {
+        let mut state = fixture();
+        state.source.clear();
+        state.local_content = Some(Zeroizing::new(
+            "A = socks5, node.example.invalid, 1080\n".into(),
+        ));
+        state.test_nodes = true;
+        state.selected_engine = None;
+        state.output = Zeroizing::new("not a gist".into());
+        state.title = Zeroizing::new("x".repeat(65));
+        state.start_with(RunMode::Import, Path::new(""), crate::relay::run);
+        finish(&mut state, &egui::Context::default());
+        assert!(state.step == RelayStep::Review);
+        let result = state.result.as_ref().unwrap();
+        assert!(!result.tested && result.healthy == 0 && result.unknown == 1);
+        state.output.clear();
+        state.title = Zeroizing::new("relay".into());
+        state.acknowledge_publish = true;
+        assert!(state.validate(RunMode::Publish, Path::new("")).is_ok());
+    }
+
+    #[test]
+    fn rate_limit_cooldown_blocks_repeated_requests_but_new_source_can_recover() {
+        let mut state = fixture();
+        state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| {
+            Err(RelayError::Gist(
+                crate::relay::gist::GistError::RateLimited {
+                    retry_after_seconds: Some(30),
+                },
+            ))
+        });
+        finish(&mut state, &egui::Context::default());
+        assert!(state.cooldown_seconds() > 0);
+        state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| {
+            panic!("cooldown must not issue another request")
+        });
+        assert!(!state.busy());
+        state.input_changed();
+        assert_eq!(state.cooldown_seconds(), 0);
+        state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| Ok(result()));
+        finish(&mut state, &egui::Context::default());
+        assert!(state.result.is_some());
     }
 
     #[test]

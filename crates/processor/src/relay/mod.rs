@@ -14,7 +14,7 @@ use std::{
 };
 use zeroize::Zeroizing;
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct RelayConfig {
     #[serde(skip)]
@@ -59,6 +59,7 @@ impl Default for RelayConfig {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RunMode {
+    Import,
     Preview,
     Publish,
 }
@@ -77,7 +78,9 @@ pub struct Progress {
     pub total: usize,
 }
 
+#[derive(Clone)]
 pub struct RelayResult {
+    pub source: Option<gist::Source>,
     pub content: Zeroizing<String>,
     pub tested: bool,
     pub created: Option<gist::CreatedGist>,
@@ -143,6 +146,9 @@ impl RelayConfig {
         {
             return Err(RelayError::InvalidInput);
         }
+        if mode == RunMode::Import {
+            return Ok(());
+        }
         if !self.output.trim().is_empty() {
             let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
                 .map_err(RelayError::Gist)?;
@@ -177,7 +183,7 @@ pub fn run(
 ) -> Result<RelayResult, RelayError> {
     config.validate(mode)?;
     active(cancel)?;
-    let client = if token.is_empty() && mode == RunMode::Preview {
+    let client = if token.is_empty() && mode != RunMode::Publish {
         gist::GistClient::anonymous()
     } else {
         gist::GistClient::new(token).map_err(RelayError::Gist)?
@@ -214,34 +220,46 @@ fn run_with(
         checked: 0,
         total: 0,
     });
-    let input = if config.local_content.is_none() {
+    let source = if config.local_content.is_none() {
         Some(
             client
-                .resolve_source(config.source.trim(), &config.source_file, cancel)
+                .read_source(config.source.trim(), &config.source_file, cancel)
                 .map_err(RelayError::Gist)?,
         )
     } else {
         None
     };
-    let source = input
-        .as_ref()
-        .map(|input| client.read(input, cancel))
-        .transpose()
-        .map_err(RelayError::Gist)?;
     let source_content = config
         .local_content
         .as_ref()
-        .or_else(|| source.as_ref().and_then(|source| source.content.as_ref()))
+        .or_else(|| source.as_ref().map(|source| &source.content))
         .ok_or(RelayError::InvalidInput)?;
     let subscription = model::Subscription::parse(source_content).map_err(RelayError::Model)?;
-    let destination = if mode == RunMode::Publish && !config.output.trim().is_empty() {
-        let output = gist::GistFile::parse(config.output.trim(), &config.output_file)
-            .map_err(RelayError::Gist)?;
-        let expected = client.read(&output, cancel).map_err(RelayError::Gist)?;
-        if expected.public && !config.allow_public_output {
-            return Err(RelayError::Gist(gist::GistError::PublicOutput));
-        }
-        Some((output, expected))
+    if mode == RunMode::Import {
+        let total = subscription.nodes().len();
+        progress(Progress {
+            stage: RelayStage::Complete,
+            checked: 0,
+            total,
+        });
+        return Ok(RelayResult {
+            content: Zeroizing::new(source_content.to_string()),
+            source,
+            tested: false,
+            created: None,
+            total,
+            healthy: 0,
+            failed: 0,
+            unknown: total,
+            security_blocked: 0,
+            removed: 0,
+            baseline_valid: 0,
+            published: false,
+            unchanged: false,
+        });
+    }
+    let destination = if mode == RunMode::Publish {
+        read_destination(config, client, cancel)?
     } else {
         None
     };
@@ -301,6 +319,7 @@ fn run_with(
     }
     let mut result = RelayResult {
         content,
+        source,
         tested: config.test_nodes,
         created: None,
         total,
@@ -322,52 +341,7 @@ fn run_with(
         }
     }
     if mode == RunMode::Publish {
-        active(cancel)?;
-        if let Some(input) = &input {
-            let current = client.read(input, cancel).map_err(RelayError::Gist)?;
-            if !current
-                .content
-                .as_ref()
-                .is_some_and(|content| model::semantic_equal(source_content, content))
-            {
-                return Err(RelayError::SourceChanged);
-            }
-        }
-        active(cancel)?;
-        progress(Progress {
-            stage: RelayStage::Publish,
-            checked: total,
-            total,
-        });
-        if let Some((output, expected)) = destination {
-            let content = expected
-                .content
-                .as_ref()
-                .filter(|old| model::semantic_equal(old, &result.content))
-                .map_or(result.content.as_str(), |old| old.as_str());
-            match client
-                .publish(
-                    input.as_ref(),
-                    &output,
-                    &expected,
-                    content,
-                    &config.title,
-                    config.allow_public_output,
-                    cancel,
-                )
-                .map_err(RelayError::Gist)?
-            {
-                gist::PublishOutcome::Unchanged => result.unchanged = true,
-                gist::PublishOutcome::Verified => result.published = true,
-            }
-        } else {
-            result.created = Some(
-                client
-                    .create(&config.output_file, &result.content, &config.title, cancel)
-                    .map_err(RelayError::Gist)?,
-            );
-            result.published = true;
-        }
+        publish_result(config, client, &mut result, destination, cancel, progress)?;
     }
     progress(Progress {
         stage: RelayStage::Complete,
@@ -375,6 +349,128 @@ fn run_with(
         total,
     });
     Ok(result)
+}
+
+pub fn upload_prepared(
+    config: &RelayConfig,
+    token: &str,
+    result: RelayResult,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(Progress) + Sync),
+) -> Result<RelayResult, RelayError> {
+    let client = gist::GistClient::new(token).map_err(RelayError::Gist)?;
+    upload_with(config, &client, result, cancel, progress)
+}
+
+fn upload_with(
+    config: &RelayConfig,
+    client: &gist::GistClient,
+    mut result: RelayResult,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(Progress) + Sync),
+) -> Result<RelayResult, RelayError> {
+    let mut validation = config.clone();
+    validation.test_nodes = false;
+    validation.validate(RunMode::Publish)?;
+    if result.published
+        || result.created.is_some()
+        || result.unchanged
+        || (result.tested && result.healthy == 0)
+        || (result.source.is_some()
+            != (config.local_content.is_none() && !config.source.trim().is_empty()))
+    {
+        return Err(RelayError::InvalidInput);
+    }
+    if model::Subscription::parse(&result.content)
+        .map_err(RelayError::Model)?
+        .nodes()
+        .is_empty()
+    {
+        return Err(RelayError::NoHealthyNodes);
+    }
+    let destination = read_destination(config, client, cancel)?;
+    publish_result(config, client, &mut result, destination, cancel, progress)?;
+    progress(Progress {
+        stage: RelayStage::Complete,
+        checked: result.total,
+        total: result.total,
+    });
+    Ok(result)
+}
+
+fn read_destination(
+    config: &RelayConfig,
+    client: &gist::GistClient,
+    cancel: &AtomicBool,
+) -> Result<Option<(gist::GistFile, gist::Snapshot)>, RelayError> {
+    if config.output.trim().is_empty() {
+        return Ok(None);
+    }
+    let output = gist::GistFile::parse(config.output.trim(), &config.output_file)
+        .map_err(RelayError::Gist)?;
+    let expected = client.read(&output, cancel).map_err(RelayError::Gist)?;
+    if expected.public && !config.allow_public_output {
+        return Err(RelayError::Gist(gist::GistError::PublicOutput));
+    }
+    Ok(Some((output, expected)))
+}
+
+fn publish_result(
+    config: &RelayConfig,
+    client: &gist::GistClient,
+    result: &mut RelayResult,
+    destination: Option<(gist::GistFile, gist::Snapshot)>,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(Progress) + Sync),
+) -> Result<(), RelayError> {
+    active(cancel)?;
+    if let Some(source) = &result.source {
+        let current = client
+            .read_source(config.source.trim(), &config.source_file, cancel)
+            .map_err(RelayError::Gist)?;
+        if current.file.id != source.file.id
+            || current.file.filename != source.file.filename
+            || !model::semantic_equal(&source.content, &current.content)
+        {
+            return Err(RelayError::SourceChanged);
+        }
+    }
+    active(cancel)?;
+    progress(Progress {
+        stage: RelayStage::Publish,
+        checked: result.total,
+        total: result.total,
+    });
+    if let Some((output, expected)) = destination {
+        let content = expected
+            .content
+            .as_ref()
+            .filter(|old| model::semantic_equal(old, &result.content))
+            .map_or(result.content.as_str(), |old| old.as_str());
+        match client
+            .publish(
+                result.source.as_ref().map(|source| &source.file),
+                &output,
+                &expected,
+                content,
+                &config.title,
+                config.allow_public_output,
+                cancel,
+            )
+            .map_err(RelayError::Gist)?
+        {
+            gist::PublishOutcome::Unchanged => result.unchanged = true,
+            gist::PublishOutcome::Verified => result.published = true,
+        }
+    } else {
+        result.created = Some(
+            client
+                .create(&config.output_file, &result.content, &config.title, cancel)
+                .map_err(RelayError::Gist)?,
+        );
+        result.published = true;
+    }
+    Ok(())
 }
 
 fn active(cancel: &AtomicBool) -> Result<(), RelayError> {

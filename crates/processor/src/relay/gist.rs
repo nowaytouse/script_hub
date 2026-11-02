@@ -14,6 +14,7 @@ const MAX_CONTENT_BYTES: usize = 4 * 1024 * 1024;
 const MAX_JSON_BYTES: usize = 8 * 1024 * 1024;
 const API_ORIGIN: &str = "https://api.github.com";
 
+#[derive(Clone)]
 pub struct GistFile {
     pub id: String,
     pub filename: String,
@@ -79,6 +80,12 @@ pub struct Snapshot {
     pub public: bool,
 }
 
+#[derive(Clone)]
+pub struct Source {
+    pub file: GistFile,
+    pub content: Zeroizing<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreatedGist {
     pub id: String,
@@ -94,6 +101,7 @@ pub enum GistError {
     Cancelled,
     Transport,
     HttpStatus(u16),
+    RateLimited { retry_after_seconds: Option<u64> },
     InvalidResponse,
     TooLarge,
     IncompleteFiles,
@@ -120,6 +128,17 @@ impl fmt::Display for GistError {
             Self::Transport => "GitHub request failed; check the connection and try again.",
             Self::HttpStatus(status) => {
                 return write!(f, "GitHub rejected the request (HTTP {status}).");
+            }
+            Self::RateLimited {
+                retry_after_seconds,
+            } => {
+                return match retry_after_seconds {
+                    Some(seconds) => write!(
+                        f,
+                        "GitHub rate limit reached; retry after {seconds} seconds."
+                    ),
+                    None => f.write_str("GitHub rate limit reached; try again later."),
+                };
             }
             Self::InvalidResponse => "GitHub returned an invalid or incomplete response.",
             Self::TooLarge => "Gist content exceeds the bounded relay size limit.",
@@ -163,6 +182,28 @@ pub struct GistClient {
 }
 
 impl GistClient {
+    pub fn read_source(
+        &self,
+        input: &str,
+        filename: &str,
+        cancel: &AtomicBool,
+    ) -> Result<Source, GistError> {
+        let file = self.resolve_source(input, filename, cancel)?;
+        let raw = Url::parse(input)
+            .ok()
+            .filter(|url| url.host_str() == Some("gist.githubusercontent.com"));
+        let content = if let Some(url) = raw {
+            let bytes = self.get(&self.raw_url(&url), false, MAX_CONTENT_BYTES, cancel)?;
+            Zeroizing::new(
+                String::from_utf8(bytes.to_vec()).map_err(|_| GistError::InvalidResponse)?,
+            )
+        } else {
+            self.read(&file, cancel)?
+                .content
+                .ok_or(GistError::InvalidResponse)?
+        };
+        Ok(Source { file, content })
+    }
     pub fn anonymous() -> Self {
         Self {
             agent: agent(true),
@@ -358,7 +399,7 @@ impl GistClient {
         let status = response.status().as_u16();
         if status != 200 {
             return Err(if (400..500).contains(&status) {
-                GistError::HttpStatus(status)
+                status_error(&response)
             } else {
                 GistError::UncertainWrite
             });
@@ -423,7 +464,7 @@ impl GistClient {
         let status = response.status().as_u16();
         if status != 201 {
             return Err(if (400..500).contains(&status) {
-                GistError::HttpStatus(status)
+                status_error(&response)
             } else {
                 GistError::UncertainWrite
             });
@@ -522,7 +563,20 @@ impl GistClient {
         };
         let mut response = request.call().map_err(|_| GistError::Transport)?;
         if response.status().as_u16() != 200 {
-            return Err(GistError::HttpStatus(response.status().as_u16()));
+            return Err(status_error(&response));
+        }
+        if !authenticated
+            && response
+                .headers()
+                .get("content-type")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(|v| {
+                    v.split(';')
+                        .next()
+                        .is_some_and(|v| v.trim().eq_ignore_ascii_case("text/html"))
+                })
+        {
+            return Err(GistError::InvalidResponse);
         }
         let mut bytes = Zeroizing::new(Vec::new());
         let mut buffer = Zeroizing::new([0_u8; 8192]);
@@ -542,6 +596,41 @@ impl GistClient {
         }
         check_cancel(cancel)?;
         Ok(bytes)
+    }
+}
+
+fn status_error(response: &ureq::http::Response<ureq::Body>) -> GistError {
+    let status = response.status().as_u16();
+    let header = |name| {
+        response
+            .headers()
+            .get(name)
+            .and_then(|value| value.to_str().ok())
+    };
+    let number = |value: &str| {
+        (!value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit()))
+            .then(|| value.parse::<u64>().ok())
+            .flatten()
+    };
+    let remaining_zero = header("x-ratelimit-remaining") == Some("0");
+    let reset = header("x-ratelimit-reset").and_then(number);
+    let retry = header("retry-after").and_then(number);
+    if status == 429 || (status == 403 && (remaining_zero || retry.is_some())) {
+        let reset_delay = reset.and_then(|reset| {
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .ok()
+                .map(|now| reset.saturating_sub(now.as_secs()))
+        });
+        GistError::RateLimited {
+            retry_after_seconds: retry
+                .into_iter()
+                .chain(reset_delay)
+                .max()
+                .filter(|seconds| *seconds <= 86400),
+        }
+    } else {
+        GistError::HttpStatus(status)
     }
 }
 

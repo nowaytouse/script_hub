@@ -123,6 +123,67 @@ fn unchanged() -> EnhanceOptions {
 }
 
 #[test]
+fn external_surge_is_retained_but_never_projected() {
+    let external = "External = external, exec=/synthetic/tool, local-port=1234, args=first, args=\"second,value\", udp-relay=true\n";
+    let source = format!(
+        "A = anytls, a.invalid, 443, password=synthetic\nB = anytls, b.invalid, 443, password=synthetic\n{external}"
+    );
+    let subscription = Subscription::parse(&source).unwrap();
+    assert_eq!(subscription.nodes().len(), 3);
+    for compatibility in [false, true] {
+        assert_eq!(
+            subscription.nodes()[2].to_sing_box(compatibility).err(),
+            Some(ModelError::Unsupported)
+        );
+    }
+    let rendered = subscription
+        .render(
+            &[Health::Failed, Health::Unknown, Health::Unknown],
+            &unchanged(),
+        )
+        .unwrap();
+    assert!(rendered.contains(external));
+    assert!(!semantic_equal(
+        &source,
+        &source.replace("args=first", "args=changed")
+    ));
+    assert!(semantic_equal(&source, &source));
+    let renamed = subscription
+        .render(&[Health::Unknown; 3], &EnhanceOptions::default())
+        .unwrap();
+    assert!(
+        renamed
+            .contains("exec=/synthetic/tool, local-port=1234, args=first, args=\"second,value\"")
+    );
+}
+
+#[test]
+fn external_surge_requires_unambiguous_exec_and_port() {
+    for source in [
+        "X = external, local-port=1, args=a",
+        "X = external, exec=, local-port=1",
+        "X = external, exec=\"   \", local-port=1",
+        "X = external, exec=tool, args=a",
+        "X = external, exec=tool, local-port=0",
+        "X = external, exec=tool, local-port=65536",
+        "X = external, exec=tool, local-port=1, exec=other",
+        "X = anytls, a.invalid, 443, args=a, args=b",
+    ] {
+        assert!(Subscription::parse(source).is_err(), "{source}");
+    }
+}
+
+#[test]
+fn external_reference_is_updated_on_rename() {
+    let source = "Base = anytls, a.invalid, 443, password=synthetic\nX = external, exec=tool, local-port=1234, args=a, args=b, underlying-proxy=Base\n";
+    let subscription = Subscription::parse(source).unwrap();
+    let output = subscription
+        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+        .unwrap();
+    assert!(output.contains("args=a, args=b, underlying-proxy=\"ANYTLS | Base\""));
+}
+
+#[test]
 fn anytls_projection_preserves_quoted_password_alpn_and_tls_identity() {
     let source = r#""HK, A" = anytls, node.example.invalid, 443, password="p,a=ss#word", sni=identity.example.invalid, alpn="h2,http/1.1", skip-cert-verify=false
 "#;

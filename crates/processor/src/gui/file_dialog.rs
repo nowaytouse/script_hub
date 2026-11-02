@@ -5,6 +5,7 @@ pub enum FileAction {
     Import,
     ExportBackup,
     ExportNodes,
+    ChooseEngine,
 }
 
 #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -17,7 +18,7 @@ pub fn choose(action: FileAction) -> Result<Option<PathBuf>, ()> {
     #[cfg(target_os = "macos")]
     let mut command = {
         let script = match action {
-            FileAction::Import => {
+            FileAction::Import | FileAction::ChooseEngine => {
                 "try\nPOSIX path of (choose file)\non error number -128\nreturn \"\"\nend try"
             }
             FileAction::ExportBackup => {
@@ -37,6 +38,9 @@ pub fn choose(action: FileAction) -> Result<Option<PathBuf>, ()> {
         let script = match action {
             FileAction::Import => {
                 "$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Windows.Forms; [Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='JSON files (*.json)|*.json|Text files (*.txt;*.list)|*.txt;*.list|All files (*.*)|*.*'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($d.FileName) }; $d.Dispose()"
+            }
+            FileAction::ChooseEngine => {
+                "$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Windows.Forms; [Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='Executable files (*.exe)|*.exe'; $d.CheckFileExists=$true; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($d.FileName) }; $d.Dispose()"
             }
             FileAction::ExportBackup => {
                 "$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Windows.Forms; [Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $d=New-Object System.Windows.Forms.SaveFileDialog; $d.FileName='relay-backup.json'; $d.Filter='JSON files (*.json)|*.json|All files (*.*)|*.*'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($d.FileName) }; $d.Dispose()"
@@ -76,7 +80,28 @@ pub fn choose(action: FileAction) -> Result<Option<PathBuf>, ()> {
     if !child.wait().map_err(|_| ())?.success() {
         return Err(());
     }
-    parse_response(&output)
+    let selected = parse_response(&output)?;
+    if matches!(action, FileAction::ChooseEngine) {
+        return selected.map(validate_engine).transpose();
+    }
+    Ok(selected)
+}
+
+#[cfg(any(test, target_os = "macos", target_os = "windows"))]
+fn validate_engine(path: PathBuf) -> Result<PathBuf, ()> {
+    let path = path.canonicalize().map_err(|_| ())?;
+    if !path.is_file() {
+        return Err(());
+    }
+    #[cfg(windows)]
+    if !path
+        .extension()
+        .and_then(|s| s.to_str())
+        .is_some_and(|s| s.eq_ignore_ascii_case("exe"))
+    {
+        return Err(());
+    }
+    Ok(path)
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
@@ -129,5 +154,11 @@ mod tests {
             parse_response(b"C:\\a b"),
             Ok(Some(PathBuf::from("C:\\a b")))
         );
+    }
+
+    #[test]
+    fn engine_selection_requires_an_existing_file() {
+        assert!(validate_engine(std::env::temp_dir()).is_err());
+        assert!(validate_engine(std::env::temp_dir().join("missing-sing-box-test")).is_err());
     }
 }

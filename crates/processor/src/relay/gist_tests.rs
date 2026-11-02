@@ -123,11 +123,117 @@ impl Drop for Fixture {
     }
 }
 
-fn response(status: u16, headers: &str, body: &str) -> String {
+pub(in crate::relay) fn response(status: u16, headers: &str, body: &str) -> String {
     format!(
         "HTTP/1.1 {status} Fixture\r\nContent-Length: {}\r\nConnection: close\r\n{headers}\r\n{body}",
         body.len()
     )
+}
+
+#[test]
+fn latest_raw_source_is_fetched_directly_without_credentials() {
+    let fixture = Fixture::new(vec![Some(response(
+        200,
+        "Content-Type: text/plain\r\n",
+        "hello",
+    ))]);
+    let input = format!("https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt");
+    let source = fixture
+        .client()
+        .read_source(&input, "", &AtomicBool::new(false))
+        .unwrap();
+    assert_eq!(source.content.as_str(), "hello");
+    let requests = fixture.requests.lock().unwrap();
+    assert_eq!(requests.len(), 1);
+    assert!(
+        requests[0]
+            .head
+            .starts_with(&format!("GET /example/{ID}/raw/nodes.txt "))
+    );
+    assert!(
+        !requests[0]
+            .head
+            .to_ascii_lowercase()
+            .contains("authorization:")
+    );
+}
+
+#[test]
+fn raw_source_rejects_redirect_html_and_oversized_content() {
+    let input = format!("https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt");
+    for (reply, expected) in [
+        (
+            response(302, "Location: https://example.com/\r\n", ""),
+            GistError::HttpStatus(302),
+        ),
+        (
+            response(200, "Content-Type: text/html; charset=utf-8\r\n", "<html>"),
+            GistError::InvalidResponse,
+        ),
+        (
+            response(200, "", &"x".repeat(MAX_CONTENT_BYTES + 1)),
+            GistError::TooLarge,
+        ),
+    ] {
+        let fixture = Fixture::new(vec![Some(reply)]);
+        assert!(
+            matches!(fixture.client().read_source(&input, "", &AtomicBool::new(false)), Err(error) if error == expected)
+        );
+        assert_eq!(fixture.request_methods(), vec!["GET"]);
+    }
+}
+
+#[test]
+fn rate_limits_are_typed_without_retry_and_plain_forbidden_is_not() {
+    let input = format!("https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt");
+    for (status, headers, expected) in [
+        (
+            429,
+            "Retry-After: 12\r\n",
+            GistError::RateLimited {
+                retry_after_seconds: Some(12),
+            },
+        ),
+        (
+            403,
+            "X-RateLimit-Remaining: 0\r\n",
+            GistError::RateLimited {
+                retry_after_seconds: None,
+            },
+        ),
+        (403, "", GistError::HttpStatus(403)),
+        (
+            403,
+            "Retry-After: 12\r\n",
+            GistError::RateLimited {
+                retry_after_seconds: Some(12),
+            },
+        ),
+    ] {
+        let fixture = Fixture::new(vec![Some(response(status, headers, "secret response"))]);
+        assert!(
+            matches!(fixture.client().read_source(&input, "", &AtomicBool::new(false)), Err(error) if error == expected)
+        );
+        assert_eq!(fixture.request_methods(), vec!["GET"]);
+    }
+}
+
+#[test]
+fn rate_limit_uses_later_reset_without_shortening_wait() {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let headers = format!(
+        "Retry-After: 1\r\nX-RateLimit-Remaining: 0\r\nX-RateLimit-Reset: {}\r\n",
+        now + 600
+    );
+    let fixture = Fixture::new(vec![Some(response(403, &headers, ""))]);
+    let input = format!("https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt");
+    assert!(
+        matches!(fixture.client().read_source(&input, "", &AtomicBool::new(false)), Err(GistError::RateLimited { retry_after_seconds: Some(seconds) }) if (590..=600).contains(&seconds))
+    );
+    assert_eq!(fixture.request_methods(), ["GET"]);
 }
 
 pub(in crate::relay) fn document(content: &str) -> Value {

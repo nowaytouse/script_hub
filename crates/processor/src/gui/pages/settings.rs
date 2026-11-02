@@ -134,13 +134,25 @@ impl HubApp {
                         ui.colored_label(self.colors.warning, tr(Text::WorkspaceNotApplied));
                     }
                     ui.add_space(10.0);
-                    ui.label(tr(Text::SingboxPath));
-                    ui.add_enabled(
-                        !self.active(),
-                        egui::TextEdit::singleline(&mut self.draft.singbox)
-                            .desired_width(f32::INFINITY),
-                    );
-                    ui.weak(tr(Text::SingboxOptional));
+                    ui.label(tr(Text::RelayEnginePurpose));
+                    ui.label(tr(if self.relay.selected_engine.is_some() {
+                        Text::RelayEngineReady
+                    } else {
+                        Text::RelayEngineMissing
+                    }));
+                    if ui
+                        .add_enabled(
+                            !self.active(),
+                            egui::Button::new(tr(Text::RelayChooseEngine)),
+                        )
+                        .clicked()
+                    {
+                        self.relay.file_action(
+                            crate::gui::file_dialog::FileAction::ChooseEngine,
+                            None,
+                            None,
+                        );
+                    }
                 });
                 ui.add_space(16.0);
                 card(ui, self.colors, |ui| {
