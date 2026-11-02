@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.4.1 · 2026-11-02
+
+- Replace external file dialogs with an in-app browser for node import, backup, export and checker selection; bound background directory reads and preserve private, no-overwrite exports.
+
 ## 0.4.0 · 2026-11-02
 
 - Add a native node-processing panel: preview, regex filters, name editing, conservative deduplication, reset, checks and Gist publication.

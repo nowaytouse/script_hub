@@ -295,6 +295,7 @@ impl HubApp {
             || self.repository_loader.is_some()
             || self.templates.busy()
             || self.relay.busy()
+            || self.relay.selecting_file()
     }
     fn job_active(&self) -> bool {
         self.job.as_ref().is_some_and(Job::is_running)
@@ -939,7 +940,10 @@ impl eframe::App for HubApp {
                 .collect::<Vec<_>>()
         });
         self.route_file_drop(dropped);
-        if !ctx.egui_wants_keyboard_input() && self.pending.is_none() {
+        if !ctx.egui_wants_keyboard_input()
+            && self.pending.is_none()
+            && !self.relay.selecting_file()
+        {
             for (key, page) in [
                 (egui::Key::Num1, Page::Overview),
                 (egui::Key::Num2, Page::Catalog),
@@ -1070,6 +1074,8 @@ impl eframe::App for HubApp {
                 });
             });
         self.confirm(ui.ctx());
+        self.relay
+            .show_file_picker(ui.ctx(), self.draft.language, self.loaded_root.as_deref());
         if self.templates.busy() || self.relay.busy() {
             ui.ctx().request_repaint_after(Duration::from_millis(100));
         }
@@ -1522,6 +1528,20 @@ mod tests {
         let app = HubApp::new(None, Preferences::default(), None, None);
         assert_eq!(app.close_notice(false), None);
         assert_eq!(app.close_notice(true), Some(Text::VaultAutoLockedUnsaved));
+    }
+
+    #[test]
+    fn file_selection_blocks_background_actions_but_not_window_close() {
+        let mut app = relay_app();
+        app.relay
+            .file_action(super::super::file_dialog::FileAction::Import, None, None);
+        assert!(app.active() && !app.blocks_close());
+        app.queue_job(JobKind::GitPush);
+        app.route_file_drop(vec![std::env::temp_dir().join("must-not-import.list")]);
+        assert!(app.pending.is_none() && !app.relay.busy());
+        assert!(app.relay.selecting_file());
+        app.relay.clear(&egui::Context::default());
+        assert!(!app.active());
     }
 
     #[test]

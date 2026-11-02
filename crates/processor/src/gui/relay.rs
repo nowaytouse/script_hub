@@ -140,6 +140,7 @@ pub(super) struct RelayState {
     pub error: Option<Failure>,
     pub notice: Option<Text>,
     pending: Option<Pending>,
+    file_picker: Option<super::file_dialog::Picker>,
     file_pending: Option<FilePending>,
     completed_config: Option<PrivateConfig>,
     generation: u64,
@@ -283,6 +284,7 @@ impl Default for RelayState {
             error: None,
             notice: None,
             pending: None,
+            file_picker: None,
             file_pending: None,
             completed_config: None,
             generation: 0,
@@ -350,6 +352,31 @@ impl RelayState {
     }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some() || self.file_pending.is_some()
+    }
+
+    pub(super) fn selecting_file(&self) -> bool {
+        self.file_picker.is_some()
+    }
+
+    pub(super) fn show_file_picker(
+        &mut self,
+        ctx: &egui::Context,
+        language: crate::runtime::settings::Language,
+        workspace: Option<&Path>,
+    ) {
+        use super::file_dialog::PickerResponse;
+        let Some(picker) = &mut self.file_picker else {
+            return;
+        };
+        let action = picker.action;
+        match picker.show(ctx, language) {
+            PickerResponse::Pending => {}
+            PickerResponse::Cancelled => self.file_picker = None,
+            PickerResponse::Selected(path) => {
+                self.file_picker = None;
+                self.file_action(action, Some(path), workspace);
+            }
+        }
     }
 
     pub(super) fn validate(&self, mode: RunMode, engine: &Path) -> Result<(), Text> {
@@ -447,6 +474,7 @@ impl RelayState {
 
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
         self.clear_editor_widgets(ctx);
+        self.file_picker = None;
         self.generation = self.generation.wrapping_add(1);
         if let Some(pending) = &self.pending {
             pending.cancel.store(true, Ordering::Release);
@@ -626,11 +654,25 @@ impl RelayState {
         workspace: Option<&Path>,
     ) {
         if self.busy()
+            || self.selecting_file()
             || (!matches!(action, FileAction::Import | FileAction::ChooseEngine)
                 && !self.allow_plaintext)
         {
             return;
         }
+        let Some(path) = path else {
+            if !matches!(action, FileAction::Import | FileAction::ChooseEngine)
+                && self
+                    .result
+                    .as_ref()
+                    .is_none_or(|result| result.content.is_empty())
+            {
+                self.error = Some(Failure::Validation(Text::RelayFileError));
+                return;
+            }
+            self.file_picker = Some(super::file_dialog::Picker::new(action, None));
+            return;
+        };
         let payload = if matches!(action, FileAction::Import | FileAction::ChooseEngine) {
             None
         } else {
@@ -667,16 +709,9 @@ impl RelayState {
             .name("script-hub-relay-file".into())
             .spawn(move || {
                 let work = || -> Result<Option<FileCompleted>, Text> {
-                    let path = match path {
-                        Some(path) => path,
-                        None => match super::file_dialog::choose(action)
-                            .map_err(|_| Text::RelayFileError)?
-                        {
-                            Some(path) => path,
-                            None => return Ok(None),
-                        },
-                    };
                     if matches!(action, FileAction::ChooseEngine) {
+                        let path = super::file_dialog::validate_engine(path)
+                            .map_err(|_| Text::RelayFileError)?;
                         return Ok(Some(FileCompleted::Engine(path)));
                     }
                     if matches!(action, FileAction::Import) {
@@ -916,6 +951,32 @@ mod tests {
             std::thread::sleep(Duration::from_millis(2));
         }
         assert!(!state.busy(), "synthetic worker must finish");
+    }
+
+    #[test]
+    fn choosing_a_path_is_in_app_and_does_not_dispatch_a_file_operation() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.result = Some(result());
+        state.file_action(FileAction::ExportNodes, None, None);
+        assert!(!state.selecting_file(), "export requires plaintext consent");
+        state.allow_plaintext = true;
+        state.file_action(FileAction::ExportNodes, None, None);
+        assert!(state.selecting_file() && !state.busy());
+        assert!(state.allow_plaintext && state.result.is_some());
+        state.clear(&ctx);
+        assert!(!state.selecting_file() && !state.busy());
+    }
+
+    #[test]
+    fn direct_engine_selection_cannot_bypass_file_validation() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        let previous = state.selected_engine.clone();
+        state.file_action(FileAction::ChooseEngine, Some(std::env::temp_dir()), None);
+        finish(&mut state, &ctx);
+        assert!(state.error.is_some());
+        assert_eq!(state.selected_engine, previous);
     }
 
     #[test]
