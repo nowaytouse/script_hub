@@ -726,6 +726,27 @@ mod tests {
 
     #[test]
     fn readonly_root_validation_does_not_release_writer_lock() {
+        const CHILD: &str = "SCRIPT_HUB_LOCK_REGRESSION_CHILD";
+        // Unrelated parallel process launches can briefly inherit a Unix lock before exec.
+        if std::env::var_os(CHILD).is_none() {
+            let output = Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "runtime::job::tests::readonly_root_validation_does_not_release_writer_lock",
+                    "--test-threads=1",
+                    "--nocapture",
+                ])
+                .env(CHILD, "1")
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "isolated lock regression failed:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            return;
+        }
         let root = std::env::temp_dir().join(format!(
             "script-hub-gui-lock-{}-{}",
             std::process::id(),
@@ -740,6 +761,7 @@ mod tests {
         std::fs::write(root.join("crates/processor/Cargo.toml"), "").unwrap();
         std::fs::write(root.join("rulesets/Sources/adblock_whitelist.list"), "").unwrap();
         let writer = acquire_write_lock(&root).unwrap();
+        assert_eq!(validate_root(&root).unwrap(), root.canonicalize().unwrap());
         let state = Arc::new(Mutex::new(State::new(String::new())));
         let mut readonly_worker = Command::new(std::env::current_exe().unwrap());
         readonly_worker
@@ -749,7 +771,7 @@ mod tests {
         run_worker(readonly_worker, state).unwrap();
         assert!(acquire_write_lock(&root).is_err());
         drop(writer);
-        assert!(acquire_write_lock(&root).is_ok());
+        drop(acquire_write_lock(&root).expect("closing the writer must release its lock"));
         assert!(root.join(".cache/script-hub-gui.lock").exists());
         std::fs::remove_dir_all(root).unwrap();
     }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Script Hub logo, lilac H connector on deep violet with a circular accent">
+  <title>Script Hub — Symbol</title>
+  <desc>Original geometric H mark: two softly rounded pillars joined by an arcing pathway, accompanied by a circular violet node. No text.</desc>
+  <defs>
+    <linearGradient id="night" x1="68" y1="84" x2="900" y2="982" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#443581"/>
+      <stop offset="0.48" stop-color="#2B245C"/>
+      <stop offset="1" stop-color="#101427"/>
+    </linearGradient>
+    <radialGradient id="ambient" cx="0" cy="0" r="1" gradientTransform="translate(230 160) rotate(48) scale(930)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7962C0" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#1A1647" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leftBar" x1="164" y1="208" x2="350" y2="810" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C6BCFF"/>
+      <stop offset="0.46" stop-color="#A69AFF"/>
+      <stop offset="1" stop-color="#FBF9FF"/>
+    </linearGradient>
+    <linearGradient id="rightBar" x1="576" y1="205" x2="739" y2="815" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FEFCFF"/>
+      <stop offset="0.38" stop-color="#EFEDFF"/>
+      <stop offset="1" stop-color="#8172EE"/>
+    </linearGradient>
+    <linearGradient id="bridge" x1="171" y1="512" x2="740" y2="530" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F5FF"/>
+      <stop offset="0.30" stop-color="#DAD5FF"/>
+      <stop offset="0.66" stop-color="#B7ADFB"/>
+      <stop offset="1" stop-color="#8D7EF2"/>
+    </linearGradient>
+    <radialGradient id="node" cx="0" cy="0" r="1" gradientTransform="translate(833 470) rotate(49) scale(136)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E2DCFF"/>
+      <stop offset="0.66" stop-color="#C0B4FF"/>
+      <stop offset="1" stop-color="#9484E9"/>
+    </radialGradient>
+    <clipPath id="tileClip"><rect x="0" y="0" width="1024" height="1024" rx="185"/></clipPath>
+  </defs>
+  <g clip-path="url(#tileClip)">
+    <rect width="1024" height="1024" fill="url(#night)"/>
+    <rect width="1024" height="1024" fill="url(#ambient)"/>
+  </g>
+  <g id="symbol">
+    <rect id="left-pillar" x="155" y="214" width="170" height="600" rx="43" fill="url(#leftBar)"/>
+    <rect id="right-pillar" x="570" y="214" width="170" height="600" rx="43" fill="url(#rightBar)"/>
+    <!-- The arch carries the H's crossbar; it is one custom Bézier shape, not an overlay effect. -->
+    <path id="arc-bridge" d="M155 638 C173 521 240 435 352 435 L542 435 C649 435 721 518 740 638 L740 641 L155 641 Z" fill="url(#bridge)" opacity=".91"/>
+    <circle id="node" cx="860" cy="500" r="74" fill="url(#node)"/>
+  </g>
+</svg>

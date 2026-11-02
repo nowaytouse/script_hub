@@ -51,7 +51,8 @@ impl Fixture {
             "crates/processor/Cargo.toml",
             b"[package]\nname = \"rust_processor\"\n",
         );
-        fixture.write("crates/processor/assets/Info.plist.in", b"<plist><dict><key>CFBundleIdentifier</key><string>io.github.nowaytouse.script-hub</string><key>CFBundleShortVersionString</key><string>@VERSION@</string><key>CFBundleVersion</key><string>@BUILD_NUMBER@</string></dict></plist>");
+        fixture.write("crates/processor/assets/Info.plist.in", b"<plist><dict><key>CFBundleIdentifier</key><string>io.github.nowaytouse.script-hub</string><key>CFBundleIconFile</key><string>ScriptHub.icns</string><key>CFBundleShortVersionString</key><string>@VERSION@</string><key>CFBundleVersion</key><string>@BUILD_NUMBER@</string></dict></plist>");
+        fixture.write("crates/processor/assets/ScriptHub.icns", b"synthetic icon");
         fixture.write(
             "crates/processor/assets/templates.vault",
             b"SHVAULT\0\x01synthetic ciphertext",
@@ -204,6 +205,11 @@ fn macos_stage_is_complete_and_does_not_publish_early() {
             .contains(COMMIT)
     );
     let plist = fs::read_to_string(app.join("Info.plist")).unwrap();
+    assert!(plist.contains("ScriptHub.icns"));
+    assert_eq!(
+        fs::read(app.join("Resources/ScriptHub.icns")).unwrap(),
+        b"synthetic icon"
+    );
     assert!(plist.contains("0.2.0") && !plist.contains('@'));
     assert!(!fixture.0.join("ScriptHub.app").exists());
 }

@@ -288,6 +288,12 @@ fn stage(
         root.join("crates/processor/assets/templates.vault"),
         PathBuf::from("templates.vault"),
     ));
+    if platform == Platform::MacOs {
+        files.push((
+            root.join("crates/processor/assets/ScriptHub.icns"),
+            PathBuf::from("ScriptHub.icns"),
+        ));
+    }
     for name in FONTS {
         files.push((
             root.join("crates/processor/licenses/epaint_default_fonts")
@@ -561,6 +567,7 @@ fn verify_package(directory: &Path, platform: Platform, metadata: &Metadata) -> 
             ("CFBundleIdentifier", IDENTIFIER),
             ("CFBundleExecutable", "script-hub-gui"),
             ("CFBundlePackageType", "APPL"),
+            ("CFBundleIconFile", "ScriptHub.icns"),
             ("CFBundleShortVersionString", &metadata.version),
             ("CFBundleVersion", &metadata.build_number),
         ] {

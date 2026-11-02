@@ -37,7 +37,7 @@ pub fn choose(action: FileAction) -> Result<Option<PathBuf>, ()> {
         use std::os::windows::process::CommandExt;
         let script = match action {
             FileAction::Import => {
-                "$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Windows.Forms; [Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='JSON files (*.json)|*.json|Text files (*.txt;*.list)|*.txt;*.list|All files (*.*)|*.*'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($d.FileName) }; $d.Dispose()"
+                "$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Windows.Forms; [Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='Node and backup files (*.json;*.yaml;*.yml;*.txt;*.list;*.conf)|*.json;*.yaml;*.yml;*.txt;*.list;*.conf|All files (*.*)|*.*'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($d.FileName) }; $d.Dispose()"
             }
             FileAction::ChooseEngine => {
                 "$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Windows.Forms; [Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='Executable files (*.exe)|*.exe'; $d.CheckFileExists=$true; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($d.FileName) }; $d.Dispose()"

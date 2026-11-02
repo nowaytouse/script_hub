@@ -53,7 +53,7 @@
   "RelayTested": "プロトコルによる接続検証を完了",
   "RelayCreateHelp": "出力 Gist を空欄にすると、投稿時にトークンで Secret Gist を作成します。リンクを知る人は閲覧でき、暗号化されません。",
   "RelayCreated": "出力 Gist の作成と検証を完了しました。このセッションでは同じ出力先を保持します。",
-  "RelayFormats": "Surge ノード、sing-box JSON、Sub-Store Plain JSON を自動認識します。Sub-Store 設定バックアップはノードファイルではないため、先に Surge または Plain JSON で書き出してください。",
+  "RelayFormats": "Surge ノード、URI/Base64 購読、sing-box JSON、Sub-Store／Shadowrocket／mihomo のノード JSON・YAML を自動認識します。完全なアプリ設定や Sub-Store 設定バックアップではなく、書き出したノードを読み込んでください。",
   "RelayPrivacy": "非公開の入力はセッション内だけに保持し、設定、履歴、コマンド引数に保存しません。出力は非表示です。完全なメモリ消去は保証せず、フォーカスを失っても許可済みの処理は継続します。",
   "RelayToken": "GitHub トークン（セッションのみ。公開データのプレビューでは任意）",
   "RelaySource": "取得元 Gist ID または HTTPS Gist / raw URL",

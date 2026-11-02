@@ -73,6 +73,9 @@ impl HubApp {
                         });
                     }
                     SupportTab::About => {
+                        if let Some(texture) = ui.ctx().data(|data| data.get_temp::<egui::TextureHandle>(egui::Id::unique("script-hub-logo"))) {
+                            ui.image((texture.id(), egui::vec2(64.0, 64.0)));
+                        }
                         ui.label(RichText::new("Script Hub").size(30.0).strong().color(self.colors.accent));
                         ui.label(tr(Text::AboutDescription));
                         ui.add_space(16.0);

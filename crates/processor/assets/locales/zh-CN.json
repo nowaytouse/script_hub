@@ -53,7 +53,7 @@
   "RelayTested": "已完成协议级测活",
   "RelayCreateHelp": "输出 Gist 留空时，上传会使用令牌新建秘密 Gist。持有链接的人仍可读取，内容并未加密。",
   "RelayCreated": "输出 Gist 已创建并验证，本次会话已记住该目标。",
-  "RelayFormats": "自动识别 Surge 节点文本、sing-box 节点 JSON 和 Sub-Store 普通 JSON。Sub-Store 设置备份不是节点导出文件：请先同步或导出为 Surge 或普通 JSON。",
+  "RelayFormats": "自动识别 Surge 节点文本、URI/Base64 订阅、sing-box JSON，以及 Sub-Store／小火箭／mihomo 节点 JSON 或 YAML。请导入导出的节点，而非完整客户端配置或 Sub-Store 设置备份。",
   "RelayPrivacy": "私人输入仅保留在本次会话，不写入设置、历史或命令参数。输出保持隐藏，内存擦除不作完整保证；失去焦点不会取消已授权的运行。",
   "RelayToken": "GitHub 令牌（仅限会话；预览公开内容时可不填）",
   "RelaySource": "源 Gist ID 或 HTTPS Gist / 原始文件地址",

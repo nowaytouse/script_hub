@@ -1107,10 +1107,18 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         // Explicit template setup never opens a remembered protected workspace.
         preferences.reopen_workspace = false;
     }
+    let icon = match eframe::icon_data::from_png_bytes(include_bytes!("../../assets/logo.png")) {
+        Ok(icon) => icon,
+        Err(error) => {
+            eprintln!("Cannot load Script Hub icon: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size(preferences.window.dimensions())
-            .with_min_inner_size([740.0, 540.0]),
+            .with_min_inner_size([740.0, 540.0])
+            .with_icon(icon.clone()),
         renderer: eframe::Renderer::Glow,
         ..Default::default()
     };
@@ -1118,6 +1126,15 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         "Script Hub",
         options,
         Box::new(move |cc| {
+            let image = egui::ColorImage::from_rgba_unmultiplied(
+                [icon.width as usize, icon.height as usize],
+                &icon.rgba,
+            );
+            let texture = cc
+                .egui_ctx
+                .load_texture("script-hub-logo", image, Default::default());
+            cc.egui_ctx
+                .data_mut(|data| data.insert_temp(egui::Id::unique("script-hub-logo"), texture));
             theme::apply(&cc.egui_ctx, &preferences);
             let mut app = HubApp::new(explicit, preferences, path, error);
             if let Some((sources, public, backup)) = template_setup {
@@ -1174,6 +1191,12 @@ fn usage(success: bool) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn bundled_logo_decodes() {
+        let icon =
+            eframe::icon_data::from_png_bytes(include_bytes!("../../assets/logo.png")).unwrap();
+        assert_eq!((icon.width, icon.height), (256, 256));
+    }
     use super::*;
     use std::fs;
     use std::sync::mpsc::RecvTimeoutError;

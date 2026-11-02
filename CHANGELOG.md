@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+- Recognize URI/Base64 subscriptions and Shadowrocket/mihomo node YAML/JSON; preserve Sub-Store sing-box export containers, metadata and unsupported nodes through cleanup and backup.
+- Use the supplied Script Hub mark for the desktop window, About page and macOS application bundle.
+- Isolate the writer-lock regression test from unrelated parallel process launches.
 - Read explicit Gist raw links directly; respect rate-limit cooldowns and upload prepared results without repeated node checks.
 - Focus relay on one step at a time; discover the connection checker automatically and replace path entry with a native picker.
 - Preserve unsupported Surge external definitions without running their programs or discarding the rest of the subscription.

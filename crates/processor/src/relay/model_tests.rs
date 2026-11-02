@@ -54,10 +54,7 @@ fn substore_udp_projection_is_limited_to_supported_protocols() {
         r#"[{"name":"A","type":"socks5","server":"a.invalid","port":1080,"udp":true}]"#,
     )
     .unwrap();
-    assert_eq!(
-        sub.nodes()[0].to_sing_box(false).err(),
-        Some(ModelError::Unsupported)
-    );
+    assert_eq!(sub.nodes()[0].to_sing_box(false).unwrap()["version"], "5");
     let sub = Subscription::parse(r#"[{"name":"A","type":"ss","server":"a.invalid","port":443,"cipher":"aes-128-gcm","password":"synthetic","udp":"false"}]"#).unwrap();
     assert_eq!(
         sub.nodes()[0].to_sing_box(false).err(),
@@ -119,6 +116,210 @@ fn unchanged() -> EnhanceOptions {
     EnhanceOptions {
         rename: false,
         sort: false,
+    }
+}
+
+#[test]
+fn producer_node_containers_roundtrip_without_losing_fields() {
+    for source in [
+        "proxies:\n  - {name: B, type: trojan, server: b.invalid, port: 443, password: synthetic, future: {keep: true}}\n  - {name: A, type: http, server: a.invalid, port: 80}\n",
+        r#"{"proxies":[{"name":"B","type":"trojan","server":"b.invalid","port":443,"password":"synthetic","future":{"keep":true,"url":"https://docs.invalid"}},{"name":"A","type":"http","server":"a.invalid","port":80}]}"#,
+        "- name: B\n  type: http\n  server: b.invalid\n  port: 80\n  future: {keep: true}\n- name: A\n  type: http\n  server: a.invalid\n  port: 80\n",
+        r#"{"outbounds":[{"tag":"B","type":"http","server":"b.invalid","server_port":80,"future":{"keep":true}},{"tag":"A","type":"http","server":"a.invalid","server_port":80}],"endpoints":[]}"#,
+    ] {
+        let sub = Subscription::parse(source).unwrap();
+        assert_eq!(
+            &*sub.render(&[Health::Unknown; 2], &unchanged()).unwrap(),
+            source
+        );
+        assert_eq!(
+            sub.nodes()[0].to_sing_box(false).err(),
+            Some(ModelError::Unsupported)
+        );
+        let rendered = sub
+            .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+            .unwrap();
+        let parsed = Subscription::parse(&rendered).unwrap();
+        assert_eq!(parsed.nodes().len(), 2);
+        assert!(rendered.contains("keep"));
+        if source.contains("endpoints") {
+            assert_eq!(
+                serde_json::from_str::<Value>(&rendered).unwrap()["endpoints"],
+                json!([])
+            );
+        }
+        assert!(semantic_equal(&rendered, &rendered));
+        assert!(!semantic_equal(source, &rendered));
+        let removed = sub
+            .render(&[Health::Unknown, Health::Failed], &unchanged())
+            .unwrap();
+        assert_eq!(Subscription::parse(&removed).unwrap().nodes().len(), 1);
+    }
+}
+
+#[test]
+fn uri_and_base64_subscriptions_keep_encoding_unknown_nodes_and_credentials() {
+    use base64::{Engine as _, engine::general_purpose::*};
+    let source = "# nodes\ntrojan://synthetic@b.invalid:443?sni=identity.invalid#B\nfuture://opaque@a.invalid:1234?keep=value#A\n";
+    for encoding in [
+        None,
+        Some(STANDARD),
+        Some(STANDARD_NO_PAD),
+        Some(URL_SAFE),
+        Some(URL_SAFE_NO_PAD),
+    ] {
+        let input = encoding
+            .as_ref()
+            .map_or_else(|| source.to_owned(), |engine| engine.encode(source));
+        let sub = Subscription::parse(&input).unwrap();
+        assert_eq!(sub.nodes().len(), 2);
+        assert_eq!(
+            sub.nodes()[0].to_sing_box(false).unwrap()["tls"]["server_name"],
+            "identity.invalid"
+        );
+        assert_eq!(
+            sub.nodes()[1].to_sing_box(false).err(),
+            Some(ModelError::Unsupported)
+        );
+        assert_eq!(
+            &*sub.render(&[Health::Unknown; 2], &unchanged()).unwrap(),
+            &input
+        );
+        let rendered = sub
+            .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+            .unwrap();
+        let parsed = Subscription::parse(&rendered).unwrap();
+        assert_eq!(parsed.nodes().len(), 2);
+        let decoded = match encoding {
+            Some(_) => String::from_utf8(
+                [STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD]
+                    .iter()
+                    .find_map(|engine| engine.decode(rendered.as_bytes()).ok())
+                    .unwrap(),
+            )
+            .unwrap(),
+            None => rendered.to_string(),
+        };
+        assert!(decoded.contains("opaque@a.invalid:1234?keep=value"));
+        assert!(decoded.contains("synthetic@b.invalid:443?sni=identity.invalid"));
+        assert!(semantic_equal(&rendered, &rendered));
+        let removed = sub
+            .render(&[Health::Failed, Health::Unknown], &unchanged())
+            .unwrap();
+        assert_eq!(Subscription::parse(&removed).unwrap().nodes().len(), 1);
+    }
+}
+
+#[test]
+fn structured_nodes_reject_full_configs_nonempty_endpoints_and_ambiguous_names() {
+    for input in [
+        r#"{"outbounds":[],"endpoints":[{"type":"wireguard"}]}"#,
+        r#"{"outbounds":[],"route":{}}"#,
+        "proxies: []\nproxy-groups: []",
+        "proxies:\n - {name: duplicate, type: http, server: a.invalid, port: 80}\n - {name: duplicate, type: http, server: b.invalid, port: 80}",
+        "trojan://p@a.invalid:443#duplicate\ntrojan://p@b.invalid:443#duplicate",
+    ] {
+        assert!(Subscription::parse(input).is_err());
+    }
+    assert!(Subscription::parse(&"a".repeat(4 * 1024 * 1024 + 1)).is_err());
+}
+
+#[test]
+fn yaml_dependencies_and_comments_only_noop_are_preserved() {
+    let source = "# retained on no-op\nproxies:\n - {name: Base, type: http, server: a.invalid, port: 80}\n - {name: Child, type: http, server: b.invalid, port: 80, dialer-proxy: Base}\n";
+    let sub = Subscription::parse(source).unwrap();
+    assert_eq!(
+        &*sub.render(&[Health::Unknown; 2], &unchanged()).unwrap(),
+        source
+    );
+    let renamed = sub
+        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+        .unwrap();
+    let parsed = Subscription::parse(&renamed).unwrap();
+    assert!(
+        parsed
+            .render(&[Health::Unknown; 2], &EnhanceOptions::default())
+            .is_ok()
+    );
+    assert!(semantic_equal(
+        source,
+        &source.replace("# retained on no-op", "# another comment")
+    ));
+}
+
+#[test]
+fn reality_requires_explicit_utls_and_compact_surge_is_not_a_uri() {
+    let source =
+        "n=trojan, example.invalid, 443, password=synthetic, test-url=https://example.invalid/";
+    assert_eq!(Subscription::parse(source).unwrap().format_label(), "Surge");
+    for source in [
+        "vless://id@node.invalid:443?security=reality&pbk=synthetic#A",
+        r#"{"outbounds":[{"type":"vless","tag":"A","server":"node.invalid","server_port":443,"uuid":"id","tls":{"enabled":true,"reality":{"enabled":true,"public_key":"synthetic"}}}]}"#,
+        "proxies:\n - {name: A, type: vless, server: node.invalid, port: 443, uuid: id, tls: true, reality-opts: {public-key: synthetic}}",
+    ] {
+        let sub = Subscription::parse(source).unwrap();
+        assert_eq!(
+            sub.nodes()[0].to_sing_box(false).err(),
+            Some(ModelError::Unsupported)
+        );
+        assert_eq!(
+            &*sub.render(&[Health::Unknown], &unchanged()).unwrap(),
+            source
+        );
+    }
+    let source = "vless://id@node.invalid:443?security=reality&pbk=synthetic&fp=chrome#A";
+    assert!(
+        Subscription::parse(source).unwrap().nodes()[0]
+            .to_sing_box(false)
+            .is_ok()
+    );
+}
+
+#[test]
+fn common_mihomo_protocols_project_without_losing_transport_identity() {
+    for (protocol, expected, fields) in [
+        ("socks5", "socks", json!({})),
+        ("http", "http", json!({})),
+        (
+            "ss",
+            "shadowsocks",
+            json!({"cipher":"aes-128-gcm","password":"synthetic"}),
+        ),
+        ("trojan", "trojan", json!({"password":"synthetic"})),
+        (
+            "anytls",
+            "anytls",
+            json!({"password":"synthetic","udp":true}),
+        ),
+        (
+            "vmess",
+            "vmess",
+            json!({"uuid":"123e4567-e89b-12d3-a456-426614174000","cipher":"auto","alterId":0}),
+        ),
+        (
+            "vless",
+            "vless",
+            json!({"uuid":"123e4567-e89b-12d3-a456-426614174000"}),
+        ),
+        ("hysteria2", "hysteria2", json!({"password":"synthetic"})),
+        (
+            "tuic",
+            "tuic",
+            json!({"uuid":"123e4567-e89b-12d3-a456-426614174000","password":"synthetic","congestion-controller":"cubic","udp-relay-mode":"native"}),
+        ),
+    ] {
+        let mut value = json!({"name":"A","type":protocol,"server":"node.invalid","port":443,"_subName":"subscription"});
+        value
+            .as_object_mut()
+            .unwrap()
+            .extend(fields.as_object().unwrap().clone());
+        let input = json!({"proxies":[value]}).to_string();
+        let sub = Subscription::parse(&input).unwrap();
+        let projected = sub.nodes()[0].to_sing_box(false).unwrap();
+        assert_eq!(projected["type"], expected);
+        assert_eq!(projected["server"], "node.invalid");
+        assert_eq!(projected["server_port"], 443);
+        assert!(projected.get("_subName").is_none());
     }
 }
 

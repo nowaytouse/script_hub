@@ -53,7 +53,7 @@
   "RelayTested": "Protocol-aware checks completed",
   "RelayCreateHelp": "Leave the output Gist empty to create a new secret Gist with your token. Anyone with its link can read it; it is not encrypted.",
   "RelayCreated": "Output Gist created and verified; its target is retained for this session.",
-  "RelayFormats": "Surge node text, sing-box node JSON and Sub-Store Plain JSON are recognized automatically. Sub-Store settings backups are not exported node files: sync/export the nodes as Surge or Plain JSON first.",
+  "RelayFormats": "Automatically recognizes Surge node text, URI/Base64 subscriptions, sing-box JSON and Sub-Store/Shadowrocket/mihomo node JSON or YAML. Import exported nodes, not a full app configuration or Sub-Store settings backup.",
   "RelayPrivacy": "Private inputs stay in this session, not preferences, history or command arguments. Output stays hidden. Memory erasure is best-effort; focus loss does not cancel an authorized run.",
   "RelayToken": "GitHub token (session only; optional for public previews)",
   "RelaySource": "Source Gist ID or HTTPS Gist/raw URL",

@@ -49,6 +49,36 @@ fn input(content: &str) -> Option<String> {
     doc["id"] = serde_json::json!(INPUT_ID);
     api(doc)
 }
+
+#[test]
+fn new_node_formats_complete_raw_import_cleanup_creation_and_backup() {
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    let uri = "trojan://synthetic@a.invalid:443#A\ntrojan://synthetic@b.invalid:443#B\n";
+    for source in [
+        uri.to_owned(), STANDARD.encode(uri),
+        "proxies:\n - {name: A, type: http, server: a.invalid, port: 80}\n - {name: B, type: http, server: b.invalid, port: 80}\n".into(),
+        r#"{"outbounds":[{"tag":"A","type":"http","server":"a.invalid","server_port":80},{"tag":"B","type":"http","server":"b.invalid","server_port":80}],"endpoints":[]}"#.into(),
+    ] {
+        let cleaned = model::Subscription::parse(&source).unwrap()
+            .render(&[Health::Healthy { latency_ms: 5 }, Health::Failed],
+                &model::EnhanceOptions { rename: false, sort: false }).unwrap();
+        let fixture = Fixture::new(vec![
+            Some(response(200, "Content-Type: text/plain\r\n", &source)),
+            Some(response(200, "Content-Type: text/plain\r\n", &source)),
+            created(document(&cleaned)), api(document(&cleaned)),
+        ]);
+        let mut config = config();
+        config.source = format!("https://gist.githubusercontent.com/example/{INPUT_ID}/raw/nodes.txt");
+        config.output.clear();
+        let result = run_with(&config, &fixture.client(), RunMode::Publish,
+            &AtomicBool::new(false), &|_| {}, &check).unwrap();
+        assert!(result.published && result.created.is_some());
+        assert_eq!((result.total, result.healthy, result.removed), (2, 1, 1));
+        assert_eq!(fixture.request_methods(), ["GET", "GET", "POST", "GET"]);
+        let restored = backup::decode(&backup::encode(&config, &result.content).unwrap()).unwrap();
+        assert_eq!(&*restored.content, &*cleaned);
+    }
+}
 fn check(
     _: &model::Subscription,
     _: &engine::ProbeOptions,

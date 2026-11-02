@@ -176,6 +176,19 @@ mod tests {
     const CONTENT: &str = "[Proxy]\nA = socks5, node.example.invalid, 1080\n";
 
     #[test]
+    fn supported_subscription_formats_survive_backups_exactly() {
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        let uri = "trojan://synthetic@node.invalid:443#A";
+        for content in [uri.to_owned(), STANDARD.encode(uri),
+            "proxies:\n - {name: A, type: http, server: node.invalid, port: 80}\n".into(),
+            r#"{"outbounds":[{"tag":"A","type":"http","server":"node.invalid","server_port":80}],"endpoints":[]}"#.into()] {
+            let bytes = encode(&RelayConfig::default(), &content).unwrap();
+            let backup = decode(&bytes).unwrap();
+            assert_eq!(&*backup.content, &content);
+        }
+    }
+
+    #[test]
     fn roundtrip_excludes_security_settings() {
         let config = RelayConfig {
             source: "0123456789abcdef0123456789abcdef".into(),

@@ -11,6 +11,11 @@ use serde::{
 use serde_json::{Map, Value, json};
 use zeroize::{Zeroize, Zeroizing};
 
+mod mihomo;
+mod uri;
+
+const MAX_CONTENT: usize = 4 * 1024 * 1024;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Health {
     Healthy { latency_ms: u64 },
@@ -59,6 +64,8 @@ enum NodeSource {
     Surge(SurgeNode),
     Native(PrivateJson),
     SubStore(PrivateJson),
+    Mihomo(PrivateJson),
+    Uri(uri::UriNode),
 }
 
 struct SurgeNode {
@@ -113,104 +120,13 @@ impl Node {
                 Ok(source.0.clone())
             }
             NodeSource::SubStore(source) => self.project_substore(&source.0, compatibility),
+            NodeSource::Mihomo(source) => mihomo::project(self, &source.0, compatibility, true),
+            NodeSource::Uri(source) => source.project(compatibility),
         }
     }
 
     fn project_substore(&self, source: &Value, compatibility: bool) -> Result<Value, ModelError> {
-        let object = source.as_object().ok_or(ModelError::Unsupported)?;
-        let insecure = object.get("skip-cert-verify");
-        if insecure == Some(&Value::Bool(true)) && !compatibility {
-            return Err(ModelError::SecurityBlocked);
-        }
-        if insecure.is_some_and(|v| !v.is_boolean()) {
-            return Err(ModelError::Unsupported);
-        }
-        let (protocol, fields, required_tls): (&str, &[&str], bool) = match self.protocol() {
-            "socks5" => ("socks", &["username", "password"], false),
-            "http" => ("http", &["username", "password"], false),
-            "trojan" => ("trojan", &["password"], true),
-            "anytls" => ("anytls", &["password"], true),
-            "ss" => ("shadowsocks", &["cipher", "password"], false),
-            _ => return Err(ModelError::Unsupported),
-        };
-        let common = [
-            "name",
-            "server",
-            "port",
-            "type",
-            "tls",
-            "sni",
-            "alpn",
-            "skip-cert-verify",
-            "udp",
-        ];
-        if object
-            .keys()
-            .any(|key| !common.contains(&key.as_str()) && !fields.contains(&key.as_str()))
-        {
-            return Err(ModelError::Unsupported);
-        }
-        let tls = match object.get("tls") {
-            None => required_tls,
-            Some(Value::Bool(value)) if !required_tls || *value => *value,
-            _ => return Err(ModelError::Unsupported),
-        };
-        if tls && matches!(protocol, "socks" | "shadowsocks")
-            || !tls
-                && ["sni", "alpn", "skip-cert-verify"]
-                    .iter()
-                    .any(|key| object.contains_key(*key))
-        {
-            return Err(ModelError::Unsupported);
-        }
-        let mut outbound = json!({"type":protocol,"tag":self.name(),"server":self.server(),"server_port":self.port});
-        if let Some(udp) = object.get("udp") {
-            let udp = udp.as_bool().ok_or(ModelError::Unsupported)?;
-            if !matches!(protocol, "shadowsocks" | "trojan") {
-                return Err(ModelError::Unsupported);
-            }
-            if !udp {
-                outbound["network"] = "tcp".into();
-            }
-        }
-        if protocol == "socks" {
-            outbound["version"] = "5".into();
-        }
-        for key in fields {
-            if let Some(value) = object.get(*key) {
-                if !value.as_str().is_some_and(valid_label) {
-                    return Err(ModelError::Unsupported);
-                }
-                outbound[if *key == "cipher" { "method" } else { key }] = value.clone();
-            } else if *key == "cipher"
-                || *key == "password" && matches!(protocol, "trojan" | "anytls" | "shadowsocks")
-            {
-                return Err(ModelError::Unsupported);
-            }
-        }
-        if tls {
-            let mut projected = json!({"enabled":true});
-            if let Some(sni) = object.get("sni") {
-                if !sni.as_str().is_some_and(valid_label) {
-                    return Err(ModelError::Unsupported);
-                }
-                projected["server_name"] = sni.clone();
-            }
-            if let Some(alpn) = object.get("alpn") {
-                if !alpn.as_array().is_some_and(|v| {
-                    !v.is_empty() && v.iter().all(|v| v.as_str().is_some_and(valid_label))
-                }) {
-                    return Err(ModelError::Unsupported);
-                }
-                projected["alpn"] = alpn.clone();
-            }
-            if let Some(insecure) = insecure {
-                projected["insecure"] = insecure.clone();
-            }
-            outbound["tls"] = projected;
-        }
-        validate_native(&outbound, compatibility)?;
-        Ok(outbound)
+        mihomo::project(self, source, compatibility, false)
     }
 
     fn project_surge(&self, source: &SurgeNode, compatibility: bool) -> Result<Value, ModelError> {
@@ -347,13 +263,37 @@ pub struct Subscription {
     original: Zeroizing<String>,
     nodes: Vec<Node>,
     dialect: Dialect,
+    encoding: Option<SubscriptionEncoding>,
 }
 
 enum Dialect {
     Surge(Vec<Line>),
     NativeArray,
-    NativeObject,
+    NativeObject { endpoints: bool },
     SubStoreArray,
+    Proxies { yaml: bool },
+    YamlArray,
+    Uri(Vec<Line>),
+}
+
+#[derive(Clone, Copy)]
+enum SubscriptionEncoding {
+    Standard,
+    StandardNoPad,
+    UrlSafe,
+    UrlSafeNoPad,
+}
+
+impl SubscriptionEncoding {
+    fn engine(self) -> base64::engine::GeneralPurpose {
+        use base64::engine::general_purpose::*;
+        match self {
+            Self::Standard => STANDARD,
+            Self::StandardNoPad => STANDARD_NO_PAD,
+            Self::UrlSafe => URL_SAFE,
+            Self::UrlSafeNoPad => URL_SAFE_NO_PAD,
+        }
+    }
 }
 
 enum Line {
@@ -363,17 +303,36 @@ enum Line {
 
 impl Subscription {
     pub fn parse(input: &str) -> Result<Self, ModelError> {
+        use base64::Engine as _;
+        if input.len() > MAX_CONTENT {
+            return Err(ModelError::InvalidInput);
+        }
         let trimmed = input.trim_start_matches('\u{feff}').trim_start();
-        let proxy_header = trimmed
-            .lines()
-            .next()
-            .is_some_and(|line| line.trim().eq_ignore_ascii_case("[Proxy]"));
-        let (nodes, dialect) =
-            if trimmed.starts_with('{') || trimmed.starts_with('[') && !proxy_header {
-                parse_native(trimmed)?
-            } else {
-                parse_surge(input)?
-            };
+        let (nodes, dialect, encoding) = if let Ok((nodes, dialect)) = parse_plain(input) {
+            (nodes, dialect, None)
+        } else {
+            let compact = Zeroizing::new(trimmed.split_ascii_whitespace().collect::<String>());
+            let mut decoded = None;
+            for encoding in [
+                SubscriptionEncoding::Standard,
+                SubscriptionEncoding::StandardNoPad,
+                SubscriptionEncoding::UrlSafe,
+                SubscriptionEncoding::UrlSafeNoPad,
+            ] {
+                let Ok(bytes) = encoding.engine().decode(compact.as_bytes()) else {
+                    continue;
+                };
+                let bytes = Zeroizing::new(bytes);
+                let Ok(text) = std::str::from_utf8(&bytes) else {
+                    continue;
+                };
+                if let Ok((nodes, dialect)) = parse_uri(text) {
+                    decoded = Some((nodes, dialect, Some(encoding)));
+                    break;
+                }
+            }
+            decoded.ok_or(ModelError::InvalidInput)?
+        };
         let mut names = HashSet::new();
         if nodes.is_empty() || nodes.iter().any(|node| !names.insert(node.name())) {
             return Err(ModelError::InvalidInput);
@@ -382,6 +341,7 @@ impl Subscription {
             original: Zeroizing::new(input.to_owned()),
             nodes,
             dialect,
+            encoding,
         })
     }
 
@@ -392,8 +352,12 @@ impl Subscription {
     pub fn format_label(&self) -> &'static str {
         match self.dialect {
             Dialect::Surge(_) => "Surge",
-            Dialect::NativeArray | Dialect::NativeObject => "sing-box JSON",
+            Dialect::NativeArray | Dialect::NativeObject { .. } => "sing-box JSON",
             Dialect::SubStoreArray => "Sub-Store JSON",
+            Dialect::Proxies { yaml: false } => "mihomo / Shadowrocket JSON",
+            Dialect::Proxies { yaml: true } | Dialect::YamlArray => "mihomo / Shadowrocket YAML",
+            Dialect::Uri(_) if self.encoding.is_some() => "Base64 URI subscription",
+            Dialect::Uri(_) => "URI subscription",
         }
     }
 
@@ -490,7 +454,7 @@ impl Subscription {
         {
             return Ok(self.original.clone());
         }
-        match &self.dialect {
+        let output = match &self.dialect {
             Dialect::Surge(lines) => {
                 let mut output = Zeroizing::new(String::new());
                 let mut order = order.into_iter();
@@ -537,21 +501,56 @@ impl Subscription {
                 }
                 Ok(output)
             }
-            Dialect::NativeArray | Dialect::NativeObject | Dialect::SubStoreArray => {
+            Dialect::Uri(lines) => {
+                let mut output = Zeroizing::new(String::new());
+                let mut order = order.into_iter();
+                for line in lines {
+                    match line {
+                        Line::Literal(value) => output.push_str(value),
+                        Line::Node => {
+                            if let Some(index) = order.next() {
+                                let NodeSource::Uri(source) = &self.nodes[index].source else {
+                                    return Err(ModelError::Render);
+                                };
+                                if names[index].as_str() == self.nodes[index].name() {
+                                    output.push_str(source.original());
+                                } else {
+                                    output.push_str(&source.render_name(&names[index])?);
+                                }
+                                output.push('\n');
+                            }
+                        }
+                    }
+                }
+                Ok(output)
+            }
+            Dialect::NativeArray
+            | Dialect::NativeObject { .. }
+            | Dialect::SubStoreArray
+            | Dialect::Proxies { .. }
+            | Dialect::YamlArray => {
                 let mut values = Vec::with_capacity(order.len());
                 for index in order {
                     let source = match &self.nodes[index].source {
-                        NodeSource::Native(source) | NodeSource::SubStore(source) => source,
+                        NodeSource::Native(source)
+                        | NodeSource::SubStore(source)
+                        | NodeSource::Mihomo(source) => source,
                         _ => return Err(ModelError::Render),
                     };
                     let mut value = source.0.clone();
-                    value[if matches!(self.dialect, Dialect::SubStoreArray) {
+                    value[if matches!(
+                        self.nodes[index].source,
+                        NodeSource::SubStore(_) | NodeSource::Mihomo(_)
+                    ) {
                         "name"
                     } else {
                         "tag"
                     }] = names[index].as_str().into();
                     if let Some(dependency) = dependencies[index] {
-                        let key = if matches!(self.dialect, Dialect::SubStoreArray) {
+                        let key = if matches!(
+                            self.nodes[index].source,
+                            NodeSource::SubStore(_) | NodeSource::Mihomo(_)
+                        ) {
                             ["dialer-proxy", "detour", "underlying-proxy"]
                                 .into_iter()
                                 .find(|key| value.get(*key).is_some())
@@ -564,17 +563,40 @@ impl Subscription {
                     values.push(value);
                 }
                 let output = PrivateJson(
-                    if matches!(self.dialect, Dialect::NativeArray | Dialect::SubStoreArray) {
+                    if matches!(
+                        self.dialect,
+                        Dialect::NativeArray | Dialect::SubStoreArray | Dialect::YamlArray
+                    ) {
                         Value::Array(values)
+                    } else if matches!(self.dialect, Dialect::Proxies { .. }) {
+                        json!({"proxies":values})
+                    } else if matches!(self.dialect, Dialect::NativeObject { endpoints: true }) {
+                        json!({"outbounds":values,"endpoints":[]})
                     } else {
                         json!({"outbounds":values})
                     },
                 );
-                serde_json::to_string_pretty(&output.0)
-                    .map(Zeroizing::new)
-                    .map_err(|_| ModelError::Render)
+                if matches!(
+                    self.dialect,
+                    Dialect::YamlArray | Dialect::Proxies { yaml: true }
+                ) {
+                    mihomo::render(&output.0)
+                } else {
+                    serde_json::to_string_pretty(&output.0)
+                        .map(Zeroizing::new)
+                        .map_err(|_| ModelError::Render)
+                }
             }
+        }?;
+        use base64::Engine as _;
+        let output = match self.encoding {
+            Some(encoding) => Zeroizing::new(encoding.engine().encode(output.as_bytes())),
+            None => output,
+        };
+        if output.len() > MAX_CONTENT {
+            return Err(ModelError::Render);
         }
+        Ok(output)
     }
 
     fn dependencies(&self) -> Result<Vec<Option<usize>>, ModelError> {
@@ -699,6 +721,12 @@ pub fn semantic_equal(left: &str, right: &str) -> bool {
     {
         return false;
     }
+    if let (Dialect::NativeObject { endpoints: a }, Dialect::NativeObject { endpoints: b }) =
+        (&left.dialect, &right.dialect)
+        && a != b
+    {
+        return false;
+    }
     left.nodes.iter().zip(&right.nodes).all(|(left, right)| {
         if left.name() != right.name()
             || left.server() != right.server()
@@ -710,7 +738,9 @@ pub fn semantic_equal(left: &str, right: &str) -> bool {
         let external = left.protocol() == "external";
         match (&left.source, &right.source) {
             (NodeSource::Native(left), NodeSource::Native(right))
-            | (NodeSource::SubStore(left), NodeSource::SubStore(right)) => left.0 == right.0,
+            | (NodeSource::SubStore(left), NodeSource::SubStore(right))
+            | (NodeSource::Mihomo(left), NodeSource::Mihomo(right)) => left.0 == right.0,
+            (NodeSource::Uri(left), NodeSource::Uri(right)) => left.original() == right.original(),
             (NodeSource::Surge(left), NodeSource::Surge(right)) => {
                 if external {
                     return left.raw == right.raw;
@@ -1009,12 +1039,75 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
     Ok((nodes, Dialect::Surge(lines)))
 }
 
+fn parse_plain(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
+    let trimmed = input.trim_start_matches('\u{feff}').trim_start();
+    let first = trimmed
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with(';'))
+        .ok_or(ModelError::InvalidInput)?;
+    if first.split_once("://").is_some_and(|(scheme, _)| {
+        scheme.starts_with(|c: char| c.is_ascii_alphabetic())
+            && scheme
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+    }) {
+        return parse_uri(input);
+    }
+    if first.eq_ignore_ascii_case("[Proxy]") {
+        return parse_surge(input);
+    }
+    if (trimmed.starts_with('{') || trimmed.starts_with('['))
+        && let Ok(result) = parse_native(trimmed)
+    {
+        return Ok(result);
+    }
+    if let Ok(result) = parse_surge(input) {
+        return Ok(result);
+    }
+    parse_structured(mihomo::parse_yaml(trimmed)?, true)
+}
+
+fn parse_uri(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
+    let mut nodes = Vec::new();
+    let mut lines = Vec::new();
+    if input.starts_with('\u{feff}') {
+        lines.push(Line::Literal(Zeroizing::new("\u{feff}".into())));
+    }
+    let input = input.trim_start_matches('\u{feff}');
+    for line in input.split_inclusive('\n') {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with(';') {
+            lines.push(Line::Literal(Zeroizing::new(line.to_owned())));
+            continue;
+        }
+        let source = uri::parse(trimmed, nodes.len())?;
+        nodes.push(Node {
+            name: source.name.clone(),
+            server: source.server.clone(),
+            protocol: source.protocol.clone(),
+            port: source.port,
+            dependency: None,
+            source: NodeSource::Uri(source),
+        });
+        lines.push(Line::Node);
+    }
+    if nodes.is_empty() {
+        return Err(ModelError::InvalidInput);
+    }
+    Ok((nodes, Dialect::Uri(lines)))
+}
+
 fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
-    let mut root = PrivateJson(
+    let root = PrivateJson(
         serde_json::from_str::<UniqueValue>(input)
             .map_err(|_| ModelError::InvalidInput)?
             .0,
     );
+    parse_structured(root, false)
+}
+
+fn parse_structured(mut root: PrivateJson, yaml: bool) -> Result<(Vec<Node>, Dialect), ModelError> {
     let (outbounds, dialect) = match &mut root.0 {
         Value::Array(values) => {
             let substore = values
@@ -1023,19 +1116,42 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
                 .is_some_and(|v| v.contains_key("name"));
             (
                 values,
-                if substore {
+                if yaml && substore {
+                    Dialect::YamlArray
+                } else if yaml {
+                    return Err(ModelError::InvalidInput);
+                } else if substore {
                     Dialect::SubStoreArray
                 } else {
                     Dialect::NativeArray
                 },
             )
         }
-        Value::Object(object) if object.len() == 1 && object.contains_key("outbounds") => (
+        Value::Object(object)
+            if !yaml
+                && object.contains_key("outbounds")
+                && object
+                    .keys()
+                    .all(|key| key == "outbounds" || key == "endpoints")
+                && object
+                    .get("endpoints")
+                    .is_none_or(|v| v.as_array().is_some_and(Vec::is_empty)) =>
+        {
+            let endpoints = object.contains_key("endpoints");
+            (
+                object
+                    .get_mut("outbounds")
+                    .and_then(Value::as_array_mut)
+                    .ok_or(ModelError::InvalidInput)?,
+                Dialect::NativeObject { endpoints },
+            )
+        }
+        Value::Object(object) if object.len() == 1 && object.contains_key("proxies") => (
             object
-                .get_mut("outbounds")
+                .get_mut("proxies")
                 .and_then(Value::as_array_mut)
                 .ok_or(ModelError::InvalidInput)?,
-            Dialect::NativeObject,
+            Dialect::Proxies { yaml },
         ),
         _ => return Err(ModelError::InvalidInput),
     };
@@ -1043,7 +1159,10 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
     for value in outbounds.drain(..) {
         let source = PrivateJson(value);
         let object = source.0.as_object().ok_or(ModelError::InvalidInput)?;
-        let substore = matches!(dialect, Dialect::SubStoreArray);
+        let substore = matches!(
+            dialect,
+            Dialect::SubStoreArray | Dialect::YamlArray | Dialect::Proxies { .. }
+        );
         if if substore {
             object.contains_key("tag") || object.contains_key("server_port")
         } else {
@@ -1099,7 +1218,9 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
             protocol,
             port,
             dependency,
-            source: if substore {
+            source: if matches!(dialect, Dialect::YamlArray | Dialect::Proxies { .. }) {
+                NodeSource::Mihomo(source)
+            } else if substore {
                 NodeSource::SubStore(source)
             } else {
                 NodeSource::Native(source)
@@ -1212,6 +1333,12 @@ fn validate_native(value: &Value, compatibility: bool) -> Result<(), ModelError>
         }
         if let Some(reality) = tls.get("reality") {
             only_keys(reality, &["enabled", "public_key", "short_id"])?;
+            if reality.get("enabled") == Some(&Value::Bool(true))
+                && (tls.get("enabled") != Some(&Value::Bool(true))
+                    || tls.get("utls").and_then(|v| v.get("enabled")) != Some(&Value::Bool(true)))
+            {
+                return Err(ModelError::Unsupported);
+            }
         }
     }
     if let Some(transport) = value.get("transport") {
