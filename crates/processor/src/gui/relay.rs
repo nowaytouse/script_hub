@@ -1,5 +1,6 @@
 //! Session-only relay state; deliberately separate from preferences and job history.
 
+use super::file_dialog::FileAction;
 use super::i18n::Text;
 use crate::relay::gist::{GistFile, validate_filename, validate_name};
 use crate::relay::{Progress, RelayConfig, RelayError, RelayResult, RunMode};
@@ -66,6 +67,7 @@ pub(super) fn failure_message(
                 GistError::InvalidResponse => Text::RelayResponseInvalid,
                 GistError::TooLarge => Text::RelayTooLarge,
                 GistError::IncompleteFiles => Text::RelayFileListIncomplete,
+                GistError::SelectFile(_) => Text::RelaySelectFile,
                 GistError::Conflict => Text::RelayOutputChanged,
                 GistError::PublicOutput => Text::RelayPublicOutput,
                 GistError::UncertainWrite => Text::RelayWriteUncertain,
@@ -84,6 +86,8 @@ pub(super) fn failure_message(
 }
 
 pub(super) struct RelayState {
+    pub local_content: Option<Zeroizing<String>>,
+    pub local_summary: Option<(usize, &'static str)>,
     pub token: Zeroizing<String>,
     pub source: Zeroizing<String>,
     pub source_file: Zeroizing<String>,
@@ -101,11 +105,25 @@ pub(super) struct RelayState {
     pub acknowledge_publish: bool,
     pub allow_plaintext: bool,
     pub result: Option<RelayResult>,
+    pub result_format: Option<&'static str>,
     pub progress: Option<Progress>,
     pub error: Option<Failure>,
     pub notice: Option<Text>,
     pending: Option<Pending>,
+    file_pending: Option<FilePending>,
+    completed_config: Option<PrivateConfig>,
     generation: u64,
+}
+
+struct FilePending {
+    worker: JoinHandle<()>,
+    receiver: mpsc::Receiver<Result<Option<FileCompleted>, Text>>,
+    generation: u64,
+}
+
+enum FileCompleted {
+    Imported(Box<crate::relay::backup::RelayBackup>),
+    Saved,
 }
 
 struct Pending {
@@ -132,27 +150,32 @@ impl Default for RelayState {
     fn default() -> Self {
         let defaults = RelayConfig::default();
         Self {
+            local_content: None,
+            local_summary: None,
             token: Zeroizing::new(String::new()),
             source: Zeroizing::new(String::new()),
             source_file: Zeroizing::new(String::new()),
             output: Zeroizing::new(String::new()),
-            output_file: Zeroizing::new(String::new()),
-            title: Zeroizing::new(String::new()),
+            output_file: Zeroizing::new(defaults.output_file),
+            title: Zeroizing::new(defaults.title),
             concurrency: defaults.concurrency,
             timeout_seconds: defaults.timeout_seconds,
             compatibility: false,
             doh: false,
-            rename: defaults.rename,
-            sort: defaults.sort,
-            test_nodes: defaults.test_nodes,
+            rename: false,
+            sort: false,
+            test_nodes: true,
             allow_public_output: false,
             acknowledge_publish: false,
             allow_plaintext: false,
             result: None,
+            result_format: None,
             progress: None,
             error: None,
             notice: None,
             pending: None,
+            file_pending: None,
+            completed_config: None,
             generation: 0,
         }
     }
@@ -160,20 +183,25 @@ impl Default for RelayState {
 
 impl RelayState {
     pub(super) fn busy(&self) -> bool {
-        self.pending.is_some()
+        self.pending.is_some() || self.file_pending.is_some()
     }
 
     pub(super) fn validate(&self, mode: RunMode, engine: &Path) -> Result<(), Text> {
-        if self.source.trim().is_empty() {
+        if self.source.trim().is_empty() && self.local_content.is_none() {
             return Err(Text::RelayInputInvalid);
         }
-        let source =
-            GistFile::parse(self.source.trim(), &self.source_file).map_err(
-                |error| match error {
-                    crate::relay::gist::GistError::PinnedTarget => Text::RelayPinnedTarget,
-                    _ => Text::RelayInputInvalid,
-                },
-            )?;
+        let source = if self.source.trim().is_empty() {
+            None
+        } else {
+            Some(
+                GistFile::parse_source(self.source.trim(), &self.source_file).map_err(|error| {
+                    match error {
+                        crate::relay::gist::GistError::PinnedTarget => Text::RelayPinnedTarget,
+                        _ => Text::RelayInputInvalid,
+                    }
+                })?,
+            )
+        };
         if !self.output.trim().is_empty() {
             let output = GistFile::parse(self.output.trim(), &self.output_file).map_err(
                 |error| match error {
@@ -181,7 +209,7 @@ impl RelayState {
                     _ => Text::RelayOutputInvalid,
                 },
             )?;
-            if source.id == output.id {
+            if source.as_ref().is_some_and(|source| source.id == output.id) {
                 return Err(Text::RelayOutputInvalid);
             }
         } else if mode == RunMode::Publish && validate_filename(&self.output_file).is_err() {
@@ -212,14 +240,19 @@ impl RelayState {
         if mode == RunMode::Publish && !self.acknowledge_publish {
             return Err(Text::RelayConsentRequired);
         }
-        self.private_config(engine)
-            .0
-            .validate(mode)
-            .map_err(|_| Text::RelayConfigInvalid)
+        if self
+            .local_content
+            .as_ref()
+            .is_some_and(|content| content.len() > 4 * 1024 * 1024)
+        {
+            return Err(Text::RelayTooLarge);
+        }
+        Ok(())
     }
 
     fn private_config(&self, engine: &Path) -> PrivateConfig {
         PrivateConfig(RelayConfig {
+            local_content: None,
             source: self.source.trim().to_owned(),
             source_file: self.source_file.to_string(),
             output: self.output.trim().to_owned(),
@@ -243,12 +276,16 @@ impl RelayState {
             pending.cancel.store(true, Ordering::Release);
         }
         self.token.zeroize();
+        self.local_content = None;
+        self.local_summary = None;
+        self.completed_config = None;
         self.source.zeroize();
         self.source_file.zeroize();
         self.output.zeroize();
         self.output_file.zeroize();
         self.title.zeroize();
         self.result = None;
+        self.result_format = None;
         self.progress = None;
         self.error = None;
         self.allow_plaintext = false;
@@ -256,7 +293,7 @@ impl RelayState {
         self.allow_public_output = false;
         self.compatibility = false;
         self.doh = false;
-        self.test_nodes = false;
+        self.test_nodes = true;
         self.notice = Some(if self.busy() {
             Text::RelayCancelling
         } else {
@@ -279,6 +316,7 @@ impl RelayState {
         if !ctx.input(|input| input.viewport().focused.unwrap_or(true)) {
             self.allow_plaintext = false;
         }
+        self.tick_file(ctx);
         let Some(pending) = &self.pending else { return };
         let current = pending.generation == self.generation;
         if current {
@@ -304,8 +342,14 @@ impl RelayState {
         self.compatibility = false;
         match (joined, result) {
             (Ok(()), Ok(Ok(result))) => {
+                self.result_format = crate::relay::model::Subscription::parse(&result.content)
+                    .ok()
+                    .map(|subscription| subscription.format_label());
                 if let Some(created) = &result.created {
                     self.output = Zeroizing::new(created.id.clone());
+                    if let Some(config) = &mut self.completed_config {
+                        config.0.output = created.id.clone();
+                    }
                 }
                 self.notice = Some(if result.published {
                     Text::RelayPublished
@@ -338,6 +382,164 @@ impl RelayState {
         }
     }
 
+    pub(super) fn file_dialog_active(&self) -> bool {
+        self.file_pending.is_some()
+    }
+
+    pub(super) fn file_action(
+        &mut self,
+        action: FileAction,
+        path: Option<std::path::PathBuf>,
+        workspace: Option<&Path>,
+    ) {
+        if self.busy() || (!matches!(action, FileAction::Import) && !self.allow_plaintext) {
+            return;
+        }
+        let payload = if matches!(action, FileAction::Import) {
+            None
+        } else {
+            let Some(result) = &self.result else { return };
+            Some((
+                self.completed_config.as_ref().map(|config| {
+                    PrivateConfig(RelayConfig {
+                        source: config.0.source.clone(),
+                        source_file: config.0.source_file.clone(),
+                        output: config.0.output.clone(),
+                        output_file: config.0.output_file.clone(),
+                        title: config.0.title.clone(),
+                        rename: config.0.rename,
+                        sort: config.0.sort,
+                        concurrency: config.0.concurrency,
+                        timeout_seconds: config.0.timeout_seconds,
+                        ..RelayConfig::default()
+                    })
+                }),
+                result.content.clone(),
+            ))
+        };
+        let workspace = workspace.map(Path::to_owned);
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let generation = self.generation;
+        self.error = None;
+        self.notice = None;
+        self.allow_plaintext = false;
+        let worker = thread::Builder::new()
+            .name("script-hub-relay-file".into())
+            .spawn(move || {
+                let work = || -> Result<Option<FileCompleted>, Text> {
+                    let path = match path {
+                        Some(path) => path,
+                        None => match super::file_dialog::choose(action)
+                            .map_err(|_| Text::RelayFileError)?
+                        {
+                            Some(path) => path,
+                            None => return Ok(None),
+                        },
+                    };
+                    if matches!(action, FileAction::Import) {
+                        let bytes = Zeroizing::new(
+                            crate::vault::read_bounded(&path).map_err(|_| Text::RelayFileError)?,
+                        );
+                        let content =
+                            std::str::from_utf8(&bytes).map_err(|_| Text::RelayBackupInvalid)?;
+                        let backup = if content.len() <= 4 * 1024 * 1024
+                            && crate::relay::model::Subscription::parse(content).is_ok()
+                        {
+                            crate::relay::backup::RelayBackup {
+                                config: RelayConfig {
+                                    test_nodes: true,
+                                    rename: false,
+                                    sort: false,
+                                    ..RelayConfig::default()
+                                },
+                                content: Zeroizing::new(content.to_owned()),
+                            }
+                        } else {
+                            crate::relay::backup::decode(&bytes)
+                                .map_err(|_| Text::RelayBackupInvalid)?
+                        };
+                        return Ok(Some(FileCompleted::Imported(Box::new(backup))));
+                    }
+                    if !super::templates::safe_export_destination(&path, workspace.as_deref()) {
+                        return Err(Text::RelayFileError);
+                    }
+                    let (config, content) = payload.ok_or(Text::RelayFileError)?;
+                    let bytes = if matches!(action, FileAction::ExportBackup) {
+                        crate::relay::backup::encode(
+                            &config.ok_or(Text::RelayFileError)?.0,
+                            &content,
+                        )
+                        .map_err(|_| Text::RelayBackupInvalid)?
+                    } else {
+                        Zeroizing::new(content.as_bytes().to_vec())
+                    };
+                    // Never replace an existing backup or write private node data into the repository.
+                    crate::vault::write_private(&path, &bytes, false).map_err(
+                        |error| match error {
+                            crate::vault::VaultError::AlreadyExists => Text::RelayFileExists,
+                            _ => Text::RelayFileError,
+                        },
+                    )?;
+                    Ok(Some(FileCompleted::Saved))
+                };
+                let _ = sender.send(work());
+            });
+        match worker {
+            Ok(worker) => {
+                self.file_pending = Some(FilePending {
+                    worker,
+                    receiver,
+                    generation,
+                })
+            }
+            Err(_) => self.error = Some(Failure::Validation(Text::RelayFileError)),
+        }
+    }
+
+    fn tick_file(&mut self, ctx: &egui::Context) {
+        let Some(pending) = &self.file_pending else {
+            return;
+        };
+        if !pending.worker.is_finished() {
+            ctx.request_repaint_after(Duration::from_millis(100));
+            return;
+        }
+        let Some(pending) = self.file_pending.take() else {
+            return;
+        };
+        let result = pending.receiver.try_recv();
+        let joined = pending.worker.join();
+        if pending.generation != self.generation {
+            return;
+        }
+        match (joined, result) {
+            (Ok(()), Ok(Ok(Some(FileCompleted::Imported(mut backup))))) => {
+                self.clear(ctx);
+                let config = &mut backup.config;
+                self.source = Zeroizing::new(std::mem::take(&mut config.source));
+                self.source_file = Zeroizing::new(std::mem::take(&mut config.source_file));
+                self.output = Zeroizing::new(std::mem::take(&mut config.output));
+                self.output_file = Zeroizing::new(std::mem::take(&mut config.output_file));
+                self.title = Zeroizing::new(std::mem::take(&mut config.title));
+                self.rename = config.rename;
+                self.sort = config.sort;
+                self.concurrency = config.concurrency;
+                self.timeout_seconds = config.timeout_seconds;
+                self.local_summary = crate::relay::model::Subscription::parse(&backup.content)
+                    .ok()
+                    .map(|subscription| (subscription.nodes().len(), subscription.format_label()));
+                self.local_content = Some(std::mem::take(&mut backup.content));
+                self.notice = Some(Text::RelayImported);
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::Saved)))) => {
+                self.notice = Some(Text::RelayFileSaved)
+            }
+            (Ok(()), Ok(Ok(None))) => {}
+            (Ok(()), Ok(Err(key))) => self.error = Some(Failure::Validation(key)),
+            _ => self.error = Some(Failure::Validation(Text::RelayFileError)),
+        }
+    }
+
     pub(super) fn start_with<F>(&mut self, mode: RunMode, engine: &Path, work: F)
     where
         F: FnOnce(
@@ -357,7 +559,9 @@ impl RelayState {
             self.error = Some(Failure::Validation(error));
             return;
         }
-        let config = self.private_config(engine);
+        let mut config = self.private_config(engine);
+        config.0.local_content = self.local_content.clone();
+        self.completed_config = Some(self.private_config(engine));
         let token = self.token.clone();
         let cancel = Arc::new(AtomicBool::new(false));
         let worker_cancel = Arc::clone(&cancel);
@@ -365,6 +569,7 @@ impl RelayState {
         let worker_progress = Arc::clone(&progress);
         let (sender, receiver) = mpsc::sync_channel(1);
         self.result = None;
+        self.result_format = None;
         self.progress = None;
         self.error = None;
         self.notice = None;
@@ -412,6 +617,7 @@ mod tests {
 
     pub(super) fn fixture() -> RelayState {
         let mut state = RelayState::default();
+        state.test_nodes = false;
         state.token.push_str("synthetic-token");
         state.source.push_str("0123456789abcdef0123456789abcdef");
         state.source_file.push_str("input.conf");
@@ -523,9 +729,10 @@ mod tests {
     }
 
     #[test]
-    fn real_testing_requires_an_engine_without_changing_format_only_defaults() {
+    fn gui_defaults_to_cleaning_while_cli_format_only_is_explicit() {
         let mut state = fixture();
-        assert!(!state.test_nodes);
+        assert!(RelayState::default().test_nodes);
+        assert!(!RelayConfig::default().test_nodes);
         state.test_nodes = true;
         assert_eq!(
             state.validate(RunMode::Preview, Path::new("")),
@@ -751,6 +958,68 @@ mod tests {
         let translated = failure_message(crate::runtime::settings::Language::ZhCn, &failure);
         assert_ne!(translated, original);
         assert!(translated.contains("节点"));
+    }
+
+    #[test]
+    fn file_import_is_transactional_and_backup_exports_preserve_completed_settings() {
+        let ctx = egui::Context::default();
+        let directory = std::env::temp_dir().join(format!(
+            "script-hub-relay-file-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let directory = directory.canonicalize().unwrap();
+        let source = directory.join("input.list");
+        let content = "A = socks5, node.example.invalid, 1080\n";
+        crate::vault::write_private(&source, content.as_bytes(), false).unwrap();
+        let mut state = fixture();
+        state.file_action(FileAction::Import, Some(source.clone()), None);
+        assert!(state.busy());
+        finish(&mut state, &ctx);
+        assert_eq!(
+            state.local_content.as_deref().map(|value| value.as_str()),
+            Some(content)
+        );
+        assert_eq!(state.local_summary, Some((1, "Surge")));
+        assert!(state.token.is_empty() && state.test_nodes && !state.acknowledge_publish);
+        assert!(!state.rename && !state.sort);
+        let mut completed = result();
+        completed.content = Zeroizing::new(content.into());
+        state.result = Some(completed);
+        state.completed_config = Some(state.private_config(Path::new("private-engine")));
+        state.title.push_str("unapplied edit");
+        state.allow_plaintext = true;
+        let destination = directory.join("backup.json");
+        state.file_action(FileAction::ExportBackup, Some(destination.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(state.error.is_none());
+        let bytes = Zeroizing::new(crate::vault::read_bounded(&destination).unwrap());
+        let backup = crate::relay::backup::decode(&bytes).unwrap();
+        assert!(!backup.config.title.contains("unapplied edit"));
+        assert_eq!(backup.content.as_str(), content);
+        let invalid = directory.join("invalid.json");
+        crate::vault::write_private(&invalid, b"{bad", false).unwrap();
+        state.file_action(FileAction::Import, Some(invalid.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(state.error.is_some());
+        assert_eq!(state.local_content.as_ref().unwrap().as_str(), content);
+        assert!(state.result.is_some());
+        state.allow_plaintext = true;
+        state.file_action(FileAction::ExportNodes, Some(destination.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(state.error.is_some());
+        assert_eq!(
+            crate::vault::read_bounded(&destination).unwrap().as_slice(),
+            bytes.as_slice()
+        );
+        for path in [source, destination, invalid] {
+            std::fs::remove_file(path).unwrap();
+        }
+        std::fs::remove_dir(directory).unwrap();
     }
 
     #[test]

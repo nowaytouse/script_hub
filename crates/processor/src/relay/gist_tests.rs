@@ -313,6 +313,76 @@ fn accepts_explicit_gist_and_raw_file_targets() {
 }
 
 #[test]
+fn source_resolution_infers_raw_and_single_file_without_changing_strict_parse() {
+    assert!(GistFile::parse(ID, "").is_err());
+    assert!(GistFile::parse_source(ID, "").unwrap().filename.is_empty());
+    let fixture = Fixture::new(vec![api(document("private"))]);
+    let cancel = AtomicBool::new(false);
+    let raw = format!("https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt");
+    assert_eq!(
+        fixture
+            .client()
+            .resolve_source(&raw, "", &cancel)
+            .unwrap()
+            .filename,
+        "nodes.txt"
+    );
+    assert_eq!(
+        fixture
+            .client()
+            .resolve_source(ID, "", &cancel)
+            .unwrap()
+            .filename,
+        "nodes.txt"
+    );
+    assert_eq!(fixture.request_methods(), vec!["GET"]);
+}
+
+#[test]
+fn source_resolution_requires_complete_valid_unambiguous_file_list() {
+    let mut multiple = document("private");
+    multiple["files"]["other.txt"] = multiple["files"]["nodes.txt"].clone();
+    multiple["files"]["other.txt"]["filename"] = json!("other.txt");
+    let mut empty = document("private");
+    empty["files"] = json!({});
+    let mut truncated = document("private");
+    truncated["truncated"] = json!(true);
+    let mut bad = document("private");
+    bad["files"] = json!({"../bad": {"filename":"../bad", "size":0, "truncated":false}});
+    let mut mismatch = document("private");
+    mismatch["files"]["nodes.txt"]["filename"] = json!("other.txt");
+    let mut invalid_metadata = document("private");
+    invalid_metadata["history"] = json!([]);
+    let fixture = Fixture::new(vec![
+        api(multiple),
+        api(empty),
+        api(truncated),
+        api(bad),
+        api(mismatch),
+        api(invalid_metadata),
+    ]);
+    let client = fixture.client();
+    let cancel = AtomicBool::new(false);
+    assert!(
+        matches!(client.resolve_source(ID, "", &cancel), Err(GistError::SelectFile(names)) if names == ["nodes.txt", "other.txt"])
+    );
+    assert!(matches!(
+        client.resolve_source(ID, "", &cancel),
+        Err(GistError::InvalidResponse)
+    ));
+    assert!(matches!(
+        client.resolve_source(ID, "", &cancel),
+        Err(GistError::IncompleteFiles)
+    ));
+    for _ in 0..3 {
+        assert!(matches!(
+            client.resolve_source(ID, "", &cancel),
+            Err(GistError::InvalidResponse)
+        ));
+    }
+}
+
+#[test]
 fn revision_pinned_raw_urls_cannot_silently_select_the_latest_gist() {
     let target = format!("https://gist.githubusercontent.com/example/{ID}/raw/{REV}/nodes.txt");
     for filename in ["", "nodes.txt"] {
@@ -503,7 +573,7 @@ fn cancellation_before_read_sends_no_request() {
 fn identical_output_is_a_no_op() {
     let fixture = Fixture::new(vec![api(document("unchanged"))]);
     let result = fixture.client().publish(
-        &selected(INPUT_ID),
+        Some(&selected(INPUT_ID)),
         &selected(ID),
         &expected("unchanged"),
         "unchanged",
@@ -526,7 +596,7 @@ fn publication_updates_only_selected_file_and_verifies_readback() {
         api(document("new")),
     ]);
     let result = fixture.client().publish(
-        &selected(INPUT_ID),
+        Some(&selected(INPUT_ID)),
         &selected(ID),
         &expected("old"),
         "new",
@@ -546,13 +616,54 @@ fn publication_updates_only_selected_file_and_verifies_readback() {
 }
 
 #[test]
+fn local_source_publication_still_validates_and_verifies_output() {
+    let fixture = Fixture::new(vec![
+        api(document("old")),
+        api(document("new")),
+        api(document("new")),
+    ]);
+    let client = fixture.client();
+    let cancel = AtomicBool::new(false);
+    let invalid = GistFile {
+        id: "../invalid".to_owned(),
+        filename: "nodes.txt".to_owned(),
+    };
+    assert_eq!(
+        client.publish(
+            None,
+            &invalid,
+            &expected("old"),
+            "new",
+            "relay",
+            false,
+            &cancel
+        ),
+        Err(GistError::InvalidTarget)
+    );
+    assert!(fixture.request_methods().is_empty());
+    assert_eq!(
+        client.publish(
+            None,
+            &selected(ID),
+            &expected("old"),
+            "new",
+            "relay",
+            false,
+            &cancel
+        ),
+        Ok(PublishOutcome::Verified)
+    );
+    assert_eq!(fixture.request_methods(), vec!["GET", "PATCH", "GET"]);
+}
+
+#[test]
 fn concurrent_output_change_prevents_patch() {
     let mut doc = document("old");
     doc["history"][0]["version"] = json!("dddddddddddddddddddddddddddddddddddddddd");
     let fixture = Fixture::new(vec![api(doc)]);
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             "new",
@@ -574,7 +685,7 @@ fn public_output_requires_explicit_acknowledgement() {
     snapshot.public = true;
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &snapshot,
             "new",
@@ -592,7 +703,7 @@ fn identical_input_output_is_rejected_before_network() {
     let fixture = Fixture::new(vec![]);
     assert_eq!(
         fixture.client().publish(
-            &selected(ID),
+            Some(&selected(ID)),
             &selected(ID),
             &expected("old"),
             "new",
@@ -611,7 +722,7 @@ fn cancellation_after_preflight_prevents_patch() {
     let fixture = Fixture::with_cancel(vec![api(document("old"))], Some(cancel.clone()));
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             "new",
@@ -629,7 +740,7 @@ fn lost_patch_response_is_uncertain_and_never_retried() {
     let fixture = Fixture::new(vec![api(document("old")), None]);
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             "new",
@@ -651,7 +762,7 @@ fn wrong_readback_is_not_publication_success() {
     ]);
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             "new",
@@ -688,7 +799,7 @@ fn oversized_candidate_is_rejected_before_any_write() {
     let fixture = Fixture::new(vec![]);
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             &"x".repeat(MAX_CONTENT_BYTES + 1),
@@ -740,7 +851,7 @@ fn unchanged_revision_cannot_hide_changed_file_or_description() {
         let fixture = Fixture::new(vec![api(doc)]);
         assert_eq!(
             fixture.client().publish(
-                &selected(INPUT_ID),
+                Some(&selected(INPUT_ID)),
                 &selected(ID),
                 &expected("old"),
                 "new",
@@ -759,7 +870,7 @@ fn readback_transport_failure_remains_uncertain_after_patch() {
     let fixture = Fixture::new(vec![api(document("old")), api(document("new")), None]);
     assert_eq!(
         fixture.client().publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             "new",
@@ -813,7 +924,7 @@ fn anonymous_publish_rejects_before_any_request() {
     client.origin = Some(fixture.origin.clone());
     assert_eq!(
         client.publish(
-            &selected(INPUT_ID),
+            Some(&selected(INPUT_ID)),
             &selected(ID),
             &expected("old"),
             "new",

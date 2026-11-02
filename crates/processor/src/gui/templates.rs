@@ -1246,7 +1246,7 @@ pub(super) fn clear_secret_widget(ctx: &egui::Context, id: &str) {
     ctx.data_mut(|data| data.remove::<egui::text_edit::TextEditState>(egui::Id::unique(id)));
 }
 
-fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> bool {
+pub(super) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> bool {
     if !writable_template_destination(path)
         || !path.is_absolute()
         || path

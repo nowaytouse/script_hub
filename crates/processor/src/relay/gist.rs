@@ -21,6 +21,12 @@ pub struct GistFile {
 
 impl GistFile {
     pub fn parse(input: &str, filename: &str) -> Result<Self, GistError> {
+        let file = Self::parse_source(input, filename)?;
+        validate_filename(&file.filename)?;
+        Ok(file)
+    }
+
+    pub fn parse_source(input: &str, filename: &str) -> Result<Self, GistError> {
         let (id, raw_filename) = if valid_hex(input) {
             (input.to_ascii_lowercase(), None)
         } else {
@@ -52,7 +58,9 @@ impl GistFile {
             Some(_) => return Err(GistError::InvalidTarget),
             None => filename.to_owned(),
         };
-        validate_filename(&filename)?;
+        if !filename.is_empty() {
+            validate_filename(&filename)?;
+        }
         Ok(Self { id, filename })
     }
 }
@@ -89,6 +97,7 @@ pub enum GistError {
     InvalidResponse,
     TooLarge,
     IncompleteFiles,
+    SelectFile(Vec<String>),
     Conflict,
     PublicOutput,
     UncertainWrite,
@@ -117,6 +126,7 @@ impl fmt::Display for GistError {
             Self::IncompleteFiles => {
                 "GitHub returned a partial file list; the selected file cannot be confirmed absent."
             }
+            Self::SelectFile(_) => "Choose a file from the source Gist.",
             Self::Conflict => "The output Gist changed; preview it again before publishing.",
             Self::PublicOutput => "Publishing to a public Gist requires explicit acknowledgement.",
             Self::UncertainWrite => {
@@ -177,26 +187,55 @@ impl GistClient {
         Ok(client)
     }
 
+    pub fn resolve_source(
+        &self,
+        input: &str,
+        filename: &str,
+        cancel: &AtomicBool,
+    ) -> Result<GistFile, GistError> {
+        check_cancel(cancel)?;
+        let mut file = GistFile::parse_source(input, filename)?;
+        if !file.filename.is_empty() {
+            return Ok(file);
+        }
+        let bytes = self.get(&self.api_url(&file), true, MAX_JSON_BYTES, cancel)?;
+        let doc: ApiGist =
+            serde_json::from_slice(&bytes).map_err(|_| GistError::InvalidResponse)?;
+        validate_metadata(&doc, &file.id)?;
+        if doc.truncated {
+            return Err(GistError::IncompleteFiles);
+        }
+        let mut names = Vec::with_capacity(doc.files.len());
+        for (name, entry) in &doc.files {
+            if validate_filename(name).is_err() || entry.filename != *name {
+                return Err(GistError::InvalidResponse);
+            }
+            names.push(name.clone());
+        }
+        check_cancel(cancel)?;
+        match names.len() {
+            0 => Err(GistError::InvalidResponse),
+            1 => {
+                file.filename = names.pop().ok_or(GistError::InvalidResponse)?;
+                Ok(file)
+            }
+            _ => Err(GistError::SelectFile(names)),
+        }
+    }
+
     pub fn read(&self, file: &GistFile, cancel: &AtomicBool) -> Result<Snapshot, GistError> {
         check_cancel(cancel)?;
         validate_file(file)?;
         let bytes = self.get(&self.api_url(file), true, MAX_JSON_BYTES, cancel)?;
         let mut doc: ApiGist =
             serde_json::from_slice(&bytes).map_err(|_| GistError::InvalidResponse)?;
+        validate_metadata(&doc, &file.id)?;
         let version = doc
             .history
             .first()
             .ok_or(GistError::InvalidResponse)?
             .version
             .as_str();
-        if !doc.id.eq_ignore_ascii_case(&file.id)
-            || !valid_hex(version)
-            || doc.updated_at.is_empty()
-            || doc.updated_at.len() > 64
-            || doc.updated_at.chars().any(char::is_control)
-        {
-            return Err(GistError::InvalidResponse);
-        }
         let content = match doc.files.get_mut(&file.filename) {
             None if doc.truncated => return Err(GistError::IncompleteFiles),
             None => None,
@@ -256,7 +295,7 @@ impl GistClient {
     )]
     pub fn publish(
         &self,
-        input: &GistFile,
+        input: Option<&GistFile>,
         output: &GistFile,
         expected: &Snapshot,
         content: &str,
@@ -268,12 +307,14 @@ impl GistClient {
             return Err(GistError::InvalidToken);
         }
         check_cancel(cancel)?;
-        validate_file(input)?;
+        if let Some(input) = input {
+            validate_file(input)?;
+            if input.id.eq_ignore_ascii_case(&output.id) {
+                return Err(GistError::InvalidTarget);
+            }
+        }
         validate_file(output)?;
         validate_name(description)?;
-        if input.id.eq_ignore_ascii_case(&output.id) {
-            return Err(GistError::InvalidTarget);
-        }
         if content.len() > MAX_CONTENT_BYTES {
             return Err(GistError::TooLarge);
         }
@@ -632,6 +673,21 @@ struct ApiGist {
     updated_at: String,
     history: Vec<ApiRevision>,
     files: BTreeMap<String, ApiFile>,
+}
+
+fn validate_metadata(doc: &ApiGist, id: &str) -> Result<(), GistError> {
+    if !doc.id.eq_ignore_ascii_case(id)
+        || !doc
+            .history
+            .first()
+            .is_some_and(|revision| valid_hex(&revision.version))
+        || doc.updated_at.is_empty()
+        || doc.updated_at.len() > 64
+        || doc.updated_at.chars().any(char::is_control)
+    {
+        return Err(GistError::InvalidResponse);
+    }
+    Ok(())
 }
 
 #[derive(Deserialize)]

@@ -47,6 +47,62 @@ fn candidate() -> Zeroizing<String> {
 }
 
 #[test]
+fn local_backup_cleans_creates_gist_and_roundtrips_without_source_requests() {
+    let mut config = config();
+    config.source.clear();
+    config.output.clear();
+    config.local_content = Some(Zeroizing::new(SOURCE.into()));
+    let cleaned = candidate();
+    let fixture = Fixture::new(vec![created(document(&cleaned)), api(document(&cleaned))]);
+    let result = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Publish,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert!(result.published && result.created.is_some());
+    assert_eq!((result.total, result.removed), (2, 1));
+    assert_eq!(fixture.request_methods(), ["POST", "GET"]);
+    let bytes = backup::encode(&config, &result.content).unwrap();
+    let restored = backup::decode(&bytes).unwrap();
+    assert!(model::semantic_equal(&restored.content, &cleaned));
+    assert_eq!(
+        model::Subscription::parse(&restored.content)
+            .unwrap()
+            .nodes()
+            .len(),
+        1
+    );
+}
+
+#[test]
+fn local_source_cannot_overwrite_its_recorded_origin_and_invalid_data_never_writes() {
+    let mut config = config();
+    config.local_content = Some(Zeroizing::new(SOURCE.into()));
+    config.output = config.source.clone();
+    assert!(config.validate(RunMode::Publish).is_err());
+    config.output.clear();
+    config.source.clear();
+    config.local_content = Some(Zeroizing::new("not nodes".into()));
+    let fixture = Fixture::new(vec![]);
+    assert!(matches!(
+        run_with(
+            &config,
+            &fixture.client(),
+            RunMode::Publish,
+            &AtomicBool::new(false),
+            &|_| {},
+            &check
+        ),
+        Err(RelayError::Model(_))
+    ));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn default_formatting_never_invokes_a_node_checker_or_claims_health() {
     let fixture = Fixture::new(vec![input(SOURCE)]);
     let mut config = config();

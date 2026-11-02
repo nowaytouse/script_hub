@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+- Guide relay import, cleanup and Gist publication through three steps, with automatic file discovery and Sub-Store Plain JSON recognition.
+- Add native node-file and relay-backup import/export without storing GitHub tokens or restoring unsafe permissions.
+- Preserve Sub-Store proxy dependencies, unknown nodes and explicit TLS checks during cleanup.
 - Reuse exception matching and parse rules once when generating ad-block shards; avoid intermediate rule-string copies.
 - Select module-only rules before collecting them, without cloning complete rule categories.
 - Keep one IP fallback per equivalent rule in PROMAX and stop loading redundant IP shards; standalone lists remain available. Embedded IP updates follow module refreshes.

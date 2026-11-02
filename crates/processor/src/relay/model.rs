@@ -58,6 +58,7 @@ pub struct Node {
 enum NodeSource {
     Surge(SurgeNode),
     Native(PrivateJson),
+    SubStore(PrivateJson),
 }
 
 struct SurgeNode {
@@ -111,7 +112,105 @@ impl Node {
                 validate_native(&source.0, compatibility)?;
                 Ok(source.0.clone())
             }
+            NodeSource::SubStore(source) => self.project_substore(&source.0, compatibility),
         }
+    }
+
+    fn project_substore(&self, source: &Value, compatibility: bool) -> Result<Value, ModelError> {
+        let object = source.as_object().ok_or(ModelError::Unsupported)?;
+        let insecure = object.get("skip-cert-verify");
+        if insecure == Some(&Value::Bool(true)) && !compatibility {
+            return Err(ModelError::SecurityBlocked);
+        }
+        if insecure.is_some_and(|v| !v.is_boolean()) {
+            return Err(ModelError::Unsupported);
+        }
+        let (protocol, fields, required_tls): (&str, &[&str], bool) = match self.protocol() {
+            "socks5" => ("socks", &["username", "password"], false),
+            "http" => ("http", &["username", "password"], false),
+            "trojan" => ("trojan", &["password"], true),
+            "anytls" => ("anytls", &["password"], true),
+            "ss" => ("shadowsocks", &["cipher", "password"], false),
+            _ => return Err(ModelError::Unsupported),
+        };
+        let common = [
+            "name",
+            "server",
+            "port",
+            "type",
+            "tls",
+            "sni",
+            "alpn",
+            "skip-cert-verify",
+            "udp",
+        ];
+        if object
+            .keys()
+            .any(|key| !common.contains(&key.as_str()) && !fields.contains(&key.as_str()))
+        {
+            return Err(ModelError::Unsupported);
+        }
+        let tls = match object.get("tls") {
+            None => required_tls,
+            Some(Value::Bool(value)) if !required_tls || *value => *value,
+            _ => return Err(ModelError::Unsupported),
+        };
+        if tls && matches!(protocol, "socks" | "shadowsocks")
+            || !tls
+                && ["sni", "alpn", "skip-cert-verify"]
+                    .iter()
+                    .any(|key| object.contains_key(*key))
+        {
+            return Err(ModelError::Unsupported);
+        }
+        let mut outbound = json!({"type":protocol,"tag":self.name(),"server":self.server(),"server_port":self.port});
+        if let Some(udp) = object.get("udp") {
+            let udp = udp.as_bool().ok_or(ModelError::Unsupported)?;
+            if !matches!(protocol, "shadowsocks" | "trojan") {
+                return Err(ModelError::Unsupported);
+            }
+            if !udp {
+                outbound["network"] = "tcp".into();
+            }
+        }
+        if protocol == "socks" {
+            outbound["version"] = "5".into();
+        }
+        for key in fields {
+            if let Some(value) = object.get(*key) {
+                if !value.as_str().is_some_and(valid_label) {
+                    return Err(ModelError::Unsupported);
+                }
+                outbound[if *key == "cipher" { "method" } else { key }] = value.clone();
+            } else if *key == "cipher"
+                || *key == "password" && matches!(protocol, "trojan" | "anytls" | "shadowsocks")
+            {
+                return Err(ModelError::Unsupported);
+            }
+        }
+        if tls {
+            let mut projected = json!({"enabled":true});
+            if let Some(sni) = object.get("sni") {
+                if !sni.as_str().is_some_and(valid_label) {
+                    return Err(ModelError::Unsupported);
+                }
+                projected["server_name"] = sni.clone();
+            }
+            if let Some(alpn) = object.get("alpn") {
+                if !alpn.as_array().is_some_and(|v| {
+                    !v.is_empty() && v.iter().all(|v| v.as_str().is_some_and(valid_label))
+                }) {
+                    return Err(ModelError::Unsupported);
+                }
+                projected["alpn"] = alpn.clone();
+            }
+            if let Some(insecure) = insecure {
+                projected["insecure"] = insecure.clone();
+            }
+            outbound["tls"] = projected;
+        }
+        validate_native(&outbound, compatibility)?;
+        Ok(outbound)
     }
 
     fn project_surge(&self, source: &SurgeNode, compatibility: bool) -> Result<Value, ModelError> {
@@ -254,6 +353,7 @@ enum Dialect {
     Surge(Vec<Line>),
     NativeArray,
     NativeObject,
+    SubStoreArray,
 }
 
 enum Line {
@@ -287,6 +387,14 @@ impl Subscription {
 
     pub fn nodes(&self) -> &[Node] {
         &self.nodes
+    }
+
+    pub fn format_label(&self) -> &'static str {
+        match self.dialect {
+            Dialect::Surge(_) => "Surge",
+            Dialect::NativeArray | Dialect::NativeObject => "sing-box JSON",
+            Dialect::SubStoreArray => "Sub-Store JSON",
+        }
     }
 
     pub fn render(
@@ -429,24 +537,39 @@ impl Subscription {
                 }
                 Ok(output)
             }
-            Dialect::NativeArray | Dialect::NativeObject => {
+            Dialect::NativeArray | Dialect::NativeObject | Dialect::SubStoreArray => {
                 let mut values = Vec::with_capacity(order.len());
                 for index in order {
-                    let NodeSource::Native(source) = &self.nodes[index].source else {
-                        return Err(ModelError::Render);
+                    let source = match &self.nodes[index].source {
+                        NodeSource::Native(source) | NodeSource::SubStore(source) => source,
+                        _ => return Err(ModelError::Render),
                     };
                     let mut value = source.0.clone();
-                    value["tag"] = names[index].as_str().into();
+                    value[if matches!(self.dialect, Dialect::SubStoreArray) {
+                        "name"
+                    } else {
+                        "tag"
+                    }] = names[index].as_str().into();
                     if let Some(dependency) = dependencies[index] {
-                        value["detour"] = names[dependency].as_str().into();
+                        let key = if matches!(self.dialect, Dialect::SubStoreArray) {
+                            ["dialer-proxy", "detour", "underlying-proxy"]
+                                .into_iter()
+                                .find(|key| value.get(*key).is_some())
+                                .ok_or(ModelError::InvalidDependency)?
+                        } else {
+                            "detour"
+                        };
+                        value[key] = names[dependency].as_str().into();
                     }
                     values.push(value);
                 }
-                let output = PrivateJson(if matches!(self.dialect, Dialect::NativeArray) {
-                    Value::Array(values)
-                } else {
-                    json!({"outbounds":values})
-                });
+                let output = PrivateJson(
+                    if matches!(self.dialect, Dialect::NativeArray | Dialect::SubStoreArray) {
+                        Value::Array(values)
+                    } else {
+                        json!({"outbounds":values})
+                    },
+                );
                 serde_json::to_string_pretty(&output.0)
                     .map(Zeroizing::new)
                     .map_err(|_| ModelError::Render)
@@ -585,7 +708,8 @@ pub fn semantic_equal(left: &str, right: &str) -> bool {
             return false;
         }
         match (&left.source, &right.source) {
-            (NodeSource::Native(left), NodeSource::Native(right)) => left.0 == right.0,
+            (NodeSource::Native(left), NodeSource::Native(right))
+            | (NodeSource::SubStore(left), NodeSource::SubStore(right)) => left.0 == right.0,
             (NodeSource::Surge(left), NodeSource::Surge(right)) => {
                 uncertain_identity(left) == uncertain_identity(right)
                     && semantic_fields(left) == semantic_fields(right)
@@ -863,7 +987,20 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
             .0,
     );
     let (outbounds, dialect) = match &mut root.0 {
-        Value::Array(values) => (values, Dialect::NativeArray),
+        Value::Array(values) => {
+            let substore = values
+                .first()
+                .and_then(Value::as_object)
+                .is_some_and(|v| v.contains_key("name"));
+            (
+                values,
+                if substore {
+                    Dialect::SubStoreArray
+                } else {
+                    Dialect::NativeArray
+                },
+            )
+        }
         Value::Object(object) if object.len() == 1 && object.contains_key("outbounds") => (
             object
                 .get_mut("outbounds")
@@ -877,6 +1014,14 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
     for value in outbounds.drain(..) {
         let source = PrivateJson(value);
         let object = source.0.as_object().ok_or(ModelError::InvalidInput)?;
+        let substore = matches!(dialect, Dialect::SubStoreArray);
+        if if substore {
+            object.contains_key("tag") || object.contains_key("server_port")
+        } else {
+            object.contains_key("name") || object.contains_key("port")
+        } {
+            return Err(ModelError::InvalidInput);
+        }
         let text = |key: &str| -> Result<Zeroizing<String>, ModelError> {
             object
                 .get(key)
@@ -885,7 +1030,7 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
                 .map(|value| Zeroizing::new(value.to_owned()))
                 .ok_or(ModelError::InvalidInput)
         };
-        let name = text("tag")?;
+        let name = text(if substore { "name" } else { "tag" })?;
         let server = text("server")?;
         let protocol = text("type")?;
         if matches!(
@@ -895,13 +1040,19 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
             return Err(ModelError::InvalidInput);
         }
         let port = object
-            .get("server_port")
+            .get(if substore { "port" } else { "server_port" })
             .and_then(Value::as_u64)
             .and_then(|port| u16::try_from(port).ok())
             .filter(|port| *port > 0)
             .ok_or(ModelError::InvalidInput)?;
-        let dependency = object
-            .get("detour")
+        let keys: &[&str] = if substore {
+            &["dialer-proxy", "detour", "underlying-proxy"]
+        } else {
+            &["detour"]
+        };
+        let mut found = keys.iter().filter_map(|key| object.get(*key));
+        let dependency = found
+            .next()
             .map(|value| {
                 value
                     .as_str()
@@ -910,13 +1061,20 @@ fn parse_native(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
                     .ok_or(ModelError::InvalidInput)
             })
             .transpose()?;
+        if found.next().is_some() {
+            return Err(ModelError::InvalidInput);
+        }
         nodes.push(Node {
             name,
             server,
             protocol,
             port,
             dependency,
-            source: NodeSource::Native(source),
+            source: if substore {
+                NodeSource::SubStore(source)
+            } else {
+                NodeSource::Native(source)
+            },
         });
     }
     Ok((nodes, dialect))

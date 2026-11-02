@@ -286,18 +286,21 @@ fn listener_requires_rfc1929_and_rejects_a_wrong_password() {
 #[ignore = "requires an installed sing-box; validates synthetic configuration only"]
 fn installed_engine_accepts_synthetic_config_without_network() {
     let engine = executable(Path::new("sing-box")).unwrap();
-    let subscription = Subscription::parse(
+    for source in [
         "A = anytls, node.example.invalid, 443, password=synthetic, alpn=\"h2,http/1.1\"\n",
-    )
-    .unwrap();
-    let outbound = subscription.nodes()[0].to_sing_box(false).unwrap();
-    for doh in [false, true] {
-        let config = SecretJson(
-            isolated_config(&outbound, 12345, "synthetic-user", "synthetic-auth", doh).unwrap(),
-        );
-        let mut process = Process::spawn(&engine, "check", &config.0).unwrap();
-        assert!(process.checked(&AtomicBool::new(false)).unwrap());
-        assert!(process.child.try_wait().unwrap().is_some());
+        r#"[{"name":"A","type":"ss","server":"node.example.invalid","port":443,"cipher":"aes-128-gcm","password":"synthetic","udp":false}]"#,
+        r#"[{"name":"A","type":"trojan","server":"node.example.invalid","port":443,"password":"synthetic","udp":true}]"#,
+    ] {
+        let subscription = Subscription::parse(source).unwrap();
+        let outbound = subscription.nodes()[0].to_sing_box(false).unwrap();
+        for doh in [false, true] {
+            let config = SecretJson(
+                isolated_config(&outbound, 12345, "synthetic-user", "synthetic-auth", doh).unwrap(),
+            );
+            let mut process = Process::spawn(&engine, "check", &config.0).unwrap();
+            assert!(process.checked(&AtomicBool::new(false)).unwrap());
+            assert!(process.child.try_wait().unwrap().is_some());
+        }
     }
 }
 

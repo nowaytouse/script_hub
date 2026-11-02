@@ -1,5 +1,6 @@
 //! Private subscription processing and explicit Gist relay operations.
 
+pub mod backup;
 pub mod engine;
 pub mod gist;
 pub mod model;
@@ -16,6 +17,8 @@ use zeroize::Zeroizing;
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct RelayConfig {
+    #[serde(skip)]
+    pub local_content: Option<Zeroizing<String>>,
     pub source: String,
     pub source_file: String,
     pub output: String,
@@ -35,6 +38,7 @@ pub struct RelayConfig {
 impl Default for RelayConfig {
     fn default() -> Self {
         Self {
+            local_content: None,
             source: String::new(),
             source_file: String::new(),
             output: String::new(),
@@ -121,12 +125,28 @@ impl std::error::Error for RelayError {}
 
 impl RelayConfig {
     pub fn validate(&self, mode: RunMode) -> Result<(), RelayError> {
-        let input = gist::GistFile::parse(self.source.trim(), &self.source_file)
-            .map_err(RelayError::Gist)?;
+        let input = if self.source.trim().is_empty() {
+            if self.local_content.is_none() {
+                return Err(RelayError::InvalidInput);
+            }
+            None
+        } else {
+            Some(
+                gist::GistFile::parse_source(self.source.trim(), &self.source_file)
+                    .map_err(RelayError::Gist)?,
+            )
+        };
+        if self
+            .local_content
+            .as_ref()
+            .is_some_and(|content| content.len() > 4 * 1024 * 1024)
+        {
+            return Err(RelayError::InvalidInput);
+        }
         if !self.output.trim().is_empty() {
             let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
                 .map_err(RelayError::Gist)?;
-            if output.id == input.id {
+            if input.as_ref().is_some_and(|input| output.id == input.id) {
                 return Err(RelayError::InvalidInput);
             }
         } else if mode == RunMode::Publish {
@@ -194,10 +214,25 @@ fn run_with(
         checked: 0,
         total: 0,
     });
-    let input = gist::GistFile::parse(config.source.trim(), &config.source_file)
+    let input = if config.local_content.is_none() {
+        Some(
+            client
+                .resolve_source(config.source.trim(), &config.source_file, cancel)
+                .map_err(RelayError::Gist)?,
+        )
+    } else {
+        None
+    };
+    let source = input
+        .as_ref()
+        .map(|input| client.read(input, cancel))
+        .transpose()
         .map_err(RelayError::Gist)?;
-    let source = client.read(&input, cancel).map_err(RelayError::Gist)?;
-    let source_content = source.content.as_ref().ok_or(RelayError::InvalidInput)?;
+    let source_content = config
+        .local_content
+        .as_ref()
+        .or_else(|| source.as_ref().and_then(|source| source.content.as_ref()))
+        .ok_or(RelayError::InvalidInput)?;
     let subscription = model::Subscription::parse(source_content).map_err(RelayError::Model)?;
     let destination = if mode == RunMode::Publish && !config.output.trim().is_empty() {
         let output = gist::GistFile::parse(config.output.trim(), &config.output_file)
@@ -288,13 +323,15 @@ fn run_with(
     }
     if mode == RunMode::Publish {
         active(cancel)?;
-        let current = client.read(&input, cancel).map_err(RelayError::Gist)?;
-        if !current
-            .content
-            .as_ref()
-            .is_some_and(|content| model::semantic_equal(source_content, content))
-        {
-            return Err(RelayError::SourceChanged);
+        if let Some(input) = &input {
+            let current = client.read(input, cancel).map_err(RelayError::Gist)?;
+            if !current
+                .content
+                .as_ref()
+                .is_some_and(|content| model::semantic_equal(source_content, content))
+            {
+                return Err(RelayError::SourceChanged);
+            }
         }
         active(cancel)?;
         progress(Progress {
@@ -310,7 +347,7 @@ fn run_with(
                 .map_or(result.content.as_str(), |old| old.as_str());
             match client
                 .publish(
-                    &input,
+                    input.as_ref(),
                     &output,
                     &expected,
                     content,

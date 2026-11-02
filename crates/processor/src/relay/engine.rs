@@ -377,7 +377,21 @@ fn executable(path: &Path) -> Result<PathBuf, EngineError> {
         std::env::var_os("PATH")
             .into_iter()
             .flat_map(|paths| std::env::split_paths(&paths).collect::<Vec<_>>())
+            .filter(|directory| directory.is_absolute())
             .map(|directory| directory.join(&name))
+            .chain({
+                #[cfg(target_os = "macos")]
+                {
+                    vec![
+                        PathBuf::from("/opt/homebrew/bin").join(&name),
+                        PathBuf::from("/usr/local/bin").join(&name),
+                    ]
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    Vec::<PathBuf>::new()
+                }
+            })
             .find(|candidate| candidate.is_file())
             .and_then(|candidate| candidate.canonicalize().ok())
             .ok_or(EngineError::Unavailable)?

@@ -326,6 +326,18 @@ impl HubApp {
         if self.active() || paths.is_empty() {
             return;
         }
+        if self.page == Page::Relay {
+            if paths.len() == 1 {
+                self.relay.file_action(
+                    super::file_dialog::FileAction::Import,
+                    paths.into_iter().next(),
+                    self.loaded_root.as_deref(),
+                );
+            } else {
+                self.relay.error = Some(super::relay::Failure::Validation(Text::RelayOneFile));
+            }
+            return;
+        }
         let template_drop = (self.page == Page::Catalog
             && self.catalog_tab == CatalogTab::Templates)
             || paths.iter().any(|path| {
@@ -607,7 +619,11 @@ impl HubApp {
         }
         self.relay.start_with(
             mode,
-            Path::new(self.draft.singbox.trim()),
+            Path::new(if self.draft.singbox.trim().is_empty() {
+                "sing-box"
+            } else {
+                self.draft.singbox.trim()
+            }),
             crate::relay::run,
         );
     }
@@ -1257,7 +1273,7 @@ mod tests {
                 update
                     .nodes
                     .iter()
-                    .any(|(_, node)| node.label() == Some("Preview without upload"))
+                    .any(|(_, node)| node.label() == Some(app.tr(Text::RelayPreview)))
             });
         let accessible = format!("{:?}", output.platform_output.accesskit_update);
         output.drop_without_applying_deltas();
@@ -1268,7 +1284,7 @@ mod tests {
     }
 
     #[test]
-    fn relay_engine_controls_are_shown_only_for_explicit_connectivity_checks() {
+    fn relay_engine_controls_are_hidden_in_the_beginner_view() {
         for enabled in [false, true] {
             let ctx = egui::Context::default();
             ctx.enable_accesskit();
@@ -1296,7 +1312,10 @@ mod tests {
                     })
                 });
             output.drop_without_applying_deltas();
-            assert_eq!(engine_control_present, enabled);
+            assert!(
+                !engine_control_present,
+                "engine paths belong in advanced settings, even when checks are enabled"
+            );
         }
     }
 

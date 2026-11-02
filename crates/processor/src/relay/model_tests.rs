@@ -1,6 +1,120 @@
 use super::*;
 use serde_json::json;
 
+#[test]
+fn substore_dependency_aliases_rename_and_cascade() {
+    for key in ["dialer-proxy", "detour", "underlying-proxy"] {
+        let source = format!(
+            r#"[{{"name":"Base","type":"socks5","server":"base.invalid","port":1080}},{{"name":"Child","type":"socks5","server":"child.invalid","port":1080,"{key}":"Base","future":{{"keep":true}}}}]"#
+        );
+        let sub = Subscription::parse(&source).unwrap();
+        assert_eq!(
+            sub.nodes()[1].to_sing_box(true).err(),
+            Some(ModelError::Unsupported)
+        );
+        let renamed = sub
+            .render(
+                &[Health::Unknown; 2],
+                &EnhanceOptions {
+                    rename: true,
+                    sort: false,
+                },
+            )
+            .unwrap();
+        let output: Value = serde_json::from_str(&renamed).unwrap();
+        assert_eq!(output[1][key], output[0]["name"]);
+        assert_eq!(output[1]["future"]["keep"], true);
+        let removed = sub
+            .render(&[Health::Failed, Health::Unknown], &unchanged())
+            .unwrap();
+        assert_eq!(serde_json::from_str::<Value>(&removed).unwrap(), json!([]));
+    }
+    assert!(Subscription::parse(r#"[{"name":"A","type":"socks5","server":"a.invalid","port":1080,"detour":"B","dialer-proxy":"B"}]"#).is_err());
+}
+
+#[test]
+fn substore_udp_projection_is_limited_to_supported_protocols() {
+    for (protocol, fields) in [
+        ("ss", r#", "cipher":"aes-128-gcm","password":"synthetic""#),
+        ("trojan", r#", "password":"synthetic""#),
+    ] {
+        for udp in [true, false] {
+            let source = format!(
+                r#"[{{"name":"A","type":"{protocol}","server":"a.invalid","port":443,"udp":{udp}{fields}}}]"#
+            );
+            let sub = Subscription::parse(&source).unwrap();
+            let projected = sub.nodes()[0].to_sing_box(false).unwrap();
+            assert_eq!(
+                projected.get("network").and_then(Value::as_str),
+                if udp { None } else { Some("tcp") }
+            );
+        }
+    }
+    let sub = Subscription::parse(
+        r#"[{"name":"A","type":"socks5","server":"a.invalid","port":1080,"udp":true}]"#,
+    )
+    .unwrap();
+    assert_eq!(
+        sub.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+    let sub = Subscription::parse(r#"[{"name":"A","type":"ss","server":"a.invalid","port":443,"cipher":"aes-128-gcm","password":"synthetic","udp":"false"}]"#).unwrap();
+    assert_eq!(
+        sub.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+}
+
+#[test]
+fn substore_json_preserves_unknown_nodes_and_projects_only_known_fields() {
+    let source = r#"[{"name":"A","type":"trojan","server":"a.example.invalid","port":443,"password":"synthetic","sni":"identity.example.invalid","skip-cert-verify":true},{"name":"B","type":"future","server":"b.example.invalid","port":1234,"future":{"keep":true}},{"name":"C","type":"socks5","server":"c.example.invalid","port":1080}]"#;
+    let sub = Subscription::parse(source).unwrap();
+    assert_eq!(sub.format_label(), "Sub-Store JSON");
+    assert_eq!(
+        sub.nodes()[0].to_sing_box(false).err(),
+        Some(ModelError::SecurityBlocked)
+    );
+    assert_eq!(
+        sub.nodes()[0].to_sing_box(true).unwrap()["tls"]["insecure"],
+        true
+    );
+    assert_eq!(
+        sub.nodes()[1].to_sing_box(true).err(),
+        Some(ModelError::Unsupported)
+    );
+    let rendered = sub
+        .render(
+            &[Health::SecurityBlocked, Health::Unknown, Health::Failed],
+            &EnhanceOptions::default(),
+        )
+        .unwrap();
+    let output: Value = serde_json::from_str(&rendered).unwrap();
+    assert_eq!(output.as_array().unwrap().len(), 2);
+    let retained = output
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|node| node.get("future").is_some())
+        .unwrap();
+    assert_eq!(retained["future"]["keep"], true);
+    assert!(retained["name"].as_str().unwrap().contains('B'));
+    assert!(semantic_equal(&rendered, &rendered));
+}
+
+#[test]
+fn substore_json_rejects_ambiguous_and_invalid_input() {
+    for source in [
+        r#"[{"name":"A","tag":"A","type":"socks5","server":"a.invalid","port":1}]"#,
+        r#"[{"name":"A","type":"socks5","server":"a.invalid","port":1,"server_port":1}]"#,
+        r#"[{"name":"A","name":"B","type":"socks5","server":"a.invalid","port":1}]"#,
+        r#"[{"name":"","type":"socks5","server":"a.invalid","port":1}]"#,
+        r#"[{"name":"A","type":"socks5","server":"a.invalid","port":0}]"#,
+        r#"{"subscriptions":[],"settings":{}}"#,
+    ] {
+        assert!(Subscription::parse(source).is_err());
+    }
+}
+
 fn unchanged() -> EnhanceOptions {
     EnhanceOptions {
         rename: false,
