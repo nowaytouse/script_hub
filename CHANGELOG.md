@@ -5,6 +5,7 @@
 ## 0.4.1 · 2026-11-02
 
 - Replace external file dialogs with an in-app browser for node import, backup, export and checker selection; bound background directory reads and preserve private, no-overwrite exports.
+- Keep module artifacts LF-normalized on Windows checkouts so conversion validation stays byte-exact across platforms.
 
 ## 0.4.0 · 2026-11-02
 

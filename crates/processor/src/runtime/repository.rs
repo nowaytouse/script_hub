@@ -771,6 +771,48 @@ mod tests {
     }
 
     #[test]
+    fn module_attributes_preserve_converter_bytes_with_autocrlf() {
+        let (bare, work) = seeded_remote("module-eol");
+        work.git(&["config", "core.autocrlf", "false"]);
+        let surge = "#!name=Fixture\n[Rule]\nDOMAIN,example.invalid,REJECT\n";
+        let converted = crate::promax::artifact::convert_surge_to_shadowrocket(surge);
+        fs::write(work.path().join("fixture.sgmodule"), surge).unwrap();
+        fs::write(work.path().join("fixture.module"), &converted).unwrap();
+        work.git(&["add", "--", "fixture.sgmodule", "fixture.module"]);
+        work.git(&["commit", "-m", "add modules"]);
+        work.git(&["push", "origin", "main"]);
+
+        let before = clone_from_with_autocrlf(&bare, "module-eol-before", true);
+        assert_eq!(
+            fs::read(before.path().join("fixture.sgmodule")).unwrap(),
+            surge.replace('\n', "\r\n").as_bytes()
+        );
+        assert_eq!(
+            fs::read(before.path().join("fixture.module")).unwrap(),
+            converted.replace('\n', "\r\n").as_bytes()
+        );
+
+        let attributes =
+            fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.gitattributes")).unwrap();
+        fs::write(work.path().join(".gitattributes"), attributes).unwrap();
+        work.git(&["add", "--", ".gitattributes"]);
+        work.git(&["commit", "-m", "enforce module line endings"]);
+        work.git(&["push", "origin", "main"]);
+        let after = clone_from_with_autocrlf(&bare, "module-eol-after", true);
+        let checked_surge = fs::read(after.path().join("fixture.sgmodule")).unwrap();
+        let checked_module = fs::read(after.path().join("fixture.module")).unwrap();
+        assert_eq!(checked_surge, surge.as_bytes());
+        assert_eq!(checked_module, converted.as_bytes());
+        assert_eq!(
+            crate::promax::artifact::convert_surge_to_shadowrocket(
+                std::str::from_utf8(&checked_surge).unwrap()
+            )
+            .as_bytes(),
+            checked_module
+        );
+    }
+
+    #[test]
     fn porcelain_zero_parser_keeps_renamed_paths_and_untracked_entries() {
         let bytes = b"R  new.txt\0old.txt\0?? untracked.txt\0 M changed.txt\0";
         let changes = parse_status(bytes).unwrap();
