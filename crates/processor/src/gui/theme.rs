@@ -22,7 +22,7 @@ pub fn palette(dark: bool, accent: Accent) -> Palette {
             [20, 19, 36],
             [27, 25, 47],
             [37, 34, 61],
-            [91, 82, 125],
+            [120, 110, 155],
             [241, 238, 250],
             [190, 184, 210],
             [92, 213, 170],
@@ -34,7 +34,7 @@ pub fn palette(dark: bool, accent: Accent) -> Palette {
             [247, 245, 252],
             [255, 255, 255],
             [242, 239, 252],
-            [169, 160, 190],
+            [143, 132, 168],
             [34, 28, 53],
             [92, 80, 113],
             [12, 114, 86],
@@ -83,15 +83,15 @@ pub fn apply(ctx: &egui::Context, preferences: &Preferences) {
     ctx.global_style_mut(|style| {
         style.animation_time = 0.0;
         let compact = preferences.density == Density::Compact;
-        style.spacing.item_spacing = egui::Vec2::splat(if compact { 8.0 } else { 12.0 });
-        style.spacing.button_padding = egui::vec2(12.0, if compact { 6.0 } else { 10.0 });
-        style.spacing.window_margin = egui::Margin::same(if compact { 16 } else { 20 });
-        style.spacing.interact_size.y = if compact { 32.0 } else { 40.0 };
+        style.spacing.item_spacing = egui::vec2(10.0, if compact { 6.0 } else { 10.0 });
+        style.spacing.button_padding = egui::vec2(12.0, if compact { 6.0 } else { 8.0 });
+        style.spacing.window_margin = egui::Margin::same(if compact { 12 } else { 16 });
+        style.spacing.interact_size.y = if compact { 32.0 } else { 36.0 };
         for (kind, size) in [
-            (TextStyle::Body, 15.0),
+            (TextStyle::Body, 14.0),
             (TextStyle::Button, 14.0),
-            (TextStyle::Small, 13.0),
-            (TextStyle::Heading, 26.0),
+            (TextStyle::Small, 12.0),
+            (TextStyle::Heading, 24.0),
             (TextStyle::Monospace, 13.0),
         ] {
             let family = if kind == TextStyle::Monospace {
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn density_changes_spacing_without_shrinking_controls_below_target_size() {
         let ctx = egui::Context::default();
-        for (density, margin) in [(Density::Compact, 16), (Density::Comfortable, 20)] {
+        for (density, margin) in [(Density::Compact, 12), (Density::Comfortable, 16)] {
             apply(
                 &ctx,
                 &Preferences {
@@ -218,6 +218,23 @@ mod tests {
             let style = ctx.global_style();
             assert_eq!(style.spacing.window_margin.left, margin);
             assert!(style.spacing.interact_size.y >= 32.0);
+        }
+    }
+
+    #[test]
+    fn controls_and_focus_indicators_meet_nontext_contrast_in_both_themes() {
+        for dark in [false, true] {
+            for accent in [Accent::Purple, Accent::Blue, Accent::Teal, Accent::Amber] {
+                let colors = palette(dark, accent);
+                for surface in [colors.canvas, colors.surface, colors.raised] {
+                    assert!(
+                        contrast(colors.border, surface) >= 3.0,
+                        "border {:?} on {surface:?}",
+                        colors.border
+                    );
+                    assert!(contrast(colors.accent, surface) >= 3.0);
+                }
+            }
         }
     }
 }

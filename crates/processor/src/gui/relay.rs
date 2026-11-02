@@ -141,6 +141,7 @@ pub(super) struct RelayState {
     pub notice: Option<Text>,
     pending: Option<Pending>,
     file_picker: Option<super::file_dialog::Picker>,
+    last_directory: Option<std::path::PathBuf>,
     file_pending: Option<FilePending>,
     completed_config: Option<PrivateConfig>,
     generation: u64,
@@ -285,6 +286,7 @@ impl Default for RelayState {
             notice: None,
             pending: None,
             file_picker: None,
+            last_directory: None,
             file_pending: None,
             completed_config: None,
             generation: 0,
@@ -369,7 +371,13 @@ impl RelayState {
             return;
         };
         let action = picker.action;
-        match picker.show(ctx, language) {
+        let response = picker.show(ctx, language);
+        if !matches!(response, PickerResponse::Pending)
+            && let Some(directory) = picker.directory()
+        {
+            self.last_directory = Some(directory.to_owned());
+        }
+        match response {
             PickerResponse::Pending => {}
             PickerResponse::Cancelled => self.file_picker = None,
             PickerResponse::Selected(path) => {
@@ -475,6 +483,7 @@ impl RelayState {
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
         self.clear_editor_widgets(ctx);
         self.file_picker = None;
+        self.last_directory = None;
         self.generation = self.generation.wrapping_add(1);
         if let Some(pending) = &self.pending {
             pending.cancel.store(true, Ordering::Release);
@@ -653,11 +662,12 @@ impl RelayState {
         path: Option<std::path::PathBuf>,
         workspace: Option<&Path>,
     ) {
-        if self.busy()
-            || self.selecting_file()
-            || (!matches!(action, FileAction::Import | FileAction::ChooseEngine)
-                && !self.allow_plaintext)
+        if self.busy() || self.selecting_file() {
+            return;
+        }
+        if !matches!(action, FileAction::Import | FileAction::ChooseEngine) && !self.allow_plaintext
         {
+            self.error = Some(Failure::Validation(Text::VaultPlaintextConsent));
             return;
         }
         let Some(path) = path else {
@@ -670,7 +680,11 @@ impl RelayState {
                 self.error = Some(Failure::Validation(Text::RelayFileError));
                 return;
             }
-            self.file_picker = Some(super::file_dialog::Picker::new(action, None));
+            self.error = None;
+            self.file_picker = Some(super::file_dialog::Picker::new(
+                action,
+                self.last_directory.as_deref(),
+            ));
             return;
         };
         let payload = if matches!(action, FileAction::Import | FileAction::ChooseEngine) {
@@ -792,7 +806,9 @@ impl RelayState {
         }
         match (joined, result) {
             (Ok(()), Ok(Ok(Some(FileCompleted::Imported(mut backup))))) => {
+                let last_directory = self.last_directory.take();
                 self.clear(ctx);
+                self.last_directory = last_directory;
                 let config = &mut backup.config;
                 self.source = Zeroizing::new(std::mem::take(&mut config.source));
                 self.source_file = Zeroizing::new(std::mem::take(&mut config.source_file));
@@ -960,12 +976,30 @@ mod tests {
         state.result = Some(result());
         state.file_action(FileAction::ExportNodes, None, None);
         assert!(!state.selecting_file(), "export requires plaintext consent");
+        assert!(matches!(
+            state.error,
+            Some(Failure::Validation(Text::VaultPlaintextConsent))
+        ));
         state.allow_plaintext = true;
         state.file_action(FileAction::ExportNodes, None, None);
         assert!(state.selecting_file() && !state.busy());
         assert!(state.allow_plaintext && state.result.is_some());
         state.clear(&ctx);
         assert!(!state.selecting_file() && !state.busy());
+        assert!(state.last_directory.is_none());
+    }
+
+    #[test]
+    fn last_browsed_folder_is_session_only_and_clear_forgets_it() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        let path = std::env::temp_dir().join("synthetic-last-folder");
+        state.last_directory = Some(path.clone());
+        state.file_action(FileAction::Import, None, None);
+        assert!(state.selecting_file() && !state.busy());
+        state.clear(&ctx);
+        assert!(state.last_directory.is_none());
+        assert!(!state.selecting_file());
     }
 
     #[test]
@@ -1476,6 +1510,7 @@ mod tests {
         let content = "A = socks5, node.example.invalid, 1080\n";
         crate::vault::write_private(&source, content.as_bytes(), false).unwrap();
         let mut state = fixture();
+        state.last_directory = Some(directory.clone());
         state.file_action(FileAction::Import, Some(source.clone()), None);
         assert!(state.busy());
         finish(&mut state, &ctx);
@@ -1484,6 +1519,7 @@ mod tests {
             Some(content)
         );
         assert_eq!(state.local_summary, Some((1, "Surge")));
+        assert_eq!(state.last_directory.as_ref(), Some(&directory));
         assert!(state.token.is_empty() && state.test_nodes && !state.acknowledge_publish);
         assert!(!state.rename && !state.sort);
         let mut completed = result();

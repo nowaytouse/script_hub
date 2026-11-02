@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.5.0 · 2026-11-02
+
+- Redesign the in-app file browser with places, history, breadcrumbs, file columns, format filters and keyboard navigation.
+- Simplify the node workflow with grouped sources, common actions and expandable advanced options; retain privacy and export safeguards.
+- Refine desktop spacing, navigation, empty states and responsive settings, with contrast and layout regression checks.
+
 ## 0.4.1 · 2026-11-02
 
 - Replace external file dialogs with an in-app browser for node import, backup, export and checker selection; bound background directory reads and preserve private, no-overwrite exports.

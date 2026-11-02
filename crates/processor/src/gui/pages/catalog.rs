@@ -164,7 +164,7 @@ impl HubApp {
             .show(ui, |ui| {
                 ui.set_width(ui.available_width());
                 if indices.is_empty() {
-                    ui.label(tr(Text::NoResults));
+                    ui.label(tr(self.catalog_empty_text()));
                 }
                 for &index in &indices {
                     let module = &self.catalog.modules[index];
@@ -387,7 +387,7 @@ impl HubApp {
             .max_height(height)
             .show(ui, |ui| {
                 if indices.is_empty() {
-                    ui.label(self.tr(Text::NoResults));
+                    ui.label(self.tr(self.catalog_empty_text()));
                 }
                 let row_height = if self.draft.density == crate::runtime::settings::Density::Compact
                 {

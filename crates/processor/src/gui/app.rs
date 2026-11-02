@@ -138,6 +138,7 @@ pub struct HubApp {
     pub(super) selected_rules: BTreeSet<usize>,
     pub(super) copy_policy: String,
     pub(super) sources: Vec<CustomSource>,
+    pub(super) sources_loaded: bool,
     pub(super) source_name: String,
     pub(super) source_url: String,
     pub(super) source_category: SourceCategory,
@@ -228,6 +229,7 @@ impl HubApp {
             selected_rules: BTreeSet::new(),
             copy_policy: String::new(),
             sources: Vec::new(),
+            sources_loaded: false,
             source_name: String::new(),
             source_url: String::new(),
             source_category: SourceCategory::Wool,
@@ -362,6 +364,16 @@ impl HubApp {
         self.loaded_root.as_deref() == Some(Path::new(self.root_input.trim()))
     }
 
+    pub(super) fn catalog_empty_text(&self) -> Text {
+        if self.workspace_loader.is_some() {
+            Text::LoadingWorkspace
+        } else if self.workspace_ready() {
+            Text::NoResults
+        } else {
+            Text::OpenWorkspaceHint
+        }
+    }
+
     pub(super) fn reload(&mut self) {
         if self.active() {
             return;
@@ -383,6 +395,7 @@ impl HubApp {
         self.loaded_root = None;
         self.catalog = Catalog::default();
         self.sources.clear();
+        self.sources_loaded = false;
         self.repository = None;
         self.repository_error = None;
         self.repository_loader = None;
@@ -471,10 +484,12 @@ impl HubApp {
                 match loaded.sources {
                     Ok(sources) => {
                         self.sources = sources;
+                        self.sources_loaded = true;
                         self.error = self.startup_error.clone();
                     }
                     Err(error) => {
                         self.sources.clear();
+                        self.sources_loaded = false;
                         self.error = self.startup_error.clone().or(Some(error));
                     }
                 }
@@ -714,15 +729,21 @@ impl HubApp {
     }
 
     fn navigation(&mut self, ui: &mut egui::Ui) {
-        ui.add_space(10.0);
-        ui.label(
-            RichText::new("SCRIPT HUB")
-                .size(20.0)
-                .strong()
-                .color(self.colors.accent),
-        );
-        ui.weak(self.tr(Text::Workspace));
-        ui.add_space(24.0);
+        ui.add_space(8.0);
+        ui.horizontal(|ui| {
+            if let Some(logo) = ui.ctx().data(|data| {
+                data.get_temp::<egui::TextureHandle>(egui::Id::unique("script-hub-logo"))
+            }) {
+                ui.add(egui::Image::new((logo.id(), egui::vec2(28.0, 28.0))));
+            }
+            ui.label(RichText::new("Script Hub").size(18.0).strong());
+        });
+        ui.add_space(18.0);
+        let modifier = if cfg!(target_os = "macos") {
+            "⌘"
+        } else {
+            "Ctrl+"
+        };
         for (page, key, shortcut) in [
             (Page::Overview, Text::Overview, "1"),
             (Page::Catalog, Text::Library, "2"),
@@ -734,10 +755,15 @@ impl HubApp {
                 .add(
                     egui::Button::new("")
                         .left_text(self.tr(key))
-                        .right_text(shortcut)
+                        .right_text(
+                            RichText::new(format!("{modifier}{shortcut}"))
+                                .small()
+                                .color(self.colors.muted),
+                        )
                         .selected(self.page == page)
-                        .min_size(egui::vec2(ui.available_width(), 39.0))
-                        .corner_radius(8),
+                        .min_size(egui::vec2(ui.available_width(), 36.0))
+                        .corner_radius(8)
+                        .frame_when_inactive(false),
                 )
                 .clicked()
             {
@@ -747,7 +773,7 @@ impl HubApp {
                 }
             }
         }
-        ui.add_space(20.0);
+        ui.add_space(16.0);
         ui.separator();
         ui.add_space(12.0);
         for (page, key) in [
@@ -974,6 +1000,12 @@ impl eframe::App for HubApp {
                         ui.colored_label(self.colors.accent, self.tr(Text::RelayWorking));
                     } else if self.workspace_loader.is_some() {
                         ui.colored_label(self.colors.accent, self.tr(Text::LoadingWorkspace));
+                    } else if self.page == Page::Relay {
+                        ui.weak(self.tr(Text::RelaySessionPrivacy));
+                    } else if matches!(self.page, Page::Settings | Page::Support)
+                        || (self.page == Page::Catalog && self.catalog_tab == CatalogTab::Templates)
+                    {
+                        ui.weak(self.tr(Text::Ready));
                     } else if let Some(job) = &self.job {
                         let snapshot = job.summary();
                         let (label, color) = self.outcome(&snapshot);
@@ -989,7 +1021,7 @@ impl eframe::App for HubApp {
                             if self.workspace_ready() {
                                 self.colors.success
                             } else {
-                                self.colors.warning
+                                self.colors.muted
                             },
                             self.tr(if self.workspace_ready() {
                                 Text::WorkspaceReady
@@ -1080,6 +1112,11 @@ impl eframe::App for HubApp {
             ui.ctx().request_repaint_after(Duration::from_millis(100));
         }
     }
+}
+
+#[cfg(test)]
+pub(super) fn test_app(preferences: Preferences) -> HubApp {
+    HubApp::new(None, preferences, None, None)
 }
 
 pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
@@ -2090,6 +2127,24 @@ mod tests {
         assert_eq!(app.catalog.rules.len(), 1);
         assert!(app.error.is_some());
         assert!(app.sources.is_empty());
+        assert!(!app.sources_loaded);
+        app.error = None;
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let output = ctx.run_ui(Default::default(), |ui| app.overview_page(ui));
+        assert!(
+            output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label().is_some_and(
+                    |label| label.contains("Unavailable") && label.contains("Sources")
+                ))
+        );
+        output.drop_without_applying_deltas();
         assert_eq!(fs::read_to_string(manifest).unwrap(), "{broken");
     }
 

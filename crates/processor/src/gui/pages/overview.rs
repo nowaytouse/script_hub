@@ -8,10 +8,28 @@ impl HubApp {
     pub(crate) fn overview_page(&mut self, ui: &mut egui::Ui) {
         ui.heading(self.tr(Text::Overview));
         ui.weak(self.tr(Text::OverviewDescription));
-        ui.add_space(24.0);
+        ui.add_space(18.0);
         egui::ScrollArea::vertical()
             .id_salt("overview")
             .show(ui, |ui| {
+                card(ui, self.colors, |ui| {
+                    ui.label(RichText::new(self.tr(Text::QuickStart)).strong());
+                    ui.weak(self.tr(Text::OverviewRelayHelp));
+                    ui.add_space(8.0);
+                    ui.horizontal_wrapped(|ui| {
+                        if ui
+                            .add(primary_button(self.colors, self.tr(Text::Relay)))
+                            .clicked()
+                        {
+                            self.page = Page::Relay;
+                        }
+                        if ui.button(self.tr(Text::Templates)).clicked() {
+                            self.page = Page::Catalog;
+                            self.catalog_tab = CatalogTab::Templates;
+                        }
+                    });
+                });
+                ui.add_space(16.0);
                 card(ui, self.colors, |ui| {
                     ui.label(RichText::new(self.tr(Text::Workspace)).strong());
                     ui.add_space(8.0);
@@ -61,14 +79,20 @@ impl HubApp {
                         (self.catalog.rules.len(), Text::RuleCount, CatalogTab::Rules),
                         (self.sources.len(), Text::Sources, CatalogTab::Sources),
                     ] {
-                        let value = if self.workspace_ready() {
+                        let value = if tab == CatalogTab::Sources
+                            && self.workspace_ready()
+                            && !self.sources_loaded
+                        {
+                            self.tr(Text::Unavailable).to_owned()
+                        } else if self.workspace_ready() {
                             count.to_string()
                         } else {
-                            "...".to_string()
+                            "—".to_string()
                         };
                         let label = format!("{value}  {}", self.tr(key));
                         if ui
-                            .add(
+                            .add_enabled(
+                                self.workspace_ready(),
                                 egui::Button::new(label)
                                     .frame(false)
                                     .min_size(egui::vec2(0.0, ui.spacing().interact_size.y)),

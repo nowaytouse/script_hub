@@ -29,7 +29,7 @@ fn primary_button(colors: Palette, label: &str) -> egui::Button<'_> {
     egui::Button::new(egui::RichText::new(label).color(colors.on_accent))
         .fill(colors.accent)
         .corner_radius(8)
-        .min_size(egui::vec2(120.0, 40.0))
+        .min_size(egui::vec2(120.0, 36.0))
 }
 
 #[cfg(test)]

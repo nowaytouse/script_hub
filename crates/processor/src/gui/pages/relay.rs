@@ -103,6 +103,7 @@ impl HubApp {
                                             .strong(),
                                     );
                                     ui.add_space(8.0);
+                                    ui.strong(tr(Text::RelayGistSource));
                                     if secret_field(
                                         ui,
                                         &mut state.source,
@@ -169,24 +170,27 @@ impl HubApp {
                                         }
                                         ui.weak(tr(Text::RelayTokenHelp));
                                     });
+                                    ui.add_space(8.0);
+                                    if ui
+                                        .add_enabled(
+                                            state
+                                                .validate(RunMode::Import, state.engine_path())
+                                                .is_ok()
+                                                && cooldown == 0,
+                                            primary_button(colors, tr(Text::RelayImportGist)),
+                                        )
+                                        .clicked()
+                                    {
+                                        action = Some(RunMode::Import);
+                                    }
                                     ui.add_space(12.0);
-                                    ui.horizontal_wrapped(|ui| {
-                                        if ui
-                                            .add_enabled(
-                                                state
-                                                    .validate(RunMode::Import, state.engine_path())
-                                                    .is_ok()
-                                                    && cooldown == 0,
-                                                primary_button(colors, tr(Text::RelayImportGist)),
-                                            )
-                                            .clicked()
-                                        {
-                                            action = Some(RunMode::Import);
-                                        }
-                                        if ui.button(tr(Text::RelayImportFile)).clicked() {
-                                            file_action = Some(FileAction::Import);
-                                        }
-                                    });
+                                    ui.separator();
+                                    ui.add_space(8.0);
+                                    ui.strong(tr(Text::RelayLocalSource));
+                                    ui.weak(tr(Text::RelayDropFile));
+                                    if ui.button(tr(Text::RelayImportFile)).clicked() {
+                                        file_action = Some(FileAction::Import);
+                                    }
                                 }
                                 RelayStep::Review => {
                                     ui.label(
@@ -206,43 +210,6 @@ impl HubApp {
                                     let mut reset_editor_widgets = false;
                                     if let Some(editor) = &mut state.editor {
                                         let mut changed = false;
-                                        ui.label(tr(Text::RelayEditorHelp));
-                                        for (label, value, id) in [
-                                            (
-                                                Text::RelayIncludeRegex,
-                                                &mut editor.options.include,
-                                                "relay-include",
-                                            ),
-                                            (
-                                                Text::RelayExcludeRegex,
-                                                &mut editor.options.exclude,
-                                                "relay-exclude",
-                                            ),
-                                            (
-                                                Text::RelayFindLiteral,
-                                                &mut editor.options.find,
-                                                "relay-find",
-                                            ),
-                                            (
-                                                Text::RelayReplaceLiteral,
-                                                &mut editor.options.replace,
-                                                "relay-replace",
-                                            ),
-                                        ] {
-                                            ui.horizontal(|ui| {
-                                                let label = ui.label(tr(label));
-                                                let mut output = egui::TextEdit::singleline(value)
-                                                    .id(egui::Id::unique(id))
-                                                    .char_limit(512)
-                                                    .show(ui);
-                                                let _ = (*output.response)
-                                                    .clone()
-                                                    .labelled_by(label.id);
-                                                changed |= output.response.changed();
-                                                output.state.clear_undoer();
-                                                output.state.store(ui.ctx(), output.response.id);
-                                            });
-                                        }
                                         changed |= ui
                                             .checkbox(
                                                 &mut editor.options.deduplicate,
@@ -255,6 +222,64 @@ impl HubApp {
                                         changed |= ui
                                             .checkbox(&mut state.sort, tr(Text::RelaySort))
                                             .changed();
+                                        let active_filters = [
+                                            &editor.options.include,
+                                            &editor.options.exclude,
+                                            &editor.options.find,
+                                            &editor.options.replace,
+                                        ]
+                                        .iter()
+                                        .filter(|value| !value.is_empty())
+                                        .count();
+                                        let filters_label = if active_filters > 0 {
+                                            format!("{} ({active_filters})", tr(Text::RelayFilters))
+                                        } else {
+                                            tr(Text::RelayFilters).to_owned()
+                                        };
+                                        egui::CollapsingHeader::new(filters_label)
+                                            .id_salt("relay-filters")
+                                            .show(ui, |ui| {
+                                                ui.weak(tr(Text::RelayEditorHelp));
+                                                for (label, value, id) in [
+                                                    (
+                                                        Text::RelayIncludeRegex,
+                                                        &mut editor.options.include,
+                                                        "relay-include",
+                                                    ),
+                                                    (
+                                                        Text::RelayExcludeRegex,
+                                                        &mut editor.options.exclude,
+                                                        "relay-exclude",
+                                                    ),
+                                                    (
+                                                        Text::RelayFindLiteral,
+                                                        &mut editor.options.find,
+                                                        "relay-find",
+                                                    ),
+                                                    (
+                                                        Text::RelayReplaceLiteral,
+                                                        &mut editor.options.replace,
+                                                        "relay-replace",
+                                                    ),
+                                                ] {
+                                                    ui.horizontal(|ui| {
+                                                        let label = ui.label(tr(label));
+                                                        let mut output =
+                                                            egui::TextEdit::singleline(value)
+                                                                .id(egui::Id::unique(id))
+                                                                .char_limit(512)
+                                                                .show(ui);
+                                                        let _ = (*output.response)
+                                                            .clone()
+                                                            .labelled_by(label.id);
+                                                        changed |= output.response.changed();
+                                                        output.state.clear_undoer();
+                                                        output
+                                                            .state
+                                                            .store(ui.ctx(), output.response.id);
+                                                    });
+                                                }
+                                            });
                                         ui.checkbox(&mut editor.reveal, tr(Text::RelayRevealNames));
                                         if editor.reveal {
                                             egui::ScrollArea::vertical()
@@ -339,7 +364,7 @@ impl HubApp {
                                     if reset_editor_widgets {
                                         state.clear_editor_widgets(ui.ctx());
                                     }
-                                    {
+                                    ui.collapsing(tr(Text::RelayAdvanced), |ui| {
                                         ui.weak(tr(Text::RelayStrictProbeHelp));
                                         ui.horizontal_wrapped(|ui| {
                                             ui.label(tr(if state.selected_engine.is_some() {
@@ -356,8 +381,6 @@ impl HubApp {
                                             }
                                         });
                                         ui.weak(tr(Text::RelayEnginePurpose));
-                                    }
-                                    ui.collapsing(tr(Text::RelayAdvanced), |ui| {
                                         ui.horizontal_wrapped(|ui| {
                                             ui.label(tr(Text::RelayConcurrency));
                                             ui.add(
@@ -378,6 +401,9 @@ impl HubApp {
                                     });
                                     ui.weak(tr(Text::RelayCleanHelp));
                                     ui.add_space(12.0);
+                                    if state.selected_engine.is_none() {
+                                        ui.weak(tr(Text::RelayEngineMissing));
+                                    }
                                     ui.horizontal_wrapped(|ui| {
                                         let ready = state.editor.is_some() && cooldown == 0;
                                         if ui
