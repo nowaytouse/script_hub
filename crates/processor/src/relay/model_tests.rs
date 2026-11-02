@@ -2,6 +2,189 @@ use super::*;
 use serde_json::json;
 
 #[test]
+fn processing_filters_edits_and_cascades_without_changing_health() {
+    let source = "A = http, a.invalid, 80\nB = http, b.invalid, 80, underlying-proxy=A\nC = http, c.invalid, 80\n";
+    let sub = Subscription::parse(source).unwrap();
+    let mut options = editor::Options::default();
+    options.nodes.push(editor::NodeEdit {
+        index: 0,
+        included: false,
+        name: None,
+    });
+    options.nodes.push(editor::NodeEdit {
+        index: 2,
+        included: true,
+        name: Some("renamed".into()),
+    });
+    let output = sub
+        .render_processed(&[Health::Unknown; 3], &unchanged(), &options)
+        .unwrap();
+    assert_eq!(output.retained, vec![2]);
+    assert_eq!(
+        Subscription::parse(&output.content).unwrap().nodes()[0].name(),
+        "renamed"
+    );
+    assert_eq!(output.excluded, 2);
+    options.nodes.clear();
+    options.find = "A".into();
+    options.replace = "New".into();
+    let output = sub
+        .render_processed(&[Health::Unknown; 3], &unchanged(), &options)
+        .unwrap();
+    assert_eq!(
+        Subscription::parse(&output.content).unwrap().nodes()[1]
+            .dependency
+            .as_ref()
+            .map(|name| name.as_str()),
+        Some("New")
+    );
+}
+
+#[test]
+fn processing_deduplicates_full_identity_and_rejects_bad_edits() {
+    let source = r#"[{"name":"A","type":"trojan","server":"a.invalid","port":443,"password":"one"},{"name":"B","type":"trojan","server":"a.invalid","port":443,"password":"one"},{"name":"C","type":"trojan","server":"a.invalid","port":443,"password":"two"}]"#;
+    let sub = Subscription::parse(source).unwrap();
+    let mut options = editor::Options::default();
+    options.deduplicate = true;
+    let output = sub
+        .render_processed(&[Health::Unknown; 3], &unchanged(), &options)
+        .unwrap();
+    assert_eq!(output.retained, vec![0, 2]);
+    assert_eq!(output.duplicates, 1);
+    options.deduplicate = false;
+    options.nodes.push(editor::NodeEdit {
+        index: 1,
+        included: true,
+        name: Some("A".into()),
+    });
+    assert_eq!(
+        sub.render_processed(&[Health::Unknown; 3], &unchanged(), &options)
+            .err(),
+        Some(ModelError::InvalidEdit)
+    );
+    options.nodes.clear();
+    options.include = "[".into();
+    assert_eq!(
+        sub.render_processed(&[Health::Unknown; 3], &unchanged(), &options)
+            .err(),
+        Some(ModelError::InvalidEdit)
+    );
+}
+
+#[test]
+fn processing_noop_and_empty_are_explicit() {
+    let source = "A = http, a.invalid, 80\n";
+    let sub = Subscription::parse(source).unwrap();
+    let mut options = editor::Options::default();
+    assert_eq!(
+        &*sub
+            .render_processed(&[Health::Unknown], &unchanged(), &options)
+            .unwrap()
+            .content,
+        source
+    );
+    options.exclude = ".*".into();
+    let result = sub
+        .render_processed(&[Health::Unknown], &unchanged(), &options)
+        .unwrap();
+    assert!(result.content.is_empty());
+    assert!(result.retained.is_empty());
+}
+
+#[test]
+fn removed_or_overridden_names_do_not_expand_an_unused_bulk_replacement() {
+    let source = format!(
+        "{} = http, a.invalid, 80\nB = http, b.invalid, 80\n",
+        "a".repeat(500)
+    );
+    let sub = Subscription::parse(&source).unwrap();
+    let mut edits = editor::Options::default();
+    edits.find = "a".into();
+    edits.replace = "aa".into();
+    edits.nodes.push(editor::NodeEdit {
+        index: 0,
+        included: false,
+        name: None,
+    });
+    assert_eq!(
+        sub.render_processed(&[Health::Unknown; 2], &unchanged(), &edits)
+            .unwrap()
+            .retained,
+        [1]
+    );
+    edits.nodes.clear();
+    edits.nodes.push(editor::NodeEdit {
+        index: 0,
+        included: true,
+        name: Some("short".into()),
+    });
+    let output = sub
+        .render_processed(&[Health::Unknown; 2], &unchanged(), &edits)
+        .unwrap();
+    assert_eq!(
+        Subscription::parse(&output.content).unwrap().nodes()[0].name(),
+        "short"
+    );
+}
+
+#[test]
+fn probe_projection_enforces_tls_without_mutating_sources() {
+    for source in [
+        "A = trojan, node.invalid, 443, password=synthetic, sni=identity.invalid, alpn=h2, skip-cert-verify=true\n",
+        r#"{"outbounds":[{"type":"trojan","tag":"A","server":"node.invalid","server_port":443,"password":"synthetic","transport":{"type":"ws","path":"/synthetic"},"tls":{"enabled":true,"server_name":"identity.invalid","alpn":["h2"],"insecure":true,"utls":{"enabled":true,"fingerprint":"chrome"}}}]}"#,
+        "proxies:\n - {name: A, type: trojan, server: node.invalid, port: 443, password: synthetic, sni: identity.invalid, alpn: [h2], skip-cert-verify: true}\n",
+        "trojan://synthetic@node.invalid:443?sni=identity.invalid&alpn=h2&allowInsecure=1#A\n",
+    ] {
+        let subscription = Subscription::parse(source).unwrap();
+        let node = &subscription.nodes()[0];
+        assert_eq!(
+            node.to_sing_box(false).err(),
+            Some(ModelError::SecurityBlocked)
+        );
+        let (strict, changed) = node.to_probe_sing_box(false).unwrap();
+        assert!(changed);
+        assert_eq!(strict["tls"]["enabled"], true);
+        assert_eq!(strict["tls"]["insecure"], false);
+        assert_eq!(strict["tls"]["server_name"], "identity.invalid");
+        assert_eq!(strict["tls"]["alpn"], json!(["h2"]));
+        let (compatible, changed) = node.to_probe_sing_box(true).unwrap();
+        assert!(!changed);
+        assert_eq!(compatible["tls"]["insecure"], true);
+        let mut expected = compatible.clone();
+        expected["tls"]["insecure"] = false.into();
+        assert_eq!(strict, expected);
+        assert_eq!(
+            node.to_sing_box(false).err(),
+            Some(ModelError::SecurityBlocked)
+        );
+        assert_eq!(node.to_sing_box(true).unwrap(), compatible);
+        let rendered = subscription
+            .render(&[Health::Unknown], &unchanged())
+            .unwrap();
+        assert!(semantic_equal(source, &rendered));
+    }
+}
+
+#[test]
+fn probe_projection_preserves_errors_and_secure_outbounds() {
+    let secure =
+        Subscription::parse("A = trojan, node.invalid, 443, password=synthetic\n").unwrap();
+    let (outbound, changed) = secure.nodes()[0].to_probe_sing_box(false).unwrap();
+    assert!(!changed);
+    assert_eq!(outbound, secure.nodes()[0].to_sing_box(false).unwrap());
+    let unsupported = Subscription::parse("A = trojan, node.invalid, 443, password=synthetic, skip-cert-verify=true, future-option=value\n").unwrap();
+    assert_eq!(
+        unsupported.nodes()[0].to_probe_sing_box(false).err(),
+        Some(ModelError::Unsupported)
+    );
+    let disabled = Subscription::parse(r#"{"outbounds":[{"type":"trojan","tag":"A","server":"node.invalid","server_port":443,"password":"synthetic","tls":{"enabled":false,"insecure":true}}]}"#).unwrap();
+    assert_eq!(
+        disabled.nodes()[0].to_probe_sing_box(false).err(),
+        Some(ModelError::SecurityBlocked)
+    );
+}
+
+#[test]
 fn substore_dependency_aliases_rename_and_cascade() {
     for key in ["dialer-proxy", "detour", "underlying-proxy"] {
         let source = format!(
@@ -116,6 +299,69 @@ fn unchanged() -> EnhanceOptions {
     EnhanceOptions {
         rename: false,
         sort: false,
+    }
+}
+
+#[test]
+fn strict_probe_does_not_skip_a_batch_just_because_sources_request_bypass() {
+    let source = (0..90)
+        .map(|index| {
+            if index < 77 {
+                format!("trojan://synthetic@n{index}.invalid:443?insecure=1#node{index}\n")
+            } else {
+                format!("future://synthetic@n{index}.invalid:443#node{index}\n")
+            }
+        })
+        .collect::<String>();
+    let sub = Subscription::parse(&source).unwrap();
+    let projected = sub
+        .nodes()
+        .iter()
+        .filter_map(|node| node.to_probe_sing_box(false).ok())
+        .collect::<Vec<_>>();
+    assert_eq!(projected.len(), 77);
+    assert!(
+        projected
+            .iter()
+            .all(|(value, strict)| *strict && value["tls"]["insecure"] == false)
+    );
+    assert_eq!(
+        &*sub.render(&[Health::Unknown; 90], &unchanged()).unwrap(),
+        &source
+    );
+}
+
+#[test]
+fn anytls_udp_toggle_does_not_prevent_a_tcp_only_probe() {
+    for udp in ["", ", udp: false", ", udp: true"] {
+        let source = format!(
+            "proxies:\n - {{name: A, type: anytls, server: node.invalid, port: 443, password: synthetic, skip-cert-verify: true{udp}}}"
+        );
+        let sub = Subscription::parse(&source).unwrap();
+        let (strict, changed) = sub.nodes()[0].to_probe_sing_box(false).unwrap();
+        assert!(changed);
+        assert_eq!(strict["tls"]["insecure"], false);
+        let (compatible, changed) = sub.nodes()[0].to_probe_sing_box(true).unwrap();
+        assert!(!changed);
+        assert_eq!(compatible["tls"]["insecure"], true);
+        assert_eq!(
+            &*sub.render(&[Health::Unknown], &unchanged()).unwrap(),
+            &source
+        );
+    }
+    for fields in [
+        ", udp: invalid",
+        ", unknown-option: true",
+        ", dialer-proxy: other",
+    ] {
+        let source = format!(
+            "proxies:\n - {{name: A, type: anytls, server: node.invalid, port: 443, password: synthetic{fields}}}"
+        );
+        assert!(
+            Subscription::parse(&source).unwrap().nodes()[0]
+                .to_probe_sing_box(false)
+                .is_err()
+        );
     }
 }
 

@@ -114,6 +114,7 @@ impl HubApp {
                                         state.local_content = None;
                                         state.local_summary = None;
                                         state.source_file.zeroize();
+                                        state.clear_editor_widgets(ui.ctx());
                                         state.input_changed();
                                     }
                                     ui.weak(tr(Text::RelaySourceHelp));
@@ -134,17 +135,28 @@ impl HubApp {
                                                 .clicked()
                                             {
                                                 state.source_file = zeroize::Zeroizing::new(name);
+                                                state.local_content = None;
+                                                state.local_summary = None;
+                                                state.clear_editor_widgets(ui.ctx());
+                                                state.input_changed();
                                                 state.error = None;
                                             }
                                         }
                                     }
                                     ui.collapsing(tr(Text::RelaySourceOptions), |ui| {
+                                        let previous_file = state.source_file.clone();
                                         visible_field(
                                             ui,
                                             &mut state.source_file,
                                             SECRET_IDS[2],
                                             tr(Text::RelaySourceFile),
                                         );
+                                        if state.source_file != previous_file {
+                                            state.local_content = None;
+                                            state.local_summary = None;
+                                            state.clear_editor_widgets(ui.ctx());
+                                            state.input_changed();
+                                        }
                                         if secret_field(
                                             ui,
                                             &mut state.token,
@@ -191,8 +203,144 @@ impl HubApp {
                                         ));
                                     }
                                     ui.add_space(12.0);
-                                    ui.checkbox(&mut state.test_nodes, tr(Text::RelayTestNodes));
-                                    if state.test_nodes {
+                                    let mut reset_editor_widgets = false;
+                                    if let Some(editor) = &mut state.editor {
+                                        let mut changed = false;
+                                        ui.label(tr(Text::RelayEditorHelp));
+                                        for (label, value, id) in [
+                                            (
+                                                Text::RelayIncludeRegex,
+                                                &mut editor.options.include,
+                                                "relay-include",
+                                            ),
+                                            (
+                                                Text::RelayExcludeRegex,
+                                                &mut editor.options.exclude,
+                                                "relay-exclude",
+                                            ),
+                                            (
+                                                Text::RelayFindLiteral,
+                                                &mut editor.options.find,
+                                                "relay-find",
+                                            ),
+                                            (
+                                                Text::RelayReplaceLiteral,
+                                                &mut editor.options.replace,
+                                                "relay-replace",
+                                            ),
+                                        ] {
+                                            ui.horizontal(|ui| {
+                                                let label = ui.label(tr(label));
+                                                let mut output = egui::TextEdit::singleline(value)
+                                                    .id(egui::Id::unique(id))
+                                                    .char_limit(512)
+                                                    .show(ui);
+                                                let _ = (*output.response)
+                                                    .clone()
+                                                    .labelled_by(label.id);
+                                                changed |= output.response.changed();
+                                                output.state.clear_undoer();
+                                                output.state.store(ui.ctx(), output.response.id);
+                                            });
+                                        }
+                                        changed |= ui
+                                            .checkbox(
+                                                &mut editor.options.deduplicate,
+                                                tr(Text::RelayDeduplicate),
+                                            )
+                                            .changed();
+                                        changed |= ui
+                                            .checkbox(&mut state.rename, tr(Text::RelayRename))
+                                            .changed();
+                                        changed |= ui
+                                            .checkbox(&mut state.sort, tr(Text::RelaySort))
+                                            .changed();
+                                        ui.checkbox(&mut editor.reveal, tr(Text::RelayRevealNames));
+                                        if editor.reveal {
+                                            egui::ScrollArea::vertical()
+                                                .id_salt("relay-node-list")
+                                                .max_height(260.0)
+                                                .show_rows(
+                                                    ui,
+                                                    30.0,
+                                                    editor.rows.len(),
+                                                    |ui, range| {
+                                                        for row in &mut editor.rows[range] {
+                                                            ui.horizontal(|ui| {
+                                                                let label = ui.label(format!(
+                                                                    "#{} · {}",
+                                                                    row.index + 1,
+                                                                    row.protocol.as_str()
+                                                                ));
+                                                                changed |= ui
+                                                                    .checkbox(
+                                                                        &mut row.included,
+                                                                        tr(Text::RelayNodeEnabled),
+                                                                    )
+                                                                    .changed();
+                                                                let mut output =
+                                                                    egui::TextEdit::singleline(
+                                                                        &mut *row.name,
+                                                                    )
+                                                                    .id(egui::Id::unique((
+                                                                        "relay-node-name",
+                                                                        row.index,
+                                                                    )))
+                                                                    .char_limit(512)
+                                                                    .show(ui);
+                                                                let _ = (*output.response)
+                                                                    .clone()
+                                                                    .labelled_by(label.id);
+                                                                changed |=
+                                                                    output.response.changed();
+                                                                output.state.clear_undoer();
+                                                                output.state.store(
+                                                                    ui.ctx(),
+                                                                    output.response.id,
+                                                                );
+                                                            });
+                                                        }
+                                                    },
+                                                );
+                                            if state.result.is_some() {
+                                                ui.collapsing(
+                                                    tr(Text::RelayProcessedNames),
+                                                    |ui| {
+                                                        egui::ScrollArea::vertical()
+                                                            .id_salt("relay-processed-names")
+                                                            .max_height(180.0)
+                                                            .show_rows(
+                                                                ui,
+                                                                24.0,
+                                                                state.preview_names.len(),
+                                                                |ui, range| {
+                                                                    for name in
+                                                                        &state.preview_names[range]
+                                                                    {
+                                                                        ui.label(name.as_str());
+                                                                    }
+                                                                },
+                                                            );
+                                                    },
+                                                );
+                                            }
+                                        }
+                                        if ui.button(tr(Text::RelayResetOriginal)).clicked() {
+                                            editor.reset();
+                                            reset_editor_widgets = true;
+                                            state.rename = false;
+                                            state.sort = false;
+                                            changed = true;
+                                        }
+                                        if changed {
+                                            state.invalidate_result();
+                                        }
+                                    }
+                                    if reset_editor_widgets {
+                                        state.clear_editor_widgets(ui.ctx());
+                                    }
+                                    {
+                                        ui.weak(tr(Text::RelayStrictProbeHelp));
                                         ui.horizontal_wrapped(|ui| {
                                             ui.label(tr(if state.selected_engine.is_some() {
                                                 Text::RelayEngineReady
@@ -208,12 +356,8 @@ impl HubApp {
                                             }
                                         });
                                         ui.weak(tr(Text::RelayEnginePurpose));
-                                    } else {
-                                        ui.weak(tr(Text::RelayFormatOnly));
                                     }
                                     ui.collapsing(tr(Text::RelayAdvanced), |ui| {
-                                        ui.checkbox(&mut state.rename, tr(Text::RelayRename));
-                                        ui.checkbox(&mut state.sort, tr(Text::RelaySort));
                                         ui.horizontal_wrapped(|ui| {
                                             ui.label(tr(Text::RelayConcurrency));
                                             ui.add(
@@ -235,26 +379,25 @@ impl HubApp {
                                     ui.weak(tr(Text::RelayCleanHelp));
                                     ui.add_space(12.0);
                                     ui.horizontal_wrapped(|ui| {
-                                        let ready = state
-                                            .validate(RunMode::Preview, state.engine_path())
-                                            .is_ok()
-                                            && (!state.test_nodes
-                                                || state.selected_engine.is_some())
-                                            && cooldown == 0;
+                                        let ready = state.editor.is_some() && cooldown == 0;
                                         if ui
                                             .add_enabled(
                                                 ready,
-                                                primary_button(
-                                                    colors,
-                                                    tr(if state.test_nodes {
-                                                        Text::RelayPreview
-                                                    } else {
-                                                        Text::RelayPrepareOnly
-                                                    }),
-                                                ),
+                                                egui::Button::new(tr(Text::RelayPrepareOnly)),
                                             )
                                             .clicked()
                                         {
+                                            state.test_nodes = false;
+                                            action = Some(RunMode::Preview);
+                                        }
+                                        if ui
+                                            .add_enabled(
+                                                ready && state.selected_engine.is_some(),
+                                                primary_button(colors, tr(Text::RelayPreview)),
+                                            )
+                                            .clicked()
+                                        {
+                                            state.test_nodes = true;
                                             action = Some(RunMode::Preview);
                                         }
                                         if ui
@@ -285,10 +428,14 @@ impl HubApp {
                                         &mut state.allow_plaintext,
                                         tr(Text::VaultPlaintextConsent),
                                     );
+                                    let has_content = state
+                                        .result
+                                        .as_ref()
+                                        .is_some_and(|result| !result.content.is_empty());
                                     ui.horizontal_wrapped(|ui| {
                                         if ui
                                             .add_enabled(
-                                                state.allow_plaintext && state.result.is_some(),
+                                                state.allow_plaintext && has_content,
                                                 egui::Button::new(tr(Text::RelayCopy)),
                                             )
                                             .clicked()
@@ -301,7 +448,7 @@ impl HubApp {
                                         ] {
                                             if ui
                                                 .add_enabled(
-                                                    state.allow_plaintext && state.result.is_some(),
+                                                    state.allow_plaintext && has_content,
                                                     egui::Button::new(tr(label)),
                                                 )
                                                 .clicked()
@@ -382,9 +529,7 @@ impl HubApp {
                                     }
                                     if ui
                                         .add_enabled(
-                                            publish.is_ok()
-                                                && cooldown == 0
-                                                && state.result.is_some(),
+                                            publish.is_ok() && cooldown == 0 && has_content,
                                             primary_button(colors, tr(Text::RelayPublish)),
                                         )
                                         .clicked()
@@ -429,6 +574,10 @@ impl HubApp {
             });
         });
         if let Some(mode) = action {
+            if mode == RunMode::Import {
+                self.relay.clear_editor_widgets(ui.ctx());
+                self.relay.input_changed();
+            }
             self.start_relay(mode);
         } else if let Some(action) = file_action {
             self.relay
@@ -453,12 +602,33 @@ fn summary(
     }
     ui.horizontal_wrapped(|ui| {
         ui.label(format!("{}: {}", tr(Text::RelayTotal), result.total));
+        ui.label(format!(
+            "{}: {}",
+            tr(Text::RelayProcessed),
+            result.processed
+        ));
+        ui.label(format!("{}: {}", tr(Text::RelayExcluded), result.excluded));
+        ui.label(format!(
+            "{}: {}",
+            tr(Text::RelayDuplicates),
+            result.duplicates
+        ));
+        if result.duplicate_skipped > 0 {
+            ui.label(format!(
+                "{}: {}",
+                tr(Text::RelayDuplicateSkipped),
+                result.duplicate_skipped
+            ));
+        }
         if result.tested {
             ui.label(format!("{}: {}", tr(Text::RelayHealthy), result.healthy));
             ui.label(format!("{}: {}", tr(Text::RelayRemoved), result.removed));
         }
     });
     if result.tested {
+        if result.healthy == 0 {
+            ui.label(tr(Text::RelayNoHealthyHelp));
+        }
         ui.collapsing(tr(Text::RelayResultDetails), |ui| {
             for (key, count) in [
                 (Text::RelayFailed, result.failed),
@@ -468,8 +638,105 @@ fn summary(
             ] {
                 ui.label(format!("{}: {count}", tr(key)));
             }
+            use crate::relay::engine::ProbeReason;
+            let strict_probed = result
+                .details
+                .iter()
+                .filter(|detail| detail.strict_tls)
+                .count();
+            if strict_probed > 0 {
+                let verified = result
+                    .details
+                    .iter()
+                    .filter(|detail| detail.strict_tls && detail.reason == ProbeReason::Verified)
+                    .count();
+                ui.label(format!(
+                    "{}: {strict_probed} · {}: {verified}",
+                    tr(Text::RelayStrictProbed),
+                    tr(Text::RelayStrictVerified)
+                ));
+            }
+            for (reason, key) in [
+                (ProbeReason::Verified, Text::RelayReasonVerified),
+                (ProbeReason::Unsupported, Text::RelayReasonUnsupported),
+                (ProbeReason::UnsafeAddress, Text::RelayReasonUnsafeAddress),
+                (
+                    ProbeReason::ExternalResource,
+                    Text::RelayReasonExternalResource,
+                ),
+                (
+                    ProbeReason::EngineConfigRejected,
+                    Text::RelayReasonEngineConfigRejected,
+                ),
+                (
+                    ProbeReason::EngineConfigTimeout,
+                    Text::RelayReasonEngineConfigTimeout,
+                ),
+                (ProbeReason::EngineNotReady, Text::RelayReasonEngineNotReady),
+                (ProbeReason::EngineExited, Text::RelayReasonEngineExited),
+                (
+                    ProbeReason::ConnectionFailed,
+                    Text::RelayReasonConnectionFailed,
+                ),
+                (ProbeReason::Timeout, Text::RelayReasonTimeout),
+                (ProbeReason::TunnelRejected, Text::RelayReasonTunnelRejected),
+                (ProbeReason::HttpResponse, Text::RelayReasonHttpResponse),
+                (ProbeReason::TlsFailure, Text::RelayReasonTlsFailure),
+                (ProbeReason::Inconclusive, Text::RelayReasonInconclusive),
+                (
+                    ProbeReason::StrictTlsUnverified,
+                    Text::RelayReasonStrictTlsUnverified,
+                ),
+                (
+                    ProbeReason::BaselineUnstable,
+                    Text::RelayReasonBaselineUnstable,
+                ),
+                (ProbeReason::NotTested, Text::RelayReasonNotTested),
+            ] {
+                let count = result
+                    .details
+                    .iter()
+                    .filter(|detail| detail.reason == reason)
+                    .count();
+                if count > 0 {
+                    ui.label(format!("{}: {count}", tr(key)));
+                }
+            }
+            ui.weak(tr(Text::RelayLatencyHelp));
+            for (target, name) in [(0, "Google 204"), (1, "Cloudflare 204")] {
+                if let Some((minimum, median)) = latency_stats(&result.details, target) {
+                    ui.label(format!(
+                        "{name}: {} {minimum} ms · {} {median} ms",
+                        tr(Text::RelayMinimum),
+                        tr(Text::RelayMedian)
+                    ));
+                }
+            }
         });
     }
+}
+
+fn latency_stats(
+    details: &[crate::relay::engine::ProbeDetail],
+    target: usize,
+) -> Option<(u64, u64)> {
+    let mut values: Vec<_> = details
+        .iter()
+        .filter(|detail| {
+            detail.reason == crate::relay::engine::ProbeReason::Verified
+                && detail.target == Some(target)
+        })
+        .filter_map(|detail| detail.latency_ms)
+        .collect();
+    values.sort_unstable();
+    let minimum = *values.first()?;
+    let middle = values.len() / 2;
+    let median = if values.len() % 2 == 0 {
+        values[middle - 1] + (values[middle] - values[middle - 1]) / 2
+    } else {
+        values[middle]
+    };
+    Some((minimum, median))
 }
 
 fn visible_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str) {
@@ -512,5 +779,31 @@ fn secret_field(
 fn length_counter(ui: &mut egui::Ui, count: usize, error: egui::Color32) {
     if count > 64 {
         ui.colored_label(error, format!("{count} / 64"));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::latency_stats;
+    use crate::relay::engine::{ProbeDetail, ProbeReason};
+
+    #[test]
+    fn latency_statistics_keep_targets_and_unverified_results_separate() {
+        let detail = |reason, target, latency_ms| ProbeDetail {
+            reason,
+            target,
+            latency_ms,
+            strict_tls: true,
+        };
+        let details = [
+            detail(ProbeReason::Verified, Some(0), Some(10)),
+            detail(ProbeReason::Verified, Some(0), Some(30)),
+            detail(ProbeReason::Verified, Some(1), Some(100)),
+            detail(ProbeReason::Timeout, Some(0), Some(1)),
+            detail(ProbeReason::Verified, Some(0), None),
+        ];
+        assert_eq!(latency_stats(&details, 0), Some((10, 20)));
+        assert_eq!(latency_stats(&details, 1), Some((100, 100)));
+        assert_eq!(latency_stats(&details, 2), None);
     }
 }

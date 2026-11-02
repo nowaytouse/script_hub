@@ -17,6 +17,11 @@ use super::model::{Health, ModelError, Subscription};
 use serde_json::{Value, json};
 use zeroize::{Zeroize, Zeroizing};
 
+mod report;
+mod transport;
+use report::Outcome;
+pub use report::{ProbeDetail, ProbeReason};
+
 const TARGETS: [&str; 2] = [
     "https://www.gstatic.com/generate_204",
     "https://cp.cloudflare.com/generate_204",
@@ -60,11 +65,42 @@ impl std::error::Error for EngineError {}
 pub struct ProbeBatch {
     pub health: Vec<Health>,
     pub baseline_valid: usize,
+    pub details: Vec<ProbeDetail>,
+}
+
+#[cfg(test)]
+impl ProbeBatch {
+    pub(crate) fn from_health(health: Vec<Health>, baseline_valid: usize) -> Self {
+        let details = health
+            .iter()
+            .map(|health| {
+                Outcome::new(
+                    *health,
+                    match health {
+                        Health::Healthy { .. } => ProbeReason::Verified,
+                        Health::Failed => ProbeReason::ConnectionFailed,
+                        Health::Unknown => ProbeReason::Inconclusive,
+                        Health::SecurityBlocked => ProbeReason::StrictTlsUnverified,
+                    },
+                )
+                .detail
+            })
+            .collect();
+        Self {
+            health,
+            baseline_valid,
+            details,
+        }
+    }
 }
 
 enum Attempt {
     Success(u64),
     Transport,
+    Connection,
+    Rejected,
+    Tls,
+    Http,
     Policy,
 }
 
@@ -92,7 +128,7 @@ fn classify(baseline: [bool; 2], attempts: &[Vec<Attempt>], alive: bool) -> Heal
             group.len() >= 2
                 && group
                     .iter()
-                    .all(|attempt| matches!(attempt, Attempt::Transport))
+                    .all(|attempt| matches!(attempt, Attempt::Transport | Attempt::Connection))
         })
     {
         Health::Failed
@@ -232,6 +268,14 @@ struct Process {
     writer: Option<JoinHandle<std::io::Result<()>>>,
     finished: bool,
 }
+
+#[derive(Debug, Eq, PartialEq)]
+enum ConfigStatus {
+    Accepted,
+    Rejected,
+    TimedOut,
+}
+
 impl Process {
     fn spawn(engine: &Path, action: &str, config: &Value) -> Result<Self, EngineError> {
         let encoded =
@@ -301,7 +345,7 @@ impl Process {
         self.finished = true;
         Ok(())
     }
-    fn checked(&mut self, cancel: &AtomicBool) -> Result<bool, EngineError> {
+    fn checked(&mut self, cancel: &AtomicBool) -> Result<ConfigStatus, EngineError> {
         let deadline = Instant::now() + Duration::from_secs(5);
         loop {
             ensure_active(cancel)?;
@@ -311,11 +355,15 @@ impl Process {
                 .map_err(|_| EngineError::Infrastructure)?
             {
                 self.finish()?;
-                return Ok(status.success());
+                return Ok(if status.success() {
+                    ConfigStatus::Accepted
+                } else {
+                    ConfigStatus::Rejected
+                });
             }
             if Instant::now() >= deadline {
                 self.finish()?;
-                return Ok(false);
+                return Ok(ConfigStatus::TimedOut);
             }
             thread::sleep(Duration::from_millis(20));
         }
@@ -439,6 +487,8 @@ fn agent(proxy: Option<ureq::Proxy>, timeout: Duration) -> ureq::Agent {
     ureq::Agent::config_builder()
         .timeout_global(Some(timeout))
         .max_redirects(0)
+        .max_redirects_will_error(false)
+        .max_idle_connections(0)
         .http_status_as_error(false)
         .proxy(proxy)
         .build()
@@ -447,21 +497,29 @@ fn agent(proxy: Option<ureq::Proxy>, timeout: Duration) -> ureq::Agent {
 
 fn request(client: &ureq::Agent, url: &str) -> Attempt {
     let started = Instant::now();
-    match client.get(url).config().https_only(true).build().call() {
+    match client.head(url).config().https_only(true).build().call() {
         Ok(response) if response.status().as_u16() == 204 => {
             Attempt::Success(started.elapsed().as_millis().min(u64::MAX as u128) as u64)
         }
-        Ok(_) => Attempt::Policy,
+        Ok(_) => Attempt::Http,
         Err(error) => error_attempt(&error),
     }
 }
 
 fn error_attempt(error: &ureq::Error) -> Attempt {
-    // SOCKS folds remote rejection and local protocol errors into ambiguous IO errors.
+    if let Some(failure) = transport::failure(error) {
+        return match failure {
+            transport::TunnelFailure::Remote(3..=6) => Attempt::Connection,
+            transport::TunnelFailure::Remote(1 | 2) => Attempt::Rejected,
+            _ => Attempt::Policy,
+        };
+    }
     if matches!(error, ureq::Error::Timeout(_))
         || matches!(error, ureq::Error::Io(error) if error.kind() == std::io::ErrorKind::TimedOut)
     {
         Attempt::Transport
+    } else if matches!(error, ureq::Error::Tls(_) | ureq::Error::Rustls(_)) {
+        Attempt::Tls
     } else {
         Attempt::Policy
     }
@@ -522,8 +580,18 @@ fn probe_one(
     options: &ProbeOptions,
     valid: [bool; 2],
     cancel: &AtomicBool,
-) -> Result<Health, EngineError> {
+) -> Result<Outcome, EngineError> {
     ensure_active(cancel)?;
+    if outbound
+        .get("server")
+        .and_then(Value::as_str)
+        .is_none_or(unsafe_address)
+    {
+        return Ok(Outcome::new(Health::Unknown, ProbeReason::UnsafeAddress));
+    }
+    if contains_external_resource(outbound) {
+        return Ok(Outcome::new(Health::Unknown, ProbeReason::ExternalResource));
+    }
     let port = TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0))
         .and_then(|listener| listener.local_addr())
         .map_err(|_| EngineError::Infrastructure)?
@@ -531,27 +599,36 @@ fn probe_one(
     let user = credential()?;
     let password = credential()?;
     let Ok(config) = isolated_config(outbound, port, &user, &password, options.doh) else {
-        return Ok(Health::Unknown);
+        return Ok(Outcome::new(Health::Unknown, ProbeReason::Unsupported));
     };
     let config = SecretJson(config);
     let mut checker = Process::spawn(engine, "check", &config.0)?;
-    if !checker.checked(cancel)? {
-        return Ok(Health::Unknown);
+    match checker.checked(cancel)? {
+        ConfigStatus::Accepted => {}
+        ConfigStatus::Rejected => {
+            return Ok(Outcome::new(
+                Health::Unknown,
+                ProbeReason::EngineConfigRejected,
+            ));
+        }
+        ConfigStatus::TimedOut => {
+            return Ok(Outcome::new(
+                Health::Unknown,
+                ProbeReason::EngineConfigTimeout,
+            ));
+        }
     }
     let mut process = Process::spawn(engine, "run", &config.0)?;
     if !process.ready(port, &user, &password, cancel)? {
+        let reason = if process.alive()? {
+            ProbeReason::EngineNotReady
+        } else {
+            ProbeReason::EngineExited
+        };
         process.finish()?;
-        return Ok(Health::Unknown);
+        return Ok(Outcome::new(Health::Unknown, reason));
     }
-    let proxy = ureq::Proxy::builder(ureq::ProxyProtocol::Socks5h)
-        .host("127.0.0.1")
-        .port(port)
-        .username(user.as_str())
-        .password(password.as_str())
-        .resolve_target(false)
-        .build()
-        .map_err(|_| EngineError::Infrastructure)?;
-    let client = agent(Some(proxy), options.timeout);
+    let client = transport::agent(port, &user, &password, options.timeout)?;
     let result = probe_targets(
         valid,
         cancel,
@@ -567,27 +644,79 @@ fn probe_targets(
     cancel: &AtomicBool,
     mut alive: impl FnMut() -> Result<bool, EngineError>,
     mut fetch: impl FnMut(&str) -> Attempt,
-) -> Result<Health, EngineError> {
+) -> Result<Outcome, EngineError> {
     let mut attempts = [Vec::new(), Vec::new()];
-    for (index, target) in TARGETS.iter().enumerate() {
-        for _ in 0..2 {
+    let order = if !valid[0] && valid[1] {
+        [1, 0]
+    } else {
+        [0, 1]
+    };
+    for _ in 0..2 {
+        for index in order {
             ensure_active(cancel)?;
             if !alive()? {
-                return Ok(Health::Unknown);
+                return Ok(Outcome::new(Health::Unknown, ProbeReason::EngineExited));
             }
-            let attempt = fetch(target);
+            let attempt = fetch(TARGETS[index]);
             ensure_active(cancel)?;
             let success = matches!(attempt, Attempt::Success(_));
             attempts[index].push(attempt);
             if success {
-                return Ok(classify(valid, &attempts, alive()?));
+                let live = alive()?;
+                let mut result = Outcome::new(
+                    classify(valid, &attempts, live),
+                    if live {
+                        ProbeReason::Verified
+                    } else {
+                        ProbeReason::EngineExited
+                    },
+                );
+                if live {
+                    result.detail.target = Some(index);
+                }
+                return Ok(result);
             }
         }
     }
-    Ok(classify(valid, &attempts, alive()?))
+    let live = alive()?;
+    let health = classify(valid, &attempts, live);
+    let reason = if !live {
+        ProbeReason::EngineExited
+    } else if attempts
+        .iter()
+        .flatten()
+        .any(|a| matches!(a, Attempt::Http))
+    {
+        ProbeReason::HttpResponse
+    } else if attempts.iter().flatten().any(|a| matches!(a, Attempt::Tls)) {
+        ProbeReason::TlsFailure
+    } else if attempts
+        .iter()
+        .flatten()
+        .any(|a| matches!(a, Attempt::Rejected))
+    {
+        ProbeReason::TunnelRejected
+    } else if attempts
+        .iter()
+        .flatten()
+        .any(|a| matches!(a, Attempt::Policy))
+    {
+        ProbeReason::Inconclusive
+    } else if !valid.iter().all(|v| *v) {
+        ProbeReason::BaselineUnstable
+    } else if attempts
+        .iter()
+        .flatten()
+        .any(|a| matches!(a, Attempt::Connection))
+    {
+        ProbeReason::ConnectionFailed
+    } else {
+        ProbeReason::Timeout
+    };
+    Ok(Outcome::new(health, reason))
 }
 
-struct Measurements(Mutex<HashMap<String, Health>>);
+struct Measurements(Mutex<HashMap<String, Outcome>>);
 fn measurement_key(outbound: &Value) -> Result<Zeroizing<String>, EngineError> {
     let mut identity = SecretJson(outbound.clone());
     identity
@@ -674,11 +803,12 @@ pub fn check_nodes(
     let hosts = Mutex::new(HashSet::new());
     let measurements = Measurements(Mutex::new(HashMap::new()));
     let mut health = vec![Health::Unknown; count];
+    let mut details = vec![ProbeDetail::new(ProbeReason::Inconclusive); count];
     let result = thread::scope(|scope| -> Result<(), EngineError> {
         let mut handles = Vec::new();
         for _ in 0..options.concurrency.min(count) {
             handles.push(
-                scope.spawn(|| -> Result<Vec<(usize, Health)>, EngineError> {
+                scope.spawn(|| -> Result<Vec<(usize, Outcome)>, EngineError> {
                     let result = (|| {
                         let mut outcomes = Vec::new();
                         loop {
@@ -690,10 +820,13 @@ pub fn check_nodes(
                             let Some(node) = subscription.nodes().get(index) else {
                                 break;
                             };
-                            let outcome = match node.to_sing_box(options.compatibility) {
-                                Err(ModelError::SecurityBlocked) => Health::SecurityBlocked,
-                                Err(_) => Health::Unknown,
-                                Ok(outbound) => {
+                            let outcome = match node.to_probe_sing_box(options.compatibility) {
+                                Err(ModelError::SecurityBlocked) => Outcome::new(
+                                    Health::SecurityBlocked,
+                                    ProbeReason::StrictTlsUnverified,
+                                ),
+                                Err(_) => Outcome::new(Health::Unknown, ProbeReason::Unsupported),
+                                Ok((outbound, strict_tls)) => {
                                     let outbound = SecretJson(outbound);
                                     let key = measurement_key(&outbound.0)?;
                                     let permit = loop {
@@ -733,7 +866,7 @@ pub fn check_nodes(
                                         }
                                     };
                                     drop(permit);
-                                    value
+                                    value.strict_tls(strict_tls)
                                 }
                             };
                             outcomes.push((index, outcome));
@@ -753,7 +886,8 @@ pub fn check_nodes(
             match handle.join() {
                 Ok(Ok(outcomes)) => {
                     for (index, outcome) in outcomes {
-                        health[index] = outcome;
+                        health[index] = outcome.health;
+                        details[index] = outcome.detail;
                     }
                 }
                 Ok(Err(failure)) => {
@@ -776,15 +910,17 @@ pub fn check_nodes(
         initial[1] && final_baseline[1],
     ];
     if !valid.iter().all(|item| *item) {
-        for result in &mut health {
+        for (result, detail) in health.iter_mut().zip(&mut details) {
             if *result == Health::Failed {
                 *result = Health::Unknown;
+                detail.reason = ProbeReason::BaselineUnstable;
             }
         }
     }
     Ok(ProbeBatch {
         health,
         baseline_valid: valid.into_iter().filter(|valid| *valid).count(),
+        details,
     })
 }
 

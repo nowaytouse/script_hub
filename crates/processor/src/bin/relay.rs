@@ -23,7 +23,7 @@ fn main() -> ExitCode {
     let args: Vec<_> = std::env::args().skip(1).collect();
     if args.as_slice() == ["--help"] {
         println!(
-            "script-hub-relay [--publish]\nRead RelayConfig JSON from stdin. Preview is the default; GIST_TOKEN is session-only.\nRequired: source; source_file unless explicit in raw URL.\nPublish requires output_file and GIST_TOKEN; blank output creates one secret Gist, otherwise a distinct existing output is reused.\nFormatting does not need sing-box. Set test_nodes:true and configure engine for real protocol-aware tests. Untested nodes are not marked healthy or removed.\nOnly aggregate results and a created Gist ID/URL are printed; use the desktop Relay page to copy nodes. Save the created target for later runs. Never retry an uncertain create without checking your Gists."
+            "script-hub-relay [--publish]\nRead RelayConfig JSON from stdin. Preview is the default; GIST_TOKEN is session-only.\nRequired: source; source_file unless explicit in raw URL.\nPublish requires output_file and GIST_TOKEN; blank output creates one secret Gist, otherwise a distinct existing output is reused.\nFormatting does not need sing-box. Set test_nodes:true and configure engine for protocol-aware HTTPS checks. Source certificate bypass is first tested with strict verification unless compatibility is explicitly enabled. Untested nodes are not marked healthy or removed.\nOnly counts, non-sensitive check details and a created Gist ID/URL are printed; use the desktop node panel to edit or copy nodes. Save the created target for later runs. Never retry an uncertain create without checking your Gists."
         );
         return ExitCode::SUCCESS;
     }
@@ -56,7 +56,25 @@ fn main() -> ExitCode {
         Ok(result) => {
             println!(
                 "{}",
-                serde_json::json!({"tested":result.tested,"total":result.total,"healthy":result.healthy,"failed":result.failed,"unknown":result.unknown,"security_blocked":result.security_blocked,"removed":result.removed,"baseline_valid":result.baseline_valid,"published":result.published,"unchanged":result.unchanged,"created_gist_id":result.created.as_ref().map(|created| &created.id),"created_gist_url":result.created.as_ref().map(|created| &created.url)})
+                serde_json::json!({
+                    "tested": result.tested,
+                    "total": result.total,
+                    "processed": result.processed,
+                    "excluded": result.excluded,
+                    "duplicates": result.duplicates,
+                    "duplicate_skipped": result.duplicate_skipped,
+                    "healthy": result.healthy,
+                    "failed": result.failed,
+                    "unknown": result.unknown,
+                    "security_blocked": result.security_blocked,
+                    "removed": result.removed,
+                    "baseline_valid": result.baseline_valid,
+                    "details": result.details,
+                    "published": result.published,
+                    "unchanged": result.unchanged,
+                    "created_gist_id": result.created.as_ref().map(|created| &created.id),
+                    "created_gist_url": result.created.as_ref().map(|created| &created.url)
+                })
             );
             ExitCode::SUCCESS
         }

@@ -53,6 +53,7 @@ impl HubApp {
                                 "accent",
                                 &mut self.draft.accent,
                                 &[
+                                    (Accent::Purple, tr(Text::Purple)),
                                     (Accent::Blue, tr(Text::Blue)),
                                     (Accent::Teal, tr(Text::Teal)),
                                     (Accent::Amber, tr(Text::Amber)),

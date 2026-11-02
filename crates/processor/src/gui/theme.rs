@@ -19,30 +19,32 @@ pub struct Palette {
 pub fn palette(dark: bool, accent: Accent) -> Palette {
     let (canvas, surface, raised, border, text, muted, success, warning, error) = if dark {
         (
-            [19, 24, 33],
-            [25, 32, 43],
-            [34, 43, 57],
-            [73, 88, 108],
-            [233, 238, 245],
-            [170, 185, 204],
+            [20, 19, 36],
+            [27, 25, 47],
+            [37, 34, 61],
+            [91, 82, 125],
+            [241, 238, 250],
+            [190, 184, 210],
             [92, 213, 170],
             [244, 194, 102],
             [255, 152, 156],
         )
     } else {
         (
-            [245, 247, 251],
+            [247, 245, 252],
             [255, 255, 255],
-            [234, 240, 249],
-            [157, 172, 192],
-            [25, 38, 58],
-            [76, 95, 118],
+            [242, 239, 252],
+            [169, 160, 190],
+            [34, 28, 53],
+            [92, 80, 113],
             [12, 114, 86],
             [147, 87, 8],
             [179, 38, 48],
         )
     };
     let accent = match (accent, dark) {
+        (Accent::Purple, false) => [89, 67, 170],
+        (Accent::Purple, true) => [198, 188, 255],
         (Accent::Blue, false) => [37, 99, 235],
         (Accent::Blue, true) => [125, 177, 255],
         (Accent::Teal, false) => [13, 112, 111],
@@ -60,7 +62,7 @@ pub fn palette(dark: bool, accent: Accent) -> Palette {
         muted: color(muted),
         accent: color(accent),
         on_accent: if dark {
-            color([19, 24, 33])
+            color([20, 19, 36])
         } else {
             Color32::WHITE
         },
@@ -152,10 +154,10 @@ mod tests {
     #[test]
     fn semantic_text_colors_meet_aa_on_both_surfaces() {
         for dark in [false, true] {
-            for accent in [Accent::Blue, Accent::Teal, Accent::Amber] {
+            for accent in [Accent::Purple, Accent::Blue, Accent::Teal, Accent::Amber] {
                 let p = palette(dark, accent);
                 for foreground in [p.text, p.muted, p.accent, p.success, p.warning, p.error] {
-                    for background in [p.surface, p.canvas] {
+                    for background in [p.surface, p.canvas, p.raised] {
                         assert!(
                             contrast(foreground, background) >= 4.5,
                             "{foreground:?} on {background:?}"
@@ -169,7 +171,7 @@ mod tests {
     #[test]
     fn primary_action_text_meets_aa_for_every_theme_and_accent() {
         for dark in [false, true] {
-            for accent in [Accent::Blue, Accent::Teal, Accent::Amber] {
+            for accent in [Accent::Purple, Accent::Blue, Accent::Teal, Accent::Amber] {
                 let colors = palette(dark, accent);
                 assert!(contrast(colors.on_accent, colors.accent) >= 4.5);
             }
@@ -179,7 +181,7 @@ mod tests {
     #[test]
     fn interactive_text_remains_readable_in_each_active_state() {
         for theme in [Theme::Light, Theme::Dark] {
-            for accent in [Accent::Blue, Accent::Teal, Accent::Amber] {
+            for accent in [Accent::Purple, Accent::Blue, Accent::Teal, Accent::Amber] {
                 let ctx = egui::Context::default();
                 apply(
                     &ctx,

@@ -51,6 +51,190 @@ fn input(content: &str) -> Option<String> {
 }
 
 #[test]
+fn manual_processing_precedes_checks_and_keeps_origin_and_diagnostics_aligned() {
+    let fixture = Fixture::new(vec![input(SOURCE)]);
+    let mut cfg = config();
+    cfg.expected_source = Some(Zeroizing::new(SOURCE.into()));
+    cfg.processing.nodes.push(model::editor::NodeEdit {
+        index: 0,
+        included: false,
+        name: None,
+    });
+    let result = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|subscription, _, _, _| {
+            assert_eq!(subscription.nodes().len(), 1);
+            assert_eq!(subscription.nodes()[0].name(), "B");
+            Ok(engine::ProbeBatch::from_health(
+                vec![Health::Healthy { latency_ms: 3 }],
+                2,
+            ))
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        (
+            result.total,
+            result.processed,
+            result.excluded,
+            result.healthy,
+            result.removed
+        ),
+        (2, 1, 1, 1, 1)
+    );
+    assert_eq!(result.details[0].reason, engine::ProbeReason::NotTested);
+    assert_eq!(result.details[1].reason, engine::ProbeReason::Verified);
+    assert_eq!(&*result.source.as_ref().unwrap().content, SOURCE);
+    assert_eq!(fixture.request_methods(), ["GET"]);
+}
+
+#[test]
+fn deduplication_is_not_double_counted_as_manual_exclusion() {
+    let source = "A = http, same.invalid, 80\nB = http, same.invalid, 80\n";
+    let fixture = Fixture::new(vec![]);
+    let mut cfg = config();
+    cfg.test_nodes = false;
+    cfg.local_content = Some(Zeroizing::new(source.into()));
+    cfg.expected_source = Some(Zeroizing::new(source.into()));
+    cfg.processing.deduplicate = true;
+    let result = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| panic!("local preview must not check nodes"),
+    )
+    .unwrap();
+    assert_eq!(
+        (
+            result.total,
+            result.processed,
+            result.excluded,
+            result.duplicates,
+            result.removed
+        ),
+        (2, 1, 0, 1, 1)
+    );
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
+fn a_healthy_dependent_removed_with_its_failed_parent_cannot_authorize_publication() {
+    let source = "A = http, a.invalid, 80\nB = http, b.invalid, 80, underlying-proxy=A\nC = http, c.invalid, 80\n";
+    let fixture = Fixture::new(vec![input(source)]);
+    let mut cfg = config();
+    cfg.output.clear();
+    let result = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Publish,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| {
+            Ok(engine::ProbeBatch::from_health(
+                vec![
+                    Health::Failed,
+                    Health::Healthy { latency_ms: 3 },
+                    Health::Unknown,
+                ],
+                2,
+            ))
+        },
+    );
+    assert!(matches!(result, Err(RelayError::NoHealthyNodes)));
+    assert_eq!(fixture.request_methods(), ["GET"]);
+}
+
+#[test]
+fn excluded_healthy_nodes_cannot_authorize_publication_of_unverified_candidates() {
+    let fixture = Fixture::new(vec![input(SOURCE)]);
+    let mut cfg = config();
+    cfg.output.clear();
+    cfg.expected_source = Some(Zeroizing::new(SOURCE.into()));
+    cfg.processing.nodes.push(model::editor::NodeEdit {
+        index: 0,
+        included: false,
+        name: None,
+    });
+    let result = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Publish,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|subscription, _, _, _| {
+            assert_eq!(subscription.nodes().len(), 1);
+            Ok(engine::ProbeBatch::from_health(vec![Health::Unknown], 2))
+        },
+    );
+    assert!(matches!(result, Err(RelayError::NoHealthyNodes)));
+    assert_eq!(fixture.request_methods(), ["GET"]);
+}
+
+#[test]
+fn edited_preview_is_local_and_a_changed_remote_source_is_rejected_before_checks() {
+    let fixture = Fixture::new(vec![]);
+    let mut cfg = config();
+    cfg.test_nodes = false;
+    cfg.expected_source = Some(Zeroizing::new(SOURCE.into()));
+    cfg.local_content = Some(Zeroizing::new(SOURCE.into()));
+    cfg.processing.find = "A".into();
+    cfg.processing.replace = "Edited".into();
+    let result = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| panic!("local preview cannot check nodes"),
+    )
+    .unwrap();
+    assert!(!result.tested);
+    assert_eq!(
+        model::Subscription::parse(&result.content).unwrap().nodes()[0].name(),
+        "Edited"
+    );
+    assert!(fixture.request_methods().is_empty());
+    cfg.local_content = None;
+    cfg.test_nodes = true;
+    let changed = SOURCE.replace("a.example.invalid", "changed.example.invalid");
+    let fixture = Fixture::new(vec![input(&changed)]);
+    let result = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| panic!("stale snapshot cannot be checked"),
+    );
+    assert!(matches!(result, Err(RelayError::SourceChanged)));
+    assert_eq!(fixture.request_methods(), ["GET"]);
+}
+
+#[test]
+fn all_failed_preview_returns_diagnostics_but_no_exportable_empty_subscription() {
+    let fixture = Fixture::new(vec![input(SOURCE)]);
+    let result = run_with(
+        &config(),
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| Ok(engine::ProbeBatch::from_health(vec![Health::Failed; 2], 2)),
+    )
+    .unwrap();
+    assert_eq!((result.total, result.failed, result.removed), (2, 2, 2));
+    assert!(result.content.is_empty());
+    assert_eq!(result.details.len(), 2);
+    assert_eq!(fixture.request_methods(), ["GET"]);
+}
+
+#[test]
 fn new_node_formats_complete_raw_import_cleanup_creation_and_backup() {
     use base64::{Engine as _, engine::general_purpose::STANDARD};
     let uri = "trojan://synthetic@a.invalid:443#A\ntrojan://synthetic@b.invalid:443#B\n";
@@ -85,10 +269,10 @@ fn check(
     _: &AtomicBool,
     _: &(dyn Fn(usize, usize) + Sync),
 ) -> Result<engine::ProbeBatch, engine::EngineError> {
-    Ok(engine::ProbeBatch {
-        health: vec![Health::Healthy { latency_ms: 5 }, Health::Failed],
-        baseline_valid: 2,
-    })
+    Ok(engine::ProbeBatch::from_health(
+        vec![Health::Healthy { latency_ms: 5 }, Health::Failed],
+        2,
+    ))
 }
 fn candidate() -> Zeroizing<String> {
     model::Subscription::parse(SOURCE)
@@ -224,12 +408,7 @@ fn real_testing_does_not_create_when_every_node_is_unverified() {
         RunMode::Publish,
         &AtomicBool::new(false),
         &|_| {},
-        &|_, _, _, _| {
-            Ok(engine::ProbeBatch {
-                health: vec![Health::Unknown; 2],
-                baseline_valid: 2,
-            })
-        },
+        &|_, _, _, _| Ok(engine::ProbeBatch::from_health(vec![Health::Unknown; 2], 2)),
     );
     assert!(matches!(result, Err(RelayError::NoHealthyNodes)));
     assert_eq!(fixture.request_methods(), ["GET"]);
@@ -311,10 +490,7 @@ fn all_red_or_inconclusive_never_replaces_output() {
                        _: &engine::ProbeOptions,
                        _: &AtomicBool,
                        _: &(dyn Fn(usize, usize) + Sync)| {
-            Ok(engine::ProbeBatch {
-                health: vec![health; 2],
-                baseline_valid: 2,
-            })
+            Ok(engine::ProbeBatch::from_health(vec![health; 2], 2))
         };
         let result = run_with(
             &config(),
@@ -527,10 +703,10 @@ fn one_healthy_node_does_not_make_an_inconclusive_peer_removable() {
                    _: &engine::ProbeOptions,
                    _: &AtomicBool,
                    _: &(dyn Fn(usize, usize) + Sync)| {
-        Ok(engine::ProbeBatch {
-            health: vec![Health::Healthy { latency_ms: 5 }, Health::Unknown],
-            baseline_valid: 2,
-        })
+        Ok(engine::ProbeBatch::from_health(
+            vec![Health::Healthy { latency_ms: 5 }, Health::Unknown],
+            2,
+        ))
     };
     let result = run_with(
         &config(),

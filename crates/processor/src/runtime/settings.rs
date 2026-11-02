@@ -22,6 +22,8 @@ pub enum Theme {
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Accent {
     #[default]
+    #[serde(rename = "purple")]
+    Purple,
     #[serde(rename = "blue")]
     Blue,
     #[serde(rename = "teal")]
@@ -473,6 +475,22 @@ mod tests {
     #[test]
     fn new_preferences_use_english() {
         assert_eq!(Preferences::default().language, Language::En);
+    }
+
+    #[test]
+    fn accent_defaults_to_purple_and_saved_choices_remain_compatible() {
+        assert_eq!(Preferences::default().accent, Accent::Purple);
+        for (value, accent) in [
+            ("purple", Accent::Purple),
+            ("blue", Accent::Blue),
+            ("teal", Accent::Teal),
+            ("amber", Accent::Amber),
+        ] {
+            let json = format!(r#"{{"accent":"{value}"}}"#);
+            let preferences: Preferences = serde_json::from_str(&json).unwrap();
+            assert_eq!(preferences.accent, accent);
+            assert_eq!(serde_json::to_value(preferences).unwrap()["accent"], value);
+        }
     }
 
     #[test]

@@ -2,7 +2,12 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
-## Unreleased
+## 0.4.0 · 2026-11-02
+
+- Add a native node-processing panel: preview, regex filters, name editing, conservative deduplication, reset, checks and Gist publication.
+- Try source-requested TLS bypass nodes with strict verification first; report safe diagnostic reasons and separate cold HTTPS latency by target.
+- Use structured authenticated SOCKS replies, interleaved retries and loopback-only proxy resolution; keep ambiguous failures out of automatic cleanup.
+- Match the desktop theme to the purple mark, with light/dark contrast tests and preserved saved preferences.
 
 - Recognize URI/Base64 subscriptions and Shadowrocket/mihomo node YAML/JSON; preserve Sub-Store sing-box export containers, metadata and unsupported nodes through cleanup and backup.
 - Use the supplied Script Hub mark for the desktop window, About page and macOS application bundle.

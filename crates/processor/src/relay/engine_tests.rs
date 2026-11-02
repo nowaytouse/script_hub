@@ -47,7 +47,7 @@ fn verified_success_does_not_wait_for_another_test_target() {
         },
     )
     .unwrap();
-    assert_eq!(result, Health::Healthy { latency_ms: 7 });
+    assert_eq!(result.health, Health::Healthy { latency_ms: 7 });
 }
 
 #[test]
@@ -63,7 +63,71 @@ fn failed_nodes_still_require_all_four_transport_failures() {
         },
     )
     .unwrap();
-    assert_eq!((result, calls), (Health::Failed, 4));
+    assert_eq!((result.health, calls), (Health::Failed, 4));
+}
+
+#[test]
+fn fallback_is_tried_before_retrying_a_failed_primary_target() {
+    let mut targets = Vec::new();
+    let result = probe_targets(
+        [true, true],
+        &AtomicBool::new(false),
+        || Ok(true),
+        |target| {
+            targets.push(target.to_owned());
+            if target == TARGETS[1] {
+                Attempt::Success(24)
+            } else {
+                Attempt::Transport
+            }
+        },
+    )
+    .unwrap();
+    assert_eq!(targets, TARGETS);
+    assert_eq!(result.detail.target, Some(1));
+    assert_eq!(result.detail.latency_ms, Some(24));
+}
+
+#[test]
+fn only_structured_network_replies_can_confirm_a_connection_failure() {
+    for code in 1..=8 {
+        let error = ureq::Error::Other(Box::new(transport::TunnelFailure::Remote(code)));
+        let attempts = [
+            vec![error_attempt(&error), error_attempt(&error)],
+            vec![error_attempt(&error), error_attempt(&error)],
+        ];
+        assert_eq!(
+            classify([true, true], &attempts, true),
+            if (3..=6).contains(&code) {
+                Health::Failed
+            } else {
+                Health::Unknown
+            }
+        );
+    }
+    for error in [
+        ureq::Error::Other(Box::new(transport::TunnelFailure::Local)),
+        ureq::Error::Other(Box::new(transport::TunnelFailure::Protocol)),
+        ureq::Error::Io(std::io::Error::other("connection refused")),
+    ] {
+        let attempts = [
+            vec![error_attempt(&error), error_attempt(&error)],
+            vec![error_attempt(&error), error_attempt(&error)],
+        ];
+        assert_eq!(classify([true, true], &attempts, true), Health::Unknown);
+    }
+}
+
+#[test]
+fn strict_tls_attempts_preserve_ambiguous_failures_without_hiding_the_reason() {
+    let outcome = Outcome::new(Health::Unknown, ProbeReason::TunnelRejected).strict_tls(true);
+    assert_eq!(outcome.health, Health::SecurityBlocked);
+    assert_eq!(outcome.detail.reason, ProbeReason::TunnelRejected);
+    let outcome = Outcome::new(Health::Failed, ProbeReason::ConnectionFailed).strict_tls(true);
+    assert_eq!(outcome.health, Health::Failed);
+    let outcome = Outcome::new(Health::Unknown, ProbeReason::EngineConfigRejected).strict_tls(true);
+    assert_eq!(outcome.health, Health::Unknown);
+    assert_eq!(outcome.detail.reason, ProbeReason::EngineConfigRejected);
 }
 
 #[test]
@@ -318,7 +382,10 @@ fn installed_engine_accepts_synthetic_config_without_network() {
                 isolated_config(&outbound, 12345, "synthetic-user", "synthetic-auth", doh).unwrap(),
             );
             let mut process = Process::spawn(&engine, "check", &config.0).unwrap();
-            assert!(process.checked(&AtomicBool::new(false)).unwrap());
+            assert!(matches!(
+                process.checked(&AtomicBool::new(false)).unwrap(),
+                ConfigStatus::Accepted
+            ));
             assert!(process.child.try_wait().unwrap().is_some());
         }
     }

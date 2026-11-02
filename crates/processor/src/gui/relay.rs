@@ -51,6 +51,7 @@ pub(super) fn failure_message(
                 ModelError::Unsupported => Text::RelayUnsupported,
                 ModelError::SecurityBlocked => Text::RelaySecurityBlocked,
                 ModelError::InvalidDependency => Text::RelayDependencyInvalid,
+                ModelError::InvalidEdit => Text::RelayEditInvalid,
                 ModelError::InvalidHealth | ModelError::Render => Text::RelayRenderFailed,
             },
             RelayError::Engine(error) => match error {
@@ -128,6 +129,8 @@ pub(super) struct RelayState {
     pub rename: bool,
     pub sort: bool,
     pub test_nodes: bool,
+    pub editor: Option<EditorState>,
+    pub preview_names: Vec<Zeroizing<String>>,
     pub allow_public_output: bool,
     pub acknowledge_publish: bool,
     pub allow_plaintext: bool,
@@ -140,6 +143,75 @@ pub(super) struct RelayState {
     file_pending: Option<FilePending>,
     completed_config: Option<PrivateConfig>,
     generation: u64,
+}
+
+pub(super) struct EditorRow {
+    pub index: usize,
+    pub original: Zeroizing<String>,
+    pub name: Zeroizing<String>,
+    pub protocol: Zeroizing<String>,
+    pub included: bool,
+}
+
+pub(super) struct EditorState {
+    pub source: Zeroizing<String>,
+    origin: Option<crate::relay::gist::Source>,
+    pub rows: Vec<EditorRow>,
+    pub options: crate::relay::model::editor::Options,
+    pub reveal: bool,
+}
+
+impl EditorState {
+    fn new(
+        source: &str,
+        origin: Option<crate::relay::gist::Source>,
+    ) -> Result<Self, crate::relay::model::ModelError> {
+        let subscription = crate::relay::model::Subscription::parse(source)?;
+        let rows = subscription
+            .nodes()
+            .iter()
+            .enumerate()
+            .map(|(index, node)| EditorRow {
+                index,
+                original: Zeroizing::new(node.name().to_owned()),
+                name: Zeroizing::new(node.name().to_owned()),
+                protocol: Zeroizing::new(node.protocol().to_owned()),
+                included: true,
+            })
+            .collect();
+        Ok(Self {
+            source: Zeroizing::new(source.to_owned()),
+            origin,
+            rows,
+            options: Default::default(),
+            reveal: false,
+        })
+    }
+
+    fn processing(&self) -> crate::relay::model::editor::Options {
+        let mut options = self.options.clone();
+        options.nodes = self
+            .rows
+            .iter()
+            .filter(|row| !row.included || row.name != row.original)
+            .map(|row| crate::relay::model::editor::NodeEdit {
+                index: row.index,
+                included: row.included,
+                name: (row.name != row.original).then(|| row.name.to_string()),
+            })
+            .collect();
+        options
+    }
+
+    pub fn reset(&mut self) {
+        self.options = Default::default();
+        for row in &mut self.rows {
+            row.included = true;
+            row.name.zeroize();
+            row.name.push_str(&row.original);
+        }
+        self.reveal = false;
+    }
 }
 
 struct FilePending {
@@ -200,6 +272,8 @@ impl Default for RelayState {
             rename: false,
             sort: false,
             test_nodes: true,
+            editor: None,
+            preview_names: Vec::new(),
             allow_public_output: false,
             acknowledge_publish: false,
             allow_plaintext: false,
@@ -217,6 +291,26 @@ impl Default for RelayState {
 }
 
 impl RelayState {
+    pub(super) fn clear_editor_widgets(&self, ctx: &egui::Context) {
+        ctx.data_mut(|data| {
+            for id in [
+                "relay-include",
+                "relay-exclude",
+                "relay-find",
+                "relay-replace",
+            ] {
+                data.remove::<egui::text_edit::TextEditState>(egui::Id::unique(id));
+            }
+            if let Some(editor) = &self.editor {
+                for row in &editor.rows {
+                    data.remove::<egui::text_edit::TextEditState>(egui::Id::unique((
+                        "relay-node-name",
+                        row.index,
+                    )));
+                }
+            }
+        });
+    }
     pub(super) fn engine_path(&self) -> &Path {
         self.selected_engine
             .as_deref()
@@ -230,6 +324,15 @@ impl RelayState {
     }
 
     pub(super) fn input_changed(&mut self) {
+        self.editor = None;
+        self.rename = false;
+        self.sort = false;
+        self.compatibility = false;
+        self.invalidate_result();
+    }
+
+    pub(super) fn invalidate_result(&mut self) {
+        self.preview_names.clear();
         self.error = None;
         self.notice = None;
         self.cooldown_until = None;
@@ -238,6 +341,7 @@ impl RelayState {
         self.completed_config = None;
         self.allow_plaintext = false;
         self.acknowledge_publish = false;
+        self.allow_public_output = false;
     }
 
     pub(super) fn clear_request_error(&mut self) {
@@ -333,10 +437,16 @@ impl RelayState {
             sort: self.sort,
             test_nodes: self.test_nodes,
             allow_public_output: self.allow_public_output,
+            processing: self
+                .editor
+                .as_ref()
+                .map_or_else(Default::default, EditorState::processing),
+            expected_source: self.editor.as_ref().map(|editor| editor.source.clone()),
         })
     }
 
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
+        self.clear_editor_widgets(ctx);
         self.generation = self.generation.wrapping_add(1);
         if let Some(pending) = &self.pending {
             pending.cancel.store(true, Ordering::Release);
@@ -349,6 +459,8 @@ impl RelayState {
         self.cooldown_until = None;
         self.local_content = None;
         self.local_summary = None;
+        self.editor = None;
+        self.preview_names.clear();
         self.completed_config = None;
         self.source.zeroize();
         self.source_file.zeroize();
@@ -388,6 +500,10 @@ impl RelayState {
 
     pub(super) fn tick(&mut self, ctx: &egui::Context) {
         if !ctx.input(|input| input.viewport().focused.unwrap_or(true)) {
+            self.clear_editor_widgets(ctx);
+            if let Some(editor) = &mut self.editor {
+                editor.reveal = false;
+            }
             self.allow_plaintext = false;
             self.reveal_source = false;
             self.reveal_token = false;
@@ -421,15 +537,38 @@ impl RelayState {
         self.allow_public_output = false;
         self.compatibility = false;
         match (joined, result) {
-            (Ok(()), Ok(Ok(result))) => {
+            (Ok(()), Ok(Ok(mut result))) => {
+                if pending.mode == RunMode::Import {
+                    match EditorState::new(&result.content, result.source.clone()) {
+                        Ok(editor) => self.editor = Some(editor),
+                        Err(error) => {
+                            self.error = Some(Failure::Operation(RelayError::Model(error)));
+                            return;
+                        }
+                    }
+                }
+                if pending.mode == RunMode::Preview && !self.test_nodes {
+                    result.source = self
+                        .editor
+                        .as_ref()
+                        .and_then(|editor| editor.origin.clone());
+                }
                 self.step = if pending.mode == RunMode::Publish {
                     RelayStep::Publish
                 } else {
                     RelayStep::Review
                 };
+                self.preview_names.clear();
                 self.result_format = crate::relay::model::Subscription::parse(&result.content)
                     .ok()
-                    .map(|subscription| subscription.format_label());
+                    .map(|subscription| {
+                        self.preview_names = subscription
+                            .nodes()
+                            .iter()
+                            .map(|node| Zeroizing::new(node.name().to_owned()))
+                            .collect();
+                        subscription.format_label()
+                    });
                 if let Some(created) = &result.created {
                     self.output = Zeroizing::new(created.id.clone());
                     if let Some(config) = &mut self.completed_config {
@@ -468,7 +607,9 @@ impl RelayState {
         if !self.allow_plaintext || self.busy() {
             return;
         }
-        if let Some(result) = &self.result {
+        if let Some(result) = &self.result
+            && !result.content.is_empty()
+        {
             ctx.copy_text(result.content.to_string());
             self.notice = Some(Text::Copied);
         }
@@ -494,6 +635,10 @@ impl RelayState {
             None
         } else {
             let Some(result) = &self.result else { return };
+            if result.content.is_empty() {
+                self.error = Some(Failure::Validation(Text::RelayFileError));
+                return;
+            }
             Some((
                 self.completed_config.as_ref().map(|config| {
                     PrivateConfig(RelayConfig {
@@ -665,7 +810,14 @@ impl RelayState {
             return;
         }
         let mut config = self.private_config(engine);
+        if mode == RunMode::Import {
+            config.0.expected_source = None;
+            config.0.processing = Default::default();
+        }
         config.0.local_content = self.local_content.clone();
+        if mode == RunMode::Preview && !self.test_nodes {
+            config.0.local_content = self.editor.as_ref().map(|editor| editor.source.clone());
+        }
         self.completed_config = Some(self.private_config(engine));
         let token = self.token.clone();
         let cancel = Arc::new(AtomicBool::new(false));
@@ -674,6 +826,7 @@ impl RelayState {
         let worker_progress = Arc::clone(&progress);
         let (sender, receiver) = mpsc::sync_channel(1);
         self.result = None;
+        self.preview_names.clear();
         self.result_format = None;
         self.progress = None;
         self.error = None;
@@ -735,17 +888,22 @@ mod tests {
 
     fn result() -> RelayResult {
         RelayResult {
-            content: Zeroizing::new("synthetic private node".to_owned()),
+            content: Zeroizing::new("A = socks5, node.example.invalid, 1080\n".to_owned()),
             tested: true,
             source: None,
             created: None,
             total: 2,
+            processed: 2,
+            excluded: 0,
+            duplicates: 0,
+            duplicate_skipped: 0,
             healthy: 1,
             failed: 0,
             unknown: 1,
             security_blocked: 0,
             removed: 0,
             baseline_valid: 2,
+            details: Vec::new(),
             published: false,
             unchanged: false,
         }
@@ -1005,7 +1163,7 @@ mod tests {
         assert!(!copied_without_consent);
         state.allow_plaintext = true;
         let output = ctx.run_ui(Default::default(), |ui| state.copy(ui.ctx()));
-        let copied = output.platform_output.commands.iter().any(|command| matches!(command, egui::OutputCommand::CopyText(value) if value == "synthetic private node"));
+        let copied = output.platform_output.commands.iter().any(|command| matches!(command, egui::OutputCommand::CopyText(value) if value == "A = socks5, node.example.invalid, 1080\n"));
         output.drop_without_applying_deltas();
         assert!(copied);
         for id in SECRET_IDS {
@@ -1016,6 +1174,134 @@ mod tests {
         for id in SECRET_IDS {
             assert!(egui::text_edit::TextEditState::load(&ctx, egui::Id::unique(id)).is_none());
         }
+    }
+
+    #[test]
+    fn empty_result_cannot_be_copied_or_exported() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        let mut empty = result();
+        empty.content.clear();
+        state.result = Some(empty);
+        state.allow_plaintext = true;
+        let output = ctx.run_ui(Default::default(), |ui| state.copy(ui.ctx()));
+        assert!(
+            !output
+                .platform_output
+                .commands
+                .iter()
+                .any(|command| matches!(command, egui::OutputCommand::CopyText(_)))
+        );
+        output.drop_without_applying_deltas();
+        for action in [FileAction::ExportNodes, FileAction::ExportBackup] {
+            state.file_action(action, None, None);
+            assert!(matches!(
+                state.error,
+                Some(Failure::Validation(Text::RelayFileError))
+            ));
+            assert!(!state.file_dialog_active());
+        }
+    }
+
+    #[test]
+    fn editor_keeps_original_indices_and_reset_preserves_source() {
+        let source =
+            "A = socks5, one.example.invalid, 1080\nB = socks5, two.example.invalid, 1080\n";
+        let mut editor = EditorState::new(source, None).unwrap();
+        editor.rows[1].included = false;
+        editor.rows[0].name = Zeroizing::new("Renamed".into());
+        let edits = editor.processing();
+        assert_eq!(
+            edits
+                .nodes
+                .iter()
+                .map(|edit| edit.index)
+                .collect::<Vec<_>>(),
+            [0, 1]
+        );
+        editor.reset();
+        assert_eq!(editor.source.as_str(), source);
+        assert!(editor.processing().nodes.is_empty());
+        assert!(!editor.reveal);
+    }
+
+    #[test]
+    fn editing_invalidates_result_and_source_change_discards_editor() {
+        let mut state = fixture();
+        state.editor =
+            Some(EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap());
+        state.result = Some(result());
+        state.acknowledge_publish = true;
+        state.invalidate_result();
+        assert!(state.result.is_none() && state.editor.is_some() && !state.acknowledge_publish);
+        state.input_changed();
+        assert!(state.editor.is_none());
+    }
+
+    #[test]
+    fn pure_preview_uses_local_snapshot_without_node_checks() {
+        let mut state = fixture();
+        let source = "A = socks5, node.example.invalid, 1080\n";
+        state.editor = Some(EditorState::new(source, None).unwrap());
+        state.test_nodes = false;
+        state.start_with(
+            RunMode::Preview,
+            Path::new(""),
+            move |config, _, _, _, _| {
+                assert!(!config.test_nodes);
+                assert_eq!(
+                    config.local_content.as_deref().map(|s| s.as_str()),
+                    Some(source)
+                );
+                assert_eq!(
+                    config.expected_source.as_deref().map(|s| s.as_str()),
+                    Some(source)
+                );
+                Ok(result())
+            },
+        );
+        finish(&mut state, &egui::Context::default());
+        assert!(state.result.is_some());
+        assert_eq!(
+            state
+                .preview_names
+                .iter()
+                .map(|name| name.as_str())
+                .collect::<Vec<_>>(),
+            ["A"]
+        );
+        state.invalidate_result();
+        assert!(state.preview_names.is_empty());
+    }
+
+    #[test]
+    fn clear_removes_private_editor_widget_state() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.editor =
+            Some(EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap());
+        let id = egui::Id::unique(("relay-node-name", 0));
+        egui::text_edit::TextEditState::default().store(&ctx, id);
+        state.clear(&ctx);
+        assert!(state.editor.is_none());
+        assert!(egui::text_edit::TextEditState::load(&ctx, id).is_none());
+    }
+
+    #[test]
+    fn focus_loss_hides_names_and_clears_editor_widget_state() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.editor =
+            Some(EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap());
+        state.editor.as_mut().unwrap().reveal = true;
+        let id = egui::Id::unique(("relay-node-name", 0));
+        egui::text_edit::TextEditState::default().store(&ctx, id);
+        let mut input = egui::RawInput::default();
+        input.viewports.get_mut(&input.viewport_id).unwrap().focused = Some(false);
+        let output = ctx.run_ui(input, |ui| state.tick(ui.ctx()));
+        output.drop_without_applying_deltas();
+        assert!(!state.editor.as_ref().unwrap().reveal);
+        assert!(egui::text_edit::TextEditState::load(&ctx, id).is_none());
     }
     #[test]
     fn validation_messages_follow_the_selected_language() {

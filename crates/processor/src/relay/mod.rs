@@ -12,13 +12,17 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::Duration,
 };
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 #[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct RelayConfig {
     #[serde(skip)]
     pub local_content: Option<Zeroizing<String>>,
+    #[serde(skip)]
+    pub processing: model::editor::Options,
+    #[serde(skip)]
+    pub expected_source: Option<Zeroizing<String>>,
     pub source: String,
     pub source_file: String,
     pub output: String,
@@ -39,6 +43,8 @@ impl Default for RelayConfig {
     fn default() -> Self {
         Self {
             local_content: None,
+            processing: Default::default(),
+            expected_source: None,
             source: String::new(),
             source_file: String::new(),
             output: String::new(),
@@ -86,11 +92,16 @@ pub struct RelayResult {
     pub created: Option<gist::CreatedGist>,
     pub total: usize,
     pub healthy: usize,
+    pub processed: usize,
+    pub excluded: usize,
+    pub duplicates: usize,
+    pub duplicate_skipped: usize,
     pub failed: usize,
     pub unknown: usize,
     pub security_blocked: usize,
     pub removed: usize,
     pub baseline_valid: usize,
+    pub details: Vec<engine::ProbeDetail>,
     pub published: bool,
     pub unchanged: bool,
 }
@@ -249,15 +260,53 @@ fn run_with(
             created: None,
             total,
             healthy: 0,
+            processed: total,
+            excluded: 0,
+            duplicates: 0,
+            duplicate_skipped: 0,
             failed: 0,
             unknown: total,
             security_blocked: 0,
             removed: 0,
             baseline_valid: 0,
+            details: Vec::new(),
             published: false,
             unchanged: false,
         });
     }
+    if let Some(expected) = &config.expected_source {
+        if !model::semantic_equal(source_content, expected) {
+            return Err(RelayError::SourceChanged);
+        }
+    } else if config.processing.deduplicate
+        || !config.processing.nodes.is_empty()
+        || [
+            &config.processing.include,
+            &config.processing.exclude,
+            &config.processing.find,
+            &config.processing.replace,
+        ]
+        .iter()
+        .any(|value| !value.is_empty())
+    {
+        return Err(RelayError::InvalidInput);
+    }
+    let prepared = subscription
+        .render_processed(
+            &vec![model::Health::Unknown; subscription.nodes().len()],
+            &model::EnhanceOptions {
+                rename: config.rename,
+                sort: config.sort,
+            },
+            &config.processing,
+        )
+        .map_err(RelayError::Model)?;
+    let processed = prepared.retained.len();
+    let working = if processed == 0 {
+        None
+    } else {
+        Some(model::Subscription::parse(&prepared.content).map_err(RelayError::Model)?)
+    };
     let destination = if mode == RunMode::Publish {
         read_destination(config, client, cancel)?
     } else {
@@ -265,11 +314,13 @@ fn run_with(
     };
     active(cancel)?;
     let total = subscription.nodes().len();
-    let batch = if config.test_nodes {
+    let batch = if config.test_nodes
+        && let Some(working) = &working
+    {
         progress(Progress {
             stage: RelayStage::Check,
             checked: 0,
-            total,
+            total: processed,
         });
         let options = engine::ProbeOptions {
             engine: config.engine.clone(),
@@ -278,7 +329,7 @@ fn run_with(
             compatibility: config.compatibility,
             doh: config.doh,
         };
-        check(&subscription, &options, cancel, &|checked, total| {
+        check(working, &options, cancel, &|checked, total| {
             progress(Progress {
                 stage: RelayStage::Check,
                 checked,
@@ -288,34 +339,69 @@ fn run_with(
         .map_err(RelayError::Engine)?
     } else {
         engine::ProbeBatch {
-            health: vec![model::Health::Unknown; total],
+            health: vec![model::Health::Unknown; processed],
             baseline_valid: 0,
+            details: vec![engine::ProbeDetail::new(engine::ProbeReason::NotTested); processed],
         }
     };
     active(cancel)?;
-    if mode == RunMode::Publish && config.test_nodes && !publication_ready(&batch.health) {
-        return Err(RelayError::NoHealthyNodes);
+    if batch.details.len() != processed || batch.health.len() != processed {
+        return Err(RelayError::Engine(engine::EngineError::Infrastructure));
     }
     progress(Progress {
         stage: RelayStage::Render,
         checked: total,
         total,
     });
-    let content = subscription
-        .render(
-            &batch.health,
-            &model::EnhanceOptions {
-                rename: config.rename,
-                sort: config.sort,
-            },
-        )
-        .map_err(RelayError::Model)?;
-    let retained = model::Subscription::parse(&content)
+    let cleaned = if let Some(working) = &working {
+        working
+            .render_processed(
+                &batch.health,
+                &model::EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &Default::default(),
+            )
+            .map_err(RelayError::Model)?
+    } else {
+        model::editor::Rendered {
+            content: Zeroizing::new(String::new()),
+            retained: Vec::new(),
+            excluded: 0,
+            duplicates: 0,
+            duplicate_skipped: 0,
+        }
+    };
+    let retained = cleaned.retained.len();
+    let retained_healthy = cleaned
+        .retained
+        .iter()
+        .filter(|&&index| matches!(batch.health[index], model::Health::Healthy { .. }))
+        .count();
+    if mode == RunMode::Publish
+        && config.test_nodes
+        && !publication_ready(cleaned.retained.iter().map(|&index| &batch.health[index]))
+    {
+        return Err(RelayError::NoHealthyNodes);
+    }
+    let mut content = cleaned.content;
+    if retained == 0 {
+        if mode == RunMode::Publish {
+            return Err(RelayError::NoHealthyNodes);
+        }
+        content.zeroize();
+    } else if model::Subscription::parse(&content)
         .map_err(RelayError::Model)?
         .nodes()
-        .len();
-    if retained == 0 {
-        return Err(RelayError::NoHealthyNodes);
+        .len()
+        != retained
+    {
+        return Err(RelayError::Model(model::ModelError::Render));
+    }
+    let mut details = vec![engine::ProbeDetail::new(engine::ProbeReason::NotTested); total];
+    for (original, detail) in prepared.retained.iter().copied().zip(&batch.details) {
+        details[original] = *detail;
     }
     let mut result = RelayResult {
         content,
@@ -323,18 +409,23 @@ fn run_with(
         tested: config.test_nodes,
         created: None,
         total,
-        healthy: 0,
+        healthy: retained_healthy,
+        processed,
+        excluded: prepared.excluded,
+        duplicates: prepared.duplicates,
+        duplicate_skipped: prepared.duplicate_skipped,
         failed: 0,
         unknown: 0,
         security_blocked: 0,
         removed: total.saturating_sub(retained),
         baseline_valid: batch.baseline_valid,
+        details,
         published: false,
         unchanged: false,
     };
     for health in batch.health {
         match health {
-            model::Health::Healthy { .. } => result.healthy += 1,
+            model::Health::Healthy { .. } => {}
             model::Health::Failed => result.failed += 1,
             model::Health::Unknown => result.unknown += 1,
             model::Health::SecurityBlocked => result.security_blocked += 1,
@@ -481,9 +572,9 @@ fn active(cancel: &AtomicBool) -> Result<(), RelayError> {
     }
 }
 
-fn publication_ready(health: &[model::Health]) -> bool {
+fn publication_ready<'a>(health: impl IntoIterator<Item = &'a model::Health>) -> bool {
     health
-        .iter()
+        .into_iter()
         .any(|health| matches!(health, model::Health::Healthy { .. }))
 }
 

@@ -11,6 +11,7 @@ use serde::{
 use serde_json::{Map, Value, json};
 use zeroize::{Zeroize, Zeroizing};
 
+pub mod editor;
 mod mihomo;
 mod uri;
 
@@ -31,6 +32,7 @@ pub enum ModelError {
     SecurityBlocked,
     InvalidHealth,
     InvalidDependency,
+    InvalidEdit,
     Render,
 }
 
@@ -44,6 +46,7 @@ impl fmt::Display for ModelError {
             }
             Self::InvalidHealth => "node and health counts differ",
             Self::InvalidDependency => "node dependencies are missing or cyclic",
+            Self::InvalidEdit => "invalid node editing options",
             Self::Render => "subscription could not be rendered",
         })
     }
@@ -84,6 +87,14 @@ struct Field {
 
 struct PrivateJson(Value);
 
+#[derive(Eq, PartialEq)]
+struct NodeIdentity(Zeroizing<String>);
+impl std::hash::Hash for NodeIdentity {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::hash::Hash::hash(self.0.as_str(), state);
+    }
+}
+
 impl Drop for PrivateJson {
     fn drop(&mut self) {
         fn clear(value: &mut Value) {
@@ -122,6 +133,39 @@ impl Node {
             NodeSource::SubStore(source) => self.project_substore(&source.0, compatibility),
             NodeSource::Mihomo(source) => mihomo::project(self, &source.0, compatibility, true),
             NodeSource::Uri(source) => source.project(compatibility),
+        }
+    }
+
+    pub fn to_probe_sing_box(&self, compatibility: bool) -> Result<(Value, bool), ModelError> {
+        let project = |compatibility| {
+            if let NodeSource::Mihomo(source) = &self.source
+                && self.protocol() == "anytls"
+                && self.dependency.is_none()
+                && source
+                    .0
+                    .get("udp")
+                    .is_none_or(|value| value == &Value::Bool(false))
+            {
+                // The probe sends TCP CONNECT only; the UDP toggle does not change this test.
+                let mut source = PrivateJson(source.0.clone());
+                source.0["udp"] = Value::Bool(true);
+                return mihomo::project(self, &source.0, compatibility, true);
+            }
+            self.to_sing_box(compatibility)
+        };
+        match project(compatibility) {
+            Err(ModelError::SecurityBlocked) if !compatibility => {
+                let mut outbound = project(true)?;
+                let tls = outbound.get_mut("tls").ok_or(ModelError::SecurityBlocked)?;
+                if tls.get("enabled") != Some(&Value::Bool(true))
+                    || tls.get("insecure") != Some(&Value::Bool(true))
+                {
+                    return Err(ModelError::SecurityBlocked);
+                }
+                tls["insecure"] = Value::Bool(false);
+                Ok((outbound, true))
+            }
+            result => result.map(|outbound| (outbound, false)),
         }
     }
 
@@ -366,13 +410,91 @@ impl Subscription {
         health: &[Health],
         options: &EnhanceOptions,
     ) -> Result<Zeroizing<String>, ModelError> {
+        self.render_with_count(health, options)
+            .map(|(content, _)| content)
+    }
+
+    pub(crate) fn render_with_count(
+        &self,
+        health: &[Health],
+        options: &EnhanceOptions,
+    ) -> Result<(Zeroizing<String>, usize), ModelError> {
+        let rendered = self.render_inner(health, options, &editor::Options::default(), false)?;
+        Ok((rendered.content, rendered.retained.len()))
+    }
+
+    pub fn render_processed(
+        &self,
+        health: &[Health],
+        options: &EnhanceOptions,
+        edits: &editor::Options,
+    ) -> Result<editor::Rendered, ModelError> {
+        self.render_inner(health, options, edits, true)
+    }
+
+    fn render_inner(
+        &self,
+        health: &[Health],
+        options: &EnhanceOptions,
+        edits: &editor::Options,
+        clear_empty: bool,
+    ) -> Result<editor::Rendered, ModelError> {
         if health.len() != self.nodes.len() {
             return Err(ModelError::InvalidHealth);
         }
-        if !options.rename && !options.sort && !health.contains(&Health::Failed) {
-            return Ok(self.original.clone());
+        if [
+            edits.include.as_str(),
+            edits.exclude.as_str(),
+            edits.find.as_str(),
+            edits.replace.as_str(),
+        ]
+        .iter()
+        .any(|value| value.len() > 512 || value.chars().any(char::is_control))
+            || edits.find.is_empty() && !edits.replace.is_empty()
+            || edits.nodes.len() > self.nodes.len()
+        {
+            return Err(ModelError::InvalidEdit);
         }
-        if (options.rename || health.contains(&Health::Failed))
+        let compile = |pattern: &str| {
+            if pattern.is_empty() {
+                Ok(None)
+            } else {
+                regex::RegexBuilder::new(pattern)
+                    .size_limit(1024 * 1024)
+                    .build()
+                    .map(Some)
+                    .map_err(|_| ModelError::InvalidEdit)
+            }
+        };
+        let include = compile(&edits.include)?;
+        let exclude = compile(&edits.exclude)?;
+        let mut overrides = vec![None; self.nodes.len()];
+        for edit in &edits.nodes {
+            if edit.index >= self.nodes.len()
+                || overrides[edit.index].is_some()
+                || edit.name.as_ref().is_some_and(|name| {
+                    name.is_empty() || name.len() > 512 || name.chars().any(char::is_control)
+                })
+            {
+                return Err(ModelError::InvalidEdit);
+            }
+            overrides[edit.index] = Some(edit);
+        }
+        let edit_active = include.is_some()
+            || exclude.is_some()
+            || !edits.find.is_empty()
+            || !edits.nodes.is_empty()
+            || edits.deduplicate;
+        if !options.rename && !options.sort && !health.contains(&Health::Failed) && !edit_active {
+            return Ok(editor::Rendered {
+                content: self.original.clone(),
+                retained: (0..self.nodes.len()).collect(),
+                excluded: 0,
+                duplicates: 0,
+                duplicate_skipped: 0,
+            });
+        }
+        if (options.rename || health.contains(&Health::Failed) || edit_active)
             && self.nodes.iter().any(|node| {
                 let NodeSource::Surge(source) = &node.source else {
                     return false;
@@ -393,11 +515,85 @@ impl Subscription {
                 dependents[*dependency].push(index);
             }
         }
+        let mut manual = vec![false; self.nodes.len()];
+        for (index, node) in self.nodes.iter().enumerate() {
+            manual[index] = include.as_ref().is_some_and(|re| !re.is_match(node.name()))
+                || exclude.as_ref().is_some_and(|re| re.is_match(node.name()))
+                || overrides[index].is_some_and(|edit| !edit.included);
+        }
+        let mut duplicates = 0;
+        let mut duplicate_skipped = 0;
+        let mut identities: HashSet<NodeIdentity> = HashSet::new();
+        let mut duplicate = vec![false; self.nodes.len()];
+        if edits.deduplicate {
+            for (index, node) in self.nodes.iter().enumerate() {
+                if manual[index] || health[index] == Health::Failed {
+                    continue;
+                }
+                if dependencies[index].is_some() || !dependents[index].is_empty() {
+                    duplicate_skipped += 1;
+                    continue;
+                }
+                let identity = match &node.source {
+                    NodeSource::Native(source)
+                    | NodeSource::SubStore(source)
+                    | NodeSource::Mihomo(source)
+                        if matches!(
+                            node.protocol(),
+                            "anytls"
+                                | "ss"
+                                | "shadowsocks"
+                                | "socks"
+                                | "socks5"
+                                | "http"
+                                | "https"
+                                | "trojan"
+                                | "vmess"
+                                | "vless"
+                                | "tuic"
+                                | "hysteria2"
+                        ) =>
+                    {
+                        let mut value = PrivateJson(source.0.clone());
+                        if let Some(object) = value.0.as_object_mut() {
+                            object.remove(if matches!(node.source, NodeSource::Native(_)) {
+                                "tag"
+                            } else {
+                                "name"
+                            });
+                        }
+                        Some(Zeroizing::new(
+                            serde_json::to_string(&value.0).map_err(|_| ModelError::Render)?,
+                        ))
+                    }
+                    NodeSource::Surge(source)
+                        if matches!(
+                            node.protocol(),
+                            "anytls" | "ss" | "socks5" | "http" | "https" | "trojan" | "vmess"
+                        ) && uncertain_identity(source).iter().all(Option::is_none)
+                            && source.fields.iter().all(|field| {
+                                uncertain_token(source, field.value_range.clone()).is_none()
+                            }) =>
+                    {
+                        let mut raw = source.raw.clone();
+                        raw.replace_range(source.name_range.clone(), "");
+                        Some(raw)
+                    }
+                    _ => None,
+                };
+                if let Some(identity) = identity {
+                    if !identities.insert(NodeIdentity(identity)) {
+                        duplicate[index] = true;
+                        duplicates += 1;
+                    }
+                } else {
+                    duplicate_skipped += 1;
+                }
+            }
+        }
         let mut removed = vec![false; self.nodes.len()];
-        let mut pending: Vec<_> = health
-            .iter()
-            .enumerate()
-            .filter_map(|(index, health)| (*health == Health::Failed).then_some(index))
+        let mut pending: Vec<_> = (0..self.nodes.len())
+            .filter(|&index| manual[index] || duplicate[index] || health[index] == Health::Failed)
             .collect();
         while let Some(index) = pending.pop() {
             if !removed[index] {
@@ -405,16 +601,67 @@ impl Subscription {
                 pending.extend(&dependents[index]);
             }
         }
+        let excluded = removed
+            .iter()
+            .enumerate()
+            .filter(|(index, removed)| {
+                **removed && health[*index] != Health::Failed && !duplicate[*index]
+            })
+            .count();
         let mut names: Vec<Zeroizing<String>> = Vec::with_capacity(self.nodes.len());
         let mut regions = Vec::with_capacity(self.nodes.len());
         let mut used = HashSet::new();
-        for node in &self.nodes {
+        let mut name_bytes = 0usize;
+        for (index, node) in self.nodes.iter().enumerate() {
+            if removed[index] {
+                names.push(node.name.clone());
+                regions.push(*b"ZZ");
+                continue;
+            }
+            let override_name = overrides[index].and_then(|edit| edit.name.as_deref());
+            if override_name.is_none()
+                && !edits.find.is_empty()
+                && edits.replace.len() > edits.find.len()
+            {
+                let growth = node
+                    .name()
+                    .matches(&edits.find)
+                    .count()
+                    .checked_mul(edits.replace.len() - edits.find.len())
+                    .ok_or(ModelError::InvalidEdit)?;
+                if growth > 0
+                    && node
+                        .name()
+                        .len()
+                        .checked_add(growth)
+                        .is_none_or(|size| size > 512)
+                {
+                    return Err(ModelError::InvalidEdit);
+                }
+            }
+            let replaced = if override_name.is_some() || edits.find.is_empty() {
+                node.name().to_owned()
+            } else {
+                node.name().replace(&edits.find, &edits.replace)
+            };
+            let edited = override_name.unwrap_or(&replaced);
+            if edited != node.name()
+                && (edited.is_empty() || edited.len() > 512 || edited.chars().any(char::is_control))
+            {
+                return Err(ModelError::InvalidEdit);
+            }
+            name_bytes = name_bytes
+                .checked_add(edited.len())
+                .ok_or(ModelError::InvalidEdit)?;
+            if name_bytes > MAX_CONTENT {
+                return Err(ModelError::InvalidEdit);
+            }
             let prefix = format!("{} | ", node.protocol().to_uppercase());
-            let original = node.name().strip_prefix(&prefix).unwrap_or(node.name());
+            let original = edited.strip_prefix(&prefix).unwrap_or(edited);
             let region = local_region(original);
             regions.push(region.unwrap_or(*b"ZZ"));
             let base = if !options.rename {
-                node.name().to_owned()
+                edited.to_owned()
             } else {
                 let body = if let Some([first, second]) = region {
                     let marker = format!("[{}{}] ", char::from(first), char::from(second));
@@ -430,7 +677,10 @@ impl Subscription {
             };
             let mut candidate = base.clone();
             let mut suffix = 2usize;
-            while !used.insert(candidate.clone()) {
+            while !removed[index] && !used.insert(candidate.clone()) {
+                if edit_active {
+                    return Err(ModelError::InvalidEdit);
+                }
                 candidate = format!("{base} #{suffix}");
                 suffix += 1;
             }
@@ -452,7 +702,23 @@ impl Subscription {
                 .zip(&self.nodes)
                 .all(|(name, node)| name.as_str() == node.name())
         {
-            return Ok(self.original.clone());
+            return Ok(editor::Rendered {
+                content: self.original.clone(),
+                retained: order,
+                excluded,
+                duplicates,
+                duplicate_skipped,
+            });
+        }
+        let retained = order.clone();
+        if retained.is_empty() && clear_empty {
+            return Ok(editor::Rendered {
+                content: Zeroizing::new(String::new()),
+                retained,
+                excluded,
+                duplicates,
+                duplicate_skipped,
+            });
         }
         let output = match &self.dialect {
             Dialect::Surge(lines) => {
@@ -596,7 +862,13 @@ impl Subscription {
         if output.len() > MAX_CONTENT {
             return Err(ModelError::Render);
         }
-        Ok(output)
+        Ok(editor::Rendered {
+            content: output,
+            retained,
+            excluded,
+            duplicates,
+            duplicate_skipped,
+        })
     }
 
     fn dependencies(&self) -> Result<Vec<Option<usize>>, ModelError> {
