@@ -209,77 +209,29 @@ impl HubApp {
                                     ui.add_space(12.0);
                                     let mut reset_editor_widgets = false;
                                     if let Some(editor) = &mut state.editor {
-                                        let mut changed = false;
-                                        changed |= ui
-                                            .checkbox(
-                                                &mut editor.options.deduplicate,
-                                                tr(Text::RelayDeduplicate),
-                                            )
-                                            .changed();
-                                        changed |= ui
-                                            .checkbox(&mut state.rename, tr(Text::RelayRename))
-                                            .changed();
-                                        changed |= ui
-                                            .checkbox(&mut state.sort, tr(Text::RelaySort))
-                                            .changed();
-                                        let active_filters = [
-                                            &editor.options.include,
-                                            &editor.options.exclude,
-                                            &editor.options.find,
-                                            &editor.options.replace,
-                                        ]
-                                        .iter()
-                                        .filter(|value| !value.is_empty())
-                                        .count();
-                                        let filters_label = if active_filters > 0 {
-                                            format!("{} ({active_filters})", tr(Text::RelayFilters))
-                                        } else {
-                                            tr(Text::RelayFilters).to_owned()
-                                        };
-                                        egui::CollapsingHeader::new(filters_label)
-                                            .id_salt("relay-filters")
-                                            .show(ui, |ui| {
-                                                ui.weak(tr(Text::RelayEditorHelp));
-                                                for (label, value, id) in [
-                                                    (
-                                                        Text::RelayIncludeRegex,
-                                                        &mut editor.options.include,
-                                                        "relay-include",
-                                                    ),
-                                                    (
-                                                        Text::RelayExcludeRegex,
-                                                        &mut editor.options.exclude,
-                                                        "relay-exclude",
-                                                    ),
-                                                    (
-                                                        Text::RelayFindLiteral,
-                                                        &mut editor.options.find,
-                                                        "relay-find",
-                                                    ),
-                                                    (
-                                                        Text::RelayReplaceLiteral,
-                                                        &mut editor.options.replace,
-                                                        "relay-replace",
-                                                    ),
-                                                ] {
-                                                    ui.horizontal(|ui| {
-                                                        let label = ui.label(tr(label));
-                                                        let mut output =
-                                                            egui::TextEdit::singleline(value)
-                                                                .id(egui::Id::unique(id))
-                                                                .char_limit(512)
-                                                                .show(ui);
-                                                        let _ = (*output.response)
-                                                            .clone()
-                                                            .labelled_by(label.id);
-                                                        changed |= output.response.changed();
-                                                        output.state.clear_undoer();
-                                                        output
-                                                            .state
-                                                            .store(ui.ctx(), output.response.id);
-                                                    });
-                                                }
+                                        let mut changed = super::node_operations::show(
+                                            ui,
+                                            language,
+                                            colors,
+                                            &mut editor.options.pipeline,
+                                            state
+                                                .result
+                                                .as_ref()
+                                                .map_or(&[], |result| result.stages.as_slice()),
+                                        );
+                                        if state.rename || state.sort {
+                                            ui.horizontal_wrapped(|ui| {
+                                                changed |= ui
+                                                    .checkbox(
+                                                        &mut state.rename,
+                                                        tr(Text::RelayRename),
+                                                    )
+                                                    .changed();
+                                                changed |= ui
+                                                    .checkbox(&mut state.sort, tr(Text::RelaySort))
+                                                    .changed();
                                             });
+                                        }
                                         ui.checkbox(&mut editor.reveal, tr(Text::RelayRevealNames));
                                         if editor.reveal {
                                             egui::ScrollArea::vertical()
@@ -351,6 +303,10 @@ impl HubApp {
                                             }
                                         }
                                         if ui.button(tr(Text::RelayResetOriginal)).clicked() {
+                                            super::node_operations::clear_widgets(
+                                                ui.ctx(),
+                                                &editor.options.pipeline,
+                                            );
                                             editor.reset();
                                             reset_editor_widgets = true;
                                             state.rename = false;

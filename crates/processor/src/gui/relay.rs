@@ -140,6 +140,7 @@ pub(super) struct RelayState {
     pub error: Option<Failure>,
     pub notice: Option<Text>,
     pending: Option<Pending>,
+    imported_processing: Option<crate::relay::model::editor::Options>,
     file_picker: Option<super::file_dialog::Picker>,
     last_directory: Option<std::path::PathBuf>,
     file_pending: Option<FilePending>,
@@ -285,6 +286,7 @@ impl Default for RelayState {
             error: None,
             notice: None,
             pending: None,
+            imported_processing: None,
             file_picker: None,
             last_directory: None,
             file_pending: None,
@@ -296,6 +298,9 @@ impl Default for RelayState {
 
 impl RelayState {
     pub(super) fn clear_editor_widgets(&self, ctx: &egui::Context) {
+        if let Some(editor) = &self.editor {
+            super::pages::clear_node_operations(ctx, &editor.options.pipeline);
+        }
         ctx.data_mut(|data| {
             for id in [
                 "relay-include",
@@ -328,6 +333,7 @@ impl RelayState {
     }
 
     pub(super) fn input_changed(&mut self) {
+        self.imported_processing = None;
         self.editor = None;
         self.rename = false;
         self.sort = false;
@@ -483,6 +489,7 @@ impl RelayState {
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
         self.clear_editor_widgets(ctx);
         self.file_picker = None;
+        self.imported_processing = None;
         self.last_directory = None;
         self.generation = self.generation.wrapping_add(1);
         if let Some(pending) = &self.pending {
@@ -577,7 +584,21 @@ impl RelayState {
             (Ok(()), Ok(Ok(mut result))) => {
                 if pending.mode == RunMode::Import {
                     match EditorState::new(&result.content, result.source.clone()) {
-                        Ok(editor) => self.editor = Some(editor),
+                        Ok(mut editor) => {
+                            if let Some(mut options) = self.imported_processing.take() {
+                                for edit in &options.nodes {
+                                    if let Some(row) = editor.rows.get_mut(edit.index) {
+                                        row.included = edit.included;
+                                        if let Some(name) = &edit.name {
+                                            row.name = Zeroizing::new(name.clone());
+                                        }
+                                    }
+                                }
+                                options.nodes.clear();
+                                editor.options = options;
+                            }
+                            self.editor = Some(editor);
+                        }
                         Err(error) => {
                             self.error = Some(Failure::Operation(RelayError::Model(error)));
                             return;
@@ -619,7 +640,20 @@ impl RelayState {
                 } else {
                     Text::RelayPreviewReady
                 });
-                self.result = Some(result);
+                if pending.mode == RunMode::Import
+                    && (self.rename
+                        || self.sort
+                        || self
+                            .editor
+                            .as_ref()
+                            .is_some_and(|editor| editor.processing().is_active()))
+                {
+                    self.result = None;
+                    self.completed_config = None;
+                    self.notice = Some(Text::OperationRestored);
+                } else {
+                    self.result = Some(result);
+                }
             }
             (Ok(()), Ok(Err(error))) => {
                 if let RelayError::Gist(crate::relay::gist::GistError::RateLimited {
@@ -703,6 +737,8 @@ impl RelayState {
                         output: config.0.output.clone(),
                         output_file: config.0.output_file.clone(),
                         title: config.0.title.clone(),
+                        processing: config.0.processing.clone(),
+                        expected_source: config.0.expected_source.clone(),
                         rename: config.0.rename,
                         sort: config.0.sort,
                         concurrency: config.0.concurrency,
@@ -819,6 +855,7 @@ impl RelayState {
                 self.sort = config.sort;
                 self.concurrency = config.concurrency;
                 self.timeout_seconds = config.timeout_seconds;
+                self.imported_processing = Some(std::mem::take(&mut config.processing));
                 self.local_summary = crate::relay::model::Subscription::parse(&backup.content)
                     .ok()
                     .map(|subscription| (subscription.nodes().len(), subscription.format_label()));
@@ -948,6 +985,7 @@ mod tests {
             excluded: 0,
             duplicates: 0,
             duplicate_skipped: 0,
+            stages: Vec::new(),
             healthy: 1,
             failed: 0,
             unknown: 1,
@@ -958,6 +996,58 @@ mod tests {
             published: false,
             unchanged: false,
         }
+    }
+
+    #[test]
+    fn restoring_a_processing_plan_requires_preview_and_applies_it_only_once() {
+        use crate::relay::model::pipeline::{Operation, Step};
+        let ctx = egui::Context::default();
+        let content = "A = http, node.invalid, 80\n";
+        let mut config = RelayConfig {
+            rename: false,
+            sort: false,
+            ..Default::default()
+        };
+        config.processing.pipeline.push(Step {
+            id: 9,
+            enabled: true,
+            operation: Operation::ReplaceName {
+                pattern: "A".into(),
+                replacement: "AA".into(),
+                regex: false,
+            },
+        });
+        let bytes = crate::relay::backup::encode(&config, content).unwrap();
+        let path = std::env::temp_dir().canonicalize().unwrap().join(format!(
+            "script-hub-plan-{}-{}.json",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        crate::vault::write_private(&path, &bytes, false).unwrap();
+        let mut state = fixture();
+        state.file_action(FileAction::Import, Some(path.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(
+            state.result.is_none(),
+            "raw backup input is not a processed result"
+        );
+        let editor = state.editor.as_ref().unwrap();
+        assert_eq!(editor.source.as_str(), content);
+        assert_eq!(editor.options.pipeline.len(), 1);
+        state.test_nodes = false;
+        state.start_with(RunMode::Preview, Path::new(""), crate::relay::run);
+        finish(&mut state, &ctx);
+        let restored =
+            crate::relay::model::Subscription::parse(&state.result.as_ref().unwrap().content)
+                .unwrap();
+        assert_eq!(restored.nodes()[0].name(), "AA");
+        assert_eq!(state.result.as_ref().unwrap().stages.len(), 1);
+        state.clear(&ctx);
+        assert!(state.imported_processing.is_none());
+        std::fs::remove_file(path).unwrap();
     }
 
     fn finish(state: &mut RelayState, ctx: &egui::Context) {

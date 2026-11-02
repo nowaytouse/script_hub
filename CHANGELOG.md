@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.6.0 · 2026-11-02
+
+- Add eight native Rust node operations with ordered cards, enable/reorder/duplicate controls and per-step preview counts.
+- Include the original source and processing plan in relay backups; require a fresh preview after restoration and preserve existing project backups.
+- Keep local operations separate from explicit network checks and publication, without a JavaScript runtime or Sub-Store API compatibility layer.
+
 ## 0.5.0 · 2026-11-02
 
 - Redesign the in-app file browser with places, history, breadcrumbs, file columns, format filters and keyboard navigation.

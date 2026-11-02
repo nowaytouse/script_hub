@@ -96,6 +96,7 @@ pub struct RelayResult {
     pub excluded: usize,
     pub duplicates: usize,
     pub duplicate_skipped: usize,
+    pub stages: Vec<model::pipeline::StageReport>,
     pub failed: usize,
     pub unknown: usize,
     pub security_blocked: usize,
@@ -160,6 +161,7 @@ impl RelayConfig {
         if mode == RunMode::Import {
             return Ok(());
         }
+        model::pipeline::validate(&self.processing.pipeline).map_err(RelayError::Model)?;
         if !self.output.trim().is_empty() {
             let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
                 .map_err(RelayError::Gist)?;
@@ -264,6 +266,7 @@ fn run_with(
             excluded: 0,
             duplicates: 0,
             duplicate_skipped: 0,
+            stages: Vec::new(),
             failed: 0,
             unknown: total,
             security_blocked: 0,
@@ -278,17 +281,7 @@ fn run_with(
         if !model::semantic_equal(source_content, expected) {
             return Err(RelayError::SourceChanged);
         }
-    } else if config.processing.deduplicate
-        || !config.processing.nodes.is_empty()
-        || [
-            &config.processing.include,
-            &config.processing.exclude,
-            &config.processing.find,
-            &config.processing.replace,
-        ]
-        .iter()
-        .any(|value| !value.is_empty())
-    {
+    } else if config.processing.is_active() {
         return Err(RelayError::InvalidInput);
     }
     let prepared = subscription
@@ -371,6 +364,7 @@ fn run_with(
             excluded: 0,
             duplicates: 0,
             duplicate_skipped: 0,
+            stages: Vec::new(),
         }
     };
     let retained = cleaned.retained.len();
@@ -414,6 +408,7 @@ fn run_with(
         excluded: prepared.excluded,
         duplicates: prepared.duplicates,
         duplicate_skipped: prepared.duplicate_skipped,
+        stages: prepared.stages,
         failed: 0,
         unknown: 0,
         security_blocked: 0,

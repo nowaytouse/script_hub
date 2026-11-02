@@ -13,6 +13,7 @@ use zeroize::{Zeroize, Zeroizing};
 
 pub mod editor;
 mod mihomo;
+pub mod pipeline;
 mod uri;
 
 const MAX_CONTENT: usize = 4 * 1024 * 1024;
@@ -429,6 +430,7 @@ impl Subscription {
         options: &EnhanceOptions,
         edits: &editor::Options,
     ) -> Result<editor::Rendered, ModelError> {
+        pipeline::validate(&edits.pipeline)?;
         self.render_inner(health, options, edits, true)
     }
 
@@ -480,21 +482,28 @@ impl Subscription {
             }
             overrides[edit.index] = Some(edit);
         }
+        let pipeline_active = edits.pipeline.iter().any(|step| step.enabled);
         let edit_active = include.is_some()
             || exclude.is_some()
             || !edits.find.is_empty()
             || !edits.nodes.is_empty()
             || edits.deduplicate;
-        if !options.rename && !options.sort && !health.contains(&Health::Failed) && !edit_active {
+        if !options.rename
+            && !options.sort
+            && !health.contains(&Health::Failed)
+            && !edit_active
+            && !pipeline_active
+        {
             return Ok(editor::Rendered {
                 content: self.original.clone(),
                 retained: (0..self.nodes.len()).collect(),
                 excluded: 0,
                 duplicates: 0,
                 duplicate_skipped: 0,
+                stages: Vec::new(),
             });
         }
-        if (options.rename || health.contains(&Health::Failed) || edit_active)
+        if (options.rename || health.contains(&Health::Failed) || edit_active || pipeline_active)
             && self.nodes.iter().any(|node| {
                 let NodeSource::Surge(source) = &node.source else {
                     return false;
@@ -534,53 +543,7 @@ impl Subscription {
                     duplicate_skipped += 1;
                     continue;
                 }
-                let identity = match &node.source {
-                    NodeSource::Native(source)
-                    | NodeSource::SubStore(source)
-                    | NodeSource::Mihomo(source)
-                        if matches!(
-                            node.protocol(),
-                            "anytls"
-                                | "ss"
-                                | "shadowsocks"
-                                | "socks"
-                                | "socks5"
-                                | "http"
-                                | "https"
-                                | "trojan"
-                                | "vmess"
-                                | "vless"
-                                | "tuic"
-                                | "hysteria2"
-                        ) =>
-                    {
-                        let mut value = PrivateJson(source.0.clone());
-                        if let Some(object) = value.0.as_object_mut() {
-                            object.remove(if matches!(node.source, NodeSource::Native(_)) {
-                                "tag"
-                            } else {
-                                "name"
-                            });
-                        }
-                        Some(Zeroizing::new(
-                            serde_json::to_string(&value.0).map_err(|_| ModelError::Render)?,
-                        ))
-                    }
-                    NodeSource::Surge(source)
-                        if matches!(
-                            node.protocol(),
-                            "anytls" | "ss" | "socks5" | "http" | "https" | "trojan" | "vmess"
-                        ) && uncertain_identity(source).iter().all(Option::is_none)
-                            && source.fields.iter().all(|field| {
-                                uncertain_token(source, field.value_range.clone()).is_none()
-                            }) =>
-                    {
-                        let mut raw = source.raw.clone();
-                        raw.replace_range(source.name_range.clone(), "");
-                        Some(raw)
-                    }
-                    _ => None,
-                };
+                let identity = pipeline::identity(node)?;
                 if let Some(identity) = identity {
                     if !identities.insert(NodeIdentity(identity)) {
                         duplicate[index] = true;
@@ -601,7 +564,7 @@ impl Subscription {
                 pending.extend(&dependents[index]);
             }
         }
-        let excluded = removed
+        let mut excluded = removed
             .iter()
             .enumerate()
             .filter(|(index, removed)| {
@@ -696,6 +659,17 @@ impl Subscription {
                     .then_with(|| names[*left].cmp(&names[*right]))
             });
         }
+        let mut working = pipeline::Working {
+            sub: self,
+            dependencies: &dependencies,
+            dependents: &dependents,
+            names: &mut names,
+            order: &mut order,
+        };
+        let (stages, counts) = pipeline::apply(&mut working, &edits.pipeline)?;
+        excluded += counts.excluded;
+        duplicates += counts.duplicates;
+        duplicate_skipped = duplicate_skipped.max(counts.skipped);
         if order.iter().copied().eq(0..self.nodes.len())
             && names
                 .iter()
@@ -708,6 +682,7 @@ impl Subscription {
                 excluded,
                 duplicates,
                 duplicate_skipped,
+                stages,
             });
         }
         let retained = order.clone();
@@ -718,6 +693,7 @@ impl Subscription {
                 excluded,
                 duplicates,
                 duplicate_skipped,
+                stages,
             });
         }
         let output = match &self.dialect {
@@ -868,6 +844,7 @@ impl Subscription {
             excluded,
             duplicates,
             duplicate_skipped,
+            stages,
         })
     }
 

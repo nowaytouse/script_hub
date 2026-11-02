@@ -19,6 +19,47 @@ fn config() -> RelayConfig {
 }
 
 #[test]
+fn ordered_pipeline_requires_reviewed_source_and_does_not_start_network_checks() {
+    use model::pipeline::{Operation, Step};
+    let source = "A = http, first.invalid, 80\nB = http, second.invalid, 80\n";
+    let fixture = Fixture::new(vec![]);
+    let mut cfg = config();
+    cfg.local_content = Some(Zeroizing::new(source.into()));
+    cfg.test_nodes = false;
+    cfg.processing.pipeline.push(Step {
+        id: 8,
+        enabled: true,
+        operation: Operation::NameFilter {
+            pattern: "B".into(),
+            keep: true,
+        },
+    });
+    let execute = |cfg: &RelayConfig| {
+        run_with(
+            cfg,
+            &fixture.client(),
+            RunMode::Preview,
+            &AtomicBool::new(false),
+            &|_| {},
+            &|_, _, _, _| panic!("local pipeline must not start node checks"),
+        )
+    };
+    assert!(matches!(execute(&cfg), Err(RelayError::InvalidInput)));
+    cfg.expected_source = Some(Zeroizing::new(source.into()));
+    let output = execute(&cfg).unwrap();
+    assert_eq!((output.total, output.processed, output.excluded), (2, 1, 1));
+    assert_eq!(
+        (
+            output.stages[0].id,
+            output.stages[0].before,
+            output.stages[0].after
+        ),
+        (8, 2, 1)
+    );
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn import_ignores_publication_and_probe_settings_and_preserves_original() {
     let fixture = Fixture::new(vec![input(SOURCE)]);
     let mut config = config();

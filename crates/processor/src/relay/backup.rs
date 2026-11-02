@@ -55,6 +55,7 @@ struct Export<'a> {
     sort: bool,
     concurrency: usize,
     timeout_seconds: u64,
+    processing: &'a super::model::editor::Options,
     content: &'a str,
 }
 
@@ -82,6 +83,8 @@ struct Import {
     sort: bool,
     concurrency: usize,
     timeout_seconds: u64,
+    #[serde(default)]
+    processing: Option<super::model::editor::Options>,
     #[serde(deserialize_with = "secret")]
     content: Zeroizing<String>,
 }
@@ -90,7 +93,17 @@ fn validate(config: &RelayConfig, content: &str) -> Result<(), BackupError> {
     if content.len() > MAX_CONTENT {
         return Err(BackupError::TooLarge);
     }
-    Subscription::parse(content).map_err(|_| BackupError::Invalid)?;
+    let subscription = Subscription::parse(content).map_err(|_| BackupError::Invalid)?;
+    subscription
+        .render_processed(
+            &vec![super::model::Health::Unknown; subscription.nodes().len()],
+            &super::model::EnhanceOptions {
+                rename: config.rename,
+                sort: config.sort,
+            },
+            &config.processing,
+        )
+        .map_err(|_| BackupError::Invalid)?;
     validate_name(&config.title).map_err(|_| BackupError::Invalid)?;
     if !config.source_file.is_empty() {
         validate_filename(&config.source_file).map_err(|_| BackupError::Invalid)?;
@@ -120,10 +133,14 @@ fn validate(config: &RelayConfig, content: &str) -> Result<(), BackupError> {
 }
 
 pub fn encode(config: &RelayConfig, content: &str) -> Result<Zeroizing<Vec<u8>>, BackupError> {
+    let content = config
+        .expected_source
+        .as_ref()
+        .map_or(content, |source| source.as_str());
     validate(config, content)?;
     let document = Export {
         format: "script-hub-relay",
-        version: 1,
+        version: 2,
         source: &config.source,
         source_file: &config.source_file,
         output: &config.output,
@@ -133,6 +150,7 @@ pub fn encode(config: &RelayConfig, content: &str) -> Result<Zeroizing<Vec<u8>>,
         sort: config.sort,
         concurrency: config.concurrency,
         timeout_seconds: config.timeout_seconds,
+        processing: &config.processing,
         content,
     };
     let bytes = Zeroizing::new(serde_json::to_vec(&document).map_err(|_| BackupError::Invalid)?);
@@ -147,7 +165,12 @@ pub fn decode(bytes: &[u8]) -> Result<RelayBackup, BackupError> {
         return Err(BackupError::TooLarge);
     }
     let mut doc: Import = serde_json::from_slice(bytes).map_err(|_| BackupError::Invalid)?;
-    if doc.format.as_str() != "script-hub-relay" || doc.version != 1 {
+    let known_schema = match doc.version {
+        1 => doc.processing.is_none(),
+        2 => doc.processing.is_some(),
+        _ => false,
+    };
+    if doc.format.as_str() != "script-hub-relay" || !known_schema {
         return Err(BackupError::Invalid);
     }
     let backup = RelayBackup {
@@ -161,6 +184,8 @@ pub fn decode(bytes: &[u8]) -> Result<RelayBackup, BackupError> {
             sort: doc.sort,
             concurrency: doc.concurrency,
             timeout_seconds: doc.timeout_seconds,
+            processing: doc.processing.take().unwrap_or_default(),
+            expected_source: Some(doc.content.clone()),
             test_nodes: true,
             ..RelayConfig::default()
         },
@@ -174,6 +199,72 @@ pub fn decode(bytes: &[u8]) -> Result<RelayBackup, BackupError> {
 mod tests {
     use super::*;
     const CONTENT: &str = "[Proxy]\nA = socks5, node.example.invalid, 1080\n";
+
+    #[test]
+    fn original_project_backups_restore_without_a_processing_plan() {
+        let old = serde_json::json!({
+            "format": "script-hub-relay", "version": 1,
+            "source": "", "source_file": "", "output": "", "output_file": "nodes.list",
+            "title": "Saved relay", "rename": false, "sort": false,
+            "concurrency": 4, "timeout_seconds": 8, "content": CONTENT,
+        });
+        let backup = decode(&serde_json::to_vec(&old).unwrap()).unwrap();
+        assert_eq!(backup.content.as_str(), CONTENT);
+        assert!(!backup.config.processing.is_active());
+    }
+
+    #[test]
+    fn processing_backup_keeps_the_bound_source_not_the_already_renamed_output() {
+        use super::super::model::{
+            EnhanceOptions, Health, editor,
+            pipeline::{Operation, Step},
+        };
+        let config = RelayConfig {
+            rename: false,
+            sort: false,
+            expected_source: Some(Zeroizing::new(CONTENT.into())),
+            processing: editor::Options {
+                pipeline: vec![Step {
+                    id: 1,
+                    enabled: true,
+                    operation: Operation::FormatName {
+                        template: "Prefix {name}".into(),
+                    },
+                }],
+                include: String::new(),
+                exclude: String::new(),
+                find: String::new(),
+                replace: String::new(),
+                nodes: Vec::new(),
+                deduplicate: false,
+            },
+            ..Default::default()
+        };
+        let process = |source: &str, options: &editor::Options| {
+            let sub = Subscription::parse(source).unwrap();
+            sub.render_processed(
+                &[Health::Unknown],
+                &EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                options,
+            )
+            .unwrap()
+        };
+        let output = process(CONTENT, &config.processing);
+        let backup = decode(&encode(&config, &output.content).unwrap()).unwrap();
+        assert_eq!(backup.content.as_str(), CONTENT);
+        assert_eq!(
+            process(&backup.content, &backup.config.processing).content,
+            output.content
+        );
+        assert_eq!(backup.config.processing.pipeline.len(), 1);
+        assert_eq!(
+            backup.config.expected_source.as_deref().map(|s| s.as_str()),
+            Some(CONTENT)
+        );
+    }
 
     #[test]
     fn supported_subscription_formats_survive_backups_exactly() {
@@ -229,9 +320,9 @@ mod tests {
         let s = std::str::from_utf8(&bytes).unwrap();
         for bad in [
             "{}".to_owned(),
-            s.replace("\"version\":1", "\"version\":2"),
+            s.replace("\"version\":2", "\"version\":1"),
             s.replacen('{', "{\"extra\":1,", 1),
-            s.replacen('{', "{\"version\":1,", 1),
+            s.replacen('{', "{\"version\":2,", 1),
         ] {
             assert!(decode(bad.as_bytes()).is_err());
         }

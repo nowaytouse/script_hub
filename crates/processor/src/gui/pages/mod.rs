@@ -1,5 +1,6 @@
 mod catalog;
 mod history;
+pub(super) mod node_operations;
 mod overview;
 mod relay;
 mod repository;
@@ -11,6 +12,13 @@ mod templates;
 
 use super::theme::Palette;
 use eframe::egui;
+
+pub(super) fn clear_node_operations(
+    ctx: &egui::Context,
+    steps: &[crate::relay::model::pipeline::Step],
+) {
+    node_operations::clear_widgets(ctx, steps);
+}
 
 fn card<R>(ui: &mut egui::Ui, colors: Palette, contents: impl FnOnce(&mut egui::Ui) -> R) -> R {
     egui::Frame::new()
