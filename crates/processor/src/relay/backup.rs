@@ -95,13 +95,15 @@ fn validate(config: &RelayConfig, content: &str) -> Result<(), BackupError> {
     }
     let subscription = Subscription::parse(content).map_err(|_| BackupError::Invalid)?;
     subscription
-        .render_processed(
+        .render_processed_with_resolver(
             &vec![super::model::Health::Unknown; subscription.nodes().len()],
             &super::model::EnhanceOptions {
                 rename: config.rename,
                 sort: config.sort,
             },
             &config.processing,
+            // Validate the plan without contacting a resolver or restoring network consent.
+            &|hosts, _| Ok(vec![None; hosts.len()]),
         )
         .map_err(|_| BackupError::Invalid)?;
     validate_name(&config.title).map_err(|_| BackupError::Invalid)?;
@@ -201,6 +203,29 @@ mod tests {
     const CONTENT: &str = "[Proxy]\nA = socks5, node.example.invalid, 1080\n";
 
     #[test]
+    fn dns_plan_roundtrip_is_offline_and_never_restores_consent() {
+        let mut config = RelayConfig {
+            allow_resolution: true,
+            ..Default::default()
+        };
+        config
+            .processing
+            .pipeline
+            .push(super::super::model::pipeline::Step {
+                id: 42,
+                enabled: true,
+                operation: super::super::model::pipeline::Operation::ResolveDomain {
+                    family: super::super::model::pipeline::AddressFamily::PreferV4,
+                },
+            });
+        let encoded = encode(&config, CONTENT).unwrap();
+        let decoded = decode(&encoded).unwrap();
+        assert_eq!(decoded.content.as_str(), CONTENT);
+        assert_eq!(decoded.config.processing.pipeline.len(), 1);
+        assert!(!decoded.config.allow_resolution);
+    }
+
+    #[test]
     fn original_project_backups_restore_without_a_processing_plan() {
         let old = serde_json::json!({
             "format": "script-hub-relay", "version": 1,
@@ -288,6 +313,7 @@ mod tests {
             compatibility: true,
             doh: true,
             allow_public_output: true,
+            allow_resolution: true,
             ..RelayConfig::default()
         };
         let bytes = encode(&config, CONTENT).unwrap();
@@ -298,6 +324,7 @@ mod tests {
             "compatibility",
             "doh",
             "allow_public_output",
+            "allow_resolution",
             "test_nodes",
         ] {
             assert!(!text.contains(forbidden));
@@ -311,6 +338,7 @@ mod tests {
             !backup.config.compatibility
                 && !backup.config.doh
                 && !backup.config.allow_public_output
+                && !backup.config.allow_resolution
         );
     }
 

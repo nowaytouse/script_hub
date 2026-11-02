@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.7.0 · 2026-11-02
+
+- Expand native operations with host, port, region and IP-family filters, limits, reverse ordering and typed node properties.
+- Add explicitly authorized DoH processing with bounded concurrency, session caching, cancellation and shared rate-limit cooldowns; preserve unsupported nodes and TLS identities.
+- Group operation controls and show modification/skip counts; back up plans without restoring network consent.
+
 ## 0.6.0 · 2026-11-02
 
 - Add eight native Rust node operations with ordered cards, enable/reorder/duplicate controls and per-step preview counts.

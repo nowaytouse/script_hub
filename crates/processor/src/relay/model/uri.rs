@@ -233,6 +233,281 @@ pub(super) fn parse(line: &str, index: usize) -> Result<UriNode, ModelError> {
 }
 
 impl UriNode {
+    pub(super) fn same_effective(left: &str, right: &str) -> Result<bool, ModelError> {
+        let a = parse(left, 0)?;
+        let b = parse(right, 0)?;
+        Ok(a.server == b.server
+            && a.port == b.port
+            && a.name == b.name
+            && a.protocol == b.protocol
+            && a.data.0 == b.data.0)
+    }
+
+    pub(super) fn render_mutation(
+        &self,
+        name: &str,
+        mutation: &super::properties::Mutation,
+    ) -> Result<Zeroizing<String>, ModelError> {
+        use super::properties::{Setting, hostname};
+        if mutation.is_empty() {
+            return if name == self.name.as_str() {
+                Ok(self.raw.clone())
+            } else {
+                self.render_name(name)
+            };
+        }
+        if !valid_label(name) {
+            return Err(ModelError::InvalidEdit);
+        }
+        if mutation.address.is_some() && !hostname(&self.server) {
+            return Err(ModelError::Unsupported);
+        }
+        if self.vmess {
+            let mut data = PrivateJson(self.data.0.clone());
+            let obj = data.0.as_object_mut().ok_or(ModelError::Unsupported)?;
+            let tls = match obj.get("tls") {
+                None => false,
+                Some(Value::String(s)) if s.is_empty() => false,
+                Some(Value::String(s)) if s == "tls" => true,
+                _ => return Err(ModelError::Unsupported),
+            };
+            if obj.get("sni").is_some_and(|v| !v.is_string()) {
+                return Err(ModelError::Unsupported);
+            }
+            if let Some(address) = &mutation.address {
+                match obj.get("net") {
+                    None | Some(Value::String(_))
+                        if obj.get("net").is_none()
+                            || obj
+                                .get("net")
+                                .and_then(Value::as_str)
+                                .is_some_and(|net| net.is_empty() || net == "tcp") =>
+                    {
+                        if obj
+                            .get("host")
+                            .is_some_and(|host| !host.as_str().is_some_and(str::is_empty))
+                        {
+                            return Err(ModelError::Unsupported);
+                        }
+                    }
+                    Some(Value::String(net))
+                        if net == "ws"
+                            && obj
+                                .get("host")
+                                .and_then(Value::as_str)
+                                .is_some_and(valid_label) => {}
+                    _ => return Err(ModelError::Unsupported),
+                }
+                if tls
+                    && obj
+                        .get("sni")
+                        .and_then(Value::as_str)
+                        .is_none_or(str::is_empty)
+                    && !mutation
+                        .settings
+                        .iter()
+                        .any(|s| matches!(s, Setting::ServerName { .. }))
+                {
+                    obj.insert("sni".into(), self.server.as_str().into());
+                }
+                obj.insert("add".into(), address.as_str().into());
+            }
+            for setting in &mutation.settings {
+                match setting {
+                    Setting::ServerName { value } if tls => {
+                        obj.insert("sni".into(), value.as_str().into());
+                    }
+                    Setting::Alpn { values } if tls => {
+                        if obj.get("alpn").is_some_and(|v| !v.is_string()) {
+                            return Err(ModelError::Unsupported);
+                        }
+                        obj.insert("alpn".into(), values.join(",").into());
+                    }
+                    _ => return Err(ModelError::Unsupported),
+                }
+            }
+            if name != self.name.as_str() {
+                obj.insert("ps".into(), name.into());
+            }
+            let serialized =
+                Zeroizing::new(serde_json::to_string(&data.0).map_err(|_| ModelError::Render)?);
+            let mut result = Zeroizing::new(format!(
+                "vmess://{}",
+                STANDARD.encode(serialized.as_bytes())
+            ));
+            if self.raw.contains('#') {
+                result.push('#');
+                if name == self.name.as_str() {
+                    result.push_str(
+                        self.raw
+                            .split_once('#')
+                            .map(|(_, f)| f)
+                            .ok_or(ModelError::Render)?,
+                    );
+                } else {
+                    result.push_str(&encode(name));
+                }
+            }
+            return Ok(result);
+        }
+        if !matches!(
+            self.protocol.as_str(),
+            "trojan"
+                | "anytls"
+                | "vless"
+                | "hy2"
+                | "hysteria2"
+                | "tuic"
+                | "http"
+                | "https"
+                | "socks"
+                | "socks5"
+        ) {
+            return Err(ModelError::Unsupported);
+        }
+        let params = self
+            .data
+            .0
+            .get("query")
+            .and_then(Value::as_object)
+            .ok_or(ModelError::Unsupported)?;
+        let get = |key: &str| params.get(key).and_then(Value::as_str);
+        if mutation.address.is_some() {
+            if matches!(self.protocol.as_str(), "http" | "https") {
+                return Err(ModelError::Unsupported);
+            }
+            match get("type") {
+                None | Some("tcp") if get("host").is_none() => {}
+                Some("ws") if get("host").is_some_and(valid_label) => {}
+                _ => return Err(ModelError::Unsupported),
+            }
+        }
+        let required = matches!(
+            self.protocol.as_str(),
+            "trojan" | "anytls" | "hy2" | "hysteria2" | "tuic" | "https"
+        );
+        let security = get("security").unwrap_or(if required { "tls" } else { "none" });
+        if !matches!(security, "none" | "tls" | "reality")
+            || required && security == "none"
+            || security == "reality" && self.protocol.as_str() != "vless"
+            || security != "none" && matches!(self.protocol.as_str(), "socks" | "socks5")
+        {
+            return Err(ModelError::Unsupported);
+        }
+        let tls = security != "none";
+        if get("sni").is_some() && get("peer").is_some()
+            || get("insecure").is_some() && get("allowInsecure").is_some()
+            || get("sni")
+                .or_else(|| get("peer"))
+                .is_some_and(|s| !valid_label(s))
+            || !tls
+                && ["sni", "peer", "alpn", "insecure", "allowInsecure"]
+                    .iter()
+                    .any(|k| get(k).is_some())
+        {
+            return Err(ModelError::Unsupported);
+        }
+        let mut changes: Vec<(&str, String)> = Vec::new();
+        if mutation.address.is_some()
+            && tls
+            && get("sni").is_none()
+            && get("peer").is_none()
+            && !mutation
+                .settings
+                .iter()
+                .any(|s| matches!(s, Setting::ServerName { .. }))
+        {
+            changes.push(("sni", self.server.as_str().to_owned()));
+        }
+        for setting in &mutation.settings {
+            match setting {
+                Setting::VerifyTls if tls => {
+                    let key = if get("allowInsecure").is_some() {
+                        "allowInsecure"
+                    } else {
+                        "insecure"
+                    };
+                    if get(key).is_some_and(|v| !matches!(v, "0" | "1" | "true" | "false")) {
+                        return Err(ModelError::Unsupported);
+                    }
+                    changes.push((key, "0".into()));
+                }
+                Setting::ServerName { value } if tls => changes.push((
+                    if get("peer").is_some() { "peer" } else { "sni" },
+                    value.clone(),
+                )),
+                Setting::Alpn { values } if tls => changes.push(("alpn", values.join(","))),
+                _ => return Err(ModelError::Unsupported),
+            }
+        }
+        let (without_fragment, fragment) = self
+            .raw
+            .split_once('#')
+            .map_or((self.raw.as_str(), None), |(a, b)| (a, Some(b)));
+        let (prefix, query) = without_fragment
+            .split_once('?')
+            .map_or((without_fragment, None), |(a, b)| (a, Some(b)));
+        let (_, body) = prefix.split_once("://").ok_or(ModelError::Render)?;
+        let authority = body.strip_suffix('/').unwrap_or(body);
+        let hostport = authority.rsplit_once('@').map_or(authority, |(_, h)| h);
+        let host_start = prefix.len() - body.len() + authority.len() - hostport.len();
+        let host_end = if hostport.starts_with('[') {
+            host_start + hostport.find(']').ok_or(ModelError::Render)? + 1
+        } else {
+            host_start + hostport.rfind(':').ok_or(ModelError::Render)?
+        };
+        let mut result = Zeroizing::new(String::new());
+        result.push_str(&prefix[..host_start]);
+        if let Some(address) = &mutation.address {
+            if address.parse::<std::net::Ipv6Addr>().is_ok() {
+                result.push('[');
+                result.push_str(address);
+                result.push(']');
+            } else {
+                result.push_str(address);
+            }
+        } else {
+            result.push_str(&prefix[host_start..host_end]);
+        }
+        result.push_str(&prefix[host_end..]);
+        let mut first = true;
+        if let Some(query) = query {
+            for pair in query.split('&') {
+                let key = decode(pair.split_once('=').map_or(pair, |(k, _)| k))?;
+                result.push(if first { '?' } else { '&' });
+                first = false;
+                if let Some((_, value)) = changes.iter().find(|(k, _)| *k == key) {
+                    result.push_str(&encode(&key));
+                    result.push('=');
+                    result.push_str(&encode(value));
+                } else {
+                    result.push_str(pair);
+                }
+            }
+        }
+        for (key, value) in &changes {
+            if !params.contains_key(*key) {
+                result.push(if first { '?' } else { '&' });
+                first = false;
+                result.push_str(&encode(key));
+                result.push('=');
+                result.push_str(&encode(value));
+            }
+        }
+        if let Some(fragment) = fragment {
+            result.push('#');
+            if name == self.name.as_str() {
+                result.push_str(fragment);
+            } else {
+                result.push_str(&encode(name));
+            }
+        } else if name != self.name.as_str() {
+            result.push('#');
+            result.push_str(&encode(name));
+        }
+        Ok(result)
+    }
+
     pub(super) fn original(&self) -> &str {
         &self.raw
     }

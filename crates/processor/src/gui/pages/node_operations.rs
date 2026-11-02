@@ -1,18 +1,22 @@
 use super::card;
 use crate::gui::i18n::{Text, text};
 use crate::gui::theme::Palette;
-use crate::relay::model::pipeline::{self, Operation, SortKey, StageReport, Step};
+use crate::relay::model::pipeline::{self, AddressFamily, Operation, SortKey, StageReport, Step};
+use crate::relay::model::properties::Setting;
 use crate::runtime::settings::Language;
 use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
-const FIELDS: [&str; 5] = [
+const FIELDS: [&str; 8] = [
     "pattern",
     "replacement",
     "template",
     "protocols",
     "patterns",
+    "regions",
+    "server_name",
+    "alpn",
 ];
 
 fn field_id(id: u64, field: &str) -> egui::Id {
@@ -82,6 +86,14 @@ fn operation_label(op: &Operation) -> Text {
         Operation::Sort { .. } => Text::OperationSort,
         Operation::RegexSort { .. } => Text::OperationRegexSort,
         Operation::Deduplicate => Text::OperationDeduplicate,
+        Operation::HostFilter { .. } => Text::OperationHostFilter,
+        Operation::PortFilter { .. } => Text::OperationPortFilter,
+        Operation::RegionFilter { .. } => Text::OperationRegionFilter,
+        Operation::IpFilter { .. } => Text::OperationIpFilter,
+        Operation::Limit { .. } => Text::OperationLimit,
+        Operation::Reverse => Text::OperationReverse,
+        Operation::ResolveDomain { .. } => Text::OperationResolveDomain,
+        Operation::SetProperty { .. } => Text::OperationSetProperty,
     }
 }
 
@@ -92,7 +104,7 @@ enum Action {
     Delete,
 }
 
-fn new_operations() -> [Operation; 8] {
+fn new_operations() -> [Operation; 16] {
     [
         Operation::NameFilter {
             pattern: String::new(),
@@ -119,7 +131,83 @@ fn new_operations() -> [Operation; 8] {
             patterns: Vec::new(),
         },
         Operation::Deduplicate,
+        Operation::HostFilter {
+            pattern: String::new(),
+            keep: true,
+        },
+        Operation::PortFilter {
+            start: 1,
+            end: 65535,
+            keep: true,
+        },
+        Operation::RegionFilter {
+            regions: vec!["JP".into()],
+            keep: true,
+            keep_unknown: true,
+        },
+        Operation::IpFilter {
+            family: AddressFamily::V4,
+            keep_domains: true,
+        },
+        Operation::Limit { count: 50 },
+        Operation::Reverse,
+        Operation::ResolveDomain {
+            family: AddressFamily::PreferV4,
+        },
+        Operation::SetProperty {
+            setting: Setting::TcpFastOpen { enabled: true },
+        },
     ]
+}
+
+fn list_field(ui: &mut egui::Ui, id: egui::Id, label: &str, values: &mut Vec<String>) -> bool {
+    let mut draft = ui
+        .ctx()
+        .data_mut(|data| data.get_temp::<Zeroizing<String>>(id.with("draft")))
+        .unwrap_or_else(|| Zeroizing::new(values.join(", ")));
+    if !field(ui, label, &mut draft, id, false) {
+        return false;
+    }
+    values.zeroize();
+    *values = draft
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned)
+        .collect();
+    ui.ctx()
+        .data_mut(|data| data.insert_temp(id.with("draft"), draft));
+    true
+}
+
+fn family_control(
+    ui: &mut egui::Ui,
+    language: Language,
+    family: &mut AddressFamily,
+    preferred: bool,
+) -> bool {
+    let mut changed = false;
+    ui.horizontal_wrapped(|ui| {
+        for (value, label) in [
+            (AddressFamily::V4, Text::OperationIpv4),
+            (AddressFamily::V6, Text::OperationIpv6),
+            (AddressFamily::PreferV4, Text::OperationPreferIpv4),
+            (AddressFamily::PreferV6, Text::OperationPreferIpv6),
+        ] {
+            if !preferred && matches!(value, AddressFamily::PreferV4 | AddressFamily::PreferV6) {
+                continue;
+            }
+            if ui
+                .selectable_label(*family == value, text(language, label))
+                .clicked()
+                && *family != value
+            {
+                *family = value;
+                changed = true;
+            }
+        }
+    });
+    changed
 }
 
 pub(super) fn show(
@@ -141,18 +229,29 @@ pub(super) fn show(
         .checked_add(1);
     ui.add_enabled_ui(steps.len() < MAX_STEPS && next_id.is_some(), |ui| {
         ui.menu_button(tr(Text::OperationAdd), |ui| {
-            for operation in new_operations() {
-                if ui.button(tr(operation_label(&operation))).clicked()
-                    && let Some(id) = next_id
-                {
-                    steps.push(Step {
-                        id,
-                        enabled: true,
-                        operation,
-                    });
-                    changed = true;
-                    ui.close();
-                }
+            for (group, label) in [
+                (0, Text::OperationGroupFilters),
+                (1, Text::OperationGroupOrder),
+                (2, Text::OperationGroupNetwork),
+            ] {
+                ui.menu_button(tr(label), |ui| {
+                    for operation in new_operations()
+                        .into_iter()
+                        .filter(|op| operation_group(op) == group)
+                    {
+                        if ui.button(tr(operation_label(&operation))).clicked()
+                            && let Some(id) = next_id
+                        {
+                            steps.push(Step {
+                                id,
+                                enabled: true,
+                                operation,
+                            });
+                            changed = true;
+                            ui.close();
+                        }
+                    }
+                });
             }
         });
     });
@@ -307,6 +406,135 @@ pub(super) fn show(
                         }
                     }
                     Operation::Deduplicate => {}
+                    Operation::HostFilter { pattern, keep } => {
+                        changed |= field(
+                            ui,
+                            tr(Text::OperationHostPattern),
+                            pattern,
+                            field_id(step.id, "pattern"),
+                            false,
+                        );
+                        changed |= ui.checkbox(keep, tr(Text::OperationKeepMatches)).changed();
+                    }
+                    Operation::PortFilter { start, end, keep } => {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(tr(Text::OperationPortRange));
+                            changed |= ui
+                                .add(egui::DragValue::new(start).range(1..=65535))
+                                .changed();
+                            ui.label("–");
+                            changed |= ui.add(egui::DragValue::new(end).range(1..=65535)).changed();
+                        });
+                        changed |= ui.checkbox(keep, tr(Text::OperationKeepMatches)).changed();
+                    }
+                    Operation::RegionFilter {
+                        regions,
+                        keep,
+                        keep_unknown,
+                    } => {
+                        changed |= list_field(
+                            ui,
+                            field_id(step.id, "regions"),
+                            tr(Text::OperationRegions),
+                            regions,
+                        );
+                        changed |= ui.checkbox(keep, tr(Text::OperationKeepMatches)).changed();
+                        changed |= ui
+                            .checkbox(keep_unknown, tr(Text::OperationKeepUnknown))
+                            .changed();
+                    }
+                    Operation::IpFilter {
+                        family,
+                        keep_domains,
+                    } => {
+                        changed |= family_control(ui, language, family, false);
+                        changed |= ui
+                            .checkbox(keep_domains, tr(Text::OperationKeepDomains))
+                            .changed();
+                    }
+                    Operation::Limit { count } => {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(tr(Text::OperationLimitCount));
+                            changed |= ui
+                                .add(egui::DragValue::new(count).range(1..=100000))
+                                .changed();
+                        });
+                    }
+                    Operation::Reverse => {}
+                    Operation::ResolveDomain { family } => {
+                        changed |= family_control(ui, language, family, true);
+                        ui.weak(tr(Text::ResolutionPreview));
+                    }
+                    Operation::SetProperty { setting } => {
+                        let current = match setting {
+                            Setting::Udp { .. } => 0,
+                            Setting::TcpFastOpen { .. } => 1,
+                            Setting::VerifyTls => 2,
+                            Setting::ServerName { .. } => 3,
+                            Setting::Alpn { .. } => 4,
+                        };
+                        let labels = [
+                            Text::PropertyUdp,
+                            Text::PropertyTfo,
+                            Text::PropertyVerifyTls,
+                            Text::PropertyServerName,
+                            Text::PropertyAlpn,
+                        ];
+                        egui::ComboBox::from_id_salt(("property-kind", step.id))
+                            .selected_text(tr(labels[current]))
+                            .show_ui(ui, |ui| {
+                                for (index, label) in labels[..5].iter().enumerate() {
+                                    if ui.selectable_label(index == current, tr(*label)).clicked()
+                                        && index != current
+                                    {
+                                        *setting = match index {
+                                            0 => Setting::Udp { enabled: true },
+                                            1 => Setting::TcpFastOpen { enabled: true },
+                                            2 => Setting::VerifyTls,
+                                            3 => Setting::ServerName {
+                                                value: String::new(),
+                                            },
+                                            _ => Setting::Alpn { values: Vec::new() },
+                                        };
+                                        for name in ["server_name", "alpn"] {
+                                            let id = field_id(step.id, name);
+                                            ui.ctx().data_mut(|data| {
+                                                data.remove::<egui::text_edit::TextEditState>(id);
+                                                data.remove::<Zeroizing<String>>(id.with("draft"));
+                                            });
+                                        }
+                                        changed = true;
+                                    }
+                                }
+                            });
+                        match setting {
+                            Setting::Udp { enabled } | Setting::TcpFastOpen { enabled } => {
+                                changed |=
+                                    ui.checkbox(enabled, tr(Text::PropertyEnabled)).changed();
+                            }
+                            Setting::VerifyTls => {
+                                ui.weak(tr(Text::PropertyVerifyTlsHelp));
+                            }
+                            Setting::ServerName { value } => {
+                                changed |= field(
+                                    ui,
+                                    tr(Text::PropertyServerName),
+                                    value,
+                                    field_id(step.id, "server_name"),
+                                    false,
+                                );
+                            }
+                            Setting::Alpn { values } => {
+                                changed |= list_field(
+                                    ui,
+                                    field_id(step.id, "alpn"),
+                                    tr(Text::PropertyAlpnHelp),
+                                    values,
+                                );
+                            }
+                        }
+                        ui.weak(tr(Text::PropertySkippedHelp));
+                    }
                 });
                 ui.horizontal_wrapped(|ui| {
                     changed |= ui
@@ -314,11 +542,15 @@ pub(super) fn show(
                         .changed();
                     if let Some(report) = reports.iter().find(|report| report.id == step.id) {
                         ui.weak(format!(
-                            "{} → {} · {} {}",
+                            "{} → {} · {} {} · {} {} · {} {}",
                             report.before,
                             report.after,
                             tr(Text::OperationRenamed),
-                            report.renamed
+                            report.renamed,
+                            tr(Text::OperationModified),
+                            report.modified,
+                            tr(Text::OperationSkipped),
+                            report.skipped
                         ));
                     }
                     if ui
@@ -376,11 +608,108 @@ pub(super) fn show(
     changed
 }
 
+fn operation_group(op: &Operation) -> u8 {
+    match op {
+        Operation::NameFilter { .. }
+        | Operation::ProtocolFilter { .. }
+        | Operation::HostFilter { .. }
+        | Operation::PortFilter { .. }
+        | Operation::RegionFilter { .. }
+        | Operation::IpFilter { .. } => 0,
+        Operation::ResolveDomain { .. } | Operation::SetProperty { .. } => 2,
+        _ => 1,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::gui::theme;
     use crate::runtime::settings::Preferences;
+
+    #[test]
+    fn operation_defaults_and_groups_cover_all_choices() {
+        let operations = new_operations();
+        assert_eq!(operations.len(), 16);
+        assert_eq!(
+            operations
+                .iter()
+                .filter(|op| operation_group(op) == 0)
+                .count(),
+            6
+        );
+        assert_eq!(
+            operations
+                .iter()
+                .filter(|op| operation_group(op) == 1)
+                .count(),
+            8
+        );
+        assert_eq!(
+            operations
+                .iter()
+                .filter(|op| operation_group(op) == 2)
+                .count(),
+            2
+        );
+        assert!(
+            matches!(&operations[8], Operation::HostFilter { pattern, keep: true } if pattern.is_empty())
+        );
+        assert!(matches!(
+            &operations[9],
+            Operation::PortFilter {
+                start: 1,
+                end: 65535,
+                keep: true
+            }
+        ));
+        assert!(
+            matches!(&operations[10], Operation::RegionFilter { regions, keep: true, keep_unknown: true } if regions == &["JP"])
+        );
+        assert!(matches!(
+            &operations[11],
+            Operation::IpFilter {
+                family: AddressFamily::V4,
+                keep_domains: true
+            }
+        ));
+        assert!(matches!(&operations[12], Operation::Limit { count: 50 }));
+        assert!(matches!(
+            &operations[14],
+            Operation::ResolveDomain {
+                family: AddressFamily::PreferV4
+            }
+        ));
+        assert!(matches!(
+            &operations[15],
+            Operation::SetProperty {
+                setting: Setting::TcpFastOpen { enabled: true }
+            }
+        ));
+    }
+
+    #[test]
+    fn clearing_widgets_removes_new_sensitive_drafts() {
+        let ctx = egui::Context::default();
+        let steps = [Step {
+            id: 4,
+            enabled: true,
+            operation: Operation::Reverse,
+        }];
+        for name in ["regions", "server_name", "alpn"] {
+            let id = field_id(4, name).with("draft");
+            ctx.data_mut(|data| data.insert_temp(id, Zeroizing::new("private".to_owned())));
+        }
+        clear_widgets(&ctx, &steps);
+        for name in ["regions", "server_name", "alpn"] {
+            assert!(
+                ctx.data_mut(
+                    |data| data.get_temp::<Zeroizing<String>>(field_id(4, name).with("draft"))
+                )
+                .is_none()
+            );
+        }
+    }
 
     #[test]
     fn validation_cache_invalidates_on_change_and_empty_reset() {
@@ -491,5 +820,19 @@ mod tests {
         }
         assert!(!steps[0].enabled);
         output.drop_without_applying_deltas();
+    }
+
+    #[test]
+    fn every_expanded_operation_fits_the_narrow_panel() {
+        for operation in new_operations() {
+            let ctx = egui::Context::default();
+            theme::apply(&ctx, &Preferences::default());
+            let mut steps = vec![Step {
+                id: 1,
+                enabled: true,
+                operation,
+            }];
+            draw(&ctx, &mut steps, vec![]).drop_without_applying_deltas();
+        }
     }
 }

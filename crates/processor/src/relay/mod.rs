@@ -4,6 +4,7 @@ pub mod backup;
 pub mod engine;
 pub mod gist;
 pub mod model;
+pub mod resolve;
 
 use serde::Deserialize;
 use std::{
@@ -23,6 +24,8 @@ pub struct RelayConfig {
     pub processing: model::editor::Options,
     #[serde(skip)]
     pub expected_source: Option<Zeroizing<String>>,
+    #[serde(skip)]
+    pub allow_resolution: bool,
     pub source: String,
     pub source_file: String,
     pub output: String,
@@ -45,6 +48,7 @@ impl Default for RelayConfig {
             local_content: None,
             processing: Default::default(),
             expected_source: None,
+            allow_resolution: false,
             source: String::new(),
             source_file: String::new(),
             output: String::new(),
@@ -162,6 +166,11 @@ impl RelayConfig {
             return Ok(());
         }
         model::pipeline::validate(&self.processing.pipeline).map_err(RelayError::Model)?;
+        if model::pipeline::has_resolution(&self.processing.pipeline) && !self.allow_resolution {
+            return Err(RelayError::Model(model::ModelError::Resolution(
+                model::pipeline::ResolveError::ConsentRequired,
+            )));
+        }
         if !self.output.trim().is_empty() {
             let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
                 .map_err(RelayError::Gist)?;
@@ -284,16 +293,23 @@ fn run_with(
     } else if config.processing.is_active() {
         return Err(RelayError::InvalidInput);
     }
-    let prepared = subscription
-        .render_processed(
-            &vec![model::Health::Unknown; subscription.nodes().len()],
-            &model::EnhanceOptions {
-                rename: config.rename,
-                sort: config.sort,
-            },
+    let health = vec![model::Health::Unknown; subscription.nodes().len()];
+    let enhance = model::EnhanceOptions {
+        rename: config.rename,
+        sort: config.sort,
+    };
+    let prepared = if model::pipeline::has_resolution(&config.processing.pipeline) {
+        let session = resolve::Session::new(cancel);
+        subscription.render_processed_with_resolver(
+            &health,
+            &enhance,
             &config.processing,
+            &|hosts, family| session.resolve(hosts, family),
         )
-        .map_err(RelayError::Model)?;
+    } else {
+        subscription.render_processed(&health, &enhance, &config.processing)
+    }
+    .map_err(RelayError::Model)?;
     let processed = prepared.retained.len();
     let working = if processed == 0 {
         None
@@ -579,6 +595,32 @@ mod workflow_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn resolution_requires_session_consent_before_any_io_but_not_on_import() {
+        let mut config = RelayConfig {
+            local_content: Some(Zeroizing::new("A = socks5, node.example, 1080\n".into())),
+            ..Default::default()
+        };
+        config.processing.pipeline.push(model::pipeline::Step {
+            id: 1,
+            enabled: true,
+            operation: model::pipeline::Operation::ResolveDomain {
+                family: model::pipeline::AddressFamily::V4,
+            },
+        });
+        assert!(config.validate(RunMode::Import).is_ok());
+        assert!(matches!(
+            config.validate(RunMode::Preview),
+            Err(RelayError::Model(model::ModelError::Resolution(
+                model::pipeline::ResolveError::ConsentRequired
+            )))
+        ));
+        config.allow_resolution = true;
+        assert!(config.validate(RunMode::Preview).is_ok());
+        config.processing.pipeline[0].enabled = false;
+        config.allow_resolution = false;
+        assert!(config.validate(RunMode::Preview).is_ok());
+    }
     #[test]
     fn preview_accepts_an_explicit_raw_source_without_output_or_token() {
         let config = RelayConfig {

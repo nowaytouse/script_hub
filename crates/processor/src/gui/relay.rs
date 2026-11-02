@@ -38,6 +38,7 @@ pub(super) fn failure_message(
     language: crate::runtime::settings::Language,
     failure: &Failure,
 ) -> String {
+    use crate::relay::model::pipeline::ResolveError;
     use crate::relay::{engine::EngineError, gist::GistError, model::ModelError};
     let key = match failure {
         Failure::Validation(key) => *key,
@@ -53,6 +54,21 @@ pub(super) fn failure_message(
                 ModelError::InvalidDependency => Text::RelayDependencyInvalid,
                 ModelError::InvalidEdit => Text::RelayEditInvalid,
                 ModelError::InvalidHealth | ModelError::Render => Text::RelayRenderFailed,
+                ModelError::Resolution(error) => match error {
+                    ResolveError::ConsentRequired => Text::ResolutionConsentRequired,
+                    ResolveError::Cancelled => Text::ResolutionCancelled,
+                    ResolveError::Unavailable => Text::ResolutionUnavailable,
+                    ResolveError::InvalidResponse => Text::ResolutionResponseInvalid,
+                    ResolveError::Budget => Text::ResolutionBudget,
+                    ResolveError::RateLimited {
+                        retry_after_seconds,
+                    } => {
+                        return format!(
+                            "{} {retry_after_seconds} s",
+                            super::i18n::text(language, Text::ResolutionRateLimited)
+                        );
+                    }
+                },
             },
             RelayError::Engine(error) => match error {
                 EngineError::InvalidOptions => Text::RelayOptionsInvalid,
@@ -126,6 +142,7 @@ pub(super) struct RelayState {
     pub timeout_seconds: u64,
     pub compatibility: bool,
     pub doh: bool,
+    pub allow_resolution: bool,
     pub rename: bool,
     pub sort: bool,
     pub test_nodes: bool,
@@ -272,6 +289,7 @@ impl Default for RelayState {
             timeout_seconds: defaults.timeout_seconds,
             compatibility: false,
             doh: false,
+            allow_resolution: false,
             rename: false,
             sort: false,
             test_nodes: true,
@@ -342,6 +360,7 @@ impl RelayState {
     }
 
     pub(super) fn invalidate_result(&mut self) {
+        self.allow_resolution = false;
         self.preview_names.clear();
         self.error = None;
         self.notice = None;
@@ -412,6 +431,9 @@ impl RelayState {
         if mode == RunMode::Import {
             return Ok(());
         }
+        if mode == RunMode::Preview && self.needs_resolution() && !self.allow_resolution {
+            return Err(Text::ResolutionConsentRequired);
+        }
         if !self.output.trim().is_empty() {
             let output = GistFile::parse(self.output.trim(), &self.output_file).map_err(
                 |error| match error {
@@ -474,6 +496,7 @@ impl RelayState {
             timeout_seconds: self.timeout_seconds,
             compatibility: self.compatibility,
             doh: self.doh,
+            allow_resolution: self.allow_resolution,
             rename: self.rename,
             sort: self.sort,
             test_nodes: self.test_nodes,
@@ -523,6 +546,7 @@ impl RelayState {
         self.allow_public_output = false;
         self.compatibility = false;
         self.doh = false;
+        self.allow_resolution = false;
         self.test_nodes = true;
         self.notice = Some(if self.busy() {
             Text::RelayCancelling
@@ -656,6 +680,15 @@ impl RelayState {
                 }
             }
             (Ok(()), Ok(Err(error))) => {
+                if let RelayError::Model(crate::relay::model::ModelError::Resolution(
+                    crate::relay::model::pipeline::ResolveError::RateLimited {
+                        retry_after_seconds,
+                    },
+                )) = &error
+                {
+                    self.cooldown_until =
+                        Instant::now().checked_add(Duration::from_secs(*retry_after_seconds));
+                }
                 if let RelayError::Gist(crate::relay::gist::GistError::RateLimited {
                     retry_after_seconds,
                 }) = &error
@@ -945,6 +978,12 @@ impl RelayState {
             Err(_) => self.notice = Some(Text::RelayWorkerStopped),
         }
     }
+
+    pub(super) fn needs_resolution(&self) -> bool {
+        self.editor.as_ref().is_some_and(|editor| {
+            crate::relay::model::pipeline::has_resolution(&editor.options.pipeline)
+        })
+    }
 }
 
 impl Drop for RelayState {
@@ -972,6 +1011,39 @@ mod tests {
         state.output_file.push_str("output.conf");
         state.title.push_str("Synthetic relay");
         state
+    }
+
+    #[test]
+    fn dns_consent_is_explicit_and_invalidated_with_the_processing_plan() {
+        use crate::relay::model::pipeline::{AddressFamily, Operation, Step};
+        let mut state = fixture();
+        state.editor = Some(EditorState::new("A = socks5, node.example, 1080\n", None).unwrap());
+        state.editor.as_mut().unwrap().options.pipeline.push(Step {
+            id: 1,
+            enabled: true,
+            operation: Operation::ResolveDomain {
+                family: AddressFamily::PreferV4,
+            },
+        });
+        assert!(matches!(
+            state.validate(RunMode::Preview, Path::new("sing-box")),
+            Err(Text::ResolutionConsentRequired)
+        ));
+        state.allow_resolution = true;
+        assert!(
+            state
+                .validate(RunMode::Preview, Path::new("sing-box"))
+                .is_ok()
+        );
+        assert!(
+            state
+                .private_config(Path::new("sing-box"))
+                .0
+                .allow_resolution
+        );
+        state.invalidate_result();
+        assert!(!state.allow_resolution);
+        assert!(state.validate(RunMode::Import, Path::new("")).is_ok());
     }
 
     fn result() -> RelayResult {

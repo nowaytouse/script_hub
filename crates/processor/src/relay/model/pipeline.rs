@@ -1,10 +1,11 @@
-//! Ordered, local-only subscription transformations.
+//! Ordered subscription transformations with explicitly injected network operations.
 use super::{
     MAX_CONTENT, ModelError, NodeIdentity, NodeSource, PrivateJson, Subscription, local_region,
-    uncertain_identity, uncertain_token,
+    properties, uncertain_identity, uncertain_token,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::net::IpAddr;
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
@@ -45,6 +46,62 @@ pub enum Operation {
         patterns: Vec<String>,
     },
     Deduplicate,
+    HostFilter {
+        pattern: String,
+        keep: bool,
+    },
+    PortFilter {
+        start: u16,
+        end: u16,
+        keep: bool,
+    },
+    RegionFilter {
+        regions: Vec<String>,
+        keep: bool,
+        keep_unknown: bool,
+    },
+    IpFilter {
+        family: AddressFamily,
+        keep_domains: bool,
+    },
+    Limit {
+        count: usize,
+    },
+    Reverse,
+    ResolveDomain {
+        family: AddressFamily,
+    },
+    SetProperty {
+        setting: properties::Setting,
+    },
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum AddressFamily {
+    V4,
+    V6,
+    PreferV4,
+    PreferV6,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ResolveError {
+    ConsentRequired,
+    Cancelled,
+    Unavailable,
+    InvalidResponse,
+    RateLimited { retry_after_seconds: u64 },
+    Budget,
+}
+
+pub type Resolver<'a> =
+    dyn Fn(&[&str], AddressFamily) -> Result<Vec<Option<IpAddr>>, ResolveError> + 'a;
+
+pub fn has_resolution(steps: &[Step]) -> bool {
+    steps
+        .iter()
+        .any(|step| step.enabled && matches!(step.operation, Operation::ResolveDomain { .. }))
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
@@ -61,6 +118,8 @@ pub struct StageReport {
     pub before: usize,
     pub after: usize,
     pub renamed: usize,
+    pub modified: usize,
+    pub skipped: usize,
 }
 
 fn valid_text(s: &str) -> bool {
@@ -138,7 +197,7 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
             return Err(ModelError::InvalidEdit);
         }
         match &step.operation {
-            Operation::NameFilter { pattern, .. } => {
+            Operation::NameFilter { pattern, .. } | Operation::HostFilter { pattern, .. } => {
                 if !valid_text(pattern) {
                     return Err(ModelError::InvalidEdit);
                 }
@@ -198,7 +257,54 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                     }
                 }
             }
-            Operation::Flags { .. } | Operation::Sort { .. } | Operation::Deduplicate => {}
+            Operation::PortFilter { start, end, .. }
+                if step.enabled && (*start == 0 || start > end) =>
+            {
+                return Err(ModelError::InvalidEdit);
+            }
+            Operation::IpFilter {
+                family: AddressFamily::PreferV4 | AddressFamily::PreferV6,
+                ..
+            } if step.enabled => return Err(ModelError::InvalidEdit),
+            Operation::RegionFilter { regions, .. } => {
+                if regions.len() > 64
+                    || regions.iter().any(|r| !valid_text(r))
+                    || step.enabled
+                        && (regions.is_empty()
+                            || regions.iter().any(|r| {
+                                r.len() != 2 || !r.bytes().all(|b| b.is_ascii_alphabetic())
+                            }))
+                {
+                    return Err(ModelError::InvalidEdit);
+                }
+            }
+            Operation::Limit { count } if *count > 100_000 => return Err(ModelError::InvalidEdit),
+            Operation::SetProperty { setting } => {
+                match setting {
+                    properties::Setting::ServerName { value }
+                        if value.len() > 512 || value.chars().any(char::is_control) =>
+                    {
+                        return Err(ModelError::InvalidEdit);
+                    }
+                    properties::Setting::Alpn { values }
+                        if values.len() > 32 || values.iter().any(|v| !valid_text(v)) =>
+                    {
+                        return Err(ModelError::InvalidEdit);
+                    }
+                    _ => {}
+                }
+                if step.enabled {
+                    properties::validate_setting(setting)?;
+                }
+            }
+            Operation::Flags { .. }
+            | Operation::Sort { .. }
+            | Operation::Deduplicate
+            | Operation::PortFilter { .. }
+            | Operation::IpFilter { .. }
+            | Operation::Limit { .. }
+            | Operation::Reverse
+            | Operation::ResolveDomain { .. } => {}
         }
     }
     Ok(())
@@ -261,6 +367,8 @@ pub(super) struct Working<'a> {
     pub dependents: &'a [Vec<usize>],
     pub names: &'a mut [Zeroizing<String>],
     pub order: &'a mut Vec<usize>,
+    pub mutations: &'a mut [properties::Mutation],
+    pub resolver: Option<&'a Resolver<'a>>,
 }
 
 #[derive(Default)]
@@ -292,6 +400,8 @@ pub(super) fn apply(
         dependents,
         names,
         order,
+        mutations,
+        resolver,
     } = working;
     let mut counts = Counts::default();
     let mut skipped_nodes = HashSet::new();
@@ -299,10 +409,127 @@ pub(super) fn apply(
     for step in steps.iter().filter(|s| s.enabled) {
         let before = order.len();
         let mut renamed = 0;
+        let mut modified = 0;
+        let mut skipped = 0;
         let mut name_bytes = order.iter().map(|&i| names[i].len()).sum();
         let mut remove = vec![false; names.len()];
         let mut duplicate = vec![false; names.len()];
         match &step.operation {
+            Operation::HostFilter { pattern, keep } => {
+                let re = regex(pattern)?;
+                for &i in order.iter() {
+                    let host = mutations[i]
+                        .address
+                        .as_deref()
+                        .unwrap_or(sub.nodes[i].server());
+                    remove[i] = re.is_match(host) != *keep;
+                }
+            }
+            Operation::PortFilter { start, end, keep } => {
+                for &i in order.iter() {
+                    remove[i] = (*start..=*end).contains(&sub.nodes[i].port) != *keep;
+                }
+            }
+            Operation::RegionFilter {
+                regions,
+                keep,
+                keep_unknown,
+            } => {
+                for &i in order.iter() {
+                    remove[i] = match local_region(&names[i]) {
+                        Some(region) => {
+                            regions
+                                .iter()
+                                .any(|r| r.as_bytes().eq_ignore_ascii_case(&region))
+                                != *keep
+                        }
+                        None => !*keep_unknown,
+                    };
+                }
+            }
+            Operation::IpFilter {
+                family,
+                keep_domains,
+            } => {
+                for &i in order.iter() {
+                    let host = mutations[i]
+                        .address
+                        .as_deref()
+                        .unwrap_or(sub.nodes[i].server());
+                    remove[i] = match host.parse::<IpAddr>() {
+                        Ok(IpAddr::V4(_)) => {
+                            matches!(family, AddressFamily::V6 | AddressFamily::PreferV6)
+                        }
+                        Ok(IpAddr::V6(_)) => {
+                            matches!(family, AddressFamily::V4 | AddressFamily::PreferV4)
+                        }
+                        Err(_) => !*keep_domains,
+                    };
+                }
+            }
+            Operation::Limit { count } => {
+                for &i in order.iter().skip(*count) {
+                    remove[i] = true;
+                }
+            }
+            Operation::Reverse => order.reverse(),
+            Operation::SetProperty { setting } => {
+                for &i in order.iter() {
+                    match properties::set_setting(&sub.nodes[i], &mut mutations[i], setting) {
+                        Ok(changed) => modified += usize::from(changed),
+                        Err(ModelError::Unsupported) => skipped += 1,
+                        Err(error) => return Err(error),
+                    }
+                }
+            }
+            Operation::ResolveDomain { family } => {
+                let mut indices = Vec::new();
+                for &i in order.iter() {
+                    let host = mutations[i]
+                        .address
+                        .as_deref()
+                        .unwrap_or(sub.nodes[i].server());
+                    if properties::hostname(host) {
+                        indices.push(i);
+                    } else {
+                        skipped += 1;
+                    }
+                }
+                if !indices.is_empty() {
+                    let resolver =
+                        resolver.ok_or(ModelError::Resolution(ResolveError::ConsentRequired))?;
+                    let hosts: Vec<_> = indices
+                        .iter()
+                        .map(|&i| {
+                            mutations[i]
+                                .address
+                                .as_deref()
+                                .unwrap_or(sub.nodes[i].server())
+                        })
+                        .collect();
+                    let addresses = resolver(&hosts, *family).map_err(ModelError::Resolution)?;
+                    if addresses.len() != indices.len() {
+                        return Err(ModelError::Resolution(ResolveError::InvalidResponse));
+                    }
+                    for (i, address) in indices.into_iter().zip(addresses) {
+                        let Some(address) = address else {
+                            skipped += 1;
+                            continue;
+                        };
+                        if matches!(
+                            (*family, address),
+                            (AddressFamily::V4, IpAddr::V6(_)) | (AddressFamily::V6, IpAddr::V4(_))
+                        ) {
+                            return Err(ModelError::Resolution(ResolveError::InvalidResponse));
+                        }
+                        match properties::set_address(&sub.nodes[i], &mut mutations[i], address) {
+                            Ok(changed) => modified += usize::from(changed),
+                            Err(ModelError::Unsupported) => skipped += 1,
+                            Err(error) => return Err(error),
+                        }
+                    }
+                }
+            }
             Operation::NameFilter { pattern, keep } => {
                 let re = regex(pattern)?;
                 for &i in order.iter() {
@@ -419,7 +646,12 @@ pub(super) fn apply(
                 for &i in order.iter() {
                     if dependencies[i].is_some() || !dependents[i].is_empty() {
                         skipped_nodes.insert(i);
-                    } else if let Some(value) = identity(&sub.nodes[i])? {
+                    } else if let Some(mut value) = identity(&sub.nodes[i])? {
+                        let mutation = Zeroizing::new(
+                            serde_json::to_string(&mutations[i]).map_err(|_| ModelError::Render)?,
+                        );
+                        value.push('\0');
+                        value.push_str(&mutation);
                         if !seen.insert(NodeIdentity(value)) {
                             remove[i] = true;
                             duplicate[i] = true;
@@ -462,6 +694,8 @@ pub(super) fn apply(
             before,
             after: order.len(),
             renamed,
+            modified,
+            skipped,
         });
     }
     let mut used = HashSet::new();
@@ -476,6 +710,293 @@ pub(super) fn apply(
 mod tests {
     use super::*;
     use crate::relay::model::{EnhanceOptions, Health, editor};
+    #[test]
+    fn resolver_batch_retains_tls_identity_and_reports_missing() {
+        let sub = Subscription::parse(r#"[{"type":"trojan","tag":"a","server":"a.example","server_port":443,"password":"x","tls":{"enabled":true}},{"type":"trojan","tag":"b","server":"b.example","server_port":443,"password":"x","tls":{"enabled":true}}]"#).unwrap();
+        let options = editor::Options {
+            pipeline: vec![step(
+                1,
+                Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                },
+            )],
+            include: String::new(),
+            exclude: String::new(),
+            find: String::new(),
+            replace: String::new(),
+            nodes: Vec::new(),
+            deduplicate: false,
+        };
+        let resolver = |hosts: &[&str], _: AddressFamily| {
+            assert_eq!(hosts, &["a.example", "b.example"]);
+            Ok(vec![Some("192.0.2.1".parse().unwrap()), None])
+        };
+        let result = sub
+            .render_processed_with_resolver(
+                &[Health::Unknown; 2],
+                &EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &options,
+                &resolver,
+            )
+            .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(value[0]["server"], "192.0.2.1");
+        assert_eq!(value[0]["tls"]["server_name"], "a.example");
+        assert_eq!(value[1]["server"], "b.example");
+        assert_eq!(
+            (result.stages[0].modified, result.stages[0].skipped),
+            (1, 1)
+        );
+    }
+
+    #[test]
+    fn resolver_requires_consent_and_valid_batch() {
+        let sub = Subscription::parse(
+            r#"[{"type":"http","tag":"a","server":"a.example","server_port":80}]"#,
+        )
+        .unwrap();
+        let options = editor::Options {
+            pipeline: vec![step(
+                1,
+                Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                },
+            )],
+            include: String::new(),
+            exclude: String::new(),
+            find: String::new(),
+            replace: String::new(),
+            nodes: Vec::new(),
+            deduplicate: false,
+        };
+        let enhance = EnhanceOptions {
+            rename: false,
+            sort: false,
+        };
+        assert!(matches!(
+            sub.render_processed(&[Health::Unknown], &enhance, &options),
+            Err(ModelError::Resolution(ResolveError::ConsentRequired))
+        ));
+        let resolver = |_: &[&str], _: AddressFamily| Ok(vec![]);
+        assert!(matches!(
+            sub.render_processed_with_resolver(&[Health::Unknown], &enhance, &options, &resolver),
+            Err(ModelError::Resolution(ResolveError::InvalidResponse))
+        ));
+    }
+
+    #[test]
+    fn resolved_host_filter_uses_effective_address() {
+        let sub = Subscription::parse(
+            r#"[{"type":"socks","tag":"a","server":"a.example","server_port":80}]"#,
+        )
+        .unwrap();
+        let options = editor::Options {
+            pipeline: vec![
+                step(
+                    1,
+                    Operation::ResolveDomain {
+                        family: AddressFamily::V4,
+                    },
+                ),
+                step(
+                    2,
+                    Operation::HostFilter {
+                        pattern: "^192\\.0\\.2\\.1$".into(),
+                        keep: true,
+                    },
+                ),
+            ],
+            include: String::new(),
+            exclude: String::new(),
+            find: String::new(),
+            replace: String::new(),
+            nodes: Vec::new(),
+            deduplicate: false,
+        };
+        let resolver = |_: &[&str], _: AddressFamily| Ok(vec![Some("192.0.2.1".parse().unwrap())]);
+        let result = sub
+            .render_processed_with_resolver(
+                &[Health::Unknown],
+                &EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &options,
+                &resolver,
+            )
+            .unwrap();
+        assert_eq!(result.retained, vec![0]);
+    }
+
+    #[test]
+    fn local_filters_reverse_and_limit_apply_in_sequence() {
+        let source = "JP A = socks5, a.example, 1080\nUS B = socks5, b.example, 443\nJP C = socks5, 1.1.1.1, 443\nOther = socks5, 2606:4700:4700::1111, 443\n";
+        let out = run(
+            source,
+            vec![
+                step(
+                    1,
+                    Operation::PortFilter {
+                        start: 443,
+                        end: 443,
+                        keep: true,
+                    },
+                ),
+                step(
+                    2,
+                    Operation::RegionFilter {
+                        regions: vec!["JP".into()],
+                        keep: true,
+                        keep_unknown: true,
+                    },
+                ),
+                step(
+                    3,
+                    Operation::IpFilter {
+                        family: AddressFamily::V4,
+                        keep_domains: false,
+                    },
+                ),
+                step(4, Operation::Reverse),
+                step(5, Operation::Limit { count: 1 }),
+            ],
+        )
+        .unwrap();
+        assert_eq!(out.retained, vec![2]);
+        assert_eq!(
+            out.stages.iter().map(|s| s.after).collect::<Vec<_>>(),
+            [3, 2, 1, 1, 1]
+        );
+    }
+
+    #[test]
+    fn host_filter_cascades_dependencies_and_reverse_changes_limit_choice() {
+        let source = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080, underlying-proxy=Base\nLast = socks5, last.example, 1080\n";
+        let out = run(
+            source,
+            vec![step(
+                1,
+                Operation::HostFilter {
+                    pattern: "^base\\.".into(),
+                    keep: false,
+                },
+            )],
+        )
+        .unwrap();
+        assert_eq!(out.retained, vec![2]);
+        let out = run(
+            source,
+            vec![
+                step(1, Operation::Reverse),
+                step(2, Operation::Limit { count: 1 }),
+            ],
+        )
+        .unwrap();
+        assert_eq!(out.retained, vec![2]);
+    }
+
+    #[test]
+    fn properties_report_actual_changes_and_preserve_unsupported_nodes() {
+        let source =
+            "A = socks5, node.example, 1080\nB = external, exec=synthetic, local-port=1234\n";
+        let out = run(
+            source,
+            vec![
+                step(
+                    1,
+                    Operation::SetProperty {
+                        setting: properties::Setting::TcpFastOpen { enabled: true },
+                    },
+                ),
+                step(
+                    2,
+                    Operation::SetProperty {
+                        setting: properties::Setting::TcpFastOpen { enabled: true },
+                    },
+                ),
+            ],
+        )
+        .unwrap();
+        assert_eq!((out.stages[0].modified, out.stages[0].skipped), (1, 1));
+        assert_eq!((out.stages[1].modified, out.stages[1].skipped), (0, 1));
+        assert!(out.content.contains("tfo=true"));
+        let reparsed = Subscription::parse(&out.content).unwrap();
+        let NodeSource::Surge(node) = &reparsed.nodes()[0].source else {
+            panic!("expected Surge node");
+        };
+        assert!(
+            node.fields
+                .iter()
+                .any(|field| field.key == "tfo" && field.value.as_str() == "true")
+        );
+        assert!(out.content.contains("B = external, exec=synthetic"));
+    }
+
+    #[test]
+    fn rejects_invalid_filter_semantics_before_processing() {
+        for operation in [
+            Operation::PortFilter {
+                start: 443,
+                end: 80,
+                keep: true,
+            },
+            Operation::RegionFilter {
+                regions: vec!["Japan".into()],
+                keep: true,
+                keep_unknown: true,
+            },
+            Operation::IpFilter {
+                family: AddressFamily::PreferV4,
+                keep_domains: true,
+            },
+            Operation::SetProperty {
+                setting: properties::Setting::Alpn { values: vec![] },
+            },
+        ] {
+            assert!(matches!(
+                validate(&[step(1, operation)]),
+                Err(ModelError::InvalidEdit)
+            ));
+        }
+    }
+
+    #[test]
+    fn deduplication_does_not_merge_nodes_with_distinct_mutations() {
+        let source = r#"[{"type":"socks","tag":"a","server":"node.example","server_port":1080},{"type":"socks","tag":"b","server":"node.example","server_port":1080}]"#;
+        let sub = Subscription::parse(source).unwrap();
+        let mut edits = editor::Options::default();
+        edits.pipeline = vec![
+            step(
+                1,
+                Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                },
+            ),
+            step(2, Operation::Deduplicate),
+        ];
+        let resolver = |_: &[&str], _: AddressFamily| {
+            Ok(vec![
+                Some("1.1.1.1".parse().unwrap()),
+                Some("8.8.8.8".parse().unwrap()),
+            ])
+        };
+        let result = sub
+            .render_processed_with_resolver(
+                &[Health::Unknown; 2],
+                &EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &edits,
+                &resolver,
+            )
+            .unwrap();
+        assert_eq!(result.retained, [0, 1]);
+        assert_eq!(result.duplicates, 0);
+    }
     fn step(id: u64, operation: Operation) -> Step {
         Step {
             id,

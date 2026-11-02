@@ -320,6 +320,13 @@ impl HubApp {
                                     if reset_editor_widgets {
                                         state.clear_editor_widgets(ui.ctx());
                                     }
+                                    let needs_resolution = state.needs_resolution();
+                                    if needs_resolution {
+                                        ui.checkbox(
+                                            &mut state.allow_resolution,
+                                            tr(Text::ResolutionConsent),
+                                        );
+                                    }
                                     ui.collapsing(tr(Text::RelayAdvanced), |ui| {
                                         ui.weak(tr(Text::RelayStrictProbeHelp));
                                         ui.horizontal_wrapped(|ui| {
@@ -361,11 +368,17 @@ impl HubApp {
                                         ui.weak(tr(Text::RelayEngineMissing));
                                     }
                                     ui.horizontal_wrapped(|ui| {
-                                        let ready = state.editor.is_some() && cooldown == 0;
+                                        let ready = state.editor.is_some()
+                                            && cooldown == 0
+                                            && (!needs_resolution || state.allow_resolution);
                                         if ui
                                             .add_enabled(
                                                 ready,
-                                                egui::Button::new(tr(Text::RelayPrepareOnly)),
+                                                egui::Button::new(tr(if needs_resolution {
+                                                    Text::ResolutionPrepare
+                                                } else {
+                                                    Text::RelayPrepareOnly
+                                                })),
                                             )
                                             .clicked()
                                         {

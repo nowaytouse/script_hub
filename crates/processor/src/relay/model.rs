@@ -14,6 +14,7 @@ use zeroize::{Zeroize, Zeroizing};
 pub mod editor;
 mod mihomo;
 pub mod pipeline;
+pub mod properties;
 mod uri;
 
 const MAX_CONTENT: usize = 4 * 1024 * 1024;
@@ -34,6 +35,7 @@ pub enum ModelError {
     InvalidHealth,
     InvalidDependency,
     InvalidEdit,
+    Resolution(pipeline::ResolveError),
     Render,
 }
 
@@ -48,6 +50,7 @@ impl fmt::Display for ModelError {
             Self::InvalidHealth => "node and health counts differ",
             Self::InvalidDependency => "node dependencies are missing or cyclic",
             Self::InvalidEdit => "invalid node editing options",
+            Self::Resolution(_) => "DNS resolution failed",
             Self::Render => "subscription could not be rendered",
         })
     }
@@ -420,7 +423,8 @@ impl Subscription {
         health: &[Health],
         options: &EnhanceOptions,
     ) -> Result<(Zeroizing<String>, usize), ModelError> {
-        let rendered = self.render_inner(health, options, &editor::Options::default(), false)?;
+        let rendered =
+            self.render_inner(health, options, &editor::Options::default(), false, None)?;
         Ok((rendered.content, rendered.retained.len()))
     }
 
@@ -431,7 +435,18 @@ impl Subscription {
         edits: &editor::Options,
     ) -> Result<editor::Rendered, ModelError> {
         pipeline::validate(&edits.pipeline)?;
-        self.render_inner(health, options, edits, true)
+        self.render_inner(health, options, edits, true, None)
+    }
+
+    pub fn render_processed_with_resolver(
+        &self,
+        health: &[Health],
+        options: &EnhanceOptions,
+        edits: &editor::Options,
+        resolver: &pipeline::Resolver<'_>,
+    ) -> Result<editor::Rendered, ModelError> {
+        pipeline::validate(&edits.pipeline)?;
+        self.render_inner(health, options, edits, true, Some(resolver))
     }
 
     fn render_inner(
@@ -440,6 +455,7 @@ impl Subscription {
         options: &EnhanceOptions,
         edits: &editor::Options,
         clear_empty: bool,
+        resolver: Option<&pipeline::Resolver<'_>>,
     ) -> Result<editor::Rendered, ModelError> {
         if health.len() != self.nodes.len() {
             return Err(ModelError::InvalidHealth);
@@ -659,18 +675,22 @@ impl Subscription {
                     .then_with(|| names[*left].cmp(&names[*right]))
             });
         }
+        let mut mutations = vec![properties::Mutation::default(); self.nodes.len()];
         let mut working = pipeline::Working {
             sub: self,
             dependencies: &dependencies,
             dependents: &dependents,
             names: &mut names,
             order: &mut order,
+            mutations: &mut mutations,
+            resolver,
         };
         let (stages, counts) = pipeline::apply(&mut working, &edits.pipeline)?;
         excluded += counts.excluded;
         duplicates += counts.duplicates;
         duplicate_skipped = duplicate_skipped.max(counts.skipped);
-        if order.iter().copied().eq(0..self.nodes.len())
+        if mutations.iter().all(properties::Mutation::is_empty)
+            && order.iter().copied().eq(0..self.nodes.len())
             && names
                 .iter()
                 .zip(&self.nodes)
@@ -729,6 +749,11 @@ impl Subscription {
                                         quote_surge(&names[index])?,
                                     ));
                                 }
+                                properties::surge_edits(
+                                    &self.nodes[index],
+                                    &mutations[index],
+                                    &mut edits,
+                                )?;
                                 edits.sort_by_key(|edit| std::cmp::Reverse(edit.0.start));
                                 for (range, replacement) in edits {
                                     raw.replace_range(range, &replacement);
@@ -754,7 +779,12 @@ impl Subscription {
                                 let NodeSource::Uri(source) = &self.nodes[index].source else {
                                     return Err(ModelError::Render);
                                 };
-                                if names[index].as_str() == self.nodes[index].name() {
+                                if !mutations[index].is_empty() {
+                                    output.push_str(
+                                        &source
+                                            .render_mutation(&names[index], &mutations[index])?,
+                                    );
+                                } else if names[index].as_str() == self.nodes[index].name() {
                                     output.push_str(source.original());
                                 } else {
                                     output.push_str(&source.render_name(&names[index])?);
@@ -780,6 +810,7 @@ impl Subscription {
                         _ => return Err(ModelError::Render),
                     };
                     let mut value = source.0.clone();
+                    properties::apply_json(&self.nodes[index], &mut value, &mutations[index])?;
                     value[if matches!(
                         self.nodes[index].source,
                         NodeSource::SubStore(_) | NodeSource::Mihomo(_)
