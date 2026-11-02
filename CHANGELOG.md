@@ -2,6 +2,13 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.8.0 · 2026-11-02
+
+- Add combined conditions, name normalization, collision-safe unique names, region labels and reproducible shuffling.
+- Add natural-name, effective-server and numeric-port sorting; safely edit server addresses and ports in supported dialects.
+- Import and export reusable operation plans independently of subscriptions, with explicit plaintext consent, private files and fresh-preview requirements.
+- Keep operation controls usable after importing large step identifiers, and reject unfinished enabled conditions before filtering.
+
 ## 0.7.0 · 2026-11-02
 
 - Expand native operations with host, port, region and IP-family filters, limits, reverse ordering and typed node properties.

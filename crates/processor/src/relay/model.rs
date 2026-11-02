@@ -80,6 +80,7 @@ struct SurgeNode {
     name_range: Range<usize>,
     protocol_range: Range<usize>,
     server_range: Range<usize>,
+    port_range: Range<usize>,
     fields: Vec<Field>,
 }
 
@@ -1311,6 +1312,7 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
                 name_range,
                 protocol_range,
                 server_range,
+                port_range: ranges[2].clone(),
                 fields,
             }),
         });

@@ -7,6 +7,8 @@ use zeroize::ZeroizeOnDrop;
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 #[serde(tag = "property", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Setting {
+    Server { value: String },
+    Port { value: u16 },
     Udp { enabled: bool },
     TcpFastOpen { enabled: bool },
     VerifyTls,
@@ -17,17 +19,20 @@ pub enum Setting {
 #[derive(Clone, Default, PartialEq, Eq, Serialize, Zeroize, ZeroizeOnDrop)]
 pub(super) struct Mutation {
     pub(super) address: Option<String>,
+    pub(super) port: Option<u16>,
     pub(super) settings: Vec<Setting>,
 }
 
 impl Mutation {
     pub(super) fn is_empty(&self) -> bool {
-        self.address.is_none() && self.settings.is_empty()
+        self.address.is_none() && self.port.is_none() && self.settings.is_empty()
     }
 }
 
 fn kind(setting: &Setting) -> u8 {
     match setting {
+        Setting::Server { .. } => 5,
+        Setting::Port { .. } => 6,
         Setting::Udp { .. } => 0,
         Setting::TcpFastOpen { .. } => 1,
         Setting::VerifyTls => 2,
@@ -39,15 +44,19 @@ fn kind(setting: &Setting) -> u8 {
 pub(super) fn hostname(value: &str) -> bool {
     value.len() <= 253
         && value.parse::<IpAddr>().is_err()
-        && value.trim_end_matches('.').split('.').all(|label| {
-            !label.is_empty()
-                && label.len() <= 63
-                && !label.starts_with('-')
-                && !label.ends_with('-')
-                && label
-                    .bytes()
-                    .all(|b| b.is_ascii_alphanumeric() || b == b'-')
-        })
+        && value
+            .strip_suffix('.')
+            .unwrap_or(value)
+            .split('.')
+            .all(|label| {
+                !label.is_empty()
+                    && label.len() <= 63
+                    && !label.starts_with('-')
+                    && !label.ends_with('-')
+                    && label
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+            })
 }
 
 pub fn validate_setting(setting: &Setting) -> Result<(), ModelError> {
@@ -55,6 +64,10 @@ pub fn validate_setting(setting: &Setting) -> Result<(), ModelError> {
         !s.is_empty() && s.len() <= 255 && !s.chars().any(|c| c.is_control() || c.is_whitespace())
     };
     match setting {
+        Setting::Server { value } if value.parse::<IpAddr>().is_err() && !hostname(value) => {
+            Err(ModelError::InvalidEdit)
+        }
+        Setting::Port { value: 0 } => Err(ModelError::InvalidEdit),
         Setting::ServerName { value } if !valid(value) => Err(ModelError::InvalidEdit),
         Setting::Alpn { values }
             if values.is_empty()
@@ -73,6 +86,20 @@ pub(super) fn set_setting(
     setting: &Setting,
 ) -> Result<bool, ModelError> {
     validate_setting(setting)?;
+    match setting {
+        Setting::Server { value } => return set_host(node, mutation, value),
+        Setting::Port { value } => {
+            if mutation.port.unwrap_or(node.port) == *value {
+                return Ok(false);
+            }
+            let mut candidate = mutation.clone();
+            candidate.port = (*value != node.port).then_some(*value);
+            snapshot(node, &candidate)?;
+            *mutation = candidate;
+            return Ok(true);
+        }
+        _ => {}
+    }
     let mut candidate = mutation.clone();
     candidate.settings.retain(|old| kind(old) != kind(setting));
     candidate.settings.push(setting.clone());
@@ -97,24 +124,32 @@ pub(super) fn set_address(
     mutation: &mut Mutation,
     address: IpAddr,
 ) -> Result<bool, ModelError> {
-    if mutation
-        .address
-        .as_deref()
-        .and_then(|s| s.parse::<IpAddr>().ok())
-        == Some(address)
-    {
+    set_host(node, mutation, &address.to_string())
+}
+
+fn same_host(left: &str, right: &str) -> bool {
+    match (left.parse::<IpAddr>(), right.parse::<IpAddr>()) {
+        (Ok(a), Ok(b)) => a == b,
+        (Err(_), Err(_)) => left
+            .strip_suffix('.')
+            .unwrap_or(left)
+            .eq_ignore_ascii_case(right.strip_suffix('.').unwrap_or(right)),
+        _ => false,
+    }
+}
+
+fn set_host(node: &Node, mutation: &mut Mutation, host: &str) -> Result<bool, ModelError> {
+    let host = match host.parse::<IpAddr>() {
+        Ok(ip) => ip.to_string(),
+        Err(_) if hostname(host) => host.to_owned(),
+        Err(_) => return Err(ModelError::InvalidEdit),
+    };
+    if same_host(mutation.address.as_deref().unwrap_or(node.server()), &host) {
         return Ok(false);
     }
-    let before = snapshot(node, mutation)?;
     let mut candidate = mutation.clone();
-    candidate.address = Some(address.to_string());
-    let after = snapshot(node, &candidate)?;
-    if before == after
-        || matches!(node.source, NodeSource::Uri(_))
-            && uri::UriNode::same_effective(&before, &after)?
-    {
-        return Ok(false);
-    }
+    candidate.address = (!same_host(node.server(), &host)).then_some(host);
+    snapshot(node, &candidate)?;
     *mutation = candidate;
     Ok(true)
 }
@@ -277,7 +312,7 @@ pub(super) fn apply_json(
         if !safe_transport(node, value, native) {
             return Err(ModelError::Unsupported);
         }
-        if !hostname(node.server()) {
+        if tls && !hostname(node.server()) {
             return Err(ModelError::Unsupported);
         }
         if tls {
@@ -305,6 +340,13 @@ pub(super) fn apply_json(
             }
         }
         value["server"] = address.as_str().into();
+    }
+    if let Some(port) = mutation.port {
+        let key = if native { "server_port" } else { "port" };
+        if !value.get(key).is_some_and(|v| v.as_u64().is_some()) {
+            return Err(ModelError::Unsupported);
+        }
+        value[key] = port.into();
     }
     for setting in &mutation.settings {
         match setting {
@@ -442,10 +484,16 @@ pub(super) fn surge_edits(
         {
             return Err(ModelError::Unsupported);
         }
-        if !hostname(node.server()) {
+        if tls && !hostname(node.server()) {
             return Err(ModelError::Unsupported);
         }
         edits.push((source.server_range.clone(), quote_surge(address)?));
+    }
+    if let Some(port) = mutation.port {
+        if uncertain_token(source, source.port_range.clone()).is_some() {
+            return Err(ModelError::Unsupported);
+        }
+        edits.push((source.port_range.clone(), Zeroizing::new(port.to_string())));
     }
     let mut additions = Vec::<(String, Zeroizing<String>)>::new();
     let mut set = |key: &str, value: String| -> Result<(), ModelError> {
@@ -502,6 +550,226 @@ pub(super) fn surge_edits(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn server_and_port_mutations_preserve_dialect_and_identity() {
+        for (input, port_key) in [
+            (
+                r#"[{"type":"trojan","tag":"n","server":"old.example","server_port":443,"password":"x","tls":{"enabled":true},"extra":"kept"}]"#,
+                "server_port",
+            ),
+            (
+                r#"{"proxies":[{"type":"trojan","name":"n","server":"old.example","port":443,"password":"x","extra":"kept"}]}"#,
+                "port",
+            ),
+            (
+                r#"[{"type":"trojan","name":"n","server":"old.example","port":443,"password":"x","extra":"kept"}]"#,
+                "port",
+            ),
+        ] {
+            let sub = Subscription::parse(input).unwrap();
+            let node = &sub.nodes()[0];
+            let mut mutation = Mutation::default();
+            assert!(set_setting(node, &mut mutation, &Setting::Port { value: 8443 }).unwrap());
+            assert!(
+                set_setting(
+                    node,
+                    &mut mutation,
+                    &Setting::Server {
+                        value: "new.example".into()
+                    }
+                )
+                .unwrap()
+            );
+            assert!(set_address(node, &mut mutation, "2001:db8::1".parse().unwrap()).unwrap());
+            let output: Value = serde_json::from_str(&snapshot(node, &mutation).unwrap()).unwrap();
+            assert_eq!(output[port_key], 8443);
+            assert_eq!(output["server"], "2001:db8::1");
+            assert_eq!(output["extra"], "kept");
+            let identity = if port_key == "server_port" {
+                &output["tls"]["server_name"]
+            } else {
+                &output["sni"]
+            };
+            assert_eq!(identity, "old.example");
+        }
+    }
+
+    #[test]
+    fn port_and_host_noops_validate_and_preserve_prior_mutation() {
+        let sub = Subscription::parse(
+            r#"[{"type":"socks","tag":"n","server":"192.0.2.4","server_port":1080}]"#,
+        )
+        .unwrap();
+        let node = &sub.nodes()[0];
+        let mut mutation = Mutation::default();
+        assert!(!set_setting(node, &mut mutation, &Setting::Port { value: 1080 }).unwrap());
+        assert!(
+            !set_setting(
+                node,
+                &mut mutation,
+                &Setting::Server {
+                    value: "192.0.2.4".into()
+                }
+            )
+            .unwrap()
+        );
+        assert!(
+            set_setting(
+                node,
+                &mut mutation,
+                &Setting::Server {
+                    value: "new.example".into()
+                }
+            )
+            .unwrap()
+        );
+        let before = mutation.clone();
+        for host in [
+            "",
+            "https://example.com",
+            "a..example",
+            "[::1]",
+            "example.com:443",
+            "a.example..",
+        ] {
+            assert!(matches!(
+                set_setting(node, &mut mutation, &Setting::Server { value: host.into() }),
+                Err(ModelError::InvalidEdit)
+            ));
+            assert!(mutation == before);
+        }
+        assert!(matches!(
+            set_setting(node, &mut mutation, &Setting::Port { value: 0 }),
+            Err(ModelError::InvalidEdit)
+        ));
+        assert!(mutation == before);
+    }
+
+    #[test]
+    fn surge_port_and_server_preserve_line_endings() {
+        let sub = Subscription::parse(
+            "n = trojan, old.example, 443, password=x, sni=identity.example\r\n",
+        )
+        .unwrap();
+        let node = &sub.nodes()[0];
+        let mut mutation = Mutation::default();
+        set_setting(node, &mut mutation, &Setting::Port { value: 8443 }).unwrap();
+        set_setting(
+            node,
+            &mut mutation,
+            &Setting::Server {
+                value: "new.example".into(),
+            },
+        )
+        .unwrap();
+        let output = snapshot(node, &mutation).unwrap();
+        let parsed = Subscription::parse(&output).unwrap();
+        let node = parsed.nodes()[0].to_sing_box(false).unwrap();
+        assert_eq!(node["server"], "new.example");
+        assert_eq!(node["server_port"], 8443);
+        assert!(output.contains("sni=identity.example"));
+        assert!(output.ends_with("\r\n"));
+    }
+
+    #[test]
+    fn uri_port_and_ipv6_host_preserve_query_and_fragment() {
+        let sub = Subscription::parse(
+            "trojan://secret@old.example:443?x=a%2Fb&peer=identity.example#name",
+        )
+        .unwrap();
+        let node = &sub.nodes()[0];
+        let mut mutation = Mutation::default();
+        set_setting(node, &mut mutation, &Setting::Port { value: 8443 }).unwrap();
+        set_setting(
+            node,
+            &mut mutation,
+            &Setting::Server {
+                value: "2001:db8::1".into(),
+            },
+        )
+        .unwrap();
+        let output = snapshot(node, &mutation).unwrap();
+        assert_eq!(
+            output.as_str(),
+            "trojan://secret@[2001:db8::1]:8443?x=a%2Fb&peer=identity.example#name"
+        );
+    }
+
+    #[test]
+    fn equivalent_uri_values_do_not_rewrite_original_formatting() {
+        let sub =
+            Subscription::parse("trojan://secret@Old.Example:00443?peer=identity.example#name")
+                .unwrap();
+        let node = &sub.nodes()[0];
+        let mut mutation = Mutation::default();
+        assert!(
+            !set_setting(
+                node,
+                &mut mutation,
+                &Setting::Server {
+                    value: "old.example.".into()
+                }
+            )
+            .unwrap()
+        );
+        assert!(!set_setting(node, &mut mutation, &Setting::Port { value: 443 }).unwrap());
+        assert!(mutation.is_empty());
+        assert_eq!(
+            snapshot(node, &mutation).unwrap().as_str(),
+            "trojan://secret@Old.Example:00443?peer=identity.example#name"
+        );
+    }
+
+    #[test]
+    fn vmess_port_preserves_string_or_number() {
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        for port in [json!("443"), json!(443)] {
+            let source = json!({"v":"2", "ps":"n", "add":"old.example", "port":port, "id":"id", "tls":"tls", "extra":"kept"});
+            let input = format!(
+                "vmess://{}",
+                STANDARD.encode(serde_json::to_vec(&source).unwrap())
+            );
+            let sub = Subscription::parse(&input).unwrap();
+            let node = &sub.nodes()[0];
+            let mut mutation = Mutation::default();
+            set_setting(node, &mut mutation, &Setting::Port { value: 8443 }).unwrap();
+            let output = snapshot(node, &mutation).unwrap();
+            let decoded = STANDARD
+                .decode(output.strip_prefix("vmess://").unwrap())
+                .unwrap();
+            let value: Value = serde_json::from_slice(&decoded).unwrap();
+            assert_eq!(
+                value["port"],
+                if source["port"].is_string() {
+                    json!("8443")
+                } else {
+                    json!(8443)
+                }
+            );
+            assert_eq!(value["extra"], "kept");
+        }
+    }
+
+    #[test]
+    fn unsupported_host_change_keeps_existing_port() {
+        let sub = Subscription::parse("trojan://secret@192.0.2.1:443#n").unwrap();
+        let node = &sub.nodes()[0];
+        let mut mutation = Mutation::default();
+        set_setting(node, &mut mutation, &Setting::Port { value: 8443 }).unwrap();
+        let before = mutation.clone();
+        assert!(matches!(
+            set_setting(
+                node,
+                &mut mutation,
+                &Setting::Server {
+                    value: "new.example".into()
+                }
+            ),
+            Err(ModelError::Unsupported)
+        ));
+        assert!(mutation == before);
+    }
 
     #[test]
     fn native_address_preserves_explicit_tls_identity() {

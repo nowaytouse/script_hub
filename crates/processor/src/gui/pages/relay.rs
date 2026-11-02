@@ -320,6 +320,31 @@ impl HubApp {
                                     if reset_editor_widgets {
                                         state.clear_editor_widgets(ui.ctx());
                                     }
+                                    ui.collapsing(tr(Text::OperationPlan), |ui| {
+                                        ui.weak(tr(Text::OperationPlanHelp));
+                                        if ui
+                                            .add_enabled(
+                                                state.editor.is_some(),
+                                                egui::Button::new(tr(Text::OperationPlanImport)),
+                                            )
+                                            .clicked()
+                                        {
+                                            file_action = Some(FileAction::ImportPlan);
+                                        }
+                                        ui.checkbox(
+                                            &mut state.allow_plaintext,
+                                            tr(Text::VaultPlaintextConsent),
+                                        );
+                                        if ui
+                                            .add_enabled(
+                                                state.editor.is_some() && state.allow_plaintext,
+                                                egui::Button::new(tr(Text::OperationPlanExport)),
+                                            )
+                                            .clicked()
+                                        {
+                                            file_action = Some(FileAction::ExportPlan);
+                                        }
+                                    });
                                     let needs_resolution = state.needs_resolution();
                                     if needs_resolution {
                                         ui.checkbox(

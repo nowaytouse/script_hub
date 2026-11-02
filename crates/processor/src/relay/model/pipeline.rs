@@ -74,6 +74,76 @@ pub enum Operation {
     SetProperty {
         setting: properties::Setting,
     },
+    ConditionFilter {
+        conditions: Vec<Condition>,
+        mode: MatchMode,
+        keep: bool,
+    },
+    NormalizeName {
+        case: NameCase,
+        trim: bool,
+        collapse_whitespace: bool,
+    },
+    UniqueNames {
+        separator: String,
+    },
+    RegionNames {
+        labels: Vec<RegionLabel>,
+        separator: String,
+        keep_name: bool,
+    },
+    Shuffle {
+        seed: u64,
+    },
+}
+
+#[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
+#[serde(deny_unknown_fields)]
+pub struct Condition {
+    pub field: Field,
+    pub matcher: TextMatch,
+    pub value: String,
+    pub negate: bool,
+}
+
+#[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
+#[serde(deny_unknown_fields)]
+pub struct RegionLabel {
+    pub region: String,
+    pub label: String,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum Field {
+    Name,
+    Server,
+    Protocol,
+    Port,
+    Region,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum TextMatch {
+    Equals,
+    Contains,
+    Regex,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum MatchMode {
+    All,
+    Any,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum NameCase {
+    Preserve,
+    Lower,
+    Upper,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
@@ -110,6 +180,9 @@ pub enum SortKey {
     Name,
     Protocol,
     Region,
+    NaturalName,
+    Server,
+    Port,
 }
 
 #[derive(Clone)]
@@ -197,6 +270,53 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
             return Err(ModelError::InvalidEdit);
         }
         match &step.operation {
+            Operation::ConditionFilter { conditions, .. } => {
+                if conditions.len() > 32
+                    || conditions.iter().any(|c| !valid_text(&c.value))
+                    || step.enabled
+                        && (conditions.is_empty() || conditions.iter().any(|c| c.value.is_empty()))
+                {
+                    return Err(ModelError::InvalidEdit);
+                }
+                if step.enabled {
+                    for condition in conditions {
+                        if condition.matcher == TextMatch::Regex {
+                            regex(&condition.value)?;
+                        }
+                    }
+                }
+            }
+            Operation::UniqueNames { separator } => {
+                if !valid_text(separator) {
+                    return Err(ModelError::InvalidEdit);
+                }
+            }
+            Operation::RegionNames {
+                labels, separator, ..
+            } => {
+                if labels.len() > 64
+                    || !valid_text(separator)
+                    || labels
+                        .iter()
+                        .any(|l| !valid_text(&l.region) || !valid_text(&l.label))
+                {
+                    return Err(ModelError::InvalidEdit);
+                }
+                if step.enabled {
+                    let mut codes = HashSet::new();
+                    if labels.is_empty()
+                        || labels.iter().any(|l| {
+                            l.region.len() != 2
+                                || !l.region.bytes().all(|b| b.is_ascii_alphabetic())
+                                || l.label.is_empty()
+                                || !codes.insert(l.region.to_ascii_uppercase())
+                        })
+                    {
+                        return Err(ModelError::InvalidEdit);
+                    }
+                }
+            }
+            Operation::NormalizeName { .. } | Operation::Shuffle { .. } => {}
             Operation::NameFilter { pattern, .. } | Operation::HostFilter { pattern, .. } => {
                 if !valid_text(pattern) {
                     return Err(ModelError::InvalidEdit);
@@ -390,6 +510,55 @@ fn protocol(value: &str) -> &str {
     }
 }
 
+fn natural_cmp(left: &str, right: &str) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    let (a, b) = (left.as_bytes(), right.as_bytes());
+    let (mut i, mut j) = (0, 0);
+    while i < a.len() && j < b.len() {
+        if a[i].is_ascii_digit() && b[j].is_ascii_digit() {
+            let (mut ie, mut je) = (i, j);
+            while ie < a.len() && a[ie].is_ascii_digit() {
+                ie += 1;
+            }
+            while je < b.len() && b[je].is_ascii_digit() {
+                je += 1;
+            }
+            let mut ai = i;
+            let mut bj = j;
+            while ai < ie && a[ai] == b'0' {
+                ai += 1;
+            }
+            while bj < je && b[bj] == b'0' {
+                bj += 1;
+            }
+            let cmp = (ie - ai)
+                .cmp(&(je - bj))
+                .then_with(|| a[ai..ie].cmp(&b[bj..je]));
+            if cmp != Ordering::Equal {
+                return cmp;
+            }
+            i = ie;
+            j = je;
+        } else {
+            let cmp = a[i].cmp(&b[j]);
+            if cmp != Ordering::Equal {
+                return cmp;
+            }
+            i += 1;
+            j += 1;
+        }
+    }
+    (a.len() - i).cmp(&(b.len() - j))
+}
+
+fn next_shuffle(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9e3779b97f4a7c15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
+    z ^ (z >> 31)
+}
+
 pub(super) fn apply(
     working: &mut Working<'_>,
     steps: &[Step],
@@ -415,6 +584,169 @@ pub(super) fn apply(
         let mut remove = vec![false; names.len()];
         let mut duplicate = vec![false; names.len()];
         match &step.operation {
+            Operation::ConditionFilter {
+                conditions,
+                mode,
+                keep,
+            } => {
+                let compiled: Vec<_> = conditions
+                    .iter()
+                    .map(|condition| {
+                        if condition.matcher == TextMatch::Regex {
+                            regex(&condition.value).map(Some)
+                        } else {
+                            Ok(None)
+                        }
+                    })
+                    .collect::<Result<_, ModelError>>()?;
+                let needs_port = conditions
+                    .iter()
+                    .any(|condition| condition.field == Field::Port);
+                let needs_region = conditions
+                    .iter()
+                    .any(|condition| condition.field == Field::Region);
+                for &i in order.iter() {
+                    let port = if needs_port {
+                        mutations[i].port.unwrap_or(sub.nodes[i].port).to_string()
+                    } else {
+                        String::new()
+                    };
+                    let region = if needs_region {
+                        local_region(&names[i])
+                            .map(|r| String::from_utf8_lossy(&r).into_owned())
+                            .unwrap_or_default()
+                    } else {
+                        String::new()
+                    };
+                    let mut matches = conditions.iter().zip(&compiled).map(|(condition, re)| {
+                        let actual = match condition.field {
+                            Field::Name => names[i].as_str(),
+                            Field::Server => mutations[i]
+                                .address
+                                .as_deref()
+                                .unwrap_or(sub.nodes[i].server()),
+                            Field::Protocol => protocol(sub.nodes[i].protocol()),
+                            Field::Port => &port,
+                            Field::Region => &region,
+                        };
+                        let expected = if condition.field == Field::Protocol
+                            && condition.matcher == TextMatch::Equals
+                        {
+                            protocol(&condition.value)
+                        } else {
+                            &condition.value
+                        };
+                        let found = match condition.matcher {
+                            TextMatch::Equals if condition.field == Field::Protocol => {
+                                actual.eq_ignore_ascii_case(expected)
+                            }
+                            TextMatch::Equals => actual == expected,
+                            TextMatch::Contains => actual.contains(expected),
+                            TextMatch::Regex => re.as_ref().is_some_and(|r| r.is_match(actual)),
+                        };
+                        found != condition.negate
+                    });
+                    let matched = match mode {
+                        MatchMode::All => matches.all(|v| v),
+                        MatchMode::Any => matches.any(|v| v),
+                    };
+                    remove[i] = matched != *keep;
+                }
+            }
+            Operation::NormalizeName {
+                case,
+                trim,
+                collapse_whitespace,
+            } => {
+                for &i in order.iter() {
+                    let input = if *trim {
+                        names[i].trim()
+                    } else {
+                        names[i].as_str()
+                    };
+                    let input = Zeroizing::new(match case {
+                        NameCase::Preserve => input.to_owned(),
+                        NameCase::Lower => input.to_lowercase(),
+                        NameCase::Upper => input.to_uppercase(),
+                    });
+                    let mut output = Zeroizing::new(String::new());
+                    let mut whitespace = false;
+                    for character in input.chars() {
+                        if *collapse_whitespace && character.is_whitespace() {
+                            if !whitespace {
+                                output.push(' ');
+                            }
+                            whitespace = true;
+                        } else {
+                            output.push(character);
+                            whitespace = false;
+                        }
+                    }
+                    renamed += usize::from(set_name(names, i, output, &mut name_bytes)?);
+                }
+            }
+            Operation::UniqueNames { separator } => {
+                let mut reserved: HashSet<_> = order
+                    .iter()
+                    .map(|&i| NodeIdentity(names[i].clone()))
+                    .collect();
+                let mut seen = HashSet::new();
+                let mut counters = std::collections::HashMap::new();
+                for &i in order.iter() {
+                    let base = names[i].clone();
+                    if seen.insert(NodeIdentity(base.clone())) {
+                        continue;
+                    }
+                    let next = counters.entry(NodeIdentity(base.clone())).or_insert(2usize);
+                    loop {
+                        let candidate =
+                            Zeroizing::new(format!("{}{}{}", base.as_str(), separator, *next));
+                        *next = next.checked_add(1).ok_or(ModelError::InvalidEdit)?;
+                        if !reserved.contains(&NodeIdentity(candidate.clone())) {
+                            reserved.insert(NodeIdentity(candidate.clone()));
+                            renamed += usize::from(set_name(names, i, candidate, &mut name_bytes)?);
+                            break;
+                        }
+                    }
+                }
+            }
+            Operation::RegionNames {
+                labels,
+                separator,
+                keep_name,
+            } => {
+                for &i in order.iter() {
+                    let Some(region) = local_region(&names[i]) else {
+                        continue;
+                    };
+                    let Some(label) = labels
+                        .iter()
+                        .find(|l| l.region.as_bytes().eq_ignore_ascii_case(&region))
+                    else {
+                        continue;
+                    };
+                    let value = if *keep_name {
+                        format!("{}{}{}", label.label, separator, names[i].as_str())
+                    } else {
+                        label.label.clone()
+                    };
+                    renamed +=
+                        usize::from(set_name(names, i, Zeroizing::new(value), &mut name_bytes)?);
+                }
+            }
+            Operation::Shuffle { seed } => {
+                let mut state = *seed;
+                for i in (1..order.len()).rev() {
+                    let bound = i as u64 + 1;
+                    let threshold = bound.wrapping_neg() % bound;
+                    let mut sample = next_shuffle(&mut state);
+                    while sample < threshold {
+                        sample = next_shuffle(&mut state);
+                    }
+                    let j = (sample % bound) as usize;
+                    order.swap(i, j);
+                }
+            }
             Operation::HostFilter { pattern, keep } => {
                 let re = regex(pattern)?;
                 for &i in order.iter() {
@@ -427,7 +759,9 @@ pub(super) fn apply(
             }
             Operation::PortFilter { start, end, keep } => {
                 for &i in order.iter() {
-                    remove[i] = (*start..=*end).contains(&sub.nodes[i].port) != *keep;
+                    remove[i] = (*start..=*end)
+                        .contains(&mutations[i].port.unwrap_or(sub.nodes[i].port))
+                        != *keep;
                 }
             }
             Operation::RegionFilter {
@@ -619,6 +953,21 @@ pub(super) fn apply(
                 order.sort_by(|&a, &b| {
                     let cmp = match key {
                         SortKey::Name => names[a].cmp(&names[b]),
+                        SortKey::NaturalName => natural_cmp(&names[a], &names[b]),
+                        SortKey::Server => mutations[a]
+                            .address
+                            .as_deref()
+                            .unwrap_or(sub.nodes[a].server())
+                            .cmp(
+                                mutations[b]
+                                    .address
+                                    .as_deref()
+                                    .unwrap_or(sub.nodes[b].server()),
+                            ),
+                        SortKey::Port => mutations[a]
+                            .port
+                            .unwrap_or(sub.nodes[a].port)
+                            .cmp(&mutations[b].port.unwrap_or(sub.nodes[b].port)),
                         SortKey::Protocol => {
                             protocol(sub.nodes[a].protocol()).cmp(protocol(sub.nodes[b].protocol()))
                         }
@@ -710,6 +1059,289 @@ pub(super) fn apply(
 mod tests {
     use super::*;
     use crate::relay::model::{EnhanceOptions, Health, editor};
+
+    #[test]
+    fn normalize_and_unique_reserve_existing_names() {
+        let input = r#"[{"type":"socks","tag":"A","server":"a","server_port":1},{"type":"socks","tag":"a","server":"b","server_port":2},{"type":"socks","tag":"a 2","server":"c","server_port":3}]"#;
+        let operations = || {
+            vec![
+                step(
+                    1,
+                    Operation::NormalizeName {
+                        case: NameCase::Lower,
+                        trim: true,
+                        collapse_whitespace: true,
+                    },
+                ),
+                step(
+                    2,
+                    Operation::UniqueNames {
+                        separator: " ".into(),
+                    },
+                ),
+                step(
+                    3,
+                    Operation::NormalizeName {
+                        case: NameCase::Lower,
+                        trim: true,
+                        collapse_whitespace: true,
+                    },
+                ),
+            ]
+        };
+        let result = run(input, operations()).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(value[0]["tag"], "a");
+        assert_eq!(value[1]["tag"], "a 3");
+        assert_eq!(value[2]["tag"], "a 2");
+        assert_eq!(result.stages[2].renamed, 0);
+    }
+
+    #[test]
+    fn conditions_match_region_unknown_and_protocol_aliases() {
+        let input = r#"[{"type":"socks","tag":"[US] alpha","server":"a","server_port":10},{"type":"socks","tag":"plain","server":"b","server_port":20}]"#;
+        let condition = |field, matcher, value: &str, negate| Condition {
+            field,
+            matcher,
+            value: value.into(),
+            negate,
+        };
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::ConditionFilter {
+                    conditions: vec![
+                        condition(Field::Protocol, TextMatch::Equals, "socks5", false),
+                        condition(Field::Region, TextMatch::Regex, ".", true),
+                    ],
+                    mode: MatchMode::All,
+                    keep: true,
+                },
+            )],
+        )
+        .unwrap();
+        assert_eq!(result.retained, vec![1]);
+    }
+
+    #[test]
+    fn region_names_and_seeded_shuffle_are_deterministic() {
+        let input = r#"[{"type":"socks","tag":"[US] alpha","server":"a","server_port":1},{"type":"socks","tag":"[JP] beta","server":"b","server_port":2},{"type":"socks","tag":"plain","server":"c","server_port":3}]"#;
+        let steps = || {
+            vec![
+                step(
+                    1,
+                    Operation::RegionNames {
+                        labels: vec![RegionLabel {
+                            region: "us".into(),
+                            label: "America".into(),
+                        }],
+                        separator: " / ".into(),
+                        keep_name: true,
+                    },
+                ),
+                step(2, Operation::Shuffle { seed: 0 }),
+            ]
+        };
+        let a = run(input, steps()).unwrap();
+        let b = run(input, steps()).unwrap();
+        assert_eq!(a.content.as_str(), b.content.as_str());
+        assert!(a.content.contains("America / [US] alpha"));
+        assert!(a.content.contains("plain"));
+    }
+
+    #[test]
+    fn natural_sort_uses_unbounded_digits_and_stable_equal_numbers() {
+        assert_eq!(natural_cmp("node2", "node10"), std::cmp::Ordering::Less);
+        assert_eq!(natural_cmp("node0002", "node2"), std::cmp::Ordering::Equal);
+        assert_eq!(
+            natural_cmp("n99999999999999999999", "n100000000000000000000"),
+            std::cmp::Ordering::Less
+        );
+        let input = r#"[{"type":"socks","tag":"node10","server":"a","server_port":1},{"type":"socks","tag":"node2","server":"b","server_port":2},{"type":"socks","tag":"node02","server":"c","server_port":3}]"#;
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::Sort {
+                    key: SortKey::NaturalName,
+                    descending: false,
+                },
+            )],
+        )
+        .unwrap();
+        assert_eq!(result.retained, vec![1, 2, 0]);
+    }
+
+    #[test]
+    fn condition_validation_rejects_invalid_enabled_and_bounds() {
+        let empty = step(
+            1,
+            Operation::ConditionFilter {
+                conditions: vec![],
+                mode: MatchMode::All,
+                keep: true,
+            },
+        );
+        assert!(matches!(validate(&[empty]), Err(ModelError::InvalidEdit)));
+        let disabled = Step {
+            id: 1,
+            enabled: false,
+            operation: Operation::ConditionFilter {
+                conditions: vec![],
+                mode: MatchMode::All,
+                keep: true,
+            },
+        };
+        assert!(validate(&[disabled]).is_ok());
+        let labels = vec![
+            RegionLabel {
+                region: "us".into(),
+                label: "A".into(),
+            },
+            RegionLabel {
+                region: "US".into(),
+                label: "B".into(),
+            },
+        ];
+        assert!(matches!(
+            validate(&[step(
+                2,
+                Operation::RegionNames {
+                    labels,
+                    separator: String::new(),
+                    keep_name: false
+                }
+            )]),
+            Err(ModelError::InvalidEdit)
+        ));
+    }
+
+    #[test]
+    fn condition_empty_values_rejected_only_when_enabled() {
+        for matcher in [TextMatch::Equals, TextMatch::Contains, TextMatch::Regex] {
+            let condition = Condition {
+                field: Field::Name,
+                matcher,
+                value: String::new(),
+                negate: false,
+            };
+            let operation = Operation::ConditionFilter {
+                conditions: vec![condition],
+                mode: MatchMode::All,
+                keep: false,
+            };
+            let enabled = Step {
+                id: 1,
+                enabled: true,
+                operation: operation.clone(),
+            };
+            let disabled = Step {
+                id: 1,
+                enabled: false,
+                operation,
+            };
+            assert!(matches!(validate(&[enabled]), Err(ModelError::InvalidEdit)));
+            assert!(validate(&[disabled]).is_ok());
+        }
+    }
+
+    #[test]
+    fn effective_address_and_port_drive_sorts_and_conditions() {
+        let sub = Subscription::parse(r#"[{"type":"socks","tag":"a","server":"a.example","server_port":10},{"type":"socks","tag":"b","server":"b.example","server_port":20}]"#).unwrap();
+        for key in [SortKey::Server, SortKey::Port] {
+            let dependencies = vec![None, None];
+            let dependents = vec![vec![], vec![]];
+            let mut names = vec![Zeroizing::new("a".into()), Zeroizing::new("b".into())];
+            let mut order = vec![0, 1];
+            let mut mutations = vec![properties::Mutation::default(); 2];
+            mutations[0].address = Some("z.example".into());
+            mutations[0].port = Some(30);
+            let mut working = Working {
+                sub: &sub,
+                dependencies: &dependencies,
+                dependents: &dependents,
+                names: &mut names,
+                order: &mut order,
+                mutations: &mut mutations,
+                resolver: None,
+            };
+            apply(
+                &mut working,
+                &[step(
+                    1,
+                    Operation::Sort {
+                        key,
+                        descending: false,
+                    },
+                )],
+            )
+            .unwrap();
+            assert_eq!(order, vec![1, 0]);
+        }
+        let dependencies = vec![None, None];
+        let dependents = vec![vec![], vec![]];
+        let mut names = vec![Zeroizing::new("a".into()), Zeroizing::new("b".into())];
+        let mut order = vec![0, 1];
+        let mut mutations = vec![properties::Mutation::default(); 2];
+        mutations[0].address = Some("z.example".into());
+        mutations[0].port = Some(30);
+        let mut working = Working {
+            sub: &sub,
+            dependencies: &dependencies,
+            dependents: &dependents,
+            names: &mut names,
+            order: &mut order,
+            mutations: &mut mutations,
+            resolver: None,
+        };
+        apply(
+            &mut working,
+            &[step(
+                1,
+                Operation::ConditionFilter {
+                    conditions: vec![
+                        Condition {
+                            field: Field::Server,
+                            matcher: TextMatch::Equals,
+                            value: "z.example".into(),
+                            negate: false,
+                        },
+                        Condition {
+                            field: Field::Port,
+                            matcher: TextMatch::Equals,
+                            value: "30".into(),
+                            negate: false,
+                        },
+                    ],
+                    mode: MatchMode::All,
+                    keep: true,
+                },
+            )],
+        )
+        .unwrap();
+        assert_eq!(order, vec![0]);
+    }
+
+    #[test]
+    fn normalized_dependency_name_updates_detour() {
+        let input = r#"[{"type":"socks","tag":"BASE","server":"a","server_port":1},{"type":"socks","tag":"chain","server":"b","server_port":2,"detour":"BASE"}]"#;
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::NormalizeName {
+                    case: NameCase::Lower,
+                    trim: true,
+                    collapse_whitespace: true,
+                },
+            )],
+        )
+        .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(value[0]["tag"], "base");
+        assert_eq!(value[1]["detour"], "base");
+    }
     #[test]
     fn resolver_batch_retains_tls_identity_and_reports_missing() {
         let sub = Subscription::parse(r#"[{"type":"trojan","tag":"a","server":"a.example","server_port":443,"password":"x","tls":{"enabled":true}},{"type":"trojan","tag":"b","server":"b.example","server_port":443,"password":"x","tls":{"enabled":true}}]"#).unwrap();

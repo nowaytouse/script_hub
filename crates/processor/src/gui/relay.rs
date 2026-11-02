@@ -242,6 +242,8 @@ struct FilePending {
 
 enum FileCompleted {
     Imported(Box<crate::relay::backup::RelayBackup>),
+    Plan(Vec<crate::relay::model::pipeline::Step>),
+    PlanSaved,
     Saved,
     Engine(std::path::PathBuf),
 }
@@ -732,13 +734,18 @@ impl RelayState {
         if self.busy() || self.selecting_file() {
             return;
         }
-        if !matches!(action, FileAction::Import | FileAction::ChooseEngine) && !self.allow_plaintext
-        {
+        if action.is_save() && !self.allow_plaintext {
             self.error = Some(Failure::Validation(Text::VaultPlaintextConsent));
             return;
         }
+        if matches!(action, FileAction::ImportPlan | FileAction::ExportPlan)
+            && self.editor.is_none()
+        {
+            self.error = Some(Failure::Validation(Text::OperationPlanInvalid));
+            return;
+        }
         let Some(path) = path else {
-            if !matches!(action, FileAction::Import | FileAction::ChooseEngine)
+            if matches!(action, FileAction::ExportBackup | FileAction::ExportNodes)
                 && self
                     .result
                     .as_ref()
@@ -754,7 +761,14 @@ impl RelayState {
             ));
             return;
         };
-        let payload = if matches!(action, FileAction::Import | FileAction::ChooseEngine) {
+        let plan = if action == FileAction::ExportPlan {
+            self.editor
+                .as_ref()
+                .map(|editor| editor.options.pipeline.clone())
+        } else {
+            None
+        };
+        let payload = if !matches!(action, FileAction::ExportBackup | FileAction::ExportNodes) {
             None
         } else {
             let Some(result) = &self.result else { return };
@@ -797,6 +811,14 @@ impl RelayState {
                             .map_err(|_| Text::RelayFileError)?;
                         return Ok(Some(FileCompleted::Engine(path)));
                     }
+                    if action == FileAction::ImportPlan {
+                        let bytes = Zeroizing::new(
+                            crate::vault::read_bounded(&path).map_err(|_| Text::RelayFileError)?,
+                        );
+                        let steps = crate::relay::plan::decode(&bytes)
+                            .map_err(|_| Text::OperationPlanInvalid)?;
+                        return Ok(Some(FileCompleted::Plan(steps)));
+                    }
                     if matches!(action, FileAction::Import) {
                         let bytes = Zeroizing::new(
                             crate::vault::read_bounded(&path).map_err(|_| Text::RelayFileError)?,
@@ -823,6 +845,17 @@ impl RelayState {
                     }
                     if !super::templates::safe_export_destination(&path, workspace.as_deref()) {
                         return Err(Text::RelayFileError);
+                    }
+                    if let Some(plan) = plan {
+                        let bytes = crate::relay::plan::encode(&plan)
+                            .map_err(|_| Text::OperationPlanInvalid)?;
+                        crate::vault::write_private(&path, &bytes, false).map_err(|error| {
+                            match error {
+                                crate::vault::VaultError::AlreadyExists => Text::RelayFileExists,
+                                _ => Text::RelayFileError,
+                            }
+                        })?;
+                        return Ok(Some(FileCompleted::PlanSaved));
                     }
                     let (config, content) = payload.ok_or(Text::RelayFileError)?;
                     let bytes = if matches!(action, FileAction::ExportBackup) {
@@ -874,6 +907,12 @@ impl RelayState {
             return;
         }
         match (joined, result) {
+            (Ok(()), Ok(Ok(Some(FileCompleted::Plan(steps))))) => {
+                self.apply_plan(ctx, steps);
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::PlanSaved)))) => {
+                self.notice = Some(Text::OperationPlanSaved);
+            }
             (Ok(()), Ok(Ok(Some(FileCompleted::Imported(mut backup))))) => {
                 let last_directory = self.last_directory.take();
                 self.clear(ctx);
@@ -983,6 +1022,18 @@ impl RelayState {
         self.editor.as_ref().is_some_and(|editor| {
             crate::relay::model::pipeline::has_resolution(&editor.options.pipeline)
         })
+    }
+
+    fn apply_plan(&mut self, ctx: &egui::Context, steps: Vec<crate::relay::model::pipeline::Step>) {
+        self.clear_editor_widgets(ctx);
+        if let Some(editor) = &mut self.editor {
+            editor.options.pipeline = steps;
+            self.invalidate_result();
+            self.notice = Some(Text::OperationPlanLoaded);
+            self.step = RelayStep::Review;
+        } else {
+            self.error = Some(Failure::Validation(Text::OperationPlanInvalid));
+        }
     }
 }
 
@@ -1742,5 +1793,84 @@ mod tests {
             assert!(message.contains("429"));
             assert!(message.starts_with(super::super::i18n::text(language, Text::RelayHttpStatus)));
         }
+    }
+
+    #[test]
+    fn operation_plan_files_preserve_source_and_manual_edits_but_reset_consent() {
+        use crate::relay::model::pipeline::{AddressFamily, Operation, Step};
+        let ctx = egui::Context::default();
+        let directory = std::env::temp_dir().join(format!(
+            "script-hub-plan-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let directory = directory.canonicalize().unwrap();
+        let destination = directory.join("operations.json");
+        let source = "A = socks5, node.example.invalid, 1080\n";
+        let mut state = fixture();
+        let mut editor = EditorState::new(source, None).unwrap();
+        editor.rows[0].name = Zeroizing::new("Manual name".into());
+        editor.options.pipeline = vec![Step {
+            id: u64::MAX,
+            enabled: true,
+            operation: Operation::ResolveDomain {
+                family: AddressFamily::PreferV4,
+            },
+        }];
+        state.editor = Some(editor);
+        state.file_action(FileAction::ExportPlan, Some(destination.clone()), None);
+        assert!(!destination.exists());
+        assert!(matches!(
+            state.error,
+            Some(Failure::Validation(Text::VaultPlaintextConsent))
+        ));
+        state.allow_plaintext = true;
+        state.file_action(FileAction::ExportPlan, Some(destination.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(state.error.is_none());
+        let original = crate::vault::read_bounded(&destination).unwrap();
+        let text = std::str::from_utf8(&original).unwrap();
+        assert!(
+            !text.contains("node.example.invalid")
+                && !text.contains("Manual name")
+                && !text.contains("synthetic-token")
+        );
+        state.editor.as_mut().unwrap().options.pipeline.clear();
+        state.result = Some(result());
+        state.allow_resolution = true;
+        state.acknowledge_publish = true;
+        state.file_action(FileAction::ImportPlan, Some(destination.clone()), None);
+        finish(&mut state, &ctx);
+        let editor = state.editor.as_ref().unwrap();
+        assert_eq!(editor.source.as_str(), source);
+        assert_eq!(editor.rows[0].name.as_str(), "Manual name");
+        assert_eq!(editor.options.pipeline.len(), 1);
+        assert!(state.result.is_none() && !state.allow_resolution && !state.acknowledge_publish);
+        assert!(state.needs_resolution());
+        state.allow_plaintext = true;
+        state.file_action(FileAction::ExportPlan, Some(destination.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(matches!(
+            state.error,
+            Some(Failure::Validation(Text::RelayFileExists))
+        ));
+        assert_eq!(crate::vault::read_bounded(&destination).unwrap(), original);
+        let invalid = directory.join("invalid.json");
+        crate::vault::write_private(&invalid, b"{bad", false).unwrap();
+        state.file_action(FileAction::ImportPlan, Some(invalid.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(matches!(
+            state.error,
+            Some(Failure::Validation(Text::OperationPlanInvalid))
+        ));
+        assert_eq!(state.editor.as_ref().unwrap().options.pipeline.len(), 1);
+        for path in [destination, invalid] {
+            std::fs::remove_file(path).unwrap();
+        }
+        std::fs::remove_dir(directory).unwrap();
     }
 }

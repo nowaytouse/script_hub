@@ -22,9 +22,20 @@ impl Drop for ListingPermit {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FileAction {
     Import,
+    ImportPlan,
+    ExportPlan,
     ExportBackup,
     ExportNodes,
     ChooseEngine,
+}
+
+impl FileAction {
+    pub(super) fn is_save(self) -> bool {
+        matches!(
+            self,
+            Self::ExportBackup | Self::ExportNodes | Self::ExportPlan
+        )
+    }
 }
 
 pub enum PickerResponse {
@@ -210,6 +221,7 @@ impl Picker {
             filename: match action {
                 FileAction::ExportBackup => "relay-backup.json",
                 FileAction::ExportNodes => "nodes.list",
+                FileAction::ExportPlan => "operations.json",
                 _ => "",
             }
             .to_owned(),
@@ -354,7 +366,7 @@ impl Picker {
                 .filter_map(|(index, entry)| {
                     let visible = (self.show_hidden || !entry.display.starts_with('.'))
                         && (entry.directory
-                            || self.action != FileAction::Import
+                            || !matches!(self.action, FileAction::Import | FileAction::ImportPlan)
                             || self.all_files
                             || entry.path.extension().is_none()
                             || entry
@@ -362,9 +374,13 @@ impl Picker {
                                 .extension()
                                 .and_then(|ext| ext.to_str())
                                 .is_some_and(|ext| {
-                                    ["json", "yaml", "yml", "conf", "list", "txt"]
-                                        .iter()
-                                        .any(|allowed| ext.eq_ignore_ascii_case(allowed))
+                                    if self.action == FileAction::ImportPlan {
+                                        ext.eq_ignore_ascii_case("json")
+                                    } else {
+                                        ["json", "yaml", "yml", "conf", "list", "txt"]
+                                            .iter()
+                                            .any(|allowed| ext.eq_ignore_ascii_case(allowed))
+                                    }
                                 }))
                         && entry.lowercase.contains(&query);
                     visible.then_some(index)
@@ -384,11 +400,11 @@ impl Picker {
 
     fn selection(&self) -> Result<PathBuf, Text> {
         match self.action {
-            FileAction::Import | FileAction::ChooseEngine => {
+            FileAction::Import | FileAction::ImportPlan | FileAction::ChooseEngine => {
                 let path = self.selected.as_ref().ok_or(Text::FilePickerInvalid)?;
                 Ok(path.clone())
             }
-            FileAction::ExportBackup | FileAction::ExportNodes => {
+            FileAction::ExportBackup | FileAction::ExportNodes | FileAction::ExportPlan => {
                 if !valid_filename(&self.filename) {
                     return Err(Text::FilePickerInvalid);
                 }
@@ -560,7 +576,7 @@ impl Picker {
                 let mut changed = ui
                     .checkbox(&mut self.show_hidden, tr(Text::FilePickerHidden))
                     .changed();
-                if self.action == FileAction::Import {
+                if matches!(self.action, FileAction::Import | FileAction::ImportPlan) {
                     changed |= ui
                         .checkbox(&mut self.all_files, tr(Text::FilePickerAllFiles))
                         .changed();
@@ -701,10 +717,7 @@ impl Picker {
                                 let entry = &listing.entries[self.filtered[next]];
                                 self.selected = Some(entry.path.clone());
                                 if !entry.directory
-                                    && matches!(
-                                        self.action,
-                                        FileAction::ExportBackup | FileAction::ExportNodes
-                                    )
+                                    && self.action.is_save()
                                     && let Some(name) = entry.name.to_str()
                                 {
                                     self.filename = name.to_owned();
@@ -809,10 +822,7 @@ impl Picker {
                                     ui.ctx().request_repaint();
                                     self.selected = Some(entry.path.clone());
                                     if !entry.directory
-                                        && matches!(
-                                            self.action,
-                                            FileAction::ExportBackup | FileAction::ExportNodes
-                                        )
+                                        && self.action.is_save()
                                         && let Some(name) = entry.name.to_str()
                                     {
                                         self.filename = name.to_owned();
@@ -846,10 +856,7 @@ impl Picker {
             ui.small(status);
             ui.horizontal(|ui| {
                 let label = ui.label(tr(Text::FilePickerName));
-                if matches!(
-                    self.action,
-                    FileAction::ExportBackup | FileAction::ExportNodes
-                ) {
+                if self.action.is_save() {
                     let field = ui.add(
                         egui::TextEdit::singleline(&mut self.filename)
                             .id(filename_id)
@@ -884,7 +891,7 @@ impl Picker {
                 let ready = self.worker.is_none()
                     && self.pending.is_none()
                     && self.listing.is_some()
-                    && (!matches!(self.action, FileAction::Import | FileAction::ChooseEngine)
+                    && (self.action.is_save()
                         || self.listing.as_ref().is_some_and(|l| {
                             l.entries
                                 .iter()
@@ -893,14 +900,11 @@ impl Picker {
                 if ui
                     .add_enabled(
                         ready,
-                        egui::Button::new(tr(
-                            if matches!(self.action, FileAction::Import | FileAction::ChooseEngine)
-                            {
-                                Text::FilePickerOpen
-                            } else {
-                                Text::FilePickerSave
-                            },
-                        )),
+                        egui::Button::new(tr(if !self.action.is_save() {
+                            Text::FilePickerOpen
+                        } else {
+                            Text::FilePickerSave
+                        })),
                     )
                     .clicked()
                 {

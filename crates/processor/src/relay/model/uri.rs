@@ -259,9 +259,6 @@ impl UriNode {
         if !valid_label(name) {
             return Err(ModelError::InvalidEdit);
         }
-        if mutation.address.is_some() && !hostname(&self.server) {
-            return Err(ModelError::Unsupported);
-        }
         if self.vmess {
             let mut data = PrivateJson(self.data.0.clone());
             let obj = data.0.as_object_mut().ok_or(ModelError::Unsupported)?;
@@ -271,6 +268,9 @@ impl UriNode {
                 Some(Value::String(s)) if s == "tls" => true,
                 _ => return Err(ModelError::Unsupported),
             };
+            if mutation.address.is_some() && tls && !hostname(&self.server) {
+                return Err(ModelError::Unsupported);
+            }
             if obj.get("sni").is_some_and(|v| !v.is_string()) {
                 return Err(ModelError::Unsupported);
             }
@@ -312,6 +312,14 @@ impl UriNode {
                 }
                 obj.insert("add".into(), address.as_str().into());
             }
+            if let Some(port) = mutation.port {
+                let value = match obj.get("port") {
+                    Some(Value::String(_)) => Value::String(port.to_string()),
+                    Some(Value::Number(_)) => port.into(),
+                    _ => return Err(ModelError::Unsupported),
+                };
+                obj.insert("port".into(), value);
+            }
             for setting in &mutation.settings {
                 match setting {
                     Setting::ServerName { value } if tls => {
@@ -352,7 +360,7 @@ impl UriNode {
         }
         if !matches!(
             self.protocol.as_str(),
-            "trojan"
+            "ss" | "trojan"
                 | "anytls"
                 | "vless"
                 | "hy2"
@@ -363,6 +371,15 @@ impl UriNode {
                 | "socks"
                 | "socks5"
         ) {
+            return Err(ModelError::Unsupported);
+        }
+        if self.protocol.as_str() == "ss"
+            && !self
+                .raw
+                .split_once('#')
+                .map_or(self.raw.as_str(), |(body, _)| body)
+                .contains('@')
+        {
             return Err(ModelError::Unsupported);
         }
         let params = self
@@ -395,6 +412,9 @@ impl UriNode {
             return Err(ModelError::Unsupported);
         }
         let tls = security != "none";
+        if mutation.address.is_some() && tls && !hostname(&self.server) {
+            return Err(ModelError::Unsupported);
+        }
         if get("sni").is_some() && get("peer").is_some()
             || get("insecure").is_some() && get("allowInsecure").is_some()
             || get("sni")
@@ -469,7 +489,13 @@ impl UriNode {
         } else {
             result.push_str(&prefix[host_start..host_end]);
         }
-        result.push_str(&prefix[host_end..]);
+        if let Some(port) = mutation.port {
+            result.push(':');
+            result.push_str(&port.to_string());
+            result.push_str(&prefix[host_start + hostport.len()..]);
+        } else {
+            result.push_str(&prefix[host_end..]);
+        }
         let mut first = true;
         if let Some(query) = query {
             for pair in query.split('&') {

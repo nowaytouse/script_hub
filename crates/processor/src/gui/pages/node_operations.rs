@@ -1,14 +1,17 @@
 use super::card;
 use crate::gui::i18n::{Text, text};
 use crate::gui::theme::Palette;
-use crate::relay::model::pipeline::{self, AddressFamily, Operation, SortKey, StageReport, Step};
+use crate::relay::model::pipeline::{
+    self, AddressFamily, Condition, Field, MatchMode, NameCase, Operation, RegionLabel, SortKey,
+    StageReport, Step, TextMatch,
+};
 use crate::relay::model::properties::Setting;
 use crate::runtime::settings::Language;
 use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
-const FIELDS: [&str; 8] = [
+const FIELDS: [&str; 10] = [
     "pattern",
     "replacement",
     "template",
@@ -17,6 +20,8 @@ const FIELDS: [&str; 8] = [
     "regions",
     "server_name",
     "alpn",
+    "separator",
+    "server",
 ];
 
 fn field_id(id: u64, field: &str) -> egui::Id {
@@ -46,6 +51,13 @@ pub(super) fn clear_widgets(ctx: &egui::Context, steps: &[Step]) {
             for field in FIELDS {
                 data.remove::<egui::text_edit::TextEditState>(field_id(step.id, field));
                 data.remove::<Zeroizing<String>>(field_id(step.id, field).with("draft"));
+            }
+            for i in 0..64 {
+                for name in ["condition", "region_code", "region_label"] {
+                    let id = field_id(step.id, name).with(i);
+                    data.remove::<egui::text_edit::TextEditState>(id);
+                    data.remove::<Zeroizing<String>>(id.with("draft"));
+                }
             }
         }
     });
@@ -94,6 +106,11 @@ fn operation_label(op: &Operation) -> Text {
         Operation::Reverse => Text::OperationReverse,
         Operation::ResolveDomain { .. } => Text::OperationResolveDomain,
         Operation::SetProperty { .. } => Text::OperationSetProperty,
+        Operation::ConditionFilter { .. } => Text::OperationConditionFilter,
+        Operation::NormalizeName { .. } => Text::OperationNormalizeName,
+        Operation::UniqueNames { .. } => Text::OperationUniqueNames,
+        Operation::RegionNames { .. } => Text::OperationRegionNames,
+        Operation::Shuffle { .. } => Text::OperationShuffle,
     }
 }
 
@@ -104,7 +121,7 @@ enum Action {
     Delete,
 }
 
-fn new_operations() -> [Operation; 16] {
+fn new_operations() -> [Operation; 21] {
     [
         Operation::NameFilter {
             pattern: String::new(),
@@ -157,6 +174,39 @@ fn new_operations() -> [Operation; 16] {
         Operation::SetProperty {
             setting: Setting::TcpFastOpen { enabled: true },
         },
+        Operation::ConditionFilter {
+            conditions: vec![Condition {
+                field: Field::Name,
+                matcher: TextMatch::Contains,
+                value: String::new(),
+                negate: false,
+            }],
+            mode: MatchMode::All,
+            keep: true,
+        },
+        Operation::NormalizeName {
+            case: NameCase::Preserve,
+            trim: true,
+            collapse_whitespace: true,
+        },
+        Operation::UniqueNames {
+            separator: " · ".into(),
+        },
+        Operation::RegionNames {
+            labels: vec![
+                RegionLabel {
+                    region: "JP".into(),
+                    label: "Japan".into(),
+                },
+                RegionLabel {
+                    region: "US".into(),
+                    label: "United States".into(),
+                },
+            ],
+            separator: " | ".into(),
+            keep_name: true,
+        },
+        Operation::Shuffle { seed: 0 },
     ]
 }
 
@@ -210,6 +260,62 @@ fn family_control(
     changed
 }
 
+fn choice<T: Copy + PartialEq>(
+    ui: &mut egui::Ui,
+    language: Language,
+    id: impl std::hash::Hash + std::fmt::Debug,
+    label: Text,
+    value: &mut T,
+    options: &[(T, Text)],
+) -> bool {
+    let label_response = ui.label(text(language, label));
+    let selected = options
+        .iter()
+        .find(|(candidate, _)| *candidate == *value)
+        .map(|(_, label)| *label)
+        .unwrap_or(label);
+    let mut changed = false;
+    let response = egui::ComboBox::from_id_salt(id)
+        .width(ui.available_width().min(220.0))
+        .selected_text(text(language, selected))
+        .show_ui(ui, |ui| {
+            for (candidate, label) in options {
+                if ui
+                    .selectable_label(*candidate == *value, text(language, *label))
+                    .clicked()
+                    && *candidate != *value
+                {
+                    *value = *candidate;
+                    changed = true;
+                }
+            }
+        });
+    let _ = response.response.labelled_by(label_response.id);
+    changed
+}
+
+fn clear_rows(ctx: &egui::Context, step: u64, names: &[&str], limit: usize) {
+    ctx.data_mut(|data| {
+        for i in 0..limit {
+            for name in names {
+                let id = field_id(step, name).with(i);
+                data.remove::<egui::text_edit::TextEditState>(id);
+                data.remove::<Zeroizing<String>>(id.with("draft"));
+            }
+        }
+    });
+}
+
+fn next_step_id(steps: &[Step]) -> Option<u64> {
+    steps
+        .iter()
+        .map(|step| step.id)
+        .max()
+        .unwrap_or(0)
+        .checked_add(1)
+        .or_else(|| (0..=MAX_STEPS as u64).find(|id| steps.iter().all(|step| step.id != *id)))
+}
+
 pub(super) fn show(
     ui: &mut egui::Ui,
     language: Language,
@@ -221,12 +327,7 @@ pub(super) fn show(
     let mut changed = false;
     ui.strong(tr(Text::OperationChain));
     ui.weak(tr(Text::OperationChainHelp));
-    let next_id = steps
-        .iter()
-        .map(|step| step.id)
-        .max()
-        .unwrap_or(0)
-        .checked_add(1);
+    let next_id = next_step_id(steps);
     ui.add_enabled_ui(steps.len() < MAX_STEPS && next_id.is_some(), |ui| {
         ui.menu_button(tr(Text::OperationAdd), |ui| {
             for (group, label) in [
@@ -360,6 +461,9 @@ pub(super) fn show(
                                 (SortKey::Name, Text::OperationSortName),
                                 (SortKey::Protocol, Text::OperationSortProtocol),
                                 (SortKey::Region, Text::OperationSortRegion),
+                                (SortKey::NaturalName, Text::OperationSortNatural),
+                                (SortKey::Server, Text::OperationSortServer),
+                                (SortKey::Port, Text::OperationSortPort),
                             ] {
                                 if ui.selectable_label(*key == candidate, tr(label)).clicked() {
                                     *key = candidate;
@@ -461,6 +565,174 @@ pub(super) fn show(
                         });
                     }
                     Operation::Reverse => {}
+                    Operation::ConditionFilter {
+                        conditions,
+                        mode,
+                        keep,
+                    } => {
+                        changed |= choice(
+                            ui,
+                            language,
+                            (step.id, "mode"),
+                            Text::ConditionMode,
+                            mode,
+                            &[
+                                (MatchMode::All, Text::ConditionAll),
+                                (MatchMode::Any, Text::ConditionAny),
+                            ],
+                        );
+                        let mut remove = None;
+                        for (i, condition) in conditions.iter_mut().enumerate() {
+                            ui.separator();
+                            changed |= choice(
+                                ui,
+                                language,
+                                (step.id, "field", i),
+                                Text::ConditionField,
+                                &mut condition.field,
+                                &[
+                                    (Field::Name, Text::OperationSortName),
+                                    (Field::Server, Text::OperationSortServer),
+                                    (Field::Protocol, Text::OperationSortProtocol),
+                                    (Field::Port, Text::OperationSortPort),
+                                    (Field::Region, Text::OperationSortRegion),
+                                ],
+                            );
+                            changed |= choice(
+                                ui,
+                                language,
+                                (step.id, "matcher", i),
+                                Text::ConditionMatcher,
+                                &mut condition.matcher,
+                                &[
+                                    (TextMatch::Equals, Text::ConditionEquals),
+                                    (TextMatch::Contains, Text::ConditionContains),
+                                    (TextMatch::Regex, Text::ConditionRegex),
+                                ],
+                            );
+                            changed |= field(
+                                ui,
+                                tr(Text::ConditionValue),
+                                &mut condition.value,
+                                field_id(step.id, "condition").with(i),
+                                false,
+                            );
+                            changed |= ui
+                                .checkbox(&mut condition.negate, tr(Text::ConditionNegate))
+                                .changed();
+                            if ui.button(tr(Text::ConditionDelete)).clicked() {
+                                remove = Some(i);
+                            }
+                        }
+                        if let Some(i) = remove {
+                            conditions.remove(i);
+                            clear_rows(ui.ctx(), step.id, &["condition"], 32);
+                            changed = true;
+                        }
+                        if ui
+                            .add_enabled(
+                                conditions.len() < 32,
+                                egui::Button::new(tr(Text::ConditionAdd)),
+                            )
+                            .clicked()
+                        {
+                            conditions.push(Condition {
+                                field: Field::Name,
+                                matcher: TextMatch::Contains,
+                                value: String::new(),
+                                negate: false,
+                            });
+                            changed = true;
+                        }
+                        changed |= ui.checkbox(keep, tr(Text::OperationKeepMatches)).changed();
+                    }
+                    Operation::NormalizeName {
+                        case,
+                        trim,
+                        collapse_whitespace,
+                    } => {
+                        changed |= choice(
+                            ui,
+                            language,
+                            (step.id, "case"),
+                            Text::NameCase,
+                            case,
+                            &[
+                                (NameCase::Preserve, Text::NameCasePreserve),
+                                (NameCase::Lower, Text::NameCaseLower),
+                                (NameCase::Upper, Text::NameCaseUpper),
+                            ],
+                        );
+                        changed |= ui.checkbox(trim, tr(Text::NameTrim)).changed();
+                        changed |= ui
+                            .checkbox(collapse_whitespace, tr(Text::NameCollapseWhitespace))
+                            .changed();
+                    }
+                    Operation::UniqueNames { separator } => {
+                        changed |= field(
+                            ui,
+                            tr(Text::NameSeparator),
+                            separator,
+                            field_id(step.id, "separator"),
+                            false,
+                        );
+                    }
+                    Operation::RegionNames {
+                        labels,
+                        separator,
+                        keep_name,
+                    } => {
+                        ui.weak(tr(Text::RegionNamesHelp));
+                        let mut remove = None;
+                        for (i, label) in labels.iter_mut().enumerate() {
+                            ui.separator();
+                            changed |= field(
+                                ui,
+                                tr(Text::RegionCode),
+                                &mut label.region,
+                                field_id(step.id, "region_code").with(i),
+                                false,
+                            );
+                            changed |= field(
+                                ui,
+                                tr(Text::RegionLabel),
+                                &mut label.label,
+                                field_id(step.id, "region_label").with(i),
+                                false,
+                            );
+                            if ui.button(tr(Text::RegionDelete)).clicked() {
+                                remove = Some(i);
+                            }
+                        }
+                        if let Some(i) = remove {
+                            labels.remove(i);
+                            clear_rows(ui.ctx(), step.id, &["region_code", "region_label"], 64);
+                            changed = true;
+                        }
+                        if ui
+                            .add_enabled(labels.len() < 64, egui::Button::new(tr(Text::RegionAdd)))
+                            .clicked()
+                        {
+                            labels.push(RegionLabel {
+                                region: String::new(),
+                                label: String::new(),
+                            });
+                            changed = true;
+                        }
+                        changed |= field(
+                            ui,
+                            tr(Text::NameSeparator),
+                            separator,
+                            field_id(step.id, "separator"),
+                            false,
+                        );
+                        changed |= ui.checkbox(keep_name, tr(Text::RegionKeepName)).changed();
+                    }
+                    Operation::Shuffle { seed } => {
+                        ui.label(tr(Text::ShuffleSeed));
+                        changed |= ui.add(egui::DragValue::new(seed)).changed();
+                        ui.weak(tr(Text::ShuffleHelp));
+                    }
                     Operation::ResolveDomain { family } => {
                         changed |= family_control(ui, language, family, true);
                         ui.weak(tr(Text::ResolutionPreview));
@@ -472,6 +744,8 @@ pub(super) fn show(
                             Setting::VerifyTls => 2,
                             Setting::ServerName { .. } => 3,
                             Setting::Alpn { .. } => 4,
+                            Setting::Server { .. } => 5,
+                            Setting::Port { .. } => 6,
                         };
                         let labels = [
                             Text::PropertyUdp,
@@ -479,11 +753,13 @@ pub(super) fn show(
                             Text::PropertyVerifyTls,
                             Text::PropertyServerName,
                             Text::PropertyAlpn,
+                            Text::PropertyServer,
+                            Text::PropertyPort,
                         ];
                         egui::ComboBox::from_id_salt(("property-kind", step.id))
                             .selected_text(tr(labels[current]))
                             .show_ui(ui, |ui| {
-                                for (index, label) in labels[..5].iter().enumerate() {
+                                for (index, label) in labels.iter().enumerate() {
                                     if ui.selectable_label(index == current, tr(*label)).clicked()
                                         && index != current
                                     {
@@ -494,9 +770,13 @@ pub(super) fn show(
                                             3 => Setting::ServerName {
                                                 value: String::new(),
                                             },
-                                            _ => Setting::Alpn { values: Vec::new() },
+                                            4 => Setting::Alpn { values: Vec::new() },
+                                            5 => Setting::Server {
+                                                value: String::new(),
+                                            },
+                                            _ => Setting::Port { value: 443 },
                                         };
-                                        for name in ["server_name", "alpn"] {
+                                        for name in ["server_name", "alpn", "server"] {
                                             let id = field_id(step.id, name);
                                             ui.ctx().data_mut(|data| {
                                                 data.remove::<egui::text_edit::TextEditState>(id);
@@ -531,6 +811,21 @@ pub(super) fn show(
                                     tr(Text::PropertyAlpnHelp),
                                     values,
                                 );
+                            }
+                            Setting::Server { value } => {
+                                changed |= field(
+                                    ui,
+                                    tr(Text::PropertyServer),
+                                    value,
+                                    field_id(step.id, "server"),
+                                    false,
+                                );
+                            }
+                            Setting::Port { value } => {
+                                ui.label(tr(Text::PropertyPort));
+                                changed |= ui
+                                    .add(egui::DragValue::new(value).range(1..=65535))
+                                    .changed();
                             }
                         }
                         ui.weak(tr(Text::PropertySkippedHelp));
@@ -615,7 +910,8 @@ fn operation_group(op: &Operation) -> u8 {
         | Operation::HostFilter { .. }
         | Operation::PortFilter { .. }
         | Operation::RegionFilter { .. }
-        | Operation::IpFilter { .. } => 0,
+        | Operation::IpFilter { .. }
+        | Operation::ConditionFilter { .. } => 0,
         Operation::ResolveDomain { .. } | Operation::SetProperty { .. } => 2,
         _ => 1,
     }
@@ -624,26 +920,35 @@ fn operation_group(op: &Operation) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn imported_maximum_identifier_does_not_disable_new_operations() {
+        let steps = [Step {
+            id: u64::MAX,
+            enabled: true,
+            operation: Operation::Reverse,
+        }];
+        assert_eq!(next_step_id(&steps), Some(0));
+    }
     use crate::gui::theme;
     use crate::runtime::settings::Preferences;
 
     #[test]
     fn operation_defaults_and_groups_cover_all_choices() {
         let operations = new_operations();
-        assert_eq!(operations.len(), 16);
+        assert_eq!(operations.len(), 21);
         assert_eq!(
             operations
                 .iter()
                 .filter(|op| operation_group(op) == 0)
                 .count(),
-            6
+            7
         );
         assert_eq!(
             operations
                 .iter()
                 .filter(|op| operation_group(op) == 1)
                 .count(),
-            8
+            12
         );
         assert_eq!(
             operations
@@ -686,6 +991,33 @@ mod tests {
                 setting: Setting::TcpFastOpen { enabled: true }
             }
         ));
+        assert!(
+            matches!(&operations[16], Operation::ConditionFilter { conditions, mode: MatchMode::All, keep: true } if conditions.len() == 1 && conditions[0].value.is_empty() && conditions[0].field == Field::Name && conditions[0].matcher == TextMatch::Contains)
+        );
+        assert!(matches!(
+            &operations[17],
+            Operation::NormalizeName {
+                case: NameCase::Preserve,
+                trim: true,
+                collapse_whitespace: true
+            }
+        ));
+        assert!(
+            matches!(&operations[18], Operation::UniqueNames { separator } if separator == " · ")
+        );
+        assert!(
+            matches!(&operations[19], Operation::RegionNames { labels, separator, keep_name: true } if labels.len() == 2 && labels[0].region == "JP" && labels[0].label == "Japan" && labels[1].region == "US" && labels[1].label == "United States" && separator == " | ")
+        );
+        assert!(matches!(&operations[20], Operation::Shuffle { seed: 0 }));
+        let condition = Step {
+            id: 1,
+            enabled: true,
+            operation: operations[16].clone(),
+        };
+        assert!(
+            pipeline::validate(&[condition]).is_err(),
+            "empty condition must require input"
+        );
     }
 
     #[test]
@@ -700,7 +1032,13 @@ mod tests {
             let id = field_id(4, name).with("draft");
             ctx.data_mut(|data| data.insert_temp(id, Zeroizing::new("private".to_owned())));
         }
+        let row_id = field_id(4, "condition").with(0).with("draft");
+        ctx.data_mut(|data| data.insert_temp(row_id, Zeroizing::new("private value".to_owned())));
         clear_widgets(&ctx, &steps);
+        assert!(
+            ctx.data_mut(|data| data.get_temp::<Zeroizing<String>>(row_id))
+                .is_none()
+        );
         for name in ["regions", "server_name", "alpn"] {
             assert!(
                 ctx.data_mut(
@@ -756,6 +1094,58 @@ mod tests {
         );
         output.textures_delta.clear();
         output
+    }
+
+    #[test]
+    fn new_operations_and_properties_fit_narrow_cards() {
+        let mut ops: Vec<_> = new_operations().into_iter().skip(16).collect();
+        ops.push(Operation::Sort {
+            key: SortKey::NaturalName,
+            descending: false,
+        });
+        ops.push(Operation::SetProperty {
+            setting: Setting::Server {
+                value: String::new(),
+            },
+        });
+        ops.push(Operation::SetProperty {
+            setting: Setting::Port { value: 443 },
+        });
+        for (i, operation) in ops.into_iter().enumerate() {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            theme::apply(&ctx, &Preferences::default());
+            let mut steps = vec![Step {
+                id: i as u64 + 1,
+                enabled: true,
+                operation,
+            }];
+            let output = draw(&ctx, &mut steps, vec![]);
+            let update = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .expect("accessible controls");
+            let expected = match i {
+                0 => "Add condition",
+                1 => "Letter case",
+                2 => "Separator",
+                3 => "Add region",
+                4 => "Seed",
+                5 => "Natural name",
+                6 => "Server address",
+                _ => "Server port",
+            };
+            assert!(
+                update
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some(expected)
+                        || node.value() == Some(expected)),
+                "missing {expected}"
+            );
+            output.drop_without_applying_deltas();
+        }
     }
 
     #[test]

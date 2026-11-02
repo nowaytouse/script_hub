@@ -4,6 +4,7 @@ pub mod backup;
 pub mod engine;
 pub mod gist;
 pub mod model;
+pub mod plan;
 pub mod resolve;
 
 use serde::Deserialize;
