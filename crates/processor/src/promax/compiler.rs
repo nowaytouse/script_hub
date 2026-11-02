@@ -1423,31 +1423,54 @@ impl AdBlockManager {
         failures
     }
 
-    fn filter_rules(&self, rules: &HashSet<String>) -> Result<Vec<String>, String> {
-        let exceptions = regex::RegexSet::new(self.source_exceptions.iter().map(|domain| {
+    fn source_exception_matcher(&self) -> Result<regex::RegexSet, String> {
+        regex::RegexSet::new(self.source_exceptions.iter().map(|domain| {
             let pattern = regex::escape(domain)
                 .replace("\\*", ".*")
                 .replace("\\?", ".");
             format!("(?i)(?:^|\\.){pattern}$")
         }))
-        .map_err(|error| format!("cannot compile AdGuard domain exceptions: {error}"))?;
-        let mut filtered = Vec::new();
+        .map_err(|error| format!("cannot compile AdGuard domain exceptions: {error}"))
+    }
+
+    fn partition_rules<'a>(
+        rules: &'a HashSet<String>,
+        exceptions: &regex::RegexSet,
+    ) -> [Vec<&'a str>; 3] {
+        use crate::promax::rule::{RuleKind, SurgeRule};
+
+        let mut parts = [Vec::new(), Vec::new(), Vec::new()];
         for rule in rules {
-            if let Ok(parsed) = crate::promax::rule::SurgeRule::parse(rule)
-                && matches!(
-                    parsed.kind,
-                    crate::promax::rule::RuleKind::Domain
-                        | crate::promax::rule::RuleKind::DomainSuffix
-                        | crate::promax::rule::RuleKind::DomainWildcard
-                )
-                && exceptions.is_match(&parsed.payload)
-            {
-                continue;
-            }
-            filtered.push(rule.clone());
+            let part = match SurgeRule::parse(rule) {
+                Ok(parsed) => {
+                    if matches!(
+                        parsed.kind,
+                        RuleKind::Domain | RuleKind::DomainSuffix | RuleKind::DomainWildcard
+                    ) && exceptions.is_match(&parsed.payload)
+                    {
+                        continue;
+                    }
+                    match parsed.kind {
+                        RuleKind::Domain
+                        | RuleKind::DomainSuffix
+                        | RuleKind::DomainKeyword
+                        | RuleKind::DomainWildcard
+                        | RuleKind::DomainRegex => 0,
+                        RuleKind::IpCidr
+                        | RuleKind::IpCidr6
+                        | RuleKind::IpAsn
+                        | RuleKind::GeoIp => 1,
+                        _ => 2,
+                    }
+                }
+                Err(_) => 2,
+            };
+            parts[part].push(rule.as_str());
         }
-        filtered.sort();
-        Ok(filtered)
+        for part in &mut parts {
+            part.sort_unstable();
+        }
+        parts
     }
 
     fn generate_ruleset(
@@ -1465,6 +1488,7 @@ impl AdBlockManager {
             RULES_PER_SHARD
         );
 
+        let exceptions = self.source_exception_matcher()?;
         for category in CATEGORIES {
             let empty_set = HashSet::new();
             let rules_in_cat = self
@@ -1473,9 +1497,9 @@ impl AdBlockManager {
                 .unwrap()
                 .get(*category)
                 .unwrap_or(&empty_set);
-            let rules = self.filter_rules(rules_in_cat)?;
+            let [domains, ips, other] = Self::partition_rules(rules_in_cat, &exceptions);
 
-            if rules.is_empty() {
+            if domains.is_empty() && ips.is_empty() && other.is_empty() {
                 println!(
                     "\x1b[0;32m[INFO]\x1b[0m   ⊘ Skip shard for {}: no unique rules",
                     category
@@ -1484,28 +1508,6 @@ impl AdBlockManager {
             }
 
             let meta = CATEGORY_META.get(category).unwrap();
-            let mut domains = Vec::new();
-            let mut ips = Vec::new();
-            let mut other = Vec::new();
-            for rule in rules {
-                match crate::promax::rule::SurgeRule::parse(&rule).map(|parsed| parsed.kind) {
-                    Ok(
-                        crate::promax::rule::RuleKind::Domain
-                        | crate::promax::rule::RuleKind::DomainSuffix
-                        | crate::promax::rule::RuleKind::DomainKeyword
-                        | crate::promax::rule::RuleKind::DomainWildcard
-                        | crate::promax::rule::RuleKind::DomainRegex,
-                    ) => domains.push(rule),
-                    Ok(
-                        crate::promax::rule::RuleKind::IpCidr
-                        | crate::promax::rule::RuleKind::IpCidr6
-                        | crate::promax::rule::RuleKind::IpAsn
-                        | crate::promax::rule::RuleKind::GeoIp,
-                    ) => ips.push(rule),
-                    _ => other.push(rule),
-                }
-            }
-
             for (suffix, part_rules) in [("", domains), ("_ip", ips), ("_other_extra", other)] {
                 let chunk_count = part_rules.len().div_ceil(RULES_PER_SHARD);
                 for (idx, chunk) in part_rules.chunks(RULES_PER_SHARD).enumerate() {
@@ -1526,16 +1528,18 @@ impl AdBlockManager {
                         format!("{}/{}", idx + 1, chunk_count)
                     };
 
-                    let mut content = Vec::new();
-                    content.push(format!("# Ruleset: AdBlock · {}", meta.label_zh));
-                    content.push(format!("# Purpose: {}", meta.desc));
-                    content.push(format!("# Category-Key: {}", category));
-                    content.push(format!("# Shard: {}", shard_label));
-                    content.push(format!("# Total Rules: {}", chunk.len()));
-                    content.extend(chunk.iter().cloned());
-
-                    let mut out_str = content.join("\n");
-                    out_str.push('\n');
+                    let mut out_str = format!(
+                        "# Ruleset: AdBlock · {}\n# Purpose: {}\n# Category-Key: {}\n# Shard: {}\n# Total Rules: {}\n",
+                        meta.label_zh,
+                        meta.desc,
+                        category,
+                        shard_label,
+                        chunk.len()
+                    );
+                    for rule in chunk {
+                        out_str.push_str(rule);
+                        out_str.push('\n');
+                    }
                     let rel_path = format!("rulesets/AdBlock/{filename}");
                     artifacts.push(crate::promax::artifact::GeneratedArtifact {
                         target: adblock_dir.join(&filename),

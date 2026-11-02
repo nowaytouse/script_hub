@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## Unreleased
+
+- Reuse exception matching and parse rules once when generating ad-block shards; avoid intermediate rule-string copies.
+
 ## 0.3.2 · 2026-11-01
 
 - Compile accepted IPv4/IPv6 reject and drop networks into Surge's early IP path.

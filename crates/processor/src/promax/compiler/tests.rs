@@ -990,8 +990,11 @@ fn reviewed_privacy_sources_survive_safety_filter_and_keep_suffixes_protected() 
     );
 
     let privacy_rules = manager.rules["REJECT"]["Privacy"].clone();
-    let filtered = manager.filter_rules(&privacy_rules).unwrap();
-    let rendered_hosts: HashSet<String> = filtered
+    let parts = AdBlockManager::partition_rules(
+        &privacy_rules,
+        &manager.source_exception_matcher().unwrap(),
+    );
+    let rendered_hosts: HashSet<String> = parts[0]
         .iter()
         .filter_map(|line| crate::promax::rule::SurgeRule::parse(line).ok())
         .filter(|rule| rule.kind == crate::promax::rule::RuleKind::Domain)
@@ -1497,7 +1500,11 @@ fn adguard_domain_exception_removes_a_merged_block_rule() {
         "fixture",
     );
     let rules = &manager.rules["REJECT"]["Advertising"];
-    assert!(manager.filter_rules(rules).unwrap().is_empty());
+    assert!(
+        AdBlockManager::partition_rules(rules, &manager.source_exception_matcher().unwrap())
+            .iter()
+            .all(Vec::is_empty)
+    );
 }
 
 #[test]
@@ -1508,14 +1515,87 @@ fn adguard_wildcard_exceptions_preserve_domain_boundaries_and_case() {
         "REJECT", "Advertising", false, false, "fixture",
     );
     assert_eq!(
-        manager
-            .filter_rules(&manager.rules["REJECT"]["Advertising"])
-            .unwrap(),
+        AdBlockManager::partition_rules(
+            &manager.rules["REJECT"]["Advertising"],
+            &manager.source_exception_matcher().unwrap(),
+        )[0],
         vec![
             "DOMAIN,ads.example.test".to_string(),
             "DOMAIN,unsafe1.ads.example.test".to_string(),
         ]
     );
+}
+
+#[test]
+fn rule_partition_preserves_exception_scope_order_and_invalid_fallbacks() {
+    let mut manager = AdBlockManager::new(std::env::temp_dir());
+    manager
+        .source_exceptions
+        .insert("safe*.ads.example.test".to_string());
+    let rules: HashSet<String> = [
+        "DOMAIN,Safe1.ads.example.test",
+        "DOMAIN-SUFFIX,media.safe2.ads.example.test",
+        "DOMAIN-WILDCARD,*.safe3.ads.example.test",
+        "DOMAIN,ads.example.test",
+        "DOMAIN-KEYWORD,safe1.ads.example.test",
+        r"DOMAIN-REGEX,safe1\.ads\.example\.test",
+        "IP-CIDR,192.0.2.0/24,no-resolve",
+        "IP-CIDR6,2001:db8::/32,no-resolve",
+        "IP-ASN,64496,no-resolve",
+        "GEOIP,CN",
+        "PROCESS-NAME,ad-app",
+        r"URL-REGEX,^https://safe1\.ads\.example\.test/",
+        "DOMAIN,safe1.ads.example.test,invalid-option",
+    ]
+    .into_iter()
+    .map(str::to_string)
+    .collect();
+
+    assert_eq!(
+        AdBlockManager::partition_rules(&rules, &manager.source_exception_matcher().unwrap()),
+        [
+            vec![
+                "DOMAIN,ads.example.test",
+                "DOMAIN-KEYWORD,safe1.ads.example.test",
+                r"DOMAIN-REGEX,safe1\.ads\.example\.test"
+            ],
+            vec![
+                "GEOIP,CN",
+                "IP-ASN,64496,no-resolve",
+                "IP-CIDR,192.0.2.0/24,no-resolve",
+                "IP-CIDR6,2001:db8::/32,no-resolve"
+            ],
+            vec![
+                "DOMAIN,safe1.ads.example.test,invalid-option",
+                "PROCESS-NAME,ad-app",
+                r"URL-REGEX,^https://safe1\.ads\.example\.test/"
+            ],
+        ],
+    );
+}
+
+#[test]
+fn fully_excepted_categories_emit_no_empty_shards() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!("promax-empty-shards-{unique}"));
+    let mut manager = AdBlockManager::new(root.clone());
+    manager
+        .source_exceptions
+        .insert("safe.ads.example.test".to_string());
+    manager
+        .rules
+        .get_mut("REJECT")
+        .unwrap()
+        .get_mut("Advertising")
+        .unwrap()
+        .insert("DOMAIN,safe.ads.example.test".to_string());
+
+    let (paths, artifacts) = manager.generate_ruleset().unwrap();
+    assert!(paths.is_empty() && artifacts.is_empty());
+    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -1671,6 +1751,83 @@ fn rule_ingestion_preserves_quarantine_provenance_and_tinygif_normalization() {
         manager.quarantine[2].risk,
         crate::promax::safety::RiskClass::ProtectedService
     );
+}
+
+#[test]
+#[ignore = "offline release diagnostic; run with --release --ignored --nocapture"]
+fn benchmark_published_shard_generation() {
+    use std::hint::black_box;
+    use std::time::Instant;
+
+    let repo = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!("promax-shard-benchmark-{unique}"));
+    let mut manager = AdBlockManager::new(root.clone());
+    let mut expected = HashMap::new();
+    for entry in fs::read_dir(repo.join("rulesets/AdBlock")).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().is_none_or(|ext| ext != "list")
+            || !path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("AdBlock_")
+        {
+            continue;
+        }
+        let content = fs::read_to_string(&path).unwrap();
+        let category = content
+            .lines()
+            .find_map(|line| line.strip_prefix("# Category-Key: "))
+            .unwrap();
+        manager
+            .rules
+            .get_mut("REJECT")
+            .unwrap()
+            .get_mut(category)
+            .unwrap()
+            .extend(
+                content
+                    .lines()
+                    .filter(|line| !line.is_empty() && !line.starts_with('#'))
+                    .map(str::to_string),
+            );
+        expected.insert(path.file_name().unwrap().to_owned(), content);
+    }
+    assert!(!expected.is_empty());
+    let count: usize = manager.rules["REJECT"].values().map(HashSet::len).sum();
+    for exception_count in [0, 128] {
+        manager.source_exceptions = (0..exception_count)
+            .map(|index| format!("safe{index}?.benchmark.example"))
+            .collect();
+        let mut elapsed = Vec::new();
+        for _ in 0..3 {
+            let start = Instant::now();
+            let (paths, artifacts) = black_box(&manager).generate_ruleset().unwrap();
+            elapsed.push(start.elapsed());
+            assert_eq!(paths.len(), expected.len());
+            assert_eq!(artifacts.len(), expected.len());
+            for artifact in &artifacts {
+                assert_eq!(
+                    artifact.content,
+                    expected[artifact.target.file_name().unwrap()],
+                    "{}",
+                    artifact.target.display()
+                );
+            }
+            black_box(artifacts);
+        }
+        elapsed.sort_unstable();
+        eprintln!(
+            "published shard generation: rules={count}, shards={}, exceptions={exception_count}, rounds=3, median={:?}",
+            expected.len(),
+            elapsed[1]
+        );
+    }
+    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
