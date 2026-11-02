@@ -7,6 +7,7 @@
 - Expand native operations with host, port, region and IP-family filters, limits, reverse ordering and typed node properties.
 - Add explicitly authorized DoH processing with bounded concurrency, session caching, cancellation and shared rate-limit cooldowns; preserve unsupported nodes and TLS identities.
 - Group operation controls and show modification/skip counts; back up plans without restoring network consent.
+- Keep the in-app file browser polling after path navigation, without requiring another input event.
 
 ## 0.6.0 · 2026-11-02
 

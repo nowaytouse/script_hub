@@ -929,6 +929,11 @@ impl Picker {
         } else if let Some(path) = navigate {
             self.navigate(path);
         }
+        // Navigation starts a worker after the repaint check at the start of this frame.
+        // Ensure its result (or a queued request waiting for a permit) is polled.
+        if self.worker.is_some() || self.pending.is_some() {
+            ctx.request_repaint_after(Duration::from_millis(100));
+        }
         if confirm {
             match self.selection() {
                 Ok(path) => {
@@ -955,6 +960,110 @@ mod tests {
         assert!(picker.worker.is_none() && picker.listing.is_none());
         assert_eq!(picker.pending.as_ref(), Some(&path));
         assert!(picker.directory().is_none());
+    }
+
+    #[test]
+    fn path_navigation_schedules_poll_after_loaded_frame() {
+        fn draw(
+            ctx: &egui::Context,
+            picker: &mut Picker,
+            mut events: Vec<egui::Event>,
+        ) -> egui::FullOutput {
+            let modifiers = events
+                .iter()
+                .find_map(|event| match event {
+                    egui::Event::Key { modifiers, .. } => Some(*modifiers),
+                    _ => None,
+                })
+                .unwrap_or_default();
+            events.insert(0, egui::Event::ModifiersChanged(modifiers));
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(800.0, 600.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    let _ = picker.show(ui.ctx(), Language::En);
+                },
+            );
+            output.textures_delta.clear();
+            output
+        }
+        let ctx = egui::Context::default();
+        let initial = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let target = initial.join("src");
+        let mut picker = Picker::new(FileAction::Import, Some(&initial));
+        picker.pending = None;
+        picker.listing = Some(Listing {
+            entries: Vec::new(),
+            truncated: false,
+        });
+        let _ = draw(&ctx, &mut picker, vec![]);
+        let _ = draw(
+            &ctx,
+            &mut picker,
+            vec![egui::Event::Key {
+                key: egui::Key::L,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers {
+                    command: true,
+                    ..Default::default()
+                },
+            }],
+        );
+        picker.path_text = target.display().to_string();
+        let output = draw(
+            &ctx,
+            &mut picker,
+            vec![egui::Event::Key {
+                key: egui::Key::Enter,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::default(),
+            }],
+        );
+        assert_eq!(picker.directory.as_ref(), Some(&target));
+        assert!(picker.worker.is_some() || picker.pending.is_some());
+        assert!(
+            output.viewport_output[&egui::ViewportId::ROOT].repaint_delay
+                <= Duration::from_millis(100)
+        );
+        // Deliver a synthetic completion without relying on filesystem timing or input events.
+        let (sender, receiver) = mpsc::sync_channel(1);
+        sender
+            .send(Ok(Listing {
+                entries: vec![Entry {
+                    name: "nodes.conf".into(),
+                    display: "nodes.conf".into(),
+                    lowercase: "nodes.conf".into(),
+                    path: target.join("nodes.conf"),
+                    directory: false,
+                    size: 1,
+                }],
+                truncated: false,
+            }))
+            .unwrap();
+        picker.worker = Some(Worker {
+            path: target.clone(),
+            receiver,
+            cancel: Arc::new(AtomicBool::new(false)),
+        });
+        picker.pending = None;
+        let _ = draw(&ctx, &mut picker, vec![]);
+        assert_eq!(picker.directory(), Some(target.as_path()));
+        assert!(
+            picker
+                .listing
+                .as_ref()
+                .is_some_and(|listing| !listing.entries.is_empty())
+        );
     }
 
     #[test]
