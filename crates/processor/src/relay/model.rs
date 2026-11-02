@@ -11,6 +11,7 @@ use serde::{
 use serde_json::{Map, Value, json};
 use zeroize::{Zeroize, Zeroizing};
 
+pub mod dns;
 pub mod editor;
 mod mihomo;
 pub mod pipeline;
@@ -120,6 +121,9 @@ impl Node {
     }
     pub fn server(&self) -> &str {
         &self.server
+    }
+    pub fn port(&self) -> u16 {
+        self.port
     }
     pub fn protocol(&self) -> &str {
         &self.protocol

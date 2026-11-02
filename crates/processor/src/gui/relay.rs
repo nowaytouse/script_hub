@@ -60,6 +60,8 @@ pub(super) fn failure_message(
                     ResolveError::Unavailable => Text::ResolutionUnavailable,
                     ResolveError::InvalidResponse => Text::ResolutionResponseInvalid,
                     ResolveError::Budget => Text::ResolutionBudget,
+                    ResolveError::Dnssec => Text::ResolutionDnssec,
+                    ResolveError::InvalidOptions => Text::ResolutionOptionsInvalid,
                     ResolveError::RateLimited {
                         retry_after_seconds,
                     } => {
@@ -148,6 +150,7 @@ pub(super) struct RelayState {
     pub test_nodes: bool,
     pub editor: Option<EditorState>,
     pub preview_names: Vec<Zeroizing<String>>,
+    pub preview_endpoints: Vec<Zeroizing<String>>,
     pub allow_public_output: bool,
     pub acknowledge_publish: bool,
     pub allow_plaintext: bool,
@@ -297,6 +300,7 @@ impl Default for RelayState {
             test_nodes: true,
             editor: None,
             preview_names: Vec::new(),
+            preview_endpoints: Vec::new(),
             allow_public_output: false,
             acknowledge_publish: false,
             allow_plaintext: false,
@@ -364,6 +368,7 @@ impl RelayState {
     pub(super) fn invalidate_result(&mut self) {
         self.allow_resolution = false;
         self.preview_names.clear();
+        self.preview_endpoints.clear();
         self.error = None;
         self.notice = None;
         self.cooldown_until = None;
@@ -530,6 +535,7 @@ impl RelayState {
         self.local_summary = None;
         self.editor = None;
         self.preview_names.clear();
+        self.preview_endpoints.clear();
         self.completed_config = None;
         self.source.zeroize();
         self.source_file.zeroize();
@@ -643,6 +649,7 @@ impl RelayState {
                     RelayStep::Review
                 };
                 self.preview_names.clear();
+                self.preview_endpoints.clear();
                 self.result_format = crate::relay::model::Subscription::parse(&result.content)
                     .ok()
                     .map(|subscription| {
@@ -650,6 +657,17 @@ impl RelayState {
                             .nodes()
                             .iter()
                             .map(|node| Zeroizing::new(node.name().to_owned()))
+                            .collect();
+                        self.preview_endpoints = subscription
+                            .nodes()
+                            .iter()
+                            .map(|node| {
+                                Zeroizing::new(if node.server().contains(':') {
+                                    format!("[{}]:{}", node.server(), node.port())
+                                } else {
+                                    format!("{}:{}", node.server(), node.port())
+                                })
+                            })
                             .collect();
                         subscription.format_label()
                     });
@@ -987,6 +1005,7 @@ impl RelayState {
         let (sender, receiver) = mpsc::sync_channel(1);
         self.result = None;
         self.preview_names.clear();
+        self.preview_endpoints.clear();
         self.result_format = None;
         self.progress = None;
         self.error = None;
@@ -1022,6 +1041,21 @@ impl RelayState {
         self.editor.as_ref().is_some_and(|editor| {
             crate::relay::model::pipeline::has_resolution(&editor.options.pipeline)
         })
+    }
+
+    pub(super) fn resolution_providers(&self) -> Vec<crate::relay::model::dns::Provider> {
+        let mut providers = Vec::new();
+        if let Some(editor) = &self.editor {
+            for step in editor.options.pipeline.iter().filter(|step| step.enabled) {
+                if let crate::relay::model::pipeline::Operation::ResolveDomain { options, .. } =
+                    &step.operation
+                    && !providers.contains(&options.provider)
+                {
+                    providers.push(options.provider);
+                }
+            }
+        }
+        providers
     }
 
     fn apply_plan(&mut self, ctx: &egui::Context, steps: Vec<crate::relay::model::pipeline::Step>) {
@@ -1074,6 +1108,7 @@ mod tests {
             enabled: true,
             operation: Operation::ResolveDomain {
                 family: AddressFamily::PreferV4,
+                options: Default::default(),
             },
         });
         assert!(matches!(
@@ -1095,6 +1130,111 @@ mod tests {
         state.invalidate_result();
         assert!(!state.allow_resolution);
         assert!(state.validate(RunMode::Import, Path::new("")).is_ok());
+    }
+
+    #[test]
+    fn dns_providers_are_distinct_and_ignore_disabled_steps() {
+        use crate::relay::model::{
+            dns::{Options, Provider},
+            pipeline::{AddressFamily, Operation, Step},
+        };
+        let mut state = fixture();
+        state.editor = Some(EditorState::new("A = socks5, node.example, 1080\n", None).unwrap());
+        let step = |id, enabled, provider| Step {
+            id,
+            enabled,
+            operation: Operation::ResolveDomain {
+                family: AddressFamily::V4,
+                options: Options {
+                    provider,
+                    ..Default::default()
+                },
+            },
+        };
+        state.editor.as_mut().unwrap().options.pipeline = vec![
+            step(1, true, Provider::Cloudflare),
+            step(2, false, Provider::Google),
+            step(3, true, Provider::Cloudflare),
+        ];
+        assert!(state.resolution_providers() == vec![Provider::Cloudflare]);
+        state
+            .editor
+            .as_mut()
+            .unwrap()
+            .options
+            .pipeline
+            .push(step(4, true, Provider::Google));
+        assert!(state.resolution_providers() == vec![Provider::Cloudflare, Provider::Google]);
+    }
+
+    #[test]
+    fn replacing_dns_options_invalidates_preview_and_consent() {
+        use crate::relay::model::{
+            dns::{Options, Provider},
+            pipeline::{AddressFamily, Operation, Step},
+        };
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.editor = Some(EditorState::new("A = socks5, node.example, 1080\n", None).unwrap());
+        state.allow_resolution = true;
+        state.result = Some(result());
+        state
+            .preview_names
+            .push(Zeroizing::new("private name".into()));
+        state
+            .preview_endpoints
+            .push(Zeroizing::new("private.example:443".into()));
+        state.apply_plan(
+            &ctx,
+            vec![Step {
+                id: 1,
+                enabled: true,
+                operation: Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                    options: Options {
+                        provider: Provider::Google,
+                        ..Default::default()
+                    },
+                },
+            }],
+        );
+        assert!(!state.allow_resolution && state.result.is_none());
+        assert!(state.preview_names.is_empty() && state.preview_endpoints.is_empty());
+        assert!(state.resolution_providers() == vec![Provider::Google]);
+        assert!(matches!(
+            state.validate(RunMode::Preview, Path::new("")),
+            Err(Text::ResolutionConsentRequired)
+        ));
+    }
+
+    #[test]
+    fn processed_endpoint_preview_brackets_ipv6_and_is_cleared() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.editor = Some(EditorState::new("A = socks5, node.example, 1080\n", None).unwrap());
+        state.start_with(RunMode::Preview, Path::new(""), |_, _, _, _, _| {
+            let mut result = result();
+            result.content = Zeroizing::new(
+                r#"[{"type":"socks","tag":"A","server":"2001:db8::1","server_port":1080}]"#.into(),
+            );
+            Ok(result)
+        });
+        finish(&mut state, &ctx);
+        assert_eq!(
+            state
+                .preview_endpoints
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>(),
+            ["[2001:db8::1]:1080"]
+        );
+        state.invalidate_result();
+        assert!(state.preview_endpoints.is_empty());
+        state
+            .preview_endpoints
+            .push(Zeroizing::new("private.example:443".into()));
+        state.clear(&ctx);
+        assert!(state.preview_endpoints.is_empty());
     }
 
     fn result() -> RelayResult {
@@ -1819,6 +1959,7 @@ mod tests {
             enabled: true,
             operation: Operation::ResolveDomain {
                 family: AddressFamily::PreferV4,
+                options: Default::default(),
             },
         }];
         state.editor = Some(editor);

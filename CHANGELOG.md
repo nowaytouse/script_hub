@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.9.0 · 2026-11-02
+
+- Expand explicit node-domain resolution with standard DoH POST/GET, JSON compatibility, Cloudflare/Google providers, scoped filters and reproducible address selection.
+- Honor DNS/HTTP cache lifetimes, isolate provider caches and rate-limit cooldowns, validate wire replies with Hickory, and offer strict resolver AD assertions without TLS or DNSSEC bypass.
+- Add a direct DNS operation entry, bounded controls, per-step DNS reports and opt-in processed endpoint previews; retain unresolved nodes and fresh network-consent requirements.
+
 ## 0.8.0 · 2026-11-02
 
 - Add combined conditions, name normalization, collision-safe unique names, region labels and reproducible shuffling.

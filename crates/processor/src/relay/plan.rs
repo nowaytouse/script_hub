@@ -87,6 +87,7 @@ mod tests {
                 enabled: true,
                 operation: Operation::ResolveDomain {
                     family: AddressFamily::PreferV4,
+                    options: Default::default(),
                 },
             },
         ];

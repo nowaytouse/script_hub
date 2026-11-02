@@ -305,7 +305,7 @@ fn run_with(
             &health,
             &enhance,
             &config.processing,
-            &|hosts, family| session.resolve(hosts, family),
+            &|hosts, family, options| session.resolve(hosts, family, options),
         )
     } else {
         subscription.render_processed(&health, &enhance, &config.processing)
@@ -607,6 +607,7 @@ mod tests {
             enabled: true,
             operation: model::pipeline::Operation::ResolveDomain {
                 family: model::pipeline::AddressFamily::V4,
+                options: Default::default(),
             },
         });
         assert!(config.validate(RunMode::Import).is_ok());

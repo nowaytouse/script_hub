@@ -1,6 +1,7 @@
 use super::card;
 use crate::gui::i18n::{Text, text};
 use crate::gui::theme::Palette;
+use crate::relay::model::dns::{self, Format, Provider, Selection};
 use crate::relay::model::pipeline::{
     self, AddressFamily, Condition, Field, MatchMode, NameCase, Operation, RegionLabel, SortKey,
     StageReport, Step, TextMatch,
@@ -11,7 +12,7 @@ use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
-const FIELDS: [&str; 10] = [
+const FIELDS: [&str; 12] = [
     "pattern",
     "replacement",
     "template",
@@ -22,6 +23,8 @@ const FIELDS: [&str; 10] = [
     "alpn",
     "separator",
     "server",
+    "dns_include",
+    "dns_exclude",
 ];
 
 fn field_id(id: u64, field: &str) -> egui::Id {
@@ -170,6 +173,7 @@ fn new_operations() -> [Operation; 21] {
         Operation::Reverse,
         Operation::ResolveDomain {
             family: AddressFamily::PreferV4,
+            options: dns::Options::default(),
         },
         Operation::SetProperty {
             setting: Setting::TcpFastOpen { enabled: true },
@@ -329,30 +333,45 @@ pub(super) fn show(
     ui.weak(tr(Text::OperationChainHelp));
     let next_id = next_step_id(steps);
     ui.add_enabled_ui(steps.len() < MAX_STEPS && next_id.is_some(), |ui| {
-        ui.menu_button(tr(Text::OperationAdd), |ui| {
-            for (group, label) in [
-                (0, Text::OperationGroupFilters),
-                (1, Text::OperationGroupOrder),
-                (2, Text::OperationGroupNetwork),
-            ] {
-                ui.menu_button(tr(label), |ui| {
-                    for operation in new_operations()
-                        .into_iter()
-                        .filter(|op| operation_group(op) == group)
-                    {
-                        if ui.button(tr(operation_label(&operation))).clicked()
-                            && let Some(id) = next_id
+        ui.horizontal_wrapped(|ui| {
+            ui.menu_button(tr(Text::OperationAdd), |ui| {
+                for (group, label) in [
+                    (0, Text::OperationGroupFilters),
+                    (1, Text::OperationGroupOrder),
+                    (2, Text::OperationGroupNetwork),
+                ] {
+                    ui.menu_button(tr(label), |ui| {
+                        for operation in new_operations()
+                            .into_iter()
+                            .filter(|op| operation_group(op) == group)
                         {
-                            steps.push(Step {
-                                id,
-                                enabled: true,
-                                operation,
-                            });
-                            changed = true;
-                            ui.close();
+                            if ui.button(tr(operation_label(&operation))).clicked()
+                                && let Some(id) = next_id
+                            {
+                                steps.push(Step {
+                                    id,
+                                    enabled: true,
+                                    operation,
+                                });
+                                changed = true;
+                                ui.close();
+                            }
                         }
-                    }
+                    });
+                }
+            });
+            if ui.button(tr(Text::ResolutionQuickAdd)).clicked()
+                && let Some(id) = next_id
+            {
+                steps.push(Step {
+                    id,
+                    enabled: true,
+                    operation: Operation::ResolveDomain {
+                        family: AddressFamily::PreferV4,
+                        options: dns::Options::default(),
+                    },
                 });
+                changed = true;
             }
         });
     });
@@ -733,9 +752,108 @@ pub(super) fn show(
                         changed |= ui.add(egui::DragValue::new(seed)).changed();
                         ui.weak(tr(Text::ShuffleHelp));
                     }
-                    Operation::ResolveDomain { family } => {
+                    Operation::ResolveDomain { family, options } => {
                         changed |= family_control(ui, language, family, true);
+                        changed |= choice(
+                            ui,
+                            language,
+                            (step.id, "dns_provider"),
+                            Text::ResolutionProviders,
+                            &mut options.provider,
+                            &[
+                                (Provider::Cloudflare, Text::ResolutionCloudflare),
+                                (Provider::Google, Text::ResolutionGoogle),
+                            ],
+                        );
+                        changed |= choice(
+                            ui,
+                            language,
+                            (step.id, "dns_format"),
+                            Text::ResolutionFormat,
+                            &mut options.format,
+                            &[
+                                (Format::Post, Text::ResolutionPost),
+                                (Format::Get, Text::ResolutionGet),
+                                (Format::Json, Text::ResolutionJson),
+                            ],
+                        );
+                        changed |= choice(
+                            ui,
+                            language,
+                            (step.id, "dns_selection"),
+                            Text::ResolutionSelection,
+                            &mut options.selection,
+                            &[
+                                (Selection::Lowest, Text::ResolutionLowest),
+                                (Selection::First, Text::ResolutionFirst),
+                                (Selection::Stable, Text::ResolutionStable),
+                            ],
+                        );
+                        if options.selection == Selection::Stable {
+                            let label = ui.label(tr(Text::ShuffleSeed));
+                            let control = ui.add(egui::DragValue::new(&mut options.seed));
+                            changed |= control.changed();
+                            let _ = control.labelled_by(label.id);
+                        }
                         ui.weak(tr(Text::ResolutionPreview));
+                        ui.collapsing(tr(Text::ResolutionAdvanced), |ui| {
+                            changed |= ui
+                                .checkbox(&mut options.cache, tr(Text::ResolutionCache))
+                                .changed();
+                            changed |= field(
+                                ui,
+                                tr(Text::ResolutionInclude),
+                                &mut options.include,
+                                field_id(step.id, "dns_include"),
+                                false,
+                            );
+                            changed |= field(
+                                ui,
+                                tr(Text::ResolutionExclude),
+                                &mut options.exclude,
+                                field_id(step.id, "dns_exclude"),
+                                false,
+                            );
+                            let label = ui.label(tr(Text::ResolutionTimeout));
+                            let control = ui.add(
+                                egui::DragValue::new(&mut options.timeout_seconds).range(1..=20),
+                            );
+                            changed |= control.changed();
+                            let _ = control.labelled_by(label.id);
+                            let label = ui.label(tr(Text::ResolutionConcurrency));
+                            let control =
+                                ui.add(egui::DragValue::new(&mut options.concurrency).range(1..=4));
+                            changed |= control.changed();
+                            let _ = control.labelled_by(label.id);
+                            changed |= ui
+                                .checkbox(&mut options.require_ad, tr(Text::ResolutionRequireAd))
+                                .changed();
+                            ui.weak(tr(Text::ResolutionAdHelp));
+                        });
+                        if let Some(report) = reports
+                            .iter()
+                            .find(|r| r.id == step.id)
+                            .and_then(|r| r.resolution.as_ref())
+                        {
+                            ui.collapsing(tr(Text::ResolutionStats), |ui| {
+                                for (label, value) in [
+                                    (Text::ResolutionStatUnique, report.unique_hosts),
+                                    (Text::ResolutionStatQueries, report.queries),
+                                    (Text::ResolutionStatCache, report.cache_hits),
+                                    (Text::ResolutionStatNegative, report.negative_hits),
+                                    (Text::ResolutionStatNx, report.nxdomain),
+                                    (Text::ResolutionStatNodata, report.nodata),
+                                    (Text::ResolutionStatResolved, report.resolved),
+                                    (Text::ResolutionStatFiltered, report.filtered),
+                                    (Text::ResolutionStatUnsafe, report.unsafe_answers),
+                                    (Text::ResolutionStatAuthenticated, report.authenticated),
+                                    (Text::ResolutionStatUnverified, report.unverified),
+                                    (Text::ResolutionStatCandidates, report.candidates),
+                                ] {
+                                    ui.label(format!("{}: {value}", tr(label)));
+                                }
+                            });
+                        }
                     }
                     Operation::SetProperty { setting } => {
                         let current = match setting {
@@ -982,7 +1100,8 @@ mod tests {
         assert!(matches!(
             &operations[14],
             Operation::ResolveDomain {
-                family: AddressFamily::PreferV4
+                family: AddressFamily::PreferV4,
+                ..
             }
         ));
         assert!(matches!(
@@ -1028,7 +1147,13 @@ mod tests {
             enabled: true,
             operation: Operation::Reverse,
         }];
-        for name in ["regions", "server_name", "alpn"] {
+        for name in [
+            "regions",
+            "server_name",
+            "alpn",
+            "dns_include",
+            "dns_exclude",
+        ] {
             let id = field_id(4, name).with("draft");
             ctx.data_mut(|data| data.insert_temp(id, Zeroizing::new("private".to_owned())));
         }
@@ -1039,7 +1164,13 @@ mod tests {
             ctx.data_mut(|data| data.get_temp::<Zeroizing<String>>(row_id))
                 .is_none()
         );
-        for name in ["regions", "server_name", "alpn"] {
+        for name in [
+            "regions",
+            "server_name",
+            "alpn",
+            "dns_include",
+            "dns_exclude",
+        ] {
             assert!(
                 ctx.data_mut(
                     |data| data.get_temp::<Zeroizing<String>>(field_id(4, name).with("draft"))
@@ -1223,6 +1354,121 @@ mod tests {
                 operation,
             }];
             draw(&ctx, &mut steps, vec![]).drop_without_applying_deltas();
+        }
+    }
+
+    #[test]
+    fn dns_controls_fit_narrow_light_and_dark_cards() {
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let colors = theme::palette(dark, Preferences::default().accent);
+            let mut steps = vec![Step {
+                id: 1,
+                enabled: true,
+                operation: Operation::ResolveDomain {
+                    family: AddressFamily::PreferV4,
+                    options: dns::Options {
+                        selection: Selection::Stable,
+                        ..Default::default()
+                    },
+                },
+            }];
+            let draw_frame = |steps: &mut Vec<Step>, events: Vec<egui::Event>| {
+                ctx.run_ui(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            egui::vec2(320.0, 1200.0),
+                        )),
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        egui::CentralPanel::default().show(ui, |ui| {
+                            let boundary = ui.available_rect_before_wrap();
+                            show(ui, Language::En, colors, steps, &[]);
+                            assert!(ui.min_rect().right() <= boundary.right() + 0.5);
+                        });
+                    },
+                )
+            };
+            let output = draw_frame(&mut steps, vec![]);
+            let nodes = &output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes;
+            for label in [
+                "DNS provider",
+                "Request format",
+                "Address selection",
+                "Seed",
+                "Advanced DNS options",
+            ] {
+                assert!(
+                    nodes
+                        .iter()
+                        .any(|(_, n)| n.label() == Some(label) || n.value() == Some(label)),
+                    "missing {label}"
+                );
+            }
+            let bounds = nodes
+                .iter()
+                .find_map(|(_, n)| {
+                    (n.label() == Some("Advanced DNS options"))
+                        .then(|| n.bounds())
+                        .flatten()
+                })
+                .unwrap();
+            let pos = egui::pos2(
+                ((bounds.x0 + bounds.x1) / 2.0) as f32,
+                ((bounds.y0 + bounds.y1) / 2.0) as f32,
+            );
+            output.drop_without_applying_deltas();
+            let pointer = |pressed| egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::default(),
+            };
+            draw_frame(
+                &mut steps,
+                vec![egui::Event::PointerMoved(pos), pointer(true)],
+            )
+            .drop_without_applying_deltas();
+            let output = draw_frame(
+                &mut steps,
+                vec![egui::Event::PointerMoved(pos), pointer(false)],
+            );
+            let nodes = &output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes;
+            for label in [
+                "Use session cache",
+                "Include hostnames (regex; empty means all)",
+                "Exclude hostnames (regex)",
+                "Request timeout (seconds)",
+                "Maximum concurrent requests",
+                "Require provider-asserted DNSSEC AD",
+            ] {
+                assert!(
+                    nodes
+                        .iter()
+                        .any(|(_, n)| n.label() == Some(label) || n.value() == Some(label)),
+                    "missing {label}"
+                );
+            }
+            output.drop_without_applying_deltas();
         }
     }
 }

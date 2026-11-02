@@ -103,7 +103,7 @@ fn validate(config: &RelayConfig, content: &str) -> Result<(), BackupError> {
             },
             &config.processing,
             // Validate the plan without contacting a resolver or restoring network consent.
-            &|hosts, _| Ok(vec![None; hosts.len()]),
+            &|hosts, _, _| Ok(super::model::dns::Batch::addresses(vec![None; hosts.len()])),
         )
         .map_err(|_| BackupError::Invalid)?;
     validate_name(&config.title).map_err(|_| BackupError::Invalid)?;
@@ -216,6 +216,7 @@ mod tests {
                 enabled: true,
                 operation: super::super::model::pipeline::Operation::ResolveDomain {
                     family: super::super::model::pipeline::AddressFamily::PreferV4,
+                    options: Default::default(),
                 },
             });
         let encoded = encode(&config, CONTENT).unwrap();

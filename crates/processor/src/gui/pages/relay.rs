@@ -288,13 +288,16 @@ impl HubApp {
                                                             .max_height(180.0)
                                                             .show_rows(
                                                                 ui,
-                                                                24.0,
+                                                                52.0,
                                                                 state.preview_names.len(),
                                                                 |ui, range| {
-                                                                    for name in
-                                                                        &state.preview_names[range]
-                                                                    {
-                                                                        ui.label(name.as_str());
+                                                                    for index in range {
+                                                                        let name = state.preview_names[index].as_str();
+                                                                        ui.add(egui::Label::new(name).truncate()).on_hover_text(name);
+                                                                        if let Some(endpoint) = state.preview_endpoints.get(index) {
+                                                                            ui.add(egui::Label::new(egui::RichText::new(endpoint.as_str()).monospace().weak()).truncate())
+                                                                                .on_hover_text(endpoint.as_str());
+                                                                        }
                                                                     }
                                                                 },
                                                             );
@@ -347,6 +350,8 @@ impl HubApp {
                                     });
                                     let needs_resolution = state.needs_resolution();
                                     if needs_resolution {
+                                        let providers = state.resolution_providers().into_iter().map(|provider| provider.name()).collect::<Vec<_>>().join(", ");
+                                        ui.weak(format!("{}: {providers}", tr(Text::ResolutionProviders)));
                                         ui.checkbox(
                                             &mut state.allow_resolution,
                                             tr(Text::ResolutionConsent),

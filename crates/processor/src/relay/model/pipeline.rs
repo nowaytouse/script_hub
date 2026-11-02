@@ -1,7 +1,7 @@
 //! Ordered subscription transformations with explicitly injected network operations.
 use super::{
-    MAX_CONTENT, ModelError, NodeIdentity, NodeSource, PrivateJson, Subscription, local_region,
-    properties, uncertain_identity, uncertain_token,
+    MAX_CONTENT, ModelError, NodeIdentity, NodeSource, PrivateJson, Subscription, dns,
+    local_region, properties, uncertain_identity, uncertain_token,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -70,6 +70,8 @@ pub enum Operation {
     Reverse,
     ResolveDomain {
         family: AddressFamily,
+        #[serde(default)]
+        options: dns::Options,
     },
     SetProperty {
         setting: properties::Setting,
@@ -163,10 +165,12 @@ pub enum ResolveError {
     InvalidResponse,
     RateLimited { retry_after_seconds: u64 },
     Budget,
+    Dnssec,
+    InvalidOptions,
 }
 
 pub type Resolver<'a> =
-    dyn Fn(&[&str], AddressFamily) -> Result<Vec<Option<IpAddr>>, ResolveError> + 'a;
+    dyn Fn(&[&str], AddressFamily, &dns::Options) -> Result<dns::Batch, ResolveError> + 'a;
 
 pub fn has_resolution(steps: &[Step]) -> bool {
     steps
@@ -193,6 +197,7 @@ pub struct StageReport {
     pub renamed: usize,
     pub modified: usize,
     pub skipped: usize,
+    pub resolution: Option<dns::Report>,
 }
 
 fn valid_text(s: &str) -> bool {
@@ -417,14 +422,14 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                     properties::validate_setting(setting)?;
                 }
             }
+            Operation::ResolveDomain { options, .. } => dns::validate(options, step.enabled)?,
             Operation::Flags { .. }
             | Operation::Sort { .. }
             | Operation::Deduplicate
             | Operation::PortFilter { .. }
             | Operation::IpFilter { .. }
             | Operation::Limit { .. }
-            | Operation::Reverse
-            | Operation::ResolveDomain { .. } => {}
+            | Operation::Reverse => {}
         }
     }
     Ok(())
@@ -580,6 +585,7 @@ pub(super) fn apply(
         let mut renamed = 0;
         let mut modified = 0;
         let mut skipped = 0;
+        let mut resolution = None;
         let mut name_bytes = order.iter().map(|&i| names[i].len()).sum();
         let mut remove = vec![false; names.len()];
         let mut duplicate = vec![false; names.len()];
@@ -816,7 +822,8 @@ pub(super) fn apply(
                     }
                 }
             }
-            Operation::ResolveDomain { family } => {
+            Operation::ResolveDomain { family, options } => {
+                resolution = Some(dns::Report::default());
                 let mut indices = Vec::new();
                 for &i in order.iter() {
                     let host = mutations[i]
@@ -841,11 +848,13 @@ pub(super) fn apply(
                                 .unwrap_or(sub.nodes[i].server())
                         })
                         .collect();
-                    let addresses = resolver(&hosts, *family).map_err(ModelError::Resolution)?;
-                    if addresses.len() != indices.len() {
+                    let batch =
+                        resolver(&hosts, *family, options).map_err(ModelError::Resolution)?;
+                    if batch.addresses.len() != indices.len() {
                         return Err(ModelError::Resolution(ResolveError::InvalidResponse));
                     }
-                    for (i, address) in indices.into_iter().zip(addresses) {
+                    resolution = Some(batch.report);
+                    for (i, address) in indices.into_iter().zip(batch.addresses) {
                         let Some(address) = address else {
                             skipped += 1;
                             continue;
@@ -1045,6 +1054,7 @@ pub(super) fn apply(
             renamed,
             modified,
             skipped,
+            resolution,
         });
     }
     let mut used = HashSet::new();
@@ -1350,6 +1360,7 @@ mod tests {
                 1,
                 Operation::ResolveDomain {
                     family: AddressFamily::V4,
+                    options: dns::Options::default(),
                 },
             )],
             include: String::new(),
@@ -1359,9 +1370,12 @@ mod tests {
             nodes: Vec::new(),
             deduplicate: false,
         };
-        let resolver = |hosts: &[&str], _: AddressFamily| {
+        let resolver = |hosts: &[&str], _: AddressFamily, _: &dns::Options| {
             assert_eq!(hosts, &["a.example", "b.example"]);
-            Ok(vec![Some("192.0.2.1".parse().unwrap()), None])
+            Ok(dns::Batch::addresses(vec![
+                Some("192.0.2.1".parse().unwrap()),
+                None,
+            ]))
         };
         let result = sub
             .render_processed_with_resolver(
@@ -1385,6 +1399,120 @@ mod tests {
     }
 
     #[test]
+    fn resolution_reports_are_per_step_and_zero_eligible_is_reported() {
+        let sub = Subscription::parse(
+            r#"[{"type":"socks","tag":"a","server":"a.example","server_port":1080}]"#,
+        )
+        .unwrap();
+        let mut edits = editor::Options::default();
+        edits.pipeline = vec![
+            step(
+                1,
+                Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                    options: dns::Options::default(),
+                },
+            ),
+            step(2, Operation::Reverse),
+            step(
+                3,
+                Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                    options: dns::Options::default(),
+                },
+            ),
+        ];
+        let resolver = |_: &[&str], _: AddressFamily, _: &dns::Options| {
+            Ok(dns::Batch {
+                addresses: vec![Some("192.0.2.1".parse().unwrap())],
+                report: dns::Report {
+                    queries: 2,
+                    cache_hits: 3,
+                    ..Default::default()
+                },
+            })
+        };
+        let rendered = sub
+            .render_processed_with_resolver(
+                &[Health::Unknown],
+                &EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &edits,
+                &resolver,
+            )
+            .unwrap();
+        let first = rendered.stages[0].resolution.as_ref().unwrap();
+        assert_eq!((first.queries, first.cache_hits), (2, 3));
+        assert!(rendered.stages[1].resolution.is_none());
+        assert_eq!(
+            rendered.stages[2].resolution.as_ref(),
+            Some(&dns::Report::default())
+        );
+    }
+
+    #[test]
+    fn invalid_dns_options_fail_before_callback_and_disabled_regex_draft_is_allowed() {
+        let sub = Subscription::parse(
+            r#"[{"type":"socks","tag":"a","server":"a.example","server_port":1080}]"#,
+        )
+        .unwrap();
+        let dns_options = dns::Options {
+            include: "[".into(),
+            ..Default::default()
+        };
+        let operation = Operation::ResolveDomain {
+            family: AddressFamily::V4,
+            options: dns_options,
+        };
+        let mut edits = editor::Options::default();
+        edits.pipeline = vec![step(1, operation.clone())];
+        let called = std::cell::Cell::new(false);
+        let resolver = |_: &[&str], _: AddressFamily, _: &dns::Options| {
+            called.set(true);
+            Ok(dns::Batch::addresses(vec![]))
+        };
+        assert!(matches!(
+            sub.render_processed_with_resolver(
+                &[Health::Unknown],
+                &EnhanceOptions {
+                    rename: false,
+                    sort: false
+                },
+                &edits,
+                &resolver,
+            ),
+            Err(ModelError::InvalidEdit)
+        ));
+        assert!(!called.get());
+        assert!(
+            validate(&[Step {
+                id: 1,
+                enabled: false,
+                operation
+            }])
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn legacy_dns_step_without_options_deserializes_to_defaults() {
+        let step: Step = serde_json::from_str(
+            r#"{"id":1,"enabled":true,"operation":{"type":"resolve_domain","family":"v4"}}"#,
+        )
+        .unwrap();
+        let Operation::ResolveDomain { options, .. } = &step.operation else {
+            panic!("expected DNS operation")
+        };
+        assert_eq!(
+            options.timeout_seconds,
+            dns::Options::default().timeout_seconds
+        );
+        assert_eq!(options.concurrency, dns::Options::default().concurrency);
+    }
+
+    #[test]
     fn resolver_requires_consent_and_valid_batch() {
         let sub = Subscription::parse(
             r#"[{"type":"http","tag":"a","server":"a.example","server_port":80}]"#,
@@ -1395,6 +1523,7 @@ mod tests {
                 1,
                 Operation::ResolveDomain {
                     family: AddressFamily::V4,
+                    options: dns::Options::default(),
                 },
             )],
             include: String::new(),
@@ -1412,7 +1541,8 @@ mod tests {
             sub.render_processed(&[Health::Unknown], &enhance, &options),
             Err(ModelError::Resolution(ResolveError::ConsentRequired))
         ));
-        let resolver = |_: &[&str], _: AddressFamily| Ok(vec![]);
+        let resolver =
+            |_: &[&str], _: AddressFamily, _: &dns::Options| Ok(dns::Batch::addresses(vec![]));
         assert!(matches!(
             sub.render_processed_with_resolver(&[Health::Unknown], &enhance, &options, &resolver),
             Err(ModelError::Resolution(ResolveError::InvalidResponse))
@@ -1431,6 +1561,7 @@ mod tests {
                     1,
                     Operation::ResolveDomain {
                         family: AddressFamily::V4,
+                        options: dns::Options::default(),
                     },
                 ),
                 step(
@@ -1448,7 +1579,11 @@ mod tests {
             nodes: Vec::new(),
             deduplicate: false,
         };
-        let resolver = |_: &[&str], _: AddressFamily| Ok(vec![Some("192.0.2.1".parse().unwrap())]);
+        let resolver = |_: &[&str], _: AddressFamily, _: &dns::Options| {
+            Ok(dns::Batch::addresses(vec![Some(
+                "192.0.2.1".parse().unwrap(),
+            )]))
+        };
         let result = sub
             .render_processed_with_resolver(
                 &[Health::Unknown],
@@ -1605,15 +1740,16 @@ mod tests {
                 1,
                 Operation::ResolveDomain {
                     family: AddressFamily::V4,
+                    options: dns::Options::default(),
                 },
             ),
             step(2, Operation::Deduplicate),
         ];
-        let resolver = |_: &[&str], _: AddressFamily| {
-            Ok(vec![
+        let resolver = |_: &[&str], _: AddressFamily, _: &dns::Options| {
+            Ok(dns::Batch::addresses(vec![
                 Some("1.1.1.1".parse().unwrap()),
                 Some("8.8.8.8".parse().unwrap()),
-            ])
+            ]))
         };
         let result = sub
             .render_processed_with_resolver(
