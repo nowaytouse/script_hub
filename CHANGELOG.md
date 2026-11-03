@@ -2,6 +2,11 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## Unreleased
+
+- Remember each subscription and collection's Gist target, filename, title, and sync interval in the encrypted library. Opening an item does not restore authorization or start a schedule.
+- Scheduled sync of a remote subscription fetches fresh nodes even when the workspace has a local cache.
+
 ## 0.14.0 · 2026-11-03
 
 - Replace the single-session wizard with a searchable subscription and collection workspace, adaptive list/detail navigation, and quick operation shortcuts.

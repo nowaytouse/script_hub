@@ -90,6 +90,7 @@ mod tests {
                         source_file: String::new(),
                         content: "old".into(),
                         processing: Default::default(),
+                        publish: Default::default(),
                     })
                     .unwrap(),
             );
@@ -100,6 +101,7 @@ mod tests {
                 name: "group".into(),
                 members: ids,
                 processing: Default::default(),
+                publish: Default::default(),
             })
             .unwrap();
         workspace

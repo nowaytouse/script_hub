@@ -32,7 +32,7 @@ impl HubApp {
                         (
                             RelayStep::Publish,
                             Text::WorkspaceOutputTab,
-                            state.result.is_some(),
+                            state.result.is_some() || state.workspace.selected.is_some(),
                         ),
                     ] {
                         if ui
@@ -613,8 +613,11 @@ impl HubApp {
                                         state.clear_request_error();
                                     }
                                     ui.weak(tr(Text::RelayCreateHelp));
+                                    if state.workspace.selected.is_some() {
+                                        ui.weak(tr(Text::WorkspaceOutputSavedHelp));
+                                    }
                                     ui.collapsing(tr(Text::RelayOutputOptions), |ui| {
-                                        visible_field(
+                                        let file_changed = visible_field(
                                             ui,
                                             &mut state.output_file,
                                             SECRET_IDS[4],
@@ -625,7 +628,7 @@ impl HubApp {
                                             state.output_file.chars().count(),
                                             colors.error,
                                         );
-                                        visible_field(
+                                        let title_changed = visible_field(
                                             ui,
                                             &mut state.title,
                                             SECRET_IDS[5],
@@ -636,7 +639,7 @@ impl HubApp {
                                             state.title.chars().count(),
                                             colors.error,
                                         );
-                                        secret_field(
+                                        let target_changed = secret_field(
                                             ui,
                                             &mut state.output,
                                             SECRET_IDS[3],
@@ -644,6 +647,11 @@ impl HubApp {
                                             &mut state.reveal_output,
                                             tr(Text::RelayShow),
                                         );
+                                        if file_changed || title_changed || target_changed {
+                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
+                                            state.allow_public_output = false;
+                                            state.acknowledge_publish = false;
+                                        }
                                         ui.checkbox(
                                             &mut state.allow_public_output,
                                             tr(Text::RelayPublicConsent),
@@ -655,6 +663,7 @@ impl HubApp {
                                             state.output.zeroize();
                                             state.allow_public_output = false;
                                             state.acknowledge_publish = false;
+                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
                                         }
                                     }
                                     ui.checkbox(
@@ -690,7 +699,9 @@ impl HubApp {
                                     ui.weak(tr(Text::ScheduleHelp));
                                     ui.horizontal_wrapped(|ui| {
                                         ui.label(tr(Text::ScheduleInterval));
-                                        ui.add(egui::DragValue::new(&mut state.schedule.interval_minutes).range(1..=10080));
+                                        if ui.add(egui::DragValue::new(&mut state.schedule.interval_minutes).range(1..=10080)).changed() {
+                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
+                                        }
                                     });
                                     ui.weak(tr(Text::ScheduleSessionOnly));
                                         if ui.add_enabled(!matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) && has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
@@ -899,7 +910,7 @@ fn latency_stats(
     Some((minimum, median))
 }
 
-fn visible_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str) {
+fn visible_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str) -> bool {
     let label = ui.label(label);
     let mut output = egui::TextEdit::singleline(value)
         .id(egui::Id::unique(id))
@@ -908,6 +919,7 @@ fn visible_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str) {
     let _ = (*output.response).clone().labelled_by(label.id);
     output.state.clear_undoer();
     output.state.store(ui.ctx(), output.response.id);
+    output.response.changed()
 }
 
 fn secret_field(

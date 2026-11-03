@@ -522,6 +522,13 @@ impl RelayState {
     }
 
     pub(super) fn arm_schedule(&mut self) {
+        if matches!(
+            self.workspace.selected,
+            Some(super::subscriptions::Selection::Collection(_))
+        ) {
+            self.error = Some(Failure::Validation(Text::WorkspaceCollectionSchedule));
+            return;
+        }
         if self.busy() || self.result.is_none() {
             self.error = Some(Failure::Validation(Text::ScheduleNeedsPreview));
             return;
@@ -530,7 +537,16 @@ impl RelayState {
             self.error = Some(Failure::Validation(Text::ScheduleNeedsOutput));
             return;
         }
-        if self.local_content.is_none()
+        if let Err(error) = self.validate(RunMode::Publish, self.engine_path()) {
+            self.error = Some(Failure::Validation(error));
+            return;
+        }
+        let local_content = if self.source.trim().is_empty() {
+            self.local_content.clone()
+        } else {
+            None
+        };
+        if local_content.is_none()
             && self
                 .editor
                 .as_ref()
@@ -540,7 +556,7 @@ impl RelayState {
             return;
         }
         let mut config = self.private_config(self.engine_path());
-        config.0.local_content = self.local_content.clone();
+        config.0.local_content = local_content;
         config.0.test_nodes = self.result.as_ref().is_some_and(|result| result.tested);
         // The schedule owns a frozen snapshot; editing requires stopping it first.
         if let Err(error) = self.schedule.arm(config.0.clone(), &self.token) {
@@ -559,6 +575,13 @@ impl RelayState {
                 Ok(mut editor) => {
                     if let Some(old) = &self.editor {
                         editor.options = old.options.clone();
+                    }
+                    if result.source.is_some()
+                        && let Some(cached) = &mut self.local_content
+                        && cached.as_str() != editor.source.as_str()
+                    {
+                        *cached = editor.source.clone();
+                        self.workspace.draft_dirty |= self.workspace.selected.is_some();
                     }
                     self.editor = Some(editor);
                 }
@@ -710,9 +733,7 @@ impl RelayState {
         if self.source.trim().is_empty() && self.local_content.is_none() {
             return Err(Text::RelayInputInvalid);
         }
-        let source = if self.source.trim().is_empty() || self.local_content.is_some() {
-            None
-        } else {
+        if !self.source.trim().is_empty() && self.local_content.is_none() {
             RelayConfig {
                 source: self.source.trim().to_owned(),
                 source_file: self.source_file.to_string(),
@@ -725,8 +746,7 @@ impl RelayState {
                 }
                 _ => Text::RelayInputInvalid,
             })?;
-            GistFile::parse_source(self.source.trim(), &self.source_file).ok()
-        };
+        }
         if mode == RunMode::Import {
             return Ok(());
         }
@@ -740,7 +760,19 @@ impl RelayState {
                     _ => Text::RelayOutputInvalid,
                 },
             )?;
-            if source.as_ref().is_some_and(|source| source.id == output.id) {
+            let source_matches = |source: &str, file: &str| {
+                GistFile::parse_source(source.trim(), file)
+                    .is_ok_and(|source| source.id == output.id)
+            };
+            if source_matches(&self.source, &self.source_file)
+                || matches!(
+                    self.workspace.selected,
+                    Some(super::subscriptions::Selection::Collection(_))
+                ) && self.workspace.data.subscriptions.iter().any(|entry| {
+                    self.workspace.members.contains(&entry.id)
+                        && source_matches(&entry.source, &entry.source_file)
+                })
+            {
                 return Err(Text::RelayOutputInvalid);
             }
         } else if mode == RunMode::Publish && validate_filename(&self.output_file).is_err() {
@@ -810,6 +842,7 @@ impl RelayState {
 
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
         self.schedule.stop();
+        self.schedule.interval_minutes = crate::relay::schedule::DEFAULT_INTERVAL.as_secs() / 60;
         self.paste.zeroize();
         self.archive_identity.zeroize();
         self.reveal_identity = false;
@@ -986,6 +1019,7 @@ impl RelayState {
                     });
                 if let Some(created) = &result.created {
                     self.output = Zeroizing::new(created.id.clone());
+                    self.workspace.draft_dirty |= self.workspace.selected.is_some();
                     if let Some(config) = &mut self.completed_config {
                         config.0.output = created.id.clone();
                     }
@@ -1042,6 +1076,7 @@ impl RelayState {
                 error
             {
                 self.output = Zeroizing::new(created.id.clone());
+                self.workspace.draft_dirty |= self.workspace.selected.is_some();
             }
         }
         self.error = Some(failure);
@@ -1502,6 +1537,8 @@ mod tests {
         let mut state = fixture();
         state.source = Zeroizing::new("https://example.com/sub".into());
         state.source_file.clear();
+        state.local_content = Some(Zeroizing::new("A = socks5, cached.example, 1080\n".into()));
+        state.workspace.selected = Some(super::super::subscriptions::Selection::Subscription(1));
         let fresh = "B = socks5, fresh.example, 1080\n";
         let mut latest = result();
         latest.content = Zeroizing::new(fresh.into());
@@ -1512,6 +1549,8 @@ mod tests {
         state.accept_scheduled(latest);
         assert_eq!(state.result.as_ref().unwrap().content.as_str(), fresh);
         assert_eq!(state.editor.as_ref().unwrap().source.as_str(), fresh);
+        assert_eq!(state.local_content.as_ref().unwrap().as_str(), fresh);
+        assert!(state.workspace.draft_dirty);
         assert_eq!(state.preview_names[0].as_str(), "B");
         assert_eq!(
             state

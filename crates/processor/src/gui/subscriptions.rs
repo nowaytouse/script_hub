@@ -8,7 +8,7 @@ use super::{
 use crate::relay::{
     RelayConfig,
     backup::RelayBackup,
-    library::{Collection, Entry, Workspace},
+    library::{Collection, Entry, PublishSettings, Workspace},
     library_store::{Store, StoreError},
 };
 use eframe::egui;
@@ -255,6 +255,22 @@ impl State {
 }
 
 impl RelayState {
+    fn publish_settings(&self) -> PublishSettings {
+        PublishSettings {
+            output: self.output.trim().to_owned(),
+            output_file: self.output_file.to_string(),
+            title: self.title.to_string(),
+            interval_minutes: self.schedule.interval_minutes,
+        }
+    }
+
+    fn restore_publish_settings(&mut self, settings: &PublishSettings) {
+        self.output = Zeroizing::new(settings.output.clone());
+        self.output_file = Zeroizing::new(settings.output_file.clone());
+        self.title = Zeroizing::new(settings.title.clone());
+        self.schedule.interval_minutes = settings.interval_minutes;
+    }
+
     pub(super) fn workspace_request(&mut self, ctx: &egui::Context, action: Action) {
         if self.busy() || self.schedule.armed() {
             return;
@@ -312,6 +328,7 @@ impl RelayState {
                     source_file: config.0.source_file.clone(),
                     content: content.to_owned(),
                     processing: config.0.processing.clone(),
+                    publish: self.publish_settings(),
                 };
                 if id == 0 {
                     self.workspace
@@ -336,6 +353,7 @@ impl RelayState {
                     name: self.workspace.name.trim().to_owned(),
                     members: self.workspace.members.clone(),
                     processing,
+                    publish: self.publish_settings(),
                 };
                 if id == 0 {
                     self.workspace
@@ -448,6 +466,7 @@ impl RelayState {
                                 }),
                             );
                         }
+                        self.restore_publish_settings(&entry.publish);
                     }
                     Selection::Collection(id) => {
                         let Some(collection) = self
@@ -464,6 +483,7 @@ impl RelayState {
                         self.workspace.name = Zeroizing::new(collection.name.clone());
                         self.workspace.members = collection.members.clone();
                         self.workspace.collection_options = collection.processing.clone();
+                        self.restore_publish_settings(&collection.publish);
                     }
                 }
                 self.workspace.selected = Some(selection);
@@ -527,6 +547,7 @@ impl RelayState {
             }
             Action::Prepared => {
                 if let Some(prepared) = self.workspace.prepared.take() {
+                    let publish = self.publish_settings();
                     self.workspace.data = prepared.data;
                     self.workspace.dirty |= prepared.changed;
                     self.apply_backup(
@@ -534,11 +555,15 @@ impl RelayState {
                         Box::new(RelayBackup {
                             config: RelayConfig {
                                 processing: prepared.processing,
+                                output: publish.output.clone(),
+                                output_file: publish.output_file.clone(),
+                                title: publish.title.clone(),
                                 ..Default::default()
                             },
                             content: prepared.content,
                         }),
                     );
+                    self.schedule.interval_minutes = publish.interval_minutes;
                     self.step = RelayStep::Review;
                 }
             }
@@ -677,6 +702,42 @@ mod tests {
     }
 
     #[test]
+    fn saved_output_settings_follow_the_item_without_restoring_consent() {
+        let ctx = egui::Context::default();
+        let mut relay = RelayState::default();
+        relay.execute_workspace(&ctx, Action::NewSubscription);
+        relay.source.push_str("https://example.com/nodes");
+        relay.output.push_str("11111111111111111111111111111111");
+        relay.output_file = Zeroizing::new("my-nodes.list".into());
+        relay.title = Zeroizing::new("My subscription".into());
+        relay.schedule.interval_minutes = 180;
+        relay.acknowledge_publish = true;
+        relay.allow_public_output = true;
+        assert!(relay.save_workspace_draft());
+        let subscription = relay.workspace.selected.unwrap();
+
+        relay.execute_workspace(&ctx, Action::NewCollection);
+        assert!(relay.output.is_empty());
+        assert_eq!(relay.schedule.interval_minutes, 60);
+        relay.output.push_str("22222222222222222222222222222222");
+        assert!(relay.save_workspace_draft());
+        let collection = relay.workspace.selected.unwrap();
+
+        relay.execute_workspace(&ctx, Action::Open(subscription));
+        assert_eq!(relay.output.as_str(), "11111111111111111111111111111111");
+        assert_eq!(relay.output_file.as_str(), "my-nodes.list");
+        assert_eq!(relay.title.as_str(), "My subscription");
+        assert_eq!(relay.schedule.interval_minutes, 180);
+        assert!(!relay.acknowledge_publish && !relay.allow_public_output);
+        assert!(!relay.schedule.armed());
+
+        relay.execute_workspace(&ctx, Action::Open(collection));
+        assert_eq!(relay.output.as_str(), "22222222222222222222222222222222");
+        assert_eq!(relay.schedule.interval_minutes, 60);
+        assert!(!relay.workspace.draft_dirty);
+    }
+
+    #[test]
     fn offline_collection_build_keeps_a_saved_library_clean() {
         let ctx = egui::Context::default();
         let mut relay = RelayState::default();
@@ -690,6 +751,7 @@ mod tests {
                 source_file: String::new(),
                 content: "A = socks5, node.example, 1080\n".into(),
                 processing: Default::default(),
+                publish: Default::default(),
             })
             .unwrap();
         let collection = relay
@@ -700,6 +762,7 @@ mod tests {
                 name: "Combined".into(),
                 members: vec![id],
                 processing: Default::default(),
+                publish: Default::default(),
             })
             .unwrap();
         relay.execute_workspace(&ctx, Action::Open(Selection::Collection(collection)));

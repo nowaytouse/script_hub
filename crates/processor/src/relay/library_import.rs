@@ -131,6 +131,7 @@ pub fn import(
                 String::new()
             },
             processing: Default::default(),
+            publish: Default::default(),
         });
         if !item.is_file {
             mapping.insert(item.name.as_str(), id);
@@ -175,6 +176,7 @@ pub fn import(
             name,
             members,
             processing: Default::default(),
+            publish: Default::default(),
         });
         summary.collections += 1;
     }

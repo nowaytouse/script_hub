@@ -29,6 +29,8 @@ pub struct Entry {
     pub source_file: String,
     pub content: String,
     pub processing: Options,
+    #[serde(default, skip_serializing_if = "PublishSettings::is_default")]
+    pub publish: PublishSettings,
 }
 
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
@@ -38,6 +40,65 @@ pub struct Collection {
     pub name: String,
     pub members: Vec<u64>,
     pub processing: Options,
+    #[serde(default, skip_serializing_if = "PublishSettings::is_default")]
+    pub publish: PublishSettings,
+}
+
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
+#[serde(deny_unknown_fields)]
+pub struct PublishSettings {
+    pub output: String,
+    pub output_file: String,
+    pub title: String,
+    pub interval_minutes: u64,
+}
+
+impl Default for PublishSettings {
+    fn default() -> Self {
+        let config = super::RelayConfig::default();
+        Self {
+            output: config.output,
+            output_file: config.output_file,
+            title: config.title,
+            interval_minutes: super::schedule::DEFAULT_INTERVAL.as_secs() / 60,
+        }
+    }
+}
+
+impl PublishSettings {
+    fn is_default(&self) -> bool {
+        self == &Self::default()
+    }
+
+    pub fn validate(&self) -> Result<(), Error> {
+        let seconds = self
+            .interval_minutes
+            .checked_mul(60)
+            .ok_or(Error::Invalid)?;
+        if !(super::schedule::MIN_INTERVAL.as_secs()..=super::schedule::MAX_INTERVAL.as_secs())
+            .contains(&seconds)
+            || self.output.len() > 8192
+            || self.output.chars().any(char::is_control)
+            || super::gist::validate_filename(&self.output_file).is_err()
+            || super::gist::validate_name(&self.title).is_err()
+            || (!self.output.trim().is_empty()
+                && super::gist::GistFile::parse(self.output.trim(), &self.output_file).is_err())
+        {
+            return Err(Error::Invalid);
+        }
+        Ok(())
+    }
+
+    fn aliases_source(&self, entry: &Entry) -> bool {
+        if self.output.trim().is_empty() || entry.source.trim().is_empty() {
+            return false;
+        }
+        matches!(
+            (super::gist::GistFile::parse(self.output.trim(), &self.output_file),
+             super::input::target(entry.source.trim(), &entry.source_file)),
+            (Ok(output), Ok(super::input::Target::Gist(source))) if output.id == source.id
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,6 +187,8 @@ impl Workspace {
             if (!entry.source.trim().is_empty()
                 && super::input::target(entry.source.trim(), &entry.source_file).is_err())
                 || model::pipeline::validate(&entry.processing.pipeline).is_err()
+                || entry.publish.validate().is_err()
+                || entry.publish.aliases_source(entry)
             {
                 return Err(Error::Invalid);
             }
@@ -145,6 +208,7 @@ impl Workspace {
                 || !valid_name(&collection.name)
                 || !names.insert(&collection.name)
                 || model::pipeline::validate(&collection.processing.pipeline).is_err()
+                || collection.publish.validate().is_err()
             {
                 return Err(Error::Invalid);
             }
@@ -154,6 +218,13 @@ impl Workspace {
                 .iter()
                 .any(|id| !entry_ids.contains(id) || !members.insert(id))
             {
+                return Err(Error::Invalid);
+            }
+            if collection.members.iter().any(|id| {
+                self.subscriptions
+                    .iter()
+                    .any(|entry| entry.id == *id && collection.publish.aliases_source(entry))
+            }) {
                 return Err(Error::Invalid);
             }
         }
@@ -382,6 +453,7 @@ mod tests {
             source_file: String::new(),
             content: content.into(),
             processing: Options::default(),
+            publish: PublishSettings::default(),
         }
     }
 
@@ -391,11 +463,64 @@ mod tests {
             name: "group".into(),
             members,
             processing: Options::default(),
+            publish: PublishSettings::default(),
         }
     }
 
     const NODE: &str =
         r#"[{"type":"socks","tag":"same","server":"example.com","server_port":1080}]"#;
+
+    #[test]
+    fn legacy_publish_defaults_and_custom_settings_roundtrip() {
+        let mut w = Workspace::default();
+        let id = w.add_entry(entry("one", NODE)).unwrap();
+        w.add_collection(collection(vec![id])).unwrap();
+        let legacy = w.encode().unwrap();
+        assert!(
+            !std::str::from_utf8(&legacy)
+                .unwrap()
+                .contains("\"publish\"")
+        );
+        let mut restored = Workspace::decode(&legacy).unwrap();
+        assert!(restored.subscriptions[0].publish.is_default());
+        assert!(restored.collections[0].publish.is_default());
+        restored.subscriptions[0].publish.interval_minutes = 2;
+        restored.collections[0].publish.title = "Custom".into();
+        let restored = Workspace::decode(&restored.encode().unwrap()).unwrap();
+        assert_eq!(restored.subscriptions[0].publish.interval_minutes, 2);
+        assert_eq!(restored.collections[0].publish.title, "Custom");
+        assert!(serde_json::from_str::<PublishSettings>(
+            r#"{"output":"","output_file":"nodes.list","title":"x","interval_minutes":60,"token":"secret"}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn publish_settings_validate_and_reject_source_aliases() {
+        let mut w = Workspace::default();
+        let mut e = entry("one", NODE);
+        e.source = "0123456789abcdef0123456789abcdef".into();
+        let id = w.add_entry(e).unwrap();
+        w.add_collection(collection(vec![id])).unwrap();
+        for interval in [0, 10081, u64::MAX] {
+            w.subscriptions[0].publish.interval_minutes = interval;
+            assert_eq!(w.validate(), Err(Error::Invalid));
+        }
+        w.subscriptions[0].publish.interval_minutes = 60;
+        w.subscriptions[0].publish.output_file = "../bad".into();
+        assert_eq!(w.validate(), Err(Error::Invalid));
+        w.subscriptions[0].publish.output_file = "nodes.list".into();
+        w.subscriptions[0].publish.output = "invalid".into();
+        assert_eq!(w.validate(), Err(Error::Invalid));
+        w.subscriptions[0].publish.output = w.subscriptions[0].source.clone();
+        assert_eq!(w.validate(), Err(Error::Invalid));
+        w.subscriptions[0].publish.output.clear();
+        w.collections[0].publish.output = w.subscriptions[0].source.clone();
+        assert_eq!(w.validate(), Err(Error::Invalid));
+        w.collections[0].publish.output.clear();
+        w.collections[0].publish.title = "bad\nname".into();
+        assert_eq!(w.validate(), Err(Error::Invalid));
+    }
 
     #[test]
     fn roundtrip_rejects_duplicate_keys() {

@@ -57,7 +57,7 @@ pub struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            interval_minutes: 60,
+            interval_minutes: schedule::DEFAULT_INTERVAL.as_secs() / 60,
             progress: None,
             result: None,
             last_error: None,

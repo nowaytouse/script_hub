@@ -221,10 +221,7 @@ impl HubApp {
                     self.relay.step = RelayStep::Review;
                 }
                 if ui
-                    .add_enabled(
-                        self.relay.result.is_some(),
-                        egui::Button::new(tr(Text::WorkspaceOutputTab)),
-                    )
+                    .add_enabled(!busy, egui::Button::new(tr(Text::WorkspaceOutputTab)))
                     .clicked()
                 {
                     self.relay.step = RelayStep::Publish;

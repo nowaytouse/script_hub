@@ -12,6 +12,8 @@ The manager runs independently of Surge modules or a local server. Client node f
 
 Save the encrypted library to keep it between launches. The application uses a fixed private location and never saves its password or Gist token. Switching items protects unsaved drafts; removing a referenced subscription requires removing it from its collections first.
 
+Set each item's Gist target, filename, title, and preferred interval in **Output**, then save the encrypted library. Tokens, authorization, and running schedules are not restored. Remote schedules fetch the source again instead of reusing the library cache. A known source Gist cannot also be the item's destination, including a collection member's source.
+
 Collections combine members in selection order as sing-box node JSON. **Refresh and build** downloads remote members; **Build from cache** stays offline. Unsupported conversions, network-dependent member operations, and changed input with position-bound edits fail without partially replacing cached nodes. Collections use manual refresh; scheduled synchronization remains available for individual subscriptions.
 
 Import a Sub-Store JSON/Base64 backup and choose **Add available items to library**. Compatible subscriptions and node files are added without overwriting existing entries. Collections with incomplete references are skipped and counted. Settings, tokens and old processors are not restored; import does not download remote links.
