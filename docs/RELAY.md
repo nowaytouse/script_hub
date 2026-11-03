@@ -10,6 +10,8 @@
 
 The manager runs independently of Surge modules or a local server. Client node formats remain adapters, not runtime dependencies.
 
+For Surge, publish in Surge format, then name and copy the verified group into `[Proxy Group]`. Keep the subscription link private.
+
 Save the encrypted library to keep it between launches. The application uses a fixed private location and never saves its password or Gist token. Switching items protects unsaved drafts; removing a referenced subscription requires removing it from its collections first.
 
 Set each item's Gist target, filename, title, and preferred interval in **Output**, then save the encrypted library. Tokens, authorization, and running schedules are not restored. Remote schedules fetch the source again instead of reusing the library cache. A known source Gist cannot also be the item's destination, including a collection member's source.

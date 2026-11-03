@@ -159,19 +159,7 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         || name.contains([
             '=', ',', '#', ';', '"', '\\', '[', ']', '\u{2028}', '\u{2029}',
         ])
-        || [
-            "DIRECT",
-            "CELLULAR",
-            "CELLULAR-ONLY",
-            "HYBRID",
-            "NO-HYBRID",
-            "REJECT",
-            "REJECT-DROP",
-            "REJECT-NO-DROP",
-            "REJECT-TINYGIF",
-        ]
-        .iter()
-        .any(|builtin| name.eq_ignore_ascii_case(builtin))
+        || is_surge_builtin_name(name)
         || !valid_host(server)
     {
         return Err(ModelError::Unsupported);
@@ -257,6 +245,22 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         }
     }
     Ok(row)
+}
+
+pub(super) fn is_surge_builtin_name(name: &str) -> bool {
+    [
+        "DIRECT",
+        "CELLULAR",
+        "CELLULAR-ONLY",
+        "HYBRID",
+        "NO-HYBRID",
+        "REJECT",
+        "REJECT-DROP",
+        "REJECT-NO-DROP",
+        "REJECT-TINYGIF",
+    ]
+    .iter()
+    .any(|builtin| name.eq_ignore_ascii_case(builtin))
 }
 
 fn default_socks_version(source: &mut Value) {
@@ -487,26 +491,47 @@ mod tests {
     #[test]
     #[ignore = "optional Surge parser smoke test; requires SCRIPT_HUB_SURGE_BIN and SCRIPT_HUB_SURGE_TEST_DIR"]
     fn generated_surge_policies_pass_client_config_check() {
+        use crate::relay::gist::{GistFile, PolicyLink};
         use std::io::Write as _;
 
         let policies = export_subscription(SURGE_CONVERSION, OutputFormat::Surge).unwrap();
         let anytls = export_subscription(ANYTLS_JSON, OutputFormat::Surge).unwrap();
         let scratch =
             std::path::PathBuf::from(std::env::var_os("SCRIPT_HUB_SURGE_TEST_DIR").unwrap());
+        let external = scratch.join("external-sample.txt");
+        let mut external_file = std::fs::File::create_new(&external).unwrap();
+        writeln!(
+            external_file,
+            "External sample = https, proxy.example.invalid, 443"
+        )
+        .unwrap();
+        drop(external_file);
+        let target = GistFile::parse("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "nodes.txt").unwrap();
+        let receipt = PolicyLink::from_raw(
+            "https://gist.githubusercontent.com/example/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/raw/nodes.txt",
+            &target,
+        )
+        .unwrap();
+        let group = receipt
+            .named_policy_group("东京 🇯🇵")
+            .unwrap()
+            .replace(receipt.subscription_url().as_str(), "external-sample.txt");
         let path = scratch.join("script-hub-surge-check.conf");
         let mut profile = std::fs::File::create_new(&path).unwrap();
         write!(
             profile,
-            "[Proxy]\n{}{}\n[Proxy Group]\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS\n[Rule]\nFINAL,Check\n",
+            "[Proxy]\n{}{}\n[Proxy Group]\n{group}\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS, 东京 🇯🇵\n[Rule]\nFINAL,Check\n",
             policies.as_str(), anytls.as_str()
         )
         .unwrap();
         drop(profile);
         let result = std::process::Command::new(std::env::var_os("SCRIPT_HUB_SURGE_BIN").unwrap())
+            .current_dir(&scratch)
             .arg("--check")
             .arg(&path)
             .output();
         std::fs::remove_file(path).unwrap();
+        std::fs::remove_file(external).unwrap();
         let result = result.unwrap();
         assert!(
             result.status.success(),
@@ -667,6 +692,36 @@ mod tests {
             export_subscription(foreign, OutputFormat::Surge),
             Err(RelayError::ExportNode { index: 1, .. })
         ));
+    }
+
+    #[test]
+    fn native_surge_export_requires_tls_verification_but_original_is_lossless() {
+        let source = concat!(
+            "[Proxy]\r\n",
+            "TLS = https, tls.example.invalid, 443\r\n",
+            "Node = anytls, node.example.invalid, 443, password=fixture, skip-cert-verify=true\r\n",
+        );
+        let result = export_subscription(source, OutputFormat::Surge);
+        assert!(matches!(
+            result,
+            Err(RelayError::ExportNode {
+                index: 2,
+                error: ModelError::SecurityBlocked,
+            })
+        ));
+        assert_eq!(
+            export_subscription(source, OutputFormat::Original)
+                .unwrap()
+                .as_str(),
+            source
+        );
+        let strict = source.replace("skip-cert-verify=true", "skip-cert-verify=false");
+        assert_eq!(
+            export_subscription(&strict, OutputFormat::Surge)
+                .unwrap()
+                .as_str(),
+            strict
+        );
     }
 
     #[test]

@@ -1,15 +1,18 @@
 use super::{length_counter, primary_button, secret_field, visible_field};
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
-use crate::gui::relay::{RelayState, RelayStep, SECRET_IDS};
-use crate::gui::subscriptions::Selection;
+use crate::gui::relay::{RelayState, RelayStep, SECRET_IDS, SURGE_GROUP_NAME_ID};
+use crate::gui::subscriptions::{Selection, State as WorkspaceState};
 use crate::gui::theme::Palette;
 use crate::relay::RunMode;
 use crate::relay::export::OutputFormat;
-use crate::relay::gist::{GistFile, validate_filename, validate_name};
+use crate::relay::gist::{
+    GistFile, default_policy_group_name, validate_filename, validate_name,
+    validate_policy_group_name,
+};
 use crate::runtime::settings::Language;
 use eframe::egui;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
 enum Tab {
@@ -342,6 +345,7 @@ fn gist(
     }
 
     if destination_changed {
+        state.surge_group_draft = None;
         invalidate_gist_destination(state);
     }
     let mut title_invalid = validate_name(&state.title).is_err();
@@ -427,7 +431,9 @@ fn gist(
         ui.label(tr(Text::RelayCreated));
         ui.hyperlink_to(tr(Text::RelayOutputGistTab), &created.url);
     }
-    show_surge_handoff(ui, state, language);
+    if !state.schedule.armed() {
+        show_surge_handoff(ui, state, language, colors);
+    }
 
     ui.add_space(12.0);
     let open_schedule = ui.data_mut(|data| {
@@ -496,7 +502,12 @@ fn gist(
     publish.then_some(RunMode::Publish)
 }
 
-pub(super) fn show_surge_handoff(ui: &mut egui::Ui, state: &mut RelayState, language: Language) {
+pub(super) fn show_surge_handoff(
+    ui: &mut egui::Ui,
+    state: &mut RelayState,
+    language: Language,
+    colors: Palette,
+) {
     if state.demo_mode || state.publish_format != OutputFormat::Surge {
         return;
     }
@@ -511,16 +522,97 @@ pub(super) fn show_surge_handoff(ui: &mut egui::Ui, state: &mut RelayState, lang
     else {
         return;
     };
-    ui.add_space(8.0);
-    ui.label(text(language, Text::RelaySurgeHandoffHelp));
-    if ui
-        .button(text(language, Text::RelaySurgeHandoffCopy))
-        .clicked()
+    if state
+        .surge_group_draft
+        .as_ref()
+        .is_some_and(|(previous, _)| previous != receipt)
     {
-        ui.ctx()
-            .copy_text(std::mem::take(&mut *receipt.policy_group()));
-        state.notice = Some(Text::Copied);
+        state.surge_group_draft = None;
     }
+    let (_, name) = state.surge_group_draft.get_or_insert_with(|| {
+        crate::gui::templates::clear_secret_widget(ui.ctx(), SURGE_GROUP_NAME_ID);
+        let mut suggestion = default_policy_group_name(saved_workspace_name(&state.workspace));
+        if group_name_matches_node(&suggestion, &state.preview_names) {
+            let alternative = format!("{suggestion} group");
+            suggestion = if validate_policy_group_name(&alternative)
+                && !group_name_matches_node(&alternative, &state.preview_names)
+            {
+                alternative
+            } else {
+                default_policy_group_name("")
+            };
+        }
+        (receipt.clone(), Zeroizing::new(suggestion))
+    });
+    let tr = |key| text(language, key);
+    ui.add_space(12.0);
+    ui.strong(tr(Text::RelaySurgeHandoffTitle));
+    ui.label(tr(Text::RelaySurgeHandoffHelp));
+    let label = ui.label(tr(Text::RelaySurgeGroupName));
+    let mut edit = egui::TextEdit::singleline(&mut **name)
+        .id(egui::Id::unique(SURGE_GROUP_NAME_ID))
+        .desired_width(f32::INFINITY)
+        .char_limit(64)
+        .show(ui);
+    let _ = (*edit.response).clone().labelled_by(label.id);
+    edit.state.clear_undoer();
+    edit.state.store(ui.ctx(), edit.response.id);
+
+    let name = name.trim_matches(' ');
+    let issue = if !validate_policy_group_name(name) {
+        Some(Text::RelaySurgeGroupNameInvalid)
+    } else if group_name_matches_node(name, &state.preview_names) {
+        Some(Text::RelaySurgeGroupNameCollision)
+    } else {
+        None
+    };
+    if let Some(issue) = issue {
+        ui.colored_label(colors.error, tr(issue));
+    }
+    ui.horizontal_wrapped(|ui| {
+        if ui
+            .add_enabled(
+                issue.is_none(),
+                primary_button(colors, tr(Text::RelaySurgeHandoffCopy)),
+            )
+            .clicked()
+            && let Some(mut group) = receipt.named_policy_group(name)
+        {
+            ui.ctx().copy_text(std::mem::take(&mut *group));
+            state.notice = Some(Text::Copied);
+        }
+        if ui
+            .button(tr(Text::RelaySurgeCopySubscriptionLink))
+            .clicked()
+        {
+            let mut url = receipt.subscription_url();
+            ui.ctx().copy_text(std::mem::take(&mut *url));
+            state.notice = Some(Text::Copied);
+        }
+    });
+}
+
+fn saved_workspace_name(workspace: &WorkspaceState) -> &str {
+    match workspace.selected {
+        Some(Selection::Subscription(id)) => workspace
+            .data
+            .subscriptions
+            .iter()
+            .find(|entry| entry.id == id)
+            .map(|entry| entry.name.as_str()),
+        Some(Selection::Collection(id)) => workspace
+            .data
+            .collections
+            .iter()
+            .find(|entry| entry.id == id)
+            .map(|entry| entry.name.as_str()),
+        None => None,
+    }
+    .unwrap_or_default()
+}
+
+fn group_name_matches_node(name: &str, nodes: &[Zeroizing<String>]) -> bool {
+    nodes.iter().any(|node| node.eq_ignore_ascii_case(name))
 }
 
 fn select_gist_format(state: &mut RelayState, format: OutputFormat) {
@@ -868,10 +960,11 @@ mod tests {
         state.output.push_str("0123456789abcdef");
         state.publish_format = OutputFormat::Surge;
         let copy = text(Language::En, Text::RelaySurgeHandoffCopy).to_owned();
+        let link = text(Language::En, Text::RelaySurgeCopySubscriptionLink).to_owned();
         assert!(
             !render(&mut state, Tab::Gist, false)
                 .iter()
-                .any(|(label, _)| label == &copy)
+                .any(|(label, _)| label == &copy || label == &link)
         );
 
         let target = GistFile::parse(&state.output, &state.output_file).unwrap();
@@ -882,21 +975,87 @@ mod tests {
             )
             .unwrap(),
         );
-        assert!(render(&mut state, Tab::Gist, false).contains(&(copy.clone(), false)));
+        let confirmed = render(&mut state, Tab::Gist, false);
+        assert!(confirmed.contains(&(copy.clone(), false)));
+        assert!(confirmed.contains(&(link.clone(), false)));
+        assert!(
+            !confirmed
+                .iter()
+                .any(|(label, _)| label.contains("gist.githubusercontent.com"))
+        );
 
         state.publish_format = OutputFormat::Original;
         assert!(
             !render(&mut state, Tab::Gist, true)
                 .iter()
-                .any(|(label, _)| label == &copy)
+                .any(|(label, _)| label == &copy || label == &link)
         );
         state.publish_format = OutputFormat::Surge;
         state.output_file.push_str(".other");
         assert!(
             !render(&mut state, Tab::Gist, true)
                 .iter()
-                .any(|(label, _)| label == &copy)
+                .any(|(label, _)| label == &copy || label == &link)
         );
+    }
+
+    #[test]
+    fn surge_handoff_names_are_editable_and_scoped_to_the_verified_receipt() {
+        let mut state = prepared();
+        let id = state
+            .workspace
+            .data
+            .add_entry(crate::relay::library::Entry {
+                id: 0,
+                name: "Home".into(),
+                source: String::new(),
+                source_file: String::new(),
+                content: state.local_content.as_ref().unwrap().to_string(),
+                processing: Default::default(),
+                publish: Default::default(),
+            })
+            .unwrap();
+        state.workspace.selected = Some(Selection::Subscription(id));
+        state.publish_format = OutputFormat::Surge;
+        state.preview_names.push(Zeroizing::new("home".into()));
+        state.output.push_str("0123456789abcdef");
+        let install_receipt = |state: &mut RelayState| {
+            let target = GistFile::parse(&state.output, &state.output_file).unwrap();
+            let raw = format!(
+                "https://gist.githubusercontent.com/example/{}/raw/nodes.list",
+                state.output.as_str()
+            );
+            state.result.as_mut().unwrap().surge_policy =
+                crate::relay::gist::PolicyLink::from_raw(&raw, &target);
+        };
+        install_receipt(&mut state);
+        let _ = render(&mut state, Tab::Gist, false);
+        let draft = state.surge_group_draft.as_mut().unwrap();
+        assert_eq!(draft.1.as_str(), "Home group");
+        *draft.1 = "HOME".into();
+
+        let blocked = render(&mut state, Tab::Gist, true);
+        let entry = |key, disabled| (text(Language::En, key).to_owned(), disabled);
+        assert!(blocked.contains(&entry(Text::RelaySurgeGroupNameCollision, false)));
+        assert!(blocked.contains(&entry(Text::RelaySurgeHandoffCopy, true)));
+        assert!(blocked.contains(&entry(Text::RelaySurgeCopySubscriptionLink, false)));
+        assert!(!state.acknowledge_publish && !state.busy());
+
+        *state.surge_group_draft.as_mut().unwrap().1 = "DIRECT".into();
+        let invalid = render(&mut state, Tab::Gist, false);
+        assert!(invalid.contains(&entry(Text::RelaySurgeGroupNameInvalid, false)));
+        assert!(invalid.contains(&entry(Text::RelaySurgeHandoffCopy, true)));
+
+        state.output = Zeroizing::new("fedcba9876543210".into());
+        install_receipt(&mut state);
+        let changed = render(&mut state, Tab::Gist, false);
+        assert!(changed.contains(&entry(Text::RelaySurgeHandoffCopy, false)));
+        assert_eq!(
+            state.surge_group_draft.as_ref().unwrap().1.as_str(),
+            "Home group"
+        );
+        state.clear(&egui::Context::default());
+        assert!(state.surge_group_draft.is_none());
     }
 
     #[test]

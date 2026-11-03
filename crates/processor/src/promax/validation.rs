@@ -1,5 +1,6 @@
 use super::rule::{RuleKind, SurgeRule, split_fields};
 use fancy_regex::Regex;
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -433,21 +434,8 @@ pub fn validate_apple_compatibility(content: &str, implicit_reject: bool) -> Vec
         let Ok(rule) = SurgeRule::parse(cleaned) else {
             continue;
         };
-        let targets_critical = match rule.kind {
-            RuleKind::Domain
-            | RuleKind::DomainSuffix
-            | RuleKind::DomainWildcard
-            | RuleKind::DomainRegex => {
-                crate::promax::safety::apple_host_pattern_is_critical(&rule.payload)
-            }
-            RuleKind::DomainKeyword => crate::promax::safety::APPLE_CRITICAL_EXACT
-                .iter()
-                .chain(crate::promax::safety::APPLE_CRITICAL_SUFFIXES.iter())
-                .any(|host| host.contains(&rule.payload.to_ascii_lowercase())),
-            _ => false,
-        };
         let is_direct = rule.policy.as_deref() == Some("DIRECT");
-        if targets_critical && (implicit_reject || !is_direct) {
+        if (implicit_reject || !is_direct) && targets_apple_critical_domain(&rule) {
             errors.push(error(
                 line_number,
                 "apple-critical-nondirect",
@@ -458,6 +446,26 @@ pub fn validate_apple_compatibility(content: &str, implicit_reject: bool) -> Vec
         }
     }
     errors
+}
+
+fn targets_apple_critical_domain(rule: &SurgeRule) -> bool {
+    use crate::promax::safety::{
+        APPLE_CRITICAL_EXACT, APPLE_CRITICAL_SUFFIXES, apple_host_pattern_is_critical,
+    };
+    match rule.kind {
+        RuleKind::Domain
+        | RuleKind::DomainSuffix
+        | RuleKind::DomainWildcard
+        | RuleKind::DomainRegex => apple_host_pattern_is_critical(&rule.payload),
+        RuleKind::DomainKeyword => {
+            let keyword = rule.payload.to_ascii_lowercase();
+            APPLE_CRITICAL_EXACT
+                .iter()
+                .chain(APPLE_CRITICAL_SUFFIXES.iter())
+                .any(|host| host.contains(&keyword))
+        }
+        _ => false,
+    }
 }
 
 fn validate_generic_module_rule(line: &str) -> bool {
@@ -475,6 +483,273 @@ fn validate_generic_module_rule(line: &str) -> bool {
     SurgeRule::parse(&format!("{},{}", fields[0], payload)).is_ok()
 }
 
+type LogicalError = (&'static str, &'static str);
+const LOGICAL_SYNTAX: LogicalError = (
+    "invalid-logical-rule",
+    "logical rules require a parenthesized list of policy-free sub-rules",
+);
+const MAX_LOGICAL_DEPTH: usize = 10;
+
+fn is_logical_operator(kind: &str) -> bool {
+    ["AND", "OR", "NOT"]
+        .iter()
+        .any(|operator| kind.eq_ignore_ascii_case(operator))
+}
+
+fn take_logical_group(input: &str) -> Option<(&str, &str)> {
+    let input = input.trim_start().strip_prefix('(')?;
+    let mut depth = 1;
+    let mut quote = None;
+    let mut escaped = false;
+    let mut field_start = true;
+    for (offset, byte) in input.bytes().enumerate() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if byte == b'\\' {
+            escaped = true;
+            field_start = false;
+            continue;
+        }
+        if let Some(delimiter) = quote {
+            if byte == delimiter {
+                quote = None;
+            }
+            continue;
+        }
+        match byte {
+            b'\'' | b'"' if field_start => {
+                quote = Some(byte);
+                field_start = false;
+            }
+            b'(' => {
+                depth += 1;
+                field_start = true;
+            }
+            b')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some((&input[..offset], &input[offset + 1..]));
+                }
+                field_start = false;
+            }
+            b',' => field_start = true,
+            byte if byte.is_ascii_whitespace() => {}
+            _ => field_start = false,
+        }
+    }
+    None
+}
+
+// Surge accepts single quotes around a matcher; adapt those to the typed parser.
+fn logical_leaf_text(line: &str) -> Cow<'_, str> {
+    let Some((kind, value)) = line.split_once(',') else {
+        return Cow::Borrowed(line);
+    };
+    let Some(quoted) = value.trim_start().strip_prefix('\'') else {
+        return Cow::Borrowed(line);
+    };
+    let mut normalized = format!("{kind},\"");
+    let mut escaped = false;
+    for (index, character) in quoted.char_indices() {
+        if !escaped {
+            match character {
+                '\'' => {
+                    normalized.push('"');
+                    normalized.push_str(&quoted[index + 1..]);
+                    return Cow::Owned(normalized);
+                }
+                '"' => normalized.push('\\'),
+                _ => {}
+            }
+        }
+        normalized.push(character);
+        escaped = character == '\\' && !escaped;
+    }
+    Cow::Borrowed(line)
+}
+
+fn validate_logical_leaf(
+    line: &str,
+    promax_dns_guard: bool,
+    protect_apple: bool,
+) -> Result<bool, LogicalError> {
+    let line = logical_leaf_text(line);
+    let fields = split_fields(&line).map_err(|_| LOGICAL_SYNTAX)?;
+    let [kind, value, options @ ..] = fields.as_slice() else {
+        return Err(LOGICAL_SYNTAX);
+    };
+    if value.is_empty() {
+        return Err(LOGICAL_SYNTAX);
+    }
+    let kind = kind.to_ascii_uppercase();
+    let reference = matches!(kind.as_str(), "RULE-SET" | "DOMAIN-SET");
+    for option in options {
+        let upper = option.to_ascii_uppercase();
+        let allowed = match upper.as_str() {
+            "NO-RESOLVE" | "EXTENDED-MATCHING" => true,
+            "REQUIRES-RESOLVE" => kind == "SCRIPT",
+            _ => upper
+                .split_once('=')
+                .is_some_and(|(option, value)| match option {
+                    "UPDATE-INTERVAL" => {
+                        reference && value.parse::<i64>().is_ok_and(|interval| interval != 0)
+                    }
+                    "NOTIFICATION-TEXT" | "NOTIFICATION-INTERVAL" | "ALWAYS-CAPTURE" => {
+                        !value.is_empty()
+                    }
+                    _ => false,
+                }),
+        };
+        if !allowed {
+            return Err(LOGICAL_SYNTAX);
+        }
+    }
+
+    // Validate the matcher with the same typed parser as inline rules. Extra
+    // documented Surge matchers stay local to this module validator.
+    let matcher = if options.is_empty() {
+        line
+    } else if value.contains([',', '"']) {
+        Cow::Owned(format!("{kind},\"{value}\""))
+    } else {
+        Cow::Owned(format!("{kind},{value}"))
+    };
+    let (can_pre_match, needs_no_resolve) = match SurgeRule::parse(&matcher) {
+        Ok(rule) if protect_apple && targets_apple_critical_domain(&rule) => {
+            return Err((
+                "apple-critical-nondirect",
+                "Apple critical domains must not be targeted by a non-DIRECT logical rule",
+            ));
+        }
+        Ok(rule) => (
+            rule.kind.supports_pre_matching(),
+            matches!(
+                rule.kind,
+                RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::IpAsn | RuleKind::GeoIp
+            ),
+        ),
+        Err(_) => match kind.as_str() {
+            "RULE-SET" | "DOMAIN-SET" => (true, true),
+            "SRC-IP" | "SUBNET" | "CELLULAR-RADIO" | "CELLULAR-CARRIER" => (true, false),
+            "DEVICE-NAME" | "MAC-ADDRESS" | "PROTOCOL" | "HOSTNAME-TYPE" | "SCRIPT" => {
+                (false, false)
+            }
+            _ => return Err(LOGICAL_SYNTAX),
+        },
+    };
+    if promax_dns_guard && needs_no_resolve && !options.iter().any(|option| option == "no-resolve")
+    {
+        return Err((
+            "ip-rule-missing-no-resolve",
+            "PROMAX logical IP and ruleset sub-rules require canonical no-resolve",
+        ));
+    }
+    if promax_dns_guard && reference && (kind != "RULE-SET" || !is_compiled_adblock_ruleset(value))
+    {
+        return Err((
+            "unfiltered-promax-ruleset",
+            "PROMAX logical rulesets must reference safety-filtered AdBlock output",
+        ));
+    }
+    Ok(can_pre_match)
+}
+
+fn validate_logical_children(
+    operator: &str,
+    mut children: &str,
+    depth: usize,
+    promax_dns_guard: bool,
+    non_direct: bool,
+    negated: bool,
+) -> Result<bool, LogicalError> {
+    if depth > MAX_LOGICAL_DEPTH {
+        return Err((
+            "invalid-logical-rule",
+            "logical rule nesting exceeds ten levels",
+        ));
+    }
+    let negated = negated ^ operator.eq_ignore_ascii_case("NOT");
+    let mut can_pre_match = true;
+    loop {
+        let (child, tail) = take_logical_group(children).ok_or(LOGICAL_SYNTAX)?;
+        let child = child.trim();
+        let (kind, value) = child.split_once(',').ok_or(LOGICAL_SYNTAX)?;
+        let kind = kind.trim();
+        can_pre_match &= if is_logical_operator(kind) {
+            let (nested, tail) = take_logical_group(value).ok_or(LOGICAL_SYNTAX)?;
+            if !tail.trim().is_empty() {
+                return Err(LOGICAL_SYNTAX);
+            }
+            validate_logical_children(
+                kind,
+                nested,
+                depth + 1,
+                promax_dns_guard,
+                non_direct,
+                negated,
+            )?
+        } else {
+            validate_logical_leaf(child, promax_dns_guard, non_direct && !negated)?
+        };
+        let tail = tail.trim();
+        if tail.is_empty() {
+            return Ok(can_pre_match);
+        }
+        if operator.eq_ignore_ascii_case("NOT") {
+            return Err(("invalid-logical-rule", "NOT requires exactly one sub-rule"));
+        }
+        children = tail.strip_prefix(',').ok_or(LOGICAL_SYNTAX)?;
+    }
+}
+
+fn validate_logical_rule(
+    operator: &str,
+    value: &str,
+    strict_promax: bool,
+    require_no_resolve: bool,
+    surge_dialect: bool,
+) -> Result<(), LogicalError> {
+    let (children, tail) = take_logical_group(value).ok_or(LOGICAL_SYNTAX)?;
+    let tail = crate::strip_inline_comment(tail);
+    let tail = tail.strip_prefix(',').ok_or(LOGICAL_SYNTAX)?;
+    let fields = split_fields(tail).map_err(|_| LOGICAL_SYNTAX)?;
+    let [policy, options @ ..] = fields.as_slice() else {
+        return Err(LOGICAL_SYNTAX);
+    };
+    if policy.is_empty() || super::rule::is_option(&policy.to_ascii_uppercase()) {
+        return Err(("invalid-logical-rule", "logical rule is missing a policy"));
+    }
+    let rejects = is_internal_reject_policy(policy);
+    if strict_promax && !rejects {
+        return Err((
+            "unsupported-policy",
+            "PROMAX logical rules require an internal policy",
+        ));
+    }
+    let can_pre_match = validate_logical_children(
+        operator,
+        children,
+        1,
+        strict_promax && require_no_resolve,
+        !policy.eq_ignore_ascii_case("DIRECT"),
+        false,
+    )?;
+    if surge_dialect
+        && options
+            .iter()
+            .any(|option| option.eq_ignore_ascii_case("pre-matching"))
+        && (!rejects || !can_pre_match)
+    {
+        return Err((
+            "invalid-rule-option",
+            "pre-matching requires a REJECT policy and supported logical sub-rules",
+        ));
+    }
+    Ok(())
+}
+
 fn validate_module_rule(
     line_number: usize,
     line: &str,
@@ -483,6 +758,20 @@ fn validate_module_rule(
     surge_dialect: bool,
     errors: &mut Vec<ValidationError>,
 ) {
+    if let Some((kind, value)) = line.split_once(',')
+        && is_logical_operator(kind.trim())
+    {
+        if let Err((code, message)) = validate_logical_rule(
+            kind.trim(),
+            value,
+            strict_promax,
+            require_no_resolve,
+            surge_dialect,
+        ) {
+            errors.push(error(line_number, code, message));
+        }
+        return;
+    }
     let cleaned = crate::strip_inline_comment(line);
     let line = cleaned.trim();
     if line.to_ascii_uppercase().starts_with("RULE-SET,") {
@@ -494,28 +783,6 @@ fn validate_module_rule(
             surge_dialect,
             errors,
         );
-        return;
-    }
-    if ["AND,", "OR,", "NOT,"]
-        .iter()
-        .any(|prefix| line.to_ascii_uppercase().starts_with(prefix))
-    {
-        let balanced = line.chars().filter(|character| *character == '(').count()
-            == line.chars().filter(|character| *character == ')').count();
-        let policy = line.rsplit_once(',').map(|(_, policy)| policy.trim());
-        if !balanced || policy.is_none_or(str::is_empty) {
-            errors.push(error(
-                line_number,
-                "invalid-logical-rule",
-                "logical rule is unbalanced or missing a policy",
-            ));
-        } else if strict_promax && !is_internal_reject_policy(policy.unwrap()) {
-            errors.push(error(
-                line_number,
-                "unsupported-policy",
-                "PROMAX logical rules require an internal policy",
-            ));
-        }
         return;
     }
     match SurgeRule::parse(line) {
@@ -1019,6 +1286,119 @@ mod tests {
         validate_apple_compatibility, validate_external_ruleset, validate_shadowrocket_module,
         validate_surge_module, validate_surge_section_line, validate_transport_security,
     };
+
+    #[test]
+    fn surge_logical_rule_requires_well_formed_policy_free_children() {
+        for rule in [
+            "AND,garbage,REJECT",
+            "OR,(),REJECT",
+            "NOT,((DOMAIN,a.example),(DOMAIN,b.example)),REJECT",
+            "AND,((FINAL),(DOMAIN,a.example)),REJECT",
+            "AND,((DOMAIN,a.example,DIRECT)),REJECT",
+            "AND,((DOMAIN,a.example,My Proxy)),REJECT",
+            "AND,((DOMAIN,a.example,pre-matching)),REJECT",
+            "AND,((NOT,((DOMAIN,a.example)),DIRECT)),REJECT",
+            "AND,((DOMAIN,a.example),),REJECT",
+            "AND,((DOMAIN,a.example)),pre-matching",
+            "AND,)((DOMAIN,a.example)),REJECT",
+        ] {
+            let content = format!("#!name=fixture\n[Rule]\n{rule}\n");
+            assert!(
+                validate_surge_module(&content)
+                    .iter()
+                    .any(|error| error.line == 3 && error.code == "invalid-logical-rule"),
+                "{rule}",
+            );
+        }
+    }
+
+    #[test]
+    fn surge_logical_rules_accept_valid_matchers_and_bound_nesting() {
+        for rule in [
+            "AND,((NOT,((SRC-IP,192.168.1.110))),(DOMAIN-SUFFIX,example.com)),My Proxy",
+            "AND,((PROTOCOL,UDP),(RULE-SET,https://example.test/streaming.list)),REJECT",
+            r#"OR,((USER-AGENT,"Example (, V2"),(USER-AGENT,'Example ), V3')),DIRECT"#,
+            "OR,((DOMAIN,a.example),(DOMAIN,b.example)),DIRECT,notification-text=Matched",
+        ] {
+            let content = format!("#!name=fixture\n[Rule]\n{rule}\n");
+            assert!(validate_surge_module(&content).is_empty(), "{rule}");
+        }
+        let mut leaf = "DOMAIN,a.example".to_string();
+        for depth in 1..=11 {
+            leaf = format!("NOT,(({leaf}))");
+            let content = format!("#!name=fixture\n[Rule]\n{leaf},DIRECT\n");
+            let errors = validate_surge_module(&content);
+            assert_eq!(errors.is_empty(), depth <= 10, "depth {depth}: {errors:?}");
+        }
+    }
+
+    #[test]
+    fn surge_logical_rules_enforce_pre_matching_and_promax_dns_safety() {
+        let rule = "AND,((DOMAIN-SUFFIX,tracker.example.com),(DEST-PORT,443)),REJECT,pre-matching";
+        let valid = format!("#!name=PROMAX fixture\n[Rule]\n{rule}\n");
+        assert!(validate_surge_module(&valid).is_empty());
+        for (rule, code) in [
+            (
+                "AND,((DOMAIN,a.example),(DEST-PORT,443)),DIRECT,pre-matching",
+                "invalid-rule-option",
+            ),
+            (
+                "AND,((DOMAIN,a.example),(PROTOCOL,UDP)),REJECT,pre-matching",
+                "invalid-rule-option",
+            ),
+            (
+                "AND,((DOMAIN,a.example),(NOT,((IP-CIDR,192.0.2.0/24)))),REJECT",
+                "ip-rule-missing-no-resolve",
+            ),
+            (
+                "AND,((RULE-SET,https://example.test/ads.list,no-resolve)),REJECT",
+                "unfiltered-promax-ruleset",
+            ),
+        ] {
+            let name = if code == "invalid-rule-option" {
+                "fixture"
+            } else {
+                "PROMAX fixture"
+            };
+            let content = format!("#!name={name}\n[Rule]\n{rule}\n");
+            assert!(
+                validate_surge_module(&content)
+                    .iter()
+                    .any(|error| error.code == code),
+                "{rule}",
+            );
+        }
+        let valid = "#!name=PROMAX fixture\n[Rule]\nAND,((DOMAIN,a.example),(NOT,((IP-CIDR,192.0.2.0/24,no-resolve)))),REJECT\n";
+        assert!(validate_surge_module(valid).is_empty());
+    }
+
+    #[test]
+    fn logical_rules_protect_apple_targets_without_rejecting_exclusions() {
+        for (rule, blocked) in [
+            (
+                "AND,((DOMAIN,account.apple.com),(DEST-PORT,443)),REJECT,pre-matching",
+                true,
+            ),
+            ("NOT,((NOT,((DOMAIN,account.apple.com)))),REJECT", true),
+            (
+                "AND,((NOT,((DOMAIN,account.apple.com))),(DEST-PORT,443)),REJECT,pre-matching",
+                false,
+            ),
+            (
+                "AND,((DOMAIN,account.apple.com),(DEST-PORT,443)),DIRECT",
+                false,
+            ),
+        ] {
+            let content = format!("#!name=fixture\n[Rule]\n{rule}\n");
+            let errors = validate_surge_module(&content);
+            if blocked {
+                assert_eq!(errors.len(), 1, "{rule}: {errors:?}");
+                assert_eq!(errors[0].code, "apple-critical-nondirect");
+            } else {
+                assert!(errors.is_empty(), "{rule}: {errors:?}");
+            }
+        }
+    }
 
     #[test]
     fn shadowrocket_promax_ip_rules_and_rulesets_require_no_resolve() {

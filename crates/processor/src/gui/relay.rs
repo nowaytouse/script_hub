@@ -3,7 +3,7 @@
 use super::file_dialog::FileAction;
 use super::i18n::{Text, text};
 use crate::relay::export::{OutputFormat, export_subscription};
-use crate::relay::gist::{GistFile, validate_filename, validate_name};
+use crate::relay::gist::{GistFile, PolicyLink, validate_filename, validate_name};
 use crate::relay::schedule::{RetryDeadline, server_retry_after};
 use crate::relay::{Progress, RelayConfig, RelayError, RelayResult, RunMode};
 use crate::runtime::settings::Language;
@@ -15,7 +15,8 @@ use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 use zeroize::{Zeroize, Zeroizing};
 
-pub(super) const SECRET_IDS: [&str; 8] = [
+pub(super) const SURGE_GROUP_NAME_ID: &str = "relay-surge-group-name";
+pub(super) const SECRET_IDS: [&str; 9] = [
     "relay-token",
     "relay-source",
     "relay-source-file",
@@ -24,6 +25,7 @@ pub(super) const SECRET_IDS: [&str; 8] = [
     "relay-title",
     "relay-age-identity",
     "relay-age-recipient",
+    SURGE_GROUP_NAME_ID,
 ];
 
 pub(super) enum Failure {
@@ -243,6 +245,7 @@ pub(super) struct RelayState {
     pub result_format: Option<&'static str>,
     pub output_format: OutputFormat,
     pub publish_format: OutputFormat,
+    pub(super) surge_group_draft: Option<(PolicyLink, Zeroizing<String>)>,
     pub(super) format_feedback: Option<(OutputFormat, Result<(), Failure>)>,
     pub demo_report: Option<Result<crate::relay::demo::DemoReport, RelayError>>,
     pub progress: Option<Progress>,
@@ -429,6 +432,7 @@ impl RelayState {
             result_format: None,
             output_format: OutputFormat::Original,
             publish_format: OutputFormat::Original,
+            surge_group_draft: None,
             format_feedback: None,
             demo_report: None,
             progress: None,
@@ -826,6 +830,7 @@ impl RelayState {
         self.notice = None;
         self.result = None;
         self.result_format = None;
+        self.surge_group_draft = None;
         self.format_feedback = None;
         self.completed_config = None;
         self.allow_plaintext = false;
@@ -1047,6 +1052,7 @@ impl RelayState {
         self.result_format = None;
         self.output_format = OutputFormat::Original;
         self.publish_format = OutputFormat::Original;
+        self.surge_group_draft = None;
         self.format_feedback = None;
         self.progress = None;
         self.error = None;

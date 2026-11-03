@@ -1,5 +1,10 @@
 # Changes
 
+## 0.14.7 · 2026-11-03
+
+- Name verified Surge groups and copy their subscription links without publishing again.
+- Apply strict TLS to native Surge exports and validate logical rules before publishing modules.
+
 ## 0.14.6 · 2026-11-03
 
 - Run an enabled subscription or collection schedule on demand without bypassing retries or cooldowns.

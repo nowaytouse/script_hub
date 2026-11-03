@@ -15,6 +15,8 @@ const MAX_CONTENT_BYTES: usize = 4 * 1024 * 1024;
 const MAX_JSON_BYTES: usize = 8 * 1024 * 1024;
 const API_ORIGIN: &str = "https://api.github.com";
 const POLICY_FILENAME_ENCODE: &AsciiSet = &NON_ALPHANUMERIC.remove(b'.').remove(b'-').remove(b'_');
+const DEFAULT_POLICY_GROUP: &str = "Script Hub";
+const MAX_POLICY_GROUP_CHARS: usize = 64;
 
 #[derive(Clone)]
 pub struct GistFile {
@@ -150,10 +152,62 @@ impl PolicyLink {
     }
 
     pub fn policy_group(&self) -> Zeroizing<String> {
+        self.render_policy_group(DEFAULT_POLICY_GROUP)
+    }
+
+    pub fn named_policy_group(&self, name: &str) -> Option<Zeroizing<String>> {
+        let name = name.trim_matches(' ');
+        validate_policy_group_name(name).then(|| self.render_policy_group(name))
+    }
+
+    pub fn subscription_url(&self) -> Zeroizing<String> {
+        self.url.clone()
+    }
+
+    fn render_policy_group(&self, name: &str) -> Zeroizing<String> {
         Zeroizing::new(format!(
-            "Script Hub = select, policy-path={}",
+            "{name} = select, policy-path={}",
             self.url.as_str()
         ))
+    }
+}
+
+fn safe_policy_group_char(ch: char) -> bool {
+    !ch.is_control()
+        && !matches!(
+            ch,
+            '=' | ',' | '#' | ';' | '"' | '\\' | '/' | '[' | ']' | ':'
+                | '\u{061c}' | '\u{200e}'..='\u{200f}' | '\u{2028}'..='\u{202e}'
+                | '\u{2066}'..='\u{2069}' | '\u{feff}'
+        )
+}
+
+pub fn validate_policy_group_name(name: &str) -> bool {
+    let name = name.trim_matches(' ');
+    !name.is_empty()
+        && name.trim() == name
+        && name.chars().take(MAX_POLICY_GROUP_CHARS + 1).count() <= MAX_POLICY_GROUP_CHARS
+        && name.chars().all(safe_policy_group_char)
+        && !super::export::is_surge_builtin_name(name)
+}
+
+pub fn default_policy_group_name(name: &str) -> String {
+    let normalized: String = name
+        .trim()
+        .chars()
+        .map(|ch| {
+            if safe_policy_group_char(ch) && !ch.is_whitespace() {
+                ch
+            } else {
+                ' '
+            }
+        })
+        .take(MAX_POLICY_GROUP_CHARS)
+        .collect();
+    if validate_policy_group_name(&normalized) {
+        normalized.split_whitespace().collect::<Vec<_>>().join(" ")
+    } else {
+        DEFAULT_POLICY_GROUP.to_owned()
     }
 }
 

@@ -90,7 +90,7 @@ impl HubApp {
                             ui.label(format!("{}: {} · {} {} · {} {}", tr(Text::ScheduleLastConfirmed), tr(if result.unchanged { Text::RelayUnchanged } else { Text::RelayPublished }), tr(Text::RelayTotal), result.total, tr(Text::RelayRemoved), result.removed));
                         }
                         if state.schedule.armed() {
-                            output::show_surge_handoff(ui, state, language);
+                            output::show_surge_handoff(ui, state, language, colors);
                         }
                         if schedule_status == ScheduleStatus::Paused {
                             ui.weak(tr(Text::ScheduleRecovery));

@@ -346,6 +346,48 @@ fn policy_link_encodes_profile_delimiters_and_keeps_receipt_out_of_debug() {
 }
 
 #[test]
+fn named_policy_groups_keep_the_same_latest_url_without_config_injection() {
+    let file = selected(ID);
+    let raw = format!("https://gist.githubusercontent.com/example/{ID}/raw/{REV}/nodes.txt");
+    let link = PolicyLink::from_raw(&raw, &file).unwrap();
+    let url = link.subscription_url();
+    assert_eq!(
+        url.as_str(),
+        format!("https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt")
+    );
+    assert_eq!(
+        link.named_policy_group("  东京 🇯🇵  ").unwrap().as_str(),
+        format!("东京 🇯🇵 = select, policy-path={}", url.as_str())
+    );
+    for invalid in [
+        "",
+        " direct ",
+        "REJECT-NO-DROP",
+        "foo:bar",
+        "a/b",
+        "x,y",
+        "[Rule]",
+        "x=y",
+        "x#y",
+        "x;y",
+        "x\"y",
+        "x\\y",
+        "x\n[Rule]",
+        "x\u{202e}y",
+    ] {
+        assert!(
+            link.named_policy_group(invalid).is_none(),
+            "accepted {invalid:?}"
+        );
+    }
+    assert!(link.named_policy_group(&"节".repeat(64)).is_some());
+    assert!(link.named_policy_group(&"节".repeat(65)).is_none());
+    assert_eq!(default_policy_group_name("  Tokyo/[JP] "), "Tokyo JP");
+    assert_eq!(default_policy_group_name(" direct "), DEFAULT_POLICY_GROUP);
+    assert_eq!(default_policy_group_name("  []  "), DEFAULT_POLICY_GROUP);
+}
+
+#[test]
 fn creation_never_retries_a_lost_or_ambiguous_post_response() {
     for reply in [
         None,

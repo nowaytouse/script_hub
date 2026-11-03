@@ -756,6 +756,38 @@ fn conversion_failure_cannot_begin_a_gist_write() {
 }
 
 #[test]
+fn unsafe_native_surge_preview_cannot_publish_to_gist() {
+    let mut config = config();
+    config.source.clear();
+    config.local_content = Some(Zeroizing::new(
+        "Node = anytls, node.example.invalid, 443, password=fixture, skip-cert-verify=true\n"
+            .into(),
+    ));
+    config.test_nodes = false;
+    config.output_format = export::OutputFormat::Surge;
+    let fixture = Fixture::new(vec![]);
+    let cancel = AtomicBool::new(false);
+    let preview = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert!(preview.surge_policy.is_none());
+    assert!(matches!(
+        upload_with(&config, &fixture.client(), preview, &cancel, &|_| {}),
+        Err(RelayError::ExportNode {
+            index: 1,
+            error: model::ModelError::SecurityBlocked
+        })
+    ));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn original_gist_upload_rejects_missing_dependencies_before_any_request() {
     let mut config = config();
     config.source.clear();

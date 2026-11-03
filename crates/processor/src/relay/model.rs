@@ -182,8 +182,9 @@ impl Node {
         let NodeSource::Surge(source) = &self.source else {
             return Err(ModelError::Unsupported);
         };
-        // The common line grammar alone cannot distinguish Shadowrocket-only options.
-        self.project_surge(source, true).map(PrivateJson).map(drop)
+        // The common line grammar alone cannot distinguish Shadowrocket-only options
+        // or enforce the same TLS policy as a converted Surge export.
+        self.project_surge(source, false).map(PrivateJson).map(drop)
     }
 
     pub fn to_probe_sing_box(&self, compatibility: bool) -> Result<(Value, bool), ModelError> {
