@@ -28,7 +28,7 @@
       <stop offset="0.66" stop-color="#B7ADFB"/>
       <stop offset="1" stop-color="#8D7EF2"/>
     </linearGradient>
-    <radialGradient id="node" cx="0" cy="0" r="1" gradientTransform="translate(833 470) rotate(49) scale(136)" gradientUnits="userSpaceOnUse">
+    <radialGradient id="node-shade" cx="0" cy="0" r="1" gradientTransform="translate(833 470) rotate(49) scale(136)" gradientUnits="userSpaceOnUse">
       <stop stop-color="#E2DCFF"/>
       <stop offset="0.66" stop-color="#C0B4FF"/>
       <stop offset="1" stop-color="#9484E9"/>
@@ -44,6 +44,6 @@
     <rect id="right-pillar" x="570" y="214" width="170" height="600" rx="43" fill="url(#rightBar)"/>
     <!-- The arch carries the H's crossbar; it is one custom Bézier shape, not an overlay effect. -->
     <path id="arc-bridge" d="M155 638 C173 521 240 435 352 435 L542 435 C649 435 721 518 740 638 L740 641 L155 641 Z" fill="url(#bridge)" opacity=".91"/>
-    <circle id="node" cx="860" cy="500" r="74" fill="url(#node)"/>
+    <circle id="node" cx="860" cy="500" r="74" fill="url(#node-shade)"/>
   </g>
 </svg>

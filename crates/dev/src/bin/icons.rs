@@ -235,6 +235,21 @@ mod tests {
         }
     }
 
+    #[test]
+    fn original_circular_accent_remains_visible_in_system_icons() {
+        let (tree, _) = fixture();
+        for size in [64, 128, 256, 512, 1024] {
+            let image = render(&tree, size).unwrap();
+            let x = (size as f32 * (0.1 + 0.8 * 860.0 / 1024.0)) as u32;
+            let y = (size as f32 * (0.1 + 0.8 * 500.0 / 1024.0)) as u32;
+            let pixel = image.pixel(x, y).unwrap();
+            assert!(
+                pixel.red() > 140 && pixel.green() > 130 && pixel.blue() > 180,
+                "Accent missing at {size}px: {pixel:?}"
+            );
+        }
+    }
+
     fn png_size(data: &[u8]) -> Option<(u32, u32)> {
         let image = tiny_skia::Pixmap::decode_png(data).ok()?;
         Some((image.width(), image.height()))
