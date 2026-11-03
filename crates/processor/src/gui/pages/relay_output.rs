@@ -90,7 +90,11 @@ pub(super) fn show(
         });
         true
     } else {
-        ui.label(tr(Text::RelayOutputEmpty));
+        ui.label(tr(if state.result.is_some() {
+            Text::RelayReviewEmptyResult
+        } else {
+            Text::RelayOutputEmpty
+        }));
         let have_input = state.editor.is_some() || state.local_content.is_some();
         if ui
             .button(tr(if have_input {
@@ -858,6 +862,25 @@ mod tests {
             text(Language::En, Text::RelayOutputGoOperations).to_owned(),
             false
         )));
+        assert!(
+            source_loaded
+                .iter()
+                .any(|(label, _)| label == text(Language::En, Text::RelayOutputEmpty))
+        );
+
+        let mut empty = prepared();
+        empty.result.as_mut().unwrap().content.clear();
+        let filtered = render(&mut empty, Tab::Local, true);
+        assert!(
+            filtered
+                .iter()
+                .any(|(label, _)| label == text(Language::En, Text::RelayReviewEmptyResult))
+        );
+        assert!(
+            !filtered
+                .iter()
+                .any(|(label, _)| label == text(Language::En, Text::RelayCopy))
+        );
     }
 
     #[test]

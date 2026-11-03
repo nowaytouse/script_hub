@@ -1,5 +1,10 @@
 # Changes
 
+## 0.14.5 · 2026-11-03
+
+- Export compatible AnyTLS nodes to Surge and clarify recovery after an empty preview or a failed file save.
+- Validate Apple safeguards before publishing modules, reject invalid publication paths, and fix dependency search on Windows.
+
 ## 0.14.4 · 2026-11-03
 
 - Keep edits after syncing unchanged local nodes; explain which remote edits block scheduling.

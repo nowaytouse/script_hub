@@ -139,7 +139,7 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         {
             ("ss", &["method", "password", "network"])
         }
-        "trojan" => ("trojan", &["password", "tls"]),
+        kind @ ("trojan" | "anytls") => (kind, &["password", "tls"]),
         _ => return Err(ModelError::Unsupported),
     };
     if object
@@ -177,7 +177,7 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         return Err(ModelError::Unsupported);
     }
     let mut row = Zeroizing::new(format!("{name} = {kind}, {server}, {port}"));
-    if kind != "trojan" {
+    if matches!(kind, "socks5" | "ss") {
         let udp = match object.get("network") {
             None => true,
             Some(value) if value == "tcp" => false,
@@ -206,12 +206,12 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
             write!(row, ", {key}={}", value.as_str()).map_err(|_| ModelError::Render)?;
         }
     }
-    if kind == "trojan" {
+    if matches!(kind, "trojan" | "anytls") {
         let tls = source["tls"].as_object().ok_or(ModelError::Unsupported)?;
         if source["tls"]["enabled"] != true
             || tls
                 .keys()
-                .any(|key| !["enabled", "server_name", "insecure"].contains(&key.as_str()))
+                .any(|key| !["enabled", "server_name", "insecure", "alpn"].contains(&key.as_str()))
         {
             return Err(ModelError::Unsupported);
         }
@@ -231,6 +231,29 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
                 })
                 .ok_or(ModelError::Unsupported)?;
             write!(row, ", sni={sni}").map_err(|_| ModelError::Render)?;
+        }
+        if let Some(alpn) = tls.get("alpn") {
+            let protocols = alpn.as_array().ok_or(ModelError::Unsupported)?;
+            if protocols.is_empty() {
+                return Err(ModelError::Unsupported);
+            }
+            let mut joined = Zeroizing::new(String::new());
+            for value in protocols {
+                let protocol = value
+                    .as_str()
+                    .filter(|value| {
+                        (1..=255).contains(&value.len())
+                            && !value.contains(['#', ','])
+                            && value.bytes().all(|byte| byte.is_ascii_graphic())
+                    })
+                    .ok_or(ModelError::Unsupported)?;
+                if !joined.is_empty() {
+                    joined.push(',');
+                }
+                joined.push_str(protocol);
+            }
+            let quoted = quote_surge(&joined)?;
+            write!(row, ", alpn={}", quoted.as_str()).map_err(|_| ModelError::Render)?;
         }
     }
     Ok(row)
@@ -363,6 +386,12 @@ mod tests {
          "password":"synthetic","tls":{"enabled":true,"server_name":"tls.example","insecure":false}}
     ]}"#;
 
+    const ANYTLS_JSON: &str = r#"{"outbounds":[{
+        "type":"anytls", "tag":"Strict AnyTLS", "server":"proxy.example.invalid", "server_port":443,
+        "password":"fixture,phrase", "tcp_fast_open":true,
+        "tls":{"enabled":true,"server_name":"tls.example.invalid","insecure":false,"alpn":["h2","http/1.1"]}
+    }]}"#;
+
     #[test]
     fn preserves_native_client_documents_byte_for_byte() {
         let mihomo =
@@ -410,19 +439,66 @@ mod tests {
     }
 
     #[test]
+    fn exports_strict_anytls_json_and_share_link_without_losing_tls_options() {
+        let uri = "anytls://fixture%2Cphrase@proxy.example.invalid:443?peer=tls.example.invalid&allowInsecure=0&alpn=h2%2Chttp%2F1.1#AnyTLS%20URI\n";
+        for (input, name, tfo) in [
+            (ANYTLS_JSON, "Strict AnyTLS", ", tfo=true"),
+            (uri, "AnyTLS URI", ""),
+        ] {
+            let output = export_subscription(input, OutputFormat::Surge).unwrap();
+            assert_eq!(
+                output.as_str(),
+                format!(
+                    "{name} = anytls, proxy.example.invalid, 443{tfo}, password=\"fixture,phrase\", skip-cert-verify=false, sni=tls.example.invalid, alpn=\"h2,http/1.1\"\n"
+                )
+            );
+            assert!(!output.contains("udp-relay"));
+            let expected = export_subscription(input, OutputFormat::SingBox).unwrap();
+            let roundtrip = export_subscription(&output, OutputFormat::SingBox).unwrap();
+            assert_eq!(
+                serde_json::from_str::<Value>(&roundtrip).unwrap(),
+                serde_json::from_str::<Value>(&expected).unwrap(),
+            );
+        }
+    }
+
+    #[test]
+    fn anytls_export_rejects_session_overrides_and_unsafe_or_ambiguous_tls() {
+        let input: Value = serde_json::from_str(ANYTLS_JSON).unwrap();
+        let mut idle_override = input.clone();
+        idle_override["outbounds"][0]["idle_session_timeout"] = json!("5m");
+        let mut insecure = input.clone();
+        insecure["outbounds"][0]["tls"]["insecure"] = json!(true);
+        let mut invalid_alpn = input;
+        invalid_alpn["outbounds"][0]["tls"]["alpn"] = json!(["h2,http/1.1"]);
+        for (input, expected) in [
+            (idle_override, ModelError::Unsupported),
+            (insecure, ModelError::SecurityBlocked),
+            (invalid_alpn, ModelError::Unsupported),
+        ] {
+            let error = export_subscription(&input.to_string(), OutputFormat::Surge).unwrap_err();
+            assert!(
+                matches!(error, RelayError::ExportNode { index: 1, error } if error == expected)
+            );
+            assert!(!error.to_string().contains("fixture,phrase"));
+        }
+    }
+
+    #[test]
     #[ignore = "optional Surge parser smoke test; requires SCRIPT_HUB_SURGE_BIN and SCRIPT_HUB_SURGE_TEST_DIR"]
     fn generated_surge_policies_pass_client_config_check() {
         use std::io::Write as _;
 
         let policies = export_subscription(SURGE_CONVERSION, OutputFormat::Surge).unwrap();
+        let anytls = export_subscription(ANYTLS_JSON, OutputFormat::Surge).unwrap();
         let scratch =
             std::path::PathBuf::from(std::env::var_os("SCRIPT_HUB_SURGE_TEST_DIR").unwrap());
         let path = scratch.join("script-hub-surge-check.conf");
         let mut profile = std::fs::File::create_new(&path).unwrap();
         write!(
             profile,
-            "[Proxy]\n{}\n[Proxy Group]\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan\n[Rule]\nFINAL,Check\n",
-            policies.as_str()
+            "[Proxy]\n{}{}\n[Proxy Group]\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS\n[Rule]\nFINAL,Check\n",
+            policies.as_str(), anytls.as_str()
         )
         .unwrap();
         drop(profile);

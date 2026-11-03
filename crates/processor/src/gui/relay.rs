@@ -1627,6 +1627,16 @@ impl RelayState {
             (Ok(()), Ok(Ok(Some(FileCompleted::CopyReady(format, mut content))))) => {
                 if self.allow_plaintext && self.result.is_some() && self.output_format == format {
                     ctx.copy_text(std::mem::take(&mut *content));
+                    if matches!(
+                        self.error,
+                        Some(Failure::Validation(
+                            Text::RelayFileExists
+                                | Text::RelayFileError
+                                | Text::VaultPlaintextConsent
+                        ))
+                    ) {
+                        self.error = None;
+                    }
                     self.notice = Some(Text::Copied);
                 }
             }
@@ -2941,6 +2951,7 @@ mod tests {
         output.drop_without_applying_deltas();
         assert!(!copied_without_consent);
         assert!(!state.busy());
+        state.error = Some(Failure::Validation(Text::RelayFileExists));
         state.allow_plaintext = true;
         let output = ctx.run_ui(Default::default(), |ui| state.copy(ui.ctx()));
         assert!(state.busy());
@@ -2956,6 +2967,7 @@ mod tests {
         let copied = output.platform_output.commands.iter().any(|command| matches!(command, egui::OutputCommand::CopyText(value) if value == "A = socks5, node.example.invalid, 1080\n"));
         output.drop_without_applying_deltas();
         assert!(copied);
+        assert!(state.error.is_none());
         assert_eq!(state.notice, Some(Text::Copied));
         for id in SECRET_IDS {
             egui::text_edit::TextEditState::default().store(&ctx, egui::Id::unique(id));

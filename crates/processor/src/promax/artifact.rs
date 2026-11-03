@@ -757,6 +757,38 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
     }
 
     #[test]
+    fn apple_critical_mitm_never_replaces_published_modules() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("promax-apple-artifact-{unique}"));
+        let stable = "#!name=Previous module\n[MITM]\nhostname = %APPEND% -account.apple.com, weatherkit.apple.com\n";
+        for (kind, relative) in [
+            (ArtifactKind::Surge, "modules/surge/example.sgmodule"),
+            (
+                ArtifactKind::Shadowrocket,
+                "modules/shadowrocket/example.module",
+            ),
+        ] {
+            let target = root.join(relative);
+            fs::create_dir_all(target.parent().unwrap()).unwrap();
+            fs::write(&target, stable).unwrap();
+            let artifact = GeneratedArtifact {
+                target: target.clone(),
+                content: "#!name=Incoming module\n[MITM]\nhostname = %APPEND% account.apple.com\n"
+                    .to_owned(),
+                kind,
+            };
+
+            let error = super::publish_generated_artifacts(&root, &[artifact]).unwrap_err();
+            assert!(error.contains("line 3 apple-critical-mitm"), "{error}");
+            assert_eq!(fs::read_to_string(&target).unwrap(), stable);
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn failed_rollback_reports_error_and_preserves_recovery_data() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)

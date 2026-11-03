@@ -24,7 +24,7 @@ const DEPENDENCIES: &str = include_str!(concat!(
 ));
 const REPOSITORY: &str = "https://github.com/nowaytouse/script_hub";
 const NOTICE_SEPARATOR: &str =
-    "\n==============================================================================\n";
+    "==============================================================================";
 const NOTICE_RESULT_LIMIT: usize = 20;
 
 fn build_revision() -> Option<&'static str> {
@@ -120,19 +120,35 @@ fn matching_notices<'a>(
     content: &'a str,
     words: &'a [String],
 ) -> impl Iterator<Item = (usize, &'a str, &'a str, &'a str)> {
-    let mut blocks = content.split(NOTICE_SEPARATOR);
+    // Borrow each block, preserving the original license text and its line endings.
+    let mut remaining = Some(content);
+    let mut blocks = std::iter::from_fn(move || {
+        let block = remaining.take()?;
+        let mut start = 0;
+        for line in block.split_inclusive('\n') {
+            let end = start + line.len();
+            if line.trim_end_matches(['\r', '\n']) == NOTICE_SEPARATOR {
+                remaining = Some(&block[end..]);
+                return Some(&block[..start]);
+            }
+            start = end;
+        }
+        Some(block)
+    });
     blocks.next();
     std::iter::from_fn(move || Some((blocks.next()?, blocks.next()?)))
         .enumerate()
         .filter_map(move |(index, (header, body))| {
-            let (name, crates) = header.split_once("\nUsed by: ")?;
-            let metadata = header.to_ascii_lowercase();
-            words.iter().all(|word| metadata.contains(word)).then_some((
-                index,
-                name,
-                crates,
-                body.trim_matches('\n'),
-            ))
+            let mut lines = header.lines();
+            let name = lines.next()?;
+            let crates = lines.next()?.strip_prefix("Used by: ")?;
+            if !words.is_empty() {
+                let metadata = header.to_ascii_lowercase();
+                if !words.iter().all(|word| metadata.contains(word)) {
+                    return None;
+                }
+            }
+            Some((index, name, crates, body.trim_matches(['\r', '\n'])))
         })
 }
 
@@ -353,8 +369,8 @@ fn document(ui: &mut egui::Ui, content: &str) {
 #[cfg(test)]
 mod tests {
     use super::{
-        DEPENDENCIES, DiagnosticStatusSnapshot, LICENSE, NOTICES, NOTICES_ZH_CN, PRIVACY,
-        PRIVACY_ZH_CN, build_details, localized_documents, matching_notices,
+        DEPENDENCIES, DiagnosticStatusSnapshot, LICENSE, NOTICE_SEPARATOR, NOTICES, NOTICES_ZH_CN,
+        PRIVACY, PRIVACY_ZH_CN, build_details, localized_documents, matching_notices,
     };
     use crate::gui::app::test_app;
     use crate::runtime::settings::{Language, Preferences};
@@ -398,6 +414,34 @@ mod tests {
         let build = build_details();
         assert!(build.contains(env!("CARGO_PKG_VERSION")));
         assert!(!build.contains(env!("CARGO_MANIFEST_DIR")));
+    }
+
+    #[test]
+    fn notice_search_accepts_crlf_and_mixed_line_endings() {
+        let lf = format!(
+            "Preamble\n{NOTICE_SEPARATOR}\nMIT License\nUsed by: example 1.0;\n{NOTICE_SEPARATOR}\n\nLine one\nLine two\n\n{NOTICE_SEPARATOR}\nOther License\nUsed by: other 2.0;\n{NOTICE_SEPARATOR}\nAnother body"
+        );
+        let crlf = lf.replace('\n', "\r\n");
+        let mixed = lf
+            .replace("Used by: example 1.0;\n", "Used by: example 1.0;\r\n")
+            .replace(
+                &format!("{NOTICE_SEPARATOR}\n"),
+                &format!("{NOTICE_SEPARATOR}\r\n"),
+            );
+        let words = ["mit".to_owned(), "example".to_owned()];
+        for (content, body) in [
+            (&lf, "Line one\nLine two"),
+            (&crlf, "Line one\r\nLine two"),
+            (&mixed, "Line one\nLine two"),
+        ] {
+            let mut matches = matching_notices(content, &words);
+            assert_eq!(
+                matches.next(),
+                Some((0, "MIT License", "example 1.0;", body))
+            );
+            assert!(matches.next().is_none());
+            assert_eq!(matching_notices(content, &[]).count(), 2);
+        }
     }
 
     #[test]

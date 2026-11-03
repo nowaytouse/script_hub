@@ -173,6 +173,7 @@ fn validate_module(content: &str, surge_dialect: bool) -> Vec<ValidationError> {
         );
     }
     errors.extend(validate_transport_security(content));
+    errors.extend(validate_apple_compatibility(content, false));
     errors
 }
 

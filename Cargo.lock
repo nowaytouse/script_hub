@@ -3642,7 +3642,7 @@ dependencies = [
 
 [[package]]
 name = "rust_processor"
-version = "0.14.4"
+version = "0.14.5"
 dependencies = [
  "age",
  "argon2",
@@ -3792,7 +3792,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "script_hub_dev"
-version = "0.14.4"
+version = "0.14.5"
 dependencies = [
  "editpe",
  "resvg",
@@ -3857,12 +3857,12 @@ dependencies = [
 
 [[package]]
 name = "serde-saphyr"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a253edfdea34032da21af84e16fcc94f4c7a6ba237f9f3bc2dbf43cea8535c44"
+checksum = "3f4dc2714fc5632417a6e979602d7044bad8f2880c63fc7217087180acec31b6"
 dependencies = [
  "annotate-snippets",
- "base64 0.23.1",
+ "base64 0.21.7",
  "encoding_rs_io",
  "granit-parser",
  "nohash-hasher",

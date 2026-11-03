@@ -10,7 +10,7 @@ fn validate_file(
         .extension()
         .and_then(|value| value.to_str())
         .unwrap_or_default();
-    let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
+    let content = read_artifact(path)?;
     let mut validation = match extension {
         "sgmodule" => rust_processor::promax::validation::validate_surge_module(&content),
         "module" => rust_processor::promax::validation::validate_shadowrocket_module(&content),
@@ -44,15 +44,43 @@ fn validate_file(
                 ),
             });
         }
-    }
-    let adblock_ruleset = extension == "list"
-        && path
+        let adblock_ruleset = path
             .ancestors()
             .any(|ancestor| ancestor.ends_with(Path::new("rulesets/AdBlock")));
-    validation.extend(
-        rust_processor::promax::validation::validate_apple_compatibility(&content, adblock_ruleset),
-    );
+        validation.extend(
+            rust_processor::promax::validation::validate_apple_compatibility(
+                &content,
+                adblock_ruleset,
+            ),
+        );
+    }
     Ok(validation)
+}
+
+fn read_artifact(path: &Path) -> Result<String, String> {
+    let metadata = std::fs::symlink_metadata(path).map_err(|error| error.to_string())?;
+    if !metadata.is_file() {
+        return Err("expected a regular artifact file, not a symbolic link or directory".into());
+    }
+    std::fs::read_to_string(path).map_err(|error| error.to_string())
+}
+
+fn require_publication_directory(root: &Path, directory: &Path) -> Result<(), String> {
+    for path in directory.ancestors().take_while(|path| *path != root) {
+        let metadata = std::fs::symlink_metadata(path).map_err(|error| {
+            format!(
+                "cannot inspect publication directory {}: {error}",
+                path.display()
+            )
+        })?;
+        if !metadata.is_dir() {
+            return Err(format!(
+                "expected a real publication directory: {}",
+                path.display()
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn report_validation(
@@ -98,6 +126,20 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     let mut artifacts = 0;
     let mut errors = 0;
     let modules_root = root.join("modules");
+    let module_dirs = [
+        modules_root.join("surge"),
+        modules_root.join("shadowrocket"),
+    ];
+    let ruleset_dirs = [
+        root.join("rulesets/AdBlock"),
+        root.join("rulesets/RULE-SET"),
+        root.join("rulesets/Sources/dns/mapping"),
+    ];
+    for directory in module_dirs.iter().chain(&ruleset_dirs) {
+        require_publication_directory(root, directory)?;
+    }
+    let port_source = root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
+    require_publication_directory(root, &root.join("rulesets/Sources/conf"))?;
     let legacy_promax = modules_root.join(
         "surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
     );
@@ -108,13 +150,7 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         );
         errors += 1;
     }
-    for directory in [
-        modules_root.join("surge"),
-        modules_root.join("shadowrocket"),
-    ] {
-        if !directory.is_dir() {
-            continue;
-        }
+    for directory in module_dirs {
         for entry in walkdir::WalkDir::new(directory) {
             let entry = match entry {
                 Ok(entry) => entry,
@@ -123,10 +159,13 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
                     continue;
                 }
             };
-            if !entry.file_type().is_file() {
-                continue;
-            }
             let path = entry.path();
+            if entry.file_type().is_symlink() {
+                return Err(format!(
+                    "unexpected symbolic link in published modules: {}",
+                    path.display()
+                ));
+            }
             let extension = path
                 .extension()
                 .and_then(|value| value.to_str())
@@ -146,14 +185,7 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         }
     }
 
-    for directory in [
-        root.join("rulesets/AdBlock"),
-        root.join("rulesets/RULE-SET"),
-        root.join("rulesets/Sources/dns/mapping"),
-    ] {
-        if !directory.is_dir() {
-            continue;
-        }
+    for directory in ruleset_dirs {
         for entry in walkdir::WalkDir::new(&directory) {
             let entry = match entry {
                 Ok(entry) => entry,
@@ -163,8 +195,13 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
                 }
             };
             let path = entry.path();
-            if !path.is_file() || path.extension().and_then(|value| value.to_str()) != Some("list")
-            {
+            if entry.file_type().is_symlink() {
+                return Err(format!(
+                    "unexpected symbolic link in published rulesets: {}",
+                    path.display()
+                ));
+            }
+            if path.extension().and_then(|value| value.to_str()) != Some("list") {
                 continue;
             }
             if directory.ends_with("rulesets/Sources/dns/mapping")
@@ -185,24 +222,12 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         }
     }
 
-    let port_source = root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
-    if port_source.is_file() {
-        let content = std::fs::read_to_string(&port_source).map_err(|error| error.to_string())?;
-        let validation =
-            rust_processor::promax::validation::validate_apple_compatibility(&content, false);
-        artifacts += 1;
-        if !validation.is_empty() {
-            eprintln!(
-                "[ERROR] {}: {} Apple compatibility error(s)",
-                port_source.display(),
-                validation.len()
-            );
-            for item in validation.iter().take(3) {
-                eprintln!("        line {} {}", item.line, item.code);
-            }
-            errors += validation.len();
-        }
-    }
+    let content = read_artifact(&port_source)
+        .map_err(|error| format!("{}: {error}", port_source.display()))?;
+    let validation =
+        rust_processor::promax::validation::validate_apple_compatibility(&content, false);
+    artifacts += 1;
+    errors += report_validation(&port_source, &validation, 3);
 
     artifacts += 1;
     let mut boundary_errors = rust_processor::general_update::validate_category_boundaries(root)?;
@@ -271,7 +296,52 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{report_walkdir_error, validate_file, validate_retired_outputs};
+    use super::{
+        report_walkdir_error, require_publication_directory, validate_file,
+        validate_retired_outputs,
+    };
+
+    #[test]
+    fn required_publication_directory_cannot_be_missing_or_a_file() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-publication-dir-{}", std::process::id()));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.join("shadowrocket");
+        assert!(require_publication_directory(&root, &path).is_err());
+        std::fs::write(&path, "not a directory").unwrap();
+        assert!(require_publication_directory(&root, &path).is_err());
+        std::fs::remove_file(&path).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        assert!(require_publication_directory(&root, &path).is_ok());
+        std::fs::remove_dir(&path).unwrap();
+        std::fs::remove_dir(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn validation_does_not_follow_artifact_or_publication_symlinks() {
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-publication-link-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let original = root.join("original.list");
+        std::fs::write(&original, "# Rules: 1\nDOMAIN,example.test\n").unwrap();
+        let link = root.join("fixture.list");
+        std::os::unix::fs::symlink(&original, &link).unwrap();
+        assert!(
+            validate_file(&link)
+                .unwrap_err()
+                .contains("regular artifact")
+        );
+        let directory_link = root.join("modules");
+        std::os::unix::fs::symlink(&root, &directory_link).unwrap();
+        assert!(require_publication_directory(&root, &directory_link).is_err());
+        for file in [link, directory_link, original] {
+            std::fs::remove_file(file).unwrap();
+        }
+        std::fs::remove_dir(root).unwrap();
+    }
 
     #[test]
     fn rejects_reintroduced_retired_outputs_without_removing_local_data() {
