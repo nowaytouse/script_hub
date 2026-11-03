@@ -154,6 +154,17 @@ fn metadata_rejects_xml_or_source_marker_injection() {
 }
 
 #[test]
+fn source_marker_distinguishes_base_commit_from_build_commit() {
+    let clean = Fixture::metadata().source();
+    let dirty = Metadata::new("0.2.0", COMMIT, true, "7").unwrap().source();
+    let source_link = format!("Source: {REPOSITORY}/tree/{COMMIT}");
+    assert!(clean.lines().any(|line| line == source_link));
+    assert!(dirty.lines().any(|line| line == source_link));
+    assert!(clean.contains("Source scope: Build commit."));
+    assert!(dirty.contains("Source scope: Base commit only."));
+}
+
+#[test]
 fn native_packages_keep_public_template_help_and_release_notes() {
     for (platform, directory) in [
         (Platform::MacOs, "ScriptHub.app/Contents/Resources"),
@@ -236,6 +247,66 @@ fn windows_stage_keeps_sidecars_in_one_resources_directory() {
             .is_file()
     );
     assert!(!fixture.stage().join("templates.vault").exists());
+}
+
+#[test]
+fn stage_requires_known_licenses_without_copying_unlisted_files() {
+    for platform in [Platform::MacOs, Platform::Windows] {
+        let fixture = Fixture::new();
+        fixture.write("rulesets/Sources/licenses/local-only.txt", b"never bundle");
+        stage(&fixture.0, &fixture.stage(), platform, &Fixture::metadata()).unwrap();
+        let resources = fixture.stage().join(resources(platform));
+        for name in ["AdGuard-CNAME-MIT.txt", "app2smile-MIT.txt"] {
+            assert!(resources.join("licenses").join(name).is_file());
+        }
+        assert!(!resources.join("licenses/local-only.txt").exists());
+    }
+
+    let fixture = Fixture::new();
+    fs::remove_file(
+        fixture
+            .0
+            .join("rulesets/Sources/licenses/app2smile-MIT.txt"),
+    )
+    .unwrap();
+    let error = stage(
+        &fixture.0,
+        &fixture.stage(),
+        Platform::MacOs,
+        &Fixture::metadata(),
+    )
+    .unwrap_err();
+    assert!(error.contains("app2smile-MIT.txt"), "{error}");
+    assert!(!fixture.stage().exists());
+}
+
+#[test]
+fn packaged_notices_and_source_receipt_must_match_on_both_platforms() {
+    for platform in [Platform::MacOs, Platform::Windows] {
+        let fixture = Fixture::new();
+        let metadata = Fixture::metadata();
+        let directory = fixture.stage();
+        stage(&fixture.0, &directory, platform, &metadata).unwrap();
+        verify_resources(&fixture.0, &directory, platform, &metadata).unwrap();
+        let packaged = directory.join(resources(platform));
+        let notice = packaged.join("THIRD_PARTY_LICENSES.txt");
+        let original = fs::read(&notice).unwrap();
+        let mut wrong_notice = original.clone();
+        wrong_notice[0] ^= 1;
+        fs::write(&notice, wrong_notice).unwrap();
+        let error = verify_resources(&fixture.0, &directory, platform, &metadata).unwrap_err();
+        assert!(error.contains("THIRD_PARTY_LICENSES.txt"), "{error}");
+        fs::write(notice, original).unwrap();
+
+        fs::write(
+            packaged.join("SOURCE.txt"),
+            format!("{}Extra", metadata.source()),
+        )
+        .unwrap();
+        assert!(owned_delivery(&directory, platform).unwrap());
+        let error = verify_resources(&fixture.0, &directory, platform, &metadata).unwrap_err();
+        assert!(error.contains("SOURCE.txt"), "{error}");
+    }
 }
 
 #[test]
@@ -353,12 +424,18 @@ fn windows_post_publish_failure_restores_both_binary_and_resources() {
     stage(&fixture.0, &next, Platform::Windows, &Fixture::metadata()).unwrap();
     let result = publish_with(&fixture.0, &next, Platform::Windows, |directory| {
         if directory == fixture.0 {
-            Err("synthetic paired verification failure".to_owned())
-        } else {
-            Ok(())
+            fs::remove_file(directory.join("ScriptHub.resources/THIRD_PARTY_LICENSES.txt"))
+                .unwrap();
         }
+        verify_resources(
+            &fixture.0,
+            directory,
+            Platform::Windows,
+            &Fixture::metadata(),
+        )
     });
-    assert!(result.is_err());
+    let error = result.err().expect("missing notice must prevent delivery");
+    assert!(error.contains("THIRD_PARTY_LICENSES.txt"), "{error}");
     assert_eq!(
         fs::read(fixture.0.join("script-hub-gui.exe")).unwrap(),
         b"previous executable"

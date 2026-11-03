@@ -8,6 +8,10 @@ on:
       - 'Cargo.lock'
       - 'Cargo.toml'
       - 'rust-toolchain.toml'
+      - '.cargo/**'
+      - 'crates/processor/about.toml'
+      - 'crates/processor/about.hbs'
+      - 'crates/processor/THIRD_PARTY_LICENSES.txt'
       - '.github/workflows/dependency_audit.yml'
   pull_request:
     paths:
@@ -15,6 +19,10 @@ on:
       - 'Cargo.lock'
       - 'Cargo.toml'
       - 'rust-toolchain.toml'
+      - '.cargo/**'
+      - 'crates/processor/about.toml'
+      - 'crates/processor/about.hbs'
+      - 'crates/processor/THIRD_PARTY_LICENSES.txt'
       - '.github/workflows/dependency_audit.yml'
   schedule:
     - cron: '43 3 * * *'
@@ -37,7 +45,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+      - uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           toolchain: stable
           cache: false
@@ -54,3 +62,32 @@ jobs:
         run: |
           cargo audit --version
           cargo audit --file Cargo.lock --deny unsound --deny yanked
+      - name: Cache notice generator
+        if: github.event_name != 'schedule'
+        id: notice-tool
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cargo/bin/cargo-about
+          key: cargo-about-0.9.3-ubuntu-26.04-${{ runner.arch }}
+      - name: Install notice generator
+        if: github.event_name != 'schedule' && steps.notice-tool.outputs.cache-hit != 'true'
+        run: cargo install cargo-about --version 0.9.3 --locked --features cli
+      - name: Verify desktop license inventory
+        if: github.event_name != 'schedule'
+        env:
+          RAYON_NUM_THREADS: '2'
+        shell: bash
+        run: |
+          [[ "$(cargo about --version)" == 'cargo-about 0.9.3' ]]
+          cargo fetch --locked --manifest-path crates/processor/Cargo.toml
+          generated=$(mktemp "${RUNNER_TEMP:?}/script-hub-notice.XXXXXX")
+          trap 'rm -- "$generated"' EXIT
+          cargo about generate --offline --locked --fail --features gui \
+            --manifest-path crates/processor/Cargo.toml \
+            --config crates/processor/about.toml \
+            --output-file "$generated" crates/processor/about.hbs
+          if ! git diff --no-index --no-ext-diff --no-textconv --ignore-space-at-eol --quiet \
+            -- crates/processor/THIRD_PARTY_LICENSES.txt "$generated"; then
+            echo '::error file=crates/processor/THIRD_PARTY_LICENSES.txt::License inventory verification failed. See Desktop notices in docs/UPDATE_GUIDE.md.'
+            exit 1
+          fi

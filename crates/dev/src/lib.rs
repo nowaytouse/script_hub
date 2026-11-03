@@ -31,6 +31,12 @@ const FONTS: &[&str] = &[
     "egui-icons.txt",
     "emoji-icon-font-mit-license.txt",
 ];
+const UPSTREAM_NOTICES: &[&str] = &[
+    "AdGuard-CNAME-MIT.txt",
+    "README.md",
+    "README.zh-CN.md",
+    "app2smile-MIT.txt",
+];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Platform {
@@ -67,9 +73,14 @@ impl Metadata {
     }
 
     fn source(&self) -> String {
+        let scope = if self.dirty {
+            "Base commit only. This local build contains changes not provided by that link."
+        } else {
+            "Build commit."
+        };
         format!(
-            "Version: {}\nSource commit: {}\nSource dirty: {}\nSource: {REPOSITORY}/tree/{}\n",
-            self.version, self.commit, self.dirty, self.commit
+            "Version: {}\nSource commit: {}\nSource dirty: {}\nSource: {REPOSITORY}/tree/{}\nSource scope: {scope}\n\nLicenses: LICENSE, THIRD_PARTY_LICENSES.txt, and licenses/\nNotices: THIRD_PARTY_NOTICES.md / THIRD_PARTY_NOTICES.zh-CN.md\n",
+            self.version, self.commit, self.dirty, self.commit,
         )
     }
 }
@@ -146,6 +157,12 @@ fn copy_checked(root: &Path, source: &Path, destination: &Path) -> Result<(), St
             .ok_or("Package destination has no parent")?,
     )?;
     context(fs::copy(source, destination), destination)?;
+    verify_copy(root, source, destination)
+}
+
+fn verify_copy(root: &Path, source: &Path, destination: &Path) -> Result<(), String> {
+    regular(root, source)?;
+    regular(root, destination)?;
     let mut original = context(fs::File::open(source), source)?;
     let mut copied = context(fs::File::open(destination), destination)?;
     let mut left = [0; 8192];
@@ -262,22 +279,7 @@ fn build_native_with(
     Ok(executable)
 }
 
-fn stage(
-    root: &Path,
-    directory: &Path,
-    platform: Platform,
-    metadata: &Metadata,
-    input_binary: &Path,
-) -> Result<(), String> {
-    build_tree(root, directory)?;
-    Metadata::new(
-        &metadata.version,
-        &metadata.commit,
-        metadata.dirty,
-        &metadata.build_number,
-    )?;
-    regular(root, &root.join("Cargo.toml"))?;
-    regular(root, &root.join("crates/processor/Cargo.toml"))?;
+fn resource_files(root: &Path, platform: Platform) -> Vec<(PathBuf, PathBuf)> {
     let mut files: Vec<(PathBuf, PathBuf)> = ROOT_FILES
         .iter()
         .map(|name| (root.join(name), PathBuf::from(name)))
@@ -303,29 +305,32 @@ fn stage(
             PathBuf::from("licenses/epaint_default_fonts").join(name),
         ));
     }
-    let licenses = root.join("rulesets/Sources/licenses");
-    no_links(root, &licenses)?;
-    let mut upstream = context(fs::read_dir(&licenses), &licenses)?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|error| format!("Cannot list license inputs: {error}"))?;
-    upstream.sort_by_key(std::fs::DirEntry::file_name);
-    for entry in upstream {
-        let path = entry.path();
-        if path.extension().is_some_and(|extension| extension == "txt")
-            || matches!(
-                path.file_name().and_then(|name| name.to_str()),
-                Some("README.md" | "README.zh-CN.md")
-            )
-        {
-            files.push((path, PathBuf::from("licenses").join(entry.file_name())));
-        }
+    for name in UPSTREAM_NOTICES {
+        files.push((
+            root.join("rulesets/Sources/licenses").join(name),
+            PathBuf::from("licenses").join(name),
+        ));
     }
-    if files.iter().all(|(_, destination)| {
-        !destination.starts_with("licenses")
-            || destination.starts_with("licenses/epaint_default_fonts")
-    }) {
-        return Err("No upstream license notices were found.".to_owned());
-    }
+    files
+}
+
+fn stage(
+    root: &Path,
+    directory: &Path,
+    platform: Platform,
+    metadata: &Metadata,
+    input_binary: &Path,
+) -> Result<(), String> {
+    build_tree(root, directory)?;
+    Metadata::new(
+        &metadata.version,
+        &metadata.commit,
+        metadata.dirty,
+        &metadata.build_number,
+    )?;
+    regular(root, &root.join("Cargo.toml"))?;
+    regular(root, &root.join("crates/processor/Cargo.toml"))?;
+    let files = resource_files(root, platform);
     for (source, _) in &files {
         regular(root, source)?;
     }
@@ -551,7 +556,43 @@ fn output(command: &mut Command) -> Result<String, String> {
         .map_err(|_| "Build tool returned non-UTF-8 metadata.".to_owned())
 }
 
-fn verify_package(directory: &Path, platform: Platform, metadata: &Metadata) -> Result<(), String> {
+fn verify_resources(
+    root: &Path,
+    directory: &Path,
+    platform: Platform,
+    metadata: &Metadata,
+) -> Result<(), String> {
+    let packaged = directory.join(resources(platform));
+    for (source, relative) in resource_files(root, platform) {
+        verify_copy(root, &source, &packaged.join(relative))?;
+    }
+    let path = packaged.join("SOURCE.txt");
+    regular(root, &path)?;
+    let expected = metadata.source();
+    let mut found = Vec::with_capacity(expected.len());
+    let receipt = context(fs::File::open(&path), &path)?;
+    context(
+        receipt
+            .take(expected.len() as u64 + 1)
+            .read_to_end(&mut found),
+        &path,
+    )?;
+    if found.as_slice() != expected.as_bytes() {
+        return Err(format!(
+            "Packaged source receipt does not match the build: {}",
+            path.display()
+        ));
+    }
+    Ok(())
+}
+
+fn verify_package(
+    root: &Path,
+    directory: &Path,
+    platform: Platform,
+    metadata: &Metadata,
+) -> Result<(), String> {
+    verify_resources(root, directory, platform, metadata)?;
     let executable = if platform == Platform::MacOs {
         directory.join("ScriptHub.app/Contents/MacOS/script-hub-gui")
     } else {
@@ -693,7 +734,7 @@ pub fn run(mut arguments: impl Iterator<Item = String>) -> Result<(), String> {
         )?;
     }
     let delivery = publish_with(&root, &directory, platform, |directory| {
-        verify_package(directory, platform, &metadata)?;
+        verify_package(&root, directory, platform, &metadata)?;
         if let Some(icon) = &windows_ico {
             windows_icon::verify(&directory.join(binary(platform)), icon)?;
         }

@@ -10,4 +10,6 @@ cargo-about generates the inventory from locked Windows / macOS desktop dependen
 
 `epaint_default_fonts` includes OFL, Ubuntu, Hack / Bitstream Vera and icon-font notices; its MIT / Apache alternatives do not replace asset terms. The MIT terms of `libsqlite3-sys` and its bundled SQLite source notices are retained separately.
 
-Desktop packages include licenses, notices and font materials; `SOURCE.txt` identifies the build commit. Full license texts are not shortened with these docs.
+Desktop packages include `LICENSE`, `THIRD_PARTY_LICENSES.txt`, `licenses/` and these bilingual notices. Open `SOURCE.txt` in the same resources directory for the version and source reference. In a local build with uncommitted changes the link identifies only the base commit.
+
+See the [repository maintenance guide](https://github.com/nowaytouse/script_hub/blob/master/docs/UPDATE_GUIDE.md) for refreshing the inventory and checking release materials. Full license texts are not shortened with these docs.

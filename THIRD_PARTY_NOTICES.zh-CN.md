@@ -10,4 +10,6 @@
 
 `epaint_default_fonts` 的字体条款包含 OFL、Ubuntu、Hack / Bitstream Vera 及图标字体声明；不能用 crate 的 MIT / Apache 选项代替。`libsqlite3-sys` 的 MIT 与其捆绑 SQLite 源码声明分别保留。
 
-桌面包附带许可、声明与字体材料；`SOURCE.txt` 指向构建提交。完整许可正文不因文档精简而删减。
+桌面包附带 `LICENSE`、`THIRD_PARTY_LICENSES.txt`、`licenses/` 和本双语声明。同一资源目录的 `SOURCE.txt` 提供版本和源码引用。本地构建如含未提交修改，该链接仅指向基准提交。
+
+刷新清单和核查发布材料的步骤见[仓库维护文档](https://github.com/nowaytouse/script_hub/blob/master/docs/UPDATE_GUIDE.zh-CN.md)。完整许可正文不因文档精简而删减。
