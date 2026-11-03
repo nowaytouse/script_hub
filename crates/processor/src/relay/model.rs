@@ -395,6 +395,12 @@ enum Line {
     Node,
 }
 
+struct LegacyEdits<'a> {
+    include: Option<regex::Regex>,
+    exclude: Option<regex::Regex>,
+    overrides: Vec<Option<&'a editor::NodeEdit>>,
+}
+
 impl Subscription {
     pub fn parse(input: &str) -> Result<Self, ModelError> {
         use base64::Engine as _;
@@ -507,17 +513,20 @@ impl Subscription {
         self.render_inner(health, options, edits, true, Some(resolver))
     }
 
-    fn render_inner(
+    /// Validates a saved plan without applying any operation to node data.
+    pub(super) fn validate_saved_processing(
         &self,
-        health: &[Health],
-        options: &EnhanceOptions,
         edits: &editor::Options,
-        clear_empty: bool,
-        resolver: Option<&pipeline::Resolver<'_>>,
-    ) -> Result<editor::Rendered, ModelError> {
-        if health.len() != self.nodes.len() {
-            return Err(ModelError::InvalidHealth);
-        }
+    ) -> Result<(), ModelError> {
+        pipeline::validate(&edits.pipeline)?;
+        self.validate_legacy_edits(edits)?;
+        self.validate_export_dependencies()
+    }
+
+    fn validate_legacy_edits<'a>(
+        &self,
+        edits: &'a editor::Options,
+    ) -> Result<LegacyEdits<'a>, ModelError> {
         if [
             edits.include.as_str(),
             edits.exclude.as_str(),
@@ -556,6 +565,29 @@ impl Subscription {
             }
             overrides[edit.index] = Some(edit);
         }
+        Ok(LegacyEdits {
+            include,
+            exclude,
+            overrides,
+        })
+    }
+
+    fn render_inner(
+        &self,
+        health: &[Health],
+        options: &EnhanceOptions,
+        edits: &editor::Options,
+        clear_empty: bool,
+        resolver: Option<&pipeline::Resolver<'_>>,
+    ) -> Result<editor::Rendered, ModelError> {
+        if health.len() != self.nodes.len() {
+            return Err(ModelError::InvalidHealth);
+        }
+        let LegacyEdits {
+            include,
+            exclude,
+            overrides,
+        } = self.validate_legacy_edits(edits)?;
         let pipeline_active = edits.pipeline.iter().any(|step| step.enabled);
         let edit_active = include.is_some()
             || exclude.is_some()

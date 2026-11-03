@@ -350,6 +350,7 @@ enum FileCompleted {
 
 struct Pending {
     mode: RunMode,
+    preview_restored: bool,
     output_format: OutputFormat,
     worker: JoinHandle<()>,
     receiver: mpsc::Receiver<Result<RelayResult, RelayError>>,
@@ -1120,6 +1121,29 @@ impl RelayState {
                 };
                 self.preview_names.clear();
                 self.preview_endpoints.clear();
+                if pending.mode == RunMode::Import
+                    && (self.rename
+                        || self.sort
+                        || self
+                            .editor
+                            .as_ref()
+                            .is_some_and(|editor| editor.processing().is_active()))
+                {
+                    self.result = None;
+                    self.result_format = None;
+                    self.completed_config = None;
+                    self.notice = Some(Text::OperationRestored);
+                    if pending.preview_restored
+                        && !pending.cancel.load(Ordering::Acquire)
+                        && self.can_preview_restored()
+                    {
+                        self.test_nodes = false;
+                        let engine = self.engine_path().to_owned();
+                        self.start_with(RunMode::Preview, &engine, crate::relay::run);
+                        ctx.request_repaint();
+                    }
+                    return;
+                }
                 self.result_format = crate::relay::model::Subscription::parse(&result.content)
                     .ok()
                     .map(|subscription| {
@@ -1155,20 +1179,7 @@ impl RelayState {
                 } else {
                     Text::RelayPreviewReady
                 });
-                if pending.mode == RunMode::Import
-                    && (self.rename
-                        || self.sort
-                        || self
-                            .editor
-                            .as_ref()
-                            .is_some_and(|editor| editor.processing().is_active()))
-                {
-                    self.result = None;
-                    self.completed_config = None;
-                    self.notice = Some(Text::OperationRestored);
-                } else {
-                    self.result = Some(result);
-                }
+                self.result = Some(result);
             }
             (
                 Ok(()),
@@ -1649,6 +1660,53 @@ impl RelayState {
         self.step = RelayStep::Review;
         let engine = self.engine_path().to_owned();
         self.start_with(RunMode::Import, &engine, crate::relay::run);
+        if let Some(pending) = &mut self.pending
+            && pending.generation == self.generation
+            && pending.mode == RunMode::Import
+        {
+            pending.preview_restored = true;
+        }
+    }
+
+    fn can_preview_restored(&self) -> bool {
+        use crate::relay::model::pipeline::Operation;
+
+        !self.busy()
+            && !self.schedule.armed()
+            && !self.selecting_file()
+            && self.local_content.is_some()
+            && self.editor.as_ref().is_some_and(|editor| {
+                let options = &editor.options;
+                // Bound work done on open; new operation types require an explicit preview.
+                editor.source.len() <= 256 * 1024
+                    && editor.rows.len() <= 256
+                    && options.pipeline.len() <= 8
+                    && options.include.is_empty()
+                    && options.exclude.is_empty()
+                    && options.find.is_empty()
+                    && options.replace.is_empty()
+                    && options
+                        .pipeline
+                        .iter()
+                        .filter(|step| step.enabled)
+                        .all(|step| match &step.operation {
+                            Operation::ReplaceName {
+                                pattern,
+                                replacement,
+                                regex: false,
+                            } => pattern.len() <= 64 && replacement.len() <= 64,
+                            Operation::ProtocolFilter { .. }
+                            | Operation::Flags { .. }
+                            | Operation::Sort { .. }
+                            | Operation::Deduplicate
+                            | Operation::PortFilter { .. }
+                            | Operation::Limit { .. }
+                            | Operation::Reverse
+                            | Operation::NormalizeName { .. }
+                            | Operation::Slice { .. } => true,
+                            _ => false,
+                        })
+            })
     }
 
     pub(super) fn start_with<F>(&mut self, mode: RunMode, engine: &Path, work: F)
@@ -1733,6 +1791,7 @@ impl RelayState {
             Ok(worker) => {
                 self.pending = Some(Pending {
                     mode,
+                    preview_restored: false,
                     output_format,
                     worker,
                     receiver,
@@ -2253,11 +2312,12 @@ mod tests {
     }
 
     #[test]
-    fn restoring_a_processing_plan_requires_preview_and_applies_it_only_once() {
+    fn restoring_a_lightweight_plan_previews_it_once_without_network() {
         use crate::relay::model::pipeline::{Operation, Step};
         let ctx = egui::Context::default();
         let content = "A = http, node.invalid, 80\n";
         let mut config = RelayConfig {
+            source: "https://example.com/nodes".into(),
             rename: false,
             sort: false,
             ..Default::default()
@@ -2284,24 +2344,78 @@ mod tests {
         let mut state = fixture();
         state.file_action(FileAction::Import, Some(path.clone()), None);
         finish(&mut state, &ctx);
-        assert!(
-            state.result.is_none(),
-            "raw backup input is not a processed result"
-        );
         let editor = state.editor.as_ref().unwrap();
         assert_eq!(editor.source.as_str(), content);
         assert_eq!(editor.options.pipeline.len(), 1);
-        state.test_nodes = false;
-        state.start_with(RunMode::Preview, Path::new(""), crate::relay::run);
-        finish(&mut state, &ctx);
-        let restored =
-            crate::relay::model::Subscription::parse(&state.result.as_ref().unwrap().content)
-                .unwrap();
+        let result = state.result.as_ref().unwrap();
+        let restored = crate::relay::model::Subscription::parse(&result.content).unwrap();
         assert_eq!(restored.nodes()[0].name(), "AA");
-        assert_eq!(state.result.as_ref().unwrap().stages.len(), 1);
+        assert_eq!(result.stages.len(), 1);
+        assert!(!result.tested && !result.published && result.source.is_none());
+        assert!(!state.allow_resolution && !state.acknowledge_publish && !state.allow_plaintext);
+        let completed = &state.completed_config.as_ref().unwrap().0;
+        assert_eq!(completed.source, "https://example.com/nodes");
+        assert_eq!(
+            completed.expected_source.as_deref().map(String::as_str),
+            Some(content)
+        );
         state.clear(&ctx);
         assert!(state.imported_processing.is_none());
         std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn restoring_a_script_resolver_or_regex_waits_for_explicit_preview() {
+        use crate::relay::model::pipeline::{AddressFamily, Operation, Step};
+        let ctx = egui::Context::default();
+        for (operation, resolves) in [
+            (
+                Operation::Script {
+                    source: "fn transform(node) { node }".into(),
+                },
+                false,
+            ),
+            (
+                Operation::ResolveDomain {
+                    family: AddressFamily::V4,
+                    options: Default::default(),
+                },
+                true,
+            ),
+            (
+                Operation::ReplaceName {
+                    pattern: "^A".into(),
+                    replacement: "B".into(),
+                    regex: true,
+                },
+                false,
+            ),
+        ] {
+            let mut config = RelayConfig::default();
+            config.processing.pipeline.push(Step {
+                id: 1,
+                enabled: true,
+                operation,
+            });
+            let mut state = fixture();
+            state.allow_resolution = true;
+            state.apply_backup(
+                &ctx,
+                Box::new(crate::relay::backup::RelayBackup {
+                    config,
+                    content: Zeroizing::new("A = http, node.invalid, 80\n".into()),
+                }),
+            );
+            finish(&mut state, &ctx);
+            assert!(state.result.is_none() && state.error.is_none() && !state.allow_resolution);
+            assert!(state.notice == Some(Text::OperationRestored));
+            if resolves {
+                assert!(matches!(
+                    state.validate(RunMode::Preview, Path::new("")),
+                    Err(Text::ResolutionConsentRequired)
+                ));
+            }
+        }
     }
 
     #[test]

@@ -1,6 +1,8 @@
 # Changes
 
-[English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
+## 0.14.3 · 2026-11-03
+
+- Preview lightweight saved edits offline on open; run scripts and DNS only when requested.
 
 ## 0.14.2 · 2026-11-03
 

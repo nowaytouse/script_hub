@@ -100,17 +100,10 @@ fn validate(config: &RelayConfig, content: &str) -> Result<(), BackupError> {
         return Err(BackupError::TooLarge);
     }
     let subscription = Subscription::parse(content).map_err(|_| BackupError::Invalid)?;
+    // A backup is a source and an editable plan, not proof that the plan renders.
+    // Never run imported scripts or simulate DNS answers during admission.
     subscription
-        .render_processed_with_resolver(
-            &vec![super::model::Health::Unknown; subscription.nodes().len()],
-            &super::model::EnhanceOptions {
-                rename: config.rename,
-                sort: config.sort,
-            },
-            &config.processing,
-            // Validate the plan without contacting a resolver or restoring network consent.
-            &|hosts, _, _| Ok(super::model::dns::Batch::addresses(vec![None; hosts.len()])),
-        )
+        .validate_saved_processing(&config.processing)
         .map_err(|_| BackupError::Invalid)?;
     validate_name(&config.title).map_err(|_| BackupError::Invalid)?;
     if !config.source_file.is_empty() {
@@ -235,6 +228,76 @@ mod tests {
         assert_eq!(decoded.content.as_str(), CONTENT);
         assert_eq!(decoded.config.processing.pipeline.len(), 1);
         assert!(!decoded.config.allow_resolution);
+    }
+
+    #[test]
+    fn enabled_scripts_roundtrip_without_running_until_explicit_preview() {
+        use crate::relay::{
+            RelayError, RunMode,
+            model::pipeline::{Operation, Step},
+        };
+
+        let source = r#"fn transform(node) { throw "runtime fixture"; }"#;
+        let mut config = RelayConfig::default();
+        config.processing.pipeline.push(Step {
+            id: 1,
+            enabled: true,
+            operation: Operation::Script {
+                source: source.into(),
+            },
+        });
+        let bytes = encode(&config, CONTENT).unwrap();
+        let backup = decode(&bytes).unwrap();
+        assert_eq!(backup.content.as_str(), CONTENT);
+        assert!(matches!(
+            &backup.config.processing.pipeline[0].operation,
+            Operation::Script { source: saved } if saved == source
+        ));
+        let preview = RelayConfig {
+            local_content: Some(backup.content.clone()),
+            test_nodes: false,
+            ..backup.config.clone()
+        };
+        assert!(matches!(
+            crate::relay::run(
+                &preview,
+                "",
+                RunMode::Preview,
+                &std::sync::atomic::AtomicBool::new(false),
+                &|_| {},
+            ),
+            Err(RelayError::Model(
+                crate::relay::model::ModelError::InvalidEdit
+            ))
+        ));
+
+        let mut document: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        document["processing"]["pipeline"][0]["source"] = serde_json::json!("fn transform(");
+        assert!(matches!(
+            decode(&serde_json::to_vec(&document).unwrap()),
+            Err(BackupError::Invalid)
+        ));
+        config.processing.pipeline[0].operation = Operation::Script {
+            source: "fn transform(".into(),
+        };
+        assert_eq!(encode(&config, CONTENT), Err(BackupError::Invalid));
+    }
+
+    #[test]
+    fn backup_admission_still_rejects_invalid_indices_and_dependencies() {
+        use crate::relay::model::editor::NodeEdit;
+
+        let mut config = RelayConfig::default();
+        config.processing.nodes.push(NodeEdit {
+            index: 1,
+            included: false,
+            name: None,
+        });
+        assert_eq!(encode(&config, CONTENT), Err(BackupError::Invalid));
+
+        config.processing.nodes.clear();
+        let content = "A = socks5, a.example.invalid, 1080, underlying-proxy=Missing\n";
+        assert_eq!(encode(&config, content), Err(BackupError::Invalid));
     }
 
     #[test]
