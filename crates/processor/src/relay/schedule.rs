@@ -85,6 +85,21 @@ impl Schedule {
         !self.paused && !self.running && self.next.is_some_and(|next| now >= next)
     }
 
+    pub fn can_request_now(&self, now: Instant) -> bool {
+        !self.paused
+            && !self.running
+            && !self.is_waiting_to_retry()
+            && self.next.is_some_and(|next| now < next)
+    }
+
+    pub fn request_now(&mut self, now: Instant) -> bool {
+        if !self.can_request_now(now) {
+            return false;
+        }
+        self.next = Some(now);
+        true
+    }
+
     pub fn begin(&mut self, now: Instant) -> bool {
         if !self.due(now) {
             return false;
@@ -237,6 +252,31 @@ mod tests {
         schedule.finish(late, &Err(RelayError::SourceChanged));
         assert!(!schedule.due(late));
         assert!(schedule.due(late + MIN_INTERVAL));
+    }
+
+    #[test]
+    fn run_now_uses_the_normal_deadline_and_cannot_bypass_retry_or_stop() {
+        let now = Instant::now();
+        let mut schedule = Schedule::new(MIN_INTERVAL, now).unwrap();
+        assert!(schedule.request_now(now));
+        assert!(!schedule.request_now(now));
+        assert!(schedule.begin(now));
+        assert!(!schedule.request_now(now));
+
+        let first_finish = now + Duration::from_secs(2);
+        schedule.finish_status(first_finish, Ok(()));
+        assert_eq!(schedule.next_due(), Some(first_finish + MIN_INTERVAL));
+
+        assert!(schedule.request_now(first_finish));
+        assert!(schedule.begin(first_finish));
+        schedule.finish_status(first_finish, Err(&RelayError::InputUnavailable));
+        assert!(schedule.is_waiting_to_retry());
+        assert!(!schedule.request_now(first_finish));
+        assert_eq!(schedule.next_due(), Some(first_finish + MIN_INTERVAL));
+
+        schedule.pause();
+        assert!(!schedule.request_now(first_finish));
+        assert!(!schedule.begin(first_finish + MIN_INTERVAL));
     }
 
     #[test]

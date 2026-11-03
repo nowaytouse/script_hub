@@ -172,6 +172,28 @@ impl State {
     pub fn armed(&self) -> bool {
         self.config.is_some() && self.schedule.as_ref().is_some_and(|s| !s.is_paused())
     }
+
+    pub(super) fn can_run_now(&self) -> bool {
+        let now = Instant::now();
+        self.armed()
+            && !self.running()
+            && self
+                .server_retry_until
+                .is_none_or(|deadline| deadline.remaining_seconds(now) == 0)
+            && self
+                .schedule
+                .as_ref()
+                .is_some_and(|schedule| schedule.can_request_now(now))
+    }
+
+    pub(super) fn request_run_now(&mut self) {
+        if self.can_run_now()
+            && let Some(schedule) = &mut self.schedule
+        {
+            schedule.request_now(Instant::now());
+        }
+    }
+
     pub fn clear_feedback(&mut self) {
         self.last_error = None;
         self.result = None;

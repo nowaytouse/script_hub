@@ -1,5 +1,11 @@
 # Changes
 
+## 0.14.6 · 2026-11-03
+
+- Run an enabled subscription or collection schedule on demand without bypassing retries or cooldowns.
+- Clarify collection refresh and keep file drops from replacing an active schedule.
+- Count ruleset comments consistently during validation.
+
 ## 0.14.5 · 2026-11-03
 
 - Export compatible AnyTLS nodes to Surge and clarify recovery after an empty preview or a failed file save.

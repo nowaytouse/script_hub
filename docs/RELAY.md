@@ -14,7 +14,7 @@ Save the encrypted library to keep it between launches. The application uses a f
 
 Set each item's Gist target, filename, title, and preferred interval in **Output**, then save the encrypted library. Tokens, authorization, and running schedules are not restored. Remote schedules fetch the source again instead of reusing the library cache. A known source Gist cannot also be the item's destination, including a collection member's source.
 
-Collections combine members in selection order as sing-box node JSON. **Refresh and build** downloads remote members; **Build from cache** stays offline. Unsupported conversions, network-dependent member operations, and changed input with position-bound edits fail without partially replacing cached nodes. Collections use manual refresh; scheduled synchronization remains available for individual subscriptions.
+Collections combine members in selection order as sing-box node JSON. **Refresh and build** downloads remote members; **Build from cache** stays offline. Scheduled collection runs download remote members and reuse local ones. Failed runs do not partially replace cached nodes.
 
 Import a Sub-Store JSON/Base64 backup and choose **Add available items to library**. Compatible subscriptions and node files are added without overwriting existing entries. Collections with incomplete references are skipped and counted. Settings, tokens and old processors are not restored; import does not download remote links.
 
@@ -24,7 +24,7 @@ The Rust age library is pre-1.0 and marked experimental upstream. Keep an indepe
 
 **Script transform (Rhai)** adds a Rust-hosted `fn transform(node) { node }` operation. It is not compiled Rust or JavaScript. Only the documented node view is exposed, without credentials, files, network or commands. Scripts have resource budgets, not process-level isolation. Imported Hub plans may contain scripts; inspect them before previewing or publishing.
 
-Schedules run only while the app is open, one job at a time. Default: 60 minutes; range: 1 minute–7 days. Missed runs are not replayed. HTTP cooldowns are honored; ambiguous writes stop the plan. Unchanged content is not uploaded. The newest successful result becomes the copy/export result.
+Schedules run only while the app is open, one job at a time. **Sync now** starts the enabled schedule early without bypassing cooldowns. Default: 60 minutes; range: 1 minute–7 days. Missed runs are not replayed. Ambiguous writes stop the plan; unchanged content is not uploaded. The newest successful result becomes the copy/export result.
 
 Credentials remain in the session, not settings or history. Quitting or Clear stops the plan; a stopped plan must be re-enabled explicitly. A secret Gist is not encrypted. Cancellation cannot undo an accepted write.
 

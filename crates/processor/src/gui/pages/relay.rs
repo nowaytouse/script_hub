@@ -105,8 +105,25 @@ impl HubApp {
                             });
                         } else {
                             ui.weak(tr(Text::ScheduleSessionOnly));
-                            if state.schedule.armed() && ui.button(tr(Text::ScheduleStop)).clicked() {
-                                state.schedule.stop();
+                            if state.schedule.armed() {
+                                ui.horizontal_wrapped(|ui| {
+                                    if ui
+                                        .add_enabled(
+                                            admitted && state.schedule_can_run_now(),
+                                            egui::Button::new(tr(Text::ScheduleRunNow)),
+                                        )
+                                        .clicked()
+                                    {
+                                        state.run_schedule_now();
+                                        ui.ctx().request_repaint();
+                                    }
+                                    if ui.button(tr(Text::ScheduleStop)).clicked() {
+                                        state.schedule.stop();
+                                        if state.workspace.error == Some(Text::ScheduleStopBeforeImport) {
+                                            state.workspace.error = None;
+                                        }
+                                    }
+                                });
                             }
                         }
                     });
@@ -939,6 +956,36 @@ mod tests {
     use std::path::Path;
     use std::sync::mpsc;
 
+    fn render(app: &mut HubApp, ctx: &egui::Context) -> Vec<(String, bool)> {
+        let output = ctx.run_ui(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(420.0, 580.0),
+                )),
+                ..Default::default()
+            },
+            |ui| {
+                egui::CentralPanel::default().show(ui, |ui| app.relay_editor(ui));
+            },
+        );
+        let entries = output
+            .platform_output
+            .accesskit_update
+            .as_ref()
+            .expect("accessibility tree")
+            .nodes
+            .iter()
+            .filter_map(|(_, node)| {
+                node.label()
+                    .or_else(|| node.value())
+                    .map(|label| (label.to_owned(), node.is_disabled()))
+            })
+            .collect();
+        output.drop_without_applying_deltas();
+        entries
+    }
+
     #[test]
     fn upload_progress_explains_cancel_and_keeps_navigation_locked() {
         let ctx = egui::Context::default();
@@ -965,44 +1012,15 @@ mod tests {
             total: 2,
         });
 
-        let render = |app: &mut HubApp| {
-            let output = ctx.run_ui(
-                egui::RawInput {
-                    screen_rect: Some(egui::Rect::from_min_size(
-                        egui::Pos2::ZERO,
-                        egui::vec2(420.0, 580.0),
-                    )),
-                    ..Default::default()
-                },
-                |ui| {
-                    egui::CentralPanel::default().show(ui, |ui| app.relay_editor(ui));
-                },
-            );
-            let entries: Vec<_> = output
-                .platform_output
-                .accesskit_update
-                .as_ref()
-                .expect("accessibility tree")
-                .nodes
-                .iter()
-                .filter_map(|(_, node)| {
-                    node.label()
-                        .or_else(|| node.value())
-                        .map(|label| (label.to_owned(), node.is_disabled()))
-                })
-                .collect();
-            output.drop_without_applying_deltas();
-            entries
-        };
         let entry = |key, disabled| (text(Language::En, key).to_owned(), disabled);
-        let running = render(&mut app);
+        let running = render(&mut app, &ctx);
         assert!(running.contains(&entry(Text::RelayUpload, false)));
         assert!(running.contains(&entry(Text::RelayCancelWriteWarning, false)));
         assert!(running.contains(&entry(Text::RelayCancel, false)));
         assert!(running.contains(&entry(Text::RelayOutputGoSource, true)));
 
         app.relay.request_cancel();
-        let cancelling = render(&mut app);
+        let cancelling = render(&mut app, &ctx);
         assert!(cancelling.contains(&entry(Text::RelayCancel, true)));
         assert_eq!(
             cancelling
@@ -1011,6 +1029,40 @@ mod tests {
                 .count(),
             1
         );
+    }
+
+    #[test]
+    fn armed_schedule_shows_sync_now_and_disables_it_after_queueing() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = crate::gui::app::test_app(Preferences {
+            language: Language::En,
+            ..Preferences::default()
+        });
+        app.relay.step = RelayStep::Publish;
+        app.relay
+            .schedule
+            .arm(
+                crate::relay::RelayConfig {
+                    source: "https://example.invalid/nodes".into(),
+                    output: "fedcba9876543210fedcba9876543210".into(),
+                    output_file: "nodes.conf".into(),
+                    test_nodes: false,
+                    ..Default::default()
+                },
+                "synthetic-token",
+            )
+            .unwrap();
+        let entry = |key, disabled| (text(Language::En, key).to_owned(), disabled);
+        let ready = render(&mut app, &ctx);
+        assert!(ready.contains(&entry(Text::ScheduleRunNow, false)));
+        assert!(ready.contains(&entry(Text::ScheduleStop, false)));
+
+        // No worker ticks in this test, so queueing never makes a network request.
+        app.relay.run_schedule_now();
+        let queued = render(&mut app, &ctx);
+        assert!(queued.contains(&entry(Text::ScheduleRunNow, true)));
+        assert!(queued.contains(&entry(Text::ScheduleStop, false)));
     }
 
     #[test]

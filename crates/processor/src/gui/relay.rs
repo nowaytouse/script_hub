@@ -653,6 +653,22 @@ impl RelayState {
         self.error = result.err().map(Failure::Operation);
     }
 
+    pub(super) fn schedule_can_run_now(&self) -> bool {
+        !self.demo_mode
+            && !self.busy()
+            && !self.selecting_file()
+            && self.workspace.confirm.is_none()
+            && !self.workspace.password_form
+            && self.cooldown_seconds() == 0
+            && self.schedule.can_run_now()
+    }
+
+    pub(super) fn run_schedule_now(&mut self) {
+        if self.schedule_can_run_now() {
+            self.schedule.request_run_now();
+        }
+    }
+
     pub(super) fn accept_scheduled_collection(
         &mut self,
         mut completed: crate::relay::collection_schedule::Completed,
@@ -1347,6 +1363,14 @@ impl RelayState {
         workspace: Option<&Path>,
         imports_new: bool,
     ) {
+        if self.schedule.armed() && matches!(action, FileAction::Import | FileAction::ImportPlan) {
+            if imports_new {
+                self.workspace.error = Some(Text::ScheduleStopBeforeImport);
+            } else {
+                self.error = Some(Failure::Validation(Text::ScheduleStopBeforeImport));
+            }
+            return;
+        }
         if self.demo_mode || self.busy() || self.selecting_file() {
             return;
         }
@@ -1947,6 +1971,25 @@ mod tests {
         assert!(state.schedule.armed());
         state.input_changed();
         assert!(!state.schedule.armed());
+    }
+
+    #[test]
+    fn run_schedule_now_requires_arming_and_cannot_bypass_the_relay_cooldown() {
+        let mut state = fixture();
+        state.result = Some(result());
+        assert!(!state.schedule_can_run_now());
+        state.acknowledge_publish = true;
+        state.arm_schedule();
+        assert!(state.schedule_can_run_now());
+        state.cooldown_until = Some(RetryDeadline::new(Instant::now(), Duration::from_secs(60)));
+        state.run_schedule_now();
+        assert!(!state.schedule_can_run_now());
+        state.cooldown_until = None;
+        assert!(state.schedule_can_run_now());
+        state.run_schedule_now();
+        assert!(!state.schedule_can_run_now());
+        state.schedule.stop();
+        assert!(!state.schedule_can_run_now());
     }
 
     #[test]

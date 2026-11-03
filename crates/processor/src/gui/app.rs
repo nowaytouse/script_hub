@@ -497,7 +497,14 @@ impl HubApp {
     }
 
     fn route_file_drop(&mut self, paths: Vec<PathBuf>) {
-        if self.active() || paths.is_empty() {
+        if paths.is_empty() {
+            return;
+        }
+        if self.page == Page::Relay && self.relay.schedule.armed() {
+            self.relay.workspace.error = Some(Text::ScheduleStopBeforeImport);
+            return;
+        }
+        if self.active() {
             return;
         }
         if self.page == Page::Relay {
@@ -1198,6 +1205,7 @@ impl eframe::App for HubApp {
         let close_requested = ctx.input(|input| input.viewport().close_requested());
         let schedule_admitted = !close_requested
             && !self.active()
+            && self.relay.cooldown_seconds() == 0
             && self.pending.is_none()
             && self.relay.workspace.confirm.is_none()
             && !self.relay.workspace.password_form;
@@ -2224,6 +2232,45 @@ mod tests {
         assert!(app.relay.selecting_file());
         app.relay.clear(&egui::Context::default());
         assert!(!app.active());
+    }
+
+    #[test]
+    fn armed_schedule_blocks_drag_and_drop_and_direct_relay_imports() {
+        let mut app = relay_app();
+        app.page = Page::Relay;
+        app.relay
+            .schedule
+            .arm(
+                crate::relay::RelayConfig {
+                    source: "0123456789abcdef0123456789abcdef".into(),
+                    source_file: "input.conf".into(),
+                    output: "fedcba9876543210fedcba9876543210".into(),
+                    output_file: "output.conf".into(),
+                    test_nodes: false,
+                    ..Default::default()
+                },
+                "synthetic-token",
+            )
+            .unwrap();
+        assert!(app.relay.schedule.armed() && !app.active());
+        let source = app.relay.source.clone();
+        app.route_file_drop(vec![
+            std::env::temp_dir().join("must-not-import-while-armed.list"),
+        ]);
+        assert_eq!(
+            app.relay.workspace.error,
+            Some(Text::ScheduleStopBeforeImport)
+        );
+        assert!(app.relay.schedule.armed() && !app.active());
+
+        app.relay.workspace.error = None;
+        app.relay.start_workspace_import(None, None);
+        assert_eq!(
+            app.relay.workspace.error,
+            Some(Text::ScheduleStopBeforeImport)
+        );
+        assert!(app.relay.schedule.armed() && !app.active());
+        assert_eq!(app.relay.source, source);
     }
 
     #[test]

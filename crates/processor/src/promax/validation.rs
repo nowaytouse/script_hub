@@ -324,13 +324,17 @@ pub fn validate_transport_security(content: &str) -> Vec<ValidationError> {
     errors
 }
 
+pub(crate) fn external_rule_line(raw: &str) -> Option<&str> {
+    let line = raw.trim();
+    (!line.is_empty() && !line.starts_with(['#', ';'])).then_some(line)
+}
+
 pub fn validate_external_ruleset(content: &str) -> Vec<ValidationError> {
     let mut errors = Vec::new();
     for (index, raw_line) in content.lines().enumerate() {
-        let line = raw_line.trim();
-        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+        let Some(line) = external_rule_line(raw_line) else {
             continue;
-        }
+        };
         match SurgeRule::parse(line) {
             Ok(rule) if rule.policy.is_some() => errors.push(error(
                 index + 1,

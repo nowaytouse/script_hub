@@ -20,8 +20,7 @@ fn validate_file(
     if extension == "list" {
         let actual = content
             .lines()
-            .map(str::trim)
-            .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
+            .filter_map(rust_processor::promax::validation::external_rule_line)
             .collect::<std::collections::HashSet<_>>()
             .len();
         let declared: Vec<_> = content
@@ -416,7 +415,11 @@ mod tests {
             "script-hub-validate-one-{}.list",
             std::process::id()
         ));
-        std::fs::write(&path, "# Rules: 1\nDOMAIN-SUFFIX,ads.example\n").unwrap();
+        std::fs::write(
+            &path,
+            "# Rules: 1\n  ; ignored note\nDOMAIN-SUFFIX,ads.example\n",
+        )
+        .unwrap();
 
         let validation = validate_file(&path);
         std::fs::remove_file(path).unwrap();
@@ -430,7 +433,11 @@ mod tests {
             "script-hub-validate-count-{}.list",
             std::process::id()
         ));
-        for content in ["# Rules: 0\n", "# Rules: 1000\nDOMAIN,example.test\n"] {
+        for content in [
+            "# Rules: 0\n",
+            "# Rules: 1\n  ; only a comment\n",
+            "# Rules: 1000\nDOMAIN,example.test\n",
+        ] {
             std::fs::write(&path, content).unwrap();
             assert!(
                 validate_file(&path)

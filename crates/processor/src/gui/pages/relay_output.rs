@@ -99,6 +99,8 @@ pub(super) fn show(
         if ui
             .button(tr(if have_input {
                 Text::RelayOutputGoOperations
+            } else if matches!(state.workspace.selected, Some(Selection::Collection(_))) {
+                Text::RelayOutputGoMembers
             } else {
                 Text::RelayOutputGoSource
             }))
@@ -437,8 +439,16 @@ fn gist(
         .open(open_schedule)
         .show(ui, |ui| {
             ui.weak(tr(Text::ScheduleHelp));
-            if matches!(state.workspace.selected, Some(Selection::Collection(_))) {
-                ui.weak(tr(Text::WorkspaceCollectionSchedule));
+            let collection = matches!(state.workspace.selected, Some(Selection::Collection(_)));
+            if collection && has_content && !state.workspace.members.is_empty() {
+                let has_remote_member = state.workspace.data.subscriptions.iter().any(|entry| {
+                    !entry.source.trim().is_empty() && state.workspace.members.contains(&entry.id)
+                });
+                ui.weak(tr(if has_remote_member {
+                    Text::WorkspaceCollectionSchedule
+                } else {
+                    Text::WorkspaceCollectionScheduleLocal
+                }));
             }
             ui.horizontal_wrapped(|ui| {
                 let label = ui.label(tr(Text::ScheduleInterval));
@@ -454,7 +464,16 @@ fn gist(
             ui.weak(tr(Text::ScheduleSessionOnly));
             let issue = state.schedule_setup_issue();
             if let Some(error) = issue {
-                ui.label(tr(error));
+                let guidance = if collection
+                    && error == Text::ScheduleNeedsPreview
+                    && state.editor.is_none()
+                    && state.local_content.is_none()
+                {
+                    Text::WorkspaceCollectionScheduleBuildFirst
+                } else {
+                    error
+                };
+                ui.label(tr(guidance));
             }
             if ui
                 .add_enabled(
@@ -625,15 +644,43 @@ mod tests {
     }
 
     #[test]
+    fn unbuilt_collection_points_to_members_without_promising_refresh() {
+        let mut state = RelayState::default();
+        state.workspace.selected = Some(Selection::Collection(0));
+        let ctx = egui::Context::default();
+        open_gist(&ctx);
+        let nodes = render_in_context(&mut state, &ctx, false);
+        assert!(nodes.contains(&(
+            text(Language::En, Text::RelayOutputGoMembers).to_owned(),
+            false
+        )));
+        assert!(nodes.contains(&(text(Language::En, Text::ScheduleEnable).to_owned(), true)));
+        assert!(nodes.iter().any(|(label, _)| {
+            label == text(Language::En, Text::WorkspaceCollectionScheduleBuildFirst)
+        }));
+        assert!(!nodes.iter().any(|(label, _)| {
+            [
+                Text::WorkspaceCollectionSchedule,
+                Text::WorkspaceCollectionScheduleLocal,
+            ]
+            .iter()
+            .any(|key| label == text(Language::En, *key))
+        }));
+    }
+
+    #[test]
     fn collection_sync_explains_remote_edits_without_blocking_local_member_edits() {
         use crate::relay::{
             library::{Collection, Entry},
             model::editor::{NodeEdit, Options},
         };
 
-        for edited_remote in [false, true] {
+        for (has_remote, edited_remote) in [(false, false), (true, false), (true, true)] {
             let mut state = prepared();
             for remote in [false, true] {
+                if remote && !has_remote {
+                    continue;
+                }
                 let mut processing = Options::default();
                 if remote == edited_remote {
                     processing.nodes.push(NodeEdit {
@@ -680,6 +727,16 @@ mod tests {
             let ctx = egui::Context::default();
             open_gist(&ctx);
             let nodes = render_in_context(&mut state, &ctx, false);
+            let guidance = if has_remote {
+                Text::WorkspaceCollectionSchedule
+            } else {
+                Text::WorkspaceCollectionScheduleLocal
+            };
+            assert!(
+                nodes
+                    .iter()
+                    .any(|(label, _)| label == text(Language::En, guidance))
+            );
             assert!(nodes.contains(&(
                 text(Language::En, Text::ScheduleEnable).to_owned(),
                 edited_remote
