@@ -8,6 +8,7 @@
 - Add ordered batch renaming, range selection, dependency-aware name deduplication and offline IPv4/IPv6 CIDR filtering.
 - Expand naming templates with effective server/port, stable source indices and padded indices; validate intermediate names and preserve dependency-linked nodes.
 - Verify generated icon consistency and Windows resource round-trips during desktop packaging and CI.
+- Replace the yanked async-executor lockfile release while keeping strict dependency-audit gates enabled.
 
 ## 0.9.0 · 2026-11-02
 
