@@ -97,6 +97,37 @@ pub enum Operation {
     Shuffle {
         seed: u64,
     },
+    BatchRename {
+        rules: Vec<RenameRule>,
+    },
+    Slice {
+        skip: usize,
+        count: usize,
+    },
+    DeduplicateName {
+        keep: KeepOccurrence,
+        ignore_case: bool,
+    },
+    NetworkFilter {
+        networks: Vec<String>,
+        keep: bool,
+        keep_domains: bool,
+    },
+}
+
+#[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
+#[serde(deny_unknown_fields)]
+pub struct RenameRule {
+    pub pattern: String,
+    pub replacement: String,
+    pub regex: bool,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum KeepOccurrence {
+    First,
+    Last,
 }
 
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
@@ -254,7 +285,21 @@ fn template_parts(template: &str) -> Result<Vec<&str>, ModelError> {
                 }
                 let end = rest[i..].find('}').ok_or(ModelError::InvalidEdit)? + i;
                 let token = &rest[i..=end];
-                if !matches!(token, "{name}" | "{protocol}" | "{region}" | "{index}") {
+                if !matches!(
+                    token,
+                    "{name}"
+                        | "{protocol}"
+                        | "{region}"
+                        | "{index}"
+                        | "{server}"
+                        | "{port}"
+                        | "{source_index}"
+                        | "{index:02}"
+                        | "{index:03}"
+                        | "{index:04}"
+                        | "{index:05}"
+                        | "{index:06}"
+                ) {
                     return Err(ModelError::InvalidEdit);
                 }
                 parts.push(token);
@@ -275,6 +320,38 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
             return Err(ModelError::InvalidEdit);
         }
         match &step.operation {
+            Operation::BatchRename { rules } => {
+                if rules.len() > 32
+                    || rules
+                        .iter()
+                        .any(|r| !valid_text(&r.pattern) || !valid_text(&r.replacement))
+                    || step.enabled
+                        && (rules.is_empty() || rules.iter().any(|r| r.pattern.is_empty()))
+                {
+                    return Err(ModelError::InvalidEdit);
+                }
+                if step.enabled {
+                    for rule in rules.iter().filter(|r| r.regex) {
+                        regex(&rule.pattern)?;
+                    }
+                }
+            }
+            Operation::Slice { skip, count } => {
+                if *skip > 100_000 || *count > 100_000 || skip.checked_add(*count).is_none() {
+                    return Err(ModelError::InvalidEdit);
+                }
+            }
+            Operation::DeduplicateName { .. } => {}
+            Operation::NetworkFilter { networks, .. } => {
+                if networks.len() > 64
+                    || networks.iter().any(|n| !valid_text(n))
+                    || step.enabled
+                        && (networks.is_empty()
+                            || networks.iter().any(|n| n.parse::<ipnet::IpNet>().is_err()))
+                {
+                    return Err(ModelError::InvalidEdit);
+                }
+            }
             Operation::ConditionFilter { conditions, .. } => {
                 if conditions.len() > 32
                     || conditions.iter().any(|c| !valid_text(&c.value))
@@ -590,6 +667,96 @@ pub(super) fn apply(
         let mut remove = vec![false; names.len()];
         let mut duplicate = vec![false; names.len()];
         match &step.operation {
+            Operation::BatchRename { rules } => {
+                let compiled: Vec<_> = rules
+                    .iter()
+                    .map(|r| {
+                        if r.regex {
+                            regex(&r.pattern).map(Some)
+                        } else {
+                            Ok(None)
+                        }
+                    })
+                    .collect::<Result<_, ModelError>>()?;
+                for &i in order.iter() {
+                    let mut value = names[i].clone();
+                    for (rule, re) in rules.iter().zip(&compiled) {
+                        value = Zeroizing::new(if let Some(re) = re {
+                            re.replace_all(&value, rule.replacement.as_str())
+                                .into_owned()
+                        } else {
+                            value.replace(&rule.pattern, &rule.replacement)
+                        });
+                        if !valid_text(&value) {
+                            return Err(ModelError::InvalidEdit);
+                        }
+                    }
+                    renamed += usize::from(set_name(names, i, value, &mut name_bytes)?);
+                }
+            }
+            Operation::Slice { skip, count } => {
+                let end = skip.checked_add(*count).ok_or(ModelError::InvalidEdit)?;
+                for (pos, &i) in order.iter().enumerate() {
+                    if pos < *skip || pos >= end {
+                        if dependencies[i].is_some() || !dependents[i].is_empty() {
+                            skipped += 1;
+                        } else {
+                            remove[i] = true;
+                        }
+                    }
+                }
+            }
+            Operation::DeduplicateName { keep, ignore_case } => {
+                let key_for = |i: usize| {
+                    NodeIdentity(Zeroizing::new(if *ignore_case {
+                        names[i].to_lowercase()
+                    } else {
+                        names[i].to_string()
+                    }))
+                };
+                let mut groups = std::collections::HashMap::new();
+                for &i in order.iter() {
+                    let protected = dependencies[i].is_some() || !dependents[i].is_empty();
+                    let group = groups.entry(key_for(i)).or_insert((i, false));
+                    if *keep == KeepOccurrence::Last {
+                        group.0 = i;
+                    }
+                    group.1 |= protected;
+                }
+                for &i in order.iter() {
+                    let (preferred, has_protected) = groups[&key_for(i)];
+                    let protected = dependencies[i].is_some() || !dependents[i].is_empty();
+                    if protected {
+                        if i != preferred {
+                            skipped += 1;
+                        }
+                    } else if has_protected || i != preferred {
+                        remove[i] = true;
+                        duplicate[i] = true;
+                        counts.duplicates += 1;
+                    }
+                }
+            }
+            Operation::NetworkFilter {
+                networks,
+                keep,
+                keep_domains,
+            } => {
+                let parsed: Vec<ipnet::IpNet> = networks
+                    .iter()
+                    .map(|n| n.parse().map_err(|_| ModelError::InvalidEdit))
+                    .collect::<Result<_, _>>()?;
+                for &i in order.iter() {
+                    let host = mutations[i]
+                        .address
+                        .as_deref()
+                        .unwrap_or(sub.nodes[i].server());
+                    remove[i] = match host.parse::<IpAddr>() {
+                        Ok(ip) => parsed.iter().any(|n| n.contains(&ip)) != *keep,
+                        Err(_) => !*keep_domains,
+                    };
+                }
+            }
             Operation::ConditionFilter {
                 conditions,
                 mode,
@@ -915,6 +1082,26 @@ pub(super) fn apply(
                     for part in &parts {
                         if *part == "{index}" {
                             result.push_str(&(pos + 1).to_string());
+                        } else if let Some(width) = part
+                            .strip_prefix("{index:0")
+                            .and_then(|p| p.strip_suffix('}'))
+                        {
+                            let width: usize =
+                                width.parse().map_err(|_| ModelError::InvalidEdit)?;
+                            result.push_str(&format!("{:0width$}", pos + 1));
+                        } else if *part == "{source_index}" {
+                            result.push_str(&(i + 1).to_string());
+                        } else if *part == "{port}" {
+                            result.push_str(
+                                &mutations[i].port.unwrap_or(sub.nodes[i].port).to_string(),
+                            );
+                        } else if *part == "{server}" {
+                            result.push_str(
+                                mutations[i]
+                                    .address
+                                    .as_deref()
+                                    .unwrap_or(sub.nodes[i].server()),
+                            );
                         } else {
                             result.push_str(match *part {
                                 "{name}" => &names[i],
@@ -1069,6 +1256,351 @@ pub(super) fn apply(
 mod tests {
     use super::*;
     use crate::relay::model::{EnhanceOptions, Health, editor};
+
+    #[test]
+    fn batch_rename_is_ordered_and_preserves_unknown_node_fields() {
+        let input =
+            r#"[{"type":"socks","tag":"node12","server":"a","server_port":1,"custom":{"x":1}}]"#;
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::BatchRename {
+                    rules: vec![
+                        RenameRule {
+                            pattern: r"node(\d+)".into(),
+                            replacement: "N$1".into(),
+                            regex: true,
+                        },
+                        RenameRule {
+                            pattern: "N".into(),
+                            replacement: "Node ".into(),
+                            regex: false,
+                        },
+                    ],
+                },
+            )],
+        )
+        .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(value[0]["tag"], "Node 12");
+        assert_eq!(value[0]["custom"]["x"], 1);
+        assert_eq!(result.stages[0].renamed, 1);
+    }
+
+    #[test]
+    fn expanded_template_uses_effective_fields_and_both_indices() {
+        let input = r#"[{"type":"socks","tag":"A","server":"a","server_port":1},{"type":"socks","tag":"B","server":"b","server_port":2}]"#;
+        let result = run(
+            input,
+            vec![
+                step(1, Operation::Reverse),
+                step(
+                    2,
+                    Operation::SetProperty {
+                        setting: properties::Setting::Port { value: 42 },
+                    },
+                ),
+                step(
+                    3,
+                    Operation::FormatName {
+                        template: "{server}:{port}-{source_index}-{index:03}".into(),
+                    },
+                ),
+            ],
+        )
+        .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(value[0]["tag"], "b:42-2-001");
+        assert_eq!(value[1]["tag"], "a:42-1-002");
+    }
+
+    #[test]
+    fn network_filter_is_offline_and_domains_are_independent() {
+        let input = r#"[{"type":"socks","tag":"A","server":"192.0.2.4","server_port":1},{"type":"socks","tag":"B","server":"2001:db8::1","server_port":2},{"type":"socks","tag":"C","server":"example.invalid","server_port":3}]"#;
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::NetworkFilter {
+                    networks: vec!["192.0.2.0/24".into(), "2001:db8::/32".into()],
+                    keep: false,
+                    keep_domains: true,
+                },
+            )],
+        )
+        .unwrap();
+        assert_eq!(result.retained, vec![2]);
+    }
+
+    #[test]
+    fn name_dedup_last_uses_effective_order_and_unicode_case() {
+        let input = r#"[{"type":"socks","tag":"Ä","server":"a","server_port":1},{"type":"socks","tag":"ä","server":"b","server_port":2},{"type":"socks","tag":"C","server":"c","server_port":3}]"#;
+        let result = run(
+            input,
+            vec![
+                step(1, Operation::Reverse),
+                step(
+                    2,
+                    Operation::DeduplicateName {
+                        keep: KeepOccurrence::Last,
+                        ignore_case: true,
+                    },
+                ),
+            ],
+        )
+        .unwrap();
+        assert_eq!(result.retained, vec![2, 0]);
+    }
+
+    #[test]
+    fn new_operations_validate_drafts_and_bounds() {
+        let invalid = Operation::NetworkFilter {
+            networks: vec!["bad".into()],
+            keep: true,
+            keep_domains: true,
+        };
+        assert!(validate(&[step(1, invalid.clone())]).is_err());
+        let mut draft = step(1, invalid);
+        draft.enabled = false;
+        assert!(validate(&[draft]).is_ok());
+        assert!(
+            validate(&[step(
+                1,
+                Operation::Slice {
+                    skip: 100_000,
+                    count: 100_001
+                }
+            )])
+            .is_err()
+        );
+        assert!(validate(&[step(1, Operation::BatchRename { rules: vec![] })]).is_err());
+        assert!(
+            serde_json::from_str::<Operation>(
+                r#"{"type":"deduplicate_name","keep":"last","ignore_case":true}"#
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn slice_protects_dependencies_without_cascading() {
+        let input = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080, underlying-proxy=Base\nLast = socks5, last.example, 1080\n";
+        let result = run(input, vec![step(1, Operation::Slice { skip: 2, count: 1 })]).unwrap();
+        assert_eq!(result.retained, vec![0, 1, 2]);
+        assert_eq!(result.stages[0].skipped, 2);
+    }
+
+    #[test]
+    fn name_dedup_prioritizes_dependencies_in_either_order() {
+        let input = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080, underlying-proxy=Base\nbase = socks5, other.example, 1080\n";
+        for (reverse, keep, expected_skipped) in [
+            (false, KeepOccurrence::First, 0),
+            (false, KeepOccurrence::Last, 1),
+            (true, KeepOccurrence::First, 1),
+            (true, KeepOccurrence::Last, 0),
+        ] {
+            let mut steps = Vec::new();
+            if reverse {
+                steps.push(step(1, Operation::Reverse));
+            }
+            steps.push(step(
+                2,
+                Operation::DeduplicateName {
+                    keep,
+                    ignore_case: true,
+                },
+            ));
+            let result = run(input, steps).unwrap();
+            assert_eq!(
+                result.retained,
+                if reverse { vec![1, 0] } else { vec![0, 1] }
+            );
+            assert_eq!(result.stages.last().unwrap().skipped, expected_skipped);
+            assert_eq!(result.duplicates, 1);
+            assert_eq!(result.excluded, 0);
+        }
+    }
+
+    #[test]
+    fn name_dedup_uses_prior_renames_and_counts_ordinary_duplicates() {
+        let input = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080, underlying-proxy=Base\nOther = socks5, other.example, 1080\n";
+        let result = run(
+            input,
+            vec![
+                step(
+                    1,
+                    Operation::ReplaceName {
+                        pattern: "Other".into(),
+                        replacement: "base".into(),
+                        regex: false,
+                    },
+                ),
+                step(
+                    2,
+                    Operation::DeduplicateName {
+                        keep: KeepOccurrence::Last,
+                        ignore_case: true,
+                    },
+                ),
+            ],
+        )
+        .unwrap();
+        assert_eq!(result.retained, vec![0, 1]);
+        assert_eq!(result.stages[1].skipped, 1);
+        assert_eq!(result.duplicates, 1);
+        assert_eq!(result.excluded, 0);
+    }
+
+    #[test]
+    fn batch_rejects_oversized_intermediate_even_if_later_shortened() {
+        let input = r#"[{"type":"socks","tag":"A","server":"a","server_port":1}]"#;
+        let operation = Operation::BatchRename {
+            rules: vec![
+                RenameRule {
+                    pattern: "A".into(),
+                    replacement: "x".repeat(512),
+                    regex: false,
+                },
+                RenameRule {
+                    pattern: "x".into(),
+                    replacement: "xx".into(),
+                    regex: false,
+                },
+                RenameRule {
+                    pattern: "x".into(),
+                    replacement: "".into(),
+                    regex: false,
+                },
+            ],
+        };
+        assert!(run(input, vec![step(1, operation)]).is_err());
+    }
+
+    #[test]
+    fn template_and_batch_preserve_uri_and_surge_extra_fields() {
+        let operation = || Operation::BatchRename {
+            rules: vec![RenameRule {
+                pattern: "old".into(),
+                replacement: "new".into(),
+                regex: false,
+            }],
+        };
+        let surge = run(
+            "old = socks5, a.example, 1080, custom-option=opaque\n",
+            vec![step(1, operation())],
+        )
+        .unwrap();
+        let parsed = Subscription::parse(&surge.content).unwrap();
+        assert_eq!(parsed.nodes[0].name(), "new");
+        assert!(
+            surge
+                .content
+                .ends_with(" = socks5, a.example, 1080, custom-option=opaque\n")
+        );
+        let uri = run(
+            "trojan://secret@example.com:443?custom=opaque#old\n",
+            vec![step(1, operation())],
+        )
+        .unwrap();
+        assert!(uri.content.contains("custom=opaque"));
+        assert!(uri.content.contains("#new"));
+        let yaml = "proxies:\n  - name: old\n    type: http\n    server: example.com\n    port: 80\n    custom: opaque\n";
+        let out = run(yaml, vec![step(1, operation())]).unwrap();
+        assert!(out.content.contains("new"));
+        assert!(out.content.contains("custom: opaque"));
+        assert!(Subscription::parse(&out.content).is_ok());
+    }
+
+    #[test]
+    fn network_filter_uses_effective_address_and_domains_can_be_excluded() {
+        let input = r#"[{"type":"socks","tag":"A","server":"example.invalid","server_port":1}]"#;
+        let out = run(
+            input,
+            vec![
+                step(
+                    1,
+                    Operation::SetProperty {
+                        setting: properties::Setting::Server {
+                            value: "192.0.2.42".into(),
+                        },
+                    },
+                ),
+                step(
+                    2,
+                    Operation::NetworkFilter {
+                        networks: vec!["192.0.2.0/24".into()],
+                        keep: true,
+                        keep_domains: false,
+                    },
+                ),
+            ],
+        )
+        .unwrap();
+        assert_eq!(out.retained, vec![0]);
+        let out = run(
+            input,
+            vec![step(
+                1,
+                Operation::NetworkFilter {
+                    networks: vec!["192.0.2.0/24".into()],
+                    keep: false,
+                    keep_domains: false,
+                },
+            )],
+        )
+        .unwrap();
+        assert!(out.retained.is_empty());
+    }
+
+    #[test]
+    fn new_operation_limits_and_serde_are_enforced() {
+        let rule = RenameRule {
+            pattern: "x".into(),
+            replacement: "y".into(),
+            regex: false,
+        };
+        assert!(
+            validate(&[step(
+                1,
+                Operation::BatchRename {
+                    rules: vec![rule; 33]
+                }
+            )])
+            .is_err()
+        );
+        assert!(
+            validate(&[step(
+                1,
+                Operation::NetworkFilter {
+                    networks: vec!["0.0.0.0/0".into(); 65],
+                    keep: true,
+                    keep_domains: true
+                }
+            )])
+            .is_err()
+        );
+        assert!(
+            validate(&[step(
+                1,
+                Operation::Slice {
+                    skip: usize::MAX,
+                    count: 1
+                }
+            )])
+            .is_err()
+        );
+        let json =
+            r#"{"type":"batch_rename","rules":[{"pattern":"a","replacement":"b","regex":false}]}"#;
+        let parsed: Operation = serde_json::from_str(json).unwrap();
+        assert_eq!(serde_json::to_string(&parsed).unwrap(), json);
+        assert!(
+            serde_json::from_str::<Operation>(
+                r#"{"type":"slice","skip":1,"count":2,"extra":true}"#
+            )
+            .is_err()
+        );
+    }
 
     #[test]
     fn normalize_and_unique_reserve_existing_names() {

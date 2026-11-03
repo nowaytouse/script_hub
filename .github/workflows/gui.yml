@@ -73,9 +73,11 @@ jobs:
       - name: Format and lint
         run: |
           cargo fmt --all -- --check
-          cargo clippy --locked --workspace --all-targets --features rust_processor/gui -- -D warnings
+          cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
       - name: Tests
-        run: cargo test --locked --workspace --all-targets --features rust_processor/gui -- --test-threads=1
+        run: cargo test --locked --workspace --all-targets --all-features -- --test-threads=1
+      - name: Verify generated system icons
+        run: cargo icons --check
       - name: Build and package root application
         run: cargo app --archive
       - name: Worker smoke test without a display

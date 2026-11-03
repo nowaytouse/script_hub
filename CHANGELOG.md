@@ -2,6 +2,13 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.10.0 · 2026-11-03
+
+- Give system icons a balanced transparent safe area, render each size from the original SVG, and embed multiresolution Windows EXE icons without changing the in-app mark.
+- Add ordered batch renaming, range selection, dependency-aware name deduplication and offline IPv4/IPv6 CIDR filtering.
+- Expand naming templates with effective server/port, stable source indices and padded indices; validate intermediate names and preserve dependency-linked nodes.
+- Verify generated icon consistency and Windows resource round-trips during desktop packaging and CI.
+
 ## 0.9.0 · 2026-11-02
 
 - Expand explicit node-domain resolution with standard DoH POST/GET, JSON compatibility, Cloudflare/Google providers, scoped filters and reproducible address selection.

@@ -3,8 +3,8 @@ use crate::gui::i18n::{Text, text};
 use crate::gui::theme::Palette;
 use crate::relay::model::dns::{self, Format, Provider, Selection};
 use crate::relay::model::pipeline::{
-    self, AddressFamily, Condition, Field, MatchMode, NameCase, Operation, RegionLabel, SortKey,
-    StageReport, Step, TextMatch,
+    self, AddressFamily, Condition, Field, KeepOccurrence, MatchMode, NameCase, Operation,
+    RegionLabel, RenameRule, SortKey, StageReport, Step, TextMatch,
 };
 use crate::relay::model::properties::Setting;
 use crate::runtime::settings::Language;
@@ -12,7 +12,7 @@ use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
-const FIELDS: [&str; 12] = [
+const FIELDS: [&str; 13] = [
     "pattern",
     "replacement",
     "template",
@@ -25,6 +25,7 @@ const FIELDS: [&str; 12] = [
     "server",
     "dns_include",
     "dns_exclude",
+    "networks",
 ];
 
 fn field_id(id: u64, field: &str) -> egui::Id {
@@ -56,7 +57,13 @@ pub(super) fn clear_widgets(ctx: &egui::Context, steps: &[Step]) {
                 data.remove::<Zeroizing<String>>(field_id(step.id, field).with("draft"));
             }
             for i in 0..64 {
-                for name in ["condition", "region_code", "region_label"] {
+                for name in [
+                    "condition",
+                    "region_code",
+                    "region_label",
+                    "rename_pattern",
+                    "rename_replacement",
+                ] {
                     let id = field_id(step.id, name).with(i);
                     data.remove::<egui::text_edit::TextEditState>(id);
                     data.remove::<Zeroizing<String>>(id.with("draft"));
@@ -73,6 +80,17 @@ fn field(
     id: egui::Id,
     multiline: bool,
 ) -> bool {
+    field_with_limit(ui, label, value, id, multiline, 512)
+}
+
+fn field_with_limit(
+    ui: &mut egui::Ui,
+    label: &str,
+    value: &mut String,
+    id: egui::Id,
+    multiline: bool,
+    limit: usize,
+) -> bool {
     let label = ui.label(label);
     let edit = if multiline {
         egui::TextEdit::multiline(value).desired_rows(3)
@@ -81,7 +99,7 @@ fn field(
     };
     let mut output = edit
         .id(id)
-        .char_limit(512)
+        .char_limit(limit)
         .desired_width(ui.available_width().min(480.0))
         .show(ui);
     let _ = (*output.response).clone().labelled_by(label.id);
@@ -114,6 +132,10 @@ fn operation_label(op: &Operation) -> Text {
         Operation::UniqueNames { .. } => Text::OperationUniqueNames,
         Operation::RegionNames { .. } => Text::OperationRegionNames,
         Operation::Shuffle { .. } => Text::OperationShuffle,
+        Operation::BatchRename { .. } => Text::OperationBatchRename,
+        Operation::Slice { .. } => Text::OperationSlice,
+        Operation::DeduplicateName { .. } => Text::OperationDeduplicateName,
+        Operation::NetworkFilter { .. } => Text::OperationNetworkFilter,
     }
 }
 
@@ -124,7 +146,7 @@ enum Action {
     Delete,
 }
 
-fn new_operations() -> [Operation; 21] {
+fn new_operations() -> [Operation; 25] {
     [
         Operation::NameFilter {
             pattern: String::new(),
@@ -211,15 +233,42 @@ fn new_operations() -> [Operation; 21] {
             keep_name: true,
         },
         Operation::Shuffle { seed: 0 },
+        Operation::BatchRename {
+            rules: vec![RenameRule {
+                pattern: String::new(),
+                replacement: String::new(),
+                regex: false,
+            }],
+        },
+        Operation::Slice { skip: 0, count: 50 },
+        Operation::DeduplicateName {
+            keep: KeepOccurrence::First,
+            ignore_case: false,
+        },
+        Operation::NetworkFilter {
+            networks: Vec::new(),
+            keep: true,
+            keep_domains: true,
+        },
     ]
 }
 
 fn list_field(ui: &mut egui::Ui, id: egui::Id, label: &str, values: &mut Vec<String>) -> bool {
+    list_field_with_limit(ui, id, label, values, 512)
+}
+
+fn list_field_with_limit(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    label: &str,
+    values: &mut Vec<String>,
+    limit: usize,
+) -> bool {
     let mut draft = ui
         .ctx()
         .data_mut(|data| data.get_temp::<Zeroizing<String>>(id.with("draft")))
         .unwrap_or_else(|| Zeroizing::new(values.join(", ")));
-    if !field(ui, label, &mut draft, id, false) {
+    if !field_with_limit(ui, label, &mut draft, id, false, limit) {
         return false;
     }
     values.zeroize();
@@ -470,6 +519,127 @@ pub(super) fn show(
                             false,
                         );
                         ui.weak(tr(Text::OperationTemplateHelp));
+                    }
+                    Operation::BatchRename { rules } => {
+                        let mut action = None;
+                        let len = rules.len();
+                        for (i, rule) in rules.iter_mut().enumerate() {
+                            ui.separator();
+                            ui.label(format!("{} {}", tr(Text::RenameRule), i + 1));
+                            changed |= field(
+                                ui,
+                                tr(Text::OperationPattern),
+                                &mut rule.pattern,
+                                field_id(step.id, "rename_pattern").with(i),
+                                false,
+                            );
+                            changed |= field(
+                                ui,
+                                tr(Text::OperationReplacement),
+                                &mut rule.replacement,
+                                field_id(step.id, "rename_replacement").with(i),
+                                false,
+                            );
+                            changed |= ui
+                                .checkbox(&mut rule.regex, tr(Text::OperationUseRegex))
+                                .changed();
+                            ui.horizontal_wrapped(|ui| {
+                                if ui
+                                    .add_enabled(
+                                        i > 0,
+                                        egui::Button::new(tr(Text::OperationMoveUp)),
+                                    )
+                                    .clicked()
+                                {
+                                    action = Some((i, 0));
+                                }
+                                if ui
+                                    .add_enabled(
+                                        i + 1 < len,
+                                        egui::Button::new(tr(Text::OperationMoveDown)),
+                                    )
+                                    .clicked()
+                                {
+                                    action = Some((i, 1));
+                                }
+                                if ui.button(tr(Text::OperationDelete)).clicked() {
+                                    action = Some((i, 2));
+                                }
+                            });
+                        }
+                        if let Some((i, kind)) = action {
+                            match kind {
+                                0 => rules.swap(i, i - 1),
+                                1 => rules.swap(i, i + 1),
+                                _ => {
+                                    rules.remove(i);
+                                }
+                            }
+                            clear_rows(
+                                ui.ctx(),
+                                step.id,
+                                &["rename_pattern", "rename_replacement"],
+                                32,
+                            );
+                            changed = true;
+                        }
+                        if ui
+                            .add_enabled(rules.len() < 32, egui::Button::new(tr(Text::RenameAdd)))
+                            .clicked()
+                        {
+                            rules.push(RenameRule {
+                                pattern: String::new(),
+                                replacement: String::new(),
+                                regex: false,
+                            });
+                            changed = true;
+                        }
+                    }
+                    Operation::Slice { skip, count } => {
+                        ui.label(tr(Text::SliceSkip));
+                        changed |= ui
+                            .add(egui::DragValue::new(skip).range(0..=100000))
+                            .changed();
+                        ui.label(tr(Text::SliceCount));
+                        changed |= ui
+                            .add(egui::DragValue::new(count).range(0..=100000))
+                            .changed();
+                        ui.weak(tr(Text::SliceHelp));
+                    }
+                    Operation::DeduplicateName { keep, ignore_case } => {
+                        ui.weak(tr(Text::DeduplicateNameHelp));
+                        changed |= choice(
+                            ui,
+                            language,
+                            (step.id, "occurrence"),
+                            Text::DeduplicateOccurrence,
+                            keep,
+                            &[
+                                (KeepOccurrence::First, Text::DeduplicateFirst),
+                                (KeepOccurrence::Last, Text::DeduplicateLast),
+                            ],
+                        );
+                        changed |= ui
+                            .checkbox(ignore_case, tr(Text::DeduplicateIgnoreCase))
+                            .changed();
+                    }
+                    Operation::NetworkFilter {
+                        networks,
+                        keep,
+                        keep_domains,
+                    } => {
+                        changed |= list_field_with_limit(
+                            ui,
+                            field_id(step.id, "networks"),
+                            tr(Text::NetworkList),
+                            networks,
+                            4096,
+                        );
+                        ui.weak(tr(Text::NetworkHelp));
+                        changed |= ui.checkbox(keep, tr(Text::OperationKeepMatches)).changed();
+                        changed |= ui
+                            .checkbox(keep_domains, tr(Text::OperationKeepDomains))
+                            .changed();
                     }
                     Operation::Flags { add } => {
                         changed |= ui.checkbox(add, tr(Text::OperationAddFlags)).changed();
@@ -1029,6 +1199,7 @@ fn operation_group(op: &Operation) -> u8 {
         | Operation::PortFilter { .. }
         | Operation::RegionFilter { .. }
         | Operation::IpFilter { .. }
+        | Operation::NetworkFilter { .. }
         | Operation::ConditionFilter { .. } => 0,
         Operation::ResolveDomain { .. } | Operation::SetProperty { .. } => 2,
         _ => 1,
@@ -1053,20 +1224,20 @@ mod tests {
     #[test]
     fn operation_defaults_and_groups_cover_all_choices() {
         let operations = new_operations();
-        assert_eq!(operations.len(), 21);
+        assert_eq!(operations.len(), 25);
         assert_eq!(
             operations
                 .iter()
                 .filter(|op| operation_group(op) == 0)
                 .count(),
-            7
+            8
         );
         assert_eq!(
             operations
                 .iter()
                 .filter(|op| operation_group(op) == 1)
                 .count(),
-            12
+            15
         );
         assert_eq!(
             operations
@@ -1153,13 +1324,25 @@ mod tests {
             "alpn",
             "dns_include",
             "dns_exclude",
+            "networks",
         ] {
             let id = field_id(4, name).with("draft");
             ctx.data_mut(|data| data.insert_temp(id, Zeroizing::new("private".to_owned())));
         }
         let row_id = field_id(4, "condition").with(0).with("draft");
         ctx.data_mut(|data| data.insert_temp(row_id, Zeroizing::new("private value".to_owned())));
+        for name in ["rename_pattern", "rename_replacement"] {
+            let id = field_id(4, name).with(31).with("draft");
+            ctx.data_mut(|data| data.insert_temp(id, Zeroizing::new("private".to_owned())));
+        }
         clear_widgets(&ctx, &steps);
+        for name in ["rename_pattern", "rename_replacement"] {
+            assert!(
+                ctx.data_mut(|data| data
+                    .get_temp::<Zeroizing<String>>(field_id(4, name).with(31).with("draft")))
+                    .is_none()
+            );
+        }
         assert!(
             ctx.data_mut(|data| data.get_temp::<Zeroizing<String>>(row_id))
                 .is_none()
@@ -1170,6 +1353,7 @@ mod tests {
             "alpn",
             "dns_include",
             "dns_exclude",
+            "networks",
         ] {
             assert!(
                 ctx.data_mut(
@@ -1205,7 +1389,10 @@ mod tests {
         steps: &mut Vec<Step>,
         events: Vec<egui::Event>,
     ) -> egui::FullOutput {
-        let colors = theme::palette(false, Preferences::default().accent);
+        let colors = theme::palette(
+            ctx.theme() == egui::Theme::Dark,
+            Preferences::default().accent,
+        );
         let mut output = ctx.run_ui(
             egui::RawInput {
                 screen_rect: Some(egui::Rect::from_min_size(
@@ -1263,8 +1450,12 @@ mod tests {
                 2 => "Separator",
                 3 => "Add region",
                 4 => "Seed",
-                5 => "Natural name",
-                6 => "Server address",
+                5 => "Add rule",
+                6 => "Skip nodes",
+                7 => "Keep occurrence",
+                8 => "CIDR networks, comma separated (maximum 64)",
+                9 => "Natural name",
+                10 => "Server address",
                 _ => "Server port",
             };
             assert!(
@@ -1276,6 +1467,64 @@ mod tests {
                 "missing {expected}"
             );
             output.drop_without_applying_deltas();
+        }
+    }
+
+    #[test]
+    fn batch_rename_add_is_accessible_and_works_in_both_themes() {
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let mut steps = vec![Step {
+                id: 1,
+                enabled: true,
+                operation: Operation::BatchRename { rules: vec![] },
+            }];
+            let output = draw(&ctx, &mut steps, vec![]);
+            let bounds = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .find_map(|(_, node)| {
+                    (node.label() == Some("Add rule"))
+                        .then(|| node.bounds())
+                        .flatten()
+                })
+                .expect("accessible add rule button");
+            let pos = egui::pos2(
+                ((bounds.x0 + bounds.x1) / 2.0) as f32,
+                ((bounds.y0 + bounds.y1) / 2.0) as f32,
+            );
+            output.drop_without_applying_deltas();
+            let event = |pressed| egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::default(),
+            };
+            draw(
+                &ctx,
+                &mut steps,
+                vec![egui::Event::PointerMoved(pos), event(true)],
+            )
+            .drop_without_applying_deltas();
+            draw(
+                &ctx,
+                &mut steps,
+                vec![egui::Event::PointerMoved(pos), event(false)],
+            )
+            .drop_without_applying_deltas();
+            assert!(
+                matches!(&steps[0].operation, Operation::BatchRename { rules } if rules.len() == 1 && !rules[0].regex)
+            );
         }
     }
 

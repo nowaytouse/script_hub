@@ -1157,11 +1157,19 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    let system_icon =
+        match eframe::icon_data::from_png_bytes(include_bytes!("../../assets/system-icon.png")) {
+            Ok(icon) => icon,
+            Err(error) => {
+                eprintln!("Cannot load Script Hub system icon: {error}");
+                return ExitCode::FAILURE;
+            }
+        };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size(preferences.window.dimensions())
             .with_min_inner_size([740.0, 540.0])
-            .with_icon(icon.clone()),
+            .with_icon(system_icon),
         renderer: eframe::Renderer::Glow,
         ..Default::default()
     };
@@ -1239,6 +1247,27 @@ mod tests {
         let icon =
             eframe::icon_data::from_png_bytes(include_bytes!("../../assets/logo.png")).unwrap();
         assert_eq!((icon.width, icon.height), (256, 256));
+    }
+    #[test]
+    fn system_icon_has_balanced_transparent_safe_area() {
+        let icon =
+            eframe::icon_data::from_png_bytes(include_bytes!("../../assets/system-icon.png"))
+                .unwrap();
+        assert_eq!((icon.width, icon.height), (256, 256));
+        let mut bounds = (256_usize, 256_usize, 0_usize, 0_usize);
+        let (pixels, remainder) = icon.rgba.as_chunks::<4>();
+        assert!(remainder.is_empty());
+        for (i, pixel) in pixels.iter().enumerate() {
+            if pixel[3] != 0 {
+                let (x, y) = (i % 256, i / 256);
+                bounds.0 = bounds.0.min(x);
+                bounds.1 = bounds.1.min(y);
+                bounds.2 = bounds.2.max(x);
+                bounds.3 = bounds.3.max(y);
+            }
+        }
+        assert!((24..=27).contains(&bounds.0) && (24..=27).contains(&bounds.1));
+        assert!(bounds.0.abs_diff(255 - bounds.2) <= 1 && bounds.1.abs_diff(255 - bounds.3) <= 1);
     }
     use super::*;
     use std::fs;

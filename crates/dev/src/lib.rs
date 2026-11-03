@@ -1,5 +1,7 @@
 //! Native desktop assembly and recoverable repository-root delivery.
 
+mod windows_icon;
+
 use std::{
     fs,
     io::Read,
@@ -671,6 +673,18 @@ pub fn run(mut arguments: impl Iterator<Item = String>) -> Result<(), String> {
     )?;
     let directory = root.join("target/release/bundle").join(nonce());
     stage(&root, &directory, platform, &metadata, &input_binary)?;
+    let windows_ico = if platform == Platform::Windows {
+        let icon = root.join("crates/processor/assets/ScriptHub.ico");
+        regular(&root, &icon)?;
+        if context(fs::metadata(&icon), &icon)?.len() > 16 * 1024 * 1024 {
+            return Err("Windows icon exceeds size limit".to_owned());
+        }
+        let bytes = context(fs::read(&icon), &icon)?;
+        windows_icon::apply(&directory.join(binary(platform)), &bytes)?;
+        Some(bytes)
+    } else {
+        None
+    };
     if platform == Platform::MacOs {
         checked(
             Command::new("/usr/bin/codesign")
@@ -679,7 +693,11 @@ pub fn run(mut arguments: impl Iterator<Item = String>) -> Result<(), String> {
         )?;
     }
     let delivery = publish_with(&root, &directory, platform, |directory| {
-        verify_package(directory, platform, &metadata)
+        verify_package(directory, platform, &metadata)?;
+        if let Some(icon) = &windows_ico {
+            windows_icon::verify(&directory.join(binary(platform)), icon)?;
+        }
+        Ok(())
     })?;
     context(fs::remove_dir(&directory), &directory)?;
     println!(
