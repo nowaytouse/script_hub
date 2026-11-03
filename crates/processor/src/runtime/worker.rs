@@ -70,6 +70,7 @@ fn srs_arguments(arguments: &[String]) -> Result<(String, String), String> {
 pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     let operation = args.next().unwrap_or_default();
     let arguments: Vec<String> = args.collect();
+    #[cfg(feature = "gui")]
     if operation == "relay-demo" {
         if !arguments.is_empty() {
             return fail("relay-demo does not accept arguments".to_owned());
