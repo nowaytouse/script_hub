@@ -621,6 +621,75 @@ mod tests {
     }
 
     #[test]
+    fn collection_sync_explains_remote_edits_without_blocking_local_member_edits() {
+        use crate::relay::{
+            library::{Collection, Entry},
+            model::editor::{NodeEdit, Options},
+        };
+
+        for edited_remote in [false, true] {
+            let mut state = prepared();
+            for remote in [false, true] {
+                let mut processing = Options::default();
+                if remote == edited_remote {
+                    processing.nodes.push(NodeEdit {
+                        index: 0,
+                        included: true,
+                        name: Some("Edited".into()),
+                    });
+                }
+                let id = state
+                    .workspace
+                    .data
+                    .add_entry(Entry {
+                        id: 0,
+                        name: if remote { "Remote" } else { "Local" }.into(),
+                        source: if remote {
+                            "https://example.com/nodes"
+                        } else {
+                            ""
+                        }
+                        .into(),
+                        source_file: String::new(),
+                        content: state.local_content.as_ref().unwrap().to_string(),
+                        processing,
+                        publish: Default::default(),
+                    })
+                    .unwrap();
+                state.workspace.members.push(id);
+            }
+            let id = state
+                .workspace
+                .data
+                .add_collection(Collection {
+                    id: 0,
+                    name: "Collection".into(),
+                    members: state.workspace.members.clone(),
+                    processing: Default::default(),
+                    publish: Default::default(),
+                })
+                .unwrap();
+            state.workspace.selected = Some(Selection::Collection(id));
+            state.token.push_str("synthetic-token");
+            state.output.push_str("0123456789abcdef");
+            state.acknowledge_publish = true;
+            let ctx = egui::Context::default();
+            open_gist(&ctx);
+            let nodes = render_in_context(&mut state, &ctx, false);
+            assert!(nodes.contains(&(
+                text(Language::En, Text::ScheduleEnable).to_owned(),
+                edited_remote
+            )));
+            assert_eq!(
+                nodes
+                    .iter()
+                    .any(|(label, _)| label == text(Language::En, Text::ScheduleIndexedEdits)),
+                edited_remote,
+            );
+        }
+    }
+
+    #[test]
     fn local_export_has_no_gist_controls_and_requires_plaintext_consent() {
         for dark in [false, true] {
             let mut state = prepared();

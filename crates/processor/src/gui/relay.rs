@@ -576,20 +576,43 @@ impl RelayState {
         if self.output.trim().is_empty() {
             return Some(Text::ScheduleNeedsOutput);
         }
-        if let Err(error) = self.validate(RunMode::Publish, self.engine_path()) {
-            return Some(error);
-        }
-        if !self.source.trim().is_empty()
-            && self.editor.as_ref().is_some_and(|editor| {
-                editor
-                    .rows
+        let indexed = self.editor.as_ref().is_some_and(|editor| {
+            editor
+                .rows
+                .iter()
+                .any(|row| !row.included || row.name != row.original)
+        });
+        let remote_indexed = match self.workspace.selected {
+            Some(super::subscriptions::Selection::Collection(id)) => {
+                let stored_edits = if self.workspace.draft_dirty {
+                    self.editor.is_none()
+                        && !self.workspace.members_changed
+                        && !self.workspace.collection_options.nodes.is_empty()
+                } else {
+                    self.workspace
+                        .data
+                        .collections
+                        .iter()
+                        .any(|entry| entry.id == id && !entry.processing.nodes.is_empty())
+                };
+                self.workspace
+                    .data
+                    .subscriptions
                     .iter()
-                    .any(|row| !row.included || row.name != row.original)
-            })
-        {
+                    .filter(|entry| self.workspace.members.contains(&entry.id))
+                    .any(|entry| {
+                        crate::relay::collection_schedule::edits_depend_on_remote_order(
+                            entry,
+                            indexed || stored_edits,
+                        )
+                    })
+            }
+            _ => indexed && !self.source.trim().is_empty(),
+        };
+        if remote_indexed {
             return Some(Text::ScheduleIndexedEdits);
         }
-        None
+        self.validate(RunMode::Publish, self.engine_path()).err()
     }
 
     pub(super) fn arm_schedule(&mut self) {
@@ -660,24 +683,34 @@ impl RelayState {
             .map(|source| source.content())
             .or(self.local_content.as_deref().map(String::as_str));
         if let Some(content) = content {
-            match EditorState::new(content, result.source.clone()) {
-                Ok(mut editor) => {
-                    if let Some(old) = &self.editor {
-                        editor.options = old.options.clone();
+            if result.source.is_none()
+                && let Some(editor) = self
+                    .editor
+                    .as_mut()
+                    .filter(|editor| editor.origin.is_none() && editor.source.as_str() == content)
+            {
+                // Positional edits remain bound to exactly these local source bytes.
+                editor.reveal = false;
+            } else {
+                match EditorState::new(content, result.source.clone()) {
+                    Ok(mut editor) => {
+                        if let Some(old) = &self.editor {
+                            editor.options = old.options.clone();
+                        }
+                        if result.source.is_some()
+                            && let Some(cached) = &mut self.local_content
+                            && cached.as_str() != editor.source.as_str()
+                        {
+                            *cached = editor.source.clone();
+                            self.workspace.draft_dirty |= self.workspace.selected.is_some();
+                        }
+                        self.editor = Some(editor);
                     }
-                    if result.source.is_some()
-                        && let Some(cached) = &mut self.local_content
-                        && cached.as_str() != editor.source.as_str()
-                    {
-                        *cached = editor.source.clone();
-                        self.workspace.draft_dirty |= self.workspace.selected.is_some();
+                    Err(error) => {
+                        self.error = Some(Failure::Operation(RelayError::Model(error)));
+                        self.schedule.stop();
+                        return;
                     }
-                    self.editor = Some(editor);
-                }
-                Err(error) => {
-                    self.error = Some(Failure::Operation(RelayError::Model(error)));
-                    self.schedule.stop();
-                    return;
                 }
             }
         }
@@ -1979,6 +2012,13 @@ mod tests {
         state.arm_schedule();
         assert!(!state.schedule.armed());
         state.output = destination;
+        let mut editor = EditorState::new(state.local_content.as_ref().unwrap(), None).unwrap();
+        editor.rows[0].included = false;
+        state.editor = Some(editor);
+        assert!(state.schedule_setup_issue() == Some(Text::ScheduleIndexedEdits));
+        state.arm_schedule();
+        assert!(!state.schedule.armed());
+        state.editor.as_mut().unwrap().rows[0].included = true;
         state.workspace.name = Zeroizing::new("Unsaved collection name".into());
         state.workspace.draft_dirty = true;
         let (snapshot, snapshot_id) = state.collection_schedule_snapshot(id).unwrap();
@@ -2014,7 +2054,12 @@ mod tests {
         let mut state = fixture();
         state.source = Zeroizing::new("https://example.com/sub".into());
         state.source_file.clear();
-        state.local_content = Some(Zeroizing::new("A = socks5, cached.example, 1080\n".into()));
+        let cached = "A = socks5, cached.example, 1080\n";
+        state.local_content = Some(Zeroizing::new(cached.into()));
+        let mut editor = EditorState::new(cached, None).unwrap();
+        editor.rows[0].included = false;
+        editor.rows[0].name = Zeroizing::new("Cached rename".into());
+        state.editor = Some(editor);
         state.workspace.selected = Some(super::super::subscriptions::Selection::Subscription(1));
         let fresh = "B = socks5, fresh.example, 1080\n";
         let mut latest = result();
@@ -2031,6 +2076,10 @@ mod tests {
         assert_eq!(state.local_content.as_ref().unwrap().as_str(), fresh);
         assert!(state.workspace.draft_dirty);
         assert_eq!(state.preview_names[0].as_str(), "B");
+        let editor = state.editor.as_ref().unwrap();
+        assert!(editor.rows[0].included);
+        assert_eq!(editor.rows[0].name.as_str(), "B");
+        assert!(editor.processing().nodes.is_empty());
         assert_eq!(
             state
                 .completed_config
@@ -2042,6 +2091,52 @@ mod tests {
                 .unwrap()
                 .as_str(),
             fresh
+        );
+    }
+
+    #[test]
+    fn scheduled_success_keeps_positional_edits_only_on_the_same_local_bytes() {
+        let mut state = fixture();
+        state.source.clear();
+        state.source_file.clear();
+        let base = "A = socks5, a.example.invalid, 1080\nB = socks5, b.example.invalid, 1080\n";
+        let renamed = "Renamed = socks5, a.example.invalid, 1080\n";
+        state.local_content = Some(Zeroizing::new(base.into()));
+        let mut editor = EditorState::new(base, None).unwrap();
+        editor.rows[0].name = Zeroizing::new("Renamed".into());
+        editor.rows[1].included = false;
+        editor.reveal = true;
+        state.editor = Some(editor);
+
+        let mut latest = result();
+        latest.content = Zeroizing::new(renamed.into());
+        state.accept_scheduled(latest);
+        let editor = state.editor.as_ref().unwrap();
+        assert!(!editor.reveal);
+        assert_eq!(editor.rows[0].name.as_str(), "Renamed");
+        assert!(!editor.rows[1].included);
+        let edits = &state.completed_config.as_ref().unwrap().0.processing.nodes;
+        assert_eq!(edits.len(), 2);
+        assert_eq!(edits[0].name.as_deref(), Some("Renamed"));
+        assert!(!edits[1].included);
+
+        let new_base = "B = socks5, b.example.invalid, 1080\nA = socks5, a.example.invalid, 1080\n";
+        state.local_content = Some(Zeroizing::new(new_base.into()));
+        let mut latest = result();
+        latest.content = Zeroizing::new(new_base.into());
+        state.accept_scheduled(latest);
+        let editor = state.editor.as_ref().unwrap();
+        assert_eq!(editor.rows[0].name.as_str(), "B");
+        assert!(editor.rows[1].included);
+        assert!(
+            state
+                .completed_config
+                .as_ref()
+                .unwrap()
+                .0
+                .processing
+                .nodes
+                .is_empty()
         );
     }
 

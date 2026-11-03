@@ -1,5 +1,9 @@
 # Changes
 
+## 0.14.4 · 2026-11-03
+
+- Keep edits after syncing unchanged local nodes; explain which remote edits block scheduling.
+
 ## 0.14.3 · 2026-11-03
 
 - Preview lightweight saved edits offline on open; run scripts and DNS only when requested.

@@ -25,6 +25,10 @@ pub(super) struct Prepared {
     sources: Vec<(u64, Option<gist::GistFile>)>,
 }
 
+pub(crate) fn edits_depend_on_remote_order(entry: &Entry, collection_edits: bool) -> bool {
+    !entry.source.trim().is_empty() && (collection_edits || !entry.processing.nodes.is_empty())
+}
+
 /// Check the frozen workspace, destination, and edit bindings without reading remote data.
 pub fn validate(workspace: &Workspace, id: u64, config: &RelayConfig) -> Result<(), RelayError> {
     workspace.validate().map_err(|_| RelayError::InvalidInput)?;
@@ -51,19 +55,19 @@ pub fn validate(workspace: &Workspace, id: u64, config: &RelayConfig) -> Result<
         if model::pipeline::has_resolution(&entry.processing.pipeline) {
             return Err(RelayError::Model(model::ModelError::Unsupported));
         }
-        if !entry.source.trim().is_empty() {
-            if !config.processing.nodes.is_empty()
-                || !collection.processing.nodes.is_empty()
-                || !entry.processing.nodes.is_empty()
-            {
-                return Err(RelayError::InvalidInput);
-            }
-            if matches!(
+        if edits_depend_on_remote_order(
+            entry,
+            !config.processing.nodes.is_empty() || !collection.processing.nodes.is_empty(),
+        ) {
+            return Err(RelayError::InvalidInput);
+        }
+        if !entry.source.trim().is_empty()
+            && matches!(
                 input::target(entry.source.trim(), &entry.source_file)?,
                 input::Target::Gist(source) if output.id == source.id
-            ) {
-                return Err(RelayError::InvalidInput);
-            }
+            )
+        {
+            return Err(RelayError::InvalidInput);
         }
     }
     Ok(())
