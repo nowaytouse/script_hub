@@ -1,4 +1,6 @@
-# --- Private DNS Upstreams ---
+# DNS bootstrap and local names
+
+DOMAIN-SUFFIX,home.arpa
 
 IP-CIDR,1.2.4.8/32,no-resolve
 IP-CIDR,114.114.114.114/32,no-resolve

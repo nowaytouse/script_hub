@@ -1075,6 +1075,38 @@ fn operational_services_are_not_rejected_rewritten_or_intercepted() {
 }
 
 #[test]
+fn captcha_dependency_hosts_remain_available_without_allowing_geetest_siblings() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(root);
+    manager.load_whitelist().unwrap();
+    for host in [
+        "hcaptcha.com",
+        "a.hcaptcha.com",
+        "newassets.hcaptcha.com",
+        "onepass.geetest.com",
+    ] {
+        for category in ["Advertising", "ThreatIntel_Ultimate"] {
+            for kind in ["DOMAIN", "DOMAIN-SUFFIX"] {
+                let rule = format!("{kind},{host}");
+                manager.add_rule_line(&rule, "REJECT", category);
+                assert!(!manager.rules["REJECT"][category].contains(&rule), "{rule}");
+            }
+        }
+    }
+    for rule in [
+        "DOMAIN-SUFFIX,doubleclick.net",
+        "DOMAIN-SUFFIX,log.geetest.com",
+        "DOMAIN,onepass.geetest.com.attacker.test",
+    ] {
+        manager.add_rule_line(rule, "REJECT", "Advertising");
+        assert!(
+            manager.rules["REJECT"]["Advertising"].contains(rule),
+            "{rule}"
+        );
+    }
+}
+
+#[test]
 fn pinterest_pin_widgets_remain_available_without_allowing_tracking_siblings() {
     let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut manager = AdBlockManager::new(repo_root);

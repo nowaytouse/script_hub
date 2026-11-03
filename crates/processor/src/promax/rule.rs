@@ -317,18 +317,32 @@ fn validate_domain(payload: &str, wildcard: bool) -> Result<(), RuleError> {
     let valid = !payload.contains("://")
         && !payload.contains('/')
         && !payload.chars().any(char::is_whitespace)
-        && payload.split('.').all(|label| {
-            !label.is_empty()
-                && label.chars().all(|character| {
-                    character.is_ascii_alphanumeric()
-                        || character == '-'
-                        || character == '_'
-                        || wildcard && matches!(character, '*' | '?')
-                })
-        });
+        && payload
+            .split('.')
+            .all(|label| valid_domain_label(label, wildcard));
     valid
         .then_some(())
         .ok_or_else(|| RuleError("invalid domain payload".to_string()))
+}
+
+fn valid_domain_label(label: &str, wildcard: bool) -> bool {
+    let mut class = None;
+    for character in label.chars() {
+        match character {
+            '[' if wildcard && class.is_none() => class = Some(0usize),
+            ']' if wildcard && class.is_some_and(|count| count > 0) => class = None,
+            _ if character.is_ascii_alphanumeric()
+                || matches!(character, '-' | '_')
+                || wildcard && matches!(character, '*' | '?') =>
+            {
+                if let Some(count) = &mut class {
+                    *count += 1;
+                }
+            }
+            _ => return false,
+        }
+    }
+    !label.is_empty() && class.is_none()
 }
 
 fn validate_ip_network(kind: RuleKind, payload: &str) -> Result<(), RuleError> {

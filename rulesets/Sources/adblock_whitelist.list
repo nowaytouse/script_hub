@@ -78,6 +78,7 @@ DOMAIN,ss3.bdstatic.com
 # ============ 🔥 Apple 核心服务 (仅保护关键功能) ============
 # 注意: 不要添加 apple.com 整体，会让广告规则失效
 DOMAIN,account.apple.com
+DOMAIN-SUFFIX,apple
 DOMAIN,appleid.cdn-apple.com
 DOMAIN,idmsa.apple.com
 DOMAIN,gsa.apple.com
@@ -379,6 +380,11 @@ DOMAIN,imap.gmail.com
 DOMAIN,fpinit.itunes.apple.com
 DOMAIN,xp.itunes-apple.com.akadns.net
 DOMAIN,mobile.events.data.microsoft.com
+
+# CAPTCHA dependencies: https://docs.hcaptcha.com/#content-security-policy-settings
+DOMAIN-SUFFIX,hcaptcha.com
+# https://docs.geetest.com/onelogin/deploy/server/
+DOMAIN,onepass.geetest.com
 
 # ============ GitHub 全局保护 ============
 # 防止上游规则误杀 GitHub 导致脚本更新失败

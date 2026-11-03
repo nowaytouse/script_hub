@@ -149,6 +149,7 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     for directory in [
         root.join("rulesets/AdBlock"),
         root.join("rulesets/RULE-SET"),
+        root.join("rulesets/Sources/dns/mapping"),
     ] {
         if !directory.is_dir() {
             continue;
@@ -163,6 +164,11 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
             };
             let path = entry.path();
             if !path.is_file() || path.extension().and_then(|value| value.to_str()) != Some("list")
+            {
+                continue;
+            }
+            if directory.ends_with("rulesets/Sources/dns/mapping")
+                && rust_processor::srs_generator::is_input_manifest(path)
             {
                 continue;
             }
@@ -207,6 +213,7 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         eprintln!("[ERROR] ruleset category contamination: {message}");
     }
     errors += boundary_errors.len();
+    artifacts += rust_processor::mihomo_generator::validate_generated(root)?;
     Ok((artifacts, errors))
 }
 

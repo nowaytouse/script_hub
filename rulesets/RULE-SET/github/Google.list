@@ -1,19 +1,12 @@
 # Ruleset: Google
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 913
+# Rules: 903
 
 DOMAIN-SUFFIX,gle
-DOMAIN-SUFFIX,dclk
-DOMAIN-SUFFIX,gbiz
 DOMAIN-SUFFIX,goog
-DOMAIN-SUFFIX,guge
-DOMAIN-SUFFIX,nexus
 DOMAIN-SUFFIX,chrome
 DOMAIN-SUFFIX,android
-DOMAIN-SUFFIX,hangout
-DOMAIN-SUFFIX,xn--flw351e
-DOMAIN-SUFFIX,xn--qcka1pmc
 DOMAIN-SUFFIX,g.cn
 DOMAIN-SUFFIX,g.co
 DOMAIN-SUFFIX,c.gle
@@ -70,7 +63,6 @@ DOMAIN-SUFFIX,waze.com
 DOMAIN-SUFFIX,youtu.be
 DOMAIN-SUFFIX,1e100.net
 DOMAIN-SUFFIX,1ucrs.com
-DOMAIN-SUFFIX,ai.studio
 DOMAIN-SUFFIX,blink.org
 DOMAIN-SUFFIX,coova.com
 DOMAIN-SUFFIX,coova.net
@@ -677,6 +669,7 @@ DOMAIN-SUFFIX,google.co.nz
 DOMAIN-SUFFIX,google.co.th
 DOMAIN-SUFFIX,google.co.tz
 DOMAIN-SUFFIX,google.co.ug
+DOMAIN-SUFFIX,google.co.uk
 DOMAIN-SUFFIX,google.co.uz
 DOMAIN-SUFFIX,google.co.ve
 DOMAIN-SUFFIX,google.co.vi
@@ -759,6 +752,7 @@ DOMAIN-SUFFIX,youtube.co.nz
 DOMAIN-SUFFIX,youtube.co.th
 DOMAIN-SUFFIX,youtube.co.tz
 DOMAIN-SUFFIX,youtube.co.ug
+DOMAIN-SUFFIX,youtube.co.uk
 DOMAIN-SUFFIX,youtube.co.ve
 DOMAIN-SUFFIX,youtube.co.za
 DOMAIN-SUFFIX,youtube.co.zw
@@ -771,6 +765,7 @@ DOMAIN-SUFFIX,blogspot.co.id
 DOMAIN-SUFFIX,blogspot.co.il
 DOMAIN-SUFFIX,blogspot.co.ke
 DOMAIN-SUFFIX,blogspot.co.nz
+DOMAIN-SUFFIX,blogspot.co.uk
 DOMAIN-SUFFIX,blogspot.co.za
 DOMAIN-SUFFIX,youtube.com.ar
 DOMAIN-SUFFIX,youtube.com.au
@@ -842,6 +837,7 @@ DOMAIN-SUFFIX,docs.google.com
 DOMAIN-SUFFIX,youtubego.co.id
 DOMAIN-SUFFIX,youtubego.co.in
 DOMAIN-SUFFIX,drive.google.com
+DOMAIN-SUFFIX,howtogetmo.co.uk
 DOMAIN-SUFFIX,womenwill.com.br
 DOMAIN-SUFFIX,youtubego.com.br
 DOMAIN,fonts.gstatic.com
@@ -850,10 +846,12 @@ DOMAIN-SUFFIX,beacons3.gvt2.com
 DOMAIN-SUFFIX,fcmatch.google.com
 DOMAIN,checkin.gstatic.com
 DOMAIN,clients1.google.com
+DOMAIN-SUFFIX,googlecompare.co.uk
 DOMAIN,analytics.google.com
 DOMAIN,fonts.googleapis.com
 DOMAIN,voice.telephony.goog
 DOMAIN-SUFFIX,adservice.google.com
+DOMAIN-SUFFIX,thinkquarterly.co.uk
 DOMAIN,alt1-mtalk.google.com
 DOMAIN,alt2-mtalk.google.com
 DOMAIN,alt3-mtalk.google.com
@@ -870,19 +868,15 @@ DOMAIN,fontfiles.googleapis.com
 DOMAIN-SUFFIX,analytics-alv.google.com
 DOMAIN-SUFFIX,prod-databe.floonet.goog
 DOMAIN-SUFFIX,clickserver.googleads.com
-DOMAIN,antigravity.googleapis.com
 DOMAIN-SUFFIX,prod-controlbe.floonet.goog
 DOMAIN-SUFFIX,staging-databe.floonet.goog
-DOMAIN,antigravity-pa.googleapis.com
 DOMAIN,clientservices.googleapis.com
 DOMAIN,connectivitycheck.gstatic.com
 DOMAIN,firebaselogging.googleapis.com
 DOMAIN,redirector.xn--ngstr-lra8j.com
 DOMAIN-SUFFIX,staging-controlbe.floonet.goog
-DOMAIN,cloudaicompanion.googleapis.com
 DOMAIN,firebaseappcheck.googleapis.com
 DOMAIN,cache-management-prod.google.com
-DOMAIN,appsgenaiserver-pa.googleapis.com
 DOMAIN,firebaseapptesters.googleapis.com
 DOMAIN,firebaselogging-pa.googleapis.com
 DOMAIN,firebasedynamiclinks.googleapis.com
@@ -902,11 +896,7 @@ DOMAIN,download.mlcc.google.com
 DOMAIN-SUFFIX,prod.databe.floonet.goog
 DOMAIN-SUFFIX,staging.databe.floonet.goog
 DOMAIN,download.tensorflow.google.com
-DOMAIN,geminiweb-pa.clients.google.com
-DOMAIN,geminiweb-pa.clients6.google.com
 DOMAIN,redirector.c.youtubeeducation.com
-DOMAIN,appsgenaiserver-pa.clients.google.com
-DOMAIN,appsgenaiserver-pa.clients6.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,c.android.clients.google.com
 DOMAIN-KEYWORD,appspot

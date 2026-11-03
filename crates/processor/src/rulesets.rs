@@ -15,10 +15,11 @@ static VALID_IPV4_CIDR: Lazy<Regex> =
 static VALID_IPV6_CIDR: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^([0-9a-fA-F:]+)(/\d{1,3})?$").unwrap());
 
-static M1: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\(\^\|\.\)(.+?)-\.\+\.").unwrap());
-static M2: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(?:\(\^\|\.\)|\^)([a-zA-Z0-9][-a-zA-Z0-9.]*)$").unwrap());
-static M3: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\.\+(.+)$").unwrap());
+// Existing service-owned brand zones must not be confused with open registration
+// suffixes such as com/co.uk. Ownership stays with their dedicated categories.
+const SERVICE_BRAND_SUFFIXES: &[&str] = &[
+    "apple", "goog", "gle", "android", "chrome", "bing", "azure", "office", "windows", "skype",
+];
 
 fn is_invalid_domain_regex(payload: &str) -> bool {
     let val = payload.trim();
@@ -41,28 +42,37 @@ fn is_invalid_url_regex(payload: &str) -> bool {
 }
 
 fn convert_domain_regex_for_surge(rule: &str) -> Option<String> {
-    if !rule.to_uppercase().starts_with("DOMAIN-REGEX,") {
+    let payload = rule.strip_prefix("DOMAIN-REGEX,")?.strip_suffix('$')?;
+    let (kind, domain) = if let Some(domain) = payload.strip_prefix(r"(^|\.)") {
+        ("DOMAIN-SUFFIX", domain)
+    } else {
+        ("DOMAIN", payload.strip_prefix('^')?)
+    };
+    let labels: Vec<_> = domain.split(r"\.").collect();
+    if labels.len() < 2
+        || labels.iter().any(|label| {
+            label.is_empty()
+                || label.starts_with('-')
+                || label.ends_with('-')
+                || !label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        })
+    {
         return None;
     }
-    let parts: Vec<&str> = rule.splitn(2, ',').collect();
-    let payload = parts[1].trim().trim_matches('"');
-    if is_invalid_domain_regex(payload) {
-        return None;
+    Some(format!("{kind},{}", labels.join(".")))
+}
+
+fn unrepresentable_domain_regex(line: &str) -> bool {
+    let line = line.trim();
+    let line = line
+        .strip_prefix('-')
+        .map_or(line, |line| line.trim().trim_matches(['\'', '"']));
+    if !line.to_ascii_uppercase().starts_with("DOMAIN-REGEX,") {
+        return false;
     }
-    let literal = payload.replace("\\.", ".");
-    if let Some(caps) = M1.captures(&literal) {
-        return Some(format!("DOMAIN-KEYWORD,{}", &caps[1]));
-    }
-    if let Some(caps) = M2.captures(&literal) {
-        return Some(format!("DOMAIN-KEYWORD,{}", &caps[1]));
-    }
-    if let Some(caps) = M3.captures(&literal) {
-        let kw = &caps[1];
-        if kw.len() >= 3 {
-            return Some(format!("DOMAIN-KEYWORD,{}", kw));
-        }
-    }
-    None
+    normalize_rule(line).is_none_or(|rule| convert_domain_regex_for_surge(&rule).is_none())
 }
 
 fn validate_rule_value(rule_type: &str, value: &str) -> bool {
@@ -168,6 +178,19 @@ pub(crate) fn normalize_rule(line: &str) -> Option<String> {
         return None;
     }
 
+    if rule_type == "DOMAIN-SUFFIX" {
+        let domain = rule.payload.trim_end_matches('.').to_ascii_lowercase();
+        // RFC 8375 reserves this zone for local home-network names, not registrants.
+        if domain != "home.arpa"
+            && !SERVICE_BRAND_SUFFIXES.contains(&domain.as_str())
+            && psl::suffix(domain.as_bytes()).is_some_and(|suffix| {
+                suffix.typ() == Some(psl::Type::Icann) && suffix.as_bytes() == domain.as_bytes()
+            })
+        {
+            return None;
+        }
+    }
+
     if !validate_rule_value(rule_type, &rule.payload) {
         return None;
     }
@@ -236,7 +259,7 @@ fn clean_rule(
     let mut normalized = normalize_rule(&r)?;
 
     if normalized.starts_with("DOMAIN-REGEX,") {
-        normalized = convert_domain_regex_for_surge(&normalized)?;
+        normalized = normalize_rule(&convert_domain_regex_for_surge(&normalized)?)?;
     }
 
     if !skip_conflict {
@@ -325,11 +348,13 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
     } = input;
 
     let mut all_rules = HashSet::new();
+    let mut unrepresentable_regex_count = 0usize;
 
     for path in local_paths {
         let content = fs::read_to_string(path)
             .map_err(|error| format!("failed to read {}: {error}", path.display()))?;
         for line in content.lines() {
+            unrepresentable_regex_count += usize::from(unrepresentable_domain_regex(line));
             if let Some(cleaned) = clean_rule(line, name, conflict_domains, skip_conflict) {
                 all_rules.insert(cleaned);
             }
@@ -337,9 +362,16 @@ pub fn process_ruleset(input: RulesetInput<'_>) -> Result<(), String> {
     }
 
     for line in remote_content.lines() {
+        unrepresentable_regex_count += usize::from(unrepresentable_domain_regex(line));
         if let Some(cleaned) = clean_rule(line, name, conflict_domains, skip_conflict) {
             all_rules.insert(cleaned);
         }
+    }
+
+    if unrepresentable_regex_count > 0 {
+        eprintln!(
+            "[WARN] Ruleset {name}: {unrepresentable_regex_count} domain regex rule(s) cannot be represented exactly in Surge and were omitted; sources were not modified"
+        );
     }
 
     if all_rules.is_empty() {
@@ -421,6 +453,91 @@ mod tests {
     use super::{is_ruleset_watermark, normalize_rule, strip_inline_comment};
     use std::fs;
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    #[test]
+    fn rejects_only_icann_public_suffix_domain_suffix_rules() {
+        for suffix in ["com", "cn", "co.uk", "COM.CN"] {
+            assert!(
+                normalize_rule(&format!("DOMAIN-SUFFIX,{suffix}")).is_none(),
+                "{suffix}"
+            );
+        }
+        for suffix in [
+            "example.co.uk",
+            "cloudfront.net",
+            "github.io",
+            "localdomain",
+            "home.arpa",
+            "apple",
+            "goog",
+            "azure",
+        ] {
+            assert!(
+                normalize_rule(&format!("DOMAIN-SUFFIX,{suffix}")).is_some(),
+                "{suffix}"
+            );
+        }
+        assert_eq!(
+            normalize_rule("DOMAIN-KEYWORD,com").as_deref(),
+            Some("DOMAIN-KEYWORD,com")
+        );
+        assert!(super::clean_rule(r"DOMAIN-REGEX,(^|\.)co\.uk$", "fixture", &[], false).is_none());
+    }
+
+    #[test]
+    fn domain_regex_conversion_never_broadens_or_guesses() {
+        for (source, expected) in [
+            (r"DOMAIN-REGEX,^example\.com$", "DOMAIN,example.com"),
+            (
+                r"DOMAIN-REGEX,(^|\.)example\.com$",
+                "DOMAIN-SUFFIX,example.com",
+            ),
+        ] {
+            assert_eq!(
+                super::clean_rule(source, "fixture", &[], false).as_deref(),
+                Some(expected)
+            );
+            assert!(
+                !"notexample.com".ends_with(&format!(".{}", expected.split_once(',').unwrap().1))
+            );
+        }
+        let complex = r"DOMAIN-REGEX,^ads[0-9]+\.example\.com$";
+        assert!(super::clean_rule(complex, "fixture", &[], false).is_none());
+        assert!(super::unrepresentable_domain_regex(complex));
+    }
+
+    #[test]
+    fn only_unrepresentable_regex_preserves_existing_ruleset() {
+        let dir = output_dir();
+        let path = dir.join("Fixture.list");
+        fs::write(&path, "existing output\n").unwrap();
+        let result = process("Fixture", &dir, r"DOMAIN-REGEX,^ads[0-9]+\.example\.com$");
+        assert!(result.is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), "existing output\n");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn mixed_regex_rules_publish_only_exact_conversions() {
+        let dir = output_dir();
+        process(
+            "Fixture",
+            &dir,
+            "DOMAIN-REGEX,^example\\.com$\nDOMAIN-REGEX,(^|\\.)example\\.org$\nDOMAIN-REGEX,^ads[0-9]+\\.example\\.com$\n",
+        )
+        .unwrap();
+        let output = fs::read_to_string(dir.join("Fixture.list")).unwrap();
+        assert!(output.lines().any(|line| line == "DOMAIN,example.com"));
+        assert!(
+            output
+                .lines()
+                .any(|line| line == "DOMAIN-SUFFIX,example.org")
+        );
+        assert!(!output.contains("DOMAIN-REGEX"));
+        assert!(!output.contains("DOMAIN-KEYWORD"));
+        fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn url_diagnostics_remove_credentials_queries_and_fragments() {
@@ -439,16 +556,19 @@ mod tests {
     }
 
     fn output_dir() -> PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "script-hub-ruleset-test-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        fs::create_dir(&path).unwrap();
-        path
+        static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+        loop {
+            let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "script-hub-ruleset-test-{}-{id}",
+                std::process::id()
+            ));
+            match fs::create_dir(&path) {
+                Ok(()) => return path,
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => panic!("failed to create test directory: {error}"),
+            }
+        }
     }
 
     fn process(

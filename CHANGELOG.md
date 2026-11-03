@@ -2,6 +2,20 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.11.0 · 2026-11-03
+
+- Add native, policy-neutral Mihomo providers with explicit subset counts, deterministic publication and source/output consistency checks.
+- Expand advertising, domestic, international and AI sources; retain specialized category ownership and reject ICANN public-suffix catch-alls.
+- Reclassify known international speed-test endpoints without losing fallback coverage, and preserve local `home.arpa` names.
+- Protect Apple's .apple brand zone, including Safe Browsing proxy/token endpoints, from advertising and threat-feed false positives.
+- Protect documented hCaptcha dependencies and the exact GeeTest OneLogin endpoint without exempting unrelated GeeTest hosts.
+- Replace widened regex conversions with provably equivalent matches and explicit omissions; validate module policies and Surge update intervals.
+- Preserve alternative matcher semantics and quoted values in sing-box exports; emit current-version SRS and keep unsupported conversions explicit.
+- Mark option-adapted SRS files `_supported` as well; retire the misleading unmarked filenames without removing their supported base matchers.
+- Regenerate client exports without network refresh using `--exports-only`.
+- Correct wildcard entries mislabeled as exact domains in DNS mapping sources and include those lists in publication validation.
+- Document supported clients outside the README: Shadowrocket, current Surge, Mihomo and current sing-box.
+
 ## 0.10.0 · 2026-11-03
 
 - Give system icons a balanced transparent safe area, render each size from the original SVG, and embed multiresolution Windows EXE icons without changing the in-app mark.

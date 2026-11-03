@@ -123,9 +123,14 @@ fn validate_module(content: &str, surge_dialect: bool) -> Vec<ValidationError> {
             Some("General") => {
                 validate_general(line_number, line, &mut seen_general_keys, &mut errors)
             }
-            Some("Rule") => {
-                validate_module_rule(line_number, line, strict_promax, true, &mut errors)
-            }
+            Some("Rule") => validate_module_rule(
+                line_number,
+                line,
+                strict_promax,
+                true,
+                surge_dialect,
+                &mut errors,
+            ),
             Some("MITM") => validate_mitm(line_number, line, &mut errors),
             Some("Script") => {
                 validate_surge_script(line_number, line, &mut errors);
@@ -249,7 +254,7 @@ pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationE
             let mut seen = HashSet::new();
             validate_general(1, line, &mut seen, &mut errors);
         }
-        "Rule" => validate_module_rule(1, line, false, false, &mut errors),
+        "Rule" => validate_module_rule(1, line, false, false, true, &mut errors),
         "MITM" => validate_mitm(1, line, &mut errors),
         "Script" => validate_surge_script(1, line, &mut errors),
         "URL Rewrite" | "Body Rewrite" | "Header Rewrite" => {
@@ -470,12 +475,20 @@ fn validate_module_rule(
     line: &str,
     strict_promax: bool,
     require_no_resolve: bool,
+    surge_dialect: bool,
     errors: &mut Vec<ValidationError>,
 ) {
     let cleaned = crate::strip_inline_comment(line);
     let line = cleaned.trim();
     if line.to_ascii_uppercase().starts_with("RULE-SET,") {
-        validate_rule_set(line_number, line, strict_promax, require_no_resolve, errors);
+        validate_rule_set(
+            line_number,
+            line,
+            strict_promax,
+            require_no_resolve,
+            surge_dialect,
+            errors,
+        );
         return;
     }
     if ["AND,", "OR,", "NOT,"]
@@ -567,6 +580,7 @@ fn validate_rule_set(
     line: &str,
     strict_promax: bool,
     require_no_resolve: bool,
+    surge_dialect: bool,
     errors: &mut Vec<ValidationError>,
 ) {
     let fields = match split_fields(line) {
@@ -576,7 +590,7 @@ fn validate_rule_set(
             return;
         }
     };
-    if fields.len() < 3 || fields[1].trim().is_empty() {
+    if fields.len() < 3 || fields[1].trim().is_empty() || fields[2].trim().is_empty() {
         errors.push(error(
             line_number,
             "invalid-rule-set",
@@ -611,13 +625,26 @@ fn validate_rule_set(
     }
     for option in &fields[3..] {
         let option = option.to_ascii_uppercase();
+        if surge_dialect && option == "PRE-MATCHING" && !is_internal_reject_policy(&policy) {
+            errors.push(error(
+                line_number,
+                "invalid-rule-option",
+                "pre-matching requires a REJECT policy",
+            ));
+        }
         let valid = matches!(
             option.as_str(),
             "NO-RESOLVE" | "EXTENDED-MATCHING" | "PRE-MATCHING"
         ) || option
             .strip_prefix("UPDATE-INTERVAL=")
-            .and_then(|value| value.parse::<u32>().ok())
-            .is_some_and(|value| value > 0 && value <= 31_536_000);
+            .and_then(|value| value.parse::<i64>().ok())
+            .is_some_and(|value| {
+                if surge_dialect {
+                    value != 0
+                } else {
+                    value > 0 && value <= 31_536_000
+                }
+            });
         if !valid {
             errors.push(error(
                 line_number,
@@ -1133,6 +1160,49 @@ hostname = good.example, https://bad.example
 
         assert_eq!(errors.len(), 1);
         assert_eq!((errors[0].line, errors[0].code), (3, "invalid-rule-option"));
+    }
+
+    #[test]
+    fn rule_sets_require_policy_and_reject_policy_for_pre_matching() {
+        for rule in [
+            "RULE-SET,https://example.test/ads.list,",
+            "RULE-SET,https://example.test/ads.list,DIRECT,pre-matching",
+        ] {
+            let module = format!("#!name=fixture\n[Rule]\n{rule}\n");
+            assert!(!validate_surge_module(&module).is_empty(), "{rule}");
+        }
+        for policy in ["REJECT", "REJECT-DROP", "REJECT-NO-DROP"] {
+            let module = format!(
+                "#!name=fixture\n[Rule]\nRULE-SET,https://example.test/ads.list,{policy},pre-matching\n"
+            );
+            assert!(validate_surge_module(&module).is_empty(), "{policy}");
+        }
+        let module = "#!name=fixture\n[Rule]\nRULE-SET,https://example.test/ads.list,My Policy\n";
+        assert!(validate_surge_module(module).is_empty());
+        let shadowrocket =
+            "#!name=fixture\n[Rule]\nRULE-SET,https://example.test/ads.list,DIRECT,pre-matching\n";
+        assert!(validate_shadowrocket_module(shadowrocket).is_empty());
+    }
+
+    #[test]
+    fn rule_set_update_interval_accepts_negative_disable_and_positive_values() {
+        for interval in ["-1", "-60", "86400", "31536001"] {
+            let module = format!(
+                "#!name=fixture\n[Rule]\nRULE-SET,https://example.test/ads.list,DIRECT,update-interval={interval}\n"
+            );
+            assert!(validate_surge_module(&module).is_empty(), "{interval}");
+        }
+        for interval in ["0", "invalid"] {
+            let module = format!(
+                "#!name=fixture\n[Rule]\nRULE-SET,https://example.test/ads.list,DIRECT,update-interval={interval}\n"
+            );
+            assert!(
+                validate_surge_module(&module)
+                    .iter()
+                    .any(|error| error.code == "invalid-rule-option"),
+                "{interval}"
+            );
+        }
     }
 
     #[test]

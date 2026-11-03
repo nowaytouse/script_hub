@@ -274,6 +274,7 @@ fn run(
     emit_stage(Stage::Gaming);
     rust_processor::general_update::split_gaming_rules(root)?;
     rust_processor::general_update::consolidate_rulesets(root)?;
+    rust_processor::general_update::enforce_category_boundaries(root)?;
     rust_processor::general_update::enforce_jp_ownership(root)?;
     rust_processor::general_update::split_published_rulesets(root)?;
     let retired = rust_processor::general_update::retire_ruleset_inputs(root)?;
@@ -343,6 +344,8 @@ fn run(
 
     if execute {
         emit_stage(Stage::Finalize);
+        let providers = rust_processor::mihomo_generator::run_generator(root)?;
+        println!("[INFO] synchronized {providers} policy-neutral Mihomo providers");
         discard_semantic_noop_changes(root)?;
         let status = Command::new("git")
             .args(["diff", "--check"])
@@ -364,6 +367,8 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut quick = false;
     let mut gaming_only = false;
     let mut adblock_only = false;
+    let mut exports_only = false;
+    let mut classify_only = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--root" => root = Some(arg_value(&mut args, "--root")),
@@ -372,9 +377,11 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--quick" => quick = true,
             "--gaming-only" => gaming_only = true,
             "--adblock-only" => adblock_only = true,
+            "--exports-only" => exports_only = true,
+            "--classify-only" => classify_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -385,8 +392,19 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         }
     }
 
-    if adblock_only && (quick || gaming_only) {
-        eprintln!("--adblock-only cannot be combined with --quick or --gaming-only");
+    if [
+        quick,
+        gaming_only,
+        adblock_only,
+        exports_only,
+        classify_only,
+    ]
+    .into_iter()
+    .filter(|enabled| *enabled)
+    .count()
+        > 1
+    {
+        eprintln!("update modes cannot be combined");
         return ExitCode::from(2);
     }
 
@@ -410,7 +428,34 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         None => None,
     };
 
-    let result = if gaming_only && !execute {
+    let result = if (exports_only || classify_only) && !execute {
+        println!("[INFO] dry run: client exports skipped");
+        Ok(())
+    } else if exports_only || classify_only {
+        (|| {
+            if classify_only {
+                rust_processor::general_update::enforce_category_boundaries(&root)?;
+                rust_processor::general_update::enforce_jp_ownership(&root)?;
+                rust_processor::general_update::split_published_rulesets(&root)?;
+                let version = rust_processor::publication_now()
+                    .format("%Y.%m.%d")
+                    .to_string();
+                rust_processor::firewall_sync::refresh_security_modules(&root, &version)?;
+                rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
+            }
+            let count = rust_processor::mihomo_generator::run_generator(&root)?;
+            println!("[INFO] synchronized {count} policy-neutral Mihomo providers");
+            if let Some(singbox) = &singbox
+                && !rust_processor::srs_generator::run_srs_generator(
+                    &root.to_string_lossy(),
+                    &singbox.to_string_lossy(),
+                )
+            {
+                return Err("SRS generation failed".to_string());
+            }
+            discard_semantic_noop_changes(&root)
+        })()
+    } else if gaming_only && !execute {
         println!("[INFO] dry run: game classification skipped");
         Ok(())
     } else if gaming_only {
@@ -419,6 +464,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         rust_processor::general_update::split_gaming_rules(&root).and_then(|()| {
             rust_processor::general_update::split_published_rulesets(&root)?;
             rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
+            rust_processor::mihomo_generator::run_generator(&root)?;
             if let Some(singbox) = &singbox {
                 emit_stage(Stage::Srs);
                 if !rust_processor::srs_generator::run_srs_generator(
@@ -451,6 +497,54 @@ mod tests {
     use std::io::Cursor;
     use std::process::{Command, ExitCode};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn local_modes_remain_non_mutating_without_execute() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-dry-local-{}", std::process::id()));
+        assert!(!root.exists());
+        for mode in ["--exports-only", "--classify-only"] {
+            assert_eq!(
+                run_cli(
+                    [
+                        "--root".into(),
+                        root.to_string_lossy().into_owned(),
+                        mode.into()
+                    ]
+                    .into_iter()
+                ),
+                ExitCode::SUCCESS
+            );
+            assert!(!root.exists());
+        }
+    }
+
+    #[test]
+    fn update_modes_cannot_silently_override_one_another() {
+        let modes = [
+            "--quick",
+            "--gaming-only",
+            "--adblock-only",
+            "--exports-only",
+            "--classify-only",
+        ];
+        for (index, first) in modes.iter().enumerate() {
+            for second in &modes[index + 1..] {
+                assert_eq!(
+                    run_cli(
+                        [
+                            "--root".into(),
+                            ".".into(),
+                            (*first).into(),
+                            (*second).into()
+                        ]
+                        .into_iter()
+                    ),
+                    ExitCode::from(2)
+                );
+            }
+        }
+    }
 
     #[test]
     fn reads_sequential_git_batch_responses_without_losing_blob_boundaries() {

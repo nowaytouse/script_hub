@@ -23,7 +23,8 @@ pub(crate) use rulesets::{generate_header, normalize_rule};
 // Preserve crate-root interfaces while implementations live with their owners.
 pub use app::{update_cli, validate_cli};
 pub use pipeline::{
-    firewall_sync, functional_update, general_update, merge_bundles, module_catalog, srs_generator,
+    firewall_sync, functional_update, general_update, merge_bundles, mihomo_generator,
+    module_catalog, srs_generator,
 };
 pub use runtime::job as gui_job;
 pub use transforms::{mitm_manager, smart_cleanup, url_rewriter};

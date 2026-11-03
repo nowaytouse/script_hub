@@ -190,6 +190,8 @@ pub const APPLE_CRITICAL_EXACT: &[&str] = &[
 
 /// Apple documents these domains as required for iCloud and related services.
 pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
+    // IANA delegates .apple to Apple; it includes Safe Browsing proxy/token services.
+    "apple",
     "apple-cloudkit.com",
     "apple-livephotoskit.com",
     "apzones.com",
@@ -1568,6 +1570,9 @@ mod tests {
         assert!(apple_host_pattern_is_critical("account.apple.com"));
         assert!(apple_host_pattern_is_critical("*.icloud.com"));
         assert!(apple_host_pattern_is_critical("*.apple.com"));
+        assert!(apple_host_pattern_is_critical("proxy.safebrowsing.apple"));
+        assert!(apple_host_pattern_is_critical("token.safebrowsing.apple"));
+        assert!(!apple_host_pattern_is_critical("apple.example"));
         assert!(!apple_host_pattern_is_critical("weatherkit.apple.com"));
     }
 

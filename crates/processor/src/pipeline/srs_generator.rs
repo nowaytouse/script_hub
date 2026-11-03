@@ -15,13 +15,16 @@ struct SingboxRuleset {
 
 impl SingboxRuleset {
     fn new(rules: HashMap<String, Vec<String>>) -> Self {
+        let mut groups: Vec<_> = rules.into_iter().collect();
+        groups.sort_by(|left, right| left.0.cmp(&right.0));
         Self {
-            version: 1,
-            rules: if rules.is_empty() {
-                Vec::new()
-            } else {
-                vec![rules]
-            },
+            version: 5,
+            // Independent list entries are alternatives. Combining process and
+            // destination fields in one headless rule would require BOTH.
+            rules: groups
+                .into_iter()
+                .map(|(kind, values)| HashMap::from([(kind, values)]))
+                .collect(),
         }
     }
 }
@@ -32,15 +35,30 @@ fn wildcard_to_regex(value: &str) -> String {
     format!("^{}$", r)
 }
 
+pub(crate) fn is_input_manifest(path: &Path) -> bool {
+    path.file_stem()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| name.ends_with("_sources") || name.ends_with("_manual"))
+}
+
 fn rule_fields(line: &str) -> Option<(&str, Cow<'_, str>)> {
-    let (kind, tail) = line.split_once(',')?;
-    let kind = kind.trim();
-    if kind == "DOMAIN-REGEX" {
-        let rule = crate::promax::rule::SurgeRule::parse(line).ok()?;
-        Some((kind, Cow::Owned(rule.payload)))
-    } else {
-        Some((kind, Cow::Borrowed(tail.split(',').next()?.trim())))
+    let rule = crate::promax::rule::SurgeRule::parse(line).ok()?;
+    let kind = rule.kind.as_str();
+    if rule.policy.is_some()
+        || rule.options.iter().any(|option| match option.as_str() {
+            "NO-RESOLVE" => !matches!(kind, "IP-CIDR" | "IP-CIDR6" | "IP-ASN" | "GEOIP"),
+            // These matching enhancements are configured by the referencing
+            // client's DNS/sniffing rules; the base hostname matcher remains.
+            "EXTENDED-MATCHING" => !matches!(
+                kind,
+                "DOMAIN" | "DOMAIN-SUFFIX" | "DOMAIN-KEYWORD" | "DOMAIN-WILDCARD" | "URL-REGEX"
+            ),
+            _ => true,
+        })
+    {
+        return None;
     }
+    Some((kind, Cow::Owned(rule.payload)))
 }
 
 fn files_equal(left: &Path, right: &Path) -> std::io::Result<bool> {
@@ -126,6 +144,9 @@ fn compile_srs(
         if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
+        if supported_only && !supports_srs_matchers(trimmed) {
+            continue;
+        }
         let Some((rtype, val)) = rule_fields(trimmed) else {
             eprintln!(
                 "[ERROR] Invalid SRS input rule in {}: {trimmed}",
@@ -166,9 +187,15 @@ fn compile_srs(
                 }
             }
             "PROCESS-NAME" => {
-                if let Some(set) = merged_rules.get_mut("process_name") {
-                    set.insert(val.to_string());
-                }
+                let field = if val.contains('/') || val.contains('\\') {
+                    "process_path"
+                } else {
+                    "process_name"
+                };
+                merged_rules
+                    .entry(field.to_string())
+                    .or_default()
+                    .insert(val.to_string());
             }
             _ => {}
         }
@@ -384,9 +411,7 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
                 if path
                     .extension()
                     .is_some_and(|extension| extension == "list")
-                    && !path
-                        .file_name()
-                        .is_some_and(|name| name.to_string_lossy().ends_with("_sources.list"))
+                    && !is_input_manifest(&path)
                 {
                     list_files.push(path);
                 }
@@ -430,7 +455,7 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
             let supported = supported_srs_lines(&content);
             if !supported.is_empty() {
                 println!(
-                    "[INFO] SRS supports only {} matchers from {}; exported with an explicit _supported suffix",
+                    "[INFO] SRS retains {} base matchers from {}; adapted options or unsupported matchers require the explicit _supported suffix",
                     supported.len(),
                     path.display()
                 );
@@ -480,17 +505,37 @@ fn supported_srs_lines(content: &str) -> Vec<&str> {
     content
         .lines()
         .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#') && supports_complete_srs(line))
+        .filter(|line| !line.is_empty() && !line.starts_with('#') && supports_srs_matchers(line))
         .collect()
 }
 
 fn supports_complete_srs(content: &str) -> bool {
+    supports_srs_matchers(content)
+        && content
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .all(|line| {
+                crate::promax::rule::SurgeRule::parse(line)
+                    .is_ok_and(|rule| rule.options.is_empty())
+            })
+}
+
+fn supports_srs_matchers(content: &str) -> bool {
     content
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .all(|line| {
-            rule_fields(line).is_some_and(|(kind, _)| {
+            rule_fields(line).is_some_and(|(kind, payload)| {
+                if kind == "DOMAIN-WILDCARD" && payload.contains(['[', ']']) {
+                    return false;
+                }
+                if kind == "PROCESS-NAME"
+                    && (payload.contains(['*', '?']) || payload.ends_with(['/', '\\']))
+                {
+                    return false;
+                }
                 matches!(
                     kind,
                     "DOMAIN"
@@ -512,6 +557,16 @@ mod tests {
     use std::collections::HashMap;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn source_manifests_and_manual_fragments_are_not_published_rulesets() {
+        for name in ["DNS_China_114_sources.list", "DNS_China_114_manual.list"] {
+            assert!(super::is_input_manifest(std::path::Path::new(name)));
+        }
+        assert!(!super::is_input_manifest(std::path::Path::new(
+            "DNS_China_114.list"
+        )));
+    }
 
     #[test]
     fn unsupported_surge_matchers_cannot_be_published_as_partial_srs() {
@@ -544,7 +599,7 @@ mod tests {
 
         assert_eq!(
             serde_json::to_value(ruleset).unwrap(),
-            serde_json::json!({"version": 1, "rules": []})
+            serde_json::json!({"version": 5, "rules": []})
         );
     }
 
@@ -557,15 +612,19 @@ mod tests {
 
         assert_eq!(
             serde_json::to_value(ruleset).unwrap(),
-            serde_json::json!({"version": 1, "rules": [{"domain": ["example.com"]}]})
+            serde_json::json!({"version": 5, "rules": [{"domain": ["example.com"]}]})
         );
     }
 
     #[test]
-    fn rule_fields_borrows_the_first_two_fields_without_changing_csv_semantics() {
+    fn rule_fields_rejects_policy_and_option_loss_before_extracting_payload() {
+        assert_eq!(rule_fields(" DOMAIN-SUFFIX , example.com , REJECT "), None);
+        assert!(rule_fields("DOMAIN,example.com,extended-matching").is_some());
+        assert!(rule_fields("IP-CIDR,300.0.0.0/8").is_none());
+        assert!(rule_fields("IP-CIDR,192.0.2.0/24,no-resolve").is_some());
         assert_eq!(
-            rule_fields(" DOMAIN-SUFFIX , example.com , REJECT "),
-            Some(("DOMAIN-SUFFIX", std::borrow::Cow::Borrowed("example.com")))
+            rule_fields("DOMAIN,\"example.com\"").unwrap().1,
+            "example.com"
         );
         assert_eq!(rule_fields("DOMAIN-SUFFIX"), None);
         assert_eq!(
@@ -575,6 +634,46 @@ mod tests {
                 std::borrow::Cow::Owned("^a{1,3}\\.test$".to_string())
             ))
         );
+    }
+
+    #[test]
+    fn independent_process_and_destination_matchers_remain_alternatives() {
+        let ruleset = SingboxRuleset::new(HashMap::from([
+            ("domain".to_string(), vec!["example.test".to_string()]),
+            ("process_name".to_string(), vec!["browser".to_string()]),
+        ]));
+        assert_eq!(
+            serde_json::to_value(ruleset).unwrap(),
+            serde_json::json!({"version": 5, "rules": [
+                {"domain": ["example.test"]}, {"process_name": ["browser"]}
+            ]})
+        );
+    }
+
+    #[test]
+    fn non_equivalent_wildcards_and_bundle_prefixes_are_not_compiled_in_subsets() {
+        let source = "DOMAIN,safe.example\nDOMAIN-WILDCARD,ad[0-9].example\nPROCESS-NAME,/Applications/DDNet.app/\nPROCESS-NAME,browser*\n";
+        assert!(source.lines().all(|line| rule_fields(line).is_some()));
+        assert!(!super::supports_complete_srs(source));
+        assert_eq!(
+            super::supported_srs_lines(source),
+            vec!["DOMAIN,safe.example"]
+        );
+        assert!(super::supports_complete_srs(
+            "PROCESS-NAME,browser\nPROCESS-NAME,/usr/bin/browser"
+        ));
+    }
+
+    #[test]
+    fn adapted_options_keep_base_matches_but_never_claim_complete_equivalence() {
+        for line in [
+            "DOMAIN,example.com,extended-matching",
+            "IP-CIDR,192.0.2.0/24,no-resolve",
+        ] {
+            assert!(!super::supports_complete_srs(line));
+            assert!(super::supports_srs_matchers(line));
+            assert_eq!(super::supported_srs_lines(line), vec![line]);
+        }
     }
 
     #[test]

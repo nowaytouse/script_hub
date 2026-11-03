@@ -11,4 +11,7 @@ cargo run --locked --bin validate -- --root .
 
 `--quick` still accesses the network. Updates do not automatically commit or push. On failure, inspect logs and the worktree; preserve recovery backups.
 
+`--exports-only --execute` regenerates client formats from the current lists without fetching upstreams; pass `--singbox` to include SRS.
+`--classify-only --execute` also reapplies local category boundaries before exporting.
+
 [Home](../README.md) · [Workflow](../.github/workflows/update_rulesets.yml)

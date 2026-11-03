@@ -687,12 +687,28 @@ fn validate_consolidated_rulesets(root: &Path) -> Result<Vec<String>, String> {
         return Ok(Vec::new());
     }
     let mut errors = Vec::new();
+    // GlobalProxy is a fallback: a domain removed because a published owner or
+    // AdBlock fully covers it still satisfies the consolidated input contract.
+    let proxy_specialized = proxy_specialized_boundary(&directory)?;
+    let proxy_apple = RuleBoundary::from_rules(&read_apple_ownership_rules(root)?);
+    let proxy_adblock = if root.join("rulesets/AdBlock").is_dir() {
+        read_adblock_boundary(root, None)?.0
+    } else {
+        RuleBoundary::default()
+    };
     for (target, inputs) in CONSOLIDATED_RULESETS {
         let output = read_rules(&directory.join(format!("{target}.list")))?;
         let output_ip = read_optional_rules(&directory.join(format!("{target}_ip.list")))?;
         let output_extra = read_optional_rules(&directory.join(format!("{target}_extra.list")))?;
         for input in *inputs {
-            if !read_rules(&input_path(root, input, ""))?.is_subset(&output)
+            let domains = read_rules(&input_path(root, input, ""))?;
+            let missing_domains = domains.difference(&output).any(|rule| {
+                *target != "GlobalProxy"
+                    || !(proxy_specialized.covers(rule)
+                        || proxy_apple.covers(rule)
+                        || proxy_adblock.covers(rule))
+            });
+            if missing_domains
                 || !read_optional_rules(&input_path(root, input, "_ip"))?.is_subset(&output_ip)
                 || !read_optional_rules(&input_path(root, input, "_extra"))?
                     .is_subset(&output_extra)
@@ -1162,6 +1178,103 @@ fn remove_covered(rules: &mut BTreeSet<String>, boundary: &RuleBoundary) -> usiz
     before - rules.len()
 }
 
+fn speedtest_boundary(root: &Path) -> Result<(RuleBoundary, RuleBoundary), String> {
+    fn read_lists(root: &Path, paths: &[&str]) -> Result<BTreeSet<String>, String> {
+        let mut rules = BTreeSet::new();
+        let mut loaded = 0;
+        for relative in paths {
+            let path = root.join(relative);
+            let content = match fs::read_to_string(&path) {
+                Ok(content) => content,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => return Err(format!("cannot read {}: {error}", path.display())),
+            };
+            loaded += 1;
+            for (index, line) in content.lines().enumerate() {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') || line == "payload:" {
+                    continue;
+                }
+                let value = line.strip_prefix("- ").ok_or_else(|| {
+                    format!("invalid speedtest rule at {}:{}", path.display(), index + 1)
+                })?;
+                let rule = crate::normalize_rule(value).ok_or_else(|| {
+                    format!("invalid speedtest rule at {}:{}", path.display(), index + 1)
+                })?;
+                rules.insert(rule);
+            }
+        }
+        if loaded == 0
+            && root
+                .join("rulesets/Sources/Links/Direct_sources.list")
+                .is_file()
+        {
+            return Err(format!(
+                "no readable speedtest source among {}",
+                paths.join(", ")
+            ));
+        }
+        Ok(rules)
+    }
+    let china = read_lists(
+        root,
+        &[
+            "rulesets/Sources/Links/Kelee_SpeedtestChina_local.yaml",
+            "rulesets/Sources/kelee/SpeedtestChina.yaml",
+        ],
+    )?;
+    let china = RuleBoundary::from_rules(&china);
+    let mut international = read_lists(
+        root,
+        &[
+            "rulesets/Sources/Links/Kelee_SpeedtestInternational_local.yaml",
+            "rulesets/Sources/kelee/SpeedtestInternational.yaml",
+        ],
+    )?;
+    remove_covered(&mut international, &china);
+    Ok((china, RuleBoundary::from_rules(&international)))
+}
+
+fn international_speedtest_count(
+    rules: &BTreeSet<String>,
+    china: &RuleBoundary,
+    international: &RuleBoundary,
+) -> usize {
+    rules
+        .iter()
+        .filter(|rule| international.covers(rule) && !china.covers(rule))
+        .count()
+}
+
+// Only published domain categories own proxy traffic here. Retired internal
+// inputs, IP/extra companions and broad fallback categories are not owners.
+fn proxy_specialized_boundary(directory: &Path) -> Result<RuleBoundary, String> {
+    let mut boundary = RuleBoundary::default();
+    for entry in fs::read_dir(directory).map_err(|error| error.to_string())? {
+        let path = entry.map_err(|error| error.to_string())?.path();
+        if path.extension().and_then(|value| value.to_str()) != Some("list") {
+            continue;
+        }
+        let Some(name) = path.file_stem().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if matches!(name, "Direct" | "GlobalProxy" | "Apple" | "AdBlock")
+            || INTERNAL_RULESETS.contains(&name)
+            || name.ends_with("_ip")
+            || name.ends_with("_extra")
+        {
+            continue;
+        }
+        for rule in read_rules(&path)? {
+            if rule.starts_with("DOMAIN,") || rule.starts_with("DOMAIN-SUFFIX,") {
+                boundary.insert(&rule);
+            }
+        }
+    }
+    boundary.finish();
+    Ok(boundary)
+}
+
 pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> {
     let directory = root.join("rulesets/RULE-SET");
     let direct = read_rules(&directory.join("Direct.list"))?;
@@ -1219,6 +1332,27 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     if direct_adblock > 0 {
         errors.push(format!(
             "Direct contains {direct_adblock} AdBlock-covered rule(s)"
+        ));
+    }
+    let (china_speedtest, international_speedtest) = speedtest_boundary(root)?;
+    let direct_international =
+        international_speedtest_count(&direct, &china_speedtest, &international_speedtest);
+    if direct_international > 0 {
+        errors.push(format!(
+            "Direct contains {direct_international} international-only speedtest rule(s)"
+        ));
+    }
+    let proxy_adblock = coverage_count(&proxy, &adblock);
+    if proxy_adblock > 0 {
+        errors.push(format!(
+            "GlobalProxy contains {proxy_adblock} AdBlock-covered rule(s)"
+        ));
+    }
+    let specialized = proxy_specialized_boundary(&directory)?;
+    let proxy_specialized = coverage_count(&proxy, &specialized);
+    if proxy_specialized > 0 {
+        errors.push(format!(
+            "GlobalProxy contains {proxy_specialized} specialized-category-covered rule(s)"
         ));
     }
     let mut requested_proxy_additions = BTreeSet::new();
@@ -1320,6 +1454,8 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
 
 pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, usize), String> {
     let directory = root.join("rulesets/RULE-SET");
+    // Read and validate the speedtest sources before any output can be changed.
+    let (china_speedtest, international_speedtest) = speedtest_boundary(root)?;
     let synced_apple_owner_domains = sync_apple_owner_domains(root)?;
     let direct_path = directory.join("Direct.list");
     let proxy_path = directory.join("GlobalProxy.list");
@@ -1363,10 +1499,33 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
     let (adblock, _) = read_adblock_boundary(root, None)?;
 
     let removed_from_direct = remove_covered(&mut direct, &adblock);
+    let migrated_speedtests: BTreeSet<String> = direct
+        .iter()
+        .filter(|rule| international_speedtest.covers(rule) && !china_speedtest.covers(rule))
+        .cloned()
+        .collect();
+    let removed_international_from_direct = migrated_speedtests.len();
+    direct.retain(|rule| !international_speedtest.covers(rule) || china_speedtest.covers(rule));
+    proxy.extend(migrated_speedtests.iter().cloned());
+    let removed_adblock_from_proxy = remove_covered(&mut proxy, &adblock);
+    let specialized = proxy_specialized_boundary(&directory)?;
+    let removed_specialized_from_proxy = remove_covered(&mut proxy, &specialized);
     let proxy_before = proxy.len();
     proxy.retain(|rule| !direct.contains(rule));
     let removed_direct_from_proxy = proxy_before - proxy.len();
-    let removed_from_proxy = removed_apple_from_proxy + removed_direct_from_proxy;
+    let removed_from_proxy = removed_apple_from_proxy
+        + removed_direct_from_proxy
+        + removed_adblock_from_proxy
+        + removed_specialized_from_proxy;
+    let proxy_boundary = RuleBoundary::from_rules(&proxy);
+    if migrated_speedtests.iter().any(|rule| {
+        !(proxy_boundary.covers(rule)
+            || specialized.covers(rule)
+            || adblock.covers(rule)
+            || apple.covers(rule))
+    }) {
+        return Err("international speedtest migration would leave an uncovered rule".to_string());
+    }
 
     let nsfw_path = input_path(root, "NSFW", "");
     let removed_from_nsfw = if nsfw_path.is_file() {
@@ -1418,7 +1577,7 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
         .collect::<Vec<_>>()
         .join(", ");
     println!(
-        "[INFO] category boundaries synced {synced_apple_owner_domains} curated Apple service domain(s) into Apple.list; removed {removed_from_direct} AdBlock-covered and {removed_apple_from_direct} Apple-owned rule(s) from Direct, {removed_apple_from_proxy} Apple-owned and {removed_direct_from_proxy} Direct overlap(s) from GlobalProxy, {removed_apple_from_cdn} Apple-owned rule(s) from CDN, {removed_apple_from_global_proxy_ip} Apple-owned IP rule(s) from GlobalProxy_ip, {removed_apple_from_cdn_ip} Apple-owned IP rule(s) from CDN_ip, and {removed_from_nsfw} shared-service overlap(s) from NSFW; other Apple ownership removals: [{}]",
+        "[INFO] category boundaries synced {synced_apple_owner_domains} curated Apple service domain(s) into Apple.list; removed {removed_from_direct} AdBlock-covered, {removed_international_from_direct} international-only speedtest and {removed_apple_from_direct} Apple-owned rule(s) from Direct, {removed_apple_from_proxy} Apple-owned, {removed_direct_from_proxy} Direct overlap(s), {removed_adblock_from_proxy} AdBlock-covered and {removed_specialized_from_proxy} specialized-category-covered rule(s) from GlobalProxy, {removed_apple_from_cdn} Apple-owned rule(s) from CDN, {removed_apple_from_global_proxy_ip} Apple-owned IP rule(s) from GlobalProxy_ip, {removed_apple_from_cdn_ip} Apple-owned IP rule(s) from CDN_ip, and {removed_from_nsfw} shared-service overlap(s) from NSFW; other Apple ownership removals: [{}]",
         category_counts,
     );
     Ok((
@@ -2227,6 +2386,192 @@ mod tests {
         assert_eq!(
             fs::read_to_string(rules.join("Gaming_Web.list")).unwrap(),
             web
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn international_speedtest_boundary_keeps_china_and_shared_parent() {
+        let root = consolidation_fixture();
+        fs::remove_file(root.join("rulesets/Sources/custom/JP_manual.list")).unwrap();
+        let rules = root.join("rulesets/RULE-SET");
+        let links = root.join("rulesets/Sources/Links");
+        fs::create_dir_all(&links).unwrap();
+        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+        fs::write(
+            links.join("Kelee_SpeedtestInternational_local.yaml"),
+            "# International\npayload:\n  - DOMAIN,foreign.test\n  - DOMAIN,shared.test\n  - DOMAIN,child.cdn.test\n",
+        ).unwrap();
+        fs::write(
+            links.join("Kelee_SpeedtestChina_local.yaml"),
+            "payload:\n  - DOMAIN,shared.test\n  - DOMAIN,china.test\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("Direct.list"),
+            "DOMAIN,foreign.test\nDOMAIN,shared.test\nDOMAIN,china.test\nDOMAIN-SUFFIX,cdn.test\n",
+        )
+        .unwrap();
+        let errors = validate_category_boundaries(&root).unwrap();
+        assert!(
+            errors
+                .iter()
+                .any(|error| error == "Direct contains 1 international-only speedtest rule(s)")
+        );
+        enforce_category_boundaries(&root).unwrap();
+        let direct = fs::read_to_string(rules.join("Direct.list")).unwrap();
+        assert!(!direct.contains("DOMAIN,foreign.test"));
+        assert!(direct.contains("DOMAIN,shared.test"));
+        assert!(direct.contains("DOMAIN,china.test"));
+        assert!(direct.contains("DOMAIN-SUFFIX,cdn.test"));
+        let proxy = fs::read_to_string(rules.join("GlobalProxy.list")).unwrap();
+        assert!(proxy.contains("DOMAIN,foreign.test"));
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn international_speedtest_migration_preserves_specialized_ownership() {
+        let root = consolidation_fixture();
+        fs::remove_file(root.join("rulesets/Sources/custom/JP_manual.list")).unwrap();
+        let rules = root.join("rulesets/RULE-SET");
+        let links = root.join("rulesets/Sources/Links");
+        fs::create_dir_all(&links).unwrap();
+        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+        fs::write(
+            links.join("Kelee_SpeedtestInternational_local.yaml"),
+            "payload:\n  - DOMAIN,foreign.test\n",
+        )
+        .unwrap();
+        fs::write(
+            links.join("Kelee_SpeedtestChina_local.yaml"),
+            "payload:\n  - DOMAIN,china.test\n",
+        )
+        .unwrap();
+        fs::write(
+            rules.join("Direct.list"),
+            "DOMAIN,foreign.test\nDOMAIN,china.test\n",
+        )
+        .unwrap();
+        let owner = "DOMAIN,foreign.test\n";
+        fs::write(rules.join("Google.list"), owner).unwrap();
+
+        enforce_category_boundaries(&root).unwrap();
+
+        assert!(
+            !read_rules(&rules.join("Direct.list"))
+                .unwrap()
+                .contains("DOMAIN,foreign.test")
+        );
+        assert!(
+            !read_rules(&rules.join("GlobalProxy.list"))
+                .unwrap()
+                .contains("DOMAIN,foreign.test")
+        );
+        assert_eq!(
+            fs::read_to_string(rules.join("Google.list")).unwrap(),
+            owner
+        );
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn maintained_speedtest_sources_parse() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (china, international) = super::speedtest_boundary(&root).unwrap();
+        assert!(china.covers("DOMAIN,cesu-hz.zjtelecom.com.cn"));
+        assert!(international.covers("DOMAIN,speedtest-london-east.vodafone.co.uk"));
+    }
+
+    #[test]
+    fn unavailable_speedtest_sources_leave_outputs_unchanged() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        let links = root.join("rulesets/Sources/Links");
+        fs::create_dir_all(&links).unwrap();
+        fs::write(links.join("Direct_sources.list"), "# fixture\n").unwrap();
+        fs::write(rules.join("Direct.list"), "DOMAIN,foreign.test\n").unwrap();
+        let direct = fs::read(rules.join("Direct.list")).unwrap();
+        let proxy = fs::read(rules.join("GlobalProxy.list")).unwrap();
+        let apple = fs::read(rules.join("Apple.list")).unwrap();
+        assert!(enforce_category_boundaries(&root).is_err());
+        assert_eq!(fs::read(rules.join("Direct.list")).unwrap(), direct);
+        assert_eq!(fs::read(rules.join("GlobalProxy.list")).unwrap(), proxy);
+        assert_eq!(fs::read(rules.join("Apple.list")).unwrap(), apple);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn global_proxy_removes_covered_specialized_rules_without_removing_parents() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        let adblock = root.join("rulesets/AdBlock");
+        fs::create_dir_all(&adblock).unwrap();
+        let cdn = fs::read_to_string(rules.join("CDN.list")).unwrap();
+        fs::write(
+            rules.join("CDN.list"),
+            format!("{cdn}\nDOMAIN,cdn-owner.ai.test\n"),
+        )
+        .unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        fs::write(rules.join("Direct.list"), "DOMAIN,direct.test\n").unwrap();
+        let apple = fs::read_to_string(rules.join("Apple.list")).unwrap();
+        fs::write(
+            rules.join("Apple.list"),
+            format!("{apple}\nDOMAIN-SUFFIX,apple.test\n"),
+        )
+        .unwrap();
+        let jp = fs::read_to_string(rules.join("JP.list")).unwrap();
+        fs::write(
+            rules.join("JP.list"),
+            format!("{jp}\nDOMAIN-SUFFIX,japan.test\nDOMAIN,asset.shared.test\n"),
+        )
+        .unwrap();
+        fs::write(rules.join("AI.list"), "DOMAIN-SUFFIX,ai.test\n").unwrap();
+        // A retired input must not independently claim a public fallback rule.
+        fs::write(rules.join("Gaming.list"), "DOMAIN,legacy.test\n").unwrap();
+        fs::write(adblock.join("Advertising.list"), "DOMAIN-SUFFIX,ads.test\n").unwrap();
+        let proxy = fs::read_to_string(rules.join("GlobalProxy.list")).unwrap();
+        fs::write(
+            rules.join("GlobalProxy.list"),
+            format!("{proxy}\nDOMAIN,store.apple.test\nDOMAIN,video.japan.test\nDOMAIN,api.ai.test\nDOMAIN,track.ads.test\nDOMAIN,legacy.test\nDOMAIN-SUFFIX,shared.test\n"),
+        )
+        .unwrap();
+
+        let errors = validate_category_boundaries(&root).unwrap();
+        assert!(errors.iter().any(|error| error.contains("AdBlock-covered")));
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.contains("specialized-category-covered"))
+        );
+        assert!(errors.iter().any(|error| error.contains("Apple-owned")));
+        assert_eq!(enforce_category_boundaries(&root).unwrap().2, 5);
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        let proxy = fs::read_to_string(rules.join("GlobalProxy.list")).unwrap();
+        for host in [
+            "store.apple.test",
+            "video.japan.test",
+            "api.ai.test",
+            "track.ads.test",
+            "cdn-owner.ai.test",
+        ] {
+            assert!(!proxy.contains(host), "unexpected proxy rule for {host}");
+        }
+        assert!(proxy.contains("DOMAIN,legacy.test"));
+        assert!(proxy.contains("DOMAIN-SUFFIX,shared.test"));
+        let cdn = fs::read_to_string(rules.join("CDN.list")).unwrap();
+        fs::write(
+            rules.join("CDN.list"),
+            format!("{cdn}\nDOMAIN,missing-unowned.test\n"),
+        )
+        .unwrap();
+        assert!(
+            validate_category_boundaries(&root)
+                .unwrap()
+                .iter()
+                .any(|error| error == "GlobalProxy is missing consolidated CDN rules")
         );
         fs::remove_dir_all(root).unwrap();
     }
