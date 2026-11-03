@@ -1238,6 +1238,12 @@ impl RelayState {
             .map(|(_, feedback)| feedback)
     }
 
+    pub(super) fn invalidate_surge_policy(&mut self) {
+        if let Some(result) = &mut self.result {
+            result.surge_policy = None;
+        }
+    }
+
     fn start_local_output(&mut self, format: OutputFormat, copy: bool) {
         if self.busy() || self.selecting_file() {
             return;
@@ -1733,7 +1739,10 @@ impl RelayState {
                     cancel,
                     progress,
                     generation: self.generation,
-                })
+                });
+                if mode == RunMode::Publish {
+                    self.invalidate_surge_policy();
+                }
             }
             Err(_) => self.notice = Some(Text::RelayWorkerStopped),
         }
@@ -2122,6 +2131,7 @@ mod tests {
             tested: true,
             source: None,
             created: None,
+            surge_policy: None,
             total: 2,
             processed: 2,
             excluded: 0,

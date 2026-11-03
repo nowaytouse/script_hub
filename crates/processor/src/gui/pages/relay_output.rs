@@ -421,6 +421,7 @@ fn gist(
         ui.label(tr(Text::RelayCreated));
         ui.hyperlink_to(tr(Text::RelayOutputGistTab), &created.url);
     }
+    show_surge_handoff(ui, state, language);
 
     ui.add_space(12.0);
     let open_schedule = ui.data_mut(|data| {
@@ -470,6 +471,33 @@ fn gist(
         schedule_section.header_response.request_focus();
     }
     publish.then_some(RunMode::Publish)
+}
+
+pub(super) fn show_surge_handoff(ui: &mut egui::Ui, state: &mut RelayState, language: Language) {
+    if state.demo_mode || state.publish_format != OutputFormat::Surge {
+        return;
+    }
+    let Ok(target) = GistFile::parse(state.output.trim(), &state.output_file) else {
+        return;
+    };
+    let Some(receipt) = state
+        .result
+        .as_ref()
+        .and_then(|result| result.surge_policy.as_ref())
+        .filter(|receipt| receipt.matches(&target))
+    else {
+        return;
+    };
+    ui.add_space(8.0);
+    ui.label(text(language, Text::RelaySurgeHandoffHelp));
+    if ui
+        .button(text(language, Text::RelaySurgeHandoffCopy))
+        .clicked()
+    {
+        ui.ctx()
+            .copy_text(std::mem::take(&mut *receipt.policy_group()));
+        state.notice = Some(Text::Copied);
+    }
 }
 
 fn select_gist_format(state: &mut RelayState, format: OutputFormat) {
@@ -702,6 +730,43 @@ mod tests {
         );
         let nodes = render(&mut state, Tab::Gist, false);
         assert!(nodes.contains(&(text(Language::En, Text::RelayExportCheck).to_owned(), false)));
+    }
+
+    #[test]
+    fn surge_handoff_only_appears_for_the_confirmed_gist_file_and_format() {
+        let mut state = prepared();
+        state.output.push_str("0123456789abcdef");
+        state.publish_format = OutputFormat::Surge;
+        let copy = text(Language::En, Text::RelaySurgeHandoffCopy).to_owned();
+        assert!(
+            !render(&mut state, Tab::Gist, false)
+                .iter()
+                .any(|(label, _)| label == &copy)
+        );
+
+        let target = GistFile::parse(&state.output, &state.output_file).unwrap();
+        state.result.as_mut().unwrap().surge_policy = Some(
+            crate::relay::gist::PolicyLink::from_raw(
+                "https://gist.githubusercontent.com/example/0123456789abcdef/raw/nodes.list",
+                &target,
+            )
+            .unwrap(),
+        );
+        assert!(render(&mut state, Tab::Gist, false).contains(&(copy.clone(), false)));
+
+        state.publish_format = OutputFormat::Original;
+        assert!(
+            !render(&mut state, Tab::Gist, true)
+                .iter()
+                .any(|(label, _)| label == &copy)
+        );
+        state.publish_format = OutputFormat::Surge;
+        state.output_file.push_str(".other");
+        assert!(
+            !render(&mut state, Tab::Gist, true)
+                .iter()
+                .any(|(label, _)| label == &copy)
+        );
     }
 
     #[test]

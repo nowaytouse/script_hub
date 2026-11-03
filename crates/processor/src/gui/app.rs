@@ -856,6 +856,7 @@ impl HubApp {
             let mut upload = prepared.clone();
             upload.published = false;
             upload.created = None;
+            upload.surge_policy = None;
             upload.unchanged = false;
             self.relay
                 .start_with(mode, &engine, move |config, token, _, cancel, progress| {
@@ -1200,6 +1201,7 @@ impl eframe::App for HubApp {
             && self.pending.is_none()
             && self.relay.workspace.confirm.is_none()
             && !self.relay.workspace.password_form;
+        let schedule_was_running = self.relay.schedule.running();
         if let Some(result) = self.relay.schedule.tick(ctx, schedule_admitted) {
             match result {
                 super::relay_schedule::Completed::Subscription(result) => {
@@ -1209,6 +1211,9 @@ impl eframe::App for HubApp {
                     self.relay.accept_scheduled_collection(*completed);
                 }
             }
+        }
+        if !schedule_was_running && self.relay.schedule.running() {
+            self.relay.invalidate_surge_policy();
         }
         self.relay.tick(ctx);
         self.poll_workspace_loader(ctx);

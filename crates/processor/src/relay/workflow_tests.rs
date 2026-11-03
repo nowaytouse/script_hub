@@ -654,8 +654,67 @@ fn prepared_upload_exports_the_selected_format_without_mutating_its_preview() {
     assert_eq!(prepared.content.as_str(), source);
     let uploaded = upload_with(&config, &fixture.client(), prepared, &cancel, &|_| {}).unwrap();
     assert!(uploaded.published && uploaded.created.is_some());
+    assert!(uploaded.surge_policy.is_none());
     assert_eq!(uploaded.content.as_str(), source);
     assert_eq!(fixture.request_methods(), ["POST", "GET"]);
+}
+
+#[test]
+fn surge_gist_receipt_follows_verified_creation_update_and_unchanged_output() {
+    let source = "A = socks5, a.example.invalid, 1080\n";
+    let mut config = config();
+    config.source.clear();
+    config.local_content = Some(Zeroizing::new(source.into()));
+    config.test_nodes = false;
+    config.output_format = export::OutputFormat::Surge;
+    for (output, replies, methods, changed) in [
+        (
+            "",
+            vec![created(document(source)), api(document(source))],
+            vec!["POST", "GET"],
+            true,
+        ),
+        (
+            ID,
+            vec![
+                api(document("old")),
+                api(document("old")),
+                api(document(source)),
+                api(document(source)),
+            ],
+            vec!["GET", "GET", "PATCH", "GET"],
+            true,
+        ),
+        (
+            ID,
+            vec![api(document(source)), api(document(source))],
+            vec!["GET", "GET"],
+            false,
+        ),
+    ] {
+        config.output = output.to_owned();
+        let fixture = Fixture::new(replies);
+        let cancel = AtomicBool::new(false);
+        let preview = run_with(
+            &config,
+            &fixture.client(),
+            RunMode::Preview,
+            &cancel,
+            &|_| {},
+            &check,
+        )
+        .unwrap();
+        assert!(preview.surge_policy.is_none());
+        let result = upload_with(&config, &fixture.client(), preview, &cancel, &|_| {}).unwrap();
+        assert_eq!(result.published, changed);
+        assert_eq!(result.unchanged, !changed);
+        assert_eq!(result.created.is_some(), output.is_empty());
+        assert!(result.surge_policy.unwrap().matches(&gist::GistFile {
+            id: ID.to_owned(),
+            filename: config.output_file.clone(),
+        }));
+        assert_eq!(fixture.request_methods(), methods);
+    }
 }
 
 #[test]

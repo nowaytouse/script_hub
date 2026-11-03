@@ -269,12 +269,13 @@ fn creation_posts_one_secret_gist_and_verifies_its_independent_target() {
         created(document("new nodes")),
         api(document("new nodes")),
     ]);
-    let receipt = fixture
+    let (receipt, link) = fixture
         .client()
         .create("nodes.txt", "new nodes", "relay", &AtomicBool::new(false))
         .unwrap();
     assert_eq!(receipt.id, ID);
     assert_eq!(receipt.url, format!("https://gist.github.com/{ID}"));
+    assert_policy_link(link);
     let requests = fixture.requests.lock().unwrap();
     assert!(requests[0].head.starts_with("POST /gists HTTP/1.1"));
     assert!(
@@ -288,6 +289,60 @@ fn creation_posts_one_secret_gist_and_verifies_its_independent_target() {
             "public": false, "description": "relay", "files": {"nodes.txt": {"content": "new nodes"}}
         })
     );
+}
+
+#[test]
+fn invalid_readback_raw_metadata_never_becomes_a_policy_link() {
+    for raw in [
+        Value::Null,
+        json!(format!(
+            "https://not-github.invalid/example/{ID}/raw/nodes.txt"
+        )),
+        json!(format!(
+            "https://gist.githubusercontent.com/example/{INPUT_ID}/raw/nodes.txt"
+        )),
+        json!(format!(
+            "https://gist.githubusercontent.com/example/{ID}/raw/other.txt"
+        )),
+        json!(format!(
+            "https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt?token=secret"
+        )),
+    ] {
+        let mut readback = document("nodes");
+        readback["files"]["nodes.txt"]["raw_url"] = raw;
+        let fixture = Fixture::new(vec![created(document("nodes")), api(readback)]);
+        let (created, link) = fixture
+            .client()
+            .create("nodes.txt", "nodes", "relay", &AtomicBool::new(false))
+            .unwrap();
+        assert_eq!(created.id, ID);
+        assert!(link.is_none());
+        assert_eq!(fixture.request_methods(), ["POST", "GET"]);
+    }
+}
+
+#[test]
+fn policy_link_encodes_profile_delimiters_and_keeps_receipt_out_of_debug() {
+    let file = GistFile {
+        id: ID.to_owned(),
+        filename: "nodes, group=\"other\";#% .txt".to_owned(),
+    };
+    let raw = format!(
+        "https://gist.githubusercontent.com/example/{ID}/raw/{REV}/nodes%2C%20group%3D%22other%22%3B%23%25%20.txt"
+    );
+    let link = PolicyLink::from_raw(&raw, &file).unwrap();
+    assert!(link.matches(&file));
+    assert!(!link.matches(&selected(ID)));
+    let line = link.policy_group();
+    assert_eq!(
+        line.as_str(),
+        format!(
+            "Script Hub = select, policy-path=https://gist.githubusercontent.com/example/{ID}/raw/nodes%2C%20group%3D%22other%22%3B%23%25%20.txt"
+        )
+    );
+    assert_eq!(line.lines().count(), 1);
+    assert!(!line.contains(REV) && !line.contains("Authorization") && !line.contains(TOKEN));
+    assert_eq!(format!("{link:?}"), "PolicyLink([redacted])");
 }
 
 #[test]
@@ -369,6 +424,18 @@ fn selected(id: &str) -> GistFile {
         id: id.to_owned(),
         filename: "nodes.txt".to_owned(),
     }
+}
+
+fn assert_policy_link(link: Option<PolicyLink>) {
+    let link = link.unwrap();
+    assert!(link.matches(&selected(ID)));
+    assert!(!link.matches(&selected(INPUT_ID)));
+    assert_eq!(
+        link.policy_group().as_str(),
+        format!(
+            "Script Hub = select, policy-path=https://gist.githubusercontent.com/example/{ID}/raw/nodes.txt"
+        )
+    );
 }
 
 fn expected(content: &str) -> Snapshot {
@@ -687,7 +754,10 @@ fn identical_output_is_a_no_op() {
         false,
         &AtomicBool::new(false),
     );
-    assert_eq!(result, Ok(PublishOutcome::Unchanged));
+    let PublishOutcome::Unchanged(link) = result.unwrap() else {
+        panic!("identical content must not be written");
+    };
+    assert_policy_link(link);
     assert_eq!(fixture.requests.lock().unwrap().len(), 1);
 }
 
@@ -710,7 +780,10 @@ fn publication_updates_only_selected_file_and_verifies_readback() {
         false,
         &AtomicBool::new(false),
     );
-    assert_eq!(result, Ok(PublishOutcome::Verified));
+    let PublishOutcome::Verified(link) = result.unwrap() else {
+        panic!("changed content must be verified after writing");
+    };
+    assert_policy_link(link);
     let requests = fixture.requests.lock().unwrap();
     assert_eq!(requests.len(), 3);
     assert!(requests[1].head.starts_with("PATCH "));
@@ -747,7 +820,7 @@ fn local_source_publication_still_validates_and_verifies_output() {
         Err(GistError::InvalidTarget)
     );
     assert!(fixture.request_methods().is_empty());
-    assert_eq!(
+    assert!(matches!(
         client.publish(
             None,
             &selected(ID),
@@ -757,8 +830,8 @@ fn local_source_publication_still_validates_and_verifies_output() {
             false,
             &cancel
         ),
-        Ok(PublishOutcome::Verified)
-    );
+        Ok(PublishOutcome::Verified(Some(_)))
+    ));
     assert_eq!(fixture.request_methods(), vec!["GET", "PATCH", "GET"]);
 }
 

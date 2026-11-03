@@ -89,6 +89,9 @@ impl HubApp {
                         if let Some(result) = state.schedule.result {
                             ui.label(format!("{}: {} · {} {} · {} {}", tr(Text::ScheduleLastConfirmed), tr(if result.unchanged { Text::RelayUnchanged } else { Text::RelayPublished }), tr(Text::RelayTotal), result.total, tr(Text::RelayRemoved), result.removed));
                         }
+                        if state.schedule.armed() {
+                            output::show_surge_handoff(ui, state, language);
+                        }
                         if schedule_status == ScheduleStatus::Paused {
                             ui.weak(tr(Text::ScheduleRecovery));
                             ui.horizontal_wrapped(|ui| {

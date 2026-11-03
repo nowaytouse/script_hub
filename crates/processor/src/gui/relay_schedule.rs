@@ -495,6 +495,7 @@ mod tests {
                         content: Zeroizing::new("fresh".into()),
                         tested: false,
                         created: None,
+                        surge_policy: None,
                         total: 1,
                         healthy: 0,
                         processed: 1,

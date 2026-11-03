@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.14.2 · 2026-11-03
+
+- Copy a Surge policy group after verified Gist publication.
+
 ## 0.14.1 · 2026-11-03
 
 - Separate local export from Gist format checks; reject broken node dependencies before publishing.

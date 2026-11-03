@@ -116,6 +116,7 @@ pub struct RelayResult {
     pub content: Zeroizing<String>,
     pub tested: bool,
     pub created: Option<gist::CreatedGist>,
+    pub surge_policy: Option<gist::PolicyLink>,
     pub total: usize,
     pub healthy: usize,
     pub processed: usize,
@@ -327,6 +328,7 @@ fn run_with(
             source,
             tested: false,
             created: None,
+            surge_policy: None,
             total,
             healthy: 0,
             processed: total,
@@ -476,6 +478,7 @@ fn run_with(
         source,
         tested: config.test_nodes,
         created: None,
+        surge_policy: None,
         total,
         healthy: retained_healthy,
         processed,
@@ -568,6 +571,7 @@ fn validate_prepared(config: &RelayConfig, result: &RelayResult) -> Result<(), R
     validation.validate(RunMode::Publish)?;
     if result.published
         || result.created.is_some()
+        || result.surge_policy.is_some()
         || result.unchanged
         || (result.tested && result.healthy == 0)
         || (result.source.is_some()
@@ -650,7 +654,7 @@ fn publish_result(
         checked: result.total,
         total: result.total,
     });
-    if let Some((output, expected)) = destination {
+    let link = if let Some((output, expected)) = destination {
         // An explicit target must actually receive its exported bytes, not an equivalent profile.
         let content = if converted.is_some() {
             payload
@@ -673,16 +677,25 @@ fn publish_result(
             )
             .map_err(RelayError::Gist)?
         {
-            gist::PublishOutcome::Unchanged => result.unchanged = true,
-            gist::PublishOutcome::Verified => result.published = true,
+            gist::PublishOutcome::Unchanged(link) => {
+                result.unchanged = true;
+                link
+            }
+            gist::PublishOutcome::Verified(link) => {
+                result.published = true;
+                link
+            }
         }
     } else {
-        result.created = Some(
-            client
-                .create(&config.output_file, payload, &config.title, cancel)
-                .map_err(RelayError::Gist)?,
-        );
+        let (created, link) = client
+            .create(&config.output_file, payload, &config.title, cancel)
+            .map_err(RelayError::Gist)?;
+        result.created = Some(created);
         result.published = true;
+        link
+    };
+    if config.output_format == export::OutputFormat::Surge {
+        result.surge_policy = link;
     }
     Ok(())
 }

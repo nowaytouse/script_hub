@@ -6,6 +6,7 @@ use std::{
     time::Duration,
 };
 
+use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, utf8_percent_encode};
 use serde::{Deserialize, Serialize};
 use url::Url;
 use zeroize::{Zeroize, Zeroizing};
@@ -13,6 +14,7 @@ use zeroize::{Zeroize, Zeroizing};
 const MAX_CONTENT_BYTES: usize = 4 * 1024 * 1024;
 const MAX_JSON_BYTES: usize = 8 * 1024 * 1024;
 const API_ORIGIN: &str = "https://api.github.com";
+const POLICY_FILENAME_ENCODE: &AsciiSet = &NON_ALPHANUMERIC.remove(b'.').remove(b'-').remove(b'_');
 
 #[derive(Clone)]
 pub struct GistFile {
@@ -115,6 +117,52 @@ pub struct CreatedGist {
     pub url: String,
 }
 
+/// A verified Gist file's revision-free address. Treat it like a subscription credential.
+#[derive(Clone, PartialEq, Eq)]
+pub struct PolicyLink {
+    id: Zeroizing<String>,
+    filename: Zeroizing<String>,
+    url: Zeroizing<String>,
+}
+
+impl PolicyLink {
+    pub(crate) fn from_raw(value: &str, expected: &GistFile) -> Option<Self> {
+        let raw = raw_target(&trusted_url(value).ok()?).ok()?;
+        if !raw.id.eq_ignore_ascii_case(&expected.id) || raw.filename != expected.filename {
+            return None;
+        }
+        // Encode configuration delimiters as well as URL delimiters. Drop the revision so
+        // the same policy-path follows updates to exactly this Gist file.
+        let encoded = utf8_percent_encode(&raw.filename, POLICY_FILENAME_ENCODE);
+        let url = format!(
+            "https://gist.githubusercontent.com/{}/{}/raw/{encoded}",
+            raw.owner, raw.id
+        );
+        Some(Self {
+            id: Zeroizing::new(raw.id),
+            filename: Zeroizing::new(raw.filename),
+            url: Zeroizing::new(url),
+        })
+    }
+
+    pub fn matches(&self, file: &GistFile) -> bool {
+        self.id.eq_ignore_ascii_case(&file.id) && self.filename.as_str() == file.filename
+    }
+
+    pub fn policy_group(&self) -> Zeroizing<String> {
+        Zeroizing::new(format!(
+            "Script Hub = select, policy-path={}",
+            self.url.as_str()
+        ))
+    }
+}
+
+impl fmt::Debug for PolicyLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("PolicyLink([redacted])")
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GistError {
     InvalidTarget,
@@ -191,10 +239,10 @@ impl fmt::Display for GistError {
 
 impl std::error::Error for GistError {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublishOutcome {
-    Unchanged,
-    Verified,
+    Unchanged(Option<PolicyLink>),
+    Verified(Option<PolicyLink>),
 }
 
 pub struct GistClient {
@@ -288,6 +336,15 @@ impl GistClient {
     }
 
     pub fn read(&self, file: &GistFile, cancel: &AtomicBool) -> Result<Snapshot, GistError> {
+        self.read_with_link(file, cancel)
+            .map(|(snapshot, _)| snapshot)
+    }
+
+    fn read_with_link(
+        &self,
+        file: &GistFile,
+        cancel: &AtomicBool,
+    ) -> Result<(Snapshot, Option<PolicyLink>), GistError> {
         check_cancel(cancel)?;
         validate_file(file)?;
         let bytes = self.get(&self.api_url(file), true, MAX_JSON_BYTES, cancel)?;
@@ -300,6 +357,7 @@ impl GistClient {
             .ok_or(GistError::InvalidResponse)?
             .version
             .as_str();
+        let mut link = None;
         let content = match doc.files.get_mut(&file.filename) {
             None if doc.truncated => return Err(GistError::IncompleteFiles),
             None => None,
@@ -341,16 +399,23 @@ impl GistClient {
                 if content.len() != selected.size {
                     return Err(GistError::InvalidResponse);
                 }
+                link = selected
+                    .raw_url
+                    .as_deref()
+                    .and_then(|raw| PolicyLink::from_raw(raw, file));
                 Some(content)
             }
         };
         check_cancel(cancel)?;
-        Ok(Snapshot {
-            content,
-            revision: format!("{version}:{}", doc.updated_at),
-            description: doc.description.unwrap_or_default(),
-            public: doc.public,
-        })
+        Ok((
+            Snapshot {
+                content,
+                revision: format!("{version}:{}", doc.updated_at),
+                description: doc.description.unwrap_or_default(),
+                public: doc.public,
+            },
+            link,
+        ))
     }
 
     #[expect(
@@ -392,9 +457,9 @@ impl GistClient {
         if payload.len() > MAX_JSON_BYTES {
             return Err(GistError::TooLarge);
         }
-        let current = self.read(output, cancel)?;
+        let (current, link) = self.read_with_link(output, cancel)?;
         if !needs_publish(expected, &current, content, description, allow_public)? {
-            return Ok(PublishOutcome::Unchanged);
+            return Ok(PublishOutcome::Unchanged(link));
         }
         check_cancel(cancel)?;
         // GitHub offers no documented atomic Gist CAS; this preflight only detects observed conflicts.
@@ -417,8 +482,8 @@ impl GistClient {
         }
         drop(response);
         // After a possible write, cancellation or a lost readback cannot imply rollback.
-        let verified = self
-            .read(output, cancel)
+        let (verified, link) = self
+            .read_with_link(output, cancel)
             .map_err(|_| GistError::UncertainWrite)?;
         if verified.content.as_deref().map(|value| value.as_str()) != Some(content)
             || verified.description != description
@@ -426,7 +491,7 @@ impl GistClient {
         {
             return Err(GistError::VerificationFailed);
         }
-        Ok(PublishOutcome::Verified)
+        Ok(PublishOutcome::Verified(link))
     }
 
     /// Creates one secret Gist. A known creation receipt survives failed or cancelled verification.
@@ -436,7 +501,7 @@ impl GistClient {
         content: &str,
         description: &str,
         cancel: &AtomicBool,
-    ) -> Result<CreatedGist, GistError> {
+    ) -> Result<(CreatedGist, Option<PolicyLink>), GistError> {
         if self.token.is_empty() {
             return Err(GistError::InvalidToken);
         }
@@ -505,15 +570,16 @@ impl GistClient {
             id: created.id.clone(),
             filename: filename.to_owned(),
         };
-        let verified = self.read(&output, cancel);
-        if !verified.is_ok_and(|snapshot| {
-            snapshot.content.as_deref().map(|value| value.as_str()) == Some(content)
-                && snapshot.description == description
-                && !snapshot.public
-        }) {
-            return Err(GistError::CreatedUnverified(created));
+        match self.read_with_link(&output, cancel) {
+            Ok((snapshot, link))
+                if snapshot.content.as_deref().map(|value| value.as_str()) == Some(content)
+                    && snapshot.description == description
+                    && !snapshot.public =>
+            {
+                Ok((created, link))
+            }
+            _ => Err(GistError::CreatedUnverified(created)),
         }
-        Ok(created)
     }
 
     #[cfg(test)]
@@ -710,6 +776,7 @@ fn trusted_url(value: &str) -> Result<Url, GistError> {
 }
 
 struct RawTarget {
+    owner: String,
     id: String,
     revision: Option<String>,
     filename: String,
@@ -736,6 +803,7 @@ fn raw_target(url: &Url) -> Result<RawTarget, GistError> {
     let filename = decode_filename(filename)?;
     validate_filename(&filename)?;
     Ok(RawTarget {
+        owner: owner.to_owned(),
         id: id.to_ascii_lowercase(),
         revision,
         filename,
