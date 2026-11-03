@@ -943,7 +943,14 @@ impl eframe::App for HubApp {
         self.templates.tick(ctx);
         let schedule_admitted = !self.active() && self.pending.is_none();
         if let Some(result) = self.relay.schedule.tick(ctx, schedule_admitted) {
-            self.relay.accept_scheduled(result);
+            match result {
+                super::relay_schedule::Completed::Subscription(result) => {
+                    self.relay.accept_scheduled(*result);
+                }
+                super::relay_schedule::Completed::Collection(completed) => {
+                    self.relay.accept_scheduled_collection(*completed);
+                }
+            }
         }
         if self.relay.schedule.running() {
             self.relay.progress = self.relay.schedule.progress;
@@ -1422,6 +1429,62 @@ mod tests {
         assert!(!accessible.contains("synthetic-token"));
         assert!(!accessible.contains("0123456789abcdef0123456789abcdef"));
         assert!(app.loaded_root.is_none() && app.workspace_loader.is_none() && app.job.is_none());
+    }
+
+    #[test]
+    fn locked_workspace_can_run_demo_without_using_the_private_session() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = relay_app();
+        app.relay.workspace.locked = true;
+        let mut draw = |events| {
+            ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(620.0, 720.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, |ui| app.relay_page(ui));
+                },
+            )
+        };
+        let output = draw(vec![]);
+        let bounds = output
+            .platform_output
+            .accesskit_update
+            .as_ref()
+            .unwrap()
+            .nodes
+            .iter()
+            .find(|(_, node)| node.label() == Some("Run offline demo"))
+            .and_then(|(_, node)| node.bounds())
+            .unwrap();
+        output.drop_without_applying_deltas();
+        let pos = egui::pos2(
+            ((bounds.x0 + bounds.x1) * 0.5) as f32,
+            ((bounds.y0 + bounds.y1) * 0.5) as f32,
+        );
+        for pressed in [true, false] {
+            draw(vec![
+                egui::Event::PointerMoved(pos),
+                egui::Event::PointerButton {
+                    pos,
+                    button: egui::PointerButton::Primary,
+                    pressed,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ])
+            .drop_without_applying_deltas();
+        }
+        let report = app.relay.demo_report.as_ref().unwrap().as_ref().unwrap();
+        assert_eq!(report.exported_nodes, 2);
+        assert!(app.relay.workspace.locked && app.relay.result.is_none());
+        assert_eq!(app.relay.token.as_str(), "synthetic-token");
+        assert!(!app.relay.schedule.armed());
     }
 
     #[test]

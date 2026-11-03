@@ -6,6 +6,9 @@
 
 - Remember each subscription and collection's Gist target, filename, title, and sync interval in the encrypted library. Opening an item does not restore authorization or start a schedule.
 - Scheduled sync of a remote subscription fetches fresh nodes even when the workspace has a local cache.
+- Schedule collection sync to an existing Gist, refreshing and rechecking every remote member before publication.
+- Choose a local export format explicitly. Keep the original or a matching Surge/Mihomo source, or convert to sing-box outbounds without silently dropping nodes.
+- Run a dry-run demo from the subscription workspace or with `--worker relay-demo`; it uses sample data and performs no network or file I/O.
 
 ## 0.14.0 · 2026-11-03
 

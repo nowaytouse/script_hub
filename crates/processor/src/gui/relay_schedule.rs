@@ -11,7 +11,8 @@ use std::{
 
 use super::relay::PrivateConfig;
 use crate::relay::{
-    Progress, RelayConfig, RelayError, RelayResult,
+    Progress, RelayConfig, RelayError, RelayResult, collection_schedule,
+    library::Workspace,
     schedule::{self, Schedule},
 };
 use eframe::egui;
@@ -36,10 +37,24 @@ impl From<&RelayResult> for Summary {
 
 struct Pending {
     worker: JoinHandle<()>,
-    receiver: mpsc::Receiver<Result<RelayResult, RelayError>>,
+    receiver: mpsc::Receiver<Result<Completed, RelayError>>,
     cancel: Arc<AtomicBool>,
     progress: Arc<Mutex<Option<Progress>>>,
     generation: u64,
+}
+
+pub enum Completed {
+    Subscription(Box<RelayResult>),
+    Collection(Box<collection_schedule::Completed>),
+}
+
+impl Completed {
+    fn result(&self) -> &RelayResult {
+        match self {
+            Self::Subscription(result) => result,
+            Self::Collection(completed) => &completed.result,
+        }
+    }
 }
 
 pub struct State {
@@ -49,6 +64,7 @@ pub struct State {
     pub last_error: Option<RelayError>,
     schedule: Option<Schedule>,
     config: Option<PrivateConfig>,
+    collection: Option<(Arc<Workspace>, u64)>,
     token: Option<Zeroizing<String>>,
     pending: Option<Pending>,
     generation: u64,
@@ -63,6 +79,7 @@ impl Default for State {
             last_error: None,
             schedule: None,
             config: None,
+            collection: None,
             token: None,
             pending: None,
             generation: 0,
@@ -72,15 +89,34 @@ impl Default for State {
 
 impl State {
     pub fn arm(&mut self, config: RelayConfig, token: &str) -> Result<(), RelayError> {
+        self.arm_with(config, token, None)
+    }
+
+    pub fn arm_collection(
+        &mut self,
+        config: RelayConfig,
+        token: &str,
+        workspace: &Workspace,
+        id: u64,
+    ) -> Result<(), RelayError> {
+        self.arm_with(config, token, Some((workspace, id)))
+    }
+
+    fn arm_with(
+        &mut self,
+        config: RelayConfig,
+        token: &str,
+        collection: Option<(&Workspace, u64)>,
+    ) -> Result<(), RelayError> {
         let config = PrivateConfig(config);
-        if self.running()
-            || token.is_empty()
-            || config.0.output.trim().is_empty()
-            || (config.0.local_content.is_none() && !config.0.processing.nodes.is_empty())
-        {
+        if self.running() || self.armed() || token.is_empty() {
             return Err(RelayError::InvalidInput);
         }
-        schedule::validate(&config.0)?;
+        if let Some((workspace, id)) = collection {
+            collection_schedule::validate(workspace, id, &config.0)?;
+        } else {
+            schedule::validate(&config.0)?;
+        }
         crate::relay::gist::GistClient::new(token).map_err(RelayError::Gist)?;
         let seconds = self
             .interval_minutes
@@ -90,6 +126,7 @@ impl State {
         self.generation = self.generation.wrapping_add(1);
         self.schedule = Some(schedule);
         self.config = Some(config);
+        self.collection = collection.map(|(workspace, id)| (Arc::new(workspace.clone()), id));
         self.token = Some(Zeroizing::new(token.to_owned()));
         self.progress = None;
         self.result = None;
@@ -106,6 +143,7 @@ impl State {
             pending.cancel.store(true, Ordering::Release);
         }
         self.config = None;
+        self.collection = None;
         self.token = None;
         self.progress = None;
     }
@@ -123,7 +161,7 @@ impl State {
             .map(|due| due.saturating_duration_since(Instant::now()).as_secs())
     }
 
-    pub fn tick(&mut self, ctx: &egui::Context, admitted: bool) -> Option<RelayResult> {
+    pub fn tick(&mut self, ctx: &egui::Context, admitted: bool) -> Option<Completed> {
         let mut completed = None;
         if let Some(pending) = &self.pending
             && pending.generation == self.generation
@@ -147,13 +185,13 @@ impl State {
                 Err(RelayError::InvalidInput)
             };
             if let Some(schedule) = &mut self.schedule {
-                schedule.finish(Instant::now(), &outcome);
+                schedule.finish_status(Instant::now(), outcome.as_ref().map(|_| ()));
             }
             if pending.generation == self.generation {
                 self.progress = None;
                 match outcome {
                     Ok(result) => {
-                        self.result = Some(Summary::from(&result));
+                        self.result = Some(Summary::from(result.result()));
                         self.last_error = None;
                         completed = Some(result);
                     }
@@ -164,6 +202,7 @@ impl State {
                 }
                 if self.schedule.as_ref().is_some_and(Schedule::is_paused) {
                     self.config = None;
+                    self.collection = None;
                     self.token = None;
                 }
             }
@@ -176,6 +215,7 @@ impl State {
         {
             let config = PrivateConfig(self.config.as_ref().unwrap().0.clone());
             let token = self.token.as_ref().unwrap().clone();
+            let collection = self.collection.clone();
             let cancel = Arc::new(AtomicBool::new(false));
             let progress = Arc::new(Mutex::new(None));
             let (sender, receiver) = mpsc::channel();
@@ -184,11 +224,25 @@ impl State {
             let worker = thread::Builder::new()
                 .name("relay-schedule".into())
                 .spawn(move || {
-                    let result = schedule::run(&config.0, &token, &worker_cancel, &|value| {
+                    let report = |value| {
                         if let Ok(mut progress) = worker_progress.lock() {
                             *progress = Some(value);
                         }
-                    });
+                    };
+                    let result = if let Some((workspace, id)) = collection {
+                        collection_schedule::run(
+                            &workspace,
+                            id,
+                            &config.0,
+                            &token,
+                            &worker_cancel,
+                            &report,
+                        )
+                        .map(|completed| Completed::Collection(Box::new(completed)))
+                    } else {
+                        schedule::run(&config.0, &token, &worker_cancel, &report)
+                            .map(|result| Completed::Subscription(Box::new(result)))
+                    };
                     let _ = sender.send(result);
                 });
             match worker {
@@ -202,10 +256,14 @@ impl State {
                     })
                 }
                 Err(_) => {
-                    let error = Err(RelayError::InvalidInput);
-                    self.schedule.as_mut().unwrap().finish(now, &error);
-                    self.last_error = error.err();
+                    let error = RelayError::InvalidInput;
+                    self.schedule
+                        .as_mut()
+                        .unwrap()
+                        .finish_status(now, Err(&error));
+                    self.last_error = Some(error);
                     self.config = None;
+                    self.collection = None;
                     self.token = None;
                 }
             }
@@ -300,7 +358,7 @@ mod tests {
         let worker = thread::spawn(move || {
             assert!(
                 sender
-                    .send(Ok(RelayResult {
+                    .send(Ok(Completed::Subscription(Box::new(RelayResult {
                         source: None,
                         content: Zeroizing::new("fresh".into()),
                         tested: false,
@@ -320,7 +378,7 @@ mod tests {
                         details: Vec::new(),
                         published: true,
                         unchanged: false,
-                    }))
+                    }))))
                     .is_ok()
             );
         });
@@ -337,7 +395,7 @@ mod tests {
             completed = state.tick(&egui::Context::default(), false);
             thread::yield_now();
         }
-        assert_eq!(completed.unwrap().content.as_str(), "fresh");
+        assert_eq!(completed.unwrap().result().content.as_str(), "fresh");
         assert_eq!(state.result.unwrap().total, 1);
         assert!(state.tick(&egui::Context::default(), false).is_none());
     }

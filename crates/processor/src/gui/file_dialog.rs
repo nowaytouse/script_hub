@@ -26,7 +26,7 @@ pub enum FileAction {
     ExportPlan,
     ExportBackup,
     ExportEncrypted,
-    ExportNodes,
+    ExportNodes(crate::relay::export::OutputFormat),
     ChooseEngine,
 }
 
@@ -34,7 +34,7 @@ impl FileAction {
     pub(super) fn is_save(self) -> bool {
         matches!(
             self,
-            Self::ExportBackup | Self::ExportEncrypted | Self::ExportNodes | Self::ExportPlan
+            Self::ExportBackup | Self::ExportEncrypted | Self::ExportNodes(_) | Self::ExportPlan
         )
     }
 }
@@ -219,14 +219,17 @@ impl Picker {
                 .map_or_else(String::new, |path| path.display().to_string()),
             directory: None,
             search: String::new(),
-            filename: match action {
-                FileAction::ExportBackup => "relay-backup.json",
-                FileAction::ExportEncrypted => "relay-backup.age",
-                FileAction::ExportNodes => "nodes.list",
-                FileAction::ExportPlan => "operations.json",
-                _ => "",
-            }
-            .to_owned(),
+            filename: if let FileAction::ExportNodes(format) = action {
+                format!("nodes.{}", format.extension())
+            } else {
+                match action {
+                    FileAction::ExportBackup => "relay-backup.json",
+                    FileAction::ExportEncrypted => "relay-backup.age",
+                    FileAction::ExportPlan => "operations.json",
+                    _ => "",
+                }
+                .to_owned()
+            },
             selected: None,
             listing: None,
             filtered: Vec::new(),
@@ -408,7 +411,7 @@ impl Picker {
             }
             FileAction::ExportBackup
             | FileAction::ExportEncrypted
-            | FileAction::ExportNodes
+            | FileAction::ExportNodes(_)
             | FileAction::ExportPlan => {
                 if !valid_filename(&self.filename) {
                     return Err(Text::FilePickerInvalid);
@@ -1347,9 +1350,12 @@ mod tests {
     #[test]
     fn selection_is_structural_and_does_not_require_existing_destination() {
         let dir = std::env::temp_dir().join("synthetic-picker-no-io");
-        let mut picker = Picker::new(FileAction::ExportNodes, Some(&dir));
+        let mut picker = Picker::new(
+            FileAction::ExportNodes(crate::relay::export::OutputFormat::Original),
+            Some(&dir),
+        );
         picker.directory = Some(dir.clone());
-        assert_eq!(picker.selection().unwrap(), dir.join("nodes.list"));
+        assert_eq!(picker.selection().unwrap(), dir.join("nodes.txt"));
         picker.filename = "../escape".into();
         assert!(picker.selection().is_err());
     }

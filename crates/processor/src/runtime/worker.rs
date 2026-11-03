@@ -70,6 +70,23 @@ fn srs_arguments(arguments: &[String]) -> Result<(String, String), String> {
 pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     let operation = args.next().unwrap_or_default();
     let arguments: Vec<String> = args.collect();
+    if operation == "relay-demo" {
+        if !arguments.is_empty() {
+            return fail("relay-demo does not accept arguments".to_owned());
+        }
+        let report = crate::relay::demo::run()
+            .map_err(|error| error.to_string())
+            .and_then(|report| {
+                serde_json::to_string_pretty(&report).map_err(|error| error.to_string())
+            });
+        return match report {
+            Ok(report) => {
+                println!("{report}");
+                ExitCode::SUCCESS
+            }
+            Err(error) => fail(error),
+        };
+    }
     let adblock_arguments = if operation == "adblock" {
         match adblock_arguments(&arguments) {
             Ok(arguments) => Some(arguments),

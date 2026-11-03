@@ -28,7 +28,7 @@ pub fn refresh(
     })
 }
 
-fn refresh_with(
+pub(super) fn refresh_with(
     workspace: &Workspace,
     id: u64,
     cancel: &AtomicBool,
@@ -58,7 +58,10 @@ fn refresh_with(
             return Err(RelayError::Cancelled);
         }
         if entry.content != *content
-            && (!entry.processing.nodes.is_empty() || !collection.processing.nodes.is_empty())
+            && (!entry.processing.nodes.is_empty()
+                || workspace.collections.iter().any(|collection| {
+                    collection.members.contains(id) && !collection.processing.nodes.is_empty()
+                }))
         {
             return Err(RelayError::SourceChanged);
         }
@@ -173,5 +176,25 @@ mod tests {
                 1
             );
         }
+    }
+
+    #[test]
+    fn shared_member_refresh_cannot_invalidate_another_collections_edits() {
+        let mut workspace = workspace();
+        let mut other = workspace.collections[0].clone();
+        other.name = "other group".into();
+        other
+            .processing
+            .nodes
+            .push(super::super::model::editor::NodeEdit {
+                index: 0,
+                included: false,
+                name: None,
+            });
+        workspace.add_collection(other).unwrap();
+        let result = refresh_with(&workspace, 3, &AtomicBool::new(false), |_| {
+            Ok(Zeroizing::new("new".into()))
+        });
+        assert!(matches!(result, Err(RelayError::SourceChanged)));
     }
 }

@@ -417,9 +417,9 @@ impl Workspace {
             let processed =
                 model::Subscription::parse(&rendered.content).map_err(|_| Error::Unsupported)?;
             for node in processed.nodes() {
-                let value = PrivateJson(node.to_sing_box(false).map_err(|_| Error::Unsupported)?);
                 let mut bytes = Zeroizing::new(Vec::new());
-                serde_json::to_writer(&mut *bytes, &value.0).map_err(|_| Error::Invalid)?;
+                node.write_export_sing_box(&mut bytes)
+                    .map_err(|_| Error::Unsupported)?;
                 if output
                     .len()
                     .checked_add(bytes.len())
@@ -616,6 +616,30 @@ mod tests {
         let mut bad = w.subscriptions[0].clone();
         bad.content = "not a subscription".into();
         w.update_entry(bad).unwrap();
+        assert!(matches!(w.merge(c), Err(Error::Unsupported)));
+    }
+
+    #[test]
+    fn merge_preserves_surge_socks_udp_default() {
+        let mut w = Workspace::default();
+        let id = w
+            .add_entry(entry("one", "alpha = socks5, example.com, 1080\n"))
+            .unwrap();
+        let c = w.add_collection(collection(vec![id])).unwrap();
+        let merged: serde_json::Value = serde_json::from_str(&w.merge(c).unwrap()).unwrap();
+        assert_eq!(merged[0]["network"], "tcp");
+    }
+
+    #[test]
+    fn merge_rejects_unrepresentable_surge_controls() {
+        let mut w = Workspace::default();
+        let id = w
+            .add_entry(entry(
+                "one",
+                "alpha = socks5, example.com, 1080, block-quic=true\n",
+            ))
+            .unwrap();
+        let c = w.add_collection(collection(vec![id])).unwrap();
         assert!(matches!(w.merge(c), Err(Error::Unsupported)));
     }
 

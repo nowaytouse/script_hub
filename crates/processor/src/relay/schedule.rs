@@ -77,6 +77,10 @@ impl Schedule {
     }
 
     pub fn finish(&mut self, now: Instant, result: &Result<RelayResult, RelayError>) {
+        self.finish_status(now, result.as_ref().map(|_| ()));
+    }
+
+    pub fn finish_status(&mut self, now: Instant, result: Result<(), &RelayError>) {
         if !self.running {
             return;
         }

@@ -2,8 +2,11 @@
 
 pub mod archive;
 pub mod backup;
+pub mod collection_schedule;
 pub mod compat;
+pub mod demo;
 pub mod engine;
+pub mod export;
 pub mod gist;
 pub mod input;
 pub mod library;
@@ -126,11 +129,18 @@ pub enum RelayError {
     InputUnavailable,
     InputInvalid,
     InputHttpStatus(u16),
-    InputRateLimited { retry_after_seconds: Option<u64> },
+    InputRateLimited {
+        retry_after_seconds: Option<u64>,
+    },
     NoHealthyNodes,
     SourceChanged,
     Cancelled,
     Model(model::ModelError),
+    ExportFormat,
+    ExportNode {
+        index: usize,
+        error: model::ModelError,
+    },
     Gist(gist::GistError),
     Engine(engine::EngineError),
 }
@@ -167,6 +177,8 @@ impl fmt::Display for RelayError {
             }
             Self::Cancelled => f.write_str("Relay cancelled. No new publication was started."),
             Self::Model(error) => error.fmt(f),
+            Self::ExportFormat => f.write_str("The selected client needs a matching source format. Use Original or choose sing-box conversion."),
+            Self::ExportNode { index, error } => write!(f, "Cannot export node {index}: {error}"),
             Self::Gist(error) => error.fmt(f),
             Self::Engine(error) => error.fmt(f),
         }
@@ -504,6 +516,18 @@ fn upload_with(
     cancel: &AtomicBool,
     progress: &(dyn Fn(Progress) + Sync),
 ) -> Result<RelayResult, RelayError> {
+    validate_prepared(config, &result)?;
+    let destination = read_destination(config, client, cancel)?;
+    publish_result(config, client, &mut result, destination, cancel, progress)?;
+    progress(Progress {
+        stage: RelayStage::Complete,
+        checked: result.total,
+        total: result.total,
+    });
+    Ok(result)
+}
+
+fn validate_prepared(config: &RelayConfig, result: &RelayResult) -> Result<(), RelayError> {
     let mut validation = config.clone();
     validation.test_nodes = false;
     validation.validate(RunMode::Publish)?;
@@ -523,14 +547,7 @@ fn upload_with(
     {
         return Err(RelayError::NoHealthyNodes);
     }
-    let destination = read_destination(config, client, cancel)?;
-    publish_result(config, client, &mut result, destination, cancel, progress)?;
-    progress(Progress {
-        stage: RelayStage::Complete,
-        checked: result.total,
-        total: result.total,
-    });
-    Ok(result)
+    Ok(())
 }
 
 fn read_destination(

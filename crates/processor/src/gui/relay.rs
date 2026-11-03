@@ -2,6 +2,7 @@
 
 use super::file_dialog::FileAction;
 use super::i18n::Text;
+use crate::relay::export::{OutputFormat, export_subscription};
 use crate::relay::gist::{GistFile, validate_filename, validate_name};
 use crate::relay::{Progress, RelayConfig, RelayError, RelayResult, RunMode};
 use eframe::egui;
@@ -76,6 +77,13 @@ pub(super) fn failure_message(
             RelayError::NoHealthyNodes => Text::RelayNoHealthy,
             RelayError::SourceChanged => Text::RelaySourceChanged,
             RelayError::Cancelled => Text::RelayCancelled,
+            RelayError::ExportFormat => Text::RelayExportFormatMismatch,
+            RelayError::ExportNode { index, .. } => {
+                return format!(
+                    "{} #{index}",
+                    super::i18n::text(language, Text::RelayExportNodeFailed)
+                );
+            }
             RelayError::Model(error) => match error {
                 ModelError::InvalidInput => Text::RelaySubscriptionInvalid,
                 ModelError::Unsupported => Text::RelayUnsupported,
@@ -236,6 +244,8 @@ pub(super) struct RelayState {
     pub allow_plaintext: bool,
     pub result: Option<RelayResult>,
     pub result_format: Option<&'static str>,
+    pub output_format: OutputFormat,
+    pub demo_report: Option<Result<crate::relay::demo::DemoReport, RelayError>>,
     pub progress: Option<Progress>,
     pub error: Option<Failure>,
     pub notice: Option<Text>,
@@ -324,6 +334,7 @@ struct FilePending {
 }
 
 enum FileCompleted {
+    ExportFailed(RelayError),
     Imported(Box<crate::relay::backup::RelayBackup>),
     Migration(crate::relay::compat::Report),
     Locked(Zeroizing<Vec<u8>>),
@@ -399,6 +410,8 @@ impl Default for RelayState {
             allow_plaintext: false,
             result: None,
             result_format: None,
+            output_format: OutputFormat::Original,
+            demo_report: None,
             progress: None,
             error: None,
             notice: None,
@@ -522,14 +535,7 @@ impl RelayState {
     }
 
     pub(super) fn arm_schedule(&mut self) {
-        if matches!(
-            self.workspace.selected,
-            Some(super::subscriptions::Selection::Collection(_))
-        ) {
-            self.error = Some(Failure::Validation(Text::WorkspaceCollectionSchedule));
-            return;
-        }
-        if self.busy() || self.result.is_none() {
+        if self.busy() || self.selecting_file() || self.result.is_none() {
             self.error = Some(Failure::Validation(Text::ScheduleNeedsPreview));
             return;
         }
@@ -558,10 +564,41 @@ impl RelayState {
         let mut config = self.private_config(self.engine_path());
         config.0.local_content = local_content;
         config.0.test_nodes = self.result.as_ref().is_some_and(|result| result.tested);
-        // The schedule owns a frozen snapshot; editing requires stopping it first.
-        if let Err(error) = self.schedule.arm(config.0.clone(), &self.token) {
-            self.error = Some(Failure::Operation(error));
+        let result = if let Some(super::subscriptions::Selection::Collection(id)) =
+            self.workspace.selected
+        {
+            if !self.save_workspace_draft() {
+                return;
+            }
+            self.schedule
+                .arm_collection(config.0.clone(), &self.token, &self.workspace.data, id)
+        } else {
+            self.schedule.arm(config.0.clone(), &self.token)
+        };
+        self.error = result.err().map(Failure::Operation);
+    }
+
+    pub(super) fn accept_scheduled_collection(
+        &mut self,
+        mut completed: crate::relay::collection_schedule::Completed,
+    ) {
+        for refreshed in &mut completed.workspace.subscriptions {
+            if refreshed.source.is_empty() || !self.workspace.members.contains(&refreshed.id) {
+                continue;
+            }
+            if let Some(entry) = self.workspace.data.subscriptions.iter_mut().find(|entry| {
+                entry.id == refreshed.id
+                    && entry.source == refreshed.source
+                    && entry.source_file == refreshed.source_file
+            }) && entry.content != refreshed.content
+            {
+                entry.content.zeroize();
+                entry.content = std::mem::take(&mut refreshed.content);
+                self.workspace.dirty = true;
+            }
         }
+        self.local_content = Some(completed.base);
+        self.accept_scheduled(completed.result);
     }
 
     pub(super) fn accept_scheduled(&mut self, result: RelayResult) {
@@ -882,6 +919,7 @@ impl RelayState {
         self.title.push_str(&defaults.title);
         self.result = None;
         self.result_format = None;
+        self.output_format = OutputFormat::Original;
         self.progress = None;
         self.error = None;
         self.allow_plaintext = false;
@@ -1089,8 +1127,17 @@ impl RelayState {
         if let Some(result) = &self.result
             && !result.content.is_empty()
         {
-            ctx.copy_text(result.content.to_string());
-            self.notice = Some(Text::Copied);
+            match export_subscription(&result.content, self.output_format) {
+                Ok(content) => {
+                    ctx.copy_text(content.to_string());
+                    self.error = None;
+                    self.notice = Some(Text::Copied);
+                }
+                Err(error) => {
+                    self.notice = None;
+                    self.error = Some(Failure::Operation(error));
+                }
+            }
         }
     }
 
@@ -1120,7 +1167,7 @@ impl RelayState {
         let Some(path) = path else {
             if matches!(
                 action,
-                FileAction::ExportBackup | FileAction::ExportEncrypted | FileAction::ExportNodes
+                FileAction::ExportBackup | FileAction::ExportEncrypted | FileAction::ExportNodes(_)
             ) && self
                 .result
                 .as_ref()
@@ -1145,7 +1192,7 @@ impl RelayState {
         };
         let payload = if !matches!(
             action,
-            FileAction::ExportBackup | FileAction::ExportEncrypted | FileAction::ExportNodes
+            FileAction::ExportBackup | FileAction::ExportEncrypted | FileAction::ExportNodes(_)
         ) {
             None
         } else {
@@ -1228,8 +1275,13 @@ impl RelayState {
                             &content,
                         )
                         .map_err(|_| Text::RelayBackupInvalid)?
+                    } else if let FileAction::ExportNodes(format) = action {
+                        match export_subscription(&content, format) {
+                            Ok(converted) => Zeroizing::new(converted.as_bytes().to_vec()),
+                            Err(error) => return Ok(Some(FileCompleted::ExportFailed(error))),
+                        }
                     } else {
-                        Zeroizing::new(content.as_bytes().to_vec())
+                        return Err(Text::RelayFileError);
                     };
                     let bytes = if action == FileAction::ExportEncrypted {
                         crate::relay::archive::encrypt(&bytes, recipient.trim())
@@ -1307,6 +1359,9 @@ impl RelayState {
             }
             (Ok(()), Ok(Ok(Some(FileCompleted::Saved)))) => {
                 self.notice = Some(Text::RelayFileSaved)
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::ExportFailed(error))))) => {
+                self.error = Some(Failure::Operation(error));
             }
             (Ok(()), Ok(Ok(None))) => {}
             (Ok(()), Ok(Err(key))) => self.error = Some(Failure::Validation(key)),
@@ -1517,6 +1572,58 @@ mod tests {
         assert!(state.schedule.armed());
         state.input_changed();
         assert!(!state.schedule.armed());
+    }
+
+    #[test]
+    fn collection_arming_requires_an_independent_target_and_explicit_consent() {
+        use crate::relay::library::{Collection, Entry};
+
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        let source = state.source.to_string();
+        let content = "A = socks5, cached.example, 1080\n";
+        let member = state
+            .workspace
+            .data
+            .add_entry(Entry {
+                id: 0,
+                name: "Member".into(),
+                source: source.clone(),
+                source_file: state.source_file.to_string(),
+                content: content.into(),
+                processing: Default::default(),
+                publish: Default::default(),
+            })
+            .unwrap();
+        let id = state
+            .workspace
+            .data
+            .add_collection(Collection {
+                id: 0,
+                name: "Collection".into(),
+                members: vec![member],
+                processing: Default::default(),
+                publish: Default::default(),
+            })
+            .unwrap();
+        state.source.clear();
+        state.source_file.clear();
+        state.workspace.selected = Some(super::super::subscriptions::Selection::Collection(id));
+        state.workspace.members = vec![member];
+        state.local_content = Some(state.workspace.data.merge(id).unwrap());
+        state.result = Some(result());
+
+        state.arm_schedule();
+        assert!(!state.schedule.armed());
+        state.acknowledge_publish = true;
+        let destination = std::mem::replace(&mut state.output, Zeroizing::new(source));
+        state.arm_schedule();
+        assert!(!state.schedule.armed());
+        state.output = destination;
+        state.arm_schedule();
+        assert!(state.schedule.armed());
+        assert!(state.schedule.tick(&ctx, true).is_none());
+        assert!(!state.schedule.running());
     }
 
     #[test]
@@ -1882,14 +1989,14 @@ mod tests {
         let ctx = egui::Context::default();
         let mut state = fixture();
         state.result = Some(result());
-        state.file_action(FileAction::ExportNodes, None, None);
+        state.file_action(FileAction::ExportNodes(OutputFormat::Original), None, None);
         assert!(!state.selecting_file(), "export requires plaintext consent");
         assert!(matches!(
             state.error,
             Some(Failure::Validation(Text::VaultPlaintextConsent))
         ));
         state.allow_plaintext = true;
-        state.file_action(FileAction::ExportNodes, None, None);
+        state.file_action(FileAction::ExportNodes(OutputFormat::Original), None, None);
         assert!(state.selecting_file() && !state.busy());
         assert!(state.allow_plaintext && state.result.is_some());
         state.clear(&ctx);
@@ -2196,7 +2303,10 @@ mod tests {
                 .any(|command| matches!(command, egui::OutputCommand::CopyText(_)))
         );
         output.drop_without_applying_deltas();
-        for action in [FileAction::ExportNodes, FileAction::ExportBackup] {
+        for action in [
+            FileAction::ExportNodes(OutputFormat::Original),
+            FileAction::ExportBackup,
+        ] {
             state.file_action(action, None, None);
             assert!(matches!(
                 state.error,
@@ -2452,7 +2562,11 @@ mod tests {
         assert_eq!(state.local_content.as_ref().unwrap().as_str(), content);
         assert!(state.result.is_some());
         state.allow_plaintext = true;
-        state.file_action(FileAction::ExportNodes, Some(destination.clone()), None);
+        state.file_action(
+            FileAction::ExportNodes(OutputFormat::Original),
+            Some(destination.clone()),
+            None,
+        );
         finish(&mut state, &ctx);
         assert!(state.error.is_some());
         assert_eq!(

@@ -80,6 +80,29 @@ pub struct Snapshot {
     pub public: bool,
 }
 
+pub(super) fn needs_publish(
+    expected: &Snapshot,
+    current: &Snapshot,
+    content: &str,
+    description: &str,
+    allow_public: bool,
+) -> Result<bool, GistError> {
+    if current.revision != expected.revision
+        || current.content != expected.content
+        || current.description != expected.description
+        || current.public != expected.public
+    {
+        return Err(GistError::Conflict);
+    }
+    if current.public && !allow_public {
+        return Err(GistError::PublicOutput);
+    }
+    Ok(
+        current.content.as_ref().map(|value| value.as_str()) != Some(content)
+            || current.description != description,
+    )
+}
+
 #[derive(Clone)]
 pub struct Source {
     pub file: GistFile,
@@ -370,19 +393,7 @@ impl GistClient {
             return Err(GistError::TooLarge);
         }
         let current = self.read(output, cancel)?;
-        if current.revision != expected.revision
-            || current.content != expected.content
-            || current.description != expected.description
-            || current.public != expected.public
-        {
-            return Err(GistError::Conflict);
-        }
-        if current.public && !allow_public {
-            return Err(GistError::PublicOutput);
-        }
-        if current.content.as_deref().map(|value| value.as_str()) == Some(content)
-            && current.description == description
-        {
+        if !needs_publish(expected, &current, content, description, allow_public)? {
             return Ok(PublishOutcome::Unchanged);
         }
         check_cancel(cancel)?;

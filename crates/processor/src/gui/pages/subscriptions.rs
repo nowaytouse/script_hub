@@ -16,6 +16,34 @@ impl HubApp {
         let tr = |key| text(language, key);
         ui.heading(tr(Text::Relay));
         ui.weak(tr(Text::WorkspaceIntro));
+        ui.horizontal_wrapped(|ui| {
+            if ui.button(tr(Text::RelayDemoRun)).clicked() {
+                self.relay.demo_report = Some(crate::relay::demo::run());
+            }
+            ui.weak(tr(Text::RelayDemoOffline));
+        });
+        if let Some(report) = &self.relay.demo_report {
+            card(ui, colors, |ui| match report {
+                Ok(report) => {
+                    ui.strong(tr(Text::RelayDemoPassed));
+                    ui.label(format!(
+                        "{} {} / {} · {} {} → {} · {} {}",
+                        tr(Text::RelayDemoRefreshed),
+                        report.refreshed_members,
+                        report.members,
+                        tr(Text::RelayDemoNodes),
+                        report.input_nodes,
+                        report.exported_nodes,
+                        tr(Text::RelayDemoPlanned),
+                        report.planned_uploads,
+                    ));
+                    ui.weak(tr(Text::RelayDemoChecks));
+                }
+                Err(_) => {
+                    ui.colored_label(colors.error, tr(Text::RelayDemoFailed));
+                }
+            });
+        }
         ui.add_space(12.0);
         if let Some(error) = self.relay.workspace.error {
             ui.colored_label(colors.error, tr(error));

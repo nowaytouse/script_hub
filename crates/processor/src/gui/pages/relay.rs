@@ -3,6 +3,7 @@ use crate::gui::app::HubApp;
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
 use crate::gui::relay::{InputMode, RelayStep, SECRET_IDS};
+use crate::relay::export::OutputFormat;
 use crate::relay::{RelayStage, RunMode};
 use eframe::egui;
 use zeroize::Zeroize;
@@ -560,6 +561,25 @@ impl HubApp {
                                         &mut state.allow_plaintext,
                                         tr(Text::VaultPlaintextConsent),
                                     );
+                                    let format_label = |format| tr(match format {
+                                        OutputFormat::Original => Text::RelayExportOriginal,
+                                        OutputFormat::Surge => Text::RelayExportSurge,
+                                        OutputFormat::Mihomo => Text::RelayExportMihomo,
+                                        OutputFormat::SingBox => Text::RelayExportSingBox,
+                                    });
+                                    ui.horizontal_wrapped(|ui| {
+                                        let label = ui.label(tr(Text::RelayExportFormat));
+                                        egui::ComboBox::from_id_salt("relay-export-format")
+                                            .selected_text(format_label(state.output_format))
+                                            .show_ui(ui, |ui| {
+                                                for format in [OutputFormat::Original, OutputFormat::Surge, OutputFormat::Mihomo, OutputFormat::SingBox] {
+                                                    ui.selectable_value(&mut state.output_format, format, format_label(format));
+                                                }
+                                            })
+                                            .response
+                                            .labelled_by(label.id);
+                                    });
+                                    ui.weak(tr(Text::RelayExportFormatHelp));
                                     let has_content = state
                                         .result
                                         .as_ref()
@@ -575,7 +595,7 @@ impl HubApp {
                                             state.copy(ui.ctx());
                                         }
                                         for (label, export) in [
-                                            (Text::RelayExportNodes, FileAction::ExportNodes),
+                                            (Text::RelayExportNodes, FileAction::ExportNodes(state.output_format)),
                                             (Text::RelayExportBackup, FileAction::ExportBackup),
                                         ] {
                                             if ui
@@ -695,7 +715,9 @@ impl HubApp {
                                     ui.add_space(16.0);
                                     ui.separator();
                                     ui.strong(tr(Text::ScheduleTitle));
-                                        if matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) { ui.weak(tr(Text::WorkspaceCollectionSchedule)); }
+                                    if matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) {
+                                        ui.weak(tr(Text::WorkspaceCollectionSchedule));
+                                    }
                                     ui.weak(tr(Text::ScheduleHelp));
                                     ui.horizontal_wrapped(|ui| {
                                         ui.label(tr(Text::ScheduleInterval));
@@ -704,7 +726,7 @@ impl HubApp {
                                         }
                                     });
                                     ui.weak(tr(Text::ScheduleSessionOnly));
-                                        if ui.add_enabled(!matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) && has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
+                                    if ui.add_enabled(has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
                                         state.arm_schedule();
                                     }
                                 }

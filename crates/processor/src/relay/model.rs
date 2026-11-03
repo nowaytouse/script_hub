@@ -20,7 +20,7 @@ pub mod properties;
 pub mod script;
 mod uri;
 
-const MAX_CONTENT: usize = 4 * 1024 * 1024;
+pub(super) const MAX_CONTENT: usize = 4 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Health {
@@ -145,6 +145,40 @@ impl Node {
             NodeSource::Mihomo(source) => mihomo::project(self, &source.0, compatibility, true),
             NodeSource::Uri(source) => source.project(compatibility),
         }
+    }
+
+    pub(super) fn write_export_sing_box(&self, output: &mut Vec<u8>) -> Result<(), ModelError> {
+        let mut udp = None;
+        if let NodeSource::Surge(source) = &self.source {
+            for field in &source.fields {
+                match field.key.as_str() {
+                    "udp-relay" if matches!(self.protocol(), "socks5" | "ss") => {
+                        udp = Some(parse_bool(&field.value)?);
+                    }
+                    "udp-relay" | "block-quic" | "test-url" | "test-timeout" => {
+                        return Err(ModelError::Unsupported);
+                    }
+                    _ => {}
+                }
+            }
+            // Surge opts in to UDP on these policies; sing-box defaults to both networks.
+            if matches!(self.protocol(), "socks5" | "ss") {
+                udp = Some(udp.unwrap_or(false));
+            }
+        }
+        let mut value = PrivateJson(self.to_sing_box(false)?);
+        if udp == Some(false) {
+            value.0["network"] = "tcp".into();
+        }
+        serde_json::to_writer(output, &value.0).map_err(|_| ModelError::Render)
+    }
+
+    pub(super) fn validate_native_surge_export(&self) -> Result<(), ModelError> {
+        let NodeSource::Surge(source) = &self.source else {
+            return Err(ModelError::Unsupported);
+        };
+        // The common line grammar alone cannot distinguish Shadowrocket-only options.
+        self.project_surge(source, true).map(PrivateJson).map(drop)
     }
 
     pub fn to_probe_sing_box(&self, compatibility: bool) -> Result<(Value, bool), ModelError> {
@@ -414,6 +448,18 @@ impl Subscription {
             Dialect::Uri(_) if self.encoding.is_some() => "Base64 URI subscription",
             Dialect::Uri(_) => "URI subscription",
         }
+    }
+
+    pub(super) fn is_surge_policy_list(&self) -> bool {
+        matches!(self.dialect, Dialect::Surge(_))
+    }
+
+    pub(super) fn is_mihomo_provider(&self) -> bool {
+        matches!(self.dialect, Dialect::Proxies { .. })
+    }
+
+    pub(super) fn validate_export_dependencies(&self) -> Result<(), ModelError> {
+        self.dependencies().map(drop)
     }
 
     pub fn render(
@@ -1211,6 +1257,9 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
         }
         let line = view;
         let trimmed = line.trim();
+        if trimmed.starts_with("#!") {
+            return Err(ModelError::InvalidInput);
+        }
         if trimmed.is_empty()
             || trimmed.starts_with('#')
             || trimmed.starts_with(';')
@@ -1224,6 +1273,9 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
             return Err(ModelError::InvalidInput);
         }
         let comment = surge_code_end(line);
+        if line[comment..].starts_with("#!") {
+            return Err(ModelError::InvalidInput);
+        }
         let meaningful = &line[..comment];
         let equals = unquoted_positions(meaningful, '=')?
             .into_iter()
