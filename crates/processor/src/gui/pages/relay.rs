@@ -49,8 +49,10 @@ impl HubApp {
                     ui.label(tr(notice));
                 }
                 let cooldown = state.cooldown_seconds();
-                if cooldown > 0 && !state.schedule.armed() {
-                    ui.weak(format!("{} {cooldown} s", tr(Text::RelayRetryWait)));
+                if !state.schedule.armed()
+                    && let Some(message) = state.cooldown_message(language)
+                {
+                    ui.weak(message);
                 }
                 let schedule_status = state.schedule.status();
                 if schedule_status != ScheduleStatus::Idle {

@@ -135,7 +135,7 @@ fn status_error(
             .iter()
             .filter_map(|value| {
                 let value = value.to_str().ok()?.trim();
-                value.parse::<u64>().ok().or_else(|| {
+                super::parse_retry_delay_seconds(value).or_else(|| {
                     let date = chrono::DateTime::parse_from_rfc2822(value).ok()?;
                     let millis = date.signed_duration_since(now).num_milliseconds().max(0) as u64;
                     Some(millis.div_ceil(1000))
@@ -303,6 +303,13 @@ mod tests {
         assert!(matches!(
             status_error(302, &headers, now),
             RelayError::InputHttpStatus(302)
+        ));
+        headers.append("retry-after", "18446744073709551616".parse().unwrap());
+        assert!(matches!(
+            status_error(503, &headers, now),
+            RelayError::InputRateLimited {
+                retry_after_seconds: Some(u64::MAX)
+            }
         ));
         headers.insert("retry-after", "secret-invalid".parse().unwrap());
         let error = status_error(429, &headers, now);

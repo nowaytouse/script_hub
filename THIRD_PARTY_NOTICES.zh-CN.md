@@ -4,12 +4,12 @@
 
 [GPLv3](LICENSE) 仅适用于作者有权许可的项目代码，不改变第三方材料的许可。
 
-[Rust 依赖正文](crates/processor/THIRD_PARTY_LICENSES.txt) · [字体声明](crates/processor/licenses/epaint_default_fonts/) · [上游来源](rulesets/Sources/licenses/README.zh-CN.md)
+在线仓库：[Rust 依赖正文](https://github.com/nowaytouse/script_hub/blob/master/crates/processor/THIRD_PARTY_LICENSES.txt) · [字体声明](https://github.com/nowaytouse/script_hub/tree/master/crates/processor/licenses/epaint_default_fonts) · [上游来源](https://github.com/nowaytouse/script_hub/blob/master/rulesets/Sources/licenses/README.zh-CN.md)
 
-依赖清单由 cargo-about 根据锁定的 Windows / macOS 桌面依赖生成；不覆盖运行时下载内容，不是完整 SBOM 或法律合规认定。app2smile 与 AdGuard 等已登记来源保留各自许可。
+清单仅覆盖锁定的 Windows 与 macOS 桌面依赖，不含运行时下载内容，并非完整 SBOM。app2smile、AdGuard 等上游许可不变。
 
 `epaint_default_fonts` 的字体条款包含 OFL、Ubuntu、Hack / Bitstream Vera 及图标字体声明；不能用 crate 的 MIT / Apache 选项代替。`libsqlite3-sys` 的 MIT 与其捆绑 SQLite 源码声明分别保留。
 
-桌面包附带 `LICENSE`、`THIRD_PARTY_LICENSES.txt`、`licenses/` 和本双语声明。同一资源目录的 `SOURCE.txt` 提供版本和源码引用。本地构建如含未提交修改，该链接仅指向基准提交。
+离线：桌面包内的 `LICENSE`、`THIRD_PARTY_LICENSES.txt` 与 `licenses/`。`SOURCE.txt` 指向构建源码；含未提交改动时只记录基准提交。
 
-刷新清单和核查发布材料的步骤见[仓库维护文档](https://github.com/nowaytouse/script_hub/blob/master/docs/UPDATE_GUIDE.zh-CN.md)。完整许可正文不因文档精简而删减。
+[维护](https://github.com/nowaytouse/script_hub/blob/master/docs/UPDATE_GUIDE.zh-CN.md)

@@ -16,7 +16,7 @@ cargo run --locked --bin validate -- --root .
 
 ## Desktop notices
 
-After a dependency, desktop feature, or target change, regenerate the notice using cargo-about 0.9.3 from the repository root. Write to a scratch location first and review the diff before replacing the tracked file:
+After dependency, desktop feature, or target changes, regenerate with cargo-about 0.9.3 and review the diff:
 
 ```sh
 cargo fetch --locked --manifest-path crates/processor/Cargo.toml
@@ -26,6 +26,6 @@ cargo about generate --offline --locked --fail --features gui \
   --output-file /path/to/scratch/THIRD_PARTY_LICENSES.txt crates/processor/about.hbs
 ```
 
-The dependency audit compares a fresh notice on relevant pushes, pull requests, and manual runs; scheduled vulnerability checks do not regenerate it. Normalize only trailing spaces, tabs and CRLF in the generated text; retain all notices and license wording. The offline check uses the fetched locked crates and does not substitute for review of additional upstream license material. Separately check bundled assets and upstream material against their terms. Before distributing an archive, verify that the corresponding source is available, that `SOURCE.txt` names the build commit, and that the package includes the full license texts and notices. Do not treat a dirty build's base-commit link as its source.
+Keep the full notices and license texts. Before release, verify bundled and upstream terms, package notices, and the exact source referenced by `SOURCE.txt`.
 
 [Home](../README.md) · [Workflow](../.github/workflows/update_rulesets.yml)

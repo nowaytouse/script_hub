@@ -11,6 +11,5 @@
 
 The [source manifests](../Links/) define scope. Conversion, deduplication, classification and quarantine preserve upstream licenses; app settings retain normal video posts, and the full CNAME clickthrough / microsites lists remain disabled.
 
-app2smile scripts reference the author's maintained source. A reference is not redistribution permission; restricted luestr resources are not copied, converted or retrieved through client impersonation.
 
 Only some sources have been reviewed; future maintenance is not guaranteed. [Full notice](../../../THIRD_PARTY_NOTICES.md)

@@ -697,6 +697,33 @@ fn conversion_failure_cannot_begin_a_gist_write() {
 }
 
 #[test]
+fn original_gist_upload_rejects_missing_dependencies_before_any_request() {
+    let mut config = config();
+    config.source.clear();
+    config.output.clear();
+    config.local_content = Some(Zeroizing::new(
+        "Alpha = socks5, node.example.invalid, 1080, underlying-proxy=Missing\n".into(),
+    ));
+    config.test_nodes = false;
+    let fixture = Fixture::new(vec![]);
+    let cancel = AtomicBool::new(false);
+    let imported = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Import,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert!(matches!(
+        upload_with(&config, &fixture.client(), imported, &cancel, &|_| {}),
+        Err(RelayError::Model(model::ModelError::InvalidDependency))
+    ));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn an_explicit_format_replaces_an_equivalent_old_dialect_but_is_then_a_no_op() {
     use export::{OutputFormat, export_subscription};
 

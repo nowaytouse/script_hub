@@ -4,12 +4,12 @@
 
 [GPLv3](LICENSE) applies only to project code its authors have authority to license; third-party terms remain unchanged.
 
-[Rust license texts](crates/processor/THIRD_PARTY_LICENSES.txt) · [Font notices](crates/processor/licenses/epaint_default_fonts/) · [Upstream sources](rulesets/Sources/licenses/README.md)
+Repository: [Rust license texts](https://github.com/nowaytouse/script_hub/blob/master/crates/processor/THIRD_PARTY_LICENSES.txt) · [Font notices](https://github.com/nowaytouse/script_hub/tree/master/crates/processor/licenses/epaint_default_fonts) · [Upstream sources](https://github.com/nowaytouse/script_hub/blob/master/rulesets/Sources/licenses/README.md)
 
-cargo-about generates the inventory from locked Windows / macOS desktop dependencies. It excludes runtime downloads and is not a complete SBOM or legal compliance determination. Registered sources such as app2smile and AdGuard retain their own licenses.
+The inventory covers locked Windows and macOS desktop dependencies, not runtime downloads or a complete SBOM. Upstream terms still apply, including app2smile and AdGuard.
 
 `epaint_default_fonts` includes OFL, Ubuntu, Hack / Bitstream Vera and icon-font notices; its MIT / Apache alternatives do not replace asset terms. The MIT terms of `libsqlite3-sys` and its bundled SQLite source notices are retained separately.
 
-Desktop packages include `LICENSE`, `THIRD_PARTY_LICENSES.txt`, `licenses/` and these bilingual notices. Open `SOURCE.txt` in the same resources directory for the version and source reference. In a local build with uncommitted changes the link identifies only the base commit.
+Offline: `LICENSE`, `THIRD_PARTY_LICENSES.txt`, and `licenses/` in the package. `SOURCE.txt` names the build source; a dirty build records only the base commit.
 
-See the [repository maintenance guide](https://github.com/nowaytouse/script_hub/blob/master/docs/UPDATE_GUIDE.md) for refreshing the inventory and checking release materials. Full license texts are not shortened with these docs.
+[Maintenance](https://github.com/nowaytouse/script_hub/blob/master/docs/UPDATE_GUIDE.md)

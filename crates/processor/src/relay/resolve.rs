@@ -417,7 +417,7 @@ fn retry_after(value: Option<&str>) -> u64 {
     let Some(value) = value else {
         return 60;
     };
-    if let Ok(seconds) = value.trim().parse::<u64>() {
+    if let Some(seconds) = super::parse_retry_delay_seconds(value) {
         return seconds.max(1);
     }
     if let Ok(date) = chrono::DateTime::parse_from_rfc2822(value) {
@@ -1026,6 +1026,7 @@ mod tests {
     #[test]
     fn parses_retry_after_without_shortening_server_minimum() {
         assert_eq!(retry_after(Some("7200")), 7200);
+        assert_eq!(retry_after(Some("18446744073709551616")), u64::MAX);
         assert_eq!(retry_after(Some("not-a-date")), 60);
         let future = (chrono::Utc::now() + chrono::Duration::seconds(120)).to_rfc2822();
         assert!(retry_after(Some(&future)) >= 119);

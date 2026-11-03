@@ -1,10 +1,12 @@
 //! Session-only relay state; deliberately separate from preferences and job history.
 
 use super::file_dialog::FileAction;
-use super::i18n::Text;
+use super::i18n::{Text, text};
 use crate::relay::export::{OutputFormat, export_subscription};
 use crate::relay::gist::{GistFile, validate_filename, validate_name};
+use crate::relay::schedule::{RetryDeadline, server_retry_after};
 use crate::relay::{Progress, RelayConfig, RelayError, RelayResult, RunMode};
+use crate::runtime::settings::Language;
 use eframe::egui;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -51,6 +53,12 @@ pub(super) fn failure_message(
 ) -> String {
     use crate::relay::model::pipeline::ResolveError;
     use crate::relay::{engine::EngineError, gist::GistError, model::ModelError};
+    if let Failure::Operation(error) = failure
+        && server_retry_after(error)
+            .is_some_and(|wait| RetryDeadline::new(Instant::now(), wait) == RetryDeadline::Session)
+    {
+        return text(language, Text::RelayRetrySession).to_owned();
+    }
     let key = match failure {
         Failure::Validation(key) => *key,
         Failure::Operation(error) => match error {
@@ -79,10 +87,8 @@ pub(super) fn failure_message(
             RelayError::Cancelled => Text::RelayCancelled,
             RelayError::ExportFormat => Text::RelayExportFormatMismatch,
             RelayError::ExportNode { index, .. } => {
-                return format!(
-                    "{} #{index}",
-                    super::i18n::text(language, Text::RelayExportNodeFailed)
-                );
+                return super::i18n::text(language, Text::RelayExportNodeFailed)
+                    .replace("{node}", &index.to_string());
             }
             RelayError::Model(error) => match error {
                 ModelError::InvalidInput => Text::RelaySubscriptionInvalid,
@@ -210,7 +216,7 @@ pub(super) struct RelayState {
     pub encrypted_import: Option<Zeroizing<Vec<u8>>>,
     pub migration: Option<Arc<crate::relay::compat::Report>>,
     pub migration_ack: bool,
-    cooldown_until: Option<Instant>,
+    cooldown_until: Option<RetryDeadline>,
     pub local_content: Option<Zeroizing<String>>,
     pub local_summary: Option<(usize, &'static str)>,
     pub token: Zeroizing<String>,
@@ -237,6 +243,7 @@ pub(super) struct RelayState {
     pub result_format: Option<&'static str>,
     pub output_format: OutputFormat,
     pub publish_format: OutputFormat,
+    pub(super) format_feedback: Option<(OutputFormat, Result<(), Failure>)>,
     pub demo_report: Option<Result<crate::relay::demo::DemoReport, RelayError>>,
     pub progress: Option<Progress>,
     pub error: Option<Failure>,
@@ -328,8 +335,8 @@ struct FilePending {
 }
 
 enum FileCompleted {
-    ExportFailed(RelayError),
-    FormatChecked,
+    ExportFailed(OutputFormat, RelayError),
+    FormatChecked(OutputFormat),
     CopyReady(OutputFormat, Zeroizing<String>),
     Nodes(Zeroizing<String>),
     Imported(Box<crate::relay::backup::RelayBackup>),
@@ -343,6 +350,7 @@ enum FileCompleted {
 
 struct Pending {
     mode: RunMode,
+    output_format: OutputFormat,
     worker: JoinHandle<()>,
     receiver: mpsc::Receiver<Result<RelayResult, RelayError>>,
     cancel: Arc<AtomicBool>,
@@ -420,6 +428,7 @@ impl RelayState {
             result_format: None,
             output_format: OutputFormat::Original,
             publish_format: OutputFormat::Original,
+            format_feedback: None,
             demo_report: None,
             progress: None,
             error: None,
@@ -687,6 +696,7 @@ impl RelayState {
         self.completed_config = Some(self.private_config(self.engine_path()));
         self.notice = None;
         self.error = None;
+        self.format_feedback = None;
         self.result = Some(result);
     }
 
@@ -720,11 +730,21 @@ impl RelayState {
             .unwrap_or_else(|| Path::new("sing-box"))
     }
 
+    fn retry_deadline(&self) -> Option<RetryDeadline> {
+        self.cooldown_until.max(self.schedule.server_retry_until())
+    }
+
     pub(super) fn cooldown_seconds(&self) -> u64 {
-        self.cooldown_until
-            .max(self.schedule.server_retry_until())
-            .and_then(|deadline| deadline.checked_duration_since(Instant::now()))
-            .map_or(0, |remaining| remaining.as_secs().saturating_add(1))
+        self.retry_deadline()
+            .map_or(0, |deadline| deadline.remaining_seconds(Instant::now()))
+    }
+
+    pub(super) fn cooldown_message(&self, language: Language) -> Option<String> {
+        if self.retry_deadline() == Some(RetryDeadline::Session) {
+            return Some(text(language, Text::RelayRetrySession).to_owned());
+        }
+        let seconds = self.cooldown_seconds();
+        (seconds > 0).then(|| format!("{} {seconds} s", text(language, Text::RelayRetryWait)))
     }
 
     pub(super) fn input_changed(&mut self) {
@@ -741,7 +761,6 @@ impl RelayState {
         self.rename = false;
         self.sort = false;
         self.compatibility = false;
-        self.cooldown_until = None;
         self.invalidate_result();
     }
 
@@ -757,6 +776,7 @@ impl RelayState {
         self.notice = None;
         self.result = None;
         self.result_format = None;
+        self.format_feedback = None;
         self.completed_config = None;
         self.allow_plaintext = false;
         self.acknowledge_publish = false;
@@ -959,7 +979,6 @@ impl RelayState {
         self.reveal_source = false;
         self.reveal_token = false;
         self.reveal_output = false;
-        self.cooldown_until = None;
         self.local_content = None;
         self.local_summary = None;
         self.editor = None;
@@ -978,6 +997,7 @@ impl RelayState {
         self.result_format = None;
         self.output_format = OutputFormat::Original;
         self.publish_format = OutputFormat::Original;
+        self.format_feedback = None;
         self.progress = None;
         self.error = None;
         self.allow_plaintext = false;
@@ -1027,7 +1047,8 @@ impl RelayState {
             self.reveal_identity = false;
             super::templates::clear_secret_widget(ctx, SECRET_IDS[6]);
         }
-        if self.cooldown_seconds() > 0 {
+        if matches!(self.retry_deadline(), Some(RetryDeadline::At(deadline)) if deadline > Instant::now())
+        {
             ctx.request_repaint_after(Duration::from_secs(1));
         }
         self.tick_file(ctx);
@@ -1047,6 +1068,9 @@ impl RelayState {
         let result = pending.receiver.try_recv();
         let joined = pending.worker.join();
         if !current {
+            if let (Ok(()), Ok(Err(error))) = (&joined, &result) {
+                self.record_server_retry(error);
+            }
             self.notice = Some(Text::RelayCancelled);
             return;
         }
@@ -1056,6 +1080,7 @@ impl RelayState {
         self.compatibility = false;
         match (joined, result) {
             (Ok(()), Ok(Ok(mut result))) => {
+                self.format_feedback = None;
                 if pending.mode == RunMode::Publish {
                     self.completed_config = Some(self.private_config(self.engine_path()));
                 }
@@ -1145,6 +1170,13 @@ impl RelayState {
                     self.result = Some(result);
                 }
             }
+            (
+                Ok(()),
+                Ok(Err(error @ (RelayError::ExportFormat | RelayError::ExportNode { .. }))),
+            ) if pending.mode == RunMode::Publish => {
+                self.format_feedback =
+                    Some((pending.output_format, Err(Failure::Operation(error))));
+            }
             (Ok(()), Ok(Err(error))) => {
                 if matches!(error, RelayError::SourceChanged) && !self.source.is_empty() {
                     self.clear_editor_widgets(ctx);
@@ -1159,11 +1191,17 @@ impl RelayState {
         }
     }
 
+    fn record_server_retry(&mut self, error: &RelayError) {
+        if let Some(retry) = server_retry_after(error) {
+            self.cooldown_until = self
+                .cooldown_until
+                .max(Some(RetryDeadline::new(Instant::now(), retry)));
+        }
+    }
+
     fn record_workspace_failure(&mut self, failure: Failure) {
         if let Failure::Operation(error) = &failure {
-            if let Some(retry) = crate::relay::schedule::server_retry_after(error) {
-                self.cooldown_until = self.cooldown_until.max(Instant::now().checked_add(retry));
-            }
+            self.record_server_retry(error);
             if let RelayError::Gist(crate::relay::gist::GistError::CreatedUnverified(created)) =
                 error
             {
@@ -1193,6 +1231,13 @@ impl RelayState {
         self.start_local_output(format, false);
     }
 
+    pub(super) fn format_feedback(&self, format: OutputFormat) -> Option<&Result<(), Failure>> {
+        self.format_feedback
+            .as_ref()
+            .filter(|(checked, _)| *checked == format)
+            .map(|(_, feedback)| feedback)
+    }
+
     fn start_local_output(&mut self, format: OutputFormat, copy: bool) {
         if self.busy() || self.selecting_file() {
             return;
@@ -1206,15 +1251,13 @@ impl RelayState {
         };
         let content = result.content.clone();
         let (sender, receiver) = mpsc::sync_channel(1);
-        self.error = None;
-        self.notice = None;
         match thread::Builder::new()
             .name("script-hub-local-output".into())
             .spawn(move || {
                 let result = match export_subscription(&content, format) {
                     Ok(content) if copy => FileCompleted::CopyReady(format, content),
-                    Ok(_) => FileCompleted::FormatChecked,
-                    Err(error) => FileCompleted::ExportFailed(error),
+                    Ok(_) => FileCompleted::FormatChecked(format),
+                    Err(error) => FileCompleted::ExportFailed(format, error),
                 };
                 let _ = sender.send(Ok(Some(result)));
             }) {
@@ -1391,7 +1434,9 @@ impl RelayState {
                     } else if let FileAction::ExportNodes(format) = action {
                         match export_subscription(&content, format) {
                             Ok(converted) => Zeroizing::new(converted.as_bytes().to_vec()),
-                            Err(error) => return Ok(Some(FileCompleted::ExportFailed(error))),
+                            Err(error) => {
+                                return Ok(Some(FileCompleted::ExportFailed(format, error)));
+                            }
                         }
                     } else {
                         return Err(Text::RelayFileError);
@@ -1523,11 +1568,11 @@ impl RelayState {
             (Ok(()), Ok(Ok(Some(FileCompleted::Saved)))) => {
                 self.notice = Some(Text::RelayFileSaved)
             }
-            (Ok(()), Ok(Ok(Some(FileCompleted::ExportFailed(error))))) => {
-                self.error = Some(Failure::Operation(error));
+            (Ok(()), Ok(Ok(Some(FileCompleted::ExportFailed(format, error))))) => {
+                self.format_feedback = Some((format, Err(Failure::Operation(error))));
             }
-            (Ok(()), Ok(Ok(Some(FileCompleted::FormatChecked)))) => {
-                self.notice = Some(Text::RelayExportCheckPassed);
+            (Ok(()), Ok(Ok(Some(FileCompleted::FormatChecked(format))))) => {
+                self.format_feedback = Some((format, Ok(())));
             }
             (Ok(()), Ok(Ok(Some(FileCompleted::CopyReady(format, mut content))))) => {
                 if self.allow_plaintext && self.result.is_some() && self.output_format == format {
@@ -1542,10 +1587,8 @@ impl RelayState {
     }
 
     fn replace_nodes(&mut self, ctx: &egui::Context, content: Zeroizing<String>) {
-        let cooldown = self.cooldown_until;
         self.clear_editor_widgets(ctx);
         self.input_changed();
-        self.cooldown_until = cooldown;
         self.clear_pasted_text(ctx);
         self.source.zeroize();
         self.source_file.zeroize();
@@ -1649,6 +1692,7 @@ impl RelayState {
         if mode != RunMode::Publish {
             self.completed_config = Some(self.private_config(engine));
             self.result = None;
+            self.format_feedback = None;
             self.preview_names.clear();
             self.preview_endpoints.clear();
             self.result_format = None;
@@ -1667,6 +1711,7 @@ impl RelayState {
         self.error = None;
         self.notice = None;
         self.allow_plaintext = false;
+        let output_format = config.0.output_format;
         match thread::Builder::new()
             .name("script-hub-private-relay".to_owned())
             .spawn(move || {
@@ -1682,6 +1727,7 @@ impl RelayState {
             Ok(worker) => {
                 self.pending = Some(Pending {
                     mode,
+                    output_format,
                     worker,
                     receiver,
                     cancel,
@@ -1814,7 +1860,7 @@ mod tests {
         assert!(!state.schedule.armed());
 
         state.result = Some(result());
-        state.cooldown_until = Instant::now().checked_add(Duration::from_secs(60));
+        state.cooldown_until = Some(RetryDeadline::new(Instant::now(), Duration::from_secs(60)));
         state.arm_schedule();
         assert!(!state.schedule.armed());
     }
@@ -2099,12 +2145,37 @@ mod tests {
         let mut state = fixture();
         state.result = Some(result());
         state.output_format = OutputFormat::SingBox;
+        state.error = Some(Failure::Validation(Text::RelayTokenInvalid));
         state.start_format_check();
         finish(&mut state, &egui::Context::default());
-        assert_eq!(state.notice, Some(Text::RelayExportCheckPassed));
-        assert!(state.error.is_none());
+        assert!(matches!(
+            state.format_feedback(OutputFormat::SingBox),
+            Some(Ok(()))
+        ));
+        assert!(matches!(
+            state.error,
+            Some(Failure::Validation(Text::RelayTokenInvalid))
+        ));
         assert!(!state.allow_plaintext && !state.acknowledge_publish);
         assert_eq!(state.result.as_ref().unwrap().content, result().content);
+    }
+
+    #[test]
+    fn a_failed_output_check_reports_the_format_used_by_the_worker() {
+        let mut state = fixture();
+        let mut preview = result();
+        preview.content = Zeroizing::new(
+            r#"{"outbounds":[{"type":"socks","tag":"A","server":"node.example.invalid","server_port":1080,"network":"udp"}]}"#.into(),
+        );
+        state.result = Some(preview);
+        state.start_format_check_for(OutputFormat::Mihomo);
+        finish(&mut state, &egui::Context::default());
+        assert!(matches!(
+            state.format_feedback(OutputFormat::Mihomo),
+            Some(Err(_))
+        ));
+        assert!(state.format_feedback(OutputFormat::Original).is_none());
+        assert!(state.error.is_none());
     }
 
     #[test]
@@ -2504,7 +2575,7 @@ mod tests {
         state.output = Zeroizing::new("incomplete destination".into());
         state.token = Zeroizing::new("unfinished token".into());
         state.title = Zeroizing::new("a".repeat(65));
-        state.cooldown_until = Instant::now().checked_add(Duration::from_secs(30));
+        state.cooldown_until = Some(RetryDeadline::new(Instant::now(), Duration::from_secs(30)));
         state.invalidate_result();
         state.start_with(RunMode::Preview, Path::new(""), crate::relay::run);
         finish(&mut state, &egui::Context::default());
@@ -2914,8 +2985,10 @@ mod tests {
     }
 
     #[test]
-    fn rate_limit_cooldown_survives_processing_edits_but_new_source_can_recover() {
+    fn rate_limit_cooldown_survives_processing_edits_and_source_reset() {
         let mut state = fixture();
+        let source = state.source.clone();
+        let source_file = state.source_file.clone();
         state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| {
             Err(RelayError::Gist(
                 crate::relay::gist::GistError::RateLimited {
@@ -2933,10 +3006,60 @@ mod tests {
         });
         assert!(!state.busy());
         state.input_changed();
+        assert_eq!(state.cooldown_until, deadline);
+        state.clear(&egui::Context::default());
+        assert_eq!(state.cooldown_until, deadline);
+        state.cooldown_until = Some(RetryDeadline::At(Instant::now()));
         assert_eq!(state.cooldown_seconds(), 0);
+        state.source = source;
+        state.source_file = source_file;
         state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| Ok(result()));
         finish(&mut state, &egui::Context::default());
         assert!(state.result.is_some());
+    }
+
+    #[test]
+    fn late_manual_server_limit_survives_clear_and_blocks_only_online_work() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        let source = state.source.clone();
+        let source_file = state.source_file.clone();
+        let (release, wait) = mpsc::channel();
+        state.start_with(RunMode::Import, Path::new(""), move |_, _, _, cancel, _| {
+            wait.recv_timeout(Duration::from_secs(5)).unwrap();
+            assert!(cancel.load(Ordering::Acquire));
+            Err(RelayError::InputRateLimited {
+                retry_after_seconds: Some(u64::MAX),
+            })
+        });
+        assert!(state.busy());
+        state.clear(&ctx);
+        release.send(()).unwrap();
+        finish(&mut state, &ctx);
+        assert!(state.error.is_none() && state.result.is_none());
+        assert_eq!(state.cooldown_until, Some(RetryDeadline::Session));
+        state.record_server_retry(&RelayError::InputRateLimited {
+            retry_after_seconds: Some(60),
+        });
+        state.input_changed();
+        state.clear(&ctx);
+        assert_eq!(
+            state.cooldown_message(Language::ZhCn),
+            Some(text(Language::ZhCn, Text::RelayRetrySession).to_owned())
+        );
+        state.source = source;
+        state.source_file = source_file;
+        state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| {
+            panic!("session lock must not issue another request")
+        });
+        assert!(!state.busy());
+
+        state.editor =
+            Some(EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap());
+        state.test_nodes = false;
+        state.start_with(RunMode::Preview, Path::new(""), crate::relay::run);
+        finish(&mut state, &ctx);
+        assert_eq!(state.result.as_ref().unwrap().total, 1);
     }
 
     #[test]

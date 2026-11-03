@@ -27,6 +27,14 @@ use std::{
 };
 use zeroize::{Zeroize, Zeroizing};
 
+fn parse_retry_delay_seconds(value: &str) -> Option<u64> {
+    let value = value.trim();
+    value.parse().ok().or_else(|| {
+        // An overflowing decimal is a valid wait, not a reason to retry early.
+        (!value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit())).then_some(u64::MAX)
+    })
+}
+
 #[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct RelayConfig {
@@ -606,6 +614,9 @@ fn publication_payload(
 ) -> Result<Option<Zeroizing<String>>, RelayError> {
     active(cancel)?;
     if config.output_format == export::OutputFormat::Original {
+        model::Subscription::parse(&result.content)
+            .and_then(|subscription| subscription.validate_export_dependencies())
+            .map_err(RelayError::Model)?;
         Ok(None)
     } else {
         export::export_subscription(&result.content, config.output_format).map(Some)

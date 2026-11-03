@@ -11,6 +11,5 @@
 
 接入范围以[源清单](../Links/)为准。转换、去重、分类与安全隔离不改变原许可；App 参数保留普通视频帖，CNAME clickthrough / microsites 全集不启用。
 
-app2smile 脚本引用作者维护源。引用不等于再分发授权；luestr 受限资源不复制、不转换、不伪装客户端身份获取。
 
 仅部分来源已核对，不保证未来维护状态。[完整声明](../../../THIRD_PARTY_NOTICES.zh-CN.md)

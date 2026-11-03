@@ -1,12 +1,12 @@
 use super::{length_counter, primary_button, secret_field, visible_field};
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
-use crate::gui::relay::{Failure, RelayState, RelayStep, SECRET_IDS};
+use crate::gui::relay::{RelayState, RelayStep, SECRET_IDS};
 use crate::gui::subscriptions::Selection;
 use crate::gui::theme::Palette;
+use crate::relay::RunMode;
 use crate::relay::export::OutputFormat;
 use crate::relay::gist::{GistFile, validate_filename, validate_name};
-use crate::relay::{RelayError, RunMode};
 use crate::runtime::settings::Language;
 use eframe::egui;
 use zeroize::Zeroize;
@@ -72,7 +72,6 @@ pub(super) fn show(
         ui.data_mut(|data| data.insert_temp(tab_id, tab));
         state.reveal_token = false;
         state.reveal_output = false;
-        clear_format_check_notice(state);
     }
     let has_content = if let Some(result) = state
         .result
@@ -112,9 +111,12 @@ pub(super) fn show(
     ui.add_space(8.0);
 
     match tab {
-        Tab::Local if has_content => (None, local(ui, state, colors, &tr)),
+        Tab::Local if has_content => (None, local(ui, state, colors, language)),
         Tab::Local => (None, None),
-        Tab::Gist => (gist(ui, state, colors, cooldown, has_content, &tr), None),
+        Tab::Gist => (
+            gist(ui, state, colors, cooldown, has_content, language),
+            None,
+        ),
     }
 }
 
@@ -122,11 +124,12 @@ fn local(
     ui: &mut egui::Ui,
     state: &mut RelayState,
     colors: Palette,
-    tr: &impl Fn(Text) -> &'static str,
+    language: Language,
 ) -> Option<FileAction> {
+    let tr = |key| text(language, key);
     let mut selected_format = state.output_format;
-    format_picker(ui, Text::RelayExportFormat, &mut selected_format, tr);
-    select_local_format(state, selected_format);
+    format_picker(ui, Text::RelayExportFormat, &mut selected_format, &tr);
+    state.output_format = selected_format;
     ui.weak(tr(if state.demo_mode {
         Text::RelaySandboxFormatHelp
     } else {
@@ -137,19 +140,20 @@ fn local(
             state.start_format_check();
         }
         if state.output_format != OutputFormat::Original
-            && incompatible_format(state)
+            && incompatible_format(state, state.output_format)
             && ui.button(tr(Text::RelayExportUseOriginal)).clicked()
         {
-            select_local_format(state, OutputFormat::Original);
+            state.output_format = OutputFormat::Original;
         }
     });
+    show_format_feedback(ui, state, state.output_format, colors, language);
     if state.demo_mode {
         return None;
     }
     ui.add_space(8.0);
     ui.checkbox(&mut state.allow_plaintext, tr(Text::VaultPlaintextConsent));
 
-    let can_export = state.allow_plaintext && !incompatible_format(state);
+    let can_export = state.allow_plaintext && !incompatible_format(state, state.output_format);
     let mut file_action = None;
     ui.horizontal_wrapped(|ui| {
         if ui
@@ -237,28 +241,27 @@ fn format_picker(
     });
 }
 
-fn incompatible_format(state: &RelayState) -> bool {
-    matches!(
-        state.error,
-        Some(Failure::Operation(
-            RelayError::ExportFormat | RelayError::ExportNode { .. }
-        ))
-    )
+fn incompatible_format(state: &RelayState, format: OutputFormat) -> bool {
+    matches!(state.format_feedback(format), Some(Err(_)))
 }
 
-fn clear_format_check_notice(state: &mut RelayState) {
-    if state.notice == Some(Text::RelayExportCheckPassed) {
-        state.notice = None;
-    }
-}
-
-fn select_local_format(state: &mut RelayState, format: OutputFormat) {
-    if state.output_format != format {
-        state.output_format = format;
-        clear_format_check_notice(state);
-        if incompatible_format(state) {
-            state.error = None;
-        }
+fn show_format_feedback(
+    ui: &mut egui::Ui,
+    state: &RelayState,
+    format: OutputFormat,
+    colors: Palette,
+    language: Language,
+) {
+    if let Some(feedback) = state.format_feedback(format) {
+        let status = match feedback {
+            Ok(()) => egui::RichText::new(text(language, Text::RelayExportCheckPassed)),
+            Err(error) => egui::RichText::new(crate::gui::relay::failure_message(language, error))
+                .color(colors.error),
+        };
+        let status = ui.add(egui::Label::new(status).selectable(false));
+        ui.ctx().accesskit_node_builder(status.id, |node| {
+            node.set_live(egui::accesskit::Live::Polite);
+        });
     }
 }
 
@@ -268,21 +271,26 @@ fn gist(
     colors: Palette,
     cooldown: u64,
     has_content: bool,
-    tr: &impl Fn(Text) -> &'static str,
+    language: Language,
 ) -> Option<RunMode> {
+    let tr = |key| text(language, key);
     let mut selected_format = state.publish_format;
-    format_picker(ui, Text::RelayPublishFormat, &mut selected_format, tr);
+    format_picker(ui, Text::RelayPublishFormat, &mut selected_format, &tr);
     select_gist_format(state, selected_format);
     ui.weak(tr(Text::RelayPublishFormatHelp));
-    if has_content && state.publish_format != OutputFormat::Original {
+    if has_content {
         ui.horizontal_wrapped(|ui| {
             if ui.button(tr(Text::RelayExportCheck)).clicked() {
                 state.start_format_check_for(state.publish_format);
             }
-            if incompatible_format(state) && ui.button(tr(Text::RelayExportUseOriginal)).clicked() {
+            if state.publish_format != OutputFormat::Original
+                && incompatible_format(state, state.publish_format)
+                && ui.button(tr(Text::RelayExportUseOriginal)).clicked()
+            {
                 select_gist_format(state, OutputFormat::Original);
             }
         });
+        show_format_feedback(ui, state, state.publish_format, colors, language);
     }
     ui.add_space(12.0);
     if secret_field(
@@ -388,7 +396,7 @@ fn gist(
         .add_enabled(
             has_content
                 && !unverified
-                && !incompatible_format(state)
+                && !incompatible_format(state, state.publish_format)
                 && issue.is_none()
                 && cooldown == 0,
             primary_button(
@@ -445,7 +453,9 @@ fn gist(
             }
             if ui
                 .add_enabled(
-                    issue.is_none() && !incompatible_format(state) && cooldown == 0,
+                    issue.is_none()
+                        && !incompatible_format(state, state.publish_format)
+                        && cooldown == 0,
                     egui::Button::new(tr(Text::ScheduleEnable)),
                 )
                 .clicked()
@@ -465,7 +475,6 @@ fn gist(
 fn select_gist_format(state: &mut RelayState, format: OutputFormat) {
     if state.publish_format != format {
         state.publish_format = format;
-        clear_format_check_notice(state);
         invalidate_gist_destination(state);
     }
 }
@@ -490,7 +499,8 @@ fn clear_gist_authorization(state: &mut RelayState) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::relay::RelayConfig;
+    use crate::gui::relay::Failure;
+    use crate::relay::{RelayConfig, RelayError};
     use crate::runtime::settings::Preferences;
     use std::sync::atomic::AtomicBool;
 
@@ -542,7 +552,7 @@ mod tests {
                 });
             },
         );
-        let entries = output
+        let nodes = output
             .platform_output
             .accesskit_update
             .as_ref()
@@ -550,13 +560,26 @@ mod tests {
             .nodes
             .iter()
             .filter_map(|(_, node)| {
-                node.label()
-                    .or_else(|| node.value())
-                    .map(|label| (label.to_owned(), node.is_disabled()))
+                let label = node.label().or_else(|| node.value())?.to_owned();
+                Some((label, node.is_disabled(), node.live()))
             })
-            .collect();
+            .collect::<Vec<_>>();
         output.drop_without_applying_deltas();
-        entries
+        for key in [
+            Text::RelayExportCheckPassed,
+            Text::RelayExportFormatMismatch,
+        ] {
+            let label = text(Language::En, key);
+            if nodes.iter().any(|(name, _, _)| name == label) {
+                assert!(nodes.iter().any(|(name, _, live)| {
+                    name == label && *live == Some(egui::accesskit::Live::Polite)
+                }));
+            }
+        }
+        nodes
+            .into_iter()
+            .map(|(label, disabled, _)| (label, disabled))
+            .collect()
     }
 
     #[test]
@@ -595,9 +618,11 @@ mod tests {
                 .contains(&(text(Language::En, Text::RelayExportCheck).to_owned(), false))
         );
         assert!(!state.allow_plaintext);
-        state.notice = Some(Text::RelayExportCheckPassed);
-        select_local_format(&mut state, OutputFormat::Original);
-        assert!(state.notice.is_none());
+        state.format_feedback = Some((OutputFormat::SingBox, Ok(())));
+        let success = text(Language::En, Text::RelayExportCheckPassed).to_owned();
+        assert!(render(&mut state, Tab::Local, false).contains(&(success.clone(), false)));
+        state.output_format = OutputFormat::Original;
+        assert!(!render(&mut state, Tab::Local, false).contains(&(success, false)));
     }
 
     #[test]
@@ -605,22 +630,56 @@ mod tests {
         let mut state = prepared();
         state.output_format = OutputFormat::SingBox;
         state.allow_plaintext = true;
-        state.error = Some(Failure::Operation(RelayError::ExportNode {
-            index: 1,
-            error: crate::relay::model::ModelError::Unsupported,
-        }));
+        state.format_feedback = Some((
+            OutputFormat::SingBox,
+            Err(Failure::Operation(RelayError::ExportNode {
+                index: 1,
+                error: crate::relay::model::ModelError::Unsupported,
+            })),
+        ));
         let nodes = render(&mut state, Tab::Local, true);
         assert!(nodes.contains(&(text(Language::En, Text::RelayCopy).to_owned(), true)));
         assert!(nodes.contains(&(
             text(Language::En, Text::RelayExportUseOriginal).to_owned(),
             false
         )));
-        select_local_format(&mut state, OutputFormat::Original);
-        assert!(state.error.is_none());
+        state.output_format = OutputFormat::Original;
         assert!(
             render(&mut state, Tab::Local, true)
                 .contains(&(text(Language::En, Text::RelayCopy).to_owned(), false))
         );
+    }
+
+    #[test]
+    fn format_feedback_only_blocks_actions_that_use_the_checked_format() {
+        let mut state = prepared();
+        state.token.push_str("synthetic-test-token");
+        state.output.push_str("0123456789abcdef0123456789abcdef");
+        state.acknowledge_publish = true;
+        state.allow_plaintext = true;
+        state.output_format = OutputFormat::Mihomo;
+        state.format_feedback = Some((
+            OutputFormat::Mihomo,
+            Err(Failure::Operation(RelayError::ExportFormat)),
+        ));
+        let update = text(Language::En, Text::RelayOutputUpdate).to_owned();
+        let copy = text(Language::En, Text::RelayCopy).to_owned();
+        let failure = text(Language::En, Text::RelayExportFormatMismatch).to_owned();
+        let ctx = egui::Context::default();
+        open_gist(&ctx);
+        let gist_original = render_in_context(&mut state, &ctx, false);
+        assert!(gist_original.contains(&(update.clone(), false)));
+        assert!(!gist_original.iter().any(|(label, _)| label == &failure));
+        assert_eq!(state.output_format, OutputFormat::Mihomo);
+
+        state.publish_format = OutputFormat::Mihomo;
+        state.output_format = OutputFormat::Original;
+        let gist_mihomo = render(&mut state, Tab::Gist, true);
+        assert!(gist_mihomo.contains(&(update, true)));
+        assert!(gist_mihomo.contains(&(failure, false)));
+        assert!(render(&mut state, Tab::Local, false).contains(&(copy, false)));
+        state.invalidate_result();
+        assert!(state.format_feedback(OutputFormat::Mihomo).is_none());
     }
 
     #[test]

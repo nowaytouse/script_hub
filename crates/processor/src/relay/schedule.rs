@@ -15,12 +15,38 @@ pub const MIN_INTERVAL: Duration = Duration::from_secs(60);
 pub const MAX_INTERVAL: Duration = Duration::from_secs(7 * 24 * 60 * 60);
 pub const DEFAULT_INTERVAL: Duration = Duration::from_secs(60 * 60);
 
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub(crate) enum RetryDeadline {
+    At(Instant),
+    Session,
+}
+
+impl RetryDeadline {
+    pub(crate) fn new(now: Instant, wait: Duration) -> Self {
+        now.checked_add(wait).map_or(Self::Session, Self::At)
+    }
+
+    #[cfg(any(feature = "gui", test))]
+    pub(crate) fn remaining_seconds(self, now: Instant) -> u64 {
+        match self {
+            Self::At(deadline) => {
+                let remaining = deadline.saturating_duration_since(now);
+                remaining
+                    .as_secs()
+                    .saturating_add(u64::from(remaining.subsec_nanos() != 0))
+            }
+            Self::Session => u64::MAX,
+        }
+    }
+}
+
 /// One in-flight job at most. The owner must call `finish` after each `begin`.
 pub struct Schedule {
     interval: Duration,
     next: Option<Instant>,
     running: bool,
     paused: bool,
+    blocked_for_session: bool,
     failures: u32,
 }
 
@@ -35,6 +61,7 @@ impl Schedule {
             next: Some(next),
             running: false,
             paused: false,
+            blocked_for_session: false,
             failures: 0,
         })
     }
@@ -73,7 +100,7 @@ impl Schedule {
     }
 
     pub fn resume(&mut self, now: Instant) -> Result<(), RelayError> {
-        if self.running {
+        if self.running || self.blocked_for_session {
             return Err(RelayError::InvalidInput);
         }
         let next = now
@@ -94,6 +121,15 @@ impl Schedule {
             return;
         }
         self.running = false;
+        if result
+            .err()
+            .and_then(server_retry_after)
+            .is_some_and(|wait| RetryDeadline::new(now, wait) == RetryDeadline::Session)
+        {
+            self.blocked_for_session = true;
+            self.pause();
+            return;
+        }
         if self.paused {
             return;
         }
@@ -241,6 +277,34 @@ mod tests {
         schedule.finish(now, &Err(RelayError::SourceChanged));
         assert!(schedule.is_paused());
         assert_eq!(schedule.next_due(), None);
+    }
+
+    #[test]
+    fn unrepresentable_server_wait_pauses_and_cannot_resume_in_the_same_session() {
+        let now = Instant::now();
+        let wait = Duration::from_secs(u64::MAX);
+        let lock = RetryDeadline::new(now, wait);
+        assert_eq!(lock, RetryDeadline::Session);
+        assert_eq!(lock.max(RetryDeadline::new(now, MIN_INTERVAL)), lock);
+        assert_eq!(lock.remaining_seconds(now + MIN_INTERVAL), u64::MAX);
+
+        for already_paused in [false, true] {
+            let mut schedule = Schedule::new(MIN_INTERVAL, now).unwrap();
+            let due = now + MIN_INTERVAL;
+            assert!(schedule.begin(due));
+            if already_paused {
+                schedule.pause();
+            }
+            schedule.finish(
+                due,
+                &Err(RelayError::InputRateLimited {
+                    retry_after_seconds: Some(u64::MAX),
+                }),
+            );
+            assert!(schedule.is_paused());
+            assert_eq!(schedule.next_due(), None);
+            assert!(schedule.resume(due + MIN_INTERVAL).is_err());
+        }
     }
 
     #[test]

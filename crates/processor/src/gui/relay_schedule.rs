@@ -13,7 +13,7 @@ use super::relay::{Failure, PrivateConfig};
 use crate::relay::{
     Progress, RelayConfig, RelayError, RelayResult, collection_schedule,
     library::Workspace,
-    schedule::{self, Schedule},
+    schedule::{self, RetryDeadline, Schedule},
 };
 use eframe::egui;
 use zeroize::Zeroizing;
@@ -71,7 +71,7 @@ pub struct State {
     pub progress: Option<Progress>,
     pub result: Option<Summary>,
     pub(super) last_error: Option<Failure>,
-    server_retry_until: Option<Instant>,
+    server_retry_until: Option<RetryDeadline>,
     schedule: Option<Schedule>,
     config: Option<PrivateConfig>,
     collection: Option<(Arc<Workspace>, u64)>,
@@ -126,7 +126,7 @@ impl State {
             || token.is_empty()
             || self
                 .server_retry_until
-                .is_some_and(|deadline| deadline > now)
+                .is_some_and(|deadline| deadline.remaining_seconds(now) > 0)
         {
             return Err(RelayError::InvalidInput);
         }
@@ -177,7 +177,7 @@ impl State {
         self.result = None;
     }
 
-    pub fn server_retry_until(&self) -> Option<Instant> {
+    pub fn server_retry_until(&self) -> Option<RetryDeadline> {
         self.server_retry_until
     }
 
@@ -236,7 +236,9 @@ impl State {
             if let Err(error) = &outcome
                 && let Some(wait) = schedule::server_retry_after(error)
             {
-                self.server_retry_until = self.server_retry_until.max(now.checked_add(wait));
+                self.server_retry_until = self
+                    .server_retry_until
+                    .max(Some(RetryDeadline::new(now, wait)));
             }
             if let Some(schedule) = &mut self.schedule {
                 schedule.finish_status(now, outcome.as_ref().map(|_| ()));
@@ -434,6 +436,12 @@ mod tests {
 
     #[test]
     fn stop_discards_late_feedback_but_preserves_real_server_retry_deadline() {
+        for seconds in [120, u64::MAX] {
+            check_late_server_retry(seconds);
+        }
+    }
+
+    fn check_late_server_retry(seconds: u64) {
         let mut state = State::default();
         state.arm(config(), "test").unwrap();
         let cancel = Arc::new(AtomicBool::new(false));
@@ -445,7 +453,7 @@ mod tests {
             assert!(observed.load(Ordering::Acquire));
             sender
                 .send(Err(RelayError::InputRateLimited {
-                    retry_after_seconds: Some(120),
+                    retry_after_seconds: Some(seconds),
                 }))
                 .unwrap();
         });
@@ -467,7 +475,8 @@ mod tests {
         assert_eq!(state.status(), Status::Idle);
         assert!(state.last_error.is_none() && state.result.is_none());
         let deadline = state.server_retry_until().unwrap();
-        assert!(deadline > Instant::now());
+        assert!(deadline.remaining_seconds(Instant::now()) > 0);
+        assert_eq!(deadline == RetryDeadline::Session, seconds == u64::MAX);
         state.clear_feedback();
         assert_eq!(state.server_retry_until(), Some(deadline));
         assert!(state.arm(config(), "test").is_err());

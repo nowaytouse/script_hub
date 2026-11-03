@@ -380,9 +380,8 @@ impl HubApp {
                     crate::gui::relay::failure_message(language, error),
                 );
             }
-            let cooldown = self.relay.cooldown_seconds();
-            if cooldown > 0 {
-                ui.weak(format!("{} {cooldown} s", tr(Text::RelayRetryWait)));
+            if let Some(message) = self.relay.cooldown_message(language) {
+                ui.weak(message);
             }
             let selection = self.relay.workspace.selected;
             egui::ScrollArea::vertical()

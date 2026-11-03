@@ -61,6 +61,11 @@ pub(super) fn show(
                 Text::WorkspaceListNewSubscription,
                 workspace.subscriptions.len(),
             ),
+            ListKind::Collections if workspace.subscriptions.is_empty() => (
+                Action::NewSubscription,
+                Text::WorkspaceListNewSubscription,
+                workspace.collections.len(),
+            ),
             ListKind::Collections => (
                 Action::NewCollection,
                 Text::WorkspaceListNewCollection,
@@ -77,7 +82,7 @@ pub(super) fn show(
             }));
         }
         ui.horizontal_wrapped(|ui| {
-            if (!demo_mode || list.kind == ListKind::Collections)
+            if (!demo_mode || create_action == Action::NewCollection)
                 && ui
                     .add_enabled(allow_actions, primary_button(colors, tr(create_label)))
                     .clicked()
@@ -239,7 +244,13 @@ mod tests {
             (output, action)
         }
         for dark in [false, true] {
-            for language in [Language::En, Language::ZhCn] {
+            for (language, kind, has_subscription) in [
+                (Language::En, ListKind::Subscriptions, false),
+                (Language::ZhCn, ListKind::Subscriptions, false),
+                (Language::En, ListKind::Collections, false),
+                (Language::ZhCn, ListKind::Collections, false),
+                (Language::En, ListKind::Collections, true),
+            ] {
                 let ctx = egui::Context::default();
                 ctx.enable_accesskit();
                 let preferences = Preferences {
@@ -248,6 +259,26 @@ mod tests {
                 };
                 theme::apply(&ctx, &preferences);
                 let mut state = State::default();
+                state.list.kind = kind;
+                if has_subscription {
+                    state
+                        .data
+                        .add_entry(crate::relay::library::Entry {
+                            id: 0,
+                            name: "Example".into(),
+                            source: "https://example.test/subscription".into(),
+                            source_file: String::new(),
+                            content: String::new(),
+                            processing: Default::default(),
+                            publish: Default::default(),
+                        })
+                        .expect("valid test subscription");
+                }
+                let (expected_action, expected_label) = if has_subscription {
+                    (Action::NewCollection, Text::WorkspaceListNewCollection)
+                } else {
+                    (Action::NewSubscription, Text::WorkspaceListNewSubscription)
+                };
                 let (output, _) = draw(&ctx, &mut state, language, dark, true, vec![]);
                 let update = output
                     .platform_output
@@ -257,9 +288,7 @@ mod tests {
                 let (_, node) = update
                     .nodes
                     .iter()
-                    .find(|(_, node)| {
-                        node.label() == Some(text(language, Text::WorkspaceListNewSubscription))
-                    })
+                    .find(|(_, node)| node.label() == Some(text(language, expected_label)))
                     .expect("named new button");
                 let bounds = node.bounds().expect("button bounds");
                 assert!(bounds.x0 >= 0.0 && bounds.x1 <= 320.0);
@@ -289,7 +318,7 @@ mod tests {
                     true,
                     vec![egui::Event::PointerMoved(pos), button(false)],
                 );
-                assert!(matches!(action, Some(Action::NewSubscription)));
+                assert!(action == Some(expected_action));
                 let _ = draw(
                     &ctx,
                     &mut state,
