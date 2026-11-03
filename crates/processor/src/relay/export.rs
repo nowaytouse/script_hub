@@ -23,6 +23,15 @@ pub enum OutputFormat {
 }
 
 impl OutputFormat {
+    pub(super) const fn script_label(self) -> &'static str {
+        match self {
+            Self::Original => "original",
+            Self::Surge => "surge",
+            Self::Mihomo => "mihomo",
+            Self::SingBox => "sing-box",
+        }
+    }
+
     pub(super) fn is_original(&self) -> bool {
         *self == Self::Original
     }
@@ -111,7 +120,14 @@ fn surge(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> {
 }
 
 fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
-    const COMMON: &[&str] = &["type", "tag", "server", "server_port", "tcp_fast_open"];
+    const COMMON: &[&str] = &[
+        "type",
+        "tag",
+        "server",
+        "server_port",
+        "tcp_fast_open",
+        "detour",
+    ];
     let object = source.as_object().ok_or(ModelError::Unsupported)?;
     let field = |key: &str| {
         object
@@ -165,6 +181,10 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         return Err(ModelError::Unsupported);
     }
     let mut row = Zeroizing::new(format!("{name} = {kind}, {server}, {port}"));
+    if object.contains_key("detour") {
+        let quoted = quote_surge(field("detour")?)?;
+        write!(row, ", underlying-proxy={}", quoted.as_str()).map_err(|_| ModelError::Render)?;
+    }
     if matches!(kind, "socks5" | "ss") {
         let udp = match object.get("network") {
             None => true,
@@ -324,7 +344,7 @@ fn verify_projection(
 }
 
 fn mihomo_node(source: &Value) -> Result<PrivateJson, ModelError> {
-    const COMMON: &[&str] = &["type", "tag", "server", "server_port", "network"];
+    const COMMON: &[&str] = &["type", "tag", "server", "server_port", "network", "detour"];
     let object = source.as_object().ok_or(ModelError::Unsupported)?;
     let (kind, fields): (&str, &[&str]) = match source["type"].as_str() {
         Some("socks")
@@ -358,6 +378,13 @@ fn mihomo_node(source: &Value) -> Result<PrivateJson, ModelError> {
         "type": kind, "name": source["tag"], "server": source["server"],
         "port": source["server_port"], "udp": udp,
     }));
+    if let Some(detour) = source.get("detour") {
+        let target = detour
+            .as_str()
+            .filter(|target| !target.is_empty())
+            .ok_or(ModelError::Unsupported)?;
+        converted.0["dialer-proxy"] = target.into();
+    }
     for (from, to) in [
         ("method", "cipher"),
         ("username", "username"),
@@ -379,6 +406,45 @@ fn export_text(output: &[u8]) -> Result<Zeroizing<String>, RelayError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn verified_proxy_chain_roundtrips_between_surge_mihomo_and_sing_box() {
+        let source = "Entry = socks5, entry.example.invalid, 1080\nExit = socks5, exit.example.invalid, 1080, underlying-proxy=Entry\n";
+        let native = export_subscription(source, OutputFormat::Surge).unwrap();
+        assert_eq!(native.as_str(), source);
+        let sing_box = export_subscription(source, OutputFormat::SingBox).unwrap();
+        let canonical: Value = serde_json::from_str(&sing_box).unwrap();
+        assert_eq!(canonical["outbounds"][1]["detour"], "Entry");
+        let mihomo = export_subscription(&sing_box, OutputFormat::Mihomo).unwrap();
+        assert!(mihomo.contains("\"dialer-proxy\":\"Entry\""));
+        let surge = export_subscription(&mihomo, OutputFormat::Surge).unwrap();
+        assert!(surge.contains("underlying-proxy="));
+        let roundtrip = export_subscription(&surge, OutputFormat::SingBox).unwrap();
+        assert_eq!(
+            serde_json::from_str::<Value>(&roundtrip).unwrap(),
+            canonical
+        );
+        let parsed = Subscription::parse(&surge).unwrap();
+        assert!(matches!(
+            parsed.nodes()[1].to_probe_sing_box(false),
+            Err(ModelError::Unsupported)
+        ));
+    }
+
+    #[test]
+    fn sing_box_preserves_valid_udp_over_tcp_encodings() {
+        for field in [json!(true), json!({"enabled": false, "version": 1})] {
+            let source = json!([{
+                "type":"socks", "tag":"sample", "server":"sample.example.invalid",
+                "server_port":1080, "udp_over_tcp":field
+            }]);
+            let exported = export_subscription(&source.to_string(), OutputFormat::SingBox).unwrap();
+            assert_eq!(
+                serde_json::from_str::<Value>(&exported).unwrap()["outbounds"][0]["udp_over_tcp"],
+                field
+            );
+        }
+    }
 
     const SURGE: &str = "[Proxy]\r\n# example\r\nalpha = https, example.com, 443\r\n";
     const SURGE_CONVERSION: &str = r#"{"outbounds":[
@@ -496,6 +562,11 @@ mod tests {
 
         let policies = export_subscription(SURGE_CONVERSION, OutputFormat::Surge).unwrap();
         let anytls = export_subscription(ANYTLS_JSON, OutputFormat::Surge).unwrap();
+        let chain = export_subscription(
+            r#"[{"type":"socks","tag":"Entry","server":"entry.example.invalid","server_port":1080},
+                {"type":"socks","tag":"Exit","server":"exit.example.invalid","server_port":1080,"detour":"Entry"}]"#,
+            OutputFormat::Surge,
+        ).unwrap();
         let scratch =
             std::path::PathBuf::from(std::env::var_os("SCRIPT_HUB_SURGE_TEST_DIR").unwrap());
         let external = scratch.join("external-sample.txt");
@@ -520,8 +591,8 @@ mod tests {
         let mut profile = std::fs::File::create_new(&path).unwrap();
         write!(
             profile,
-            "[Proxy]\n{}{}\n[Proxy Group]\n{group}\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS, 东京 🇯🇵\n[Rule]\nFINAL,Check\n",
-            policies.as_str(), anytls.as_str()
+            "[Proxy]\n{}{}{}\n[Proxy Group]\n{group}\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS, Exit, 东京 🇯🇵\n[Rule]\nFINAL,Check\n",
+            policies.as_str(), anytls.as_str(), chain.as_str()
         )
         .unwrap();
         drop(profile);

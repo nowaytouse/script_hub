@@ -10,6 +10,7 @@ pub enum Setting {
     Server { value: String },
     Port { value: u16 },
     Udp { enabled: bool },
+    UdpOverTcp { enabled: bool },
     TcpFastOpen { enabled: bool },
     VerifyTls,
     ServerName { value: String },
@@ -34,6 +35,7 @@ fn kind(setting: &Setting) -> u8 {
         Setting::Server { .. } => 5,
         Setting::Port { .. } => 6,
         Setting::Udp { .. } => 0,
+        Setting::UdpOverTcp { .. } => 7,
         Setting::TcpFastOpen { .. } => 1,
         Setting::VerifyTls => 2,
         Setting::ServerName { .. } => 3,
@@ -213,6 +215,277 @@ fn json_tls(node: &Node, value: &Value) -> Result<bool, ModelError> {
     }
 }
 
+/// The only protocol settings exposed to scripts, independently of source dialect.
+#[derive(Clone, Default)]
+pub(super) struct ScriptFields {
+    pub udp: Option<bool>,
+    pub udp_over_tcp: Option<bool>,
+    pub tfo: Option<bool>,
+    pub tls: Option<bool>,
+    pub verify_tls: Option<bool>,
+    pub sni: Option<String>,
+    pub alpn: Option<Vec<String>>,
+    pub transport: Option<String>,
+}
+
+fn bounded_text(value: &str) -> Option<String> {
+    (!value.is_empty()
+        && value.len() <= 255
+        && !value.chars().any(|c| c.is_control() || c.is_whitespace()))
+    .then(|| value.to_owned())
+}
+
+fn bounded_alpn<'a>(items: impl Iterator<Item = &'a str>) -> Option<Vec<String>> {
+    let items = items
+        .take(33)
+        .map(|item| (!item.contains(',')).then(|| bounded_text(item)).flatten())
+        .collect::<Option<Vec<_>>>()?;
+    (1..=32).contains(&items.len()).then_some(items)
+}
+
+fn transport(protocol: &str, explicit: Option<&str>) -> Option<String> {
+    let kind = match (explicit, protocol) {
+        (Some(kind), _) => kind,
+        (None, "hysteria2" | "hy2" | "tuic" | "tuic-v5") => "quic",
+        (
+            None,
+            "socks" | "socks5" | "socks5-tls" | "ss" | "shadowsocks" | "http" | "https" | "trojan"
+            | "anytls" | "vmess" | "vless",
+        ) => "tcp",
+        _ => return None,
+    };
+    matches!(
+        kind,
+        "tcp" | "ws" | "http" | "httpupgrade" | "grpc" | "quic"
+    )
+    .then(|| kind.to_owned())
+}
+
+fn native_script_fields(node: &Node, value: &Value, tls: Option<bool>) -> ScriptFields {
+    let protocol = node.protocol();
+    let parameters = value.get("tls");
+    let normal_tls = tls == Some(true)
+        && !parameters.is_some_and(|value| {
+            value
+                .get("reality")
+                .and_then(|value| value.get("enabled"))
+                .and_then(Value::as_bool)
+                == Some(true)
+        });
+    ScriptFields {
+        udp: match value.get("network") {
+            Some(network) if network == "tcp" => Some(false),
+            Some(network) if network == "udp" => Some(true),
+            None if matches!(protocol, "http" | "https") => Some(false),
+            None if matches!(
+                protocol,
+                "socks"
+                    | "socks5"
+                    | "ss"
+                    | "shadowsocks"
+                    | "trojan"
+                    | "anytls"
+                    | "vmess"
+                    | "vless"
+                    | "hysteria2"
+                    | "hy2"
+                    | "tuic"
+            ) =>
+            {
+                Some(true)
+            }
+            _ => None,
+        },
+        udp_over_tcp: matches!(protocol, "socks" | "shadowsocks")
+            .then(|| {
+                value.get("udp_over_tcp").map_or(Some(false), |value| {
+                    value.as_bool().or_else(|| {
+                        value
+                            .as_object()?
+                            .get("enabled")
+                            .map_or(Some(false), Value::as_bool)
+                    })
+                })
+            })
+            .flatten(),
+        tfo: value
+            .get("tcp_fast_open")
+            .map_or(Some(false), Value::as_bool),
+        tls,
+        verify_tls: normal_tls
+            .then(|| {
+                parameters
+                    .and_then(|value| value.get("insecure"))
+                    .map_or(Some(true), |value| {
+                        value.as_bool().map(|insecure| !insecure)
+                    })
+            })
+            .flatten(),
+        sni: (tls == Some(true)
+            && !parameters.is_some_and(|value| {
+                value.get("disable_sni").and_then(Value::as_bool) == Some(true)
+            }))
+        .then(|| {
+            effective_sni(
+                parameters.and_then(|value| value.get("server_name")),
+                node.server(),
+            )
+        })
+        .flatten(),
+        alpn: (tls == Some(true))
+            .then(|| json_alpn(parameters?.get("alpn")?))
+            .flatten(),
+        transport: transport(
+            protocol,
+            value
+                .get("transport")
+                .and_then(|value| value.get("type"))
+                .and_then(Value::as_str),
+        ),
+    }
+}
+
+fn effective_sni(value: Option<&Value>, server: &str) -> Option<String> {
+    match value {
+        Some(value) => bounded_text(value.as_str()?),
+        None if hostname(server) => bounded_text(server),
+        None => None,
+    }
+}
+
+fn json_alpn(value: &Value) -> Option<Vec<String>> {
+    let array = value.as_array()?;
+    (array.len() <= 32 && array.iter().all(Value::is_string)).then_some(())?;
+    bounded_alpn(array.iter().filter_map(Value::as_str))
+}
+
+pub(super) fn script_fields(node: &Node, mutation: &Mutation) -> ScriptFields {
+    let protocol = node.protocol();
+    let mut fields = match &node.source {
+        NodeSource::Native(value) => {
+            native_script_fields(node, &value.0, json_tls(node, &value.0).ok())
+        }
+        NodeSource::Uri(source) => {
+            source
+                .project(true)
+                .ok()
+                .map(PrivateJson)
+                .map_or_else(ScriptFields::default, |value| {
+                    let tls = value
+                        .0
+                        .get("tls")
+                        .and_then(|value| value.get("enabled"))
+                        .map_or(Some(false), Value::as_bool);
+                    native_script_fields(node, &value.0, tls)
+                })
+        }
+        NodeSource::SubStore(value) | NodeSource::Mihomo(value) => {
+            let value = &value.0;
+            let tls = json_tls(node, value).ok();
+            ScriptFields {
+                udp: value.get("udp").and_then(Value::as_bool),
+                tfo: value.get("tfo").and_then(Value::as_bool),
+                tls,
+                verify_tls: (tls == Some(true) && value.get("reality-opts").is_none())
+                    .then(|| {
+                        value.get("skip-cert-verify").map_or(Some(true), |value| {
+                            value.as_bool().map(|insecure| !insecure)
+                        })
+                    })
+                    .flatten(),
+                sni: (tls == Some(true))
+                    .then(|| {
+                        effective_sni(value.get(identity_key(node, value).ok()?), node.server())
+                    })
+                    .flatten(),
+                alpn: (tls == Some(true))
+                    .then(|| json_alpn(value.get("alpn")?))
+                    .flatten(),
+                transport: transport(protocol, value.get("network").and_then(Value::as_str)),
+                ..Default::default()
+            }
+        }
+        NodeSource::Surge(source) => {
+            let field = |key| {
+                source
+                    .fields
+                    .iter()
+                    .find(|field| field.key == key)
+                    .filter(|field| uncertain_token(source, field.value_range.clone()).is_none())
+                    .map(|field| field.value.as_str())
+            };
+            let boolean = |key| field(key).and_then(|value| parse_bool(value).ok());
+            let tls = field("tls").map_or_else(
+                || {
+                    Some(matches!(
+                        protocol,
+                        "https"
+                            | "socks5-tls"
+                            | "trojan"
+                            | "anytls"
+                            | "hysteria2"
+                            | "tuic"
+                            | "tuic-v5"
+                    ))
+                },
+                |value| parse_bool(value).ok(),
+            );
+            ScriptFields {
+                udp: boolean("udp-relay").or(match protocol {
+                    "socks5" | "socks5-tls" | "ss" | "http" | "https" => Some(false),
+                    "anytls" => Some(true),
+                    _ => None,
+                }),
+                tfo: field("tfo").map_or(Some(false), |value| parse_bool(value).ok()),
+                tls,
+                verify_tls: (tls == Some(true)
+                    && field("server-cert-fingerprint-sha256").is_none())
+                .then(|| {
+                    field("skip-cert-verify").map_or(Some(true), |value| {
+                        parse_bool(value).ok().map(|insecure| !insecure)
+                    })
+                })
+                .flatten(),
+                sni: (tls == Some(true))
+                    .then(|| match field("sni") {
+                        Some(value) if value.eq_ignore_ascii_case("off") => None,
+                        Some(value) => bounded_text(value),
+                        None if hostname(node.server()) => bounded_text(node.server()),
+                        None => None,
+                    })
+                    .flatten(),
+                alpn: (tls == Some(true))
+                    .then(|| bounded_alpn(field("alpn")?.split(',').map(str::trim)))
+                    .flatten(),
+                transport: transport(protocol, None),
+                ..Default::default()
+            }
+        }
+    };
+    for setting in &mutation.settings {
+        match setting {
+            Setting::Udp { enabled } => fields.udp = Some(*enabled),
+            Setting::UdpOverTcp { enabled } => fields.udp_over_tcp = Some(*enabled),
+            Setting::TcpFastOpen { enabled } => fields.tfo = Some(*enabled),
+            Setting::VerifyTls if fields.verify_tls.is_some() => fields.verify_tls = Some(true),
+            Setting::ServerName { value } if matches!(node.source, NodeSource::Surge(_)) => {
+                fields.sni = (!value.eq_ignore_ascii_case("off"))
+                    .then(|| bounded_text(value))
+                    .flatten();
+            }
+            Setting::ServerName { value }
+                if fields.sni.is_some()
+                    || !matches!(node.source, NodeSource::Native(ref source) if source.0["tls"]["disable_sni"] == true) =>
+            {
+                fields.sni = bounded_text(value)
+            }
+            Setting::Alpn { values } => fields.alpn = Some(values.clone()),
+            _ => {}
+        }
+    }
+    fields
+}
+
 fn explicit_host(headers: &Value) -> bool {
     let Some(headers) = headers.as_object() else {
         return false;
@@ -350,6 +623,32 @@ pub(super) fn apply_json(
     }
     for setting in &mutation.settings {
         match setting {
+            Setting::UdpOverTcp { enabled }
+                if native && matches!(node.protocol(), "socks" | "shadowsocks") =>
+            {
+                if let Some(current) = value.get_mut("udp_over_tcp") {
+                    if current.is_boolean() {
+                        *current = (*enabled).into();
+                    } else {
+                        let options = current.as_object_mut().ok_or(ModelError::Unsupported)?;
+                        if options
+                            .keys()
+                            .any(|key| !matches!(key.as_str(), "enabled" | "version"))
+                            || options
+                                .get("enabled")
+                                .is_some_and(|value| !value.is_boolean())
+                            || options
+                                .get("version")
+                                .is_some_and(|value| !matches!(value.as_u64(), Some(1 | 2)))
+                        {
+                            return Err(ModelError::Unsupported);
+                        }
+                        options.insert("enabled".into(), (*enabled).into());
+                    }
+                } else {
+                    value["udp_over_tcp"] = json!({"enabled": enabled});
+                }
+            }
             Setting::TcpFastOpen { enabled } if native => {
                 if value.get("tcp_fast_open").is_some_and(|v| !v.is_boolean()) {
                     return Err(ModelError::Unsupported);
@@ -550,6 +849,71 @@ pub(super) fn surge_edits(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn script_reads_explicit_and_previously_mutated_protocol_values() {
+        let parsed = Subscription::parse(concat!(
+            "n = trojan, node.example.invalid, 443, password=fixture, ",
+            "skip-cert-verify=true, tfo=false, sni=before.example.invalid, alpn=\"h2,http/1.1\"\n",
+        ))
+        .unwrap();
+        let node = &parsed.nodes()[0];
+        let mut mutation = Mutation::default();
+        let fields = script_fields(node, &mutation);
+        assert_eq!(fields.tls, Some(true));
+        assert_eq!(fields.verify_tls, Some(false));
+        assert_eq!(fields.tfo, Some(false));
+        assert_eq!(fields.sni.as_deref(), Some("before.example.invalid"));
+        assert_eq!(fields.alpn.unwrap(), ["h2", "http/1.1"]);
+        assert_eq!(fields.transport.as_deref(), Some("tcp"));
+        for setting in [
+            Setting::VerifyTls,
+            Setting::TcpFastOpen { enabled: true },
+            Setting::ServerName {
+                value: "after.example.invalid".into(),
+            },
+            Setting::Alpn {
+                values: vec!["http/1.1".into()],
+            },
+        ] {
+            assert!(set_setting(node, &mut mutation, &setting).unwrap());
+        }
+        let fields = script_fields(node, &mutation);
+        assert_eq!(fields.verify_tls, Some(true));
+        assert_eq!(fields.tfo, Some(true));
+        assert_eq!(fields.sni.as_deref(), Some("after.example.invalid"));
+        assert_eq!(fields.alpn.unwrap(), ["http/1.1"]);
+
+        let uri = Subscription::parse(
+            "trojan://fixture@node.example.invalid:443?peer=tls.example.invalid&alpn=h2#test",
+        )
+        .unwrap();
+        let fields = script_fields(&uri.nodes()[0], &Mutation::default());
+        assert_eq!(fields.verify_tls, Some(true));
+        assert_eq!(fields.sni.as_deref(), Some("tls.example.invalid"));
+        assert_eq!(fields.alpn.unwrap(), ["h2"]);
+    }
+
+    #[test]
+    fn udp_over_tcp_toggles_only_known_sing_box_mappings_and_preserves_version() {
+        let parsed = Subscription::parse(r#"[{"type":"socks","tag":"n","server":"node.example.invalid","server_port":1080,"udp_over_tcp":{"enabled":false,"version":1}}]"#).unwrap();
+        let node = &parsed.nodes()[0];
+        let mut mutation = Mutation::default();
+        assert_eq!(script_fields(node, &mutation).udp_over_tcp, Some(false));
+        let enable = Setting::UdpOverTcp { enabled: true };
+        assert!(set_setting(node, &mut mutation, &enable).unwrap());
+        assert_eq!(script_fields(node, &mutation).udp_over_tcp, Some(true));
+        let output: Value = serde_json::from_str(&snapshot(node, &mutation).unwrap()).unwrap();
+        assert_eq!(
+            output["udp_over_tcp"],
+            json!({"enabled": true, "version": 1})
+        );
+        let parsed = Subscription::parse("n = socks5, node.example.invalid, 1080\n").unwrap();
+        assert_eq!(
+            set_setting(&parsed.nodes()[0], &mut Mutation::default(), &enable),
+            Err(ModelError::Unsupported)
+        );
+    }
 
     #[test]
     fn server_and_port_mutations_preserve_dialect_and_identity() {

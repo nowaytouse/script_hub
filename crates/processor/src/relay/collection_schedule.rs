@@ -158,6 +158,15 @@ pub(super) fn prepare_with(
     let mut fresh = config.clone();
     fresh.local_content = Some(base.clone());
     fresh.expected_source = Some(base.clone());
+    fresh.script_source = model::script::SourceContext {
+        kind: "collection",
+        label: workspace
+            .collections
+            .iter()
+            .find(|entry| entry.id == id)
+            .and_then(|entry| RelayConfig::script_source_label(&entry.name)),
+        member_index: None,
+    };
     let result = super::run(&fresh, "", RunMode::Preview, cancel, &|value| {
         if value.stage != RelayStage::Complete {
             progress(value);

@@ -1,10 +1,11 @@
 //! Ordered subscription transformations with explicitly injected network operations.
+use super::super::export::OutputFormat;
 use super::{
     MAX_CONTENT, ModelError, NodeIdentity, NodeSource, PrivateJson, Subscription, dns,
     local_region, properties, uncertain_identity, uncertain_token,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::net::IpAddr;
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
@@ -21,6 +22,8 @@ pub struct Step {
 pub enum Operation {
     Script {
         source: String,
+        #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+        arguments: ScriptArguments,
     },
     NameFilter {
         pattern: String,
@@ -116,6 +119,47 @@ pub enum Operation {
         keep: bool,
         keep_domains: bool,
     },
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ScriptArguments(pub BTreeMap<String, String>);
+
+impl Zeroize for ScriptArguments {
+    fn zeroize(&mut self) {
+        for (mut key, mut value) in std::mem::take(&mut self.0) {
+            key.zeroize();
+            value.zeroize();
+        }
+    }
+}
+
+impl Drop for ScriptArguments {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl ZeroizeOnDrop for ScriptArguments {}
+
+impl From<BTreeMap<String, String>> for ScriptArguments {
+    fn from(value: BTreeMap<String, String>) -> Self {
+        Self(value)
+    }
+}
+
+impl std::ops::Deref for ScriptArguments {
+    type Target = BTreeMap<String, String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for ScriptArguments {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
@@ -243,19 +287,23 @@ fn set_name(
     value: Zeroizing<String>,
     total: &mut usize,
 ) -> Result<bool, ModelError> {
-    if value.is_empty() || !valid_text(&value) {
+    let changed = check_name_edit(&names[i], &value, total)?;
+    names[i] = value;
+    Ok(changed)
+}
+
+fn check_name_edit(old: &str, value: &str, total: &mut usize) -> Result<bool, ModelError> {
+    if value.is_empty() || !valid_text(value) {
         return Err(ModelError::InvalidEdit);
     }
     *total = total
-        .checked_sub(names[i].len())
+        .checked_sub(old.len())
         .and_then(|n| n.checked_add(value.len()))
         .ok_or(ModelError::InvalidEdit)?;
     if *total > MAX_CONTENT {
         return Err(ModelError::InvalidEdit);
     }
-    let changed = names[i] != value;
-    names[i] = value;
-    Ok(changed)
+    Ok(old != value)
 }
 fn regex(pattern: &str) -> Result<regex::Regex, ModelError> {
     if !valid_text(pattern) {
@@ -323,10 +371,11 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
             return Err(ModelError::InvalidEdit);
         }
         match &step.operation {
-            Operation::Script { source } => {
+            Operation::Script { source, arguments } => {
                 if source.len() > super::script::MAX_SOURCE || step.enabled && source.is_empty() {
                     return Err(ModelError::InvalidEdit);
                 }
+                super::script::validate_arguments(arguments)?;
                 if step.enabled {
                     super::script::compile(source)?;
                 }
@@ -576,8 +625,10 @@ pub(super) fn identity(node: &super::Node) -> Result<Option<Zeroizing<String>>, 
 
 pub(super) struct Working<'a> {
     pub sub: &'a Subscription,
-    pub dependencies: &'a [Option<usize>],
-    pub dependents: &'a [Vec<usize>],
+    pub target_format: OutputFormat,
+    pub source_context: &'a super::script::SourceContext,
+    pub dependencies: &'a mut [Option<usize>],
+    pub dependents: &'a mut Vec<Vec<usize>>,
     pub names: &'a mut [Zeroizing<String>],
     pub order: &'a mut Vec<usize>,
     pub mutations: &'a mut [properties::Mutation],
@@ -589,6 +640,69 @@ pub(super) struct Counts {
     pub excluded: usize,
     pub duplicates: usize,
     pub skipped: usize,
+}
+
+pub(crate) fn has_script(steps: &[Step]) -> bool {
+    steps
+        .iter()
+        .any(|step| step.enabled && matches!(step.operation, Operation::Script { .. }))
+}
+
+struct ScriptEdit {
+    index: usize,
+    name: Option<Zeroizing<String>>,
+    mutation: Option<properties::Mutation>,
+    dependency: Option<Option<Zeroizing<String>>>,
+}
+
+fn apply_script_dependencies(
+    sub: &Subscription,
+    dependencies: &mut [Option<usize>],
+    dependents: &mut Vec<Vec<usize>>,
+    names: &[Zeroizing<String>],
+    edits: &[ScriptEdit],
+) -> Result<usize, ModelError> {
+    if edits.iter().all(|edit| edit.dependency.is_none()) {
+        return Ok(0);
+    }
+    let mut by_name = HashMap::with_capacity(edits.len());
+    for edit in edits {
+        let name = edit.name.as_ref().unwrap_or(&names[edit.index]);
+        by_name
+            .entry(name.as_str())
+            .and_modify(|target| *target = None)
+            .or_insert(Some(edit.index));
+    }
+
+    let mut candidate = dependencies.to_vec();
+    let mut modified = 0;
+    for edit in edits {
+        let Some(target) = &edit.dependency else {
+            continue;
+        };
+        let target = target
+            .as_ref()
+            .map(|name| {
+                by_name
+                    .get(name.as_str())
+                    .copied()
+                    .flatten()
+                    .ok_or(ModelError::InvalidDependency)
+            })
+            .transpose()?;
+        if target != candidate[edit.index] {
+            sub.nodes[edit.index]
+                .validate_dependency_edit(target.map(|index| &sub.nodes[index]))?;
+            candidate[edit.index] = target;
+            modified += usize::from(edit.mutation.is_none());
+        }
+    }
+    if candidate.as_slice() != &*dependencies {
+        super::validate_dependency_graph(&candidate)?;
+        *dependents = super::dependency_children(&candidate);
+        dependencies.copy_from_slice(&candidate);
+    }
+    Ok(modified)
 }
 
 fn protocol(value: &str) -> &str {
@@ -658,6 +772,8 @@ pub(super) fn apply(
 ) -> Result<(Vec<StageReport>, Counts), ModelError> {
     let Working {
         sub,
+        target_format,
+        source_context,
         dependencies,
         dependents,
         names,
@@ -677,38 +793,89 @@ pub(super) fn apply(
         let mut name_bytes = order.iter().map(|&i| names[i].len()).sum();
         let mut remove = vec![false; names.len()];
         let mut duplicate = vec![false; names.len()];
+        let mut script_edits = None;
         match &step.operation {
-            Operation::Script { source } => {
+            Operation::Script { source, arguments } => {
                 let script = super::script::compile(source)?;
+                let outputs = script.apply(
+                    order.iter().map(|&index| {
+                        let node = &sub.nodes[index];
+                        let mutation = &mutations[index];
+                        super::script::Input {
+                            index,
+                            name: names[index].to_string(),
+                            server: mutation
+                                .address
+                                .as_deref()
+                                .unwrap_or(node.server())
+                                .to_owned(),
+                            port: mutation.port.unwrap_or(node.port()),
+                            protocol: node.protocol().to_owned(),
+                            fields: properties::script_fields(node, mutation),
+                            underlying_proxy: dependencies[index]
+                                .map(|target| names[target].to_string()),
+                        }
+                    }),
+                    &super::script::Context {
+                        source_format: sub.script_format_label().to_owned(),
+                        target_format: target_format.script_label().to_owned(),
+                        arguments: arguments.0.clone(),
+                        source: (**source_context).clone(),
+                    },
+                )?;
+
+                // A script may omit or reorder input IDs, never introduce or duplicate them.
                 for &i in order.iter() {
-                    let node = &sub.nodes[i];
-                    let output = script.transform(
-                        &names[i],
-                        mutations[i].address.as_deref().unwrap_or(node.server()),
-                        mutations[i].port.unwrap_or(node.port()),
-                        node.protocol(),
-                    )?;
-                    renamed += usize::from(set_name(
-                        names,
-                        i,
-                        Zeroizing::new(output.name),
-                        &mut name_bytes,
-                    )?);
-                    if !output.included {
+                    remove[i] = true;
+                }
+                for output in &outputs {
+                    let pending = remove
+                        .get_mut(output.index)
+                        .ok_or(ModelError::InvalidEdit)?;
+                    if !std::mem::take(pending) {
+                        return Err(ModelError::InvalidEdit);
+                    }
+                }
+
+                // Check every edit before committing any, including legacy returned exclusions.
+                let mut edits = Vec::with_capacity(outputs.len());
+                for output in outputs {
+                    let i = output.index;
+                    let name = Zeroizing::new(output.name);
+                    let changed = check_name_edit(&names[i], &name, &mut name_bytes)?;
+                    renamed += usize::from(changed);
+                    let mut mutation = None;
+                    if !output.settings.is_empty() {
+                        let mut candidate = mutations[i].clone();
+                        let mut changed = false;
+                        let mut unsupported = false;
+                        for setting in &output.settings {
+                            match properties::set_setting(&sub.nodes[i], &mut candidate, setting) {
+                                Ok(value) => changed |= value,
+                                Err(ModelError::Unsupported) => unsupported = true,
+                                Err(error) => return Err(error),
+                            }
+                        }
+                        modified += usize::from(changed);
+                        skipped += usize::from(unsupported);
+                        mutation = changed.then_some(candidate);
+                    }
+                    if output.included {
+                        edits.push(ScriptEdit {
+                            index: i,
+                            name: changed.then_some(name),
+                            mutation,
+                            dependency: output
+                                .underlying_proxy
+                                .map(|value| value.map(Zeroizing::new)),
+                        });
+                    } else {
                         remove[i] = true;
                     }
-                    let mut changed = false;
-                    let mut unsupported = false;
-                    for setting in output.settings {
-                        match properties::set_setting(node, &mut mutations[i], &setting) {
-                            Ok(value) => changed |= value,
-                            Err(ModelError::Unsupported) => unsupported = true,
-                            Err(error) => return Err(error),
-                        }
-                    }
-                    modified += usize::from(changed);
-                    skipped += usize::from(unsupported);
                 }
+                modified +=
+                    apply_script_dependencies(sub, dependencies, dependents, names, &edits)?;
+                script_edits = Some(edits);
             }
             Operation::BatchRename { rules } => {
                 let compiled: Vec<_> = rules
@@ -1264,7 +1431,20 @@ pub(super) fn apply(
             .iter()
             .filter(|&&i| remove[i] && !duplicate[i])
             .count();
-        order.retain(|&i| !remove[i]);
+        if let Some(edits) = script_edits {
+            order.clear();
+            for edit in edits.into_iter().filter(|edit| !remove[edit.index]) {
+                if let Some(name) = edit.name {
+                    names[edit.index] = name;
+                }
+                if let Some(mutation) = edit.mutation {
+                    mutations[edit.index] = mutation;
+                }
+                order.push(edit.index);
+            }
+        } else {
+            order.retain(|&i| !remove[i]);
+        }
         let mut total = 0usize;
         for &i in order.iter() {
             if names[i].is_empty() || !valid_text(&names[i]) {
@@ -1308,6 +1488,7 @@ mod tests {
                 1,
                 Operation::Script {
                     source: source.into(),
+                    arguments: Default::default(),
                 },
             )]
         };
@@ -1325,6 +1506,224 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn batch_script_can_deduplicate_and_reorder_without_reassigning_node_data() {
+        let input = r#"[{"type":"socks","tag":"first","server":"a.example","server_port":1080,"custom":1},{"type":"socks","tag":"duplicate","server":"a.example","server_port":1080,"custom":2},{"type":"socks","tag":"last","server":"b.example","server_port":1080,"custom":3}]"#;
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::Script {
+                    source: r#"fn operator(nodes, context) {
+                        if context.source_format != "sing-box" || context.target_format != "original" {
+                            throw "unexpected format";
+                        }
+                        [nodes[2], nodes[0]]
+                    }"#
+                    .into(),
+                    arguments: Default::default(),
+                },
+            )],
+        )
+        .unwrap();
+        let output: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(result.retained, [2, 0]);
+        assert_eq!(result.excluded, 1);
+        assert_eq!(result.duplicates, 0);
+        assert_eq!(output[0]["custom"], 3);
+        assert_eq!(output[1]["custom"], 1);
+    }
+
+    #[test]
+    fn batch_script_omission_prunes_transitive_dependencies_in_returned_order() {
+        let input = r#"[{"type":"socks","tag":"base","server":"a","server_port":1080},{"type":"socks","tag":"child","server":"b","server_port":1080,"detour":"base"},{"type":"socks","tag":"grandchild","server":"c","server_port":1080,"detour":"child"},{"type":"socks","tag":"first survivor","server":"d","server_port":1080},{"type":"socks","tag":"second survivor","server":"e","server_port":1080}]"#;
+        let result = run(
+            input,
+            vec![step(
+                1,
+                Operation::Script {
+                    source:
+                        "fn operator(nodes, context) { [nodes[4], nodes[2], nodes[1], nodes[3]] }"
+                            .into(),
+                    arguments: Default::default(),
+                },
+            )],
+        )
+        .unwrap();
+        assert_eq!(result.retained, [4, 3]);
+        assert_eq!(result.excluded, 3);
+        assert_eq!(result.stages[0].after, 2);
+    }
+
+    fn script_step(id: u64, source: &str) -> Step {
+        step(
+            id,
+            Operation::Script {
+                source: source.to_owned(),
+                arguments: Default::default(),
+            },
+        )
+    }
+
+    #[test]
+    fn script_rewires_to_final_name_before_cascading_removal() {
+        let input = r#"[{"type":"socks","tag":"old","server":"a","server_port":1080},{"type":"socks","tag":"new","server":"b","server_port":1080},{"type":"socks","tag":"child","server":"c","server_port":1080,"detour":"old"}]"#;
+        let rewire = r#"fn operator(nodes, context) {
+            let parent = nodes[1]; parent.name = "new parent";
+            let child = nodes[2];
+            if child.underlying_proxy != "old" { throw "unexpected original dependency"; }
+            child.underlying_proxy = parent.name;
+            [child, parent]
+        }"#;
+        let rename = r#"fn transform(node) {
+            if node.name == "child" && node.underlying_proxy != "new parent" { throw "missing updated dependency"; }
+            if node.name == "new parent" { node.name = "renamed parent"; }
+            node
+        }"#;
+        let result = run(input, vec![script_step(1, rewire), script_step(2, rename)]).unwrap();
+        assert_eq!(result.retained, [2, 1]);
+        assert_eq!(result.excluded, 1);
+        assert_eq!(result.stages[0].modified, 1);
+        let output: serde_json::Value = serde_json::from_str(&result.content).unwrap();
+        assert_eq!(output[0]["detour"], "renamed parent");
+
+        let drop_parent = step(
+            3,
+            Operation::NameFilter {
+                pattern: "renamed parent".into(),
+                keep: false,
+            },
+        );
+        let pruned = run(
+            input,
+            vec![script_step(1, rewire), script_step(2, rename), drop_parent],
+        )
+        .unwrap();
+        assert_eq!(pruned.excluded, 3);
+        assert!(pruned.retained.is_empty());
+    }
+
+    #[test]
+    fn script_dependency_edits_use_surge_mihomo_and_substore_fields() {
+        let add = r#"fn transform(node) { if node.name == "Child" { node.underlying_proxy = "Base"; } node }"#;
+        let clear = r#"fn transform(node) { if node.name == "Child" { node.underlying_proxy = (); } node }"#;
+        let surge = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080, udp-relay=true # comment\n";
+        let result = run(surge, vec![script_step(1, add)]).unwrap();
+        assert!(
+            result
+                .content
+                .contains("udp-relay=true, underlying-proxy=\"Base\" # comment")
+        );
+        let middle = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080, underlying-proxy=Base, udp-relay=true # comment\n";
+        assert_eq!(
+            run(middle, vec![script_step(1, clear)])
+                .unwrap()
+                .content
+                .as_str(),
+            surge
+        );
+
+        for (input, key) in [
+            (
+                r#"{"proxies":[{"name":"Base","type":"socks5","server":"base.example","port":1080},{"name":"Child","type":"socks5","server":"child.example","port":1080}]}"#,
+                "dialer-proxy",
+            ),
+            (
+                r#"[{"name":"Base","type":"socks5","server":"base.example","port":1080},{"name":"Child","type":"socks5","server":"child.example","port":1080}]"#,
+                "underlying-proxy",
+            ),
+        ] {
+            let linked = run(input, vec![script_step(1, add)]).unwrap();
+            assert!(linked.content.contains(&format!("\"{key}\": \"Base\"")));
+            let cleared = run(&linked.content, vec![script_step(1, clear)]).unwrap();
+            assert!(!cleared.content.contains(key));
+        }
+    }
+
+    #[test]
+    fn script_rejects_invalid_or_unrepresentable_proxy_topology() {
+        let input = "Base = socks5, base.example, 1080\nChild = socks5, child.example, 1080\n";
+        for script in [
+            r#"fn transform(node) { node.underlying_proxy = "missing"; node }"#,
+            r#"fn transform(node) { node.underlying_proxy = node.name; node }"#,
+            r#"fn operator(nodes, context) { let a = nodes[0]; let b = nodes[1]; a.underlying_proxy = b.name; b.underlying_proxy = a.name; [a,b] }"#,
+            r#"fn operator(nodes, context) { let b = nodes[1]; b.underlying_proxy = "Base"; [b] }"#,
+        ] {
+            assert!(matches!(
+                run(input, vec![script_step(1, script)]),
+                Err(ModelError::InvalidDependency)
+            ));
+        }
+        let edit = r#"fn transform(node) { if node.name == "Child" { node.underlying_proxy = "Base"; } node }"#;
+        for unsupported in [
+            "Base = socks5, base.example, 1080\nChild = hysteria2, child.example, 443, port-hopping=1000-2000\n",
+            "Base = socks5, base.example, 1080\nChild = direct, child.example, 1080\n",
+            "Base = direct, base.example, 1080\nChild = socks5, child.example, 1080\n",
+            "socks5://base.example:1080#Base\nsocks5://child.example:1080#Child\n",
+        ] {
+            assert!(matches!(
+                run(unsupported, vec![script_step(1, edit)]),
+                Err(ModelError::Unsupported)
+            ));
+        }
+    }
+
+    #[test]
+    fn script_arguments_preserve_legacy_serialization_and_validate_saved_entries() {
+        let legacy = r#"{"type":"script","source":"fn transform(node) { node }"}"#;
+        let operation: Operation = serde_json::from_str(legacy).unwrap();
+        assert_eq!(serde_json::to_string(&operation).unwrap(), legacy);
+        let invalid = r#"{"type":"script","source":"fn transform(node) { node }","arguments":{"invalid key":"value"}}"#;
+        let operation: Operation = serde_json::from_str(invalid).unwrap();
+        assert!(matches!(
+            validate(&[step(1, operation)]),
+            Err(ModelError::InvalidEdit)
+        ));
+    }
+
+    #[test]
+    fn invalid_batch_script_leaves_existing_working_state_untouched() {
+        let sub = Subscription::parse(
+            r#"[{"type":"socks","tag":"a","server":"a.example","server_port":80},{"type":"socks","tag":"b","server":"b.example","server_port":81}]"#,
+        )
+        .unwrap();
+        for source in [
+            "fn operator(nodes, context) { [nodes[0], nodes[0]] }",
+            r#"fn operator(nodes, context) { let a = nodes[0]; a.name = "new-a"; a.port = 443; let b = nodes[1]; b.name = ""; [a, b] }"#,
+        ] {
+            let mut names = [Zeroizing::new("a".into()), Zeroizing::new("b".into())];
+            let mut order = vec![0, 1];
+            let mut mutations = vec![properties::Mutation::default(); 2];
+            let mut working = Working {
+                sub: &sub,
+                target_format: OutputFormat::Original,
+                source_context: &super::super::script::SourceContext::default(),
+                dependencies: &mut [None, None],
+                dependents: &mut vec![vec![], vec![]],
+                names: &mut names,
+                order: &mut order,
+                mutations: &mut mutations,
+                resolver: None,
+            };
+            assert!(matches!(
+                apply(
+                    &mut working,
+                    &[step(
+                        1,
+                        Operation::Script {
+                            source: source.into(),
+                            arguments: Default::default(),
+                        }
+                    )],
+                ),
+                Err(ModelError::InvalidEdit)
+            ));
+            assert_eq!(order, [0, 1]);
+            assert_eq!(names.each_ref().map(|name| name.as_str()), ["a", "b"]);
+            assert!(mutations.iter().all(properties::Mutation::is_empty));
+        }
     }
 
     #[test]
@@ -1862,8 +2261,8 @@ mod tests {
     fn effective_address_and_port_drive_sorts_and_conditions() {
         let sub = Subscription::parse(r#"[{"type":"socks","tag":"a","server":"a.example","server_port":10},{"type":"socks","tag":"b","server":"b.example","server_port":20}]"#).unwrap();
         for key in [SortKey::Server, SortKey::Port] {
-            let dependencies = vec![None, None];
-            let dependents = vec![vec![], vec![]];
+            let mut dependencies = [None, None];
+            let mut dependents = vec![vec![], vec![]];
             let mut names = vec![Zeroizing::new("a".into()), Zeroizing::new("b".into())];
             let mut order = vec![0, 1];
             let mut mutations = vec![properties::Mutation::default(); 2];
@@ -1871,8 +2270,10 @@ mod tests {
             mutations[0].port = Some(30);
             let mut working = Working {
                 sub: &sub,
-                dependencies: &dependencies,
-                dependents: &dependents,
+                target_format: OutputFormat::Original,
+                source_context: &super::super::script::SourceContext::default(),
+                dependencies: &mut dependencies,
+                dependents: &mut dependents,
                 names: &mut names,
                 order: &mut order,
                 mutations: &mut mutations,
@@ -1891,8 +2292,8 @@ mod tests {
             .unwrap();
             assert_eq!(order, vec![1, 0]);
         }
-        let dependencies = vec![None, None];
-        let dependents = vec![vec![], vec![]];
+        let mut dependencies = [None, None];
+        let mut dependents = vec![vec![], vec![]];
         let mut names = vec![Zeroizing::new("a".into()), Zeroizing::new("b".into())];
         let mut order = vec![0, 1];
         let mut mutations = vec![properties::Mutation::default(); 2];
@@ -1900,8 +2301,10 @@ mod tests {
         mutations[0].port = Some(30);
         let mut working = Working {
             sub: &sub,
-            dependencies: &dependencies,
-            dependents: &dependents,
+            target_format: OutputFormat::Original,
+            source_context: &super::super::script::SourceContext::default(),
+            dependencies: &mut dependencies,
+            dependents: &mut dependents,
             names: &mut names,
             order: &mut order,
             mutations: &mut mutations,

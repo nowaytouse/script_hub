@@ -362,6 +362,9 @@ impl HubApp {
             let _ = (*edit.response).clone().labelled_by(label.id);
             if edit.response.changed() {
                 self.relay.workspace.draft_dirty = true;
+                if self.relay.result.as_ref().is_some_and(|result| result.script_target.is_some()) {
+                    self.relay.invalidate_result();
+                }
             }
             edit.state.clear_undoer();
             edit.state.store(ui.ctx(), edit.response.id);

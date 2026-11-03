@@ -18,6 +18,7 @@ mod mihomo;
 pub mod pipeline;
 pub mod properties;
 pub mod script;
+mod script_regex;
 mod uri;
 
 pub(super) const MAX_CONTENT: usize = 4 * 1024 * 1024;
@@ -91,6 +92,64 @@ struct Field {
     key: String,
     value: Zeroizing<String>,
     value_range: Range<usize>,
+}
+
+fn dependency_children(dependencies: &[Option<usize>]) -> Vec<Vec<usize>> {
+    let mut children = vec![Vec::new(); dependencies.len()];
+    for (index, dependency) in dependencies.iter().enumerate() {
+        if let Some(parent) = dependency {
+            children[*parent].push(index);
+        }
+    }
+    children
+}
+
+fn validate_dependency_graph(dependencies: &[Option<usize>]) -> Result<(), ModelError> {
+    let mut state = vec![0u8; dependencies.len()];
+    let mut trail = Vec::new();
+    for index in 0..dependencies.len() {
+        let mut cursor = Some(index);
+        while let Some(index) = cursor {
+            match state.get_mut(index).ok_or(ModelError::InvalidDependency)? {
+                2 => break,
+                1 => return Err(ModelError::InvalidDependency),
+                marker => {
+                    *marker = 1;
+                    trail.push(index);
+                    cursor = dependencies[index];
+                }
+            }
+        }
+        for index in trail.drain(..) {
+            state[index] = 2;
+        }
+    }
+    Ok(())
+}
+
+impl Node {
+    fn validate_dependency_edit(&self, target: Option<&Self>) -> Result<(), ModelError> {
+        let is_non_proxy = |node: &Self| {
+            matches!(node.protocol(), "direct" | "pass" | "block" | "dns")
+                || node.protocol().starts_with("reject")
+        };
+        match &self.source {
+            NodeSource::Uri(_) => Err(ModelError::Unsupported),
+            NodeSource::Surge(source)
+                if target.is_some_and(|target| {
+                    is_non_proxy(self)
+                        || is_non_proxy(target)
+                        || source
+                            .fields
+                            .iter()
+                            .any(|field| field.key == "port-hopping")
+                }) =>
+            {
+                Err(ModelError::Unsupported)
+            }
+            _ => Ok(()),
+        }
+    }
 }
 
 pub(super) struct PrivateJson(pub(super) Value);
@@ -171,7 +230,39 @@ impl Node {
                 udp = Some(udp.unwrap_or(false));
             }
         }
-        let mut value = PrivateJson(self.to_sing_box(false)?);
+        let mut value = if let Some(dependency) = &self.dependency {
+            // Export the validated chain. A single-node health probe must not bypass it.
+            let mut projected = match &self.source {
+                NodeSource::Surge(source) => PrivateJson(self.project_surge(source, false)?),
+                NodeSource::Native(source) => {
+                    let mut node = PrivateJson(source.0.clone());
+                    node.0
+                        .as_object_mut()
+                        .ok_or(ModelError::Unsupported)?
+                        .remove("detour");
+                    validate_native(&node.0, false)?;
+                    node
+                }
+                NodeSource::SubStore(source) | NodeSource::Mihomo(source) => {
+                    let mut node = PrivateJson(source.0.clone());
+                    let fields = node.0.as_object_mut().ok_or(ModelError::Unsupported)?;
+                    for key in ["underlying-proxy", "dialer-proxy", "detour"] {
+                        fields.remove(key);
+                    }
+                    PrivateJson(mihomo::project(
+                        self,
+                        &node.0,
+                        false,
+                        matches!(self.source, NodeSource::Mihomo(_)),
+                    )?)
+                }
+                NodeSource::Uri(_) => return Err(ModelError::Unsupported),
+            };
+            projected.0["detour"] = dependency.as_str().into();
+            projected
+        } else {
+            PrivateJson(self.to_sing_box(false)?)
+        };
         if udp == Some(false) {
             value.0["network"] = "tcp".into();
         }
@@ -266,6 +357,7 @@ impl Node {
             "block-quic",
             "test-url",
             "test-timeout",
+            "underlying-proxy",
         ];
         if fields
             .keys()
@@ -462,6 +554,18 @@ impl Subscription {
         }
     }
 
+    fn script_format_label(&self) -> &'static str {
+        match self.dialect {
+            Dialect::Surge(_) => "surge",
+            Dialect::NativeArray | Dialect::NativeObject { .. } => "sing-box",
+            Dialect::SubStoreArray => "sub-store-json",
+            Dialect::Proxies { yaml: false } => "mihomo-json",
+            Dialect::Proxies { yaml: true } | Dialect::YamlArray => "mihomo-yaml",
+            Dialect::Uri(_) if self.encoding.is_some() => "base64-uri",
+            Dialect::Uri(_) => "uri",
+        }
+    }
+
     pub(super) fn is_surge_policy_list(&self) -> bool {
         matches!(self.dialect, Dialect::Surge(_))
     }
@@ -488,8 +592,17 @@ impl Subscription {
         health: &[Health],
         options: &EnhanceOptions,
     ) -> Result<(Zeroizing<String>, usize), ModelError> {
-        let rendered =
-            self.render_inner(health, options, &editor::Options::default(), false, None)?;
+        let rendered = self.render_inner(
+            health,
+            options,
+            &editor::Options::default(),
+            false,
+            None,
+            (
+                super::export::OutputFormat::Original,
+                &script::SourceContext::default(),
+            ),
+        )?;
         Ok((rendered.content, rendered.retained.len()))
     }
 
@@ -499,8 +612,14 @@ impl Subscription {
         options: &EnhanceOptions,
         edits: &editor::Options,
     ) -> Result<editor::Rendered, ModelError> {
-        pipeline::validate(&edits.pipeline)?;
-        self.render_inner(health, options, edits, true, None)
+        self.render_processed_for(
+            health,
+            options,
+            edits,
+            super::export::OutputFormat::Original,
+            None,
+            &script::SourceContext::default(),
+        )
     }
 
     pub fn render_processed_with_resolver(
@@ -510,8 +629,34 @@ impl Subscription {
         edits: &editor::Options,
         resolver: &pipeline::Resolver<'_>,
     ) -> Result<editor::Rendered, ModelError> {
+        self.render_processed_for(
+            health,
+            options,
+            edits,
+            super::export::OutputFormat::Original,
+            Some(resolver),
+            &script::SourceContext::default(),
+        )
+    }
+
+    pub(super) fn render_processed_for(
+        &self,
+        health: &[Health],
+        options: &EnhanceOptions,
+        edits: &editor::Options,
+        target_format: super::export::OutputFormat,
+        resolver: Option<&pipeline::Resolver<'_>>,
+        source_context: &script::SourceContext,
+    ) -> Result<editor::Rendered, ModelError> {
         pipeline::validate(&edits.pipeline)?;
-        self.render_inner(health, options, edits, true, Some(resolver))
+        self.render_inner(
+            health,
+            options,
+            edits,
+            true,
+            resolver,
+            (target_format, source_context),
+        )
     }
 
     /// Validates a saved plan without applying any operation to node data.
@@ -580,6 +725,7 @@ impl Subscription {
         edits: &editor::Options,
         clear_empty: bool,
         resolver: Option<&pipeline::Resolver<'_>>,
+        (target_format, source_context): (super::export::OutputFormat, &script::SourceContext),
     ) -> Result<editor::Rendered, ModelError> {
         if health.len() != self.nodes.len() {
             return Err(ModelError::InvalidHealth);
@@ -624,13 +770,8 @@ impl Subscription {
         {
             return Err(ModelError::Unsupported);
         }
-        let dependencies = self.dependencies()?;
-        let mut dependents = vec![Vec::new(); self.nodes.len()];
-        for (index, dependency) in dependencies.iter().enumerate() {
-            if let Some(dependency) = dependency {
-                dependents[*dependency].push(index);
-            }
-        }
+        let mut dependencies = self.dependencies()?;
+        let mut dependents = dependency_children(&dependencies);
         let mut manual = vec![false; self.nodes.len()];
         for (index, node) in self.nodes.iter().enumerate() {
             manual[index] = include.as_ref().is_some_and(|re| !re.is_match(node.name()))
@@ -768,9 +909,11 @@ impl Subscription {
         }
         let mut mutations = vec![properties::Mutation::default(); self.nodes.len()];
         let mut working = pipeline::Working {
+            target_format,
+            source_context,
             sub: self,
-            dependencies: &dependencies,
-            dependents: &dependents,
+            dependencies: &mut dependencies,
+            dependents: &mut dependents,
             names: &mut names,
             order: &mut order,
             mutations: &mut mutations,
@@ -782,10 +925,13 @@ impl Subscription {
         duplicate_skipped = duplicate_skipped.max(counts.skipped);
         if mutations.iter().all(properties::Mutation::is_empty)
             && order.iter().copied().eq(0..self.nodes.len())
-            && names
-                .iter()
-                .zip(&self.nodes)
-                .all(|(name, node)| name.as_str() == node.name())
+            && names.iter().zip(self.nodes.iter().zip(&dependencies)).all(
+                |(name, (node, dependency))| {
+                    name.as_str() == node.name()
+                        && dependency.map(|target| names[target].as_str())
+                            == node.dependency.as_ref().map(|name| name.as_str())
+                },
+            )
         {
             return Ok(editor::Rendered {
                 content: self.original.clone(),
@@ -821,19 +967,11 @@ impl Subscription {
                                 };
                                 let mut raw = source.raw.clone();
                                 let mut edits = Vec::new();
-                                if let Some(dependency) = dependencies[index]
-                                    && names[dependency].as_str() != self.nodes[dependency].name()
-                                {
-                                    let field = source
-                                        .fields
-                                        .iter()
-                                        .find(|field| field.key == "underlying-proxy")
-                                        .ok_or(ModelError::InvalidDependency)?;
-                                    edits.push((
-                                        field.value_range.clone(),
-                                        quote_surge(&names[dependency])?,
-                                    ));
-                                }
+                                surge_dependency_edit(
+                                    source,
+                                    dependencies[index].map(|target| names[target].as_str()),
+                                    &mut edits,
+                                )?;
                                 if names[index].as_str() != self.nodes[index].name() {
                                     edits.push((
                                         source.name_range.clone(),
@@ -910,20 +1048,11 @@ impl Subscription {
                     } else {
                         "tag"
                     }] = names[index].as_str().into();
-                    if let Some(dependency) = dependencies[index] {
-                        let key = if matches!(
-                            self.nodes[index].source,
-                            NodeSource::SubStore(_) | NodeSource::Mihomo(_)
-                        ) {
-                            ["dialer-proxy", "detour", "underlying-proxy"]
-                                .into_iter()
-                                .find(|key| value.get(*key).is_some())
-                                .ok_or(ModelError::InvalidDependency)?
-                        } else {
-                            "detour"
-                        };
-                        value[key] = names[dependency].as_str().into();
-                    }
+                    json_dependency_edit(
+                        &self.nodes[index],
+                        &mut value,
+                        dependencies[index].map(|target| names[target].as_str()),
+                    )?;
                     values.push(value);
                 }
                 let output = PrivateJson(
@@ -992,25 +1121,7 @@ impl Subscription {
                     .transpose()
             })
             .collect::<Result<_, _>>()?;
-        let mut state = vec![0u8; self.nodes.len()];
-        for index in 0..self.nodes.len() {
-            let mut trail = Vec::new();
-            let mut cursor = Some(index);
-            while let Some(index) = cursor {
-                match state[index] {
-                    2 => break,
-                    1 => return Err(ModelError::InvalidDependency),
-                    _ => {
-                        state[index] = 1;
-                        trail.push(index);
-                        cursor = dependencies[index];
-                    }
-                }
-            }
-            for index in trail {
-                state[index] = 2;
-            }
-        }
+        validate_dependency_graph(&dependencies)?;
         Ok(dependencies)
     }
 }
@@ -1277,6 +1388,70 @@ pub(super) fn quote_surge(input: &str) -> Result<Zeroizing<String>, ModelError> 
     serde_json::to_string(input)
         .map(Zeroizing::new)
         .map_err(|_| ModelError::Render)
+}
+
+fn surge_dependency_edit(
+    source: &SurgeNode,
+    dependency: Option<&str>,
+    edits: &mut Vec<(Range<usize>, Zeroizing<String>)>,
+) -> Result<(), ModelError> {
+    let field = source
+        .fields
+        .iter()
+        .find(|field| field.key == "underlying-proxy");
+    match (field, dependency) {
+        (Some(field), Some(target)) if field.value.as_str() != target => {
+            edits.push((field.value_range.clone(), quote_surge(target)?));
+        }
+        (Some(field), None) => {
+            let start = source.raw[..field.value_range.start]
+                .rfind(',')
+                .ok_or(ModelError::InvalidDependency)?;
+            edits.push((start..field.value_range.end, Zeroizing::new(String::new())));
+        }
+        (None, Some(target)) => {
+            let code_end = surge_code_end(&source.raw);
+            let position = source.raw[..code_end].trim_end().len();
+            let encoded = quote_surge(target)?;
+            edits.push((
+                position..position,
+                Zeroizing::new(format!(", underlying-proxy={}", encoded.as_str())),
+            ));
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn json_dependency_edit(
+    node: &Node,
+    value: &mut Value,
+    dependency: Option<&str>,
+) -> Result<(), ModelError> {
+    if dependency.is_none() && node.dependency.is_none() {
+        return Ok(());
+    }
+    let object = value.as_object_mut().ok_or(ModelError::Render)?;
+    let key = match node.source {
+        NodeSource::Native(_) => "detour",
+        NodeSource::SubStore(_) | NodeSource::Mihomo(_) => {
+            ["dialer-proxy", "detour", "underlying-proxy"]
+                .into_iter()
+                .find(|key| object.contains_key(*key))
+                .unwrap_or(if matches!(node.source, NodeSource::Mihomo(_)) {
+                    "dialer-proxy"
+                } else {
+                    "underlying-proxy"
+                })
+        }
+        _ => return Err(ModelError::Render),
+    };
+    if let Some(target) = dependency {
+        object.insert(key.to_owned(), target.into());
+    } else {
+        object.remove(key);
+    }
+    Ok(())
 }
 
 pub(super) fn valid_host(value: &str) -> bool {
@@ -1785,8 +1960,17 @@ fn validate_native(value: &Value, compatibility: bool) -> Result<(), ModelError>
     if let Some(obfs) = value.get("obfs") {
         only_keys(obfs, &["type", "password"])?;
     }
-    if let Some(uot) = value.get("udp_over_tcp") {
+    if let Some(uot) = value.get("udp_over_tcp").filter(|uot| !uot.is_boolean()) {
         only_keys(uot, &["enabled", "version"])?;
+        if uot
+            .get("enabled")
+            .is_some_and(|enabled| !enabled.is_boolean())
+            || uot
+                .get("version")
+                .is_some_and(|version| !matches!(version.as_u64(), Some(1 | 2)))
+        {
+            return Err(ModelError::Unsupported);
+        }
     }
     Ok(())
 }

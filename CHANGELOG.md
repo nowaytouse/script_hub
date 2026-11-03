@@ -1,5 +1,10 @@
 # Changes
 
+## 0.14.8 · 2026-11-04
+
+- Run bounded Rhai scripts over an entire subscription, with format context, endpoint edits, and regex helpers.
+- Edit and export validated proxy chains, inspect effective protocol fields, and reuse scripts with per-step arguments and safe source metadata.
+
 ## 0.14.7 · 2026-11-03
 
 - Name verified Surge groups and copy their subscription links without publishing again.

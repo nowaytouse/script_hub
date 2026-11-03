@@ -10,9 +10,18 @@ use crate::relay::model::properties::Setting;
 use crate::relay::model::script::{self, SyntaxError};
 use crate::runtime::settings::Language;
 use eframe::egui;
+use std::collections::BTreeMap;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
+const BATCH_SCRIPT_EXAMPLE: &str = "fn operator(nodes, context) {
+    if nodes.len > 1 {
+        let first = nodes[0];
+        nodes[0] = nodes[1];
+        nodes[1] = first;
+    }
+    nodes
+}";
 const FIELDS: [&str; 14] = [
     "pattern",
     "replacement",
@@ -34,6 +43,10 @@ fn field_id(id: u64, field: &str) -> egui::Id {
     egui::Id::unique("relay-operation-field")
         .with(id)
         .with(field)
+}
+
+fn script_arguments_id(step_id: u64) -> egui::Id {
+    field_id(step_id, "script-arguments")
 }
 
 fn validation_id() -> egui::Id {
@@ -86,6 +99,16 @@ pub(super) fn clear_widgets(ctx: &egui::Context, steps: &[Step]) {
         data.remove::<egui::text_edit::TextEditState>(search_id());
         for step in steps {
             data.remove::<Result<(), SyntaxError>>(field_id(step.id, "script").with("syntax"));
+            if let Operation::Script { arguments, .. } = &step.operation {
+                let id = script_arguments_id(step.id);
+                data.remove::<ScriptArgumentDraft>(id);
+                for field in ["new-name", "new-value"] {
+                    data.remove::<egui::text_edit::TextEditState>(id.with(field));
+                }
+                for name in arguments.keys() {
+                    data.remove::<egui::text_edit::TextEditState>(id.with(("value", name)));
+                }
+            }
             for field in FIELDS {
                 data.remove::<egui::text_edit::TextEditState>(field_id(step.id, field));
                 data.remove::<Zeroizing<String>>(field_id(step.id, field).with("draft"));
@@ -154,7 +177,19 @@ fn script_field(
     let id = field_id(step_id, "script");
     let syntax_id = id.with("syntax");
     ui.label(tr(Text::OperationScriptHelp));
-    let changed = field_with_limit(
+    egui::CollapsingHeader::new(tr(Text::OperationScriptReference))
+        .id_salt(id.with("reference"))
+        .show(ui, |ui| {
+            ui.label(tr(Text::OperationScriptSignatures));
+            ui.label(tr(Text::OperationScriptContext));
+            ui.label(tr(Text::OperationScriptSourceContext));
+            ui.label(tr(Text::OperationScriptFields));
+            ui.label(tr(Text::OperationScriptReadOnlyFields));
+            ui.label(tr(Text::OperationScriptUnderlyingProxy));
+            ui.label(tr(Text::OperationScriptRegex));
+            ui.label(tr(Text::OperationScriptBatchExampleHelp));
+        });
+    let mut changed = field_with_limit(
         ui,
         tr(Text::OperationScriptSource),
         source,
@@ -162,10 +197,32 @@ fn script_field(
         true,
         script::MAX_SOURCE,
     );
+    let check = ui
+        .horizontal_wrapped(|ui| {
+            let check = ui.button(tr(Text::OperationScriptCheck)).clicked();
+            let empty = source.trim().is_empty();
+            let example = if empty {
+                Text::OperationScriptInsertBatchExample
+            } else {
+                Text::OperationScriptCopyBatchExample
+            };
+            if ui.button(tr(example)).clicked() {
+                if empty {
+                    source.zeroize();
+                    source.push_str(BATCH_SCRIPT_EXAMPLE);
+                    changed = true;
+                    ui.memory_mut(|memory| memory.request_focus(id));
+                } else {
+                    ui.ctx().copy_text(BATCH_SCRIPT_EXAMPLE.to_owned());
+                }
+            }
+            check
+        })
+        .inner;
     if changed {
         ui.data_mut(|data| data.remove::<Result<(), SyntaxError>>(syntax_id));
     }
-    if ui.button(tr(Text::OperationScriptCheck)).clicked() {
+    if check {
         let result = script::check_syntax(source);
         ui.data_mut(|data| data.insert_temp(syntax_id, result));
     }
@@ -190,6 +247,127 @@ fn script_field(
             ui.colored_label(colors.error, message);
         }
     }
+    changed
+}
+
+#[derive(Clone, Default)]
+struct ScriptArgumentDraft {
+    name: Zeroizing<String>,
+    value: Zeroizing<String>,
+}
+
+fn script_arguments(
+    ui: &mut egui::Ui,
+    language: Language,
+    colors: Palette,
+    step_id: u64,
+    arguments: &mut BTreeMap<String, String>,
+) -> bool {
+    let tr = |key| text(language, key);
+    let id = script_arguments_id(step_id);
+    let mut changed = false;
+    egui::CollapsingHeader::new(tr(Text::OperationScriptArguments))
+        .id_salt(id)
+        .default_open(!arguments.is_empty())
+        .show(ui, |ui| {
+            ui.weak(tr(Text::OperationScriptArgumentsHelp));
+            let mut remove = None;
+            for (name, value) in arguments.iter_mut() {
+                ui.push_id(name, |ui| {
+                    changed |=
+                        field_with_limit(ui, name, value, id.with(("value", name)), false, 512);
+                    if !script::valid_argument_value(value) {
+                        ui.colored_label(
+                            colors.error,
+                            tr(Text::OperationScriptArgumentValueInvalid),
+                        );
+                    }
+                    let control = ui.button(tr(Text::OperationScriptArgumentRemove));
+                    control.widget_info(|| {
+                        egui::WidgetInfo::labeled(
+                            egui::Role::Button,
+                            ui.is_enabled(),
+                            format!("{}: {name}", tr(Text::OperationScriptArgumentRemove)),
+                        )
+                    });
+                    if control.clicked() {
+                        remove = Some(name.clone());
+                    }
+                });
+            }
+            if let Some(name) = remove
+                && let Some(mut value) = arguments.remove(&name)
+            {
+                value.zeroize();
+                ui.data_mut(|data| {
+                    data.remove::<egui::text_edit::TextEditState>(id.with(("value", &name)))
+                });
+                changed = true;
+            }
+
+            if !arguments.is_empty() {
+                ui.separator();
+            }
+            let mut draft = ui
+                .data(|data| data.get_temp::<ScriptArgumentDraft>(id))
+                .unwrap_or_default();
+            let mut draft_changed = field_with_limit(
+                ui,
+                tr(Text::OperationScriptArgumentName),
+                &mut draft.name,
+                id.with("new-name"),
+                false,
+                128,
+            );
+            draft_changed |= field_with_limit(
+                ui,
+                tr(Text::OperationScriptArgumentValue),
+                &mut draft.value,
+                id.with("new-value"),
+                false,
+                512,
+            );
+            let issue = if arguments.len() >= script::MAX_ARGUMENTS {
+                Some(Text::OperationScriptArgumentLimit)
+            } else if draft.name.is_empty() && draft.value.is_empty() {
+                None
+            } else if !script::valid_argument_name(&draft.name) {
+                Some(Text::OperationScriptArgumentNameInvalid)
+            } else if arguments.contains_key(draft.name.as_str()) {
+                Some(Text::OperationScriptArgumentDuplicate)
+            } else if !script::valid_argument_value(&draft.value) {
+                Some(Text::OperationScriptArgumentValueInvalid)
+            } else {
+                None
+            };
+            if let Some(issue) = issue {
+                ui.colored_label(colors.error, tr(issue));
+            }
+            if ui
+                .add_enabled(
+                    !draft.name.is_empty() && issue.is_none(),
+                    egui::Button::new(tr(Text::OperationScriptArgumentAdd)),
+                )
+                .clicked()
+            {
+                arguments.insert(
+                    std::mem::take(&mut *draft.name),
+                    std::mem::take(&mut *draft.value),
+                );
+                ui.memory_mut(|memory| memory.request_focus(id.with("new-name")));
+                draft_changed = true;
+                changed = true;
+            }
+            if draft_changed {
+                ui.data_mut(|data| {
+                    if draft.name.is_empty() && draft.value.is_empty() {
+                        data.remove::<ScriptArgumentDraft>(id);
+                    } else {
+                        data.insert_temp(id, draft);
+                    }
+                });
+            }
+        });
     changed
 }
 
@@ -337,6 +515,7 @@ fn new_operations() -> [Operation; 26] {
         },
         Operation::Script {
             source: "fn transform(node) { node.name = \"Hub \" + node.name; node }".into(),
+            arguments: Default::default(),
         },
     ]
 }
@@ -629,8 +808,9 @@ pub(super) fn show(
                 let configurable =
                     !matches!(step.operation, Operation::Deduplicate | Operation::Reverse);
                 let details = |ui: &mut egui::Ui| match &mut step.operation {
-                    Operation::Script { source } => {
+                    Operation::Script { source, arguments } => {
                         changed |= script_field(ui, language, colors, step.id, source);
+                        changed |= script_arguments(ui, language, colors, step.id, arguments);
                     }
                     Operation::NameFilter { pattern, keep } => {
                         changed |= field(
@@ -1223,6 +1403,7 @@ pub(super) fn show(
                             Setting::Alpn { .. } => 4,
                             Setting::Server { .. } => 5,
                             Setting::Port { .. } => 6,
+                            Setting::UdpOverTcp { .. } => 7,
                         };
                         let labels = [
                             Text::PropertyUdp,
@@ -1232,6 +1413,7 @@ pub(super) fn show(
                             Text::PropertyAlpn,
                             Text::PropertyServer,
                             Text::PropertyPort,
+                            Text::PropertyUdpOverTcp,
                         ];
                         egui::ComboBox::from_id_salt(("property-kind", step.id))
                             .selected_text(tr(labels[current]))
@@ -1251,7 +1433,8 @@ pub(super) fn show(
                                             5 => Setting::Server {
                                                 value: String::new(),
                                             },
-                                            _ => Setting::Port { value: 443 },
+                                            6 => Setting::Port { value: 443 },
+                                            _ => Setting::UdpOverTcp { enabled: true },
                                         };
                                         for name in ["server_name", "alpn", "server"] {
                                             let id = field_id(step.id, name);
@@ -1268,6 +1451,11 @@ pub(super) fn show(
                             Setting::Udp { enabled } | Setting::TcpFastOpen { enabled } => {
                                 changed |=
                                     ui.checkbox(enabled, tr(Text::PropertyEnabled)).changed();
+                            }
+                            Setting::UdpOverTcp { enabled } => {
+                                changed |=
+                                    ui.checkbox(enabled, tr(Text::PropertyEnabled)).changed();
+                                ui.weak(tr(Text::PropertyUdpOverTcpHelp));
                             }
                             Setting::VerifyTls => {
                                 ui.weak(tr(Text::PropertyVerifyTlsHelp));
@@ -1528,7 +1716,7 @@ mod tests {
         );
         assert!(matches!(&operations[20], Operation::Shuffle { seed: 0 }));
         assert!(
-            matches!(&operations[25], Operation::Script { source } if source == "fn transform(node) { node.name = \"Hub \" + node.name; node }")
+            matches!(&operations[25], Operation::Script { source, arguments } if source == "fn transform(node) { node.name = \"Hub \" + node.name; node }" && arguments.is_empty())
         );
         let condition = Step {
             id: 1,
@@ -1705,6 +1893,7 @@ mod tests {
             enabled: true,
             operation: Operation::Script {
                 source: "fn helper(node) { node }".into(),
+                arguments: Default::default(),
             },
         }];
         open_for_next_frame(&ctx, 1);
@@ -1727,6 +1916,137 @@ mod tests {
     }
 
     #[test]
+    fn batch_example_inserts_into_empty_scripts_and_copies_without_replacing_edits() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut steps = vec![Step {
+            id: 1,
+            enabled: true,
+            operation: Operation::Script {
+                source: String::new(),
+                arguments: Default::default(),
+            },
+        }];
+        open_for_next_frame(&ctx, 1);
+        let output = draw(&ctx, &mut steps, vec![]);
+        let inserted = click_label(
+            &ctx,
+            &mut steps,
+            output,
+            text(Language::En, Text::OperationScriptInsertBatchExample),
+        );
+        assert!(
+            !inserted
+                .platform_output
+                .commands
+                .iter()
+                .any(|command| { matches!(command, egui::OutputCommand::CopyText(_)) })
+        );
+        inserted.drop_without_applying_deltas();
+        let Operation::Script { source, .. } = &mut steps[0].operation else {
+            panic!("expected script operation");
+        };
+        assert_eq!(source.as_str(), BATCH_SCRIPT_EXAMPLE);
+        assert_eq!(script::check_syntax(source), Ok(()));
+
+        let original = "fn transform(node) { node }";
+        *source = original.into();
+        let output = draw(&ctx, &mut steps, vec![]);
+        let copied = click_label(
+            &ctx,
+            &mut steps,
+            output,
+            text(Language::En, Text::OperationScriptCopyBatchExample),
+        );
+        assert!(copied.platform_output.commands.iter().any(|command| {
+            matches!(command, egui::OutputCommand::CopyText(value) if value == BATCH_SCRIPT_EXAMPLE)
+        }));
+        copied.drop_without_applying_deltas();
+        assert!(
+            matches!(&steps[0].operation, Operation::Script { source, .. } if source.as_str() == original)
+        );
+    }
+
+    #[test]
+    fn script_argument_form_preserves_invalid_drafts_and_adds_only_valid_text() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut steps = vec![Step {
+            id: 1,
+            enabled: true,
+            operation: Operation::Script {
+                source: "fn transform(node) { node }".into(),
+                arguments: BTreeMap::from([("prefix".into(), "original".into())]).into(),
+            },
+        }];
+        open_for_next_frame(&ctx, 1);
+        let id = script_arguments_id(1);
+        let add = text(Language::En, Text::OperationScriptArgumentAdd);
+        let draft = |name: &str, value: &str| ScriptArgumentDraft {
+            name: Zeroizing::new(name.into()),
+            value: Zeroizing::new(value.into()),
+        };
+        for (name, value, error) in [
+            (
+                "prefix",
+                "duplicate".to_owned(),
+                Text::OperationScriptArgumentDuplicate,
+            ),
+            (
+                "new_value",
+                "雪".repeat(86),
+                Text::OperationScriptArgumentValueInvalid,
+            ),
+        ] {
+            ctx.data_mut(|data| data.insert_temp(id, draft(name, &value)));
+            let output = draw(&ctx, &mut steps, vec![]);
+            let update = output.platform_output.accesskit_update.as_ref().unwrap();
+            assert!(
+                update
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some(add) && node.is_disabled())
+            );
+            assert!(
+                update
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| node.label().or_else(|| node.value())
+                        == Some(text(Language::En, error)))
+            );
+            output.drop_without_applying_deltas();
+            let retained = ctx
+                .data(|data| data.get_temp::<ScriptArgumentDraft>(id))
+                .unwrap();
+            assert_eq!(retained.name.as_str(), name);
+            assert_eq!(retained.value.as_str(), value);
+        }
+
+        ctx.data_mut(|data| data.insert_temp(id, draft("new_value", "")));
+        let output = draw(&ctx, &mut steps, vec![]);
+        click_label(&ctx, &mut steps, output, add).drop_without_applying_deltas();
+        let Operation::Script { arguments, .. } = &steps[0].operation else {
+            panic!("expected script operation");
+        };
+        assert_eq!(
+            arguments.get("prefix").map(String::as_str),
+            Some("original")
+        );
+        assert_eq!(arguments.get("new_value").map(String::as_str), Some(""));
+        assert!(
+            ctx.data(|data| data.get_temp::<ScriptArgumentDraft>(id))
+                .is_none()
+        );
+
+        ctx.data_mut(|data| data.insert_temp(id, draft("not_added", "pending")));
+        clear_widgets(&ctx, &steps);
+        assert!(
+            ctx.data(|data| data.get_temp::<ScriptArgumentDraft>(id))
+                .is_none()
+        );
+    }
+
+    #[test]
     fn new_operations_and_properties_fit_narrow_cards() {
         let mut ops: Vec<_> = new_operations().into_iter().skip(16).collect();
         ops.push(Operation::Sort {
@@ -1740,6 +2060,9 @@ mod tests {
         });
         ops.push(Operation::SetProperty {
             setting: Setting::Port { value: 443 },
+        });
+        ops.push(Operation::SetProperty {
+            setting: Setting::UdpOverTcp { enabled: true },
         });
         for (i, operation) in ops.into_iter().enumerate() {
             let ctx = egui::Context::default();
@@ -1775,6 +2098,9 @@ mod tests {
                 Operation::SetProperty {
                     setting: Setting::Port { .. },
                 } => "Server port",
+                Operation::SetProperty {
+                    setting: Setting::UdpOverTcp { .. },
+                } => text(Language::En, Text::PropertyUdpOverTcpHelp),
                 _ => panic!("unexpected operation in UI fixture"),
             };
             assert!(

@@ -24,7 +24,9 @@ Classic age X25519 backups can be unlocked with their private key. Encrypted exp
 
 The Rust age library is pre-1.0 and marked experimental upstream. Keep an independent recoverable copy of important configurations.
 
-**Script transform (Rhai)** adds a Rust-hosted `fn transform(node) { node }` operation. It is not compiled Rust or JavaScript. Only the documented node view is exposed, without credentials, files, network or commands. Scripts have resource budgets, not process-level isolation. Imported Hub plans may contain scripts; inspect them before previewing or publishing.
+**Rhai scripts** can use `transform(node)`, `transform(node, context)`, or `operator(nodes, context)`. An operator returns an ordered subset of up to 4,096 supplied nodes. The editor lists fields and regex helpers. Choose the Gist format before previewing; collection members are prepared for sing-box before combining. Scripts are bounded, not process-isolated, and cannot access credentials, files, or the network. Review imported scripts before previewing: a server change can send existing credentials to the new server when the client connects. JavaScript is not executed.
+
+Read per-step text parameters from `context.arguments`; never put secrets there. Source context exposes the source kind, a local display label when available, and a 1-based index when processing a collection member. Set `node.underlying_proxy` to a retained node’s final name or `()` to clear it. Cycles and missing links fail before export. DoH and health checks remain native operations; a standalone probe does not bypass a chain.
 
 Schedules run only while the app is open, one job at a time. **Sync now** starts the enabled schedule early without bypassing cooldowns. Default: 60 minutes; range: 1 minute–7 days. Missed runs are not replayed. Ambiguous writes stop the plan; unchanged content is not uploaded. The newest successful result becomes the copy/export result.
 

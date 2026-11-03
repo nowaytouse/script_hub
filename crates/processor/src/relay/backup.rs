@@ -244,6 +244,8 @@ mod tests {
             enabled: true,
             operation: Operation::Script {
                 source: source.into(),
+                arguments: std::collections::BTreeMap::from([("prefix".into(), "example".into())])
+                    .into(),
             },
         });
         let bytes = encode(&config, CONTENT).unwrap();
@@ -251,7 +253,8 @@ mod tests {
         assert_eq!(backup.content.as_str(), CONTENT);
         assert!(matches!(
             &backup.config.processing.pipeline[0].operation,
-            Operation::Script { source: saved } if saved == source
+            Operation::Script { source: saved, arguments }
+                if saved == source && arguments.get("prefix").is_some_and(|value| value == "example")
         ));
         let preview = RelayConfig {
             local_content: Some(backup.content.clone()),
@@ -279,6 +282,7 @@ mod tests {
         ));
         config.processing.pipeline[0].operation = Operation::Script {
             source: "fn transform(".into(),
+            arguments: Default::default(),
         };
         assert_eq!(encode(&config, CONTENT), Err(BackupError::Invalid));
     }

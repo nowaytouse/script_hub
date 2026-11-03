@@ -46,6 +46,8 @@ pub struct RelayConfig {
     pub expected_source: Option<Zeroizing<String>>,
     #[serde(skip)]
     pub allow_resolution: bool,
+    #[serde(skip)]
+    pub(crate) script_source: model::script::SourceContext,
     pub source: String,
     pub source_file: String,
     pub output: String,
@@ -70,6 +72,7 @@ impl Default for RelayConfig {
             processing: Default::default(),
             expected_source: None,
             allow_resolution: false,
+            script_source: Default::default(),
             source: String::new(),
             source_file: String::new(),
             output: String::new(),
@@ -117,6 +120,7 @@ pub struct RelayResult {
     pub tested: bool,
     pub created: Option<gist::CreatedGist>,
     pub surge_policy: Option<gist::PolicyLink>,
+    pub script_target: Option<export::OutputFormat>,
     pub total: usize,
     pub healthy: usize,
     pub processed: usize,
@@ -198,6 +202,15 @@ impl fmt::Display for RelayError {
 impl std::error::Error for RelayError {}
 
 impl RelayConfig {
+    pub(crate) fn script_source_label(label: &str) -> Option<String> {
+        let label = label.trim();
+        (!label.is_empty()
+            && label.len() <= 256
+            && !label.contains("://")
+            && !label.chars().any(char::is_control))
+        .then(|| label.to_owned())
+    }
+
     pub fn validate(&self, mode: RunMode) -> Result<(), RelayError> {
         let input = if self.source.trim().is_empty() {
             if self.local_content.is_none() {
@@ -329,6 +342,7 @@ fn run_with(
             tested: false,
             created: None,
             surge_policy: None,
+            script_target: None,
             total,
             healthy: 0,
             processed: total,
@@ -358,16 +372,32 @@ fn run_with(
         rename: config.rename,
         sort: config.sort,
     };
+    let mut script_source = config.script_source.clone();
+    script_source.kind = match &source {
+        Some(input::Source::Gist(_)) => "gist",
+        Some(input::Source::Https { .. }) => "https",
+        None if script_source.kind == "collection" => "collection",
+        None => "local",
+    };
     let prepared = if model::pipeline::has_resolution(&config.processing.pipeline) {
         let session = resolve::Session::new(cancel);
-        subscription.render_processed_with_resolver(
+        subscription.render_processed_for(
             &health,
             &enhance,
             &config.processing,
-            &|hosts, family, options| session.resolve(hosts, family, options),
+            config.output_format,
+            Some(&|hosts, family, options| session.resolve(hosts, family, options)),
+            &script_source,
         )
     } else {
-        subscription.render_processed(&health, &enhance, &config.processing)
+        subscription.render_processed_for(
+            &health,
+            &enhance,
+            &config.processing,
+            config.output_format,
+            None,
+            &script_source,
+        )
     }
     .map_err(RelayError::Model)?;
     let processed = prepared.retained.len();
@@ -479,6 +509,8 @@ fn run_with(
         tested: config.test_nodes,
         created: None,
         surge_policy: None,
+        script_target: model::pipeline::has_script(&config.processing.pipeline)
+            .then_some(config.output_format),
         total,
         healthy: retained_healthy,
         processed,
@@ -573,6 +605,9 @@ fn validate_prepared(config: &RelayConfig, result: &RelayResult) -> Result<(), R
         || result.created.is_some()
         || result.surge_policy.is_some()
         || result.unchanged
+        || result.script_target
+            != model::pipeline::has_script(&config.processing.pipeline)
+                .then_some(config.output_format)
         || (result.tested && result.healthy == 0)
         || (result.source.is_some()
             != (config.local_content.is_none() && !config.source.trim().is_empty()))

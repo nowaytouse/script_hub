@@ -286,6 +286,7 @@ fn gist(
     let mut selected_format = state.publish_format;
     format_picker(ui, Text::RelayPublishFormat, &mut selected_format, &tr);
     select_gist_format(state, selected_format);
+    let has_content = has_content && state.result.is_some();
     ui.weak(tr(Text::RelayPublishFormatHelp));
     if has_content {
         ui.horizontal_wrapped(|ui| {
@@ -301,6 +302,7 @@ fn gist(
         });
         show_format_feedback(ui, state, state.publish_format, colors, language);
     }
+    let has_content = has_content && state.result.is_some();
     ui.add_space(12.0);
     if secret_field(
         ui,
@@ -618,6 +620,13 @@ fn group_name_matches_node(name: &str, nodes: &[Zeroizing<String>]) -> bool {
 fn select_gist_format(state: &mut RelayState, format: OutputFormat) {
     if state.publish_format != format {
         state.publish_format = format;
+        if state
+            .result
+            .as_ref()
+            .is_some_and(|result| result.script_target.is_some())
+        {
+            state.invalidate_result();
+        }
         invalidate_gist_destination(state);
     }
 }

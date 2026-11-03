@@ -660,6 +660,60 @@ fn prepared_upload_exports_the_selected_format_without_mutating_its_preview() {
 }
 
 #[test]
+fn script_uses_planned_format_and_stale_preview_cannot_publish() {
+    use export::OutputFormat;
+    use model::pipeline::{Operation, Step};
+
+    let source = "A = socks5, a.example.invalid, 1080\n";
+    let mut config = config();
+    config.source.clear();
+    config.output.clear();
+    config.local_content = Some(Zeroizing::new(source.into()));
+    config.expected_source = config.local_content.clone();
+    config.test_nodes = false;
+    config.output_format = OutputFormat::Surge;
+    config.script_source.label = RelayConfig::script_source_label("Demo");
+    config.processing.pipeline = vec![Step {
+        id: 1,
+        enabled: true,
+        operation: Operation::Script {
+            source: "fn operator(nodes, context) { if context.source_kind != \"local\" || context.source_label != \"Demo\" { throw \"invalid context\"; } let n = nodes[0]; n.name = context.arguments[\"prefix\"] + context.source_format + \" to \" + context.target_format; nodes[0] = n; nodes }".into(),
+            arguments: std::collections::BTreeMap::from([("prefix".into(), "From ".into())]).into(),
+        },
+    }];
+    let fixture = Fixture::new(vec![]);
+    let cancel = AtomicBool::new(false);
+    let preview = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    let nodes = model::Subscription::parse(&preview.content).unwrap();
+    assert_eq!(nodes.nodes()[0].name(), "From surge to surge");
+    config.output_format = OutputFormat::Mihomo;
+    assert!(matches!(
+        upload_with(&config, &fixture.client(), preview, &cancel, &|_| {}),
+        Err(RelayError::InvalidInput)
+    ));
+    let preview = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    let nodes = model::Subscription::parse(&preview.content).unwrap();
+    assert_eq!(nodes.nodes()[0].name(), "From surge to mihomo");
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn surge_gist_receipt_follows_verified_creation_update_and_unchanged_output() {
     let source = "A = socks5, a.example.invalid, 1080\n";
     let mut config = config();

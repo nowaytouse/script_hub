@@ -387,15 +387,33 @@ impl Workspace {
             let sub = model::Subscription::parse(&entry.content).map_err(|_| Error::Unsupported)?;
             let health = vec![model::Health::Unknown; sub.nodes().len()];
             let rendered = sub
-                .render_processed(
+                .render_processed_for(
                     &health,
                     &model::EnhanceOptions {
                         rename: false,
                         sort: false,
                     },
                     &entry.processing,
+                    super::export::OutputFormat::SingBox,
+                    None,
+                    &model::script::SourceContext {
+                        kind: if entry.source.trim().is_empty() {
+                            "local"
+                        } else {
+                            match super::input::target(entry.source.trim(), &entry.source_file) {
+                                Ok(super::input::Target::Gist(_)) => "gist",
+                                Ok(super::input::Target::Https(_)) => "https",
+                                Err(_) => "unknown",
+                            }
+                        },
+                        label: super::RelayConfig::script_source_label(&entry.name),
+                        member_index: Some(member_index + 1),
+                    },
                 )
                 .map_err(|_| Error::Unsupported)?;
+            if rendered.retained.is_empty() {
+                continue;
+            }
             let processed =
                 model::Subscription::parse(&rendered.content).map_err(|_| Error::Unsupported)?;
             let mut namespaced = Options::default();
@@ -441,6 +459,9 @@ impl Workspace {
                 first = false;
                 output.extend_from_slice(&bytes);
             }
+        }
+        if first {
+            return Err(Error::Invalid);
         }
         output.push(b']');
         let text = String::from_utf8(std::mem::take(&mut *output)).map_err(|_| Error::Invalid)?;
@@ -614,7 +635,7 @@ mod tests {
     }
 
     #[test]
-    fn merge_namespaces_collisions_and_rejects_dependencies() {
+    fn merge_namespaces_collisions_and_preserves_dependencies() {
         let mut w = Workspace::default();
         let a = w.add_entry(entry("one", NODE)).unwrap();
         let b = w.add_entry(entry("two", NODE)).unwrap();
@@ -629,7 +650,9 @@ mod tests {
         let mut group = w.collections[0].clone();
         group.members = vec![b];
         w.update_collection(group).unwrap();
-        assert!(matches!(w.merge(c), Err(Error::Unsupported)));
+        let merged: serde_json::Value = serde_json::from_str(&w.merge(c).unwrap()).unwrap();
+        assert_eq!(merged[0]["tag"], "1: child");
+        assert_eq!(merged[0]["detour"], "1: same");
     }
 
     #[test]
@@ -681,6 +704,7 @@ mod tests {
             enabled: true,
             operation: model::pipeline::Operation::Script {
                 source: r#"fn transform(node) { node.name = "script-" + node.name; node }"#.into(),
+                arguments: Default::default(),
             },
         });
         let id = w.add_entry(item).unwrap();
@@ -688,5 +712,41 @@ mod tests {
         let merged = w.merge(c).unwrap();
         let parsed = model::Subscription::parse(&merged).unwrap();
         assert_eq!(parsed.nodes()[0].name(), "1: script-same");
+    }
+
+    #[test]
+    fn collection_skips_an_empty_script_member_and_passes_the_composition_target() {
+        let mut workspace = Workspace::default();
+        let mut skipped = entry("skipped", NODE);
+        let mut retained = entry("retained", NODE);
+        for (item, source) in [
+            (&mut skipped, "fn operator(nodes, context) { [] }"),
+            (
+                &mut retained,
+                "fn transform(node, context) { if context.source_kind != \"local\" || context.source_label != \"retained\" || context.member_index != 2 { throw \"invalid context\"; } node.name = context.target_format; node }",
+            ),
+        ] {
+            item.processing.pipeline.push(model::pipeline::Step {
+                id: 1,
+                enabled: true,
+                operation: model::pipeline::Operation::Script {
+                    source: source.into(),
+                    arguments: Default::default(),
+                },
+            });
+        }
+        let skipped = workspace.add_entry(skipped).unwrap();
+        let retained = workspace.add_entry(retained).unwrap();
+        let both = workspace
+            .add_collection(collection(vec![skipped, retained]))
+            .unwrap();
+        let merged = workspace.merge(both).unwrap();
+        let parsed = model::Subscription::parse(&merged).unwrap();
+        assert_eq!(parsed.nodes().len(), 1);
+        assert_eq!(parsed.nodes()[0].name(), "2: sing-box");
+        let mut only_empty = collection(vec![skipped]);
+        only_empty.name = "Only empty".into();
+        let empty = workspace.add_collection(only_empty).unwrap();
+        assert!(matches!(workspace.merge(empty), Err(Error::Invalid)));
     }
 }

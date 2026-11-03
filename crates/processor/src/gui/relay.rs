@@ -1006,6 +1006,21 @@ impl RelayState {
                 EditorState::processing,
             ),
             expected_source: self.editor.as_ref().map(|editor| editor.source.clone()),
+            script_source: crate::relay::model::script::SourceContext {
+                kind: if matches!(
+                    self.workspace.selected,
+                    Some(super::subscriptions::Selection::Collection(_))
+                ) {
+                    "collection"
+                } else {
+                    "local"
+                },
+                label: self
+                    .workspace
+                    .selected
+                    .and_then(|_| RelayConfig::script_source_label(&self.workspace.name)),
+                member_index: None,
+            },
         })
     }
 
@@ -2345,6 +2360,7 @@ mod tests {
             source: None,
             created: None,
             surge_policy: None,
+            script_target: None,
             total: 2,
             processed: 2,
             excluded: 0,
@@ -2526,6 +2542,7 @@ mod tests {
             (
                 Operation::Script {
                     source: "fn transform(node) { node }".into(),
+                    arguments: Default::default(),
                 },
                 false,
             ),

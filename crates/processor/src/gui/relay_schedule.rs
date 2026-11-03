@@ -518,6 +518,7 @@ mod tests {
                         tested: false,
                         created: None,
                         surge_policy: None,
+                        script_target: None,
                         total: 1,
                         healthy: 0,
                         processed: 1,
