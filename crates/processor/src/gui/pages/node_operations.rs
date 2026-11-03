@@ -12,7 +12,7 @@ use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
-const FIELDS: [&str; 13] = [
+const FIELDS: [&str; 14] = [
     "pattern",
     "replacement",
     "template",
@@ -26,6 +26,7 @@ const FIELDS: [&str; 13] = [
     "dns_include",
     "dns_exclude",
     "networks",
+    "script",
 ];
 
 fn field_id(id: u64, field: &str) -> egui::Id {
@@ -111,6 +112,7 @@ fn field_with_limit(
 
 fn operation_label(op: &Operation) -> Text {
     match op {
+        Operation::Script { .. } => Text::OperationScript,
         Operation::NameFilter { .. } => Text::OperationNameFilter,
         Operation::ProtocolFilter { .. } => Text::OperationProtocolFilter,
         Operation::ReplaceName { .. } => Text::OperationReplaceName,
@@ -146,7 +148,7 @@ enum Action {
     Delete,
 }
 
-fn new_operations() -> [Operation; 25] {
+fn new_operations() -> [Operation; 26] {
     [
         Operation::NameFilter {
             pattern: String::new(),
@@ -249,6 +251,9 @@ fn new_operations() -> [Operation; 25] {
             networks: Vec::new(),
             keep: true,
             keep_domains: true,
+        },
+        Operation::Script {
+            source: "fn transform(node) { node.name = \"Hub \" + node.name; node }".into(),
         },
     ]
 }
@@ -443,6 +448,17 @@ pub(super) fn show(
                 .id_salt(("relay-operation-card", step.id))
                 .default_open(true)
                 .show(ui, |ui| match &mut step.operation {
+                    Operation::Script { source } => {
+                        ui.label(tr(Text::OperationScriptHelp));
+                        changed |= field_with_limit(
+                            ui,
+                            tr(Text::OperationScriptSource),
+                            source,
+                            field_id(step.id, "script"),
+                            true,
+                            crate::relay::model::script::MAX_SOURCE,
+                        );
+                    }
                     Operation::NameFilter { pattern, keep } => {
                         changed |= field(
                             ui,
@@ -1224,7 +1240,7 @@ mod tests {
     #[test]
     fn operation_defaults_and_groups_cover_all_choices() {
         let operations = new_operations();
-        assert_eq!(operations.len(), 25);
+        assert_eq!(operations.len(), 26);
         assert_eq!(
             operations
                 .iter()
@@ -1237,7 +1253,7 @@ mod tests {
                 .iter()
                 .filter(|op| operation_group(op) == 1)
                 .count(),
-            15
+            16
         );
         assert_eq!(
             operations
@@ -1299,6 +1315,9 @@ mod tests {
             matches!(&operations[19], Operation::RegionNames { labels, separator, keep_name: true } if labels.len() == 2 && labels[0].region == "JP" && labels[0].label == "Japan" && labels[1].region == "US" && labels[1].label == "United States" && separator == " | ")
         );
         assert!(matches!(&operations[20], Operation::Shuffle { seed: 0 }));
+        assert!(
+            matches!(&operations[25], Operation::Script { source } if source == "fn transform(node) { node.name = \"Hub \" + node.name; node }")
+        );
         let condition = Step {
             id: 1,
             enabled: true,
@@ -1325,6 +1344,7 @@ mod tests {
             "dns_include",
             "dns_exclude",
             "networks",
+            "script",
         ] {
             let id = field_id(4, name).with("draft");
             ctx.data_mut(|data| data.insert_temp(id, Zeroizing::new("private".to_owned())));
@@ -1354,6 +1374,7 @@ mod tests {
             "dns_include",
             "dns_exclude",
             "networks",
+            "script",
         ] {
             assert!(
                 ctx.data_mut(
@@ -1444,19 +1465,25 @@ mod tests {
                 .accesskit_update
                 .as_ref()
                 .expect("accessible controls");
-            let expected = match i {
-                0 => "Add condition",
-                1 => "Letter case",
-                2 => "Separator",
-                3 => "Add region",
-                4 => "Seed",
-                5 => "Add rule",
-                6 => "Skip nodes",
-                7 => "Keep occurrence",
-                8 => "CIDR networks, comma separated (maximum 64)",
-                9 => "Natural name",
-                10 => "Server address",
-                _ => "Server port",
+            let expected = match &steps[0].operation {
+                Operation::ConditionFilter { .. } => "Add condition",
+                Operation::NormalizeName { .. } => "Letter case",
+                Operation::UniqueNames { .. } => "Separator",
+                Operation::RegionNames { .. } => "Add region",
+                Operation::Shuffle { .. } => "Seed",
+                Operation::BatchRename { .. } => "Add rule",
+                Operation::Slice { .. } => "Skip nodes",
+                Operation::DeduplicateName { .. } => "Keep occurrence",
+                Operation::NetworkFilter { .. } => "CIDR networks, comma separated (maximum 64)",
+                Operation::Script { .. } => "Rhai script",
+                Operation::Sort { .. } => "Natural name",
+                Operation::SetProperty {
+                    setting: Setting::Server { .. },
+                } => "Server address",
+                Operation::SetProperty {
+                    setting: Setting::Port { .. },
+                } => "Server port",
+                _ => panic!("unexpected operation in UI fixture"),
             };
             assert!(
                 update

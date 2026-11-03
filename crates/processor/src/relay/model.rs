@@ -17,6 +17,7 @@ pub mod entrance;
 mod mihomo;
 pub mod pipeline;
 pub mod properties;
+pub mod script;
 mod uri;
 
 const MAX_CONTENT: usize = 4 * 1024 * 1024;
@@ -1697,7 +1698,7 @@ fn validate_native(value: &Value, compatibility: bool) -> Result<(), ModelError>
 }
 
 // Reject duplicate JSON keys rather than silently selecting one credential or setting.
-struct UniqueValue(Value);
+pub(super) struct UniqueValue(pub(super) Value);
 
 impl<'de> Deserialize<'de> for UniqueValue {
     fn deserialize<D: de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {

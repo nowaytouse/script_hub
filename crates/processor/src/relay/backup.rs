@@ -3,6 +3,7 @@
 use super::{
     RelayConfig,
     gist::{GistFile, validate_filename, validate_name},
+    input::{self, Target},
     model::Subscription,
 };
 use serde::{Deserialize, Deserializer, Serialize};
@@ -120,14 +121,17 @@ fn validate(config: &RelayConfig, content: &str) -> Result<(), BackupError> {
         None
     } else {
         Some(
-            GistFile::parse_source(config.source.trim(), &config.source_file)
+            input::target(config.source.trim(), &config.source_file)
                 .map_err(|_| BackupError::Invalid)?,
         )
     };
     if !config.output.trim().is_empty() {
         let output = GistFile::parse(config.output.trim(), &config.output_file)
             .map_err(|_| BackupError::Invalid)?;
-        if source.as_ref().is_some_and(|source| source.id == output.id) {
+        if source
+            .as_ref()
+            .is_some_and(|source| matches!(source, Target::Gist(source) if source.id == output.id))
+        {
             return Err(BackupError::Invalid);
         }
     }
@@ -341,6 +345,20 @@ mod tests {
                 && !backup.config.allow_public_output
                 && !backup.config.allow_resolution
         );
+    }
+
+    #[test]
+    fn https_source_roundtrips_and_unsafe_sources_are_rejected() {
+        let mut config = RelayConfig {
+            source: "https://example.com/subscription?key=synthetic".into(),
+            source_file: String::new(),
+            ..RelayConfig::default()
+        };
+        let backup = decode(&encode(&config, CONTENT).unwrap()).unwrap();
+        assert_eq!(backup.config.source, config.source);
+        assert_eq!(backup.content.as_str(), CONTENT);
+        config.source = "http://example.com/subscription".into();
+        assert!(encode(&config, CONTENT).is_err());
     }
 
     #[test]

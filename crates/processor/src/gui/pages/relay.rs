@@ -15,6 +15,7 @@ impl HubApp {
         let admitted = !self.active() && self.pending.is_none();
         let mut action = None;
         let mut file_action = None;
+        let mut migration_selection = None;
         ui.vertical_centered(|ui| {
             ui.set_max_width(880.0);
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
@@ -244,6 +245,53 @@ impl HubApp {
                                     if ui.button(tr(Text::RelayImportFile)).clicked() {
                                         file_action = Some(FileAction::Import);
                                     }
+                                     ui.weak(tr(Text::MigrationFormats));
+                                     if state.encrypted_import.is_some() {
+                                         ui.separator();
+                                         ui.strong(tr(Text::ArchiveUnlock));
+                                         ui.weak(tr(Text::ArchiveHelp));
+                                         secret_field(ui, &mut state.archive_identity, SECRET_IDS[6], tr(Text::ArchiveIdentity), &mut state.reveal_identity, tr(Text::RelayShow));
+                                         ui.horizontal_wrapped(|ui| {
+                                             if ui.add_enabled(!state.archive_identity.is_empty(), primary_button(colors, tr(Text::ArchiveUnlock))).clicked() {
+                                                 state.unlock_import(ui.ctx());
+                                             }
+                                             if ui.button(tr(Text::RelayCancel)).clicked() {
+                                                 state.encrypted_import = None;
+                                                 state.archive_identity.zeroize();
+                                                 crate::gui::templates::clear_secret_widget(ui.ctx(), SECRET_IDS[6]);
+                                             }
+                                         });
+                                     }
+                                     if let Some(report) = &state.migration {
+                                         ui.separator();
+                                         ui.strong(tr(Text::MigrationPreview));
+                                         ui.label(format!("{} {} · {} {} · {} {}", report.items.len(), tr(Text::MigrationItems), report.collections.len(), tr(Text::MigrationCollections), report.unsupported_count, tr(Text::MigrationUnsupported)));
+                                         ui.weak(tr(Text::MigrationHelp));
+                                         ui.checkbox(&mut state.migration_ack, tr(Text::MigrationConsent));
+                                         egui::ScrollArea::vertical().id_salt("substore-import-preview").max_height(240.0).show_rows(ui, 32.0, report.items.len(), |ui, rows| {
+                                             for index in rows {
+                                                 let item = &report.items[index];
+                                                 ui.horizontal(|ui| {
+                                                     let name_width = (ui.available_width() - 280.0).max(60.0);
+                                                     ui.add_sized([name_width, 28.0], egui::Label::new(item.name.as_str()).truncate());
+                                                     ui.weak(tr(if item.source.is_some() { Text::InputLink } else { Text::RelayLocalSource }));
+                                                     if item.unsupported > 0 { ui.colored_label(colors.warning, format!("{} {}", item.unsupported, tr(Text::MigrationUnsupported))); }
+                                                     if ui.add_enabled(state.migration_ack && (item.content.is_some() || item.source.is_some()), egui::Button::new(tr(Text::MigrationChoose))).clicked() { migration_selection = Some(index); }
+                                                 });
+                                             }
+                                         });
+                                         if !report.collections.is_empty() {
+                                             ui.collapsing(tr(Text::MigrationCollections), |ui| {
+                                                 egui::ScrollArea::vertical().id_salt("substore-collections-preview").max_height(120.0).show_rows(ui, 24.0, report.collections.len(), |ui, rows| {
+                                                     for index in rows {
+                                                         let collection = &report.collections[index];
+                                                         ui.add(egui::Label::new(format!("{} · {} {}", collection.name.as_str(), collection.subscriptions.len(), tr(Text::MigrationItems))).truncate());
+                                                     }
+                                                 });
+                                             });
+                                         }
+                                         if ui.button(tr(Text::RelayCancel)).clicked() { state.migration = None; }
+                                     }
                                     }
                                 }
                                 RelayStep::Review => {
@@ -542,6 +590,13 @@ impl HubApp {
                                         }
                                     });
                                     ui.weak(tr(Text::RelayBackupWarning));
+                                     ui.collapsing(tr(Text::ArchiveExport), |ui| {
+                                         ui.weak(tr(Text::ArchiveExportHelp));
+                                         visible_field(ui, &mut state.archive_recipient, SECRET_IDS[7], tr(Text::ArchiveRecipient));
+                                         if ui.add_enabled(has_content && !state.archive_recipient.trim().is_empty(), egui::Button::new(tr(Text::ArchiveExport))).clicked() {
+                                             file_action = Some(FileAction::ExportEncrypted);
+                                         }
+                                     });
                                     ui.add_space(16.0);
                                     ui.separator();
                                     ui.label(
@@ -675,6 +730,8 @@ impl HubApp {
                 self.relay.input_changed();
             }
             self.start_relay(mode);
+        } else if let Some(index) = migration_selection {
+            self.relay.select_migration(ui.ctx(), index);
         } else if let Some(action) = file_action {
             self.relay
                 .file_action(action, None, self.loaded_root.as_deref());

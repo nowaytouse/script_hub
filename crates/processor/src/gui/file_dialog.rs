@@ -25,6 +25,7 @@ pub enum FileAction {
     ImportPlan,
     ExportPlan,
     ExportBackup,
+    ExportEncrypted,
     ExportNodes,
     ChooseEngine,
 }
@@ -33,7 +34,7 @@ impl FileAction {
     pub(super) fn is_save(self) -> bool {
         matches!(
             self,
-            Self::ExportBackup | Self::ExportNodes | Self::ExportPlan
+            Self::ExportBackup | Self::ExportEncrypted | Self::ExportNodes | Self::ExportPlan
         )
     }
 }
@@ -220,6 +221,7 @@ impl Picker {
             search: String::new(),
             filename: match action {
                 FileAction::ExportBackup => "relay-backup.json",
+                FileAction::ExportEncrypted => "relay-backup.age",
                 FileAction::ExportNodes => "nodes.list",
                 FileAction::ExportPlan => "operations.json",
                 _ => "",
@@ -377,7 +379,7 @@ impl Picker {
                                     if self.action == FileAction::ImportPlan {
                                         ext.eq_ignore_ascii_case("json")
                                     } else {
-                                        ["json", "yaml", "yml", "conf", "list", "txt"]
+                                        ["json", "yaml", "yml", "conf", "list", "txt", "age"]
                                             .iter()
                                             .any(|allowed| ext.eq_ignore_ascii_case(allowed))
                                     }
@@ -404,7 +406,10 @@ impl Picker {
                 let path = self.selected.as_ref().ok_or(Text::FilePickerInvalid)?;
                 Ok(path.clone())
             }
-            FileAction::ExportBackup | FileAction::ExportNodes | FileAction::ExportPlan => {
+            FileAction::ExportBackup
+            | FileAction::ExportEncrypted
+            | FileAction::ExportNodes
+            | FileAction::ExportPlan => {
                 if !valid_filename(&self.filename) {
                     return Err(Text::FilePickerInvalid);
                 }

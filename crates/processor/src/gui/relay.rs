@@ -12,13 +12,15 @@ use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 use zeroize::{Zeroize, Zeroizing};
 
-pub(super) const SECRET_IDS: [&str; 6] = [
+pub(super) const SECRET_IDS: [&str; 8] = [
     "relay-token",
     "relay-source",
     "relay-source-file",
     "relay-output",
     "relay-output-file",
     "relay-title",
+    "relay-age-identity",
+    "relay-age-recipient",
 ];
 
 pub(super) enum Failure {
@@ -152,6 +154,46 @@ pub(super) fn failure_message(
     super::i18n::text(language, key).to_owned()
 }
 
+fn archive_error(error: crate::relay::archive::ArchiveError) -> Text {
+    use crate::relay::archive::ArchiveError;
+    match error {
+        ArchiveError::TooLarge => Text::RelayTooLarge,
+        ArchiveError::InvalidKey => Text::ArchiveKeyInvalid,
+        ArchiveError::Unsupported => Text::ArchiveUnsupported,
+        ArchiveError::InvalidArchive | ArchiveError::EncryptionFailed => Text::ArchiveInvalid,
+    }
+}
+
+fn decode_import(bytes: &[u8]) -> Result<FileCompleted, Text> {
+    if bytes.len() > 8 * 1024 * 1024 {
+        return Err(Text::RelayTooLarge);
+    }
+    if crate::relay::archive::detect(bytes) {
+        return Ok(FileCompleted::Locked(Zeroizing::new(bytes.to_vec())));
+    }
+    let content = std::str::from_utf8(bytes).map_err(|_| Text::RelayBackupInvalid)?;
+    if content.len() <= 4 * 1024 * 1024 && crate::relay::model::Subscription::parse(content).is_ok()
+    {
+        return Ok(FileCompleted::Imported(Box::new(
+            crate::relay::backup::RelayBackup {
+                config: RelayConfig {
+                    test_nodes: true,
+                    rename: false,
+                    sort: false,
+                    ..RelayConfig::default()
+                },
+                content: Zeroizing::new(content.to_owned()),
+            },
+        )));
+    }
+    if let Ok(backup) = crate::relay::backup::decode(bytes) {
+        return Ok(FileCompleted::Imported(Box::new(backup)));
+    }
+    crate::relay::compat::import(bytes)
+        .map(FileCompleted::Migration)
+        .map_err(|_| Text::RelayBackupInvalid)
+}
+
 pub(super) struct RelayState {
     pub step: RelayStep,
     pub input_mode: InputMode,
@@ -162,6 +204,12 @@ pub(super) struct RelayState {
     pub reveal_source: bool,
     pub reveal_token: bool,
     pub reveal_output: bool,
+    pub archive_identity: Zeroizing<String>,
+    pub reveal_identity: bool,
+    pub archive_recipient: Zeroizing<String>,
+    pub encrypted_import: Option<Zeroizing<Vec<u8>>>,
+    pub migration: Option<crate::relay::compat::Report>,
+    pub migration_ack: bool,
     cooldown_until: Option<Instant>,
     pub local_content: Option<Zeroizing<String>>,
     pub local_summary: Option<(usize, &'static str)>,
@@ -276,6 +324,8 @@ struct FilePending {
 
 enum FileCompleted {
     Imported(Box<crate::relay::backup::RelayBackup>),
+    Migration(crate::relay::compat::Report),
+    Locked(Zeroizing<Vec<u8>>),
     Plan(Vec<crate::relay::model::pipeline::Step>),
     PlanSaved,
     Saved,
@@ -316,6 +366,12 @@ impl Default for RelayState {
             reveal_source: false,
             reveal_token: false,
             reveal_output: false,
+            archive_identity: Zeroizing::new(String::new()),
+            reveal_identity: false,
+            archive_recipient: Zeroizing::new(String::new()),
+            encrypted_import: None,
+            migration: None,
+            migration_ack: false,
             cooldown_until: None,
             local_content: None,
             local_summary: None,
@@ -356,7 +412,7 @@ impl Default for RelayState {
 }
 
 impl RelayState {
-    pub(super) fn import_paste(&mut self, ctx: &egui::Context) {
+    pub(super) fn import_paste(&mut self, _ctx: &egui::Context) {
         if self.busy() {
             return;
         }
@@ -364,12 +420,75 @@ impl RelayState {
             self.error = Some(Failure::Validation(Text::RelayTooLarge));
             return;
         }
-        self.clear_editor_widgets(ctx);
-        self.input_changed();
-        self.source.zeroize();
-        self.source_file.zeroize();
-        self.local_content = Some(self.paste.clone());
-        self.start_with(RunMode::Import, Path::new(""), crate::relay::run);
+        self.decode_import(Zeroizing::new(self.paste.as_bytes().to_vec()), None);
+    }
+
+    pub(super) fn unlock_import(&mut self, ctx: &egui::Context) {
+        if self.busy() || self.archive_identity.is_empty() {
+            return;
+        }
+        let Some(bytes) = self.encrypted_import.clone() else {
+            return;
+        };
+        let identity = Zeroizing::new(std::mem::take(&mut *self.archive_identity));
+        self.reveal_identity = false;
+        super::templates::clear_secret_widget(ctx, SECRET_IDS[6]);
+        self.decode_import(bytes, Some(identity));
+    }
+
+    fn decode_import(&mut self, bytes: Zeroizing<Vec<u8>>, identity: Option<Zeroizing<String>>) {
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let generation = self.generation;
+        self.error = None;
+        self.notice = None;
+        match thread::Builder::new()
+            .name("script-hub-backup-import".into())
+            .spawn(move || {
+                let result = if let Some(identity) = identity {
+                    crate::relay::archive::decrypt(&bytes, identity.trim())
+                        .map_err(archive_error)
+                        .and_then(|plaintext| decode_import(&plaintext))
+                } else {
+                    decode_import(&bytes)
+                };
+                let _ = sender.send(result.map(Some));
+            }) {
+            Ok(worker) => {
+                self.file_pending = Some(FilePending {
+                    worker,
+                    receiver,
+                    generation,
+                })
+            }
+            Err(_) => self.error = Some(Failure::Validation(Text::RelayFileError)),
+        }
+    }
+
+    pub(super) fn select_migration(&mut self, ctx: &egui::Context, index: usize) {
+        if self.busy() || !self.migration_ack {
+            return;
+        }
+        let Some(report) = &self.migration else {
+            return;
+        };
+        let Ok(config) = report.select_item(index, self.migration_ack) else {
+            self.error = Some(Failure::Validation(Text::RelayBackupInvalid));
+            return;
+        };
+        let mut config = PrivateConfig(config);
+        if let Some(content) = config.0.local_content.take() {
+            self.apply_backup(
+                ctx,
+                Box::new(crate::relay::backup::RelayBackup {
+                    config: config.0.clone(),
+                    content,
+                }),
+            );
+        } else {
+            self.clear(ctx);
+            self.source = Zeroizing::new(std::mem::take(&mut config.0.source));
+            self.notice = Some(Text::MigrationReady);
+        }
     }
 
     pub(super) fn add_preset(
@@ -676,6 +795,12 @@ impl RelayState {
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
         self.schedule.stop();
         self.paste.zeroize();
+        self.archive_identity.zeroize();
+        self.reveal_identity = false;
+        self.archive_recipient.zeroize();
+        self.encrypted_import = None;
+        self.migration = None;
+        self.migration_ack = false;
         self.reveal_paste = false;
         self.input_mode = InputMode::Link;
         self.clear_editor_widgets(ctx);
@@ -747,6 +872,8 @@ impl RelayState {
             self.reveal_token = false;
             self.reveal_output = false;
             self.reveal_paste = false;
+            self.reveal_identity = false;
+            super::templates::clear_secret_widget(ctx, SECRET_IDS[6]);
         }
         if self.cooldown_seconds() > 0 {
             ctx.request_repaint_after(Duration::from_secs(1));
@@ -915,7 +1042,7 @@ impl RelayState {
         if self.busy() || self.selecting_file() {
             return;
         }
-        if action.is_save() && !self.allow_plaintext {
+        if action.is_save() && action != FileAction::ExportEncrypted && !self.allow_plaintext {
             self.error = Some(Failure::Validation(Text::VaultPlaintextConsent));
             return;
         }
@@ -926,11 +1053,13 @@ impl RelayState {
             return;
         }
         let Some(path) = path else {
-            if matches!(action, FileAction::ExportBackup | FileAction::ExportNodes)
-                && self
-                    .result
-                    .as_ref()
-                    .is_none_or(|result| result.content.is_empty())
+            if matches!(
+                action,
+                FileAction::ExportBackup | FileAction::ExportEncrypted | FileAction::ExportNodes
+            ) && self
+                .result
+                .as_ref()
+                .is_none_or(|result| result.content.is_empty())
             {
                 self.error = Some(Failure::Validation(Text::RelayFileError));
                 return;
@@ -949,7 +1078,10 @@ impl RelayState {
         } else {
             None
         };
-        let payload = if !matches!(action, FileAction::ExportBackup | FileAction::ExportNodes) {
+        let payload = if !matches!(
+            action,
+            FileAction::ExportBackup | FileAction::ExportEncrypted | FileAction::ExportNodes
+        ) {
             None
         } else {
             let Some(result) = &self.result else { return };
@@ -978,6 +1110,7 @@ impl RelayState {
             ))
         };
         let workspace = workspace.map(Path::to_owned);
+        let recipient = self.archive_recipient.clone();
         let (sender, receiver) = mpsc::sync_channel(1);
         let generation = self.generation;
         self.error = None;
@@ -1004,25 +1137,7 @@ impl RelayState {
                         let bytes = Zeroizing::new(
                             crate::vault::read_bounded(&path).map_err(|_| Text::RelayFileError)?,
                         );
-                        let content =
-                            std::str::from_utf8(&bytes).map_err(|_| Text::RelayBackupInvalid)?;
-                        let backup = if content.len() <= 4 * 1024 * 1024
-                            && crate::relay::model::Subscription::parse(content).is_ok()
-                        {
-                            crate::relay::backup::RelayBackup {
-                                config: RelayConfig {
-                                    test_nodes: true,
-                                    rename: false,
-                                    sort: false,
-                                    ..RelayConfig::default()
-                                },
-                                content: Zeroizing::new(content.to_owned()),
-                            }
-                        } else {
-                            crate::relay::backup::decode(&bytes)
-                                .map_err(|_| Text::RelayBackupInvalid)?
-                        };
-                        return Ok(Some(FileCompleted::Imported(Box::new(backup))));
+                        return decode_import(&bytes).map(Some);
                     }
                     if !super::templates::safe_export_destination(&path, workspace.as_deref()) {
                         return Err(Text::RelayFileError);
@@ -1039,7 +1154,10 @@ impl RelayState {
                         return Ok(Some(FileCompleted::PlanSaved));
                     }
                     let (config, content) = payload.ok_or(Text::RelayFileError)?;
-                    let bytes = if matches!(action, FileAction::ExportBackup) {
+                    let bytes = if matches!(
+                        action,
+                        FileAction::ExportBackup | FileAction::ExportEncrypted
+                    ) {
                         crate::relay::backup::encode(
                             &config.ok_or(Text::RelayFileError)?.0,
                             &content,
@@ -1047,6 +1165,12 @@ impl RelayState {
                         .map_err(|_| Text::RelayBackupInvalid)?
                     } else {
                         Zeroizing::new(content.as_bytes().to_vec())
+                    };
+                    let bytes = if action == FileAction::ExportEncrypted {
+                        crate::relay::archive::encrypt(&bytes, recipient.trim())
+                            .map_err(archive_error)?
+                    } else {
+                        bytes
                     };
                     // Never replace an existing backup or write private node data into the repository.
                     crate::vault::write_private(&path, &bytes, false).map_err(
@@ -1094,29 +1218,22 @@ impl RelayState {
             (Ok(()), Ok(Ok(Some(FileCompleted::PlanSaved)))) => {
                 self.notice = Some(Text::OperationPlanSaved);
             }
-            (Ok(()), Ok(Ok(Some(FileCompleted::Imported(mut backup))))) => {
-                let last_directory = self.last_directory.take();
-                self.clear(ctx);
-                self.last_directory = last_directory;
-                let config = &mut backup.config;
-                self.source = Zeroizing::new(std::mem::take(&mut config.source));
-                self.source_file = Zeroizing::new(std::mem::take(&mut config.source_file));
-                self.output = Zeroizing::new(std::mem::take(&mut config.output));
-                self.output_file = Zeroizing::new(std::mem::take(&mut config.output_file));
-                self.title = Zeroizing::new(std::mem::take(&mut config.title));
-                self.rename = config.rename;
-                self.sort = config.sort;
-                self.concurrency = config.concurrency;
-                self.timeout_seconds = config.timeout_seconds;
-                self.imported_processing = Some(std::mem::take(&mut config.processing));
-                self.local_summary = crate::relay::model::Subscription::parse(&backup.content)
-                    .ok()
-                    .map(|subscription| (subscription.nodes().len(), subscription.format_label()));
-                self.local_content = Some(std::mem::take(&mut backup.content));
-                self.notice = Some(Text::RelayImported);
-                self.step = RelayStep::Review;
-                let engine = self.engine_path().to_owned();
-                self.start_with(RunMode::Import, &engine, crate::relay::run);
+            (Ok(()), Ok(Ok(Some(FileCompleted::Migration(report))))) => {
+                self.encrypted_import = None;
+                self.archive_identity.zeroize();
+                self.migration_ack = false;
+                self.migration = Some(report);
+                self.step = RelayStep::Source;
+                self.input_mode = InputMode::File;
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::Locked(bytes))))) => {
+                self.encrypted_import = Some(bytes);
+                self.migration = None;
+                self.step = RelayStep::Source;
+                self.input_mode = InputMode::File;
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::Imported(backup))))) => {
+                self.apply_backup(ctx, backup)
             }
             (Ok(()), Ok(Ok(Some(FileCompleted::Engine(path))))) => {
                 self.selected_engine = Some(path);
@@ -1129,6 +1246,35 @@ impl RelayState {
             (Ok(()), Ok(Err(key))) => self.error = Some(Failure::Validation(key)),
             _ => self.error = Some(Failure::Validation(Text::RelayFileError)),
         }
+    }
+
+    fn apply_backup(
+        &mut self,
+        ctx: &egui::Context,
+        mut backup: Box<crate::relay::backup::RelayBackup>,
+    ) {
+        let last_directory = self.last_directory.take();
+        self.clear(ctx);
+        self.last_directory = last_directory;
+        let config = &mut backup.config;
+        self.source = Zeroizing::new(std::mem::take(&mut config.source));
+        self.source_file = Zeroizing::new(std::mem::take(&mut config.source_file));
+        self.output = Zeroizing::new(std::mem::take(&mut config.output));
+        self.output_file = Zeroizing::new(std::mem::take(&mut config.output_file));
+        self.title = Zeroizing::new(std::mem::take(&mut config.title));
+        self.rename = config.rename;
+        self.sort = config.sort;
+        self.concurrency = config.concurrency;
+        self.timeout_seconds = config.timeout_seconds;
+        self.imported_processing = Some(std::mem::take(&mut config.processing));
+        self.local_summary = crate::relay::model::Subscription::parse(&backup.content)
+            .ok()
+            .map(|subscription| (subscription.nodes().len(), subscription.format_label()));
+        self.local_content = Some(std::mem::take(&mut backup.content));
+        self.notice = Some(Text::RelayImported);
+        self.step = RelayStep::Review;
+        let engine = self.engine_path().to_owned();
+        self.start_with(RunMode::Import, &engine, crate::relay::run);
     }
 
     pub(super) fn start_with<F>(&mut self, mode: RunMode, engine: &Path, work: F)
@@ -1554,6 +1700,93 @@ mod tests {
         assert_eq!(state.result.as_ref().unwrap().stages.len(), 1);
         state.clear(&ctx);
         assert!(state.imported_processing.is_none());
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn substore_preview_requires_selection_and_never_fetches_or_restores_tokens() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.result = Some(result());
+        state.paste = Zeroizing::new(r#"{"subs":[{"name":"remote","source":"remote","url":"https://example.com/sub","process":[{"type":"Script Operator"}]}],"settings":{"gistToken":"do-not-restore"}}"#.into());
+        state.import_paste(&ctx);
+        finish(&mut state, &ctx);
+        assert_eq!(state.migration.as_ref().unwrap().items.len(), 1);
+        assert!(state.result.is_some());
+        state.select_migration(&ctx, 0);
+        assert_eq!(state.token.as_str(), "synthetic-token");
+        state.migration_ack = true;
+        state.select_migration(&ctx, 0);
+        assert_eq!(state.source.as_str(), "https://example.com/sub");
+        assert!(state.token.is_empty() && state.result.is_none());
+        assert!(!state.busy(), "selection must not contact a remote source");
+        assert!(state.migration.is_none());
+    }
+
+    #[test]
+    fn age_import_keeps_failed_attempt_recoverable_and_clears_private_key() {
+        use age::{secrecy::ExposeSecret, x25519};
+        let key = x25519::Identity::generate();
+        let secret = key.to_string();
+        let ciphertext = crate::relay::archive::encrypt(
+            br#"{"subs":[{"name":"local","source":"local","content":"A = socks5, node.example, 1080\n"}]}"#,
+            &key.to_public().to_string(),
+        ).unwrap();
+        assert!(matches!(
+            decode_import(&ciphertext),
+            Ok(FileCompleted::Locked(_))
+        ));
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.encrypted_import = Some(ciphertext);
+        state.archive_identity.push_str("not-a-key");
+        state.unlock_import(&ctx);
+        finish(&mut state, &ctx);
+        assert!(state.archive_identity.is_empty() && state.encrypted_import.is_some());
+        assert!(matches!(
+            state.error,
+            Some(Failure::Validation(Text::ArchiveKeyInvalid))
+        ));
+        state.archive_identity.push_str(secret.expose_secret());
+        state.unlock_import(&ctx);
+        finish(&mut state, &ctx);
+        assert!(state.archive_identity.is_empty() && state.encrypted_import.is_none());
+        assert!(state.migration.is_some());
+        state.migration_ack = true;
+        state.select_migration(&ctx, 0);
+        finish(&mut state, &ctx);
+        assert_eq!(state.editor.as_ref().unwrap().rows.len(), 1);
+        assert!(state.source.is_empty() && state.token.is_empty());
+        state.clear(&ctx);
+        assert!(state.migration.is_none() && state.archive_recipient.is_empty());
+    }
+
+    #[test]
+    fn encrypted_export_roundtrips_without_plaintext_consent() {
+        use age::{secrecy::ExposeSecret, x25519};
+        let ctx = egui::Context::default();
+        let key = x25519::Identity::generate();
+        let secret = key.to_string();
+        let path = std::env::temp_dir().canonicalize().unwrap().join(format!(
+            "script-hub-age-export-{}-{}.age",
+            std::process::id(),
+            chrono::Utc::now().timestamp_nanos_opt().unwrap()
+        ));
+        let mut state = fixture();
+        state.result = Some(result());
+        state.completed_config = Some(state.private_config(Path::new("")));
+        state
+            .archive_recipient
+            .push_str(&key.to_public().to_string());
+        state.file_action(FileAction::ExportEncrypted, Some(path.clone()), None);
+        finish(&mut state, &ctx);
+        assert!(state.error.is_none());
+        let ciphertext = crate::vault::read_bounded(&path).unwrap();
+        assert!(crate::relay::archive::detect(&ciphertext));
+        let plaintext =
+            crate::relay::archive::decrypt(&ciphertext, secret.expose_secret()).unwrap();
+        assert!(crate::relay::backup::decode(&plaintext).is_ok());
+        assert!(!String::from_utf8_lossy(&ciphertext).contains("synthetic-token"));
         std::fs::remove_file(path).unwrap();
     }
 

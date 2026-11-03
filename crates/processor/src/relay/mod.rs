@@ -1,6 +1,8 @@
 //! Private subscription processing and explicit Gist relay operations.
 
+pub mod archive;
 pub mod backup;
+pub mod compat;
 pub mod engine;
 pub mod gist;
 pub mod input;

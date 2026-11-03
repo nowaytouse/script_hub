@@ -19,6 +19,9 @@ pub struct Step {
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Operation {
+    Script {
+        source: String,
+    },
     NameFilter {
         pattern: String,
         keep: bool,
@@ -320,6 +323,14 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
             return Err(ModelError::InvalidEdit);
         }
         match &step.operation {
+            Operation::Script { source } => {
+                if source.len() > super::script::MAX_SOURCE || step.enabled && source.is_empty() {
+                    return Err(ModelError::InvalidEdit);
+                }
+                if step.enabled {
+                    super::script::compile(source)?;
+                }
+            }
             Operation::BatchRename { rules } => {
                 if rules.len() > 32
                     || rules
@@ -667,6 +678,38 @@ pub(super) fn apply(
         let mut remove = vec![false; names.len()];
         let mut duplicate = vec![false; names.len()];
         match &step.operation {
+            Operation::Script { source } => {
+                let script = super::script::compile(source)?;
+                for &i in order.iter() {
+                    let node = &sub.nodes[i];
+                    let output = script.transform(
+                        &names[i],
+                        mutations[i].address.as_deref().unwrap_or(node.server()),
+                        mutations[i].port.unwrap_or(node.port()),
+                        node.protocol(),
+                    )?;
+                    renamed += usize::from(set_name(
+                        names,
+                        i,
+                        Zeroizing::new(output.name),
+                        &mut name_bytes,
+                    )?);
+                    if !output.included {
+                        remove[i] = true;
+                    }
+                    let mut changed = false;
+                    let mut unsupported = false;
+                    for setting in output.settings {
+                        match properties::set_setting(node, &mut mutations[i], &setting) {
+                            Ok(value) => changed |= value,
+                            Err(ModelError::Unsupported) => unsupported = true,
+                            Err(error) => return Err(error),
+                        }
+                    }
+                    modified += usize::from(changed);
+                    skipped += usize::from(unsupported);
+                }
+            }
             Operation::BatchRename { rules } => {
                 let compiled: Vec<_> = rules
                     .iter()
@@ -1256,6 +1299,33 @@ pub(super) fn apply(
 mod tests {
     use super::*;
     use crate::relay::model::{EnhanceOptions, Health, editor};
+
+    #[test]
+    fn script_preserves_private_fields_and_fails_atomically() {
+        let input = r#"[{"type":"http","tag":"alpha","server":"a","server_port":80,"password":"secret","custom":42},{"type":"http","tag":"beta","server":"b","server_port":80}]"#;
+        let operation = |source: &str| {
+            vec![step(
+                1,
+                Operation::Script {
+                    source: source.into(),
+                },
+            )]
+        };
+        let result = run(input, operation(r#"fn transform(node) { node.name = "new-" + node.name; if node.server == "b" { node.included = false; } node }"#)).unwrap();
+        assert_eq!(result.retained, [0]);
+        assert!(result.content.contains("secret"));
+        assert!(result.content.contains("custom"));
+        assert_eq!(result.stages[0].renamed, 2);
+        assert!(
+            run(
+                input,
+                operation(
+                    r#"fn transform(node) { if node.server == "b" { node.name = ""; } node }"#
+                )
+            )
+            .is_err()
+        );
+    }
 
     #[test]
     fn batch_rename_is_ordered_and_preserves_unknown_node_fields() {

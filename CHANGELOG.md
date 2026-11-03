@@ -2,6 +2,14 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.13.0 · 2026-11-03
+
+- Present subscriptions as an independent manager; no Surge module or local server is required.
+- Preview Sub-Store JSON/Base64 backups and selectively import recognized local nodes or public HTTPS sources, without restoring tokens, settings or old processors.
+- Add classic age X25519 backup unlocking and encrypted Hub backup export, with bounded authenticated reads and private-key clearing.
+- Add Rust-hosted Rhai node transformations to the ordered editor, with a restricted node view and execution budgets; no JavaScript or arbitrary native-code execution.
+- Reject duplicate backup keys and preserve public HTTPS source metadata through Hub backup round-trips.
+
 ## 0.12.0 · 2026-11-03
 
 - Import node text from public HTTPS subscriptions, paste or local files, with bounded parsing and pinned public-address resolution.
