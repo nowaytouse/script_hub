@@ -2,8 +2,8 @@ use super::{card, primary_button, subscription_list};
 use crate::gui::{
     app::HubApp,
     i18n::{Text, text},
-    relay::RelayStep,
-    subscriptions::{Action, Selection},
+    relay::{RelayState, RelayStep},
+    subscriptions::{Action, Selection, State},
 };
 use eframe::egui;
 use zeroize::Zeroize;
@@ -14,35 +14,103 @@ impl HubApp {
         let language = self.draft.language;
         let colors = self.colors;
         let tr = |key| text(language, key);
-        ui.heading(tr(Text::Relay));
-        ui.weak(tr(Text::WorkspaceIntro));
+        let allow_actions =
+            !self.active() && self.pending.is_none() && !self.relay.schedule.armed();
+        let locked = self.relay.workspace.locked;
+        let mut demo = false;
+        let mut library_action = None;
         ui.horizontal_wrapped(|ui| {
-            if ui.button(tr(Text::RelayDemoRun)).clicked() {
-                self.relay.demo_report = Some(crate::relay::demo::run());
+            ui.heading(tr(Text::Relay));
+            if !locked {
+                ui.menu_button(tr(Text::WorkspaceLibraryTools), |ui| {
+                    if ui
+                        .add_enabled(
+                            allow_actions && can_save_library(&self.relay.workspace),
+                            egui::Button::new(tr(Text::WorkspaceListSave)),
+                        )
+                        .clicked()
+                    {
+                        library_action = Some(Action::SaveLibrary);
+                        ui.close();
+                    }
+                    if ui
+                        .add_enabled(
+                            allow_actions,
+                            egui::Button::new(tr(Text::WorkspaceListLock)),
+                        )
+                        .clicked()
+                    {
+                        library_action = Some(Action::Lock);
+                        ui.close();
+                    }
+                    ui.separator();
+                    if ui.button(tr(Text::RelayDemoRun)).clicked() {
+                        demo = true;
+                        ui.close();
+                    }
+                    ui.label(tr(Text::RelayDemoOffline));
+                });
             }
-            ui.weak(tr(Text::RelayDemoOffline));
         });
-        if let Some(report) = &self.relay.demo_report {
-            card(ui, colors, |ui| match report {
-                Ok(report) => {
-                    ui.strong(tr(Text::RelayDemoPassed));
-                    ui.label(format!(
-                        "{} {} / {} · {} {} → {} · {} {}",
-                        tr(Text::RelayDemoRefreshed),
-                        report.refreshed_members,
-                        report.members,
-                        tr(Text::RelayDemoNodes),
-                        report.input_nodes,
-                        report.exported_nodes,
-                        tr(Text::RelayDemoPlanned),
-                        report.planned_uploads,
-                    ));
-                    ui.weak(tr(Text::RelayDemoChecks));
-                }
-                Err(_) => {
-                    ui.colored_label(colors.error, tr(Text::RelayDemoFailed));
-                }
+        if let Some(action) = library_action {
+            if action == Action::SaveLibrary {
+                self.relay.execute_workspace(ui.ctx(), action);
+            } else {
+                self.relay.workspace_request(ui.ctx(), action);
+            }
+        }
+        if locked {
+            ui.weak(tr(Text::WorkspaceIntro));
+            ui.horizontal_wrapped(|ui| {
+                demo = ui.button(tr(Text::RelayDemoRun)).clicked();
+                ui.weak(tr(Text::RelayDemoOffline));
             });
+        } else {
+            let workspace = &self.relay.workspace;
+            let dirty = workspace.dirty || workspace.draft_dirty;
+            ui.colored_label(
+                if dirty { colors.warning } else { colors.muted },
+                tr(if dirty {
+                    Text::WorkspaceListUnsaved
+                } else if workspace.stored {
+                    Text::WorkspaceListSaved
+                } else {
+                    Text::WorkspaceListSession
+                }),
+            );
+        }
+        if demo {
+            self.relay.demo_report = Some(crate::relay::demo::run());
+        }
+        ui.add_space(8.0);
+        if let Some(report) = &self.relay.demo_report {
+            let dismiss = card(ui, colors, |ui| {
+                match report {
+                    Ok(report) => {
+                        ui.strong(tr(Text::RelayDemoPassed));
+                        ui.label(format!(
+                            "{} {} / {} · {} {} → {} · {} {}",
+                            tr(Text::RelayDemoRefreshed),
+                            report.refreshed_members,
+                            report.members,
+                            tr(Text::RelayDemoNodes),
+                            report.input_nodes,
+                            report.exported_nodes,
+                            tr(Text::RelayDemoPlanned),
+                            report.planned_uploads,
+                        ));
+                        ui.weak(tr(Text::RelayDemoChecks));
+                    }
+                    Err(_) => {
+                        ui.colored_label(colors.error, tr(Text::RelayDemoFailed));
+                    }
+                }
+                ui.small_button(tr(Text::Close)).clicked()
+            });
+            if dismiss {
+                self.relay.demo_report = None;
+            }
+            ui.add_space(8.0);
         }
         ui.add_space(12.0);
         if let Some(error) = self.relay.workspace.error {
@@ -130,35 +198,38 @@ impl HubApp {
             }
             ui.add_space(12.0);
         }
-        let wide = ui.available_width() >= 980.0 && self.relay.workspace.show_editor;
-        let allow_actions =
-            !self.active() && self.pending.is_none() && !self.relay.schedule.armed();
+        let wide = ui.available_width() >= 840.0 && self.relay.workspace.show_editor;
         let mut action = None;
         if wide {
-            let width = ui.available_width();
+            let list_width = (ui.available_width() * 0.28).clamp(224.0, 300.0);
             let height = ui.available_height();
             ui.horizontal_top(|ui| {
                 ui.allocate_ui_with_layout(
-                    egui::vec2(260.0, height),
+                    egui::vec2(list_width, height),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
+                        ui.set_max_width(list_width);
                         let state = &mut self.relay.workspace;
                         action =
                             subscription_list::show(ui, language, colors, state, allow_actions);
                     },
                 );
                 ui.separator();
+                let detail_width = ui.available_width().min(880.0);
                 ui.allocate_ui_with_layout(
-                    egui::vec2((width - 280.0).max(320.0), height),
+                    egui::vec2(detail_width, height),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
-                        self.subscription_detail(ui);
+                        ui.set_max_width(detail_width);
+                        self.subscription_detail(ui, false);
                     },
                 );
             });
         } else if self.relay.workspace.show_editor {
-            self.subscription_detail(ui);
+            ui.set_max_width(ui.available_width().min(880.0));
+            self.subscription_detail(ui, true);
         } else {
+            ui.set_max_width(ui.available_width().min(680.0));
             let state = &mut self.relay.workspace;
             action = subscription_list::show(ui, language, colors, state, allow_actions);
         }
@@ -209,27 +280,48 @@ impl HubApp {
         }
     }
 
-    fn subscription_detail(&mut self, ui: &mut egui::Ui) {
+    fn subscription_detail(&mut self, ui: &mut egui::Ui, compact: bool) {
         let language = self.draft.language;
         let tr = |key| text(language, key);
         let colors = self.colors;
         let busy = self.active() || self.pending.is_some() || self.relay.schedule.armed();
         ui.add_enabled_ui(!busy, |ui| {
+            let can_save = can_save_library(&self.relay.workspace);
+            let can_delete = matches!(
+                self.relay.workspace.selected,
+                Some(Selection::Subscription(id) | Selection::Collection(id)) if id != 0
+            );
             ui.horizontal_wrapped(|ui| {
-                if ui.button(tr(Text::WorkspaceBack)).clicked() { self.relay.workspace_request(ui.ctx(), Action::Back); }
-                if self.relay.workspace.draft_dirty { ui.colored_label(colors.warning, tr(Text::WorkspaceUnsaved)); }
-                if ui.button(tr(Text::WorkspaceSave)).clicked() && self.relay.save_workspace_draft()
-                    && (self.relay.workspace.dirty || !self.relay.workspace.stored) {
-                    self.relay.workspace.save_storage(ui.ctx());
+                if compact && ui.button(tr(Text::WorkspaceBack)).clicked() {
+                    self.relay.execute_workspace(ui.ctx(), Action::Back);
                 }
-                if matches!(self.relay.workspace.selected, Some(Selection::Subscription(id) | Selection::Collection(id)) if id != 0)
-                    && ui.button(tr(Text::WorkspaceDelete)).clicked() { self.relay.workspace_request(ui.ctx(), Action::Delete); }
+                if ui
+                    .add_enabled(can_save, egui::Button::new(tr(Text::WorkspaceSave)))
+                    .clicked()
+                {
+                    self.relay.execute_workspace(ui.ctx(), Action::SaveLibrary);
+                }
+                if can_delete {
+                    ui.menu_button(tr(Text::WorkspaceItemActions), |ui| {
+                        if ui.button(tr(Text::WorkspaceDelete)).clicked() {
+                            self.relay.workspace_request(ui.ctx(), Action::Delete);
+                            ui.close();
+                        }
+                    });
+                }
             });
             let label = ui.label(tr(Text::WorkspaceName));
-            let mut edit = egui::TextEdit::singleline(&mut *self.relay.workspace.name).id(egui::Id::unique("workspace-item-name")).char_limit(128).desired_width(ui.available_width()).show(ui);
+            let mut edit = egui::TextEdit::singleline(&mut *self.relay.workspace.name)
+                .id(egui::Id::unique("workspace-item-name"))
+                .char_limit(128)
+                .desired_width(ui.available_width())
+                .show(ui);
             let _ = (*edit.response).clone().labelled_by(label.id);
-            if edit.response.changed() { self.relay.workspace.draft_dirty = true; }
-            edit.state.clear_undoer(); edit.state.store(ui.ctx(), edit.response.id);
+            if edit.response.changed() {
+                self.relay.workspace.draft_dirty = true;
+            }
+            edit.state.clear_undoer();
+            edit.state.store(ui.ctx(), edit.response.id);
         });
         ui.add_space(8.0);
         if matches!(
@@ -237,26 +329,8 @@ impl HubApp {
             Some(Selection::Collection(_))
         ) && self.relay.step == RelayStep::Source
         {
-            ui.horizontal_wrapped(|ui| {
-                let _ = ui.selectable_label(true, tr(Text::WorkspaceSourceTab));
-                if ui
-                    .add_enabled(
-                        self.relay.editor.is_some(),
-                        egui::Button::new(tr(Text::WorkspaceOperationsTab)),
-                    )
-                    .clicked()
-                {
-                    self.relay.step = RelayStep::Review;
-                }
-                if ui
-                    .add_enabled(!busy, egui::Button::new(tr(Text::WorkspaceOutputTab)))
-                    .clicked()
-                {
-                    self.relay.step = RelayStep::Publish;
-                }
-            });
-            ui.strong(tr(Text::WorkspaceMembers));
-            ui.weak(tr(Text::WorkspaceMembersHelp));
+            relay_tabs(ui, &mut self.relay, &tr);
+            ui.add_space(12.0);
             if let Some(error) = &self.relay.error {
                 ui.colored_label(
                     colors.error,
@@ -267,83 +341,245 @@ impl HubApp {
             if cooldown > 0 {
                 ui.weak(format!("{} {cooldown} s", tr(Text::RelayRetryWait)));
             }
-            let mut changed = false;
-            let entries: Vec<_> = self
-                .relay
-                .workspace
-                .data
-                .subscriptions
-                .iter()
-                .map(|e| (e.id, e.name.clone(), e.content.is_empty()))
-                .collect();
+            let selection = self.relay.workspace.selected;
             egui::ScrollArea::vertical()
-                .id_salt("workspace-members")
-                .max_height(300.0)
-                .show_rows(ui, 32.0, entries.len(), |ui, range| {
-                    for (id, name, missing) in &entries[range] {
-                        let position = self
-                            .relay
-                            .workspace
-                            .members
-                            .iter()
-                            .position(|member| member == id);
-                        let mut checked = position.is_some();
-                        let label = format!(
-                            "{}{name}{}",
-                            position.map_or_else(String::new, |i| format!("{}. ", i + 1)),
-                            if *missing {
-                                format!(" · {}", tr(Text::WorkspaceNotFetched))
-                            } else {
-                                String::new()
-                            }
-                        );
-                        if ui
-                            .add_enabled(!busy, egui::Checkbox::new(&mut checked, label))
-                            .changed()
-                        {
-                            if checked {
-                                self.relay.workspace.members.push(*id);
-                            } else {
-                                self.relay.workspace.members.retain(|member| member != id);
-                            }
-                            changed = true;
-                        }
-                    }
+                .id_salt((
+                    "workspace-collection",
+                    selection.map(|selection| match selection {
+                        Selection::Collection(id) | Selection::Subscription(id) => id,
+                    }),
+                ))
+                .show(ui, |ui| {
+                    card(ui, colors, |ui| self.collection_members(ui, busy));
                 });
-            if changed {
-                if let Some(editor) = &self.relay.editor {
-                    self.relay.workspace.collection_options = editor.processing();
+        } else {
+            self.relay_editor(ui);
+        }
+    }
+
+    fn collection_members(&mut self, ui: &mut egui::Ui, busy: bool) {
+        let language = self.draft.language;
+        let tr = |key| text(language, key);
+        let colors = self.colors;
+        let workspace = &self.relay.workspace;
+        if workspace.data.subscriptions.is_empty() {
+            ui.strong(tr(Text::WorkspaceMembers));
+            ui.label(tr(Text::WorkspaceListNeedsSubscriptions));
+            if ui
+                .add_enabled(
+                    !busy,
+                    primary_button(colors, tr(Text::WorkspaceListNewSubscription)),
+                )
+                .clicked()
+            {
+                self.relay
+                    .workspace_request(ui.ctx(), Action::NewSubscription);
+            }
+            return;
+        }
+        let positions: std::collections::HashMap<_, _> = workspace
+            .members
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(position, id)| (id, position))
+            .collect();
+        let position = |id| positions.get(&id).copied();
+        let mut entries: Vec<_> = workspace.data.subscriptions.iter().collect();
+        entries.sort_by_key(|entry| position(entry.id).unwrap_or(usize::MAX));
+        ui.strong(format!(
+            "{} · {}",
+            tr(Text::WorkspaceMembers),
+            workspace.members.len()
+        ));
+        ui.label(tr(Text::WorkspaceMembersHelp));
+        ui.add_space(8.0);
+        enum Edit {
+            Add(u64),
+            Remove(usize),
+            Move(usize, usize),
+        }
+        let mut edit = None;
+        let member_count = workspace.members.len();
+        egui::ScrollArea::vertical()
+            .id_salt("workspace-members")
+            .max_height((ui.available_height() - 72.0).clamp(120.0, 320.0))
+            .show_rows(ui, 40.0, entries.len(), |ui, range| {
+                for entry in &entries[range] {
+                    let at = position(entry.id);
+                    let title = match at {
+                        Some(index) => format!("{}. {}", index + 1, entry.name),
+                        None => entry.name.clone(),
+                    };
+                    let title = if entry.content.is_empty() {
+                        format!("{title} · {}", tr(Text::WorkspaceNotFetched))
+                    } else {
+                        title
+                    };
+                    ui.push_id(entry.id, |ui| {
+                        ui.horizontal(|ui| {
+                            let width = if at.is_some() {
+                                ui.available_width() - 2.0 * (32.0 + ui.spacing().item_spacing.x)
+                            } else {
+                                ui.available_width()
+                            };
+                            let row = ui
+                                .add_enabled_ui(!busy, |ui| {
+                                    ui.add_sized(
+                                        [width.max(32.0), 40.0],
+                                        egui::Button::new(&title).selected(at.is_some()).truncate(),
+                                    )
+                                })
+                                .inner
+                                .on_hover_text(&title);
+                            row.widget_info(|| {
+                                egui::WidgetInfo::selected(
+                                    egui::Role::Button,
+                                    !busy,
+                                    at.is_some(),
+                                    &title,
+                                )
+                            });
+                            if row.clicked() {
+                                edit = Some(at.map_or(Edit::Add(entry.id), Edit::Remove));
+                            }
+                            if let Some(index) = at {
+                                for (glyph, key, target) in [
+                                    ("↑", Text::OperationMoveUp, index.checked_sub(1)),
+                                    (
+                                        "↓",
+                                        Text::OperationMoveDown,
+                                        (index + 1 < member_count).then_some(index + 1),
+                                    ),
+                                ] {
+                                    let enabled = !busy && target.is_some();
+                                    let control = ui
+                                        .add_enabled(
+                                            enabled,
+                                            egui::Button::new(glyph)
+                                                .min_size(egui::vec2(32.0, 32.0)),
+                                        )
+                                        .on_hover_text(tr(key));
+                                    control.widget_info(|| {
+                                        egui::WidgetInfo::labeled(
+                                            egui::Role::Button,
+                                            enabled,
+                                            format!("{}: {}", tr(key), entry.name),
+                                        )
+                                    });
+                                    if control.clicked()
+                                        && let Some(target) = target
+                                    {
+                                        edit = Some(Edit::Move(index, target));
+                                    }
+                                }
+                            }
+                        });
+                    });
                 }
-                self.relay.clear_editor_widgets(ui.ctx());
-                self.relay.editor = None;
-                self.relay.invalidate_result();
-                self.relay.workspace.members_changed = true;
+            });
+        if let Some(edit) = edit {
+            let members = &mut self.relay.workspace.members;
+            match edit {
+                Edit::Add(id) => members.push(id),
+                Edit::Remove(index) => {
+                    members.remove(index);
+                }
+                Edit::Move(from, to) => members.swap(from, to),
             }
-            if entries.is_empty() {
-                ui.label(tr(Text::WorkspaceListEmptyCollections));
+            if let Some(editor) = &self.relay.editor {
+                self.relay.workspace.collection_options = editor.processing();
             }
-            ui.horizontal_wrapped(|ui| {
-                let enabled = !busy && !self.relay.workspace.members.is_empty();
-                if ui
+            self.relay.clear_editor_widgets(ui.ctx());
+            self.relay.editor = None;
+            self.relay.local_content = None;
+            self.relay.local_summary = None;
+            self.relay.invalidate_result();
+            self.relay.workspace.members_changed = true;
+        }
+
+        let workspace = &self.relay.workspace;
+        let (has_remote, has_uncached) = workspace
+            .data
+            .subscriptions
+            .iter()
+            .filter(|entry| workspace.members.contains(&entry.id))
+            .fold((false, false), |(remote, uncached), entry| {
+                (
+                    remote || !entry.source.trim().is_empty(),
+                    uncached || entry.content.is_empty(),
+                )
+            });
+        let has_members = !workspace.members.is_empty();
+        let enabled = !busy && has_members;
+        ui.add_space(8.0);
+        if !has_members {
+            ui.label(tr(Text::WorkspaceChooseMembers));
+        } else if has_uncached {
+            ui.label(tr(Text::WorkspaceCachedUnavailable));
+        }
+        ui.horizontal_wrapped(|ui| {
+            if has_remote
+                && ui
                     .add_enabled(
                         enabled && self.relay.cooldown_seconds() == 0,
                         primary_button(colors, tr(Text::WorkspaceRefreshBuild)),
                     )
                     .clicked()
-                {
-                    self.relay.prepare_collection(true);
-                }
-                if ui
-                    .add_enabled(enabled, egui::Button::new(tr(Text::WorkspaceBuildCached)))
-                    .clicked()
-                {
-                    self.relay.prepare_collection(false);
-                }
-            });
-        } else {
-            self.relay_editor(ui);
-        }
+            {
+                self.relay.prepare_collection(true);
+            }
+            let cached = tr(Text::WorkspaceBuildCached);
+            if ui
+                .add_enabled(
+                    enabled && !has_uncached,
+                    if has_remote {
+                        egui::Button::new(cached)
+                    } else {
+                        primary_button(colors, cached)
+                    },
+                )
+                .clicked()
+            {
+                self.relay.prepare_collection(false);
+            }
+        });
     }
+}
+
+pub(super) fn relay_tabs(
+    ui: &mut egui::Ui,
+    state: &mut RelayState,
+    tr: &impl Fn(Text) -> &'static str,
+) {
+    let source = if matches!(state.workspace.selected, Some(Selection::Collection(_))) {
+        Text::WorkspaceMembersTab
+    } else {
+        Text::WorkspaceSourceTab
+    };
+    ui.horizontal_wrapped(|ui| {
+        for (step, label) in [
+            (RelayStep::Source, source),
+            (RelayStep::Review, Text::WorkspaceOperationsTab),
+            (RelayStep::Publish, Text::WorkspaceOutputTab),
+        ] {
+            if ui
+                .add_enabled(
+                    !state.busy() && !state.schedule.armed(),
+                    egui::Button::new(tr(label))
+                        .selected(state.step == step)
+                        .min_size(egui::vec2(0.0, 32.0)),
+                )
+                .clicked()
+            {
+                state.step = step;
+            }
+        }
+    });
+}
+
+fn can_save_library(workspace: &State) -> bool {
+    workspace.dirty || workspace.draft_dirty || !workspace.stored
 }
 
 fn password_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str) {
@@ -357,4 +593,110 @@ fn password_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str) 
     let _ = (*edit.response).clone().labelled_by(label.id);
     edit.state.clear_undoer();
     edit.state.store(ui.ctx(), edit.response.id);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gui::app::test_app;
+    use crate::relay::library::Entry;
+    use crate::runtime::settings::{Language, Preferences};
+
+    fn click(ctx: &egui::Context, label: &str, mut render: impl FnMut(&mut egui::Ui)) {
+        let mut draw = |events| {
+            ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(620.0, 720.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, &mut render);
+                },
+            )
+        };
+        let frame = draw(vec![]);
+        let bounds = frame
+            .platform_output
+            .accesskit_update
+            .as_ref()
+            .expect("accessibility tree")
+            .nodes
+            .iter()
+            .find(|(_, node)| node.label() == Some(label))
+            .and_then(|(_, node)| node.bounds())
+            .expect("named button bounds");
+        frame.drop_without_applying_deltas();
+        let pos = egui::pos2(
+            ((bounds.x0 + bounds.x1) * 0.5) as f32,
+            ((bounds.y0 + bounds.y1) * 0.5) as f32,
+        );
+        for pressed in [true, false] {
+            draw(vec![
+                egui::Event::PointerMoved(pos),
+                egui::Event::PointerButton {
+                    pos,
+                    button: egui::PointerButton::Primary,
+                    pressed,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ])
+            .drop_without_applying_deltas();
+        }
+    }
+
+    #[test]
+    fn compact_navigation_keeps_an_unsaved_item_resumable() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = test_app(Preferences::default());
+        app.relay.workspace.checked = true;
+        app.relay.workspace.selected = Some(Selection::Subscription(0));
+        app.relay.workspace.show_editor = true;
+        app.relay.workspace.name = "Synthetic draft".to_owned().into();
+        app.relay.workspace.draft_dirty = true;
+        click(&ctx, text(Language::En, Text::WorkspaceBack), |ui| {
+            app.relay_page(ui);
+        });
+        assert!(!app.relay.workspace.show_editor);
+        assert!(app.relay.workspace.confirm.is_none());
+        click(&ctx, text(Language::En, Text::WorkspaceResumeItem), |ui| {
+            app.relay_page(ui);
+        });
+        assert!(app.relay.workspace.show_editor && app.relay.workspace.draft_dirty);
+        assert_eq!(app.relay.workspace.name.as_str(), "Synthetic draft");
+    }
+
+    #[test]
+    fn member_move_updates_order_and_invalidates_the_previous_merge() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = test_app(Preferences::default());
+        let workspace = &mut app.relay.workspace;
+        for (id, name) in [(1, "Alpha"), (2, "Beta")] {
+            workspace.data.subscriptions.push(Entry {
+                id,
+                name: name.to_owned(),
+                source: String::new(),
+                source_file: String::new(),
+                content: "ss://synthetic".to_owned(),
+                processing: Default::default(),
+                publish: Default::default(),
+            });
+        }
+        workspace.selected = Some(Selection::Collection(3));
+        workspace.members = vec![1, 2];
+        app.relay.local_content = Some("Previous merge".to_owned().into());
+        click(
+            &ctx,
+            &format!("{}: Alpha", text(Language::En, Text::OperationMoveDown)),
+            |ui| app.collection_members(ui, false),
+        );
+        assert_eq!(app.relay.workspace.members, [2, 1]);
+        assert!(app.relay.workspace.draft_dirty && app.relay.workspace.members_changed);
+        assert!(app.relay.local_content.is_none());
+    }
 }

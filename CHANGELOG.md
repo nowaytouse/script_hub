@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Rework the subscription workspace: keep preview actions above the operation chain, separate local export from Gist, and let collection members be reordered without retaining a stale preview.
+
 - Remember each subscription and collection's Gist target, filename, title, and sync interval in the encrypted library. Opening an item does not restore authorization or start a schedule.
 - Scheduled sync of a remote subscription fetches fresh nodes even when the workspace has a local cache.
 - Schedule collection sync to an existing Gist, refreshing and rechecking every remote member before publication.

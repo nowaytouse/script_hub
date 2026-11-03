@@ -1,8 +1,10 @@
+use super::{card, primary_button};
 use crate::gui::i18n::{Text, text};
 use crate::gui::subscriptions::{Action, ListKind, Selection, State};
 use crate::gui::theme::Palette;
 use crate::runtime::settings::Language;
 use eframe::egui;
+use zeroize::{Zeroize, Zeroizing};
 
 pub(super) fn show(
     ui: &mut egui::Ui,
@@ -11,15 +13,14 @@ pub(super) fn show(
     state: &mut State,
     allow_actions: bool,
 ) -> Option<Action> {
-    let storage_dirty = state.dirty || state.draft_dirty;
-    let stored = state.stored;
     let selected = state.selected;
+    let show_editor = state.show_editor;
     let workspace = &state.data;
     let list = &mut state.list;
     let tr = |key| text(language, key);
     let mut action = None;
-    ui.heading(tr(Text::WorkspaceListTitle));
-    ui.add_enabled_ui(allow_actions, |ui| {
+    card(ui, colors, |ui| {
+        ui.strong(tr(Text::WorkspaceListTitle));
         ui.horizontal_wrapped(|ui| {
             ui.selectable_value(
                 &mut list.kind,
@@ -40,135 +41,153 @@ pub(super) fn show(
                 ),
             );
         });
-        let label = ui.label(tr(Text::WorkspaceListSearch));
+        ui.add_space(8.0);
+        if !show_editor && selected.is_some() {
+            if ui
+                .add_enabled(
+                    allow_actions,
+                    egui::Button::new(tr(Text::WorkspaceResumeItem)),
+                )
+                .clicked()
+            {
+                state.show_editor = true;
+            }
+            ui.add_space(8.0);
+        }
+        let (create_action, create_label, item_count) = match list.kind {
+            ListKind::Subscriptions => (
+                Action::NewSubscription,
+                Text::WorkspaceListNewSubscription,
+                workspace.subscriptions.len(),
+            ),
+            ListKind::Collections => (
+                Action::NewCollection,
+                Text::WorkspaceListNewCollection,
+                workspace.collections.len(),
+            ),
+        };
+        if item_count == 0 {
+            ui.label(tr(match list.kind {
+                ListKind::Subscriptions => Text::WorkspaceListEmptySubscriptions,
+                ListKind::Collections if workspace.subscriptions.is_empty() => {
+                    Text::WorkspaceListNeedsSubscriptions
+                }
+                ListKind::Collections => Text::WorkspaceListEmptyCollections,
+            }));
+        }
+        ui.horizontal_wrapped(|ui| {
+            if ui
+                .add_enabled(allow_actions, primary_button(colors, tr(create_label)))
+                .clicked()
+            {
+                action = Some(create_action);
+            }
+            if ui
+                .add_enabled(
+                    allow_actions,
+                    egui::Button::new(tr(Text::WorkspaceListImport)),
+                )
+                .clicked()
+            {
+                action = Some(Action::Import);
+            }
+        });
+        if item_count == 0 {
+            return;
+        }
+        ui.add_space(12.0);
+        let search_label = tr(Text::WorkspaceListSearch);
+        let label = ui.label(search_label);
         let mut edit = egui::TextEdit::singleline(&mut list.query)
             .char_limit(128)
             .id(egui::Id::unique("workspace-search"))
             .desired_width(ui.available_width())
             .show(ui);
         let _ = (*edit.response).clone().labelled_by(label.id);
+        if !list.query.is_empty()
+            && ui
+                .small_button(tr(Text::WorkspaceListClearSearch))
+                .clicked()
+        {
+            list.query.zeroize();
+            edit.response.request_focus();
+        }
         edit.state.clear_undoer();
         edit.state.store(ui.ctx(), edit.response.id);
-    });
-
-    ui.horizontal_wrapped(|ui| {
-        if ui
-            .add_enabled(
-                allow_actions,
-                egui::Button::new(tr(match list.kind {
-                    ListKind::Subscriptions => Text::WorkspaceListNewSubscription,
-                    ListKind::Collections => Text::WorkspaceListNewCollection,
-                })),
-            )
-            .clicked()
-        {
-            action = Some(match list.kind {
-                ListKind::Subscriptions => Action::NewSubscription,
-                ListKind::Collections => Action::NewCollection,
-            });
-        }
-        if ui
-            .add_enabled(
-                allow_actions,
-                egui::Button::new(tr(Text::WorkspaceListImport)),
-            )
-            .clicked()
-        {
-            action = Some(Action::Import);
-        }
-    });
-    let query = list.query.trim().to_lowercase();
-    let rows: Vec<(Selection, &str, Option<usize>)> = match list.kind {
-        ListKind::Subscriptions => workspace
-            .subscriptions
-            .iter()
-            .filter(|item| item.name.to_lowercase().contains(&query))
-            .map(|item| (Selection::Subscription(item.id), item.name.as_str(), None))
-            .collect(),
-        ListKind::Collections => workspace
-            .collections
-            .iter()
-            .filter(|item| item.name.to_lowercase().contains(&query))
-            .map(|item| {
-                (
-                    Selection::Collection(item.id),
-                    item.name.as_str(),
-                    Some(item.members.len()),
-                )
-            })
-            .collect(),
-    };
-    if rows.is_empty() {
-        ui.label(tr(if !query.is_empty() {
-            Text::WorkspaceListNoResults
-        } else if list.kind == ListKind::Subscriptions {
-            Text::WorkspaceListEmptySubscriptions
+        let query = Zeroizing::new(list.query.trim().to_lowercase());
+        let matches = |name: &str| {
+            query.is_empty() || Zeroizing::new(name.to_lowercase()).contains(query.as_str())
+        };
+        let rows: Vec<(Selection, &str, Option<usize>)> = match list.kind {
+            ListKind::Subscriptions => workspace
+                .subscriptions
+                .iter()
+                .filter(|item| matches(&item.name))
+                .map(|item| (Selection::Subscription(item.id), item.name.as_str(), None))
+                .collect(),
+            ListKind::Collections => workspace
+                .collections
+                .iter()
+                .filter(|item| matches(&item.name))
+                .map(|item| {
+                    (
+                        Selection::Collection(item.id),
+                        item.name.as_str(),
+                        Some(item.members.len()),
+                    )
+                })
+                .collect(),
+        };
+        if rows.is_empty() {
+            ui.label(tr(Text::WorkspaceListNoResults));
         } else {
-            Text::WorkspaceListEmptyCollections
-        }));
-    } else {
-        egui::ScrollArea::vertical()
-            .id_salt("workspace-list")
-            .max_height(360.0)
-            .show_rows(ui, 36.0, rows.len(), |ui, range| {
-                for (selection, name, count) in &rows[range] {
-                    let title = match count {
-                        Some(count) => {
-                            format!("{name} · {count} {}", tr(Text::WorkspaceListMembers))
-                        }
-                        None => (*name).to_owned(),
-                    };
-                    let width = ui.available_width();
-                    if ui
-                        .add_enabled_ui(allow_actions, |ui| {
-                            ui.add_sized(
-                                [width, 32.0],
-                                egui::Button::new(title)
-                                    .selected(selected == Some(*selection))
-                                    .truncate(),
+            ui.separator();
+            egui::ScrollArea::vertical()
+                .id_salt(("workspace-list", list.kind == ListKind::Collections))
+                .max_height(ui.available_height().max(100.0))
+                .show_rows(ui, 36.0, rows.len(), |ui, range| {
+                    for (selection, name, count) in &rows[range] {
+                        let title = match count {
+                            Some(count) => {
+                                format!("{name} · {count} {}", tr(Text::WorkspaceListMembers))
+                            }
+                            None => (*name).to_owned(),
+                        };
+                        let width = ui.available_width();
+                        let is_current = selected == Some(*selection);
+                        let response = ui
+                            .push_id(
+                                (
+                                    "library-item",
+                                    match selection {
+                                        Selection::Subscription(id) | Selection::Collection(id) => {
+                                            id
+                                        }
+                                    },
+                                ),
+                                |ui| {
+                                    ui.add_enabled_ui(allow_actions, |ui| {
+                                        ui.add_sized(
+                                            [width, 36.0],
+                                            egui::Button::new(&title)
+                                                .selected(is_current)
+                                                .truncate(),
+                                        )
+                                    })
+                                    .inner
+                                },
                             )
-                        })
-                        .inner
-                        .clicked()
-                    {
-                        action = Some(Action::Open(*selection));
+                            .inner
+                            .on_hover_text(title);
+                        if response.clicked() {
+                            if is_current {
+                                state.show_editor = true;
+                            } else {
+                                action = Some(Action::Open(*selection));
+                            }
+                        }
                     }
-                }
-            });
-    }
-    ui.separator();
-    ui.colored_label(
-        if storage_dirty {
-            colors.warning
-        } else {
-            colors.muted
-        },
-        tr(if storage_dirty {
-            Text::WorkspaceListUnsaved
-        } else if stored {
-            Text::WorkspaceListSaved
-        } else {
-            Text::WorkspaceListSession
-        }),
-    );
-    ui.horizontal_wrapped(|ui| {
-        if ui
-            .add_enabled(
-                allow_actions,
-                egui::Button::new(tr(Text::WorkspaceListSave)),
-            )
-            .clicked()
-        {
-            action = Some(Action::SaveLibrary);
-        }
-        if ui
-            .add_enabled(
-                allow_actions,
-                egui::Button::new(tr(Text::WorkspaceListLock)),
-            )
-            .clicked()
-        {
-            action = Some(Action::Lock);
+                });
         }
     });
     action

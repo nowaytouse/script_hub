@@ -1574,57 +1574,92 @@ mod tests {
     }
 
     #[test]
-    fn relay_publish_step_explains_missing_upload_permissions() {
-        for (missing, expected) in [
-            ("token", Text::RelayTokenInvalid),
-            ("consent", Text::RelayConsentRequired),
-        ] {
-            let ctx = egui::Context::default();
-            ctx.enable_accesskit();
-            let mut app = relay_app();
-            app.relay.step = super::super::relay::RelayStep::Publish;
-            if missing == "token" {
-                app.relay.token.clear();
-            }
-            let output = ctx.run_ui(
+    fn compact_relay_can_load_pasted_nodes_and_open_output_without_scrolling() {
+        use super::super::relay::{InputMode, RelayStep};
+
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = relay_app();
+        app.relay.input_mode = InputMode::Paste;
+        app.relay
+            .paste
+            .push_str("Example = socks5, node.example, 1080\n");
+        let draw = |app: &mut HubApp, events| {
+            ctx.run_ui(
                 egui::RawInput {
                     screen_rect: Some(egui::Rect::from_min_size(
                         egui::Pos2::ZERO,
-                        egui::vec2(1160.0, 1600.0),
+                        egui::vec2(620.0, 580.0),
                     )),
+                    events,
                     ..Default::default()
                 },
                 |ui| {
                     egui::CentralPanel::default().show(ui, |ui| app.relay_page(ui));
                 },
-            );
-            let accessible_text: Vec<_> = output
+            )
+        };
+        let click = |app: &mut HubApp, key| {
+            let label = app.tr(key);
+            draw(app, Vec::new()).drop_without_applying_deltas();
+            let output = draw(app, Vec::new());
+            let node = output
                 .platform_output
                 .accesskit_update
                 .as_ref()
-                .into_iter()
-                .flat_map(|update| &update.nodes)
-                .filter_map(|(_, node)| node.label().or_else(|| node.value()).map(str::to_owned))
-                .collect();
+                .unwrap()
+                .nodes
+                .iter()
+                .find(|(_, node)| node.label() == Some(label))
+                .map(|(_, node)| node)
+                .unwrap_or_else(|| panic!("missing accessible control: {label}"));
+            assert!(!node.is_disabled(), "{label} is disabled");
+            let bounds = node.bounds().unwrap();
             output.drop_without_applying_deltas();
-            assert!(
-                app.relay
-                    .validate(
-                        crate::relay::RunMode::Preview,
-                        Path::new(&app.draft.singbox)
-                    )
-                    .is_ok()
+            let pos = egui::pos2(
+                ((bounds.x0 + bounds.x1) * 0.5) as f32,
+                ((bounds.y0 + bounds.y1) * 0.5) as f32,
             );
             assert!(
-                accessible_text
-                    .iter()
-                    .any(|text| text == app.tr(Text::RelayPublish))
+                (0.0..620.0).contains(&pos.x) && (0.0..580.0).contains(&pos.y),
+                "{label} must be inside the initial viewport: {pos:?}"
             );
-            assert!(
-                accessible_text.iter().any(|text| text == app.tr(expected)),
-                "missing upload guidance for {missing}"
-            );
+            for pressed in [true, false] {
+                draw(
+                    app,
+                    vec![
+                        egui::Event::PointerMoved(pos),
+                        egui::Event::PointerButton {
+                            pos,
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: egui::Modifiers::NONE,
+                        },
+                    ],
+                )
+                .drop_without_applying_deltas();
+            }
+        };
+        click(&mut app, Text::RelayImportGist);
+        assert!(app.relay.busy(), "load action did not start the import");
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        while app.relay.busy() && std::time::Instant::now() < deadline {
+            app.relay.tick(&ctx);
+            std::thread::yield_now();
         }
+        assert_eq!(
+            app.relay.result.as_ref().map(|result| result.total),
+            Some(1),
+            "import error: {:?}",
+            app.relay
+                .error
+                .as_ref()
+                .map(|error| { super::super::relay::failure_message(app.draft.language, error) })
+        );
+        assert!(app.relay.step == RelayStep::Review);
+        click(&mut app, Text::RelayContinue);
+        assert!(app.relay.step == RelayStep::Publish);
+        assert!(!app.relay.allow_plaintext && !app.relay.acknowledge_publish);
     }
 
     #[test]

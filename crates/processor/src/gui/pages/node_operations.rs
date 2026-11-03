@@ -39,19 +39,44 @@ fn validation_id() -> egui::Id {
     egui::Id::unique("relay-operation-validation")
 }
 
-fn valid_chain(ctx: &egui::Context, steps: &[Step], changed: bool) -> bool {
-    let cached = ctx.data_mut(|data| data.get_temp::<bool>(validation_id()));
-    if !changed && let Some(valid) = cached {
-        return valid;
+fn opening_step_id() -> egui::Id {
+    egui::Id::unique("relay-operation-opening")
+}
+
+#[derive(Clone, Copy)]
+struct Validation {
+    valid: bool,
+    first_invalid: Option<u64>,
+}
+
+fn validate_chain(ctx: &egui::Context, steps: &[Step], changed: bool) -> Validation {
+    if !changed
+        && let Some(cached) = ctx.data_mut(|data| data.get_temp::<Validation>(validation_id()))
+    {
+        return cached;
     }
     let valid = pipeline::validate(steps).is_ok();
-    ctx.data_mut(|data| data.insert_temp(validation_id(), valid));
-    valid
+    let first_invalid = if valid {
+        None
+    } else {
+        steps
+            .iter()
+            .filter(|step| step.enabled)
+            .find(|step| pipeline::validate(std::slice::from_ref(*step)).is_err())
+            .map(|step| step.id)
+    };
+    let validation = Validation {
+        valid,
+        first_invalid,
+    };
+    ctx.data_mut(|data| data.insert_temp(validation_id(), validation));
+    validation
 }
 
 pub(super) fn clear_widgets(ctx: &egui::Context, steps: &[Step]) {
     ctx.data_mut(|data| {
-        data.remove::<bool>(validation_id());
+        data.remove::<Validation>(validation_id());
+        data.remove::<u64>(opening_step_id());
         for step in steps {
             for field in FIELDS {
                 data.remove::<egui::text_edit::TextEditState>(field_id(step.id, field));
@@ -383,80 +408,99 @@ pub(super) fn show(
 ) -> bool {
     let tr = |key| text(language, key);
     let mut changed = false;
-    ui.strong(tr(Text::OperationChain));
+    ui.horizontal_wrapped(|ui| {
+        ui.strong(tr(Text::OperationChain));
+        if !steps.is_empty() {
+            let enabled = steps.iter().filter(|step| step.enabled).count();
+            ui.weak(format!(
+                "{}: {enabled}/{}",
+                tr(Text::OperationEnabled),
+                steps.len()
+            ));
+        }
+    });
     ui.weak(tr(Text::OperationChainHelp));
     let next_id = next_step_id(steps);
-    ui.add_enabled_ui(steps.len() < MAX_STEPS && next_id.is_some(), |ui| {
+    let can_add = steps.len() < MAX_STEPS && next_id.is_some();
+    let mut add = None;
+    ui.add_enabled_ui(can_add, |ui| {
         ui.horizontal_wrapped(|ui| {
-            ui.menu_button(tr(Text::OperationAdd), |ui| {
-                for (group, label) in [
-                    (0, Text::OperationGroupFilters),
-                    (1, Text::OperationGroupOrder),
-                    (2, Text::OperationGroupNetwork),
-                ] {
-                    ui.menu_button(tr(label), |ui| {
-                        for operation in new_operations()
-                            .into_iter()
-                            .filter(|op| operation_group(op) == group)
-                        {
-                            if ui.button(tr(operation_label(&operation))).clicked()
-                                && let Some(id) = next_id
-                            {
-                                steps.push(Step {
-                                    id,
-                                    enabled: true,
-                                    operation,
-                                });
-                                changed = true;
-                                ui.close();
-                            }
-                        }
-                    });
-                }
-            });
             for (label, kind) in [
                 (Text::OperationNameFilter, Text::OperationNameFilter),
                 (Text::OperationDeduplicate, Text::OperationDeduplicate),
                 (Text::OperationSort, Text::OperationSort),
                 (Text::ResolutionQuickAdd, Text::OperationResolveDomain),
-                (Text::OperationScript, Text::OperationScript),
             ] {
-                if ui.button(tr(label)).clicked()
-                    && steps.len() < MAX_STEPS
-                    && let Some(id) = next_step_id(steps)
-                    && let Some(operation) = new_operations()
+                if ui.button(tr(label)).clicked() {
+                    add = new_operations()
                         .into_iter()
-                        .find(|op| operation_label(op) == kind)
-                {
-                    steps.push(Step {
-                        id,
-                        enabled: true,
-                        operation,
-                    });
-                    changed = true;
+                        .find(|op| operation_label(op) == kind);
                 }
             }
+            ui.menu_button(tr(Text::OperationAdd), |ui| {
+                ui.set_max_width(300.0);
+                egui::ScrollArea::vertical()
+                    .max_height(320.0)
+                    .show(ui, |ui| {
+                        let operations = new_operations();
+                        let mut chosen = None;
+                        for (group, label) in [
+                            (0, Text::OperationGroupFilters),
+                            (1, Text::OperationGroupOrder),
+                            (2, Text::OperationGroupNetwork),
+                        ] {
+                            if group != 0 {
+                                ui.separator();
+                            }
+                            ui.strong(tr(label));
+                            for (index, operation) in operations.iter().enumerate() {
+                                if operation_group(operation) == group
+                                    && ui.button(tr(operation_label(operation))).clicked()
+                                {
+                                    chosen = Some(index);
+                                }
+                            }
+                        }
+                        if let Some(index) = chosen {
+                            add = operations.into_iter().nth(index);
+                            ui.close();
+                        }
+                    });
+            });
         });
     });
+    let mut opening = ui.ctx().data_mut(|data| {
+        let opening = data.get_temp::<u64>(opening_step_id());
+        data.remove::<u64>(opening_step_id());
+        opening
+    });
+    if can_add && let (Some(id), Some(operation)) = (next_id, add) {
+        steps.push(Step {
+            id,
+            enabled: true,
+            operation,
+        });
+        opening = Some(id);
+        changed = true;
+    }
     if steps.is_empty() {
         ui.weak(tr(Text::OperationEmpty));
+    } else if !can_add {
+        ui.weak(tr(Text::OperationStepLimit));
     }
     let mut action = None;
     let count = steps.len();
+    let validation = validate_chain(ui.ctx(), steps, false);
     for (index, step) in steps.iter_mut().enumerate() {
         ui.add_space(6.0);
         ui.push_id(("relay-operation", step.id), |ui| {
             ui.spacing_mut().window_margin = egui::Margin::same(8);
             ui.spacing_mut().item_spacing.y = 6.0;
             card(ui, colors, |ui| {
-                egui::CollapsingHeader::new(format!(
-                    "{}. {}",
-                    index + 1,
-                    tr(operation_label(&step.operation))
-                ))
-                .id_salt(("relay-operation-card", step.id))
-                .default_open(true)
-                .show(ui, |ui| match &mut step.operation {
+                let title = format!("{}. {}", index + 1, tr(operation_label(&step.operation)));
+                let configurable =
+                    !matches!(step.operation, Operation::Deduplicate | Operation::Reverse);
+                let details = |ui: &mut egui::Ui| match &mut step.operation {
                     Operation::Script { source } => {
                         ui.label(tr(Text::OperationScriptHelp));
                         changed |= field_with_limit(
@@ -1143,24 +1187,47 @@ pub(super) fn show(
                         }
                         ui.weak(tr(Text::PropertySkippedHelp));
                     }
-                });
+                };
+                let response = if configurable {
+                    egui::CollapsingHeader::new(title)
+                        .id_salt(("relay-operation-card", step.id))
+                        .default_open(opening == Some(step.id))
+                        .open((opening == Some(step.id)).then_some(true))
+                        .show(ui, details)
+                        .header_response
+                } else {
+                    ui.strong(title)
+                };
+                if opening == Some(step.id) {
+                    response.scroll_to_me(Some(egui::Align::Center));
+                    if configurable {
+                        response.request_focus();
+                    }
+                }
+                if step.enabled && validation.first_invalid == Some(step.id) {
+                    ui.colored_label(colors.error, tr(Text::OperationNeedsAttention));
+                }
+                if !changed
+                    && step.enabled
+                    && let Some(report) = reports.iter().find(|report| report.id == step.id)
+                {
+                    let mut summary = format!("{} → {}", report.before, report.after);
+                    for (key, count) in [
+                        (Text::OperationRenamed, report.renamed),
+                        (Text::OperationModified, report.modified),
+                        (Text::OperationSkipped, report.skipped),
+                    ] {
+                        if count > 0 {
+                            use std::fmt::Write as _;
+                            let _ = write!(summary, " · {} {count}", tr(key));
+                        }
+                    }
+                    ui.weak(summary);
+                }
                 ui.horizontal_wrapped(|ui| {
                     changed |= ui
                         .checkbox(&mut step.enabled, tr(Text::OperationEnabled))
                         .changed();
-                    if let Some(report) = reports.iter().find(|report| report.id == step.id) {
-                        ui.weak(format!(
-                            "{} → {} · {} {} · {} {} · {} {}",
-                            report.before,
-                            report.after,
-                            tr(Text::OperationRenamed),
-                            report.renamed,
-                            tr(Text::OperationModified),
-                            report.modified,
-                            tr(Text::OperationSkipped),
-                            report.skipped
-                        ));
-                    }
                     if ui
                         .add_enabled(index > 0, egui::Button::new(tr(Text::OperationMoveUp)))
                         .clicked()
@@ -1176,18 +1243,22 @@ pub(super) fn show(
                     {
                         action = Some((index, Action::Down));
                     }
-                    if ui
-                        .add_enabled(
-                            count < MAX_STEPS && next_id.is_some(),
-                            egui::Button::new(tr(Text::OperationDuplicate)),
-                        )
-                        .clicked()
-                    {
-                        action = Some((index, Action::Duplicate));
-                    }
-                    if ui.button(tr(Text::OperationDelete)).clicked() {
-                        action = Some((index, Action::Delete));
-                    }
+                    ui.menu_button(tr(Text::OperationRowActions), |ui| {
+                        if ui
+                            .add_enabled(
+                                count < MAX_STEPS,
+                                egui::Button::new(tr(Text::OperationDuplicate)),
+                            )
+                            .clicked()
+                        {
+                            action = Some((index, Action::Duplicate));
+                            ui.close();
+                        }
+                        if ui.button(tr(Text::OperationDelete)).clicked() {
+                            action = Some((index, Action::Delete));
+                            ui.close();
+                        }
+                    });
                 });
             });
         });
@@ -1197,10 +1268,14 @@ pub(super) fn show(
             Action::Up => steps.swap(index, index - 1),
             Action::Down => steps.swap(index, index + 1),
             Action::Duplicate => {
-                if let Some(id) = next_id {
+                if steps.len() < MAX_STEPS
+                    && let Some(id) = next_step_id(steps)
+                {
                     let mut copy = steps[index].clone();
                     copy.id = id;
                     steps.insert(index + 1, copy);
+                    ui.ctx()
+                        .data_mut(|data| data.insert_temp(opening_step_id(), id));
                 }
             }
             Action::Delete => {
@@ -1210,7 +1285,7 @@ pub(super) fn show(
         }
         changed = true;
     }
-    if !valid_chain(ui.ctx(), steps, changed) {
+    if !validate_chain(ui.ctx(), steps, changed).valid {
         ui.colored_label(colors.error, tr(Text::OperationInvalid));
     }
     changed
@@ -1226,7 +1301,9 @@ fn operation_group(op: &Operation) -> u8 {
         | Operation::IpFilter { .. }
         | Operation::NetworkFilter { .. }
         | Operation::ConditionFilter { .. } => 0,
-        Operation::ResolveDomain { .. } | Operation::SetProperty { .. } => 2,
+        Operation::ResolveDomain { .. }
+        | Operation::SetProperty { .. }
+        | Operation::Script { .. } => 2,
         _ => 1,
     }
 }
@@ -1262,14 +1339,14 @@ mod tests {
                 .iter()
                 .filter(|op| operation_group(op) == 1)
                 .count(),
-            16
+            15
         );
         assert_eq!(
             operations
                 .iter()
                 .filter(|op| operation_group(op) == 2)
                 .count(),
-            2
+            3
         );
         assert!(
             matches!(&operations[8], Operation::HostFilter { pattern, keep: true } if pattern.is_empty())
@@ -1405,13 +1482,15 @@ mod tests {
                 keep: true,
             },
         }];
-        assert!(!valid_chain(&ctx, &steps, false));
+        assert_eq!(validate_chain(&ctx, &steps, false).first_invalid, Some(1));
         steps[0].enabled = false;
-        assert!(!valid_chain(&ctx, &steps, false));
-        assert!(valid_chain(&ctx, &steps, true));
+        assert!(!validate_chain(&ctx, &steps, false).valid);
+        let updated = validate_chain(&ctx, &steps, true);
+        assert!(updated.valid);
+        assert_eq!(updated.first_invalid, None);
         steps[0].enabled = true;
         clear_widgets(&ctx, &[]);
-        assert!(!valid_chain(&ctx, &steps, false));
+        assert_eq!(validate_chain(&ctx, &steps, false).first_invalid, Some(1));
     }
 
     fn draw(
@@ -1444,6 +1523,53 @@ mod tests {
         output
     }
 
+    fn open_for_next_frame(ctx: &egui::Context, id: u64) {
+        ctx.data_mut(|data| data.insert_temp(opening_step_id(), id));
+    }
+
+    fn click_label(
+        ctx: &egui::Context,
+        steps: &mut Vec<Step>,
+        output: egui::FullOutput,
+        label: &str,
+    ) -> egui::FullOutput {
+        let bounds = output
+            .platform_output
+            .accesskit_update
+            .as_ref()
+            .unwrap()
+            .nodes
+            .iter()
+            .find_map(|(_, node)| {
+                (node.label() == Some(label))
+                    .then(|| node.bounds())
+                    .flatten()
+            })
+            .unwrap_or_else(|| panic!("missing {label}"));
+        let pos = egui::pos2(
+            ((bounds.x0 + bounds.x1) / 2.0) as f32,
+            ((bounds.y0 + bounds.y1) / 2.0) as f32,
+        );
+        output.drop_without_applying_deltas();
+        let event = |pressed| egui::Event::PointerButton {
+            pos,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers: egui::Modifiers::default(),
+        };
+        draw(
+            ctx,
+            steps,
+            vec![egui::Event::PointerMoved(pos), event(true)],
+        )
+        .drop_without_applying_deltas();
+        draw(
+            ctx,
+            steps,
+            vec![egui::Event::PointerMoved(pos), event(false)],
+        )
+    }
+
     #[test]
     fn new_operations_and_properties_fit_narrow_cards() {
         let mut ops: Vec<_> = new_operations().into_iter().skip(16).collect();
@@ -1468,6 +1594,7 @@ mod tests {
                 enabled: true,
                 operation,
             }];
+            open_for_next_frame(&ctx, steps[0].id);
             let output = draw(&ctx, &mut steps, vec![]);
             let update = output
                 .platform_output
@@ -1521,6 +1648,7 @@ mod tests {
                 enabled: true,
                 operation: Operation::BatchRename { rules: vec![] },
             }];
+            open_for_next_frame(&ctx, 1);
             let output = draw(&ctx, &mut steps, vec![]);
             let bounds = output
                 .platform_output
@@ -1572,50 +1700,18 @@ mod tests {
         let mut steps = vec![Step {
             id: 1,
             enabled: false,
-            operation: Operation::Deduplicate,
+            operation: Operation::Sort {
+                key: SortKey::Name,
+                descending: false,
+            },
         }];
         let output = draw(&ctx, &mut steps, vec![]);
-        let bounds = output
-            .platform_output
-            .accesskit_update
-            .as_ref()
-            .unwrap()
-            .nodes
-            .iter()
-            .find_map(|(_, node)| {
-                (node.label() == Some("1. Deduplicate"))
-                    .then(|| node.bounds())
-                    .flatten()
-            })
-            .expect("card header must be accessible");
-        let pos = egui::pos2(
-            ((bounds.x0 + bounds.x1) / 2.0) as f32,
-            ((bounds.y0 + bounds.y1) / 2.0) as f32,
-        );
-        output.drop_without_applying_deltas();
-        let event = |pressed| egui::Event::PointerButton {
-            pos,
-            button: egui::PointerButton::Primary,
-            pressed,
-            modifiers: egui::Modifiers::default(),
-        };
-        draw(
-            &ctx,
-            &mut steps,
-            vec![egui::Event::PointerMoved(pos), event(true)],
-        )
-        .drop_without_applying_deltas();
-        let output = draw(
-            &ctx,
-            &mut steps,
-            vec![egui::Event::PointerMoved(pos), event(false)],
-        );
         let update = output
             .platform_output
             .accesskit_update
             .as_ref()
             .expect("accessibility update");
-        for label in ["Enabled", "Move up", "Move down", "Duplicate", "Delete"] {
+        for label in ["1. Sort", "Enabled", "Move up", "Move down", "Step actions"] {
             assert!(
                 update
                     .nodes
@@ -1624,8 +1720,45 @@ mod tests {
                 "missing {label}"
             );
         }
+        assert!(
+            !update
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label() == Some("Delete")),
+            "destructive action should not be next to everyday controls"
+        );
         assert!(!steps[0].enabled);
         output.drop_without_applying_deltas();
+    }
+
+    #[test]
+    fn quick_add_opens_its_settings_and_move_preserves_step_identity() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        theme::apply(&ctx, &Preferences::default());
+        let mut steps = vec![Step {
+            id: 9,
+            enabled: false,
+            operation: Operation::Deduplicate,
+        }];
+        let output = draw(&ctx, &mut steps, vec![]);
+        let output = click_label(&ctx, &mut steps, output, "Name filter");
+        assert_eq!(steps.len(), 2);
+        assert!(steps[1].enabled);
+        let new_id = steps[1].id;
+        assert!(
+            output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.value() == Some("Pattern"))
+        );
+        click_label(&ctx, &mut steps, output, "Move down").drop_without_applying_deltas();
+        assert_eq!((steps[0].id, steps[1].id), (new_id, 9));
+        assert!(steps[0].enabled && !steps[1].enabled);
     }
 
     #[test]
@@ -1638,6 +1771,7 @@ mod tests {
                 enabled: true,
                 operation,
             }];
+            open_for_next_frame(&ctx, 1);
             draw(&ctx, &mut steps, vec![]).drop_without_applying_deltas();
         }
     }
@@ -1683,6 +1817,7 @@ mod tests {
                     },
                 )
             };
+            open_for_next_frame(&ctx, 1);
             let output = draw_frame(&mut steps, vec![]);
             let nodes = &output
                 .platform_output

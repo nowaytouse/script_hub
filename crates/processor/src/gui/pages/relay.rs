@@ -2,11 +2,14 @@ use super::{card, primary_button};
 use crate::gui::app::HubApp;
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
-use crate::gui::relay::{InputMode, RelayStep, SECRET_IDS};
-use crate::relay::export::OutputFormat;
+use crate::gui::relay::{InputMode, RelayState, RelayStep, SECRET_IDS};
+use crate::gui::theme::Palette;
 use crate::relay::{RelayStage, RunMode};
 use eframe::egui;
 use zeroize::Zeroize;
+
+#[path = "relay_output.rs"]
+mod output;
 
 impl HubApp {
     pub(super) fn relay_editor(&mut self, ui: &mut egui::Ui) {
@@ -18,35 +21,12 @@ impl HubApp {
         let mut file_action = None;
         let mut migration_selection = None;
         let mut workspace_import = false;
+        let width = ui.available_width().min(880.0);
         ui.vertical_centered(|ui| {
-            ui.set_max_width(880.0);
+            ui.set_max_width(width);
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                 let state = &mut self.relay;
-                ui.horizontal_wrapped(|ui| {
-                    for (step, label, available) in [
-                        (RelayStep::Source, Text::WorkspaceSourceTab, true),
-                        (
-                            RelayStep::Review,
-                            Text::WorkspaceOperationsTab,
-                            state.result.is_some() || state.local_content.is_some(),
-                        ),
-                        (
-                            RelayStep::Publish,
-                            Text::WorkspaceOutputTab,
-                            state.result.is_some() || state.workspace.selected.is_some(),
-                        ),
-                    ] {
-                        if ui
-                            .add_enabled(
-                                !state.busy() && available,
-                                egui::Button::new(tr(label)).selected(state.step == step),
-                            )
-                            .clicked()
-                        {
-                            state.step = step;
-                        }
-                    }
-                });
+                super::subscriptions::relay_tabs(ui, state, &tr);
                 ui.add_space(12.0);
                 if let Some(error) = &state.error {
                     ui.colored_label(
@@ -109,6 +89,12 @@ impl HubApp {
                     });
                     return;
                 }
+                if state.step == RelayStep::Review && state.editor.is_some() {
+                    ui.add_enabled_ui(admitted && !state.schedule.armed(), |ui| {
+                        (action, file_action) = review_actions(ui, state, colors, cooldown, &tr);
+                    });
+                    ui.add_space(8.0);
+                }
                 egui::ScrollArea::vertical()
                     .id_salt(("relay-step", state.step as u8))
                     .show(ui, |ui| {
@@ -131,7 +117,6 @@ impl HubApp {
                                     });
                                     ui.add_space(8.0);
                                     if state.input_mode == InputMode::Link {
-                                    ui.strong(tr(Text::RelayGistSource));
                                     if secret_field(
                                         ui,
                                         &mut state.source,
@@ -157,18 +142,13 @@ impl HubApp {
                                         ui.label(tr(Text::RelaySelectFile));
                                         for name in names {
                                             if ui
-                                                .selectable_label(
-                                                    state.source_file.as_str() == name,
-                                                    &name,
-                                                )
+                                                .add_enabled(cooldown == 0, egui::Button::new(&name))
                                                 .clicked()
                                             {
                                                 state.source_file = zeroize::Zeroizing::new(name);
                                                 state.local_content = None;
                                                 state.local_summary = None;
-                                                state.clear_editor_widgets(ui.ctx());
-                                                state.input_changed();
-                                                state.error = None;
+                                                action = Some(RunMode::Import);
                                             }
                                         }
                                     }
@@ -201,7 +181,7 @@ impl HubApp {
                                     ui.add_space(8.0);
                                     if ui
                                         .add_enabled(
-                                            state
+                                            !state.source.trim().is_empty() && state
                                                 .validate(RunMode::Import, state.engine_path())
                                                 .is_ok()
                                                 && cooldown == 0,
@@ -212,9 +192,18 @@ impl HubApp {
                                         if !state.source.trim().is_empty() { state.local_content = None; state.local_summary = None; }
                                         action = Some(RunMode::Import);
                                     }
+                                    if !state.source.trim().is_empty() && state.validate(RunMode::Import, state.engine_path()).is_err() {
+                                        ui.weak(tr(Text::RelayInputInvalid));
+                                    }
                                     } else if state.input_mode == InputMode::Paste {
                                         ui.label(tr(Text::InputPasteHelp));
-                                        ui.checkbox(&mut state.reveal_paste, tr(Text::InputReveal));
+                                        ui.horizontal_wrapped(|ui| {
+                                            if ui.add_enabled(!state.paste.trim().is_empty(), primary_button(colors, tr(Text::RelayImportGist))).clicked() {
+                                                state.import_paste(ui.ctx());
+                                            }
+                                            ui.checkbox(&mut state.reveal_paste, tr(Text::InputReveal));
+                                        });
+                                        let label = ui.label(tr(Text::RelayPasteLabel));
                                         let changed = egui::ScrollArea::vertical()
                                             .id_salt("relay-paste-scroll")
                                             .max_height(180.0)
@@ -226,6 +215,7 @@ impl HubApp {
                                             .password(!state.reveal_paste)
                                             .char_limit(4 * 1024 * 1024)
                                             .show(ui);
+                                        let _ = (*edit.response).clone().labelled_by(label.id);
                                         edit.state.clear_undoer();
                                         edit.state.store(ui.ctx(), edit.response.id);
                                         edit.response.changed()
@@ -236,13 +226,10 @@ impl HubApp {
                                             state.local_content = None;
                                             state.local_summary = None;
                                         }
-                                        if ui.add_enabled(!state.paste.trim().is_empty(), primary_button(colors, tr(Text::RelayImportGist))).clicked() {
-                                            state.import_paste(ui.ctx());
-                                        }
                                     } else {
                                     ui.strong(tr(Text::RelayLocalSource));
                                     ui.weak(tr(Text::RelayDropFile));
-                                    if ui.button(tr(Text::RelayImportFile)).clicked() {
+                                    if ui.add(primary_button(colors, tr(Text::RelayImportFile))).clicked() {
                                         file_action = Some(FileAction::Import);
                                     }
                                      ui.weak(tr(Text::MigrationFormats));
@@ -301,6 +288,13 @@ impl HubApp {
                                             .size(20.0)
                                             .strong(),
                                     );
+                                    if state.editor.is_none() {
+                                        ui.label(tr(Text::RelayReviewNoSource));
+                                        if ui.button(tr(Text::RelayOutputGoSource)).clicked() {
+                                            state.step = RelayStep::Source;
+                                        }
+                                        return;
+                                    }
                                     if let Some(result) = &state.result {
                                         summary(ui, result, state.result_format, &tr);
                                     } else if let Some((count, format)) = state.local_summary {
@@ -376,6 +370,7 @@ impl HubApp {
                                                                         row.index,
                                                                     )))
                                                                     .char_limit(512)
+                                                                    .desired_width(ui.available_width())
                                                                     .show(ui);
                                                                 let _ = (*output.response)
                                                                     .clone()
@@ -460,297 +455,21 @@ impl HubApp {
                                             file_action = Some(FileAction::ExportPlan);
                                         }
                                     });
-                                    let needs_resolution = state.needs_resolution();
-                                    if needs_resolution {
-                                        let providers = state.resolution_providers().into_iter().map(|provider| provider.name()).collect::<Vec<_>>().join(", ");
-                                        ui.weak(format!("{}: {providers}", tr(Text::ResolutionProviders)));
-                                        ui.checkbox(
-                                            &mut state.allow_resolution,
-                                            tr(Text::ResolutionConsent),
-                                        );
-                                    }
-                                    ui.collapsing(tr(Text::RelayAdvanced), |ui| {
-                                        ui.weak(tr(Text::RelayStrictProbeHelp));
-                                        ui.horizontal_wrapped(|ui| {
-                                            ui.label(tr(if state.selected_engine.is_some() {
-                                                Text::RelayEngineReady
-                                            } else {
-                                                Text::RelayEngineMissing
-                                            }));
-                                            if ui.button(tr(Text::RelayChooseEngine)).clicked() {
-                                                file_action = Some(FileAction::ChooseEngine);
-                                            }
-                                            if ui.button(tr(Text::RelayDetectEngine)).clicked() {
-                                                state.selected_engine =
-                                                    crate::relay::engine::discover_engine();
-                                            }
-                                        });
-                                        ui.weak(tr(Text::RelayEnginePurpose));
-                                        ui.horizontal_wrapped(|ui| {
-                                            ui.label(tr(Text::RelayConcurrency));
-                                            ui.add(
-                                                egui::DragValue::new(&mut state.concurrency)
-                                                    .range(1..=8),
-                                            );
-                                            ui.label(tr(Text::RelayTimeout));
-                                            ui.add(
-                                                egui::DragValue::new(&mut state.timeout_seconds)
-                                                    .range(1..=20),
-                                            );
-                                        });
-                                        ui.checkbox(
-                                            &mut state.compatibility,
-                                            tr(Text::RelayCompatibility),
-                                        );
-                                        ui.checkbox(&mut state.doh, tr(Text::RelayDoh));
-                                    });
-                                    ui.add_space(12.0);
-                                    ui.horizontal_wrapped(|ui| {
-                                        let ready = state.editor.is_some()
-                                            && cooldown == 0
-                                            && (!needs_resolution || state.allow_resolution);
-                                        if ui
-                                            .add_enabled(
-                                                ready,
-                                                primary_button(colors, tr(if needs_resolution {
-                                                    Text::ResolutionPrepare
-                                                } else {
-                                                    Text::RelayPrepareOnly
-                                                })),
-                                            )
-                                            .clicked()
-                                        {
-                                            state.test_nodes = false;
-                                            action = Some(RunMode::Preview);
-                                        }
-                                        if ui
-                                            .add_enabled(
-                                                ready && state.selected_engine.is_some(),
-                                                egui::Button::new(tr(Text::RelayPreview)),
-                                            )
-                                            .clicked()
-                                        {
-                                            state.test_nodes = true;
-                                            action = Some(RunMode::Preview);
-                                        }
-                                        if ui
-                                            .add_enabled(
-                                                state.result.is_some(),
-                                                egui::Button::new(tr(Text::RelayContinue)),
-                                            )
-                                            .clicked()
-                                        {
-                                            state.step = RelayStep::Publish;
-                                        }
-                                    });
                                 }
                                 RelayStep::Publish => {
-                                    ui.label(
-                                        egui::RichText::new(tr(Text::RelaySaveTitle))
-                                            .size(20.0)
-                                            .strong(),
-                                    );
-                                    if let Some(result) = &state.result {
-                                        summary(ui, result, state.result_format, &tr);
-                                    }
-                                    ui.add_space(12.0);
-                                    ui.label(
-                                        egui::RichText::new(tr(Text::RelayLocalSave)).strong(),
-                                    );
-                                    ui.checkbox(
-                                        &mut state.allow_plaintext,
-                                        tr(Text::VaultPlaintextConsent),
-                                    );
-                                    let format_label = |format| tr(match format {
-                                        OutputFormat::Original => Text::RelayExportOriginal,
-                                        OutputFormat::Surge => Text::RelayExportSurge,
-                                        OutputFormat::Mihomo => Text::RelayExportMihomo,
-                                        OutputFormat::SingBox => Text::RelayExportSingBox,
-                                    });
-                                    ui.horizontal_wrapped(|ui| {
-                                        let label = ui.label(tr(Text::RelayExportFormat));
-                                        egui::ComboBox::from_id_salt("relay-export-format")
-                                            .selected_text(format_label(state.output_format))
-                                            .show_ui(ui, |ui| {
-                                                for format in [OutputFormat::Original, OutputFormat::Surge, OutputFormat::Mihomo, OutputFormat::SingBox] {
-                                                    ui.selectable_value(&mut state.output_format, format, format_label(format));
-                                                }
-                                            })
-                                            .response
-                                            .labelled_by(label.id);
-                                    });
-                                    ui.weak(tr(Text::RelayExportFormatHelp));
-                                    let has_content = state
-                                        .result
-                                        .as_ref()
-                                        .is_some_and(|result| !result.content.is_empty());
-                                    ui.horizontal_wrapped(|ui| {
-                                        if ui
-                                            .add_enabled(
-                                                state.allow_plaintext && has_content,
-                                                egui::Button::new(tr(Text::RelayCopy)),
-                                            )
-                                            .clicked()
-                                        {
-                                            state.copy(ui.ctx());
-                                        }
-                                        for (label, export) in [
-                                            (Text::RelayExportNodes, FileAction::ExportNodes(state.output_format)),
-                                            (Text::RelayExportBackup, FileAction::ExportBackup),
-                                        ] {
-                                            if ui
-                                                .add_enabled(
-                                                    state.allow_plaintext && has_content,
-                                                    egui::Button::new(tr(label)),
-                                                )
-                                                .clicked()
-                                            {
-                                                file_action = Some(export);
-                                            }
-                                        }
-                                    });
-                                    ui.weak(tr(Text::RelayBackupWarning));
-                                     ui.collapsing(tr(Text::ArchiveExport), |ui| {
-                                         ui.weak(tr(Text::ArchiveExportHelp));
-                                         visible_field(ui, &mut state.archive_recipient, SECRET_IDS[7], tr(Text::ArchiveRecipient));
-                                         if ui.add_enabled(has_content && !state.archive_recipient.trim().is_empty(), egui::Button::new(tr(Text::ArchiveExport))).clicked() {
-                                             file_action = Some(FileAction::ExportEncrypted);
-                                         }
-                                     });
-                                    ui.add_space(16.0);
-                                    ui.separator();
-                                    ui.label(
-                                        egui::RichText::new(tr(Text::RelayStepUpload)).strong(),
-                                    );
-                                    if secret_field(
-                                        ui,
-                                        &mut state.token,
-                                        SECRET_IDS[0],
-                                        tr(Text::RelayToken),
-                                        &mut state.reveal_token,
-                                        tr(Text::RelayShow),
-                                    ) {
-                                        state.clear_request_error();
-                                    }
-                                    ui.weak(tr(Text::RelayCreateHelp));
-                                    if state.workspace.selected.is_some() {
-                                        ui.weak(tr(Text::WorkspaceOutputSavedHelp));
-                                    }
-                                    ui.collapsing(tr(Text::RelayOutputOptions), |ui| {
-                                        let file_changed = visible_field(
-                                            ui,
-                                            &mut state.output_file,
-                                            SECRET_IDS[4],
-                                            tr(Text::RelayOutputFile),
-                                        );
-                                        length_counter(
-                                            ui,
-                                            state.output_file.chars().count(),
-                                            colors.error,
-                                        );
-                                        let title_changed = visible_field(
-                                            ui,
-                                            &mut state.title,
-                                            SECRET_IDS[5],
-                                            tr(Text::RelayTitle),
-                                        );
-                                        length_counter(
-                                            ui,
-                                            state.title.chars().count(),
-                                            colors.error,
-                                        );
-                                        let target_changed = secret_field(
-                                            ui,
-                                            &mut state.output,
-                                            SECRET_IDS[3],
-                                            tr(Text::RelayOutput),
-                                            &mut state.reveal_output,
-                                            tr(Text::RelayShow),
-                                        );
-                                        if file_changed || title_changed || target_changed {
-                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
-                                            state.allow_public_output = false;
-                                            state.acknowledge_publish = false;
-                                        }
-                                        ui.checkbox(
-                                            &mut state.allow_public_output,
-                                            tr(Text::RelayPublicConsent),
-                                        );
-                                    });
-                                    if !state.output.is_empty() {
-                                        ui.weak(tr(Text::RelayReuseOutput));
-                                        if ui.button(tr(Text::RelayCreateAnother)).clicked() {
-                                            state.output.zeroize();
-                                            state.allow_public_output = false;
-                                            state.acknowledge_publish = false;
-                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
-                                        }
-                                    }
-                                    ui.checkbox(
-                                        &mut state.acknowledge_publish,
-                                        tr(Text::RelayPublishConsent),
-                                    );
-                                    let publish =
-                                        state.validate(RunMode::Publish, state.engine_path());
-                                    if let Err(error) = publish {
-                                        ui.weak(tr(error));
-                                    }
-                                    if ui
-                                        .add_enabled(
-                                            publish.is_ok() && cooldown == 0 && has_content,
-                                            primary_button(colors, tr(Text::RelayPublish)),
-                                        )
-                                        .clicked()
-                                    {
-                                        action = Some(RunMode::Publish);
-                                    }
-                                    if let Some(created) = state
-                                        .result
-                                        .as_ref()
-                                        .and_then(|result| result.created.as_ref())
-                                    {
-                                        ui.label(tr(Text::RelayCreated));
-                                        ui.hyperlink_to(&created.url, &created.url);
-                                    }
-                                    ui.add_space(16.0);
-                                    ui.separator();
-                                    ui.strong(tr(Text::ScheduleTitle));
-                                    if matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) {
-                                        ui.weak(tr(Text::WorkspaceCollectionSchedule));
-                                    }
-                                    ui.weak(tr(Text::ScheduleHelp));
-                                    ui.horizontal_wrapped(|ui| {
-                                        ui.label(tr(Text::ScheduleInterval));
-                                        if ui.add(egui::DragValue::new(&mut state.schedule.interval_minutes).range(1..=10080)).changed() {
-                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
-                                        }
-                                    });
-                                    ui.weak(tr(Text::ScheduleSessionOnly));
-                                    if ui.add_enabled(has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
-                                        state.arm_schedule();
-                                    }
+                                    (action, file_action) = output::show(ui, state, language, colors, cooldown);
                                 }
                             });
                         });
                         ui.add_space(12.0);
-                        ui.horizontal_wrapped(|ui| {
-                            if state.step != RelayStep::Source
-                                && ui.button(tr(Text::RelayBack)).clicked()
-                            {
-                                state.step = if state.step == RelayStep::Publish {
-                                    RelayStep::Review
-                                } else {
-                                    RelayStep::Source
-                                };
-                            }
-                            if ui.button(tr(if state.workspace.selected.is_some() { Text::WorkspaceListLock } else { Text::RelayClear })).clicked() {
-                                if state.workspace.selected.is_some() { state.workspace_request(ui.ctx(), crate::gui::subscriptions::Action::Lock); } else { state.clear(ui.ctx()); }
-                            }
-                        });
                         ui.collapsing(tr(Text::RelayDetails), |ui| {
                             ui.label(tr(Text::RelayFormats));
                             ui.label(tr(Text::RelayPrivacy));
-                            ui.label(tr(Text::RelayPublishWarning));
+                            if state.workspace.selected.is_none()
+                                && ui.button(tr(Text::RelayClear)).clicked()
+                            {
+                                state.clear(ui.ctx());
+                            }
                         });
                         if !admitted {
                             ui.weak(tr(Text::RelayWait));
@@ -775,6 +494,109 @@ impl HubApp {
     }
 }
 
+fn review_actions(
+    ui: &mut egui::Ui,
+    state: &mut RelayState,
+    colors: Palette,
+    cooldown: u64,
+    tr: &impl Fn(Text) -> &'static str,
+) -> (Option<RunMode>, Option<FileAction>) {
+    let mut action = None;
+    let mut file = None;
+    let has_content = state
+        .result
+        .as_ref()
+        .is_some_and(|result| !result.content.is_empty());
+    let needs_resolution = state.needs_resolution();
+    card(ui, colors, |ui| {
+        ui.strong(tr(match (state.result.is_some(), has_content) {
+            (_, true) => Text::RelayReviewReady,
+            (true, false) => Text::RelayReviewEmptyResult,
+            _ => Text::RelayReviewNeedsPreview,
+        }));
+        if needs_resolution {
+            let providers = state
+                .resolution_providers()
+                .into_iter()
+                .map(|provider| provider.name())
+                .collect::<Vec<_>>()
+                .join(", ");
+            ui.label(format!("{}: {providers}", tr(Text::ResolutionProviders)));
+            ui.checkbox(&mut state.allow_resolution, tr(Text::ResolutionConsent));
+        }
+        ui.horizontal_wrapped(|ui| {
+            let ready = cooldown == 0 && (!needs_resolution || state.allow_resolution);
+            let label = tr(if needs_resolution {
+                Text::ResolutionPrepare
+            } else {
+                Text::RelayPrepareOnly
+            });
+            let preview = if has_content {
+                egui::Button::new(label).min_size(egui::vec2(0.0, 36.0))
+            } else {
+                primary_button(colors, label)
+            };
+            if ui.add_enabled(ready, preview).clicked() {
+                state.test_nodes = false;
+                action = Some(RunMode::Preview);
+            }
+            if state.selected_engine.is_some()
+                && ui
+                    .add_enabled(ready, egui::Button::new(tr(Text::RelayPreview)))
+                    .clicked()
+            {
+                state.test_nodes = true;
+                action = Some(RunMode::Preview);
+            }
+            ui.menu_button(
+                tr(if state.selected_engine.is_some() {
+                    Text::RelayAdvanced
+                } else {
+                    Text::RelayTestSetup
+                }),
+                |ui| {
+                    ui.set_min_width(240.0);
+                    ui.label(tr(if state.selected_engine.is_some() {
+                        Text::RelayEngineReady
+                    } else {
+                        Text::RelayEngineMissing
+                    }));
+                    ui.label(tr(Text::RelayEnginePurpose));
+                    if ui.button(tr(Text::RelayDetectEngine)).clicked() {
+                        state.selected_engine = crate::relay::engine::discover_engine();
+                    }
+                    if ui.button(tr(Text::RelayChooseEngine)).clicked() {
+                        file = Some(FileAction::ChooseEngine);
+                        ui.close();
+                    }
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        let label = ui.label(tr(Text::RelayConcurrency));
+                        ui.add(egui::DragValue::new(&mut state.concurrency).range(1..=8))
+                            .labelled_by(label.id);
+                    });
+                    ui.horizontal(|ui| {
+                        let label = ui.label(tr(Text::RelayTimeout));
+                        ui.add(egui::DragValue::new(&mut state.timeout_seconds).range(1..=20))
+                            .labelled_by(label.id);
+                    });
+                    ui.checkbox(&mut state.compatibility, tr(Text::RelayCompatibility));
+                    ui.checkbox(&mut state.doh, tr(Text::RelayDoh));
+                    ui.weak(tr(Text::RelayStrictProbeHelp));
+                },
+            );
+            if has_content
+                && ui
+                    .add(primary_button(colors, tr(Text::RelayContinue)))
+                    .clicked()
+            {
+                state.step = RelayStep::Publish;
+            }
+        });
+    });
+    (action, file)
+}
+
 fn summary(
     ui: &mut egui::Ui,
     result: &crate::relay::RelayResult,
@@ -796,12 +618,16 @@ fn summary(
             tr(Text::RelayProcessed),
             result.processed
         ));
-        ui.label(format!("{}: {}", tr(Text::RelayExcluded), result.excluded));
-        ui.label(format!(
-            "{}: {}",
-            tr(Text::RelayDuplicates),
-            result.duplicates
-        ));
+        if result.excluded > 0 {
+            ui.label(format!("{}: {}", tr(Text::RelayExcluded), result.excluded));
+        }
+        if result.duplicates > 0 {
+            ui.label(format!(
+                "{}: {}",
+                tr(Text::RelayDuplicates),
+                result.duplicates
+            ));
+        }
         if result.duplicate_skipped > 0 {
             ui.label(format!(
                 "{}: {}",
@@ -953,21 +779,42 @@ fn secret_field(
     show_label: &str,
 ) -> bool {
     let label = ui.label(label);
-    let mut changed = false;
-    ui.horizontal(|ui| {
-        let width = (ui.available_width() - 92.0).max(80.0);
+    let toggle_width = ui
+        .painter()
+        .layout_no_wrap(
+            show_label.to_owned(),
+            egui::TextStyle::Body.resolve(ui.style()),
+            ui.visuals().text_color(),
+        )
+        .size()
+        .x
+        + 2.0 * ui.spacing().interact_size.y
+        + ui.spacing().item_spacing.x;
+    let inline = ui.available_width() >= toggle_width + 160.0;
+    let password = !*reveal;
+    let mut edit = |ui: &mut egui::Ui, width| {
         let mut output = egui::TextEdit::singleline(value)
             .id(egui::Id::unique(id))
-            .password(!*reveal)
+            .password(password)
             .desired_width(width)
             .show(ui);
         let _ = (*output.response).clone().labelled_by(label.id);
-        changed = output.response.changed();
         output.state.clear_undoer();
         output.state.store(ui.ctx(), output.response.id);
+        output.response.changed()
+    };
+    if inline {
+        ui.horizontal(|ui| {
+            let changed = edit(ui, ui.available_width() - toggle_width);
+            ui.checkbox(reveal, show_label);
+            changed
+        })
+        .inner
+    } else {
+        let changed = edit(ui, ui.available_width());
         ui.checkbox(reveal, show_label);
-    });
-    changed
+        changed
+    }
 }
 
 fn length_counter(ui: &mut egui::Ui, count: usize, error: egui::Color32) {
