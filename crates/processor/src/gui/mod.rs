@@ -6,5 +6,6 @@ mod file_dialog;
 pub mod i18n;
 mod pages;
 mod relay;
+mod relay_schedule;
 mod templates;
 mod theme;

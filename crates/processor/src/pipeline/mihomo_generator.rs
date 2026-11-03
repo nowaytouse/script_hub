@@ -228,7 +228,8 @@ fn existing(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
                 return Err(format!("not a regular output file: {}", path.display()));
             }
             let content = fs::read_to_string(&path)
-                .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+                .map_err(|e| format!("cannot read {}: {e}", path.display()))?
+                .replace("\r\n", "\n");
             outputs.insert(path, content);
         }
     }
@@ -414,6 +415,16 @@ mod tests {
         let out = root.join("rulesets/Mihomo/example_supported.yaml");
         let before = fs::read_to_string(&out).unwrap();
         assert!(before.starts_with(OWNER));
+        let crlf = before.replace('\n', "\r\n");
+        fs::write(&out, &crlf).unwrap();
+        assert_eq!(validate_generated(&root).unwrap(), 1);
+        assert_eq!(run_generator(&root).unwrap(), 1);
+        assert_eq!(fs::read_to_string(&out).unwrap(), crlf);
+        fs::write(&out, crlf.replace("a.example", "b.example")).unwrap();
+        assert!(validate_generated(&root).is_err());
+        fs::write(&out, before.replace("a.example", "a\rexample")).unwrap();
+        assert!(validate_generated(&root).is_err());
+        fs::write(&out, &before).unwrap();
         fs::write(sources.join("bad.list"), "DOMAIN,invalid/name\n").unwrap();
         assert!(run_generator(&root).is_err());
         assert_eq!(fs::read_to_string(&out).unwrap(), before);

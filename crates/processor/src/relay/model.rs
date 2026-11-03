@@ -13,6 +13,7 @@ use zeroize::{Zeroize, Zeroizing};
 
 pub mod dns;
 pub mod editor;
+pub mod entrance;
 mod mihomo;
 pub mod pipeline;
 pub mod properties;
@@ -1250,6 +1251,9 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
         let protocol_range = ranges[0].clone();
         let protocol = Zeroizing::new(decode_surge(&line[protocol_range.clone()])?.to_lowercase());
         let external = protocol.as_str() == "external";
+        if external {
+            return Err(ModelError::InvalidInput);
+        }
         let server_range = if external {
             protocol_range.clone()
         } else {
@@ -1264,7 +1268,10 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
                 .ok_or(ModelError::InvalidInput)?;
             let equal = range.start + relative;
             let key = line[range.start..equal].trim().to_lowercase();
-            if !valid_label(&key) || (!keys.insert(key.clone()) && !(external && key == "args")) {
+            if !valid_label(&key)
+                || dangerous_key(&key)
+                || (!keys.insert(key.clone()) && !(external && key == "args"))
+            {
                 return Err(ModelError::InvalidInput);
             }
             let value_range = trimmed_range(line, equal + 1..range.end);
@@ -1444,6 +1451,9 @@ fn parse_structured(mut root: PrivateJson, yaml: bool) -> Result<(Vec<Node>, Dia
     let mut nodes = Vec::with_capacity(outbounds.len());
     for value in outbounds.drain(..) {
         let source = PrivateJson(value);
+        if dangerous_fields(&source.0) {
+            return Err(ModelError::InvalidInput);
+        }
         let object = source.0.as_object().ok_or(ModelError::InvalidInput)?;
         let substore = matches!(
             dialect,
@@ -1469,7 +1479,7 @@ fn parse_structured(mut root: PrivateJson, yaml: bool) -> Result<(Vec<Node>, Dia
         let protocol = text("type")?;
         if matches!(
             protocol.as_str(),
-            "direct" | "block" | "dns" | "selector" | "urltest"
+            "direct" | "block" | "dns" | "selector" | "urltest" | "external"
         ) {
             return Err(ModelError::InvalidInput);
         }
@@ -1514,6 +1524,25 @@ fn parse_structured(mut root: PrivateJson, yaml: bool) -> Result<(Vec<Node>, Dia
         });
     }
     Ok((nodes, dialect))
+}
+
+fn dangerous_key(key: &str) -> bool {
+    let key = key.replace('-', "_").to_ascii_lowercase();
+    key.ends_with("_path")
+        || matches!(
+            key.as_str(),
+            "plugin" | "plugin_opts" | "command" | "exec" | "executable" | "process" | "script"
+        )
+}
+
+fn dangerous_fields(value: &Value) -> bool {
+    match value {
+        Value::Object(fields) => fields.iter().any(|(key, value)| {
+            dangerous_key(key) || (!key.eq_ignore_ascii_case("headers") && dangerous_fields(value))
+        }),
+        Value::Array(values) => values.iter().any(dangerous_fields),
+        _ => false,
+    }
 }
 
 fn only_keys(value: &Value, allowed: &[&str]) -> Result<(), ModelError> {

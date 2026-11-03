@@ -129,7 +129,7 @@ fn manual_processing_precedes_checks_and_keeps_origin_and_diagnostics_aligned() 
     );
     assert_eq!(result.details[0].reason, engine::ProbeReason::NotTested);
     assert_eq!(result.details[1].reason, engine::ProbeReason::Verified);
-    assert_eq!(&*result.source.as_ref().unwrap().content, SOURCE);
+    assert_eq!(result.source.as_ref().unwrap().content(), SOURCE);
     assert_eq!(fixture.request_methods(), ["GET"]);
 }
 

@@ -570,38 +570,25 @@ fn common_mihomo_protocols_project_without_losing_transport_identity() {
 }
 
 #[test]
-fn external_surge_is_retained_but_never_projected() {
+fn external_surge_is_rejected_before_rendering() {
     let external = "External = external, exec=/synthetic/tool, local-port=1234, args=first, args=\"second,value\", udp-relay=true\n";
     let source = format!(
         "A = anytls, a.invalid, 443, password=synthetic\nB = anytls, b.invalid, 443, password=synthetic\n{external}"
     );
-    let subscription = Subscription::parse(&source).unwrap();
-    assert_eq!(subscription.nodes().len(), 3);
-    for compatibility in [false, true] {
-        assert_eq!(
-            subscription.nodes()[2].to_sing_box(compatibility).err(),
-            Some(ModelError::Unsupported)
-        );
+    assert!(Subscription::parse(&source).is_err());
+}
+
+#[test]
+fn rejects_executable_fields_but_keeps_unknown_protocol_and_headers() {
+    for source in [
+        r#"[{"type":"future","tag":"a","server":"example.com","server_port":443,"command":"/bin/tool"}]"#,
+        "proxies:\n  - { name: a, type: ss, server: example.com, port: 443, plugin: executable }\n",
+        "trojan://secret@example.com:443?%70lugin=tool#a",
+        "a = trojan, example.com, 443, exec=/bin/tool",
+    ] {
+        assert!(Subscription::parse(source).is_err());
     }
-    let rendered = subscription
-        .render(
-            &[Health::Failed, Health::Unknown, Health::Unknown],
-            &unchanged(),
-        )
-        .unwrap();
-    assert!(rendered.contains(external));
-    assert!(!semantic_equal(
-        &source,
-        &source.replace("args=first", "args=changed")
-    ));
-    assert!(semantic_equal(&source, &source));
-    let renamed = subscription
-        .render(&[Health::Unknown; 3], &EnhanceOptions::default())
-        .unwrap();
-    assert!(
-        renamed
-            .contains("exec=/synthetic/tool, local-port=1234, args=first, args=\"second,value\"")
-    );
+    assert!(Subscription::parse(r#"[{"type":"future","tag":"a","server":"example.com","server_port":443,"headers":{"Command":"normal text"}}]"#).is_ok());
 }
 
 #[test]
@@ -621,13 +608,9 @@ fn external_surge_requires_unambiguous_exec_and_port() {
 }
 
 #[test]
-fn external_reference_is_updated_on_rename() {
+fn external_reference_is_rejected_before_rename() {
     let source = "Base = anytls, a.invalid, 443, password=synthetic\nX = external, exec=tool, local-port=1234, args=a, args=b, underlying-proxy=Base\n";
-    let subscription = Subscription::parse(source).unwrap();
-    let output = subscription
-        .render(&[Health::Unknown; 2], &EnhanceOptions::default())
-        .unwrap();
-    assert!(output.contains("args=a, args=b, underlying-proxy=\"ANYTLS | Base\""));
+    assert!(Subscription::parse(source).is_err());
 }
 
 #[test]
@@ -735,11 +718,15 @@ fn native_local_files_processes_and_ambient_dialers_are_not_executed() {
         let source = format!(
             r#"[{{"type":"anytls","tag":"A","server":"node.example.invalid","server_port":443,"password":"synthetic",{field}}}]"#
         );
-        let subscription = Subscription::parse(&source).unwrap();
-        assert_eq!(
-            subscription.nodes()[0].to_sing_box(true).err(),
-            Some(ModelError::Unsupported)
-        );
+        if field.contains("bind_interface") || field.contains("routing_mark") {
+            let subscription = Subscription::parse(&source).unwrap();
+            assert_eq!(
+                subscription.nodes()[0].to_sing_box(true).err(),
+                Some(ModelError::Unsupported)
+            );
+        } else {
+            assert!(Subscription::parse(&source).is_err());
+        }
     }
 }
 

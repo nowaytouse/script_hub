@@ -3,9 +3,11 @@
 pub mod backup;
 pub mod engine;
 pub mod gist;
+pub mod input;
 pub mod model;
 pub mod plan;
 pub mod resolve;
+pub mod schedule;
 
 use serde::Deserialize;
 use std::{
@@ -91,7 +93,7 @@ pub struct Progress {
 
 #[derive(Clone)]
 pub struct RelayResult {
-    pub source: Option<gist::Source>,
+    pub source: Option<input::Source>,
     pub content: Zeroizing<String>,
     pub tested: bool,
     pub created: Option<gist::CreatedGist>,
@@ -115,6 +117,10 @@ pub struct RelayResult {
 #[derive(Debug)]
 pub enum RelayError {
     InvalidInput,
+    InputUnavailable,
+    InputInvalid,
+    InputHttpStatus(u16),
+    InputRateLimited { retry_after_seconds: Option<u64> },
     NoHealthyNodes,
     SourceChanged,
     Cancelled,
@@ -128,6 +134,25 @@ impl fmt::Display for RelayError {
             Self::InvalidInput => f.write_str(
                 "Check the input, distinct output target, name length and probe settings.",
             ),
+            Self::InputUnavailable => f.write_str(
+                "The HTTPS subscription could not be read safely. Check the address and try again.",
+            ),
+            Self::InputInvalid => {
+                f.write_str("The HTTPS subscription is too large or is not valid UTF-8.")
+            }
+            Self::InputHttpStatus(status) => write!(
+                f,
+                "The HTTPS subscription request was rejected (HTTP {status}); redirects are not followed."
+            ),
+            Self::InputRateLimited {
+                retry_after_seconds,
+            } => match retry_after_seconds {
+                Some(seconds) => write!(
+                    f,
+                    "The HTTPS subscription is rate limited; retry after {seconds} seconds."
+                ),
+                None => f.write_str("The HTTPS subscription is rate limited; try again later."),
+            },
             Self::NoHealthyNodes => {
                 f.write_str("No node has verified success. Existing output was not changed.")
             }
@@ -151,10 +176,7 @@ impl RelayConfig {
             }
             None
         } else {
-            Some(
-                gist::GistFile::parse_source(self.source.trim(), &self.source_file)
-                    .map_err(RelayError::Gist)?,
-            )
+            Some(input::target(self.source.trim(), &self.source_file)?)
         };
         if self
             .local_content
@@ -175,7 +197,9 @@ impl RelayConfig {
         if !self.output.trim().is_empty() {
             let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
                 .map_err(RelayError::Gist)?;
-            if input.as_ref().is_some_and(|input| output.id == input.id) {
+            if input.as_ref().is_some_and(
+                |input| matches!(input, input::Target::Gist(file) if output.id == file.id),
+            ) {
                 return Err(RelayError::InvalidInput);
             }
         } else if mode == RunMode::Publish {
@@ -244,18 +268,20 @@ fn run_with(
         total: 0,
     });
     let source = if config.local_content.is_none() {
-        Some(
-            client
-                .read_source(config.source.trim(), &config.source_file, cancel)
-                .map_err(RelayError::Gist)?,
-        )
+        Some(input::read(
+            client,
+            config.source.trim(),
+            &config.source_file,
+            cancel,
+        )?)
     } else {
         None
     };
     let source_content = config
         .local_content
         .as_ref()
-        .or_else(|| source.as_ref().map(|source| &source.content))
+        .map(|content| content.as_str())
+        .or_else(|| source.as_ref().map(input::Source::content))
         .ok_or(RelayError::InvalidInput)?;
     let subscription = model::Subscription::parse(source_content).map_err(RelayError::Model)?;
     if mode == RunMode::Import {
@@ -528,13 +554,8 @@ fn publish_result(
 ) -> Result<(), RelayError> {
     active(cancel)?;
     if let Some(source) = &result.source {
-        let current = client
-            .read_source(config.source.trim(), &config.source_file, cancel)
-            .map_err(RelayError::Gist)?;
-        if current.file.id != source.file.id
-            || current.file.filename != source.file.filename
-            || !model::semantic_equal(&source.content, &current.content)
-        {
+        let current = input::read(client, config.source.trim(), &config.source_file, cancel)?;
+        if !source.matches(&current) {
             return Err(RelayError::SourceChanged);
         }
     }
@@ -552,7 +573,7 @@ fn publish_result(
             .map_or(result.content.as_str(), |old| old.as_str());
         match client
             .publish(
-                result.source.as_ref().map(|source| &source.file),
+                result.source.as_ref().and_then(input::Source::gist_file),
                 &output,
                 &expected,
                 content,

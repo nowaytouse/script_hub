@@ -2199,8 +2199,7 @@ mod tests {
 
     #[test]
     fn properties_report_actual_changes_and_preserve_unsupported_nodes() {
-        let source =
-            "A = socks5, node.example, 1080\nB = external, exec=synthetic, local-port=1234\n";
+        let source = "A = socks5, node.example, 1080\nB = future, node.example, 1234\n";
         let out = run(
             source,
             vec![
@@ -2231,7 +2230,7 @@ mod tests {
                 .iter()
                 .any(|field| field.key == "tfo" && field.value.as_str() == "true")
         );
-        assert!(out.content.contains("B = external, exec=synthetic"));
+        assert!(out.content.contains("B = future, node.example, 1234"));
     }
 
     #[test]

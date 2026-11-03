@@ -11,6 +11,7 @@ on:
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
       - '.cargo/**'
+      - '.gitattributes'
       - '.github/workflows/gui.yml'
       - 'LICENSE'
       - 'README*.md'
@@ -26,6 +27,7 @@ on:
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
       - '.cargo/**'
+      - '.gitattributes'
       - '.github/workflows/gui.yml'
       - 'LICENSE'
       - 'README*.md'
@@ -87,7 +89,11 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $worker = Start-Process -FilePath ./script-hub-gui.exe -ArgumentList '--worker','validate','--root','.' -Wait -PassThru
+          $stdout = Join-Path $env:RUNNER_TEMP 'worker-validate.stdout.log'
+          $stderr = Join-Path $env:RUNNER_TEMP 'worker-validate.stderr.log'
+          $worker = Start-Process -FilePath ./script-hub-gui.exe -ArgumentList '--worker','validate','--root','.' -RedirectStandardOutput $stdout -RedirectStandardError $stderr -Wait -PassThru
+          # This worker reads public repository artifacts, never private sessions.
+          Get-Content $stdout,$stderr
           if ($worker.ExitCode -ne 0) { throw "GUI worker failed: $($worker.ExitCode)" }
       - name: Upload desktop executable
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 (Node 24)

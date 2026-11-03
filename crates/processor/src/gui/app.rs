@@ -929,6 +929,16 @@ impl eframe::App for HubApp {
         // Auto-lock may clear drafts before close handling; keep the reason for this frame.
         let had_template_changes = self.templates.dirty || self.templates.editing;
         self.templates.tick(ctx);
+        let schedule_admitted = !self.active() && self.pending.is_none();
+        if let Some(result) = self.relay.schedule.tick(ctx, schedule_admitted) {
+            self.relay.accept_scheduled(result);
+        }
+        if self.relay.schedule.running() {
+            self.relay.progress = self.relay.schedule.progress;
+        }
+        if let Some(error) = self.relay.schedule.last_error.take() {
+            self.relay.error = Some(super::relay::Failure::Operation(error));
+        }
         self.relay.tick(ctx);
         self.poll_workspace_loader(ctx);
         self.poll_repository_loader(ctx);
@@ -1419,6 +1429,56 @@ mod tests {
                 !engine_control_present,
                 "engine paths belong in advanced settings, even when checks are enabled"
             );
+        }
+    }
+
+    #[test]
+    fn relay_input_modes_are_reachable_and_private_in_both_themes_and_languages() {
+        use super::super::relay::InputMode;
+        use crate::runtime::settings::Language;
+        for language in [Language::En, Language::ZhCn] {
+            for dark in [false, true] {
+                for (mode, key) in [
+                    (InputMode::Link, Text::RelayImportGist),
+                    (InputMode::Paste, Text::InputReveal),
+                    (InputMode::File, Text::RelayImportFile),
+                ] {
+                    let ctx = egui::Context::default();
+                    ctx.enable_accesskit();
+                    ctx.set_visuals(if dark {
+                        egui::Visuals::dark()
+                    } else {
+                        egui::Visuals::light()
+                    });
+                    let mut app = relay_app();
+                    app.draft.language = language;
+                    app.relay.input_mode = mode;
+                    app.relay.paste.push_str("Synthetic = trojan, private.example, 443, password=never-paint-this-secret\n");
+                    let output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                egui::vec2(1000.0, 1000.0),
+                            )),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            egui::CentralPanel::default().show(ui, |ui| app.relay_page(ui));
+                        },
+                    );
+                    let update = output.platform_output.accesskit_update.as_ref().unwrap();
+                    assert!(
+                        update
+                            .nodes
+                            .iter()
+                            .any(|(_, node)| node.label() == Some(app.tr(key)))
+                    );
+                    let accessible = format!("{update:?}");
+                    assert!(!accessible.contains("never-paint-this-secret"));
+                    assert!(!accessible.contains("synthetic-token"));
+                    output.drop_without_applying_deltas();
+                }
+            }
         }
     }
 

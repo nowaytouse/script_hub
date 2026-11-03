@@ -221,6 +221,9 @@ pub(super) fn parse(line: &str, index: usize) -> Result<UriNode, ModelError> {
         }
         (host.to_owned(), port, name)
     };
+    if dangerous_fields(&private.0) {
+        return Err(ModelError::InvalidInput);
+    }
     Ok(UriNode {
         name: Zeroizing::new(name),
         server: Zeroizing::new(server),

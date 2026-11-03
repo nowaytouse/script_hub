@@ -645,7 +645,7 @@ fn select(
         }
     }
 }
-fn public(ip: IpAddr) -> bool {
+pub(super) fn public(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(v) => {
             let o = v.octets();

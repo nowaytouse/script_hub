@@ -2,6 +2,15 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.12.0 · 2026-11-03
+
+- Import node text from public HTTPS subscriptions, paste or local files, with bounded parsing and pinned public-address resolution.
+- Add editable native enhancement presets and session-only scheduled download/process/Gist synchronization; honor server cooldowns and stop on ambiguous writes.
+- Keep scheduled results, previews and copying in sync; preserve source binding, publication consent and cancellation boundaries.
+- Separate link, text and file entry points, retain masked private inputs and keep all interface text in translation catalogs.
+- Reject executable node directives, pin public probe endpoints, and distinguish addresses that cannot be verified safely.
+- Accept equivalent CRLF provider files without hiding content changes; preserve Windows worker diagnostics in CI.
+
 ## 0.11.0 · 2026-11-03
 
 - Add native, policy-neutral Mihomo providers with explicit subset counts, deterministic publication and source/output consistency checks.

@@ -6,6 +6,7 @@ pub enum ProbeReason {
     Verified,
     Unsupported,
     UnsafeAddress,
+    AddressUnverified,
     ExternalResource,
     EngineConfigRejected,
     EngineConfigTimeout,

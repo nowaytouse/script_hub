@@ -42,7 +42,7 @@ jobs:
           fi
           echo "base=$DIFF_BASE" >> "$GITHUB_OUTPUT"
           changed_paths=$(git diff --name-only "$DIFF_BASE" "$DIFF_HEAD")
-          if grep -E '^(Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.cargo/|crates/|modules/|rulesets/|dns/|\.github/ci/|\.github/workflows/)' <<< "$changed_paths" > /dev/null; then
+          if grep -E '^(Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.gitattributes$|\.cargo/|crates/|modules/|rulesets/|dns/|\.github/ci/|\.github/workflows/)' <<< "$changed_paths" > /dev/null; then
             echo "relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "relevant=false" >> "$GITHUB_OUTPUT"

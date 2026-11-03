@@ -173,6 +173,79 @@ fn unsafe_address(server: &str) -> bool {
     }
 }
 
+fn pin_endpoint(outbound: &Value, doh: bool, timeout: Duration) -> Option<Value> {
+    use ureq::unversioned::{
+        resolver::{DefaultResolver, Resolver},
+        transport::{NextTimeout, time::Duration as UDuration},
+    };
+    let server = outbound.get("server")?.as_str()?;
+    if unsafe_address(server) {
+        return None;
+    }
+    let host = url::Host::parse(server.trim_matches(['[', ']'])).ok()?;
+    let ip = match host {
+        url::Host::Ipv4(ip) => IpAddr::V4(ip),
+        url::Host::Ipv6(ip) => IpAddr::V6(ip),
+        url::Host::Domain(ref name) => {
+            // Avoid changing transport Host semantics and avoid silently replacing DoH with system DNS.
+            if doh || outbound.get("transport").is_some() {
+                return None;
+            }
+            let uri = format!("https://{name}/").parse().ok()?;
+            let config = ureq::Agent::config_builder().proxy(None).build();
+            let addresses = DefaultResolver::default()
+                .resolve(
+                    &uri,
+                    &config,
+                    NextTimeout {
+                        after: UDuration::Exact(timeout),
+                        ..Default::default()
+                    },
+                )
+                .ok()?;
+            select_public_address(addresses.iter().map(|address| address.ip()))?
+        }
+    };
+    if !super::resolve::public(ip) {
+        return None;
+    }
+    pin_address(outbound, ip)
+}
+
+fn select_public_address(addresses: impl IntoIterator<Item = IpAddr>) -> Option<IpAddr> {
+    let mut addresses = addresses.into_iter();
+    let first = addresses.next()?;
+    if !super::resolve::public(first) || addresses.any(|ip| !super::resolve::public(ip)) {
+        return None;
+    }
+    Some(first)
+}
+
+fn pin_address(outbound: &Value, ip: IpAddr) -> Option<Value> {
+    if !super::resolve::public(ip) {
+        return None;
+    }
+    let original = outbound.get("server")?.as_str()?;
+    let mut pinned = outbound.clone();
+    let object = pinned.as_object_mut()?;
+    if let Some(tls) = object.get_mut("tls") {
+        let tls = tls.as_object_mut()?;
+        let name = match tls.get("server_name") {
+            None => "",
+            Some(Value::String(name)) => name.as_str(),
+            Some(_) => return None,
+        };
+        if original.trim_matches(['[', ']']).parse::<IpAddr>().is_err()
+            && tls.get("enabled") == Some(&Value::Bool(true))
+            && name.is_empty()
+        {
+            tls.insert("server_name".into(), original.into());
+        }
+    }
+    object.insert("server".into(), ip.to_string().into());
+    Some(pinned)
+}
+
 fn contains_external_resource(value: &Value) -> bool {
     match value {
         Value::Object(fields) => fields.iter().any(|(key, value)| {
@@ -585,20 +658,28 @@ fn probe_one(
     if outbound
         .get("server")
         .and_then(Value::as_str)
-        .is_none_or(unsafe_address)
+        .and_then(|server| server.trim_matches(['[', ']']).parse::<IpAddr>().ok())
+        .is_some_and(|ip| !super::resolve::public(ip))
     {
         return Ok(Outcome::new(Health::Unknown, ProbeReason::UnsafeAddress));
     }
     if contains_external_resource(outbound) {
         return Ok(Outcome::new(Health::Unknown, ProbeReason::ExternalResource));
     }
+    let Some(pinned) = pin_endpoint(outbound, options.doh, options.timeout) else {
+        return Ok(Outcome::new(
+            Health::Unknown,
+            ProbeReason::AddressUnverified,
+        ));
+    };
+    let pinned = SecretJson(pinned);
     let port = TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0))
         .and_then(|listener| listener.local_addr())
         .map_err(|_| EngineError::Infrastructure)?
         .port();
     let user = credential()?;
     let password = credential()?;
-    let Ok(config) = isolated_config(outbound, port, &user, &password, options.doh) else {
+    let Ok(config) = isolated_config(&pinned.0, port, &user, &password, options.doh) else {
         return Ok(Outcome::new(Health::Unknown, ProbeReason::Unsupported));
     };
     let config = SecretJson(config);

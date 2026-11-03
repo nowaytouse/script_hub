@@ -34,6 +34,14 @@ pub(super) enum RelayStep {
     Publish,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum InputMode {
+    #[default]
+    Link,
+    Paste,
+    File,
+}
+
 pub(super) fn failure_message(
     language: crate::runtime::settings::Language,
     failure: &Failure,
@@ -44,6 +52,25 @@ pub(super) fn failure_message(
         Failure::Validation(key) => *key,
         Failure::Operation(error) => match error {
             RelayError::InvalidInput => Text::RelayConfigInvalid,
+            RelayError::InputUnavailable => Text::RelayInputUnavailable,
+            RelayError::InputInvalid => Text::RelaySubscriptionInvalid,
+            RelayError::InputHttpStatus(status) => {
+                return format!(
+                    "{} {status}",
+                    super::i18n::text(language, Text::RelayInputStatus)
+                );
+            }
+            RelayError::InputRateLimited {
+                retry_after_seconds,
+            } => {
+                return match retry_after_seconds {
+                    Some(seconds) => format!(
+                        "{} {seconds} s",
+                        super::i18n::text(language, Text::RelayInputLimited)
+                    ),
+                    None => super::i18n::text(language, Text::RelayInputLimited).to_owned(),
+                };
+            }
             RelayError::NoHealthyNodes => Text::RelayNoHealthy,
             RelayError::SourceChanged => Text::RelaySourceChanged,
             RelayError::Cancelled => Text::RelayCancelled,
@@ -127,6 +154,10 @@ pub(super) fn failure_message(
 
 pub(super) struct RelayState {
     pub step: RelayStep,
+    pub input_mode: InputMode,
+    pub paste: Zeroizing<String>,
+    pub reveal_paste: bool,
+    pub schedule: super::relay_schedule::State,
     pub selected_engine: Option<std::path::PathBuf>,
     pub reveal_source: bool,
     pub reveal_token: bool,
@@ -178,7 +209,7 @@ pub(super) struct EditorRow {
 
 pub(super) struct EditorState {
     pub source: Zeroizing<String>,
-    origin: Option<crate::relay::gist::Source>,
+    origin: Option<crate::relay::input::Source>,
     pub rows: Vec<EditorRow>,
     pub options: crate::relay::model::editor::Options,
     pub reveal: bool,
@@ -187,7 +218,7 @@ pub(super) struct EditorState {
 impl EditorState {
     fn new(
         source: &str,
-        origin: Option<crate::relay::gist::Source>,
+        origin: Option<crate::relay::input::Source>,
     ) -> Result<Self, crate::relay::model::ModelError> {
         let subscription = crate::relay::model::Subscription::parse(source)?;
         let rows = subscription
@@ -260,7 +291,7 @@ struct Pending {
     generation: u64,
 }
 
-struct PrivateConfig(RelayConfig);
+pub(super) struct PrivateConfig(pub(super) RelayConfig);
 
 impl Drop for PrivateConfig {
     fn drop(&mut self) {
@@ -277,6 +308,10 @@ impl Default for RelayState {
         let defaults = RelayConfig::default();
         Self {
             step: RelayStep::Source,
+            input_mode: InputMode::Link,
+            paste: Zeroizing::new(String::new()),
+            reveal_paste: false,
+            schedule: Default::default(),
             selected_engine: crate::relay::engine::discover_engine(),
             reveal_source: false,
             reveal_token: false,
@@ -321,6 +356,121 @@ impl Default for RelayState {
 }
 
 impl RelayState {
+    pub(super) fn import_paste(&mut self, ctx: &egui::Context) {
+        if self.busy() {
+            return;
+        }
+        if self.paste.len() > 4 * 1024 * 1024 {
+            self.error = Some(Failure::Validation(Text::RelayTooLarge));
+            return;
+        }
+        self.clear_editor_widgets(ctx);
+        self.input_changed();
+        self.source.zeroize();
+        self.source_file.zeroize();
+        self.local_content = Some(self.paste.clone());
+        self.start_with(RunMode::Import, Path::new(""), crate::relay::run);
+    }
+
+    pub(super) fn add_preset(
+        &mut self,
+        ctx: &egui::Context,
+        preset: crate::relay::model::entrance::Preset,
+    ) {
+        let Some(editor) = &self.editor else { return };
+        let mut steps = editor.options.pipeline.clone();
+        let mut id = steps.iter().map(|step| step.id).max().unwrap_or(0);
+        for mut step in crate::relay::model::entrance::steps(preset) {
+            let Some(next) = id.checked_add(1) else {
+                self.error = Some(Failure::Validation(Text::OperationPlanInvalid));
+                return;
+            };
+            id = next;
+            step.id = id;
+            steps.push(step);
+        }
+        if crate::relay::model::pipeline::validate(&steps).is_err() {
+            self.error = Some(Failure::Validation(Text::OperationPlanInvalid));
+            return;
+        }
+        self.clear_editor_widgets(ctx);
+        if let Some(editor) = &mut self.editor {
+            editor.options.pipeline = steps;
+        }
+        self.invalidate_result();
+    }
+
+    pub(super) fn arm_schedule(&mut self) {
+        if self.busy() || self.result.is_none() {
+            self.error = Some(Failure::Validation(Text::ScheduleNeedsPreview));
+            return;
+        }
+        if !self.acknowledge_publish || self.output.trim().is_empty() {
+            self.error = Some(Failure::Validation(Text::ScheduleNeedsOutput));
+            return;
+        }
+        if self.local_content.is_none()
+            && self
+                .editor
+                .as_ref()
+                .is_some_and(|editor| !editor.processing().nodes.is_empty())
+        {
+            self.error = Some(Failure::Validation(Text::ScheduleIndexedEdits));
+            return;
+        }
+        let mut config = self.private_config(self.engine_path());
+        config.0.local_content = self.local_content.clone();
+        config.0.test_nodes = self.result.as_ref().is_some_and(|result| result.tested);
+        // The schedule owns a frozen snapshot; editing requires stopping it first.
+        if let Err(error) = self.schedule.arm(config.0.clone(), &self.token) {
+            self.error = Some(Failure::Operation(error));
+        }
+    }
+
+    pub(super) fn accept_scheduled(&mut self, result: RelayResult) {
+        let content = result
+            .source
+            .as_ref()
+            .map(|source| source.content())
+            .or(self.local_content.as_deref().map(String::as_str));
+        if let Some(content) = content {
+            match EditorState::new(content, result.source.clone()) {
+                Ok(mut editor) => {
+                    if let Some(old) = &self.editor {
+                        editor.options = old.options.clone();
+                    }
+                    self.editor = Some(editor);
+                }
+                Err(error) => {
+                    self.error = Some(Failure::Operation(RelayError::Model(error)));
+                    self.schedule.stop();
+                    return;
+                }
+            }
+        }
+        if let Ok(subscription) = crate::relay::model::Subscription::parse(&result.content) {
+            self.preview_names = subscription
+                .nodes()
+                .iter()
+                .map(|node| Zeroizing::new(node.name().to_owned()))
+                .collect();
+            self.preview_endpoints = subscription
+                .nodes()
+                .iter()
+                .map(|node| Zeroizing::new(format!("{}:{}", node.server(), node.port())))
+                .collect();
+            self.result_format = Some(subscription.format_label());
+        }
+        self.completed_config = Some(self.private_config(self.engine_path()));
+        self.notice = Some(if result.unchanged {
+            Text::RelayUnchanged
+        } else {
+            Text::RelayPublished
+        });
+        self.error = None;
+        self.result = Some(result);
+    }
+
     pub(super) fn clear_editor_widgets(&self, ctx: &egui::Context) {
         if let Some(editor) = &self.editor {
             super::pages::clear_node_operations(ctx, &editor.options.pipeline);
@@ -331,6 +481,7 @@ impl RelayState {
                 "relay-exclude",
                 "relay-find",
                 "relay-replace",
+                "relay-paste",
             ] {
                 data.remove::<egui::text_edit::TextEditState>(egui::Id::unique(id));
             }
@@ -366,6 +517,7 @@ impl RelayState {
     }
 
     pub(super) fn invalidate_result(&mut self) {
+        self.schedule.stop();
         self.allow_resolution = false;
         self.preview_names.clear();
         self.preview_endpoints.clear();
@@ -385,7 +537,7 @@ impl RelayState {
         self.cooldown_until = None;
     }
     pub(super) fn busy(&self) -> bool {
-        self.pending.is_some() || self.file_pending.is_some()
+        self.pending.is_some() || self.file_pending.is_some() || self.schedule.running()
     }
 
     pub(super) fn selecting_file(&self) -> bool {
@@ -423,17 +575,22 @@ impl RelayState {
         if self.source.trim().is_empty() && self.local_content.is_none() {
             return Err(Text::RelayInputInvalid);
         }
-        let source = if self.source.trim().is_empty() {
+        let source = if self.source.trim().is_empty() || self.local_content.is_some() {
             None
         } else {
-            Some(
-                GistFile::parse_source(self.source.trim(), &self.source_file).map_err(|error| {
-                    match error {
-                        crate::relay::gist::GistError::PinnedTarget => Text::RelayPinnedTarget,
-                        _ => Text::RelayInputInvalid,
-                    }
-                })?,
-            )
+            RelayConfig {
+                source: self.source.trim().to_owned(),
+                source_file: self.source_file.to_string(),
+                ..RelayConfig::default()
+            }
+            .validate(RunMode::Import)
+            .map_err(|error| match error {
+                RelayError::Gist(crate::relay::gist::GistError::PinnedTarget) => {
+                    Text::RelayPinnedTarget
+                }
+                _ => Text::RelayInputInvalid,
+            })?;
+            GistFile::parse_source(self.source.trim(), &self.source_file).ok()
         };
         if mode == RunMode::Import {
             return Ok(());
@@ -517,6 +674,10 @@ impl RelayState {
     }
 
     pub(super) fn clear(&mut self, ctx: &egui::Context) {
+        self.schedule.stop();
+        self.paste.zeroize();
+        self.reveal_paste = false;
+        self.input_mode = InputMode::Link;
         self.clear_editor_widgets(ctx);
         self.file_picker = None;
         self.imported_processing = None;
@@ -567,6 +728,7 @@ impl RelayState {
     }
 
     pub(super) fn request_cancel(&mut self) {
+        self.schedule.stop();
         if let Some(pending) = &self.pending {
             pending.cancel.store(true, Ordering::Release);
             self.notice = Some(Text::RelayCancelling);
@@ -584,6 +746,7 @@ impl RelayState {
             self.reveal_source = false;
             self.reveal_token = false;
             self.reveal_output = false;
+            self.reveal_paste = false;
         }
         if self.cooldown_seconds() > 0 {
             ctx.request_repaint_after(Duration::from_secs(1));
@@ -1096,6 +1259,87 @@ mod tests {
         state.output_file.push_str("output.conf");
         state.title.push_str("Synthetic relay");
         state
+    }
+
+    #[test]
+    fn public_https_import_validation_does_not_require_gist_or_engine() {
+        let mut state = fixture();
+        state.source = Zeroizing::new("https://example.com/sub?key=synthetic".into());
+        state.source_file.clear();
+        assert!(state.validate(RunMode::Import, Path::new("")).is_ok());
+        state.source = Zeroizing::new("https://127.0.0.1/private".into());
+        assert!(state.validate(RunMode::Import, Path::new("")).is_err());
+    }
+
+    #[test]
+    fn pasted_nodes_import_offline_and_clear_erases_the_input() {
+        let ctx = egui::Context::default();
+        let mut state = RelayState::default();
+        state.input_mode = InputMode::Paste;
+        state.paste.push_str("A = socks5, node.example, 1080\n");
+        state.import_paste(&ctx);
+        finish(&mut state, &ctx);
+        assert_eq!(state.editor.as_ref().unwrap().rows.len(), 1);
+        assert!(state.source.is_empty());
+        assert!(state.result.as_ref().unwrap().source.is_none());
+        state.clear(&ctx);
+        assert!(state.paste.is_empty() && state.local_content.is_none());
+    }
+
+    #[test]
+    fn schedule_arming_is_explicit_and_input_edits_stop_it() {
+        let mut state = fixture();
+        state.result = Some(result());
+        state.arm_schedule();
+        assert!(!state.schedule.armed());
+        state.acknowledge_publish = true;
+        state.arm_schedule();
+        assert!(state.schedule.armed());
+        state.input_changed();
+        assert!(!state.schedule.armed());
+    }
+
+    #[test]
+    fn native_presets_append_unique_steps_without_silent_dns_requests() {
+        let mut state = fixture();
+        state.editor = Some(EditorState::new("A = socks5, node.example, 1080\n", None).unwrap());
+        let ctx = egui::Context::default();
+        state.add_preset(&ctx, crate::relay::model::entrance::Preset::Safe);
+        state.add_preset(&ctx, crate::relay::model::entrance::Preset::Compatible);
+        let steps = &state.editor.as_ref().unwrap().options.pipeline;
+        assert_eq!(steps.len(), 16);
+        assert!(crate::relay::model::pipeline::validate(steps).is_ok());
+        assert!(!state.needs_resolution());
+    }
+
+    #[test]
+    fn scheduled_success_replaces_stale_copy_and_source_binding() {
+        let mut state = fixture();
+        state.source = Zeroizing::new("https://example.com/sub".into());
+        state.source_file.clear();
+        let fresh = "B = socks5, fresh.example, 1080\n";
+        let mut latest = result();
+        latest.content = Zeroizing::new(fresh.into());
+        latest.source = Some(crate::relay::input::Source::Https {
+            url: Zeroizing::new(state.source.to_string()),
+            content: Zeroizing::new(fresh.into()),
+        });
+        state.accept_scheduled(latest);
+        assert_eq!(state.result.as_ref().unwrap().content.as_str(), fresh);
+        assert_eq!(state.editor.as_ref().unwrap().source.as_str(), fresh);
+        assert_eq!(state.preview_names[0].as_str(), "B");
+        assert_eq!(
+            state
+                .completed_config
+                .as_ref()
+                .unwrap()
+                .0
+                .expected_source
+                .as_deref()
+                .unwrap()
+                .as_str(),
+            fresh
+        );
     }
 
     #[test]

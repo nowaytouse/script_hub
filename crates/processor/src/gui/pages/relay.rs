@@ -2,7 +2,7 @@ use super::{card, primary_button};
 use crate::gui::app::HubApp;
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
-use crate::gui::relay::{RelayStep, SECRET_IDS};
+use crate::gui::relay::{InputMode, RelayStep, SECRET_IDS};
 use crate::relay::{RelayStage, RunMode};
 use eframe::egui;
 use zeroize::Zeroize;
@@ -16,7 +16,7 @@ impl HubApp {
         let mut action = None;
         let mut file_action = None;
         ui.vertical_centered(|ui| {
-            ui.set_max_width(760.0);
+            ui.set_max_width(880.0);
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                 ui.heading(tr(Text::Relay));
                 ui.label(tr(Text::RelayIntro));
@@ -60,6 +60,24 @@ impl HubApp {
                 if cooldown > 0 {
                     ui.weak(format!("{} {cooldown} s", tr(Text::RelayRetryWait)));
                 }
+                if state.schedule.armed() || state.schedule.running() {
+                    card(ui, colors, |ui| {
+                        ui.strong(tr(if state.schedule.armed() { Text::ScheduleActive } else { Text::RelayCancelling }));
+                        if let Some(seconds) = state.schedule.seconds_until_due() {
+                            ui.label(format!("{} {:02}:{:02}:{:02}", tr(Text::ScheduleNext), seconds / 3600, seconds / 60 % 60, seconds % 60));
+                        } else if state.schedule.running() {
+                            ui.label(tr(Text::ScheduleRunning));
+                        }
+                        if let Some(result) = state.schedule.result {
+                            ui.label(format!("{} · {} {} · {} {}", tr(if result.unchanged { Text::RelayUnchanged } else { Text::RelayPublished }), tr(Text::RelayTotal), result.total, tr(Text::RelayRemoved), result.removed));
+                        }
+                        ui.weak(tr(Text::ScheduleSessionOnly));
+                        if ui.button(tr(Text::ScheduleStop)).clicked() {
+                            state.schedule.stop();
+                        }
+                    });
+                    ui.add_space(8.0);
+                }
                 if state.busy() {
                     card(ui, colors, |ui| {
                         ui.horizontal(|ui| {
@@ -94,7 +112,7 @@ impl HubApp {
                 egui::ScrollArea::vertical()
                     .id_salt(("relay-step", state.step as u8))
                     .show(ui, |ui| {
-                        ui.add_enabled_ui(admitted, |ui| {
+                        ui.add_enabled_ui(admitted && !state.schedule.armed(), |ui| {
                             card(ui, colors, |ui| match state.step {
                                 RelayStep::Source => {
                                     ui.label(
@@ -103,6 +121,16 @@ impl HubApp {
                                             .strong(),
                                     );
                                     ui.add_space(8.0);
+                                    ui.horizontal_wrapped(|ui| {
+                                        for (mode, key) in [(InputMode::Link, Text::InputLink), (InputMode::Paste, Text::InputPaste), (InputMode::File, Text::RelayLocalSource)] {
+                                            if ui.selectable_label(state.input_mode == mode, tr(key)).clicked() {
+                                                state.input_mode = mode;
+                                                state.clear_request_error();
+                                            }
+                                        }
+                                    });
+                                    ui.add_space(8.0);
+                                    if state.input_mode == InputMode::Link {
                                     ui.strong(tr(Text::RelayGistSource));
                                     if secret_field(
                                         ui,
@@ -183,13 +211,39 @@ impl HubApp {
                                     {
                                         action = Some(RunMode::Import);
                                     }
-                                    ui.add_space(12.0);
-                                    ui.separator();
-                                    ui.add_space(8.0);
+                                    } else if state.input_mode == InputMode::Paste {
+                                        ui.label(tr(Text::InputPasteHelp));
+                                        ui.checkbox(&mut state.reveal_paste, tr(Text::InputReveal));
+                                        let changed = egui::ScrollArea::vertical()
+                                            .id_salt("relay-paste-scroll")
+                                            .max_height(180.0)
+                                            .show(ui, |ui| {
+                                        let mut edit = egui::TextEdit::multiline(&mut *state.paste)
+                                            .id(egui::Id::unique("relay-paste"))
+                                            .desired_rows(6)
+                                            .desired_width(f32::INFINITY)
+                                            .password(!state.reveal_paste)
+                                            .char_limit(4 * 1024 * 1024)
+                                            .show(ui);
+                                        edit.state.clear_undoer();
+                                        edit.state.store(ui.ctx(), edit.response.id);
+                                        edit.response.changed()
+                                            }).inner;
+                                        if changed {
+                                            state.clear_editor_widgets(ui.ctx());
+                                            state.input_changed();
+                                            state.local_content = None;
+                                            state.local_summary = None;
+                                        }
+                                        if ui.add_enabled(!state.paste.trim().is_empty(), primary_button(colors, tr(Text::RelayImportGist))).clicked() {
+                                            state.import_paste(ui.ctx());
+                                        }
+                                    } else {
                                     ui.strong(tr(Text::RelayLocalSource));
                                     ui.weak(tr(Text::RelayDropFile));
                                     if ui.button(tr(Text::RelayImportFile)).clicked() {
                                         file_action = Some(FileAction::Import);
+                                    }
                                     }
                                 }
                                 RelayStep::Review => {
@@ -207,6 +261,15 @@ impl HubApp {
                                         ));
                                     }
                                     ui.add_space(12.0);
+                                    ui.collapsing(tr(Text::NativePreset), |ui| {
+                                        ui.weak(tr(Text::NativePresetHelp));
+                                        let mut selected = None;
+                                        ui.horizontal_wrapped(|ui| {
+                                            if ui.button(tr(Text::NativeSafe)).clicked() { selected = Some(crate::relay::model::entrance::Preset::Safe); }
+                                            if ui.button(tr(Text::NativeCompatible)).clicked() { selected = Some(crate::relay::model::entrance::Preset::Compatible); }
+                                        });
+                                        if let Some(preset) = selected { state.add_preset(ui.ctx(), preset); }
+                                    });
                                     let mut reset_editor_widgets = false;
                                     if let Some(editor) = &mut state.editor {
                                         let mut changed = super::node_operations::show(
@@ -392,11 +455,7 @@ impl HubApp {
                                         );
                                         ui.checkbox(&mut state.doh, tr(Text::RelayDoh));
                                     });
-                                    ui.weak(tr(Text::RelayCleanHelp));
                                     ui.add_space(12.0);
-                                    if state.selected_engine.is_none() {
-                                        ui.weak(tr(Text::RelayEngineMissing));
-                                    }
                                     ui.horizontal_wrapped(|ui| {
                                         let ready = state.editor.is_some()
                                             && cooldown == 0
@@ -404,7 +463,7 @@ impl HubApp {
                                         if ui
                                             .add_enabled(
                                                 ready,
-                                                egui::Button::new(tr(if needs_resolution {
+                                                primary_button(colors, tr(if needs_resolution {
                                                     Text::ResolutionPrepare
                                                 } else {
                                                     Text::RelayPrepareOnly
@@ -418,7 +477,7 @@ impl HubApp {
                                         if ui
                                             .add_enabled(
                                                 ready && state.selected_engine.is_some(),
-                                                primary_button(colors, tr(Text::RelayPreview)),
+                                                egui::Button::new(tr(Text::RelayPreview)),
                                             )
                                             .clicked()
                                         {
@@ -569,6 +628,18 @@ impl HubApp {
                                         ui.label(tr(Text::RelayCreated));
                                         ui.hyperlink_to(&created.url, &created.url);
                                     }
+                                    ui.add_space(16.0);
+                                    ui.separator();
+                                    ui.strong(tr(Text::ScheduleTitle));
+                                    ui.weak(tr(Text::ScheduleHelp));
+                                    ui.horizontal_wrapped(|ui| {
+                                        ui.label(tr(Text::ScheduleInterval));
+                                        ui.add(egui::DragValue::new(&mut state.schedule.interval_minutes).range(1..=10080));
+                                    });
+                                    ui.weak(tr(Text::ScheduleSessionOnly));
+                                    if ui.add_enabled(has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
+                                        state.arm_schedule();
+                                    }
                                 }
                             });
                         });
@@ -685,6 +756,10 @@ fn summary(
                 (ProbeReason::Verified, Text::RelayReasonVerified),
                 (ProbeReason::Unsupported, Text::RelayReasonUnsupported),
                 (ProbeReason::UnsafeAddress, Text::RelayReasonUnsafeAddress),
+                (
+                    ProbeReason::AddressUnverified,
+                    Text::RelayReasonAddressUnverified,
+                ),
                 (
                     ProbeReason::ExternalResource,
                     Text::RelayReasonExternalResource,

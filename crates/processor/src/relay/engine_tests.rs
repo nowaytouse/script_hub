@@ -283,6 +283,65 @@ fn local_address_variants_are_rejected_without_resolving() {
 }
 
 #[test]
+fn pinned_endpoint_retains_tls_identity_and_rejects_private_addresses() {
+    let public = "1.1.1.1".parse().unwrap();
+    let local = "127.0.0.1".parse().unwrap();
+    assert_eq!(select_public_address([public]), Some(public));
+    assert_eq!(select_public_address([public, local]), None);
+    assert_eq!(select_public_address([]), None);
+    let outbound = json!({"type":"trojan","server":"node.example.com","server_port":443,"tls":{"enabled":true}});
+    let pinned = pin_address(&outbound, "1.1.1.1".parse().unwrap()).unwrap();
+    assert_eq!(pinned["server"], "1.1.1.1");
+    assert_eq!(pinned["tls"]["server_name"], "node.example.com");
+    let mut with_name = outbound.clone();
+    with_name["tls"]["server_name"] = json!("");
+    assert_eq!(
+        pin_address(&with_name, public).unwrap()["tls"]["server_name"],
+        "node.example.com"
+    );
+    with_name["tls"]["server_name"] = json!("identity.example.com");
+    assert_eq!(
+        pin_address(&with_name, public).unwrap()["tls"]["server_name"],
+        "identity.example.com"
+    );
+    for invalid in [json!(null), json!(42)] {
+        with_name["tls"]["server_name"] = invalid;
+        assert!(pin_address(&with_name, public).is_none());
+    }
+    assert!(pin_address(&outbound, "127.0.0.1".parse().unwrap()).is_none());
+    let mut transport = outbound.clone();
+    transport["transport"] = json!({"type":"ws"});
+    assert!(pin_endpoint(&transport, false, Duration::from_secs(1)).is_none());
+    assert!(pin_endpoint(&outbound, true, Duration::from_secs(1)).is_none());
+}
+
+#[test]
+fn distinguishes_known_private_from_unverified_addresses_without_connecting() {
+    let options = ProbeOptions {
+        doh: true,
+        ..Default::default()
+    };
+    let cancel = AtomicBool::new(false);
+    for (server, expected) in [
+        ("127.0.0.1", ProbeReason::UnsafeAddress),
+        ("node.example.invalid", ProbeReason::AddressUnverified),
+        ("node.local", ProbeReason::AddressUnverified),
+    ] {
+        let outbound = json!({"type":"socks","server":server,"server_port":1080});
+        let result = probe_one(
+            &outbound,
+            Path::new("unused"),
+            &options,
+            [false; 2],
+            &cancel,
+        )
+        .unwrap();
+        assert_eq!(result.health, Health::Unknown);
+        assert_eq!(result.detail.reason, expected);
+    }
+}
+
+#[test]
 fn measurement_cache_does_not_probe_named_aliases_again() {
     let subscription = Subscription::parse("A = anytls, node.example.invalid, 443, password=synthetic\nB = anytls, node.example.invalid, 443, password=synthetic\n").unwrap();
     let first = subscription.nodes()[0].to_sing_box(false).unwrap();
