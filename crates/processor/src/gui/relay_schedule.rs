@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::relay::PrivateConfig;
+use super::relay::{Failure, PrivateConfig};
 use crate::relay::{
     Progress, RelayConfig, RelayError, RelayResult, collection_schedule,
     library::Workspace,
@@ -57,11 +57,21 @@ impl Completed {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Status {
+    Idle,
+    Waiting { seconds: u64, retry: bool },
+    Running,
+    Stopping,
+    Paused,
+}
+
 pub struct State {
     pub interval_minutes: u64,
     pub progress: Option<Progress>,
     pub result: Option<Summary>,
-    pub last_error: Option<RelayError>,
+    pub(super) last_error: Option<Failure>,
+    server_retry_until: Option<Instant>,
     schedule: Option<Schedule>,
     config: Option<PrivateConfig>,
     collection: Option<(Arc<Workspace>, u64)>,
@@ -77,6 +87,7 @@ impl Default for State {
             progress: None,
             result: None,
             last_error: None,
+            server_retry_until: None,
             schedule: None,
             config: None,
             collection: None,
@@ -96,7 +107,7 @@ impl State {
         &mut self,
         config: RelayConfig,
         token: &str,
-        workspace: &Workspace,
+        workspace: Workspace,
         id: u64,
     ) -> Result<(), RelayError> {
         self.arm_with(config, token, Some((workspace, id)))
@@ -106,14 +117,21 @@ impl State {
         &mut self,
         config: RelayConfig,
         token: &str,
-        collection: Option<(&Workspace, u64)>,
+        collection: Option<(Workspace, u64)>,
     ) -> Result<(), RelayError> {
         let config = PrivateConfig(config);
-        if self.running() || self.armed() || token.is_empty() {
+        let now = Instant::now();
+        if self.running()
+            || self.armed()
+            || token.is_empty()
+            || self
+                .server_retry_until
+                .is_some_and(|deadline| deadline > now)
+        {
             return Err(RelayError::InvalidInput);
         }
-        if let Some((workspace, id)) = collection {
-            collection_schedule::validate(workspace, id, &config.0)?;
+        if let Some((workspace, id)) = &collection {
+            collection_schedule::validate(workspace, *id, &config.0)?;
         } else {
             schedule::validate(&config.0)?;
         }
@@ -122,15 +140,14 @@ impl State {
             .interval_minutes
             .checked_mul(60)
             .ok_or(RelayError::InvalidInput)?;
-        let schedule = Schedule::new(Duration::from_secs(seconds), Instant::now())?;
+        let schedule = Schedule::new(Duration::from_secs(seconds), now)?;
         self.generation = self.generation.wrapping_add(1);
         self.schedule = Some(schedule);
         self.config = Some(config);
-        self.collection = collection.map(|(workspace, id)| (Arc::new(workspace.clone()), id));
+        self.collection = collection.map(|(workspace, id)| (Arc::new(workspace), id));
         self.token = Some(Zeroizing::new(token.to_owned()));
         self.progress = None;
-        self.result = None;
-        self.last_error = None;
+        self.clear_feedback();
         Ok(())
     }
 
@@ -146,6 +163,7 @@ impl State {
         self.collection = None;
         self.token = None;
         self.progress = None;
+        self.clear_feedback();
     }
 
     pub fn running(&self) -> bool {
@@ -154,11 +172,41 @@ impl State {
     pub fn armed(&self) -> bool {
         self.config.is_some() && self.schedule.as_ref().is_some_and(|s| !s.is_paused())
     }
-    pub fn seconds_until_due(&self) -> Option<u64> {
-        self.schedule
-            .as_ref()?
-            .next_due()
-            .map(|due| due.saturating_duration_since(Instant::now()).as_secs())
+    pub fn clear_feedback(&mut self) {
+        self.last_error = None;
+        self.result = None;
+    }
+
+    pub fn server_retry_until(&self) -> Option<Instant> {
+        self.server_retry_until
+    }
+
+    pub(super) fn status(&self) -> Status {
+        self.status_at(Instant::now())
+    }
+
+    fn status_at(&self, now: Instant) -> Status {
+        if self.running() {
+            return if self.armed() {
+                Status::Running
+            } else {
+                Status::Stopping
+            };
+        }
+        if let Some(schedule) = self.schedule.as_ref().filter(|_| self.armed())
+            && let Some(due) = schedule.next_due()
+        {
+            let remaining = due.saturating_duration_since(now);
+            return Status::Waiting {
+                seconds: remaining.as_secs() + u64::from(remaining.subsec_nanos() != 0),
+                retry: schedule.is_waiting_to_retry(),
+            };
+        }
+        if self.last_error.is_some() {
+            Status::Paused
+        } else {
+            Status::Idle
+        }
     }
 
     pub fn tick(&mut self, ctx: &egui::Context, admitted: bool) -> Option<Completed> {
@@ -184,8 +232,14 @@ impl State {
             } else {
                 Err(RelayError::InvalidInput)
             };
+            let now = Instant::now();
+            if let Err(error) = &outcome
+                && let Some(wait) = schedule::server_retry_after(error)
+            {
+                self.server_retry_until = self.server_retry_until.max(now.checked_add(wait));
+            }
             if let Some(schedule) = &mut self.schedule {
-                schedule.finish_status(Instant::now(), outcome.as_ref().map(|_| ()));
+                schedule.finish_status(now, outcome.as_ref().map(|_| ()));
             }
             if pending.generation == self.generation {
                 self.progress = None;
@@ -196,8 +250,7 @@ impl State {
                         completed = Some(result);
                     }
                     Err(error) => {
-                        self.result = None;
-                        self.last_error = Some(error);
+                        self.last_error = Some(Failure::Operation(error));
                     }
                 }
                 if self.schedule.as_ref().is_some_and(Schedule::is_paused) {
@@ -261,7 +314,7 @@ impl State {
                         .as_mut()
                         .unwrap()
                         .finish_status(now, Err(&error));
-                    self.last_error = Some(error);
+                    self.last_error = Some(Failure::Operation(error));
                     self.config = None;
                     self.collection = None;
                     self.token = None;
@@ -318,8 +371,69 @@ mod tests {
         assert!(state.arm(config(), "test").is_err());
     }
 
+    fn finish_failed_run(state: &mut State, error: RelayError) {
+        let schedule = state.schedule.as_mut().unwrap();
+        assert!(schedule.begin(schedule.next_due().unwrap()));
+        let (sender, receiver) = mpsc::channel();
+        let worker = thread::spawn(move || sender.send(Err(error)).unwrap());
+        state.pending = Some(Pending {
+            worker,
+            receiver,
+            cancel: Arc::new(AtomicBool::new(false)),
+            progress: Arc::new(Mutex::new(None)),
+            generation: state.generation,
+        });
+        let ctx = egui::Context::default();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while state.running() && Instant::now() < deadline {
+            assert!(state.tick(&ctx, false).is_none());
+            thread::yield_now();
+        }
+        assert!(!state.running());
+    }
+
     #[test]
-    fn stop_cancels_pending_and_discards_late_result() {
+    fn transient_and_fatal_errors_keep_last_confirmed_sync_but_have_distinct_states() {
+        let mut state = State::default();
+        state.arm(config(), "test").unwrap();
+        let initial_due = state.schedule.as_ref().unwrap().next_due().unwrap();
+        assert_eq!(
+            state.status_at(initial_due - Duration::from_millis(500)),
+            Status::Waiting {
+                seconds: 1,
+                retry: false
+            }
+        );
+        assert_eq!(
+            state.status_at(initial_due),
+            Status::Waiting {
+                seconds: 0,
+                retry: false
+            }
+        );
+        state.result = Some(Summary {
+            total: 4,
+            removed: 1,
+            unchanged: false,
+        });
+        finish_failed_run(&mut state, RelayError::SourceChanged);
+        assert!(matches!(
+            state.status(),
+            Status::Waiting { retry: true, .. }
+        ));
+        assert!(state.last_error.is_some());
+        assert_eq!(state.result.unwrap().total, 4);
+        finish_failed_run(&mut state, RelayError::NoHealthyNodes);
+        assert_eq!(state.status(), Status::Paused);
+        assert!(state.last_error.is_some());
+        assert_eq!(state.result.unwrap().total, 4);
+        assert!(!state.armed() && state.config.is_none() && state.token.is_none());
+        state.clear_feedback();
+        assert_eq!(state.status(), Status::Idle);
+    }
+
+    #[test]
+    fn stop_discards_late_feedback_but_preserves_real_server_retry_deadline() {
         let mut state = State::default();
         state.arm(config(), "test").unwrap();
         let cancel = Arc::new(AtomicBool::new(false));
@@ -329,7 +443,11 @@ mod tests {
         let worker = thread::spawn(move || {
             wait.recv().unwrap();
             assert!(observed.load(Ordering::Acquire));
-            sender.send(Err(RelayError::SourceChanged)).unwrap();
+            sender
+                .send(Err(RelayError::InputRateLimited {
+                    retry_after_seconds: Some(120),
+                }))
+                .unwrap();
         });
         state.pending = Some(Pending {
             worker,
@@ -339,15 +457,20 @@ mod tests {
             generation: state.generation,
         });
         state.stop();
-        assert!(state.running());
+        assert_eq!(state.status(), Status::Stopping);
         release.send(()).unwrap();
         let deadline = Instant::now() + Duration::from_secs(2);
         while state.running() && Instant::now() < deadline {
             assert!(state.tick(&egui::Context::default(), false).is_none());
             thread::yield_now();
         }
-        assert!(!state.running());
+        assert_eq!(state.status(), Status::Idle);
         assert!(state.last_error.is_none() && state.result.is_none());
+        let deadline = state.server_retry_until().unwrap();
+        assert!(deadline > Instant::now());
+        state.clear_feedback();
+        assert_eq!(state.server_retry_until(), Some(deadline));
+        assert!(state.arm(config(), "test").is_err());
     }
 
     #[test]

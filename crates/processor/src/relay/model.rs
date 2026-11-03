@@ -93,7 +93,7 @@ struct Field {
     value_range: Range<usize>,
 }
 
-struct PrivateJson(Value);
+pub(super) struct PrivateJson(pub(super) Value);
 
 #[derive(Eq, PartialEq)]
 struct NodeIdentity(Zeroizing<String>);
@@ -148,6 +148,11 @@ impl Node {
     }
 
     pub(super) fn write_export_sing_box(&self, output: &mut Vec<u8>) -> Result<(), ModelError> {
+        let value = self.export_sing_box()?;
+        serde_json::to_writer(output, &value.0).map_err(|_| ModelError::Render)
+    }
+
+    pub(super) fn export_sing_box(&self) -> Result<PrivateJson, ModelError> {
         let mut udp = None;
         if let NodeSource::Surge(source) = &self.source {
             for field in &source.fields {
@@ -170,7 +175,7 @@ impl Node {
         if udp == Some(false) {
             value.0["network"] = "tcp".into();
         }
-        serde_json::to_writer(output, &value.0).map_err(|_| ModelError::Render)
+        Ok(value)
     }
 
     pub(super) fn validate_native_surge_export(&self) -> Result<(), ModelError> {
@@ -1235,10 +1240,14 @@ fn decode_surge(input: &str) -> Result<Zeroizing<String>, ModelError> {
     Ok(output)
 }
 
-fn quote_surge(input: &str) -> Result<Zeroizing<String>, ModelError> {
+pub(super) fn quote_surge(input: &str) -> Result<Zeroizing<String>, ModelError> {
     serde_json::to_string(input)
         .map(Zeroizing::new)
         .map_err(|_| ModelError::Render)
+}
+
+pub(super) fn valid_host(value: &str) -> bool {
+    value.parse::<std::net::IpAddr>().is_ok() || properties::hostname(value)
 }
 
 fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {

@@ -5,9 +5,11 @@ use std::sync::atomic::AtomicBool;
 use zeroize::{Zeroize, Zeroizing};
 
 use super::{
-    Progress, RelayConfig, RelayError, RelayResult, RelayStage, RunMode, active, gist, input,
+    Progress, Publication, RelayConfig, RelayError, RelayResult, RelayStage, RunMode, active, gist,
+    input,
     library::{Entry, Workspace},
-    library_refresh, model, publish_result, read_destination, validate_prepared,
+    library_refresh, model, publication_payload, publish_result, read_destination,
+    validate_prepared,
 };
 
 pub struct Completed {
@@ -91,13 +93,17 @@ fn run_with(
     let mut fetch =
         |entry: &Entry| input::read(client, entry.source.trim(), &entry.source_file, cancel);
     let mut prepared = prepare_with(workspace, id, config, cancel, progress, &mut fetch)?;
+    let converted = publication_payload(config, &prepared.result, cancel)?;
     let destination = read_destination(config, client, cancel)?.ok_or(RelayError::InvalidInput)?;
     prepared.recheck_with(cancel, &mut fetch)?;
     publish_result(
         config,
         client,
         &mut prepared.result,
-        Some(destination),
+        Publication {
+            destination: Some(destination),
+            converted,
+        },
         cancel,
         progress,
     )?;
@@ -381,28 +387,63 @@ mod tests {
     }
 
     #[test]
+    fn incompatible_collection_format_stops_before_destination_and_final_source_reads() {
+        let (mut workspace, id, mut config) = fixture();
+        workspace.subscriptions[0].source =
+            format!("https://gist.githubusercontent.com/example/{GIST}/raw/nodes.txt");
+        workspace.subscriptions[1].content = "Old = http, old.example, 80\n".into();
+        config.output_file = "nodes.txt".into();
+        config.output_format = super::super::export::OutputFormat::Mihomo;
+        let fixture = Fixture::new(vec![Some(response(
+            200,
+            "Content-Type: text/plain\r\n",
+            NEW,
+        ))]);
+        assert!(matches!(
+            run_with(
+                &workspace,
+                id,
+                &config,
+                &fixture.client(),
+                &AtomicBool::new(false),
+                &|_| {},
+            ),
+            Err(RelayError::ExportNode { index: 2, .. })
+        ));
+        assert_eq!(fixture.request_methods(), ["GET"]);
+    }
+
+    #[test]
     fn successful_run_updates_one_gist_and_returns_fresh_cache_after_readback() {
         let (mut workspace, id, mut config) = fixture();
         workspace.subscriptions[0].source =
             format!("https://gist.githubusercontent.com/example/{GIST}/raw/nodes.txt");
         config.output_file = "nodes.txt".into();
         config.title = "relay".into();
+        config.output_format = super::super::export::OutputFormat::Mihomo;
         let cancel = AtomicBool::new(false);
         let preview = prepare_with(&workspace, id, &config, &cancel, &|_| {}, &mut |_| {
             Ok(source("nodes.txt", NEW))
         })
         .unwrap();
+        let exported = super::super::export::export_subscription(
+            &preview.result.content,
+            config.output_format,
+        )
+        .unwrap();
+        assert_ne!(exported.as_str(), preview.result.content.as_str());
         let fixture = Fixture::new(vec![
             Some(response(200, "Content-Type: text/plain\r\n", NEW)),
             api(document(OLD)),
             Some(response(200, "Content-Type: text/plain\r\n", NEW)),
             api(document(OLD)),
             Some(response(200, "", "")),
-            api(document(&preview.result.content)),
+            api(document(&exported)),
         ]);
         let completed =
             run_with(&workspace, id, &config, &fixture.client(), &cancel, &|_| {}).unwrap();
         assert!(completed.result.published);
+        assert_eq!(completed.result.content, preview.result.content);
         assert_eq!(completed.workspace.subscriptions[0].content, NEW);
         assert_eq!(
             fixture.request_methods(),

@@ -2,6 +2,7 @@
 
 use super::{
     RelayConfig,
+    export::OutputFormat,
     gist::{GistFile, validate_filename, validate_name},
     input::{self, Target},
     model::Subscription,
@@ -51,6 +52,8 @@ struct Export<'a> {
     source_file: &'a str,
     output: &'a str,
     output_file: &'a str,
+    #[serde(skip_serializing_if = "OutputFormat::is_original")]
+    output_format: OutputFormat,
     title: &'a str,
     rename: bool,
     sort: bool,
@@ -78,6 +81,8 @@ struct Import {
     output: Zeroizing<String>,
     #[serde(deserialize_with = "secret")]
     output_file: Zeroizing<String>,
+    #[serde(default)]
+    output_format: Option<OutputFormat>,
     #[serde(deserialize_with = "secret")]
     title: Zeroizing<String>,
     rename: bool,
@@ -151,6 +156,7 @@ pub fn encode(config: &RelayConfig, content: &str) -> Result<Zeroizing<Vec<u8>>,
         source_file: &config.source_file,
         output: &config.output,
         output_file: &config.output_file,
+        output_format: config.output_format,
         title: &config.title,
         rename: config.rename,
         sort: config.sort,
@@ -172,7 +178,7 @@ pub fn decode(bytes: &[u8]) -> Result<RelayBackup, BackupError> {
     }
     let mut doc: Import = serde_json::from_slice(bytes).map_err(|_| BackupError::Invalid)?;
     let known_schema = match doc.version {
-        1 => doc.processing.is_none(),
+        1 => doc.processing.is_none() && doc.output_format.is_none(),
         2 => doc.processing.is_some(),
         _ => false,
     };
@@ -185,6 +191,7 @@ pub fn decode(bytes: &[u8]) -> Result<RelayBackup, BackupError> {
             source_file: std::mem::take(&mut *doc.source_file),
             output: std::mem::take(&mut *doc.output),
             output_file: std::mem::take(&mut *doc.output_file),
+            output_format: doc.output_format.unwrap_or_default(),
             title: std::mem::take(&mut *doc.title),
             rename: doc.rename,
             sort: doc.sort,
@@ -241,6 +248,7 @@ mod tests {
         let backup = decode(&serde_json::to_vec(&old).unwrap()).unwrap();
         assert_eq!(backup.content.as_str(), CONTENT);
         assert!(!backup.config.processing.is_active());
+        assert_eq!(backup.config.output_format, OutputFormat::Original);
     }
 
     #[test]
@@ -319,6 +327,7 @@ mod tests {
             doh: true,
             allow_public_output: true,
             allow_resolution: true,
+            output_format: OutputFormat::Mihomo,
             ..RelayConfig::default()
         };
         let bytes = encode(&config, CONTENT).unwrap();
@@ -337,6 +346,7 @@ mod tests {
         let backup = decode(&bytes).unwrap();
         assert_eq!(&*backup.content, CONTENT);
         assert_eq!(backup.config.source, config.source);
+        assert_eq!(backup.config.output_format, OutputFormat::Mihomo);
         assert!(backup.config.test_nodes);
         assert_eq!(backup.config.engine, std::path::PathBuf::from("sing-box"));
         assert!(

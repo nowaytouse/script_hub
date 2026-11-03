@@ -1,7 +1,9 @@
 use super::{card, primary_button};
 use crate::gui::app::HubApp;
 use crate::gui::i18n::{Text, text};
-use crate::gui::templates::{CONFIRM_ID, EDIT_CONTENT_ID, EDIT_NAME_ID, PASSWORD_ID};
+use crate::gui::templates::{
+    CONFIRM_ID, EDIT_CONTENT_ID, EDIT_NAME_ID, PASSWORD_ID, TemplateState,
+};
 use crate::runtime::settings::Language;
 use crate::vault::Client;
 use eframe::egui::{self, RichText};
@@ -45,10 +47,12 @@ impl HubApp {
                     ui.spinner();
                     ui.label(tr(Text::VaultWorking));
                 });
-                if ui.button(tr(Text::VaultLock)).clicked() {
-                    state.lock(ui.ctx());
+                let lock = ui.button(tr(Text::VaultLock));
+                if lock.clicked() {
+                    state.request_lock(ui.ctx(), lock.id);
                 }
             });
+            show_lock_confirmation(ui.ctx(), state, colors.error, &tr);
             return;
         }
         egui::ScrollArea::vertical()
@@ -217,8 +221,9 @@ impl HubApp {
                         if state.dirty {
                             ui.label(tr(Text::UnsavedChanges));
                         }
-                        if ui.button(tr(Text::VaultLock)).clicked() {
-                            state.lock(ui.ctx());
+                        let lock = ui.button(tr(Text::VaultLock));
+                        if lock.clicked() {
+                            state.request_lock(ui.ctx(), lock.id);
                         }
                     });
                     if !state.unlocked() {
@@ -497,6 +502,51 @@ impl HubApp {
                     }
                 });
             });
+        show_lock_confirmation(ui.ctx(), state, colors.error, &tr);
+    }
+}
+
+fn show_lock_confirmation(
+    ctx: &egui::Context,
+    state: &mut TemplateState,
+    error_color: egui::Color32,
+    tr: &impl Fn(Text) -> &'static str,
+) {
+    let Some(opener) = state.lock_confirmation else {
+        return;
+    };
+    if !state.dirty && !state.editing {
+        state.lock_confirmation = None;
+        return;
+    }
+    let modal = egui::Modal::new(egui::Id::unique("vault-confirm-lock")).show(ctx, |ui| {
+        ui.set_max_width(380.0);
+        ui.heading(tr(Text::UnsavedChanges));
+        ui.label(tr(if state.editing {
+            Text::VaultLockEditHelp
+        } else {
+            Text::VaultLockSaveHelp
+        }));
+        ui.add_space(8.0);
+        ui.horizontal_wrapped(|ui| {
+            let cancel = ui.button(tr(Text::Cancel));
+            let discard = ui.add(
+                egui::Button::new(tr(Text::VaultDiscardAndLock))
+                    .stroke(egui::Stroke::new(1.0, error_color)),
+            );
+            if ui.is_visible() && !cancel.has_focus() && !discard.has_focus() {
+                cancel.request_focus();
+            }
+            (cancel.clicked(), discard.clicked())
+        })
+        .inner
+    });
+    let (cancel, discard) = modal.inner;
+    if cancel || modal.should_close() {
+        state.lock_confirmation = None;
+        ctx.memory_mut(|memory| memory.request_focus(opener));
+    } else if discard {
+        state.lock(ctx);
     }
 }
 
@@ -516,6 +566,50 @@ fn secret_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str, hi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn lock_confirmation_defaults_to_cancel_and_preserves_the_draft() {
+        for key in [egui::Key::Enter, egui::Key::Escape] {
+            let ctx = egui::Context::default();
+            let mut state = TemplateState::default();
+            state.preview.push_str("synthetic uncommitted draft");
+            state.editing = true;
+            state.request_lock(&ctx, egui::Id::unique("lock-opener"));
+            let draw = |state: &mut TemplateState, events| {
+                let output = ctx.run_ui(
+                    egui::RawInput {
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        show_lock_confirmation(ui.ctx(), state, egui::Color32::RED, &|key| {
+                            text(Language::En, key)
+                        });
+                    },
+                );
+                output.drop_without_applying_deltas();
+            };
+            draw(&mut state, vec![]);
+            draw(&mut state, vec![]);
+            assert!(state.lock_confirmation.is_some());
+            draw(
+                &mut state,
+                vec![egui::Event::Key {
+                    key,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                }],
+            );
+            assert!(
+                state.lock_confirmation.is_none(),
+                "{key:?} cancels by default"
+            );
+            assert!(state.editing);
+            assert_eq!(state.preview.as_str(), "synthetic uncommitted draft");
+        }
+    }
 
     #[test]
     fn password_widget_does_not_retain_undo_history() {

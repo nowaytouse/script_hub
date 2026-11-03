@@ -30,9 +30,34 @@ pub(super) struct Script {
     ast: AST,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SyntaxError {
+    Size,
+    Parse {
+        line: Option<usize>,
+        column: Option<usize>,
+    },
+    EntryPoint,
+}
+
+/// Checks syntax and the entry point without evaluating statements or reading any nodes.
+pub(crate) fn check_syntax(source: &str) -> Result<(), SyntaxError> {
+    let script = compile_with_diagnostics(source)?;
+    if !script.ast.iter_functions().any(|function| {
+        function.name == "transform" && function.params.len() == 1 && function.this_type.is_none()
+    }) {
+        return Err(SyntaxError::EntryPoint);
+    }
+    Ok(())
+}
+
 pub(super) fn compile(source: &str) -> Result<Script, ModelError> {
+    compile_with_diagnostics(source).map_err(|_| ModelError::InvalidEdit)
+}
+
+fn compile_with_diagnostics(source: &str) -> Result<Script, SyntaxError> {
     if source.is_empty() || source.len() > MAX_SOURCE {
-        return Err(ModelError::InvalidEdit);
+        return Err(SyntaxError::Size);
     }
     let mut engine = Engine::new();
     engine.disable_symbol("eval");
@@ -71,9 +96,13 @@ pub(super) fn compile(source: &str) -> Result<Script, ModelError> {
     engine.register_set("tfo", |n: &mut ScriptNode, v: bool| n.tfo = Some(v));
     engine.register_set("sni", |n: &mut ScriptNode, v: String| n.sni = Some(v));
     engine.register_set("verify_tls", |n: &mut ScriptNode, v: bool| n.verify_tls = v);
-    let ast = engine
-        .compile(source)
-        .map_err(|_| ModelError::InvalidEdit)?;
+    let ast = engine.compile(source).map_err(|error| {
+        let position = error.position();
+        SyntaxError::Parse {
+            line: position.line(),
+            column: position.position(),
+        }
+    })?;
     Ok(Script { engine, ast })
 }
 
@@ -127,6 +156,31 @@ mod tests {
 
     fn run(source: &str) -> Result<Output, ModelError> {
         compile(source)?.transform("node", "example.com", 443, "trojan")
+    }
+
+    #[test]
+    fn syntax_check_reports_safe_locations_and_checks_entry_without_running() {
+        assert_eq!(check_syntax(""), Err(SyntaxError::Size));
+        assert_eq!(
+            check_syntax(&"猫".repeat(MAX_SOURCE / 2)),
+            Err(SyntaxError::Size)
+        );
+        assert_eq!(
+            check_syntax("fn transform() { 0 }"),
+            Err(SyntaxError::EntryPoint)
+        );
+        assert_eq!(
+            check_syntax("fn helper(node) { node }"),
+            Err(SyntaxError::EntryPoint)
+        );
+        assert!(matches!(
+            check_syntax("fn transform(node) {\nlet x = ;\nnode\n}"),
+            Err(SyntaxError::Parse {
+                line: Some(2),
+                column: Some(_)
+            })
+        ));
+        assert!(check_syntax("throw \"not evaluated\"; fn transform(node) { node }").is_ok());
     }
 
     #[test]

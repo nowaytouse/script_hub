@@ -12,6 +12,7 @@ pub(super) fn show(
     colors: Palette,
     state: &mut State,
     allow_actions: bool,
+    demo_mode: bool,
 ) -> Option<Action> {
     let selected = state.selected;
     let show_editor = state.show_editor;
@@ -76,18 +77,20 @@ pub(super) fn show(
             }));
         }
         ui.horizontal_wrapped(|ui| {
-            if ui
-                .add_enabled(allow_actions, primary_button(colors, tr(create_label)))
-                .clicked()
+            if (!demo_mode || list.kind == ListKind::Collections)
+                && ui
+                    .add_enabled(allow_actions, primary_button(colors, tr(create_label)))
+                    .clicked()
             {
                 action = Some(create_action);
             }
-            if ui
-                .add_enabled(
-                    allow_actions,
-                    egui::Button::new(tr(Text::WorkspaceListImport)),
-                )
-                .clicked()
+            if !demo_mode
+                && ui
+                    .add_enabled(
+                        allow_actions,
+                        egui::Button::new(tr(Text::WorkspaceListImport)),
+                    )
+                    .clicked()
             {
                 action = Some(Action::Import);
             }
@@ -227,6 +230,7 @@ mod tests {
                             theme::palette(dark, Accent::Purple),
                             state,
                             enabled,
+                            false,
                         );
                     });
                 },

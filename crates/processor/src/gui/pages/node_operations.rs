@@ -7,6 +7,7 @@ use crate::relay::model::pipeline::{
     RegionLabel, RenameRule, SortKey, StageReport, Step, TextMatch,
 };
 use crate::relay::model::properties::Setting;
+use crate::relay::model::script::{self, SyntaxError};
 use crate::runtime::settings::Language;
 use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
@@ -43,6 +44,10 @@ fn opening_step_id() -> egui::Id {
     egui::Id::unique("relay-operation-opening")
 }
 
+fn search_id() -> egui::Id {
+    egui::Id::unique("relay-operation-search")
+}
+
 #[derive(Clone, Copy)]
 struct Validation {
     valid: bool,
@@ -77,7 +82,10 @@ pub(super) fn clear_widgets(ctx: &egui::Context, steps: &[Step]) {
     ctx.data_mut(|data| {
         data.remove::<Validation>(validation_id());
         data.remove::<u64>(opening_step_id());
+        data.remove::<Zeroizing<String>>(search_id());
+        data.remove::<egui::text_edit::TextEditState>(search_id());
         for step in steps {
+            data.remove::<Result<(), SyntaxError>>(field_id(step.id, "script").with("syntax"));
             for field in FIELDS {
                 data.remove::<egui::text_edit::TextEditState>(field_id(step.id, field));
                 data.remove::<Zeroizing<String>>(field_id(step.id, field).with("draft"));
@@ -132,6 +140,56 @@ fn field_with_limit(
     let changed = output.response.changed();
     output.state.clear_undoer();
     output.state.store(ui.ctx(), output.response.id);
+    changed
+}
+
+fn script_field(
+    ui: &mut egui::Ui,
+    language: Language,
+    colors: Palette,
+    step_id: u64,
+    source: &mut String,
+) -> bool {
+    let tr = |key| text(language, key);
+    let id = field_id(step_id, "script");
+    let syntax_id = id.with("syntax");
+    ui.label(tr(Text::OperationScriptHelp));
+    let changed = field_with_limit(
+        ui,
+        tr(Text::OperationScriptSource),
+        source,
+        id,
+        true,
+        script::MAX_SOURCE,
+    );
+    if changed {
+        ui.data_mut(|data| data.remove::<Result<(), SyntaxError>>(syntax_id));
+    }
+    if ui.button(tr(Text::OperationScriptCheck)).clicked() {
+        let result = script::check_syntax(source);
+        ui.data_mut(|data| data.insert_temp(syntax_id, result));
+    }
+    match ui.data(|data| data.get_temp::<Result<(), SyntaxError>>(syntax_id)) {
+        None => {}
+        Some(Ok(())) => {
+            ui.label(tr(Text::OperationScriptSyntaxOk));
+        }
+        Some(Err(SyntaxError::Size)) => {
+            ui.colored_label(colors.error, tr(Text::OperationScriptSize));
+        }
+        Some(Err(SyntaxError::EntryPoint)) => {
+            ui.colored_label(colors.error, tr(Text::OperationScriptEntry));
+        }
+        Some(Err(SyntaxError::Parse { line, column })) => {
+            let message = tr(Text::OperationScriptSyntaxError);
+            let message = match (line, column) {
+                (Some(line), Some(column)) => format!("{message} ({line}:{column})."),
+                (Some(line), None) => format!("{message} ({line})."),
+                _ => format!("{message}."),
+            };
+            ui.colored_label(colors.error, message);
+        }
+    }
     changed
 }
 
@@ -399,6 +457,103 @@ fn next_step_id(steps: &[Step]) -> Option<u64> {
         .or_else(|| (0..=MAX_STEPS as u64).find(|id| steps.iter().all(|step| step.id != *id)))
 }
 
+fn operation_matches(label: Text, language: Language, query: &str) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+    let localized = text(language, label).to_lowercase();
+    let english = text(Language::En, label).to_lowercase();
+    query
+        .split_whitespace()
+        .all(|word| localized.contains(word) || english.contains(word))
+}
+
+fn operation_menu(ui: &mut egui::Ui, language: Language) -> Option<Operation> {
+    use egui::containers::menu::{MenuButton, MenuConfig};
+
+    let tr = |key| text(language, key);
+    let id = search_id();
+    let (_, menu) = MenuButton::new(tr(Text::OperationAdd))
+        .config(MenuConfig::new().close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside))
+        .ui(ui, |ui| {
+            ui.set_max_width(300.0);
+            let previous = ui.data(|data| data.get_temp::<Zeroizing<String>>(id));
+            let opening = previous.is_none();
+            let mut query = previous.unwrap_or_default();
+            let label = ui.label(tr(Text::OperationSearch));
+            let input = ui
+                .add(
+                    egui::TextEdit::singleline(&mut *query)
+                        .id(id)
+                        .desired_width(220.0)
+                        .char_limit(80),
+                )
+                .labelled_by(label.id);
+            if !ui.is_sizing_pass() {
+                if opening {
+                    input.request_focus();
+                }
+                if opening || input.changed() {
+                    ui.data_mut(|data| data.insert_temp(id, query.clone()));
+                }
+            }
+            let query = Zeroizing::new(query.trim().to_lowercase());
+            let list = egui::ScrollArea::vertical().max_height(320.0);
+            let list = if input.changed() {
+                list.vertical_scroll_offset(0.0)
+            } else {
+                list
+            };
+            list.show(ui, |ui| {
+                let operations = new_operations();
+                let mut any = false;
+                for (group, label) in [
+                    (0, Text::OperationGroupFilters),
+                    (1, Text::OperationGroupOrder),
+                    (2, Text::OperationGroupNetwork),
+                    (3, Text::OperationGroupCustom),
+                ] {
+                    let mut heading = false;
+                    for (index, operation) in operations.iter().enumerate() {
+                        let key = operation_label(operation);
+                        if operation_group(operation) != group
+                            || !operation_matches(key, language, &query)
+                        {
+                            continue;
+                        }
+                        if !heading {
+                            if any {
+                                ui.separator();
+                            }
+                            ui.strong(tr(label));
+                            heading = true;
+                            any = true;
+                        }
+                        if ui.button(tr(key)).clicked() {
+                            ui.close();
+                            return operations.into_iter().nth(index);
+                        }
+                    }
+                }
+                if !any {
+                    ui.weak(tr(Text::OperationSearchNoResults));
+                }
+                None
+            })
+            .inner
+        });
+    if menu
+        .as_ref()
+        .is_none_or(|response| response.inner.is_some())
+    {
+        ui.data_mut(|data| {
+            data.remove::<Zeroizing<String>>(id);
+            data.remove::<egui::text_edit::TextEditState>(id);
+        });
+    }
+    menu.and_then(|response| response.inner)
+}
+
 pub(super) fn show(
     ui: &mut egui::Ui,
     language: Language,
@@ -437,36 +592,9 @@ pub(super) fn show(
                         .find(|op| operation_label(op) == kind);
                 }
             }
-            ui.menu_button(tr(Text::OperationAdd), |ui| {
-                ui.set_max_width(300.0);
-                egui::ScrollArea::vertical()
-                    .max_height(320.0)
-                    .show(ui, |ui| {
-                        let operations = new_operations();
-                        let mut chosen = None;
-                        for (group, label) in [
-                            (0, Text::OperationGroupFilters),
-                            (1, Text::OperationGroupOrder),
-                            (2, Text::OperationGroupNetwork),
-                        ] {
-                            if group != 0 {
-                                ui.separator();
-                            }
-                            ui.strong(tr(label));
-                            for (index, operation) in operations.iter().enumerate() {
-                                if operation_group(operation) == group
-                                    && ui.button(tr(operation_label(operation))).clicked()
-                                {
-                                    chosen = Some(index);
-                                }
-                            }
-                        }
-                        if let Some(index) = chosen {
-                            add = operations.into_iter().nth(index);
-                            ui.close();
-                        }
-                    });
-            });
+            if let Some(operation) = operation_menu(ui, language) {
+                add = Some(operation);
+            }
         });
     });
     let mut opening = ui.ctx().data_mut(|data| {
@@ -502,15 +630,7 @@ pub(super) fn show(
                     !matches!(step.operation, Operation::Deduplicate | Operation::Reverse);
                 let details = |ui: &mut egui::Ui| match &mut step.operation {
                     Operation::Script { source } => {
-                        ui.label(tr(Text::OperationScriptHelp));
-                        changed |= field_with_limit(
-                            ui,
-                            tr(Text::OperationScriptSource),
-                            source,
-                            field_id(step.id, "script"),
-                            true,
-                            crate::relay::model::script::MAX_SOURCE,
-                        );
+                        changed |= script_field(ui, language, colors, step.id, source);
                     }
                     Operation::NameFilter { pattern, keep } => {
                         changed |= field(
@@ -1301,9 +1421,8 @@ fn operation_group(op: &Operation) -> u8 {
         | Operation::IpFilter { .. }
         | Operation::NetworkFilter { .. }
         | Operation::ConditionFilter { .. } => 0,
-        Operation::ResolveDomain { .. }
-        | Operation::SetProperty { .. }
-        | Operation::Script { .. } => 2,
+        Operation::ResolveDomain { .. } | Operation::SetProperty { .. } => 2,
+        Operation::Script { .. } => 3,
         _ => 1,
     }
 }
@@ -1346,7 +1465,14 @@ mod tests {
                 .iter()
                 .filter(|op| operation_group(op) == 2)
                 .count(),
-            3
+            2
+        );
+        assert_eq!(
+            operations
+                .iter()
+                .filter(|op| operation_group(op) == 3)
+                .count(),
+            1
         );
         assert!(
             matches!(&operations[8], Operation::HostFilter { pattern, keep: true } if pattern.is_empty())
@@ -1571,6 +1697,36 @@ mod tests {
     }
 
     #[test]
+    fn script_syntax_status_is_local_to_the_step_and_clears_on_edit() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut steps = vec![Step {
+            id: 1,
+            enabled: true,
+            operation: Operation::Script {
+                source: "fn helper(node) { node }".into(),
+            },
+        }];
+        open_for_next_frame(&ctx, 1);
+        let output = draw(&ctx, &mut steps, vec![]);
+        let output = click_label(
+            &ctx,
+            &mut steps,
+            output,
+            text(Language::En, Text::OperationScriptCheck),
+        );
+        output.drop_without_applying_deltas();
+        let field = field_id(1, "script");
+        let status = |data: &egui::util::IdTypeMap| {
+            data.get_temp::<Result<(), SyntaxError>>(field.with("syntax"))
+        };
+        assert_eq!(ctx.data(status), Some(Err(SyntaxError::EntryPoint)));
+        ctx.memory_mut(|memory| memory.request_focus(field));
+        draw(&ctx, &mut steps, vec![egui::Event::Text(" ".into())]).drop_without_applying_deltas();
+        assert_eq!(ctx.data(status), None);
+    }
+
+    #[test]
     fn new_operations_and_properties_fit_narrow_cards() {
         let mut ops: Vec<_> = new_operations().into_iter().skip(16).collect();
         ops.push(Operation::Sort {
@@ -1759,6 +1915,95 @@ mod tests {
         click_label(&ctx, &mut steps, output, "Move down").drop_without_applying_deltas();
         assert_eq!((steps[0].id, steps[1].id), (new_id, 9));
         assert!(steps[0].enabled && !steps[1].enabled);
+    }
+
+    #[test]
+    fn operation_search_accepts_localized_and_english_labels() {
+        assert!(operation_matches(
+            Text::OperationScript,
+            Language::ZhCn,
+            "脚本"
+        ));
+        assert!(operation_matches(
+            Text::OperationScript,
+            Language::Ja,
+            "スクリプト rhai"
+        ));
+        assert!(operation_matches(
+            Text::OperationScript,
+            Language::ZhCn,
+            "script transform"
+        ));
+        assert!(!operation_matches(
+            Text::OperationNameFilter,
+            Language::En,
+            "rhai"
+        ));
+    }
+
+    #[test]
+    fn searchable_operation_menu_reveals_and_adds_custom_script() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        theme::apply(&ctx, &Preferences::default());
+        let mut steps = vec![];
+        let add = text(Language::En, Text::OperationAdd);
+        let output = draw(&ctx, &mut steps, vec![]);
+        click_label(&ctx, &mut steps, output, add).drop_without_applying_deltas();
+        draw(&ctx, &mut steps, vec![]).drop_without_applying_deltas();
+        assert!(ctx.memory(|memory| memory.has_focus(search_id())));
+
+        let output = draw(
+            &ctx,
+            &mut steps,
+            vec![egui::Event::Text("unmatched".into())],
+        );
+        let label = text(Language::En, Text::OperationSearchNoResults);
+        assert!(
+            output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label().or_else(|| node.value()) == Some(label))
+        );
+        output.drop_without_applying_deltas();
+
+        egui::Popup::close_all(&ctx);
+        let output = draw(&ctx, &mut steps, vec![]);
+        assert!(ctx.data(|data| data.get_temp::<Zeroizing<String>>(search_id()).is_none()));
+        click_label(&ctx, &mut steps, output, add).drop_without_applying_deltas();
+        draw(&ctx, &mut steps, vec![]).drop_without_applying_deltas();
+        draw(&ctx, &mut steps, vec![egui::Event::Text("RHAI".into())])
+            .drop_without_applying_deltas();
+        let output = draw(&ctx, &mut steps, vec![]);
+        assert!(
+            output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label().or_else(|| node.value())
+                    == Some(text(Language::En, Text::OperationGroupCustom)))
+        );
+        click_label(
+            &ctx,
+            &mut steps,
+            output,
+            text(Language::En, Text::OperationScript),
+        )
+        .drop_without_applying_deltas();
+        assert!(matches!(
+            steps.as_slice(),
+            [Step {
+                operation: Operation::Script { .. },
+                ..
+            }]
+        ));
     }
 
     #[test]

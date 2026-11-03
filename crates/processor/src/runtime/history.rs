@@ -105,9 +105,12 @@ impl HistoryStore {
     }
 
     pub fn recent(&self, limit: usize) -> Result<Vec<HistoryRecord>, String> {
+        Self::recent_from(&self.connection, limit)
+    }
+
+    fn recent_from(connection: &Connection, limit: usize) -> Result<Vec<HistoryRecord>, String> {
         let limit = limit.min(RETAINED_RECORDS as usize) as i64;
-        let mut statement = self
-            .connection
+        let mut statement = connection
             .prepare(
                 "SELECT id, kind, started_at, elapsed_ms, outcome, exit_code, length(CAST(logs_json AS BLOB)), logs_json
              FROM history ORDER BY id DESC LIMIT ?1",
@@ -149,32 +152,30 @@ impl HistoryStore {
             .map_err(|error| format!("cannot decode task history: {error}"))
     }
 
-    pub fn clear(&self) -> Result<(), String> {
+    pub fn clear(&self) -> Result<Vec<HistoryRecord>, String> {
+        self.clear_and_read("DELETE FROM history WHERE outcome <> 'running'")
+    }
+
+    /// Remove unfinished rows only after the user explicitly confirms recovery.
+    /// Callers must not infer that a row is stale; another app instance may own it.
+    pub fn clear_unfinished(&self) -> Result<Vec<HistoryRecord>, String> {
+        self.clear_and_read("DELETE FROM history WHERE outcome = 'running'")
+    }
+
+    fn clear_and_read(&self, statement: &str) -> Result<Vec<HistoryRecord>, String> {
         let transaction = self
             .connection
             .unchecked_transaction()
             .map_err(|error| format!("cannot begin task history clear: {error}"))?;
         transaction
-            .execute("DELETE FROM history WHERE outcome <> 'running'", [])
+            .execute(statement, [])
             .map_err(|error| format!("cannot clear task history: {error}"))?;
+        // Do not report a failed refresh after its corresponding deletion has committed.
+        let records = Self::recent_from(&transaction, RETAINED_RECORDS as usize)?;
         transaction
             .commit()
-            .map_err(|error| format!("cannot commit task history clear: {error}"))
-    }
-
-    /// Remove unfinished rows only after the user explicitly confirms recovery.
-    /// Callers must not infer that a row is stale; another app instance may own it.
-    pub fn clear_unfinished(&self) -> Result<(), String> {
-        let transaction = self
-            .connection
-            .unchecked_transaction()
-            .map_err(|error| format!("cannot begin unfinished history recovery: {error}"))?;
-        transaction
-            .execute("DELETE FROM history WHERE outcome = 'running'", [])
-            .map_err(|error| format!("cannot remove unfinished task history: {error}"))?;
-        transaction
-            .commit()
-            .map_err(|error| format!("cannot commit unfinished history recovery: {error}"))
+            .map_err(|error| format!("cannot commit task history clear: {error}"))?;
+        Ok(records)
     }
 
     pub fn start(&self, kind: &str) -> Result<i64, String> {
@@ -550,9 +551,9 @@ mod tests {
                 .iter()
                 .any(|record| record.id == running_id)
         );
-        store.clear().unwrap();
-        let records = store.recent(200).unwrap();
+        let records = store.clear().unwrap();
         assert_eq!(records.len(), 1);
+        assert_eq!(records[0].id, running_id);
         assert_eq!(records[0].outcome, "running");
     }
 
@@ -644,14 +645,50 @@ mod tests {
         }
 
         assert_eq!(store.recent(usize::MAX).unwrap().len(), 100);
-        store.clear_unfinished().unwrap();
-        let records = store.recent(usize::MAX).unwrap();
+        let records = store.clear_unfinished().unwrap();
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].id, completed_id);
         assert_eq!(records[0].outcome, "success");
 
         store.start("quick_update").unwrap();
         assert_eq!(store.recent(usize::MAX).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn failed_snapshot_rolls_back_both_history_clear_actions() {
+        for remove_unfinished in [false, true] {
+            let dir = TestDir::new();
+            let store = HistoryStore::open(&database(&dir)).unwrap();
+            let completed = store.start("validate").unwrap();
+            store
+                .finish(completed, &snapshot(JobOutcome::Success, &[]), false)
+                .unwrap();
+            let running = store.start("update").unwrap();
+            let survivor = if remove_unfinished {
+                completed
+            } else {
+                running
+            };
+            store
+                .connection
+                .execute(
+                    "UPDATE history SET logs_json = 'invalid' WHERE id = ?1",
+                    [survivor],
+                )
+                .unwrap();
+
+            let result = if remove_unfinished {
+                store.clear_unfinished()
+            } else {
+                store.clear()
+            };
+            assert!(result.unwrap_err().contains("cannot decode task history"));
+            let row_count: i64 = store
+                .connection
+                .query_row("SELECT COUNT(*) FROM history", [], |row| row.get(0))
+                .unwrap();
+            assert_eq!(row_count, 2);
+        }
     }
 
     #[test]

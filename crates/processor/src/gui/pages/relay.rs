@@ -3,8 +3,9 @@ use crate::gui::app::HubApp;
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
 use crate::gui::relay::{InputMode, RelayState, RelayStep, SECRET_IDS};
+use crate::gui::relay_schedule::Status as ScheduleStatus;
 use crate::gui::theme::Palette;
-use crate::relay::{RelayStage, RunMode};
+use crate::relay::{Progress, RelayStage, RunMode};
 use eframe::egui;
 use zeroize::Zeroize;
 
@@ -26,67 +27,110 @@ impl HubApp {
             ui.set_max_width(width);
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                 let state = &mut self.relay;
+                let busy = state.busy();
                 super::subscriptions::relay_tabs(ui, state, &tr);
                 ui.add_space(12.0);
+                if state.step != RelayStep::Source && !state.paste.trim().is_empty() {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.colored_label(colors.warning, tr(Text::RelayPastedTextPending));
+                        if ui.add_enabled(admitted && !state.schedule.armed(), egui::Button::new(tr(Text::RelayOutputGoSource))).clicked() {
+                            state.step = RelayStep::Source;
+                        }
+                    });
+                }
                 if let Some(error) = &state.error {
                     ui.colored_label(
                         colors.error,
                         crate::gui::relay::failure_message(language, error),
                     );
-                } else if let Some(notice) = state.notice {
+                } else if let Some(notice) = state.notice
+                    && !(busy && notice == Text::RelayCancelling)
+                {
                     ui.label(tr(notice));
                 }
                 let cooldown = state.cooldown_seconds();
-                if cooldown > 0 {
+                if cooldown > 0 && !state.schedule.armed() {
                     ui.weak(format!("{} {cooldown} s", tr(Text::RelayRetryWait)));
                 }
-                if state.schedule.armed() || state.schedule.running() {
+                let schedule_status = state.schedule.status();
+                if schedule_status != ScheduleStatus::Idle {
                     card(ui, colors, |ui| {
-                        ui.strong(tr(if state.schedule.armed() { Text::ScheduleActive } else { Text::RelayCancelling }));
-                        if let Some(seconds) = state.schedule.seconds_until_due() {
-                            ui.label(format!("{} {:02}:{:02}:{:02}", tr(Text::ScheduleNext), seconds / 3600, seconds / 60 % 60, seconds % 60));
-                        } else if state.schedule.running() {
-                            ui.label(tr(Text::ScheduleRunning));
+                        match schedule_status {
+                            ScheduleStatus::Idle => {}
+                            ScheduleStatus::Stopping => pending_progress(ui, &tr, None, Text::RelayCancelling),
+                            ScheduleStatus::Running => {
+                                pending_progress(ui, &tr, state.schedule.progress, Text::ScheduleRunning);
+                                if state.schedule.progress.is_some_and(|progress| progress.stage == RelayStage::Publish) {
+                                    ui.weak(tr(Text::RelayCancelWriteWarning));
+                                }
+                            }
+                            ScheduleStatus::Waiting { seconds, retry } => {
+                                if !retry {
+                                    ui.strong(tr(Text::ScheduleActive));
+                                }
+                                if seconds == 0 {
+                                    ui.strong(tr(Text::ScheduleReadyWhenIdle));
+                                } else {
+                                    let label = tr(if retry { Text::ScheduleRetryIn } else { Text::ScheduleNext });
+                                    ui.label(format!("{label} {:02}:{:02}:{:02}", seconds / 3600, seconds / 60 % 60, seconds % 60));
+                                }
+                            }
+                            ScheduleStatus::Paused => {
+                                ui.strong(tr(Text::SchedulePaused));
+                            }
+                        }
+                        if matches!(schedule_status, ScheduleStatus::Paused | ScheduleStatus::Waiting { retry: true, .. })
+                            && let Some(error) = &state.schedule.last_error
+                        {
+                            ui.colored_label(colors.warning, crate::gui::relay::failure_message(language, error));
                         }
                         if let Some(result) = state.schedule.result {
-                            ui.label(format!("{} · {} {} · {} {}", tr(if result.unchanged { Text::RelayUnchanged } else { Text::RelayPublished }), tr(Text::RelayTotal), result.total, tr(Text::RelayRemoved), result.removed));
+                            ui.label(format!("{}: {} · {} {} · {} {}", tr(Text::ScheduleLastConfirmed), tr(if result.unchanged { Text::RelayUnchanged } else { Text::RelayPublished }), tr(Text::RelayTotal), result.total, tr(Text::RelayRemoved), result.removed));
                         }
-                        ui.weak(tr(Text::ScheduleSessionOnly));
-                        if ui.button(tr(Text::ScheduleStop)).clicked() {
-                            state.schedule.stop();
+                        if schedule_status == ScheduleStatus::Paused {
+                            ui.weak(tr(Text::ScheduleRecovery));
+                            ui.horizontal_wrapped(|ui| {
+                                if ui.add_enabled(admitted, egui::Button::new(tr(Text::ScheduleReviewSettings))).clicked() {
+                                    state.step = RelayStep::Publish;
+                                    output::open_gist(ui.ctx());
+                                }
+                                if ui.button(tr(Text::Close)).clicked() {
+                                    state.schedule.clear_feedback();
+                                }
+                            });
+                        } else {
+                            ui.weak(tr(Text::ScheduleSessionOnly));
+                            if state.schedule.armed() && ui.button(tr(Text::ScheduleStop)).clicked() {
+                                state.schedule.stop();
+                            }
                         }
                     });
                     ui.add_space(8.0);
                 }
-                if state.busy() {
-                    card(ui, colors, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.spinner();
-                            ui.label(tr(Text::RelayWorking));
-                        });
-                        if let Some(progress) = state.progress {
-                            ui.label(tr(match progress.stage {
-                                RelayStage::Read => Text::RelayRead,
-                                RelayStage::Check => Text::RelayCheck,
-                                RelayStage::Render => Text::RelayRender,
-                                RelayStage::Publish => Text::RelayUpload,
-                                RelayStage::Complete => Text::Succeeded,
-                            }));
-                            if progress.total > 0 {
-                                ui.add(
-                                    egui::ProgressBar::new(
-                                        progress.checked as f32 / progress.total as f32,
-                                    )
-                                    .text(format!("{} / {}", progress.checked, progress.total)),
-                                );
+                if busy {
+                    if !state.schedule.running() {
+                        card(ui, colors, |ui| {
+                            let local = state.file_dialog_active();
+                            let cancelling = state.notice == Some(Text::RelayCancelling);
+                            let progress = if local || cancelling { None } else { state.progress };
+                            pending_progress(ui, &tr, progress, if local {
+                                Text::RelayLocalProcessing
+                            } else if cancelling {
+                                Text::RelayCancelling
+                            } else {
+                                Text::RelayWorking
+                            });
+                            if let Some(result) = state.result.as_ref().filter(|result| !result.content.is_empty()) {
+                                ui.weak(format!("{} · {}: {}", tr(Text::RelayPreviousPreview), tr(Text::RelayOutputNodeCount), result.total.saturating_sub(result.removed)));
                             }
-                        }
-                        if state.file_dialog_active() {
-                            ui.weak(tr(Text::RelayDialogHelp));
-                        } else if ui.button(tr(Text::RelayCancel)).clicked() {
-                            state.request_cancel();
-                        }
-                    });
+                            if progress.is_some_and(|progress| progress.stage == RelayStage::Publish) {
+                                ui.weak(tr(Text::RelayCancelWriteWarning));
+                            }
+                            if !local && ui.add_enabled(!cancelling, egui::Button::new(tr(Text::RelayCancel))).clicked() {
+                                state.request_cancel();
+                            }
+                        });
+                    }
                     return;
                 }
                 if state.step == RelayStep::Review && state.editor.is_some() {
@@ -100,7 +144,11 @@ impl HubApp {
                     .show(ui, |ui| {
                         ui.add_enabled_ui(admitted && !state.schedule.armed(), |ui| {
                             card(ui, colors, |ui| match state.step {
+                                RelayStep::Source if state.demo_mode => {
+                                    ui.label(tr(Text::RelaySandboxOffline));
+                                }
                                 RelayStep::Source => {
+                                    let mut focus_paste = false;
                                     ui.label(
                                         egui::RichText::new(tr(Text::RelayImportTitle))
                                             .size(20.0)
@@ -109,9 +157,13 @@ impl HubApp {
                                     ui.add_space(8.0);
                                     ui.horizontal_wrapped(|ui| {
                                         for (mode, key) in [(InputMode::Link, Text::InputLink), (InputMode::Paste, Text::InputPaste), (InputMode::File, Text::RelayLocalSource)] {
-                                            if ui.selectable_label(state.input_mode == mode, tr(key)).clicked() {
+                                            if ui.selectable_label(state.input_mode == mode, tr(key)).clicked() && state.input_mode != mode {
                                                 state.input_mode = mode;
+                                                state.reveal_source = false;
+                                                state.reveal_paste = false;
+                                                state.reveal_token = false;
                                                 state.clear_request_error();
+                                                focus_paste = mode == InputMode::Paste;
                                             }
                                         }
                                     });
@@ -175,6 +227,8 @@ impl HubApp {
                                             tr(Text::RelayShow),
                                         ) {
                                             state.clear_request_error();
+                                            state.acknowledge_publish = false;
+                                            state.allow_public_output = false;
                                         }
                                         ui.weak(tr(Text::RelayTokenHelp));
                                     });
@@ -202,6 +256,10 @@ impl HubApp {
                                                 state.import_paste(ui.ctx());
                                             }
                                             ui.checkbox(&mut state.reveal_paste, tr(Text::InputReveal));
+                                            if !state.paste.is_empty() && ui.button(tr(Text::RelayClearPastedText)).clicked() {
+                                                state.clear_pasted_text(ui.ctx());
+                                                focus_paste = true;
+                                            }
                                         });
                                         let label = ui.label(tr(Text::RelayPasteLabel));
                                         let changed = egui::ScrollArea::vertical()
@@ -216,15 +274,19 @@ impl HubApp {
                                             .char_limit(4 * 1024 * 1024)
                                             .show(ui);
                                         let _ = (*edit.response).clone().labelled_by(label.id);
+                                        if focus_paste {
+                                            edit.response.request_focus();
+                                        }
                                         edit.state.clear_undoer();
                                         edit.state.store(ui.ctx(), edit.response.id);
                                         edit.response.changed()
                                             }).inner;
                                         if changed {
-                                            state.clear_editor_widgets(ui.ctx());
-                                            state.input_changed();
-                                            state.local_content = None;
-                                            state.local_summary = None;
+                                            state.clear_request_error();
+                                            state.workspace.draft_dirty |= state.workspace.selected.is_some();
+                                        }
+                                        if !state.paste.trim().is_empty() && state.workspace.selected.is_some() {
+                                            ui.weak(tr(Text::RelayLoadPastedBeforeSave));
                                         }
                                     } else {
                                     ui.strong(tr(Text::RelayLocalSource));
@@ -430,7 +492,7 @@ impl HubApp {
                                     if reset_editor_widgets {
                                         state.clear_editor_widgets(ui.ctx());
                                     }
-                                    ui.collapsing(tr(Text::OperationPlan), |ui| {
+                                    if !state.demo_mode { ui.collapsing(tr(Text::OperationPlan), |ui| {
                                         ui.weak(tr(Text::OperationPlanHelp));
                                         if ui
                                             .add_enabled(
@@ -454,7 +516,7 @@ impl HubApp {
                                         {
                                             file_action = Some(FileAction::ExportPlan);
                                         }
-                                    });
+                                    }); }
                                 }
                                 RelayStep::Publish => {
                                     (action, file_action) = output::show(ui, state, language, colors, cooldown);
@@ -494,6 +556,35 @@ impl HubApp {
     }
 }
 
+fn pending_progress(
+    ui: &mut egui::Ui,
+    tr: &impl Fn(Text) -> &'static str,
+    progress: Option<Progress>,
+    fallback: Text,
+) {
+    let progress = progress.filter(|progress| progress.stage != RelayStage::Complete);
+    let label = progress.map_or(fallback, |progress| match progress.stage {
+        RelayStage::Read => Text::RelayReadingInput,
+        RelayStage::Check => Text::RelayCheck,
+        RelayStage::Render => Text::RelayRender,
+        RelayStage::Publish => Text::RelayUpload,
+        RelayStage::Complete => fallback,
+    });
+    ui.horizontal_wrapped(|ui| {
+        ui.spinner();
+        ui.strong(tr(label));
+    });
+    if let Some(progress) =
+        progress.filter(|progress| progress.stage == RelayStage::Check && progress.total > 0)
+    {
+        let checked = progress.checked.min(progress.total);
+        ui.add(
+            egui::ProgressBar::new(checked as f32 / progress.total as f32)
+                .text(format!("{checked} / {}", progress.total)),
+        );
+    }
+}
+
 fn review_actions(
     ui: &mut egui::Ui,
     state: &mut RelayState,
@@ -522,10 +613,14 @@ fn review_actions(
                 .collect::<Vec<_>>()
                 .join(", ");
             ui.label(format!("{}: {providers}", tr(Text::ResolutionProviders)));
-            ui.checkbox(&mut state.allow_resolution, tr(Text::ResolutionConsent));
+            if state.demo_mode {
+                ui.weak(tr(Text::RelaySandboxOffline));
+            } else {
+                ui.checkbox(&mut state.allow_resolution, tr(Text::ResolutionConsent));
+            }
         }
         ui.horizontal_wrapped(|ui| {
-            let ready = cooldown == 0 && (!needs_resolution || state.allow_resolution);
+            let ready = !needs_resolution || (!state.demo_mode && state.allow_resolution);
             let label = tr(if needs_resolution {
                 Text::ResolutionPrepare
             } else {
@@ -536,55 +631,63 @@ fn review_actions(
             } else {
                 primary_button(colors, label)
             };
-            if ui.add_enabled(ready, preview).clicked() {
+            if ui
+                .add_enabled(ready && (!needs_resolution || cooldown == 0), preview)
+                .clicked()
+            {
                 state.test_nodes = false;
                 action = Some(RunMode::Preview);
             }
             if state.selected_engine.is_some()
                 && ui
-                    .add_enabled(ready, egui::Button::new(tr(Text::RelayPreview)))
+                    .add_enabled(
+                        ready && cooldown == 0,
+                        egui::Button::new(tr(Text::RelayPreview)),
+                    )
                     .clicked()
             {
                 state.test_nodes = true;
                 action = Some(RunMode::Preview);
             }
-            ui.menu_button(
-                tr(if state.selected_engine.is_some() {
-                    Text::RelayAdvanced
-                } else {
-                    Text::RelayTestSetup
-                }),
-                |ui| {
-                    ui.set_min_width(240.0);
-                    ui.label(tr(if state.selected_engine.is_some() {
-                        Text::RelayEngineReady
+            if !state.demo_mode {
+                ui.menu_button(
+                    tr(if state.selected_engine.is_some() {
+                        Text::RelayAdvanced
                     } else {
-                        Text::RelayEngineMissing
-                    }));
-                    ui.label(tr(Text::RelayEnginePurpose));
-                    if ui.button(tr(Text::RelayDetectEngine)).clicked() {
-                        state.selected_engine = crate::relay::engine::discover_engine();
-                    }
-                    if ui.button(tr(Text::RelayChooseEngine)).clicked() {
-                        file = Some(FileAction::ChooseEngine);
-                        ui.close();
-                    }
-                    ui.separator();
-                    ui.horizontal(|ui| {
-                        let label = ui.label(tr(Text::RelayConcurrency));
-                        ui.add(egui::DragValue::new(&mut state.concurrency).range(1..=8))
-                            .labelled_by(label.id);
-                    });
-                    ui.horizontal(|ui| {
-                        let label = ui.label(tr(Text::RelayTimeout));
-                        ui.add(egui::DragValue::new(&mut state.timeout_seconds).range(1..=20))
-                            .labelled_by(label.id);
-                    });
-                    ui.checkbox(&mut state.compatibility, tr(Text::RelayCompatibility));
-                    ui.checkbox(&mut state.doh, tr(Text::RelayDoh));
-                    ui.weak(tr(Text::RelayStrictProbeHelp));
-                },
-            );
+                        Text::RelayTestSetup
+                    }),
+                    |ui| {
+                        ui.set_min_width(240.0);
+                        ui.label(tr(if state.selected_engine.is_some() {
+                            Text::RelayEngineReady
+                        } else {
+                            Text::RelayEngineMissing
+                        }));
+                        ui.label(tr(Text::RelayEnginePurpose));
+                        if ui.button(tr(Text::RelayDetectEngine)).clicked() {
+                            state.selected_engine = crate::relay::engine::discover_engine();
+                        }
+                        if ui.button(tr(Text::RelayChooseEngine)).clicked() {
+                            file = Some(FileAction::ChooseEngine);
+                            ui.close();
+                        }
+                        ui.separator();
+                        ui.horizontal(|ui| {
+                            let label = ui.label(tr(Text::RelayConcurrency));
+                            ui.add(egui::DragValue::new(&mut state.concurrency).range(1..=8))
+                                .labelled_by(label.id);
+                        });
+                        ui.horizontal(|ui| {
+                            let label = ui.label(tr(Text::RelayTimeout));
+                            ui.add(egui::DragValue::new(&mut state.timeout_seconds).range(1..=20))
+                                .labelled_by(label.id);
+                        });
+                        ui.checkbox(&mut state.compatibility, tr(Text::RelayCompatibility));
+                        ui.checkbox(&mut state.doh, tr(Text::RelayDoh));
+                        ui.weak(tr(Text::RelayStrictProbeHelp));
+                    },
+                );
+            }
             if has_content
                 && ui
                     .add(primary_button(colors, tr(Text::RelayContinue)))
@@ -825,8 +928,85 @@ fn length_counter(ui: &mut egui::Ui, count: usize, error: egui::Color32) {
 
 #[cfg(test)]
 mod tests {
-    use super::latency_stats;
+    use super::*;
     use crate::relay::engine::{ProbeDetail, ProbeReason};
+    use crate::runtime::settings::{Language, Preferences};
+    use std::path::Path;
+    use std::sync::mpsc;
+
+    #[test]
+    fn upload_progress_explains_cancel_and_keeps_navigation_locked() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = crate::gui::app::test_app(Preferences {
+            language: Language::En,
+            ..Preferences::default()
+        });
+        app.relay.step = RelayStep::Publish;
+        app.relay.local_content = Some(zeroize::Zeroizing::new(
+            "Example = socks5, node.example, 1080\n".to_owned(),
+        ));
+        app.relay.paste.push_str("new text");
+        let (_finish, wait) = mpsc::channel::<()>();
+        app.relay
+            .start_with(RunMode::Import, Path::new(""), move |_, _, _, _, _| {
+                let _ = wait.recv();
+                Err(crate::relay::RelayError::Cancelled)
+            });
+        assert!(app.relay.busy());
+        app.relay.progress = Some(Progress {
+            stage: RelayStage::Publish,
+            checked: 1,
+            total: 2,
+        });
+
+        let render = |app: &mut HubApp| {
+            let output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(420.0, 580.0),
+                    )),
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, |ui| app.relay_editor(ui));
+                },
+            );
+            let entries: Vec<_> = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .expect("accessibility tree")
+                .nodes
+                .iter()
+                .filter_map(|(_, node)| {
+                    node.label()
+                        .or_else(|| node.value())
+                        .map(|label| (label.to_owned(), node.is_disabled()))
+                })
+                .collect();
+            output.drop_without_applying_deltas();
+            entries
+        };
+        let entry = |key, disabled| (text(Language::En, key).to_owned(), disabled);
+        let running = render(&mut app);
+        assert!(running.contains(&entry(Text::RelayUpload, false)));
+        assert!(running.contains(&entry(Text::RelayCancelWriteWarning, false)));
+        assert!(running.contains(&entry(Text::RelayCancel, false)));
+        assert!(running.contains(&entry(Text::RelayOutputGoSource, true)));
+
+        app.relay.request_cancel();
+        let cancelling = render(&mut app);
+        assert!(cancelling.contains(&entry(Text::RelayCancel, true)));
+        assert_eq!(
+            cancelling
+                .iter()
+                .filter(|(label, _)| label == text(Language::En, Text::RelayCancelling))
+                .count(),
+            1
+        );
+    }
 
     #[test]
     fn latency_statistics_keep_targets_and_unverified_results_separate() {

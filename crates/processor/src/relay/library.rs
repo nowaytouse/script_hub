@@ -4,7 +4,10 @@ use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
-use super::model::{self, editor::Options};
+use super::{
+    export::OutputFormat,
+    model::{self, editor::Options},
+};
 
 const MAX_CACHE: usize = 4 * 1024 * 1024;
 const MAX_DOCUMENT: usize = 8 * 1024 * 1024;
@@ -49,6 +52,9 @@ pub struct Collection {
 pub struct PublishSettings {
     pub output: String,
     pub output_file: String,
+    #[serde(default, skip_serializing_if = "OutputFormat::is_original")]
+    #[zeroize(skip)]
+    pub format: OutputFormat,
     pub title: String,
     pub interval_minutes: u64,
 }
@@ -59,6 +65,7 @@ impl Default for PublishSettings {
         Self {
             output: config.output,
             output_file: config.output_file,
+            format: config.output_format,
             title: config.title,
             interval_minutes: super::schedule::DEFAULT_INTERVAL.as_secs() / 60,
         }
@@ -535,6 +542,28 @@ mod tests {
             ),
             Err(Error::Invalid)
         ));
+    }
+
+    #[test]
+    fn publishing_format_is_persisted_and_old_settings_default_to_original() {
+        let old = br#"{"output":"","output_file":"nodes.list","title":"Saved relay","interval_minutes":60}"#;
+        let legacy: PublishSettings = serde_json::from_slice(old).unwrap();
+        assert_eq!(legacy.format, OutputFormat::Original);
+        let mut workspace = Workspace::default();
+        let mut item = entry("one", NODE);
+        item.publish.format = OutputFormat::SingBox;
+        workspace.add_entry(item).unwrap();
+        let encoded = workspace.encode().unwrap();
+        assert!(
+            std::str::from_utf8(&encoded)
+                .unwrap()
+                .contains(r#""format":"sing-box""#)
+        );
+        let restored = Workspace::decode(&encoded).unwrap();
+        assert_eq!(
+            restored.subscriptions[0].publish.format,
+            OutputFormat::SingBox
+        );
     }
 
     #[test]

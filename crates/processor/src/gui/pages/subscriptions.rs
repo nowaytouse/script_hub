@@ -10,7 +10,9 @@ use zeroize::Zeroize;
 
 impl HubApp {
     pub(crate) fn relay_page(&mut self, ui: &mut egui::Ui) {
-        self.relay.workspace.check_storage();
+        if !self.relay.demo_mode {
+            self.relay.workspace.check_storage();
+        }
         let language = self.draft.language;
         let colors = self.colors;
         let tr = |key| text(language, key);
@@ -21,7 +23,8 @@ impl HubApp {
         let mut library_action = None;
         ui.horizontal_wrapped(|ui| {
             ui.heading(tr(Text::Relay));
-            if !locked {
+            self.demo_launcher(ui);
+            if !locked && !self.relay.demo_mode {
                 ui.menu_button(tr(Text::WorkspaceLibraryTools), |ui| {
                     if ui
                         .add_enabled(
@@ -52,6 +55,7 @@ impl HubApp {
                 });
             }
         });
+        self.demo_launcher_feedback(ui);
         if let Some(action) = library_action {
             if action == Action::SaveLibrary {
                 self.relay.execute_workspace(ui.ctx(), action);
@@ -65,7 +69,7 @@ impl HubApp {
                 demo = ui.button(tr(Text::RelayDemoRun)).clicked();
                 ui.weak(tr(Text::RelayDemoOffline));
             });
-        } else {
+        } else if !self.relay.demo_mode {
             let workspace = &self.relay.workspace;
             let dirty = workspace.dirty || workspace.draft_dirty;
             ui.colored_label(
@@ -113,7 +117,9 @@ impl HubApp {
             ui.add_space(8.0);
         }
         ui.add_space(12.0);
-        if let Some(error) = self.relay.workspace.error {
+        if let Some(error) = self.relay.workspace.error
+            && self.relay.workspace.confirm.is_none()
+        {
             ui.colored_label(colors.error, tr(error));
         }
         if let Some(notice) = self.relay.workspace.notice {
@@ -127,6 +133,18 @@ impl HubApp {
                 summary.collections,
                 summary.skipped
             ));
+        }
+        if self.relay.workspace_import_pending()
+            && (!self.relay.workspace.show_editor
+                || matches!(
+                    self.relay.workspace.selected,
+                    Some(Selection::Collection(_))
+                ))
+        {
+            ui.horizontal_wrapped(|ui| {
+                ui.spinner();
+                ui.label(tr(Text::RelayWorking));
+            });
         }
         if self.relay.workspace.busy() {
             ui.horizontal(|ui| {
@@ -210,8 +228,14 @@ impl HubApp {
                     |ui| {
                         ui.set_max_width(list_width);
                         let state = &mut self.relay.workspace;
-                        action =
-                            subscription_list::show(ui, language, colors, state, allow_actions);
+                        action = subscription_list::show(
+                            ui,
+                            language,
+                            colors,
+                            state,
+                            allow_actions,
+                            self.relay.demo_mode,
+                        );
                     },
                 );
                 ui.separator();
@@ -231,7 +255,14 @@ impl HubApp {
         } else {
             ui.set_max_width(ui.available_width().min(680.0));
             let state = &mut self.relay.workspace;
-            action = subscription_list::show(ui, language, colors, state, allow_actions);
+            action = subscription_list::show(
+                ui,
+                language,
+                colors,
+                state,
+                allow_actions,
+                self.relay.demo_mode,
+            );
         }
         if let Some(action) = action {
             self.relay.workspace_request(ui.ctx(), action);
@@ -252,6 +283,9 @@ impl HubApp {
                     } else {
                         Text::WorkspaceUnsavedHelp
                     }));
+                    if let Some(error) = self.relay.workspace.error {
+                        ui.colored_label(colors.error, tr(error));
+                    }
                     ui.horizontal_wrapped(|ui| {
                         if action != Action::Delete
                             && ui.button(tr(Text::WorkspaceSaveContinue)).clicked()
@@ -266,7 +300,9 @@ impl HubApp {
                             }))
                             .clicked()
                         {
-                            self.relay.workspace.draft_dirty = false;
+                            if action != Action::Import {
+                                self.relay.workspace.draft_dirty = false;
+                            }
                             self.relay.execute_workspace(ui.ctx(), action);
                         }
                         if ui.button(tr(Text::RelayCancel)).clicked() {
@@ -287,10 +323,9 @@ impl HubApp {
         let busy = self.active() || self.pending.is_some() || self.relay.schedule.armed();
         ui.add_enabled_ui(!busy, |ui| {
             let can_save = can_save_library(&self.relay.workspace);
-            let can_delete = matches!(
-                self.relay.workspace.selected,
-                Some(Selection::Subscription(id) | Selection::Collection(id)) if id != 0
-            );
+            let saved_item = self.relay.workspace.selected.filter(|selection| {
+                matches!(selection, Selection::Subscription(id) | Selection::Collection(id) if *id != 0)
+            });
             ui.horizontal_wrapped(|ui| {
                 if compact && ui.button(tr(Text::WorkspaceBack)).clicked() {
                     self.relay.execute_workspace(ui.ctx(), Action::Back);
@@ -301,8 +336,16 @@ impl HubApp {
                 {
                     self.relay.execute_workspace(ui.ctx(), Action::SaveLibrary);
                 }
-                if can_delete {
+                if let Some(selection) = saved_item {
                     ui.menu_button(tr(Text::WorkspaceItemActions), |ui| {
+                        if ui.button(tr(Text::WorkspaceDuplicate)).clicked() {
+                            self.relay.workspace_request(
+                                ui.ctx(),
+                                Action::Duplicate(selection, tr(Text::WorkspaceDuplicateSuffix)),
+                            );
+                            ui.close();
+                        }
+                        ui.separator();
                         if ui.button(tr(Text::WorkspaceDelete)).clicked() {
                             self.relay.workspace_request(ui.ctx(), Action::Delete);
                             ui.close();
@@ -561,11 +604,22 @@ pub(super) fn relay_tabs(
         for (step, label) in [
             (RelayStep::Source, source),
             (RelayStep::Review, Text::WorkspaceOperationsTab),
-            (RelayStep::Publish, Text::WorkspaceOutputTab),
+            (
+                RelayStep::Publish,
+                if state.demo_mode {
+                    Text::RelaySandboxFormat
+                } else {
+                    Text::WorkspaceOutputTab
+                },
+            ),
         ] {
             if ui
                 .add_enabled(
-                    !state.busy() && !state.schedule.armed(),
+                    !state.busy()
+                        && !state.schedule.armed()
+                        && (!state.demo_mode
+                            || step != RelayStep::Source
+                            || source == Text::WorkspaceMembersTab),
                     egui::Button::new(tr(label))
                         .selected(state.step == step)
                         .min_size(egui::vec2(0.0, 32.0)),

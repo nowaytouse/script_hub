@@ -628,6 +628,114 @@ fn prepared_raw_result_uploads_without_rechecking_nodes() {
 }
 
 #[test]
+fn prepared_upload_exports_the_selected_format_without_mutating_its_preview() {
+    use export::{OutputFormat, export_subscription};
+
+    let source = "A = socks5, a.example.invalid, 1080\n";
+    let mut config = config();
+    config.source.clear();
+    config.output.clear();
+    config.local_content = Some(Zeroizing::new(source.into()));
+    config.test_nodes = false;
+    config.output_format = OutputFormat::Mihomo;
+    let exported = export_subscription(source, config.output_format).unwrap();
+    assert_ne!(source, exported.as_str());
+    let fixture = Fixture::new(vec![created(document(&exported)), api(document(&exported))]);
+    let cancel = AtomicBool::new(false);
+    let prepared = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert_eq!(prepared.content.as_str(), source);
+    let uploaded = upload_with(&config, &fixture.client(), prepared, &cancel, &|_| {}).unwrap();
+    assert!(uploaded.published && uploaded.created.is_some());
+    assert_eq!(uploaded.content.as_str(), source);
+    assert_eq!(fixture.request_methods(), ["POST", "GET"]);
+}
+
+#[test]
+fn conversion_failure_cannot_begin_a_gist_write() {
+    let mut config = config();
+    config.source.clear();
+    config.output.clear();
+    config.local_content = Some(Zeroizing::new(SOURCE.into()));
+    config.test_nodes = false;
+    config.output_format = export::OutputFormat::Mihomo;
+    let fixture = Fixture::new(vec![]);
+    let cancel = AtomicBool::new(false);
+    let prepared = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    for attempt in [
+        run_with(
+            &config,
+            &fixture.client(),
+            RunMode::Publish,
+            &cancel,
+            &|_| {},
+            &check,
+        ),
+        upload_with(&config, &fixture.client(), prepared, &cancel, &|_| {}),
+    ] {
+        assert!(matches!(
+            attempt,
+            Err(RelayError::ExportNode { index: 1, .. })
+        ));
+    }
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
+fn an_explicit_format_replaces_an_equivalent_old_dialect_but_is_then_a_no_op() {
+    use export::{OutputFormat, export_subscription};
+
+    let source = "A = socks5, a.example.invalid, 1080\n";
+    let mut config = config();
+    config.source.clear();
+    config.local_content = Some(Zeroizing::new(source.into()));
+    config.test_nodes = false;
+    config.output_format = OutputFormat::Mihomo;
+    let exported = export_subscription(source, config.output_format).unwrap();
+    let fixture = Fixture::new(vec![
+        api(document(source)),
+        api(document(source)),
+        api(document(&exported)),
+        api(document(&exported)),
+        api(document(&exported)),
+        api(document(&exported)),
+    ]);
+    let execute = || {
+        run_with(
+            &config,
+            &fixture.client(),
+            RunMode::Publish,
+            &AtomicBool::new(false),
+            &|_| {},
+            &check,
+        )
+        .unwrap()
+    };
+    assert!(execute().published);
+    let repeated = execute();
+    assert!(repeated.unchanged && !repeated.published);
+    assert_eq!(
+        fixture.request_methods(),
+        ["GET", "GET", "PATCH", "GET", "GET", "GET"]
+    );
+}
+
+#[test]
 fn prepared_raw_result_refuses_changed_source_before_post() {
     let changed = SOURCE.replace("a.example.invalid", "changed.example.invalid");
     let fixture = Fixture::new(vec![

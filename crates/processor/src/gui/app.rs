@@ -1,5 +1,6 @@
 use super::app_history::HistoryLoader;
 use super::i18n::{Text, text};
+use super::relay::RelayState;
 use super::theme::{self, Palette};
 use crate::pipeline::custom_sources::{self, CustomSource, SourceCategory};
 use crate::runtime::catalog::Catalog;
@@ -11,10 +12,34 @@ use crate::runtime::settings::{self, Preferences};
 use eframe::egui::{self, RichText};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::process::ExitCode;
+use std::process::{Command, ExitCode, Stdio};
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
+
+fn offline_demo_command(executable: &Path) -> Command {
+    #[cfg(target_os = "macos")]
+    if let Some(bundle) = executable.parent().and_then(|dir| {
+        let contents = dir.parent()?;
+        let bundle = contents.parent()?;
+        (dir.ends_with("MacOS")
+            && contents.ends_with("Contents")
+            && bundle
+                .extension()
+                .is_some_and(|extension| extension == "app"))
+        .then_some(bundle)
+    }) {
+        // LaunchServices activates a separate native app window and waits for that instance.
+        let mut command = Command::new("/usr/bin/open");
+        command.args(["-n", "-W", "-a"]).arg(bundle).arg("--args");
+        command.arg("--demo");
+        return command;
+    }
+
+    let mut command = Command::new(executable);
+    command.arg("--demo");
+    command
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Page {
@@ -49,6 +74,7 @@ pub(super) enum TaskTab {
 }
 
 pub(super) enum Pending {
+    CloseSettings { save_failed: bool },
     Job(JobKind, JobOptions),
     AddSource(PathBuf, CustomSource),
     RemoveSource(PathBuf, SourceCategory, String),
@@ -169,6 +195,8 @@ pub struct HubApp {
     pub(super) colors: Palette,
     pub(super) templates: super::templates::TemplateState,
     pub(super) relay: super::relay::RelayState,
+    demo_launch: Option<Receiver<bool>>,
+    demo_launch_failed: bool,
     appearance: Option<(Preferences, bool)>,
 }
 
@@ -184,20 +212,26 @@ impl HubApp {
             preferences,
             settings_path,
             startup_error,
+            RelayState::default(),
             load_workspace,
         )
     }
 
     fn new_with_loader<F>(
         explicit: Option<PathBuf>,
-        preferences: Preferences,
+        mut preferences: Preferences,
         settings_path: Option<PathBuf>,
         startup_error: Option<String>,
+        relay: RelayState,
         loader: F,
     ) -> Self
     where
         F: FnOnce(Option<PathBuf>, bool) -> Result<LoadedWorkspace, String> + Send + 'static,
     {
+        if startup_error.is_some() {
+            preferences.record_history = false;
+            preferences.diagnostic_logs = false;
+        }
         let explicit_root = explicit.is_some();
         let open_on_startup = explicit_root || preferences.reopen_workspace;
         let root = explicit.or_else(|| {
@@ -213,7 +247,7 @@ impl HubApp {
             draft: preferences.clone(),
             colors: theme::palette(false, preferences.accent),
             templates: Default::default(),
-            relay: Default::default(),
+            relay,
             preferences,
             settings_path,
             page: Page::Overview,
@@ -257,6 +291,8 @@ impl HubApp {
             pending: None,
             error: None,
             notice: None,
+            demo_launch: None,
+            demo_launch_failed: false,
             appearance: None,
         };
         if let Some(error) = startup_error {
@@ -269,12 +305,90 @@ impl HubApp {
             }
             app.initial_load = true;
         }
-        app.refresh_history(false);
+        if !app.relay.demo_mode {
+            app.refresh_history(false);
+        }
         app
     }
 
     pub(super) fn tr(&self, key: Text) -> &'static str {
         text(self.draft.language, key)
+    }
+
+    pub(super) fn demo_launcher(&mut self, ui: &mut egui::Ui) {
+        if self.relay.demo_mode {
+            return;
+        }
+        let open = self.demo_launch.is_some();
+        let label = self.tr(if open {
+            Text::RelayDemoWindowRunning
+        } else {
+            Text::RelayDemoOpenWindow
+        });
+        if ui.add_enabled(!open, egui::Button::new(label)).clicked() {
+            self.start_demo_with(ui.ctx(), || {
+                std::env::current_exe()
+                    .and_then(|path| {
+                        offline_demo_command(&path)
+                            .stdin(Stdio::null())
+                            .stdout(Stdio::null())
+                            .stderr(Stdio::null())
+                            .status()
+                    })
+                    .is_ok_and(|status| status.success())
+            });
+        }
+    }
+
+    pub(super) fn demo_launcher_feedback(&self, ui: &mut egui::Ui) {
+        if self.demo_launch_failed {
+            ui.colored_label(self.colors.error, self.tr(Text::RelayDemoWindowFailed));
+        }
+    }
+
+    fn start_demo_with(
+        &mut self,
+        ctx: &egui::Context,
+        run: impl FnOnce() -> bool + Send + 'static,
+    ) {
+        if self.relay.demo_mode || self.demo_launch.is_some() {
+            return;
+        }
+        let ctx = ctx.clone();
+        let (sender, receiver) = mpsc::sync_channel(1);
+        match thread::Builder::new()
+            .name("script-hub-demo-window".into())
+            .spawn(move || {
+                let _ = sender.send(run());
+                ctx.request_repaint();
+            }) {
+            Ok(_) => {
+                self.demo_launch = Some(receiver);
+                self.demo_launch_failed = false;
+            }
+            Err(_) => self.demo_launch_failed = true,
+        }
+    }
+
+    fn poll_demo_window(&mut self) {
+        let Some(demo) = &self.demo_launch else {
+            return;
+        };
+        match demo.try_recv() {
+            Ok(success) => self.demo_launch_failed = !success,
+            Err(TryRecvError::Disconnected) => self.demo_launch_failed = true,
+            Err(TryRecvError::Empty) => return,
+        }
+        self.demo_launch = None;
+    }
+
+    fn apply_appearance(&mut self, ctx: &egui::Context) {
+        let dark = ctx.global_style().visuals.dark_mode;
+        if self.appearance.as_ref() != Some(&(self.draft.clone(), dark)) {
+            theme::apply(ctx, &self.draft);
+            self.colors = theme::palette(ctx.global_style().visuals.dark_mode, self.draft.accent);
+            self.appearance = Some((self.draft.clone(), ctx.global_style().visuals.dark_mode));
+        }
     }
 
     pub(super) fn template_project_root(&self) -> Option<PathBuf> {
@@ -303,53 +417,116 @@ impl HubApp {
         self.job.as_ref().is_some_and(Job::is_running)
     }
 
+    fn close_work_in_progress(&self) -> bool {
+        self.job_active() || self.templates.busy() || self.relay.busy()
+    }
+
     fn blocks_close(&self) -> bool {
-        self.job_active()
-            || self.templates.busy()
-            || self.relay.busy()
+        self.close_work_in_progress()
             || self.templates.dirty
             || self.templates.editing
             || self.relay.workspace.unsaved()
+            || self.has_unsaved_settings()
+    }
+
+    fn has_unsaved_settings(&self) -> bool {
+        self.settings_path.is_some() && self.draft != self.preferences
+    }
+
+    pub(super) fn request_quit(&mut self, ctx: &egui::Context) {
+        if self.blocks_close() {
+            self.handle_close_request(ctx, false);
+        } else {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
     }
 
     fn close_notice(&self, had_template_changes: bool) -> Option<Text> {
-        if self.relay.workspace.unsaved() {
+        if self.close_work_in_progress() {
+            Some(Text::CloseWorkInProgress)
+        } else if self.relay.workspace.unsaved() {
             Some(Text::WorkspaceUnsaved)
         } else if self.templates.dirty || self.templates.editing {
             Some(Text::VaultUnsavedChanges)
         } else if had_template_changes {
             Some(Text::VaultAutoLockedUnsaved)
-        } else if self.relay.busy() {
-            Some(Text::RelayCancelling)
-        } else if self.blocks_close() {
-            Some(Text::Running)
+        } else if self.has_unsaved_settings() {
+            Some(Text::UnsavedChanges)
         } else {
             None
         }
     }
 
-    fn route_file_drop(&mut self, ctx: &egui::Context, paths: Vec<PathBuf>) {
+    fn handle_close_request(&mut self, ctx: &egui::Context, had_template_changes: bool) {
+        if !self.blocks_close() && !had_template_changes {
+            return;
+        }
+        let Some(notice) = self.close_notice(had_template_changes) else {
+            return;
+        };
+        ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        match notice {
+            Text::CloseWorkInProgress if self.relay.busy() => self.page = Page::Relay,
+            Text::CloseWorkInProgress if self.job_active() => {
+                self.page = Page::Tasks;
+                self.task_tab = TaskTab::Current;
+            }
+            Text::WorkspaceUnsaved => {
+                self.relay.dismiss_file_picker();
+                self.page = Page::Relay;
+                self.relay.workspace.confirm = Some(super::subscriptions::Action::Close);
+                self.notice = None;
+                return;
+            }
+            Text::UnsavedChanges => {
+                self.page = Page::Settings;
+                if !matches!(self.pending, Some(Pending::CloseSettings { .. })) {
+                    self.pending = Some(Pending::CloseSettings { save_failed: false });
+                }
+                return;
+            }
+            Text::CloseWorkInProgress
+            | Text::VaultUnsavedChanges
+            | Text::VaultAutoLockedUnsaved => {
+                self.page = Page::Catalog;
+                self.catalog_tab = CatalogTab::Templates;
+            }
+            _ => {}
+        }
+        self.notice = Some(notice);
+    }
+
+    fn route_file_drop(&mut self, paths: Vec<PathBuf>) {
         if self.active() || paths.is_empty() {
             return;
         }
         if self.page == Page::Relay {
-            if self.relay.workspace.locked || self.relay.workspace.draft_dirty {
+            if self.relay.workspace.locked
+                || self.relay.workspace.draft_dirty
+                || self.relay.workspace.confirm.is_some()
+                || self.relay.workspace.password_form
+            {
                 self.relay.workspace.error = Some(Text::WorkspaceImportBlocked);
                 return;
             }
             if paths.len() == 1 {
-                if self.relay.workspace.selected.is_none() {
+                let path = paths.into_iter().next();
+                let workspace = self.loaded_root.as_deref();
+                let replace_current = self.relay.workspace.show_editor
+                    && self.relay.step == super::relay::RelayStep::Source
+                    && self.relay.input_mode == super::relay::InputMode::File
+                    && matches!(
+                        self.relay.workspace.selected,
+                        Some(super::subscriptions::Selection::Subscription(_))
+                    );
+                if replace_current {
                     self.relay
-                        .execute_workspace(ctx, super::subscriptions::Action::NewSubscription);
+                        .file_action(super::file_dialog::FileAction::Import, path, workspace);
+                } else {
+                    self.relay.start_workspace_import(path, workspace);
                 }
-                self.relay.workspace.show_editor = true;
-                self.relay.file_action(
-                    super::file_dialog::FileAction::Import,
-                    paths.into_iter().next(),
-                    self.loaded_root.as_deref(),
-                );
             } else {
-                self.relay.error = Some(super::relay::Failure::Validation(Text::RelayOneFile));
+                self.relay.workspace.error = Some(Text::RelayOneFile);
             }
             return;
         }
@@ -625,14 +802,7 @@ impl HubApp {
                 .then(|| PathBuf::from(self.draft.singbox.trim())),
             commit_message: Some(self.commit_message.clone()),
             paths: self.selected_files.iter().cloned().collect(),
-            history: if self.draft.record_history {
-                self.history_path().map(|path| HistoryOptions {
-                    path,
-                    keep_logs: self.draft.developer_mode && self.draft.diagnostic_logs,
-                })
-            } else {
-                None
-            },
+            history: self.configured_history(),
         };
         if kind == JobKind::Validate {
             self.start(kind, options);
@@ -641,13 +811,46 @@ impl HubApp {
         }
     }
 
+    pub(super) fn settings_load_failed(&self) -> bool {
+        self.startup_error.is_some()
+    }
+
+    pub(super) fn save_preferences(&mut self) {
+        let Some(path) = &self.settings_path else {
+            return;
+        };
+        match settings::save(path, &self.draft) {
+            Ok(()) => {
+                self.preferences = self.draft.clone();
+                self.startup_error = None;
+                self.notice = Some(Text::SettingsSaved);
+                self.error = None;
+            }
+            Err(error) => {
+                self.notice = None;
+                self.error = Some(error);
+            }
+        }
+    }
+
+    pub(super) fn configured_history(&self) -> Option<HistoryOptions> {
+        // Appearance can preview immediately; collection cannot use a draft or a fallback.
+        if self.settings_load_failed() || !self.preferences.record_history {
+            return None;
+        }
+        self.history_path().map(|path| HistoryOptions {
+            path,
+            keep_logs: self.preferences.developer_mode && self.preferences.diagnostic_logs,
+        })
+    }
+
     pub(super) fn start_relay(&mut self, mode: crate::relay::RunMode) {
         if self.active() || self.pending.is_some() {
             return;
         }
         let engine = self.relay.engine_path().to_owned();
         if mode == crate::relay::RunMode::Publish {
-            let Some(prepared) = self.relay.result.take() else {
+            let Some(prepared) = &self.relay.result else {
                 return;
             };
             let mut upload = prepared.clone();
@@ -658,7 +861,6 @@ impl HubApp {
                 .start_with(mode, &engine, move |config, token, _, cancel, progress| {
                     crate::relay::upload_prepared(config, token, upload, cancel, progress)
                 });
-            self.relay.result = Some(prepared);
         } else {
             self.relay.start_with(mode, &engine, crate::relay::run);
         }
@@ -819,6 +1021,10 @@ impl HubApp {
         if self.pending.is_none() {
             return;
         }
+        if let Some(Pending::CloseSettings { save_failed }) = self.pending {
+            self.confirm_settings_close(ctx, save_failed);
+            return;
+        }
         let mut execute = false;
         let mut cancel = false;
         let response = egui::Modal::new(egui::Id::unique("confirm-operation")).show(ctx, |ui| {
@@ -831,7 +1037,7 @@ impl HubApp {
                 Some(Pending::RemoveUnfinishedHistory(path)) => {
                     (self.tr(Text::RemoveUnfinishedHistory), path)
                 }
-                None => return,
+                Some(Pending::CloseSettings { .. }) | None => return,
             };
             ui.heading(title);
             ui.add_space(8.0);
@@ -892,7 +1098,7 @@ impl HubApp {
                 }
                 Some(Pending::ClearHistory(_)) => {}
                 Some(Pending::RemoveUnfinishedHistory(_)) => {}
-                None => {}
+                Some(Pending::CloseSettings { .. }) | None => {}
             }
             ui.add_space(16.0);
             ui.horizontal(|ui| {
@@ -916,11 +1122,57 @@ impl HubApp {
                     }
                     Pending::ClearHistory(_) => self.refresh_history(true),
                     Pending::RemoveUnfinishedHistory(_) => self.remove_unfinished_history(),
+                    Pending::CloseSettings { .. } => {}
                 }
             }
         } else if cancel || response.should_close() {
             self.pending = None;
         }
+    }
+
+    fn confirm_settings_close(&mut self, ctx: &egui::Context, save_failed: bool) {
+        let mut save = false;
+        let mut discard = false;
+        let mut cancel = false;
+        let response =
+            egui::Modal::new(egui::Id::unique("confirm-close-settings")).show(ctx, |ui| {
+                ui.set_width(ctx.content_rect().width().clamp(64.0, 472.0) - 32.0);
+                ui.heading(self.tr(Text::UnsavedChanges));
+                ui.label(self.tr(Text::SettingsCloseConfirm));
+                if save_failed {
+                    ui.colored_label(self.colors.error, self.tr(Text::SettingsCloseSaveFailed));
+                }
+                ui.add_space(12.0);
+                ui.horizontal_wrapped(|ui| {
+                    save = ui
+                        .add_enabled(
+                            !self.active(),
+                            egui::Button::new(self.tr(Text::SettingsSaveAndQuit)),
+                        )
+                        .clicked();
+                    discard = ui.button(self.tr(Text::SettingsDiscardAndQuit)).clicked();
+                    cancel = ui.button(self.tr(Text::Cancel)).clicked();
+                });
+            });
+        if save || discard {
+            self.finish_settings_close(ctx, save);
+        } else if cancel || response.should_close() {
+            self.pending = None;
+        }
+    }
+
+    fn finish_settings_close(&mut self, ctx: &egui::Context, save: bool) {
+        if save {
+            self.save_preferences();
+            if self.has_unsaved_settings() {
+                self.pending = Some(Pending::CloseSettings { save_failed: true });
+                return;
+            }
+        } else {
+            self.draft = self.preferences.clone();
+        }
+        self.pending = None;
+        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
     }
 
     fn source_result(&mut self, result: Result<(), String>) {
@@ -938,10 +1190,16 @@ impl HubApp {
 
 impl eframe::App for HubApp {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.poll_demo_window();
         // Auto-lock may clear drafts before close handling; keep the reason for this frame.
         let had_template_changes = self.templates.dirty || self.templates.editing;
         self.templates.tick(ctx);
-        let schedule_admitted = !self.active() && self.pending.is_none();
+        let close_requested = ctx.input(|input| input.viewport().close_requested());
+        let schedule_admitted = !close_requested
+            && !self.active()
+            && self.pending.is_none()
+            && self.relay.workspace.confirm.is_none()
+            && !self.relay.workspace.password_form;
         if let Some(result) = self.relay.schedule.tick(ctx, schedule_admitted) {
             match result {
                 super::relay_schedule::Completed::Subscription(result) => {
@@ -952,22 +1210,11 @@ impl eframe::App for HubApp {
                 }
             }
         }
-        if self.relay.schedule.running() {
-            self.relay.progress = self.relay.schedule.progress;
-        }
-        if let Some(error) = self.relay.schedule.last_error.take() {
-            self.relay.error = Some(super::relay::Failure::Operation(error));
-        }
         self.relay.tick(ctx);
         self.poll_workspace_loader(ctx);
         self.poll_repository_loader(ctx);
         self.poll_history(ctx);
-        let dark = ctx.global_style().visuals.dark_mode;
-        if self.appearance.as_ref() != Some(&(self.draft.clone(), dark)) {
-            theme::apply(ctx, &self.draft);
-            self.colors = theme::palette(ctx.global_style().visuals.dark_mode, self.draft.accent);
-            self.appearance = Some((self.draft.clone(), ctx.global_style().visuals.dark_mode));
-        }
+        self.apply_appearance(ctx);
         if !self.job_finished_handled && !self.job_active() {
             self.job_finished_handled = true;
             self.refresh_repository_after_load = true;
@@ -977,19 +1224,16 @@ impl eframe::App for HubApp {
         if self.active() {
             ctx.request_repaint_after(Duration::from_millis(250));
         }
-        if ctx.input(|input| input.viewport().close_requested())
-            && let Some(notice) = self.close_notice(had_template_changes)
+        if (self.notice == Some(Text::CloseWorkInProgress) && !self.close_work_in_progress())
+            || (self.notice == Some(Text::VaultUnsavedChanges)
+                && !self.templates.dirty
+                && !self.templates.editing)
         {
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            if self.relay.workspace.unsaved() && !self.relay.busy() {
-                self.relay.schedule.stop();
-                self.page = Page::Relay;
-                self.relay.workspace.confirm = Some(super::subscriptions::Action::Close);
-            }
-            if self.relay.busy() {
-                self.relay.request_cancel();
-            }
-            self.notice = Some(notice);
+            self.notice = None;
+        }
+        if close_requested {
+            self.handle_close_request(ctx, had_template_changes);
+            return;
         }
         let dropped = ctx.input(|input| {
             input
@@ -999,7 +1243,7 @@ impl eframe::App for HubApp {
                 .map(|file| file.path().to_path_buf())
                 .collect::<Vec<_>>()
         });
-        self.route_file_drop(ctx, dropped);
+        self.route_file_drop(dropped);
         if !ctx.egui_wants_keyboard_input()
             && self.pending.is_none()
             && !self.relay.selecting_file()
@@ -1148,6 +1392,79 @@ impl eframe::App for HubApp {
     }
 }
 
+struct DemoApp(HubApp);
+
+impl DemoApp {
+    fn new(preferences: Preferences, workspace: crate::relay::library::Workspace) -> Self {
+        let mut relay = RelayState::new(true);
+        relay.workspace.data = workspace;
+        relay.workspace.checked = true;
+        relay.workspace.list.kind = super::subscriptions::ListKind::Collections;
+        let mut hub = HubApp::new_with_loader(None, preferences, None, None, relay, load_workspace);
+        hub.page = Page::Relay;
+        Self(hub)
+    }
+}
+
+impl eframe::App for DemoApp {
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.0.relay.tick(ctx);
+        self.0.apply_appearance(ctx);
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        use settings::{Language, Theme};
+        let hub = &mut self.0;
+        let current = hub.draft.language;
+        let tr = |key| text(current, key);
+        let language_name = |language| match language {
+            Language::En | Language::System => "English",
+            Language::ZhCn => "简体中文",
+            Language::Ja => "日本語",
+        };
+        egui::CentralPanel::default()
+            .frame(egui::Frame::new().fill(hub.colors.canvas).inner_margin(20))
+            .show(ui, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    ui.strong(tr(Text::RelaySandboxTitle));
+                    ui.separator();
+                    let label = ui.label(tr(Text::Language));
+                    egui::ComboBox::from_id_salt("demo-language")
+                        .selected_text(language_name(current))
+                        .show_ui(ui, |ui| {
+                            for language in [Language::En, Language::ZhCn, Language::Ja] {
+                                if ui
+                                    .selectable_value(
+                                        &mut hub.draft.language,
+                                        language,
+                                        language_name(language),
+                                    )
+                                    .clicked()
+                                {
+                                    ui.close();
+                                }
+                            }
+                        })
+                        .response
+                        .labelled_by(label.id);
+                    let (theme, label) = if ui.visuals().dark_mode {
+                        (Theme::Light, Text::Light)
+                    } else {
+                        (Theme::Dark, Text::Dark)
+                    };
+                    if ui.button(tr(label)).clicked() {
+                        hub.draft.theme = theme;
+                    }
+                });
+                ui.label(tr(Text::RelaySandboxOffline));
+                ui.add_space(8.0);
+                ui.separator();
+                ui.add_space(8.0);
+                hub.relay_page(ui);
+            });
+    }
+}
+
 #[cfg(test)]
 pub(super) fn test_app(preferences: Preferences) -> HubApp {
     HubApp::new(None, preferences, None, None)
@@ -1155,6 +1472,7 @@ pub(super) fn test_app(preferences: Preferences) -> HubApp {
 
 pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut template_setup = None;
+    let mut demo = None;
     let explicit = match args.next().as_deref() {
         Some("--worker") => return crate::runtime::worker::run(args),
         Some("--root") => match args.next() {
@@ -1162,6 +1480,16 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
             _ => return usage(false),
         },
         Some("--help" | "-h") => return usage(true),
+        Some("--demo") if args.next().is_none() => {
+            match crate::relay::demo::workspace() {
+                Ok(workspace) => demo = Some(workspace),
+                Err(_) => {
+                    eprintln!("Cannot load the offline demo fixture.");
+                    return ExitCode::FAILURE;
+                }
+            }
+            None
+        }
         Some("--prepare-templates") => {
             let Some(setup) = parse_template_setup(args) else {
                 return usage(false);
@@ -1172,12 +1500,13 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         Some(_) => return usage(false),
         None => None,
     };
-    let (path, mut preferences, error) = match settings::preferences_path() {
-        Ok(path) => match settings::load(&path) {
+    let (path, mut preferences, error) = match demo.is_none().then(settings::preferences_path) {
+        None => (None, Preferences::default(), None),
+        Some(Ok(path)) => match settings::load(&path) {
             Ok(preferences) => (Some(path), preferences.unwrap_or_default(), None),
             Err(error) => (Some(path), Preferences::default(), Some(error)),
         },
-        Err(error) => (None, Preferences::default(), Some(error)),
+        Some(Err(error)) => (None, Preferences::default(), Some(error)),
     };
     let saved_reopen = preferences.reopen_workspace;
     if template_setup.is_some() {
@@ -1208,7 +1537,11 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         ..Default::default()
     };
     match eframe::run_native(
-        "Script Hub",
+        if demo.is_some() {
+            "Script Hub — Offline Demo"
+        } else {
+            "Script Hub"
+        },
         options,
         Box::new(move |cc| {
             let image = egui::ColorImage::from_rgba_unmultiplied(
@@ -1221,6 +1554,9 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
             cc.egui_ctx
                 .data_mut(|data| data.insert_temp(egui::Id::unique("script-hub-logo"), texture));
             theme::apply(&cc.egui_ctx, &preferences);
+            if let Some(workspace) = demo {
+                return Ok(Box::new(DemoApp::new(preferences, workspace)) as Box<dyn eframe::App>);
+            }
             let mut app = HubApp::new(explicit, preferences, path, error);
             if let Some((sources, public, backup)) = template_setup {
                 app.preferences.reopen_workspace = saved_reopen;
@@ -1265,7 +1601,7 @@ fn parse_template_setup(
 
 fn usage(success: bool) -> ExitCode {
     println!(
-        "Usage: script-hub-gui [--root <repository>]\n       script-hub-gui --prepare-templates <public.vault> <local-backup.vault> <config>...\nNative desktop support: Windows and macOS. Linux GUI development is frozen."
+        "Usage: script-hub-gui [--root <repository>]\n       script-hub-gui --demo\n       script-hub-gui --prepare-templates <public.vault> <local-backup.vault> <config>...\nNative desktop support: Windows and macOS. Linux GUI development is frozen."
     );
     if success {
         ExitCode::SUCCESS
@@ -1276,6 +1612,89 @@ fn usage(success: bool) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn demo_command_passes_only_the_isolated_mode_flag() {
+        use super::*;
+        let executable = Path::new("/fixture/script-hub-gui");
+        let command = offline_demo_command(executable);
+        assert_eq!(command.get_program(), executable);
+        assert_eq!(command.get_args().collect::<Vec<_>>(), ["--demo"]);
+        #[cfg(target_os = "macos")]
+        {
+            let command =
+                offline_demo_command(Path::new("/fixture/Script Hub.app/Contents/MacOS/gui"));
+            assert_eq!(command.get_program(), "/usr/bin/open");
+            assert_eq!(
+                command.get_args().collect::<Vec<_>>(),
+                [
+                    "-n",
+                    "-W",
+                    "-a",
+                    "/fixture/Script Hub.app",
+                    "--args",
+                    "--demo"
+                ]
+            );
+        }
+    }
+
+    #[test]
+    fn demo_launcher_allows_one_child_and_preserves_locked_subscription_state() {
+        use super::*;
+
+        let ctx = egui::Context::default();
+        let mut app = test_app(Preferences::default());
+        app.relay.workspace.locked = true;
+        app.relay.workspace.draft_dirty = true;
+        let (complete, running) = mpsc::sync_channel(1);
+        app.demo_launch = Some(running);
+        app.start_demo_with(&ctx, || panic!("a second demo must not launch"));
+        app.poll_demo_window();
+        assert!(app.demo_launch.is_some());
+        complete.send(false).unwrap();
+        app.poll_demo_window();
+        assert!(app.demo_launch.is_none() && app.demo_launch_failed);
+        assert!(app.relay.workspace.locked && app.relay.workspace.draft_dirty);
+
+        let (complete, running) = mpsc::sync_channel(1);
+        app.demo_launch = Some(running);
+        complete.send(true).unwrap();
+        app.poll_demo_window();
+        assert!(app.demo_launch.is_none() && !app.demo_launch_failed);
+    }
+
+    #[test]
+    fn native_demo_uses_only_sample_state_and_blocks_external_actions() {
+        use super::*;
+        use crate::gui::file_dialog::FileAction;
+        use crate::gui::subscriptions::Action;
+        use crate::relay::RunMode;
+
+        let ctx = egui::Context::default();
+        let mut demo = DemoApp::new(
+            Preferences::default(),
+            crate::relay::demo::workspace().unwrap(),
+        );
+        assert!(demo.0.settings_path.is_none());
+        assert!(demo.0.workspace_loader.is_none());
+        assert!(demo.0.history_loader.is_none());
+        let relay = &mut demo.0.relay;
+        assert!(relay.workspace.checked && !relay.workspace.stored);
+        assert!(relay.selected_engine.is_none());
+        assert_eq!(relay.workspace.data.subscriptions.len(), 2);
+        for action in [Action::SaveLibrary, Action::Import, Action::Lock] {
+            relay.execute_workspace(&ctx, action);
+        }
+        relay.prepare_collection(true);
+        relay.file_action(FileAction::ChooseEngine, None, None);
+        relay.arm_schedule();
+        relay.start_with(RunMode::Publish, Path::new("unused"), |_, _, _, _, _| {
+            panic!("offline demo must never dispatch Gist work")
+        });
+        assert!(!relay.workspace.password_form && !relay.workspace.locked);
+        assert!(!relay.selecting_file() && !relay.busy() && !relay.schedule.armed());
+    }
+
     #[test]
     fn bundled_logo_decodes() {
         let icon =
@@ -1460,7 +1879,9 @@ mod tests {
             .unwrap()
             .nodes
             .iter()
-            .find(|(_, node)| node.label() == Some("Run offline demo"))
+            .find(|(_, node)| {
+                node.label() == Some(text(settings::Language::En, Text::RelayDemoRun))
+            })
             .and_then(|(_, node)| node.bounds())
             .unwrap();
         output.drop_without_applying_deltas();
@@ -1580,10 +2001,6 @@ mod tests {
         let ctx = egui::Context::default();
         ctx.enable_accesskit();
         let mut app = relay_app();
-        app.relay.input_mode = InputMode::Paste;
-        app.relay
-            .paste
-            .push_str("Example = socks5, node.example, 1080\n");
         let draw = |app: &mut HubApp, events| {
             ctx.run_ui(
                 egui::RawInput {
@@ -1640,6 +2057,14 @@ mod tests {
                 .drop_without_applying_deltas();
             }
         };
+        click(&mut app, Text::InputPaste);
+        let sample = "Example = socks5, node.example, 1080\n";
+        draw(&mut app, vec![egui::Event::Paste(sample.to_owned())]).drop_without_applying_deltas();
+        assert!(app.relay.input_mode == InputMode::Paste);
+        assert_eq!(app.relay.paste.as_str(), sample);
+        click(&mut app, Text::InputLink);
+        click(&mut app, Text::InputPaste);
+        assert_eq!(app.relay.paste.as_str(), sample);
         click(&mut app, Text::RelayImportGist);
         assert!(app.relay.busy(), "load action did not start the import");
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
@@ -1789,14 +2214,75 @@ mod tests {
             .file_action(super::super::file_dialog::FileAction::Import, None, None);
         assert!(app.active() && !app.blocks_close());
         app.queue_job(JobKind::GitPush);
-        app.route_file_drop(
-            &egui::Context::default(),
-            vec![std::env::temp_dir().join("must-not-import.list")],
-        );
+        app.route_file_drop(vec![std::env::temp_dir().join("must-not-import.list")]);
         assert!(app.pending.is_none() && !app.relay.busy());
         assert!(app.relay.selecting_file());
         app.relay.clear(&egui::Context::default());
         assert!(!app.active());
+    }
+
+    #[test]
+    fn requesting_close_during_relay_work_does_not_cancel_the_worker() {
+        let mut app = relay_app();
+        let ctx = egui::Context::default();
+        let (release, wait) = mpsc::sync_channel(1);
+        let (observed, cancellation) = mpsc::sync_channel(1);
+        app.relay.start_with(
+            crate::relay::RunMode::Preview,
+            Path::new(&app.draft.singbox),
+            move |_, _, _, cancel, _| {
+                wait.recv_timeout(Duration::from_secs(2)).unwrap();
+                observed
+                    .send(cancel.load(std::sync::atomic::Ordering::Acquire))
+                    .unwrap();
+                Err(crate::relay::RelayError::InputUnavailable)
+            },
+        );
+        assert!(app.relay.busy());
+        let output = ctx.run_ui(Default::default(), |_| {
+            app.handle_close_request(&ctx, false)
+        });
+        assert!(
+            output.viewport_output[&egui::ViewportId::ROOT]
+                .commands
+                .contains(&egui::ViewportCommand::CancelClose)
+        );
+        output.drop_without_applying_deltas();
+        assert!(app.page == Page::Relay);
+        assert_eq!(app.notice, Some(Text::CloseWorkInProgress));
+        release.send(()).unwrap();
+        assert!(!cancellation.recv_timeout(Duration::from_secs(2)).unwrap());
+    }
+
+    #[test]
+    fn close_confirmation_takes_precedence_over_the_file_picker() {
+        let mut app = relay_app();
+        let ctx = egui::Context::default();
+        app.relay.workspace.draft_dirty = true;
+        app.relay
+            .file_action(super::super::file_dialog::FileAction::Import, None, None);
+        assert!(app.relay.selecting_file());
+        let output = ctx.run_ui(Default::default(), |_| {
+            app.handle_close_request(&ctx, false)
+        });
+        output.drop_without_applying_deltas();
+        assert!(!app.relay.selecting_file());
+        assert!(app.relay.workspace.draft_dirty);
+        assert!(matches!(
+            app.relay.workspace.confirm,
+            Some(super::super::subscriptions::Action::Close)
+        ));
+    }
+
+    #[test]
+    fn close_with_an_unapplied_template_opens_its_editor_without_discarding() {
+        let mut app = relay_app();
+        let ctx = egui::Context::default();
+        app.templates.editing = true;
+        let output = ctx.run_ui(Default::default(), |_| app.handle_close_request(&ctx, true));
+        output.drop_without_applying_deltas();
+        assert!(app.page == Page::Catalog && app.catalog_tab == CatalogTab::Templates);
+        assert!(app.templates.editing);
     }
 
     #[test]
@@ -1839,10 +2325,7 @@ mod tests {
     #[test]
     fn dropping_a_configuration_never_opens_it_as_a_workspace() {
         let mut app = HubApp::new(None, Preferences::default(), None, None);
-        app.route_file_drop(
-            &egui::Context::default(),
-            vec![std::env::temp_dir().join("synthetic.surge.conf")],
-        );
+        app.route_file_drop(vec![std::env::temp_dir().join("synthetic.surge.conf")]);
         assert!(app.page == Page::Catalog && app.catalog_tab == CatalogTab::Templates);
         assert_eq!(app.templates.queued_imports(), 1);
         assert!(app.root_input.is_empty() && app.workspace_loader.is_none());
@@ -2281,14 +2764,18 @@ mod tests {
 
     impl Workspace {
         fn new() -> Self {
+            static NEXT_FIXTURE: std::sync::atomic::AtomicU64 =
+                std::sync::atomic::AtomicU64::new(0);
             let root = std::env::temp_dir().join(format!(
-                "script-hub-desktop-app-{}-{}",
+                "script-hub-desktop-app-{}-{}-{}",
                 std::process::id(),
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
-                    .as_nanos()
+                    .as_nanos(),
+                NEXT_FIXTURE.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
             ));
+            fs::create_dir(&root).unwrap();
             for directory in [
                 "crates/processor",
                 "modules/source",
@@ -2319,6 +2806,97 @@ mod tests {
             fs::remove_dir_all(&self.0).unwrap();
         }
     }
+
+    #[test]
+    fn quitting_with_unsaved_settings_keeps_the_draft_until_an_explicit_choice() {
+        let workspace = Workspace::new();
+        let path = workspace.0.join("settings.json");
+        let mut app = test_app(Preferences::default());
+        settings::save(&path, &app.preferences).unwrap();
+        app.settings_path = Some(path.clone());
+        app.draft.scale_percent = 115;
+        let ctx = egui::Context::default();
+
+        app.request_quit(&ctx);
+        assert_eq!(app.page, Page::Settings);
+        assert!(matches!(
+            app.pending,
+            Some(Pending::CloseSettings { save_failed: false })
+        ));
+        assert!(app.blocks_close());
+        assert_eq!(settings::load(&path).unwrap().unwrap().scale_percent, 100);
+
+        app.finish_settings_close(&ctx, false);
+        assert!(app.pending.is_none() && !app.blocks_close());
+        assert_eq!(app.draft.scale_percent, 100);
+        assert_eq!(settings::load(&path).unwrap().unwrap().scale_percent, 100);
+
+        app.draft.scale_percent = 120;
+        app.handle_close_request(&ctx, false);
+        app.finish_settings_close(&ctx, true);
+        assert!(app.pending.is_none() && !app.blocks_close());
+        assert_eq!(settings::load(&path).unwrap().unwrap().scale_percent, 120);
+    }
+
+    #[test]
+    fn failed_save_at_quit_preserves_settings_draft_and_original_file() {
+        let workspace = Workspace::new();
+        let path = workspace.0.join("settings.json");
+        fs::write(&path, "{broken settings").unwrap();
+        let mut app = test_app(Preferences::default());
+        app.settings_path = Some(path.clone());
+        app.draft.scale_percent = 125;
+        let ctx = egui::Context::default();
+        app.handle_close_request(&ctx, false);
+        app.finish_settings_close(&ctx, true);
+
+        assert!(matches!(
+            app.pending,
+            Some(Pending::CloseSettings { save_failed: true })
+        ));
+        assert!(app.blocks_close());
+        assert_eq!(app.draft.scale_percent, 125);
+        assert_eq!(fs::read_to_string(path).unwrap(), "{broken settings");
+    }
+
+    #[test]
+    fn unreadable_preferences_pause_history_until_a_valid_save() {
+        let workspace = Workspace::new();
+        let path = workspace.0.join("settings.json");
+        let invalid = "{invalid settings";
+        fs::write(&path, invalid).unwrap();
+        let mut app = HubApp::new(
+            None,
+            Preferences::default(),
+            Some(path.clone()),
+            Some(settings::load(&path).unwrap_err()),
+        );
+        assert!(!app.draft.record_history);
+        assert!(!app.draft.diagnostic_logs);
+        assert!(app.configured_history().is_none());
+
+        app.draft.record_history = true;
+        app.draft.developer_mode = true;
+        app.draft.diagnostic_logs = true;
+        app.save_preferences();
+        assert!(app.settings_load_failed());
+        assert!(app.configured_history().is_none());
+        assert_eq!(fs::read_to_string(&path).unwrap(), invalid);
+
+        fs::rename(&path, workspace.0.join("settings.broken.json")).unwrap();
+        let opted_in = app.draft.clone();
+        app.draft = app.preferences.clone();
+        app.save_preferences();
+        assert!(!app.settings_load_failed());
+        assert!(app.configured_history().is_none());
+
+        app.draft = opted_in;
+        app.save_preferences();
+        assert!(!app.settings_load_failed());
+        assert!(app.configured_history().unwrap().keep_logs);
+        assert_eq!(settings::load(&path).unwrap(), Some(app.draft.clone()));
+    }
+
     #[test]
     fn invalid_root_clears_catalog_and_surfaces_error() {
         let mut app = HubApp::new(
@@ -2398,6 +2976,7 @@ mod tests {
             Preferences::default(),
             None,
             None,
+            RelayState::default(),
             move |root, platform| {
                 entered_sender.send(()).map_err(|error| error.to_string())?;
                 release_receiver
@@ -2465,9 +3044,14 @@ mod tests {
             root: "/unavailable/protected/project".to_string(),
             ..Preferences::default()
         };
-        let app = HubApp::new_with_loader(None, preferences, None, None, |_, _| {
-            panic!("default launch must not attempt workspace access")
-        });
+        let app = HubApp::new_with_loader(
+            None,
+            preferences,
+            None,
+            None,
+            RelayState::default(),
+            |_, _| panic!("default launch must not attempt workspace access"),
+        );
         assert!(app.workspace_loader.is_none());
         assert!(!app.workspace_ready());
         assert_eq!(app.root_input, "/unavailable/protected/project");
@@ -2484,6 +3068,7 @@ mod tests {
             },
             None,
             None,
+            RelayState::default(),
             |_, _| panic!("template storage must not start a workspace scan"),
         );
         assert_eq!(

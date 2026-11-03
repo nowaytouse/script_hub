@@ -64,11 +64,10 @@ impl HubApp {
                     }
                     let store = HistoryStore::open(&path)?;
                     match action {
-                        HistoryLoadAction::Read => {}
-                        HistoryLoadAction::ClearCompleted => store.clear()?,
-                        HistoryLoadAction::RemoveUnfinished => store.clear_unfinished()?,
+                        HistoryLoadAction::Read => store.recent(100),
+                        HistoryLoadAction::ClearCompleted => store.clear(),
+                        HistoryLoadAction::RemoveUnfinished => store.clear_unfinished(),
                     }
-                    store.recent(100)
                 })();
                 let _ = sender.send(result);
             }) {

@@ -47,6 +47,7 @@ pub(super) struct TemplateState {
     pub overwrite_export: bool,
     pub overwrite_vault: bool,
     pub remove_pending: bool,
+    pub lock_confirmation: Option<egui::Id>,
     pub dirty: bool,
     pub error: Option<String>,
     pub notice: Option<Text>,
@@ -106,6 +107,7 @@ impl Default for TemplateState {
             overwrite_export: false,
             overwrite_vault: false,
             remove_pending: false,
+            lock_confirmation: None,
             dirty: false,
             error: None,
             notice: None,
@@ -533,8 +535,17 @@ impl TemplateState {
         self.last_activity = Instant::now();
     }
 
+    pub(super) fn request_lock(&mut self, ctx: &egui::Context, opener: egui::Id) {
+        if self.dirty || self.editing {
+            self.lock_confirmation = Some(opener);
+        } else {
+            self.lock(ctx);
+        }
+    }
+
     pub(super) fn lock(&mut self, ctx: &egui::Context) {
         self.generation.fetch_add(1, Ordering::AcqRel);
+        self.lock_confirmation = None;
         self.vault = None;
         self.password.zeroize();
         self.confirmation.zeroize();
@@ -1318,6 +1329,8 @@ mod tests {
                 state.apply_edit(&ctx);
             }
             assert!(state.unlocked() && (state.editing || state.dirty));
+            state.request_lock(&ctx, egui::Id::unique("lock-opener"));
+            assert!(state.lock_confirmation.is_some());
             let mut input = egui::RawInput {
                 focused: false,
                 ..Default::default()
@@ -1330,6 +1343,7 @@ mod tests {
             let output = ctx.run_ui(input, |ui| state.tick(ui.ctx()));
             output.drop_without_applying_deltas();
             assert!(!state.unlocked() && !state.editing && !state.dirty);
+            assert!(state.lock_confirmation.is_none());
             assert!(state.preview.is_empty() && state.edit_name.is_empty());
             assert!(state.password.is_empty() && state.confirmation.is_empty());
             assert_eq!(state.notice, Some(Text::VaultAutoLockedUnsaved));

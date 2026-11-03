@@ -42,6 +42,7 @@ pub struct RelayConfig {
     pub source_file: String,
     pub output: String,
     pub output_file: String,
+    pub output_format: export::OutputFormat,
     pub title: String,
     pub engine: PathBuf,
     pub test_nodes: bool,
@@ -65,6 +66,7 @@ impl Default for RelayConfig {
             source_file: String::new(),
             output: String::new(),
             output_file: "nodes.list".to_owned(),
+            output_format: export::OutputFormat::Original,
             title: "Script Hub Relay".to_owned(),
             engine: PathBuf::from("sing-box"),
             test_nodes: false,
@@ -212,18 +214,20 @@ impl RelayConfig {
                 model::pipeline::ResolveError::ConsentRequired,
             )));
         }
-        if !self.output.trim().is_empty() {
-            let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
-                .map_err(RelayError::Gist)?;
-            if input.as_ref().is_some_and(
-                |input| matches!(input, input::Target::Gist(file) if output.id == file.id),
-            ) {
-                return Err(RelayError::InvalidInput);
+        if mode == RunMode::Publish {
+            if self.output.trim().is_empty() {
+                gist::validate_filename(&self.output_file).map_err(RelayError::Gist)?;
+            } else {
+                let output = gist::GistFile::parse(self.output.trim(), &self.output_file)
+                    .map_err(RelayError::Gist)?;
+                if input.as_ref().is_some_and(
+                    |input| matches!(input, input::Target::Gist(file) if output.id == file.id),
+                ) {
+                    return Err(RelayError::InvalidInput);
+                }
             }
-        } else if mode == RunMode::Publish {
-            gist::validate_filename(&self.output_file).map_err(RelayError::Gist)?;
+            gist::validate_name(&self.title).map_err(RelayError::Gist)?;
         }
-        gist::validate_name(&self.title).map_err(RelayError::Gist)?;
         if self.test_nodes
             && (!(1..=8).contains(&self.concurrency)
                 || !(1..=20).contains(&self.timeout_seconds)
@@ -248,7 +252,8 @@ pub fn run(
 ) -> Result<RelayResult, RelayError> {
     config.validate(mode)?;
     active(cancel)?;
-    let client = if token.is_empty() && mode != RunMode::Publish {
+    let client = if mode != RunMode::Publish && (token.is_empty() || config.local_content.is_some())
+    {
         gist::GistClient::anonymous()
     } else {
         gist::GistClient::new(token).map_err(RelayError::Gist)?
@@ -488,7 +493,18 @@ fn run_with(
         }
     }
     if mode == RunMode::Publish {
-        publish_result(config, client, &mut result, destination, cancel, progress)?;
+        let converted = publication_payload(config, &result, cancel)?;
+        publish_result(
+            config,
+            client,
+            &mut result,
+            Publication {
+                destination,
+                converted,
+            },
+            cancel,
+            progress,
+        )?;
     }
     progress(Progress {
         stage: RelayStage::Complete,
@@ -517,8 +533,19 @@ fn upload_with(
     progress: &(dyn Fn(Progress) + Sync),
 ) -> Result<RelayResult, RelayError> {
     validate_prepared(config, &result)?;
+    let converted = publication_payload(config, &result, cancel)?;
     let destination = read_destination(config, client, cancel)?;
-    publish_result(config, client, &mut result, destination, cancel, progress)?;
+    publish_result(
+        config,
+        client,
+        &mut result,
+        Publication {
+            destination,
+            converted,
+        },
+        cancel,
+        progress,
+    )?;
     progress(Progress {
         stage: RelayStage::Complete,
         checked: result.total,
@@ -567,15 +594,39 @@ fn read_destination(
     Ok(Some((output, expected)))
 }
 
+struct Publication {
+    destination: Option<(gist::GistFile, gist::Snapshot)>,
+    converted: Option<Zeroizing<String>>,
+}
+
+fn publication_payload(
+    config: &RelayConfig,
+    result: &RelayResult,
+    cancel: &AtomicBool,
+) -> Result<Option<Zeroizing<String>>, RelayError> {
+    active(cancel)?;
+    if config.output_format == export::OutputFormat::Original {
+        Ok(None)
+    } else {
+        export::export_subscription(&result.content, config.output_format).map(Some)
+    }
+}
+
 fn publish_result(
     config: &RelayConfig,
     client: &gist::GistClient,
     result: &mut RelayResult,
-    destination: Option<(gist::GistFile, gist::Snapshot)>,
+    Publication {
+        destination,
+        converted,
+    }: Publication,
     cancel: &AtomicBool,
     progress: &(dyn Fn(Progress) + Sync),
 ) -> Result<(), RelayError> {
     active(cancel)?;
+    let payload = converted
+        .as_ref()
+        .map_or(result.content.as_str(), |content| content.as_str());
     if let Some(source) = &result.source {
         let current = input::read(client, config.source.trim(), &config.source_file, cancel)?;
         if !source.matches(&current) {
@@ -589,11 +640,16 @@ fn publish_result(
         total: result.total,
     });
     if let Some((output, expected)) = destination {
-        let content = expected
-            .content
-            .as_ref()
-            .filter(|old| model::semantic_equal(old, &result.content))
-            .map_or(result.content.as_str(), |old| old.as_str());
+        // An explicit target must actually receive its exported bytes, not an equivalent profile.
+        let content = if converted.is_some() {
+            payload
+        } else {
+            expected
+                .content
+                .as_ref()
+                .filter(|old| model::semantic_equal(old, payload))
+                .map_or(payload, |old| old.as_str())
+        };
         match client
             .publish(
                 result.source.as_ref().and_then(input::Source::gist_file),
@@ -612,7 +668,7 @@ fn publish_result(
     } else {
         result.created = Some(
             client
-                .create(&config.output_file, &result.content, &config.title, cancel)
+                .create(&config.output_file, payload, &config.title, cancel)
                 .map_err(RelayError::Gist)?,
         );
         result.published = true;
@@ -675,6 +731,28 @@ mod tests {
             ..RelayConfig::default()
         };
         assert!(config.validate(RunMode::Preview).is_ok());
+    }
+
+    #[test]
+    fn local_preview_ignores_invalid_publish_target_and_token() {
+        let config = RelayConfig {
+            local_content: Some(Zeroizing::new("A = socks5, node.example, 1080\n".into())),
+            output: "not a gist".into(),
+            title: "invalid\nlabel".into(),
+            test_nodes: false,
+            ..Default::default()
+        };
+        let result = run(
+            &config,
+            "invalid token",
+            RunMode::Preview,
+            &AtomicBool::new(false),
+            &|_| {},
+        )
+        .unwrap();
+        assert_eq!(result.total, 1);
+        assert!(!result.published);
+        assert!(config.validate(RunMode::Publish).is_err());
     }
     #[test]
     fn publication_requires_a_distinct_output_and_valid_name_before_any_io() {

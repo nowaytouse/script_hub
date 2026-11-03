@@ -25,11 +25,12 @@ use super::{
 const HTTPS_SOURCE: &str = "https://subscription.invalid/demo";
 const GIST_SOURCE: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const GIST_DESTINATION: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-const CACHED: &str = "Cached = http, cached.invalid, 8080\n";
+const CACHED: &str = "Cached = socks5, cached.invalid, 1080\n";
 const FRESH: &str =
-    "Primary = http, primary.invalid, 8080\nExclude = http, excluded.invalid, 8080\n";
-const SECONDARY: &str =
-    r#"[{"type":"http","tag":"Secondary","server":"secondary.invalid","server_port":8080}]"#;
+    "Primary = socks5, primary.invalid, 1080\nExclude = socks5, excluded.invalid, 1080\n";
+const OFFLINE_PRIMARY: &str =
+    "Primary = socks5, primary.invalid, 1080\nAlternate = socks5, primary.invalid, 1080\n";
+const SECONDARY: &str = r#"[{"type":"socks","tag":"Secondary","server":"secondary.invalid","server_port":1080,"network":"tcp"}]"#;
 
 /// Counts and safety checks from a simulated publication. No output was actually written.
 #[derive(Debug, Eq, PartialEq, Serialize)]
@@ -46,11 +47,15 @@ pub struct DemoReport {
 
 /// Exercise real relay preparation, export, publication preflight, and scheduling without I/O.
 pub fn run() -> Result<DemoReport, RelayError> {
-    let (workspace, id) = fixture()?;
+    let workspace = fixture([
+        (HTTPS_SOURCE, "", CACHED),
+        (GIST_SOURCE, "demo.json", SECONDARY),
+    ])?;
     let collection = workspace
         .collections
         .first()
         .ok_or(RelayError::InvalidInput)?;
+    let id = collection.id;
     let config = RelayConfig {
         local_content: Some(workspace.merge(id).map_err(|_| RelayError::InvalidInput)?),
         processing: collection.processing.clone(),
@@ -73,15 +78,22 @@ pub fn run() -> Result<DemoReport, RelayError> {
         },
     )?;
     let result = &prepared.result;
-    let exported = export_subscription(&result.content, OutputFormat::SingBox)?;
-    let subscription = Subscription::parse(&exported).map_err(RelayError::Model)?;
-    if !subscription
-        .nodes()
-        .iter()
-        .map(super::model::Node::name)
-        .eq(["1: Ready", "2: Secondary"])
-    {
-        return Err(RelayError::Model(ModelError::Render));
+    let expected_names = ["1: Ready", "2: Secondary"];
+    for format in [
+        OutputFormat::Surge,
+        OutputFormat::SingBox,
+        OutputFormat::Mihomo,
+    ] {
+        let exported = export_subscription(&result.content, format)?;
+        let subscription = Subscription::parse(&exported).map_err(RelayError::Model)?;
+        if !subscription
+            .nodes()
+            .iter()
+            .map(super::model::Node::name)
+            .eq(expected_names)
+        {
+            return Err(RelayError::Model(ModelError::Render));
+        }
     }
     prepared.recheck_with(&cancel, &mut fetch)?;
     let source_change_blocked = match prepared.recheck_with(&cancel, &mut |entry| {
@@ -129,33 +141,36 @@ pub fn run() -> Result<DemoReport, RelayError> {
         refreshed_members,
         input_nodes: result.total,
         removed_nodes: result.removed,
-        exported_nodes: subscription.nodes().len(),
+        exported_nodes: expected_names.len(),
         planned_uploads,
         skipped_unchanged,
         source_change_blocked,
     })
 }
 
-fn fixture() -> Result<(Workspace, u64), RelayError> {
+/// Synthetic local entries for interactive previews, with no upstream or publication targets.
+pub fn workspace() -> Result<Workspace, RelayError> {
+    fixture([("", "", OFFLINE_PRIMARY), ("", "", SECONDARY)])
+}
+
+fn fixture(sources: [(&str, &str, &str); 2]) -> Result<Workspace, RelayError> {
     let mut workspace = Workspace::default();
-    let members = [
-        ("Primary", HTTPS_SOURCE, "", CACHED),
-        ("Secondary", GIST_SOURCE, "demo.json", SECONDARY),
-    ]
-    .into_iter()
-    .map(|(name, source, source_file, content)| {
-        workspace.add_entry(Entry {
-            id: 0,
-            name: name.into(),
-            source: source.into(),
-            source_file: source_file.into(),
-            content: content.into(),
-            processing: Options::default(),
-            publish: Default::default(),
+    let members = ["Primary", "Secondary"]
+        .into_iter()
+        .zip(sources)
+        .map(|(name, (source, source_file, content))| {
+            workspace.add_entry(Entry {
+                id: 0,
+                name: name.into(),
+                source: source.into(),
+                source_file: source_file.into(),
+                content: content.into(),
+                processing: Options::default(),
+                publish: Default::default(),
+            })
         })
-    })
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|_| RelayError::InvalidInput)?;
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| RelayError::InvalidInput)?;
     let mut processing = Options::default();
     processing.pipeline.extend([
         Step {
@@ -175,8 +190,13 @@ fn fixture() -> Result<(Workspace, u64), RelayError> {
                 regex: false,
             },
         },
+        Step {
+            id: 3,
+            enabled: true,
+            operation: Operation::Deduplicate,
+        },
     ]);
-    let id = workspace
+    workspace
         .add_collection(Collection {
             id: 0,
             name: "Demo".into(),
@@ -185,7 +205,7 @@ fn fixture() -> Result<(Workspace, u64), RelayError> {
             publish: Default::default(),
         })
         .map_err(|_| RelayError::InvalidInput)?;
-    Ok((workspace, id))
+    Ok(workspace)
 }
 
 fn fetch(entry: &Entry) -> Result<Source, RelayError> {
@@ -253,5 +273,44 @@ mod tests {
                 source_change_blocked: true,
             }
         );
+    }
+
+    #[test]
+    fn interactive_workspace_previews_and_deduplicates_without_remote_targets() {
+        let workspace = workspace().unwrap();
+        assert_eq!(workspace.subscriptions.len(), 2);
+        assert_eq!(workspace.collections.len(), 1);
+        assert!(
+            workspace
+                .subscriptions
+                .iter()
+                .all(|entry| entry.source.is_empty()
+                    && entry.source_file.is_empty()
+                    && entry.publish.output.is_empty())
+        );
+        let collection = &workspace.collections[0];
+        assert!(collection.publish.output.is_empty());
+        let content = workspace.merge(collection.id).unwrap();
+        let result = super::super::run(
+            &RelayConfig {
+                expected_source: Some(content.clone()),
+                local_content: Some(content),
+                processing: collection.processing.clone(),
+                rename: false,
+                sort: false,
+                test_nodes: false,
+                ..Default::default()
+            },
+            "",
+            super::super::RunMode::Preview,
+            &AtomicBool::new(false),
+            &|_| {},
+        )
+        .unwrap();
+        assert_eq!(
+            (result.total, result.processed, result.duplicates),
+            (3, 2, 1)
+        );
+        assert!(!result.published && !result.tested && result.source.is_none());
     }
 }

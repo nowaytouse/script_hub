@@ -15,12 +15,13 @@ impl HubApp {
             .history_records
             .iter()
             .any(|record| record.outcome == "running");
+        let can_remove = !self.active() && self.history_error.is_none();
         ui.label(tr(Text::HistoryIntro));
         ui.horizontal_wrapped(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.history_search)
-                    .hint_text(tr(Text::HistorySearch)),
-            );
+            let search_label = ui.label(tr(Text::HistorySearch));
+            let _ = ui
+                .text_edit_singleline(&mut self.history_search)
+                .labelled_by(search_label.id);
             if ui
                 .add_enabled(
                     self.history_loader.is_none(),
@@ -32,7 +33,7 @@ impl HubApp {
             }
             if ui
                 .add_enabled(
-                    !self.active() && self.history_loader.is_none() && has_completed,
+                    can_remove && self.history_loader.is_none() && has_completed,
                     egui::Button::new(tr(Text::ClearHistory)),
                 )
                 .clicked()
@@ -42,7 +43,7 @@ impl HubApp {
             }
             if ui
                 .add_enabled(
-                    !self.active() && self.history_loader.is_none() && has_unfinished,
+                    can_remove && self.history_loader.is_none() && has_unfinished,
                     egui::Button::new(tr(Text::RemoveUnfinishedHistory)),
                 )
                 .clicked()
@@ -52,20 +53,23 @@ impl HubApp {
             }
         });
         if self.history_loader.is_some() {
-            ui.label(tr(Text::HistoryLoading));
-        }
-        if let Some(error) = &self.history_error {
-            ui.colored_label(self.colors.error, error);
+            ui.horizontal_wrapped(|ui| {
+                ui.spinner();
+                ui.label(tr(Text::HistoryLoading));
+            });
+        } else if let Some(error) = &self.history_error {
+            ui.colored_label(self.colors.error, tr(Text::HistoryRefreshFailed));
+            ui.collapsing(tr(Text::Details), |ui| {
+                ui.label(error);
+            });
         }
         ui.add_space(12.0);
-        let search = self.history_search.to_lowercase();
+        let search = self.history_search.trim().to_lowercase();
         let mut copied = None;
         egui::ScrollArea::vertical()
             .id_salt("task-history")
             .show(ui, |ui| {
-                if self.history_records.is_empty() {
-                    ui.label(tr(Text::HistoryEmpty));
-                }
+                let mut shown = false;
                 for record in &self.history_records {
                     let key = match record.kind.as_str() {
                         "validate" => Text::Validate,
@@ -93,6 +97,7 @@ impl HubApp {
                     {
                         continue;
                     }
+                    shown = true;
                     card(ui, self.colors, |ui| {
                         ui.horizontal_wrapped(|ui| {
                             ui.label(RichText::new(tr(key)).strong());
@@ -134,6 +139,13 @@ impl HubApp {
                             });
                     });
                     ui.add_space(10.0);
+                }
+                if !shown && self.history_loader.is_none() && self.history_error.is_none() {
+                    ui.label(tr(if self.history_records.is_empty() {
+                        Text::HistoryEmpty
+                    } else {
+                        Text::HistoryNoMatches
+                    }));
                 }
             });
         if let Some(summary) = copied {

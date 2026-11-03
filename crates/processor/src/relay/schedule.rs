@@ -5,7 +5,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::{Progress, RelayConfig, RelayError, RelayResult, RunMode, gist::GistError};
+use super::{
+    Progress, RelayConfig, RelayError, RelayResult, RunMode,
+    gist::GistError,
+    model::{ModelError, pipeline::ResolveError},
+};
 
 pub const MIN_INTERVAL: Duration = Duration::from_secs(60);
 pub const MAX_INTERVAL: Duration = Duration::from_secs(7 * 24 * 60 * 60);
@@ -43,6 +47,11 @@ impl Schedule {
     }
     pub fn is_paused(&self) -> bool {
         self.paused
+    }
+
+    /// Whether the next deadline is a retry after a transient failure.
+    pub fn is_waiting_to_retry(&self) -> bool {
+        self.next.is_some() && self.failures != 0
     }
 
     pub fn due(&self, now: Instant) -> bool {
@@ -119,6 +128,9 @@ enum Outcome {
 }
 
 fn classify(error: &RelayError) -> Outcome {
+    if let Some(delay) = server_retry_after(error) {
+        return Outcome::Retry(delay);
+    }
     match error {
         RelayError::InputUnavailable
         | RelayError::SourceChanged
@@ -128,14 +140,25 @@ fn classify(error: &RelayError) -> Outcome {
         {
             Outcome::Retry(Duration::ZERO)
         }
+        _ => Outcome::Stop,
+    }
+}
+
+/// Server-directed waits only; local retry backoff does not apply to other workflows.
+pub(crate) fn server_retry_after(error: &RelayError) -> Option<Duration> {
+    let seconds = match error {
         RelayError::InputRateLimited {
             retry_after_seconds,
         }
         | RelayError::Gist(GistError::RateLimited {
             retry_after_seconds,
-        }) => Outcome::Retry(Duration::from_secs(retry_after_seconds.unwrap_or(0))),
-        _ => Outcome::Stop,
-    }
+        }) => retry_after_seconds.unwrap_or(MIN_INTERVAL.as_secs()),
+        RelayError::Model(ModelError::Resolution(ResolveError::RateLimited {
+            retry_after_seconds,
+        })) => *retry_after_seconds,
+        _ => return None,
+    };
+    Some(Duration::from_secs(seconds))
 }
 
 /// Reject index bindings to changing upstream data before other validation.
@@ -264,6 +287,52 @@ mod tests {
             }),
         );
         assert_eq!(schedule.next_due(), Some(at + Duration::from_secs(900)));
+    }
+
+    #[test]
+    fn dns_rate_limit_waits_for_retry_after_instead_of_pausing() {
+        let now = Instant::now();
+        let mut schedule = Schedule::new(MIN_INTERVAL, now).unwrap();
+        let at = now + MIN_INTERVAL;
+        assert!(!schedule.is_waiting_to_retry());
+        assert!(schedule.begin(at));
+        schedule.finish_status(
+            at,
+            Err(&RelayError::Model(ModelError::Resolution(
+                ResolveError::RateLimited {
+                    retry_after_seconds: 900,
+                },
+            ))),
+        );
+        assert!(schedule.is_waiting_to_retry());
+        assert!(!schedule.due(at + Duration::from_secs(899)));
+        let retry = at + Duration::from_secs(900);
+        assert!(schedule.begin(retry));
+        assert!(!schedule.is_waiting_to_retry());
+        schedule.finish_status(retry, Ok(()));
+        assert!(!schedule.is_waiting_to_retry());
+        assert_eq!(schedule.next_due(), Some(retry + MIN_INTERVAL));
+    }
+
+    #[test]
+    fn dns_safety_failures_still_pause() {
+        for error in [ResolveError::ConsentRequired, ResolveError::Dnssec] {
+            assert!(matches!(
+                classify(&RelayError::Model(ModelError::Resolution(error))),
+                Outcome::Stop
+            ));
+        }
+    }
+
+    #[test]
+    fn server_wait_does_not_include_generic_retry_backoff() {
+        assert_eq!(server_retry_after(&RelayError::InputUnavailable), None);
+        assert_eq!(
+            server_retry_after(&RelayError::InputRateLimited {
+                retry_after_seconds: None,
+            }),
+            Some(MIN_INTERVAL)
+        );
     }
 
     #[test]

@@ -182,17 +182,7 @@ fn decode_import(bytes: &[u8]) -> Result<FileCompleted, Text> {
     let content = std::str::from_utf8(bytes).map_err(|_| Text::RelayBackupInvalid)?;
     if content.len() <= 4 * 1024 * 1024 && crate::relay::model::Subscription::parse(content).is_ok()
     {
-        return Ok(FileCompleted::Imported(Box::new(
-            crate::relay::backup::RelayBackup {
-                config: RelayConfig {
-                    test_nodes: true,
-                    rename: false,
-                    sort: false,
-                    ..RelayConfig::default()
-                },
-                content: Zeroizing::new(content.to_owned()),
-            },
-        )));
+        return Ok(FileCompleted::Nodes(Zeroizing::new(content.to_owned())));
     }
     if let Ok(backup) = crate::relay::backup::decode(bytes) {
         return Ok(FileCompleted::Imported(Box::new(backup)));
@@ -203,6 +193,7 @@ fn decode_import(bytes: &[u8]) -> Result<FileCompleted, Text> {
 }
 
 pub(super) struct RelayState {
+    pub(super) demo_mode: bool,
     pub workspace: super::subscriptions::State,
     pub step: RelayStep,
     pub input_mode: InputMode,
@@ -245,6 +236,7 @@ pub(super) struct RelayState {
     pub result: Option<RelayResult>,
     pub result_format: Option<&'static str>,
     pub output_format: OutputFormat,
+    pub publish_format: OutputFormat,
     pub demo_report: Option<Result<crate::relay::demo::DemoReport, RelayError>>,
     pub progress: Option<Progress>,
     pub error: Option<Failure>,
@@ -252,6 +244,7 @@ pub(super) struct RelayState {
     pending: Option<Pending>,
     pub(super) imported_processing: Option<crate::relay::model::editor::Options>,
     file_picker: Option<super::file_dialog::Picker>,
+    file_picker_imports_new: bool,
     last_directory: Option<std::path::PathBuf>,
     file_pending: Option<FilePending>,
     completed_config: Option<PrivateConfig>,
@@ -331,10 +324,14 @@ struct FilePending {
     worker: JoinHandle<()>,
     receiver: mpsc::Receiver<Result<Option<FileCompleted>, Text>>,
     generation: u64,
+    imports_new: bool,
 }
 
 enum FileCompleted {
     ExportFailed(RelayError),
+    FormatChecked,
+    CopyReady(OutputFormat, Zeroizing<String>),
+    Nodes(Zeroizing<String>),
     Imported(Box<crate::relay::backup::RelayBackup>),
     Migration(crate::relay::compat::Report),
     Locked(Zeroizing<Vec<u8>>),
@@ -367,15 +364,26 @@ impl Drop for PrivateConfig {
 
 impl Default for RelayState {
     fn default() -> Self {
+        Self::new(false)
+    }
+}
+
+impl RelayState {
+    pub(super) fn new(demo_mode: bool) -> Self {
         let defaults = RelayConfig::default();
         Self {
+            demo_mode,
             step: RelayStep::Source,
             workspace: Default::default(),
             input_mode: InputMode::Link,
             paste: Zeroizing::new(String::new()),
             reveal_paste: false,
             schedule: Default::default(),
-            selected_engine: crate::relay::engine::discover_engine(),
+            selected_engine: if demo_mode {
+                None
+            } else {
+                crate::relay::engine::discover_engine()
+            },
             reveal_source: false,
             reveal_token: false,
             reveal_output: false,
@@ -411,6 +419,7 @@ impl Default for RelayState {
             result: None,
             result_format: None,
             output_format: OutputFormat::Original,
+            publish_format: OutputFormat::Original,
             demo_report: None,
             progress: None,
             error: None,
@@ -418,15 +427,13 @@ impl Default for RelayState {
             pending: None,
             imported_processing: None,
             file_picker: None,
+            file_picker_imports_new: false,
             last_directory: None,
             file_pending: None,
             completed_config: None,
             generation: 0,
         }
     }
-}
-
-impl RelayState {
     pub(super) fn import_paste(&mut self, _ctx: &egui::Context) {
         if self.busy() {
             return;
@@ -436,6 +443,16 @@ impl RelayState {
             return;
         }
         self.decode_import(Zeroizing::new(self.paste.as_bytes().to_vec()), None);
+    }
+
+    pub(super) fn clear_pasted_text(&mut self, ctx: &egui::Context) {
+        self.paste.zeroize();
+        self.reveal_paste = false;
+        super::templates::clear_secret_widget(ctx, "relay-paste");
+        self.clear_request_error();
+        if self.workspace.error == Some(Text::RelayLoadPastedBeforeSave) {
+            self.workspace.error = None;
+        }
     }
 
     pub(super) fn unlock_import(&mut self, ctx: &egui::Context) {
@@ -473,6 +490,7 @@ impl RelayState {
                     worker,
                     receiver,
                     generation,
+                    imports_new: false,
                 })
             }
             Err(_) => self.error = Some(Failure::Validation(Text::RelayFileError)),
@@ -534,17 +552,42 @@ impl RelayState {
         self.invalidate_result();
     }
 
-    pub(super) fn arm_schedule(&mut self) {
-        if self.busy() || self.selecting_file() || self.result.is_none() {
-            self.error = Some(Failure::Validation(Text::ScheduleNeedsPreview));
-            return;
+    pub(super) fn schedule_setup_issue(&self) -> Option<Text> {
+        let Some(result) = self
+            .result
+            .as_ref()
+            .filter(|result| !result.content.is_empty())
+        else {
+            return Some(Text::ScheduleNeedsPreview);
+        };
+        if result.tested && result.healthy == 0 {
+            return Some(Text::RelayNoHealthyHelp);
         }
-        if !self.acknowledge_publish || self.output.trim().is_empty() {
-            self.error = Some(Failure::Validation(Text::ScheduleNeedsOutput));
-            return;
+        if self.output.trim().is_empty() {
+            return Some(Text::ScheduleNeedsOutput);
         }
         if let Err(error) = self.validate(RunMode::Publish, self.engine_path()) {
-            self.error = Some(Failure::Validation(error));
+            return Some(error);
+        }
+        if !self.source.trim().is_empty()
+            && self.editor.as_ref().is_some_and(|editor| {
+                editor
+                    .rows
+                    .iter()
+                    .any(|row| !row.included || row.name != row.original)
+            })
+        {
+            return Some(Text::ScheduleIndexedEdits);
+        }
+        None
+    }
+
+    pub(super) fn arm_schedule(&mut self) {
+        if self.demo_mode || self.busy() || self.selecting_file() || self.cooldown_seconds() > 0 {
+            return;
+        }
+        if let Some(issue) = self.schedule_setup_issue() {
+            self.error = Some(Failure::Validation(issue));
             return;
         }
         let local_content = if self.source.trim().is_empty() {
@@ -552,29 +595,28 @@ impl RelayState {
         } else {
             None
         };
-        if local_content.is_none()
-            && self
-                .editor
-                .as_ref()
-                .is_some_and(|editor| !editor.processing().nodes.is_empty())
-        {
-            self.error = Some(Failure::Validation(Text::ScheduleIndexedEdits));
-            return;
-        }
         let mut config = self.private_config(self.engine_path());
         config.0.local_content = local_content;
         config.0.test_nodes = self.result.as_ref().is_some_and(|result| result.tested);
         let result = if let Some(super::subscriptions::Selection::Collection(id)) =
             self.workspace.selected
         {
-            if !self.save_workspace_draft() {
-                return;
+            match self.collection_schedule_snapshot(id) {
+                Ok((snapshot, id)) => {
+                    self.schedule
+                        .arm_collection(config.0.clone(), &self.token, snapshot, id)
+                }
+                Err(_) => {
+                    self.error = Some(Failure::Validation(Text::WorkspaceDraftInvalid));
+                    return;
+                }
             }
-            self.schedule
-                .arm_collection(config.0.clone(), &self.token, &self.workspace.data, id)
         } else {
             self.schedule.arm(config.0.clone(), &self.token)
         };
+        if result.is_ok() {
+            self.notice = None;
+        }
         self.error = result.err().map(Failure::Operation);
     }
 
@@ -643,11 +685,7 @@ impl RelayState {
             self.result_format = Some(subscription.format_label());
         }
         self.completed_config = Some(self.private_config(self.engine_path()));
-        self.notice = Some(if result.unchanged {
-            Text::RelayUnchanged
-        } else {
-            Text::RelayPublished
-        });
+        self.notice = None;
         self.error = None;
         self.result = Some(result);
     }
@@ -684,6 +722,7 @@ impl RelayState {
 
     pub(super) fn cooldown_seconds(&self) -> u64 {
         self.cooldown_until
+            .max(self.schedule.server_retry_until())
             .and_then(|deadline| deadline.checked_duration_since(Instant::now()))
             .map_or(0, |remaining| remaining.as_secs().saturating_add(1))
     }
@@ -702,6 +741,7 @@ impl RelayState {
         self.rename = false;
         self.sort = false;
         self.compatibility = false;
+        self.cooldown_until = None;
         self.invalidate_result();
     }
 
@@ -715,7 +755,6 @@ impl RelayState {
         self.preview_endpoints.clear();
         self.error = None;
         self.notice = None;
-        self.cooldown_until = None;
         self.result = None;
         self.result_format = None;
         self.completed_config = None;
@@ -726,7 +765,6 @@ impl RelayState {
 
     pub(super) fn clear_request_error(&mut self) {
         self.error = None;
-        self.cooldown_until = None;
     }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some()
@@ -737,6 +775,17 @@ impl RelayState {
 
     pub(super) fn selecting_file(&self) -> bool {
         self.file_picker.is_some()
+    }
+
+    pub(super) fn workspace_import_pending(&self) -> bool {
+        self.file_pending
+            .as_ref()
+            .is_some_and(|pending| pending.imports_new)
+    }
+
+    pub(super) fn dismiss_file_picker(&mut self) {
+        self.file_picker = None;
+        self.file_picker_imports_new = false;
     }
 
     pub(super) fn show_file_picker(
@@ -758,10 +807,11 @@ impl RelayState {
         }
         match response {
             PickerResponse::Pending => {}
-            PickerResponse::Cancelled => self.file_picker = None,
+            PickerResponse::Cancelled => self.dismiss_file_picker(),
             PickerResponse::Selected(path) => {
                 self.file_picker = None;
-                self.file_action(action, Some(path), workspace);
+                let imports_new = std::mem::take(&mut self.file_picker_imports_new);
+                self.dispatch_file_action(action, Some(path), workspace, imports_new);
             }
         }
     }
@@ -790,33 +840,36 @@ impl RelayState {
         if mode == RunMode::Preview && self.needs_resolution() && !self.allow_resolution {
             return Err(Text::ResolutionConsentRequired);
         }
-        if !self.output.trim().is_empty() {
-            let output = GistFile::parse(self.output.trim(), &self.output_file).map_err(
-                |error| match error {
-                    crate::relay::gist::GistError::PinnedTarget => Text::RelayPinnedTarget,
-                    _ => Text::RelayOutputInvalid,
-                },
-            )?;
-            let source_matches = |source: &str, file: &str| {
-                GistFile::parse_source(source.trim(), file)
-                    .is_ok_and(|source| source.id == output.id)
-            };
-            if source_matches(&self.source, &self.source_file)
-                || matches!(
-                    self.workspace.selected,
-                    Some(super::subscriptions::Selection::Collection(_))
-                ) && self.workspace.data.subscriptions.iter().any(|entry| {
-                    self.workspace.members.contains(&entry.id)
-                        && source_matches(&entry.source, &entry.source_file)
-                })
-            {
-                return Err(Text::RelayOutputInvalid);
+        if mode == RunMode::Publish {
+            if !self.output.trim().is_empty() {
+                let output =
+                    GistFile::parse(self.output.trim(), &self.output_file).map_err(|error| {
+                        match error {
+                            crate::relay::gist::GistError::PinnedTarget => Text::RelayPinnedTarget,
+                            _ => Text::RelayOutputInvalid,
+                        }
+                    })?;
+                let source_matches = |source: &str, file: &str| {
+                    GistFile::parse_source(source.trim(), file)
+                        .is_ok_and(|source| source.id == output.id)
+                };
+                if source_matches(&self.source, &self.source_file)
+                    || matches!(
+                        self.workspace.selected,
+                        Some(super::subscriptions::Selection::Collection(_))
+                    ) && self.workspace.data.subscriptions.iter().any(|entry| {
+                        self.workspace.members.contains(&entry.id)
+                            && source_matches(&entry.source, &entry.source_file)
+                    })
+                {
+                    return Err(Text::RelayOutputInvalid);
+                }
+            } else if validate_filename(&self.output_file).is_err() {
+                return Err(Text::RelayNameInvalid);
             }
-        } else if mode == RunMode::Publish && validate_filename(&self.output_file).is_err() {
-            return Err(Text::RelayNameInvalid);
-        }
-        if validate_name(&self.title).is_err() || self.output_file.chars().count() > 64 {
-            return Err(Text::RelayNameInvalid);
+            if validate_name(&self.title).is_err() || self.output_file.chars().count() > 64 {
+                return Err(Text::RelayNameInvalid);
+            }
         }
         if mode != RunMode::Publish && self.test_nodes && engine.as_os_str().is_empty() {
             return Err(Text::SingboxRequired);
@@ -827,7 +880,10 @@ impl RelayState {
         {
             return Err(Text::RelayOptionsInvalid);
         }
-        if (!self.token.is_empty()
+        let uses_token = mode == RunMode::Publish
+            || (self.local_content.is_none() && (self.test_nodes || self.editor.is_none()));
+        if (uses_token
+            && !self.token.is_empty()
             && (self.token.len() > 1024
                 || !self.token.is_ascii()
                 || self
@@ -858,6 +914,7 @@ impl RelayState {
             source_file: self.source_file.to_string(),
             output: self.output.trim().to_owned(),
             output_file: self.output_file.to_string(),
+            output_format: self.publish_format,
             title: self.title.to_string(),
             engine: engine.to_path_buf(),
             concurrency: self.concurrency,
@@ -890,7 +947,7 @@ impl RelayState {
         self.reveal_paste = false;
         self.input_mode = InputMode::Link;
         self.clear_editor_widgets(ctx);
-        self.file_picker = None;
+        self.dismiss_file_picker();
         self.imported_processing = None;
         self.last_directory = None;
         self.generation = self.generation.wrapping_add(1);
@@ -920,6 +977,7 @@ impl RelayState {
         self.result = None;
         self.result_format = None;
         self.output_format = OutputFormat::Original;
+        self.publish_format = OutputFormat::Original;
         self.progress = None;
         self.error = None;
         self.allow_plaintext = false;
@@ -998,6 +1056,9 @@ impl RelayState {
         self.compatibility = false;
         match (joined, result) {
             (Ok(()), Ok(Ok(mut result))) => {
+                if pending.mode == RunMode::Publish {
+                    self.completed_config = Some(self.private_config(self.engine_path()));
+                }
                 if pending.mode == RunMode::Import {
                     match EditorState::new(&result.content, result.source.clone()) {
                         Ok(mut editor) => {
@@ -1085,6 +1146,13 @@ impl RelayState {
                 }
             }
             (Ok(()), Ok(Err(error))) => {
+                if matches!(error, RelayError::SourceChanged) && !self.source.is_empty() {
+                    self.clear_editor_widgets(ctx);
+                    self.input_changed();
+                    self.local_content = None;
+                    self.local_summary = None;
+                    self.step = RelayStep::Source;
+                }
                 self.record_workspace_failure(Failure::Operation(error));
             }
             _ => self.notice = Some(Text::RelayWorkerStopped),
@@ -1093,22 +1161,8 @@ impl RelayState {
 
     fn record_workspace_failure(&mut self, failure: Failure) {
         if let Failure::Operation(error) = &failure {
-            let retry = match error {
-                RelayError::Model(crate::relay::model::ModelError::Resolution(
-                    crate::relay::model::pipeline::ResolveError::RateLimited {
-                        retry_after_seconds,
-                    },
-                )) => Some(*retry_after_seconds),
-                RelayError::Gist(crate::relay::gist::GistError::RateLimited {
-                    retry_after_seconds,
-                })
-                | RelayError::InputRateLimited {
-                    retry_after_seconds,
-                } => Some(retry_after_seconds.unwrap_or(60)),
-                _ => None,
-            };
-            if let Some(seconds) = retry {
-                self.cooldown_until = Instant::now().checked_add(Duration::from_secs(seconds));
+            if let Some(retry) = crate::relay::schedule::server_retry_after(error) {
+                self.cooldown_until = self.cooldown_until.max(Instant::now().checked_add(retry));
             }
             if let RelayError::Gist(crate::relay::gist::GistError::CreatedUnverified(created)) =
                 error
@@ -1121,28 +1175,59 @@ impl RelayState {
     }
 
     pub(super) fn copy(&mut self, ctx: &egui::Context) {
-        if !self.allow_plaintext || self.busy() {
-            return;
-        }
-        if let Some(result) = &self.result
-            && !result.content.is_empty()
-        {
-            match export_subscription(&result.content, self.output_format) {
-                Ok(content) => {
-                    ctx.copy_text(content.to_string());
-                    self.error = None;
-                    self.notice = Some(Text::Copied);
-                }
-                Err(error) => {
-                    self.notice = None;
-                    self.error = Some(Failure::Operation(error));
-                }
-            }
+        if self.allow_plaintext && !self.demo_mode {
+            self.start_local_output(self.output_format, true);
+            ctx.request_repaint();
         }
     }
 
     pub(super) fn file_dialog_active(&self) -> bool {
         self.file_pending.is_some()
+    }
+
+    pub(super) fn start_format_check(&mut self) {
+        self.start_format_check_for(self.output_format);
+    }
+
+    pub(super) fn start_format_check_for(&mut self, format: OutputFormat) {
+        self.start_local_output(format, false);
+    }
+
+    fn start_local_output(&mut self, format: OutputFormat, copy: bool) {
+        if self.busy() || self.selecting_file() {
+            return;
+        }
+        let Some(result) = self
+            .result
+            .as_ref()
+            .filter(|result| !result.content.is_empty())
+        else {
+            return;
+        };
+        let content = result.content.clone();
+        let (sender, receiver) = mpsc::sync_channel(1);
+        self.error = None;
+        self.notice = None;
+        match thread::Builder::new()
+            .name("script-hub-local-output".into())
+            .spawn(move || {
+                let result = match export_subscription(&content, format) {
+                    Ok(content) if copy => FileCompleted::CopyReady(format, content),
+                    Ok(_) => FileCompleted::FormatChecked,
+                    Err(error) => FileCompleted::ExportFailed(error),
+                };
+                let _ = sender.send(Ok(Some(result)));
+            }) {
+            Ok(worker) => {
+                self.file_pending = Some(FilePending {
+                    worker,
+                    receiver,
+                    generation: self.generation,
+                    imports_new: false,
+                });
+            }
+            Err(_) => self.error = Some(Failure::Validation(Text::RelayWorkerStopped)),
+        }
     }
 
     pub(super) fn file_action(
@@ -1151,7 +1236,25 @@ impl RelayState {
         path: Option<std::path::PathBuf>,
         workspace: Option<&Path>,
     ) {
-        if self.busy() || self.selecting_file() {
+        self.dispatch_file_action(action, path, workspace, false);
+    }
+
+    pub(super) fn start_workspace_import(
+        &mut self,
+        path: Option<std::path::PathBuf>,
+        workspace: Option<&Path>,
+    ) {
+        self.dispatch_file_action(FileAction::Import, path, workspace, true);
+    }
+
+    fn dispatch_file_action(
+        &mut self,
+        action: FileAction,
+        path: Option<std::path::PathBuf>,
+        workspace: Option<&Path>,
+        imports_new: bool,
+    ) {
+        if self.demo_mode || self.busy() || self.selecting_file() {
             return;
         }
         if action.is_save() && action != FileAction::ExportEncrypted && !self.allow_plaintext {
@@ -1176,11 +1279,16 @@ impl RelayState {
                 self.error = Some(Failure::Validation(Text::RelayFileError));
                 return;
             }
-            self.error = None;
+            if imports_new {
+                self.workspace.error = None;
+            } else {
+                self.error = None;
+            }
             self.file_picker = Some(super::file_dialog::Picker::new(
                 action,
                 self.last_directory.as_deref(),
             ));
+            self.file_picker_imports_new = imports_new;
             return;
         };
         let plan = if action == FileAction::ExportPlan {
@@ -1208,6 +1316,7 @@ impl RelayState {
                         source_file: config.0.source_file.clone(),
                         output: config.0.output.clone(),
                         output_file: config.0.output_file.clone(),
+                        output_format: config.0.output_format,
                         title: config.0.title.clone(),
                         processing: config.0.processing.clone(),
                         expected_source: config.0.expected_source.clone(),
@@ -1225,9 +1334,13 @@ impl RelayState {
         let recipient = self.archive_recipient.clone();
         let (sender, receiver) = mpsc::sync_channel(1);
         let generation = self.generation;
-        self.error = None;
-        self.notice = None;
-        self.allow_plaintext = false;
+        if imports_new {
+            self.workspace.error = None;
+        } else {
+            self.error = None;
+            self.notice = None;
+            self.allow_plaintext = false;
+        }
         let worker = thread::Builder::new()
             .name("script-hub-relay-file".into())
             .spawn(move || {
@@ -1306,8 +1419,10 @@ impl RelayState {
                     worker,
                     receiver,
                     generation,
+                    imports_new,
                 })
             }
+            Err(_) if imports_new => self.workspace.error = Some(Text::WorkspaceImportReadFailed),
             Err(_) => self.error = Some(Failure::Validation(Text::RelayFileError)),
         }
     }
@@ -1327,6 +1442,36 @@ impl RelayState {
         let joined = pending.worker.join();
         if pending.generation != self.generation {
             return;
+        }
+        if pending.imports_new {
+            match (&joined, &result) {
+                (
+                    Ok(()),
+                    Ok(Ok(Some(
+                        FileCompleted::Nodes(_)
+                        | FileCompleted::Imported(_)
+                        | FileCompleted::Migration(_)
+                        | FileCompleted::Locked(_),
+                    ))),
+                ) => {
+                    let directory = self.last_directory.take();
+                    self.execute_workspace(ctx, super::subscriptions::Action::NewSubscription);
+                    self.last_directory = directory;
+                    self.input_mode = InputMode::File;
+                }
+                (Ok(()), Ok(Err(key))) => {
+                    self.workspace.error = Some(if *key == Text::RelayFileError {
+                        Text::WorkspaceImportReadFailed
+                    } else {
+                        *key
+                    });
+                    return;
+                }
+                _ => {
+                    self.workspace.error = Some(Text::WorkspaceImportReadFailed);
+                    return;
+                }
+            }
         }
         match (joined, result) {
             (Ok(()), Ok(Ok(Some(FileCompleted::Plan(steps))))) => {
@@ -1353,6 +1498,24 @@ impl RelayState {
                 self.apply_backup(ctx, backup);
                 self.workspace.draft_dirty = self.workspace.selected.is_some();
             }
+            (Ok(()), Ok(Ok(Some(FileCompleted::Nodes(content))))) => {
+                if self.workspace.selected.is_some() {
+                    self.replace_nodes(ctx, content);
+                } else {
+                    self.apply_backup(
+                        ctx,
+                        Box::new(crate::relay::backup::RelayBackup {
+                            config: RelayConfig {
+                                test_nodes: true,
+                                rename: false,
+                                sort: false,
+                                ..RelayConfig::default()
+                            },
+                            content,
+                        }),
+                    );
+                }
+            }
             (Ok(()), Ok(Ok(Some(FileCompleted::Engine(path))))) => {
                 self.selected_engine = Some(path);
                 self.notice = Some(Text::RelayEngineSelected);
@@ -1363,10 +1526,42 @@ impl RelayState {
             (Ok(()), Ok(Ok(Some(FileCompleted::ExportFailed(error))))) => {
                 self.error = Some(Failure::Operation(error));
             }
+            (Ok(()), Ok(Ok(Some(FileCompleted::FormatChecked)))) => {
+                self.notice = Some(Text::RelayExportCheckPassed);
+            }
+            (Ok(()), Ok(Ok(Some(FileCompleted::CopyReady(format, mut content))))) => {
+                if self.allow_plaintext && self.result.is_some() && self.output_format == format {
+                    ctx.copy_text(std::mem::take(&mut *content));
+                    self.notice = Some(Text::Copied);
+                }
+            }
             (Ok(()), Ok(Ok(None))) => {}
             (Ok(()), Ok(Err(key))) => self.error = Some(Failure::Validation(key)),
             _ => self.error = Some(Failure::Validation(Text::RelayFileError)),
         }
+    }
+
+    fn replace_nodes(&mut self, ctx: &egui::Context, content: Zeroizing<String>) {
+        let cooldown = self.cooldown_until;
+        self.clear_editor_widgets(ctx);
+        self.input_changed();
+        self.cooldown_until = cooldown;
+        self.clear_pasted_text(ctx);
+        self.source.zeroize();
+        self.source_file.zeroize();
+        self.reveal_source = false;
+        for id in [SECRET_IDS[1], SECRET_IDS[2]] {
+            super::templates::clear_secret_widget(ctx, id);
+        }
+        self.migration = None;
+        self.encrypted_import = None;
+        self.local_summary = crate::relay::model::Subscription::parse(&content)
+            .ok()
+            .map(|subscription| (subscription.nodes().len(), subscription.format_label()));
+        self.local_content = Some(content);
+        self.step = RelayStep::Review;
+        let engine = self.engine_path().to_owned();
+        self.start_with(RunMode::Import, &engine, crate::relay::run);
     }
 
     pub(super) fn apply_backup(
@@ -1390,6 +1585,7 @@ impl RelayState {
         self.source_file = Zeroizing::new(std::mem::take(&mut config.source_file));
         self.output = Zeroizing::new(std::mem::take(&mut config.output));
         self.output_file = Zeroizing::new(std::mem::take(&mut config.output_file));
+        self.publish_format = config.output_format;
         self.title = Zeroizing::new(std::mem::take(&mut config.title));
         self.rename = config.rename;
         self.sort = config.sort;
@@ -1418,7 +1614,20 @@ impl RelayState {
             + Send
             + 'static,
     {
-        if self.busy() || self.cooldown_seconds() > 0 {
+        let offline = match mode {
+            RunMode::Import => self.local_content.is_some(),
+            RunMode::Preview => {
+                !self.test_nodes
+                    && !self.needs_resolution()
+                    && (self.editor.is_some() || self.local_content.is_some())
+            }
+            RunMode::Publish => false,
+        };
+        if self.demo_mode && !offline {
+            self.error = Some(Failure::Validation(Text::RelaySandboxOffline));
+            return;
+        }
+        if self.busy() || (!offline && self.cooldown_seconds() > 0) {
             return;
         }
         if let Err(error) = self.validate(mode, engine) {
@@ -1431,20 +1640,29 @@ impl RelayState {
             config.0.processing = Default::default();
         }
         config.0.local_content = self.local_content.clone();
-        if mode == RunMode::Preview && !self.test_nodes {
-            config.0.local_content = self.editor.as_ref().map(|editor| editor.source.clone());
+        if mode == RunMode::Preview
+            && !self.test_nodes
+            && let Some(editor) = &self.editor
+        {
+            config.0.local_content = Some(editor.source.clone());
         }
-        self.completed_config = Some(self.private_config(engine));
-        let token = self.token.clone();
+        if mode != RunMode::Publish {
+            self.completed_config = Some(self.private_config(engine));
+            self.result = None;
+            self.preview_names.clear();
+            self.preview_endpoints.clear();
+            self.result_format = None;
+        }
+        let token = if mode != RunMode::Publish && config.0.local_content.is_some() {
+            Zeroizing::new(String::new())
+        } else {
+            self.token.clone()
+        };
         let cancel = Arc::new(AtomicBool::new(false));
         let worker_cancel = Arc::clone(&cancel);
         let progress = Arc::new(Mutex::new(None));
         let worker_progress = Arc::clone(&progress);
         let (sender, receiver) = mpsc::sync_channel(1);
-        self.result = None;
-        self.preview_names.clear();
-        self.preview_endpoints.clear();
-        self.result_format = None;
         self.progress = None;
         self.error = None;
         self.notice = None;
@@ -1575,6 +1793,33 @@ mod tests {
     }
 
     #[test]
+    fn schedule_rejects_empty_and_zero_healthy_previews_and_respects_cooldown() {
+        let mut state = fixture();
+        state.acknowledge_publish = true;
+        let mut preview = result();
+        preview.content.clear();
+        state.result = Some(preview);
+        state.arm_schedule();
+        assert_eq!(
+            state.schedule_setup_issue(),
+            Some(Text::ScheduleNeedsPreview)
+        );
+        assert!(!state.schedule.armed());
+
+        let mut preview = result();
+        preview.healthy = 0;
+        state.result = Some(preview);
+        state.arm_schedule();
+        assert_eq!(state.schedule_setup_issue(), Some(Text::RelayNoHealthyHelp));
+        assert!(!state.schedule.armed());
+
+        state.result = Some(result());
+        state.cooldown_until = Instant::now().checked_add(Duration::from_secs(60));
+        state.arm_schedule();
+        assert!(!state.schedule.armed());
+    }
+
+    #[test]
     fn collection_arming_requires_an_independent_target_and_explicit_consent() {
         use crate::relay::library::{Collection, Entry};
 
@@ -1620,8 +1865,19 @@ mod tests {
         state.arm_schedule();
         assert!(!state.schedule.armed());
         state.output = destination;
+        state.workspace.name = Zeroizing::new("Unsaved collection name".into());
+        state.workspace.draft_dirty = true;
+        let (snapshot, snapshot_id) = state.collection_schedule_snapshot(id).unwrap();
+        assert_eq!(snapshot_id, id);
+        assert_eq!(snapshot.collections[0].name, "Unsaved collection name");
+        assert_eq!(
+            snapshot.collections[0].publish.output,
+            state.output.as_str()
+        );
         state.arm_schedule();
         assert!(state.schedule.armed());
+        assert!(state.workspace.draft_dirty && !state.workspace.dirty);
+        assert_eq!(state.workspace.data.collections[0].name, "Collection");
         assert!(state.schedule.tick(&ctx, true).is_none());
         assert!(!state.schedule.running());
     }
@@ -1653,7 +1909,9 @@ mod tests {
             url: Zeroizing::new(state.source.to_string()),
             content: Zeroizing::new(fresh.into()),
         });
+        state.notice = Some(Text::RelayPublished);
         state.accept_scheduled(latest);
+        assert!(state.notice.is_none());
         assert_eq!(state.result.as_ref().unwrap().content.as_str(), fresh);
         assert_eq!(state.editor.as_ref().unwrap().source.as_str(), fresh);
         assert_eq!(state.local_content.as_ref().unwrap().as_str(), fresh);
@@ -1834,6 +2092,83 @@ mod tests {
             published: false,
             unchanged: false,
         }
+    }
+
+    #[test]
+    fn checking_output_format_does_not_grant_plaintext_or_publish_consent() {
+        let mut state = fixture();
+        state.result = Some(result());
+        state.output_format = OutputFormat::SingBox;
+        state.start_format_check();
+        finish(&mut state, &egui::Context::default());
+        assert_eq!(state.notice, Some(Text::RelayExportCheckPassed));
+        assert!(state.error.is_none());
+        assert!(!state.allow_plaintext && !state.acknowledge_publish);
+        assert_eq!(state.result.as_ref().unwrap().content, result().content);
+    }
+
+    #[test]
+    fn replacing_nodes_keeps_destination_and_drops_old_node_specific_edits() {
+        use super::super::subscriptions::Selection;
+        use crate::relay::model::pipeline::{Operation, Step};
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.workspace.selected = Some(Selection::Subscription(0));
+        let mut editor = EditorState::new(&result().content, None).unwrap();
+        editor.rows[0].included = false;
+        editor.options.pipeline.push(Step {
+            id: 1,
+            enabled: true,
+            operation: Operation::ReplaceName {
+                pattern: "a".into(),
+                replacement: "b".into(),
+                regex: false,
+            },
+        });
+        state.editor = Some(editor);
+        state.schedule.interval_minutes = 30;
+        state.token = Zeroizing::new("unfinished token".into());
+        state.acknowledge_publish = true;
+        state
+            .paste
+            .push_str("New = socks5, new.example.invalid, 1080\n");
+        let output = state.output.clone();
+        state.import_paste(&ctx);
+        finish(&mut state, &ctx);
+        assert_eq!(state.output, output);
+        assert_eq!(state.schedule.interval_minutes, 30);
+        assert_eq!(state.token.as_str(), "unfinished token");
+        assert!(state.paste.is_empty() && state.source.is_empty() && !state.acknowledge_publish);
+        let editor = state.editor.as_ref().unwrap();
+        assert!(editor.rows[0].included);
+        assert_eq!(editor.options.pipeline.len(), 1);
+        assert!(
+            state.result.is_none(),
+            "the retained operation plan requires a fresh preview"
+        );
+    }
+
+    #[test]
+    fn publish_errors_retain_preview_unless_the_source_changed() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.result = Some(result());
+        state.result_format = Some("Surge");
+        state.preview_names.push(Zeroizing::new("Example".into()));
+        state.acknowledge_publish = true;
+        state.start_with(RunMode::Publish, Path::new(""), |_, _, _, _, _| {
+            Err(RelayError::Gist(crate::relay::gist::GistError::Conflict))
+        });
+        finish(&mut state, &ctx);
+        assert!(state.result.is_some());
+        assert_eq!(state.result_format, Some("Surge"));
+        assert_eq!(state.preview_names.len(), 1);
+        state.acknowledge_publish = true;
+        state.start_with(RunMode::Publish, Path::new(""), |_, _, _, _, _| {
+            Err(RelayError::SourceChanged)
+        });
+        finish(&mut state, &ctx);
+        assert!(state.result.is_none() && state.step == RelayStep::Source);
     }
 
     #[test]
@@ -2018,6 +2353,26 @@ mod tests {
     }
 
     #[test]
+    fn unreadable_workspace_import_keeps_active_editor_and_reports_error_in_library() {
+        use super::super::subscriptions::Selection;
+
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        state.workspace.selected = Some(Selection::Collection(7));
+        state.workspace.show_editor = true;
+        state.workspace.name.push_str("Current collection");
+        state.result = Some(result());
+        state.start_workspace_import(Some(std::env::temp_dir()), None);
+        assert!(state.workspace_import_pending());
+        finish(&mut state, &ctx);
+        assert!(state.workspace.selected == Some(Selection::Collection(7)));
+        assert_eq!(state.workspace.name.as_str(), "Current collection");
+        assert!(state.workspace.show_editor && !state.workspace.draft_dirty);
+        assert!(state.result.is_some() && !state.workspace_import_pending());
+        assert_eq!(state.workspace.error, Some(Text::WorkspaceImportReadFailed));
+    }
+
+    #[test]
     fn direct_engine_selection_cannot_bypass_file_validation() {
         let ctx = egui::Context::default();
         let mut state = fixture();
@@ -2125,17 +2480,41 @@ mod tests {
         );
         let mut state = fixture();
         assert!(state.validate(RunMode::Preview, &engine).is_ok());
+        state.acknowledge_publish = true;
         state.output = state.source.clone();
-        assert!(state.validate(RunMode::Preview, &engine).is_err());
+        assert!(state.validate(RunMode::Publish, &engine).is_err());
         state = fixture();
+        state.acknowledge_publish = true;
         state.title = Zeroizing::new("界".repeat(64));
         state.output_file = Zeroizing::new(format!("{}.conf", "界".repeat(59)));
-        assert!(state.validate(RunMode::Preview, &engine).is_ok());
+        assert!(state.validate(RunMode::Publish, &engine).is_ok());
         state.title.push('界');
-        assert!(state.validate(RunMode::Preview, &engine).is_err());
+        assert!(state.validate(RunMode::Publish, &engine).is_err());
         let _ = state.title.pop();
         state.output_file.push('界');
-        assert!(state.validate(RunMode::Preview, &engine).is_err());
+        assert!(state.validate(RunMode::Publish, &engine).is_err());
+    }
+
+    #[test]
+    fn offline_preview_works_during_cooldown_with_incomplete_publish_settings() {
+        let mut state = fixture();
+        state.editor =
+            Some(EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap());
+        state.test_nodes = false;
+        state.output = Zeroizing::new("incomplete destination".into());
+        state.token = Zeroizing::new("unfinished token".into());
+        state.title = Zeroizing::new("a".repeat(65));
+        state.cooldown_until = Instant::now().checked_add(Duration::from_secs(30));
+        state.invalidate_result();
+        state.start_with(RunMode::Preview, Path::new(""), crate::relay::run);
+        finish(&mut state, &egui::Context::default());
+        assert!(
+            state
+                .result
+                .as_ref()
+                .is_some_and(|result| result.total == 1 && !result.tested)
+        );
+        assert!(state.cooldown_seconds() > 0);
     }
 
     #[test]
@@ -2271,11 +2650,23 @@ mod tests {
             .any(|command| matches!(command, egui::OutputCommand::CopyText(_)));
         output.drop_without_applying_deltas();
         assert!(!copied_without_consent);
+        assert!(!state.busy());
         state.allow_plaintext = true;
         let output = ctx.run_ui(Default::default(), |ui| state.copy(ui.ctx()));
+        assert!(state.busy());
+        assert!(
+            !output
+                .platform_output
+                .commands
+                .iter()
+                .any(|command| matches!(command, egui::OutputCommand::CopyText(_)))
+        );
+        output.drop_without_applying_deltas();
+        let output = ctx.run_ui(Default::default(), |ui| finish(&mut state, ui.ctx()));
         let copied = output.platform_output.commands.iter().any(|command| matches!(command, egui::OutputCommand::CopyText(value) if value == "A = socks5, node.example.invalid, 1080\n"));
         output.drop_without_applying_deltas();
         assert!(copied);
+        assert_eq!(state.notice, Some(Text::Copied));
         for id in SECRET_IDS {
             egui::text_edit::TextEditState::default().store(&ctx, egui::Id::unique(id));
         }
@@ -2283,6 +2674,38 @@ mod tests {
         assert!(state.result.is_none() && !state.allow_plaintext);
         for id in SECRET_IDS {
             assert!(egui::text_edit::TextEditState::load(&ctx, egui::Id::unique(id)).is_none());
+        }
+    }
+
+    #[test]
+    fn pending_converted_copy_cannot_outlive_its_consent_or_generation() {
+        for clear in [false, true] {
+            let ctx = egui::Context::default();
+            let mut state = fixture();
+            state.result = Some(result());
+            state.allow_plaintext = true;
+            state.output_format = OutputFormat::SingBox;
+            state.copy(&ctx);
+            assert!(state.busy());
+            if clear {
+                state.clear(&ctx);
+                // Renewing consent must still not deliver the old generation.
+                state.result = Some(result());
+                state.output_format = OutputFormat::SingBox;
+                state.allow_plaintext = true;
+            } else {
+                state.allow_plaintext = false;
+            }
+            let output = ctx.run_ui(Default::default(), |ui| finish(&mut state, ui.ctx()));
+            assert!(
+                !output
+                    .platform_output
+                    .commands
+                    .iter()
+                    .any(|command| matches!(command, egui::OutputCommand::CopyText(_)))
+            );
+            output.drop_without_applying_deltas();
+            assert_ne!(state.notice, Some(Text::Copied));
         }
     }
 
@@ -2449,10 +2872,12 @@ mod tests {
                 state.source = Zeroizing::new(url);
                 state.source_file = Zeroizing::new(String::new());
             }
-            assert_eq!(
-                state.validate(RunMode::Preview, &engine),
-                Err(Text::RelayPinnedTarget)
-            );
+            let mode = if output {
+                RunMode::Publish
+            } else {
+                RunMode::Preview
+            };
+            assert_eq!(state.validate(mode, &engine), Err(Text::RelayPinnedTarget));
         }
     }
 
@@ -2489,7 +2914,7 @@ mod tests {
     }
 
     #[test]
-    fn rate_limit_cooldown_blocks_repeated_requests_but_new_source_can_recover() {
+    fn rate_limit_cooldown_survives_processing_edits_but_new_source_can_recover() {
         let mut state = fixture();
         state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| {
             Err(RelayError::Gist(
@@ -2500,6 +2925,9 @@ mod tests {
         });
         finish(&mut state, &egui::Context::default());
         assert!(state.cooldown_seconds() > 0);
+        let deadline = state.cooldown_until;
+        state.invalidate_result();
+        assert_eq!(state.cooldown_until, deadline);
         state.start_with(RunMode::Import, Path::new(""), |_, _, _, _, _| {
             panic!("cooldown must not issue another request")
         });
@@ -2573,6 +3001,16 @@ mod tests {
             crate::vault::read_bounded(&destination).unwrap().as_slice(),
             bytes.as_slice()
         );
+        use super::super::subscriptions::Selection;
+        state.workspace.selected = Some(Selection::Subscription(7));
+        state.output.push_str("old destination");
+        state.start_workspace_import(Some(source.clone()), None);
+        assert!(state.workspace.selected == Some(Selection::Subscription(7)));
+        finish(&mut state, &ctx);
+        assert!(state.workspace.selected == Some(Selection::Subscription(0)));
+        assert!(state.workspace.draft_dirty && state.workspace.show_editor);
+        assert_eq!(state.local_content.as_ref().unwrap().as_str(), content);
+        assert!(state.output.is_empty() && state.workspace.error.is_none());
         for path in [source, destination, invalid] {
             std::fs::remove_file(path).unwrap();
         }

@@ -22,7 +22,9 @@ fn choice<T: Copy + PartialEq>(
             .width(ui.available_width().min(240.0))
             .show_ui(ui, |ui| {
                 for (candidate, label) in choices {
-                    ui.selectable_value(value, *candidate, *label);
+                    if ui.selectable_value(value, *candidate, *label).clicked() {
+                        ui.close();
+                    }
                 }
             })
             .response
@@ -35,7 +37,9 @@ impl HubApp {
         let language = self.draft.language;
         let tr = |key| text(language, key);
         ui.heading(tr(Text::Settings));
-        ui.add_space(18.0);
+        ui.add_space(8.0);
+        self.settings_actions(ui);
+        ui.add_space(16.0);
         egui::ScrollArea::vertical()
             .id_salt("settings")
             .show(ui, |ui| {
@@ -140,12 +144,13 @@ impl HubApp {
                 card(ui, self.colors, |ui| {
                     ui.label(RichText::new(tr(Text::Workspace)).size(18.0).strong());
                     ui.add_space(10.0);
-                    ui.label(tr(Text::ProjectPath));
+                    let path_label = ui.label(tr(Text::ProjectPath));
                     ui.add_enabled(
                         !self.active(),
                         egui::TextEdit::singleline(&mut self.root_input)
                             .desired_width(ui.available_width()),
-                    );
+                    )
+                    .labelled_by(path_label.id);
                     if ui
                         .add_enabled(!self.active(), egui::Button::new(tr(Text::LoadWorkspace)))
                         .clicked()
@@ -189,6 +194,11 @@ impl HubApp {
                             .strong(),
                     );
                     ui.add_space(10.0);
+                    if self.settings_load_failed() && self.settings_path.is_some() {
+                        ui.colored_label(self.colors.warning, tr(Text::HistorySettingsUnavailable));
+                    } else {
+                        ui.weak(tr(Text::HistorySettingsApplyAfterSave));
+                    }
                     ui.add_enabled_ui(!self.active(), |ui| {
                         ui.checkbox(&mut self.draft.record_history, tr(Text::RecordHistory));
                         ui.weak(tr(Text::RecordHistoryHelp));
@@ -215,63 +225,77 @@ impl HubApp {
                                 ui.label(tr(Text::DatabaseLocation));
                                 ui.add(egui::Label::new(path.display().to_string()).wrap());
                             }
+                            if let Some(path) = &self.settings_path {
+                                ui.label(tr(Text::SettingsFileLocation));
+                                ui.add(egui::Label::new(path.display().to_string()).wrap());
+                            }
                         }
                     });
                 });
-                ui.add_space(16.0);
-                if self.draft != self.preferences {
-                    ui.colored_label(self.colors.warning, tr(Text::UnsavedChanges));
-                }
-                ui.horizontal_wrapped(|ui| {
-                    if ui
-                        .add_enabled(
-                            !self.active(),
-                            primary_button(self.colors, tr(Text::SaveSettings)),
-                        )
-                        .clicked()
-                    {
-                        let result = self
-                            .settings_path
-                            .as_ref()
-                            .ok_or_else(|| tr(Text::SettingsError).to_string())
-                            .and_then(|path| settings::save(path, &self.draft));
-                        match result {
-                            Ok(()) => {
-                                self.preferences = self.draft.clone();
-                                self.notice = Some(Text::SettingsSaved);
-                                self.error = None;
-                            }
-                            Err(error) => self.error = Some(error),
-                        }
-                    }
-                    if ui
-                        .add_enabled(!self.active(), egui::Button::new(tr(Text::Cancel)))
-                        .clicked()
-                    {
-                        self.draft = self.preferences.clone();
-                        self.root_input = self.loaded_root.as_deref().map_or_else(
-                            || self.preferences.root.clone(),
-                            |root| root.display().to_string(),
-                        );
-                        ui.ctx().send_viewport_cmd(egui::ViewportCommand::InnerSize(
-                            self.draft.window.dimensions().into(),
-                        ));
-                    }
-                    if ui.button(tr(Text::ResetSettings)).clicked() {
-                        let root = self.draft.root.clone();
-                        let singbox = self.draft.singbox.clone();
-                        self.draft = settings::Preferences {
-                            root,
-                            singbox,
-                            ..Default::default()
-                        };
-                    }
-                });
-                if let Some(path) = &self.settings_path {
-                    ui.add_space(12.0);
-                    ui.weak(path.display().to_string());
-                }
             });
+    }
+
+    fn settings_actions(&mut self, ui: &mut egui::Ui) {
+        let language = self.draft.language;
+        let tr = |key| text(language, key);
+        let busy = self.active();
+        let dirty = self.draft != self.preferences;
+        let recovery = self.settings_load_failed();
+        let workspace_input_changed = self.root_input
+            != self.loaded_root.as_deref().map_or_else(
+                || self.preferences.root.clone(),
+                |root| root.display().to_string(),
+            );
+        ui.horizontal_wrapped(|ui| {
+            let save = ui.add_enabled(
+                !busy && (dirty || recovery) && self.settings_path.is_some(),
+                primary_button(self.colors, tr(Text::SaveSettings)),
+            );
+            if save.clicked() {
+                self.save_preferences();
+            }
+            if ui
+                .add_enabled(
+                    !busy && (dirty || workspace_input_changed),
+                    egui::Button::new(tr(Text::RevertSettings)),
+                )
+                .clicked()
+            {
+                let restore_window = self.draft.window != self.preferences.window;
+                self.draft = self.preferences.clone();
+                if workspace_input_changed {
+                    self.root_input = self.loaded_root.as_deref().map_or_else(
+                        || self.preferences.root.clone(),
+                        |root| root.display().to_string(),
+                    );
+                }
+                if restore_window {
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::InnerSize(
+                        self.draft.window.dimensions().into(),
+                    ));
+                }
+            }
+            if ui
+                .add_enabled(!busy, egui::Button::new(tr(Text::ResetSettings)))
+                .clicked()
+            {
+                let defaults = settings::Preferences::default();
+                self.draft = settings::Preferences {
+                    root: self.draft.root.clone(),
+                    singbox: self.draft.singbox.clone(),
+                    record_history: !recovery && defaults.record_history,
+                    ..defaults
+                };
+            }
+            if ui.button(tr(Text::SettingsQuit)).clicked() {
+                self.request_quit(ui.ctx());
+            }
+        });
+        if self.settings_path.is_none() {
+            ui.weak(tr(Text::SettingsSessionOnly));
+        } else if self.draft != self.preferences {
+            ui.colored_label(self.colors.warning, tr(Text::UnsavedChanges));
+        }
     }
 }
 
@@ -282,10 +306,29 @@ mod tests {
     use crate::runtime::settings::Preferences;
 
     #[test]
+    fn task_diagnostics_read_committed_preferences_not_visual_draft() {
+        let mut app = test_app(Preferences {
+            record_history: false,
+            ..Default::default()
+        });
+        app.settings_path = Some(std::path::PathBuf::from("settings.json"));
+        app.draft.record_history = true;
+        app.draft.developer_mode = true;
+        app.draft.diagnostic_logs = true;
+        assert!(app.configured_history().is_none());
+        app.preferences.record_history = true;
+        assert!(!app.configured_history().unwrap().keep_logs);
+        app.preferences.developer_mode = true;
+        app.preferences.diagnostic_logs = true;
+        assert!(app.configured_history().unwrap().keep_logs);
+    }
+
+    #[test]
     fn settings_controls_fit_narrow_viewport_and_have_accessible_names() {
         for (language, width) in [
             (Language::En, 740.0 / 1.5),
             (Language::ZhCn, 740.0 / 1.5),
+            (Language::Ja, 740.0 / 1.5),
             (Language::En, 1160.0),
             (Language::ZhCn, 1160.0),
         ] {
@@ -373,6 +416,21 @@ mod tests {
                     },
                 );
             let viewport = ctx.content_rect();
+            let nodes = &output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes;
+            for key in [Text::SaveSettings, Text::RevertSettings] {
+                let bounds = nodes
+                    .iter()
+                    .find(|(_, node)| node.label() == Some(text(language, key)))
+                    .and_then(|(_, node)| node.bounds())
+                    .expect("settings actions have labelled buttons");
+                assert!(bounds.y0 >= f64::from(viewport.min.y));
+                assert!(bounds.y1 <= f64::from(viewport.max.y));
+            }
             output.drop_without_applying_deltas();
             assert!(!bounds.is_empty(), "missing controls for {language:?}");
             for (rect, role, description) in bounds {

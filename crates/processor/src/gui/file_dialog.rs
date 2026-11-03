@@ -435,7 +435,9 @@ impl Picker {
         let mut navigate = None;
         let mut confirm = false;
         let mut history_move = None;
-        if !self.focus_initialized {
+        let mut cancel_path = None;
+        let mut filename_focus = None;
+        if !self.focus_initialized && self.return_focus.is_none() {
             self.return_focus = ctx.memory(|m| m.focused());
         }
         egui::Modal::new(egui::Id::unique("builtin-file-picker")).show(ctx, |ui| {
@@ -453,89 +455,143 @@ impl Picker {
             let search_id = ui.make_persistent_id("builtin-file-picker-search");
             let filename_id = ui.make_persistent_id("builtin-file-picker-filename");
             let path_id = ui.make_persistent_id("builtin-file-picker-path");
-            if !self.focus_initialized {
-                ui.memory_mut(|m| m.request_focus(search_id));
+            filename_focus = Some(filename_id);
+            // The modal's invisible first sizing pass cannot retain keyboard focus.
+            if !self.focus_initialized && !ui.is_sizing_pass() {
+                ui.memory_mut(|m| {
+                    m.request_focus(if self.action.is_save() {
+                        filename_id
+                    } else {
+                        search_id
+                    });
+                });
                 self.focus_initialized = true;
             }
             let editing_text = ui.memory(|m| {
                 m.has_focus(search_id) || m.has_focus(filename_id) || m.has_focus(path_id)
             });
             ui.set_width((available.x - 40.0).clamp(100.0, 850.0));
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.heading(tr(Text::FilePickerTitle));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button(tr(Text::FilePickerPath)).clicked() {
-                        self.editing_path = true;
-                        ui.memory_mut(|m| m.request_focus(path_id));
-                    }
-                });
-            });
-            ui.horizontal(|ui| {
-                let back = ui
-                    .add_enabled(self.history_index > 0, egui::Button::new("←"))
-                    .on_hover_text(tr(Text::FilePickerBack));
-                back.widget_info(|| {
-                    egui::WidgetInfo::labeled(
-                        egui::Role::Button,
-                        self.history_index > 0,
-                        tr(Text::FilePickerBack),
-                    )
-                });
-                if back.clicked()
-                    || (!editing_text
-                        && self.history_index > 0
-                        && ui.input(|i| i.modifiers.alt && i.key_pressed(egui::Key::ArrowLeft)))
+                let edit_path = ui.button(tr(Text::FilePickerPath));
+                if edit_path.clicked()
+                    || ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::L))
                 {
-                    history_move = Some(self.history_index - 1);
-                }
-                let forward = ui
-                    .add_enabled(
-                        self.history_index + 1 < self.history.len(),
-                        egui::Button::new("→"),
-                    )
-                    .on_hover_text(tr(Text::FilePickerForward));
-                forward.widget_info(|| {
-                    egui::WidgetInfo::labeled(
-                        egui::Role::Button,
-                        self.history_index + 1 < self.history.len(),
-                        tr(Text::FilePickerForward),
-                    )
-                });
-                if forward.clicked()
-                    || (!editing_text
-                        && self.history_index + 1 < self.history.len()
-                        && ui.input(|i| i.modifiers.alt && i.key_pressed(egui::Key::ArrowRight)))
-                {
-                    history_move = Some(self.history_index + 1);
-                }
-                let up = ui.button("↑").on_hover_text(tr(Text::FilePickerUp));
-                up.widget_info(|| {
-                    egui::WidgetInfo::labeled(egui::Role::Button, true, tr(Text::FilePickerUp))
-                });
-                if up.clicked() {
-                    navigate = self
-                        .directory
-                        .as_ref()
-                        .and_then(|p| p.parent())
-                        .map(Path::to_owned);
-                }
-                let refresh = ui.button("↻").on_hover_text(tr(Text::FilePickerRefresh));
-                refresh.widget_info(|| {
-                    egui::WidgetInfo::labeled(egui::Role::Button, true, tr(Text::FilePickerRefresh))
-                });
-                if refresh.clicked() {
-                    navigate = self.directory.clone();
-                }
-                if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::L)) {
                     self.editing_path = true;
                     ui.memory_mut(|m| m.request_focus(path_id));
                 }
-                if self.editing_path {
+                if self.editing_path && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    cancel_path = Some(edit_path.id);
+                }
+            });
+            if !self.editing_path {
+                ui.horizontal(|ui| {
+                    let back = ui
+                        .add_enabled(self.history_index > 0, egui::Button::new("←"))
+                        .on_hover_text(tr(Text::FilePickerBack));
+                    back.widget_info(|| {
+                        egui::WidgetInfo::labeled(
+                            egui::Role::Button,
+                            self.history_index > 0,
+                            tr(Text::FilePickerBack),
+                        )
+                    });
+                    if back.clicked()
+                        || (!editing_text
+                            && self.history_index > 0
+                            && ui.input(|i| i.modifiers.alt && i.key_pressed(egui::Key::ArrowLeft)))
+                    {
+                        history_move = Some(self.history_index - 1);
+                    }
+                    let forward = ui
+                        .add_enabled(
+                            self.history_index + 1 < self.history.len(),
+                            egui::Button::new("→"),
+                        )
+                        .on_hover_text(tr(Text::FilePickerForward));
+                    forward.widget_info(|| {
+                        egui::WidgetInfo::labeled(
+                            egui::Role::Button,
+                            self.history_index + 1 < self.history.len(),
+                            tr(Text::FilePickerForward),
+                        )
+                    });
+                    if forward.clicked()
+                        || (!editing_text
+                            && self.history_index + 1 < self.history.len()
+                            && ui
+                                .input(|i| i.modifiers.alt && i.key_pressed(egui::Key::ArrowRight)))
+                    {
+                        history_move = Some(self.history_index + 1);
+                    }
+                    let up = ui.button("↑").on_hover_text(tr(Text::FilePickerUp));
+                    up.widget_info(|| {
+                        egui::WidgetInfo::labeled(egui::Role::Button, true, tr(Text::FilePickerUp))
+                    });
+                    if up.clicked() {
+                        navigate = self
+                            .directory
+                            .as_ref()
+                            .and_then(|p| p.parent())
+                            .map(Path::to_owned);
+                    }
+                    let refresh = ui.button("↻").on_hover_text(tr(Text::FilePickerRefresh));
+                    refresh.widget_info(|| {
+                        egui::WidgetInfo::labeled(
+                            egui::Role::Button,
+                            true,
+                            tr(Text::FilePickerRefresh),
+                        )
+                    });
+                    if refresh.clicked() {
+                        navigate = self.directory.clone();
+                    }
+                    if let Some(directory) = &self.directory {
+                        let mut crumbs: Vec<_> = directory.ancestors().take(3).collect();
+                        crumbs.reverse();
+                        let width =
+                            (ui.available_width() / crumbs.len().max(1) as f32 - 4.0).max(20.0);
+                        for path in crumbs {
+                            let name = path
+                                .file_name()
+                                .unwrap_or(path.as_os_str())
+                                .to_string_lossy();
+                            let button = ui
+                                .add_sized(
+                                    [width, 22.0],
+                                    egui::Button::new(name.as_ref()).truncate(),
+                                )
+                                .on_hover_text(path.display().to_string());
+                            button.widget_info(|| {
+                                egui::WidgetInfo::labeled(egui::Role::Button, true, path.display())
+                            });
+                            if button.clicked() {
+                                navigate = Some(path.to_owned());
+                            }
+                        }
+                    }
+                });
+            } else {
+                ui.horizontal(|ui| {
+                    let go = tr(Text::FilePickerGo);
+                    let go_width = ui
+                        .painter()
+                        .layout_no_wrap(
+                            go.to_owned(),
+                            egui::TextStyle::Body.resolve(ui.style()),
+                            ui.visuals().text_color(),
+                        )
+                        .size()
+                        .x
+                        + 2.0 * ui.spacing().button_padding.x;
                     let field = ui.add(
                         egui::TextEdit::singleline(&mut self.path_text)
                             .id(path_id)
                             .char_limit(32768)
-                            .desired_width(ui.available_width()),
+                            .desired_width(
+                                (ui.available_width() - go_width - ui.spacing().item_spacing.x)
+                                    .max(1.0),
+                            ),
                     );
                     field.widget_info(|| {
                         egui::WidgetInfo::labeled(
@@ -544,31 +600,29 @@ impl Picker {
                             tr(Text::FilePickerPath),
                         )
                     });
-                    if field.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                        navigate = Some(PathBuf::from(&self.path_text));
-                        self.editing_path = false;
+                    if field.changed() && self.error == Some(Text::FilePickerAbsolutePath) {
+                        self.error = None;
                     }
-                } else if let Some(directory) = &self.directory {
-                    let mut crumbs: Vec<_> = directory.ancestors().take(3).collect();
-                    crumbs.reverse();
-                    let width = (ui.available_width() / crumbs.len().max(1) as f32 - 4.0).max(20.0);
-                    for path in crumbs {
-                        let name = path
-                            .file_name()
-                            .unwrap_or(path.as_os_str())
-                            .to_string_lossy();
-                        let button = ui
-                            .add_sized([width, 22.0], egui::Button::new(name.as_ref()).truncate())
-                            .on_hover_text(path.display().to_string());
-                        button.widget_info(|| {
-                            egui::WidgetInfo::labeled(egui::Role::Button, true, path.display())
-                        });
-                        if button.clicked() {
-                            navigate = Some(path.to_owned());
+                    if ui.button(go).clicked()
+                        || (field.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)))
+                    {
+                        let path = PathBuf::from(&self.path_text);
+                        if path.is_absolute() {
+                            navigate = Some(path);
+                            ui.memory_mut(|m| m.request_focus(search_id));
+                        } else {
+                            self.error = Some(Text::FilePickerAbsolutePath);
+                            field.request_focus();
                         }
                     }
+                });
+                if self.error == Some(Text::FilePickerAbsolutePath) {
+                    ui.colored_label(
+                        ui.visuals().error_fg_color,
+                        tr(Text::FilePickerAbsolutePath),
+                    );
                 }
-            });
+            }
             ui.horizontal_wrapped(|ui| {
                 let label = ui.label(tr(Text::FilePickerSearch));
                 let field = ui.add(
@@ -848,7 +902,12 @@ impl Picker {
                     });
                 });
             });
-            let status = if let Some(error) = self.error {
+            let status = if let Some(error) = self.error.filter(|error| {
+                !matches!(
+                    error,
+                    Text::FilePickerAbsolutePath | Text::FilePickerInvalidFilename
+                )
+            }) {
                 tr(error)
             } else if self.pending.is_some() {
                 tr(Text::FilePickerBusy)
@@ -871,6 +930,9 @@ impl Picker {
                             .char_limit(255)
                             .desired_width(ui.available_width().min(200.0)),
                     );
+                    if field.changed() && self.error == Some(Text::FilePickerInvalidFilename) {
+                        self.error = None;
+                    }
                     if field.lost_focus()
                         && ui.input(|i| i.key_pressed(egui::Key::Enter))
                         && self.listing.is_some()
@@ -895,6 +957,16 @@ impl Picker {
                     item.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &name));
                 }
             });
+            if self.error == Some(Text::FilePickerInvalidFilename) {
+                if valid_filename(&self.filename) {
+                    self.error = None;
+                } else {
+                    ui.colored_label(
+                        ui.visuals().error_fg_color,
+                        tr(Text::FilePickerInvalidFilename),
+                    );
+                }
+            }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let ready = self.worker.is_none()
                     && self.pending.is_none()
@@ -924,6 +996,19 @@ impl Picker {
             });
         });
         if ctx.input(|input| input.key_pressed(egui::Key::Escape)) {
+            if let Some(id) = cancel_path {
+                self.editing_path = false;
+                self.path_text = self
+                    .directory
+                    .as_ref()
+                    .map_or_else(String::new, |path| path.display().to_string());
+                if self.error == Some(Text::FilePickerAbsolutePath) {
+                    self.error = None;
+                }
+                ctx.memory_mut(|m| m.request_focus(id));
+                ctx.request_repaint();
+                return PickerResponse::Pending;
+            }
             if let Some(id) = self.return_focus {
                 ctx.memory_mut(|m| m.request_focus(id));
             }
@@ -936,9 +1021,11 @@ impl Picker {
             return response;
         }
         if let Some(index) = history_move {
+            self.editing_path = false;
             self.history_index = index;
             self.request(self.history[index].clone());
         } else if let Some(path) = navigate {
+            self.editing_path = false;
             self.navigate(path);
         }
         // Navigation starts a worker after the repaint check at the start of this frame.
@@ -946,7 +1033,7 @@ impl Picker {
         if self.worker.is_some() || self.pending.is_some() {
             ctx.request_repaint_after(Duration::from_millis(100));
         }
-        if confirm {
+        if confirm && self.directory().is_some() {
             match self.selection() {
                 Ok(path) => {
                     if let Some(id) = self.return_focus {
@@ -954,7 +1041,17 @@ impl Picker {
                     }
                     return PickerResponse::Selected(path);
                 }
-                Err(error) => self.error = Some(error),
+                Err(error) => {
+                    self.error = Some(if self.action.is_save() {
+                        if let Some(id) = filename_focus {
+                            ctx.memory_mut(|m| m.request_focus(id));
+                        }
+                        Text::FilePickerInvalidFilename
+                    } else {
+                        error
+                    });
+                    ctx.request_repaint();
+                }
             }
         }
         response
@@ -964,6 +1061,131 @@ impl Picker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn draw_picker(
+        ctx: &egui::Context,
+        picker: &mut Picker,
+        key: Option<(egui::Key, egui::Modifiers)>,
+    ) -> (egui::FullOutput, PickerResponse) {
+        let events = key.map_or_else(Vec::new, |(key, modifiers)| {
+            vec![
+                egui::Event::ModifiersChanged(modifiers),
+                egui::Event::Key {
+                    key,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers,
+                },
+            ]
+        });
+        let mut response = PickerResponse::Pending;
+        let mut output = ctx.run_ui(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(640.0, 480.0) / 1.5,
+                )),
+                events,
+                ..Default::default()
+            },
+            |ui| response = picker.show(ui.ctx(), Language::En),
+        );
+        output.textures_delta.clear();
+        (output, response)
+    }
+
+    #[test]
+    fn invalid_folder_path_keeps_edit_and_escape_only_dismisses_the_edit() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        crate::gui::theme::apply(&ctx, &crate::runtime::settings::Preferences::default());
+        let directory = std::env::temp_dir();
+        let mut picker = Picker::new(FileAction::Import, Some(&directory));
+        picker.pending = None;
+        picker.listing = Some(Listing {
+            entries: Vec::new(),
+            truncated: false,
+        });
+        draw_picker(&ctx, &mut picker, None);
+        draw_picker(
+            &ctx,
+            &mut picker,
+            Some((egui::Key::L, egui::Modifiers::COMMAND)),
+        );
+        let path_focus = ctx.memory(|m| m.focused()).expect("folder field focused");
+        picker.path_text = "relative/path".into();
+        let (_, response) = draw_picker(
+            &ctx,
+            &mut picker,
+            Some((egui::Key::Enter, egui::Modifiers::NONE)),
+        );
+        assert!(matches!(response, PickerResponse::Pending));
+        assert!(picker.editing_path);
+        assert_eq!(picker.path_text, "relative/path");
+        assert_eq!(picker.directory(), Some(directory.as_path()));
+        assert_eq!(picker.error, Some(Text::FilePickerAbsolutePath));
+        assert_eq!(ctx.memory(|m| m.focused()), Some(path_focus));
+
+        let mut go_bounds = None;
+        for _ in 0..3 {
+            let (output, _) = draw_picker(&ctx, &mut picker, None);
+            go_bounds = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .and_then(|update| {
+                    update.nodes.iter().find_map(|(_, node)| {
+                        if node.label() == Some(text(Language::En, Text::FilePickerGo)) {
+                            node.bounds()
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .or(go_bounds);
+        }
+        let bounds = go_bounds.expect("pointer action for folder navigation");
+        assert!(bounds.x0 >= 0.0 && bounds.x1 <= f64::from(640.0_f32 / 1.5));
+        assert!(bounds.y0 >= 0.0 && bounds.y1 <= 320.0);
+
+        let (_, response) = draw_picker(
+            &ctx,
+            &mut picker,
+            Some((egui::Key::Escape, egui::Modifiers::NONE)),
+        );
+        assert!(matches!(response, PickerResponse::Pending));
+        assert!(!picker.editing_path);
+        assert_eq!(picker.path_text, directory.display().to_string());
+        assert!(picker.error.is_none());
+        assert_ne!(ctx.memory(|m| m.focused()), Some(path_focus));
+    }
+
+    #[test]
+    fn invalid_filename_keeps_save_dialog_and_returns_focus_to_filename() {
+        let ctx = egui::Context::default();
+        let directory = std::env::temp_dir();
+        let mut picker = Picker::new(FileAction::ExportPlan, Some(&directory));
+        picker.pending = None;
+        picker.listing = Some(Listing {
+            entries: Vec::new(),
+            truncated: false,
+        });
+        picker.filename = "../outside.json".into();
+        draw_picker(&ctx, &mut picker, None);
+        draw_picker(&ctx, &mut picker, None);
+        let filename_focus = ctx.memory(|m| m.focused()).expect("filename focused");
+
+        let (_, response) = draw_picker(
+            &ctx,
+            &mut picker,
+            Some((egui::Key::Enter, egui::Modifiers::NONE)),
+        );
+        assert!(matches!(response, PickerResponse::Pending));
+        assert_eq!(picker.error, Some(Text::FilePickerInvalidFilename));
+        assert_eq!(picker.filename, "../outside.json");
+        assert_eq!(ctx.memory(|m| m.focused()), Some(filename_focus));
+    }
 
     #[test]
     fn construction_does_not_start_a_directory_read() {

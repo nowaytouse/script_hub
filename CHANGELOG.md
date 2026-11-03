@@ -4,6 +4,38 @@
 
 ## Unreleased
 
+- Ask before closing a window or quitting from Settings with unsaved settings. If saving fails, keep the draft and window open.
+
+- Show sync progress, retry timing, and pause reasons separately from the last successful result. Keep server wait deadlines after stopping, including DoH rate limits.
+- Require a publishable preview for scheduled uploads. Arming a collection schedule does not save its draft.
+- Show and copy effective diagnostic settings from Help without exposing paths, subscriptions, or log contents.
+
+- Open the separate offline demo from Help or Subscription Manager, even while the subscription library is locked.
+- Keep active network cooldowns when editing local node operations, without blocking offline previews.
+- Check Rhai syntax and the required transform entry point before running a preview.
+- Verify bundled license and source receipt bytes before and after desktop package delivery.
+
+- Launch a separate offline desktop demo with sample subscriptions and collections using `--demo`. It does not read saved settings or the subscription library.
+- Find node operations by localized or English name; custom scripts have their own group.
+
+- Choose and check a separate output format for manual and scheduled Gist uploads. A failed conversion leaves the remote Gist untouched.
+- Convert local clipboard output in the background and discard it if clipboard permission is withdrawn.
+- Pause new task history and diagnostic recording if saved settings cannot be read.
+
+- Keep Save and Revert visible in Settings; task history and diagnostic logs use saved preferences only.
+- Browse bundled dependency license texts offline, copy build information without private paths, and jump from Help to Settings or subscriptions.
+- Apply history cleanup and its refreshed list in one transaction; refresh failures block further deletion until the list is current again.
+- Export compatible SOCKS5, Shadowsocks, and Trojan nodes as Surge proxy policies. Unsupported settings stop the export with the node number.
+
+- Duplicate subscriptions and collections as private drafts without inheriting publishing settings, and preview loaded nodes without completing Gist setup.
+- Convert supported nodes to a Mihomo proxy provider, and check output compatibility before revealing, copying, or saving node content.
+
+- Keep the current operation running when a window close is blocked, and consolidate progress and cancellation controls in the relay editor.
+- Stage library imports until the file is recognized, and confirm before manually locking an edited template vault.
+
+- Preserve loaded nodes while editing pasted input, keep output settings when replacing nodes, and keep a usable preview after retryable upload failures.
+- Keep invalid folder paths and filenames editable in the file picker, and show Gist filename and description errors next to their fields.
+
 - Rework the subscription workspace: keep preview actions above the operation chain, separate local export from Gist, and let collection members be reordered without retaining a stale preview.
 
 - Remember each subscription and collection's Gist target, filename, title, and sync interval in the encrypted library. Opening an item does not restore authorization or start a schedule.
