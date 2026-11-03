@@ -437,10 +437,6 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
                 rust_processor::general_update::enforce_category_boundaries(&root)?;
                 rust_processor::general_update::enforce_jp_ownership(&root)?;
                 rust_processor::general_update::split_published_rulesets(&root)?;
-                let version = rust_processor::publication_now()
-                    .format("%Y.%m.%d")
-                    .to_string();
-                rust_processor::firewall_sync::refresh_security_modules(&root, &version)?;
                 rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
             }
             let count = rust_processor::mihomo_generator::run_generator(&root)?;
@@ -517,6 +513,92 @@ mod tests {
             );
             assert!(!root.exists());
         }
+    }
+
+    #[test]
+    fn classify_only_preserves_existing_security_modules() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("script-hub-classify-only-{unique}"));
+        for directory in [
+            "rulesets/RULE-SET",
+            "rulesets/AdBlock",
+            "rulesets/Sources/custom",
+            "rulesets/Sources/compiled",
+        ] {
+            std::fs::create_dir_all(root.join(directory)).unwrap();
+        }
+        for (name, host) in [
+            ("Direct", "direct.test"),
+            ("GlobalProxy", "proxy.test"),
+            ("Apple", "apple.test"),
+            ("JP", "japan.test"),
+        ] {
+            std::fs::write(
+                root.join(format!("rulesets/RULE-SET/{name}.list")),
+                format!("DOMAIN-SUFFIX,{host}\n"),
+            )
+            .unwrap();
+        }
+        for (path, host) in [
+            ("rulesets/Sources/custom/JP_manual.list", "misskey.io"),
+            ("rulesets/Sources/compiled/Pixiv.list", "pixiv.net"),
+        ] {
+            std::fs::write(root.join(path), format!("DOMAIN-SUFFIX,{host}\n")).unwrap();
+        }
+        let modules = [
+            "modules/surge/head_expanse/🌟 AdBlock Helper .sgmodule",
+            "modules/surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule",
+            "modules/shadowrocket/head_expanse/🌟 AdBlock Helper .module",
+            "modules/shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
+            "modules/shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module",
+        ];
+        let contents = b"#!name=Keep security module\n\n[Rule]\nDEST-PORT,6667,REJECT\n";
+        for relative in modules {
+            let path = root.join(relative);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, contents).unwrap();
+        }
+        assert!(
+            Command::new("git")
+                .args(["init", "--quiet"])
+                .current_dir(&root)
+                .status()
+                .unwrap()
+                .success()
+        );
+
+        assert_eq!(
+            run_cli(
+                [
+                    "--root".into(),
+                    root.to_string_lossy().into_owned(),
+                    "--execute".into(),
+                    "--classify-only".into()
+                ]
+                .into_iter()
+            ),
+            ExitCode::SUCCESS
+        );
+        assert!(root.join("rulesets/Mihomo/Direct.yaml").is_file());
+        for relative in modules {
+            let path = root.join(relative);
+            assert_eq!(
+                std::fs::read(&path).unwrap(),
+                contents,
+                "{}",
+                path.display()
+            );
+            let mirror = path
+                .parent()
+                .unwrap()
+                .join("github")
+                .join(path.file_name().unwrap());
+            assert_eq!(std::fs::read(mirror).unwrap(), contents);
+        }
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
