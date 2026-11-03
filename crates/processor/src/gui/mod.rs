@@ -7,5 +7,6 @@ pub mod i18n;
 mod pages;
 mod relay;
 mod relay_schedule;
+mod subscriptions;
 mod templates;
 mod theme;

@@ -8,7 +8,7 @@ use eframe::egui;
 use zeroize::Zeroize;
 
 impl HubApp {
-    pub(crate) fn relay_page(&mut self, ui: &mut egui::Ui) {
+    pub(super) fn relay_editor(&mut self, ui: &mut egui::Ui) {
         let language = self.draft.language;
         let tr = |key| text(language, key);
         let colors = self.colors;
@@ -16,24 +16,22 @@ impl HubApp {
         let mut action = None;
         let mut file_action = None;
         let mut migration_selection = None;
+        let mut workspace_import = false;
         ui.vertical_centered(|ui| {
             ui.set_max_width(880.0);
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                ui.heading(tr(Text::Relay));
-                ui.label(tr(Text::RelayIntro));
-                ui.add_space(12.0);
                 let state = &mut self.relay;
                 ui.horizontal_wrapped(|ui| {
                     for (step, label, available) in [
-                        (RelayStep::Source, Text::RelayStepImport, true),
+                        (RelayStep::Source, Text::WorkspaceSourceTab, true),
                         (
                             RelayStep::Review,
-                            Text::RelayStepClean,
+                            Text::WorkspaceOperationsTab,
                             state.result.is_some() || state.local_content.is_some(),
                         ),
                         (
                             RelayStep::Publish,
-                            Text::RelayStepUpload,
+                            Text::WorkspaceOutputTab,
                             state.result.is_some(),
                         ),
                     ] {
@@ -210,6 +208,7 @@ impl HubApp {
                                         )
                                         .clicked()
                                     {
+                                        if !state.source.trim().is_empty() { state.local_content = None; state.local_summary = None; }
                                         action = Some(RunMode::Import);
                                     }
                                     } else if state.input_mode == InputMode::Paste {
@@ -268,6 +267,7 @@ impl HubApp {
                                          ui.label(format!("{} {} · {} {} · {} {}", report.items.len(), tr(Text::MigrationItems), report.collections.len(), tr(Text::MigrationCollections), report.unsupported_count, tr(Text::MigrationUnsupported)));
                                          ui.weak(tr(Text::MigrationHelp));
                                          ui.checkbox(&mut state.migration_ack, tr(Text::MigrationConsent));
+                                         if ui.add_enabled(state.migration_ack, egui::Button::new(tr(Text::WorkspaceImportAll))).clicked() { workspace_import = true; }
                                          egui::ScrollArea::vertical().id_salt("substore-import-preview").max_height(240.0).show_rows(ui, 32.0, report.items.len(), |ui, rows| {
                                              for index in rows {
                                                  let item = &report.items[index];
@@ -686,13 +686,14 @@ impl HubApp {
                                     ui.add_space(16.0);
                                     ui.separator();
                                     ui.strong(tr(Text::ScheduleTitle));
+                                        if matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) { ui.weak(tr(Text::WorkspaceCollectionSchedule)); }
                                     ui.weak(tr(Text::ScheduleHelp));
                                     ui.horizontal_wrapped(|ui| {
                                         ui.label(tr(Text::ScheduleInterval));
                                         ui.add(egui::DragValue::new(&mut state.schedule.interval_minutes).range(1..=10080));
                                     });
                                     ui.weak(tr(Text::ScheduleSessionOnly));
-                                    if ui.add_enabled(has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
+                                        if ui.add_enabled(!matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))) && has_content && publish.is_ok() && !state.output.is_empty() && cooldown == 0, egui::Button::new(tr(Text::ScheduleEnable))).clicked() {
                                         state.arm_schedule();
                                     }
                                 }
@@ -709,8 +710,8 @@ impl HubApp {
                                     RelayStep::Source
                                 };
                             }
-                            if ui.button(tr(Text::RelayClear)).clicked() {
-                                state.clear(ui.ctx());
+                            if ui.button(tr(if state.workspace.selected.is_some() { Text::WorkspaceListLock } else { Text::RelayClear })).clicked() {
+                                if state.workspace.selected.is_some() { state.workspace_request(ui.ctx(), crate::gui::subscriptions::Action::Lock); } else { state.clear(ui.ctx()); }
                             }
                         });
                         ui.collapsing(tr(Text::RelayDetails), |ui| {
@@ -724,7 +725,9 @@ impl HubApp {
                     });
             });
         });
-        if let Some(mode) = action {
+        if workspace_import {
+            self.relay.import_workspace_report();
+        } else if let Some(mode) = action {
             if mode == RunMode::Import {
                 self.relay.clear_editor_widgets(ui.ctx());
                 self.relay.input_changed();

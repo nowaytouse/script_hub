@@ -6,6 +6,8 @@ mod relay;
 mod repository;
 mod settings;
 mod sources;
+mod subscription_list;
+mod subscriptions;
 mod support;
 mod tasks;
 mod templates;

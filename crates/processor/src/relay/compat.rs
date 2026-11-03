@@ -28,6 +28,7 @@ pub struct Item {
 pub struct Collection {
     pub name: Zeroizing<String>,
     pub subscriptions: Vec<Zeroizing<String>>,
+    pub valid_references: bool,
     pub unsupported: usize,
 }
 
@@ -36,6 +37,7 @@ pub struct Report {
     pub collections: Vec<Collection>,
     pub sensitive_count: usize,
     pub unsupported_count: usize,
+    pub invalid_items: usize,
 }
 
 // Never format source URLs, node contents, settings, or processor arguments.
@@ -46,6 +48,7 @@ impl std::fmt::Debug for Report {
             .field("collections", &self.collections.len())
             .field("sensitive_count", &self.sensitive_count)
             .field("unsupported_count", &self.unsupported_count)
+            .field("invalid_items", &self.invalid_items)
             .finish()
     }
 }
@@ -137,6 +140,7 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
         collections: Vec::new(),
         sensitive_count: 0,
         unsupported_count: 0,
+        invalid_items: 0,
     };
     for (key, is_file) in [("subs", false), ("files", true)] {
         let Some(values) = root.get(key) else {
@@ -146,6 +150,7 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
         for value in values {
             let Some(name) = name(value) else {
                 report.unsupported_count += 1;
+                report.invalid_items += 1;
                 continue;
             };
             let mut unsupported = count_process(value);
@@ -209,10 +214,12 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
         for value in values.as_array().ok_or(ImportError::InvalidBackup)? {
             let Some(name) = name(value) else {
                 report.unsupported_count += 1;
+                report.invalid_items += 1;
                 continue;
             };
             let mut unsupported = count_process(value);
             let mut subscriptions = Vec::new();
+            let mut valid_references = true;
             if let Some(refs) = value.get("subscriptions") {
                 if let Some(refs) = refs.as_array() {
                     for reference in refs {
@@ -220,11 +227,16 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
                             subscriptions.push(Zeroizing::new(reference.to_owned()));
                         } else {
                             unsupported += 1;
+                            valid_references = false;
                         }
                     }
                 } else {
                     unsupported += 1;
+                    valid_references = false;
                 }
+            } else {
+                unsupported += 1;
+                valid_references = false;
             }
             if let Some(object) = value.as_object() {
                 unsupported += object
@@ -236,6 +248,7 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
             report.collections.push(Collection {
                 name,
                 subscriptions,
+                valid_references,
                 unsupported,
             });
         }

@@ -414,18 +414,27 @@ pub(super) fn show(
                     });
                 }
             });
-            if ui.button(tr(Text::ResolutionQuickAdd)).clicked()
-                && let Some(id) = next_id
-            {
-                steps.push(Step {
-                    id,
-                    enabled: true,
-                    operation: Operation::ResolveDomain {
-                        family: AddressFamily::PreferV4,
-                        options: dns::Options::default(),
-                    },
-                });
-                changed = true;
+            for (label, kind) in [
+                (Text::OperationNameFilter, Text::OperationNameFilter),
+                (Text::OperationDeduplicate, Text::OperationDeduplicate),
+                (Text::OperationSort, Text::OperationSort),
+                (Text::ResolutionQuickAdd, Text::OperationResolveDomain),
+                (Text::OperationScript, Text::OperationScript),
+            ] {
+                if ui.button(tr(label)).clicked()
+                    && steps.len() < MAX_STEPS
+                    && let Some(id) = next_step_id(steps)
+                    && let Some(operation) = new_operations()
+                        .into_iter()
+                        .find(|op| operation_label(op) == kind)
+                {
+                    steps.push(Step {
+                        id,
+                        enabled: true,
+                        operation,
+                    });
+                    changed = true;
+                }
             }
         });
     });

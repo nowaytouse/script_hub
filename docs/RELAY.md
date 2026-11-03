@@ -2,7 +2,7 @@
 
 [English](RELAY.md) · [简体中文](RELAY.zh-CN.md)
 
-1. Choose **Link**, **Paste text** or **Local file**. HTTPS subscriptions and Gist sources are supported; only recognized node data is accepted.
+1. Add a **subscription** or **collection** in the library. A subscription accepts an HTTPS link, Gist, pasted nodes, or a local node file.
 2. Edit parameters and ordered operations. Native presets append editable steps; they do not execute the Entrance JavaScript or reproduce every feature of it.
 3. Preview. The preparation action is Rust-only; optional protocol health checks use the separately detected core.
 4. Enter a Gist-capable token and publish. Leave the output target empty to create a secret Gist, or select an existing distinct target.
@@ -10,7 +10,11 @@
 
 The manager runs independently of Surge modules or a local server. Client node formats remain adapters, not runtime dependencies.
 
-Local import also previews Sub-Store JSON/Base64 backups: choose one subscription or recognized node file and confirm replacement of the current session. Collections are preview-only; settings, tokens and old processors are not restored. Choosing a remote source does not download it.
+Save the encrypted library to keep it between launches. The application uses a fixed private location and never saves its password or Gist token. Switching items protects unsaved drafts; removing a referenced subscription requires removing it from its collections first.
+
+Collections combine members in selection order as sing-box node JSON. **Refresh and build** downloads remote members; **Build from cache** stays offline. Unsupported conversions, network-dependent member operations, and changed input with position-bound edits fail without partially replacing cached nodes. Collections use manual refresh; scheduled synchronization remains available for individual subscriptions.
+
+Import a Sub-Store JSON/Base64 backup and choose **Add available items to library**. Compatible subscriptions and node files are added without overwriting existing entries. Collections with incomplete references are skipped and counted. Settings, tokens and old processors are not restored; import does not download remote links.
 
 Classic age X25519 backups can be unlocked with their private key. Encrypted export wraps a Hub backup for an `age1…` recipient; keep the matching private key separately. Keys are not saved. Passphrase, SSH, plugin and post-quantum age formats are unsupported. Input limit: 8 MiB encrypted, 4 MiB decrypted, 8 KiB decoded header.
 

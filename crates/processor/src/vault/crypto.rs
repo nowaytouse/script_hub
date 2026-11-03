@@ -23,8 +23,13 @@ pub(super) const MAX_FILE_BYTES: usize = HEADER_BYTES + MAX_PLAINTEXT_BYTES + TA
 /// An explicitly unlocked library. Dropping it erases its owned plaintext and key buffers.
 pub struct UnlockedVault {
     library: Library,
+    envelope: Envelope,
+}
+
+pub(crate) struct Envelope {
     key: Zeroizing<[u8; 32]>,
     salt: [u8; SALT_BYTES],
+    magic: [u8; 8],
 }
 
 impl UnlockedVault {
@@ -47,10 +52,27 @@ impl UnlockedVault {
     pub fn seal(&self) -> Result<Vec<u8>, VaultError> {
         validate_library(&self.library)?;
         let plaintext = encode_library(&self.library)?;
+        self.envelope.seal(&plaintext)
+    }
+}
+
+impl Envelope {
+    pub(crate) fn create(password: &str, magic: [u8; 8]) -> Result<Self, VaultError> {
+        validate_password(password)?;
+        let mut salt = [0u8; SALT_BYTES];
+        getrandom::fill(&mut salt).map_err(|_| VaultError::Randomness)?;
+        let key = derive_key(password, &salt)?;
+        Ok(Self { key, salt, magic })
+    }
+
+    pub(crate) fn seal(&self, plaintext: &[u8]) -> Result<Vec<u8>, VaultError> {
+        if plaintext.len() > MAX_PLAINTEXT_BYTES {
+            return Err(VaultError::TooLarge);
+        }
         let mut nonce = [0u8; NONCE_BYTES];
         getrandom::fill(&mut nonce).map_err(|_| VaultError::Randomness)?;
         let mut header = [0u8; HEADER_BYTES];
-        header[..8].copy_from_slice(MAGIC);
+        header[..8].copy_from_slice(&self.magic);
         header[8] = VERSION;
         header[9..25].copy_from_slice(&self.salt);
         header[25..].copy_from_slice(&nonce);
@@ -60,7 +82,7 @@ impl UnlockedVault {
             .encrypt(
                 &XNonce::from(nonce),
                 Payload {
-                    msg: plaintext.as_slice(),
+                    msg: plaintext,
                     aad: &header,
                 },
             )
@@ -70,24 +92,56 @@ impl UnlockedVault {
         result.extend_from_slice(&ciphertext);
         Ok(result)
     }
+
+    pub(crate) fn unlock(
+        ciphertext: &[u8],
+        password: &str,
+        magic: [u8; 8],
+    ) -> Result<(Self, Zeroizing<Vec<u8>>), VaultError> {
+        validate_header(ciphertext, &magic)?;
+        validate_password(password)?;
+        let salt: [u8; SALT_BYTES] = ciphertext[9..25]
+            .try_into()
+            .map_err(|_| VaultError::Format)?;
+        let nonce: [u8; NONCE_BYTES] = ciphertext[25..HEADER_BYTES]
+            .try_into()
+            .map_err(|_| VaultError::Format)?;
+        let key = derive_key(password, &salt)?;
+        let cipher =
+            XChaCha20Poly1305::new_from_slice(key.as_ref()).map_err(|_| VaultError::Format)?;
+        let plaintext = Zeroizing::new(
+            cipher
+                .decrypt(
+                    &XNonce::from(nonce),
+                    Payload {
+                        msg: &ciphertext[HEADER_BYTES..],
+                        aad: &ciphertext[..HEADER_BYTES],
+                    },
+                )
+                .map_err(|_| VaultError::Authentication)?,
+        );
+        Ok((Self { key, salt, magic }, plaintext))
+    }
 }
 
 pub fn create(library: Library, password: &str) -> Result<UnlockedVault, VaultError> {
     validate_password(password)?;
     validate_library(&library)?;
     drop(encode_library(&library)?);
-    let mut salt = [0u8; SALT_BYTES];
-    getrandom::fill(&mut salt).map_err(|_| VaultError::Randomness)?;
-    let key = derive_key(password, &salt)?;
-    Ok(UnlockedVault { library, key, salt })
+    let envelope = Envelope::create(password, *MAGIC)?;
+    Ok(UnlockedVault { library, envelope })
 }
 
 pub(crate) fn validate_envelope(ciphertext: &[u8]) -> Result<(), VaultError> {
+    validate_header(ciphertext, MAGIC)
+}
+
+fn validate_header(ciphertext: &[u8], magic: &[u8; 8]) -> Result<(), VaultError> {
     if ciphertext.len() > MAX_FILE_BYTES {
         return Err(VaultError::TooLarge);
     }
     if ciphertext.len() < HEADER_BYTES + TAG_BYTES
-        || &ciphertext[..8] != MAGIC
+        || &ciphertext[..8] != magic
         || ciphertext[8] != VERSION
     {
         return Err(VaultError::Format);
@@ -96,30 +150,10 @@ pub(crate) fn validate_envelope(ciphertext: &[u8]) -> Result<(), VaultError> {
 }
 
 pub fn unlock(ciphertext: &[u8], password: &str) -> Result<UnlockedVault, VaultError> {
-    validate_envelope(ciphertext)?;
-    validate_password(password)?;
-    let salt: [u8; SALT_BYTES] = ciphertext[9..25]
-        .try_into()
-        .map_err(|_| VaultError::Format)?;
-    let nonce: [u8; NONCE_BYTES] = ciphertext[25..HEADER_BYTES]
-        .try_into()
-        .map_err(|_| VaultError::Format)?;
-    let key = derive_key(password, &salt)?;
-    let cipher = XChaCha20Poly1305::new_from_slice(key.as_ref()).map_err(|_| VaultError::Format)?;
-    let plaintext = Zeroizing::new(
-        cipher
-            .decrypt(
-                &XNonce::from(nonce),
-                Payload {
-                    msg: &ciphertext[HEADER_BYTES..],
-                    aad: &ciphertext[..HEADER_BYTES],
-                },
-            )
-            .map_err(|_| VaultError::Authentication)?,
-    );
+    let (envelope, plaintext) = Envelope::unlock(ciphertext, password, *MAGIC)?;
     let library: Library = serde_json::from_slice(&plaintext).map_err(|_| VaultError::Format)?;
     validate_library(&library)?;
-    Ok(UnlockedVault { library, key, salt })
+    Ok(UnlockedVault { library, envelope })
 }
 
 fn validate_password(password: &str) -> Result<(), VaultError> {
@@ -162,5 +196,28 @@ impl Write for BoundedPlaintext {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod envelope_tests {
+    use super::*;
+
+    #[test]
+    fn envelope_authenticates_magic_password_header_and_payload_with_fresh_nonce() {
+        let envelope = Envelope::create("long enough password", *b"TESTMAGC").unwrap();
+        let first = envelope.seal(b"secret").unwrap();
+        let second = envelope.seal(b"secret").unwrap();
+        assert_ne!(&first[25..HEADER_BYTES], &second[25..HEADER_BYTES]);
+        let (_, plaintext) =
+            Envelope::unlock(&first, "long enough password", *b"TESTMAGC").unwrap();
+        assert_eq!(&*plaintext, b"secret");
+        assert!(Envelope::unlock(&first, "long enough password", *b"OTHER123").is_err());
+        assert!(Envelope::unlock(&first, "wrong password here", *b"TESTMAGC").is_err());
+        for index in [9, 25, HEADER_BYTES] {
+            let mut damaged = first.clone();
+            damaged[index] ^= 1;
+            assert!(Envelope::unlock(&damaged, "long enough password", *b"TESTMAGC").is_err());
+        }
     }
 }

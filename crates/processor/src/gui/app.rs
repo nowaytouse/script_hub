@@ -309,10 +309,13 @@ impl HubApp {
             || self.relay.busy()
             || self.templates.dirty
             || self.templates.editing
+            || self.relay.workspace.unsaved()
     }
 
     fn close_notice(&self, had_template_changes: bool) -> Option<Text> {
-        if self.templates.dirty || self.templates.editing {
+        if self.relay.workspace.unsaved() {
+            Some(Text::WorkspaceUnsaved)
+        } else if self.templates.dirty || self.templates.editing {
             Some(Text::VaultUnsavedChanges)
         } else if had_template_changes {
             Some(Text::VaultAutoLockedUnsaved)
@@ -325,12 +328,21 @@ impl HubApp {
         }
     }
 
-    fn route_file_drop(&mut self, paths: Vec<PathBuf>) {
+    fn route_file_drop(&mut self, ctx: &egui::Context, paths: Vec<PathBuf>) {
         if self.active() || paths.is_empty() {
             return;
         }
         if self.page == Page::Relay {
+            if self.relay.workspace.locked || self.relay.workspace.draft_dirty {
+                self.relay.workspace.error = Some(Text::WorkspaceImportBlocked);
+                return;
+            }
             if paths.len() == 1 {
+                if self.relay.workspace.selected.is_none() {
+                    self.relay
+                        .execute_workspace(ctx, super::subscriptions::Action::NewSubscription);
+                }
+                self.relay.workspace.show_editor = true;
                 self.relay.file_action(
                     super::file_dialog::FileAction::Import,
                     paths.into_iter().next(),
@@ -962,6 +974,11 @@ impl eframe::App for HubApp {
             && let Some(notice) = self.close_notice(had_template_changes)
         {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            if self.relay.workspace.unsaved() && !self.relay.busy() {
+                self.relay.schedule.stop();
+                self.page = Page::Relay;
+                self.relay.workspace.confirm = Some(super::subscriptions::Action::Close);
+            }
             if self.relay.busy() {
                 self.relay.request_cancel();
             }
@@ -975,7 +992,7 @@ impl eframe::App for HubApp {
                 .map(|file| file.path().to_path_buf())
                 .collect::<Vec<_>>()
         });
-        self.route_file_drop(dropped);
+        self.route_file_drop(ctx, dropped);
         if !ctx.egui_wants_keyboard_input()
             && self.pending.is_none()
             && !self.relay.selecting_file()
@@ -1286,6 +1303,8 @@ mod tests {
 
     fn relay_app() -> HubApp {
         let mut app = HubApp::new(None, Preferences::default(), None, None);
+        app.relay.workspace.checked = true;
+        app.relay.workspace.show_editor = true;
         app.relay.token.push_str("synthetic-token");
         app.relay
             .source
@@ -1300,6 +1319,15 @@ mod tests {
             .to_string_lossy()
             .into_owned();
         app
+    }
+
+    #[test]
+    fn workspace_changes_guard_window_close() {
+        let mut app = relay_app();
+        app.relay.workspace.dirty = true;
+        assert_eq!(app.close_notice(false), Some(Text::WorkspaceUnsaved));
+        app.relay.workspace.dirty = false;
+        assert_eq!(app.close_notice(false), None);
     }
 
     #[test]
@@ -1663,7 +1691,10 @@ mod tests {
             .file_action(super::super::file_dialog::FileAction::Import, None, None);
         assert!(app.active() && !app.blocks_close());
         app.queue_job(JobKind::GitPush);
-        app.route_file_drop(vec![std::env::temp_dir().join("must-not-import.list")]);
+        app.route_file_drop(
+            &egui::Context::default(),
+            vec![std::env::temp_dir().join("must-not-import.list")],
+        );
         assert!(app.pending.is_none() && !app.relay.busy());
         assert!(app.relay.selecting_file());
         app.relay.clear(&egui::Context::default());
@@ -1710,7 +1741,10 @@ mod tests {
     #[test]
     fn dropping_a_configuration_never_opens_it_as_a_workspace() {
         let mut app = HubApp::new(None, Preferences::default(), None, None);
-        app.route_file_drop(vec![std::env::temp_dir().join("synthetic.surge.conf")]);
+        app.route_file_drop(
+            &egui::Context::default(),
+            vec![std::env::temp_dir().join("synthetic.surge.conf")],
+        );
         assert!(app.page == Page::Catalog && app.catalog_tab == CatalogTab::Templates);
         assert_eq!(app.templates.queued_imports(), 1);
         assert!(app.root_input.is_empty() && app.workspace_loader.is_none());

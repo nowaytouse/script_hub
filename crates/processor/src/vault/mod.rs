@@ -11,6 +11,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+pub(crate) use crypto::Envelope;
 pub use crypto::{UnlockedVault, create, unlock};
 pub(crate) use io::{checked_parent, create_private_parent, is_link};
 pub use io::{read_bounded, write_private};

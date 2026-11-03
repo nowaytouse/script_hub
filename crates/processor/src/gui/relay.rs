@@ -195,6 +195,7 @@ fn decode_import(bytes: &[u8]) -> Result<FileCompleted, Text> {
 }
 
 pub(super) struct RelayState {
+    pub workspace: super::subscriptions::State,
     pub step: RelayStep,
     pub input_mode: InputMode,
     pub paste: Zeroizing<String>,
@@ -208,7 +209,7 @@ pub(super) struct RelayState {
     pub reveal_identity: bool,
     pub archive_recipient: Zeroizing<String>,
     pub encrypted_import: Option<Zeroizing<Vec<u8>>>,
-    pub migration: Option<crate::relay::compat::Report>,
+    pub migration: Option<Arc<crate::relay::compat::Report>>,
     pub migration_ack: bool,
     cooldown_until: Option<Instant>,
     pub local_content: Option<Zeroizing<String>>,
@@ -239,7 +240,7 @@ pub(super) struct RelayState {
     pub error: Option<Failure>,
     pub notice: Option<Text>,
     pending: Option<Pending>,
-    imported_processing: Option<crate::relay::model::editor::Options>,
+    pub(super) imported_processing: Option<crate::relay::model::editor::Options>,
     file_picker: Option<super::file_dialog::Picker>,
     last_directory: Option<std::path::PathBuf>,
     file_pending: Option<FilePending>,
@@ -290,7 +291,7 @@ impl EditorState {
         })
     }
 
-    fn processing(&self) -> crate::relay::model::editor::Options {
+    pub(super) fn processing(&self) -> crate::relay::model::editor::Options {
         let mut options = self.options.clone();
         options.nodes = self
             .rows
@@ -358,6 +359,7 @@ impl Default for RelayState {
         let defaults = RelayConfig::default();
         Self {
             step: RelayStep::Source,
+            workspace: Default::default(),
             input_mode: InputMode::Link,
             paste: Zeroizing::new(String::new()),
             reveal_paste: false,
@@ -627,7 +629,15 @@ impl RelayState {
     }
 
     pub(super) fn input_changed(&mut self) {
-        self.imported_processing = None;
+        let mut processing = self
+            .editor
+            .as_ref()
+            .map(EditorState::processing)
+            .or_else(|| self.imported_processing.take());
+        if let Some(options) = &mut processing {
+            options.nodes.clear();
+        }
+        self.imported_processing = self.workspace.selected.and(processing);
         self.editor = None;
         self.rename = false;
         self.sort = false;
@@ -636,6 +646,9 @@ impl RelayState {
     }
 
     pub(super) fn invalidate_result(&mut self) {
+        if self.workspace.selected.is_some() {
+            self.workspace.draft_dirty = true;
+        }
         self.schedule.stop();
         self.allow_resolution = false;
         self.preview_names.clear();
@@ -656,7 +669,10 @@ impl RelayState {
         self.cooldown_until = None;
     }
     pub(super) fn busy(&self) -> bool {
-        self.pending.is_some() || self.file_pending.is_some() || self.schedule.running()
+        self.pending.is_some()
+            || self.file_pending.is_some()
+            || self.schedule.running()
+            || self.workspace.busy()
     }
 
     pub(super) fn selecting_file(&self) -> bool {
@@ -766,7 +782,7 @@ impl RelayState {
         Ok(())
     }
 
-    fn private_config(&self, engine: &Path) -> PrivateConfig {
+    pub(super) fn private_config(&self, engine: &Path) -> PrivateConfig {
         PrivateConfig(RelayConfig {
             local_content: None,
             source: self.source.trim().to_owned(),
@@ -784,10 +800,10 @@ impl RelayState {
             sort: self.sort,
             test_nodes: self.test_nodes,
             allow_public_output: self.allow_public_output,
-            processing: self
-                .editor
-                .as_ref()
-                .map_or_else(Default::default, EditorState::processing),
+            processing: self.editor.as_ref().map_or_else(
+                || self.imported_processing.clone().unwrap_or_default(),
+                EditorState::processing,
+            ),
             expected_source: self.editor.as_ref().map(|editor| editor.source.clone()),
         })
     }
@@ -853,6 +869,7 @@ impl RelayState {
     }
 
     pub(super) fn request_cancel(&mut self) {
+        self.workspace.cancel.store(true, Ordering::Release);
         self.schedule.stop();
         if let Some(pending) = &self.pending {
             pending.cancel.store(true, Ordering::Release);
@@ -862,6 +879,12 @@ impl RelayState {
     }
 
     pub(super) fn tick(&mut self, ctx: &egui::Context) {
+        if let Some(action) = self.workspace.tick(ctx) {
+            self.execute_workspace(ctx, action);
+        }
+        if let Some(failure) = self.workspace.take_failure() {
+            self.record_workspace_failure(failure);
+        }
         if !ctx.input(|input| input.viewport().focused.unwrap_or(true)) {
             self.clear_editor_widgets(ctx);
             if let Some(editor) = &mut self.editor {
@@ -990,31 +1013,38 @@ impl RelayState {
                 }
             }
             (Ok(()), Ok(Err(error))) => {
-                if let RelayError::Model(crate::relay::model::ModelError::Resolution(
-                    crate::relay::model::pipeline::ResolveError::RateLimited {
-                        retry_after_seconds,
-                    },
-                )) = &error
-                {
-                    self.cooldown_until =
-                        Instant::now().checked_add(Duration::from_secs(*retry_after_seconds));
-                }
-                if let RelayError::Gist(crate::relay::gist::GistError::RateLimited {
-                    retry_after_seconds,
-                }) = &error
-                {
-                    self.cooldown_until = Instant::now()
-                        .checked_add(Duration::from_secs(retry_after_seconds.unwrap_or(60)));
-                }
-                if let RelayError::Gist(crate::relay::gist::GistError::CreatedUnverified(created)) =
-                    &error
-                {
-                    self.output = Zeroizing::new(created.id.clone());
-                }
-                self.error = Some(Failure::Operation(error));
+                self.record_workspace_failure(Failure::Operation(error));
             }
             _ => self.notice = Some(Text::RelayWorkerStopped),
         }
+    }
+
+    fn record_workspace_failure(&mut self, failure: Failure) {
+        if let Failure::Operation(error) = &failure {
+            let retry = match error {
+                RelayError::Model(crate::relay::model::ModelError::Resolution(
+                    crate::relay::model::pipeline::ResolveError::RateLimited {
+                        retry_after_seconds,
+                    },
+                )) => Some(*retry_after_seconds),
+                RelayError::Gist(crate::relay::gist::GistError::RateLimited {
+                    retry_after_seconds,
+                })
+                | RelayError::InputRateLimited {
+                    retry_after_seconds,
+                } => Some(retry_after_seconds.unwrap_or(60)),
+                _ => None,
+            };
+            if let Some(seconds) = retry {
+                self.cooldown_until = Instant::now().checked_add(Duration::from_secs(seconds));
+            }
+            if let RelayError::Gist(crate::relay::gist::GistError::CreatedUnverified(created)) =
+                error
+            {
+                self.output = Zeroizing::new(created.id.clone());
+            }
+        }
+        self.error = Some(failure);
     }
 
     pub(super) fn copy(&mut self, ctx: &egui::Context) {
@@ -1222,7 +1252,7 @@ impl RelayState {
                 self.encrypted_import = None;
                 self.archive_identity.zeroize();
                 self.migration_ack = false;
-                self.migration = Some(report);
+                self.migration = Some(Arc::new(report));
                 self.step = RelayStep::Source;
                 self.input_mode = InputMode::File;
             }
@@ -1233,7 +1263,8 @@ impl RelayState {
                 self.input_mode = InputMode::File;
             }
             (Ok(()), Ok(Ok(Some(FileCompleted::Imported(backup))))) => {
-                self.apply_backup(ctx, backup)
+                self.apply_backup(ctx, backup);
+                self.workspace.draft_dirty = self.workspace.selected.is_some();
             }
             (Ok(()), Ok(Ok(Some(FileCompleted::Engine(path))))) => {
                 self.selected_engine = Some(path);
@@ -1248,13 +1279,21 @@ impl RelayState {
         }
     }
 
-    fn apply_backup(
+    pub(super) fn apply_backup(
         &mut self,
         ctx: &egui::Context,
         mut backup: Box<crate::relay::backup::RelayBackup>,
     ) {
         let last_directory = self.last_directory.take();
+        let token = self
+            .workspace
+            .selected
+            .is_some()
+            .then(|| self.token.clone());
         self.clear(ctx);
+        if let Some(token) = token {
+            self.token = token;
+        }
         self.last_directory = last_directory;
         let config = &mut backup.config;
         self.source = Zeroizing::new(std::mem::take(&mut config.source));

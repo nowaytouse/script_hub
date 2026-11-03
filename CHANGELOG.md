@@ -2,6 +2,13 @@
 
 [English](CHANGELOG.md) · [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.14.0 · 2026-11-03
+
+- Replace the single-session wizard with a searchable subscription and collection workspace, adaptive list/detail navigation, and quick operation shortcuts.
+- Save the library locally with password encryption; guard unsaved edits, deletion, locking, and closing. Keep Gist tokens session-only.
+- Build ordered collections from cached nodes or refresh their remote members as one transaction. Protect node-index edits when input changes.
+- Migrate compatible Sub-Store subscriptions, node files, and complete collections in one pass without restoring settings, tokens, or legacy processors.
+
 ## 0.13.0 · 2026-11-03
 
 - Present subscriptions as an independent manager; no Surge module or local server is required.
