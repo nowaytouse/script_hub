@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::{BTreeSet, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
@@ -223,109 +223,90 @@ pub fn sync_ports(ports_source: &str, firewall_modules: &[&str], execute: bool, 
     }
 }
 
-const SYSTEM_DNS_HOSTS: &[&str] = &[
+// Only local namespaces and exact vendor-documented LAN management names.
+// Never derive system-DNS exceptions from public service routing lists.
+const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "localhost",
     "*.localhost",
+    "local",
     "*.local",
     "*.lan",
+    "home.arpa",
     "*.home.arpa",
     "*.localdomain",
     "router.asus.com",
+    "www.asusrouter.com",
+    "routerlogin.com",
     "routerlogin.net",
+    "www.routerlogin.com",
+    "www.routerlogin.net",
     "orbilogin.com",
+    "orbilogin.net",
+    "aplogin.com",
+    "aplogin.net",
     "miwifi.com",
     "www.miwifi.com",
     "tplogin.cn",
     "tplinklogin.net",
     "tplinkwifi.net",
+    "tplinkap.net",
+    "tplinkdeco.net",
+    "tplinkmifi.net",
+    "tplinkmodem.net",
+    "tplinkplc.net",
+    "tplinkrepeater.net",
+    "fritz.box",
     "melogin.cn",
     "falogin.cn",
     "tendawifi.com",
 ];
 
-fn covered_by_wildcard_parent(host: &str, hosts: &BTreeSet<String>) -> bool {
-    let mut candidate = host.strip_prefix("*.").unwrap_or(host);
-    while let Some((_, parent)) = candidate.split_once('.') {
-        if hosts.contains(&format!("*.{parent}")) {
-            return true;
-        }
-        candidate = parent;
-    }
-    false
-}
+const HELPER_DOH_HOST: &str = "dns.alidns.com";
+// Bootstrap addresses only, not additional DNS servers. https://alidns.com/
+const HELPER_DOH_BOOTSTRAP: &str = "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1";
+const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
+    HELPER_DOH_HOST,
+    "cloudflare-dns.com",
+    "dns.google",
+    "dns.quad9.net",
+];
 
-fn prune_redundant_system_hosts(hosts: &mut BTreeSet<String>) {
-    let redundant: Vec<String> = hosts
+fn helper_sections() -> (Vec<String>, Vec<String>) {
+    let mut hosts: Vec<String> = LOCAL_SYSTEM_DNS_HOSTS
         .iter()
-        .filter(|host| covered_by_wildcard_parent(host, hosts))
-        .cloned()
-        .collect();
-    for host in redundant {
-        hosts.remove(&host);
-    }
-}
-
-fn helper_sections(root: &Path) -> Result<(Vec<String>, Vec<String>), String> {
-    let apple_path = root.join("rulesets/RULE-SET/Apple.list");
-    let content = fs::read_to_string(&apple_path)
-        .map_err(|error| format!("failed to read {}: {error}", apple_path.display()))?;
-    let mut system_hosts = BTreeSet::new();
-    for line in content.lines().map(str::trim) {
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let rule = crate::promax::rule::SurgeRule::parse(line)
-            .map_err(|error| format!("invalid Apple rule {line:?}: {error}"))?;
-        match rule.kind {
-            crate::promax::rule::RuleKind::Domain => {
-                system_hosts.insert(rule.payload);
-            }
-            crate::promax::rule::RuleKind::DomainSuffix => {
-                system_hosts.insert(rule.payload.clone());
-                system_hosts.insert(format!("*.{}", rule.payload));
-            }
-            crate::promax::rule::RuleKind::DomainWildcard => {
-                system_hosts.insert(rule.payload);
-            }
-            _ => {}
-        }
-    }
-    system_hosts.extend(SYSTEM_DNS_HOSTS.iter().map(|host| (*host).to_string()));
-    prune_redundant_system_hosts(&mut system_hosts);
-    system_hosts.remove("dns.alidns.com");
-    let mut hosts: Vec<String> = system_hosts
-        .into_iter()
         .map(|host| format!("{host} = server:system"))
         .collect();
-    hosts.push("dns.alidns.com = 223.5.5.5, 223.6.6.6".to_string());
-    hosts.sort();
+    hosts.push(format!("{HELPER_DOH_HOST} = {HELPER_DOH_BOOTSTRAP}"));
+    hosts.sort_unstable();
 
-    let exclusions = crate::promax::safety::apple_mitm_exclusions();
-    Ok((hosts.into_iter().collect(), exclusions))
+    let mut exclusions = crate::promax::safety::apple_mitm_exclusions();
+    exclusions.extend(
+        ENCRYPTED_DNS_MITM_EXCLUSIONS
+            .iter()
+            .map(|host| format!("-{host}")),
+    );
+    exclusions.sort_unstable();
+    exclusions.dedup();
+    (hosts, exclusions)
 }
 
-fn render_helper(
-    root: &Path,
-    shadowrocket: bool,
-    with_firewall: bool,
-    version: &str,
-) -> Result<String, String> {
-    let (hosts, exclusions) = helper_sections(root)?;
+fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> String {
+    let (hosts, exclusions) = helper_sections();
     let name = if with_firewall {
         "🛡️ PROMAX AdBlock Helper (DNS & Firewall)"
     } else {
         "🌟 AdBlock Helper"
     };
     let prefix = if shadowrocket { "[🚀SR] " } else { "" };
-    let general = if shadowrocket {
-        "fallback-dns-server = %APPEND% 223.5.5.5, 119.29.29.29, https://dns.alidns.com/dns-query"
+    let dns_key = if shadowrocket {
+        "fallback-dns-server"
     } else {
-        "dns-server = %APPEND% 223.5.5.5, 119.29.29.29\nencrypted-dns-server = %APPEND% https://dns.alidns.com/dns-query"
+        "encrypted-dns-server"
     };
     let mut output = vec![
         format!("#!name={name}"),
         format!(
-            "#!desc={prefix}轻量 DNS 补充 + Apple/局域网系统解析、DoH 引导与关键服务 MITM 排除。模块不注入分流策略；Apple 分流由外部规则集和用户策略组决定。{}",
+            "#!desc={prefix}追加 AliDNS DoH 与双栈引导；系统解析仅用于局域网域名和设备入口。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。{}",
             if with_firewall {
                 "附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。"
             } else {
@@ -338,7 +319,7 @@ fn render_helper(
         format!("#!version={version}"),
         String::new(),
         "[General]".to_string(),
-        general.to_string(),
+        format!("{dns_key} = %APPEND% https://{HELPER_DOH_HOST}/dns-query"),
     ];
     if with_firewall {
         output.extend([
@@ -357,7 +338,7 @@ fn render_helper(
         format!("hostname = %INSERT% {}", exclusions.join(", ")),
         String::new(),
     ]);
-    Ok(output.join("\n"))
+    output.join("\n")
 }
 
 fn render_firewall(shadowrocket: bool, version: &str) -> String {
@@ -372,16 +353,16 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
     let outputs = [
         (
             modules.join("surge/head_expanse/🌟 AdBlock Helper .sgmodule"),
-            render_helper(root, false, false, version)?,
+            render_helper(false, false, version),
         ),
         (
             modules.join("shadowrocket/head_expanse/🌟 AdBlock Helper .module"),
-            render_helper(root, true, false, version)?,
+            render_helper(true, false, version),
         ),
         (
             modules
                 .join("shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
-            render_helper(root, true, true, version)?,
+            render_helper(true, true, version),
         ),
         (
             modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
@@ -407,8 +388,10 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
 
 #[cfg(test)]
 mod tests {
-    use super::{render_helper, sync_ports};
+    use super::{HELPER_DOH_HOST, render_helper, sync_ports};
+    use std::collections::HashSet;
     use std::fs;
+    use std::net::IpAddr;
 
     #[test]
     fn sync_inserts_markers_and_never_blocks_apple_service_ports() {
@@ -447,34 +430,80 @@ mod tests {
     }
 
     #[test]
-    fn helper_keeps_dns_hosts_and_mitm_without_forcing_apple_policy() {
-        let root =
-            std::env::temp_dir().join(format!("script-hub-helper-render-{}", std::process::id()));
-        let rulesets = root.join("rulesets/RULE-SET");
-        let _ = fs::remove_dir_all(&root);
-        fs::create_dir_all(&rulesets).unwrap();
-        fs::write(
-            rulesets.join("Apple.list"),
-            "DOMAIN,account.apple.com\nDOMAIN-SUFFIX,icloud.com\nDOMAIN,a1.media.apple.test\nDOMAIN-SUFFIX,media.apple.test\n",
-        )
-        .unwrap();
-
-        let helper = render_helper(&root, false, false, "test").unwrap();
-        assert!(helper.contains("[Host]"));
-        assert!(helper.contains("account.apple.com = server:system"));
-        assert!(helper.contains("*.icloud.com = server:system"));
-        assert!(helper.contains("media.apple.test = server:system"));
-        assert!(helper.contains("*.media.apple.test = server:system"));
-        assert!(!helper.contains("a1.media.apple.test = server:system"));
-        assert!(helper.contains("dns.alidns.com = 223.5.5.5, 223.6.6.6"));
-        assert!(helper.contains("-account.apple.com"));
-        assert!(!helper.contains("[Rule]"));
-        assert!(!helper.contains(",DIRECT"));
-
-        let firewall_helper = render_helper(&root, true, true, "test").unwrap();
-        assert!(firewall_helper.contains("[Rule]"));
-        assert!(firewall_helper.contains("SYNCED PORT RULES START"));
-        assert!(!firewall_helper.contains(",DIRECT"));
-        fs::remove_dir_all(root).unwrap();
+    fn helper_only_adds_encrypted_dns_and_local_host_overrides() {
+        for (shadowrocket, firewall, dns_key) in [
+            (false, false, "encrypted-dns-server"),
+            (true, false, "fallback-dns-server"),
+            (true, true, "fallback-dns-server"),
+        ] {
+            let module = render_helper(shadowrocket, firewall, "test");
+            let (_, body) = module.split_once("[General]\n").unwrap();
+            assert_eq!(
+                body.split_once("\n\n").unwrap().0,
+                format!("{dns_key} = %APPEND% https://{HELPER_DOH_HOST}/dns-query")
+            );
+            let (_, host_section) = body.split_once("[Host]\n").unwrap();
+            let (hosts, mitm) = host_section.split_once("\n\n[MITM]\n").unwrap();
+            let mut names = HashSet::new();
+            for (host, mapping) in hosts.lines().map(|line| line.split_once(" = ").unwrap()) {
+                assert!(names.insert(host), "duplicate Host mapping: {host}");
+                if host == HELPER_DOH_HOST {
+                    let addresses: Vec<IpAddr> = mapping
+                        .split(',')
+                        .map(|ip| ip.trim().parse().unwrap())
+                        .collect();
+                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv4()).count(), 2);
+                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv6()).count(), 2);
+                } else {
+                    assert_eq!(mapping, "server:system");
+                    assert!(
+                        !host.contains(['*', '?'])
+                            || matches!(
+                                host,
+                                "*.localhost"
+                                    | "*.local"
+                                    | "*.lan"
+                                    | "*.home.arpa"
+                                    | "*.localdomain"
+                            )
+                    );
+                }
+            }
+            for required in [
+                HELPER_DOH_HOST,
+                "localhost",
+                "home.arpa",
+                "*.home.arpa",
+                "www.asusrouter.com",
+                "www.routerlogin.com",
+                "tplinkrepeater.net",
+                "fritz.box",
+            ] {
+                assert!(names.contains(required), "missing Host mapping: {required}");
+            }
+            for public_host in [
+                "account.apple.com",
+                "*.apple.com",
+                "*.icloud.com",
+                "a1.mzstatic.com",
+                "*.akamaized.net",
+                "cloudflare-dns.com",
+                "*.tplinkwifi.net",
+            ] {
+                assert!(!names.contains(public_host));
+            }
+            let excluded: HashSet<_> = mitm
+                .trim_end()
+                .strip_prefix("hostname = %INSERT% ")
+                .unwrap()
+                .split(", ")
+                .collect();
+            assert!(excluded.contains("-account.apple.com"));
+            assert!(excluded.contains("-dns.alidns.com"));
+            assert!(excluded.contains("-cloudflare-dns.com"));
+            assert_eq!(module.contains("[Rule]"), firewall);
+            assert_eq!(module.contains("SYNCED PORT RULES START"), firewall);
+            assert!(!module.contains(",DIRECT"));
+        }
     }
 }

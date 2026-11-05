@@ -175,6 +175,16 @@ fn combine_metadata(parts: &[(String, HashMap<String, String>)]) -> (String, Str
     )
 }
 
+const VIDEO_DEFAULTS: &[(&str, &str)] = &[
+    ("屏蔽Shorts按钮", "false"),
+    ("屏蔽上传按钮", "false"),
+    ("屏蔽选段按钮", "false"),
+];
+const TOOL_DEFAULTS: &[(&str, &str)] = &[
+    ("sync", "\"# Sub-Store Sync\""),
+    ("EVENT_SCRIPT_NAME", "\"# 网络信息变化\""),
+];
+
 fn set_argument_defaults(args: &str, defaults: &[(&str, &str)]) -> String {
     crate::smart_cleanup::split_script_parameters(args)
         .into_iter()
@@ -188,6 +198,81 @@ fn set_argument_defaults(args: &str, defaults: &[(&str, &str)]) -> String {
         })
         .collect::<Vec<_>>()
         .join(",")
+}
+
+fn verify_argument_defaults(
+    meta: &HashMap<String, String>,
+    defaults: &[(&str, &str)],
+) -> Result<(), String> {
+    let args = meta
+        .get("arguments")
+        .ok_or_else(|| "upstream no longer declares module arguments".to_string())?;
+    let args = crate::smart_cleanup::split_script_parameters(args);
+    for &(name, expected) in defaults {
+        let mut values = args.iter().filter_map(|arg| {
+            let arg = arg.trim();
+            let (key, value) = arg.split_once(':').unwrap_or((arg, ""));
+            (key.trim() == name).then(|| value.trim())
+        });
+        if values.next() != Some(expected) || values.next().is_some() {
+            return Err(format!(
+                "module argument {name} is missing, duplicated or has an unexpected default"
+            ));
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn verify_video_defaults(content: &str) -> Result<(), String> {
+    let (meta, sections) = parse_module(content);
+    verify_argument_defaults(&meta, VIDEO_DEFAULTS)?;
+    for &(name, _) in VIDEO_DEFAULTS {
+        let placeholder = format!("{{{{{{{name}}}}}}}");
+        if !sections
+            .iter()
+            .filter(|section| section.name == "Script")
+            .any(|section| {
+                section
+                    .lines
+                    .iter()
+                    .any(|line| !line.trim_start().starts_with('#') && line.contains(&placeholder))
+            })
+        {
+            return Err(format!(
+                "upstream no longer uses video argument {name} in a script"
+            ));
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn verify_tool_defaults(content: &str) -> Result<(), String> {
+    let (meta, sections) = parse_module(content);
+    verify_argument_defaults(&meta, TOOL_DEFAULTS)?;
+    for (name, script_type) in [("sync", "cron"), ("EVENT_SCRIPT_NAME", "event")] {
+        let placeholder = format!("{{{{{{{name}}}}}}}");
+        let mut matches = sections
+            .iter()
+            .filter(|section| section.name == "Script")
+            .flat_map(|section| &section.lines)
+            .filter_map(|line| line.split_once('='))
+            .filter(|(label, _)| label.trim() == placeholder);
+        let correct_type = matches.next().is_some_and(|(_, params)| {
+            crate::smart_cleanup::split_script_parameters(params)
+                .iter()
+                .any(|param| {
+                    param.split_once('=').is_some_and(|(key, value)| {
+                        key.trim() == "type" && value.trim() == script_type
+                    })
+                })
+        });
+        if !correct_type || matches.next().is_some() {
+            return Err(format!(
+                "upstream no longer uses {name} as a unique {script_type} script label"
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn order_sections(merged: &HashMap<String, Vec<String>>, order: &[&str]) -> Vec<ModuleSectionPub> {
@@ -517,14 +602,7 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
         a = a.replace("增加画中画:false", "增加画中画:true");
         header.insert(
             "arguments".to_string(),
-            set_argument_defaults(
-                &a,
-                &[
-                    ("屏蔽Shorts按钮", "false"),
-                    ("屏蔽上传按钮", "false"),
-                    ("屏蔽选段按钮", "false"),
-                ],
-            ),
+            set_argument_defaults(&a, VIDEO_DEFAULTS),
         );
     }
     if let Some(v) = meta.get("arguments-desc") {
@@ -624,13 +702,7 @@ fn finalize_devtools(path: &Path) -> bool {
     let text = std::fs::read_to_string(path).unwrap_or_default();
     let (mut meta, sections) = parse_module(&text);
     if let Some(args) = meta.get_mut("arguments") {
-        *args = set_argument_defaults(
-            args,
-            &[
-                ("sync", "\"# Sub-Store Sync\""),
-                ("EVENT_SCRIPT_NAME", "\"# 网络信息变化\""),
-            ],
-        );
+        *args = set_argument_defaults(args, TOOL_DEFAULTS);
         let description = meta.entry("arguments-desc".to_string()).or_default();
         description.insert_str(
             0,

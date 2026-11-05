@@ -20,7 +20,7 @@ Collections combine members in selection order as sing-box node JSON. **Refresh 
 
 Import a Sub-Store JSON/Base64 backup and choose **Add available items to library**. Existing entries are not overwritten; collections with incomplete references are skipped and counted. Tag-selected members are added after explicit members in backup order, then saved as a fixed list. Compatible type filters and simple name filters become native operations. Imported collection name filters match names after each member's own operations, before the collection prefix and collection-level renames. An unsupported active step also stops migration of later steps, whose input may depend on it. Scripts, settings and tokens are not restored; adding items does not download remote links.
 
-Subscription-level **Regex Rename** and **Regex Delete** migrate to editable batch renames when they use simple literal alternatives (with optional anchors and ASCII case folding) and literal replacement text without `$`. Rules replace all matches and trim the name after each rule. Collection-level renames and other JavaScript-specific regex syntax remain unsupported.
+Subscription-level **Regex Rename** and **Regex Delete** migrate to editable batch renames when they use simple literal alternatives (with optional anchors and ASCII case folding). Replacements support literal text, `$$` for a dollar sign, and `$&` for the whole match. Rules replace all matches and trim the name after each rule. Collection-level renames and other JavaScript-specific regex or replacement syntax remain unsupported.
 
 Subscription-level **Remove Flags** also migrates: it removes country, pirate, and rainbow flags anywhere in a name, then trims it. Adding flags is not migrated.
 

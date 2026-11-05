@@ -767,12 +767,14 @@ fn publish_video_sources(
                 crate::mitm_manager::cleaned_mitm_content(&content).unwrap_or(content)
             })
         };
+        let combined = functional(&combined_path)?;
+        crate::merge_bundles::verify_video_defaults(&combined)?;
         publish_generated_artifacts(
             root,
             &[
                 GeneratedArtifact {
                     target: root.join(VIDEO_OUTPUT),
-                    content: functional(&combined_path)?,
+                    content: combined,
                     kind: ArtifactKind::Surge,
                 },
                 GeneratedArtifact {
@@ -853,6 +855,7 @@ fn publish_devtools_sources(
         root,
         request,
         Some(|content| {
+            crate::merge_bundles::verify_tool_defaults(content)?;
             Ok(crate::url_rewriter::normalize_cdn_urls(strip_rule_section(
                 content,
             )))
@@ -1086,6 +1089,22 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 #[cfg(test)]
 mod tests {
     #[test]
+    fn published_video_and_tools_still_use_the_configured_defaults() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let video = std::fs::read_to_string(root.join(super::VIDEO_OUTPUT)).unwrap();
+        let tools = std::fs::read_to_string(root.join(super::DEVTOOLS_OUTPUT)).unwrap();
+        crate::merge_bundles::verify_video_defaults(&video).unwrap();
+        crate::merge_bundles::verify_tool_defaults(&tools).unwrap();
+        let duplicated = tools.replace(
+            "sync:\"# Sub-Store Sync\"",
+            "sync:\"# Sub-Store Sync\",sync:\"# Sub-Store Sync\"",
+        );
+        assert!(crate::merge_bundles::verify_tool_defaults(&duplicated).is_err());
+        let renamed = video.replace("屏蔽Shorts按钮", "上游改名");
+        assert!(crate::merge_bundles::verify_video_defaults(&renamed).is_err());
+    }
+
+    #[test]
     fn video_bundle_keeps_media_features_separate_from_adblock_inputs() {
         let root = temporary_root("video-bundle");
         let source = |label: &str, content: &str| SourceInput {
@@ -1108,7 +1127,7 @@ mod tests {
             source("YouTube", concat!(
                 "#!name=YouTube\n#!arguments=Language:off,屏蔽上传按钮:true,屏蔽选段按钮:true,屏蔽Shorts按钮:true,字幕翻译语言:off\n",
                 "[Rule]\nDOMAIN,yt-ads.example.test,REJECT\n",
-                "[Script]\nYT = type=http-request,pattern=^https://youtubei.googleapis.com/,script-path=https://example.test/yt.js\n",
+                "[Script]\nYT = type=http-request,pattern=^https://youtubei.googleapis.com/,script-path=https://example.test/yt.js,argument=\"{{{屏蔽上传按钮}}},{{{屏蔽选段按钮}}},{{{屏蔽Shorts按钮}}}\"\n",
                 "YT Video = type=http-request,pattern=^https://.+\\.googlevideo\\.com/,script-path=https://example.test/video.js\n",
                 "[MITM]\nhostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com\n",
             )),
@@ -1515,9 +1534,10 @@ mod tests {
             label: "Fixture panel".to_string(),
             url: "https://example.test/panel.sgmodule".to_string(),
             content: concat!(
-                "#!name=Fixture panel\n#!arguments=REFRESH:60,TITLE:\"One, two\"\n",
+                 "#!name=Fixture panel\n#!arguments=REFRESH:60,TITLE:\"One, two\",EVENT_SCRIPT_NAME:\"Active upstream event\"\n",
                 "[Panel]\nFixture = script-name=Fixture Panel,update-interval={{{REFRESH}}}\n",
-                    "[Script]\nFixture Panel = type=generic,script-path=https://raw.githubusercontent.com/example/repo/main/panel.js\n",
+                     "[Script]\nFixture Panel = type=generic,script-path=https://raw.githubusercontent.com/example/repo/main/panel.js\n",
+                     "{{{EVENT_SCRIPT_NAME}}} = type=event,event-name=network-changed,script-path=https://example.test/panel.js\n",
             )
             .to_string(),
         }]
@@ -1555,6 +1575,7 @@ mod tests {
         let metadata = crate::merge_bundles::module_metadata_pub(&restored);
         assert!(metadata["arguments"].contains("ability:http-client-policy"));
         assert!(metadata["arguments"].contains("sync:\"# Sub-Store Sync\""));
+        assert!(metadata["arguments"].contains("EVENT_SCRIPT_NAME:\"# 网络信息变化\""));
         assert!(metadata["arguments"].contains("REFRESH:60"));
         assert!(metadata["arguments"].contains("TITLE:\"One, two\""));
         assert!(restored.contains("[Panel]\nFixture = script-name=Fixture Panel"));
@@ -1580,6 +1601,13 @@ mod tests {
         let output = root.join(super::DEVTOOLS_OUTPUT);
         std::fs::write(&output, &dated).unwrap();
         publish_devtools_sources(&root, panels(), Vec::new()).unwrap();
+        assert_eq!(std::fs::read_to_string(&output).unwrap(), dated);
+        let mut changed_upstream = panels();
+        changed_upstream[0].content = changed_upstream[0]
+            .content
+            .replace("{{{EVENT_SCRIPT_NAME}}} =", "Always-on event =");
+        let error = publish_devtools_sources(&root, changed_upstream, Vec::new()).unwrap_err();
+        assert!(error.contains("EVENT_SCRIPT_NAME"));
         assert_eq!(std::fs::read_to_string(output).unwrap(), dated);
         let _ = std::fs::remove_dir_all(root);
     }

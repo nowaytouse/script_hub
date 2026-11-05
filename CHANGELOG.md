@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Keep the quieter utility and visible YouTube defaults across upstream refreshes; retain the last valid module when the relevant arguments or hooks change.
+- Limit the helper's system DNS mappings to local devices and bootstrap its HTTPS resolver over IPv4 and IPv6.
+- Translate Sub-Store's whole-match and literal-dollar replacements in native subscription renames.
+
 - Update encrypted sample module links and make scheduled utilities opt-in while keeping YouTube controls visible.
 - Migrate subscription-level Sub-Store flag removal as a native rename operation.
 

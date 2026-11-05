@@ -178,13 +178,9 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
                     } else {
                         (arg.get("expr")?, arg.get("now")?.as_str()?)
                     };
-                    // JavaScript replacement templates are not Rust regex templates.
-                    if replacement.contains('$') {
-                        return None;
-                    }
                     Some(pipeline::RenameRule {
                         pattern: portable_regex(std::slice::from_ref(expr))?,
-                        replacement: replacement.to_owned(),
+                        replacement: portable_replacement(replacement)?,
                         regex: true,
                     })
                 })
@@ -196,6 +192,25 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
         }
         _ => None,
     }
+}
+
+fn portable_replacement(value: &str) -> Option<String> {
+    if value.len() > 512 {
+        return None;
+    }
+    let mut remaining = value;
+    let mut replacement = Zeroizing::new(String::with_capacity(value.len()));
+    while let Some((literal, suffix)) = remaining.split_once('$') {
+        replacement.push_str(literal);
+        replacement.push_str(match suffix.as_bytes().first()? {
+            b'$' => "$$",
+            b'&' => "${0}",
+            _ => return None,
+        });
+        remaining = &suffix[1..];
+    }
+    replacement.push_str(remaining);
+    (replacement.len() <= 512).then(|| std::mem::take(&mut *replacement))
 }
 
 fn portable_regex(patterns: &[Value]) -> Option<String> {
@@ -600,6 +615,29 @@ mod tests {
     }
 
     #[test]
+    fn imports_whole_match_and_literal_dollar_replacements() {
+        let backup = br#"{"subs":[{"name":"Local","source":"local",
+            "content":"[Proxy]\nHK HK = socks5, node.example.invalid, 1080\n",
+            "process":[{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$$$&Z"}]}]}]}"#;
+        let report = import(backup).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let config = report.select_item(0, true).unwrap();
+        let source = model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+        let result = source
+            .render_processed(
+                &[model::Health::Unknown],
+                &model::EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &config.processing,
+            )
+            .unwrap();
+        let rendered = model::Subscription::parse(&result.content).unwrap();
+        assert_eq!(rendered.nodes()[0].name(), "$HKZ $HKZ");
+    }
+
+    #[test]
     fn imports_flag_removal_with_global_matching_and_trim() {
         let backup = r#"{"subs":[{"name":"Local","source":"local",
             "content":"[Proxy]\n🇭🇰 Alpha🏴‍☠️ 🏳️‍🌈🇯🇵 = socks5, node.example.invalid, 1080\nA🇺🇸B🇦 = socks5, other.example.invalid, 1080\n",
@@ -629,7 +667,8 @@ mod tests {
             r#"{"type":"Script Operator","args":{"content":"unknown"}}"#,
             r#"{"type":"Regex Filter","args":{"regex":["(?=HK)"]}}"#,
             r#"{"type":"Regex Delete Operator","args":["[HK]"]}"#,
-            r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$&-new"}]}"#,
+            r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$1-new"}]}"#,
+            r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$'-new"}]}"#,
             r#"{"type":"Flag Operator","args":{"mode":"add","tw":"ws"}}"#,
         ] {
             let backup = format!(
