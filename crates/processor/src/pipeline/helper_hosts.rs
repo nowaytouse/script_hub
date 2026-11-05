@@ -1,0 +1,211 @@
+use std::collections::BTreeSet;
+use std::fs;
+use std::io::ErrorKind;
+use std::path::Path;
+use std::time::Duration;
+
+use crate::promax::source::{DownloadConfig, Downloader};
+
+pub(super) const SOURCE: &str =
+    "https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/lan_without_real_ip.conf";
+const SNAPSHOT: &str = "modules/source/local/sukka-lan-hosts.txt";
+
+// Public-looking device aliases may be admitted only as exact names.
+const DEVICE_NAMES: &[&str] = &[
+    "asusrouter.com",
+    "aterm.me",
+    "console.gl-inet.com",
+    "homerouter.cpe",
+    "huaweimobilewifi.com",
+    "instant.arubanetworks.com",
+    "mobile.hotspot",
+    "ntt.setup",
+    "pi.hole",
+    "repeater.asus.com",
+    "router.asus.com",
+    "routerlogin.com",
+    "routerlogin.net",
+    "setmeup.arubanetworks.com",
+    "tplinkap.net",
+    "tplinkmodem.net",
+    "tplinkplclogin.net",
+    "tplinkrepeater.net",
+    "tplinkwifi.net",
+    "tplogin.cn",
+    "unifi",
+];
+
+pub(super) fn local_zone(name: &str) -> bool {
+    matches!(
+        name,
+        "home"
+            | "home.arpa"
+            | "internal"
+            | "lan"
+            | "local"
+            | "localdomain"
+            | "localhost"
+            | "10.in-addr.arpa"
+            | "127.in-addr.arpa"
+            | "168.192.in-addr.arpa"
+            | "254.169.in-addr.arpa"
+            | "c.f.ip6.arpa"
+            | "d.f.ip6.arpa"
+            | "8.e.f.ip6.arpa"
+            | "9.e.f.ip6.arpa"
+            | "a.e.f.ip6.arpa"
+            | "b.e.f.ip6.arpa"
+    ) || name
+        .strip_suffix(".172.in-addr.arpa")
+        .and_then(|n| {
+            n.parse::<u8>()
+                .ok()
+                .filter(|number| n == number.to_string())
+        })
+        .is_some_and(|n| (16..=31).contains(&n))
+}
+
+fn supported(name: &str) -> bool {
+    if let Some(zone) = name.strip_prefix("*.") {
+        local_zone(zone)
+    } else {
+        local_zone(name) || DEVICE_NAMES.contains(&name)
+    }
+}
+
+fn filtered(source: &str) -> Result<BTreeSet<String>, String> {
+    if !source
+        .lines()
+        .rev()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .is_some_and(|line| line.starts_with('#') && line.contains(" EOF "))
+    {
+        return Err("Sukka LAN source is incomplete".into());
+    }
+    let mut hosts = BTreeSet::new();
+    for (kind, name) in source
+        .lines()
+        .filter_map(|line| line.trim().split_once(','))
+    {
+        let name = name.trim().to_ascii_lowercase();
+        if !matches!(kind, "DOMAIN" | "DOMAIN-SUFFIX") || name.starts_with('*') || !supported(&name)
+        {
+            continue;
+        }
+        if kind == "DOMAIN-SUFFIX" && local_zone(&name) {
+            hosts.insert(format!("*.{name}"));
+        }
+        hosts.insert(name);
+    }
+    if hosts.is_empty() {
+        return Err("Sukka LAN source contains no supported hosts".into());
+    }
+    Ok(hosts)
+}
+
+pub(super) fn publish(root: &Path, source: &str) -> Result<(), String> {
+    let hosts = filtered(source)?;
+    let snapshot = root.join(SNAPSHOT);
+    let text = format!(
+        "# Filtered local Host names from SukkaW/Surge (source data: AGPL-3.0)\n# {SOURCE}\n{}\n",
+        hosts.into_iter().collect::<Vec<_>>().join("\n")
+    );
+    if !crate::safe_write_file_internal(&snapshot, &text, true) {
+        return Err("could not publish filtered Sukka LAN hosts".into());
+    }
+    Ok(())
+}
+
+pub(super) fn refresh(root: &Path) -> Result<(), String> {
+    let downloader = Downloader::new(DownloadConfig {
+        attempts: 2,
+        timeout: Duration::from_secs(12),
+        batch_timeout: Duration::from_secs(30),
+        concurrency: 1,
+        max_bytes: 64 * 1024,
+        max_total_bytes: 64 * 1024,
+        ..DownloadConfig::default()
+    });
+    let source = downloader.get(SOURCE).map_err(|error| error.to_string())?;
+    publish(root, &source)
+}
+
+pub(super) fn load(root: &Path) -> Result<Vec<String>, String> {
+    let text = match fs::read_to_string(root.join(SNAPSHOT)) {
+        Ok(text) => text,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(format!("cannot read filtered Sukka LAN hosts: {error}")),
+    };
+    let hosts = text
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'));
+    let hosts: Vec<_> = hosts
+        .map(|name| {
+            supported(name)
+                .then(|| name.to_string())
+                .ok_or("unsafe Host in filtered Sukka snapshot")
+        })
+        .collect::<Result<_, _>>()?;
+    if hosts.is_empty() {
+        return Err("filtered Sukka LAN hosts are empty".into());
+    }
+    Ok(hosts)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn upstream_cannot_insert_public_dns_or_broaden_device_aliases() {
+        let source = "\
+DOMAIN-SUFFIX,ROUTERLOGIN.NET
+DOMAIN-SUFFIX,168.192.in-addr.arpa
+DOMAIN-SUFFIX,31.172.in-addr.arpa
+DOMAIN-SUFFIX,home
+DOMAIN,unifi
+DOMAIN-SUFFIX,32.172.in-addr.arpa
+DOMAIN-SUFFIX,8.8.8.in-addr.arpa
+DOMAIN-SUFFIX,plex.direct
+DOMAIN-SUFFIX,apple.com
+DOMAIN,cdn.jsdelivr.net
+DOMAIN,localhost,REJECT
+DOMAIN,*.lan
+DOMAIN,routerlogin.net.example.org
+IP-CIDR,192.168.0.0/16
+### EOF ###";
+        let result = filtered(source).unwrap();
+        assert_eq!(
+            result.into_iter().collect::<Vec<_>>(),
+            [
+                "*.168.192.in-addr.arpa",
+                "*.31.172.in-addr.arpa",
+                "*.home",
+                "168.192.in-addr.arpa",
+                "31.172.in-addr.arpa",
+                "home",
+                "routerlogin.net",
+                "unifi"
+            ]
+        );
+    }
+
+    #[test]
+    fn incomplete_or_unsafe_only_refresh_does_not_replace_a_good_snapshot() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-local-hosts-{}", std::process::id()));
+        fs::create_dir_all(root.join("modules/source/local")).unwrap();
+        publish(&root, "DOMAIN,unifi\n### EOF ###").unwrap();
+        let path = root.join(SNAPSHOT);
+        let original = fs::read(&path).unwrap();
+        for invalid in ["DOMAIN,pi.hole", "DOMAIN,apple.com\n### EOF ###"] {
+            assert!(publish(&root, invalid).is_err());
+            assert_eq!(fs::read(&path).unwrap(), original);
+        }
+        fs::write(path, "*.apple.com\n").unwrap();
+        assert!(load(&root).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
+}

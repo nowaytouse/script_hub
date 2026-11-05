@@ -9,6 +9,7 @@ use zeroize::{Zeroize, Zeroizing};
 
 use super::{RelayConfig, input, model};
 use model::pipeline::{self, Operation, Step};
+use model::properties::Setting;
 
 const MAX_ENCODED: usize = 8 * 1024 * 1024;
 const MAX_JSON: usize = 4 * 1024 * 1024;
@@ -110,13 +111,17 @@ fn keep(args: &Value) -> Option<bool> {
     }
 }
 
-fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
+fn processor_args(item: &Value) -> Option<&Value> {
     if item.as_object()?.keys().any(|key| {
         !["type", "args", "disabled", "customName", "id", "preview"].contains(&key.as_str())
     }) {
         return None;
     }
-    let args = item.get("args")?;
+    item.get("args")
+}
+
+fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
+    let args = processor_args(item)?;
     match item.get("type")?.as_str()? {
         "Type Filter" => {
             let types = args
@@ -154,6 +159,39 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
                 Operation::MemberNameFilter { pattern, keep }
             } else {
                 Operation::NameFilter { pattern, keep }
+            })
+        }
+        "Regex Sort Operator" if !collection => {
+            let expressions = args
+                .as_array()
+                .or_else(|| args.get("expressions").and_then(Value::as_array))?;
+            if expressions.is_empty()
+                || expressions.len() > 64
+                || args.as_object().is_some_and(|object| {
+                    object
+                        .keys()
+                        .any(|key| !matches!(key.as_str(), "expressions" | "order"))
+                })
+            {
+                return None;
+            }
+            use pipeline::RegexSortUnmatched::{Ascending, Descending, Original};
+            let unmatched = match args.get("order").filter(|value| !value.is_null()) {
+                None => Ascending,
+                Some(value) => match value.as_str()? {
+                    "" | "asc" => Ascending,
+                    "desc" => Descending,
+                    "original" => Original,
+                    _ => return None,
+                },
+            };
+            let patterns = expressions
+                .iter()
+                .map(|expr| portable_regex(std::slice::from_ref(expr)).map(|(pattern, _)| pattern))
+                .collect::<Option<Vec<_>>>()?;
+            Some(Operation::RegexSort {
+                patterns,
+                unmatched,
             })
         }
         "Flag Operator" if !collection && args.get("mode")?.as_str()? == "remove" => {
@@ -195,6 +233,46 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
         }
         _ => None,
     }
+}
+
+fn quick_settings(item: &Value) -> Option<Vec<Operation>> {
+    let args = processor_args(item)?.as_object()?;
+    let mut operations = Vec::new();
+    for (key, value) in args {
+        let key = key.as_str();
+        if !matches!(
+            key,
+            "udp"
+                | "tfo"
+                | "scert"
+                | "useless"
+                | "vmess aead"
+                | "reuse"
+                | "ecn"
+                | "block-quic"
+                | "ip-version"
+        ) {
+            return None;
+        }
+        if value.is_null() {
+            continue;
+        }
+        let mode = value.as_str()?;
+        let setting = match (key, mode) {
+            (_, "DEFAULT") | ("useless", "DISABLED") | ("ip-version", "") => continue,
+            ("udp", "ENABLED" | "DISABLED") => Setting::Udp {
+                enabled: mode == "ENABLED",
+            },
+            ("tfo", "ENABLED" | "DISABLED") => Setting::TcpFastOpen {
+                enabled: mode == "ENABLED",
+            },
+            ("scert", "DISABLED") => Setting::VerifyTls,
+            // A partially migrated operator could bypass a filter or weaken TLS.
+            _ => return None,
+        };
+        operations.push(Operation::SetProperty { setting });
+    }
+    Some(operations)
 }
 
 fn portable_replacement(value: &str, captures: usize) -> Option<String> {
@@ -299,23 +377,38 @@ fn migrate_process(value: &Value, collection: bool) -> (Vec<Step>, usize) {
     let mut steps = Vec::new();
     let mut unsupported = 0;
     let mut incomplete = false;
+    let mut next_extra_id = process.len() as u64 + 1;
     for (index, item) in process.iter().enumerate() {
         let disabled = item.get("disabled").and_then(Value::as_bool) == Some(true);
         let valid_disabled = item.get("disabled").is_none_or(Value::is_boolean);
-        if !incomplete
-            && valid_disabled
-            && steps.len() < 64
-            && let Some(operation) = convert_processor(item, collection)
-        {
-            let mut step = Step {
-                id: index as u64 + 1,
-                enabled: true,
-                operation,
-            };
-            if pipeline::validate(std::slice::from_ref(&step)).is_ok() {
-                step.enabled = !disabled;
-                steps.push(step);
-                continue;
+        if !incomplete && valid_disabled && steps.len() < 64 {
+            let operations =
+                if item.get("type").and_then(Value::as_str) == Some("Quick Setting Operator") {
+                    quick_settings(item)
+                } else {
+                    convert_processor(item, collection).map(|operation| vec![operation])
+                };
+            if let Some(operations) = operations.filter(|ops| steps.len() + ops.len() <= 64) {
+                let mut migrated = Vec::with_capacity(operations.len());
+                for (offset, operation) in operations.into_iter().enumerate() {
+                    migrated.push(Step {
+                        id: if offset == 0 {
+                            index as u64 + 1
+                        } else {
+                            next_extra_id + offset as u64 - 1
+                        },
+                        enabled: true,
+                        operation,
+                    });
+                }
+                if pipeline::validate(&migrated).is_ok() {
+                    next_extra_id += migrated.len().saturating_sub(1) as u64;
+                    for step in &mut migrated {
+                        step.enabled = !disabled;
+                    }
+                    steps.extend(migrated);
+                    continue;
+                }
             }
         }
         // A missing active step can change the data or suppress downstream processors.
@@ -614,6 +707,69 @@ mod tests {
     }
 
     #[test]
+    fn imports_regex_sort_priorities_and_unmatched_order() {
+        for (args, expected) in [
+            (r#"["^JP","US"]"#, [2, 3, 0, 4, 5, 1]),
+            (
+                r#"{"expressions":["^JP","US"],"order":"desc"}"#,
+                [2, 3, 0, 1, 5, 4],
+            ),
+            (
+                r#"{"expressions":["^JP","US"],"order":"original"}"#,
+                [2, 3, 0, 1, 4, 5],
+            ),
+        ] {
+            let backup = format!(
+                r#"{{"subs":[{{"name":"Local","source":"local",
+                "content":"[Proxy]\nUS = socks5, us.example.invalid, 1080\nZ = socks5, z.example.invalid, 1080\nJP Z US = socks5, jpz.example.invalid, 1080\nJP A = socks5, jpa.example.invalid, 1080\nA = socks5, a.example.invalid, 1080\nM = socks5, m.example.invalid, 1080\n",
+                "process":[{{"type":"Regex Sort Operator","args":{args}}}]}}]}}"#
+            );
+            let report = import(backup.as_bytes()).unwrap();
+            let config = report.select_item(0, false).unwrap();
+            let source =
+                model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+            let result = source
+                .render_processed(
+                    &[model::Health::Unknown; 6],
+                    &model::EnhanceOptions {
+                        rename: false,
+                        sort: false,
+                    },
+                    &config.processing,
+                )
+                .unwrap();
+            assert_eq!(result.retained, expected, "{args}");
+        }
+    }
+
+    #[test]
+    fn imports_safe_quick_settings_before_following_filters_without_colliding_ids() {
+        let backup = br#"{"subs":[{"name":"Local","source":"local",
+            "content":"[Proxy]\nKeep = socks5, udp.example.invalid, 1080, tfo=true, udp-relay=false\nKeep TLS = trojan, secure.example.invalid, 443, password=fixture\nDrop = socks5, other.example.invalid, 1080",
+            "process":[
+              {"type":"Quick Setting Operator","args":{"udp":"ENABLED","tfo":"DISABLED","scert":"DISABLED","useless":"DEFAULT","ip-version":"DEFAULT"}},
+              {"type":"Regex Filter","args":{"regex":["^Keep"]}}
+            ]}]}"#;
+        let report = import(backup).unwrap();
+        let config = report.select_item(0, false).unwrap();
+        let source = model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+        let result = source
+            .render_processed(
+                &[model::Health::Unknown; 3],
+                &model::EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &config.processing,
+            )
+            .unwrap();
+        assert_eq!(result.retained, [0, 1]);
+        for setting in ["udp-relay=true", "tfo=false", "skip-cert-verify=false"] {
+            assert!(result.content.contains(setting), "missing {setting}");
+        }
+    }
+
+    #[test]
     fn imports_subscription_rename_and_delete_with_ordered_global_replacement_and_trim() {
         let backup = br#"{"subs":[{"name":"Local","source":"local",
             "content":"[Proxy]\nold seed seed seed HK = socks5, node.example.invalid, 1080\n",
@@ -739,6 +895,9 @@ mod tests {
             r#"{"type":"Regex Rename Operator","args":[{"expr":"(HK)?","now":"$1"}]}"#,
             r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$'-new"}]}"#,
             r#"{"type":"Flag Operator","args":{"mode":"add","tw":"ws"}}"#,
+            r#"{"type":"Quick Setting Operator","args":{"udp":"ENABLED","scert":"ENABLED"}}"#,
+            r#"{"type":"Quick Setting Operator","args":{"tfo":"ENABLED","useless":"ENABLED"}}"#,
+            r#"{"type":"Regex Sort Operator","args":{"expressions":["^HK"],"order":"random"}}"#,
         ] {
             let backup = format!(
                 r#"{{"subs":[{{"name":"X","source":"remote","url":"https://example.com/sub","process":[{kind},{{"type":"Type Filter","args":["ss"]}}]}}]}}"#

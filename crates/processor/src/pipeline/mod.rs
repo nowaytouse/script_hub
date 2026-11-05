@@ -4,6 +4,7 @@ pub mod custom_sources;
 pub mod firewall_sync;
 pub mod functional_update;
 pub mod general_update;
+mod helper_hosts;
 pub mod merge_bundles;
 pub mod mihomo_generator;
 pub mod module_catalog;

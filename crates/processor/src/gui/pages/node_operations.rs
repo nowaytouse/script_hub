@@ -4,7 +4,7 @@ use crate::gui::theme::Palette;
 use crate::relay::model::dns::{self, Format, Provider, Selection};
 use crate::relay::model::pipeline::{
     self, AddressFamily, Condition, Field, KeepOccurrence, MatchMode, NameCase, Operation,
-    RegionLabel, RenameRule, SortKey, StageReport, Step, TextMatch,
+    RegexSortUnmatched, RegionLabel, RenameRule, SortKey, StageReport, Step, TextMatch,
 };
 use crate::relay::model::properties::Setting;
 use crate::relay::model::script::{self, SyntaxError};
@@ -435,6 +435,7 @@ fn new_operations() -> [Operation; 26] {
         },
         Operation::RegexSort {
             patterns: Vec::new(),
+            unmatched: RegexSortUnmatched::Original,
         },
         Operation::Deduplicate,
         Operation::HostFilter {
@@ -1037,7 +1038,10 @@ pub(super) fn show(
                             .checkbox(descending, tr(Text::OperationDescending))
                             .changed();
                     }
-                    Operation::RegexSort { patterns } => {
+                    Operation::RegexSort {
+                        patterns,
+                        unmatched,
+                    } => {
                         let id = field_id(step.id, "patterns");
                         let mut value = ui
                             .ctx()
@@ -1070,6 +1074,23 @@ pub(super) fn show(
                                 .data_mut(|data| data.insert_temp(id.with("draft"), value.clone()));
                             changed = true;
                         }
+                        ui.label(tr(Text::OperationRegexSortUnmatched));
+                        ui.horizontal_wrapped(|ui| {
+                            for (candidate, label) in [
+                                (RegexSortUnmatched::Original, Text::OperationOriginalOrder),
+                                (RegexSortUnmatched::Ascending, Text::OperationAscending),
+                                (RegexSortUnmatched::Descending, Text::OperationDescending),
+                            ] {
+                                if ui
+                                    .selectable_label(*unmatched == candidate, tr(label))
+                                    .clicked()
+                                    && *unmatched != candidate
+                                {
+                                    *unmatched = candidate;
+                                    changed = true;
+                                }
+                            }
+                        });
                     }
                     Operation::Deduplicate => {}
                     Operation::HostFilter { pattern, keep } => {

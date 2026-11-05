@@ -54,6 +54,8 @@ pub enum Operation {
     },
     RegexSort {
         patterns: Vec<String>,
+        #[serde(default, skip_serializing_if = "RegexSortUnmatched::is_original")]
+        unmatched: RegexSortUnmatched,
     },
     Deduplicate,
     HostFilter {
@@ -271,6 +273,21 @@ pub enum SortKey {
     NaturalName,
     Server,
     Port,
+}
+
+#[derive(Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "snake_case")]
+pub enum RegexSortUnmatched {
+    #[default]
+    Original,
+    Ascending,
+    Descending,
+}
+
+impl RegexSortUnmatched {
+    fn is_original(&self) -> bool {
+        *self == Self::Original
+    }
 }
 
 #[derive(Clone)]
@@ -513,7 +530,7 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                     template_parts(template)?;
                 }
             }
-            Operation::RegexSort { patterns } => {
+            Operation::RegexSort { patterns, .. } => {
                 if patterns.len() > 64
                     || patterns.iter().any(|p| !valid_text(p))
                     || step.enabled
@@ -1411,7 +1428,10 @@ pub(super) fn apply(
                     if *descending { cmp.reverse() } else { cmp }
                 });
             }
-            Operation::RegexSort { patterns } => {
+            Operation::RegexSort {
+                patterns,
+                unmatched,
+            } => {
                 let regexes: Vec<_> = patterns
                     .iter()
                     .map(|p| regex(p))
@@ -1423,7 +1443,20 @@ pub(super) fn apply(
                         .position(|r| r.is_match(&names[i]))
                         .unwrap_or(regexes.len());
                 }
-                order.sort_by_key(|&i| priorities[i]);
+                order.sort_by(|&a, &b| {
+                    priorities[a].cmp(&priorities[b]).then_with(|| {
+                        if priorities[a] != regexes.len() || unmatched.is_original() {
+                            return std::cmp::Ordering::Equal;
+                        }
+                        // Sub-Store compares names as UTF-16, not as Unicode scalar values.
+                        let cmp = names[a].encode_utf16().cmp(names[b].encode_utf16());
+                        if *unmatched == RegexSortUnmatched::Descending {
+                            cmp.reverse()
+                        } else {
+                            cmp
+                        }
+                    })
+                });
             }
             Operation::Deduplicate => {
                 let mut seen = HashSet::new();
@@ -2965,7 +2998,16 @@ mod tests {
             )])
             .is_err()
         );
-        assert!(validate(&[step(1, Operation::RegexSort { patterns: vec![] })]).is_err());
+        assert!(
+            validate(&[step(
+                1,
+                Operation::RegexSort {
+                    patterns: vec![],
+                    unmatched: RegexSortUnmatched::Original,
+                }
+            )])
+            .is_err()
+        );
         assert!(
             validate(&[step(
                 1,
@@ -3014,12 +3056,42 @@ mod tests {
                 1,
                 Operation::RegexSort {
                     patterns: vec!["^JP".into(), "^US".into()],
+                    unmatched: RegexSortUnmatched::Original,
                 },
             )],
         )
         .unwrap();
         assert_eq!(out.retained, [1, 2, 0, 3]);
         assert_eq!((out.stages[0].before, out.stages[0].after), (4, 4));
+    }
+
+    #[test]
+    fn regex_priority_sort_orders_only_unmatched_names_by_utf16() {
+        let source = "US B = http, us.invalid, 80\nJP Z = http, jp1.invalid, 80\nJP A = http, jp2.invalid, 80\n\u{e000} = http, first.invalid, 80\n😀 = http, second.invalid, 80\nZulu = http, third.invalid, 80\n";
+        for (unmatched, expected) in [
+            (RegexSortUnmatched::Ascending, [1, 2, 0, 5, 4, 3]),
+            (RegexSortUnmatched::Descending, [1, 2, 0, 3, 4, 5]),
+        ] {
+            let out = run(
+                source,
+                vec![step(
+                    1,
+                    Operation::RegexSort {
+                        patterns: vec!["^JP".into(), "^[JU]".into()],
+                        unmatched,
+                    },
+                )],
+            )
+            .unwrap();
+            assert_eq!(out.retained, expected);
+        }
+    }
+
+    #[test]
+    fn legacy_regex_sort_keeps_original_unmatched_order_on_round_trip() {
+        let old = serde_json::json!({"type":"regex_sort","patterns":["^JP"]});
+        let operation: Operation = serde_json::from_value(old.clone()).unwrap();
+        assert_eq!(serde_json::to_value(operation).unwrap(), old);
     }
 
     #[test]

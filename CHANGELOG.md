@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Follow Sukka's local DNS feed for reviewed device names and private reverse zones without importing public DNS overrides.
+- Migrate Sub-Store regex sorting and safe node quick settings; control unmatched node order in the native editor.
+
 - Keep Apple enhancement modules free of routing rules, narrow their HTTPS interception, and use native WeatherKit data by default. Shadowrocket uses upstream TV and an optional WeatherKit Rewrite module.
 - Migrate numbered captures in portable Sub-Store regex renames.
 - Restore the public encrypted template's sanitization invariant.

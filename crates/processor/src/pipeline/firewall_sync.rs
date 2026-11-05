@@ -231,10 +231,22 @@ const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "local",
     "*.local",
     "*.lan",
+    "lan",
     "home.arpa",
     "*.home.arpa",
+    "localdomain",
     "*.localdomain",
+    "internal",
+    "*.internal",
+    "*.127.in-addr.arpa",
+    "*.c.f.ip6.arpa",
+    "*.d.f.ip6.arpa",
+    "*.8.e.f.ip6.arpa",
+    "*.9.e.f.ip6.arpa",
+    "*.a.e.f.ip6.arpa",
+    "*.b.e.f.ip6.arpa",
     "router.asus.com",
+    "router.synology.com",
     "www.asusrouter.com",
     "routerlogin.com",
     "routerlogin.net",
@@ -271,13 +283,16 @@ const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
     "dns.quad9.net",
 ];
 
-fn helper_sections() -> (Vec<String>, Vec<String>) {
+fn helper_sections(upstream_hosts: &[String]) -> (Vec<String>, Vec<String>) {
     let mut hosts: Vec<String> = LOCAL_SYSTEM_DNS_HOSTS
         .iter()
+        .copied()
+        .chain(upstream_hosts.iter().map(String::as_str))
         .map(|host| format!("{host} = server:system"))
         .collect();
     hosts.push(format!("{HELPER_DOH_HOST} = {HELPER_DOH_BOOTSTRAP}"));
     hosts.sort_unstable();
+    hosts.dedup();
 
     let mut exclusions = crate::promax::safety::apple_mitm_exclusions();
     exclusions.extend(
@@ -290,8 +305,13 @@ fn helper_sections() -> (Vec<String>, Vec<String>) {
     (hosts, exclusions)
 }
 
-fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> String {
-    let (hosts, exclusions) = helper_sections();
+fn render_helper(
+    shadowrocket: bool,
+    with_firewall: bool,
+    version: &str,
+    upstream_hosts: &[String],
+) -> String {
+    let (hosts, exclusions) = helper_sections(upstream_hosts);
     let name = if with_firewall {
         "🛡️ PROMAX AdBlock Helper (DNS & Firewall)"
     } else {
@@ -331,6 +351,12 @@ fn render_helper(shadowrocket: bool, with_firewall: bool, version: &str) -> Stri
         ]);
     }
     output.extend([String::new(), "[Host]".to_string()]);
+    if !upstream_hosts.is_empty() {
+        output.push(format!(
+            "# Local names selected from SukkaW/Surge (AGPL-3.0): {}",
+            super::helper_hosts::SOURCE,
+        ));
+    }
     output.extend(hosts);
     output.extend([
         String::new(),
@@ -350,19 +376,20 @@ fn render_firewall(shadowrocket: bool, version: &str) -> String {
 
 pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, String> {
     let modules = root.join("modules");
+    let upstream_hosts = super::helper_hosts::load(root)?;
     let outputs = [
         (
             modules.join("surge/head_expanse/🌟 AdBlock Helper .sgmodule"),
-            render_helper(false, false, version),
+            render_helper(false, false, version, &upstream_hosts),
         ),
         (
             modules.join("shadowrocket/head_expanse/🌟 AdBlock Helper .module"),
-            render_helper(true, false, version),
+            render_helper(true, false, version, &upstream_hosts),
         ),
         (
             modules
                 .join("shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
-            render_helper(true, true, version),
+            render_helper(true, true, version, &upstream_hosts),
         ),
         (
             modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
@@ -436,7 +463,16 @@ mod tests {
             (true, false, "fallback-dns-server"),
             (true, true, "fallback-dns-server"),
         ] {
-            let module = render_helper(shadowrocket, firewall, "test");
+            let module = render_helper(
+                shadowrocket,
+                firewall,
+                "test",
+                &[
+                    "unifi".into(),
+                    "*.16.172.in-addr.arpa".into(),
+                    "home.arpa".into(),
+                ],
+            );
             let (_, body) = module.split_once("[General]\n").unwrap();
             assert_eq!(
                 body.split_once("\n\n").unwrap().0,
@@ -445,7 +481,11 @@ mod tests {
             let (_, host_section) = body.split_once("[Host]\n").unwrap();
             let (hosts, mitm) = host_section.split_once("\n\n[MITM]\n").unwrap();
             let mut names = HashSet::new();
-            for (host, mapping) in hosts.lines().map(|line| line.split_once(" = ").unwrap()) {
+            for (host, mapping) in hosts
+                .lines()
+                .filter(|line| !line.starts_with('#'))
+                .map(|line| line.split_once(" = ").unwrap())
+            {
                 assert!(names.insert(host), "duplicate Host mapping: {host}");
                 if host == HELPER_DOH_HOST {
                     let addresses: Vec<IpAddr> = mapping
@@ -458,14 +498,9 @@ mod tests {
                     assert_eq!(mapping, "server:system");
                     assert!(
                         !host.contains(['*', '?'])
-                            || matches!(
-                                host,
-                                "*.localhost"
-                                    | "*.local"
-                                    | "*.lan"
-                                    | "*.home.arpa"
-                                    | "*.localdomain"
-                            )
+                            || host
+                                .strip_prefix("*.")
+                                .is_some_and(crate::pipeline::helper_hosts::local_zone)
                     );
                 }
             }
@@ -478,6 +513,11 @@ mod tests {
                 "www.routerlogin.com",
                 "tplinkrepeater.net",
                 "fritz.box",
+                "unifi",
+                "router.synology.com",
+                "*.internal",
+                "*.16.172.in-addr.arpa",
+                "*.d.f.ip6.arpa",
             ] {
                 assert!(names.contains(required), "missing Host mapping: {required}");
             }

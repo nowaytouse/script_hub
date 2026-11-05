@@ -873,6 +873,11 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
     let downloader = downloader();
     sync_local_sources(root, &downloader);
     let mut failures = Vec::new();
+    run_step(
+        "Sukka local DNS hosts",
+        super::helper_hosts::refresh(root),
+        &mut failures,
+    );
     let configured_sources = custom_sources::load(root);
     let (custom_wool, custom_weibo, custom_devtools, custom_source_error) = match configured_sources
     {
