@@ -14,6 +14,7 @@ use std::collections::BTreeMap;
 use zeroize::{Zeroize, Zeroizing};
 
 const MAX_STEPS: usize = 64;
+const INLINE_MOVE_MIN_WIDTH: f32 = 480.0;
 const BATCH_SCRIPT_EXAMPLE: &str = "fn operator(nodes, context) {
     if nodes.len > 1 {
         let first = nodes[0];
@@ -1526,16 +1527,96 @@ pub(super) fn show(
                         ui.weak(tr(Text::PropertySkippedHelp));
                     }
                 };
-                let response = if configurable {
-                    egui::CollapsingHeader::new(title)
-                        .id_salt(("relay-operation-card", step.id))
-                        .default_open(opening == Some(step.id))
-                        .open((opening == Some(step.id)).then_some(true))
-                        .show(ui, details)
-                        .header_response
-                } else {
-                    ui.strong(title)
+                let inline_move = ui.available_width() >= INLINE_MOVE_MIN_WIDTH;
+                let move_step = |ui: &mut egui::Ui| {
+                    let mut movement = None;
+                    for (label, available, direction) in [
+                        (Text::OperationMoveUp, index > 0, Action::Up),
+                        (Text::OperationMoveDown, index + 1 < count, Action::Down),
+                    ] {
+                        if ui
+                            .add_enabled(available, egui::Button::new(tr(label)))
+                            .clicked()
+                        {
+                            movement = Some(direction);
+                        }
+                    }
+                    movement
                 };
+                let mut state = configurable.then(|| {
+                    let id = ui.make_persistent_id(("relay-operation-card", step.id));
+                    let open = opening == Some(step.id);
+                    let mut state =
+                        egui::collapsing_header::CollapsingState::load_with_default_open(
+                            ui.ctx(),
+                            id,
+                            open,
+                        );
+                    if open {
+                        state.set_open(true);
+                    }
+                    state
+                });
+                let mut enabled_changed = false;
+                let response = ui
+                    .horizontal_wrapped(|ui| {
+                        let disclosure = if let Some(state) = &mut state {
+                            let arrow = if state.is_open() { "▾" } else { "▸" };
+                            let response = ui.add(
+                                egui::Button::new(
+                                    egui::RichText::new(format!("{arrow} {title}")).strong(),
+                                )
+                                .frame(false),
+                            );
+                            if response.clicked() {
+                                state.toggle(ui);
+                            }
+                            response.widget_info(|| {
+                                egui::WidgetInfo::labeled(
+                                    egui::Role::DisclosureTriangle,
+                                    ui.is_enabled(),
+                                    &title,
+                                )
+                            });
+                            ui.ctx().accesskit_node_builder(response.id, |node| {
+                                node.set_expanded(state.is_open());
+                            });
+                            response
+                        } else {
+                            ui.strong(&title)
+                        };
+                        let enabled = ui.checkbox(&mut step.enabled, tr(Text::OperationEnabled));
+                        enabled_changed = enabled.changed();
+                        if inline_move && let Some(movement) = move_step(ui) {
+                            action = Some((index, movement));
+                        }
+                        ui.menu_button(tr(Text::OperationRowActions), |ui| {
+                            if !inline_move && let Some(movement) = move_step(ui) {
+                                action = Some((index, movement));
+                                ui.close();
+                            }
+                            if ui
+                                .add_enabled(
+                                    count < MAX_STEPS,
+                                    egui::Button::new(tr(Text::OperationDuplicate)),
+                                )
+                                .clicked()
+                            {
+                                action = Some((index, Action::Duplicate));
+                                ui.close();
+                            }
+                            if ui.button(tr(Text::OperationDelete)).clicked() {
+                                action = Some((index, Action::Delete));
+                                ui.close();
+                            }
+                        });
+                        disclosure
+                    })
+                    .inner;
+                if let Some(state) = &mut state {
+                    state.show_body_indented(&response, ui, details);
+                }
+                changed |= enabled_changed;
                 if opening == Some(step.id) {
                     response.scroll_to_me(Some(egui::Align::Center));
                     if configurable {
@@ -1562,42 +1643,6 @@ pub(super) fn show(
                     }
                     ui.weak(summary);
                 }
-                ui.horizontal_wrapped(|ui| {
-                    changed |= ui
-                        .checkbox(&mut step.enabled, tr(Text::OperationEnabled))
-                        .changed();
-                    if ui
-                        .add_enabled(index > 0, egui::Button::new(tr(Text::OperationMoveUp)))
-                        .clicked()
-                    {
-                        action = Some((index, Action::Up));
-                    }
-                    if ui
-                        .add_enabled(
-                            index + 1 < count,
-                            egui::Button::new(tr(Text::OperationMoveDown)),
-                        )
-                        .clicked()
-                    {
-                        action = Some((index, Action::Down));
-                    }
-                    ui.menu_button(tr(Text::OperationRowActions), |ui| {
-                        if ui
-                            .add_enabled(
-                                count < MAX_STEPS,
-                                egui::Button::new(tr(Text::OperationDuplicate)),
-                            )
-                            .clicked()
-                        {
-                            action = Some((index, Action::Duplicate));
-                            ui.close();
-                        }
-                        if ui.button(tr(Text::OperationDelete)).clicked() {
-                            action = Some((index, Action::Delete));
-                            ui.close();
-                        }
-                    });
-                });
             });
         });
     }
@@ -1885,11 +1930,12 @@ mod tests {
             .unwrap()
             .nodes
             .iter()
-            .find_map(|(_, node)| {
+            .filter_map(|(_, node)| {
                 (node.label() == Some(label))
                     .then(|| node.bounds())
                     .flatten()
             })
+            .min_by(|left, right| left.y0.total_cmp(&right.y0))
             .unwrap_or_else(|| panic!("missing {label}"));
         let pos = egui::pos2(
             ((bounds.x0 + bounds.x1) / 2.0) as f32,
@@ -2227,7 +2273,7 @@ mod tests {
             .accesskit_update
             .as_ref()
             .expect("accessibility update");
-        for label in ["1. Sort", "Enabled", "Move up", "Move down", "Step actions"] {
+        for label in ["1. Sort", "Enabled", "Step actions"] {
             assert!(
                 update
                     .nodes
@@ -2236,13 +2282,15 @@ mod tests {
                 "missing {label}"
             );
         }
-        assert!(
-            !update
-                .nodes
-                .iter()
-                .any(|(_, node)| node.label() == Some("Delete")),
-            "destructive action should not be next to everyday controls"
-        );
+        for label in ["Move up", "Move down", "Delete"] {
+            assert!(
+                !update
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some(label)),
+                "{label} should be in the compact menu"
+            );
+        }
         assert!(!steps[0].enabled);
         output.drop_without_applying_deltas();
     }
@@ -2272,6 +2320,9 @@ mod tests {
                 .iter()
                 .any(|(_, node)| node.value() == Some("Pattern"))
         );
+        click_label(&ctx, &mut steps, output, "Step actions").drop_without_applying_deltas();
+        // A newly opened popup can spend its first frame measuring, before its actions are visible.
+        let output = draw(&ctx, &mut steps, vec![]);
         click_label(&ctx, &mut steps, output, "Move down").drop_without_applying_deltas();
         assert_eq!((steps[0].id, steps[1].id), (new_id, 9));
         assert!(steps[0].enabled && !steps[1].enabled);

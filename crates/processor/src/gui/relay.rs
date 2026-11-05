@@ -41,6 +41,14 @@ pub(super) enum RelayStep {
     Publish,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub(super) enum ReviewPane {
+    #[default]
+    Operations,
+    Nodes,
+    Preview,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub(super) enum InputMode {
     #[default]
@@ -204,6 +212,7 @@ pub(super) struct RelayState {
     pub(super) demo_mode: bool,
     pub workspace: super::subscriptions::State,
     pub step: RelayStep,
+    pub review_pane: ReviewPane,
     pub input_mode: InputMode,
     pub paste: Zeroizing<String>,
     pub reveal_paste: bool,
@@ -238,6 +247,7 @@ pub(super) struct RelayState {
     pub editor: Option<EditorState>,
     pub preview_names: Vec<Zeroizing<String>>,
     pub preview_endpoints: Vec<Zeroizing<String>>,
+    pub reveal_preview_details: bool,
     pub allow_public_output: bool,
     pub acknowledge_publish: bool,
     pub allow_plaintext: bool,
@@ -386,6 +396,7 @@ impl RelayState {
         Self {
             demo_mode,
             step: RelayStep::Source,
+            review_pane: ReviewPane::Operations,
             workspace: Default::default(),
             input_mode: InputMode::Link,
             paste: Zeroizing::new(String::new()),
@@ -425,6 +436,7 @@ impl RelayState {
             editor: None,
             preview_names: Vec::new(),
             preview_endpoints: Vec::new(),
+            reveal_preview_details: false,
             allow_public_output: false,
             acknowledge_publish: false,
             allow_plaintext: false,
@@ -697,6 +709,7 @@ impl RelayState {
     }
 
     pub(super) fn accept_scheduled(&mut self, result: RelayResult) {
+        self.reveal_preview_details = false;
         let content = result
             .source
             .as_ref()
@@ -812,6 +825,7 @@ impl RelayState {
         }
         self.imported_processing = self.workspace.selected.and(processing);
         self.editor = None;
+        self.review_pane = ReviewPane::Operations;
         self.rename = false;
         self.sort = false;
         self.compatibility = false;
@@ -824,6 +838,7 @@ impl RelayState {
         }
         self.schedule.stop();
         self.allow_resolution = false;
+        self.reveal_preview_details = false;
         self.preview_names.clear();
         self.preview_endpoints.clear();
         self.error = None;
@@ -1156,6 +1171,7 @@ impl RelayState {
                     self.completed_config = Some(self.private_config(self.engine_path()));
                 }
                 if pending.mode == RunMode::Import {
+                    self.review_pane = ReviewPane::Operations;
                     match EditorState::new(&result.content, result.source.clone()) {
                         Ok(mut editor) => {
                             if let Some(mut options) = self.imported_processing.take() {
@@ -1249,6 +1265,9 @@ impl RelayState {
                 } else {
                     Text::RelayPreviewReady
                 });
+                if pending.mode == RunMode::Preview {
+                    self.review_pane = ReviewPane::Preview;
+                }
                 self.result = Some(result);
             }
             (
@@ -1847,6 +1866,7 @@ impl RelayState {
             self.format_feedback = None;
             self.preview_names.clear();
             self.preview_endpoints.clear();
+            self.reveal_preview_details = false;
             self.result_format = None;
         }
         let token = if mode != RunMode::Publish && config.0.local_content.is_some() {

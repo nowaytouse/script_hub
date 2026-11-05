@@ -281,6 +281,13 @@ const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
     "cloudflare-dns.com",
     "dns.google",
     "dns.quad9.net",
+    // Old Helper profiles may still select these endpoints; exempt them without adding resolvers.
+    "adblock.dns.mullvad.net",
+    "dns.digitale-gesellschaft.ch",
+    "doh.applied-privacy.net",
+    "doh.ffmuc.net",
+    "doh.libredns.gr",
+    "freedns.controld.com",
 ];
 
 const HELPER_OUTPUTS: &[(&str, &str, bool, bool)] = &[
@@ -629,6 +636,17 @@ mod tests {
             assert!(excluded.contains("-account.apple.com"));
             assert!(excluded.contains("-dns.alidns.com"));
             assert!(excluded.contains("-cloudflare-dns.com"));
+            for host in [
+                "adblock.dns.mullvad.net",
+                "dns.digitale-gesellschaft.ch",
+                "doh.applied-privacy.net",
+                "doh.ffmuc.net",
+                "doh.libredns.gr",
+                "freedns.controld.com",
+            ] {
+                assert!(excluded.contains(format!("-{host}").as_str()));
+                assert!(!names.contains(host));
+            }
             assert_eq!(module.contains("[Rule]"), firewall);
             assert_eq!(module.contains("SYNCED PORT RULES START"), firewall);
             assert!(!module.contains(",DIRECT"));

@@ -2,7 +2,7 @@ use super::{card, primary_button};
 use crate::gui::app::HubApp;
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
-use crate::gui::relay::{InputMode, RelayState, RelayStep, SECRET_IDS};
+use crate::gui::relay::{InputMode, RelayState, RelayStep, ReviewPane, SECRET_IDS};
 use crate::gui::relay_schedule::Status as ScheduleStatus;
 use crate::gui::theme::Palette;
 use crate::relay::{Progress, RelayStage, RunMode};
@@ -160,9 +160,19 @@ impl HubApp {
                         (action, file_action) = review_actions(ui, state, colors, cooldown, &tr);
                     });
                     ui.add_space(8.0);
+                    ui.horizontal_wrapped(|ui| {
+                        for (pane, label) in [
+                            (ReviewPane::Operations, Text::RelayReviewOperations),
+                            (ReviewPane::Nodes, Text::RelayReviewNodes),
+                            (ReviewPane::Preview, Text::RelayReviewOutputPreview),
+                        ] {
+                            ui.selectable_value(&mut state.review_pane, pane, tr(label));
+                        }
+                    });
+                    ui.add_space(8.0);
                 }
                 egui::ScrollArea::vertical()
-                    .id_salt(("relay-step", state.step as u8))
+                    .id_salt(("relay-step", state.step as u8, state.review_pane))
                     .show(ui, |ui| {
                         ui.add_enabled_ui(admitted && !state.schedule.armed(), |ui| {
                             card(ui, colors, |ui| match state.step {
@@ -369,39 +379,40 @@ impl HubApp {
                                     }
                                 }
                                 RelayStep::Review => {
-                                    ui.label(
-                                        egui::RichText::new(tr(Text::RelayReviewTitle))
-                                            .size(20.0)
-                                            .strong(),
-                                    );
                                     if state.editor.is_none() {
+                                        ui.heading(tr(Text::RelayReviewTitle));
                                         ui.label(tr(Text::RelayReviewNoSource));
                                         if ui.button(tr(Text::RelayOutputGoSource)).clicked() {
                                             state.step = RelayStep::Source;
                                         }
                                         return;
                                     }
-                                    if let Some(result) = &state.result {
-                                        summary(ui, result, state.result_format, &tr);
-                                    } else if let Some((count, format)) = state.local_summary {
+                                    if state.review_pane == ReviewPane::Preview {
+                                        show_output_preview(ui, state, &tr);
+                                        return;
+                                    }
+                                    if let Some((count, format)) = state.local_summary {
                                         ui.label(format!(
                                             "{format} · {} {count}",
                                             tr(Text::RelayTotal)
                                         ));
                                     }
                                     ui.add_space(12.0);
-                                    ui.collapsing(tr(Text::NativePreset), |ui| {
-                                        ui.weak(tr(Text::NativePresetHelp));
-                                        let mut selected = None;
-                                        ui.horizontal_wrapped(|ui| {
-                                            if ui.button(tr(Text::NativeSafe)).clicked() { selected = Some(crate::relay::model::entrance::Preset::Safe); }
-                                            if ui.button(tr(Text::NativeCompatible)).clicked() { selected = Some(crate::relay::model::entrance::Preset::Compatible); }
+                                    if state.review_pane == ReviewPane::Operations {
+                                        ui.collapsing(tr(Text::NativePreset), |ui| {
+                                            ui.weak(tr(Text::NativePresetHelp));
+                                            let mut selected = None;
+                                            ui.horizontal_wrapped(|ui| {
+                                                if ui.button(tr(Text::NativeSafe)).clicked() { selected = Some(crate::relay::model::entrance::Preset::Safe); }
+                                                if ui.button(tr(Text::NativeCompatible)).clicked() { selected = Some(crate::relay::model::entrance::Preset::Compatible); }
+                                            });
+                                            if let Some(preset) = selected { state.add_preset(ui.ctx(), preset); }
                                         });
-                                        if let Some(preset) = selected { state.add_preset(ui.ctx(), preset); }
-                                    });
+                                    }
                                     let mut reset_editor_widgets = false;
                                     if let Some(editor) = &mut state.editor {
-                                        let mut changed = super::node_operations::show(
+                                        let mut changed = state.review_pane == ReviewPane::Operations
+                                            && super::node_operations::show(
                                             ui,
                                             language,
                                             colors,
@@ -411,7 +422,7 @@ impl HubApp {
                                                 .as_ref()
                                                 .map_or(&[], |result| result.stages.as_slice()),
                                         );
-                                        if state.rename || state.sort {
+                                        if state.review_pane == ReviewPane::Operations && (state.rename || state.sort) {
                                             ui.horizontal_wrapped(|ui| {
                                                 changed |= ui
                                                     .checkbox(
@@ -424,8 +435,13 @@ impl HubApp {
                                                     .changed();
                                             });
                                         }
-                                        ui.checkbox(&mut editor.reveal, tr(Text::RelayRevealNames));
-                                        if editor.reveal {
+                                        if state.review_pane == ReviewPane::Nodes {
+                                            ui.checkbox(&mut editor.reveal, tr(Text::RelayRevealNames));
+                                            if !editor.reveal {
+                                                ui.weak(tr(Text::RelayReviewHiddenNodes));
+                                            }
+                                        }
+                                        if state.review_pane == ReviewPane::Nodes && editor.reveal {
                                             egui::ScrollArea::vertical()
                                                 .id_salt("relay-node-list")
                                                 .max_height(260.0)
@@ -472,33 +488,16 @@ impl HubApp {
                                                         }
                                                     },
                                                 );
-                                            if state.result.is_some() {
-                                                ui.collapsing(
-                                                    tr(Text::RelayProcessedNames),
-                                                    |ui| {
-                                                        egui::ScrollArea::vertical()
-                                                            .id_salt("relay-processed-names")
-                                                            .max_height(180.0)
-                                                            .show_rows(
-                                                                ui,
-                                                                52.0,
-                                                                state.preview_names.len(),
-                                                                |ui, range| {
-                                                                    for index in range {
-                                                                        let name = state.preview_names[index].as_str();
-                                                                        ui.add(egui::Label::new(name).truncate()).on_hover_text(name);
-                                                                        if let Some(endpoint) = state.preview_endpoints.get(index) {
-                                                                            ui.add(egui::Label::new(egui::RichText::new(endpoint.as_str()).monospace().weak()).truncate())
-                                                                                .on_hover_text(endpoint.as_str());
-                                                                        }
-                                                                    }
-                                                                },
-                                                            );
-                                                    },
-                                                );
-                                            }
                                         }
-                                        if ui.button(tr(Text::RelayResetOriginal)).clicked() {
+                                        let mut reset = false;
+                                        ui.menu_button(tr(Text::RelayResetOriginal), |ui| {
+                                            ui.label(tr(Text::RelayReviewResetHelp));
+                                            if ui.button(tr(Text::RelayReviewResetConfirm)).clicked() {
+                                                reset = true;
+                                                ui.close();
+                                            }
+                                        });
+                                        if reset {
                                             super::node_operations::clear_widgets(
                                                 ui.ctx(),
                                                 &editor.options.pipeline,
@@ -516,7 +515,7 @@ impl HubApp {
                                     if reset_editor_widgets {
                                         state.clear_editor_widgets(ui.ctx());
                                     }
-                                    if !state.demo_mode { ui.collapsing(tr(Text::OperationPlan), |ui| {
+                                    if !state.demo_mode && state.review_pane == ReviewPane::Operations { ui.collapsing(tr(Text::OperationPlan), |ui| {
                                         ui.weak(tr(Text::OperationPlanHelp));
                                         if ui
                                             .add_enabled(
@@ -578,6 +577,48 @@ impl HubApp {
                 .file_action(action, None, self.loaded_root.as_deref());
         }
     }
+}
+
+fn show_output_preview(
+    ui: &mut egui::Ui,
+    state: &mut RelayState,
+    tr: &impl Fn(Text) -> &'static str,
+) {
+    let Some(result) = &state.result else {
+        ui.weak(tr(Text::RelayReviewNeedsPreview));
+        return;
+    };
+    let has_details = !state.preview_names.is_empty();
+    if has_details {
+        ui.checkbox(
+            &mut state.reveal_preview_details,
+            tr(Text::RelayReviewRevealOutput),
+        );
+    }
+    summary(ui, result, state.result_format, tr);
+    if !has_details || !state.reveal_preview_details {
+        return;
+    }
+    ui.separator();
+    ui.strong(tr(Text::RelayProcessedNames));
+    egui::ScrollArea::vertical()
+        .id_salt("relay-processed-names")
+        .max_height(260.0)
+        .show_rows(ui, 52.0, state.preview_names.len(), |ui, range| {
+            for index in range {
+                let name = state.preview_names[index].as_str();
+                ui.add(egui::Label::new(name).truncate())
+                    .on_hover_text(name);
+                if let Some(endpoint) = state.preview_endpoints.get(index) {
+                    let endpoint = endpoint.as_str();
+                    ui.add(
+                        egui::Label::new(egui::RichText::new(endpoint).monospace().weak())
+                            .truncate(),
+                    )
+                    .on_hover_text(endpoint);
+                }
+            }
+        });
 }
 
 fn pending_progress(

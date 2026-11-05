@@ -2009,7 +2009,7 @@ mod tests {
 
     #[test]
     fn compact_relay_can_load_pasted_nodes_and_open_output_without_scrolling() {
-        use super::super::relay::{InputMode, RelayStep};
+        use super::super::relay::{InputMode, RelayStep, ReviewPane};
 
         let ctx = egui::Context::default();
         ctx.enable_accesskit();
@@ -2095,6 +2095,30 @@ mod tests {
                 .map(|error| { super::super::relay::failure_message(app.draft.language, error) })
         );
         assert!(app.relay.step == RelayStep::Review);
+        assert_eq!(app.relay.review_pane, ReviewPane::Operations);
+        click(&mut app, Text::RelayReviewNodes);
+        assert_eq!(app.relay.review_pane, ReviewPane::Nodes);
+        click(&mut app, Text::RelayRevealNames);
+        assert!(app.relay.editor.as_ref().unwrap().reveal);
+        click(&mut app, Text::RelayReviewOutputPreview);
+        assert_eq!(app.relay.review_pane, ReviewPane::Preview);
+        assert!(!app.relay.reveal_preview_details);
+        let output = draw(&mut app, Vec::new());
+        assert!(!format!("{:?}", output.platform_output.accesskit_update).contains("node.example"));
+        output.drop_without_applying_deltas();
+        click(&mut app, Text::RelayReviewRevealOutput);
+        assert!(app.relay.reveal_preview_details);
+        click(&mut app, Text::RelayReviewOperations);
+        click(&mut app, Text::RelayPrepareOnly);
+        assert!(app.relay.busy());
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        while app.relay.busy() && std::time::Instant::now() < deadline {
+            app.relay.tick(&ctx);
+            std::thread::yield_now();
+        }
+        assert_eq!(app.relay.review_pane, ReviewPane::Preview);
+        assert!(app.relay.result.is_some());
+        assert!(!app.relay.reveal_preview_details);
         click(&mut app, Text::RelayContinue);
         assert!(app.relay.step == RelayStep::Publish);
         assert!(!app.relay.allow_plaintext && !app.relay.acknowledge_publish);

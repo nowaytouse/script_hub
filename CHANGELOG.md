@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Separate relay operations, input nodes, and output preview; keep private output details hidden until explicitly revealed.
+- Protect exact encrypted resolver endpoints from older Helper configurations without selecting them or adding DNS mappings.
+
 - Preserve Surge's Bonjour resolution and reject incomplete upstream Host snapshots before refreshing the DNS helper.
 - Migrate Sub-Store collection regex sorting against original member names without changing published names.
 
