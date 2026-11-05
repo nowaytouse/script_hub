@@ -22,6 +22,8 @@ Import a Sub-Store JSON/Base64 backup and choose **Add available items to librar
 
 Subscription-level **Regex Rename** and **Regex Delete** migrate to editable batch renames when they use simple literal alternatives (with optional anchors and ASCII case folding) and literal replacement text without `$`. Rules replace all matches and trim the name after each rule. Collection-level renames and other JavaScript-specific regex syntax remain unsupported.
 
+Subscription-level **Remove Flags** also migrates: it removes country, pirate, and rainbow flags anywhere in a name, then trims it. Adding flags is not migrated.
+
 Classic age X25519 backups can be unlocked with their private key. Encrypted export wraps a Hub backup for an `age1…` recipient; keep the matching private key separately. Keys are not saved. Passphrase, SSH, plugin and post-quantum age formats are unsupported. Input limit: 8 MiB encrypted, 4 MiB decrypted, 8 KiB decoded header.
 
 The Rust age library is pre-1.0 and marked experimental upstream. Keep an independent recoverable copy of important configurations.

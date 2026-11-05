@@ -154,6 +154,17 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
                 Operation::NameFilter { pattern, keep }
             })
         }
+        "Flag Operator" if !collection && args.get("mode")?.as_str()? == "remove" => {
+            // Sub-Store removes flags throughout the name, not just its leading country flag.
+            Some(Operation::BatchRename {
+                rules: vec![pipeline::RenameRule {
+                    pattern: r"[\u{1F1E6}-\u{1F1FF}]{2}|🏴‍☠️|🏳️‍🌈".into(),
+                    replacement: String::new(),
+                    regex: true,
+                }],
+                trim_each: true,
+            })
+        }
         kind @ ("Regex Rename Operator" | "Regex Delete Operator") if !collection => {
             let args = args.as_array()?;
             if args.is_empty() || args.len() > 32 {
@@ -579,9 +590,37 @@ mod tests {
 
     #[test]
     fn collection_rename_is_not_migrated_to_namespaced_nodes() {
-        let item = serde_json::json!({"type": "Regex Delete Operator", "args": ["^HK"]});
-        assert!(convert_processor(&item, false).is_some());
-        assert!(convert_processor(&item, true).is_none());
+        for item in [
+            serde_json::json!({"type": "Regex Delete Operator", "args": ["^HK"]}),
+            serde_json::json!({"type": "Flag Operator", "args": {"mode": "remove"}}),
+        ] {
+            assert!(convert_processor(&item, false).is_some());
+            assert!(convert_processor(&item, true).is_none());
+        }
+    }
+
+    #[test]
+    fn imports_flag_removal_with_global_matching_and_trim() {
+        let backup = r#"{"subs":[{"name":"Local","source":"local",
+            "content":"[Proxy]\n🇭🇰 Alpha🏴‍☠️ 🏳️‍🌈🇯🇵 = socks5, node.example.invalid, 1080\nA🇺🇸B🇦 = socks5, other.example.invalid, 1080\n",
+            "process":[{"type":"Flag Operator","args":{"mode":"remove","tw":"ws"}}]}]}"#;
+        let report = import(backup.as_bytes()).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let config = report.select_item(0, true).unwrap();
+        let source = model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+        let result = source
+            .render_processed(
+                &[model::Health::Unknown; 2],
+                &model::EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &config.processing,
+            )
+            .unwrap();
+        let rendered = model::Subscription::parse(&result.content).unwrap();
+        let names: Vec<_> = rendered.nodes().iter().map(model::Node::name).collect();
+        assert_eq!(names, ["Alpha", "AB🇦"]);
     }
 
     #[test]
@@ -591,6 +630,7 @@ mod tests {
             r#"{"type":"Regex Filter","args":{"regex":["(?=HK)"]}}"#,
             r#"{"type":"Regex Delete Operator","args":["[HK]"]}"#,
             r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$&-new"}]}"#,
+            r#"{"type":"Flag Operator","args":{"mode":"add","tw":"ws"}}"#,
         ] {
             let backup = format!(
                 r#"{{"subs":[{{"name":"X","source":"remote","url":"https://example.com/sub","process":[{kind},{{"type":"Type Filter","args":["ss"]}}]}}]}}"#

@@ -1106,7 +1106,7 @@ mod tests {
                 source("Global", "#!name=Global\n#!arguments = Storage:\"Argument\"\n[MITM]\nhostname = %APPEND% global.example.test\n"),
             ],
             source("YouTube", concat!(
-                "#!name=YouTube\n#!arguments=Language:off\n",
+                "#!name=YouTube\n#!arguments=Language:off,屏蔽上传按钮:true,屏蔽选段按钮:true,屏蔽Shorts按钮:true,字幕翻译语言:off\n",
                 "[Rule]\nDOMAIN,yt-ads.example.test,REJECT\n",
                 "[Script]\nYT = type=http-request,pattern=^https://youtubei.googleapis.com/,script-path=https://example.test/yt.js\n",
                 "YT Video = type=http-request,pattern=^https://.+\\.googlevideo\\.com/,script-path=https://example.test/video.js\n",
@@ -1121,6 +1121,8 @@ mod tests {
         );
         assert!(combined.contains("Enhanced.Storage:\"PersistentStore\",Storage:\"Argument\""));
         assert!(combined.contains("argument=Storage={{{Enhanced.Storage}}}"));
+        assert!(combined.contains("屏蔽上传按钮:false,屏蔽选段按钮:false,屏蔽Shorts按钮:false"));
+        assert!(combined.contains("字幕翻译语言:\"zh-Hans\""));
         assert!(combined.contains("force-http-engine-hosts = %APPEND% bili.example.test:80"));
         assert!(!combined.contains("*:8082"));
         assert!(!combined.contains("accounts.google.com"));
@@ -1552,6 +1554,7 @@ mod tests {
         assert!(restored.contains("Sub-Store Core"));
         let metadata = crate::merge_bundles::module_metadata_pub(&restored);
         assert!(metadata["arguments"].contains("ability:http-client-policy"));
+        assert!(metadata["arguments"].contains("sync:\"# Sub-Store Sync\""));
         assert!(metadata["arguments"].contains("REFRESH:60"));
         assert!(metadata["arguments"].contains("TITLE:\"One, two\""));
         assert!(restored.contains("[Panel]\nFixture = script-name=Fixture Panel"));

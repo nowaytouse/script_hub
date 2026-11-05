@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Update encrypted sample module links and make scheduled utilities opt-in while keeping YouTube controls visible.
+- Migrate subscription-level Sub-Store flag removal as a native rename operation.
+
 - Combine the BiliBili and YouTube feature modules across Surge and Shadowrocket while keeping their PROMAX build inputs separate.
 - Migrate portable subscription-level Sub-Store regex rename and delete operations without running JavaScript.
 

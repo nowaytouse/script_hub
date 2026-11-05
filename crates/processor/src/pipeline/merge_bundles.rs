@@ -175,6 +175,21 @@ fn combine_metadata(parts: &[(String, HashMap<String, String>)]) -> (String, Str
     )
 }
 
+fn set_argument_defaults(args: &str, defaults: &[(&str, &str)]) -> String {
+    crate::smart_cleanup::split_script_parameters(args)
+        .into_iter()
+        .map(|arg| {
+            let arg = arg.trim();
+            let key = arg.split_once(':').map_or(arg, |(key, _)| key.trim());
+            defaults
+                .iter()
+                .find(|(name, _)| *name == key)
+                .map_or_else(|| arg.to_owned(), |(_, value)| format!("{key}:{value}"))
+        })
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
 fn order_sections(merged: &HashMap<String, Vec<String>>, order: &[&str]) -> Vec<ModuleSectionPub> {
     let mut result = Vec::new();
     let mut seen = HashSet::new();
@@ -499,11 +514,18 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
         let mut a = args.clone();
         a = a.replace("字幕翻译语言:off", "字幕翻译语言:\"zh-Hans\"");
         a = a.replace("歌词翻译语言:off", "歌词翻译语言:\"zh-Hans\"");
-        a = a.replace("屏蔽Shorts按钮:false", "屏蔽Shorts按钮:true");
-        a = a.replace("屏蔽上传按钮:false", "屏蔽上传按钮:true");
-        a = a.replace("屏蔽选段按钮:false", "屏蔽选段按钮:true");
         a = a.replace("增加画中画:false", "增加画中画:true");
-        header.insert("arguments".to_string(), a);
+        header.insert(
+            "arguments".to_string(),
+            set_argument_defaults(
+                &a,
+                &[
+                    ("屏蔽Shorts按钮", "false"),
+                    ("屏蔽上传按钮", "false"),
+                    ("屏蔽选段按钮", "false"),
+                ],
+            ),
+        );
     }
     if let Some(v) = meta.get("arguments-desc") {
         header.insert("arguments-desc".to_string(), v.clone());
@@ -600,7 +622,21 @@ fn pin_script_paths_in_text(
 
 fn finalize_devtools(path: &Path) -> bool {
     let text = std::fs::read_to_string(path).unwrap_or_default();
-    let (meta, sections) = parse_module(&text);
+    let (mut meta, sections) = parse_module(&text);
+    if let Some(args) = meta.get_mut("arguments") {
+        *args = set_argument_defaults(
+            args,
+            &[
+                ("sync", "\"# Sub-Store Sync\""),
+                ("EVENT_SCRIPT_NAME", "\"# 网络信息变化\""),
+            ],
+        );
+        let description = meta.entry("arguments-desc".to_string()).or_default();
+        description.insert_str(
+            0,
+            "定时同步和网络变化查询默认关闭。启用时移除对应脚本名称参数开头的 #。\\n\\n",
+        );
+    }
     let mut merged: HashMap<String, Vec<String>> = HashMap::new();
     for sec in sections {
         merged.insert(sec.name, sec.lines);
