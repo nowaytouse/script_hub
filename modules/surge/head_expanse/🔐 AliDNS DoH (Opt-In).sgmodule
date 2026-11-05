@@ -1,0 +1,16 @@
+#!name=🔐 AliDNS DoH (Opt-In)
+#!desc=可选：将全局加密 DNS 列表替换为 AliDNS，不与已有服务商抢答。停用模块即可恢复配置。
+#!author=ScriptHub
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!tag=DNS, Optional
+#!version=2026.11.05
+
+[General]
+encrypted-dns-server = https://dns.alidns.com/dns-query
+encrypted-dns-skip-cert-verification = false
+
+[Host]
+dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1
+
+[MITM]
+hostname = %INSERT% -dns.alidns.com

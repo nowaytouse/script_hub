@@ -1024,7 +1024,11 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
             .path()
             .strip_prefix(&source)
             .map_err(|error| error.to_string())?;
-        if relative == Path::new("amplify_nexus/🍎 Apple服务增强合集.sgmodule") {
+        if relative == Path::new("amplify_nexus/🍎 Apple服务增强合集.sgmodule")
+            || relative.parent() == Some(Path::new("head_expanse"))
+                && relative.file_name().and_then(|file| file.to_str())
+                    == Some(super::firewall_sync::ALIDNS_SURGE_FILE)
+        {
             continue;
         }
         let mut target = root.join("modules/shadowrocket").join(relative);
@@ -1340,7 +1344,7 @@ mod tests {
     }
 
     #[test]
-    fn shadowrocket_sync_never_overwrites_native_apple_publication() {
+    fn shadowrocket_sync_never_overwrites_native_publications() {
         let root = temporary_root("shadowrocket-native-apple");
         let surge = root.join(super::APPLE_OUTPUT);
         let native = root.join(super::apple_shadowrocket::TV_OUTPUT);
@@ -1349,10 +1353,24 @@ mod tests {
         }
         std::fs::write(surge, "#!name=Surge-only Apple News\n").unwrap();
         std::fs::write(&native, "#!name=Native Apple TV\n").unwrap();
+        let surge_doh = root
+            .join("modules/surge/head_expanse")
+            .join(super::super::firewall_sync::ALIDNS_SURGE_FILE);
+        let native_doh =
+            root.join("modules/shadowrocket/head_expanse/🔐 AliDNS DoH (Opt-In).module");
+        for path in [&surge_doh, &native_doh] {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        }
+        std::fs::write(surge_doh, "#!name=Surge-only DNS override\n").unwrap();
+        std::fs::write(&native_doh, "#!name=Native fallback DNS\n").unwrap();
         assert_eq!(sync_shadowrocket_variants(&root).unwrap(), 0);
         assert_eq!(
             std::fs::read_to_string(native).unwrap(),
             "#!name=Native Apple TV\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(native_doh).unwrap(),
+            "#!name=Native fallback DNS\n"
         );
         std::fs::remove_dir_all(root).unwrap();
     }

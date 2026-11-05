@@ -247,6 +247,8 @@ const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "router.asus.com",
     "router.synology.com",
     "www.asusrouter.com",
+    "expertwifi.net",
+    "my.keenetic.net",
     "routerlogin.com",
     "routerlogin.net",
     "www.routerlogin.com",
@@ -273,11 +275,11 @@ const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "tendawifi.com",
 ];
 
-const HELPER_DOH_HOST: &str = "dns.alidns.com";
+const ALIDNS_DOH_HOST: &str = "dns.alidns.com";
 // Bootstrap addresses only, not additional DNS servers. https://alidns.com/
-const HELPER_DOH_BOOTSTRAP: &str = "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1";
+const ALIDNS_DOH_BOOTSTRAP: &str = "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1";
 const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
-    HELPER_DOH_HOST,
+    ALIDNS_DOH_HOST,
     "cloudflare-dns.com",
     "dns.google",
     "dns.quad9.net",
@@ -311,6 +313,16 @@ const HELPER_OUTPUTS: &[(&str, &str, bool, bool)] = &[
     ),
 ];
 
+pub(super) const ALIDNS_SURGE_FILE: &str = "🔐 AliDNS DoH (Opt-In).sgmodule";
+const ALIDNS_OUTPUTS: &[(&str, &str, bool)] = &[
+    ("surge/head_expanse", ALIDNS_SURGE_FILE, false),
+    (
+        "shadowrocket/head_expanse",
+        "🔐 AliDNS DoH (Opt-In).module",
+        true,
+    ),
+];
+
 fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String>, Vec<String>) {
     let mut hosts: Vec<String> = LOCAL_SYSTEM_DNS_HOSTS
         .iter()
@@ -320,7 +332,6 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
         .filter(|host| shadowrocket || !matches!(*host, "local" | "*.local"))
         .map(|host| format!("{host} = server:system"))
         .collect();
-    hosts.push(format!("{HELPER_DOH_HOST} = {HELPER_DOH_BOOTSTRAP}"));
     hosts.sort_unstable();
     hosts.dedup();
 
@@ -348,15 +359,10 @@ fn render_helper(
         "🌟 AdBlock Helper"
     };
     let prefix = if shadowrocket { "[🚀SR] " } else { "" };
-    let dns_key = if shadowrocket {
-        "fallback-dns-server"
-    } else {
-        "encrypted-dns-server"
-    };
     let mut output = vec![
         format!("#!name={name}"),
         format!(
-            "#!desc={prefix}追加 AliDNS DoH 与双栈引导；指定局域网名称、设备入口和私网反查交给当前系统 DNS。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。{}",
+            "#!desc={prefix}保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和私网反查交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。{}",
             if with_firewall {
                 "附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。"
             } else {
@@ -367,9 +373,6 @@ fn render_helper(
         "#!category=『 🔝 Head Expanse › 首端扩域 』".to_string(),
         "#!tag=AdBlock, DNS, Apple Safety".to_string(),
         format!("#!version={version}"),
-        String::new(),
-        "[General]".to_string(),
-        format!("{dns_key} = %APPEND% https://{HELPER_DOH_HOST}/dns-query"),
     ];
     if with_firewall {
         output.extend([
@@ -397,6 +400,50 @@ fn render_helper(
     output.join("\n")
 }
 
+fn render_alidns(shadowrocket: bool, version: &str) -> String {
+    let tls = if shadowrocket {
+        ""
+    } else {
+        "\nencrypted-dns-skip-cert-verification = false"
+    };
+    let (description, setting) = if shadowrocket {
+        (
+            "[🚀SR] 可选：将 AliDNS 加入备用 DNS，保留已有设置。需要时单独启用。",
+            "fallback-dns-server = %APPEND%",
+        )
+    } else {
+        (
+            "可选：将全局加密 DNS 列表替换为 AliDNS，不与已有服务商抢答。停用模块即可恢复配置。",
+            "encrypted-dns-server =",
+        )
+    };
+    format!(
+        "#!name=🔐 AliDNS DoH (Opt-In)\n#!desc={description}\n#!author=ScriptHub\n#!category=『 🔝 Head Expanse › 首端扩域 』\n#!tag=DNS, Optional\n#!version={version}\n\n[General]\n{setting} https://{ALIDNS_DOH_HOST}/dns-query{tls}\n\n[Host]\n{ALIDNS_DOH_HOST} = {ALIDNS_DOH_BOOTSTRAP}\n\n[MITM]\nhostname = %INSERT% -{ALIDNS_DOH_HOST}\n"
+    )
+}
+
+fn dns_modules<'a>(
+    version: &'a str,
+    upstream_hosts: &'a [String],
+) -> impl Iterator<Item = (&'static str, &'static str, String)> + 'a {
+    HELPER_OUTPUTS
+        .iter()
+        .map(move |&(dir, file, shadowrocket, firewall)| {
+            (
+                dir,
+                file,
+                render_helper(shadowrocket, firewall, version, upstream_hosts),
+            )
+        })
+        .chain(
+            ALIDNS_OUTPUTS
+                .iter()
+                .map(move |&(dir, file, shadowrocket)| {
+                    (dir, file, render_alidns(shadowrocket, version))
+                }),
+        )
+}
+
 fn render_firewall(shadowrocket: bool, version: &str) -> String {
     let prefix = if shadowrocket { "[🚀SR] " } else { "" };
     format!(
@@ -407,14 +454,8 @@ fn render_firewall(shadowrocket: bool, version: &str) -> String {
 pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, String> {
     let modules = root.join("modules");
     let upstream_hosts = super::helper_hosts::load(root)?;
-    let helpers = HELPER_OUTPUTS
-        .iter()
-        .map(|&(dir, file, shadowrocket, firewall)| {
-            (
-                modules.join(dir).join(file),
-                render_helper(shadowrocket, firewall, version, &upstream_hosts),
-            )
-        });
+    let helpers = dns_modules(version, &upstream_hosts)
+        .map(|(dir, file, content)| (modules.join(dir).join(file), content));
     let firewalls = [
         (
             modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
@@ -455,8 +496,7 @@ fn helper_dns_settings(content: &str) -> Vec<&str> {
 
 pub(crate) fn validate_published_helpers(root: &Path) -> Result<(), String> {
     let upstream_hosts = super::helper_hosts::load(root)?;
-    for &(dir, file, shadowrocket, firewall) in HELPER_OUTPUTS {
-        let expected = render_helper(shadowrocket, firewall, "", &upstream_hosts);
+    for (dir, file, expected) in dns_modules("", &upstream_hosts) {
         let expected = helper_dns_settings(&expected);
         let dir = root.join("modules").join(dir);
         for path in [dir.join(file), dir.join("github").join(file)] {
@@ -481,7 +521,7 @@ pub(crate) fn validate_published_helpers(root: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{HELPER_DOH_HOST, render_helper, sync_ports};
+    use super::{ALIDNS_DOH_HOST, render_alidns, render_helper, sync_ports};
     use std::collections::HashSet;
     use std::fs;
     use std::net::IpAddr;
@@ -493,7 +533,7 @@ mod tests {
         fs::create_dir_all(root.join("modules/source/local")).unwrap();
         super::super::helper_hosts::publish(&root, "# Size: 1\nDOMAIN,unifi\n### EOF ###").unwrap();
         super::refresh_security_modules(&root, "test").unwrap();
-        for &(dir, file, _, _) in super::HELPER_OUTPUTS {
+        for (dir, file, _) in super::dns_modules("test", &[]) {
             let dir = root.join("modules").join(dir);
             fs::create_dir_all(dir.join("github")).unwrap();
             fs::copy(dir.join(file), dir.join("github").join(file)).unwrap();
@@ -545,12 +585,8 @@ mod tests {
     }
 
     #[test]
-    fn helper_only_adds_encrypted_dns_and_local_host_overrides() {
-        for (shadowrocket, firewall, dns_key) in [
-            (false, false, "encrypted-dns-server"),
-            (true, false, "fallback-dns-server"),
-            (true, true, "fallback-dns-server"),
-        ] {
+    fn helper_preserves_the_users_dns_provider() {
+        for (shadowrocket, firewall) in [(false, false), (true, false), (true, true)] {
             let module = render_helper(
                 shadowrocket,
                 firewall,
@@ -562,12 +598,8 @@ mod tests {
                     "*.local".into(),
                 ],
             );
-            let (_, body) = module.split_once("[General]\n").unwrap();
-            assert_eq!(
-                body.split_once("\n\n").unwrap().0,
-                format!("{dns_key} = %APPEND% https://{HELPER_DOH_HOST}/dns-query")
-            );
-            let (_, host_section) = body.split_once("[Host]\n").unwrap();
+            assert!(!module.contains("[General]"));
+            let (_, host_section) = module.split_once("[Host]\n").unwrap();
             let (hosts, mitm) = host_section.split_once("\n\n[MITM]\n").unwrap();
             let mut names = HashSet::new();
             for (host, mapping) in hosts
@@ -576,25 +608,15 @@ mod tests {
                 .map(|line| line.split_once(" = ").unwrap())
             {
                 assert!(names.insert(host), "duplicate Host mapping: {host}");
-                if host == HELPER_DOH_HOST {
-                    let addresses: Vec<IpAddr> = mapping
-                        .split(',')
-                        .map(|ip| ip.trim().parse().unwrap())
-                        .collect();
-                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv4()).count(), 2);
-                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv6()).count(), 2);
-                } else {
-                    assert_eq!(mapping, "server:system");
-                    assert!(
-                        !host.contains(['*', '?'])
-                            || host
-                                .strip_prefix("*.")
-                                .is_some_and(crate::pipeline::helper_hosts::local_zone)
-                    );
-                }
+                assert_eq!(mapping, "server:system");
+                assert!(
+                    !host.contains(['*', '?'])
+                        || host
+                            .strip_prefix("*.")
+                            .is_some_and(crate::pipeline::helper_hosts::local_zone)
+                );
             }
             for required in [
-                HELPER_DOH_HOST,
                 "localhost",
                 "home.arpa",
                 "*.home.arpa",
@@ -606,6 +628,8 @@ mod tests {
                 "fritz.box",
                 "unifi",
                 "router.synology.com",
+                "expertwifi.net",
+                "my.keenetic.net",
                 "*.internal",
                 "*.16.172.in-addr.arpa",
                 "*.d.f.ip6.arpa",
@@ -619,6 +643,9 @@ mod tests {
                 "a1.mzstatic.com",
                 "*.akamaized.net",
                 "cloudflare-dns.com",
+                ALIDNS_DOH_HOST,
+                "*.expertwifi.net",
+                "*.keenetic.net",
                 "*.tplinkwifi.net",
                 "tplinklogin.net",
                 "*.c.f.ip6.arpa",
@@ -650,6 +677,40 @@ mod tests {
             assert_eq!(module.contains("[Rule]"), firewall);
             assert_eq!(module.contains("SYNCED PORT RULES START"), firewall);
             assert!(!module.contains(",DIRECT"));
+        }
+    }
+
+    #[test]
+    fn optional_alidns_has_one_encrypted_endpoint_and_exact_dual_stack_bootstrap() {
+        for (shadowrocket, setting) in [
+            (false, "encrypted-dns-server ="),
+            (true, "fallback-dns-server = %APPEND%"),
+        ] {
+            let module = render_alidns(shadowrocket, "test");
+            let (_, body) = module.split_once("[General]\n").unwrap();
+            let (general, rest) = body.split_once("\n\n[Host]\n").unwrap();
+            assert_eq!(
+                general,
+                format!(
+                    "{setting} https://{ALIDNS_DOH_HOST}/dns-query{}",
+                    if shadowrocket {
+                        ""
+                    } else {
+                        "\nencrypted-dns-skip-cert-verification = false"
+                    }
+                )
+            );
+            let (hosts, mitm) = rest.split_once("\n\n[MITM]\n").unwrap();
+            let (host, mapping) = hosts.split_once(" = ").unwrap();
+            assert_eq!(host, ALIDNS_DOH_HOST);
+            let addresses: Vec<IpAddr> = mapping
+                .split(',')
+                .map(|ip| ip.trim().parse().unwrap())
+                .collect();
+            assert_eq!(addresses.iter().filter(|ip| ip.is_ipv4()).count(), 2);
+            assert_eq!(addresses.iter().filter(|ip| ip.is_ipv6()).count(), 2);
+            assert_eq!(mitm.trim_end(), format!("hostname = %INSERT% -{host}"));
+            assert!(!module.contains("[Rule]"));
         }
     }
 }

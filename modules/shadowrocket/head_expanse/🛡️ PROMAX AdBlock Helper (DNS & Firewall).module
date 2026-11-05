@@ -1,12 +1,9 @@
 #!name=🛡️ PROMAX AdBlock Helper (DNS & Firewall)
-#!desc=[🚀SR] 追加 AliDNS DoH 与双栈引导；指定局域网名称、设备入口和私网反查交给当前系统 DNS。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。
+#!desc=[🚀SR] 保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和私网反查交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。
 #!author=ScriptHub
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, DNS, Apple Safety
 #!version=2026.11.05
-
-[General]
-fallback-dns-server = %APPEND% https://dns.alidns.com/dns-query
 
 [Rule]
 # --- SYNCED PORT RULES START ---
@@ -148,7 +145,7 @@ aplogin.net = server:system
 asusrouter.com = server:system
 aterm.me = server:system
 console.gl-inet.com = server:system
-dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1
+expertwifi.net = server:system
 falogin.cn = server:system
 fritz.box = server:system
 home = server:system
@@ -164,6 +161,7 @@ localhost = server:system
 melogin.cn = server:system
 miwifi.com = server:system
 mobile.hotspot = server:system
+my.keenetic.net = server:system
 ntt.setup = server:system
 orbilogin.com = server:system
 orbilogin.net = server:system

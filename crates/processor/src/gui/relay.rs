@@ -248,6 +248,7 @@ pub(super) struct RelayState {
     pub preview_names: Vec<Zeroizing<String>>,
     pub preview_endpoints: Vec<Zeroizing<String>>,
     pub reveal_preview_details: bool,
+    pub last_preview_counts: Option<(usize, usize)>,
     pub allow_public_output: bool,
     pub acknowledge_publish: bool,
     pub allow_plaintext: bool,
@@ -331,12 +332,27 @@ impl EditorState {
 
     pub fn reset(&mut self) {
         self.options = Default::default();
+        self.reset_node_edits();
+    }
+
+    pub(super) fn reset_node_edits(&mut self) {
         for row in &mut self.rows {
             row.included = true;
             row.name.zeroize();
             row.name.push_str(&row.original);
         }
         self.reveal = false;
+    }
+
+    pub(super) fn clear_node_widgets(&self, ctx: &egui::Context) {
+        ctx.data_mut(|data| {
+            for row in &self.rows {
+                data.remove::<egui::text_edit::TextEditState>(egui::Id::unique((
+                    "relay-node-name",
+                    row.index,
+                )));
+            }
+        });
     }
 }
 
@@ -437,6 +453,7 @@ impl RelayState {
             preview_names: Vec::new(),
             preview_endpoints: Vec::new(),
             reveal_preview_details: false,
+            last_preview_counts: None,
             allow_public_output: false,
             acknowledge_publish: false,
             allow_plaintext: false,
@@ -710,6 +727,7 @@ impl RelayState {
 
     pub(super) fn accept_scheduled(&mut self, result: RelayResult) {
         self.reveal_preview_details = false;
+        self.last_preview_counts = None;
         let content = result
             .source
             .as_ref()
@@ -770,6 +788,7 @@ impl RelayState {
     pub(super) fn clear_editor_widgets(&self, ctx: &egui::Context) {
         if let Some(editor) = &self.editor {
             super::pages::clear_node_operations(ctx, &editor.options.pipeline);
+            editor.clear_node_widgets(ctx);
         }
         ctx.data_mut(|data| {
             for id in [
@@ -780,14 +799,6 @@ impl RelayState {
                 "relay-paste",
             ] {
                 data.remove::<egui::text_edit::TextEditState>(egui::Id::unique(id));
-            }
-            if let Some(editor) = &self.editor {
-                for row in &editor.rows {
-                    data.remove::<egui::text_edit::TextEditState>(egui::Id::unique((
-                        "relay-node-name",
-                        row.index,
-                    )));
-                }
             }
         });
     }
@@ -839,6 +850,7 @@ impl RelayState {
         self.schedule.stop();
         self.allow_resolution = false;
         self.reveal_preview_details = false;
+        self.last_preview_counts = None;
         self.preview_names.clear();
         self.preview_endpoints.clear();
         self.error = None;
@@ -1061,6 +1073,7 @@ impl RelayState {
         }
         self.token.zeroize();
         self.step = RelayStep::Source;
+        self.review_pane = ReviewPane::Operations;
         self.reveal_source = false;
         self.reveal_token = false;
         self.reveal_output = false;
@@ -1069,6 +1082,8 @@ impl RelayState {
         self.editor = None;
         self.preview_names.clear();
         self.preview_endpoints.clear();
+        self.reveal_preview_details = false;
+        self.last_preview_counts = None;
         self.completed_config = None;
         self.source.zeroize();
         self.source_file.zeroize();
@@ -1129,6 +1144,7 @@ impl RelayState {
             self.reveal_source = false;
             self.reveal_token = false;
             self.reveal_output = false;
+            self.reveal_preview_details = false;
             self.reveal_paste = false;
             self.reveal_identity = false;
             super::templates::clear_secret_widget(ctx, SECRET_IDS[6]);
@@ -1167,6 +1183,7 @@ impl RelayState {
         match (joined, result) {
             (Ok(()), Ok(Ok(mut result))) => {
                 self.format_feedback = None;
+                self.last_preview_counts = None;
                 if pending.mode == RunMode::Publish {
                     self.completed_config = Some(self.private_config(self.engine_path()));
                 }
@@ -1861,6 +1878,17 @@ impl RelayState {
             config.0.local_content = Some(editor.source.clone());
         }
         if mode != RunMode::Publish {
+            // A prior result can be reported, but must not be reused for output after a retry.
+            if mode == RunMode::Preview {
+                if let Some(previous) = &self.result {
+                    self.last_preview_counts = Some((
+                        previous.total,
+                        previous.total.saturating_sub(previous.removed),
+                    ));
+                }
+            } else {
+                self.last_preview_counts = None;
+            }
             self.completed_config = Some(self.private_config(engine));
             self.result = None;
             self.format_feedback = None;
@@ -3218,6 +3246,7 @@ mod tests {
         state.editor =
             Some(EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap());
         state.editor.as_mut().unwrap().reveal = true;
+        state.reveal_preview_details = true;
         let id = egui::Id::unique(("relay-node-name", 0));
         egui::text_edit::TextEditState::default().store(&ctx, id);
         let mut input = egui::RawInput::default();
@@ -3225,7 +3254,59 @@ mod tests {
         let output = ctx.run_ui(input, |ui| state.tick(ui.ctx()));
         output.drop_without_applying_deltas();
         assert!(!state.editor.as_ref().unwrap().reveal);
+        assert!(!state.reveal_preview_details);
         assert!(egui::text_edit::TextEditState::load(&ctx, id).is_none());
+    }
+
+    #[test]
+    fn reset_node_edits_keeps_processing_steps() {
+        use crate::relay::model::pipeline::{Operation, Step};
+
+        let mut editor =
+            EditorState::new("A = socks5, node.example.invalid, 1080\n", None).unwrap();
+        editor.rows[0].name.push_str(" renamed");
+        editor.rows[0].included = false;
+        editor.options.pipeline.push(Step {
+            id: 9,
+            enabled: true,
+            operation: Operation::Deduplicate,
+        });
+        editor.reset_node_edits();
+        let processing = editor.processing();
+        assert!(processing.nodes.is_empty());
+        assert_eq!(processing.pipeline[0].id, 9);
+    }
+
+    #[test]
+    fn failed_preview_retry_retains_counts_but_never_keeps_publishable_output() {
+        let ctx = egui::Context::default();
+        let mut state = fixture();
+        let mut previous = result();
+        previous.total = 3;
+        previous.removed = 1;
+        state.local_content = Some(previous.content.clone());
+        state.result = Some(previous);
+        state
+            .preview_names
+            .push(Zeroizing::new("private demo node".to_owned()));
+        state.reveal_preview_details = true;
+        state.start_with(RunMode::Preview, Path::new(""), |_, _, _, _, _| {
+            Err(RelayError::InputUnavailable)
+        });
+        assert_eq!(state.last_preview_counts, Some((3, 2)));
+        assert!(state.result.is_none());
+        finish(&mut state, &ctx);
+        assert!(matches!(
+            state.error,
+            Some(Failure::Operation(RelayError::InputUnavailable))
+        ));
+        assert!(state.result.is_none() && state.preview_names.is_empty());
+        assert!(
+            !state.reveal_preview_details && !state.allow_plaintext && !state.acknowledge_publish
+        );
+        assert_eq!(state.last_preview_counts, Some((3, 2)));
+        state.invalidate_result();
+        assert!(state.last_preview_counts.is_none());
     }
     #[test]
     fn validation_messages_follow_the_selected_language() {

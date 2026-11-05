@@ -37,6 +37,19 @@ pub struct Entry {
     pub publish: PublishSettings,
 }
 
+impl Entry {
+    fn script_source_kind(&self) -> &'static str {
+        if self.source.trim().is_empty() {
+            return "local";
+        }
+        match super::input::target(self.source.trim(), &self.source_file) {
+            Ok(super::input::Target::Gist(_)) => "gist",
+            Ok(super::input::Target::Https(_)) => "https",
+            Err(_) => "unknown",
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 #[serde(deny_unknown_fields)]
 pub struct Collection {
@@ -309,7 +322,14 @@ impl Workspace {
                 serde_json::to_writer(&mut *old, &existing.processing)
                     .map_err(|_| Error::Invalid)?;
                 serde_json::to_writer(&mut *new, &entry.processing).map_err(|_| Error::Invalid)?;
-                if existing.content != entry.content || *old != *new {
+                // Member scripts can change which nodes occupy a collection position.
+                let changed_script_context =
+                    model::pipeline::has_script(&existing.processing.pipeline)
+                        && (existing.script_source_kind() != entry.script_source_kind()
+                            || (existing.name != entry.name
+                                && super::RelayConfig::script_source_label(&existing.name)
+                                    != super::RelayConfig::script_source_label(&entry.name)));
+                if existing.content != entry.content || *old != *new || changed_script_context {
                     return Err(Error::Referenced);
                 }
             }
@@ -353,6 +373,9 @@ impl Workspace {
                 .iter_mut()
                 .find(|item| item.id == collection.id)
                 .ok_or(Error::NotFound)?;
+            if slot.members != collection.members && !collection.processing.nodes.is_empty() {
+                return Err(Error::Referenced);
+            }
             *slot = collection;
             Ok(())
         })
@@ -409,15 +432,7 @@ impl Workspace {
                     super::export::OutputFormat::SingBox,
                     None,
                     &model::script::SourceContext {
-                        kind: if entry.source.trim().is_empty() {
-                            "local"
-                        } else {
-                            match super::input::target(entry.source.trim(), &entry.source_file) {
-                                Ok(super::input::Target::Gist(_)) => "gist",
-                                Ok(super::input::Target::Https(_)) => "https",
-                                Err(_) => "unknown",
-                            }
-                        },
+                        kind: entry.script_source_kind(),
                         label: super::RelayConfig::script_source_label(&entry.name),
                         member_index: Some(member_index + 1),
                     },
@@ -630,6 +645,71 @@ mod tests {
         let mut renamed = w.subscriptions[0].clone();
         renamed.name = "renamed".into();
         assert!(w.update_entry(renamed).is_ok());
+    }
+
+    #[test]
+    fn referenced_index_edits_reject_changes_to_member_script_context() {
+        let mut workspace = Workspace::default();
+        let mut member = entry("first", NODE);
+        member.processing.pipeline.push(model::pipeline::Step {
+            id: 1,
+            enabled: true,
+            operation: model::pipeline::Operation::Script {
+                source: r#"fn operator(nodes, context) {
+                    if context.source_label == "first" && context.source_kind == "local" {
+                        nodes
+                    } else {
+                        []
+                    }
+                }"#
+                .into(),
+                arguments: Default::default(),
+            },
+        });
+        let first = workspace.add_entry(member).unwrap();
+        let second = workspace.add_entry(entry("second", NODE)).unwrap();
+        let mut group = collection(vec![first, second]);
+        group.processing.nodes.push(model::editor::NodeEdit {
+            index: 0,
+            included: false,
+            name: None,
+        });
+        let group = workspace.add_collection(group).unwrap();
+        let original = workspace.merge(group).unwrap();
+
+        let mut renamed = workspace.subscriptions[0].clone();
+        renamed.name = "renamed".into();
+        assert_eq!(workspace.update_entry(renamed), Err(Error::Referenced));
+        let mut remote = workspace.subscriptions[0].clone();
+        remote.source = "https://example.com/sub".into();
+        assert_eq!(workspace.update_entry(remote), Err(Error::Referenced));
+        assert_eq!(*workspace.merge(group).unwrap(), *original);
+    }
+
+    #[test]
+    fn changing_collection_members_requires_clearing_position_edits() {
+        let mut workspace = Workspace::default();
+        let first = workspace.add_entry(entry("first", NODE)).unwrap();
+        let second = workspace.add_entry(entry("second", NODE)).unwrap();
+        let mut group = collection(vec![first, second]);
+        group.processing.nodes.push(model::editor::NodeEdit {
+            index: 0,
+            included: false,
+            name: None,
+        });
+        workspace.add_collection(group).unwrap();
+
+        let mut reordered = workspace.collections[0].clone();
+        reordered.members.reverse();
+        assert_eq!(
+            workspace.update_collection(reordered.clone()),
+            Err(Error::Referenced)
+        );
+        assert_eq!(workspace.collections[0].members, [first, second]);
+
+        reordered.processing.nodes.clear();
+        workspace.update_collection(reordered).unwrap();
+        assert_eq!(workspace.collections[0].members, [second, first]);
     }
 
     #[test]

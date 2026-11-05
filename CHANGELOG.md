@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Keep existing DNS providers in the AdBlock Helper and offer AliDNS as a separate, opt-in module.
+- Keep the last relay preview counts after a failed retry without exposing or reusing its output; hide preview addresses when the window loses focus.
+- Reject collection edits that could target the wrong node; reset individual node edits without losing processing steps.
+
 - Separate relay operations, input nodes, and output preview; keep private output details hidden until explicitly revealed.
 - Protect exact encrypted resolver endpoints from older Helper configurations without selecting them or adding DNS mappings.
 

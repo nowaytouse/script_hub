@@ -1,0 +1,15 @@
+#!name=🔐 AliDNS DoH (Opt-In)
+#!desc=[🚀SR] 可选：将 AliDNS 加入备用 DNS，保留已有设置。需要时单独启用。
+#!author=ScriptHub
+#!category=『 🔝 Head Expanse › 首端扩域 』
+#!tag=DNS, Optional
+#!version=2026.11.05
+
+[General]
+fallback-dns-server = %APPEND% https://dns.alidns.com/dns-query
+
+[Host]
+dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1
+
+[MITM]
+hostname = %INSERT% -dns.alidns.com

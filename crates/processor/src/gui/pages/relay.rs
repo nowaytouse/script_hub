@@ -142,8 +142,12 @@ impl HubApp {
                             } else {
                                 Text::RelayWorking
                             });
-                            if let Some(result) = state.result.as_ref().filter(|result| !result.content.is_empty()) {
-                                ui.weak(format!("{} · {}: {}", tr(Text::RelayPreviousPreview), tr(Text::RelayOutputNodeCount), result.total.saturating_sub(result.removed)));
+                            let last_count = state.last_preview_counts.map(|(_, count)| count).or_else(|| {
+                                state.result.as_ref().filter(|result| !result.content.is_empty())
+                                    .map(|result| result.total.saturating_sub(result.removed))
+                            });
+                            if let Some(count) = last_count {
+                                ui.weak(format!("{} · {}: {count}", tr(Text::RelayPreviousPreview), tr(Text::RelayOutputNodeCount)));
                             }
                             if progress.is_some_and(|progress| progress.stage == RelayStage::Publish) {
                                 ui.weak(tr(Text::RelayCancelWriteWarning));
@@ -490,22 +494,35 @@ impl HubApp {
                                                 );
                                         }
                                         let mut reset = false;
-                                        ui.menu_button(tr(Text::RelayResetOriginal), |ui| {
-                                            ui.label(tr(Text::RelayReviewResetHelp));
-                                            if ui.button(tr(Text::RelayReviewResetConfirm)).clicked() {
-                                                reset = true;
-                                                ui.close();
-                                            }
+                                        let nodes_only = state.review_pane == ReviewPane::Nodes;
+                                        let (label, help, confirm) = if nodes_only {
+                                            (Text::RelayResetNodeEdits, Text::RelayResetNodeEditsHelp, Text::RelayResetNodeEditsConfirm)
+                                        } else {
+                                            (Text::RelayResetOriginal, Text::RelayReviewResetHelp, Text::RelayReviewResetConfirm)
+                                        };
+                                        ui.add_enabled_ui(!nodes_only || editor.rows.iter().any(|row| !row.included || row.name != row.original), |ui| {
+                                            ui.menu_button(tr(label), |ui| {
+                                                ui.label(tr(help));
+                                                if ui.button(tr(confirm)).clicked() {
+                                                    reset = true;
+                                                    ui.close();
+                                                }
+                                            });
                                         });
                                         if reset {
-                                            super::node_operations::clear_widgets(
-                                                ui.ctx(),
-                                                &editor.options.pipeline,
-                                            );
-                                            editor.reset();
-                                            reset_editor_widgets = true;
-                                            state.rename = false;
-                                            state.sort = false;
+                                            if nodes_only {
+                                                editor.reset_node_edits();
+                                                editor.clear_node_widgets(ui.ctx());
+                                            } else {
+                                                super::node_operations::clear_widgets(
+                                                    ui.ctx(),
+                                                    &editor.options.pipeline,
+                                                );
+                                                editor.reset();
+                                                reset_editor_widgets = true;
+                                                state.rename = false;
+                                                state.sort = false;
+                                            }
                                             changed = true;
                                         }
                                         if changed {
@@ -585,6 +602,15 @@ fn show_output_preview(
     tr: &impl Fn(Text) -> &'static str,
 ) {
     let Some(result) = &state.result else {
+        if let Some((total, processed)) = state.last_preview_counts {
+            ui.strong(tr(Text::RelayPreviousPreview));
+            ui.horizontal_wrapped(|ui| {
+                ui.label(format!("{}: {total}", tr(Text::RelayTotal)));
+                ui.label(format!("{}: {processed}", tr(Text::RelayOutputNodeCount)));
+            });
+            ui.weak(tr(Text::RelayPreviousPreviewOnly));
+            return;
+        }
         ui.weak(tr(Text::RelayReviewNeedsPreview));
         return;
     };
@@ -670,6 +696,12 @@ fn review_actions(
             (true, false) => Text::RelayReviewEmptyResult,
             _ => Text::RelayReviewNeedsPreview,
         }));
+        if state.review_pane != ReviewPane::Preview
+            && state.result.is_none()
+            && state.last_preview_counts.is_some()
+        {
+            ui.weak(tr(Text::RelayPreviousPreviewOnly));
+        }
         if needs_resolution {
             let providers = state
                 .resolution_providers()
