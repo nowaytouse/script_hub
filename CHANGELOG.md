@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Temporarily pin age exactly to 0.11.5 while retaining locked dependency audits.
+- Import deterministic Sub-Store name sorting into the native pipeline, with UTF-16 order, stable equal-name ties, and collection member-name support.
+- Keep saved subscription and collection previews faithful to their processing plans without implicit name decoration or ordering.
+
 - Keep DNS Helpers free of firewall rules; compile the current validated port denylist into PROMAX instead of reading a missing legacy path.
 - Add Steven Black's MIT-licensed original hosts through the existing safety pipeline; preserve exact aliases and ignore real-IP mappings.
 - Protect categorized content-service roots from advertising lists without exempting their ad subdomains or threat-intelligence indicators.

@@ -117,12 +117,30 @@ fn processor_args(item: &Value) -> Option<&Value> {
     }) {
         return None;
     }
-    item.get("args")
+    Some(item.get("args").unwrap_or(&Value::Null))
 }
 
 fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
     let args = processor_args(item)?;
     match item.get("type")?.as_str()? {
+        "Sort Operator" => {
+            let descending = match item.get("args") {
+                None => false,
+                Some(value) => match value.as_str()? {
+                    "asc" => false,
+                    "desc" => true,
+                    _ => return None,
+                },
+            };
+            Some(Operation::Sort {
+                key: if collection {
+                    pipeline::SortKey::MemberNameUtf16
+                } else {
+                    pipeline::SortKey::NameUtf16
+                },
+                descending,
+            })
+        }
         "Type Filter" => {
             let types = args
                 .as_array()
@@ -809,6 +827,62 @@ mod tests {
             assert!(steps.is_empty());
             assert_eq!(unsupported, 2);
         }
+    }
+
+    #[test]
+    fn imports_only_supported_sub_store_sorts_transactionally() {
+        let missing = serde_json::json!({"type":"Sort Operator"});
+        assert!(matches!(
+            convert_processor(&missing, false),
+            Some(Operation::Sort {
+                key: pipeline::SortKey::NameUtf16,
+                descending: false
+            })
+        ));
+        let unknown = serde_json::json!({"type":"Sort Operator", "unknown":true});
+        assert!(convert_processor(&unknown, false).is_none());
+        for kind in [
+            "Type Filter",
+            "Regex Filter",
+            "Regex Sort Operator",
+            "Flag Operator",
+            "Regex Rename Operator",
+            "Regex Delete Operator",
+            "Quick Setting Operator",
+        ] {
+            let missing = serde_json::json!({"type":kind});
+            assert!(convert_processor(&missing, false).is_none());
+            assert!(quick_settings(&missing).is_none());
+        }
+        for (order, descending) in [("asc", false), ("desc", true)] {
+            for collection in [false, true] {
+                let item = serde_json::json!({"type": "Sort Operator", "args": order});
+                assert!(
+                    matches!(convert_processor(&item, collection), Some(Operation::Sort { key, descending: d })
+                    if d == descending && key == if collection { pipeline::SortKey::MemberNameUtf16 } else { pipeline::SortKey::NameUtf16 })
+                );
+            }
+        }
+        for args in [
+            serde_json::json!("random"),
+            serde_json::json!(null),
+            serde_json::json!({"order":"asc"}),
+        ] {
+            let item = serde_json::json!({"process": [
+                {"type":"Sort Operator", "args":args},
+                {"type":"Type Filter", "args":["ss"]}
+            ]});
+            let (steps, unsupported) = migrate_process(&item, false);
+            assert!(steps.is_empty());
+            assert_eq!(unsupported, 2);
+        }
+        let item = serde_json::json!({"process": [
+            {"type":"Regex Delete Operator", "args":["^A"]},
+            {"type":"Sort Operator", "args":"asc"}
+        ]});
+        let (steps, unsupported) = migrate_process(&item, true);
+        assert!(steps.is_empty());
+        assert_eq!(unsupported, 2);
     }
 
     #[test]

@@ -744,6 +744,7 @@ pub(super) fn show(
     colors: Palette,
     steps: &mut Vec<Step>,
     reports: &[StageReport],
+    collection: bool,
 ) -> bool {
     let tr = |key| text(language, key);
     let mut changed = false;
@@ -1024,18 +1025,32 @@ pub(super) fn show(
                         ui.horizontal_wrapped(|ui| {
                             for (candidate, label) in [
                                 (SortKey::Name, Text::OperationSortName),
+                                (SortKey::NameUtf16, Text::OperationSortNameUtf16),
+                                (SortKey::MemberNameUtf16, Text::OperationSortMemberNameUtf16),
                                 (SortKey::Protocol, Text::OperationSortProtocol),
                                 (SortKey::Region, Text::OperationSortRegion),
                                 (SortKey::NaturalName, Text::OperationSortNatural),
                                 (SortKey::Server, Text::OperationSortServer),
                                 (SortKey::Port, Text::OperationSortPort),
                             ] {
+                                if candidate == SortKey::MemberNameUtf16
+                                    && !collection
+                                    && *key != candidate
+                                {
+                                    continue;
+                                }
                                 if ui.selectable_label(*key == candidate, tr(label)).clicked() {
                                     *key = candidate;
                                     changed = true;
                                 }
                             }
                         });
+                        if matches!(key, SortKey::NameUtf16 | SortKey::MemberNameUtf16) {
+                            ui.weak(tr(Text::OperationSortUtf16Help));
+                        }
+                        if *key == SortKey::MemberNameUtf16 {
+                            ui.weak(tr(Text::OperationSortMemberNameHelp));
+                        }
                         changed |= ui
                             .checkbox(descending, tr(Text::OperationDescending))
                             .changed();
@@ -1904,7 +1919,7 @@ mod tests {
             |ui| {
                 egui::CentralPanel::default().show(ui, |ui| {
                     let boundary = ui.available_rect_before_wrap();
-                    show(ui, Language::En, colors, steps, &[]);
+                    show(ui, Language::En, colors, steps, &[], false);
                     assert!(ui.min_rect().right() <= boundary.right() + 0.5);
                 });
             },
@@ -1915,6 +1930,63 @@ mod tests {
 
     fn open_for_next_frame(ctx: &egui::Context, id: u64) {
         ctx.data_mut(|data| data.insert_temp(opening_step_id(), id));
+    }
+
+    #[test]
+    fn utf16_sort_controls_explain_ties_and_only_offer_member_keys_in_collections() {
+        for collection in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            theme::apply(&ctx, &Preferences::default());
+            let colors = theme::palette(false, Preferences::default().accent);
+            let mut steps = vec![Step {
+                id: 1,
+                enabled: true,
+                operation: Operation::Sort {
+                    key: SortKey::NameUtf16,
+                    descending: false,
+                },
+            }];
+            open_for_next_frame(&ctx, 1);
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(320.0, 1200.0),
+                    )),
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, |ui| {
+                        let boundary = ui.available_rect_before_wrap();
+                        show(ui, Language::En, colors, &mut steps, &[], collection);
+                        assert!(ui.min_rect().right() <= boundary.right() + 0.5);
+                    });
+                },
+            );
+            output.textures_delta.clear();
+            let update = output.platform_output.accesskit_update.as_ref().unwrap();
+            let has = |key| {
+                update
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some(text(Language::En, key)))
+            };
+            assert!(has(Text::OperationSortNameUtf16));
+            let labels = update
+                .nodes
+                .iter()
+                .filter_map(|(_, node)| node.label().or_else(|| node.value()))
+                .collect::<Vec<_>>()
+                .join(" ");
+            let labels = labels.split_whitespace().collect::<Vec<_>>().join(" ");
+            assert!(
+                labels.contains(text(Language::En, Text::OperationSortUtf16Help)),
+                "{labels}"
+            );
+            assert_eq!(has(Text::OperationSortMemberNameUtf16), collection);
+            output.drop_without_applying_deltas();
+        }
     }
 
     fn click_label(
@@ -2467,7 +2539,7 @@ mod tests {
                     |ui| {
                         egui::CentralPanel::default().show(ui, |ui| {
                             let boundary = ui.available_rect_before_wrap();
-                            show(ui, Language::En, colors, steps, &[]);
+                            show(ui, Language::En, colors, steps, &[], false);
                             assert!(ui.min_rect().right() <= boundary.right() + 0.5);
                         });
                     },

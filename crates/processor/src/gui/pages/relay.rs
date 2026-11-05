@@ -425,6 +425,7 @@ impl HubApp {
                                                 .result
                                                 .as_ref()
                                                 .map_or(&[], |result| result.stages.as_slice()),
+                                            matches!(state.workspace.selected, Some(crate::gui::subscriptions::Selection::Collection(_))),
                                         );
                                         if state.review_pane == ReviewPane::Operations && (state.rename || state.sort) {
                                             ui.horizontal_wrapped(|ui| {

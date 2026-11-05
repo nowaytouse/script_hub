@@ -529,6 +529,8 @@ impl RelayState {
                             Zeroizing::new(entry.name.clone())
                         };
                         if entry.content.is_empty() {
+                            self.rename = false;
+                            self.sort = false;
                             self.source = Zeroizing::new(entry.source.clone());
                             self.source_file = Zeroizing::new(entry.source_file.clone());
                             self.imported_processing = Some(entry.processing.clone());
@@ -540,6 +542,8 @@ impl RelayState {
                                         source: entry.source.clone(),
                                         source_file: entry.source_file.clone(),
                                         processing: entry.processing.clone(),
+                                        rename: false,
+                                        sort: false,
                                         ..Default::default()
                                     },
                                     content: Zeroizing::new(entry.content.clone()),
@@ -659,6 +663,8 @@ impl RelayState {
                         Box::new(RelayBackup {
                             config: RelayConfig {
                                 processing: prepared.processing,
+                                rename: false,
+                                sort: false,
                                 output: publish.output.clone(),
                                 output_file: publish.output_file.clone(),
                                 output_format: publish.format,
@@ -776,6 +782,43 @@ impl RelayState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn opening_a_saved_subscription_does_not_add_implicit_name_edits() {
+        let ctx = egui::Context::default();
+        let mut relay = RelayState::new(true);
+        relay.workspace.checked = true;
+        relay.workspace.data = crate::relay::demo::workspace().unwrap();
+        let id = relay.workspace.data.subscriptions[0].id;
+        relay.execute_workspace(&ctx, Action::Open(Selection::Subscription(id)));
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while relay.busy() && std::time::Instant::now() < deadline {
+            relay.tick(&ctx);
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        assert!(!relay.busy() && relay.error.is_none());
+        assert!(relay.editor.is_some());
+        assert!(!relay.rename && !relay.sort);
+    }
+
+    #[test]
+    fn building_a_saved_collection_keeps_implicit_name_edits_off() {
+        let ctx = egui::Context::default();
+        let mut relay = RelayState::new(true);
+        relay.workspace.checked = true;
+        relay.workspace.data = crate::relay::demo::workspace().unwrap();
+        let id = relay.workspace.data.collections[0].id;
+        relay.execute_workspace(&ctx, Action::Open(Selection::Collection(id)));
+        relay.prepare_collection(false);
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while relay.busy() && std::time::Instant::now() < deadline {
+            relay.tick(&ctx);
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        assert!(!relay.busy() && relay.error.is_none());
+        assert!(relay.editor.is_some());
+        assert!(!relay.rename && !relay.sort);
+    }
 
     #[test]
     fn cancelling_import_picker_leaves_the_original_dirty_draft_active() {

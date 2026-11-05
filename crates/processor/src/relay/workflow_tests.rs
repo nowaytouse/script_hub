@@ -19,6 +19,84 @@ fn config() -> RelayConfig {
 }
 
 #[test]
+fn migrated_sub_store_sort_survives_preview_exports_and_backup() {
+    use export::{OutputFormat, export_subscription};
+    let backup = r#"{
+        "subs":[
+            {"name":"A","source":"local","content":"[Proxy]\n𐀀 = socks5, a.invalid, 1080\nZ = socks5, b.invalid, 1080\nX = socks5, e.invalid, 1080\n", "process":[{"type":"Sort Operator","args":"asc"}]},
+            {"name":"B","source":"local","content":"[Proxy]\n = socks5, c.invalid, 1080\nA = socks5, d.invalid, 1080\nX = socks5, f.invalid, 1080\n"}
+        ],
+        "collections":[
+            {"name":"Ascending","subscriptions":["A","B"],"process":[{"type":"Sort Operator","args":"asc"}]},
+            {"name":"Descending","subscriptions":["A","B"],"process":[{"type":"Sort Operator","args":"desc"}]}
+        ]
+    }"#;
+    let report = compat::import(backup.as_bytes()).unwrap();
+    assert_eq!(report.unsupported_count, 0);
+    let (workspace, _) =
+        library_import::import(&library::Workspace::default(), &report, true).unwrap();
+    let workspace = library::Workspace::decode(&workspace.encode().unwrap()).unwrap();
+    for (content, processing, collection, expected) in [
+        (
+            Zeroizing::new(workspace.subscriptions[0].content.clone()),
+            workspace.subscriptions[0].processing.clone(),
+            false,
+            vec!["X", "Z", "𐀀"],
+        ),
+        (
+            workspace.merge(workspace.collections[0].id).unwrap(),
+            workspace.collections[0].processing.clone(),
+            true,
+            vec!["2: A", "1: X", "2: X", "1: Z", "1: 𐀀", "2: "],
+        ),
+        (
+            workspace.merge(workspace.collections[1].id).unwrap(),
+            workspace.collections[1].processing.clone(),
+            true,
+            vec!["2: ", "1: 𐀀", "1: Z", "1: X", "2: X", "2: A"],
+        ),
+    ] {
+        let mut cfg = config();
+        cfg.source.clear();
+        cfg.output.clear();
+        cfg.local_content = Some(content.clone());
+        cfg.expected_source = Some(content.clone());
+        cfg.processing = processing;
+        cfg.test_nodes = false;
+        if collection {
+            cfg.script_source.kind = "collection";
+        }
+        if !collection {
+            let restored = backup::decode(&backup::encode(&cfg, &content).unwrap()).unwrap();
+            cfg = restored.config.clone();
+            cfg.local_content = Some(restored.content.clone());
+            cfg.test_nodes = false;
+        }
+        let fixture = Fixture::new(vec![]);
+        let preview = run_with(
+            &cfg,
+            &fixture.client(),
+            RunMode::Preview,
+            &AtomicBool::new(false),
+            &|_| {},
+            &|_, _, _, _| panic!("sort must not check nodes"),
+        )
+        .unwrap();
+        for format in [
+            OutputFormat::Surge,
+            OutputFormat::Mihomo,
+            OutputFormat::SingBox,
+        ] {
+            let exported = export_subscription(&preview.content, format).unwrap();
+            let parsed = model::Subscription::parse(&exported).unwrap();
+            let names: Vec<_> = parsed.nodes().iter().map(model::Node::name).collect();
+            assert_eq!(names, expected);
+        }
+        assert!(fixture.request_methods().is_empty());
+    }
+}
+
+#[test]
 fn migrated_empty_filter_cannot_publish_an_empty_subscription() {
     let backup = br#"{"subs":[{"name":"Sample","source":"local","content":"A = http, first.invalid, 80\n","process":[{"type":"Regex Filter","args":{"regex":[],"keep":true}}]}]}"#;
     let report = compat::import(backup).unwrap();

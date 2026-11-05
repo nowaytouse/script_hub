@@ -24,6 +24,8 @@ Subscription-level **Regex Rename** and **Regex Delete** migrate to editable bat
 
 Subscription-level **Remove Flags** also migrates: it removes country, pirate, and rainbow flags anywhere in a name, then trims it. Adding flags is not migrated.
 
+**Name Sort** migrates ascending/descending UTF-16 order; equal names keep their input order. Random order is not migrated. Library previews do not add implicit name decoration or sorting.
+
 **Regex Sort** migrates portable patterns in priority order and preserves the ascending, descending, or original order selected for unmatched names. Imported collection sorts compare member names before Script Hub adds its prefixes; output names keep their prefixes. **Quick Setting** can migrate UDP, TCP Fast Open, and explicitly enabled certificate verification. A Quick Setting with other active fields, including a TLS verification bypass, is not partially applied.
 
 Classic age X25519 backups can be unlocked with their private key. Encrypted export wraps a Hub backup for an `age1…` recipient; keep the matching private key separately. Keys are not saved. Passphrase, SSH, plugin and post-quantum age formats are unsupported. Input limit: 8 MiB encrypted, 4 MiB decrypted, 8 KiB decoded header.

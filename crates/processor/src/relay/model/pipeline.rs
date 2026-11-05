@@ -273,6 +273,8 @@ pub fn has_resolution(steps: &[Step]) -> bool {
 #[serde(rename_all = "snake_case")]
 pub enum SortKey {
     Name,
+    NameUtf16,
+    MemberNameUtf16,
     Protocol,
     Region,
     NaturalName,
@@ -1400,6 +1402,18 @@ pub(super) fn apply(
                 }
             }
             Operation::Sort { key, descending } => {
+                let mut member_names = Vec::new();
+                if *key == SortKey::MemberNameUtf16 {
+                    if source_context.kind != "collection" {
+                        return Err(ModelError::InvalidEdit);
+                    }
+                    member_names.resize(names.len(), "");
+                    for &i in order.iter() {
+                        member_names[i] =
+                            super::super::library::collection_member_name(sub.nodes[i].name())
+                                .ok_or(ModelError::InvalidEdit)?;
+                    }
+                }
                 let mut regions = Vec::new();
                 if *key == SortKey::Region {
                     regions.resize(names.len(), *b"ZZ");
@@ -1410,6 +1424,10 @@ pub(super) fn apply(
                 order.sort_by(|&a, &b| {
                     let cmp = match key {
                         SortKey::Name => names[a].cmp(&names[b]),
+                        SortKey::NameUtf16 => names[a].encode_utf16().cmp(names[b].encode_utf16()),
+                        SortKey::MemberNameUtf16 => member_names[a]
+                            .encode_utf16()
+                            .cmp(member_names[b].encode_utf16()),
                         SortKey::NaturalName => natural_cmp(&names[a], &names[b]),
                         SortKey::Server => mutations[a]
                             .address
@@ -3073,6 +3091,60 @@ mod tests {
         )
         .unwrap();
         assert_eq!(out.retained, vec![0]);
+    }
+
+    #[test]
+    fn utf16_name_sort_keeps_equal_names_stable_in_both_directions() {
+        let source = "Same = http, first.invalid, 80\nSAME = http, second.invalid, 80\n\u{e000} = http, third.invalid, 80\n𐀀 = http, fourth.invalid, 80\nA = http, fifth.invalid, 80\n";
+        for (descending, expected) in [(false, [4, 0, 1, 3, 2]), (true, [2, 3, 0, 1, 4])] {
+            let out = run(
+                source,
+                vec![
+                    step(
+                        3,
+                        Operation::NormalizeName {
+                            case: NameCase::Lower,
+                            trim: false,
+                            collapse_whitespace: false,
+                        },
+                    ),
+                    step(
+                        1,
+                        Operation::Sort {
+                            key: SortKey::NameUtf16,
+                            descending,
+                        },
+                    ),
+                    step(
+                        2,
+                        Operation::UniqueNames {
+                            separator: " · ".into(),
+                        },
+                    ),
+                ],
+            )
+            .unwrap();
+            assert_eq!(out.retained, expected);
+            assert_eq!((out.stages[1].before, out.stages[1].after), (5, 5));
+        }
+    }
+
+    #[test]
+    fn member_utf16_sort_requires_collection_context() {
+        let source = "1: Z = http, first.invalid, 80\n2: A = http, second.invalid, 80\n";
+        assert!(
+            run(
+                source,
+                vec![step(
+                    1,
+                    Operation::Sort {
+                        key: SortKey::MemberNameUtf16,
+                        descending: false,
+                    }
+                )]
+            )
+            .is_err()
+        );
     }
 
     #[test]
