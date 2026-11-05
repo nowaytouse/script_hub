@@ -9,6 +9,7 @@
 # Local names selected from SukkaW/Surge (source data: AGPL-3.0): https://ruleset.skk.moe/Modules/Rules/sukka_local_dns_mapping/lan_without_real_ip.conf
 # Local names selected from IANA IPv4 Locally-Served DNS Zones (registry data: CC0-1.0): https://www.iana.org/assignments/locally-served-dns-zones/ipv4.csv
 # Local names selected from IANA IPv6 Locally-Served DNS Zones (registry data: CC0-1.0): https://www.iana.org/assignments/locally-served-dns-zones/ipv6.csv
+# Local names selected from V2Fly/domain-list-community (source data: MIT): https://api.github.com/repos/v2fly/domain-list-community/contents/data/private?ref=master
 *.0.in-addr.arpa = server:system
 *.10.in-addr.arpa = server:system
 *.100.100.in-addr.arpa = server:system
@@ -222,6 +223,7 @@ huaweimobilewifi.com = server:system
 instant.arubanetworks.com = server:system
 internal = server:system
 lan = server:system
+leike.cc = server:system
 local = server:system
 localdomain = server:system
 localhost = server:system
@@ -229,12 +231,14 @@ melogin.cn = server:system
 miwifi.com = server:system
 mobile.hotspot = server:system
 my.keenetic.net = server:system
+my.router = server:system
 ntt.setup = server:system
 orbilogin.com = server:system
 orbilogin.net = server:system
 pi.hole = server:system
 repeater.asus.com = server:system
 router.asus.com = server:system
+router.ctc = server:system
 router.synology.com = server:system
 routerlogin.com = server:system
 routerlogin.net = server:system

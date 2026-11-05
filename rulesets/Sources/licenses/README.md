@@ -9,6 +9,7 @@
 | [Steven Black — own hosts only](https://github.com/StevenBlack/hosts/tree/master/data/StevenBlack) | [MIT](StevenBlack-MIT.txt) |
 | [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
 | [HaGeZi](https://github.com/hagezi/dns-blocklists) | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
+| [V2Fly private devices](https://github.com/v2fly/domain-list-community/blob/master/data/private) | [MIT](V2Fly-MIT.txt) |
 
 The [source manifests](../Links/) define scope. Conversion, deduplication, classification and quarantine preserve upstream licenses; app settings retain normal video posts, and the full CNAME clickthrough / microsites lists remain disabled.
 

@@ -77,6 +77,30 @@ impl Downloader {
         self.get_until(url, Some(Instant::now() + self.config.batch_timeout))
     }
 
+    pub(crate) fn get_github(&self, url: &str, token: &str) -> Result<String, DownloadError> {
+        if !url.parse::<ureq::http::Uri>().ok().is_some_and(|uri| {
+            uri.scheme_str() == Some("https")
+                && uri
+                    .authority()
+                    .is_some_and(|host| host.as_str() == "api.github.com")
+        }) || token.is_empty()
+            || token.len() > 4096
+            || !token
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.'))
+        {
+            return Err(DownloadError(
+                "invalid GitHub API authorization target or token".into(),
+            ));
+        }
+        self.get_candidates_authorized(
+            url,
+            &[url.to_string()],
+            Some(Instant::now() + self.config.batch_timeout),
+            Some(token),
+        )
+    }
+
     fn get_until(&self, url: &str, deadline: Option<Instant>) -> Result<String, DownloadError> {
         self.get_candidates_until(url, &download_candidates(url), deadline)
     }
@@ -86,6 +110,16 @@ impl Downloader {
         url: &str,
         candidates: &[String],
         deadline: Option<Instant>,
+    ) -> Result<String, DownloadError> {
+        self.get_candidates_authorized(url, candidates, deadline, None)
+    }
+
+    fn get_candidates_authorized(
+        &self,
+        url: &str,
+        candidates: &[String],
+        deadline: Option<Instant>,
+        token: Option<&str>,
     ) -> Result<String, DownloadError> {
         let attempts = self.config.attempts.max(1);
         let mut attempted_candidates = BTreeSet::new();
@@ -138,15 +172,21 @@ impl Downloader {
             let mut retryable = true;
             attempted_candidates.insert(candidate.as_str());
             performed_attempts += 1;
-            match self
+            let request = self
                 .agent
                 .get(candidate)
                 .config()
                 .timeout_global(Some(timeout))
                 .https_only(requires_https(candidate))
-                .build()
-                .call()
-            {
+                // Credentials must never follow a source relocation or mirror.
+                .max_redirects(if token.is_some() { 0 } else { 5 })
+                .build();
+            let request = if let Some(token) = token {
+                request.header("Authorization", format!("Bearer {token}"))
+            } else {
+                request
+            };
+            match request.call() {
                 Ok(mut response) if response.status().is_success() => {
                     match response
                         .body_mut()
@@ -612,6 +652,72 @@ mod tests {
             .unwrap();
         });
         (format!("http://{address}/rules.list"), server)
+    }
+
+    #[test]
+    fn github_authorization_rejects_other_origins_and_invalid_tokens_before_connecting() {
+        let downloader = Downloader::new(DownloadConfig::default());
+        let token = "unit_test_github_token";
+        for url in [
+            "http://api.github.com/repos/example",
+            "https://api.github.com.evil.test/repos/example",
+            "https://api.github.com@evil.test/repos/example",
+            "https://api.github.com:8443/repos/example",
+            "https://raw.githubusercontent.com/example/list",
+        ] {
+            let error = downloader.get_github(url, token).unwrap_err().to_string();
+            assert!(!error.contains(token));
+        }
+        for token in ["", "invalid token", "bad\r\nheader"] {
+            assert!(
+                downloader
+                    .get_github("https://api.github.com/repos/example", token)
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn authenticated_download_does_not_forward_credentials_on_redirects() {
+        let target = TcpListener::bind("127.0.0.1:0").unwrap();
+        target.set_nonblocking(true).unwrap();
+        let redirect = format!("http://{}/other", target.local_addr().unwrap());
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/source", listener.local_addr().unwrap());
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(Duration::from_secs(2)))
+                .unwrap();
+            let mut request = Vec::new();
+            while !request.ends_with(b"\r\n\r\n") && request.len() < 4096 {
+                let mut byte = [0];
+                stream.read_exact(&mut byte).unwrap();
+                request.extend(byte);
+            }
+            write!(stream, "HTTP/1.1 302 Found\r\nLocation: {redirect}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").unwrap();
+            String::from_utf8(request).unwrap()
+        });
+        let token = "unit_test_github_token";
+        let downloader = Downloader::new(DownloadConfig {
+            attempts: 1,
+            ..DownloadConfig::default()
+        });
+        let error = downloader
+            .get_candidates_authorized(&url, std::slice::from_ref(&url), None, Some(token))
+            .unwrap_err();
+        assert!(!error.to_string().contains(token));
+        assert!(
+            server
+                .join()
+                .unwrap()
+                .to_ascii_lowercase()
+                .contains("authorization: bearer unit_test_github_token\r\n")
+        );
+        assert_eq!(
+            target.accept().unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
     }
 
     fn serve_socks5_once(body: &str) -> (String, JoinHandle<()>) {

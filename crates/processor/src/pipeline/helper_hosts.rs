@@ -6,6 +6,7 @@ use std::time::Duration;
 use crate::promax::source::{DownloadConfig, Downloader};
 
 mod iana;
+mod v2fly;
 
 const SNAPSHOT: &str = "modules/source/local/sukka-lan-hosts.txt";
 const MAX_SOURCE_BYTES: u64 = 64 * 1024;
@@ -14,6 +15,7 @@ const MAX_SOURCE_BYTES: u64 = 64 * 1024;
 enum Format {
     Sukka,
     Iana { ipv6: bool },
+    V2Fly,
 }
 
 #[derive(Clone, Copy)]
@@ -43,6 +45,12 @@ const FEEDS: &[Feed] = &[
         attribution: "IANA IPv6 Locally-Served DNS Zones (registry data: CC0-1.0)",
         format: Format::Iana { ipv6: true },
     },
+    Feed {
+        url: "https://api.github.com/repos/v2fly/domain-list-community/contents/data/private?ref=master",
+        snapshot: "modules/source/local/v2fly-device-hosts.txt",
+        attribution: "V2Fly/domain-list-community (source data: MIT)",
+        format: Format::V2Fly,
+    },
 ];
 
 pub(super) fn source_comments() -> impl Iterator<Item = String> {
@@ -62,11 +70,14 @@ const DEVICE_NAMES: &[&str] = &[
     "homerouter.cpe",
     "huaweimobilewifi.com",
     "instant.arubanetworks.com",
+    "leike.cc",
     "mobile.hotspot",
+    "my.router",
     "ntt.setup",
     "pi.hole",
     "repeater.asus.com",
     "router.asus.com",
+    "router.ctc",
     "routerlogin.com",
     "routerlogin.net",
     "setmeup.arubanetworks.com",
@@ -92,6 +103,19 @@ fn supported(name: &str) -> bool {
     } else {
         local_zone(name) || iana::local_zone(name) || DEVICE_NAMES.contains(&name)
     }
+}
+
+fn valid_name(name: &str) -> bool {
+    name.len() <= 253
+        && name.split('.').all(|label| {
+            !label.is_empty()
+                && label.len() <= 63
+                && !label.starts_with('-')
+                && !label.ends_with('-')
+                && label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        })
 }
 
 fn filtered(source: &str) -> Result<BTreeSet<String>, String> {
@@ -136,17 +160,7 @@ fn filtered(source: &str) -> Result<BTreeSet<String>, String> {
         if name.ends_with(".skk.moe") && name.contains('_') {
             continue;
         }
-        if name.len() > 253
-            || name.split('.').any(|label| {
-                label.is_empty()
-                    || label.len() > 63
-                    || label.starts_with('-')
-                    || label.ends_with('-')
-                    || !label
-                        .bytes()
-                        .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
-            })
-        {
+        if !valid_name(&name) {
             return Err("invalid hostname in Sukka LAN source".into());
         }
         if !supported(&name) {
@@ -173,6 +187,7 @@ fn publish_feed(root: &Path, feed: Feed, source: &str) -> Result<(), String> {
     let hosts = match feed.format {
         Format::Sukka => filtered(source)?,
         Format::Iana { ipv6 } => iana::filtered(source, ipv6)?,
+        Format::V2Fly => v2fly::filtered(source)?,
     };
     let snapshot = root.join(feed.snapshot);
     match fs::symlink_metadata(&snapshot) {
@@ -227,7 +242,15 @@ pub(super) fn refresh(root: &Path) -> Result<(), String> {
         ..DownloadConfig::default()
     });
     refresh_with(root, |url| {
-        downloader.get(url).map_err(|error| error.to_string())
+        let response = if url.starts_with("https://api.github.com/") {
+            match std::env::var("GITHUB_TOKEN") {
+                Ok(token) if !token.is_empty() => downloader.get_github(url, &token),
+                _ => downloader.get(url),
+            }
+        } else {
+            downloader.get(url)
+        };
+        response.map_err(|error| error.to_string())
     })
 }
 
@@ -248,6 +271,7 @@ fn load_feed(root: &Path, feed: Feed) -> Result<BTreeSet<String>, String> {
         .map(|name| {
             let correct_source = match feed.format {
                 Format::Sukka => true,
+                Format::V2Fly => DEVICE_NAMES.contains(&name),
                 Format::Iana { ipv6 } => name
                     .strip_prefix("*.")
                     .unwrap_or(name)
@@ -281,18 +305,19 @@ pub(super) fn load(root: &Path) -> Result<Vec<String>, String> {
 pub(super) fn seed_test_snapshots(root: &Path) {
     fs::create_dir_all(root.join("modules/source/local")).unwrap();
     refresh_with(root, |url| {
-        if url == FEEDS[0].url {
-            Ok("# Size: 1\nDOMAIN,unifi\n### EOF ###".into())
-        } else {
-            let ipv6 = url == FEEDS[2].url;
-            let mut source = String::from("Zone,Description,Reference\n");
-            for host in iana::expected_hosts(ipv6)
-                .iter()
-                .filter(|host| !host.starts_with("*."))
-            {
-                source.push_str(&format!("{host},Local zone,[RFC]\n"));
+        match FEEDS.iter().find(|feed| feed.url == url).unwrap().format {
+            Format::Sukka => Ok("# Size: 1\nDOMAIN,unifi\n### EOF ###".into()),
+            Format::V2Fly => Ok(v2fly::test_document(&v2fly::test_source())),
+            Format::Iana { ipv6 } => {
+                let mut source = String::from("Zone,Description,Reference\n");
+                for host in iana::expected_hosts(ipv6)
+                    .iter()
+                    .filter(|host| !host.starts_with("*."))
+                {
+                    source.push_str(&format!("{host},Local zone,[RFC]\n"));
+                }
+                Ok(source)
             }
-            Ok(source)
         }
     })
     .unwrap();
@@ -493,7 +518,28 @@ DOMAIN,routerlogin.net.example.org
     }
 
     #[test]
-    #[ignore = "bounded live HTTPS requests to the official Sukka and IANA feeds"]
+    fn device_feed_updates_removals_and_keeps_last_good_data_on_invalid_input() {
+        let root = temp_root("helper-device-feed");
+        seed_test_snapshots(&root);
+        let feed = *FEEDS.last().unwrap();
+        let path = root.join(feed.snapshot);
+        let source = v2fly::test_source().replace("leike.cc\n", "");
+        publish_feed(&root, feed, &v2fly::test_document(&source)).unwrap();
+        assert!(!load_feed(&root, feed).unwrap().contains("leike.cc"));
+        let original = fs::read(&path).unwrap();
+        for invalid in ["<html>error</html>".to_string(), "a".repeat(65537)] {
+            assert!(publish_feed(&root, feed, &invalid).is_err());
+            assert_eq!(fs::read(&path).unwrap(), original);
+        }
+        for invalid in ["*.leike.cc\n", "*.lan\n", "apple.com\n"] {
+            fs::write(&path, invalid).unwrap();
+            assert!(load_feed(&root, feed).is_err());
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    #[ignore = "bounded live HTTPS requests to the official Helper feeds"]
     fn live_helper_refresh_runs_the_production_pipeline() {
         let stamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

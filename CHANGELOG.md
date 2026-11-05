@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Follow V2Fly's maintained private-device feed with exact, reviewed Host mappings and last-good recovery; keep routing and global DNS settings unchanged.
+- Scope authenticated GitHub feed reads to the official API without redirects; keep updater builds and external SRS compilation separate from those credentials.
 - Clarify backup import counts and identify deletion targets and collection dependencies before confirmation.
 - Migrate Sub-Store's explicit first-name duplicate deletion into a native, editable operation without silently changing linked-node identity.
 - Resolve the withdrawn serde-saphyr release using the latest non-yanked registry version, and refresh compatible psl, svgtypes, and winnow patches while retaining the age security hold.

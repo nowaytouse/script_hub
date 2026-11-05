@@ -169,15 +169,21 @@ jobs:
       id: baseline_validation
       run: cargo run --locked --manifest-path crates/processor/Cargo.toml --bin validate -- --root "$GITHUB_WORKSPACE"
 
+    - name: Build Rust updater without publication credentials
+      id: update_build
+      run: |
+        cargo build --release --locked --manifest-path crates/processor/Cargo.toml --bin update
+
     - name: Execute Rust Ruleset Update
       id: update
       run: |
-        cargo run --release --locked --manifest-path crates/processor/Cargo.toml --bin update -- \
+        "$CARGO_TARGET_DIR/release/update" \
           --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
       env:
         CI: 'true'
         GITHUB_ACTIONS: 'true'
         SCRIPTHUB_DOWNLOAD_CONCURRENCY: '4'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Validate generated modules
       id: generated_validation
@@ -212,6 +218,7 @@ jobs:
         RUST_SETUP: ${{ steps.rust_setup.outcome }}
         RUST_CHECKS: ${{ steps.rust_checks.outcome }}
         BASELINE_VALIDATION: ${{ steps.baseline_validation.outcome }}
+        UPDATER_BUILD: ${{ steps.update_build.outcome }}
         RULESET_UPDATE: ${{ steps.update.outcome }}
         GENERATED_VALIDATION: ${{ steps.generated_validation.outcome }}
         PUBLICATION: ${{ steps.publication.outcome }}
@@ -225,6 +232,7 @@ jobs:
           printf '| Rust setup | %s |\n' "${RUST_SETUP:-not reached}"
           printf '| Rust checks | %s |\n' "${RUST_CHECKS:-not reached}"
           printf '| Published baseline | %s |\n' "${BASELINE_VALIDATION:-not reached}"
+          printf '| Updater build | %s |\n' "${UPDATER_BUILD:-not reached}"
           printf '| Ruleset generation | %s |\n' "${RULESET_UPDATE:-not reached}"
           printf '| Generated validation | %s |\n' "${GENERATED_VALIDATION:-not reached}"
           printf '| Publication | %s |\n' "${PUBLICATION:-not reached}"

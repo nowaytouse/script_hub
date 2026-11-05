@@ -609,6 +609,10 @@ mod tests {
                     "*.16.172.in-addr.arpa".into(),
                     "home.arpa".into(),
                     "*.local".into(),
+                    "my.router".into(),
+                    "router.ctc".into(),
+                    "leike.cc".into(),
+                    "router.asus.com".into(),
                 ],
             );
             assert!(!module.contains("[General]"));
@@ -648,6 +652,9 @@ mod tests {
                 "*.internal",
                 "*.16.172.in-addr.arpa",
                 "*.d.f.ip6.arpa",
+                "my.router",
+                "router.ctc",
+                "leike.cc",
             ] {
                 assert!(names.contains(required), "missing Host mapping: {required}");
             }
@@ -664,6 +671,9 @@ mod tests {
                 "*.tplinkwifi.net",
                 "tplinklogin.net",
                 "*.c.f.ip6.arpa",
+                "*.my.router",
+                "*.router.ctc",
+                "*.leike.cc",
             ] {
                 assert!(!names.contains(public_host));
             }

@@ -94,6 +94,19 @@ fn srs_output_dir(list_file: &Path, root_dir: &Path) -> PathBuf {
     }
 }
 
+fn compiler_command(singbox_path: &str, input: &Path, output: &Path) -> Command {
+    let mut command = Command::new(singbox_path);
+    command
+        .env_remove("GITHUB_TOKEN")
+        .env_remove("GH_TOKEN")
+        .arg("rule-set")
+        .arg("compile")
+        .arg(input)
+        .arg("-o")
+        .arg(output);
+    command
+}
+
 fn compile_srs(
     list_file: &Path,
     root_dir: &Path,
@@ -234,13 +247,7 @@ fn compile_srs(
     }
 
     let srs_tmp = srs_file.with_extension("write.srs");
-    let output = Command::new(singbox_path)
-        .arg("rule-set")
-        .arg("compile")
-        .arg(&json_tmp)
-        .arg("-o")
-        .arg(&srs_tmp)
-        .output();
+    let output = compiler_command(singbox_path, &json_tmp, &srs_tmp).output();
 
     let _ = fs::remove_file(&json_tmp);
 
@@ -557,6 +564,23 @@ mod tests {
     use std::collections::HashMap;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn external_srs_compiler_cannot_inherit_github_credentials() {
+        use std::collections::BTreeSet;
+        use std::ffi::OsStr;
+        use std::path::Path;
+
+        let command =
+            super::compiler_command("sing-box", Path::new("input.json"), Path::new("output.srs"));
+        assert_eq!(
+            command
+                .get_envs()
+                .filter_map(|(key, value)| value.is_none().then_some(key))
+                .collect::<BTreeSet<_>>(),
+            BTreeSet::from([OsStr::new("GITHUB_TOKEN"), OsStr::new("GH_TOKEN")])
+        );
+    }
 
     #[test]
     fn source_manifests_and_manual_fragments_are_not_published_rulesets() {
