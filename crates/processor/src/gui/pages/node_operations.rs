@@ -382,6 +382,7 @@ fn operation_label(op: &Operation) -> Text {
         Operation::Flags { .. } => Text::OperationFlags,
         Operation::Sort { .. } => Text::OperationSort,
         Operation::RegexSort { .. } => Text::OperationRegexSort,
+        Operation::MemberRegexSort { .. } => Text::OperationMemberRegexSort,
         Operation::Deduplicate => Text::OperationDeduplicate,
         Operation::HostFilter { .. } => Text::OperationHostFilter,
         Operation::PortFilter { .. } => Text::OperationPortFilter,
@@ -1039,6 +1040,10 @@ pub(super) fn show(
                             .changed();
                     }
                     Operation::RegexSort {
+                        patterns,
+                        unmatched,
+                    }
+                    | Operation::MemberRegexSort {
                         patterns,
                         unmatched,
                     } => {

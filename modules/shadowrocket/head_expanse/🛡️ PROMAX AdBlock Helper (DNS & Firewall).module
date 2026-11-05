@@ -1,5 +1,5 @@
 #!name=🛡️ PROMAX AdBlock Helper (DNS & Firewall)
-#!desc=[🚀SR] 追加 AliDNS DoH 与双栈引导；系统解析仅用于局域网域名和设备入口。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。
+#!desc=[🚀SR] 追加 AliDNS DoH 与双栈引导；指定局域网名称、设备入口和私网反查交给当前系统 DNS。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。
 #!author=ScriptHub
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, DNS, Apple Safety
@@ -116,7 +116,6 @@ IN-PORT,8076,REJECT-DROP
 *.9.e.f.ip6.arpa = server:system
 *.a.e.f.ip6.arpa = server:system
 *.b.e.f.ip6.arpa = server:system
-*.c.f.ip6.arpa = server:system
 *.d.f.ip6.arpa = server:system
 *.home = server:system
 *.home.arpa = server:system
@@ -178,7 +177,6 @@ setmeup.arubanetworks.com = server:system
 tendawifi.com = server:system
 tplinkap.net = server:system
 tplinkdeco.net = server:system
-tplinklogin.net = server:system
 tplinkmifi.net = server:system
 tplinkmodem.net = server:system
 tplinkplc.net = server:system
@@ -189,6 +187,8 @@ tplogin.cn = server:system
 unifi = server:system
 www.asusrouter.com = server:system
 www.miwifi.com = server:system
+www.orbilogin.com = server:system
+www.orbilogin.net = server:system
 www.routerlogin.com = server:system
 www.routerlogin.net = server:system
 

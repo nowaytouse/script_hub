@@ -1,6 +1,5 @@
 use std::collections::BTreeSet;
 use std::fs;
-use std::io::ErrorKind;
 use std::path::Path;
 use std::time::Duration;
 
@@ -49,7 +48,6 @@ pub(super) fn local_zone(name: &str) -> bool {
             | "127.in-addr.arpa"
             | "168.192.in-addr.arpa"
             | "254.169.in-addr.arpa"
-            | "c.f.ip6.arpa"
             | "d.f.ip6.arpa"
             | "8.e.f.ip6.arpa"
             | "9.e.f.ip6.arpa"
@@ -79,15 +77,34 @@ fn filtered(source: &str) -> Result<BTreeSet<String>, String> {
         .rev()
         .map(str::trim)
         .find(|line| !line.is_empty())
-        .is_some_and(|line| line.starts_with('#') && line.contains(" EOF "))
+        .is_some_and(|line| line.starts_with('#') && line.trim_matches('#').trim() == "EOF")
     {
         return Err("Sukka LAN source is incomplete".into());
     }
+    let mut declared_size = None;
+    let mut row_count = 0;
     let mut hosts = BTreeSet::new();
-    for (kind, name) in source
+    for line in source
         .lines()
-        .filter_map(|line| line.trim().split_once(','))
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
     {
+        if let Some(size) = line.strip_prefix("# Size:") {
+            let size = size
+                .trim()
+                .parse::<usize>()
+                .map_err(|_| "invalid Sukka LAN source size")?;
+            if declared_size.replace(size).is_some() {
+                return Err("duplicate Sukka LAN source size".into());
+            }
+        }
+        if line.starts_with('#') {
+            continue;
+        }
+        row_count += 1;
+        let (kind, name) = line
+            .split_once(',')
+            .ok_or("malformed Sukka LAN source row")?;
         let name = name.trim().to_ascii_lowercase();
         if !matches!(kind, "DOMAIN" | "DOMAIN-SUFFIX") || name.starts_with('*') || !supported(&name)
         {
@@ -97,6 +114,9 @@ fn filtered(source: &str) -> Result<BTreeSet<String>, String> {
             hosts.insert(format!("*.{name}"));
         }
         hosts.insert(name);
+    }
+    if declared_size != Some(row_count) {
+        return Err("Sukka LAN source row count does not match its declared size".into());
     }
     if hosts.is_empty() {
         return Err("Sukka LAN source contains no supported hosts".into());
@@ -132,11 +152,14 @@ pub(super) fn refresh(root: &Path) -> Result<(), String> {
 }
 
 pub(super) fn load(root: &Path) -> Result<Vec<String>, String> {
-    let text = match fs::read_to_string(root.join(SNAPSHOT)) {
-        Ok(text) => text,
-        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(error) => return Err(format!("cannot read filtered Sukka LAN hosts: {error}")),
-    };
+    let snapshot = root.join(SNAPSHOT);
+    let metadata = fs::symlink_metadata(&snapshot)
+        .map_err(|error| format!("cannot inspect filtered Sukka LAN hosts: {error}"))?;
+    if !metadata.is_file() {
+        return Err("filtered Sukka LAN hosts must be a regular file".into());
+    }
+    let text = fs::read_to_string(snapshot)
+        .map_err(|error| format!("cannot read filtered Sukka LAN hosts: {error}"))?;
     let hosts = text
         .lines()
         .map(str::trim)
@@ -161,6 +184,7 @@ mod tests {
     #[test]
     fn upstream_cannot_insert_public_dns_or_broaden_device_aliases() {
         let source = "\
+# Size: 15
 DOMAIN-SUFFIX,ROUTERLOGIN.NET
 DOMAIN-SUFFIX,168.192.in-addr.arpa
 DOMAIN-SUFFIX,31.172.in-addr.arpa
@@ -168,6 +192,7 @@ DOMAIN-SUFFIX,home
 DOMAIN,unifi
 DOMAIN-SUFFIX,32.172.in-addr.arpa
 DOMAIN-SUFFIX,8.8.8.in-addr.arpa
+DOMAIN-SUFFIX,c.f.ip6.arpa
 DOMAIN-SUFFIX,plex.direct
 DOMAIN-SUFFIX,apple.com
 DOMAIN,cdn.jsdelivr.net
@@ -197,13 +222,22 @@ IP-CIDR,192.168.0.0/16
         let root =
             std::env::temp_dir().join(format!("script-hub-local-hosts-{}", std::process::id()));
         fs::create_dir_all(root.join("modules/source/local")).unwrap();
-        publish(&root, "DOMAIN,unifi\n### EOF ###").unwrap();
+        publish(&root, "# Size: 1\nDOMAIN,unifi\n### EOF ###").unwrap();
         let path = root.join(SNAPSHOT);
         let original = fs::read(&path).unwrap();
-        for invalid in ["DOMAIN,pi.hole", "DOMAIN,apple.com\n### EOF ###"] {
+        for invalid in [
+            "# Size: 1\nDOMAIN,pi.hole",
+            "# Size: 2\nDOMAIN,pi.hole\n### EOF ###",
+            "# Size: 1\nDOMAIN,pi.hole\n### not EOF ###",
+            "# Size: 1\n# Size: 1\nDOMAIN,pi.hole\n### EOF ###",
+            "DOMAIN,pi.hole\n### EOF ###",
+            "# Size: 1\nDOMAIN,apple.com\n### EOF ###",
+        ] {
             assert!(publish(&root, invalid).is_err());
             assert_eq!(fs::read(&path).unwrap(), original);
         }
+        publish(&root, "# Size: 1\nDOMAIN,pi.hole\n### EOF ###").unwrap();
+        assert_eq!(load(&root).unwrap(), ["pi.hole"]);
         fs::write(path, "*.apple.com\n").unwrap();
         assert!(load(&root).is_err());
         fs::remove_dir_all(root).unwrap();

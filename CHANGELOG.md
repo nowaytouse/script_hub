@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve Surge's Bonjour resolution and reject incomplete upstream Host snapshots before refreshing the DNS helper.
+- Migrate Sub-Store collection regex sorting against original member names without changing published names.
+
 - Follow Sukka's local DNS feed for reviewed device names and private reverse zones without importing public DNS overrides.
 - Migrate Sub-Store regex sorting and safe node quick settings; control unmatched node order in the native editor.
 

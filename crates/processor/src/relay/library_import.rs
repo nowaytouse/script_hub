@@ -330,6 +330,67 @@ mod tests {
     }
 
     #[test]
+    fn collection_regex_sort_migration_uses_original_member_names_and_keeps_output_names() {
+        let backup = br#"{
+          "subs":[
+            {"name":"A","source":"local","content":"[Proxy]\nZeta = socks5, z.example.invalid, 1080\n1: Literal = socks5, literal.example.invalid, 1080\n"},
+            {"name":"B","source":"local","content":"[Proxy]\nHK Zed = socks5, zed.example.invalid, 1080\nAlpha = socks5, a.example.invalid, 1080\nHK Abel = socks5, abel.example.invalid, 1080\n"}
+          ],
+          "collections":[{"name":"Group","subscriptions":["A","B"],
+            "process":[{"type":"Regex Sort Operator","args":{"expressions":["^HK","^1:"],"order":"asc"}}]}]
+        }"#;
+        let report = compat::import(backup).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let (workspace, _) = import(&Workspace::default(), &report, true).unwrap();
+        let collection = &workspace.collections[0];
+        let merged = workspace.merge(collection.id).unwrap();
+        let source = model::Subscription::parse(&merged).unwrap();
+        let mut processing = collection.processing.clone();
+        processing.nodes.push(model::editor::NodeEdit {
+            index: 2,
+            included: true,
+            name: Some("Rebranded".into()),
+        });
+        let health = vec![model::Health::Unknown; 5];
+        let enhance = model::EnhanceOptions {
+            rename: false,
+            sort: false,
+        };
+        assert!(matches!(
+            source.render_processed(&health, &enhance, &processing),
+            Err(model::ModelError::InvalidEdit)
+        ));
+        let output = source
+            .render_processed_for(
+                &health,
+                &enhance,
+                &processing,
+                super::super::export::OutputFormat::SingBox,
+                None,
+                &model::script::SourceContext {
+                    kind: "collection",
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let nodes: Vec<serde_json::Value> = serde_json::from_str(&output.content).unwrap();
+        let names: Vec<_> = nodes
+            .iter()
+            .map(|node| node["tag"].as_str().unwrap())
+            .collect();
+        assert_eq!(
+            names,
+            [
+                "Rebranded",
+                "2: HK Abel",
+                "1: 1: Literal",
+                "2: Alpha",
+                "1: Zeta"
+            ]
+        );
+    }
+
+    #[test]
     fn imported_local_chain_merges_with_its_detour_and_rejects_invalid_graphs() {
         let content = "[Proxy]\nBridge = socks5, bridge.example.invalid, 1080\nExit = socks5, exit.example.invalid, 1080, underlying-proxy=Bridge\n";
         let backup = serde_json::json!({

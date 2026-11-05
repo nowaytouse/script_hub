@@ -161,7 +161,7 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
                 Operation::NameFilter { pattern, keep }
             })
         }
-        "Regex Sort Operator" if !collection => {
+        "Regex Sort Operator" => {
             let expressions = args
                 .as_array()
                 .or_else(|| args.get("expressions").and_then(Value::as_array))?;
@@ -189,9 +189,16 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
                 .iter()
                 .map(|expr| portable_regex(std::slice::from_ref(expr)).map(|(pattern, _)| pattern))
                 .collect::<Option<Vec<_>>>()?;
-            Some(Operation::RegexSort {
-                patterns,
-                unmatched,
+            Some(if collection {
+                Operation::MemberRegexSort {
+                    patterns,
+                    unmatched,
+                }
+            } else {
+                Operation::RegexSort {
+                    patterns,
+                    unmatched,
+                }
             })
         }
         "Flag Operator" if !collection && args.get("mode")?.as_str()? == "remove" => {

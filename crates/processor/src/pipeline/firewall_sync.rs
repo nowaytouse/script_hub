@@ -239,7 +239,6 @@ const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "internal",
     "*.internal",
     "*.127.in-addr.arpa",
-    "*.c.f.ip6.arpa",
     "*.d.f.ip6.arpa",
     "*.8.e.f.ip6.arpa",
     "*.9.e.f.ip6.arpa",
@@ -254,12 +253,13 @@ const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "www.routerlogin.net",
     "orbilogin.com",
     "orbilogin.net",
+    "www.orbilogin.com",
+    "www.orbilogin.net",
     "aplogin.com",
     "aplogin.net",
     "miwifi.com",
     "www.miwifi.com",
     "tplogin.cn",
-    "tplinklogin.net",
     "tplinkwifi.net",
     "tplinkap.net",
     "tplinkdeco.net",
@@ -283,11 +283,34 @@ const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
     "dns.quad9.net",
 ];
 
-fn helper_sections(upstream_hosts: &[String]) -> (Vec<String>, Vec<String>) {
+const HELPER_OUTPUTS: &[(&str, &str, bool, bool)] = &[
+    (
+        "surge/head_expanse",
+        "🌟 AdBlock Helper .sgmodule",
+        false,
+        false,
+    ),
+    (
+        "shadowrocket/head_expanse",
+        "🌟 AdBlock Helper .module",
+        true,
+        false,
+    ),
+    (
+        "shadowrocket/head_expanse",
+        "🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
+        true,
+        true,
+    ),
+];
+
+fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String>, Vec<String>) {
     let mut hosts: Vec<String> = LOCAL_SYSTEM_DNS_HOSTS
         .iter()
         .copied()
         .chain(upstream_hosts.iter().map(String::as_str))
+        // Surge already uses the system resolver library for Bonjour names.
+        .filter(|host| shadowrocket || !matches!(*host, "local" | "*.local"))
         .map(|host| format!("{host} = server:system"))
         .collect();
     hosts.push(format!("{HELPER_DOH_HOST} = {HELPER_DOH_BOOTSTRAP}"));
@@ -311,7 +334,7 @@ fn render_helper(
     version: &str,
     upstream_hosts: &[String],
 ) -> String {
-    let (hosts, exclusions) = helper_sections(upstream_hosts);
+    let (hosts, exclusions) = helper_sections(shadowrocket, upstream_hosts);
     let name = if with_firewall {
         "🛡️ PROMAX AdBlock Helper (DNS & Firewall)"
     } else {
@@ -326,7 +349,7 @@ fn render_helper(
     let mut output = vec![
         format!("#!name={name}"),
         format!(
-            "#!desc={prefix}追加 AliDNS DoH 与双栈引导；系统解析仅用于局域网域名和设备入口。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。{}",
+            "#!desc={prefix}追加 AliDNS DoH 与双栈引导；指定局域网名称、设备入口和私网反查交给当前系统 DNS。保留 Apple 关键服务与加密 DNS 的 MITM 排除，不改分流策略。{}",
             if with_firewall {
                 "附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。"
             } else {
@@ -377,20 +400,15 @@ fn render_firewall(shadowrocket: bool, version: &str) -> String {
 pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, String> {
     let modules = root.join("modules");
     let upstream_hosts = super::helper_hosts::load(root)?;
-    let outputs = [
-        (
-            modules.join("surge/head_expanse/🌟 AdBlock Helper .sgmodule"),
-            render_helper(false, false, version, &upstream_hosts),
-        ),
-        (
-            modules.join("shadowrocket/head_expanse/🌟 AdBlock Helper .module"),
-            render_helper(true, false, version, &upstream_hosts),
-        ),
-        (
-            modules
-                .join("shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
-            render_helper(true, true, version, &upstream_hosts),
-        ),
+    let helpers = HELPER_OUTPUTS
+        .iter()
+        .map(|&(dir, file, shadowrocket, firewall)| {
+            (
+                modules.join(dir).join(file),
+                render_helper(shadowrocket, firewall, version, &upstream_hosts),
+            )
+        });
+    let firewalls = [
         (
             modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
             render_firewall(false, version),
@@ -401,7 +419,7 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
         ),
     ];
     let mut written = 0;
-    for (path, content) in outputs {
+    for (path, content) in helpers.chain(firewalls) {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|error| error.to_string())?;
         }
@@ -413,12 +431,75 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
     Ok(written)
 }
 
+fn helper_dns_settings(content: &str) -> Vec<&str> {
+    let mut firewall = false;
+    content
+        .lines()
+        .map(str::trim)
+        .filter(|line| {
+            if line.starts_with('[') && line.ends_with(']') {
+                firewall = *line == "[Rule]";
+                return true;
+            }
+            !firewall && !line.is_empty() && !line.starts_with('#')
+        })
+        .collect()
+}
+
+pub(crate) fn validate_published_helpers(root: &Path) -> Result<(), String> {
+    let upstream_hosts = super::helper_hosts::load(root)?;
+    for &(dir, file, shadowrocket, firewall) in HELPER_OUTPUTS {
+        let expected = render_helper(shadowrocket, firewall, "", &upstream_hosts);
+        let expected = helper_dns_settings(&expected);
+        let dir = root.join("modules").join(dir);
+        for path in [dir.join(file), dir.join("github").join(file)] {
+            if !fs::symlink_metadata(&path).is_ok_and(|metadata| metadata.is_file()) {
+                return Err(format!(
+                    "missing regular DNS helper publication: {}",
+                    path.display()
+                ));
+            }
+            let current = fs::read_to_string(&path)
+                .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+            if helper_dns_settings(&current) != expected {
+                return Err(format!(
+                    "DNS helper settings differ from validated generation: {}",
+                    path.display()
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{HELPER_DOH_HOST, render_helper, sync_ports};
     use std::collections::HashSet;
     use std::fs;
     use std::net::IpAddr;
+
+    #[test]
+    fn publication_guard_rejects_dns_drift_in_a_helper_mirror() {
+        let root =
+            std::env::temp_dir().join(format!("script-hub-helper-guard-{}", std::process::id()));
+        fs::create_dir_all(root.join("modules/source/local")).unwrap();
+        super::super::helper_hosts::publish(&root, "# Size: 1\nDOMAIN,unifi\n### EOF ###").unwrap();
+        super::refresh_security_modules(&root, "test").unwrap();
+        for &(dir, file, _, _) in super::HELPER_OUTPUTS {
+            let dir = root.join("modules").join(dir);
+            fs::create_dir_all(dir.join("github")).unwrap();
+            fs::copy(dir.join(file), dir.join("github").join(file)).unwrap();
+        }
+        super::validate_published_helpers(&root).unwrap();
+        let mirror = root.join("modules/surge/head_expanse/github/🌟 AdBlock Helper .sgmodule");
+        let drift = fs::read_to_string(&mirror)
+            .unwrap()
+            .replace("[Host]\n", "[Host]\n*.example.com = server:system\n");
+        fs::write(mirror, drift).unwrap();
+        assert!(super::validate_published_helpers(&root).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn sync_inserts_markers_and_never_blocks_apple_service_ports() {
@@ -471,6 +552,7 @@ mod tests {
                     "unifi".into(),
                     "*.16.172.in-addr.arpa".into(),
                     "home.arpa".into(),
+                    "*.local".into(),
                 ],
             );
             let (_, body) = module.split_once("[General]\n").unwrap();
@@ -511,6 +593,8 @@ mod tests {
                 "*.home.arpa",
                 "www.asusrouter.com",
                 "www.routerlogin.com",
+                "www.orbilogin.com",
+                "www.orbilogin.net",
                 "tplinkrepeater.net",
                 "fritz.box",
                 "unifi",
@@ -529,9 +613,13 @@ mod tests {
                 "*.akamaized.net",
                 "cloudflare-dns.com",
                 "*.tplinkwifi.net",
+                "tplinklogin.net",
+                "*.c.f.ip6.arpa",
             ] {
                 assert!(!names.contains(public_host));
             }
+            assert_eq!(names.contains("*.local"), shadowrocket);
+            assert_eq!(names.contains("local"), shadowrocket);
             let excluded: HashSet<_> = mitm
                 .trim_end()
                 .strip_prefix("hostname = %INSERT% ")

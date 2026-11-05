@@ -57,6 +57,11 @@ pub enum Operation {
         #[serde(default, skip_serializing_if = "RegexSortUnmatched::is_original")]
         unmatched: RegexSortUnmatched,
     },
+    MemberRegexSort {
+        patterns: Vec<String>,
+        #[serde(default, skip_serializing_if = "RegexSortUnmatched::is_original")]
+        unmatched: RegexSortUnmatched,
+    },
     Deduplicate,
     HostFilter {
         pattern: String,
@@ -530,7 +535,7 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                     template_parts(template)?;
                 }
             }
-            Operation::RegexSort { patterns, .. } => {
+            Operation::RegexSort { patterns, .. } | Operation::MemberRegexSort { patterns, .. } => {
                 if patterns.len() > 64
                     || patterns.iter().any(|p| !valid_text(p))
                     || step.enabled
@@ -1431,16 +1436,39 @@ pub(super) fn apply(
             Operation::RegexSort {
                 patterns,
                 unmatched,
+            }
+            | Operation::MemberRegexSort {
+                patterns,
+                unmatched,
             } => {
                 let regexes: Vec<_> = patterns
                     .iter()
                     .map(|p| regex(p))
                     .collect::<Result<_, _>>()?;
+                let member_names = if matches!(&step.operation, Operation::MemberRegexSort { .. }) {
+                    if source_context.kind != "collection" {
+                        return Err(ModelError::InvalidEdit);
+                    }
+                    let mut members = vec![""; names.len()];
+                    for &i in order.iter() {
+                        members[i] =
+                            super::super::library::collection_member_name(sub.nodes[i].name())
+                                .ok_or(ModelError::InvalidEdit)?;
+                    }
+                    Some(members)
+                } else {
+                    None
+                };
+                let sort_name = |i: usize| {
+                    member_names
+                        .as_ref()
+                        .map_or(names[i].as_str(), |members| members[i])
+                };
                 let mut priorities = vec![regexes.len(); names.len()];
                 for &i in order.iter() {
                     priorities[i] = regexes
                         .iter()
-                        .position(|r| r.is_match(&names[i]))
+                        .position(|r| r.is_match(sort_name(i)))
                         .unwrap_or(regexes.len());
                 }
                 order.sort_by(|&a, &b| {
@@ -1449,7 +1477,7 @@ pub(super) fn apply(
                             return std::cmp::Ordering::Equal;
                         }
                         // Sub-Store compares names as UTF-16, not as Unicode scalar values.
-                        let cmp = names[a].encode_utf16().cmp(names[b].encode_utf16());
+                        let cmp = sort_name(a).encode_utf16().cmp(sort_name(b).encode_utf16());
                         if *unmatched == RegexSortUnmatched::Descending {
                             cmp.reverse()
                         } else {

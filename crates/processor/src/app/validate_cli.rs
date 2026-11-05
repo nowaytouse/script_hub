@@ -122,6 +122,7 @@ fn validate_retired_outputs(root: &Path) -> Result<(), String> {
 fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     emit_stage(Stage::Validate);
     validate_retired_outputs(root)?;
+    rust_processor::firewall_sync::validate_published_helpers(root)?;
     let mut artifacts = 0;
     let mut errors = 0;
     let modules_root = root.join("modules");

@@ -41,11 +41,15 @@ jobs:
             DIFF_BASE=$(git hash-object -w -t tree /dev/null)
           fi
           echo "base=$DIFF_BASE" >> "$GITHUB_OUTPUT"
-          changed_paths=$(git diff --name-only "$DIFF_BASE" "$DIFF_HEAD")
-          if grep -E '^(Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.gitattributes$|\.cargo/|crates/|modules/|rulesets/|dns/|\.github/ci/|\.github/workflows/)' <<< "$changed_paths" > /dev/null; then
-            echo "relevant=true" >> "$GITHUB_OUTPUT"
-          else
+          if git --literal-pathspecs diff --quiet --no-renames "$DIFF_BASE" "$DIFF_HEAD" -- \
+              Cargo.toml Cargo.lock rust-toolchain.toml .gitattributes \
+              .cargo/ crates/ modules/ rulesets/ dns/ .github/ci/ .github/workflows/; then
             echo "relevant=false" >> "$GITHUB_OUTPUT"
+          else
+            case $? in
+              1) echo "relevant=true" >> "$GITHUB_OUTPUT" ;;
+              *) echo "Could not inspect the changed paths" >&2; exit 1 ;;
+            esac
           fi
 
       - name: Set up Rust
