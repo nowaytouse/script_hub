@@ -11,6 +11,7 @@ use super::{
 
 const MAX_CACHE: usize = 4 * 1024 * 1024;
 const MAX_DOCUMENT: usize = 8 * 1024 * 1024;
+const MEMBER_NAME_SEPARATOR: &str = ": ";
 pub const MAX_SUBSCRIPTIONS: usize = 256;
 pub const MAX_COLLECTIONS: usize = 128;
 
@@ -164,6 +165,17 @@ impl Drop for PrivateJson {
 
 fn valid_name(name: &str) -> bool {
     !name.is_empty() && name.len() <= 512 && !name.chars().any(char::is_control)
+}
+
+pub(super) fn collection_member_name(merged_name: &str) -> Option<&str> {
+    let (index, name) = merged_name.split_once(MEMBER_NAME_SEPARATOR)?;
+    (!index.starts_with('0')
+        && index.bytes().all(|b| b.is_ascii_digit())
+        && index
+            .parse::<usize>()
+            .is_ok_and(|index| (1..=MAX_SUBSCRIPTIONS).contains(&index))
+        && !name.is_empty())
+    .then_some(name)
 }
 
 impl Workspace {
@@ -418,7 +430,7 @@ impl Workspace {
                 model::Subscription::parse(&rendered.content).map_err(|_| Error::Unsupported)?;
             let mut namespaced = Options::default();
             for (index, node) in processed.nodes().iter().enumerate() {
-                let name = format!("{}: {}", member_index + 1, node.name());
+                let name = format!("{}{MEMBER_NAME_SEPARATOR}{}", member_index + 1, node.name());
                 if !valid_name(&name) {
                     return Err(Error::Unsupported);
                 }

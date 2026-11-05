@@ -1,4 +1,6 @@
 //! Explicit, offline preview of Sub-Store backup contents.
+mod tags;
+
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde_json::Value;
 use zeroize::{Zeroize, Zeroizing};
@@ -84,17 +86,19 @@ fn name(value: &Value) -> Option<Zeroizing<String>> {
     Some(Zeroizing::new(name.to_owned()))
 }
 
+pub(super) fn valid_node_content(value: &str) -> bool {
+    model::Subscription::parse(value).is_ok_and(|sub| {
+        !sub.nodes().is_empty()
+            && sub.validate_export_dependencies().is_ok()
+            && sub
+                .nodes()
+                .iter()
+                .all(|node| node.export_sing_box().is_ok())
+    })
+}
+
 fn node_content(value: &str) -> Option<Zeroizing<String>> {
-    let parsed = model::Subscription::parse(value).ok()?;
-    if parsed.nodes().is_empty()
-        || parsed
-            .nodes()
-            .iter()
-            .any(|node| node.to_sing_box(false).is_err())
-    {
-        return None;
-    }
-    Some(Zeroizing::new(value.to_owned()))
+    valid_node_content(value).then(|| Zeroizing::new(value.to_owned()))
 }
 
 fn keep(args: &Value) -> Option<bool> {
@@ -104,7 +108,7 @@ fn keep(args: &Value) -> Option<bool> {
     }
 }
 
-fn convert_filter(item: &Value, allow_names: bool) -> Option<Operation> {
+fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
     if item.as_object()?.keys().any(|key| {
         !["type", "args", "disabled", "customName", "id", "preview"].contains(&key.as_str())
     }) {
@@ -141,10 +145,44 @@ fn convert_filter(item: &Value, allow_names: bool) -> Option<Operation> {
                 keep: keep(args)?,
             })
         }
-        "Regex Filter" if allow_names => Some(Operation::NameFilter {
-            pattern: portable_regex(args.get("regex")?.as_array()?)?,
-            keep: keep(args)?,
-        }),
+        "Regex Filter" => {
+            let pattern = portable_regex(args.get("regex")?.as_array()?)?;
+            let keep = keep(args)?;
+            Some(if collection {
+                Operation::MemberNameFilter { pattern, keep }
+            } else {
+                Operation::NameFilter { pattern, keep }
+            })
+        }
+        kind @ ("Regex Rename Operator" | "Regex Delete Operator") if !collection => {
+            let args = args.as_array()?;
+            if args.is_empty() || args.len() > 32 {
+                return None;
+            }
+            let rules = args
+                .iter()
+                .map(|arg| {
+                    let (expr, replacement) = if kind == "Regex Delete Operator" {
+                        (arg, "")
+                    } else {
+                        (arg.get("expr")?, arg.get("now")?.as_str()?)
+                    };
+                    // JavaScript replacement templates are not Rust regex templates.
+                    if replacement.contains('$') {
+                        return None;
+                    }
+                    Some(pipeline::RenameRule {
+                        pattern: portable_regex(std::slice::from_ref(expr))?,
+                        replacement: replacement.to_owned(),
+                        regex: true,
+                    })
+                })
+                .collect::<Option<Vec<_>>>()?;
+            Some(Operation::BatchRename {
+                rules,
+                trim_each: true,
+            })
+        }
         _ => None,
     }
 }
@@ -188,7 +226,7 @@ fn portable_regex(patterns: &[Value]) -> Option<String> {
     (!result.is_empty()).then(|| std::mem::take(&mut *result))
 }
 
-fn migrate_process(value: &Value, allow_names: bool) -> (Vec<Step>, usize) {
+fn migrate_process(value: &Value, collection: bool) -> (Vec<Step>, usize) {
     let Some(value) = value.get("process").filter(|v| !v.is_null()) else {
         return (Vec::new(), 0);
     };
@@ -204,7 +242,7 @@ fn migrate_process(value: &Value, allow_names: bool) -> (Vec<Step>, usize) {
         if !incomplete
             && valid_disabled
             && steps.len() < 64
-            && let Some(operation) = convert_filter(item, allow_names)
+            && let Some(operation) = convert_processor(item, collection)
         {
             let mut step = Step {
                 id: index as u64 + 1,
@@ -285,7 +323,7 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
             let (operations, mut unsupported) = if is_file {
                 (Vec::new(), count_file_process(value))
             } else {
-                migrate_process(value, true)
+                migrate_process(value, false)
             };
             let source_kind = value.get("source").and_then(Value::as_str);
             let source = if source_kind == Some("remote") {
@@ -326,9 +364,12 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
             }
             if let Some(object) = value.as_object() {
                 unsupported += object
-                    .keys()
-                    .filter(|key| {
+                    .iter()
+                    .filter(|(key, value)| {
                         !["name", "source", "url", "content", "process"].contains(&key.as_str())
+                            && (is_file
+                                || key.as_str() != "tag"
+                                || !tags::is_supported_metadata(value))
                     })
                     .count();
             }
@@ -344,14 +385,19 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
         }
     }
     if let Some(values) = root.get("collections") {
-        for value in values.as_array().ok_or(ImportError::InvalidBackup)? {
+        let values = values.as_array().ok_or(ImportError::InvalidBackup)?;
+        let tag_sources = (values.len() <= super::library::MAX_COLLECTIONS).then(|| {
+            root.get("subs")
+                .and_then(Value::as_array)
+                .map_or(&[][..], Vec::as_slice)
+        });
+        for value in values {
             let Some(name) = name(value) else {
                 report.unsupported_count += 1;
                 report.invalid_items += 1;
                 continue;
             };
-            // Collection assembly adds a namespace prefix to node names.
-            let (operations, mut unsupported) = migrate_process(value, false);
+            let (operations, mut unsupported) = migrate_process(value, true);
             let mut subscriptions = Vec::new();
             let mut valid_references = true;
             if let Some(refs) = value.get("subscriptions") {
@@ -368,14 +414,27 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
                     unsupported += 1;
                     valid_references = false;
                 }
-            } else {
+            } else if value.get("subscriptionTags").is_none_or(Value::is_null) {
+                unsupported += 1;
+                valid_references = false;
+            }
+            if valid_references
+                && !tags::extend_members(
+                    &mut subscriptions,
+                    value.get("subscriptionTags"),
+                    tag_sources,
+                )
+            {
                 unsupported += 1;
                 valid_references = false;
             }
             if let Some(object) = value.as_object() {
                 unsupported += object
                     .keys()
-                    .filter(|key| !["name", "subscriptions", "process"].contains(&key.as_str()))
+                    .filter(|key| {
+                        !["name", "subscriptions", "subscriptionTags", "process"]
+                            .contains(&key.as_str())
+                    })
                     .count();
             }
             report.unsupported_count += unsupported;
@@ -485,10 +544,44 @@ mod tests {
     fn type_filter_maps_the_surge_protocol_aliases_classified_by_substore() {
         let filter = serde_json::json!({"type": "Type Filter", "args": ["http", "socks5", "tuic"]});
         assert!(matches!(
-            convert_filter(&filter, true).as_ref(),
+            convert_processor(&filter, true).as_ref(),
             Some(Operation::ProtocolFilter { protocols, .. })
                 if protocols == &["http", "https", "socks5", "socks5-tls", "tuic", "tuic-v5"]
         ));
+    }
+
+    #[test]
+    fn imports_subscription_rename_and_delete_with_ordered_global_replacement_and_trim() {
+        let backup = br#"{"subs":[{"name":"Local","source":"local",
+            "content":"[Proxy]\nold seed seed seed HK = socks5, node.example.invalid, 1080\n",
+            "process":[
+              {"type":"Regex Rename Operator","args":[{"expr":"^old","now":""},
+                {"expr":"^seed","now":"ready"},{"expr":"seed","now":"CA"}]},
+              {"type":"Regex Delete Operator","args":["CA "]}
+            ]}]}"#;
+        let report = import(backup).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let config = report.select_item(0, true).unwrap();
+        let source = model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+        let result = source
+            .render_processed(
+                &[model::Health::Unknown],
+                &model::EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &config.processing,
+            )
+            .unwrap();
+        let rendered = model::Subscription::parse(&result.content).unwrap();
+        assert_eq!(rendered.nodes()[0].name(), "ready HK");
+    }
+
+    #[test]
+    fn collection_rename_is_not_migrated_to_namespaced_nodes() {
+        let item = serde_json::json!({"type": "Regex Delete Operator", "args": ["^HK"]});
+        assert!(convert_processor(&item, false).is_some());
+        assert!(convert_processor(&item, true).is_none());
     }
 
     #[test]
@@ -496,6 +589,8 @@ mod tests {
         for kind in [
             r#"{"type":"Script Operator","args":{"content":"unknown"}}"#,
             r#"{"type":"Regex Filter","args":{"regex":["(?=HK)"]}}"#,
+            r#"{"type":"Regex Delete Operator","args":["[HK]"]}"#,
+            r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$&-new"}]}"#,
         ] {
             let backup = format!(
                 r#"{{"subs":[{{"name":"X","source":"remote","url":"https://example.com/sub","process":[{kind},{{"type":"Type Filter","args":["ss"]}}]}}]}}"#

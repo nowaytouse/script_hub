@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+- Combine the BiliBili and YouTube feature modules across Surge and Shadowrocket while keeping their PROMAX build inputs separate.
+- Migrate portable subscription-level Sub-Store regex rename and delete operations without running JavaScript.
+
 - Combine the panel utilities with Script Hub Tools. Use the existing Tools module link; the standalone panel links are retired.
 
+- Restore compatible collection name filters, tag-selected members, and validated proxy chains from Sub-Store backups.
 - Filter subscriptions with bounded Rhai boolean masks without rewriting or reordering retained nodes.
 - Migrate compatible Sub-Store filters as native subscription and collection operations.
 - Accept formatting-only refreshes without losing saved collection edits.

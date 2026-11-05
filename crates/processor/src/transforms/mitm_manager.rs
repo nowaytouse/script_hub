@@ -58,18 +58,9 @@ pub(crate) fn is_restricted(domain: &str) -> bool {
             .any(|suffix| domain == *suffix || domain.ends_with(&format!(".{suffix}")))
 }
 
-fn process_file(path: &Path, dry_run: bool) -> bool {
-    if !path.exists() || !path.is_file() {
-        return false;
-    }
-
-    let content = match fs::read_to_string(path) {
-        Ok(c) => c,
-        Err(_) => return false,
-    };
-
+pub(crate) fn cleaned_mitm_content(content: &str) -> Option<String> {
     if !content.contains("[MITM]") {
-        return false;
+        return None;
     }
 
     let mut final_content = String::with_capacity(content.len());
@@ -129,17 +120,24 @@ fn process_file(path: &Path, dry_run: bool) -> bool {
         final_content.push('\n');
     }
 
-    if modified {
-        if dry_run {
-            println!("[DRY RUN] Would modify: {:?}", path);
-        } else {
-            if !crate::safe_write_file_internal(path, &final_content, true) {
-                return false;
-            }
-        }
+    modified.then_some(final_content)
+}
+
+fn process_file(path: &Path, dry_run: bool) -> bool {
+    if !path.is_file() {
+        return false;
+    }
+    let Ok(content) = fs::read_to_string(path) else {
+        return false;
+    };
+    let Some(cleaned) = cleaned_mitm_content(&content) else {
+        return false;
+    };
+    if dry_run {
+        println!("[DRY RUN] Would modify: {:?}", path);
         true
     } else {
-        false
+        crate::safe_write_file_internal(path, &cleaned, true)
     }
 }
 

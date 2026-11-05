@@ -96,6 +96,15 @@ const BILIBILI: &[RemoteSource] = &[
     },
 ];
 
+const YOUTUBE: RemoteSource = RemoteSource {
+    label: "YouTube.Enhance",
+    url: "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule",
+    required: true,
+};
+const VIDEO_OUTPUT: &str = "modules/surge/amplify_nexus/📺 BiliBili + YouTube 增强合集.sgmodule";
+const BILIBILI_BUILD_SOURCE: &str = "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule";
+const YOUTUBE_BUILD_SOURCE: &str = "modules/source/local/YouTube.ADBlock.sgmodule";
+
 const WEIBO: &[RemoteSource] = &[
     RemoteSource {
         label: "Weibo",
@@ -388,20 +397,7 @@ fn publish_bundle(
         .youtube_adblock_output
         .as_ref()
         .map(std::path::PathBuf::from);
-    let cache = root.join(".cache");
-    fs::create_dir_all(&cache)
-        .map_err(|error| format!("cannot create functional cache: {error}"))?;
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|error| format!("cannot name functional staging directory: {error}"))?
-        .as_nanos();
-    let staging = cache.join(format!(
-        "functional-bundle-{}-{timestamp}",
-        std::process::id()
-    ));
-    fs::create_dir(&staging)
-        .map_err(|error| format!("cannot create functional staging: {error}"))?;
-    let result = (|| {
+    with_bundle_staging(root, |staging| {
         let staged_output = staging.join("bundle.sgmodule");
         if request.op == "promax_source_merge" && target.exists() {
             fs::copy(&target, &staged_output)
@@ -415,8 +411,7 @@ fn publish_bundle(
         if !process_merge_bundle(&request) {
             return Err(format!("merge failed for {}", target.display()));
         }
-        let content = fs::read_to_string(&staged_output)
-            .map_err(|error| format!("cannot read staged bundle: {error}"))?;
+        let content = read_staged_bundle(&staged_output)?;
         let content = match postprocess {
             Some(transform) => transform(&content)?,
             None => content,
@@ -429,14 +424,37 @@ fn publish_bundle(
         if let Some(target) = adblock_target {
             artifacts.push(GeneratedArtifact {
                 target,
-                content: fs::read_to_string(&staged_adblock).map_err(|error| {
-                    format!("cannot read staged YouTube adblock source: {error}")
-                })?,
+                content: read_staged_bundle(&staged_adblock)?,
                 kind: ArtifactKind::Surge,
             });
         }
         publish_generated_artifacts(root, &artifacts)
-    })();
+    })
+}
+
+fn read_staged_bundle(path: &Path) -> Result<String, String> {
+    fs::read_to_string(path)
+        .map_err(|error| format!("cannot read staged bundle {}: {error}", path.display()))
+}
+
+fn with_bundle_staging(
+    root: &Path,
+    build: impl FnOnce(&Path) -> Result<(), String>,
+) -> Result<(), String> {
+    let cache = root.join(".cache");
+    fs::create_dir_all(&cache)
+        .map_err(|error| format!("cannot create functional cache: {error}"))?;
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("cannot name functional staging directory: {error}"))?
+        .as_nanos();
+    let staging = cache.join(format!(
+        "functional-bundle-{}-{timestamp}",
+        std::process::id()
+    ));
+    fs::create_dir(&staging)
+        .map_err(|error| format!("cannot create functional staging: {error}"))?;
+    let result = build(&staging);
     if let Err(error) = fs::remove_dir_all(&staging) {
         eprintln!(
             "[WARN] cannot clean functional staging {}: {error}",
@@ -645,6 +663,141 @@ fn harden_youtube_content(content: &str) -> Result<String, String> {
     Ok(output)
 }
 
+fn scope_biliverse_enhanced_storage(content: &str) -> String {
+    content
+        .lines()
+        .map(|line| {
+            let directive = line
+                .strip_prefix("#!")
+                .and_then(|line| line.split_once('='))
+                .map(|(key, value)| (key.trim(), value.trim()));
+            if let Some(("arguments", args)) = directive {
+                let args = crate::smart_cleanup::split_script_parameters(args)
+                    .into_iter()
+                    .map(|arg| {
+                        let arg = arg.trim();
+                        match arg.split_once(':') {
+                            Some(("Storage", value)) => format!("Enhanced.Storage:{value}"),
+                            _ if arg == "Storage" => "Enhanced.Storage".to_string(),
+                            _ => arg.to_string(),
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                format!("#!arguments={args}")
+            } else if matches!(directive, Some(("arguments-desc", _))) {
+                line.replace("\\nStorage:", "\\nEnhanced.Storage:")
+            } else {
+                line.replace("{{{Storage}}}", "{{{Enhanced.Storage}}}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn publish_video_sources(
+    root: &Path,
+    mut bilibili: Vec<SourceInput>,
+    youtube: SourceInput,
+) -> Result<(), String> {
+    for source in &mut bilibili {
+        if source.label == "Enhanced" {
+            source.content = scope_biliverse_enhanced_storage(&source.content);
+        }
+        source.content = crate::url_rewriter::normalize_force_http_engine_hosts(&source.content);
+    }
+    with_bundle_staging(root, |staging| {
+        let bili_path = staging.join("bilibili.sgmodule");
+        let youtube_path = staging.join("youtube.sgmodule");
+        let ads_path = staging.join("youtube-ads.sgmodule");
+        let combined_path = staging.join("video.sgmodule");
+        let mut feature = MergeBundleRequest {
+            op: "upstream_merge".into(),
+            output_path: bili_path.to_string_lossy().into_owned(),
+            header_meta: metadata(&[
+                ("name", "📺 BiliBili增强合集"),
+                (
+                    "desc",
+                    "合并 Biliverse 与 Maasea 官方源的增强、全球、重定向和广告辅助能力",
+                ),
+                ("author", "Biliverse, Maasea"),
+            ]),
+            sources: bilibili,
+            content_replacements: vec![[r#"ForceHost:"1""#.into(), r#"ForceHost:"2""#.into()]],
+            ..MergeBundleRequest::default()
+        };
+        if !process_merge_bundle(&feature) {
+            return Err("cannot build the BiliBili-only extraction input".into());
+        }
+        let youtube_url = youtube.url.clone();
+        let split = MergeBundleRequest {
+            op: "youtube_merge".into(),
+            output_path: youtube_path.to_string_lossy().into_owned(),
+            header_meta: metadata(&[("name", "YouTube.Enhance")]),
+            sources: vec![youtube],
+            youtube_adblock_output: Some(ads_path.to_string_lossy().into_owned()),
+            ..MergeBundleRequest::default()
+        };
+        if !process_merge_bundle(&split) {
+            return Err("cannot separate YouTube features from its PROMAX input".into());
+        }
+        feature.sources.push(SourceInput {
+            label: YOUTUBE.label.into(),
+            url: youtube_url,
+            content: harden_youtube_content(&read_staged_bundle(&youtube_path)?)?,
+        });
+        feature.output_path = combined_path.to_string_lossy().into_owned();
+        feature.header_meta = metadata(&[
+            ("name", "📺 BiliBili + YouTube 增强合集"),
+            (
+                "desc",
+                "BiliBili 与 YouTube 功能增强；YouTube 广告构建源独立维护",
+            ),
+            ("author", "Biliverse, Maasea"),
+            ("icon", "https://www.bilibili.com/favicon.ico"),
+            ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+            ("tag", "BiliBili, YouTube, 增强"),
+        ]);
+        if !process_merge_bundle(&feature) {
+            return Err("cannot build the combined video module".into());
+        }
+        let functional = |path: &Path| {
+            read_staged_bundle(path).map(|content| {
+                let content = crate::url_rewriter::normalize_cdn_urls(strip_rule_section(&content));
+                crate::mitm_manager::cleaned_mitm_content(&content).unwrap_or(content)
+            })
+        };
+        publish_generated_artifacts(
+            root,
+            &[
+                GeneratedArtifact {
+                    target: root.join(VIDEO_OUTPUT),
+                    content: functional(&combined_path)?,
+                    kind: ArtifactKind::Surge,
+                },
+                GeneratedArtifact {
+                    target: root.join(BILIBILI_BUILD_SOURCE),
+                    content: functional(&bili_path)?,
+                    kind: ArtifactKind::Surge,
+                },
+                GeneratedArtifact {
+                    target: root.join(YOUTUBE_BUILD_SOURCE),
+                    content: read_staged_bundle(&ads_path)?,
+                    kind: ArtifactKind::Surge,
+                },
+            ],
+        )
+    })
+}
+
+fn merge_video(root: &Path, downloader: &Downloader) -> Result<(), String> {
+    let bilibili = fetch_sources(downloader, BILIBILI)?;
+    let youtube = fetch_sources(downloader, &[YOUTUBE])?
+        .pop()
+        .ok_or_else(|| "YouTube feature source unavailable".to_string())?;
+    publish_video_sources(root, bilibili, youtube)
+}
+
 const DEVTOOLS_OUTPUT: &str = "modules/surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule";
 fn publish_devtools_sources(
     root: &Path,
@@ -813,62 +966,8 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         &mut failures,
     );
     run_step(
-        "BiliBili",
-        merge(
-            root,
-            &downloader,
-            MergeJob {
-                op: "upstream_merge",
-                output: "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-                header: &[
-                    ("name", "📺 BiliBili增强合集"),
-                    (
-                        "desc",
-                        "合并 Biliverse 与 Maasea 官方源的增强、全球、重定向和广告辅助能力",
-                    ),
-                    ("author", "Biliverse, Maasea"),
-                    ("icon", "https://www.bilibili.com/favicon.ico"),
-                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                    ("tag", "BiliBili, 增强"),
-                ],
-                specs: BILIBILI,
-                custom_sources: None,
-                replacements: &[("ForceHost:\"1\"", "ForceHost:\"2\"")],
-                youtube_adblock_output: None,
-                postprocess: Some(|content| Ok(strip_rule_section(content))),
-            },
-        ),
-        &mut failures,
-    );
-    run_step(
-        "YouTube",
-        merge(
-            root,
-            &downloader,
-            MergeJob {
-                op: "youtube_merge",
-                output: "modules/surge/amplify_nexus/📺 YouTube增强合集.sgmodule",
-                header: &[
-                    ("name", "📺 YouTube增强合集"),
-                    ("desc", "YouTube 功能增强；广告行由 Rust 拆分后并入 PROMAX"),
-                    ("author", "Maasea"),
-                    (
-                        "icon",
-                        "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/YouTube.png",
-                    ),
-                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                ],
-                specs: &[RemoteSource {
-                    label: "YouTube.Enhance",
-                    url: "https://raw.githubusercontent.com/Maasea/sgmodule/master/YouTube.Enhance.sgmodule",
-                    required: true,
-                }],
-                custom_sources: None,
-                replacements: &[],
-                youtube_adblock_output: Some("modules/source/local/YouTube.ADBlock.sgmodule"),
-                postprocess: Some(harden_youtube_content),
-            },
-        ),
+        "BiliBili + YouTube",
+        merge_video(root, &downloader),
         &mut failures,
     );
     run_step(
@@ -986,6 +1085,52 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn video_bundle_keeps_media_features_separate_from_adblock_inputs() {
+        let root = temporary_root("video-bundle");
+        let source = |label: &str, content: &str| SourceInput {
+            label: label.into(),
+            url: "https://example.test/source.sgmodule".into(),
+            content: content.into(),
+        };
+        super::publish_video_sources(
+            &root,
+            vec![
+                source("Enhanced", concat!(
+                    "#!name=Enhanced\n#!arguments = Storage:\"PersistentStore\"\n",
+                    "[General]\nforce-http-engine-hosts = %APPEND% bili.example.test:80, *:8082\n",
+                    "[Rule]\nDOMAIN,bili.example.test,DIRECT\n",
+                    "[Script]\nBili = type=http-request,pattern=^https://bili.example.test/,script-path=https://example.test/bili.js,argument=Storage={{{Storage}}}\n",
+                        "[MITM]\nhostname = %APPEND% bili.example.test, accounts.google.com\n",
+                )),
+                source("Global", "#!name=Global\n#!arguments = Storage:\"Argument\"\n[MITM]\nhostname = %APPEND% global.example.test\n"),
+            ],
+            source("YouTube", concat!(
+                "#!name=YouTube\n#!arguments=Language:off\n",
+                "[Rule]\nDOMAIN,yt-ads.example.test,REJECT\n",
+                "[Script]\nYT = type=http-request,pattern=^https://youtubei.googleapis.com/,script-path=https://example.test/yt.js\n",
+                "YT Video = type=http-request,pattern=^https://.+\\.googlevideo\\.com/,script-path=https://example.test/video.js\n",
+                "[MITM]\nhostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com\n",
+            )),
+        ).unwrap();
+        let combined = std::fs::read_to_string(root.join(super::VIDEO_OUTPUT)).unwrap();
+        let bili = std::fs::read_to_string(root.join(super::BILIBILI_BUILD_SOURCE)).unwrap();
+        let ads = std::fs::read_to_string(root.join(super::YOUTUBE_BUILD_SOURCE)).unwrap();
+        assert!(
+            combined.contains("bili.example.test") && combined.contains("youtubei.googleapis.com")
+        );
+        assert!(combined.contains("Enhanced.Storage:\"PersistentStore\",Storage:\"Argument\""));
+        assert!(combined.contains("argument=Storage={{{Enhanced.Storage}}}"));
+        assert!(combined.contains("force-http-engine-hosts = %APPEND% bili.example.test:80"));
+        assert!(!combined.contains("*:8082"));
+        assert!(!combined.contains("accounts.google.com"));
+        assert!(!combined.contains("[Rule]") && !combined.contains("googlevideo"));
+        assert!(!bili.contains("youtubei.googleapis.com"));
+        assert!(ads.contains("yt-ads.example.test") && ads.contains("*.googlevideo.com"));
+        assert!(!ads.contains("bili.example.test"));
+        let _ = std::fs::remove_dir_all(root);
+    }
+
     use super::{
         RemoteSource, custom_sources_from_batch, harden_apple_content, harden_youtube_content,
         publish_bundle, publish_devtools_sources, sources_from_batch, strip_rule_section,

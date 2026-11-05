@@ -29,6 +29,10 @@ pub enum Operation {
         pattern: String,
         keep: bool,
     },
+    MemberNameFilter {
+        pattern: String,
+        keep: bool,
+    },
     ProtocolFilter {
         protocols: Vec<String>,
         keep: bool,
@@ -105,6 +109,8 @@ pub enum Operation {
     },
     BatchRename {
         rules: Vec<RenameRule>,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        trim_each: bool,
     },
     Slice {
         skip: usize,
@@ -380,7 +386,7 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                     super::script::compile(source)?;
                 }
             }
-            Operation::BatchRename { rules } => {
+            Operation::BatchRename { rules, .. } => {
                 if rules.len() > 32
                     || rules
                         .iter()
@@ -459,7 +465,9 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                 }
             }
             Operation::NormalizeName { .. } | Operation::Shuffle { .. } => {}
-            Operation::NameFilter { pattern, .. } | Operation::HostFilter { pattern, .. } => {
+            Operation::NameFilter { pattern, .. }
+            | Operation::MemberNameFilter { pattern, .. }
+            | Operation::HostFilter { pattern, .. } => {
                 if !valid_text(pattern) {
                     return Err(ModelError::InvalidEdit);
                 }
@@ -877,7 +885,7 @@ pub(super) fn apply(
                     apply_script_dependencies(sub, dependencies, dependents, names, &edits)?;
                 script_edits = Some(edits);
             }
-            Operation::BatchRename { rules } => {
+            Operation::BatchRename { rules, trim_each } => {
                 let compiled: Vec<_> = rules
                     .iter()
                     .map(|r| {
@@ -897,6 +905,15 @@ pub(super) fn apply(
                         } else {
                             value.replace(&rule.pattern, &rule.replacement)
                         });
+                        if *trim_each {
+                            // Sub-Store follows ECMAScript trim, which includes BOM but not NEL.
+                            let trimmed = value.trim_matches(|c: char| {
+                                c == '\u{feff}' || (c.is_whitespace() && c != '\u{85}')
+                            });
+                            if trimmed.len() != value.len() {
+                                value = Zeroizing::new(trimmed.to_owned());
+                            }
+                        }
                         if !valid_text(&value) {
                             return Err(ModelError::InvalidEdit);
                         }
@@ -1254,6 +1271,18 @@ pub(super) fn apply(
                 let re = regex(pattern)?;
                 for &i in order.iter() {
                     remove[i] = re.is_match(&names[i]) != *keep;
+                }
+            }
+            Operation::MemberNameFilter { pattern, keep } => {
+                if source_context.kind != "collection" {
+                    return Err(ModelError::InvalidEdit);
+                }
+                let re = regex(pattern)?;
+                for &i in order.iter() {
+                    // The immutable base tag is namespaced after the member pipeline runs.
+                    let name = super::super::library::collection_member_name(sub.nodes[i].name())
+                        .ok_or(ModelError::InvalidEdit)?;
+                    remove[i] = re.is_match(name) != *keep;
                 }
             }
             Operation::ProtocolFilter { protocols, keep } => {
@@ -1736,6 +1765,7 @@ mod tests {
             vec![step(
                 1,
                 Operation::BatchRename {
+                    trim_each: false,
                     rules: vec![
                         RenameRule {
                             pattern: r"node(\d+)".into(),
@@ -1844,7 +1874,16 @@ mod tests {
             )])
             .is_err()
         );
-        assert!(validate(&[step(1, Operation::BatchRename { rules: vec![] })]).is_err());
+        assert!(
+            validate(&[step(
+                1,
+                Operation::BatchRename {
+                    rules: vec![],
+                    trim_each: false,
+                }
+            )])
+            .is_err()
+        );
         assert!(
             serde_json::from_str::<Operation>(
                 r#"{"type":"deduplicate_name","keep":"last","ignore_case":true}"#
@@ -1926,6 +1965,7 @@ mod tests {
     fn batch_rejects_oversized_intermediate_even_if_later_shortened() {
         let input = r#"[{"type":"socks","tag":"A","server":"a","server_port":1}]"#;
         let operation = Operation::BatchRename {
+            trim_each: false,
             rules: vec![
                 RenameRule {
                     pattern: "A".into(),
@@ -1950,6 +1990,7 @@ mod tests {
     #[test]
     fn template_and_batch_preserve_uri_and_surge_extra_fields() {
         let operation = || Operation::BatchRename {
+            trim_each: false,
             rules: vec![RenameRule {
                 pattern: "old".into(),
                 replacement: "new".into(),
@@ -2034,6 +2075,7 @@ mod tests {
             validate(&[step(
                 1,
                 Operation::BatchRename {
+                    trim_each: false,
                     rules: vec![rule; 33]
                 }
             )])

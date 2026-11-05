@@ -48,7 +48,7 @@ pub struct SourceInput {
     pub content: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct MergeBundleRequest {
     pub op: String,
     pub output_path: String,

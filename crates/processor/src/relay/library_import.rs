@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use super::{
     compat,
     library::{self, Collection, Entry, Workspace},
-    model::{self, editor::Options},
+    model::editor::Options,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -83,14 +83,7 @@ pub fn import(
         let source = item.source.as_deref().map(String::as_str).unwrap_or("");
         let content = item.content.as_deref().map(String::as_str).unwrap_or("");
         let valid_source = !source.is_empty() && super::input::target(source, "").is_ok();
-        let valid_content = !content.is_empty()
-            && model::Subscription::parse(content).is_ok_and(|sub| {
-                !sub.nodes().is_empty()
-                    && sub
-                        .nodes()
-                        .iter()
-                        .all(|node| node.to_sing_box(false).is_ok())
-            });
+        let valid_content = compat::valid_node_content(content);
         if (item.is_file && !valid_content) || (!valid_source && !valid_content) {
             summary.skipped += 1;
             continue;
@@ -193,6 +186,7 @@ pub fn import(
 
 #[cfg(test)]
 mod tests {
+    use super::super::model;
     use super::*;
 
     #[test]
@@ -257,7 +251,7 @@ mod tests {
         }"#;
         let report = compat::import(backup).unwrap();
         let original = Workspace::default();
-        assert_eq!(report.unsupported_count, 1);
+        assert_eq!(report.unsupported_count, 0);
         assert!(matches!(
             import(&original, &report, false),
             Err(Error::AcknowledgementRequired)
@@ -271,7 +265,96 @@ mod tests {
             &result.collections[0].processing.pipeline[0].operation,
             model::pipeline::Operation::ProtocolFilter { protocols, keep: false } if protocols == &["ss"]
         ));
-        assert_eq!(result.collections[0].processing.pipeline.len(), 1);
+        assert!(matches!(
+            &result.collections[0].processing.pipeline[1].operation,
+            model::pipeline::Operation::MemberNameFilter { pattern, keep: true } if pattern == "^HK"
+        ));
+    }
+
+    #[test]
+    fn collection_name_migration_matches_member_names_without_matching_hub_prefixes() {
+        let backup = br#"{
+          "subs":[
+            {"name":"A","tag":["chosen"],"source":"local","content":"[Proxy]\nRAW = socks5, first.example.invalid, 1080\n"},
+            {"name":"B","tag":["chosen"],"source":"local","content":"[Proxy]\n1: Literal = socks5, second.example.invalid, 1080\nOTHER = socks5, other.example.invalid, 1080\n"}
+          ],
+          "collections":[{"name":"Group","subscriptions":["B"],"subscriptionTags":["chosen"],
+            "process":[{"type":"Regex Filter","args":{"regex":["(?i)^hk$","1:"]}}]}]
+        }"#;
+        let report = compat::import(backup).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let (mut workspace, summary) = import(&Workspace::default(), &report, true).unwrap();
+        assert_eq!(summary.collections, 1);
+        let mut member = workspace.subscriptions[0].clone();
+        member.processing.nodes.push(model::editor::NodeEdit {
+            index: 0,
+            included: true,
+            name: Some("HK".into()),
+        });
+        workspace.update_entry(member).unwrap();
+        let collection = &workspace.collections[0];
+        let merged = workspace.merge(collection.id).unwrap();
+        let source = model::Subscription::parse(&merged).unwrap();
+        let mut processing = collection.processing.clone();
+        processing.nodes.push(model::editor::NodeEdit {
+            index: 0,
+            included: true,
+            name: Some("Rebranded".into()),
+        });
+        let health = vec![model::Health::Unknown; 3];
+        let enhance = model::EnhanceOptions {
+            rename: false,
+            sort: false,
+        };
+        assert!(matches!(
+            source.render_processed(&health, &enhance, &processing),
+            Err(model::ModelError::InvalidEdit)
+        ));
+        let output = source
+            .render_processed_for(
+                &health,
+                &enhance,
+                &processing,
+                super::super::export::OutputFormat::SingBox,
+                None,
+                &model::script::SourceContext {
+                    kind: "collection",
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(output.retained, [0, 2]);
+        let nodes: serde_json::Value = serde_json::from_str(&output.content).unwrap();
+        assert_eq!(nodes[0]["tag"], "Rebranded");
+        assert_eq!(nodes[1]["tag"], "2: HK");
+    }
+
+    #[test]
+    fn imported_local_chain_merges_with_its_detour_and_rejects_invalid_graphs() {
+        let content = "[Proxy]\nBridge = socks5, bridge.example.invalid, 1080\nExit = socks5, exit.example.invalid, 1080, underlying-proxy=Bridge\n";
+        let backup = serde_json::json!({
+            "subs": [{"name":"A", "source":"local", "content":content}],
+            "collections": [{"name":"Group", "subscriptions":["A"]}]
+        });
+        let report = compat::import(&serde_json::to_vec(&backup).unwrap()).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let (workspace, summary) = import(&Workspace::default(), &report, true).unwrap();
+        assert_eq!(summary.collections, 1);
+        let merged = workspace.merge(workspace.collections[0].id).unwrap();
+        let nodes: serde_json::Value = serde_json::from_str(&merged).unwrap();
+        assert_eq!(nodes[0]["tag"], "1: Bridge");
+        assert_eq!(nodes[1]["tag"], "1: Exit");
+        assert_eq!(nodes[1]["detour"], "1: Bridge");
+
+        for invalid in [
+            content.replace("underlying-proxy=Bridge", "underlying-proxy=missing"),
+            content.replace(
+                "bridge.example.invalid, 1080",
+                "bridge.example.invalid, 1080, underlying-proxy=Exit",
+            ),
+        ] {
+            assert!(!compat::valid_node_content(&invalid));
+        }
     }
 
     #[test]

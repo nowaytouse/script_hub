@@ -375,6 +375,7 @@ fn operation_label(op: &Operation) -> Text {
     match op {
         Operation::Script { .. } => Text::OperationScript,
         Operation::NameFilter { .. } => Text::OperationNameFilter,
+        Operation::MemberNameFilter { .. } => Text::OperationMemberNameFilter,
         Operation::ProtocolFilter { .. } => Text::OperationProtocolFilter,
         Operation::ReplaceName { .. } => Text::OperationReplaceName,
         Operation::FormatName { .. } => Text::OperationFormatName,
@@ -497,6 +498,7 @@ fn new_operations() -> [Operation; 26] {
         },
         Operation::Shuffle { seed: 0 },
         Operation::BatchRename {
+            trim_each: false,
             rules: vec![RenameRule {
                 pattern: String::new(),
                 replacement: String::new(),
@@ -812,7 +814,8 @@ pub(super) fn show(
                         changed |= script_field(ui, language, colors, step.id, source);
                         changed |= script_arguments(ui, language, colors, step.id, arguments);
                     }
-                    Operation::NameFilter { pattern, keep } => {
+                    Operation::NameFilter { pattern, keep }
+                    | Operation::MemberNameFilter { pattern, keep } => {
                         changed |= field(
                             ui,
                             tr(Text::OperationPattern),
@@ -889,7 +892,8 @@ pub(super) fn show(
                         );
                         ui.weak(tr(Text::OperationTemplateHelp));
                     }
-                    Operation::BatchRename { rules } => {
+                    Operation::BatchRename { rules, trim_each } => {
+                        changed |= ui.checkbox(trim_each, tr(Text::RenameTrimEach)).changed();
                         let mut action = None;
                         let len = rules.len();
                         for (i, rule) in rules.iter_mut().enumerate() {
@@ -1602,6 +1606,7 @@ pub(super) fn show(
 fn operation_group(op: &Operation) -> u8 {
     match op {
         Operation::NameFilter { .. }
+        | Operation::MemberNameFilter { .. }
         | Operation::ProtocolFilter { .. }
         | Operation::HostFilter { .. }
         | Operation::PortFilter { .. }
@@ -2128,7 +2133,10 @@ mod tests {
             let mut steps = vec![Step {
                 id: 1,
                 enabled: true,
-                operation: Operation::BatchRename { rules: vec![] },
+                operation: Operation::BatchRename {
+                    rules: vec![],
+                    trim_each: false,
+                },
             }];
             open_for_next_frame(&ctx, 1);
             let output = draw(&ctx, &mut steps, vec![]);
@@ -2169,7 +2177,7 @@ mod tests {
             )
             .drop_without_applying_deltas();
             assert!(
-                matches!(&steps[0].operation, Operation::BatchRename { rules } if rules.len() == 1 && !rules[0].regex)
+                matches!(&steps[0].operation, Operation::BatchRename { rules, .. } if rules.len() == 1 && !rules[0].regex)
             );
         }
     }
