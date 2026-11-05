@@ -337,7 +337,7 @@ fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -
     let mut output = vec![
         "#!name=🌟 AdBlock Helper".to_string(),
         format!(
-            "#!desc={prefix}保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和私网反查交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。"
+            "#!desc={prefix}保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和本地反查区交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。"
         ),
         "#!author=ScriptHub".to_string(),
         "#!category=『 🔝 Head Expanse › 首端扩域 』".to_string(),
@@ -346,10 +346,7 @@ fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -
     ];
     output.extend([String::new(), "[Host]".to_string()]);
     if !upstream_hosts.is_empty() {
-        output.push(format!(
-            "# Local names selected from SukkaW/Surge (AGPL-3.0): {}",
-            super::helper_hosts::SOURCE,
-        ));
+        output.extend(super::helper_hosts::source_comments());
     }
     output.extend(hosts);
     output.extend([
@@ -484,8 +481,7 @@ mod tests {
     fn publication_guard_rejects_dns_drift_in_a_helper_mirror() {
         let root =
             std::env::temp_dir().join(format!("script-hub-helper-guard-{}", std::process::id()));
-        fs::create_dir_all(root.join("modules/source/local")).unwrap();
-        super::super::helper_hosts::publish(&root, "# Size: 1\nDOMAIN,unifi\n### EOF ###").unwrap();
+        super::super::helper_hosts::seed_test_snapshots(&root);
         super::refresh_security_modules(&root, "test").unwrap();
         for (dir, file, _) in super::dns_modules("test", &[]) {
             let dir = root.join("modules").join(dir);

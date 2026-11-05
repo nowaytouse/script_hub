@@ -234,7 +234,7 @@ fn run(
         let failures = rust_processor::functional_update::run_functional_updates(root);
         if !failures.is_empty() {
             eprintln!(
-                "[WARN] {} functional bundle(s) kept at their last validated version: {}",
+                "[WARN] {} functional update step(s) reported failures: {}",
                 failures.len(),
                 failures.join(", ")
             );

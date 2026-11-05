@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expand DNS Helpers with IANA's locally-served IPv4 and IPv6 reverse zones, independently validated and refreshed alongside Sukka's LAN feed without changing routing or global DNS providers.
 - Reject self-referential Host aliases during upstream merge and publication checks; keep DNS Helpers free of unreviewed public-domain overrides.
 - Temporarily pin age exactly to 0.11.5 while retaining locked dependency audits.
 - Import deterministic Sub-Store name sorting into the native pipeline, with UTF-16 order, stable equal-name ties, and collection member-name support.

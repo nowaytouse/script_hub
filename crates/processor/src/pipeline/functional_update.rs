@@ -874,7 +874,7 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
     sync_local_sources(root, &downloader);
     let mut failures = Vec::new();
     run_step(
-        "Sukka local DNS hosts",
+        "Helper local DNS sources",
         super::helper_hosts::refresh(root),
         &mut failures,
     );
