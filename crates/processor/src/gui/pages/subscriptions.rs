@@ -103,6 +103,14 @@ impl HubApp {
                             tr(Text::RelayDemoPlanned),
                             report.planned_uploads,
                         ));
+                        ui.label(format!(
+                            "{}: {} / {} · {}: {}",
+                            tr(Text::RelayDemoBackup),
+                            report.backup_subscriptions,
+                            report.backup_collections,
+                            tr(Text::RelayDemoScheduled),
+                            report.scheduled_runs,
+                        ));
                         ui.weak(tr(Text::RelayDemoChecks));
                     }
                     Err(_) => {

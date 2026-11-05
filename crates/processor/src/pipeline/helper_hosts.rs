@@ -106,8 +106,27 @@ fn filtered(source: &str) -> Result<BTreeSet<String>, String> {
             .split_once(',')
             .ok_or("malformed Sukka LAN source row")?;
         let name = name.trim().to_ascii_lowercase();
-        if !matches!(kind, "DOMAIN" | "DOMAIN-SUFFIX") || name.starts_with('*') || !supported(&name)
+        if !matches!(kind, "DOMAIN" | "DOMAIN-SUFFIX") || name.contains(',') {
+            return Err("unreviewed Sukka LAN source row format".into());
+        }
+        // Some Sukka feeds use an underscore-bearing provenance marker, never a Host entry.
+        if name.ends_with(".skk.moe") && name.contains('_') {
+            continue;
+        }
+        if name.len() > 253
+            || name.split('.').any(|label| {
+                label.is_empty()
+                    || label.len() > 63
+                    || label.starts_with('-')
+                    || label.ends_with('-')
+                    || !label
+                        .bytes()
+                        .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+            })
         {
+            return Err("invalid hostname in Sukka LAN source".into());
+        }
+        if !supported(&name) {
             continue;
         }
         if kind == "DOMAIN-SUFFIX" && local_zone(&name) {
@@ -184,7 +203,7 @@ mod tests {
     #[test]
     fn upstream_cannot_insert_public_dns_or_broaden_device_aliases() {
         let source = "\
-# Size: 15
+# Size: 12
 DOMAIN-SUFFIX,ROUTERLOGIN.NET
 DOMAIN-SUFFIX,168.192.in-addr.arpa
 DOMAIN-SUFFIX,31.172.in-addr.arpa
@@ -196,10 +215,7 @@ DOMAIN-SUFFIX,c.f.ip6.arpa
 DOMAIN-SUFFIX,plex.direct
 DOMAIN-SUFFIX,apple.com
 DOMAIN,cdn.jsdelivr.net
-DOMAIN,localhost,REJECT
-DOMAIN,*.lan
 DOMAIN,routerlogin.net.example.org
-IP-CIDR,192.168.0.0/16
 ### EOF ###";
         let result = filtered(source).unwrap();
         assert_eq!(
@@ -218,6 +234,12 @@ IP-CIDR,192.168.0.0/16
     }
 
     #[test]
+    fn provenance_marker_is_counted_but_never_published_as_a_host() {
+        let hosts = filtered("# Size: 2\nDOMAIN,this_ruleset_is_made_by_sukkaw.ruleset.skk.moe\nDOMAIN,unifi\n### EOF ###").unwrap();
+        assert_eq!(hosts.into_iter().collect::<Vec<_>>(), ["unifi"]);
+    }
+
+    #[test]
     fn incomplete_or_unsafe_only_refresh_does_not_replace_a_good_snapshot() {
         let root =
             std::env::temp_dir().join(format!("script-hub-local-hosts-{}", std::process::id()));
@@ -232,6 +254,10 @@ IP-CIDR,192.168.0.0/16
             "# Size: 1\n# Size: 1\nDOMAIN,pi.hole\n### EOF ###",
             "DOMAIN,pi.hole\n### EOF ###",
             "# Size: 1\nDOMAIN,apple.com\n### EOF ###",
+            "# Size: 1\nDOMAIN,unifi,REJECT\n### EOF ###",
+            "# Size: 1\nIP-CIDR,192.168.0.0/16\n### EOF ###",
+            "# Size: 1\nDOMAIN,*.lan\n### EOF ###",
+            "# Size: 1\nDOMAIN,invalid..lan\n### EOF ###",
         ] {
             assert!(publish(&root, invalid).is_err());
             assert_eq!(fs::read(&path).unwrap(), original);
@@ -240,6 +266,44 @@ IP-CIDR,192.168.0.0/16
         assert_eq!(load(&root).unwrap(), ["pi.hole"]);
         fs::write(path, "*.apple.com\n").unwrap();
         assert!(load(&root).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    #[ignore = "bounded live HTTPS request to the official Sukka feed"]
+    fn live_helper_refresh_runs_the_production_pipeline() {
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "script-hub-live-helper-{}-{stamp}",
+            std::process::id()
+        ));
+        fs::create_dir_all(root.join("modules/source/local")).unwrap();
+        refresh(&root).unwrap();
+        let hosts = load(&root).unwrap();
+        assert!(!hosts.is_empty());
+        let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let published_count = load(&repository).unwrap().len();
+        let snapshot_unchanged =
+            fs::read(root.join(SNAPSHOT)).unwrap() == fs::read(repository.join(SNAPSHOT)).unwrap();
+        let version = "live-test";
+        let written = crate::firewall_sync::refresh_security_modules(&root, version).unwrap();
+        let source = repository.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
+        let targets = [
+            root.join("modules/surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
+            root.join("modules/shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module"),
+            root.join("modules/shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
+        ];
+        let target_names: Vec<_> = targets.iter().map(|path| path.to_str().unwrap()).collect();
+        crate::firewall_sync::sync_ports(source.to_str().unwrap(), &target_names, true, version);
+        crate::url_rewriter::copy_github_variants(root.to_str().unwrap()).unwrap();
+        crate::firewall_sync::validate_published_helpers(&root).unwrap();
+        println!(
+            "live Helper refresh: {} filtered Host names (published {published_count}), snapshot_unchanged={snapshot_unchanged}, {written} modules, DNS mirrors validated",
+            hosts.len()
+        );
         fs::remove_dir_all(root).unwrap();
     }
 }

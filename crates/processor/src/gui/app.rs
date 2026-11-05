@@ -1468,6 +1468,22 @@ impl eframe::App for DemoApp {
                     if ui.button(tr(label)).clicked() {
                         hub.draft.theme = theme;
                     }
+                    if ui
+                        .add_enabled(
+                            hub.relay.can_import_demo_backup(),
+                            egui::Button::new(tr(Text::RelayDemoImportSample)),
+                        )
+                        .on_disabled_hover_text(tr(Text::RelayDemoImportHint))
+                        .clicked()
+                    {
+                        hub.relay.import_demo_backup();
+                    }
+                    if ui
+                        .add_enabled(!hub.relay.busy(), egui::Button::new(tr(Text::RelayDemoRun)))
+                        .clicked()
+                    {
+                        hub.relay.demo_report = Some(crate::relay::demo::run());
+                    }
                 });
                 ui.label(tr(Text::RelaySandboxOffline));
                 ui.add_space(8.0);

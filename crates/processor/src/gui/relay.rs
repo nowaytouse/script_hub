@@ -259,6 +259,7 @@ pub(super) struct RelayState {
     pub(super) surge_group_draft: Option<(PolicyLink, Zeroizing<String>)>,
     pub(super) format_feedback: Option<(OutputFormat, Result<(), Failure>)>,
     pub demo_report: Option<Result<crate::relay::demo::DemoReport, RelayError>>,
+    demo_backup_imported: bool,
     pub progress: Option<Progress>,
     pub error: Option<Failure>,
     pub notice: Option<Text>,
@@ -407,6 +408,29 @@ impl Default for RelayState {
 }
 
 impl RelayState {
+    pub(super) fn can_import_demo_backup(&self) -> bool {
+        self.demo_mode
+            && !self.busy()
+            && !self.demo_backup_imported
+            && !self.workspace.show_editor
+            && !self.workspace.draft_dirty
+            && !self.selecting_file()
+    }
+
+    pub(super) fn import_demo_backup(&mut self) {
+        if !self.can_import_demo_backup() {
+            return;
+        }
+        match crate::relay::compat::import(crate::relay::demo::backup()) {
+            Ok(report) => {
+                self.migration = Some(Arc::new(report));
+                self.migration_ack = true;
+                self.import_workspace_report();
+            }
+            Err(_) => self.error = Some(Failure::Validation(Text::RelayBackupInvalid)),
+        }
+    }
+
     pub(super) fn new(demo_mode: bool) -> Self {
         let defaults = RelayConfig::default();
         Self {
@@ -464,6 +488,7 @@ impl RelayState {
             surge_group_draft: None,
             format_feedback: None,
             demo_report: None,
+            demo_backup_imported: false,
             progress: None,
             error: None,
             notice: None,
@@ -1130,6 +1155,9 @@ impl RelayState {
 
     pub(super) fn tick(&mut self, ctx: &egui::Context) {
         if let Some(action) = self.workspace.tick(ctx) {
+            if self.demo_mode && action == super::subscriptions::Action::Migrated {
+                self.demo_backup_imported = true;
+            }
             self.execute_workspace(ctx, action);
         }
         if let Some(failure) = self.workspace.take_failure() {
@@ -3275,6 +3303,52 @@ mod tests {
         let processing = editor.processing();
         assert!(processing.nodes.is_empty());
         assert_eq!(processing.pipeline[0].id, 9);
+    }
+
+    #[test]
+    fn demo_backup_import_uses_normal_migration_without_storage_or_remote_sources() {
+        let ctx = egui::Context::default();
+        let mut state = RelayState::new(true);
+        state.workspace.checked = true;
+        state.workspace.data = crate::relay::demo::workspace().unwrap();
+        state.import_demo_backup();
+        finish(&mut state, &ctx);
+        let summary = state.workspace.import_summary.unwrap();
+        assert_eq!(
+            (summary.subscriptions, summary.collections, summary.skipped),
+            (2, 1, 0)
+        );
+        assert_eq!(state.workspace.data.subscriptions.len(), 4);
+        assert_eq!(state.workspace.data.collections.len(), 2);
+        assert!(
+            state
+                .workspace
+                .data
+                .subscriptions
+                .iter()
+                .all(|entry| entry.source.is_empty())
+        );
+        assert!(state.token.is_empty() && state.local_content.is_none());
+        assert!(state.workspace.selected.is_none());
+        state.workspace.import_summary = None;
+        state.import_demo_backup();
+        assert!(!state.busy() && !state.can_import_demo_backup());
+        assert_eq!(state.workspace.data.subscriptions.len(), 4);
+        assert_eq!(state.workspace.data.collections.len(), 2);
+    }
+
+    #[test]
+    fn demo_backup_import_cannot_discard_an_open_draft_or_run_in_a_live_session() {
+        for demo in [true, false] {
+            let mut state = RelayState::new(demo);
+            state.workspace.show_editor = true;
+            state.workspace.draft_dirty = true;
+            *state.workspace.name = "Unsaved example".into();
+            state.import_demo_backup();
+            assert!(!state.busy() && state.migration.is_none());
+            assert_eq!(state.workspace.name.as_str(), "Unsaved example");
+            assert!(state.workspace.draft_dirty && state.workspace.show_editor);
+        }
     }
 
     #[test]

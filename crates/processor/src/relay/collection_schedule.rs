@@ -240,10 +240,15 @@ fn fetch_member(
 
 #[cfg(test)]
 mod tests {
+    use std::time::{Duration, Instant};
+
     use super::*;
     use crate::relay::{
+        compat, demo,
         gist::tests::{Fixture, ID as DESTINATION, INPUT_ID as GIST, api, document, response},
         library::Collection,
+        library_import,
+        schedule::{MIN_INTERVAL, Schedule},
     };
 
     const OLD: &str = "Old = socks5, old.example, 1080\n";
@@ -462,5 +467,97 @@ mod tests {
             fixture.request_methods(),
             ["GET", "GET", "GET", "GET", "PATCH", "GET"]
         );
+    }
+
+    #[test]
+    fn imported_backup_survives_native_roundtrip_and_two_scheduled_publications() {
+        let report = compat::import(demo::backup()).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let (workspace, summary) =
+            library_import::import(&Workspace::default(), &report, true).unwrap();
+        assert_eq!(
+            summary,
+            library_import::Summary {
+                subscriptions: 2,
+                collections: 1,
+                skipped: 0,
+            }
+        );
+        let encoded = workspace.encode().unwrap();
+        let workspace = Workspace::decode(&encoded).unwrap();
+        assert_eq!(workspace.encode().unwrap(), encoded);
+        let collection = &workspace.collections[0];
+        let id = collection.id;
+        let config = RelayConfig {
+            local_content: Some(workspace.merge(id).unwrap()),
+            processing: collection.processing.clone(),
+            output: DESTINATION.into(),
+            output_file: "nodes.txt".into(),
+            title: "relay".into(),
+            output_format: super::super::export::OutputFormat::Mihomo,
+            rename: false,
+            sort: false,
+            ..Default::default()
+        };
+        let cancel = AtomicBool::new(false);
+        let preview = prepare_with(&workspace, id, &config, &cancel, &|_| {}, &mut |_| {
+            Err(RelayError::InvalidInput)
+        })
+        .unwrap();
+        assert_eq!(preview.result.total, 3);
+        assert_eq!(preview.result.processed, 2);
+        assert!(!preview.result.tested && !preview.result.published);
+        let exported = super::super::export::export_subscription(
+            &preview.result.content,
+            config.output_format,
+        )
+        .unwrap();
+        let exported_nodes = model::Subscription::parse(&exported).unwrap();
+        assert_eq!(
+            exported_nodes
+                .nodes()
+                .iter()
+                .map(|node| node.name())
+                .collect::<Vec<_>>(),
+            ["1: Ready", "2: Secondary"]
+        );
+        let fixture = Fixture::new(vec![
+            api(document(OLD)),
+            api(document(OLD)),
+            Some(response(200, "", "")),
+            api(document(&exported)),
+            api(document(&exported)),
+            api(document(&exported)),
+        ]);
+        let client = fixture.client();
+        let now = Instant::now();
+        let mut timer = Schedule::new(MIN_INTERVAL, now).unwrap();
+        assert!(!timer.begin(now));
+        assert!(fixture.request_methods().is_empty());
+        let due = now + MIN_INTERVAL;
+        assert!(timer.begin(due));
+        assert!(!timer.begin(due));
+        let first = run_with(&workspace, id, &config, &client, &cancel, &|_| {});
+        let finished = due + Duration::from_millis(1);
+        timer.finish_status(finished, first.as_ref().map(|_| ()));
+        let first = first.unwrap();
+        assert!(first.result.published && !first.result.unchanged);
+        assert_eq!(first.result.content, preview.result.content);
+        assert_eq!(fixture.request_methods(), ["GET", "GET", "PATCH", "GET"]);
+        assert!(!timer.begin(finished));
+        let next = finished + MIN_INTERVAL;
+        assert_eq!(timer.next_due(), Some(next));
+        assert!(timer.begin(next));
+        let second = run_with(&first.workspace, id, &config, &client, &cancel, &|_| {});
+        timer.finish_status(next, second.as_ref().map(|_| ()));
+        let second = second.unwrap();
+        assert!(second.result.unchanged && !second.result.published);
+        assert_eq!(second.result.content, first.result.content);
+        assert_eq!(
+            fixture.request_methods(),
+            ["GET", "GET", "PATCH", "GET", "GET", "GET"]
+        );
+        assert!(!timer.is_running() && !timer.is_paused());
+        assert_eq!(timer.next_due(), Some(next + MIN_INTERVAL));
     }
 }

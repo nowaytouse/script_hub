@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Exercise backup migration, collection previews, and simulated scheduler cycles in the offline demo; prevent duplicate sample imports and draft loss.
+- Verify scheduled collection publication, readback, and unchanged-output skipping against a mock Gist.
+- Validate the live Helper refresh path and reject upstream grammar changes without replacing the last good Host snapshot.
+
 - Keep existing DNS providers in the AdBlock Helper and offer AliDNS as a separate, opt-in module.
 - Keep the last relay preview counts after a failed retry without exposing or reusing its output; hide preview addresses when the window loses focus.
 - Reject collection edits that could target the wrong node; reset individual node edits without losing processing steps.

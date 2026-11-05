@@ -9,11 +9,12 @@ use serde::Serialize;
 use zeroize::Zeroizing;
 
 use super::{
-    RelayConfig, RelayError, collection_schedule,
+    RelayConfig, RelayError, RunMode, collection_schedule, compat,
     export::{OutputFormat, export_subscription},
     gist::{self, GistError, Snapshot},
     input::Source,
     library::{Collection, Entry, Workspace},
+    library_import,
     model::{
         ModelError, Subscription,
         editor::Options,
@@ -31,10 +32,40 @@ const FRESH: &str =
 const OFFLINE_PRIMARY: &str =
     "Primary = socks5, primary.invalid, 1080\nAlternate = socks5, primary.invalid, 1080\n";
 const SECONDARY: &str = r#"[{"type":"socks","tag":"Secondary","server":"secondary.invalid","server_port":1080,"network":"tcp"}]"#;
+const SUBSTORE_BACKUP: &[u8] = br#"{
+  "subs": [
+    {
+      "name": "Backup Primary",
+      "source": "local",
+      "content": "Primary = socks5, primary.invalid, 1080\nExclude = socks5, excluded.invalid, 1080\n",
+      "process": [{"type":"Regex Rename Operator","args":[{"expr":"Primary","now":"Ready"}]}]
+    },
+    {
+      "name": "Backup Secondary",
+      "source": "local",
+      "content": "Secondary = socks5, secondary.invalid, 1080\n"
+    }
+  ],
+  "collections": [
+    {
+      "name": "Backup Demo",
+      "subscriptions": ["Backup Primary", "Backup Secondary"],
+      "process": [{"type":"Regex Filter","args":{"regex":["Exclude$"],"keep":false}}]
+    }
+  ]
+}"#;
+
+/// An original-format Sub-Store backup containing only local, synthetic sample nodes.
+pub fn backup() -> &'static [u8] {
+    SUBSTORE_BACKUP
+}
 
 /// Counts and safety checks from a simulated publication. No output was actually written.
 #[derive(Debug, Eq, PartialEq, Serialize)]
 pub struct DemoReport {
+    pub backup_subscriptions: usize,
+    pub backup_collections: usize,
+    pub scheduled_runs: usize,
     pub members: usize,
     pub refreshed_members: usize,
     pub input_nodes: usize,
@@ -47,6 +78,47 @@ pub struct DemoReport {
 
 /// Exercise real relay preparation, export, publication preflight, and scheduling without I/O.
 pub fn run() -> Result<DemoReport, RelayError> {
+    let imported = compat::import(backup()).map_err(|_| RelayError::InvalidInput)?;
+    if imported.unsupported_count != 0 {
+        return Err(RelayError::InvalidInput);
+    }
+    let (workspace, imported) = library_import::import(&Workspace::default(), &imported, true)
+        .map_err(|_| RelayError::InvalidInput)?;
+    if imported.skipped != 0 {
+        return Err(RelayError::InvalidInput);
+    }
+    let workspace = Workspace::decode(&workspace.encode().map_err(|_| RelayError::InvalidInput)?)
+        .map_err(|_| RelayError::InvalidInput)?;
+    let collection = workspace
+        .collections
+        .first()
+        .ok_or(RelayError::InvalidInput)?;
+    let content = workspace
+        .merge(collection.id)
+        .map_err(|_| RelayError::InvalidInput)?;
+    let preview = super::run(
+        &RelayConfig {
+            expected_source: Some(content.clone()),
+            local_content: Some(content),
+            processing: collection.processing.clone(),
+            script_source: super::model::script::SourceContext {
+                kind: "collection",
+                label: Some(collection.name.clone()),
+                member_index: None,
+            },
+            rename: false,
+            sort: false,
+            test_nodes: false,
+            ..Default::default()
+        },
+        "",
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+    )?;
+    if preview.total != 3 || preview.processed != 2 || preview.published || preview.tested {
+        return Err(RelayError::Model(ModelError::Render));
+    }
     let workspace = fixture([
         (HTTPS_SOURCE, "", CACHED),
         (GIST_SOURCE, "demo.json", SECONDARY),
@@ -65,6 +137,12 @@ pub fn run() -> Result<DemoReport, RelayError> {
         ..RelayConfig::default()
     };
     let cancel = AtomicBool::new(false);
+    let now = Instant::now();
+    let mut schedule = Schedule::new(MIN_INTERVAL, now)?;
+    let due = now + MIN_INTERVAL;
+    if schedule.begin(now) || !schedule.begin(due) || schedule.begin(due) {
+        return Err(RelayError::InvalidInput);
+    }
     let mut refreshed_members = 0;
     let prepared = collection_schedule::prepare_with(
         &workspace,
@@ -121,13 +199,27 @@ pub fn run() -> Result<DemoReport, RelayError> {
     let simulated = Snapshot {
         content: Some(result.content.clone()),
         revision: "synthetic-after".into(),
-        description: config.title,
+        description: config.title.clone(),
         public: false,
     };
+    schedule.finish_status(due, Ok(()));
+    let next = due + MIN_INTERVAL;
+    if schedule.begin(due) || !schedule.begin(next) || schedule.begin(next) {
+        return Err(RelayError::InvalidInput);
+    }
+    let repeated = collection_schedule::prepare_with(
+        &prepared.workspace,
+        id,
+        &config,
+        &cancel,
+        &|_| {},
+        &mut fetch,
+    )?;
+    repeated.recheck_with(&cancel, &mut fetch)?;
     let skipped_unchanged = !gist::needs_publish(
         &simulated,
         &simulated,
-        &result.content,
+        &repeated.result.content,
         &simulated.description,
         false,
     )
@@ -135,8 +227,12 @@ pub fn run() -> Result<DemoReport, RelayError> {
     if planned_uploads != 1 || !skipped_unchanged {
         return Err(RelayError::Gist(GistError::VerificationFailed));
     }
-    check_schedule()?;
+    schedule.finish_status(next, Ok(()));
+    check_schedule(schedule, next)?;
     Ok(DemoReport {
+        backup_subscriptions: imported.subscriptions,
+        backup_collections: imported.collections,
+        scheduled_runs: 2,
         members: collection.members.len(),
         refreshed_members,
         input_nodes: result.total,
@@ -227,15 +323,8 @@ fn https_source(content: &str) -> Source {
     }
 }
 
-fn check_schedule() -> Result<(), RelayError> {
-    let now = Instant::now();
-    let mut schedule = Schedule::new(MIN_INTERVAL, now)?;
-    let due = now + MIN_INTERVAL;
-    if schedule.begin(now) || !schedule.begin(due) || schedule.begin(due) {
-        return Err(RelayError::InvalidInput);
-    }
-    schedule.finish_status(due, Ok(()));
-    let next = due + MIN_INTERVAL;
+fn check_schedule(mut schedule: Schedule, last_success: Instant) -> Result<(), RelayError> {
+    let next = last_success + MIN_INTERVAL;
     if schedule.next_due() != Some(next) || !schedule.begin(next) {
         return Err(RelayError::InvalidInput);
     }
@@ -263,6 +352,9 @@ mod tests {
         assert_eq!(
             run().unwrap(),
             DemoReport {
+                backup_subscriptions: 2,
+                backup_collections: 1,
+                scheduled_runs: 2,
                 members: 2,
                 refreshed_members: 2,
                 input_nodes: 3,

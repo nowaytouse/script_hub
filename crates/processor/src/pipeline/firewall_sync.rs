@@ -599,6 +599,8 @@ mod tests {
                 ],
             );
             assert!(!module.contains("[General]"));
+            assert!(!module.contains("use-local-host-item-for-proxy"));
+            assert!(!module.contains("force-syslib"));
             let (_, host_section) = module.split_once("[Host]\n").unwrap();
             let (hosts, mitm) = host_section.split_once("\n\n[MITM]\n").unwrap();
             let mut names = HashSet::new();
@@ -711,6 +713,7 @@ mod tests {
             assert_eq!(addresses.iter().filter(|ip| ip.is_ipv6()).count(), 2);
             assert_eq!(mitm.trim_end(), format!("hostname = %INSERT% -{host}"));
             assert!(!module.contains("[Rule]"));
+            assert!(!module.contains("use-local-host-item-for-proxy"));
         }
     }
 }
