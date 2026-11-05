@@ -1446,6 +1446,7 @@ static SECTION_ORDER: &[&str] = &[
     "Script",
     "Body Rewrite",
     "Header Rewrite",
+    "Panel",
     "MITM",
 ];
 

@@ -646,32 +646,40 @@ fn harden_youtube_content(content: &str) -> Result<String, String> {
 }
 
 const DEVTOOLS_OUTPUT: &str = "modules/surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule";
-const DEVTOOLS_CUSTOM_MARKER: &str = "#!script-hub-custom-sources=merged";
-
-fn custom_devtools_request(
+fn publish_devtools_sources(
     root: &Path,
+    panel_sources: Vec<SourceInput>,
     custom_sources: Vec<SourceInput>,
-) -> Result<MergeBundleRequest, String> {
+) -> Result<(), String> {
     const BASE: &str = include_str!("../../assets/DevTools.Base.sgmodule");
-    let body_start = BASE
-        .find("\n[General]")
-        .ok_or_else(|| "curated DevTools base is missing [General]".to_string())?
-        + 1;
+    let has_custom_sources = !custom_sources.is_empty();
     let mut sources = vec![SourceInput {
         label: "Script Hub curated base".to_string(),
         url: "local:crates/processor/assets/DevTools.Base.sgmodule".to_string(),
-        content: BASE[body_start..].to_string(),
+        content: BASE.to_string(),
     }];
+    sources.extend(panel_sources);
     sources.extend(custom_sources);
     let mut header_meta = crate::merge_bundles::module_metadata_pub(BASE);
     header_meta.remove("date");
-    if sources.len() > 1 {
+    header_meta.extend(metadata(&[
+        (
+            "desc",
+            "Script Hub 转换 · BoxJs · Sub-Store(β) · 节假日、网络与订阅流量面板",
+        ),
+        (
+            "author",
+            "@小白脸 @xream @keywos @ckyb, ChavyLeung, sub-store-org, Rabbit-Spec, Coldvvater",
+        ),
+        ("tag", "ScriptHub, BoxJs, Sub-Store, 面板, 工具"),
+    ]));
+    if has_custom_sources {
         header_meta.insert(
             "script-hub-custom-sources".to_string(),
             "merged".to_string(),
         );
     }
-    Ok(MergeBundleRequest {
+    let request = MergeBundleRequest {
         op: "devtools_merge".to_string(),
         output_path: root.join(DEVTOOLS_OUTPUT).to_string_lossy().to_string(),
         header_meta,
@@ -685,38 +693,30 @@ fn custom_devtools_request(
         script_raw_prefix: None,
         scripts_dir: None,
         script_hub_local: None,
-    })
-}
-
-fn publish_custom_devtools_sources(
-    root: &Path,
-    custom_sources: Vec<SourceInput>,
-) -> Result<(), String> {
-    let request = custom_devtools_request(root, custom_sources)?;
+    };
     // Functional modules must not take over routing policies from the user's
     // rulesets, including when an added upstream source contains [Rule].
     publish_bundle(
         root,
         request,
-        Some(|content| Ok(strip_rule_section(content))),
+        Some(|content| {
+            Ok(crate::url_rewriter::normalize_cdn_urls(strip_rule_section(
+                content,
+            )))
+        }),
     )
 }
 
-fn merge_custom_devtools(
+fn merge_devtools(
     root: &Path,
     downloader: &Downloader,
     custom_sources: &[CustomSource],
 ) -> Result<(), String> {
-    let custom_sources = fetch_custom_sources(downloader, custom_sources)?;
-    publish_custom_devtools_sources(root, custom_sources)
-}
-
-fn devtools_output_has_custom_marker(root: &Path) -> Result<bool, String> {
-    match fs::read_to_string(root.join(DEVTOOLS_OUTPUT)) {
-        Ok(content) => Ok(content.lines().any(|line| line == DEVTOOLS_CUSTOM_MARKER)),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
-        Err(error) => Err(format!("cannot inspect current DevTools bundle: {error}")),
-    }
+    publish_devtools_sources(
+        root,
+        fetch_sources(downloader, UTILITIES)?,
+        fetch_custom_sources(downloader, custom_sources)?,
+    )
 }
 
 pub fn run_functional_updates(root: &Path) -> Vec<String> {
@@ -896,25 +896,13 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         }),
         &mut failures,
     );
-    let devtools_has_custom_marker = devtools_output_has_custom_marker(root);
-    if custom_source_error.is_some() {
-        failures.push("DevTools custom sources".to_string());
-    } else {
-        match devtools_has_custom_marker {
-            Ok(has_custom_marker) if !custom_devtools.is_empty() || has_custom_marker => {
-                run_step(
-                    "DevTools custom sources",
-                    merge_custom_devtools(root, &downloader, &custom_devtools),
-                    &mut failures,
-                );
-            }
-            Ok(_) => {}
-            Err(error) => {
-                eprintln!("[WARN] cannot inspect DevTools custom output: {error}");
-                failures.push("DevTools custom sources".to_string());
-            }
-        }
-    }
+    run_step(
+        "Script Hub utilities and panels",
+        require_valid_custom_sources(&custom_source_error, || {
+            merge_devtools(root, &downloader, &custom_devtools)
+        }),
+        &mut failures,
+    );
     run_step(
         "Wool PROMAX source",
         require_valid_custom_sources(&custom_source_error, || {
@@ -940,35 +928,6 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
         }),
         &mut failures,
     );
-    run_step(
-        "Panel utilities",
-        merge(
-            root,
-            &downloader,
-            MergeJob {
-                op: "upstream_merge",
-                output: "modules/surge/amplify_nexus/📊 面板工具合集.sgmodule",
-                header: &[
-                    ("name", "📊 面板工具合集"),
-                    ("desc", "节假日、网络信息与订阅流量面板"),
-                    ("author", "Rabbit-Spec, xream, Coldvvater"),
-                    (
-                        "icon",
-                        "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/Auto.png",
-                    ),
-                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                    ("tag", "面板, 工具"),
-                ],
-                specs: UTILITIES,
-                custom_sources: None,
-                replacements: &[],
-                youtube_adblock_output: None,
-                postprocess: None,
-            },
-        ),
-        &mut failures,
-    );
-
     failures
 }
 
@@ -1028,9 +987,8 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        DEVTOOLS_CUSTOM_MARKER, RemoteSource, custom_sources_from_batch,
-        devtools_output_has_custom_marker, harden_apple_content, harden_youtube_content,
-        publish_bundle, publish_custom_devtools_sources, sources_from_batch, strip_rule_section,
+        RemoteSource, custom_sources_from_batch, harden_apple_content, harden_youtube_content,
+        publish_bundle, publish_devtools_sources, sources_from_batch, strip_rule_section,
         sync_shadowrocket_variants, valid_module,
     };
     use crate::merge_bundles::{MergeBundleRequest, SourceInput};
@@ -1402,11 +1360,24 @@ mod tests {
     }
 
     #[test]
-    fn custom_devtools_marker_survives_finalize_and_empty_sources_restore_curated_base() {
+    fn tools_keep_panels_and_core_when_custom_sources_are_removed() {
         let root = temporary_root("devtools-custom-marker");
         let custom_rule = "^https://custom-devtools\\.example\\.test/ads - reject";
-        publish_custom_devtools_sources(
+        let panels = || {
+            vec![SourceInput {
+            label: "Fixture panel".to_string(),
+            url: "https://example.test/panel.sgmodule".to_string(),
+            content: concat!(
+                "#!name=Fixture panel\n#!arguments=REFRESH:60,TITLE:\"One, two\"\n",
+                "[Panel]\nFixture = script-name=Fixture Panel,update-interval={{{REFRESH}}}\n",
+                    "[Script]\nFixture Panel = type=generic,script-path=https://raw.githubusercontent.com/example/repo/main/panel.js\n",
+            )
+            .to_string(),
+        }]
+        };
+        publish_devtools_sources(
             &root,
+            panels(),
             vec![SourceInput {
                 label: "Fixture custom DevTools".to_string(),
                 url: "https://raw.githubusercontent.com/example/repo/main/custom.sgmodule"
@@ -1418,24 +1389,50 @@ mod tests {
         )
         .unwrap();
 
-        assert!(devtools_output_has_custom_marker(&root).unwrap());
         let output = root.join(super::DEVTOOLS_OUTPUT);
         let with_custom = std::fs::read_to_string(&output).unwrap();
         assert!(
             with_custom
                 .lines()
-                .any(|line| line == DEVTOOLS_CUSTOM_MARKER)
+                .any(|line| line == "#!script-hub-custom-sources=merged")
         );
         assert!(with_custom.contains(custom_rule));
         assert!(!with_custom.contains("[Rule]"));
         assert!(!with_custom.contains("DOMAIN,custom-devtools.example.test,DIRECT"));
 
-        publish_custom_devtools_sources(&root, Vec::new()).unwrap();
+        publish_devtools_sources(&root, panels(), Vec::new()).unwrap();
 
-        assert!(!devtools_output_has_custom_marker(&root).unwrap());
         let restored = std::fs::read_to_string(output).unwrap();
+        assert!(!restored.contains("#!script-hub-custom-sources="));
         assert!(restored.contains("Sub-Store Core"));
+        let metadata = crate::merge_bundles::module_metadata_pub(&restored);
+        assert!(metadata["arguments"].contains("ability:http-client-policy"));
+        assert!(metadata["arguments"].contains("REFRESH:60"));
+        assert!(metadata["arguments"].contains("TITLE:\"One, two\""));
+        assert!(restored.contains("[Panel]\nFixture = script-name=Fixture Panel"));
+        assert!(restored.lines().any(|line| {
+            line.split_once('=').is_some_and(|(name, params)| {
+                name.trim() == "Fixture Panel" && params.trim().starts_with("type=generic,")
+            })
+        }));
         assert!(!restored.contains(custom_rule));
+        assert!(restored.contains("https://cdn.jsdelivr.net/gh/example/repo@main/panel.js"));
+        let dated = restored
+            .lines()
+            .map(|line| {
+                if line.starts_with("#!date=") {
+                    "#!date=2000-01-01 00:00:00"
+                } else {
+                    line
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
+        let output = root.join(super::DEVTOOLS_OUTPUT);
+        std::fs::write(&output, &dated).unwrap();
+        publish_devtools_sources(&root, panels(), Vec::new()).unwrap();
+        assert_eq!(std::fs::read_to_string(output).unwrap(), dated);
         let _ = std::fs::remove_dir_all(root);
     }
 }

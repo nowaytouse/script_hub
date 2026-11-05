@@ -132,7 +132,7 @@ fn combine_metadata(parts: &[(String, HashMap<String, String>)]) -> (String, Str
         let mod_name = meta.get("name").map(|s| s.as_str()).unwrap_or(label);
 
         if let Some(raw_args) = meta.get("arguments") {
-            for token in raw_args.split(',') {
+            for token in crate::smart_cleanup::split_script_parameters(raw_args) {
                 let token = token.trim();
                 if !token.is_empty() && !arg_tokens.iter().any(|t| t == token) {
                     arg_tokens.push(token.to_string());
@@ -673,10 +673,17 @@ fn finalize_devtools(path: &Path) -> bool {
         "Script",
         "Body Rewrite",
         "Header Rewrite",
+        "Panel",
         "MITM",
     ];
     let section_list = order_sections(&merged, order);
-    let header = format_header_pub(&meta);
+    let mut header = format_header_pub(&meta);
+    header.extend(
+        text.lines()
+            .take_while(|line| !line.starts_with('['))
+            .filter(|line| line.starts_with("# "))
+            .map(str::to_owned),
+    );
     write_module(path, &header, &section_list, false)
 }
 

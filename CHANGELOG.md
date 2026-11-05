@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Combine the panel utilities with Script Hub Tools. Use the existing Tools module link; the standalone panel links are retired.
+
 - Filter subscriptions with bounded Rhai boolean masks without rewriting or reordering retained nodes.
 - Migrate compatible Sub-Store filters as native subscription and collection operations.
 - Accept formatting-only refreshes without losing saved collection edits.

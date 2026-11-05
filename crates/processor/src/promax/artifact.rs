@@ -515,12 +515,12 @@ pub fn convert_surge_to_shadowrocket(content: &str) -> String {
         let trimmed = raw_line.trim();
         if trimmed.starts_with('[') && trimmed.ends_with(']') {
             section = &trimmed[1..trimmed.len() - 1];
-            if section != "IP Rewrite" {
+            if !matches!(section, "IP Rewrite" | "Panel") {
                 output.push(raw_line.to_string());
             }
             continue;
         }
-        if section == "IP Rewrite" || trimmed.starts_with("#!requirement=") {
+        if matches!(section, "IP Rewrite" | "Panel") || trimmed.starts_with("#!requirement=") {
             continue;
         }
         if let Some(description) = trimmed.strip_prefix("#!desc=") {
@@ -552,8 +552,25 @@ pub fn convert_surge_to_shadowrocket(content: &str) -> String {
             continue;
         }
 
+        let is_script = section == "Script" && !trimmed.is_empty() && !trimmed.starts_with('#');
+        if is_script
+            && trimmed.split_once('=').is_some_and(|(_, parameters)| {
+                crate::smart_cleanup::split_script_parameters(parameters)
+                    .into_iter()
+                    .filter_map(|parameter| parameter.split_once('='))
+                    .find(|(key, _)| key.trim().eq_ignore_ascii_case("type"))
+                    .is_some_and(|(_, value)| {
+                        value
+                            .trim()
+                            .trim_matches(['"', '\''])
+                            .eq_ignore_ascii_case("generic")
+                    })
+            })
+        {
+            continue;
+        }
         let mut line = raw_line.to_string();
-        if section == "Script" && !trimmed.is_empty() && !trimmed.starts_with('#') {
+        if is_script {
             for pattern in SHADOWROCKET_SCRIPT_PARAMS.iter() {
                 line = pattern.replace_all(&line, "").to_string();
             }
@@ -702,6 +719,34 @@ fixture = type=http-response,pattern=^https://example.test/ad,script-path=https:
         assert!(converted.contains("RULE-SET,https://example.test/ad.list,REJECT,no-resolve"));
         assert!(!converted.contains("ability="));
         assert!(!converted.contains("engine=auto"));
+    }
+
+    #[test]
+    fn shadowrocket_omits_panels_and_generic_scripts_without_changing_other_script_types() {
+        let source = r#"#!name=Tools
+[Panel]
+Tools = script-name=panel,update-interval=60
+[Script]
+panel = argument="hint,mode=fixture",type=generic,script-path=https://example.test/panel.js
+on-network = type=event,event-name=network-changed,script-path=https://example.test/event.js
+sync = type=cron,cronexp="55 23 * * *",script-path=https://example.test/cron.js
+request = argument="note,type=generic,keep=1",type=http-request,pattern=^https://example.test/,script-path=https://example.test/request.js
+[MITM]
+hostname = %APPEND% example.test
+"#;
+        let converted = convert_surge_to_shadowrocket(source);
+        assert_eq!(
+            converted,
+            r#"#!name=Tools
+[Script]
+on-network = type=event,event-name=network-changed,script-path=https://example.test/event.js
+sync = type=cron,cronexp="55 23 * * *",script-path=https://example.test/cron.js
+request = argument="note,type=generic,keep=1",type=http-request,pattern=^https://example.test/,script-path=https://example.test/request.js
+[MITM]
+hostname = %APPEND% example.test
+"#
+        );
+        assert!(crate::promax::validation::validate_shadowrocket_module(&converted).is_empty());
     }
 
     #[test]

@@ -448,6 +448,15 @@ pub fn copy_github_variants(root_dir: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub(crate) fn normalize_cdn_urls(mut content: String) -> String {
+    for (pattern, replacement) in MOCK_REPLACEMENTS.iter() {
+        if let std::borrow::Cow::Owned(rewritten) = pattern.replace_all(&content, *replacement) {
+            content = rewritten;
+        }
+    }
+    content
+}
+
 pub fn run_url_rewrites(directory: &str) -> i32 {
     let path = Path::new(directory);
     if !path.exists() {
@@ -514,9 +523,7 @@ pub fn run_url_rewrites(directory: &str) -> i32 {
                 .replace_all(&new_content, "https://cdn.jsdelivr.net/gh/${1}/${2}@${3}/")
                 .into_owned();
         } else {
-            for (re, repl) in MOCK_REPLACEMENTS.iter() {
-                new_content = re.replace_all(&new_content, *repl).to_string();
-            }
+            new_content = normalize_cdn_urls(new_content);
         }
 
         if new_content != orig_content {
