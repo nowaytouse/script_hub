@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Keep DNS Helpers free of firewall rules; compile the current validated port denylist into PROMAX instead of reading a missing legacy path.
+- Add Steven Black's MIT-licensed original hosts through the existing safety pipeline; preserve exact aliases and ignore real-IP mappings.
+- Protect categorized content-service roots from advertising lists without exempting their ad subdomains or threat-intelligence indicators.
+- Preserve empty Sub-Store filter, rename, and delete operation semantics during native backup migration.
+- Raise the serde-saphyr minimum to the already-locked 2.1 line without introducing age's affected P-256 dependency graph.
+
 - Exercise backup migration, collection previews, and simulated scheduler cycles in the offline demo; prevent duplicate sample imports and draft loss.
 - Verify scheduled collection publication, readback, and unchanged-output skipping against a mock Gist.
 - Validate the live Helper refresh path and reject upstream grammar changes without replacing the last good Host snapshot.

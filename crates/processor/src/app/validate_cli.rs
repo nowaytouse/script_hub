@@ -106,7 +106,12 @@ fn report_walkdir_error(error: walkdir::Error, errors: &mut usize) {
 }
 
 fn validate_retired_outputs(root: &Path) -> Result<(), String> {
-    for retired in ["modules/loon", "modules/helper"] {
+    for retired in [
+        "modules/loon",
+        "modules/helper",
+        "modules/shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
+        "modules/shadowrocket/head_expanse/github/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
+    ] {
         let path = root.join(retired);
         match std::fs::symlink_metadata(&path) {
             Ok(_) => return Err(format!("retired output must not be published: {retired}")),

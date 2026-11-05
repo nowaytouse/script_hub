@@ -4,11 +4,98 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn content_service_roots_are_quarantined_without_whitelisting_subdomains_or_threats() {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "script-hub-content-roots-{}-{stamp}",
+        std::process::id()
+    ));
+    let repository = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for file in [
+        "rulesets/Sources/adblock_whitelist.list",
+        "rulesets/RULE-SET/Apple.list",
+    ] {
+        let target = root.join(file);
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        fs::copy(repository.join(file), target).unwrap();
+    }
+    let path = root.join("rulesets/Sources/compiled/NSFW.list");
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(&path, "DOMAIN-SUFFIX,www.service.fixture.test\nIP-CIDR,192.0.2.0/24\nDOMAIN,invalid..test\nDOMAIN,invalid_name.test\n").unwrap();
+    let manual = root.join("rulesets/Sources/custom/NSFW_manual.list");
+    fs::create_dir_all(manual.parent().unwrap()).unwrap();
+    fs::write(manual, "DOMAIN-SUFFIX,manual.fixture.test\n").unwrap();
+    let mut manager = AdBlockManager::new(root.clone());
+    manager.load_whitelist().unwrap();
+    manager.extract_from_text(
+        "DOMAIN,service.fixture.test\nDOMAIN,www.service.fixture.test\nDOMAIN-SUFFIX,service.fixture.test\nDOMAIN,manual.fixture.test\nDOMAIN,ads.service.fixture.test\nDOMAIN,invalid_name.test\n",
+        "REJECT", "Advertising", false, false, "fixture",
+    );
+    let rules = &manager.rules["REJECT"]["Advertising"];
+    assert!(!rules.contains("DOMAIN,service.fixture.test"));
+    assert!(!rules.contains("DOMAIN,www.service.fixture.test"));
+    assert!(!rules.contains("DOMAIN-SUFFIX,service.fixture.test"));
+    assert!(!rules.contains("DOMAIN,manual.fixture.test"));
+    assert!(rules.contains("DOMAIN,ads.service.fixture.test"));
+    assert!(rules.contains("DOMAIN,invalid_name.test"));
+    assert_eq!(
+        manager
+            .quarantine
+            .iter()
+            .filter(|record| record.reason == "protected-content-service-root")
+            .count(),
+        4
+    );
+    manager.extract_from_text(
+        "DOMAIN,service.fixture.test\n",
+        "REJECT",
+        "Security",
+        false,
+        false,
+        "security-fixture",
+    );
+    assert!(manager.rules["REJECT"]["Security"].contains("DOMAIN,service.fixture.test"));
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn hosts_sinkholes_keep_all_exact_aliases_and_normal_service_exemptions() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut manager = AdBlockManager::new(root);
+    manager.load_whitelist().unwrap();
+    manager.extract_from_text(
+        "0.0.0.0 ad-host.fixture.test tracker-host.fixture.test\n127.0.0.1 localhost\n192.0.2.1 normal-host.fixture.test\n::1 weather-analytics-events.apple.com i.ytimg.com registry.api.cnn.io vkcache.com\n",
+        "REJECT", "Advertising", false, false, "hosts-fixture",
+    );
+    assert_eq!(
+        manager.rules["REJECT"]["Advertising"],
+        HashSet::from([
+            "DOMAIN,ad-host.fixture.test".to_owned(),
+            "DOMAIN,tracker-host.fixture.test".to_owned(),
+        ])
+    );
+}
+
+#[test]
 fn published_promax_keeps_one_ip_fallback_without_external_ip_shards() {
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let ports = crate::firewall_sync::read_port_rules(
+        &root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list"),
+    )
+    .unwrap();
     for mirror in ["", "github/"] {
         let path = root.join(format!("modules/surge/head_expanse/{mirror}🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"));
         let content = fs::read_to_string(path).unwrap();
+        for port_rule in &ports {
+            assert_eq!(
+                content.lines().filter(|line| *line == port_rule).count(),
+                1,
+                "{port_rule}"
+            );
+        }
         let mut section = "";
         let mut seen = HashSet::new();
         let mut rewrites = 0;
@@ -2248,8 +2335,9 @@ fn offline_fixture_publishes_complete_promax_product_set() {
         "DOMAIN-SUFFIX,ads.fixture.test\nDOMAIN,tracker.fixture.test\nDOMAIN,extended.fixture.test,REJECT,extended-matching\nIP-CIDR,192.0.2.0/24\n",
     )
     .unwrap();
+    fs::create_dir_all(root.join("rulesets/Sources/conf")).unwrap();
     fs::write(
-        root.join("rulesets/Sources/DirectPorts.list"),
+        root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list"),
         "DEST-PORT,4444,REJECT\nDEST-PORT,4444,REJECT\n",
     )
     .unwrap();

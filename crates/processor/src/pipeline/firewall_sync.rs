@@ -4,90 +4,87 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-static PORT_PATTERN: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(IN-PORT|DEST-PORT|SRC-PORT)(?:,|$)").unwrap());
-
 static VERSION_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"#!version=.*").unwrap());
 
 // Never turn normal Apple platform, LAN discovery, AirPlay, printing, or Xcode
 // traffic into a generic malware signal.
-const PROTECTED_SERVICE_PORTS: &[&str] = &[
-    "3283", "4659", "5223", "5353", "548", "5900", "6000", "7000", "9100", "9418",
-];
+const PROTECTED_SERVICE_PORTS: &[u16] =
+    &[3283, 4659, 5223, 5353, 548, 5900, 6000, 7000, 9100, 9418];
 
 fn is_protected_service_port(rule: &str) -> bool {
     let mut fields = rule.split(',').map(str::trim);
-    matches!(fields.next(), Some("DEST-PORT" | "SRC-PORT"))
-        && fields
-            .next()
-            .is_some_and(|port| PROTECTED_SERVICE_PORTS.contains(&port))
+    if !matches!(fields.next(), Some("DEST-PORT" | "SRC-PORT" | "IN-PORT")) {
+        return false;
+    }
+    let Some(port) = fields.next() else {
+        return false;
+    };
+    let (start, end) = port.split_once('-').unwrap_or((port, port));
+    match (start.parse::<u16>(), end.parse::<u16>()) {
+        (Ok(start), Ok(end)) => PROTECTED_SERVICE_PORTS
+            .iter()
+            .any(|port| (start..=end).contains(port)),
+        _ => false,
+    }
 }
 
-pub fn sync_ports(ports_source: &str, firewall_modules: &[&str], execute: bool, version_str: &str) {
-    println!("--- Firewall Port Sync (English Script Interface) ---");
-
-    let source_path = Path::new(ports_source);
-    if !source_path.exists() {
-        println!(
-            "\x1b[0;33m[WARN]\x1b[0m Port rules source not found: {}",
-            ports_source
-        );
-        return;
-    }
-
-    let source_content = match fs::read_to_string(source_path) {
-        Ok(c) => c,
-        Err(e) => {
-            println!(
-                "\x1b[0;31m[ERROR]\x1b[0m Failed to read ports source: {:?}",
-                e
-            );
-            return;
-        }
-    };
-
+pub fn read_port_rules(path: &Path) -> Result<Vec<String>, String> {
+    let source_content = fs::read_to_string(path)
+        .map_err(|error| format!("cannot read port rules {}: {error}", path.display()))?;
     let mut port_rules = Vec::new();
-    let mut invalid_rules = Vec::new();
 
-    for line in source_content.lines() {
-        let trimmed = line.trim();
+    for (index, line) in source_content.lines().enumerate() {
+        let cleaned = crate::strip_inline_comment(line);
+        let trimmed = cleaned.trim();
         if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
-        if PORT_PATTERN.is_match(trimmed) {
-            if trimmed.split(',').nth(2).is_none() {
-                invalid_rules.push(trimmed.to_string());
-                println!(
-                    "\x1b[0;33m[WARN]\x1b[0m   Invalid rule (missing action): {}",
-                    trimmed
-                );
-            } else if is_protected_service_port(trimmed) {
-                println!(
-                    "\x1b[0;34m[INFO]\x1b[0m   Protected service port omitted: {}",
-                    trimmed
-                );
-            } else {
-                port_rules.push(trimmed.to_string());
-            }
+        let rule = crate::promax::rule::SurgeRule::parse(trimmed)
+            .map_err(|error| format!("invalid port rule at line {}: {error}", index + 1))?;
+        if !matches!(
+            rule.kind,
+            crate::promax::rule::RuleKind::DestPort
+                | crate::promax::rule::RuleKind::SrcPort
+                | crate::promax::rule::RuleKind::InPort
+        ) || !matches!(
+            rule.policy.as_deref(),
+            Some("REJECT" | "REJECT-DROP" | "REJECT-NO-DROP")
+        ) || !rule.options.is_empty()
+            || rule
+                .payload
+                .split('-')
+                .any(|port| port.parse::<u16>() == Ok(0))
+        {
+            return Err(format!(
+                "invalid port rule at line {}: {trimmed}",
+                index + 1
+            ));
+        }
+        let rendered = rule.render_module("REJECT");
+        if is_protected_service_port(&rendered) {
+            println!("\x1b[0;34m[INFO]\x1b[0m   Protected service port omitted: {rendered}");
+        } else {
+            port_rules.push(rendered);
         }
     }
     port_rules.sort();
     port_rules.dedup();
 
-    if !invalid_rules.is_empty() {
-        println!(
-            "\x1b[0;33m[WARN]\x1b[0m Skipping {} invalid rules (missing action)",
-            invalid_rules.len()
-        );
-        for rule in &invalid_rules {
-            println!("\x1b[0;33m[WARN]\x1b[0m   - {}", rule);
-        }
-    }
-
     if port_rules.is_empty() {
-        println!("\x1b[0;33m[WARN]\x1b[0m No port rules found in source.");
-        return;
+        return Err(format!("no port rules found in {}", path.display()));
     }
+    Ok(port_rules)
+}
+
+pub fn sync_ports(ports_source: &str, firewall_modules: &[&str], execute: bool, version_str: &str) {
+    println!("--- Firewall Port Sync (English Script Interface) ---");
+    let port_rules = match read_port_rules(Path::new(ports_source)) {
+        Ok(rules) => rules,
+        Err(error) => {
+            println!("\x1b[0;31m[ERROR]\x1b[0m {error}");
+            return;
+        }
+    };
 
     println!(
         "\x1b[0;34m[INFO]\x1b[0m Extracted {} valid rules from source.",
@@ -292,23 +289,11 @@ const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
     "freedns.controld.com",
 ];
 
-const HELPER_OUTPUTS: &[(&str, &str, bool, bool)] = &[
-    (
-        "surge/head_expanse",
-        "🌟 AdBlock Helper .sgmodule",
-        false,
-        false,
-    ),
+const HELPER_OUTPUTS: &[(&str, &str, bool)] = &[
+    ("surge/head_expanse", "🌟 AdBlock Helper .sgmodule", false),
     (
         "shadowrocket/head_expanse",
         "🌟 AdBlock Helper .module",
-        true,
-        false,
-    ),
-    (
-        "shadowrocket/head_expanse",
-        "🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
-        true,
         true,
     ),
 ];
@@ -346,43 +331,19 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
     (hosts, exclusions)
 }
 
-fn render_helper(
-    shadowrocket: bool,
-    with_firewall: bool,
-    version: &str,
-    upstream_hosts: &[String],
-) -> String {
+fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -> String {
     let (hosts, exclusions) = helper_sections(shadowrocket, upstream_hosts);
-    let name = if with_firewall {
-        "🛡️ PROMAX AdBlock Helper (DNS & Firewall)"
-    } else {
-        "🌟 AdBlock Helper"
-    };
     let prefix = if shadowrocket { "[🚀SR] " } else { "" };
     let mut output = vec![
-        format!("#!name={name}"),
+        "#!name=🌟 AdBlock Helper".to_string(),
         format!(
-            "#!desc={prefix}保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和私网反查交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。{}",
-            if with_firewall {
-                "附带高级端口过滤；开发、矿池、IRC 等场景请按需启用。"
-            } else {
-                ""
-            }
+            "#!desc={prefix}保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和私网反查交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。"
         ),
         "#!author=ScriptHub".to_string(),
         "#!category=『 🔝 Head Expanse › 首端扩域 』".to_string(),
         "#!tag=AdBlock, DNS, Apple Safety".to_string(),
         format!("#!version={version}"),
     ];
-    if with_firewall {
-        output.extend([
-            String::new(),
-            "[Rule]".to_string(),
-            "# --- SYNCED PORT RULES START ---".to_string(),
-            "# Automated update from ports source".to_string(),
-            "# --- SYNCED PORT RULES END ---".to_string(),
-        ]);
-    }
     output.extend([String::new(), "[Host]".to_string()]);
     if !upstream_hosts.is_empty() {
         output.push(format!(
@@ -428,11 +389,11 @@ fn dns_modules<'a>(
 ) -> impl Iterator<Item = (&'static str, &'static str, String)> + 'a {
     HELPER_OUTPUTS
         .iter()
-        .map(move |&(dir, file, shadowrocket, firewall)| {
+        .map(move |&(dir, file, shadowrocket)| {
             (
                 dir,
                 file,
-                render_helper(shadowrocket, firewall, version, upstream_hosts),
+                render_helper(shadowrocket, version, upstream_hosts),
             )
         })
         .chain(
@@ -480,17 +441,10 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
 }
 
 fn helper_dns_settings(content: &str) -> Vec<&str> {
-    let mut firewall = false;
     content
         .lines()
         .map(str::trim)
-        .filter(|line| {
-            if line.starts_with('[') && line.ends_with(']') {
-                firewall = *line == "[Rule]";
-                return true;
-            }
-            !firewall && !line.is_empty() && !line.starts_with('#')
-        })
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .collect()
 }
 
@@ -539,6 +493,24 @@ mod tests {
             fs::copy(dir.join(file), dir.join("github").join(file)).unwrap();
         }
         super::validate_published_helpers(&root).unwrap();
+        for (dir, file, _) in super::dns_modules("test", &[]) {
+            let dir = root.join("modules").join(dir);
+            for path in [dir.join(file), dir.join("github").join(file)] {
+                let original = fs::read_to_string(&path).unwrap();
+                for injected in [
+                    "\n[rUlE]\nDEST-PORT,4444,REJECT\n",
+                    "\n[IP Rewrite]\n127.0.0.1 = 0.0.0.0\n",
+                ] {
+                    fs::write(&path, format!("{original}{injected}")).unwrap();
+                    assert!(
+                        super::validate_published_helpers(&root).is_err(),
+                        "{}",
+                        path.display()
+                    );
+                }
+                fs::write(&path, original).unwrap();
+            }
+        }
         let mirror = root.join("modules/surge/head_expanse/github/🌟 AdBlock Helper .sgmodule");
         let drift = fs::read_to_string(&mirror)
             .unwrap()
@@ -558,7 +530,7 @@ mod tests {
         let module = directory.join("firewall.sgmodule");
         fs::write(
             &source,
-            "DEST-PORT,4444,REJECT-DROP\nDEST-PORT,3333,REJECT-DROP\nDEST-PORT,4444,REJECT-DROP\nDEST-PORT,5223,REJECT-DROP\nDEST-PORTABLE,7777,REJECT-DROP\n",
+            "DEST-PORT,4444,REJECT-DROP\nDEST-PORT,3333,REJECT-DROP\nDEST-PORT,4444,REJECT-DROP\nDEST-PORT,5223,REJECT-DROP\n",
         )
         .unwrap();
         fs::write(
@@ -585,11 +557,54 @@ mod tests {
     }
 
     #[test]
+    fn port_rules_fail_closed_on_missing_or_invalid_source() {
+        let directory =
+            std::env::temp_dir().join(format!("script-hub-port-reader-{}", std::process::id()));
+        fs::create_dir_all(&directory).unwrap();
+        let source = directory.join("ports.list");
+        assert!(super::read_port_rules(&source).is_err());
+        fs::write(&source, "DEST-PORT,4444\n").unwrap();
+        assert!(super::read_port_rules(&source).is_err());
+        fs::write(
+            &source,
+            "DEST-PORT,5223,REJECT\nDEST-PORT,4444,REJECT\nDEST-PORT,4444,REJECT\n",
+        )
+        .unwrap();
+        assert_eq!(
+            super::read_port_rules(&source).unwrap(),
+            ["DEST-PORT,4444,REJECT"]
+        );
+        for invalid in [
+            "DEST-PORTABLE,7777,REJECT",
+            "DOMAIN,example.com,REJECT",
+            "DEST-PORT,4444,DIRECT",
+            "DEST-PORT,4444,PROXY",
+            "DEST-PORT,4444,REJECT-IMG",
+            "DEST-PORT,4444,",
+            "DEST-PORT,0,REJECT",
+            "DEST-PORT,9000-8000,REJECT",
+            "DEST-PORT,65536,REJECT",
+        ] {
+            fs::write(&source, invalid).unwrap();
+            assert!(super::read_port_rules(&source).is_err(), "{invalid}");
+        }
+        fs::write(
+            &source,
+            "DEST-PORT,5222-5224,REJECT-DROP\nSRC-PORT,5340-5360,REJECT\nIN-PORT,547-549,REJECT\nDEST-PORT,4444,REJECT-NO-DROP # comment\n",
+        )
+        .unwrap();
+        assert_eq!(
+            super::read_port_rules(&source).unwrap(),
+            ["DEST-PORT,4444,REJECT-NO-DROP"]
+        );
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
     fn helper_preserves_the_users_dns_provider() {
-        for (shadowrocket, firewall) in [(false, false), (true, false), (true, true)] {
+        for shadowrocket in [false, true] {
             let module = render_helper(
                 shadowrocket,
-                firewall,
                 "test",
                 &[
                     "unifi".into(),
@@ -676,8 +691,9 @@ mod tests {
                 assert!(excluded.contains(format!("-{host}").as_str()));
                 assert!(!names.contains(host));
             }
-            assert_eq!(module.contains("[Rule]"), firewall);
-            assert_eq!(module.contains("SYNCED PORT RULES START"), firewall);
+            assert!(!module.contains("[Rule]"));
+            assert!(!module.contains("[IP Rewrite]"));
+            assert!(!module.contains("SYNCED PORT RULES START"));
             assert!(!module.contains(",DIRECT"));
         }
     }

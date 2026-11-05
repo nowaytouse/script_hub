@@ -153,7 +153,18 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
             })
         }
         "Regex Filter" => {
-            let (pattern, _) = portable_regex(args.get("regex")?.as_array()?)?;
+            let expressions = match args.get("regex") {
+                None if args.is_object() => &[][..],
+                Some(value) => value.as_array()?.as_slice(),
+                None => return None,
+            };
+            let pattern = if expressions.is_empty() {
+                r"\b\B".to_owned()
+            } else if expressions.len() == 1 && expressions[0].as_str() == Some("") {
+                "^".to_owned()
+            } else {
+                portable_regex(expressions)?.0
+            };
             let keep = keep(args)?;
             Some(if collection {
                 Operation::MemberNameFilter { pattern, keep }
@@ -392,6 +403,14 @@ fn migrate_process(value: &Value, collection: bool) -> (Vec<Step>, usize) {
             let operations =
                 if item.get("type").and_then(Value::as_str) == Some("Quick Setting Operator") {
                     quick_settings(item)
+                } else if matches!(
+                    item.get("type").and_then(Value::as_str),
+                    Some("Regex Rename Operator" | "Regex Delete Operator")
+                ) && processor_args(item)
+                    .and_then(Value::as_array)
+                    .is_some_and(Vec::is_empty)
+                {
+                    Some(Vec::new())
                 } else {
                     convert_processor(item, collection).map(|operation| vec![operation])
                 };
@@ -711,6 +730,85 @@ mod tests {
             Some(Operation::ProtocolFilter { protocols, .. })
                 if protocols == &["http", "https", "socks5", "socks5-tls", "tuic", "tuic-v5"]
         ));
+    }
+
+    #[test]
+    fn empty_regex_filter_preserves_substore_selection_and_following_steps() {
+        for (args, expected) in [
+            (r#"{}"#, 0),
+            (r#"{"regex":[],"keep":false}"#, 1),
+            (r#"{"regex":[""]}"#, 1),
+            (r#"{"regex":[""],"keep":false}"#, 0),
+        ] {
+            let backup = format!(
+                r#"{{"subs":[{{"name":"Local","source":"local",
+                "content":"[Proxy]\nHK = socks5, node.example.invalid, 1080\n",
+                "process":[{{"type":"Regex Filter","args":{args}}},
+                  {{"type":"Type Filter","args":["socks5"]}}]}}]}}"#
+            );
+            let report = import(backup.as_bytes()).unwrap();
+            assert_eq!(report.unsupported_count, 0);
+            let config = report.select_item(0, false).unwrap();
+            assert_eq!(config.processing.pipeline.len(), 2);
+            let source =
+                model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+            let result = source
+                .render_processed(
+                    &[model::Health::Unknown],
+                    &model::EnhanceOptions {
+                        rename: false,
+                        sort: false,
+                    },
+                    &config.processing,
+                )
+                .unwrap();
+            assert_eq!(result.retained.len(), expected, "{args}");
+        }
+        for args in [serde_json::json!({"regex": null}), serde_json::json!([])] {
+            assert!(
+                convert_processor(
+                    &serde_json::json!({"type":"Regex Filter", "args":args}),
+                    false
+                )
+                .is_none()
+            );
+        }
+    }
+
+    #[test]
+    fn empty_collection_regex_filter_uses_member_names() {
+        for (regex, expected) in [
+            (serde_json::json!([]), r"\b\B"),
+            (serde_json::json!([""]), "^"),
+        ] {
+            let filter = serde_json::json!({"type":"Regex Filter", "args":{"regex":regex}});
+            assert!(matches!(
+                convert_processor(&filter, true),
+                Some(Operation::MemberNameFilter { ref pattern, keep: true }) if pattern == expected
+            ));
+        }
+    }
+
+    #[test]
+    fn empty_rename_and_delete_do_not_block_following_steps() {
+        for kind in ["Regex Rename Operator", "Regex Delete Operator"] {
+            let item = serde_json::json!({"process": [
+                {"type": kind, "args": []},
+                {"type": kind, "args": [], "disabled": true},
+                {"type": "Type Filter", "args": ["ss"]}
+            ]});
+            let (steps, unsupported) = migrate_process(&item, false);
+            assert_eq!(unsupported, 0);
+            assert_eq!(steps.len(), 1);
+            assert_eq!(steps[0].id, 3);
+            let invalid = serde_json::json!({"process": [
+                {"type": kind, "args": [], "unknown": true},
+                {"type": "Type Filter", "args": ["ss"]}
+            ]});
+            let (steps, unsupported) = migrate_process(&invalid, false);
+            assert!(steps.is_empty());
+            assert_eq!(unsupported, 2);
+        }
     }
 
     #[test]

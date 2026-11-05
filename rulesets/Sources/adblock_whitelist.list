@@ -12,6 +12,11 @@
 #
 # 更新: 2025-12-20
 
+# Preserve this explicitly categorized shared-service endpoint.
+DOMAIN,registry.api.cnn.io
+# Shared CDN ownership is explicit in v2fly/domain-list-community/data/vk.
+DOMAIN,vkcache.com
+
 # ============ 🔥 YouTube 核心域名 (CRITICAL) ============
 # 这些域名被拦截会导致 YouTube 完全无法使用！
 DOMAIN,youtubei.googleapis.com

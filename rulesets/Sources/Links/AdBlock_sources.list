@@ -6,7 +6,7 @@
 #           ThreatIntel_Ultimate, ThreatIntel_TIF, ThreatIntel, Other
 #
 # Rules:
-#   - Only .list / .txt / domainset URLs, or .sgmodule files that contain a [Rule] section
+#   - Domain / hosts lists, or .sgmodule files that contain a [Rule] section
 #   - Script / URL Rewrite modules: rulesets/Sources/Links/AdBlock_functional_sources.list → PROMAX
 #   - PROMAX references rulesets/AdBlock/*.list via RULE-SET + merged functional sections
 #
@@ -24,6 +24,10 @@ https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list
 
 # Loyalsoldier
 https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt|REJECT|auto|Advertising
+
+# Steven Black's own MIT-licensed hosts, not the mixed-license aggregate.
+# Sinkhole aliases remain exact domains and pass the shared service/media safety filters.
+https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts|REJECT|auto|Advertising
 
 # anti-AD
 https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt|REJECT|auto|AntiAD

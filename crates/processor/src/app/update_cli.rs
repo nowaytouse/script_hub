@@ -313,7 +313,6 @@ fn run(
     let firewall_modules = [
         modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
         modules.join("shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module"),
-        modules.join("shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
     ];
     let firewall_refs: Vec<&str> = firewall_modules
         .iter()

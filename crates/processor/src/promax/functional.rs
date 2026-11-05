@@ -105,6 +105,29 @@ pub(crate) fn narrow_functional_authority(section: &str, line: &str) -> String {
     )
 }
 
+pub fn normalize_hosts_source_line(line: &str) -> Option<Vec<String>> {
+    let mut fields = line.split('#').next()?.split_whitespace();
+    let address = fields.next()?.parse::<IpAddr>().ok()?;
+    if !address.is_unspecified()
+        && address != IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)
+        && address != IpAddr::V6(std::net::Ipv6Addr::LOCALHOST)
+    {
+        return Some(Vec::new());
+    }
+    let mut rules = Vec::new();
+    for host in fields {
+        if !host.contains('.') {
+            continue;
+        }
+        let rule = format!("DOMAIN,{}", host.to_ascii_lowercase());
+        if crate::promax::rule::SurgeRule::parse(&rule).is_err() {
+            return Some(Vec::new());
+        }
+        rules.push(rule);
+    }
+    Some(rules)
+}
+
 pub fn normalize_domain_source_line(line: &str) -> Option<String> {
     let mut candidate = line.trim();
     if candidate.is_empty()
@@ -121,12 +144,8 @@ pub fn normalize_domain_source_line(line: &str) -> Option<String> {
             .or_else(|| stripped.strip_suffix('^'))
             .unwrap_or(stripped);
     } else if candidate.split_whitespace().count() >= 2 {
-        let mut fields = candidate.split_whitespace();
-        let address = fields.next()?;
-        if address.parse::<IpAddr>().is_err() {
-            return None;
-        }
-        candidate = fields.next()?;
+        let mut rules = normalize_hosts_source_line(candidate)?;
+        return (rules.len() == 1).then(|| rules.remove(0));
     }
 
     candidate = candidate
@@ -299,7 +318,7 @@ mod tests {
         );
         assert_eq!(
             normalize_domain_source_line("0.0.0.0 tracker.example.net").as_deref(),
-            Some("DOMAIN-SUFFIX,tracker.example.net")
+            Some("DOMAIN,tracker.example.net")
         );
         assert_eq!(
             normalize_domain_source_line("||telemetry.example.org^").as_deref(),
@@ -308,6 +327,37 @@ mod tests {
         assert_eq!(
             normalize_domain_source_line("- '+.sponsor.example.dev'").as_deref(),
             Some("DOMAIN-SUFFIX,sponsor.example.dev")
+        );
+    }
+
+    #[test]
+    fn hosts_sources_keep_exact_aliases_and_ignore_real_ip_mappings() {
+        assert_eq!(
+            super::normalize_hosts_source_line(
+                "0.0.0.0 ads.example.test TRACK.example.test # sinkhole"
+            ),
+            Some(vec![
+                "DOMAIN,ads.example.test".into(),
+                "DOMAIN,track.example.test".into()
+            ])
+        );
+        for line in [
+            "127.0.0.1 localhost",
+            "::1 localhost ip6-localhost",
+            "192.0.2.1 real.example.test",
+            "0.0.0.0 *.example.test",
+            "0.0.0.0 bad..example.test",
+        ] {
+            assert_eq!(
+                super::normalize_hosts_source_line(line),
+                Some(vec![]),
+                "{line}"
+            );
+        }
+        assert!(normalize_domain_source_line("203.0.113.1 service.example.test").is_none());
+        assert_eq!(
+            super::normalize_hosts_source_line(":: tracker.example.test"),
+            Some(vec!["DOMAIN,tracker.example.test".into()])
         );
     }
 }

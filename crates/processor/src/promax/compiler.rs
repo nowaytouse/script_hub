@@ -309,6 +309,7 @@ impl SourceEntry {
 pub struct AdBlockManager {
     root_dir: PathBuf,
     safety: crate::promax::safety::SafetyPolicy,
+    content_service_roots: HashSet<String>,
     quarantine: Vec<crate::promax::safety::QuarantineRecord>,
     rules: HashMap<String, HashMap<String, HashSet<String>>>, // policy -> category -> rules
     seen_rules: HashMap<String, HashSet<String>>,             // policy -> rules
@@ -361,6 +362,7 @@ impl AdBlockManager {
         AdBlockManager {
             root_dir,
             safety: crate::promax::safety::SafetyPolicy::default(),
+            content_service_roots: HashSet::new(),
             quarantine: Vec::new(),
             rules,
             seen_rules,
@@ -420,6 +422,50 @@ impl AdBlockManager {
                 stats.domain_patterns, stats.ip_networks, stats.invalid_entries
             ));
         }
+        let mut content_service_roots = HashSet::new();
+        for source in [
+            "rulesets/Sources/compiled/NSFW.list",
+            "rulesets/Sources/custom/NSFW_manual.list",
+        ] {
+            let path = self.root_dir.join(source);
+            let content_roots = match fs::read_to_string(&path) {
+                Ok(content) => content,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => {
+                    return Err(format!(
+                        "cannot read content service roots {}: {error}",
+                        path.display()
+                    ));
+                }
+            };
+            content_service_roots.extend(content_roots.lines().filter_map(|line| {
+                let cleaned = crate::strip_inline_comment(line);
+                let rule = crate::promax::rule::SurgeRule::parse(&cleaned).ok()?;
+                if !matches!(
+                    rule.kind,
+                    crate::promax::rule::RuleKind::Domain
+                        | crate::promax::rule::RuleKind::DomainSuffix
+                ) || rule.policy.is_some()
+                    || !rule.options.is_empty()
+                {
+                    return None;
+                }
+                let domain = rule.payload.to_ascii_lowercase();
+                let domain = domain.strip_prefix("www.").unwrap_or(&domain);
+                (domain.contains('.')
+                    && domain.split('.').all(|label| {
+                        !label.is_empty()
+                            && label.len() <= 63
+                            && !label.starts_with('-')
+                            && !label.ends_with('-')
+                            && label
+                                .bytes()
+                                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+                    }))
+                .then(|| domain.to_string())
+            }));
+        }
+        self.content_service_roots = content_service_roots;
         self.safety = safety;
         println!(
             "\x1b[0;32m[INFO]\x1b[0m Loaded {} protected whitelist patterns ({} domain, {} IP)",
@@ -812,6 +858,12 @@ impl AdBlockManager {
         if stripped.is_empty() || stripped.starts_with('#') {
             return;
         }
+        if let Some(rules) = crate::promax::functional::normalize_hosts_source_line(stripped) {
+            for rule in rules {
+                self.add_rule_line(&rule, default_policy, category);
+            }
+            return;
+        }
         if let Some(exception) = stripped.strip_prefix("@@") {
             if let Some(rule) = crate::promax::functional::normalize_domain_source_line(exception)
                 && let Ok(parsed) = crate::promax::rule::SurgeRule::parse(&rule)
@@ -893,6 +945,35 @@ impl AdBlockManager {
             "REJECT-TINYGIF" | "REJECT-IMG" => "REJECT",
             policy => policy,
         };
+
+        if policy != "DIRECT"
+            && category != "Security"
+            && !category.starts_with("ThreatIntel")
+            && matches!(
+                parsed.kind,
+                crate::promax::rule::RuleKind::Domain | crate::promax::rule::RuleKind::DomainSuffix
+            )
+        {
+            let domain = if parsed.payload.bytes().any(|byte| byte.is_ascii_uppercase()) {
+                Cow::Owned(parsed.payload.to_ascii_lowercase())
+            } else {
+                Cow::Borrowed(parsed.payload.as_str())
+            };
+            if self
+                .content_service_roots
+                .contains(domain.strip_prefix("www.").unwrap_or(&domain))
+            {
+                self.quarantine
+                    .push(crate::promax::safety::QuarantineRecord {
+                        source: self.current_source.clone(),
+                        line: self.current_line,
+                        candidate: stripped.to_string(),
+                        reason: "protected-content-service-root".to_string(),
+                        risk: crate::promax::safety::RiskClass::ProtectedService,
+                    });
+                return;
+            }
+        }
 
         if let crate::promax::safety::SafetyDecision::Quarantine(reason) =
             self.safety.decision(&parsed)
@@ -1215,6 +1296,10 @@ impl AdBlockManager {
                 }
                 if stripped.starts_with("@@")
                     || crate::promax::rule::SurgeRule::parse(stripped).is_ok()
+                    || stripped
+                        .split_whitespace()
+                        .next()
+                        .is_some_and(|field| field.parse::<std::net::IpAddr>().is_ok())
                     || crate::promax::functional::normalize_domain_source_line(stripped).is_some()
                 {
                     self.add_rule_line(stripped, default_policy, category);
@@ -2518,18 +2603,16 @@ impl AdBlockManager {
         rule_lines.push("# --- SYNCED PORT RULES START ---".to_string());
         rule_lines.push("# Automated update from ports source".to_string());
 
-        let ports_source = self.root_dir.join("rulesets/Sources/DirectPorts.list");
-        if ports_source.exists()
-            && let Ok(file) = File::open(&ports_source)
-        {
-            let reader = BufReader::new(file);
-            for line in reader.lines().map_while(Result::ok) {
-                let stripped = line.trim();
-                if !stripped.is_empty() && !stripped.starts_with('#') {
-                    rule_lines.push(stripped.to_string());
-                }
-            }
-        }
+        let ports_source = self
+            .root_dir
+            .join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
+        let port_rules = if ports_source.exists() {
+            crate::firewall_sync::read_port_rules(&ports_source)?
+        } else {
+            Vec::new()
+        };
+        let port_count = port_rules.len();
+        rule_lines.extend(port_rules);
 
         rule_lines.extend(vec![
             "# --- SYNCED PORT RULES END ---".to_string(),
@@ -2648,6 +2731,9 @@ impl AdBlockManager {
 
         let mut functional_sections = Vec::new();
         let mut func_counts = Vec::new();
+        if port_count > 0 {
+            func_counts.push(format!("Port Reject={port_count}"));
+        }
         if !ip_rewrites.is_empty() {
             functional_sections.push(crate::smart_cleanup::ModuleSectionPub {
                 name: "IP Rewrite".to_string(),
@@ -2719,7 +2805,12 @@ impl AdBlockManager {
             "按用途分片({}片) + 应用内去广告({}); 索引 rulesets/AdBlock/catalog.json",
             shard_count, func_summary
         );
-        let tag = "AdBlock, Dependency, HTTPDNS, Script".to_string();
+        let tag = if port_count > 0 {
+            "AdBlock, Firewall, Dependency, HTTPDNS, Script"
+        } else {
+            "AdBlock, Dependency, HTTPDNS, Script"
+        }
+        .to_string();
 
         let mut header_meta = HashMap::new();
         header_meta.insert("name".to_string(), name);
@@ -2744,7 +2835,7 @@ impl AdBlockManager {
             header_lines.push("#!requirement=CORE_VERSION>=6010000".to_string());
         }
         header_lines.push(
-            "# app2smile/rules + AdGuard CNAME: MIT; notices: rulesets/Sources/licenses/README.md"
+            "# app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md"
                 .to_string(),
         );
         let mut module_content =

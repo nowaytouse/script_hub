@@ -3613,6 +3613,12 @@
   },
   {
     "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "candidate": "||fapcat.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
     "candidate": "||fatchilli.media^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -3963,6 +3969,12 @@
     "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
     "candidate": "||fkrkkmxsqeb5bj9r.s3.amazonaws.com^",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "candidate": "||flirt4free.com^",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -12367,6 +12379,12 @@
   },
   {
     "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "candidate": "||sexemulator.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
     "candidate": "||sgali-mcs.byteoversea.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -15429,6 +15447,12 @@
     "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
     "candidate": "||xlog.tiktokv.com^",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "candidate": "||xmatch.com^",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -19237,6 +19261,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_ad_only.conf",
+    "candidate": "DOMAIN-SUFFIX,csezczpngywzt.website,Reject",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Johnshall/Shadowrocket-ADBlock-Rules-Forever@release/sr_ad_only.conf",
     "candidate": "DOMAIN-SUFFIX,ctm-media.com,Reject",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -22483,6 +22513,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".adultfriendfinder.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".adv-analytics-collector.videograph.ai",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -23638,6 +23674,12 @@
     "candidate": ".bnijec.colorfulimages.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".bongacams.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
@@ -25657,6 +25699,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".fapcat.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".fatchilli.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -26019,6 +26067,12 @@
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".fkrkkmxsqeb5bj9r.s3.amazonaws.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".flirt4free.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -35479,6 +35533,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".sexemulator.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".sgali-mcs.byteoversea.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -36640,6 +36700,12 @@
     "candidate": ".stratus.campaign-image.com.cn",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".streamate.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
@@ -38935,6 +39001,18 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".www.nutaku.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".www.perfectgirls.net",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".www.realincestvideos.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -39111,6 +39189,12 @@
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".xlog.tiktokv.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".xmatch.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -41173,6 +41257,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,cams.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN,captifymedia.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -41218,6 +41308,12 @@
     "candidate": "DOMAIN,cdnmedia.xyz",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,chaturbate.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -41875,6 +41971,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,imlive.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN,imp.nextmedia.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -42316,6 +42418,12 @@
     "candidate": "DOMAIN,pcad.video.baidu.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,perfectgirls.net",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -42967,6 +43075,18 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,www.free3dadultgames.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,www.mrskin.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN,wxa.wxs.qq.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -42988,6 +43108,12 @@
     "candidate": "DOMAIN,xmediawebs.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN,xnxx.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -43046,18 +43172,6 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-KEYWORD,adproxy.autohome.com",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
-    "candidate": "DOMAIN-KEYWORD,adsdk",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
-    "candidate": "DOMAIN-KEYWORD,adservice",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
   },
@@ -44218,6 +44332,12 @@
     "candidate": "DOMAIN-SUFFIX,adtube.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,adultfriendfinder.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -45463,6 +45583,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,bongacams.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,boostervideo.ru",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -45886,6 +46012,12 @@
     "candidate": "DOMAIN-SUFFIX,cegifompifteefa.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,celebjihad.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -47965,6 +48097,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,fapcat.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,fastimage.uve.weibo.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -48363,6 +48501,12 @@
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,fkrkkmxsqeb5bj9r.s3.amazonaws.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,flirt4free.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -54217,6 +54361,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,javhd.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,jcuau.travelintelligence.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -54712,6 +54862,12 @@
     "candidate": "DOMAIN-SUFFIX,live.vot.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,livejasmin.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -58417,6 +58573,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,pixiv.org",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,plaguealacritytwitter.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -58582,6 +58744,12 @@
     "candidate": "DOMAIN-SUFFIX,popularmedia.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,porn300.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -59815,6 +59983,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,sexemulator.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,sgali-mcs.byteoversea.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -60994,6 +61168,12 @@
     "candidate": "DOMAIN-SUFFIX,stream.heavenmedia.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,streamate.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
@@ -64087,6 +64267,18 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,www.nutaku.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,www.perfectgirls.net",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,www.realincestvideos.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -64257,6 +64449,12 @@
     "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
     "candidate": "DOMAIN-SUFFIX,xlog.tiktokv.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/Advertising/Advertising_All.list",
+    "candidate": "DOMAIN-SUFFIX,xmatch.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -74353,6 +74551,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
+    "candidate": "DOMAIN-SUFFIX,fapcat.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
     "candidate": "DOMAIN-SUFFIX,fatchilli.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -74703,6 +74907,12 @@
     "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
     "candidate": "DOMAIN-SUFFIX,fkrkkmxsqeb5bj9r.s3.amazonaws.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
+    "candidate": "DOMAIN-SUFFIX,flirt4free.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -83107,6 +83317,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
+    "candidate": "DOMAIN-SUFFIX,sexemulator.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
     "candidate": "DOMAIN-SUFFIX,sgali-mcs.byteoversea.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -86173,6 +86389,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
+    "candidate": "DOMAIN-SUFFIX,xmatch.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/chenyk1219/surge@release/adg.list",
     "candidate": "DOMAIN-SUFFIX,xml-eu-v4.9versemedia.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -86905,12 +87127,6 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list",
-    "candidate": "DOMAIN-KEYWORD,adservice,reject",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/limbopro/Adblock4limbo@main/Adblock4limbo_surge.list",
     "candidate": "DOMAIN-SUFFIX,alitui.weibo.com,reject",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -87615,6 +87831,12 @@
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".adtechvideo.s3.amazonaws.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".adultfriendfinder.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -88435,6 +88657,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".bongacams.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".book.rollingvideogames.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -88615,6 +88843,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".celebjihad.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".ceuswatcab01.blob.core.windows.net",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -88658,6 +88892,12 @@
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".cimage.adobe.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".cjpgaszjnhhzh.space",
     "reason": "broad-media-domain",
     "risk": "broad-media"
   },
@@ -88993,6 +89233,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".csezczpngywzt.website",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".cstmedia.com.cn",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -89299,12 +89545,6 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
-    "candidate": ".donutsmphackclient.netlify.app",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".doppler-beacon.cbsivideo.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -89551,6 +89791,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".enheartsteamed.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".entrecard.s3.amazonaws.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -89626,6 +89872,12 @@
     "candidate": ".extensions-media.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".fapcat.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
@@ -89721,6 +89973,12 @@
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".flash.xiaohongshu.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".flirt4free.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -94075,6 +94333,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".kronemedia.de",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
     "candidate": ".kurpjriycgiff.site",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -94198,6 +94462,12 @@
     "candidate": ".liveats-vod.video.ptqy.gitv.tv",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".livejasmin.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
@@ -95788,6 +96058,12 @@
     "candidate": ".popads.media",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
+    "candidate": ".porn300.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-surge2.txt",
@@ -211986,6 +212262,876 @@
     "risk": "protected-service"
   },
   {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,80d4b6e40cc712bf92fcdbabdd4345fd.safeframe.googlesyndication.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,8a97175fd63e1d3a69f36979b9b34470.safeframe.googlesyndication.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ads-api.tiktok.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ads-sg.tiktok.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,adservice.google.be",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,adservice.google.co.in",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,adservice.google.com.vn",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,adtekmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,afs.googlesyndication.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-blog.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-blog.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-cdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-cdn.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-chat.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-chat.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-endpoint.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-endpoint.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-schnellvpn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ahoravideo-schnellvpn.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,alliance4media.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,alt2.googleanalytics.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,alt4.googleanalytics.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,analytics.s3.amazonaws.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,analyticsengine.s3.amazonaws.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,api.rollbar.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,atom.warnermedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,auth-google.site",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,b2b6d102cb7a4898bc54a3b73e31b759.safeframe.googlesyndication.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,bigsharkmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,bot2.googlerenewals.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,businessvideonews.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,c23811bc8d067cdb4f00f6af2c918f3d.safeframe.googlesyndication.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,camsoda.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ccc.sys.miui.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cdn.bitmedianetwork.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cdn.cloudimagesb.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cdn.googletoolservices.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cdn.playstream.media",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cdn5.userzoom.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cdnimages.xyz",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,click.googleanalytics.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,cookies.nextmillmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,corp-github.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,datarouter.ol.epicgames.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,deshmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,dev.medialogistics2020.ca",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,device-metrics-us-2.amazon.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,device-metrics-us.amazon.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,discord-app.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ecoprintworks.vercel.app",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,elixmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,enabler.datalake.mediaset.it",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,enatimedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,engine.bitmedianetwork.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,facf31c1c8559131d653f3c5ad4ecc78.safeframe.googlesyndication.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,fgoogle.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,firebaselogging-pa.googleapis.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,freegiftcards.co",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,freestar-io.videoplayerhub.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,fundingchoicesmessages.google.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,github.com.cnpmjs.org",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,gw.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,hb.minutemedia-prebid.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,hbbtv.mediaset.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,i-adq.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,i-sdk.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,images.datatrics.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,images.twnmm.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,in-star.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,in-starlive-preroll.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,in-starlive.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,in-viacom18.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,linux2.googlerenewals.net",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,live-manifests-aka.warnermediacdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,live-manifests-lln.warnermediacdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,live-media-aka.warnermediacdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,live-media-lln.warnermediacdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,logs.netflix.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mads.amazon.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mailmetromedia.amp.permutive.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mailsupport-24f7f1500ed129bc71f2ad9c06fe1e73.pages.dev",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,marketingplatform.google.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,media.complex.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,media.rtk.io",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mediadirectx.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mediasama.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mediavisor.doubleclick.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,mvideo.facilitategovernor.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,nexus.officeapps.live.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,o-adq.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,o-iab-imp-counters.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,o-iab-notifications.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,o-sdk.mediation.unity3d.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,o209266.ingest.us.sentry.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,pbs.nextmillmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,plaimedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,postmediamontrealgazette2.files.wordpress.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,prod-mediate-events.applovin.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,prodcdn.playstream.media",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,pscontent.playstream.media",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,region1.google-analytics.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,registry.api.cnn.io",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,rereddit.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,sandbox.googleanalytics.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,service.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,sionicmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,smartlock.google.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,sqm.telemetry.microsoft.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ssl.googleanalytics.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,sso-github.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,stripchat.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,sts-github.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,telecommand.telemetry.microsoft.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,thumbeks.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,track.venatusmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,tsl-github.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ttwitter.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,twitter.cm",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,twitterr.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,v10c.events.data.microsoft.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,video.alxbgo.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,videoads.hotstar.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,videos-bleepingcomputers-com.tvpagecdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,vkcache.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,vod-media-aka.warnermediacdn.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,warnermediagroup-com.videoplayerhub.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,watson.telemetry.microsoft.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,web.vortex.data.microsoft.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,webpagetest.net",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,windowsphishingalert158.s3.amazonaws.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,ww25.twitterr.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.alliance4media.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.camsoda.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.chacomedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.elixmedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.fgoogle.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.googletagmanager.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.in-star.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.in-viacom18.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.plaimedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.postmediamontrealgazette2.files.wordpress.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.rereddit.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.service.videoplaza.tv",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,www.ttwitter.com",
+    "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts",
+    "candidate": "DOMAIN,xml.plaimedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
     "source": "https://cdn.jsdelivr.net/gh/app2smile/rules@master/module/tieba.sgmodule",
     "candidate": "RULE-SET,https://cdn.jsdelivr.net/gh/app2smile/rules@master/rule/tieba-ad.list,REJECT-DROP",
     "reason": "unsupported rule type RULE-SET",
@@ -225949,6 +227095,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||benaughty.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
     "candidate": "||beringmedia.com^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -227377,6 +228529,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||daftsex.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
     "candidate": "||danakagetrsm.vercel.app^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -227911,6 +229069,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||flirt4free.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
     "candidate": "||foremedia.net^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -227926,6 +229090,12 @@
     "candidate": "||fortunegift.shop^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||freehookupaffair.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
@@ -228406,6 +229576,12 @@
     "candidate": "||hurlmedia.design^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||iamnaughty.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
@@ -229891,6 +231067,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||ourdream.ai^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
     "candidate": "||ourtime-assist.members-authenticated.workers.dev^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -229935,6 +231117,12 @@
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
     "candidate": "||parzoom.com^",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||passion.com^",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -231265,6 +232453,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||together2night.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
     "candidate": "||tokenapi-whatsapp.com^",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -232270,6 +233464,12 @@
     "candidate": "||xgbmuxkupngbn.website^",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
+    "candidate": "||xmatch.com^",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/popupads.txt",
@@ -244915,6 +246115,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject.conf",
+    "candidate": ".xtube.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject.conf",
     "candidate": ".xzfizn.massmedian.co.jp",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -246373,6 +247579,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".adultfriendfinder.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".adv.topvideo.tj",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -247333,6 +248545,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".benaughty.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".benim-netfliximi-kontrol-et.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -247929,6 +249147,12 @@
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".bon-whatsapp.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".bongacams.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -249853,6 +251077,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".erothots.co",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".esp4valorant1pcweb0.github.io",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -249927,6 +251157,12 @@
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".fantastic-salamander-c721cb.netlify.app",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".fapcat.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -250041,6 +251277,18 @@
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".fleasteamprominent.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".flirt.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".flirt4free.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -251002,6 +252250,12 @@
     "candidate": ".i.total-media.net",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".iamnaughty.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
@@ -253603,6 +254857,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".nutaku.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".nutentertainintermediate.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -253983,6 +255243,12 @@
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".pepecoinsuper-airdrop.pages.dev",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".perfectgirls.net",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -255205,6 +256471,12 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".sexemulator.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".shadowbot-dih.pages.dev",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -255717,6 +256989,12 @@
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".stream-whatsapp.com",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".streamate.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -256593,6 +257871,12 @@
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
     "candidate": ".tobecation.github.io",
     "reason": "protected-domain-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".together2night.com",
+    "reason": "protected-content-service-root",
     "risk": "protected-service"
   },
   {
@@ -258430,6 +259714,12 @@
     "candidate": ".xgbmuxkupngbn.website",
     "reason": "broad-media-domain",
     "risk": "broad-media"
+  },
+  {
+    "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
+    "candidate": ".xmatch.com",
+    "reason": "protected-content-service-root",
+    "risk": "protected-service"
   },
   {
     "source": "https://ruleset.skk.moe/List/domainset/reject_extra.conf",
@@ -292297,12 +293587,6 @@
   },
   {
     "source": "https://ruleset.skk.moe/List/non_ip/reject.conf",
-    "candidate": "DOMAIN-KEYWORD,adsdk",
-    "reason": "protected-domain-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "https://ruleset.skk.moe/List/non_ip/reject.conf",
     "candidate": "DOMAIN-KEYWORD,mon.zijieapi.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
@@ -299844,180 +301128,6 @@
     "risk": "protected-service"
   },
   {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "*.mcdn.bilivideo.cn",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/(?:biliverse\\.github\\.io|app\\.bilibili\\.com)\\/api\\/Enhanced(?:\\?.*)?$ data-type=file data=\"https://github.com/Biliverse/Enhanced/releases/download/v0.6.3/Biliverse.Enhanced.PreferencePanes.json\" status-code=200 header=\"Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.6.3\"",
-    "reason": "broad-cross-site-rewrite",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/(?:biliverse\\.github\\.io|app\\.bilibili\\.com)\\/api\\/Global(?:\\?.*)?$ data-type=file data=\"https://github.com/Biliverse/Global/releases/download/v0.9.3/BiliBili.Global.boxjs.json\" status-code=200 header=\"Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.9.3\"",
-    "reason": "broad-cross-site-rewrite",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/(?:biliverse\\.github\\.io|app\\.bilibili\\.com)\\/api\\/Redirect(?:\\?.*)?$ data-type=file data=\"https://github.com/Biliverse/Redirect/releases/download/v0.2.25/BiliBili.Redirect.boxjs.json\" status-code=200 header=\"Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.2.25\"",
-    "reason": "broad-cross-site-rewrite",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/(?:\\?[^#]*)?$ data-type=file data=\"https://github.com/NSNanoCat/PreferencePanes/releases/latest/download/home.html\" status-code=200 header=\"Content-Type:text/html|Cache-Control:no-store\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/bridge\\.mjs(?:\\?[^#]*)?$ data-type=file data=\"https://biliverse.github.io/settings/bridge.mjs\" status-code=200 header=\"Content-Type:text/javascript|Cache-Control:no-store\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/home\\.json(?:\\?[^#]*)?$ data-type=file data=\"https://biliverse.github.io/settings/home.json\" status-code=200 header=\"Content-Type:application/json|Cache-Control:no-store\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/theme\\.css(?:\\?[^#]*)?$ data-type=file data=\"https://biliverse.github.io/settings/theme.css\" status-code=200 header=\"Content-Type:text/css|Cache-Control:no-store\"",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "api.biliapi.net",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "api.bilibili.com",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "app.biliapi.net",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "app.bilibili.com",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.dmView                                = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.community\\.service\\.dm\\.v1\\.DM\\/DmView,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.dynAll                                = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.app\\.dynamic\\.v2\\.Dynamic\\/DynAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.mainList                              = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.main\\.community\\.reply\\.v1\\.Reply\\/MainList,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.searchAll                             = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.polymer\\.app\\.search\\.v1\\.Search\\/SearchAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.teenager                              = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.app\\.interface\\.v1\\.Teenagers\\/ModeStatus,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.v1.view                               = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.app\\.(view|viewunite)\\.v1\\.View\\/(View|ViewProgress)$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "bilibili.helper.v2                                    = type=http-response,pattern=^https:\\/\\/app\\.bilibili\\.com\\/x\\/v2\\/(splash|search\\?|feed\\/index),requires-body=1,max-size=-1,binary-body-mode=0,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.v2.js",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "biliverse.github.io",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "cn-hk-eq-*.bilivideo.com",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "cn-hk-eq-*.bilivideo.com:4483",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "grpc.biliapi.net",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "search.bilibili.com",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "upos-*-mirrorakam.akamaized.net",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "upos-*-mirrorakam.akamaized.net:4483",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "upos-sz-mirror*.bilivideo.com",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "upos-sz-mirror*.bilivideo.com:4483",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/surge/amplify_nexus/📺 BiliBili增强合集.sgmodule",
-    "candidate": "www.bilibili.com",
-    "reason": "unreferenced-mitm-host",
-    "risk": "broad-media"
-  },
-  {
     "source": "rulesets/Sources/LocalModules/12306去广告.beta.sgmodule",
     "candidate": "-*.githubusercontent.com",
     "reason": "protected-mitm-host",
@@ -300076,6 +301186,174 @@
     "candidate": "-github.com",
     "reason": "protected-mitm-host",
     "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "*.mcdn.bilivideo.cn",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/(?:biliverse\\.github\\.io|app\\.bilibili\\.com)\\/api\\/Enhanced(?:\\?.*)?$ data-type=file data=\"https://github.com/Biliverse/Enhanced/releases/download/v0.6.3/Biliverse.Enhanced.PreferencePanes.json\" status-code=200 header=\"Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.6.3\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/(?:biliverse\\.github\\.io|app\\.bilibili\\.com)\\/api\\/Global(?:\\?.*)?$ data-type=file data=\"https://github.com/Biliverse/Global/releases/download/v0.9.3/BiliBili.Global.boxjs.json\" status-code=200 header=\"Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.9.3\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/(?:biliverse\\.github\\.io|app\\.bilibili\\.com)\\/api\\/Redirect(?:\\?.*)?$ data-type=file data=\"https://github.com/Biliverse/Redirect/releases/download/v0.2.25/BiliBili.Redirect.boxjs.json\" status-code=200 header=\"Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.2.25\"",
+    "reason": "broad-cross-site-rewrite",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/(?:\\?[^#]*)?$ data-type=file data=\"https://github.com/NSNanoCat/PreferencePanes/releases/latest/download/home.html\" status-code=200 header=\"Content-Type:text/html|Cache-Control:no-store\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/bridge\\.mjs(?:\\?[^#]*)?$ data-type=file data=\"https://biliverse.github.io/settings/bridge.mjs\" status-code=200 header=\"Content-Type:text/javascript|Cache-Control:no-store\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/home\\.json(?:\\?[^#]*)?$ data-type=file data=\"https://biliverse.github.io/settings/home.json\" status-code=200 header=\"Content-Type:application/json|Cache-Control:no-store\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "^https:\\/\\/app\\.bilibili\\.com\\/settings\\/theme\\.css(?:\\?[^#]*)?$ data-type=file data=\"https://biliverse.github.io/settings/theme.css\" status-code=200 header=\"Content-Type:text/css|Cache-Control:no-store\"",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "api.biliapi.net",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "api.bilibili.com",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "app.biliapi.net",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "app.bilibili.com",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.dmView                                = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.community\\.service\\.dm\\.v1\\.DM\\/DmView,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.dynAll                                = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.app\\.dynamic\\.v2\\.Dynamic\\/DynAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.mainList                              = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.main\\.community\\.reply\\.v1\\.Reply\\/MainList,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.searchAll                             = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.polymer\\.app\\.search\\.v1\\.Search\\/SearchAll$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.teenager                              = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.app\\.interface\\.v1\\.Teenagers\\/ModeStatus,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.v1.view                               = type=http-response,pattern=^https:\\/\\/grpc\\.biliapi\\.net\\/bilibili\\.app\\.(view|viewunite)\\.v1\\.View\\/(View|ViewProgress)$,requires-body=1,binary-body-mode=1,max-size=-1,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "bilibili.helper.v2                                    = type=http-response,pattern=^https:\\/\\/app\\.bilibili\\.com\\/x\\/v2\\/(splash|search\\?|feed\\/index),requires-body=1,max-size=-1,binary-body-mode=0,script-path=https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Script/Bilibili/bilibili.helper.v2.js",
+    "reason": "protected-functional-intersection",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "cn-hk-eq-*.bilivideo.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "cn-hk-eq-*.bilivideo.com:4483",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "grpc.biliapi.net",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "search.bilibili.com",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "upos-*-mirrorakam.akamaized.net",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "upos-*-mirrorakam.akamaized.net:4483",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "upos-sz-mirror*.bilivideo.com",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "upos-sz-mirror*.bilivideo.com:4483",
+    "reason": "protected-mitm-host",
+    "risk": "protected-service"
+  },
+  {
+    "source": "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule",
+    "candidate": "www.bilibili.com",
+    "reason": "unreferenced-mitm-host",
+    "risk": "broad-media"
   },
   {
     "source": "rulesets/Sources/LocalModules/IT之家去广告.beta.sgmodule",

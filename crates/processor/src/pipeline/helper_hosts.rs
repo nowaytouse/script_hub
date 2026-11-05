@@ -294,7 +294,6 @@ DOMAIN,routerlogin.net.example.org
         let targets = [
             root.join("modules/surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
             root.join("modules/shadowrocket/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.module"),
-            root.join("modules/shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module"),
         ];
         let target_names: Vec<_> = targets.iter().map(|path| path.to_str().unwrap()).collect();
         crate::firewall_sync::sync_ports(source.to_str().unwrap(), &target_names, true, version);

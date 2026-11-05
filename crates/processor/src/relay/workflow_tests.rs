@@ -19,6 +19,94 @@ fn config() -> RelayConfig {
 }
 
 #[test]
+fn migrated_empty_filter_cannot_publish_an_empty_subscription() {
+    let backup = br#"{"subs":[{"name":"Sample","source":"local","content":"A = http, first.invalid, 80\n","process":[{"type":"Regex Filter","args":{"regex":[],"keep":true}}]}]}"#;
+    let report = compat::import(backup).unwrap();
+    assert_eq!(report.unsupported_count, 0);
+    let (workspace, _) =
+        library_import::import(&library::Workspace::default(), &report, true).unwrap();
+    let entry = &workspace.subscriptions[0];
+    let fixture = Fixture::new(vec![]);
+    let mut cfg = config();
+    cfg.source.clear();
+    cfg.output.clear();
+    cfg.local_content = Some(Zeroizing::new(entry.content.clone()));
+    cfg.expected_source = Some(Zeroizing::new(entry.content.clone()));
+    cfg.processing = entry.processing.clone();
+    cfg.test_nodes = false;
+    let execute = |mode| {
+        run_with(
+            &cfg,
+            &fixture.client(),
+            mode,
+            &AtomicBool::new(false),
+            &|_| {},
+            &|_, _, _, _| panic!("migration must not start node checks"),
+        )
+    };
+    let preview = execute(RunMode::Preview).unwrap();
+    assert_eq!(
+        (preview.total, preview.processed, preview.excluded),
+        (1, 0, 1)
+    );
+    assert!(preview.content.is_empty() && !preview.published);
+    assert!(matches!(
+        execute(RunMode::Publish),
+        Err(RelayError::NoHealthyNodes)
+    ));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
+fn migrated_collection_empty_filter_cannot_publish_or_check_nodes() {
+    let backup = br#"{
+        "subs":[
+            {"name":"A","source":"local","content":"[Proxy]\nHK = socks5, first.invalid, 1080\n"},
+            {"name":"B","source":"local","content":"[Proxy]\nJP = socks5, second.invalid, 1080\n"}
+        ],
+        "collections":[{"name":"Group","subscriptions":["A","B"],
+            "process":[{"type":"Regex Filter","args":{"regex":[],"keep":true}}]}]
+    }"#;
+    let report = compat::import(backup).unwrap();
+    assert_eq!(report.unsupported_count, 0);
+    let (workspace, _) =
+        library_import::import(&library::Workspace::default(), &report, true).unwrap();
+    let collection = &workspace.collections[0];
+    let merged = workspace.merge(collection.id).unwrap();
+    let fixture = Fixture::new(vec![]);
+    let mut cfg = config();
+    cfg.source.clear();
+    cfg.output.clear();
+    cfg.local_content = Some(merged.clone());
+    cfg.expected_source = Some(merged);
+    cfg.processing = collection.processing.clone();
+    cfg.script_source.kind = "collection";
+    cfg.test_nodes = false;
+    let execute = |mode| {
+        run_with(
+            &cfg,
+            &fixture.client(),
+            mode,
+            &AtomicBool::new(false),
+            &|_| {},
+            &|_, _, _, _| panic!("migration must not start node checks"),
+        )
+    };
+    let preview = execute(RunMode::Preview).unwrap();
+    assert_eq!(
+        (preview.total, preview.processed, preview.excluded),
+        (2, 0, 2)
+    );
+    assert_eq!((preview.stages[0].before, preview.stages[0].after), (2, 0));
+    assert!(preview.content.is_empty() && !preview.published);
+    assert!(matches!(
+        execute(RunMode::Publish),
+        Err(RelayError::NoHealthyNodes)
+    ));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn ordered_pipeline_requires_reviewed_source_and_does_not_start_network_checks() {
     use model::pipeline::{Operation, Step};
     let source = "A = http, first.invalid, 80\nB = http, second.invalid, 80\n";
