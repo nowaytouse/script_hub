@@ -4,6 +4,7 @@ use serde_json::Value;
 use zeroize::{Zeroize, Zeroizing};
 
 use super::{RelayConfig, input, model};
+use model::pipeline::{self, Operation, Step};
 
 const MAX_ENCODED: usize = 8 * 1024 * 1024;
 const MAX_JSON: usize = 4 * 1024 * 1024;
@@ -20,7 +21,7 @@ pub struct Item {
     pub name: Zeroizing<String>,
     pub source: Option<Zeroizing<String>>,
     pub content: Option<Zeroizing<String>>,
-    pub operations: Vec<model::pipeline::Step>,
+    pub operations: Vec<Step>,
     pub unsupported: usize,
     pub is_file: bool,
 }
@@ -29,6 +30,7 @@ pub struct Collection {
     pub name: Zeroizing<String>,
     pub subscriptions: Vec<Zeroizing<String>>,
     pub valid_references: bool,
+    pub operations: Vec<Step>,
     pub unsupported: usize,
 }
 
@@ -95,7 +97,134 @@ fn node_content(value: &str) -> Option<Zeroizing<String>> {
     Some(Zeroizing::new(value.to_owned()))
 }
 
-fn count_process(value: &Value) -> usize {
+fn keep(args: &Value) -> Option<bool> {
+    match args.get("keep") {
+        None => Some(true),
+        Some(value) => value.as_bool(),
+    }
+}
+
+fn convert_filter(item: &Value, allow_names: bool) -> Option<Operation> {
+    if item.as_object()?.keys().any(|key| {
+        !["type", "args", "disabled", "customName", "id", "preview"].contains(&key.as_str())
+    }) {
+        return None;
+    }
+    let args = item.get("args")?;
+    match item.get("type")?.as_str()? {
+        "Type Filter" => {
+            let types = args
+                .as_array()
+                .or_else(|| args.get("value").and_then(Value::as_array))?;
+            if types.is_empty() || types.len() > 64 {
+                return None;
+            }
+            let mut protocols = Vec::with_capacity(types.len());
+            for kind in types {
+                let protocol = kind.as_str()?;
+                let alias = match protocol {
+                    // Sub-Store classifies these Surge spellings as one type.
+                    "http" => Some("https"),
+                    "socks5" => Some("socks5-tls"),
+                    "tuic" => Some("tuic-v5"),
+                    "ss" | "hysteria2" | "vmess" | "vless" | "trojan" | "anytls" => None,
+                    _ => return None,
+                };
+                for name in std::iter::once(protocol).chain(alias) {
+                    if !protocols.iter().any(|p| p == name) {
+                        protocols.push(name.to_owned());
+                    }
+                }
+            }
+            Some(Operation::ProtocolFilter {
+                protocols,
+                keep: keep(args)?,
+            })
+        }
+        "Regex Filter" if allow_names => Some(Operation::NameFilter {
+            pattern: portable_regex(args.get("regex")?.as_array()?)?,
+            keep: keep(args)?,
+        }),
+        _ => None,
+    }
+}
+
+fn portable_regex(patterns: &[Value]) -> Option<String> {
+    // shortcut: only literal alternatives and anchors, until JS/Rust regex equivalence can be established for more syntax.
+    let mut result = Zeroizing::new(String::new());
+    for pattern in patterns {
+        let pattern = pattern.as_str()?;
+        if pattern.len() > 512 {
+            return None;
+        }
+        let insensitive = pattern.starts_with("(?i)");
+        let pattern = pattern.strip_prefix("(?i)").unwrap_or(pattern);
+        for alternative in pattern.split('|') {
+            let literal = alternative.strip_prefix('^').unwrap_or(alternative);
+            let literal = literal.strip_suffix('$').unwrap_or(literal);
+            if literal.is_empty()
+                || insensitive && !literal.is_ascii()
+                || literal
+                    .chars()
+                    .any(|c| c.is_control() || ".*+?()[]{}\\^$".contains(c))
+            {
+                return None;
+            }
+            if !result.is_empty() {
+                result.push('|');
+            }
+            if insensitive {
+                result.push_str("(?i-u:");
+            }
+            result.push_str(alternative);
+            if insensitive {
+                result.push(')');
+            }
+            if result.len() > 512 {
+                return None;
+            }
+        }
+    }
+    (!result.is_empty()).then(|| std::mem::take(&mut *result))
+}
+
+fn migrate_process(value: &Value, allow_names: bool) -> (Vec<Step>, usize) {
+    let Some(value) = value.get("process").filter(|v| !v.is_null()) else {
+        return (Vec::new(), 0);
+    };
+    let Some(process) = value.as_array() else {
+        return (Vec::new(), 1);
+    };
+    let mut steps = Vec::new();
+    let mut unsupported = 0;
+    let mut incomplete = false;
+    for (index, item) in process.iter().enumerate() {
+        let disabled = item.get("disabled").and_then(Value::as_bool) == Some(true);
+        let valid_disabled = item.get("disabled").is_none_or(Value::is_boolean);
+        if !incomplete
+            && valid_disabled
+            && steps.len() < 64
+            && let Some(operation) = convert_filter(item, allow_names)
+        {
+            let mut step = Step {
+                id: index as u64 + 1,
+                enabled: true,
+                operation,
+            };
+            if pipeline::validate(std::slice::from_ref(&step)).is_ok() {
+                step.enabled = !disabled;
+                steps.push(step);
+                continue;
+            }
+        }
+        // A missing active step can change the data or suppress downstream processors.
+        incomplete |= !disabled;
+        unsupported += 1;
+    }
+    (steps, unsupported)
+}
+
+fn count_file_process(value: &Value) -> usize {
     match value.get("process") {
         None | Some(Value::Null) => 0,
         Some(Value::Array(process)) => process.len(),
@@ -153,7 +282,11 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
                 report.invalid_items += 1;
                 continue;
             };
-            let mut unsupported = count_process(value);
+            let (operations, mut unsupported) = if is_file {
+                (Vec::new(), count_file_process(value))
+            } else {
+                migrate_process(value, true)
+            };
             let source_kind = value.get("source").and_then(Value::as_str);
             let source = if source_kind == Some("remote") {
                 value
@@ -204,7 +337,7 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
                 name,
                 source,
                 content,
-                operations: Vec::new(),
+                operations,
                 unsupported,
                 is_file,
             });
@@ -217,7 +350,8 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
                 report.invalid_items += 1;
                 continue;
             };
-            let mut unsupported = count_process(value);
+            // Collection assembly adds a namespace prefix to node names.
+            let (operations, mut unsupported) = migrate_process(value, false);
             let mut subscriptions = Vec::new();
             let mut valid_references = true;
             if let Some(refs) = value.get("subscriptions") {
@@ -249,6 +383,7 @@ pub fn import(bytes: &[u8]) -> Result<Report, ImportError> {
                 name,
                 subscriptions,
                 valid_references,
+                operations,
                 unsupported,
             });
         }
@@ -310,6 +445,65 @@ mod tests {
         let encoded = STANDARD.encode(json);
         assert_eq!(import(encoded.as_bytes()).unwrap().items.len(), 1);
         assert!(import(STANDARD.encode(encoded).as_bytes()).is_err());
+    }
+
+    #[test]
+    fn imports_portable_filters_and_keeps_disabled_steps_in_order() {
+        let backup = br#"{"subs":[{"name":"Local","source":"local",
+            "content":"[Proxy]\nhk = socks5, node.example.invalid, 1080\nNotHK = socks5, other.example.invalid, 1080\nHK-Web = http, web.example.invalid, 80\n",
+            "process":[
+              {"type":"Regex Filter","args":{"regex":["(?i)^HK$|^HK-Web$"]}},
+              {"type":"Type Filter","args":["socks5"],"disabled":true},
+              {"type":"Script Operator","args":{"content":"not runnable"},"disabled":true},
+              {"type":"Type Filter","args":{"value":["socks5"],"keep":false}}
+            ]}]}"#;
+        let report = import(backup).unwrap();
+        assert_eq!(report.unsupported_count, 1);
+        let config = report.select_item(0, true).unwrap();
+        let order: Vec<_> = config
+            .processing
+            .pipeline
+            .iter()
+            .map(|step| (step.id, step.enabled))
+            .collect();
+        assert_eq!(order, [(1, true), (2, false), (4, true)]);
+        let source = model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+        let result = source
+            .render_processed(
+                &[model::Health::Unknown; 3],
+                &model::EnhanceOptions {
+                    rename: config.rename,
+                    sort: config.sort,
+                },
+                &config.processing,
+            )
+            .unwrap();
+        assert_eq!(result.retained, [2]);
+    }
+
+    #[test]
+    fn type_filter_maps_the_surge_protocol_aliases_classified_by_substore() {
+        let filter = serde_json::json!({"type": "Type Filter", "args": ["http", "socks5", "tuic"]});
+        assert!(matches!(
+            convert_filter(&filter, true).as_ref(),
+            Some(Operation::ProtocolFilter { protocols, .. })
+                if protocols == &["http", "https", "socks5", "socks5-tls", "tuic", "tuic-v5"]
+        ));
+    }
+
+    #[test]
+    fn unsupported_active_processor_blocks_importing_dependent_steps() {
+        for kind in [
+            r#"{"type":"Script Operator","args":{"content":"unknown"}}"#,
+            r#"{"type":"Regex Filter","args":{"regex":["(?=HK)"]}}"#,
+        ] {
+            let backup = format!(
+                r#"{{"subs":[{{"name":"X","source":"remote","url":"https://example.com/sub","process":[{kind},{{"type":"Type Filter","args":["ss"]}}]}}]}}"#
+            );
+            let report = import(backup.as_bytes()).unwrap();
+            assert_eq!(report.unsupported_count, 2);
+            assert!(report.items[0].operations.is_empty());
+        }
     }
 
     #[test]

@@ -962,6 +962,117 @@ fn semantic_no_op_keeps_existing_bytes_without_patch() {
 }
 
 #[test]
+fn scheduled_gist_processes_one_source_read_and_keeps_the_final_recheck() {
+    use model::pipeline::{Operation, Step};
+    let candidate = candidate();
+    let fixture = Fixture::new(vec![
+        input(SOURCE),
+        api(document(&candidate)),
+        input(SOURCE),
+        api(document(&candidate)),
+    ]);
+    let mut config = config();
+    config.local_content = Some(Zeroizing::new("stale cache".into()));
+    config.expected_source = Some(Zeroizing::new("stale preview".into()));
+    config.script_source.label = Some("Scheduled".into());
+    config.processing.pipeline.push(Step {
+        id: 1,
+        enabled: true,
+        operation: Operation::Script {
+            source: r#"fn transform(node, context) {
+                if context.source_kind != "gist" || context.source_label != "Scheduled" {
+                    throw "unexpected source";
+                }
+                node
+            }"#
+            .into(),
+            arguments: Default::default(),
+        },
+    });
+    let result = execute(
+        &config,
+        &fixture.client(),
+        Execution::Scheduled,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert!(result.unchanged && !result.published);
+    assert_eq!(result.source.unwrap().gist_file().unwrap().id, INPUT_ID);
+    assert_eq!(fixture.request_methods(), ["GET", "GET", "GET", "GET"]);
+}
+
+#[test]
+fn scheduled_gist_with_cached_bytes_still_rejects_positional_edits_before_network() {
+    let fixture = Fixture::new(vec![]);
+    let mut config = config();
+    config.local_content = Some(Zeroizing::new(SOURCE.into()));
+    config.processing.nodes.push(model::editor::NodeEdit {
+        index: 0,
+        included: false,
+        name: None,
+    });
+    let result = execute(
+        &config,
+        &fixture.client(),
+        Execution::Scheduled,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    );
+    assert!(matches!(result, Err(RelayError::InvalidInput)));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
+fn scheduled_gist_source_change_prevents_writing() {
+    let fixture = Fixture::new(vec![
+        input(SOURCE),
+        api(document("existing")),
+        input(&SOURCE.replace("a.example.invalid", "new.example.invalid")),
+    ]);
+    let result = execute(
+        &config(),
+        &fixture.client(),
+        Execution::Scheduled,
+        &AtomicBool::new(false),
+        &|_| {},
+        &check,
+    );
+    assert!(matches!(result, Err(RelayError::SourceChanged)));
+    assert_eq!(fixture.request_methods(), ["GET", "GET", "GET"]);
+}
+
+#[test]
+fn scheduled_local_content_keeps_edits_bound_to_frozen_positions() {
+    let candidate = candidate();
+    let fixture = Fixture::new(vec![api(document(&candidate)), api(document(&candidate))]);
+    let mut config = config();
+    config.source.clear();
+    config.source_file.clear();
+    config.local_content = Some(Zeroizing::new(SOURCE.into()));
+    config.test_nodes = false;
+    config.processing.nodes.push(model::editor::NodeEdit {
+        index: 1,
+        included: false,
+        name: None,
+    });
+    let result = execute(
+        &config,
+        &fixture.client(),
+        Execution::Scheduled,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| panic!("untested local schedule must not probe"),
+    )
+    .unwrap();
+    assert!(result.unchanged && result.source.is_none());
+    assert_eq!(result.excluded, 1);
+    assert_eq!(fixture.request_methods(), ["GET", "GET"]);
+}
+
+#[test]
 fn changed_output_is_written_once_and_verified() {
     let candidate = candidate();
     let fixture = Fixture::new(vec![
@@ -990,26 +1101,31 @@ fn changed_output_is_written_once_and_verified() {
 
 #[test]
 fn cancellation_after_checking_cannot_start_publication() {
-    let fixture = Fixture::new(vec![input(SOURCE), api(document("existing"))]);
-    let cancel = AtomicBool::new(false);
-    let checker = |s: &model::Subscription,
-                   o: &engine::ProbeOptions,
-                   c: &AtomicBool,
-                   p: &(dyn Fn(usize, usize) + Sync)| {
-        let result = check(s, o, c, p);
-        c.store(true, std::sync::atomic::Ordering::Release);
-        result
-    };
-    let result = run_with(
-        &config(),
-        &fixture.client(),
-        RunMode::Publish,
-        &cancel,
-        &|_| {},
-        &checker,
-    );
-    assert!(matches!(result, Err(RelayError::Cancelled)));
-    assert_eq!(fixture.request_methods(), ["GET", "GET"]);
+    for execution in [
+        Execution::Interactive(RunMode::Publish),
+        Execution::Scheduled,
+    ] {
+        let fixture = Fixture::new(vec![input(SOURCE), api(document("existing"))]);
+        let cancel = AtomicBool::new(false);
+        let checker = |s: &model::Subscription,
+                       o: &engine::ProbeOptions,
+                       c: &AtomicBool,
+                       p: &(dyn Fn(usize, usize) + Sync)| {
+            let result = check(s, o, c, p);
+            c.store(true, std::sync::atomic::Ordering::Release);
+            result
+        };
+        let result = execute(
+            &config(),
+            &fixture.client(),
+            execution,
+            &cancel,
+            &|_| {},
+            &checker,
+        );
+        assert!(matches!(result, Err(RelayError::Cancelled)));
+        assert_eq!(fixture.request_methods(), ["GET", "GET"]);
+    }
 }
 
 #[test]

@@ -1,5 +1,12 @@
 # Changes
 
+## Unreleased
+
+- Filter subscriptions with bounded Rhai boolean masks without rewriting or reordering retained nodes.
+- Migrate compatible Sub-Store filters as native subscription and collection operations.
+- Accept formatting-only refreshes without losing saved collection edits.
+- Avoid a duplicate source download during scheduled sync; recheck the source before publishing.
+
 ## 0.14.8 · 2026-11-04
 
 - Run bounded Rhai scripts over an entire subscription, with format context, endpoint edits, and regex helpers.

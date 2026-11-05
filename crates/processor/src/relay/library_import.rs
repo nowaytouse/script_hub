@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use super::{
     compat,
     library::{self, Collection, Entry, Workspace},
-    model,
+    model::{self, editor::Options},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,7 +55,10 @@ pub fn import(
                 .items
                 .iter()
                 .any(|item| item.unsupported > 0 || !item.operations.is_empty())
-            || report.collections.iter().any(|item| item.unsupported > 0))
+            || report
+                .collections
+                .iter()
+                .any(|item| item.unsupported > 0 || !item.operations.is_empty()))
     {
         return Err(Error::AcknowledgementRequired);
     }
@@ -116,6 +119,8 @@ pub fn import(
         }
         let id = candidate.next_id;
         candidate.next_id = id.checked_add(1).ok_or(Error::Invalid)?;
+        let mut processing = Options::default();
+        processing.pipeline.clone_from(&item.operations);
         candidate.subscriptions.push(Entry {
             id,
             name,
@@ -130,7 +135,7 @@ pub fn import(
             } else {
                 String::new()
             },
-            processing: Default::default(),
+            processing,
             publish: Default::default(),
         });
         if !item.is_file {
@@ -171,11 +176,13 @@ pub fn import(
         }
         let id = candidate.next_id;
         candidate.next_id = id.checked_add(1).ok_or(Error::Invalid)?;
+        let mut processing = Options::default();
+        processing.pipeline.clone_from(&collection.operations);
         candidate.collections.push(Collection {
             id,
             name,
             members,
-            processing: Default::default(),
+            processing,
             publish: Default::default(),
         });
         summary.collections += 1;
@@ -237,6 +244,34 @@ mod tests {
         );
         assert!(result.collections[0].processing.pipeline.is_empty());
         assert!(original.subscriptions.is_empty());
+    }
+
+    #[test]
+    fn bulk_migration_preserves_native_subscription_and_collection_pipelines() {
+        let backup = br#"{
+          "subs":[{"name":"A","source":"remote","url":"https://example.com/a",
+            "process":[{"type":"Type Filter","args":["ss"]}]}],
+          "collections":[{"name":"Group","subscriptions":["A"],
+            "process":[{"type":"Type Filter","args":{"value":["ss"],"keep":false}},
+              {"type":"Regex Filter","args":{"regex":["^HK"]}}]}]
+        }"#;
+        let report = compat::import(backup).unwrap();
+        let original = Workspace::default();
+        assert_eq!(report.unsupported_count, 1);
+        assert!(matches!(
+            import(&original, &report, false),
+            Err(Error::AcknowledgementRequired)
+        ));
+        let (result, _) = import(&original, &report, true).unwrap();
+        assert!(matches!(
+            &result.subscriptions[0].processing.pipeline[0].operation,
+            model::pipeline::Operation::ProtocolFilter { protocols, keep: true } if protocols == &["ss"]
+        ));
+        assert!(matches!(
+            &result.collections[0].processing.pipeline[0].operation,
+            model::pipeline::Operation::ProtocolFilter { protocols, keep: false } if protocols == &["ss"]
+        ));
+        assert_eq!(result.collections[0].processing.pipeline.len(), 1);
     }
 
     #[test]

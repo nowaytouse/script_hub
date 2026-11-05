@@ -336,7 +336,9 @@ impl HubApp {
                                      if let Some(report) = &state.migration {
                                          ui.separator();
                                          ui.strong(tr(Text::MigrationPreview));
-                                         ui.label(format!("{} {} · {} {} · {} {}", report.items.len(), tr(Text::MigrationItems), report.collections.len(), tr(Text::MigrationCollections), report.unsupported_count, tr(Text::MigrationUnsupported)));
+                                         let operations = report.items.iter().map(|item| item.operations.len()).sum::<usize>()
+                                             + report.collections.iter().map(|item| item.operations.len()).sum::<usize>();
+                                         ui.label(format!("{} {} · {} {} · {} {} · {} {}", report.items.len(), tr(Text::MigrationItems), report.collections.len(), tr(Text::MigrationCollections), operations, tr(Text::WorkspaceOperationsTab), report.unsupported_count, tr(Text::MigrationUnsupported)));
                                          ui.weak(tr(Text::MigrationHelp));
                                          ui.checkbox(&mut state.migration_ack, tr(Text::MigrationConsent));
                                          if ui.add_enabled(state.migration_ack, egui::Button::new(tr(Text::WorkspaceImportAll))).clicked() { workspace_import = true; }

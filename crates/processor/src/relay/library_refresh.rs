@@ -2,7 +2,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use zeroize::{Zeroize, Zeroizing};
 
-use super::{Progress, RelayConfig, RelayError, RunMode, library::Workspace};
+use super::{Progress, RelayConfig, RelayError, RunMode, library::Workspace, model};
 
 pub fn refresh(
     workspace: &Workspace,
@@ -62,6 +62,7 @@ pub(super) fn refresh_with(
                 || workspace.collections.iter().any(|collection| {
                     collection.members.contains(id) && !collection.processing.nodes.is_empty()
                 }))
+            && !model::semantic_equal(&entry.content, &content)
         {
             return Err(RelayError::SourceChanged);
         }
@@ -179,8 +180,42 @@ mod tests {
     }
 
     #[test]
-    fn shared_member_refresh_cannot_invalidate_another_collections_edits() {
+    fn shared_member_refresh_preserves_other_collections_edits_across_formatting_changes() {
+        let workspace = workspace_with_shared_member_edits();
+        let refreshed = refresh_with(&workspace, 3, &AtomicBool::new(false), |_| {
+            Ok(Zeroizing::new(
+                "# updated comment\nA=socks5,a.example.invalid,1080\nB=socks5,b.example.invalid,1080\n"
+                    .into(),
+            ))
+        })
+        .unwrap();
+        let other = &refreshed.collections[1];
+        assert_eq!(other.processing.nodes.len(), 1);
+        assert!(!other.processing.nodes[0].included);
+        assert!(
+            refreshed.subscriptions[0]
+                .content
+                .starts_with("# updated comment")
+        );
+    }
+
+    #[test]
+    fn shared_member_refresh_rejects_reordered_nodes_with_other_collections_edits() {
+        let workspace = workspace_with_shared_member_edits();
+        let result = refresh_with(&workspace, 3, &AtomicBool::new(false), |_| {
+            Ok(Zeroizing::new(
+                "B = socks5, b.example.invalid, 1080\nA = socks5, a.example.invalid, 1080\n".into(),
+            ))
+        });
+        assert!(matches!(result, Err(RelayError::SourceChanged)));
+    }
+
+    fn workspace_with_shared_member_edits() -> Workspace {
         let mut workspace = workspace();
+        for entry in &mut workspace.subscriptions {
+            entry.content =
+                "A = socks5, a.example.invalid, 1080\nB = socks5, b.example.invalid, 1080\n".into();
+        }
         let mut other = workspace.collections[0].clone();
         other.name = "other group".into();
         other
@@ -192,9 +227,6 @@ mod tests {
                 name: None,
             });
         workspace.add_collection(other).unwrap();
-        let result = refresh_with(&workspace, 3, &AtomicBool::new(false), |_| {
-            Ok(Zeroizing::new("new".into()))
-        });
-        assert!(matches!(result, Err(RelayError::SourceChanged)));
+        workspace
     }
 }

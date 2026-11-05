@@ -297,6 +297,12 @@ type Checker<'a> = dyn Fn(
         &(dyn Fn(usize, usize) + Sync),
     ) -> Result<engine::ProbeBatch, engine::EngineError>
     + 'a;
+
+enum Execution {
+    Interactive(RunMode),
+    Scheduled,
+}
+
 fn run_with(
     config: &RelayConfig,
     client: &gist::GistClient,
@@ -305,14 +311,45 @@ fn run_with(
     progress: &(dyn Fn(Progress) + Sync),
     check: &Checker<'_>,
 ) -> Result<RelayResult, RelayError> {
-    config.validate(mode)?;
+    execute(
+        config,
+        client,
+        Execution::Interactive(mode),
+        cancel,
+        progress,
+        check,
+    )
+}
+
+fn execute(
+    config: &RelayConfig,
+    client: &gist::GistClient,
+    execution: Execution,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(Progress) + Sync),
+    check: &Checker<'_>,
+) -> Result<RelayResult, RelayError> {
+    let mode = match execution {
+        Execution::Interactive(mode) => {
+            config.validate(mode)?;
+            mode
+        }
+        Execution::Scheduled => {
+            schedule::validate(config)?;
+            RunMode::Publish
+        }
+    };
     active(cancel)?;
     progress(Progress {
         stage: RelayStage::Read,
         checked: 0,
         total: 0,
     });
-    let source = if config.local_content.is_none() {
+    let local_content = config
+        .local_content
+        .as_deref()
+        .filter(|_| !matches!(execution, Execution::Scheduled) || config.source.trim().is_empty());
+    let source = if local_content.is_none() {
         Some(input::read(
             client,
             config.source.trim(),
@@ -322,10 +359,8 @@ fn run_with(
     } else {
         None
     };
-    let source_content = config
-        .local_content
-        .as_ref()
-        .map(|content| content.as_str())
+    let source_content = local_content
+        .map(String::as_str)
         .or_else(|| source.as_ref().map(input::Source::content))
         .ok_or(RelayError::InvalidInput)?;
     let subscription = model::Subscription::parse(source_content).map_err(RelayError::Model)?;
@@ -360,12 +395,15 @@ fn run_with(
             unchanged: false,
         });
     }
-    if let Some(expected) = &config.expected_source {
-        if !model::semantic_equal(source_content, expected) {
-            return Err(RelayError::SourceChanged);
+    // Scheduled plans bind to this run's source; validation forbids remote positional edits.
+    if matches!(execution, Execution::Interactive(_)) {
+        if let Some(expected) = &config.expected_source {
+            if !model::semantic_equal(source_content, expected) {
+                return Err(RelayError::SourceChanged);
+            }
+        } else if config.processing.is_active() {
+            return Err(RelayError::InvalidInput);
         }
-    } else if config.processing.is_active() {
-        return Err(RelayError::InvalidInput);
     }
     let health = vec![model::Health::Unknown; subscription.nodes().len()];
     let enhance = model::EnhanceOptions {

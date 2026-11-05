@@ -6,8 +6,8 @@ use std::{
 };
 
 use super::{
-    Progress, RelayConfig, RelayError, RelayResult, RunMode,
-    gist::GistError,
+    Execution, Progress, RelayConfig, RelayError, RelayResult, RunMode, engine, execute,
+    gist::{GistClient, GistError},
     model::{ModelError, pipeline::ResolveError},
 };
 
@@ -215,7 +215,7 @@ pub(crate) fn server_retry_after(error: &RelayError) -> Option<Duration> {
 /// Reject index bindings to changing upstream data before other validation.
 pub fn validate(config: &RelayConfig) -> Result<(), RelayError> {
     if config.output.trim().is_empty()
-        || (config.local_content.is_none() && !config.processing.nodes.is_empty())
+        || (!config.source.trim().is_empty() && !config.processing.nodes.is_empty())
     {
         return Err(RelayError::InvalidInput);
     }
@@ -229,11 +229,22 @@ pub fn run(
     cancel: &AtomicBool,
     progress: &(dyn Fn(Progress) + Sync),
 ) -> Result<RelayResult, RelayError> {
-    validate(config)?;
-    let imported = super::run(config, token, RunMode::Import, cancel, progress)?;
-    let mut fresh = config.clone();
-    fresh.expected_source = Some(imported.content);
-    super::run(&fresh, token, RunMode::Publish, cancel, progress)
+    let client = match GistClient::new(token) {
+        Ok(client) => client,
+        Err(error) => {
+            // Keep invalid-plan diagnostics ahead of credential errors without validating twice.
+            validate(config)?;
+            return Err(RelayError::Gist(error));
+        }
+    };
+    execute(
+        config,
+        &client,
+        Execution::Scheduled,
+        cancel,
+        progress,
+        &engine::check_nodes,
+    )
 }
 
 #[cfg(test)]
@@ -453,8 +464,9 @@ mod tests {
             name: None,
         });
         assert!(matches!(validate(&config), Err(RelayError::InvalidInput)));
-        config.source.clear();
         config.local_content = Some(zeroize::Zeroizing::new("static".into()));
+        assert!(matches!(validate(&config), Err(RelayError::InvalidInput)));
+        config.source.clear();
         assert!(validate(&config).is_ok());
     }
 }

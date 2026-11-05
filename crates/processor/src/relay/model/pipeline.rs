@@ -1691,6 +1691,7 @@ mod tests {
         .unwrap();
         for source in [
             "fn operator(nodes, context) { [nodes[0], nodes[0]] }",
+            "fn filter(nodes, context) { [true, 1] }",
             r#"fn operator(nodes, context) { let a = nodes[0]; a.name = "new-a"; a.port = 443; let b = nodes[1]; b.name = ""; [a, b] }"#,
         ] {
             let mut names = [Zeroizing::new("a".into()), Zeroizing::new("b".into())];

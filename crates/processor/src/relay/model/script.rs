@@ -134,6 +134,7 @@ enum EntryPoint {
     Transform,
     TransformWithContext,
     Operator,
+    Filter,
 }
 
 pub(super) struct Script {
@@ -294,6 +295,7 @@ fn compile_with_diagnostics(source: &str) -> Result<Script, SyntaxError> {
     let mut transform = false;
     let mut transform_with_context = false;
     let mut operator = false;
+    let mut filter = false;
     for function in ast
         .iter_functions()
         .filter(|function| function.this_type.is_none())
@@ -302,19 +304,21 @@ fn compile_with_diagnostics(source: &str) -> Result<Script, SyntaxError> {
             ("transform", 1) => transform = true,
             ("transform", 2) => transform_with_context = true,
             ("operator", 2) => operator = true,
+            ("filter", 2) => filter = true,
             _ => {}
         }
     }
-    let entry = match (transform, transform_with_context, operator) {
+    let entry = match (transform, transform_with_context, operator, filter) {
         // Keep legacy selection for scripts with a transform overload used as a helper.
-        (true, _, false) => EntryPoint::Transform,
-        (false, true, false) => EntryPoint::TransformWithContext,
-        (false, false, true) => {
-            engine.set_max_array_size(MAX_BATCH_NODES);
-            EntryPoint::Operator
-        }
+        (true, _, false, false) => EntryPoint::Transform,
+        (false, true, false, false) => EntryPoint::TransformWithContext,
+        (false, false, true, false) => EntryPoint::Operator,
+        (false, false, false, true) => EntryPoint::Filter,
         _ => return Err(SyntaxError::EntryPoint),
     };
+    if matches!(entry, EntryPoint::Operator | EntryPoint::Filter) {
+        engine.set_max_array_size(MAX_BATCH_NODES);
+    }
     Ok(Script { engine, ast, entry })
 }
 
@@ -334,8 +338,14 @@ impl Script {
     ) -> Result<Vec<Output>, ModelError> {
         validate_arguments(&context.arguments)?;
         let context = RuntimeContext(Rc::new(context.clone()));
-        if matches!(self.entry, EntryPoint::Operator) {
-            return self.apply_batch(inputs, context);
+        if matches!(self.entry, EntryPoint::Operator | EntryPoint::Filter) {
+            if inputs.len() > MAX_BATCH_NODES {
+                return Err(ModelError::InvalidEdit);
+            }
+            return match self.entry {
+                EntryPoint::Filter => self.apply_filter(inputs, context),
+                _ => self.apply_batch(inputs, context),
+            };
         }
         collect_outputs(inputs.map(|input| {
             let node = ScriptNode::from(&input);
@@ -350,7 +360,9 @@ impl Script {
                     "transform",
                     (node, context.clone()),
                 ),
-                EntryPoint::Operator => unreachable!("operators are dispatched as a batch"),
+                EntryPoint::Operator | EntryPoint::Filter => {
+                    unreachable!("batch entries are dispatched separately")
+                }
             }
             .map_err(|_| ModelError::InvalidEdit)?;
             result.output(&input)
@@ -363,9 +375,6 @@ impl Script {
         context: RuntimeContext,
     ) -> Result<Vec<Output>, ModelError> {
         let count = inputs.len();
-        if count > MAX_BATCH_NODES {
-            return Err(ModelError::InvalidEdit);
-        }
         let mut originals = HashMap::with_capacity(count);
         let mut nodes = Array::with_capacity(count);
         for input in inputs {
@@ -390,6 +399,33 @@ impl Script {
                 .remove(&node.index)
                 .ok_or(ModelError::InvalidEdit)?;
             node.output(&input)
+        }))
+    }
+
+    fn apply_filter(
+        &self,
+        inputs: impl ExactSizeIterator<Item = Input>,
+        context: RuntimeContext,
+    ) -> Result<Vec<Output>, ModelError> {
+        let inputs: Vec<_> = inputs.collect();
+        let nodes: Array = inputs
+            .iter()
+            .map(|input| Dynamic::from(ScriptNode::from(input)))
+            .collect();
+        let mask: Array = self
+            .engine
+            .call_fn(&mut Scope::new(), &self.ast, "filter", (nodes, context))
+            .map_err(|_| ModelError::InvalidEdit)?;
+        if mask.len() != inputs.len() {
+            return Err(ModelError::InvalidEdit);
+        }
+        collect_outputs(inputs.into_iter().zip(mask).filter_map(|(input, keep)| {
+            match keep.try_cast::<bool>() {
+                // The mask never applies changes made to the script's node copies.
+                Some(true) => Some(ScriptNode::from(&input).output(&input)),
+                Some(false) => None,
+                None => Some(Err(ModelError::InvalidEdit)),
+            }
         }))
     }
 }
@@ -579,6 +615,11 @@ mod tests {
         assert!(check_syntax("throw \"not evaluated\"; fn transform(node) { node }").is_ok());
         assert!(check_syntax("fn transform(node, context) { node }").is_ok());
         assert!(check_syntax("fn operator(nodes, context) { nodes }").is_ok());
+        assert!(check_syntax("fn filter(nodes, context) { [] }").is_ok());
+        assert_eq!(
+            check_syntax("fn filter(nodes, context) { [] } fn operator(nodes, context) { nodes }"),
+            Err(SyntaxError::EntryPoint)
+        );
         assert_eq!(
             check_syntax("fn transform(node) { node } fn operator(nodes, context) { nodes }"),
             Err(SyntaxError::EntryPoint),
@@ -756,6 +797,37 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn filter_keeps_original_nodes_in_order_and_requires_a_boolean_per_input() {
+        let script = compile(
+            r#"fn filter(nodes, context) {
+                let edited = nodes[2];
+                edited.name = "ignored";
+                [context.source_format == "uri", false, true]
+            }"#,
+        )
+        .unwrap();
+        let outputs = script.apply((0..3).map(input), &context()).unwrap();
+        assert_eq!(
+            outputs
+                .iter()
+                .map(|node| (node.index, node.name.as_str()))
+                .collect::<Vec<_>>(),
+            [(0, "node-0"), (2, "node-2")]
+        );
+        for mask in ["[]", "[true, true, true, true]", "[true, false, 1]"] {
+            let script = compile(&format!("fn filter(nodes, context) {{ {mask} }}")).unwrap();
+            assert!(matches!(
+                script.apply((0..3).map(input), &context()),
+                Err(ModelError::InvalidEdit)
+            ));
+        }
+        assert!(matches!(
+            script.apply((0..MAX_BATCH_NODES + 1).map(input), &context()),
+            Err(ModelError::InvalidEdit)
+        ));
     }
 
     #[test]
