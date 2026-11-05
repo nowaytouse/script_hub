@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Keep Apple enhancement modules free of routing rules, narrow their HTTPS interception, and use native WeatherKit data by default. Shadowrocket uses upstream TV and an optional WeatherKit Rewrite module.
+- Migrate numbered captures in portable Sub-Store regex renames.
+- Restore the public encrypted template's sanitization invariant.
+
 - Keep the quieter utility and visible YouTube defaults across upstream refreshes; retain the last valid module when the relevant arguments or hooks change.
 - Limit the helper's system DNS mappings to local devices and bootstrap its HTTPS resolver over IPv4 and IPv6.
 - Translate Sub-Store's whole-match and literal-dollar replacements in native subscription renames.

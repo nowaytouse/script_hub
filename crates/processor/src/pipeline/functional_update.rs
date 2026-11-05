@@ -5,6 +5,7 @@ use std::fs;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use super::{apple_shadowrocket, apple_surge::harden as harden_apple_content};
 use crate::merge_bundles::{MergeBundleRequest, SourceInput, process_merge_bundle};
 use crate::pipeline::custom_sources::{self, CustomSource, SourceCategory};
 use crate::promax::artifact::{ArtifactKind, GeneratedArtifact, publish_generated_artifacts};
@@ -44,12 +45,22 @@ const LOCAL_SOURCES: &[(&str, &str)] = &[
     ),
 ];
 
+const APPLE_OUTPUT: &str = "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule";
+const APPLE_HEADER: &[(&str, &str)] = &[
+    ("name", "🍎 Apple服务增强合集"),
+    (
+        "desc",
+        "整合 WeatherKit · News · TV；默认使用 Apple 原生天气数据，路由由外部规则集与用户策略决定",
+    ),
+    ("author", "VirgilClyne[https://github.com/VirgilClyne]"),
+    ("homepage", "https://NSRingo.github.io"),
+    (
+        "icon",
+        "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png",
+    ),
+    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
+];
 const APPLE: &[RemoteSource] = &[
-    RemoteSource {
-        label: "iRingo.Maps",
-        url: "https://github.com/NSRingo/GeoServices/releases/latest/download/iRingo.Maps.sgmodule",
-        required: true,
-    },
     RemoteSource {
         label: "iRingo.WeatherKit",
         url: "https://github.com/NSRingo/WeatherKit/releases/latest/download/iRingo.WeatherKit.sgmodule",
@@ -63,6 +74,19 @@ const APPLE: &[RemoteSource] = &[
     RemoteSource {
         label: "iRingo.TV",
         url: "https://github.com/NSRingo/TV/releases/latest/download/iRingo.TV.sgmodule",
+        required: true,
+    },
+];
+
+const APPLE_SHADOWROCKET: &[RemoteSource] = &[
+    RemoteSource {
+        label: "iRingo.TV (Shadowrocket)",
+        url: apple_shadowrocket::TV_SOURCE,
+        required: true,
+    },
+    RemoteSource {
+        label: "iRingo.WeatherKit Rewrite (Shadowrocket)",
+        url: apple_shadowrocket::WEATHER_SOURCE,
         required: true,
     },
 ];
@@ -351,20 +375,27 @@ struct MergeJob<'a> {
 }
 
 fn merge(root: &Path, downloader: &Downloader, job: MergeJob<'_>) -> Result<(), String> {
+    let mut sources = fetch_sources(downloader, job.specs)?;
+    if let Some(custom_sources) = job.custom_sources {
+        sources.extend(fetch_custom_sources(downloader, custom_sources)?);
+    }
+    publish_merge_job(root, job, sources)
+}
+
+fn publish_merge_job(
+    root: &Path,
+    job: MergeJob<'_>,
+    sources: Vec<SourceInput>,
+) -> Result<(), String> {
     let MergeJob {
         op,
         output,
         header,
-        specs,
-        custom_sources,
         replacements,
         youtube_adblock_output,
         postprocess,
+        ..
     } = job;
-    let mut sources = fetch_sources(downloader, specs)?;
-    if let Some(custom_sources) = custom_sources {
-        sources.extend(fetch_custom_sources(downloader, custom_sources)?);
-    }
     let request = MergeBundleRequest {
         op: op.to_string(),
         output_path: root.join(output).to_string_lossy().to_string(),
@@ -539,88 +570,6 @@ fn push_output_line(output: &mut String, first_line: &mut bool, line: &str) {
     }
     output.push_str(line);
     *first_line = false;
-}
-
-const APPLE_FUNCTIONAL_MITM_HOSTS: &[&str] = &[
-    "play-cdn.itunes.apple.com",
-    "play-edge-cdn.itunes.apple.com",
-    "configuration.ls.apple.com",
-    "gspe35-ssl.ls.apple.com",
-    "gspe35-ssl.ls.apple.cn",
-    "weatherkit.apple.com",
-    "news-edge.apple.com",
-    "news-todayconfig-edge.apple.com",
-    "news-events.apple.com",
-    "news-sports-events.apple.com",
-    "news-client-search.apple.com",
-    "uts-api.itunes.apple.com",
-    "umc-tempo-api.apple.com",
-];
-
-fn harden_apple_content(content: &str) -> Result<String, String> {
-    let exclusions = crate::promax::safety::apple_mitm_exclusions();
-    let hostname_count = exclusions
-        .len()
-        .saturating_add(APPLE_FUNCTIONAL_MITM_HOSTS.len());
-    let hostname_bytes = exclusions
-        .iter()
-        .map(String::len)
-        .chain(APPLE_FUNCTIONAL_MITM_HOSTS.iter().map(|host| host.len()))
-        .fold("hostname = %INSERT% ".len(), usize::saturating_add)
-        .saturating_add(hostname_count.saturating_sub(1).saturating_mul(2));
-    let mut output = String::with_capacity(content.len().saturating_add(hostname_bytes));
-    let mut first_line = true;
-    let mut in_rule = false;
-    let mut replaced_hostname = false;
-    for line in content.lines() {
-        let trimmed = line.trim();
-        if trimmed.starts_with('[') && trimmed.ends_with(']') {
-            in_rule = trimmed.eq_ignore_ascii_case("[Rule]");
-            if in_rule {
-                continue;
-            }
-        }
-        if in_rule {
-            continue;
-        }
-        if trimmed.starts_with("hostname =") {
-            if !replaced_hostname {
-                if !first_line {
-                    output.push('\n');
-                }
-                output.push_str("hostname = %INSERT% ");
-                let mut first_host = true;
-                for host in exclusions
-                    .iter()
-                    .map(String::as_str)
-                    .chain(APPLE_FUNCTIONAL_MITM_HOSTS.iter().copied())
-                {
-                    if !first_host {
-                        output.push_str(", ");
-                    }
-                    output.push_str(host);
-                    first_host = false;
-                }
-                first_line = false;
-                replaced_hostname = true;
-            }
-        } else {
-            if line.contains("isWorkaroundSSLPinning:true") {
-                let line = line.replace(
-                    "isWorkaroundSSLPinning:true",
-                    "isWorkaroundSSLPinning:false",
-                );
-                push_output_line(&mut output, &mut first_line, &line);
-            } else {
-                push_output_line(&mut output, &mut first_line, line);
-            }
-        }
-    }
-    if !replaced_hostname {
-        return Err("Apple bundle has no MITM hostname entry".to_string());
-    }
-    output.push('\n');
-    Ok(output)
 }
 
 fn harden_youtube_content(content: &str) -> Result<String, String> {
@@ -875,6 +824,51 @@ fn merge_devtools(
     )
 }
 
+fn publish_apple_surge(root: &Path, mut sources: Vec<SourceInput>) -> Result<(), String> {
+    // The shared merge validates its intermediate output before Apple-specific hardening.
+    for source in &mut sources {
+        source.content = strip_rule_section(&source.content).replace(
+            "isWorkaroundSSLPinning:true",
+            "isWorkaroundSSLPinning:false",
+        );
+    }
+    publish_merge_job(
+        root,
+        MergeJob {
+            op: "upstream_merge",
+            output: APPLE_OUTPUT,
+            header: APPLE_HEADER,
+            specs: APPLE,
+            custom_sources: None,
+            replacements: &[],
+            youtube_adblock_output: None,
+            postprocess: Some(harden_apple_content),
+        },
+        sources,
+    )
+}
+
+fn publish_apple_shadowrocket(root: &Path, sources: &[SourceInput]) -> Result<(), String> {
+    let [tv, weather] = sources else {
+        return Err("missing official Shadowrocket Apple sources".into());
+    };
+    publish_generated_artifacts(
+        root,
+        &[
+            GeneratedArtifact {
+                target: root.join(apple_shadowrocket::TV_OUTPUT),
+                content: apple_shadowrocket::render_tv(&tv.content)?,
+                kind: ArtifactKind::Shadowrocket,
+            },
+            GeneratedArtifact {
+                target: root.join(apple_shadowrocket::WEATHER_OUTPUT),
+                content: apple_shadowrocket::render_weather(&weather.content)?,
+                kind: ArtifactKind::Shadowrocket,
+            },
+        ],
+    )
+}
+
 pub fn run_functional_updates(root: &Path) -> Vec<String> {
     let downloader = downloader();
     sync_local_sources(root, &downloader);
@@ -904,40 +898,13 @@ pub fn run_functional_updates(root: &Path) -> Vec<String> {
 
     run_step(
         "Apple",
-        merge(
-            root,
-            &downloader,
-            MergeJob {
-                op: "upstream_merge",
-                output: "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule",
-                header: &[
-                    ("name", "🍎 Apple服务增强合集"),
-                    (
-                        "desc",
-                        "整合 Apple 生态增强：Maps · WeatherKit · News · TV；路由由外部 Apple 规则集与用户策略决定，关键服务排除 MITM",
-                    ),
-                    ("author", "VirgilClyne[https://github.com/VirgilClyne]"),
-                    ("homepage", "https://NSRingo.github.io"),
-                    (
-                        "icon",
-                        "https://developer.apple.com/assets/elements/icons/sf-symbols/sf-symbols-128x128.png",
-                    ),
-                    ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
-                ],
-                specs: APPLE,
-                custom_sources: None,
-                replacements: &[
-                    ("Proxy:🇺🇸美国", "Proxy:\"🍎 Apple 🍏\""),
-                    (",🇺🇸美国", ",{{{Proxy}}}"),
-                    (
-                        "isWorkaroundSSLPinning:true",
-                        "isWorkaroundSSLPinning:false",
-                    ),
-                ],
-                youtube_adblock_output: None,
-                postprocess: Some(harden_apple_content),
-            },
-        ),
+        fetch_sources(&downloader, APPLE).and_then(|sources| publish_apple_surge(root, sources)),
+        &mut failures,
+    );
+    run_step(
+        "Apple for Shadowrocket",
+        fetch_sources(&downloader, APPLE_SHADOWROCKET)
+            .and_then(|sources| publish_apple_shadowrocket(root, &sources)),
         &mut failures,
     );
     run_step(
@@ -1052,6 +1019,9 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
             .path()
             .strip_prefix(&source)
             .map_err(|error| error.to_string())?;
+        if relative == Path::new("amplify_nexus/🍎 Apple服务增强合集.sgmodule") {
+            continue;
+        }
         let mut target = root.join("modules/shadowrocket").join(relative);
         target.set_extension("module");
         let content = std::fs::read_to_string(entry.path())
@@ -1184,6 +1154,37 @@ mod tests {
             "sources": [{"label": "fixture", "url": "https://example.test/source", "content": content}],
             "youtube_adblock_output": (op == "youtube_merge").then(|| root.join("adblock.sgmodule"))
         })).unwrap()
+    }
+
+    #[test]
+    fn apple_refresh_removes_upstream_routing_and_restores_native_weather_defaults() {
+        let root = temporary_root("apple-refresh");
+        let original =
+            include_str!("../../../../modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule");
+        let content = original
+            .replace(
+                "isWorkaroundSSLPinning:false",
+                "isWorkaroundSSLPinning:true",
+            )
+            .replace(
+                "Weather.Provider:\"WeatherKit\"",
+                "Weather.Provider:\"ColorfulClouds\"",
+            );
+        let content = format!("{content}\n[Rule]\nDOMAIN,account.apple.com,REJECT\n");
+        super::publish_apple_surge(
+            &root,
+            vec![crate::merge_bundles::SourceInput {
+                label: "fixture".into(),
+                url: "https://example.test/apple.sgmodule".into(),
+                content,
+            }],
+        )
+        .unwrap();
+        let refreshed = std::fs::read_to_string(root.join(super::APPLE_OUTPUT)).unwrap();
+        assert!(!refreshed.contains("[Rule]"));
+        assert!(refreshed.contains("Weather.Provider:\"WeatherKit\""));
+        assert!(refreshed.contains("isWorkaroundSSLPinning:false"));
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -1334,6 +1335,24 @@ mod tests {
     }
 
     #[test]
+    fn shadowrocket_sync_never_overwrites_native_apple_publication() {
+        let root = temporary_root("shadowrocket-native-apple");
+        let surge = root.join(super::APPLE_OUTPUT);
+        let native = root.join(super::apple_shadowrocket::TV_OUTPUT);
+        for path in [&surge, &native] {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        }
+        std::fs::write(surge, "#!name=Surge-only Apple News\n").unwrap();
+        std::fs::write(&native, "#!name=Native Apple TV\n").unwrap();
+        assert_eq!(sync_shadowrocket_variants(&root).unwrap(), 0);
+        assert_eq!(
+            std::fs::read_to_string(native).unwrap(),
+            "#!name=Native Apple TV\n"
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn shadowrocket_sync_validates_converted_promax_with_target_rules() {
         let root = temporary_root("shadowrocket-sync-promax");
         let source_dir = root.join("modules/surge/head_expanse");
@@ -1470,18 +1489,6 @@ mod tests {
         eprintln!(
             "validation of 8 MiB module x {iterations}: legacy={legacy:?}, optimized={optimized:?}"
         );
-    }
-
-    #[test]
-    fn apple_hardening_keeps_only_bounded_function_hosts() {
-        let input = "#!name=Apple\n#!arguments=isWorkaroundSSLPinning:true\n[Rule]\nDOMAIN,account.apple.com,DIRECT\n[Script]\nweather = type=http-response,pattern=^https://weatherkit\\.apple\\.com,script-path=https://example.test/a.js\n[MITM]\nhostname = %APPEND% *.apple.com, arbitrary.apple.com\n";
-        let hardened = harden_apple_content(input).unwrap();
-        assert!(!hardened.contains("[Rule]"));
-        assert!(!hardened.contains("isWorkaroundSSLPinning:true"));
-        assert!(hardened.contains("-account.apple.com"));
-        assert!(hardened.contains("weatherkit.apple.com"));
-        assert!(hardened.contains("uts-api.itunes.apple.com"));
-        assert!(!hardened.contains("arbitrary.apple.com"));
     }
 
     #[test]

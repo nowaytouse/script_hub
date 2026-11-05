@@ -1,0 +1,18 @@
+#!name=🌤 WeatherKit Rewrite (Opt-In)
+#!desc=[🚀SR] 可选：将天气、可用性和预警请求发送到第三方端点。保持禁用即可继续使用 Apple 原生天气；不改分流。
+#!author=VirgilClyne[https://github.com/VirgilClyne],WordlessEcho[https://github.com/WordlessEcho],001[https://github.com/001ProMax],hhh2210[https://github.com/hhh2210], ScriptHub
+#!homepage=https://nsringo.github.io/guide/Weather/weather-kit.html
+#!category=『 🌐 Amplify Nexus › 增益中枢 』
+#!tag=Apple, WeatherKit, Opt-In
+#!arguments=endpoint:weatherkit.pages.dev
+#!arguments-desc=endpoint: iRingo 天气改写服务（默认 weatherkit.pages.dev）
+# Source: https://raw.githubusercontent.com/NSRingo/WeatherKit/main/modules/iRingo.WeatherKit.Rewrite.srmodule
+
+[URL Rewrite]
+^https?:\/\/weatherkit\.apple\.com\/api\/v1\/availability\/ https://{{{endpoint}}}/api/v1/availability/ header
+^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/ https://{{{endpoint}}}/api/v2/weather/ header
+^https?:\/\/weatherkit\.apple\.com\/api\/v1\/weatherAlerts\?([^#]*&ids=[^&#]*-[0-9]{9}(?:&[^#]*)?)$ https://{{{endpoint}}}/api/v1/weatherAlerts?$1 header
+^https?:\/\/weatherkit\.apple\.com\/api\/v1\/weatherAlerts\?([^#]*&ids=-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?(?:&[^#]*)?)$ https://{{{endpoint}}}/api/v1/weatherAlerts?$1 header
+
+[MITM]
+hostname = %APPEND% weatherkit.apple.com

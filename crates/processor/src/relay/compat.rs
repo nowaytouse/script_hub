@@ -1,6 +1,8 @@
 //! Explicit, offline preview of Sub-Store backup contents.
 mod tags;
 
+use std::fmt::Write as _;
+
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde_json::Value;
 use zeroize::{Zeroize, Zeroizing};
@@ -146,7 +148,7 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
             })
         }
         "Regex Filter" => {
-            let pattern = portable_regex(args.get("regex")?.as_array()?)?;
+            let (pattern, _) = portable_regex(args.get("regex")?.as_array()?)?;
             let keep = keep(args)?;
             Some(if collection {
                 Operation::MemberNameFilter { pattern, keep }
@@ -178,9 +180,10 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
                     } else {
                         (arg.get("expr")?, arg.get("now")?.as_str()?)
                     };
+                    let (pattern, captures) = portable_regex(std::slice::from_ref(expr))?;
                     Some(pipeline::RenameRule {
-                        pattern: portable_regex(std::slice::from_ref(expr))?,
-                        replacement: portable_replacement(replacement)?,
+                        pattern,
+                        replacement: portable_replacement(replacement, captures)?,
                         regex: true,
                     })
                 })
@@ -194,7 +197,7 @@ fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
     }
 }
 
-fn portable_replacement(value: &str) -> Option<String> {
+fn portable_replacement(value: &str, captures: usize) -> Option<String> {
     if value.len() > 512 {
         return None;
     }
@@ -202,20 +205,42 @@ fn portable_replacement(value: &str) -> Option<String> {
     let mut replacement = Zeroizing::new(String::with_capacity(value.len()));
     while let Some((literal, suffix)) = remaining.split_once('$') {
         replacement.push_str(literal);
-        replacement.push_str(match suffix.as_bytes().first()? {
-            b'$' => "$$",
-            b'&' => "${0}",
+        let consumed = match suffix.as_bytes() {
+            [b'$', ..] => {
+                replacement.push_str("$$");
+                1
+            }
+            [b'&', ..] => {
+                replacement.push_str("${0}");
+                1
+            }
+            [digit @ b'0'..=b'9', rest @ ..] => {
+                let first = usize::from(*digit - b'0');
+                let second = rest
+                    .first()
+                    .filter(|digit| digit.is_ascii_digit())
+                    .map(|digit| first * 10 + usize::from(*digit - b'0'));
+                // ECMAScript falls back to one digit when the two-digit group is absent.
+                let (index, consumed) = match second {
+                    Some(index) if (1..=captures).contains(&index) => (index, 2),
+                    _ if (1..=captures).contains(&first) => (first, 1),
+                    _ => return None,
+                };
+                write!(&mut *replacement, "${{{index}}}").ok()?;
+                consumed
+            }
             _ => return None,
-        });
-        remaining = &suffix[1..];
+        };
+        remaining = &suffix[consumed..];
     }
     replacement.push_str(remaining);
     (replacement.len() <= 512).then(|| std::mem::take(&mut *replacement))
 }
 
-fn portable_regex(patterns: &[Value]) -> Option<String> {
-    // shortcut: only literal alternatives and anchors, until JS/Rust regex equivalence can be established for more syntax.
+fn portable_regex(patterns: &[Value]) -> Option<(String, usize)> {
+    // shortcut: literal alternatives, outer anchors and flat captures until more regex syntax can be proven portable.
     let mut result = Zeroizing::new(String::new());
+    let mut captures = 0;
     for pattern in patterns {
         let pattern = pattern.as_str()?;
         if pattern.len() > 512 {
@@ -223,33 +248,45 @@ fn portable_regex(patterns: &[Value]) -> Option<String> {
         }
         let insensitive = pattern.starts_with("(?i)");
         let pattern = pattern.strip_prefix("(?i)").unwrap_or(pattern);
-        for alternative in pattern.split('|') {
-            let literal = alternative.strip_prefix('^').unwrap_or(alternative);
-            let literal = literal.strip_suffix('$').unwrap_or(literal);
-            if literal.is_empty()
-                || insensitive && !literal.is_ascii()
-                || literal
-                    .chars()
-                    .any(|c| c.is_control() || ".*+?()[]{}\\^$".contains(c))
-            {
-                return None;
+        if insensitive && !pattern.is_ascii() {
+            return None;
+        }
+        let mut chars = pattern.chars().peekable();
+        let (mut in_group, mut branch_start, mut has_atom) = (false, true, false);
+        while let Some(ch) = chars.next() {
+            match ch {
+                '(' if !in_group => {
+                    in_group = true;
+                    has_atom = false;
+                    captures += 1;
+                }
+                ')' if in_group && has_atom => in_group = false,
+                '^' if !in_group && branch_start => {}
+                '$' if !in_group && has_atom && matches!(chars.peek(), None | Some('|')) => {}
+                '|' if has_atom => has_atom = false,
+                ch if ch.is_control() || ".*+?()[]{}\\^$|".contains(ch) => return None,
+                _ => has_atom = true,
             }
-            if !result.is_empty() {
-                result.push('|');
-            }
-            if insensitive {
-                result.push_str("(?i-u:");
-            }
-            result.push_str(alternative);
-            if insensitive {
-                result.push(')');
-            }
-            if result.len() > 512 {
-                return None;
-            }
+            branch_start = ch == '|';
+        }
+        if in_group || !has_atom {
+            return None;
+        }
+        if !result.is_empty() {
+            result.push('|');
+        }
+        if insensitive {
+            result.push_str("(?i-u:");
+        }
+        result.push_str(pattern);
+        if insensitive {
+            result.push(')');
+        }
+        if result.len() > 512 {
+            return None;
         }
     }
-    (!result.is_empty()).then(|| std::mem::take(&mut *result))
+    (!result.is_empty()).then(|| (std::mem::take(&mut *result), captures))
 }
 
 fn migrate_process(value: &Value, collection: bool) -> (Vec<Step>, usize) {
@@ -638,6 +675,35 @@ mod tests {
     }
 
     #[test]
+    fn imports_numbered_captures_with_ecmascript_replacement_order() {
+        let backup = br#"{"subs":[{"name":"Local","source":"local",
+            "content":"[Proxy]\njP-one = socks5, node.example.invalid, 1080\nUS = socks5, other.example.invalid, 1080\n",
+            "process":[{"type":"Regex Rename Operator","args":[{"expr":"(?i)^(jp|hk)-(one|two)$|^(us)$","now":"$2-$1-$3-$01-$10"}]}]}]}"#;
+        let report = import(backup).unwrap();
+        assert_eq!(report.unsupported_count, 0);
+        let config = report.select_item(0, true).unwrap();
+        let source = model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+        let result = source
+            .render_processed(
+                &[model::Health::Unknown; 2],
+                &model::EnhanceOptions {
+                    rename: false,
+                    sort: false,
+                },
+                &config.processing,
+            )
+            .unwrap();
+        let rendered = model::Subscription::parse(&result.content).unwrap();
+        let names: Vec<_> = rendered.nodes().iter().map(model::Node::name).collect();
+        assert_eq!(names, ["one-jP--jP-jP0", "--US--0"]);
+    }
+
+    #[test]
+    fn numbered_replacement_prefers_existing_two_digit_capture() {
+        assert_eq!(portable_replacement("$100", 10).as_deref(), Some("${10}0"));
+    }
+
+    #[test]
     fn imports_flag_removal_with_global_matching_and_trim() {
         let backup = r#"{"subs":[{"name":"Local","source":"local",
             "content":"[Proxy]\n🇭🇰 Alpha🏴‍☠️ 🏳️‍🌈🇯🇵 = socks5, node.example.invalid, 1080\nA🇺🇸B🇦 = socks5, other.example.invalid, 1080\n",
@@ -668,6 +734,9 @@ mod tests {
             r#"{"type":"Regex Filter","args":{"regex":["(?=HK)"]}}"#,
             r#"{"type":"Regex Delete Operator","args":["[HK]"]}"#,
             r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$1-new"}]}"#,
+            r#"{"type":"Regex Rename Operator","args":[{"expr":"((HK))","now":"$1"}]}"#,
+            r#"{"type":"Regex Rename Operator","args":[{"expr":"(HK|)","now":"$1"}]}"#,
+            r#"{"type":"Regex Rename Operator","args":[{"expr":"(HK)?","now":"$1"}]}"#,
             r#"{"type":"Regex Rename Operator","args":[{"expr":"HK","now":"$'-new"}]}"#,
             r#"{"type":"Flag Operator","args":{"mode":"add","tw":"ws"}}"#,
         ] {

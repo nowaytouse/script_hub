@@ -1,3 +1,5 @@
+mod apple_shadowrocket;
+mod apple_surge;
 pub mod custom_sources;
 pub mod firewall_sync;
 pub mod functional_update;
