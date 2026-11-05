@@ -139,6 +139,30 @@ impl State {
     pub fn unsaved(&self) -> bool {
         self.dirty || self.draft_dirty
     }
+    pub fn deletion_info(&self) -> Option<(&str, usize)> {
+        match self.selected? {
+            Selection::Subscription(id) => {
+                let entry = self
+                    .data
+                    .subscriptions
+                    .iter()
+                    .find(|entry| entry.id == id)?;
+                let references = self
+                    .data
+                    .collections
+                    .iter()
+                    .filter(|collection| collection.members.contains(&id))
+                    .count();
+                Some((&entry.name, references))
+            }
+            Selection::Collection(id) => self
+                .data
+                .collections
+                .iter()
+                .find(|collection| collection.id == id)
+                .map(|collection| (collection.name.as_str(), 0)),
+        }
+    }
     pub fn progress(&self) -> Option<crate::relay::Progress> {
         self.progress.lock().ok().and_then(|p| *p)
     }

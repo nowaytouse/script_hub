@@ -134,13 +134,12 @@ impl HubApp {
             ui.label(tr(notice));
         }
         if let Some(summary) = self.relay.workspace.import_summary {
-            ui.label(format!(
-                "{}: {} / {} / {}",
-                tr(Text::WorkspaceImportSummary),
-                summary.subscriptions,
-                summary.collections,
-                summary.skipped
-            ));
+            ui.label(
+                tr(Text::WorkspaceImportSummary)
+                    .replace("{subscriptions}", &summary.subscriptions.to_string())
+                    .replace("{collections}", &summary.collections.to_string())
+                    .replace("{skipped}", &summary.skipped.to_string()),
+            );
         }
         if self.relay.workspace_import_pending()
             && (!self.relay.workspace.show_editor
@@ -278,11 +277,24 @@ impl HubApp {
         if let Some(action) = self.relay.workspace.confirm
             && !self.relay.busy()
         {
+            let collection = matches!(
+                self.relay.workspace.selected,
+                Some(Selection::Collection(_))
+            );
+            let deletion = self
+                .relay
+                .workspace
+                .deletion_info()
+                .map(|(name, references)| (zeroize::Zeroizing::new(name.to_owned()), references));
             let modal =
                 egui::Modal::new(egui::Id::unique("workspace-confirm")).show(ui.ctx(), |ui| {
                     ui.set_max_width(360.0);
                     ui.heading(tr(if action == Action::Delete {
-                        Text::WorkspaceDelete
+                        if collection {
+                            Text::WorkspaceDeleteCollectionTitle
+                        } else {
+                            Text::WorkspaceDeleteSubscriptionTitle
+                        }
                     } else {
                         Text::WorkspaceUnsaved
                     }));
@@ -291,6 +303,18 @@ impl HubApp {
                     } else {
                         Text::WorkspaceUnsavedHelp
                     }));
+                    if action == Action::Delete
+                        && let Some((name, references)) = &deletion
+                    {
+                        ui.strong(name.as_str());
+                        if *references > 0 {
+                            ui.colored_label(
+                                colors.warning,
+                                tr(Text::WorkspaceDeleteReferenced)
+                                    .replace("{count}", &references.to_string()),
+                            );
+                        }
+                    }
                     if let Some(error) = self.relay.workspace.error {
                         ui.colored_label(colors.error, tr(error));
                     }
@@ -301,11 +325,21 @@ impl HubApp {
                             self.relay.workspace_save_and_continue(ui.ctx());
                         }
                         if ui
-                            .button(tr(if action == Action::Delete {
-                                Text::WorkspaceDelete
-                            } else {
-                                Text::WorkspaceDiscard
-                            }))
+                            .add_enabled(
+                                action != Action::Delete
+                                    || deletion
+                                        .as_ref()
+                                        .is_some_and(|(_, references)| *references == 0),
+                                egui::Button::new(tr(if action == Action::Delete {
+                                    if collection {
+                                        Text::WorkspaceDeleteCollection
+                                    } else {
+                                        Text::WorkspaceDeleteSubscription
+                                    }
+                                } else {
+                                    Text::WorkspaceDiscard
+                                })),
+                            )
                             .clicked()
                         {
                             if action != Action::Import {
@@ -313,7 +347,7 @@ impl HubApp {
                             }
                             self.relay.execute_workspace(ui.ctx(), action);
                         }
-                        if ui.button(tr(Text::RelayCancel)).clicked() {
+                        if ui.button(tr(Text::WorkspaceCancel)).clicked() {
                             self.relay.workspace.confirm = None;
                         }
                     });
@@ -682,6 +716,7 @@ mod tests {
                 },
             )
         };
+        draw(vec![]).drop_without_applying_deltas();
         let frame = draw(vec![]);
         let bounds = frame
             .platform_output
@@ -691,9 +726,9 @@ mod tests {
             .nodes
             .iter()
             .find(|(_, node)| node.label() == Some(label))
-            .and_then(|(_, node)| node.bounds())
-            .expect("named button bounds");
+            .and_then(|(_, node)| node.bounds());
         frame.drop_without_applying_deltas();
+        let bounds = bounds.expect("named button bounds");
         let pos = egui::pos2(
             ((bounds.x0 + bounds.x1) * 0.5) as f32,
             ((bounds.y0 + bounds.y1) * 0.5) as f32,
@@ -710,6 +745,110 @@ mod tests {
             ])
             .drop_without_applying_deltas();
         }
+    }
+
+    #[test]
+    fn deletion_confirmation_names_the_saved_item_and_explains_collection_references() {
+        for language in [Language::En, Language::ZhCn, Language::Ja] {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            let mut app = test_app(Preferences {
+                language,
+                ..Default::default()
+            });
+            app.relay.demo_mode = true;
+            app.relay.workspace.checked = true;
+            app.relay.workspace.data = crate::relay::demo::workspace().unwrap();
+            let item = &app.relay.workspace.data.subscriptions[0];
+            let id = item.id;
+            let name = item.name.clone();
+            app.relay.workspace.selected = Some(Selection::Subscription(id));
+            app.relay.workspace.name = "An unsaved rename".to_owned().into();
+            app.relay.workspace.confirm = Some(Action::Delete);
+            let mut draw = || {
+                ctx.run_ui(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            egui::vec2(350.0, 720.0),
+                        )),
+                        ..Default::default()
+                    },
+                    |ui| {
+                        egui::CentralPanel::default().show(ui, |ui| app.relay_page(ui));
+                    },
+                )
+            };
+            draw().drop_without_applying_deltas();
+            let mut output = draw();
+            output.textures_delta.clear();
+            let nodes = &output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes;
+            assert!(
+                nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some(name.as_str())
+                        || node.value() == Some(name.as_str()))
+            );
+            assert!(nodes.iter().any(|(_, node)| node.label()
+                == Some(text(language, Text::WorkspaceDeleteSubscription))
+                && node.is_disabled()));
+            let references = app.relay.workspace.deletion_info().unwrap().1;
+            assert!(references > 0);
+            let explanation = text(language, Text::WorkspaceDeleteReferenced)
+                .replace("{count}", &references.to_string());
+            assert!(
+                nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some(explanation.as_str())
+                        || node.value() == Some(explanation.as_str()))
+            );
+            output.drop_without_applying_deltas();
+            click(&ctx, text(language, Text::WorkspaceCancel), |ui| {
+                app.relay_page(ui)
+            });
+            assert!(app.relay.workspace.confirm.is_none());
+            assert!(
+                app.relay
+                    .workspace
+                    .data
+                    .subscriptions
+                    .iter()
+                    .any(|entry| entry.id == id)
+            );
+        }
+    }
+
+    #[test]
+    fn collection_confirmation_deletes_only_the_named_collection() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = test_app(Preferences::default());
+        app.relay.demo_mode = true;
+        app.relay.workspace.checked = true;
+        app.relay.workspace.data = crate::relay::demo::workspace().unwrap();
+        let id = app.relay.workspace.data.collections[0].id;
+        let subscriptions = app.relay.workspace.data.subscriptions.len();
+        app.relay.workspace.selected = Some(Selection::Collection(id));
+        app.relay.workspace.confirm = Some(Action::Delete);
+        click(
+            &ctx,
+            text(Language::En, Text::WorkspaceDeleteCollection),
+            |ui| app.relay_page(ui),
+        );
+        assert!(
+            !app.relay
+                .workspace
+                .data
+                .collections
+                .iter()
+                .any(|entry| entry.id == id)
+        );
+        assert_eq!(app.relay.workspace.data.subscriptions.len(), subscriptions);
     }
 
     #[test]

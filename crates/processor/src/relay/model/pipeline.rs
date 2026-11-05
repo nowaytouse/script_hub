@@ -188,6 +188,7 @@ pub struct RenameRule {
 pub enum KeepOccurrence {
     First,
     Last,
+    SubStoreFirst,
 }
 
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
@@ -430,6 +431,12 @@ pub fn validate(steps: &[Step]) -> Result<(), ModelError> {
                 if *skip > 100_000 || *count > 100_000 || skip.checked_add(*count).is_none() {
                     return Err(ModelError::InvalidEdit);
                 }
+            }
+            Operation::DeduplicateName {
+                keep: KeepOccurrence::SubStoreFirst,
+                ignore_case: true,
+            } => {
+                return Err(ModelError::InvalidEdit);
             }
             Operation::DeduplicateName { .. } => {}
             Operation::NetworkFilter { networks, .. } => {
@@ -958,33 +965,73 @@ pub(super) fn apply(
                 }
             }
             Operation::DeduplicateName { keep, ignore_case } => {
-                let key_for = |i: usize| {
-                    NodeIdentity(Zeroizing::new(if *ignore_case {
-                        names[i].to_lowercase()
-                    } else {
-                        names[i].to_string()
-                    }))
-                };
-                let mut groups = std::collections::HashMap::new();
-                for &i in order.iter() {
-                    let protected = dependencies[i].is_some() || !dependents[i].is_empty();
-                    let group = groups.entry(key_for(i)).or_insert((i, false));
-                    if *keep == KeepOccurrence::Last {
-                        group.0 = i;
+                if *keep == KeepOccurrence::SubStoreFirst {
+                    // Plain JavaScript objects treat inherited property names as already present.
+                    const PROTOTYPE_KEYS: &[&str] = &[
+                        "__proto__",
+                        "constructor",
+                        "toString",
+                        "toLocaleString",
+                        "valueOf",
+                        "hasOwnProperty",
+                        "isPrototypeOf",
+                        "propertyIsEnumerable",
+                        "__defineGetter__",
+                        "__defineSetter__",
+                        "__lookupGetter__",
+                        "__lookupSetter__",
+                    ];
+                    if *ignore_case
+                        || order
+                            .iter()
+                            .any(|&i| PROTOTYPE_KEYS.contains(&names[i].as_str()))
+                    {
+                        return Err(ModelError::InvalidEdit);
                     }
-                    group.1 |= protected;
                 }
-                for &i in order.iter() {
-                    let (preferred, has_protected) = groups[&key_for(i)];
-                    let protected = dependencies[i].is_some() || !dependents[i].is_empty();
-                    if protected {
-                        if i != preferred {
-                            skipped += 1;
+                if *keep == KeepOccurrence::SubStoreFirst {
+                    let mut seen = HashSet::new();
+                    for &i in order.iter() {
+                        if !seen.insert(names[i].as_str()) {
+                            remove[i] = true;
+                            duplicate[i] = true;
+                            counts.duplicates += 1;
                         }
-                    } else if has_protected || i != preferred {
-                        remove[i] = true;
-                        duplicate[i] = true;
-                        counts.duplicates += 1;
+                    }
+                    if order.iter().any(|&i| {
+                        !remove[i] && dependencies[i].is_some_and(|parent| remove[parent])
+                    }) {
+                        return Err(ModelError::InvalidDependency);
+                    }
+                } else {
+                    let key_for = |i: usize| {
+                        NodeIdentity(Zeroizing::new(if *ignore_case {
+                            names[i].to_lowercase()
+                        } else {
+                            names[i].to_string()
+                        }))
+                    };
+                    let mut groups = std::collections::HashMap::new();
+                    for &i in order.iter() {
+                        let protected = dependencies[i].is_some() || !dependents[i].is_empty();
+                        let group = groups.entry(key_for(i)).or_insert((i, false));
+                        if *keep == KeepOccurrence::Last {
+                            group.0 = i;
+                        }
+                        group.1 |= protected;
+                    }
+                    for &i in order.iter() {
+                        let (preferred, has_protected) = groups[&key_for(i)];
+                        let protected = dependencies[i].is_some() || !dependents[i].is_empty();
+                        if protected {
+                            if i != preferred {
+                                skipped += 1;
+                            }
+                        } else if has_protected || i != preferred {
+                            remove[i] = true;
+                            duplicate[i] = true;
+                            counts.duplicates += 1;
+                        }
                     }
                 }
             }
@@ -1910,6 +1957,85 @@ mod tests {
         )
         .unwrap();
         assert_eq!(result.retained, vec![2]);
+    }
+
+    #[test]
+    fn substore_name_dedup_removes_duplicate_leaf_without_breaking_chain() {
+        let input = "A = socks5, first.example, 1080\nParent = socks5, parent.example, 1080\nB = socks5, second.example, 1080, underlying-proxy=Parent\n";
+        let result = run(
+            input,
+            vec![
+                step(
+                    1,
+                    Operation::ReplaceName {
+                        pattern: "B".into(),
+                        replacement: "A".into(),
+                        regex: false,
+                    },
+                ),
+                step(
+                    2,
+                    Operation::DeduplicateName {
+                        keep: KeepOccurrence::SubStoreFirst,
+                        ignore_case: false,
+                    },
+                ),
+            ],
+        )
+        .unwrap();
+        assert_eq!(result.retained, vec![0, 1]);
+        assert_eq!(result.duplicates, 1);
+    }
+
+    #[test]
+    fn substore_name_dedup_rejects_prototype_names_and_dependency_conflicts() {
+        let operation = || {
+            step(
+                1,
+                Operation::DeduplicateName {
+                    keep: KeepOccurrence::SubStoreFirst,
+                    ignore_case: false,
+                },
+            )
+        };
+        for name in ["__proto__", "constructor", "toString", "hasOwnProperty"] {
+            let input = format!("{name} = socks5, a.example, 1080\n");
+            assert!(matches!(
+                run(&input, vec![operation()]),
+                Err(ModelError::InvalidEdit)
+            ));
+        }
+        let input = "A = socks5, first.example, 1080\nB = socks5, second.example, 1080\nChild = socks5, child.example, 1080, underlying-proxy=B\n";
+        let rename = step(
+            1,
+            Operation::ReplaceName {
+                pattern: "B".into(),
+                replacement: "A".into(),
+                regex: false,
+            },
+        );
+        let strict = step(
+            2,
+            Operation::DeduplicateName {
+                keep: KeepOccurrence::SubStoreFirst,
+                ignore_case: false,
+            },
+        );
+        assert!(matches!(
+            run(input, vec![rename, strict]),
+            Err(ModelError::InvalidDependency)
+        ));
+        let invalid = step(
+            1,
+            Operation::DeduplicateName {
+                keep: KeepOccurrence::SubStoreFirst,
+                ignore_case: true,
+            },
+        );
+        assert!(matches!(
+            run("A = socks5, a.example, 1080\n", vec![invalid]),
+            Err(ModelError::InvalidEdit)
+        ));
     }
 
     #[test]

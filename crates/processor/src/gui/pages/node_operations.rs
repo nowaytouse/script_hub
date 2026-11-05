@@ -984,8 +984,7 @@ pub(super) fn show(
                         ui.weak(tr(Text::SliceHelp));
                     }
                     Operation::DeduplicateName { keep, ignore_case } => {
-                        ui.weak(tr(Text::DeduplicateNameHelp));
-                        changed |= choice(
+                        let selected = choice(
                             ui,
                             language,
                             (step.id, "occurrence"),
@@ -994,10 +993,27 @@ pub(super) fn show(
                             &[
                                 (KeepOccurrence::First, Text::DeduplicateFirst),
                                 (KeepOccurrence::Last, Text::DeduplicateLast),
+                                (
+                                    KeepOccurrence::SubStoreFirst,
+                                    Text::DeduplicateSubStoreFirst,
+                                ),
                             ],
                         );
+                        changed |= selected;
+                        let compatible = *keep == KeepOccurrence::SubStoreFirst;
+                        if selected && compatible {
+                            *ignore_case = false;
+                        }
+                        ui.weak(tr(if compatible {
+                            Text::DeduplicateSubStoreHelp
+                        } else {
+                            Text::DeduplicateNameHelp
+                        }));
                         changed |= ui
-                            .checkbox(ignore_case, tr(Text::DeduplicateIgnoreCase))
+                            .add_enabled(
+                                !compatible,
+                                egui::Checkbox::new(ignore_case, tr(Text::DeduplicateIgnoreCase)),
+                            )
                             .changed();
                     }
                     Operation::NetworkFilter {
@@ -1930,6 +1946,50 @@ mod tests {
 
     fn open_for_next_frame(ctx: &egui::Context, id: u64) {
         ctx.data_mut(|data| data.insert_temp(opening_step_id(), id));
+    }
+
+    #[test]
+    fn substore_name_dedup_is_labelled_and_does_not_offer_case_folding() {
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let mut steps = vec![Step {
+                id: 1,
+                enabled: true,
+                operation: Operation::DeduplicateName {
+                    keep: KeepOccurrence::SubStoreFirst,
+                    ignore_case: false,
+                },
+            }];
+            open_for_next_frame(&ctx, 1);
+            let output = draw(&ctx, &mut steps, vec![]);
+            let nodes = &output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes;
+            for key in [
+                Text::DeduplicateSubStoreFirst,
+                Text::DeduplicateSubStoreHelp,
+            ] {
+                let expected = text(Language::En, key);
+                assert!(
+                    nodes.iter().any(|(_, node)| node.label() == Some(expected)
+                        || node.value() == Some(expected))
+                );
+            }
+            assert!(nodes.iter().any(|(_, node)| node.label()
+                == Some(text(Language::En, Text::DeduplicateIgnoreCase))
+                && node.is_disabled()));
+            assert!(pipeline::validate(&steps).is_ok());
+            output.drop_without_applying_deltas();
+        }
     }
 
     #[test]

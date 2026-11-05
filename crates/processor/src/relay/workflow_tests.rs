@@ -19,6 +19,65 @@ fn config() -> RelayConfig {
 }
 
 #[test]
+fn migrated_name_dedup_survives_workspace_backup_and_exports() {
+    use export::OutputFormat;
+    let backup = br#"{"subs":[{"name":"Local","source":"local",
+        "content":"[Proxy]\nA = socks5, first.invalid, 1080\nB = socks5, second.invalid, 1080\nC = socks5, third.invalid, 1080\na = socks5, fourth.invalid, 1080\n",
+        "process":[{"type":"Regex Rename Operator","args":[{"expr":"^C$","now":"A"}]},
+                   {"type":"Handle Duplicate Operator","args":{"action":"delete"}},
+                   {"type":"Type Filter","args":["socks5"]}]}]}"#;
+    let report = compat::import(backup).unwrap();
+    assert_eq!(report.unsupported_count, 0);
+    let (workspace, _) =
+        library_import::import(&library::Workspace::default(), &report, true).unwrap();
+    let workspace = library::Workspace::decode(&workspace.encode().unwrap()).unwrap();
+    let content = Zeroizing::new(workspace.subscriptions[0].content.clone());
+    let mut cfg = config();
+    cfg.source.clear();
+    cfg.output.clear();
+    cfg.local_content = Some(content.clone());
+    cfg.expected_source = Some(content.clone());
+    cfg.processing = workspace.subscriptions[0].processing.clone();
+    cfg.test_nodes = false;
+    let restored = backup::decode(&backup::encode(&cfg, &content).unwrap()).unwrap();
+    cfg = restored.config.clone();
+    cfg.local_content = Some(restored.content.clone());
+    cfg.test_nodes = false;
+    let fixture = Fixture::new(vec![]);
+    let preview = run_with(
+        &cfg,
+        &fixture.client(),
+        RunMode::Preview,
+        &AtomicBool::new(false),
+        &|_| {},
+        &|_, _, _, _| panic!("must not check nodes"),
+    )
+    .unwrap();
+    for format in [
+        OutputFormat::Surge,
+        OutputFormat::Mihomo,
+        OutputFormat::SingBox,
+    ] {
+        let exported = export::export_subscription(&preview.content, format).unwrap();
+        let parsed = model::Subscription::parse(&exported).unwrap();
+        let nodes: Vec<_> = parsed
+            .nodes()
+            .iter()
+            .map(|node| (node.name(), node.server()))
+            .collect();
+        assert_eq!(
+            nodes,
+            [
+                ("A", "first.invalid"),
+                ("B", "second.invalid"),
+                ("a", "fourth.invalid")
+            ]
+        );
+    }
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn migrated_sub_store_sort_survives_preview_exports_and_backup() {
     use export::{OutputFormat, export_subscription};
     let backup = r#"{

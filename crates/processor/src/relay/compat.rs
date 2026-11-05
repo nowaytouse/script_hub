@@ -123,6 +123,25 @@ fn processor_args(item: &Value) -> Option<&Value> {
 fn convert_processor(item: &Value, collection: bool) -> Option<Operation> {
     let args = processor_args(item)?;
     match item.get("type")?.as_str()? {
+        "Handle Duplicate Operator" if !collection => {
+            let args = args.as_object()?;
+            if args.keys().any(|key| {
+                !matches!(
+                    key.as_str(),
+                    "action" | "field" | "template" | "link" | "position"
+                )
+            }) || args.get("action")?.as_str()? != "delete"
+                || args
+                    .get("field")
+                    .is_some_and(|field| field != &serde_json::json!(["name"]))
+            {
+                return None;
+            }
+            Some(Operation::DeduplicateName {
+                keep: pipeline::KeepOccurrence::SubStoreFirst,
+                ignore_case: false,
+            })
+        }
         "Sort Operator" => {
             let descending = match item.get("args") {
                 None => false,
@@ -686,6 +705,46 @@ impl Report {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn duplicate_delete_migrates_only_name_and_stops_on_unsupported_active_steps() {
+        for args in [
+            serde_json::json!({"action":"delete"}),
+            serde_json::json!({"action":"delete", "field":["name"], "template":"0 1", "link":"-", "position":"back"}),
+        ] {
+            let item = serde_json::json!({"type":"Handle Duplicate Operator", "args":args});
+            assert!(matches!(
+                convert_processor(&item, false),
+                Some(Operation::DeduplicateName {
+                    keep: pipeline::KeepOccurrence::SubStoreFirst,
+                    ignore_case: false
+                })
+            ));
+            assert!(convert_processor(&item, true).is_none());
+        }
+        for args in [
+            serde_json::json!({}),
+            serde_json::json!({"action":"rename"}),
+            serde_json::json!({"action":"delete", "field":[]}),
+            serde_json::json!({"action":"delete", "field":["server"]}),
+            serde_json::json!({"action":"delete", "unknown":true}),
+        ] {
+            let item = serde_json::json!({"process":[
+                {"type":"Handle Duplicate Operator", "args":args},
+                {"type":"Type Filter", "args":["ss"]}
+            ]});
+            let (steps, unsupported) = migrate_process(&item, false);
+            assert!(steps.is_empty());
+            assert_eq!(unsupported, 2);
+        }
+        let item = serde_json::json!({"process":[
+            {"type":"Handle Duplicate Operator", "args":{"action":"rename"}, "disabled":true},
+            {"type":"Type Filter", "args":["ss"]}
+        ]});
+        let (steps, unsupported) = migrate_process(&item, false);
+        assert_eq!(unsupported, 1);
+        assert_eq!(steps.len(), 1);
+    }
 
     #[test]
     fn previews_without_restoring_secrets_or_executing_scripts() {
