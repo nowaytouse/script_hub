@@ -1059,8 +1059,9 @@ fn validate_host(line_number: usize, line: &str, errors: &mut Vec<ValidationErro
         return;
     };
     let host = host.trim();
+    let resolver = crate::strip_inline_comment(resolver);
     if host.is_empty()
-        || resolver.trim().is_empty()
+        || resolver.is_empty()
         || host.contains("://")
         || host.contains('/')
         || host.chars().any(char::is_whitespace)
@@ -1069,6 +1070,18 @@ fn validate_host(line_number: usize, line: &str, errors: &mut Vec<ValidationErro
             line_number,
             "invalid-host-mapping",
             "Host entry contains an invalid host or empty resolver",
+        ));
+        return;
+    }
+    // Alias lookups restart under the target name; self-aliases are not DNS allowlists.
+    if host
+        .trim_end_matches('.')
+        .eq_ignore_ascii_case(resolver.trim_end_matches('.'))
+    {
+        errors.push(error(
+            line_number,
+            "self-referential-host-alias",
+            "self-referential Host aliases are not admitted by this project; omit the mapping or use an explicit resolver",
         ));
     }
 }
@@ -1286,6 +1299,47 @@ mod tests {
         validate_apple_compatibility, validate_external_ruleset, validate_shadowrocket_module,
         validate_surge_module, validate_surge_section_line, validate_transport_security,
     };
+
+    #[test]
+    fn self_referential_host_aliases_fail_module_and_merge_admission() {
+        for mapping in [
+            "cdn.example.com = cdn.example.com",
+            "CDN.EXAMPLE.COM = cdn.example.com",
+            "cdn.example.com. = cdn.example.com",
+            "cdn.example.com = CDN.EXAMPLE.COM. # original hostname",
+            "cdn.example.com = cdn.example.com // original hostname",
+        ] {
+            let content = format!("#!name=fixture\n[Host]\n{mapping}\n");
+            for errors in [
+                validate_surge_module(&content),
+                validate_shadowrocket_module(&content),
+                validate_surge_section_line("Host", mapping),
+            ] {
+                assert_eq!(errors.len(), 1, "{mapping}: {errors:?}");
+                assert_eq!(errors[0].code, "self-referential-host-alias", "{mapping}");
+            }
+        }
+    }
+
+    #[test]
+    fn distinct_host_aliases_and_resolver_mappings_remain_supported() {
+        for mapping in [
+            "app.example.com = cdn.example.com",
+            "app.example.com = server:system",
+            "app.example.com = server:syslib",
+            "app.example.com = server:https://dns.example.com/dns-query",
+            "app.example.com = 192.0.2.1, 2001:db8::1",
+        ] {
+            let content = format!("#!name=fixture\n[Host]\n{mapping}\n");
+            for errors in [
+                validate_surge_module(&content),
+                validate_shadowrocket_module(&content),
+                validate_surge_section_line("Host", mapping),
+            ] {
+                assert!(errors.is_empty(), "{mapping}: {errors:?}");
+            }
+        }
+    }
 
     #[test]
     fn surge_logical_rule_requires_well_formed_policy_free_children() {

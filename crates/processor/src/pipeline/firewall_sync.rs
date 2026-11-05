@@ -498,14 +498,16 @@ mod tests {
             for path in [dir.join(file), dir.join("github").join(file)] {
                 let original = fs::read_to_string(&path).unwrap();
                 for injected in [
-                    "\n[rUlE]\nDEST-PORT,4444,REJECT\n",
-                    "\n[IP Rewrite]\n127.0.0.1 = 0.0.0.0\n",
+                    format!("{original}\n[rUlE]\nDEST-PORT,4444,REJECT\n"),
+                    format!("{original}\n[IP Rewrite]\n127.0.0.1 = 0.0.0.0\n"),
+                    original.replace("[Host]\n", "[Host]\ncdn.example.com = cdn.example.com\n"),
+                    original.replace("[Host]\n", "[Host]\ncdn.example.com = vendor.example.net\n"),
                 ] {
-                    fs::write(&path, format!("{original}{injected}")).unwrap();
+                    fs::write(&path, injected).unwrap();
+                    let error = super::validate_published_helpers(&root).unwrap_err();
                     assert!(
-                        super::validate_published_helpers(&root).is_err(),
-                        "{}",
-                        path.display()
+                        error.starts_with("DNS helper settings differ from validated generation:"),
+                        "{error}"
                     );
                 }
                 fs::write(&path, original).unwrap();
