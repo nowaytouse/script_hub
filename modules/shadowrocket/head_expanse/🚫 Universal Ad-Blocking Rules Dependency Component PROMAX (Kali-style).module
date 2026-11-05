@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-05 13:49:23
+#!date=2026-11-05 21:14:56
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
@@ -1223,6 +1223,8 @@ IP-CIDR,88.255.216.16/32,REJECT,no-resolve
 IP-CIDR,88.42.84.136/32,REJECT,no-resolve
 IP-CIDR,88.85.75.147/32,REJECT,no-resolve
 IP-CIDR,88.85.77.92/32,REJECT,no-resolve
+IP-CIDR,89.126.250.172/32,REJECT,no-resolve
+IP-CIDR,89.127.233.127/32,REJECT,no-resolve
 IP-CIDR,91.121.67.60/32,REJECT,no-resolve
 IP-CIDR,91.202.233.143/32,REJECT,no-resolve
 IP-CIDR,91.204.226.224/32,REJECT,no-resolve

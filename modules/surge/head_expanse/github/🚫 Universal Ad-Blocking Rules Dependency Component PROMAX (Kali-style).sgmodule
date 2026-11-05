@@ -1,10 +1,10 @@
 #!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-05]
-#!desc=按用途分片(23片) + 应用内去广告(Port Reject=77, IP Rewrite=1191, URL Rewrite=547, Map Local=1245, Script=275, Body Rewrite=90, MITM=736); 索引 rulesets/AdBlock/catalog.json
+#!desc=按用途分片(23片) + 应用内去广告(Port Reject=77, IP Rewrite=1193, URL Rewrite=547, Map Local=1245, Script=275, Body Rewrite=90, MITM=736); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-05 13:49:24
+#!date=2026-11-05 21:14:57
 #!requirement=CORE_VERSION>=6010000
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
@@ -1161,6 +1161,8 @@
 88.42.84.136 = reject
 88.85.75.147 = reject
 88.85.77.92 = reject
+89.126.250.172 = reject
+89.127.233.127 = reject
 91.121.67.60 = reject
 91.202.233.143 = reject
 91.204.226.224 = reject
@@ -2418,6 +2420,8 @@ IP-CIDR,88.255.216.16/32,REJECT,no-resolve,pre-matching
 IP-CIDR,88.42.84.136/32,REJECT,no-resolve,pre-matching
 IP-CIDR,88.85.75.147/32,REJECT,no-resolve,pre-matching
 IP-CIDR,88.85.77.92/32,REJECT,no-resolve,pre-matching
+IP-CIDR,89.126.250.172/32,REJECT,no-resolve,pre-matching
+IP-CIDR,89.127.233.127/32,REJECT,no-resolve,pre-matching
 IP-CIDR,91.121.67.60/32,REJECT,no-resolve,pre-matching
 IP-CIDR,91.202.233.143/32,REJECT,no-resolve,pre-matching
 IP-CIDR,91.204.226.224/32,REJECT,no-resolve,pre-matching
