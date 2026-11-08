@@ -1,7 +1,7 @@
 # Ruleset: AI
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 415
+# Rules: 419
 
 DOMAIN-SUFFIX,g.ai
 DOMAIN-SUFFIX,n.cn
@@ -129,6 +129,7 @@ DOMAIN-SUFFIX,cozetest.cn
 DOMAIN-SUFFIX,duiopen.com
 DOMAIN-SUFFIX,favonis.com
 DOMAIN-SUFFIX,flow.google
+DOMAIN-SUFFIX,grokbot.com
 DOMAIN-SUFFIX,intercom.io
 DOMAIN-SUFFIX,klingai.com
 DOMAIN-SUFFIX,labs.google
@@ -399,10 +400,13 @@ DOMAIN,ppl-ai-file-upload.s3.amazonaws.com
 DOMAIN,appsgenaiserver-pa.clients.google.com
 DOMAIN,appsgenaiserver-pa.clients6.google.com
 DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
+DOMAIN,production-copilot-host-westus.webpubsub.azure.com
 DOMAIN,webchannel-alkalimakersuite-pa.clients6.google.com
 DOMAIN,o33249.ingest.us.sentry.io
+DOMAIN,o1158394.ingest.us.sentry.io
 DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
 DOMAIN,self.events.data.microsoft.com
+DOMAIN,http-intake.logs.us5.datadoghq.com
 DOMAIN,openaiassets.blob.core.windows.net
 DOMAIN,copilotprodattachments.blob.core.windows.net
 DOMAIN,openaicomproductionae4b.blob.core.windows.net
