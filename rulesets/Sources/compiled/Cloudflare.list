@@ -1,7 +1,7 @@
 # Ruleset: Cloudflare
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 72
+# Rules: 71
 
 DOMAIN-SUFFIX,cfl.re
 DOMAIN-SUFFIX,r2.dev
@@ -47,7 +47,6 @@ DOMAIN-SUFFIX,cloudflare-ech.com
 DOMAIN-SUFFIX,cloudflareapps.com
 DOMAIN-SUFFIX,cloudflarebolt.com
 DOMAIN-SUFFIX,cloudflarechina.cn
-DOMAIN-SUFFIX,cloudflareperf.com
 DOMAIN-SUFFIX,cloudflareprod.com
 DOMAIN-SUFFIX,cloudflaretest.com
 DOMAIN-SUFFIX,cloudflarewarp.com
