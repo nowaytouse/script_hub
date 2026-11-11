@@ -27,6 +27,7 @@ pub const MIN_PASSWORD_CHARS: usize = 12;
 pub enum Client {
     Surge,
     Shadowrocket,
+    FlClash,
     Other,
 }
 

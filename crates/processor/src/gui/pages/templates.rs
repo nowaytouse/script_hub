@@ -125,6 +125,11 @@ impl HubApp {
                                     Client::Shadowrocket,
                                     "Shadowrocket",
                                 );
+                                ui.selectable_value(
+                                    &mut state.import_client,
+                                    Client::FlClash,
+                                    "FlClash",
+                                );
                             });
                             ui.label(tr(Text::VaultPreparePublic));
                             ui.monospace(&state.prepare_public);
@@ -268,6 +273,7 @@ impl HubApp {
                             Client::Shadowrocket,
                             "Shadowrocket",
                         );
+                        ui.selectable_value(&mut state.import_client, Client::FlClash, "FlClash");
                         ui.selectable_value(
                             &mut state.import_client,
                             Client::Other,
@@ -307,7 +313,10 @@ impl HubApp {
                         }
                         ui.add_enabled_ui(!state.editing, |ui| {
                             for (index, template) in vault.library().templates.iter().enumerate() {
-                                ui.selectable_value(&mut state.selected, index, &template.name);
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.selectable_value(&mut state.selected, index, &template.name);
+                                    ui.weak(client_label(language, template.client));
+                                });
                             }
                         });
                     }
@@ -343,6 +352,7 @@ impl HubApp {
                                 Client::Shadowrocket,
                                 "Shadowrocket",
                             );
+                            ui.selectable_value(&mut state.edit_client, Client::FlClash, "FlClash");
                             ui.selectable_value(
                                 &mut state.edit_client,
                                 Client::Other,
@@ -378,6 +388,12 @@ impl HubApp {
                 }
                 card(ui, colors, |ui| {
                     ui.label(RichText::new(tr(Text::VaultConfigure)).strong());
+                    let fl_clash = state
+                        .selected_template()
+                        .is_some_and(|template| template.client == Client::FlClash);
+                    if fl_clash {
+                        ui.weak(tr(Text::VaultFlClashHelp));
+                    }
                     for (index, (slot, value)) in state.subscriptions.iter_mut().enumerate() {
                         let label = if slot.is_empty() {
                             tr(Text::VaultSeparateSubscription).to_owned()
@@ -458,8 +474,15 @@ impl HubApp {
                         egui::TextEdit::singleline(&mut state.export_path)
                             .id_salt("vault-export-path")
                             .desired_width(f32::INFINITY)
-                            .hint_text(tr(Text::VaultExportHint)),
+                            .hint_text(tr(if fl_clash {
+                                Text::VaultExportYamlHint
+                            } else {
+                                Text::VaultExportHint
+                            })),
                     );
+                    if fl_clash {
+                        ui.weak(tr(Text::VaultFlClashExportHelp));
+                    }
                     ui.checkbox(&mut state.overwrite_export, tr(Text::VaultOverwrite));
                     if ui
                         .add_enabled(
@@ -503,6 +526,15 @@ impl HubApp {
                 });
             });
         show_lock_confirmation(ui.ctx(), state, colors.error, &tr);
+    }
+}
+
+fn client_label(language: Language, client: Client) -> &'static str {
+    match client {
+        Client::Surge => "Surge",
+        Client::Shadowrocket => "Shadowrocket",
+        Client::FlClash => "FlClash",
+        Client::Other => text(language, Text::VaultOther),
     }
 }
 
@@ -566,6 +598,65 @@ fn secret_field(ui: &mut egui::Ui, value: &mut String, id: &str, label: &str, hi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn flclash_is_visible_in_preparation_import_editing_and_template_labels() {
+        assert_eq!(client_label(Language::En, Client::FlClash), "FlClash");
+        for workflow in 0..3 {
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            let mut app = crate::gui::app::test_app(Default::default());
+            if workflow == 0 {
+                app.templates.prepare_mode = true;
+            } else {
+                app.templates.vault = Some(
+                    crate::vault::create(
+                        crate::vault::Library {
+                            templates: vec![crate::vault::Template {
+                                name: "Synthetic YAML fixture".to_owned(),
+                                client: Client::FlClash,
+                                content: "proxy-providers: {}\nproxy-groups: []\nrules: []\n"
+                                    .to_owned(),
+                            }],
+                        },
+                        "synthetic client selection password",
+                    )
+                    .unwrap(),
+                );
+                if workflow == 2 {
+                    app.templates.edit_selected(&ctx);
+                }
+            }
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1160.0, 2600.0),
+                    )),
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, |ui| app.templates_page(ui));
+                },
+            );
+            let count = output
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .filter(|(_, node)| node.label() == Some("FlClash"))
+                .count();
+            output.platform_output.accesskit_update = None;
+            output.drop_without_applying_deltas();
+            let expected_selectors = if workflow == 2 { 2 } else { 1 };
+            assert!(
+                count >= expected_selectors,
+                "workflow {workflow}: {count} FlClash labels"
+            );
+        }
+    }
 
     #[test]
     fn lock_confirmation_defaults_to_cancel_and_preserves_the_draft() {

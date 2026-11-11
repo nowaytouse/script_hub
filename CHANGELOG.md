@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add FlClash/Mihomo YAML templates with structured subscription sanitization and export.
+
 - Follow V2Fly's maintained private-device feed with exact, reviewed Host mappings and last-good recovery; keep routing and global DNS settings unchanged.
 - Scope authenticated GitHub feed reads to the official API without redirects; keep updater builds and external SRS compilation separate from those credentials.
 - Clarify backup import counts and identify deletion targets and collection dependencies before confirmation.

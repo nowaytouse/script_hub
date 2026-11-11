@@ -56,4 +56,14 @@ mod tests {
             text(Language::En, Text::Settings)
         );
     }
+
+    #[test]
+    fn flclash_export_guidance_keeps_yaml_distinct_from_other_client_exports() {
+        for language in [Language::En, Language::ZhCn, Language::Ja] {
+            assert!(text(language, Text::VaultExportYamlHint).contains("profile.yaml"));
+            assert!(text(language, Text::VaultFlClashExportHelp).contains(".yaml"));
+            assert!(text(language, Text::VaultFlClashExportHelp).contains(".yml"));
+            assert!(text(language, Text::VaultExportHint).contains("profile.conf"));
+        }
+    }
 }

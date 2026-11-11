@@ -12,4 +12,6 @@ tTUa!Acdb7!vhUpSUD1Rl9g*^bm@S#Xahrj1TK72KrA!TMty$lhh6zl1aIbOvAODzM#N2SxzG53iEgVR
 
 编辑 → 应用 → 保存，会保留本地加密副本，不替换公开示例。离开应用前请先保存；自动锁定会丢弃未保存更改。订阅地址在复制或导出时填入。
 
+FlClash/Mihomo YAML 模板可使用订阅槽位。复制或导出时填写订阅地址，再将导出的 `.yaml` 作为新配置导入 FlClash。
+
 导出的示例在注释里列出可选模块链接，需单独安装。新默认保留 YouTube 按钮，关闭定时同步和网络变化查询；不改客户端已保存的参数。

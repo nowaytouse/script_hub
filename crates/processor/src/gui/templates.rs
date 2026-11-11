@@ -627,19 +627,9 @@ impl TemplateState {
                 .lines()
                 .filter(|line| !line.is_empty())
                 .map(PathBuf::from)
-                .map(|path| {
-                    let detected = inferred_client(&path);
-                    let client = if detected == Client::Other {
-                        self.import_client
-                    } else {
-                        detected
-                    };
-                    (path, client)
-                })
                 .collect::<Vec<_>>();
             if sources.is_empty()
                 || sources.len() > vault::MAX_TEMPLATES
-                || sources.iter().any(|(_, client)| *client == Client::Other)
                 || self.prepare_public.trim().is_empty()
                 || self.prepare_backup.trim().is_empty()
             {
@@ -658,7 +648,7 @@ impl TemplateState {
             if public == backup
                 || sources
                     .iter()
-                    .any(|(path, _)| path == &public || path == &backup)
+                    .any(|path| path == &public || path == &backup)
             {
                 self.error =
                     Some("Source files and encrypted destinations must be different.".to_owned());
@@ -668,7 +658,24 @@ impl TemplateState {
             let managed = (!self.explicit_prepare)
                 .then(|| self.store.clone())
                 .flatten();
+            let fallback_client = self.import_client;
             self.start(move |_, _| {
+                // YAML inspection stays on the worker alongside bounded local imports.
+                let sources = sources
+                    .into_iter()
+                    .map(|path| {
+                        let detected = inferred_client(&path);
+                        let client = if detected == Client::Other {
+                            fallback_client
+                        } else {
+                            detected
+                        };
+                        (path, client)
+                    })
+                    .collect::<Vec<_>>();
+                if sources.iter().any(|(_, client)| *client == Client::Other) {
+                    return Err("Select a client for each unrecognized configuration.".to_owned());
+                }
                 if let Some(store) = managed {
                     vault::provision::provision_managed(&sources, store.root(), &password)
                         .map_err(|error| error.to_string())?;
@@ -938,7 +945,14 @@ impl TemplateState {
         if !self.allow_plaintext || self.busy() || self.export_path.trim().is_empty() {
             return;
         }
-        let path = PathBuf::from(self.export_path.trim());
+        let client = self
+            .selected_template()
+            .map_or(Client::Other, |template| template.client);
+        let Some(path) = configuration_export_path(Path::new(self.export_path.trim()), client)
+        else {
+            self.error = Some("Choose a file path for the FlClash export.".to_owned());
+            return;
+        };
         let existing_vault = Path::new(self.path.trim()).canonicalize().ok();
         let workspace = workspace.or_else(|| self.store.as_ref().map(ManagedStore::root));
         if !safe_export_destination(&path, workspace)
@@ -1245,12 +1259,40 @@ fn inferred_client(path: &Path) -> Client {
         .to_string_lossy()
         .to_ascii_lowercase();
     if filename.contains("shadowrocket") {
-        Client::Shadowrocket
-    } else if filename.contains("surge") {
-        Client::Surge
-    } else {
-        Client::Other
+        return Client::Shadowrocket;
     }
+    if filename.contains("surge") {
+        return Client::Surge;
+    }
+    let Ok(bytes) = vault::read_bounded(path) else {
+        return Client::Other;
+    };
+    let bytes = Zeroizing::new(bytes);
+    if bytes.len() > vault::MAX_TEMPLATE_BYTES {
+        return Client::Other;
+    }
+    match std::str::from_utf8(&bytes) {
+        Ok(content) if vault::template::is_flclash_config(content) => Client::FlClash,
+        _ => Client::Other,
+    }
+}
+
+fn configuration_export_path(path: &Path, client: Client) -> Option<PathBuf> {
+    if client == Client::FlClash {
+        let filename = path.file_name()?;
+        if !path
+            .as_os_str()
+            .as_encoded_bytes()
+            .ends_with(filename.as_encoded_bytes())
+            || path.is_dir()
+        {
+            return None;
+        }
+        if path.extension().is_none() {
+            return Some(path.with_extension("yaml"));
+        }
+    }
+    Some(path.to_owned())
 }
 
 pub(super) fn clear_secret_widget(ctx: &egui::Context, id: &str) {
@@ -1299,6 +1341,122 @@ pub(super) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const FLCLASH_FIXTURE: &str = "proxy-providers:\n  subscription:\n    type: http\n    url: \"{{SUBSCRIPTION_1}}\"\n    path: ./providers/subscription.yaml\n    interval: 3600\nproxy-groups:\n  - name: PROXY\n    type: select\n    use: [subscription]\nrules:\n  - MATCH,PROXY\n";
+
+    fn flclash_state() -> TemplateState {
+        let mut state = TemplateState::default();
+        state.vault = Some(
+            vault::create(
+                Library {
+                    templates: vec![Template {
+                        name: "FULL".to_owned(),
+                        client: Client::FlClash,
+                        content: FLCLASH_FIXTURE.to_owned(),
+                    }],
+                },
+                "synthetic FlClash fixture password",
+            )
+            .unwrap(),
+        );
+        state
+    }
+
+    #[test]
+    fn flclash_detection_reads_supported_content_including_extensionless_files() {
+        let fixture = ManagedFixture::new();
+        for filename in ["profile.yaml", "profile.yml", "FULL"] {
+            let source = fixture.0.join(filename);
+            std::fs::write(&source, FLCLASH_FIXTURE).unwrap();
+            assert_eq!(inferred_client(&source), Client::FlClash);
+        }
+        // Existing client name hints still work without reading their contents.
+        assert_eq!(inferred_client(Path::new("surge.conf")), Client::Surge);
+        assert_eq!(
+            inferred_client(Path::new("shadowrocket.conf")),
+            Client::Shadowrocket
+        );
+    }
+
+    #[test]
+    fn flclash_detection_rejects_unrelated_invalid_and_oversized_yaml() {
+        let fixture = ManagedFixture::new();
+        let path = fixture.0.join("FlClash.yaml");
+        for content in [
+            "name: unrelated application\nversion: 1\n",
+            "# proxy-providers: {}\n# proxy-groups: []\n# rules: []\n",
+            "proxy-providers: [unterminated\n",
+        ] {
+            std::fs::write(&path, content).unwrap();
+            assert_eq!(inferred_client(&path), Client::Other);
+        }
+        std::fs::write(&path, "x".repeat(vault::MAX_TEMPLATE_BYTES + 1)).unwrap();
+        assert_eq!(inferred_client(&path), Client::Other);
+        assert_eq!(
+            inferred_client(&fixture.0.join("missing.yaml")),
+            Client::Other
+        );
+    }
+
+    #[test]
+    fn flclash_edit_retains_the_yaml_client_and_content_in_the_encrypted_library() {
+        let ctx = egui::Context::default();
+        let mut state = flclash_state();
+        state.edit_selected(&ctx);
+        assert_eq!(state.edit_client, Client::FlClash);
+        state.edit_name = Zeroizing::new("edited.yaml".to_owned());
+        state.apply_edit(&ctx);
+        assert!(state.error.is_none() && state.dirty && !state.editing);
+        let sealed = state.vault.as_ref().unwrap().seal().unwrap();
+        let reopened = vault::unlock(&sealed, "synthetic FlClash fixture password").unwrap();
+        let template = &reopened.library().templates[0];
+        assert_eq!(template.client, Client::FlClash);
+        assert_eq!(template.name, "edited.yaml");
+        assert_eq!(template.content, FLCLASH_FIXTURE);
+    }
+
+    #[test]
+    fn flclash_export_uses_yaml_without_changing_explicit_or_existing_client_extensions() {
+        for filename in ["profile.yaml", "profile.yml", "profile.YAML", "custom.conf"] {
+            assert_eq!(
+                configuration_export_path(Path::new(filename), Client::FlClash).as_deref(),
+                Some(Path::new(filename))
+            );
+        }
+        for client in [Client::Surge, Client::Shadowrocket, Client::Other] {
+            assert_eq!(
+                configuration_export_path(Path::new("profile"), client).as_deref(),
+                Some(Path::new("profile"))
+            );
+        }
+        let ctx = egui::Context::default();
+        let fixture = ManagedFixture::new();
+        let directory = fixture.0.join("directory");
+        std::fs::create_dir(&directory).unwrap();
+        assert!(configuration_export_path(&directory, Client::FlClash).is_none());
+        let trailing_separator = PathBuf::from(format!("{}/", fixture.0.join("missing").display()));
+        assert!(configuration_export_path(&trailing_separator, Client::FlClash).is_none());
+        let mut state = flclash_state();
+        state.refresh_selection(&ctx);
+        assert_eq!(state.subscriptions.len(), 1);
+        state.subscriptions[0]
+            .1
+            .push_str("https://subscriptions.example/fixture");
+        state.allow_plaintext = true;
+        state.export_path = fixture.0.join("profile").to_string_lossy().into_owned();
+        state.export(None);
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while state.busy() && Instant::now() < deadline {
+            state.tick(&ctx);
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        assert!(!state.busy() && state.error.is_none(), "{:?}", state.error);
+        assert_eq!(state.notice, Some(Text::VaultExported));
+        assert!(!fixture.0.join("profile").exists());
+        let exported = std::fs::read_to_string(fixture.0.join("profile.yaml")).unwrap();
+        assert!(vault::template::is_flclash_config(&exported));
+        assert!(exported.contains("https://subscriptions.example/fixture"));
+    }
 
     fn editable_state() -> TemplateState {
         let mut state = TemplateState::default();

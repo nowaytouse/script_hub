@@ -1,5 +1,7 @@
 //! Subscription slots and conservative sanitization for encrypted public templates.
 
+mod flclash;
+
 use super::{Client, MAX_TEMPLATE_BYTES, MAX_TEMPLATES, Template, VaultError};
 use regex::Regex;
 use std::collections::BTreeMap;
@@ -146,6 +148,9 @@ fn policy_paths(line: &str, counter: &mut usize) -> Result<Zeroizing<String>, Va
 
 /// Removes supported private fields before a template is placed in a public vault.
 pub fn sanitize(template: &Template) -> Result<Template, VaultError> {
+    if template.client == Client::FlClash {
+        return flclash::sanitize(template);
+    }
     if template.client == Client::Other || template.content.contains('\0') {
         return Err(VaultError::Format);
     }
@@ -226,6 +231,9 @@ pub fn sanitize(template: &Template) -> Result<Template, VaultError> {
 
 /// Returns the unique subscription slot names in their first appearance order.
 pub fn subscription_slots(template: &Template) -> Vec<String> {
+    if template.client == Client::FlClash {
+        return flclash::subscription_slots(template).unwrap_or_default();
+    }
     let Ok(ranges) = slot_ranges(&template.content) else {
         return Vec::new();
     };
@@ -243,6 +251,9 @@ pub fn render(
     template: &Template,
     subscriptions: &BTreeMap<String, String>,
 ) -> Result<Zeroizing<String>, VaultError> {
+    if template.client == Client::FlClash {
+        return flclash::render(template, subscriptions);
+    }
     if template.content.len() > MAX_TEMPLATE_BYTES || template.content.contains('\0') {
         return Err(VaultError::TooLarge);
     }
@@ -268,6 +279,12 @@ pub fn render(
     }
     checked_push(&mut output, &template.content[offset..])?;
     Ok(output)
+}
+
+/// Conservatively recognizes the supported FlClash YAML template shape.
+/// This never fetches URLs or inspects the user's installed client configuration.
+pub fn is_flclash_config(content: &str) -> bool {
+    flclash::is_config(content)
 }
 
 /// Validates one HTTPS subscription URL for insertion into a configuration field.
