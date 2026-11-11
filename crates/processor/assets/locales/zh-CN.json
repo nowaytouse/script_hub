@@ -675,6 +675,8 @@
   "VaultExportHint": "请输入项目之外的绝对路径，例如下载目录中的 profile.conf",
   "VaultExportYamlHint": "请输入项目之外的绝对路径，例如下载目录中的 profile.yaml",
   "VaultFlClashExportHelp": "FlClash 使用 .yaml 或 .yml。未填写扩展名时，导出文件名会补上 .yaml。",
+  "VaultWindowsStrictDns": "加入 Windows TUN 严格 DNS 设置",
+  "VaultWindowsStrictDnsHelp": "要求所有 DNS 上游使用 HTTPS，且引导解析器使用 IP 地址。将结果作为 FlClash 本地文件导入，并核对生效配置中的 TUN、严格路由和 TCP／UDP DNS 接管。",
   "VaultOverwrite": "允许替换目标位置的已有文件",
   "VaultExport": "导出配置",
   "VaultExported": "已导出明文配置，请妥善保管，不要提交到仓库。",

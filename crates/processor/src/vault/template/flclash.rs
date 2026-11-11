@@ -12,6 +12,15 @@ use std::fmt;
 use url::Url;
 use zeroize::{Zeroize, Zeroizing};
 
+const DNS_RESOLVERS: &[&str] = &[
+    "default-nameserver",
+    "proxy-server-nameserver",
+    "nameserver",
+    "fallback",
+    "direct-nameserver",
+];
+const CN_DOH: &str = "https://dns.alidns.com/dns-query#DIRECT";
+
 #[derive(Clone, Copy)]
 enum UrlMode {
     Import,
@@ -308,6 +317,7 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
             "geodata-mode",
             "geox-url",
             "dns",
+            "tun",
             "proxies",
             "proxy-providers",
             "proxy-groups",
@@ -331,6 +341,35 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
                     public_url(value)?;
                 }
             }
+            "tun" => {
+                let map = object(value)?;
+                fields(
+                    map,
+                    &[
+                        "enable",
+                        "stack",
+                        "auto-route",
+                        "auto-detect-interface",
+                        "strict-route",
+                        "dns-hijack",
+                        "mtu",
+                    ],
+                )?;
+                for (key, value) in map {
+                    match key.as_str() {
+                        "stack" => {
+                            if !matches!(value.as_str(), Some("system" | "gvisor" | "mixed")) {
+                                return Err(VaultError::Format);
+                            }
+                        }
+                        "dns-hijack" => {
+                            strings(value)?;
+                        }
+                        "mtu" => integer(value)?,
+                        _ => flag(value)?,
+                    }
+                }
+            }
             "dns" => {
                 let map = object(value)?;
                 fields(
@@ -347,6 +386,7 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
                         "nameserver",
                         "fallback",
                         "direct-nameserver",
+                        "nameserver-policy",
                         "fake-ip-filter",
                         "fake-ip-range",
                     ],
@@ -358,6 +398,16 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
                         }
                         "enhanced-mode" | "fake-ip-range" => {
                             public_text(value)?;
+                        }
+                        "nameserver-policy" => {
+                            for (selector, upstreams) in object(value)? {
+                                public_str(selector)?;
+                                if upstreams.is_array() {
+                                    strings(upstreams)?;
+                                } else {
+                                    public_text(upstreams)?;
+                                }
+                            }
                         }
                         _ => strings(value)?,
                     }
@@ -529,6 +579,89 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
     Ok(())
 }
 
+fn encrypted_resolver(value: &Value, bootstrap: bool) -> Result<(), VaultError> {
+    let url = Url::parse(public_text(value)?).map_err(|_| VaultError::Format)?;
+    if url.scheme() != "https"
+        || url.host().is_none()
+        || (bootstrap && !matches!(url.host(), Some(url::Host::Ipv4(_) | url::Host::Ipv6(_))))
+        || !matches!(url.fragment(), None | Some("DIRECT"))
+    {
+        return Err(VaultError::Format);
+    }
+    Ok(())
+}
+
+fn guard_windows_dns(root: &mut Value) -> Result<(), VaultError> {
+    let root = root.as_object_mut().ok_or(VaultError::Format)?;
+    let dns = root
+        .get_mut("dns")
+        .and_then(Value::as_object_mut)
+        .ok_or(VaultError::Format)?;
+    for key in DNS_RESOLVERS {
+        let required = matches!(*key, "nameserver" | "default-nameserver")
+            || (*key == "proxy-server-nameserver"
+                && dns.get("respect-rules") == Some(&Value::Bool(true)));
+        let resolvers = dns
+            .get(*key)
+            .and_then(Value::as_array)
+            .map_or(&[][..], Vec::as_slice);
+        if required && resolvers.is_empty() {
+            return Err(VaultError::Format);
+        }
+        for resolver in resolvers {
+            encrypted_resolver(resolver, *key == "default-nameserver")?;
+        }
+    }
+    let policies = dns
+        .entry("nameserver-policy")
+        .or_insert_with(|| Value::Object(Map::new()))
+        .as_object_mut()
+        .ok_or(VaultError::Format)?;
+    for upstreams in policies.values() {
+        if let Some(upstreams) = upstreams.as_array() {
+            if upstreams.is_empty() {
+                return Err(VaultError::Format);
+            }
+            for upstream in upstreams {
+                encrypted_resolver(upstream, false)?;
+            }
+        } else {
+            encrypted_resolver(upstreams, false)?;
+        }
+    }
+    policies
+        .entry("geosite:cn")
+        .or_insert_with(|| CN_DOH.into());
+    dns.insert("enable".into(), true.into());
+
+    let tun = root
+        .entry("tun")
+        .or_insert_with(|| Value::Object(Map::new()))
+        .as_object_mut()
+        .ok_or(VaultError::Format)?;
+    let hijack = tun
+        .entry("dns-hijack")
+        .or_insert_with(|| Value::Array(Vec::new()))
+        .as_array_mut()
+        .ok_or(VaultError::Format)?;
+    if !hijack
+        .iter()
+        .any(|value| matches!(value.as_str(), Some("any:53" | "udp://any:53")))
+    {
+        hijack.push("any:53".into());
+    }
+    if !hijack
+        .iter()
+        .any(|value| value.as_str() == Some("tcp://any:53"))
+    {
+        hijack.push("tcp://any:53".into());
+    }
+    for flag in ["enable", "auto-route", "strict-route"] {
+        tun.insert(flag.into(), true.into());
+    }
+    Ok(())
+}
+
 fn serialize(value: &Value) -> Result<Zeroizing<String>, VaultError> {
     let output = Zeroizing::new(serde_saphyr::to_string(value).map_err(|_| VaultError::Format)?);
     if output.len() > MAX_TEMPLATE_BYTES {
@@ -618,9 +751,13 @@ fn slots(value: &Value) -> Result<Vec<String>, VaultError> {
 pub(super) fn render(
     template: &Template,
     subscriptions: &BTreeMap<String, String>,
+    windows_dns_guard: bool,
 ) -> Result<Zeroizing<String>, VaultError> {
     let mut value = parse(&template.content)?;
     validate(&value.0, UrlMode::Slots)?;
+    if windows_dns_guard {
+        guard_windows_dns(&mut value.0)?;
+    }
     let names = slots(&value.0)?;
     if subscriptions.len() != names.len()
         || names.iter().any(|name| !subscriptions.contains_key(name))

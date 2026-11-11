@@ -44,6 +44,7 @@ pub(super) struct TemplateState {
     pub edit_client: Client,
     pub export_path: String,
     pub allow_plaintext: bool,
+    pub windows_dns_guard: bool,
     pub overwrite_export: bool,
     pub overwrite_vault: bool,
     pub remove_pending: bool,
@@ -104,6 +105,7 @@ impl Default for TemplateState {
             edit_client: Client::Other,
             export_path: String::new(),
             allow_plaintext: false,
+            windows_dns_guard: false,
             overwrite_export: false,
             overwrite_vault: false,
             remove_pending: false,
@@ -583,6 +585,7 @@ impl TemplateState {
         self.cancel_edit(ctx);
         self.export_path.zeroize();
         self.allow_plaintext = false;
+        self.windows_dns_guard = false;
         self.overwrite_export = false;
         self.remove_pending = false;
     }
@@ -902,8 +905,17 @@ impl TemplateState {
             .filter(|(slot, _)| !slot.is_empty())
             .map(|(slot, value)| (slot.clone(), value.to_string()))
             .collect::<BTreeMap<_, _>>();
-        let result =
-            vault::template::render(template, &bindings).map_err(|error| error.to_string());
+        let result = if self.windows_dns_guard {
+            vault::template::render_flclash_windows_dns(template, &bindings).map_err(|error| {
+                if matches!(error, vault::VaultError::Format) {
+                    "Windows strict DNS requires valid subscription slots, HTTPS-only DNS servers and an HTTPS bootstrap resolver with an IP host.".to_owned()
+                } else {
+                    error.to_string()
+                }
+            })
+        } else {
+            vault::template::render(template, &bindings).map_err(|error| error.to_string())
+        };
         for value in bindings.values_mut() {
             value.zeroize();
         }
@@ -1342,7 +1354,7 @@ pub(super) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> 
 mod tests {
     use super::*;
 
-    const FLCLASH_FIXTURE: &str = "proxy-providers:\n  subscription:\n    type: http\n    url: \"{{SUBSCRIPTION_1}}\"\n    path: ./providers/subscription.yaml\n    interval: 3600\nproxy-groups:\n  - name: PROXY\n    type: select\n    use: [subscription]\nrules:\n  - MATCH,PROXY\n";
+    const FLCLASH_FIXTURE: &str = "proxy-providers:\n  subscription:\n    type: http\n    url: \"{{SUBSCRIPTION_1}}\"\n    path: ./providers/subscription.yaml\n    interval: 3600\nproxy-groups:\n  - name: PROXY\n    type: select\n    use: [subscription]\nrules:\n  - MATCH,PROXY\ndns:\n  nameserver: ['https://resolver.example/dns-query']\n  default-nameserver: ['https://192.0.2.53/dns-query']\n";
 
     fn flclash_state() -> TemplateState {
         let mut state = TemplateState::default();
@@ -1439,10 +1451,12 @@ mod tests {
         let mut state = flclash_state();
         state.refresh_selection(&ctx);
         assert_eq!(state.subscriptions.len(), 1);
+        assert!(!state.windows_dns_guard);
         state.subscriptions[0]
             .1
             .push_str("https://subscriptions.example/fixture");
         state.allow_plaintext = true;
+        state.windows_dns_guard = true;
         state.export_path = fixture.0.join("profile").to_string_lossy().into_owned();
         state.export(None);
         let deadline = Instant::now() + Duration::from_secs(5);
@@ -1456,6 +1470,9 @@ mod tests {
         let exported = std::fs::read_to_string(fixture.0.join("profile.yaml")).unwrap();
         assert!(vault::template::is_flclash_config(&exported));
         assert!(exported.contains("https://subscriptions.example/fixture"));
+        assert!(exported.contains("strict-route: true") && exported.contains("tcp://any:53"));
+        state.refresh_selection(&ctx);
+        assert!(!state.windows_dns_guard);
     }
 
     fn editable_state() -> TemplateState {

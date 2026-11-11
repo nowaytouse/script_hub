@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add opt-in Windows TUN strict DNS settings to FlClash template export, including TCP and UDP interception, HTTPS-only resolvers, and the local-file China DNS policy.
 - Add FlClash/Mihomo YAML templates with structured subscription sanitization and export.
 
 - Follow V2Fly's maintained private-device feed with exact, reviewed Host mappings and last-good recovery; keep routing and global DNS settings unchanged.

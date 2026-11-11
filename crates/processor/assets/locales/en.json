@@ -675,6 +675,8 @@
   "VaultExportHint": "Absolute path outside the project, for example Downloads/profile.conf",
   "VaultExportYamlHint": "Absolute path outside the project, for example Downloads/profile.yaml",
   "VaultFlClashExportHelp": "Use .yaml or .yml for FlClash. If no extension is entered, .yaml is added to the export filename.",
+  "VaultWindowsStrictDns": "Include Windows TUN strict DNS settings",
+  "VaultWindowsStrictDnsHelp": "Requires HTTPS-only DNS with an IP bootstrap resolver. Import the result as a local FlClash file and confirm TUN, strict routing, and TCP/UDP DNS interception in the effective configuration.",
   "VaultOverwrite": "Allow replacing an existing destination file",
   "VaultExport": "Export configuration",
   "VaultExported": "Plaintext configuration exported. Protect the file and do not commit it.",

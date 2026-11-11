@@ -252,7 +252,7 @@ pub fn render(
     subscriptions: &BTreeMap<String, String>,
 ) -> Result<Zeroizing<String>, VaultError> {
     if template.client == Client::FlClash {
-        return flclash::render(template, subscriptions);
+        return flclash::render(template, subscriptions, false);
     }
     if template.content.len() > MAX_TEMPLATE_BYTES || template.content.contains('\0') {
         return Err(VaultError::TooLarge);
@@ -279,6 +279,16 @@ pub fn render(
     }
     checked_push(&mut output, &template.content[offset..])?;
     Ok(output)
+}
+
+pub(crate) fn render_flclash_windows_dns(
+    template: &Template,
+    subscriptions: &BTreeMap<String, String>,
+) -> Result<Zeroizing<String>, VaultError> {
+    if template.client != Client::FlClash {
+        return Err(VaultError::Format);
+    }
+    flclash::render(template, subscriptions, true)
 }
 
 /// Conservatively recognizes the supported FlClash YAML template shape.

@@ -444,6 +444,15 @@ impl HubApp {
                             );
                     }
                     ui.add_space(12.0);
+                    if fl_clash {
+                        ui.checkbox(
+                            &mut state.windows_dns_guard,
+                            tr(Text::VaultWindowsStrictDns),
+                        );
+                        if state.windows_dns_guard {
+                            ui.weak(tr(Text::VaultWindowsStrictDnsHelp));
+                        }
+                    }
                     ui.checkbox(&mut state.allow_plaintext, tr(Text::VaultPlaintextConsent));
                     ui.weak(tr(Text::VaultClipboardWarning));
                     ui.add_space(8.0);

@@ -675,6 +675,8 @@
   "VaultExportHint": "プロジェクト外の絶対パス、例: ダウンロード内の profile.conf",
   "VaultExportYamlHint": "プロジェクト外の絶対パス、例: ダウンロード内の profile.yaml",
   "VaultFlClashExportHelp": "FlClash には .yaml または .yml を使用します。拡張子がない場合は、書き出すファイル名に .yaml を追加します。",
+  "VaultWindowsStrictDns": "Windows TUN の厳格な DNS 設定を含める",
+  "VaultWindowsStrictDnsHelp": "HTTPS の DNS サーバーと IP アドレス指定のブートストラップが必要です。FlClash にローカルファイルとして取り込み、有効な設定で TUN、厳格なルーティング、TCP/UDP DNS の捕捉を確認してください。",
   "VaultOverwrite": "出力先の既存ファイルの置き換えを許可",
   "VaultExport": "設定を出力",
   "VaultExported": "平文の設定を出力しました。保護して、リポジトリにはコミットしないでください。",

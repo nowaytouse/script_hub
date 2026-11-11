@@ -22,6 +22,89 @@ fn binding(url: &str) -> BTreeMap<String, String> {
     BTreeMap::from([("SUBSCRIPTION_1".to_owned(), url.to_owned())])
 }
 
+const DNS_FIXTURE: &str = "
+ipv6: false
+dns:
+  ipv6: false
+  default-nameserver: ['https://192.0.2.53/dns-query']
+  nameserver: ['https://resolver.example/dns-query']
+  nameserver-policy:
+    example.test: ['https://regional.example/dns-query#DIRECT']
+tun:
+  stack: mixed
+  dns-hijack: ['udp://any:53']
+";
+
+#[test]
+fn windows_dns_opt_in_preserves_source_and_round_trips_the_local_profile() {
+    let source = template(&format!("{}{DNS_FIXTURE}", fixture("{{SUBSCRIPTION_1}}")));
+    let subscriptions = binding("https://subscriptions.example/fixture");
+    let normal = parse(&super::super::render(&source, &subscriptions).unwrap()).unwrap();
+    assert!(normal.0["tun"]["strict-route"].is_null());
+    assert!(normal.0["dns"]["nameserver-policy"]["geosite:cn"].is_null());
+
+    let guarded = super::super::render_flclash_windows_dns(&source, &subscriptions).unwrap();
+    let effective = parse(&guarded).unwrap();
+    assert_eq!(effective.0["tun"]["enable"], true);
+    assert_eq!(effective.0["tun"]["auto-route"], true);
+    assert_eq!(effective.0["tun"]["strict-route"], true);
+    assert_eq!(effective.0["tun"]["stack"], "mixed");
+    assert_eq!(
+        effective.0["tun"]["dns-hijack"],
+        serde_json::json!(["udp://any:53", "tcp://any:53"])
+    );
+    assert_eq!(
+        effective.0["dns"]["nameserver-policy"]["geosite:cn"],
+        CN_DOH
+    );
+    assert_eq!(
+        effective.0["dns"]["nameserver-policy"]["example.test"],
+        normal.0["dns"]["nameserver-policy"]["example.test"]
+    );
+    for key in [
+        "ipv6",
+        "rules",
+        "proxy-groups",
+        "proxy-providers",
+        "rule-providers",
+    ] {
+        assert_eq!(effective.0[key], normal.0[key], "{key}");
+    }
+    let imported = super::super::sanitize(&template(&guarded)).unwrap();
+    assert!(!imported.content.contains("subscriptions.example"));
+    let reapplied = super::super::render_flclash_windows_dns(&imported, &subscriptions).unwrap();
+    assert_eq!(reapplied.as_str(), guarded.as_str());
+}
+
+#[test]
+fn windows_dns_opt_in_rejects_plaintext_unsafe_fragments_and_unpinned_bootstrap() {
+    for (before, after) in [
+        ("https://resolver.example/dns-query", "192.0.2.53"),
+        (
+            "https://resolver.example/dns-query",
+            "https://resolver.example/dns-query#skip-cert-verify=true",
+        ),
+        (
+            "https://192.0.2.53/dns-query",
+            "https://bootstrap.example/dns-query",
+        ),
+        (
+            "https://regional.example/dns-query#DIRECT",
+            "udp://192.0.2.54",
+        ),
+    ] {
+        let dns = DNS_FIXTURE.replace(before, after);
+        let source = template(&format!("{}{dns}", fixture("{{SUBSCRIPTION_1}}")));
+        assert!(
+            super::super::render_flclash_windows_dns(
+                &source,
+                &binding("https://subscriptions.example/fixture")
+            )
+            .is_err()
+        );
+    }
+}
+
 #[test]
 fn flclash_client_has_its_own_snake_case_wire_name() {
     assert_eq!(
