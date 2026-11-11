@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-05]
-#!desc=[🚀SR] 按用途分片(23片) + 应用内去广告(Port Reject=77, URL Rewrite=547, Map Local=1245, Script=275, Body Rewrite=90, MITM=736); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-12]
+#!desc=[🚀SR] 按用途分片(23片) + 应用内去广告(Port Reject=77, URL Rewrite=546, Map Local=1245, Script=275, Body Rewrite=90, MITM=736); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-05 21:14:56
+#!date=2026-11-12 03:47:03
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
@@ -2231,7 +2231,6 @@ http:\/\/ad\.myfriday\.cn\/d\/json\/1\.1 _ reject
 ^https?:\/\/appapi\.51job(app)?\.com\/api\/market\/(adtrace|get_launch|get_prompt) - reject
 ^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject
 ^https:\/\/god\.gameyw\.netease\.com\/v\d\/ad - reject
-hostname - reject
 ^https?:\/\/www\.123pan\.com\/api\/config\/get - reject-dict
 ^https?:\/\/dat\.ruanmei\.com\/ithome\/money\/acd\.json$ - reject
 ^https:\/\/api\.weibo\.cn\/2\/logservice\/service\? - reject

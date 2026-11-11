@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3742/4614；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3741/4612；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -2937,7 +2937,6 @@ https://support.you.163.com/appversync/check.do - reject
 ^https?:\/\/snailsleep\.net\/snail\/v\d\/adTask\/ - reject
 ^https?:\/\/snailsleep\.net\/snail\/v\d\/screen\/qn\/get\? - reject
 ^https?:\/\/res-release\.wuta-cam\.com\/json\/ads_component_cache\.json - reject
-hostname - reject
 ^https?:\/\/ios\.wps\.cn\/ad-statistics-service - reject
 ^https?:\/\/apiwz\.midukanshu\.com\/advert\/getPopup$ - reject
 ^https?:\/\/apiwz\.midukanshu\.com\/advert\/treasureInfo$ - reject
