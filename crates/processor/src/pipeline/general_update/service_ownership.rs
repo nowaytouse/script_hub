@@ -107,10 +107,11 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
         let name = format!("Microsoft_proxy{suffix}");
         let path = directory.join(format!("{name}.list"));
         let mut rules = read_optional_rules(&path)?;
-        if read_optional_rules(&directory.join(format!("Microsoft{suffix}.list")))?
-            .into_iter()
-            .fold(false, |changed, rule| rules.insert(rule) || changed)
-        {
+        let initial_count = rules.len();
+        rules.extend(read_optional_rules(
+            &directory.join(format!("Microsoft{suffix}.list")),
+        )?);
+        if rules.len() != initial_count {
             changes.push(Change { name, path, rules });
         }
     }
