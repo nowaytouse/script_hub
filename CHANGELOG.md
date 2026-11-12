@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Refresh reviewed network-safe Brave, uBO Privacy, uBO Badware and Greek filter subsets without flattening browser-only rules or ambiguous exceptions.
+- Restore the native Bilibili ADBlock preference-pane endpoint and resolve its script defaults without duplicating ad handlers.
+- Restore GitHub service ownership, add exact Microsoft sign-in and Microsoft 365 coverage, and render the same split for Surge, Shadowrocket, FlClash, Mihomo and sing-box.
+- Document how to unlock, customize, and export the bundled public configuration templates.
+
 - Add opt-in Windows TUN strict DNS settings to FlClash template export, including TCP and UDP interception, HTTPS-only resolvers, and the local-file China DNS policy.
 - Add FlClash/Mihomo YAML templates with structured subscription sanitization and export.
 

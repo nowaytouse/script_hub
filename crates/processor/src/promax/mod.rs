@@ -1,4 +1,5 @@
 pub mod artifact;
+mod browser_filter;
 mod compiler;
 pub(crate) mod feed;
 pub mod functional;

@@ -551,7 +551,9 @@ impl AdBlockManager {
                     );
                     continue;
                 }
-                if kind != "auto" && kind != "domainset" {
+                if !matches!(kind.as_str(), "auto" | "domainset" | "browser-domains")
+                    || kind == "browser-domains" && policy != "REJECT"
+                {
                     println!(
                         "\x1b[0;33m[WARN]\x1b[0m Skipping invalid source kind in AdBlock manifest: {}",
                         line
@@ -1385,7 +1387,11 @@ impl AdBlockManager {
         let mut failures = Vec::new();
         let mut category_sources = HashMap::<String, usize>::new();
         self.verified_rolling_feeds.clear();
-        for entry in source_entries {
+        // A browser candidate must not duplicate an existing broader network rule.
+        let (network, browser): (Vec<_>, Vec<_>) = source_entries
+            .iter()
+            .partition(|entry| entry.kind != "browser-domains");
+        for entry in network.into_iter().chain(browser) {
             let category = entry
                 .category
                 .clone()
@@ -1426,6 +1432,34 @@ impl AdBlockManager {
             } else {
                 entry.display_name(&self.root_dir)
             };
+
+            if entry.kind == "browser-domains" {
+                if super::browser_filter::category(&entry.source) != Some(category.as_str()) {
+                    failures.push(format!(
+                        "{}: browser source category is not reviewed",
+                        entry.display_name(&self.root_dir)
+                    ));
+                    continue;
+                }
+                match super::browser_filter::project(&entry.source, mod_text) {
+                    Ok(rules) => {
+                        println!(
+                            "[INFO] Projected {} browser filter host candidates: {}",
+                            rules.len(),
+                            entry.display_name(&self.root_dir)
+                        );
+                        self.current_source = provenance;
+                        for (line, rule) in rules {
+                            self.current_line = line;
+                            self.add_rule_line(&rule, &entry.policy, &category);
+                        }
+                    }
+                    Err(error) => {
+                        failures.push(format!("{}: {error}", entry.display_name(&self.root_dir)))
+                    }
+                }
+                continue;
+            }
 
             if entry.policy == "REJECT" {
                 match super::feed::verify_rolling_feed(&entry.source, &category, mod_text) {
@@ -1811,7 +1845,7 @@ impl AdBlockManager {
     fn integrate_functional_sections(
         &mut self,
         remote_contents: &HashMap<String, String>,
-    ) -> HashMap<String, usize> {
+    ) -> Result<HashMap<String, usize>, String> {
         println!(
             "\x1b[0;32m[INFO]\x1b[0m ============================================================"
         );
@@ -1880,6 +1914,15 @@ impl AdBlockManager {
 
             let Ok(content) = fs::read_to_string(&path) else {
                 continue;
+            };
+            let content = if path
+                == self
+                    .root_dir
+                    .join("modules/source/local/BiliBili.ADBlock.sgmodule")
+            {
+                super::functional::resolve_bili_adblock_arguments(&content)?
+            } else {
+                content
             };
             let digest = format!("{:x}", md5::compute(content.as_bytes()));
             if !seen_functional_content.insert(digest) {
@@ -1955,7 +1998,7 @@ impl AdBlockManager {
             "\x1b[0;32m[SUCCESS]\x1b[0m Functional sections merged: {}",
             summary
         );
-        added
+        Ok(added)
     }
 
     fn split_candidate_rejection(
@@ -2981,7 +3024,13 @@ impl AdBlockManager {
         }
 
         if execute {
-            self.functional_stats = self.integrate_functional_sections(&remote_contents);
+            self.functional_stats = match self.integrate_functional_sections(&remote_contents) {
+                Ok(stats) => stats,
+                Err(error) => {
+                    eprintln!("[ERROR] Refusing functional PROMAX generation: {error}");
+                    return false;
+                }
+            };
             let (generated_rulesets, mut artifacts) = match self.generate_ruleset() {
                 Ok(generated) => generated,
                 Err(error) => {

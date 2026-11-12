@@ -433,6 +433,13 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     } else if exports_only || classify_only {
         (|| {
             if classify_only {
+                // A changed AdBlock snapshot can expose previously pruned fallback members.
+                if root
+                    .join("rulesets/Sources/Links/GlobalProxy_sources.list")
+                    .is_file()
+                {
+                    rust_processor::general_update::consolidate_rulesets(&root)?;
+                }
                 rust_processor::general_update::enforce_category_boundaries(&root)?;
                 rust_processor::general_update::enforce_jp_ownership(&root)?;
                 rust_processor::general_update::split_published_rulesets(&root)?;

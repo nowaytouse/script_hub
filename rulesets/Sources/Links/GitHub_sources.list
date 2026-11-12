@@ -1,8 +1,4 @@
-# GitHub Sources
-https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Surge/GitHub/GitHub.list
-
-# MetaCubeX official geosite source
-https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/github.list
-
-# Smart-Config-Kit Supplement
-../custom/SmartConfigKit/SCK_GitHub.list
+# Reviewed first-party scopes and exact infrastructure hosts. Do not put
+# mixed geosite imports through global deduplication before scope validation.
+# https://docs.github.com/en/actions/reference/runners/github-hosted-runners#communication-requirements-for-github-hosted-runners
+../custom/GitHub_manual.list

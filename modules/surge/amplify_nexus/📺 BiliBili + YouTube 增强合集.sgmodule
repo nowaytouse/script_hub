@@ -1,5 +1,5 @@
 #!name=📺 BiliBili + YouTube 增强合集
-#!desc=BiliBili 与 YouTube 功能增强；YouTube 广告构建源独立维护\n\n【Bundled Modules】\n✦ 🪐 Biliverse: ⚙️ Enhanced: 哔哩哔哩：增强模式\n中国站功能增强及UI自定义\n\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\n中国站自动线路及全区搜索\n\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\n中国站CDN自定义\n\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接
+#!desc=BiliBili 与 YouTube 功能增强；ADBlock 去广告脚本由 PROMAX 提供，需同时启用\n\n【Bundled Modules】\n✦ 🪐 Biliverse: ⚙️ Enhanced: 哔哩哔哩：增强模式\n中国站功能增强及UI自定义\n\n✦ 📺 BiliBili: 🌐 Global: 哔哩哔哩：全球模式\n中国站自动线路及全区搜索\n\n✦ 📺 BiliBili: 🔀 Redirect: 哔哩哔哩：重定向\n中国站CDN自定义\n\n✦ Bilibili Helper: 去除扰人内容 & 禁用 P2P 连接
 #!author=Biliverse, Maasea
 #!icon=https://www.bilibili.com/favicon.ico
 #!category=『 🛠️ Amplify Nexus › 增幅枢纽 』
@@ -13,6 +13,7 @@
 # - Redirect: https://github.com/Biliverse/Redirect/releases/latest/download/BiliBili.Redirect.sgmodule
 # - Helper: https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/Bilibili.Helper.sgmodule
 # - YouTube.Enhance: https://cdn.jsdelivr.net/gh/Maasea/sgmodule@master/YouTube.Enhance.sgmodule
+# - ADBlock settings: https://github.com/Biliverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule
 
 [General]
 # > TCP Force HTTP Hosts
@@ -43,6 +44,8 @@ force-http-engine-hosts = %APPEND% upos-sz-mirror*.bilivideo.com:80, cn-hk-eq-*.
 ^https:\/\/(?:biliverse\.github\.io|app\.bilibili\.com)\/api\/Global(?:\?.*)?$ data-type=file data="https://github.com/Biliverse/Global/releases/download/v0.9.3/BiliBili.Global.boxjs.json" status-code=200 header="Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.9.3"
 
 ^https:\/\/(?:biliverse\.github\.io|app\.bilibili\.com)\/api\/Redirect(?:\?.*)?$ data-type=file data="https://github.com/Biliverse/Redirect/releases/download/v0.2.25/BiliBili.Redirect.boxjs.json" status-code=200 header="Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.2.25"
+
+^https:\/\/app\.bilibili\.com\/api\/ADBlock(?:\?.*)?$ data-type=file data="https://github.com/Biliverse/ADBlock/releases/download/v0.7.5/BiliBili.ADBlock.boxjs.json" status-code=200 header="Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.7.5"
 
 [Script]
 PreferencePanes.API                                   = type=http-request, pattern=^https:\/\/(?:biliverse\.github\.io|app\.bilibili\.com)\/api\/(?:get|set|delete)(?:\?.*)?$, requires-body=1, max-size=65536, script-path=https://github.com/NSNanoCat/PreferencePanes/releases/latest/download/api.js

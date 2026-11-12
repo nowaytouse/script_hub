@@ -26,6 +26,85 @@ pub(crate) fn prepare_functional_source<'a>(
     }
 }
 
+pub(crate) fn resolve_bili_adblock_arguments(content: &str) -> Result<String, String> {
+    let arguments = content
+        .lines()
+        .find_map(|line| {
+            let (key, value) = line.split_once('=')?;
+            (key.trim() == "#!arguments").then_some(value)
+        })
+        .ok_or("Bilibili ADBlock has no argument defaults")?;
+    let mut defaults = std::collections::HashMap::new();
+    for pair in arguments.split(',') {
+        let (key, value) = pair
+            .trim()
+            .split_once(':')
+            .ok_or("malformed Bilibili ADBlock argument")?;
+        let value = match value.trim() {
+            value @ ("true" | "false") => value,
+            value => value
+                .strip_prefix('"')
+                .and_then(|v| v.strip_suffix('"'))
+                .filter(|v| {
+                    v.bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
+                })
+                .ok_or("unsupported Bilibili ADBlock default value")?,
+        };
+        if key.is_empty()
+            || !key
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'.'))
+            || defaults.insert(key, value).is_some()
+        {
+            return Err("invalid or duplicate Bilibili ADBlock argument name".into());
+        }
+    }
+    if defaults.get("Storage") != Some(&"PersistentStore") {
+        return Err("Bilibili ADBlock must keep preference-panel storage enabled".into());
+    }
+    let mut output = String::with_capacity(content.len());
+    for line in content.lines() {
+        if !line.contains("{{{") {
+            output.push_str(line);
+        } else {
+            let (prefix, mut rest) = line
+                .split_once(", argument=")
+                .ok_or("Bilibili ADBlock placeholder outside script arguments")?;
+            if prefix.contains("{{{") || !prefix.contains("script-path=") {
+                return Err("Bilibili ADBlock placeholder outside script arguments".into());
+            }
+            if let Some((name, options)) = prefix.split_once(" = ")
+                && name.ends_with("BiliBili.ADBlock.response.json")
+                && options.contains(r"api\.bili")
+            {
+                // Keep both upstream JSON response matchers when scripts are deduplicated by ID.
+                output.push_str(name);
+                output.push_str(".web = ");
+                output.push_str(options);
+            } else {
+                output.push_str(prefix);
+            }
+            output.push_str(", argument=");
+            while let Some((before, placeholder)) = rest.split_once("{{{") {
+                let (key, after) = placeholder
+                    .split_once("}}}")
+                    .ok_or("unclosed Bilibili ADBlock placeholder")?;
+                output.push_str(before);
+                output.push_str(
+                    defaults
+                        .get(key)
+                        .ok_or("Bilibili ADBlock placeholder has no default")?,
+                );
+                rest = after;
+            }
+            output.push_str(rest);
+        }
+        output.push('\n');
+    }
+    Ok(output)
+}
+
 pub(crate) fn narrow_http_authority_pattern(pattern: &str) -> String {
     let Some(prefix) = [
         r"^https?:\/\/",
@@ -183,6 +262,28 @@ pub fn normalize_domain_source_line(line: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::normalize_domain_source_line;
+
+    #[test]
+    fn bilibili_defaults_keep_native_settings_and_remove_template_placeholders() {
+        let source = include_str!("../../../../modules/source/local/BiliBili.ADBlock.sgmodule");
+        let rendered = super::resolve_bili_adblock_arguments(source).unwrap();
+        assert!(!rendered.contains("{{{"));
+        assert!(rendered.contains("Storage=\"PersistentStore\""));
+        assert!(rendered.contains("Privacy.Strict=\"false\""));
+        assert!(rendered.contains("Feed.BlockUpLiveList=\"\""));
+        assert!(rendered.contains("BiliBili.ADBlock.response.json.web = "));
+    }
+
+    #[test]
+    fn bilibili_defaults_reject_unknown_arguments_and_non_argument_placeholders() {
+        let source = "#!arguments = Storage:\"PersistentStore\",Feed.AD:true\n";
+        for line in [
+            "script = script-path=https://example.test/a.js, argument=\"{{{unknown}}}\"",
+            "script = script-path=https://example.test/{{{Feed.AD}}}.js, argument=\"\"",
+        ] {
+            assert!(super::resolve_bili_adblock_arguments(&format!("{source}{line}\n")).is_err());
+        }
+    }
 
     #[test]
     fn tieba_merge_keeps_video_posts_and_does_not_change_unrelated_templates() {

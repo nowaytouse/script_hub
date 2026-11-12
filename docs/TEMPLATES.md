@@ -1,17 +1,23 @@
-# Templates
+# Using configuration templates
 
 [English](TEMPLATES.md) · [简体中文](TEMPLATES.zh-CN.md)
 
-The sample library is public ciphertext. Its public password is a manual gate, not confidentiality or bot protection. Do not reuse it for private libraries.
+## Unlock the sample
 
-Open Templates in the desktop app. Copy this password and enter it yourself:
+Open the [desktop app](../crates/processor/README.md) and go to **Library → Templates → Open library**. Select **Templates**, not **Encrypted originals**. Paste the full line below into **Password**, then click **Unlock**. No account, token, or subscription is needed to view the sample.
 
 ```text
 tTUa!Acdb7!vhUpSUD1Rl9g*^bm@S#Xahrj1TK72KrA!TMty$lhh6zl1aIbOvAODzM#N2SxzG53iEgVRu571DNGU9rLWijO!0jZCDGPDQmLu%cmnC&QT9vOfqZ75V7*m
 ```
 
-Edit → Apply → Save keeps an encrypted local copy; it does not replace the public sample. Save before leaving the app: automatic locking discards unsaved changes. Subscription values are filled when copying or exporting.
+The bundled sample is encrypted, but its password is public. It is a manual gate, not confidentiality or bot protection. Do not reuse it for private libraries.
 
-FlClash/Mihomo YAML templates can use subscription slots. Fill these slots when copying or exporting, then import the exported `.yaml` as a new FlClash profile.
+## Make it yours
 
-Exported samples list optional module URLs in comments. Install them separately. New defaults keep YouTube controls visible and leave scheduled sync and network-change lookups off. Saved module settings are unchanged.
+1. Select a template for your client and enable **Show full template** to read its original text.
+2. Use **Edit template → Apply changes** to adjust policy groups or rule order, or edit a copy in your own text editor. To keep edits in the app, choose **Save encrypted library** with a project available. This writes a local copy, not the public sample. Save before switching apps: automatic locking discards unsaved changes.
+3. Fill any subscription fields needed by the client, acknowledge the plaintext warning, then choose **Copy configuration** or **Export configuration** to a path outside the repository. Import the result as a new profile and keep your existing profile until the new one works.
+
+Subscription URLs are inserted only when copying or exporting, and Script Hub does not fetch them. Add a Shadowrocket subscription separately. For a FlClash/Mihomo template, fill its provider slots and import the exported `.yaml` as a local profile.
+
+Install optional modules listed in the comments separately. Keep plaintext exports and subscription URLs out of Git.

@@ -4,6 +4,36 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn reviewed_browser_host_does_not_duplicate_a_network_suffix_in_another_category() {
+    let browser = "https://raw.githubusercontent.com/kargig/greek-adblockplus-filter/master/void-gr-filters.txt";
+    let network = "https://example.test/compiled.list";
+    let entry = |source: &str, kind: &str, category: &str| super::SourceEntry {
+        manifest_path: "rulesets/Sources/Links/AdBlock_sources.list".into(),
+        source: source.into(),
+        policy: "REJECT".into(),
+        kind: kind.into(),
+        category: Some(category.into()),
+    };
+    let sources = [
+        entry(browser, "browser-domains", "Advertising"),
+        entry(network, "auto", "ThreatIntel"),
+    ];
+    let contents = HashMap::from([
+        (browser.into(), "||adman.kathimerini.gr^".into()),
+        (network.into(), "DOMAIN-SUFFIX,adman.kathimerini.gr".into()),
+    ]);
+    let mut manager =
+        AdBlockManager::new(std::env::temp_dir().join("script-hub-browser-dedupe-fixture"));
+    assert!(
+        manager
+            .process_source_entries(&sources, &contents)
+            .is_empty()
+    );
+    assert!(manager.rules["REJECT"]["ThreatIntel"].contains("DOMAIN-SUFFIX,adman.kathimerini.gr"));
+    assert!(!manager.rules["REJECT"]["Advertising"].contains("DOMAIN,adman.kathimerini.gr"));
+}
+
+#[test]
 fn content_service_roots_are_quarantined_without_whitelisting_subdomains_or_threats() {
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -1461,7 +1491,9 @@ hostname = %APPEND% tiebac.baidu.com
 ";
     let mut manager = AdBlockManager::new(root.clone());
     manager.safety = crate::promax::safety::SafetyPolicy::from_lines(["DOMAIN,t10.baidu.com"]);
-    manager.integrate_functional_sections(&HashMap::from([(url.to_string(), fixture.to_string())]));
+    manager
+        .integrate_functional_sections(&HashMap::from([(url.to_string(), fixture.to_string())]))
+        .unwrap();
     let output = manager.generate_module(&[], "cdn").content;
     assert!(output.contains("argument=per_filter_video_thread=0"));
     assert!(output.contains("binary-body-mode=1"));

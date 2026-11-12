@@ -1,7 +1,7 @@
 # Canonical AdBlock source manifest
 # Format: SOURCE|POLICY|KIND(optional)|CATEGORY(optional)
 # POLICY: REJECT, REJECT-DROP, REJECT-NO-DROP, DIRECT
-# KIND: auto (default), domainset
+# KIND: auto (default), domainset, browser-domains (reviewed network projection)
 # CATEGORY: Local, Advertising, Privacy, Privacy_CNAME, Security, AntiAD,
 #           ThreatIntel_Ultimate, ThreatIntel_TIF, ThreatIntel, Other
 #
@@ -72,6 +72,12 @@ https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT|auto|A
 # https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE
 # Scoped/URL rules must not be interpreted as unconditional whole-domain blocks.
 https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/ChineseFilter/sections/adservers.txt|REJECT|auto|Advertising
+# Browser list sources: only the reviewed network projection is published.
+# Other Brave selections and license terms: ../licenses/README.md.
+https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt|REJECT|browser-domains|Advertising
+https://raw.githubusercontent.com/kargig/greek-adblockplus-filter/master/void-gr-filters.txt|REJECT|browser-domains|Advertising
+https://ublockorigin.github.io/uAssetsCDN/filters/privacy.min.txt|REJECT|browser-domains|Privacy
+https://ublockorigin.github.io/uAssetsCDN/filters/badware.min.txt|REJECT|browser-domains|ThreatIntel
 # Internal exact-host privacy rules; not a public subscriber list.
 ../Privacy_Reviewed.list|REJECT|auto|Privacy
 https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset|Advertising

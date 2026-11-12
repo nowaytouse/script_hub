@@ -18,6 +18,15 @@ struct RemoteSource {
     required: bool,
 }
 
+const BILI_ADBLOCK_FILE: &str = "BiliBili.ADBlock.sgmodule";
+const BILI_ADBLOCK_SURGE_URL: &str =
+    "https://github.com/Biliverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule";
+const BILI_ADBLOCK_SHADOWROCKET: RemoteSource = RemoteSource {
+    label: "ADBlock settings (Shadowrocket)",
+    url: "https://github.com/Biliverse/ADBlock/releases/latest/download/BiliBili.ADBlock.srmodule",
+    required: true,
+};
+
 const LOCAL_SOURCES: &[(&str, &str)] = &[
     (
         "XWebAds.sgmodule",
@@ -27,10 +36,7 @@ const LOCAL_SOURCES: &[(&str, &str)] = &[
         "Wool.ADBlock.sgmodule",
         "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/blockAds.module",
     ),
-    (
-        "BiliBili.ADBlock.sgmodule",
-        "https://github.com/Biliverse/ADBlock/releases/latest/download/BiliBili.ADBlock.sgmodule",
-    ),
+    (BILI_ADBLOCK_FILE, BILI_ADBLOCK_SURGE_URL),
     (
         "[Sukka] Enhance Better ADBlock for Surge.sgmodule",
         "https://ruleset.skk.moe/Modules/sukka_enhance_adblock.sgmodule",
@@ -126,6 +132,8 @@ const YOUTUBE: RemoteSource = RemoteSource {
     required: true,
 };
 const VIDEO_OUTPUT: &str = "modules/surge/amplify_nexus/📺 BiliBili + YouTube 增强合集.sgmodule";
+const VIDEO_SHADOWROCKET_OUTPUT: &str =
+    "modules/shadowrocket/amplify_nexus/📺 BiliBili + YouTube 增强合集.module";
 const BILIBILI_BUILD_SOURCE: &str = "rulesets/Sources/LocalModules/BiliBili.Functional.sgmodule";
 const YOUTUBE_BUILD_SOURCE: &str = "modules/source/local/YouTube.ADBlock.sgmodule";
 
@@ -644,10 +652,74 @@ fn scope_biliverse_enhanced_storage(content: &str) -> String {
         .join("\n")
 }
 
+const BILI_PANE_UPSTREAM_HOSTS: &str = r"(?:biliverse\.github\.io|app\.bilibili\.com)";
+const BILI_PANE_UPSTREAM_PATTERN: &str =
+    r"^https:\/\/(?:biliverse\.github\.io|app\.bilibili\.com)\/api\/ADBlock(?:\?.*)?$";
+
+fn bilibili_adblock_panes(surge: &str, shadowrocket: &str) -> Result<[SourceInput; 2], String> {
+    let surge_meta = crate::merge_bundles::module_metadata_pub(surge);
+    let rocket_meta = crate::merge_bundles::module_metadata_pub(shadowrocket);
+    let version = surge_meta
+        .get("version")
+        .filter(|version| {
+            version.len() <= 24
+                && version.split('.').count() == 3
+                && version
+                    .split('.')
+                    .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
+        })
+        .ok_or_else(|| "ADBlock source has no recognized release version".to_string())?;
+    if rocket_meta.get("version") != Some(version) {
+        return Err("Biliverse ADBlock client releases do not match".into());
+    }
+
+    let asset = format!("https://github.com/Biliverse/ADBlock/releases/download/v{version}");
+    let surge_pane = format!(
+        r#"{BILI_PANE_UPSTREAM_PATTERN} data-type=file data="{asset}/BiliBili.ADBlock.boxjs.json" status-code=200 header="Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:{version}""#
+    );
+    let rocket_pane = format!(
+        "PreferencePanes.Config.ADBlock = type=http-request, pattern={BILI_PANE_UPSTREAM_PATTERN}, script-path={asset}/config.bundle.js"
+    );
+
+    let pane = |content: &str, section: &str, expected: &str, url: &str| {
+        let mut current = "";
+        let mut matches = 0;
+        for line in content.lines().map(str::trim) {
+            if line.starts_with('[') && line.ends_with(']') {
+                current = line;
+            } else if current == section && line == expected {
+                matches += 1;
+            }
+        }
+        if matches != 1 {
+            return Err(format!(
+                "missing or changed official ADBlock pane in {section}"
+            ));
+        }
+        // The in-app origin is enough; GitHub Pages remains outside the MITM scope.
+        let line = expected.replace(BILI_PANE_UPSTREAM_HOSTS, r"app\.bilibili\.com");
+        Ok(SourceInput {
+            label: "ADBlock settings".into(),
+            url: url.into(),
+            content: format!("{section}\n{line}\n[MITM]\nhostname = %APPEND% app.bilibili.com\n"),
+        })
+    };
+    Ok([
+        pane(surge, "[Map Local]", &surge_pane, BILI_ADBLOCK_SURGE_URL)?,
+        pane(
+            shadowrocket,
+            "[Script]",
+            &rocket_pane,
+            BILI_ADBLOCK_SHADOWROCKET.url,
+        )?,
+    ])
+}
+
 fn publish_video_sources(
     root: &Path,
     mut bilibili: Vec<SourceInput>,
     youtube: SourceInput,
+    [surge_pane, rocket_pane]: [SourceInput; 2],
 ) -> Result<(), String> {
     for source in &mut bilibili {
         if source.label == "Enhanced" {
@@ -660,6 +732,7 @@ fn publish_video_sources(
         let youtube_path = staging.join("youtube.sgmodule");
         let ads_path = staging.join("youtube-ads.sgmodule");
         let combined_path = staging.join("video.sgmodule");
+        let rocket_path = staging.join("video-shadowrocket.sgmodule");
         let mut feature = MergeBundleRequest {
             op: "upstream_merge".into(),
             output_path: bili_path.to_string_lossy().into_owned(),
@@ -700,15 +773,22 @@ fn publish_video_sources(
             ("name", "📺 BiliBili + YouTube 增强合集"),
             (
                 "desc",
-                "BiliBili 与 YouTube 功能增强；YouTube 广告构建源独立维护",
+                "BiliBili 与 YouTube 功能增强；ADBlock 去广告脚本由 PROMAX 提供，需同时启用",
             ),
             ("author", "Biliverse, Maasea"),
             ("icon", "https://www.bilibili.com/favicon.ico"),
             ("category", "『 🛠️ Amplify Nexus › 增幅枢纽 』"),
             ("tag", "BiliBili, YouTube, 增强"),
         ]);
+        feature.sources.push(surge_pane);
         if !process_merge_bundle(&feature) {
             return Err("cannot build the combined video module".into());
+        }
+        feature.sources.pop();
+        feature.sources.push(rocket_pane);
+        feature.output_path = rocket_path.to_string_lossy().into_owned();
+        if !process_merge_bundle(&feature) {
+            return Err("cannot build the Shadowrocket video module".into());
         }
         let functional = |path: &Path| {
             read_staged_bundle(path).map(|content| {
@@ -718,6 +798,13 @@ fn publish_video_sources(
         };
         let combined = functional(&combined_path)?;
         crate::merge_bundles::verify_video_defaults(&combined)?;
+        let rocket =
+            crate::promax::artifact::convert_surge_to_shadowrocket(&functional(&rocket_path)?);
+        if !combined.contains(r"\/api\/ADBlock")
+            || !rocket.contains("PreferencePanes.Config.ADBlock")
+        {
+            return Err("ADBlock pane was lost while generating the video modules".into());
+        }
         publish_generated_artifacts(
             root,
             &[
@@ -725,6 +812,11 @@ fn publish_video_sources(
                     target: root.join(VIDEO_OUTPUT),
                     content: combined,
                     kind: ArtifactKind::Surge,
+                },
+                GeneratedArtifact {
+                    target: root.join(VIDEO_SHADOWROCKET_OUTPUT),
+                    content: rocket,
+                    kind: ArtifactKind::Shadowrocket,
                 },
                 GeneratedArtifact {
                     target: root.join(BILIBILI_BUILD_SOURCE),
@@ -746,7 +838,15 @@ fn merge_video(root: &Path, downloader: &Downloader) -> Result<(), String> {
     let youtube = fetch_sources(downloader, &[YOUTUBE])?
         .pop()
         .ok_or_else(|| "YouTube feature source unavailable".to_string())?;
-    publish_video_sources(root, bilibili, youtube)
+    let surge_adblock = fs::read_to_string(
+        root.join("modules/source/local").join(BILI_ADBLOCK_FILE),
+    )
+    .map_err(|error| format!("cannot read the Biliverse ADBlock source snapshot: {error}"))?;
+    let rocket_adblock = fetch_sources(downloader, &[BILI_ADBLOCK_SHADOWROCKET])?
+        .pop()
+        .ok_or_else(|| "Shadowrocket ADBlock source unavailable".to_string())?;
+    let panes = bilibili_adblock_panes(&surge_adblock, &rocket_adblock.content)?;
+    publish_video_sources(root, bilibili, youtube, panes)
 }
 
 const DEVTOOLS_OUTPUT: &str = "modules/surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule";
@@ -1024,7 +1124,8 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
             .path()
             .strip_prefix(&source)
             .map_err(|error| error.to_string())?;
-        if relative == Path::new("amplify_nexus/🍎 Apple服务增强合集.sgmodule")
+        if entry.path().ends_with(VIDEO_OUTPUT)
+            || relative == Path::new("amplify_nexus/🍎 Apple服务增强合集.sgmodule")
             || relative.parent() == Some(Path::new("head_expanse"))
                 && relative.file_name().and_then(|file| file.to_str())
                     == Some(super::firewall_sync::ALIDNS_SURGE_FILE)
@@ -1067,6 +1168,37 @@ pub fn sync_shadowrocket_variants(root: &Path) -> Result<usize, String> {
 
 #[cfg(test)]
 mod tests {
+    const ADBLOCK_SURGE_FIXTURE: &str = concat!(
+        "#!name = Biliverse ADBlock\n#!version = 0.7.5\n[Map Local]\n",
+        r#"^https:\/\/(?:biliverse\.github\.io|app\.bilibili\.com)\/api\/ADBlock(?:\?.*)?$ data-type=file data="https://github.com/Biliverse/ADBlock/releases/download/v0.7.5/BiliBili.ADBlock.boxjs.json" status-code=200 header="Content-Type:application/json; charset=utf-8|Cache-Control:no-store|X-PreferencePanes-Version:0.7.5""#,
+        "\n[Script]\nADBlock.handler = type=http-response, pattern=^https://app\\.bilibili\\.com/feed, script-path=https://example.test/ads.js\n",
+    );
+    const ADBLOCK_SHADOWROCKET_FIXTURE: &str = concat!(
+        "#!name = Biliverse ADBlock\n#!version = 0.7.5\n[Script]\n",
+        r#"PreferencePanes.Config.ADBlock = type=http-request, pattern=^https:\/\/(?:biliverse\.github\.io|app\.bilibili\.com)\/api\/ADBlock(?:\?.*)?$, script-path=https://github.com/Biliverse/ADBlock/releases/download/v0.7.5/config.bundle.js"#,
+        "\nADBlock.handler = type=http-response, pattern=^https://app\\.bilibili\\.com/feed, script-path=https://example.test/ads.js\n",
+    );
+
+    #[test]
+    fn video_pane_rejects_mismatched_versions_and_unreviewed_endpoints() {
+        let broken_rocket = [
+            ADBLOCK_SHADOWROCKET_FIXTURE.replacen("version = 0.7.5", "version = 0.7.6", 1),
+            ADBLOCK_SHADOWROCKET_FIXTURE.replace("https://github.com/", "https://example.test/"),
+            ADBLOCK_SHADOWROCKET_FIXTURE.replace(r"\/api\/ADBlock", r"\/api\/.*"),
+            ADBLOCK_SHADOWROCKET_FIXTURE.replace("[Script]", "[Rule]"),
+        ];
+        for broken in broken_rocket {
+            assert!(super::bilibili_adblock_panes(ADBLOCK_SURGE_FIXTURE, &broken).is_err());
+        }
+        let broken_surge = ADBLOCK_SURGE_FIXTURE.replace(
+            "X-PreferencePanes-Version:0.7.5",
+            "X-PreferencePanes-Version:0.7.4",
+        );
+        assert!(
+            super::bilibili_adblock_panes(&broken_surge, ADBLOCK_SHADOWROCKET_FIXTURE).is_err()
+        );
+    }
+
     #[test]
     fn published_video_and_tools_still_use_the_configured_defaults() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -1110,8 +1242,12 @@ mod tests {
                 "YT Video = type=http-request,pattern=^https://.+\\.googlevideo\\.com/,script-path=https://example.test/video.js\n",
                 "[MITM]\nhostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com\n",
             )),
+            super::bilibili_adblock_panes(ADBLOCK_SURGE_FIXTURE, ADBLOCK_SHADOWROCKET_FIXTURE)
+                .unwrap(),
         ).unwrap();
         let combined = std::fs::read_to_string(root.join(super::VIDEO_OUTPUT)).unwrap();
+        let rocket_path = root.join(super::VIDEO_SHADOWROCKET_OUTPUT);
+        let rocket = std::fs::read_to_string(&rocket_path).unwrap();
         let bili = std::fs::read_to_string(root.join(super::BILIBILI_BUILD_SOURCE)).unwrap();
         let ads = std::fs::read_to_string(root.join(super::YOUTUBE_BUILD_SOURCE)).unwrap();
         assert!(
@@ -1128,6 +1264,23 @@ mod tests {
         assert!(!bili.contains("youtubei.googleapis.com"));
         assert!(ads.contains("yt-ads.example.test") && ads.contains("*.googlevideo.com"));
         assert!(!ads.contains("bili.example.test"));
+        let pane_pattern = r"^https:\/\/app\.bilibili\.com\/api\/ADBlock(?:\?.*)?$";
+        assert_eq!(combined.matches(pane_pattern).count(), 1);
+        assert_eq!(rocket.matches(pane_pattern).count(), 1);
+        assert!(combined.contains("X-PreferencePanes-Version:0.7.5"));
+        assert!(!combined.contains("PreferencePanes.Config.ADBlock"));
+        assert!(
+            rocket.contains("PreferencePanes.Config.ADBlock")
+                && rocket.contains("/v0.7.5/config.bundle.js")
+        );
+        assert!(!rocket.contains("BiliBili.ADBlock.boxjs.json"));
+        for output in [&combined, &rocket] {
+            assert!(!output.contains("ADBlock.handler"));
+            assert!(!output.contains("biliverse.github.io"));
+        }
+        assert!(!bili.contains("/api\\/ADBlock"));
+        assert_eq!(sync_shadowrocket_variants(&root).unwrap(), 0);
+        assert_eq!(std::fs::read_to_string(rocket_path).unwrap(), rocket);
         let _ = std::fs::remove_dir_all(root);
     }
 

@@ -7,6 +7,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+mod service_ownership;
+
+pub use service_ownership::MICROSOFT_SIGN_IN_HOSTS;
+
 const NSFW_PROTECTED_CATEGORY_FILES: &[&str] = &[
     "AI.list",
     "Apple.list",
@@ -1289,6 +1293,12 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     };
     let (adblock, apple_adblock) = read_adblock_boundary(root, apple.as_ref())?;
     let mut errors = validate_consolidated_rulesets(root)?;
+    for change in service_ownership::plan(root)? {
+        errors.push(format!(
+            "{} violates GitHub or Microsoft service ownership",
+            change.name
+        ));
+    }
     let apple_owner_domains = read_apple_source_domain_rules(root)?;
     if !apple_owner_domains.is_empty() {
         let owner_path = directory.join("Apple.list");
@@ -1456,6 +1466,9 @@ pub fn enforce_category_boundaries(root: &Path) -> Result<(usize, usize, usize, 
     let directory = root.join("rulesets/RULE-SET");
     // Read and validate the speedtest sources before any output can be changed.
     let (china_speedtest, international_speedtest) = speedtest_boundary(root)?;
+    for change in service_ownership::plan(root)? {
+        write_rules(&change.path, &change.name, &change.rules)?;
+    }
     let synced_apple_owner_domains = sync_apple_owner_domains(root)?;
     let direct_path = directory.join("Direct.list");
     let proxy_path = directory.join("GlobalProxy.list");
@@ -2630,6 +2643,87 @@ mod tests {
         assert!(!nsfw.contains("social.example"));
         assert!(!nsfw.contains("crunchyroll.com"));
         assert!(!nsfw.contains("10bet.com"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn github_and_microsoft_sign_in_recover_their_owners_without_claiming_shared_parents() {
+        let root = consolidation_fixture();
+        let rules = root.join("rulesets/RULE-SET");
+        let sources = root.join("rulesets/Sources");
+        fs::create_dir_all(sources.join("Links")).unwrap();
+        fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+        fs::write(sources.join("Links/GitHub_sources.list"), "# GitHub\n").unwrap();
+        let github = "DOMAIN-SUFFIX,github.com\nDOMAIN-SUFFIX,githubusercontent.com\nDOMAIN,github-cloud.s3.amazonaws.com\n";
+        let microsoft = "DOMAIN-SUFFIX,cloud.microsoft\nDOMAIN-SUFFIX,static.microsoft\nDOMAIN-SUFFIX,usercontent.microsoft\n";
+        fs::write(sources.join("custom/GitHub_manual.list"), github).unwrap();
+        fs::write(sources.join("custom/Microsoft_manual.list"), microsoft).unwrap();
+        super::consolidate_rulesets(&root).unwrap();
+        for (name, content) in [
+            (
+                "GitHub",
+                "DOMAIN-SUFFIX,jetbrains.com\nDOMAIN-KEYWORD,github\n",
+            ),
+            ("GitHub_extra", "DOMAIN-KEYWORD,github\n"),
+            (
+                "Microsoft",
+                "DOMAIN-SUFFIX,githubusercontent.com\nDOMAIN-SUFFIX,github-cloud.s3.amazonaws.com\nDOMAIN-SUFFIX,microsoftonline.com\nDOMAIN-SUFFIX,windows.net\nDOMAIN,login.microsoftonline.com\n",
+            ),
+            ("AI", "DOMAIN,api.github.com\nDOMAIN,api.ai.test\n"),
+            (
+                "Direct",
+                "DOMAIN,github.com\nDOMAIN-SUFFIX,login.live.com\nDOMAIN,notgithub.com\n",
+            ),
+        ] {
+            fs::write(rules.join(format!("{name}.list")), content).unwrap();
+        }
+        let proxy = fs::read_to_string(rules.join("GlobalProxy.list")).unwrap();
+        fs::write(
+            rules.join("GlobalProxy.list"),
+            format!("{proxy}\nDOMAIN,raw.githubusercontent.com\nDOMAIN,github-cloud.s3.amazonaws.com\nDOMAIN-SUFFIX,s3.amazonaws.com\nDOMAIN,account.live.com\nDOMAIN-SUFFIX,static.microsoft\n"),
+        )
+        .unwrap();
+
+        assert!(
+            validate_category_boundaries(&root)
+                .unwrap()
+                .iter()
+                .any(|error| { error.contains("violates GitHub or Microsoft service ownership") })
+        );
+        enforce_category_boundaries(&root).unwrap();
+        super::split_published_rulesets(&root).unwrap();
+        assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        assert_eq!(
+            read_rules(&rules.join("GitHub.list")).unwrap(),
+            super::parse_rules(github)
+        );
+        assert!(!rules.join("GitHub_extra.list").exists());
+        assert_eq!(
+            read_rules(&rules.join("Microsoft.list")).unwrap(),
+            super::parse_rules(&format!(
+                "{microsoft}DOMAIN-SUFFIX,microsoftonline.com\nDOMAIN-SUFFIX,windows.net\n"
+            ))
+        );
+        assert_eq!(
+            read_rules(&rules.join("AI.list")).unwrap(),
+            super::parse_rules("DOMAIN,api.ai.test\n")
+        );
+        let direct = read_rules(&rules.join("Direct.list")).unwrap();
+        assert_eq!(
+            direct,
+            super::MICROSOFT_SIGN_IN_HOSTS
+                .iter()
+                .map(|host| format!("DOMAIN,{host}"))
+                .chain(std::iter::once("DOMAIN,notgithub.com".to_string()))
+                .collect()
+        );
+        let proxy = read_rules(&rules.join("GlobalProxy.list")).unwrap();
+        assert!(proxy.contains("DOMAIN-SUFFIX,s3.amazonaws.com"));
+        assert!(proxy.contains("DOMAIN-SUFFIX,jetbrains.com"));
+        assert!(!proxy.contains("DOMAIN,raw.githubusercontent.com"));
+        assert!(!proxy.contains("DOMAIN,account.live.com"));
+        assert!(!proxy.contains("DOMAIN-SUFFIX,static.microsoft"));
+        assert!(super::service_ownership::plan(&root).unwrap().is_empty());
         fs::remove_dir_all(root).unwrap();
     }
 
