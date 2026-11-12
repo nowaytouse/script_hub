@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Import and export supported Surge VLESS policies in Subscription Relay. Show the minimum Surge versions before export and stop rather than drop nodes when conversion cannot preserve their settings.
+- Reject directory-style export paths for FlClash on Windows, including paths with a trailing separator under a verbatim prefix.
+
 - Split Microsoft into exact sign-in and service rulesets, include GitHub in the latter, and update public sample exports to use the two current subscriptions.
 
 - Refresh reviewed network-safe Brave, uBO Privacy, uBO Badware and Greek filter subsets without flattening browser-only rules or ambiguous exceptions.

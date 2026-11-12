@@ -1293,10 +1293,12 @@ fn inferred_client(path: &Path) -> Client {
 fn configuration_export_path(path: &Path, client: Client) -> Option<PathBuf> {
     if client == Client::FlClash {
         let filename = path.file_name()?;
-        if !path
-            .as_os_str()
-            .as_encoded_bytes()
-            .ends_with(filename.as_encoded_bytes())
+        let raw = path.as_os_str().as_encoded_bytes();
+        // A verbatim Windows path may treat a trailing slash as filename data.
+        if raw
+            .last()
+            .is_some_and(|&byte| std::path::is_separator(char::from(byte)))
+            || !raw.ends_with(filename.as_encoded_bytes())
             || path.is_dir()
         {
             return None;
@@ -1449,6 +1451,10 @@ mod tests {
         assert!(configuration_export_path(&directory, Client::FlClash).is_none());
         let trailing_separator = PathBuf::from(format!("{}/", fixture.0.join("missing").display()));
         assert!(configuration_export_path(&trailing_separator, Client::FlClash).is_none());
+        #[cfg(windows)]
+        for path in [r"\\?\C:\missing/", r"\\?\C:\missing\"] {
+            assert!(configuration_export_path(Path::new(path), Client::FlClash).is_none());
+        }
         let mut state = flclash_state();
         state.refresh_selection(&ctx);
         assert_eq!(state.subscriptions.len(), 1);

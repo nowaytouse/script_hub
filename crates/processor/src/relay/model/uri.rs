@@ -572,6 +572,18 @@ impl UriNode {
     }
 
     pub(super) fn project(&self, compatibility: bool) -> Result<Value, ModelError> {
+        self.project_with_target(compatibility, false)
+    }
+
+    pub(super) fn project_for_surge(&self) -> Result<Value, ModelError> {
+        self.project_with_target(false, true)
+    }
+
+    fn project_with_target(
+        &self,
+        compatibility: bool,
+        surge_target: bool,
+    ) -> Result<Value, ModelError> {
         let data = self.data.0.as_object().ok_or(ModelError::Unsupported)?;
         if self.vmess {
             return self.project_vmess(compatibility);
@@ -644,7 +656,11 @@ impl UriNode {
             "path",
             "serviceName",
         ];
-        if params.keys().any(|k| !allowed.contains(&k.as_str())) {
+        let surge_vless = surge_target && protocol == "vless";
+        if params.keys().any(|k| {
+            !(allowed.contains(&k.as_str())
+                || surge_vless && matches!(k.as_str(), "spx" | "mode" | "authority"))
+        }) {
             return Err(ModelError::Unsupported);
         }
         if get("encryption").is_some() && protocol != "vless"
@@ -737,8 +753,12 @@ impl UriNode {
         {
             return Err(ModelError::Unsupported);
         }
-        match get("type").unwrap_or("tcp") {
-            "tcp" => {
+        let transport_type = get("type").unwrap_or("tcp");
+        if transport_type != "grpc" && (get("mode").is_some() || get("authority").is_some()) {
+            return Err(ModelError::Unsupported);
+        }
+        match transport_type {
+            "tcp" | "raw" if transport_type == "tcp" || protocol == "vless" => {
                 if ["host", "path", "serviceName"]
                     .iter()
                     .any(|k| get(k).is_some())
@@ -767,11 +787,19 @@ impl UriNode {
                 if let Some(service) = get("serviceName") {
                     transport["service_name"] = service.into();
                 }
+                for key in ["mode", "authority"] {
+                    if let Some(value) = get(key) {
+                        transport[key] = value.into();
+                    }
+                }
                 out["transport"] = transport;
             }
             _ => return Err(ModelError::Unsupported),
         }
-        validate_native(&out, compatibility)?;
+        // Surge uses native TLS for REALITY, even when the link has no uTLS hint.
+        if !surge_vless {
+            validate_native(&out, compatibility)?;
+        }
         Ok(out)
     }
 

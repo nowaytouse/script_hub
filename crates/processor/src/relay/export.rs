@@ -9,6 +9,8 @@ use zeroize::Zeroizing;
 use super::RelayError;
 use super::model::{MAX_CONTENT, ModelError, PrivateJson, Subscription, quote_surge, valid_host};
 
+mod surge_vless;
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum OutputFormat {
@@ -105,9 +107,10 @@ fn surge(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> {
             index: index + 1,
             error,
         };
-        let mut normalized = node.export_sing_box().map_err(at_node)?;
+        let mut normalized = node.export_surge_projection().map_err(at_node)?;
         default_socks_version(&mut normalized.0);
         let line = surge_node(&normalized.0).map_err(at_node)?;
+        surge_vless::normalize(&mut normalized.0);
         if output.len() + line.len() + 1 > MAX_CONTENT {
             return Err(RelayError::Model(ModelError::Render));
         }
@@ -115,7 +118,7 @@ fn surge(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> {
         output.push('\n');
         expected.push(normalized);
     }
-    verify_projection(&output, expected, Subscription::is_surge_policy_list)?;
+    verify_projection(&output, expected, OutputFormat::Surge)?;
     Ok(output)
 }
 
@@ -156,6 +159,10 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
             ("ss", &["method", "password", "network"])
         }
         kind @ ("trojan" | "anytls") => (kind, &["password", "tls"]),
+        "vless" => (
+            "vless",
+            &["uuid", "flow", "packet_encoding", "tls", "transport"],
+        ),
         _ => return Err(ModelError::Unsupported),
     };
     if object
@@ -200,6 +207,10 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
     if kind == "ss" {
         write!(row, ", encrypt-method={}", field("method")?).map_err(|_| ModelError::Render)?;
     }
+    if kind == "vless" {
+        surge_vless::append(source, &mut row)?;
+        return Ok(row);
+    }
     for key in ["username", "password"] {
         if object.contains_key(key) || (key == "password" && kind != "socks5") {
             let value = field(key)?;
@@ -223,48 +234,56 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         {
             return Err(ModelError::Unsupported);
         }
-        if let Some(insecure) = tls.get("insecure") {
-            if insecure.as_bool() != Some(false) {
-                return Err(ModelError::SecurityBlocked);
-            }
-            row.push_str(", skip-cert-verify=false");
-        }
-        if let Some(sni) = tls.get("server_name") {
-            let sni = sni
-                .as_str()
-                .filter(|sni| {
-                    valid_host(sni)
-                        && sni.parse::<std::net::IpAddr>().is_err()
-                        && !sni.eq_ignore_ascii_case("off")
-                })
-                .ok_or(ModelError::Unsupported)?;
-            write!(row, ", sni={sni}").map_err(|_| ModelError::Render)?;
-        }
-        if let Some(alpn) = tls.get("alpn") {
-            let protocols = alpn.as_array().ok_or(ModelError::Unsupported)?;
-            if protocols.is_empty() {
-                return Err(ModelError::Unsupported);
-            }
-            let mut joined = Zeroizing::new(String::new());
-            for value in protocols {
-                let protocol = value
-                    .as_str()
-                    .filter(|value| {
-                        (1..=255).contains(&value.len())
-                            && !value.contains(['#', ','])
-                            && value.bytes().all(|byte| byte.is_ascii_graphic())
-                    })
-                    .ok_or(ModelError::Unsupported)?;
-                if !joined.is_empty() {
-                    joined.push(',');
-                }
-                joined.push_str(protocol);
-            }
-            let quoted = quote_surge(&joined)?;
-            write!(row, ", alpn={}", quoted.as_str()).map_err(|_| ModelError::Render)?;
-        }
+        append_surge_tls_parameters(tls, &mut row)?;
     }
     Ok(row)
+}
+
+fn append_surge_tls_parameters(
+    tls: &serde_json::Map<String, Value>,
+    row: &mut Zeroizing<String>,
+) -> Result<(), ModelError> {
+    if let Some(insecure) = tls.get("insecure") {
+        if insecure.as_bool() != Some(false) {
+            return Err(ModelError::SecurityBlocked);
+        }
+        row.push_str(", skip-cert-verify=false");
+    }
+    if let Some(sni) = tls.get("server_name") {
+        let sni = sni
+            .as_str()
+            .filter(|sni| {
+                valid_host(sni)
+                    && sni.parse::<std::net::IpAddr>().is_err()
+                    && !sni.eq_ignore_ascii_case("off")
+            })
+            .ok_or(ModelError::Unsupported)?;
+        write!(row, ", sni={sni}").map_err(|_| ModelError::Render)?;
+    }
+    if let Some(alpn) = tls.get("alpn") {
+        let protocols = alpn.as_array().ok_or(ModelError::Unsupported)?;
+        if protocols.is_empty() {
+            return Err(ModelError::Unsupported);
+        }
+        let mut joined = Zeroizing::new(String::new());
+        for value in protocols {
+            let protocol = value
+                .as_str()
+                .filter(|value| {
+                    (1..=255).contains(&value.len())
+                        && !value.contains(['#', ','])
+                        && value.bytes().all(|byte| byte.is_ascii_graphic())
+                })
+                .ok_or(ModelError::Unsupported)?;
+            if !joined.is_empty() {
+                joined.push(',');
+            }
+            joined.push_str(protocol);
+        }
+        let quoted = quote_surge(&joined)?;
+        write!(row, ", alpn={}", quoted.as_str()).map_err(|_| ModelError::Render)?;
+    }
+    Ok(())
 }
 
 pub(super) fn is_surge_builtin_name(name: &str) -> bool {
@@ -315,25 +334,38 @@ fn mihomo(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> 
         expected.push(normalized);
     }
     let output = export_text(&output)?;
-    verify_projection(&output, expected, Subscription::is_mihomo_provider)?;
+    verify_projection(&output, expected, OutputFormat::Mihomo)?;
     Ok(output)
 }
 
 fn verify_projection(
     output: &str,
     expected: Vec<PrivateJson>,
-    matches_format: fn(&Subscription) -> bool,
+    format: OutputFormat,
 ) -> Result<(), RelayError> {
     let roundtrip =
         Subscription::parse(output).map_err(|_| RelayError::Model(ModelError::Render))?;
-    if !matches_format(&roundtrip) || roundtrip.nodes().len() != expected.len() {
+    let surge = format == OutputFormat::Surge;
+    let matches_format = if surge {
+        roundtrip.is_surge_policy_list()
+    } else {
+        roundtrip.is_mihomo_provider()
+    };
+    if !matches_format || roundtrip.nodes().len() != expected.len() {
         return Err(RelayError::Model(ModelError::Render));
     }
     for (index, (node, original)) in roundtrip.nodes().iter().zip(expected).enumerate() {
-        if !node
-            .export_sing_box()
-            .is_ok_and(|value| value.0 == original.0)
-        {
+        let projected = if surge {
+            node.export_surge_projection()
+        } else {
+            node.export_sing_box()
+        };
+        if !projected.is_ok_and(|mut value| {
+            if surge {
+                surge_vless::normalize(&mut value.0);
+            }
+            value.0 == original.0
+        }) {
             return Err(RelayError::ExportNode {
                 index: index + 1,
                 error: ModelError::Unsupported,
@@ -406,6 +438,13 @@ fn export_text(output: &[u8]) -> Result<Zeroizing<String>, RelayError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const VLESS_LINKS: &str = concat!(
+        "vless://11111111-1111-4111-8111-111111111111@raw.example.invalid:443?security=tls&flow=xtls-rprx-vision#VLESS%20Vision\n",
+        "vless://11111111-1111-4111-8111-111111111111@reality.example.invalid:443?security=reality&flow=xtls-rprx-vision&sni=identity.example.invalid&fp=chrome&pbk=dwrjY6KiAMPxKdlF7T4AWFXXBtsxeHCXtBQYeCOdZV4&sid=0123456789abcdef#VLESS%20REALITY\n",
+        "vless://11111111-1111-4111-8111-111111111111@ws.example.invalid:443?security=tls&type=ws&path=%2Fsocket&host=front.example.invalid#VLESS%20WS\n",
+        "vless://11111111-1111-4111-8111-111111111111@grpc.example.invalid:443?security=tls&type=grpc&serviceName=fixture&mode=multi&authority=front.example.invalid#VLESS%20gRPC\n",
+    );
 
     #[test]
     fn verified_proxy_chain_roundtrips_between_surge_mihomo_and_sing_box() {
@@ -562,6 +601,7 @@ mod tests {
 
         let policies = export_subscription(SURGE_CONVERSION, OutputFormat::Surge).unwrap();
         let anytls = export_subscription(ANYTLS_JSON, OutputFormat::Surge).unwrap();
+        let vless = export_subscription(VLESS_LINKS, OutputFormat::Surge).unwrap();
         let chain = export_subscription(
             r#"[{"type":"socks","tag":"Entry","server":"entry.example.invalid","server_port":1080},
                 {"type":"socks","tag":"Exit","server":"exit.example.invalid","server_port":1080,"detour":"Entry"}]"#,
@@ -591,8 +631,8 @@ mod tests {
         let mut profile = std::fs::File::create_new(&path).unwrap();
         write!(
             profile,
-            "[Proxy]\n{}{}{}\n[Proxy Group]\n{group}\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS, Exit, 东京 🇯🇵\n[Rule]\nFINAL,Check\n",
-            policies.as_str(), anytls.as_str(), chain.as_str()
+            "[Proxy]\n{}{}{}{}\n[Proxy Group]\n{group}\nCheck = select, Tokyo SOCKS, Shadowsocks, Trojan, Strict AnyTLS, Exit, VLESS Vision, VLESS REALITY, VLESS WS, VLESS gRPC, 东京 🇯🇵\n[Rule]\nFINAL,Check\n",
+            policies.as_str(), anytls.as_str(), chain.as_str(), vless.as_str()
         )
         .unwrap();
         drop(profile);
@@ -758,11 +798,85 @@ mod tests {
 
     #[test]
     fn surge_export_rejects_shadowrocket_only_policy() {
-        let foreign = "alpha = vless, example.com, 443, username=synthetic\n";
+        let foreign = "alpha = ssr, example.invalid, 443, password=synthetic\n";
         assert!(matches!(
             export_subscription(foreign, OutputFormat::Surge),
             Err(RelayError::ExportNode { index: 1, .. })
         ));
+    }
+
+    #[test]
+    fn surge_vless_preserves_supported_transport_and_reality_settings() {
+        let output = export_subscription(VLESS_LINKS, OutputFormat::Surge).unwrap();
+        let rows: Vec<_> = output.lines().collect();
+        assert_eq!(rows.len(), 4);
+        assert!(rows[0].contains(", tls=true, flow=xtls-rprx-vision"));
+        assert!(rows[1].contains(", reality-public-key="));
+        assert!(
+            rows[1]
+                .contains(", reality-short-id=\"0123456789abcdef\", sni=identity.example.invalid")
+        );
+        assert!(!rows[1].contains(", tls=true"));
+        assert!(
+            rows[2].contains(
+                ", ws=true, ws-path=\"/socket\", ws-headers=\"Host:front.example.invalid\""
+            )
+        );
+        assert!(rows[3].contains(", grpc=true, grpc-service-name=\"fixture\", grpc-mode=multi, grpc-authority=\"front.example.invalid\""));
+        assert_eq!(
+            export_subscription(&output, OutputFormat::Surge)
+                .unwrap()
+                .as_str(),
+            output.as_str()
+        );
+    }
+
+    #[test]
+    fn surge_vless_converts_mihomo_headers_and_explicit_default_xudp() {
+        let provider = r#"proxies:
+  - {name: WS, type: vless, server: example.invalid, port: 443, uuid: fixture, udp: true, network: ws, ws-opts: {path: /socket, headers: {host: front.example.invalid, X-Test: fixture}}}
+"#;
+        let output = export_subscription(provider, OutputFormat::Surge).unwrap();
+        assert!(output.contains("ws-headers=\"X-Test:fixture|host:front.example.invalid\""));
+        let sing_box = r#"[{"type":"vless","tag":"XUDP","server":"example.invalid","server_port":443,"uuid":"fixture","packet_encoding":"xudp","tls":{"enabled":false}}]"#;
+        let output = export_subscription(sing_box, OutputFormat::Surge).unwrap();
+        assert_eq!(
+            output.as_str(),
+            "XUDP = vless, example.invalid, 443, username=\"fixture\"\n"
+        );
+    }
+
+    #[test]
+    fn surge_vless_conversion_refuses_unsupported_or_unsafe_options_without_dropping_nodes() {
+        let first = VLESS_LINKS.lines().next().unwrap();
+        for (query, expected) in [
+            ("security=tls&type=xhttp", ModelError::Unsupported),
+            ("security=none&type=grpc", ModelError::Unsupported),
+            (
+                "security=none&flow=xtls-rprx-vision",
+                ModelError::Unsupported,
+            ),
+            (
+                "security=tls&type=ws&flow=xtls-rprx-vision",
+                ModelError::Unsupported,
+            ),
+            ("security=tls&fp=firefox", ModelError::Unsupported),
+            ("security=tls&allowInsecure=1", ModelError::SecurityBlocked),
+        ] {
+            let input = format!(
+                "{first}\nvless://synthetic@blocked.example.invalid:443?{query}#Private%20fixture\n"
+            );
+            let error = export_subscription(&input, OutputFormat::Surge).unwrap_err();
+            assert!(
+                matches!(error, RelayError::ExportNode { index: 2, error } if error == expected)
+            );
+            assert_eq!(
+                export_subscription(&input, OutputFormat::Original)
+                    .unwrap()
+                    .as_str(),
+                input
+            );
+        }
     }
 
     #[test]

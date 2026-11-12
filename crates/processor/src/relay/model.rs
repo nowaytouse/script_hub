@@ -19,7 +19,10 @@ pub mod pipeline;
 pub mod properties;
 pub mod script;
 mod script_regex;
+mod surge_vless;
 mod uri;
+
+pub(super) use surge_vless::{valid_surge_reality_key, valid_surge_reality_short_id};
 
 pub(super) const MAX_CONTENT: usize = 4 * 1024 * 1024;
 
@@ -275,7 +278,37 @@ impl Node {
         };
         // The common line grammar alone cannot distinguish Shadowrocket-only options
         // or enforce the same TLS policy as a converted Surge export.
+        if self.protocol() == "vless" {
+            return self.export_surge_projection().map(drop);
+        }
         self.project_surge(source, false).map(PrivateJson).map(drop)
+    }
+
+    pub(super) fn export_surge_projection(&self) -> Result<PrivateJson, ModelError> {
+        if self.protocol() == "vless" {
+            match &self.source {
+                NodeSource::Surge(source) => {
+                    let mut value = PrivateJson(surge_vless::project(
+                        self,
+                        &surge_fields(source)?,
+                        false,
+                        true,
+                    )?);
+                    if let Some(dependency) = &self.dependency {
+                        value.0["detour"] = dependency.as_str().into();
+                    }
+                    return Ok(value);
+                }
+                NodeSource::Uri(source) => {
+                    if self.dependency.is_some() {
+                        return Err(ModelError::Unsupported);
+                    }
+                    return source.project_for_surge().map(PrivateJson);
+                }
+                _ => {}
+            }
+        }
+        self.export_sing_box()
     }
 
     pub fn to_probe_sing_box(&self, compatibility: bool) -> Result<(Value, bool), ModelError> {
@@ -316,19 +349,10 @@ impl Node {
     }
 
     fn project_surge(&self, source: &SurgeNode, compatibility: bool) -> Result<Value, ModelError> {
-        if uncertain_identity(source).iter().any(Option::is_some)
-            || source
-                .fields
-                .iter()
-                .any(|field| uncertain_token(source, field.value_range.clone()).is_some())
-        {
-            return Err(ModelError::Unsupported);
+        let fields = surge_fields(source)?;
+        if self.protocol() == "vless" {
+            return surge_vless::project(self, &fields, compatibility, false);
         }
-        let fields: HashMap<&str, &str> = source
-            .fields
-            .iter()
-            .map(|field| (field.key.as_str(), field.value.as_str()))
-            .collect();
         let boolean = |key: &str| -> Result<Option<bool>, ModelError> {
             fields.get(key).map(|value| parse_bool(value)).transpose()
         };
@@ -1271,6 +1295,22 @@ fn uncertain_token(source: &SurgeNode, range: Range<usize>) -> Option<&str> {
     None
 }
 
+fn surge_fields(source: &SurgeNode) -> Result<HashMap<&str, &str>, ModelError> {
+    if uncertain_identity(source).iter().any(Option::is_some)
+        || source
+            .fields
+            .iter()
+            .any(|field| uncertain_token(source, field.value_range.clone()).is_some())
+    {
+        return Err(ModelError::Unsupported);
+    }
+    Ok(source
+        .fields
+        .iter()
+        .map(|field| (field.key.as_str(), field.value.as_str()))
+        .collect())
+}
+
 fn required_field<'a>(fields: &'a HashMap<&str, &str>, key: &str) -> Result<&'a str, ModelError> {
     fields
         .get(key)
@@ -1539,7 +1579,7 @@ fn parse_surge(input: &str) -> Result<(Vec<Node>, Dialect), ModelError> {
             let equal = range.start + relative;
             let key = line[range.start..equal].trim().to_lowercase();
             if !valid_label(&key)
-                || dangerous_key(&key)
+                || (dangerous_key(&key) && !(protocol.as_str() == "vless" && key == "ws-path"))
                 || (!keys.insert(key.clone()) && !(external && key == "args"))
             {
                 return Err(ModelError::InvalidInput);

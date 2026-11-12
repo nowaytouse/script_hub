@@ -248,6 +248,9 @@ fn format_picker(
             .response
             .labelled_by(label_widget.id);
     });
+    if *selected == OutputFormat::Surge {
+        ui.weak(tr(Text::RelayExportSurgeVlessHelp));
+    }
 }
 
 fn incompatible_format(state: &RelayState, format: OutputFormat) -> bool {
@@ -866,6 +869,17 @@ mod tests {
             let nodes = render(&mut state, Tab::Local, dark);
             assert!(nodes.contains(&(text(Language::En, Text::RelayCopy).to_owned(), false)));
         }
+    }
+
+    #[test]
+    fn surge_vless_requirements_are_visible_for_local_and_gist_output() {
+        let mut state = prepared();
+        let help = text(Language::En, Text::RelayExportSurgeVlessHelp).to_owned();
+        assert!(!render(&mut state, Tab::Local, false).contains(&(help.clone(), false)));
+        state.output_format = OutputFormat::Surge;
+        assert!(render(&mut state, Tab::Local, false).contains(&(help.clone(), false)));
+        state.publish_format = OutputFormat::Surge;
+        assert!(render(&mut state, Tab::Gist, false).contains(&(help, false)));
     }
 
     #[test]

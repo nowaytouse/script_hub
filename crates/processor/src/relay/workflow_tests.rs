@@ -1035,6 +1035,33 @@ fn conversion_failure_cannot_begin_a_gist_write() {
 }
 
 #[test]
+fn incompatible_vless_stays_in_preview_and_cannot_start_a_gist_write() {
+    let mut config = config();
+    config.source.clear();
+    config.output.clear();
+    let input = "vless://fixture@node.example.invalid:443?type=xhttp&security=tls#Fixture";
+    config.local_content = Some(Zeroizing::new(input.into()));
+    config.test_nodes = false;
+    config.output_format = export::OutputFormat::Surge;
+    let fixture = Fixture::new(vec![]);
+    let cancel = AtomicBool::new(false);
+    let preview = run_with(
+        &config,
+        &fixture.client(),
+        RunMode::Preview,
+        &cancel,
+        &|_| {},
+        &check,
+    )
+    .unwrap();
+    assert!(matches!(
+        upload_with(&config, &fixture.client(), preview, &cancel, &|_| {}),
+        Err(RelayError::ExportNode { index: 1, .. })
+    ));
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn unsafe_native_surge_preview_cannot_publish_to_gist() {
     let mut config = config();
     config.source.clear();

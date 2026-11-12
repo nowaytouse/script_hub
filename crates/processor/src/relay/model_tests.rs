@@ -960,6 +960,100 @@ fn common_surge_protocols_project_only_faithful_known_fields() {
 }
 
 #[test]
+fn surge_vless_ws_preserves_transport_and_enables_xudp_for_sing_box() {
+    let source = "W = vless, node.example.invalid, 443, username=11111111-1111-4111-8111-111111111111, tls=true, sni=identity.example.invalid, ws=true, ws-path=/v2, ws-headers=Host:front.example.invalid|X-Fixture:synthetic\n";
+    let subscription = Subscription::parse(source).unwrap();
+    let node = &subscription.nodes()[0];
+    let projected = node.to_sing_box(false).unwrap();
+    assert_eq!(projected["packet_encoding"], "xudp");
+    assert_eq!(
+        projected["transport"],
+        json!({"type":"ws","path":"/v2","headers":{"Host":"front.example.invalid","X-Fixture":"synthetic"}})
+    );
+    assert_eq!(projected["tls"]["server_name"], "identity.example.invalid");
+    assert!(node.validate_native_surge_export().is_ok());
+}
+
+#[test]
+fn surge_native_reality_and_grpc_only_options_do_not_invent_probe_settings() {
+    let key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    let source = format!(
+        "R = vless, node.example.invalid, 443, username=11111111-1111-4111-8111-111111111111, sni=identity.example.invalid, reality-public-key={key}, reality-short-id=0011, flow=xtls-rprx-vision\nG = vless, node.example.invalid, 443, username=fixture, tls=true, grpc=true, grpc-service-name=fixture, grpc-mode=multi, grpc-authority=front.example.invalid\n"
+    );
+    let subscription = Subscription::parse(&source).unwrap();
+    for node in subscription.nodes() {
+        assert!(node.validate_native_surge_export().is_ok());
+        assert!(matches!(
+            node.to_probe_sing_box(false),
+            Err(ModelError::Unsupported)
+        ));
+    }
+    let reality = subscription.nodes()[0].export_surge_projection().unwrap();
+    assert_eq!(reality.0["tls"]["reality"]["public_key"], key);
+    assert!(reality.0["tls"].get("utls").is_none());
+    let grpc = subscription.nodes()[1].export_surge_projection().unwrap();
+    assert_eq!(grpc.0["transport"]["mode"], "multi");
+    assert_eq!(grpc.0["transport"]["authority"], "front.example.invalid");
+}
+
+#[test]
+fn malformed_or_incompatible_surge_vless_remains_unmodified_in_original() {
+    for options in [
+        "grpc=true",
+        "tls=true, ws=true, flow=xtls-rprx-vision",
+        "ws-path=/ignored",
+        "reality-short-id=0011",
+        "reality-public-key=not-base64, sni=identity.example.invalid",
+        "encryption=unsupported",
+        "ws=true, ws-headers=Host:a.example.invalid|host:b.example.invalid",
+    ] {
+        let source = format!(
+            "N = vless, node.example.invalid, 443, username=11111111-1111-4111-8111-111111111111, {options}\n"
+        );
+        let subscription = Subscription::parse(&source).unwrap();
+        assert_eq!(
+            subscription.nodes()[0].validate_native_surge_export(),
+            Err(ModelError::Unsupported)
+        );
+        assert_eq!(
+            subscription
+                .render(&[Health::Unknown], &unchanged())
+                .unwrap()
+                .as_str(),
+            source
+        );
+    }
+    let insecure = Subscription::parse(
+        "N = vless, node.example.invalid, 443, username=fixture, tls=true, skip-cert-verify=true",
+    )
+    .unwrap();
+    assert_eq!(
+        insecure.nodes()[0].validate_native_surge_export(),
+        Err(ModelError::SecurityBlocked)
+    );
+    assert!(
+        Subscription::parse("N = socks5, node.example.invalid, 1080, ws-path=/fixture").is_err()
+    );
+}
+
+#[test]
+fn vless_uri_can_project_surge_reality_without_utls_and_native_grpc_options() {
+    let key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    let source = format!(
+        "vless://11111111-1111-4111-8111-111111111111@node.example.invalid:443?type=raw&security=reality&sni=identity.example.invalid&pbk={key}&spx=%2F#R\nvless://fixture@node.example.invalid:443?type=grpc&security=tls&serviceName=fixture&mode=multi&authority=front.example.invalid#G\n"
+    );
+    let subscription = Subscription::parse(&source).unwrap();
+    let reality = subscription.nodes()[0].export_surge_projection().unwrap();
+    assert_eq!(reality.0["tls"]["reality"]["public_key"], key);
+    assert!(reality.0["tls"].get("utls").is_none());
+    let grpc = subscription.nodes()[1].export_surge_projection().unwrap();
+    assert_eq!(
+        grpc.0["transport"],
+        json!({"type":"grpc","service_name":"fixture","mode":"multi","authority":"front.example.invalid"})
+    );
+}
+
+#[test]
 fn duplicate_json_keys_cannot_hide_credentials_or_routing_settings() {
     assert!(Subscription::parse(r#"[{"type":"anytls","tag":"A","server":"a.example.invalid","server_port":443,"password":"one","password":"two"}]"#).is_err());
     assert!(Subscription::parse(r#"{"outbounds":[],"outbounds":[]}"#).is_err());
