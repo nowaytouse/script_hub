@@ -14,11 +14,6 @@ pub const MICROSOFT_SIGN_IN_HOSTS: &[&str] = &[
 const MICROSOFT_MANIFEST: &str = "rulesets/Sources/Links/Microsoft_proxy_sources.list";
 const GITHUB_OWNERS: &str = "rulesets/Sources/custom/GitHub_manual.list";
 const MICROSOFT_OWNERS: &str = "rulesets/Sources/custom/Microsoft_manual.list";
-const PREVIOUS_DEV_RULES: &[&str] = &[
-    "DOMAIN-SUFFIX,jetbrains.com",
-    "DOMAIN-SUFFIX,stackexchange.com",
-    "DOMAIN-SUFFIX,stackoverflow.com",
-];
 
 pub(super) struct Change {
     pub(super) name: String,
@@ -62,7 +57,6 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
     let microsoft = reviewed_domains(root, MICROSOFT_OWNERS, "DOMAIN-SUFFIX,cloud.microsoft")?;
 
     let directory = root.join("rulesets/RULE-SET");
-    let previous_github = read_optional_rules(&directory.join("GitHub.list"))?;
     let github_boundary = RuleBoundary::from_rules(&github);
     let microsoft_boundary = RuleBoundary::from_rules(&microsoft);
     if microsoft
@@ -84,7 +78,6 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
     };
     let proxy_path = directory.join("Microsoft_proxy.list");
     let mut proxy = read_optional_rules(&proxy_path)?;
-    proxy.extend(read_optional_rules(&directory.join("Microsoft.list"))?);
     proxy.retain(|rule| !is_github(rule) && !sign_in_rule(rule));
     proxy.extend(github);
     proxy.extend(microsoft);
@@ -101,18 +94,6 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
                 path,
                 rules,
             });
-        }
-    }
-    for suffix in ["_ip", "_extra"] {
-        let name = format!("Microsoft_proxy{suffix}");
-        let path = directory.join(format!("{name}.list"));
-        let mut rules = read_optional_rules(&path)?;
-        let initial_count = rules.len();
-        rules.extend(read_optional_rules(
-            &directory.join(format!("Microsoft{suffix}.list")),
-        )?);
-        if rules.len() != initial_count {
-            changes.push(Change { name, path, rules });
         }
     }
 
@@ -153,15 +134,7 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
         rules.retain(|rule| {
             !is_github(rule) && !microsoft_boundary.covers(rule) && !sign_in_rule(rule)
         });
-        let mut changed = initial_count != rules.len();
-        if name == "GlobalProxy" {
-            for &rule in PREVIOUS_DEV_RULES {
-                if previous_github.contains(rule) {
-                    changed |= rules.insert(rule.to_string());
-                }
-            }
-        }
-        if changed {
+        if initial_count != rules.len() {
             changes.push(Change { name, path, rules });
         }
     }

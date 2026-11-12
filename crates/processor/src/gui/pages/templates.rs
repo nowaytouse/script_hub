@@ -86,9 +86,6 @@ impl HubApp {
                         if mode != previous_mode {
                             state.prepare_mode = mode == 2;
                             state.creating = mode == 1;
-                            if mode != 0 {
-                                state.use_originals = false;
-                            }
                             state.clear_passwords(ui.ctx());
                             state.error = None;
                             state.notice = None;
@@ -130,6 +127,11 @@ impl HubApp {
                                     Client::FlClash,
                                     "FlClash",
                                 );
+                                ui.selectable_value(
+                                    &mut state.import_client,
+                                    Client::SingBox,
+                                    "sing-box",
+                                );
                             });
                             ui.label(tr(Text::VaultPreparePublic));
                             ui.monospace(&state.prepare_public);
@@ -138,24 +140,13 @@ impl HubApp {
                         } else {
                             if !state.creating {
                                 ui.horizontal_wrapped(|ui| {
-                                    if ui
-                                        .selectable_label(
-                                            !state.use_originals,
-                                            tr(Text::VaultLibraryTemplates),
-                                        )
-                                        .clicked()
-                                    {
-                                        state.select_library(false, ui.ctx());
+                                    if ui.button(tr(Text::VaultLibraryBundled)).clicked() {
+                                        state.select_bundled_library(ui.ctx());
                                     }
-                                    if state.originals_available()
-                                        && ui
-                                            .selectable_label(
-                                                state.use_originals,
-                                                tr(Text::VaultLibraryOriginals),
-                                            )
-                                            .clicked()
+                                    if state.private_library_available()
+                                        && ui.button(tr(Text::VaultLibraryTemplates)).clicked()
                                     {
-                                        state.select_library(true, ui.ctx());
+                                        state.select_private_library(ui.ctx());
                                     }
                                 });
                                 ui.weak(tr(Text::VaultImportEncryptedHint));
@@ -274,6 +265,7 @@ impl HubApp {
                             "Shadowrocket",
                         );
                         ui.selectable_value(&mut state.import_client, Client::FlClash, "FlClash");
+                        ui.selectable_value(&mut state.import_client, Client::SingBox, "sing-box");
                         ui.selectable_value(
                             &mut state.import_client,
                             Client::Other,
@@ -355,6 +347,11 @@ impl HubApp {
                             ui.selectable_value(&mut state.edit_client, Client::FlClash, "FlClash");
                             ui.selectable_value(
                                 &mut state.edit_client,
+                                Client::SingBox,
+                                "sing-box",
+                            );
+                            ui.selectable_value(
+                                &mut state.edit_client,
                                 Client::Other,
                                 tr(Text::VaultOther),
                             );
@@ -388,11 +385,12 @@ impl HubApp {
                 }
                 card(ui, colors, |ui| {
                     ui.label(RichText::new(tr(Text::VaultConfigure)).strong());
-                    let fl_clash = state
-                        .selected_template()
-                        .is_some_and(|template| template.client == Client::FlClash);
+                    let client = state.selected_template().map(|template| template.client);
+                    let fl_clash = client == Some(Client::FlClash);
                     if fl_clash {
                         ui.weak(tr(Text::VaultFlClashHelp));
+                    } else if client == Some(Client::SingBox) {
+                        ui.weak(tr(Text::VaultSingBoxHelp));
                     }
                     for (index, (slot, value)) in state.subscriptions.iter_mut().enumerate() {
                         let label = if slot.is_empty() {
@@ -483,10 +481,10 @@ impl HubApp {
                         egui::TextEdit::singleline(&mut state.export_path)
                             .id_salt("vault-export-path")
                             .desired_width(f32::INFINITY)
-                            .hint_text(tr(if fl_clash {
-                                Text::VaultExportYamlHint
-                            } else {
-                                Text::VaultExportHint
+                            .hint_text(tr(match client {
+                                Some(Client::FlClash) => Text::VaultExportYamlHint,
+                                Some(Client::SingBox) => Text::VaultExportJsonHint,
+                                _ => Text::VaultExportHint,
                             })),
                     );
                     if fl_clash {
@@ -543,6 +541,7 @@ fn client_label(language: Language, client: Client) -> &'static str {
         Client::Surge => "Surge",
         Client::Shadowrocket => "Shadowrocket",
         Client::FlClash => "FlClash",
+        Client::SingBox => "sing-box",
         Client::Other => text(language, Text::VaultOther),
     }
 }
@@ -609,8 +608,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn flclash_is_visible_in_preparation_import_editing_and_template_labels() {
+    fn structured_clients_are_visible_in_preparation_import_editing_and_template_labels() {
         assert_eq!(client_label(Language::En, Client::FlClash), "FlClash");
+        assert_eq!(client_label(Language::En, Client::SingBox), "sing-box");
         for workflow in 0..3 {
             let ctx = egui::Context::default();
             ctx.enable_accesskit();
@@ -648,22 +648,25 @@ mod tests {
                     egui::CentralPanel::default().show(ui, |ui| app.templates_page(ui));
                 },
             );
-            let count = output
+            let nodes = &output
                 .platform_output
                 .accesskit_update
                 .as_ref()
                 .unwrap()
-                .nodes
-                .iter()
-                .filter(|(_, node)| node.label() == Some("FlClash"))
-                .count();
+                .nodes;
+            let expected_selectors = if workflow == 2 { 2 } else { 1 };
+            for name in ["FlClash", "sing-box"] {
+                let count = nodes
+                    .iter()
+                    .filter(|(_, node)| node.label() == Some(name))
+                    .count();
+                assert!(
+                    count >= expected_selectors,
+                    "workflow {workflow}: {count} {name} labels"
+                );
+            }
             output.platform_output.accesskit_update = None;
             output.drop_without_applying_deltas();
-            let expected_selectors = if workflow == 2 { 2 } else { 1 };
-            assert!(
-                count >= expected_selectors,
-                "workflow {workflow}: {count} FlClash labels"
-            );
         }
     }
 

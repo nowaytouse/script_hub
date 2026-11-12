@@ -11,7 +11,7 @@ use eframe::egui;
 use zeroize::{Zeroize, Zeroizing};
 
 use super::i18n::Text;
-use crate::vault::managed::{ManagedStore, valid_library};
+use crate::vault::managed::ManagedStore;
 use crate::vault::{self, Client, Library, Template, UnlockedVault};
 
 const IDLE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
@@ -58,13 +58,10 @@ pub(super) struct TemplateState {
     last_activity: Instant,
     sidecar_checked: bool,
     project_checked: Option<PathBuf>,
-    legacy_checked: Option<PathBuf>,
     store: Option<ManagedStore>,
     template_path: Option<PathBuf>,
-    originals_path: Option<PathBuf>,
     file_stamps: BTreeMap<PathBuf, (u64, SystemTime)>,
     external_vault: bool,
-    pub use_originals: bool,
     explicit_prepare: bool,
     imports: Vec<PathBuf>,
 }
@@ -119,13 +116,10 @@ impl Default for TemplateState {
             last_activity: Instant::now(),
             sidecar_checked: false,
             project_checked: None,
-            legacy_checked: None,
             store: None,
             template_path: None,
-            originals_path: None,
             file_stamps: BTreeMap::new(),
             external_vault: false,
-            use_originals: false,
             explicit_prepare: false,
             imports: Vec::new(),
         }
@@ -162,61 +156,33 @@ impl TemplateState {
         }
         self.sidecar_checked = true;
         if self.path.is_empty()
-            && let Ok(executable) = std::env::current_exe()
-            && let Some(path) = bundled_vault(&executable)
-            && matches!(valid_library(&path), Ok(true))
+            && let Some(path) = self.current_bundled_path()
         {
-            self.template_path = Some(path.clone());
             self.path = path.to_string_lossy().into_owned();
         }
     }
 
     pub(super) fn visit_project(&mut self, project: &Path) {
-        #[cfg(not(test))]
-        let legacy = match crate::runtime::settings::preferences_path() {
-            Ok(path) => path
-                .parent()
-                .map(|parent| parent.join("vaults/originals.vault")),
-            Err(_) => {
-                self.error = Some(
-                    "The previous encrypted vault location could not be determined safely."
-                        .to_owned(),
-                );
-                None
-            }
-        };
-        // Unit tests must never inspect the user's real application-data directory.
-        #[cfg(test)]
-        let legacy: Option<PathBuf> = None;
-        self.visit_project_with_legacy(project, legacy.as_deref());
-    }
-
-    fn visit_project_with_legacy(&mut self, project: &Path, legacy: Option<&Path>) {
         // An unlocked or still-running session keeps its original save scope until it is locked.
         if self.unlocked() || self.busy() {
             self.prune_pinned_records();
             return;
         }
-        if self.project_checked.as_deref() == Some(project) && self.store.is_some() {
-            let selected = Path::new(&self.path);
-            let regular = |path: &Path| {
-                std::fs::symlink_metadata(path)
-                    .is_ok_and(|metadata| metadata.is_file() && !vault::is_link(&metadata))
-            };
-            let originals_stale = self
-                .originals_path
-                .as_deref()
-                .is_some_and(|path| !regular(path));
-            if (self.external_vault || self.path.is_empty() || regular(selected))
-                && !originals_stale
-                && !self.cached_files_changed()
-            {
-                return;
-            }
+        let same_project = self.project_checked.as_deref() == Some(project);
+        let selected = Path::new(&self.path);
+        if same_project
+            && self.store.is_some()
+            && (self.external_vault
+                || self.path.is_empty()
+                || std::fs::symlink_metadata(selected)
+                    .is_ok_and(|metadata| metadata.is_file() && !vault::is_link(&metadata)))
+            && !self.cached_files_changed()
+        {
+            return;
         }
+        let private_selected = same_project && self.template_path.as_deref() == Some(selected);
         self.project_checked = Some(project.to_owned());
         self.store = None;
-        self.originals_path = None;
         self.template_path = None;
         self.file_stamps.clear();
         if !self.external_vault {
@@ -227,28 +193,18 @@ impl TemplateState {
             Ok(store) if writable_template_destination(&store.library(false)) => store,
             Ok(_) => {
                 self.error = Some(APP_ASSET_ERROR.to_owned());
+                self.visit();
                 return;
             }
             Err(error) => {
                 self.error = Some(error.to_string());
+                self.visit();
                 return;
             }
         };
-        let check_legacy = self.legacy_checked.as_deref() != Some(project);
-        self.legacy_checked = Some(project.to_owned());
-        let restored = store.restore().and_then(|locations| {
-            if check_legacy
-                && let Some(source) = legacy
-                && store.migrate_legacy_originals(source)?
-            {
-                return store.restore();
-            }
-            Ok(locations)
-        });
-        let locations = match restored {
-            Ok(locations) => locations,
+        self.template_path = match store.restore() {
+            Ok(path) => path,
             Err(error) => {
-                self.store = None;
                 self.error = Some(error.to_string());
                 self.visit();
                 return;
@@ -258,23 +214,12 @@ impl TemplateState {
             self.prepare_public = store.public().to_string_lossy().into_owned();
             self.prepare_backup = store.library(true).to_string_lossy().into_owned();
         }
-        self.originals_path = locations.originals;
-        self.template_path = locations.library;
-        if self.template_path.is_none() {
-            match valid_library(&store.public()) {
-                Ok(true) => self.template_path = Some(store.public()),
-                Ok(false) => {}
-                Err(error) => self.error = Some(error.to_string()),
-            }
-        }
         self.store = Some(store);
-        if !self.external_vault {
-            self.use_originals = false;
-            self.path = self
-                .template_path
-                .as_ref()
-                .map_or_else(String::new, |path| path.to_string_lossy().into_owned());
-            self.sidecar_checked = false;
+        if !self.external_vault
+            && private_selected
+            && let Some(path) = &self.template_path
+        {
+            self.path = path.to_string_lossy().into_owned();
         }
         self.visit();
         self.refresh_file_stamps();
@@ -287,14 +232,11 @@ impl TemplateState {
         }
         if self.project_checked.is_some() || self.store.is_some() {
             self.project_checked = None;
-            self.legacy_checked = None;
             self.store = None;
             self.template_path = None;
-            self.originals_path = None;
             self.file_stamps.clear();
             if !self.external_vault {
                 self.path.clear();
-                self.use_originals = false;
                 self.sidecar_checked = false;
             }
             if !self.explicit_prepare {
@@ -306,49 +248,33 @@ impl TemplateState {
     }
 
     fn prune_pinned_records(&mut self) {
-        if let Some(store) = &self.store {
-            let stale = |cached: &Option<PathBuf>, originals| {
-                cached.as_deref().is_some_and(|path| {
-                    path == store.library(originals)
-                        && !std::fs::symlink_metadata(path)
-                            .is_ok_and(|metadata| metadata.is_file() && !vault::is_link(&metadata))
-                })
-            };
-            let template_stale = stale(&self.template_path, false);
-            let originals_stale = stale(&self.originals_path, true);
-            if template_stale || originals_stale {
-                match store.prune_missing() {
-                    Ok(locations) => {
-                        if template_stale {
-                            self.template_path = locations.library;
-                            self.file_stamps.remove(&store.library(false));
-                        }
-                        if originals_stale {
-                            self.originals_path = locations.originals;
-                            self.file_stamps.remove(&store.library(true));
-                        }
-                    }
-                    Err(error) => self.error = Some(error.to_string()),
+        if let Some(store) = &self.store
+            && let Some(path) = &self.template_path
+            && path == &store.library(false)
+            && !std::fs::symlink_metadata(path)
+                .is_ok_and(|metadata| metadata.is_file() && !vault::is_link(&metadata))
+        {
+            match store.prune_missing() {
+                Ok(library) => {
+                    self.file_stamps.remove(path);
+                    self.template_path = library;
                 }
+                Err(error) => self.error = Some(error.to_string()),
             }
         }
     }
 
     fn cached_files_changed(&self) -> bool {
         // shortcut: length/mtime detects ordinary edits; add file events if metadata-preserving changes must be noticed before unlock.
-        self.template_path
-            .iter()
-            .chain(self.originals_path.iter())
-            .any(|path| {
-                file_stamp(path).is_none_or(|stamp| self.file_stamps.get(path) != Some(&stamp))
-            })
+        self.template_path.iter().any(|path| {
+            file_stamp(path).is_none_or(|stamp| self.file_stamps.get(path) != Some(&stamp))
+        })
     }
 
     fn refresh_file_stamps(&mut self) {
         self.file_stamps = self
             .template_path
             .iter()
-            .chain(self.originals_path.iter())
             .filter_map(|path| file_stamp(path).map(|stamp| (path.clone(), stamp)))
             .collect();
     }
@@ -357,30 +283,55 @@ impl TemplateState {
         self.store.is_some()
     }
 
-    pub(super) fn originals_available(&self) -> bool {
-        self.originals_path.is_some()
+    pub(super) fn private_library_available(&self) -> bool {
+        self.template_path.is_some()
     }
 
     pub(super) fn save_destination(&self) -> Option<PathBuf> {
-        self.store
-            .as_ref()
-            .map(|store| store.library(self.use_originals))
+        self.store.as_ref().map(|store| store.library(false))
     }
 
-    pub(super) fn select_library(&mut self, originals: bool, ctx: &egui::Context) {
+    pub(super) fn select_private_library(&mut self, ctx: &egui::Context) {
         if self.busy() || self.unlocked() {
             return;
         }
+        let Some(path) = self.template_path.as_ref() else {
+            return;
+        };
+        self.path = path.to_string_lossy().into_owned();
         self.clear_passwords(ctx);
-        self.use_originals = originals;
         self.external_vault = false;
-        self.path = (if originals {
-            &self.originals_path
-        } else {
-            &self.template_path
-        })
-        .as_ref()
-        .map_or_else(String::new, |path| path.to_string_lossy().into_owned());
+        self.error = None;
+        self.notice = None;
+    }
+
+    fn current_bundled_path(&self) -> Option<PathBuf> {
+        #[cfg(not(test))]
+        let sidecar = std::env::current_exe()
+            .ok()
+            .and_then(|exe| bundled_vault(&exe));
+        #[cfg(test)]
+        let sidecar = None::<PathBuf>;
+        sidecar
+            .into_iter()
+            .chain(self.store.as_ref().map(ManagedStore::public))
+            .find(|path| {
+                vault::read_bounded(path)
+                    .is_ok_and(|bytes| bytes == include_bytes!("../../assets/templates.vault"))
+            })
+    }
+
+    pub(super) fn select_bundled_library(&mut self, ctx: &egui::Context) {
+        if self.busy() || self.unlocked() {
+            return;
+        }
+        let Some(path) = self.current_bundled_path() else {
+            self.error = Some("The bundled encrypted template library is unavailable.".to_owned());
+            return;
+        };
+        self.clear_passwords(ctx);
+        self.external_vault = false;
+        self.path = path.to_string_lossy().into_owned();
         self.error = None;
         self.notice = None;
     }
@@ -429,7 +380,6 @@ impl TemplateState {
             self.creating = false;
             self.prepare_mode = false;
             self.external_vault = true;
-            self.use_originals = false;
         } else {
             self.imports.extend(paths);
         }
@@ -484,13 +434,12 @@ impl TemplateState {
         }
         match result {
             Ok(Completed::Opened(vault, dirty, path)) => {
-                if let Some(store) = &self.store {
-                    if path == store.library(false) {
-                        self.template_path = Some(path.clone());
-                    }
-                    if path == store.library(true) {
-                        self.originals_path = Some(path.clone());
-                    }
+                if self
+                    .store
+                    .as_ref()
+                    .is_some_and(|store| path == store.library(false))
+                {
+                    self.template_path = Some(path.clone());
                 }
                 self.path = path.to_string_lossy().into_owned();
                 self.external_vault = false;
@@ -510,11 +459,7 @@ impl TemplateState {
             },
             Ok(Completed::Saved(path)) => {
                 self.path = path.to_string_lossy().into_owned();
-                if self.use_originals {
-                    self.originals_path = Some(path);
-                } else {
-                    self.template_path = Some(path);
-                }
+                self.template_path = Some(path);
                 self.dirty = false;
                 self.notice = Some(Text::VaultSaved);
                 self.refresh_file_stamps();
@@ -523,9 +468,6 @@ impl TemplateState {
             Ok(Completed::Provisioned(path)) => {
                 self.template_path = Some(path.clone());
                 self.path = path.to_string_lossy().into_owned();
-                if let Some(store) = &self.store {
-                    self.originals_path = Some(store.library(true));
-                }
                 self.prepare_mode = false;
                 self.prepare_sources.zeroize();
                 self.creating = false;
@@ -786,8 +728,7 @@ impl TemplateState {
             self.error = Some(STORAGE_ERROR.to_owned());
             return;
         };
-        let originals = self.use_originals;
-        let path = store.library(originals);
+        let path = store.library(false);
         if !writable_template_destination(&path) {
             self.error = Some(APP_ASSET_ERROR.to_owned());
             return;
@@ -806,7 +747,7 @@ impl TemplateState {
         self.start(move |generation, expected| {
             ensure_current(&generation, expected)?;
             let path = store
-                .publish(&bytes, originals, overwrite)
+                .publish(&bytes, overwrite)
                 .map_err(|error| error.to_string())?;
             Ok(Completed::Saved(path))
         });
@@ -963,7 +904,7 @@ impl TemplateState {
             .map_or(Client::Other, |template| template.client);
         let Some(path) = configuration_export_path(Path::new(self.export_path.trim()), client)
         else {
-            self.error = Some("Choose a file path for the FlClash export.".to_owned());
+            self.error = Some("Choose a file path for the configuration export.".to_owned());
             return;
         };
         let existing_vault = Path::new(self.path.trim()).canonicalize().ok();
@@ -1291,7 +1232,12 @@ fn inferred_client(path: &Path) -> Client {
 }
 
 fn configuration_export_path(path: &Path, client: Client) -> Option<PathBuf> {
-    if client == Client::FlClash {
+    let default_extension = match client {
+        Client::FlClash => Some("yaml"),
+        Client::SingBox => Some("json"),
+        _ => None,
+    };
+    if let Some(extension) = default_extension {
         let filename = path.file_name()?;
         let raw = path.as_os_str().as_encoded_bytes();
         // A verbatim Windows path may treat a trailing slash as filename data.
@@ -1304,7 +1250,7 @@ fn configuration_export_path(path: &Path, client: Client) -> Option<PathBuf> {
             return None;
         }
         if path.extension().is_none() {
-            return Some(path.with_extension("yaml"));
+            return Some(path.with_extension(extension));
         }
     }
     Some(path.to_owned())
@@ -1482,6 +1428,19 @@ mod tests {
         assert!(!state.windows_dns_guard);
     }
 
+    #[test]
+    fn singbox_exports_use_json_and_reject_directory_paths() {
+        assert_eq!(
+            configuration_export_path(Path::new("profile"), Client::SingBox).as_deref(),
+            Some(Path::new("profile.json"))
+        );
+        assert_eq!(
+            configuration_export_path(Path::new("profile.JSON"), Client::SingBox).as_deref(),
+            Some(Path::new("profile.JSON"))
+        );
+        assert!(configuration_export_path(Path::new("missing/"), Client::SingBox).is_none());
+    }
+
     fn editable_state() -> TemplateState {
         let mut state = TemplateState::default();
         state.vault = Some(
@@ -1650,15 +1609,23 @@ mod tests {
     }
 
     #[test]
-    fn managed_vault_restores_the_project_record_without_path_entry() {
+    fn bundled_current_template_is_selected_before_a_saved_private_library() {
         let fixture = ManagedFixture::new();
         let library = fixture.encrypted_library();
-        std::fs::write(
-            fixture.registry(),
-            br#"{"version":1,"library":"templates.vault","originals":null}"#,
+        let public = ManagedStore::new(&fixture.0).unwrap().public();
+        std::fs::create_dir_all(public.parent().unwrap()).unwrap();
+        vault::write_private(
+            &public,
+            include_bytes!("../../assets/templates.vault"),
+            false,
         )
         .unwrap();
         let mut state = TemplateState::default();
+        state.visit_project(&fixture.0);
+        assert_eq!(Path::new(&state.path), public);
+        assert!(state.private_library_available());
+        state.select_private_library(&egui::Context::default());
+        assert_eq!(Path::new(&state.path), library);
         state.visit_project(&fixture.0);
         assert_eq!(Path::new(&state.path), library);
         assert!(state.password.is_empty() && !state.unlocked());
@@ -1752,22 +1719,24 @@ mod tests {
     }
 
     #[test]
-    fn managed_vault_explicit_visit_restores_a_verified_copy_of_known_legacy_originals() {
+    fn managed_vault_visit_unpins_old_originals_without_touching_backup() {
         let fixture = ManagedFixture::new();
-        let legacy = ManagedFixture::new();
-        let encrypted = legacy.encrypted_library();
-        let source = legacy.0.join("originals.vault");
-        std::fs::rename(encrypted, &source).unwrap();
-        let before = vault::read_bounded(&source).unwrap();
+        let source = fixture.0.join(".cache/vaults/originals.vault");
+        let before = b"retired opaque backup";
+        vault::write_private(&source, before, false).unwrap();
+        vault::write_private(
+            &fixture.registry(),
+            br#"{"version":1,"library":null,"originals":"originals.vault"}"#,
+            false,
+        )
+        .unwrap();
         let mut state = TemplateState::default();
-        state.visit_project_with_legacy(&fixture.0, Some(&source));
-        assert!(state.originals_available());
-        state.select_library(true, &egui::Context::default());
-        assert_eq!(
-            Path::new(&state.path),
-            fixture.0.join(".cache/vaults/originals.vault")
-        );
-        assert_eq!(vault::read_bounded(Path::new(&state.path)).unwrap(), before);
+        state.visit_project(&fixture.0);
+        assert!(state.path.is_empty());
+        assert!(!state.private_library_available());
+        let registry: serde_json::Value =
+            serde_json::from_slice(&vault::read_bounded(&fixture.registry()).unwrap()).unwrap();
+        assert!(registry["originals"].is_null());
         assert_eq!(vault::read_bounded(&source).unwrap(), before);
         assert!(state.password.is_empty() && !state.unlocked());
     }
@@ -1780,8 +1749,9 @@ mod tests {
         state.visit_project(&fixture.0);
         let record = vault::read_bounded(&fixture.registry()).unwrap();
         let encrypted = vault::read_bounded(&library).unwrap();
-        state.password.push_str("synthetic wrong password");
         let ctx = egui::Context::default();
+        state.select_private_library(&ctx);
+        state.password.push_str("synthetic wrong password");
         state.open(&ctx);
         let deadline = Instant::now() + Duration::from_secs(10);
         while state.busy() && Instant::now() < deadline {

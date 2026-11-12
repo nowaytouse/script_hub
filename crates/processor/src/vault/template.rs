@@ -1,7 +1,8 @@
 //! Subscription slots and conservative sanitization for encrypted public templates.
 
+mod derived;
 mod flclash;
-mod microsoft;
+mod links;
 
 use super::{Client, MAX_TEMPLATE_BYTES, MAX_TEMPLATES, Template, UnlockedVault, VaultError};
 use regex::Regex;
@@ -9,23 +10,26 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::LazyLock;
 use url::Url;
-use zeroize::{Zeroize, Zeroizing};
+use zeroize::Zeroizing;
 
 pub(crate) fn unlock_for_display(
     bytes: &[u8],
     password: &str,
 ) -> Result<UnlockedVault, VaultError> {
     let mut vault = super::unlock(bytes, password)?;
-    // Only the shipped sample may change; imported libraries can intentionally route services differently.
+    // Derive companion profiles only from the current authenticated bundled source.
     if bytes == include_bytes!("../../assets/templates.vault") {
-        for template in &mut vault.library_mut().templates {
-            if matches!(template.client, Client::Surge | Client::Shadowrocket)
-                && let Some(mut content) = microsoft::upgrade(&template.content)?
-            {
-                template.content.zeroize();
-                template.content = std::mem::take(&mut *content);
-            }
+        for template in &vault.library().templates {
+            links::validate_urls(&template.content)?;
         }
+        let surge = vault
+            .library()
+            .templates
+            .iter()
+            .find(|template| template.client == Client::Surge)
+            .ok_or(VaultError::Format)?;
+        let derived = derived::derive(surge)?;
+        vault.library_mut().templates.extend(derived);
         vault.validate_for_storage()?;
     }
     Ok(vault)
@@ -172,7 +176,9 @@ pub fn sanitize(template: &Template) -> Result<Template, VaultError> {
     if template.client == Client::FlClash {
         return flclash::sanitize(template);
     }
-    if template.client == Client::Other || template.content.contains('\0') {
+    // Arbitrary sing-box JSON can embed credentials in protocol-specific fields.
+    if matches!(template.client, Client::Other | Client::SingBox) || template.content.contains('\0')
+    {
         return Err(VaultError::Format);
     }
     if template.content.len() > MAX_TEMPLATE_BYTES {
@@ -272,6 +278,7 @@ pub fn render(
     template: &Template,
     subscriptions: &BTreeMap<String, String>,
 ) -> Result<Zeroizing<String>, VaultError> {
+    links::validate_urls(&template.content)?;
     if template.client == Client::FlClash {
         return flclash::render(template, subscriptions, false);
     }
@@ -299,6 +306,13 @@ pub fn render(
         offset = end;
     }
     checked_push(&mut output, &template.content[offset..])?;
+    if template.client == Client::SingBox {
+        let parsed: serde_json::Value =
+            serde_json::from_str(&output).map_err(|_| VaultError::Format)?;
+        if !parsed.is_object() {
+            return Err(VaultError::Format);
+        }
+    }
     Ok(output)
 }
 
@@ -309,6 +323,7 @@ pub(crate) fn render_flclash_windows_dns(
     if template.client != Client::FlClash {
         return Err(VaultError::Format);
     }
+    links::validate_urls(&template.content)?;
     flclash::render(template, subscriptions, true)
 }
 

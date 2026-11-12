@@ -63,6 +63,8 @@ mod tests {
             assert!(text(language, Text::VaultExportYamlHint).contains("profile.yaml"));
             assert!(text(language, Text::VaultFlClashExportHelp).contains(".yaml"));
             assert!(text(language, Text::VaultFlClashExportHelp).contains(".yml"));
+            assert!(text(language, Text::VaultExportJsonHint).contains("profile.json"));
+            assert!(text(language, Text::VaultSingBoxHelp).contains("script-hub-proxy"));
             assert!(text(language, Text::VaultExportHint).contains("profile.conf"));
         }
     }

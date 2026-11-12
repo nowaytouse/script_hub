@@ -464,7 +464,7 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
         "Profile_Exceptions_ip.list",
         "Pixiv.list",
         "Pixiv_ip.list",
-        // Retired owners are migration inputs, not competitors for canonical rules.
+        // Retired owners are discarded by the ownership pass, not deduplication inputs.
         "Microsoft.list",
         "Microsoft_ip.list",
         "GitHub.list",

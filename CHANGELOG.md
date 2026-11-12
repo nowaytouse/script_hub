@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Default to the current encrypted template library, retire legacy template selection and GitHub ruleset aliases, and derive FlClash and sing-box profiles from the Surge routing baseline.
+- Enable direct encrypted DNS and IPv6 in the Shadowrocket template; use Microsoft NCSI for direct checks and GrapheneOS HTTPS for proxy checks.
+- Include the published native AdBlock providers in the FlClash and sing-box templates.
+
 - Import and export supported Surge VLESS policies in Subscription Relay. Show the minimum Surge versions before export and stop rather than drop nodes when conversion cannot preserve their settings.
 - Reject directory-style export paths for FlClash on Windows, including paths with a trailing separator under a verbatim prefix.
 

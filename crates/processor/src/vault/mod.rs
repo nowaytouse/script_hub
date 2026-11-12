@@ -28,6 +28,7 @@ pub enum Client {
     Surge,
     Shadowrocket,
     FlClash,
+    SingBox,
     Other,
 }
 
@@ -50,6 +51,7 @@ pub struct Library {
 pub enum VaultError {
     Password,
     Format,
+    MissingArtifact,
     TooLarge,
     Authentication,
     Randomness,
@@ -62,6 +64,9 @@ impl fmt::Display for VaultError {
         f.write_str(match self {
             Self::Password => "Use a password of at least 12 characters and at most 1024 bytes.",
             Self::Format => "The template library format or content is invalid.",
+            Self::MissingArtifact => {
+                "This template references a missing Script Hub ruleset. Reopen the bundled example or update the link before exporting."
+            }
             Self::TooLarge => "The template library exceeds its supported size limits.",
             Self::Authentication => "The password is incorrect or the library is damaged.",
             Self::Randomness => "Secure system randomness is unavailable.",

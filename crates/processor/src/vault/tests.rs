@@ -41,6 +41,11 @@ fn documented_sample_password(document: &str) -> &str {
 
 #[test]
 fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
+    const DIRECT_PROBE: &str = "http://www.msftconnecttest.com/connecttest.txt";
+    const PROXY_PROBE: &str = "https://connectivitycheck.grapheneos.network/generate_204";
+    let group_probe =
+        regex::Regex::new(r#"(?i)(?:^|,)[ \t]*url[ \t]*=[ \t]*"?(https?://[^ \t\r\n",]+)"#)
+            .unwrap();
     let english = documented_sample_password(include_str!("../../../../docs/TEMPLATES.md"));
     let chinese = documented_sample_password(include_str!("../../../../docs/TEMPLATES.zh-CN.md"));
     assert!(english == chinese, "The public-password documents disagree");
@@ -49,29 +54,49 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
         template::unlock_for_display(include_bytes!("../../assets/templates.vault"), &password)
             .expect("The public-password documents and encrypted sample do not authenticate");
     drop(password);
-    assert!(
-        !vault.library().templates.is_empty(),
-        "The public encrypted sample is empty"
-    );
+    assert_eq!(vault.library().templates.len(), 4);
+    for client in [
+        Client::Surge,
+        Client::Shadowrocket,
+        Client::FlClash,
+        Client::SingBox,
+    ] {
+        assert_eq!(
+            vault
+                .library()
+                .templates
+                .iter()
+                .filter(|entry| entry.client == client)
+                .count(),
+            1
+        );
+    }
     assert!(
         validate_library(vault.library()).is_ok(),
         "The public encrypted sample is invalid"
     );
     for template in &vault.library().templates {
-        let sanitized = template::sanitize(template)
-            .expect("The public encrypted sample cannot pass the sanitizer");
-        assert!(
-            sanitized.name == template.name
-                && sanitized.client == template.client
-                && sanitized.content == template.content,
-            "The public encrypted sample still requires sanitization"
-        );
+        // Derived sing-box content comes from the sanitized Surge source, not
+        // arbitrary JSON admitted through public provisioning.
+        if matches!(template.client, Client::Surge | Client::Shadowrocket) {
+            let sanitized = template::sanitize(template)
+                .expect("The public encrypted sample cannot pass the sanitizer");
+            assert!(
+                sanitized.name == template.name
+                    && sanitized.client == template.client
+                    && sanitized.content == template.content,
+                "The public encrypted sample still requires sanitization"
+            );
+        }
         let subscriptions = template::subscription_slots(template)
             .into_iter()
             .map(|slot| (slot, "https://example.invalid/subscription".to_owned()))
             .collect::<std::collections::BTreeMap<_, _>>();
         let rendered = template::render(template, &subscriptions)
             .expect("The public encrypted sample has invalid subscription slots");
+        assert!(!rendered.contains("/Microsoft_extra.list"));
+        assert!(!rendered.contains("/GitHub.list"));
+        assert!(!rendered.contains("/Microsoft.list"));
         if matches!(template.client, Client::Surge | Client::Shadowrocket) {
             let direct = rendered.find("Microsoft_direct.list,DIRECT");
             let proxy = rendered.find("Microsoft_proxy.list,");
@@ -81,6 +106,73 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                     && !rendered.contains("/GitHub.list,"),
                 "The public sample must export the new Microsoft routing split"
             );
+        }
+        if template.client == Client::FlClash {
+            assert!(!subscriptions.is_empty());
+            assert!(template::is_flclash_config(&rendered));
+        }
+        if matches!(template.client, Client::Surge | Client::Shadowrocket) {
+            let mut section = "";
+            let mut settings = std::collections::BTreeMap::new();
+            let mut group_count = 0;
+            for line in rendered.lines().map(str::trim) {
+                if let Some(header) = line
+                    .strip_prefix('[')
+                    .and_then(|value| value.strip_suffix(']'))
+                {
+                    section = header;
+                } else if section.eq_ignore_ascii_case("General")
+                    && let Some((key, value)) = line.split_once('=')
+                {
+                    settings.insert(key.trim(), value.trim().trim_matches('"'));
+                } else if section.eq_ignore_ascii_case("Proxy Group")
+                    && !line.starts_with(['#', ';', '/'])
+                {
+                    for capture in group_probe.captures_iter(line) {
+                        assert!(
+                            &capture[1] == PROXY_PROBE,
+                            "A group uses an unexpected probe"
+                        );
+                        group_count += 1;
+                    }
+                }
+            }
+            for (key, expected) in [
+                ("internet-test-url", DIRECT_PROBE),
+                ("proxy-test-url", PROXY_PROBE),
+            ] {
+                assert!(
+                    settings.get(key) == Some(&expected),
+                    "Unexpected connectivity probe: {key}"
+                );
+            }
+            if template.client == Client::Shadowrocket {
+                assert_eq!(group_count, 3);
+                for (key, value) in [
+                    ("ipv6", "true"),
+                    ("dns-direct-system", "false"),
+                    ("dns-direct-fallback-proxy", "false"),
+                    (
+                        "direct-dns-server",
+                        "https://dns.alidns.com/dns-query, https://doh.pub/dns-query",
+                    ),
+                ] {
+                    assert!(
+                        settings.get(key) == Some(&value),
+                        "Unexpected Shadowrocket setting: {key}"
+                    );
+                }
+            }
+        }
+        if template.client == Client::SingBox {
+            let config: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+            assert!(config["outbounds"].is_array());
+            assert!(
+                config["route"]["rule_set"]
+                    .as_array()
+                    .is_some_and(|rules| !rules.is_empty())
+            );
+            assert!(subscriptions.is_empty());
         }
     }
 }
@@ -99,6 +191,10 @@ fn opening_a_user_library_does_not_rewrite_legacy_rules() {
     assert!(
         reopened.library().templates[0].content == vault.library().templates[0].content,
         "Opening a user-owned vault must preserve its routing"
+    );
+    assert!(
+        template::render(&reopened.library().templates[0], &Default::default()).is_err(),
+        "A retired repository rule-set URL must not be exported"
     );
 }
 

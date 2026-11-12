@@ -30,11 +30,6 @@ impl Default for Record {
     }
 }
 
-pub(crate) struct Locations {
-    pub library: Option<PathBuf>,
-    pub originals: Option<PathBuf>,
-}
-
 impl ManagedStore {
     pub(crate) fn new(root: &Path) -> Result<Self, VaultError> {
         if !root.is_absolute() || root.components().any(|part| part == Component::ParentDir) {
@@ -79,22 +74,18 @@ impl ManagedStore {
         Ok(true)
     }
 
-    pub(crate) fn restore(&self) -> Result<Locations, VaultError> {
+    pub(crate) fn restore(&self) -> Result<Option<PathBuf>, VaultError> {
         if !self.available()? {
-            return Ok(Locations {
-                library: None,
-                originals: None,
-            });
+            return Ok(None);
         }
         let mut record = self.read_record()?;
         let previous = record.clone();
-        // Never resolve recorded strings: only the two fixed filenames can be restored.
+        // Old backups are no longer an active library; leave their ciphertext untouched.
         let library = valid_library(&self.library(false))?.then(|| self.library(false));
-        let originals = valid_library(&self.library(true))?.then(|| self.library(true));
         record.library = library.as_ref().map(|_| "templates.vault".to_owned());
-        record.originals = originals.as_ref().map(|_| "originals.vault".to_owned());
+        record.originals = None;
         self.update_record(&previous, &record)?;
-        Ok(Locations { library, originals })
+        Ok(library)
     }
 
     fn read_record(&self) -> Result<Record, VaultError> {
@@ -123,12 +114,9 @@ impl ManagedStore {
     }
 
     /// Removes stale names without reading ciphertext or changing an active session's scope.
-    pub(crate) fn prune_missing(&self) -> Result<Locations, VaultError> {
+    pub(crate) fn prune_missing(&self) -> Result<Option<PathBuf>, VaultError> {
         if !self.available()? {
-            return Ok(Locations {
-                library: None,
-                originals: None,
-            });
+            return Ok(None);
         }
         let mut record = self.read_record()?;
         let previous = record.clone();
@@ -137,26 +125,15 @@ impl ManagedStore {
         {
             record.library = None;
         }
-        if record.originals.as_deref() != Some("originals.vault")
-            || !regular_file(&self.library(true))?
-        {
-            record.originals = None;
-        }
+        record.originals = None;
         self.update_record(&previous, &record)?;
-        let library = record.library.map(|_| self.library(false));
-        let originals = record.originals.map(|_| self.library(true));
-        Ok(Locations { library, originals })
+        Ok(record.library.map(|_| self.library(false)))
     }
 
-    /// Publishes encrypted bytes; legacy migration verifies the envelope and copy, not the password.
-    pub(crate) fn publish(
-        &self,
-        bytes: &[u8],
-        originals: bool,
-        overwrite: bool,
-    ) -> Result<PathBuf, VaultError> {
+    /// Publishes the private working library, never a retired backup.
+    pub(crate) fn publish(&self, bytes: &[u8], overwrite: bool) -> Result<PathBuf, VaultError> {
         super::crypto::validate_envelope(bytes)?;
-        let destination = self.library(originals);
+        let destination = self.library(false);
         create_private_parent(&destination)?;
         self.restore()?; // Registry failures must be visible before publishing more ciphertext.
         write_private(&destination, bytes, overwrite)?;
@@ -182,30 +159,11 @@ impl ManagedStore {
             }
             return Ok(destination);
         }
-        self.publish(bytes, false, false)
-    }
-
-    pub(crate) fn migrate_legacy_originals(&self, source: &Path) -> Result<bool, VaultError> {
-        self.restore()?;
-        match fs::symlink_metadata(self.library(true)) {
-            Ok(metadata) if metadata.is_file() && !super::is_link(&metadata) => return Ok(false),
-            Ok(_) => return Err(VaultError::Io),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-            Err(_) => return Err(VaultError::Io),
-        }
-        match fs::symlink_metadata(source) {
-            Ok(_) => {}
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
-            Err(_) => return Err(VaultError::Io),
-        }
-        let bytes = read_bounded(source)?;
-        // The old file remains the authority: this verifies its envelope and exact copied bytes, not its password.
-        self.publish(&bytes, true, false)?;
-        Ok(true)
+        self.publish(bytes, false)
     }
 }
 
-pub(crate) fn valid_library(path: &Path) -> Result<bool, VaultError> {
+fn valid_library(path: &Path) -> Result<bool, VaultError> {
     if !regular_file(path)? {
         return Ok(false);
     }
@@ -281,29 +239,28 @@ mod tests {
         assert!(record["originals"].is_null());
         let replacement = fixture.bytes();
         assert_eq!(
-            store.publish(&replacement, false, false),
+            store.publish(&replacement, false),
             Err(VaultError::AlreadyExists)
         );
         assert_eq!(read_bounded(&copied).unwrap(), bytes);
     }
 
     #[test]
-    fn legacy_originals_migration_copies_only_the_explicit_ciphertext_and_keeps_its_source() {
+    fn retired_originals_are_not_restored_or_rewritten() {
         let fixture = Fixture::new();
-        let legacy = Fixture::new();
         let store = ManagedStore::new(&fixture.0).unwrap();
-        let source = legacy.0.join("originals.vault");
-        let bytes = fixture.bytes();
-        write_private(&source, &bytes, false).unwrap();
-        assert!(store.migrate_legacy_originals(&source).unwrap());
-        assert_eq!(read_bounded(&source).unwrap(), bytes);
+        create_private_parent(&store.registry()).unwrap();
+        write_private(
+            &store.registry(),
+            br#"{"version":1,"library":null,"originals":"originals.vault"}"#,
+            false,
+        )
+        .unwrap();
+        let bytes = b"opaque retired backup";
+        write_private(&store.library(true), bytes, false).unwrap();
+        assert!(store.restore().unwrap().is_none());
         assert_eq!(read_bounded(&store.library(true)).unwrap(), bytes);
-        assert!(store.restore().unwrap().originals.is_some());
-        let replacement = fixture.bytes();
-        write_private(&source, &replacement, true).unwrap();
-        assert!(!store.migrate_legacy_originals(&source).unwrap());
-        assert_eq!(read_bounded(&store.library(true)).unwrap(), bytes);
-        assert_eq!(read_bounded(&source).unwrap(), replacement);
+        assert!(store.read_record().unwrap().originals.is_none());
         assert!(!store.library(false).exists());
     }
 
@@ -314,7 +271,7 @@ mod tests {
         create_private_parent(&store.registry()).unwrap();
         write_private(&store.registry(), b"not a registry", false).unwrap();
         assert_eq!(
-            store.publish(&fixture.bytes(), false, false),
+            store.publish(&fixture.bytes(), false),
             Err(VaultError::Format)
         );
         assert!(!store.library(false).exists());
@@ -344,21 +301,6 @@ mod tests {
     }
 
     #[test]
-    fn legacy_originals_migration_never_copies_an_invalid_envelope() {
-        let fixture = Fixture::new();
-        let legacy = Fixture::new();
-        let source = legacy.0.join("originals.vault");
-        write_private(&source, b"invalid encrypted fixture", false).unwrap();
-        let store = ManagedStore::new(&fixture.0).unwrap();
-        assert_eq!(
-            store.migrate_legacy_originals(&source),
-            Err(VaultError::Format)
-        );
-        assert!(!store.library(true).exists());
-        assert_eq!(read_bounded(&source).unwrap(), b"invalid encrypted fixture");
-    }
-
-    #[test]
     fn damaged_ciphertext_is_preserved_while_its_record_is_cleared() {
         let fixture = Fixture::new();
         let store = ManagedStore::new(&fixture.0).unwrap();
@@ -370,7 +312,7 @@ mod tests {
         )
         .unwrap();
         write_private(&store.library(false), b"damaged encrypted fixture", false).unwrap();
-        assert!(store.restore().unwrap().library.is_none());
+        assert!(store.restore().unwrap().is_none());
         assert_eq!(
             read_bounded(&store.library(false)).unwrap(),
             b"damaged encrypted fixture"
@@ -388,7 +330,7 @@ mod tests {
         let store = ManagedStore::new(&fixture.0).unwrap();
         std::os::unix::fs::symlink(&external.0, fixture.0.join(".cache")).unwrap();
         assert!(store.restore().is_err());
-        assert!(store.publish(&fixture.bytes(), false, false).is_err());
+        assert!(store.publish(&fixture.bytes(), false).is_err());
         assert!(
             fs::symlink_metadata(fixture.0.join(".cache"))
                 .unwrap()

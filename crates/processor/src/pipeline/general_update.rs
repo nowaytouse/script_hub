@@ -2647,7 +2647,7 @@ mod tests {
     }
 
     #[test]
-    fn microsoft_split_migrates_legacy_rules_and_keeps_shared_parents() {
+    fn microsoft_split_retires_legacy_rules_without_ingesting_them() {
         let root = consolidation_fixture();
         let rules = root.join("rulesets/RULE-SET");
         let sources = root.join("rulesets/Sources");
@@ -2669,11 +2669,13 @@ mod tests {
                 "DOMAIN-SUFFIX,jetbrains.com\nDOMAIN-KEYWORD,github\n",
             ),
             ("GitHub_extra", "DOMAIN-KEYWORD,github\n"),
+            ("Microsoft", "DOMAIN-SUFFIX,retired.example\n"),
+            ("Microsoft_extra", "PROCESS-NAME,Retired\n"),
             (
-                "Microsoft",
+                "Microsoft_proxy",
                 "DOMAIN-SUFFIX,githubusercontent.com\nDOMAIN-SUFFIX,github-cloud.s3.amazonaws.com\nDOMAIN-SUFFIX,microsoftonline.com\nDOMAIN-SUFFIX,windows.net\nDOMAIN,login.microsoftonline.com\n",
             ),
-            ("Microsoft_extra", "PROCESS-NAME,OneDrive\n"),
+            ("Microsoft_proxy_extra", "PROCESS-NAME,OneDrive\n"),
             ("AI", "DOMAIN,api.github.com\nDOMAIN,api.ai.test\n"),
             (
                 "Direct",
@@ -2730,7 +2732,7 @@ mod tests {
         );
         let proxy = read_rules(&rules.join("GlobalProxy.list")).unwrap();
         assert!(proxy.contains("DOMAIN-SUFFIX,s3.amazonaws.com"));
-        assert!(proxy.contains("DOMAIN-SUFFIX,jetbrains.com"));
+        assert!(!proxy.contains("DOMAIN-SUFFIX,jetbrains.com"));
         assert!(!proxy.contains("DOMAIN,raw.githubusercontent.com"));
         assert!(!proxy.contains("DOMAIN,account.live.com"));
         assert!(!proxy.contains("DOMAIN-SUFFIX,static.microsoft"));
