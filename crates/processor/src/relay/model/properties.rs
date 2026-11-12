@@ -415,21 +415,11 @@ pub(super) fn script_fields(node: &Node, mutation: &Mutation) -> ScriptFields {
                     .map(|field| field.value.as_str())
             };
             let boolean = |key| field(key).and_then(|value| parse_bool(value).ok());
-            let tls = field("tls").map_or_else(
-                || {
-                    Some(matches!(
-                        protocol,
-                        "https"
-                            | "socks5-tls"
-                            | "trojan"
-                            | "anytls"
-                            | "hysteria2"
-                            | "tuic"
-                            | "tuic-v5"
-                    ))
-                },
-                |value| parse_bool(value).ok(),
-            );
+            let tls_default = Some(matches!(
+                protocol,
+                "https" | "socks5-tls" | "trojan" | "anytls" | "hysteria2" | "tuic" | "tuic-v5"
+            ));
+            let tls = field("tls").map_or(tls_default, |value| parse_bool(value).ok());
             ScriptFields {
                 udp: boolean("udp-relay").or(match protocol {
                     "socks5" | "socks5-tls" | "ss" | "http" | "https" => Some(false),

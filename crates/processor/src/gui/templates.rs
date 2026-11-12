@@ -1109,21 +1109,19 @@ fn outside_application_assets_with_resources(
         )
     }) {
         let protected = normalized_destination.as_ref().is_some_and(|destination| {
-            if destination == &asset {
-                return true;
-            }
             #[cfg(target_os = "windows")]
             {
-                destination.parent() == asset.parent()
-                    && destination
-                        .file_name()
-                        .and_then(|name| name.to_str())
-                        .zip(asset.file_name().and_then(|name| name.to_str()))
-                        .is_some_and(|(left, right)| left.eq_ignore_ascii_case(right))
+                destination == &asset
+                    || (destination.parent() == asset.parent()
+                        && destination
+                            .file_name()
+                            .and_then(|name| name.to_str())
+                            .zip(asset.file_name().and_then(|name| name.to_str()))
+                            .is_some_and(|(left, right)| left.eq_ignore_ascii_case(right)))
             }
             #[cfg(not(target_os = "windows"))]
             {
-                false
+                destination == &asset
             }
         });
         if protected {
@@ -1261,6 +1259,13 @@ pub(super) fn clear_secret_widget(ctx: &egui::Context, id: &str) {
 }
 
 pub(super) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> bool {
+    #[cfg(windows)]
+    if path
+        .file_name()
+        .is_none_or(|name| !unambiguous_windows_export_name(name))
+    {
+        return false;
+    }
     if !writable_template_destination(path)
         || !path.is_absolute()
         || path
@@ -1289,14 +1294,17 @@ pub(super) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> 
     {
         return false;
     }
-    if path
+    !path
         .extension()
         .and_then(|extension| extension.to_str())
         .is_some_and(|extension| extension.eq_ignore_ascii_case("vault"))
-    {
-        return false;
-    }
-    true
+}
+
+#[cfg(any(windows, test))]
+fn unambiguous_windows_export_name(name: &std::ffi::OsStr) -> bool {
+    let name = name.as_encoded_bytes();
+    // Win32 may strip a terminal dot or space, and a colon selects an NTFS stream.
+    !matches!(name.last(), Some(b'.' | b' ')) && !name.contains(&b':')
 }
 
 #[cfg(test)]
@@ -2025,6 +2033,25 @@ mod tests {
             None
         ));
         assert!(safe_export_destination(&root.join("template.conf"), None));
+    }
+
+    #[test]
+    fn windows_plain_export_names_exclude_aliases_and_streams() {
+        for name in [
+            "templates.vault.",
+            "templates.vault ",
+            "profile.yaml:stream",
+        ] {
+            assert!(!unambiguous_windows_export_name(std::ffi::OsStr::new(name)));
+            #[cfg(windows)]
+            assert!(!safe_export_destination(
+                &std::env::temp_dir().join(name),
+                None
+            ));
+        }
+        assert!(unambiguous_windows_export_name(std::ffi::OsStr::new(
+            "配置 01.yaml"
+        )));
     }
 
     #[cfg(target_os = "macos")]

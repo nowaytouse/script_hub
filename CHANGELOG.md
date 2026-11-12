@@ -1,5 +1,7 @@
 # Changes
 
+[简体中文](CHANGELOG.zh-CN.md)
+
 ## Unreleased
 
 - Default to the current encrypted template library, retire legacy template selection and GitHub ruleset aliases, and derive FlClash and sing-box profiles from the Surge routing baseline.
@@ -8,6 +10,9 @@
 
 - Import and export supported Surge VLESS policies in Subscription Relay. Show the minimum Surge versions before export and stop rather than drop nodes when conversion cannot preserve their settings.
 - Reject directory-style export paths for FlClash on Windows, including paths with a trailing separator under a verbatim prefix.
+- Reject ambiguous Windows filenames for plaintext exports before they can resolve to another file or an alternate data stream.
+- Clarify that copying or exporting a FlClash configuration produces unencrypted YAML containing any entered subscription URLs. The bundled template library stays encrypted.
+- Refresh the SQLite, SVG rendering, regex and public-suffix dependencies while retaining the age security hold.
 
 - Split Microsoft into exact sign-in and service rulesets, include GitHub in the latter, and update public sample exports to use the two current subscriptions.
 

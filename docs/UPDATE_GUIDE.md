@@ -14,6 +14,12 @@ cargo run --locked --bin validate -- --root .
 `--exports-only --execute` regenerates client formats from the current lists without fetching upstreams; pass `--singbox` to include SRS.
 `--classify-only --execute` also reapplies local category boundaries before exporting.
 
+## Desktop translations
+
+Edit the English, Simplified Chinese, and Japanese JSON catalogs together. Keep the same keys and placeholder names in all three. Rust callers use the generated `Text` enum. [Translation catalogs](../crates/processor/assets/locales/)
+
+Run `cargo check --locked -p rust_processor --features gui` to check the catalogs. The build rejects duplicate keys, missing or extra keys, empty translations, and mismatched placeholders.
+
 ## Desktop notices
 
 After dependency, desktop feature, or target changes, regenerate with cargo-about 0.9.3 and review the diff:

@@ -192,11 +192,14 @@ mod tests {
                 .contains("subscription.fixture")
         );
         assert_eq!(fs::read_to_string(source).unwrap(), original);
-        let registry: serde_json::Value = serde_json::from_slice(
-            &read_bounded(&directory.0.join(".cache/vaults/locations.json")).unwrap(),
-        )
-        .unwrap();
-        assert_eq!(registry["originals"], "originals.vault");
+        assert!(
+            crate::vault::managed::ManagedStore::new(&directory.0)
+                .unwrap()
+                .restore()
+                .unwrap()
+                .is_none()
+        );
+        assert!(!directory.0.join(".cache/vaults/locations.json").exists());
     }
 
     #[test]

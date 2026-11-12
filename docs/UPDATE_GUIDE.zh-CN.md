@@ -14,6 +14,12 @@ cargo run --locked --bin validate -- --root .
 `--exports-only --execute` 从当前列表重建客户端格式，不拉取上游；搭配 `--singbox` 同时生成 SRS。
 `--classify-only --execute` 还会在导出前重新执行本地分类收束。
 
+## 桌面应用翻译
+
+同时更新英文、简体中文和日文 JSON 字典。三个字典使用相同的键和占位符名称，Rust 调用使用生成的 `Text` 枚举。[翻译字典](../crates/processor/assets/locales/)
+
+运行 `cargo check --locked -p rust_processor --features gui` 校验字典。构建会拒绝重复、缺失或多出的键、空译文以及不一致的占位符。
+
 ## 桌面许可声明
 
 依赖、桌面功能或目标平台变化后，用 cargo-about 0.9.3 生成清单并审阅差异：

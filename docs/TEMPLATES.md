@@ -26,4 +26,6 @@ FlClash and sing-box include the current native AdBlock rule providers. They do 
 
 Subscription URLs are inserted only when copying or exporting, and Script Hub does not fetch them. Add a Shadowrocket subscription separately. For FlClash/Mihomo, fill the provider slots with Clash-compatible URLs and import the exported `.yaml` as a local profile. For sing-box 1.14 or later, export `.json`; run a local SOCKS proxy at `127.0.0.1:1080` or replace the `script-hub-proxy` outbound with your own while keeping its tag. The sing-box template does not accept a subscription URL.
 
+The FlClash YAML produced by **Copy configuration** or **Export configuration** is unencrypted so the client can import it. It includes any subscription URLs you entered. The password field is masked in Script Hub, and the template library stays encrypted on disk. Use **Save encrypted library** to keep template edits in an encrypted local library.
+
 Install optional modules listed in the comments separately. Keep plaintext exports and subscription URLs out of Git.

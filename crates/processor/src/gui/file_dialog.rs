@@ -154,7 +154,7 @@ fn read_directory(path: &Path, action: FileAction, cancel: &AtomicBool) -> Resul
             directory: metadata.is_dir(),
             size: linked_target
                 .as_ref()
-                .map_or_else(|| metadata.len(), std::fs::Metadata::len),
+                .map_or(metadata.len(), std::fs::Metadata::len),
         });
     }
     entries.sort_by(|a, b| {
