@@ -1,8 +1,8 @@
 use std::fmt::Write;
 
-use super::general_update::MICROSOFT_SIGN_IN_HOSTS;
-
-const GITHUB: &str = include_str!("../../../../rulesets/Sources/custom/GitHub_manual.list");
+const RAW_RULESETS: &str =
+    "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets";
+const RULESETS: [&str; 2] = ["Microsoft_direct", "Microsoft_proxy"];
 
 pub fn render(client: &str, direct: &str, proxy: &str) -> Result<String, String> {
     if [direct, proxy].into_iter().any(|label| {
@@ -16,29 +16,20 @@ pub fn render(client: &str, direct: &str, proxy: &str) -> Result<String, String>
     {
         return Err("Specify two distinct existing policy names without rule delimiters".into());
     }
-    let github = GITHUB
-        .lines()
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(|line| {
-            line.split_once(',')
-                .filter(|(kind, host)| {
-                    matches!(*kind, "DOMAIN" | "DOMAIN-SUFFIX")
-                        && !host.contains(',')
-                        && crate::normalize_rule(line).as_deref() == Some(line)
-                })
-                .ok_or("Invalid curated GitHub routing row")
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    let entries = RULESETS.into_iter().zip([direct, proxy]);
     if matches!(client, "sing-box" | "singbox") {
-        let (domains, suffixes): (Vec<_>, Vec<_>) =
-            github.into_iter().partition(|(kind, _)| *kind == "DOMAIN");
-        let route = serde_json::json!({"route": {"rules": [
-            {"domain": MICROSOFT_SIGN_IN_HOSTS, "action": "route", "outbound": direct},
-            {"domain": domains.into_iter().map(|(_, host)| host).collect::<Vec<_>>(),
-             "action": "route", "outbound": proxy},
-            {"domain_suffix": suffixes.into_iter().map(|(_, host)| host).collect::<Vec<_>>(),
-             "action": "route", "outbound": proxy},
-        ]}});
+        let rule_set = RULESETS.map(|tag| {
+            serde_json::json!({
+                "type": "remote", "tag": tag, "format": "binary",
+                "url": format!("{RAW_RULESETS}/SingBox/{tag}_Singbox.srs"),
+            })
+        });
+        let rules: Vec<_> = entries
+            .map(|(tag, policy)| {
+                serde_json::json!({"rule_set": [tag], "action": "route", "outbound": policy})
+            })
+            .collect();
+        let route = serde_json::json!({"route": {"rule_set": rule_set, "rules": rules}});
         return serde_json::to_string_pretty(&route).map_err(|error| error.to_string());
     }
 
@@ -49,22 +40,30 @@ pub fn render(client: &str, direct: &str, proxy: &str) -> Result<String, String>
         );
     }
     let mut output = if yaml {
-        "rules:\n".to_owned()
+        let mut output = String::from("rule-providers:\n");
+        for name in RULESETS {
+            writeln!(
+                output,
+                "  {name}:\n    type: http\n    behavior: classical\n    format: yaml\n    url: {RAW_RULESETS}/Mihomo/{name}.yaml\n    interval: 86400"
+            )
+            .map_err(|error| error.to_string())?;
+        }
+        output.push_str("rules:\n");
+        output
     } else {
         "[Rule]\n".to_owned()
     };
-    let sign_in = MICROSOFT_SIGN_IN_HOSTS
-        .iter()
-        .map(|host| ("DOMAIN", *host, direct));
-    for (kind, host, policy) in
-        sign_in.chain(github.into_iter().map(|(kind, host)| (kind, host, proxy)))
-    {
+    for (name, policy) in entries {
         if yaml {
-            let row = serde_json::to_string(&format!("{kind},{host},{policy}"))
+            let row = serde_json::to_string(&format!("RULE-SET,{name},{policy}"))
                 .map_err(|error| error.to_string())?;
             writeln!(output, "  - {row}").map_err(|error| error.to_string())?;
         } else {
-            writeln!(output, "{kind},{host},{policy}").map_err(|error| error.to_string())?;
+            writeln!(
+                output,
+                "RULE-SET,{RAW_RULESETS}/RULE-SET/{name}.list,{policy}"
+            )
+            .map_err(|error| error.to_string())?;
         }
     }
     Ok(output)
@@ -75,37 +74,55 @@ mod tests {
     use super::*;
 
     #[test]
-    fn all_clients_preserve_exact_sign_in_and_github_suffix_ownership() {
-        for client in ["surge", "shadowrocket", "flclash", "mihomo"] {
-            let rendered = render(client, "DIRECT", "GitHub proxy").unwrap();
-            let sign_in = rendered
-                .find("DOMAIN,login.microsoftonline.com,DIRECT")
-                .unwrap();
-            let github = rendered
-                .find("DOMAIN-SUFFIX,github.com,GitHub proxy")
-                .unwrap();
-            assert!(sign_in < github);
-            assert!(rendered.contains("DOMAIN,github-cloud.s3.amazonaws.com,GitHub proxy"));
-            assert!(!rendered.contains("DOMAIN-SUFFIX,live.com"));
-            assert!(!rendered.contains("DOMAIN-SUFFIX,s3.amazonaws.com"));
-            assert!(!rendered.contains("FINAL,") && !rendered.contains("MATCH,"));
+    fn all_clients_follow_the_live_split_with_direct_first() {
+        for client in ["surge", "shadowrocket"] {
+            let rendered = render(client, "My direct", "My proxy").unwrap();
+            assert_eq!(
+                rendered.lines().collect::<Vec<_>>(),
+                [
+                    "[Rule]",
+                    &format!("RULE-SET,{RAW_RULESETS}/RULE-SET/Microsoft_direct.list,My direct"),
+                    &format!("RULE-SET,{RAW_RULESETS}/RULE-SET/Microsoft_proxy.list,My proxy"),
+                ]
+            );
+        }
+        for client in ["flclash", "mihomo"] {
+            let rendered = render(client, "My direct", "My proxy").unwrap();
+            let (providers, rules) = rendered.split_once("\nrules:\n").unwrap();
+            for name in RULESETS {
+                assert!(providers.contains(&format!(
+                    "  {name}:\n    type: http\n    behavior: classical\n    format: yaml\n    url: {RAW_RULESETS}/Mihomo/{name}.yaml"
+                )));
+            }
+            assert_eq!(
+                rules.lines().collect::<Vec<_>>(),
+                [
+                    r#"  - "RULE-SET,Microsoft_direct,My direct""#,
+                    r#"  - "RULE-SET,Microsoft_proxy,My proxy""#,
+                ]
+            );
         }
         let output = render("sing-box", "direct", "proxy").unwrap();
         let json: serde_json::Value = serde_json::from_str(&output).unwrap();
         let route = &json["route"];
-        let rules = route["rules"].as_array().unwrap();
+        let rule_set = route["rule_set"].as_array().unwrap();
+        assert_eq!(rule_set.len(), RULESETS.len());
+        for (provider, name) in rule_set.iter().zip(RULESETS) {
+            assert_eq!(provider["tag"], name);
+            assert_eq!(provider["type"], "remote");
+            assert_eq!(provider["format"], "binary");
+            assert_eq!(
+                provider["url"],
+                format!("{RAW_RULESETS}/SingBox/{name}_Singbox.srs")
+            );
+        }
         assert_eq!(
-            rules[0]["domain"],
-            serde_json::json!(MICROSOFT_SIGN_IN_HOSTS)
+            route["rules"],
+            serde_json::json!([
+                {"rule_set": ["Microsoft_direct"], "action": "route", "outbound": "direct"},
+                {"rule_set": ["Microsoft_proxy"], "action": "route", "outbound": "proxy"},
+            ])
         );
-        assert_eq!(rules[0]["outbound"], "direct");
-        assert!(
-            rules[2]["domain_suffix"]
-                .as_array()
-                .unwrap()
-                .contains(&serde_json::json!("github.com"))
-        );
-        assert_eq!(rules[2]["outbound"], "proxy");
         assert!(route.get("final").is_none());
     }
 

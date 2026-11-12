@@ -1,6 +1,6 @@
-# Ruleset: Microsoft_extra
+# Ruleset: Microsoft_proxy_extra
 # Policy: USER-DEFINED
-# Description: Current typed ruleset; policy selected by consumer
+# Description: Rust-merged canonical ruleset
 # Rules: 5
 PROCESS-NAME,OneDrive
 PROCESS-NAME,OneDriveUpdater

@@ -1,14 +1,35 @@
 //! Subscription slots and conservative sanitization for encrypted public templates.
 
 mod flclash;
+mod microsoft;
 
-use super::{Client, MAX_TEMPLATE_BYTES, MAX_TEMPLATES, Template, VaultError};
+use super::{Client, MAX_TEMPLATE_BYTES, MAX_TEMPLATES, Template, UnlockedVault, VaultError};
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::LazyLock;
 use url::Url;
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
+
+pub(crate) fn unlock_for_display(
+    bytes: &[u8],
+    password: &str,
+) -> Result<UnlockedVault, VaultError> {
+    let mut vault = super::unlock(bytes, password)?;
+    // Only the shipped sample may change; imported libraries can intentionally route services differently.
+    if bytes == include_bytes!("../../assets/templates.vault") {
+        for template in &mut vault.library_mut().templates {
+            if matches!(template.client, Client::Surge | Client::Shadowrocket)
+                && let Some(mut content) = microsoft::upgrade(&template.content)?
+            {
+                template.content.zeroize();
+                template.content = std::mem::take(&mut *content);
+            }
+        }
+        vault.validate_for_storage()?;
+    }
+    Ok(vault)
+}
 
 const SLOT_PREFIX: &str = "{{SUBSCRIPTION_";
 const MAX_SUBSCRIPTION_BYTES: usize = 8192;

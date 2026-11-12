@@ -9,8 +9,6 @@ use std::time::Duration;
 
 mod service_ownership;
 
-pub use service_ownership::MICROSOFT_SIGN_IN_HOSTS;
-
 const NSFW_PROTECTED_CATEGORY_FILES: &[&str] = &[
     "AI.list",
     "Apple.list",
@@ -23,9 +21,9 @@ const NSFW_PROTECTED_CATEGORY_FILES: &[&str] = &[
     "Gaming_Download.list",
     "Gaming_Play.list",
     "Gaming_Web.list",
-    "GitHub.list",
     "Google.list",
-    "Microsoft.list",
+    "Microsoft_direct.list",
+    "Microsoft_proxy.list",
     "Netflix.list",
     "PayPal.list",
     "SocialMedia.list",
@@ -750,6 +748,8 @@ fn write_rules(path: &Path, name: &str, rules: &BTreeSet<String>) -> Result<(), 
         "Gaming_Web" => {
             "Stores, accounts, communities and shared-platform fallback; not a gameplay-only list"
         }
+        "Microsoft_direct" => "Exact Microsoft sign-in endpoints; apply before Microsoft_proxy",
+        "Microsoft_proxy" => "Microsoft services including GitHub; policy selected by consumer",
         _ => "Rust-merged canonical ruleset",
     };
     let mut content = crate::generate_header(name, description, rules.len());
@@ -1295,7 +1295,7 @@ pub fn validate_category_boundaries(root: &Path) -> Result<Vec<String>, String> 
     let mut errors = validate_consolidated_rulesets(root)?;
     for change in service_ownership::plan(root)? {
         errors.push(format!(
-            "{} violates GitHub or Microsoft service ownership",
+            "{} violates Microsoft direct/proxy service ownership",
             change.name
         ));
     }
@@ -1670,7 +1670,7 @@ mod tests {
                 vec!["googleapis.cn", "gstatic-cn.com", "googlecnapps.cn"],
             ),
             (
-                "Microsoft",
+                "Microsoft_proxy",
                 vec![
                     "login.partner.microsoftonline.cn",
                     "office365.cn",
@@ -2647,13 +2647,17 @@ mod tests {
     }
 
     #[test]
-    fn github_and_microsoft_sign_in_recover_their_owners_without_claiming_shared_parents() {
+    fn microsoft_split_migrates_legacy_rules_and_keeps_shared_parents() {
         let root = consolidation_fixture();
         let rules = root.join("rulesets/RULE-SET");
         let sources = root.join("rulesets/Sources");
         fs::create_dir_all(sources.join("Links")).unwrap();
         fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
-        fs::write(sources.join("Links/GitHub_sources.list"), "# GitHub\n").unwrap();
+        fs::write(
+            sources.join("Links/Microsoft_proxy_sources.list"),
+            "# Microsoft and GitHub\n",
+        )
+        .unwrap();
         let github = "DOMAIN-SUFFIX,github.com\nDOMAIN-SUFFIX,githubusercontent.com\nDOMAIN,github-cloud.s3.amazonaws.com\n";
         let microsoft = "DOMAIN-SUFFIX,cloud.microsoft\nDOMAIN-SUFFIX,static.microsoft\nDOMAIN-SUFFIX,usercontent.microsoft\n";
         fs::write(sources.join("custom/GitHub_manual.list"), github).unwrap();
@@ -2669,6 +2673,7 @@ mod tests {
                 "Microsoft",
                 "DOMAIN-SUFFIX,githubusercontent.com\nDOMAIN-SUFFIX,github-cloud.s3.amazonaws.com\nDOMAIN-SUFFIX,microsoftonline.com\nDOMAIN-SUFFIX,windows.net\nDOMAIN,login.microsoftonline.com\n",
             ),
+            ("Microsoft_extra", "PROCESS-NAME,OneDrive\n"),
             ("AI", "DOMAIN,api.github.com\nDOMAIN,api.ai.test\n"),
             (
                 "Direct",
@@ -2688,34 +2693,40 @@ mod tests {
             validate_category_boundaries(&root)
                 .unwrap()
                 .iter()
-                .any(|error| { error.contains("violates GitHub or Microsoft service ownership") })
+                .any(|error| error.contains("violates Microsoft direct/proxy service ownership"))
         );
         enforce_category_boundaries(&root).unwrap();
         super::split_published_rulesets(&root).unwrap();
         assert!(validate_category_boundaries(&root).unwrap().is_empty());
+        for retired in ["GitHub", "GitHub_extra", "Microsoft", "Microsoft_extra"] {
+            assert!(!rules.join(format!("{retired}.list")).exists());
+        }
         assert_eq!(
-            read_rules(&rules.join("GitHub.list")).unwrap(),
-            super::parse_rules(github)
-        );
-        assert!(!rules.join("GitHub_extra.list").exists());
-        assert_eq!(
-            read_rules(&rules.join("Microsoft.list")).unwrap(),
+            read_rules(&rules.join("Microsoft_proxy.list")).unwrap(),
             super::parse_rules(&format!(
-                "{microsoft}DOMAIN-SUFFIX,microsoftonline.com\nDOMAIN-SUFFIX,windows.net\n"
+                "{github}{microsoft}DOMAIN-SUFFIX,microsoftonline.com\nDOMAIN-SUFFIX,windows.net\n"
             ))
         );
+        assert_eq!(
+            read_rules(&rules.join("Microsoft_proxy_extra.list")).unwrap(),
+            super::parse_rules("PROCESS-NAME,OneDrive\n")
+        );
+        assert!(!rules.join("Microsoft_direct_ip.list").exists());
         assert_eq!(
             read_rules(&rules.join("AI.list")).unwrap(),
             super::parse_rules("DOMAIN,api.ai.test\n")
         );
-        let direct = read_rules(&rules.join("Direct.list")).unwrap();
+        let direct = read_rules(&rules.join("Microsoft_direct.list")).unwrap();
         assert_eq!(
             direct,
-            super::MICROSOFT_SIGN_IN_HOSTS
+            super::service_ownership::MICROSOFT_SIGN_IN_HOSTS
                 .iter()
                 .map(|host| format!("DOMAIN,{host}"))
-                .chain(std::iter::once("DOMAIN,notgithub.com".to_string()))
                 .collect()
+        );
+        assert_eq!(
+            read_rules(&rules.join("Direct.list")).unwrap(),
+            super::parse_rules("DOMAIN,notgithub.com\n")
         );
         let proxy = read_rules(&rules.join("GlobalProxy.list")).unwrap();
         assert!(proxy.contains("DOMAIN-SUFFIX,s3.amazonaws.com"));

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Split Microsoft into exact sign-in and service rulesets, include GitHub in the latter, and update public sample exports to use the two current subscriptions.
+
 - Refresh reviewed network-safe Brave, uBO Privacy, uBO Badware and Greek filter subsets without flattening browser-only rules or ambiguous exceptions.
 - Restore the native Bilibili ADBlock preference-pane endpoint and resolve its script defaults without duplicating ad handlers.
 - Restore GitHub service ownership, add exact Microsoft sign-in and Microsoft 365 coverage, and render the same split for Surge, Shadowrocket, FlClash, Mihomo and sing-box.

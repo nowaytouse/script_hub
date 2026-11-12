@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-const USAGE: &str = "Usage: routing_template <surge|shadowrocket|flclash|mihomo|sing-box> <direct-policy> <proxy-policy>\nMerge the emitted routing entries before broad rules; keep the existing final rule.";
+const USAGE: &str = "Usage: routing_template <surge|shadowrocket|flclash|mihomo|sing-box> <direct-policy> <proxy-policy>\nMerge the Microsoft_direct and Microsoft_proxy provider declarations and rules before broad rules; keep the existing final rule.";
 
 fn main() -> ExitCode {
     if rust_processor::app::print_version("routing_template") {

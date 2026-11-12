@@ -45,8 +45,9 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
     let chinese = documented_sample_password(include_str!("../../../../docs/TEMPLATES.zh-CN.md"));
     assert!(english == chinese, "The public-password documents disagree");
     let password = zeroize::Zeroizing::new(english.to_owned());
-    let vault = unlock(include_bytes!("../../assets/templates.vault"), &password)
-        .expect("The public-password documents and encrypted sample do not authenticate");
+    let vault =
+        template::unlock_for_display(include_bytes!("../../assets/templates.vault"), &password)
+            .expect("The public-password documents and encrypted sample do not authenticate");
     drop(password);
     assert!(
         !vault.library().templates.is_empty(),
@@ -69,11 +70,36 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
             .into_iter()
             .map(|slot| (slot, "https://example.invalid/subscription".to_owned()))
             .collect::<std::collections::BTreeMap<_, _>>();
-        assert!(
-            template::render(template, &subscriptions).is_ok(),
-            "The public encrypted sample has invalid subscription slots"
-        );
+        let rendered = template::render(template, &subscriptions)
+            .expect("The public encrypted sample has invalid subscription slots");
+        if matches!(template.client, Client::Surge | Client::Shadowrocket) {
+            let direct = rendered.find("Microsoft_direct.list,DIRECT");
+            let proxy = rendered.find("Microsoft_proxy.list,");
+            assert!(
+                matches!((direct, proxy), (Some(direct), Some(proxy)) if direct < proxy)
+                    && !rendered.contains("/Microsoft.list,")
+                    && !rendered.contains("/GitHub.list,"),
+                "The public sample must export the new Microsoft routing split"
+            );
+        }
     }
+}
+
+#[test]
+fn opening_a_user_library_does_not_rewrite_legacy_rules() {
+    let mut library = fixture();
+    let template = &mut library.templates[0];
+    let base = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/RULE-SET/";
+    template.content = format!(
+        "[Rule]\nRULE-SET,{base}Microsoft.list,PROXY\nRULE-SET,{base}GitHub.list,PROXY\nFINAL,DIRECT"
+    );
+    let vault = create(library, PASSWORD).unwrap();
+    let encrypted = vault.seal().unwrap();
+    let reopened = template::unlock_for_display(&encrypted, PASSWORD).unwrap();
+    assert!(
+        reopened.library().templates[0].content == vault.library().templates[0].content,
+        "Opening a user-owned vault must preserve its routing"
+    );
 }
 
 #[test]

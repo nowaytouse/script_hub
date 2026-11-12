@@ -11,7 +11,7 @@ pub const MICROSOFT_SIGN_IN_HOSTS: &[&str] = &[
     "login.windows.net",
 ];
 
-const GITHUB_MANIFEST: &str = "rulesets/Sources/Links/GitHub_sources.list";
+const MICROSOFT_MANIFEST: &str = "rulesets/Sources/Links/Microsoft_proxy_sources.list";
 const GITHUB_OWNERS: &str = "rulesets/Sources/custom/GitHub_manual.list";
 const MICROSOFT_OWNERS: &str = "rulesets/Sources/custom/Microsoft_manual.list";
 const PREVIOUS_DEV_RULES: &[&str] = &[
@@ -52,7 +52,7 @@ fn reviewed_domains(root: &Path, source: &str, required: &str) -> Result<BTreeSe
 
 pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
     if !root
-        .join(GITHUB_MANIFEST)
+        .join(MICROSOFT_MANIFEST)
         .try_exists()
         .map_err(|e| e.to_string())?
     {
@@ -62,8 +62,7 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
     let microsoft = reviewed_domains(root, MICROSOFT_OWNERS, "DOMAIN-SUFFIX,cloud.microsoft")?;
 
     let directory = root.join("rulesets/RULE-SET");
-    let path = directory.join("GitHub.list");
-    let previous = read_optional_rules(&path)?;
+    let previous_github = read_optional_rules(&directory.join("GitHub.list"))?;
     let github_boundary = RuleBoundary::from_rules(&github);
     let microsoft_boundary = RuleBoundary::from_rules(&microsoft);
     if microsoft
@@ -76,58 +75,89 @@ pub(super) fn plan(root: &Path) -> Result<Vec<Change>, String> {
         .iter()
         .map(|host| format!("DOMAIN,{host}"))
         .collect();
+    let is_github = |rule: &str| {
+        github_boundary.covers(rule)
+            || rule
+                .strip_prefix("DOMAIN-SUFFIX,")
+                .is_some_and(|host| github_boundary.domains.contains(&host.to_ascii_lowercase()))
+            || rule.eq_ignore_ascii_case("DOMAIN-KEYWORD,github")
+    };
+    let proxy_path = directory.join("Microsoft_proxy.list");
+    let mut proxy = read_optional_rules(&proxy_path)?;
+    proxy.extend(read_optional_rules(&directory.join("Microsoft.list"))?);
+    proxy.retain(|rule| !is_github(rule) && !sign_in_rule(rule));
+    proxy.extend(github);
+    proxy.extend(microsoft);
+
     let mut changes = Vec::new();
-    if previous != github {
-        changes.push(Change {
-            name: "GitHub".to_string(),
-            path,
-            rules: github,
-        });
+    for (name, rules) in [
+        ("Microsoft_direct", direct_sign_in),
+        ("Microsoft_proxy", proxy),
+    ] {
+        let path = directory.join(format!("{name}.list"));
+        if read_optional_rules(&path)? != rules {
+            changes.push(Change {
+                name: name.into(),
+                path,
+                rules,
+            });
+        }
+    }
+    for suffix in ["_ip", "_extra"] {
+        let name = format!("Microsoft_proxy{suffix}");
+        let path = directory.join(format!("{name}.list"));
+        let mut rules = read_optional_rules(&path)?;
+        if read_optional_rules(&directory.join(format!("Microsoft{suffix}.list")))?
+            .into_iter()
+            .fold(false, |changed, rule| rules.insert(rule) || changed)
+        {
+            changes.push(Change { name, path, rules });
+        }
     }
 
-    let mut categories = apple_ownership_category_paths(&directory)?;
+    let categories = apple_ownership_category_paths(&directory)?;
     for required in ["Direct", "GlobalProxy"] {
         if !categories.iter().any(|(name, _)| name == required) {
             return Err(format!("missing {required}.list for service ownership"));
         }
     }
-    if !categories.iter().any(|(name, _)| name == "Microsoft") {
-        categories.push(("Microsoft".to_string(), directory.join("Microsoft.list")));
-    }
     for (name, path) in categories {
-        if matches!(name.as_str(), "GitHub" | "Profile_Exceptions") || name.ends_with("_ip") {
+        if matches!(
+            name.as_str(),
+            "GitHub"
+                | "GitHub_ip"
+                | "GitHub_extra"
+                | "Microsoft"
+                | "Microsoft_ip"
+                | "Microsoft_extra"
+        ) {
+            changes.push(Change {
+                name,
+                path,
+                rules: BTreeSet::new(),
+            });
+            continue;
+        }
+        if matches!(
+            name.as_str(),
+            "Microsoft_direct" | "Microsoft_proxy" | "Profile_Exceptions"
+        ) || name.ends_with("_ip")
+            || name.ends_with("_extra")
+        {
             continue;
         }
         let mut rules = read_optional_rules(&path)?;
         let initial_count = rules.len();
-        if name == "GitHub_extra" {
-            rules.clear();
-        } else {
-            // A parent's shared suffix survives; first-match templates place exact owners first.
-            rules.retain(|rule| {
-                !github_boundary.covers(rule)
-                    && !rule.strip_prefix("DOMAIN-SUFFIX,").is_some_and(|host| {
-                        github_boundary.domains.contains(&host.to_ascii_lowercase())
-                    })
-                    && (name == "Microsoft" || !microsoft_boundary.covers(rule))
-                    && !rule.eq_ignore_ascii_case("DOMAIN-KEYWORD,github")
-                    && (!sign_in_rule(rule) || (name == "Direct" && direct_sign_in.contains(rule)))
-            });
-        }
+        // Keep shared parent suffixes. Templates match the exact sign-in hosts first.
+        rules.retain(|rule| {
+            !is_github(rule) && !microsoft_boundary.covers(rule) && !sign_in_rule(rule)
+        });
         let mut changed = initial_count != rules.len();
-        if name == "Direct" {
-            for rule in &direct_sign_in {
-                changed |= rules.insert(rule.clone());
-            }
-        } else if name == "GlobalProxy" {
+        if name == "GlobalProxy" {
             for &rule in PREVIOUS_DEV_RULES {
-                if previous.contains(rule) {
+                if previous_github.contains(rule) {
                     changed |= rules.insert(rule.to_string());
                 }
-            }
-        } else if name == "Microsoft" {
-            for rule in &microsoft {
-                changed |= rules.insert(rule.clone());
             }
         }
         if changed {

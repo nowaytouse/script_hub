@@ -718,7 +718,8 @@ impl TemplateState {
             let import = self.external_vault.then(|| self.store.clone()).flatten();
             self.start(move |generation, expected| {
                 let bytes = vault::read_bounded(&path).map_err(|error| error.to_string())?;
-                let vault = vault::unlock(&bytes, &password).map_err(|error| error.to_string())?;
+                let vault = vault::template::unlock_for_display(&bytes, &password)
+                    .map_err(|error| error.to_string())?;
                 ensure_current(&generation, expected)?;
                 let path = if let Some(store) = import {
                     store

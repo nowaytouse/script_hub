@@ -10,6 +10,7 @@ static PRIORITY_ORDER: &[&str] = &[
     "reject-drop.list",
     "reject-no-drop.list",
     "HTTPDNS_Hijack.list",
+    "Microsoft_direct.list",
     "AI.list",
     "AI_ip.list",
     "SocialMedia.list",
@@ -42,10 +43,7 @@ static PRIORITY_ORDER: &[&str] = &[
     "Google_ip.list",
     "Apple.list",
     "Apple_ip.list",
-    "Microsoft.list",
-    "Microsoft_ip.list",
-    "GitHub.list",
-    "GitHub_ip.list",
+    "Microsoft_proxy.list",
     "PayPal.list",
     "PayPal_ip.list",
     "Binance.list",
@@ -136,8 +134,7 @@ static SEMANTIC_COVERAGE_RULESETS: &[&str] = &[
     "Google.list",
     "Apple.list",
     "AppleNews.list",
-    "Microsoft.list",
-    "GitHub.list",
+    "Microsoft_proxy.list",
     "PayPal.list",
     "Binance.list",
     "Cloudflare.list",
@@ -467,6 +464,11 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
         "Profile_Exceptions_ip.list",
         "Pixiv.list",
         "Pixiv_ip.list",
+        // Retired owners are migration inputs, not competitors for canonical rules.
+        "Microsoft.list",
+        "Microsoft_ip.list",
+        "GitHub.list",
+        "GitHub_ip.list",
     ]
     .iter()
     .cloned()
@@ -1824,6 +1826,39 @@ mod ruleset_cleanup_tests {
         assert_eq!(
             fs::read_to_string(readme).unwrap(),
             "Documentation retained\n"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn microsoft_sign_in_survives_the_broader_proxy_suffix() {
+        let root = cleanup_fixture("microsoft-split");
+        let rulesets = root.join("rulesets/RULE-SET");
+        let direct = rulesets.join("Microsoft_direct.list");
+        let proxy = rulesets.join("Microsoft_proxy.list");
+        let legacy = rulesets.join("GitHub.list");
+        fs::write(&direct, "DOMAIN,login.live.com\n").unwrap();
+        fs::write(
+            &proxy,
+            "DOMAIN,login.live.com\nDOMAIN-SUFFIX,live.com\nDOMAIN-SUFFIX,github.com\n",
+        )
+        .unwrap();
+        fs::write(&legacy, "DOMAIN-SUFFIX,github.com\n").unwrap();
+
+        run_cleanup(root.to_str().unwrap()).unwrap();
+
+        assert!(
+            fs::read_to_string(direct)
+                .unwrap()
+                .contains("DOMAIN,login.live.com")
+        );
+        let proxy = fs::read_to_string(proxy).unwrap();
+        assert!(!proxy.contains("DOMAIN,login.live.com"));
+        assert!(proxy.contains("DOMAIN-SUFFIX,live.com"));
+        assert!(proxy.contains("DOMAIN-SUFFIX,github.com"));
+        assert_eq!(
+            fs::read_to_string(legacy).unwrap(),
+            "DOMAIN-SUFFIX,github.com\n"
         );
         fs::remove_dir_all(root).unwrap();
     }

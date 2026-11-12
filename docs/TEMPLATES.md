@@ -14,6 +14,8 @@ The bundled sample is encrypted, but its password is public. It is a manual gate
 
 ## Make it yours
 
+In the latest desktop app, the bundled Surge and Shadowrocket samples use `Microsoft_direct` for sign-in and `Microsoft_proxy` for other Microsoft services, including GitHub. Export a fresh copy or update previously exported configurations manually; your existing files and private libraries are not rewritten.
+
 1. Select a template for your client and enable **Show full template** to read its original text.
 2. Use **Edit template → Apply changes** to adjust policy groups or rule order, or edit a copy in your own text editor. To keep edits in the app, choose **Save encrypted library** with a project available. This writes a local copy, not the public sample. Save before switching apps: automatic locking discards unsaved changes.
 3. Fill any subscription fields needed by the client, acknowledge the plaintext warning, then choose **Copy configuration** or **Export configuration** to a path outside the repository. Import the result as a new profile and keep your existing profile until the new one works.
