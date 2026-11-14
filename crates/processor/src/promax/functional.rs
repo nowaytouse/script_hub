@@ -2,6 +2,90 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::net::IpAddr;
 
+pub(crate) const X_WEB_SOURCE: &str = "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Shadowrocket/module/XWebAds.srmodule";
+pub(crate) const X_WEB_HOST: &str = "x.com";
+const X_WEB_RUNTIME: &str = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/x-web-ads-safe.js";
+const X_WEB_PATTERN_PREFIX: &str = r"^https://x\.com/i/api/graphql/[A-Za-z0-9_-]+/(";
+const X_WEB_PATTERN_END: &str = r")(?:\?|$)";
+const X_WEB_LIMIT: &str = "1048576";
+
+fn reviewed_x_operations(operations: &str) -> bool {
+    let mut seen = std::collections::HashSet::new();
+    operations.split('|').all(|name| {
+        matches!(name, "HomeTimeline" | "HomeLatestTimeline" | "TweetDetail") && seen.insert(name)
+    })
+}
+
+pub(crate) fn project_x_web_source(content: &str) -> Result<String, &'static str> {
+    let error = "unreviewed XWebAds module shape; keeping last validated source";
+    let mut lines = content
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'));
+    if lines.next() != Some("[Script]") {
+        return Err(error);
+    }
+    let (_, script) = lines
+        .next()
+        .and_then(|line| line.split_once('='))
+        .ok_or(error)?;
+    let mut fields = crate::smart_cleanup::split_script_parameters(script);
+    let index = fields
+        .iter()
+        .position(|field| field.starts_with("pattern="))
+        .ok_or(error)?;
+    let pattern = fields
+        .swap_remove(index)
+        .trim_start_matches("pattern=")
+        .replace(r"\/", "/");
+    fields.sort_unstable();
+    if fields
+        != [
+            "requires-body=true",
+            "script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/X/X_ads.js",
+            "type=http-response",
+        ]
+        || lines.next() != Some("[MITM]")
+        || lines
+            .next()
+            .and_then(|line| line.split_once('='))
+            .is_none_or(|(key, value)| key.trim() != "hostname" || value.trim() != "%APPEND% x.com")
+        || lines.next().is_some()
+    {
+        return Err(error);
+    }
+    let operations = pattern
+        .strip_prefix(r"^https?://x\.com/i/api/graphql/[^/]+/(")
+        .and_then(|tail| tail.strip_suffix(')'))
+        .filter(|operations| reviewed_x_operations(operations))
+        .ok_or(error)?;
+    Ok(format!(
+        "#!name=X Web Ads\n#!author=fmz200[https://github.com/fmz200]\n# Reviewed projection of {X_WEB_SOURCE}\n\n[Script]\nX Web Ads = type=http-response, pattern={X_WEB_PATTERN_PREFIX}{operations}{X_WEB_PATTERN_END}, script-path={X_WEB_RUNTIME}, requires-body=true, max-size={X_WEB_LIMIT}\n\n[MITM]\nhostname = %APPEND% {X_WEB_HOST}\n"
+    ))
+}
+
+pub(crate) fn is_reviewed_x_web_script(line: &str) -> bool {
+    let Some(("X Web Ads", parameters)) = line
+        .split_once('=')
+        .map(|(name, value)| (name.trim(), value))
+    else {
+        return false;
+    };
+    let fields = crate::smart_cleanup::split_script_parameters(parameters);
+    let [kind, pattern, path, body, cap] = fields.as_slice() else {
+        return false;
+    };
+    *kind == "type=http-response"
+        && *body == "requires-body=true"
+        && cap.strip_prefix("max-size=") == Some(X_WEB_LIMIT)
+        && path.strip_prefix("script-path=") == Some(X_WEB_RUNTIME)
+        && pattern
+            .strip_prefix("pattern=")
+            .and_then(|value| value.strip_prefix(X_WEB_PATTERN_PREFIX))
+            .and_then(|value| value.strip_suffix(X_WEB_PATTERN_END))
+            .is_some_and(reviewed_x_operations)
+}
+
 static DOMAIN: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?i)^[a-z0-9_*?](?:[a-z0-9._*?-]*[a-z0-9_*?])?$")
         .expect("domain source regex must compile")

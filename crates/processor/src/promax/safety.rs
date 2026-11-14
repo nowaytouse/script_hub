@@ -522,6 +522,9 @@ impl SafetyPolicy {
     }
 
     pub fn functional_decision(&self, line: &str) -> SafetyDecision {
+        if super::functional::is_reviewed_x_web_script(line) {
+            return SafetyDecision::Keep;
+        }
         let request = functional_request_pattern(line);
         let normalized = request
             .replace(r"\\/", "/")
@@ -604,6 +607,9 @@ impl SafetyPolicy {
                     if mainland_functional_hostname(request).is_some() {
                         references.push(format!("mainland-handler:{hostname}"));
                     }
+                    if super::functional::is_reviewed_x_web_script(line) {
+                        references.push("reviewed-x-web:x.com".to_owned());
+                    }
                     references
                 } else {
                     request_host_patterns(request)
@@ -630,6 +636,13 @@ impl SafetyPolicy {
     pub fn hostname_is_referenced_by_patterns(&self, hostname: &str, patterns: &[String]) -> bool {
         let hostname = hostname.trim();
         if hostname.starts_with('-') {
+            return true;
+        }
+        if hostname == super::functional::X_WEB_HOST
+            && patterns
+                .binary_search_by(|pattern| pattern.as_str().cmp("reviewed-x-web:x.com"))
+                .is_ok()
+        {
             return true;
         }
         let hostname = hostname.split_once(':').map_or(hostname, |(host, _)| host);

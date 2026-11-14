@@ -28,10 +28,7 @@ const BILI_ADBLOCK_SHADOWROCKET: RemoteSource = RemoteSource {
 };
 
 const LOCAL_SOURCES: &[(&str, &str)] = &[
-    (
-        "XWebAds.sgmodule",
-        "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/XWebAds.module",
-    ),
+    ("XWebAds.sgmodule", crate::promax::functional::X_WEB_SOURCE),
     (
         "Wool.ADBlock.sgmodule",
         "https://raw.githubusercontent.com/fmz200/wool_scripts/refs/heads/main/Surge/module/blockAds.module",
@@ -513,7 +510,18 @@ fn sync_local_sources(root: &Path, downloader: &Downloader) {
     for (name, url) in LOCAL_SOURCES {
         match batch.contents.get(*url) {
             Some(content) if valid_module(content) => {
-                if !crate::safe_write_file_internal(&directory.join(name), content, true) {
+                let content = if *url == crate::promax::functional::X_WEB_SOURCE {
+                    match crate::promax::functional::project_x_web_source(content) {
+                        Ok(projected) => std::borrow::Cow::Owned(projected),
+                        Err(error) => {
+                            eprintln!("[WARN] {name}: {error}");
+                            continue;
+                        }
+                    }
+                } else {
+                    std::borrow::Cow::Borrowed(content.as_str())
+                };
+                if !crate::safe_write_file_internal(&directory.join(name), &content, true) {
                     eprintln!("[WARN] failed to publish local functional source: {name}");
                 }
             }

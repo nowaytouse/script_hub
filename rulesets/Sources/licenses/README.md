@@ -8,6 +8,7 @@
 | [AdGuard CNAME](https://github.com/AdguardTeam/cname-trackers) | [MIT](AdGuard-CNAME-MIT.txt) |
 | [Steven Black — own hosts only](https://github.com/StevenBlack/hosts/tree/master/data/StevenBlack) | [MIT](StevenBlack-MIT.txt) |
 | [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
+| [fmz200 — X Web Ads endpoint and response schema](https://github.com/fmz200/wool_scripts/blob/main/Shadowrocket/module/XWebAds.srmodule) | [GPL-3.0](https://github.com/fmz200/wool_scripts/blob/main/LICENSE) |
 | [HaGeZi](https://github.com/hagezi/dns-blocklists) | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
 | [V2Fly private devices](https://github.com/v2fly/domain-list-community/blob/master/data/private) | [MIT](V2Fly-MIT.txt) |
 | [Brave First-Party filters — reviewed advertising hosts only](https://github.com/brave/adblock-lists/blob/master/brave-lists/brave-firstparty.txt) | [MPL-2.0](https://github.com/brave/adblock-lists/blob/master/LICENSE) |

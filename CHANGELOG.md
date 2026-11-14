@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Follow fmz200’s Shadowrocket X Web Ads module in PROMAX, with a bounded local response filter for the reviewed timeline and post-detail endpoints.
+
 - Default to the current encrypted template library, retire legacy template selection and GitHub ruleset aliases, and derive FlClash and sing-box profiles from the Surge routing baseline.
 - Enable direct encrypted DNS and IPv6 in the Shadowrocket template; use Microsoft NCSI for direct checks and GrapheneOS HTTPS for proxy checks.
 - Include the published native AdBlock providers in the FlClash and sing-box templates.

@@ -4,6 +4,57 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn x_web_ads_follows_reviewed_upstream_without_unprotecting_x() {
+    use crate::promax::{
+        functional,
+        rule::SurgeRule,
+        safety::{SafetyDecision, SafetyPolicy},
+    };
+
+    let upstream = r"#!name=Fixture X Web Ads
+[Script]
+X = type=http-response, pattern=^https?:\/\/x\.com\/i\/api\/graphql\/[^\/]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail), script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/X/X_ads.js, requires-body=true
+[MITM]
+hostname = %APPEND% x.com";
+    let canonical = functional::project_x_web_source(upstream).unwrap();
+    assert_eq!(canonical.matches("x-web-ads-safe.js").count(), 1);
+    assert!(canonical.contains(functional::X_WEB_SOURCE));
+    assert!(
+        functional::project_x_web_source(&upstream.replace("HomeTimeline|", ""))
+            .unwrap()
+            .contains("(HomeLatestTimeline|TweetDetail)")
+    );
+    for unreviewed in [
+        upstream.replace("TweetDetail", "Login"),
+        upstream.replace("%APPEND% x.com", "%APPEND% *.x.com"),
+        upstream.replace("requires-body=true", "requires-body=true, argument=secret"),
+        format!("{upstream}\n[Rule]\nDOMAIN,x.com,REJECT"),
+    ] {
+        assert!(functional::project_x_web_source(&unreviewed).is_err());
+    }
+    let mut manager = AdBlockManager::new(std::env::temp_dir().join("script-hub-x-web-fixture"));
+    manager.safety = SafetyPolicy::from_lines(["DOMAIN-SUFFIX,x.com"]);
+    assert!(matches!(
+        manager
+            .safety
+            .decision(&SurgeRule::parse("DOMAIN,x.com").unwrap()),
+        SafetyDecision::Quarantine(_)
+    ));
+    let rogue = canonical.replace("x-web-ads-safe.js", "unknown.js");
+    manager.extract_from_text(&rogue, "REJECT", "Local", true, false, "unreviewed");
+    manager.retain_referenced_mitm_hosts();
+    assert!(!manager.mitm_hosts.contains("x.com"));
+    assert!(manager.sections["Script"].is_empty());
+    manager.extract_from_text(&canonical, "REJECT", "Local", true, false, "reviewed");
+    manager.retain_referenced_mitm_hosts();
+    assert!(manager.mitm_hosts.contains("x.com"));
+    assert_eq!(manager.sections["Script"].len(), 1);
+    assert!(functional::is_reviewed_x_web_script(
+        &manager.sections["Script"][0]
+    ));
+}
+
+#[test]
 fn reviewed_browser_host_does_not_duplicate_a_network_suffix_in_another_category() {
     let browser = "https://raw.githubusercontent.com/kargig/greek-adblockplus-filter/master/void-gr-filters.txt";
     let network = "https://example.test/compiled.list";

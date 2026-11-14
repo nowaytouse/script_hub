@@ -292458,18 +292458,6 @@
     "risk": "broad-media"
   },
   {
-    "source": "modules/source/local/XWebAds.sgmodule",
-    "candidate": "X网页版去广告 = type=http-response, pattern=^https?:\\/\\/x\\.com\\/i\\/api\\/graphql\\/[^\\/]+\\/(HomeTimeline|HomeLatestTimeline|TweetDetail), script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/X/X_ads.js, requires-body=true",
-    "reason": "protected-functional-intersection",
-    "risk": "protected-service"
-  },
-  {
-    "source": "modules/source/local/XWebAds.sgmodule",
-    "candidate": "x.com",
-    "reason": "protected-mitm-host",
-    "risk": "protected-service"
-  },
-  {
     "source": "modules/source/local/YouTube.ADBlock.sgmodule",
     "candidate": "*.googlevideo.com",
     "reason": "protected-mitm-host",

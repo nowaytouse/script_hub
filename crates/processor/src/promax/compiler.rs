@@ -1155,6 +1155,8 @@ impl AdBlockManager {
         }
         if self.safety.hostname_is_protected(hostname)
             && !self.safety.hostname_can_have_mainland_handler(hostname)
+            // Retention still requires the surviving, exact reviewed X response handler.
+            && hostname != super::functional::X_WEB_HOST
         {
             self.quarantine
                 .push(crate::promax::safety::QuarantineRecord {
