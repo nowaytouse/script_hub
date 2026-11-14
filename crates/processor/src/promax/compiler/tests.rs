@@ -4,6 +4,67 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn missing_or_truncated_declared_functional_sources_cannot_publish() {
+    let root = std::env::temp_dir().join(format!(
+        "promax-functional-inputs-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let manifest = root.join("rulesets/Sources/Links/AdBlock_functional_sources.list");
+    fs::create_dir_all(manifest.parent().unwrap()).unwrap();
+    let previous = root.join("modules/surge/head_expanse/PROMAX.sgmodule");
+    fs::create_dir_all(previous.parent().unwrap()).unwrap();
+    fs::write(&previous, "previous valid publication").unwrap();
+    let source = "../required-adblock.sgmodule";
+    let url = "https://example.test/functional.sgmodule";
+    let mut manager = AdBlockManager::new(root.clone());
+
+    fs::write(&manifest, source).unwrap();
+    let missing = manager.integrate_functional_sections(&HashMap::new());
+    fs::write(&manifest, [b'#', b'\n', 0xff]).unwrap();
+    let malformed = manager.integrate_functional_sections(&HashMap::new());
+    fs::write(&manifest, url).unwrap();
+    let no_download = manager.integrate_functional_sections(&HashMap::new());
+    let placeholder = "#!name=Upstream placeholder response\n[Script]\n# No active rows\n[MITM]\nhostname = example.test";
+    let inactive =
+        manager.integrate_functional_sections(&HashMap::from([(url.into(), placeholder.into())]));
+    assert_eq!(
+        fs::read_to_string(previous).unwrap(),
+        "previous valid publication"
+    );
+    fs::remove_dir_all(root).unwrap();
+    assert!(
+        missing.is_err(),
+        "missing explicit source was silently ignored"
+    );
+    assert!(
+        malformed.is_err(),
+        "invalid UTF-8 truncated the manifest silently"
+    );
+    assert!(
+        no_download.is_err(),
+        "missing remote result was silently ignored"
+    );
+    assert!(
+        inactive.is_err(),
+        "remote placeholder was accepted as a working module"
+    );
+}
+
+#[test]
+fn repository_functional_manifest_resolves_active_local_sources() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let (paths, remotes) = AdBlockManager::new(root)
+        .load_functional_source_paths()
+        .unwrap();
+    assert!(!paths.is_empty());
+    assert!(!remotes.is_empty());
+}
+
+#[test]
 fn x_web_ads_follows_reviewed_upstream_without_unprotecting_x() {
     use crate::promax::{
         functional,
@@ -1530,7 +1591,7 @@ fn licensed_remote_app_modules_keep_templates_and_ruleset_boundaries() {
     .unwrap();
     fs::write(
         root.join("rulesets/Sources/legacy-ad.sgmodule"),
-        "[Script]\nlegacy_ad = type=http-response,pattern=^https://tiebac\\.baidu\\.com/legacy/ads,requires-body=true,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js,argument=per_filter_video_thread=1\nunrelated_ad = type=http-response,pattern=^https://ads\\.example/ad,requires-body=true,script-path=https://scripts.example/remove-ads.js\n",
+        "[Script]\nlegacy_ad = type=http-response,pattern=^https://tiebac\\.baidu\\.com/legacy/ads,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-proto.js,argument=per_filter_video_thread=1\nunrelated_ad = type=http-response,pattern=^https://ads\\.example/ad,requires-body=true,script-path=https://scripts.example/remove-ads.js\n",
     ).unwrap();
     let fixture = r"#!name=贴吧去广告
 [Rule]
@@ -1553,6 +1614,7 @@ hostname = %APPEND% tiebac.baidu.com
     assert!(output.contains("tiebac.baidu.com"));
     assert_eq!(output.matches("script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js").count(), 1);
     assert!(!output.contains("per_filter_video_thread=1"));
+    assert!(!output.contains("legacy_ad"));
     assert!(output.contains("script-path=https://scripts.example/remove-ads.js"));
     fs::remove_dir_all(root).unwrap();
 }
@@ -1560,7 +1622,7 @@ hostname = %APPEND% tiebac.baidu.com
 #[test]
 fn obsolete_embedded_scripts_follow_verified_maintained_resources() {
     let mut manager = AdBlockManager::new(std::env::temp_dir());
-    manager.add_section_line("Script", "mlxx = type=http-response,pattern=^https://api\\.bevol\\.com/ads,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/Yu9191/Rewrite@main/mlxx.js");
+    manager.add_section_line("Script", r"mlxx = type=http-response,pattern=^https://api\.bevol\.com/(?:appmain/app/home/page|usercenter/account/info|personal/page|appmain/app/home/launch|trialbox/shop/app/homePage)$,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/Yu9191/Rewrite@main/mlxx.js");
     manager.add_section_line("Script", "fish = type=http-response,pattern=^https://acs\\.m\\.goofish\\.com/ads,requires-body=true,script-path=https://klraw.pages.dev/kelv1n1n/script/refs/heads/main/js/goofish.js?token=fixture");
     let module = manager.generate_module(&[], "cdn").content;
     assert!(!module.contains("Yu9191/Rewrite"));
@@ -1572,6 +1634,8 @@ fn obsolete_embedded_scripts_follow_verified_maintained_resources() {
         module.contains("https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js")
     );
     assert!(module.contains("requires-body=true"));
+    assert!(module.contains("appmain/app/home/launch|trialbox/shop/app/homePage"));
+    assert!(!module.contains("usercenter/account/info"));
 }
 
 #[test]

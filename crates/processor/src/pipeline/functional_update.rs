@@ -500,43 +500,59 @@ fn with_bundle_staging(
     result
 }
 
-fn sync_local_sources(root: &Path, downloader: &Downloader) {
+fn refresh_local_source(
+    target: &Path,
+    url: &str,
+    downloaded: Result<&str, &str>,
+) -> Result<(), String> {
+    let candidate = downloaded.and_then(|body| {
+        if url == crate::promax::functional::X_WEB_SOURCE {
+            crate::promax::functional::project_x_web_source(body).map(std::borrow::Cow::Owned)
+        } else if valid_module(body) && crate::promax::functional::has_active_payload(body) {
+            Ok(std::borrow::Cow::Borrowed(body))
+        } else {
+            Err("upstream supplied no usable module content")
+        }
+    });
+    let failure = match candidate {
+        Ok(content) if crate::safe_write_file_internal(target, &content, true) => return Ok(()),
+        Ok(_) => "cannot write refreshed source",
+        Err(error) => error,
+    };
+    let fallback = fs::read_to_string(target).is_ok_and(|content| {
+        valid_module(&content) && crate::promax::functional::has_active_payload(&content)
+    });
+    let disposition = if fallback {
+        "using the existing functional snapshot"
+    } else {
+        "no usable local snapshot"
+    };
+    Err(format!("{failure}; {disposition}"))
+}
+
+fn sync_local_sources(root: &Path, downloader: &Downloader) -> Vec<String> {
     let directory = root.join("modules/source/local");
     if let Err(error) = std::fs::create_dir_all(&directory) {
         eprintln!("[WARN] cannot create local functional source directory: {error}");
-        return;
+        return vec!["local functional source directory".into()];
     }
     let batch = downloader.download_many(LOCAL_SOURCES.iter().map(|(_, url)| *url));
+    let mut failures = Vec::new();
     for (name, url) in LOCAL_SOURCES {
-        match batch.contents.get(*url) {
-            Some(content) if valid_module(content) => {
-                let content = if *url == crate::promax::functional::X_WEB_SOURCE {
-                    match crate::promax::functional::project_x_web_source(content) {
-                        Ok(projected) => std::borrow::Cow::Owned(projected),
-                        Err(error) => {
-                            eprintln!("[WARN] {name}: {error}");
-                            continue;
-                        }
-                    }
-                } else {
-                    std::borrow::Cow::Borrowed(content.as_str())
-                };
-                if !crate::safe_write_file_internal(&directory.join(name), &content, true) {
-                    eprintln!("[WARN] failed to publish local functional source: {name}");
-                }
-            }
-            Some(_) => eprintln!("[WARN] local functional source returned invalid content: {name}"),
-            None => {
-                let error = batch
-                    .failures
-                    .iter()
-                    .find(|failure| failure.url == *url)
-                    .map(|failure| failure.error.as_str())
-                    .unwrap_or("missing download result");
-                eprintln!("[WARN] keeping existing {name}: {error}");
-            }
+        let downloaded = batch.contents.get(*url).map(String::as_str).ok_or_else(|| {
+            batch
+                .failures
+                .iter()
+                .find(|failure| failure.url == *url)
+                .map(|failure| failure.error.as_str())
+                .unwrap_or("missing download result")
+        });
+        if let Err(error) = refresh_local_source(&directory.join(name), url, downloaded) {
+            eprintln!("[WARN] {name}: {error}");
+            failures.push((*name).to_owned());
         }
     }
+    failures
 }
 
 fn run_step(label: &str, result: Result<(), String>, failures: &mut Vec<String>) {
@@ -979,8 +995,7 @@ fn publish_apple_shadowrocket(root: &Path, sources: &[SourceInput]) -> Result<()
 
 pub fn run_functional_updates(root: &Path) -> Vec<String> {
     let downloader = downloader();
-    sync_local_sources(root, &downloader);
-    let mut failures = Vec::new();
+    let mut failures = sync_local_sources(root, &downloader);
     run_step(
         "Helper local DNS sources",
         super::helper_hosts::refresh(root),
@@ -1586,6 +1601,33 @@ mod tests {
         assert!(valid_module(
             "#!name=Fixture functional module with enough bytes for validation\n#!desc=fixture\n[Script]\nfixture = type=generic,script-path=https://example.test/a.js\n"
         ));
+    }
+
+    #[test]
+    fn local_functional_refresh_preserves_last_usable_snapshot() {
+        let root = temporary_root("local-functional-refresh");
+        let target = root.join("source.sgmodule");
+        let url = "https://example.test/source.sgmodule";
+        let previous = "#!name=Fixture adblock\n[Script]\nfixture = type=http-response,pattern=^https://ads\\.example/test,script-path=https://example.test/filter.js\n";
+        let invalid = "#!name=Long enough module placeholder without any active entries\n[Script]\n# no payload\n[MITM]\nhostname = ads.example";
+        assert!(
+            super::refresh_local_source(&target, url, Err("HTTP 404"))
+                .unwrap_err()
+                .contains("no usable local snapshot")
+        );
+        super::refresh_local_source(&target, url, Ok(previous)).unwrap();
+        for response in [Err("HTTP 404"), Ok(invalid)] {
+            assert!(
+                super::refresh_local_source(&target, url, response)
+                    .unwrap_err()
+                    .contains("using the existing functional snapshot")
+            );
+            assert_eq!(std::fs::read_to_string(&target).unwrap(), previous);
+        }
+        let updated = previous.replace("/test,", "/updated,");
+        super::refresh_local_source(&target, url, Ok(&updated)).unwrap();
+        assert_eq!(std::fs::read_to_string(&target).unwrap(), updated);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

@@ -1185,6 +1185,13 @@ fn validate_surge_script(line_number: usize, line: &str, errors: &mut Vec<Valida
             "script resource has a maintained replacement; refusing the retired 404/TLS proxy reference",
         ));
     }
+    if super::script_resources::is_unreviewed_mlxx(line) {
+        errors.push(error(
+            line_number,
+            "unreviewed-mlxx-handler",
+            "Mlxx response rewriting is only reviewed for the launch and trial-box ad endpoints",
+        ));
+    }
     let valid = match script_type {
         Some("http-request" | "http-response") => {
             let pattern = parameter(&params, "pattern");
@@ -1811,6 +1818,24 @@ RULE-SET,https://example.test/unfiltered.list,PROXY
                 validate_surge_module(&module)
                     .iter()
                     .any(|error| error.code == "obsolete-script-resource")
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_mixed_mlxx_matcher_in_both_published_dialects() {
+        let module = r"#!name=PROMAX fixture
+[Script]
+mlxx = type=http-response,pattern=^https://api\.bevol\.com/(?:personal/page|appmain/app/home/launch)$,requires-body=1,script-path=https://cdn.jsdelivr.net/gh/fmz200/wool_scripts@main/Scripts/mlxx/mlxx.js
+";
+        for validation in [
+            validate_surge_module(module),
+            validate_shadowrocket_module(module),
+        ] {
+            assert!(
+                validation
+                    .iter()
+                    .any(|error| error.code == "unreviewed-mlxx-handler")
             );
         }
     }

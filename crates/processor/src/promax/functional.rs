@@ -9,6 +9,52 @@ const X_WEB_PATTERN_PREFIX: &str = r"^https://x\.com/i/api/graphql/[A-Za-z0-9_-]
 const X_WEB_PATTERN_END: &str = r")(?:\?|$)";
 const X_WEB_LIMIT: &str = "1048576";
 
+/// A title and a section header are not proof that a response contains a usable module.
+pub(crate) fn has_active_payload(content: &str) -> bool {
+    let mut section = "";
+    for line in content.lines().map(str::trim) {
+        if line.is_empty() || line.starts_with(['#', ';']) || line.starts_with("//") {
+            continue;
+        }
+        if let Some(header) = line
+            .strip_prefix('[')
+            .and_then(|line| line.strip_suffix(']'))
+        {
+            section = header;
+            continue;
+        }
+        let projected = if section == "Script" {
+            // Native sources can declare arguments that are resolved after fetching.
+            // Validate the matcher and resource, not the unresolved argument value.
+            line.split_once('=').map(|(name, parameters)| {
+                let mut fields = crate::smart_cleanup::split_script_parameters(parameters);
+                fields.retain(|field| !field.starts_with("argument="));
+                format!("{name}={}", fields.join(","))
+            })
+        } else {
+            None
+        };
+        let candidate = projected.as_deref().unwrap_or(line);
+        if matches!(
+            section,
+            "Script" | "URL Rewrite" | "Body Rewrite" | "Header Rewrite" | "Map Local"
+        ) && super::validation::validate_surge_section_line(section, candidate).is_empty()
+        {
+            return true;
+        }
+        if matches!(section, "Rule" | "Adblock Plus")
+            && (super::rule::SurgeRule::parse(candidate).is_ok()
+                || (candidate.starts_with("RULE-SET,")
+                    && super::validation::validate_surge_section_line("Rule", candidate)
+                        .is_empty())
+                || (section == "Adblock Plus" && normalize_domain_source_line(candidate).is_some()))
+        {
+            return true;
+        }
+    }
+    false
+}
+
 fn reviewed_x_operations(operations: &str) -> bool {
     let mut seen = std::collections::HashSet::new();
     operations.split('|').all(|name| {

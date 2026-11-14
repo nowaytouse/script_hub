@@ -597,8 +597,9 @@ impl SafetyPolicy {
     pub fn functional_host_patterns(functional_lines: &[String]) -> Vec<String> {
         let mut patterns: Vec<String> = functional_lines
             .iter()
-            .flat_map(|line| {
-                let request = functional_request_pattern(line);
+            .map(|line| (line, functional_request_pattern(line)))
+            .filter(|(_, request)| !is_proven_plain_http(request))
+            .flat_map(|(line, request)| {
                 if let Some(hostname) = literal_request_hostname(request) {
                     let mut references = vec![
                         format!("observed:{}", hostname_reference_token(&hostname)),
@@ -827,17 +828,42 @@ impl SafetyPolicy {
     }
 }
 
-pub(crate) fn functional_request_pattern(line: &str) -> &str {
-    if let Some((_, pattern)) = line.split_once("pattern=") {
-        return top_level_parameter_value(pattern);
-    }
+fn functional_request_pattern(line: &str) -> &str {
     let mut fields = line.split_whitespace();
     let first = fields.next().unwrap_or("");
     if first.starts_with("http-request") || first.starts_with("http-response") {
-        fields.next().unwrap_or(first)
-    } else {
-        first
+        return fields.next().unwrap_or(first);
     }
+    if !first.starts_with('^')
+        && !first.contains("://")
+        && !first.contains(r":\/\/")
+        && let Some((_, parameters)) = line.split_once('=')
+    {
+        let mut pattern = None;
+        let mut script_type = None;
+        for (key, value) in crate::smart_cleanup::split_script_parameters(parameters)
+            .into_iter()
+            .filter_map(|field| field.split_once('='))
+        {
+            if key.trim().eq_ignore_ascii_case("pattern") && pattern.is_none() {
+                pattern = Some(value.trim());
+            } else if key.trim().eq_ignore_ascii_case("type") && script_type.is_none() {
+                script_type = Some(value.trim());
+            }
+        }
+        if matches!(script_type, Some("http-request" | "http-response"))
+            && let Some(pattern) = pattern
+        {
+            return pattern;
+        }
+    }
+    first
+}
+
+fn is_proven_plain_http(request: &str) -> bool {
+    (request.starts_with("^http://") || request.starts_with(r"^http:\/\/"))
+        && (!request.contains('|')
+            || Expr::parse_tree(request).is_ok_and(|tree| !matches!(tree.expr, Expr::Alt(_))))
 }
 
 fn literal_request_hostname(request: &str) -> Option<String> {
@@ -866,36 +892,6 @@ fn literal_request_hostname(request: &str) -> Option<String> {
     } else {
         None
     }
-}
-
-fn top_level_parameter_value(value: &str) -> &str {
-    let mut quote = None;
-    let mut escaped = false;
-    let mut depths = [0_u32; 3];
-    for (index, character) in value.char_indices() {
-        if let Some(delimiter) = quote {
-            if character == delimiter && !escaped {
-                quote = None;
-            }
-            escaped = character == '\\' && !escaped;
-            if character != '\\' {
-                escaped = false;
-            }
-            continue;
-        }
-        match character {
-            '\'' | '"' => quote = Some(character),
-            '{' => depths[0] += 1,
-            '}' => depths[0] = depths[0].saturating_sub(1),
-            '[' => depths[1] += 1,
-            ']' => depths[1] = depths[1].saturating_sub(1),
-            '(' => depths[2] += 1,
-            ')' => depths[2] = depths[2].saturating_sub(1),
-            ',' if depths == [0, 0, 0] => return value[..index].trim(),
-            _ => {}
-        }
-    }
-    value.trim()
 }
 
 fn request_host_patterns(request: &str) -> Vec<String> {
@@ -1453,6 +1449,37 @@ mod tests {
         assert!(safety.hostname_is_referenced("api.service.com.cn", &functions));
         assert!(!safety.hostname_is_referenced("other.service.com.cn", &functions));
         assert!(!safety.hostname_is_referenced("scripts.example", &functions));
+    }
+
+    #[test]
+    fn functional_safety_uses_the_actual_matcher_not_embedded_pattern_text() {
+        let safety = SafetyPolicy::from_lines(["DOMAIN-SUFFIX,protected.test"]);
+        let script = r#"x = type=http-response, argument="pattern=^https://ordinary\.test/ads", Pattern = ^https://protected\.test/feed, script-path=https://example.test/a.js"#;
+        let map_local = r#"^https://protected\.test/feed data-type=text data="pattern=^https://ordinary\.test/ads""#;
+        for line in [script, map_local] {
+            assert_eq!(
+                safety.functional_decision(line),
+                SafetyDecision::Quarantine("protected-functional-intersection")
+            );
+        }
+
+        let valid = r#"x = type=http-response, argument="pattern=^https://unrelated\.test/ads", Pattern = ^https://ordinary\.test/ads, script-path=https://example.test/a.js"#;
+        let references = [valid.to_string()];
+        assert!(safety.hostname_is_referenced("ordinary.test", &references));
+        assert!(!safety.hostname_is_referenced("unrelated.test", &references));
+    }
+
+    #[test]
+    fn plain_http_does_not_justify_https_interception() {
+        let safety = SafetyPolicy::default();
+        let http_only = [r"^http:\/\/api\.example\.test/ads _ reject".to_string()];
+        assert!(!safety.hostname_is_referenced("api.example.test", &http_only));
+        let both = [r"^https?://api\.example\.test/ads _ reject".to_string()];
+        assert!(safety.hostname_is_referenced("api.example.test", &both));
+        let alternatives = [
+            r"^http://api\.example\.test/ads|^https://api\.example\.test/ads _ reject".to_string(),
+        ];
+        assert!(safety.hostname_is_referenced("api.example.test", &alternatives));
     }
 
     #[test]

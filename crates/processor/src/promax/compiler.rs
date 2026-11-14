@@ -198,6 +198,8 @@ static GROUP_HEAD_EXPANSE: &str = "『 🔝 Head Expanse › 首端扩域 』";
 static CDN_BASE_URL: &str = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/";
 static GITHUB_RAW_URL: &str = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/";
 static RULES_PER_SHARD: usize = 100_000;
+const FUNCTIONAL_MANIFEST: &str = "rulesets/Sources/Links/AdBlock_functional_sources.list";
+type FunctionalSources = (Vec<(PathBuf, &'static str)>, Vec<String>);
 
 #[derive(Serialize, Deserialize)]
 struct CatalogItem {
@@ -606,8 +608,14 @@ impl AdBlockManager {
             .filter(|entry| entry.is_remote())
             .map(|entry| entry.source.clone())
             .collect();
-        let (functional_paths, functional_urls) = self.load_functional_source_paths();
-        urls.extend(functional_urls);
+        let (functional_paths, functional_urls) =
+            self.load_functional_source_paths().map_err(|error| {
+                vec![crate::promax::source::DownloadFailure {
+                    url: FUNCTIONAL_MANIFEST.to_owned(),
+                    error,
+                }]
+            })?;
+        urls.extend(functional_urls.iter().cloned());
 
         println!(
             "\x1b[0;32m[INFO]\x1b[0m Rust downloader resolving {} remote PROMAX source(s)",
@@ -619,6 +627,17 @@ impl AdBlockManager {
         let batch = downloader.download_many(urls);
         if !batch.failures.is_empty() {
             return Err(batch.failures);
+        }
+        let invalid: Vec<_> = functional_urls
+            .into_iter()
+            .filter_map(|url| {
+                Self::functional_remote_payload(&batch.contents, &url)
+                    .err()
+                    .map(|error| crate::promax::source::DownloadFailure { url, error })
+            })
+            .collect();
+        if !invalid.is_empty() {
+            return Err(invalid);
         }
         // Probe maintained replacements and explicitly licensed app dependencies,
         // not every embedded script or any client-gated resource.
@@ -1870,29 +1889,23 @@ impl AdBlockManager {
         }
         let mitm_before = self.mitm_hosts.len();
 
-        let (local_paths, remote_urls) = self.load_functional_source_paths();
+        let (local_paths, remote_urls) = self.load_functional_source_paths()?;
         let mut seen_functional_content = HashSet::new();
 
         for u in remote_urls {
-            if let Some(content) = remote_contents.get(&u) {
-                let digest = format!("{:x}", md5::compute(content.as_bytes()));
-                if !seen_functional_content.insert(digest) {
-                    println!("\x1b[0;32m[INFO]\x1b[0m   ⊘ Duplicate functional content: {u}");
-                    continue;
-                }
-                let parts: Vec<&str> = u.split('/').collect();
-                println!(
-                    "\x1b[0;32m[INFO]\x1b[0m   + Functional remote: {}",
-                    parts.last().unwrap_or(&u.as_str())
-                );
-                let prepared = super::functional::prepare_functional_source(&u, content);
-                self.extract_from_text(&prepared, "REJECT", "Local", true, false, &u);
-            } else {
-                println!(
-                    "\x1b[0;33m[WARN]\x1b[0m   ⚠ Functional remote fetch failed: {}",
-                    u
-                );
+            let content = Self::functional_remote_payload(remote_contents, &u)?;
+            let digest = format!("{:x}", md5::compute(content.as_bytes()));
+            if !seen_functional_content.insert(digest) {
+                println!("\x1b[0;32m[INFO]\x1b[0m   ⊘ Duplicate functional content: {u}");
+                continue;
             }
+            let parts: Vec<&str> = u.split('/').collect();
+            println!(
+                "\x1b[0;32m[INFO]\x1b[0m   + Functional remote: {}",
+                parts.last().unwrap_or(&u.as_str())
+            );
+            let prepared = super::functional::prepare_functional_source(&u, content);
+            self.extract_from_text(&prepared, "REJECT", "Local", true, false, &u);
         }
 
         // Current official app modules own their scripts; do not re-add stale aggregate copies.
@@ -1914,14 +1927,9 @@ impl AdBlockManager {
                 .to_string();
             println!("\x1b[0;32m[INFO]\x1b[0m   + Functional ({}): {}", tag, rel);
 
-            let Ok(content) = fs::read_to_string(&path) else {
-                continue;
-            };
-            let content = if path
-                == self
-                    .root_dir
-                    .join("modules/source/local/BiliBili.ADBlock.sgmodule")
-            {
+            let content = fs::read_to_string(&path)
+                .map_err(|error| format!("cannot read functional source {rel}: {error}"))?;
+            let content = if path.ends_with("modules/source/local/BiliBili.ADBlock.sgmodule") {
                 super::functional::resolve_bili_adblock_arguments(&content)?
             } else {
                 content
@@ -1935,6 +1943,7 @@ impl AdBlockManager {
                 .lines()
                 .filter(|line| {
                     super::script_resources::script_resource_url(line)
+                        .and_then(super::script_resources::official_app_resource)
                         .is_none_or(|url| !official_app_scripts.contains(url))
                 })
                 .collect::<Vec<_>>()
@@ -2221,89 +2230,143 @@ impl AdBlockManager {
         }
     }
 
-    fn load_functional_source_paths(&self) -> (Vec<(PathBuf, &'static str)>, Vec<String>) {
+    fn functional_local_has_payload(path: &Path, content: &str) -> bool {
+        super::functional::has_active_payload(content)
+            || (path.ends_with("modules/source/local/YouTube.ADBlock.sgmodule")
+                && content.lines().any(|line| {
+                    let line = line.trim();
+                    line.starts_with("hostname =")
+                        && super::validation::validate_surge_section_line("MITM", line).is_empty()
+                })
+                && super::validation::validate_surge_module(content).is_empty())
+    }
+
+    fn functional_remote_payload<'a>(
+        contents: &'a HashMap<String, String>,
+        url: &str,
+    ) -> Result<&'a str, String> {
+        contents
+            .get(url)
+            .filter(|body| super::functional::has_active_payload(body))
+            .map(String::as_str)
+            .ok_or_else(|| {
+                format!(
+                    "missing or inactive functional module: {}",
+                    crate::redact_url(url)
+                )
+            })
+    }
+
+    fn load_functional_source_paths(&self) -> Result<FunctionalSources, String> {
         let mut paths = Vec::new();
         let mut remote_urls = Vec::new();
         let mut seen = HashSet::new();
 
-        let func_sources_file = self
+        let root = self
             .root_dir
-            .join("rulesets/Sources/Links/AdBlock_functional_sources.list");
-        if func_sources_file.exists()
-            && let Ok(file) = File::open(&func_sources_file)
-        {
-            let reader = BufReader::new(file);
-            for line in reader.lines().map_while(Result::ok) {
-                let line = line.trim();
-                if line.is_empty() || line.starts_with('#') {
-                    continue;
-                }
-                if line.starts_with("http://") || line.starts_with("https://") {
-                    remote_urls.push(line.to_string());
-                    continue;
-                }
-                let resolved = func_sources_file.parent().unwrap().join(line);
-                let norm = resolved.canonicalize().unwrap_or(resolved);
-                if seen.insert(norm.clone()) && norm.is_file() {
-                    let mode = self.resolve_module_ingest_mode(&norm, true);
-                    if mode == "skip" {
-                        let rel = norm
-                            .strip_prefix(&self.root_dir)
-                            .unwrap_or(&norm)
-                            .to_string_lossy()
-                            .to_string();
-                        println!(
-                            "\x1b[0;33m[WARN]\x1b[0m   ⊘ Skipped (no ad / unlock-only): {}",
-                            rel
-                        );
-                        continue;
-                    }
-                    paths.push((norm, mode));
-                }
+            .canonicalize()
+            .map_err(|error| format!("cannot resolve PROMAX root: {error}"))?;
+        let manifest = root.join(FUNCTIONAL_MANIFEST);
+        let content = fs::read_to_string(&manifest)
+            .map_err(|error| format!("cannot read {FUNCTIONAL_MANIFEST}: {error}"))?;
+        for (index, line) in content.lines().enumerate() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
             }
+            if line.starts_with("http://") || line.starts_with("https://") {
+                remote_urls.push(line.to_string());
+                continue;
+            }
+            let norm = manifest
+                .parent()
+                .unwrap()
+                .join(line)
+                .canonicalize()
+                .map_err(|error| {
+                    format!(
+                        "{FUNCTIONAL_MANIFEST}:{} cannot resolve {line}: {error}",
+                        index + 1
+                    )
+                })?;
+            if !norm.starts_with(&root) || !norm.is_file() {
+                return Err(format!(
+                    "{FUNCTIONAL_MANIFEST}:{} expected a file inside the repository: {line}",
+                    index + 1
+                ));
+            }
+            if !seen.insert(norm.clone()) {
+                continue;
+            }
+            let body = fs::read_to_string(&norm).map_err(|error| {
+                format!(
+                    "{FUNCTIONAL_MANIFEST}:{} cannot read {line}: {error}",
+                    index + 1
+                )
+            })?;
+            // The YouTube split can legitimately have only MITM hosts. Optional
+            // discovered files may also be metadata-only after rules extraction.
+            if !Self::functional_local_has_payload(&norm, &body) {
+                return Err(format!(
+                    "{FUNCTIONAL_MANIFEST}:{} no usable entries in {line}",
+                    index + 1
+                ));
+            }
+            let mode = self.resolve_module_ingest_mode(&norm, true);
+            if mode == "skip" {
+                return Err(format!(
+                    "{FUNCTIONAL_MANIFEST}:{} declared source is not eligible for PROMAX: {line}",
+                    index + 1
+                ));
+            }
+            paths.push((norm, mode));
         }
 
-        // Local local modules dir
-        let local_dir = self.root_dir.join("modules/source/local");
-        if local_dir.is_dir()
-            && let Ok(entries) = fs::read_dir(local_dir)
-        {
-            let mut files: Vec<PathBuf> = entries.map_while(Result::ok).map(|e| e.path()).collect();
-            files.sort();
-            for f in files {
-                let name = f.file_name().unwrap().to_string_lossy().to_string();
-                if name.ends_with(".sgmodule") || name.ends_with(".module") {
-                    let norm = f.canonicalize().unwrap_or(f);
-                    if seen.insert(norm.clone()) {
-                        let mode = self.resolve_module_ingest_mode(&norm, false);
-                        if mode != "skip" {
-                            paths.push((norm, mode));
-                        }
-                    }
+        for relative in ["modules/source/local", "rulesets/Sources/LocalModules"] {
+            let entries = match fs::read_dir(root.join(relative)) {
+                Ok(entries) => entries,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => {
+                    return Err(format!(
+                        "cannot read functional source directory {relative}: {error}"
+                    ));
                 }
-            }
-        }
-
-        // LocalModules dir
-        let local_modules_dir = self.root_dir.join("rulesets/Sources/LocalModules");
-        if local_modules_dir.is_dir()
-            && let Ok(entries) = fs::read_dir(local_modules_dir)
-        {
-            let mut files: Vec<PathBuf> = entries.map_while(Result::ok).map(|e| e.path()).collect();
+            };
+            let mut files = entries
+                .map(|entry| entry.map(|entry| entry.path()))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| {
+                    format!("cannot list functional source directory {relative}: {error}")
+                })?;
             files.sort();
-            let protected = ["script_hub.surge.sgmodule"];
-            for f in files {
-                let name = f.file_name().unwrap().to_string_lossy().to_string();
-                if protected.contains(&name.as_str()) {
+            for file in files {
+                if file.ends_with("script_hub.surge.sgmodule")
+                    && relative == "rulesets/Sources/LocalModules"
+                {
                     continue;
                 }
-                if name.ends_with(".sgmodule") || name.ends_with(".module") {
-                    let norm = f.canonicalize().unwrap_or(f);
-                    if seen.insert(norm.clone()) {
-                        let mode = self.resolve_module_ingest_mode(&norm, false);
-                        if mode != "skip" {
-                            paths.push((norm, mode));
-                        }
+                if !matches!(
+                    file.extension().and_then(|ext| ext.to_str()),
+                    Some("sgmodule" | "module")
+                ) {
+                    continue;
+                }
+                let norm = file.canonicalize().map_err(|error| {
+                    format!(
+                        "cannot resolve functional source {}: {error}",
+                        file.display()
+                    )
+                })?;
+                if !norm.starts_with(&root) {
+                    return Err(format!(
+                        "functional source escapes repository: {}",
+                        file.display()
+                    ));
+                }
+                if seen.insert(norm.clone()) {
+                    let mode = self.resolve_module_ingest_mode(&norm, false);
+                    if mode != "skip" {
+                        paths.push((norm, mode));
                     }
                 }
             }
@@ -2316,7 +2379,7 @@ impl AdBlockManager {
             split_n,
             remote_urls.len()
         );
-        (paths, remote_urls)
+        Ok((paths, remote_urls))
     }
 
     fn generate_catalog_artifacts(
