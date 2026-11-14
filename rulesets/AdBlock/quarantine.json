@@ -33595,6 +33595,12 @@
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
+    "candidate": ".mimetakpngubp.site",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
     "candidate": ".mini.videostrip.com",
     "reason": "broad-media-domain",
     "risk": "broad-media"
@@ -35932,12 +35938,6 @@
     "candidate": ".sgali-mcs.byteoversea.com",
     "reason": "protected-domain-intersection",
     "risk": "protected-service"
-  },
-  {
-    "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
-    "candidate": ".sgimage.netmarble.com",
-    "reason": "broad-media-domain",
-    "risk": "broad-media"
   },
   {
     "source": "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/reject.txt",
