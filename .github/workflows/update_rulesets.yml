@@ -34,7 +34,6 @@ jobs:
     timeout-minutes: 120
     env:
       CARGO_BUILD_JOBS: '1'
-      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     permissions:
       contents: write
 
@@ -172,14 +171,19 @@ jobs:
     - name: Build Rust updater without publication credentials
       id: update_build
       run: |
+        set -euo pipefail
+        target_dir=$(cargo metadata --locked --no-deps --format-version 1 | jq -er '.target_directory')
         cargo build --release --locked --manifest-path crates/processor/Cargo.toml --bin update
+        test -x "$target_dir/release/update"
+        echo "executable=$target_dir/release/update" >> "$GITHUB_OUTPUT"
 
     - name: Execute Rust Ruleset Update
       id: update
       run: |
-        "$CARGO_TARGET_DIR/release/update" \
+        "$UPDATER_EXECUTABLE" \
           --root "$GITHUB_WORKSPACE" --unattended --singbox /usr/local/bin/sing-box
       env:
+        UPDATER_EXECUTABLE: ${{ steps.update_build.outputs.executable }}
         CI: 'true'
         GITHUB_ACTIONS: 'true'
         SCRIPTHUB_DOWNLOAD_CONCURRENCY: '4'

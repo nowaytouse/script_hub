@@ -53,13 +53,11 @@ jobs:
     timeout-minutes: 35
     env:
       CARGO_BUILD_JOBS: '1'
-      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           rust-src-dir: .
-          toolchain: stable
           cache-workspaces: . -> target
           cache-shared-key: script-hub-processor
           cache-save-if: ${{ github.ref == 'refs/heads/master' }}
@@ -68,7 +66,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          package_id=$(cargo pkgid -p rust_processor)
+          package_id=$(cargo pkgid --locked -p rust_processor)
           version=${package_id##*@}
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release version'; exit 1; }
           printf 'value=%s\n' "$version" >> "$GITHUB_OUTPUT"

@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-26.04
     env:
       CARGO_BUILD_JOBS: '1'
-      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     permissions:
       contents: read
     steps:

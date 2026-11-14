@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
+use std::mem::DropGuard;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -346,7 +347,9 @@ pub fn save(path: &Path, preferences: &Preferences) -> Result<(), String> {
     }
 
     let (mut file, temp_path) = create_temp_file(parent, path.file_name().unwrap_or_default())?;
-    let mut staging = StagingFile::new(temp_path);
+    let staging = DropGuard::new(temp_path, |path| {
+        let _ = fs::remove_file(path);
+    });
     file.write_all(&bytes)
         .and_then(|()| file.flush())
         .and_then(|()| file.sync_all())
@@ -355,13 +358,13 @@ pub fn save(path: &Path, preferences: &Preferences) -> Result<(), String> {
 
     // On platforms where rename cannot replace an existing destination this
     // safely fails while retaining the old file; no delete-before-rename gap.
-    fs::rename(&staging.path, path).map_err(|error| {
+    fs::rename(&*staging, path).map_err(|error| {
         format!(
             "cannot atomically replace preferences {}: {error}",
             path.display()
         )
     })?;
-    staging.committed = true;
+    DropGuard::dismiss(staging);
     Ok(())
 }
 
@@ -398,28 +401,6 @@ fn create_temp_file(
         "could not allocate a unique staged file beside {}",
         parent.display()
     ))
-}
-
-struct StagingFile {
-    path: PathBuf,
-    committed: bool,
-}
-
-impl StagingFile {
-    fn new(path: PathBuf) -> Self {
-        Self {
-            path,
-            committed: false,
-        }
-    }
-}
-
-impl Drop for StagingFile {
-    fn drop(&mut self) {
-        if !self.committed {
-            let _ = fs::remove_file(&self.path);
-        }
-    }
 }
 
 #[cfg(test)]

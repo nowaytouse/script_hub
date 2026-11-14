@@ -1,4 +1,5 @@
 [build]
+# Shared by local packaging, the updater workflow, and Cargo's CI caches.
 target-dir = "target"
 
 [alias]

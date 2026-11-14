@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- Follow rolling Rust nightly for local builds and CI.
 - Keep working PROMAX inputs when upstream returns an empty module, and reject incomplete functional builds instead of silently dropping declared sources.
 - Prefer official app2smile handlers over duplicate CDN aliases, use actual request patterns to retain MITM hosts, and limit Mlxx to its two reviewed ad endpoints.
 - Follow fmz200’s Shadowrocket X Web Ads module in PROMAX, with a bounded local response filter for the reviewed timeline and post-detail endpoints.

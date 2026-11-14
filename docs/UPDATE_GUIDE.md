@@ -2,7 +2,9 @@
 
 [English](UPDATE_GUIDE.md) · [简体中文](UPDATE_GUIDE.zh-CN.md)
 
-Run from the repository root; replace the sing-box path.
+Local builds and CI use rolling Rust nightly through `rust-toolchain.toml`. The processor requires Rust 1.100 or newer.
+
+Run from the repository root and replace the sing-box path.
 
 ```sh
 cargo run --release --locked --bin update -- --root . --execute --singbox /path/to/sing-box

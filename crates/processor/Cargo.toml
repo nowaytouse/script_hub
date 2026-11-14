@@ -2,6 +2,7 @@
 name = "rust_processor"
 version.workspace = true
 edition = "2024"
+rust-version = "1.100"
 description = "Rust core and native desktop workspace for Script Hub rules and modules"
 license = "GPL-3.0-only"
 repository = "https://github.com/nowaytouse/script_hub"
@@ -39,7 +40,7 @@ psl = "2.1.252"
 percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.8"
-ureq = { version = "3.5.1", features = ["socks-proxy"] }
+ureq = { version = "3.5.2", features = ["socks-proxy"] }
 rusqlite = { version = "0.42", features = ["bundled"] }
 argon2 = { version = "0.6", optional = true, default-features = false, features = ["alloc", "zeroize"] }
 chacha20poly1305 = { version = "0.11", optional = true, default-features = false, features = ["alloc", "zeroize"] }

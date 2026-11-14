@@ -609,7 +609,9 @@ fn mainland_weibo_log_handlers_are_retained_without_auth_or_thumbnail_targets() 
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -622,7 +624,9 @@ fn mainland_weibo_log_handlers_are_retained_without_auth_or_thumbnail_targets() 
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            !manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            !manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -641,7 +645,9 @@ fn mainland_override_rejects_top_level_request_alternatives() {
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            !manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            !manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -663,7 +669,9 @@ fn mainland_override_rejects_nullable_separators_and_unterminated_intent_tokens(
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            !manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            !manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -686,7 +694,9 @@ fn mainland_override_keeps_literal_separator_terminal_and_query_proofs() {
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -699,7 +709,11 @@ fn mainland_override_does_not_borrow_ad_intent_from_alternative_paths() {
     manager.load_whitelist().unwrap();
     let mixed = r#"^https?:\/\/www\.xiaohongshu\.com\/api\/sns\/(v\d+\/ads\/resource|v\d+\/hey\/\w+\/hey_gallery) data="https://example.test/empty.json""#;
     manager.add_section_line("Map Local", mixed);
-    assert!(!manager.sections["Map Local"].contains(&mixed.to_string()));
+    assert!(
+        !manager.sections["Map Local"]
+            .iter()
+            .any(|entry| entry == mixed)
+    );
     for pattern in [
         r"^https://api\.bilibili\.com/api/ad(mission|s) - reject",
         r"^https://api\.bilibili\.com/api/ad[ms] - reject",
@@ -708,7 +722,9 @@ fn mainland_override_does_not_borrow_ad_intent_from_alternative_paths() {
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            !manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            !manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -721,7 +737,11 @@ fn mainland_override_does_not_enable_promotion_cosmetics() {
     manager.load_whitelist().unwrap();
     let cosmetic = r"badges = type=http-response,pattern=^https:\/\/m5-zb\.amap\.com\/ws\/promotion-web\/resource(\/home)?\?,script-path=https://example.test/fixture.js,requires-body=true";
     manager.add_section_line("Script", cosmetic);
-    assert!(!manager.sections["Script"].contains(&cosmetic.to_string()));
+    assert!(
+        !manager.sections["Script"]
+            .iter()
+            .any(|entry| entry == cosmetic)
+    );
     for path in ["promotion", "promote", "commercial"] {
         let pattern = format!(r"^https://m5-zb\.amap\.com/ws/{path}/resource - reject");
         manager.add_section_line("URL Rewrite", &pattern);
@@ -739,14 +759,20 @@ fn mainland_override_keeps_common_splash_prefix_and_dedicated_telemetry_host() {
     manager.load_whitelist().unwrap();
     let splash = r#"http-response-jq ^https:\/\/app\.bilibili\.com\/x\/v2\/splash\/(list|show|event\/list2)\? '.data |= with_entries(if .key | IN("show", "event_list") then .value = [] else . end)'"#;
     manager.add_section_line("Body Rewrite", splash);
-    assert!(manager.sections["Body Rewrite"].contains(&splash.to_string()));
+    assert!(
+        manager.sections["Body Rewrite"]
+            .iter()
+            .any(|entry| entry == splash)
+    );
     for pattern in [
         r"^https://api\.bilibili\.com/x/log/collect - reject",
         r"^https://logs\.amap\.com/v\d+/collect - reject",
     ] {
         manager.add_section_line("URL Rewrite", pattern);
         assert!(
-            manager.sections["URL Rewrite"].contains(&pattern.to_string()),
+            manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == pattern),
             "{pattern}"
         );
     }
@@ -1066,10 +1092,18 @@ fn mainland_telemetry_and_ad_paths_are_not_operational_allow_exceptions() {
     }
     let ads = r"^https://www\.xiaohongshu\.com/api/sns/v1/ads/resource - reject";
     manager.add_section_line("URL Rewrite", ads);
-    assert!(manager.sections["URL Rewrite"].contains(&ads.to_string()));
+    assert!(
+        manager.sections["URL Rewrite"]
+            .iter()
+            .any(|entry| entry == ads)
+    );
     let telemetry = r"^https://api\.bilibili\.com/x/report/click - reject";
     manager.add_section_line("URL Rewrite", telemetry);
-    assert!(manager.sections["URL Rewrite"].contains(&telemetry.to_string()));
+    assert!(
+        manager.sections["URL Rewrite"]
+            .iter()
+            .any(|entry| entry == telemetry)
+    );
     for host in ["www.xiaohongshu.com", "api.bilibili.com"] {
         manager.add_mitm_host(host);
     }
@@ -1105,7 +1139,9 @@ fn mainland_telemetry_and_ad_paths_are_not_operational_allow_exceptions() {
     ] {
         manager.add_section_line("URL Rewrite", line);
         assert!(
-            !manager.sections["URL Rewrite"].contains(&line.to_string()),
+            !manager.sections["URL Rewrite"]
+                .iter()
+                .any(|entry| entry == line),
             "{line}"
         );
     }

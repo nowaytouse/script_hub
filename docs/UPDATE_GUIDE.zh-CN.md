@@ -2,7 +2,9 @@
 
 [English](UPDATE_GUIDE.md) · [简体中文](UPDATE_GUIDE.zh-CN.md)
 
-仓库根目录执行；替换 sing-box 路径。
+本地构建和 CI 通过 `rust-toolchain.toml` 跟随 Rust nightly。处理器要求 Rust 1.100 或更高版本。
+
+请从仓库根目录执行，并替换 sing-box 路径。
 
 ```sh
 cargo run --release --locked --bin update -- --root . --execute --singbox /path/to/sing-box
