@@ -927,8 +927,6 @@ static SCRIPT_NAME_RE: Lazy<Regex> =
 static SCRIPT_LABEL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^(.+?)\s*=\s*type=").unwrap());
 static SCRIPT_PATH_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)\bscript-path\s*=\s*([^,\s]+)").unwrap());
-static SCRIPT_TYPE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)\btype\s*=\s*([^,\s]+)").unwrap());
 static SCRIPT_PATTERN_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)\bpattern\s*=\s*([^,]+)").unwrap());
 static SECTION_HEADER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\[([^\]]+)\]\s*$").unwrap());
@@ -1304,18 +1302,32 @@ fn merge_body_rewrite_jq(lines: &[String]) -> Vec<String> {
 }
 
 pub fn script_matcher_key_pub(line: &str) -> Option<String> {
-    let script_type = SCRIPT_TYPE_RE
-        .captures(line)
-        .map(|captures| captures[1].to_ascii_lowercase());
-    let pattern = SCRIPT_PATTERN_RE
-        .captures(line)
-        .map(|captures| captures[1].trim().to_string());
-    match (script_type.as_deref(), pattern) {
-        (Some(script_type @ ("http-request" | "http-response")), Some(pattern)) => {
-            Some(format!("script:matcher:{script_type}:{pattern}"))
-        }
-        _ => None,
+    let (label, parameters) = line.split_once('=')?;
+    if label.trim().is_empty() || label.trim_start().starts_with('#') {
+        return None;
     }
+    let fields = split_script_parameters(parameters);
+    let parameter = |name: &str| {
+        fields.iter().find_map(|field| {
+            let (key, value) = field.split_once('=')?;
+            key.trim().eq_ignore_ascii_case(name).then(|| value.trim())
+        })
+    };
+    let script_type = parameter("type")?.to_ascii_lowercase();
+    if !matches!(script_type.as_str(), "http-request" | "http-response") {
+        return None;
+    }
+    let pattern = parameter("pattern")?;
+    let pattern = pattern
+        .strip_prefix('"')
+        .and_then(|pattern| pattern.strip_suffix('"'))
+        .or_else(|| {
+            pattern
+                .strip_prefix('\'')
+                .and_then(|pattern| pattern.strip_suffix('\''))
+        })
+        .unwrap_or(pattern);
+    (!pattern.is_empty()).then(|| format!("script:matcher:{script_type}:{pattern}"))
 }
 
 pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> {
@@ -1962,6 +1974,28 @@ mod ruleset_cleanup_tests {
                 r#"^https://ads\.example mock-response-body data=\"{}\""#
             )
         );
+    }
+
+    #[test]
+    fn script_dedupe_uses_full_top_level_matcher() {
+        let narrow = r#"narrow = type=http-response, argument="pattern=bogus,type=http-request", Pattern = ^https://ads\.example/[a-z]{1,4}$, script-path=a.js"#;
+        let wide =
+            r"wide = type=http-response,pattern=^https://ads\.example/[a-z]{1,8}$,script-path=b.js";
+        let duplicate = r#"dupe = type=http-response,pattern="^https://ads\.example/[a-z]{1,4}$",script-path=c.js"#;
+        assert_eq!(
+            script_matcher_key_pub(narrow).as_deref(),
+            Some(r"script:matcher:http-response:^https://ads\.example/[a-z]{1,4}$")
+        );
+        assert_ne!(script_matcher_key_pub(narrow), script_matcher_key_pub(wide));
+        assert_eq!(
+            script_matcher_key_pub(narrow),
+            script_matcher_key_pub(duplicate)
+        );
+        let lines = [narrow, wide, duplicate].map(str::to_string);
+        let deduped = dedupe_section_lines_pub("Script", &lines);
+        assert_eq!(deduped.len(), 2);
+        assert!(deduped[0].starts_with("narrow"));
+        assert!(deduped[1].starts_with("wide"));
     }
 
     #[test]

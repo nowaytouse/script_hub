@@ -748,6 +748,11 @@ fn publish_video_sources(
     for source in &mut bilibili {
         if source.label == "Enhanced" {
             source.content = scope_biliverse_enhanced_storage(&source.content);
+        } else if source.label == "Global" {
+            source.content = crate::merge_bundles::apply_module_argument_defaults(
+                &source.content,
+                crate::merge_bundles::BILIBILI_GLOBAL_DEFAULTS,
+            )?;
         }
         source.content = crate::url_rewriter::normalize_force_http_engine_hosts(&source.content);
     }
@@ -769,7 +774,6 @@ fn publish_video_sources(
                 ("author", "Biliverse, Maasea"),
             ]),
             sources: bilibili,
-            content_replacements: vec![[r#"ForceHost:"1""#.into(), r#"ForceHost:"2""#.into()]],
             ..MergeBundleRequest::default()
         };
         if !process_merge_bundle(&feature) {
@@ -824,6 +828,7 @@ fn publish_video_sources(
         crate::merge_bundles::verify_video_defaults(&combined)?;
         let rocket =
             crate::promax::artifact::convert_surge_to_shadowrocket(&functional(&rocket_path)?);
+        crate::merge_bundles::verify_video_defaults(&rocket)?;
         if !combined.contains(r"\/api\/ADBlock")
             || !rocket.contains("PreferencePanes.Config.ADBlock")
         {
@@ -874,6 +879,38 @@ fn merge_video(root: &Path, downloader: &Downloader) -> Result<(), String> {
 }
 
 const DEVTOOLS_OUTPUT: &str = "modules/surge/amplify_nexus/🧰 Script Hub 配套工具合集.sgmodule";
+fn verify_substore_resources(content: &str) -> Result<(), String> {
+    use crate::promax::script_resources::script_resource_url;
+
+    const RELEASE: &str = "https://github.com/sub-store-org/Sub-Store/releases/latest/download/";
+    let script_lines = content
+        .lines()
+        .map(str::trim)
+        .skip_while(|line| *line != "[Script]")
+        .skip(1)
+        .take_while(|line| !line.starts_with('['));
+    for (expected_label, asset) in [
+        ("Sub-Store Core", "sub-store-1.min.js"),
+        ("Sub-Store Simple", "sub-store-0.min.js"),
+        ("{{{sync}}}", "cron-sync-artifacts.min.js"),
+        ("{{{produce}}}", "cron-sync-artifacts.min.js"),
+    ] {
+        let mut matches = script_lines.clone().filter(|line| {
+            line.split_once('=')
+                .is_some_and(|(label, _)| label.trim() == expected_label)
+        });
+        let found = matches.next().and_then(script_resource_url);
+        if found.and_then(|url| url.strip_prefix(RELEASE)) != Some(asset)
+            || matches.next().is_some()
+        {
+            return Err(format!(
+                "{expected_label} must reference exactly one official rolling Sub-Store asset: {asset}"
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn publish_devtools_sources(
     root: &Path,
     panel_sources: Vec<SourceInput>,
@@ -929,6 +966,7 @@ fn publish_devtools_sources(
         request,
         Some(|content| {
             crate::merge_bundles::verify_tool_defaults(content)?;
+            verify_substore_resources(content)?;
             Ok(crate::url_rewriter::normalize_cdn_urls(strip_rule_section(
                 content,
             )))
@@ -1226,16 +1264,38 @@ mod tests {
     fn published_video_and_tools_still_use_the_configured_defaults() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let video = std::fs::read_to_string(root.join(super::VIDEO_OUTPUT)).unwrap();
+        let shadowrocket_video =
+            std::fs::read_to_string(root.join(super::VIDEO_SHADOWROCKET_OUTPUT)).unwrap();
         let tools = std::fs::read_to_string(root.join(super::DEVTOOLS_OUTPUT)).unwrap();
         crate::merge_bundles::verify_video_defaults(&video).unwrap();
+        crate::merge_bundles::verify_video_defaults(&shadowrocket_video).unwrap();
         crate::merge_bundles::verify_tool_defaults(&tools).unwrap();
         let duplicated = tools.replace(
             "sync:\"# Sub-Store Sync\"",
             "sync:\"# Sub-Store Sync\",sync:\"# Sub-Store Sync\"",
         );
         assert!(crate::merge_bundles::verify_tool_defaults(&duplicated).is_err());
-        let renamed = video.replace("屏蔽Shorts按钮", "上游改名");
-        assert!(crate::merge_bundles::verify_video_defaults(&renamed).is_err());
+        let active_produce = tools.replace(
+            "produce:\"# Sub-Store Produce\"",
+            "produce:Sub-Store Produce",
+        );
+        assert!(crate::merge_bundles::verify_tool_defaults(&active_produce).is_err());
+        let ignore_notify = tools.replace(
+            "sync_success_notify={{{sync_success_notify}}}",
+            "sync_success_notify=true",
+        );
+        assert!(crate::merge_bundles::verify_tool_defaults(&ignore_notify).is_err());
+        let ignore_manual = tools.replace(
+            "update-interval={{{UPDATE-INTERVAL}}}",
+            "update-interval=30",
+        );
+        assert!(crate::merge_bundles::verify_tool_defaults(&ignore_manual).is_err());
+        for key in ["屏蔽Shorts按钮", "字幕翻译语言", "启用调试模式"] {
+            assert!(
+                crate::merge_bundles::verify_video_defaults(&video.replace(key, "上游改名"))
+                    .is_err()
+            );
+        }
     }
 
     #[test]
@@ -1256,12 +1316,12 @@ mod tests {
                     "[Script]\nBili = type=http-request,pattern=^https://bili.example.test/,script-path=https://example.test/bili.js,argument=Storage={{{Storage}}}\n",
                         "[MITM]\nhostname = %APPEND% bili.example.test, accounts.google.com\n",
                 )),
-                source("Global", "#!name=Global\n#!arguments = Storage:\"Argument\"\n[MITM]\nhostname = %APPEND% global.example.test\n"),
+                source("Global", "#!name=Global\n#!arguments = Storage:\"Argument\", ForceHost : \"1\"\n[Script]\nGlobal = type=http-request,pattern=^https://global.example.test/,script-path=https://example.test/global.js,argument=ForceHost={{{ForceHost}}}\n[MITM]\nhostname = %APPEND% global.example.test\n"),
             ],
             source("YouTube", concat!(
-                "#!name=YouTube\n#!arguments=Language:off,屏蔽上传按钮:true,屏蔽选段按钮:true,屏蔽Shorts按钮:true,字幕翻译语言:off\n",
+                "#!name=YouTube\n#!arguments=Language:off,屏蔽上传按钮:true,屏蔽选段按钮:true,屏蔽Shorts按钮:true,字幕翻译语言:\"ja\",启用调试模式:true\n",
                 "[Rule]\nDOMAIN,yt-ads.example.test,REJECT\n",
-                "[Script]\nYT = type=http-request,pattern=^https://youtubei.googleapis.com/,script-path=https://example.test/yt.js,argument=\"{{{屏蔽上传按钮}}},{{{屏蔽选段按钮}}},{{{屏蔽Shorts按钮}}}\"\n",
+                "[Script]\nYT = type=http-request,pattern=^https://youtubei.googleapis.com/,script-path=https://example.test/yt.js,argument=\"{{{屏蔽上传按钮}}},{{{屏蔽选段按钮}}},{{{屏蔽Shorts按钮}}},{{{字幕翻译语言}}},{{{启用调试模式}}}\"\n",
                 "YT Video = type=http-request,pattern=^https://.+\\.googlevideo\\.com/,script-path=https://example.test/video.js\n",
                 "[MITM]\nhostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com\n",
             )),
@@ -1279,7 +1339,12 @@ mod tests {
         assert!(combined.contains("Enhanced.Storage:\"PersistentStore\",Storage:\"Argument\""));
         assert!(combined.contains("argument=Storage={{{Enhanced.Storage}}}"));
         assert!(combined.contains("屏蔽上传按钮:false,屏蔽选段按钮:false,屏蔽Shorts按钮:false"));
-        assert!(combined.contains("字幕翻译语言:\"zh-Hans\""));
+        for output in [&combined, &rocket, &bili] {
+            assert!(output.contains("ForceHost:\"2\""));
+            assert!(!output.contains("ForceHost:\"1\""));
+        }
+        assert!(combined.contains("字幕翻译语言:off,启用调试模式:false"));
+        assert!(rocket.contains("字幕翻译语言:off,启用调试模式:false"));
         assert!(combined.contains("force-http-engine-hosts = %APPEND% bili.example.test:80"));
         assert!(!combined.contains("*:8082"));
         assert!(!combined.contains("accounts.google.com"));
@@ -1767,8 +1832,8 @@ mod tests {
             label: "Fixture panel".to_string(),
             url: "https://example.test/panel.sgmodule".to_string(),
             content: concat!(
-                 "#!name=Fixture panel\n#!arguments=REFRESH:60,TITLE:\"One, two\",EVENT_SCRIPT_NAME:\"Active upstream event\"\n",
-                "[Panel]\nFixture = script-name=Fixture Panel,update-interval={{{REFRESH}}}\n",
+                 "#!name=Fixture panel\n#!arguments=REFRESH:60,TITLE:\"One, two\",EVENT_SCRIPT_NAME:\"Active upstream event\",PANEL_NAME:Network,UPDATE-INTERVAL:30\n",
+                "[Panel]\nFixture = script-name=Fixture Panel,update-interval={{{REFRESH}}}\n{{{PANEL_NAME}}} = script-name=Fixture Panel,update-interval={{{UPDATE-INTERVAL}}}\n",
                      "[Script]\nFixture Panel = type=generic,script-path=https://raw.githubusercontent.com/example/repo/main/panel.js\n",
                      "{{{EVENT_SCRIPT_NAME}}} = type=event,event-name=network-changed,script-path=https://example.test/panel.js\n",
             )
@@ -1805,11 +1870,49 @@ mod tests {
         let restored = std::fs::read_to_string(output).unwrap();
         assert!(!restored.contains("#!script-hub-custom-sources="));
         assert!(restored.contains("Sub-Store Core"));
+        let shadowrocket = crate::promax::artifact::convert_surge_to_shadowrocket(&restored);
+        assert!(crate::promax::validation::validate_shadowrocket_module(&shadowrocket).is_empty());
+        for module in [&restored, &shadowrocket] {
+            super::verify_substore_resources(module).unwrap();
+            let wrong_section = module.replacen("[Script]", "[Host]", 1);
+            assert!(super::verify_substore_resources(&wrong_section).is_err());
+            let stale = module.replacen(
+                "/releases/latest/download/",
+                "/releases/download/2.36.37/",
+                1,
+            );
+            let error = super::verify_substore_resources(&stale).unwrap_err();
+            assert!(error.contains("Sub-Store Core"));
+            let module_meta = crate::merge_bundles::module_metadata_pub(module);
+            assert!(module_meta["arguments"].contains("https://sub.xream.eu.org\""));
+            assert!(!module_meta["arguments"].contains("cors:\"*\""));
+            assert!(!module.contains("github_com_sub-store-org_"));
+            assert!(
+                module
+                    .contains("qx-rewrite|surge-module|shadowrocket-module|loon-plugin|all-module")
+            );
+            for script in [
+                "script-hub.js",
+                "Rewrite-Parser.js",
+                "rule-parser.js",
+                "script-converter.js",
+            ] {
+                let expected =
+                    format!("https://cdn.jsdelivr.net/gh/Script-Hub-Org/Script-Hub@main/{script}");
+                let mut matching = module
+                    .lines()
+                    .filter_map(crate::promax::script_resources::script_resource_url)
+                    .filter(|url| *url == expected);
+                assert!(matching.next().is_some());
+                assert!(matching.next().is_none());
+            }
+        }
         let metadata = crate::merge_bundles::module_metadata_pub(&restored);
         assert!(metadata["arguments"].contains("ability:http-client-policy"));
         assert!(metadata["arguments"].contains("sync:\"# Sub-Store Sync\""));
         assert!(metadata["arguments"].contains("EVENT_SCRIPT_NAME:\"# 网络信息变化\""));
         assert!(metadata["arguments"].contains("REFRESH:60"));
+        assert!(metadata["arguments"].contains("UPDATE-INTERVAL:-1"));
         assert!(metadata["arguments"].contains("TITLE:\"One, two\""));
         assert!(restored.contains("[Panel]\nFixture = script-name=Fixture Panel"));
         assert!(restored.lines().any(|line| {

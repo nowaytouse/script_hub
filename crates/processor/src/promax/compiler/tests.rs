@@ -1619,15 +1619,16 @@ fn licensed_remote_app_modules_keep_templates_and_ruleset_boundaries() {
             .as_nanos()
     ));
     fs::create_dir_all(root.join("rulesets/Sources/Links")).unwrap();
+    fs::create_dir_all(root.join("modules/source/local")).unwrap();
     let url = "https://raw.githubusercontent.com/app2smile/rules/master/module/tieba.sgmodule";
     fs::write(
         root.join("rulesets/Sources/Links/AdBlock_functional_sources.list"),
-        format!("{url}\n../legacy-ad.sgmodule\n"),
+        format!("{url}\n../../../modules/source/local/All-in-One-2.x.sgmodule\n"),
     )
     .unwrap();
     fs::write(
-        root.join("rulesets/Sources/legacy-ad.sgmodule"),
-        "[Script]\nlegacy_ad = type=http-response,pattern=^https://tiebac\\.baidu\\.com/legacy/ads,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-proto.js,argument=per_filter_video_thread=1\nunrelated_ad = type=http-response,pattern=^https://ads\\.example/ad,requires-body=true,script-path=https://scripts.example/remove-ads.js\n",
+        root.join("modules/source/local/All-in-One-2.x.sgmodule"),
+        "[Script]\nlegacy_ad = type=http-response,pattern=^https://tiebac\\.baidu\\.com/legacy/ads,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/app2smile/rules@master/js/tieba-proto.js,argument=per_filter_video_thread=1\nlegacy_mirror_ad = type=http-response,pattern=^https://tiebac\\.baidu\\.com/legacy/mirror,requires-body=true,script-path=https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_476501_tieba-proto.js\nunrelated_ad = type=http-response,pattern=^https://ads\\.example/ad,requires-body=true,script-path=https://scripts.example/remove-ads.js\n",
     ).unwrap();
     let fixture = r"#!name=贴吧去广告
 [Rule]
@@ -1651,6 +1652,7 @@ hostname = %APPEND% tiebac.baidu.com
     assert_eq!(output.matches("script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js").count(), 1);
     assert!(!output.contains("per_filter_video_thread=1"));
     assert!(!output.contains("legacy_ad"));
+    assert!(!output.contains("legacy_mirror_ad"));
     assert!(output.contains("script-path=https://scripts.example/remove-ads.js"));
     fs::remove_dir_all(root).unwrap();
 }

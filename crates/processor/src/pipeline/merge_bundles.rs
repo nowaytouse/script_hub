@@ -179,10 +179,17 @@ const VIDEO_DEFAULTS: &[(&str, &str)] = &[
     ("屏蔽Shorts按钮", "false"),
     ("屏蔽上传按钮", "false"),
     ("屏蔽选段按钮", "false"),
+    ("字幕翻译语言", "off"),
+    ("启用调试模式", "false"),
 ];
+// Retain HTTPS media URLs without adding CDN MITM hosts.
+pub(crate) const BILIBILI_GLOBAL_DEFAULTS: &[(&str, &str)] = &[("ForceHost", r#""2""#)];
 const TOOL_DEFAULTS: &[(&str, &str)] = &[
     ("sync", "\"# Sub-Store Sync\""),
+    ("produce", "\"# Sub-Store Produce\""),
+    ("sync_success_notify", "false"),
     ("EVENT_SCRIPT_NAME", "\"# 网络信息变化\""),
+    ("UPDATE-INTERVAL", "-1"),
 ];
 
 fn set_argument_defaults(args: &str, defaults: &[(&str, &str)]) -> String {
@@ -200,13 +207,7 @@ fn set_argument_defaults(args: &str, defaults: &[(&str, &str)]) -> String {
         .join(",")
 }
 
-fn verify_argument_defaults(
-    meta: &HashMap<String, String>,
-    defaults: &[(&str, &str)],
-) -> Result<(), String> {
-    let args = meta
-        .get("arguments")
-        .ok_or_else(|| "upstream no longer declares module arguments".to_string())?;
+fn verify_argument_defaults(args: &str, defaults: &[(&str, &str)]) -> Result<(), String> {
     let args = crate::smart_cleanup::split_script_parameters(args);
     for &(name, expected) in defaults {
         let mut values = args.iter().filter_map(|arg| {
@@ -223,10 +224,43 @@ fn verify_argument_defaults(
     Ok(())
 }
 
+pub(crate) fn apply_module_argument_defaults(
+    content: &str,
+    defaults: &[(&str, &str)],
+) -> Result<String, String> {
+    let mut output = String::with_capacity(content.len());
+    let mut found = false;
+    for line in content.lines() {
+        if let Some((key, value)) = line.split_once('=')
+            && key.trim() == "#!arguments"
+        {
+            if found {
+                return Err("module declares multiple arguments directives".into());
+            }
+            let args = set_argument_defaults(value, defaults);
+            verify_argument_defaults(&args, defaults)?;
+            output.push_str("#!arguments=");
+            output.push_str(&args);
+            found = true;
+        } else {
+            output.push_str(line);
+        }
+        output.push('\n');
+    }
+    if !found {
+        return Err("upstream no longer declares module arguments".into());
+    }
+    Ok(output)
+}
+
 pub(crate) fn verify_video_defaults(content: &str) -> Result<(), String> {
     let (meta, sections) = parse_module(content);
-    verify_argument_defaults(&meta, VIDEO_DEFAULTS)?;
-    for &(name, _) in VIDEO_DEFAULTS {
+    let args = meta
+        .get("arguments")
+        .ok_or("video bundle has no argument defaults")?;
+    verify_argument_defaults(args, VIDEO_DEFAULTS)?;
+    verify_argument_defaults(args, BILIBILI_GLOBAL_DEFAULTS)?;
+    for &(name, _) in VIDEO_DEFAULTS.iter().chain(BILIBILI_GLOBAL_DEFAULTS) {
         let placeholder = format!("{{{{{{{name}}}}}}}");
         if !sections
             .iter()
@@ -248,8 +282,15 @@ pub(crate) fn verify_video_defaults(content: &str) -> Result<(), String> {
 
 pub(crate) fn verify_tool_defaults(content: &str) -> Result<(), String> {
     let (meta, sections) = parse_module(content);
-    verify_argument_defaults(&meta, TOOL_DEFAULTS)?;
-    for (name, script_type) in [("sync", "cron"), ("EVENT_SCRIPT_NAME", "event")] {
+    let args = meta
+        .get("arguments")
+        .ok_or("tools bundle has no argument defaults")?;
+    verify_argument_defaults(args, TOOL_DEFAULTS)?;
+    for (name, script_type) in [
+        ("sync", "cron"),
+        ("produce", "cron"),
+        ("EVENT_SCRIPT_NAME", "event"),
+    ] {
         let placeholder = format!("{{{{{{{name}}}}}}}");
         let mut matches = sections
             .iter()
@@ -271,6 +312,35 @@ pub(crate) fn verify_tool_defaults(content: &str) -> Result<(), String> {
                 "upstream no longer uses {name} as a unique {script_type} script label"
             ));
         }
+    }
+    let sync = sections
+        .iter()
+        .filter(|section| section.name == "Script")
+        .flat_map(|section| &section.lines)
+        .find(|line| {
+            line.split_once('=')
+                .is_some_and(|(label, _)| label.trim() == "{{{sync}}}")
+        });
+    if !sync.is_some_and(|line| line.contains("sync_success_notify={{{sync_success_notify}}}")) {
+        return Err("upstream no longer uses sync_success_notify in the sync script".into());
+    }
+    let mut panels = sections
+        .iter()
+        .filter(|section| section.name == "Panel")
+        .flat_map(|section| &section.lines)
+        .filter_map(|line| line.split_once('='))
+        .filter(|(label, _)| label.trim() == "{{{PANEL_NAME}}}");
+    let binding = panels.next().is_some_and(|(_, params)| {
+        crate::smart_cleanup::split_script_parameters(params)
+            .iter()
+            .any(|param| {
+                param.split_once('=').is_some_and(|(key, value)| {
+                    key.trim() == "update-interval" && value.trim() == "{{{UPDATE-INTERVAL}}}"
+                })
+            })
+    });
+    if !binding || panels.next().is_some() {
+        return Err("network panel no longer uses UPDATE-INTERVAL for manual refresh".into());
     }
     Ok(())
 }
@@ -596,13 +666,9 @@ fn merge_youtube(req: &MergeBundleRequest) -> bool {
 
     let mut header = req.header_meta.clone();
     if let Some(args) = meta.get("arguments") {
-        let mut a = args.clone();
-        a = a.replace("字幕翻译语言:off", "字幕翻译语言:\"zh-Hans\"");
-        a = a.replace("歌词翻译语言:off", "歌词翻译语言:\"zh-Hans\"");
-        a = a.replace("增加画中画:false", "增加画中画:true");
         header.insert(
             "arguments".to_string(),
-            set_argument_defaults(&a, VIDEO_DEFAULTS),
+            set_argument_defaults(args, VIDEO_DEFAULTS),
         );
     }
     if let Some(v) = meta.get("arguments-desc") {
@@ -706,7 +772,7 @@ fn finalize_devtools(path: &Path) -> bool {
         let description = meta.entry("arguments-desc".to_string()).or_default();
         description.insert_str(
             0,
-            "定时同步和网络变化查询默认关闭。启用时移除对应脚本名称参数开头的 #。\\n\\n",
+            "定时同步、预处理和网络变化查询默认关闭；同步成功通知也默认关闭。启用定时或网络变化任务时，移除对应脚本名称参数开头的 #。\\n\\n",
         );
     }
     let mut merged: HashMap<String, Vec<String>> = HashMap::new();

@@ -14,8 +14,16 @@
     }
 
     // 获取参数值
-    const removeAllBanners = $argument?.removeAllBanners !== undefined ? $argument.removeAllBanners : true;
-    const removePinnedArticles = $argument?.removePinnedArticles !== undefined ? $argument.removePinnedArticles : true;
+    let options = typeof $argument === 'undefined' ? null : $argument;
+    if (typeof options === 'string') {
+        try {
+            options = JSON.parse(options);
+        } catch {
+            options = null;
+        }
+    }
+    const removeAllBanners = (Array.isArray(options) ? options[0] : options?.removeAllBanners) === true;
+    const removePinnedArticles = (Array.isArray(options) ? options[1] : options?.removePinnedArticles) === true;
     
     // 移除全部横幅
     const removeAllBannersFunc = () => {

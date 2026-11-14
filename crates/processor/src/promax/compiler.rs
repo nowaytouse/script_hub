@@ -1931,6 +1931,9 @@ impl AdBlockManager {
                 .map_err(|error| format!("cannot read functional source {rel}: {error}"))?;
             let content = if path.ends_with("modules/source/local/BiliBili.ADBlock.sgmodule") {
                 super::functional::resolve_bili_adblock_arguments(&content)?
+            } else if path.ends_with("rulesets/Sources/LocalModules/IT之家去广告.beta.sgmodule")
+            {
+                super::functional::resolve_ithome_adblock_arguments(&content)?
             } else {
                 content
             };
@@ -1943,7 +1946,7 @@ impl AdBlockManager {
                 .lines()
                 .filter(|line| {
                     super::script_resources::script_resource_url(line)
-                        .and_then(super::script_resources::official_app_resource)
+                        .and_then(super::script_resources::app_resource_identity)
                         .is_none_or(|url| !official_app_scripts.contains(url))
                 })
                 .collect::<Vec<_>>()

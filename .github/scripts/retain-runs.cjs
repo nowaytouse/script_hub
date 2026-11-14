@@ -65,6 +65,8 @@ async function retainRuns({ github, repo, currentRunId, dryRun = true, maxDeleti
   let lastRequest = -Infinity;
   let lastMutation = -Infinity;
   let remainingRequests = Infinity;
+  const acknowledgedAbsent = new Set();
+  const confirmedAbsent = new Set();
 
   async function request(method, path, beforeAttempt) {
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -140,6 +142,20 @@ async function retainRuns({ github, repo, currentRunId, dryRun = true, maxDeleti
     const groups = new Map();
     for (const run of runs) {
       if (!integer(run.workflow_id)) throw new Error('Invalid workflow ID in repository snapshot');
+      if (confirmedAbsent.has(run.id)) continue;
+      // GitHub's list can briefly retain a run after DELETE returns 204.
+      if (acknowledgedAbsent.has(run.id) && remainingRequests > 50) {
+        try {
+          const current = (await request('GET', `${base}/runs/${run.id}`)).data;
+          if (current?.id !== run.id || current.workflow_id !== run.workflow_id) {
+            throw new Error(`GitHub run identity changed: ${run.id}`);
+          }
+        } catch (error) {
+          if (error.status !== 404) throw error;
+          confirmedAbsent.add(run.id);
+          continue;
+        }
+      }
       if (!groups.has(run.workflow_id)) groups.set(run.workflow_id, {
         id: run.workflow_id, name: run.name, runs: [],
       });
@@ -176,6 +192,7 @@ async function retainRuns({ github, repo, currentRunId, dryRun = true, maxDeleti
               throw Object.assign(new Error(`Run ${run.id} became active or was rerun`), { deferred: true });
             }
           });
+          acknowledgedAbsent.add(run.id);
           result.deleted.push(run.id);
           result.remaining--;
           log(`Deleted workflow run ${run.id} (workflow ${run.workflow_id}), including logs and artifacts`);
@@ -185,6 +202,7 @@ async function retainRuns({ github, repo, currentRunId, dryRun = true, maxDeleti
             continue;
           }
           if (error.status !== 404) throw error;
+          acknowledgedAbsent.add(run.id);
           result.missing.push(run.id);
           result.remaining--;
         }

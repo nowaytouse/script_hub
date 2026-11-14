@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Keep GitHub API cooldowns from stopping independent module and ruleset downloads, and deduplicate scripts by their complete request patterns.
+- Follow Sub-Store's official rolling script releases in the utilities bundle and keep reviewed, quiet video and utility defaults across refreshes.
 - Follow rolling Rust nightly for local builds and CI.
 - Keep working PROMAX inputs when upstream returns an empty module, and reject incomplete functional builds instead of silently dropping declared sources.
 - Prefer official app2smile handlers over duplicate CDN aliases, use actual request patterns to retain MITM hosts, and limit Mlxx to its two reviewed ad endpoints.

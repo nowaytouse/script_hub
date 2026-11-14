@@ -103,6 +103,32 @@ test('fresh reconciliation retains only the latest ten when runs arrive during d
   assert.deepEqual(result.workflows[0].kept, [13, 12, 11, 10, 9, 8, 7, 6, 5, 4]);
 });
 
+test('a stale list cannot resurrect a run confirmed absent by its direct API', async () => {
+  const f = fixture([{ id: 1, runs: Array.from({ length: 11 }, (_, i) => run(i + 1)) }], ({ path, live }) => {
+    if (path.includes('/runs?') && !live.has(1)) {
+      return { data: { total_count: 11, workflow_runs: [run(1), ...live.values()] }, headers: {} };
+    }
+  });
+  const result = await retainRuns({ ...f.options, dryRun: false });
+  assert.equal(result.refreshed, true);
+  assert.deepEqual(result.deleted, [1]);
+  assert.equal(result.remaining, 0);
+  assert.equal(result.workflows[0].total, 10);
+  assert.equal(f.calls.filter((call) => call.method === 'DELETE').length, 1);
+  assert.equal(f.calls.filter((call) => call.method === 'GET' && call.path.endsWith('/runs/1')).length, 2);
+});
+
+test('an acknowledged deletion is still counted if the direct API finds the run', async () => {
+  const f = fixture([{ id: 1, runs: Array.from({ length: 11 }, (_, i) => run(i + 1)) }], ({ method, path }) => {
+    if (method === 'DELETE' && path.endsWith('/runs/1')) return { status: 204 };
+  });
+  const result = await retainRuns({ ...f.options, dryRun: false });
+  assert.deepEqual(result.deleted, [1]);
+  assert.equal(result.remaining, 1);
+  assert.equal(f.calls.filter((call) => call.method === 'DELETE').length, 1);
+  assert.equal(f.calls.filter((call) => call.method === 'GET' && call.path.endsWith('/runs/1')).length, 2);
+});
+
 test('a failed final inventory exposes unverified partial cleanup instead of snapshot success', async () => {
   let inventories = 0;
   const f = fixture([{ id: 1, runs: Array.from({ length: 11 }, (_, i) => run(i + 1)) }], ({ path }) => {

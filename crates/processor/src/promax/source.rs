@@ -124,19 +124,26 @@ impl Downloader {
         let attempts = self.config.attempts.max(1);
         let mut attempted_candidates = BTreeSet::new();
         let mut missing_candidates = BTreeSet::new();
+        let mut deferred_candidates = BTreeSet::new();
         let mut last_error = None;
         let mut performed_attempts = 0;
         for attempt in 1..=attempts {
             let Some(candidate) = candidates
                 .iter()
-                .find(|candidate| !attempted_candidates.contains(candidate.as_str()))
+                .find(|candidate| {
+                    !attempted_candidates.contains(candidate.as_str())
+                        && !deferred_candidates.contains(candidate.as_str())
+                })
                 .or_else(|| {
                     candidates
                         .iter()
                         .cycle()
                         .skip((attempt - 1) % candidates.len().max(1))
                         .take(candidates.len())
-                        .find(|candidate| !missing_candidates.contains(candidate.as_str()))
+                        .find(|candidate| {
+                            !missing_candidates.contains(candidate.as_str())
+                                && !deferred_candidates.contains(candidate.as_str())
+                        })
                 })
             else {
                 break;
@@ -155,10 +162,11 @@ impl Downloader {
                 ));
             }
             if !self.wait_for_origin_slot(candidate, deadline) {
-                last_error = Some(
-                    "batch deadline reached or origin cooldown exceeds remaining time".to_string(),
-                );
-                break;
+                deferred_candidates.insert(candidate.as_str());
+                last_error.get_or_insert_with(|| {
+                    "batch deadline reached or origin cooldown exceeds remaining time".to_string()
+                });
+                continue;
             }
             let timeout = deadline
                 .map(|deadline| deadline.saturating_duration_since(Instant::now()))
@@ -367,7 +375,7 @@ impl Downloader {
                 if deadline.is_some_and(|deadline| now >= deadline) {
                     return false;
                 }
-                not_before.retain(|key, next| key == "github" || *next > now);
+                not_before.retain(|_, next| *next > now);
                 if let Some(next) = not_before.get(&origin).copied().filter(|next| *next > now) {
                     if deadline.is_some_and(|deadline| next >= deadline) {
                         return false;
@@ -466,12 +474,10 @@ fn server_cooldown_delay(
 }
 
 fn origin_key(url: &str) -> Option<String> {
+    // The GitHub API, raw content and CDNs have independent rate limits.
     let uri = url.parse::<ureq::http::Uri>().ok()?;
     let scheme = uri.scheme_str()?;
     let host = uri.host()?;
-    if is_github_url(url) {
-        return Some("github".to_string());
-    }
     let port = uri.port_u16().or(match scheme {
         "http" => Some(80),
         "https" => Some(443),
@@ -994,6 +1000,22 @@ mod tests {
             Some(std::time::Instant::now() + Duration::from_millis(1))
         ));
         ORIGIN_NOT_BEFORE.lock().unwrap().remove(&key);
+    }
+
+    #[test]
+    fn github_api_cooldown_does_not_block_public_assets() {
+        let api = "https://api.github.com/repos/owner/repo/contents/rules.list";
+        let raw = "https://raw.githubusercontent.com/owner/repo/main/rules.list";
+        let cdn = "https://cdn.jsdelivr.net/gh/owner/repo@main/rules.list";
+        let downloader = Downloader::new(test_config(1024));
+        downloader.defer_origin(api, Duration::from_secs(30));
+        let deadline = || Some(std::time::Instant::now() + Duration::from_millis(5));
+        let allowed = [api, raw, cdn].map(|url| downloader.wait_for_origin_slot(url, deadline()));
+        let mut gate = ORIGIN_NOT_BEFORE.lock().unwrap();
+        for url in [api, raw, cdn] {
+            gate.remove(&origin_key(url).unwrap());
+        }
+        assert_eq!(allowed, [false, true, true]);
     }
 
     #[test]

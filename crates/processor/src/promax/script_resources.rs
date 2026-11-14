@@ -11,15 +11,17 @@ const MLXX_LAUNCH_PATTERN: &str = r"^https://api\.bevol\.com/appmain/app/home/la
 const MLXX_TRIAL_PATTERN: &str = r"^https://api\.bevol\.com/trialbox/shop/app/homePage$";
 const GOOFISH_RESOURCE: &str =
     "https://raw.githubusercontent.com/ishowshu/qx/main/script/goofish.js";
+const TIEBA_PROTO_RESOURCE: &str =
+    "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js";
 
 const APP2SMILE_RESOURCES: &[&str] = &[
     "https://raw.githubusercontent.com/app2smile/rules/master/js/qidian.js",
     "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-json.js",
-    "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js",
+    TIEBA_PROTO_RESOURCE,
     "https://raw.githubusercontent.com/app2smile/rules/master/js/qq-news.js",
 ];
 
-pub(crate) fn official_app_resource(url: &str) -> Option<&'static str> {
+fn official_app_resource(url: &str) -> Option<&'static str> {
     const RAW: &str = "https://raw.githubusercontent.com/app2smile/rules/master/";
     const CDN: &str = "https://cdn.jsdelivr.net/gh/app2smile/rules@master/";
     let path = url.strip_prefix(RAW).or_else(|| url.strip_prefix(CDN))?;
@@ -27,6 +29,16 @@ pub(crate) fn official_app_resource(url: &str) -> Option<&'static str> {
         .iter()
         .copied()
         .find(|resource| resource.strip_prefix(RAW) == Some(path))
+}
+
+pub(crate) fn app_resource_identity(url: &str) -> Option<&'static str> {
+    match url {
+        "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_476501_tieba-proto.js"
+        | "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_476501_tieba-proto.js" => {
+            Some(TIEBA_PROTO_RESOURCE)
+        }
+        _ => official_app_resource(url),
+    }
 }
 
 fn script_path_range(line: &str) -> Option<(usize, usize)> {
@@ -326,6 +338,26 @@ mod tests {
             BTreeSet::from([super::APP2SMILE_RESOURCES[0]])
         );
         assert!(required_resources("a = type=http-response,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/qidian.js.evil").is_empty());
+    }
+
+    #[test]
+    fn recognized_tieba_mirror_has_official_identity_without_new_network_dependency() {
+        let cdn = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/github_com_476501_tieba-proto.js";
+        let raw = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/source/scripts/github_com_476501_tieba-proto.js";
+        for url in [cdn, raw] {
+            assert_eq!(
+                super::app_resource_identity(url),
+                Some(super::TIEBA_PROTO_RESOURCE)
+            );
+            assert!(
+                required_resources(&format!("script = type=http-response,script-path={url}"))
+                    .is_empty()
+            );
+        }
+        assert_eq!(
+            super::app_resource_identity(&raw.replace("/nowaytouse/", "/other/")),
+            None
+        );
     }
 
     #[test]

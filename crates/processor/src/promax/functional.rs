@@ -235,6 +235,46 @@ pub(crate) fn resolve_bili_adblock_arguments(content: &str) -> Result<String, St
     Ok(output)
 }
 
+pub(crate) fn resolve_ithome_adblock_arguments(content: &str) -> Result<String, String> {
+    const ARGUMENT: &str = r#"argument="[{{{removeAllBanners}}},{{{removePinnedArticles}}}]""#;
+    const SCRIPT: &str = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/scripts/kelee_one_e31609_IThome_remove_ads.js";
+    let mut output = String::with_capacity(content.len());
+    let mut in_script = false;
+    let mut matched = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            in_script = trimmed == "[Script]";
+        }
+        if in_script && super::script_resources::script_resource_url(line) == Some(SCRIPT) {
+            let (_, parameters) = line.split_once('=').ok_or("IT Home script has no label")?;
+            if matched
+                || crate::smart_cleanup::split_script_parameters(parameters)
+                    .iter()
+                    .filter(|field| {
+                        field
+                            .split_once('=')
+                            .is_some_and(|(key, _)| key.trim().eq_ignore_ascii_case("argument"))
+                    })
+                    .copied()
+                    .collect::<Vec<_>>()
+                    != [ARGUMENT]
+            {
+                return Err("IT Home script has an unreviewed argument shape".into());
+            }
+            matched = true;
+            output.push_str(&line.replace(ARGUMENT, r#"argument="[false,false]""#));
+        } else {
+            output.push_str(line);
+        }
+        output.push('\n');
+    }
+    if !matched || output.contains("{{{") {
+        return Err("IT Home script defaults could not be resolved".into());
+    }
+    Ok(output)
+}
+
 pub(crate) fn narrow_http_authority_pattern(pattern: &str) -> String {
     let Some(prefix) = [
         r"^https?:\/\/",
@@ -413,6 +453,21 @@ mod tests {
         ] {
             assert!(super::resolve_bili_adblock_arguments(&format!("{source}{line}\n")).is_err());
         }
+    }
+
+    #[test]
+    fn ithome_defaults_keep_normal_banners_and_pinned_articles() {
+        let source =
+            include_str!("../../../../rulesets/Sources/LocalModules/IT之家去广告.beta.sgmodule");
+        let output = super::resolve_ithome_adblock_arguments(source).unwrap();
+        assert!(output.contains(r#"argument="[false,false]""#));
+        assert!(!output.contains("{{{"));
+        assert!(
+            super::resolve_ithome_adblock_arguments(
+                &source.replace("removePinnedArticles}}}", "removeOtherContent}}}",)
+            )
+            .is_err()
+        );
     }
 
     #[test]
