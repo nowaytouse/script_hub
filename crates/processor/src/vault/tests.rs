@@ -98,8 +98,20 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
         assert!(!rendered.contains("/GitHub.list"));
         assert!(!rendered.contains("/Microsoft.list"));
         if matches!(template.client, Client::Surge | Client::Shadowrocket) {
-            let direct = rendered.find("Microsoft_direct.list,DIRECT");
-            let proxy = rendered.find("Microsoft_proxy.list,");
+            for private_setting in [
+                "[MTProto]",
+                "DEVICE:",
+                "dns.nextdns.io",
+                "ca-p12",
+                "ca-passphrase",
+            ] {
+                assert!(
+                    !rendered.contains(private_setting),
+                    "Private {private_setting} leaked into bundled template"
+                );
+            }
+            let direct = rendered.find("/Microsoft_direct.list");
+            let proxy = rendered.find("/Microsoft_proxy.list");
             assert!(
                 matches!((direct, proxy), (Some(direct), Some(proxy)) if direct < proxy)
                     && !rendered.contains("/Microsoft.list,")
@@ -110,6 +122,10 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
         if template.client == Client::FlClash {
             assert!(!subscriptions.is_empty());
             assert!(template::is_flclash_config(&rendered));
+            let config: serde_json::Value = serde_saphyr::from_str(&rendered).unwrap();
+            for tag in ["JP", "TW", "Microsoft_direct", "Microsoft_proxy"] {
+                assert!(config["rule-providers"][tag]["url"].is_string());
+            }
         }
         if matches!(template.client, Client::Surge | Client::Shadowrocket) {
             let mut section = "";
@@ -146,8 +162,16 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                     "Unexpected connectivity probe: {key}"
                 );
             }
-            if template.client == Client::Shadowrocket {
+            if template.client == Client::Surge {
+                // Current Surge inherits the global proxy probe; legacy group url= is ignored.
+                assert_eq!(group_count, 0);
+                assert_eq!(settings.get("proxy-test-udp"), Some(&"example.com@1.1.1.1"));
+                for name in ["Direct", "US", "JP", "TW", "Direct-Final"] {
+                    assert!(rendered.contains(&format!("[Ruleset {name}]")));
+                }
+            } else {
                 assert_eq!(group_count, 3);
+                assert!(!rendered.contains("[Ruleset "));
                 for (key, value) in [
                     ("ipv6", "true"),
                     ("dns-direct-system", "false"),
@@ -167,6 +191,15 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
         if template.client == Client::SingBox {
             let config: serde_json::Value = serde_json::from_str(&rendered).unwrap();
             assert!(config["outbounds"].is_array());
+            for tag in ["JP", "TW", "Microsoft_direct", "Microsoft_proxy"] {
+                assert!(
+                    config["route"]["rule_set"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|provider| provider["tag"] == tag)
+                );
+            }
             assert!(
                 config["route"]["rule_set"]
                     .as_array()

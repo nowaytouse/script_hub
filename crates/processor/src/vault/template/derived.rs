@@ -126,6 +126,37 @@ fn provider_stem(url: &str) -> Option<&str> {
     .then_some(name)
 }
 
+fn expand_inline<'a>(
+    name: &'a str,
+    policy: &str,
+    no_resolve: bool,
+    inline: &BTreeMap<&'a str, Vec<&'a str>>,
+    active: &mut BTreeSet<&'a str>,
+    output: &mut Vec<String>,
+) -> Result<(), VaultError> {
+    if active.len() >= 8 || !active.insert(name) {
+        return Err(VaultError::Format);
+    }
+    let rules = inline.get(name).ok_or(VaultError::Format)?;
+    for rule in rules {
+        let mut parts = fields(rule);
+        let kind = parts.next().ok_or(VaultError::Format)?;
+        let value = parts.next().ok_or(VaultError::Format)?;
+        let no_resolve = no_resolve || parts.any(|field| field == "no-resolve");
+        if kind == "RULE-SET" && !matches!(value, "LAN" | "SYSTEM") && inline.contains_key(value) {
+            expand_inline(value, policy, no_resolve, inline, active, output)?;
+        } else {
+            if output.len() >= 4096 {
+                return Err(VaultError::TooLarge);
+            }
+            let modifiers = if no_resolve { ",no-resolve" } else { "" };
+            output.push(format!("{kind},{value},{policy}{modifiers}"));
+        }
+    }
+    active.remove(name);
+    Ok(())
+}
+
 fn yaml_policy<'a>(name: &'a str, groups: &BTreeMap<&str, Group<'_>>) -> Option<&'a str> {
     match name {
         "DIRECT" | "REJECT" => Some(name),
@@ -397,7 +428,29 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let mut sing_providers = BTreeMap::new();
     let mut adblock_at = None;
     let mut final_policy = None;
+    let mut expanded = Vec::new();
     for line in source_rules {
+        let mut parts = fields(line);
+        if parts.next() == Some("RULE-SET")
+            && let Some(name) = parts
+                .next()
+                .filter(|name| !matches!(*name, "LAN" | "SYSTEM") && inline.contains_key(name))
+        {
+            let policy = parts.next().ok_or(VaultError::Format)?;
+            let no_resolve = parts.any(|field| field == "no-resolve");
+            expand_inline(
+                name,
+                policy,
+                no_resolve,
+                &inline,
+                &mut BTreeSet::new(),
+                &mut expanded,
+            )?;
+        } else {
+            expanded.push(line.to_owned());
+        }
+    }
+    for line in &expanded {
         let mut fields = fields(line);
         match fields.next() {
             Some("RULE-SET") => {
@@ -406,10 +459,11 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                     .ok_or(VaultError::Format)?;
                 let no_resolve = fields.any(|field| field == "no-resolve");
                 let Some(stem) = provider_stem(url) else {
-                    let rules = if url == "LAN" {
-                        LAN
-                    } else {
-                        inline.get(url).map_or(&[][..], Vec::as_slice)
+                    let rules = match url {
+                        "LAN" => LAN,
+                        // Surge's internal OS-traffic classifier has no portable equivalent.
+                        "SYSTEM" => &[],
+                        _ => return Err(VaultError::Format),
                     };
                     for rule in rules {
                         let mut parts = self::fields(rule);
@@ -429,7 +483,11 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                 };
                 // Keep leading local overrides and the explicit Microsoft sign-in exception.
                 // Broad service rules (including Direct and GlobalProxy) must not shadow AdBlock.
-                if stem != "Microsoft_direct" && adblock_at.is_none() {
+                if !matches!(
+                    stem,
+                    "Profile_Exceptions" | "Apple_extra" | "Microsoft_direct"
+                ) && adblock_at.is_none()
+                {
                     adblock_at = Some((yaml_rules.len(), sing_rules.len()));
                 }
                 if let Some(url) = provider_url(stem, false)? {
@@ -548,6 +606,45 @@ fn validate_group_graph(graph: &BTreeMap<&str, Vec<&str>>) -> Result<(), VaultEr
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nested_profile_sets_keep_providers_policy_and_order() {
+        let surge = Template {
+            name: "Nested fixture".into(),
+            client: Client::Surge,
+            content: format!(
+                "[Proxy Group]\nProxy = select, policy-path={{{{SUBSCRIPTION_1}}}}\n[Rule]\nRULE-SET,Direct,DIRECT\nRULE-SET,Regional,Proxy,no-resolve\nFINAL,Proxy\n[Ruleset Direct]\nRULE-SET,{RAW}RULE-SET/Profile_Exceptions.list\nRULE-SET,{RAW}RULE-SET/Microsoft_direct.list\n[Ruleset Regional]\nRULE-SET,LAN\nRULE-SET,Services\n[Ruleset Services]\nRULE-SET,{RAW}RULE-SET/JP.list\nDOMAIN,fixture.example\nRULE-SET,{RAW}RULE-SET/Google_ip.list\n"
+            ),
+        };
+        let exports = derive(&surge).unwrap();
+        let yaml: Value = serde_saphyr::from_str(&exports[0].content).unwrap();
+        let rules = yaml["rules"].as_array().unwrap();
+        assert_eq!(rules[0], "RULE-SET,Profile_Exceptions,DIRECT");
+        assert_eq!(rules[1], "RULE-SET,Microsoft_direct,DIRECT");
+        let jp = rules
+            .iter()
+            .position(|rule| rule == "RULE-SET,JP,Proxy,no-resolve")
+            .unwrap();
+        assert!(
+            rules[jp - 1]
+                .as_str()
+                .unwrap()
+                .starts_with("RULE-SET,AdBlock_")
+        );
+        assert_eq!(rules[jp + 1], "DOMAIN,fixture.example,Proxy");
+        assert_eq!(rules[jp + 2], "RULE-SET,Google_ip,Proxy,no-resolve");
+        let sing: Value = serde_json::from_str(&exports[1].content).unwrap();
+        assert!(
+            sing["route"]["rule_set"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|provider| provider["tag"] == "JP")
+        );
+        let mut cyclic = surge;
+        cyclic.content.push_str("RULE-SET,Regional\n");
+        assert!(matches!(derive(&cyclic), Err(VaultError::Format)));
+    }
 
     #[test]
     fn projects_repository_order_with_native_adblock() {

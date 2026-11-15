@@ -18,6 +18,8 @@ After unlocking, choose Surge, Shadowrocket, FlClash or sing-box. The variants f
 
 Shadowrocket enables IPv6 and uses AliDNS and DNSPod DoH for DIRECT DNS. Surge and Shadowrocket use [Microsoft NCSI](https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/troubleshoot-ncsi-guidance) (HTTP 200) for direct checks and the [GrapheneOS HTTPS endpoint](https://grapheneos.org/faq#default-connections) (204) for proxy and group checks. The direct probe uses plaintext HTTP; either service can see the source address of its probe.
 
+Surge uses `example.com@1.1.1.1` for UDP relay checks, independently of its DNS and HTTPS probe settings. The regional rule groups are inline in Surge and expanded for the other clients.
+
 FlClash and sing-box include the current native AdBlock rule providers. They do not execute Surge modules or scripts, intercept TLS, or claim coverage for rules without a native representation. Script Hub checks its own ruleset references against the catalog bundled with the app; this does not check third-party availability.
 
 1. Select a template for your client and enable **Show full template** to read its original text.

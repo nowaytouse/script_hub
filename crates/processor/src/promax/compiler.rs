@@ -2949,8 +2949,11 @@ impl AdBlockManager {
             "# app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md"
                 .to_string(),
         );
-        let mut module_content =
-            crate::smart_cleanup::format_module_pub(&header_lines, &all_sections, false);
+        let mut module_content = super::inline::organize(&crate::smart_cleanup::format_module_pub(
+            &header_lines,
+            &all_sections,
+            false,
+        ));
 
         if url_source == "github" {
             let cdn_own = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/";

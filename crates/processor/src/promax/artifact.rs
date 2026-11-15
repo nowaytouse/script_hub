@@ -507,6 +507,12 @@ static SHADOWROCKET_IP_REWRITE_SUMMARY: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"IP Rewrite=\d+(?:, )?").unwrap());
 
 pub fn convert_surge_to_shadowrocket(content: &str) -> String {
+    let expanded = match super::inline::expand(content) {
+        Ok(expanded) => expanded,
+        // Keep invalid references visible so publication cannot silently discard rules.
+        Err(_) => return content.to_owned(),
+    };
+    let content = expanded.as_deref().unwrap_or(content);
     let mut output = Vec::new();
     let mut section = "";
     let mut seen_ip_rules = HashSet::new();

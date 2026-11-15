@@ -55,6 +55,8 @@ const NSFW_PROTECTED_DOMAINS: &[&str] = &[
     "fc2.com",
     "fhm.com",
     "hidive.com",
+    "hulu.com",
+    "hulu.jp",
     "images.pexels.com",
     "images.weserv.nl",
     "media.discordapp.net",
@@ -531,6 +533,9 @@ fn process_manifest(
     } else if manifest.name == "Pixiv" {
         // The ecosystem aggregate also names its advertising domain.
         vec!["ads-pixiv.net".to_string()]
+    } else if manifest.name == "StreamUS" {
+        // The shared Hulu feed carries the official Japan domain as well.
+        vec!["hulu.jp".to_string()]
     } else {
         Vec::new()
     };
@@ -1745,12 +1750,15 @@ mod tests {
         let jp = read_rules(&root.join("rulesets/RULE-SET/JP.list")).unwrap();
         assert!(jp.contains("DOMAIN,jp.pinterest.com"));
         assert!(jp.contains("DOMAIN-SUFFIX,pinterest.jp"));
+        assert!(jp.contains("DOMAIN-SUFFIX,elegra.ph"));
+        assert!(jp.contains("DOMAIN-SUFFIX,exloli.org"));
         for unrelated in [
             "DOMAIN-SUFFIX,pinterest.com",
             "DOMAIN-SUFFIX,pinimg.com",
             "DOMAIN,i.pinimg.com",
             "DOMAIN,www.pinterest.com",
             "DOMAIN,uk.pinterest.com",
+            "DOMAIN-SUFFIX,telegra.ph",
         ] {
             assert!(
                 !jp.contains(unrelated),
@@ -1758,6 +1766,32 @@ mod tests {
             );
         }
         assert!(!root.join("rulesets/RULE-SET/JP_ip.list").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn stream_us_never_imports_hulu_japans_domain() {
+        let root = consolidation_fixture();
+        let url = "https://example.test/hulu.list";
+        let manifest = Manifest {
+            name: "StreamUS".into(),
+            local_paths: Vec::new(),
+            remote_urls: vec![url.into()],
+        };
+        process_manifest(
+            &root,
+            &manifest,
+            &HashMap::from([(
+                url.into(),
+                "DOMAIN-SUFFIX,hulu.com\nDOMAIN-SUFFIX,hulu.jp\n".into(),
+            )]),
+        )
+        .unwrap();
+        let us = read_rules(&root.join("rulesets/Sources/compiled/StreamUS.list")).unwrap();
+        assert_eq!(
+            us,
+            std::collections::BTreeSet::from(["DOMAIN-SUFFIX,hulu.com".into()])
+        );
         fs::remove_dir_all(root).unwrap();
     }
 

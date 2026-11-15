@@ -18,6 +18,8 @@ tTUa!Acdb7!vhUpSUD1Rl9g*^bm@S#Xahrj1TK72KrA!TMty$lhh6zl1aIbOvAODzM#N2SxzG53iEgVR
 
 小火箭启用 IPv6，DIRECT DNS 使用阿里云和 DNSPod 的 DoH。Surge 和小火箭的直连测速使用 [微软 NCSI](https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/troubleshoot-ncsi-guidance)（HTTP 200），代理和测速组使用 [GrapheneOS HTTPS 探测端点](https://grapheneos.org/faq#default-connections)（204）。直连探测是明文 HTTP，两个服务都能看到各自探测的出口地址。
 
+Surge 使用 `example.com@1.1.1.1` 测试 UDP 中继，独立于常用 DNS 和 HTTPS 测速设置。区域分组在 Surge 内联，在其他客户端展开。
+
 FlClash 和 sing-box 接入当前原生 AdBlock 规则提供方。不执行 Surge 模块或脚本，也不做 TLS 中间人解密；没有原生等价能力的规则不宣称覆盖。导出会按 App 内置目录校验本项目的规则集引用，不检查第三方地址的实时可用性。
 
 1. 选择对应客户端的模板，勾选 **显示完整模板**，即可阅读原文。

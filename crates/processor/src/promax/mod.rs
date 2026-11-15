@@ -3,6 +3,7 @@ mod browser_filter;
 mod compiler;
 pub(crate) mod feed;
 pub mod functional;
+mod inline;
 pub mod rule;
 pub mod safety;
 pub mod script_resources;

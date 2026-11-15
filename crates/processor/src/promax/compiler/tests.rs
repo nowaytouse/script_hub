@@ -231,9 +231,10 @@ fn published_promax_keeps_one_ip_fallback_without_external_ip_shards() {
     for mirror in ["", "github/"] {
         let path = root.join(format!("modules/surge/head_expanse/{mirror}🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule"));
         let content = fs::read_to_string(path).unwrap();
+        let expanded = crate::promax::inline::expand(&content).unwrap().unwrap();
         for port_rule in &ports {
             assert_eq!(
-                content.lines().filter(|line| *line == port_rule).count(),
+                expanded.lines().filter(|line| *line == port_rule).count(),
                 1,
                 "{port_rule}"
             );
@@ -242,7 +243,7 @@ fn published_promax_keeps_one_ip_fallback_without_external_ip_shards() {
         let mut seen = HashSet::new();
         let mut rewrites = 0;
         let mut subscriptions = 0;
-        for line in content.lines().map(str::trim) {
+        for line in expanded.lines().map(str::trim) {
             if line.starts_with('[') && line.ends_with(']') {
                 section = line;
                 continue;
@@ -355,9 +356,11 @@ fn staged_ip_shards_are_inlined_without_losing_nonidentical_rules() {
                 .any(|line| line.starts_with("RULE-SET,") && line.contains(&path))
         );
         assert!(
-            module.contains("IP-ASN,13335,REJECT,no-resolve,pre-matching")
-                || module.contains("IP-ASN,13335,REJECT,pre-matching,no-resolve")
+            module.contains(
+                "RULE-SET,Script Hub PROMAX IP pre-match 01,REJECT,no-resolve,pre-matching"
+            )
         );
+        assert!(module.contains("IP-ASN,13335,no-resolve"));
         assert_eq!(
             module.matches("198.51.100.1/24").count() + module.matches("198.51.100.0/24").count(),
             1
@@ -441,9 +444,12 @@ fn inlined_reject_keeps_distinct_drop_fallback() {
         .content;
     assert!(
         module
+            .contains("RULE-SET,Script Hub PROMAX IP pre-match 01,REJECT,no-resolve,pre-matching")
+    );
+    assert!(
+        module
             .lines()
-            .any(|line| line.starts_with("IP-CIDR,198.51.100.0/24,REJECT,")
-                && line.contains("pre-matching"))
+            .any(|line| line == "IP-CIDR,198.51.100.0/24,no-resolve")
     );
     assert!(module.contains("IP-CIDR,198.51.100.0/24,REJECT-DROP,no-resolve"));
     assert!(crate::promax::validation::validate_surge_module(&module).is_empty());

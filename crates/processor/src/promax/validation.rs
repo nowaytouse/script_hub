@@ -27,13 +27,23 @@ const SECTIONS: &[&str] = &[
 ];
 
 pub fn validate_surge_module(content: &str) -> Vec<ValidationError> {
-    validate_module(content, true)
+    match super::inline::expand(content) {
+        Ok(expanded) => validate_module(expanded.as_deref().unwrap_or(content), true),
+        Err(message) => vec![error(1, "invalid-promax-inline-ruleset", message)],
+    }
 }
 
 /// Validate a Shadowrocket module while retaining shared PROMAX safety checks.
 ///
 /// Both clients support no-resolve; unsupported Surge sections remain dialect-specific.
 pub fn validate_shadowrocket_module(content: &str) -> Vec<ValidationError> {
+    if !matches!(super::inline::expand(content), Ok(None)) {
+        return vec![error(
+            1,
+            "unsupported-section",
+            "Shadowrocket needs flattened PROMAX rule sets",
+        )];
+    }
     validate_module(content, false)
 }
 

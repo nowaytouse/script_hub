@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+- Refresh the encrypted client templates from the current grouped Surge profile, project nested rulesets into native formats, and use a dedicated Cloudflare UDP relay probe.
+- Organize local PROMAX firewall and IP pre-match rules into named Surge rulesets while retaining external shards and equivalent flat Shadowrocket rules.
+- Expand JP with reviewed Japanese service and adult-domain feeds, plus `exloli.org` and `elegra.ph`, without moving unrelated services.
+
 - Keep GitHub API cooldowns from stopping independent module and ruleset downloads, and deduplicate scripts by their complete request patterns.
 - Follow Sub-Store's official rolling script releases in the utilities bundle and keep reviewed, quiet video and utility defaults across refreshes.
 - Follow rolling Rust nightly for local builds and CI.
