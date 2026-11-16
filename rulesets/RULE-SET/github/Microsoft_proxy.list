@@ -1,7 +1,7 @@
 # Ruleset: Microsoft_proxy
 # Policy: USER-DEFINED
 # Description: Microsoft services including GitHub; policy selected by consumer
-# Rules: 761
+# Rules: 764
 DOMAIN,az764295.vo.msecnd.net
 DOMAIN,azure.microsoft.com
 DOMAIN,azuremarketplace.microsoft.com
@@ -11,6 +11,7 @@ DOMAIN,azurestackhub.download.prss.microsoft.com
 DOMAIN,azurestackhubuat.download.prss.microsoft.com
 DOMAIN,b.c2r.ts.cdn.office.net
 DOMAIN,bingsettingssearch.trafficmanager.net
+DOMAIN,builds.dotnet.microsoft.com
 DOMAIN,cbdstest.download.prss.microsoft.com
 DOMAIN,cn.windowssearch.com
 DOMAIN,collaborate.download.prss.microsoft.com
@@ -19,6 +20,7 @@ DOMAIN,crl.microsoft.com
 DOMAIN,ctldl.windowsupdate.com
 DOMAIN,dc.services.visualstudio.com
 DOMAIN,developer.microsoft.com
+DOMAIN,dotnetcli.trafficmanager.net
 DOMAIN,download.microsoft.com
 DOMAIN,download.visualstudio.microsoft.com
 DOMAIN,dreamspark.download.prss.microsoft.com
@@ -57,6 +59,7 @@ DOMAIN,productionresultssa7.blob.core.windows.net
 DOMAIN,productionresultssa8.blob.core.windows.net
 DOMAIN,productionresultssa9.blob.core.windows.net
 DOMAIN,rt.services.visualstudio.com
+DOMAIN,sundry-star-net-geo.trafficmanager.net
 DOMAIN,vscode.blob.core.windows.net
 DOMAIN,vscode.search.windows.net
 DOMAIN,vsmarketplacebadge.apphb.com
