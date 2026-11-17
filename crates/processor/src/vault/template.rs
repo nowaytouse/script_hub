@@ -48,6 +48,7 @@ pub fn project_surge_profiles(surge: &Template) -> Result<Vec<Template>, VaultEr
 
 const SLOT_PREFIX: &str = "{{SUBSCRIPTION_";
 const MAX_SUBSCRIPTION_BYTES: usize = 8192;
+pub(crate) const GEOIP_MANUAL_NOTE: &str = "# GeoIP Country database (manual): https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb";
 static URLS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?i)https?://[^\s,<>"']+"#).expect("constant URL pattern"));
 static FIELD_ASSIGNMENTS: LazyLock<Regex> = LazyLock::new(|| {
@@ -208,7 +209,9 @@ pub fn sanitize(template: &Template) -> Result<Template, VaultError> {
         };
         let trimmed = line.trim().trim_start_matches('\u{feff}');
         if trimmed.starts_with(['#', ';']) || trimmed.starts_with("//") {
-            if !URLS.is_match(line) && !contains_credentials(line) {
+            // Preserve this exact reviewed public resource note, while keeping
+            // arbitrary URLs and possible subscriptions out of comments.
+            if trimmed == GEOIP_MANUAL_NOTE || !URLS.is_match(line) && !contains_credentials(line) {
                 checked_push(&mut output, raw)?;
             }
             continue;
@@ -403,6 +406,18 @@ mod tests {
             client,
             content: content.to_string(),
         }
+    }
+
+    #[test]
+    fn only_the_exact_reviewed_geoip_comment_survives_public_sanitization() {
+        let source = format!(
+            "[General]\n{GEOIP_MANUAL_NOTE}\n{GEOIP_MANUAL_NOTE}?token=fixture-only\n# Private resource: https://private.example.test/subscription\n"
+        );
+        let sanitized = sanitize(&template(Client::Shadowrocket, &source)).unwrap();
+        assert_eq!(
+            sanitized.content,
+            format!("[General]\n{GEOIP_MANUAL_NOTE}\n")
+        );
     }
 
     #[test]

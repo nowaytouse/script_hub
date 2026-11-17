@@ -22,6 +22,8 @@ FlClash 条目为 `FlClash-Surge.yaml`，解锁后从当前内置 Surge 源模�
 
 Surge 使用 `example.com@1.1.1.1` 测试 UDP 中继，独立于常用 DNS 和 HTTPS 测速设置。区域分组在 Surge 内联，在其他客户端展开。
 
+GeoIP 使用 [GeoIP All in One](https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb)：Surge 设置 `geoip-maxmind-url`；FlClash 继承原始 MMDB 地址，每周检查更新。小火箭需把模板注释中的公开地址填入 **设置 → GeoLite2 数据库 → 国家 URL**，再更新数据库。此文件提供国家／位置信息，不是 ASN 库。当前 sing-box 使用原生 SRS 规则集，不能通过配置字段直接加载此 MMDB。
+
 FlClash 只继承 Surge 源模板声明的分流规则。广告模块独立安装，原生 PROMAX 适配见[预览版模块指南](FLCLASH_PREVIEW.zh-CN.md)；模板不激活 MITM 或授予脚本权限。sing-box 保留现有原生 AdBlock 规则提供方，不执行这些模块。导出会按 App 内置目录校验本项目的规则集引用，不检查第三方地址的实时可用性。
 
 1. 选择对应客户端的模板，勾选 **显示完整模板**，即可阅读原文。

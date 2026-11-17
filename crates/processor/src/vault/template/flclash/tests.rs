@@ -2,6 +2,23 @@ use super::*;
 
 const PUBLIC_RULE_URL: &str = "https://raw.githubusercontent.com/example/rules/main/ads.yaml";
 
+#[test]
+fn geoip_update_options_require_a_boolean_and_a_positive_nonoverflowing_hour_count() {
+    let source = fixture("{{SUBSCRIPTION_1}}");
+    for (enabled, hours) in [(true, 1), (true, 168), (false, 168), (true, 2_562_047)] {
+        let yaml = format!("{source}\ngeo-auto-update: {enabled}\ngeo-update-interval: {hours}\n");
+        validate(&parse(&yaml).unwrap().0, UrlMode::Slots).unwrap();
+    }
+    for value in ["0", "-1", "2562048", "1.5", "\"168\"", "null", "true"] {
+        let yaml = format!("{source}\ngeo-auto-update: true\ngeo-update-interval: {value}\n");
+        assert!(validate(&parse(&yaml).unwrap().0, UrlMode::Slots).is_err());
+    }
+    for value in ["\"true\"", "1", "null"] {
+        let yaml = format!("{source}\ngeo-auto-update: {value}\ngeo-update-interval: 168\n");
+        assert!(validate(&parse(&yaml).unwrap().0, UrlMode::Slots).is_err());
+    }
+}
+
 fn template(content: &str) -> Template {
     Template {
         name: "fixture.yaml".to_owned(),

@@ -315,6 +315,8 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
             "ipv6",
             "allow-lan",
             "geodata-mode",
+            "geo-auto-update",
+            "geo-update-interval",
             "geox-url",
             "dns",
             "tun",
@@ -328,7 +330,15 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
     )?;
     for (key, value) in root {
         match key.as_str() {
-            "ipv6" | "allow-lan" | "geodata-mode" => flag(value)?,
+            "ipv6" | "allow-lan" | "geodata-mode" | "geo-auto-update" => flag(value)?,
+            "geo-update-interval" => {
+                // Mihomo multiplies hours by time.Hour in a signed 64-bit
+                // time.Duration. Reject zero and overflow before export.
+                value
+                    .as_u64()
+                    .filter(|hours| (1..=2_562_047).contains(hours))
+                    .ok_or(VaultError::Format)?;
+            }
             "mode" | "log-level" => {
                 public_text(value)?;
             }

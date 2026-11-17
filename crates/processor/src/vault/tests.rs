@@ -41,6 +41,8 @@ fn documented_sample_password(document: &str) -> &str {
 
 #[test]
 fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
+    const GEOIP_URL: &str =
+        "https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb";
     const DIRECT_PROBE: &str = "http://www.msftconnecttest.com/connecttest.txt";
     const PROXY_PROBE: &str = "https://connectivitycheck.grapheneos.network/generate_204";
     let group_probe =
@@ -123,6 +125,10 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
             assert!(!subscriptions.is_empty());
             assert!(template::is_flclash_config(&rendered));
             let config: serde_json::Value = serde_saphyr::from_str(&rendered).unwrap();
+            assert_eq!(config["geodata-mode"], false);
+            assert_eq!(config["geox-url"]["mmdb"], GEOIP_URL);
+            assert_eq!(config["geo-auto-update"], true);
+            assert_eq!(config["geo-update-interval"], 168);
             for tag in ["JP", "TW", "Microsoft_direct", "Microsoft_proxy"] {
                 assert!(config["rule-providers"][tag]["url"].is_string());
             }
@@ -163,6 +169,8 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                 );
             }
             if template.client == Client::Surge {
+                assert_eq!(settings.get("geoip-maxmind-url"), Some(&GEOIP_URL));
+                assert_eq!(settings.get("disable-geoip-db-auto-update"), Some(&"false"));
                 // Current Surge inherits the global proxy probe; legacy group url= is ignored.
                 assert_eq!(group_count, 0);
                 assert_eq!(settings.get("proxy-test-udp"), Some(&"example.com@1.1.1.1"));
@@ -170,6 +178,12 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                     assert!(rendered.contains(&format!("[Ruleset {name}]")));
                 }
             } else {
+                assert!(
+                    rendered
+                        .lines()
+                        .any(|line| line == template::GEOIP_MANUAL_NOTE)
+                );
+                assert!(!settings.contains_key("geoip-maxmind-url"));
                 assert_eq!(group_count, 3);
                 assert!(!rendered.contains("[Ruleset "));
                 for (key, value) in [

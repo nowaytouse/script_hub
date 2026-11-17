@@ -258,6 +258,37 @@ fn derived_dns(general: &BTreeMap<&str, &str>) -> Result<Value, VaultError> {
     }))
 }
 
+fn inherit_geoip(general: &BTreeMap<&str, &str>, yaml: &mut Value) -> Result<(), VaultError> {
+    let Some(source) = general.get("geoip-maxmind-url") else {
+        return Ok(());
+    };
+    let source = endpoint(source.trim_matches('"'), true)?;
+    // Surge also accepts archives, but Mihomo's MMDB downloader consumes the
+    // response bytes directly rather than extracting a Country database.
+    let path = url::Url::parse(source)
+        .map_err(|_| VaultError::Format)?
+        .path()
+        .to_ascii_lowercase();
+    if [".tar.gz", ".tgz", ".zip"]
+        .iter()
+        .any(|suffix| path.ends_with(suffix))
+    {
+        return Err(VaultError::Format);
+    }
+    let disabled = general
+        .get("disable-geoip-db-auto-update")
+        .map(|value| boolean(value))
+        .transpose()?
+        .unwrap_or(false);
+    yaml["geodata-mode"] = false.into();
+    yaml["geox-url"] = json!({"mmdb":source});
+    // Mihomo updates only datasets enabled by actual use. MMDB mode selects
+    // UpdateMMDB instead of GeoIP.dat; do not add unrelated DAT/ASN sources.
+    yaml["geo-auto-update"] = (!disabled).into();
+    yaml["geo-update-interval"] = 168.into();
+    Ok(())
+}
+
 fn provider_stem(url: &str) -> Option<&str> {
     let suffix = url.strip_prefix(RAW).or_else(|| url.strip_prefix(CDN))?;
     let suffix = suffix.strip_prefix("RULE-SET/")?;
@@ -746,11 +777,12 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     }
     let dns = derived_dns(&general)?;
     let ipv6 = dns["ipv6"].as_bool().ok_or(VaultError::Format)?;
-    let yaml = json!({
+    let mut yaml = json!({
         "mode":"rule", "allow-lan":false, "ipv6":ipv6, "dns":dns,
         "proxy-providers":slots, "proxy-groups":yaml_groups,
         "rule-providers":yaml_providers, "rules":yaml_rules
     });
+    inherit_geoip(&general, &mut yaml)?;
     let sing = json!({
         "inbounds":[{"type":"mixed", "tag":"local", "listen":"127.0.0.1", "listen_port":7890}],
         "outbounds":outbounds,
@@ -827,6 +859,81 @@ fn validate_group_graph(graph: &BTreeMap<&str, Vec<&str>>) -> Result<(), VaultEr
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn geoip_fixture(general: &str) -> Template {
+        Template {
+            name: "Synthetic GeoIP profile".into(),
+            client: Client::Surge,
+            content: format!(
+                "[General]\n{general}\n[Proxy Group]\nProxy = select, policy-path={{{{SUBSCRIPTION_1}}}}\n[Rule]\nGEOIP,CN,DIRECT\nFINAL,Proxy\n"
+            ),
+        }
+    }
+
+    #[test]
+    fn geoip_source_is_inherited_as_mmdb_and_preserves_auto_update_opt_out() {
+        let url = "https://geoip.example.test/country.mmdb";
+        for (setting, enabled) in [
+            ("", true),
+            ("disable-geoip-db-auto-update = false", true),
+            ("disable-geoip-db-auto-update = true", false),
+        ] {
+            let source = geoip_fixture(&format!("geoip-maxmind-url = {url}\n{setting}"));
+            let projections = derive(&source).unwrap();
+            let yaml: Value = serde_saphyr::from_str(&projections[0].content).unwrap();
+            assert_eq!(yaml["geodata-mode"], false);
+            assert_eq!(yaml["geox-url"], json!({"mmdb":url}));
+            assert_eq!(yaml["geo-auto-update"], enabled);
+            assert_eq!(yaml["geo-update-interval"], 168);
+            super::super::flclash::subscription_slots(&projections[0]).unwrap();
+            let sing: Value = serde_json::from_str(&projections[1].content).unwrap();
+            assert!(sing["route"].get("geoip").is_none());
+            assert!(sing.get("geox-url").is_none());
+            assert!(!projections[1].content.contains(url));
+        }
+    }
+
+    #[test]
+    fn invalid_geoip_source_or_update_flag_fails_without_exporting_a_bad_profile() {
+        for url in [
+            "http://geoip.example.test/country.mmdb",
+            "https://fixture-user:fixture-pass@geoip.example.test/country.mmdb",
+            "https://geoip.example.test/country.mmdb?token=fixture-secret",
+            "https://geoip.example.test/country.mmdb#fragment",
+            "https://geoip.example.test/country.tar.gz",
+            "https://geoip.example.test/country.TGZ",
+            "https://geoip.example.test/country.ZiP",
+            "file:///country.mmdb",
+            "",
+        ] {
+            let error = match derive(&geoip_fixture(&format!("geoip-maxmind-url = {url}"))) {
+                Ok(_) => panic!("unsafe source must not produce a profile"),
+                Err(error) => error,
+            };
+            assert!(matches!(error, VaultError::Format));
+            assert!(!error.to_string().contains("geoip.example.test"));
+        }
+        let source = geoip_fixture(
+            "geoip-maxmind-url = https://geoip.example.test/country.mmdb\ndisable-geoip-db-auto-update = maybe",
+        );
+        assert!(matches!(derive(&source), Err(VaultError::Format)));
+    }
+
+    #[test]
+    fn profiles_without_a_custom_geoip_url_keep_default_geo_settings() {
+        for general in ["", "disable-geoip-db-auto-update = true"] {
+            let projections = derive(&geoip_fixture(general)).unwrap();
+            let yaml: Value = serde_saphyr::from_str(&projections[0].content).unwrap();
+            for key in [
+                "geodata-mode",
+                "geox-url",
+                "geo-auto-update",
+                "geo-update-interval",
+            ] {
+                assert!(yaml.get(key).is_none());
+            }
+        }
+    }
 
     #[test]
     fn nested_profile_sets_keep_providers_policy_and_order() {

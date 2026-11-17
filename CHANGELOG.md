@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Use GeoIP All in One for the bundled Surge database and inherit its MMDB source and weekly updates in FlClash. Add manual Shadowrocket Country URL guidance; keep sing-box on supported native rule sets.
+
 - Share lossless Body, Header, URL Rewrite and Map Local field handling across native module generation, cleanup and publication. Preserve literal JSON quotes and multiple replacement pairs, reject malformed published fields, and regenerate Surge, Shadowrocket and FlClash Preview modules through the same checks.
 
 - Make module link copying available without opening a workspace using an embedded public catalog, and add FlClash Preview alongside Surge and Shadowrocket.

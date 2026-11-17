@@ -22,6 +22,8 @@ Shadowrocket enables IPv6 and uses AliDNS and DNSPod DoH for DIRECT DNS. Surge a
 
 Surge uses `example.com@1.1.1.1` for UDP relay checks, independently of its DNS and HTTPS probe settings. The regional rule groups are inline in Surge and expanded for the other clients.
 
+GeoIP uses [GeoIP All in One](https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb): Surge sets `geoip-maxmind-url`; FlClash inherits the raw MMDB URL and checks for updates weekly. In Shadowrocket, copy the public URL in the template note into **Settings → GeoLite2 Database → Country URL**, then update the database. This file is a country/location database, not an ASN database. Current sing-box versions use native SRS rule sets and cannot load this MMDB through a configuration field.
+
 FlClash inherits only the Surge source's declared routing rules. Advertising modules are separate: use the native PROMAX projection described in the [Preview module guide](FLCLASH_PREVIEW.md). The template does not activate MITM or grant script permissions. sing-box retains its existing native AdBlock providers and does not execute these modules. Script Hub checks its own ruleset references against the bundled catalog, not third-party availability.
 
 1. Select a template for your client and enable **Show full template** to read its original text.
