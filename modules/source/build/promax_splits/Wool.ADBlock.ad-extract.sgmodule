@@ -3315,7 +3315,7 @@ http:\/\/dili.sqcosmos.com\/jiekou\/endpage\/ad data-type=text data="{}" status-
 https://api.rr.tv/storage/business/rootName/app/homePage\?dataType=JSON data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/oneapph5\.dongfeng-nissan\.com\.cn\/mb-gw\/vmsp-discover\/rest\/business-service\/v1\/advert\/advertinfo data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/app\.meruki\.cn\/\?n=Sig\.Front\.AppFront\.GetOpenAdDoorzo data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https?:\/\/(ec|c)api\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList data-type=text data="{"status":"SUCCESS"}" header="Content-Type:application/json"
+^https?:\/\/(ec|c)api\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList data-type=text data="{\"status\":\"SUCCESS\"}" header=Content-Type:application/json
 ^https?:\/\/dyncdn\.me\/static\/\d{0,2}\/js\/expla\d{0,4}\.js$ data-type=text data=" " status-code=200
 ^https?:\/\/api-sams\.walmartmobile\.cn\/api\/v\d\/sams\/channel\/portal\/AdgroupData data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https?:\/\/api-sams\.walmartmobile\.cn\/api\/v\d\/sams\/configuration\/personCenterEntrance\/query data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -3458,7 +3458,7 @@ https?:\/\/(ipv4|interface\d?)\.music\.163.com\/e?api\/ad data-type=text data="{
 ^https:\/\/(live|livewsa)\.ximalaya\.com\/lamia\/v1\/subscribe\/status$ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/subscribe\/v\d\/subscribe\/recommend\? data-type=text data="{}" status-code=200 header="Content-Type:application/json"
 ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/mobile-user\/v\d\/purchased\/recommend\/ data-type=text data="{}" status-code=200 header="Content-Type:application/json"
-^https:\/\/(m|mwsa)\.ximalaya\.com\/community\/square\/v\d\/stream\? data-type=text data="{"data":{"cards":[{"content":{},"type":"RECOMMENDS"}]},"ret":0}" status-code=200 header="Content-Type:application/json"
+^https:\/\/(m|mwsa)\.ximalaya\.com\/community\/square\/v\d\/stream\? data-type=text data="{\"data\":{\"cards\":[{\"content\":{},\"type\":\"RECOMMENDS\"}]},\"ret\":0}" status-code=200 header=Content-Type:application/json
 ^http?:\/\/.*\.pglstatp-toutiao\.com data-type=text data=" " status-code=200
 ^http:\/\/res1\.hubcloud\.com\.cn data-type=text data=" " status-code=200
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.item\.search\.activate\/2\.0 data-type=text data="{}" status-code=200 header="Content-Type:application/json"
@@ -3696,7 +3696,7 @@ usmile                                             = type=http-response, pattern
 
 [Body Rewrite]
 http-response-jq ^https:\/\/app\.bilibili\.com\/x\/v2\/splash\/(list|show|event\/list2)\? '.data |= with_entries(if .key | IN("show", "event_list") then .value = [] else . end)'
-http-response ^https?:\/\/beta-api\.crunchyroll\.com\/cms offset_ms":\d+ offset_ms":99999999999999
+http-response ^https?:\/\/beta-api\.crunchyroll\.com\/cms "offset_ms\":\d+" "offset_ms\":99999999999999"
 http-response ^https?:\/\/adservice\.sigmob\.cn\/extconfig false true
 http-response ^https?:\/\/maicai\.api\.ddxq\.mobi\/homeApi\/newDetails suspension fmz200
 http-response ^https?:\/\/47\.100\.65\.202\/api\/mobile\/index\.php\?version=\d&mobile=yes&module=basicdata&type=forumlist adv fmz200
@@ -3711,18 +3711,18 @@ http-response-jq ^https?:\/\/p\.kuaidi100\.com\/apicenter\/xcx\.dox 'delpaths([[
 http-response-jq ^https:\/\/az2-live\.ksapisrv\.com\/rest\/n\/live\/feed\/square\/refresh\? 'delpaths([["data","banners"]])'
 http-response-jq (?i)^https://lzmh\.lz-qs\.com:6025/lzmh_app_api/api/v2/user/getUserBaseInfoAndConfig\? 'del(.value.config)'
 http-response-jq http:\/\/dili.sqcosmos.com\/jiekou\/mains\/p\d+.html '.album |= map(select(.id != "4154" and .id != "4165"))'
-http-response ^https?:\/\/mobile\.yangkeduo\.com\/proxy\/api\/api\/express\/post\/waybill\/red_packet\/goods_list$ "list":\[.+\] "list":[]
+http-response ^https?:\/\/mobile\.yangkeduo\.com\/proxy\/api\/api\/express\/post\/waybill\/red_packet\/goods_list$ "\"list\":\[.+\]" "\"list\":[]"
 http-response-jq ^https:\/\/j1\.pupuapi\.com\/client\/notification\/message_center\/unread_number '.data = []'
-http-response ^https?:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew \{.+\} {"status":"SUCCESS"}
-http-response ^https?:\/\/m\.lkcoffee\.com\/ecapi\/resource\/m\/member\/exchange\/page \{.+\} {"status":"SUCCESS"}
-http-response ^https?:\/\/m\.lkcoffee\.com\/capi\/resource\/m\/growUp\/main "popTitle":".+?" "popTitle":""
+http-response ^https?:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew \{.+\} "{\"status\":\"SUCCESS\"}"
+http-response ^https?:\/\/m\.lkcoffee\.com\/ecapi\/resource\/m\/member\/exchange\/page \{.+\} "{\"status\":\"SUCCESS\"}"
+http-response ^https?:\/\/m\.lkcoffee\.com\/capi\/resource\/m\/growUp\/main "\"popTitle\":\".+?\"" "\"popTitle\":\"\""
 http-response ^https?:\/\/dyncdn\.me\/static\/\d{0,2}\/js\/showads\.js$ true false
 http-response-jq ^https://www\.tailgdd\.com/v8/smart/app/config/get$ 'if (getpath([]) | has("data")) then (setpath(["data"]; {})) else . end'
 http-response ^https?:\/\/tft-app\.cdtft\.cn\/gateway-customer\/tftapp\/tft-ams\/api\/appAd officialAdvertResultVo fmz200
-http-response ^https?:\/\/chl\.tf\.cn\/channelmg\/sys\/socso\/order\/queryOrderInfo "imgUrl" response-body
-http-response ^https?:\/\/client\.tujia\.com\/bnbapp-node\/app\/portal\/getportalconfig\/bnb\/v2 "banners":\[.+\], "banners":[],
+http-response ^https?:\/\/chl\.tf\.cn\/channelmg\/sys\/socso\/order\/queryOrderInfo imgUrl response-body
+http-response ^https?:\/\/client\.tujia\.com\/bnbapp-node\/app\/portal\/getportalconfig\/bnb\/v2 "\"banners\":\[.+\]," "\"banners\":[],"
 http-response-jq ^https:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api '.data.objects["OpenAPP-&-FlashAD"] = [] | .data.objects["InTheaters-&-BoxAD"] = []'
-http-response ^https?:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api\?bannerInfos=%5B%7B%22cinemaI "WX_index_mp-&-boxAD" "fmz200"
+http-response ^https?:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api\?bannerInfos=%5B%7B%22cinemaI WX_index_mp-&-boxAD fmz200
 http-response-jq ^https:\/\/app-conf\.ds\.163\.com\/v\d\/app\/base\/conf\/static\/start-config\? 'delpaths([["result","updateConfig",2,"itemList",94,"itemList",2]])'
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/discovery-feed\/v\d\/mix\/ '.heData |= map(select(.item.list[].bizType != "SceneListenCard"))'
 http-response-jq ^https:\/\/(mobile|mobilehera|mobwsa)\.ximalaya\.com\/football-portal\/diff2\/batch\? '(delpaths([["json","ad"]])) | (delpaths([["json","toc"]]))'
@@ -3749,6 +3749,6 @@ http-response-jq ^https?:\/\/oneapp-api\.faw-vw\.com\/content\/(customize\/getCu
 http-response-jq ^https?:\/\/oneapp-api\.faw-vw\.com\/content\/(collection\/getCollectionList)\/v1\?.* '. = { returnStatus: "SUCCEED", hasMore: false, data: {} }'
 http-response-jq http:\/\/.+\.gamersky.com/.+/lists/getListElements '.listElements |= map(select(has("adCategory") | not))'
 http-response-jq ^https?:\/\/portal\.zjzwfw\.gov\.cn\/app_api\/appHome\/selectStartPic 'if (getpath([]) | has("data")) then (setpath(["data"]; {})) else . end'
-http-response ^https?:\/\/app-izz\.zhengzhou\.gov\.cn:10019\/bizgw\/gateway\.do "imgUrl19_5x9":".+?" "imgUrl19_5x9":""
+http-response ^https?:\/\/app-izz\.zhengzhou\.gov\.cn:10019\/bizgw\/gateway\.do "\"imgUrl19_5x9\":\".+?\"" "\"imgUrl19_5x9\":\"\""
 http-response ^https?:\/\/app\.zhuanzhuan\.com\/zz\/v2\/zzinfoshow\/getfeedflowinfo\? userRed fmz200
 http-response ^https?:\/\/app\.zhuanzhuan\.com\/zz\/v2\/zzinfoshow\/getchoicegoodsinfos infoData fmz200

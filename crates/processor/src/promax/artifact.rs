@@ -264,6 +264,27 @@ fn publish_artifacts_inner(
     artifacts: &[GeneratedArtifact],
     quarantine: Option<&[QuarantineRecord]>,
 ) -> Result<(), String> {
+    // Keep every native publication path on the same syntax serializer. Large
+    // rule-list artifacts stay borrowed; only small native modules are copied.
+    let artifacts: Vec<std::borrow::Cow<'_, GeneratedArtifact>> = artifacts
+        .iter()
+        .map(|artifact| {
+            if matches!(
+                artifact.kind,
+                ArtifactKind::Surge | ArtifactKind::Shadowrocket
+            ) {
+                let content = crate::rewrite_syntax::normalize_module(&artifact.content)
+                    .map_err(|e| e.to_string())?;
+                Ok(std::borrow::Cow::Owned(GeneratedArtifact {
+                    target: artifact.target.clone(),
+                    content,
+                    kind: artifact.kind,
+                }))
+            } else {
+                Ok(std::borrow::Cow::Borrowed(artifact))
+            }
+        })
+        .collect::<Result<_, String>>()?;
     let staging_root = root.join(".cache/promax-staging");
     if staging_root.exists() {
         if staging_root.join(".recovery-required").exists() || staging_root.join(".backup").exists()
@@ -277,7 +298,7 @@ fn publish_artifacts_inner(
             .map_err(|error| format!("cannot reset PROMAX staging directory: {error}"))?;
     }
 
-    for artifact in artifacts {
+    for artifact in &artifacts {
         let relative = artifact.target.strip_prefix(root).map_err(|_| {
             format!(
                 "artifact target escapes repository: {}",

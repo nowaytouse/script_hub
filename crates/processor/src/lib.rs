@@ -11,6 +11,7 @@ pub mod pipeline;
 pub mod promax;
 #[cfg(feature = "gui")]
 pub mod relay;
+pub mod rewrite_syntax;
 pub mod runtime;
 pub mod transforms;
 #[cfg(feature = "gui")]

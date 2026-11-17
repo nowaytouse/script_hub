@@ -3,6 +3,81 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 static SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+#[test]
+fn body_rewrites_share_serialization_and_independent_publication_checks() {
+    let raw =
+        r#"http-response ^https://example\.test/cms offset_ms":\d+ offset_ms":99999999999999"#;
+    assert!(
+        super::validate_native_rewrites(&fixture(&format!("[Body Rewrite]\n{raw}\n"))).is_err()
+    );
+    let result = render(&fixture(&format!("[Body Rewrite]\n{raw}\n"))).unwrap();
+    super::validate_native_rewrites(&result.content).unwrap();
+    let row = result
+        .content
+        .lines()
+        .find(|line| line.starts_with("http-response "))
+        .unwrap();
+    assert_eq!(
+        crate::rewrite_syntax::BodyRewrite::parse_source(raw).unwrap(),
+        crate::rewrite_syntax::BodyRewrite::parse_strict(row).unwrap()
+    );
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .all(|d| d.disposition != "omitted")
+    );
+}
+
+#[test]
+fn malformed_body_rewrite_cannot_be_silently_published() {
+    for row in [
+        "http-response ^https://example.test search",
+        "http-response ^https://example.test [bad value",
+    ] {
+        assert!(render(&fixture(&format!("[Body Rewrite]\n{row}\n"))).is_err());
+    }
+}
+
+#[test]
+fn map_local_json_remains_valid_after_native_field_decoding() {
+    let row = r#"^https://example\.test/json data-type=text data="{"status":"SUCCESS"}" header="Content-Type:application/json""#;
+    assert!(super::validate_native_rewrites(&fixture(&format!("[Map Local]\n{row}\n"))).is_err());
+    let result = render(&fixture(&format!("[Map Local]\n{row}\n"))).unwrap();
+    super::validate_native_rewrites(&result.content).unwrap();
+    let row = result
+        .content
+        .lines()
+        .find(|line| line.starts_with("^https:"))
+        .unwrap();
+    let fields = crate::rewrite_syntax::parse_strict(row).unwrap();
+    let data = fields
+        .iter()
+        .find_map(|field| field.strip_prefix("data="))
+        .unwrap();
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(data).unwrap(),
+        serde_json::json!({"status":"SUCCESS"})
+    );
+}
+
+#[test]
+fn multiple_body_replacement_pairs_remain_in_one_entry() {
+    let row = r#"http-response ^https://example\.test "ad":true "ad":false offset_ms":\d+ offset_ms":99999999999999"#;
+    let result = render(&fixture(&format!("[Body Rewrite]\n{row}\n"))).unwrap();
+    super::validate_native_rewrites(&result.content).unwrap();
+    assert_eq!(result.sections["Body Rewrite"], 1);
+    let target = result
+        .content
+        .lines()
+        .find(|line| line.starts_with("http-response "))
+        .unwrap();
+    assert_eq!(
+        crate::rewrite_syntax::BodyRewrite::parse_source(row).unwrap(),
+        crate::rewrite_syntax::BodyRewrite::parse_strict(target).unwrap()
+    );
+}
 fn fixture(body: &str) -> String {
     format!("#!name=Synthetic fixture\n{body}")
 }
@@ -290,7 +365,17 @@ fn quoted_tinygif_type_is_normalized_and_existing_data_is_not_overwritten() {
     );
     let result = render(&source).unwrap();
     assert!(result.content.contains("data-type=base64"));
-    assert!(result.content.contains("header=\"X-Existing:yes\""));
+    let row = result
+        .content
+        .lines()
+        .find(|line| line.starts_with("^https:"))
+        .unwrap();
+    assert!(
+        crate::rewrite_syntax::parse_strict(row)
+            .unwrap()
+            .iter()
+            .any(|field| field == "header=X-Existing:yes")
+    );
     assert!(!result.content.contains("data=\"original\""));
     assert_eq!(result.sections["Map Local"], 1);
 }

@@ -376,6 +376,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut exports_only = false;
     let mut classify_only = false;
     let mut flclash_only = false;
+    let mut rewrites_only = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--root" => root = Some(arg_value(&mut args, "--root")),
@@ -387,9 +388,10 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--exports-only" => exports_only = true,
             "--classify-only" => classify_only = true,
             "--flclash-only" => flclash_only = true,
+            "--rewrites-only" => rewrites_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--flclash-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--flclash-only|--rewrites-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -407,6 +409,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         exports_only,
         classify_only,
         flclash_only,
+        rewrites_only,
     ]
     .into_iter()
     .filter(|enabled| *enabled)
@@ -437,7 +440,18 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         None => None,
     };
 
-    let result = if flclash_only && !execute {
+    let result = if rewrites_only && !execute {
+        println!("[INFO] dry run: rewrite normalization skipped");
+        Ok(())
+    } else if rewrites_only {
+        rust_processor::pipeline::rewrite_normalize::run(&root).and_then(|count| {
+            let projected = finalize_flclash_exports(&root)?;
+            println!(
+                "[INFO] normalized {count} native modules; regenerated {projected} FlClash variants"
+            );
+            Ok(())
+        })
+    } else if flclash_only && !execute {
         println!("[INFO] dry run: native FlClash generation skipped");
         Ok(())
     } else if flclash_only {
@@ -524,7 +538,12 @@ mod tests {
         let root =
             std::env::temp_dir().join(format!("script-hub-dry-local-{}", std::process::id()));
         assert!(!root.exists());
-        for mode in ["--exports-only", "--classify-only", "--flclash-only"] {
+        for mode in [
+            "--exports-only",
+            "--classify-only",
+            "--flclash-only",
+            "--rewrites-only",
+        ] {
             assert_eq!(
                 run_cli(
                     [
@@ -693,6 +712,7 @@ mod tests {
             "--exports-only",
             "--classify-only",
             "--flclash-only",
+            "--rewrites-only",
         ];
         for (index, first) in modes.iter().enumerate() {
             for second in &modes[index + 1..] {

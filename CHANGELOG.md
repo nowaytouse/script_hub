@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Share lossless Body, Header, URL Rewrite and Map Local field handling across native module generation, cleanup and publication. Preserve literal JSON quotes and multiple replacement pairs, reject malformed published fields, and regenerate Surge, Shadowrocket and FlClash Preview modules through the same checks.
+
 - Make module link copying available without opening a workspace using an embedded public catalog, and add FlClash Preview alongside Surge and Shadowrocket.
 
 - Generate FlClash-Surge from the encrypted Surge template with subscription slots only, supported group behavior, provider health checks and encrypted DNS. Preserve source routing without extra advertising rulesets, document smart-group approximations, and keep Windows DNS-guard export usable.

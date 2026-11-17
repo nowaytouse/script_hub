@@ -9,5 +9,6 @@ mod helper_hosts;
 pub mod merge_bundles;
 pub mod mihomo_generator;
 pub mod module_catalog;
+pub mod rewrite_normalize;
 pub mod routing_template;
 pub mod srs_generator;

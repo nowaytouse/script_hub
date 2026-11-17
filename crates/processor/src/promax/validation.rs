@@ -260,6 +260,10 @@ fn validate_ip_rewrite(
 /// malformed regexes and incomplete scripts can be quarantined without
 /// invalidating the whole generated product.
 pub fn validate_surge_section_line(section: &str, line: &str) -> Vec<ValidationError> {
+    // Source admission repairs losslessly representable quoting before the
+    // stricter publication checks; do not drop a valid upstream JSON rewrite.
+    let normalized = crate::rewrite_syntax::normalize_section_line(section, line);
+    let line = normalized.as_deref().unwrap_or(line);
     let mut errors = Vec::new();
     match section {
         "General" => {
@@ -1097,6 +1101,13 @@ fn validate_host(line_number: usize, line: &str, errors: &mut Vec<ValidationErro
 }
 
 fn validate_map_local(line_number: usize, line: &str, errors: &mut Vec<ValidationError>) {
+    if let Err(reason) = crate::rewrite_syntax::map_local::validate(line) {
+        errors.push(error(
+            line_number,
+            "invalid-map-local-fields",
+            reason.to_string(),
+        ));
+    }
     validate_regex_entry("Map Local", line_number, line, errors);
     let data_type = line
         .split_whitespace()
@@ -1138,32 +1149,102 @@ fn validate_map_local(line_number: usize, line: &str, errors: &mut Vec<Validatio
     }
 }
 
+/// Publication grammar, without the lossless source-admission repair step.
+pub fn validate_published_rewrite(section: &str, line: &str) -> Vec<ValidationError> {
+    let mut errors = Vec::new();
+    if section == "Map Local" {
+        validate_map_local(1, line, &mut errors);
+    } else {
+        validate_regex_entry(section, 1, line, &mut errors);
+    }
+    errors
+}
+
 fn validate_regex_entry(
     section: &str,
     line_number: usize,
     line: &str,
     errors: &mut Vec<ValidationError>,
 ) {
-    let mut fields = line.split_whitespace();
-    let first = fields.next().unwrap_or("");
-    let pattern = if section == "Body Rewrite" && first.starts_with("http-") {
-        fields.next()
+    if section == "Body Rewrite" {
+        use crate::rewrite_syntax::BodyRewrite;
+        let source = match BodyRewrite::parse_source(line) {
+            Ok(source) => source,
+            Err(reason) => {
+                errors.push(error(
+                    line_number,
+                    "invalid-rewrite-fields",
+                    reason.to_string(),
+                ));
+                return;
+            }
+        };
+        if let BodyRewrite::Regex { .. } = &source {
+            if BodyRewrite::parse_strict(line).as_ref() != Ok(&source) {
+                errors.push(error(
+                    line_number,
+                    "ambiguous-rewrite-fields",
+                    "body rewrite quoting changes the client field values",
+                ));
+                return;
+            }
+            for search in source.regexes() {
+                if let Err(reason) = Regex::new(search) {
+                    errors.push(error(
+                        line_number,
+                        "invalid-body-search-regex",
+                        reason.to_string(),
+                    ));
+                }
+            }
+        }
+        if let Err(reason) = Regex::new(source.pattern()) {
+            errors.push(error(
+                line_number,
+                "invalid-section-regex",
+                reason.to_string(),
+            ));
+        }
+        return;
+    }
+    if matches!(section, "URL Rewrite" | "Header Rewrite") {
+        if let Ok(fields) = crate::rewrite_syntax::parse_source(line) {
+            let index = usize::from(
+                section == "Header Rewrite"
+                    && fields.first().is_some_and(|field| {
+                        matches!(field.as_str(), "http-request" | "http-response")
+                    }),
+            );
+            if let Some(pattern) = fields.get(index)
+                && let Err(reason) = Regex::new(pattern)
+            {
+                errors.push(error(
+                    line_number,
+                    "invalid-section-regex",
+                    reason.to_string(),
+                ));
+                return;
+            }
+        }
+        if let Err(reason) = crate::rewrite_syntax::http::validate(section, line) {
+            errors.push(error(line_number, "invalid-rewrite-fields", reason));
+        }
+    } else if let Some(pattern) = crate::rewrite_syntax::map_local::fields(line)
+        .ok()
+        .and_then(|fields| fields.first().cloned())
+    {
+        if let Err(reason) = Regex::new(&pattern) {
+            errors.push(error(
+                line_number,
+                "invalid-section-regex",
+                reason.to_string(),
+            ));
+        }
     } else {
-        Some(first)
-    };
-    let Some(pattern) = pattern.filter(|pattern| !pattern.is_empty()) else {
         errors.push(error(
             line_number,
             "invalid-section-regex",
             "missing request pattern",
-        ));
-        return;
-    };
-    if let Err(regex_error) = Regex::new(pattern) {
-        errors.push(error(
-            line_number,
-            "invalid-section-regex",
-            regex_error.to_string(),
         ));
     }
 }
@@ -2081,6 +2162,68 @@ skip-server-cert-verify = true
                 (2, "tls-verification-disabled"),
                 (3, "tls-downgrade-rewrite"),
             ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod rewrite_contract_tests {
+    use super::*;
+
+    #[test]
+    fn source_admission_repairs_quotes_but_publication_requires_lossless_fields() {
+        let raw =
+            r#"http-response ^https://example\.test/cms offset_ms":\d+ offset_ms":99999999999999"#;
+        assert!(validate_surge_section_line("Body Rewrite", raw).is_empty());
+        assert!(!validate_published_rewrite("Body Rewrite", raw).is_empty());
+        let fixed = crate::rewrite_syntax::normalize_section_line("Body Rewrite", raw).unwrap();
+        let module = format!("#!name=Synthetic rewrite\n[Body Rewrite]\n{fixed}\n");
+        assert!(validate_surge_module(&module).is_empty());
+        assert!(validate_shadowrocket_module(&module).is_empty());
+    }
+
+    #[test]
+    fn publication_checks_search_regex_arity_phase_and_each_replacement_pair() {
+        for row in [
+            "http-response ^https://example.test [bad value",
+            "http-response ^https://example.test good value [bad value",
+            "http-response ^https://example.test search",
+            "http-other ^https://example.test search value",
+            "http-response [bad search value",
+        ] {
+            assert!(
+                !validate_published_rewrite("Body Rewrite", row).is_empty(),
+                "{row}"
+            );
+        }
+        assert!(
+            validate_published_rewrite(
+                "Body Rewrite",
+                "http-response ^https://example.test first one second two"
+            )
+            .is_empty()
+        );
+        assert!(
+            !validate_published_rewrite(
+                "Header Rewrite",
+                "http-response ^https://example.test header-add X"
+            )
+            .is_empty()
+        );
+        assert!(
+            !validate_published_rewrite("URL Rewrite", "^https://example.test target 999")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn map_local_uses_its_own_grammar_instead_of_http_rewrite_arity() {
+        assert!(
+            validate_surge_section_line(
+                "Map Local",
+                r#"^https://example\.test data-type=text data="{}""#
+            )
+            .is_empty()
         );
     }
 }

@@ -455,48 +455,8 @@ fn script(line: &str, number: usize, report: &mut Projection) -> Option<String> 
     }
     Some(format!("{} = {}", name.trim(), kept.join(", ")))
 }
-fn tokens(line: &str) -> Option<Vec<String>> {
-    let mut values = Vec::new();
-    let mut current = String::new();
-    let mut quote = None;
-    let mut escaped = false;
-    for c in line.chars() {
-        if escaped {
-            current.push(c);
-            escaped = false;
-            continue;
-        }
-        if c == '\\' && quote.is_some() {
-            current.push(c);
-            escaped = true;
-            continue;
-        }
-        if let Some(q) = quote {
-            if c == q {
-                quote = None;
-            } else {
-                current.push(c);
-            }
-        } else if c == '\'' || c == '"' {
-            quote = Some(c);
-        } else if c.is_whitespace() {
-            if !current.is_empty() {
-                values.push(std::mem::take(&mut current));
-            }
-        } else {
-            current.push(c);
-        }
-    }
-    if quote.is_some() {
-        return None;
-    }
-    if !current.is_empty() {
-        values.push(current);
-    }
-    Some(values)
-}
 fn map_local(line: &str) -> Option<String> {
-    let values = tokens(line)?;
+    let values = crate::rewrite_syntax::parse_strict(line).ok()?;
     let get = |key: &str| values.iter().find_map(|v| v.strip_prefix(key));
     if get("data-type=") == Some("tiny-gif") {
         if get("data=").is_some() {
@@ -508,7 +468,10 @@ fn map_local(line: &str) -> Option<String> {
             if key == "data-type" {
                 result.push_str(r#" data-type=base64 data="R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7""#);
             } else {
-                result.push_str(&format!(" {key}=\"{value}\""));
+                result.push_str(&format!(
+                    " {key}={}",
+                    crate::rewrite_syntax::quote_field(value).ok()?
+                ));
             }
         }
         if get("header=").is_none() {
@@ -566,6 +529,9 @@ pub fn render(source: &str) -> Result<Projection, String> {
 }
 
 fn render_embedded(source: &str, routing: &[RoutingReport]) -> Result<Projection, String> {
+    let normalized =
+        crate::rewrite_syntax::normalize_module(source).map_err(|error| error.to_string())?;
+    let source = normalized.as_str();
     let errors = crate::promax::validation::validate_surge_module(source);
     if !errors.is_empty() {
         return Err(format!(
@@ -1147,6 +1113,11 @@ fn retired_owned_routing(root: &Path, path: &Path, text: &str) -> bool {
 /// Generate only public, native preview modules; no network, vault or user profile access.
 pub fn run_generator(root: &Path) -> Result<usize, String> {
     let planned = plan(root)?;
+    for (path, content) in &planned {
+        if path.extension().is_some_and(|ext| ext == "sgmodule") {
+            validate_native_rewrites(content)?;
+        }
+    }
     let old = existing(root)?;
     for (path, text) in &old {
         if !text.contains(OWNER) && !path.ends_with("catalog.json") {
@@ -1180,6 +1151,13 @@ pub fn run_generator(root: &Path) -> Result<usize, String> {
 pub fn validate_generated(root: &Path) -> Result<usize, String> {
     let planned = plan(root)?;
     let old = existing(root)?;
+    // An equal recomputation can repeat a compiler bug. Validate the produced
+    // target syntax independently of the source/output equality check.
+    for (path, content) in &old {
+        if path.extension().is_some_and(|ext| ext == "sgmodule") {
+            validate_native_rewrites(content)?;
+        }
+    }
     if planned != old {
         let bad = planned
             .iter()
@@ -1192,6 +1170,40 @@ pub fn validate_generated(root: &Path) -> Result<usize, String> {
         ));
     }
     Ok(planned.len())
+}
+
+fn validate_native_rewrites(content: &str) -> Result<(), String> {
+    let defaults = argument_defaults(content)?;
+    let mut section = "";
+    for (index, row) in content.lines().enumerate() {
+        let row = row.trim();
+        if row.starts_with('[') && row.ends_with(']') {
+            section = &row[1..row.len() - 1];
+            continue;
+        }
+        if matches!(
+            section,
+            "Body Rewrite" | "Header Rewrite" | "URL Rewrite" | "Map Local"
+        ) && !row.is_empty()
+            && !row.starts_with('#')
+        {
+            let number = index + 1;
+            let resolved =
+                resolve_defaults(row, &defaults).ok_or("Unresolved target rewrite argument")?;
+            if resolved.trim_start().starts_with('#') {
+                continue;
+            }
+            if let Some(error) =
+                crate::promax::validation::validate_published_rewrite(section, &resolved).first()
+            {
+                return Err(format!(
+                    "Invalid FlClash {section} line {number}: {}",
+                    error.code
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

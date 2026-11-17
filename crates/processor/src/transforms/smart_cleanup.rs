@@ -1252,11 +1252,25 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
 }
 
 pub fn functional_matcher_key_pub(section: &str, line: &str) -> Option<String> {
+    if section == "Body Rewrite" {
+        return crate::rewrite_syntax::BodyRewrite::parse_source(line)
+            .ok()
+            .map(|entry| entry.pattern().to_owned());
+    }
+    if matches!(section, "Header Rewrite" | "URL Rewrite") {
+        let fields = crate::rewrite_syntax::parse_source(line).ok()?;
+        let index = usize::from(
+            section == "Header Rewrite"
+                && fields.first().is_some_and(|field| {
+                    matches!(field.as_str(), "http-request" | "http-response")
+                }),
+        );
+        return fields.get(index).cloned();
+    }
     let mut fields = line.split_whitespace();
     let first = fields.next()?;
     let matcher = match section {
-        "URL Rewrite" | "Map Local" => first,
-        "Body Rewrite" | "Header Rewrite" => fields.next()?,
+        "Map Local" => first,
         "Rewrite"
             if first.eq_ignore_ascii_case("http-request")
                 || first.eq_ignore_ascii_case("http-response") =>
@@ -1331,6 +1345,18 @@ pub fn script_matcher_key_pub(line: &str) -> Option<String> {
 }
 
 pub fn dedupe_section_lines_pub(section: &str, lines: &[String]) -> Vec<String> {
+    let normalized: Vec<String> = lines
+        .iter()
+        .map(|line| {
+            if line.trim().is_empty() || line.trim_start().starts_with('#') {
+                line.clone()
+            } else {
+                crate::rewrite_syntax::normalize_section_line(section, line)
+                    .unwrap_or_else(|_| line.clone())
+            }
+        })
+        .collect();
+    let lines = &normalized;
     let merged_body_lines = (section == "Body Rewrite").then(|| merge_body_rewrite_jq(lines));
     let lines = merged_body_lines.as_deref().unwrap_or(lines);
     let mut seen = HashSet::new();
@@ -1490,7 +1516,13 @@ pub fn format_module_pub(
             let lines = if dedupe {
                 dedupe_section_lines_pub(section_name, lines)
             } else {
-                lines.clone()
+                lines
+                    .iter()
+                    .map(|line| {
+                        crate::rewrite_syntax::normalize_section_line(section_name, line)
+                            .unwrap_or_else(|_| line.clone())
+                    })
+                    .collect()
             };
             if lines.iter().all(|line| {
                 let line = line.trim();
