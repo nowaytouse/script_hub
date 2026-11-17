@@ -1,6 +1,8 @@
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 use serde_json::{Value, json};
 use std::{collections::BTreeMap, fs, path::Path};
+#[path = "../src/module_header.rs"]
+mod module_header;
 
 pub fn modules(root: &Path, platform: &str, extension: &str) -> std::io::Result<Value> {
     let mut modules = Vec::new();
@@ -24,7 +26,8 @@ pub fn modules(root: &Path, platform: &str, extension: &str) -> std::io::Result<
             if !fs::symlink_metadata(&path)?.is_file() {
                 return Err(std::io::Error::other("Nonregular public module"));
             }
-            let content = fs::read_to_string(&path)?;
+            let content = module_header::read(&path)?;
+            let cdn_available = fs::metadata(&path)?.len() <= module_header::MAX_CDN_FILE_BYTES;
             let mut metadata = BTreeMap::new();
             for line in content
                 .lines()
@@ -73,7 +76,7 @@ pub fn modules(root: &Path, platform: &str, extension: &str) -> std::io::Result<
                     .collect::<Vec<_>>()
                     .join("/")
             };
-            modules.push(json!({"name":name,"desc":metadata.get("desc").cloned().unwrap_or_default(),"category":category,"author":metadata.get("author").cloned().unwrap_or_default(),"date":metadata.get("date").cloned().unwrap_or_default(),"filename":filename,"merged_into":if retired {"PROMAX"}else{""},"install_url":format!("https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{}",encode(&relative)),"github_install_url":format!("https://raw.githubusercontent.com/nowaytouse/script_hub/master/{}",encode(&raw))}));
+            modules.push(json!({"name":name,"desc":metadata.get("desc").cloned().unwrap_or_default(),"category":category,"author":metadata.get("author").cloned().unwrap_or_default(),"date":metadata.get("date").cloned().unwrap_or_default(),"filename":filename,"merged_into":if retired {"PROMAX"}else{""},"install_url":if cdn_available {format!("https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/{}",encode(&relative))}else{String::new()},"github_install_url":format!("https://raw.githubusercontent.com/nowaytouse/script_hub/master/{}",encode(&raw))}));
         }
     }
     Ok(json!(modules))

@@ -6,15 +6,16 @@
 
 ## 安装入口
 
-- **PROMAX 去广告模块适配**：[ScriptHub.AdBlock.Preview.sgmodule](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。首次导入和即时更新优先用此 GitHub 直连地址。
-- **可选 `ScriptHub.PROMAX.*.sgmodule` 路由分片**：按源声明顺序，从[目录](../modules/flclash/catalog.json)选择各项 `github_install_url`。不含脚本或 CA 材料；域名／IP 规则无需解密，HTTPS URL 重写仍需应用自身的 CA 流程。
+- **PROMAX 唯一安装入口**：[ScriptHub.AdBlock.Preview.sgmodule](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。支持的路由、重写和脚本均合并在此模块内；首次导入和即时更新优先用此 GitHub 直连地址。
 - **其他预览版模块与兼容报告**：[modules/flclash](../modules/flclash/)。应用增强合集按需单独选择，不要把全部模块一键全开。
+
+请使用上面的 GitHub 直连链接：合并文件超过 [jsDelivr 的 GitHub 单文件 20 MB 限制](https://www.jsdelivr.com/documentation)，GUI 因此禁用此模块的 CDN 复制。其他 PROMAX 仓库路径只是同一模块的兼容镜像，只需安装一份。
 
 在当前配置的**进阶配置 → MITM → 模块 → 添加**中选择 URL 导入；也可先下载，再从模块页按文件导入。使用原生模块页，不要导入到订阅／配置页。保留原配置供回滚；`FlClash-Surge.yaml` 继承 Surge 分流，不额外添加广告规则提供方。
 
 带脚本的新模块会先禁用，需按应用提示审核脚本权限。导入后先查看**有效条目、忽略条目、资源下载和内核校验问题**，再决定启用；不能只凭“导入成功”判断生效，因为解析器将“全部被忽略”的模块也视为非空。脚本声明或内容变化后，应用可能再次禁用并要求重新审核，这是预览版自身的授权机制。
 
-预览版保存无脚本路由模块时会默认启用。PROMAX 分片应按需逐个导入，不要一键导入整套；规则量大，已有主配置中的等价规则也可能重复。仓库发布更新不会替设备导入或启用模块。
+如果已安装旧的 `ScriptHub.PROMAX.*.sgmodule` 路由分片，请在 FlClash 中停用或移除，再更新上面的主 PROMAX 模块。只保留一份 PROMAX，避免重复处理。仓库推送不会自动删除、替换或启用设备中已有的模块。
 
 HTTPS 响应修改还需要预览版自己的 HTTPS 解密开关和 CA 信任流程。本仓库不包含 CA／私钥，不安装证书、不替用户接受脚本权限。主去广告合集与重复的单应用去广告脚本不应同时安装，以免同一响应被处理多次。
 
@@ -24,9 +25,9 @@ HTTPS 响应修改还需要预览版自己的 HTTPS 解密开关和 CA 信任流
 
 Rust 生成器读取包括 PROMAX 在内的当前公开 Surge 模块，生成独立的 FlClash Preview 产物。保留受支持的 URL／Header／Body Rewrite、Map Local、脚本和 MITM 主机范围；支持的内联路由规范化后保留。不兼容的节、参数或策略会进入兼容报告。
 
-原生解析器不能加载远程 `RULE-SET`。源 PROMAX 显式声明的 23 份本仓库公开列表中，22 份生成独立可选路由分片；另 1 份只有 3 条不支持的 `USER-AGENT`，不发布空模块。分片只用 GitHub 直连地址，不复制 CDN 变体。目录记录源顺序、不支持的匹配器及丢失的 Surge 选项（包括 `pre`／`extended-matching`），不宣称完全等价。模板不会增加广告规则提供方。
+原生解析器不能加载远程 `RULE-SET`。生成器将源 PROMAX 显式声明的 23 份本仓库公开列表展开到同一个主模块，按源顺序保留支持的规则并去除完全重复项。不支持的条目（包括 `USER-AGENT`）及丢失的 Surge 选项（包括 `pre`／`extended-matching`）仍记录在[兼容目录](../modules/flclash/catalog.json)中，来源与许可通知继续保留。模板不会增加广告规则提供方。
 
-发布保护上限为每片 8 MiB、总量 64 MiB，不代表设备容量或性能保证，尚未做设备压力测试。`[IP Rewrite]`、`[General]`、任意代理分组策略、其他远程规则集，以及无法表示的 jq／结构化 body／条件操作继续报告为遗漏。已有等价的内联防火墙／IP fallback 可以保留。
+合并文件较大，生成器的体积限制不代表私有预览内核的导入速度或内存保证。`[IP Rewrite]`、`[General]`、任意代理分组策略、其他远程规则集，以及无法表示的 jq／结构化 body／条件操作继续报告为遗漏。域名／IP 分流无需解密；HTTPS URL 重写仍需应用自身的 MITM／CA 流程。
 
 模块不会替换订阅、整个配置、系统 DNS、TUN 或全局 TLS／安全选项。原生模块路由只支持解析器接受的 DIRECT／REJECT 系列；这些已支持的规则仍会影响匹配流量。兼容报告列出来源和适配／遗漏数量，遗漏不代表语义等价。
 

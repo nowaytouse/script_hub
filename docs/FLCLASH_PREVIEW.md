@@ -6,17 +6,18 @@ These modules target **FlClash testing/preview builds with the native MITM modul
 
 ## Install from the repository
 
-PROMAX advertising-module projection:
+PROMAX has one installation entry, containing its supported routing, rewrites and scripts:
 
 - [ScriptHub.AdBlock.Preview.sgmodule](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule) — direct GitHub URL for first installation and timely refresh.
-- Optional `ScriptHub.PROMAX.*.sgmodule` routing shards — choose each shard's `github_install_url` in the [catalog](../modules/flclash/catalog.json), in source declaration order. They contain no scripts or CA material. Domain/IP rules need no decryption; HTTPS URL rewrites still require the application's CA workflow.
 - [Other Preview modules and compatibility report](../modules/flclash/) — select additional application bundles separately.
+
+Use the direct GitHub link above: the merged file exceeds [jsDelivr's 20 MB GitHub file limit](https://www.jsdelivr.com/documentation), so the GUI disables CDN copying for it. Other PROMAX repository paths are compatibility mirrors of the same module; install only one.
 
 In the active profile's advanced configuration, open **MITM → Modules → Add**, then import the module URL (or download the file and use file import). Use the native module page, not the subscription/profile importer. Keep the existing profile for rollback. `FlClash-Surge.yaml` inherits Surge routing without adding extra advertising providers.
 
 A script-bearing module is initially disabled until the application's script permission is accepted. Review the imported effective entries, ignored entries, downloaded resources and core validation issues before enabling it. A successful import alone is insufficient: the parser also considers a module with only skipped entries non-empty. Changed script declarations or content can invalidate the previous permission and disable the module again.
 
-The Preview app enables script-free routing modules when saved. Import the PROMAX shards individually as needed; do not bulk-import the series. They are large rule lists, and equivalent rules already present in a profile can duplicate them. Publishing updates does not import or enable modules on a device.
+If you installed the old `ScriptHub.PROMAX.*.sgmodule` routing shards, disable or remove them in FlClash, then update the main PROMAX module above. Keep one PROMAX installation to avoid duplicate handling. Publishing this change does not remove, replace or enable modules already installed on a device.
 
 HTTPS response changes additionally require the preview application's MITM feature and its own CA trust setup. This repository neither contains a CA/private key nor installs a certificate or grants script permission. Enable only the modules and host scopes you intend to use. Do not combine the aggregate advertising module with equivalent standalone ad handlers.
 
@@ -26,9 +27,9 @@ Source parameter definitions, descriptions and declared placeholders are retaine
 
 The generator reads the current public Surge module outputs, including PROMAX, and produces a separate, reproducible Preview namespace. It retains supported URL/header/body rewrites, Map Local responses, script declarations and MITM host scopes. Supported inline routing is normalized; incompatible sections, options and policy targets are counted in the compatibility report.
 
-The native importer cannot load remote `RULE-SET` entries. Of the 23 public repository lists explicitly declared by source PROMAX, 22 produce separate optional routing shards; one contains only three unsupported `USER-AGENT` rules and produces no empty module. Shards use direct GitHub URLs, without duplicate CDN variants. The catalog records source order, unsupported matchers and lost Surge options, including `pre`/`extended-matching`; this is not a claim of full semantic equivalence. No advertising providers are added to the template.
+The native importer cannot load remote `RULE-SET` entries. The generator expands the 23 public repository lists explicitly declared by source PROMAX into the same main module, retaining supported rules in source order and removing exact duplicates. Unsupported entries, including `USER-AGENT`, and lost Surge options such as `pre`/`extended-matching` remain in the [compatibility catalog](../modules/flclash/catalog.json). Sources and license notices are retained; no advertising providers are added to the template.
 
-Publication is bounded to 8 MiB per routing shard and 64 MiB in total. These limits protect generation and publication; device capacity and performance have not been stress-tested. `[IP Rewrite]`, `[General]`, arbitrary proxy-group policies, other remote rulesets, and unsupported jq/structured-body or conditional operations remain reported omissions. Equivalent inline firewall/IP fallback rules can be retained.
+The combined module is large; generation limits are not guarantees of import speed or memory use on the private preview core. `[IP Rewrite]`, `[General]`, arbitrary proxy-group policies, other remote rulesets, and unsupported jq/structured-body or conditional operations remain reported omissions. Domain/IP routing needs no decryption; HTTPS URL rewrites still require the application's MITM/CA workflow.
 
 The module does not replace the profile, its subscription, system DNS, TUN settings or global TLS/security settings. Routing policies in native modules are limited to the parser's DIRECT/REJECT family. A module's supported routing rules still affect matching traffic.
 

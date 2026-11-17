@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "target": "FlClash preview 0.9.4+2026111517",
   "importer_revision": "5e73f3fb673a0012cc7c7312a52da33b76b78295",
   "importer_blob": "8dad1a3c5dd3c13ee476ebc5b9306e43f9ea54e5",
@@ -7,7 +7,7 @@
   "importer_source": "https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/common/mitm_module.dart",
   "fingerprint_purpose": "MD5 is a non-security source-change fingerprint only; it is not download authentication",
   "validation_scope": "Static importer compatibility and deterministic source/output equality only; no script API, endpoint, certificate or live MITM execution acceptance",
-  "external_rulesets": "Native importer does not support remote RULE-SET. Only public repository lists explicitly declared by the source PROMAX module become separate optional routing modules; other external lists remain unsupported. No extra provider is injected into a template.",
+  "external_rulesets": "Native importer does not support remote RULE-SET. Public repository lists explicitly declared by source PROMAX are embedded in its single native module at their source positions; other external lists remain unsupported. No extra provider is injected into a template.",
   "modules": [
     {
       "source": "modules/surge/amplify_nexus/Reddit 增强合集 (翻译 + NSFW).sgmodule",
@@ -2508,17 +2508,17 @@
       "source_md5_change_fingerprint": "2745a28c60d62f3f3c01c490d81661f9",
       "path": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
       "github_path": "modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule",
-      "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/flclash/head%5Fexpanse/ScriptHub%2EAdBlock%2EPreview%2Esgmodule",
+      "install_url": null,
       "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/github/ScriptHub%2EAdBlock%2EPreview%2Esgmodule",
       "projection": {
-        "input_lines": 5027,
-        "emitted_lines": 3720,
-        "active_lines": 3719,
+        "input_lines": 1385425,
+        "emitted_lines": 1383745,
+        "active_lines": 1383744,
         "sections": {
           "Body Rewrite": 21,
           "MITM": 1,
           "Map Local": 1245,
-          "Rule": 1426,
+          "Rule": 1381451,
           "Script": 272,
           "URL Rewrite": 755
         },
@@ -9690,8 +9690,8 @@
           {
             "line": 1220,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Local.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1221,
@@ -9708,8 +9708,8 @@
           {
             "line": 1222,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Local_other_extra.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1224,
@@ -9816,80 +9816,80 @@
           {
             "line": 1225,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Advertising_other_extra.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1226,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Advertising_01.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1227,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Advertising_02.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1228,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Advertising_03.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1229,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Advertising_04.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1231,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1232,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy_other_extra.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1234,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy_CNAME_01.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1235,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy_CNAME_02.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1236,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy_CNAME_03.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1237,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy_CNAME_04.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1238,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Privacy_CNAME_05.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1240,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Security.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1241,
@@ -9906,50 +9906,50 @@
           {
             "line": 1242,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_Security_other_extra.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1244,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_AntiAD.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1246,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1247,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1249,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1250,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1251,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1253,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "external RULE-SET is unsupported by the native importer; source-declared public PROMAX lists have separate optional routing modules in this catalog"
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
             "line": 1264,
@@ -11977,7 +11977,7 @@
       }
     }
   ],
-  "promax_routing_note": "Optional heavy series in source declaration order; do not automatically enable all shards. The functional PROMAX module is separate. Unsupported matchers and lost Surge rule options are reported. Publication limits are 8 MiB per shard and 64 MiB total, not verified client capacity or performance guarantees. Existing equivalent profile rules can duplicate these modules; review before enabling.",
+  "promax_routing_note": "Source-list audit only, not separate installable modules. Supported rows are embedded into the single PROMAX module in declaration order and exact duplicate rows retain their first occurrence. Per-source counts precede aggregate deduplication. Unsupported matchers and lost Surge options are reported. Limits are 8 MiB per source list and 64 MiB for all sources and for the merged module, not verified client capacity or performance guarantees.",
   "promax_routing": [
     {
       "source": "rulesets/AdBlock/AdBlock_Local.list",
@@ -11991,9 +11991,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "6622dee00f0088b8688f8a3e49d2ac7f",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Local.sgmodule",
-      "output_bytes": 98720,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FLocal%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 92624,
       "projection": {
         "input_lines": 2450,
         "emitted_lines": 2450,
@@ -12023,9 +12022,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "9b822ecf82cc8c6096b7872575123908",
-      "path": null,
-      "output_bytes": 0,
-      "github_install_url": null,
+      "embedded_in": null,
+      "projected_bytes": 0,
       "projection": {
         "input_lines": 1,
         "emitted_lines": 0,
@@ -12059,9 +12057,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "fbd2ce07522f17163f8992982e779c87",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Advertising_other_extra.sgmodule",
-      "output_bytes": 15441,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FAdvertising%5Fother%5Fextra%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 9309,
       "projection": {
         "input_lines": 161,
         "emitted_lines": 161,
@@ -13022,9 +13019,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "626d1be906948f732b7a4d74fd4ceb0f",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Advertising_01.sgmodule",
-      "output_bytes": 3865927,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FAdvertising%5F01%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 3859813,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 99973,
@@ -14560,9 +14556,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "d395f8b893f079bc06254c5ab4d9743b",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Advertising_02.sgmodule",
-      "output_bytes": 4063530,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FAdvertising%5F02%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 4057416,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 99992,
@@ -14838,9 +14833,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "3f6241e11f28303cfb901141ae5967ca",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Advertising_03.sgmodule",
-      "output_bytes": 4075614,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FAdvertising%5F03%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 4069500,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 99992,
@@ -15080,9 +15074,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "bd1258f2b4938d94a65226634d11f452",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Advertising_04.sgmodule",
-      "output_bytes": 3057094,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FAdvertising%5F04%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 3050980,
       "projection": {
         "input_lines": 75590,
         "emitted_lines": 75573,
@@ -15370,9 +15363,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "8bd7a6a1f2b5ea1ce60afc177de796a2",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy.sgmodule",
-      "output_bytes": 228976,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 222876,
       "projection": {
         "input_lines": 4919,
         "emitted_lines": 4919,
@@ -15402,9 +15394,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "6daedbbd280039db06230c3409946dea",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy_other_extra.sgmodule",
-      "output_bytes": 6234,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%5Fother%5Fextra%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 110,
       "projection": {
         "input_lines": 5,
         "emitted_lines": 3,
@@ -15446,9 +15437,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "1903969d25371fd03c5f7161da3ac593",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy_CNAME_01.sgmodule",
-      "output_bytes": 5957541,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%5FCNAME%5F01%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 5951423,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -15478,9 +15468,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "192178de4514cfbf1a150c67e289ba01",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy_CNAME_02.sgmodule",
-      "output_bytes": 5170101,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%5FCNAME%5F02%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 5163983,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -15510,9 +15499,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "c0515ba5c55cde1dbedbb08ead1a955b",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy_CNAME_03.sgmodule",
-      "output_bytes": 4967867,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%5FCNAME%5F03%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 4961749,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -15542,9 +15530,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "4ed7fbaa43413c8ee7749b890dc55b02",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy_CNAME_04.sgmodule",
-      "output_bytes": 5184960,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%5FCNAME%5F04%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 5178842,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -15574,9 +15561,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "49f9dc89acbbef52de6ab734987ddb3b",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Privacy_CNAME_05.sgmodule",
-      "output_bytes": 5177257,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FPrivacy%5FCNAME%5F05%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 5171139,
       "projection": {
         "input_lines": 94338,
         "emitted_lines": 94338,
@@ -15606,9 +15592,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "c96c9c1182261c082f63912a15aae96a",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Security.sgmodule",
-      "output_bytes": 6144,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FSecurity%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 42,
       "projection": {
         "input_lines": 1,
         "emitted_lines": 1,
@@ -15638,9 +15623,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "27a8f10ca1e2a272a36be20737270ce1",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Security_other_extra.sgmodule",
-      "output_bytes": 7960,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FSecurity%5Fother%5Fextra%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 1834,
       "projection": {
         "input_lines": 42,
         "emitted_lines": 42,
@@ -15922,9 +15906,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "089858d0f42f86d072574def049557c3",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_AntiAD.sgmodule",
-      "output_bytes": 191743,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FAntiAD%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 185645,
       "projection": {
         "input_lines": 4923,
         "emitted_lines": 4923,
@@ -15954,9 +15937,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "f877b842741b0fef550fe40220dbc873",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_ThreatIntel_Ultimate_01.sgmodule",
-      "output_bytes": 4072746,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FThreatIntel%5FUltimate%5F01%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 4066614,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -15986,9 +15968,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "d3578ee7f9a71d3b866d0b84e52a14a6",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_ThreatIntel_Ultimate_02.sgmodule",
-      "output_bytes": 2830352,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FThreatIntel%5FUltimate%5F02%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 2824220,
       "projection": {
         "input_lines": 66902,
         "emitted_lines": 66902,
@@ -16018,9 +15999,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "3489026d759665c993cd4495f2b0be55",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_ThreatIntel_TIF_01.sgmodule",
-      "output_bytes": 4022321,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FThreatIntel%5FTIF%5F01%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 4016199,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -16050,9 +16030,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "1e7673682fa8f8c7c2cd610f249d68c9",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_ThreatIntel_TIF_02.sgmodule",
-      "output_bytes": 3985422,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FThreatIntel%5FTIF%5F02%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 3979300,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -16082,9 +16061,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "01f35db8067ff70765c826a4cd747387",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_ThreatIntel_TIF_03.sgmodule",
-      "output_bytes": 2561898,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FThreatIntel%5FTIF%5F03%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 2555776,
       "projection": {
         "input_lines": 64901,
         "emitted_lines": 64901,
@@ -16114,9 +16092,8 @@
         "no-resolve"
       ],
       "source_md5_change_fingerprint": "74b446c197389a57bbd65b271b79f1d6",
-      "path": "modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_ThreatIntel.sgmodule",
-      "output_bytes": 2885372,
-      "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/ScriptHub%2EPROMAX%2EAdBlock%5FThreatIntel%2Esgmodule",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 2879264,
       "projection": {
         "input_lines": 66165,
         "emitted_lines": 66165,

@@ -62,6 +62,7 @@ fn write_template_artifacts(output: &Path) -> io::Result<()> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build/catalog.rs");
+    println!("cargo:rerun-if-changed=src/module_header.rs");
     println!("cargo:rerun-if-changed=build/locales.rs");
     let mut sources = Vec::new();
     for locale in locales::LOCALES {

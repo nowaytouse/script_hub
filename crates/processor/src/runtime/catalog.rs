@@ -242,8 +242,16 @@ mod bundled_tests {
                 assert_eq!(bundled.desc, live.desc);
             }
             if platform == ModulePlatform::FlClash {
-                assert!(urls.contains("ScriptHub%2EPROMAX"));
                 assert!(urls.contains("modules/flclash/"));
+                assert!(!urls.contains("ScriptHub%2EPROMAX"));
+                let promax = bundled
+                    .modules
+                    .iter()
+                    .filter(|m| m.filename == "ScriptHub.AdBlock.Preview.sgmodule")
+                    .collect::<Vec<_>>();
+                assert_eq!(promax.len(), 1);
+                assert!(promax[0].install_url.is_empty());
+                assert!(safe_https_single_field_url(&promax[0].github_install_url));
             }
         }
     }

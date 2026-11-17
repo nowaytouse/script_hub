@@ -1,6 +1,7 @@
 //! Shared ruleset processing, artifact publication and desktop update workflows.
 
 mod filesystem;
+mod module_header;
 mod rulesets;
 
 pub mod app;

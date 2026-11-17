@@ -71,8 +71,10 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
             .collect();
         paths.sort();
         for path in paths {
-            let content = fs::read_to_string(&path)
+            let content = crate::module_header::read(&path)
                 .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+            let cdn_available = fs::metadata(&path).map_err(|e| e.to_string())?.len()
+                <= crate::module_header::MAX_CDN_FILE_BYTES;
             let meta = crate::merge_bundles::module_metadata_pub(&content);
             let filename = path
                 .file_name()
@@ -116,7 +118,11 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
                 } else {
                     String::new()
                 },
-                install_url: format!("{CDN}{}", encode_path(&rel)),
+                install_url: if cdn_available {
+                    format!("{CDN}{}", encode_path(&rel))
+                } else {
+                    String::new()
+                },
                 github_install_url: if mirror.is_file() {
                     format!("{RAW}{}", encode_path(&mirror_rel))
                 } else {
@@ -163,6 +169,36 @@ mod tests {
     use super::catalog_snapshot;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn large_module_has_direct_url_and_does_not_read_rule_body_for_metadata() {
+        use std::io::Write;
+        let root = std::env::temp_dir().join(format!(
+            "large-module-{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let directory = root.join("modules/flclash/head_expanse");
+        fs::create_dir_all(&directory).unwrap();
+        let mut file = fs::File::create(directory.join("PROMAX.sgmodule")).unwrap();
+        file.write_all(b"#!name=Single PROMAX\n[Rule]\n\xff")
+            .unwrap();
+        file.set_len(crate::module_header::MAX_CDN_FILE_BYTES + 1)
+            .unwrap();
+        drop(file);
+        let items = super::flclash_catalog_snapshot(&root).unwrap();
+        assert_eq!(items[0]["name"], "Single PROMAX");
+        assert_eq!(items[0]["install_url"], "");
+        assert!(
+            items[0]["github_install_url"]
+                .as_str()
+                .unwrap()
+                .contains("/modules/flclash/")
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn catalog_snapshot_is_read_only_and_includes_retired_modules() {

@@ -2567,7 +2567,30 @@ mod tests {
             click(&mut app, pos).drop_without_applying_deltas();
             assert_eq!(app.module_platform, platform);
             assert!(!app.catalog.modules.is_empty());
+            if platform == ModulePlatform::FlClash {
+                app.module_search = "PROMAX".to_owned();
+            }
             let output = draw(&mut app, Vec::new());
+            if platform == ModulePlatform::FlClash {
+                assert_eq!(
+                    app.catalog
+                        .modules
+                        .iter()
+                        .filter(|m| m.matches("promax", ""))
+                        .count(),
+                    1
+                );
+                assert!(
+                    !output
+                        .platform_output
+                        .accesskit_update
+                        .as_ref()
+                        .unwrap()
+                        .nodes
+                        .iter()
+                        .any(|(_, n)| n.label() == Some(text(app.draft.language, Text::CopyCdn)))
+                );
+            }
             let pos = center(&output, text(app.draft.language, Text::CopyGithub));
             output.drop_without_applying_deltas();
             let expected = app.catalog.modules[app.selected_module.unwrap()]

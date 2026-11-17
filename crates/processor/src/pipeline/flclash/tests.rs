@@ -437,18 +437,30 @@ fn promax_routing_preserves_supported_rules_and_reports_source_options_once() {
 
 #[test]
 fn promax_routing_retains_registered_notices_without_private_profile_material() {
-    let projection = super::render_routing(
+    let root = temporary();
+    fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+    fs::write(
+        root.join("rulesets/AdBlock/AdBlock_Synthetic.list"),
         "DOMAIN,ads.example.test\n",
-        "AdBlock_Synthetic",
-        "REJECT",
-        &[],
     )
     .unwrap();
+    let source = fixture(
+        "[Rule]\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Synthetic.list,REJECT\n",
+    );
+    let routing = super::plan_promax_routing(&root, &source).unwrap();
+    let projection = super::render_embedded(&source, &routing).unwrap();
     for (owner, notice) in super::REGISTERED_MIT_NOTICES {
         assert!(
             projection
                 .content
                 .contains(&format!("# Registered MIT notice: {owner}\n"))
+        );
+        assert_eq!(
+            projection
+                .content
+                .matches(&format!("# Registered MIT notice: {owner}\n"))
+                .count(),
+            1
         );
         for line in notice.lines().filter(|line| !line.is_empty()) {
             assert!(projection.content.contains(&format!("# {line}\n")));
@@ -465,16 +477,12 @@ fn promax_routing_retains_registered_notices_without_private_profile_material() 
             .content
             .contains("permission notice shall be included")
     );
-    assert!(
-        projection
-            .content
-            .contains("/rulesets/AdBlock/AdBlock_Synthetic.list")
-    );
+    assert!(projection.content.contains("catalog.json (promax_routing)"));
     assert!(projection.content.contains("# Modified:"));
     assert!(
         projection
             .content
-            .contains("not every source or license applies to every shard or rule")
+            .contains("not every source or license applies to every source rule")
     );
     for material in [
         "ss://",
@@ -487,6 +495,7 @@ fn promax_routing_retains_registered_notices_without_private_profile_material() 
     ] {
         assert!(!projection.content.contains(material));
     }
+    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -511,38 +520,34 @@ fn promax_routing_plan_keeps_declaration_order_and_reports_empty_shards() {
     let source = fixture(
         "[Rule]\nRULE-SET,Local inline,REJECT\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Z.list,REJECT,pre-matching\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Empty.list,REJECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_A.list,DIRECT\n[Ruleset Local inline]\nDOMAIN,inline.example.test\n",
     );
-    let mut outputs = std::collections::BTreeMap::new();
-    let reports = super::plan_promax_routing(&root, &source, &mut outputs).unwrap();
+    let reports = super::plan_promax_routing(&root, &source).unwrap();
     assert_eq!(reports.len(), 3);
     assert!(reports[0].source.ends_with("AdBlock_Z.list"));
     assert!(reports[1].source.ends_with("AdBlock_Empty.list"));
     assert!(reports[2].source.ends_with("AdBlock_A.list"));
-    assert!(reports[1].path.is_none());
+    assert!(reports[1].embedded_in.is_none());
     assert_eq!(reports[1].projection.active_lines, 0);
     assert!(reports[1].source_bytes > 0);
-    assert_eq!(reports[1].output_bytes, 0);
+    assert_eq!(reports[1].projected_bytes, 0);
     assert_eq!(reports[0].source_bytes, "DOMAIN,z.example.test\n".len());
-    assert_eq!(reports[0].output_bytes, reports[0].projection.content.len());
-    assert_eq!(outputs.len(), 2);
-    assert!(
-        outputs
-            .keys()
-            .all(|path| !path.components().any(|part| part.as_os_str() == "github"))
+    assert_eq!(
+        reports[0].projected_bytes,
+        reports[0].projection.content.len()
     );
+    assert_eq!(reports[0].embedded_in.as_deref(), Some(super::MAIN_MODULE));
+    assert_eq!(reports[2].embedded_in.as_deref(), Some(super::MAIN_MODULE));
     let before = reports[0].projection.content.clone();
     fs::write(
         root.join("rulesets/AdBlock/AdBlock_Z.list"),
         "DOMAIN,changed.example.test\n",
     )
     .unwrap();
-    let refreshed =
-        super::plan_promax_routing(&root, &source, &mut std::collections::BTreeMap::new()).unwrap();
+    let refreshed = super::plan_promax_routing(&root, &source).unwrap();
     assert_ne!(refreshed[0].projection.content, before);
     assert!(
         super::plan_promax_routing(
             &root,
-            &fixture("[Rule]\nRULE-SET,https://example.test/untrusted.list,REJECT\n"),
-            &mut outputs
+            &fixture("[Rule]\nRULE-SET,https://example.test/untrusted.list,REJECT\n")
         )
         .is_err()
     );
@@ -582,5 +587,80 @@ fn full_public_plan_is_identical_for_lf_and_crlf_worktrees() {
     );
     // Normalization must not bypass the raw on-disk byte limit.
     assert!(super::read_public_bounded(&root, &ruleset_path, ruleset.len()).is_err());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn merged_promax_keeps_source_positions_and_deduplicates_only_exact_rows() {
+    let root = temporary();
+    fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+    fs::write(
+        root.join("rulesets/AdBlock/AdBlock_One.list"),
+        "DOMAIN,first.example.test\nDOMAIN,shared.example.test\nIP-CIDR,192.0.2.0/24\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("rulesets/AdBlock/AdBlock_Two.list"),
+        "DOMAIN,shared.example.test\nDOMAIN,last.example.test\nIP-CIDR,192.0.2.0/24\n",
+    )
+    .unwrap();
+    let source = fixture(
+        "[Rule]\nDOMAIN,before.example.test,DIRECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_One.list,REJECT,no-resolve\nDOMAIN,middle.example.test,DIRECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Two.list,REJECT\nDOMAIN,shared.example.test,DIRECT\nDOMAIN,after.example.test,DIRECT\n",
+    );
+    let routing = super::plan_promax_routing(&root, &source).unwrap();
+    let merged = super::render_embedded(&source, &routing).unwrap();
+    let rows = super::parse_sections(&merged.content)
+        .into_iter()
+        .find(|(s, _)| s == "Rule")
+        .unwrap()
+        .1
+        .into_iter()
+        .map(|(_, s)| s)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        rows,
+        [
+            "DOMAIN,before.example.test,DIRECT",
+            "DOMAIN,first.example.test,REJECT",
+            "DOMAIN,shared.example.test,REJECT",
+            "IP-CIDR,192.0.2.0/24,REJECT,no-resolve",
+            "DOMAIN,middle.example.test,DIRECT",
+            "DOMAIN,last.example.test,REJECT",
+            "IP-CIDR,192.0.2.0/24,REJECT",
+            "DOMAIN,shared.example.test,DIRECT",
+            "DOMAIN,after.example.test,DIRECT"
+        ]
+    );
+    assert!(super::validate_merged_size(super::MAX_ROUTING_TOTAL_BYTES).is_ok());
+    assert!(super::validate_merged_size(super::MAX_ROUTING_TOTAL_BYTES + 1).is_err());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn generator_retires_only_owned_routing_after_preflight() {
+    let root = temporary();
+    fs::write(
+        root.join("modules/surge/head_expanse/Test.sgmodule"),
+        fixture("[Rule]\nDOMAIN,ads.example.test,REJECT\n"),
+    )
+    .unwrap();
+    run_generator(&root).unwrap();
+    let old = root.join("modules/flclash/head_expanse/ScriptHub.PROMAX.AdBlock_Old.sgmodule");
+    fs::write(
+        &old,
+        format!("{}\n[Rule]\nDOMAIN,old.example.test,REJECT\n", super::OWNER),
+    )
+    .unwrap();
+    let unknown = root.join("modules/flclash/head_expanse/Personal.sgmodule");
+    fs::write(&unknown, "#!name=Preserve user file\n").unwrap();
+    assert!(run_generator(&root).is_err());
+    assert!(old.exists() && unknown.exists());
+    fs::remove_file(&unknown).unwrap();
+    run_generator(&root).unwrap();
+    assert!(!old.exists());
+    validate_generated(&root).unwrap();
+    fs::write(&old, "#!name=Manually authored matching filename\n").unwrap();
+    assert!(run_generator(&root).is_err());
+    assert!(old.exists());
     fs::remove_dir_all(root).unwrap();
 }

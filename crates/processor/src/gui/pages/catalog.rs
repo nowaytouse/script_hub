@@ -472,13 +472,7 @@ impl HubApp {
 
     fn subscription_controls(&mut self, ui: &mut egui::Ui, cdn: &str, github: &str) {
         ui.horizontal_wrapped(|ui| {
-            if ui
-                .add_enabled(
-                    safe_https_single_field_url(cdn),
-                    egui::Button::new(self.tr(Text::CopyCdn)),
-                )
-                .clicked()
-            {
+            if safe_https_single_field_url(cdn) && ui.button(self.tr(Text::CopyCdn)).clicked() {
                 self.copy(ui.ctx(), cdn);
             }
             if ui
@@ -493,7 +487,10 @@ impl HubApp {
         });
         ui.weak(self.tr(Text::InstallHint));
         egui::CollapsingHeader::new(self.tr(Text::Details)).show(ui, |ui| {
-            for value in [cdn, github] {
+            for value in [cdn, github]
+                .into_iter()
+                .filter(|url| safe_https_single_field_url(url))
+            {
                 let mut value = value;
                 ui.add(
                     egui::TextEdit::multiline(&mut value)
