@@ -1109,11 +1109,17 @@ fn validate_map_local(line_number: usize, line: &str, errors: &mut Vec<Validatio
         ));
     }
     validate_regex_entry("Map Local", line_number, line, errors);
-    let data_type = line
-        .split_whitespace()
-        .find_map(|field| field.strip_prefix("data-type="))
+    let Ok(fields) = crate::rewrite_syntax::map_local::fields(line) else {
+        return;
+    };
+    let parameter = |name: &str| {
+        fields
+            .iter()
+            .skip(1)
+            .find_map(|field| field.strip_prefix(name))
+    };
+    let data_type = parameter("data-type=")
         .unwrap_or("file")
-        .trim_matches(['\'', '"'])
         .to_ascii_lowercase();
     if !matches!(data_type.as_str(), "file" | "text" | "tiny-gif" | "base64") {
         errors.push(error(
@@ -1122,22 +1128,15 @@ fn validate_map_local(line_number: usize, line: &str, errors: &mut Vec<Validatio
             format!("unsupported Map Local data-type: {data_type}"),
         ));
     }
-    if data_type != "tiny-gif"
-        && !line
-            .split_whitespace()
-            .any(|field| field.starts_with("data="))
-    {
+    if data_type != "tiny-gif" && parameter("data=").is_none() {
         errors.push(error(
             line_number,
             "missing-map-local-data",
             "Map Local requires data unless data-type=tiny-gif",
         ));
     }
-    if let Some(status) = line
-        .split_whitespace()
-        .find_map(|field| field.strip_prefix("status-code="))
+    if let Some(status) = parameter("status-code=")
         && !status
-            .trim_matches(['\'', '"'])
             .parse::<u16>()
             .is_ok_and(|status| (200..=999).contains(&status))
     {
@@ -2224,6 +2223,26 @@ mod rewrite_contract_tests {
                 r#"^https://example\.test data-type=text data="{}""#
             )
             .is_empty()
+        );
+    }
+
+    #[test]
+    fn map_local_parameters_are_not_read_from_inside_quoted_response_values() {
+        let valid = r#"^https://example\.test data="literal data-type=bad status-code=0" data-type=text status-code=200"#;
+        assert!(validate_published_rewrite("Map Local", valid).is_empty());
+        let missing =
+            r#"^https://example\.test data-type=text header="X-Note: placeholder data=inside""#;
+        assert!(
+            validate_published_rewrite("Map Local", missing)
+                .iter()
+                .any(|error| error.code == "missing-map-local-data")
+        );
+        let invalid =
+            r#"^https://example\.test data-type=text data="status-code=200" status-code=0"#;
+        assert!(
+            validate_published_rewrite("Map Local", invalid)
+                .iter()
+                .any(|error| error.code == "invalid-map-local-status")
         );
     }
 }

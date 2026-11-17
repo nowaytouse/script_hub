@@ -1212,21 +1212,13 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
     if section == "URL Rewrite" {
         return format!(
             "rewrite:{}",
-            stripped
-                .split_whitespace()
-                .next()
-                .unwrap_or(stripped)
-                .trim_matches(['\'', '"'])
+            functional_matcher_key_pub(section, stripped).unwrap_or_else(|| stripped.to_owned())
         );
     }
     if section == "Map Local" {
         return format!(
             "maplocal:{}",
-            stripped
-                .split_whitespace()
-                .next()
-                .unwrap_or(stripped)
-                .trim_matches(['\'', '"'])
+            functional_matcher_key_pub(section, stripped).unwrap_or_else(|| stripped.to_owned())
         );
     }
     if section == "Body Rewrite" {
@@ -1252,6 +1244,11 @@ pub fn dedupe_key_pub(section: &str, line: &str) -> String {
 }
 
 pub fn functional_matcher_key_pub(section: &str, line: &str) -> Option<String> {
+    if section == "Map Local" {
+        return crate::rewrite_syntax::map_local::fields(line)
+            .ok()
+            .and_then(|fields| fields.into_iter().next());
+    }
     if section == "Body Rewrite" {
         return crate::rewrite_syntax::BodyRewrite::parse_source(line)
             .ok()
@@ -1270,7 +1267,6 @@ pub fn functional_matcher_key_pub(section: &str, line: &str) -> Option<String> {
     let mut fields = line.split_whitespace();
     let first = fields.next()?;
     let matcher = match section {
-        "Map Local" => first,
         "Rewrite"
             if first.eq_ignore_ascii_case("http-request")
                 || first.eq_ignore_ascii_case("http-response") =>
@@ -2141,5 +2137,43 @@ mod ruleset_cleanup_tests {
         assert!(!reject.contains("ru1353t"));
         assert!(reject.contains("DOMAIN,ads.example"));
         fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod rewrite_field_tests {
+    use super::*;
+
+    #[test]
+    fn quoted_patterns_keep_their_full_matcher_during_deduplication() {
+        for (section, rows) in [
+            (
+                "URL Rewrite",
+                vec![
+                    r#""^https://example\.test/a b" https://next.example.test/one 302"#.to_owned(),
+                    r#""^https://example\.test/a c" https://next.example.test/two 302"#.to_owned(),
+                ],
+            ),
+            (
+                "Map Local",
+                vec![
+                    r#""^https://example\.test/a b" data-type=text data="one""#.to_owned(),
+                    r#""^https://example\.test/a c" data-type=text data="two""#.to_owned(),
+                ],
+            ),
+        ] {
+            let mut repeated = rows.clone();
+            repeated.push(rows[0].clone());
+            let result = dedupe_section_lines_pub(section, &repeated);
+            assert_eq!(result.len(), 2);
+            assert_eq!(
+                functional_matcher_key_pub(section, &result[0]).as_deref(),
+                Some(r"^https://example\.test/a b")
+            );
+            assert_eq!(
+                functional_matcher_key_pub(section, &result[1]).as_deref(),
+                Some(r"^https://example\.test/a c")
+            );
+        }
     }
 }
