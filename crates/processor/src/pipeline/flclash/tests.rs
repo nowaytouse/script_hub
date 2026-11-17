@@ -552,3 +552,35 @@ fn promax_routing_plan_keeps_declaration_order_and_reports_empty_shards() {
     );
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn full_public_plan_is_identical_for_lf_and_crlf_worktrees() {
+    let root = temporary();
+    let source_path = root.join("modules/surge/head_expanse").join(super::PROMAX);
+    let ruleset_path = root.join("rulesets/AdBlock/AdBlock_Synthetic.list");
+    fs::create_dir_all(ruleset_path.parent().unwrap()).unwrap();
+    let source = fixture(
+        "[Rule]\nDOMAIN,inline.example.test,REJECT\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Synthetic.list,REJECT,no-resolve\n",
+    );
+    let ruleset = "# Synthetic public list\nDOMAIN,ads.example.test\nIP-CIDR,192.0.2.0/24\n";
+    fs::write(&source_path, &source).unwrap();
+    fs::write(&ruleset_path, ruleset).unwrap();
+    let lf = super::plan(&root).unwrap();
+
+    fs::write(&source_path, source.replace('\n', "\r\n")).unwrap();
+    fs::write(&ruleset_path, ruleset.replace('\n', "\r\n")).unwrap();
+    let crlf = super::plan(&root).unwrap();
+    // Includes both module variants, routing content and the complete catalog
+    // with source fingerprints and source/output byte counts.
+    assert_eq!(lf, crlf);
+    let catalog: serde_json::Value =
+        serde_json::from_str(&crlf[&root.join("modules/flclash/catalog.json")]).unwrap();
+    assert_eq!(catalog["promax_routing"][0]["source_bytes"], ruleset.len());
+    assert_eq!(
+        catalog["promax_routing"][0]["source_md5_change_fingerprint"],
+        super::fingerprint(ruleset)
+    );
+    // Normalization must not bypass the raw on-disk byte limit.
+    assert!(super::read_public_bounded(&root, &ruleset_path, ruleset.len()).is_err());
+    fs::remove_dir_all(root).unwrap();
+}

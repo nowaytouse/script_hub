@@ -799,7 +799,11 @@ fn read_public_bounded(root: &Path, path: &Path, limit: usize) -> Result<String,
             path.display()
         ));
     }
-    fs::read_to_string(path).map_err(|e| e.to_string())
+    // Git stores public text with LF even when core.autocrlf produces a CRLF
+    // worktree. Fingerprints, source byte counts and output must use that same
+    // canonical text on every platform; the raw file size was bounded above.
+    let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    Ok(text.replace("\r\n", "\n"))
 }
 
 fn public_adblock_path(url: &str) -> Result<PathBuf, String> {
