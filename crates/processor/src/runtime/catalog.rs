@@ -4,6 +4,14 @@ use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ModulePlatform {
+    #[default]
+    Surge,
+    Shadowrocket,
+    FlClash,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct ModuleItem {
     pub name: String,
@@ -138,6 +146,46 @@ pub fn selected_surge_rule_set_snippets(
 }
 
 impl Catalog {
+    pub fn bundled(platform: ModulePlatform) -> Self {
+        let read = |platform| {
+            let json = match platform {
+                ModulePlatform::Surge => {
+                    include_str!(concat!(env!("OUT_DIR"), "/modules-surge.json"))
+                }
+                ModulePlatform::Shadowrocket => {
+                    include_str!(concat!(env!("OUT_DIR"), "/modules-shadowrocket.json"))
+                }
+                ModulePlatform::FlClash => {
+                    include_str!(concat!(env!("OUT_DIR"), "/modules-flclash.json"))
+                }
+            };
+            serde_json::from_str(json).expect("build-generated public module inventory")
+        };
+        Self {
+            modules: read(platform),
+            counterparts: read(if platform == ModulePlatform::Surge {
+                ModulePlatform::Shadowrocket
+            } else {
+                ModulePlatform::Surge
+            }),
+            rules: Vec::new(),
+        }
+    }
+
+    pub fn load_platform(root: &Path, platform: ModulePlatform) -> Result<Self, String> {
+        if platform != ModulePlatform::FlClash {
+            return Self::load(root, platform == ModulePlatform::Shadowrocket);
+        }
+        Ok(Self {
+            modules: serde_json::from_value(crate::module_catalog::flclash_catalog_snapshot(root)?)
+                .map_err(|e| e.to_string())?,
+            counterparts: serde_json::from_value(crate::module_catalog::catalog_snapshot(
+                root, false,
+            )?)
+            .map_err(|e| e.to_string())?,
+            rules: load_rules(root)?,
+        })
+    }
     pub fn load(root: &Path, shadowrocket: bool) -> Result<Self, String> {
         let modules =
             serde_json::from_value(crate::module_catalog::catalog_snapshot(root, shadowrocket)?)
@@ -163,6 +211,41 @@ impl Catalog {
         self.counterparts
             .iter()
             .any(|other| stem(&other.filename) == stem(&module.filename))
+    }
+}
+
+#[cfg(test)]
+mod bundled_tests {
+    use super::*;
+    #[test]
+    fn bundled_modules_match_public_workspace_and_copy_without_opening_it() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        for platform in [
+            ModulePlatform::Surge,
+            ModulePlatform::Shadowrocket,
+            ModulePlatform::FlClash,
+        ] {
+            let bundled = Catalog::bundled(platform);
+            let live = Catalog::load_platform(&root, platform).unwrap();
+            assert!(!bundled.modules.is_empty());
+            let indices = (0..bundled.modules.len()).collect();
+            let live_indices = (0..live.modules.len()).collect();
+            let urls = selected_module_urls(&bundled.modules, &indices, true);
+            assert!(!urls.is_empty());
+            assert_eq!(
+                urls,
+                selected_module_urls(&live.modules, &live_indices, true)
+            );
+            assert_eq!(bundled.modules.len(), live.modules.len());
+            for (bundled, live) in bundled.modules.iter().zip(&live.modules) {
+                assert_eq!(bundled.name, live.name);
+                assert_eq!(bundled.desc, live.desc);
+            }
+            if platform == ModulePlatform::FlClash {
+                assert!(urls.contains("ScriptHub%2EPROMAX"));
+                assert!(urls.contains("modules/flclash/"));
+            }
+        }
     }
 }
 

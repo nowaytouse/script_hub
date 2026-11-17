@@ -1,3 +1,5 @@
+#[path = "build/catalog.rs"]
+mod catalog;
 #[path = "build/locales.rs"]
 mod locales;
 
@@ -59,6 +61,7 @@ fn write_template_artifacts(output: &Path) -> io::Result<()> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("cargo:rerun-if-changed=build/catalog.rs");
     println!("cargo:rerun-if-changed=build/locales.rs");
     let mut sources = Vec::new();
     for locale in locales::LOCALES {
@@ -74,6 +77,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     fs::write(output.join("locales.rs"), generated)?;
     if std::env::var_os("CARGO_FEATURE_GUI").is_some() {
         write_template_artifacts(&output)?;
+    }
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for (platform, extension) in [
+        ("surge", "sgmodule"),
+        ("shadowrocket", "module"),
+        ("flclash", "sgmodule"),
+    ] {
+        println!(
+            "cargo:rerun-if-changed={}",
+            root.join("modules").join(platform).display()
+        );
+        fs::write(
+            output.join(format!("modules-{platform}.json")),
+            serde_json::to_vec(&catalog::modules(&root, platform, extension)?)?,
+        )?;
     }
     Ok(())
 }

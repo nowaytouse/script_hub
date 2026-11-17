@@ -2,7 +2,7 @@ use super::card;
 use crate::gui::app::{CatalogTab, HubApp};
 use crate::gui::i18n::{Text, text};
 use crate::runtime::catalog::{
-    safe_https_single_field_url, selected_module_urls, selected_rule_urls,
+    Catalog, ModulePlatform, safe_https_single_field_url, selected_module_urls, selected_rule_urls,
     selected_surge_rule_set_snippets, valid_rule_set_policy,
 };
 use eframe::egui::{self, RichText};
@@ -41,13 +41,28 @@ impl HubApp {
         let tr = |key| text(language, key);
         ui.horizontal_wrapped(|ui| {
             ui.label(tr(Text::Platform));
-            let old = self.shadowrocket;
+            let old = self.module_platform;
             ui.add_enabled_ui(!self.active(), |ui| {
-                ui.selectable_value(&mut self.shadowrocket, false, "Surge");
-                ui.selectable_value(&mut self.shadowrocket, true, "Shadowrocket");
+                ui.selectable_value(&mut self.module_platform, ModulePlatform::Surge, "Surge");
+                ui.selectable_value(
+                    &mut self.module_platform,
+                    ModulePlatform::Shadowrocket,
+                    "Shadowrocket",
+                );
+                ui.selectable_value(
+                    &mut self.module_platform,
+                    ModulePlatform::FlClash,
+                    "FlClash Preview",
+                );
             });
-            if old != self.shadowrocket {
-                self.reload();
+            if old != self.module_platform {
+                if self.workspace_ready() {
+                    self.reload();
+                } else {
+                    self.catalog = Catalog::bundled(self.module_platform);
+                    self.selected_module = None;
+                    self.selected_modules.clear();
+                }
                 self.category.clear();
             }
             egui::ComboBox::from_id_salt("module-category")

@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Make module link copying available without opening a workspace using an embedded public catalog, and add FlClash Preview alongside Surge and Shadowrocket.
+
 - Generate FlClash-Surge from the encrypted Surge template with subscription slots only, supported group behavior, provider health checks and encrypted DNS. Preserve source routing without extra advertising rulesets, document smart-group approximations, and keep Windows DNS-guard export usable.
 
 - Add native FlClash MITM Preview modules and 22 optional PROMAX routing shards from the source's explicitly declared public lists, with compatibility accounting, direct GitHub delivery, independent regeneration and publication validation. Report unsupported rules and options without adding advertising providers to the template.

@@ -3,7 +3,7 @@ use super::i18n::{Text, text};
 use super::relay::RelayState;
 use super::theme::{self, Palette};
 use crate::pipeline::custom_sources::{self, CustomSource, SourceCategory};
-use crate::runtime::catalog::Catalog;
+use crate::runtime::catalog::{Catalog, ModulePlatform};
 use crate::runtime::history::{HistoryOptions, HistoryRecord};
 use crate::runtime::job::{Job, JobKind, JobOptions, JobOutcome, Snapshot, validate_root};
 use crate::runtime::progress::Stage;
@@ -86,7 +86,7 @@ struct WorkspaceLoader {
     receiver: Receiver<Result<LoadedWorkspace, String>>,
     worker: JoinHandle<()>,
     requested_root: Option<PathBuf>,
-    shadowrocket: bool,
+    module_platform: ModulePlatform,
 }
 
 struct LoadedWorkspace {
@@ -103,11 +103,11 @@ pub(super) struct RepositoryLoader {
 
 fn load_workspace(
     requested_root: Option<PathBuf>,
-    shadowrocket: bool,
+    module_platform: ModulePlatform,
 ) -> Result<LoadedWorkspace, String> {
     let candidate = requested_root.ok_or_else(|| "choose a project folder first".to_string())?;
     let root = validate_root(&candidate)?;
-    let catalog = Catalog::load(&root, shadowrocket)?;
+    let catalog = Catalog::load_platform(&root, module_platform)?;
     // A damaged optional source manifest must not hide the valid local catalog.
     // Its write/update paths still reject the malformed manifest independently.
     let sources = custom_sources::load(&root);
@@ -153,7 +153,7 @@ pub struct HubApp {
     pub(super) root_input: String,
     pub(super) page: Page,
     pub(super) catalog_tab: CatalogTab,
-    pub(super) shadowrocket: bool,
+    pub(super) module_platform: ModulePlatform,
     pub(super) catalog: Catalog,
     pub(super) module_search: String,
     pub(super) rule_search: String,
@@ -226,7 +226,9 @@ impl HubApp {
         loader: F,
     ) -> Self
     where
-        F: FnOnce(Option<PathBuf>, bool) -> Result<LoadedWorkspace, String> + Send + 'static,
+        F: FnOnce(Option<PathBuf>, ModulePlatform) -> Result<LoadedWorkspace, String>
+            + Send
+            + 'static,
     {
         if startup_error.is_some() {
             preferences.record_history = false;
@@ -252,8 +254,8 @@ impl HubApp {
             settings_path,
             page: Page::Overview,
             catalog_tab: CatalogTab::Modules,
-            shadowrocket: false,
-            catalog: Catalog::default(),
+            module_platform: ModulePlatform::Surge,
+            catalog: Catalog::bundled(ModulePlatform::Surge),
             module_search: String::new(),
             rule_search: String::new(),
             category: String::new(),
@@ -581,7 +583,9 @@ impl HubApp {
 
     fn start_workspace_load_with<F>(&mut self, requested_root: Option<PathBuf>, loader_fn: F)
     where
-        F: FnOnce(Option<PathBuf>, bool) -> Result<LoadedWorkspace, String> + Send + 'static,
+        F: FnOnce(Option<PathBuf>, ModulePlatform) -> Result<LoadedWorkspace, String>
+            + Send
+            + 'static,
     {
         if self.workspace_loader.is_some() || self.job_active() || self.relay.busy() {
             return;
@@ -589,7 +593,7 @@ impl HubApp {
         // A failed explicit selection must not redirect vault writes to a remembered project.
         self.template_root_request = Some(requested_root.clone().unwrap_or_default());
         self.loaded_root = None;
-        self.catalog = Catalog::default();
+        self.catalog = Catalog::bundled(self.module_platform);
         self.sources.clear();
         self.sources_loaded = false;
         self.repository = None;
@@ -601,7 +605,7 @@ impl HubApp {
         self.selected_rules.clear();
         self.copy_policy.clear();
         self.selected_files.clear();
-        let shadowrocket = self.shadowrocket;
+        let module_platform = self.module_platform;
         self.error = self.startup_error.clone();
         let (sender, receiver) = mpsc::sync_channel(1);
         let loader_root = requested_root.clone();
@@ -609,7 +613,7 @@ impl HubApp {
             .name("script-hub-workspace-loader".to_owned())
             .spawn(move || {
                 let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    loader_fn(loader_root, shadowrocket)
+                    loader_fn(loader_root, module_platform)
                 }))
                 .unwrap_or_else(|_| Err("workspace loading failed unexpectedly".to_owned()));
                 let _ = sender.send(result);
@@ -624,7 +628,7 @@ impl HubApp {
             receiver,
             worker,
             requested_root,
-            shadowrocket,
+            module_platform,
         });
     }
 
@@ -659,7 +663,7 @@ impl HubApp {
             result = Err("workspace loader stopped unexpectedly".to_owned());
         }
         // A platform change or root edit must never apply a stale snapshot.
-        if loader.shadowrocket != self.shadowrocket
+        if loader.module_platform != self.module_platform
             || loader.requested_root.as_deref().map_or_else(
                 || !self.root_input.trim().is_empty(),
                 |root| root.to_string_lossy() != self.root_input,
@@ -696,7 +700,7 @@ impl HubApp {
             }
             Err(error) => {
                 self.loaded_root = None;
-                self.catalog = Catalog::default();
+                self.catalog = Catalog::bundled(self.module_platform);
                 self.sources.clear();
                 self.repository = None;
                 self.error = self.startup_error.clone().or(Some(error));
@@ -2505,6 +2509,84 @@ mod tests {
     }
 
     #[test]
+    fn module_platforms_and_copy_work_without_opening_a_project() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let mut app = HubApp::new(None, Preferences::default(), None, None);
+        let draw = |app: &mut HubApp, events| {
+            ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1160.0, 760.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    egui::CentralPanel::default().show(ui, |ui| app.catalog_page(ui));
+                },
+            )
+        };
+        for (label, platform) in [
+            ("Surge", ModulePlatform::Surge),
+            ("Shadowrocket", ModulePlatform::Shadowrocket),
+            ("FlClash Preview", ModulePlatform::FlClash),
+        ] {
+            let output = draw(&mut app, Vec::new());
+            let center = |output: &egui::FullOutput, label: &str| {
+                let node = output
+                    .platform_output
+                    .accesskit_update
+                    .as_ref()
+                    .unwrap()
+                    .nodes
+                    .iter()
+                    .find(|(_, n)| n.label() == Some(label))
+                    .unwrap_or_else(|| panic!("Missing button {label}"));
+                let b = node.1.bounds().unwrap();
+                egui::pos2(((b.x0 + b.x1) / 2.0) as f32, ((b.y0 + b.y1) / 2.0) as f32)
+            };
+            let click = |app: &mut HubApp, pos| {
+                let event = |pressed| {
+                    vec![
+                        egui::Event::PointerMoved(pos),
+                        egui::Event::PointerButton {
+                            pos,
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: Default::default(),
+                        },
+                    ]
+                };
+                draw(app, event(true)).drop_without_applying_deltas();
+                draw(app, event(false))
+            };
+            let pos = center(&output, label);
+            output.drop_without_applying_deltas();
+            click(&mut app, pos).drop_without_applying_deltas();
+            assert_eq!(app.module_platform, platform);
+            assert!(!app.catalog.modules.is_empty());
+            let output = draw(&mut app, Vec::new());
+            let pos = center(&output, text(app.draft.language, Text::CopyGithub));
+            output.drop_without_applying_deltas();
+            let expected = app.catalog.modules[app.selected_module.unwrap()]
+                .github_install_url
+                .clone();
+            let copied = click(&mut app, pos);
+            assert!(
+                copied
+                    .platform_output
+                    .commands
+                    .iter()
+                    .any(|c| matches!(c, egui::OutputCommand::CopyText(v) if v == &expected))
+            );
+            copied.drop_without_applying_deltas();
+            assert!(app.loaded_root.is_none() && app.workspace_loader.is_none());
+        }
+    }
+
+    #[test]
     fn pages_render_in_supported_languages_themes_and_compact_layout() {
         use crate::runtime::settings::{Language, Theme};
         let ctx = egui::Context::default();
@@ -2990,7 +3072,7 @@ mod tests {
     }
 
     #[test]
-    fn invalid_root_clears_catalog_and_surfaces_error() {
+    fn invalid_root_preserves_public_bundled_catalog_and_surfaces_error() {
         let mut app = HubApp::new(
             Some("nonexistent-script-hub-root".into()),
             Preferences::default(),
@@ -2999,7 +3081,7 @@ mod tests {
         );
         assert!(wait_for_workspace(&mut app));
         assert!(app.error.is_some());
-        assert!(app.catalog.modules.is_empty() && app.loaded_root.is_none());
+        assert!(!app.catalog.modules.is_empty() && app.loaded_root.is_none());
     }
 
     #[test]
