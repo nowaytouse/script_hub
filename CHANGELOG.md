@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+- Generate FlClash-Surge from the encrypted Surge template with subscription slots only, supported group behavior, provider health checks and encrypted DNS. Preserve source routing without extra advertising rulesets, document smart-group approximations, and keep Windows DNS-guard export usable.
+
+- Add native FlClash MITM Preview modules and 22 optional PROMAX routing shards from the source's explicitly declared public lists, with compatibility accounting, direct GitHub delivery, independent regeneration and publication validation. Report unsupported rules and options without adding advertising providers to the template.
+- Remove an unreferenced cached script flagged by Windows Defender as an HTML redirector; keep antivirus protection and the published module inputs unchanged.
+
 - Refresh the encrypted client templates from the current grouped Surge profile, project nested rulesets into native formats, and use a dedicated Cloudflare UDP relay probe.
 - Organize local PROMAX firewall and IP pre-match rules into named Surge rulesets while retaining external shards and equivalent flat Shadowrocket rules.
 - Expand JP with reviewed Japanese service and adult-domain feeds, plus `exloli.org` and `elegra.ph`, without moving unrelated services.

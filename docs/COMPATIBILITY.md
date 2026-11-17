@@ -13,7 +13,8 @@ an artifact passing repository checks is not a device runtime test.
 | --- | --- |
 | Shadowrocket | Use the Shadowrocket-specific modules and compatible rule lists. Module conversion is not a guarantee that every upstream script, rewrite or MITM behavior is equivalent. |
 | Surge | Use Surge modules and rule lists. Support targets the latest version, not historical releases. |
-| Mihomo / FlClash | Generated providers use `rulesets/Mihomo/NAME.yaml` or `rulesets/AdBlock/Mihomo/NAME.yaml`; configure `behavior: classical` and `format: yaml`. `_supported.yaml` has omissions or adaptations, counted in its header. Use the provider, not a Surge or Shadowrocket module. |
+| Mihomo / FlClash routing | Generated providers use `rulesets/Mihomo/NAME.yaml` or `rulesets/AdBlock/Mihomo/NAME.yaml`; configure `behavior: classical` and `format: yaml`. `_supported.yaml` has omissions or adaptations, counted in its header. Use the provider, not a Surge or Shadowrocket module. |
+| FlClash MITM Preview | Dedicated native `.sgmodule` outputs under `modules/flclash/`, generated for the testing/preview module parser. Rewrite/script/MITM support and omissions are separate from routing providers. See the [Preview guide](FLCLASH_PREVIEW.md). |
 | sing-box | Use the generated `.srs` rule sets, not a Surge or Shadowrocket module. Support targets the latest version. Files marked `_supported` contain only the supported subset, not an equivalent complete ruleset. |
 
 Domain, IP and extra families are separate. Select an appropriate policy in

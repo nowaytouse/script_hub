@@ -244,6 +244,7 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     }
     errors += boundary_errors.len();
     artifacts += rust_processor::mihomo_generator::validate_generated(root)?;
+    artifacts += rust_processor::flclash::validate_generated(root)?;
     Ok((artifacts, errors))
 }
 

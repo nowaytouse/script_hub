@@ -25,12 +25,69 @@ const LAN: &[&str] = &[
     "IP-CIDR6,fe80::/10,no-resolve",
 ];
 
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+enum GroupKind {
+    #[default]
+    Select,
+    UrlTest,
+    Fallback,
+    LoadBalance,
+    Smart,
+}
+
+impl GroupKind {
+    fn yaml_type(self) -> &'static str {
+        match self {
+            Self::Select => "select",
+            Self::UrlTest | Self::Smart => "url-test",
+            Self::Fallback => "fallback",
+            Self::LoadBalance => "load-balance",
+        }
+    }
+}
+
 #[derive(Default)]
 struct Group<'a> {
+    kind: GroupKind,
     members: Vec<&'a str>,
     includes: Vec<&'a str>,
     slot: Option<&'a str>,
     filter: Option<&'a str>,
+    interval: Option<u64>,
+    tolerance: Option<u64>,
+    test_timeout: Option<u64>,
+    hidden: Option<bool>,
+    persistent: Option<bool>,
+    source_only: Vec<&'a str>,
+}
+
+fn boolean(value: &str) -> Result<bool, VaultError> {
+    match value.trim_matches('"') {
+        "true" | "1" => Ok(true),
+        "false" | "0" => Ok(false),
+        _ => Err(VaultError::Format),
+    }
+}
+
+fn integer(value: &str) -> Result<u64, VaultError> {
+    value
+        .trim_matches('"')
+        .parse()
+        .map_err(|_| VaultError::Format)
+}
+
+fn endpoint(value: &str, https_only: bool) -> Result<&str, VaultError> {
+    let parsed = url::Url::parse(value).map_err(|_| VaultError::Format)?;
+    if !(parsed.scheme() == "https" || !https_only && parsed.scheme() == "http")
+        || parsed.host_str().is_none()
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || parsed.query().is_some()
+        || parsed.fragment().is_some()
+    {
+        return Err(VaultError::Format);
+    }
+    Ok(value)
 }
 
 // Surge quotes comma-bearing include-other-group, regex and modifier values.
@@ -66,42 +123,81 @@ fn group(line: &str) -> Result<(&str, Group<'_>), VaultError> {
     {
         return Err(VaultError::Format);
     }
-    let mut group = Group::default();
-    for field in fields(value).skip(1) {
+    let mut components = fields(value);
+    let kind = match components.next().ok_or(VaultError::Format)? {
+        "select" => GroupKind::Select,
+        "url-test" => GroupKind::UrlTest,
+        "fallback" => GroupKind::Fallback,
+        "load-balance" => GroupKind::LoadBalance,
+        "smart" => GroupKind::Smart,
+        _ => return Err(VaultError::Format),
+    };
+    let mut group = Group {
+        kind,
+        ..Group::default()
+    };
+    let mut parameters = BTreeSet::new();
+    for field in components {
         let Some((key, value)) = field.split_once('=') else {
             group.members.push(field.trim_matches('"'));
             continue;
         };
+        let key = key.trim();
+        if !parameters.insert(key) {
+            return Err(VaultError::Format);
+        }
         let value = value.trim().trim_matches('"');
-        match key.trim() {
+        match key {
             "policy-path" => {
                 let ranges = slot_ranges(value)?;
-                if !matches!(ranges.as_slice(), [(0, end, _)] if *end == value.len())
-                    || group.slot.replace(value).is_some()
-                {
+                if !matches!(ranges.as_slice(), [(0, end, _)] if *end == value.len()) {
                     return Err(VaultError::Format);
                 }
+                group.slot = Some(value);
             }
             "include-other-group" => group.includes.extend(value.split(',').map(str::trim)),
-            "policy-regex-filter" => group.filter = Some(value),
-            _ => {}
+            "policy-regex-filter" => {
+                regex::Regex::new(value).map_err(|_| VaultError::Format)?;
+                group.filter = Some(value);
+            }
+            "interval" => group.interval = Some(integer(value)?),
+            "tolerance" => group.tolerance = Some(integer(value)?),
+            "test-timeout" => group.test_timeout = Some(integer(value)?),
+            "hidden" => group.hidden = Some(boolean(value)?),
+            "persistent" => group.persistent = Some(boolean(value)?),
+            // Current Surge ignores group url=. Its timeout is a score threshold,
+            // not Mihomo's health-check timeout. Do not silently substitute either.
+            _ => group.source_only.push(key),
         }
     }
     Ok((name, group))
 }
 
-fn include_providers<'a>(
+fn include_members<'a>(
     name: &'a str,
     groups: &BTreeMap<&'a str, Group<'a>>,
     visiting: &mut BTreeSet<&'a str>,
     providers: &mut Vec<&'a str>,
+    members: &mut Vec<&'a str>,
 ) -> Result<(), VaultError> {
     if !visiting.insert(name) {
         return Err(VaultError::Format);
     }
     let group = groups.get(name).ok_or(VaultError::Format)?;
+    for &member in &group.members {
+        let member = yaml_policy(member, groups).ok_or(VaultError::Format)?;
+        if !members.contains(&member) {
+            members.push(member);
+        }
+    }
+    // Keep each group's explicitly declared choices ahead of included choices.
     for &name in &group.includes {
-        include_providers(name, groups, visiting, providers)?;
+        // A child filter constrains its nodes before inclusion. Combining those
+        // filters is not modeled, so reject rather than broaden the selection.
+        if groups.get(name).ok_or(VaultError::Format)?.filter.is_some() {
+            return Err(VaultError::Format);
+        }
+        include_members(name, groups, visiting, providers, members)?;
     }
     if let Some(slot) = group.slot
         && !providers.contains(&slot)
@@ -110,6 +206,56 @@ fn include_providers<'a>(
     }
     visiting.remove(name);
     Ok(())
+}
+
+fn derived_dns(general: &BTreeMap<&str, &str>) -> Result<Value, VaultError> {
+    const BOOTSTRAP: &str = "https://223.5.5.5/dns-query#DIRECT";
+    const DEFAULT: &str = "https://dns.alidns.com/dns-query";
+    let nameservers = if let Some(source) = general.get("encrypted-dns-server") {
+        fields(source)
+            .map(|value| endpoint(value.trim_matches('"'), true).map(str::to_owned))
+            .collect::<Result<Vec<_>, _>>()?
+    } else {
+        vec![DEFAULT.to_owned()]
+    };
+    if nameservers.is_empty() {
+        return Err(VaultError::Format);
+    }
+    let ipv6 = general
+        .get("ipv6")
+        .map(|value| boolean(value))
+        .transpose()?
+        .unwrap_or(true);
+    let follow_rules = general
+        .get("encrypted-dns-follow-outbound-mode")
+        .map(|value| boolean(value))
+        .transpose()?
+        .unwrap_or(false);
+    let proxy_resolvers = nameservers
+        .iter()
+        .map(|value| format!("{value}#DIRECT"))
+        .collect::<Vec<_>>();
+    // Surge sends encrypted DNS directly unless the source explicitly opts into
+    // outbound rules. Pin normal resolvers too, so an empty proxy group cannot
+    // prevent the subscriptions needed to populate that group from resolving.
+    let nameservers = nameservers
+        .into_iter()
+        .map(|value| {
+            if follow_rules {
+                value
+            } else {
+                format!("{value}#DIRECT")
+            }
+        })
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "enable":true, "ipv6":ipv6,
+        "enhanced-mode":"fake-ip", "fake-ip-range":"198.18.0.1/16",
+        "use-hosts":true, "use-system-hosts":false, "respect-rules":true,
+        "default-nameserver":[BOOTSTRAP],
+        "proxy-server-nameserver":proxy_resolvers, "nameserver":nameservers,
+        "fake-ip-filter":["+.lan", "+.local"],
+    }))
 }
 
 fn provider_stem(url: &str) -> Option<&str> {
@@ -250,15 +396,15 @@ fn provider_url(stem: &str, sing: bool) -> Result<Option<String>, VaultError> {
     }
 }
 
-fn native_adblock_artifacts(sing: bool) -> impl Iterator<Item = (&'static str, &'static str)> {
-    let (directory, extension) = if sing {
-        ("AdBlock/", "_Singbox.srs")
-    } else {
-        ("AdBlock/Mihomo/", ".yaml")
-    };
-    links::artifact_paths().filter_map(move |path| {
+// Native advertising shards remain a sing-box companion behavior only. FlClash
+// routing is projected exclusively from the Surge source and uses native modules
+// for its separately selected preview advertising functionality.
+fn native_sing_adblock_artifacts() -> impl Iterator<Item = (&'static str, &'static str)> {
+    links::artifact_paths().filter_map(|path| {
         let relative = path.strip_prefix("rulesets/")?;
-        let artifact = relative.strip_prefix(directory)?.strip_suffix(extension)?;
+        let artifact = relative
+            .strip_prefix("AdBlock/")?
+            .strip_suffix("_Singbox.srs")?;
         let stem = artifact.strip_suffix("_supported").unwrap_or(artifact);
         let shard = stem.strip_prefix("AdBlock_")?;
         // Only compiled ad-block shards: no raw Surge-only rules, HTTPDNS or firewall providers.
@@ -270,32 +416,13 @@ fn native_adblock_artifacts(sing: bool) -> impl Iterator<Item = (&'static str, &
     })
 }
 
-fn add_native_adblock(
-    yaml_rules: &mut Vec<String>,
-    yaml_providers: &mut Map<String, Value>,
+fn add_native_sing_adblock(
     sing_rules: &mut Vec<Value>,
     sing_providers: &mut BTreeMap<&str, Value>,
-    insert_at: (usize, usize),
+    insert_at: usize,
 ) -> Result<(), VaultError> {
-    let mut rejects = Vec::new();
-    for (tag, path) in native_adblock_artifacts(false) {
-        let url = format!("{RAW}{path}");
-        links::validate_url(&url)?;
-        if yaml_providers.insert(tag.into(), json!({
-            "type":"http", "behavior":"classical", "format":"yaml", "url":url, "interval":86400
-        })).is_some() {
-            return Err(VaultError::Format);
-        }
-        // Prevent even an upstream CIDR/ASN entry without no-resolve from issuing DNS.
-        let modifier = if tag.ends_with("_ip") {
-            ",no-resolve"
-        } else {
-            ""
-        };
-        rejects.push(format!("RULE-SET,{tag},REJECT{modifier}"));
-    }
     let mut tags = Vec::new();
-    for (tag, path) in native_adblock_artifacts(true) {
+    for (tag, path) in native_sing_adblock_artifacts() {
         let url = format!("{RAW}{path}");
         links::validate_url(&url)?;
         if sing_providers
@@ -311,12 +438,11 @@ fn add_native_adblock(
         }
         tags.push(tag);
     }
-    if rejects.is_empty() || tags.is_empty() {
+    if tags.is_empty() {
         return Err(VaultError::MissingArtifact);
     }
-    yaml_rules.splice(insert_at.0..insert_at.0, rejects);
     sing_rules.insert(
-        insert_at.1,
+        insert_at,
         json!({"rule_set":tags, "action":"reject", "no_drop":true}),
     );
     Ok(())
@@ -330,6 +456,7 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let mut group_order = Vec::new();
     let mut source_rules = Vec::new();
     let mut inline = BTreeMap::<&str, Vec<&str>>::new();
+    let mut general = BTreeMap::new();
     let mut section = "";
     for line in surge.content.lines() {
         let line = inline_comment(line).0.trim();
@@ -341,6 +468,10 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
             .and_then(|line| line.strip_suffix(']'))
         {
             section = header;
+        } else if section.eq_ignore_ascii_case("General") {
+            if let Some((key, value)) = line.split_once('=') {
+                general.insert(key.trim(), value.trim());
+            }
         } else if section.eq_ignore_ascii_case("Proxy Group") {
             let (name, group) = group(line)?;
             if groups.insert(name, group).is_some() {
@@ -357,7 +488,22 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
         }
     }
 
+    let global_test_timeout = general
+        .get("test-timeout")
+        .map(|value| integer(value))
+        .transpose()?
+        .unwrap_or(5);
+    let probe = endpoint(
+        general
+            .get("proxy-test-url")
+            .copied()
+            .unwrap_or("https://connectivitycheck.grapheneos.network/generate_204")
+            .trim_matches('"'),
+        false,
+    )?;
     let mut slots = Map::new();
+    let mut provider_checks = BTreeMap::<String, Value>::new();
+    let mut shared_check_intervals = false;
     let mut yaml_groups = Vec::new();
     let mut outbounds = vec![
         json!({"type":"direct", "tag":"direct"}),
@@ -367,7 +513,19 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     for name in group_order {
         let group = groups.get(name).ok_or(VaultError::Format)?;
         let mut providers = Vec::new();
-        include_providers(name, &groups, &mut BTreeSet::new(), &mut providers)?;
+        let mut proxies = Vec::new();
+        include_members(
+            name,
+            &groups,
+            &mut BTreeSet::new(),
+            &mut providers,
+            &mut proxies,
+        )?;
+        // Surge smart ignores built-ins and nested groups; preserving them as
+        // url-test choices could accidentally select a formerly ignored DIRECT.
+        if group.kind == GroupKind::Smart {
+            proxies.clear();
+        }
         let mut uses = Vec::new();
         for slot in providers {
             let key = slot.trim_matches(['{', '}']).to_ascii_lowercase();
@@ -377,11 +535,6 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
             );
             uses.push(key);
         }
-        let proxies: Vec<_> = group
-            .members
-            .iter()
-            .filter_map(|member| yaml_policy(member, &groups))
-            .collect();
         graph.insert(
             name,
             proxies
@@ -390,7 +543,58 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                 .filter(|name| groups.contains_key(name))
                 .collect(),
         );
-        let mut yaml = json!({"name":name, "type":"select", "empty-fallback":"REJECT"});
+        let mut yaml =
+            json!({"name":name, "type":group.kind.yaml_type(), "empty-fallback":"REJECT"});
+        if group.kind != GroupKind::Select {
+            // Surge's legacy group url= is ignored in current releases.
+            yaml["url"] = json!(probe);
+            let interval = if group.kind == GroupKind::Smart {
+                300
+            } else {
+                group.interval.unwrap_or(600)
+            };
+            yaml["interval"] = json!(interval);
+            let milliseconds = group
+                .test_timeout
+                .unwrap_or(global_test_timeout)
+                .checked_mul(1000)
+                .ok_or(VaultError::Format)?;
+            yaml["timeout"] = json!(milliseconds);
+            // Mihomo's group URL only tests explicit proxies, not provider nodes.
+            // Keep shared providers deduplicated and test them at their own level.
+            for key in &uses {
+                let check = json!({"enable":true, "url":probe, "interval":interval, "timeout":milliseconds, "lazy":true});
+                if let Some(previous) = provider_checks.get_mut(key) {
+                    if previous["timeout"] != check["timeout"] {
+                        return Err(VaultError::Format);
+                    }
+                    let old_interval = previous["interval"].as_u64().ok_or(VaultError::Format)?;
+                    if old_interval != interval {
+                        shared_check_intervals = true;
+                        previous["interval"] = json!(match (old_interval, interval) {
+                            (0, current) => current,
+                            (previous, 0) => previous,
+                            (previous, current) => previous.min(current),
+                        });
+                    }
+                } else {
+                    provider_checks.insert(key.clone(), check);
+                }
+            }
+            if matches!(group.kind, GroupKind::UrlTest | GroupKind::Smart) {
+                yaml["tolerance"] = json!(group.tolerance.unwrap_or(100));
+            }
+            if group.kind == GroupKind::LoadBalance {
+                yaml["strategy"] = json!(if group.persistent.unwrap_or(false) {
+                    "consistent-hashing"
+                } else {
+                    "round-robin"
+                });
+            }
+        }
+        if let Some(hidden) = group.hidden {
+            yaml["hidden"] = json!(hidden);
+        }
         if !uses.is_empty() {
             yaml["use"] = json!(uses);
         }
@@ -399,11 +603,8 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
         } else if uses.is_empty() {
             yaml["proxies"] = json!(["REJECT"]);
         }
-        // A filter outside the portable regex subset cannot safely be copied.
-        if let Some(filter) = group
-            .filter
-            .filter(|filter| regex::Regex::new(filter).is_ok())
-        {
+        // An unsupported expression fails above rather than broadening the group.
+        if let Some(filter) = group.filter {
             yaml["filter"] = json!(filter);
         }
         yaml_groups.push(yaml);
@@ -418,6 +619,9 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
         outbounds.push(json!({"type":"selector", "tag":name, "default":outbound_tags[0], "outbounds":outbound_tags}));
     }
     validate_group_graph(&graph)?;
+    for (key, check) in provider_checks {
+        slots.get_mut(&key).ok_or(VaultError::Format)?["health-check"] = check;
+    }
     if slots.is_empty() {
         return Err(VaultError::Format);
     }
@@ -426,7 +630,7 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let mut yaml_providers = Map::new();
     let mut sing_rules = Vec::new();
     let mut sing_providers = BTreeMap::new();
-    let mut adblock_at = None;
+    let mut sing_adblock_at = None;
     let mut final_policy = None;
     let mut expanded = Vec::new();
     for line in source_rules {
@@ -481,14 +685,14 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                     }
                     continue;
                 };
-                // Keep leading local overrides and the explicit Microsoft sign-in exception.
-                // Broad service rules (including Direct and GlobalProxy) must not shadow AdBlock.
+                // Retain sing-box's existing native advertising position after
+                // explicit exceptions. FlClash adds no rules beyond its source.
                 if !matches!(
                     stem,
                     "Profile_Exceptions" | "Apple_extra" | "Microsoft_direct"
-                ) && adblock_at.is_none()
+                ) && sing_adblock_at.is_none()
                 {
-                    adblock_at = Some((yaml_rules.len(), sing_rules.len()));
+                    sing_adblock_at = Some(sing_rules.len());
                 }
                 if let Some(url) = provider_url(stem, false)? {
                     yaml_providers.insert(stem.into(), json!({
@@ -534,20 +738,16 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
         }
     }
     let final_policy = final_policy.ok_or(VaultError::Format)?;
-    let adblock_at = adblock_at.unwrap_or((yaml_rules.len(), sing_rules.len()));
-    add_native_adblock(
-        &mut yaml_rules,
-        &mut yaml_providers,
-        &mut sing_rules,
-        &mut sing_providers,
-        adblock_at,
-    )?;
+    let sing_adblock_at = sing_adblock_at.unwrap_or(sing_rules.len());
+    add_native_sing_adblock(&mut sing_rules, &mut sing_providers, sing_adblock_at)?;
     yaml_rules.push(format!("MATCH,{final_policy}"));
     if final_policy == "REJECT" {
         sing_rules.push(json!({"action":"reject"}));
     }
+    let dns = derived_dns(&general)?;
+    let ipv6 = dns["ipv6"].as_bool().ok_or(VaultError::Format)?;
     let yaml = json!({
-        "mode":"rule", "allow-lan":false,
+        "mode":"rule", "allow-lan":false, "ipv6":ipv6, "dns":dns,
         "proxy-providers":slots, "proxy-groups":yaml_groups,
         "rule-providers":yaml_providers, "rules":yaml_rules
     });
@@ -562,11 +762,32 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
             "default_http_client":DOWNLOAD_CLIENT,
         }
     });
+    let mut yaml_content = String::from(
+        "# Derived from the current bundled Surge profile; group/rule order and subscription slots follow that source.\n# DNS is a portable HTTPS-only profile baseline; no system DNS settings are changed.\n# Encrypted DNS follows Surge's DIRECT default unless the source explicitly enables encrypted-dns-follow-outbound-mode.\n",
+    );
+    if shared_check_intervals {
+        yaml_content.push_str("# Shared provider health checks use the shortest requested interval (nonzero when any group schedules checks); their nodes remain deduplicated.\n");
+    }
+    for (name, group) in &groups {
+        if group.kind == GroupKind::Smart {
+            yaml_content.push_str(&format!("# Group {name}: Surge smart is approximated by url-test; learned per-site selection/retry is not reproduced; built-in/group members remain ignored as in Surge.\n"));
+        }
+        if group.kind == GroupKind::LoadBalance {
+            yaml_content.push_str(&format!("# Group {name}: load-balance uses Mihomo hashing/round-robin, not Surge random selection.\n"));
+        }
+        if !group.source_only.is_empty() {
+            yaml_content.push_str(&format!(
+                "# Group {name}: source-only options not represented: {}.\n",
+                group.source_only.join(", ")
+            ));
+        }
+    }
+    yaml_content.push_str(&serde_saphyr::to_string(&yaml).map_err(|_| VaultError::Format)?);
     Ok(vec![
         Template {
-            name: "FlClash.yaml".into(),
+            name: "FlClash-Surge.yaml".into(),
             client: Client::FlClash,
-            content: serde_saphyr::to_string(&yaml).map_err(|_| VaultError::Format)?,
+            content: yaml_content,
         },
         Template {
             name: "sing-box.json".into(),
@@ -626,10 +847,25 @@ mod tests {
             .position(|rule| rule == "RULE-SET,JP,Proxy,no-resolve")
             .unwrap();
         assert!(
-            rules[jp - 1]
-                .as_str()
+            !rules
+                .iter()
+                .any(|rule| rule.as_str().unwrap().starts_with("RULE-SET,AdBlock_"))
+        );
+        assert!(
+            rules
+                .iter()
+                .position(|rule| rule == "DOMAIN-SUFFIX,local,Proxy")
                 .unwrap()
-                .starts_with("RULE-SET,AdBlock_")
+                < jp
+        );
+        assert_eq!(
+            yaml["rule-providers"]
+                .as_object()
+                .unwrap()
+                .keys()
+                .map(String::as_str)
+                .collect::<BTreeSet<_>>(),
+            BTreeSet::from(["Profile_Exceptions", "Microsoft_direct", "JP", "Google_ip"])
         );
         assert_eq!(rules[jp + 1], "DOMAIN,fixture.example,Proxy");
         assert_eq!(rules[jp + 2], "RULE-SET,Google_ip,Proxy,no-resolve");
@@ -647,7 +883,7 @@ mod tests {
     }
 
     #[test]
-    fn projects_repository_order_with_native_adblock() {
+    fn flclash_keeps_only_source_routes_while_sing_box_retains_native_adblock() {
         let surge = Template {
             name: "Fixture Surge".into(),
             client: Client::Surge,
@@ -672,7 +908,27 @@ mod tests {
             .iter()
             .position(|rule| rule == "RULE-SET,Microsoft_proxy,Regional")
             .unwrap();
+        assert_eq!(
+            service,
+            pinned + 1,
+            "no extra FlClash advertising rules are inserted"
+        );
         assert_eq!(yaml_rules[service + 1], "RULE-SET,GlobalProxy,Regional");
+        assert_eq!(yaml_rules[service + 2], "MATCH,Regional");
+        assert!(
+            !yaml_rules
+                .iter()
+                .any(|rule| rule.as_str().unwrap().starts_with("RULE-SET,AdBlock_"))
+        );
+        assert_eq!(
+            yaml["rule-providers"]
+                .as_object()
+                .unwrap()
+                .keys()
+                .map(String::as_str)
+                .collect::<BTreeSet<_>>(),
+            BTreeSet::from(["Microsoft_direct", "Microsoft_proxy", "GlobalProxy"])
+        );
         let value: Value = serde_json::from_str(&output[1].content).unwrap();
         let sing_rules = value["route"]["rules"].as_array().unwrap();
         assert_eq!(sing_rules[0]["outbound"], "direct");
@@ -710,34 +966,12 @@ mod tests {
                 )
             })
             .collect();
-        let yaml_tags = yaml_rules[pinned + 1..service]
-            .iter()
-            .map(|rule| {
-                let (tag, reject) = rule
-                    .as_str()
-                    .unwrap()
-                    .strip_prefix("RULE-SET,")
-                    .unwrap()
-                    .split_once(',')
-                    .unwrap();
-                assert_eq!(
-                    reject,
-                    if tag.ends_with("_ip") {
-                        "REJECT,no-resolve"
-                    } else {
-                        "REJECT"
-                    }
-                );
-                tag
-            })
-            .collect::<BTreeSet<_>>();
         let sing_tags = sing_rules[pinned + 1]["rule_set"]
             .as_array()
             .unwrap()
             .iter()
             .map(|tag| tag.as_str().unwrap())
             .collect::<BTreeSet<_>>();
-        assert_eq!(yaml_tags, expected);
         assert_eq!(sing_tags, expected);
         for tag in expected {
             let provider = value["route"]["rule_set"]
@@ -747,7 +981,240 @@ mod tests {
                 .find(|provider| provider["tag"] == tag)
                 .unwrap();
             links::validate_url(provider["url"].as_str().unwrap()).unwrap();
-            links::validate_url(yaml["rule-providers"][tag]["url"].as_str().unwrap()).unwrap();
         }
+    }
+
+    fn projection_fixture(body: &str) -> Template {
+        Template {
+            name: "Synthetic inherited Surge".into(),
+            client: Client::Surge,
+            content: body.into(),
+        }
+    }
+
+    #[test]
+    fn source_group_types_order_members_and_native_parameters_are_preserved() {
+        let source = projection_fixture(concat!(
+            "[General]\nproxy-test-url=https://probe.example.invalid/check\ntest-timeout=7\n",
+            "ipv6=false\nencrypted-dns-server=https://dns.example.invalid/query\n",
+            "[Proxy Group]\nBank = select, DIRECT, policy-path={{SUBSCRIPTION_1}}\n",
+            "Mirror = select, REJECT, include-other-group=\"Bank,Bank\"\n",
+            "Auto = url-test, Mirror, interval=45, tolerance=0, test-timeout=2, url=http://ignored.example.invalid\n",
+            "Backup = fallback, Mirror, interval=70, hidden=true\n",
+            "Balance = load-balance, Mirror, persistent=true\n",
+            "Learned = smart, DIRECT, Mirror, policy-path={{SUBSCRIPTION_2}}, interval=999\n",
+            "[Rule]\nFINAL,Auto\n",
+        ));
+        let output = derive(&source).unwrap();
+        let yaml: Value = serde_saphyr::from_str(&output[0].content).unwrap();
+        let groups = yaml["proxy-groups"].as_array().unwrap();
+        assert_eq!(
+            groups
+                .iter()
+                .map(|group| group["name"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            ["Bank", "Mirror", "Auto", "Backup", "Balance", "Learned"]
+        );
+        assert_eq!(groups[1]["proxies"], json!(["REJECT", "DIRECT"]));
+        assert_eq!(groups[1]["use"], json!(["subscription_1"]));
+        assert_eq!(yaml["proxy-providers"].as_object().unwrap().len(), 2);
+        assert_eq!(groups[2]["type"], "url-test");
+        assert_eq!(groups[2]["url"], "https://probe.example.invalid/check");
+        assert_eq!(groups[2]["interval"], 45);
+        assert_eq!(groups[2]["tolerance"], 0);
+        assert_eq!(groups[2]["timeout"], 2000);
+        assert_eq!(groups[3]["type"], "fallback");
+        assert_eq!(groups[3]["hidden"], true);
+        assert_eq!(groups[3]["timeout"], 7000);
+        assert_eq!(groups[4]["type"], "load-balance");
+        assert_eq!(groups[4]["strategy"], "consistent-hashing");
+        assert_eq!(groups[5]["type"], "url-test");
+        assert_eq!(groups[5]["interval"], 300);
+        assert!(
+            groups[5].get("proxies").is_none(),
+            "Surge smart ignores built-in and nested-group choices"
+        );
+        assert_eq!(groups[5]["use"], json!(["subscription_2"]));
+        let check = &yaml["proxy-providers"]["subscription_2"]["health-check"];
+        assert_eq!(check["enable"], true);
+        assert_eq!(check["url"], "https://probe.example.invalid/check");
+        assert_eq!(check["timeout"], 7000);
+        assert_eq!(check["interval"], 300);
+        assert!(
+            yaml["proxy-providers"]["subscription_1"]
+                .get("health-check")
+                .is_none()
+        );
+        assert!(
+            output[0]
+                .content
+                .contains("Surge smart is approximated by url-test")
+        );
+        assert!(
+            output[0]
+                .content
+                .contains("source-only options not represented: url")
+        );
+        assert_eq!(yaml["ipv6"], false);
+        assert_eq!(yaml["dns"]["ipv6"], false);
+        assert_eq!(
+            yaml["dns"]["nameserver"],
+            json!(["https://dns.example.invalid/query#DIRECT"])
+        );
+    }
+
+    #[test]
+    fn automatic_provider_health_checks_are_shared_without_duplicate_subscriptions() {
+        let source = projection_fixture(concat!(
+            "[Proxy Group]\nBank = select, policy-path={{SUBSCRIPTION_1}}\n",
+            "Auto = url-test, include-other-group=Bank, interval=120\n",
+            "Backup = fallback, include-other-group=Bank, interval=300\n",
+            "[Rule]\nFINAL,Auto\n",
+        ));
+        let output = derive(&source).unwrap();
+        let yaml: Value = serde_saphyr::from_str(&output[0].content).unwrap();
+        assert_eq!(yaml["proxy-providers"].as_object().unwrap().len(), 1);
+        assert_eq!(
+            yaml["proxy-providers"]["subscription_1"]["health-check"]["interval"],
+            120
+        );
+        assert!(output[0].content.contains("shortest requested interval"));
+    }
+
+    #[test]
+    fn unknown_group_types_members_filters_and_include_cycles_are_rejected() {
+        for body in [
+            "Bank = subnet, policy-path={{SUBSCRIPTION_1}}",
+            "Bank = select, Missing, policy-path={{SUBSCRIPTION_1}}",
+            "Bank = select, policy-path={{SUBSCRIPTION_1}}, policy-regex-filter=\"(?=US)\"",
+            "Bank = select, policy-path={{SUBSCRIPTION_1}}, include-other-group=Other\nOther = select, include-other-group=Bank",
+        ] {
+            let source =
+                projection_fixture(&format!("[Proxy Group]\n{body}\n[Rule]\nFINAL,Bank\n"));
+            assert!(matches!(derive(&source), Err(VaultError::Format)), "{body}");
+        }
+    }
+
+    #[test]
+    fn included_filtered_groups_are_rejected_instead_of_broadening_nodes() {
+        let standalone = projection_fixture(concat!(
+            "[Proxy Group]\nNarrow = smart, policy-path={{SUBSCRIPTION_1}}, policy-regex-filter=JP\n",
+            "[Rule]\nFINAL,Narrow\n",
+        ));
+        assert!(derive(&standalone).is_ok());
+        let included = projection_fixture(concat!(
+            "[Proxy Group]\nNarrow = smart, policy-path={{SUBSCRIPTION_1}}, policy-regex-filter=JP\n",
+            "Combined = select, include-other-group=Narrow\n",
+            "[Rule]\nFINAL,Combined\n",
+        ));
+        assert!(matches!(derive(&included), Err(VaultError::Format)));
+    }
+
+    #[test]
+    fn source_probe_can_be_http_but_dns_must_remain_https() {
+        let source = projection_fixture(
+            "[General]\nipv6=true\nproxy-test-url=http://probe.example.invalid/check\n[Proxy Group]\nBank = smart, policy-path={{SUBSCRIPTION_1}}\n[Rule]\nFINAL,Bank\n",
+        );
+        let output = derive(&source).unwrap();
+        let yaml: Value = serde_saphyr::from_str(&output[0].content).unwrap();
+        assert_eq!(yaml["ipv6"], true);
+        assert_eq!(yaml["dns"]["ipv6"], true);
+        assert_eq!(
+            yaml["proxy-groups"][0]["url"],
+            "http://probe.example.invalid/check"
+        );
+        assert_eq!(
+            yaml["proxy-providers"]["subscription_1"]["health-check"]["url"],
+            "http://probe.example.invalid/check"
+        );
+        let insecure = projection_fixture(&source.content.replace(
+            "[General]",
+            "[General]\nencrypted-dns-server=http://dns.example.invalid/query",
+        ));
+        assert!(matches!(derive(&insecure), Err(VaultError::Format)));
+    }
+
+    #[test]
+    fn encrypted_dns_defaults_and_explicit_false_remain_direct_before_nodes_load() {
+        for follow in ["", "encrypted-dns-follow-outbound-mode=false\n"] {
+            let source = projection_fixture(&format!(
+                "[General]\n{follow}encrypted-dns-server=https://dns.example.invalid/query, https://second.example.invalid/query\n[Proxy Group]\nAuto = smart, policy-path={{{{SUBSCRIPTION_1}}}}\n[Rule]\nFINAL,Auto\n"
+            ));
+            let output = derive(&source).unwrap();
+            let yaml: Value = serde_saphyr::from_str(&output[0].content).unwrap();
+            let expected = json!([
+                "https://dns.example.invalid/query#DIRECT",
+                "https://second.example.invalid/query#DIRECT"
+            ]);
+            assert_eq!(yaml["dns"]["respect-rules"], true);
+            assert_eq!(yaml["dns"]["nameserver"], expected);
+            assert_eq!(yaml["dns"]["proxy-server-nameserver"], expected);
+            assert_eq!(
+                yaml["dns"]["default-nameserver"],
+                json!(["https://223.5.5.5/dns-query#DIRECT"])
+            );
+        }
+    }
+
+    #[test]
+    fn explicit_encrypted_dns_following_keeps_only_bootstrap_and_node_dns_direct() {
+        let source = projection_fixture(concat!(
+            "[General]\nencrypted-dns-follow-outbound-mode=true\n",
+            "encrypted-dns-server=https://dns.example.invalid/query\n",
+            "[Proxy Group]\nAuto = smart, policy-path={{SUBSCRIPTION_1}}\n",
+            "[Rule]\nFINAL,Auto\n",
+        ));
+        let output = derive(&source).unwrap();
+        let yaml: Value = serde_saphyr::from_str(&output[0].content).unwrap();
+        assert_eq!(yaml["dns"]["respect-rules"], true);
+        assert_eq!(
+            yaml["dns"]["nameserver"],
+            json!(["https://dns.example.invalid/query"])
+        );
+        assert_eq!(
+            yaml["dns"]["proxy-server-nameserver"],
+            json!(["https://dns.example.invalid/query#DIRECT"])
+        );
+        assert_eq!(
+            yaml["dns"]["default-nameserver"],
+            json!(["https://223.5.5.5/dns-query#DIRECT"])
+        );
+    }
+
+    #[test]
+    fn conflicting_shared_provider_timeouts_are_not_silently_collapsed() {
+        let source = projection_fixture(
+            "[Proxy Group]\nBank = select, policy-path={{SUBSCRIPTION_1}}\nAuto = url-test, include-other-group=Bank, test-timeout=2\nBackup = fallback, include-other-group=Bank, test-timeout=5\n[Rule]\nFINAL,Auto\n",
+        );
+        assert!(matches!(derive(&source), Err(VaultError::Format)));
+    }
+
+    #[test]
+    fn derived_https_dns_baseline_allows_the_existing_windows_guard() {
+        let source = projection_fixture(concat!(
+            "[Proxy Group]\nBank = smart, policy-path={{SUBSCRIPTION_1}}\n",
+            "[Rule]\nFINAL,Bank\n",
+        ));
+        let output = derive(&source).unwrap();
+        let subscriptions = BTreeMap::from([(
+            "SUBSCRIPTION_1".to_owned(),
+            "https://example.invalid/subscription".to_owned(),
+        )]);
+        let rendered =
+            super::super::render_flclash_windows_dns(&output[0], &subscriptions).unwrap();
+        let yaml: Value = serde_saphyr::from_str(&rendered).unwrap();
+        assert_eq!(yaml["dns"]["enable"], true);
+        assert_eq!(yaml["dns"]["respect-rules"], true);
+        assert_eq!(
+            yaml["dns"]["default-nameserver"],
+            json!(["https://223.5.5.5/dns-query#DIRECT"])
+        );
+        assert_eq!(
+            yaml["proxy-providers"]["subscription_1"]["url"],
+            "https://example.invalid/subscription"
+        );
+        assert_eq!(yaml["tun"]["enable"], true);
+        assert_eq!(yaml["tun"]["strict-route"], true);
+        assert_eq!(yaml["tun"]["dns-hijack"], json!(["any:53", "tcp://any:53"]));
     }
 }

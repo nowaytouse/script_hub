@@ -2,6 +2,7 @@ mod apple_shadowrocket;
 mod apple_surge;
 pub mod custom_sources;
 pub mod firewall_sync;
+pub mod flclash;
 pub mod functional_update;
 pub mod general_update;
 mod helper_hosts;

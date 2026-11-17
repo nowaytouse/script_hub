@@ -28,11 +28,22 @@ pub(crate) fn unlock_for_display(
             .iter()
             .find(|template| template.client == Client::Surge)
             .ok_or(VaultError::Format)?;
-        let derived = derived::derive(surge)?;
+        let derived = project_surge_profiles(surge)?;
         vault.library_mut().templates.extend(derived);
         vault.validate_for_storage()?;
     }
     Ok(vault)
+}
+
+/// Derives client profiles from a sanitized Surge template with explicit subscription slots.
+/// Rejects content that still requires sanitization instead of silently changing slot bindings.
+/// This does not unlock a library, fetch subscriptions, write files or activate a client.
+pub fn project_surge_profiles(surge: &Template) -> Result<Vec<Template>, VaultError> {
+    let sanitized = sanitize(surge)?;
+    if sanitized.content != surge.content {
+        return Err(VaultError::Format);
+    }
+    derived::derive(&sanitized)
 }
 
 const SLOT_PREFIX: &str = "{{SUBSCRIPTION_";
@@ -392,6 +403,72 @@ mod tests {
             client,
             content: content.to_string(),
         }
+    }
+
+    #[test]
+    fn public_projection_preserves_sanitized_subscription_slots() {
+        let source = template(
+            Client::Surge,
+            "# Ordinary public guidance\n[Proxy Group]\nBank = select, DIRECT, policy-path={{SUBSCRIPTION_1}}\nOther = select, Bank, policy-path={{SUBSCRIPTION_2}}\n[Rule]\nFINAL,Other\n",
+        );
+        let output = project_surge_profiles(&source).unwrap();
+        let flclash = output
+            .iter()
+            .find(|profile| profile.client == Client::FlClash)
+            .unwrap();
+        assert_eq!(
+            subscription_slots(flclash),
+            ["SUBSCRIPTION_1", "SUBSCRIPTION_2"]
+        );
+        let yaml: serde_json::Value = serde_saphyr::from_str(&flclash.content).unwrap();
+        assert!(yaml.get("proxies").is_none());
+        assert_eq!(
+            yaml["proxy-providers"]["subscription_1"]["url"],
+            "{{SUBSCRIPTION_1}}"
+        );
+        assert_eq!(
+            yaml["proxy-providers"]["subscription_2"]["url"],
+            "{{SUBSCRIPTION_2}}"
+        );
+    }
+
+    #[test]
+    fn public_projection_rejects_unsanitized_private_content_without_disclosing_it() {
+        let safe =
+            "[Proxy Group]\nBank = select, policy-path={{SUBSCRIPTION_1}}\n[Rule]\nFINAL,Bank\n";
+        for source in [
+            safe.replace(
+                "{{SUBSCRIPTION_1}}",
+                "https://subscription.example.invalid/path?token=fixture-private-marker",
+            ),
+            safe.replace(
+                "policy-path={{SUBSCRIPTION_1}}",
+                "policy-path={{SUBSCRIPTION_1}}, policy-regex-filter=\"https://subscription.example.invalid/path?token=fixture-private-marker\"",
+            ),
+            format!(
+                "[Proxy]\nNode = trojan, private.example.invalid, 443, password=fixture-private-marker\n{safe}"
+            ),
+            format!("[General]\nhttp-api=fixture-private-marker@127.0.0.1:6171\n{safe}"),
+            format!("# https://subscription.example.invalid/fixture-private-marker\n{safe}"),
+        ] {
+            let error = project_surge_profiles(&template(Client::Surge, &source))
+                .err()
+                .expect("Private source content must not produce public projections");
+            assert!(matches!(error, VaultError::Format));
+            assert!(!error.to_string().contains("fixture-private-marker"));
+        }
+    }
+
+    #[test]
+    fn public_projection_does_not_silently_renumber_existing_slots() {
+        let source = template(
+            Client::Surge,
+            "[Proxy Group]\nBank = select, policy-path={{SUBSCRIPTION_2}}\n[Rule]\nFINAL,Bank\n",
+        );
+        assert!(matches!(
+            project_surge_profiles(&source),
+            Err(VaultError::Format)
+        ));
     }
 
     #[test]
