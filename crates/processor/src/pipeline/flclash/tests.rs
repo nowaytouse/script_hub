@@ -444,6 +444,7 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
     let [
         (rule_section, rows),
         (rewrite_section, rewrites),
+        (body_section, body),
         (map_section, maps),
         (mitm_section, hosts),
     ] = sections.as_slice()
@@ -452,13 +453,15 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
     };
     assert_eq!(rule_section, "Rule");
     assert_eq!(rewrite_section, "URL Rewrite");
+    assert_eq!(body_section, "Body Rewrite");
     assert_eq!(map_section, "Map Local");
     assert_eq!(mitm_section, "MITM");
-    assert!(!rewrites.is_empty() && !maps.is_empty());
+    assert!(rewrites.len() > 45 && maps.len() > 12 && !body.is_empty());
     assert_eq!(hosts.len(), 1);
     assert!(!hosts[0].1.contains('*'));
     assert!(text.len() <= super::MAX_PROMAX_BYTES);
-    assert!(rows.len() + rewrites.len() + maps.len() <= super::MAX_PROMAX_RULES);
+    assert!(text.len() > 30_000_000);
+    assert!(rows.len() + rewrites.len() + body.len() + maps.len() <= super::MAX_PROMAX_RULES);
     assert!(
         rows.iter()
             .any(|(_, row)| row == "DOMAIN,aaid.umeng.com,REJECT")
@@ -471,7 +474,27 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
                 || super::is_port_rule(&parts[0]))
             && super::is_block_policy(&parts[2])
     }));
-    assert!(!rows.iter().any(|(_, row)| row.contains("ipinfo.io")));
+    for host in [
+        "ipinfo.io",
+        "api.ipinfo.io",
+        "17u.cn",
+        "wx.17u.cn",
+        "lm.licenses.adobe.com",
+    ] {
+        assert!(
+            !rows.iter().any(|(_, row)| {
+                let mut fields = row.split(',');
+                let kind = fields.next().unwrap();
+                let value = fields.next().unwrap();
+                value == host
+                    || kind == "DOMAIN-SUFFIX"
+                        && host
+                            .strip_suffix(value)
+                            .is_some_and(|prefix| prefix.ends_with('.'))
+            }),
+            "{host} should stay accessible"
+        );
+    }
     let catalog: serde_json::Value =
         serde_json::from_str(&planned[&root.join("modules/flclash/catalog.json")]).unwrap();
     assert_eq!(
@@ -597,6 +620,19 @@ fn promax_compatibility_rewrites_match_only_reviewed_ad_requests() {
         "Map Local",
         r#"^https://pan\.baidu\.com/rest/\d\.\d/pcs/adv data-type=file data="https://example.test/payload""#
     ).is_none());
+    let (_, mock) = super::reviewed_promax_http(
+        "Map Local",
+        r#"^https://api\.douban\.com/v2/app_ads/splash data="https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/source/mocks/reject-200.txt""#,
+    )
+    .unwrap();
+    assert!(mock.ends_with(super::PROMAX_INLINE_EMPTY));
+    assert!(!mock.contains("https://cdn"));
+    let mut output = std::collections::BTreeMap::from([(
+        "Rule".into(),
+        vec!["DOMAIN-SUFFIX,y.qq.com,REJECT".into()],
+    )]);
+    super::append_promax_http(&mut output, vec![("URL Rewrite", host, line)]);
+    assert_eq!(output.len(), 1);
     let routing = super::render_routing(
         "DOMAIN,ipinfo.io\nDOMAIN-SUFFIX,controld.com\nDOMAIN,ad.example.test\n",
         "REJECT",
@@ -671,14 +707,14 @@ fn promax_routing_retains_registered_notices_without_private_profile_material() 
 }
 
 #[test]
-fn promax_routing_plan_uses_only_the_approved_local_ad_list() {
+fn promax_routing_plan_ignores_unapproved_sources() {
     let root = temporary();
     let local = root.join(super::PROMAX_AD_LIST);
     fs::create_dir_all(local.parent().unwrap()).unwrap();
     let rules = "DOMAIN,local.example.test\n";
     fs::write(&local, rules).unwrap();
     let source = fixture(
-        "[Rule]\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT\n",
+        "[Rule]\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list,REJECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT\n",
     );
     let reports = super::plan_promax_routing(&root, &source).unwrap();
     assert_eq!(reports.len(), 1);

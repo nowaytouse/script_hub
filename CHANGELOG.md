@@ -4,7 +4,7 @@
 
 ## Unreleased
 
-- Expand FlClash Preview PROMAX at its existing subscription URL. The single compatibility module combines local app ads, Anti-AD and privacy domains with the merged firewall ports, selected URL rewrites and inline Map Local responses on exact MITM hosts. Cap publication at 640 KiB and 14,000 active entries.
+- Expand the single FlClash Preview PROMAX module to about 31 MB at its existing GitHub Raw URL. Include the complete Advertising and HaGeZi TIF Medium domain categories and supplemental phishing domains alongside Local, Anti-AD, Privacy and firewall ports. Expand the reviewed URL Rewrite, inline Map Local and native Body Rewrite entries on exact MITM hosts. Cap publication at 36 MiB and 850,000 active entries.
 
 - Publish an installable FlClash Preview AdBlock Helper for MITM exclusions and share the expanded public IPv4/IPv6 resolver mappings with the FlClash template. Retire the duplicate standalone FlClash Firewall after verifying its supported port rules are already in PROMAX.
 

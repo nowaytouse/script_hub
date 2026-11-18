@@ -6,10 +6,10 @@
 
 ## 安装入口
 
-- [PROMAX 唯一安装入口](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。兼容版包含本地应用广告、Anti-AD 和隐私域名、防火墙端口规则，以及精选的应用 HTTPS 处理规则。
+- [PROMAX 唯一安装入口](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。模块约 31 MB，包含广告、隐私和防钓鱼域名、防火墙端口规则及精选的应用 HTTPS 处理规则。
 - **其他预览版模块与兼容报告**：[modules/flclash](../modules/flclash/)。应用增强合集按需单独选择，不要把全部模块一键全开。
 
-已安装 PROMAX 的话，用上面的 GitHub 直连地址更新原条目，可避开 CDN 缓存。模块显示为 **FlClash Preview · AdBlock PROMAX (Compatibility)**。域名和端口规则可以独立生效。要对 HTTPS 请求应用 URL Rewrite 和 Map Local，请在 FlClash 中开启 MITM，并按应用流程信任 CA。PROMAX 使用内联响应数据，无需授予脚本权限。
+已安装 PROMAX 的话，用上面的 GitHub Raw 地址更新原条目。该模块超过 jsDelivr 对 GitHub 文件的默认单文件 20 MB 限制。域名和端口规则可以独立生效。要对 HTTPS 请求应用 URL Rewrite、Map Local 和 Body Rewrite，请在 FlClash 中开启 MITM 并按应用流程信任 CA。PROMAX 使用内联响应数据，无需授予脚本权限。 [jsDelivr 限制](https://www.jsdelivr.com/documentation#restrictions)
 
 在当前配置的**进阶配置 → MITM → 模块 → 添加**中选择 URL 导入；也可先下载，再从模块页按文件导入。使用原生模块页，不要导入到订阅／配置页。保留原配置供回滚；`FlClash-Surge.yaml` 继承 Surge 分流，不额外添加广告规则提供方。
 
@@ -25,7 +25,7 @@ HTTPS 响应修改还需要预览版自己的 HTTPS 解密开关和 CA 信任流
 
 Rust 生成器读取包括 PROMAX 在内的当前公开 Surge 模块，生成独立的 FlClash Preview 产物。保留受支持的 URL／Header／Body Rewrite、Map Local、脚本和 MITM 主机范围；支持的内联路由规范化后保留。不兼容的节、参数或策略会进入兼容报告。
 
-PROMAX 将现有 Local、Anti-AD 和 Privacy 列表中的精确域名和域名后缀，与已合并的防火墙端口规则一起编入模块。精选 URL Rewrite 和内联 Map Local 仅匹配指定的 MITM 主机，无需下载远程脚本或响应文件。发布上限为 640 KiB 和 14,000 条有效条目。来源和省略项见[兼容目录](../modules/flclash/catalog.json)。
+PROMAX 使用 Local、Anti-AD、Privacy、完整的 Advertising 和 HaGeZi TIF Medium 分片，以及补充威胁列表中的合规精确域名和域名后缀。模块沿用共享的服务保护检查，并纳入已合并的防火墙端口规则。精选 URL Rewrite、内联 Map Local 和原生 Body Rewrite 限定在精确的 MITM 主机上。发布上限为 36 MiB 和 850,000 条有效条目。来源和省略项见[兼容目录](../modules/flclash/catalog.json)。
 
 其他预览模块仍可使用受支持的 HTTPS 处理条目。`[IP Rewrite]`、`[General]`、任意代理分组策略、其他远程规则集，以及无法表示的 jq／结构化 body／条件操作继续报告为遗漏。
 
@@ -40,9 +40,9 @@ cargo run --locked --manifest-path crates/processor/Cargo.toml --bin update -- -
 cargo run --locked --manifest-path crates/processor/Cargo.toml --bin validate -- --root /path/to/script_hub
 ```
 
-GitHub 直连变体不依赖 CDN 的分支缓存；设备上仍需执行模块自身的“更新”，必要时重新审核脚本权限。推送新文件不会绕过应用授权，也不会自动在现有设备上启用模块。
+在应用内对原模块执行“更新”可下载新版本。其他模块如使用脚本，则按应用提示审核权限。
 
-兼容契约固定为 FlClash dev [`5e73f3fb673a0012cc7c7312a52da33b76b78295`](https://github.com/chen08209/FlClash/tree/5e73f3fb673a0012cc7c7312a52da33b76b78295)：[模块解析器](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/common/mitm_module.dart)、[官方兼容测试](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/test/common/mitm_module_test.dart)、[原生新建模块模板](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/features/mitm/module_editor.dart)。适配器记录 parser/test 的 blob。私有预览内核可能有额外限制；静态兼容和仓库测试不等于所有上游脚本都已在该内核运行通过。
+兼容契约固定为 FlClash dev [`5e73f3fb673a0012cc7c7312a52da33b76b78295`](https://github.com/chen08209/FlClash/tree/5e73f3fb673a0012cc7c7312a52da33b76b78295)：[模块解析器](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/common/mitm_module.dart)、[官方兼容测试](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/test/common/mitm_module_test.dart)、[原生新建模块模板](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/features/mitm/module_editor.dart)。适配器记录解析器和测试的 Git 对象。预览版使用私有内核，实际 HTTPS 处理效果需在该客户端验证。
 
 ## 设备验收
 

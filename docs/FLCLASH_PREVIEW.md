@@ -6,12 +6,12 @@ These modules target **FlClash testing/preview builds with the native MITM modul
 
 ## Install from the repository
 
-PROMAX has one installation entry. The compatibility module combines local app ads, Anti-AD and privacy domains with firewall port rules and selected app-specific HTTPS handlers.
+PROMAX has one installation entry. The module is about 31 MB and combines ad, privacy and phishing domain rules with firewall ports and selected app-specific HTTPS handlers.
 
 - [ScriptHub.AdBlock.Preview.sgmodule](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule) — direct GitHub URL for first installation and timely refresh.
 - [Other Preview modules and compatibility report](../modules/flclash/) — select additional application bundles separately.
 
-If PROMAX is already installed, update that entry using the direct GitHub link above to avoid CDN cache delays. The module is listed as **FlClash Preview · AdBlock PROMAX (Compatibility)**. Domain and port rules work independently of HTTPS decryption. To activate the URL Rewrite and Map Local entries for HTTPS requests, enable MITM in FlClash and follow its CA trust workflow. PROMAX uses inline response data and requires no script permission.
+Update an existing PROMAX entry from the GitHub Raw link above. The module exceeds the default 20 MB single-file limit for GitHub files on jsDelivr. Domain and port rules work independently of HTTPS decryption. To apply URL Rewrite, Map Local and Body Rewrite to HTTPS requests, enable MITM in FlClash and follow its CA trust workflow. PROMAX embeds its response data and requires no script permission. [jsDelivr limits](https://www.jsdelivr.com/documentation#restrictions)
 
 In the active profile's advanced configuration, open **MITM → Modules → Add**, then import the module URL (or download the file and use file import). Use the native module page, not the subscription/profile importer. Keep the existing profile for rollback. `FlClash-Surge.yaml` inherits Surge routing without adding extra advertising providers.
 
@@ -27,7 +27,7 @@ Source parameter definitions, descriptions and declared placeholders are retaine
 
 The generator reads the current public Surge module outputs, including PROMAX, and produces a separate, reproducible Preview namespace. It retains supported URL/header/body rewrites, Map Local responses, script declarations and MITM host scopes. Supported inline routing is normalized; incompatible sections, options and policy targets are counted in the compatibility report.
 
-PROMAX embeds exact domains and dotted suffixes from the existing Local, Anti-AD and Privacy lists alongside the merged firewall ports. Selected URL Rewrite and inline Map Local entries are scoped to exact MITM hosts, with no remote script or response-file downloads. Publication is capped at 640 KiB and 14,000 active entries. The [compatibility catalog](../modules/flclash/catalog.json) records sources and omissions.
+PROMAX embeds eligible exact domains and dotted suffixes from Local, Anti-AD, Privacy, all Advertising and HaGeZi TIF Medium shards, and the supplemental threat list. It applies the shared protected-service checks and retains the merged firewall ports. Reviewed URL rewrites, inline Map Local responses and native Body rewrites are scoped to exact MITM hosts. Publication is capped at 36 MiB and 850,000 active entries. The [compatibility catalog](../modules/flclash/catalog.json) records sources and omissions.
 
 Other Preview modules continue to project supported HTTPS handlers. `[IP Rewrite]`, `[General]`, arbitrary proxy-group policies, other remote rulesets, and unsupported jq/structured-body or conditional operations remain reported omissions.
 
@@ -42,9 +42,9 @@ cargo run --locked --manifest-path crates/processor/Cargo.toml --bin update -- -
 cargo run --locked --manifest-path crates/processor/Cargo.toml --bin validate -- --root /path/to/script_hub
 ```
 
-The direct GitHub variant avoids relying on a CDN's branch cache for immediate delivery. Existing clients may still need their native module **Update** action and, if the application requires it, a fresh script permission review. Publishing a new module does not silently enable it on an existing device.
+Use the native module **Update** action to fetch a new release. Follow the application's permission review for any other module that uses scripts.
 
-Adapter contract: FlClash dev [`5e73f3fb673a0012cc7c7312a52da33b76b78295`](https://github.com/chen08209/FlClash/tree/5e73f3fb673a0012cc7c7312a52da33b76b78295), its [module parser](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/common/mitm_module.dart), [compatibility tests](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/test/common/mitm_module_test.dart), and [native editor template](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/features/mitm/module_editor.dart). The parser/test blobs are recorded by the adapter. The bundled private preview core can have additional behavior; source-level adapter tests do not prove that every upstream script runs successfully on that core.
+The adapter pins the FlClash dev revision [`5e73f3fb673a0012cc7c7312a52da33b76b78295`](https://github.com/chen08209/FlClash/tree/5e73f3fb673a0012cc7c7312a52da33b76b78295) and records the [module parser](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/common/mitm_module.dart) and [compatibility test](https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/test/common/mitm_module_test.dart) blobs. Verify actual HTTPS handling in the preview client, which uses a private core.
 
 ## Device acceptance
 
