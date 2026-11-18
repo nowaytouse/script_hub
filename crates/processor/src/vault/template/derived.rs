@@ -8,6 +8,10 @@ use std::collections::{BTreeMap, BTreeSet};
 const RAW: &str = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/";
 const CDN: &str = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/";
 const ASN_URL: &str = "https://github.com/laincat/GeoIP/releases/latest/download/GeoLite2-ASN.mmdb";
+const DNS_BOOTSTRAP: [&str; 2] = [
+    "https://223.5.5.5/dns-query#DIRECT",
+    "https://223.6.6.6/dns-query#DIRECT",
+];
 const LOCAL_PROXY: &str = "script-hub-proxy";
 const DOWNLOAD_CLIENT: &str = "ruleset-download";
 const LAN: &[&str] = &[
@@ -211,7 +215,6 @@ fn include_members<'a>(
 }
 
 fn derived_dns(general: &BTreeMap<&str, &str>) -> Result<Value, VaultError> {
-    const BOOTSTRAP: &str = "https://223.5.5.5/dns-query#DIRECT";
     const DEFAULT: &str = "https://dns.alidns.com/dns-query";
     let nameservers = if let Some(source) = general.get("encrypted-dns-server") {
         fields(source)
@@ -254,7 +257,7 @@ fn derived_dns(general: &BTreeMap<&str, &str>) -> Result<Value, VaultError> {
         "enable":true, "ipv6":ipv6,
         "enhanced-mode":"fake-ip", "fake-ip-range":"198.18.0.1/16",
         "use-hosts":true, "use-system-hosts":false, "respect-rules":true,
-        "default-nameserver":[BOOTSTRAP],
+        "default-nameserver":DNS_BOOTSTRAP,
         "proxy-server-nameserver":proxy_resolvers, "nameserver":nameservers,
         "fake-ip-filter":["+.lan", "+.local"],
     }))
@@ -824,6 +827,7 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let ipv6 = dns["ipv6"].as_bool().ok_or(VaultError::Format)?;
     let mut yaml = json!({
         "mode":"rule", "allow-lan":false, "ipv6":ipv6, "dns":dns,
+        "unified-delay":true, "tcp-concurrent":true, "geodata-loader":"memconservative",
         "proxy-providers":slots, "proxy-groups":yaml_groups,
         "rule-providers":yaml_providers, "rules":yaml_rules
     });
@@ -1350,10 +1354,7 @@ mod tests {
             assert_eq!(yaml["dns"]["respect-rules"], true);
             assert_eq!(yaml["dns"]["nameserver"], expected);
             assert_eq!(yaml["dns"]["proxy-server-nameserver"], expected);
-            assert_eq!(
-                yaml["dns"]["default-nameserver"],
-                json!(["https://223.5.5.5/dns-query#DIRECT"])
-            );
+            assert_eq!(yaml["dns"]["default-nameserver"], json!(DNS_BOOTSTRAP));
         }
     }
 
@@ -1376,10 +1377,7 @@ mod tests {
             yaml["dns"]["proxy-server-nameserver"],
             json!(["https://dns.example.invalid/query#DIRECT"])
         );
-        assert_eq!(
-            yaml["dns"]["default-nameserver"],
-            json!(["https://223.5.5.5/dns-query#DIRECT"])
-        );
+        assert_eq!(yaml["dns"]["default-nameserver"], json!(DNS_BOOTSTRAP));
     }
 
     #[test]
@@ -1406,10 +1404,7 @@ mod tests {
         let yaml: Value = serde_saphyr::from_str(&rendered).unwrap();
         assert_eq!(yaml["dns"]["enable"], true);
         assert_eq!(yaml["dns"]["respect-rules"], true);
-        assert_eq!(
-            yaml["dns"]["default-nameserver"],
-            json!(["https://223.5.5.5/dns-query#DIRECT"])
-        );
+        assert_eq!(yaml["dns"]["default-nameserver"], json!(DNS_BOOTSTRAP));
         assert_eq!(
             yaml["proxy-providers"]["subscription_1"]["url"],
             "https://example.invalid/subscription"

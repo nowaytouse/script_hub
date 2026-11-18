@@ -125,6 +125,16 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
             assert!(!subscriptions.is_empty());
             assert!(template::is_flclash_config(&rendered));
             let config: serde_json::Value = serde_saphyr::from_str(&rendered).unwrap();
+            assert_eq!(config["unified-delay"], true);
+            assert_eq!(config["tcp-concurrent"], true);
+            assert_eq!(config["geodata-loader"], "memconservative");
+            assert_eq!(
+                config["dns"]["default-nameserver"],
+                serde_json::json!([
+                    "https://223.5.5.5/dns-query#DIRECT",
+                    "https://223.6.6.6/dns-query#DIRECT"
+                ])
+            );
             assert_eq!(config["geodata-mode"], false);
             assert_eq!(config["geox-url"]["mmdb"], GEOIP_URL);
             assert_eq!(

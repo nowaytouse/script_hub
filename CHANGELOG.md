@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Use unified latency measurement, concurrent TCP connections, a memory-conservative GEO loader, and two encrypted DNS bootstrap resolvers in the bundled FlClash export. FlClash Preview applies its app-wide GEO settings and selected overrides at runtime.
+
 - Use laincat's dedicated IPtoASN database for the existing IP-ASN rules in the bundled FlClash export. Keep the AIO country MMDB and the inherited weekly GEO update setting.
 
 - Add reviewed V2Fly GeoSite service domains to the existing AI, US streaming and social media rulesets, respecting Japan's Hulu routing.

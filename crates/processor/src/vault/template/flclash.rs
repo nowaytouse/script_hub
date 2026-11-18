@@ -314,7 +314,10 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
             "log-level",
             "ipv6",
             "allow-lan",
+            "unified-delay",
+            "tcp-concurrent",
             "geodata-mode",
+            "geodata-loader",
             "geo-auto-update",
             "geo-update-interval",
             "geox-url",
@@ -330,7 +333,13 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
     )?;
     for (key, value) in root {
         match key.as_str() {
-            "ipv6" | "allow-lan" | "geodata-mode" | "geo-auto-update" => flag(value)?,
+            "ipv6" | "allow-lan" | "unified-delay" | "tcp-concurrent" | "geodata-mode"
+            | "geo-auto-update" => flag(value)?,
+            "geodata-loader" => {
+                if !matches!(value.as_str(), Some("memconservative" | "standard")) {
+                    return Err(VaultError::Format);
+                }
+            }
             "geo-update-interval" => {
                 // Mihomo multiplies hours by time.Hour in a signed 64-bit
                 // time.Duration. Reject zero and overflow before export.

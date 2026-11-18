@@ -325,6 +325,9 @@ fn rejects_inline_nodes_credentials_and_unsupported_structures() {
         format!("{valid}\nlisteners: []\n"),
         format!("{valid}\nsecret: fixture-secret\n"),
         format!("{valid}\nexternal-controller: 127.0.0.1:9090\n"),
+        format!("{valid}\nunified-delay: 'true'\n"),
+        format!("{valid}\ntcp-concurrent: 1\n"),
+        format!("{valid}\ngeodata-loader: fixture-private-loader\n"),
         valid.replace(
             PUBLIC_RULE_URL,
             "https://rules.example/list?%74oken=fixture-secret",
