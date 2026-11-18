@@ -9,6 +9,9 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+mod heidai;
+pub use heidai::export_heidai_full;
+
 pub const CONTRACT_REVISION: &str = "5e73f3fb673a0012cc7c7312a52da33b76b78295";
 pub const IMPORTER_BLOB: &str = "8dad1a3c5dd3c13ee476ebc5b9306e43f9ea54e5";
 pub const IMPORTER_TEST_BLOB: &str = "5210600351a62d518e453467fbed981183693bb5";

@@ -320,6 +320,14 @@ const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
         "ads-img-qc.xhscdn.com",
         super::browser_filter::AWAVENUE_ADS_ONLY,
     ),
+    (
+        "analytics.m7g.twitch.tv",
+        super::browser_filter::ADGUARD_TRACKING_SERVERS,
+    ),
+    (
+        "analytics.pgncs.notion.so",
+        super::browser_filter::ADGUARD_TRACKING_SERVERS,
+    ),
 ];
 
 /// Whether a parsed DNS rule is one of the specifically reviewed exact-host

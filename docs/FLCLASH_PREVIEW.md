@@ -25,6 +25,16 @@ Source parameter definitions, descriptions and declared placeholders are retaine
 
 ## What is compiled
 
+### Complete 217heidai source for local use
+
+Export a single local PROMAX module from the [complete official DNS release](https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt). The exporter reads the complete release and verifies its declared counts. It applies source exceptions to the added rules, preserves the existing PROMAX, and filters additions against the shared service protections and Direct routing list. The export uses the existing load budget.
+
+~~~sh
+cargo run --locked --package rust_processor --bin promax -- --root . --export-heidai-full /path/outside/repository/ScriptHub.AdBlock.Heidai.Full.sgmodule
+~~~
+
+Import the result from the native module page in place of the standard PROMAX. Re-run the export and reimport to refresh. The [source catalog](../rulesets/Sources/sgmodule/AdBlock_sources_manual.list) lists original complete releases for other clients. The upstream native exports contain raw block matches, including Apple service names.
+
 The generator reads the current public Surge module outputs, including PROMAX, and produces a separate, reproducible Preview namespace. It retains supported URL/header/body rewrites, Map Local responses, script declarations and MITM host scopes. Supported inline routing is normalized; incompatible sections, options and policy targets are counted in the compatibility report.
 
 PROMAX embeds eligible exact domains and dotted suffixes from Local, Anti-AD, Privacy, all Advertising and HaGeZi TIF Medium shards, and the supplemental threat list. It applies the shared protected-service checks and retains the merged firewall ports. Reviewed URL rewrites, inline Map Local responses and native Body rewrites are scoped to exact MITM hosts. Publication is capped at 36 MiB and 850,000 active entries. The [compatibility catalog](../modules/flclash/catalog.json) records sources and omissions.

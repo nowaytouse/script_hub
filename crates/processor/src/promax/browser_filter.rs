@@ -29,6 +29,16 @@ const REVIEWED_MOBILE_ADSERVERS: &[&str] = &[
     "yc-ads.s3.amazonaws.com",
 ];
 pub(super) const AWAVENUE_ADS_ONLY: &str = "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt";
+pub(super) const ADGUARD_TRACKING_SERVERS: &str = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt";
+const REVIEWED_ADGUARD_TRACKERS: &[&str] = &[
+    "analytics.authoritymedia.com",
+    "analytics.m7g.twitch.tv",
+    "analytics.pgncs.notion.so",
+    "log.mediacategory.com",
+    "pixel.nudgify.com",
+    "track.fusionmedia.io",
+    "trackszn.median.eu",
+];
 
 const BRAVE_FIRST_PARTY: &str =
     "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt";
@@ -105,7 +115,7 @@ pub(super) fn category(source: &str) -> Option<&'static str> {
         | HEIDAI_SUPPLEMENT
         | ADGUARD_MOBILE_ADSERVERS
         | AWAVENUE_ADS_ONLY => Some("Advertising"),
-        UBO_PRIVACY => Some("Privacy"),
+        UBO_PRIVACY | ADGUARD_TRACKING_SERVERS => Some("Privacy"),
         UBO_BADWARE => Some("ThreatIntel"),
         _ => None,
     }
@@ -172,6 +182,7 @@ pub(super) fn project(source: &str, text: &str) -> Result<Vec<(usize, String)>, 
         GREEK_FILTER => Some(GREEK_REVIEWED_AD_HOSTS),
         HEIDAI_SUPPLEMENT => Some(HEIDAI_ADS),
         ADGUARD_MOBILE_ADSERVERS => Some(REVIEWED_MOBILE_ADSERVERS),
+        ADGUARD_TRACKING_SERVERS => Some(REVIEWED_ADGUARD_TRACKERS),
         UBO_BADWARE | AWAVENUE_ADS_ONLY => None,
         _ => return Err("browser filter source is not reviewed".into()),
     };
@@ -183,7 +194,20 @@ pub(super) fn project(source: &str, text: &str) -> Result<Vec<(usize, String)>, 
         let line = line.trim();
         let error = |reason| format!("browser filter line {}: {reason}", index + 1);
         if let Some(directive) = line.strip_prefix("!#") {
+            // CNAME sections have their own source policy. This projection uses only
+            // the reviewed hosts present in the tracker file itself.
+            let separate_cname_source = directive
+                .strip_prefix("include https://adguardteam.github.io/cname-trackers/data/")
+                .and_then(|path| path.split_once('/'))
+                .is_some_and(|(kind, file)| {
+                    matches!(kind, "trackers" | "mail_trackers" | "microsites")
+                        && file.ends_with(".txt")
+                        && file
+                            .bytes()
+                            .all(|byte| byte.is_ascii_alphanumeric() || b"-_.()".contains(&byte))
+                });
             match directive.split_ascii_whitespace().next() {
+                Some("include") if source == ADGUARD_TRACKING_SERVERS && separate_cname_source => {}
                 Some("if") => conditions.push(false),
                 Some("else") if conditions.last() == Some(&false) => {
                     if let Some(branch) = conditions.last_mut() {
@@ -331,6 +355,28 @@ mod tests {
     }
 
     #[test]
+    fn adguard_tracking_projects_reviewed_exact_hosts_without_service_traffic() {
+        let text = "||analytics.authoritymedia.com^\n\
+                    ||analytics.m7g.twitch.tv^\n@@||analytics.m7g.twitch.tv^\n\
+                    ||analytics.pgncs.notion.so^$third-party\n\
+                    ||api.twitch.tv^\n||www.notion.so^\n||doh.dns.apple.com^\n\
+                    ||extra.analytics.authoritymedia.com^\n\
+                    !#include https://adguardteam.github.io/cname-trackers/data/trackers/actioniq.txt\n";
+        assert_eq!(category(ADGUARD_TRACKING_SERVERS), Some("Privacy"));
+        assert_eq!(
+            project(ADGUARD_TRACKING_SERVERS, text).unwrap(),
+            [(1, "DOMAIN,analytics.authoritymedia.com".into())],
+        );
+        assert!(
+            project(
+                ADGUARD_TRACKING_SERVERS,
+                "!#include https://unreviewed.example.com/tracking.txt\n"
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
     fn bom_cannot_hide_the_first_exception() {
         let text = "\u{feff}@@||ads.example.com^\n||ads.example.com^\n";
         assert!(project(UBO_BADWARE, text).unwrap().is_empty());
@@ -344,7 +390,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "fetches four current public browser filter sources"]
+    #[ignore = "fetches current public browser filter sources"]
     fn live_reviewed_feeds_project_without_scope_errors() {
         use crate::promax::source::{DownloadConfig, Downloader};
         use std::time::Duration;
@@ -357,7 +403,13 @@ mod tests {
             max_bytes: 2 * 1024 * 1024,
             ..DownloadConfig::default()
         });
-        for source in [BRAVE_FIRST_PARTY, UBO_PRIVACY, UBO_BADWARE, GREEK_FILTER] {
+        for source in [
+            BRAVE_FIRST_PARTY,
+            UBO_PRIVACY,
+            UBO_BADWARE,
+            GREEK_FILTER,
+            ADGUARD_TRACKING_SERVERS,
+        ] {
             let body = downloader.get(source).unwrap();
             let rules = project(source, &body).unwrap_or_else(|error| panic!("{source}: {error}"));
             assert!(!rules.is_empty(), "{source}");

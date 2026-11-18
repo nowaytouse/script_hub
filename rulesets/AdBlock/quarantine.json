@@ -195678,6 +195678,36 @@
     "risk": "protected-service"
   },
   {
+    "source": "https://cdn.jsdelivr.net/gh/AdguardTeam/AdguardFilters@master/SpywareFilter/sections/tracking_servers.txt",
+    "candidate": "DOMAIN,analytics.authoritymedia.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/AdguardTeam/AdguardFilters@master/SpywareFilter/sections/tracking_servers.txt",
+    "candidate": "DOMAIN,log.mediacategory.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/AdguardTeam/AdguardFilters@master/SpywareFilter/sections/tracking_servers.txt",
+    "candidate": "DOMAIN,pixel.nudgify.com",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/AdguardTeam/AdguardFilters@master/SpywareFilter/sections/tracking_servers.txt",
+    "candidate": "DOMAIN,track.fusionmedia.io",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
+    "source": "https://cdn.jsdelivr.net/gh/AdguardTeam/AdguardFilters@master/SpywareFilter/sections/tracking_servers.txt",
+    "candidate": "DOMAIN,trackszn.median.eu",
+    "reason": "broad-media-domain",
+    "risk": "broad-media"
+  },
+  {
     "source": "https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_mail_trackers_justdomains.txt",
     "candidate": "12dkim1._domainkey.email.health.amazon.com",
     "reason": "protected-domain-intersection",

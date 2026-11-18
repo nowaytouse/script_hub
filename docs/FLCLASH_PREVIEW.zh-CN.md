@@ -23,6 +23,16 @@ HTTPS 响应修改还需要预览版自己的 HTTPS 解密开关和 CA 信任流
 
 ## 适配范围
 
+### 217heidai 完整上游的本地导出
+
+从[官方完整 DNS 发行版](https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt)生成单个本地 PROMAX。导出器读取完整发行版并核对声明的条数，在新增规则中保留来源的放行语义，再应用共用服务保护与现有直连清单。导出沿用现有 PROMAX 和加载上限。
+
+~~~sh
+cargo run --locked --package rust_processor --bin promax -- --root . --export-heidai-full /path/outside/repository/ScriptHub.AdBlock.Heidai.Full.sgmodule
+~~~
+
+在原生模块页按文件导入，用于替换原 PROMAX 条目。再次导出并导入即可刷新。[来源目录](../rulesets/Sources/sgmodule/AdBlock_sources_manual.list)登记了各客户端的官方完整发行版，原生直订带有上游原始拦截，其中包含 Apple 服务域名。
+
 Rust 生成器读取包括 PROMAX 在内的当前公开 Surge 模块，生成独立的 FlClash Preview 产物。保留受支持的 URL／Header／Body Rewrite、Map Local、脚本和 MITM 主机范围；支持的内联路由规范化后保留。不兼容的节、参数或策略会进入兼容报告。
 
 PROMAX 使用 Local、Anti-AD、Privacy、完整的 Advertising 和 HaGeZi TIF Medium 分片，以及补充威胁列表中的合规精确域名和域名后缀。模块沿用共享的服务保护检查，并纳入已合并的防火墙端口规则。精选 URL Rewrite、内联 Map Local 和原生 Body Rewrite 限定在精确的 MITM 主机上。发布上限为 36 MiB 和 850,000 条有效条目。来源和省略项见[兼容目录](../modules/flclash/catalog.json)。

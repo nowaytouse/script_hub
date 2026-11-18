@@ -7,6 +7,7 @@ fn main() {
     let mut root = None;
     let mut execute = false;
     let mut refresh_index = false;
+    let mut heidai_output = None;
     let mut arguments = std::env::args().skip(1);
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
@@ -21,8 +22,19 @@ fn main() {
             },
             "--execute" => execute = true,
             "--refresh-index" => refresh_index = true,
+            "--export-heidai-full" => match arguments.next() {
+                Some(value) if !value.is_empty() && !value.starts_with('-') => {
+                    heidai_output = Some(PathBuf::from(value));
+                }
+                _ => {
+                    eprintln!("Missing file for --export-heidai-full <file.sgmodule>");
+                    std::process::exit(2);
+                }
+            },
             "--help" | "-h" => {
-                println!("Usage: promax --root <repository> [--execute | --refresh-index]");
+                println!(
+                    "Usage: promax --root <repository> [--execute | --refresh-index | --export-heidai-full <file.sgmodule>]"
+                );
                 return;
             }
             unknown => {
@@ -36,6 +48,20 @@ fn main() {
         eprintln!("Missing required --root <repository> argument");
         std::process::exit(2);
     };
+    if let Some(output) = heidai_output {
+        if execute || refresh_index {
+            eprintln!("--export-heidai-full is a separate local export mode");
+            std::process::exit(2);
+        }
+        match rust_processor::pipeline::flclash::export_heidai_full(&root, &output) {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("Unable to export complete 217heidai source: {error}");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
     if refresh_index {
         if execute {
             eprintln!("--refresh-index cannot be combined with --execute");

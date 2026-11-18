@@ -38,6 +38,11 @@ DOMAIN,ads-img-al.xhscdn.com
 DOMAIN,ads-img-bak.xhscdn.com
 DOMAIN,ads-img-qc.xhscdn.com
 
+# Dedicated analytics hosts from AdGuard Tracking Protection.
+# https://github.com/AdguardTeam/AdguardFilters/blob/master/SpywareFilter/sections/tracking_servers.txt
+DOMAIN,analytics.m7g.twitch.tv
+DOMAIN,analytics.pgncs.notion.so
+
 # Apple-specific ad endpoints (not Apple auth, iCloud, media, or service parents).
 # AdGuard HostlistsRegistry's AWAvenue Ads Rule includes both exact hosts:
 # https://github.com/AdguardTeam/HostlistsRegistry/blob/main/assets/filter_53.txt
